@@ -2475,7 +2475,7 @@ int ek_init() {
     try {
       electrostatics = new FdElectrostatics(es_parameters, stream[0]);
     } catch (std::string e) {
-      std::cout << "Error in initialization of electrokinetics electrostatics "
+      std::cerr << "Error in initialization of electrokinetics electrostatics "
                    "solver: "
                 << e << std::endl;
       return 1;
