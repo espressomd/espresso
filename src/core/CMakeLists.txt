@@ -42,7 +42,8 @@ set(EspressoCore_SRC
     virtual_sites.cpp
     exclusions.cpp
     CellStructure.cpp
-    PartCfg.cpp AtomDecomposition.hpp)
+    PartCfg.cpp 
+    AtomDecomposition.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
