@@ -67,23 +67,19 @@
  *  decomposition.
  */
 struct DomainDecomposition {
-  DomainDecomposition()
-      : cell_offset{0, 0, 0}, cell_grid{0, 0, 0},
-        ghost_cell_grid{0, 0, 0}, cell_size{0, 0, 0}, inv_cell_size{0, 0, 0} {}
+  DomainDecomposition() = default;
+
   /** Offset in global grid */
-  int cell_offset[3];
+  Utils::Vector3i cell_offset = {};
   /** linked cell grid in nodes spatial domain. */
-  int cell_grid[3];
+  Utils::Vector3i cell_grid = {};
   /** linked cell grid with ghost frame. */
-  int ghost_cell_grid[3];
-  /** cell size.
-   *  Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range);
-   * \endverbatim
-   */
-  Utils::Vector3d cell_size;
+  Utils::Vector3i ghost_cell_grid = {};
+  /** cell size. */
+  Utils::Vector3d cell_size = {};
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
-  double inv_cell_size[3];
-  bool fully_connected[3];
+  Utils::Vector3d inv_cell_size = {};
+  bool fully_connected[3] = {false, false, false};
 
   boost::mpi::communicator comm;
   BoxGeometry box_geo;
@@ -141,9 +137,6 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
  */
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
                                     std::vector<Cell *> &modified_cells);
-
-/** calculate physical (processor) minimal number of cells */
-int calc_processor_min_num_cells(const Utils::Vector3i &grid);
 
 /*@}*/
 

@@ -64,6 +64,20 @@ constexpr int max_num_cells = 32768;
 /************************************************************/
 /*@{*/
 
+static int calc_processor_min_num_cells(const Utils::Vector3i &grid) {
+  int min = 1;
+  /* the minimal number of cells can be lower if there are at least two nodes
+     serving a direction,
+     since this also ensures that the cell size is at most half the box length.
+     However, if there is
+     only one processor for a direction, there have to be at least two cells for
+     this direction. */
+  for (int i = 0; i < 3; i++)
+    if (grid[i] == 1)
+      min *= 2;
+  return min;
+}
+
 /**
  *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
  *
@@ -230,10 +244,7 @@ int dd_fill_comm_cell_lists(ParticleList **part_lists,
   for (int o = lc[0]; o <= hc[0]; o++)
     for (int n = lc[1]; n <= hc[1]; n++)
       for (int m = lc[2]; m <= hc[2]; m++) {
-        auto const i =
-            get_linear_index(o, n, m,
-                             {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
-                              dd.ghost_cell_grid[2]});
+        auto const i = get_linear_index(o, n, m, dd.ghost_cell_grid);
 
         part_lists[c] = &(dd.cells.at(i).particles());
         c++;
@@ -456,9 +467,7 @@ void dd_init_cell_interactions(const Utils::Vector3i &grid) {
     for (n = 1; n < dd.cell_grid[1] + 1; n++)
       for (m = 1; m < dd.cell_grid[0] + 1; m++) {
 
-        ind1 = get_linear_index(m, n, o,
-                                {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
-                                 dd.ghost_cell_grid[2]});
+        ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
 
         std::vector<Cell *> red_neighbors;
         std::vector<Cell *> black_neighbors;
@@ -477,10 +486,7 @@ void dd_init_cell_interactions(const Utils::Vector3i &grid) {
         for (p = lower_index[2]; p <= upper_index[2]; p++)
           for (q = lower_index[1]; q <= upper_index[1]; q++)
             for (r = lower_index[0]; r <= upper_index[0]; r++) {
-              ind2 = get_linear_index(r, q, p,
-                                      {dd.ghost_cell_grid[0],
-                                       dd.ghost_cell_grid[1],
-                                       dd.ghost_cell_grid[2]});
+              ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
               if (ind2 > ind1) {
                 red_neighbors.push_back(&dd.cells.at(ind2));
               } else {
@@ -498,7 +504,7 @@ void dd_init_cell_interactions(const Utils::Vector3i &grid) {
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
 Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
-  int cpos[3];
+  Utils::Vector3i cpos;
 
   for (int i = 0; i < 3; i++) {
     cpos[i] = static_cast<int>(std::floor(pos[i] * dd.inv_cell_size[i])) + 1 -
@@ -524,9 +530,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
     }
   }
 
-  auto const ind = get_linear_index(
-      cpos[0], cpos[1], cpos[2],
-      {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]});
+  auto const ind = get_linear_index(cpos, dd.ghost_cell_grid);
   return &(dd.cells.at(ind));
 }
 
@@ -584,20 +588,6 @@ void dd_on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
     }
   }
   dd_update_communicators_w_boxl();
-}
-
-int calc_processor_min_num_cells(const Utils::Vector3i &grid) {
-  int i, min = 1;
-  /* the minimal number of cells can be lower if there are at least two nodes
-     serving a direction,
-     since this also ensures that the cell size is at most half the box length.
-     However, if there is
-     only one processor for a direction, there have to be at least two cells for
-     this direction. */
-  for (i = 0; i < 3; i++)
-    if (grid[i] == 1)
-      min *= 2;
-  return min;
 }
 
 /************************************************************/
