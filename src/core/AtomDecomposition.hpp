@@ -35,6 +35,18 @@
 #include <limits>
 #include <vector>
 
+/**
+ * @brief Atom decomposition cell system.
+ *
+ * This implements a distributed particle storage
+ * by just evenly distributing the particles over
+ * all part-taking nodes. Pairs are found by just
+ * considering all pairs indepent of logical or
+ * physical location, it has therefor quadratic time
+ * complexity in the number of particles.
+ *
+ * For a more detailed discussion please see @cite plimpton1995a.
+ */
 class AtomDecomposition {
   boost::mpi::communicator comm;
   std::vector<Cell> cells;
@@ -56,8 +68,8 @@ public:
     mark_cells();
   }
 
-  void exchange_particles(bool global_flag, ParticleList &displaced_parts,
-                          std::vector<Cell *> &modified_cells) {
+  void resort(bool global_flag, ParticleList &displaced_parts,
+              std::vector<Cell *> &modified_cells) {
     /* Local updates are a NoOp for this decomposition. */
     if (not global_flag) {
       assert(displaced_parts.empty());

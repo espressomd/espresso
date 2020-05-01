@@ -52,5 +52,5 @@ void nsq_topology_init(const boost::mpi::communicator &comm) {
 void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
                             std::vector<Cell *> &modified_cells) {
   assert(displaced_parts);
-  ad.value().exchange_particles(global_flag, *displaced_parts, modified_cells);
+  ad.value().resort(global_flag, *displaced_parts, modified_cells);
 }
