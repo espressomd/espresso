@@ -29,7 +29,6 @@
 #include "lbgpu.hpp"
 
 namespace {
-
 InterpolationOrder interpolation_order = InterpolationOrder::linear;
 }
 

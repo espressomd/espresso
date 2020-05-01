@@ -27,6 +27,8 @@
 
 #include <utils/constants.hpp>
 
+#include <cstdio>
+
 /** Volume conservation.
  *  Calculate volumes, volume force and add it to each virtual particle.
  *  This function is called from @ref integrate.

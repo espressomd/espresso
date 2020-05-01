@@ -118,7 +118,7 @@ public:
     valid_params.clear();
 
     for (auto const &p : m_parameters) {
-      valid_params.push_back(p.first);
+      valid_params.emplace_back(p.first);
     }
 
     return valid_params;

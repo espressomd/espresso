@@ -154,7 +154,7 @@ private:
    */
   Particle &append_indexed_particle(ParticleList &pl, Particle &&p) {
     /* Check if cell may reallocate, in which case the index
-     * entries for all particles in this celle have to be
+     * entries for all particles in this cell have to be
      * updated. */
     auto const may_reallocate = pl.size() >= pl.capacity();
     auto &new_part = pl.insert(std::move(p));

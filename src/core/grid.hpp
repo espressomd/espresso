@@ -36,11 +36,9 @@
 
 #include "LocalBox.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <cassert>
 #include <limits>
 
 extern BoxGeometry box_geo;

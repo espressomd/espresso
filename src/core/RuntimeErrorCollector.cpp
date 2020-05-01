@@ -23,7 +23,7 @@
 
 #include <boost/mpi/collectives.hpp>
 
-#include <sstream>
+#include <iostream>
 #include <utility>
 
 using namespace std;

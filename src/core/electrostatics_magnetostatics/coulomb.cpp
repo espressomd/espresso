@@ -40,6 +40,8 @@ double coulomb_cutoff;
 
 #include <utils/constants.hpp>
 
+#include <cstdio>
+
 Coulomb_parameters coulomb;
 
 namespace Coulomb {

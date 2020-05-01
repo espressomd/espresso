@@ -844,7 +844,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
         dummy_old_particle_numbers, old_state_index, new_state_index, true);
   } else {
     bf = std::min(1.0, bf * exp(-beta * (E_pot_new - E_pot_old))); // Metropolis
-                                                                   // Algorithm
+                                                                   // algorithm
                                                                    // since
                                                                    // proposal
                                                                    // density is
@@ -861,7 +861,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   // bf = std::min(1.0,
   //     bf*exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
 
-  // Metropolis-Hastings Algorithm for asymmetric proposal density
+  // Metropolis-Hastings algorithm for asymmetric proposal density
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
     m_accepted_configurational_MC_moves += 1;

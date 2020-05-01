@@ -46,7 +46,6 @@ void Slitpore::calculate_dist(const Utils::Vector3d &pos, double &dist,
       m_pore_mouth - m_pore_length + m_lower_smoothing_radius};
 
   if (pos[2] > m_pore_mouth + m_channel_width / 2) {
-    //    printf("upper wall\n");
     // Feel the upper wall
     dist = m_pore_mouth + m_channel_width - pos[2];
     vec[0] = vec[1] = 0;
@@ -95,14 +94,13 @@ void Slitpore::calculate_dist(const Utils::Vector3d &pos, double &dist,
   }
 
   if (pos[0] > c12[0] && pos[0] < c22[0]) {
-    //    printf("pore end\n");
     // Feel the pore end wall
     dist = pos[2] - (m_pore_mouth - m_pore_length);
     vec[0] = vec[1] = 0;
     vec[2] = dist;
     return;
   }
-  // Else
+
   // Feel the lower smoothing
   if (pos[0] < dividing_plane()) {
     dist = -sqrt(Utils::sqr(c12[0] - pos[0]) + Utils::sqr(c12[1] - pos[2])) +

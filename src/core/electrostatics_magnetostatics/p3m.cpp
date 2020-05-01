@@ -60,7 +60,6 @@ using Utils::strcat_alloc;
 
 #include <complex>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 
 /************************************************

@@ -76,8 +76,8 @@ public:
   const auto &bonds() const { return bondbuf; }
 
 private:
-  std::vector<char> buf;     //< Buffer for everything but bonds
-  std::vector<char> bondbuf; //< Buffer for bond lists
+  std::vector<char> buf;     ///< Buffer for everything but bonds
+  std::vector<char> bondbuf; ///< Buffer for bond lists
 };
 
 static size_t calc_transmit_size(unsigned data_parts) {
@@ -349,7 +349,7 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
       prepare_recv_buffer(recv_buffer, ghost_comm, data_parts);
 
     /* transfer data */
-    // Use two send/recvs in order to avoid, having to serialize CommBuf
+    // Use two send/recvs in order to avoid having to serialize CommBuf
     // (which consists of already serialized data).
     switch (comm_type) {
     case GHOST_RECV:
