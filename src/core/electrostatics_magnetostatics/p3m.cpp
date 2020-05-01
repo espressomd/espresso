@@ -983,7 +983,6 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
   double int_time;
   double r_cut_iL;
   double rs_err, ks_err;
-  int i, n_cells;
   char b[5 * ES_DOUBLE_SPACE + 3 * ES_INTEGER_SPACE + 128];
 
   /* initial checks. */
