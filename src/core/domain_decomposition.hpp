@@ -98,20 +98,6 @@ struct DomainDecomposition {
 /** Information about the domain decomposition. */
 extern DomainDecomposition dd;
 
-/** Maximal number of cells per node. In order to avoid memory
- *  problems due to the cell grid one has to specify the maximal
- *  number of \ref cells::cells. If the number of cells is larger
- *  than max_num_cells the cell grid is reduced.
- *  max_num_cells has to be larger than 27, e.g. one inner cell.
- */
-extern int max_num_cells;
-
-/** Minimal number of cells per node. This is mainly to avoid excessively large
- *  numbers of particles per cell, which will result in really large Verlet
- *  lists and eventually crash ESPResSo.
- */
-extern int min_num_cells;
-
 /*@}*/
 
 /************************************************************/

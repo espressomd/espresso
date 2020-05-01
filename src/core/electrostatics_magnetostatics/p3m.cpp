@@ -1054,19 +1054,6 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
     return -P3M_TUNE_ELCTEST;
   }
 
-  /* check whether this radius is too large, so that we would use less cells
-   * than allowed */
-  n_cells = 1;
-  for (i = 0; i < 3; i++)
-    n_cells *= (int)(floor(local_geo.length()[i] /
-                           (r_cut_iL * box_geo.length()[0] + skin)));
-  if (n_cells < min_num_cells) {
-    /* print result */
-    sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e radius dangerously high\n\n",
-            mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err);
-    *log = strcat_alloc(*log, b);
-  }
-
   int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -P3M_TUNE_FAIL) {
     *log = strcat_alloc(*log, "tuning failed, test integration not possible\n");

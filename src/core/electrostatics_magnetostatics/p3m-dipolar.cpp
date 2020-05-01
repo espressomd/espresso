@@ -1163,20 +1163,6 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
     runtimeErrorMsg() << "dipolar P3M: tuning when dlc needs to be fixed";
   }
 
-  /* check whether this radius is too large, so that we would use less cells
-   * than allowed */
-  n_cells = 1;
-  for (i = 0; i < 3; i++)
-    n_cells *= (int)(floor(local_geo.length()[i] /
-                           (r_cut_iL * box_geo.length()[0] + skin)));
-  if (n_cells < min_num_cells) {
-    /* print result */
-    sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e radius dangerously high\n\n",
-            mesh, cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
-    *log = strcat_alloc(*log, b);
-    return -P3M_TUNE_CUTOFF_TOO_LARGE;
-  }
-
   int_time = dp3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -P3M_TUNE_FAIL) {
     *log = strcat_alloc(*log, "tuning failed, test integration not possible\n");
