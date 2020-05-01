@@ -31,10 +31,14 @@
 #include <boost/serialization/vector.hpp>
 
 struct AtomDecomposition {
-  /** The local cell */
-  Cell *local;
+  std::vector<Cell> cells;
 
   boost::mpi::communicator comm;
+
+  /**
+   * @brief Get the local cell.
+   */
+  Cell &local() { return cells.at(comm.rank()); }
 
   /**
    * @brief Determine which rank owns a particle id.
@@ -50,7 +54,7 @@ struct AtomDecomposition {
    * @return Pointer to cell or nullptr if not local.
    */
   Cell *id_to_cell(int id) {
-    return (id_to_rank(id) == comm.rank()) ? local : nullptr;
+    return (id_to_rank(id) == comm.rank()) ? std::addressof(local()) : nullptr;
   }
 };
 
@@ -66,7 +70,7 @@ static GhostCommunicator nsq_prepare_comm() {
   /* every node has its dedicated comm step */
   for (int n = 0; n < ad.comm.size(); n++) {
     comm.communications[n].part_lists.resize(1);
-    comm.communications[n].part_lists[0] = &(cells[n].particles());
+    comm.communications[n].part_lists[0] = &(ad.cells.at(n).particles());
     comm.communications[n].node = n;
   }
 
@@ -84,18 +88,17 @@ void nsq_topology_init(const boost::mpi::communicator &comm) {
   /* This cell system supports any range. */
   cell_structure.max_range =
       Utils::Vector3d::broadcast(std::numeric_limits<double>::infinity());
-  cells.resize(ad.comm.size());
+  ad.cells = std::vector<Cell>(ad.comm.size());
 
   /* mark cells */
-  ad.local = &cells[ad.comm.rank()];
   cell_structure.m_local_cells.resize(1);
-  cell_structure.m_local_cells[0] = ad.local;
+  cell_structure.m_local_cells[0] = std::addressof(ad.local());
 
   cell_structure.m_ghost_cells.resize(ad.comm.size() - 1);
   int c = 0;
   for (int n = 0; n < ad.comm.size(); n++)
     if (n != ad.comm.rank())
-      cell_structure.m_ghost_cells[c++] = &cells[n];
+      cell_structure.m_ghost_cells[c++] = &(ad.cells.at(n));
 
   std::vector<Cell *> red_neighbors;
   std::vector<Cell *> black_neighbors;
@@ -111,13 +114,13 @@ void nsq_topology_init(const boost::mpi::communicator &comm) {
     }
 
     if (((diff > 0 && (diff % 2) == 0) || (diff < 0 && ((-diff) % 2) == 1))) {
-      red_neighbors.push_back(&cells.at(n));
+      red_neighbors.push_back(&ad.cells.at(n));
     } else {
-      black_neighbors.push_back(&cells.at(n));
+      black_neighbors.push_back(&ad.cells.at(n));
     }
   }
 
-  ad.local->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
+  ad.local().m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
 
   /* create communicators */
   cell_structure.exchange_ghosts_comm = nsq_prepare_comm();
@@ -166,13 +169,13 @@ void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
 
   if (std::any_of(recv_buf.begin(), recv_buf.end(),
                   [](auto const &buf) { return not buf.empty(); })) {
-    modified_cells.push_back(ad.local);
+    modified_cells.push_back(std::addressof(ad.local()));
   }
 
   /* Add new particles belonging to this node */
   for (auto &parts : recv_buf) {
     for (auto &p : parts) {
-      ad.local->particles().insert(std::move(p));
+      ad.local().particles().insert(std::move(p));
     }
   }
 }
