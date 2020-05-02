@@ -48,12 +48,16 @@
  *
  *  Implementation in nsquare.cpp.
  */
+#include "AtomDecomposition.hpp"
 #include "Cell.hpp"
 #include "ParticleList.hpp"
 
 #include <boost/mpi/communicator.hpp>
+#include <boost/optional.hpp>
 
 #include <vector>
+
+extern boost::optional<AtomDecomposition> ad;
 
 /** setup the nsquare topology */
 void nsq_topology_init(const boost::mpi::communicator &comm);

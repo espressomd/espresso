@@ -49,34 +49,11 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos);
 
 DomainDecomposition dd;
 
-/** Maximal number of cells per node. In order to avoid memory
- *  problems due to the cell grid one has to specify the maximal
- *  number of \ref cells::cells. If the number of cells is larger
- *  than max_num_cells the cell grid is reduced.
- *  max_num_cells has to be larger than 27, e.g. one inner cell.
- */
-constexpr int max_num_cells = 32768;
-
 /*@}*/
 
 /************************************************************/
 /** \name Private Functions */
 /************************************************************/
-/*@{*/
-
-static int calc_processor_min_num_cells(const Utils::Vector3i &grid) {
-  int min = 1;
-  /* the minimal number of cells can be lower if there are at least two nodes
-     serving a direction,
-     since this also ensures that the cell size is at most half the box length.
-     However, if there is
-     only one processor for a direction, there have to be at least two cells for
-     this direction. */
-  for (int i = 0; i < 3; i++)
-    if (grid[i] == 1)
-      min *= 2;
-  return min;
-}
 
 /**
  *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
@@ -103,7 +80,7 @@ void dd_create_cell_grid(double range) {
   cell_range[0] = cell_range[1] = cell_range[2] = range;
 
   /* Min num cells can not be smaller than calc_processor_min_num_cells. */
-  int min_num_cells = calc_processor_min_num_cells(cart_info.dims);
+  int min_num_cells = dd.calc_processor_min_num_cells();
 
   if (range <= 0.) {
     /* this is the non-interacting case */
@@ -119,7 +96,7 @@ void dd_create_cell_grid(double range) {
     double volume = dd.local_geo.length()[0];
     for (i = 1; i < 3; i++)
       volume *= dd.local_geo.length()[i];
-    double scale = pow(max_num_cells / volume, 1. / 3.);
+    double scale = pow(DomainDecomposition::max_num_cells / volume, 1. / 3.);
     for (i = 0; i < 3; i++) {
       /* this is at least 1 */
       dd.cell_grid[i] = (int)ceil(dd.local_geo.length()[i] * scale);
@@ -146,7 +123,7 @@ void dd_create_cell_grid(double range) {
       n_local_cells = dd.cell_grid[0] * dd.cell_grid[1] * dd.cell_grid[2];
 
       /* done */
-      if (n_local_cells <= max_num_cells)
+      if (n_local_cells <= DomainDecomposition::max_num_cells)
         break;
 
       /* find coordinate with the smallest cell range */
@@ -175,7 +152,7 @@ void dd_create_cell_grid(double range) {
   }
 
   /* quit program if unsuccessful */
-  if (n_local_cells > max_num_cells) {
+  if (n_local_cells > DomainDecomposition::max_num_cells) {
     runtimeErrorMsg() << "no suitable cell grid found ";
   }
 
@@ -321,11 +298,12 @@ GhostCommunicator dd_prepare_comm(const BoxGeometry &box_geo,
   return ghost_comm;
 }
 
+namespace {
 /** Revert the order of a communicator: After calling this the
  *  communicator is working in reverted order with exchanged
  *  communication types GHOST_SEND <-> GHOST_RECV.
  */
-static void revert_comm_order(GhostCommunicator &comm) {
+void revert_comm_order(GhostCommunicator &comm) {
   /* revert order */
   boost::reverse(comm.communications);
 
@@ -344,8 +322,8 @@ static void revert_comm_order(GhostCommunicator &comm) {
 /** Of every two communication rounds, set the first receivers to prefetch and
  *  poststore
  */
-void dd_assign_prefetches(GhostCommunicator *comm) {
-  for (auto it = comm->communications.begin(); it != comm->communications.end();
+void assign_prefetches(GhostCommunicator &comm) {
+  for (auto it = comm.communications.begin(); it != comm.communications.end();
        it += 2) {
     auto next = std::next(it);
     if (it->type == GHOST_RECV && next->type == GHOST_SEND) {
@@ -354,6 +332,7 @@ void dd_assign_prefetches(GhostCommunicator *comm) {
     }
   }
 }
+} // namespace
 
 /** update the 'shift' member of those GhostCommunicators, which use
  *  that value to speed up the folding process of its ghost members
@@ -399,22 +378,13 @@ void dd_update_communicators_w_boxl() {
  * created list of interacting neighbor cells is used by the Verlet
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
-void dd_init_cell_interactions(const Utils::Vector3i &grid) {
-  int m, n, o, p, q, r, ind1, ind2;
-
-  for (int i = 0; i < 3; i++) {
-    if (dd.fully_connected[i] and grid[i] != 1) {
-      runtimeErrorMsg()
-          << "Node grid not compatible with fully_connected property";
-    }
-  }
-
+void dd_init_cell_interactions() {
   /* loop all local cells */
-  for (o = 1; o < dd.cell_grid[2] + 1; o++)
-    for (n = 1; n < dd.cell_grid[1] + 1; n++)
-      for (m = 1; m < dd.cell_grid[0] + 1; m++) {
+  for (int o = 1; o < dd.cell_grid[2] + 1; o++)
+    for (int n = 1; n < dd.cell_grid[1] + 1; n++)
+      for (int m = 1; m < dd.cell_grid[0] + 1; m++) {
 
-        ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
+        auto const ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
 
         std::vector<Cell *> red_neighbors;
         std::vector<Cell *> black_neighbors;
@@ -430,10 +400,10 @@ void dd_init_cell_interactions(const Utils::Vector3i &grid) {
           }
         }
 
-        for (p = lower_index[2]; p <= upper_index[2]; p++)
-          for (q = lower_index[1]; q <= upper_index[1]; q++)
-            for (r = lower_index[0]; r <= upper_index[0]; r++) {
-              ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
+        for (int p = lower_index[2]; p <= upper_index[2]; p++)
+          for (int q = lower_index[1]; q <= upper_index[1]; q++)
+            for (int r = lower_index[0]; r <= upper_index[0]; r++) {
+              auto const ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
               if (ind2 > ind1) {
                 red_neighbors.push_back(&dd.cells.at(ind2));
               } else {
@@ -508,8 +478,8 @@ bool dd_on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
    maybe optimize the cell system by using smaller cells. */
   auto const re_init = (range > min_cell_size) or ((not fast) and [&]() {
                          for (int i = 0; i < 3; i++) {
-                           auto const poss_size =
-                               (int)floor(local_geo.length()[i] / range);
+                           auto const poss_size = static_cast<int>(
+                               floor(local_geo.length()[i] / range));
                            if (poss_size > dd.cell_grid[i])
                              return true;
                          }
@@ -541,6 +511,13 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
   dd.comm = comm;
   auto const cart_info = Utils::Mpi::cart_get<3>(dd.comm);
 
+  for (int i = 0; i < 3; i++) {
+    if (dd.fully_connected[i] and cart_info.dims[i] != 1) {
+      runtimeErrorMsg()
+          << "Node grid not compatible with fully_connected property";
+    }
+  }
+
   dd.box_geo = box_geo;
   dd.local_geo = local_geo;
 
@@ -551,23 +528,28 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
 
   /* set up new domain decomposition cell structure */
   dd_create_cell_grid(range);
-  /* mark cells */
+
+  /* setup cell neighbors */
+  dd_init_cell_interactions();
+
+  /* mark local and ghost cells */
   dd.mark_cells();
 
   cell_structure.m_local_cells = dd.m_local_cells;
   cell_structure.m_ghost_cells = dd.m_ghost_cells;
 
   /* create communicators */
-  cell_structure.exchange_ghosts_comm = dd_prepare_comm(box_geo, local_geo);
-  cell_structure.collect_ghost_force_comm = dd_prepare_comm(box_geo, local_geo);
+  dd.m_exchange_ghosts_comm = dd_prepare_comm(box_geo, local_geo);
+  dd.m_collect_ghost_force_comm = dd_prepare_comm(box_geo, local_geo);
 
   /* collect forces has to be done in reverted order! */
-  revert_comm_order(cell_structure.collect_ghost_force_comm);
+  revert_comm_order(dd.m_collect_ghost_force_comm);
 
-  dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
-  dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
+  assign_prefetches(dd.m_exchange_ghosts_comm);
+  assign_prefetches(dd.m_collect_ghost_force_comm);
 
-  dd_init_cell_interactions(cart_info.dims);
+  cell_structure.exchange_ghosts_comm = dd.m_exchange_ghosts_comm;
+  cell_structure.collect_ghost_force_comm = dd.m_collect_ghost_force_comm;
 }
 
 namespace {
@@ -636,23 +618,26 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
       ++it;
     }
   }
+}
 } // namespace
 
-void exchange_neighbors(ParticleList *pl, std::vector<Cell *> &modified_cells) {
-  auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(dd.comm);
+static void exchange_neighbors(
+    ParticleList *pl, std::vector<Cell *> &modified_cells) {
+  auto const& comm = dd.comm;
+  auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
   static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
-    if (Utils::Mpi::cart_get<3>(dd.comm).dims[dir] == 1) {
+    if (Utils::Mpi::cart_get<3>(comm).dims[dir] == 1) {
       continue;
       /* In this (common) case left and right neighbors are
          the same, and we need only one communication */
     }
-    if (Utils::Mpi::cart_get<3>(dd.comm).dims[dir] == 2) {
+    if (Utils::Mpi::cart_get<3>(comm).dims[dir] == 2) {
       move_left_or_right(*pl, send_buf_l, send_buf_l, dir);
 
-      Utils::Mpi::sendrecv(dd.comm, node_neighbors[2 * dir], 0, send_buf_l,
+      Utils::Mpi::sendrecv(comm, node_neighbors[2 * dir], 0, send_buf_l,
                            node_neighbors[2 * dir], 0, recv_buf_l);
 
       send_buf_l.clear();
@@ -679,7 +664,6 @@ void exchange_neighbors(ParticleList *pl, std::vector<Cell *> &modified_cells) {
     move_if_local(recv_buf_r, *pl, modified_cells);
   }
 }
-} // namespace
 
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
                                     std::vector<Cell *> &modified_cells) {

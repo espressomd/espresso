@@ -62,7 +62,10 @@
 #include "LocalBox.hpp"
 #include "ghosts.hpp"
 
+#include "ParticleDecomposition.hpp"
+
 #include <boost/mpi/communicator.hpp>
+#include <boost/range/numeric.hpp>
 #include <utils/index.hpp>
 #include <utils/mpi/cart_comm.hpp>
 
@@ -142,14 +145,36 @@ struct DomainDecomposition {
    */
   Utils::Vector3d max_range() const {
     auto dir_max_range = [this](int i) {
-      if (fully_connected[i])
+      if (fully_connected[i]) {
         return std::numeric_limits<double>::infinity();
-      else
-        return std::min(0.5 * box_geo.length()[i], local_geo.length()[i]);
+      }
+
+      return std::min(0.5 * box_geo.length()[i], local_geo.length()[i]);
     };
 
     return {dir_max_range(0), dir_max_range(1), dir_max_range(2)};
   }
+
+  int calc_processor_min_num_cells() const {
+    /* the minimal number of cells can be lower if there are at least two nodes
+       serving a direction,
+       since this also ensures that the cell size is at most half the box
+       length. However, if there is only one processor for a direction, there
+       have to be at least two cells for this direction. */
+    return boost::accumulate(Utils::Mpi::cart_get<3>(comm).dims, 1,
+                             [](int n_cells, int grid) {
+                               return (grid == 1) ? 2 * n_cells : n_cells;
+                             });
+  }
+
+public:
+  /** Maximal number of cells per node. In order to avoid memory
+   *  problems due to the cell grid one has to specify the maximal
+   *  number of cells. If the number of cells is larger
+   *  than max_num_cells the cell grid is reduced.
+   *  max_num_cells has to be larger than 27, e.g. one inner cell.
+   */
+  static constexpr int max_num_cells = 32768;
 };
 
 /************************************************************/

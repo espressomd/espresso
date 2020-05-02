@@ -29,13 +29,14 @@
 #include "algorithm/link_cell.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
-#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
+#include "domain_decomposition.hpp"
 #include "nsquare.hpp"
 
 #include <utils/NoOp.hpp>
