@@ -161,7 +161,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // Now for the minimum distances, the fourth
   // is for the line segment
 
-  double mdst[5];
+  Utils::VectorXd<5> mdst;
 
   mdst[0] = (dst0 < rad0 ? rad0 - dst0 : dst0 - rad0);
   mdst[1] = (dst1 < rad1 ? rad1 - dst1 : dst1 - rad1);
@@ -191,7 +191,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   auto const time0 = (T0 + T1) / ttota;
   auto const time1 = (T0 + T1 + T2) / ttota;
 
-  int io[5];
+  Utils::VectorXi<5> io;
 
   io[0] = (0.0 <= t0 && t0 <= T0 ? 1 : 0);
   io[1] =
@@ -260,7 +260,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // We now establish the rotation matrix required to go
   // form {0,0,1} to {xd,yd,zd}
 
-  double matrix[9];
+  Utils::Vector9d matrix;
 
   if (xd * xd + yd * yd > 1.e-10) {
     // Rotation matrix
@@ -351,7 +351,5 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
 
   vec = normal_3D * distance;
   dist = std::copysign(distance, m_direction);
-
-  // And we are done with the stomatocyte
 }
 } // namespace Shapes

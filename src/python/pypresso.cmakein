@@ -28,17 +28,15 @@ if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@WITH_UBSAN@" = "ON" ] && [ "@WI
 fi
 export LD_PRELOAD
 if [ "@WITH_UBSAN@" = "ON" ]; then
+  export UBSAN_OPTIONS="print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/maintainer/CI/ubsan.supp\" $UBSAN_OPTIONS"
   if [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
-    export UBSAN_OPTIONS="halt_on_error=1 print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt\" $UBSAN_OPTIONS"
-  else
-    export UBSAN_OPTIONS="print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt\" $UBSAN_OPTIONS"
+    export UBSAN_OPTIONS="halt_on_error=1 $UBSAN_OPTIONS"
   fi
 fi
 if [ "@WITH_ASAN@" = "ON" ]; then
+  ASAN_OPTIONS="protect_shadow_gap=0 allocator_may_return_null=1 $ASAN_OPTIONS"
   if [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
-    ASAN_OPTIONS="halt_on_error=1 protect_shadow_gap=0 $ASAN_OPTIONS"
-  else
-    ASAN_OPTIONS="protect_shadow_gap=0 $ASAN_OPTIONS"
+    ASAN_OPTIONS="halt_on_error=1 $ASAN_OPTIONS"
   fi
   if [ "$1" = "--leaks" ]; then
     shift

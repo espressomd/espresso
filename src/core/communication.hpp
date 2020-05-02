@@ -57,9 +57,6 @@
 #include "grid_based_algorithms/lb_constants.hpp"
 
 #include <boost/mpi/communicator.hpp>
-#include <utils/serialization/array.hpp>
-
-#include <array>
 #include <vector>
 
 /** The number of this node. */

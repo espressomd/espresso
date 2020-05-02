@@ -162,8 +162,6 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
   return C;
 }
 
-/* global variables */
-
 /* Error codes */
 constexpr const char init_errors[][64] = {
     "",                                                              // 0
@@ -244,13 +242,13 @@ void Correlator::initialize() {
 
   if (m_tau_max <= m_dt) {
     throw std::runtime_error(init_errors[4]);
-
-  } // set hierarchy depth which can  accommodate at least m_tau_max
+  }
+  // set hierarchy depth which can accommodate at least m_tau_max
   if ((m_tau_max / m_dt) < m_tau_lin) {
     hierarchy_depth = 1;
   } else {
-    hierarchy_depth = (unsigned int)ceil(
-        1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0));
+    hierarchy_depth = static_cast<int>(
+        ceil(1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0)));
   }
 
   dim_A = 0;
@@ -274,15 +272,15 @@ void Correlator::initialize() {
     throw std::runtime_error(init_errors[11]); // there is no reasonable default
   }
   if (corr_operation_name == "componentwise_product") {
-    m_dim_corr = dim_A;
+    m_dim_corr = static_cast<int>(dim_A);
     corr_operation = &componentwise_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
-    m_dim_corr = dim_A * dim_B;
+    m_dim_corr = static_cast<int>(dim_A * dim_B);
     corr_operation = &tensor_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "square_distance_componentwise") {
-    m_dim_corr = dim_A;
+    m_dim_corr = static_cast<int>(dim_A);
     corr_operation = &square_distance_componentwise;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "fcs_acf") {
@@ -297,7 +295,7 @@ void Correlator::initialize() {
     m_correlation_args[2] = m_correlation_args[2] * m_correlation_args[2];
     if (dim_A % 3)
       throw std::runtime_error(init_errors[18]);
-    m_dim_corr = dim_A / 3;
+    m_dim_corr = static_cast<int>(dim_A) / 3;
     corr_operation = &fcs_acf;
   } else if (corr_operation_name == "scalar_product") {
     m_dim_corr = 1;
@@ -484,7 +482,7 @@ int Correlator::finalize() {
   for (int ll = 0; ll < hierarchy_depth - 1; ll++) {
     int vals_ll; // number of values remaining in the lowest level
     if (n_vals[ll] > m_tau_lin + 1)
-      vals_ll = m_tau_lin + n_vals[ll] % 2;
+      vals_ll = m_tau_lin + static_cast<int>(n_vals[ll]) % 2;
     else
       vals_ll = n_vals[ll];
 

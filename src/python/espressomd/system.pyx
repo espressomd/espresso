@@ -47,6 +47,7 @@ from .globals cimport FIELD_SIMTIME, FIELD_MAX_OIF_OBJECTS
 from .globals cimport integ_switch, max_oif_objects, sim_time
 from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded, mpi_bcast_parameter
 from .utils cimport handle_errors, check_type_or_throw_except
+from .utils import is_valid_type
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -71,45 +72,42 @@ cdef class System:
               ``self.new_attr = somevalue`` without declaring it inside this
               indentation level, either as method, property or reference.
 
-    Attributes
-    ----------
-    globals : :class:`espressomd.globals.Globals`
-    actors : :class:`espressomd.actors.Actors`
-    analysis : :class:`espressomd.analyze.Analysis`
-    auto_update_accumulators : :class:`espressomd.accumulators.AutoUpdateAccumulators`
-    bonded_inter : :class:`espressomd.interactions.BondedInteractions`
-    cell_system : :class:`espressomd.cellsystem.CellSystem`
-    collision_detection : :class:`espressomd.collision_detection.CollisionDetection`
-    comfixed : :class:`espressomd.comfixed.ComFixed`
-    constraints : :class:`espressomd.constraints.Constraints`
-    cuda_init_handle : :class:`espressomd.cuda_init.CudaInitHandle`
-    galilei : :class:`espressomd.galilei.GalileiTransform`
-    integrator : :class:`espressomd.integrate.IntegratorHandle`
-    lbboundaries : :class:`espressomd.lbboundaries.LBBoundaries`
-    ekboundaries : :class:`espressomd.ekboundaries.EKBoundaries`
-    non_bonded_inter : :class:`espressomd.interactions.NonBondedInteractions`
-    part : :class:`espressomd.particle_data.ParticleList`
-    thermostat : :class:`espressomd.thermostat.Thermostat`
-
     """
     cdef public:
         globals
+        """:class:`espressomd.globals.Globals`"""
         part
+        """:class:`espressomd.particle_data.ParticleList`"""
         non_bonded_inter
+        """:class:`espressomd.interactions.NonBondedInteractions`"""
         bonded_inter
+        """:class:`espressomd.interactions.BondedInteractions`"""
         cell_system
+        """:class:`espressomd.cellsystem.CellSystem`"""
         thermostat
+        """:class:`espressomd.thermostat.Thermostat`"""
         actors
+        """:class:`espressomd.actors.Actors`"""
         analysis
+        """:class:`espressomd.analyze.Analysis`"""
         galilei
+        """:class:`espressomd.galilei.GalileiTransform`"""
         integrator
+        """:class:`espressomd.integrate.IntegratorHandle`"""
         auto_update_accumulators
+        """:class:`espressomd.accumulators.AutoUpdateAccumulators`"""
         constraints
+        """:class:`espressomd.constraints.Constraints`"""
         lbboundaries
+        """:class:`espressomd.lbboundaries.LBBoundaries`"""
         ekboundaries
+        """:class:`espressomd.ekboundaries.EKBoundaries`"""
         collision_detection
+        """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
+        """:class:`espressomd.cuda_init.CudaInitHandle`"""
         comfixed
+        """:class:`espressomd.comfixed.ComFixed`"""
         _active_virtual_sites_handle
 
     def __init__(self, **kwargs):
@@ -346,18 +344,48 @@ cdef class System:
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
-        """Return the scalar distance between the particles, respecting periodic boundaries.
+        """Return the scalar distance between particles, between a particle
+        and a point or between two points, respecting periodic boundaries.
+
+        Parameters
+        ----------
+        p1 : :class:`~espressomd.particle_data.ParticleHandle` or (3,) array of :obj:`float`
+            First particle or position.
+        p2 : :class:`~espressomd.particle_data.ParticleHandle` or (3,) array of :obj:`float`
+            Second particle or position.
 
         """
         res = self.distance_vec(p1, p2)
-        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
+        return np.linalg.norm(res)
 
     def distance_vec(self, p1, p2):
-        """Return the distance vector between the particles, respecting periodic boundaries.
+        """Return the distance vector between particles, between a particle
+        and a point or between two points, respecting periodic boundaries.
+
+        Parameters
+        ----------
+        p1 : :class:`~espressomd.particle_data.ParticleHandle` or (3,) array of :obj:`float`
+            First particle or position.
+        p2 : :class:`~espressomd.particle_data.ParticleHandle` or (3,) array of :obj:`float`
+            Second particle or position.
 
         """
 
-        cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
+        cdef Vector3d pos1
+        if isinstance(p1, particle_data.ParticleHandle):
+            pos1 = make_Vector3d(p1.pos)
+        else:
+            check_type_or_throw_except(
+                p1, 3, float, "p1 must be a particle or 3 floats")
+            pos1 = make_Vector3d(p1)
+        cdef Vector3d pos2
+        if isinstance(p2, particle_data.ParticleHandle):
+            pos2 = make_Vector3d(p2.pos)
+        else:
+            check_type_or_throw_except(
+                p2, 3, float, "p2 must be a particle or 3 floats")
+            pos2 = make_Vector3d(p2)
+        cdef Vector3d mi_vec = get_mi_vector(pos2, pos1, box_geo)
 
         return make_array_locked(mi_vec)
 

@@ -129,7 +129,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
     }
   }
 
-  set_resort_particles(Cells::RESORT_LOCAL);
+  cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 
   /* Apply new volume to the box-length, communicate it, and account for
    * necessary adjustments to the cell geometry */
@@ -149,7 +149,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
 
   /* fast box length update */
   grid_changed_box_l(box_geo);
-  cells_on_geometry_change(CELL_FLAG_FAST);
+  cells_on_geometry_change(true);
 }
 
 void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {

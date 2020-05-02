@@ -103,8 +103,9 @@
  *  systems, therefore have a look at @ref dd_topology_init or
  *  @ref nsq_topology_init for further details.
  */
-#include "Cell.hpp"
-#include <mpi.h>
+#include "ParticleList.hpp"
+
+#include <boost/mpi/communicator.hpp>
 
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
@@ -156,17 +157,24 @@ struct GhostCommunication {
   int node;
 
   /** Pointer array to particle lists to communicate. */
-  std::vector<Cell *> part_lists = {};
+  std::vector<ParticleList *> part_lists = {};
 
   /** Position shift for ghost particles. The shift is done on the sender side.
    */
   Utils::Vector3d shift = {};
 };
 
-/** Properties for a ghost communication. A ghost communication is defined */
+/** Properties for a ghost communication. */
 struct GhostCommunicator {
+  GhostCommunicator() = default;
+  GhostCommunicator(boost::mpi::communicator comm, size_t size)
+      : mpi_comm(std::move(comm)), communications(size) {}
+
+  /** Attached mpi communicator */
+  boost::mpi::communicator mpi_comm;
+
   /** List of ghost communications. */
-  std::vector<GhostCommunication> comm;
+  std::vector<GhostCommunication> communications;
 };
 
 /*@}*/
@@ -174,12 +182,6 @@ struct GhostCommunicator {
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-/** Initialize a communicator. */
-void prepare_comm(GhostCommunicator *gcr, int num);
-
-/** Free a communicator. */
-void free_comm(GhostCommunicator *gcr);
 
 /**
  * @brief Do a ghost communication with caller specified data parts.

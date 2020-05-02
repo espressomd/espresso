@@ -27,6 +27,8 @@
 
 #include "BoxGeometry.hpp"
 
+#include <utils/Vector.hpp>
+
 /** Parameters of the isotropic NpT-integration scheme. */
 typedef struct {
   /** mass of a virtual piston representing the shaken box */
@@ -44,9 +46,9 @@ typedef struct {
   /** difference between \ref p_ext and \ref p_inst */
   double p_diff;
   /** virial (short-range) components of \ref p_inst */
-  double p_vir[3];
+  Utils::Vector3d p_vir;
   /** ideal gas components of \ref p_inst, derived from the velocities */
-  double p_vel[3];
+  Utils::Vector3d p_vel;
   /** flag which indicates if \ref p_vel may (false) or may not (true) be used
    *  in offline pressure calculations such as 'analyze p_inst'
    */
@@ -59,7 +61,7 @@ typedef struct {
    */
   int geometry;
   /** bitwise comparison values corresponding to different directions */
-  int nptgeom_dir[3];
+  Utils::Vector3i nptgeom_dir;
   /** The number of dimensions in which NpT boxlength motion is coupled to
    *  particles */
   int dimension;

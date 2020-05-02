@@ -250,9 +250,9 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         };
 
         auto couple_particle = [&](Particle &p) -> void {
-          extern std::vector<Particle *> local_particles;
           // We only couple ghosts, if the physical particle is not on the node
-          if (p.l.ghost and not local_particles[p.p.identity]->l.ghost)
+          if (p.l.ghost and
+              not cell_structure.get_local_particle(p.p.identity)->l.ghost)
             return;
 
           if (p.p.is_virtual and !couple_virtual)

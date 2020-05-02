@@ -24,7 +24,7 @@
  */
 #include "cuda_wrapper.hpp"
 
-#include <stdio.h>
+#include <cstdio>
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>
 
@@ -81,9 +81,12 @@ __device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i) {
 template <int cao>
 __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
                                                 double alpha_L, double *he_q) {
-  const int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
-  const int ny = -mesh.y / 2 + blockDim.y * blockIdx.y + threadIdx.y;
-  const int nz = -mesh.z / 2 + blockDim.z * blockIdx.z + threadIdx.z;
+  const int nx =
+      -mesh.x / 2 + static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  const int ny =
+      -mesh.y / 2 + static_cast<int>(blockDim.y * blockIdx.y + threadIdx.y);
+  const int nz =
+      -mesh.z / 2 + static_cast<int>(blockDim.z * blockIdx.z + threadIdx.z);
 
   if ((nx >= mesh.x / 2) || (ny >= mesh.y / 2) || (nz >= mesh.z / 2))
     return;
@@ -116,9 +119,12 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
 __global__ void p3m_k_space_error_gpu_kernel_ad(const int3 mesh,
                                                 const double3 meshi, int cao,
                                                 double alpha_L, double *he_q) {
-  int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
-  int ny = -mesh.y / 2 + blockDim.y * blockIdx.y + threadIdx.y;
-  int nz = -mesh.z / 2 + blockDim.z * blockIdx.z + threadIdx.z;
+  int nx =
+      -mesh.x / 2 + static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  int ny =
+      -mesh.y / 2 + static_cast<int>(blockDim.y * blockIdx.y + threadIdx.y);
+  int nz =
+      -mesh.z / 2 + static_cast<int>(blockDim.z * blockIdx.z + threadIdx.z);
 
   if ((nx >= mesh.x / 2) || (ny >= mesh.y / 2) || (nz >= mesh.z / 2))
     return;
@@ -175,9 +181,12 @@ __global__ void p3m_k_space_error_gpu_kernel_ik_i(const int3 mesh,
                                                   double alpha_L,
                                                   double *he_q) {
 
-  int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
-  int ny = -mesh.y / 2 + blockDim.y * blockIdx.y + threadIdx.y;
-  int nz = -mesh.z / 2 + blockDim.z * blockIdx.z + threadIdx.z;
+  int nx =
+      -mesh.x / 2 + static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  int ny =
+      -mesh.y / 2 + static_cast<int>(blockDim.y * blockIdx.y + threadIdx.y);
+  int nz =
+      -mesh.z / 2 + static_cast<int>(blockDim.z * blockIdx.z + threadIdx.z);
 
   if ((nx >= mesh.x / 2) || (ny >= mesh.y / 2) || (nz >= mesh.z / 2))
     return;
@@ -238,9 +247,12 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(const int3 mesh,
                                                   double alpha_L,
                                                   double *he_q) {
 
-  int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
-  int ny = -mesh.y / 2 + blockDim.y * blockIdx.y + threadIdx.y;
-  int nz = -mesh.z / 2 + blockDim.z * blockIdx.z + threadIdx.z;
+  int nx =
+      -mesh.x / 2 + static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  int ny =
+      -mesh.y / 2 + static_cast<int>(blockDim.y * blockIdx.y + threadIdx.y);
+  int nz =
+      -mesh.z / 2 + static_cast<int>(blockDim.z * blockIdx.z + threadIdx.z);
 
   if ((nx >= mesh.x / 2) || (ny >= mesh.y / 2) || (nz >= mesh.z / 2))
     return;

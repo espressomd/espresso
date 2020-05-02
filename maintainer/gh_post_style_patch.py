@@ -26,41 +26,56 @@ if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
 
 PR = os.environ['CI_COMMIT_REF_NAME'][3:]
 URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
-      PR + '/comments?access_token=' + os.environ['GITHUB_TOKEN']
+      PR + '/comments'
+HEADERS = {'Authorization': 'token ' + os.environ['GITHUB_TOKEN']}
 SIZELIMIT = 10000
 TOKEN_ESPRESSO_CI = 'style.patch'
 
 # Delete all existing comments
-comments = requests.get(URL)
+comments = requests.get(URL, headers=HEADERS)
+comments.raise_for_status()
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and \
             TOKEN_ESPRESSO_CI in comment['body']:
-        requests.delete(comment['url'] + '?access_token=' +
-                        os.environ['GITHUB_TOKEN'])
+        response = requests.delete(comment['url'], headers=HEADERS)
+        response.raise_for_status()
+
+MESSAGE = '''Your pull request does not meet our code formatting \
+rules. {header}, please do one of the following:
+
+- You can download a patch with my suggested changes \
+  [here]({url}/artifacts/raw/style.patch), inspect it and make \
+  changes manually.
+- You can directly apply it to your repository by running \
+  `curl {url}/artifacts/raw/style.patch | git apply -`.
+- You can run `maintainer/CI/fix_style.sh` to automatically fix your coding \
+  style. This is the same command that I have executed to generate the patch \
+  above, but it requires certain tools to be installed on your computer.
+
+You can run `gitlab-runner exec docker style` afterwards to check if your \
+changes worked out properly.
+
+Please note that there are often multiple ways to correctly format code. \
+As I am just a robot, I sometimes fail to identify the most aesthetically \
+pleasing way. So please look over my suggested changes and adapt them \
+where the style does not make sense.\
+'''
 
 # If the working directory is not clean, post a new comment
 if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
-    comment = 'Your pull request does not meet our code formatting rules. '
     patch = subprocess.check_output(['git', '--no-pager', 'diff'])
     if len(patch) <= SIZELIMIT:
-        comment += 'Specifically, I suggest you make the following changes:\n'
-        comment += '```diff\n'
+        comment = 'Specifically, I suggest you make the following changes:'
+        comment += '\n```diff\n'
         comment += patch.decode('utf-8').replace('`', r'\`').strip()
         comment += '\n```\n'
-        comment += 'To apply these changes, please do one of the following:\n'
+        comment += 'To apply these changes'
     else:
-        comment += 'To fix this, please do one of the following:\n'
-    comment += '- You can download a patch with my suggested changes '
-    comment += '[here](' + os.environ['CI_JOB_URL'] + \
-               '/artifacts/raw/style.patch), '
-    comment += 'inspect it and make changes manually.\n'
-    comment += '- You can directly apply it to your repository by running '
-    comment += '`curl ' + os.environ['CI_JOB_URL'] + \
-               '/artifacts/raw/style.patch | git apply -`.\n'
-    comment += '- You can run `maintainer/CI/fix_style.sh` to automatically fix your coding style. This is the same command that I have executed to generate the patch above, but it requires certain tools to be installed on your computer.\n\n'
-    comment += 'You can run `gitlab-runner exec docker style` afterwards to check if your changes worked out properly.\n\n'
-    comment += 'Please note that there are often multiple ways to correctly format code. As I am just a robot, I sometimes fail to identify the most aesthetically pleasing way. So please look over my suggested changes and adapt them where the style does not make sense.'
+        comment = 'To fix this'
+    message = MESSAGE.format(header=comment, url=os.environ['CI_JOB_URL'])
 
     if patch:
-        assert TOKEN_ESPRESSO_CI in comment
-        requests.post(URL, json={'body': comment})
+        assert TOKEN_ESPRESSO_CI in message
+        response = requests.post(URL, headers=HEADERS,
+                                 json={'body': message})
+        response.raise_for_status()

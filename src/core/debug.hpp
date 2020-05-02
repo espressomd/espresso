@@ -25,7 +25,7 @@
  */
 
 /** this performs a lot of tests which will very likely detect corruptions of
- *  \ref local_particles and the cell structure.
+ *  the cell structure.
  */
 void check_particle_consistency();
 

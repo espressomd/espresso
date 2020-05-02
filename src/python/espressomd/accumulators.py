@@ -34,11 +34,6 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
     -------
     update()
         Update the accumulator (get the current values from the observable).
-    get_mean()
-        Returns the samples mean values of the respective observable with which the
-        accumulator was initialized.
-    get_variance()
-        Returns the samples variance for the observable.
 
     """
     _so_name = "Accumulators::MeanVarianceCalculator"
@@ -49,9 +44,16 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
     _so_creation_policy = "LOCAL"
 
     def get_mean(self):
+        """
+        Returns the samples mean values of the respective observable with
+        which the accumulator was initialized.
+        """
         return np.array(self.call_method("get_mean")).reshape(self.shape())
 
     def get_variance(self):
+        """
+        Returns the samples variance for the observable.
+        """
         return np.array(self.call_method("get_variance")).reshape(self.shape())
 
 
@@ -71,8 +73,6 @@ class TimeSeries(ScriptInterfaceHelper):
     -------
     update()
         Update the accumulator (get the current values from the observable).
-    time_series()
-        Returns the recorded values of the observable.
     clear()
         Clear the data
 
@@ -86,6 +86,9 @@ class TimeSeries(ScriptInterfaceHelper):
     _so_creation_policy = "LOCAL"
 
     def time_series(self):
+        """
+        Returns the recorded values of the observable.
+        """
         return np.array(self.call_method("time_series")).reshape(self.shape())
 
 

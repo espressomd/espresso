@@ -94,10 +94,16 @@ private:
   iterator m_red_black_divider;
 };
 
-class Cell : public ParticleList {
+class Cell {
   using neighbors_type = Neighbors<Cell *>;
 
+  ParticleList m_particles;
+
 public:
+  /** Particles */
+  auto &particles() { return m_particles; }
+  auto const &particles() const { return m_particles; }
+
   neighbors_type m_neighbors;
 
   /** Interaction pairs */

@@ -22,8 +22,6 @@
 
 #include "pair_criteria/pair_criteria.hpp"
 #include <map>
-#include <string>
-#include <vector>
 
 #include "Cluster.hpp"
 #include "Particle.hpp"

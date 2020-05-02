@@ -65,7 +65,6 @@
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
 #include "serialization/IA_parameters.hpp"
-#include "serialization/Particle.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/u32_to_u64.hpp>
@@ -218,7 +217,6 @@ void mpi_init() {
 #undef CB
 
   ErrorHandling::init_error_handling(mpiCallbacks());
-  partCfg(std::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
 
 #ifdef LB_WALBERLA
   walberla_mpi_init();
@@ -238,7 +236,7 @@ void mpi_place_particle(int node, int id, const Utils::Vector3d &pos) {
     comm_cart.send(node, SOME_TAG, pos);
   }
 
-  set_resort_particles(Cells::RESORT_GLOBAL);
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
@@ -249,7 +247,7 @@ void mpi_place_particle_slave(int pnode, int part) {
     local_place_particle(part, pos, 0);
   }
 
-  set_resort_particles(Cells::RESORT_GLOBAL);
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
@@ -275,15 +273,14 @@ int mpi_place_new_particle(int id, const Utils::Vector3d &pos) {
 
 /****************** REMOVE PARTICLE ************/
 void mpi_remove_particle(int pnode, int part) {
-  mpi_call(mpi_remove_particle_slave, pnode, part);
-  mpi_remove_particle_slave(pnode, part);
+  mpi_call_all(mpi_remove_particle_slave, pnode, part);
 }
 
 void mpi_remove_particle_slave(int pnode, int part) {
   if (part != -1) {
-    local_remove_particle(part);
+    cell_structure.remove_particle(part);
   } else {
-    local_remove_all_particles();
+    cell_structure.remove_all_particles();
   }
 
   on_particle_change();
@@ -588,8 +585,7 @@ void mpi_bcast_max_mu() { mpi_call_all(calc_mu_max); }
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
 void mpi_kill_particle_motion_slave(int rotation) {
-  local_kill_particle_motion(rotation,
-                             cell_structure.local_cells().particles());
+  local_kill_particle_motion(rotation, cell_structure.local_particles());
   on_particle_change();
 }
 
@@ -600,7 +596,7 @@ void mpi_kill_particle_motion(int rotation) {
 }
 
 void mpi_kill_particle_forces_slave(int torque) {
-  local_kill_particle_forces(torque, cell_structure.local_cells().particles());
+  local_kill_particle_forces(torque, cell_structure.local_particles());
   on_particle_change();
 }
 
@@ -656,6 +652,8 @@ void mpi_loop() {
 std::vector<int> mpi_resort_particles(int global_flag) {
   mpi_call(mpi_resort_particles_slave, global_flag, 0);
   cells_resort_particles(global_flag);
+
+  clear_particle_node();
 
   std::vector<int> n_parts;
   boost::mpi::gather(comm_cart, cells_get_n_particles(), n_parts, 0);

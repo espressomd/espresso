@@ -39,6 +39,8 @@ double coulomb_cutoff;
 
 #include <utils/constants.hpp>
 
+#include <cstdio>
+
 Coulomb_parameters coulomb;
 
 namespace Coulomb {
@@ -164,28 +166,9 @@ void deactivate() {
   }
 }
 
-void integrate_sanity_check() {
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-    break;
-  case COULOMB_DH:
-    break;
-  case COULOMB_RF:
-    break;
-#ifdef P3M
-  case COULOMB_P3M:
-    break;
-#endif /*P3M*/
-  default: {
-    runtimeErrorMsg()
-        << "npt only works with P3M, Debye-Huckel or reaction field";
-  }
-  }
-}
-
 void update_dependent_particles() {
-  iccp3m_iteration(cell_structure.local_cells().particles(),
-                   cell_structure.ghost_cells().particles());
+  iccp3m_iteration(cell_structure.local_particles(),
+                   cell_structure.ghost_particles());
 }
 
 void on_observable_calc() {
@@ -223,18 +206,6 @@ void on_coulomb_change() {
   case COULOMB_MMM1D:
     MMM1D_init();
     break;
-  default:
-    break;
-  }
-}
-
-void on_resort_particles(const ParticleRange &particles) {
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_on_resort_particles();
-    break;
-#endif
   default:
     break;
   }
@@ -400,7 +371,6 @@ int energy_n() {
     return 3;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    return 2;
   case COULOMB_SCAFACOS:
     return 2;
   default:

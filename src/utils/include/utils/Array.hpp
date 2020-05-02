@@ -61,14 +61,16 @@ template <typename T, std::size_t N> struct Array {
   detail::Storage<T, N> m_storage;
 
   DEVICE_QUALIFIER constexpr reference at(size_type i) {
-    if (i >= N)
+    if (i >= N) {
       DEVICE_THROW(std::out_of_range("Array access out of bounds."));
+    }
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr const_reference at(size_type i) const {
-    if (i >= N)
+    if (i >= N) {
       DEVICE_THROW(std::out_of_range("Array access out of bounds."));
+    }
     return m_storage.m_data[i];
   }
 
@@ -148,8 +150,8 @@ template <typename T, std::size_t N> struct Array {
   // workaround for https://github.com/RadeonOpenCompute/hcc/issues/860
   __attribute__((annotate("serialize"))) void
   __cxxamp_serialize(Kalmar::Serialize &s) const;
-  __attribute__((annotate("user_deserialize"))) void
-  cxxamp_deserialize()[[cpu]][[hc]];
+  __attribute__((annotate("user_deserialize"))) void cxxamp_deserialize()
+      [[cpu]] [[hc]];
 #endif
 
 private:

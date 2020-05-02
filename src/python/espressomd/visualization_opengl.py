@@ -1370,13 +1370,15 @@ class openGLLive():
                 self._display_all()
             return
 
-        def keyboard_up(button):
+        # pylint: disable=unused-argument
+        def keyboard_up(button, x, y):
             if isinstance(button, bytes):
                 button = button.decode("utf-8")
             self.keyboard_manager.keyboard_up(button)
             return
 
-        def keyboard_down(button):
+        # pylint: disable=unused-argument
+        def keyboard_down(button, x, y):
             if isinstance(button, bytes):
                 button = button.decode("utf-8")
             self.keyboard_manager.keyboard_down(button)

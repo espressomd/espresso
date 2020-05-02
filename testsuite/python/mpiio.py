@@ -31,7 +31,7 @@ import os
 from argparse import Namespace
 
 # Number of particles
-npart = 1023
+npart = 10
 # Number of different bond types
 nbonds = 100
 

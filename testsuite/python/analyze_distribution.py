@@ -48,7 +48,8 @@ class AnalyzeDistributions(ut.TestCase):
     def calc_min_distribution(self, bins):
         dist = []
         for i in range(self.num_part):
-            dist.append(self.system.analysis.dist_to(id=i))
+            dist.append(np.min([self.system.distance(
+                self.system.part[i], p.pos) for p in self.system.part if p.id != i]))
         hist = np.histogram(dist, bins=bins, density=False)[0]
         return hist / (float(np.sum(hist)))
 
@@ -113,7 +114,7 @@ class AnalyzeDistributions(ut.TestCase):
 
     # test system.analysis.distribution(), all the same particle types
     def test_distribution_lin(self):
-        # increase PBC for remove mirror images
+        # increase PBC to remove mirror images
         old_pos = self.system.part[:].pos.copy()
         self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos

@@ -20,6 +20,8 @@
 #define IMMERSED_BOUNDARY_IMMERSED_BOUNDARIES_HPP
 
 #include "config.hpp"
+
+#include <CellStructure.hpp>
 #include <vector>
 
 class ImmersedBoundaries {
@@ -27,11 +29,11 @@ public:
   ImmersedBoundaries() : MaxNumIBM(1000), VolumeInitDone(false) {
     VolumesCurrent.resize(MaxNumIBM);
   }
-  void init_volume_conservation();
-  void volume_conservation();
+  void init_volume_conservation(CellStructure &cs);
+  void volume_conservation(CellStructure &cs);
   int volume_conservation_set_params(int bond_type, int softID, double kappaV);
-  void calc_volumes();
-  void calc_volume_force();
+  void calc_volumes(CellStructure &cs);
+  void calc_volume_force(CellStructure &cs);
 
 private:
   const int MaxNumIBM;

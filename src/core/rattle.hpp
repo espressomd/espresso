@@ -43,10 +43,10 @@ void save_old_pos(const ParticleRange &particles,
 /** Propagate velocity and position while using SHAKE algorithm for bond
  *  constraint.
  */
-void correct_pos_shake(const ParticleRange &particles);
+void correct_pos_shake(CellStructure &cs);
 
 /** Correction of current velocities using RATTLE algorithm. */
-void correct_vel_shake();
+void correct_vel_shake(CellStructure &cs);
 
 /** Set the parameter for a rigid, aka RATTLE, bond. */
 int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol);

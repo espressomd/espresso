@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Copyright (C) 2018-2019 The ESPResSo project
+# Copyright (C) 2018-2020 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,10 +18,6 @@
 
 cd "$(git rev-parse --show-toplevel)"
 
-CLANG_FORMAT_VER=6.0
-AUTOPEP8_VER=1.3.4
-PYCODESTYLE_VER=2.3.1
-
 if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
     echo "Warning, your working tree is not clean. Please commit your changes."
     echo "You can also call this script with the -f flag to proceed anyway, but"
@@ -29,25 +25,8 @@ if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
     exit 1
 fi
 
-CLANGFORMAT="$(which clang-format-${CLANG_FORMAT_VER})"
-if [ "${CLANGFORMAT}" = "" ]; then
-    CLANGFORMAT="$(which clang-format)"
-    if ! "${CLANGFORMAT}" --version | grep -qEo "version ${CLANG_FORMAT_VER}\.[0-9]+"; then
-        echo "Could not find clang-format ${CLANG_FORMAT_VER}. ${CLANGFORMAT} is $(${CLANGFORMAT} --version | grep -Eo '[0-9\.]{5}' | head -n 1)."
-        exit 2
-    fi
-fi
-
-AUTOPEP8="$(which autopep8)"
-if ! "${AUTOPEP8}" --version 2>&1 | grep -qFo "autopep8 ${AUTOPEP8_VER} (pycodestyle: ${PYCODESTYLE_VER})"; then
-    echo "Could not find autopep8 ${AUTOPEP8_VER} with pycodestyle ${PYCODESTYLE_VER}"
-    echo "${AUTOPEP8} is $(${AUTOPEP8} --version 2>&1)"
-    exit 2
-fi
-
-find . \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' -o -name '*.cuh' \) -not -path './libs/*' | xargs -r -n 5 -P 8 "${CLANGFORMAT}" -i -style=file || exit 3
-find . \( -name '*.py' -o -name '*.pyx' -o -name '*.pxd' \) -not -path './libs/*' | xargs -r -n 5 -P 8 "${AUTOPEP8}" --ignore=E266,W291,W293 --in-place --aggressive || exit 3
-find . -type f -executable ! -name '*.sh' ! -name '*.py' ! -name '*.sh.in' ! -name pypresso.cmakein -not -path './.git/*' | xargs -r -n 5 -P 8 chmod -x || exit 3
+maintainer/lint/pre_commit.sh run --all-files
+pre_commit_return_code="${?}"
 
 if [ "${CI}" != "" ]; then
     git --no-pager diff > style.patch
@@ -62,22 +41,14 @@ if [ "${?}" = 1 ]; then
     fi
     exit 1
 else
-    echo "Passed style check"
+    if [ "${pre_commit_return_code}" = 0 ]; then
+        echo "Passed style check"
+    else
+        echo "Failed style check" >&2
+    fi
 fi
 
-pylint_command () {
-    if hash pylint 2> /dev/null; then
-        pylint "${@}"
-    elif hash pylint3 2> /dev/null; then
-        pylint3 "${@}"
-    elif hash pylint-3 2> /dev/null; then
-        pylint-3 "${@}"
-    else
-        echo "pylint not found" >&2
-        exit 1
-    fi
-}
-pylint_command --score=no --reports=no --output-format=text src doc maintainer testsuite samples | tee pylint.log
+maintainer/lint/pylint.sh --score=no --reports=no --output-format=text src doc maintainer testsuite samples | tee pylint.log
 errors=$(grep -Pc '^[a-z]+/.+?.py:[0-9]+:[0-9]+: [CRWEF][0-9]+:' pylint.log)
 
 if [ "${CI}" != "" ]; then

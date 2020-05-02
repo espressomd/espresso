@@ -24,6 +24,8 @@
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
+#include <boost/range/algorithm.hpp>
+#include <iterator>
 #include <memory>
 
 #include "Observable.hpp"
@@ -37,10 +39,14 @@ template <typename CoreCylLBObs>
 class CylindricalLBProfileObservable
     : public AutoParameters<CylindricalLBProfileObservable<CoreCylLBObs>,
                             Observable> {
+  using Base =
+      AutoParameters<CylindricalLBProfileObservable<CoreCylLBObs>, Observable>;
+
 public:
   static_assert(std::is_base_of<::Observables::CylindricalLBProfileObservable,
                                 CoreCylLBObs>::value,
                 "");
+  using Base::Base;
   CylindricalLBProfileObservable() {
     this->add_parameters({
         {"center",
@@ -133,14 +139,13 @@ public:
 
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
-    if (method == "calculate") {
-      return cylindrical_profile_observable()->operator()();
+    if (method == "edges") {
+      std::vector<Variant> variant_edges;
+      boost::copy(cylindrical_profile_observable()->edges(),
+                  std::back_inserter(variant_edges));
+      return variant_edges;
     }
-    if (method == "shape") {
-      auto const shape = cylindrical_profile_observable()->shape();
-      return std::vector<int>{shape.begin(), shape.end()};
-    }
-    return {};
+    return Base::call_method(method, parameters);
   }
 
   std::shared_ptr<::Observables::Observable> observable() const override {

@@ -57,7 +57,11 @@
  *  Implementation in domain_decomposition.cpp.
  */
 
-#include "cells.hpp"
+#include "BoxGeometry.hpp"
+#include "Cell.hpp"
+#include "LocalBox.hpp"
+
+#include <boost/mpi/communicator.hpp>
 
 /** Structure containing the information about the cell grid used for domain
  *  decomposition.
@@ -80,6 +84,10 @@ struct DomainDecomposition {
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   double inv_cell_size[3];
   bool fully_connected[3];
+
+  boost::mpi::communicator comm;
+  BoxGeometry box_geo;
+  LocalBox<double> local_geo;
 };
 
 /************************************************************/
@@ -89,20 +97,6 @@ struct DomainDecomposition {
 
 /** Information about the domain decomposition. */
 extern DomainDecomposition dd;
-
-/** Maximal number of cells per node. In order to avoid memory
- *  problems due to the cell grid one has to specify the maximal
- *  number of \ref cells::cells. If the number of cells is larger
- *  than max_num_cells the cell grid is reduced.
- *  max_num_cells has to be larger than 27, e.g. one inner cell.
- */
-extern int max_num_cells;
-
-/** Minimal number of cells per node. This is mainly to avoid excessively large
- *  numbers of particles per cell, which will result in really large Verlet
- *  lists and eventually crash ESPResSo.
- */
-extern int min_num_cells;
 
 /*@}*/
 
@@ -114,14 +108,12 @@ extern int min_num_cells;
 /** adjust the domain decomposition to a change in the geometry.
  *  Tries to speed up things if possible.
  *
- *  @param flags  A combination of \ref CELL_FLAG_FAST and \ref
- *                CELL_FLAG_GRIDCHANGED, see documentation of \ref
- *                cells_on_geometry_change.
- *  @param grid   Number of nodes in each spatial dimension.
+ *  @param fast If true do not optimize the cell size but
+ *              return asap.
  *  @param range Desired interaction range
  */
-void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
-                           double range);
+void dd_on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
+                           const LocalBox<double> &local_geo);
 
 /** Initialize the topology. The argument is a list of cell pointers,
  *  containing particles that have to be sorted into new cells. The
@@ -129,23 +121,13 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
  *  when particle data or cell structure has changed and the cell
  *  structure has to be reinitialized. This also includes setting up
  *  the cell_structure array.
- *  @param old    List of cell pointers with particles to be stored in the
- *               new cell system.
- *  @param grid  Number of nodes in each spatial dimension.
+ *
+ *  @param comm MPI communicator to use for the cell system.
  *  @param range Desired interaction range
  */
-void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
-                      double range);
-
-/** Called when the current cell structure is invalidated because for
- *  example the box length has changed. This procedure may NOT destroy
- *  the old inner and ghost cells, but it should free all other
- *  organizational data. Note that parameters like the box length or
- *  the node_grid may already have changed. Therefore organizational
- *  data has to be stored independently from variables that may be
- *  changed from outside.
- */
-void dd_topology_release();
+void dd_topology_init(const boost::mpi::communicator &comm, double range,
+                      const BoxGeometry &box_geo,
+                      const LocalBox<double> &local_geo);
 
 /** Just resort the particles. Used during integration. The particles
  *  are stored in the cell structure.
@@ -155,30 +137,12 @@ void dd_topology_release();
  *      Molecular dynamics, or any other integration scheme using only local
  *      particle moves)
  *  @param pl     List of particles
- *  @param grid   Number of nodes in each spatial dimension
  */
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    const Utils::Vector3i &grid);
+                                    std::vector<Cell *> &modified_cells);
 
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells(const Utils::Vector3i &grid);
-
-/** Fill a communication cell pointer list. Fill the cell pointers of
- *  all cells which are inside a rectangular subgrid of the 3D cell
- *  grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
- *  lower left corner lc up to the high top corner hc. The cell
- *  pointer list part_lists must already be large enough.
- *  \param part_lists  List of cell pointers to store the result.
- *  \param lc          lower left corner of the subgrid.
- *  \param hc          high up corner of the subgrid.
- */
-int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
-                            int const hc[3]);
-
-/** Of every two communication rounds, set the first receivers to prefetch and
- *  poststore
- */
-void dd_assign_prefetches(GhostCommunicator *comm);
 
 /*@}*/
 

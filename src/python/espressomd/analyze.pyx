@@ -29,11 +29,9 @@ from .globals import Globals
 from collections import OrderedDict
 from .system import System
 from .utils import array_locked, is_valid_type
-from .utils cimport Vector3i, Vector3d, Vector9d, List
+from .utils cimport Vector3i, Vector3d, Vector9d
 from .utils cimport handle_errors, check_type_or_throw_except
-from .utils cimport create_nparray_from_double_array, \
-    create_nparray_from_int_list, \
-    create_int_list_from_python_object
+from .utils cimport create_nparray_from_double_array
 from .particle_data cimport get_n_part
 
 
@@ -51,30 +49,11 @@ class Analysis:
     def append(self):
         """Append configuration for averaged analysis."""
         assert get_n_part(), "No particles to append!"
-        if n_configs > 0:
-            assert analyze.n_part_conf == get_n_part(), \
+        if get_n_configs() > 0:
+            assert analyze.get_n_part_conf() == get_n_part(), \
                 "All configurations stored must have the same length"
 
         analyze.analyze_append(analyze.partCfg())
-
-    #
-    # Minimal distance between particles
-    #
-
-    def min_dist2(self, p1, p2):
-        """Minimal distance between two three-dimensional coordinates p1 and p2.
-
-        Parameters
-        ----------
-        p1, p2 : arrays of :obj:`float`
-
-        """
-        cdef Vector3d p1c
-        cdef Vector3d p2c
-        for i in range(3):
-            p1c[i] = p1[i]
-            p2c[i] = p2[i]
-        return analyze.min_distance2(p1c, p2c)
 
     def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particle types.
@@ -88,11 +67,8 @@ class Analysis:
 
         """
 
-        cdef List[int] set1
-        cdef List[int] set2
-
         if p1 == 'default' and p2 == 'default':
-            pass
+            return analyze.mindist(analyze.partCfg(), [], [])
         elif p1 == 'default' or p2 == 'default':
             raise ValueError("Both p1 and p2 have to be specified")
         else:
@@ -106,62 +82,7 @@ class Analysis:
                     raise TypeError(
                         "Particle types in p2 have to be of type int, got: " + repr(p2[i]))
 
-            set1 = create_int_list_from_python_object(p1)
-            set2 = create_int_list_from_python_object(p2)
-        return analyze.mindist(analyze.partCfg(), set1, set2)
-
-    #
-    # Distance to particle or point
-    #
-
-    def dist_to(self, id=None, pos=None):
-        """
-        Calculate the minimal distance to either a particle or an arbitrary
-        point in space.
-
-        Parameters
-        ----------
-        id : :obj:`int`, optional
-            Calculate distance to particle with
-            :attr:`~espressomd.particle_data.ParticleHandle.id` ``id``.
-        pos : array of :obj:`float`, optional
-            Calculate distance to position ``pos``.
-
-        Returns
-        -------
-        :obj:`float`
-            The calculated distance.
-
-        """
-
-        if id is None and pos is None:
-            raise ValueError(
-                "Either id or pos have to be specified")
-
-        if (id is not None) and (pos is not None):
-            raise ValueError(
-                "Only one of id or pos may be specified")
-
-        assert len(self._system.part), "no particles in the system"
-
-        # Get position
-        cdef Vector3d cpos
-        # If particle id specified
-        if id is not None:
-            if not is_valid_type(id, int):
-                raise TypeError("Id has to be an integer")
-            if id not in self._system.part[:].id:
-                raise ValueError(
-                    "Id has to be an index of an existing particle")
-            _pos = self._system.part[id].pos
-            for i in range(3):
-                cpos[i] = _pos[i]
-            _id = id
-        else:
-            for i in range(3):
-                cpos[i] = pos[i]
-            _id = -1
-        return analyze.distto(analyze.partCfg(), cpos, _id)
+            return analyze.mindist(analyze.partCfg(), p1, p2)
 
     #
     # Analyze Linear Momentum
@@ -242,7 +163,6 @@ class Analysis:
         """
 
         cdef Vector3i planedims
-        cdef List[int] ids
         cdef Vector3d c_pos
 
         check_type_or_throw_except(
@@ -267,9 +187,7 @@ class Analysis:
         for i in range(3):
             c_pos[i] = pos[i]
 
-        ids = analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
-
-        return create_nparray_from_int_list(ids)
+        return analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
 
     def pressure(self, v_comp=False):
         """Calculate the instantaneous pressure (in parallel). This is only
@@ -313,13 +231,13 @@ class Analysis:
         # Total pressure
         cdef int i
         total = 0
-        for i in range(analyze.total_pressure.data.n):
-            total += analyze.total_pressure.data.e[i]
+        for i in range(analyze.total_pressure.data.size()):
+            total += analyze.total_pressure.data[i]
 
         p["total"] = total
 
         # kinetic
-        p["kinetic"] = analyze.total_pressure.data.e[0]
+        p["kinetic"] = analyze.total_pressure.data[0]
 
         # Bonded
         cdef double total_bonded
@@ -426,14 +344,14 @@ class Analysis:
         cdef int i
         total = np.zeros(9)
         for i in range(9):
-            for k in range(analyze.total_p_tensor.data.n // 9):
-                total[i] += analyze.total_p_tensor.data.e[9 * k + i]
+            for k in range(analyze.total_p_tensor.data.size() // 9):
+                total[i] += analyze.total_p_tensor.data[9 * k + i]
 
         p["total"] = total.reshape((3, 3))
 
         # kinetic
         p["kinetic"] = create_nparray_from_double_array(
-            analyze.total_p_tensor.data.e, 9)
+            analyze.total_p_tensor.data.data(), 9)
         p["kinetic"] = p["kinetic"].reshape((3, 3))
 
         # Bonded
@@ -555,14 +473,14 @@ class Analysis:
 
         # Total energy
         cdef int i
-        total = analyze.total_energy.data.e[0]  # kinetic energy
+        total = analyze.total_energy.data[0]  # kinetic energy
         total += calculate_current_potential_energy_of_system()
 
         e["total"] = total
         e["external_fields"] = analyze.total_energy.external_fields[0]
 
         # Kinetic energy
-        e["kinetic"] = analyze.total_energy.data.e[0]
+        e["kinetic"] = analyze.total_energy.data[0]
 
         # Non-bonded
         cdef double total_bonded
@@ -647,7 +565,6 @@ class Analysis:
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
         re = analyze.calc_re(
-            analyze.partCfg(),
             chain_start,
             number_of_chains,
             chain_length)
@@ -684,7 +601,6 @@ class Analysis:
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
         rg = analyze.calc_rg(
-            analyze.partCfg(),
             chain_start,
             number_of_chains,
             chain_length)
@@ -720,7 +636,6 @@ class Analysis:
 
         self.check_topology(chain_start, number_of_chains, chain_length)
         rh = analyze.calc_rh(
-            analyze.partCfg(),
             chain_start,
             number_of_chains,
             chain_length)
@@ -778,10 +693,8 @@ class Analysis:
         check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
-        p_types = create_int_list_from_python_object(sf_types)
-
-        sf = analyze.calc_structurefactor(analyze.partCfg(), p_types.e,
-                                          p_types.n, sf_order)
+        sf = analyze.calc_structurefactor(
+            analyze.partCfg(), sf_types, sf_order)
 
         return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
 
@@ -835,12 +748,12 @@ class Analysis:
             type_list_b = type_list_a
 
         if rdf_type != 'rdf':
-            if n_configs == 0:
+            if get_n_configs() == 0:
                 raise ValueError("No configurations founds!\n",
                                  "Use `analyze.append()` to save configurations,",
                                  "or `analyze.rdf('rdf')` to only look at current RDF!""")
             if n_conf is None:
-                n_conf = n_configs
+                n_conf = get_n_configs()
 
         if r_max is None:
             r_max = min(Globals().box_l) / 2
@@ -929,11 +842,8 @@ class Analysis:
         cdef vector[double] distribution
         distribution.resize(r_bins)
 
-        p1_types = create_int_list_from_python_object(type_list_a)
-        p2_types = create_int_list_from_python_object(type_list_b)
-
         analyze.calc_part_distribution(
-            analyze.partCfg(), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
+            analyze.partCfg(), type_list_a, type_list_b,
             r_min, r_max, r_bins, < bint > log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(

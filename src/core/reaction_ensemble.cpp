@@ -22,7 +22,7 @@
 #include "reaction_ensemble.hpp"
 #include "Particle.hpp"
 #include "energy.hpp"
-#include "global.hpp"
+#include "grid.hpp"
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
 
@@ -844,7 +844,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
         dummy_old_particle_numbers, old_state_index, new_state_index, true);
   } else {
     bf = std::min(1.0, bf * exp(-beta * (E_pot_new - E_pot_old))); // Metropolis
-                                                                   // Algorithm
+                                                                   // algorithm
                                                                    // since
                                                                    // proposal
                                                                    // density is
@@ -861,7 +861,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   // bf = std::min(1.0,
   //     bf*exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
 
-  // Metropolis-Hastings Algorithm for asymmetric proposal density
+  // Metropolis-Hastings algorithm for asymmetric proposal density
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
     m_accepted_configurational_MC_moves += 1;
@@ -1087,9 +1087,10 @@ void WangLandauReactionEnsemble::invalidate_bins() {
     int EnergyCollectiveVariable_index = 0;
     if (collective_variables.size() > 1)
       EnergyCollectiveVariable_index =
-          collective_variables.size() - 1; // assume the energy collective
-                                           // variable to be the last added
-                                           // collective variable
+          static_cast<int>(collective_variables.size()) -
+          1; // assume the energy collective
+             // variable to be the last added
+             // collective variable
     double current_energy =
         unraveled_index[EnergyCollectiveVariable_index] *
             collective_variables[EnergyCollectiveVariable_index]->delta_CV +
@@ -1109,7 +1110,8 @@ void WangLandauReactionEnsemble::invalidate_bins() {
     }
   }
 
-  used_bins = wang_landau_potential.size() - empty_bins_in_memory;
+  used_bins =
+      static_cast<int>(wang_landau_potential.size()) - empty_bins_in_memory;
 }
 
 /**
@@ -1146,7 +1148,7 @@ double find_maximum(double const *const list, int len) {
 int WangLandauReactionEnsemble::initialize_wang_landau() {
 
   nr_subindices_of_collective_variable.resize(collective_variables.size(), 0);
-  int new_CV_i = collective_variables.size() - 1;
+  auto const new_CV_i = collective_variables.size() - 1;
   nr_subindices_of_collective_variable[new_CV_i] =
       int((collective_variables[new_CV_i]->CV_maximum -
            collective_variables[new_CV_i]->CV_minimum) /
@@ -1211,25 +1213,20 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
       bf = std::min(1.0, bf * exp(wang_landau_potential[old_state_index] -
                                   wang_landau_potential[new_state_index]));
     } else {
-      if (histogram[new_state_index] >= 0 && histogram[old_state_index] < 0)
-        bf = 10; // this makes the reaction get accepted, since we found a state
-                 // in gamma
-      else if (histogram[new_state_index] < 0 && histogram[old_state_index] < 0)
-        bf = 10; // accept, in order to be able to sample new configs, which
-                 // might lie in gamma
-      else if (histogram[new_state_index] < 0 &&
-               histogram[old_state_index] >= 0)
-        bf = -10; // this makes the reaction get rejected, since the new state
+      if (histogram[old_state_index] < 0)
+        bf = 10; // accept the reaction if we found a state in gamma
+                 // (histogram[new_state_index] >= 0) or to sample new configs
+                 // which might lie in gamma(histogram[new_state_index] < 0)
+      else if (histogram[new_state_index] < 0)
+        bf = -10; // reject the reaction, since the new state
                   // is not in gamma while the old sate was in gamma
     }
   } else if (old_state_index < 0 && new_state_index >= 0) {
-    bf = 10; // this makes the reaction get accepted, since we found a state in
-             // gamma
-  } else if (old_state_index < 0 && new_state_index < 0) {
-    bf = 10; // accept, in order to be able to sample new configs, which might
-             // lie in gamma
+    bf = 10; // accept the reaction if we found a new state in gamma
+             // (new_state_index >= 0) or to sample new configs which
+             // might lie in gamma (new_state_index < 0)
   } else if (old_state_index >= 0 && new_state_index < 0) {
-    bf = -10; // this makes the reaction get rejected, since the new state is
+    bf = -10; // reject the reaction, since the new state is
               // not in gamma while the old sate was in gamma
   }
   return bf;
@@ -1488,7 +1485,7 @@ int WangLandauReactionEnsemble::
                        flattened_index_with_EnergyCollectiveVariable);
   // use unraveled index
   const int nr_collective_variables =
-      collective_variables.size() -
+      static_cast<int>(collective_variables.size()) -
       1; // forget the last collective variable (the energy collective variable)
   std::vector<double> current_state(nr_collective_variables);
   for (int i = 0; i < nr_collective_variables; i++) {

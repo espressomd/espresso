@@ -17,12 +17,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# This script generates a log of all Doxygen warnings that require fixing.
+# This script generates a summary of all Doxygen warnings that require fixing.
 
-dox_version=$(doxygen --version)
-if [ "${dox_version}" != "1.8.13" ] && [ "${dox_version}" != "1.8.11" ]; then
-    echo "Doxygen version ${dox_version} not supported"
-    exit 1
+DOXYGEN=$(cmake -LA -N | grep "DOXYGEN_EXECUTABLE:FILEPATH" | cut -d'=' -f2-)
+if ! hash "${DOXYGEN}" 2>/dev/null; then
+    echo "No doxygen found."
+    exit 2
+fi
+dox_version=$("${DOXYGEN}" --version)
+dox_version_supported=false
+for supported_version in 1.8.11 1.8.13 1.8.17; do
+    if [ "${dox_version}" = "${supported_version}" ]; then
+        dox_version_supported=true
+        break
+    fi
+done
+if [ "${dox_version_supported}" = false ]; then
+    echo "Doxygen version ${dox_version} not fully supported" >&2
+    if [ ! -z "${CI}" ]; then
+        exit 1
+    fi
+    echo "Proceeding anyway"
 fi
 
 [ -z "${srcdir}" ] && srcdir=$(realpath ..)
@@ -66,26 +81,27 @@ fi
 # find @param without description
 grep -Prn '^[\ \t]*(?:\*?[\ \t]+)?[@\\]t?param(?:\[[in, out]+\])?[\ \t]+[a-zA-Z0-9_\*]+[\ \t]*$' "${srcdir}/src" > doc/doxygen/empty-params.log
 
-rm -f dox_warnings.log
+# remove old summary
+rm -f dox_warnings_summary.log
 
 # process warnings
-"${srcdir}/maintainer/CI/dox_warnings.py"
-n_warnings="${?}"
+"${srcdir}/maintainer/CI/dox_warnings.py" || exit 2
 
-if [ ! -f dox_warnings.log ]; then
-    exit 1
-fi
-
-# print logfile
-cat dox_warnings.log
+# print summary
+cat dox_warnings_summary.log
+n_warnings=$(cat dox_warnings_summary.log | wc -l)
 
 if [ "${CI}" != "" ]; then
-    "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen "${n_warnings}" dox_warnings.log || exit 1
+    "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen "${n_warnings}" dox_warnings_summary.log || exit 2
 fi
 
 if [ "${n_warnings}" = "0" ]; then
     echo "Found no warning requiring fixing."
     exit 0
 else
-    exit 1
+    if [ "${CI}" = "" ] && [ "${dox_version_supported}" = false ]; then
+        echo "Doxygen version ${dox_version} not fully supported." >&2
+        echo "This list of warnings may contain false positives." >&2
+    fi
+    exit 2
 fi

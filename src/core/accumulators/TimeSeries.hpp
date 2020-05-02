@@ -22,6 +22,8 @@
 #include "AccumulatorBase.hpp"
 #include "observables/Observable.hpp"
 
+#include <memory>
+
 namespace Accumulators {
 
 /**
