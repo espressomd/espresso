@@ -40,6 +40,7 @@
 #include <utils/mpi/gatherv.hpp>
 
 #include <boost/algorithm/cxx11/copy_if.hpp>
+#include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/scatter.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/range/numeric.hpp>
@@ -395,47 +396,45 @@ void auto_exclusion(int distance);
 
 void mpi_who_has_slave(int, int) {
   static std::vector<int> sendbuf;
-  int n_part;
 
-  n_part = cells_get_n_particles();
-  MPI_Gather(&n_part, 1, MPI_INT, nullptr, 0, MPI_INT, 0, comm_cart);
+  auto local_particles = cell_structure.local_particles();
+  auto const n_part = static_cast<int>(local_particles.size());
+  boost::mpi::gather(comm_cart, n_part, 0);
+
   if (n_part == 0)
     return;
 
   sendbuf.resize(n_part);
 
-  auto end =
-      std::transform(cell_structure.local_particles().begin(),
-                     cell_structure.local_particles().end(), sendbuf.data(),
-                     [](Particle const &p) { return p.p.identity; });
+  std::transform(local_particles.begin(), local_particles.end(),
+                 sendbuf.begin(),
+                 [](Particle const &p) { return p.p.identity; });
 
-  auto npart = std::distance(sendbuf.data(), end);
-  MPI_Send(sendbuf.data(), npart, MPI_INT, 0, SOME_TAG, comm_cart);
+  MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, SOME_TAG, comm_cart);
 }
 
-void mpi_who_has(const ParticleRange &particles) {
-  static auto *sizes = new int[n_nodes];
-  std::vector<int> pdata;
-
+void mpi_who_has() {
   mpi_call(mpi_who_has_slave, -1, 0);
 
-  int n_part = cells_get_n_particles();
-  /* first collect number of particles on each node */
-  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
+  auto local_particles = cell_structure.local_particles();
+
+  static std::vector<int> n_parts;
+  boost::mpi::gather(comm_cart, static_cast<int>(local_particles.size()),
+                     n_parts, 0);
+
+  static std::vector<int> pdata;
 
   /* then fetch particle locations */
   for (int pnode = 0; pnode < n_nodes; pnode++) {
     if (pnode == this_node) {
-      for (auto const &p : particles)
+      for (auto const &p : local_particles)
         particle_node[p.p.identity] = this_node;
 
-    } else if (sizes[pnode] > 0) {
-      if (pdata.size() < sizes[pnode]) {
-        pdata.resize(sizes[pnode]);
-      }
-      MPI_Recv(pdata.data(), sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-      for (int i = 0; i < sizes[pnode]; i++)
+    } else if (n_parts[pnode] > 0) {
+      pdata.resize(n_parts[pnode]);
+      MPI_Recv(pdata.data(), n_parts[pnode], MPI_INT, pnode, SOME_TAG,
+               comm_cart, MPI_STATUS_IGNORE);
+      for (int i = 0; i < n_parts[pnode]; i++)
         particle_node[pdata[i]] = pnode;
     }
   }
@@ -444,7 +443,7 @@ void mpi_who_has(const ParticleRange &particles) {
 /**
  * @brief Rebuild the particle index.
  */
-void build_particle_node() { mpi_who_has(cell_structure.local_particles()); }
+void build_particle_node() { mpi_who_has(); }
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
