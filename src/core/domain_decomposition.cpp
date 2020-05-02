@@ -199,25 +199,6 @@ void dd_create_cell_grid(double range) {
   cell_structure.m_ghost_cells.resize(new_cells - n_local_cells);
 }
 
-/** Fill local_cells list and ghost_cells list for use with domain
- *  decomposition.  \ref cells::cells is assumed to be a 3d grid with size
- *  \ref DomainDecomposition::ghost_cell_grid.
- */
-void dd_mark_cells() {
-  int cnt_c = 0, cnt_l = 0, cnt_g = 0;
-
-  for (int o = 0; o < dd.ghost_cell_grid[2]; o++)
-    for (int n = 0; n < dd.ghost_cell_grid[1]; n++)
-      for (int m = 0; m < dd.ghost_cell_grid[0]; m++) {
-        if ((m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&
-             n < dd.ghost_cell_grid[1] - 1 && o > 0 &&
-             o < dd.ghost_cell_grid[2] - 1))
-          cell_structure.m_local_cells[cnt_l++] = &dd.cells.at(cnt_c++);
-        else
-          cell_structure.m_ghost_cells[cnt_g++] = &dd.cells.at(cnt_c++);
-      }
-}
-
 namespace {
 /* Calc the ghost shift vector for dim dir in direction lr */
 Utils::Vector3d shift(BoxGeometry const &box, LocalBox<double> const &local_box,
@@ -344,12 +325,12 @@ GhostCommunicator dd_prepare_comm(const BoxGeometry &box_geo,
  *  communicator is working in reverted order with exchanged
  *  communication types GHOST_SEND <-> GHOST_RECV.
  */
-void dd_revert_comm_order(GhostCommunicator *comm) {
+static void revert_comm_order(GhostCommunicator &comm) {
   /* revert order */
-  boost::reverse(comm->communications);
+  boost::reverse(comm.communications);
 
   /* exchange SEND/RECV */
-  for (auto &c : comm->communications) {
+  for (auto &c : comm.communications) {
     if (c.type == GHOST_SEND)
       c.type = GHOST_RECV;
     else if (c.type == GHOST_RECV)
@@ -571,14 +552,17 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
   /* set up new domain decomposition cell structure */
   dd_create_cell_grid(range);
   /* mark cells */
-  dd_mark_cells();
+  dd.mark_cells();
+
+  cell_structure.m_local_cells = dd.m_local_cells;
+  cell_structure.m_ghost_cells = dd.m_ghost_cells;
 
   /* create communicators */
   cell_structure.exchange_ghosts_comm = dd_prepare_comm(box_geo, local_geo);
   cell_structure.collect_ghost_force_comm = dd_prepare_comm(box_geo, local_geo);
 
   /* collect forces has to be done in reverted order! */
-  dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
+  revert_comm_order(cell_structure.collect_ghost_force_comm);
 
   dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);

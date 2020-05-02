@@ -60,6 +60,7 @@
 #include "BoxGeometry.hpp"
 #include "Cell.hpp"
 #include "LocalBox.hpp"
+#include "ghosts.hpp"
 
 #include <boost/mpi/communicator.hpp>
 #include <utils/index.hpp>
@@ -87,6 +88,32 @@ struct DomainDecomposition {
   BoxGeometry box_geo;
   LocalBox<double> local_geo;
   std::vector<Cell> cells;
+  std::vector<Cell *> m_local_cells;
+  std::vector<Cell *> m_ghost_cells;
+  GhostCommunicator m_exchange_ghosts_comm;
+  GhostCommunicator m_collect_ghost_force_comm;
+
+  /** Fill local_cells list and ghost_cells list for use with domain
+   *  decomposition.  \ref cells::cells is assumed to be a 3d grid with size
+   *  \ref DomainDecomposition::ghost_cell_grid.
+   */
+  void mark_cells() {
+    int cnt_c = 0;
+
+    m_local_cells.clear();
+    m_ghost_cells.clear();
+
+    for (int o = 0; o < ghost_cell_grid[2]; o++)
+      for (int n = 0; n < ghost_cell_grid[1]; n++)
+        for (int m = 0; m < ghost_cell_grid[0]; m++) {
+          if ((m > 0 && m < ghost_cell_grid[0] - 1 && n > 0 &&
+               n < ghost_cell_grid[1] - 1 && o > 0 &&
+               o < ghost_cell_grid[2] - 1))
+            m_local_cells.push_back(&cells.at(cnt_c++));
+          else
+            m_ghost_cells.push_back(&cells.at(cnt_c++));
+        }
+  }
 
   /** Fill a communication cell pointer list. Fill the cell pointers of
    *  all cells which are inside a rectangular subgrid of the 3D cell
