@@ -36,6 +36,8 @@
 
 #include <vector>
 
+class ParticleDecomposition;
+
 /** Cell Structure */
 enum {
   /** Flag indicating that there is no cell system yet. Only at the
@@ -94,6 +96,8 @@ private:
   std::vector<Particle *> m_particle_index;
 
 public:
+  ParticleDecomposition *m_decomposition = nullptr;
+
   /**
    * @brief Update local particle index.
    *
@@ -134,15 +138,6 @@ public:
     for (auto &p : pl) {
       update_particle_index(p.identity(), std::addressof(p));
     }
-  }
-
-  /**
-   * @brief Update local particle index.
-   *
-   * @param pl List of particles whose index entries should be updated.
-   */
-  void update_particle_index(ParticleList *pl) {
-    assert(pl), update_particle_index(*pl);
   }
 
 private:
@@ -238,7 +233,7 @@ public:
    *  \return pointer to cell where to put the particle, nullptr
    *          if the particle does not belong on this node.
    */
-  Cell *(*particle_to_cell)(const Particle &p) = nullptr;
+  Cell *particle_to_cell(const Particle &p) const;
 
   /**
    * @brief Add a particle.

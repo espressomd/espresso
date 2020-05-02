@@ -516,9 +516,7 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
   dd.local_geo = local_geo;
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
-  cell_structure.particle_to_cell = [](const Particle &p) {
-    return dd.position_to_cell(p.r.p);
-  };
+  cell_structure.m_decomposition = std::addressof(dd);
   cell_structure.max_range = dd.max_range();
 
   /* set up new domain decomposition cell structure */

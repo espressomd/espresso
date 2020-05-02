@@ -21,7 +21,13 @@
 
 #include "CellStructure.hpp"
 
+#include "ParticleDecomposition.hpp"
+
 #include <utils/contains.hpp>
+
+Cell *CellStructure::particle_to_cell(const Particle &p) const {
+  return assert(m_decomposition), m_decomposition->particle_to_cell(p);
+}
 
 void CellStructure::remove_particle(int id) {
   auto remove_all_bonds_to = [id](BondList &bl) {
