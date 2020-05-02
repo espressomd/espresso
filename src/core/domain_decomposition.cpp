@@ -517,7 +517,6 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.m_decomposition = std::addressof(dd);
-  cell_structure.max_range = dd.max_range();
 
   /* set up new domain decomposition cell structure */
   dd_create_cell_grid(range);

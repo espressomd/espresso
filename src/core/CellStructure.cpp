@@ -26,7 +26,7 @@
 #include <utils/contains.hpp>
 
 Cell *CellStructure::particle_to_cell(const Particle &p) const {
-  return assert(m_decomposition), m_decomposition->particle_to_cell(p);
+  return decomposition().particle_to_cell(p);
 }
 
 void CellStructure::remove_particle(int id) {
@@ -116,4 +116,8 @@ void CellStructure::ghosts_update(unsigned data_parts) {
 }
 void CellStructure::ghosts_reduce_forces() {
   ghost_communicator(&collect_ghost_force_comm, GHOSTTRANS_FORCE);
+}
+
+Utils::Vector3d CellStructure::max_range() const {
+  return decomposition().max_range();
 }

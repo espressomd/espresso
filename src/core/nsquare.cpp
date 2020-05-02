@@ -46,7 +46,6 @@ void nsq_topology_init(const boost::mpi::communicator &comm) {
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
   cell_structure.m_decomposition = ad.get_ptr();
-  cell_structure.max_range = ad->max_range();
   cell_structure.exchange_ghosts_comm = ad->exchange_ghosts_comm();
   cell_structure.collect_ghost_force_comm = ad->collect_ghost_force_comm();
 }

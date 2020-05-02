@@ -205,7 +205,7 @@ public:
   bool use_verlet_list = true;
 
   /** Maximal pair range supported by current cell system. */
-  Utils::Vector3d max_range = {};
+  Utils::Vector3d max_range() const;
 
   /** Minimum range that has to be supported. */
   double min_range;
@@ -293,6 +293,10 @@ public:
   void remove_all_particles();
 
 private:
+  ParticleDecomposition &decomposition() const {
+    return assert(m_decomposition), *m_decomposition;
+  }
+
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
   unsigned m_resort_particles = Cells::RESORT_NONE;
