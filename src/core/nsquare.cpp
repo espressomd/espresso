@@ -31,13 +31,18 @@
 #include <boost/optional.hpp>
 
 #include <cassert>
+
 boost::optional<AtomDecomposition> ad;
 
 void nsq_topology_init(const boost::mpi::communicator &comm) {
   ad = AtomDecomposition(comm);
 
-  cell_structure.m_local_cells = ad->local_cells();
-  cell_structure.m_ghost_cells = ad->ghost_cells();
+  cell_structure.m_local_cells.clear();
+  boost::copy(ad->local_cells(),
+              std::back_inserter(cell_structure.m_local_cells));
+  cell_structure.m_ghost_cells.clear();
+  boost::copy(ad->ghost_cells(),
+              std::back_inserter(cell_structure.m_ghost_cells));
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
   cell_structure.particle_to_cell = [](const Particle &p) {

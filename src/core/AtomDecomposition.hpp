@@ -22,8 +22,7 @@
 #ifndef ESPRESSO_ATOM_DECOMPOSITION_HPP
 #define ESPRESSO_ATOM_DECOMPOSITION_HPP
 
-#include "Cell.hpp"
-#include "ghosts.hpp"
+#include "ParticleDecomposition.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -43,7 +42,7 @@
  *
  * For a more detailed discussion please see @cite plimpton1995a.
  */
-class AtomDecomposition {
+class AtomDecomposition : public ParticleDecomposition {
   boost::mpi::communicator comm;
   std::vector<Cell> cells;
 
@@ -57,17 +56,21 @@ public:
   explicit AtomDecomposition(boost::mpi::communicator const &comm);
 
   void resort(bool global_flag, ParticleList &displaced_parts,
-              std::vector<Cell *> &modified_cells);
+              std::vector<Cell *> &modified_cells) override;
 
-  GhostCommunicator const &exchange_ghosts_comm() const {
+  GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;
   }
-  GhostCommunicator const &collect_ghost_force_comm() const {
+  GhostCommunicator const &collect_ghost_force_comm() const override {
     return m_collect_ghost_force_comm;
   };
 
-  std::vector<Cell *> const &local_cells() const { return m_local_cells; }
-  std::vector<Cell *> const &ghost_cells() const { return m_ghost_cells; }
+  Utils::Span<Cell *> local_cells() override {
+    return Utils::make_span(m_local_cells);
+  }
+  Utils::Span<Cell *> ghost_cells() override {
+    return Utils::make_span(m_ghost_cells);
+  }
 
   /**
    * @brief Determine which cell a particle id belongs to.
@@ -77,9 +80,14 @@ public:
    * @param p Particle to find cell for.
    * @return Pointer to cell or nullptr if not local.
    */
-  Cell *particle_to_cell(Particle const &p) { return id_to_cell(p.identity()); }
+  Cell *particle_to_cell(Particle const &p) override {
+    return id_to_cell(p.identity());
+  }
 
-  Utils::Vector3d max_range() const;
+  Utils::Vector3d max_range() const override;
+  /* Return true if minimum image convention is
+   * needed for distance calculation. */
+  bool minimum_image_distance() const override { return true; }
 
 private:
   /**
