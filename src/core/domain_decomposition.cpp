@@ -343,7 +343,7 @@ void dd_update_communicators_w_boxl() {
       if (cart_info.dims[dir] == 1) {
         /* prepare folding of ghost positions */
         if (dd.local_geo.boundary()[2 * dir + lr] != 0) {
-          cell_structure.exchange_ghosts_comm.communications[cnt].shift =
+          dd.m_exchange_ghosts_comm.communications[cnt].shift =
               shift(dd.box_geo, dd.local_geo, dir, lr);
         }
         cnt++;
@@ -353,7 +353,7 @@ void dd_update_communicators_w_boxl() {
           if ((cart_info.coords[dir] + i) % 2 == 0) {
             /* prepare folding of ghost positions */
             if (dd.local_geo.boundary()[2 * dir + lr] != 0) {
-              cell_structure.exchange_ghosts_comm.communications[cnt].shift =
+              dd.m_exchange_ghosts_comm.communications[cnt].shift =
                   shift(dd.box_geo, dd.local_geo, dir, lr);
             }
             cnt++;
@@ -527,9 +527,6 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
   /* mark local and ghost cells */
   dd.mark_cells();
 
-  cell_structure.m_local_cells = dd.m_local_cells;
-  cell_structure.m_ghost_cells = dd.m_ghost_cells;
-
   /* create communicators */
   dd.m_exchange_ghosts_comm = dd_prepare_comm(box_geo, local_geo);
   dd.m_collect_ghost_force_comm = dd_prepare_comm(box_geo, local_geo);
@@ -539,9 +536,6 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
 
   assign_prefetches(dd.m_exchange_ghosts_comm);
   assign_prefetches(dd.m_collect_ghost_force_comm);
-
-  cell_structure.exchange_ghosts_comm = dd.m_exchange_ghosts_comm;
-  cell_structure.collect_ghost_force_comm = dd.m_collect_ghost_force_comm;
 }
 
 void DomainDecomposition::move_if_local(ParticleList &src, ParticleList &rest,

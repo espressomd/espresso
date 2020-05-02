@@ -196,9 +196,6 @@ public:
                      [this](int id) { return get_local_particle(id); });
   }
 
-  std::vector<Cell *> m_local_cells = {};
-  std::vector<Cell *> m_ghost_cells = {};
-
   /** type descriptor */
   int type = CELL_STRUCTURE_NONEYET;
 
@@ -211,21 +208,9 @@ public:
   double min_range;
 
   /** Return the global local_cells */
-  Utils::Span<Cell *> local_cells() {
-    return {m_local_cells.data(), m_local_cells.size()};
-  }
-
-  ParticleRange local_particles() {
-    return Cells::particles(Utils::make_span(m_local_cells));
-  }
-  ParticleRange ghost_particles() {
-    return Cells::particles(Utils::make_span(m_ghost_cells));
-  }
-
-  /** Communicator to exchange ghost particles. */
-  GhostCommunicator exchange_ghosts_comm;
-  /** Communicator to collect ghost forces. */
-  GhostCommunicator collect_ghost_force_comm;
+  Utils::Span<Cell *> local_cells();
+  ParticleRange local_particles();
+  ParticleRange ghost_particles();
 
   /** Cell system dependent function to find the right cell for a
    *  particle.

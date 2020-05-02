@@ -74,20 +74,22 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
       ret.emplace_back(p1.p.identity, p2.p.identity);
   };
 
+  auto local_cells = cell_structure.local_cells();
+
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    Algorithm::link_cell(
-        boost::make_indirect_iterator(cell_structure.m_local_cells.begin()),
-        boost::make_indirect_iterator(cell_structure.m_local_cells.end()),
-        Utils::NoOp{}, pair_kernel, [](Particle const &p1, Particle const &p2) {
-          return (p1.r.p - p2.r.p).norm2();
-        });
+    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
+                         boost::make_indirect_iterator(local_cells.end()),
+                         Utils::NoOp{}, pair_kernel,
+                         [](Particle const &p1, Particle const &p2) {
+                           return (p1.r.p - p2.r.p).norm2();
+                         });
     break;
   case CELL_STRUCTURE_NSQUARE:
     Algorithm::link_cell(
-        boost::make_indirect_iterator(cell_structure.m_local_cells.begin()),
-        boost::make_indirect_iterator(cell_structure.m_local_cells.end()),
-        Utils::NoOp{}, pair_kernel, [](Particle const &p1, Particle const &p2) {
+        boost::make_indirect_iterator(local_cells.begin()),
+        boost::make_indirect_iterator(local_cells.end()), Utils::NoOp{},
+        pair_kernel, [](Particle const &p1, Particle const &p2) {
           return get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
         });
     break;
@@ -188,18 +190,22 @@ static void invalidate_ghosts() {
 /************************************************************/
 
 void cells_re_init(int new_cs, double range) {
-  invalidate_ghosts();
+  if (cell_structure.m_decomposition) {
+    invalidate_ghosts();
 
-  auto local_parts = cell_structure.local_particles();
-  std::vector<Particle> particles(local_parts.begin(), local_parts.end());
+    auto local_parts = cell_structure.local_particles();
+    std::vector<Particle> particles(local_parts.begin(), local_parts.end());
 
-  topology_init(new_cs, range);
-  cell_structure.min_range = range;
+    topology_init(new_cs, range);
 
-  for (auto &p : particles) {
-    cell_structure.add_particle(std::move(p));
+    for (auto &p : particles) {
+      cell_structure.add_particle(std::move(p));
+    }
+  } else {
+    topology_init(new_cs, range);
   }
 
+  cell_structure.min_range = range;
   on_cell_structure_change();
 }
 
@@ -295,7 +301,7 @@ void cells_resort_particles(int global_flag) {
   }
 
   if (not displaced_parts.empty()) {
-    auto sort_cell = cell_structure.m_local_cells[0];
+    auto sort_cell = cell_structure.local_cells()[0];
 
     for (auto &part : displaced_parts) {
       runtimeErrorMsg() << "Particle " << part.identity()
@@ -371,7 +377,7 @@ void cells_update_ghosts(unsigned data_parts) {
     cells_resort_particles(global);
 
     /* Communication step: number of ghosts and ghost information */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+    ghost_communicator(cell_structure.m_decomposition->exchange_ghosts_comm(),
                        GHOSTTRANS_PARTNUM);
     cell_structure.ghosts_update(data_parts);
 
