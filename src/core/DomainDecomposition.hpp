@@ -131,6 +131,30 @@ public:
   void resort(bool global, ParticleList &pl,
               std::vector<Cell *> &modified_cells) override;
 
+/**
+ *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
+ *
+ *  Calculates the cell grid, based on \ref local_geo and \p range.
+ *  If the number of cells is larger than \ref max_num_cells,
+ *  it increases max_range until the number of cells is
+ *  smaller or equal \ref max_num_cells. It sets:
+ *  \ref DomainDecomposition::cell_grid,
+ *  \ref DomainDecomposition::ghost_cell_grid,
+ *  \ref DomainDecomposition::cell_size, and
+ *  \ref DomainDecomposition::inv_cell_size.
+ *
+ *  @param range Required interacting range. All pairs closer
+ *         than this distance are found.
+ */
+  void create_cell_grid(double range);
+
+/** Init cell interactions for cell system domain decomposition.
+ * initializes the interacting neighbor cell list of a cell The
+ * created list of interacting neighbor cells is used by the Verlet
+ * algorithm.
+ */
+  void init_cell_interactions();
+
 public:
   /** Maximal number of cells per node. In order to avoid memory
    *  problems due to the cell grid one has to specify the maximal

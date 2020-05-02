@@ -1,5 +1,7 @@
 #include "DomainDecomposition.hpp"
 
+#include "errorhandling.hpp"
+
 #include <boost/mpi/collectives.hpp>
 #include <utils/mpi/sendrecv.hpp>
 
@@ -201,4 +203,145 @@ int DomainDecomposition::calc_processor_min_num_cells() const {
                            [](int n_cells, int grid) {
                              return (grid == 1) ? 2 * n_cells : n_cells;
                            });
+}
+
+void DomainDecomposition::create_cell_grid(double range) {
+  auto const cart_info = Utils::Mpi::cart_get<3>(comm);
+
+  int i, n_local_cells, new_cells;
+  double cell_range[3];
+
+  /* initialize */
+  cell_range[0] = cell_range[1] = cell_range[2] = range;
+
+  /* Min num cells can not be smaller than calc_processor_min_num_cells. */
+  int min_num_cells = calc_processor_min_num_cells();
+
+  if (range <= 0.) {
+    /* this is the non-interacting case */
+    const int cells_per_dir = std::ceil(std::pow(min_num_cells, 1. / 3.));
+
+    cell_grid[0] = cells_per_dir;
+    cell_grid[1] = cells_per_dir;
+    cell_grid[2] = cells_per_dir;
+
+    n_local_cells = cell_grid[0] * cell_grid[1] * cell_grid[2];
+  } else {
+    /* Calculate initial cell grid */
+    double volume = local_geo.length()[0];
+    for (i = 1; i < 3; i++)
+      volume *= local_geo.length()[i];
+    double scale = pow(DomainDecomposition::max_num_cells / volume, 1. / 3.);
+    for (i = 0; i < 3; i++) {
+      /* this is at least 1 */
+      cell_grid[i] = (int)ceil(local_geo.length()[i] * scale);
+      cell_range[i] = local_geo.length()[i] / cell_grid[i];
+
+      if (cell_range[i] < range) {
+        /* ok, too many cells for this direction, set to minimum */
+        cell_grid[i] = (int)floor(local_geo.length()[i] / range);
+        if (cell_grid[i] < 1) {
+          runtimeErrorMsg()
+              << "interaction range " << range << " in direction " << i
+              << " is larger than the local box size " << local_geo.length()[i];
+          cell_grid[i] = 1;
+        }
+        cell_range[i] = local_geo.length()[i] / cell_grid[i];
+      }
+    }
+
+    /* It may be necessary to asymmetrically assign the scaling to the
+       coordinates, which the above approach will not do.
+       For a symmetric box, it gives a symmetric result. Here we correct that.
+       */
+    for (;;) {
+      n_local_cells = cell_grid[0] * cell_grid[1] * cell_grid[2];
+
+      /* done */
+      if (n_local_cells <= DomainDecomposition::max_num_cells)
+        break;
+
+      /* find coordinate with the smallest cell range */
+      int min_ind = 0;
+      double min_size = cell_range[0];
+
+      for (i = 1; i < 3; i++) {
+        if (cell_grid[i] > 1 && cell_range[i] < min_size) {
+          min_ind = i;
+          min_size = cell_range[i];
+        }
+      }
+
+      cell_grid[min_ind]--;
+      cell_range[min_ind] = local_geo.length()[min_ind] / cell_grid[min_ind];
+    }
+
+    /* sanity check */
+    if (n_local_cells < min_num_cells) {
+      runtimeErrorMsg()
+          << "number of cells " << n_local_cells << " is smaller than minimum "
+          << min_num_cells
+          << " (interaction range too large or min_num_cells too large)";
+    }
+  }
+
+  /* quit program if unsuccessful */
+  if (n_local_cells > DomainDecomposition::max_num_cells) {
+    runtimeErrorMsg() << "no suitable cell grid found ";
+  }
+
+  auto const node_pos = cart_info.coords;
+
+  /* now set all dependent variables */
+  new_cells = 1;
+  for (i = 0; i < 3; i++) {
+    ghost_cell_grid[i] = cell_grid[i] + 2;
+    new_cells *= ghost_cell_grid[i];
+    cell_size[i] = local_geo.length()[i] / (double)cell_grid[i];
+    inv_cell_size[i] = 1.0 / cell_size[i];
+    cell_offset[i] = node_pos[i] * cell_grid[i];
+  }
+
+  /* allocate cell array and cell pointer arrays */
+  cells.clear();
+  cells.resize(new_cells);
+  m_local_cells.resize(n_local_cells);
+  m_ghost_cells.resize(new_cells - n_local_cells);
+}
+
+void DomainDecomposition::init_cell_interactions() {
+  /* loop all local cells */
+  for (int o = 1; o < cell_grid[2] + 1; o++)
+    for (int n = 1; n < cell_grid[1] + 1; n++)
+      for (int m = 1; m < cell_grid[0] + 1; m++) {
+
+        auto const ind1 = get_linear_index(m, n, o, ghost_cell_grid);
+
+        std::vector<Cell *> red_neighbors;
+        std::vector<Cell *> black_neighbors;
+
+        /* loop all neighbor cells */
+        int lower_index[3] = {m - 1, n - 1, o - 1};
+        int upper_index[3] = {m + 1, n + 1, o + 1};
+
+        for (int i = 0; i < 3; i++) {
+          if (fully_connected[i]) {
+            lower_index[i] = 0;
+            upper_index[i] = ghost_cell_grid[i] - 1;
+          }
+        }
+
+        for (int p = lower_index[2]; p <= upper_index[2]; p++)
+          for (int q = lower_index[1]; q <= upper_index[1]; q++)
+            for (int r = lower_index[0]; r <= upper_index[0]; r++) {
+              auto const ind2 = get_linear_index(r, q, p, ghost_cell_grid);
+              if (ind2 > ind1) {
+                red_neighbors.push_back(&cells.at(ind2));
+              } else {
+                black_neighbors.push_back(&cells.at(ind2));
+              }
+            }
+        cells.at(ind1).m_neighbors =
+            Neighbors<Cell *>(red_neighbors, black_neighbors);
+      }
 }

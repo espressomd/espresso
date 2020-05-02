@@ -50,126 +50,6 @@ DomainDecomposition dd;
 /** \name Private Functions */
 /************************************************************/
 
-/**
- *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
- *
- *  Calculates the cell grid, based on \ref local_geo and \p range.
- *  If the number of cells is larger than \ref max_num_cells,
- *  it increases max_range until the number of cells is
- *  smaller or equal \ref max_num_cells. It sets:
- *  \ref DomainDecomposition::cell_grid,
- *  \ref DomainDecomposition::ghost_cell_grid,
- *  \ref DomainDecomposition::cell_size, and
- *  \ref DomainDecomposition::inv_cell_size.
- *
- *  @param range Required interacting range. All pairs closer
- *         than this distance are found.
- */
-void dd_create_cell_grid(double range) {
-  auto const cart_info = Utils::Mpi::cart_get<3>(dd.comm);
-
-  int i, n_local_cells, new_cells;
-  double cell_range[3];
-
-  /* initialize */
-  cell_range[0] = cell_range[1] = cell_range[2] = range;
-
-  /* Min num cells can not be smaller than calc_processor_min_num_cells. */
-  int min_num_cells = dd.calc_processor_min_num_cells();
-
-  if (range <= 0.) {
-    /* this is the non-interacting case */
-    const int cells_per_dir = std::ceil(std::pow(min_num_cells, 1. / 3.));
-
-    dd.cell_grid[0] = cells_per_dir;
-    dd.cell_grid[1] = cells_per_dir;
-    dd.cell_grid[2] = cells_per_dir;
-
-    n_local_cells = dd.cell_grid[0] * dd.cell_grid[1] * dd.cell_grid[2];
-  } else {
-    /* Calculate initial cell grid */
-    double volume = dd.local_geo.length()[0];
-    for (i = 1; i < 3; i++)
-      volume *= dd.local_geo.length()[i];
-    double scale = pow(DomainDecomposition::max_num_cells / volume, 1. / 3.);
-    for (i = 0; i < 3; i++) {
-      /* this is at least 1 */
-      dd.cell_grid[i] = (int)ceil(dd.local_geo.length()[i] * scale);
-      cell_range[i] = dd.local_geo.length()[i] / dd.cell_grid[i];
-
-      if (cell_range[i] < range) {
-        /* ok, too many cells for this direction, set to minimum */
-        dd.cell_grid[i] = (int)floor(dd.local_geo.length()[i] / range);
-        if (dd.cell_grid[i] < 1) {
-          runtimeErrorMsg() << "interaction range " << range << " in direction "
-                            << i << " is larger than the local box size "
-                            << dd.local_geo.length()[i];
-          dd.cell_grid[i] = 1;
-        }
-        cell_range[i] = dd.local_geo.length()[i] / dd.cell_grid[i];
-      }
-    }
-
-    /* It may be necessary to asymmetrically assign the scaling to the
-       coordinates, which the above approach will not do.
-       For a symmetric box, it gives a symmetric result. Here we correct that.
-       */
-    for (;;) {
-      n_local_cells = dd.cell_grid[0] * dd.cell_grid[1] * dd.cell_grid[2];
-
-      /* done */
-      if (n_local_cells <= DomainDecomposition::max_num_cells)
-        break;
-
-      /* find coordinate with the smallest cell range */
-      int min_ind = 0;
-      double min_size = cell_range[0];
-
-      for (i = 1; i < 3; i++) {
-        if (dd.cell_grid[i] > 1 && cell_range[i] < min_size) {
-          min_ind = i;
-          min_size = cell_range[i];
-        }
-      }
-
-      dd.cell_grid[min_ind]--;
-      cell_range[min_ind] =
-          dd.local_geo.length()[min_ind] / dd.cell_grid[min_ind];
-    }
-
-    /* sanity check */
-    if (n_local_cells < min_num_cells) {
-      runtimeErrorMsg()
-          << "number of cells " << n_local_cells << " is smaller than minimum "
-          << min_num_cells
-          << " (interaction range too large or min_num_cells too large)";
-    }
-  }
-
-  /* quit program if unsuccessful */
-  if (n_local_cells > DomainDecomposition::max_num_cells) {
-    runtimeErrorMsg() << "no suitable cell grid found ";
-  }
-
-  auto const node_pos = cart_info.coords;
-
-  /* now set all dependent variables */
-  new_cells = 1;
-  for (i = 0; i < 3; i++) {
-    dd.ghost_cell_grid[i] = dd.cell_grid[i] + 2;
-    new_cells *= dd.ghost_cell_grid[i];
-    dd.cell_size[i] = dd.local_geo.length()[i] / (double)dd.cell_grid[i];
-    dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
-    dd.cell_offset[i] = node_pos[i] * dd.cell_grid[i];
-  }
-
-  /* allocate cell array and cell pointer arrays */
-  dd.cells.clear();
-  dd.cells.resize(new_cells);
-  dd.m_local_cells.resize(n_local_cells);
-  dd.m_ghost_cells.resize(new_cells - n_local_cells);
-}
-
 namespace {
 /* Calc the ghost shift vector for dim dir in direction lr */
 Utils::Vector3d shift(BoxGeometry const &box, LocalBox<double> const &local_box,
@@ -367,48 +247,6 @@ void dd_update_communicators_w_boxl() {
   }
 }
 
-/** Init cell interactions for cell system domain decomposition.
- * initializes the interacting neighbor cell list of a cell The
- * created list of interacting neighbor cells is used by the Verlet
- * algorithm (see verlet.cpp) to build the verlet lists.
- */
-void dd_init_cell_interactions() {
-  /* loop all local cells */
-  for (int o = 1; o < dd.cell_grid[2] + 1; o++)
-    for (int n = 1; n < dd.cell_grid[1] + 1; n++)
-      for (int m = 1; m < dd.cell_grid[0] + 1; m++) {
-
-        auto const ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
-
-        std::vector<Cell *> red_neighbors;
-        std::vector<Cell *> black_neighbors;
-
-        /* loop all neighbor cells */
-        int lower_index[3] = {m - 1, n - 1, o - 1};
-        int upper_index[3] = {m + 1, n + 1, o + 1};
-
-        for (int i = 0; i < 3; i++) {
-          if (dd.fully_connected[i]) {
-            lower_index[i] = 0;
-            upper_index[i] = dd.ghost_cell_grid[i] - 1;
-          }
-        }
-
-        for (int p = lower_index[2]; p <= upper_index[2]; p++)
-          for (int q = lower_index[1]; q <= upper_index[1]; q++)
-            for (int r = lower_index[0]; r <= upper_index[0]; r++) {
-              auto const ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
-              if (ind2 > ind1) {
-                red_neighbors.push_back(&dd.cells.at(ind2));
-              } else {
-                black_neighbors.push_back(&dd.cells.at(ind2));
-              }
-            }
-        dd.cells.at(ind1).m_neighbors =
-            Neighbors<Cell *>(red_neighbors, black_neighbors);
-      }
-}
-
 /*************************************************/
 
 /*@}*/
@@ -481,14 +319,11 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
   dd.box_geo = box_geo;
   dd.local_geo = local_geo;
 
-  cell_structure.type = CELL_STRUCTURE_DOMDEC;
-  cell_structure.m_decomposition = std::addressof(dd);
-
   /* set up new domain decomposition cell structure */
-  dd_create_cell_grid(range);
+  dd.create_cell_grid(range);
 
   /* setup cell neighbors */
-  dd_init_cell_interactions();
+  dd.init_cell_interactions();
 
   /* mark local and ghost cells */
   dd.mark_cells();
@@ -502,6 +337,9 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
 
   assign_prefetches(dd.m_exchange_ghosts_comm);
   assign_prefetches(dd.m_collect_ghost_force_comm);
+
+  cell_structure.type = CELL_STRUCTURE_DOMDEC;
+  cell_structure.m_decomposition = std::addressof(dd);
 }
 
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
