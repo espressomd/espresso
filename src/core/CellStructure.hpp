@@ -40,6 +40,8 @@
 
 #include <vector>
 
+class ParticleDecomposition;
+
 /** Cell Structure */
 enum CellStructureType : int {
   /** cell structure domain decomposition */
@@ -144,7 +146,6 @@ public:
       update_particle_index(p.identity(), std::addressof(p));
     }
   }
-
   /**
    * @brief Clear the particles index.
    */
