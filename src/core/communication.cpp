@@ -669,7 +669,9 @@ std::vector<int> mpi_resort_particles(int global_flag) {
   clear_particle_node();
 
   std::vector<int> n_parts;
-  boost::mpi::gather(comm_cart, cells_get_n_particles(), n_parts, 0);
+  boost::mpi::gather(comm_cart,
+                     static_cast<int>(cell_structure.local_particles().size()),
+                     n_parts, 0);
 
   return n_parts;
 }
@@ -677,5 +679,6 @@ std::vector<int> mpi_resort_particles(int global_flag) {
 void mpi_resort_particles_slave(int global_flag, int) {
   cells_resort_particles(global_flag);
 
-  boost::mpi::gather(comm_cart, cells_get_n_particles(), 0);
+  boost::mpi::gather(
+      comm_cart, static_cast<int>(cell_structure.local_particles().size()), 0);
 }
