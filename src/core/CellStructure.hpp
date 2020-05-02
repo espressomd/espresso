@@ -36,6 +36,8 @@
 
 #include <vector>
 
+class ParticleDecomposition;
+
 /** Cell Structure */
 enum {
   /** Flag indicating that there is no cell system yet. Only at the
@@ -94,6 +96,8 @@ private:
   std::vector<Particle *> m_particle_index;
 
 public:
+  ParticleDecomposition *m_decomposition = nullptr;
+
   /**
    * @brief Update local particle index.
    *
@@ -134,15 +138,6 @@ public:
     for (auto &p : pl) {
       update_particle_index(p.identity(), std::addressof(p));
     }
-  }
-
-  /**
-   * @brief Update local particle index.
-   *
-   * @param pl List of particles whose index entries should be updated.
-   */
-  void update_particle_index(ParticleList *pl) {
-    assert(pl), update_particle_index(*pl);
   }
 
 private:
@@ -201,36 +196,21 @@ public:
                      [this](int id) { return get_local_particle(id); });
   }
 
-  std::vector<Cell *> m_local_cells = {};
-  std::vector<Cell *> m_ghost_cells = {};
-
   /** type descriptor */
   int type = CELL_STRUCTURE_NONEYET;
 
   bool use_verlet_list = true;
 
   /** Maximal pair range supported by current cell system. */
-  Utils::Vector3d max_range = {};
+  Utils::Vector3d max_range() const;
 
   /** Minimum range that has to be supported. */
   double min_range;
 
   /** Return the global local_cells */
-  Utils::Span<Cell *> local_cells() {
-    return {m_local_cells.data(), m_local_cells.size()};
-  }
-
-  ParticleRange local_particles() {
-    return Cells::particles(Utils::make_span(m_local_cells));
-  }
-  ParticleRange ghost_particles() {
-    return Cells::particles(Utils::make_span(m_ghost_cells));
-  }
-
-  /** Communicator to exchange ghost particles. */
-  GhostCommunicator exchange_ghosts_comm;
-  /** Communicator to collect ghost forces. */
-  GhostCommunicator collect_ghost_force_comm;
+  Utils::Span<Cell *> local_cells();
+  ParticleRange local_particles();
+  ParticleRange ghost_particles();
 
   /** Cell system dependent function to find the right cell for a
    *  particle.
@@ -238,7 +218,7 @@ public:
    *  \return pointer to cell where to put the particle, nullptr
    *          if the particle does not belong on this node.
    */
-  Cell *(*particle_to_cell)(const Particle &p) = nullptr;
+  Cell *particle_to_cell(const Particle &p) const;
 
   /**
    * @brief Add a particle.
@@ -298,6 +278,10 @@ public:
   void remove_all_particles();
 
 private:
+  ParticleDecomposition &decomposition() const {
+    return assert(m_decomposition), *m_decomposition;
+  }
+
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
   unsigned m_resort_particles = Cells::RESORT_NONE;
@@ -345,7 +329,7 @@ public:
    * @param partner_ids Ids to resolve.
    * @return Vector of Particle pointers.
    */
-  inline auto resolve_bond_partners(Utils::Span<const int> partner_ids) {
+  auto resolve_bond_partners(Utils::Span<const int> partner_ids) {
     boost::container::static_vector<Particle *, 4> partners;
     get_local_particles(partner_ids, std::back_inserter(partners));
 

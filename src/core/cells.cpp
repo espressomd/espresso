@@ -35,6 +35,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "short_range_loop.hpp"
 
 #include "domain_decomposition.hpp"
 #include "nsquare.hpp"
@@ -69,29 +70,12 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   cells_update_ghosts(Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES);
 
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
-                                      double dist2) {
-    if (dist2 < cutoff2)
+                                      Distance const &d) {
+    if (d.dist2 < cutoff2)
       ret.emplace_back(p1.p.identity, p2.p.identity);
   };
 
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_DOMDEC:
-    Algorithm::link_cell(
-        boost::make_indirect_iterator(cell_structure.m_local_cells.begin()),
-        boost::make_indirect_iterator(cell_structure.m_local_cells.end()),
-        Utils::NoOp{}, pair_kernel, [](Particle const &p1, Particle const &p2) {
-          return (p1.r.p - p2.r.p).norm2();
-        });
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    Algorithm::link_cell(
-        boost::make_indirect_iterator(cell_structure.m_local_cells.begin()),
-        boost::make_indirect_iterator(cell_structure.m_local_cells.end()),
-        Utils::NoOp{}, pair_kernel, [](Particle const &p1, Particle const &p2) {
-          return get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
-        });
-    break;
-  }
+  short_range_loop(Utils::NoOp{}, pair_kernel);
 
   /* Sort pairs */
   for (auto &pair : ret) {
@@ -158,15 +142,9 @@ void topology_init(int cs, double range) {
   }
 }
 
-unsigned topology_check_resort(int cs, unsigned local_resort) {
-  switch (cs) {
-  case CELL_STRUCTURE_DOMDEC:
-  case CELL_STRUCTURE_NSQUARE:
-    return boost::mpi::all_reduce(comm_cart, local_resort,
-                                  std::bit_or<unsigned>());
-  default:
-    return Cells::Resort::RESORT_GLOBAL;
-  }
+unsigned reduce_resort(int cs, unsigned local_resort) {
+  return boost::mpi::all_reduce(comm_cart, local_resort,
+                                std::bit_or<unsigned>());
 }
 
 /** Go through ghost cells and remove the ghost entries from the
@@ -188,21 +166,22 @@ static void invalidate_ghosts() {
 /************************************************************/
 
 void cells_re_init(int new_cs, double range) {
-  invalidate_ghosts();
+  if (cell_structure.m_decomposition) {
+    invalidate_ghosts();
 
-  auto local_parts = cell_structure.local_particles();
-  std::vector<Particle> particles(local_parts.begin(), local_parts.end());
+    auto local_parts = cell_structure.local_particles();
+    std::vector<Particle> particles(local_parts.begin(), local_parts.end());
 
-  cell_structure.m_local_cells.clear();
-  cell_structure.m_ghost_cells.clear();
+    topology_init(new_cs, range);
 
-  topology_init(new_cs, range);
-  cell_structure.min_range = range;
-
-  for (auto &p : particles) {
-    cell_structure.add_particle(std::move(p));
+    for (auto &p : particles) {
+      cell_structure.add_particle(std::move(p));
+    }
+  } else {
+    topology_init(new_cs, range);
   }
 
+  cell_structure.min_range = range;
   on_cell_structure_change();
 }
 
@@ -282,15 +261,8 @@ void cells_resort_particles(int global_flag) {
     cell_structure.update_particle_index(p.identity(), nullptr);
   }
 
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_NSQUARE:
-    nsq_exchange_particles(global_flag, &displaced_parts, modified_cells);
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag, &displaced_parts,
-                                   modified_cells);
-    break;
-  }
+  cell_structure.m_decomposition->resort(global_flag, displaced_parts,
+                                         modified_cells);
 
   boost::sort(modified_cells);
   for (auto cell : modified_cells | boost::adaptors::uniqued) {
@@ -298,7 +270,7 @@ void cells_resort_particles(int global_flag) {
   }
 
   if (not displaced_parts.empty()) {
-    auto sort_cell = cell_structure.m_local_cells[0];
+    auto sort_cell = cell_structure.local_cells()[0];
 
     for (auto &part : displaced_parts) {
       runtimeErrorMsg() << "Particle " << part.identity()
@@ -328,13 +300,9 @@ void cells_on_geometry_change(bool fast) {
   auto const range = interaction_range();
   cell_structure.min_range = range;
 
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_DOMDEC:
-    if (not dd_on_geometry_change(fast, range, box_geo, local_geo))
-      cells_re_init(CELL_STRUCTURE_DOMDEC, range);
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    break;
+  if (not cell_structure.m_decomposition->on_geometry_change(
+          fast, range, box_geo, local_geo)) {
+    cells_re_init(cell_structure.type, range);
   }
 }
 
@@ -360,8 +328,8 @@ void cells_update_ghosts(unsigned data_parts) {
   auto constexpr resort_only_parts =
       Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
 
-  auto const global_resort = topology_check_resort(
-      cell_structure.type, cell_structure.get_resort_particles());
+  auto const global_resort =
+      reduce_resort(cell_structure.type, cell_structure.get_resort_particles());
 
   if (global_resort != Cells::RESORT_NONE) {
     int global = (global_resort & Cells::RESORT_GLOBAL)
@@ -372,7 +340,7 @@ void cells_update_ghosts(unsigned data_parts) {
     cells_resort_particles(global);
 
     /* Communication step: number of ghosts and ghost information */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+    ghost_communicator(cell_structure.m_decomposition->exchange_ghosts_comm(),
                        GHOSTTRANS_PARTNUM);
     cell_structure.ghosts_update(data_parts);
 

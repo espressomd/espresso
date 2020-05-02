@@ -37,21 +37,8 @@ boost::optional<AtomDecomposition> ad;
 void nsq_topology_init(const boost::mpi::communicator &comm) {
   ad = AtomDecomposition(comm);
 
-  cell_structure.m_local_cells.clear();
-  boost::copy(ad->local_cells(),
-              std::back_inserter(cell_structure.m_local_cells));
-  cell_structure.m_ghost_cells.clear();
-  boost::copy(ad->ghost_cells(),
-              std::back_inserter(cell_structure.m_ghost_cells));
-
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
-  cell_structure.particle_to_cell = [](const Particle &p) {
-    return assert(ad), ad->particle_to_cell(p);
-  };
-
-  cell_structure.max_range = ad->max_range();
-  cell_structure.exchange_ghosts_comm = ad->exchange_ghosts_comm();
-  cell_structure.collect_ghost_force_comm = ad->collect_ghost_force_comm();
+  cell_structure.m_decomposition = ad.get_ptr();
 }
 
 void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
