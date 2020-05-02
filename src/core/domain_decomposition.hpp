@@ -72,7 +72,7 @@
 /** Structure containing the information about the cell grid used for domain
  *  decomposition.
  */
-struct DomainDecomposition {
+struct DomainDecomposition : public ParticleDecomposition {
   DomainDecomposition() = default;
 
   /** Offset in global grid */
@@ -95,6 +95,26 @@ struct DomainDecomposition {
   std::vector<Cell *> m_ghost_cells;
   GhostCommunicator m_exchange_ghosts_comm;
   GhostCommunicator m_collect_ghost_force_comm;
+
+  GhostCommunicator const &exchange_ghosts_comm() const override {
+    return m_exchange_ghosts_comm;
+  }
+  GhostCommunicator const &collect_ghost_force_comm() const override {
+    return m_collect_ghost_force_comm;
+  };
+
+  Utils::Span<Cell *> local_cells() override {
+    return Utils::make_span(m_local_cells);
+  }
+  Utils::Span<Cell *> ghost_cells() override {
+    return Utils::make_span(m_ghost_cells);
+  }
+
+  Cell *particle_to_cell(Particle const &p) override {
+    return position_to_cell(p.r.p);
+  }
+
+  bool minimum_image_distance() const override { return false; }
 
   /** Fill local_cells list and ghost_cells list for use with domain
    *  decomposition.  \ref cells::cells is assumed to be a 3d grid with size
@@ -167,6 +187,50 @@ struct DomainDecomposition {
                              });
   }
 
+  Cell *position_to_cell(const Utils::Vector3d &pos);
+
+  /**
+   * @brief Move particles into the cell system if it belongs to this node.
+   *
+   * Moves all particles from src into the local cell
+   * system if they do belong here. Otherwise the
+   * particles are moved into rest.
+   *
+   * @param src Particles to move.
+   * @param rest Output list for left-over particles.
+   * @param modified_cells Local cells that were touched.
+   */
+  void move_if_local(ParticleList &src, ParticleList &rest,
+                     std::vector<Cell *> &modified_cells);
+
+  /**
+   * @brief Split particle list by direction.
+   *
+   * Moves all particles from src into left
+   * and right depending if they belong to
+   * the left or right side from local node
+   * in direction dir.
+   *
+   * @param src Particles to sort.
+   * @param left Particles that should go to the left
+   * @param right Particles that should go to the right
+   * @param dir Direction to consider.
+   */
+  void move_left_or_right(ParticleList &src, ParticleList &left,
+                          ParticleList &right, int dir) const;
+
+  /**
+   * @brief One round of particle exchange with the next neighbors.
+   *
+   * @param[in] pl Particle on the move
+   * @param[out] modified_cells Cells that got touched.
+   */
+  void exchange_neighbors(ParticleList &pl,
+                          std::vector<Cell *> &modified_cells);
+
+  void resort(bool global, ParticleList &pl,
+              std::vector<Cell *> &modified_cells);
+
 public:
   /** Maximal number of cells per node. In order to avoid memory
    *  problems due to the cell grid one has to specify the maximal
@@ -220,15 +284,6 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
                       const BoxGeometry &box_geo,
                       const LocalBox<double> &local_geo);
 
-/** Just resort the particles. Used during integration. The particles
- *  are stored in the cell structure.
- *
- *  @param global Use DD_GLOBAL_EXCHANGE for global exchange and
- *      DD_NEIGHBOR_EXCHANGE for neighbor exchange (recommended for use within
- *      Molecular dynamics, or any other integration scheme using only local
- *      particle moves)
- *  @param pl     List of particles
- */
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
                                     std::vector<Cell *> &modified_cells);
 

@@ -37,11 +37,6 @@ using Utils::get_linear_index;
 #include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/reverse.hpp>
 
-/** Returns pointer to the cell which corresponds to the position if the
- *  position is in the nodes spatial domain otherwise a nullptr pointer.
- */
-Cell *dd_save_position_to_cell(const Utils::Vector3d &pos);
-
 /************************************************/
 /** \name Variables */
 /************************************************/
@@ -167,13 +162,12 @@ void dd_create_cell_grid(double range) {
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
     dd.cell_offset[i] = node_pos[i] * dd.cell_grid[i];
   }
-  cell_structure.max_range = dd.max_range();
 
   /* allocate cell array and cell pointer arrays */
   dd.cells.clear();
   dd.cells.resize(new_cells);
-  cell_structure.m_local_cells.resize(n_local_cells);
-  cell_structure.m_ghost_cells.resize(new_cells - n_local_cells);
+  dd.m_local_cells.resize(n_local_cells);
+  dd.m_ghost_cells.resize(new_cells - n_local_cells);
 }
 
 namespace {
@@ -420,12 +414,12 @@ void dd_init_cell_interactions() {
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
-Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
+Cell *DomainDecomposition::position_to_cell(const Utils::Vector3d &pos) {
   Utils::Vector3i cpos;
 
   for (int i = 0; i < 3; i++) {
-    cpos[i] = static_cast<int>(std::floor(pos[i] * dd.inv_cell_size[i])) + 1 -
-              dd.cell_offset[i];
+    cpos[i] = static_cast<int>(std::floor(pos[i] * inv_cell_size[i])) + 1 -
+              cell_offset[i];
 
     /* particles outside our box. Still take them if
        nonperiodic boundary. We also accept the particle if we are at
@@ -433,22 +427,22 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
        the particle belongs here and could otherwise potentially be dismissed
        due to rounding errors. */
     if (cpos[i] < 1) {
-      if ((!dd.box_geo.periodic(i) or (pos[i] >= dd.box_geo.length()[i])) &&
-          dd.local_geo.boundary()[2 * i])
+      if ((!box_geo.periodic(i) or (pos[i] >= box_geo.length()[i])) &&
+          local_geo.boundary()[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
-    } else if (cpos[i] > dd.cell_grid[i]) {
-      if ((!dd.box_geo.periodic(i) or (pos[i] < dd.box_geo.length()[i])) &&
-          dd.local_geo.boundary()[2 * i + 1])
-        cpos[i] = dd.cell_grid[i];
+    } else if (cpos[i] > cell_grid[i]) {
+      if ((!box_geo.periodic(i) or (pos[i] < box_geo.length()[i])) &&
+          local_geo.boundary()[2 * i + 1])
+        cpos[i] = cell_grid[i];
       else
         return nullptr;
     }
   }
 
-  auto const ind = get_linear_index(cpos, dd.ghost_cell_grid);
-  return &(dd.cells.at(ind));
+  auto const ind = get_linear_index(cpos, ghost_cell_grid);
+  return &(cells.at(ind));
 }
 
 /*@}*/
@@ -523,8 +517,9 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.particle_to_cell = [](const Particle &p) {
-    return dd_save_position_to_cell(p.r.p);
+    return dd.position_to_cell(p.r.p);
   };
+  cell_structure.max_range = dd.max_range();
 
   /* set up new domain decomposition cell structure */
   dd_create_cell_grid(range);
@@ -552,25 +547,10 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
   cell_structure.collect_ghost_force_comm = dd.m_collect_ghost_force_comm;
 }
 
-namespace {
-
-/**
- * @brief Move particles into the cell system if it belongs to this node.
- *
- * Moves all particles from src into the local cell
- * system if they do belong here. Otherwise the
- * particles are moved into rest.
- *
- * @param src Particles to move.
- * @param rest Output list for left-over particles.
- * @param modified_cells Local cells that were touched.
- */
-void move_if_local(ParticleList &src, ParticleList &rest,
-                   std::vector<Cell *> &modified_cells) {
+void DomainDecomposition::move_if_local(ParticleList &src, ParticleList &rest,
+                                        std::vector<Cell *> &modified_cells) {
   for (auto &part : src) {
-    assert(cell_structure.get_local_particle(part.p.identity) == nullptr);
-
-    auto target_cell = dd_save_position_to_cell(part.r.p);
+    auto target_cell = position_to_cell(part.r.p);
 
     if (target_cell) {
       target_cell->particles().insert(std::move(part));
@@ -596,22 +576,23 @@ void move_if_local(ParticleList &src, ParticleList &rest,
  * @param right Particles that should go to the right
  * @param dir Direction to consider.
  */
-void move_left_or_right(ParticleList &src, ParticleList &left,
-                        ParticleList &right, int dir) {
+void DomainDecomposition::move_left_or_right(ParticleList &src,
+                                             ParticleList &left,
+                                             ParticleList &right,
+                                             int dir) const {
   for (auto it = src.begin(); it != src.end();) {
     assert(cell_structure.get_local_particle(it->p.identity) == nullptr);
 
-    if ((get_mi_coord(it->r.p[dir], dd.local_geo.my_left()[dir],
-                      dd.box_geo.length()[dir],
-                      dd.box_geo.periodic(dir)) < 0.0) and
-        (dd.box_geo.periodic(dir) || (dd.local_geo.boundary()[2 * dir] == 0))) {
+    if ((get_mi_coord(it->r.p[dir], local_geo.my_left()[dir],
+                      box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) and
+        (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0))) {
       left.insert(std::move(*it));
       it = src.erase(it);
-    } else if ((get_mi_coord(it->r.p[dir], dd.local_geo.my_right()[dir],
-                             dd.box_geo.length()[dir],
-                             dd.box_geo.periodic(dir)) >= 0.0) and
-               (dd.box_geo.periodic(dir) ||
-                (dd.local_geo.boundary()[2 * dir + 1] == 0))) {
+    } else if ((get_mi_coord(it->r.p[dir], local_geo.my_right()[dir],
+                             box_geo.length()[dir],
+                             box_geo.periodic(dir)) >= 0.0) and
+               (box_geo.periodic(dir) ||
+                (local_geo.boundary()[2 * dir + 1] == 0))) {
       right.insert(std::move(*it));
       it = src.erase(it);
     } else {
@@ -619,11 +600,9 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
     }
   }
 }
-} // namespace
 
-static void exchange_neighbors(
-    ParticleList *pl, std::vector<Cell *> &modified_cells) {
-  auto const& comm = dd.comm;
+void DomainDecomposition::exchange_neighbors(
+    ParticleList &pl, std::vector<Cell *> &modified_cells) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
   static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
@@ -635,7 +614,7 @@ static void exchange_neighbors(
          the same, and we need only one communication */
     }
     if (Utils::Mpi::cart_get<3>(comm).dims[dir] == 2) {
-      move_left_or_right(*pl, send_buf_l, send_buf_l, dir);
+      move_left_or_right(pl, send_buf_l, send_buf_l, dir);
 
       Utils::Mpi::sendrecv(comm, node_neighbors[2 * dir], 0, send_buf_l,
                            node_neighbors[2 * dir], 0, recv_buf_l);
@@ -645,13 +624,12 @@ static void exchange_neighbors(
       using boost::mpi::request;
       using Utils::Mpi::isendrecv;
 
-      move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
+      move_left_or_right(pl, send_buf_l, send_buf_r, dir);
 
-      auto req_l = isendrecv(dd.comm, node_neighbors[2 * dir], 0, send_buf_l,
+      auto req_l = isendrecv(comm, node_neighbors[2 * dir], 0, send_buf_l,
                              node_neighbors[2 * dir], 0, recv_buf_l);
-      auto req_r =
-          isendrecv(dd.comm, node_neighbors[2 * dir + 1], 0, send_buf_r,
-                    node_neighbors[2 * dir + 1], 0, recv_buf_r);
+      auto req_r = isendrecv(comm, node_neighbors[2 * dir + 1], 0, send_buf_r,
+                             node_neighbors[2 * dir + 1], 0, recv_buf_r);
 
       std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
       boost::mpi::wait_all(reqs.begin(), reqs.end());
@@ -660,16 +638,15 @@ static void exchange_neighbors(
       send_buf_r.clear();
     }
 
-    move_if_local(recv_buf_l, *pl, modified_cells);
-    move_if_local(recv_buf_r, *pl, modified_cells);
+    move_if_local(recv_buf_l, pl, modified_cells);
+    move_if_local(recv_buf_r, pl, modified_cells);
   }
 }
 
-void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    std::vector<Cell *> &modified_cells) {
+void DomainDecomposition::resort(bool global, ParticleList &pl,
+                                 std::vector<Cell *> &modified_cells) {
   if (global) {
-    auto const grid = Utils::Mpi::cart_get<3>(dd.comm).dims;
-
+    auto const grid = Utils::Mpi::cart_get<3>(comm).dims;
     /* Worst case we need grid - 1 rounds per direction.
      * This correctly implies that if there is only one node,
      * no action should be taken. */
@@ -678,7 +655,7 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
       exchange_neighbors(pl, modified_cells);
 
       auto left_over =
-          boost::mpi::all_reduce(dd.comm, pl->size(), std::plus<size_t>());
+          boost::mpi::all_reduce(comm, pl.size(), std::plus<size_t>());
 
       if (left_over == 0) {
         break;
@@ -687,6 +664,11 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
   } else {
     exchange_neighbors(pl, modified_cells);
   }
+}
+
+void dd_exchange_and_sort_particles(int global, ParticleList *pl,
+                                    std::vector<Cell *> &modified_cells) {
+  dd.resort(global, (assert(pl), *pl), modified_cells);
 }
 
 /************************************************************/
