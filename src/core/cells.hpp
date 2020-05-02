@@ -109,9 +109,6 @@ void cells_on_geometry_change(bool fast);
  */
 void cells_update_ghosts(unsigned data_parts);
 
-/** Calculate and return the total number of particles on this node. */
-int cells_get_n_particles();
-
 /**
  * @brief Get pairs closer than @p distance from the cells.
  *

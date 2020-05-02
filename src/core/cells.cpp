@@ -208,14 +208,6 @@ void cells_re_init(int new_cs, double range) {
 
 /*************************************************/
 
-int cells_get_n_particles() {
-  return std::accumulate(
-      cell_structure.m_local_cells.begin(), cell_structure.m_local_cells.end(),
-      0, [](int n, const Cell *c) { return n + c->particles().size(); });
-}
-
-/*************************************************/
-
 namespace {
 /**
  * @brief Fold coordinates to box and reset the old position.
