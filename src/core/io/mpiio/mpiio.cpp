@@ -151,7 +151,7 @@ static void dump_info(const std::string &fn, unsigned fields) {
 void mpi_mpiio_common_write(const char *filename, unsigned fields,
                             const ParticleRange &particles) {
   std::string fnam(filename);
-  int nlocalpart = cells_get_n_particles(), pref = 0, bpref = 0;
+  int nlocalpart = particles.size(), pref = 0, bpref = 0;
   int rank;
   // Keep static buffers in order not having to allocate them on every
   // function call
