@@ -2,8 +2,10 @@
 
 #include "errorhandling.hpp"
 
-#include <boost/mpi/collectives.hpp>
 #include <utils/mpi/sendrecv.hpp>
+
+#include <boost/mpi/collectives.hpp>
+#include <boost/range/algorithm/reverse.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
@@ -184,10 +186,6 @@ void DomainDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
 }
 Utils::Vector3d DomainDecomposition::max_range() const {
   auto dir_max_range = [this](int i) {
-    if (fully_connected[i]) {
-      return std::numeric_limits<double>::infinity();
-    }
-
     return std::min(0.5 * box_geo.length()[i], local_geo.length()[i]);
   };
 
@@ -324,13 +322,6 @@ void DomainDecomposition::init_cell_interactions() {
         int lower_index[3] = {m - 1, n - 1, o - 1};
         int upper_index[3] = {m + 1, n + 1, o + 1};
 
-        for (int i = 0; i < 3; i++) {
-          if (fully_connected[i]) {
-            lower_index[i] = 0;
-            upper_index[i] = ghost_cell_grid[i] - 1;
-          }
-        }
-
         for (int p = lower_index[2]; p <= upper_index[2]; p++)
           for (int q = lower_index[1]; q <= upper_index[1]; q++)
             for (int r = lower_index[0]; r <= upper_index[0]; r++) {
@@ -344,4 +335,259 @@ void DomainDecomposition::init_cell_interactions() {
         cells.at(ind1).m_neighbors =
             Neighbors<Cell *>(red_neighbors, black_neighbors);
       }
+}
+
+namespace {
+/** Revert the order of a communicator: After calling this the
+ *  communicator is working in reverted order with exchanged
+ *  communication types GHOST_SEND <-> GHOST_RECV.
+ */
+void revert_comm_order(GhostCommunicator &comm) {
+  /* revert order */
+  boost::reverse(comm.communications);
+
+  /* exchange SEND/RECV */
+  for (auto &c : comm.communications) {
+    if (c.type == GHOST_SEND)
+      c.type = GHOST_RECV;
+    else if (c.type == GHOST_RECV)
+      c.type = GHOST_SEND;
+    else if (c.type == GHOST_LOCL) {
+      boost::reverse(c.part_lists);
+    }
+  }
+}
+
+/** Of every two communication rounds, set the first receivers to prefetch and
+ *  poststore
+ */
+void assign_prefetches(GhostCommunicator &comm) {
+  for (auto it = comm.communications.begin(); it != comm.communications.end();
+       it += 2) {
+    auto next = std::next(it);
+    if (it->type == GHOST_RECV && next->type == GHOST_SEND) {
+      it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+      next->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+    }
+  }
+}
+
+/* Calc the ghost shift vector for dim dir in direction lr */
+Utils::Vector3d shift(BoxGeometry const &box, LocalBox<double> const &local_box,
+                      int dir, int lr) {
+  Utils::Vector3d ret{};
+
+  /* Shift is non-zero only in periodic directions, if we are at the box
+   * boundary */
+  ret[dir] = box.periodic(dir) * local_box.boundary()[2 * dir + lr] *
+             box.length()[dir];
+
+  return ret;
+}
+} // namespace
+
+GhostCommunicator DomainDecomposition::prepare_comm() {
+  int dir, lr, i, cnt, n_comm_cells[3];
+  Utils::Vector3i lc{}, hc{}, done{};
+
+  auto const comm_info = Utils::Mpi::cart_get<3>(comm);
+  auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
+
+  /* calculate number of communications */
+  size_t num = 0;
+  for (dir = 0; dir < 3; dir++) {
+    for (lr = 0; lr < 2; lr++) {
+      /* No communication for border of non periodic direction */
+      if (comm_info.dims[dir] == 1)
+        num++;
+      else
+        num += 2;
+    }
+  }
+
+  /* prepare communicator */
+  auto ghost_comm = GhostCommunicator{comm, num};
+
+  /* number of cells to communicate in a direction */
+  n_comm_cells[0] = cell_grid[1] * cell_grid[2];
+  n_comm_cells[1] = cell_grid[2] * ghost_cell_grid[0];
+  n_comm_cells[2] = ghost_cell_grid[0] * ghost_cell_grid[1];
+
+  cnt = 0;
+  /* direction loop: x, y, z */
+  for (dir = 0; dir < 3; dir++) {
+    lc[(dir + 1) % 3] = 1 - done[(dir + 1) % 3];
+    lc[(dir + 2) % 3] = 1 - done[(dir + 2) % 3];
+    hc[(dir + 1) % 3] = cell_grid[(dir + 1) % 3] + done[(dir + 1) % 3];
+    hc[(dir + 2) % 3] = cell_grid[(dir + 2) % 3] + done[(dir + 2) % 3];
+    /* lr loop: left right */
+    /* here we could in principle build in a one sided ghost
+       communication, simply by taking the lr loop only over one
+       value */
+    for (lr = 0; lr < 2; lr++) {
+      if (comm_info.dims[dir] == 1) {
+        /* just copy cells on a single node */
+        ghost_comm.communications[cnt].type = GHOST_LOCL;
+        ghost_comm.communications[cnt].node = comm.rank();
+
+        /* Buffer has to contain Send and Recv cells -> factor 2 */
+        ghost_comm.communications[cnt].part_lists.resize(2 * n_comm_cells[dir]);
+        /* prepare folding of ghost positions */
+        ghost_comm.communications[cnt].shift =
+            shift(box_geo, local_geo, dir, lr);
+
+        /* fill send ghost_comm cells */
+        lc[dir] = hc[dir] = 1 + lr * (cell_grid[dir] - 1);
+
+        fill_comm_cell_lists(ghost_comm.communications[cnt].part_lists.data(),
+                             lc, hc);
+
+        /* fill recv ghost_comm cells */
+        lc[dir] = hc[dir] = 0 + (1 - lr) * (cell_grid[dir] + 1);
+
+        /* place receive cells after send cells */
+        fill_comm_cell_lists(
+            &ghost_comm.communications[cnt].part_lists[n_comm_cells[dir]], lc,
+            hc);
+
+        cnt++;
+      } else {
+        /* i: send/recv loop */
+        for (i = 0; i < 2; i++) {
+          if ((comm_info.coords[dir] + i) % 2 == 0) {
+            ghost_comm.communications[cnt].type = GHOST_SEND;
+            ghost_comm.communications[cnt].node = node_neighbors[2 * dir + lr];
+            ghost_comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
+            /* prepare folding of ghost positions */
+            ghost_comm.communications[cnt].shift =
+                shift(box_geo, local_geo, dir, lr);
+
+            lc[dir] = hc[dir] = 1 + lr * (cell_grid[dir] - 1);
+
+            fill_comm_cell_lists(
+                ghost_comm.communications[cnt].part_lists.data(), lc, hc);
+            cnt++;
+          }
+          if ((comm_info.coords[dir] + (1 - i)) % 2 == 0) {
+            ghost_comm.communications[cnt].type = GHOST_RECV;
+            ghost_comm.communications[cnt].node =
+                node_neighbors[2 * dir + (1 - lr)];
+            ghost_comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
+
+            lc[dir] = hc[dir] = (1 - lr) * (cell_grid[dir] + 1);
+
+            fill_comm_cell_lists(
+                ghost_comm.communications[cnt].part_lists.data(), lc, hc);
+            cnt++;
+          }
+        }
+      }
+      done[dir] = 1;
+    }
+  }
+
+  return ghost_comm;
+}
+
+void DomainDecomposition::update_communicators_w_boxl() {
+  auto const cart_info = Utils::Mpi::cart_get<3>(comm);
+
+  int cnt = 0;
+  /* direction loop: x, y, z */
+  for (int dir = 0; dir < 3; dir++) {
+    /* lr loop: left right */
+    for (int lr = 0; lr < 2; lr++) {
+      if (cart_info.dims[dir] == 1) {
+        /* prepare folding of ghost positions */
+        if (local_geo.boundary()[2 * dir + lr] != 0) {
+          m_exchange_ghosts_comm.communications[cnt].shift =
+              shift(box_geo, local_geo, dir, lr);
+        }
+        cnt++;
+      } else {
+        /* i: send/recv loop */
+        for (int i = 0; i < 2; i++) {
+          if ((cart_info.coords[dir] + i) % 2 == 0) {
+            /* prepare folding of ghost positions */
+            if (local_geo.boundary()[2 * dir + lr] != 0) {
+              m_exchange_ghosts_comm.communications[cnt].shift =
+                  shift(box_geo, local_geo, dir, lr);
+            }
+            cnt++;
+          }
+          if ((cart_info.coords[dir] + (1 - i)) % 2 == 0) {
+            cnt++;
+          }
+        }
+      }
+    }
+  }
+}
+
+bool DomainDecomposition::on_geometry_change(
+    bool fast, double range, const BoxGeometry &new_box_geo,
+    const LocalBox<double> &new_local_geo) {
+  /* check that the CPU domains are still sufficiently large. */
+  for (int i = 0; i < 3; i++)
+    if (new_local_geo.length()[i] < range) {
+      return false;
+    }
+
+  double min_cell_size =
+      std::min(std::min(cell_size[0], cell_size[1]), cell_size[2]);
+
+  /* If new box length leads to too small cells, redo cell structure
+   using smaller number of cells. If we are not in a hurry, check if we can
+   maybe optimize the cell system by using smaller cells. */
+  auto const re_init = (range > min_cell_size) or ((not fast) and [&]() {
+                         for (int i = 0; i < 3; i++) {
+                           auto const poss_size = static_cast<int>(
+                               floor(new_local_geo.length()[i] / range));
+                           if (poss_size > cell_grid[i])
+                             return true;
+                         }
+                         return false;
+                       }());
+
+  if (re_init) {
+    return false;
+  }
+
+  box_geo = new_box_geo;
+  local_geo = new_local_geo;
+
+  /* otherwise, re-set our geometrical dimensions which have changed */
+  for (int i = 0; i < 3; i++) {
+    cell_size[i] = local_geo.length()[i] / (double)cell_grid[i];
+    inv_cell_size[i] = 1.0 / cell_size[i];
+  }
+
+  update_communicators_w_boxl();
+
+  return true;
+}
+
+DomainDecomposition::DomainDecomposition(const boost::mpi::communicator &comm,
+                                         double range,
+                                         const BoxGeometry &box_geo,
+                                         const LocalBox<double> &local_geo)
+    : comm(comm), box_geo(box_geo), local_geo(local_geo) {
+  /* set up new domain decomposition cell structure */
+  create_cell_grid(range);
+
+  /* setup cell neighbors */
+  init_cell_interactions();
+
+  /* mark local and ghost cells */
+  mark_cells();
+
+  /* create communicators */
+  m_exchange_ghosts_comm = prepare_comm();
+  m_collect_ghost_force_comm = prepare_comm();
+
+  /* collect forces has to be done in reverted order! */
+  revert_comm_order(m_collect_ghost_force_comm);
+
+  assign_prefetches(m_exchange_ghosts_comm);
+  assign_prefetches(m_collect_ghost_force_comm);
 }

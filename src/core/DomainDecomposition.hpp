@@ -16,6 +16,9 @@
  */
 struct DomainDecomposition : public ParticleDecomposition {
   DomainDecomposition() = default;
+  DomainDecomposition(const boost::mpi::communicator &comm, double range,
+                      const BoxGeometry &box_geo,
+                      const LocalBox<double> &local_geo);
 
   /** Offset in global grid */
   Utils::Vector3i cell_offset = {};
@@ -27,7 +30,6 @@ struct DomainDecomposition : public ParticleDecomposition {
   Utils::Vector3d cell_size = {};
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   Utils::Vector3d inv_cell_size = {};
-  bool fully_connected[3] = {false, false, false};
 
   boost::mpi::communicator comm;
   BoxGeometry box_geo;
@@ -131,29 +133,43 @@ public:
   void resort(bool global, ParticleList &pl,
               std::vector<Cell *> &modified_cells) override;
 
-/**
- *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
- *
- *  Calculates the cell grid, based on \ref local_geo and \p range.
- *  If the number of cells is larger than \ref max_num_cells,
- *  it increases max_range until the number of cells is
- *  smaller or equal \ref max_num_cells. It sets:
- *  \ref DomainDecomposition::cell_grid,
- *  \ref DomainDecomposition::ghost_cell_grid,
- *  \ref DomainDecomposition::cell_size, and
- *  \ref DomainDecomposition::inv_cell_size.
- *
- *  @param range Required interacting range. All pairs closer
- *         than this distance are found.
- */
+  /**
+   *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
+   *
+   *  Calculates the cell grid, based on \ref local_geo and \p range.
+   *  If the number of cells is larger than \ref max_num_cells,
+   *  it increases max_range until the number of cells is
+   *  smaller or equal \ref max_num_cells. It sets:
+   *  \ref DomainDecomposition::cell_grid,
+   *  \ref DomainDecomposition::ghost_cell_grid,
+   *  \ref DomainDecomposition::cell_size, and
+   *  \ref DomainDecomposition::inv_cell_size.
+   *
+   *  @param range Required interacting range. All pairs closer
+   *         than this distance are found.
+   */
   void create_cell_grid(double range);
 
-/** Init cell interactions for cell system domain decomposition.
- * initializes the interacting neighbor cell list of a cell The
- * created list of interacting neighbor cells is used by the Verlet
- * algorithm.
- */
+  /** Init cell interactions for cell system domain decomposition.
+   * initializes the interacting neighbor cell list of a cell The
+   * created list of interacting neighbor cells is used by the Verlet
+   * algorithm.
+   */
   void init_cell_interactions();
+
+  /** Create communicators for cell structure domain decomposition. (see \ref
+   *  GhostCommunicator)
+   */
+  GhostCommunicator prepare_comm();
+
+  /** update the 'shift' member of those GhostCommunicators, which use
+   *  that value to speed up the folding process of its ghost members
+   *  (see \ref dd_prepare_comm for the original).
+   */
+  void update_communicators_w_boxl();
+
+  bool on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
+                          const LocalBox<double> &local_geo);
 
 public:
   /** Maximal number of cells per node. In order to avoid memory

@@ -333,13 +333,9 @@ void cells_on_geometry_change(bool fast) {
   auto const range = interaction_range();
   cell_structure.min_range = range;
 
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_DOMDEC:
-    if (not dd_on_geometry_change(fast, range, box_geo, local_geo))
-      cells_re_init(CELL_STRUCTURE_DOMDEC, range);
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    break;
+  if (not cell_structure.m_decomposition->on_geometry_change(
+          fast, range, box_geo, local_geo)) {
+    cells_re_init(cell_structure.type, range);
   }
 }
 

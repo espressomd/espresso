@@ -43,9 +43,8 @@ cdef extern from "tuning.hpp":
     cdef void c_tune_skin "tune_skin" (double min_skin, double max_skin, double tol, int int_steps, bool adjust_max_skin)
 
 cdef extern from "domain_decomposition.hpp":
-    ctypedef struct  DomainDecomposition:
-        int cell_grid[3]
+    cppclass  DomainDecomposition:
+        Vector3i cell_grid
         double cell_size[3]
-        bool fully_connected[3]
 
     extern DomainDecomposition dd

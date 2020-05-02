@@ -79,20 +79,6 @@ extern DomainDecomposition dd;
 /************************************************************/
 /*@{*/
 
-/** adjust the domain decomposition to a change in the geometry.
- *  Tries to speed up things if possible. If function will fail,
- *  in which case it returns false, and in this case no changes
- *  to the cell system are made. If the change succeeds, all
- *  pointers into the cell system stay valid.
- *
- *  @param fast If true do not optimize the cell size but
- *              return asap.
- *  @param range Desired interaction range
- *  @return If the change was possible.
- */
-bool dd_on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
-                           const LocalBox<double> &local_geo);
-
 /** Initialize the topology. The argument is a list of cell pointers,
  *  containing particles that have to be sorted into new cells. The
  *  particles might not belong to this node. This procedure is used
