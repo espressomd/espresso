@@ -95,7 +95,7 @@ static size_t calc_transmit_size(unsigned data_parts) {
   return size;
 }
 
-static size_t calc_transmit_size(GhostCommunication &ghost_comm,
+static size_t calc_transmit_size(const GhostCommunication &ghost_comm,
                                  unsigned int data_parts) {
   if (data_parts & GHOSTTRANS_PARTNUM)
     return sizeof(int) * ghost_comm.part_lists.size();
@@ -108,7 +108,7 @@ static size_t calc_transmit_size(GhostCommunication &ghost_comm,
 }
 
 static void prepare_send_buffer(CommBuf &send_buffer,
-                                GhostCommunication &ghost_comm,
+                                const GhostCommunication &ghost_comm,
                                 unsigned int data_parts) {
   /* reallocate send buffer */
   send_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
@@ -165,7 +165,7 @@ static void prepare_ghost_cell(ParticleList *cell, int size) {
 }
 
 static void prepare_recv_buffer(CommBuf &recv_buffer,
-                                GhostCommunication &ghost_comm,
+                                const GhostCommunication &ghost_comm,
                                 unsigned int data_parts) {
   /* reallocate recv buffer */
   recv_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
@@ -174,7 +174,7 @@ static void prepare_recv_buffer(CommBuf &recv_buffer,
 }
 
 static void put_recv_buffer(CommBuf &recv_buffer,
-                            GhostCommunication &ghost_comm,
+                            const GhostCommunication &ghost_comm,
                             unsigned int data_parts) {
   /* put back data */
   auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
@@ -222,7 +222,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
 }
 
 static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
-                                        GhostCommunication &ghost_comm) {
+                                        const GhostCommunication &ghost_comm) {
   /* put back data */
   auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
   for (auto &part_list : ghost_comm.part_lists) {
@@ -234,7 +234,7 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
   }
 }
 
-static void cell_cell_transfer(GhostCommunication &ghost_comm,
+static void cell_cell_transfer(const GhostCommunication &ghost_comm,
                                unsigned int data_parts) {
   /* transfer data */
   auto const offset = ghost_comm.part_lists.size() / 2;
@@ -301,7 +301,7 @@ static bool is_poststorable(GhostCommunication const &ghost_comm,
   return is_recv_op(comm_type, node, this_node) && poststore;
 }
 
-void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
+void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
   if (GHOSTTRANS_NONE == data_parts)
     return;
 
@@ -311,7 +311,7 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
 
   for (auto it = gcr->communications.begin(); it != gcr->communications.end();
        ++it) {
-    GhostCommunication &ghost_comm = *it;
+    const GhostCommunication &ghost_comm = *it;
     int const comm_type = ghost_comm.type & GHOST_JOBMASK;
 
     if (comm_type == GHOST_LOCL) {
