@@ -474,13 +474,6 @@ public:
                                 double range, BoxGeometry const &box,
                                 LocalBox<double> const &local_geo);
 
-  /**
-   * @brief Return true if minimum image convention is
-   *        needed for distance calculation. */
-  bool minimum_image_distance() const {
-    return m_decomposition->minimum_image_distance();
-  }
-
 public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
     for (auto &p : local_particles()) {
