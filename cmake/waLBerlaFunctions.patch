@@ -1,0 +1,10 @@
+--- cmake/waLBerlaFunctions.cmake	2020-02-11 19:08:53.541272000 +0100
++++ cmake/waLBerlaFunctions.cmake	2020-02-11 19:09:48.780645185 +0100
+@@ -101,6 +101,7 @@
+             cuda_add_library( ${moduleLibraryName} STATIC ${sourceFiles} ${generatedSourceFiles} ${generatorSourceFiles} ${otherFiles} )
+         else()
+             add_library( ${moduleLibraryName} STATIC ${sourceFiles} ${generatedSourceFiles} ${generatorSourceFiles} ${otherFiles} )
+         endif( CUDA_FOUND )
++        add_library(walberla::${moduleLibraryName} ALIAS ${moduleLibraryName})
+ 
+         set_source_files_properties( ${generatedSourceFiles} PROPERTIES GENERATED TRUE )
