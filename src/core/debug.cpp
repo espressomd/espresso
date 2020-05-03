@@ -24,15 +24,13 @@
 
 #include "debug.hpp"
 
-#include "cells.hpp"
-
 #include <stdexcept>
 
-void check_particle_consistency() {
-  auto local_particles = cell_structure.local_particles();
+void check_particle_consistency(CellStructure &cs) {
+  auto local_particles = cs.local_particles();
   auto const cell_part_cnt = local_particles.size();
 
-  auto const max_id = cell_structure.get_max_local_particle_id();
+  auto const max_id = cs.get_max_local_particle_id();
 
   for (auto const &p : local_particles) {
     auto const id = p.identity();
@@ -41,17 +39,17 @@ void check_particle_consistency() {
       throw std::runtime_error("Particle id out of bounds.");
     }
 
-    if (cell_structure.get_local_particle(id) != &p) {
+    if (cs.get_local_particle(id) != &p) {
       throw std::runtime_error("Invalid local particle index entry.");
     }
   }
 
   /* checks: local particle id */
   int local_part_cnt = 0;
-  for (int n = 0; n < cell_structure.get_max_local_particle_id() + 1; n++) {
-    if (cell_structure.get_local_particle(n) != nullptr) {
+  for (int n = 0; n < cs.get_max_local_particle_id() + 1; n++) {
+    if (cs.get_local_particle(n) != nullptr) {
       local_part_cnt++;
-      if (cell_structure.get_local_particle(n)->p.identity != n) {
+      if (cs.get_local_particle(n)->p.identity != n) {
         throw std::runtime_error("local_particles part has corrupted id.");
       }
     }
@@ -64,10 +62,10 @@ void check_particle_consistency() {
   }
 }
 
-void check_particle_sorting() {
-  for (auto cell : cell_structure.local_cells()) {
+void check_particle_sorting(CellStructure &cs) {
+  for (auto cell : cs.local_cells()) {
     for (auto const &p : cell->particles()) {
-      if (cell_structure.particle_to_cell(p) != cell) {
+      if (cs.particle_to_cell(p) != cell) {
         throw std::runtime_error("misplaced particle with id " +
                                  std::to_string(p.identity()));
       }

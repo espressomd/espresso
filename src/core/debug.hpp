@@ -26,10 +26,11 @@
 #ifndef DEBUG_HPP
 #define DEBUG_HPP
 
+#include "CellStructure.hpp"
 /** this performs a lot of tests which will very likely detect corruptions of
  *  the cell structure.
  */
-void check_particle_consistency();
+void check_particle_consistency(CellStructure &cs);
 
 /**
  * @brief Check if particles are in correct cells.
@@ -37,6 +38,6 @@ void check_particle_consistency();
  * Check that particles are in the cells the cellsystem says
  * they should be.
  */
-void check_particle_sorting();
+void check_particle_sorting(CellStructure &cs);
 
 #endif
