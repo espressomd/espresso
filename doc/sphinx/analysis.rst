@@ -502,6 +502,8 @@ documentation for all available observables in :mod:`espressomd.observables`.
    - :class:`~espressomd.observables.CosPersistenceAngles`: Cosine of angles between bonds. The ``i``-th value in the result vector corresponds to the cosine of the angle between
      bonds that are separated by ``i`` bonds. This observable might be useful for measuring the persistence length of a polymer.
 
+   - :class:`~espressomd.observables.RDF`: Radial distribution function. Can be used on two different sets of particles.
+
 - Profile observables sampling the spatial profile of various quantities:
 
    - :class:`~espressomd.observables.DensityProfile`

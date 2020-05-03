@@ -883,3 +883,31 @@ class CylindricalLBVelocityProfile(ProfileObservable):
 
     """
     _so_name = "Observables::CylindricalLBVelocityProfile"
+
+
+@script_interface_register
+class RDF(Observable):
+
+    """Calculates a radial distribution function.
+    The result is normalized by the bulk concentration.
+
+    Parameters
+    ----------
+    ids1 : array_like of :obj:`int`
+        The ids of (existing) particles to calculate the distance from.
+    ids2 : array_like of :obj:`int`
+        The ids of (existing) particles to calculate the distance to.
+    n_r_bins : :obj:`int`
+        Number of bins in radial direction.
+    min_r : :obj:`float`
+        Minimum ``r`` to consider.
+    max_r : :obj:`float`
+        Maximum ``r`` to consider.
+
+    Returns
+    -------
+    (``n_r_bins``,) :obj:`ndarray` of :obj:`float`
+        The RDF.
+
+    """
+    _so_name = "Observables::RDF"
