@@ -45,7 +45,7 @@ void short_range_loop(PairKernel pair_kernel,
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   if (interaction_range() != INACTIVE_CUTOFF) {
-    cell_structure.pair_loop(pair_kernel, verlet_criterion);
+    cell_structure.non_bonded_loop(pair_kernel, verlet_criterion);
   }
 }
 
