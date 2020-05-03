@@ -142,7 +142,7 @@ static auto dpd_viscous_stress_local() {
   on_observable_calc();
 
   Utils::Vector<Vector3d, 3> stress{};
-  short_range_loop(
+  cell_structure.non_bonded_loop(
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
         auto const v21 = p1.m.v - p2.m.v;
 
@@ -159,8 +159,7 @@ static auto dpd_viscous_stress_local() {
         auto const f = P * (f_r - f_t) + f_t;
 
         stress += tensor_product(d.vec21, f);
-      },
-      {});
+      });
 
   return stress;
 }
