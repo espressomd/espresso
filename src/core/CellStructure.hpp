@@ -361,9 +361,6 @@ public:
       }
     }
   }
-
-
-
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP
