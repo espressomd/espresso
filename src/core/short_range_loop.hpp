@@ -37,18 +37,6 @@ struct True {
 };
 } // namespace detail
 
-template <class PairKernel, class VerletCriterion = detail::True>
-void short_range_loop(PairKernel pair_kernel,
-                      const VerletCriterion &verlet_criterion) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-
-  assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
-
-  if (interaction_range() != INACTIVE_CUTOFF) {
-    cell_structure.non_bonded_loop(pair_kernel, verlet_criterion);
-  }
-}
-
 template <class BondKernel, class PairKernel,
           class VerletCriterion = detail::True>
 void short_range_loop(BondKernel bond_kernel, PairKernel pair_kernel,
@@ -58,7 +46,6 @@ void short_range_loop(BondKernel bond_kernel, PairKernel pair_kernel,
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   cell_structure.bond_loop(bond_kernel);
-
-  short_range_loop(pair_kernel, verlet_criterion);
+  cell_structure.non_bonded_loop(pair_kernel, verlet_criterion);
 }
 #endif

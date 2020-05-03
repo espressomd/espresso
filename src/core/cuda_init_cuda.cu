@@ -21,7 +21,6 @@
 
 #include "cuda_init.hpp"
 #include "cuda_utils.hpp"
-#include "debug.hpp"
 
 #include <utils/constants.hpp>
 
