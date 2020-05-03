@@ -90,7 +90,9 @@ public:
   Utils::Vector3d max_range() const override;
   /* Return true if minimum image convention is
    * needed for distance calculation. */
-  bool minimum_image_distance() const override { return true; }
+  boost::optional<BoxGeometry> minimum_image_distance() const override {
+    return m_box;
+  }
 
 private:
   /**
@@ -124,13 +126,6 @@ private:
    * @brief Determine which rank owns a particle id.
    */
   int id_to_rank(int id) const { return id % comm.size(); }
-
-  bool on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
-                          const LocalBox<double> &local_geo) {
-    /* This decomposition does is not affected by geometry, and this always
-     * succeeds. */
-    return true;
-  }
 };
 
 #endif

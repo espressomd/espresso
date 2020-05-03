@@ -42,8 +42,6 @@
 
 #include <vector>
 
-class ParticleDecomposition;
-
 /** Cell Structure */
 enum CellStructureType : int {
   /** cell structure domain decomposition */
@@ -476,13 +474,6 @@ public:
                                 double range, BoxGeometry const &box,
                                 LocalBox<double> const &local_geo);
 
-  /**
-   * @brief Return true if minimum image convention is
-   *        needed for distance calculation. */
-  bool minimum_image_distance() const {
-    return m_decomposition->minimum_image_distance();
-  }
-
 public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
     for (auto &p : local_particles()) {
@@ -490,6 +481,10 @@ public:
     }
   }
 
+private:
+  template <class Kernel> void link_cell(Kernel kernel) {}
+
+public:
   template <class PairKernel, class DistanceFunction, class VerletCriterion>
   void pair_loop(PairKernel &&pair_kernel, DistanceFunction df,
                  const VerletCriterion &verlet_criterion) {
