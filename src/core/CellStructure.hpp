@@ -84,6 +84,32 @@ inline ParticleRange particles(Utils::Span<Cell *> cells) {
 }
 } // namespace Cells
 
+/**
+ * @brief Distance vector and length handed to pair kernels.
+ */
+struct Distance {
+  explicit Distance(Utils::Vector3d const &vec21)
+      : vec21(vec21), dist2(vec21.norm2()) {}
+
+  Utils::Vector3d vec21;
+  double dist2;
+};
+namespace detail {
+struct MinimalImageDistance {
+  const BoxGeometry box;
+
+  Distance operator()(Particle const &p1, Particle const &p2) const {
+    return Distance(get_mi_vector(p1.r.p, p2.r.p, box));
+  }
+};
+
+struct EuclidianDistance {
+  Distance operator()(Particle const &p1, Particle const &p2) const {
+    return Distance(p1.r.p - p2.r.p);
+  }
+};
+} // namespace detail
+
 /** Describes a cell structure / cell system. Contains information
  *  about the communication of cell contents (particles, ghosts, ...)
  *  between different nodes and the relation between particle
