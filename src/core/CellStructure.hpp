@@ -329,7 +329,7 @@ public:
    * @param partner_ids Ids to resolve.
    * @return Vector of Particle pointers.
    */
-  inline auto resolve_bond_partners(Utils::Span<const int> partner_ids) {
+  auto resolve_bond_partners(Utils::Span<const int> partner_ids) {
     boost::container::static_vector<Particle *, 4> partners;
     get_local_particles(partner_ids, std::back_inserter(partners));
 
@@ -361,6 +361,9 @@ public:
       }
     }
   }
+
+
+
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP

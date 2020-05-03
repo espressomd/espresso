@@ -14,10 +14,10 @@ public:
   /**
    * @brief Resort particles.
    *
-   * @param global_flag[in] Expect particles to be displaced by more than a
+   * @param[in] global_flag Expect particles to be displaced by more than a
    * local box size.
-   * @param displaced_parts[inout] Particles to be sorted
-   * @param modified_cells[out] Cells that have been touched.
+   * @param[inout] displaced_parts Particles to be sorted
+   * @param[out] modified_cells Cells that have been touched.
    */
   virtual void resort(bool global_flag, ParticleList &displaced_parts,
                       std::vector<Cell *> &modified_cells) = 0;
