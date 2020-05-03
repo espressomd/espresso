@@ -482,37 +482,68 @@ public:
   }
 
 private:
-  template <class Kernel> void link_cell(Kernel kernel) {}
+  /**
+   * @brief Run link_cell algorithm for local cells.
+   *
+   * @tparam Kernel Needs to be callable with (Particle, Particle, Distance).
+   * @param kernel Pair kernel functor.
+   */
+  template <class Kernel> void link_cell(Kernel kernel) {
+    auto const maybe_box = decomposition().minimum_image_distance();
+    auto const first = boost::make_indirect_iterator(local_cells().begin());
+    auto const last = boost::make_indirect_iterator(local_cells().end());
+
+    if (maybe_box) {
+      Algorithm::link_cell(
+          first, last,
+          [&kernel, df = detail::MinimalImageDistance{*maybe_box}](
+              Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
+    } else {
+      Algorithm::link_cell(
+          first, last,
+          [&kernel, df = detail::EuclidianDistance{}](
+              Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
+    }
+  }
 
 public:
-  template <class PairKernel, class DistanceFunction, class VerletCriterion>
-  void pair_loop(PairKernel &&pair_kernel, DistanceFunction df,
+  template <class PairKernel, class VerletCriterion>
+  void pair_loop(PairKernel &&pair_kernel,
                  const VerletCriterion &verlet_criterion) {
-    auto first = boost::make_indirect_iterator(local_cells().begin());
-    auto last = boost::make_indirect_iterator(local_cells().end());
-
+    /* In this case the verlet list update is attached to
+     * the pair kernel, and the verlet list is rebuild as
+     * we go. */
     if (use_verlet_list && m_rebuild_verlet_list) {
       m_verlet_list.clear();
 
-      Algorithm::link_cell(first, last,
-                           [&pair_kernel, &df, &verlet_criterion,
-                            this](Particle &p1, Particle &p2) {
-                             auto const d = df(p1, p2);
-                             if (verlet_criterion(p1, p2, d)) {
-                               m_verlet_list.emplace_back(&p1, &p2);
-                               pair_kernel(p1, p2, d);
-                             }
-                           });
+      link_cell([&pair_kernel, &verlet_criterion,
+                 this](Particle &p1, Particle &p2, Distance const &d) {
+        if (verlet_criterion(p1, p2, d)) {
+          m_verlet_list.emplace_back(&p1, &p2);
+          pair_kernel(p1, p2, d);
+        }
+      });
+
       m_rebuild_verlet_list = false;
     } else if (use_verlet_list && not m_rebuild_verlet_list) {
-      for (auto &pair : m_verlet_list) {
-        pair_kernel(*pair.first, *pair.second, df(*pair.first, *pair.second));
+      auto const maybe_box = decomposition().minimum_image_distance();
+      /* In this case the pair kernel is just run over the verlet list. */
+      if (maybe_box) {
+        auto const distance_function = detail::MinimalImageDistance{*maybe_box};
+        for (auto &pair : m_verlet_list) {
+          pair_kernel(*pair.first, *pair.second,
+                      distance_function(*pair.first, *pair.second));
+        }
+      } else {
+        auto const distance_function = detail::EuclidianDistance{};
+        for (auto &pair : m_verlet_list) {
+          pair_kernel(*pair.first, *pair.second,
+                      distance_function(*pair.first, *pair.second));
+        }
       }
     } else {
-      Algorithm::link_cell(first, last,
-                           [&pair_kernel, &df](Particle &p1, Particle &p2) {
-                             pair_kernel(p1, p2, df(p1, p2));
-                           });
+      /* No verlet lists, just run the kernel with pairs from the cells. */
+      link_cell(pair_kernel);
     }
   }
 };
