@@ -93,9 +93,6 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
                       const BoxGeometry &box_geo,
                       const LocalBox<double> &local_geo);
 
-void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    std::vector<Cell *> &modified_cells);
-
 /*@}*/
 
 #endif
