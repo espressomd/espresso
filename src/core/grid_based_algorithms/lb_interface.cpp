@@ -638,7 +638,8 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
                                "implemented for the CPU LB.");
     case (InterpolationOrder::linear):
       return mpi_call(::Communication::Result::one_rank,
-                      Walberla::get_velocity_at_pos, folded_pos);
+                      Walberla::get_velocity_at_pos,
+                      folded_pos / lb_lbfluid_get_agrid());
     }
 #endif
   }

@@ -451,7 +451,11 @@ public:
   // Velocity
   boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i node) const override {
-    auto const bc = get_block_and_cell(node, false);
+    boost::optional<bool> is_boundary = get_node_is_boundary(node);
+    if (is_boundary)    // is info available locally
+      if (*is_boundary) // is the node a boundary
+        return get_node_velocity_at_boundary(node);
+    auto const bc = get_block_and_cell(node, true);
     if (!bc)
       return {};
     auto const &vel_adaptor =
@@ -472,26 +476,22 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &pos) const override {
-    auto block = get_block(pos, true);
-    if (!block)
-      return {boost::none};
+    if (!pos_in_local_domain(pos))
+      return {};
     Utils::Vector3d v{0.0, 0.0, 0.0};
     interpolate_bspline_at_pos(
         pos, [this, &v, pos](const std::array<int, 3> node, double weight) {
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
-            auto const bc = get_block_and_cell(to_vector3i(node), true);
-            if (bc) {
-              auto const &vel_adaptor =
-                  (*bc).block->template getData<VelocityAdaptor>(
-                      m_velocity_adaptor_id);
-              v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
-            } else {
-              printf("Pos: %g %g %g, Node %d %d %d\n", pos[0], pos[1], pos[2],
-                     node[0], node[1], node[2]);
+            auto res =
+                get_node_velocity(Utils::Vector3i{{node[0], node[1], node[2]}});
+            if (!res) {
+              printf("Pos: %g %g %g, Node %d %d %d, weight %g\n", pos[0],
+                     pos[1], pos[2], node[0], node[1], node[2], weight);
               throw std::runtime_error("Access to LB velocity field failed.");
             }
+            v += *res * weight;
           }
         });
     return {v};

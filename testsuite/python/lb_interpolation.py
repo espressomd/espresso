@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import unittest_decorators as utx
-# import numpy as np WALBERLA TODO
-#import itertools
+import numpy as np
+import itertools
 import sys
 
 import espressomd
@@ -66,45 +66,46 @@ class LBInterpolation:
         self.system.lbboundaries.add(
             espressomd.lbboundaries.LBBoundary(shape=wall_shape2, velocity=velocity))
 
-# WALBERLA TODO
-#    def test_interpolated_velocity(self):
-#        """
-#        Check that the interpolated LB fluid velocity is zero between boundary
-#        node and first fluid node.
-#        """
-#        self.set_boundaries([0.0, 0.0, V_BOUNDARY])
-#        self.system.integrator.run(250)
-#        # Check interpolated vel at upper boundary. The node position is at 
-#        # box_l[0]-agrid/2.
-#        np.testing.assert_allclose(
-#            np.copy(self.lbf.get_interpolated_velocity(
-#                [self.system.box_l[0] - AGRID / 2, 0, 0])), 
-#            np.array([0, 0, V_BOUNDARY]))
-#
-#        # Check interpolated velocity involving boundary and neighboring node
-#        # The boundary node index is lbf.shape[0]-1, so -2 refers to the
-#        # node in front of the boundary. 
-#        node_next_to_boundary = self.lbf[
-#            self.lbf.shape[0] - 2, 0, 0]
-#        # The midpoint between the boundary and
-#        # that node is box_l - agrid.
-#        np.testing.assert_allclose(
-#            np.copy(self.lbf.get_interpolated_velocity(
-#                [self.system.box_l[0] - AGRID, 0, 0])),
-#            0.5 * (np.array([0, 0, V_BOUNDARY]) + node_next_to_boundary.velocity))
-#
-#        # Bulk
-#        for pos in itertools.product(
-#                np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID),
-#                np.arange(0.5 * AGRID, BOX_L, AGRID),
-#                np.arange(0.5 * AGRID, BOX_L, AGRID)):
-#            np.testing.assert_almost_equal(
-#                self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
-#        # Shear plane for boundary 2
-#        # for pos in itertools.product((9 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
-#        # np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2],
-#        # 1.0, decimal=4)
-#
+    def test_interpolated_velocity(self):
+        """
+        Check that the interpolated LB fluid velocity is zero between boundary
+        node and first fluid node.
+        """
+        self.set_boundaries([0.0, 0.0, V_BOUNDARY])
+        self.system.integrator.run(250)
+        # Check interpolated vel at upper boundary. The node position is at 
+        # box_l[0]-agrid/2.
+
+        # WALBERLA TODO
+        np.testing.assert_allclose(
+            np.copy(self.lbf.get_interpolated_velocity(
+                [self.system.box_l[0] - AGRID / 2, 0, 0])), 
+            np.array([0, 0, V_BOUNDARY]))
+
+        # Check interpolated velocity involving boundary and neighboring node
+        # The boundary node index is lbf.shape[0]-1, so -2 refers to the
+        # node in front of the boundary. 
+        node_next_to_boundary = self.lbf[
+            self.lbf.shape[0] - 2, 0, 0]
+        # The midpoint between the boundary and
+        # that node is box_l - agrid.
+        np.testing.assert_allclose(
+            np.copy(self.lbf.get_interpolated_velocity(
+                [self.system.box_l[0] - AGRID, 0, 0])),
+            0.5 * (np.array([0, 0, V_BOUNDARY]) + node_next_to_boundary.velocity))
+
+        # Bulk
+        for pos in itertools.product(
+                np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID),
+                np.arange(0.5 * AGRID, BOX_L, AGRID),
+                np.arange(0.5 * AGRID, BOX_L, AGRID)):
+            np.testing.assert_almost_equal(
+                self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
+        # Shear plane for boundary 2
+        # for pos in itertools.product((9 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
+        # np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2],
+        # 1.0, decimal=4)
+
     def test_mach_limit_check(self):
         """
         Assert that the mach number check fires an exception.
