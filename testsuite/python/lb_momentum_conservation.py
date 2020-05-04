@@ -72,7 +72,7 @@ class Momentum(object):
         initial_momentum = np.array(self.system.analysis.linear_momentum())
         np.testing.assert_allclose(initial_momentum, np.copy(p.v) * p.mass)
         boundary_warning = False
-        old_pos_folded=p.pos
+        old_pos_folded = p.pos
         while True: 
             self.system.integrator.run(100)
             if not boundary_warning and (
@@ -84,10 +84,15 @@ class Momentum(object):
 
             coupling_force = -(p.f - p.ext_force)
             compensation = -TIME_STEP / 2 * coupling_force
-            if np.any(np.abs(p.pos_folded -old_pos_folded)>self.system.box_l/2):
-                print("Boundary crossed",np.abs(p.pos_folded-old_pos_folded))
-            old_pos_folded=p.pos_folded
-            print(p.pos_folded, measured_momentum + compensation,p.f)
+            if np.any(np.abs(p.pos_folded - old_pos_folded)
+                      > self.system.box_l / 2):
+                print(
+                    "Boundary crossed",
+                    np.abs(
+                        p.pos_folded -
+                        old_pos_folded))
+            old_pos_folded = p.pos_folded
+            print(p.pos_folded, measured_momentum + compensation, p.f)
             # fluid force is opposed to particle force
 
             np.testing.assert_allclose(measured_momentum + compensation, 

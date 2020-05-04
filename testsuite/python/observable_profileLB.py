@@ -73,7 +73,8 @@ class ObservableProfileLBCommon:
             for y in range(int(self.system.box_l[1] / AGRID)):
                 for z in range(int(self.system.box_l[2] / AGRID)):
                     self.lbf[x, y, z].velocity = [float(x), 0.0, 0.0]
-                    np.testing.assert_allclose(np.copy(self.lbf[x, y, z].velocity), [float(x), 0.0, 0.0],atol=1E-6)
+                    np.testing.assert_allclose(np.copy(self.lbf[x, y, z].velocity), [
+                                               float(x), 0.0, 0.0], atol=1E-6)
 
 # WALBERLA TODO
 #    def test_velocity_profile(self):

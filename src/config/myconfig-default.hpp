@@ -57,8 +57,6 @@
 #endif
 #define LB_WALBERLA
 
-
-
 // Electrokinetics
 #ifdef CUDA
 #define ELECTROKINETICS

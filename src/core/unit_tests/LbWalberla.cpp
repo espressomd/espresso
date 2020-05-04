@@ -80,24 +80,23 @@ BOOST_AUTO_TEST_CASE(boundary) {
 BOOST_AUTO_TEST_CASE(boundary_flow_single_node) {
   Vector3d vel = {0.2, 3.8, 0};
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
-  box_dimensions,
-                             mpi_shape, 2);
-    Vector3i node{5,5,5};
-    if (lb.node_in_local_halo(node)) {
-      BOOST_CHECK(lb.set_node_velocity_at_boundary(node, vel));
+                                             box_dimensions, mpi_shape, 2);
+  Vector3i node{5, 5, 5};
+  if (lb.node_in_local_halo(node)) {
+    BOOST_CHECK(lb.set_node_velocity_at_boundary(node, vel));
+  }
+  for (int i = 0; i < 10; i++) {
+    lb.integrate();
+  }
+  for (int j = 0; j < 9; j++) {
+    auto v = lb.get_node_velocity(Vector3i{j, node[1], node[2]});
+    if (v) {
+      if (j != node[0]) {
+        BOOST_CHECK((*v)[0] > 1E-4);
+        BOOST_CHECK((*v)[1] > 1E-4);
+        BOOST_CHECK(fabs((*v)[2]) < 1E-12);
+      }
     }
-    for( int i=0;i<10;i++) {
-      lb.integrate();
-    }
-    for (int j=0;j<9;j++) {
-        auto v = lb.get_node_velocity(Vector3i{j,node[1],node[2]});
-        if (v) {
-          if (j!=node[0]) {
-            BOOST_CHECK((*v)[0]>1E-4);
-            BOOST_CHECK((*v)[1]>1E-4);
-            BOOST_CHECK(fabs((*v)[2])<1E-12);
-          }
-        }
   }
 }
 
@@ -105,7 +104,7 @@ BOOST_AUTO_TEST_CASE(boundary_flow_shear) {
   Vector3d vel = {0.2, -0.3, 0};
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
                                              box_dimensions, mpi_shape, 2);
-  int lower=1, upper=12;
+  int lower = 1, upper = 12;
   for (int x = -1; x <= grid_dimensions[0]; x++) {
     for (int y = -1; y <= grid_dimensions[1]; y++) {
       Vector3i node{x, y, lower};
@@ -113,7 +112,7 @@ BOOST_AUTO_TEST_CASE(boundary_flow_shear) {
         BOOST_CHECK(lb.set_node_velocity_at_boundary(node, Vector3d{}));
         BOOST_CHECK(lb.get_node_is_boundary(node));
       }
-      node[2] =upper;
+      node[2] = upper;
       if (lb.node_in_local_halo(node)) {
         BOOST_CHECK(lb.set_node_velocity_at_boundary(node, vel));
       }
@@ -123,24 +122,23 @@ BOOST_AUTO_TEST_CASE(boundary_flow_shear) {
   for (int i = 0; i < 200; i++) {
     lb.integrate();
   }
-  for (int j = lower+1; j < upper; j++) {
+  for (int j = lower + 1; j < upper; j++) {
     auto v = lb.get_node_velocity(Vector3i{0, 0, j});
     if (v) {
-     double res = ((*v)-(j-lower)/double(upper-lower) *vel).norm();
-     BOOST_CHECK_SMALL(res,0.05*vel.norm());
+      double res = ((*v) - (j - lower) / double(upper - lower) * vel).norm();
+      BOOST_CHECK_SMALL(res, 0.05 * vel.norm());
     }
-       
   }
 }
 
-
-
 std::vector<Vector3i> all_nodes_incl_ghosts(int n_ghost_layers) {
   std::vector<Vector3i> res;
-  for (int x = -n_ghost_layers; x<grid_dimensions[0]+n_ghost_layers; x++) {
-    for (int y = -n_ghost_layers; y<grid_dimensions[1]+n_ghost_layers; y++) {
-      for (int z = -n_ghost_layers; z<grid_dimensions[2]+n_ghost_layers; z++) {
-        res.push_back(Vector3i{x,y,z});
+  for (int x = -n_ghost_layers; x < grid_dimensions[0] + n_ghost_layers; x++) {
+    for (int y = -n_ghost_layers; y < grid_dimensions[1] + n_ghost_layers;
+         y++) {
+      for (int z = -n_ghost_layers; z < grid_dimensions[2] + n_ghost_layers;
+           z++) {
+        res.push_back(Vector3i{x, y, z});
       }
     }
   }
@@ -148,56 +146,60 @@ std::vector<Vector3i> all_nodes_incl_ghosts(int n_ghost_layers) {
 }
 
 BOOST_AUTO_TEST_CASE(domain_and_halo) {
-  int n_ghost_layers =2;
-  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
-                                             box_dimensions, mpi_shape, n_ghost_layers);
-  
+  int n_ghost_layers = 2;
+  LbWalberlaD3Q19TRT lb =
+      LbWalberlaD3Q19TRT(viscosity, density, agrid, tau, box_dimensions,
+                         mpi_shape, n_ghost_layers);
+
   auto my_left = lb.get_local_domain().first;
   auto my_right = lb.get_local_domain().second;
 
-  for (auto const& n: all_nodes_incl_ghosts(n_ghost_layers)) {
-    const Vector3d pos = Vector3d{
-          {double(n[0] + .5), double(n[1] + .5), double(n[2] + .5)}};
-    int is_local= 0;
+  for (auto const &n : all_nodes_incl_ghosts(n_ghost_layers)) {
+    const Vector3d pos =
+        Vector3d{{double(n[0] + .5), double(n[1] + .5), double(n[2] + .5)}};
+    int is_local = 0;
     // Nodes in local domain
-    if ((n[0]>=my_left[0] and n[1] >= my_left[1] and n[2] >= my_left[2]) and
-        (n[0]<my_right[0] and n[1]<my_right[1] and n[2] < my_right[2])) {
-          BOOST_CHECK(lb.node_in_local_domain(n));
-          BOOST_CHECK(lb.node_in_local_halo(n));
-          
-          BOOST_CHECK(lb.pos_in_local_domain(pos));
-          BOOST_CHECK(lb.pos_in_local_halo(pos));
-          is_local = 1;
+    if ((n[0] >= my_left[0] and n[1] >= my_left[1] and n[2] >= my_left[2]) and
+        (n[0] < my_right[0] and n[1] < my_right[1] and n[2] < my_right[2])) {
+      BOOST_CHECK(lb.node_in_local_domain(n));
+      BOOST_CHECK(lb.node_in_local_halo(n));
+
+      BOOST_CHECK(lb.pos_in_local_domain(pos));
+      BOOST_CHECK(lb.pos_in_local_halo(pos));
+      is_local = 1;
     } else {
       // in local halo?
-      if ((n[0] + n_ghost_layers >=my_left[0] and n[1]+n_ghost_layers >= my_left[1] and  n[2] + n_ghost_layers >= my_left[2]) and
-        (n[0]-n_ghost_layers <my_right[0] and n[1]-n_ghost_layers <my_right[1] and n[2]-n_ghost_layers < my_right[2])) {
-          BOOST_CHECK(!lb.node_in_local_domain(n));
-          BOOST_CHECK(lb.node_in_local_halo(n));
-          
-          BOOST_CHECK(!lb.pos_in_local_domain(pos));
-          BOOST_CHECK(lb.pos_in_local_halo(pos));
+      if ((n[0] + n_ghost_layers >= my_left[0] and
+           n[1] + n_ghost_layers >= my_left[1] and
+           n[2] + n_ghost_layers >= my_left[2]) and
+          (n[0] - n_ghost_layers < my_right[0] and
+           n[1] - n_ghost_layers < my_right[1] and
+           n[2] - n_ghost_layers < my_right[2])) {
+        BOOST_CHECK(!lb.node_in_local_domain(n));
+        BOOST_CHECK(lb.node_in_local_halo(n));
+
+        BOOST_CHECK(!lb.pos_in_local_domain(pos));
+        BOOST_CHECK(lb.pos_in_local_halo(pos));
       } else {
         // neither in domain nor in halo
         BOOST_CHECK(!lb.node_in_local_domain(n));
         BOOST_CHECK(!lb.node_in_local_halo(n));
-          
+
         BOOST_CHECK(!lb.pos_in_local_domain(pos));
         BOOST_CHECK(!lb.pos_in_local_halo(pos));
       }
     }
-    
+
     // If the cell is in the global physical domain
     // check that only one mpi rank said the node was local
-    if (n[0]>=0 and n[1]>=0 and n[2]>=0 and
-        n[0]<grid_dimensions[0] and n[1] < grid_dimensions[1] and n[2] < grid_dimensions[2]) {
+    if (n[0] >= 0 and n[1] >= 0 and n[2] >= 0 and n[0] < grid_dimensions[0] and
+        n[1] < grid_dimensions[1] and n[2] < grid_dimensions[2]) {
       MPI_Allreduce(MPI_IN_PLACE, &is_local, 1, MPI_INT, MPI_SUM,
-                MPI_COMM_WORLD);
-      BOOST_CHECK(is_local==1);
+                    MPI_COMM_WORLD);
+      BOOST_CHECK(is_local == 1);
     }
   }
 }
-
 
 BOOST_AUTO_TEST_CASE(velocity) {
   int n_ghost_layers = 2;
@@ -224,7 +226,6 @@ BOOST_AUTO_TEST_CASE(velocity) {
   auto n_vel = [&fold](Vector3i node) {
     return fold(node) + Vector3d{{1, 2, -.5}};
   };
-        
 
   // Assign velocities
   for (auto const &node : all_nodes_incl_ghosts(n_ghost_layers)) {
@@ -237,22 +238,21 @@ BOOST_AUTO_TEST_CASE(velocity) {
   }
 
   lb.ghost_communication();
-  
 
   // check velocities
   for (auto const &node : all_nodes_incl_ghosts(n_ghost_layers)) {
     double eps = 1E-8;
-    
+
     if (lb.node_in_local_domain(node)) {
       auto res = lb.get_node_velocity(node);
       BOOST_CHECK(res);                               // value available
       BOOST_CHECK((*res - n_vel(node)).norm() < eps); // correct value?
     }
     if (lb.pos_in_local_halo(n_pos(node))) {
-          // Check that the interpolated velocity at the node pos equals the node
+      // Check that the interpolated velocity at the node pos equals the node
       // vel
       auto res = lb.get_velocity_at_pos(n_pos(node));
-      BOOST_CHECK(res);                                    // locallly available
+      BOOST_CHECK(res); // locallly available
       auto v_exp = n_vel(node);
       printf("%d %d %d: %g %g %g | %g %g %g\n", node[0], node[1], node[2],
              (*res)[0], (*res)[1], (*res)[2], v_exp[0], v_exp[1], v_exp[2]);
@@ -264,8 +264,6 @@ BOOST_AUTO_TEST_CASE(velocity) {
     }
   }
 };
-
-
 
 BOOST_AUTO_TEST_CASE(total_momentum) {
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,

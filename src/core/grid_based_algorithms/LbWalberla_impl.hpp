@@ -477,21 +477,21 @@ public:
       return {boost::none};
     Utils::Vector3d v{0.0, 0.0, 0.0};
     interpolate_bspline_at_pos(
-        pos, [this, &v,pos](const std::array<int, 3> node, double weight) {
-      // Nodes with zero weight might not be accessible, because they can be
-      // outside ghost layers
-      if (weight != 0) {
-        auto const bc = get_block_and_cell(to_vector3i(node), true);
-      if (bc) {
-        auto const &vel_adaptor =
-            (*bc).block->template getData<VelocityAdaptor>(
-                m_velocity_adaptor_id);
-        v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
-      } else {
-        printf("Pos: %g %g %g, Node %d %d %d\n", pos[0], pos[1], pos[2],
-               node[0], node[1], node[2]);
-        throw std::runtime_error("Access to LB velocity field failed.");
-      }
+        pos, [this, &v, pos](const std::array<int, 3> node, double weight) {
+          // Nodes with zero weight might not be accessible, because they can be
+          // outside ghost layers
+          if (weight != 0) {
+            auto const bc = get_block_and_cell(to_vector3i(node), true);
+            if (bc) {
+              auto const &vel_adaptor =
+                  (*bc).block->template getData<VelocityAdaptor>(
+                      m_velocity_adaptor_id);
+              v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
+            } else {
+              printf("Pos: %g %g %g, Node %d %d %d\n", pos[0], pos[1], pos[2],
+                     node[0], node[1], node[2]);
+              throw std::runtime_error("Access to LB velocity field failed.");
+            }
           }
         });
     return {v};
