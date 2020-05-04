@@ -64,7 +64,7 @@ void local_rotate_system(double phi, double theta, double alpha,
 #endif
   }
 
-  set_resort_particles(Cells::RESORT_GLOBAL);
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
   update_dependent_particles();
 }
@@ -74,7 +74,7 @@ void mpi_rotate_system_slave(int, int) {
   mpi::broadcast(comm_cart, params, 0);
 
   local_rotate_system(params[0], params[1], params[2],
-                      cell_structure.local_cells().particles());
+                      cell_structure.local_particles());
 }
 
 void mpi_rotate_system(double phi, double theta, double alpha) {
@@ -84,7 +84,7 @@ void mpi_rotate_system(double phi, double theta, double alpha) {
   mpi::broadcast(comm_cart, params, 0);
 
   local_rotate_system(params[0], params[1], params[2],
-                      cell_structure.local_cells().particles());
+                      cell_structure.local_particles());
 }
 
 /** Rotate all particle coordinates around an axis given by phi,theta through

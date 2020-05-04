@@ -32,24 +32,15 @@
 #include "communication.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
-#include "energy.hpp"
 #include "errorhandling.hpp"
-#include "forces.hpp"
-#include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
 #include "npt.hpp"
-#include "nsquare.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
-#include "pressure.hpp"
-#include "random.hpp"
-#include "rattle.hpp"
-#include "reaction_ensemble.hpp"
-#include "rotation.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
@@ -124,7 +115,7 @@ void on_integration_start() {
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them
-  immersed_boundaries.init_volume_conservation();
+  immersed_boundaries.init_volume_conservation(cell_structure);
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
@@ -137,8 +128,6 @@ void on_integration_start() {
   npt_ensemble_init(box_geo);
 #endif
 
-  /* Update particle and observable information for routines in statistics.cpp
-   */
   invalidate_obs();
   partCfg().invalidate();
   invalidate_fetch_cache();
@@ -186,6 +175,8 @@ void on_observable_calc() {
     reinit_magnetostatics = false;
   }
 #endif /*ifdef ELECTROSTATICS */
+
+  clear_particle_node();
 }
 
 void on_particle_charge_change() {
@@ -197,8 +188,7 @@ void on_particle_charge_change() {
 }
 
 void on_particle_change() {
-
-  set_resort_particles(Cells::RESORT_LOCAL);
+  cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   reinit_electrostatics = true;
   reinit_magnetostatics = true;
 
@@ -233,7 +223,7 @@ void on_coulomb_change() {
 void on_short_range_ia_change() {
   invalidate_obs();
 
-  cells_on_geometry_change(0);
+  cells_on_geometry_change(false);
 
   recalc_forces = true;
 }
@@ -253,21 +243,13 @@ void on_lbboundary_change() {
 #endif
 }
 
-void on_resort_particles(const ParticleRange &particles) {
-#ifdef ELECTROSTATICS
-  Coulomb::on_resort_particles(particles);
-#endif /* ifdef ELECTROSTATICS */
-
-  /* DIPOLAR interactions so far don't need this */
-
-  recalc_forces = true;
-}
+void on_resort_particles() { recalc_forces = true; }
 
 void on_boxl_change() {
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
      therefore recalculate them. */
-  cells_on_geometry_change(0);
+  cells_on_geometry_change(false);
 
 /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
@@ -285,7 +267,6 @@ void on_boxl_change() {
 }
 
 void on_cell_structure_change() {
-
 /* Now give methods a chance to react to the change in cell
    structure. Most ES methods need to reinitialize, as they depend
    on skin, node grid and so on. Only for a change in box length we
@@ -319,12 +300,6 @@ void on_parameter_change(int field) {
   case FIELD_BOXL:
     on_boxl_change();
     break;
-  case FIELD_MIN_GLOBAL_CUT:
-    cells_on_geometry_change(0);
-    break;
-  case FIELD_SKIN:
-    cells_on_geometry_change(0);
-    break;
   case FIELD_PERIODIC:
 #ifdef SCAFACOS
 #ifdef ELECTROSTATICS
@@ -337,16 +312,13 @@ void on_parameter_change(int field) {
       Scafacos::update_system_params();
     }
 #endif
-
 #endif
-    cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
+  case FIELD_MIN_GLOBAL_CUT:
+  case FIELD_SKIN:
+    cells_on_geometry_change(false);
     break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();
-    cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
-    break;
-  case FIELD_MINNUMCELLS:
-  case FIELD_MAXNUMCELLS:
     cells_re_init(CELL_STRUCTURE_CURRENT, cell_structure.min_range);
     break;
   case FIELD_TEMPERATURE:
@@ -394,26 +366,22 @@ void on_parameter_change(int field) {
  */
 unsigned global_ghost_flags() {
   /* Position and Properties are always requested. */
-  unsigned data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
+  unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
 
-  /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::WALBERLA)
-    data_parts |= GHOSTTRANS_MOMENTUM;
-#ifdef BOND_CONSTRAINT
-  if (n_rigidbonds)
-    data_parts |= GHOSTTRANS_MOMENTUM;
-#endif
+    data_parts |= Cells::DATA_PART_MOMENTUM;
+
   if (thermo_switch & THERMO_DPD)
-    data_parts |= GHOSTTRANS_MOMENTUM;
+    data_parts |= Cells::DATA_PART_MOMENTUM;
 
   if (n_thermalized_bonds) {
-    data_parts |= GHOSTTRANS_MOMENTUM;
-    data_parts |= GHOSTTRANS_BONDS;
+    data_parts |= Cells::DATA_PART_MOMENTUM;
+    data_parts |= Cells::DATA_PART_BONDS;
   }
 
 #ifdef COLLISION_DETECTION
   if (collision_params.mode) {
-    data_parts |= GHOSTTRANS_BONDS;
+    data_parts |= Cells::DATA_PART_BONDS;
   }
 #endif
 

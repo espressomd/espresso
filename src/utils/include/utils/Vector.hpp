@@ -83,7 +83,7 @@ public:
   }
 
   template <typename InputIterator>
-  Vector(InputIterator first, InputIterator last) {
+  Vector(InputIterator first, InputIterator last) : Base() {
     if (std::distance(first, last) == N) {
       std::copy_n(first, N, begin());
     } else {

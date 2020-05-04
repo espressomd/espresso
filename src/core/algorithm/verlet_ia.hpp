@@ -35,24 +35,24 @@ void update_and_kernel(CellIterator first, CellIterator last,
     /* Clear the VL */
     first->m_verlet_list.clear();
 
-    for (int i = 0; i != first->n; i++) {
-      auto &p1 = first->part[i];
+    for (auto it = first->particles().begin(); it != first->particles().end();
+         ++it) {
+      auto &p1 = *it;
 
       particle_kernel(p1);
 
       /* Pairs in this cell */
-      for (int j = i + 1; j < first->n; j++) {
-        auto const dist = distance_function(p1, first->part[j]);
-        if (verlet_criterion(p1, first->part[j], dist)) {
-          pair_kernel(p1, first->part[j], dist);
-          first->m_verlet_list.emplace_back(&p1, &(first->part[j]));
+      for (auto jt = std::next(it); jt != first->particles().end(); ++jt) {
+        auto const dist = distance_function(p1, *jt);
+        if (verlet_criterion(p1, *jt, dist)) {
+          pair_kernel(p1, *jt, dist);
+          first->m_verlet_list.emplace_back(&p1, &(*jt));
         }
       }
 
       /* Pairs with neighbors */
       for (auto &neighbor : first->neighbors().red()) {
-        for (int j = 0; j < neighbor->n; j++) {
-          auto &p2 = neighbor->part[j];
+        for (auto &p2 : neighbor->particles()) {
           auto dist = distance_function(p1, p2);
           if (verlet_criterion(p1, p2, dist)) {
             pair_kernel(p1, p2, dist);
@@ -70,8 +70,8 @@ void kernel(CellIterator first, CellIterator last,
             ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
             DistanceFunction &&distance_function) {
   for (; first != last; ++first) {
-    for (int i = 0; i != first->n; i++) {
-      particle_kernel(first->part[i]);
+    for (auto &p : first->particles()) {
+      particle_kernel(p);
     }
 
     for (auto &pair : first->m_verlet_list) {

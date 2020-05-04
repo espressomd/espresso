@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # Copyright (C) 2016-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -19,19 +19,17 @@
 ENV_FILE=$(mktemp esXXXXXXX.env)
 
 cat > "${ENV_FILE}" <<EOF
-insource=${insource}
 cmake_params=${cmake_params}
 with_fftw=${with_fftw}
-with_python_interface=true
-with_coverage=${with_coverage}
-myconfig=${myconfig}
+with_coverage=false
+with_cuda=true
+CC=gcc-8
+CXX=g++-8
 check_procs=${check_procs}
 make_check=${make_check}
+build_type=RelWithAssert
+myconfig=maxset
 EOF
+image="espressomd/docker-ubuntu-20.04:06b6216c7aa3555bcf28c90734dbb84e7285c96f"
 
-if [ -z "${image}" ]; then
-    image="ubuntu"
-fi
-
-image="espressomd/espresso-${image}:latest"
 docker run -u espresso --env-file "${ENV_FILE}" -v "${PWD}:/travis" -it "${image}" /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1

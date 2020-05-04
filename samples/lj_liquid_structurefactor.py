@@ -103,9 +103,6 @@ for i in range(n_part):
     else:
         system.part.add(type=1, id=i, pos=np.random.random(3) * system.box_l)
 
-
-system.analysis.dist_to(0)
-
 print("Simulate {} particles in a cubic box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")

@@ -27,6 +27,8 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cstdio>
+
 namespace {
 /** Rotate calculated trielastic forces in the 2d plane back to the 3d plane.
  *  Use knowledge that the x-axis in rotated system is parallel to r(p1->p2) in

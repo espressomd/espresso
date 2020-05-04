@@ -20,7 +20,6 @@
  */
 
 #include "h5md_core.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -35,8 +34,8 @@ namespace H5md {
 static void backup_file(const std::string &from, const std::string &to) {
   if (this_node == 0) {
     /*
-     * If the file itself *and* a backup file exists something must
-     * went wrong before.
+     * If the file itself *and* a backup file exists, something must
+     * have went wrong.
      */
     boost::filesystem::path pfrom(from), pto(to);
     try {
@@ -331,18 +330,14 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
 
   if (!m_already_wrote_bonds) {
     int nbonds_local = bond.shape()[1];
-    for (auto it = current_particle.bl.begin();
-         it != current_particle.bl.end();) {
 
-      auto const n_partners = bonded_ia_params[*it++].num;
-
-      if (1 == n_partners) {
+    for (auto const &b : current_particle.bonds()) {
+      auto const partner_ids = b.partner_ids();
+      if (partner_ids.size() == 1) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
         bond[0][nbonds_local][0] = current_particle.p.identity;
-        bond[0][nbonds_local][1] = *it++;
+        bond[0][nbonds_local][1] = partner_ids[0];
         nbonds_local++;
-      } else {
-        it += n_partners;
       }
     }
   }
@@ -386,8 +381,6 @@ void File::Write(int write_dat, PartCfg &partCfg,
 
   if (m_write_ordered) {
     if (this_node == 0) {
-      /* Fetch bond info */
-      partCfg.update_bonds();
       // loop over all particles
       int particle_index = 0;
       for (auto const &current_particle : partCfg) {

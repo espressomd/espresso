@@ -27,7 +27,6 @@
 #include <utils/Vector.hpp>
 
 namespace {
-
 InterpolationOrder interpolation_order = InterpolationOrder::linear;
 }
 

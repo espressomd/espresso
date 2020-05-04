@@ -53,7 +53,7 @@ MSG_EXCHANGE_PART_ADD = 4
 MSG_EXCHANGE_PART_ADD_REVERT = 41
 MSG_EXCHANGE_PART_REMOVE = 5
 MSG_EXCHANGE_PART_REMOVE_REVERT = 51
-MSG_ENEGRY = 6
+MSG_ENERGY = 6
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-n', '--number-particles', type=int, nargs=1)
@@ -166,10 +166,10 @@ for i in range(particle_number):
 
 # send the initial energy
 energy = system.analysis.energy()['total']
-send_data(pickle.dumps([MSG_ENEGRY, energy]), socket)
+send_data(pickle.dumps([MSG_ENERGY, energy]), socket)
 
 while msg[0] != MSG_END:
-    # receive comand to execute next step
+    # receive command to execute next step
     msg = recv_data(socket)
     if msg[0] == MSG_END:
         break
@@ -191,7 +191,7 @@ while msg[0] != MSG_END:
 
     # calculation energy and send it to the host
     energy = system.analysis.energy()['total']
-    send_data(pickle.dumps([MSG_ENEGRY, energy]), socket)
+    send_data(pickle.dumps([MSG_ENERGY, energy]), socket)
 
 # closing the socket
 socket.close()

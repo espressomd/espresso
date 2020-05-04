@@ -16,7 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 Visualize the system cells and MPI domains. Run ESPResSo in parallel
-to color particles by node.
+to color particles by node. With OpenMPI, this can be achieved using
+``mpiexec -n 4 ./pypresso ../samples/visualization_cellsystem.py``.
+Set property ``system.cell_system.node_grid = [i, j, k]`` (with ``i * j * k``
+equal to the number of MPI ranks) to change the way the cellsystem is
+partitioned. Only the domain of MPI rank 0 will be shown in wireframe.
 """
 
 import espressomd
@@ -41,6 +45,7 @@ visualizer = openGLLive(
 system.time_step = 0.0005
 system.cell_system.set_domain_decomposition(use_verlet_lists=True)
 system.cell_system.skin = 0.4
+#system.cell_system.node_grid = [i, j, k]
 
 for i in range(100):
     system.part.add(pos=box * np.random.random(3))

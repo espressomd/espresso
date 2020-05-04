@@ -114,6 +114,7 @@ void ScriptInterfaceBase::set_state(Variant const &state) {
 std::string ScriptInterfaceBase::serialize() const {
   std::stringstream ss;
   boost::archive::binary_oarchive oa(ss);
+  // NOLINTNEXTLINE(clang-analyzer-core.uninitialized.UndefReturn,clang-analyzer-core.uninitialized.Assign)
   auto v = Serializer{}(this->id());
 
   oa << v;

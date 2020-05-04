@@ -646,7 +646,7 @@ public:
     try {
       if (!ff->isFlagSet((*bc).cell, ff->getFlag(UBB_flag)))
         return {boost::none};
-    } catch (std::exception e) {
+    } catch (std::exception &e) {
       return {boost::none};
     }
 

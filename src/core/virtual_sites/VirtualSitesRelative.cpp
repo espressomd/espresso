@@ -106,7 +106,7 @@ velocity(const Particle *p_ref,
  */
 Particle *get_reference_particle(
     const ParticleProperties::VirtualSitesRelativeParameters &vs_rel) {
-  auto p_ref = get_local_particle_data(vs_rel.to_particle_id);
+  auto p_ref = cell_structure.get_local_particle(vs_rel.to_particle_id);
   if (!p_ref) {
     throw std::runtime_error("No real particle associated with virtual site.");
   }
@@ -115,7 +115,7 @@ Particle *get_reference_particle(
 }
 
 /**
- * @brief Contraint force on the real particle.
+ * @brief Constraint force on the real particle.
  *
  *  Calculates the force exerted by the constraint on the
  *  reference particle.
@@ -146,12 +146,10 @@ auto constraint_stress(
 } // namespace
 
 void VirtualSitesRelative::update() const {
-  // Ghost update logic
-  auto const data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM;
+  cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
+                               Cells::DATA_PART_MOMENTUM);
 
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
-
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (!p.p.is_virtual)
       continue;
 
@@ -169,19 +167,19 @@ void VirtualSitesRelative::update() const {
       p.r.quat = orientation(p_ref, p.p.vs_relative);
 
     if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
-      set_resort_particles(Cells::RESORT_LOCAL);
+      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   } // namespace
 }
 
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 void VirtualSitesRelative::back_transfer_forces_and_torques() const {
-  ghost_communicator(&cell_structure.collect_ghost_force_comm,
-                     GHOSTTRANS_FORCE);
-  init_forces_ghosts(cell_structure.ghost_cells().particles());
+  cell_structure.ghosts_reduce_forces();
+
+  init_forces_ghosts(cell_structure.ghost_particles());
 
   // Iterate over all the particles in the local cells
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     // We only care about virtual particles
     if (p.p.is_virtual) {
       // First obtain the real particle responsible for this virtual particle:
@@ -197,7 +195,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 Utils::Matrix<double, 3, 3> VirtualSitesRelative::stress_tensor() const {
   Utils::Matrix<double, 3, 3> stress_tensor = {};
 
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (!p.p.is_virtual)
       continue;
 

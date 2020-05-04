@@ -18,17 +18,41 @@
  */
 #include "PidObservable.hpp"
 
-#include "partCfg_global.hpp"
+#include "grid.hpp"
+#include "particle_data.hpp"
 
+#include <boost/algorithm/clamp.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
 namespace Observables {
 std::vector<double> PidObservable::operator()() const {
-  std::vector<const Particle *> particles(ids().size());
+  std::vector<Particle> particles;
+  particles.reserve(ids().size());
 
-  boost::transform(ids(), particles.begin(),
-                   [](int id) { return &partCfg()[id]; });
+  auto const chunk_size = fetch_cache_max_size();
+  for (size_t offset = 0; offset < ids().size();) {
+    auto const this_size =
+        boost::algorithm::clamp(chunk_size, 0, ids().size() - offset);
+    auto const chunk_ids =
+        Utils::make_const_span(ids().data() + offset, this_size);
 
-  return this->evaluate(particles);
+    prefetch_particle_data(chunk_ids);
+
+    for (auto id : chunk_ids) {
+      particles.push_back(get_particle_data(id));
+
+      auto &p = particles.back();
+      p.r.p += image_shift(p.l.i, box_geo.length());
+      p.l.i = {};
+    }
+
+    offset += this_size;
+  }
+
+  std::vector<const Particle *> particles_ptrs(particles.size());
+  boost::transform(particles, particles_ptrs.begin(),
+                   [](auto const &p) { return std::addressof(p); });
+
+  return this->evaluate(particles_ptrs);
 }
 } // namespace Observables

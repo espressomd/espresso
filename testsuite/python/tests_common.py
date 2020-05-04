@@ -275,6 +275,46 @@ def get_cylindrical_bin_volume(
             phi_bin_size / (2.0 * np.pi) * z_bin_size
     return bin_volume
 
+
+def get_histogram(pos, obs_params, coord_system, **kwargs):
+    """
+    Helper function for ``np.histogramdd()`` and observables.
+
+    Parameters
+    ----------
+    pos : (N, 3) array_like of :obj:`float`
+        Particle positions.
+    obs_params : :obj:`dict`
+        Parameters of the observable.
+    coord_system : :obj:`str`, \{'cartesian', 'cylindrical'\}
+        Coordinate system.
+    \*\*kwargs :
+        Optional parameters to ``np.histogramdd()``.
+
+    Returns
+    -------
+    array_like
+        Bins and bin edges.
+
+    """
+    if coord_system == 'cartesian':
+        bins = (obs_params['n_x_bins'],
+                obs_params['n_y_bins'],
+                obs_params['n_z_bins'])
+        extent = [(obs_params['min_x'], obs_params['max_x']),
+                  (obs_params['min_y'], obs_params['max_y']),
+                  (obs_params['min_z'], obs_params['max_z'])]
+    elif coord_system == 'cylindrical':
+        bins = (obs_params['n_r_bins'],
+                obs_params['n_phi_bins'],
+                obs_params['n_z_bins'])
+        extent = [(obs_params['min_r'], obs_params['max_r']),
+                  (obs_params['min_phi'], obs_params['max_phi']),
+                  (obs_params['min_z'], obs_params['max_z'])]
+    else:
+        raise ValueError("Unknown coord system '{}'".format(coord_system))
+    return np.histogramdd(pos, bins=bins, range=extent, **kwargs)
+
 #
 # Analytical Expressions for interactions
 #

@@ -31,6 +31,7 @@
 #include <unordered_map>
 
 #include "PartCfg.hpp"
+#include "ParticleRange.hpp"
 
 namespace Writer {
 namespace H5md {

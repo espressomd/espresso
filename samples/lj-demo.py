@@ -131,8 +131,6 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
 
-system.analysis.dist_to(0)
-
 act_min_dist = system.analysis.min_dist()
 
 if use_mayavi:

@@ -28,7 +28,6 @@ cdef extern from "communication.hpp":
     vector[int] mpi_resort_particles(int global_flag)
 
 cdef extern from "cells.hpp":
-    int CELL_STRUCTURE_CURRENT
     int CELL_STRUCTURE_DOMDEC
     int CELL_STRUCTURE_NSQUARE
 
@@ -50,6 +49,3 @@ cdef extern from "domain_decomposition.hpp":
         bool fully_connected[3]
 
     extern DomainDecomposition dd
-    extern int max_num_cells
-    extern int min_num_cells
-    int calc_processor_min_num_cells(const Vector3i & grid)

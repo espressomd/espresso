@@ -28,7 +28,6 @@
 
 #include "bonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
 /** Set the parameters for the quartic potential

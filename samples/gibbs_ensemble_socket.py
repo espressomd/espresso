@@ -81,7 +81,7 @@ INIT_MOVE_CHANCE = 0.16
 EXCHANGE_CHANCE = 0.8
 VOLUME_CHANCE = 1.0 - INIT_MOVE_CHANCE - EXCHANGE_CHANCE
 
-# socket paramters
+# socket parameters
 HOST = 'localhost'
 PORT = 31415
 NUMBER_OF_CLIENTS = 2
@@ -96,7 +96,7 @@ MSG_EXCHANGE_PART_ADD = 4
 MSG_EXCHANGE_PART_ADD_REVERT = 41
 MSG_EXCHANGE_PART_REMOVE = 5
 MSG_EXCHANGE_PART_REMOVE_REVERT = 51
-MSG_ENEGRY = 6
+MSG_ENERGY = 6
 
 # script locations
 espresso_executable = "../pypresso"
@@ -139,7 +139,7 @@ class Box:
     def recv_energy(self):
         '''Received the energy data from the client.'''
         msg = self.recv_data()
-        if msg[0] == MSG_ENEGRY:
+        if msg[0] == MSG_ENERGY:
             self.energy = msg[1]
             return 0
         else:

@@ -19,11 +19,9 @@
 #ifndef LB_PARTICLE_COUPLING_HPP
 #define LB_PARTICLE_COUPLING_HPP
 
+#include "OptionalCounter.hpp"
 #include "ParticleRange.hpp"
 
-#include <boost/serialization/optional.hpp>
-
-#include "ParticleRange.hpp"
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 
@@ -74,7 +72,7 @@ bool in_local_halo(Utils::Vector3d const &pos);
 void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force);
 
 struct LB_Particle_Coupling {
-  boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling;
+  OptionalCounter rng_counter_coupling;
   /*
    * @brief Friction constant for the particle coupling.
    */

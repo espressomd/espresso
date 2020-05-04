@@ -23,15 +23,21 @@
 */
 #include "statistics_chain.hpp"
 
-std::array<double, 4> calc_re(PartCfg &partCfg, int chain_start,
-                              int chain_n_chains, int chain_length) {
+#include "grid.hpp"
+#include "particle_data.hpp"
+
+std::array<double, 4> calc_re(int chain_start, int chain_n_chains,
+                              int chain_length) {
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
   std::array<double, 4> re;
 
   for (int i = 0; i < chain_n_chains; i++) {
-    auto const d =
-        partCfg[chain_start + i * chain_length + chain_length - 1].r.p -
-        partCfg[chain_start + i * chain_length].r.p;
+    auto const &p1 =
+        get_particle_data(chain_start + i * chain_length + chain_length - 1);
+    auto const &p2 = get_particle_data(chain_start + i * chain_length);
+
+    auto const d = unfolded_position(p1.r.p, p1.l.i, box_geo.length()) -
+                   unfolded_position(p2.r.p, p2.l.i, box_geo.length());
     auto const norm2 = d.norm2();
     dist += sqrt(norm2);
     dist2 += norm2;
@@ -45,9 +51,8 @@ std::array<double, 4> calc_re(PartCfg &partCfg, int chain_start,
   return re;
 }
 
-std::array<double, 4> calc_rg(PartCfg &partCfg, int chain_start,
-                              int chain_n_chains, int chain_length) {
-  int p;
+std::array<double, 4> calc_rg(int chain_start, int chain_n_chains,
+                              int chain_length) {
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
   double tmp;
   std::array<double, 4> rg;
@@ -56,20 +61,22 @@ std::array<double, 4> calc_rg(PartCfg &partCfg, int chain_start,
     double M = 0.0;
     Utils::Vector3d r_CM{};
     for (int j = 0; j < chain_length; j++) {
-      p = chain_start + i * chain_length + j;
-      if (partCfg[p].p.is_virtual) {
+      auto const &p = get_particle_data(chain_start + i * chain_length + j);
+
+      if (p.p.is_virtual) {
         throw std::runtime_error(
             "Gyration tensor is not well-defined for chains including virtual "
             "sites. Virtual sites do not have a meaningful mass.");
       }
-      r_CM += partCfg[p].r.p * partCfg[p].p.mass;
-      M += partCfg[p].p.mass;
+      r_CM += unfolded_position(p.r.p, p.l.i, box_geo.length()) * p.p.mass;
+      M += p.p.mass;
     }
     r_CM /= M;
     tmp = 0.0;
     for (int j = 0; j < chain_length; ++j) {
-      p = chain_start + i * chain_length + j;
-      Utils::Vector3d const d = partCfg[p].r.p - r_CM;
+      auto const &p = get_particle_data(chain_start + i * chain_length + j);
+      Utils::Vector3d const d =
+          unfolded_position(p.r.p, p.l.i, box_geo.length()) - r_CM;
       tmp += d.norm2();
     }
     tmp /= (double)chain_length;
@@ -85,19 +92,21 @@ std::array<double, 4> calc_rg(PartCfg &partCfg, int chain_start,
   return rg;
 }
 
-std::array<double, 2> calc_rh(PartCfg &partCfg, int chain_start,
-                              int chain_n_chains, int chain_length) {
+std::array<double, 2> calc_rh(int chain_start, int chain_n_chains,
+                              int chain_length) {
   double r_H = 0.0, r_H2 = 0.0, ri = 0.0, prefac, tmp;
   std::array<double, 2> rh;
 
-  prefac = 0.5 * chain_length *
-           (chain_length - 1); /* 1/N^2 is not a normalization factor */
+  prefac = 0.5 * chain_length * (chain_length - 1);
   for (int p = 0; p < chain_n_chains; p++) {
     ri = 0.0;
     for (int i = chain_start + chain_length * p;
          i < chain_start + chain_length * (p + 1); i++) {
+      auto const &p1 = get_particle_data(i);
       for (int j = i + 1; j < chain_start + chain_length * (p + 1); j++) {
-        auto const d = partCfg[i].r.p - partCfg[j].r.p;
+        auto const &p2 = get_particle_data(j);
+        auto const d = unfolded_position(p1.r.p, p1.l.i, box_geo.length()) -
+                       unfolded_position(p2.r.p, p2.l.i, box_geo.length());
         ri += 1.0 / d.norm();
       }
     }

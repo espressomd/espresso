@@ -10,7 +10,7 @@
 inline bool do_nonbonded(Particle const &p1, Particle const &p2) {
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
    * symmetric, so this is sufficient. */
-  return std::none_of(p1.el.begin(), p1.el.end(),
+  return std::none_of(p1.exclusions().begin(), p1.exclusions().end(),
                       [&p2](int id) { return p2.p.identity == id; });
 }
 

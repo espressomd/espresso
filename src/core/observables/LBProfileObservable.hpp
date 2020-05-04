@@ -22,6 +22,8 @@
 #include <cmath>
 
 #include "ProfileObservable.hpp"
+#include "grid.hpp"
+
 #include <utils/Vector.hpp>
 
 namespace Observables {
@@ -55,19 +57,19 @@ public:
     sampling_positions.clear();
     if (sampling_delta_x == 0 or sampling_delta_y == 0 or sampling_delta_z == 0)
       throw std::runtime_error("Parameter delta_x/y/z must not be zero!");
-    const auto n_samples_x = static_cast<size_t>(std::rint(
-        (box_geo.length()[0] - sampling_offset_x) / sampling_delta_x));
-    const auto n_samples_y = static_cast<size_t>(std::rint(
-        (box_geo.length()[1] - sampling_offset_y) / sampling_delta_y));
-    const auto n_samples_z = static_cast<size_t>(std::rint(
-        (box_geo.length()[2] - sampling_offset_z) / sampling_delta_z));
+    const auto n_samples_x =
+        static_cast<size_t>(std::rint((max_x - min_x) / sampling_delta_x));
+    const auto n_samples_y =
+        static_cast<size_t>(std::rint((max_y - min_y) / sampling_delta_y));
+    const auto n_samples_z =
+        static_cast<size_t>(std::rint((max_z - min_z) / sampling_delta_z));
     for (size_t x = 0; x < n_samples_x; ++x) {
       for (size_t y = 0; y < n_samples_y; ++y) {
         for (size_t z = 0; z < n_samples_z; ++z) {
-          sampling_positions.push_back(
-              Utils::Vector3d{{sampling_offset_x + x * sampling_delta_x,
-                               sampling_offset_y + y * sampling_delta_y,
-                               sampling_offset_z + z * sampling_delta_z}});
+          sampling_positions.push_back(Utils::Vector3d{
+              {min_x + sampling_offset_x + x * sampling_delta_x,
+               min_y + sampling_offset_y + y * sampling_delta_y,
+               min_z + sampling_offset_z + z * sampling_delta_z}});
         }
       }
     }

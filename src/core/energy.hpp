@@ -28,6 +28,7 @@
 #define _ENERGY_H
 
 /* include the energy files */
+#include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
 #include "statistics.hpp"
 
