@@ -40,9 +40,4 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
   cell_structure.m_decomposition = std::addressof(dd);
 }
 
-void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    std::vector<Cell *> &modified_cells) {
-  dd.resort(global, (assert(pl), *pl), modified_cells);
-}
-
 /************************************************************/
