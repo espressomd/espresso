@@ -917,3 +917,7 @@ class RDF(Observable):
         if "oid" not in kwargs and "ids2" not in kwargs:
             kwargs["ids2"] = []
         super().__init__(**kwargs)
+
+    def bin_centers(self):
+        bin_width = (self.max_r - self.min_r) / self.n_r_bins
+        return self.min_r + (np.arange(self.n_r_bins) + 0.5) * bin_width
