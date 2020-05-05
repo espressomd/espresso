@@ -895,8 +895,9 @@ class RDF(Observable):
     ----------
     ids1 : array_like of :obj:`int`
         The ids of (existing) particles to calculate the distance from.
-    ids2 : array_like of :obj:`int`
+    ids2 : array_like of :obj:`int`, optional
         The ids of (existing) particles to calculate the distance to.
+        If not provided, use ``ids1``.
     n_r_bins : :obj:`int`
         Number of bins in radial direction.
     min_r : :obj:`float`
@@ -911,3 +912,8 @@ class RDF(Observable):
 
     """
     _so_name = "Observables::RDF"
+
+    def __init__(self, **kwargs):
+        if "oid" not in kwargs and "ids2" not in kwargs:
+            kwargs["ids2"] = []
+        super().__init__(**kwargs)

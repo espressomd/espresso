@@ -29,15 +29,18 @@
 namespace Observables {
 std::vector<double> RDF::operator()() const {
   std::vector<Particle> particles1 = fetch_particles(ids1());
-  std::vector<Particle> particles2 = fetch_particles(ids2());
-
   std::vector<const Particle *> particles_ptrs1(particles1.size());
-  std::vector<const Particle *> particles_ptrs2(particles2.size());
   boost::transform(particles1, particles_ptrs1.begin(),
                    [](auto const &p) { return std::addressof(p); });
+
+  if (ids2().empty()) {
+    return this->evaluate(particles_ptrs1, {});
+  }
+
+  std::vector<Particle> particles2 = fetch_particles(ids2());
+  std::vector<const Particle *> particles_ptrs2(particles2.size());
   boost::transform(particles2, particles_ptrs2.begin(),
                    [](auto const &p) { return std::addressof(p); });
-
   return this->evaluate(particles_ptrs1, particles_ptrs2);
 }
 
@@ -48,8 +51,12 @@ RDF::evaluate(Utils::Span<const Particle *const> particles1,
   auto const inv_bin_width = 1.0 / bin_width;
   std::vector<double> res(n_values(), 0.0);
   long int cnt = 0;
-  for (auto const p1 : particles1) {
-    for (auto const p2 : particles2) {
+  bool const mixed_flag = !particles2.empty();
+  for (auto it = particles1.begin(); it != particles1.end(); ++it) {
+    for (auto jt = mixed_flag ? particles2.begin() : std::next(it),
+              jend = mixed_flag ? particles2.end() : particles1.end();
+         jt != jend; ++jt) {
+      auto const p1 = *it, p2 = *jt;
       auto const dist = get_mi_vector(p1->r.p, p2->r.p, box_geo).norm();
       if (dist > min_r && dist < max_r) {
         auto const ind =
