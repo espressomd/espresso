@@ -18,6 +18,7 @@
  */
 #include <algorithm>
 #include <boost/mpi/collectives.hpp>
+#include <boost/mpi/operations.hpp>
 #include <chrono>
 #include <functional>
 #include <random>
@@ -278,8 +279,7 @@ double Metric::paverage() const {
 
 double Metric::pmax() const {
   const double l = curload();
-  return boost::mpi::all_reduce(
-      comm_cart, l, [](double d, double e) { return std::max(d, e); });
+  return boost::mpi::all_reduce(comm_cart, l, boost::mpi::maximum<double>{});
 }
 
 double Metric::pimbalance() const { return pmax() / paverage(); }
