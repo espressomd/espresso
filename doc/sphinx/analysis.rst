@@ -28,16 +28,11 @@ The direct analysis commands can be classified into two types:
     - :ref:`Minimal distances between particles`
     - :ref:`Particles in the neighborhood`
     - :ref:`Particle distribution`
-    - :ref:`Radial distribution function` with ``rdf_type='rdf'``
     - :ref:`Structure factor`
     - :ref:`Center of mass`
     - :ref:`Moment of inertia matrix`
     - :ref:`Gyration tensor`
     - :ref:`Stress Tensor`
-
-- Analysis on stored configurations, added by :meth:`espressomd.analyze.Analysis.append`:
-    - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
-    - :ref:`Chains`
 
 .. _Energies:
 
@@ -126,29 +121,6 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
     >>> print(count)
     [ 1.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
-
-
-.. _Radial distribution function:
-
-Radial distribution function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.rdf`
-
-Calculates a radial distribution function for given particle type and binning.
-The ``rdf_type`` defines if the analysis is performed on the current configuration (``rdf_type='rdf'``)
-or on averaged configurations stored with :meth:`analyze.append() <espressomd.analyze.Analysis.append>` (``rdf_type='<rdf>'``).
-
-For example, ::
-
-    rdf_bins = 100
-    r_min = 0.0
-    r_max = system.box_l[0] / 2.0
-    r, rdf_01 = S.analysis.rdf(rdf_type='<rdf>', type_list_a=[0], type_list_b=[1],
-                               r_min=r_min, r_max=r_max, r_bins=rdf_bins)
-    rdf_fp = open("rdf.dat", 'w')
-    for i in range(rdf_bins):
-        rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" % (r[i], rdf_01[i]))
-    rdf_fp.close()
 
 
 .. _Structure factor:
