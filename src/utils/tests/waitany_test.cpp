@@ -18,7 +18,7 @@
  */
 
 #define BOOST_TEST_NO_MAIN
-#define BOOST_TEST_MODULE all_gather test
+#define BOOST_TEST_MODULE waitany_test
 #define BOOST_TEST_DYN_LINK
 #include <boost/mpi.hpp>
 #include <boost/test/unit_test.hpp>
