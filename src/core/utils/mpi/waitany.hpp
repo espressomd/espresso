@@ -21,6 +21,7 @@
 
 #include <boost/mpi/request.hpp>
 #include <boost/mpi/status.hpp>
+#include <boost/version.hpp>
 #include <mpi.h>
 #include <utility> // std::pair
 
@@ -53,24 +54,40 @@ public:
 };
 
 namespace __details {
+
+#define _WAITANY_DETAILS_BOOST_MINOR_VERSION ((BOOST_VERSION / 100) % 1000)
+#define _WAITANY_DETAILS_BOOST_MAJOR_VERSION (BOOST_VERSION / 100000)
+
+#if ((_WAITANY_DETAILS_BOOST_MAJOR_VERSION == 1) &&                            \
+     (_WAITANY_DETAILS_BOOST_MINOR_VERSION < 71))
 /** Checks if a requests still has pending communication.
+ * Manual implementation as boost::mpi prior to 1.71 does not expose an active()
+ * function.
  */
-bool is_valid(const boost::mpi::request &r) {
+inline bool is_active(const boost::mpi::request &r) {
+  // This is the exact implementation featured in boost 1.71
   return r.m_requests[0] != MPI_REQUEST_NULL ||
          r.m_requests[1] != MPI_REQUEST_NULL;
 }
+#else
+/** Checks if a requests still has pending communication.
+ * Boost versions starting with 1.71 (commit 74b01dc in boostorg/mpi) have
+ * Request::active(). (And its implementation differs from above!)
+ */
+inline bool is_active(const boost::mpi::request &r) { return r.active(); }
+#endif
 
 /** Checks if any of the two requests in a pair still has pending communication.
  */
-bool is_valid(const RequestPair &rp) {
-  return is_valid(rp.first()) || is_valid(rp.second());
+inline bool is_active(const RequestPair &rp) {
+  return is_active(rp.first()) || is_active(rp.second());
 }
 } // namespace __details
 
-bool RequestPair::test() {
+inline bool RequestPair::test() {
   // If a request is *not* valid anymore, it has been completed before.
-  bool completed1 = !__details::is_valid(first());
-  bool completed2 = !__details::is_valid(second());
+  bool completed1 = !__details::is_active(first());
+  bool completed2 = !__details::is_active(second());
 
   if (!completed1 && first().test()) {
     if (completed2)
@@ -147,7 +164,7 @@ auto wait_any(It first, It last)
     for (It el = first; el != last; el++) {
 
       // Don't call test() on an already completed boost::mpi::request
-      if (!__details::is_valid(*el))
+      if (!__details::is_active(*el))
         continue;
 
       exists_non_null = true;
