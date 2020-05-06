@@ -740,12 +740,39 @@ discussion is presented in Ref. :cite:`ramirez10a`.
 Accumulators
 ------------
 
+.. _Time series:
+
+Time series
+~~~~~~~~~~~
+
+In order to take snapshots of an observable,
+:class:`espressomd.accumulators.TimeSeries` can be used::
+
+    import espressomd
+    import espressomd.observables
+    import espressomd.accumulators
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
+    position_observable = espressomd.observables.ParticlePositions(ids=(0,))
+    accumulator = espressomd.accumulators.TimeSeries(
+        obs=position_observable, delta_N=2)
+    system.auto_update_accumulators.add(accumulator)
+    system.integrator.run(10)
+    print(accumulator.time_series())
+
+In the example above the automatic update of the accumulator is used. However,
+it's also possible to manually update the accumulator by calling
+:meth:`espressomd.accumulators.TimeSeries.update`.
+
 .. _Mean-variance calculator:
 
 Mean-variance calculator
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to calculate the running mean and variance of an observable
+In order to calculate the running mean and variance of an observable,
 :class:`espressomd.accumulators.MeanVarianceCalculator` can be used::
 
     import espressomd
@@ -755,12 +782,12 @@ In order to calculate the running mean and variance of an observable
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    system.part.add(id=0, pos=[5.0, 5.0, 5.0])
+    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
     position_observable = espressomd.observables.ParticlePositions(ids=(0,))
     accumulator = espressomd.accumulators.MeanVarianceCalculator(
-        obs=position_observable, delta_N=1)
+        obs=position_observable, delta_N=2)
     system.auto_update_accumulators.add(accumulator)
-    # Perform integration (not shown)
+    system.integrator.run(10)
     print(accumulator.get_mean())
     print(accumulator.get_variance())
 
