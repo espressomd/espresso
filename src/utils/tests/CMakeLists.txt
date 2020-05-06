@@ -60,3 +60,5 @@ unit_test(NAME all_gatherv_test SRC all_gatherv_test.cpp DEPENDS utils
           Boost::mpi MPI::MPI_CXX)
 unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS utils Boost::mpi
           MPI::MPI_CXX utils NUM_PROC 3)
+unit_test(NAME waitany_test SRC waitany_test.cpp DEPENDS utils Boost::mpi
+          MPI::MPI_CXX utils NUM_PROC 4)

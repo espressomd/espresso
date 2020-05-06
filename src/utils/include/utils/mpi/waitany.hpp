@@ -150,7 +150,7 @@ struct wait_any_return_type<Status::Return, It, Ret> {
  * returned or not.
  *
  */
-template <Status return_policy, typename It>
+template <Status return_policy = Status::Return, typename It>
 auto wait_any(It first, It last)
     -> wait_any_return_type<return_policy, It, decltype(first->test())> {
   using RetType =
