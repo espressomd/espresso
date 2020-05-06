@@ -54,7 +54,7 @@ class communicator;
  * @brief exit ungracefully,
  * core dump if switched on.
  */
-void errexit();
+[[noreturn]] void errexit();
 
 /**
  * @brief check for runtime errors on all nodes.
