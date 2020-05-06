@@ -250,11 +250,11 @@ for i in range(n_ionpairs):
 
 # ENERGY MINIMIZATION
 print("\n-->E minimization")
-print("Before:", system.analysis.energy()["total"])
+print("Before: {:.2e}".format(system.analysis.energy()["total"]))
 n_max_steps = 100000
 steepest_descent(system, f_max=5.0, gamma=0.01, max_steps=n_max_steps,
                  max_displacement=0.01)
-print("After:", system.analysis.energy()["total"])
+print("After: {:.2e}".format(system.analysis.energy()["total"]))
 
 # THERMOSTAT
 if not args.drude:
@@ -349,15 +349,15 @@ else:
 
     for i in range(n_int_cycles):
         system.integrator.run(n_int_steps)
-        print("{0:.0f} %".format(100.0 * i / n_int_cycles))
+        print("\r{0:.0f} %".format((i + 1) * 100.0 / n_int_cycles), end='')
 
     print("\n-->Integration")
 
     n_int_steps = 1000
     n_int_cycles = int(args.walltime * 3600.0 / time_per_step / n_int_steps)
-    print(
-        "Simulating for", args.walltime, "h, which is", n_int_cycles, "cycles x",
-        n_int_steps, "steps, which is", args.walltime * ns_per_hour, "ns simulation time")
+    print("Simulating for {:.2f} h, which is {} cycles x {} steps, which is "
+          "{:.2f} ns simulation time".format(args.walltime, n_int_cycles,
+                                             n_int_steps, args.walltime * ns_per_hour))
 
     n_parts_tot = len(system.part)
 
@@ -398,7 +398,7 @@ else:
             file_traj.write(
                 shortTypes[p.type] + " " + ' '.join(map(str, p.pos_folded)) + '\n')
 
-        print("{0:.1f} %".format(100.0 * i / n_int_cycles))
+        print("\r{0:.1f} %".format((i + 1) * 100.0 / n_int_cycles))
 
     file_traj.close()
 
@@ -412,4 +412,4 @@ else:
             rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" %
                          (r[i], rdf_00[i], rdf_11[i], rdf_01[i]))
 
-    print("-->Done")
+    print("\n-->Done")
