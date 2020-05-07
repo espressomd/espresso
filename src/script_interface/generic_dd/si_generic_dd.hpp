@@ -32,7 +32,7 @@ namespace GenericDD {
 
 class SIGenericDD : public ScriptInterfaceBase {
 public:
-  SIGenericDD() {}
+  SIGenericDD() = default;
 
   Variant call_method(const std::string &name,
                       const VariantMap &parameters) override {

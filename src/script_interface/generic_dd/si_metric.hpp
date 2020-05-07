@@ -42,12 +42,11 @@ public:
                       const VariantMap &parameters) override {
     if (name == "average")
       return m_metric.paverage();
-    else if (name == "maximum")
+    if (name == "maximum")
       return m_metric.pmax();
-    else if (name == "imbalance")
+    if (name == "imbalance")
       return m_metric.pimbalance();
-    else
-      return {};
+    return {};
   }
 
   const ::generic_dd::repart::Metric &get_metric() const { return m_metric; }
