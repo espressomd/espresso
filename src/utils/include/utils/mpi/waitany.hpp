@@ -169,7 +169,7 @@ auto wait_any(It first, It last)
 
       exists_non_null = true;
       if ((ret = el->test()))
-        return RetType{el, ret};
+        return RetType{el, std::move(ret)};
     }
 
     // Prevent infinite loop
