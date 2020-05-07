@@ -14,7 +14,7 @@ find_library(REPA_LIBRARIES
              PATH_SUFFIXES lib)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(REPA
+find_package_handle_standard_args(Repa
                                   DEFAULT_MSG
                                   REPA_LIBRARIES
                                   REPA_INCLUDE_DIR)
