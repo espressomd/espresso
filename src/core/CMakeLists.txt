@@ -88,9 +88,9 @@ target_link_libraries(
   EspressoCore
   PRIVATE EspressoConfig shapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
-          "$<$<BOOL:${SCAFACOS}>:Scafacos>" GenericDD
+          "$<$<BOOL:${SCAFACOS}>:Scafacos>"
   PUBLIC
-    utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
+    utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi GenericDD
     "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
     "$<$<BOOL:${H5MD}>:Boost::filesystem>" "$<$<BOOL:${H5MD}>:h5xx>"
     "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:gcov>")
