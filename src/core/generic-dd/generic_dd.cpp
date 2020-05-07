@@ -492,7 +492,7 @@ std::vector<std::string> librepa_supported_grid_types() { return {}; }
  * it would leave ESPResSo in an undefined state (e.g.
  * no local cells are created).
  */
-static void err_not_compiled_in() {
+[[noreturn]] static void err_not_compiled_in() {
   // 1 error message is enough
   if (comm_cart.rank() == 0) {
     std::cerr << "Generic_dd is only available if ESPResSo has been "
