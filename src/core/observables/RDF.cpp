@@ -21,10 +21,12 @@
 #include "fetch_particles.hpp"
 #include "particle_data.hpp"
 
+#include <utils/for_each_pair.hpp>
 #include <utils/math/int_pow.hpp>
 
 #include <boost/range/algorithm/transform.hpp>
 #include <cmath>
+#include <functional>
 
 namespace Observables {
 std::vector<double> RDF::operator()() const {
@@ -51,20 +53,21 @@ RDF::evaluate(Utils::Span<const Particle *const> particles1,
   auto const inv_bin_width = 1.0 / bin_width;
   std::vector<double> res(n_values(), 0.0);
   long int cnt = 0;
-  bool const mixed_flag = !particles2.empty();
-  for (auto it = particles1.begin(); it != particles1.end(); ++it) {
-    for (auto jt = mixed_flag ? particles2.begin() : std::next(it),
-              jend = mixed_flag ? particles2.end() : particles1.end();
-         jt != jend; ++jt) {
-      auto const p1 = *it, p2 = *jt;
-      auto const dist = get_mi_vector(p1->r.p, p2->r.p, box_geo).norm();
-      if (dist > min_r && dist < max_r) {
-        auto const ind =
-            static_cast<int>(std::floor((dist - min_r) * inv_bin_width));
-        res[ind]++;
-      }
-      cnt++;
+  auto op = [=, &cnt, &res](const Particle *const p1,
+                            const Particle *const p2) {
+    auto const dist = get_mi_vector(p1->r.p, p2->r.p, box_geo).norm();
+    if (dist > min_r && dist < max_r) {
+      auto const ind =
+          static_cast<int>(std::floor((dist - min_r) * inv_bin_width));
+      res[ind]++;
     }
+    cnt++;
+  };
+  if (particles2.empty()) {
+    Utils::for_each_pair(particles1, op);
+  } else {
+    auto cmp = std::not_equal_to<const Particle *const>();
+    Utils::for_each_cartesian_pair_if(particles1, particles2, op, cmp);
   }
   if (cnt == 0)
     return res;
