@@ -19,9 +19,10 @@
 import sys
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 from espressomd import system, minimize_energy, generic_dd
 
-
+@utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class Generic_DD_Energy(ut.TestCase):
     """"Test case for all generic_dd grid types.
     NVE ensemble with 10 repartitionings.
