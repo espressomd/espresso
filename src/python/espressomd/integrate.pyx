@@ -103,7 +103,7 @@ cdef class IntegratorHandle:
 
     def set_sd(self, *args, **kwargs):
         """
-        Set the integration method to Stokesian Dynamics.
+        Set the integration method to Stokesian Dynamics (:class:`StokesianDynamics`).
 
         """
         self._integrator = StokesianDynamics(*args, **kwargs)
@@ -424,21 +424,24 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
         ----------
         viscosity : :obj:`float`
             Bulk viscosity
+        radii : :obj:`dict`
+            Dictionary that maps particle types to radii
         device : :obj:`str`, optional
             Device to execute on.  Possible values are
             "cpu" and "gpu".
-        radii : :obj:`dict`
-            Dictionary that maps particle types to radii
         lubrication : :obj:`bool`, optional
             Switches off or on the near-field corrections to the
-            hydrodynamic interactions
-        lubrication_method : :obj:`bool`, optional
-            Chooses the method of the near-field correction. Possible values
-            are "ft" and "fts"
+            hydrodynamic interactions. Default is ``True``.
+        approximation_method : :obj:`str`, optional
+            Chooses the method of the mobility approximation. Possible values
+            are ``'ft'`` and ``'fts'``. ``'fts'`` is more accurate. Defaults
+            to ``'fts'``.
         self_mobility : :obj:`bool`, optional
-            Switches off or on the mobility terms for single particles
+            Switches off or on the mobility terms for single particles. Default
+            is ``True``.
         pair_mobility : :obj:`bool`, optional
-            Switches off or on the hydrodynamic interactions between particles
+            Switches off or on the hydrodynamic interactions between particles.
+            Default is ``True``.
 
         """
 
