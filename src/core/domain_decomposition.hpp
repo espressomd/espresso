@@ -91,9 +91,9 @@ struct DomainDecomposition {
 extern DomainDecomposition dd;
 
 /** Maximal number of cells per node. In order to avoid memory
- *  problems due to the cell grid one has to specify the maximal
+ *  problems due to the cell grid, one has to specify the maximal
  *  number of \ref cells::cells. If the number of cells is larger
- *  than max_num_cells the cell grid is reduced.
+ *  than max_num_cells, the cell grid is reduced.
  *  max_num_cells has to be larger than 27, e.g. one inner cell.
  */
 extern int max_num_cells;
