@@ -33,4 +33,20 @@ The following minimal example illustrates how to use the SDM in |es|::
     system.integrator.run(100)
 
 Because there is no force on the particle yet, nothing will move. You will need
-to add your own actors to the system. 
+to add your own actors to the system.
+
+
+.. _Important:
+
+Important:
+----------
+
+The particles must be prevented from overlapping. It is mathematically allowed for the particles to overlap to a certain degree. However, once the distance of the sphere centers is less than 2/3 of the sphere diameter, the mobility matrix is no longer positive definite and the Stokesian Dynamics integrator will fail. Therefore, the particle centers must be kept apart from each other by a strongly repulsive potential, for example the WCA potential that is set to the appropriate particle radius.
+
+
+.. cite literature
+.. check math claims
+.. add reference to example with WCA potential
+.. lubrication and other parameters explained
+.. Thermostat
+.. Default parameters
