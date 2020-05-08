@@ -24,6 +24,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include "utils/for_each_pair.hpp"
+using Utils::for_each_cartesian_pair;
+using Utils::for_each_cartesian_pair_if;
 using Utils::for_each_pair;
 
 #include <numeric>
@@ -73,4 +75,108 @@ BOOST_AUTO_TEST_CASE(range) {
 
   /* Check the result */
   check_pairs(n_values, pairs);
+}
+
+void check_cartesian_pairs(int n_values_1, int n_values_2,
+                           std::vector<std::pair<int, int>> &pairs,
+                           bool exclude_diagonal = false) {
+  /* Check number of pairs */
+  BOOST_CHECK(pairs.size() ==
+              n_values_1 * n_values_2 -
+                  (exclude_diagonal ? std::min(n_values_1, n_values_2) : 0));
+
+  /* Check that all were visited in order */
+  auto it = pairs.begin();
+  for (int i = 0; i < n_values_1; ++i) {
+    for (int j = 0; j < n_values_2; ++j) {
+      if (!(exclude_diagonal and i == j)) {
+        BOOST_CHECK((it->first == i) && (it->second == j));
+        ++it;
+      }
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(basic_check_cartesian) {
+  auto const n_values1 = 141;
+  auto const n_values2 = 143;
+  std::vector<int> vec1(n_values1);
+  std::vector<int> vec2(n_values2);
+
+  std::iota(vec1.begin(), vec1.end(), 0);
+  std::iota(vec2.begin(), vec2.end(), 0);
+
+  std::vector<std::pair<int, int>> pairs;
+
+  auto pair_inserter = [&pairs](int a, int b) { pairs.emplace_back(a, b); };
+
+  /* Collect pairs */
+  for_each_cartesian_pair(vec1.begin(), vec1.end(), vec2.begin(), vec2.end(),
+                          pair_inserter);
+
+  /* Check the result */
+  check_cartesian_pairs(n_values1, n_values2, pairs);
+}
+
+BOOST_AUTO_TEST_CASE(range_cartesian) {
+  auto const n_values1 = 141;
+  auto const n_values2 = 143;
+  std::vector<int> vec1(n_values1);
+  std::vector<int> vec2(n_values2);
+
+  std::iota(vec1.begin(), vec1.end(), 0);
+  std::iota(vec2.begin(), vec2.end(), 0);
+
+  std::vector<std::pair<int, int>> pairs;
+
+  auto pair_inserter = [&pairs](int a, int b) { pairs.emplace_back(a, b); };
+
+  /* Collect pairs */
+  for_each_cartesian_pair(vec1, vec2, pair_inserter);
+
+  /* Check the result */
+  check_cartesian_pairs(n_values1, n_values2, pairs);
+}
+
+BOOST_AUTO_TEST_CASE(basic_check_cartesian_if) {
+  auto const n_values1 = 141;
+  auto const n_values2 = 143;
+  std::vector<int> vec1(n_values1);
+  std::vector<int> vec2(n_values2);
+
+  std::iota(vec1.begin(), vec1.end(), 0);
+  std::iota(vec2.begin(), vec2.end(), 0);
+
+  std::vector<std::pair<int, int>> pairs;
+
+  auto pair_inserter = [&pairs](int a, int b) { pairs.emplace_back(a, b); };
+  auto binary_comparison = [](int a, int b) { return a != b; };
+
+  /* Collect pairs */
+  for_each_cartesian_pair_if(vec1.begin(), vec1.end(), vec2.begin(), vec2.end(),
+                             pair_inserter, binary_comparison);
+
+  /* Check the result */
+  check_cartesian_pairs(n_values1, n_values2, pairs, true);
+}
+
+BOOST_AUTO_TEST_CASE(range_cartesian_if) {
+  auto const n_values1 = 141;
+  auto const n_values2 = 143;
+  std::vector<int> vec1(n_values1);
+  std::vector<int> vec2(n_values2);
+
+  std::iota(vec1.begin(), vec1.end(), 0);
+  std::iota(vec2.begin(), vec2.end(), 0);
+
+  std::vector<std::pair<int, int>> pairs;
+
+  auto pair_inserter = [&pairs](int a, int b) { pairs.emplace_back(a, b); };
+  auto binary_comparison = [](int a, int b) { return a != b; };
+
+  /* Collect pairs */
+  for_each_cartesian_pair_if(vec1, vec2, pair_inserter, binary_comparison);
+
+  /* Check the result */
+  check_cartesian_pairs(n_values1, n_values2, pairs, true);
 }
