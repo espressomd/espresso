@@ -135,7 +135,7 @@ struct wait_any_return_type<Status::Return, It, Ret> {
   Ret return_value;
 
   wait_any_return_type(It _iterator, Ret _ret)
-      : iterator(_iterator), return_value(_ret) {}
+      : iterator(_iterator), return_value(std::move(_ret)) {}
   wait_any_return_type(wait_any_return_type &&) = default;
 };
 
