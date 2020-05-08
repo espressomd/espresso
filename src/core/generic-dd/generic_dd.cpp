@@ -121,11 +121,15 @@ static void insert_particles(ParticleList &&recvbuf,
     // fold_position(p.r.p, p.l.i, box_geo);
     Cell *c = position_to_cell(p.r.p);
 
-    if (!c)
-      runtimeErrorMsg()
-          << "[" << this_node
+    if (!c) {
+      // We abort here because if this happens, something went very wrong.
+      // E.g. a global resort should have been performed instead of a local
+      // one, or the internal state of generic_dd is inconsistent.
+      std::cerr << "[" << this_node
           << "] Insertion: Particle does not belong on this node but on: "
           << position_to_node(p.r.p);
+      errexit();
+    }
 
     c->particles().insert(std::move(p));
     modified_cells.push_back(c);
