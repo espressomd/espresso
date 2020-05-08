@@ -429,9 +429,6 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
         device : :obj:`str`, optional
             Device to execute on.  Possible values are
             "cpu" and "gpu".
-        lubrication : :obj:`bool`, optional
-            Switches off or on the near-field corrections to the
-            hydrodynamic interactions. Default is ``True``.
         approximation_method : :obj:`str`, optional
             Chooses the method of the mobility approximation. Possible values
             are ``'ft'`` and ``'fts'``. ``'fts'`` is more accurate. Defaults
@@ -450,7 +447,7 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
                 sd_device_str = "cpu"
             ELIF STOKESIAN_DYNAMICS_GPU:
                 sd_device_str = "gpu"
-            return {"lubrication": True, "lubrication_method": "fts", 
+            return {"lubrication": False, "lubrication_method": "fts", 
                     "self_mobility": True, "pair_mobility": True,
                     "device": sd_device_str}
 
