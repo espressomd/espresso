@@ -37,20 +37,15 @@ typedef r123::Philox2x64 RNG;
  *  thermalizer functor.
  *
  *  To understand the Stokesian Dynamics method, it is recommended to read
- *  Durlofski et al. (1987), because it describes the method that is
+ *  @cite durlofsky87a, because it describes the method that is
  *  implemented here, apart from the thermalization.
- *      "Dynamic simulation of hydrodynamically interacting suspensions"
- *      https://core.ac.uk/download/pdf/4895234.pdf
  *
- *  All references to formulae in this file refer to the aforementioned paper,
- *  unless otherwise noted.
+ *  All references to formulae in this file refer to the paper 
+ *  @cite durlofsky87a, unless otherwise noted.
  *
  *  As they state in the paragraph below equation (2.17) it may be useful to
- *  also read Jeffrey et al. (1984) to better understand the notation used to
+ *  also read @cite jeffrey84a to better understand the notation used to
  *  compute the grand mobility matrix in this Stokesian Dynamics method.
- *      "Calculation of the resistance and mobility functions for two unequal
- *      rigid spheres in low-Reynolds-number flow"
- *      https://doi.org/10.1017/S0022112084000355
  *
  *  Both the F-T-version and the F-T-S-version have been implemented and can be
  *  selected via the FTS flag.
@@ -60,10 +55,9 @@ typedef r123::Philox2x64 RNG;
  *  but could easily be included by passing the shear flow tensor to the SD
  *  routine and some almost trivial additional initialization.
  *
- *  Also, the figures in
- *      https://doi.org/10.1016/j.jcp.2015.01.019
- *  might help with an intuitive understanding of dipole, stokeslet and rotlet
- *  flow (missing out only on the stresslet flow).
+ *  Also, the figures in @cite cortez15a might help with an intuitive
+ *  understanding of dipole, stokeslet and rotlet flow (missing out only on
+ *  the stresslet flow).
  *
  */
 
@@ -1435,15 +1429,16 @@ struct solver {
         if (sqrt_kT_Dt > 0.0) {
 
             // This method is combined from two locations,
-            // namely
+            // namely @cite banchio03a, 
             // Banchio, Brady 2002 https://doi.org/10.1063/1.1571819
             // equation (6)
             //  -- and --
+            // @cite brady88a
             // Brady, Bossis 1988
             // https://doi.org/10.1146/annurev.fl.20.010188.000551
             // equation (3)
 
-            // We adopt the more detailed method of the 2002 paper.
+            // We adopt the more detailed method of the paper @cite banchio03a.
 
             // However, the matrix A in that paper is NOT a byproduct of the
             // matrix inversion of R_{FU} as they claim. (We get the
@@ -1453,8 +1448,8 @@ struct solver {
             // as well.
 
             // Luckily, with the decomposition of R_{FU} we CAN compute an
-            // appropriate random force with the variance given by the
-            // 1988 paper (as opposed to random displacement).
+            // appropriate random force with the variance given by the paper
+            // @cite brady88a (as opposed to random displacement).
 
             vector_type<T> psi(f_host.size());
             thrust_wrapper::tabulate(Policy::par(), psi.begin(), psi.end(),

@@ -50,7 +50,7 @@ command::
 
 ``kT`` denotes the desired temperature of the system, and ``seed`` the seed for
 the random number generator of the Stokesian Dynamics thermostat. It is
-independent of other random number generators inside |es|.
+independent from other random number generators inside |es|.
 
 .. _Important_SD:
 
