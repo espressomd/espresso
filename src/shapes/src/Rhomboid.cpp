@@ -65,13 +65,13 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
     }                                                                          \
   }
 
-  // check for cone at pos+a
+  // check for cone at m_pos
   DISTANCE_FROM_CORNER(le, le, le, dpos);
-  // check for cone at pos+a
+  // check for cone at m_pos+a
   DISTANCE_FROM_CORNER(ge, le, le, dpos - m_a);
-  // check for cone at pos+b
+  // check for cone at m_pos+b
   DISTANCE_FROM_CORNER(le, ge, le, dpos - m_b);
-  // check for cone at pos+c
+  // check for cone at m_pos+c
   DISTANCE_FROM_CORNER(le, le, ge, dpos - m_c);
   // check for cone at m_pos+a+b
   DISTANCE_FROM_CORNER(ge, ge, le, dpos - m_a - m_b);
@@ -154,8 +154,7 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // ppos lies within rhomboid.
   // Find nearest wall for interaction (test all 6 possibilities).
 
-  // check for face with normal -axb
-
+  // calculate distance to face with normal -axb
   {
     auto d = dpos * axb;
     if (c_dot_axb > 0.0) {
