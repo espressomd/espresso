@@ -22,8 +22,7 @@
 #include <shapes/Rhomboid.hpp>
 
 #include <cmath>
-
-using namespace std;
+#include <functional>
 
 namespace Shapes {
 void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
@@ -177,7 +176,7 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
     }                                                                          \
     auto const tmp = axis.norm();                                              \
     d /= tmp;                                                                  \
-    if (abs(d) < abs(dist)) {                                                  \
+    if (std::abs(d) < std::abs(dist)) {                                        \
       dist = d * m_direction;                                                  \
       if (op2{}(dir##_dot_##axis, 0)) {                                        \
         d *= -1;                                                               \
