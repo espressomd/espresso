@@ -77,7 +77,7 @@ default:
      CC: 'gcc-9'
      CXX: 'g++-9'
   script:
-    - export with_cuda=false myconfig=default with_coverage=true
+    - export with_cuda=false myconfig=default with_coverage=true with_walberla=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker

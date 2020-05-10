@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE Walberla Node setters / getters
+#define BOOST_TEST_MODULE Walberla node setters and getters test
 #define BOOST_TEST_DYN_LINK
 #include "config.hpp"
 
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE(velocity) {
       // Check that the interpolated velocity at the node pos equals the node
       // vel
       auto res = lb.get_velocity_at_pos(n_pos(node));
-      BOOST_CHECK(res); // locallly available
+      BOOST_CHECK(res); // locally available
       auto v_exp = n_vel(node);
       printf("%d %d %d: %g %g %g | %g %g %g\n", node[0], node[1], node[2],
              (*res)[0], (*res)[1], (*res)[2], v_exp[0], v_exp[1], v_exp[2]);
@@ -263,7 +263,7 @@ BOOST_AUTO_TEST_CASE(velocity) {
       BOOST_CHECK(!lb.get_velocity_at_pos(n_pos(node)));
     }
   }
-};
+}
 
 BOOST_AUTO_TEST_CASE(total_momentum) {
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE(total_momentum) {
   MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                 MPI_COMM_WORLD);
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
-};
+}
 
 BOOST_AUTO_TEST_CASE(integrate_with_volume_force) {
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
@@ -356,7 +356,7 @@ BOOST_AUTO_TEST_CASE(forces) {
               *res += *res_temp;
           }
       if (lb.pos_in_local_domain(
-              pos)) // If the force is applied on the halo region then the some
+              pos)) // If the force is applied on the halo region then some
                     // of the nodes are outside of the ghost layer and no forces
                     // are added on these nodes, therefore the sum of all forces
                     // is not equal the injected force. TODO: maybe the forces
