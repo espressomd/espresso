@@ -155,7 +155,7 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
 const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind);
 
 /** @brief Calculate the average stress of all nodes by accumulating over
- *  all nodes and dividing by the @ref LB_parameters_gpu::number_of_nodes.
+ *  all nodes and dividing by the number of nodes.
  *  Returns the lower triangle of the LB stress tensor.
  */
 const Utils::Vector6d lb_lbfluid_get_stress();

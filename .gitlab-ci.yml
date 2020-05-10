@@ -54,20 +54,19 @@ style:
     expire_in: 1 week
     when: on_failure
 
-# WALBERLA TODO
-#style_doxygen:
-#  <<: *global_job_definition
-#  stage: prepare
-#  dependencies: []
-#  script:
-#    - mkdir build
-#    - cd build
-#    - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-#    - cmake .. -DWITH_CUDA=ON -DWITH_SCAFACOS=ON
-#    - sh ../maintainer/CI/dox_warnings.sh
-#  tags:
-#    - docker
-#    - linux
+style_doxygen:
+  <<: *global_job_definition
+  stage: prepare
+  dependencies: []
+  script:
+    - mkdir build
+    - cd build
+    - cp ../maintainer/configs/maxset.hpp myconfig.hpp
+    - cmake .. -DWITH_CUDA=ON -DWITH_SCAFACOS=ON
+    - sh ../maintainer/CI/dox_warnings.sh
+  tags:
+    - docker
+    - linux
 
 ### Builds without CUDA
 
