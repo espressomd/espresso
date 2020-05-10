@@ -2393,7 +2393,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   {                                                                            \
     if ((var) != nullptr)                                                      \
       cuda_safe_mem(cudaFree((var)));                                          \
-    cuda_safe_mem(cudaMalloc((void **)&var, size));                            \
+    cuda_safe_mem(cudaMalloc((void **)&(var), size));                          \
     cudaMemset(var, 0, size);                                                  \
   }
 

@@ -22,17 +22,16 @@
 #include <shapes/Rhomboid.hpp>
 
 #include <cmath>
-
-using namespace std;
+#include <functional>
 
 namespace Shapes {
 void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
                               Utils::Vector3d &vec) const {
 
-  using le = std::less_equal<double>;
-  using ge = std::greater_equal<double>;
-  using lt = std::less<double>;
-  using gt = std::greater<double>;
+  auto const le = std::less_equal<double>();
+  auto const ge = std::greater_equal<double>();
+  auto const lt = std::less<double>();
+  auto const gt = std::greater<double>();
 
   // calculate vectors and scalars that are going to be used frequently
 
@@ -49,113 +48,123 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // compute distance from the rhomboid corners, edges and faces using linear
   // combinations of the rhomboid edge vectors
 
-#ifndef DOXYGEN
-#define DISTANCE_FROM_CORNER(op1, op2, op3, distance)                          \
-  {                                                                            \
-    auto const d = distance;                                                   \
-    /* coefficients A, B, C tell whether ppos lies within a cone defined */    \
-    /* by pos and the adjacent edges */                                        \
-    auto const A = (d * bxc) / a_dot_bxc;                                      \
-    auto const B = (d * axc) / b_dot_axc;                                      \
-    auto const C = (d * axb) / c_dot_axb;                                      \
-    if (op1{}(A, 0) & op2{}(B, 0) & op3{}(C, 0)) {                             \
-      vec = d;                                                                 \
-      dist = m_direction * vec.norm();                                         \
-      return;                                                                  \
-    }                                                                          \
-  }
+  auto const corner = [=, &vec, &dist, a = bxc / a_dot_bxc, b = axc / b_dot_axc,
+                       c = axb / c_dot_axb](auto op1, auto op2, auto op3,
+                                            Utils::Vector3d const &d) {
+    /* coefficients A, B, C tell whether ppos lies within a cone defined
+     * by pos and the adjacent edges */
+    auto const A = a * d;
+    auto const B = b * d;
+    auto const C = c * d;
+    if (op1(A, 0) & op2(B, 0) & op3(C, 0)) {
+      vec = d;
+      dist = m_direction * vec.norm();
+      return true;
+    }
+    return false;
+  };
 
-  // check for cone at pos+a
-  DISTANCE_FROM_CORNER(le, le, le, dpos);
-  // check for cone at pos+a
-  DISTANCE_FROM_CORNER(ge, le, le, dpos - m_a);
-  // check for cone at pos+b
-  DISTANCE_FROM_CORNER(le, ge, le, dpos - m_b);
-  // check for cone at pos+c
-  DISTANCE_FROM_CORNER(le, le, ge, dpos - m_c);
-  // check for cone at m_pos+a+b
-  DISTANCE_FROM_CORNER(ge, ge, le, dpos - m_a - m_b);
-  // check for cone at m_pos+a+c
-  DISTANCE_FROM_CORNER(ge, le, ge, dpos - m_a - m_c);
-  // check for cone at m_pos+b+c
-  DISTANCE_FROM_CORNER(le, ge, ge, dpos - m_b - m_c);
-  // check for cone at m_pos+a+b+c
-  DISTANCE_FROM_CORNER(ge, ge, ge, dpos - m_a - m_b - m_c);
+  if ( // check for cone at m_pos
+      corner(le, le, le, dpos) ||
+      // check for cone at m_pos+a
+      corner(ge, le, le, dpos - m_a) ||
+      // check for cone at m_pos+b
+      corner(le, ge, le, dpos - m_b) ||
+      // check for cone at m_pos+c
+      corner(le, le, ge, dpos - m_c) ||
+      // check for cone at m_pos+a+b
+      corner(ge, ge, le, dpos - m_a - m_b) ||
+      // check for cone at m_pos+a+c
+      corner(ge, le, ge, dpos - m_a - m_c) ||
+      // check for cone at m_pos+b+c
+      corner(le, ge, ge, dpos - m_b - m_c) ||
+      // check for cone at m_pos+a+b+c
+      corner(ge, ge, ge, dpos - m_a - m_b - m_c))
+    return;
 
-#define DISTANCE_FROM_EDGE(op1, op2, distance, axis1, dir1, axis2, dir2, edge) \
-  {                                                                            \
-    auto const d = distance;                                                   \
-    auto const A = (d * axis1) / dir1##_dot_##axis1;                           \
-    auto const B = (d * axis2) / dir2##_dot_##axis2;                           \
-    if (op1{}(A, 0) & op2{}(B, 0)) {                                           \
-      auto const tmp = (d * edge) / edge.norm2();                              \
-      vec = d - edge * tmp;                                                    \
-      dist = m_direction * vec.norm();                                         \
-      return;                                                                  \
-    }                                                                          \
-  }
+  auto const edge = [=, &vec, &dist](auto op1, auto op2,
+                                     Utils::Vector3d const &d,
+                                     Utils::Vector3d const &axis1,
+                                     double const dir1_dot_axis1,
+                                     Utils::Vector3d const &axis2,
+                                     double const dir2_dot_axis2,
+                                     Utils::Vector3d const &edge) {
+    auto const A = (d * axis1) / dir1_dot_axis1;
+    auto const B = (d * axis2) / dir2_dot_axis2;
+    if (op1(A, 0) & op2(B, 0)) {
+      auto const tmp = (d * edge) / edge.norm2();
+      vec = d - edge * tmp;
+      dist = m_direction * vec.norm();
+      return true;
+    }
+    return false;
+  };
 
-  // check for prism at edge m_pos, a
-  DISTANCE_FROM_EDGE(le, le, dpos, axc, b, axb, c, m_a);
-  // check for prism at edge m_pos, b
-  DISTANCE_FROM_EDGE(le, le, dpos, bxc, a, axb, c, m_b);
-  // check for prism at edge m_pos, c
-  DISTANCE_FROM_EDGE(le, le, dpos, bxc, a, axc, b, m_c);
-  // check for prism at edge m_pos+a, b
-  DISTANCE_FROM_EDGE(ge, le, dpos - m_a, bxc, a, axb, c, m_b);
-  // check for prism at edge m_pos+a, c
-  DISTANCE_FROM_EDGE(ge, le, dpos - m_a, bxc, a, axc, b, m_c);
-  // check for prism at edge m_pos+b+c, c
-  DISTANCE_FROM_EDGE(le, ge, dpos - m_b - m_c, bxc, a, axc, b, m_c);
-  // check for prism at edge m_pos+b+c, b
-  DISTANCE_FROM_EDGE(le, ge, dpos - m_b - m_c, bxc, a, axb, c, m_b);
-  // check for prism at edge m_pos+b+c, a
-  DISTANCE_FROM_EDGE(ge, ge, dpos - m_b - m_c, axc, b, axb, c, m_a);
-  // check for prism at edge m_pos+a+b, a
-  DISTANCE_FROM_EDGE(ge, le, dpos - m_a - m_b, axc, b, axb, c, m_a);
-  // check for prism at edge m_pos+a+b, c
-  DISTANCE_FROM_EDGE(ge, ge, dpos - m_a - m_b, bxc, a, axc, b, m_c);
-  // check for prism at edge m_pos+a+c, a
-  DISTANCE_FROM_EDGE(le, ge, dpos - m_a - m_c, axc, b, axb, c, m_a);
-  // check for prism at edge m_pos+a+c, b
-  DISTANCE_FROM_EDGE(ge, ge, dpos - m_a - m_c, bxc, a, axb, c, m_b);
+  if ( // check for prism at edge m_pos, a
+      edge(le, le, dpos, axc, b_dot_axc, axb, c_dot_axb, m_a) ||
+      // check for prism at edge m_pos, b
+      edge(le, le, dpos, bxc, a_dot_bxc, axb, c_dot_axb, m_b) ||
+      // check for prism at edge m_pos, c
+      edge(le, le, dpos, bxc, a_dot_bxc, axc, b_dot_axc, m_c) ||
+      // check for prism at edge m_pos+a, b
+      edge(ge, le, dpos - m_a, bxc, a_dot_bxc, axb, c_dot_axb, m_b) ||
+      // check for prism at edge m_pos+a, c
+      edge(ge, le, dpos - m_a, bxc, a_dot_bxc, axc, b_dot_axc, m_c) ||
+      // check for prism at edge m_pos+b+c, c
+      edge(le, ge, dpos - m_b - m_c, bxc, a_dot_bxc, axc, b_dot_axc, m_c) ||
+      // check for prism at edge m_pos+b+c, b
+      edge(le, ge, dpos - m_b - m_c, bxc, a_dot_bxc, axb, c_dot_axb, m_b) ||
+      // check for prism at edge m_pos+b+c, a
+      edge(ge, ge, dpos - m_b - m_c, axc, b_dot_axc, axb, c_dot_axb, m_a) ||
+      // check for prism at edge m_pos+a+b, a
+      edge(ge, le, dpos - m_a - m_b, axc, b_dot_axc, axb, c_dot_axb, m_a) ||
+      // check for prism at edge m_pos+a+b, c
+      edge(ge, ge, dpos - m_a - m_b, bxc, a_dot_bxc, axc, b_dot_axc, m_c) ||
+      // check for prism at edge m_pos+a+c, a
+      edge(le, ge, dpos - m_a - m_c, axc, b_dot_axc, axb, c_dot_axb, m_a) ||
+      // check for prism at edge m_pos+a+c, b
+      edge(ge, ge, dpos - m_a - m_c, bxc, a_dot_bxc, axb, c_dot_axb, m_b))
+    return;
 
-#define DISTANCE_FROM_FACE(op1, op2, distance, axis, dir, sign)                \
-  {                                                                            \
-    auto d = (distance)*axis;                                                  \
-    if (op1{}(dir##_dot_##axis, 0)) {                                          \
-      d *= -1;                                                                 \
-    }                                                                          \
-    if (d >= 0) {                                                              \
-      auto const tmp = axis.norm();                                            \
-      d /= tmp;                                                                \
-      dist = d * m_direction;                                                  \
-      if (op2{}(dir##_dot_##axis, 0)) {                                        \
-        d *= -1;                                                               \
-      }                                                                        \
-      vec = (sign * d / tmp) * axis;                                           \
-      return;                                                                  \
-    }                                                                          \
-  }
+  auto const face_outside =
+      [=, &vec, &dist](auto op1, auto op2, Utils::Vector3d const &distance,
+                       Utils::Vector3d const &axis, double const dir_dot_axis,
+                       int sign) {
+        auto d = distance * axis;
+        if (op1(dir_dot_axis, 0)) {
+          d *= -1;
+        }
+        if (d >= 0) {
+          auto const tmp = axis.norm();
+          d /= tmp;
+          dist = d * m_direction;
+          if (op2(dir_dot_axis, 0)) {
+            d *= -1;
+          }
+          vec = (sign * d / tmp) * axis;
+          return true;
+        }
+        return false;
+      };
 
-  // check for face with normal -axb
-  DISTANCE_FROM_FACE(gt, lt, dpos, axb, c, -1);
-  // calculate distance to face with normal axc
-  DISTANCE_FROM_FACE(gt, gt, dpos, axc, b, +1);
-  // calculate distance to face with normal -bxc
-  DISTANCE_FROM_FACE(gt, lt, dpos, bxc, a, -1);
-  // calculate distance to face with normal axb
-  DISTANCE_FROM_FACE(lt, lt, dpos - m_a - m_b - m_c, axb, c, +1);
-  // calculate distance to face with normal -axc
-  DISTANCE_FROM_FACE(lt, gt, dpos - m_a - m_b - m_c, axc, b, -1);
-  // calculate distance to face with normal bxc
-  DISTANCE_FROM_FACE(lt, lt, dpos - m_a - m_b - m_c, bxc, a, +1);
+  if ( // check for face with normal -axb
+      face_outside(gt, lt, dpos, axb, c_dot_axb, -1) ||
+      // calculate distance to face with normal axc
+      face_outside(gt, gt, dpos, axc, b_dot_axc, +1) ||
+      // calculate distance to face with normal -bxc
+      face_outside(gt, lt, dpos, bxc, a_dot_bxc, -1) ||
+      // calculate distance to face with normal axb
+      face_outside(lt, lt, dpos - m_a - m_b - m_c, axb, c_dot_axb, +1) ||
+      // calculate distance to face with normal -axc
+      face_outside(lt, gt, dpos - m_a - m_b - m_c, axc, b_dot_axc, -1) ||
+      // calculate distance to face with normal bxc
+      face_outside(lt, lt, dpos - m_a - m_b - m_c, bxc, a_dot_bxc, +1))
+    return;
 
   // ppos lies within rhomboid.
   // Find nearest wall for interaction (test all 6 possibilities).
 
-  // check for face with normal -axb
-
+  // calculate distance to face with normal -axb
   {
     auto d = dpos * axb;
     if (c_dot_axb > 0.0) {
@@ -170,34 +179,35 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
     vec = (-d / tmp) * axb;
   }
 
-#define DISTANCE_FROM_FACE_INSIDE(op1, op2, distance, axis, dir, sign)         \
-  {                                                                            \
-    auto d = (distance)*axis;                                                  \
-    if (op1{}(dir##_dot_##axis, 0)) {                                          \
-      d *= -1;                                                                 \
-    }                                                                          \
-    auto const tmp = axis.norm();                                              \
-    d /= tmp;                                                                  \
-    if (abs(d) < abs(dist)) {                                                  \
-      dist = d * m_direction;                                                  \
-      if (op2{}(dir##_dot_##axis, 0)) {                                        \
-        d *= -1;                                                               \
-      }                                                                        \
-      vec = (sign * d / tmp) * axis;                                           \
-    }                                                                          \
-  }
+  auto const face_inside =
+      [=, &vec, &dist](auto op1, auto op2, Utils::Vector3d const &distance,
+                       Utils::Vector3d const &axis, double const dir_dot_axis,
+                       int sign) {
+        auto d = (distance)*axis;
+        if (op1(dir_dot_axis, 0)) {
+          d *= -1;
+        }
+        auto const tmp = axis.norm();
+        d /= tmp;
+        if (std::abs(d) < std::abs(dist)) {
+          dist = d * m_direction;
+          if (op2(dir_dot_axis, 0)) {
+            d *= -1;
+          }
+          vec = (sign * d / tmp) * axis;
+        }
+      };
 
   // calculate distance to face with normal axc
-  DISTANCE_FROM_FACE_INSIDE(gt, gt, dpos, axc, b, +1);
+  face_inside(gt, gt, dpos, axc, b_dot_axc, +1);
   // calculate distance to face with normal -bxc
-  DISTANCE_FROM_FACE_INSIDE(gt, lt, dpos, bxc, a, -1);
+  face_inside(gt, lt, dpos, bxc, a_dot_bxc, -1);
   // calculate distance to face with normal axb
-  DISTANCE_FROM_FACE_INSIDE(lt, lt, dpos - m_a - m_b - m_c, axb, c, +1);
+  face_inside(lt, lt, dpos - m_a - m_b - m_c, axb, c_dot_axb, +1);
   // calculate distance to face with normal -axc
-  DISTANCE_FROM_FACE_INSIDE(lt, gt, dpos - m_a - m_b - m_c, axc, b, -1);
+  face_inside(lt, gt, dpos - m_a - m_b - m_c, axc, b_dot_axc, -1);
   // calculate distance to face with normal bxc
-  DISTANCE_FROM_FACE_INSIDE(lt, lt, dpos - m_a - m_b - m_c, bxc, a, +1);
-#endif // ifndef DOXYGEN
+  face_inside(lt, lt, dpos - m_a - m_b - m_c, bxc, a_dot_bxc, +1);
 }
 
 } // namespace Shapes
