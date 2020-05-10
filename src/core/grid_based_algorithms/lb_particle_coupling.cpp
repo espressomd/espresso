@@ -148,6 +148,7 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
 
 using Utils::Vector;
 using Utils::Vector3d;
+using Utils::Vector3i;
 
 template <class T, size_t N> using Box = std::pair<Vector<T, N>, Vector<T, N>>;
 
@@ -201,10 +202,9 @@ bool in_local_halo(Vector3d const &pos) {
     return true;
 
   std::vector<Vector3d> re_folded_positions;
-  Vector<int, 3> folded_axis = Vector<int, 3>{0, 0, 0};
+  Vector3i folded_axis = {0, 0, 0};
   // Determine which axis needs folding
   for (int i = 0; i < 3; i++) {
-    Vector3d re_folded_pos = pos;
     if (pos[i] < halo) {
       folded_axis[i] = 1;
     } else if (pos[i] > box_geo.m_length[i] - halo) {
@@ -213,7 +213,7 @@ bool in_local_halo(Vector3d const &pos) {
   }
 
   // Fill folded position vector
-  if (folded_axis != Vector<int, 3>{0, 0, 0}) {
+  if (folded_axis != Vector3i{0, 0, 0}) {
     for (auto x : {0, 1})
       for (auto y : {0, 1})
         for (auto z : {0, 1}) {
