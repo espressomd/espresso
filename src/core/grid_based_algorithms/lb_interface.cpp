@@ -1223,7 +1223,8 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
     lb_calc_fluid_momentum_GPU(fluid_momentum.data());
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-    mpi_gather_stats(6, fluid_momentum.data(), nullptr, nullptr, nullptr);
+    mpi_gather_stats(GatherStats::lb_fluid_momentum, fluid_momentum.data(),
+                     nullptr, nullptr, nullptr);
   }
   return fluid_momentum;
 }

@@ -61,7 +61,8 @@ void init_energies(Observable_stat *stat) {
 /************************************************************/
 
 void master_energy_calc() {
-  mpi_gather_stats(1, total_energy.data.data(), nullptr, nullptr, nullptr);
+  mpi_gather_stats(GatherStats::energy, total_energy.data.data(), nullptr,
+                   nullptr, nullptr);
 
   total_energy.init_status = 1;
 }

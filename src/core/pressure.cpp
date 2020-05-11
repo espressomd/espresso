@@ -219,14 +219,11 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb) {
 
 /************************************************************/
 void master_pressure_calc(int v_comp) {
-  if (v_comp)
-    mpi_gather_stats(3, total_pressure.data.data(), total_p_tensor.data.data(),
-                     total_pressure_non_bonded.data_nb.data(),
-                     total_p_tensor_non_bonded.data_nb.data());
-  else
-    mpi_gather_stats(2, total_pressure.data.data(), total_p_tensor.data.data(),
-                     total_pressure_non_bonded.data_nb.data(),
-                     total_p_tensor_non_bonded.data_nb.data());
+  mpi_gather_stats(v_comp ? GatherStats::pressure_v_comp
+                          : GatherStats::pressure,
+                   total_pressure.data.data(), total_p_tensor.data.data(),
+                   total_pressure_non_bonded.data_nb.data(),
+                   total_p_tensor_non_bonded.data_nb.data());
 
   total_pressure.init_status = 1 + v_comp;
   total_p_tensor.init_status = 1 + v_comp;

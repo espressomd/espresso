@@ -365,34 +365,36 @@ void mpi_bcast_max_seen_particle_type(int ns) {
 }
 
 /*************** GATHER ************/
-void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
-                      void *result_t_nb) {
+void mpi_gather_stats(GatherStats job, void *result, void *result_t,
+                      void *result_nb, void *result_t_nb) {
+  auto job_slave = static_cast<int>(job);
   switch (job) {
-  case 1:
-    mpi_call(mpi_gather_stats_slave, -1, 1);
+  case GatherStats::energy:
+    /* calculate and reduce (sum up) energies */
+    mpi_call(mpi_gather_stats_slave, -1, job_slave);
     energy_calc((double *)result, sim_time);
     break;
-  case 2:
+  case GatherStats::pressure:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or
        'analyze stress_tensor' */
-    mpi_call(mpi_gather_stats_slave, -1, 2);
+    mpi_call(mpi_gather_stats_slave, -1, job_slave);
     pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
                   (double *)result_t_nb, 0);
     break;
-  case 3:
-    mpi_call(mpi_gather_stats_slave, -1, 3);
+  case GatherStats::pressure_v_comp:
+    /* calculate and reduce (sum up) virials, revert velocities half a timestep
+     * for 'analyze p_inst' */
+    mpi_call(mpi_gather_stats_slave, -1, job_slave);
     pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
                   (double *)result_t_nb, 1);
     break;
-  case 6:
-    mpi_call(mpi_gather_stats_slave, -1, 6);
+  case GatherStats::lb_fluid_momentum:
+    mpi_call(mpi_gather_stats_slave, -1, job_slave);
     lb_calc_fluid_momentum((double *)result, lbpar, lbfields, lblattice);
     break;
-  case 7:
-    break;
 #ifdef LB_BOUNDARIES
-  case 8:
-    mpi_call(mpi_gather_stats_slave, -1, 8);
+  case GatherStats::lb_boundary_forces:
+    mpi_call(mpi_gather_stats_slave, -1, job_slave);
     lb_collect_boundary_forces((double *)result);
     break;
 #endif
@@ -400,34 +402,33 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     fprintf(
         stderr,
         "%d: INTERNAL ERROR: illegal request %d for mpi_gather_stats_slave\n",
-        this_node, job);
+        this_node, job_slave);
     errexit();
   }
 }
 
-void mpi_gather_stats_slave(int, int job) {
+void mpi_gather_stats_slave(int, int job_slave) {
+  auto job = static_cast<GatherStats>(job_slave);
   switch (job) {
-  case 1:
+  case GatherStats::energy:
     /* calculate and reduce (sum up) energies */
     energy_calc(nullptr, sim_time);
     break;
-  case 2:
+  case GatherStats::pressure:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze
      * stress_tensor'*/
     pressure_calc(nullptr, nullptr, nullptr, nullptr, 0);
     break;
-  case 3:
+  case GatherStats::pressure_v_comp:
     /* calculate and reduce (sum up) virials, revert velocities half a timestep
      * for 'analyze p_inst' */
     pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
     break;
-  case 6:
+  case GatherStats::lb_fluid_momentum:
     lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
     break;
-  case 7:
-    break;
 #ifdef LB_BOUNDARIES
-  case 8:
+  case GatherStats::lb_boundary_forces:
     lb_collect_boundary_forces(nullptr);
     break;
 #endif
@@ -435,7 +436,7 @@ void mpi_gather_stats_slave(int, int job) {
     fprintf(
         stderr,
         "%d: INTERNAL ERROR: illegal request %d for mpi_gather_stats_slave\n",
-        this_node, job);
+        this_node, job_slave);
     errexit();
   }
 }
