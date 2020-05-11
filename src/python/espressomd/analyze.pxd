@@ -41,10 +41,7 @@ cdef extern from "partCfg_global.hpp":
 cdef extern from "particle_data.hpp":
     int max_seen_particle_type
 
-cdef extern from "statistics.hpp":
-    int get_n_part_conf()
-    int get_n_configs()
-
+cdef extern from "Observable_stat.hpp":
     ctypedef struct Observable_stat:
         int init_status
         vector[double] data
@@ -64,6 +61,10 @@ cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         double * nonbonded_intra_ia(int type1, int type2)
         double * nonbonded_inter_ia(int type1, int type2)
+
+cdef extern from "statistics.hpp":
+    int get_n_part_conf()
+    int get_n_configs()
 
     cdef vector[double] calc_structurefactor(PartCfg & , const vector[int] & p_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)

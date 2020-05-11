@@ -27,7 +27,7 @@
 #ifndef _ENERGY_H
 #define _ENERGY_H
 
-/* include the energy files */
+#include "Observable_stat.hpp"
 #include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
 #include "statistics.hpp"

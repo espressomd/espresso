@@ -25,6 +25,7 @@
 #ifndef CORE_PRESSURE_HPP
 #define CORE_PRESSURE_HPP
 
+#include "Observable_stat.hpp"
 #include "statistics.hpp"
 
 /** \name Exported Variables */

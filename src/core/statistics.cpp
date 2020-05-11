@@ -26,6 +26,7 @@
 
 #include "statistics.hpp"
 
+#include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
