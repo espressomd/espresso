@@ -89,10 +89,12 @@ struct Observable_stat : Observable_stat_base {
 
   /** Rescale values */
   void rescale(double volume, double time_step) {
-    for (size_t i = 0; i < chunk_size; ++i)
-      data[i] /= (volume * time_step * time_step);
-    for (size_t i = chunk_size; i < data.size(); ++i)
-      data[i] /= volume;
+    auto const factor1 = 1. / (volume * time_step * time_step);
+    auto const factor2 = 1. / volume;
+    for (auto it = data.begin(); it != data.begin() + chunk_size; ++it)
+      *it *= factor1;
+    for (auto it = data.begin() + chunk_size; it != data.end(); ++it)
+      *it *= factor2;
   }
 
   /** Get contribution from a bonded interaction */
@@ -120,8 +122,9 @@ public:
 
   /** Rescale values */
   void rescale(double volume) {
+    auto const factor = 1. / volume;
     for (auto &value : data)
-      value /= volume;
+      value *= factor;
   }
 
   /** Get contribution from a non-bonded intramolecular interaction */
