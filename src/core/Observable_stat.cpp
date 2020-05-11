@@ -28,13 +28,6 @@
 
 extern boost::mpi::communicator comm_cart;
 
-/** Calculate the maximal number of non-bonded interaction pairs in the system.
- */
-size_t max_non_bonded_pairs() {
-  return static_cast<size_t>(
-      (max_seen_particle_type * (max_seen_particle_type + 1)) / 2);
-}
-
 void Observable_stat::realloc_and_clear(size_t n_coulomb, size_t n_dipolar,
                                         size_t n_vs, size_t c_size) {
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
@@ -69,26 +62,20 @@ void Observable_stat::realloc_and_clear(size_t n_coulomb, size_t n_dipolar,
   init_status = 0;
 }
 
-void Observable_stat_non_bonded::realloc_and_clear_non_bonded(size_t c_size) {
-  chunk_size_nb = c_size;
+void Observable_stat_non_bonded::realloc_and_clear(size_t c_size) {
+  chunk_size = c_size;
   auto const n_non_bonded = max_non_bonded_pairs();
-  size_t const total = chunk_size_nb * 2 * n_non_bonded;
+  size_t const total = chunk_size * 2 * n_non_bonded;
 
-  data_nb.resize(total);
-  non_bonded_intra = data_nb.data();
-  non_bonded_inter = non_bonded_intra + chunk_size_nb * n_non_bonded;
+  data.resize(total);
+  non_bonded_intra = data.data();
+  non_bonded_inter = non_bonded_intra + chunk_size * n_non_bonded;
 
   for (int i = 0; i < total; i++)
-    data_nb[i] = 0.0;
+    data[i] = 0.0;
 }
 
-void Observable_stat::reduce(Observable_stat *output) const {
+void Observable_stat_base::reduce(Observable_stat_base *output) const {
   MPI_Reduce(data.data(), output ? output->data.data() : nullptr, data.size(),
              MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-}
-
-void Observable_stat_non_bonded::reduce(
-    Observable_stat_non_bonded *output) const {
-  MPI_Reduce(data_nb.data(), output ? output->data_nb.data() : nullptr,
-             data_nb.size(), MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }

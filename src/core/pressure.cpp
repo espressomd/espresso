@@ -190,7 +190,7 @@ void init_virials(Observable_stat *stat) {
 
 /************************************************************/
 void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
-  stat_nb->realloc_and_clear_non_bonded(1);
+  stat_nb->realloc_and_clear(1);
 }
 
 /* Initialize the p_tensor */
@@ -215,7 +215,7 @@ void init_p_tensor(Observable_stat *stat) {
 
 /***************************/
 void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb) {
-  stat_nb->realloc_and_clear_non_bonded(9);
+  stat_nb->realloc_and_clear(9);
 }
 
 /************************************************************/
