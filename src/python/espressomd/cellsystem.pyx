@@ -51,7 +51,7 @@ cdef class CellSystem:
         handle_errors("Error while initializing the cell system.")
         return True
 
-    def set_generic_dd(self, grid, use_verlet_lists=True):
+    def set_generic_dd(self, grid, init_part=None, use_verlet_lists=True):
         """
         Activates generic domain decomposition cell system.
         Supports repartitioning, however, might be slower than the
@@ -61,6 +61,9 @@ cdef class CellSystem:
         Parameters
         ----------
         'grid' : :obj:`str`: Grid type descriptor.
+        'init_part' : :obj:`str`, optional
+                      Specifies the initial partitioning scheme to be used
+                      if the grid type requires one. Otherwise ignored.
         'use_verlet_lists' : :obj:`bool`, optional
                              Activates or deactivates the usage of Verlet lists
                              in the algorithm.
@@ -68,7 +71,7 @@ cdef class CellSystem:
         """
 
         cell_structure.use_verlet_list = use_verlet_lists
-        return GenericDD(grid)
+        return GenericDD(grid, init_part if init_part is not None else "")
 
     def set_n_square(self, use_verlet_lists=True):
         """

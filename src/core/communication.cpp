@@ -680,14 +680,16 @@ void mpi_resort_particles_slave(int global_flag, int) {
   boost::mpi::gather(comm_cart, cells_get_n_particles(), 0);
 }
 
-void mpi_bcast_generic_dd_grid(std::string desc) {
+void mpi_bcast_generic_dd_grid(std::string desc, std::string init_part) {
   mpi_call(mpi_bcast_generic_dd_grid_slave, 0, 0);
   boost::mpi::broadcast(comm_cart, desc, 0);
-  generic_dd::set_grid(desc);
+  boost::mpi::broadcast(comm_cart, init_part, 0);
+  generic_dd::set_grid(desc, init_part);
 }
 
 void mpi_bcast_generic_dd_grid_slave(int, int) {
-  std::string desc;
+  std::string desc, init_part;
   boost::mpi::broadcast(comm_cart, desc, 0);
-  generic_dd::set_grid(desc);
+  boost::mpi::broadcast(comm_cart, init_part, 0);
+  generic_dd::set_grid(desc, init_part);
 }

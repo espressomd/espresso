@@ -49,12 +49,13 @@ class PyMetric:
 
 
 class GenericDD:
-    def __init__(self, grid_type):
+    def __init__(self, grid_type, init_part):
         if grid_type not in supported_grid_types():
             raise RuntimeError(
                 "Grid type {} not supported by librepa.".format(grid_type))
         self._grid_type = grid_type
-        mpi_bcast_generic_dd_grid(grid_type.encode())
+        self._init_part = init_part
+        mpi_bcast_generic_dd_grid(grid_type.encode(), init_part.encode())
         mpi_bcast_cell_structure(CELL_STRUCTURE_GENERIC_DD)
         self.__instance = script_interface.PScriptInterface(
             "ScriptInterface::GenericDD::GenericDD")

@@ -20,7 +20,7 @@ from libcpp.vector cimport vector
 
 cdef extern from "communication.hpp":
     cdef void mpi_bcast_cell_structure(int cs)
-    cdef void mpi_bcast_generic_dd_grid(string)
+    cdef void mpi_bcast_generic_dd_grid(string, string)
     int CELL_STRUCTURE_GENERIC_DD
 
 cdef extern from "generic-dd/generic_dd.hpp" namespace "generic_dd":

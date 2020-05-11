@@ -307,7 +307,8 @@ std::vector<int> mpi_resort_particles(int global_flag);
 
 /** Broadcast the grid to use to every process.
  * \param desc Grid descriptor
+ * \param init_part Optional description of the initial partitioning
  */
-void mpi_bcast_generic_dd_grid(std::string desc);
+void mpi_bcast_generic_dd_grid(std::string desc, std::string init_part = "");
 
 #endif

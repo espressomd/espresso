@@ -33,6 +33,25 @@
 #include <utils/mpi/waitany.hpp>
 
 namespace {
+
+/** Returns the center of mass of this subdomain.
+ */
+repa::Vec3d center_of_mass() {
+  int npart = 0;
+  repa::Vec3d c = {{0., 0., 0.}};
+
+  for (const auto &p : Cells::particles(cell_structure.local_cells())) {
+    npart++;
+    for (int d = 0; d < 3; ++d)
+      c[d] += p.r.p[d];
+  }
+
+  for (int d = 0; d < 3; ++d)
+    c[d] /= npart;
+
+  return c;
+}
+
 /** Wraps the underlying grid and type.
  */
 struct GridImplementationWrapper {
@@ -41,9 +60,13 @@ struct GridImplementationWrapper {
    * is instantiated.
    */
   repa::GridType new_gridtype;
+  repa::ExtraParams extra_params;
 
   GridImplementationWrapper()
-      : pargrid(nullptr), new_gridtype(repa::GridType::NONE) {}
+      : pargrid(nullptr), new_gridtype(repa::GridType::NONE) {
+    extra_params.subdomain_midpoint = center_of_mass;
+    extra_params.init_part = "Cart3D";
+  }
 
   repa::grids::ParallelLCGrid *operator->() { return pargrid.get(); }
   const repa::grids::ParallelLCGrid *operator->() const {
@@ -190,7 +213,7 @@ static void exchange_particles_begin(bool global, ParticleList *pl) {
   }
 
   fill_sendbufs(global, pl, exchg::sendbuf);
-  assert(pl->size() == 0);
+  assert(pl->empty());
 
   // Send particle data
   exchg::sreq.reserve(exchg::nneigh);
@@ -314,24 +337,6 @@ template <typename It> ParticleList filter_oob_particles(It first, It last) {
   return oobparts;
 }
 
-/** Returns the center of mass of this subdomain.
- */
-static repa::Vec3d center_of_mass() {
-  int npart = 0;
-  repa::Vec3d c = {{0., 0., 0.}};
-
-  for (const auto &p : Cells::particles(cell_structure.local_cells())) {
-    npart++;
-    for (int d = 0; d < 3; ++d)
-      c[d] += p.r.p[d];
-  }
-
-  for (int d = 0; d < 3; ++d)
-    c[d] /= npart;
-
-  return c;
-}
-
 /** Updates the particle index for cells modified by fn.
  * @param fn Function void(std::vector<Cell*>&) which stores modified cells in
  * parameter handed to it.
@@ -406,11 +411,10 @@ void topology_init(double range, bool is_repart) {
   // Create new grid only if not repartitioning.
   // This lets us effectively call cells_re_init after lb.
   if (!is_repart) {
-    auto ep = repa::ExtraParams{};
-    ep.subdomain_midpoint = impl::center_of_mass;
     grid_instance().pargrid =
         repa::make_pargrid(grid_instance().new_gridtype, comm_cart,
-                           impl::to_repa_vec(box_geo.length()), range, ep);
+                           impl::to_repa_vec(box_geo.length()), range,
+                           grid_instance().extra_params);
   }
 
   impl::ensure_at_least_one_cell();
@@ -448,8 +452,10 @@ void exchange_particles(int global_flag, ParticleList *displaced_particles,
   impl::exchange_particles_end(modified_cells);
 }
 
-void set_grid(const std::string &desc) {
+void set_grid(const std::string &desc, std::string init_part) {
   grid_instance().new_gridtype = repa::parse_grid_type(desc);
+  if (!init_part.empty())
+    grid_instance().extra_params.init_part = init_part;
 }
 
 void repartition(const repart::Metric &m) {
@@ -524,7 +530,7 @@ errdef(void, on_geometry_change, int, double)
 errdef(void, topology_init, double, bool)
 errdef(void, topology_release, void)
 errdef(void, exchange_particles, int, ParticleList *, std::vector<Cell *>&)
-errdef(void, set_grid, const std::string &)
+errdef(void, set_grid, const std::string &, std::string)
 errdef(void, repartition, const repart::Metric &)
 errdef(void, command, const std::string &) // clang-format on
 

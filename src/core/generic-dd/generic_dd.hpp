@@ -80,7 +80,7 @@ void exchange_particles(int global_flag, ParticleList *displaced_particles,
 /** Use grid specified by "desc" as underlying parallel grid implementation in
  * subsequent calls to topology_init.
  */
-void set_grid(const std::string &desc);
+void set_grid(const std::string &desc, std::string init_part = "");
 
 /** Repartitions the grid unconditionally if the underlying grid implementation
  * does support repartitioning.
