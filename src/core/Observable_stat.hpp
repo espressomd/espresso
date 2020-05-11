@@ -59,6 +59,13 @@ struct Observable_stat {
 
   void realloc_and_clear(size_t n_coulomb, size_t n_dipolar, size_t n_vs,
                          size_t c_size);
+
+  void rescale(double volume, double time_step) {
+    for (size_t i = 0; i < chunk_size; ++i)
+      data[i] /= (volume * time_step * time_step);
+    for (size_t i = chunk_size; i < data.size(); ++i)
+      data[i] /= volume;
+  }
 };
 
 /** Structure used only in the pressure and stress tensor calculation to
@@ -77,6 +84,11 @@ struct Observable_stat_non_bonded {
   size_t chunk_size_nb;
 
   void realloc_and_clear_non_bonded(size_t c_size);
+
+  void rescale(double volume) {
+    for (auto &value : data_nb)
+      value /= volume;
+  }
 };
 
 #endif // ESPRESSO_OBSERVABLE_STAT_HPP

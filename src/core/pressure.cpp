@@ -124,9 +124,6 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
                                                  sqrt(d.dist2));
                    });
 
-  /* rescale kinetic energy (=ideal contribution) */
-  virials.data[0] /= (3.0 * volume * time_step * time_step);
-
   calc_long_range_virials(cell_structure.local_particles());
 
 #ifdef VIRTUAL_SITES
@@ -138,23 +135,15 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   }
 #endif
 
-  for (size_t n = 1; n < virials.data.size(); n++)
-    virials.data[n] /= 3.0 * volume;
+  /* rescale kinetic energy (=ideal contribution) */
+  virials.rescale(3.0 * volume, time_step);
 
-  for (int i = 0; i < 9; i++)
-    p_tensor.data[i] /= (volume * time_step * time_step);
-
-  for (size_t i = 9; i < p_tensor.data.size(); i++)
-    p_tensor.data[i] /= volume;
+  p_tensor.rescale(volume, time_step);
 
   /* Intra- and Inter- part of nonbonded interaction */
-  for (auto &value : virials_non_bonded.data_nb) {
-    value /= 3.0 * volume;
-  }
+  virials_non_bonded.rescale(3.0 * volume);
 
-  for (auto &value : p_tensor_non_bonded.data_nb) {
-    value /= volume;
-  }
+  p_tensor_non_bonded.rescale(volume);
 
   /* gather data */
   MPI_Reduce(virials.data.data(), result, virials.data.size(), MPI_DOUBLE,
