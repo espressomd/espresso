@@ -146,17 +146,10 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   p_tensor_non_bonded.rescale(volume);
 
   /* gather data */
-  MPI_Reduce(virials.data.data(), result, virials.data.size(), MPI_DOUBLE,
-             MPI_SUM, 0, comm_cart);
-  MPI_Reduce(p_tensor.data.data(), result_t, p_tensor.data.size(), MPI_DOUBLE,
-             MPI_SUM, 0, comm_cart);
-
-  MPI_Reduce(virials_non_bonded.data_nb.data(), result_nb,
-             virials_non_bonded.data_nb.size(), MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
-  MPI_Reduce(p_tensor_non_bonded.data_nb.data(), result_t_nb,
-             p_tensor_non_bonded.data_nb.size(), MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
+  virials.reduce(result);
+  p_tensor.reduce(result_t);
+  virials_non_bonded.reduce(result_nb);
+  p_tensor_non_bonded.reduce(result_t_nb);
 }
 
 /************************************************************/

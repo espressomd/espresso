@@ -82,6 +82,9 @@ struct Observable_stat {
            chunk_size *
                (((2 * max_seen_particle_type - 1 - type1) * type1) / 2 + type2);
   }
+
+  /** Gather the contributions from all nodes */
+  void reduce(double *array) const;
 };
 
 /** Structure used only in the pressure and stress tensor calculation to
@@ -129,6 +132,9 @@ struct Observable_stat_non_bonded {
            chunk_size_nb *
                (((2 * max_seen_particle_type - 1 - type1) * type1) / 2 + type2);
   }
+
+  /** Gather the contributions from all nodes */
+  void reduce(double *array) const;
 };
 
 #endif // ESPRESSO_OBSERVABLE_STAT_HPP

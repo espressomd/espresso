@@ -106,8 +106,7 @@ void energy_calc(double *result, const double time) {
 #endif
 
   /* gather data */
-  MPI_Reduce(energy.data.data(), result, energy.data.size(), MPI_DOUBLE,
-             MPI_SUM, 0, comm_cart);
+  energy.reduce(result);
 }
 
 /************************************************************/

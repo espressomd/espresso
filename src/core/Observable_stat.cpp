@@ -24,6 +24,10 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
+#include <boost/mpi/communicator.hpp>
+
+extern boost::mpi::communicator comm_cart;
+
 /** Calculate the maximal number of non-bonded interaction pairs in the system.
  */
 size_t max_non_bonded_pairs() {
@@ -76,4 +80,14 @@ void Observable_stat_non_bonded::realloc_and_clear_non_bonded(size_t c_size) {
 
   for (int i = 0; i < total; i++)
     data_nb[i] = 0.0;
+}
+
+void Observable_stat::reduce(double *array) const {
+  MPI_Reduce(data.data(), array, data.size(), MPI_DOUBLE, MPI_SUM, 0,
+             comm_cart);
+}
+
+void Observable_stat_non_bonded::reduce(double *array) const {
+  MPI_Reduce(data_nb.data(), array, data_nb.size(), MPI_DOUBLE, MPI_SUM, 0,
+             comm_cart);
 }
