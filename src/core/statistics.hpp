@@ -257,12 +257,12 @@ void invalidate_obs();
 /** Docs missing
  * \todo Docs missing
  */
-void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
-                               int n_non_bonded, int n_coulomb, int n_dipolar,
-                               int n_vs, int chunk_size);
+void obsstat_realloc_and_clear(Observable_stat *stat, size_t n_pre, size_t n_bonded,
+                               size_t n_non_bonded, size_t n_coulomb, size_t n_dipolar,
+                               size_t n_vs, size_t c_size);
 
 void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
-                                          int n_nonbonded, int chunk_size_nb);
+                                          size_t n_nonbonded, size_t chunk_size_nb);
 
 /*@}*/
 

@@ -518,14 +518,14 @@ void analyze_append(PartCfg &partCfg) {
  *                                 Observables handling
  ****************************************************************************************/
 
-void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
-                               int n_non_bonded, int n_coulomb, int n_dipolar,
-                               int n_vs, int c_size) {
+void obsstat_realloc_and_clear(Observable_stat *stat, size_t n_pre, size_t n_bonded,
+                               size_t n_non_bonded, size_t n_coulomb, size_t n_dipolar,
+                               size_t n_vs, size_t c_size) {
 
   // Number of doubles to store pressure in
-  const int total =
+  size_t const total =
       c_size *
-      (n_pre + static_cast<int>(bonded_ia_params.size()) + n_non_bonded +
+      (n_pre + bonded_ia_params.size() + n_non_bonded +
        n_coulomb + n_dipolar + n_vs + Observable_stat::n_external_field);
 
   // Allocate mem for the double list
@@ -552,8 +552,8 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
 }
 
 void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
-                                          int n_nonbonded, int c_size) {
-  auto const total = c_size * (n_nonbonded + n_nonbonded);
+                                          size_t n_nonbonded, size_t c_size) {
+  size_t const total = c_size * 2 * n_nonbonded;
 
   stat_nb->data_nb.resize(total);
   stat_nb->chunk_size_nb = c_size;

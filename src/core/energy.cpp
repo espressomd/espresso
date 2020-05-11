@@ -45,10 +45,9 @@ Observable_stat total_energy{};
 /************************************************************/
 
 void init_energies(Observable_stat *stat) {
-  int n_pre, n_non_bonded, n_dipolar(0);
+  size_t n_pre(1), n_dipolar(0);
 
-  n_pre = 1;
-  n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
+  auto n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
 #ifdef ELECTROSTATICS
   auto const n_coulomb = Coulomb::energy_n();
@@ -56,7 +55,7 @@ void init_energies(Observable_stat *stat) {
   int const n_coulomb = 0;
 #endif
 #ifdef DIPOLES
-  Dipole::energy_n(n_dipolar);
+  n_dipolar = Dipole::energy_n();
 #endif
 
   obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,

@@ -48,10 +48,10 @@ cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat:
         int init_status
         vector[double] data
-        int n_coulomb
-        int n_dipolar
-        int n_non_bonded
-        int n_virtual_sites
+        size_t n_coulomb
+        size_t n_dipolar
+        size_t n_non_bonded
+        size_t n_virtual_sites
         double * bonded
         double * non_bonded
         double * coulomb

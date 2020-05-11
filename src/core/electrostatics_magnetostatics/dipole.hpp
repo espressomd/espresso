@@ -76,7 +76,7 @@ struct Dipole_parameters {
 extern Dipole_parameters dipole;
 
 namespace Dipole {
-int pressure_n();
+size_t pressure_n();
 void calc_pressure_long_range();
 
 void nonbonded_sanity_check(int &state);
@@ -91,7 +91,7 @@ void calc_long_range_force(const ParticleRange &particles);
 
 void calc_energy_long_range(Observable_stat &energy,
                             const ParticleRange &particles);
-void energy_n(int &n_dipolar);
+size_t energy_n();
 
 int set_mesh();
 void bcast_params(const boost::mpi::communicator &comm);

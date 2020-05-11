@@ -46,17 +46,15 @@ Coulomb_parameters coulomb;
 
 namespace Coulomb {
 
-void pressure_n(int &n_coulomb) {
+size_t pressure_n() {
   switch (coulomb.method) {
   case COULOMB_NONE:
-    n_coulomb = 0;
-    break;
+    return 0;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    n_coulomb = 2;
-    break;
+    return 2;
   default:
-    n_coulomb = 1;
+    return 1;
   }
 }
 
@@ -369,7 +367,7 @@ void calc_energy_long_range(Observable_stat &energy,
   }
 }
 
-int energy_n() {
+size_t energy_n() {
   switch (coulomb.method) {
   case COULOMB_NONE:
     return 0;

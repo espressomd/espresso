@@ -33,13 +33,13 @@ struct Observable_stat {
   std::vector<double> data;
 
   /** number of Coulomb interactions */
-  int n_coulomb;
+  size_t n_coulomb;
   /** number of dipolar interactions */
-  int n_dipolar;
+  size_t n_dipolar;
   /** Number of virtual sites relative (rigid body) contributions */
-  int n_virtual_sites;
+  size_t n_virtual_sites;
   /** Number of external field contributions */
-  const static int n_external_field = 1;
+  const static size_t n_external_field = 1;
 
   /** start of bonded interactions. Right after the special ones */
   double *bonded;
@@ -55,7 +55,7 @@ struct Observable_stat {
   double *external_fields;
 
   /** number of doubles per data item */
-  int chunk_size;
+  size_t chunk_size;
 };
 
 /** Structure used only in the pressure and stress tensor calculation to
@@ -71,7 +71,7 @@ struct Observable_stat_non_bonded {
   double *non_bonded_inter;
 
   /** number of doubles per data item */
-  int chunk_size_nb;
+  size_t chunk_size_nb;
 };
 
 #endif // ESPRESSO_OBSERVABLE_STAT_HPP

@@ -67,7 +67,7 @@ struct Coulomb_parameters {
 extern Coulomb_parameters coulomb;
 
 namespace Coulomb {
-void pressure_n(int &n_coulomb);
+size_t pressure_n();
 void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor,
                               const ParticleRange &particles);
@@ -85,7 +85,7 @@ void calc_long_range_force(const ParticleRange &particles);
 
 void calc_energy_long_range(Observable_stat &energy,
                             const ParticleRange &particles);
-int energy_n();
+size_t energy_n();
 
 int iccp3m_sanity_check();
 
