@@ -56,6 +56,9 @@ struct Observable_stat {
 
   /** number of doubles per data item */
   size_t chunk_size;
+
+  void realloc_and_clear(size_t n_coulomb, size_t n_dipolar, size_t n_vs,
+                         size_t c_size);
 };
 
 /** Structure used only in the pressure and stress tensor calculation to
@@ -72,6 +75,8 @@ struct Observable_stat_non_bonded {
 
   /** number of doubles per data item */
   size_t chunk_size_nb;
+
+  void realloc_and_clear_non_bonded(size_t c_size);
 };
 
 #endif // ESPRESSO_OBSERVABLE_STAT_HPP

@@ -27,14 +27,12 @@
 #include "statistics.hpp"
 
 #include "Particle.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "pressure.hpp"
@@ -517,52 +515,6 @@ void analyze_append(PartCfg &partCfg) {
 /****************************************************************************************
  *                                 Observables handling
  ****************************************************************************************/
-
-void obsstat_realloc_and_clear(Observable_stat *stat, size_t n_pre, size_t n_bonded,
-                               size_t n_non_bonded, size_t n_coulomb, size_t n_dipolar,
-                               size_t n_vs, size_t c_size) {
-
-  // Number of doubles to store pressure in
-  size_t const total =
-      c_size *
-      (n_pre + bonded_ia_params.size() + n_non_bonded +
-       n_coulomb + n_dipolar + n_vs + Observable_stat::n_external_field);
-
-  // Allocate mem for the double list
-  stat->data.resize(total);
-
-  // Number of doubles per interaction (pressure=1, stress tensor=9,...)
-  stat->chunk_size = c_size;
-
-  // Number of chunks for different interaction types
-  stat->n_coulomb = n_coulomb;
-  stat->n_dipolar = n_dipolar;
-  stat->n_virtual_sites = n_vs;
-  // Pointers to the start of different contributions
-  stat->bonded = stat->data.data() + c_size * n_pre;
-  stat->non_bonded = stat->bonded + c_size * bonded_ia_params.size();
-  stat->coulomb = stat->non_bonded + c_size * n_non_bonded;
-  stat->dipolar = stat->coulomb + c_size * n_coulomb;
-  stat->virtual_sites = stat->dipolar + c_size * n_dipolar;
-  stat->external_fields = stat->virtual_sites + c_size * n_vs;
-
-  // Set all observables to zero
-  for (int i = 0; i < total; i++)
-    stat->data[i] = 0.0;
-}
-
-void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
-                                          size_t n_nonbonded, size_t c_size) {
-  size_t const total = c_size * 2 * n_nonbonded;
-
-  stat_nb->data_nb.resize(total);
-  stat_nb->chunk_size_nb = c_size;
-  stat_nb->non_bonded_intra = stat_nb->data_nb.data();
-  stat_nb->non_bonded_inter = stat_nb->non_bonded_intra + c_size * n_nonbonded;
-
-  for (int i = 0; i < total; i++)
-    stat_nb->data_nb[i] = 0.0;
-}
 
 void invalidate_obs() {
   total_energy.init_status = 0;

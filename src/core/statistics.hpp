@@ -46,10 +46,6 @@ int get_n_configs();
 int get_n_part_conf();
 /*@}*/
 
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
-
 /** Calculate the minimal distance of two particles with types in set1 resp.
  *  set2.
  *  @param set1 types of particles
@@ -253,17 +249,5 @@ inline double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1,
 }
 
 void invalidate_obs();
-
-/** Docs missing
- * \todo Docs missing
- */
-void obsstat_realloc_and_clear(Observable_stat *stat, size_t n_pre, size_t n_bonded,
-                               size_t n_non_bonded, size_t n_coulomb, size_t n_dipolar,
-                               size_t n_vs, size_t c_size);
-
-void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
-                                          size_t n_nonbonded, size_t chunk_size_nb);
-
-/*@}*/
 
 #endif

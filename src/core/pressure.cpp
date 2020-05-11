@@ -189,9 +189,7 @@ void calc_long_range_virials(const ParticleRange &particles) {
 void init_virials(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
   // bonded, nonbonded, Coulomb, dipolar, rigid bodies
-  size_t n_pre(1), n_coulomb(0), n_dipolar(0), n_vs(0);
-
-  auto n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
+  size_t n_coulomb(0), n_dipolar(0), n_vs(0);
 
 #ifdef ELECTROSTATICS
   n_coulomb = Coulomb::pressure_n();
@@ -204,16 +202,12 @@ void init_virials(Observable_stat *stat) {
 #endif
 
   // Allocate memory for the data
-  obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,
-                            n_coulomb, n_dipolar, n_vs, 1);
-  stat->init_status = 0;
+  stat->realloc_and_clear(n_coulomb, n_dipolar, n_vs, 1);
 }
 
 /************************************************************/
 void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
-  auto n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
-
-  obsstat_realloc_and_clear_non_bonded(stat_nb, n_non_bonded, 1);
+  stat_nb->realloc_and_clear_non_bonded(1);
 }
 
 /* Initialize the p_tensor */
@@ -221,32 +215,24 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
 void init_p_tensor(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
   // bonded, nonbonded, Coulomb, dipolar, rigid bodies
-  size_t n_pre(1), n_coulomb(0), n_vs(0);
-
-  auto n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
+  size_t n_coulomb(0), n_dipolar(0), n_vs(0);
 
 #ifdef ELECTROSTATICS
   n_coulomb = Coulomb::pressure_n();
 #endif
 #ifdef DIPOLES
-  auto const n_dipolar = Dipole::pressure_n();
-#else
-  auto const n_dipolar = 0;
+  n_dipolar = Dipole::pressure_n();
 #endif
 #ifdef VIRTUAL_SITES
   n_vs = 1;
 #endif
 
-  obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,
-                            n_coulomb, n_dipolar, n_vs, 9);
-  stat->init_status = 0;
+  stat->realloc_and_clear(n_coulomb, n_dipolar, n_vs, 9);
 }
 
 /***************************/
 void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb) {
-  auto n_nonbonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
-
-  obsstat_realloc_and_clear_non_bonded(stat_nb, n_nonbonded, 9);
+  stat_nb->realloc_and_clear_non_bonded(9);
 }
 
 /************************************************************/
