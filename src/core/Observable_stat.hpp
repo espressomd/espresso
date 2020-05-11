@@ -84,7 +84,7 @@ struct Observable_stat {
   }
 
   /** Gather the contributions from all nodes */
-  void reduce(double *array) const;
+  void reduce(Observable_stat *output) const;
 };
 
 /** Structure used only in the pressure and stress tensor calculation to
@@ -134,7 +134,7 @@ struct Observable_stat_non_bonded {
   }
 
   /** Gather the contributions from all nodes */
-  void reduce(double *array) const;
+  void reduce(Observable_stat_non_bonded *output) const;
 };
 
 #endif // ESPRESSO_OBSERVABLE_STAT_HPP

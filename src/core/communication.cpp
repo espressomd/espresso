@@ -372,21 +372,27 @@ void mpi_gather_stats(GatherStats job, void *result, void *result_t,
   case GatherStats::energy:
     /* calculate and reduce (sum up) energies */
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    energy_calc((double *)result, sim_time);
+    energy_calc(reinterpret_cast<Observable_stat *>(result), sim_time);
     break;
   case GatherStats::pressure:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or
        'analyze stress_tensor' */
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
-                  (double *)result_t_nb, 0);
+    pressure_calc(reinterpret_cast<Observable_stat *>(result),
+                  reinterpret_cast<Observable_stat *>(result_t),
+                  reinterpret_cast<Observable_stat_non_bonded *>(result_nb),
+                  reinterpret_cast<Observable_stat_non_bonded *>(result_t_nb),
+                  0);
     break;
   case GatherStats::pressure_v_comp:
     /* calculate and reduce (sum up) virials, revert velocities half a timestep
      * for 'analyze p_inst' */
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
-                  (double *)result_t_nb, 1);
+    pressure_calc(reinterpret_cast<Observable_stat *>(result),
+                  reinterpret_cast<Observable_stat *>(result_t),
+                  reinterpret_cast<Observable_stat_non_bonded *>(result_nb),
+                  reinterpret_cast<Observable_stat_non_bonded *>(result_t_nb),
+                  1);
     break;
   case GatherStats::lb_fluid_momentum:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);

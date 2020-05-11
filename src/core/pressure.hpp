@@ -51,8 +51,9 @@ extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded,
  *                    domain decomposition); naturally it therefore doesn't
  *                    make sense to use it without NpT.
  */
-void pressure_calc(double *result, double *result_t, double *result_nb,
-                   double *result_t_nb, int v_comp);
+void pressure_calc(Observable_stat *result, Observable_stat *result_t,
+                   Observable_stat_non_bonded *result_nb,
+                   Observable_stat_non_bonded *result_t_nb, int v_comp);
 
 /** Function to calculate stress tensor for the observables */
 int observable_compute_stress_tensor(int v_comp, double *A);

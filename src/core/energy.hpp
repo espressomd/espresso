@@ -54,7 +54,7 @@ void master_energy_calc();
 /** parallel energy calculation.
     @param result non-zero only on master node; will contain the cumulative over
    all nodes. */
-void energy_calc(double *result, double time);
+void energy_calc(Observable_stat *result, double time);
 
 /** Calculate long range energies (P3M, ...). */
 void calc_long_range_energies(const ParticleRange &particles);

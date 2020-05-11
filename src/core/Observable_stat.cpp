@@ -82,12 +82,13 @@ void Observable_stat_non_bonded::realloc_and_clear_non_bonded(size_t c_size) {
     data_nb[i] = 0.0;
 }
 
-void Observable_stat::reduce(double *array) const {
-  MPI_Reduce(data.data(), array, data.size(), MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
+void Observable_stat::reduce(Observable_stat *output) const {
+  MPI_Reduce(data.data(), output ? output->data.data() : nullptr, data.size(),
+             MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-void Observable_stat_non_bonded::reduce(double *array) const {
-  MPI_Reduce(data_nb.data(), array, data_nb.size(), MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
+void Observable_stat_non_bonded::reduce(
+    Observable_stat_non_bonded *output) const {
+  MPI_Reduce(data_nb.data(), output ? output->data_nb.data() : nullptr,
+             data_nb.size(), MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }

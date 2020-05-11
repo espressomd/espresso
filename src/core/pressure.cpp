@@ -97,8 +97,9 @@ static void add_single_particle_virials(Particle &p) {
   cell_structure.execute_bond_handler(p, add_bonded_stress);
 }
 
-void pressure_calc(double *result, double *result_t, double *result_nb,
-                   double *result_t_nb, int v_comp) {
+void pressure_calc(Observable_stat *result, Observable_stat *result_t,
+                   Observable_stat_non_bonded *result_nb,
+                   Observable_stat_non_bonded *result_t_nb, int v_comp) {
   auto const volume = box_geo.volume();
 
   if (!interactions_sanity_checks())
@@ -221,9 +222,10 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb) {
 void master_pressure_calc(int v_comp) {
   mpi_gather_stats(v_comp ? GatherStats::pressure_v_comp
                           : GatherStats::pressure,
-                   total_pressure.data.data(), total_p_tensor.data.data(),
-                   total_pressure_non_bonded.data_nb.data(),
-                   total_p_tensor_non_bonded.data_nb.data());
+                   reinterpret_cast<void *>(&total_pressure),
+                   reinterpret_cast<void *>(&total_p_tensor),
+                   reinterpret_cast<void *>(&total_pressure_non_bonded),
+                   reinterpret_cast<void *>(&total_p_tensor_non_bonded));
 
   total_pressure.init_status = 1 + v_comp;
   total_p_tensor.init_status = 1 + v_comp;

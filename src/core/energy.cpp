@@ -61,15 +61,15 @@ void init_energies(Observable_stat *stat) {
 /************************************************************/
 
 void master_energy_calc() {
-  mpi_gather_stats(GatherStats::energy, total_energy.data.data(), nullptr,
-                   nullptr, nullptr);
+  mpi_gather_stats(GatherStats::energy, reinterpret_cast<void *>(&total_energy),
+                   nullptr, nullptr, nullptr);
 
   total_energy.init_status = 1;
 }
 
 /************************************************************/
 
-void energy_calc(double *result, const double time) {
+void energy_calc(Observable_stat *result, const double time) {
   if (!interactions_sanity_checks())
     return;
 
