@@ -58,18 +58,17 @@ cdef extern from "statistics.hpp":
         double * dipolar
         double * virtual_sites
         double * external_fields
+        double * bonded_ia(int bond_id)
+        double * nonbonded_ia(int type1, int type2)
 
     ctypedef struct Observable_stat_non_bonded:
-        pass
+        double * nonbonded_intra_ia(int type1, int type2)
+        double * nonbonded_inter_ia(int type1, int type2)
 
     cdef vector[double] calc_structurefactor(PartCfg & , const vector[int] & p_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
     cdef double mindist(PartCfg & , const vector[int] & set1, const vector[int] & set2)
     cdef vector[int] nbhood(PartCfg & , const Vector3d & pos, double r_catch, const Vector3i & planedims)
-    cdef double * obsstat_bonded(Observable_stat * stat, int j)
-    cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
-    cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)
-    cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef vector[double] centerofmass(PartCfg & , int part_type)
 

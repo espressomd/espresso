@@ -190,7 +190,7 @@ inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
-    *obsstat_nonbonded(&energy, p1.p.type, p2.p.type) +=
+    *energy.nonbonded_ia(p1.p.type, p2.p.type) +=
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist);
 
 #ifdef ELECTROSTATICS
@@ -292,7 +292,7 @@ inline bool add_bonded_energy(Particle &p1, int bond_id,
   auto const result = calc_bonded_energy(iaparams, p1, partners);
 
   if (result) {
-    *obsstat_bonded(&energy, bond_id) += result.get();
+    *energy.bonded_ia(bond_id) += result.get();
 
     return false;
   }

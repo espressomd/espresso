@@ -207,47 +207,6 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
 Utils::Vector3d calc_linear_momentum(int include_particles,
                                      int include_lbfluid);
 
-inline double *obsstat_bonded(Observable_stat *stat, int j) {
-  return stat->bonded + stat->chunk_size * j;
-}
-
-inline double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2) {
-  if (p1 > p2) {
-    int tmp = p2;
-    p2 = p1;
-    p1 = tmp;
-  }
-  return stat->non_bonded +
-         stat->chunk_size *
-             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
-}
-
-inline double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1,
-                                       int p2) {
-  /*  return stat->non_bonded_intra + stat->chunk_size*1; */
-  if (p1 > p2) {
-    int tmp = p2;
-    p2 = p1;
-    p1 = tmp;
-  }
-  return stat->non_bonded_intra +
-         stat->chunk_size_nb *
-             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
-}
-
-inline double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1,
-                                       int p2) {
-  /*  return stat->non_bonded_inter + stat->chunk_size*1; */
-  if (p1 > p2) {
-    int tmp = p2;
-    p2 = p1;
-    p1 = tmp;
-  }
-  return stat->non_bonded_inter +
-         stat->chunk_size_nb *
-             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
-}
-
 void invalidate_obs();
 
 #endif

@@ -19,6 +19,7 @@
 #ifndef ESPRESSO_OBSERVABLE_STAT_HPP
 #define ESPRESSO_OBSERVABLE_STAT_HPP
 
+#include <utility>
 #include <vector>
 
 struct Observable_stat {
@@ -66,11 +67,26 @@ struct Observable_stat {
     for (size_t i = chunk_size; i < data.size(); ++i)
       data[i] /= volume;
   }
+
+  /** Get contribution from a bonded interaction */
+  double *bonded_ia(int bond_id) { return bonded + (chunk_size * bond_id); }
+
+  /** Get contribution from a non-bonded interaction */
+  double *nonbonded_ia(int type1, int type2) {
+    extern int max_seen_particle_type;
+    if (type1 > type2) {
+      using std::swap;
+      swap(type1, type2);
+    }
+    return non_bonded +
+           chunk_size *
+               (((2 * max_seen_particle_type - 1 - type1) * type1) / 2 + type2);
+  }
 };
 
 /** Structure used only in the pressure and stress tensor calculation to
-   distinguish
-    non-bonded intra- and inter- molecular contributions. */
+ *  distinguish non-bonded intra- and inter- molecular contributions.
+ */
 struct Observable_stat_non_bonded {
   /** Array for observables on each node. */
   std::vector<double> data_nb;
@@ -88,6 +104,30 @@ struct Observable_stat_non_bonded {
   void rescale(double volume) {
     for (auto &value : data_nb)
       value /= volume;
+  }
+
+  /** Get contribution from a non-bonded intramolecular interaction */
+  double *nonbonded_intra_ia(int type1, int type2) {
+    extern int max_seen_particle_type;
+    if (type1 > type2) {
+      using std::swap;
+      swap(type1, type2);
+    }
+    return non_bonded_intra +
+           chunk_size_nb *
+               (((2 * max_seen_particle_type - 1 - type1) * type1) / 2 + type2);
+  }
+
+  /** Get contribution from a non-bonded intermolecular interaction */
+  double *nonbonded_inter_ia(int type1, int type2) {
+    extern int max_seen_particle_type;
+    if (type1 > type2) {
+      using std::swap;
+      swap(type1, type2);
+    }
+    return non_bonded_inter +
+           chunk_size_nb *
+               (((2 * max_seen_particle_type - 1 - type1) * type1) / 2 + type2);
   }
 };
 

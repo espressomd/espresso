@@ -46,32 +46,30 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 #endif
   {
     auto const force = calc_non_bonded_pair_force(p1, p2, d, dist);
-    *obsstat_nonbonded(&virials, p1.p.type, p2.p.type) += d * force;
+    *virials.nonbonded_ia(p1.p.type, p2.p.type) += d * force;
 
     /* stress tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        obsstat_nonbonded(&p_tensor, p1.p.type, p2.p.type)[k * 3 + l] +=
+        p_tensor.nonbonded_ia(p1.p.type, p2.p.type)[k * 3 + l] +=
             force[k] * d[l];
 
     auto const p1molid = p1.p.mol_id;
     auto const p2molid = p2.p.mol_id;
     if (p1molid == p2molid) {
-      *obsstat_nonbonded_intra(&virials_non_bonded, p1.p.type, p2.p.type) +=
-          d * force;
+      *virials_non_bonded.nonbonded_intra_ia(p1.p.type, p2.p.type) += d * force;
 
       for (int k = 0; k < 3; k++)
         for (int l = 0; l < 3; l++)
-          obsstat_nonbonded_intra(&p_tensor_non_bonded, p1.p.type,
-                                  p2.p.type)[k * 3 + l] += force[k] * d[l];
+          p_tensor_non_bonded.nonbonded_intra_ia(
+              p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
     } else {
-      *obsstat_nonbonded_inter(&virials_non_bonded, p1.p.type, p2.p.type) +=
-          d * force;
+      *virials_non_bonded.nonbonded_inter_ia(p1.p.type, p2.p.type) += d * force;
 
       for (int k = 0; k < 3; k++)
         for (int l = 0; l < 3; l++)
-          obsstat_nonbonded_inter(&p_tensor_non_bonded, p1.p.type,
-                                  p2.p.type)[k * 3 + l] += force[k] * d[l];
+          p_tensor_non_bonded.nonbonded_inter_ia(
+              p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
     }
   }
 
@@ -167,12 +165,12 @@ inline bool add_bonded_stress(Particle &p1, int bond_id,
   if (result) {
     auto const &stress = result.get();
 
-    *obsstat_bonded(&virials, bond_id) += trace(stress);
+    *virials.bonded_ia(bond_id) += trace(stress);
 
     /* stress tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        obsstat_bonded(&p_tensor, bond_id)[k * 3 + l] += stress[k][l];
+        p_tensor.bonded_ia(bond_id)[k * 3 + l] += stress[k][l];
 
     return false;
   }
