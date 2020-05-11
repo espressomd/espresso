@@ -82,7 +82,7 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
  *                (hence it only works with domain decomposition); naturally it
  *                therefore doesn't make sense to use it without NpT.
  */
-void master_pressure_calc(int v_comp);
+void master_pressure_calc(bool v_comp);
 
 /** Initializes stat to be used by \ref pressure_calc. */
 void init_p_tensor(Observable_stat *stat);
@@ -99,7 +99,7 @@ static void add_single_particle_virials(Particle &p) {
 
 void pressure_calc(Observable_stat *result, Observable_stat *result_t,
                    Observable_stat_non_bonded *result_nb,
-                   Observable_stat_non_bonded *result_t_nb, int v_comp) {
+                   Observable_stat_non_bonded *result_t_nb, bool v_comp) {
   auto const volume = box_geo.volume();
 
   if (!interactions_sanity_checks())
@@ -219,7 +219,7 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb) {
 }
 
 /************************************************************/
-void master_pressure_calc(int v_comp) {
+void master_pressure_calc(bool v_comp) {
   mpi_gather_stats(v_comp ? GatherStats::pressure_v_comp
                           : GatherStats::pressure,
                    reinterpret_cast<void *>(&total_pressure),
@@ -227,14 +227,28 @@ void master_pressure_calc(int v_comp) {
                    reinterpret_cast<void *>(&total_pressure_non_bonded),
                    reinterpret_cast<void *>(&total_p_tensor_non_bonded));
 
-  total_pressure.init_status = 1 + v_comp;
-  total_p_tensor.init_status = 1 + v_comp;
+  total_pressure.is_initialized = true;
+  total_p_tensor.is_initialized = true;
+  total_pressure.v_comp = v_comp;
+  total_p_tensor.v_comp = v_comp;
 }
 
-void update_pressure(int v_comp) {
+/** Calculate the sum of the ideal gas components of the instantaneous
+ *  pressure, rescaled by the box dimensions.
+ */
+double calculate_npt_p_vel_rescaled() {
   Utils::Vector3d p_vel;
-  /* if desired (v_comp==1) replace ideal component with instantaneous one */
-  if (total_pressure.init_status != 1 + v_comp) {
+  MPI_Reduce(nptiso.p_vel.data(), p_vel.data(), 3, MPI_DOUBLE, MPI_SUM, 0,
+             MPI_COMM_WORLD);
+  double acc = 0.0;
+  for (int i = 0; i < 3; i++)
+    if (nptiso.geometry & nptiso.nptgeom_dir[i])
+      acc += p_vel[i];
+  return acc / (nptiso.dimension * nptiso.volume);
+}
+
+void update_pressure(bool v_comp) {
+  if (!(total_pressure.is_initialized && total_pressure.v_comp == v_comp)) {
     init_virials(&total_pressure);
     init_p_tensor(&total_p_tensor);
 
@@ -243,25 +257,19 @@ void update_pressure(int v_comp) {
 
     if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
         !(nptiso.invalidate_p_vel)) {
-      if (total_pressure.init_status == 0)
-        master_pressure_calc(0);
-      total_pressure.data[0] = 0.0;
-      MPI_Reduce(nptiso.p_vel.data(), p_vel.data(), 3, MPI_DOUBLE, MPI_SUM, 0,
-                 MPI_COMM_WORLD);
-      for (int i = 0; i < 3; i++)
-        if (nptiso.geometry & nptiso.nptgeom_dir[i])
-          total_pressure.data[0] += p_vel[i];
-      total_pressure.data[0] /= (nptiso.dimension * nptiso.volume);
-      total_pressure.init_status = 1 + v_comp;
-    } else
+      if (!total_pressure.is_initialized)
+        master_pressure_calc(false);
+      total_pressure.data[0] = calculate_npt_p_vel_rescaled();
+      total_pressure.v_comp = true;
+    } else {
       master_pressure_calc(v_comp);
+    }
   }
 }
 
 /************************************************************/
-int observable_compute_stress_tensor(int v_comp, double *A) {
-  /* if desired (v_comp==1) replace ideal component with instantaneous one */
-  if (total_pressure.init_status != 1 + v_comp) {
+int observable_compute_stress_tensor(bool v_comp, double *A) {
+  if (!(total_pressure.is_initialized && total_pressure.v_comp == v_comp)) {
     init_virials(&total_pressure);
     init_p_tensor(&total_p_tensor);
 
@@ -270,19 +278,13 @@ int observable_compute_stress_tensor(int v_comp, double *A) {
 
     if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
         !(nptiso.invalidate_p_vel)) {
-      if (total_pressure.init_status == 0)
-        master_pressure_calc(0);
-      p_tensor.data[0] = 0.0;
-      Utils::Vector3d p_vel;
-      MPI_Reduce(nptiso.p_vel.data(), p_vel.data(), 3, MPI_DOUBLE, MPI_SUM, 0,
-                 MPI_COMM_WORLD);
-      for (int i = 0; i < 3; i++)
-        if (nptiso.geometry & nptiso.nptgeom_dir[i])
-          p_tensor.data[0] += p_vel[i];
-      p_tensor.data[0] /= (nptiso.dimension * nptiso.volume);
-      total_pressure.init_status = 1 + v_comp;
-    } else
+      if (!total_pressure.is_initialized)
+        master_pressure_calc(false);
+      p_tensor.data[0] = calculate_npt_p_vel_rescaled();
+      total_pressure.v_comp = true;
+    } else {
       master_pressure_calc(v_comp);
+    }
   }
 
   for (int j = 0; j < 9; j++) {

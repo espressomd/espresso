@@ -59,7 +59,7 @@ void Observable_stat::realloc_and_clear(size_t n_coulomb, size_t n_dipolar,
   for (int i = 0; i < total; i++)
     data[i] = 0.0;
 
-  init_status = 0;
+  is_initialized = false;
 }
 
 void Observable_stat_non_bonded::realloc_and_clear(size_t c_size) {

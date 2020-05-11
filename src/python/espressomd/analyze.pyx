@@ -215,15 +215,14 @@ class Analysis:
             * ``"virtual_sites"``: Stress contribution due to virtual sites
 
         """
-        v_comp = int(v_comp)
-
-        check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
+        check_type_or_throw_except(v_comp, 1, bool, "v_comp must be a boolean")
 
         # Dict to store the results
         p = OrderedDict()
 
         # Update in ESPResSo core if necessary
-        if analyze.total_pressure.init_status != 1 + v_comp:
+        if not (
+                analyze.total_pressure.is_initialized and analyze.total_pressure.v_comp == v_comp):
             analyze.update_pressure(v_comp)
 
         # Individual components of the pressure
@@ -332,15 +331,14 @@ class Analysis:
             * ``"virtual_sites"``: Stress tensor contribution for virtual sites
 
         """
-        v_comp = int(v_comp)
-
-        check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
+        check_type_or_throw_except(v_comp, 1, bool, "v_comp must be a boolean")
 
         # Dict to store the results
         p = OrderedDict()
 
         # Update in ESPResSo core if necessary
-        if analyze.total_p_tensor.init_status != 1 + v_comp:
+        if not (
+                analyze.total_p_tensor.is_initialized and analyze.total_p_tensor.v_comp == v_comp):
             analyze.update_pressure(v_comp)
 
         # Individual components of the pressure
@@ -467,7 +465,7 @@ class Analysis:
 
         e = OrderedDict()
 
-        if analyze.total_energy.init_status == 0:
+        if not analyze.total_energy.is_initialized:
             analyze.init_energies( & analyze.total_energy)
             analyze.master_energy_calc()
             handle_errors("calc_long_range_energies failed")

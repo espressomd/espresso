@@ -370,29 +370,17 @@ void mpi_gather_stats(GatherStats job, void *result, void *result_t,
   auto job_slave = static_cast<int>(job);
   switch (job) {
   case GatherStats::energy:
-    /* calculate and reduce (sum up) energies */
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
     energy_calc(reinterpret_cast<Observable_stat *>(result), sim_time);
     break;
   case GatherStats::pressure:
-    /* calculate and reduce (sum up) virials for 'analyze pressure' or
-       'analyze stress_tensor' */
-    mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    pressure_calc(reinterpret_cast<Observable_stat *>(result),
-                  reinterpret_cast<Observable_stat *>(result_t),
-                  reinterpret_cast<Observable_stat_non_bonded *>(result_nb),
-                  reinterpret_cast<Observable_stat_non_bonded *>(result_t_nb),
-                  0);
-    break;
   case GatherStats::pressure_v_comp:
-    /* calculate and reduce (sum up) virials, revert velocities half a timestep
-     * for 'analyze p_inst' */
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
     pressure_calc(reinterpret_cast<Observable_stat *>(result),
                   reinterpret_cast<Observable_stat *>(result_t),
                   reinterpret_cast<Observable_stat_non_bonded *>(result_nb),
                   reinterpret_cast<Observable_stat_non_bonded *>(result_t_nb),
-                  1);
+                  job == GatherStats::pressure_v_comp);
     break;
   case GatherStats::lb_fluid_momentum:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
@@ -417,18 +405,12 @@ void mpi_gather_stats_slave(int, int job_slave) {
   auto job = static_cast<GatherStats>(job_slave);
   switch (job) {
   case GatherStats::energy:
-    /* calculate and reduce (sum up) energies */
     energy_calc(nullptr, sim_time);
     break;
   case GatherStats::pressure:
-    /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze
-     * stress_tensor'*/
-    pressure_calc(nullptr, nullptr, nullptr, nullptr, 0);
-    break;
   case GatherStats::pressure_v_comp:
-    /* calculate and reduce (sum up) virials, revert velocities half a timestep
-     * for 'analyze p_inst' */
-    pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
+    pressure_calc(nullptr, nullptr, nullptr, nullptr,
+                  job == GatherStats::pressure_v_comp);
     break;
   case GatherStats::lb_fluid_momentum:
     lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);

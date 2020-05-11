@@ -55,7 +55,6 @@ void init_energies(Observable_stat *stat) {
 #endif
 
   stat->realloc_and_clear(n_coulomb, n_dipolar, 0, 1);
-  stat->init_status = 0;
 }
 
 /************************************************************/
@@ -63,8 +62,7 @@ void init_energies(Observable_stat *stat) {
 void master_energy_calc() {
   mpi_gather_stats(GatherStats::energy, reinterpret_cast<void *>(&total_energy),
                    nullptr, nullptr, nullptr);
-
-  total_energy.init_status = 1;
+  total_energy.is_initialized = true;
 }
 
 /************************************************************/
@@ -125,7 +123,7 @@ void calc_long_range_energies(const ParticleRange &particles) {
 
 double calculate_current_potential_energy_of_system() {
   // calculate potential energy
-  if (total_energy.init_status == 0) {
+  if (!total_energy.is_initialized) {
     init_energies(&total_energy);
     master_energy_calc();
   }

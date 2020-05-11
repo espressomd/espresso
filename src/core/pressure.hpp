@@ -53,11 +53,12 @@ extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded,
  */
 void pressure_calc(Observable_stat *result, Observable_stat *result_t,
                    Observable_stat_non_bonded *result_nb,
-                   Observable_stat_non_bonded *result_t_nb, int v_comp);
+                   Observable_stat_non_bonded *result_t_nb, bool v_comp);
 
 /** Function to calculate stress tensor for the observables */
-int observable_compute_stress_tensor(int v_comp, double *A);
+int observable_compute_stress_tensor(bool v_comp, double *A);
 
-void update_pressure(int v_comp);
+/** Recalculate the virials, pressure and stress tensors */
+void update_pressure(bool v_comp);
 
 #endif

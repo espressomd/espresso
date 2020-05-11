@@ -21,6 +21,7 @@
 
 from .utils cimport Vector3i, Vector3d, Vector9d
 from libcpp.vector cimport vector  # import std::vector as vector
+from libcpp cimport bool as cbool
 
 cdef extern from "<array>" namespace "std" nogil:
     cdef cppclass array4 "std::array<double, 4>":
@@ -43,7 +44,8 @@ cdef extern from "particle_data.hpp":
 
 cdef extern from "Observable_stat.hpp":
     ctypedef struct Observable_stat:
-        int init_status
+        cbool is_initialized
+        cbool v_comp
         vector[double] data
         size_t n_coulomb
         size_t n_dipolar
@@ -101,7 +103,7 @@ cdef extern from "pressure.hpp":
     cdef Observable_stat_non_bonded total_pressure_non_bonded
     cdef Observable_stat total_p_tensor
     cdef Observable_stat_non_bonded total_p_tensor_non_bonded
-    cdef void update_pressure(int)
+    cdef void update_pressure(cbool)
 
 cdef extern from "energy.hpp":
     cdef Observable_stat total_energy

@@ -181,11 +181,11 @@ inline bool add_bonded_stress(Particle &p1, int bond_id,
 /** Calculate kinetic pressure (aka energy) for one particle.
  *  @param p1 particle for which to calculate pressure
  *  @param v_comp flag which enables compensation of the velocities required
- *                for deriving a pressure reflecting \ref
- * nptiso_struct::p_inst (hence it only works with domain decomposition);
- * naturally it therefore doesn't make sense to use it without NpT.
+ *     for deriving a pressure reflecting \ref nptiso_struct::p_inst
+ *     (hence it only works with domain decomposition); naturally it
+ *     therefore doesn't make sense to use it without NpT.
  */
-inline void add_kinetic_virials(Particle const &p1, int v_comp) {
+inline void add_kinetic_virials(Particle const &p1, bool v_comp) {
   if (not p1.p.is_virtual) {
     /* kinetic energy */
     if (v_comp) {

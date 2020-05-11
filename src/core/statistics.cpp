@@ -518,7 +518,7 @@ void analyze_append(PartCfg &partCfg) {
  ****************************************************************************************/
 
 void invalidate_obs() {
-  total_energy.init_status = 0;
-  total_pressure.init_status = 0;
-  total_p_tensor.init_status = 0;
+  total_energy.is_initialized = false;
+  total_pressure.is_initialized = false;
+  total_p_tensor.is_initialized = false;
 }

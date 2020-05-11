@@ -26,12 +26,6 @@ struct Observable_stat_base {
 public:
   /** Array for observables on each node. */
   std::vector<double> data;
-  /** Status flag for observable calculation. For 'analyze energy': 0
-   *  re-initialize observable struct, else everything is fine,
-   *  calculation can start. For 'analyze pressure' and 'analyze p_inst':
-   *  0 or !(1+v_comp) re-initialize, else all OK.
-   */
-  int init_status;
   /** Gather the contributions from all nodes */
   void reduce(Observable_stat_base *output) const;
 
@@ -61,6 +55,13 @@ protected:
 
 /** Structure used for pressure, stress tensor and energy calculations. */
 struct Observable_stat : Observable_stat_base {
+  /** Flag to signal if the observable is initialized */
+  bool is_initialized;
+  /** Flag to signal if the observable measures instantaneous pressure, i.e.
+   *  the pressure with velocity compensation (half a time step), instead of
+   *  the conventional pressure. Only relevant for NpT simulations.
+   */
+  bool v_comp;
   /** number of Coulomb interactions */
   size_t n_coulomb;
   /** number of dipolar interactions */
