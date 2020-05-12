@@ -22,6 +22,7 @@
 #include "virtual_sites.hpp"
 
 #ifdef VIRTUAL_SITES
+#include "Observable_stat.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"

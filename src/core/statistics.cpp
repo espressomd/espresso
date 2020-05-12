@@ -512,13 +512,3 @@ void analyze_append(PartCfg &partCfg) {
   }
   configs.emplace_back(config);
 }
-
-/****************************************************************************************
- *                                 Observables handling
- ****************************************************************************************/
-
-void invalidate_obs() {
-  total_energy.is_initialized = false;
-  total_pressure.is_initialized = false;
-  total_p_tensor.is_initialized = false;
-}

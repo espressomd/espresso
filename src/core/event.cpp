@@ -209,7 +209,7 @@ void on_particle_change() {
 }
 
 void on_coulomb_change() {
-  invalidate_obs();
+  realloc_and_clear_all_obs();
 
 #ifdef ELECTROSTATICS
   Coulomb::on_coulomb_change();
@@ -228,7 +228,7 @@ void on_coulomb_change() {
 }
 
 void on_short_range_ia_change() {
-  invalidate_obs();
+  realloc_and_clear_all_obs();
 
   cells_on_geometry_change(false);
 

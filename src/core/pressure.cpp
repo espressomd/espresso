@@ -36,17 +36,22 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-Observable_stat virials{};
-Observable_stat total_pressure{};
-Observable_stat p_tensor{};
-Observable_stat total_p_tensor{};
+namespace {
+auto cpn = &Coulomb::pressure_n;
+auto dpn = &Dipole::pressure_n;
+} // namespace
+
+Observable_stat virials{1, ::cpn, ::dpn};
+Observable_stat total_pressure{1, ::cpn, ::dpn};
+Observable_stat p_tensor{9, ::cpn, ::dpn};
+Observable_stat total_p_tensor{9, ::cpn, ::dpn};
 
 /* Observables used in the calculation of intra- and inter- molecular
-   non-bonded contributions to pressure and to stress tensor */
-Observable_stat_non_bonded virials_non_bonded{};
-Observable_stat_non_bonded total_pressure_non_bonded{};
-Observable_stat_non_bonded p_tensor_non_bonded{};
-Observable_stat_non_bonded total_p_tensor_non_bonded{};
+ * non-bonded contributions to pressure and to stress tensor */
+Observable_stat_non_bonded virials_non_bonded{1};
+Observable_stat_non_bonded total_pressure_non_bonded{1};
+Observable_stat_non_bonded p_tensor_non_bonded{9};
+Observable_stat_non_bonded total_p_tensor_non_bonded{9};
 
 nptiso_struct nptiso = {0.0,
                         0.0,
@@ -63,36 +68,18 @@ nptiso_struct nptiso = {0.0,
                         false,
                         0};
 
-/************************************************************/
-/* local prototypes                                         */
-/************************************************************/
+/** Calculate long-range virials (P3M, ...). */
+void calc_long_range_virials(const ParticleRange &particles) {
+#ifdef ELECTROSTATICS
+  /* calculate k-space part of electrostatic interaction. */
+  Coulomb::calc_pressure_long_range(virials, p_tensor, particles);
+#endif
+#ifdef DIPOLES
+  /* calculate k-space part of magnetostatic interaction. */
+  Dipole::calc_pressure_long_range();
+#endif
+}
 
-/** Calculate long range virials (P3M, ...). */
-void calc_long_range_virials(const ParticleRange &particles);
-
-/** Initializes a virials Observable stat. */
-void init_virials(Observable_stat *stat);
-
-/** Initializes a virials Observable stat. */
-void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
-
-/** on the master node: calc energies only if necessary
- *  @param v_comp flag which enables (1) compensation of the velocities required
- *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
- *                (hence it only works with domain decomposition); naturally it
- *                therefore doesn't make sense to use it without NpT.
- */
-void master_pressure_calc(bool v_comp);
-
-/** Initializes stat to be used by \ref pressure_calc. */
-void init_p_tensor(Observable_stat *stat);
-
-/** Initializes stat_nb to be used by \ref pressure_calc. */
-void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
-
-/*********************************/
-/* Scalar and Tensorial Pressure */
-/*********************************/
 static void add_single_particle_virials(Particle &p) {
   cell_structure.execute_bond_handler(p, add_bonded_stress);
 }
@@ -105,13 +92,13 @@ void pressure_calc(Observable_stat *result, Observable_stat *result_t,
   if (!interactions_sanity_checks())
     return;
 
-  init_virials(&virials);
+  virials.realloc_and_clear();
 
-  init_p_tensor(&p_tensor);
+  p_tensor.realloc_and_clear();
 
-  init_virials_non_bonded(&virials_non_bonded);
+  virials_non_bonded.realloc_and_clear();
 
-  init_p_tensor_non_bonded(&p_tensor_non_bonded);
+  p_tensor_non_bonded.realloc_and_clear();
 
   on_observable_calc();
 
@@ -153,72 +140,12 @@ void pressure_calc(Observable_stat *result, Observable_stat *result_t,
   p_tensor_non_bonded.reduce(result_t_nb);
 }
 
-/************************************************************/
-
-void calc_long_range_virials(const ParticleRange &particles) {
-#ifdef ELECTROSTATICS
-  /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_pressure_long_range(virials, p_tensor, particles);
-#endif /*ifdef ELECTROSTATICS */
-
-#ifdef DIPOLES
-  /* calculate k-space part of magnetostatic interaction. */
-  Dipole::calc_pressure_long_range();
-#endif /*ifdef DIPOLES */
-}
-
-/* Initialize the virials used in the calculation of the scalar pressure */
-/************************************************************/
-void init_virials(Observable_stat *stat) {
-  // Determine number of contribution for different interaction types
-  // bonded, nonbonded, Coulomb, dipolar, rigid bodies
-  size_t n_coulomb(0), n_dipolar(0), n_vs(0);
-
-#ifdef ELECTROSTATICS
-  n_coulomb = Coulomb::pressure_n();
-#endif
-#ifdef DIPOLES
-  n_dipolar = Dipole::pressure_n();
-#endif
-#ifdef VIRTUAL_SITES
-  n_vs = 1;
-#endif
-
-  // Allocate memory for the data
-  stat->realloc_and_clear(1, n_coulomb, n_dipolar, n_vs);
-}
-
-/************************************************************/
-void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
-  stat_nb->realloc_and_clear(1);
-}
-
-/* Initialize the p_tensor */
-/***************************/
-void init_p_tensor(Observable_stat *stat) {
-  // Determine number of contribution for different interaction types
-  // bonded, nonbonded, Coulomb, dipolar, rigid bodies
-  size_t n_coulomb(0), n_dipolar(0), n_vs(0);
-
-#ifdef ELECTROSTATICS
-  n_coulomb = Coulomb::pressure_n();
-#endif
-#ifdef DIPOLES
-  n_dipolar = Dipole::pressure_n();
-#endif
-#ifdef VIRTUAL_SITES
-  n_vs = 1;
-#endif
-
-  stat->realloc_and_clear(9, n_coulomb, n_dipolar, n_vs);
-}
-
-/***************************/
-void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb) {
-  stat_nb->realloc_and_clear(9);
-}
-
-/************************************************************/
+/** on the master node: calc energies only if necessary
+ *  @param v_comp flag which enables compensation of the velocities required
+ *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
+ *                (hence it only works with domain decomposition); naturally it
+ *                therefore doesn't make sense to use it without NpT.
+ */
 void master_pressure_calc(bool v_comp) {
   mpi_gather_stats(v_comp ? GatherStats::pressure_v_comp
                           : GatherStats::pressure,
@@ -249,11 +176,11 @@ double calculate_npt_p_vel_rescaled() {
 
 void update_pressure(bool v_comp) {
   if (!(total_pressure.is_initialized && total_pressure.v_comp == v_comp)) {
-    init_virials(&total_pressure);
-    init_p_tensor(&total_p_tensor);
+    total_pressure.realloc_and_clear();
+    total_p_tensor.realloc_and_clear();
 
-    init_virials_non_bonded(&total_pressure_non_bonded);
-    init_p_tensor_non_bonded(&total_p_tensor_non_bonded);
+    total_pressure_non_bonded.realloc_and_clear();
+    total_p_tensor_non_bonded.realloc_and_clear();
 
     if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
         !(nptiso.invalidate_p_vel)) {
@@ -267,14 +194,13 @@ void update_pressure(bool v_comp) {
   }
 }
 
-/************************************************************/
 int observable_compute_stress_tensor(bool v_comp, double *A) {
   if (!(total_pressure.is_initialized && total_pressure.v_comp == v_comp)) {
-    init_virials(&total_pressure);
-    init_p_tensor(&total_p_tensor);
+    total_pressure.realloc_and_clear();
+    total_p_tensor.realloc_and_clear();
 
-    init_virials_non_bonded(&total_pressure_non_bonded);
-    init_p_tensor_non_bonded(&total_p_tensor_non_bonded);
+    total_pressure_non_bonded.realloc_and_clear();
+    total_p_tensor_non_bonded.realloc_and_clear();
 
     if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
         !(nptiso.invalidate_p_vel)) {

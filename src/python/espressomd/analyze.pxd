@@ -44,6 +44,7 @@ cdef extern from "particle_data.hpp":
 
 cdef extern from "Observable_stat.hpp":
     ctypedef struct Observable_stat:
+        void realloc_and_clear()
         cbool is_initialized
         cbool v_comp
         Span[double] kinetic
@@ -63,6 +64,7 @@ cdef extern from "Observable_stat.hpp":
         Span[double] non_bonded_contribution(int type1, int type2)
 
     ctypedef struct Observable_stat_non_bonded:
+        void realloc_and_clear()
         Span[double] non_bonded_intra_contribution(int type1, int type2)
         Span[double] non_bonded_inter_contribution(int type1, int type2)
 
@@ -111,7 +113,6 @@ cdef extern from "energy.hpp":
     cdef Observable_stat total_energy
     cdef Observable_stat_non_bonded total_energy_non_bonded
     cdef void master_energy_calc()
-    cdef void init_energies(Observable_stat * stat)
     double calculate_current_potential_energy_of_system()
 
 cdef extern from "dpd.hpp":

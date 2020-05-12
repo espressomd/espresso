@@ -424,10 +424,7 @@ int elc_sanity_check() {
     return ES_ERROR;
   }
   case COULOMB_ELC_P3M:
-
   case COULOMB_P3M:
-    p3m.params.epsilon = P3M_EPSILON_METALLIC;
-    coulomb.method = COULOMB_ELC_P3M;
     return ES_OK;
   default:
     break;

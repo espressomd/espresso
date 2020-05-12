@@ -460,7 +460,7 @@ class Analysis:
         e = OrderedDict()
 
         if not analyze.total_energy.is_initialized:
-            analyze.init_energies( & analyze.total_energy)
+            analyze.total_energy.realloc_and_clear()
             analyze.master_energy_calc()
             handle_errors("calc_long_range_energies failed")
 

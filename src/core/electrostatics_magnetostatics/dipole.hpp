@@ -103,5 +103,10 @@ void set_method_local(DipolarInteraction method);
 
 } // namespace Dipole
 
+#else  // DIPOLES
+namespace Dipole {
+constexpr size_t pressure_n() { return 0; }
+constexpr size_t energy_n() { return 0; }
+} // namespace Dipole
 #endif // DIPOLES
 #endif // ESPRESSO_DIPOLE_HPP

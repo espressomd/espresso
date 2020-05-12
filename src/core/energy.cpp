@@ -38,25 +38,13 @@
 
 ActorList energyActors;
 
-Observable_stat energy{};
-Observable_stat total_energy{};
+namespace {
+auto cen = &Coulomb::energy_n;
+auto den = &Dipole::energy_n;
+} // namespace
 
-/************************************************************/
-
-void init_energies(Observable_stat *stat) {
-  size_t n_coulomb(0), n_dipolar(0);
-
-#ifdef ELECTROSTATICS
-  n_coulomb = Coulomb::energy_n();
-#endif
-#ifdef DIPOLES
-  n_dipolar = Dipole::energy_n();
-#endif
-
-  stat->realloc_and_clear(1, n_coulomb, n_dipolar, 0);
-}
-
-/************************************************************/
+Observable_stat energy{1, ::cen, ::den};
+Observable_stat total_energy{1, ::cen, ::den};
 
 void master_energy_calc() {
   mpi_gather_stats(GatherStats::energy, reinterpret_cast<void *>(&total_energy),
@@ -64,13 +52,11 @@ void master_energy_calc() {
   total_energy.is_initialized = true;
 }
 
-/************************************************************/
-
 void energy_calc(Observable_stat *result, const double time) {
   if (!interactions_sanity_checks())
     return;
 
-  init_energies(&energy);
+  energy.realloc_and_clear();
 
 #ifdef CUDA
   clear_energy_on_GPU();
@@ -107,8 +93,6 @@ void energy_calc(Observable_stat *result, const double time) {
   energy.reduce(result);
 }
 
-/************************************************************/
-
 void calc_long_range_energies(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
@@ -123,7 +107,7 @@ void calc_long_range_energies(const ParticleRange &particles) {
 double calculate_current_potential_energy_of_system() {
   // calculate potential energy
   if (!total_energy.is_initialized) {
-    init_energies(&total_energy);
+    total_energy.realloc_and_clear();
     master_energy_calc();
   }
 

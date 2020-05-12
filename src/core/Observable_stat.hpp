@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-struct Observable_stat_base {
+class Observable_stat_base {
 protected:
   /** Array for observables on each node. */
   std::vector<double> data;
@@ -34,13 +34,10 @@ protected:
   size_t m_chunk_size;
 
 public:
+  explicit Observable_stat_base(size_t chunk_size) : m_chunk_size(chunk_size) {}
+
   /** Reinitialize the observable */
-  void realloc_and_clear(size_t chunk_size, size_t n_items) {
-    m_chunk_size = chunk_size;
-    data.resize(chunk_size * n_items);
-    for (auto &value : data)
-      value = 0;
-  }
+  virtual void realloc_and_clear() = 0;
 
   /** Gather the contributions from all nodes */
   void reduce(Observable_stat_base *output) const;
@@ -66,6 +63,13 @@ public:
   }
 
 protected:
+  /** Reinitialize the observable */
+  void realloc_and_clear(size_t n_items) {
+    data.resize(m_chunk_size * n_items);
+    for (auto &value : data)
+      value = 0;
+  }
+
   /** Get contribution from a non-bonded interaction */
   Utils::Span<double> non_bonded_contribution(double *base_pointer, int type1,
                                               int type2) const {
@@ -78,6 +82,7 @@ protected:
     return Utils::Span<double>(base_pointer + offset * m_chunk_size,
                                m_chunk_size);
   }
+
   /** Calculate the maximal number of non-bonded interaction pairs in the
    *  system.
    */
@@ -86,10 +91,30 @@ protected:
     return static_cast<size_t>(
         (max_seen_particle_type * (max_seen_particle_type + 1)) / 2);
   }
+
+private:
+  /** Register this observable. */
+  virtual void register_obs() = 0;
 };
 
-/** Structure used for pressure, stress tensor and energy calculations. */
-struct Observable_stat : Observable_stat_base {
+/** Structure used to cache the results of pressure, stress tensor and energy
+ *  calculations.
+ */
+class Observable_stat : public Observable_stat_base {
+private:
+  /** Callback for the Coulomb interaction */
+  size_t (*m_get_n_coulomb)();
+  /** Callback for the dipolar interaction */
+  size_t (*m_get_n_dipolar)();
+
+public:
+  explicit Observable_stat(size_t chunk_size, size_t (*get_n_coulomb)(),
+                           size_t (*get_n_dipolar)())
+      : Observable_stat_base(chunk_size), m_get_n_coulomb(get_n_coulomb),
+        m_get_n_dipolar(get_n_dipolar), is_initialized(false), v_comp(false) {
+    register_obs();
+    realloc_and_clear();
+  }
   /** Flag to signal if the observable is initialized */
   bool is_initialized;
   /** Flag to signal if the observable measures instantaneous pressure, i.e.
@@ -113,8 +138,7 @@ struct Observable_stat : Observable_stat_base {
   Utils::Span<double> external_fields;
 
   /** Reinitialize the observable */
-  void realloc_and_clear(size_t chunk_size, size_t n_coulomb, size_t n_dipolar,
-                         size_t n_vs);
+  void realloc_and_clear() final;
 
   /** Rescale values */
   void rescale(double volume, double time_step) {
@@ -137,19 +161,29 @@ struct Observable_stat : Observable_stat_base {
     return Observable_stat_base::non_bonded_contribution(non_bonded.data(),
                                                          type1, type2);
   }
+
+private:
+  /** Register this observable. */
+  void register_obs() final;
 };
 
 /** Structure used only in the pressure and stress tensor calculation to
  *  distinguish non-bonded intra- and inter- molecular contributions.
  */
-struct Observable_stat_non_bonded : Observable_stat_base {
+class Observable_stat_non_bonded : public Observable_stat_base {
+public:
+  explicit Observable_stat_non_bonded(size_t chunk_size)
+      : Observable_stat_base(chunk_size) {
+    register_obs();
+    realloc_and_clear();
+  }
   /** Contribution(s) from non-bonded intramolecular interactions. */
   Utils::Span<double> non_bonded_intra;
   /** Contribution(s) from non-bonded intermolecular interactions. */
   Utils::Span<double> non_bonded_inter;
 
   /** Reinitialize the observable */
-  void realloc_and_clear(size_t chunk_size);
+  void realloc_and_clear() final;
 
   /** Rescale values */
   void rescale(double volume) {
@@ -169,6 +203,23 @@ struct Observable_stat_non_bonded : Observable_stat_base {
                                                     int type2) const {
     return non_bonded_contribution(non_bonded_inter.data(), type1, type2);
   }
+
+private:
+  /** Register this observable. */
+  void register_obs() final;
 };
+
+/** Invalidate observables.
+ *  This function is called whenever the system has changed in such a way
+ *  that the cached energies are no longer accurate.
+ */
+void invalidate_obs();
+
+/** Resize all observables.
+ *  This function is called whenever the number of Coulomb actors, dipolar
+ *  actors, bonded interactions or non-nonded interactions changed. This is
+ *  necessary because the data array must be resized accordingly.
+ */
+void realloc_and_clear_all_obs();
 
 #endif // ESPRESSO_OBSERVABLE_STAT_HPP

@@ -206,6 +206,4 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
 Utils::Vector3d calc_linear_momentum(int include_particles,
                                      int include_lbfluid);
 
-void invalidate_obs();
-
 #endif
