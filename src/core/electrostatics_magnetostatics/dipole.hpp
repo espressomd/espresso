@@ -21,8 +21,6 @@
 
 #include "config.hpp"
 
-extern double dipolar_cutoff;
-
 #ifdef DIPOLES
 #include "Observable_stat.hpp"
 

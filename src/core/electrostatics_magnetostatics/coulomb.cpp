@@ -19,9 +19,6 @@
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
-// Real space cutoff
-double coulomb_cutoff;
-
 #ifdef ELECTROSTATICS
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
