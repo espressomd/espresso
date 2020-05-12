@@ -189,17 +189,20 @@ inline void add_kinetic_virials(Particle const &p1, bool v_comp) {
   if (not p1.p.is_virtual) {
     /* kinetic energy */
     if (v_comp) {
-      virials.data[0] += ((p1.m.v * time_step) -
-                          (p1.f.f * (0.5 * Utils::sqr(time_step) / p1.p.mass)))
-                             .norm2() *
-                         p1.p.mass;
+      virials.first_field()[0] +=
+          ((p1.m.v * time_step) -
+           (p1.f.f * (0.5 * Utils::sqr(time_step) / p1.p.mass)))
+              .norm2() *
+          p1.p.mass;
     } else {
-      virials.data[0] += Utils::sqr(time_step) * p1.m.v.norm2() * p1.p.mass;
+      virials.first_field()[0] +=
+          Utils::sqr(time_step) * p1.m.v.norm2() * p1.p.mass;
     }
 
+    auto first_field = p_tensor.first_field();
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        p_tensor.data[k * 3 + l] +=
+        first_field[k * 3 + l] +=
             (p1.m.v[k] * time_step) * (p1.m.v[l] * time_step) * p1.p.mass;
   }
 }

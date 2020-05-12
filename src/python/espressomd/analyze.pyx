@@ -32,6 +32,7 @@ from .utils import array_locked, is_valid_type
 from .utils cimport Vector3i, Vector3d, Vector9d
 from .utils cimport handle_errors, check_type_or_throw_except
 from .utils cimport create_nparray_from_double_array
+from .utils cimport create_nparray_from_double_span
 from .particle_data cimport get_n_part
 
 
@@ -228,17 +229,13 @@ class Analysis:
         # Individual components of the pressure
 
         # Total pressure
-        cdef int i
-        total = 0
-        for i in range(analyze.total_pressure.data.size()):
-            total += analyze.total_pressure.data[i]
-
-        p["total"] = total
+        p["total"] = analyze.total_pressure.accumulate()
 
         # kinetic
-        p["kinetic"] = analyze.total_pressure.data[0]
+        p["kinetic"] = analyze.total_pressure.first_field()[0]
 
         # Bonded
+        cdef int i
         cdef double total_bonded
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
@@ -347,15 +344,13 @@ class Analysis:
         cdef int i
         total = np.zeros(9)
         for i in range(9):
-            for k in range(analyze.total_p_tensor.data.size() // 9):
-                total[i] += analyze.total_p_tensor.data[9 * k + i]
+            total[i] = analyze.total_p_tensor.accumulate_along_dim(0.0, i)
 
         p["total"] = total.reshape((3, 3))
 
         # kinetic
-        p["kinetic"] = create_nparray_from_double_array(
-            analyze.total_p_tensor.data.data(), 9)
-        p["kinetic"] = p["kinetic"].reshape((3, 3))
+        p["kinetic"] = create_nparray_from_double_span(
+            analyze.total_p_tensor.first_field()).reshape((3, 3))
 
         # Bonded
         total_bonded = np.zeros((3, 3))
@@ -375,7 +370,6 @@ class Analysis:
 
         for i in range(analyze.max_seen_particle_type):
             for j in range(i, analyze.max_seen_particle_type):
-                #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = np.reshape(
                     create_nparray_from_double_array(
                         analyze.total_p_tensor.nonbonded_ia(i, j), 9), (3, 3))
@@ -474,14 +468,14 @@ class Analysis:
 
         # Total energy
         cdef int i
-        total = analyze.total_energy.data[0]  # kinetic energy
+        total = analyze.total_energy.first_field()[0]  # kinetic energy
         total += calculate_current_potential_energy_of_system()
 
         e["total"] = total
         e["external_fields"] = analyze.total_energy.external_fields[0]
 
         # Kinetic energy
-        e["kinetic"] = analyze.total_energy.data[0]
+        e["kinetic"] = analyze.total_energy.first_field()[0]
 
         # Non-bonded
         cdef double total_bonded

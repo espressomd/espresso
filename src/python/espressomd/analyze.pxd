@@ -19,7 +19,7 @@
 
 # For C-extern Analysis
 
-from .utils cimport Vector3i, Vector3d, Vector9d
+from .utils cimport Vector3i, Vector3d, Vector9d, Span
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 
@@ -46,7 +46,13 @@ cdef extern from "Observable_stat.hpp":
     ctypedef struct Observable_stat:
         cbool is_initialized
         cbool v_comp
-        vector[double] data
+        Span[double] first_field()
+        double accumulate(...)
+        double accumulate2 "accumulate"(double acc, size_t from_)
+        double accumulate1 "accumulate"(double acc)
+        double accumulate_along_dim(...)
+        double accumulate_along_dim2 "accumulate_along_dim"(double acc, size_t from_)
+        double accumulate_along_dim1 "accumulate_along_dim"(double acc)
         size_t n_coulomb
         size_t n_dipolar
         size_t n_non_bonded

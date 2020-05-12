@@ -30,7 +30,6 @@
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include <boost/range/numeric.hpp>
 
 #include "short_range_loop.hpp"
 
@@ -128,5 +127,5 @@ double calculate_current_potential_energy_of_system() {
     master_energy_calc();
   }
 
-  return boost::accumulate(total_energy.data, -total_energy.data[0]);
+  return total_energy.accumulate(-total_energy.first_field()[0]);
 }

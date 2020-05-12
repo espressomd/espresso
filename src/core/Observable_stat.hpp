@@ -19,19 +19,47 @@
 #ifndef ESPRESSO_OBSERVABLE_STAT_HPP
 #define ESPRESSO_OBSERVABLE_STAT_HPP
 
+#include <boost/range/numeric.hpp>
+
+#include <utils/Span.hpp>
+
 #include <utility>
 #include <vector>
 
 struct Observable_stat_base {
-public:
-  /** Array for observables on each node. */
-  std::vector<double> data;
+  /** Get the first field in the observable */
+  Utils::Span<double> first_field() {
+    return Utils::Span<double>(data.data(), m_chunk_size);
+  }
+
   /** Gather the contributions from all nodes */
   void reduce(Observable_stat_base *output) const;
 
+  /** Accumulate values */
+  double accumulate(double acc = 0.0, size_t from = 0) {
+    if (m_chunk_size == 1 and from == 0)
+      return boost::accumulate(data, acc);
+
+    for (auto it = data.begin() + from; it != data.end(); ++it)
+      acc += *it;
+    return acc;
+  }
+
+  /** Accumulate values along one axis */
+  double accumulate_along_dim(double acc = 0.0, size_t from = 0) {
+    if (m_chunk_size == 1 and from == 0 and m_chunk_size == 1)
+      return accumulate(acc);
+
+    for (auto it = data.begin() + from; it < data.end(); it += m_chunk_size)
+      acc += *it;
+    return acc;
+  }
+
 protected:
+  /** Array for observables on each node. */
+  std::vector<double> data;
   /** number of doubles per data item */
-  size_t chunk_size;
+  size_t m_chunk_size;
   /** Get contribution from a non-bonded interaction */
   double *nonbonded_ia(double *base_pointer, int type1, int type2) const {
     extern int max_seen_particle_type;
@@ -40,7 +68,7 @@ protected:
       swap(type1, type2);
     }
     return base_pointer +
-           chunk_size *
+           m_chunk_size *
                (((2 * max_seen_particle_type - 1 - type1) * type1) / 2 + type2);
   }
   /** Calculate the maximal number of non-bonded interaction pairs in the
@@ -92,14 +120,14 @@ struct Observable_stat : Observable_stat_base {
   void rescale(double volume, double time_step) {
     auto const factor1 = 1. / (volume * time_step * time_step);
     auto const factor2 = 1. / volume;
-    for (auto it = data.begin(); it != data.begin() + chunk_size; ++it)
+    for (auto it = data.begin(); it != data.begin() + m_chunk_size; ++it)
       *it *= factor1;
-    for (auto it = data.begin() + chunk_size; it != data.end(); ++it)
+    for (auto it = data.begin() + m_chunk_size; it != data.end(); ++it)
       *it *= factor2;
   }
 
   /** Get contribution from a bonded interaction */
-  double *bonded_ia(int bond_id) { return bonded + (chunk_size * bond_id); }
+  double *bonded_ia(int bond_id) { return bonded + (m_chunk_size * bond_id); }
 
   /** Get contribution from a non-bonded interaction */
   double *nonbonded_ia(int type1, int type2) const {

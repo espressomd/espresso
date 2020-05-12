@@ -259,7 +259,7 @@ void update_pressure(bool v_comp) {
         !(nptiso.invalidate_p_vel)) {
       if (!total_pressure.is_initialized)
         master_pressure_calc(false);
-      total_pressure.data[0] = calculate_npt_p_vel_rescaled();
+      total_pressure.first_field()[0] = calculate_npt_p_vel_rescaled();
       total_pressure.v_comp = true;
     } else {
       master_pressure_calc(v_comp);
@@ -280,7 +280,7 @@ int observable_compute_stress_tensor(bool v_comp, double *A) {
         !(nptiso.invalidate_p_vel)) {
       if (!total_pressure.is_initialized)
         master_pressure_calc(false);
-      p_tensor.data[0] = calculate_npt_p_vel_rescaled();
+      p_tensor.first_field()[0] = calculate_npt_p_vel_rescaled();
       total_pressure.v_comp = true;
     } else {
       master_pressure_calc(v_comp);
@@ -288,10 +288,7 @@ int observable_compute_stress_tensor(bool v_comp, double *A) {
   }
 
   for (int j = 0; j < 9; j++) {
-    double value = total_p_tensor.data[j];
-    for (size_t i = 1; i < total_p_tensor.data.size() / 9; i++)
-      value += total_p_tensor.data[9 * i + j];
-    A[j] = value;
+    A[j] = total_p_tensor.accumulate_along_dim(0, j);
   }
   return 0;
 }

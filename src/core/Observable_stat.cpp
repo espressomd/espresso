@@ -31,14 +31,14 @@ extern boost::mpi::communicator comm_cart;
 void Observable_stat::realloc_and_clear(size_t n_coulomb, size_t n_dipolar,
                                         size_t n_vs, size_t c_size) {
   // Number of doubles per interaction (pressure=1, stress tensor=9,...)
-  chunk_size = c_size;
+  m_chunk_size = c_size;
 
   auto const n_bonded = bonded_ia_params.size();
   auto const n_non_bonded = max_non_bonded_pairs();
 
   // Number of doubles to store pressure in
-  size_t const total = chunk_size * (1 + n_bonded + n_non_bonded + n_coulomb +
-                                     n_dipolar + n_vs + n_external_field);
+  size_t const total = m_chunk_size * (1 + n_bonded + n_non_bonded + n_coulomb +
+                                       n_dipolar + n_vs + n_external_field);
 
   // Allocate mem for the double list
   data.resize(total);
@@ -48,12 +48,12 @@ void Observable_stat::realloc_and_clear(size_t n_coulomb, size_t n_dipolar,
   this->n_dipolar = n_dipolar;
   this->n_virtual_sites = n_vs;
   // Pointers to the start of different contributions
-  bonded = data.data() + chunk_size;
-  non_bonded = bonded + chunk_size * n_bonded;
-  coulomb = non_bonded + chunk_size * n_non_bonded;
-  dipolar = coulomb + chunk_size * n_coulomb;
-  virtual_sites = dipolar + chunk_size * n_dipolar;
-  external_fields = virtual_sites + chunk_size * n_vs;
+  bonded = data.data() + m_chunk_size;
+  non_bonded = bonded + m_chunk_size * n_bonded;
+  coulomb = non_bonded + m_chunk_size * n_non_bonded;
+  dipolar = coulomb + m_chunk_size * n_coulomb;
+  virtual_sites = dipolar + m_chunk_size * n_dipolar;
+  external_fields = virtual_sites + m_chunk_size * n_vs;
 
   // Set all observables to zero
   for (int i = 0; i < total; i++)
@@ -63,13 +63,13 @@ void Observable_stat::realloc_and_clear(size_t n_coulomb, size_t n_dipolar,
 }
 
 void Observable_stat_non_bonded::realloc_and_clear(size_t c_size) {
-  chunk_size = c_size;
+  m_chunk_size = c_size;
   auto const n_non_bonded = max_non_bonded_pairs();
-  size_t const total = chunk_size * 2 * n_non_bonded;
+  size_t const total = m_chunk_size * 2 * n_non_bonded;
 
   data.resize(total);
   non_bonded_intra = data.data();
-  non_bonded_inter = non_bonded_intra + chunk_size * n_non_bonded;
+  non_bonded_inter = non_bonded_intra + m_chunk_size * n_non_bonded;
 
   for (int i = 0; i < total; i++)
     data[i] = 0.0;
