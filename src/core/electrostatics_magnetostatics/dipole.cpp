@@ -19,9 +19,6 @@
 
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-// Real space cutoff of long range methods
-double dipolar_cutoff;
-
 #ifdef DIPOLES
 
 #include "actor/DipolarBarnesHut.hpp"
