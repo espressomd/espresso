@@ -46,29 +46,25 @@ cdef extern from "Observable_stat.hpp":
     ctypedef struct Observable_stat:
         cbool is_initialized
         cbool v_comp
-        Span[double] first_field()
+        Span[double] kinetic
+        Span[double] bonded
+        Span[double] non_bonded
+        Span[double] coulomb
+        Span[double] dipolar
+        Span[double] virtual_sites
+        Span[double] external_fields
         double accumulate(...)
         double accumulate2 "accumulate"(double acc, size_t from_)
         double accumulate1 "accumulate"(double acc)
         double accumulate_along_dim(...)
         double accumulate_along_dim2 "accumulate_along_dim"(double acc, size_t from_)
         double accumulate_along_dim1 "accumulate_along_dim"(double acc)
-        size_t n_coulomb
-        size_t n_dipolar
-        size_t n_non_bonded
-        size_t n_virtual_sites
-        double * bonded
-        double * non_bonded
-        double * coulomb
-        double * dipolar
-        double * virtual_sites
-        double * external_fields
-        double * bonded_ia(int bond_id)
-        double * nonbonded_ia(int type1, int type2)
+        Span[double] bonded_contribution(int bond_id)
+        Span[double] non_bonded_contribution(int type1, int type2)
 
     ctypedef struct Observable_stat_non_bonded:
-        double * nonbonded_intra_ia(int type1, int type2)
-        double * nonbonded_inter_ia(int type1, int type2)
+        Span[double] non_bonded_intra_contribution(int type1, int type2)
+        Span[double] non_bonded_inter_contribution(int type1, int type2)
 
 cdef extern from "statistics.hpp":
     int get_n_part_conf()

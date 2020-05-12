@@ -28,51 +28,40 @@
 
 extern boost::mpi::communicator comm_cart;
 
-void Observable_stat::realloc_and_clear(size_t n_coulomb, size_t n_dipolar,
-                                        size_t n_vs, size_t c_size) {
-  // Number of doubles per interaction (pressure=1, stress tensor=9,...)
-  m_chunk_size = c_size;
-
+void Observable_stat::realloc_and_clear(size_t chunk_size, size_t n_coulomb,
+                                        size_t n_dipolar, size_t n_vs) {
+  // number of chunks for different interaction types
   auto const n_bonded = bonded_ia_params.size();
   auto const n_non_bonded = max_non_bonded_pairs();
+  constexpr size_t n_ext_fields = 1; // energies from all fields: accumulated
+  constexpr size_t n_kinetic = 1; // linear+angular kinetic energy: accumulated
 
-  // Number of doubles to store pressure in
-  size_t const total = m_chunk_size * (1 + n_bonded + n_non_bonded + n_coulomb +
-                                       n_dipolar + n_vs + n_external_field);
-
-  // Allocate mem for the double list
-  data.resize(total);
-
-  // Number of chunks for different interaction types
-  this->n_coulomb = n_coulomb;
-  this->n_dipolar = n_dipolar;
-  this->n_virtual_sites = n_vs;
-  // Pointers to the start of different contributions
-  bonded = data.data() + m_chunk_size;
-  non_bonded = bonded + m_chunk_size * n_bonded;
-  coulomb = non_bonded + m_chunk_size * n_non_bonded;
-  dipolar = coulomb + m_chunk_size * n_coulomb;
-  virtual_sites = dipolar + m_chunk_size * n_dipolar;
-  external_fields = virtual_sites + m_chunk_size * n_vs;
-
-  // Set all observables to zero
-  for (int i = 0; i < total; i++)
-    data[i] = 0.0;
-
+  // reallocate and reset memory
+  auto const total = n_kinetic + n_bonded + n_non_bonded + n_coulomb +
+                     n_dipolar + n_vs + n_ext_fields;
+  Observable_stat_base::realloc_and_clear(chunk_size, total);
   is_initialized = false;
+
+  // spans for the different contributions
+  kinetic = Utils::Span<double>(data.data(), m_chunk_size);
+  bonded = Utils::Span<double>(kinetic.end(), n_bonded * m_chunk_size);
+  non_bonded = Utils::Span<double>(bonded.end(), n_non_bonded * m_chunk_size);
+  coulomb = Utils::Span<double>(non_bonded.end(), n_coulomb * m_chunk_size);
+  dipolar = Utils::Span<double>(coulomb.end(), n_dipolar * m_chunk_size);
+  virtual_sites = Utils::Span<double>(dipolar.end(), n_vs * m_chunk_size);
+  external_fields =
+      Utils::Span<double>(virtual_sites.end(), n_ext_fields * m_chunk_size);
 }
 
-void Observable_stat_non_bonded::realloc_and_clear(size_t c_size) {
-  m_chunk_size = c_size;
+void Observable_stat_non_bonded::realloc_and_clear(size_t chunk_size) {
+  // number of chunks for different interaction types
   auto const n_non_bonded = max_non_bonded_pairs();
-  size_t const total = m_chunk_size * 2 * n_non_bonded;
-
-  data.resize(total);
-  non_bonded_intra = data.data();
-  non_bonded_inter = non_bonded_intra + m_chunk_size * n_non_bonded;
-
-  for (int i = 0; i < total; i++)
-    data[i] = 0.0;
+  // reallocate and reset memory
+  Observable_stat_base::realloc_and_clear(chunk_size, 2 * n_non_bonded);
+  // spans for the different contributions
+  auto const span_size = n_non_bonded * m_chunk_size;
+  non_bonded_intra = Utils::Span<double>(data.data(), span_size);
+  non_bonded_inter = Utils::Span<double>(non_bonded_intra.end(), span_size);
 }
 
 void Observable_stat_base::reduce(Observable_stat_base *output) const {

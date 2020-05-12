@@ -128,11 +128,11 @@ void pressure_calc(Observable_stat *result, Observable_stat *result_t,
   calc_long_range_virials(cell_structure.local_particles());
 
 #ifdef VIRTUAL_SITES
-  {
+  if (!virials.virtual_sites.empty()) {
     auto const vs_stress = virtual_sites()->stress_tensor();
 
-    *virials.virtual_sites += trace(vs_stress);
-    boost::copy(flatten(vs_stress), p_tensor.virtual_sites);
+    virials.virtual_sites[0] += trace(vs_stress);
+    boost::copy(flatten(vs_stress), p_tensor.virtual_sites.begin());
   }
 #endif
 
@@ -185,7 +185,7 @@ void init_virials(Observable_stat *stat) {
 #endif
 
   // Allocate memory for the data
-  stat->realloc_and_clear(n_coulomb, n_dipolar, n_vs, 1);
+  stat->realloc_and_clear(1, n_coulomb, n_dipolar, n_vs);
 }
 
 /************************************************************/
@@ -210,7 +210,7 @@ void init_p_tensor(Observable_stat *stat) {
   n_vs = 1;
 #endif
 
-  stat->realloc_and_clear(n_coulomb, n_dipolar, n_vs, 9);
+  stat->realloc_and_clear(9, n_coulomb, n_dipolar, n_vs);
 }
 
 /***************************/
@@ -259,7 +259,7 @@ void update_pressure(bool v_comp) {
         !(nptiso.invalidate_p_vel)) {
       if (!total_pressure.is_initialized)
         master_pressure_calc(false);
-      total_pressure.first_field()[0] = calculate_npt_p_vel_rescaled();
+      total_pressure.kinetic[0] = calculate_npt_p_vel_rescaled();
       total_pressure.v_comp = true;
     } else {
       master_pressure_calc(v_comp);
@@ -280,7 +280,7 @@ int observable_compute_stress_tensor(bool v_comp, double *A) {
         !(nptiso.invalidate_p_vel)) {
       if (!total_pressure.is_initialized)
         master_pressure_calc(false);
-      p_tensor.first_field()[0] = calculate_npt_p_vel_rescaled();
+      p_tensor.kinetic[0] = calculate_npt_p_vel_rescaled();
       total_pressure.v_comp = true;
     } else {
       master_pressure_calc(v_comp);

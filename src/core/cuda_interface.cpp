@@ -166,11 +166,13 @@ This cannot be done from inside cuda_common_cuda.cu:copy_energy_from_GPU()
 because energy.hpp indirectly includes on mpi.h while .cu files may not depend
 on mpi.h. */
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host) {
-  energy.bonded[0] += energy_host.bonded;
-  energy.non_bonded[0] += energy_host.non_bonded;
-  if (energy.n_coulomb >= 1)
+  if (!energy.bonded.empty())
+    energy.bonded[0] += energy_host.bonded;
+  if (!energy.non_bonded.empty())
+    energy.non_bonded[0] += energy_host.non_bonded;
+  if (!energy.coulomb.empty())
     energy.coulomb[0] += energy_host.coulomb;
-  if (energy.n_dipolar >= 2)
+  if (energy.dipolar.size() >= 2)
     energy.dipolar[1] += energy_host.dipolar;
 }
 

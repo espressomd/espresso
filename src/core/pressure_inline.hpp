@@ -46,35 +46,37 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 #endif
   {
     auto const force = calc_non_bonded_pair_force(p1, p2, d, dist);
-    *virials.nonbonded_ia(p1.p.type, p2.p.type) += d * force;
+    virials.non_bonded_contribution(p1.p.type, p2.p.type)[0] += d * force;
 
     /* stress tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        p_tensor.nonbonded_ia(p1.p.type, p2.p.type)[k * 3 + l] +=
+        p_tensor.non_bonded_contribution(p1.p.type, p2.p.type)[k * 3 + l] +=
             force[k] * d[l];
 
     auto const p1molid = p1.p.mol_id;
     auto const p2molid = p2.p.mol_id;
     if (p1molid == p2molid) {
-      *virials_non_bonded.nonbonded_intra_ia(p1.p.type, p2.p.type) += d * force;
+      virials_non_bonded.non_bonded_intra_contribution(
+          p1.p.type, p2.p.type)[0] += d * force;
 
       for (int k = 0; k < 3; k++)
         for (int l = 0; l < 3; l++)
-          p_tensor_non_bonded.nonbonded_intra_ia(
+          p_tensor_non_bonded.non_bonded_intra_contribution(
               p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
     } else {
-      *virials_non_bonded.nonbonded_inter_ia(p1.p.type, p2.p.type) += d * force;
+      virials_non_bonded.non_bonded_inter_contribution(
+          p1.p.type, p2.p.type)[0] += d * force;
 
       for (int k = 0; k < 3; k++)
         for (int l = 0; l < 3; l++)
-          p_tensor_non_bonded.nonbonded_inter_ia(
+          p_tensor_non_bonded.non_bonded_inter_contribution(
               p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
     }
   }
 
 #ifdef ELECTROSTATICS
-  {
+  if (!virials.coulomb.empty()) {
     /* real space Coulomb */
     auto const p_coulomb = Coulomb::pair_pressure(p1, p2, d, dist);
 
@@ -165,12 +167,12 @@ inline bool add_bonded_stress(Particle &p1, int bond_id,
   if (result) {
     auto const &stress = result.get();
 
-    *virials.bonded_ia(bond_id) += trace(stress);
+    virials.bonded_contribution(bond_id)[0] += trace(stress);
 
     /* stress tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        p_tensor.bonded_ia(bond_id)[k * 3 + l] += stress[k][l];
+        p_tensor.bonded_contribution(bond_id)[k * 3 + l] += stress[k][l];
 
     return false;
   }
@@ -189,20 +191,18 @@ inline void add_kinetic_virials(Particle const &p1, bool v_comp) {
   if (not p1.p.is_virtual) {
     /* kinetic energy */
     if (v_comp) {
-      virials.first_field()[0] +=
+      virials.kinetic[0] +=
           ((p1.m.v * time_step) -
            (p1.f.f * (0.5 * Utils::sqr(time_step) / p1.p.mass)))
               .norm2() *
           p1.p.mass;
     } else {
-      virials.first_field()[0] +=
-          Utils::sqr(time_step) * p1.m.v.norm2() * p1.p.mass;
+      virials.kinetic[0] += Utils::sqr(time_step) * p1.m.v.norm2() * p1.p.mass;
     }
 
-    auto first_field = p_tensor.first_field();
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        first_field[k * 3 + l] +=
+        p_tensor.kinetic[k * 3 + l] +=
             (p1.m.v[k] * time_step) * (p1.m.v[l] * time_step) * p1.p.mass;
   }
 }

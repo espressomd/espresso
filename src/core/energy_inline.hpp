@@ -190,16 +190,18 @@ inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
-    *energy.nonbonded_ia(p1.p.type, p2.p.type) +=
+    energy.non_bonded_contribution(p1.p.type, p2.p.type)[0] +=
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist);
 
 #ifdef ELECTROSTATICS
-  energy.coulomb[0] +=
-      Coulomb::pair_energy(p1, p2, p1.p.q * p2.p.q, d, dist, dist2);
+  if (!energy.coulomb.empty())
+    energy.coulomb[0] +=
+        Coulomb::pair_energy(p1, p2, p1.p.q * p2.p.q, d, dist, dist2);
 #endif
 
 #ifdef DIPOLES
-  energy.dipolar[0] += Dipole::pair_energy(p1, p2, d, dist, dist2);
+  if (!energy.dipolar.empty())
+    energy.dipolar[0] += Dipole::pair_energy(p1, p2, d, dist, dist2);
 #endif
 }
 
@@ -292,7 +294,7 @@ inline bool add_bonded_energy(Particle &p1, int bond_id,
   auto const result = calc_bonded_energy(iaparams, p1, partners);
 
   if (result) {
-    *energy.bonded_ia(bond_id) += result.get();
+    energy.bonded_contribution(bond_id)[0] += result.get();
 
     return false;
   }
@@ -308,19 +310,17 @@ inline void add_kinetic_energy(Particle const &p1) {
     return;
 
   /* kinetic energy */
-  if (not p1.p.is_virtual)
-    energy.first_field()[0] += 0.5 * p1.p.mass * p1.m.v.norm2();
+  energy.kinetic[0] += 0.5 * p1.p.mass * p1.m.v.norm2();
 
-    // Note that rotational degrees of virtual sites are integrated
-    // and therefore can contribute to kinetic energy
+  // Note that rotational degrees of virtual sites are integrated
+  // and therefore can contribute to kinetic energy
 #ifdef ROTATION
   if (p1.p.rotation) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
-    energy.first_field()[0] +=
-        0.5 * (Utils::sqr(p1.m.omega[0]) * p1.p.rinertia[0] +
-               Utils::sqr(p1.m.omega[1]) * p1.p.rinertia[1] +
-               Utils::sqr(p1.m.omega[2]) * p1.p.rinertia[2]);
+    energy.kinetic[0] += 0.5 * (Utils::sqr(p1.m.omega[0]) * p1.p.rinertia[0] +
+                                Utils::sqr(p1.m.omega[1]) * p1.p.rinertia[1] +
+                                Utils::sqr(p1.m.omega[2]) * p1.p.rinertia[2]);
   }
 #endif
 }

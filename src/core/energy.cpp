@@ -53,7 +53,7 @@ void init_energies(Observable_stat *stat) {
   n_dipolar = Dipole::energy_n();
 #endif
 
-  stat->realloc_and_clear(n_coulomb, n_dipolar, 0, 1);
+  stat->realloc_and_clear(1, n_coulomb, n_dipolar, 0);
 }
 
 /************************************************************/
@@ -127,5 +127,5 @@ double calculate_current_potential_energy_of_system() {
     master_energy_calc();
   }
 
-  return total_energy.accumulate(-total_energy.first_field()[0]);
+  return total_energy.accumulate(-total_energy.kinetic[0]);
 }
