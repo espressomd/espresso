@@ -42,22 +42,17 @@ public:
   /** Gather the contributions from all nodes */
   void reduce(Observable_stat_base *output) const;
 
-  /** Accumulate values */
-  double accumulate(double acc = 0.0, size_t from = 0) {
-    if (m_chunk_size == 1 and from == 0)
+  /** Accumulate values.
+   *  @param acc    Initial value for the accumulator
+   *  @param column Which column to sum up (only relevant for multi-dimensional
+   *                observables).
+   */
+  double accumulate(double acc = 0.0, size_t column = 0) {
+    assert(column < m_chunk_size);
+    if (m_chunk_size == 1)
       return boost::accumulate(data, acc);
 
-    for (auto it = data.begin() + from; it != data.end(); ++it)
-      acc += *it;
-    return acc;
-  }
-
-  /** Accumulate values along one axis */
-  double accumulate_along_dim(double acc = 0.0, size_t from = 0) {
-    if (m_chunk_size == 1 and from == 0 and m_chunk_size == 1)
-      return accumulate(acc);
-
-    for (auto it = data.begin() + from; it < data.end(); it += m_chunk_size)
+    for (auto it = data.begin() + column; it < data.end(); it += m_chunk_size)
       acc += *it;
     return acc;
   }

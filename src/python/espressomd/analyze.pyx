@@ -345,7 +345,7 @@ class Analysis:
         cdef int i
         total = np.zeros(9)
         for i in range(9):
-            total[i] = analyze.total_p_tensor.accumulate_along_dim(0.0, i)
+            total[i] = analyze.total_p_tensor.accumulate(0.0, i)
 
         p["total"] = total.reshape((3, 3))
 

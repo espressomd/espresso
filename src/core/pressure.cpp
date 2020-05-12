@@ -214,7 +214,7 @@ int observable_compute_stress_tensor(bool v_comp, double *A) {
   }
 
   for (int j = 0; j < 9; j++) {
-    A[j] = total_p_tensor.accumulate_along_dim(0, j);
+    A[j] = total_p_tensor.accumulate(0, j);
   }
   return 0;
 }

@@ -55,11 +55,8 @@ cdef extern from "Observable_stat.hpp":
         Span[double] virtual_sites
         Span[double] external_fields
         double accumulate(...)
-        double accumulate2 "accumulate"(double acc, size_t from_)
+        double accumulate2 "accumulate"(double acc, size_t column)
         double accumulate1 "accumulate"(double acc)
-        double accumulate_along_dim(...)
-        double accumulate_along_dim2 "accumulate_along_dim"(double acc, size_t from_)
-        double accumulate_along_dim1 "accumulate_along_dim"(double acc)
         Span[double] bonded_contribution(int bond_id)
         Span[double] non_bonded_contribution(int type1, int type2)
 
