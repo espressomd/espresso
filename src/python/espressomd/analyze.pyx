@@ -295,7 +295,7 @@ class Analysis:
             for i in range(analyze.total_pressure.n_virtual_sites):
                 p_vs += analyze.total_pressure.virtual_sites[i]
                 p["virtual_sites", i] = analyze.total_pressure.virtual_sites[
-                    0]
+                    i]
             if analyze.total_pressure.n_virtual_sites:
                 p["virtual_sites"] = p_vs
 
