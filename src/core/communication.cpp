@@ -57,7 +57,6 @@
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
-#include "statistics.hpp"
 #include "virtual_sites.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"

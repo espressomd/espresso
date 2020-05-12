@@ -22,6 +22,7 @@
 #include "algorithm/for_each_pair.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <profiler/profiler.hpp>

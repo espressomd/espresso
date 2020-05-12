@@ -30,13 +30,12 @@
 #include "Observable_stat.hpp"
 #include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
-#include "statistics.hpp"
 
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
 ///
-extern Observable_stat energy, total_energy;
+extern Observable_stat total_energy;
 
 extern ActorList energyActors;
 /*@}*/

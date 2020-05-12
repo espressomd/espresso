@@ -26,16 +26,15 @@
 #define CORE_PRESSURE_HPP
 
 #include "Observable_stat.hpp"
-#include "statistics.hpp"
 
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
 ///
-extern Observable_stat virials, total_pressure, p_tensor, total_p_tensor;
+extern Observable_stat total_pressure, total_p_tensor;
 ///
-extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded,
-    p_tensor_non_bonded, total_p_tensor_non_bonded;
+extern Observable_stat_non_bonded total_pressure_non_bonded,
+    total_p_tensor_non_bonded;
 /*@}*/
 
 /** Calculates the pressure in the system from a virial expansion.

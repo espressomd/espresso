@@ -63,13 +63,14 @@
 #endif
 #include "cells.hpp"
 #include "exclusions.hpp"
-#include "statistics.hpp"
 
 #include "energy.hpp"
 
 #ifdef DIPOLES
 #include "electrostatics_magnetostatics/dipole_inline.hpp"
 #endif
+
+extern Observable_stat energy;
 
 /** Calculate non-bonded energies between a pair of particles.
  *  @param p1         particle 1.

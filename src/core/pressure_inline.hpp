@@ -33,6 +33,9 @@
 
 #include <utils/math/tensor_product.hpp>
 
+extern Observable_stat virials, p_tensor;
+extern Observable_stat_non_bonded virials_non_bonded, p_tensor_non_bonded;
+
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.
  *  @param p2        pointer to particle 2.

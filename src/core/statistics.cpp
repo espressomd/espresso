@@ -43,6 +43,7 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/contains.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <cstdlib>
 #include <limits>

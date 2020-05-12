@@ -166,6 +166,7 @@ This cannot be done from inside cuda_common_cuda.cu:copy_energy_from_GPU()
 because energy.hpp indirectly includes on mpi.h while .cu files may not depend
 on mpi.h. */
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host) {
+  extern Observable_stat energy;
   if (!energy.bonded.empty())
     energy.bonded[0] += energy_host.bonded;
   if (!energy.non_bonded.empty())
