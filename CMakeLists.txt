@@ -274,6 +274,13 @@ if(Boost_VERSION VERSION_GREATER_EQUAL 106400 AND Boost_VERSION VERSION_LESS
 endif()
 
 #
+# Repa
+#
+
+find_package(Repa)
+
+
+#
 # Paths
 #
 

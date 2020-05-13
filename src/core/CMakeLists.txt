@@ -89,8 +89,9 @@ target_link_libraries(
   PRIVATE EspressoConfig shapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
           "$<$<BOOL:${SCAFACOS}>:Scafacos>"
+          "$<$<BOOL:${REPA_FOUND}>:${REPA_LIBRARIES}>"
   PUBLIC
-    utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi GenericDD
+    utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
     "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
     "$<$<BOOL:${H5MD}>:Boost::filesystem>" "$<$<BOOL:${H5MD}>:h5xx>"
     "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:gcov>")
@@ -119,7 +120,21 @@ add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)
 add_subdirectory(observables)
 add_subdirectory(virtual_sites)
-add_subdirectory(generic-dd)
+
+# Add generic-dd sources.
+# This must be done here, since we cannot modify the properties from a subdirectory.
+# And we don't want to recompile everything just because REPA_FOUND changed.
+set(GenericDD_SRC
+    generic-dd/generic_dd.cpp
+    generic-dd/metric.cpp)
+target_sources(EspressoCore PRIVATE ${GenericDD_SRC})
+if(REPA_FOUND)
+  set_source_files_properties(${GenericDD_SRC}
+  	PROPERTIES
+  	COMPILE_DEFINITIONS "HAVE_REPA"
+  	INCLUDE_DIRECTORIES ${REPA_INCLUDE_DIR})
+endif(REPA_FOUND)
+
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
