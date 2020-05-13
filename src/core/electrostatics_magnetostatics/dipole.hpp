@@ -21,6 +21,8 @@
 
 #include "config.hpp"
 
+#include <cstddef>
+
 #ifdef DIPOLES
 #include "Observable_stat.hpp"
 

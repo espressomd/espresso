@@ -26,20 +26,14 @@
 
 #include "statistics.hpp"
 
-#include "Observable_stat.hpp"
 #include "Particle.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
-#include "energy.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "integrate.hpp"
-#include "npt.hpp"
 #include "partCfg_global.hpp"
-#include "pressure.hpp"
-#include "short_range_loop.hpp"
 
-#include <utils/NoOp.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/contains.hpp>

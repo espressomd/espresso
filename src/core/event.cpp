@@ -25,6 +25,7 @@
  */
 #include "event.hpp"
 
+#include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"

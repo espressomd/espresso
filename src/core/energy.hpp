@@ -27,11 +27,8 @@
 #ifndef _ENERGY_H
 #define _ENERGY_H
 
-#include "Observable_stat.hpp"
 #include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
-
-extern Observable_stat_wrapper obs_energy;
 
 extern ActorList energyActors;
 

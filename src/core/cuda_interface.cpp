@@ -23,7 +23,6 @@
 
 #include "communication.hpp"
 #include "config.hpp"
-#include "energy.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "serialization/CUDA_particle_data.hpp"
@@ -159,21 +158,6 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
 
     add_forces_and_torques(particles, host_forces, host_torques);
   }
-}
-
-/** Takes a CUDA_energy struct and adds it to the core energy struct.
-This cannot be done from inside cuda_common_cuda.cu:copy_energy_from_GPU()
-because energy.hpp indirectly includes on mpi.h while .cu files may not depend
-on mpi.h. */
-void copy_CUDA_energy_to_energy(CUDA_energy energy_host) {
-  if (!obs_energy.local.bonded.empty())
-    obs_energy.local.bonded[0] += energy_host.bonded;
-  if (!obs_energy.local.non_bonded.empty())
-    obs_energy.local.non_bonded[0] += energy_host.non_bonded;
-  if (!obs_energy.local.coulomb.empty())
-    obs_energy.local.coulomb[0] += energy_host.coulomb;
-  if (obs_energy.local.dipolar.size() >= 2)
-    obs_energy.local.dipolar[1] += energy_host.dipolar;
 }
 
 void cuda_bcast_global_part_params() { mpi_bcast_cuda_global_part_vars(); }

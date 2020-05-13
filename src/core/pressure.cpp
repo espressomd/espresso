@@ -22,6 +22,7 @@
  *  Implementation of pressure.hpp.
  */
 
+#include "Observable_stat.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"

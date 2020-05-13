@@ -25,6 +25,7 @@
 #ifndef CORE_PRESSURE_INLINE_HPP
 #define CORE_PRESSURE_INLINE_HPP
 
+#include "Observable_stat.hpp"
 #include "exclusions.hpp"
 #include "forces_inline.hpp"
 #include "integrate.hpp"
@@ -32,6 +33,11 @@
 #include "pressure.hpp"
 
 #include <utils/math/tensor_product.hpp>
+
+extern Observable_stat_wrapper obs_scalar_pressure;
+extern Observable_stat_wrapper obs_stress_tensor;
+extern Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded;
+extern Observable_stat_non_bonded_wrapper obs_stress_tensor_non_bonded;
 
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.

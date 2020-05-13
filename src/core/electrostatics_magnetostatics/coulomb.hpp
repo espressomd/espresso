@@ -21,6 +21,8 @@
 
 #include "config.hpp"
 
+#include <cstddef>
+
 #ifdef ELECTROSTATICS
 #include "Observable_stat.hpp"
 

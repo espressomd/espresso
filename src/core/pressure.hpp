@@ -25,13 +25,6 @@
 #ifndef CORE_PRESSURE_HPP
 #define CORE_PRESSURE_HPP
 
-#include "Observable_stat.hpp"
-
-extern Observable_stat_wrapper obs_scalar_pressure;
-extern Observable_stat_wrapper obs_stress_tensor;
-extern Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded;
-extern Observable_stat_non_bonded_wrapper obs_stress_tensor_non_bonded;
-
 /** Parallel pressure calculation from a virial expansion.
  *  @param[in] v_comp flag which enables compensation of the velocities
  *                    required for deriving a pressure reflecting

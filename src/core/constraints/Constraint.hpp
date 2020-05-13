@@ -19,6 +19,7 @@
 #ifndef CONSTRAINTS_CONSTRAINT_HPP
 #define CONSTRAINTS_CONSTRAINT_HPP
 
+#include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "energy.hpp"
 

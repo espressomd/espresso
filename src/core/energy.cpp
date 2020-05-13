@@ -23,6 +23,7 @@
  */
 
 #include "EspressoSystemInterface.hpp"
+#include "Observable_stat.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
