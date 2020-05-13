@@ -54,8 +54,8 @@ void calculate_vs_relate_to_params(const Particle &p_current,
   // get the distance between the particles
   Utils::Vector3d d = get_mi_vector(p_current.r.p, p_relate_to.r.p, box_geo);
 
-  // Check, if the distance between virtual and non-virtual particles is larger
-  // htan minimum global cutoff If so, warn user
+  // Check if the distance between virtual and non-virtual particles is larger
+  // than minimum global cutoff. If so, warn user.
   l = d.norm();
   if (l > min_global_cut && n_nodes > 1) {
     runtimeErrorMsg()

@@ -27,15 +27,11 @@
 #include <ParticleRange.hpp>
 #include <utils/Vector.hpp>
 
-/** \name Type codes for the type of Coulomb interaction
-    Enumeration of implemented methods for the electrostatic
-    interaction.
-*/
-/************************************************************/
-/*@{*/
-
+/** Type codes for the type of %Coulomb interaction.
+ *  Enumeration of implemented methods for the electrostatic interaction.
+ */
 enum CoulombMethod {
-  COULOMB_NONE,      ///< %Coulomb interaction switched off (NONE)
+  COULOMB_NONE,      ///< %Coulomb interaction switched off
   COULOMB_DH,        ///< %Coulomb method is Debye-Hueckel
   COULOMB_P3M,       ///< %Coulomb method is P3M
   COULOMB_P3M_GPU,   ///< %Coulomb method is P3M with GPU-based long-range part
@@ -44,27 +40,22 @@ enum CoulombMethod {
   COULOMB_MMM2D,     ///< %Coulomb method is two-dimensional MMM
   COULOMB_RF,        ///< %Coulomb method is Reaction-Field
   COULOMB_MMM1D_GPU, ///< %Coulomb method is one-dimensional MMM running on GPU
-  COULOMB_SCAFACOS,  ///< %Coulomb method is scafacos
+  COULOMB_SCAFACOS,  ///< %Coulomb method is ScaFaCoS
 };
-/*@}*/
 
-/** \name Compounds for Coulomb interactions */
-/*@{*/
-
-/** field containing the interaction parameters for
- *  the Coulomb  interaction.  */
+/** Interaction parameters for the %Coulomb interaction. */
 struct Coulomb_parameters {
-  /** bjerrum length times temperature. */
+  /** Bjerrum length times temperature. */
   double prefactor = 0.;
 
   double field_induced = 0.;
   double field_applied = 0.;
 
-  /** Method to treat Coulomb interaction. */
+  /** Method to treat %Coulomb interaction. */
   CoulombMethod method = COULOMB_NONE;
 };
 
-/** Structure containing the Coulomb parameters. */
+/** Structure containing the %Coulomb parameters. */
 extern Coulomb_parameters coulomb;
 
 namespace Coulomb {
@@ -99,13 +90,11 @@ void bcast_coulomb_params();
 /** @brief Set the electrostatics prefactor */
 int set_prefactor(double prefactor);
 
-/** @brief Deactivates the current Coulomb method
-    This was part of coulomb_set_bjerrum()
-*/
+/** @brief Deactivates the current %Coulomb method. */
 void deactivate_method();
 
-/** @brief Update particles with properties depending on other particles
- *   e.g., charges of ICC particles
+/** @brief Update particles with properties depending on other particles,
+ *  namely ICC charges.
  */
 void update_dependent_particles();
 } // namespace Coulomb

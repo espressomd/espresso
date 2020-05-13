@@ -66,9 +66,9 @@ struct EuclidianDistance {
 };
 
 /**
- * @brief Decided which distance function to use depending on the
-          cell system, and call the pair code.
-*/
+ * @brief Decide which distance function to use depending on the
+ * cell system, and call the pair code.
+ */
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename VerletCriterion>
 void decide_distance(CellIterator first, CellIterator last,
@@ -101,8 +101,7 @@ void decide_distance(CellIterator first, CellIterator last,
 }
 
 /**
- * @brief Functor that returns true for
- *        any arguments.
+ * @brief Functor that returns true for any argument.
  */
 struct True {
   template <class... T> bool operator()(T...) const { return true; }

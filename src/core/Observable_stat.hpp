@@ -21,6 +21,10 @@
 
 #include <utils/List.hpp>
 
+/** Cache for system statistics.
+ *  Store unidimensional (energy, scalar pressure) and multi-dimensional
+ *  (stress tensors) properties of the system.
+ */
 struct Observable_stat {
   /** Status flag for observable calculation.  For 'analyze energy': 0
       re-initialize observable struct, else everything is fine,
@@ -60,8 +64,8 @@ struct Observable_stat {
 };
 
 /** Structure used only in the pressure and stress tensor calculation to
-   distinguish
-    non-bonded intra- and inter- molecular contributions. */
+ *  distinguish non-bonded intra- and inter- molecular contributions.
+ */
 typedef struct {
   /** Status flag for observable calculation.
       For 'analyze energy': 0 re-initialize observable struct, else every thing

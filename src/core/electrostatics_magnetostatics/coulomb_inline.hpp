@@ -106,10 +106,10 @@ pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
  * If supported by the method, this returns the virial
  * contribution to the pressure tensor for this pair.
  *
- * @param p1 Particle
- * @param p2 Particle
- * @param d  Distance
- * @param dist |d|
+ * @param p1 particle
+ * @param p2 particle
+ * @param d  distance vector
+ * @param dist distance norm
  * @return Contribution to the pressure tensor.
  */
 inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const &p1,

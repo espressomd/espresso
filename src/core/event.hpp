@@ -113,8 +113,8 @@ void on_ghost_flags_change();
 /** called every time the walls for the lb fluid are changed */
 void on_lbboundary_change();
 
-/** @brief Update particles with properties depending on other particles
- *   e.g., virtual sites, ICC charges
+/** @brief Update particles with properties depending on other particles,
+ *  namely virtual sites and ICC charges.
  */
 void update_dependent_particles();
 

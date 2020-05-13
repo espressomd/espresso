@@ -65,6 +65,7 @@ void init_energies(Observable_stat *stat) {
 
 /************************************************************/
 
+/** Reduce the system energy from all MPI ranks. */
 void master_energy_calc() {
   mpi_gather_stats(1, total_energy.data.e, nullptr, nullptr, nullptr);
 

@@ -29,48 +29,40 @@
 #include <ParticleRange.hpp>
 #include <boost/mpi/communicator.hpp>
 
-/** \name Compounds for Dipole interactions */
-/*@{*/
-
-/** \name Type codes for the type of dipolar interaction
-  Enumeration of implemented methods for the magnetostatic
-  interaction.
+/** Type codes for the type of dipolar interaction.
+ *  Enumeration of implemented methods for the magnetostatic interaction.
  */
-/************************************************************/
-/*@{*/
 enum DipolarInteraction {
-  /** dipolar interaction switched off (NONE). */
+  /** Dipolar interaction switched off. */
   DIPOLAR_NONE = 0,
-  /** dipolar method is P3M. */
+  /** Dipolar method is P3M. */
   DIPOLAR_P3M,
   /** Dipolar method is P3M plus DLC. */
   DIPOLAR_MDLC_P3M,
-  /** Dipolar method is all with all and no replicas */
+  /** Dipolar method is all with all and no replicas. */
   DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
-  /** Dipolar method is magnetic dipolar direct sum */
+  /** Dipolar method is magnetic dipolar direct summation. */
   DIPOLAR_DS,
-  /** Dipolar method is direct sum plus DLC. */
+  /** Dipolar method is direct summation plus DLC. */
   DIPOLAR_MDLC_DS,
-  /** Direct summation on gpu */
+  /** Dipolar method is direct summation on GPU. */
   DIPOLAR_DS_GPU,
 #ifdef DIPOLAR_BARNES_HUT
-  /** Direct summation on gpu by Barnes-Hut algorithm */
+  /** Dipolar method is direct summation on GPU by Barnes-Hut algorithm. */
   DIPOLAR_BH_GPU,
 #endif
-  /** Scafacos library */
+  /** Dipolar method is ScaFaCoS. */
   DIPOLAR_SCAFACOS
 };
 
-/** field containing the interaction parameters for
- *  the Dipole interaction.  */
+/** Interaction parameters for the %dipole interaction. */
 struct Dipole_parameters {
   double prefactor;
 
   DipolarInteraction method;
 };
-/*@}*/
 
-/** Structure containing the Dipole parameters. */
+/** Structure containing the %dipole parameters. */
 extern Dipole_parameters dipole;
 
 namespace Dipole {

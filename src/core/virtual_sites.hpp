@@ -25,7 +25,7 @@
 #ifdef VIRTUAL_SITES
 #include "virtual_sites/VirtualSites.hpp"
 
-/** @brief get active virtual sites implementation */
+/** @brief Get active virtual sites implementation */
 const std::shared_ptr<VirtualSites> &virtual_sites();
 
 /** @brief Set active virtual sites implementation */

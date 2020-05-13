@@ -23,12 +23,12 @@
 
 /** \file
  *  This file contains routine to handle virtual sites
- *  Virtual sites are like particles, but they will be not integrated.
+ *  Virtual sites are like particles, but they will not be integrated.
  *  Step performed for virtual sites:
  *  - update virtual sites
  *  - calculate forces
  *  - distribute forces
- *  - move no-virtual particles
+ *  - move non-virtual particles
  *  - update virtual sites
  */
 

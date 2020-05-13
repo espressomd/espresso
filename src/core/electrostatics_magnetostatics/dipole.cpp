@@ -206,7 +206,7 @@ void calc_long_range_force(const ParticleRange &particles) {
   case DIPOLAR_BH_GPU:
     // Do nothing, it's an actor.
     break;
-#endif // BARNES_HUT
+#endif // DIPOLAR_BARNES_HUT
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
     assert(Scafacos::dipolar());
@@ -377,7 +377,7 @@ void set_method_local(DipolarInteraction method) {
   if ((dipole.method == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
     deactivate_dipolar_barnes_hut();
   }
-#endif // BARNES_HUT
+#endif // DIPOLAR_BARNES_HUT
   dipole.method = method;
 }
 

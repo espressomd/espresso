@@ -173,7 +173,7 @@ inline double calc_non_bonded_pair_energy(Particle const &p1,
 }
 
 /** Add non-bonded and short-range Coulomb energies between a pair of particles
- *  to the @ref energy observable.
+ *  to the energy observable.
  *  @param p1        particle 1.
  *  @param p2        particle 2.
  *  @param d         vector between p1 and p2.
@@ -385,7 +385,7 @@ inline void add_kinetic_energy(Particle const &p1) {
 #ifdef ROTATION
   if (p1.p.rotation) {
     /* the rotational part is added to the total kinetic energy;
-       Here we use the rotational inertia  */
+     * Here we use the rotational inertia */
 
     energy.data.e[0] += 0.5 * (Utils::sqr(p1.m.omega[0]) * p1.p.rinertia[0] +
                                Utils::sqr(p1.m.omega[1]) * p1.p.rinertia[1] +

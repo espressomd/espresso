@@ -392,7 +392,7 @@ void calc_energy_long_range(Observable_stat &energy,
       energy.coulomb[1] +=
           0.5 * ELC_P3M_dielectric_layers_energy_self(particles);
 
-      //  assign both original and image charges now
+      // assign both original and image charges now
       ELC_p3m_charge_assign_both(particles);
       ELC_P3M_modify_p3m_sums_both(particles);
 
@@ -540,8 +540,6 @@ int set_prefactor(double prefactor) {
   return ES_OK;
 }
 
-/** @brief Deactivates the current Coulomb method
- */
 void deactivate_method() {
   coulomb.prefactor = 0;
 

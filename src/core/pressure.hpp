@@ -30,9 +30,7 @@
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
-///
 extern Observable_stat virials, total_pressure, p_tensor, total_p_tensor;
-///
 extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded,
     p_tensor_non_bonded, total_p_tensor_non_bonded;
 /*@}*/

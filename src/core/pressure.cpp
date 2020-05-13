@@ -35,16 +35,26 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 
+/** Scalar pressure from the current MPI rank */
 Observable_stat virials{};
+/** Scalar pressure from the whole system */
 Observable_stat total_pressure{};
+/** Stress tensor from the current MPI rank */
 Observable_stat p_tensor{};
+/** Stress tensor from the whole system */
 Observable_stat total_p_tensor{};
 
-/* Observables used in the calculation of intra- and inter- molecular
-   non-bonded contributions to pressure and to stress tensor */
+/** Contribution from the intra- and inter-molecular non-bonded interactions
+ *  to the scalar pressure (from the current MPI rank) */
 Observable_stat_non_bonded virials_non_bonded{};
+/** Contribution from the intra- and inter-molecular non-bonded interactions
+ *  to the scalar pressure (from the whole system) */
 Observable_stat_non_bonded total_pressure_non_bonded{};
+/** Contribution from the intra- and inter-molecular non-bonded interactions
+ *  to the stress tensor (from the current MPI rank) */
 Observable_stat_non_bonded p_tensor_non_bonded{};
+/** Contribution from the intra- and inter-molecular non-bonded interactions
+ *  to the stress tensor (from the whole system) */
 Observable_stat_non_bonded total_p_tensor_non_bonded{};
 
 nptiso_struct nptiso = {0.0,
