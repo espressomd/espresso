@@ -104,6 +104,17 @@ class Generic_DD_Energy(ut.TestCase):
         for gt in generic_dd.supported_grid_types():
             self.common_test(gt)
 
+    def test_init_part(self):
+        if "diff" not in generic_dd.supported_grid_types():
+            return
+        self.load_particles()
+        gen_dd = self.s.cell_system.set_generic_dd(
+            "diff", use_verlet_lists=True, init_part="Cart1D")
+        self.integrate()
+        en = self.get_energy()
+        self.assertAlmostEqual(self.ground_truth, en,
+                               delta=abs(1e-3 * self.ground_truth))
+
 
 if __name__ == "__main__":
     ut.main()
