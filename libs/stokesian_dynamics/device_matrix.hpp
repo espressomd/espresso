@@ -116,23 +116,6 @@ int dpotrs_(char *uplo, int *n, int *nrhs, double *a, int *lda, double *b,
 }
 #endif
 
-/** The `cublas` and `cusolver` structs channel access to efficient matrix
- *  operations provided by either the cuBLAS library (after which it is named),
- *  which executes on the GPU, or by BLAS/LAPACK, which execute on the CPU.
- *  The first template parameter specifiies whether the routines are executed on
- *  host or on device, by either passing `policy::host` or `policy::device`.
- *  The second template parameter specifies the data type (only `double` is 
- *  available).
- */
-/** The `cublas` struct channels access to efficient basic matrix operations
- *  provided by either the cuBLAS library (after which it is named), which
- *  executes on the GPU, or by BLAS (Basic Linear Algebra Subprograms), which
- *  executes on the CPU.
- *  The first template parameter specifiies whether the routines are executed on
- *  host or on device, by either passing `policy::host` or `policy::device`.
- *  The second template parameter specifies the data type (only `double` is 
- *  available).
- */
 namespace internal {
 
 /** The `cublas` struct channels access to efficient basic matrix operations

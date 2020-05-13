@@ -13,17 +13,15 @@
 typedef r123::Philox2x64 RNG;
 #endif
 
-
 #ifdef __CUDACC__
 #define DEVICE_FUNC __host__ __device__
-#define KERNEL_ABORT asm("trap;")
 #else
 #define DEVICE_FUNC
-#define KERNEL_ABORT abort()
 #endif
 
+
 /** \file
- *  This file contains computations required for Stokesioan Dynamics, namely
+ *  This file contains computations required for Stokesian Dynamics, namely
  *  the particle's translational and angular velocities are computed from the 
  *  particle's positions and radii and the forces and torques that are acting
  *  on the particles.
@@ -93,7 +91,6 @@ struct check_dist {
             //printf("Particles %lu and %lu overlapped! (distance %f < %f)\n",
             //       part_id(0, i), part_id(1, i), dr,
             //       a(part_id(0, i)) + a(part_id(1, i)));
-            //KERNEL_ABORT;
             dr = NAN;
         }
 

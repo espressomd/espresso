@@ -45,11 +45,11 @@
 #include <utils/mpi/scatter_buffer.hpp>
 
 #ifdef STOKESIAN_DYNAMICS
-#include "sd_cpu.hpp"
+#include "stokesian_dynamics/sd_cpu.hpp"
 #endif
 
 #ifdef STOKESIAN_DYNAMICS_GPU
-#include "sd_gpu.hpp"
+#include "stokesian_dynamics/sd_gpu.hpp"
 #endif
 
 #include "sd_interface.hpp"

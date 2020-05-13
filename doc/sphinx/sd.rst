@@ -13,7 +13,7 @@ radii and forces (including torques) are needed to compute the momentary
 velocities (including angular velocities). The particle positions are
 integrated by simple Euler scheme.
 
-The Stokesian Dynamics method is outlined in :cite:`Durlofsky87`
+The Stokesian Dynamics method is outlined in :cite:`durlofsky87a`
 
 ..note:: The computation of the velocities is an approximation with good results in the far field.
 
