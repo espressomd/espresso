@@ -16,7 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
+#ifndef STOKESIAN_DYNAMICS_INLINE_HPP
+#define STOKESIAN_DYNAMICS_INLINE_HPP
 
 #include "ParticleRange.hpp"
 #include "config.hpp"
@@ -66,3 +67,4 @@ inline void stokesian_dynamics_step_1(const ParticleRange &particles) {
 inline void stokesian_dynamics_step_2(const ParticleRange &particles) {}
 
 #endif // STOKESIAN_DYNAMICS
+#endif

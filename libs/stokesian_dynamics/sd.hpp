@@ -1,3 +1,6 @@
+#ifndef SD_HPP
+#define SD_HPP
+
 #include <cstdio>
 #include <vector>
 
@@ -1476,3 +1479,5 @@ struct solver {
 };
 
 } // namespace sd
+
+#endif
