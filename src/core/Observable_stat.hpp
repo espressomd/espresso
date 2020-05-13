@@ -23,6 +23,7 @@
 
 #include <utils/Span.hpp>
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 
@@ -43,8 +44,14 @@ public:
    */
   explicit Observable_stat_base(size_t chunk_size) : m_chunk_size(chunk_size) {}
 
-  /** Reinitialize the observable */
-  virtual void realloc_and_clear() = 0;
+  /** Resize the observable */
+  virtual void resize() = 0;
+
+  /** Resize and zero out the observable */
+  void resize_and_clear() {
+    resize();
+    std::fill(data.begin(), data.end(), 0);
+  }
 
   /** Gather the contributions from the current MPI rank.
    *  @param[out] out Destination of the reduction.
@@ -67,13 +74,6 @@ public:
   }
 
 protected:
-  /** Reinitialize the observable */
-  void realloc_and_clear(size_t n_items) {
-    data.resize(m_chunk_size * n_items);
-    for (auto &value : data)
-      value = 0;
-  }
-
   /** Get contribution from a non-bonded interaction */
   Utils::Span<double> non_bonded_contribution(double *base_pointer, int type1,
                                               int type2) const {
@@ -95,10 +95,6 @@ protected:
     return static_cast<size_t>(
         (max_seen_particle_type * (max_seen_particle_type + 1)) / 2);
   }
-
-private:
-  /** Register this observable. */
-  virtual void register_obs() = 0;
 };
 
 /** Structure used to cache the results of the scalar pressure, stress tensor
@@ -111,18 +107,10 @@ private:
 
 public:
   explicit Observable_stat(size_t chunk_size, bool pressure_obs = true)
-      : Observable_stat_base(chunk_size), m_pressure_obs(pressure_obs),
-        is_initialized(false), v_comp(false) {
-    register_obs();
-    realloc_and_clear();
+      : Observable_stat_base(chunk_size), m_pressure_obs(pressure_obs) {
+    resize_and_clear();
   }
-  /** Flag to signal if the observable is initialized */
-  bool is_initialized;
-  /** Flag to signal if the observable measures instantaneous pressure, i.e.
-   *  the pressure with velocity compensation (half a time step), instead of
-   *  the conventional pressure. Only relevant for NpT simulations.
-   */
-  bool v_comp;
+
   /** Contribution from linear and angular kinetic energy (accumulated). */
   Utils::Span<double> kinetic;
   /** Contribution(s) from bonded interactions. */
@@ -138,8 +126,8 @@ public:
   /** Contribution from external fields (accumulated). */
   Utils::Span<double> external_fields;
 
-  /** Reinitialize the observable */
-  void realloc_and_clear() final;
+  /** Resize the observable */
+  void resize() final;
 
   /** Rescale values */
   void rescale(double volume, double time_step) {
@@ -162,10 +150,6 @@ public:
     return Observable_stat_base::non_bonded_contribution(non_bonded.data(),
                                                          type1, type2);
   }
-
-private:
-  /** Register this observable. */
-  void register_obs() final;
 };
 
 /** Structure used only in the pressure and stress tensor calculation to
@@ -175,16 +159,16 @@ class Observable_stat_non_bonded : public Observable_stat_base {
 public:
   explicit Observable_stat_non_bonded(size_t chunk_size)
       : Observable_stat_base(chunk_size) {
-    register_obs();
-    realloc_and_clear();
+    resize_and_clear();
   }
+
   /** Contribution(s) from non-bonded intramolecular interactions. */
   Utils::Span<double> non_bonded_intra;
   /** Contribution(s) from non-bonded intermolecular interactions. */
   Utils::Span<double> non_bonded_inter;
 
-  /** Reinitialize the observable */
-  void realloc_and_clear() final;
+  /** Resize the observable */
+  void resize() final;
 
   /** Rescale values */
   void rescale(double volume) {
@@ -204,10 +188,6 @@ public:
                                                     int type2) const {
     return non_bonded_contribution(non_bonded_inter.data(), type1, type2);
   }
-
-private:
-  /** Register this observable. */
-  void register_obs() final;
 };
 
 /** Invalidate observables.
@@ -218,24 +198,31 @@ private:
  */
 void invalidate_obs();
 
-/** Resize all observables.
- *  This function is called whenever the number of Coulomb actors, dipolar
- *  actors, bonded interactions or non-nonded interactions changed. This is
- *  necessary because the data array must be resized accordingly.
- */
-void realloc_and_clear_all_obs();
-
 class Observable_stat_wrapper : public Observable_stat {
 public:
   /** Observed statistic for the current MPI rank. */
   Observable_stat local;
+  /** Flag to signal if the observable is initialized. */
+  bool is_initialized;
+  /** Flag to signal if the observable measures instantaneous pressure, i.e.
+   *  the pressure with velocity compensation (half a time step), instead of
+   *  the conventional pressure. Only relevant for NpT simulations.
+   */
+  bool v_comp;
 
   explicit Observable_stat_wrapper(size_t chunk_size, bool pressure_obs = true)
       : Observable_stat{chunk_size, pressure_obs}, local{chunk_size,
-                                                         pressure_obs} {}
+                                                         pressure_obs},
+        is_initialized(false), v_comp(false) {
+    register_obs();
+  }
 
   /** Gather the contributions from all MPI ranks. */
   void reduce() { local.reduce(data.data()); }
+
+private:
+  /** Register this observable. */
+  void register_obs();
 };
 
 class Observable_stat_non_bonded_wrapper : public Observable_stat_non_bonded {

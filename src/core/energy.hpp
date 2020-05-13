@@ -31,7 +31,6 @@
 #include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
 
-///
 extern Observable_stat_wrapper obs_energy;
 
 extern ActorList energyActors;

@@ -38,7 +38,7 @@
 
 ActorList energyActors;
 
-/** Energy from the whole system */
+/** Energy of the system */
 Observable_stat_wrapper obs_energy{1, false};
 
 /** Reduce the system energy from all MPI ranks. */
@@ -51,7 +51,7 @@ void energy_calc(const double time) {
   if (!interactions_sanity_checks())
     return;
 
-  obs_energy.local.realloc_and_clear();
+  obs_energy.local.resize_and_clear();
 
 #ifdef CUDA
   clear_energy_on_GPU();
@@ -90,7 +90,7 @@ void energy_calc(const double time) {
 
 void update_energy() {
   if (!obs_energy.is_initialized) {
-    obs_energy.realloc_and_clear();
+    obs_energy.resize();
     master_energy_calc();
   }
 }

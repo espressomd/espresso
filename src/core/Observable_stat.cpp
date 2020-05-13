@@ -33,37 +33,21 @@
 extern boost::mpi::communicator comm_cart;
 
 /** Tracker of observables */
-std::vector<Observable_stat *> &registered_obs_stat() {
-  static std::vector<Observable_stat *> s_registered_obs_stat;
-  return s_registered_obs_stat;
+std::vector<Observable_stat_wrapper *> &registered_observables() {
+  static std::vector<Observable_stat_wrapper *> s_registered_observables;
+  return s_registered_observables;
 }
 
-/** Tracker of non-bonded observables */
-std::vector<Observable_stat_non_bonded *> &registered_obs_stat_non_bonded() {
-  static std::vector<Observable_stat_non_bonded *>
-      s_registered_obs_stat_non_bonded;
-  return s_registered_obs_stat_non_bonded;
-}
-
-void Observable_stat::register_obs() { registered_obs_stat().push_back(this); }
-
-void Observable_stat_non_bonded::register_obs() {
-  registered_obs_stat_non_bonded().push_back(this);
+void Observable_stat_wrapper::register_obs() {
+  registered_observables().push_back(this);
 }
 
 void invalidate_obs() {
-  for (auto *obs : registered_obs_stat())
+  for (auto *obs : registered_observables())
     obs->is_initialized = false;
 }
 
-void realloc_and_clear_all_obs() {
-  for (auto *obs : registered_obs_stat())
-    obs->realloc_and_clear();
-  for (auto *obs : registered_obs_stat_non_bonded())
-    obs->realloc_and_clear();
-}
-
-void Observable_stat::realloc_and_clear() {
+void Observable_stat::resize() {
   // number of chunks for different interaction types
   auto const n_coulomb =
       m_pressure_obs ? Coulomb::pressure_n() : Coulomb::energy_n();
@@ -78,11 +62,10 @@ void Observable_stat::realloc_and_clear() {
   constexpr size_t n_ext_fields = 1; // energies from all fields: accumulated
   constexpr size_t n_kinetic = 1; // linear+angular kinetic energy: accumulated
 
-  // reallocate and reset memory
+  // resize vector
   auto const total = n_kinetic + n_bonded + n_non_bonded + n_coulomb +
                      n_dipolar + n_vs + n_ext_fields;
-  Observable_stat_base::realloc_and_clear(total);
-  is_initialized = false;
+  data.resize(m_chunk_size * total);
 
   // spans for the different contributions
   kinetic = Utils::Span<double>(data.data(), m_chunk_size);
@@ -95,11 +78,11 @@ void Observable_stat::realloc_and_clear() {
       Utils::Span<double>(virtual_sites.end(), n_ext_fields * m_chunk_size);
 }
 
-void Observable_stat_non_bonded::realloc_and_clear() {
+void Observable_stat_non_bonded::resize() {
   // number of chunks for different interaction types
   auto const n_non_bonded = max_non_bonded_pairs();
-  // reallocate and reset memory
-  Observable_stat_base::realloc_and_clear(2 * n_non_bonded);
+  // resize vector
+  data.resize(m_chunk_size * 2 * n_non_bonded);
   // spans for the different contributions
   auto const span_size = n_non_bonded * m_chunk_size;
   non_bonded_intra = Utils::Span<double>(data.data(), span_size);

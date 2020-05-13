@@ -41,11 +41,11 @@ Observable_stat_wrapper obs_scalar_pressure{1};
 /** Stress tensor of the system */
 Observable_stat_wrapper obs_stress_tensor{9};
 /** Contribution from the intra- and inter-molecular non-bonded interactions
- *  to the scalar pressure.
+ *  to the scalar pressure of the system.
  */
 Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded{1};
 /** Contribution from the intra- and inter-molecular non-bonded interactions
- *  to the stress tensor.
+ *  to the stress tensor of the system.
  */
 Observable_stat_non_bonded_wrapper obs_stress_tensor_non_bonded{9};
 
@@ -87,10 +87,10 @@ void pressure_calc(bool v_comp) {
   if (!interactions_sanity_checks())
     return;
 
-  obs_scalar_pressure.local.realloc_and_clear();
-  obs_scalar_pressure_non_bonded.local.realloc_and_clear();
-  obs_stress_tensor.local.realloc_and_clear();
-  obs_stress_tensor_non_bonded.local.realloc_and_clear();
+  obs_scalar_pressure.local.resize_and_clear();
+  obs_scalar_pressure_non_bonded.local.resize_and_clear();
+  obs_stress_tensor.local.resize_and_clear();
+  obs_stress_tensor_non_bonded.local.resize_and_clear();
 
   on_observable_calc();
 
@@ -163,47 +163,35 @@ double calculate_npt_p_vel_rescaled() {
   return acc / (nptiso.dimension * nptiso.volume);
 }
 
-void update_pressure(bool v_comp) {
-  if (!(obs_scalar_pressure.is_initialized &&
-        obs_scalar_pressure.v_comp == v_comp)) {
-    obs_scalar_pressure.realloc_and_clear();
-    obs_scalar_pressure_non_bonded.realloc_and_clear();
-    obs_stress_tensor.realloc_and_clear();
-    obs_stress_tensor_non_bonded.realloc_and_clear();
+void update_pressure(bool v_comp, bool observable_stress_tensor) {
+  if (obs_scalar_pressure.is_initialized &&
+      obs_scalar_pressure.v_comp == v_comp)
+    return;
 
-    if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
-        !(nptiso.invalidate_p_vel)) {
-      if (!obs_scalar_pressure.is_initialized)
-        master_pressure_calc(false);
-      obs_scalar_pressure.kinetic[0] = calculate_npt_p_vel_rescaled();
-      obs_scalar_pressure.v_comp = true;
+  obs_scalar_pressure.resize();
+  obs_scalar_pressure_non_bonded.resize();
+  obs_stress_tensor.resize();
+  obs_stress_tensor_non_bonded.resize();
+
+  if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
+      !(nptiso.invalidate_p_vel)) {
+    if (!obs_scalar_pressure.is_initialized)
+      master_pressure_calc(false);
+    auto const npt_p_vel_rescaled = calculate_npt_p_vel_rescaled();
+    if (observable_stress_tensor) {
+      obs_stress_tensor.local.kinetic[0] = npt_p_vel_rescaled;
     } else {
-      master_pressure_calc(v_comp);
+      obs_scalar_pressure.kinetic[0] = npt_p_vel_rescaled;
     }
+    obs_scalar_pressure.v_comp = true;
+  } else {
+    master_pressure_calc(v_comp);
   }
 }
 
-int observable_compute_stress_tensor(bool v_comp, double *A) {
-  if (!(obs_scalar_pressure.is_initialized &&
-        obs_scalar_pressure.v_comp == v_comp)) {
-    obs_scalar_pressure.realloc_and_clear();
-    obs_scalar_pressure_non_bonded.realloc_and_clear();
-    obs_stress_tensor.realloc_and_clear();
-    obs_stress_tensor_non_bonded.realloc_and_clear();
-
-    if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
-        !(nptiso.invalidate_p_vel)) {
-      if (!obs_scalar_pressure.is_initialized)
-        master_pressure_calc(false);
-      obs_stress_tensor.local.kinetic[0] = calculate_npt_p_vel_rescaled();
-      obs_scalar_pressure.v_comp = true;
-    } else {
-      master_pressure_calc(v_comp);
-    }
+void observable_compute_stress_tensor(double *output) {
+  update_pressure(true, true);
+  for (size_t j = 0; j < 9; j++) {
+    output[j] = obs_stress_tensor.accumulate(0, j);
   }
-
-  for (int j = 0; j < 9; j++) {
-    A[j] = obs_stress_tensor.accumulate(0, j);
-  }
-  return 0;
 }

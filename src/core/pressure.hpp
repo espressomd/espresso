@@ -41,10 +41,19 @@ extern Observable_stat_non_bonded_wrapper obs_stress_tensor_non_bonded;
  */
 void pressure_calc(bool v_comp);
 
-/** Function to calculate stress tensor for the observables */
-int observable_compute_stress_tensor(bool v_comp, double *A);
+/** Helper function for @ref Observables::StressTensor.
+ *  @param[out] output Destination array.
+ */
+void observable_compute_stress_tensor(double *output);
 
-/** Recalculate the virials, pressure and stress tensors (only if necessary). */
-void update_pressure(bool v_comp);
+/** Recalculate the virials, pressure and stress tensors (only if necessary).
+ *  @param[in] v_comp flag which enables compensation of the velocities
+ *                    required for deriving a pressure reflecting
+ *                    \ref nptiso_struct::p_inst (hence it only works with
+ *                    domain decomposition); naturally it therefore doesn't
+ *                    make sense to use it without NpT.
+ *  @param[in] observable_stress_tensor flag for internal use
+ */
+void update_pressure(bool v_comp, bool observable_stress_tensor = false);
 
 #endif

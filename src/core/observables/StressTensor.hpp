@@ -30,7 +30,7 @@ public:
   std::vector<size_t> shape() const override { return {3, 3}; }
   std::vector<double> operator()() const override {
     std::vector<double> res(n_values());
-    observable_compute_stress_tensor(true, res.data());
+    observable_compute_stress_tensor(res.data());
     return res;
   }
 };
