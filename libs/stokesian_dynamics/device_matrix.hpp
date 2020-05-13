@@ -139,12 +139,12 @@ namespace internal {
  *  provided by either the cuBLAS library (after which it is named), which
  *  executes on the GPU, or by BLAS (Basic Linear Algebra Subprograms), which
  *  executes on the CPU.
- *  The first template parameter specifies whether the routines are executed on
- *  host or on device, by either passing `policy::host` or `policy::device`.
- *  The second template parameter specifies the data type (only `double` is 
- *  available).
+ *  \tparam Policy Specifies whether the routines are executed on host or on
+ *                 device, by either passing \ref policy::host or \ref
+ *                 policy::device
+ *  \tparam T      Specifies the data type (only `double` is available).
  */
-template <typename, typename>
+template <typename Policy, typename T>
 struct cublas {};
 
 #ifdef __CUDACC__
