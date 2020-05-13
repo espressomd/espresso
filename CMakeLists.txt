@@ -279,7 +279,6 @@ endif()
 
 find_package(Repa)
 
-
 #
 # Paths
 #

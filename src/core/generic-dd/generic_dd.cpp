@@ -149,8 +149,8 @@ static void insert_particles(ParticleList &&recvbuf,
       // E.g. a global resort should have been performed instead of a local
       // one, or the internal state of generic_dd is inconsistent.
       std::cerr << "[" << this_node
-          << "] Insertion: Particle does not belong on this node but on: "
-          << position_to_node(p.r.p);
+                << "] Insertion: Particle does not belong on this node but on: "
+                << position_to_node(p.r.p);
       errexit();
     }
 

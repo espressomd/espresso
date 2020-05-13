@@ -121,20 +121,16 @@ add_subdirectory(object-in-fluid)
 add_subdirectory(observables)
 add_subdirectory(virtual_sites)
 
-# Add generic-dd sources.
-# This must be done here, since we cannot modify the properties from a subdirectory.
-# And we don't want to recompile everything just because REPA_FOUND changed.
-set(GenericDD_SRC
-    generic-dd/generic_dd.cpp
-    generic-dd/metric.cpp)
+# Add generic-dd sources. This must be done here, since we cannot modify the
+# properties from a subdirectory. And we don't want to recompile everything just
+# because REPA_FOUND changed.
+set(GenericDD_SRC generic-dd/generic_dd.cpp generic-dd/metric.cpp)
 target_sources(EspressoCore PRIVATE ${GenericDD_SRC})
 if(REPA_FOUND)
-  set_source_files_properties(${GenericDD_SRC}
-  	PROPERTIES
-  	COMPILE_DEFINITIONS "HAVE_REPA"
-  	INCLUDE_DIRECTORIES ${REPA_INCLUDE_DIR})
+  set_source_files_properties(
+    ${GenericDD_SRC} PROPERTIES COMPILE_DEFINITIONS "HAVE_REPA"
+                                INCLUDE_DIRECTORIES ${REPA_INCLUDE_DIR})
 endif(REPA_FOUND)
-
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
