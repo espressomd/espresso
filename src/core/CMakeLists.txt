@@ -89,11 +89,11 @@ target_link_libraries(
   PRIVATE EspressoConfig shapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
           "$<$<BOOL:${SCAFACOS}>:Scafacos>"
+          "$<$<BOOL:${REPA_FOUND}>:${REPA_LIBRARIES}>"
   PUBLIC
     utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
     "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
     "$<$<BOOL:${H5MD}>:Boost::filesystem>" "$<$<BOOL:${H5MD}>:h5xx>"
-    "$<$<BOOL:${REPA_FOUND}>:${REPA_LIBRARIES}>"
     "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:gcov>")
 
 target_include_directories(
