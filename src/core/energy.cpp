@@ -38,15 +38,10 @@
 
 ActorList energyActors;
 
-namespace {
-auto cen = &Coulomb::energy_n;
-auto den = &Dipole::energy_n;
-} // namespace
-
 /** Energy from the current MPI rank */
-Observable_stat energy{1, ::cen, ::den};
+Observable_stat energy{1, false};
 /** Energy from the whole system */
-Observable_stat total_energy{1, ::cen, ::den};
+Observable_stat total_energy{1, false};
 
 /** Reduce the system energy from all MPI ranks. */
 void master_energy_calc() {

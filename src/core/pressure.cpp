@@ -36,19 +36,14 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-namespace {
-auto cpn = &Coulomb::pressure_n;
-auto dpn = &Dipole::pressure_n;
-} // namespace
-
 /** Scalar pressure from the current MPI rank */
-Observable_stat virials{1, ::cpn, ::dpn};
+Observable_stat virials{1};
 /** Scalar pressure from the whole system */
-Observable_stat total_pressure{1, ::cpn, ::dpn};
+Observable_stat total_pressure{1};
 /** Stress tensor from the current MPI rank */
-Observable_stat p_tensor{9, ::cpn, ::dpn};
+Observable_stat p_tensor{9};
 /** Stress tensor from the whole system */
-Observable_stat total_p_tensor{9, ::cpn, ::dpn};
+Observable_stat total_p_tensor{9};
 
 /** Contribution from the intra- and inter-molecular non-bonded interactions
  *  to the scalar pressure (from the current MPI rank) */

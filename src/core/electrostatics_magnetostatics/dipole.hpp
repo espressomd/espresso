@@ -66,7 +66,31 @@ struct Dipole_parameters {
 extern Dipole_parameters dipole;
 
 namespace Dipole {
-size_t pressure_n();
+/** Number of electrostatic contributions to the system pressure calculation. */
+constexpr size_t pressure_n() { return 0; }
+
+/** Number of electrostatic contributions to the system energy calculation. */
+inline size_t energy_n() {
+  switch (dipole.method) {
+  case DIPOLAR_NONE:
+    return 1; // because there may be an external magnetic field
+  case DIPOLAR_P3M:
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
+  case DIPOLAR_DS:
+  case DIPOLAR_DS_GPU:
+#ifdef DIPOLAR_BARNES_HUT
+  case DIPOLAR_BH_GPU:
+#endif
+  case DIPOLAR_SCAFACOS:
+    return 2;
+  case DIPOLAR_MDLC_P3M:
+  case DIPOLAR_MDLC_DS:
+    return 3;
+  default:
+    return 0;
+  }
+}
+
 void calc_pressure_long_range();
 
 void nonbonded_sanity_check(int &state);
@@ -81,7 +105,6 @@ void calc_long_range_force(const ParticleRange &particles);
 
 void calc_energy_long_range(Observable_stat &energy,
                             const ParticleRange &particles);
-size_t energy_n();
 
 int set_mesh();
 void bcast_params(const boost::mpi::communicator &comm);

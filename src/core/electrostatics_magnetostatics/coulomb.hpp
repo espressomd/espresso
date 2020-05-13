@@ -58,7 +58,35 @@ struct Coulomb_parameters {
 extern Coulomb_parameters coulomb;
 
 namespace Coulomb {
-size_t pressure_n();
+/** Number of electrostatic contributions to the system pressure calculation. */
+inline size_t pressure_n() {
+  switch (coulomb.method) {
+  case COULOMB_NONE:
+    return 0;
+  case COULOMB_P3M_GPU:
+  case COULOMB_P3M:
+    return 2;
+  default:
+    return 1;
+  }
+}
+
+/** Number of electrostatic contributions to the system energy calculation. */
+inline size_t energy_n() {
+  switch (coulomb.method) {
+  case COULOMB_NONE:
+    return 0;
+  case COULOMB_ELC_P3M:
+    return 3;
+  case COULOMB_P3M_GPU:
+  case COULOMB_P3M:
+  case COULOMB_SCAFACOS:
+    return 2;
+  default:
+    return 1;
+  }
+}
+
 void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor,
                               const ParticleRange &particles);
@@ -76,7 +104,6 @@ void calc_long_range_force(const ParticleRange &particles);
 
 void calc_energy_long_range(Observable_stat &energy,
                             const ParticleRange &particles);
-size_t energy_n();
 
 int iccp3m_sanity_check();
 

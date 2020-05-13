@@ -24,6 +24,8 @@
 #include "config.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <boost/mpi/communicator.hpp>
@@ -63,8 +65,10 @@ void realloc_and_clear_all_obs() {
 
 void Observable_stat::realloc_and_clear() {
   // number of chunks for different interaction types
-  auto const n_coulomb = (*m_get_n_coulomb)();
-  auto const n_dipolar = (*m_get_n_dipolar)();
+  auto const n_coulomb =
+      m_pressure_obs ? Coulomb::pressure_n() : Coulomb::energy_n();
+  auto const n_dipolar =
+      m_pressure_obs ? Dipole::pressure_n() : Dipole::energy_n();
   size_t n_vs = 0;
 #ifdef VIRTUAL_SITES
   n_vs = 1;

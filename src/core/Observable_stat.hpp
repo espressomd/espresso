@@ -104,16 +104,13 @@ private:
  */
 class Observable_stat : public Observable_stat_base {
 private:
-  /** Callback for the Coulomb interaction */
-  size_t (*m_get_n_coulomb)();
-  /** Callback for the dipolar interaction */
-  size_t (*m_get_n_dipolar)();
+  /** Whether this observable is a pressure or energy observable */
+  bool m_pressure_obs;
 
 public:
-  explicit Observable_stat(size_t chunk_size, size_t (*get_n_coulomb)(),
-                           size_t (*get_n_dipolar)())
-      : Observable_stat_base(chunk_size), m_get_n_coulomb(get_n_coulomb),
-        m_get_n_dipolar(get_n_dipolar), is_initialized(false), v_comp(false) {
+  explicit Observable_stat(size_t chunk_size, bool pressure_obs = true)
+      : Observable_stat_base(chunk_size), m_pressure_obs(pressure_obs),
+        is_initialized(false), v_comp(false) {
     register_obs();
     realloc_and_clear();
   }

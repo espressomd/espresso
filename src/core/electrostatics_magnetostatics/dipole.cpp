@@ -45,8 +45,6 @@ Dipole_parameters dipole = {
 };
 
 namespace Dipole {
-size_t pressure_n() { return 0; }
-
 void calc_pressure_long_range() {
   switch (dipole.method) {
   case DIPOLAR_NONE:
@@ -254,29 +252,6 @@ void calc_energy_long_range(Observable_stat &energy,
     runtimeErrorMsg()
         << "energy calculation not implemented for dipolar method.";
     break;
-  }
-}
-
-size_t energy_n() {
-  switch (dipole.method) {
-  case DIPOLAR_NONE:
-    return 1; // because there may be an external magnetic field
-  case DIPOLAR_P3M:
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-  case DIPOLAR_DS:
-  case DIPOLAR_DS_GPU:
-#ifdef DIPOLAR_BARNES_HUT
-  case DIPOLAR_BH_GPU:
-#endif
-  case DIPOLAR_SCAFACOS:
-    return 2;
-  case DIPOLAR_MDLC_P3M:
-  case DIPOLAR_MDLC_DS:
-    return 3;
-  default:
-    runtimeErrorMsg()
-        << "energy calculation not implemented for dipolar method.";
-    return 0;
   }
 }
 
