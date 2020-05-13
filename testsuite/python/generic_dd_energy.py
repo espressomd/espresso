@@ -108,7 +108,7 @@ class Generic_DD_Energy(ut.TestCase):
         if "diff" not in generic_dd.supported_grid_types():
             return
         self.load_particles()
-        gen_dd = self.s.cell_system.set_generic_dd(
+        self.s.cell_system.set_generic_dd(
             "diff", use_verlet_lists=True, init_part="Cart1D")
         self.integrate()
         en = self.get_energy()
