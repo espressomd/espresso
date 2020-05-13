@@ -176,7 +176,7 @@ inline double calc_non_bonded_pair_energy(Particle const &p1,
 }
 
 /** Add non-bonded and short-range Coulomb energies between a pair of particles
- *  to the @ref energy observable.
+ *  to the energy observable.
  *  @param p1        particle 1.
  *  @param p2        particle 2.
  *  @param d         vector between p1 and p2.
@@ -281,7 +281,7 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
   throw BondInvalidSizeError(n_partners);
 }
 
-/** Add bonded energies for one particle to the @ref energy observable.
+/** Add bonded energies for one particle to the energy observable.
  *  @param[in] p1   particle for which to calculate energies
  *  @param[in] bond_id Numeric id of the bond
  *  @param[in] partners Bond partners of particle.
@@ -303,7 +303,7 @@ inline bool add_bonded_energy(Particle &p1, int bond_id,
   return true;
 }
 
-/** Add kinetic energies for one particle to the @ref energy observable.
+/** Add kinetic energies for one particle to the energy observable.
  *  @param[in] p1   particle for which to calculate energies
  */
 inline void add_kinetic_energy(Particle const &p1) {
@@ -318,7 +318,7 @@ inline void add_kinetic_energy(Particle const &p1) {
 #ifdef ROTATION
   if (p1.p.rotation) {
     /* the rotational part is added to the total kinetic energy;
-       Here we use the rotational inertia  */
+     * Here we use the rotational inertia */
     energy.kinetic[0] += 0.5 * (Utils::sqr(p1.m.omega[0]) * p1.p.rinertia[0] +
                                 Utils::sqr(p1.m.omega[1]) * p1.p.rinertia[1] +
                                 Utils::sqr(p1.m.omega[2]) * p1.p.rinertia[2]);
@@ -326,8 +326,7 @@ inline void add_kinetic_energy(Particle const &p1) {
 #endif
 }
 
-/** Add kinetic and bonded energies for one particle to the @ref energy
- *  observable.
+/** Add kinetic and bonded energies for one particle to the energy observable.
  *  @param[in] p   particle for which to calculate energies
  */
 inline void add_single_particle_energy(Particle &p) {

@@ -41,16 +41,26 @@ auto cpn = &Coulomb::pressure_n;
 auto dpn = &Dipole::pressure_n;
 } // namespace
 
+/** Scalar pressure from the current MPI rank */
 Observable_stat virials{1, ::cpn, ::dpn};
+/** Scalar pressure from the whole system */
 Observable_stat total_pressure{1, ::cpn, ::dpn};
+/** Stress tensor from the current MPI rank */
 Observable_stat p_tensor{9, ::cpn, ::dpn};
+/** Stress tensor from the whole system */
 Observable_stat total_p_tensor{9, ::cpn, ::dpn};
 
-/* Observables used in the calculation of intra- and inter- molecular
- * non-bonded contributions to pressure and to stress tensor */
+/** Contribution from the intra- and inter-molecular non-bonded interactions
+ *  to the scalar pressure (from the current MPI rank) */
 Observable_stat_non_bonded virials_non_bonded{1};
+/** Contribution from the intra- and inter-molecular non-bonded interactions
+ *  to the scalar pressure (from the whole system) */
 Observable_stat_non_bonded total_pressure_non_bonded{1};
+/** Contribution from the intra- and inter-molecular non-bonded interactions
+ *  to the stress tensor (from the current MPI rank) */
 Observable_stat_non_bonded p_tensor_non_bonded{9};
+/** Contribution from the intra- and inter-molecular non-bonded interactions
+ *  to the stress tensor (from the whole system) */
 Observable_stat_non_bonded total_p_tensor_non_bonded{9};
 
 nptiso_struct nptiso = {0.0,
@@ -93,11 +103,8 @@ void pressure_calc(Observable_stat *result, Observable_stat *result_t,
     return;
 
   virials.realloc_and_clear();
-
   p_tensor.realloc_and_clear();
-
   virials_non_bonded.realloc_and_clear();
-
   p_tensor_non_bonded.realloc_and_clear();
 
   on_observable_calc();
@@ -140,7 +147,7 @@ void pressure_calc(Observable_stat *result, Observable_stat *result_t,
   p_tensor_non_bonded.reduce(result_t_nb);
 }
 
-/** on the master node: calc energies only if necessary
+/** Reduce the system scalar pressure and stress tensor from all MPI ranks.
  *  @param v_comp flag which enables compensation of the velocities required
  *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
  *                (hence it only works with domain decomposition); naturally it

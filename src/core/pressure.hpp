@@ -27,15 +27,9 @@
 
 #include "Observable_stat.hpp"
 
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-///
 extern Observable_stat total_pressure, total_p_tensor;
-///
 extern Observable_stat_non_bonded total_pressure_non_bonded,
     total_p_tensor_non_bonded;
-/*@}*/
 
 /** Calculates the pressure in the system from a virial expansion.
  *  @param[out] result Calculated scalar pressure
@@ -44,7 +38,7 @@ extern Observable_stat_non_bonded total_pressure_non_bonded,
  *                        contributions to the scalar pressure
  *  @param[out] result_t_nb Calculated intra- and inter-molecular nonbonded
  *                          contributions to the stress tensor
- *  @param[in] v_comp flag which enables (1) compensation of the velocities
+ *  @param[in] v_comp flag which enables compensation of the velocities
  *                    required for deriving a pressure reflecting
  *                    \ref nptiso_struct::p_inst (hence it only works with
  *                    domain decomposition); naturally it therefore doesn't

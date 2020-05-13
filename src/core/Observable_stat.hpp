@@ -26,6 +26,11 @@
 #include <utility>
 #include <vector>
 
+/** Cache for system statistics.
+ *  Store unidimensional (energy, scalar pressure) and multi-dimensional
+ *  (stress tensors) properties of the system and provide accumulation and
+ *  reduction functionality.
+ */
 class Observable_stat_base {
 protected:
   /** Array for observables on each node. */
@@ -34,6 +39,8 @@ protected:
   size_t m_chunk_size;
 
 public:
+  /** @param chunk_size Dimensionality of the data
+   */
   explicit Observable_stat_base(size_t chunk_size) : m_chunk_size(chunk_size) {}
 
   /** Reinitialize the observable */
@@ -43,7 +50,7 @@ public:
   void reduce(Observable_stat_base *output) const;
 
   /** Accumulate values.
-   *  @param acc    Initial value for the accumulator
+   *  @param acc    Initial value for the accumulator.
    *  @param column Which column to sum up (only relevant for multi-dimensional
    *                observables).
    */
@@ -92,8 +99,8 @@ private:
   virtual void register_obs() = 0;
 };
 
-/** Structure used to cache the results of pressure, stress tensor and energy
- *  calculations.
+/** Structure used to cache the results of the scalar pressure, stress tensor
+ *  and energy calculations.
  */
 class Observable_stat : public Observable_stat_base {
 private:
@@ -127,7 +134,7 @@ public:
   Utils::Span<double> coulomb;
   /** Contribution(s) from dipolar interactions. */
   Utils::Span<double> dipolar;
-  /** Contribution(s) from virtual sites. */
+  /** Contribution(s) from virtual sites (accumulated). */
   Utils::Span<double> virtual_sites;
   /** Contribution from external fields (accumulated). */
   Utils::Span<double> external_fields;
@@ -206,7 +213,9 @@ private:
 
 /** Invalidate observables.
  *  This function is called whenever the system has changed in such a way
- *  that the cached energies are no longer accurate.
+ *  that the cached observables are no longer accurate or that the size of
+ *  the cache is no longer suitable (e.g. after addition of a new actor or
+ *  interaction).
  */
 void invalidate_obs();
 

@@ -43,9 +43,12 @@ auto cen = &Coulomb::energy_n;
 auto den = &Dipole::energy_n;
 } // namespace
 
+/** Energy from the current MPI rank */
 Observable_stat energy{1, ::cen, ::den};
+/** Energy from the whole system */
 Observable_stat total_energy{1, ::cen, ::den};
 
+/** Reduce the system energy from all MPI ranks. */
 void master_energy_calc() {
   mpi_gather_stats(GatherStats::energy, reinterpret_cast<void *>(&total_energy),
                    nullptr, nullptr, nullptr);

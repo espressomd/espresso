@@ -228,8 +228,6 @@ void copy_energy_from_GPU() {
   copy_CUDA_energy_to_energy(energy_host);
 }
 
-/** @name Generic copy functions from and to device */
-
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
   if (cudaSuccess != CU_err) {
     fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
@@ -254,5 +252,3 @@ void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
     }
   }
 }
-
-/*@}*/

@@ -58,7 +58,7 @@ void energy_calc(Observable_stat *result, double time);
 /** Calculate long range energies (P3M, ...). */
 void calc_long_range_energies(const ParticleRange &particles);
 
-/** Calculate the total energy */
+/** Calculate the total energy of the system. */
 double calculate_current_potential_energy_of_system();
 
 /*@}*/

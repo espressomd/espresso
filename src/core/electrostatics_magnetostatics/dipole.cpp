@@ -336,7 +336,7 @@ void set_method_local(DipolarInteraction method) {
   if ((dipole.method == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
     deactivate_dipolar_barnes_hut();
   }
-#endif // BARNES_HUT
+#endif // DIPOLAR_ BARNES_HUT
   dipole.method = method;
 }
 
