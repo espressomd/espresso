@@ -1210,10 +1210,11 @@ struct thermalizer {
     The relationship between force and velocity is now given by the so-called
     grand mobility matrix, or its inverse, the resistance matrix:
 
-            \vec{U} = M_{UF} \vec{F}
+            \f[\vec{U} = M_{UF} \vec{F}\f]
 
-    where \vec{U} is the force, \vec{F} the velocities and M the grand
-    mobility matrix. The subscript UF indicates that this tensor describes
+    where \f$\vec{U}\f$ is the force, \f$\vec{F}\f$ the velocities and \f$M\f$
+    the grand mobility matrix. The subscript \f$_{UF}\f$ indicates that this
+    tensor describes the relationship between forces and velocities.
     the relationship between forces and velocities.
     The mobility matrix depends on the positions of all particles and therefore
     is only valid for the momentary configuration. It needs to be recalculated
