@@ -24,19 +24,9 @@
 #include <boost/serialization/is_bitwise_serializable.hpp>
 #include <boost/serialization/split_free.hpp>
 
-BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
+#if defined(STOKESIAN_DYNAMICS) or defined(STOKESIAN_DYNAMICS_GPU)
 
-// from boost tutorial
-// https://www.boost.org/doc/libs/1_68_0/doc/html/mpi/tutorial.html
-// only applicable as long as SD_particle_data has no pointers
-// and no variable-size data
-// maybe redundant to the above BOOST_IS_BITWISE_SERIALIZABLE() ??
-/*
-namespace boost { namespace mpi {
-  template <>
-  struct is_mpi_datatype<SD_particle_data> : mpl::true_ { };
-} }
-*/
+BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
 
 namespace boost {
 namespace serialization {
@@ -62,4 +52,5 @@ void serialize(Archive &ar, SD_particle_data &p,
 } // namespace serialization
 } // namespace boost
 
+#endif
 #endif
