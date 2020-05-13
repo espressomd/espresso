@@ -208,10 +208,10 @@ if(BLAS AND LAPACK)
   set(STOKESIAN_DYNAMICS 1)
 endif()
 
-# Temporarily disabled to test CPU on CI
-if(WITH_CUDA)
-  set(STOKESIAN_DYNAMICS_GPU 1)
-endif()
+# Temporarily disabled to at least be able to test the CPU version
+# if(WITH_CUDA)
+#   set(STOKESIAN_DYNAMICS_GPU 1)
+# endif()
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)
