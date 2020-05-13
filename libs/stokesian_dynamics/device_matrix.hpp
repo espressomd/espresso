@@ -673,64 +673,6 @@ public:
     DEVICE_FUNC size_type size() const noexcept { return m_size; }
 };
 
-
-/*
-#ifdef SD_THRUST
-// These cannot be moved to thrust_wrapper, because device_matrix appears
-// Hence, the ifdef
-// Just for debugging anyway?
-template <typename T>
-std::ostream &operator<<(std::ostream &os, 
-                         thrust_wrapper::device_vector<T> const &v) {
-    os << '{';
-    for (std::size_t i = 0; i < v.size(); ++i) {
-        os << std::setw(12) << v[i];
-        if (i < v.size() - 1) {
-            os << ',';
-        }
-    }
-    os << '}';
-    return os;
-}
-
-template <typename T>
-std::ostream &operator<<(std::ostream &os, 
-                         thrust_wrapper::host_vector<T> const &v) {
-    os << '{';
-    for (std::size_t i = 0; i < v.size(); ++i) {
-        os << std::setw(12) << v[i];
-        if (i < v.size() - 1) {
-            os << ',';
-        }
-    }
-    os << '}';
-    return os;
-}
-
-template <typename T, typename Policy>
-std::ostream &operator<<(std::ostream &os, device_matrix<T, Policy> const &m) {
-    os << '{';
-    for (std::size_t i = 0; i < m.rows(); ++i) {
-        if (i > 0) {
-            os << ' ';
-        }
-        os << '{';
-        for (std::size_t j = 0; j < m.cols(); ++j) {
-            os << std::setw(12) << m(i, j);
-            if (j < m.cols() - 1) {
-                os << ',';
-            }
-        }
-        os << '}';
-        if (i < m.rows() - 1) {
-            os << ",\n";
-        }
-    }
-    os << '}';
-    return os;
-}
-#endif
-*/
 #undef DEVICE_FUNC
 #undef MAYBE_UNUSED
 #endif
