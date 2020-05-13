@@ -100,11 +100,9 @@ void sd_gather_local_particles(ParticleRange const &parts) {
     parts_buffer[i].ext_force[1] = p.f.f[1];
     parts_buffer[i].ext_force[2] = p.f.f[2];
 
-#ifdef ROTATION
     parts_buffer[i].ext_torque[0] = p.f.torque[0];
     parts_buffer[i].ext_torque[1] = p.f.torque[1];
     parts_buffer[i].ext_torque[2] = p.f.torque[2];
-#endif
 
     // radius_dict is not initialized on slave nodes -> need to assign radius
     // later on master node
@@ -134,11 +132,9 @@ void sd_update_locally(ParticleRange const &parts) {
     p.m.v[1] = v_sd[6 * i + 1];
     p.m.v[2] = v_sd[6 * i + 2];
 
-#ifdef ROTATION
     p.m.omega[0] = v_sd[6 * i + 3];
     p.m.omega[1] = v_sd[6 * i + 4];
     p.m.omega[2] = v_sd[6 * i + 5];
-#endif
 
     i++;
   }
@@ -245,17 +241,9 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
         f_host[6 * i + 1] = p.ext_force[1];
         f_host[6 * i + 2] = p.ext_force[2];
 
-#ifdef ROTATION
         f_host[6 * i + 3] = p.ext_torque[0];
         f_host[6 * i + 4] = p.ext_torque[1];
         f_host[6 * i + 5] = p.ext_torque[2];
-#else
-        // Is that really what we want?
-        // SD method will return nonzero omegas nonetheless ...
-        f_host[6 * i + 3] = 0;
-        f_host[6 * i + 4] = 0;
-        f_host[6 * i + 5] = 0;
-#endif
 
         double radius = radius_dict[p.type];
 
