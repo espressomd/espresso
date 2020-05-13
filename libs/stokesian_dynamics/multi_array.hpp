@@ -36,12 +36,6 @@
 #define DEVICE_FUNC
 #endif
 
-#if __cplusplus == 201402L
-#define CXX14_CONSTEXPR constexpr
-#else
-#define CXX14_CONSTEXPR
-#endif
-
 /// \cond
 namespace meta {
 
@@ -197,9 +191,9 @@ public:
     }
 
     /// direct access to the underlying array
-    DEVICE_FUNC CXX14_CONSTEXPR pointer data() noexcept { return m_data; }
-    /// \overload DEVICE_FUNC CXX14_CONSTEXPR pointer data()
-    DEVICE_FUNC CXX14_CONSTEXPR const_pointer data() const noexcept {
+    DEVICE_FUNC constexpr pointer data() noexcept { return m_data; }
+    /// \overload DEVICE_FUNC constexpr pointer data()
+    DEVICE_FUNC constexpr const_pointer data() const noexcept {
         return m_data;
     }
 
@@ -207,7 +201,7 @@ public:
     ///
     /// \throws std::out_of_range if index is out of range (only in DEBUG mode)
     template <typename... Idx>
-    DEVICE_FUNC CXX14_CONSTEXPR reference operator()(Idx... idx)
+    DEVICE_FUNC constexpr reference operator()(Idx... idx)
 #ifdef NDEBUG
         noexcept
 #endif
@@ -223,7 +217,7 @@ public:
             m_data[meta::linearized_index<sizeof...(idx) - 1, N...>{}(idx...)];
     }
 
-    /// \overload DEVICE_FUNC CXX14_CONSTEXPR reference operator()(Idx... idx)
+    /// \overload DEVICE_FUNC constexpr reference operator()(Idx... idx)
     template <typename... Idx>
     DEVICE_FUNC constexpr const_reference operator()(Idx... idx) const
 #ifdef NDEBUG
@@ -258,7 +252,7 @@ public:
 };
 
 template <typename T, std::size_t M, std::size_t N>
-DEVICE_FUNC CXX14_CONSTEXPR multi_array<T,M,N> outer(multi_array<T,M> const & a, multi_array<T,N> const & b) {
+DEVICE_FUNC constexpr multi_array<T,M,N> outer(multi_array<T,M> const & a, multi_array<T,N> const & b) {
     multi_array<T,M,N> c;
     for (std::size_t i = 0; i < M; ++i) {
         for (std::size_t j = 0; j < N; ++j) {
@@ -268,7 +262,7 @@ DEVICE_FUNC CXX14_CONSTEXPR multi_array<T,M,N> outer(multi_array<T,M> const & a,
     return c;
 }
 
-#undef CXX14_CONSTEXPR
+
 #undef DEVICE_FUNC
 
 #endif
