@@ -1238,18 +1238,18 @@ struct thermalizer {
     The thermalisation is achieved by a generalization of the 
     Einstein-Smoluchowski equation, which relates mobility and diffusion: 
 
-            D = \mu k_B T
+            \f[D = \mu k_B T\f]
 
-    where \mu is the mobility and D is the diffusion coefficient. The mean 
-    square displacement during a time step of length \Delta t, and along one
-    degree of freedom is given by
+    where \f$\mu\f$ is the mobility and \f$D\f$ is the diffusion coefficient.
+    The mean square displacement during a time step of length \f$\Delta t\f$,
+    and along one degree of freedom is given by
 
-            \langle x^2 \rangle / \Delta t = 2 D
+            \f[\langle x^2 \rangle / \Delta t = 2 D\f]
 
     That way we can determine the distribution of the random displacement
     that our system experiences along one of its many degrees of freedom. In
-    our case, \mu is a matrix and we need its square root. The latter is 
-    obtained via cholesky decomposition.
+    our case, \f$\mu\f$ is a matrix and we need its square root. The latter is
+    obtained via Cholesky decomposition.
  */
 template <typename Policy, typename T>
 struct solver {
