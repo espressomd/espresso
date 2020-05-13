@@ -196,11 +196,19 @@ if(WITH_GSL)
 endif(WITH_GSL)
 
 find_package(BLAS)
+if(BLAS_FOUND)
+  set(BLAS 1)
+endif()
 find_package(LAPACK)
-if(BLAS_FOUND AND LAPACK_FOUND)
+if(LAPACK_FOUND)
+  set(LAPACK 1)
+endif()
+
+if(BLAS AND LAPACK)
   set(STOKESIAN_DYNAMICS 1)
 endif()
 
+# Temporarily disabled to test CPU on CI
 if(WITH_CUDA)
   set(STOKESIAN_DYNAMICS_GPU 1)
 endif()
