@@ -570,18 +570,6 @@ public:
         device_matrix A = *this;
         device_matrix B = device_matrix::Identity(m_rows, m_cols);
 
-        // debugging stuff
-//        double *raw_data = thrust_wrapper::raw_pointer_cast(B.data());
-//        printf("A.data: \n");
-//        for (int i=0; i<m_rows; i++) {
-//          for (int j=0; j<m_cols; j++) {
-//            printf("%f ",*raw_data);
-//            raw_data++;
-//          }
-//          printf("\n");
-//        }
-        
-
         internal::cusolver<Policy, double>::potrf(
             thrust_wrapper::raw_pointer_cast(A.data()),
             thrust_wrapper::raw_pointer_cast(B.data()), m_rows);
@@ -701,29 +689,6 @@ public:
     DEVICE_FUNC const_pointer data() const noexcept { return m_data; }
     DEVICE_FUNC size_type size() const noexcept { return m_size; }
 };
-
-/* // trying to move this to thrust_wrapper.hpp
-/// Vector addition 
-template <typename T>
-thrust::device_vector<T> operator+(thrust::device_vector<T> const &x,
-                                   thrust::device_vector<T> const &y) {
-    assert(x.size() == y.size());
-    thrust::device_vector<T> z(x.size());
-    thrust::transform(x.begin(), x.end(), y.begin(), z.begin(),
-                      thrust::plus<T>{});
-    return z;
-}
-
-template <typename T>
-thrust::host_vector<T> operator+(thrust::host_vector<T> const &x,
-                                 thrust::host_vector<T> const &y) {
-    assert(x.size() == y.size());
-    thrust::host_vector<T> z(x.size());
-    thrust::transform(x.begin(), x.end(), y.begin(), z.begin(),
-                      thrust::plus<T>{});
-    return z;
-}
-*/
 
 
 /*
