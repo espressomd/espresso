@@ -43,8 +43,7 @@ cdef extern from "particle_data.hpp":
     int max_seen_particle_type
 
 cdef extern from "Observable_stat.hpp":
-    ctypedef struct Observable_stat:
-        void realloc_and_clear()
+    cdef cppclass Observable_stat_wrapper:
         cbool is_initialized
         cbool v_comp
         Span[double] kinetic
@@ -60,8 +59,7 @@ cdef extern from "Observable_stat.hpp":
         Span[double] bonded_contribution(int bond_id)
         Span[double] non_bonded_contribution(int type1, int type2)
 
-    ctypedef struct Observable_stat_non_bonded:
-        void realloc_and_clear()
+    cdef cppclass Observable_stat_non_bonded_wrapper:
         Span[double] non_bonded_intra_contribution(int type1, int type2)
         Span[double] non_bonded_inter_contribution(int type1, int type2)
 
@@ -100,16 +98,16 @@ cdef extern from "statistics_chain.hpp":
     array2 calc_rh(int, int, int)
 
 cdef extern from "pressure.hpp":
-    cdef Observable_stat total_pressure
-    cdef Observable_stat_non_bonded total_pressure_non_bonded
-    cdef Observable_stat total_p_tensor
-    cdef Observable_stat_non_bonded total_p_tensor_non_bonded
+    cdef Observable_stat_wrapper obs_scalar_pressure
+    cdef Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded
+    cdef Observable_stat_wrapper obs_stress_tensor
+    cdef Observable_stat_non_bonded_wrapper obs_stress_tensor_non_bonded
     cdef void update_pressure(cbool)
 
 cdef extern from "energy.hpp":
-    cdef Observable_stat total_energy
-    cdef Observable_stat_non_bonded total_energy_non_bonded
-    cdef void master_energy_calc()
+    cdef Observable_stat_wrapper obs_energy
+    # cdef Observable_stat_non_bonded_wrapper obs_energy_non_bonded
+    cdef void update_energy()
     double calculate_current_potential_energy_of_system()
 
 cdef extern from "dpd.hpp":

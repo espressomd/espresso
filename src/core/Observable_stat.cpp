@@ -106,7 +106,6 @@ void Observable_stat_non_bonded::realloc_and_clear() {
   non_bonded_inter = Utils::Span<double>(non_bonded_intra.end(), span_size);
 }
 
-void Observable_stat_base::reduce(Observable_stat_base *output) const {
-  MPI_Reduce(data.data(), output ? output->data.data() : nullptr, data.size(),
-             MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+void Observable_stat_base::reduce(double *out) const {
+  MPI_Reduce(data.data(), out, data.size(), MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }

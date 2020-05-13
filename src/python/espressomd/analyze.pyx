@@ -223,16 +223,16 @@ class Analysis:
 
         # Update in ESPResSo core if necessary
         if not (
-                analyze.total_pressure.is_initialized and analyze.total_pressure.v_comp == v_comp):
+                analyze.obs_scalar_pressure.is_initialized and analyze.obs_scalar_pressure.v_comp == v_comp):
             analyze.update_pressure(v_comp)
 
         # Individual components of the pressure
 
         # Total pressure
-        p["total"] = analyze.total_pressure.accumulate()
+        p["total"] = analyze.obs_scalar_pressure.accumulate()
 
         # kinetic
-        p["kinetic"] = analyze.total_pressure.kinetic[0]
+        p["kinetic"] = analyze.obs_scalar_pressure.kinetic[0]
 
         # Bonded
         cdef int i
@@ -241,7 +241,7 @@ class Analysis:
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != BONDED_IA_NONE:
-                val = analyze.total_pressure.bonded_contribution(i)[0]
+                val = analyze.obs_scalar_pressure.bonded_contribution(i)[0]
                 p["bonded", i] = val
                 total_bonded += val
         p["bonded"] = total_bonded
@@ -257,14 +257,15 @@ class Analysis:
 
         for i in range(analyze.max_seen_particle_type):
             for j in range(i, analyze.max_seen_particle_type):
-                val = analyze.total_pressure.non_bonded_contribution(i, j)[0]
+                val = analyze.obs_scalar_pressure.non_bonded_contribution(i, j)[
+                    0]
                 p["non_bonded", i, j] = val
                 total_non_bonded += val
-                val = analyze.total_pressure_non_bonded.non_bonded_intra_contribution(i, j)[
+                val = analyze.obs_scalar_pressure_non_bonded.non_bonded_intra_contribution(i, j)[
                     0]
                 total_intra += val
                 p["non_bonded_intra", i, j] = val
-                val = analyze.total_pressure_non_bonded.non_bonded_inter_contribution(i, j)[
+                val = analyze.obs_scalar_pressure_non_bonded.non_bonded_inter_contribution(i, j)[
                     0]
                 total_inter += val
                 p["non_bonded_inter", i, j] = val
@@ -276,7 +277,7 @@ class Analysis:
         IF ELECTROSTATICS == 1:
             cdef np.ndarray coulomb
             coulomb = create_nparray_from_double_span(
-                analyze.total_pressure.coulomb)
+                analyze.obs_scalar_pressure.coulomb)
             for i in range(coulomb.shape[0]):
                 p["coulomb", i] = coulomb[i]
             p["coulomb"] = np.sum(coulomb, axis=0)
@@ -285,7 +286,7 @@ class Analysis:
         IF DIPOLES == 1:
             cdef np.ndarray dipolar
             dipolar = create_nparray_from_double_span(
-                analyze.total_pressure.dipolar)
+                analyze.obs_scalar_pressure.dipolar)
             for i in range(dipolar.shape[0]):
                 p["dipolar", i] = dipolar[i]
             p["dipolar"] = np.sum(dipolar, axis=0)
@@ -293,9 +294,9 @@ class Analysis:
         # virtual sites
         IF VIRTUAL_SITES == 1:
             cdef np.ndarray virtual_sites
-            if analyze.total_pressure.virtual_sites.size():
+            if analyze.obs_scalar_pressure.virtual_sites.size():
                 virtual_sites = create_nparray_from_double_span(
-                    analyze.total_pressure.virtual_sites)
+                    analyze.obs_scalar_pressure.virtual_sites)
                 for i in range(virtual_sites.shape[0]):
                     p["virtual_sites", i] = virtual_sites[i]
                 p["virtual_sites"] = np.sum(virtual_sites, axis=0)
@@ -336,7 +337,7 @@ class Analysis:
 
         # Update in ESPResSo core if necessary
         if not (
-                analyze.total_p_tensor.is_initialized and analyze.total_p_tensor.v_comp == v_comp):
+                analyze.obs_stress_tensor.is_initialized and analyze.obs_stress_tensor.v_comp == v_comp):
             analyze.update_pressure(v_comp)
 
         # Individual components of the pressure
@@ -345,20 +346,20 @@ class Analysis:
         cdef int i
         total = np.zeros(9)
         for i in range(9):
-            total[i] = analyze.total_p_tensor.accumulate(0.0, i)
+            total[i] = analyze.obs_stress_tensor.accumulate(0.0, i)
 
         p["total"] = total.reshape((3, 3))
 
         # kinetic
         p["kinetic"] = create_nparray_from_double_span(
-            analyze.total_p_tensor.kinetic).reshape((3, 3))
+            analyze.obs_stress_tensor.kinetic).reshape((3, 3))
 
         # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != BONDED_IA_NONE:
                 p["bonded", i] = np.reshape(create_nparray_from_double_span(
-                    analyze.total_p_tensor.bonded_contribution(i)), (3, 3))
+                    analyze.obs_stress_tensor.bonded_contribution(i)), (3, 3))
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
 
@@ -372,17 +373,17 @@ class Analysis:
             for j in range(i, analyze.max_seen_particle_type):
                 p["non_bonded", i, j] = np.reshape(
                     create_nparray_from_double_span(
-                        analyze.total_p_tensor.non_bonded_contribution(i, j)), (3, 3))
+                        analyze.obs_stress_tensor.non_bonded_contribution(i, j)), (3, 3))
                 total_non_bonded += p["non_bonded", i, j]
 
                 p["non_bonded_intra", i, j] = np.reshape(
                     create_nparray_from_double_span(
-                        analyze.total_p_tensor_non_bonded.non_bonded_intra_contribution(i, j)), (3, 3))
+                        analyze.obs_stress_tensor_non_bonded.non_bonded_intra_contribution(i, j)), (3, 3))
                 total_non_bonded_intra += p["non_bonded_intra", i, j]
 
                 p["non_bonded_inter", i, j] = np.reshape(
                     create_nparray_from_double_span(
-                        analyze.total_p_tensor_non_bonded.non_bonded_inter_contribution(i, j)), (3, 3))
+                        analyze.obs_stress_tensor_non_bonded.non_bonded_inter_contribution(i, j)), (3, 3))
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
 
         p["non_bonded_intra"] = total_non_bonded_intra
@@ -394,7 +395,7 @@ class Analysis:
             cdef np.ndarray coulomb
             coulomb = np.reshape(
                 create_nparray_from_double_span(
-                    analyze.total_p_tensor.coulomb), (-1, 3, 3))
+                    analyze.obs_stress_tensor.coulomb), (-1, 3, 3))
             for i in range(coulomb.shape[0]):
                 p["coulomb", i] = coulomb[i]
             p["coulomb"] = np.sum(coulomb, axis=0)
@@ -404,7 +405,7 @@ class Analysis:
             cdef np.ndarray dipolar
             dipolar = np.reshape(
                 create_nparray_from_double_span(
-                    analyze.total_p_tensor.dipolar), (-1, 3, 3))
+                    analyze.obs_stress_tensor.dipolar), (-1, 3, 3))
             for i in range(dipolar.shape[0]):
                 p["dipolar", i] = dipolar[i]
             p["dipolar"] = np.sum(dipolar, axis=0)
@@ -412,10 +413,10 @@ class Analysis:
         # virtual sites
         IF VIRTUAL_SITES_RELATIVE == 1:
             cdef np.ndarray virtual_sites
-            if analyze.total_p_tensor.virtual_sites.size():
+            if analyze.obs_stress_tensor.virtual_sites.size():
                 virtual_sites = np.reshape(
                     create_nparray_from_double_span(
-                        analyze.total_p_tensor.virtual_sites), (-1, 3, 3))
+                        analyze.obs_stress_tensor.virtual_sites), (-1, 3, 3))
                 for i in range(virtual_sites.shape[0]):
                     p["virtual_sites", i] = virtual_sites[i]
                 p["virtual_sites"] = np.sum(virtual_sites, axis=0)
@@ -459,23 +460,22 @@ class Analysis:
 
         e = OrderedDict()
 
-        if not analyze.total_energy.is_initialized:
-            analyze.total_energy.realloc_and_clear()
-            analyze.master_energy_calc()
+        if not analyze.obs_energy.is_initialized:
+            analyze.update_energy()
             handle_errors("calc_long_range_energies failed")
 
         # Individual components of the pressure
 
         # Total energy
         cdef int i
-        total = analyze.total_energy.kinetic[0]
+        total = analyze.obs_energy.kinetic[0]
         total += calculate_current_potential_energy_of_system()
 
         e["total"] = total
-        e["external_fields"] = analyze.total_energy.external_fields[0]
+        e["external_fields"] = analyze.obs_energy.external_fields[0]
 
         # Kinetic energy
-        e["kinetic"] = analyze.total_energy.kinetic[0]
+        e["kinetic"] = analyze.obs_energy.kinetic[0]
 
         # Non-bonded
         cdef double total_bonded
@@ -483,7 +483,7 @@ class Analysis:
         cdef double val
         for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != BONDED_IA_NONE:
-                val = analyze.total_energy.bonded_contribution(i)[0]
+                val = analyze.obs_energy.bonded_contribution(i)[0]
                 e["bonded", i] = val
                 total_bonded += val
         e["bonded"] = total_bonded
@@ -499,13 +499,13 @@ class Analysis:
 
         for i in range(analyze.max_seen_particle_type):
             for j in range(i, analyze.max_seen_particle_type):
-                val = analyze.total_energy.non_bonded_contribution(i, j)[0]
+                val = analyze.obs_energy.non_bonded_contribution(i, j)[0]
                 e["non_bonded", i, j] = val
                 total_non_bonded += val
-        #       val = analyze.total_energy_non_bonded.non_bonded_intra_contribution(i, j)[0]
+        #       val = analyze.obs_energy_non_bonded.non_bonded_intra_contribution(i, j)[0]
         #       e["non_bonded_intra",i,j] = val
         #       total_intra += val
-        #       val = analyze.total_energy_non_bonded.non_bonded_inter_contribution(i, j)[0]
+        #       val = analyze.obs_energy_non_bonded.non_bonded_inter_contribution(i, j)[0]
         #       e["nonBondedInter",i,j] = val
         #       total_inter += val
         # e["nonBondedIntra"] = total_intra
@@ -516,7 +516,7 @@ class Analysis:
         IF ELECTROSTATICS == 1:
             cdef np.ndarray coulomb_contributions
             coulomb_contributions = create_nparray_from_double_span(
-                analyze.total_energy.coulomb)
+                analyze.obs_energy.coulomb)
             for i in range(len(coulomb_contributions)):
                 e["coulomb", i] = coulomb_contributions[i]
             e["coulomb"] = np.sum(coulomb_contributions)
@@ -525,7 +525,7 @@ class Analysis:
         IF DIPOLES == 1:
             cdef np.ndarray dipolar_contributions
             dipolar_contributions = create_nparray_from_double_span(
-                analyze.total_energy.dipolar)
+                analyze.obs_energy.dipolar)
             for i in range(len(dipolar_contributions)):
                 e["dipolar", i] = dipolar_contributions[i]
             e["dipolar"] = np.sum(dipolar_contributions)

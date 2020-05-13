@@ -228,23 +228,10 @@ void mpi_bcast_max_seen_particle_type(int s);
  *      \arg for \ref GatherStats::lb_boundary_forces, use
  *           \ref lb_collect_boundary_forces.
  *  \param[out] result where to store values gathered by
- *      \ref GatherStats::energy,
- *      \ref GatherStats::pressure,
- *      \ref GatherStats::pressure_v_comp,
  *      \ref GatherStats::lb_fluid_momentum,
  *      \ref GatherStats::lb_boundary_forces
- *  \param[out] result_t where to store values gathered by
- *      \ref GatherStats::pressure,
- *      \ref GatherStats::pressure_v_comp
- *  \param[out] result_nb where to store values gathered by
- *      \ref GatherStats::pressure,
- *      \ref GatherStats::pressure_v_comp
- *  \param[out] result_t_nb where to store values gathered by
- *      \ref GatherStats::pressure,
- *      \ref GatherStats::pressure_v_comp
  */
-void mpi_gather_stats(GatherStats job, void *result, void *result_t,
-                      void *result_nb, void *result_t_nb);
+void mpi_gather_stats(GatherStats job, double *result = nullptr);
 
 /** Send new \ref time_step and rescale the velocities accordingly. */
 void mpi_set_time_step(double time_step);

@@ -33,9 +33,6 @@
 
 #include <utils/math/tensor_product.hpp>
 
-extern Observable_stat virials, p_tensor;
-extern Observable_stat_non_bonded virials_non_bonded, p_tensor_non_bonded;
-
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.
  *  @param p2        pointer to particle 2.
@@ -49,47 +46,48 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 #endif
   {
     auto const force = calc_non_bonded_pair_force(p1, p2, d, dist);
-    virials.non_bonded_contribution(p1.p.type, p2.p.type)[0] += d * force;
+    obs_scalar_pressure.local.non_bonded_contribution(
+        p1.p.type, p2.p.type)[0] += d * force;
 
     /* stress tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        p_tensor.non_bonded_contribution(p1.p.type, p2.p.type)[k * 3 + l] +=
-            force[k] * d[l];
+        obs_stress_tensor.local.non_bonded_contribution(
+            p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
 
     auto const p1molid = p1.p.mol_id;
     auto const p2molid = p2.p.mol_id;
     if (p1molid == p2molid) {
-      virials_non_bonded.non_bonded_intra_contribution(
+      obs_scalar_pressure_non_bonded.local.non_bonded_intra_contribution(
           p1.p.type, p2.p.type)[0] += d * force;
 
       for (int k = 0; k < 3; k++)
         for (int l = 0; l < 3; l++)
-          p_tensor_non_bonded.non_bonded_intra_contribution(
+          obs_stress_tensor_non_bonded.local.non_bonded_intra_contribution(
               p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
     } else {
-      virials_non_bonded.non_bonded_inter_contribution(
+      obs_scalar_pressure_non_bonded.local.non_bonded_inter_contribution(
           p1.p.type, p2.p.type)[0] += d * force;
 
       for (int k = 0; k < 3; k++)
         for (int l = 0; l < 3; l++)
-          p_tensor_non_bonded.non_bonded_inter_contribution(
+          obs_stress_tensor_non_bonded.local.non_bonded_inter_contribution(
               p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
     }
   }
 
 #ifdef ELECTROSTATICS
-  if (!virials.coulomb.empty()) {
+  if (!obs_scalar_pressure.local.coulomb.empty()) {
     /* real space Coulomb */
     auto const p_coulomb = Coulomb::pair_pressure(p1, p2, d, dist);
 
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
-        p_tensor.coulomb[i * 3 + j] += p_coulomb[i][j];
+        obs_stress_tensor.local.coulomb[i * 3 + j] += p_coulomb[i][j];
       }
     }
 
-    virials.coulomb[0] += trace(p_coulomb);
+    obs_scalar_pressure.local.coulomb[0] += trace(p_coulomb);
   }
 #endif /*ifdef ELECTROSTATICS */
 
@@ -170,12 +168,13 @@ inline bool add_bonded_stress(Particle &p1, int bond_id,
   if (result) {
     auto const &stress = result.get();
 
-    virials.bonded_contribution(bond_id)[0] += trace(stress);
+    obs_scalar_pressure.local.bonded_contribution(bond_id)[0] += trace(stress);
 
     /* stress tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        p_tensor.bonded_contribution(bond_id)[k * 3 + l] += stress[k][l];
+        obs_stress_tensor.local.bonded_contribution(bond_id)[k * 3 + l] +=
+            stress[k][l];
 
     return false;
   }
@@ -191,23 +190,25 @@ inline bool add_bonded_stress(Particle &p1, int bond_id,
  *     therefore doesn't make sense to use it without NpT.
  */
 inline void add_kinetic_virials(Particle const &p1, bool v_comp) {
-  if (not p1.p.is_virtual) {
-    /* kinetic energy */
-    if (v_comp) {
-      virials.kinetic[0] +=
-          ((p1.m.v * time_step) -
-           (p1.f.f * (0.5 * Utils::sqr(time_step) / p1.p.mass)))
-              .norm2() *
-          p1.p.mass;
-    } else {
-      virials.kinetic[0] += Utils::sqr(time_step) * p1.m.v.norm2() * p1.p.mass;
-    }
+  if (p1.p.is_virtual)
+    return;
 
-    for (int k = 0; k < 3; k++)
-      for (int l = 0; l < 3; l++)
-        p_tensor.kinetic[k * 3 + l] +=
-            (p1.m.v[k] * time_step) * (p1.m.v[l] * time_step) * p1.p.mass;
+  /* kinetic energy */
+  if (v_comp) {
+    obs_scalar_pressure.local.kinetic[0] +=
+        ((p1.m.v * time_step) -
+         (p1.f.f * (0.5 * Utils::sqr(time_step) / p1.p.mass)))
+            .norm2() *
+        p1.p.mass;
+  } else {
+    obs_scalar_pressure.local.kinetic[0] +=
+        Utils::sqr(time_step) * p1.m.v.norm2() * p1.p.mass;
   }
+
+  for (int k = 0; k < 3; k++)
+    for (int l = 0; l < 3; l++)
+      obs_stress_tensor.local.kinetic[k * 3 + l] +=
+          (p1.m.v[k] * time_step) * (p1.m.v[l] * time_step) * p1.p.mass;
 }
 
 #endif

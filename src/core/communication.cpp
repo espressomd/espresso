@@ -364,31 +364,26 @@ void mpi_bcast_max_seen_particle_type(int ns) {
 }
 
 /*************** GATHER ************/
-void mpi_gather_stats(GatherStats job, void *result, void *result_t,
-                      void *result_nb, void *result_t_nb) {
+void mpi_gather_stats(GatherStats job, double *result) {
   auto job_slave = static_cast<int>(job);
   switch (job) {
   case GatherStats::energy:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    energy_calc(reinterpret_cast<Observable_stat *>(result), sim_time);
+    energy_calc(sim_time);
     break;
   case GatherStats::pressure:
   case GatherStats::pressure_v_comp:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    pressure_calc(reinterpret_cast<Observable_stat *>(result),
-                  reinterpret_cast<Observable_stat *>(result_t),
-                  reinterpret_cast<Observable_stat_non_bonded *>(result_nb),
-                  reinterpret_cast<Observable_stat_non_bonded *>(result_t_nb),
-                  job == GatherStats::pressure_v_comp);
+    pressure_calc(job == GatherStats::pressure_v_comp);
     break;
   case GatherStats::lb_fluid_momentum:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    lb_calc_fluid_momentum((double *)result, lbpar, lbfields, lblattice);
+    lb_calc_fluid_momentum(result, lbpar, lbfields, lblattice);
     break;
 #ifdef LB_BOUNDARIES
   case GatherStats::lb_boundary_forces:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    lb_collect_boundary_forces((double *)result);
+    lb_collect_boundary_forces(result);
     break;
 #endif
   default:
@@ -404,12 +399,11 @@ void mpi_gather_stats_slave(int, int job_slave) {
   auto job = static_cast<GatherStats>(job_slave);
   switch (job) {
   case GatherStats::energy:
-    energy_calc(nullptr, sim_time);
+    energy_calc(sim_time);
     break;
   case GatherStats::pressure:
   case GatherStats::pressure_v_comp:
-    pressure_calc(nullptr, nullptr, nullptr, nullptr,
-                  job == GatherStats::pressure_v_comp);
+    pressure_calc(job == GatherStats::pressure_v_comp);
     break;
   case GatherStats::lb_fluid_momentum:
     lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);

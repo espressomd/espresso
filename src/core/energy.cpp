@@ -38,23 +38,20 @@
 
 ActorList energyActors;
 
-/** Energy from the current MPI rank */
-Observable_stat energy{1, false};
 /** Energy from the whole system */
-Observable_stat total_energy{1, false};
+Observable_stat_wrapper obs_energy{1, false};
 
 /** Reduce the system energy from all MPI ranks. */
 void master_energy_calc() {
-  mpi_gather_stats(GatherStats::energy, reinterpret_cast<void *>(&total_energy),
-                   nullptr, nullptr, nullptr);
-  total_energy.is_initialized = true;
+  mpi_gather_stats(GatherStats::energy);
+  obs_energy.is_initialized = true;
 }
 
-void energy_calc(Observable_stat *result, const double time) {
+void energy_calc(const double time) {
   if (!interactions_sanity_checks())
     return;
 
-  energy.realloc_and_clear();
+  obs_energy.local.realloc_and_clear();
 
 #ifdef CUDA
   clear_energy_on_GPU();
@@ -81,33 +78,35 @@ void energy_calc(Observable_stat *result, const double time) {
   calc_long_range_energies(cell_structure.local_particles());
 
   auto local_parts = cell_structure.local_particles();
-  Constraints::constraints.add_energy(local_parts, time, energy);
+  Constraints::constraints.add_energy(local_parts, time, obs_energy.local);
 
 #ifdef CUDA
   copy_energy_from_GPU();
 #endif
 
   /* gather data */
-  energy.reduce(result);
+  obs_energy.reduce();
+}
+
+void update_energy() {
+  if (!obs_energy.is_initialized) {
+    obs_energy.realloc_and_clear();
+    master_energy_calc();
+  }
 }
 
 void calc_long_range_energies(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_energy_long_range(energy, particles);
+  Coulomb::calc_energy_long_range(obs_energy.local, particles);
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  Dipole::calc_energy_long_range(energy, particles);
+  Dipole::calc_energy_long_range(obs_energy.local, particles);
 #endif /* ifdef DIPOLES */
 }
 
 double calculate_current_potential_energy_of_system() {
-  // calculate potential energy
-  if (!total_energy.is_initialized) {
-    total_energy.realloc_and_clear();
-    master_energy_calc();
-  }
-
-  return total_energy.accumulate(-total_energy.kinetic[0]);
+  update_energy();
+  return obs_energy.accumulate(-obs_energy.kinetic[0]);
 }

@@ -36,27 +36,18 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-/** Scalar pressure from the current MPI rank */
-Observable_stat virials{1};
-/** Scalar pressure from the whole system */
-Observable_stat total_pressure{1};
-/** Stress tensor from the current MPI rank */
-Observable_stat p_tensor{9};
-/** Stress tensor from the whole system */
-Observable_stat total_p_tensor{9};
-
+/** Scalar pressure of the system */
+Observable_stat_wrapper obs_scalar_pressure{1};
+/** Stress tensor of the system */
+Observable_stat_wrapper obs_stress_tensor{9};
 /** Contribution from the intra- and inter-molecular non-bonded interactions
- *  to the scalar pressure (from the current MPI rank) */
-Observable_stat_non_bonded virials_non_bonded{1};
+ *  to the scalar pressure.
+ */
+Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded{1};
 /** Contribution from the intra- and inter-molecular non-bonded interactions
- *  to the scalar pressure (from the whole system) */
-Observable_stat_non_bonded total_pressure_non_bonded{1};
-/** Contribution from the intra- and inter-molecular non-bonded interactions
- *  to the stress tensor (from the current MPI rank) */
-Observable_stat_non_bonded p_tensor_non_bonded{9};
-/** Contribution from the intra- and inter-molecular non-bonded interactions
- *  to the stress tensor (from the whole system) */
-Observable_stat_non_bonded total_p_tensor_non_bonded{9};
+ *  to the stress tensor.
+ */
+Observable_stat_non_bonded_wrapper obs_stress_tensor_non_bonded{9};
 
 nptiso_struct nptiso = {0.0,
                         0.0,
@@ -77,7 +68,8 @@ nptiso_struct nptiso = {0.0,
 void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_pressure_long_range(virials, p_tensor, particles);
+  Coulomb::calc_pressure_long_range(obs_scalar_pressure.local,
+                                    obs_stress_tensor.local, particles);
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
@@ -89,18 +81,16 @@ static void add_single_particle_virials(Particle &p) {
   cell_structure.execute_bond_handler(p, add_bonded_stress);
 }
 
-void pressure_calc(Observable_stat *result, Observable_stat *result_t,
-                   Observable_stat_non_bonded *result_nb,
-                   Observable_stat_non_bonded *result_t_nb, bool v_comp) {
+void pressure_calc(bool v_comp) {
   auto const volume = box_geo.volume();
 
   if (!interactions_sanity_checks())
     return;
 
-  virials.realloc_and_clear();
-  p_tensor.realloc_and_clear();
-  virials_non_bonded.realloc_and_clear();
-  p_tensor_non_bonded.realloc_and_clear();
+  obs_scalar_pressure.local.realloc_and_clear();
+  obs_scalar_pressure_non_bonded.local.realloc_and_clear();
+  obs_stress_tensor.local.realloc_and_clear();
+  obs_stress_tensor_non_bonded.local.realloc_and_clear();
 
   on_observable_calc();
 
@@ -117,29 +107,30 @@ void pressure_calc(Observable_stat *result, Observable_stat *result_t,
   calc_long_range_virials(cell_structure.local_particles());
 
 #ifdef VIRTUAL_SITES
-  if (!virials.virtual_sites.empty()) {
+  if (!obs_scalar_pressure.local.virtual_sites.empty()) {
     auto const vs_stress = virtual_sites()->stress_tensor();
 
-    virials.virtual_sites[0] += trace(vs_stress);
-    boost::copy(flatten(vs_stress), p_tensor.virtual_sites.begin());
+    obs_scalar_pressure.local.virtual_sites[0] += trace(vs_stress);
+    boost::copy(flatten(vs_stress),
+                obs_stress_tensor.local.virtual_sites.begin());
   }
 #endif
 
   /* rescale kinetic energy (=ideal contribution) */
-  virials.rescale(3.0 * volume, time_step);
+  obs_scalar_pressure.local.rescale(3.0 * volume, time_step);
 
-  p_tensor.rescale(volume, time_step);
+  obs_stress_tensor.local.rescale(volume, time_step);
 
   /* Intra- and Inter- part of nonbonded interaction */
-  virials_non_bonded.rescale(3.0 * volume);
+  obs_scalar_pressure_non_bonded.local.rescale(3.0 * volume);
 
-  p_tensor_non_bonded.rescale(volume);
+  obs_stress_tensor_non_bonded.local.rescale(volume);
 
   /* gather data */
-  virials.reduce(result);
-  p_tensor.reduce(result_t);
-  virials_non_bonded.reduce(result_nb);
-  p_tensor_non_bonded.reduce(result_t_nb);
+  obs_scalar_pressure.reduce();
+  obs_stress_tensor.reduce();
+  obs_scalar_pressure_non_bonded.reduce();
+  obs_stress_tensor_non_bonded.reduce();
 }
 
 /** Reduce the system scalar pressure and stress tensor from all MPI ranks.
@@ -150,16 +141,12 @@ void pressure_calc(Observable_stat *result, Observable_stat *result_t,
  */
 void master_pressure_calc(bool v_comp) {
   mpi_gather_stats(v_comp ? GatherStats::pressure_v_comp
-                          : GatherStats::pressure,
-                   reinterpret_cast<void *>(&total_pressure),
-                   reinterpret_cast<void *>(&total_p_tensor),
-                   reinterpret_cast<void *>(&total_pressure_non_bonded),
-                   reinterpret_cast<void *>(&total_p_tensor_non_bonded));
+                          : GatherStats::pressure);
 
-  total_pressure.is_initialized = true;
-  total_p_tensor.is_initialized = true;
-  total_pressure.v_comp = v_comp;
-  total_p_tensor.v_comp = v_comp;
+  obs_scalar_pressure.is_initialized = true;
+  obs_stress_tensor.is_initialized = true;
+  obs_scalar_pressure.v_comp = v_comp;
+  obs_stress_tensor.v_comp = v_comp;
 }
 
 /** Calculate the sum of the ideal gas components of the instantaneous
@@ -177,19 +164,19 @@ double calculate_npt_p_vel_rescaled() {
 }
 
 void update_pressure(bool v_comp) {
-  if (!(total_pressure.is_initialized && total_pressure.v_comp == v_comp)) {
-    total_pressure.realloc_and_clear();
-    total_p_tensor.realloc_and_clear();
-
-    total_pressure_non_bonded.realloc_and_clear();
-    total_p_tensor_non_bonded.realloc_and_clear();
+  if (!(obs_scalar_pressure.is_initialized &&
+        obs_scalar_pressure.v_comp == v_comp)) {
+    obs_scalar_pressure.realloc_and_clear();
+    obs_scalar_pressure_non_bonded.realloc_and_clear();
+    obs_stress_tensor.realloc_and_clear();
+    obs_stress_tensor_non_bonded.realloc_and_clear();
 
     if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
         !(nptiso.invalidate_p_vel)) {
-      if (!total_pressure.is_initialized)
+      if (!obs_scalar_pressure.is_initialized)
         master_pressure_calc(false);
-      total_pressure.kinetic[0] = calculate_npt_p_vel_rescaled();
-      total_pressure.v_comp = true;
+      obs_scalar_pressure.kinetic[0] = calculate_npt_p_vel_rescaled();
+      obs_scalar_pressure.v_comp = true;
     } else {
       master_pressure_calc(v_comp);
     }
@@ -197,26 +184,26 @@ void update_pressure(bool v_comp) {
 }
 
 int observable_compute_stress_tensor(bool v_comp, double *A) {
-  if (!(total_pressure.is_initialized && total_pressure.v_comp == v_comp)) {
-    total_pressure.realloc_and_clear();
-    total_p_tensor.realloc_and_clear();
-
-    total_pressure_non_bonded.realloc_and_clear();
-    total_p_tensor_non_bonded.realloc_and_clear();
+  if (!(obs_scalar_pressure.is_initialized &&
+        obs_scalar_pressure.v_comp == v_comp)) {
+    obs_scalar_pressure.realloc_and_clear();
+    obs_scalar_pressure_non_bonded.realloc_and_clear();
+    obs_stress_tensor.realloc_and_clear();
+    obs_stress_tensor_non_bonded.realloc_and_clear();
 
     if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
         !(nptiso.invalidate_p_vel)) {
-      if (!total_pressure.is_initialized)
+      if (!obs_scalar_pressure.is_initialized)
         master_pressure_calc(false);
-      p_tensor.kinetic[0] = calculate_npt_p_vel_rescaled();
-      total_pressure.v_comp = true;
+      obs_stress_tensor.local.kinetic[0] = calculate_npt_p_vel_rescaled();
+      obs_scalar_pressure.v_comp = true;
     } else {
       master_pressure_calc(v_comp);
     }
   }
 
   for (int j = 0; j < 9; j++) {
-    A[j] = total_p_tensor.accumulate(0, j);
+    A[j] = obs_stress_tensor.accumulate(0, j);
   }
   return 0;
 }

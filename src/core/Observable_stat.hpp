@@ -46,8 +46,10 @@ public:
   /** Reinitialize the observable */
   virtual void realloc_and_clear() = 0;
 
-  /** Gather the contributions from all nodes */
-  void reduce(Observable_stat_base *output) const;
+  /** Gather the contributions from the current MPI rank.
+   *  @param[out] out Destination of the reduction.
+   */
+  void reduce(double *out) const;
 
   /** Accumulate values.
    *  @param acc    Initial value for the accumulator.
@@ -222,5 +224,30 @@ void invalidate_obs();
  *  necessary because the data array must be resized accordingly.
  */
 void realloc_and_clear_all_obs();
+
+class Observable_stat_wrapper : public Observable_stat {
+public:
+  /** Observed statistic for the current MPI rank. */
+  Observable_stat local;
+
+  explicit Observable_stat_wrapper(size_t chunk_size, bool pressure_obs = true)
+      : Observable_stat{chunk_size, pressure_obs}, local{chunk_size,
+                                                         pressure_obs} {}
+
+  /** Gather the contributions from all MPI ranks. */
+  void reduce() { local.reduce(data.data()); }
+};
+
+class Observable_stat_non_bonded_wrapper : public Observable_stat_non_bonded {
+public:
+  /** Observed statistic for the current MPI rank. */
+  Observable_stat_non_bonded local;
+
+  explicit Observable_stat_non_bonded_wrapper(size_t chunk_size)
+      : Observable_stat_non_bonded{chunk_size}, local{chunk_size} {}
+
+  /** Gather the contributions from all MPI ranks. */
+  void reduce() { local.reduce(data.data()); }
+};
 
 #endif // ESPRESSO_OBSERVABLE_STAT_HPP

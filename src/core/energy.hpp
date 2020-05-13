@@ -31,36 +31,21 @@
 #include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
 
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
 ///
-extern Observable_stat total_energy;
+extern Observable_stat_wrapper obs_energy;
 
 extern ActorList energyActors;
-/*@}*/
 
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
+/** Recalculate energies (only if necessary). */
+void update_energy();
 
-/** allocate energy arrays and initialize with zero */
-void init_energies(Observable_stat *stat);
+/** Parallel energy calculation. */
+void energy_calc(double time);
 
-/** on the master node: calc energies only if necessary */
-void master_energy_calc();
-
-/** parallel energy calculation.
-    @param result non-zero only on master node; will contain the cumulative over
-   all nodes. */
-void energy_calc(Observable_stat *result, double time);
-
-/** Calculate long range energies (P3M, ...). */
+/** Calculate long-range energies (P3M, ...). */
 void calc_long_range_energies(const ParticleRange &particles);
 
 /** Calculate the total energy of the system. */
 double calculate_current_potential_energy_of_system();
-
-/*@}*/
 
 #endif

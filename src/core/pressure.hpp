@@ -27,31 +27,24 @@
 
 #include "Observable_stat.hpp"
 
-extern Observable_stat total_pressure, total_p_tensor;
-extern Observable_stat_non_bonded total_pressure_non_bonded,
-    total_p_tensor_non_bonded;
+extern Observable_stat_wrapper obs_scalar_pressure;
+extern Observable_stat_wrapper obs_stress_tensor;
+extern Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded;
+extern Observable_stat_non_bonded_wrapper obs_stress_tensor_non_bonded;
 
-/** Calculates the pressure in the system from a virial expansion.
- *  @param[out] result Calculated scalar pressure
- *  @param[out] result_t Calculated stress tensor
- *  @param[out] result_nb Calculated intra- and inter-molecular nonbonded
- *                        contributions to the scalar pressure
- *  @param[out] result_t_nb Calculated intra- and inter-molecular nonbonded
- *                          contributions to the stress tensor
+/** Parallel pressure calculation from a virial expansion.
  *  @param[in] v_comp flag which enables compensation of the velocities
  *                    required for deriving a pressure reflecting
  *                    \ref nptiso_struct::p_inst (hence it only works with
  *                    domain decomposition); naturally it therefore doesn't
  *                    make sense to use it without NpT.
  */
-void pressure_calc(Observable_stat *result, Observable_stat *result_t,
-                   Observable_stat_non_bonded *result_nb,
-                   Observable_stat_non_bonded *result_t_nb, bool v_comp);
+void pressure_calc(bool v_comp);
 
 /** Function to calculate stress tensor for the observables */
 int observable_compute_stress_tensor(bool v_comp, double *A);
 
-/** Recalculate the virials, pressure and stress tensors */
+/** Recalculate the virials, pressure and stress tensors (only if necessary). */
 void update_pressure(bool v_comp);
 
 #endif
