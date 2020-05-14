@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import sys
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
-from espressomd import system, minimize_energy, generic_dd
+from espressomd import system
 from espressomd.interactions import FeneBond
 
 
