@@ -22,6 +22,7 @@
 #include <boost/range/numeric.hpp>
 
 #include <utils/Span.hpp>
+#include <utils/index.hpp>
 
 #include <algorithm>
 #include <utility>
@@ -90,7 +91,7 @@ protected:
       using std::swap;
       swap(type1, type2);
     }
-    int offset = ((2 * max_seen_particle_type - 1 - type1) * type1) / 2 + type2;
+    int offset = Utils::upper_triangular(type1, type2, max_seen_particle_type);
     return Utils::Span<double>(base_pointer + offset * m_chunk_size,
                                m_chunk_size);
   }
