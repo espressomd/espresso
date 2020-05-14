@@ -108,7 +108,6 @@ cdef extern from "pressure.hpp":
 
 cdef extern from "energy_inline.hpp":
     cdef Observable_stat_wrapper obs_energy
-    # cdef Observable_stat_non_bonded_wrapper obs_energy_non_bonded
 
 cdef extern from "energy.hpp":
     cdef void update_energy()

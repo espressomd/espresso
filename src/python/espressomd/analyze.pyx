@@ -226,12 +226,12 @@ class Analysis:
                 analyze.obs_scalar_pressure.is_initialized and analyze.obs_scalar_pressure.v_comp == v_comp):
             analyze.update_pressure(v_comp)
 
-        # Individual components of the pressure
-
         # Total pressure
         p["total"] = analyze.obs_scalar_pressure.accumulate()
 
-        # kinetic
+        # Individual components of the pressure
+
+        # Kinetic
         p["kinetic"] = analyze.obs_scalar_pressure.kinetic[0]
 
         # Bonded
@@ -340,8 +340,6 @@ class Analysis:
                 analyze.obs_stress_tensor.is_initialized and analyze.obs_stress_tensor.v_comp == v_comp):
             analyze.update_pressure(v_comp)
 
-        # Individual components of the pressure
-
         # Total pressure
         cdef int i
         total = np.zeros(9)
@@ -350,7 +348,9 @@ class Analysis:
 
         p["total"] = total.reshape((3, 3))
 
-        # kinetic
+        # Individual components of the pressure
+
+        # Kinetic
         p["kinetic"] = create_nparray_from_double_span(
             analyze.obs_stress_tensor.kinetic).reshape((3, 3))
 
@@ -456,15 +456,12 @@ class Analysis:
         >>> print(energy["external_fields"])
 
         """
-        #  assert len(self._system.part), "no particles in the system"
 
         e = OrderedDict()
 
         if not analyze.obs_energy.is_initialized:
             analyze.update_energy()
             handle_errors("calc_long_range_energies failed")
-
-        # Individual components of the pressure
 
         # Total energy
         cdef int i
@@ -473,6 +470,8 @@ class Analysis:
 
         e["total"] = total
         e["external_fields"] = analyze.obs_energy.external_fields[0]
+
+        # Individual components of the energy
 
         # Kinetic energy
         e["kinetic"] = analyze.obs_energy.kinetic[0]
@@ -488,13 +487,9 @@ class Analysis:
                 total_bonded += val
         e["bonded"] = total_bonded
 
-        # Non-Bonded interactions, total as well as intra and inter molecular
+        # Total non-bonded interactions
         cdef int j
-        # cdef double total_intra
-        # cdef double total_inter
         cdef double total_non_bonded
-        # total_inter = 0
-        # total_intra = 0
         total_non_bonded = 0.
 
         for i in range(analyze.max_seen_particle_type):
@@ -502,14 +497,6 @@ class Analysis:
                 val = analyze.obs_energy.non_bonded_contribution(i, j)[0]
                 e["non_bonded", i, j] = val
                 total_non_bonded += val
-        #       val = analyze.obs_energy_non_bonded.non_bonded_intra_contribution(i, j)[0]
-        #       e["non_bonded_intra",i,j] = val
-        #       total_intra += val
-        #       val = analyze.obs_energy_non_bonded.non_bonded_inter_contribution(i, j)[0]
-        #       e["nonBondedInter",i,j] = val
-        #       total_inter += val
-        # e["nonBondedIntra"] = total_intra
-        # e["nonBondedInter"] = total_inter
         e["non_bonded"] = total_non_bonded
 
         # Electrostatics
