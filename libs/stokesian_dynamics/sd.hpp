@@ -65,6 +65,7 @@ typedef r123::Philox2x64 RNG;
 
 namespace sd {
 
+namespace flags {
 enum flags {
     NONE = 0,
     SELF_MOBILITY = 1 << 0,
@@ -72,14 +73,34 @@ enum flags {
     LUBRICATION = 1 << 2,
     FTS = 1 << 3,
 };
+}
 
-// Compute distance between particle pairs and check for overlaps
+/** This functor computes the distance between all particle pairs and checks
+ *  for overlaps. 
+ *  A matrix containing unit vectors along particle center connection lines,
+ *  and actual distances is the result of this operation.
+ *  If there is a pair of particles which overlap, their distance
+ *  will be set to NAN, which eventually causes NAN to appear all over the
+ *  simulation. No warning is printed out, because the sheer presence of a
+ *  print command could impair the parallel execution performance, even if
+ *  there are no overlaps.
+ */
 template <typename Policy, typename T>
 struct check_dist {
+    /** contains particle positions */
     device_vector_view<T, Policy> const x;
+    /** contains particle radii */
     device_vector_view<T, Policy> const a;
+    /** contains various distance information. 
+     *  pd[0] through pd[2] contain a unit vector connecting the particles
+     *  pd[3] contains the actual distance
+     */
     device_matrix_view<T, Policy> pd;
+    /** this is a list of all pairs, containing the indices of particles
+     *  that belong to each pair
+     */
     device_matrix_view<std::size_t, Policy> const part_id;
+
     DEVICE_FUNC void operator()(std::size_t i) {
         std::size_t k = 6 * part_id(0, i);
         std::size_t j = 6 * part_id(1, i);
@@ -90,10 +111,9 @@ struct check_dist {
         T dr = std::sqrt(dx * dx + dy * dy + dz * dz);
         T dr_inv = 1 / dr;
 
+        // Check if particles overlap and if so, cause NAN to appear
+        // throughout the simulation
         if (dr <= a(part_id(0, i)) + a(part_id(1, i))) {
-            //printf("Particles %lu and %lu overlapped! (distance %f < %f)\n",
-            //       part_id(0, i), part_id(1, i), dr,
-            //       a(part_id(0, i)) + a(part_id(1, i)));
             dr = NAN;
         }
 
@@ -160,6 +180,10 @@ struct check_dist {
 template <typename Policy, typename T, bool isself>
 struct mobility;
 
+/** The functor that computes the self contribution to the mobility matrix of
+ *  all particles. For further information, see the description of
+ * \ref mobility .
+ */
 template <typename Policy, typename T>
 struct mobility<Policy, T, true> {
     device_matrix_view<T, Policy> zmuf, zmus, zmes;
@@ -233,6 +257,9 @@ struct mobility<Policy, T, true> {
     }
 };
 
+/** The functor that computes all pair contributions to the mobility matrix.
+ *  For further information, see the description of \ref mobility .
+ */
 template <typename Policy, typename T>
 struct mobility<Policy, T, false> {
     device_matrix_view<T, Policy> zmuf, zmus, zmes;
@@ -270,7 +297,7 @@ struct mobility<Policy, T, false> {
             2, 1, 2, 2, 2
             // clang-format on
         };
-        
+
         // particle ids of the involved particles
         std::size_t ph1 = part_id(0, pair_id);
         std::size_t ph2 = part_id(1, pair_id);
@@ -293,7 +320,7 @@ struct mobility<Policy, T, false> {
 
         // Combine components into unit vector along particle connection line
         multi_array<T, 3> e = {dx, dy, dz};
-        
+
         // This creates a lookup-table for the many e_i * e_j like 
         // multiplications in equation (A 2). 
         auto ee = outer(e, e);
@@ -439,7 +466,9 @@ struct mobility<Policy, T, false> {
             }
         }
 
-        // Fill the pair mobility terms
+        // Fill the pair mobility terms. All the necessary values have been
+        // computed in the previous lines of code. Now they need to be
+        // distributed to the correct locations in the grand mobility matrix.
 
         // Compute where the various submatrices of the current particle pair
         // are located in the grand mobility matrix.
@@ -499,8 +528,7 @@ struct mobility<Policy, T, false> {
 
 /** The lubrication functor adds pair wise interactions to the resistance
  *  matrix. This section of code has not been thoroughly commented yet.
- *  Therefore, compare to the part about lubrication, starting with the
- *  paragraph above equation (2.18).
+ *  Most of the comments are an educated guess of what is happening.
  */
 template <typename Policy, typename T>
 struct lubrication {
@@ -511,7 +539,9 @@ struct lubrication {
     T const eta;
     int const flg;
 
-    // Add the lubrication forces to the mobility inverse
+    // Add the lubrication forces to the mobility inverse (i.e. the grand
+    // resistance matrix).
+    // Lubrication interactions are added pair-wise.
     DEVICE_FUNC void operator()(std::size_t pair_id) {
         T dx = pd(0, pair_id);
         T dy = pd(1, pair_id);
@@ -519,7 +549,15 @@ struct lubrication {
         multi_array<T, 3> d = {dx, dy, dz};
         T dr = pd(3, pair_id);
 
-        if (dr < 4.0) { //non-dimensionalize!
+        // non-dimensionalization of the distance for lubrication cutoff
+        // TODO: is that actually correct for spheres with different radii?
+        T a12 = T{.5} * (a(part_id(0, pair_id)) + a(part_id(1, pair_id)));
+
+        if (dr/a12 < 4.0) {
+        
+            // Compute indices that are needed to fill in the results of
+            // calc_lub() into the correct locations of the grand resistance
+            // matrix (the mobility inverse).
             std::size_t i = part_id(0, pair_id);
             std::size_t j = part_id(1, pair_id);
 
@@ -533,11 +571,14 @@ struct lubrication {
             std::size_t jcm = j * 5;
             std::size_t jcg = jcm;
 
+            // Compute the actual lubrication correction
             multi_array<T, 12, 12> tabc;
             multi_array<T, 12, 10> tght;
             multi_array<T, 10, 10> tzm;
             calc_lub(pair_id, dr, d, tabc, tght, tzm);
 
+            // Fill in the values to the appropriate locations in the
+            // mobility inverse.
             for (std::size_t jc = 0; jc < 6; ++jc) {
                 std::size_t jl = jc + 6;
                 std::size_t j1 = ira + jc;
@@ -562,7 +603,7 @@ struct lubrication {
                 }
             }
 
-            if (flg & FTS) {
+            if (flg & flags::FTS) {
                 for (std::size_t jc = 0; jc < 5; ++jc) {
                     std::size_t jl = jc + 5;
                     std::size_t j1 = icg + jc;
@@ -606,7 +647,7 @@ struct lubrication {
         }
     }
 
-    // computes the pair-wise lubrication interactions between particle pairs
+    // Computes the pair-wise lubrication interactions between particle pairs
     DEVICE_FUNC void calc_lub(size_t pair_id, double dr,
                               multi_array<T, 3> const &d,
                               multi_array<T, 12, 12> &tabc,
@@ -657,7 +698,18 @@ struct lubrication {
 
         double x11a, x12a, y11a, y12a, y11b, y12b, x11c, x12c, y11c, y12c, x11g,
             x12g, y11g, y12g, y11h, y12h, xm, ym, zm;
-        if (dr <= 2.1) {
+
+        // The following section of code computes the so-called scalar
+        // resistance functions (?). Depending on the distance of the two
+        // spheres, there are two possible cases:
+        //   - almost touching spheres. An analytic expansion around the case
+        //     of touching spheres is used.
+        //   - intermediate regime. Tabulated values are used, because in this
+        //     regime, it would be very expensive to get the functions up to a
+        //     decent accuracy.
+
+        // Approximation for nearly touching spheres
+        if (dr <= 2.1) { // TODO: non-dimensionalize cutoff
             double xi = dr - 2;
 
             double xi1 = 1 / xi;
@@ -707,6 +759,7 @@ struct lubrication {
             ym = csa3 - 0.423489 + 0.827286 * xi;
             zm = 0.0129151 - 0.042284 * xi;
 
+        // Intermediate regime
         } else {
             auto ida = static_cast<int>(20. * (dr - 2));
             int ib = -2 + ida;
@@ -751,6 +804,10 @@ struct lubrication {
             ym = (yms[ia] - yms[ib]) * cm + yms[ib];
             zm = (zms[ia] - zms[ib]) * cm + zms[ib];
         }
+        // The scalar resistance functions have been computed.
+        // The next goal is to form all the sub-tensors, i.e. contributions to
+        // the grand resistance matrix using the scalar functions from above.
+
         //***************************************************************************c
         //***************************************************************************c
 
@@ -879,7 +936,7 @@ struct lubrication {
             }
         }
 
-        if (!(flg & FTS)) {
+        if (!(flg & flags::FTS)) {
             return;
         }
 
@@ -1285,7 +1342,7 @@ struct solver {
                             T sqrt_kT_Dt,
                             std::size_t offset,
                             std::size_t seed,
-                            int const flg = SELF_MOBILITY | PAIR_MOBILITY | FTS) {
+                            int const flg = flags::SELF_MOBILITY | flags::PAIR_MOBILITY | flags::FTS) {
         assert(x_host.size() == 6 * n_part);
         vector_type<T> x(x_host.begin(), x_host.end());
         assert(a_host.size() == n_part);
@@ -1311,14 +1368,14 @@ struct solver {
                          check_dist<Policy, T>{x, a, pd, part_id});
 
         // self mobility term
-        if (flg & SELF_MOBILITY) {
+        if (flg & flags::SELF_MOBILITY) {
             thrust_wrapper::for_each(
                 Policy::par(), begin, begin + n_part,
                 mobility<Policy, T, true>{zmuf, zmus, zmes, a, eta, flg});
         }
 
         // pair mobility term
-        if (flg & PAIR_MOBILITY) {
+        if (flg & flags::PAIR_MOBILITY) {
             thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
                                      mobility<Policy, T, false>{zmuf, zmus, zmes, pd,
                                                                 part_id, a, eta, flg});
@@ -1350,7 +1407,7 @@ struct solver {
 //        }
 //        printf("\n");
 
-        if (flg & FTS) {
+        if (flg & flags::FTS) {
             // Compute R2 = Mus(t) * R1 => rsu = zmus(t) * zmuf
             device_matrix<T, Policy> const &rsu = zmus.transpose() * zmuf;
 
@@ -1381,7 +1438,7 @@ struct solver {
 //        printf("\n");
 
         // Lubrication corrections (equation (2.18) or (2.21) resp.)
-        if (flg & LUBRICATION) {
+        if (flg & flags::LUBRICATION) {
             thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
                                      lubrication<Policy, T>{rfu, rfe, rse, pd, part_id,
                                                             a, eta, flg});
@@ -1479,5 +1536,4 @@ struct solver {
 };
 
 } // namespace sd
-
 #endif

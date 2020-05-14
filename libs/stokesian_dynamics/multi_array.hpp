@@ -54,9 +54,9 @@ struct product<T> {
     static constexpr T const value = 1;
 };
 
-/**
- *  compile-time logical AND between all parameters of the parameter pack
- */
+///
+/// compile-time logical AND between all parameters of the parameter pack
+///
 template <bool...>
 struct all;
 
@@ -251,6 +251,10 @@ public:
     }
 };
 
+/// Computes the outer product of two vectors, i.e. one-dimensional variable of
+/// type \ref multi_array.
+///
+/// \return two-dimensional \ref multi_array
 template <typename T, std::size_t M, std::size_t N>
 DEVICE_FUNC constexpr multi_array<T,M,N> outer(multi_array<T,M> const & a, multi_array<T,N> const & b) {
     multi_array<T,M,N> c;
