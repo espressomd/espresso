@@ -164,7 +164,7 @@ double calculate_npt_p_vel_rescaled() {
   return acc / (nptiso.dimension * nptiso.volume);
 }
 
-void update_pressure(bool v_comp, bool observable_stress_tensor) {
+void update_pressure(bool v_comp) {
   if (obs_scalar_pressure.is_initialized &&
       obs_scalar_pressure.v_comp == v_comp)
     return;
@@ -178,12 +178,7 @@ void update_pressure(bool v_comp, bool observable_stress_tensor) {
       !(nptiso.invalidate_p_vel)) {
     if (!obs_scalar_pressure.is_initialized)
       master_pressure_calc(false);
-    auto const npt_p_vel_rescaled = calculate_npt_p_vel_rescaled();
-    if (observable_stress_tensor) {
-      obs_stress_tensor.local.kinetic[0] = npt_p_vel_rescaled;
-    } else {
-      obs_scalar_pressure.kinetic[0] = npt_p_vel_rescaled;
-    }
+    obs_scalar_pressure.kinetic[0] = calculate_npt_p_vel_rescaled();
     obs_scalar_pressure.v_comp = true;
   } else {
     master_pressure_calc(v_comp);
@@ -191,7 +186,7 @@ void update_pressure(bool v_comp, bool observable_stress_tensor) {
 }
 
 void observable_compute_stress_tensor(double *output) {
-  update_pressure(true, true);
+  update_pressure(true);
   for (size_t j = 0; j < 9; j++) {
     output[j] = obs_stress_tensor.accumulate(0, j);
   }

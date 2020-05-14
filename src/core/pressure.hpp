@@ -45,8 +45,7 @@ void observable_compute_stress_tensor(double *output);
  *                    \ref nptiso_struct::p_inst (hence it only works with
  *                    domain decomposition); naturally it therefore doesn't
  *                    make sense to use it without NpT.
- *  @param[in] observable_stress_tensor flag for internal use
  */
-void update_pressure(bool v_comp, bool observable_stress_tensor = false);
+void update_pressure(bool v_comp);
 
 #endif
