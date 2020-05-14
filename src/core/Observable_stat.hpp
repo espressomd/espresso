@@ -130,13 +130,11 @@ public:
   void resize() final;
 
   /** Rescale values */
-  void rescale(double volume, double time_step) {
-    auto const factor1 = 1. / (volume * time_step * time_step);
-    auto const factor2 = 1. / volume;
-    for (auto it = data.begin(); it != data.begin() + m_chunk_size; ++it)
-      *it *= factor1;
-    for (auto it = data.begin() + m_chunk_size; it != data.end(); ++it)
-      *it *= factor2;
+  void rescale(double volume) {
+    auto const factor = 1. / volume;
+    for (auto &e : data) {
+      e *= factor;
+    }
   }
 
   /** Get contribution from a bonded interaction */

@@ -118,9 +118,9 @@ void pressure_calc(bool v_comp) {
 #endif
 
   /* rescale kinetic energy (=ideal contribution) */
-  obs_scalar_pressure.local.rescale(3.0 * volume, time_step);
+  obs_scalar_pressure.local.rescale(3.0 * volume);
 
-  obs_stress_tensor.local.rescale(volume, time_step);
+  obs_stress_tensor.local.rescale(volume);
 
   /* Intra- and Inter- part of nonbonded interaction */
   obs_scalar_pressure_non_bonded.local.rescale(3.0 * volume);

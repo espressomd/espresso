@@ -202,19 +202,15 @@ inline void add_kinetic_virials(Particle const &p1, bool v_comp) {
   /* kinetic energy */
   if (v_comp) {
     obs_scalar_pressure.local.kinetic[0] +=
-        ((p1.m.v * time_step) -
-         (p1.f.f * (0.5 * Utils::sqr(time_step) / p1.p.mass)))
-            .norm2() *
-        p1.p.mass;
+        (p1.m.v - (p1.f.f * (0.5 * time_step / p1.p.mass))).norm2() * p1.p.mass;
   } else {
-    obs_scalar_pressure.local.kinetic[0] +=
-        Utils::sqr(time_step) * p1.m.v.norm2() * p1.p.mass;
+    obs_scalar_pressure.local.kinetic[0] += p1.m.v.norm2() * p1.p.mass;
   }
 
   for (int k = 0; k < 3; k++)
     for (int l = 0; l < 3; l++)
       obs_stress_tensor.local.kinetic[k * 3 + l] +=
-          (p1.m.v[k] * time_step) * (p1.m.v[l] * time_step) * p1.p.mass;
+          (p1.m.v[k]) * (p1.m.v[l]) * p1.p.mass;
 }
 
 #endif
