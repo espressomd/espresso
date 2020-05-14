@@ -417,8 +417,6 @@ class Analysis:
         if (analyze.total_pressure.init_status != 1 + v_comp):
             analyze.update_pressure(v_comp)
 
-        # Individual components of the pressure
-
         # Total pressure
         cdef int i
         total = 0
@@ -427,7 +425,9 @@ class Analysis:
 
         p["total"] = total
 
-        # kinetic
+        # Individual components of the pressure
+
+        # Kinetic
         p["kinetic"] = analyze.total_pressure.data.e[0]
 
         # Bonded
@@ -450,7 +450,6 @@ class Analysis:
 
         for i in range(analyze.max_seen_particle_type):
             for j in range(i, analyze.max_seen_particle_type):
-                #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_pressure, i, j)[0]
                 total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_pressure, i, j)[0]
                 total_intra += analyze.obsstat_nonbonded_intra(& analyze.total_pressure_non_bonded, i, j)[0]
@@ -529,8 +528,6 @@ class Analysis:
         if (analyze.total_p_tensor.init_status != 1 + v_comp):
             analyze.update_pressure(v_comp)
 
-        # Individual components of the pressure
-
         # Total pressure
         cdef int i
         total = np.zeros(9)
@@ -540,7 +537,9 @@ class Analysis:
 
         p["total"] = total.reshape((3, 3))
 
-        # kinetic
+        # Individual components of the pressure
+
+        # Kinetic
         p["kinetic"] = create_nparray_from_double_array(
             analyze.total_p_tensor.data.e, 9)
         p["kinetic"] = p["kinetic"].reshape((3, 3))
@@ -563,7 +562,6 @@ class Analysis:
 
         for i in range(analyze.max_seen_particle_type):
             for j in range(i, analyze.max_seen_particle_type):
-                #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = np.reshape(
                     create_nparray_from_double_array(analyze.obsstat_nonbonded(
                         & analyze.total_p_tensor, i, j), 9), (3, 3))
@@ -651,8 +649,6 @@ class Analysis:
         >>> print(energy["external_fields"])
 
         """
-        #  if system.n_part == 0:
-        #    raise Exception('no particles')
 
         e = OrderedDict()
 
@@ -660,8 +656,6 @@ class Analysis:
             analyze.init_energies(& analyze.total_energy)
             analyze.master_energy_calc()
             handle_errors("calc_long_range_energies failed")
-
-        # Individual components of the pressure
 
         # Total energy
         cdef int i
@@ -671,10 +665,12 @@ class Analysis:
         e["total"] = total
         e["external_fields"] = analyze.total_energy.external_fields[0]
 
+        # Individual components of the energy
+
         # Kinetic energy
         e["kinetic"] = analyze.total_energy.data.e[0]
 
-        # Nonbonded
+        # Non-bonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
@@ -683,7 +679,7 @@ class Analysis:
                 total_bonded += analyze.obsstat_bonded(& analyze.total_energy, i)[0]
         e["bonded"] = total_bonded
 
-        # Non-Bonded interactions, total as well as intra and inter molecular
+        # Total non-bonded interactions
         cdef int j
         cdef double total_intra
         cdef double total_inter
@@ -694,16 +690,9 @@ class Analysis:
 
         for i in range(analyze.max_seen_particle_type):
             for j in range(analyze.max_seen_particle_type):
-                #      if checkIfParticlesInteract(i, j):
                 e["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
                 if i <= j:
                     total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
-        #       total_intra +=analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
-        #       e["non_bonded_intra",i,j] =analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
-        #       e["nonBondedInter",i,j] =analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
-        #       total_inter+= analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
-        # e["nonBondedIntra"]=total_intra
-        # e["nonBondedInter"]=total_inter
         e["non_bonded"] = total_non_bonded
 
         # Electrostatics
