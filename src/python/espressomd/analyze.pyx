@@ -496,7 +496,7 @@ class Analysis:
         homogeneous since the volume averaged stress tensor is used. Do not use
         this stress tensor in an (on average) inhomogeneous system. If the
         system is (on average inhomogeneous) then use a local stress tensor.
-        In order to obtain the stress tensor the ensemble average needs to be
+        In order to obtain the stress tensor, the ensemble average needs to be
         calculated.
 
         Returns
@@ -722,9 +722,9 @@ class Analysis:
         standard deviation, as well as mean square end-to-end distance of
         chains and its standard deviation.
 
-        This requires that a set of chains of equal length which start with the
-        particle with particle number ``chain_start`` and are consecutively
-        numbered, the last particle in that topology has id number
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
         ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
@@ -751,13 +751,14 @@ class Analysis:
     def calc_rg(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
         """
-        Calculates the mean radius of gyration of chains and its standard deviation,
-        as well as the mean square radius of gyration of chains and its
-        standard deviation.
+        Calculates the mean radius of gyration of chains and its standard
+        deviation, as well as the mean square radius of gyration of chains
+        and its standard deviation.
 
-        This requires that a set of chains of equal length which start with the
-        particle with particle number ``chain_start`` and are consecutively
-        numbered, the last particle in that topology has id number
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
+        ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
         ----------
@@ -785,10 +786,10 @@ class Analysis:
         """
         Calculates the hydrodynamic mean radius of chains and its standard deviation.
 
-        This requires that a set of chains of equal length which start with the
-        particle with particle number ``chain_start`` and are consecutively
-        numbered (the last particle in that topology has id number :
-        ``chain_start + number_of_chains * chain_length - 1``).
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
+        ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
         ----------
@@ -887,8 +888,8 @@ class Analysis:
 
         Parameters
         ----------
-        rdf_type : :obj:`str`
-            ``'rdf'`` or ``'<rdf>'``.
+        rdf_type : :obj:`str`, \{'rdf', '<rdf>'\}
+            Type of analysis.
         type_list_a : lists of :obj:`int`
             Left :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
         type_list_b : lists of :obj:`int`, optional
@@ -896,12 +897,13 @@ class Analysis:
         r_min : :obj:`float`
             Minimal distance to consider.
         r_max : :obj:`float`
-            Maximal distance to consider
+            Maximal distance to consider.
         r_bins : :obj:`int`
             Number of bins.
         n_conf : :obj:`int`, optional
-            If rdf_type is ``'<rdf>'`` this determines
-            the number of stored configs that are used.
+            If ``rdf_type`` is ``'<rdf>'`` this determines
+            the number of stored configs that are used (if
+            ``None``, all configurations are used).
 
         Returns
         -------
@@ -923,8 +925,8 @@ class Analysis:
         if rdf_type != 'rdf':
             if n_configs == 0:
                 raise ValueError("No configurations founds!\n",
-                                 "Use 'analyze append' to save some,",
-                                 "or 'analyze rdf' to only look at current RDF!""")
+                                 "Use `analyze.append()` to save configurations,",
+                                 "or `analyze.rdf('rdf')` to only look at current RDF!""")
             if n_conf is None:
                 n_conf = n_configs
 
@@ -1190,7 +1192,7 @@ class Analysis:
         """
         .. todo:: Looks to be incomplete
 
-        Calculates the compressibility thought volume fluctuations.
+        Calculates the compressibility through volume fluctuations.
 
         Parameters
         ----------
@@ -1223,11 +1225,11 @@ class Analysis:
             if (self._Vkappa["avk"] <= 0.0):
                 result = self._Vkappa["Vk1"] = self._Vkappa[
                     "Vk2"] = self._Vkappa["avk"] = 0.0
-                raise Exception(
-                    "ERROR: # of averages <avk> has to be positive! Resetting values.")
+                raise ValueError(
+                    "# of averages <avk> has to be positive! Resetting values.")
             else:
                 result = self._Vkappa["Vk2"] / self._Vkappa["avk"] - \
                     (self._Vkappa["Vk1"] / self._Vkappa["avk"])**2
             return result
         else:
-            raise Exception("ERROR: Unknown mode.")
+            raise Exception("Unknown mode.")
