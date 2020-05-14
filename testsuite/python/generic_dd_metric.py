@@ -19,11 +19,12 @@
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
-from espressomd import system
+from espressomd import system, generic_dd
 from espressomd.interactions import FeneBond
 
 
 @utx.skipIfMissingFeatures(["LENNARD_JONES"])
+@ut.skipIf("cart" not in generic_dd.supported_grid_types(), "No generic_dd")
 class Generic_DD_Metric(ut.TestCase):
     """"Test metric functionality of generic_dd."""
     box = 16.0
