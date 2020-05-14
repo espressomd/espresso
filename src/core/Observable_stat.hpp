@@ -73,6 +73,14 @@ public:
     return acc;
   }
 
+  /** Rescale values */
+  void rescale(double volume) {
+    auto const factor = 1. / volume;
+    for (auto &e : data) {
+      e *= factor;
+    }
+  }
+
 protected:
   /** Get contribution from a non-bonded interaction */
   Utils::Span<double> non_bonded_contribution(double *base_pointer, int type1,
@@ -129,14 +137,6 @@ public:
   /** Resize the observable */
   void resize() final;
 
-  /** Rescale values */
-  void rescale(double volume) {
-    auto const factor = 1. / volume;
-    for (auto &e : data) {
-      e *= factor;
-    }
-  }
-
   /** Get contribution from a bonded interaction */
   Utils::Span<double> bonded_contribution(int bond_id) {
     return Utils::Span<double>(bonded.data() + m_chunk_size * bond_id,
@@ -167,13 +167,6 @@ public:
 
   /** Resize the observable */
   void resize() final;
-
-  /** Rescale values */
-  void rescale(double volume) {
-    auto const factor = 1. / volume;
-    for (auto &value : data)
-      value *= factor;
-  }
 
   /** Get contribution from a non-bonded intramolecular interaction */
   Utils::Span<double> non_bonded_intra_contribution(int type1,
