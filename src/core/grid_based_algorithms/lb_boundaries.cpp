@@ -271,7 +271,7 @@ Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
-    mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
+    mpi_gather_stats(GatherStats::lb_boundary_forces, forces.data());
 #endif
   }
   auto const container_index = std::distance(lbboundaries.begin(), it);

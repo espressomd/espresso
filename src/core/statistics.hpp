@@ -26,10 +26,8 @@
  *  Implementation in statistics.cpp.
  */
 
-#include "Observable_stat.hpp"
 #include "PartCfg.hpp"
 #include "Particle.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <map>
 #include <string>
@@ -45,10 +43,6 @@ extern std::vector<std::vector<Utils::Vector3d>> configs;
 int get_n_configs();
 int get_n_part_conf();
 /*@}*/
-
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
 
 /** Calculate the minimal distance of two particles with types in set1 resp.
  *  set2.
@@ -210,60 +204,5 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
  */
 Utils::Vector3d calc_linear_momentum(int include_particles,
                                      int include_lbfluid);
-
-inline double *obsstat_bonded(Observable_stat *stat, int j) {
-  return stat->bonded + stat->chunk_size * j;
-}
-
-inline double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2) {
-  if (p1 > p2) {
-    int tmp = p2;
-    p2 = p1;
-    p1 = tmp;
-  }
-  return stat->non_bonded +
-         stat->chunk_size *
-             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
-}
-
-inline double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1,
-                                       int p2) {
-  /*  return stat->non_bonded_intra + stat->chunk_size*1; */
-  if (p1 > p2) {
-    int tmp = p2;
-    p2 = p1;
-    p1 = tmp;
-  }
-  return stat->non_bonded_intra +
-         stat->chunk_size_nb *
-             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
-}
-
-inline double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1,
-                                       int p2) {
-  /*  return stat->non_bonded_inter + stat->chunk_size*1; */
-  if (p1 > p2) {
-    int tmp = p2;
-    p2 = p1;
-    p1 = tmp;
-  }
-  return stat->non_bonded_inter +
-         stat->chunk_size_nb *
-             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
-}
-
-void invalidate_obs();
-
-/** Docs missing
- * \todo Docs missing
- */
-void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
-                               int n_non_bonded, int n_coulomb, int n_dipolar,
-                               int n_vs, int chunk_size);
-
-void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
-                                          int n_nonbonded, int chunk_size_nb);
-
-/*@}*/
 
 #endif

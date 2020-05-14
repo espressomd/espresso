@@ -1229,6 +1229,9 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
   Coulomb::elc_sanity_check();
 
+  p3m.params.epsilon = P3M_EPSILON_METALLIC;
+  coulomb.method = COULOMB_ELC_P3M;
+
   elc_params.far_cut = far_cut;
   if (far_cut != -1) {
     elc_params.far_cut2 = Utils::sqr(far_cut);

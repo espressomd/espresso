@@ -27,6 +27,7 @@
 #include "config.hpp"
 #include <boost/range/algorithm/find_if.hpp>
 
+#include "Observable_stat.hpp"
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
@@ -63,13 +64,14 @@
 #endif
 #include "cells.hpp"
 #include "exclusions.hpp"
-#include "statistics.hpp"
 
 #include "energy.hpp"
 
 #ifdef DIPOLES
 #include "electrostatics_magnetostatics/dipole_inline.hpp"
 #endif
+
+extern Observable_stat_wrapper obs_energy;
 
 /** Calculate non-bonded energies between a pair of particles.
  *  @param p1         particle 1.
@@ -175,7 +177,7 @@ inline double calc_non_bonded_pair_energy(Particle const &p1,
 }
 
 /** Add non-bonded and short-range Coulomb energies between a pair of particles
- *  to the @ref energy observable.
+ *  to the energy observable.
  *  @param p1        particle 1.
  *  @param p2        particle 2.
  *  @param d         vector between p1 and p2.
@@ -190,16 +192,18 @@ inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
-    *obsstat_nonbonded(&energy, p1.p.type, p2.p.type) +=
+    obs_energy.local.non_bonded_contribution(p1.p.type, p2.p.type)[0] +=
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist);
 
 #ifdef ELECTROSTATICS
-  energy.coulomb[0] +=
-      Coulomb::pair_energy(p1, p2, p1.p.q * p2.p.q, d, dist, dist2);
+  if (!obs_energy.local.coulomb.empty())
+    obs_energy.local.coulomb[0] +=
+        Coulomb::pair_energy(p1, p2, p1.p.q * p2.p.q, d, dist, dist2);
 #endif
 
 #ifdef DIPOLES
-  energy.dipolar[0] += Dipole::pair_energy(p1, p2, d, dist, dist2);
+  if (!obs_energy.local.dipolar.empty())
+    obs_energy.local.dipolar[0] += Dipole::pair_energy(p1, p2, d, dist, dist2);
 #endif
 }
 
@@ -278,7 +282,7 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
   throw BondInvalidSizeError(n_partners);
 }
 
-/** Add bonded energies for one particle to the @ref energy observable.
+/** Add bonded energies for one particle to the energy observable.
  *  @param[in] p1   particle for which to calculate energies
  *  @param[in] bond_id Numeric id of the bond
  *  @param[in] partners Bond partners of particle.
@@ -292,7 +296,7 @@ inline bool add_bonded_energy(Particle &p1, int bond_id,
   auto const result = calc_bonded_energy(iaparams, p1, partners);
 
   if (result) {
-    *obsstat_bonded(&energy, bond_id) += result.get();
+    obs_energy.local.bonded_contribution(bond_id)[0] += result.get();
 
     return false;
   }
@@ -300,7 +304,7 @@ inline bool add_bonded_energy(Particle &p1, int bond_id,
   return true;
 }
 
-/** Add kinetic energies for one particle to the @ref energy observable.
+/** Add kinetic energies for one particle to the energy observable.
  *  @param[in] p1   particle for which to calculate energies
  */
 inline void add_kinetic_energy(Particle const &p1) {
@@ -308,24 +312,23 @@ inline void add_kinetic_energy(Particle const &p1) {
     return;
 
   /* kinetic energy */
-  if (not p1.p.is_virtual)
-    energy.data[0] += 0.5 * p1.p.mass * p1.m.v.norm2();
+  obs_energy.local.kinetic[0] += 0.5 * p1.p.mass * p1.m.v.norm2();
 
-    // Note that rotational degrees of virtual sites are integrated
-    // and therefore can contribute to kinetic energy
+  // Note that rotational degrees of virtual sites are integrated
+  // and therefore can contribute to kinetic energy
 #ifdef ROTATION
   if (p1.p.rotation) {
     /* the rotational part is added to the total kinetic energy;
-       Here we use the rotational inertia  */
-    energy.data[0] += 0.5 * (Utils::sqr(p1.m.omega[0]) * p1.p.rinertia[0] +
-                             Utils::sqr(p1.m.omega[1]) * p1.p.rinertia[1] +
-                             Utils::sqr(p1.m.omega[2]) * p1.p.rinertia[2]);
+     * Here we use the rotational inertia */
+    obs_energy.local.kinetic[0] +=
+        0.5 * (Utils::sqr(p1.m.omega[0]) * p1.p.rinertia[0] +
+               Utils::sqr(p1.m.omega[1]) * p1.p.rinertia[1] +
+               Utils::sqr(p1.m.omega[2]) * p1.p.rinertia[2]);
   }
 #endif
 }
 
-/** Add kinetic and bonded energies for one particle to the @ref energy
- *  observable.
+/** Add kinetic and bonded energies for one particle to the energy observable.
  *  @param[in] p   particle for which to calculate energies
  */
 inline void add_single_particle_energy(Particle &p) {

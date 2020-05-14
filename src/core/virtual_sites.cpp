@@ -22,14 +22,15 @@
 #include "virtual_sites.hpp"
 
 #ifdef VIRTUAL_SITES
+#include "Observable_stat.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "statistics.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/quaternion.hpp>
@@ -57,8 +58,8 @@ calculate_vs_relate_to_params(Particle const &p_current,
   // get the distance between the particles
   Utils::Vector3d d = get_mi_vector(p_current.r.p, p_relate_to.r.p, box_geo);
 
-  // Check, if the distance between virtual and non-virtual particles is larger
-  // htan minimum global cutoff If so, warn user
+  // Check if the distance between virtual and non-virtual particles is larger
+  // than minimum global cutoff. If so, warn user.
   auto const dist = d.norm();
   if (dist > min_global_cut && n_nodes > 1) {
     runtimeErrorMsg()
