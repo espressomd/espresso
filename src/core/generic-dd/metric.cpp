@@ -49,10 +49,10 @@ static void metric_npart(std::vector<double> &weights) {
 /** Returns the number of distance pairs calculated for cell "c".
  */
 static int cell_ndistpairs(Cell *c) {
-   int nnp = 0;
-   for (const auto &neighbor : c->neighbors().red()) {
-     nnp += neighbor->particles().size();
-   }
+  int nnp = 0;
+  for (const auto &neighbor : c->neighbors().red()) {
+    nnp += neighbor->particles().size();
+  }
   const int n = c->particles().size();
   return n * nnp + n * (n - 1) / 2;
 }

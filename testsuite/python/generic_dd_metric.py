@@ -65,7 +65,7 @@ class Generic_DD_Metric(ut.TestCase):
 
     def test_npart(self):
         self.s.part.clear()
-        self.s.part.add(pos=[1,1,1])
+        self.s.part.add(pos=[1, 1, 1])
         m = self.dd.metric("npart")
         self.assertEqual(m.average(), 1.0 / self.nproc)
         self.assertEqual(m.maximum(), 1.0)
@@ -73,31 +73,32 @@ class Generic_DD_Metric(ut.TestCase):
 
     def test_ndistpairs(self):
         self.s.part.clear()
-        self.s.part.add(pos=[1,1,1])
+        self.s.part.add(pos=[1, 1, 1])
         m = self.dd.metric("ndistpairs")
         self.assertEqual(m.average(), 0.0)
         self.assertEqual(m.maximum(), 0.0)
-        self.s.part.add(pos=[1,1,2])
+        self.s.part.add(pos=[1, 1, 2])
         self.assertEqual(m.average(), 1.0 / self.nproc)
         self.assertEqual(m.maximum(), 1.0)
         self.assertEqual(m.imbalance(), self.nproc)
-        self.s.part.add(pos=[1,3,1])
+        self.s.part.add(pos=[1, 3, 1])
         self.assertEqual(m.average(), 3.0 / self.nproc)
-        self.s.part.add(pos= 16 * np.random.rand(100,3))
-        self.s.integrator.run(1) # Force a ghost exchange
+        self.s.part.add(pos=16 * np.random.rand(100, 3))
+        self.s.integrator.run(1)  # Force a ghost exchange
         ground_truth = len(self.s.cell_system.get_pairs_(np.max(self.s.box_l)))
-        self.assertEqual(m.average(),  ground_truth / self.nproc)
+        self.assertEqual(m.average(), ground_truth / self.nproc)
 
     def test_nbondedia(self):
         self.s.part.clear()
-        self.s.part.add(pos=[1,1,1])
-        self.s.part.add(pos=[2,2,2])
-        self.s.part.add(pos=[3,3,3])
+        self.s.part.add(pos=[1, 1, 1])
+        self.s.part.add(pos=[2, 2, 2])
+        self.s.part.add(pos=[3, 3, 3])
         self.s.part[0].add_bond((self.F, 1))
         self.s.part[0].add_bond((self.F, 2))
         m = self.dd.metric("nbondedia")
         self.assertEqual(m.average(), 2.0 / self.nproc)
-        self.assertEqual(m.maximum(), 2.0) # Both bonds are stored on particle 0
+        # Both bonds are stored on particle 0
+        self.assertEqual(m.maximum(), 2.0)
 
 
 if __name__ == "__main__":
