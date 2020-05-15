@@ -44,5 +44,6 @@ class CellSystem(ut.TestCase):
         np.testing.assert_array_equal(
             s['node_grid'], [n_nodes, 1, 1])
 
+
 if __name__ == "__main__":
     ut.main()
