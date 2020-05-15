@@ -194,7 +194,7 @@ vector so that the product of ``dist`` and ``normal`` is a point on the surface.
 Therefore negative distances are quite common!
 
 .. figure:: figures/shape-wall.png
-   :alt: Example constraint with a ``Wall`` shape.
+   :alt: Visualization of a constraint with a ``Wall`` shape.
    :align: center
    :height: 6.00000cm
 
@@ -220,7 +220,7 @@ and ``+1`` for outward.
 .. _shape-sphere:
 
 .. figure:: figures/shape-sphere.png
-   :alt: Example constraint with a ``Sphere`` shape.
+   :alt: Visualization of a constraint with a Sphere shape.
    :align: center
    :height: 6.00000cm
 
@@ -243,7 +243,7 @@ The distance to the surface is determined iteratively via Newton's method.
 .. _shape-ellipsoid:
 
 .. figure:: figures/shape-ellipsoid.png
-   :alt: Example constraint with an ``Ellipsoid`` shape.
+   :alt: Visualization of a constraint with an Ellipsoid shape.
    :align: center
    :height: 6.00000cm
 
@@ -263,9 +263,8 @@ The ``axis`` parameter is a vector along the cylinder axis, which is normalized 
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
 
-
 .. figure:: figures/shape-cylinder.png
-   :alt: Example constraint with a ``Cylinder`` shape.
+   :alt: Visualization of a constraint with a Cylinder shape.
    :align: center
    :height: 6.00000cm
 
@@ -316,7 +315,7 @@ The orientation of the pore is given by the vector ``axis``, which points along 
 The pore openings are smoothed with radius ``smoothing_radius``.
 
 .. figure:: figures/shape-simplepore.png
-   :alt: Example constraint with a ``SimplePore`` shape.
+   :alt: Visualization of a constraint with a SimplePore shape.
    :align: center
    :height: 6.00000cm
 
@@ -354,12 +353,12 @@ but the combination 7:3:1 is a good point to start from when trying to modify th
 
 
 .. figure:: figures/shape-stomatocyte1.png
-   :alt: Example constraint with a ``Stomatocyte`` shape.
+   :alt: Visualization of a constraint with a Stomatocyte shape.
    :align: center
    :height: 6.00000cm
 
 .. figure:: figures/shape-stomatocyte2.png
-   :alt: Close-up of the internal ``Stomatocyte`` structure.
+   :alt: Close-up view of the internal Stomatocyte structure.
    :align: center
    :height: 6.00000cm
 
@@ -389,7 +388,7 @@ The region is described as a pore (lower vertical part of the "T"-shape) and a c
 .. _figure-slitpore:
 
 .. figure:: figures/slitpore.png
-   :alt: Schematic for the slitpore shape showing geometrical parameters
+   :alt: Schematic for the Slitpore shape with labeled geometrical parameters.
    :align: center
    :height: 6.00000cm
 
@@ -404,7 +403,7 @@ The meaning of the geometrical parameters can be inferred from the schematic in 
 
 
 .. figure:: figures/shape-slitpore.png
-   :alt: Example constraint with a ``Slitpore`` shape.
+   :alt: Visualization of a constraint with a Slitpore shape.
    :align: center
    :height: 6.00000cm
 
@@ -436,7 +435,7 @@ The direction ``direction`` determines the force direction, ``-1`` for inward an
 
 
 .. figure:: figures/shape-spherocylinder.png
-   :alt: Example constraint with a ``SpheroCylinder`` shape.
+   :alt: Visualization of a constraint with a SpheroCylinder shape.
    :align: center
    :height: 6.00000cm
 
@@ -459,12 +458,12 @@ A hollow cone with round corners. The specific parameters
 are described in the shape's class :class:`espressomd.shapes.HollowConicalFrustum`.
 
 .. figure:: figures/shape-conical_frustum.png
-   :alt: Conical frustum shape schematic.
+   :alt: Visualization of a constraint with a HollowConicalFrustum shape.
    :align: center
    :height: 6.00000cm
 
 .. figure:: figures/conical_frustum.png
-   :alt: Schematic for the conical frustum shape showing geometrical parameters
+   :alt: Schematic for the HollowConicalFrustum shape with labeled geometrical parameters.
    :align: center
    :height: 6.00000cm
 
