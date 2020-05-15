@@ -11,8 +11,32 @@
 #include <utils/index.hpp>
 #include <utils/mpi/cart_comm.hpp>
 
-/** Structure containing the information about the cell grid used for domain
- *  decomposition.
+/** @brief Structure containing the information about the cell grid used for
+ * domain decomposition.
+ *
+ *  The domain of a node is split into a 3D cell grid with dimension
+ *  \ref DomainDecomposition::cell_grid. Together with one ghost cell
+ *  layer on each side the overall dimension of the ghost cell grid is
+ *  \ref DomainDecomposition::ghost_cell_grid. The domain
+ *  decomposition enables one the use of the linked cell algorithm
+ *  which is in turn used for setting up the Verlet list for the
+ *  system. You can see a 2D graphical representation of the linked
+ *  cell grid below.
+ *
+ *  \image html  linked_cells.gif "Linked cells structure"
+ *
+ *  2D representation of a linked cell grid: cell_grid =
+ *  {4,4}, ghost_cell_grid = {6,6}
+ *
+ * Each cell has 3^D neighbor cells (For cell 14 they are
+ * marked). Since we deal with pair forces, it is sufficient to
+ * calculate only half of the interactions (Newtons law: action =
+ * reaction). We have chosen the upper half e.g. all neighbor cells with
+ * a higher linear index (For cell 14 they are marked in light
+ * blue). Caution: This implementation needs double sided ghost
+ * communication! For single sided ghost communication one would need
+ * some ghost-ghost cell interaction as well, which we do not need!
+ *
  */
 struct DomainDecomposition : public ParticleDecomposition {
   /** Grind dimensions per node. */
@@ -68,14 +92,13 @@ public:
 
 private:
   /** Fill local_cells list and ghost_cells list for use with domain
-   *  decomposition.  \ref cells::cells is assumed to be a 3d grid with size
-   *  \ref DomainDecomposition::ghost_cell_grid.
+   *  decomposition.
    */
   void mark_cells();
 
   /** Fill a communication cell pointer list. Fill the cell pointers of
    *  all cells which are inside a rectangular subgrid of the 3D cell
-   *  grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
+   *  grid starting from the
    *  lower left corner lc up to the high top corner hc. The cell
    *  pointer list part_lists must already be large enough.
    *  \param part_lists  List of cell pointers to store the result.
@@ -139,7 +162,7 @@ private:
   /**
    *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
    *
-   *  Calculates the cell grid, based on \ref local_geo and \p range.
+   *  Calculates the cell grid, based on the local box size and the range.
    *  If the number of cells is larger than \ref max_num_cells,
    *  it increases max_range until the number of cells is
    *  smaller or equal \ref max_num_cells. It sets:
@@ -166,8 +189,7 @@ private:
   GhostCommunicator prepare_comm();
 
   /** update the 'shift' member of those GhostCommunicators, which use
-   *  that value to speed up the folding process of its ghost members
-   *  (see \ref dd_prepare_comm for the original).
+   *  that value to speed up the folding process of its ghost members;
    */
   void update_communicators_w_boxl();
 
