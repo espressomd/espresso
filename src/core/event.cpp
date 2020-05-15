@@ -355,9 +355,11 @@ void on_parameter_change(int field) {
   case FIELD_MIN_GLOBAL_CUT:
     recalc_maximal_cutoff();
     cells_on_geometry_change(0);
+    on_coulomb_change();
     break;
   case FIELD_SKIN:
     cells_on_geometry_change(0);
+    on_coulomb_change();
     break;
   case FIELD_PERIODIC:
 #ifdef SCAFACOS
