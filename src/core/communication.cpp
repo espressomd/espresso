@@ -369,7 +369,7 @@ void mpi_bcast_max_seen_particle_type(int ns) {
 }
 
 /*************** GATHER ************/
-void mpi_gather_stats(GatherStats job, double *result) {
+void mpi_gather_stats(GatherStats job) {
   auto job_slave = static_cast<int>(job);
   switch (job) {
   case GatherStats::energy:

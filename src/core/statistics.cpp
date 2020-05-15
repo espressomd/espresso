@@ -42,17 +42,6 @@
 #include <cstdlib>
 #include <limits>
 
-/** Previous particle configurations (needed for offline analysis and
- *  correlation analysis)
- */
-std::vector<std::vector<Utils::Vector3d>> configs;
-
-int get_n_configs() { return static_cast<int>(configs.size()); }
-
-int get_n_part_conf() {
-  return (configs.size()) ? static_cast<int>(configs[0].size()) : 0;
-}
-
 /****************************************************************************************
  *                                 basic observables calculation
  ****************************************************************************************/
@@ -277,146 +266,6 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
     dist[i] /= (double)cnt;
 }
 
-void calc_rdf(PartCfg &partCfg, std::vector<int> const &p1_types,
-              std::vector<int> const &p2_types, double r_min, double r_max,
-              int r_bins, std::vector<double> &rdf) {
-  calc_rdf(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
-           p2_types.size(), r_min, r_max, r_bins, &rdf[0]);
-}
-
-void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
-              int const *p2_types, int n_p2, double r_min, double r_max,
-              int r_bins, double *rdf) {
-  long int cnt = 0;
-  int ind;
-  bool mixed_flag = false;
-  if (n_p1 == n_p2) {
-    for (int i = 0; i < n_p1; i++)
-      if (p1_types[i] != p2_types[i])
-        mixed_flag = true;
-  } else {
-    mixed_flag = true;
-  }
-
-  auto const bin_width = (r_max - r_min) / (double)r_bins;
-  auto const inv_bin_width = 1.0 / bin_width;
-  for (int i = 0; i < r_bins; i++)
-    rdf[i] = 0.0;
-  /* particle loop: p1_types */
-  for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
-    for (int t1 = 0; t1 < n_p1; t1++) {
-      if (it->p.type == p1_types[t1]) {
-        /* distinguish mixed and identical rdf's */
-        auto jt = mixed_flag ? partCfg.begin() : std::next(it);
-
-        /* particle loop: p2_types */
-        for (; jt != partCfg.end(); ++jt) {
-          for (int t2 = 0; t2 < n_p2; t2++) {
-            if (jt->p.type == p2_types[t2]) {
-              auto const dist = get_mi_vector(it->r.p, jt->r.p, box_geo).norm();
-              if (dist > r_min && dist < r_max) {
-                ind = (int)((dist - r_min) * inv_bin_width);
-                rdf[ind]++;
-              }
-              cnt++;
-            }
-          }
-        }
-      }
-    }
-  }
-  if (cnt == 0)
-    return;
-
-  /* normalization */
-  auto const volume = box_geo.volume();
-  for (int i = 0; i < r_bins; i++) {
-    auto const r_in = i * bin_width + r_min;
-    auto const r_out = r_in + bin_width;
-    auto const bin_volume = (4.0 / 3.0) * Utils::pi() *
-                            ((r_out * r_out * r_out) - (r_in * r_in * r_in));
-    rdf[i] *= volume / (bin_volume * static_cast<double>(cnt));
-  }
-}
-
-void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
-                 std::vector<int> const &p2_types, double r_min, double r_max,
-                 int r_bins, std::vector<double> &rdf, int n_conf) {
-  calc_rdf_av(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
-              p2_types.size(), r_min, r_max, r_bins, &rdf[0], n_conf);
-}
-
-void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
-                 int const *p2_types, int n_p2, double r_min, double r_max,
-                 int r_bins, double *rdf, int n_conf) {
-  long int cnt = 0;
-  int cnt_conf = 1;
-  bool mixed_flag = false;
-  std::vector<double> rdf_tmp(r_bins);
-
-  if (n_p1 == n_p2) {
-    for (int i = 0; i < n_p1; i++)
-      if (p1_types[i] != p2_types[i])
-        mixed_flag = true;
-  } else
-    mixed_flag = true;
-
-  auto const bin_width = (r_max - r_min) / (double)r_bins;
-  auto const inv_bin_width = 1.0 / bin_width;
-  auto const volume = box_geo.volume();
-  for (int l = 0; l < r_bins; l++)
-    rdf_tmp[l] = rdf[l] = 0.0;
-
-  while (cnt_conf <= n_conf) {
-    for (int l = 0; l < r_bins; l++)
-      rdf_tmp[l] = 0.0;
-    cnt = 0;
-    auto const k = configs.size() - cnt_conf;
-    int i = 0;
-    for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
-      for (int t1 = 0; t1 < n_p1; t1++) {
-        if (it->p.type == p1_types[t1]) {
-          /* distinguish mixed and identical rdf's */
-          auto jt = mixed_flag ? partCfg.begin() : std::next(it);
-          int j = mixed_flag ? 0 : i + 1;
-
-          // particle loop: p2_types
-          for (; jt != partCfg.end(); ++jt) {
-            for (int t2 = 0; t2 < n_p2; t2++) {
-              if (jt->p.type == p2_types[t2]) {
-                auto const dist =
-                    get_mi_vector(configs[k][i], configs[k][j], box_geo).norm();
-                if (dist > r_min && dist < r_max) {
-                  auto const ind =
-                      static_cast<int>((dist - r_min) * inv_bin_width);
-                  rdf_tmp[ind]++;
-                }
-                cnt++;
-              }
-            }
-            j++;
-          }
-        }
-      }
-      i++;
-    }
-    // normalization
-
-    for (int i = 0; i < r_bins; i++) {
-      auto const r_in = i * bin_width + r_min;
-      auto const r_out = r_in + bin_width;
-      auto const bin_volume = (4.0 / 3.0) * Utils::pi() *
-                              ((r_out * r_out * r_out) - (r_in * r_in * r_in));
-      rdf[i] += rdf_tmp[i] * volume / (bin_volume * static_cast<double>(cnt));
-    }
-
-    cnt_conf++;
-  } // cnt_conf loop
-  for (int i = 0; i < r_bins; i++) {
-    rdf[i] /= (cnt_conf - 1);
-  }
-}
-
 std::vector<double> calc_structurefactor(PartCfg &partCfg,
                                          std::vector<int> const &p_types,
                                          int order) {
@@ -497,16 +346,4 @@ std::vector<std::vector<double>> modify_stucturefactor(int order,
   }
 
   return structure_factor;
-}
-
-/****************************************************************************************
- *                                 config storage functions
- ****************************************************************************************/
-
-void analyze_append(PartCfg &partCfg) {
-  std::vector<Utils::Vector3d> config;
-  for (auto const &p : partCfg) {
-    config.emplace_back(p.r.p);
-  }
-  configs.emplace_back(config);
 }
