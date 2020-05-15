@@ -35,7 +35,7 @@ static void backup_file(const std::string &from, const std::string &to) {
   if (this_node == 0) {
     /*
      * If the file itself *and* a backup file exists, something must
-     * have went wrong.
+     * have gone wrong.
      */
     boost::filesystem::path pfrom(from), pto(to);
     try {

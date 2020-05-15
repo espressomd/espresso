@@ -19,6 +19,7 @@
 #ifndef CONSTRAINTS_CONSTRAINT_HPP
 #define CONSTRAINTS_CONSTRAINT_HPP
 
+#include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "energy.hpp"
 
@@ -26,22 +27,18 @@ namespace Constraints {
 class Constraint {
 public:
   /**
-   * @brief Add energy contribution of this constraints to energy.
-   *
-   * Add constraint energy for particle to observable.
+   * @brief Add constraint energy for particle to the energy observable.
    *
    * @param[in] p The particle to add the energy for.
    * @param[in] folded_pos Folded position of the particle.
    * @param[in] t The time at which the energy should be calculated.
-   * @param[out] energy to add the energy to.
+   * @param[out] energy Energy observable to add this constraint's energy to.
    */
   virtual void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
                           double t, Observable_stat &energy) const = 0;
 
   /**
    * @brief Calculate the force of the constraint on a particle.
-   *
-   * Add constraint energy for particle to observable.
    *
    * @param[in] p The particle to calculate the force for.
    * @param[in] folded_pos Folded position of the particle.

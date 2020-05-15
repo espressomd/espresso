@@ -27,23 +27,17 @@
 #include "statistics.hpp"
 
 #include "Particle.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
-#include "energy.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "npt.hpp"
 #include "partCfg_global.hpp"
-#include "pressure.hpp"
-#include "short_range_loop.hpp"
 
-#include <utils/NoOp.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/contains.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <cstdlib>
 #include <limits>
@@ -515,87 +509,4 @@ void analyze_append(PartCfg &partCfg) {
     config.emplace_back(p.r.p);
   }
   configs.emplace_back(config);
-}
-
-/****************************************************************************************
- *                                 Observables handling
- ****************************************************************************************/
-
-void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
-                               int n_non_bonded, int n_coulomb, int n_dipolar,
-                               int n_vs, int c_size) {
-
-  // Number of doubles to store pressure in
-  const int total =
-      c_size *
-      (n_pre + static_cast<int>(bonded_ia_params.size()) + n_non_bonded +
-       n_coulomb + n_dipolar + n_vs + Observable_stat::n_external_field);
-
-  // Allocate mem for the double list
-  stat->data.resize(total);
-
-  // Number of doubles per interaction (pressure=1, stress tensor=9,...)
-  stat->chunk_size = c_size;
-
-  // Number of chunks for different interaction types
-  stat->n_coulomb = n_coulomb;
-  stat->n_dipolar = n_dipolar;
-  stat->n_virtual_sites = n_vs;
-  // Pointers to the start of different contributions
-  stat->bonded = stat->data.data() + c_size * n_pre;
-  stat->non_bonded = stat->bonded + c_size * bonded_ia_params.size();
-  stat->coulomb = stat->non_bonded + c_size * n_non_bonded;
-  stat->dipolar = stat->coulomb + c_size * n_coulomb;
-  stat->virtual_sites = stat->dipolar + c_size * n_dipolar;
-  stat->external_fields = stat->virtual_sites + c_size * n_vs;
-
-  // Set all observables to zero
-  for (int i = 0; i < total; i++)
-    stat->data[i] = 0.0;
-}
-
-void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
-                                          int n_nonbonded, int c_size) {
-  auto const total = c_size * (n_nonbonded + n_nonbonded);
-
-  stat_nb->data_nb.resize(total);
-  stat_nb->chunk_size_nb = c_size;
-  stat_nb->non_bonded_intra = stat_nb->data_nb.data();
-  stat_nb->non_bonded_inter = stat_nb->non_bonded_intra + c_size * n_nonbonded;
-
-  for (int i = 0; i < total; i++)
-    stat_nb->data_nb[i] = 0.0;
-}
-
-void invalidate_obs() {
-  total_energy.init_status = 0;
-  total_pressure.init_status = 0;
-  total_p_tensor.init_status = 0;
-}
-
-void update_pressure(int v_comp) {
-  Utils::Vector3d p_vel;
-  /* if desired (v_comp==1) replace ideal component with instantaneous one */
-  if (total_pressure.init_status != 1 + v_comp) {
-    init_virials(&total_pressure);
-    init_p_tensor(&total_p_tensor);
-
-    init_virials_non_bonded(&total_pressure_non_bonded);
-    init_p_tensor_non_bonded(&total_p_tensor_non_bonded);
-
-    if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
-        !(nptiso.invalidate_p_vel)) {
-      if (total_pressure.init_status == 0)
-        master_pressure_calc(0);
-      total_pressure.data[0] = 0.0;
-      MPI_Reduce(nptiso.p_vel.data(), p_vel.data(), 3, MPI_DOUBLE, MPI_SUM, 0,
-                 MPI_COMM_WORLD);
-      for (int i = 0; i < 3; i++)
-        if (nptiso.geometry & nptiso.nptgeom_dir[i])
-          total_pressure.data[0] += p_vel[i];
-      total_pressure.data[0] /= (nptiso.dimension * nptiso.volume);
-      total_pressure.init_status = 1 + v_comp;
-    } else
-      master_pressure_calc(v_comp);
-  }
 }

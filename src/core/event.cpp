@@ -25,6 +25,7 @@
  */
 #include "event.hpp"
 
+#include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
@@ -41,7 +42,6 @@
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
-#include "statistics.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
@@ -49,6 +49,7 @@
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #ifdef SCAFACOS
 #include "electrostatics_magnetostatics/scafacos.hpp"

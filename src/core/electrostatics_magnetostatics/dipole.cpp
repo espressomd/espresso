@@ -19,9 +19,6 @@
 
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-// Real space cutoff of long range methods
-double dipolar_cutoff;
-
 #ifdef DIPOLES
 
 #include "actor/DipolarBarnesHut.hpp"
@@ -48,8 +45,6 @@ Dipole_parameters dipole = {
 };
 
 namespace Dipole {
-int pressure_n() { return 0; }
-
 void calc_pressure_long_range() {
   switch (dipole.method) {
   case DIPOLAR_NONE:
@@ -260,30 +255,6 @@ void calc_energy_long_range(Observable_stat &energy,
   }
 }
 
-void energy_n(int &n_dipolar) {
-  switch (dipole.method) {
-  case DIPOLAR_NONE:
-    n_dipolar = 1; // because there may be an external magnetic field
-    break;
-  case DIPOLAR_P3M:
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-  case DIPOLAR_DS:
-  case DIPOLAR_DS_GPU:
-#ifdef DIPOLAR_BARNES_HUT
-  case DIPOLAR_BH_GPU:
-#endif
-  case DIPOLAR_SCAFACOS:
-    n_dipolar = 2;
-    break;
-  case DIPOLAR_MDLC_P3M:
-  case DIPOLAR_MDLC_DS:
-    n_dipolar = 3;
-    break;
-  default:
-    break;
-  }
-}
-
 int set_mesh() {
   switch (dipole.method) {
 #ifdef DP3M
@@ -340,7 +311,7 @@ void set_method_local(DipolarInteraction method) {
   if ((dipole.method == DIPOLAR_BH_GPU) && (method != DIPOLAR_BH_GPU)) {
     deactivate_dipolar_barnes_hut();
   }
-#endif // BARNES_HUT
+#endif // DIPOLAR_ BARNES_HUT
   dipole.method = method;
 }
 

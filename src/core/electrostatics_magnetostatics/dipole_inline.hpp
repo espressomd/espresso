@@ -56,7 +56,6 @@ inline double pair_energy(Particle const &p1, Particle const &p2,
                           Utils::Vector3d const &d, double dist, double dist2) {
   double ret = 0;
   if (dipole.method != DIPOLAR_NONE) {
-    // ret=0;
     switch (dipole.method) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:

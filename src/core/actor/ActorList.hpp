@@ -28,4 +28,4 @@ public:
   void remove(Actor *actor);
 };
 
-#endif /* ACTORLIST_HPP_ */
+#endif /* _ACTOR_ACTORLIST_HPP */
