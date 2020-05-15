@@ -133,7 +133,6 @@ print("\n--->Analysis setup")
 rdf_bins = 500
 r_min = 0.0
 r_max = system.box_l[0] / 2.0
-ptypes = system.part[:].type
 pids_Cl = system.part.select(type=types["Cl"]).id
 pids_Na = system.part.select(type=types["Na"]).id
 rdf_00_obs = RDF(ids1=pids_Cl, ids2=pids_Cl, min_r=r_min, max_r=r_max,
