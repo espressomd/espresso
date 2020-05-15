@@ -193,7 +193,7 @@ vector so that the product of ``dist`` and ``normal`` is a point on the surface.
 Therefore negative distances are quite common!
 
 .. figure:: figures/shape-wall.png
-   :alt: Example constraint with a ``Wall`` shape.
+   :alt: Visualization of a constraint with a Wall shape.
    :align: center
    :height: 6.00000cm
 
@@ -219,7 +219,7 @@ and ``+1`` for outward.
 .. _shape-sphere:
 
 .. figure:: figures/shape-sphere.png
-   :alt: Example constraint with a ``Sphere`` shape.
+   :alt: Visualization of a constraint with a Sphere shape.
    :align: center
    :height: 6.00000cm
 
@@ -242,7 +242,7 @@ The distance to the surface is determined iteratively via Newton's method.
 .. _shape-ellipsoid:
 
 .. figure:: figures/shape-ellipsoid.png
-   :alt: Example constraint with an ``Ellipsoid`` shape.
+   :alt: Visualization of a constraint with an Ellipsoid shape.
    :align: center
    :height: 6.00000cm
 
@@ -262,9 +262,8 @@ The ``axis`` parameter is a vector along the cylinder axis, which is normalized 
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
 
-
 .. figure:: figures/shape-cylinder.png
-   :alt: Example constraint with a ``Cylinder`` shape.
+   :alt: Visualization of a constraint with a Cylinder shape.
    :align: center
    :height: 6.00000cm
 
@@ -310,7 +309,7 @@ Two parallel infinite planes, connected by a cylindrical orifice. The cylinder
 is connected to the planes by torus segments with an adjustable radius.
 
 Length and radius of the cylindrical pore can be set via the corresponding parameters
-(``length`` and ``radius``). The parameter ``center`` defines the central point of the pore.
+``length`` and ``radius``. The parameter ``center`` defines the central point of the pore.
 The orientation of the pore is given by the vector ``axis``, which points along the cylinder's symmetry axis.
 The pore openings are smoothed with torus segments, the radius of which can be set using the parameter ``smoothing_radius``.
 In the OpenGL visualizer, these torus segments are rendered as a half-torus instead of a quarter-torus.
@@ -318,7 +317,7 @@ You can safely ignore this visual artifact, in the force/energy calculation, onl
 
 
 .. figure:: figures/shape-simplepore.png
-   :alt: Example constraint with a ``SimplePore`` shape.
+   :alt: Visualization of a constraint with a SimplePore shape.
    :align: center
    :height: 6.00000cm
 
@@ -352,12 +351,12 @@ but the combination 7:3:1 is a good point to start from when trying to modify th
 
 
 .. figure:: figures/shape-stomatocyte1.png
-   :alt: Example constraint with a ``Stomatocyte`` shape.
+   :alt: Visualization of a constraint with a Stomatocyte shape.
    :align: center
    :height: 6.00000cm
 
 .. figure:: figures/shape-stomatocyte2.png
-   :alt: Close-up of the internal ``Stomatocyte`` structure.
+   :alt: Close-up view of the internal Stomatocyte structure.
    :align: center
    :height: 6.00000cm
 
@@ -387,7 +386,7 @@ The region is described as a pore (lower vertical part of the "T"-shape) and a c
 .. _figure-slitpore:
 
 .. figure:: figures/slitpore.png
-   :alt: Schematic for the slitpore shape showing geometrical parameters
+   :alt: Schematic for the Slitpore shape with labeled geometrical parameters.
    :align: center
    :height: 6.00000cm
 
@@ -402,7 +401,7 @@ The meaning of the geometrical parameters can be inferred from the schematic in 
 
 
 .. figure:: figures/shape-slitpore.png
-   :alt: Example constraint with a ``Slitpore`` shape.
+   :alt: Visualization of a constraint with a Slitpore shape.
    :align: center
    :height: 6.00000cm
 
@@ -434,7 +433,7 @@ The direction ``direction`` determines the force direction, ``-1`` for inward an
 
 
 .. figure:: figures/shape-spherocylinder.png
-   :alt: Example constraint with a ``SpheroCylinder`` shape.
+   :alt: Visualization of a constraint with a SpheroCylinder shape.
    :align: center
    :height: 6.00000cm
 
@@ -466,12 +465,12 @@ The ``width`` specifies the width.
 This shape supports the ``direction`` parameter, ``+1`` for outward and ``-1`` for inward.
 
 .. figure:: figures/shape-hollowcone.png
-   :alt:  Example constraint with a  ``Hollowcone`` shape.
+   :alt:  Visualization of a constraint with a HollowCone shape.
    :align: center
    :height: 6.00000cm
 
 
-Pictured is an example constraint with a ``Hollowcone`` shape created with ::
+Pictured is an example constraint with a ``HollowCone`` shape created with ::
 
     hollowcone = HollowCone(inner_radius=5,
                             outer_radius=20,
