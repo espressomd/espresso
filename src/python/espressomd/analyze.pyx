@@ -43,19 +43,6 @@ class Analysis:
             raise TypeError("An instance of System is required as argument")
         self._system = system
 
-    #
-    # Append configs
-    #
-
-    def append(self):
-        """Append configuration for averaged analysis."""
-        assert get_n_part(), "No particles to append!"
-        if get_n_configs() > 0:
-            assert analyze.get_n_part_conf() == get_n_part(), \
-                "All configurations stored must have the same length"
-
-        analyze.analyze_append(analyze.partCfg())
-
     def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particle types.
 
@@ -682,90 +669,6 @@ class Analysis:
             analyze.partCfg(), sf_types, sf_order)
 
         return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
-
-    #
-    # RDF
-    #
-
-    def rdf(self, rdf_type=None, type_list_a=None, type_list_b=None,
-            r_min=0.0, r_max=None, r_bins=100, n_conf=None):
-        """
-        Calculate a radial distribution function.
-        The result is normalized by the spherical bin shell, the total number
-        of particle pairs and the system volume.
-
-
-        Parameters
-        ----------
-        rdf_type : :obj:`str`, \{'rdf', '<rdf>'\}
-            Type of analysis.
-        type_list_a : lists of :obj:`int`
-            Left :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
-        type_list_b : lists of :obj:`int`, optional
-            Right :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
-        r_min : :obj:`float`
-            Minimal distance to consider.
-        r_max : :obj:`float`
-            Maximal distance to consider.
-        r_bins : :obj:`int`
-            Number of bins.
-        n_conf : :obj:`int`, optional
-            If ``rdf_type`` is ``'<rdf>'`` this determines
-            the number of stored configs that are used (if
-            ``None``, all configurations are used).
-
-        Returns
-        -------
-        :obj:`ndarray`
-            Where [0] contains the midpoints of the bins,
-            and [1] contains the values of the rdf.
-
-        """
-
-        if rdf_type is None:
-            raise ValueError("rdf_type must not be empty!")
-        if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):
-            raise ValueError("type_list_a has to be a list!")
-        if (type_list_b is not None) and (
-                not hasattr(type_list_b, '__iter__')):
-            raise ValueError("type_list_b has to be a list!")
-        if type_list_b is None:
-            type_list_b = type_list_a
-
-        if rdf_type != 'rdf':
-            if get_n_configs() == 0:
-                raise ValueError("No configurations founds!\n",
-                                 "Use `analyze.append()` to save configurations,",
-                                 "or `analyze.rdf('rdf')` to only look at current RDF!""")
-            if n_conf is None:
-                n_conf = get_n_configs()
-
-        if r_max is None:
-            r_max = min(Globals().box_l) / 2
-
-        cdef vector[double] rdf
-        rdf.resize(r_bins)
-        cdef vector[int] p1_types = type_list_a
-        cdef vector[int] p2_types = type_list_b
-
-        if rdf_type == 'rdf':
-            analyze.calc_rdf(analyze.partCfg(), p1_types,
-                             p2_types, r_min, r_max, r_bins, rdf)
-        elif rdf_type == '<rdf>':
-            analyze.calc_rdf_av(
-                analyze.partCfg(), p1_types, p2_types, r_min,
-                r_max, r_bins, rdf, n_conf)
-        else:
-            raise ValueError("Unknown rdf_type value {!r}".format(rdf_type))
-
-        r = np.empty(r_bins)
-        bin_width = (r_max - r_min) / r_bins
-        rr = r_min + bin_width / 2.0
-        for i in range(r_bins):
-            r[i] = rr
-            rr += bin_width
-
-        return np.array([r, rdf])
 
     #
     # distribution

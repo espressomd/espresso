@@ -476,8 +476,8 @@ end:
         system.integrator.run(steps=500)
         cell.output_vtk_pos_folded(filename="output/sim1/cell_"
                                    + str(i) + ".vtk")
-        print "time: ", str(i * time_step)
-    print "Simulation completed."
+        print("time: ", str(i * time_step))
+    print("Simulation completed.")
 
 This simulation runs for 100 cycles. In each cycle, 500 integration
 steps are performed and output is saved into files
