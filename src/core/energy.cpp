@@ -23,6 +23,7 @@
  */
 
 #include "EspressoSystemInterface.hpp"
+#include "Observable_stat.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
@@ -30,7 +31,6 @@
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include <boost/range/numeric.hpp>
 
 #include "short_range_loop.hpp"
 
@@ -39,46 +39,20 @@
 
 ActorList energyActors;
 
-Observable_stat energy{};
-Observable_stat total_energy{};
+/** Energy of the system */
+Observable_stat_wrapper obs_energy{1, false};
 
-/************************************************************/
-
-void init_energies(Observable_stat *stat) {
-  int n_pre, n_non_bonded, n_dipolar(0);
-
-  n_pre = 1;
-  n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
-
-#ifdef ELECTROSTATICS
-  auto const n_coulomb = Coulomb::energy_n();
-#else
-  int const n_coulomb = 0;
-#endif
-#ifdef DIPOLES
-  Dipole::energy_n(n_dipolar);
-#endif
-
-  obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,
-                            n_coulomb, n_dipolar, 0, 1);
-  stat->init_status = 0;
-}
-
-/************************************************************/
-
+/** Reduce the system energy from all MPI ranks. */
 void master_energy_calc() {
-  mpi_gather_stats(1, total_energy.data.data(), nullptr, nullptr, nullptr);
-
-  total_energy.init_status = 1;
+  mpi_gather_stats(GatherStats::energy);
+  obs_energy.is_initialized = true;
 }
 
-/************************************************************/
-
-void energy_calc(double *result, const double time) {
+void energy_calc(const double time) {
   if (!interactions_sanity_checks())
     return;
 
-  init_energies(&energy);
+  obs_energy.local.resize_and_clear();
 
 #ifdef CUDA
   clear_energy_on_GPU();
@@ -105,36 +79,35 @@ void energy_calc(double *result, const double time) {
   calc_long_range_energies(cell_structure.local_particles());
 
   auto local_parts = cell_structure.local_particles();
-  Constraints::constraints.add_energy(local_parts, time, energy);
+  Constraints::constraints.add_energy(local_parts, time, obs_energy.local);
 
 #ifdef CUDA
   copy_energy_from_GPU();
 #endif
 
   /* gather data */
-  MPI_Reduce(energy.data.data(), result, energy.data.size(), MPI_DOUBLE,
-             MPI_SUM, 0, comm_cart);
+  obs_energy.reduce();
 }
 
-/************************************************************/
+void update_energy() {
+  if (!obs_energy.is_initialized) {
+    obs_energy.resize();
+    master_energy_calc();
+  }
+}
 
 void calc_long_range_energies(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_energy_long_range(energy, particles);
+  Coulomb::calc_energy_long_range(obs_energy.local, particles);
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  Dipole::calc_energy_long_range(energy, particles);
+  Dipole::calc_energy_long_range(obs_energy.local, particles);
 #endif /* ifdef DIPOLES */
 }
 
 double calculate_current_potential_energy_of_system() {
-  // calculate potential energy
-  if (total_energy.init_status == 0) {
-    init_energies(&total_energy);
-    master_energy_calc();
-  }
-
-  return boost::accumulate(total_energy.data, -total_energy.data[0]);
+  update_energy();
+  return obs_energy.accumulate(-obs_energy.kinetic[0]);
 }

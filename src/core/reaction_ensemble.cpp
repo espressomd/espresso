@@ -25,6 +25,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
+#include "statistics.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/index.hpp>

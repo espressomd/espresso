@@ -45,7 +45,7 @@ __device__ inline void get_mi_vector_dds(dds_float res[3], dds_float const a[3],
   }
 }
 
-#define scalar(a, b) (a[0] * b[0] + a[1] * b[1] + a[2] * b[2])
+#define scalar(a, b) ((a)[0] * (b)[0] + (a)[1] * (b)[1] + (a)[2] * (b)[2])
 
 __device__ void dipole_ia_force(int id, dds_float pf, float const *r1,
                                 float const *r2, float const *dip1,

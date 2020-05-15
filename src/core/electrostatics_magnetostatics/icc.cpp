@@ -65,7 +65,7 @@ void init_forces_iccp3m(const ParticleRange &particles,
 void force_calc_iccp3m(const ParticleRange &particles,
                        const ParticleRange &ghost_particles);
 
-/** Variant of @ref add_non_bonded_pair_force where only Coulomb
+/** Variant of @ref add_non_bonded_pair_force where only %Coulomb
  *  contributions are calculated
  */
 inline void add_non_bonded_pair_force_iccp3m(Particle &p1, Particle &p2,
@@ -97,7 +97,7 @@ int iccp3m_iteration(const ParticleRange &particles,
 
   Coulomb::iccp3m_sanity_check();
 
-  if ((iccp3m_cfg.eout <= 0)) {
+  if (iccp3m_cfg.eout <= 0) {
     runtimeErrorMsg()
         << "ICCP3M: nonpositive dielectric constant is not allowed.";
   }
@@ -160,7 +160,7 @@ int iccp3m_iteration(const ParticleRange &particles,
         /* check if the charge now is more than 1e6, to determine if ICC still
          * leads to reasonable results */
         /* this is kind of an arbitrary measure but does a good job spotting
-         * divergence !*/
+         * divergence! */
         if (std::abs(p.p.q) > 1e6) {
           runtimeErrorMsg()
               << "too big charge assignment in iccp3m! q >1e6 , assigned "
@@ -199,7 +199,7 @@ void force_calc_iccp3m(const ParticleRange &particles,
 
   short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2,
                                      Distance const &d) {
-    /* calc non bonded interactions */
+    /* calc non-bonded interactions */
     add_non_bonded_pair_force_iccp3m(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
   });
 

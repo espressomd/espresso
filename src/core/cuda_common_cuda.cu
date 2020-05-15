@@ -22,6 +22,7 @@
 
 #include "debug.hpp"
 
+#include "Observable_stat.hpp"
 #include "ParticleRange.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
@@ -221,14 +222,20 @@ void clear_energy_on_GPU() {
 }
 
 void copy_energy_from_GPU() {
+  extern Observable_stat_wrapper obs_energy;
   if (!global_part_vars_host.communication_enabled)
     return;
   cuda_safe_mem(cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy),
                            cudaMemcpyDeviceToHost));
-  copy_CUDA_energy_to_energy(energy_host);
+  if (!obs_energy.local.bonded.empty())
+    obs_energy.local.bonded[0] += energy_host.bonded;
+  if (!obs_energy.local.non_bonded.empty())
+    obs_energy.local.non_bonded[0] += energy_host.non_bonded;
+  if (!obs_energy.local.coulomb.empty())
+    obs_energy.local.coulomb[0] += energy_host.coulomb;
+  if (obs_energy.local.dipolar.size() >= 2)
+    obs_energy.local.dipolar[1] += energy_host.dipolar;
 }
-
-/** @name Generic copy functions from and to device */
 
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
   if (cudaSuccess != CU_err) {
@@ -254,5 +261,3 @@ void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
     }
   }
 }
-
-/*@}*/
