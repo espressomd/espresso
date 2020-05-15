@@ -127,10 +127,8 @@ void ELC_init();
 double ELC_P3M_dielectric_layers_energy_contribution(Particle const &p1,
                                                      Particle const &p2);
 /// pairwise contributions from the lowest and top layers to the force
-void ELC_P3M_dielectric_layers_force_contribution(Particle const &p1,
-                                                  Particle const &p2,
-                                                  Utils::Vector3d &force1,
-                                                  Utils::Vector3d &force2);
+Utils::Vector3d ELC_P3M_dielectric_layers_force_contribution(
+    const Utils::Vector3d &pos1, const Utils::Vector3d &pos2, double q1q2);
 /// self energies of top and bottom layers with their virtual images
 double ELC_P3M_dielectric_layers_energy_self(const ParticleRange &particles);
 /// forces of particles in border layers with themselves
