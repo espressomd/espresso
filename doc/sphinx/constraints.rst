@@ -336,6 +336,10 @@ ignore this visual artifact, it has no impact on the force/energy calculation.
 Stomatocyte
 """""""""""
 
+.. note::
+
+    Requires ``EXPERIMENTAL_FEATURES``.
+
 :class:`espressomd.shapes.Stomatocyte`
 
 A stomatocyte-shaped boundary surface.
@@ -343,13 +347,19 @@ This command should be used with care.
 The position can be any point in the simulation box and is set via the (3,) array_like parameter ``center``.
 The orientation of the (cylindrically symmetric) stomatocyte is given by an ``axis`` (a (3,) array_like of :obj:`float`),
 which points in the direction of the symmetry axis and does not need to be normalized.
-The parameters: ``outer_radius``, ``inner_radius``, and ``layer_width``, specify the shape of the stomatocyte.
-Here inappropriate choices of these parameters can yield undesired results.
+Parameters ``outer_radius``, ``inner_radius``, and ``layer_width`` specify the
+shape of the stomatocyte. Here inappropriate choices of parameters can yield
+undesired results, such as discontinuous shapes or NaN values. Always use
+values greater than 1 for ``inner_radius`` to avoid NaN values.
 The width ``layer_width`` is used as a scaling parameter.
 That is, a stomatocyte given by ``outer_radius:inner_radius:layer_width`` = 7:3:1
 is half the size of the stomatocyte given by 7:3:2.
-Not all choices of the parameters give reasonable values for the shape of the stomatocyte,
+
+Not all choices of parameters give reasonable values for the shape of the stomatocyte,
 but the combination 7:3:1 is a good point to start from when trying to modify the shape.
+If you observe jumps in forces for particles inside the stomatocyte cavity,
+your parameters are most likely wrong, in which case the OpenGL visualizer
+will typically fail to draw dots inside the stomatocyte cavity.
 
 
 .. figure:: figures/shape-stomatocyte1.png
