@@ -253,14 +253,15 @@ void lb_lbcoupling_calc_particle_lattice_ia(
           return {};
         };
 
-
         auto couple_particle = [&](Particle &p) -> void {
           // We only couple ghosts, if the physical particle is not on the node
-//          if (p.l.ghost and
-//              not cell_structure.get_local_particle(p.p.identity)->l.ghost)
-//            return;
+          //          if (p.l.ghost and
+          //              not
+          //              cell_structure.get_local_particle(p.p.identity)->l.ghost)
+          //            return;
 
-//          printf("%d: coupling at %g %g %g, ghost %d\n",this_node, p.r.p[0],p.r.p[1],p.r.p[2],p.l.ghost);
+          //          printf("%d: coupling at %g %g %g, ghost %d\n",this_node,
+          //          p.r.p[0],p.r.p[1],p.r.p[2],p.l.ghost);
           if (p.p.is_virtual and !couple_virtual)
             return;
 
@@ -289,7 +290,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         }
 
         for (auto &p : more_particles) {
-            couple_particle(p);
+          couple_particle(p);
         }
 
         break;

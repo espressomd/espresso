@@ -327,15 +327,15 @@ BOOST_AUTO_TEST_CASE(integrate_with_point_forces) {
 BOOST_AUTO_TEST_CASE(forces_initial_state) {
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
                                              box_dimensions, mpi_shape, 2);
-  
+
   for (Vector3i n : all_nodes_incl_ghosts(1)) {
     if (lb.node_in_local_halo(n)) {
       auto res = lb.get_node_force_to_be_applied(n);
       BOOST_CHECK(res);
-      BOOST_CHECK_SMALL((*res).norm(),1E-10);
+      BOOST_CHECK_SMALL((*res).norm(), 1E-10);
       res = lb.get_node_last_applied_force(n);
       BOOST_CHECK(res);
-      BOOST_CHECK_SMALL((*res).norm(),1E-10);
+      BOOST_CHECK_SMALL((*res).norm(), 1E-10);
     }
   }
 }
@@ -343,18 +343,18 @@ BOOST_AUTO_TEST_CASE(forces_initial_state) {
 BOOST_AUTO_TEST_CASE(forces_interpolation) {
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
                                              box_dimensions, mpi_shape, 2);
-  
+
   for (Vector3i n : all_nodes_incl_ghosts(1)) {
     if (lb.node_in_local_halo(n)) {
-     Vector3d pos{double(n[0]),double(n[1]),double(n[2])}; // Mid point between nodes
-      Vector3d f={1,2,-3.5};
-      lb.add_force_at_pos(pos,f);
+      Vector3d pos{double(n[0]), double(n[1]),
+                   double(n[2])}; // Mid point between nodes
+      Vector3d f = {1, 2, -3.5};
+      lb.add_force_at_pos(pos, f);
       auto res = lb.get_node_force_to_be_applied(n);
-      BOOST_CHECK_SMALL(((*res)-f/8.0).norm(),1E-10);
+      BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), 1E-10);
     }
   }
 }
-
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);

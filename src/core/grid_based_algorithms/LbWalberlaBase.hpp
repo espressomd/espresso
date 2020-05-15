@@ -28,7 +28,7 @@ public:
                                 const Utils::Vector3d &force) = 0;
   virtual boost::optional<Utils::Vector3d>
   get_node_force_to_be_applied(const Utils::Vector3i &node) const = 0;
-  
+
   virtual boost::optional<Utils::Vector3d>
   get_node_last_applied_force(const Utils::Vector3i &node) const = 0;
 

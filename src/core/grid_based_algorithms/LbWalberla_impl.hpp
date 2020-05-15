@@ -519,21 +519,23 @@ public:
   boost::optional<Utils::Vector3d>
   get_node_force_to_be_applied(const Utils::Vector3i &node) const override {
     auto const bc = get_block_and_cell(node, true);
-      if (!bc) return {};
-      
-      auto const &force_field = (*bc).block->template getData<VectorField>(
-            m_force_to_be_applied_id);
-     return to_vector3d(force_field->get((*bc).cell)) * m_density;
+    if (!bc)
+      return {};
+
+    auto const &force_field =
+        (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
+    return to_vector3d(force_field->get((*bc).cell)) * m_density;
   };
 
   virtual boost::optional<Utils::Vector3d>
   get_node_last_applied_force(const Utils::Vector3i &node) const override {
     auto const bc = get_block_and_cell(node, true);
-      if (!bc) return {};
-      
-      auto const &force_field = (*bc).block->template getData<VectorField>(
-            m_last_applied_force_field_id);
-     return to_vector3d(force_field->get((*bc).cell)) * m_density;
+    if (!bc)
+      return {};
+
+    auto const &force_field = (*bc).block->template getData<VectorField>(
+        m_last_applied_force_field_id);
+    return to_vector3d(force_field->get((*bc).cell)) * m_density;
   };
 
   // Density

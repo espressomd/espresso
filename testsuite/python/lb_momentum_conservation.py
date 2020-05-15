@@ -28,7 +28,7 @@ AGRID = .4
 GRID_SIZE = 12 
 KVISC = 4
 DENS = 2.3
-F = 5.5 /GRID_SIZE**3 
+F = 5.5 / GRID_SIZE**3 
 GAMMA = 1
 
 
@@ -73,11 +73,11 @@ class Momentum(object):
         np.testing.assert_allclose(initial_momentum, np.copy(p.v) * p.mass)
         while True: 
             self.system.integrator.run(500)
-            
+
             measured_momentum = self.system.analysis.linear_momentum()
             coupling_force = -(p.f - p.ext_force)
             compensation = -TIME_STEP / 2 * coupling_force
-            
+
             np.testing.assert_allclose(measured_momentum + compensation, 
                                        initial_momentum, atol=1E-4)
             if np.linalg.norm(p.f) < 0.01 \

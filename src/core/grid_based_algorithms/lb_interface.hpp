@@ -202,7 +202,6 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
 const Utils::Vector3d
 lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
 
-
 /**
  * @brief Distributes a force at a position which will be applied during
  *        the next integration loop

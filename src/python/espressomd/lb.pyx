@@ -132,7 +132,6 @@ cdef class HydrodynamicInteraction(Actor):
         cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
         return make_array_locked(v)
 
-
     def add_force_at_pos(self, pos, force):
         """Adds a force to the fluid at given position
 
