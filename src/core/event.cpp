@@ -299,7 +299,6 @@ void on_cell_structure_change() {
 void on_temperature_change() { lb_lbfluid_reinit_parameters(); }
 
 void on_parameter_change(int field) {
-
   switch (field) {
   case FIELD_BOXL:
     on_boxl_change();
@@ -320,6 +319,7 @@ void on_parameter_change(int field) {
   case FIELD_MIN_GLOBAL_CUT:
   case FIELD_SKIN:
     cells_on_geometry_change(false);
+    on_coulomb_change();
     break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();
