@@ -56,7 +56,6 @@
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
-#include "statistics.hpp"
 #include "virtual_sites.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -370,59 +369,42 @@ void mpi_bcast_max_seen_particle_type(int ns) {
 }
 
 /*************** GATHER ************/
-void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
-                      void *result_t_nb) {
+void mpi_gather_stats(GatherStats job) {
+  auto job_slave = static_cast<int>(job);
   switch (job) {
-  case 1:
-    mpi_call(mpi_gather_stats_slave, -1, 1);
-    energy_calc((double *)result, sim_time);
+  case GatherStats::energy:
+    mpi_call(mpi_gather_stats_slave, -1, job_slave);
+    energy_calc(sim_time);
     break;
-  case 2:
-    /* calculate and reduce (sum up) virials for 'analyze pressure' or
-       'analyze stress_tensor' */
-    mpi_call(mpi_gather_stats_slave, -1, 2);
-    pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
-                  (double *)result_t_nb, 0);
-    break;
-  case 3:
-    mpi_call(mpi_gather_stats_slave, -1, 3);
-    pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
-                  (double *)result_t_nb, 1);
-    break;
-  case 7:
+  case GatherStats::pressure:
+  case GatherStats::pressure_v_comp:
+    mpi_call(mpi_gather_stats_slave, -1, job_slave);
+    pressure_calc(job == GatherStats::pressure_v_comp);
     break;
   default:
     fprintf(
         stderr,
         "%d: INTERNAL ERROR: illegal request %d for mpi_gather_stats_slave\n",
-        this_node, job);
+        this_node, job_slave);
     errexit();
   }
 }
 
-void mpi_gather_stats_slave(int, int job) {
+void mpi_gather_stats_slave(int, int job_slave) {
+  auto job = static_cast<GatherStats>(job_slave);
   switch (job) {
-  case 1:
-    /* calculate and reduce (sum up) energies */
-    energy_calc(nullptr, sim_time);
+  case GatherStats::energy:
+    energy_calc(sim_time);
     break;
-  case 2:
-    /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze
-     * stress_tensor'*/
-    pressure_calc(nullptr, nullptr, nullptr, nullptr, 0);
-    break;
-  case 3:
-    /* calculate and reduce (sum up) virials, revert velocities half a timestep
-     * for 'analyze p_inst' */
-    pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
-    break;
-  case 7:
+  case GatherStats::pressure:
+  case GatherStats::pressure_v_comp:
+    pressure_calc(job == GatherStats::pressure_v_comp);
     break;
   default:
     fprintf(
         stderr,
         "%d: INTERNAL ERROR: illegal request %d for mpi_gather_stats_slave\n",
-        this_node, job);
+        this_node, job_slave);
     errexit();
   }
 }

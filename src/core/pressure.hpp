@@ -25,48 +25,27 @@
 #ifndef CORE_PRESSURE_HPP
 #define CORE_PRESSURE_HPP
 
-#include "statistics.hpp"
-
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-///
-extern Observable_stat virials, total_pressure, p_tensor, total_p_tensor;
-///
-extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded,
-    p_tensor_non_bonded, total_p_tensor_non_bonded;
-/*@}*/
-
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
-void init_virials(Observable_stat *stat);
-void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
-void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
-void init_p_tensor(Observable_stat *stat);
-void master_pressure_calc(int v_comp);
-
-/** Calculates the pressure in the system from a virial expansion.
- *  @param[out] result Calculated scalar pressure
- *  @param[out] result_t Calculated stress tensor
- *  @param[out] result_nb Calculated intra- and inter-molecular nonbonded
- *                        contributions to the scalar pressure
- *  @param[out] result_t_nb Calculated intra- and inter-molecular nonbonded
- *                          contributions to the stress tensor
- *  @param[in] v_comp flag which enables (1) compensation of the velocities
+/** Parallel pressure calculation from a virial expansion.
+ *  @param[in] v_comp flag which enables compensation of the velocities
  *                    required for deriving a pressure reflecting
  *                    \ref nptiso_struct::p_inst (hence it only works with
  *                    domain decomposition); naturally it therefore doesn't
  *                    make sense to use it without NpT.
  */
-void pressure_calc(double *result, double *result_t, double *result_nb,
-                   double *result_t_nb, int v_comp);
+void pressure_calc(bool v_comp);
 
-/** Function to calculate stress tensor for the observables */
-int observable_compute_stress_tensor(int v_comp, double *A);
+/** Helper function for @ref Observables::StressTensor.
+ *  @param[out] output Destination array.
+ */
+void observable_compute_stress_tensor(double *output);
 
-void update_pressure(int v_comp);
-
-/*@}*/
+/** Recalculate the virials, pressure and stress tensors (only if necessary).
+ *  @param[in] v_comp flag which enables compensation of the velocities
+ *                    required for deriving a pressure reflecting
+ *                    \ref nptiso_struct::p_inst (hence it only works with
+ *                    domain decomposition); naturally it therefore doesn't
+ *                    make sense to use it without NpT.
+ */
+void update_pressure(bool v_comp);
 
 #endif

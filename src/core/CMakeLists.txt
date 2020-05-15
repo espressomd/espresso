@@ -31,6 +31,7 @@ set(EspressoCore_SRC
     reaction_ensemble.cpp
     rotate_system.cpp
     rotation.cpp
+    Observable_stat.cpp
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp

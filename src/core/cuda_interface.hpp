@@ -108,7 +108,6 @@ typedef struct {
 
 void copy_forces_from_GPU(ParticleRange &particles);
 void copy_energy_from_GPU();
-void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();
 
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host();

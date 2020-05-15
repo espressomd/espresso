@@ -38,7 +38,7 @@
  * by just evenly distributing the particles over
  * all part-taking nodes. Pairs are found by just
  * considering all pairs independent of logical or
- * physical location, it has therefor quadratic time
+ * physical location, it has therefore quadratic time
  * complexity in the number of particles.
  *
  * For a more detailed discussion please see @cite plimpton1995a.

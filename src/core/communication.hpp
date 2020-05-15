@@ -65,6 +65,8 @@ extern int this_node;
 extern int n_nodes;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
+/** Statistics to calculate */
+enum class GatherStats : int { energy, pressure, pressure_v_comp };
 
 /**
  * Default MPI tag used by callbacks.
@@ -208,45 +210,15 @@ void mpi_bcast_ia_params(int i, int j);
 void mpi_bcast_max_seen_particle_type(int s);
 
 /** Gather data for analysis.
- *  \todo update parameter descriptions
- *  \param job what to do:
- *      \arg \c 1 calculate and reduce (sum up) energies,
- *           using \ref energy_calc.
- *      \arg \c 2 calculate and reduce (sum up) pressure, stress tensor,
- *           using \ref pressure_calc.
- *      \arg \c 3 calculate and reduce (sum up) instantaneous pressure,
- *           using \ref pressure_calc.
- *  \param result where to store the gathered value(s):
- *      \arg for \c job=1 unused (the results are stored in a global
- *           energy array of type \ref Observable_stat)
- *      \arg for \c job=2 unused (the results are stored in a global
- *           virials array of type \ref Observable_stat)
- *      \arg for \c job=3 unused (the results are stored in a global
- *           virials array of type \ref Observable_stat)
- *  \param result_t where to store the gathered value(s):
- *      \arg for \c job=1 unused (the results are stored in a global
- *           energy array of type \ref Observable_stat)
- *      \arg for \c job=2 unused (the results are stored in a global
- *           p_tensor tensor of type \ref Observable_stat)
- *      \arg for \c job=3 unused (the results are stored in a global
- *           p_tensor tensor of type \ref Observable_stat)
- *  \param result_nb where to store the gathered value(s):
- *      \arg for \c job=1 unused (the results are stored in a global
- *           energy array of type \ref Observable_stat_non_bonded)
- *      \arg for \c job=2 unused (the results are stored in a global
- *           virials_non_bonded array of type \ref Observable_stat_non_bonded)
- *      \arg for \c job=3 unused (the results are stored in a global
- *           virials_non_bonded array of type \ref Observable_stat_non_bonded)
- *  \param result_t_nb where to store the gathered value(s):
- *      \arg for \c job=1 unused (the results are stored in a global
- *           energy array of type \ref Observable_stat_non_bonded)
- *      \arg for \c job=2 unused (the results are stored in a global
- *           p_tensor_non_bonded tensor of type \ref Observable_stat_non_bonded)
- *      \arg for \c job=3 unused (the results are stored in a global
- *           p_tensor_non_bonded tensor of type \ref Observable_stat_non_bonded)
+ *  \param[in] job what to do:
+ *      \arg for \ref GatherStats::energy, calculate and reduce (sum up)
+ *           energies, using \ref energy_calc.
+ *      \arg for \ref GatherStats::pressure, calculate and reduce (sum up)
+ *           pressure, stress tensor, using \ref pressure_calc.
+ *      \arg for \ref GatherStats::pressure_v_comp, calculate and reduce
+ *           (sum up) instantaneous pressure, using \ref pressure_calc.
  */
-void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
-                      void *result_t_nb);
+void mpi_gather_stats(GatherStats job);
 
 /** Send new \ref time_step and rescale the velocities accordingly. */
 void mpi_set_time_step(double time_step);

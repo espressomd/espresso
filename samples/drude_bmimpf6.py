@@ -30,6 +30,8 @@ required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "THOLE", "LANGEVIN_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
+import espressomd.observables
+import espressomd.accumulators
 from espressomd.minimize_energy import steepest_descent
 from espressomd.electrostatics import P3M
 from espressomd.interactions import ThermalizedBond, HarmonicBond
@@ -248,11 +250,11 @@ for i in range(n_ionpairs):
 
 # ENERGY MINIMIZATION
 print("\n-->E minimization")
-print("Before:", system.analysis.energy()["total"])
+print("Before: {:.2e}".format(system.analysis.energy()["total"]))
 n_max_steps = 100000
 steepest_descent(system, f_max=5.0, gamma=0.01, max_steps=n_max_steps,
                  max_displacement=0.01)
-print("After:", system.analysis.energy()["total"])
+print("After: {:.2e}".format(system.analysis.energy()["total"]))
 
 # THERMOSTAT
 if not args.drude:
@@ -347,18 +349,42 @@ else:
 
     for i in range(n_int_cycles):
         system.integrator.run(n_int_steps)
-        print("{0:.0f} %".format(100.0 * i / n_int_cycles))
+        print("\r{0:.0f} %".format((i + 1) * 100.0 / n_int_cycles), end='')
 
     print("\n-->Integration")
 
     n_int_steps = 1000
     n_int_cycles = int(args.walltime * 3600.0 / time_per_step / n_int_steps)
-    print(
-        "Simulating for", args.walltime, "h, which is", n_int_cycles, "cycles x",
-        n_int_steps, "steps, which is", args.walltime * ns_per_hour, "ns simulation time")
+    print("Simulating for {:.2f} h, which is {} cycles x {} steps, which is "
+          "{:.2f} ns simulation time".format(args.walltime, n_int_cycles,
+                                             n_int_steps, args.walltime * ns_per_hour))
+
+    n_parts_tot = len(system.part)
+
+    # RDFs
+    rdf_bins = 100
+    r_min = 0.0
+    r_max = system.box_l[0] / 2.0
+    pids_pf6 = system.part.select(type=types["PF6"]).id
+    pids_bmim = system.part.select(type=types["BMIM_COM"]).id
+    obs_00 = espressomd.observables.RDF(ids1=pids_pf6, min_r=r_min,
+                                        max_r=r_max, n_r_bins=rdf_bins)
+    obs_11 = espressomd.observables.RDF(ids1=pids_bmim, min_r=r_min,
+                                        max_r=r_max, n_r_bins=rdf_bins)
+    obs_01 = espressomd.observables.RDF(ids1=pids_pf6, ids2=pids_bmim,
+                                        min_r=r_min, max_r=r_max,
+                                        n_r_bins=rdf_bins)
+    acc_00 = espressomd.accumulators.MeanVarianceCalculator(
+        obs=obs_00, delta_N=n_int_steps)
+    acc_11 = espressomd.accumulators.MeanVarianceCalculator(
+        obs=obs_11, delta_N=n_int_steps)
+    acc_01 = espressomd.accumulators.MeanVarianceCalculator(
+        obs=obs_01, delta_N=n_int_steps)
+    system.auto_update_accumulators.add(acc_00)
+    system.auto_update_accumulators.add(acc_11)
+    system.auto_update_accumulators.add(acc_01)
 
     file_traj = open(args.path + "traj.xyz", "w")
-    n_parts_tot = len(system.part)
 
     for i in range(n_int_cycles):
         system.integrator.run(n_int_steps)
@@ -371,41 +397,13 @@ else:
             file_traj.write(
                 shortTypes[p.type] + " " + ' '.join(map(str, p.pos_folded)) + '\n')
 
-        # FOR RDFS
-        system.analysis.append()
-
-        print("{0:.1f} %".format(100.0 * i / n_int_cycles))
-
-    # RDFs
-    rdf_bins = 100
-    r_min = 0.0
-    r_max = system.box_l[0] / 2.0
-    r, rdf_00 = system.analysis.rdf(rdf_type='<rdf>',
-                                    type_list_a=[types["PF6"]],
-                                    type_list_b=[types["PF6"]],
-                                    r_min=r_min,
-                                    r_max=r_max,
-                                    r_bins=rdf_bins)
-
-    r, rdf_11 = system.analysis.rdf(rdf_type='<rdf>',
-                                    type_list_a=[types["BMIM_COM"]],
-                                    type_list_b=[types["BMIM_COM"]],
-                                    r_min=r_min,
-                                    r_max=r_max,
-                                    r_bins=rdf_bins)
-    r, rdf_01 = system.analysis.rdf(rdf_type='<rdf>',
-                                    type_list_a=[types["PF6"]],
-                                    type_list_b=[types["BMIM_COM"]],
-                                    r_min=r_min,
-                                    r_max=r_max,
-                                    r_bins=rdf_bins)
-
-    rdf_fp = open(args.path + "rdf.dat", 'w')
-    for i in range(rdf_bins):
-        rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" %
-                     (r[i], rdf_00[i], rdf_11[i], rdf_01[i]))
-    rdf_fp.close()
+        print("\r{0:.1f} %".format((i + 1) * 100.0 / n_int_cycles))
 
     file_traj.close()
 
-    print("-->Done")
+    rdf_00 = acc_00.get_mean()
+    rdf_11 = acc_11.get_mean()
+    rdf_01 = acc_01.get_mean()
+    r = obs_01.bin_centers()
+    np.savetxt(args.path + "rdf.dat", np.c_[r, rdf_00, rdf_11, rdf_01])
+    print("\n-->Done")

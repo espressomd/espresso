@@ -19,6 +19,7 @@
 
 import unittest as ut
 import espressomd
+import espressomd.observables
 import numpy as np
 
 
@@ -51,15 +52,17 @@ class RdfTest(ut.TestCase):
         r_bins = 50
         r_min = 0.5 * dx
         r_max = r_bins * dx
-        rdf = s.analysis.rdf(rdf_type='rdf', type_list_a=[0, 1],
-                             r_min=r_min, r_max=r_max, r_bins=r_bins)
-        rv = self.bin_volumes(rdf[0])
+        obs = espressomd.observables.RDF(ids1=s.part[:].id, min_r=r_min,
+                                         max_r=r_max, n_r_bins=r_bins)
+        rdf = obs.calculate()
+        r = obs.bin_centers()
+        rv = self.bin_volumes(r)
         rho = n_part / (s.box_l[0]**3)
 
-        parts_in_bin = rdf[1] * rv * rho
+        parts_in_bin = rdf * rv * rho
 
         # All but the last bin should contain 2 particles
-        np.testing.assert_allclose(parts_in_bin[:-1], 2.0)
+        np.testing.assert_allclose(parts_in_bin[:-1], 2.0, rtol=1e-1)
 
     def test_mixed(self):
         s = self.s
@@ -74,45 +77,30 @@ class RdfTest(ut.TestCase):
         r_bins = 50
         r_min = 0.5 * dx
         r_max = r_bins * dx
-        rdf01 = s.analysis.rdf(
-            rdf_type='rdf', type_list_a=[0], type_list_b=[1],
-            r_min=r_min, r_max=r_max, r_bins=r_bins)
-        rv = self.bin_volumes(rdf01[0])
-        rho = 0.5 * n_part / (s.box_l[0]**3)
+        obs = espressomd.observables.RDF(ids1=s.part[:].id[0::2],
+                                         ids2=s.part[:].id[1::2],
+                                         min_r=r_min, max_r=r_max,
+                                         n_r_bins=r_bins)
+        rdf01 = obs.calculate()
 
-        parts_in_bin = rdf01[1] * rv * rho
+        r = obs.bin_centers()
+        rv = self.bin_volumes(r)
+        rho = 0.5 * n_part / (s.box_l[0]**3)
+        parts_in_bin = rdf01 * rv * rho
 
         # Every even bin should contain two parts
-        np.testing.assert_allclose(parts_in_bin[0:-1:2], 2.0, rtol=1e-1)
+        np.testing.assert_allclose(parts_in_bin[0::2], 2.0, rtol=1e-1)
         # Every odd bin should contain zero parts
-        np.testing.assert_allclose(parts_in_bin[1:-1:2], 0.0)
+        np.testing.assert_allclose(parts_in_bin[1::2], 0.0)
 
         # Check symmetry
-        rdf10 = s.analysis.rdf(
-            rdf_type='rdf', type_list_a=[1], type_list_b=[0],
-            r_min=r_min, r_max=r_max, r_bins=r_bins)
+        obs = espressomd.observables.RDF(ids1=s.part[:].id[1::2],
+                                         ids2=s.part[:].id[0::2],
+                                         min_r=r_min, max_r=r_max,
+                                         n_r_bins=r_bins)
+        rdf10 = obs.calculate()
 
         np.testing.assert_allclose(rdf10, rdf01)
-
-    def test_av(self):
-        s = self.s
-
-        for i in range(200):
-            s.part.add(id=i, pos=s.box_l * np.random.random(3), type=(i % 3))
-
-        r_bins = 50
-        r_min = 0.0
-        r_max = 0.49 * s.box_l[0]
-        rdf = s.analysis.rdf(rdf_type='rdf', type_list_a=[0, 1, 2],
-                             r_min=r_min, r_max=r_max, r_bins=r_bins)
-
-        for i in range(10):
-            s.analysis.append()
-
-        rdf_av = s.analysis.rdf(rdf_type='<rdf>', type_list_a=[0, 1, 2],
-                                r_min=r_min, r_max=r_max, r_bins=r_bins)
-
-        np.testing.assert_allclose(rdf[1], rdf_av[1])
 
 
 if __name__ == "__main__":
