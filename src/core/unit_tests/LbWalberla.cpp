@@ -254,8 +254,6 @@ BOOST_AUTO_TEST_CASE(velocity) {
       auto res = lb.get_velocity_at_pos(n_pos(node));
       BOOST_CHECK(res); // locally available
       auto v_exp = n_vel(node);
-      printf("%d %d %d: %g %g %g | %g %g %g\n", node[0], node[1], node[2],
-             (*res)[0], (*res)[1], (*res)[2], v_exp[0], v_exp[1], v_exp[2]);
       BOOST_CHECK_SMALL((*res - n_vel(node)).norm(), eps); // value correct?
     } else {
       // Check that access to node velocity is not possible
@@ -292,8 +290,6 @@ BOOST_AUTO_TEST_CASE(integrate_with_volume_force) {
                    grid_dimensions[2];
     MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                   MPI_COMM_WORLD);
-    //    printf("%d, %g %g %g, %g %g
-    //    %g\n",i,mom[0],mom[1],mom[2],mom_exp[0],mom_exp[1],mom_exp[2]);
     BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-7);
   }
 }
@@ -328,89 +324,37 @@ BOOST_AUTO_TEST_CASE(integrate_with_point_forces) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(forces) {
+BOOST_AUTO_TEST_CASE(forces_initial_state) {
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
                                              box_dimensions, mpi_shape, 2);
-  Vector3d minus = grid_dimensions / 2 - Vector3d{0.1, 0.1, 0.1};
-  Vector3d plus = grid_dimensions / 2 + Vector3d{0.1, 0.1, 0.1};
-  for (Vector3d pos : std::vector<Vector3d>{{1.25, 1.25, 1.25},
-                                            {1.0, 3.0, 1.0},
-                                            {4.2, 1.7, 1.6},
-                                            {3.2, 1.3, 3.1},
-                                            minus,
-                                            plus}) {
-    if (lb.pos_in_local_halo(pos)) {
-      auto res = lb.get_force_to_be_applied_at_pos(pos);
+  
+  for (Vector3i n : all_nodes_incl_ghosts(1)) {
+    if (lb.node_in_local_halo(n)) {
+      auto res = lb.get_node_force_to_be_applied(n);
       BOOST_CHECK(res);
-      BOOST_CHECK_SMALL((*res - Vector3d{0, 0, 0}).norm(), 1E-10);
-      const Vector3d f{{pos[0] + 1, -1, 2.5 - pos[2]}};
-      double eps = 1E-8;
-      BOOST_CHECK(lb.add_force_at_pos(pos, f));
-      *res = {0.0, 0.0, 0.0};
-      for (int x = -1; x <= 1; x++)
-        for (int y = -1; y <= 1; y++)
-          for (int z = -1; z <= 1; z++) {
-            auto res_temp = lb.get_force_to_be_applied_at_pos(
-                {pos[0] + x, pos[1] + y, pos[2] + z});
-            if (res_temp)
-              *res += *res_temp;
-          }
-      if (lb.pos_in_local_domain(
-              pos)) // If the force is applied on the halo region then some
-                    // of the nodes are outside of the ghost layer and no forces
-                    // are added on these nodes, therefore the sum of all forces
-                    // is not equal the injected force. TODO: maybe the forces
-                    // distibuted on local nodes from the halo should to be
-                    // checked further for correctness.
-        BOOST_CHECK((*res - f).norm() < eps);
-      BOOST_CHECK(lb.add_force_at_pos(pos, -1 * f));
-      res = lb.get_force_to_be_applied_at_pos(pos);
+      BOOST_CHECK_SMALL((*res).norm(),1E-10);
+      res = lb.get_node_last_applied_force(n);
       BOOST_CHECK(res);
-      BOOST_CHECK_SMALL((*res - Vector3d{0, 0, 0}).norm(), 1E-10);
-    } else {
-      BOOST_CHECK(!lb.get_force_to_be_applied_at_pos(pos));
+      BOOST_CHECK_SMALL((*res).norm(),1E-10);
     }
   }
 }
 
-BOOST_AUTO_TEST_CASE(last_forces) {
+BOOST_AUTO_TEST_CASE(forces_interpolation) {
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
                                              box_dimensions, mpi_shape, 2);
-  auto positions = std::vector<Vector3d>{{1.25, 2.25, 1.25},
-                                         {10.0, 3.0, 1.0},
-                                         {16.2, 10.7, 7.6},
-                                         {9.4, 2.3, 10.1},
-                                         {10.6, 14.2, 10.2}};
-  for (auto pos : positions) {
-    if (lb.pos_in_local_halo(pos)) {
-      auto res = lb.get_force_to_be_applied_at_pos(pos);
-      BOOST_CHECK(res);
-      BOOST_CHECK_SMALL((*res - Vector3d{0, 0, 0}).norm(), 1E-10);
-      const Vector3d f{{pos[0] + 1, -1, 2.5 - pos[2]}};
-      BOOST_CHECK(lb.add_force_at_pos(pos, f));
-    }
-  }
-
-  lb.integrate();
-
-  for (auto pos : positions) {
-    if (lb.pos_in_local_halo(pos)) {
-      const Vector3d f{{pos[0] + 1, -1, 2.5 - pos[2]}};
-      double eps = 1E-8;
-      Vector3d res = {0.0, 0.0, 0.0};
-      for (int x = -1; x <= 1; x++)
-        for (int y = -1; y <= 1; y++)
-          for (int z = -1; z <= 1; z++) {
-            auto res_temp = lb.get_force_last_applied_at_pos(
-                {pos[0] + x, pos[1] + y, pos[2] + z});
-            if (res_temp)
-              res += *res_temp;
-          }
-      if (lb.pos_in_local_domain(pos))
-        BOOST_CHECK((res - f).norm() < eps);
+  
+  for (Vector3i n : all_nodes_incl_ghosts(1)) {
+    if (lb.node_in_local_halo(n)) {
+     Vector3d pos{double(n[0]),double(n[1]),double(n[2])}; // Mid point between nodes
+      Vector3d f={1,2,-3.5};
+      lb.add_force_at_pos(pos,f);
+      auto res = lb.get_node_force_to_be_applied(n);
+      BOOST_CHECK_SMALL(((*res)-f/8.0).norm(),1E-10);
     }
   }
 }
+
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);

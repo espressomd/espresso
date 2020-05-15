@@ -23,20 +23,20 @@ import unittest_decorators as utx
 import numpy as np
 
 # Define the LB Parameters
-TIME_STEP = 0.01
-AGRID = .5 
-GRID_SIZE = 6
+TIME_STEP = 0.008
+AGRID = .4 
+GRID_SIZE = 12 
 KVISC = 4
 DENS = 2.3
-F = 0.05
-GAMMA = 5
+F = 5.5 /GRID_SIZE**3 
+GAMMA = 1
 
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'tau': TIME_STEP,
-             'ext_force_density': [-.5 * F, .3 * F, .8 * F]}
+             'ext_force_density': [-.7 * F, .9 * F, .8 * F]}
 
 
 class Momentum(object):
@@ -68,36 +68,19 @@ class Momentum(object):
             LB_PARAMS['ext_force_density'])
 
         p = self.system.part.add(
-            pos=self.system.box_l / 2, ext_force=-ext_fluid_force, v=[0.2, .4, .6])
+            pos=self.system.box_l / 2, ext_force=-ext_fluid_force, v=[.2, .4, .6])
         initial_momentum = np.array(self.system.analysis.linear_momentum())
         np.testing.assert_allclose(initial_momentum, np.copy(p.v) * p.mass)
-        boundary_warning = False
-        old_pos_folded = p.pos
         while True: 
-            self.system.integrator.run(100)
-            if not boundary_warning and (
-                    np.any(p.pos % self.system.box_l < .5 * AGRID)):
-                print("Close to boundary", p.pos)
-                boundary_warning = True
-
+            self.system.integrator.run(500)
+            
             measured_momentum = self.system.analysis.linear_momentum()
-
             coupling_force = -(p.f - p.ext_force)
             compensation = -TIME_STEP / 2 * coupling_force
-            if np.any(np.abs(p.pos_folded - old_pos_folded)
-                      > self.system.box_l / 2):
-                print(
-                    "Boundary crossed",
-                    np.abs(
-                        p.pos_folded -
-                        old_pos_folded))
-            old_pos_folded = p.pos_folded
-            print(p.pos_folded, measured_momentum + compensation, p.f)
-            # fluid force is opposed to particle force
-
+            
             np.testing.assert_allclose(measured_momentum + compensation, 
-                                       initial_momentum, atol=0.03)
-            if np.linalg.norm(p.f) < 1E-4 \
+                                       initial_momentum, atol=1E-4)
+            if np.linalg.norm(p.f) < 0.01 \
                and np.all(np.abs(p.pos) > 1.1 * self.system.box_l):
                 break
 

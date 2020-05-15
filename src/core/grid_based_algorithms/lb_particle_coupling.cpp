@@ -201,37 +201,6 @@ bool in_local_halo(Vector3d const &pos) {
   if (in_local_domain(pos, local_geo, halo))
     return true;
 
-  std::vector<Vector3d> re_folded_positions;
-  Vector3i folded_axis = {0, 0, 0};
-  // Determine which axis needs folding
-  for (int i = 0; i < 3; i++) {
-    if (pos[i] < halo) {
-      folded_axis[i] = 1;
-    } else if (pos[i] > box_geo.m_length[i] - halo) {
-      folded_axis[i] = -1;
-    }
-  }
-
-  // Fill folded position vector
-  if (folded_axis != Vector3i{0, 0, 0}) {
-    for (auto x : {0, 1})
-      for (auto y : {0, 1})
-        for (auto z : {0, 1}) {
-          auto added_pos =
-              Vector3d{pos[0] + x * folded_axis[0] * box_geo.m_length[0],
-                       pos[1] + y * folded_axis[1] * box_geo.m_length[1],
-                       pos[2] + z * folded_axis[2] * box_geo.m_length[2]};
-          if (std::count(re_folded_positions.begin(), re_folded_positions.end(),
-                         added_pos) == 0)
-            re_folded_positions.push_back(added_pos);
-        }
-  }
-
-  for (auto p : re_folded_positions) {
-    if (in_local_domain(p, local_geo, halo))
-      return true;
-  }
-
   return false;
 }
 
@@ -284,32 +253,29 @@ void lb_lbcoupling_calc_particle_lattice_ia(
           return {};
         };
 
-        std::vector<int> applied_particle_identities;
 
         auto couple_particle = [&](Particle &p) -> void {
           // We only couple ghosts, if the physical particle is not on the node
-          if (p.l.ghost and
-              not cell_structure.get_local_particle(p.p.identity)->l.ghost)
-            return;
+//          if (p.l.ghost and
+//              not cell_structure.get_local_particle(p.p.identity)->l.ghost)
+//            return;
 
+//          printf("%d: coupling at %g %g %g, ghost %d\n",this_node, p.r.p[0],p.r.p[1],p.r.p[2],p.l.ghost);
           if (p.p.is_virtual and !couple_virtual)
             return;
 
-          Utils::Vector3d pos = folded_position(p.r.p, box_geo);
           /* Particle is in our LB volume, so this node
            * is responsible to adding its force */
-          if (in_local_domain(pos, local_geo)) {
+          if (in_local_domain(p.r.p, local_geo)) {
             auto const force = lb_viscous_coupling(
                 p, noise_amplitude * f_random(p.identity()));
             /* add force to the particle */
             p.f.f += force;
-            applied_particle_identities.push_back(p.p.identity);
             /* Particle is not in our domain, but adds to the force
              * density in our domain, only calculate contribution to
              * the LB force density. */
-          } else if (in_local_halo(pos)) {
+          } else if (in_local_halo(p.r.p)) {
             lb_viscous_coupling(p, noise_amplitude * f_random(p.identity()));
-            applied_particle_identities.push_back(p.p.identity);
           }
 
 #ifdef ENGINE
@@ -323,11 +289,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         }
 
         for (auto &p : more_particles) {
-          if (std::count(applied_particle_identities.begin(),
-                         applied_particle_identities.end(),
-                         p.p.identity) == 0) {
             couple_particle(p);
-          }
         }
 
         break;

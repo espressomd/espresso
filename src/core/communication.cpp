@@ -381,16 +381,6 @@ void mpi_gather_stats(GatherStats job, double *result) {
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
     pressure_calc(job == GatherStats::pressure_v_comp);
     break;
-  case GatherStats::lb_fluid_momentum:
-    mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    lb_calc_fluid_momentum(result, lbpar, lbfields, lblattice);
-    break;
-#ifdef LB_BOUNDARIES
-  case GatherStats::lb_boundary_forces:
-    mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    lb_collect_boundary_forces(result);
-    break;
-#endif
   default:
     fprintf(
         stderr,
@@ -410,14 +400,6 @@ void mpi_gather_stats_slave(int, int job_slave) {
   case GatherStats::pressure_v_comp:
     pressure_calc(job == GatherStats::pressure_v_comp);
     break;
-  case GatherStats::lb_fluid_momentum:
-    lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
-    break;
-#ifdef LB_BOUNDARIES
-  case GatherStats::lb_boundary_forces:
-    lb_collect_boundary_forces(nullptr);
-    break;
-#endif
   default:
     fprintf(
         stderr,

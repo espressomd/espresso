@@ -510,9 +510,6 @@ public:
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
         force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
-      } else {
-        printf("Node %d %d %d\n", node[0], node[1], node[2]);
-        throw std::runtime_error("Access to LB force to be applied failed.");
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
@@ -520,43 +517,23 @@ public:
   };
 
   boost::optional<Utils::Vector3d>
-  get_force_to_be_applied_at_pos(const Utils::Vector3d &pos) const override {
-    auto block = get_block(pos, true);
-    if (!block)
-      return {boost::none};
-
-    Utils::Vector3d f{0.0, 0.0, 0.0};
-    auto force_at_node = [this, &f](const std::array<int, 3> node,
-                                    double weight) {
-      auto const bc = get_block_and_cell(to_vector3i(node), true);
-      if (bc) {
-        auto const &force_field = (*bc).block->template getData<VectorField>(
+  get_node_force_to_be_applied(const Utils::Vector3i &node) const override {
+    auto const bc = get_block_and_cell(node, true);
+      if (!bc) return {};
+      
+      auto const &force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
-        f += to_vector3d(force_field->get((*bc).cell)) * weight;
-      }
-    };
-    interpolate_bspline_at_pos(pos, force_at_node);
-    return {f * m_density};
+     return to_vector3d(force_field->get((*bc).cell)) * m_density;
   };
 
-  boost::optional<Utils::Vector3d>
-  get_force_last_applied_at_pos(const Utils::Vector3d &pos) const override {
-    auto block = get_block(pos, true);
-    if (!block)
-      return {boost::none};
-
-    Utils::Vector3d f{0.0, 0.0, 0.0};
-    auto force_at_node = [this, &f](const std::array<int, 3> node,
-                                    double weight) {
-      auto const bc = get_block_and_cell(to_vector3i(node), true);
-      if (bc) {
-        auto const &force_field = (*bc).block->template getData<VectorField>(
+  virtual boost::optional<Utils::Vector3d>
+  get_node_last_applied_force(const Utils::Vector3i &node) const override {
+    auto const bc = get_block_and_cell(node, true);
+      if (!bc) return {};
+      
+      auto const &force_field = (*bc).block->template getData<VectorField>(
             m_last_applied_force_field_id);
-        f += to_vector3d(force_field->get((*bc).cell)) * weight;
-      }
-    };
-    interpolate_bspline_at_pos(pos, force_at_node);
-    return {f * m_density};
+     return to_vector3d(force_field->get((*bc).cell)) * m_density;
   };
 
   // Density
