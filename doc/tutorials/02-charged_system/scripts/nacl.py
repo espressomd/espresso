@@ -121,8 +121,8 @@ rdf_bins = 100
 r_min = 0.0
 r_max = system.box_l[0] / 2.0
 ptypes = system.part[:].type
-pids_anion = system.part[:].id[numpy.nonzero(ptypes == types["Anion"])]
-pids_cation = system.part[:].id[numpy.nonzero(ptypes == types["Cation"])]
+pids_anion = system.part.select(type=types["Anion"]).id
+pids_cation = system.part.select(type=types["Cation"]).id
 rdf_00_obs = RDF(ids1=pids_anion, ids2=pids_anion, min_r=r_min, max_r=r_max,
                  n_r_bins=rdf_bins)
 rdf_01_obs = RDF(ids1=pids_anion, ids2=pids_cation, min_r=r_min, max_r=r_max,

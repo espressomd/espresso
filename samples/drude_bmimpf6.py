@@ -365,9 +365,8 @@ else:
     rdf_bins = 100
     r_min = 0.0
     r_max = system.box_l[0] / 2.0
-    ptypes = system.part[:].type
-    pids_pf6 = system.part[:].id[np.nonzero(ptypes == types["PF6"])]
-    pids_bmim = system.part[:].id[np.nonzero(ptypes == types["BMIM_COM"])]
+    pids_pf6 = system.part.select(type=types["PF6"]).id
+    pids_bmim = system.part.select(type=types["BMIM_COM"]).id
     obs_00 = espressomd.observables.RDF(ids1=pids_pf6, min_r=r_min,
                                         max_r=r_max, n_r_bins=rdf_bins)
     obs_11 = espressomd.observables.RDF(ids1=pids_bmim, min_r=r_min,
@@ -406,10 +405,5 @@ else:
     rdf_11 = acc_11.get_mean()
     rdf_01 = acc_01.get_mean()
     r = obs_01.bin_centers()
-
-    with open(args.path + "rdf.dat", 'w') as rdf_fp:
-        for i in range(rdf_bins):
-            rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" %
-                         (r[i], rdf_00[i], rdf_11[i], rdf_01[i]))
-
+    np.savetxt(args.path + "rdf.dat", np.c_[r, rdf_00, rdf_11, rdf_01])
     print("\n-->Done")

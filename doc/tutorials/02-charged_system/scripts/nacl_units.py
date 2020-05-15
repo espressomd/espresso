@@ -134,8 +134,8 @@ rdf_bins = 500
 r_min = 0.0
 r_max = system.box_l[0] / 2.0
 ptypes = system.part[:].type
-pids_Cl = system.part[:].id[numpy.nonzero(ptypes == types["Cl"])]
-pids_Na = system.part[:].id[numpy.nonzero(ptypes == types["Na"])]
+pids_Cl = system.part.select(type=types["Cl"]).id
+pids_Na = system.part.select(type=types["Na"]).id
 rdf_00_obs = RDF(ids1=pids_Cl, ids2=pids_Cl, min_r=r_min, max_r=r_max,
                  n_r_bins=rdf_bins)
 rdf_01_obs = RDF(ids1=pids_Cl, ids2=pids_Na, min_r=r_min, max_r=r_max,
@@ -168,9 +168,6 @@ rdf_00 = rdf_00_acc.get_mean()
 rdf_01 = rdf_01_acc.get_mean()
 rdf_11 = rdf_11_acc.get_mean()
 # Write out the data
-with open('rdf.data', 'w') as rdf_fp:
-    for i in range(rdf_bins):
-        rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" %
-                     (r[i], rdf_00[i], rdf_01[i], rdf_11[i]))
+numpy.savetxt('rdf.data', numpy.c_[r, rdf_00, rdf_01, rdf_11])
 print("\n--->Written rdf.data")
 print("\n--->Done")
