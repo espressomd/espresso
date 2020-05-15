@@ -311,12 +311,9 @@ Two parallel infinite planes, connected by a cylindrical orifice. The cylinder
 is connected to the planes by torus segments with an adjustable radius.
 
 Length and radius of the cylindrical pore can be set via the corresponding parameters
-(``length`` and ``radius``). The parameter ``center`` defines the central point of the pore.
+``length`` and ``radius``. The parameter ``center`` defines the central point of the pore.
 The orientation of the pore is given by the vector ``axis``, which points along the cylinder's symmetry axis.
-The pore openings are smoothed with torus segments, the radius of which can be set using the parameter ``smoothing_radius``.
-In the OpenGL visualizer, these torus segments are rendered as a half-torus instead of a quarter-torus.
-You can safely ignore this visual artifact, in the force/energy calculation, only a quarter-torus is used.
-
+The pore openings are smoothed with radius ``smoothing_radius``.
 
 .. figure:: figures/shape-simplepore.png
    :alt: Example constraint with a ``SimplePore`` shape.
@@ -331,6 +328,10 @@ Pictured is an example constraint with a ``SimplePore`` shape created with ::
                       smoothing_radius=2,
                       center=[25, 25, 25])
     system.constraints.add(shape=pore, particle_type=0, penetrable=True)
+
+Note: in the OpenGL visualizer, if the OpenGL Extrusion library is not available,
+the smooth pore openings will be rendered using a sliced torus. You can safely
+ignore this visual artifact, it has no impact on the force/energy calculation.
 
 
 Stomatocyte
@@ -466,6 +467,9 @@ are described in the shape's class :class:`espressomd.shapes.HollowConicalFrustu
    :alt: Schematic for the conical frustum shape showing geometrical parameters
    :align: center
    :height: 6.00000cm
+
+Note: in the OpenGL visualizer, if the OpenGL Extrusion library is not available,
+the shape surface will be rendered with dots.
 
 
 Union
