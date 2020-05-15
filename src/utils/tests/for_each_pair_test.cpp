@@ -34,13 +34,11 @@ using Utils::for_each_pair;
 
 using PairContainer = std::vector<std::pair<size_t, size_t>>;
 
-struct MyFixture {
+struct F {
   std::vector<size_t> vec1;
   std::vector<size_t> vec2;
   PairContainer pairs;
-  MyFixture()
-      : vec1(std::vector<size_t>(141)), vec2(std::vector<size_t>(143)),
-        pairs() {
+  F() : vec1(std::vector<size_t>(14)), vec2(std::vector<size_t>(15)), pairs() {
     std::iota(vec1.begin(), vec1.end(), 0);
     std::iota(vec2.begin(), vec2.end(), 0);
   }
@@ -62,24 +60,20 @@ void check_pairs(size_t n_values, PairContainer const &pairs) {
     }
 }
 
-BOOST_AUTO_TEST_CASE(basic_check) {
-  MyFixture f;
-
+BOOST_FIXTURE_TEST_CASE(basic_check, F) {
   /* Collect pairs */
-  for_each_pair(f.vec1.begin(), f.vec1.end(), f.pair_inserter());
+  for_each_pair(vec1.begin(), vec1.end(), pair_inserter());
 
   /* Check the result */
-  check_pairs(f.vec1.size(), f.pairs);
+  check_pairs(vec1.size(), pairs);
 }
 
-BOOST_AUTO_TEST_CASE(range) {
-  MyFixture f;
-
+BOOST_FIXTURE_TEST_CASE(range, F) {
   /* Collect pairs */
-  for_each_pair(f.vec1, f.pair_inserter());
+  for_each_pair(vec1, pair_inserter());
 
   /* Check the result */
-  check_pairs(f.vec1.size(), f.pairs);
+  check_pairs(vec1.size(), pairs);
 }
 
 void check_cartesian_pairs(size_t n_values_1, size_t n_values_2,
@@ -102,46 +96,37 @@ void check_cartesian_pairs(size_t n_values_1, size_t n_values_2,
   }
 }
 
-BOOST_AUTO_TEST_CASE(basic_check_cartesian) {
-  MyFixture f;
-
+BOOST_FIXTURE_TEST_CASE(basic_check_cartesian, F) {
   /* Collect pairs */
-  for_each_cartesian_pair(f.vec1.begin(), f.vec1.end(), f.vec2.begin(),
-                          f.vec2.end(), f.pair_inserter());
+  for_each_cartesian_pair(vec1.begin(), vec1.end(), vec2.begin(), vec2.end(),
+                          pair_inserter());
 
   /* Check the result */
-  check_cartesian_pairs(f.vec1.size(), f.vec2.size(), f.pairs);
+  check_cartesian_pairs(vec1.size(), vec2.size(), pairs);
 }
 
-BOOST_AUTO_TEST_CASE(range_cartesian) {
-  MyFixture f;
-
+BOOST_FIXTURE_TEST_CASE(range_cartesian, F) {
   /* Collect pairs */
-  for_each_cartesian_pair(f.vec1, f.vec2, f.pair_inserter());
+  for_each_cartesian_pair(vec1, vec2, pair_inserter());
 
   /* Check the result */
-  check_cartesian_pairs(f.vec1.size(), f.vec2.size(), f.pairs);
+  check_cartesian_pairs(vec1.size(), vec2.size(), pairs);
 }
 
-BOOST_AUTO_TEST_CASE(basic_check_cartesian_if) {
-  MyFixture f;
-
+BOOST_FIXTURE_TEST_CASE(basic_check_cartesian_if, F) {
   /* Collect pairs */
-  for_each_cartesian_pair_if(f.vec1.begin(), f.vec1.end(), f.vec2.begin(),
-                             f.vec2.end(), f.pair_inserter(),
+  for_each_cartesian_pair_if(vec1.begin(), vec1.end(), vec2.begin(), vec2.end(),
+                             pair_inserter(), std::not_equal_to<size_t>{});
+
+  /* Check the result */
+  check_cartesian_pairs(vec1.size(), vec2.size(), pairs, true);
+}
+
+BOOST_FIXTURE_TEST_CASE(range_cartesian_if, F) {
+  /* Collect pairs */
+  for_each_cartesian_pair_if(vec1, vec2, pair_inserter(),
                              std::not_equal_to<size_t>{});
 
   /* Check the result */
-  check_cartesian_pairs(f.vec1.size(), f.vec2.size(), f.pairs, true);
-}
-
-BOOST_AUTO_TEST_CASE(range_cartesian_if) {
-  MyFixture f;
-
-  /* Collect pairs */
-  for_each_cartesian_pair_if(f.vec1, f.vec2, f.pair_inserter(),
-                             std::not_equal_to<size_t>{});
-
-  /* Check the result */
-  check_cartesian_pairs(f.vec1.size(), f.vec2.size(), f.pairs, true);
+  check_cartesian_pairs(vec1.size(), vec2.size(), pairs, true);
 }
