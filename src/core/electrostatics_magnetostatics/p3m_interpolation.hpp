@@ -163,6 +163,8 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
   /* 3d-array index of nearest mesh point */
   ret.ind = Utils::get_linear_index(nmp, local_mesh.dim,
                                     Utils::MemoryOrder::ROW_MAJOR);
+
+  assert((nmp + Utils::Vector3i::broadcast(cao)) <= local_mesh.dim);
   for (int i = 0; i < cao; i++) {
     using Utils::bspline;
 
