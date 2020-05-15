@@ -15,9 +15,9 @@
  * domain decomposition.
  *
  *  The domain of a node is split into a 3D cell grid with dimension
- *  \ref DomainDecomposition::cell_grid. Together with one ghost cell
+ *  cell_grid. Together with one ghost cell
  *  layer on each side the overall dimension of the ghost cell grid is
- *  \ref DomainDecomposition::ghost_cell_grid. The domain
+ *  ghost_cell_grid. The domain
  *  decomposition enables one the use of the linked cell algorithm
  *  which is in turn used for setting up the Verlet list for the
  *  system. You can see a 2D graphical representation of the linked
@@ -166,10 +166,10 @@ private:
    *  If the number of cells is larger than \ref max_num_cells,
    *  it increases max_range until the number of cells is
    *  smaller or equal \ref max_num_cells. It sets:
-   *  \ref DomainDecomposition::cell_grid,
-   *  \ref DomainDecomposition::ghost_cell_grid,
-   *  \ref DomainDecomposition::cell_size, and
-   *  \ref DomainDecomposition::inv_cell_size.
+   *  cell_grid,
+   *  ghost_cell_grid,
+   *  cell_size, and
+   *  inv_cell_size.
    *
    *  @param range Required interacting range. All pairs closer
    *         than this distance are found.
