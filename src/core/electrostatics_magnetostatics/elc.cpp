@@ -976,9 +976,6 @@ static double PQ_energy(double omega, int n_part) {
 /*****************************************************************/
 
 void ELC_add_force(const ParticleRange &particles) {
-  int p, q;
-  double omega;
-
   auto const n_scxcache = int(ceil(elc_params.far_cut / ux) + 1);
   auto const n_scycache = int(ceil(elc_params.far_cut / uy) + 1);
 
@@ -989,26 +986,26 @@ void ELC_add_force(const ParticleRange &particles) {
   add_z_force(particles);
 
   /* the second condition is just for the case of numerical accident */
-  for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
-    omega = C_2PI * ux * p;
+  for (int p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
+    auto const omega = C_2PI * ux * p;
     setup_P(p, omega, particles);
     distribute(4);
     add_P_force(particles);
   }
 
-  for (q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
-    omega = C_2PI * uy * q;
+  for (int q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
+    auto const omega = C_2PI * uy * q;
     setup_Q(q, omega, particles);
     distribute(4);
     add_Q_force(particles);
   }
 
-  for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
-    for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
-                    elc_params.far_cut2 &&
-                q <= n_scycache;
+  for (int p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
+    for (int q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
+                        elc_params.far_cut2 &&
+                    q <= n_scycache;
          q++) {
-      omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
+      auto const omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
       setup_PQ(p, q, omega, particles);
       distribute(8);
       add_PQ_force(p, q, omega, particles);
@@ -1017,11 +1014,7 @@ void ELC_add_force(const ParticleRange &particles) {
 }
 
 double ELC_energy(const ParticleRange &particles) {
-  double eng;
-  int p, q;
-  double omega;
-
-  eng = dipole_energy(particles);
+  auto eng = dipole_energy(particles);
   eng += z_energy(particles);
 
   auto const n_scxcache = int(ceil(elc_params.far_cut / ux) + 1);
@@ -1032,24 +1025,24 @@ double ELC_energy(const ParticleRange &particles) {
   partblk.resize(n_localpart * 8);
 
   /* the second condition is just for the case of numerical accident */
-  for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
-    omega = C_2PI * ux * p;
+  for (int p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
+    auto const omega = C_2PI * ux * p;
     setup_P(p, omega, particles);
     distribute(4);
     eng += P_energy(omega, n_localpart);
   }
-  for (q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
-    omega = C_2PI * uy * q;
+  for (int q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
+    auto const omega = C_2PI * uy * q;
     setup_Q(q, omega, particles);
     distribute(4);
     eng += Q_energy(omega, n_localpart);
   }
-  for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
-    for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
-                    elc_params.far_cut2 &&
-                q <= n_scycache;
+  for (int p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
+    for (int q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
+                        elc_params.far_cut2 &&
+                    q <= n_scycache;
          q++) {
-      omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
+      auto const omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
       setup_PQ(p, q, omega, particles);
       distribute(8);
       eng += PQ_energy(omega, n_localpart);
