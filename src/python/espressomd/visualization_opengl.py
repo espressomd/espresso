@@ -2150,7 +2150,7 @@ class Slitpore(Shape):
                 [0.5 * (self.max_box_l + self.pore_width) - self.lower_smoothing_radius,
                  0., self.pore_mouth - self.pore_length],
                 [0.5 * (self.max_box_l + self.pore_width) - self.lower_smoothing_radius,
-                 self.max_self.box_l, self.pore_mouth - self.pore_length],
+                 self.max_box_l, self.pore_mouth - self.pore_length],
                 [0.5 * (self.max_box_l - self.pore_width) + self.lower_smoothing_radius, self.max_box_l, self.pore_mouth - self.pore_length]]
             draw_plane(wall_0, self.color, self.material)
 
