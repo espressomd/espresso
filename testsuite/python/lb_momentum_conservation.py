@@ -25,7 +25,7 @@ import numpy as np
 # Define the LB Parameters
 TIME_STEP = 0.008
 AGRID = .4 
-GRID_SIZE = 12 
+GRID_SIZE = 6 
 KVISC = 4
 DENS = 2.3
 F = 5.5 / GRID_SIZE**3 
@@ -81,7 +81,7 @@ class Momentum(object):
             np.testing.assert_allclose(measured_momentum + compensation, 
                                        initial_momentum, atol=1E-4)
             if np.linalg.norm(p.f) < 0.01 \
-               and np.all(np.abs(p.pos) > 1.1 * self.system.box_l):
+               and np.all(np.abs(p.pos) > 10.1 * self.system.box_l):
                 break
 
         # Make sure, the particle has crossed the periodic boundaries

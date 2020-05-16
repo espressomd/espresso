@@ -350,8 +350,53 @@ BOOST_AUTO_TEST_CASE(forces_interpolation) {
                    double(n[2])}; // Mid point between nodes
       Vector3d f = {1, 2, -3.5};
       lb.add_force_at_pos(pos, f);
-      auto res = lb.get_node_force_to_be_applied(n);
-      BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), 1E-10);
+      // Check neighboring nodes for force to be applied
+      for (int x : {0, 1})
+        for (int y : {0, 1})
+          for (int z : {0, 1}) {
+            Vector3i check_node{{n[0] - x, n[1] - y, n[2] - z}};
+            if (lb.node_in_local_halo(check_node)) {
+              auto res = lb.get_node_force_to_be_applied(check_node);
+              BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), 1E-10);
+            }
+          }
+      // Apply counter force to clear force field
+      lb.add_force_at_pos(pos, -f);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(force_book_keeping) {
+  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
+                                             box_dimensions, mpi_shape, 2);
+
+  // Forces added go to force_to_be_applied. After integration, they should be
+  // in last_applied_force, where they are used for velocity calculation
+
+  Vector3i origin{};
+  Vector3i middle{
+      {grid_dimensions[0] / 2, grid_dimensions[1] / 2, grid_dimensions[2] / 2}};
+  Vector3i right = grid_dimensions - Vector3i{{1, 1, 1}};
+
+  Vector3d f{{1, -2, 3.1}};
+
+  for (auto n : {origin, middle, right}) {
+    // Add force to node position
+    if (lb.node_in_local_domain(n)) {
+      lb.add_force_at_pos(Vector3d{{n[0] + .5, n[1] + .5, n[2] + .5}}, f);
+      BOOST_CHECK_SMALL((*(lb.get_node_force_to_be_applied(n)) - f).norm(),
+                        1E-10);
+    }
+    lb.integrate();
+    // Check nodes incl some of the ghosts
+    for (auto cn : {n, n + grid_dimensions, n - grid_dimensions,
+                    n + Vector3i{{grid_dimensions[0], 0, 0}}}) {
+      if (lb.node_in_local_halo(cn)) {
+        BOOST_CHECK_SMALL((*(lb.get_node_last_applied_force(cn)) - f).norm(),
+                          1E-10);
+        BOOST_CHECK_SMALL((*(lb.get_node_force_to_be_applied(cn))).norm(),
+                          1E-10);
+      }
     }
   }
 }

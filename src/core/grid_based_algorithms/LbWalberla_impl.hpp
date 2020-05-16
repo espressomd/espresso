@@ -193,7 +193,9 @@ protected:
   BlockDataID m_density_adaptor_id;
   BlockDataID m_density_interpolator_id;
   BlockDataID m_boundary_handling_id;
-
+  using Communicator = blockforest::communication::UniformBufferedScheme<
+      typename stencil::D3Q27>;
+  std::shared_ptr<Communicator> m_communication;
   // Block forest
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
@@ -225,37 +227,6 @@ protected:
     }
     // Cell not in local blocks
     return {};
-  }
-  template <typename PosVector>
-  std::vector<PosVector>
-  get_folded_positions_vector(const PosVector &pos) const {
-    std::vector<PosVector> re_folded_positions;
-    Utils::Vector3i folded_axis = Utils::Vector3i{0, 0, 0};
-    re_folded_positions.push_back(pos);
-    // Determine which axis needs folding
-    for (int i = 0; i < 3; i++) {
-      if (pos[i] < m_n_ghost_layers - 1.0) {
-        folded_axis[i] = 1;
-      } else if (pos[i] > m_grid_dimensions[i] - m_n_ghost_layers + 0.5) {
-        folded_axis[i] = -1;
-      }
-    }
-
-    // Fill folded position vector
-    if (folded_axis != Utils::Vector3i{0, 0, 0}) {
-      for (auto x : {0, 1})
-        for (auto y : {0, 1})
-          for (auto z : {0, 1}) {
-            auto added_pos =
-                PosVector{pos[0] + x * folded_axis[0] * m_grid_dimensions[0],
-                          pos[1] + y * folded_axis[1] * m_grid_dimensions[1],
-                          pos[2] + z * folded_axis[2] * m_grid_dimensions[2]};
-            if (std::count(re_folded_positions.begin(),
-                           re_folded_positions.end(), added_pos) == 0)
-              re_folded_positions.push_back(added_pos);
-          }
-    }
-    return re_folded_positions;
   }
   boost::optional<BlockAndCell>
   get_block_and_cell(const Utils::Vector3i &node,
@@ -387,11 +358,13 @@ public:
         m_blocks->getBlockStorage(), 1);
 
     // sets up the communication
-    blockforest::communication::UniformBufferedScheme<typename stencil::D3Q27>
-        communication(m_blocks);
-    communication.addPackInfo(
+    m_communication = std::make_shared<Communicator>(m_blocks);
+    m_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
             m_pdf_field_id));
+    m_communication->addPackInfo(
+        std::make_shared<field::communication::PackInfo<VectorField>>(
+            m_last_applied_force_field_id));
     m_reset_force =
         std::make_shared<ResetForce<PdfField, VectorField, Boundaries>>(
             m_pdf_field_id, m_last_applied_force_field_id,
@@ -410,7 +383,7 @@ public:
                    lbm::makeCellwiseSweep<LatticeModel, FlagField>(
                        m_pdf_field_id, m_flag_field_id, Fluid_flag)),
                "LB stream & collide")
-        << timeloop::AfterFunction(communication, "communication");
+        << timeloop::AfterFunction(*m_communication, "communication");
 
     m_velocity_adaptor_id = field::addFieldAdaptor<VelocityAdaptor>(
         m_blocks, m_pdf_field_id, "velocity adaptor");
@@ -426,20 +399,13 @@ public:
         field::addFieldInterpolator<ScalarFieldAdaptorInterpolator, FlagField>(
             m_blocks, m_density_adaptor_id, m_flag_field_id, Fluid_flag);
 
-    communication();
+    (*m_communication)();
   };
   std::shared_ptr<LatticeModel> get_lattice_model() { return m_lattice_model; };
 
   void integrate() override { m_time_loop->singleStep(); };
 
-  void ghost_communication() override {
-    blockforest::communication::UniformBufferedScheme<typename stencil::D3Q27>
-        communication(m_blocks);
-    communication.addPackInfo(
-        std::make_shared<field::communication::PackInfo<PdfField>>(
-            m_pdf_field_id));
-    communication();
-  }
+  void ghost_communication() override { (*m_communication)(); }
 
   template <typename Function>
   void interpolate_bspline_at_pos(Utils::Vector3d pos, Function f) const {
@@ -500,8 +466,7 @@ public:
   // Local force
   bool add_force_at_pos(const Utils::Vector3d &pos,
                         const Utils::Vector3d &force) override {
-    auto block = get_block(pos, true);
-    if (!block)
+    if (!pos_in_local_halo(pos))
       return false;
     auto force_at_node = [this, force](const std::array<int, 3> node,
                                        double weight) {
