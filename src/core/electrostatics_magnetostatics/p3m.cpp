@@ -431,8 +431,10 @@ Utils::Vector9d p3m_calc_kspace_stress() {
     p3m.sm.gather_grid(p3m.rs_mesh.data(), comm_cart, p3m.local_mesh.dim);
     fft_perform_forw(p3m.rs_mesh.data(), p3m.fft, comm_cart);
 
+    double diagonal = 0;
     int ind = 0;
     int j[3];
+    auto const half_alpha_inv_sq = Utils::sqr(1.0 / 2.0 / p3m.params.alpha);
     for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
       for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
         for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
@@ -455,36 +457,25 @@ Utils::Vector9d p3m_calc_kspace_stress() {
           ind++;
 
           auto const vterm =
-              (sqk == 0)
-                  ? 0.
-                  : -2.0 * (1 / sqk + Utils::sqr(1.0 / 2.0 / p3m.params.alpha));
+              (sqk == 0) ? 0. : -2.0 * (1 / sqk + half_alpha_inv_sq);
 
-          node_k_space_stress[0] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(kx)); /* sigma_xx */
-          node_k_space_stress[1] +=
-              node_k_space_energy * (vterm * kx * ky); /* sigma_xy */
-          node_k_space_stress[2] +=
-              node_k_space_energy * (vterm * kx * kz); /* sigma_xz */
-
-          node_k_space_stress[3] +=
-              node_k_space_energy * (vterm * kx * ky); /* sigma_yx */
-          node_k_space_stress[4] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(ky)); /* sigma_yy */
-          node_k_space_stress[5] +=
-              node_k_space_energy * (vterm * ky * kz); /* sigma_yz */
-
-          node_k_space_stress[6] +=
-              node_k_space_energy * (vterm * kx * kz); /* sigma_zx */
-          node_k_space_stress[7] +=
-              node_k_space_energy * (vterm * ky * kz); /* sigma_zy */
-          node_k_space_stress[8] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(kz)); /* sigma_zz */
+          diagonal += node_k_space_energy;
+          auto const prefactor = node_k_space_energy * vterm;
+          node_k_space_stress[0] += prefactor * kx * kx; /* sigma_xx */
+          node_k_space_stress[1] += prefactor * kx * ky; /* sigma_xy */
+          node_k_space_stress[2] += prefactor * kx * kz; /* sigma_xz */
+          node_k_space_stress[3] += prefactor * ky * kx; /* sigma_yx */
+          node_k_space_stress[4] += prefactor * ky * ky; /* sigma_yy */
+          node_k_space_stress[5] += prefactor * ky * kz; /* sigma_yz */
+          node_k_space_stress[6] += prefactor * kz * kx; /* sigma_zx */
+          node_k_space_stress[7] += prefactor * kz * ky; /* sigma_zy */
+          node_k_space_stress[8] += prefactor * kz * kz; /* sigma_zz */
         }
       }
     }
+    node_k_space_stress[0] += diagonal;
+    node_k_space_stress[4] += diagonal;
+    node_k_space_stress[8] += diagonal;
   }
 
   auto const force_prefac = coulomb.prefactor / (2.0 * box_geo.volume());

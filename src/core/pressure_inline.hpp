@@ -201,8 +201,10 @@ inline void add_kinetic_virials(Particle const &p1, bool v_comp) {
 
   /* kinetic energy */
   if (v_comp) {
-    obs_scalar_pressure.local.kinetic[0] +=
-        (p1.m.v - (p1.f.f * (0.5 * time_step / p1.p.mass))).norm2() * p1.p.mass;
+    // velocity at half the time step: v(t + dt / 2) =
+    // v(t + dt) - a(t) * dt / 2 = v(t + dt) - F(t) * dt / m / 2
+    auto const v = p1.m.v - p1.f.f * (time_step / (2. * p1.p.mass));
+    obs_scalar_pressure.local.kinetic[0] += v.norm2() * p1.p.mass;
   } else {
     obs_scalar_pressure.local.kinetic[0] += p1.m.v.norm2() * p1.p.mass;
   }
