@@ -22,7 +22,6 @@
 #include "particle_data.hpp"
 
 #include <boost/algorithm/clamp.hpp>
-#include <boost/range/algorithm/transform.hpp>
 #include <functional>
 
 namespace Observables {
@@ -52,6 +51,7 @@ std::vector<double> PidObservable::operator()() const {
 
   std::vector<std::reference_wrapper<const Particle>> particle_refs(
       particles.begin(), particles.end());
-  return this->evaluate(PartRefSpan(particle_refs), GenObs::traits<Particle>{});
+  return this->evaluate(ParticleReferenceRange(particle_refs),
+                        GenObs::traits<Particle>{});
 }
 } // namespace Observables
