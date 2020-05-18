@@ -30,10 +30,10 @@
 #ifdef DPD
 #include "core/observables/DPDStress.hpp"
 #endif
-#include "core/observables/Energy.hpp"
+#include "core/observables/EnergyObservable.hpp"
 #include "core/observables/LBFluidStress.hpp"
 #include "core/observables/Observable.hpp"
-#include "core/observables/Pressure.hpp"
+#include "core/observables/PressureObservable.hpp"
 #include "core/observables/PressureTensor.hpp"
 
 #include <memory>
