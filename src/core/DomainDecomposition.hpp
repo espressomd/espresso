@@ -88,7 +88,7 @@ public:
   bool minimum_image_distance() const override { return false; }
 
   void resort(bool global, ParticleList &pl,
-              std::vector<Cell *> &modified_cells) override;
+              std::vector<ParticleChange> &diff) override;
 
 private:
   /** Fill local_cells list and ghost_cells list for use with domain
@@ -132,7 +132,7 @@ private:
    * @param modified_cells Local cells that were touched.
    */
   void move_if_local(ParticleList &src, ParticleList &rest,
-                     std::vector<Cell *> &modified_cells);
+                     std::vector<ParticleChange> &modified_cells);
 
   /**
    * @brief Split particle list by direction.
@@ -157,7 +157,7 @@ private:
    * @param[out] modified_cells Cells that got touched.
    */
   void exchange_neighbors(ParticleList &pl,
-                          std::vector<Cell *> &modified_cells);
+                          std::vector<ParticleChange> &modified_cells);
 
   /**
    *  @brief Calculate cell grid dimensions, cell sizes and number of cells.

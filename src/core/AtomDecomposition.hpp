@@ -56,7 +56,7 @@ public:
   explicit AtomDecomposition(boost::mpi::communicator const &comm);
 
   void resort(bool global_flag, ParticleList &displaced_parts,
-              std::vector<Cell *> &modified_cells) override;
+              std::vector<ParticleChange> &diff) override;
 
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;

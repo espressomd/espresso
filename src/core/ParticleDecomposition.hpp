@@ -9,6 +9,16 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <boost/variant.hpp>
+
+/**
+ * @brief Change of Particle Address.
+ *
+ * Either the id of a particle that was removed, or
+ * a non-null pointer to a cell that has been modified.
+ */
+using ParticleChange = boost::variant<int, Cell *>;
+
 class ParticleDecomposition {
 public:
   /**
@@ -17,10 +27,10 @@ public:
    * @param[in] global_flag Expect particles to be displaced by more than a
    * local box size.
    * @param[inout] displaced_parts Particles to be sorted
-   * @param[out] modified_cells Cells that have been touched.
+   * @param[out] diff Cells that have been touched.
    */
   virtual void resort(bool global_flag, ParticleList &displaced_parts,
-                      std::vector<Cell *> &modified_cells) = 0;
+                      std::vector<ParticleChange> &diff) = 0;
 
   /**
    * @brief Communicator for updating ghosts from the real particles.

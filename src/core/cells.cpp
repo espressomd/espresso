@@ -246,6 +246,16 @@ ParticleList sort_and_fold_parts(const CellStructure &cs,
 }
 } // namespace
 
+/**
+ * @brief Apply a @ref ParticleChange to a particle index.
+ */
+struct UpdateParticleIndexVisitor {
+  CellStructure *cs;
+
+  void operator()(int id) const { cs->update_particle_index(id, nullptr); }
+  void operator()(Cell *c) const { cs->update_particle_index(c->particles()); }
+};
+
 void cells_resort_particles(int global_flag) {
   invalidate_ghosts();
 
@@ -261,12 +271,17 @@ void cells_resort_particles(int global_flag) {
     cell_structure.update_particle_index(p.identity(), nullptr);
   }
 
-  cell_structure.m_decomposition->resort(global_flag, displaced_parts,
-                                         modified_cells);
+  std::vector<ParticleChange> diff;
+
+  cell_structure.m_decomposition->resort(global_flag, displaced_parts, diff);
 
   boost::sort(modified_cells);
   for (auto cell : modified_cells | boost::adaptors::uniqued) {
     cell_structure.update_particle_index(cell->particles());
+  }
+
+  for (auto d : diff) {
+    boost::apply_visitor(UpdateParticleIndexVisitor{&cell_structure}, d);
   }
 
   if (not displaced_parts.empty()) {

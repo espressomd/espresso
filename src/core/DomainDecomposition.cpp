@@ -41,8 +41,9 @@ Cell *DomainDecomposition::position_to_cell(const Utils::Vector3d &pos) {
   return &(cells.at(ind));
 }
 
-void DomainDecomposition::move_if_local(ParticleList &src, ParticleList &rest,
-                                        std::vector<Cell *> &modified_cells) {
+void DomainDecomposition::move_if_local(
+    ParticleList &src, ParticleList &rest,
+    std::vector<ParticleChange> &modified_cells) {
   for (auto &part : src) {
     auto target_cell = position_to_cell(part.r.p);
 
@@ -94,7 +95,7 @@ void DomainDecomposition::move_left_or_right(ParticleList &src,
 }
 
 void DomainDecomposition::exchange_neighbors(
-    ParticleList &pl, std::vector<Cell *> &modified_cells) {
+    ParticleList &pl, std::vector<ParticleChange> &modified_cells) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
   static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
@@ -136,7 +137,7 @@ void DomainDecomposition::exchange_neighbors(
 }
 
 void DomainDecomposition::resort(bool global, ParticleList &pl,
-                                 std::vector<Cell *> &modified_cells) {
+                                 std::vector<ParticleChange> &diff) {
   if (global) {
     auto const grid = Utils::Mpi::cart_get<3>(comm).dims;
     /* Worst case we need grid - 1 rounds per direction.
@@ -144,7 +145,7 @@ void DomainDecomposition::resort(bool global, ParticleList &pl,
      * no action should be taken. */
     int rounds_left = grid[0] + grid[1] + grid[2] - 3;
     for (; rounds_left > 0; rounds_left--) {
-      exchange_neighbors(pl, modified_cells);
+      exchange_neighbors(pl, diff);
 
       auto left_over =
           boost::mpi::all_reduce(comm, pl.size(), std::plus<size_t>());
@@ -154,7 +155,7 @@ void DomainDecomposition::resort(bool global, ParticleList &pl,
       }
     }
   } else {
-    exchange_neighbors(pl, modified_cells);
+    exchange_neighbors(pl, diff);
   }
 }
 void DomainDecomposition::mark_cells() {

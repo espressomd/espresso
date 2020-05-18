@@ -98,7 +98,7 @@ void AtomDecomposition::mark_cells() {
   }
 }
 void AtomDecomposition::resort(bool global_flag, ParticleList &displaced_parts,
-                               std::vector<Cell *> &modified_cells) {
+                               std::vector<ParticleChange> &diff) {
   /* Local updates are a NoOp for this decomposition. */
   if (not global_flag) {
     assert(displaced_parts.empty());
@@ -119,7 +119,7 @@ void AtomDecomposition::resort(bool global_flag, ParticleList &displaced_parts,
 
   if (std::any_of(recv_buf.begin(), recv_buf.end(),
                   [](auto const &buf) { return not buf.empty(); })) {
-    modified_cells.push_back(std::addressof(local()));
+    diff.push_back(std::addressof(local()));
   }
 
   /* Add new particles belonging to this node */
