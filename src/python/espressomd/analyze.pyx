@@ -208,10 +208,8 @@ class Analysis:
         # Dict to store the results
         p = OrderedDict()
 
-        # Update in ESPResSo core if necessary
-        if not (
-                analyze.obs_scalar_pressure.is_initialized and analyze.obs_scalar_pressure.v_comp == v_comp):
-            analyze.update_pressure(v_comp)
+        # Update in ESPResSo core
+        analyze.update_pressure(v_comp)
 
         # Total pressure
         p["total"] = analyze.obs_scalar_pressure.accumulate()
@@ -322,10 +320,8 @@ class Analysis:
         # Dict to store the results
         p = OrderedDict()
 
-        # Update in ESPResSo core if necessary
-        if not (
-                analyze.obs_stress_tensor.is_initialized and analyze.obs_stress_tensor.v_comp == v_comp):
-            analyze.update_pressure(v_comp)
+        # Update in ESPResSo core
+        analyze.update_pressure(v_comp)
 
         # Total pressure
         cdef int i
@@ -446,9 +442,8 @@ class Analysis:
 
         e = OrderedDict()
 
-        if not analyze.obs_energy.is_initialized:
-            analyze.update_energy()
-            handle_errors("calc_long_range_energies failed")
+        analyze.update_energy()
+        handle_errors("calc_long_range_energies failed")
 
         # Total energy
         cdef int i

@@ -43,10 +43,7 @@ ActorList energyActors;
 Observable_stat_wrapper obs_energy{1, false};
 
 /** Reduce the system energy from all MPI ranks. */
-void master_energy_calc() {
-  mpi_gather_stats(GatherStats::energy);
-  obs_energy.is_initialized = true;
-}
+void master_energy_calc() { mpi_gather_stats(GatherStats::energy); }
 
 void energy_calc(const double time) {
   if (!interactions_sanity_checks())
@@ -90,10 +87,8 @@ void energy_calc(const double time) {
 }
 
 void update_energy() {
-  if (!obs_energy.is_initialized) {
-    obs_energy.resize();
-    master_energy_calc();
-  }
+  obs_energy.resize();
+  master_energy_calc();
 }
 
 void calc_long_range_energies(const ParticleRange &particles) {

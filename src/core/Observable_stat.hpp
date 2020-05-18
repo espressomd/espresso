@@ -28,9 +28,9 @@
 #include <utility>
 #include <vector>
 
-/** Cache for system statistics.
+/** Observable for system statistics.
  *  Store unidimensional (energy, scalar pressure) and multi-dimensional
- *  (stress tensors) properties of the system and provide accumulation and
+ *  (pressure tensor) properties of the system and provide accumulation and
  *  reduction functionality.
  */
 class Observable_stat_base {
@@ -106,9 +106,7 @@ protected:
   }
 };
 
-/** Structure used to cache the results of the scalar pressure, stress tensor
- *  and energy calculations.
- */
+/** Observable for the scalar pressure, pressure tensor and energy. */
 class Observable_stat : public Observable_stat_base {
 private:
   /** Whether this observable is a pressure or energy observable */
@@ -182,20 +180,10 @@ public:
   }
 };
 
-/** Invalidate observables.
- *  This function is called whenever the system has changed in such a way
- *  that the cached observables are no longer accurate or that the size of
- *  the cache is no longer suitable (e.g. after addition of a new actor or
- *  interaction).
- */
-void invalidate_obs();
-
 class Observable_stat_wrapper : public Observable_stat {
 public:
   /** Observed statistic for the current MPI rank. */
   Observable_stat local;
-  /** Flag to signal if the observable is initialized. */
-  bool is_initialized;
   /** Flag to signal if the observable measures instantaneous pressure, i.e.
    *  the pressure with velocity compensation (half a time step), instead of
    *  the conventional pressure. Only relevant for NpT simulations.
@@ -205,16 +193,10 @@ public:
   explicit Observable_stat_wrapper(size_t chunk_size, bool pressure_obs = true)
       : Observable_stat{chunk_size, pressure_obs}, local{chunk_size,
                                                          pressure_obs},
-        is_initialized(false), v_comp(false) {
-    register_obs();
-  }
+        v_comp(false) {}
 
   /** Gather the contributions from all MPI ranks. */
   void reduce() { local.reduce(data.data()); }
-
-private:
-  /** Register this observable. */
-  void register_obs();
 };
 
 class Observable_stat_non_bonded_wrapper : public Observable_stat_non_bonded {

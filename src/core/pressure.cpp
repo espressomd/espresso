@@ -144,8 +144,6 @@ void master_pressure_calc(bool v_comp) {
   mpi_gather_stats(v_comp ? GatherStats::pressure_v_comp
                           : GatherStats::pressure);
 
-  obs_scalar_pressure.is_initialized = true;
-  obs_stress_tensor.is_initialized = true;
   obs_scalar_pressure.v_comp = v_comp;
   obs_stress_tensor.v_comp = v_comp;
 }
@@ -165,10 +163,6 @@ double calculate_npt_p_vel_rescaled() {
 }
 
 void update_pressure(bool v_comp) {
-  if (obs_scalar_pressure.is_initialized &&
-      obs_scalar_pressure.v_comp == v_comp)
-    return;
-
   obs_scalar_pressure.resize();
   obs_scalar_pressure_non_bonded.resize();
   obs_stress_tensor.resize();
@@ -176,8 +170,7 @@ void update_pressure(bool v_comp) {
 
   if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
       !(nptiso.invalidate_p_vel)) {
-    if (!obs_scalar_pressure.is_initialized)
-      master_pressure_calc(false);
+    master_pressure_calc(false);
     obs_scalar_pressure.kinetic[0] = calculate_npt_p_vel_rescaled();
     obs_scalar_pressure.v_comp = true;
   } else {

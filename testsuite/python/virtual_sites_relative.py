@@ -326,13 +326,14 @@ class VirtualSites(ut.TestCase):
         p = system.part.add(pos=(0.1, 0, 0), id=2, ext_force=(-1, 0, 0))
         p.vs_auto_relate_to(0)
         system.integrator.run(0, recalc_forces=True)
-        stress_total = system.analysis.stress_tensor()["total"]
-        stress_vs_total = system.analysis.stress_tensor()["virtual_sites"]
-        stress_vs = system.analysis.stress_tensor()["virtual_sites", 0]
-
-        p_total = system.analysis.pressure()["total"]
-        p_vs_total = system.analysis.pressure()["virtual_sites"]
-        p_vs = system.analysis.pressure()["virtual_sites", 0]
+        sim_pressure = system.analysis.pressure()
+        sim_stress = system.analysis.stress_tensor()
+        stress_total = sim_stress["total"]
+        stress_vs_total = sim_stress["virtual_sites"]
+        stress_vs = sim_stress["virtual_sites", 0]
+        p_total = sim_pressure["total"]
+        p_vs_total = sim_pressure["virtual_sites"]
+        p_vs = sim_pressure["virtual_sites", 0]
 
         # expected stress
         s_expected = 1. / system.volume() * (

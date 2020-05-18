@@ -32,7 +32,7 @@
 
 extern ActorList energyActors;
 
-/** Recalculate energies (only if necessary). */
+/** Calculate energies. */
 void update_energy();
 
 /** Parallel energy calculation. */

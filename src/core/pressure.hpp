@@ -39,7 +39,7 @@ void pressure_calc(bool v_comp);
  */
 void observable_compute_stress_tensor(double *output);
 
-/** Recalculate the virials, pressure and stress tensors (only if necessary).
+/** Calculate the virials, pressure and stress tensors.
  *  @param[in] v_comp flag which enables compensation of the velocities
  *                    required for deriving a pressure reflecting
  *                    \ref nptiso_struct::p_inst (hence it only works with

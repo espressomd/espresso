@@ -44,7 +44,6 @@ cdef extern from "particle_data.hpp":
 
 cdef extern from "Observable_stat.hpp":
     cdef cppclass Observable_stat_wrapper:
-        cbool is_initialized
         cbool v_comp
         Span[double] kinetic
         Span[double] bonded

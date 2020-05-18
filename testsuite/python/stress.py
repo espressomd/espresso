@@ -127,36 +127,31 @@ class Stress(ut.TestCase):
         pos = system.part[:].pos
         vel = system.part[:].v
 
-        sim_stress_kinetic = np.copy(
-            system.analysis.stress_tensor()['kinetic'])
-        sim_stress_bonded = np.copy(system.analysis.stress_tensor()['bonded'])
-        sim_stress_bonded_harmonic = np.copy(system.analysis.stress_tensor()[
-            'bonded', len(system.bonded_inter) - 1])
-        sim_stress_nonbonded = np.copy(
-            system.analysis.stress_tensor()['non_bonded'])
-        sim_stress_nonbonded_inter = np.copy(system.analysis.stress_tensor()[
-            'non_bonded_inter'])
-        sim_stress_nonbonded_inter12 = np.copy(system.analysis.stress_tensor()[
-            'non_bonded_inter', 1, 2])
-        sim_stress_nonbonded_intra = np.copy(system.analysis.stress_tensor()[
-            'non_bonded_intra'])
-        sim_stress_nonbonded_intra00 = np.copy(system.analysis.stress_tensor()[
-            'non_bonded_intra', 0, 0])
-        sim_stress_total = np.copy(system.analysis.stress_tensor()['total'])
-        sim_pressure_kinetic = system.analysis.pressure()['kinetic']
-        sim_pressure_bonded = system.analysis.pressure()['bonded']
-        sim_pressure_bonded_harmonic = system.analysis.pressure()[
+        sim_stress = system.analysis.stress_tensor()
+        sim_stress_kinetic = np.copy(sim_stress['kinetic'])
+        sim_stress_bonded = np.copy(sim_stress['bonded'])
+        sim_stress_bonded_harmonic = np.copy(
+            sim_stress['bonded', len(system.bonded_inter) - 1])
+        sim_stress_nonbonded = np.copy(sim_stress['non_bonded'])
+        sim_stress_nonbonded_inter = np.copy(sim_stress['non_bonded_inter'])
+        sim_stress_nonbonded_inter12 = np.copy(
+            sim_stress['non_bonded_inter', 1, 2])
+        sim_stress_nonbonded_intra = np.copy(sim_stress['non_bonded_intra'])
+        sim_stress_nonbonded_intra00 = np.copy(
+            sim_stress['non_bonded_intra', 0, 0])
+        sim_stress_total = np.copy(sim_stress['total'])
+
+        sim_pressure = system.analysis.pressure()
+        sim_pressure_kinetic = sim_pressure['kinetic']
+        sim_pressure_bonded = sim_pressure['bonded']
+        sim_pressure_bonded_harmonic = sim_pressure[
             'bonded', len(system.bonded_inter) - 1]
-        sim_pressure_nonbonded = system.analysis.pressure()['non_bonded']
-        sim_pressure_nonbonded_inter = system.analysis.pressure()[
-            'non_bonded_inter']
-        sim_pressure_nonbonded_inter12 = system.analysis.pressure()[
-            'non_bonded_inter', 1, 2]
-        sim_pressure_nonbonded_intra = system.analysis.pressure()[
-            'non_bonded_intra']
-        sim_pressure_nonbonded_intra00 = system.analysis.pressure()[
-            'non_bonded_intra', 0, 0]
-        sim_pressure_total = system.analysis.pressure()['total']
+        sim_pressure_nonbonded = sim_pressure['non_bonded']
+        sim_pressure_nonbonded_inter = sim_pressure['non_bonded_inter']
+        sim_pressure_nonbonded_inter12 = sim_pressure['non_bonded_inter', 1, 2]
+        sim_pressure_nonbonded_intra = sim_pressure['non_bonded_intra']
+        sim_pressure_nonbonded_intra00 = sim_pressure['non_bonded_intra', 0, 0]
+        sim_pressure_total = sim_pressure['total']
 
         anal_stress_kinetic = stress_kinetic(vel)
         anal_stress_bonded = stress_bonded(pos)
@@ -176,8 +171,6 @@ class Stress(ut.TestCase):
             'ii', anal_stress_nonbonded_intra) / 3.0
         anal_pressure_total = anal_pressure_kinetic + \
             anal_pressure_bonded + anal_pressure_nonbonded
-
-        system.part.clear()
 
         np.testing.assert_allclose(
             sim_stress_kinetic, anal_stress_kinetic, rtol=0, atol=tol,
@@ -243,8 +236,10 @@ class Stress(ut.TestCase):
         # Compare stress tensor observable to stress tensor from analysis
         np.testing.assert_allclose(
             StressTensor().calculate(),
-            system.analysis.stress_tensor()["total"],
+            sim_stress["total"],
             atol=1E-10)
+
+        system.part.clear()
 
 
 @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
@@ -283,14 +278,13 @@ class StressFENE(ut.TestCase):
         system.part[0].add_bond((fene, 1))
         system.integrator.run(steps=0)
 
-        sim_stress_bonded = system.analysis.stress_tensor()['bonded']
-        sim_stress_fene = system.analysis.stress_tensor()[
-            'bonded', len(system.bonded_inter) - 1]
+        sim_stress = system.analysis.stress_tensor()
+        sim_stress_bonded = sim_stress['bonded']
+        sim_stress_fene = sim_stress['bonded', len(system.bonded_inter) - 1]
 
         total_bonded_stresses = np.zeros([3, 3])
         for i in range(len(system.bonded_inter)):
-            total_bonded_stresses += system.analysis.stress_tensor()[
-                'bonded', i]
+            total_bonded_stresses += sim_stress['bonded', i]
 
         anal_stress_fene = self.get_anal_stress_fene(
             system.part[0].pos, system.part[1].pos, k, d_r_max, r_0)
@@ -304,8 +298,9 @@ class StressFENE(ut.TestCase):
             sim_stress_bonded, total_bonded_stresses, atol=tol,
             err_msg='bonded stresses do not sum up to the total value')
 
-        sim_pressure_fene = system.analysis.pressure()[
-            'bonded', len(system.bonded_inter) - 1]
+        sim_pressure = system.analysis.pressure()
+        sim_pressure_fene = sim_pressure['bonded', len(
+            system.bonded_inter) - 1]
         anal_pressure_fene = np.einsum("ii", anal_stress_fene) / 3.0
         np.testing.assert_allclose(
             sim_pressure_fene, anal_pressure_fene, atol=tol,
@@ -314,7 +309,7 @@ class StressFENE(ut.TestCase):
         # Compare stress tensor observable to stress tensor from analysis
         np.testing.assert_allclose(
             StressTensor().calculate(),
-            system.analysis.stress_tensor()["total"],
+            sim_stress["total"],
             rtol=0, atol=1E-10)
 
         system.part.clear()
