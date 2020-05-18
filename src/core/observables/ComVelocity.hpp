@@ -25,7 +25,8 @@
 
 namespace Observables {
 
-using ComVelocity = ParticleObservable<GenObs::CenterOfMassVelocity>;
+using ComVelocity =
+    ParticleObservable<ParticleObservables::CenterOfMassVelocity>;
 
 } // namespace Observables
 #endif

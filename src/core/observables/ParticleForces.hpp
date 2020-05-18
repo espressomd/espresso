@@ -30,6 +30,6 @@ namespace Observables {
  *  For \f$n\f$ particles, return \f$3 n\f$ forces ordered as
  *  \f$(f_x^1, f_y^1, f_z^1, \dots, f_x^n, f_y^n, f_z^n)\f$.
  */
-using ParticleForces = ParticleObservable<GenObs::Forces>;
+using ParticleForces = ParticleObservable<ParticleObservables::Forces>;
 } // namespace Observables
 #endif

@@ -25,7 +25,7 @@
 
 namespace Observables {
 
-using TotalForce = ParticleObservable<GenObs::TotalForce>;
+using TotalForce = ParticleObservable<ParticleObservables::TotalForce>;
 
 } // namespace Observables
 #endif

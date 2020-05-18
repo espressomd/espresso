@@ -25,8 +25,8 @@
 
 namespace Observables {
 
-using MagneticDipoleMoment =
-    ParticleObservable<GenObs::Sum<GenObs::DipoleMoment>>;
+using MagneticDipoleMoment = ParticleObservable<
+    ParticleObservables::Sum<ParticleObservables::DipoleMoment>>;
 
 } // Namespace Observables
 

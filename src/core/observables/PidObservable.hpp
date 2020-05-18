@@ -20,7 +20,7 @@
 #ifndef OBSERVABLES_PIDOBSERVABLE_HPP
 #define OBSERVABLES_PIDOBSERVABLE_HPP
 
-#include <genobs/observable.hpp>
+#include <particle_observables/observable.hpp>
 
 #include "Observable.hpp"
 #include "Particle.hpp"
@@ -47,7 +47,7 @@ class PidObservable : virtual public Observable {
 
   virtual std::vector<double>
   evaluate(ParticleReferenceRange particles,
-           const GenObs::traits<Particle> &traits) const = 0;
+           const ParticleObservables::traits<Particle> &traits) const = 0;
 
 public:
   explicit PidObservable(std::vector<int> ids) : m_ids(std::move(ids)) {}
@@ -93,7 +93,7 @@ public:
 
   std::vector<double>
   evaluate(ParticleReferenceRange particles,
-           const GenObs::traits<Particle> &traits) const override {
+           const ParticleObservables::traits<Particle> &traits) const override {
     std::vector<double> res;
     Utils::flatten(ObsType{}(particles), std::back_inserter(res));
     return res;

@@ -27,7 +27,7 @@
  * This file contains generic algorithms for the calculation of particle
  * property derived observables.
  */
-namespace GenObs {
+namespace ParticleObservables {
 namespace detail {
 struct One {
   template <class Particle> auto operator()(Particle const &p) const {
@@ -93,5 +93,5 @@ template <class ValueOp> struct Map {
     return res;
   }
 };
-} // namespace GenObs
+} // namespace ParticleObservables
 #endif // ALGORITHMS_HPP

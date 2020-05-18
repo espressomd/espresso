@@ -42,7 +42,7 @@ public:
 
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
-           const GenObs::traits<Particle> &traits) const override {
+           const ParticleObservables::traits<Particle> &traits) const override {
     std::vector<double> res(n_values());
     auto v1 = get_mi_vector(traits.position(particles[1]),
                             traits.position(particles[0]), box_geo);

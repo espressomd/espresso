@@ -25,8 +25,9 @@
 
 namespace Observables {
 
-using DipoleMoment = ParticleObservable<
-    GenObs::Sum<GenObs::Product<GenObs::Charge, GenObs::Position>>>;
+using DipoleMoment =
+    ParticleObservable<ParticleObservables::Sum<ParticleObservables::Product<
+        ParticleObservables::Charge, ParticleObservables::Position>>>;
 
 } // Namespace Observables
 

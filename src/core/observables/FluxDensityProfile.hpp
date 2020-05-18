@@ -33,7 +33,7 @@ public:
 
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
-           const GenObs::traits<Particle> &traits) const override {
+           const ParticleObservables::traits<Particle> &traits) const override {
     std::array<size_t, 3> n_bins{{n_x_bins, n_y_bins, n_z_bins}};
     std::array<std::pair<double, double>, 3> limits{
         {std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),

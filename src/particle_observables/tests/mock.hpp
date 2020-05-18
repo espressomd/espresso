@@ -34,7 +34,7 @@ struct Particle {
 };
 } // namespace Testing
 
-namespace GenObs {
+namespace ParticleObservables {
 
 template <> struct traits<Testing::Particle> {
   using Particle = Testing::Particle;
@@ -46,6 +46,6 @@ template <> struct traits<Testing::Particle> {
   double force(Particle const &p) const { return p.force(); }
   double dipole_moment(Particle const &p) const { return p.dipole_moment(); }
 };
-} // namespace GenObs
+} // namespace ParticleObservables
 
 #endif

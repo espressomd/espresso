@@ -20,15 +20,15 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <genobs/observable.hpp>
-#include <genobs/properties.hpp>
+#include <particle_observables/observable.hpp>
+#include <particle_observables/properties.hpp>
 
 #include "mock.hpp"
 
 /* Check that the property functors correctly map to
  * the default traits */
 BOOST_AUTO_TEST_CASE(properties_) {
-  using namespace GenObs;
+  using namespace ParticleObservables;
 
   Testing::Particle p;
 

@@ -36,7 +36,7 @@ public:
   using PidObservable::PidObservable;
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
-           const GenObs::traits<Particle> &traits) const override {
+           const ParticleObservables::traits<Particle> &traits) const override {
     auto const no_of_angles = n_values();
     std::vector<double> angles(no_of_angles);
     auto const no_of_bonds = n_values() + 1;

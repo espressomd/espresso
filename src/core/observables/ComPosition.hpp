@@ -25,7 +25,8 @@
 
 namespace Observables {
 
-using ComPosition = ParticleObservable<GenObs::CenterOfMassPosition>;
+using ComPosition =
+    ParticleObservable<ParticleObservables::CenterOfMassPosition>;
 
 } // namespace Observables
 #endif

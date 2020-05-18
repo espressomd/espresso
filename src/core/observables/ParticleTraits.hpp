@@ -22,7 +22,7 @@
 #include "Particle.hpp"
 #include "config.hpp"
 
-namespace GenObs {
+namespace ParticleObservables {
 /**
  * Template specialization for `Particle`. The traits mechanism is used to get
  * indirect access to particle properties. This helps making the implementation
@@ -57,6 +57,6 @@ template <> struct traits<Particle> {
   }
 };
 
-} // namespace GenObs
+} // namespace ParticleObservables
 
 #endif

@@ -23,7 +23,7 @@
  * This file contains interface functionality for extracting particle properties
  * via a particle traits class.
  */
-namespace GenObs {
+namespace ParticleObservables {
 template <class DoF> struct traits;
 
 namespace detail {
@@ -86,6 +86,6 @@ struct DipoleMoment {
     return particle_traits.dipole_moment(p);
   }
 };
-} // namespace GenObs
+} // namespace ParticleObservables
 
 #endif // OBSERVABLES_PROPERTIES_HPP

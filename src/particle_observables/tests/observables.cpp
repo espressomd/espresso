@@ -21,7 +21,7 @@
 #include <boost/test/unit_test.hpp>
 #include <vector>
 
-#include <genobs/observable.hpp>
+#include <particle_observables/observable.hpp>
 
 #include "mock.hpp"
 
@@ -36,14 +36,15 @@ template <class T> struct strip_args {
 BOOST_AUTO_TEST_CASE(product_) {
   using Testing::strip_args;
 
-  auto prod = GenObs::Product<strip_args<std::integral_constant<int, 2>>,
-                              strip_args<std::integral_constant<int, 3>>>{};
+  auto prod = ParticleObservables::Product<
+      strip_args<std::integral_constant<int, 2>>,
+      strip_args<std::integral_constant<int, 3>>>{};
 
   BOOST_CHECK_EQUAL((prod.template operator()<int, int>(0)), 2 * 3);
 }
 
 BOOST_AUTO_TEST_CASE(obs) {
-  using namespace GenObs;
+  using namespace ParticleObservables;
   Testing::Particle p;
   BOOST_CHECK_EQUAL(Momentum{}(p), Mass{}(p)*Velocity{}(p));
   std::vector<Testing::Particle> parts{p, Testing::Particle{}};

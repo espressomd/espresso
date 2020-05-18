@@ -20,9 +20,9 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <genobs/algorithms.hpp>
+#include <particle_observables/algorithms.hpp>
 
-using namespace GenObs;
+using namespace ParticleObservables;
 
 namespace Testing {
 struct Identity {

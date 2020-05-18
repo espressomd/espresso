@@ -31,7 +31,7 @@ public:
 
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
-           const GenObs::traits<Particle> &traits) const override {
+           const ParticleObservables::traits<Particle> &traits) const override {
     Utils::Vector3d current{};
 #ifdef ELECTROSTATICS
     for (auto p : particles) {

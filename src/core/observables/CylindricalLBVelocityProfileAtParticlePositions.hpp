@@ -29,7 +29,7 @@ public:
 
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
-           const GenObs::traits<Particle> &traits) const override;
+           const ParticleObservables::traits<Particle> &traits) const override;
 
   std::vector<size_t> shape() const override {
     return {n_r_bins, n_phi_bins, n_z_bins, 3};

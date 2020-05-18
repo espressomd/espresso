@@ -29,6 +29,6 @@ namespace Observables {
  *  For \f$n\f$ particles, return \f$3 n\f$ positions ordered as
  *  \f$(x_1, y_1, z_1, \dots, x_n, y_n, z_n)\f$.
  */
-using ParticlePositions = ParticleObservable<GenObs::Positions>;
+using ParticlePositions = ParticleObservable<ParticleObservables::Positions>;
 } // namespace Observables
 #endif

@@ -30,6 +30,6 @@ std::vector<double> PidObservable::operator()() const {
   std::vector<std::reference_wrapper<const Particle>> particle_refs(
       particles.begin(), particles.end());
   return this->evaluate(ParticleReferenceRange(particle_refs),
-                        GenObs::traits<Particle>{});
+                        ParticleObservables::traits<Particle>{});
 }
 } // namespace Observables

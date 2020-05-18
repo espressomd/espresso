@@ -29,7 +29,7 @@ namespace Observables {
  *  For \f$n\f$ particles, return \f$3 n\f$ velocities ordered as
  *  \f$(v_x^1, v_y^1, v_z^1, \dots, v_x^n, v_y^n, v_z^n)\f$.
  */
-using ParticleVelocities = ParticleObservable<GenObs::Velocities>;
+using ParticleVelocities = ParticleObservable<ParticleObservables::Velocities>;
 
 } // namespace Observables
 #endif
