@@ -72,8 +72,11 @@ int get_sd_flags();
 void set_sd_seed(std::size_t seed);
 std::size_t get_sd_seed();
 
-/* takes the forces and torques on all particles computes new velocities
- * acts on particles on all nodes */
+/** Takes the forces and torques on all particles and computes their
+ *  velocities. Acts globally on particles on all nodes; i.e. particle data
+ *  is gathered from all nodes and their velocities and angular velocities are
+ *  set according to the Stokesian Dynamics method.
+ */
 void propagate_vel_pos_sd(const ParticleRange &particles);
 
 #endif // STOKESIAN_DYNAMICS

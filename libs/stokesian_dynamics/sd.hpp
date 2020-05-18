@@ -41,12 +41,19 @@ typedef r123::Philox2x64 RNG;
  *  @cite durlofsky87a, because it describes the method that is
  *  implemented here, apart from the thermalization.
  *
+ *      "Dynamic simulation of hydrodynamically interacting suspensions"
+ *      https://core.ac.uk/download/pdf/4895234.pdf
+ *
  *  All references to formulae in this file refer to the paper 
  *  @cite durlofsky87a, unless otherwise noted.
  *
  *  As they state in the paragraph below equation (2.17) it may be useful to
  *  also read @cite jeffrey84a to better understand the notation used to
  *  compute the grand mobility matrix in this Stokesian Dynamics method.
+ *
+ *      "Calculation of the resistance and mobility functions for two unequal
+ *      rigid spheres in low-Reynolds-number flow"
+ *      https://doi.org/10.1017/S0022112084000355
  *
  *  Both the F-T-version and the F-T-S-version have been implemented and can be
  *  selected via the FTS flag.
@@ -59,6 +66,8 @@ typedef r123::Philox2x64 RNG;
  *  Also, the figures in @cite cortez15a might help with an intuitive
  *  understanding of dipole, stokeslet and rotlet flow (missing out only on
  *  the stresslet flow).
+ *
+ *      https://doi.org/10.1016/j.jcp.2015.01.019
  *
  */
 
@@ -1327,8 +1336,15 @@ struct solver {
     /** number of pairs of particles = n_part*(n_part-1)/2 */
     std::size_t const n_pair;
 
+    /** The following (sub-)tensors can be found in equation (2.17) */
+    /** part of the grand mobility matrix that relates forces (f)
+     *  to velocities (u) */
     device_matrix<T, Policy> zmuf;
+    /** part of the grand mobility matrix that relates stresslets (s)
+     *  to velocities (u) */
     device_matrix<T, Policy> zmus;
+    /** part of the grand mobility matrix that relates stresslets (s)
+     *  to rate of strain (e) */
     device_matrix<T, Policy> zmes;
 
     solver(T eta, std::size_t const n_part)
@@ -1382,30 +1398,11 @@ struct solver {
         }
 
 
-        
-//        printf("zmuf:\n");
-//        for (int i=0; i<zmuf.rows(); i++) {
-//            for (int j=0; j<zmuf.cols(); j++) {
-//                printf("%f ",zmuf(i,j));
-//            }
-//            printf("\n");
-//        }
-//        printf("\n");
-
         // Invert the grand-mobility tensor.  This is done in several steps
         // which minimize the computation time.
 
         // Invert R1 = Muf ^ -1 => zmuf = zmuf ^ -1
         zmuf = zmuf.inverse();
-
-//        printf("zmuf:\n");
-//        for (int i=0; i<zmuf.rows(); i++) {
-//            for (int j=0; j<zmuf.cols(); j++) {
-//                printf("%f ",zmuf(i,j));
-//            }
-//            printf("\n");
-//        }
-//        printf("\n");
 
         if (flg & flags::FTS) {
             // Compute R2 = Mus(t) * R1 => rsu = zmus(t) * zmuf
@@ -1428,15 +1425,6 @@ struct solver {
         device_matrix<T, Policy> rfe = zmus;
         device_matrix<T, Policy> rse = zmes;
 
-//        printf("rfu:\n");
-//        for (int i=0; i<rfu.rows(); i++) {
-//            for (int j=0; j<rfu.cols(); j++) {
-//                printf("%f ",rfu(i,j));
-//            }
-//            printf("\n");
-//        }
-//        printf("\n");
-
         // Lubrication corrections (equation (2.18) or (2.21) resp.)
         if (flg & flags::LUBRICATION) {
             thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
@@ -1455,15 +1443,6 @@ struct solver {
                 }
             }
         }
-
-//        printf("rfu:\n");
-//        for (int i=0; i<rfu.rows(); i++) {
-//            for (int j=0; j<rfu.cols(); j++) {
-//                printf("%f ",rfu(i,j));
-//            }
-//            printf("\n");
-//        }
-//        printf("\n");
 
 
         assert(f_host.size() == 6 * n_part);
