@@ -62,7 +62,4 @@ extern boost::optional<AtomDecomposition> ad;
 /** setup the nsquare topology */
 void nsq_topology_init(const boost::mpi::communicator &comm);
 
-/** implements the load balancing as described above. */
-void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
-                            std::vector<Cell *> &modified_cells);
 #endif

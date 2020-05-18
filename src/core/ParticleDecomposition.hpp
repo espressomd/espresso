@@ -23,7 +23,7 @@ public:
                       std::vector<Cell *> &modified_cells) = 0;
 
   /**
-   * @brief Communicator for updateing ghosts from the real particles.
+   * @brief Communicator for updating ghosts from the real particles.
    */
   virtual GhostCommunicator const &exchange_ghosts_comm() const = 0;
   /**
