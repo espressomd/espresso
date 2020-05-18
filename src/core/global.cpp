@@ -25,7 +25,6 @@
 
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
@@ -74,9 +73,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_BOXL,
      {box_geo.m_length.data(), Datafield::Type::DOUBLE, 3,
       "box_l"}}, /* 0  from grid.cpp */
-    {FIELD_CELLGRID,
-     {dd.cell_grid, Datafield::Type::INT, 3,
-      "cell_grid"}}, /* 1  from cells.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA,
      {&langevin.gamma, Datafield::Type::DOUBLE, 1,
@@ -89,12 +85,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_INTEG_SWITCH,
      {&integ_switch, Datafield::Type::INT, 1,
       "integ_switch"}}, /* 7  from integrate.cpp */
-    {FIELD_MAXNUMCELLS,
-     {&max_num_cells, Datafield::Type::INT, 1,
-      "max_num_cells"}}, /* 10 from cells.cpp */
-    {FIELD_MINNUMCELLS,
-     {&min_num_cells, Datafield::Type::INT, 1,
-      "min_num_cells"}}, /* 14  from cells.cpp */
     {FIELD_RIGIDBONDS,
      {&n_rigidbonds, Datafield::Type::INT, 1,
       "n_rigidbonds"}}, /* 19 from rattle.cpp */

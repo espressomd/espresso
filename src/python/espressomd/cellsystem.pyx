@@ -21,8 +21,7 @@ from . cimport integrate
 from .globals cimport FIELD_SKIN, FIELD_NODEGRID, FIELD_MAXNUMCELLS, FIELD_MINNUMCELLS
 from .globals cimport verlet_reuse, skin
 from .globals cimport mpi_bcast_parameter
-from .cellsystem cimport dd, cell_structure, min_num_cells, max_num_cells
-from .cellsystem cimport calc_processor_min_num_cells
+from .cellsystem cimport dd, cell_structure
 import numpy as np
 from .utils cimport handle_errors
 from .utils import is_valid_type
@@ -83,8 +82,6 @@ cdef class CellSystem:
             [dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
         s["cell_size"] = np.array(
             [dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
-        s["max_num_cells"] = max_num_cells
-        s["min_num_cells"] = min_num_cells
         s["fully_connected"] = dd.fully_connected
 
         return s
@@ -99,8 +96,6 @@ cdef class CellSystem:
 
         s["skin"] = skin
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
-        s["max_num_cells"] = max_num_cells
-        s["min_num_cells"] = min_num_cells
         s["fully_connected"] = dd.fully_connected
         return s
 
@@ -117,8 +112,6 @@ cdef class CellSystem:
                     self.set_n_square(use_verlet_lists=use_verlet_lists)
         self.skin = d['skin']
         self.node_grid = d['node_grid']
-        self.max_num_cells = d['max_num_cells']
-        self.min_num_cells = d['min_num_cells']
 
     def get_pairs_(self, distance):
         return mpi_get_pairs(distance)
@@ -138,44 +131,6 @@ cdef class CellSystem:
         """
 
         return mpi_resort_particles(int(global_flag))
-
-    property max_num_cells:
-        """
-        Maximum number for the cells.
-
-        """
-
-        def __set__(self, int _max_num_cells):
-            global max_num_cells
-            if _max_num_cells < min_num_cells:
-                raise ValueError(
-                    "max_num_cells must be >= min_num_cells (currently " + str(min_num_cells) + ")")
-            max_num_cells = _max_num_cells
-            mpi_bcast_parameter(FIELD_MAXNUMCELLS)
-
-        def __get__(self):
-            return max_num_cells
-
-    property min_num_cells:
-        """
-        Minimal number of the cells.
-
-        """
-
-        def __set__(self, int _min_num_cells):
-            global min_num_cells
-            min = calc_processor_min_num_cells(node_grid)
-            if _min_num_cells < min:
-                raise ValueError(
-                    "min_num_cells must be >= processor_min_num_cells (currently " + str(min) + ")")
-            if _min_num_cells > max_num_cells:
-                raise ValueError(
-                    "min_num_cells must be <= max_num_cells (currently " + str(max_num_cells) + ")")
-            min_num_cells = _min_num_cells
-            mpi_bcast_parameter(FIELD_MINNUMCELLS)
-
-        def __get__(self):
-            return min_num_cells
 
     # setter deprecated
     property node_grid:

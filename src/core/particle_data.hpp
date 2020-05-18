@@ -185,8 +185,8 @@ void set_particle_q(int part, double q);
  *  @param part the particle.
  *  @param mu_E its new mobility.
  */
-void set_particle_mu_E(int part, double *mu_E);
-void get_particle_mu_E(int part, double (&mu_E)[3]);
+void set_particle_mu_E(int part, Utils::Vector3d const &mu_E);
+void get_particle_mu_E(int part, Utils::Vector3d &mu_E);
 #endif
 
 /** Call only on the master node: set particle type.

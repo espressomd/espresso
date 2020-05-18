@@ -348,7 +348,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
   }
   dphi = mask(p.p.rotation, dphi);
   double dphi_m = dphi.norm();
-  if (dphi_m) {
+  if (dphi_m != 0.) {
     auto const dphi_u = dphi / dphi_m;
     return local_rotate_particle_body(p, dphi_u, dphi_m);
   }
@@ -459,7 +459,7 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
   dphi = mask(p.p.rotation, dphi);
   // making the algorithm independent of the order of the rotations
   double dphi_m = dphi.norm();
-  if (dphi_m) {
+  if (dphi_m != 0) {
     auto const dphi_u = dphi / dphi_m;
     return local_rotate_particle_body(p, dphi_u, dphi_m);
   }

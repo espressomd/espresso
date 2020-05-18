@@ -55,7 +55,7 @@ public:
       for (size_t j = 0; j < no_of_angles - i; ++j) {
         average += bond_vectors[j] * bond_vectors[j + i + 1];
       }
-      angles[i] = average / (no_of_angles - i);
+      angles[i] = average / static_cast<double>(no_of_angles - i);
     }
 
     return angles;

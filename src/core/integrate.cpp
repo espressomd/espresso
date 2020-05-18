@@ -34,23 +34,16 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
-#include "dpd.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include "ghosts.hpp"
 #include "global.hpp"
-#include "grid.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
-#include "immersed_boundaries.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
-#include "pressure.hpp"
 #include "rattle.hpp"
 #include "rotation.hpp"
 #include "signalhandling.hpp"
@@ -495,3 +488,9 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
   return ES_OK;
 }
 #endif
+
+double interaction_range() {
+  /* Consider skin only if there are actually interactions */
+  auto const max_cut = maximal_cutoff();
+  return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
+}

@@ -44,7 +44,7 @@ __device__ unsigned int fde_getThreadIndex() {
 }
 
 __device__ cufftReal fde_getNode(int x, int y, int z) {
-  cufftReal *field =
+  auto *field =
       reinterpret_cast<cufftReal *>(fde_parameters_gpu->charge_potential);
   return field[fde_parameters_gpu->dim_y * fde_parameters_gpu->dim_x_padded *
                    z +
@@ -52,7 +52,7 @@ __device__ cufftReal fde_getNode(int x, int y, int z) {
 }
 
 __device__ void fde_setNode(int x, int y, int z, cufftReal value) {
-  cufftReal *field =
+  auto *field =
       reinterpret_cast<cufftReal *>(fde_parameters_gpu->charge_potential);
   field[fde_parameters_gpu->dim_y * fde_parameters_gpu->dim_x_padded * z +
         fde_parameters_gpu->dim_x_padded * y + x] = value;
@@ -152,15 +152,16 @@ __global__ void createGreensfcn() {
       fde_parameters_gpu->greensfcn[index] =
           -4.0f * PI_FLOAT * fde_parameters_gpu->prefactor *
           fde_parameters_gpu->agrid * fde_parameters_gpu->agrid * 0.5f /
-          (cos(2.0f * PI_FLOAT * coord[0] /
-               (cufftReal)fde_parameters_gpu->dim_x) +
-           cos(2.0f * PI_FLOAT * coord[1] /
-               (cufftReal)fde_parameters_gpu->dim_y) +
-           cos(2.0f * PI_FLOAT * coord[2] /
-               (cufftReal)fde_parameters_gpu->dim_z) -
+          (cos(2.0f * PI_FLOAT * static_cast<cufftReal>(coord[0]) /
+               static_cast<cufftReal>(fde_parameters_gpu->dim_x)) +
+           cos(2.0f * PI_FLOAT * static_cast<cufftReal>(coord[1]) /
+               static_cast<cufftReal>(fde_parameters_gpu->dim_y)) +
+           cos(2.0f * PI_FLOAT * static_cast<cufftReal>(coord[2]) /
+               static_cast<cufftReal>(fde_parameters_gpu->dim_z)) -
            3.0f) /
-          (fde_parameters_gpu->dim_x * fde_parameters_gpu->dim_y *
-           fde_parameters_gpu->dim_z);
+          static_cast<cufftReal>(fde_parameters_gpu->dim_x *
+                                 fde_parameters_gpu->dim_y *
+                                 fde_parameters_gpu->dim_z);
     }
 
     // fde_parameters_gpu->greensfcn[index] = 0.0f; //TODO delete

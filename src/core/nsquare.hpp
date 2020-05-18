@@ -48,14 +48,15 @@
  *
  *  Implementation in nsquare.cpp.
  */
+#include "Cell.hpp"
+#include "ParticleList.hpp"
 
-#include "cells.hpp"
+#include <boost/mpi/communicator.hpp>
 
-/** always returns the one local cell */
-void nsq_topology_release();
+#include <vector>
 
 /** setup the nsquare topology */
-void nsq_topology_init();
+void nsq_topology_init(const boost::mpi::communicator &comm);
 
 /** implements the load balancing as described above. */
 void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,

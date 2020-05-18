@@ -131,9 +131,10 @@ void force_calc(CellStructure &cell_structure) {
   Constraints::constraints.add_forces(particles, sim_time);
 
   if (max_oif_objects) {
-    double area_volume[2]; // There are two global quantities that need to be
-    // evaluated: object's surface and object's volume. One
-    // can add another quantity.
+    // There are two global quantities that need to be evaluated:
+    // object's surface and object's volume. One can add another
+    // quantity.
+    Utils::Vector2d area_volume;
     area_volume[0] = 0.0;
     area_volume[1] = 0.0;
     for (int i = 0; i < max_oif_objects; i++) {
@@ -160,8 +161,7 @@ void force_calc(CellStructure &cell_structure) {
 #endif
 
   // Communication Step: ghost forces
-  ghost_communicator(&cell_structure.collect_ghost_force_comm,
-                     GHOSTTRANS_FORCE);
+  cell_structure.ghosts_reduce_forces();
 
   // should be pretty late, since it needs to zero out the total force
   comfixed.apply(comm_cart, particles);

@@ -89,7 +89,7 @@ double slab_dip_count_mu(double *mt, double *mx, double *my,
 }
 
 /** Compute the dipolar DLC corrections for forces and torques.
- *  Algorithm implemented accordingly to @cite brodka04a.
+ *  %Algorithm implemented accordingly to @cite brodka04a.
  */
 double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
                        std::vector<Utils::Vector3d> &ts,
@@ -236,7 +236,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
 }
 
 /** Compute the dipolar DLC corrections
- *  Algorithm implemented accordingly to @cite brodka04a.
+ *  %Algorithm implemented accordingly to @cite brodka04a.
  */
 double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
   auto const facux = 2.0 * M_PI / box_geo.length()[0];
@@ -313,7 +313,8 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
-  get_DLC_dipolar(dlc_params.far_cut, dip_DLC_f, dip_DLC_t, particles);
+  get_DLC_dipolar(static_cast<int>(std::round(dlc_params.far_cut)), dip_DLC_f,
+                  dip_DLC_t, particles);
 
   // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a 3D PBC method which uses spherical
@@ -365,7 +366,9 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
 
   // First the DLC correction
   double dip_DLC_energy =
-      dipole.prefactor * get_DLC_energy_dipolar(dlc_params.far_cut, particles);
+      dipole.prefactor *
+      get_DLC_energy_dipolar(static_cast<int>(std::round(dlc_params.far_cut)),
+                             particles);
 
   // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a 3D PBC method which uses spherical

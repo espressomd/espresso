@@ -19,11 +19,7 @@
 #ifndef UTILS_DEMANGLE_HPP
 #define UTILS_DEMANGLE_HPP
 
-#include <boost/version.hpp>
-
-#if BOOST_VERSION >= 105600
 #include <boost/core/demangle.hpp>
-#endif
 
 namespace Utils {
 /**
@@ -36,11 +32,7 @@ namespace Utils {
  * @return name
  */
 template <class T> std::string demangle() {
-#if BOOST_VERSION >= 105600
   return boost::core::demangle(typeid(T).name());
-#else
-  return typeid(T).name();
-#endif
 }
 } // namespace Utils
 

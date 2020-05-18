@@ -23,7 +23,6 @@
 
 #include <utils/mask.hpp>
 
-#include <array>
 #include <cstdint>
 #include <tuple>
 

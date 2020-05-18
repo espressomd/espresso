@@ -26,29 +26,9 @@
  *  Implementation in statistics.cpp.
  */
 
-#include "Observable_stat.hpp"
 #include "PartCfg.hpp"
-#include "Particle.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include <map>
-#include <string>
 #include <vector>
-
-/** \name Exported Variables
- *  Previous particle configurations (needed for offline analysis
- *  and correlation analysis)
- */
-/************************************************************/
-/*@{*/
-extern std::vector<std::vector<Utils::Vector3d>> configs;
-int get_n_configs();
-int get_n_part_conf();
-/*@}*/
-
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
 
 /** Calculate the minimal distance of two particles with types in set1 resp.
  *  set2.
@@ -80,11 +60,6 @@ std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
  */
 double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid = -1);
 
-/** Append particles' positions in %p partCfg to #configs
- *  @param partCfg  @copybrief PartCfg
- */
-void analyze_append(PartCfg &partCfg);
-
 /** Calculate the distribution of particles around others.
  *
  *  Calculates the distance distribution of particles with types given
@@ -107,60 +82,6 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
                             std::vector<int> const &p2_types, double r_min,
                             double r_max, int r_bins, bool log_flag,
                             double *low, double *dist);
-
-/** Calculate the radial distribution function.
- *
- *  Calculates the radial distribution function of particles with
- *  types given in the @p p1_types list around particles with types given
- *  in the @p p2_types list. The range is given by @p r_min and @p r_max and
- *  the distribution function is binned into @p r_bin bins, which are
- *  equidistant. The result is stored in the array @p rdf.
- *
- *  @param partCfg  @copybrief PartCfg
- *  @param p1_types list with types of particles to find the distribution for.
- *  @param n_p1     length of @p p1_types.
- *  @param p2_types list with types of particles the others are distributed
- *                  around.
- *  @param n_p2     length of @p p2_types.
- *  @param r_min    Minimal distance for the distribution.
- *  @param r_max    Maximal distance for the distribution.
- *  @param r_bins   Number of bins.
- *  @param rdf      Array to store the result (size: @p r_bins).
- */
-void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
-              int const *p2_types, int n_p2, double r_min, double r_max,
-              int r_bins, double *rdf);
-void calc_rdf(PartCfg &partCfg, std::vector<int> const &p1_types,
-              std::vector<int> const &p2_types, double r_min, double r_max,
-              int r_bins, std::vector<double> &rdf);
-
-/** Calculate the radial distribution function averaged over last @p n_conf
- *  configurations.
- *
- *  Calculates the radial distribution function of particles with
- *  types given in the @p p1_types list around particles with types given
- *  in the @p p2_types list. The range is given by @p r_min and @p r_max and
- *  the distribution function is binned into @p r_bin bins, which are
- *  equidistant. The result is stored in the array @p rdf.
- *
- *  @param partCfg  @copybrief PartCfg
- *  @param p1_types list with types of particles to find the distribution for.
- *  @param n_p1     length of @p p1_types.
- *  @param p2_types list with types of particles the others are distributed
- *                  around.
- *  @param n_p2     length of @p p2_types.
- *  @param r_min    Minimal distance for the distribution.
- *  @param r_max    Maximal distance for the distribution.
- *  @param r_bins   Number of bins.
- *  @param rdf      Array to store the result (size: @p r_bins).
- *  @param n_conf   Number of configurations from the last stored configuration.
- */
-void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
-                 int const *p2_types, int n_p2, double r_min, double r_max,
-                 int r_bins, double *rdf, int n_conf);
-void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
-                 std::vector<int> const &p2_types, double r_min, double r_max,
-                 int r_bins, std::vector<double> &rdf, int n_conf);
 
 /** Calculate the spherically averaged structure factor.
  *
@@ -210,60 +131,5 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
  */
 Utils::Vector3d calc_linear_momentum(int include_particles,
                                      int include_lbfluid);
-
-inline double *obsstat_bonded(Observable_stat *stat, int j) {
-  return stat->bonded + stat->chunk_size * j;
-}
-
-inline double *obsstat_nonbonded(Observable_stat *stat, int p1, int p2) {
-  if (p1 > p2) {
-    int tmp = p2;
-    p2 = p1;
-    p1 = tmp;
-  }
-  return stat->non_bonded +
-         stat->chunk_size *
-             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
-}
-
-inline double *obsstat_nonbonded_intra(Observable_stat_non_bonded *stat, int p1,
-                                       int p2) {
-  /*  return stat->non_bonded_intra + stat->chunk_size*1; */
-  if (p1 > p2) {
-    int tmp = p2;
-    p2 = p1;
-    p1 = tmp;
-  }
-  return stat->non_bonded_intra +
-         stat->chunk_size_nb *
-             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
-}
-
-inline double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p1,
-                                       int p2) {
-  /*  return stat->non_bonded_inter + stat->chunk_size*1; */
-  if (p1 > p2) {
-    int tmp = p2;
-    p2 = p1;
-    p1 = tmp;
-  }
-  return stat->non_bonded_inter +
-         stat->chunk_size_nb *
-             (((2 * max_seen_particle_type - 1 - p1) * p1) / 2 + p2);
-}
-
-void invalidate_obs();
-
-/** Docs missing
- * \todo Docs missing
- */
-void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
-                               int n_non_bonded, int n_coulomb, int n_dipolar,
-                               int n_vs, int chunk_size);
-
-void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
-                                          int n_nonbonded, int chunk_size_nb);
-
-/*@}*/
 
 #endif

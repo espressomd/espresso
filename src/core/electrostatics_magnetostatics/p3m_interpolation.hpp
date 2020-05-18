@@ -67,7 +67,7 @@ public:
 
   /**
    * @brief Charge assignment order the weights are for.
-   * @return The charge assigment order.
+   * @return The charge assignment order.
    */
   auto cao() const { return m_cao; }
 
@@ -143,7 +143,7 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
   static auto const pos_shift = std::floor((cao - 1) / 2.0) - (cao % 2) / 2.0;
 
   /* distance to nearest mesh point */
-  double dist[3];
+  Utils::Vector3d dist;
 
   /* nearest mesh point */
   Utils::Vector3i nmp;
@@ -163,6 +163,8 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
   /* 3d-array index of nearest mesh point */
   ret.ind = Utils::get_linear_index(nmp, local_mesh.dim,
                                     Utils::MemoryOrder::ROW_MAJOR);
+
+  assert((nmp + Utils::Vector3i::broadcast(cao)) <= local_mesh.dim);
   for (int i = 0; i < cao; i++) {
     using Utils::bspline;
 

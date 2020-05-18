@@ -89,7 +89,7 @@ void LPK01(double x, double *K0, double *K1);
 inline double evaluateAsTaylorSeriesAt(Utils::Span<const double> series,
                                        double x) {
   assert(not series.empty());
-  int cnt = series.size() - 1;
+  auto cnt = static_cast<int>(series.size()) - 1;
   const double *c = series.data();
   double r = c[cnt];
   while (--cnt >= 0)
@@ -108,7 +108,7 @@ inline double evaluateAsChebychevSeriesAt(Utils::Span<const double> series,
   double x2 = 2.0 * x;
   double dd = c[series.size() - 1];
   double d = x2 * dd + c[series.size() - 2];
-  for (int j = series.size() - 3; j >= 1; j--) {
+  for (auto j = static_cast<int>(series.size()) - 3; j >= 1; j--) {
     auto const tmp = d;
     d = x2 * d - dd + c[j];
     dd = tmp;

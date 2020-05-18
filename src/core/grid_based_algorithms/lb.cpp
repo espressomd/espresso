@@ -59,6 +59,7 @@ using Utils::get_linear_index;
 
 #include <cassert>
 #include <cinttypes>
+#include <iostream>
 
 namespace {
 /** Basis of the mode space as described in @cite dunweg07a */
@@ -674,9 +675,10 @@ void lb_prepare_communication(HaloCommunicator &halo_comm,
                             comm.halo_info[i].datatype, &hinfo->datatype);
     MPI_Type_commit(&hinfo->datatype);
 
-    halo_create_field_hvector(D3Q19::n_vel, 1,
-                              lb_lattice.halo_grid_volume * sizeof(double),
-                              comm.halo_info[i].fieldtype, &hinfo->fieldtype);
+    halo_create_field_hvector(
+        D3Q19::n_vel, 1,
+        static_cast<int>(lb_lattice.halo_grid_volume * sizeof(double)),
+        comm.halo_info[i].fieldtype, &hinfo->fieldtype);
   }
 
   release_halo_communication(&comm);
@@ -1090,13 +1092,15 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
               get_linear_index(lb_lattice.grid[0], y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
-          compare_buffers(s_buffer, r_buffer, count * sizeof(double));
+          compare_buffers(s_buffer, r_buffer,
+                          count * static_cast<int>(sizeof(double)));
         } else {
           index =
               get_linear_index(lb_lattice.grid[0], y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
-          if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
+          if (compare_buffers(s_buffer, r_buffer,
+                              count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=" << 0 << " at index=" << index
                       << " y=" << y << " z=" << z << "\n";
           }
@@ -1116,12 +1120,14 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
           index = get_linear_index(1, y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
-          compare_buffers(s_buffer, r_buffer, count * sizeof(double));
+          compare_buffers(s_buffer, r_buffer,
+                          count * static_cast<int>(sizeof(double)));
         } else {
           index = get_linear_index(1, y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
-          if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
+          if (compare_buffers(s_buffer, r_buffer,
+                              count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=0 at index=" << index
                       << " y=" << y << " z=" << z << "\n";
           }
@@ -1147,13 +1153,15 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
               get_linear_index(x, lb_lattice.grid[1], z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
-          compare_buffers(s_buffer, r_buffer, count * sizeof(double));
+          compare_buffers(s_buffer, r_buffer,
+                          count * static_cast<int>(sizeof(double)));
         } else {
           index =
               get_linear_index(x, lb_lattice.grid[1], z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
-          if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
+          if (compare_buffers(s_buffer, r_buffer,
+                              count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=1 at index=" << index
                       << " x=" << x << " z=" << z << "\n";
           }
@@ -1174,12 +1182,14 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
           index = get_linear_index(x, 1, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
-          compare_buffers(s_buffer, r_buffer, count * sizeof(double));
+          compare_buffers(s_buffer, r_buffer,
+                          count * static_cast<int>(sizeof(double)));
         } else {
           index = get_linear_index(x, 1, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
-          if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
+          if (compare_buffers(s_buffer, r_buffer,
+                              count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=1 at index=" << index
                       << " x=" << x << " z=" << z << "\n";
           }
@@ -1205,13 +1215,15 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
               get_linear_index(x, y, lb_lattice.grid[2], lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
-          compare_buffers(s_buffer, r_buffer, count * sizeof(double));
+          compare_buffers(s_buffer, r_buffer,
+                          count * static_cast<int>(sizeof(double)));
         } else {
           index =
               get_linear_index(x, y, lb_lattice.grid[2], lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
-          if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
+          if (compare_buffers(s_buffer, r_buffer,
+                              count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=2 at index=" << index
                       << " x=" << x << " y=" << y << " z=" << lb_lattice.grid[2]
                       << "\n";
@@ -1235,12 +1247,14 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
           index = get_linear_index(x, y, 1, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
-          compare_buffers(s_buffer, r_buffer, count * sizeof(double));
+          compare_buffers(s_buffer, r_buffer,
+                          count * static_cast<int>(sizeof(double)));
         } else {
           index = get_linear_index(x, y, 1, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
-          if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
+          if (compare_buffers(s_buffer, r_buffer,
+                              count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=2 at index=" << index
                       << " x=" << x << " y=" << y << "\n";
           }

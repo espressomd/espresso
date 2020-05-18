@@ -90,10 +90,10 @@ void cuda_get_gpu_name(int dev, char name[64]) {
   cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
   if (error != cudaSuccess) {
     cuda_error = cudaGetErrorString(error);
-    strcpy(name, "no GPU");
-    return;
+    strncpy(name, "no GPU", 63);
+  } else {
+    strncpy(name, deviceProp.name, 63);
   }
-  strncpy(name, deviceProp.name, 63);
   name[63] = 0;
 }
 
@@ -133,12 +133,12 @@ int cuda_get_device() {
   if (error != cudaSuccess) {
     cuda_error = cudaGetErrorString(error);
     return -1;
-  } else
-    return dev;
+  }
+  return dev;
 }
 
 int cuda_test_device_access() {
-  int *d = 0;
+  int *d = nullptr;
   int h = 42;
   cudaError_t err;
 
@@ -156,12 +156,11 @@ int cuda_test_device_access() {
   err = cudaMemcpy(&h, d, sizeof(int), cudaMemcpyDeviceToHost);
   cudaFree(d);
 
-  if ((h == 42) && (err == cudaSuccess))
+  if ((h == 42) && (err == cudaSuccess)) {
     return ES_OK;
-  else {
-    cuda_error = cudaGetErrorString(err);
-    return ES_ERROR;
   }
+  cuda_error = cudaGetErrorString(err);
+  return ES_ERROR;
 }
 
 #endif /* defined(CUDA) */

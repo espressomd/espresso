@@ -52,12 +52,11 @@ using Utils::strcat_alloc;
 using Utils::sinc;
 #include <utils/constants.hpp>
 #include <utils/integral_parameter.hpp>
+#include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <mpi.h>
 
 /************************************************
@@ -198,7 +197,7 @@ void dp3m_init() {
     if (dp3m_sanity_checks(node_grid))
       return;
 
-    dp3m.params.cao3 = dp3m.params.cao * dp3m.params.cao * dp3m.params.cao;
+    dp3m.params.cao3 = Utils::int_pow<3>(dp3m.params.cao);
 
     /* initializes the (inverse) mesh constant dp3m.params.a (dp3m.params.ai)
      * and the cutoff for charge assignment dp3m.params.cao_cut */
@@ -233,35 +232,31 @@ void dp3m_init() {
 }
 
 double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
-  int i, ind, n[3];
-  double node_phi = 0.0, phi = 0.0;
-  double U2;
-
   int end[3];
   int size = 1;
-
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     size *= dp3m.fft.plan[3].new_mesh[i];
     end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
   }
 
+  int n[3];
+  double node_phi = 0.0;
   for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
     for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
       for (n[2] = dp3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - dp3m.fft.plan[3].start[2]) +
-              dp3m.fft.plan[3].new_mesh[2] *
-                  ((n[1] - dp3m.fft.plan[3].start[1]) +
-                   (dp3m.fft.plan[3].new_mesh[1] *
-                    (n[0] - dp3m.fft.plan[3].start[0])));
+        int const ind = (n[2] - dp3m.fft.plan[3].start[2]) +
+                        dp3m.fft.plan[3].new_mesh[2] *
+                            ((n[1] - dp3m.fft.plan[3].start[1]) +
+                             (dp3m.fft.plan[3].new_mesh[1] *
+                              (n[0] - dp3m.fft.plan[3].start[0])));
 
-        if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0))
+        if (((n[0] == 0) && (n[1] == 0) && (n[2] == 0)) ||
+            ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[2] % (dp3m.params.mesh[0] / 2) == 0))) {
           node_phi += 0.0;
-        else if ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[2] % (dp3m.params.mesh[0] / 2) == 0))
-          node_phi += 0.0;
-        else {
-          U2 = dp3m_perform_aliasing_sums_dipolar_self_energy(n);
+        } else {
+          double const U2 = dp3m_perform_aliasing_sums_dipolar_self_energy(n);
           node_phi +=
               dp3m.g_energy[ind] * U2 *
               (Utils::sqr(dp3m.d_op[n[0]]) + Utils::sqr(dp3m.d_op[n[1]]) +
@@ -271,10 +266,9 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
     }
   }
 
+  double phi = 0.0;
   MPI_Reduce(&node_phi, &phi, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-
   phi *= Utils::pi() / 3. / box_l / pow(mesh, 3.0);
-
   return phi;
 }
 
@@ -831,40 +825,38 @@ void dp3m_calc_differential_operator() {
 /*****************************************************************************/
 
 void dp3m_calc_influence_function_force() {
-  int i, n[3], ind;
   int end[3];
   int size = 1;
-  double fak1, fak2;
-  double nominator[1] = {0.0}, denominator = 0.0;
 
   dp3m_calc_meshift();
 
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     size *= dp3m.fft.plan[3].new_mesh[i];
     end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
   }
   dp3m.g_force.resize(size);
-  fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
-         (box_geo.length()[0] * box_geo.length()[0]);
+  double fak1 = Utils::int_pow<3>(dp3m.params.mesh[0]) * 2.0 /
+                (box_geo.length()[0] * box_geo.length()[0]);
 
+  int n[3];
   for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
     for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++)
       for (n[2] = dp3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - dp3m.fft.plan[3].start[2]) +
-              dp3m.fft.plan[3].new_mesh[2] *
-                  ((n[1] - dp3m.fft.plan[3].start[1]) +
-                   (dp3m.fft.plan[3].new_mesh[1] *
-                    (n[0] - dp3m.fft.plan[3].start[0])));
+        int const ind = (n[2] - dp3m.fft.plan[3].start[2]) +
+                        dp3m.fft.plan[3].new_mesh[2] *
+                            ((n[1] - dp3m.fft.plan[3].start[1]) +
+                             (dp3m.fft.plan[3].new_mesh[1] *
+                              (n[0] - dp3m.fft.plan[3].start[0])));
 
-        if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0))
+        if (((n[0] == 0) && (n[1] == 0) && (n[2] == 0)) ||
+            ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[2] % (dp3m.params.mesh[0] / 2) == 0))) {
           dp3m.g_force[ind] = 0.0;
-        else if ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[2] % (dp3m.params.mesh[0] / 2) == 0))
-          dp3m.g_force[ind] = 0.0;
-        else {
-          denominator = dp3m_perform_aliasing_sums_force(n, nominator);
-          fak2 = nominator[0];
+        } else {
+          double nominator[1] = {0.0};
+          double denominator = dp3m_perform_aliasing_sums_force(n, nominator);
+          double fak2 = nominator[0];
           fak2 /=
               pow(Utils::sqr(dp3m.d_op[n[0]]) + Utils::sqr(dp3m.d_op[n[1]]) +
                       Utils::sqr(dp3m.d_op[n[2]]),
@@ -906,7 +898,7 @@ double dp3m_perform_aliasing_sums_force(const int n[3], double nominator[1]) {
 
         n_nm = dp3m.d_op[n[0]] * nmx + dp3m.d_op[n[1]] * nmy +
                dp3m.d_op[n[2]] * nmz;
-        n_nm3 = n_nm * n_nm * n_nm;
+        n_nm3 = Utils::int_pow<3>(n_nm);
 
         nominator[0] += f3 * n_nm3;
         denominator += sz;
@@ -919,40 +911,38 @@ double dp3m_perform_aliasing_sums_force(const int n[3], double nominator[1]) {
 /*****************************************************************************/
 
 void dp3m_calc_influence_function_energy() {
-  int i, n[3], ind;
   int end[3];
   int size = 1;
-  double fak1, fak2;
-  double nominator[1] = {0.0}, denominator = 0.0;
 
   dp3m_calc_meshift();
 
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     size *= dp3m.fft.plan[3].new_mesh[i];
     end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
   }
   dp3m.g_energy.resize(size);
-  fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
-         (box_geo.length()[0] * box_geo.length()[0]);
+  double fak1 = Utils::int_pow<3>(dp3m.params.mesh[0]) * 2.0 /
+                (box_geo.length()[0] * box_geo.length()[0]);
 
+  int n[3];
   for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
     for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++)
       for (n[2] = dp3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - dp3m.fft.plan[3].start[2]) +
-              dp3m.fft.plan[3].new_mesh[2] *
-                  ((n[1] - dp3m.fft.plan[3].start[1]) +
-                   (dp3m.fft.plan[3].new_mesh[1] *
-                    (n[0] - dp3m.fft.plan[3].start[0])));
+        int const ind = (n[2] - dp3m.fft.plan[3].start[2]) +
+                        dp3m.fft.plan[3].new_mesh[2] *
+                            ((n[1] - dp3m.fft.plan[3].start[1]) +
+                             (dp3m.fft.plan[3].new_mesh[1] *
+                              (n[0] - dp3m.fft.plan[3].start[0])));
 
-        if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0))
+        if (((n[0] == 0) && (n[1] == 0) && (n[2] == 0)) ||
+            ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[2] % (dp3m.params.mesh[0] / 2) == 0))) {
           dp3m.g_energy[ind] = 0.0;
-        else if ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[2] % (dp3m.params.mesh[0] / 2) == 0))
-          dp3m.g_energy[ind] = 0.0;
-        else {
-          denominator = dp3m_perform_aliasing_sums_energy(n, nominator);
-          fak2 = nominator[0];
+        } else {
+          double nominator[1] = {0.0};
+          double denominator = dp3m_perform_aliasing_sums_energy(n, nominator);
+          double fak2 = nominator[0];
           fak2 /=
               pow(Utils::sqr(dp3m.d_op[n[0]]) + Utils::sqr(dp3m.d_op[n[1]]) +
                       Utils::sqr(dp3m.d_op[n[2]]),
@@ -1171,20 +1161,6 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
    * space */
   if (dipole.method == DIPOLAR_MDLC_P3M) {
     runtimeErrorMsg() << "dipolar P3M: tuning when dlc needs to be fixed";
-  }
-
-  /* check whether this radius is too large, so that we would use less cells
-   * than allowed */
-  n_cells = 1;
-  for (i = 0; i < 3; i++)
-    n_cells *= (int)(floor(local_geo.length()[i] /
-                           (r_cut_iL * box_geo.length()[0] + skin)));
-  if (n_cells < min_num_cells) {
-    /* print result */
-    sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e radius dangerously high\n\n",
-            mesh, cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
-    *log = strcat_alloc(*log, b);
-    return -P3M_TUNE_CUTOFF_TOO_LARGE;
   }
 
   int_time = dp3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
@@ -1543,7 +1519,7 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
                p3m_analytic_cotangent_sum(nz, mesh_i, cao);
           dp3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i,
                                   &alias1, &alias2);
-          double d = alias1 - Utils::sqr(alias2 / cs) / (n2 * n2 * n2);
+          double d = alias1 - Utils::sqr(alias2 / cs) / Utils::int_pow<3>(n2);
           /* at high precisions, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
           if (d > 0 && (fabs(d / alias1) > ROUND_ERROR_PREC))
@@ -1551,8 +1527,7 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
         }
 
   return 8. * Utils::pi() * Utils::pi() / 3. * sum_q2 *
-         sqrt(he_q / (double)n_c_part) /
-         (box_size * box_size * box_size * box_size);
+         sqrt(he_q / (double)n_c_part) / Utils::int_pow<4>(box_size);
 }
 
 /** Tuning dipolar-P3M */
@@ -1602,21 +1577,23 @@ double P3M_DIPOLAR_real_space_error(double box_size, double prefac,
   d_RCUT = r_cut_iL * box_size;
   d_rcut2 = d_RCUT * d_RCUT;
 
-  d_a2 = alpha_L * alpha_L / (box_size * box_size);
+  d_a2 = Utils::sqr(alpha_L) / Utils::sqr(box_size);
 
-  d_c = sum_q2 * exp(-d_a2 * d_RCUT * d_RCUT);
+  d_c = sum_q2 * exp(-d_a2 * Utils::sqr(d_RCUT));
 
-  d_cc = 4.0 * d_a2 * d_a2 * d_rcut2 * d_rcut2 + 6.0 * d_a2 * d_rcut2 + 3.0;
+  d_cc =
+      4.0 * Utils::sqr(d_a2) * Utils::sqr(d_rcut2) + 6.0 * d_a2 * d_rcut2 + 3.0;
 
-  d_dc = 8.0 * d_a2 * d_a2 * d_a2 * d_rcut2 * d_rcut2 * d_rcut2 +
-         20.0 * d_a2 * d_a2 * d_rcut2 * d_rcut2 + 30 * d_a2 * d_rcut2 + 15.0;
+  d_dc = 8.0 * Utils::int_pow<3>(d_a2) * Utils::int_pow<3>(d_rcut2) +
+         20.0 * Utils::sqr(d_a2) * Utils::sqr(d_rcut2) + 30.0 * d_a2 * d_rcut2 +
+         15.0;
 
-  d_con = 1.0 / sqrt(box_size * box_size * box_size * d_a2 * d_a2 * d_rcut2 *
-                     d_rcut2 * d_rcut2 * d_rcut2 * d_RCUT * (double)n_c_part);
+  d_con = 1.0 / sqrt(Utils::int_pow<3>(box_size) * Utils::sqr(d_a2) *
+                     Utils::int_pow<4>(d_rcut2) * d_RCUT * (double)n_c_part);
 
   d_error_f = d_c * d_con *
-              sqrt((13. / 6.) * d_cc * d_cc + (2. / 15.) * d_dc * d_dc -
-                   (13. / 15.) * d_cc * d_dc);
+              sqrt((13. / 6.) * Utils::sqr(d_cc) +
+                   (2. / 15.) * Utils::sqr(d_dc) - (13. / 15.) * d_cc * d_dc);
 
   return d_error_f;
 }

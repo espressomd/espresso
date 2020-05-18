@@ -21,7 +21,7 @@
 
 #include "config.hpp"
 
-extern double dipolar_cutoff;
+#include <cstddef>
 
 #ifdef DIPOLES
 #include "Observable_stat.hpp"
@@ -31,58 +31,73 @@ extern double dipolar_cutoff;
 #include <ParticleRange.hpp>
 #include <boost/mpi/communicator.hpp>
 
-/** \name Compounds for Dipole interactions */
-/*@{*/
-
-/** \name Type codes for the type of dipolar interaction
-  Enumeration of implemented methods for the magnetostatic
-  interaction.
+/** Type codes for the type of dipolar interaction.
+ *  Enumeration of implemented methods for the magnetostatic interaction.
  */
-/************************************************************/
-/*@{*/
 enum DipolarInteraction {
-  /** dipolar interaction switched off (NONE). */
+  /** Dipolar interaction switched off. */
   DIPOLAR_NONE = 0,
-  /** dipolar method is P3M. */
+  /** Dipolar method is P3M. */
   DIPOLAR_P3M,
   /** Dipolar method is P3M plus DLC. */
   DIPOLAR_MDLC_P3M,
-  /** Dipolar method is all with all and no replicas */
+  /** Dipolar method is all with all and no replicas. */
   DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
-  /** Dipolar method is magnetic dipolar direct sum */
+  /** Dipolar method is magnetic dipolar direct summation. */
   DIPOLAR_DS,
-  /** Dipolar method is direct sum plus DLC. */
+  /** Dipolar method is direct summation plus DLC. */
   DIPOLAR_MDLC_DS,
-  /** Direct summation on gpu */
+  /** Dipolar method is direct summation on GPU. */
   DIPOLAR_DS_GPU,
 #ifdef DIPOLAR_BARNES_HUT
-  /** Direct summation on gpu by Barnes-Hut algorithm */
+  /** Dipolar method is direct summation on GPU by Barnes-Hut algorithm. */
   DIPOLAR_BH_GPU,
 #endif
-  /** Scafacos library */
+  /** Dipolar method is ScaFaCoS. */
   DIPOLAR_SCAFACOS
 };
 
-/** field containing the interaction parameters for
- *  the Dipole interaction.  */
+/** Interaction parameters for the %dipole interaction. */
 struct Dipole_parameters {
   double prefactor;
 
   DipolarInteraction method;
 };
-/*@}*/
 
-/** Structure containing the Dipole parameters. */
+/** Structure containing the %dipole parameters. */
 extern Dipole_parameters dipole;
 
 namespace Dipole {
-int pressure_n();
+/** Number of electrostatic contributions to the system pressure calculation. */
+constexpr size_t pressure_n() { return 0; }
+
+/** Number of electrostatic contributions to the system energy calculation. */
+inline size_t energy_n() {
+  switch (dipole.method) {
+  case DIPOLAR_NONE:
+    return 1; // because there may be an external magnetic field
+  case DIPOLAR_P3M:
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
+  case DIPOLAR_DS:
+  case DIPOLAR_DS_GPU:
+#ifdef DIPOLAR_BARNES_HUT
+  case DIPOLAR_BH_GPU:
+#endif
+  case DIPOLAR_SCAFACOS:
+    return 2;
+  case DIPOLAR_MDLC_P3M:
+  case DIPOLAR_MDLC_DS:
+    return 3;
+  default:
+    return 0;
+  }
+}
+
 void calc_pressure_long_range();
 
 void nonbonded_sanity_check(int &state);
 double cutoff(const Utils::Vector3d &box_l);
 
-void integrate_sanity_check();
 void on_observable_calc();
 void on_coulomb_change();
 void on_boxl_change();
@@ -92,7 +107,6 @@ void calc_long_range_force(const ParticleRange &particles);
 
 void calc_energy_long_range(Observable_stat &energy,
                             const ParticleRange &particles);
-void energy_n(int &n_dipolar);
 
 int set_mesh();
 void bcast_params(const boost::mpi::communicator &comm);
@@ -101,8 +115,11 @@ void bcast_params(const boost::mpi::communicator &comm);
 int set_Dprefactor(double prefactor);
 
 void set_method_local(DipolarInteraction method);
-
 } // namespace Dipole
-
+#else  // DIPOLES
+namespace Dipole {
+constexpr size_t pressure_n() { return 0; }
+constexpr size_t energy_n() { return 0; }
+} // namespace Dipole
 #endif // DIPOLES
 #endif // ESPRESSO_DIPOLE_HPP

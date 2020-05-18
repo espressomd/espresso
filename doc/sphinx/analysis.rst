@@ -28,16 +28,11 @@ The direct analysis commands can be classified into two types:
     - :ref:`Minimal distances between particles`
     - :ref:`Particles in the neighborhood`
     - :ref:`Particle distribution`
-    - :ref:`Radial distribution function` with ``rdf_type='rdf'``
     - :ref:`Structure factor`
     - :ref:`Center of mass`
     - :ref:`Moment of inertia matrix`
     - :ref:`Gyration tensor`
     - :ref:`Stress Tensor`
-
-- Analysis on stored configurations, added by :meth:`espressomd.analyze.Analysis.append`:
-    - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
-    - :ref:`Chains`
 
 .. _Energies:
 
@@ -126,29 +121,6 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
     >>> print(count)
     [ 1.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
-
-
-.. _Radial distribution function:
-
-Radial distribution function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.rdf`
-
-Calculates a radial distribution function for given particle type and binning.
-The ``rdf_type`` defines if the analysis is performed on the current configuration (``rdf_type='rdf'``)
-or on averaged configurations stored with :meth:`analyze.append() <espressomd.analyze.Analysis.append>` (``rdf_type='<rdf>'``).
-
-For example, ::
-
-    rdf_bins = 100
-    r_min = 0.0
-    r_max = system.box_l[0] / 2.0
-    r, rdf_01 = S.analysis.rdf(rdf_type='<rdf>', type_list_a=[0], type_list_b=[1],
-                               r_min=r_min, r_max=r_max, r_bins=rdf_bins)
-    rdf_fp = open("rdf.dat", 'w')
-    for i in range(rdf_bins):
-        rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" % (r[i], rdf_01[i]))
-    rdf_fp.close()
 
 
 .. _Structure factor:
@@ -502,6 +474,8 @@ documentation for all available observables in :mod:`espressomd.observables`.
    - :class:`~espressomd.observables.CosPersistenceAngles`: Cosine of angles between bonds. The ``i``-th value in the result vector corresponds to the cosine of the angle between
      bonds that are separated by ``i`` bonds. This observable might be useful for measuring the persistence length of a polymer.
 
+   - :class:`~espressomd.observables.RDF`: Radial distribution function. Can be used on two different sets of particles.
+
 - Profile observables sampling the spatial profile of various quantities:
 
    - :class:`~espressomd.observables.DensityProfile`
@@ -715,12 +689,39 @@ discussion is presented in Ref. :cite:`ramirez10a`.
 Accumulators
 ------------
 
+.. _Time series:
+
+Time series
+~~~~~~~~~~~
+
+In order to take snapshots of an observable,
+:class:`espressomd.accumulators.TimeSeries` can be used::
+
+    import espressomd
+    import espressomd.observables
+    import espressomd.accumulators
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
+    position_observable = espressomd.observables.ParticlePositions(ids=(0,))
+    accumulator = espressomd.accumulators.TimeSeries(
+        obs=position_observable, delta_N=2)
+    system.auto_update_accumulators.add(accumulator)
+    system.integrator.run(10)
+    print(accumulator.time_series())
+
+In the example above the automatic update of the accumulator is used. However,
+it's also possible to manually update the accumulator by calling
+:meth:`espressomd.accumulators.TimeSeries.update`.
+
 .. _Mean-variance calculator:
 
 Mean-variance calculator
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to calculate the running mean and variance of an observable
+In order to calculate the running mean and variance of an observable,
 :class:`espressomd.accumulators.MeanVarianceCalculator` can be used::
 
     import espressomd
@@ -730,14 +731,14 @@ In order to calculate the running mean and variance of an observable
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    system.part.add(id=0, pos=[5.0, 5.0, 5.0])
+    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
     position_observable = espressomd.observables.ParticlePositions(ids=(0,))
     accumulator = espressomd.accumulators.MeanVarianceCalculator(
-        obs=position_observable, delta_N=1)
+        obs=position_observable, delta_N=2)
     system.auto_update_accumulators.add(accumulator)
-    # Perform integration (not shown)
-    print accumulator.get_mean()
-    print accumulator.get_variance()
+    system.integrator.run(10)
+    print(accumulator.get_mean())
+    print(accumulator.get_variance())
 
 In the example above the automatic update of the accumulator is used. However,
 it's also possible to manually update the accumulator by calling

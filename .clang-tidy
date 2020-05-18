@@ -7,7 +7,6 @@ Checks: |
    -clang-analyzer-security.FloatLoopCounter,
    bugprone-*,
    clang-analyzer-alpha.*,
-   modernize-avoid-c-arrays,
    modernize-deprecated-headers,
    modernize-make-shared,
    modernize-make-unique,
@@ -36,7 +35,7 @@ Checks: |
    readability-string-compare,
    readability-uniqueptr-delete-release,
    readability-function-size'
-WarningsAsErrors: '*'
+WarningsAsErrors: '*,-clang-analyzer-core.StackAddrEscapeBase,-clang-analyzer-optin.mpi.MPI-Checker'
 HeaderFilterRegex: '.*'
 AnalyzeTemporaryDtors: false
 FormatStyle:     none

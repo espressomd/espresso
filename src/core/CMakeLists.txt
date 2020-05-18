@@ -31,6 +31,7 @@ set(EspressoCore_SRC
     reaction_ensemble.cpp
     rotate_system.cpp
     rotation.cpp
+    Observable_stat.cpp
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp
@@ -42,7 +43,8 @@ set(EspressoCore_SRC
     virtual_sites.cpp
     exclusions.cpp
     CellStructure.cpp
-    PartCfg.cpp)
+    PartCfg.cpp
+    AtomDecomposition.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC

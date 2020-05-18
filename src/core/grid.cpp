@@ -44,10 +44,7 @@ Utils::Vector3i node_grid{};
 
 /************************************************************/
 
-void init_node_grid() {
-  grid_changed_n_nodes();
-  cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
-}
+void init_node_grid() { grid_changed_n_nodes(); }
 
 int map_position_node_array(const Utils::Vector3d &pos) {
   auto const f_pos = folded_position(pos, box_geo);

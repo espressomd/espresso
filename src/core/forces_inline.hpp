@@ -108,8 +108,9 @@ inline ParticleForce thermostat_force(Particle const &p) {
 
 #ifdef ROTATION
   return {friction_thermo_langevin(langevin, p),
-          convert_vector_body_to_space(
-              p, friction_thermo_langevin_rotation(langevin, p))};
+          p.p.rotation ? convert_vector_body_to_space(
+                             p, friction_thermo_langevin_rotation(langevin, p))
+                       : Utils::Vector3d{}};
 #else
   return friction_thermo_langevin(langevin, p);
 #endif

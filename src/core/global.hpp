@@ -46,16 +46,10 @@ void check_global_consistency();
  */
 enum Fields {
   FIELD_BOXL = 0,
-  /** index of \ref DomainDecomposition::cell_grid */
-  FIELD_CELLGRID,
   /** index of \ref LangevinThermostat::gamma */
   FIELD_LANGEVIN_GAMMA,
   /** index of \ref integ_switch */
   FIELD_INTEG_SWITCH,
-  /** index of \ref max_num_cells  */
-  FIELD_MAXNUMCELLS,
-  /** index of \ref min_num_cells  */
-  FIELD_MINNUMCELLS,
   /** index of \ref n_rigidbonds */
   FIELD_RIGIDBONDS,
   /** index of \ref node_grid */

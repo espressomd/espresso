@@ -27,13 +27,13 @@
 #include <cstring>
 
 namespace Utils {
-/** extend a string with another one. Like strcat, just automatically
-    increases the string space */
+/** Extend a string with another one.
+ *  Like strcat, just automatically increases the string space.
+ */
 inline char *strcat_alloc(char *left, const char *right) {
   if (!right) {
     return left;
   }
-
   if (!left) {
     return strdup(right);
   }

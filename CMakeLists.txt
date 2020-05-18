@@ -279,13 +279,11 @@ if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  set(BOOST_MINIMUM_VERSION "1.65.0")
-  if(CUDA_FOUND AND CUDA_VERSION VERSION_GREATER_EQUAL "9.0")
-    set(BOOST_MINIMUM_VERSION "1.66.0")
-  endif()
-else()
-  set(BOOST_MINIMUM_VERSION "1.58.0")
+set(BOOST_MINIMUM_VERSION "1.65.0")
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CUDA_FOUND
+   AND CUDA_VERSION VERSION_GREATER_EQUAL "9.0")
+  set(BOOST_MINIMUM_VERSION "1.66.0")
 endif()
 
 # old Boost.MPI versions contain a use-after-free bug that seems to only cause
@@ -295,18 +293,6 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 endif()
 
 find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
-
-if(Boost_VERSION VERSION_GREATER_EQUAL 106400 AND Boost_VERSION VERSION_LESS
-                                                  106500)
-  # Boost 1.64 has incompatible Serialization and MPI modules, see
-  # https://svn.boost.org/trac10/ticket/12723 . Some distributions, like Fedora,
-  # have backported the patch.
-  file(READ "${Boost_INCLUDE_DIR}/boost/mpi/detail/mpi_datatype_primitive.hpp"
-       boost_mpi_datatype_file)
-  if(boost_mpi_datatype_file MATCHES "boost::serialization::detail::get_data")
-    message(FATAL_ERROR "Boost 1.64 is unsupported")
-  endif()
-endif()
 
 #
 # Paths
@@ -414,7 +400,7 @@ target_link_libraries(cxx_interface INTERFACE coverage_interface)
 
 if(WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
-  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
 endif()
 
 if(WITH_TESTS)

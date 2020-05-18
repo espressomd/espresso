@@ -58,16 +58,6 @@ enum {
 
 /*@}*/
 
-/** \name Flags for cells_on_geometry_change */
-/*@{*/
-
-/** Flag for cells_on_geometry_change: the processor grid has changed. */
-#define CELL_FLAG_GRIDCHANGED 1
-/** Flag for cells_on_geometry_change: skip shrinking of cells. */
-#define CELL_FLAG_FAST 2
-
-/*@}*/
-
 /************************************************************/
 /** \name Exported Variables */
 /************************************************************/
@@ -108,19 +98,14 @@ void cells_resort_particles(int global_flag);
  *  It calculates the maximal interaction range, and as said reinitializes
  *  the cells structure if something significant has changed.
  *
- *  If bit @ref CELL_FLAG_FAST is set, the routine should try to save time.
+ *  If the fast flag is set, the routine should try to save time.
  *  Currently this means that if the maximal range decreased, it does
  *  not reorganize the particles. This is used in the NpT algorithm to
  *  avoid frequent reorganization of particles.
  *
- *  If bit @ref CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
- *  has changed, i. e. the grid or periodicity. In this case a full
- *  reorganization is due.
- *
- *  @param flags a bitmask of @ref CELL_FLAG_GRIDCHANGED,
- *               and/or @ref CELL_FLAG_FAST, see above.
+ *  @param fast If true, do not try to optimize the cell size.
  */
-void cells_on_geometry_change(int flags);
+void cells_on_geometry_change(bool fast);
 
 /** Update ghost information. If needed,
  *  the particles are also resorted.
