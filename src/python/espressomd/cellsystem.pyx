@@ -62,8 +62,7 @@ cdef class CellSystem:
         cell_structure.use_verlet_list = use_verlet_lists
 
         mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE)
-        # @TODO: gathering should be interface independent
-        # return mpi_gather_runtime_errors(interp, TCL_OK)
+
         return True
 
     def get_state(self):
@@ -71,6 +70,9 @@ cdef class CellSystem:
 
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
+            s["cell_grid"] = np.array([dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
+            s["cell_size"] = np.array([dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
+
         if cell_structure.type == CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
 
@@ -78,10 +80,6 @@ cdef class CellSystem:
         s["verlet_reuse"] = verlet_reuse
         s["n_nodes"] = n_nodes
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
-        s["cell_grid"] = np.array(
-            [dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
-        s["cell_size"] = np.array(
-            [dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
 
         return s
 
