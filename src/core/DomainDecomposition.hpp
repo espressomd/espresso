@@ -194,7 +194,8 @@ private:
   void update_communicators_w_boxl();
 
   bool on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
-                          const LocalBox<double> &local_geo);
+                          const LocalBox<double> &local_geo,
+                          std::vector<ParticleChange> &diff) override;
 
 public:
   /** Maximal number of cells per node. In order to avoid memory

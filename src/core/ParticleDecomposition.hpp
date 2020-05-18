@@ -97,7 +97,8 @@ public:
    */
   virtual bool on_geometry_change(bool fast, double range,
                                   const BoxGeometry &box_geo,
-                                  const LocalBox<double> &local_geo) = 0;
+                                  const LocalBox<double> &local_geo,
+                                  std::vector<ParticleChange> &diff) = 0;
 
   virtual ~ParticleDecomposition() = default;
 };

@@ -89,6 +89,14 @@ public:
    * needed for distance calculation. */
   bool minimum_image_distance() const override { return true; }
 
+  bool on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
+                          const LocalBox<double> &local_geo,
+                          std::vector<ParticleChange> &diff) override {
+    /* This decomposition does is not affected by geometry, and this always
+     * succeeds. */
+    return true;
+  }
+
 private:
   /**
    * @brief Find cell for id.
@@ -121,13 +129,6 @@ private:
    * @brief Determine which rank owns a particle id.
    */
   int id_to_rank(int id) const { return id % comm.size(); }
-
-  bool on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
-                          const LocalBox<double> &local_geo) {
-    /* This decomposition does is not affected by geometry, and this always
-     * succeeds. */
-    return true;
-  }
 };
 
 #endif

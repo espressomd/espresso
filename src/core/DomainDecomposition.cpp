@@ -527,7 +527,7 @@ void DomainDecomposition::update_communicators_w_boxl() {
 
 bool DomainDecomposition::on_geometry_change(
     bool fast, double range, const BoxGeometry &new_box_geo,
-    const LocalBox<double> &new_local_geo) {
+    const LocalBox<double> &new_local_geo, std::vector<ParticleChange> &diff) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (new_local_geo.length()[i] < range) {

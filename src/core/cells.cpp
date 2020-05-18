@@ -305,8 +305,16 @@ void cells_on_geometry_change(bool fast) {
   auto const range = interaction_range();
   cell_structure.min_range = range;
 
-  if (not cell_structure.m_decomposition->on_geometry_change(
-          fast, range, box_geo, local_geo)) {
+  std::vector<ParticleChange> diff;
+
+  auto const failed = not cell_structure.m_decomposition->on_geometry_change(
+      fast, range, box_geo, local_geo, diff);
+
+  for (auto d : diff) {
+    boost::apply_visitor(UpdateParticleIndexVisitor{&cell_structure}, d);
+  }
+
+  if (failed) {
     cells_re_init(cell_structure.type, range);
   }
 }
