@@ -33,6 +33,8 @@
 
 namespace Observables {
 
+using PartRefSpan = Utils::Span<std::reference_wrapper<const Particle>>;
+
 /** %Particle-based observable.
  *
  *  Base class for observables extracting raw data from particle subsets and
@@ -43,7 +45,7 @@ class PidObservable : virtual public Observable {
   std::vector<int> m_ids;
 
   virtual std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(PartRefSpan particles,
            const GenObs::traits<Particle> &traits) const = 0;
 
 public:
@@ -55,6 +57,12 @@ public:
 };
 
 namespace detail {
+/**
+ * Recursive implementation for finding the shape of a given @p T.
+ * A vector of extends for each dimension is constructed starting at
+ * the template specialization for `std::vector<T>`.
+ * @tparam T
+ */
 template <class T> struct shape_impl;
 
 template <> struct shape_impl<double> {
@@ -79,13 +87,12 @@ public:
   std::vector<size_t> shape() const override {
     using std::declval;
 
-    return detail::shape_impl<decltype(declval<ObsType>()(
-        declval<Utils::Span<std::reference_wrapper<Particle>>>()))>::
-        eval(ids().size());
+    return detail::shape_impl<decltype(
+        declval<ObsType>()(declval<PartRefSpan>()))>::eval(ids().size());
   }
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(PartRefSpan particles,
            const GenObs::traits<Particle> &traits) const override {
     std::vector<double> res;
     Utils::flatten(ObsType{}(particles), std::back_inserter(res));

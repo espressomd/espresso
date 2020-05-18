@@ -23,11 +23,17 @@
 #include "config.hpp"
 
 namespace GenObs {
+/**
+ * Template specialization for `Particle`. The traits mechanism is used to get
+ * indirect access to particle properties. This helps making the implementation
+ * of observables independent of the particle type.
+ */
 template <> struct traits<Particle> {
   auto position(Particle const &p) const { return p.r.p; }
   auto velocity(Particle const &p) const { return p.m.v; }
   auto mass(Particle const &p) const {
 #ifdef VIRTUAL_SITES
+    // we exclude virtual particles since their mass does not have a meaning
     if (p.p.is_virtual)
       return decltype(p.p.mass){};
 #endif
@@ -37,6 +43,7 @@ template <> struct traits<Particle> {
   auto force(Particle const &p) const {
 #ifdef VIRTUAL_SITES
     if (p.p.is_virtual)
+      // we exclude virtual particles since their force does not have a meaning
       return decltype(p.f.f){};
 #endif
     return p.f.f;

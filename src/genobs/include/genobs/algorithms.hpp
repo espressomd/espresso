@@ -23,6 +23,10 @@
 #include <utility>
 #include <vector>
 
+/** @file algorithms.hpp
+ * This file contains generic algorithms for the calculation of particle
+ * property derived observables.
+ */
 namespace GenObs {
 namespace detail {
 struct One {

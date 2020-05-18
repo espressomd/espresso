@@ -19,6 +19,10 @@
 #ifndef OBSERVABLES_PROPERTIES_HPP
 #define OBSERVABLES_PROPERTIES_HPP
 
+/** @file properties.hpp
+ * This file contains interface functionality for extracting particle properties
+ * via a particle traits class.
+ */
 namespace GenObs {
 template <class DoF> struct traits;
 
@@ -26,7 +30,7 @@ namespace detail {
 template <class T> struct decay { using type = typename std::decay_t<T>; };
 
 template <class U> struct decay<std::reference_wrapper<U>> {
-  using type = typename std::decay_t<U>;
+  using type = std::decay_t<U>;
 };
 
 template <class T> using decay_t = typename decay<T>::type;

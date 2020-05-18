@@ -50,10 +50,8 @@ std::vector<double> PidObservable::operator()() const {
     offset += this_size;
   }
 
-  std::vector<std::reference_wrapper<const Particle>> particles_ptrs(
+  std::vector<std::reference_wrapper<const Particle>> particle_refs(
       particles.begin(), particles.end());
-  return this->evaluate(
-      Utils::Span<std::reference_wrapper<const Particle>>(particles_ptrs),
-      GenObs::traits<Particle>{});
+  return this->evaluate(PartRefSpan(particle_refs), GenObs::traits<Particle>{});
 }
 } // namespace Observables
