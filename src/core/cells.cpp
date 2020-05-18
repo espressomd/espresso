@@ -211,7 +211,7 @@ void fold_and_reset(Particle &p) {
  */
 ParticleList sort_and_fold_parts(const CellStructure &cs,
                                  Utils::Span<Cell *> cells,
-                                 std::vector<Cell *> &modified_cells) {
+                                 std::vector<ParticleChange> &diff) {
   ParticleList displaced_parts;
 
   for (auto &c : cells) {
@@ -228,16 +228,17 @@ ParticleList sort_and_fold_parts(const CellStructure &cs,
 
       auto p = std::move(*it);
       it = c->particles().erase(it);
-      modified_cells.push_back(c);
+      diff.emplace_back(c);
 
       /* Particle is not local */
       if (target_cell == nullptr) {
+        diff.emplace_back(p.identity());
         displaced_parts.insert(std::move(p));
       }
       /* Particle belongs on this node but is in the wrong cell. */
       else if (target_cell != c) {
         target_cell->particles().insert(std::move(p));
-        modified_cells.push_back(target_cell);
+        diff.emplace_back(target_cell);
       }
     }
   }
@@ -261,24 +262,17 @@ void cells_resort_particles(int global_flag) {
 
   n_verlet_updates++;
 
-  static std::vector<Cell *> modified_cells;
-  modified_cells.clear();
+  static std::vector<ParticleChange> diff;
+  diff.clear();
 
-  ParticleList displaced_parts = sort_and_fold_parts(
-      cell_structure, cell_structure.local_cells(), modified_cells);
+  ParticleList displaced_parts =
+      sort_and_fold_parts(cell_structure, cell_structure.local_cells(), diff);
 
   for (auto const &p : displaced_parts) {
     cell_structure.update_particle_index(p.identity(), nullptr);
   }
 
-  std::vector<ParticleChange> diff;
-
   cell_structure.m_decomposition->resort(global_flag, displaced_parts, diff);
-
-  boost::sort(modified_cells);
-  for (auto cell : modified_cells | boost::adaptors::uniqued) {
-    cell_structure.update_particle_index(cell->particles());
-  }
 
   for (auto d : diff) {
     boost::apply_visitor(UpdateParticleIndexVisitor{&cell_structure}, d);
