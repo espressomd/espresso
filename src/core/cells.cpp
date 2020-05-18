@@ -268,10 +268,6 @@ void cells_resort_particles(int global_flag) {
   ParticleList displaced_parts =
       sort_and_fold_parts(cell_structure, cell_structure.local_cells(), diff);
 
-  for (auto const &p : displaced_parts) {
-    cell_structure.update_particle_index(p.identity(), nullptr);
-  }
-
   cell_structure.m_decomposition->resort(global_flag, displaced_parts, diff);
 
   for (auto d : diff) {
