@@ -120,7 +120,9 @@ void initialize() {
   //  ScriptInterface::register_new<ScriptInterface::Observables::ParticleVelocities>::
   //    register_new("Observables::ParticleVelocities");
 
-  REGISTER(StressTensor);
+  REGISTER(Energy);
+  REGISTER(Pressure);
+  REGISTER(PressureTensor);
   REGISTER_PID_OBS(ParticlePositions);
   REGISTER_PID_OBS(ParticleVelocities);
   REGISTER_PID_OBS(ParticleForces);

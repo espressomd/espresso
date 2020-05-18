@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2020 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,21 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_STRESSTENSOR_HPP
+#ifndef OBSERVABLES_PRESSURE_HPP
 
 #include "Observable.hpp"
-#include "Particle.hpp"
 #include "pressure.hpp"
 #include <vector>
 
 namespace Observables {
 
-class StressTensor : public Observable {
+class Pressure : public Observable {
 public:
-  std::vector<size_t> shape() const override { return {3, 3}; }
+  std::vector<size_t> shape() const override { return {1}; }
   std::vector<double> operator()() const override {
-    std::vector<double> res(n_values());
-    observable_compute_stress_tensor(res.data());
+    auto const ptensor = observable_compute_pressure_tensor();
+    std::vector<double> res{1};
+    res[0] = (ptensor[0] + ptensor[4] + ptensor[8]) / 3.;
     return res;
   }
 };

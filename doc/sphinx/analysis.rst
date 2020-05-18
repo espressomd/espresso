@@ -500,7 +500,11 @@ documentation for all available observables in :mod:`espressomd.observables`.
 
 - System-wide observables
 
-   - :class:`~espressomd.observables.StressTensor`: Total stress tensor (see :ref:`stress tensor`)
+   - :class:`~espressomd.observables.Energy`: Total energy (see :ref:`Energies`)
+
+   - :class:`~espressomd.observables.Pressure`: Total scalar pressure (see :ref:`Pressure`)
+
+   - :class:`~espressomd.observables.PressureTensor`: Total pressure tensor (see :ref:`Stress Tensor`)
 
    - :class:`~espressomd.observables.DPDStress`
 

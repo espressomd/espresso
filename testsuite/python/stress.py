@@ -21,7 +21,8 @@ import unittest_decorators as utx
 import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd.interactions import FeneBond
-from espressomd.observables import StressTensor
+from espressomd.observables import PressureTensor
+from espressomd.observables import Pressure
 
 from tests_common import fene_force2
 
@@ -233,11 +234,15 @@ class Stress(ut.TestCase):
             sim_pressure_total, sim_pressure_kinetic + sim_pressure_bonded + sim_pressure_nonbonded, delta=tol,
             msg='total pressure is not given as the sum of all major pressure components')
 
-        # Compare stress tensor observable to stress tensor from analysis
+        # Compare pressure observables to pressure from analysis
         np.testing.assert_allclose(
-            StressTensor().calculate(),
+            PressureTensor().calculate(),
             sim_stress["total"],
-            atol=1E-10)
+            rtol=0, atol=1E-10)
+        self.assertAlmostEqual(
+            Pressure().calculate(),
+            sim_pressure["total"],
+            delta=tol)
 
         system.part.clear()
 
@@ -306,11 +311,15 @@ class StressFENE(ut.TestCase):
             sim_pressure_fene, anal_pressure_fene, atol=tol,
             err_msg='bonded pressure for fene does not match analytical result')
 
-        # Compare stress tensor observable to stress tensor from analysis
+        # Compare pressure observables to pressure from analysis
         np.testing.assert_allclose(
-            StressTensor().calculate(),
+            PressureTensor().calculate(),
             sim_stress["total"],
             rtol=0, atol=1E-10)
+        self.assertAlmostEqual(
+            Pressure().calculate(),
+            sim_pressure["total"],
+            delta=tol)
 
         system.part.clear()
 

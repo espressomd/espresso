@@ -106,3 +106,8 @@ double calculate_current_potential_energy_of_system() {
   update_energy();
   return obs_energy.accumulate(-obs_energy.kinetic[0]);
 }
+
+double observable_compute_energy() {
+  update_energy();
+  return obs_energy.accumulate(0);
+}
