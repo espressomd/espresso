@@ -1278,7 +1278,7 @@ struct thermalizer {
 
             \f[\vec{U} = M_{UF} \vec{F}\f]
 
-    where \f$\vec{U}\f$ is the force, \f$\vec{F}\f$ the velocities and \f$M\f$
+    where \f$\vec{F}\f$ is the force, \f$\vec{U}\f$ the velocities and \f$M\f$
     the grand mobility matrix. The subscript \f$_{UF}\f$ indicates that this
     tensor describes the relationship between forces and velocities.
     the relationship between forces and velocities.
@@ -1289,10 +1289,10 @@ struct thermalizer {
     To obtain the velocities, the mobility matrix must be applied to the forces
     that act on the particles, giving the velocities.
 
-    These are the steps that are taken to compute the mobility matrix:
+    These are the steps that are taken to compute the grand mobility matrix:
       -# Starting point is an empty mobility matrix.
       -# All self mobility terms are added. Its translational part is widely
-         known as Stoke's Law.
+         known as Stokes' Law.
       -# All pair mobility terms are added.
       -# The mobility matrix is inverted to become a resistance matrix.
       -# Lubrication corrections are added to the resistance matrix. They are
@@ -1311,12 +1311,20 @@ struct thermalizer {
     The mean square displacement during a time step of length \f$\Delta t\f$,
     and along one degree of freedom is given by
 
-            \f[\langle x^2 \rangle / \Delta t = 2 D\f]
+            \f[\langle \Delta x^2 \rangle / \Delta t = 2 D\f]
+    
+    By combining these two equations we get the random displacement, which we
+    can then directly use to propagate the particles:
+    
+            \f[\Delta x = \sqrt(2 k_B T \Delta t) \mu^{1/2} \cdot \Psi]
 
-    That way we can determine the distribution of the random displacement
-    that our system experiences along one of its many degrees of freedom. In
-    our case, \f$\mu\f$ is a matrix and we need its square root. The latter is
-    obtained via Cholesky decomposition.
+    where \f[\Psi] is a random number drawn from a zero mean and unit variance
+    distribution. 
+    That way we can determine the random displacement that our system
+    experiences along one of its many degrees of freedom. In our case,
+    \f$\mu\f$ is a matrix and we need its square root. The latter is
+    obtained via Cholesky decomposition. And \f[\Psi] is a vector filled with
+    random numbers from a zero mean and unit variance distribution.
  */
 template <typename Policy, typename T>
 struct solver {

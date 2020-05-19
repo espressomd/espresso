@@ -648,6 +648,7 @@ WARN_LOGFILE           =
 # with spaces.
 
 INPUT                  = "@CMAKE_SOURCE_DIR@/src" \
+                         "@CMAKE_SOURCE_DIR@/libs/stokesian_dynamics" \
                          "@CMAKE_SOURCE_DIR@/doc/doxygen/main.dox"
 
 # This tag can be used to specify the character encoding of the source files
