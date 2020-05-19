@@ -1316,14 +1316,14 @@ struct thermalizer {
     By combining these two equations we get the random displacement, which we
     can then directly use to propagate the particles:
     
-            \f[\Delta x = \sqrt(2 k_B T \Delta t) \mu^{1/2} \cdot \Psi]
+            \f[\Delta x = \sqrt(2 k_B T \Delta t) \mu^{1/2} \cdot \Phi]
 
-    where \f[\Psi] is a random number drawn from a zero mean and unit variance
-    distribution. 
+    where \f[\Phi] is a random number drawn from a zero mean and unit variance
+    distribution.
     That way we can determine the random displacement that our system
     experiences along one of its many degrees of freedom. In our case,
     \f$\mu\f$ is a matrix and we need its square root. The latter is
-    obtained via Cholesky decomposition. And \f[\Psi] is a vector filled with
+    obtained via Cholesky decomposition. And \f[\Phi] is a vector filled with
     random numbers from a zero mean and unit variance distribution.
  */
 template <typename Policy, typename T>
@@ -1344,22 +1344,111 @@ struct solver {
     /** number of pairs of particles = n_part*(n_part-1)/2 */
     std::size_t const n_pair;
 
-    /** The following (sub-)tensors can be found in equation (2.17) */
-    /** part of the grand mobility matrix that relates forces (f)
-     *  to velocities (u) */
-    device_matrix<T, Policy> zmuf;
-    /** part of the grand mobility matrix that relates stresslets (s)
-     *  to velocities (u) */
-    device_matrix<T, Policy> zmus;
-    /** part of the grand mobility matrix that relates stresslets (s)
-     *  to rate of strain (e) */
-    device_matrix<T, Policy> zmes;
 
+
+    /** Initialization of the SD solver */
     solver(T eta, std::size_t const n_part)
-        : eta{eta}, n_part(n_part), n_pair(n_part * (n_part - 1) / 2),
-          zmuf(n_part * 6, n_part * 6), zmus(n_part * 6, n_part * 5),
-          zmes(n_part * 5, n_part * 5) {}
+        : eta{eta}, n_part(n_part), n_pair(n_part * (n_part - 1) / 2) {}
 
+
+    /** Invert the grand-mobility tensor.  This is done in several steps
+     *  which minimize the computation time. Input matrices are not preserved.
+     *
+     *    \param zmuf sub-tensor of the input mobility matrix, relating forces
+     *                to velocities
+     *    \param zmus input, relating stresslets to velocities
+     *    \param zmes input, relating ambient shear flow to stresslets
+     *    \param rfu sub-tensor of the output resistance matrix, relating
+     *               velocities to forces
+     *    \param rfe output, relating ambient shear flow to forces
+     *    \param rse output, relating ambient shear flow to stresslets
+     */
+    void invert_grand_mobility_matrix(device_matrix<T, Policy> &zmuf, 
+                                      device_matrix<T, Policy> &zmus,
+                                      device_matrix<T, Policy> &zmes,
+                                      device_matrix<T, Policy> &rfu,
+                                      device_matrix<T, Policy> &rfe,
+                                      device_matrix<T, Policy> &rse,
+                                      int const flg) {
+        // TODO: Where are these steps from?
+        // Invert R1 = Muf ^ -1 => zmuf = zmuf ^ -1
+        zmuf = zmuf.inverse();
+
+        if (flg & flags::FTS) {
+            // Compute R2 = Mus(t) * R1 => rsu = zmus(t) * zmuf
+            device_matrix<T, Policy> const &rsu = zmus.transpose() * zmuf;
+
+            // Compute R3 = R2 * Mus - Mes => zmes = rsu * zmus - zmes
+            zmes = zmes - rsu * zmus;
+
+            // Invert  R4 = R3 ^ -1 => zmes = zmes ^ -1
+            zmes = zmes.inverse();
+
+            // Compute R5 = -R3 * R4 => zmus = -rsu(t) * zmes
+            zmus = -(rsu.transpose() * zmes);
+
+            // Compute R6 = R1 - R5  => zmuf = zmuf - zmus * rsu
+            zmuf = zmuf - zmus * rsu;
+        }
+        rfu = zmuf;
+        rfe = zmus;
+        rse = zmes;
+    }
+
+    /** Thermalization with stochasitc force, making use of the fluctuation-
+     *  dissipation-theorem.
+     *  
+     *  \return stochastic force vector
+     *  \param rfu_sqrt Square root of the resistance matrix
+     *  \param size size of the force vector, is 6 times number of particles
+     *  \param sqrt_kT_Dt Square root of kT / Delta t
+     *  \param offset Simulation time, serves as RNG seed for each step
+     *  \param seed global seed for the whole simulation
+     */
+    vector_type<T> thermalization(device_matrix<T, Policy> &rfu_sqrt,
+                                  std::size_t size, T sqrt_kT_Dt,
+                                  std::size_t offset, std::size_t seed) {
+
+            // This method is combined from two locations,
+            // namely @cite banchio03a, 
+            // Banchio, Brady 2002 https://doi.org/10.1063/1.1571819
+            // equation (6)
+            //  -- and --
+            // @cite brady88a
+            // Brady, Bossis 1988
+            // https://doi.org/10.1146/annurev.fl.20.010188.000551
+            // equation (3)
+
+            // We adopt the more detailed method of the paper @cite banchio03a.
+
+            // However, the matrix A in that paper is NOT a byproduct of the
+            // matrix inversion of R_{FU} as they claim. (We get the
+            // decomposition of R_{FU} but not of its inverse)
+            // Also, the random displacement between formulas (5) and (6) is
+            // wrong, since the square root needs to include kT and Delta t
+            // as well.
+
+            // Luckily, with the decomposition of R_{FU} we CAN compute an
+            // appropriate random force with the variance given by the paper
+            // @cite brady88a (as opposed to random displacement).
+
+            // Psi is a vector filled with random numbers, scaled correctly
+            vector_type<T> psi(size);
+            thrust_wrapper::tabulate(Policy::par(), psi.begin(), psi.end(),
+                             thermalizer<T>{sqrt_kT_Dt, offset, seed});
+
+            return rfu_sqrt * psi;
+
+            // There is possibly an additional term for the thermalization
+            //
+            //     \nabla \cdot R_{FU}^{-1} \Delta t
+            //
+            // But this seems to be omitted in most cases in the literature.
+            // It is also very unclear how to actually calculate it.    
+    }
+
+
+    /** main function doing the SD calculation */
     std::vector<T> calc_vel(std::vector<T> const &x_host,
                             std::vector<T> const &f_host,
                             std::vector<T> const &a_host,
@@ -1391,49 +1480,42 @@ struct solver {
         thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
                          check_dist<Policy, T>{x, a, pd, part_id});
 
-        // self mobility term
+
+        // 1. Generate empty grand mobility matrix
+
+        // The following (sub-)tensors can be found in equation (2.17)
+        // part of the grand mobility matrix that relates forces (f)
+        // to velocities (u)
+        device_matrix<T, Policy> zmuf(n_part * 6, n_part * 6);
+        // part of the grand mobility matrix that relates stresslets (s)
+        // to velocities (u)
+        device_matrix<T, Policy> zmus(n_part * 6, n_part * 5);
+        // part of the grand mobility matrix that relates stresslets (s)
+        // to rate of strain (e)
+        device_matrix<T, Policy> zmes(n_part * 5, n_part * 5);
+
+        // 2. add self mobility terms to the grand mobility matrix
         if (flg & flags::SELF_MOBILITY) {
             thrust_wrapper::for_each(
                 Policy::par(), begin, begin + n_part,
                 mobility<Policy, T, true>{zmuf, zmus, zmes, a, eta, flg});
         }
 
-        // pair mobility term
+        // 3. add pair mobility terms to the grand mobility matrix
         if (flg & flags::PAIR_MOBILITY) {
             thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
                                      mobility<Policy, T, false>{zmuf, zmus, zmes, pd,
                                                                 part_id, a, eta, flg});
         }
 
+        // 4. invert M to obtain grand resistance matrix
+        device_matrix<T, Policy> rfu(n_part * 6, n_part * 6);
+        device_matrix<T, Policy> rfe(n_part * 6, n_part * 5);
+        device_matrix<T, Policy> rse(n_part * 5, n_part * 5);
+        invert_grand_mobility_matrix(zmuf, zmus, zmes, rfu, rfe, rse, flg);
 
-        // Invert the grand-mobility tensor.  This is done in several steps
-        // which minimize the computation time.
 
-        // Invert R1 = Muf ^ -1 => zmuf = zmuf ^ -1
-        zmuf = zmuf.inverse();
-
-        if (flg & flags::FTS) {
-            // Compute R2 = Mus(t) * R1 => rsu = zmus(t) * zmuf
-            device_matrix<T, Policy> const &rsu = zmus.transpose() * zmuf;
-
-            // Compute R3 = R2 * Mus - Mes => zmes = rsu * zmus - zmes
-            zmes = zmes - rsu * zmus;
-
-            // Invert  R4 = R3 ^ -1 => zmes = zmes ^ -1
-            zmes = zmes.inverse();
-
-            // Compute R5 = -R3 * R4 => zmus = -rsu(t) * zmes
-            zmus = -(rsu.transpose() * zmes);
-
-            // Compute R6 = R1 - R5  => zmuf = zmuf - zmus * rsu
-            zmuf = zmuf - zmus * rsu;
-        }
-
-        device_matrix<T, Policy> rfu = zmuf;
-        device_matrix<T, Policy> rfe = zmus;
-        device_matrix<T, Policy> rse = zmes;
-
-        // Lubrication corrections (equation (2.18) or (2.21) resp.)
+        // 5. add lubrication corrections (equation (2.18) or (2.21) resp.)
         if (flg & flags::LUBRICATION) {
             thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
                                      lubrication<Policy, T>{rfu, rfe, rse, pd, part_id,
@@ -1452,10 +1534,30 @@ struct solver {
             }
         }
 
+        // The inverse of the resistance matrix will be the mobility matrix 
+        // which we need in the end
+        device_matrix<T, Policy> rfu_inv;
+        // The square root of R_FU is a byproduct of the matrix inversion,
+        // which we use for the thermalization
+        device_matrix<T, Policy> rfu_sqrt;
+        // 6. invert resistance matrix to obtain mobility matrix
+        // The grand mobility matrix is now finished.
+        thrust_wrapper::tie(rfu_inv, rfu_sqrt) = rfu.inverse_and_cholesky();
 
+        // Prepare the thermal stochastic forces
+        vector_type<T> frnd(n_part * 6, T{0.0});
+        if (sqrt_kT_Dt > 0.0) {
+            frnd = thermalization(rfu_sqrt, f_host.size(), sqrt_kT_Dt,
+                                  offset, seed);
+        }
+
+
+        // Finally, perform the matrix-multiplication
+        // multiply the force vector onto the mobility matrix (Eq. 2.22)
+        
+        // prepare the force vector
         assert(f_host.size() == 6 * n_part);
         vector_type<T> fext(f_host.begin(), f_host.end());
-        
         // initialize ambient flow
         vector_type<T> uinf(n_part * 6, T{0.0});
         // initialize ambient shear flow
@@ -1464,54 +1566,7 @@ struct solver {
         // initialize the ambient flow according to the particle's positions.
         // E.g. like   uinf_i = einf * r_i   where i is particle index.
 
-        device_matrix<T, Policy> rfu_inv;
-        device_matrix<T, Policy> rfu_sqrt;
-        thrust_wrapper::tie(rfu_inv, rfu_sqrt) = rfu.inverse_and_cholesky();
-
-        vector_type<T> frnd(n_part * 6, T{0.0});
-
-        // Thermalization with stochastic force
-        if (sqrt_kT_Dt > 0.0) {
-
-            // This method is combined from two locations,
-            // namely @cite banchio03a, 
-            // Banchio, Brady 2002 https://doi.org/10.1063/1.1571819
-            // equation (6)
-            //  -- and --
-            // @cite brady88a
-            // Brady, Bossis 1988
-            // https://doi.org/10.1146/annurev.fl.20.010188.000551
-            // equation (3)
-
-            // We adopt the more detailed method of the paper @cite banchio03a.
-
-            // However, the matrix A in that paper is NOT a byproduct of the
-            // matrix inversion of R_{FU} as they claim. (We get the
-            // decomposition of R_{FU} but not of its inverse)
-            // Also, the random displacement between formulas (5) and (6) is
-            // wrong, since the square root needs to include kT and Delta t
-            // as well.
-
-            // Luckily, with the decomposition of R_{FU} we CAN compute an
-            // appropriate random force with the variance given by the paper
-            // @cite brady88a (as opposed to random displacement).
-
-            vector_type<T> psi(f_host.size());
-            thrust_wrapper::tabulate(Policy::par(), psi.begin(), psi.end(),
-                             thermalizer<T>{sqrt_kT_Dt, offset, seed});
-
-            frnd = rfu_sqrt * psi;
-
-            // There is possibly an additional term for the thermalization
-            //
-            //     \nabla \cdot R_{FU}^{-1} \Delta t
-            //
-            // But this seems to be omitted in most cases in the literature.
-            // It is also very unclear how to actually calculate it.
-        }
-
         // This is equation (2.22), plus thermal forces.
-
         vector_type<T> u = rfu_inv * (fext + rfe * einf + frnd) + uinf;
 
         // return the velocities due to hydrodynamic interactions
