@@ -90,6 +90,9 @@ system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 @utx.skipIfMissingFeatures(['LENNARD_JONES'])
 class Stress(ut.TestCase):
 
+    def tearDown(self):
+        system.part.clear()
+
     def test(self):
         # system parameters
         system.box_l = 3 * [10.0]
@@ -244,11 +247,12 @@ class Stress(ut.TestCase):
             sim_pressure["total"],
             delta=tol)
 
-        system.part.clear()
-
 
 @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
 class StressFENE(ut.TestCase):
+
+    def tearDown(self):
+        system.part.clear()
 
     def get_anal_stress_fene(self, pos_1, pos_2, k, d_r_max, r_0):
         stress = np.zeros([3, 3])
@@ -320,8 +324,6 @@ class StressFENE(ut.TestCase):
             Pressure().calculate(),
             sim_pressure["total"],
             delta=tol)
-
-        system.part.clear()
 
 
 if __name__ == "__main__":
