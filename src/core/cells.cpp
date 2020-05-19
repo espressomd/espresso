@@ -131,7 +131,7 @@ void topology_init(int cs, double range) {
     dd_topology_init(comm_cart, range, box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_init(comm_cart);
+    nsq_topology_init(comm_cart, box_geo);
     break;
   default:
     fprintf(stderr,
@@ -140,11 +140,6 @@ void topology_init(int cs, double range) {
             cs);
     errexit();
   }
-}
-
-unsigned reduce_resort(int cs, unsigned local_resort) {
-  return boost::mpi::all_reduce(comm_cart, local_resort,
-                                std::bit_or<unsigned>());
 }
 
 /** Go through ghost cells and remove the ghost entries from the
@@ -341,8 +336,9 @@ void cells_update_ghosts(unsigned data_parts) {
   auto constexpr resort_only_parts =
       Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
 
+  unsigned int localResort = cell_structure.get_resort_particles();
   auto const global_resort =
-      reduce_resort(cell_structure.type, cell_structure.get_resort_particles());
+      boost::mpi::all_reduce(comm_cart, localResort, std::bit_or<unsigned>());
 
   if (global_resort != Cells::RESORT_NONE) {
     int global = (global_resort & Cells::RESORT_GLOBAL)

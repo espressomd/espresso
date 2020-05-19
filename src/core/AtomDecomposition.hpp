@@ -52,8 +52,11 @@ class AtomDecomposition : public ParticleDecomposition {
   GhostCommunicator m_exchange_ghosts_comm;
   GhostCommunicator m_collect_ghost_force_comm;
 
+  BoxGeometry m_box;
+
 public:
-  explicit AtomDecomposition(boost::mpi::communicator const &comm);
+  AtomDecomposition(boost::mpi::communicator const &comm,
+                    BoxGeometry const &box_geo);
 
   void resort(bool global_flag, ParticleList &displaced_parts,
               std::vector<ParticleChange> &diff) override;
@@ -92,6 +95,7 @@ public:
   bool on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
                           const LocalBox<double> &local_geo,
                           std::vector<ParticleChange> &diff) override {
+    m_box = box_geo;
     /* This decomposition does is not affected by geometry, and this always
      * succeeds. */
     return true;

@@ -130,8 +130,9 @@ void AtomDecomposition::resort(bool global_flag, ParticleList &displaced_parts,
   }
 }
 
-AtomDecomposition::AtomDecomposition(const boost::mpi::communicator &comm)
-    : comm(comm), cells(comm.size()) {
+AtomDecomposition::AtomDecomposition(const boost::mpi::communicator &comm,
+                                     BoxGeometry const &box_geo)
+    : comm(comm), cells(comm.size()), m_box(box_geo) {
   /* create communicators */
   configure_comms();
   /* configure neighbor relations */

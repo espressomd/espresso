@@ -32,8 +32,9 @@
 
 boost::optional<AtomDecomposition> ad;
 
-void nsq_topology_init(const boost::mpi::communicator &comm) {
-  ad = AtomDecomposition(comm);
+void nsq_topology_init(const boost::mpi::communicator &comm,
+                       const BoxGeometry &box_geo) {
+  ad = AtomDecomposition(comm, box_geo);
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
   cell_structure.m_decomposition = ad.get_ptr();
