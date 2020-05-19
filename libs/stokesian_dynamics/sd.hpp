@@ -1316,14 +1316,14 @@ struct thermalizer {
     By combining these two equations we get the random displacement, which we
     can then directly use to propagate the particles:
     
-            \f[\Delta x = \sqrt(2 k_B T \Delta t) \mu^{1/2} \cdot \Phi]
+            \f[\Delta x = \sqrt{2 k_B T \Delta t} \times \mu^{1/2} \cdot \Phi\f]
 
-    where \f[\Phi] is a random number drawn from a zero mean and unit variance
-    distribution.
+    where \f$\Phi\f$ is a random number drawn from a zero mean and unit
+    variance distribution.
     That way we can determine the random displacement that our system
     experiences along one of its many degrees of freedom. In our case,
     \f$\mu\f$ is a matrix and we need its square root. The latter is
-    obtained via Cholesky decomposition. And \f[\Phi] is a vector filled with
+    obtained via Cholesky decomposition. And \f$\Phi\f$ is a vector filled with
     random numbers from a zero mean and unit variance distribution.
  */
 template <typename Policy, typename T>
