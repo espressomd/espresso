@@ -477,6 +477,9 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
             check_type_or_throw_except(
                 self._params["lubrication"], 1, bool,
                 "lubrication must be a bool")
+            if self._params["lubrication"]:
+                raise NotImplementedError(
+                    "Stokesian Dynamics lubrication is not available yet")
             check_type_or_throw_except(
                 self._params["lubrication_method"], 1, str,
                 "lubrication_method must be a string")

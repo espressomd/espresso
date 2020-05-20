@@ -1395,7 +1395,7 @@ struct solver {
         rse = zmes;
     }
 
-    /** Thermalization with stochasitc force, making use of the fluctuation-
+    /** Thermalization with stochastic force, making use of the fluctuation-
      *  dissipation-theorem.
      *  
      *  \return stochastic force vector
