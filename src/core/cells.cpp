@@ -26,7 +26,6 @@
  */
 #include "cells.hpp"
 #include "Particle.hpp"
-#include "algorithm/link_cell.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
@@ -43,7 +42,6 @@
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
-#include <boost/iterator/indirect_iterator.hpp>
 #include <boost/range/adaptor/uniqued.hpp>
 #include <boost/range/algorithm/sort.hpp>
 
