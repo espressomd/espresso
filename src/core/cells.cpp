@@ -180,66 +180,6 @@ void cells_re_init(int new_cs, double range) {
 
 /*************************************************/
 
-namespace {
-/**
- * @brief Fold coordinates to box and reset the old position.
- */
-void fold_and_reset(Particle &p) {
-  fold_position(p.r.p, p.l.i, box_geo);
-
-  p.l.p_old = p.r.p;
-}
-
-/**
- * @brief Sort and fold particles.
- *
- * This function folds the positions of all particles back into the
- * box and puts them back into the correct cells. Particles that do
- * not belong to this node are removed from the cell and returned.
- *
- * @param cs The cell system to be used.
- * @param cells Cells to iterate over.
- *
- * @returns List of Particles that do not belong on this node.
- */
-ParticleList sort_and_fold_parts(const CellStructure &cs,
-                                 Utils::Span<Cell *> cells,
-                                 std::vector<ParticleChange> &diff) {
-  ParticleList displaced_parts;
-
-  for (auto &c : cells) {
-    for (auto it = c->particles().begin(); it != c->particles().end();) {
-      fold_and_reset(*it);
-
-      auto target_cell = cs.particle_to_cell(*it);
-
-      /* Particle is in place */
-      if (target_cell == c) {
-        std::advance(it, 1);
-        continue;
-      }
-
-      auto p = std::move(*it);
-      it = c->particles().erase(it);
-      diff.emplace_back(c);
-
-      /* Particle is not local */
-      if (target_cell == nullptr) {
-        diff.emplace_back(p.identity());
-        displaced_parts.insert(std::move(p));
-      }
-      /* Particle belongs on this node but is in the wrong cell. */
-      else if (target_cell != c) {
-        target_cell->particles().insert(std::move(p));
-        diff.emplace_back(target_cell);
-      }
-    }
-  }
-
-  return displaced_parts;
-}
-} // namespace
-
 /**
  * @brief Apply a @ref ParticleChange to a particle index.
  */
@@ -258,8 +198,7 @@ void cells_resort_particles(int global_flag) {
   static std::vector<ParticleChange> diff;
   diff.clear();
 
-  ParticleList displaced_parts =
-      sort_and_fold_parts(cell_structure, cell_structure.local_cells(), diff);
+  ParticleList displaced_parts;
 
   cell_structure.m_decomposition->resort(global_flag, displaced_parts, diff);
 

@@ -97,30 +97,39 @@ void AtomDecomposition::mark_cells() {
     }
   }
 }
-void AtomDecomposition::resort(bool global_flag, ParticleList &displaced_parts,
+void AtomDecomposition::resort(bool global_flag, ParticleList &displaced_parts_,
                                std::vector<ParticleChange> &diff) {
+  for (auto &p : local().particles()) {
+    fold_position(p.r.p, p.l.i, m_box);
+
+    p.l.p_old = p.r.p;
+  }
+
   /* Local updates are a NoOp for this decomposition. */
   if (not global_flag) {
-    assert(displaced_parts.empty());
+    assert(displaced_parts_.empty());
     return;
   }
 
   /* Sort displaced particles by the node they belong to. */
   std::vector<std::vector<Particle>> send_buf(comm.size());
-  for (auto &p : displaced_parts) {
-    auto const target_node = id_to_rank(p.identity());
-    send_buf.at(target_node).emplace_back(std::move(p));
+  for (auto it = local().particles().begin();
+       it != local().particles().end();) {
+    auto const target_node = id_to_rank(it->identity());
+    if (target_node != comm.rank()) {
+      diff.emplace_back(it->identity());
+      send_buf.at(target_node).emplace_back(std::move(*it));
+      it = local().particles().erase(it);
+    } else {
+      ++it;
+    }
   }
-  displaced_parts.clear();
 
   /* Exchange particles */
   std::vector<std::vector<Particle>> recv_buf(comm.size());
   boost::mpi::all_to_all(comm, send_buf, recv_buf);
 
-  if (std::any_of(recv_buf.begin(), recv_buf.end(),
-                  [](auto const &buf) { return not buf.empty(); })) {
-    diff.push_back(std::addressof(local()));
-  }
+  diff.push_back(std::addressof(local()));
 
   /* Add new particles belonging to this node */
   for (auto &parts : recv_buf) {

@@ -136,8 +136,50 @@ void DomainDecomposition::exchange_neighbors(
   }
 }
 
-void DomainDecomposition::resort(bool global, ParticleList &pl,
+namespace {
+/**
+ * @brief Fold coordinates to box and reset the old position.
+ */
+void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
+  fold_position(p.r.p, p.l.i, box_geo);
+
+  p.l.p_old = p.r.p;
+}
+} // namespace
+
+void DomainDecomposition::resort(bool global, ParticleList &pl_,
                                  std::vector<ParticleChange> &diff) {
+  ParticleList displaced_parts;
+
+  for (auto &c : local_cells()) {
+    for (auto it = c->particles().begin(); it != c->particles().end();) {
+      fold_and_reset(*it, box_geo);
+
+      auto target_cell = particle_to_cell(*it);
+
+      /* Particle is in place */
+      if (target_cell == c) {
+        std::advance(it, 1);
+        continue;
+      }
+
+      auto p = std::move(*it);
+      it = c->particles().erase(it);
+      diff.emplace_back(c);
+
+      /* Particle is not local */
+      if (target_cell == nullptr) {
+        diff.emplace_back(p.identity());
+        displaced_parts.insert(std::move(p));
+      }
+      /* Particle belongs on this node but is in the wrong cell. */
+      else if (target_cell != c) {
+        target_cell->particles().insert(std::move(p));
+        diff.emplace_back(target_cell);
+      }
+    }
+  }
+
   if (global) {
     auto const grid = Utils::Mpi::cart_get<3>(comm).dims;
     /* Worst case we need grid - 1 rounds per direction.
@@ -145,17 +187,17 @@ void DomainDecomposition::resort(bool global, ParticleList &pl,
      * no action should be taken. */
     int rounds_left = grid[0] + grid[1] + grid[2] - 3;
     for (; rounds_left > 0; rounds_left--) {
-      exchange_neighbors(pl, diff);
+      exchange_neighbors(displaced_parts, diff);
 
-      auto left_over =
-          boost::mpi::all_reduce(comm, pl.size(), std::plus<size_t>());
+      auto left_over = boost::mpi::all_reduce(comm, displaced_parts.size(),
+                                              std::plus<size_t>());
 
       if (left_over == 0) {
         break;
       }
     }
   } else {
-    exchange_neighbors(pl, diff);
+    exchange_neighbors(displaced_parts, diff);
   }
 }
 void DomainDecomposition::mark_cells() {
