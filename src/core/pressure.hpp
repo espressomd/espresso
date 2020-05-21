@@ -39,7 +39,7 @@ void pressure_calc(bool v_comp);
 /** Helper function for @ref Observables::PressureTensor. */
 Utils::Vector9d observable_compute_pressure_tensor();
 
-/** Calculate the virials, pressure and stress tensors.
+/** Calculate the scalar pressure and pressure tensor.
  *  @param[in] v_comp flag which enables compensation of the velocities
  *                    required for deriving a pressure reflecting
  *                    \ref nptiso_struct::p_inst (hence it only works with

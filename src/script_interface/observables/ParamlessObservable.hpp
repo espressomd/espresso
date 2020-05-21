@@ -31,7 +31,7 @@
 #include "core/observables/DPDStress.hpp"
 #endif
 #include "core/observables/EnergyObservable.hpp"
-#include "core/observables/LBFluidStress.hpp"
+#include "core/observables/LBFluidPressureTensor.hpp"
 #include "core/observables/Observable.hpp"
 #include "core/observables/PressureObservable.hpp"
 #include "core/observables/PressureTensor.hpp"
@@ -65,7 +65,7 @@ private:
 NEW_PARAMLESS_OBSERVABLE(Energy)
 NEW_PARAMLESS_OBSERVABLE(Pressure)
 NEW_PARAMLESS_OBSERVABLE(PressureTensor)
-NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
+NEW_PARAMLESS_OBSERVABLE(LBFluidPressureTensor)
 #ifdef DPD
 NEW_PARAMLESS_OBSERVABLE(DPDStress)
 #endif

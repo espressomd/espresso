@@ -87,8 +87,8 @@ cdef extern from "statistics_chain.hpp":
 cdef extern from "pressure_inline.hpp":
     cdef Observable_stat_wrapper obs_scalar_pressure
     cdef Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded
-    cdef Observable_stat_wrapper obs_stress_tensor
-    cdef Observable_stat_non_bonded_wrapper obs_stress_tensor_non_bonded
+    cdef Observable_stat_wrapper obs_pressure_tensor
+    cdef Observable_stat_non_bonded_wrapper obs_pressure_tensor_non_bonded
 
 cdef extern from "pressure.hpp":
     cdef void update_pressure(cbool)

@@ -32,63 +32,63 @@ import numpy as np
 tol = 1.0e-13
 
 
-def stress_kinetic(vel):
-    '''Analytical result for convective stress'''
+def pressure_tensor_kinetic(vel):
+    '''Analytical result for convective pressure tensor'''
     return np.einsum('ij,ik->jk', vel, vel) / np.prod(np.copy(system.box_l))
 
 
-def stress_bonded(pos):
-    '''Analytical result for stress originating from bonded forces'''
-    stress = np.zeros([3, 3])
+def pressure_tensor_bonded(pos):
+    '''Analytical result for pressure tensor originating from bonded forces'''
+    tensor = np.zeros([3, 3])
     for p1, p2 in zip(pos[0::2], pos[1::2]):
         r = p1 - p2
         f = -1.0e4 * r
-        stress += np.einsum('i,j', f, r) / np.prod(np.copy(system.box_l))
-    return stress
+        tensor += np.einsum('i,j', f, r) / np.prod(np.copy(system.box_l))
+    return tensor
 
 
-def stress_nonbonded(particle_pairs):
-    '''Analytical result for stress originating from non-bonded forces'''
-    stress = np.zeros([3, 3])
+def pressure_tensor_nonbonded(particle_pairs):
+    '''Analytical result for pressure tensor originating from non-bonded forces'''
+    tensor = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if (p1.type == 0 and p2.type == 0) or (p1.type == 1 and p2.type == 2):
             d = p1.pos - p2.pos
             r = np.linalg.norm(d)
             r_hat = d / r
             f = (24.0 * 1.0 * (2.0 * 1.0**12 / r**13 - 1.0**6 / r**7)) * r_hat
-            stress += np.einsum('i,j', f, d) / np.prod(np.copy(system.box_l))
-    return stress
+            tensor += np.einsum('i,j', f, d) / np.prod(np.copy(system.box_l))
+    return tensor
 
 
-def stress_nonbonded_inter(particle_pairs):
-    stress = np.zeros([3, 3])
+def pressure_tensor_nonbonded_inter(particle_pairs):
+    tensor = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if p1.type == 1 and p2.type == 2 and p1.mol_id != p2.mol_id:
             r = p1.pos - p2.pos
             d = np.linalg.norm(r)
             r_hat = r / d
             f = (24.0 * 1.0 * (2.0 * 1.0**12 / d**13 - 1.0**6 / d**7)) * r_hat
-            stress += np.einsum('i,j', f, r) / np.prod(np.copy(system.box_l))
-    return stress
+            tensor += np.einsum('i,j', f, r) / np.prod(np.copy(system.box_l))
+    return tensor
 
 
-def stress_nonbonded_intra(particle_pairs):
-    stress = np.zeros([3, 3])
+def pressure_tensor_nonbonded_intra(particle_pairs):
+    tensor = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if p1.type == 0 and p2.type == 0 and p1.mol_id == p2.mol_id:
             r = p1.pos - p2.pos
             d = np.linalg.norm(r)
             r_hat = r / d
             f = (24.0 * 1.0 * (2.0 * 1.0**12 / d**13 - 1.0**6 / d**7)) * r_hat
-            stress += np.einsum('i,j', f, r) / np.prod(np.copy(system.box_l))
-    return stress
+            tensor += np.einsum('i,j', f, r) / np.prod(np.copy(system.box_l))
+    return tensor
 
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 
 @utx.skipIfMissingFeatures(['LENNARD_JONES'])
-class Stress(ut.TestCase):
+class PressureLJ(ut.TestCase):
 
     def tearDown(self):
         system.part.clear()
@@ -131,19 +131,22 @@ class Stress(ut.TestCase):
         pos = system.part[:].pos
         vel = system.part[:].v
 
-        sim_stress = system.analysis.stress_tensor()
-        sim_stress_kinetic = np.copy(sim_stress['kinetic'])
-        sim_stress_bonded = np.copy(sim_stress['bonded'])
-        sim_stress_bonded_harmonic = np.copy(
-            sim_stress['bonded', len(system.bonded_inter) - 1])
-        sim_stress_nonbonded = np.copy(sim_stress['non_bonded'])
-        sim_stress_nonbonded_inter = np.copy(sim_stress['non_bonded_inter'])
-        sim_stress_nonbonded_inter12 = np.copy(
-            sim_stress['non_bonded_inter', 1, 2])
-        sim_stress_nonbonded_intra = np.copy(sim_stress['non_bonded_intra'])
-        sim_stress_nonbonded_intra00 = np.copy(
-            sim_stress['non_bonded_intra', 0, 0])
-        sim_stress_total = np.copy(sim_stress['total'])
+        sim_pressure_tensor = system.analysis.pressure_tensor()
+        sim_pressure_tensor_kinetic = np.copy(sim_pressure_tensor['kinetic'])
+        sim_pressure_tensor_bonded = np.copy(sim_pressure_tensor['bonded'])
+        sim_pressure_tensor_bonded_harmonic = np.copy(
+            sim_pressure_tensor['bonded', len(system.bonded_inter) - 1])
+        sim_pressure_tensor_nonbonded = np.copy(
+            sim_pressure_tensor['non_bonded'])
+        sim_pressure_tensor_nonbonded_inter = np.copy(
+            sim_pressure_tensor['non_bonded_inter'])
+        sim_pressure_tensor_nonbonded_inter12 = np.copy(
+            sim_pressure_tensor['non_bonded_inter', 1, 2])
+        sim_pressure_tensor_nonbonded_intra = np.copy(
+            sim_pressure_tensor['non_bonded_intra'])
+        sim_pressure_tensor_nonbonded_intra00 = np.copy(
+            sim_pressure_tensor['non_bonded_intra', 0, 0])
+        sim_pressure_tensor_total = np.copy(sim_pressure_tensor['total'])
 
         sim_pressure = system.analysis.pressure()
         sim_pressure_kinetic = sim_pressure['kinetic']
@@ -157,55 +160,59 @@ class Stress(ut.TestCase):
         sim_pressure_nonbonded_intra00 = sim_pressure['non_bonded_intra', 0, 0]
         sim_pressure_total = sim_pressure['total']
 
-        anal_stress_kinetic = stress_kinetic(vel)
-        anal_stress_bonded = stress_bonded(pos)
-        anal_stress_nonbonded = stress_nonbonded(system.part.pairs())
-        anal_stress_nonbonded_inter = stress_nonbonded_inter(
+        anal_pressure_tensor_kinetic = pressure_tensor_kinetic(vel)
+        anal_pressure_tensor_bonded = pressure_tensor_bonded(pos)
+        anal_pressure_tensor_nonbonded = pressure_tensor_nonbonded(
             system.part.pairs())
-        anal_stress_nonbonded_intra = stress_nonbonded_intra(
+        anal_pressure_tensor_nonbonded_inter = pressure_tensor_nonbonded_inter(
             system.part.pairs())
-        anal_stress_total = anal_stress_kinetic + \
-            anal_stress_bonded + anal_stress_nonbonded
-        anal_pressure_kinetic = np.einsum('ii', anal_stress_kinetic) / 3.0
-        anal_pressure_bonded = np.einsum('ii', anal_stress_bonded) / 3.0
-        anal_pressure_nonbonded = np.einsum('ii', anal_stress_nonbonded) / 3.0
+        anal_pressure_tensor_nonbonded_intra = pressure_tensor_nonbonded_intra(
+            system.part.pairs())
+        anal_pressure_tensor_total = anal_pressure_tensor_kinetic + \
+            anal_pressure_tensor_bonded + anal_pressure_tensor_nonbonded
+        anal_pressure_kinetic = np.einsum(
+            'ii', anal_pressure_tensor_kinetic) / 3.0
+        anal_pressure_bonded = np.einsum(
+            'ii', anal_pressure_tensor_bonded) / 3.0
+        anal_pressure_nonbonded = np.einsum(
+            'ii', anal_pressure_tensor_nonbonded) / 3.0
         anal_pressure_nonbonded_inter = np.einsum(
-            'ii', anal_stress_nonbonded_inter) / 3.0
+            'ii', anal_pressure_tensor_nonbonded_inter) / 3.0
         anal_pressure_nonbonded_intra = np.einsum(
-            'ii', anal_stress_nonbonded_intra) / 3.0
+            'ii', anal_pressure_tensor_nonbonded_intra) / 3.0
         anal_pressure_total = anal_pressure_kinetic + \
             anal_pressure_bonded + anal_pressure_nonbonded
 
         np.testing.assert_allclose(
-            sim_stress_kinetic, anal_stress_kinetic, rtol=0, atol=tol,
-            err_msg='kinetic stress does not match analytical result')
+            sim_pressure_tensor_kinetic, anal_pressure_tensor_kinetic, rtol=0, atol=tol,
+            err_msg='kinetic pressure tensor does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_bonded, anal_stress_bonded, rtol=0, atol=tol,
-            err_msg='bonded stress does not match analytical result')
+            sim_pressure_tensor_bonded, anal_pressure_tensor_bonded, rtol=0, atol=tol,
+            err_msg='bonded pressure tensor does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_bonded_harmonic, anal_stress_bonded, rtol=0, atol=tol,
-            err_msg='bonded stress harmonic bond does not match analytical result')
+            sim_pressure_tensor_bonded_harmonic, anal_pressure_tensor_bonded, rtol=0, atol=tol,
+            err_msg='bonded pressure tensor harmonic bond does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_nonbonded, anal_stress_nonbonded, rtol=0, atol=tol,
-            err_msg='non-bonded stress does not match analytical result')
+            sim_pressure_tensor_nonbonded, anal_pressure_tensor_nonbonded, rtol=0, atol=tol,
+            err_msg='non-bonded pressure tensor does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_nonbonded_inter, anal_stress_nonbonded_inter, rtol=0, atol=tol,
-            err_msg='non-bonded intermolecular stress does not match analytical result')
+            sim_pressure_tensor_nonbonded_inter, anal_pressure_tensor_nonbonded_inter, rtol=0, atol=tol,
+            err_msg='non-bonded intermolecular pressure tensor does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_nonbonded_inter12, anal_stress_nonbonded_inter, rtol=0, atol=tol,
-            err_msg='non-bonded intermolecular stress molecules 1 and 2 does not match analytical result')
+            sim_pressure_tensor_nonbonded_inter12, anal_pressure_tensor_nonbonded_inter, rtol=0, atol=tol,
+            err_msg='non-bonded intermolecular pressure tensor molecules 1 and 2 does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_nonbonded_intra, anal_stress_nonbonded_intra, rtol=0, atol=tol,
-            err_msg='non-bonded intramolecular stress does not match analytical result')
+            sim_pressure_tensor_nonbonded_intra, anal_pressure_tensor_nonbonded_intra, rtol=0, atol=tol,
+            err_msg='non-bonded intramolecular pressure tensor does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_nonbonded_intra00, anal_stress_nonbonded_intra, rtol=0, atol=tol,
-            err_msg='non-bonded intramolecular stress molecule 0 does not match analytical result')
+            sim_pressure_tensor_nonbonded_intra00, anal_pressure_tensor_nonbonded_intra, rtol=0, atol=tol,
+            err_msg='non-bonded intramolecular pressure tensor molecule 0 does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_total, anal_stress_total, rtol=0, atol=tol,
-            err_msg='total stress does not match analytical result')
+            sim_pressure_tensor_total, anal_pressure_tensor_total, rtol=0, atol=tol,
+            err_msg='total pressure tensor does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_total, sim_stress_kinetic + sim_stress_bonded + sim_stress_nonbonded, rtol=0, atol=tol,
-            err_msg='total stress is not given as the sum of all major stress components')
+            sim_pressure_tensor_total, sim_pressure_tensor_kinetic + sim_pressure_tensor_bonded + sim_pressure_tensor_nonbonded, rtol=0, atol=tol,
+            err_msg='total pressure tensor is not given as the sum of all major pressure components')
         self.assertAlmostEqual(
             sim_pressure_kinetic, anal_pressure_kinetic, delta=tol,
             msg='kinetic pressure does not match analytical result')
@@ -240,7 +247,7 @@ class Stress(ut.TestCase):
         # Compare pressure observables to pressure from analysis
         np.testing.assert_allclose(
             PressureTensor().calculate(),
-            sim_stress["total"],
+            sim_pressure_tensor["total"],
             rtol=0, atol=1E-10)
         self.assertAlmostEqual(
             Pressure().calculate(),
@@ -249,17 +256,17 @@ class Stress(ut.TestCase):
 
 
 @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
-class StressFENE(ut.TestCase):
+class PressureFENE(ut.TestCase):
 
     def tearDown(self):
         system.part.clear()
 
-    def get_anal_stress_fene(self, pos_1, pos_2, k, d_r_max, r_0):
-        stress = np.zeros([3, 3])
+    def get_anal_pressure_tensor_fene(self, pos_1, pos_2, k, d_r_max, r_0):
+        tensor = np.zeros([3, 3])
         vec_r = pos_1 - pos_2
         f = -fene_force2(vec_r, k, d_r_max, r_0)
-        stress += np.einsum('i,j', f, vec_r) / np.prod(np.copy(system.box_l))
-        return stress
+        tensor += np.einsum('i,j', f, vec_r) / np.prod(np.copy(system.box_l))
+        return tensor
 
     def test_fene(self):
         # system parameters
@@ -287,30 +294,31 @@ class StressFENE(ut.TestCase):
         system.part[0].add_bond((fene, 1))
         system.integrator.run(steps=0)
 
-        sim_stress = system.analysis.stress_tensor()
-        sim_stress_bonded = sim_stress['bonded']
-        sim_stress_fene = sim_stress['bonded', len(system.bonded_inter) - 1]
+        sim_pressure_tensor = system.analysis.pressure_tensor()
+        sim_pressure_tensor_bonded = sim_pressure_tensor['bonded']
+        sim_pressure_tensor_fene = sim_pressure_tensor['bonded', len(
+            system.bonded_inter) - 1]
 
-        total_bonded_stresses = np.zeros([3, 3])
+        total_bonded_pressure_tensor = np.zeros([3, 3])
         for i in range(len(system.bonded_inter)):
-            total_bonded_stresses += sim_stress['bonded', i]
+            total_bonded_pressure_tensor += sim_pressure_tensor['bonded', i]
 
-        anal_stress_fene = self.get_anal_stress_fene(
+        anal_pressure_tensor_fene = self.get_anal_pressure_tensor_fene(
             system.part[0].pos, system.part[1].pos, k, d_r_max, r_0)
         np.testing.assert_allclose(
-            sim_stress_bonded, anal_stress_fene, atol=tol,
-            err_msg='bonded stress does not match analytical result')
+            sim_pressure_tensor_bonded, anal_pressure_tensor_fene, atol=tol,
+            err_msg='bonded pressure tensor does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_fene, anal_stress_fene, atol=tol,
-            err_msg='bonded stress for fene does not match analytical result')
+            sim_pressure_tensor_fene, anal_pressure_tensor_fene, atol=tol,
+            err_msg='bonded pressure tensor for fene does not match analytical result')
         np.testing.assert_allclose(
-            sim_stress_bonded, total_bonded_stresses, atol=tol,
-            err_msg='bonded stresses do not sum up to the total value')
+            sim_pressure_tensor_bonded, total_bonded_pressure_tensor, atol=tol,
+            err_msg='bonded pressure tensor do not sum up to the total value')
 
         sim_pressure = system.analysis.pressure()
         sim_pressure_fene = sim_pressure['bonded', len(
             system.bonded_inter) - 1]
-        anal_pressure_fene = np.einsum("ii", anal_stress_fene) / 3.0
+        anal_pressure_fene = np.einsum("ii", anal_pressure_tensor_fene) / 3.0
         np.testing.assert_allclose(
             sim_pressure_fene, anal_pressure_fene, atol=tol,
             err_msg='bonded pressure for fene does not match analytical result')
@@ -318,7 +326,7 @@ class StressFENE(ut.TestCase):
         # Compare pressure observables to pressure from analysis
         np.testing.assert_allclose(
             PressureTensor().calculate(),
-            sim_stress["total"],
+            sim_pressure_tensor["total"],
             rtol=0, atol=1E-10)
         self.assertAlmostEqual(
             Pressure().calculate(),

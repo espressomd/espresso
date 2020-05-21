@@ -1279,9 +1279,9 @@ Utils::Vector3d lb_calc_momentum_density(std::array<double, 19> const &modes,
                           modes[3] + 0.5 * force_density[2]}};
 }
 
-Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
-                               Utils::Vector3d const &force_density,
-                               const LB_Parameters &lb_parameters) {
+Utils::Vector6d lb_calc_pressure_tensor(std::array<double, 19> const &modes,
+                                        Utils::Vector3d const &force_density,
+                                        const LB_Parameters &lb_parameters) {
   auto const momentum_density = lb_calc_momentum_density(modes, force_density);
   auto const density = lb_calc_density(modes, lb_parameters);
   using Utils::sqr;

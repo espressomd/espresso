@@ -155,7 +155,7 @@ void initialize() {
   REGISTER(DPDStress)
 #endif
 
-  REGISTER(LBFluidStress);
+  REGISTER(LBFluidPressureTensor);
   REGISTER_CYLPID_PROFILE_OBS(
       CylindricalLBFluxDensityProfileAtParticlePositions);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalLBVelocityProfileAtParticlePositions);

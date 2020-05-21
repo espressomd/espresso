@@ -149,8 +149,8 @@ public:
   }
 };
 
-/** Structure used only in the pressure and stress tensor calculation to
- *  distinguish non-bonded intra- and inter- molecular contributions.
+/** Structure used only in the pressure calculation to distinguish
+ *  non-bonded intra- and inter- molecular contributions.
  */
 class Observable_stat_non_bonded : public Observable_stat_base {
 public:

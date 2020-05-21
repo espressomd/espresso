@@ -174,7 +174,7 @@ class Observables(ut.TestCase):
             decimal=9)
 
     def test_pressure_tensor(self):
-        s = self.system.analysis.stress_tensor()["total"]
+        s = self.system.analysis.pressure_tensor()["total"]
         obs_data = espressomd.observables.PressureTensor().calculate()
         self.assertEqual(obs_data.shape, s.shape)
         np.testing.assert_array_almost_equal(
