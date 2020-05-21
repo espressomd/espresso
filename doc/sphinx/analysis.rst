@@ -24,6 +24,7 @@ The direct analysis commands can be classified into two types:
 
     - :ref:`Energies`
     - :ref:`Pressure`
+    - :ref:`Pressure Tensor`
     - :ref:`Momentum of the System`
     - :ref:`Minimal distances between particles`
     - :ref:`Particles in the neighborhood`
@@ -32,7 +33,6 @@ The direct analysis commands can be classified into two types:
     - :ref:`Center of mass`
     - :ref:`Moment of inertia matrix`
     - :ref:`Gyration tensor`
-    - :ref:`Pressure Tensor`
 
 .. _Energies:
 
