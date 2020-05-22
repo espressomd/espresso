@@ -340,9 +340,13 @@ struct cusolver<policy::host, double> {
     static void potrf(double *A, double *B, int N) {
         char uplo = 'U';
         int info;
+
+        // compute the cholesky factorization, result in A
         dpotrf_(&uplo, &N, A, &N, &info);
         assert(info == 0);
 
+        // compute the inverse of the original matrix in A,
+        // result in B, cholesky factorization remains in A
         dpotrs_(&uplo, &N, &N, A, &N, B, &N, &info);
         assert(info == 0);
     }

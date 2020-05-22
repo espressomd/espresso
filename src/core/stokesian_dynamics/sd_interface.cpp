@@ -152,7 +152,7 @@ void set_sd_device(std::string const &dev) {
     device = INVALID;
 #endif
   } else if (dev == "gpu") {
-#ifdef STOKESIOAN_DYNAMICS_GPU
+#ifdef STOKESIAN_DYNAMICS_GPU
     device = GPU;
 #else
     device = INVALID;
@@ -270,14 +270,12 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
         break;
 #endif
 
-        // Temporarily removed to test CPU version on CI
-        // #ifdef STOKESIAN_DYNAMICS_GPU
-        //       case GPU:
-        //         v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
-        //                       std::sqrt(sd_kT / time_step), offset, sd_seed,
-        //                       sd_flags);
-        //         break;
-        // #endif
+#ifdef STOKESIAN_DYNAMICS_GPU
+      case GPU:
+        v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
+                      std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
+        break;
+#endif
 
       default:
         runtimeErrorMsg()

@@ -9,7 +9,7 @@
 
 
 // Dependencies with THRUST
-#ifdef STOKESIAN_DYNAMICS_GPU
+#ifdef USE_THRUST
 #  include <thrust/device_vector.h>
 #  include <thrust/execution_policy.h>
 #  include <thrust/tabulate.h>
@@ -71,7 +71,6 @@ thrust::host_vector<T> operator+(thrust::host_vector<T> const &x,
 
 
 #else // Dependencies without THRUST
-
 #  include <algorithm>
 #  include <cassert>
 #  include <iterator>

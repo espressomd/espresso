@@ -483,7 +483,8 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
             check_type_or_throw_except(
                 self._params["approximation_method"], 1, str,
                 "lubrication_method must be a string")
-            if self._params["approximation_method"].lower() not in {"ft", "fts"}:
+            if self._params["approximation_method"].lower() not in {
+                    "ft", "fts"}:
                 raise ValueError(
                     "approximation_method must be either 'ft' or 'fts'")
             check_type_or_throw_except(

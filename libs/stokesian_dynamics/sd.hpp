@@ -1480,7 +1480,6 @@ struct solver {
         thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
                          check_dist<Policy, T>{x, a, pd, part_id});
 
-
         // 1. Generate empty grand mobility matrix
 
         // The following (sub-)tensors can be found in equation (2.17)
@@ -1513,7 +1512,6 @@ struct solver {
         device_matrix<T, Policy> rfe(n_part * 6, n_part * 5);
         device_matrix<T, Policy> rse(n_part * 5, n_part * 5);
         invert_grand_mobility_matrix(zmuf, zmus, zmes, rfu, rfe, rse, flg);
-
 
         // 5. add lubrication corrections (equation (2.18) or (2.21) resp.)
         if (flg & flags::LUBRICATION) {
@@ -1550,8 +1548,6 @@ struct solver {
             frnd = thermalization(rfu_sqrt, f_host.size(), sqrt_kT_Dt,
                                   offset, seed);
         }
-
-
         // Finally, perform the matrix-multiplication
         // multiply the force vector onto the mobility matrix (Eq. 2.22)
         
