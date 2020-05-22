@@ -1,10 +1,11 @@
+#ifndef THRUST_WRAPPER_HPP
+#define THRUST_WRAPPER_HPP
+
 /** \file
  *  This file provides a wrapper around THRUST functions and types. In case
  *  that CUDA/THRUST is not present, equivalent standard C++ types and 
  *  functions are used.
  */
-
-#pragma once
 
 
 
@@ -188,4 +189,5 @@ std::vector<T> operator+(std::vector<T> const &x,
     return z;
 }
 
+#endif
 #endif
