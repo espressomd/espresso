@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--wall", action="store_const", dest="shape", const="Wall",
                    default="Wall")
-for shape in ("Sphere", "Ellipsoid", "Cylinder", "SpheroCylinder",
+for shape in ("Sphere", "Ellipsoid", "Cylinder", "SpheroCylinder", "Torus",
               "Stomatocyte", "SimplePore", "Slitpore", "HollowCone"):
     group.add_argument("--" + shape.lower(), action="store_const",
                        dest="shape", const=shape)
@@ -107,6 +107,12 @@ elif args.shape == "HollowCone":
     system.constraints.add(shape=espressomd.shapes.HollowCone(
         inner_radius=5, outer_radius=20, opening_angle=np.pi / 4.0,
         axis=[1.0, 0.0, 0.0], center=[25, 25, 25], width=2, direction=1),
+        particle_type=0, penetrable=True)
+
+elif args.shape == "Torus":
+    system.constraints.add(
+        shape=espressomd.shapes.Torus(center=[25] * 3, normal=[1, 1, 1],
+                                      direction=1, radius=15, tube_radius=6),
         particle_type=0, penetrable=True)
 
 else:
