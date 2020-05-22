@@ -50,6 +50,7 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.Sphere`
     - :class:`espressomd.shapes.SpheroCylinder`
     - :class:`espressomd.shapes.Stomatocyte`
+    - :class:`espressomd.shapes.Torus`
     - :class:`espressomd.shapes.HollowConicalFrustum`
     - :class:`espressomd.shapes.Union`
 
@@ -457,6 +458,16 @@ Pictured is an example constraint with a ``SpheroCylinder`` shape created with :
                                     radius=10,
                                     length=30)
     system.constraints.add(shape=spherocylinder, particle_type=0)
+
+
+Torus
+"""""
+
+:class:`espressomd.shapes.Torus`
+
+It is positioned at ``center`` and has a radius ``radius`` with tube radius ``tube_radius``.
+The ``normal`` parameter is the torus rotation axis, which is normalized in the program.
+The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
 
 HollowConicalFrustum
