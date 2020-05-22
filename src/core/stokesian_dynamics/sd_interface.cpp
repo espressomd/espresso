@@ -151,11 +151,9 @@ void set_sd_device(std::string const &dev) {
 #else
     device = INVALID;
 #endif
-  } else if (dev == "gpu") {
 #ifdef STOKESIAN_DYNAMICS_GPU
+  } else if (dev == "gpu") {
     device = GPU;
-#else
-    device = INVALID;
 #endif
   } else {
     device = INVALID;
@@ -290,7 +288,8 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
         return;
       }
 
-      Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
+      Utils::Mpi::scatter_buffer(v_sd.data(), int(n_part_local * 6), comm_cart,
+                                 0);
       sd_update_locally(particles);
     }
 
