@@ -447,7 +447,7 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
                 sd_device_str = "cpu"
             ELIF STOKESIAN_DYNAMICS_GPU:
                 sd_device_str = "gpu"
-            return {"lubrication": False, "lubrication_method": "fts", 
+            return {"lubrication": False, "approximation_method": "fts", 
                     "self_mobility": True, "pair_mobility": True,
                     "device": sd_device_str}
 
@@ -456,7 +456,7 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
 
             """
             return {"radii", "viscosity", "device", "lubrication",
-                    "lubrication_method", "self_mobility", "pair_mobility"}
+                    "approximation_method", "self_mobility", "pair_mobility"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -481,11 +481,11 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
                 raise NotImplementedError(
                     "Stokesian Dynamics lubrication is not available yet")
             check_type_or_throw_except(
-                self._params["lubrication_method"], 1, str,
+                self._params["approximation_method"], 1, str,
                 "lubrication_method must be a string")
-            if self._params["lubrication_method"].lower() not in {"ft", "fts"}:
+            if self._params["approximation_method"].lower() not in {"ft", "fts"}:
                 raise ValueError(
-                    "lubrication_method must be either 'ft' or 'fts'")
+                    "approximation_method must be either 'ft' or 'fts'")
             check_type_or_throw_except(
                 self._params["self_mobility"], 1, bool,
                 "self_mobility must be a bool")
@@ -501,7 +501,7 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
             fl = flags.NONE
             if self._params["lubrication"]:
                 fl = fl | flags.LUBRICATION
-            if self._params["lubrication_method"].lower() == "fts":
+            if self._params["approximation_method"].lower() == "fts":
                 fl = fl | flags.FTS
             if self._params["self_mobility"]:
                 fl = fl | flags.SELF_MOBILITY
