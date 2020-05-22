@@ -19,7 +19,6 @@
 
 #define BOOST_TEST_MODULE quaternion test
 #define BOOST_TEST_DYN_LINK
-#include <boost/range/numeric.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <limits>
@@ -77,7 +76,7 @@ BOOST_AUTO_TEST_CASE(convert_director_to_quaternion) {
   double const cos_pi_4 = std::sqrt(2.) / 2.;
   constexpr double eps = std::numeric_limits<double>::epsilon();
 #define CHECK_QUAT(input, ref)                                                 \
-  BOOST_CHECK_LE((convert_director_to_quaternion(input) - ref).norm2(), eps);
+  BOOST_CHECK_LE((convert_director_to_quaternion(input) - (ref)).norm2(), eps);
   /* identities */
   CHECK_QUAT((Vector3d{{0, 0, 0}}), (Vector4d{{1, 0, 0, 0}}));
   CHECK_QUAT((Vector3d{{0, 0, +1}}), (Vector4d{{1, 0, 0, 0}}));

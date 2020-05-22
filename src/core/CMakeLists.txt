@@ -31,6 +31,7 @@ set(EspressoCore_SRC
     reaction_ensemble.cpp
     rotate_system.cpp
     rotation.cpp
+    Observable_stat.cpp
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp
@@ -42,7 +43,8 @@ set(EspressoCore_SRC
     virtual_sites.cpp
     exclusions.cpp
     CellStructure.cpp
-    PartCfg.cpp)
+    PartCfg.cpp
+    AtomDecomposition.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
@@ -71,28 +73,14 @@ endif(CUDA)
 
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
-target_compile_options(
-  EspressoCore
-  PUBLIC
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CONFIG:Release>>:-g>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CONFIG:Release>>:-O0>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fprofile-instr-generate>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fcoverage-mapping>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:--coverage>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:-fprofile-arcs>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:-ftest-coverage>"
-)
-
 target_link_libraries(
   EspressoCore
   PRIVATE EspressoConfig shapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
-          "$<$<BOOL:${SCAFACOS}>:Scafacos>"
-  PUBLIC
-    utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
-    "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
-    "$<$<BOOL:${H5MD}>:Boost::filesystem>" "$<$<BOOL:${H5MD}>:h5xx>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:gcov>")
+          $<$<BOOL:${SCAFACOS}>:Scafacos> cxx_interface
+  PUBLIC utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
+         "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
+         $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>)
 
 target_include_directories(
   EspressoCore
@@ -101,8 +89,7 @@ target_include_directories(
   PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>" SYSTEM
   PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
 
-target_compile_definitions(EspressoCore
-                           PUBLIC "$<$<BOOL:${H5MD}>:H5XX_USE_MPI>")
+target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
 
 add_subdirectory(accumulators)
 add_subdirectory(actor)

@@ -37,7 +37,6 @@
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
-#include "particle_data.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -69,7 +68,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   std::vector<std::pair<int, int>> ret;
   auto const cutoff2 = distance * distance;
 
-  cells_update_ghosts(GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
+  cells_update_ghosts(Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES);
 
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
@@ -133,29 +132,6 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 /************************************************************/
 /*@{*/
 
-/** Choose the topology release function of a certain cell system. */
-static void topology_release(int cs) {
-  switch (cs) {
-  case CELL_STRUCTURE_NONEYET:
-    break;
-  case CELL_STRUCTURE_CURRENT:
-    topology_release(cell_structure.type);
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    dd_topology_release();
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_release();
-    break;
-  default:
-    fprintf(stderr,
-            "INTERNAL ERROR: attempting to sort the particles in an "
-            "unknown way (%d)\n",
-            cs);
-    errexit();
-  }
-}
-
 /** Choose the topology init function of a certain cell system. */
 void topology_init(int cs, double range) {
   /** broadcast the flag for using Verlet list */
@@ -170,10 +146,10 @@ void topology_init(int cs, double range) {
     topology_init(cell_structure.type, range);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(node_grid, range);
+    dd_topology_init(comm_cart, range, box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_init();
+    nsq_topology_init(comm_cart);
     break;
   default:
     fprintf(stderr,
@@ -216,25 +192,19 @@ static void invalidate_ghosts() {
 void cells_re_init(int new_cs, double range) {
   invalidate_ghosts();
 
-  topology_release(cell_structure.type);
-  /* MOVE old local_cell list to temporary buffer */
-  std::vector<Cell *> old_local_cells;
-  std::swap(old_local_cells, cell_structure.m_local_cells);
+  auto local_parts = cell_structure.local_particles();
+  std::vector<Particle> particles(local_parts.begin(), local_parts.end());
 
-  /* MOVE old cells to temporary buffer */
-  auto tmp_cells = std::move(cells);
+  cell_structure.m_local_cells.clear();
+  cell_structure.m_ghost_cells.clear();
+  cells.clear();
 
   topology_init(new_cs, range);
   cell_structure.min_range = range;
 
-  clear_particle_node();
-
-  for (auto &p : Cells::particles(Utils::make_span(old_local_cells))) {
+  for (auto &p : particles) {
     cell_structure.add_particle(std::move(p));
   }
-
-  /* to enforce initialization of the ghost cells */
-  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
 
   on_cell_structure_change();
 }
@@ -311,7 +281,6 @@ ParticleList sort_and_fold_parts(const CellStructure &cs,
 void cells_resort_particles(int global_flag) {
   invalidate_ghosts();
 
-  clear_particle_node();
   n_verlet_updates++;
 
   static std::vector<Cell *> modified_cells;
@@ -329,7 +298,7 @@ void cells_resort_particles(int global_flag) {
     nsq_exchange_particles(global_flag, &displaced_parts, modified_cells);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid,
+    dd_exchange_and_sort_particles(global_flag, &displaced_parts,
                                    modified_cells);
     break;
   }
@@ -363,20 +332,18 @@ void cells_resort_particles(int global_flag) {
 
   displaced_parts.clear();
 
-  on_resort_particles(cell_structure.local_particles());
+  on_resort_particles();
 }
 
 /*************************************************/
 
-void cells_on_geometry_change(int flags) {
-  /* Consider skin only if there are actually interactions */
-  auto const max_cut = maximal_cutoff();
-  auto const range = (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
+void cells_on_geometry_change(bool fast) {
+  auto const range = interaction_range();
   cell_structure.min_range = range;
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    dd_on_geometry_change(flags, node_grid, range);
+    dd_on_geometry_change(fast, range, box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
     break;
@@ -402,7 +369,8 @@ void check_resort_particles() {
 /*************************************************/
 void cells_update_ghosts(unsigned data_parts) {
   /* data parts that are only updated on resort */
-  auto constexpr resort_only_parts = GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS;
+  auto constexpr resort_only_parts =
+      Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
 
   auto const global_resort = topology_check_resort(
       cell_structure.type, cell_structure.get_resort_particles());
@@ -418,7 +386,7 @@ void cells_update_ghosts(unsigned data_parts) {
     /* Communication step: number of ghosts and ghost information */
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
                        GHOSTTRANS_PARTNUM);
-    ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
+    cell_structure.ghosts_update(data_parts);
 
     /* Add the ghost particles to the index if we don't already
      * have them. */
@@ -432,8 +400,7 @@ void cells_update_ghosts(unsigned data_parts) {
     cell_structure.clear_resort_particles();
   } else {
     /* Communication step: ghost information */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       data_parts & ~resort_only_parts);
+    cell_structure.ghosts_update(data_parts & ~resort_only_parts);
   }
 }
 

@@ -21,6 +21,8 @@
 import espressomd
 from espressomd import assert_features, electrostatics
 from espressomd.minimize_energy import steepest_descent
+from espressomd.observables import RDF
+from espressomd.accumulators import MeanVarianceCalculator
 import numpy
 
 assert_features(["ELECTROSTATICS", "WCA"])
@@ -113,6 +115,24 @@ for i in range(int(num_steps_equilibration / 100)):
                   system.analysis.energy()['coulomb'], temp_measured))
     system.integrator.run(100)
 
+print("\n--->Analysis setup")
+# Calculate the averaged rdfs
+rdf_bins = 100
+r_min = 0.0
+r_max = system.box_l[0] / 2.0
+pids_anion = system.part.select(type=types["Anion"]).id
+pids_cation = system.part.select(type=types["Cation"]).id
+rdf_00_obs = RDF(ids1=pids_anion, ids2=pids_anion, min_r=r_min, max_r=r_max,
+                 n_r_bins=rdf_bins)
+rdf_01_obs = RDF(ids1=pids_anion, ids2=pids_cation, min_r=r_min, max_r=r_max,
+                 n_r_bins=rdf_bins)
+rdf_00_acc = MeanVarianceCalculator(
+    obs=rdf_00_obs, delta_N=integ_steps_per_config)
+rdf_01_acc = MeanVarianceCalculator(
+    obs=rdf_01_obs, delta_N=integ_steps_per_config)
+system.auto_update_accumulators.add(rdf_00_acc)
+system.auto_update_accumulators.add(rdf_01_acc)
+
 print("\n--->Integration")
 system.time = 0.0
 temp_measured = []
@@ -124,28 +144,10 @@ for i in range(num_configs):
                   system.analysis.energy()['coulomb'], temp_measured[-1]))
     system.integrator.run(integ_steps_per_config)
 
-    # Internally append particle configuration
-    system.analysis.append()
-
-
-print("\n--->Analysis")
-# Calculate the averaged rdfs
-rdf_bins = 100
-r_min = 0.0
-r_max = system.box_l[0] / 2.0
-r, rdf_00 = system.analysis.rdf(rdf_type='<rdf>',
-                                type_list_a=[types["Anion"]],
-                                type_list_b=[types["Anion"]],
-                                r_min=r_min,
-                                r_max=r_max,
-                                r_bins=rdf_bins)
-
-r, rdf_01 = system.analysis.rdf(rdf_type='<rdf>',
-                                type_list_a=[types["Anion"]],
-                                type_list_b=[types["Cation"]],
-                                r_min=r_min,
-                                r_max=r_max,
-                                r_bins=rdf_bins)
+print("\n--->Output")
+r = rdf_00_obs.bin_centers()
+rdf_00 = rdf_00_acc.get_mean()
+rdf_01 = rdf_01_acc.get_mean()
 # Write out the data
 numpy.savetxt('rdf.data', numpy.c_[r, rdf_00, rdf_01])
 print("\n--->Written rdf.data")

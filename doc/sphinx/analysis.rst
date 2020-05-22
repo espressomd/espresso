@@ -28,16 +28,11 @@ The direct analysis commands can be classified into two types:
     - :ref:`Minimal distances between particles`
     - :ref:`Particles in the neighborhood`
     - :ref:`Particle distribution`
-    - :ref:`Radial distribution function` with ``rdf_type='rdf'``
     - :ref:`Structure factor`
     - :ref:`Center of mass`
     - :ref:`Moment of inertia matrix`
     - :ref:`Gyration tensor`
     - :ref:`Stress Tensor`
-
-- Analysis on stored configurations, added by :meth:`espressomd.analyze.Analysis.append`:
-    - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
-    - :ref:`Chains`
 
 .. _Energies:
 
@@ -126,29 +121,6 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
     >>> print(count)
     [ 1.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
-
-
-.. _Radial distribution function:
-
-Radial distribution function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.rdf`
-
-Calculates a radial distribution function for given particle type and binning.
-The ``rdf_type`` defines if the analysis is performed on the current configuration (``rdf_type='rdf'``)
-or on averaged configurations stored with :meth:`analyze.append() <espressomd.analyze.Analysis.append>` (``rdf_type='<rdf>'``).
-
-For example, ::
-
-    rdf_bins = 100
-    r_min = 0.0
-    r_max = system.box_l[0] / 2.0
-    r, rdf_01 = S.analysis.rdf(rdf_type='<rdf>', type_list_a=[0], type_list_b=[1],
-                               r_min=r_min, r_max=r_max, r_bins=rdf_bins)
-    rdf_fp = open("rdf.dat", 'w')
-    for i in range(rdf_bins):
-        rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" % (r[i], rdf_01[i]))
-    rdf_fp.close()
 
 
 .. _Structure factor:
@@ -345,8 +317,10 @@ Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give n
 Observables and correlators
 ---------------------------
 
-Analysis in the core is a new concept introduced in since version 3.1.
-It was motivated by the fact, that sometimes it is desirable that the
+Observables extract properties of the particles and the LB fluid and
+return either the raw data or a statistic derived from them. The
+Observable framework is progressively replacing the Analysis framework.
+This is motivated by the fact, that sometimes it is desirable that the
 analysis functions do more than just return a value to the scripting
 interface. For some observables it is desirable to be sampled every few
 integration steps. In addition, it should be possible to pass the
@@ -380,12 +354,13 @@ not all observables carry out their calculations in parallel.
 Instead, the entire particle configuration is collected on the head node, and the calculations are carried out there.
 This is only performance-relevant if the number of processor cores is large and/or interactions are calculated very frequently.
 
-.. _Creating an observable:
+.. _Using observables:
 
-Creating an observable
-~~~~~~~~~~~~~~~~~~~~~~
+Using observables
+~~~~~~~~~~~~~~~~~
 
-The observables are represented as Python classes derived from :class:`espressomd.observables.Observable`. They are contained in
+The observables are represented as Python classes derived from
+:class:`espressomd.observables.Observable`. They are contained in
 the ``espressomd.observables`` module. An observable is instantiated as
 follows
 
@@ -397,17 +372,70 @@ follows
 Here, the keyword argument ``ids`` specifies the ids of the particles,
 which the observable should take into account.
 
-The current value of an observable can be obtained using its calculate()-method::
+The current value of an observable can be obtained using its
+:meth:`~espressomd.observables.Observable.calculate` method::
 
     print(part_pos.calculate())
+
+Profile observables have additional methods
+:meth:`~espressomd.observables.ProfileObservable.bin_centers` and
+:meth:`~espressomd.observables.ProfileObservable.bin_edges` to facilitate
+plotting of histogram slices with functions that require either bin centers
+or bin edges for the axes. Example::
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import espressomd
+    import espressomd.observables
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.part.add(id=0, pos=[4.0, 3.0, 6.0])
+    system.part.add(id=1, pos=[7.0, 3.0, 6.0])
+
+    # histogram in Cartesian coordinates
+    density_profile = espressomd.observables.DensityProfile(
+        ids=[0, 1],
+        n_x_bins=8, min_x=1.0, max_x=9.0,
+        n_y_bins=8, min_y=1.0, max_y=9.0,
+        n_z_bins=4, min_z=4.0, max_z=8.0)
+    obs_data = density_profile.calculate()
+    obs_bins = density_profile.bin_centers()
+
+    # 1D slice: requires bin centers
+    plt.plot(obs_bins[:, 2, 2, 0], obs_data[:, 2, 2])
+    plt.show()
+
+    # 2D slice: requires extent
+    plt.imshow(obs_data[:, :, 2].T, origin='lower',
+               extent=[density_profile.min_x, density_profile.max_x,
+                       density_profile.min_y, density_profile.max_y])
+    plt.show()
+
+    # histogram in cylindrical coordinates
+    density_profile = espressomd.observables.CylindricalDensityProfile(
+        ids=[0, 1], center=[5.0, 5.0, 0.0], axis=[0, 0, 1],
+        n_r_bins=8, min_r=0.0, max_r=4.0,
+        n_phi_bins=16, min_phi=-np.pi, max_phi=np.pi,
+        n_z_bins=4, min_z=4.0, max_z=8.0)
+    obs_data = density_profile.calculate()
+    obs_bins = density_profile.bin_edges()
+
+    # 2D slice: requires bin edges
+    fig = plt.figure()
+    ax = fig.add_subplot(111, polar='True')
+    r = obs_bins[:, 0, 0, 0]
+    phi = obs_bins[0, :, 0, 1]
+    ax.pcolormesh(phi, r, obs_data[:, :, 2])
+    plt.show()
+
 
 .. _Available observables:
 
 Available observables
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following list contains some of the available observables. You can find documentation for
-all available observables in :mod:`espressomd.observables`.
+The following list contains some of the available observables. You can find
+documentation for all available observables in :mod:`espressomd.observables`.
 
 - Observables working on a given set of particles:
 
@@ -446,6 +474,8 @@ all available observables in :mod:`espressomd.observables`.
    - :class:`~espressomd.observables.CosPersistenceAngles`: Cosine of angles between bonds. The ``i``-th value in the result vector corresponds to the cosine of the angle between
      bonds that are separated by ``i`` bonds. This observable might be useful for measuring the persistence length of a polymer.
 
+   - :class:`~espressomd.observables.RDF`: Radial distribution function. Can be used on two different sets of particles.
+
 - Profile observables sampling the spatial profile of various quantities:
 
    - :class:`~espressomd.observables.DensityProfile`
@@ -468,13 +498,11 @@ all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions`
 
-
 - System-wide observables
 
    - :class:`~espressomd.observables.StressTensor`: Total stress tensor (see :ref:`stress tensor`)
 
    - :class:`~espressomd.observables.DPDStress`
-
 
 
 .. _Correlations:
@@ -661,12 +689,39 @@ discussion is presented in Ref. :cite:`ramirez10a`.
 Accumulators
 ------------
 
+.. _Time series:
+
+Time series
+~~~~~~~~~~~
+
+In order to take snapshots of an observable,
+:class:`espressomd.accumulators.TimeSeries` can be used::
+
+    import espressomd
+    import espressomd.observables
+    import espressomd.accumulators
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
+    position_observable = espressomd.observables.ParticlePositions(ids=(0,))
+    accumulator = espressomd.accumulators.TimeSeries(
+        obs=position_observable, delta_N=2)
+    system.auto_update_accumulators.add(accumulator)
+    system.integrator.run(10)
+    print(accumulator.time_series())
+
+In the example above the automatic update of the accumulator is used. However,
+it's also possible to manually update the accumulator by calling
+:meth:`espressomd.accumulators.TimeSeries.update`.
+
 .. _Mean-variance calculator:
 
 Mean-variance calculator
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to calculate the running mean and variance of an observable
+In order to calculate the running mean and variance of an observable,
 :class:`espressomd.accumulators.MeanVarianceCalculator` can be used::
 
     import espressomd
@@ -676,14 +731,14 @@ In order to calculate the running mean and variance of an observable
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    system.part.add(id=0, pos=[5.0, 5.0, 5.0])
+    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
     position_observable = espressomd.observables.ParticlePositions(ids=(0,))
     accumulator = espressomd.accumulators.MeanVarianceCalculator(
-        obs=position_observable, delta_N=1)
+        obs=position_observable, delta_N=2)
     system.auto_update_accumulators.add(accumulator)
-    # Perform integration (not shown)
-    print accumulator.get_mean()
-    print accumulator.get_variance()
+    system.integrator.run(10)
+    print(accumulator.get_mean())
+    print(accumulator.get_variance())
 
 In the example above the automatic update of the accumulator is used. However,
 it's also possible to manually update the accumulator by calling

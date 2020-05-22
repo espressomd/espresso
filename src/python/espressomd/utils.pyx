@@ -54,11 +54,11 @@ cpdef check_type_or_throw_except(x, n, t, msg):
 
 cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
     """
-    Returns a numpy array from double array
+    Returns a numpy array from double array.
 
     Parameters
     ----------
-    x : double* which is to be converted
+    x : C-style array of type double which is to be converted
     len_x: len of array
 
     """
@@ -66,6 +66,17 @@ cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
     for i in range(len_x):
         numpyArray[i] = x[i]
     return numpyArray
+
+cdef np.ndarray create_nparray_from_double_span(Span[double] x):
+    """
+    Returns a numpy array from double span.
+
+    Parameters
+    ----------
+    x : Span of type double which is to be converted
+
+    """
+    return create_nparray_from_double_array(x.data(), x.size())
 
 cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
     """

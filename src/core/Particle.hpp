@@ -339,7 +339,7 @@ struct ParticleLocal {
 };
 
 /** Struct holding all information for one particle. */
-struct Particle {
+struct Particle { // NOLINT(bugprone-exception-escape)
   int &identity() { return p.identity; }
   int const &identity() const { return p.identity; }
 

@@ -56,8 +56,10 @@ private:
   std::shared_ptr<CoreObs> m_observable;
 };
 
+// clang-format off
 #define NEW_PARAMLESS_OBSERVABLE(name)                                         \
-  using name = ParamlessObservableInterface<::Observables::name>;
+  using name = ParamlessObservableInterface<::Observables::name>; // NOLINT(bugprone-macro-parentheses)
+// clang-format on
 NEW_PARAMLESS_OBSERVABLE(StressTensor)
 NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
 #ifdef DPD

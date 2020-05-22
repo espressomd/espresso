@@ -33,7 +33,6 @@
 
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
-#include <utils/math/rotation_matrix.hpp>
 
 #include <boost/optional.hpp>
 #include <cmath>

@@ -1,5 +1,5 @@
 # Copyright (C) 2011 Olaf Lenz
-# Copyright (C) 2015 The ESPResSo Project
+# Copyright (C) 2015,2020 The ESPResSo Project
 #
 # This file is part of ESPResSo.
 #
@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# This cmake script is used to find out what myconfig header to use.
-# It needs the variables
+
+# This CMake script is used to find out which myconfig header to use.
 
 # heed the environment variable "ESPRESSO_MYCONFIG"
 if(NOT MYCONFIG_FILE)
@@ -29,7 +29,7 @@ else()
     NAMES ${MYCONFIG_NAME}
     PATHS ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}
     NO_DEFAULT_PATH)
-  # use the default if it is not
+  # otherwise, use the default one
   if(NOT MYCONFIG_FILE)
     set(MYCONFIG_FILE ${CMAKE_SOURCE_DIR}/src/config/myconfig-default.hpp)
   endif()
@@ -39,6 +39,6 @@ endif()
 configure_file(${MYCONFIG_FILE} ${CMAKE_BINARY_DIR}/src/config/myconfig-final.hpp COPYONLY)
 add_custom_target(myconfig DEPENDS ${CMAKE_BINARY_DIR}/src/config/myconfig-final.hpp)
 message(STATUS "Config file: ${MYCONFIG_FILE}")
-# Clear variable, otherwise cmake must be run by hand to detect myconfig
-# Also prevents find_file from skipping when variable is already set
+# Clear variable, otherwise cmake must be run by hand to detect myconfig.
+# Also prevents find_file from skipping when variable is already set.
 unset(MYCONFIG_FILE CACHE)

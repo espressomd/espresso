@@ -56,7 +56,19 @@ enum Resort : unsigned {
   RESORT_LOCAL = 1u,
   RESORT_GLOBAL = 2u
 };
-}
+
+/**
+ * @brief Flags to select particle parts for communication.
+ */
+enum DataPart : unsigned {
+  DATA_PART_NONE = 0u,       /**< Nothing */
+  DATA_PART_PROPERTIES = 1u, /**< Particle::p */
+  DATA_PART_POSITION = 2u,   /**< Particle::r */
+  DATA_PART_MOMENTUM = 8u,   /**< Particle::m */
+  DATA_PART_FORCE = 16u,     /**< Particle::f */
+  DATA_PART_BONDS = 32u      /**< Particle::bonds */
+};
+} // namespace Cells
 
 namespace Cells {
 inline ParticleRange particles(Utils::Span<Cell *> cells) {
@@ -142,7 +154,7 @@ private:
    */
   Particle &append_indexed_particle(ParticleList &pl, Particle &&p) {
     /* Check if cell may reallocate, in which case the index
-     * entries for all particles in this celle have to be
+     * entries for all particles in this cell have to be
      * updated. */
     auto const may_reallocate = pl.size() >= pl.capacity();
     auto &new_part = pl.insert(std::move(p));
@@ -173,7 +185,7 @@ public:
     return m_particle_index[id];
   }
 
-  /** @overload get_local_particle */
+  /** @overload */
   const Particle *get_local_particle(int id) const {
     assert(id >= 0);
 
@@ -308,6 +320,21 @@ public:
    * @brief Set the resort level to sorted.
    */
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
+
+  /**
+   * @brief Update ghost particles.
+   *
+   * This function updates the ghost particles with data
+   * from the real particles.
+   *
+   * @param data_parts Particle parts to update, combination of @ref
+   * Cells::DataPart
+   */
+  void ghosts_update(unsigned data_parts);
+  /**
+   * @brief Add forces from ghost particles to real particles.
+   */
+  void ghosts_reduce_forces();
 
   /**
    * @brief Resolve ids to particles.

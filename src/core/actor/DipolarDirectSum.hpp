@@ -25,6 +25,7 @@
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 
 #include <memory>
@@ -46,19 +47,16 @@ class DipolarDirectSum : public Actor {
 public:
   DipolarDirectSum(SystemInterface &s) {
 
-    k = dipole.prefactor;
+    k = static_cast<float>(dipole.prefactor);
 
     if (!s.requestFGpu())
-      std::cerr << "DipolarDirectSum needs access to forces on GPU!"
-                << std::endl;
+      runtimeErrorMsg() << "DipolarDirectSum needs access to forces on GPU!";
 
     if (!s.requestRGpu())
-      std::cerr << "DipolarDirectSum needs access to positions on GPU!"
-                << std::endl;
+      runtimeErrorMsg() << "DipolarDirectSum needs access to positions on GPU!";
 
     if (!s.requestDipGpu())
-      std::cerr << "DipolarDirectSum needs access to dipoles on GPU!"
-                << std::endl;
+      runtimeErrorMsg() << "DipolarDirectSum needs access to dipoles on GPU!";
   };
   void computeForces(SystemInterface &s) override {
     dds_float box[3];
@@ -67,9 +65,9 @@ public:
       box[i] = s.box()[i];
       per[i] = (box_geo.periodic(i));
     }
-    DipolarDirectSum_kernel_wrapper_force(k, s.npart_gpu(), s.rGpuBegin(),
-                                          s.dipGpuBegin(), s.fGpuBegin(),
-                                          s.torqueGpuBegin(), box, per);
+    DipolarDirectSum_kernel_wrapper_force(
+        k, static_cast<int>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(),
+        s.fGpuBegin(), s.torqueGpuBegin(), box, per);
   };
   void computeEnergy(SystemInterface &s) override {
     dds_float box[3];
@@ -79,8 +77,8 @@ public:
       per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_energy(
-        k, s.npart_gpu(), s.rGpuBegin(), s.dipGpuBegin(), box, per,
-        (&(((CUDA_energy *)s.eGpu())->dipolar)));
+        k, static_cast<int>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(), box,
+        per, (&(((CUDA_energy *)s.eGpu())->dipolar)));
   };
 
 private:

@@ -136,6 +136,7 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
     }
   }
   if (part_rep.p.type >= 0)
-    *obsstat_nonbonded(&energy, p.p.type, part_rep.p.type) += nonbonded_en;
+    energy.non_bonded_contribution(p.p.type, part_rep.p.type)[0] +=
+        nonbonded_en;
 }
 } // namespace Constraints

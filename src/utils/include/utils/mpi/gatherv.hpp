@@ -60,7 +60,7 @@ void gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
     auto const n_nodes = comm.size();
 
     /* not in-place */
-    if (in_values != out_values) {
+    if (in_values && out_values && in_values != out_values) {
       std::copy_n(in_values, in_size, out_values + displs[root]);
     }
 
@@ -69,6 +69,7 @@ void gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
       if (i == root)
         continue;
 
+      // NOLINTNEXTLINE(clang-analyzer-core.NullDereference)
       req.emplace_back(comm.irecv(i, 42, out_values + displs[i], sizes[i]));
     }
 

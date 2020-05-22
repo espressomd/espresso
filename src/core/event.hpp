@@ -37,7 +37,6 @@
  *
  *  Implementation in event.cpp.
  */
-#include "ParticleRange.hpp"
 
 /** \name Hook procedures
  *  These procedures are called if several significant changes to
@@ -71,7 +70,7 @@ void on_particle_change();
 void on_particle_charge_change();
 
 /** called every time the particles are resorted from node to node. */
-void on_resort_particles(const ParticleRange &particles);
+void on_resort_particles();
 
 /** called every time the Coulomb parameters are changed. */
 void on_coulomb_change();
@@ -108,8 +107,8 @@ unsigned global_ghost_flags();
 /** called every time the walls for the lb fluid are changed */
 void on_lbboundary_change();
 
-/** @brief Update particles with properties depending on other particles
- *   e.g., virtual sites, ICC charges
+/** @brief Update particles with properties depending on other particles,
+ *  namely virtual sites and ICC charges.
  */
 void update_dependent_particles();
 

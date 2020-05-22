@@ -72,28 +72,27 @@ pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
   auto const q1q2 = p1.p.q * p2.p.q;
 
   if (q1q2 == 0) {
-    return std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
-                           Utils::Vector3d{});
+    return {};
   }
 
   auto const force = central_force(q1q2, d, dist);
-  Utils::Vector3d f1{};
-  Utils::Vector3d f2{};
 
 #ifdef P3M
   if ((coulomb.method == COULOMB_ELC_P3M) &&
       (elc_params.dielectric_contrast_on)) {
-    // forces from the virtual charges
-    // they go directly onto the particles, since they are not pairwise forces
 
-    ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1, f2);
+    auto const f1 =
+        coulomb.prefactor *
+        ELC_P3M_dielectric_layers_force_contribution(p2.r.p, p1.r.p, q1q2);
+    auto const f2 =
+        coulomb.prefactor *
+        ELC_P3M_dielectric_layers_force_contribution(p1.r.p, p2.r.p, q1q2);
 
-    f1 *= coulomb.prefactor;
-    f2 *= coulomb.prefactor;
+    return {force, f1, f2};
   }
 #endif
 
-  return std::make_tuple(force, f1, f2);
+  return {force, {}, {}};
 }
 
 /**
@@ -102,10 +101,10 @@ pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
  * If supported by the method, this returns the virial
  * contribution to the pressure tensor for this pair.
  *
- * @param p1 Particle
- * @param p2 Particle
- * @param d  Distance
- * @param dist |d|
+ * @param p1 particle
+ * @param p2 particle
+ * @param d  distance vector
+ * @param dist distance norm
  * @return Contribution to the pressure tensor.
  */
 inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const &p1,

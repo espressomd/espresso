@@ -25,10 +25,7 @@
 #include <cmath>
 #include <limits>
 
-#include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
-#include <utils/math/sqr.hpp>
 
 #include "Particle.hpp"
 #include "integrators/brownian_inline.hpp"

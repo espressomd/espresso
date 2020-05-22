@@ -28,8 +28,6 @@ using Utils::Interpolation::bspline_3d_gradient_accumulate;
 #include "utils/math/gaussian.hpp"
 #include "utils/raster.hpp"
 
-#include <limits>
-
 BOOST_AUTO_TEST_CASE(number_of_points) {
   int count = 0;
   auto counter = [&count](const std::array<int, 3> &, const Utils::Vector3d &) {

@@ -34,8 +34,8 @@ namespace H5md {
 static void backup_file(const std::string &from, const std::string &to) {
   if (this_node == 0) {
     /*
-     * If the file itself *and* a backup file exists something must
-     * went wrong before.
+     * If the file itself *and* a backup file exists, something must
+     * have gone wrong.
      */
     boost::filesystem::path pfrom(from), pto(to);
     try {

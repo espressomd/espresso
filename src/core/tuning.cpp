@@ -21,17 +21,15 @@
 /** \file
  *  Implementation of tuning.hpp.
  */
+#include "cells.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include <limits>
-#include <sys/resource.h>
-#include <sys/time.h>
 #include <utils/statistics/RunningAverage.hpp>
 
+#include <boost/range/algorithm/max_element.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 #include <nonbonded_interactions/nonbonded_interaction_data.hpp>
 
@@ -97,11 +95,13 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
   double a = min_skin;
   double b = max_skin;
   double time_a, time_b;
-  double min_cell_size =
-      std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
-  auto const max_cut = maximal_cutoff();
+
+  /* The maximal skin is the remainder from the required cutoff to
+   * the maximal range that can be supported by the cell system, but
+   * never larger than half the box size. */
   double const max_permissible_skin =
-      std::nextafter(min_cell_size - max_cut, 0.);
+      std::min(*boost::min_element(cell_structure.max_range) - maximal_cutoff(),
+               0.5 * *boost::max_element(box_geo.length()));
 
   if (adjust_max_skin and max_skin > max_permissible_skin)
     b = max_permissible_skin;

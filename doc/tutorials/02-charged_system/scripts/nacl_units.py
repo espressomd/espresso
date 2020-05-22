@@ -20,6 +20,8 @@
 #
 import espressomd
 from espressomd import assert_features, electrostatics
+from espressomd.observables import RDF
+from espressomd.accumulators import MeanVarianceCalculator
 import numpy
 
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
@@ -37,8 +39,11 @@ density = 1.5736
 time_step = 0.001823
 temp = 298.0
 gamma = 4.55917
-#l_bjerrum = 0.885^2 * e^2/(4*pi*epsilon_0*k_B*T)
-l_bjerrum = 130878.0 / temp
+k_B = 1.380649e-23  # units of [J/K]
+q_e = 1.602176634e-19  # units of [C]
+epsilon_0 = 8.8541878128e-12  # units of [C^2/J/m]
+coulomb_prefactor = q_e**2 / (4 * numpy.pi * epsilon_0) * 1e10
+l_bjerrum = 0.885**2 * coulomb_prefactor / (k_B * temp)
 
 num_steps_equilibration = 9000
 num_configs = 50
@@ -123,6 +128,29 @@ for i in range(int(num_steps_equilibration / 100)):
                   temp_measured))
     system.integrator.run(100)
 
+print("\n--->Analysis setup")
+# Calculate the averaged rdfs
+rdf_bins = 500
+r_min = 0.0
+r_max = system.box_l[0] / 2.0
+pids_Cl = system.part.select(type=types["Cl"]).id
+pids_Na = system.part.select(type=types["Na"]).id
+rdf_00_obs = RDF(ids1=pids_Cl, ids2=pids_Cl, min_r=r_min, max_r=r_max,
+                 n_r_bins=rdf_bins)
+rdf_01_obs = RDF(ids1=pids_Cl, ids2=pids_Na, min_r=r_min, max_r=r_max,
+                 n_r_bins=rdf_bins)
+rdf_11_obs = RDF(ids1=pids_Na, ids2=pids_Na, min_r=r_min, max_r=r_max,
+                 n_r_bins=rdf_bins)
+rdf_00_acc = MeanVarianceCalculator(
+    obs=rdf_00_obs, delta_N=integ_steps_per_config)
+rdf_01_acc = MeanVarianceCalculator(
+    obs=rdf_01_obs, delta_N=integ_steps_per_config)
+rdf_11_acc = MeanVarianceCalculator(
+    obs=rdf_11_obs, delta_N=integ_steps_per_config)
+system.auto_update_accumulators.add(rdf_00_acc)
+system.auto_update_accumulators.add(rdf_01_acc)
+system.auto_update_accumulators.add(rdf_11_acc)
+
 print("\n--->Integration")
 system.time = 0.0
 for i in range(num_configs):
@@ -133,41 +161,12 @@ for i in range(num_configs):
                   temp_measured))
     system.integrator.run(integ_steps_per_config)
 
-    # Internally append particle configuration
-    system.analysis.append()
-
-
-print("\n--->Analysis")
-# Calculate the averaged rdfs
-rdf_bins = 500
-r_min = 0.0
-r_max = system.box_l[0] / 2.0
-r, rdf_00 = system.analysis.rdf(rdf_type='<rdf>',
-                                type_list_a=[types["Cl"]],
-                                type_list_b=[types["Cl"]],
-                                r_min=r_min,
-                                r_max=r_max,
-                                r_bins=rdf_bins)
-
-r, rdf_11 = system.analysis.rdf(rdf_type='<rdf>',
-                                type_list_a=[types["Na"]],
-                                type_list_b=[types["Na"]],
-                                r_min=r_min,
-                                r_max=r_max,
-                                r_bins=rdf_bins)
-
-r, rdf_01 = system.analysis.rdf(rdf_type='<rdf>',
-                                type_list_a=[types["Cl"]],
-                                type_list_b=[types["Na"]],
-                                r_min=r_min,
-                                r_max=r_max,
-                                r_bins=rdf_bins)
-
+print("\n--->Output")
+r = rdf_00_obs.bin_centers()
+rdf_00 = rdf_00_acc.get_mean()
+rdf_01 = rdf_01_acc.get_mean()
+rdf_11 = rdf_11_acc.get_mean()
 # Write out the data
-rdf_fp = open('rdf.data', 'w')
-for i in range(rdf_bins):
-    rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" %
-                 (r[i], rdf_00[i], rdf_01[i], rdf_11[i]))
-rdf_fp.close()
+numpy.savetxt('rdf.data', numpy.c_[r, rdf_00, rdf_01, rdf_11])
 print("\n--->Written rdf.data")
 print("\n--->Done")

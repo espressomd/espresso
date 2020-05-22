@@ -36,49 +36,49 @@ std::list<std::string> Scafacos::available_methods() {
   std::list<std::string> methods;
 
 #ifdef FCS_ENABLE_DIRECT
-  methods.push_back("direct");
+  methods.emplace_back("direct");
 #endif
 #ifdef FCS_ENABLE_EWALD
-  methods.push_back("ewald");
+  methods.emplace_back("ewald");
 #endif
 #ifdef FCS_ENABLE_FMM
-  methods.push_back("fmm");
+  methods.emplace_back("fmm");
 #endif
 #ifdef FCS_ENABLE_MEMD
-  methods.push_back("memd");
+  methods.emplace_back("memd");
 #endif
 #ifdef FCS_ENABLE_MMM1D
-  methods.push_back("mmm1d");
+  methods.emplace_back("mmm1d");
 #endif
 #ifdef FCS_ENABLE_MMM2D
-  methods.push_back("mmm2d");
+  methods.emplace_back("mmm2d");
 #endif
 #ifdef FCS_ENABLE_P2NFFT
-  methods.push_back("p2nfft");
+  methods.emplace_back("p2nfft");
 #endif
 #ifdef FCS_ENABLE_P3M
-  methods.push_back("p3m");
+  methods.emplace_back("p3m");
 #endif
 #ifdef FCS_ENABLE_PEPC
-  methods.push_back("pepc");
+  methods.emplace_back("pepc");
 #endif
 #ifdef FCS_ENABLE_PP3MG
-  methods.push_back("pp3mg");
+  methods.emplace_back("pp3mg");
 #endif
 #ifdef FCS_ENABLE_VMG
-  methods.push_back("vmg");
+  methods.emplace_back("vmg");
 #endif
 #ifdef FCS_ENABLE_WOLF
-  methods.push_back("wolf");
+  methods.emplace_back("wolf");
 #endif
 
   return methods;
 }
 
-Scafacos::Scafacos(const std::string &_method, MPI_Comm comm,
+Scafacos::Scafacos(std::string method, MPI_Comm comm,
                    const std::string &parameters)
-    : method(_method) {
-  handle_error(fcs_init(&handle, method.c_str(), comm));
+    : method(std::move(method)) {
+  handle_error(fcs_init(&handle, this->method.c_str(), comm));
 
   int near_flag;
   fcs_get_near_field_delegation(handle, &near_flag);
@@ -99,12 +99,10 @@ void Scafacos::parse_parameters(const std::string &s) {
 double Scafacos::r_cut() const {
   if (has_near) {
     fcs_float r_cut;
-
     fcs_get_r_cut(handle, &r_cut);
     return r_cut;
-  } else {
-    return 0.0;
   }
+  return 0.0;
 }
 
 void Scafacos::set_r_cut(double r_cut) {
@@ -133,14 +131,14 @@ void Scafacos::run_dipolar(std::vector<double> &dipoles,
                            std::vector<double> &fields,
                            std::vector<double> &potentials) {
   assert(dipoles.size() % 3 == 0);
-  const int local_n_part = dipoles.size() / 3;
+  auto const local_n_part = dipoles.size() / 3;
 
   fields.resize(6 * local_n_part);
   potentials.resize(3 * local_n_part);
 
-  handle_error(fcs_set_dipole_particles(handle, local_n_part, &(positions[0]),
-                                        &(dipoles[0]), &(fields[0]),
-                                        &(potentials[0])));
+  handle_error(fcs_set_dipole_particles(handle, static_cast<int>(local_n_part),
+                                        &(positions[0]), &(dipoles[0]),
+                                        &(fields[0]), &(potentials[0])));
   handle_error(fcs_run(handle, 0, nullptr, nullptr, nullptr, nullptr));
 }
 #endif

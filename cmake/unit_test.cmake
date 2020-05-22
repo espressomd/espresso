@@ -31,26 +31,8 @@ function(UNIT_TEST)
   if(TEST_DEPENDS)
     target_link_libraries(${TEST_NAME} PRIVATE ${TEST_DEPENDS})
   endif()
-  if(WITH_COVERAGE)
-    target_compile_options(${TEST_NAME} PUBLIC "$<$<CONFIG:Release>:-g>")
-    target_compile_options(${TEST_NAME} PUBLIC "$<$<CONFIG:Release>:-O0>")
-    target_compile_options(
-      ${TEST_NAME}
-      PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fcoverage-mapping>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:--coverage>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-fprofile-arcs>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-ftest-coverage>")
-    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      target_link_libraries(${TEST_NAME} PUBLIC gcov)
-    endif()
-  endif()
   target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
-  target_link_libraries(${TEST_NAME} PRIVATE EspressoConfig)
+  target_link_libraries(${TEST_NAME} PRIVATE EspressoConfig cxx_interface)
 
   # If NUM_PROC is given, set up MPI parallel test case
   if(TEST_NUM_PROC)
@@ -66,13 +48,16 @@ function(UNIT_TEST)
   endif()
 
   if(WARNINGS_ARE_ERRORS)
-    set_tests_properties(
-      ${TEST_NAME}
-      PROPERTIES
-        ENVIRONMENT
-        "UBSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/tools/ubsan-suppressions.txt:halt_on_error=1:print_stacktrace=1 ASAN_OPTIONS=halt_on_error=1:detect_leaks=0 MSAN_OPTIONS=halt_on_error=1"
-    )
+    set(SANITIZERS_HALT_ON_ERROR "halt_on_error=1")
+  else()
+    set(SANITIZERS_HALT_ON_ERROR "halt_on_error=0")
   endif()
+  set(UBSAN_OPTIONS "UBSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/maintainer/CI/ubsan.supp:${SANITIZERS_HALT_ON_ERROR}:print_stacktrace=1")
+  set(ASAN_OPTIONS "ASAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}:detect_leaks=0:allocator_may_return_null=1")
+  set(MSAN_OPTIONS "MSAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}")
+  set_tests_properties(
+    ${TEST_NAME} PROPERTIES ENVIRONMENT
+                            "${UBSAN_OPTIONS} ${ASAN_OPTIONS} ${MSAN_OPTIONS}")
 
   add_dependencies(check_unit_tests ${TEST_NAME})
 endfunction(UNIT_TEST)

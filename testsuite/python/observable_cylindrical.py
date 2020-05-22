@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
 import numpy as np
 import unittest as ut
 import espressomd
@@ -28,9 +27,8 @@ class TestCylindricalObservable(ut.TestCase):
     Testcase for the cylindrical observables.
 
     """
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[15.0, 15.0, 15.0])
     system.time_step = 0.01
-    system.box_l = [15.0, 15.0, 15.0]
     system.cell_system.skin = 0.4
 
     params = {
@@ -104,15 +102,9 @@ class TestCylindricalObservable(ut.TestCase):
 
     def calculate_numpy_histogram(self):
         pol_positions = self.pol_coords()
-        np_hist, _ = np.histogramdd(
-            pol_positions,
-            bins=(self.params['n_r_bins'],
-                  self.params['n_phi_bins'],
-                  self.params['n_z_bins']),
-            range=[(self.params['min_r'], self.params['max_r']),
-                   (self.params['min_phi'], self.params['max_phi']),
-                   (self.params['min_z'], self.params['max_z'])])
-        return np_hist
+        np_hist, np_edges = tests_common.get_histogram(
+            pol_positions, self.params, 'cylindrical')
+        return np_hist, np_edges
 
     def normalize_with_bin_volume(self, histogram):
         bin_volume = tests_common.get_cylindrical_bin_volume(
@@ -141,9 +133,12 @@ class TestCylindricalObservable(ut.TestCase):
             local_params['axis'] = [0.0, 0.0, 1.0]
         obs = espressomd.observables.CylindricalDensityProfile(**local_params)
         core_hist = obs.calculate()
-        np_hist = self.calculate_numpy_histogram()
+        core_edges = obs.call_method("edges")
+        np_hist, np_edges = self.calculate_numpy_histogram()
         np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist, core_hist)
+        for i in range(3):
+            np.testing.assert_array_almost_equal(np_edges[i], core_edges[i])
         self.assertEqual(np.prod(obs.shape()), len(np_hist.flatten()))
 
     def velocity_profile_test(self):
@@ -161,7 +156,7 @@ class TestCylindricalObservable(ut.TestCase):
         core_hist_v_r = core_hist[:, :, :, 0]
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
-        np_hist = self.calculate_numpy_histogram()
+        np_hist, _ = self.calculate_numpy_histogram()
         for x in np.nditer(np_hist, op_flags=['readwrite']):
             if x[...] > 0.0:
                 x[...] /= x[...]
@@ -187,7 +182,7 @@ class TestCylindricalObservable(ut.TestCase):
         core_hist_v_r = core_hist[:, :, :, 0]
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
-        np_hist = self.calculate_numpy_histogram()
+        np_hist, _ = self.calculate_numpy_histogram()
         np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(
@@ -215,8 +210,4 @@ class TestCylindricalObservable(ut.TestCase):
 
 
 if __name__ == "__main__":
-    suite = ut.TestSuite()
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(
-        TestCylindricalObservable))
-    result = ut.TextTestRunner(verbosity=4).run(suite)
-    sys.exit(not result.wasSuccessful())
+    ut.main()

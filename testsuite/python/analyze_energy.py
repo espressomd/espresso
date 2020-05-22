@@ -86,8 +86,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 3., delta=1e-7)
-        self.assertAlmostEqual(
-            energy["non_bonded", 0, 1], energy["non_bonded", 1, 0], delta=1e-7)
+        self.assertAlmostEqual(energy["non_bonded", 0, 1], 1., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded", 0, 0]
                                + energy["non_bonded", 0, 1]
                                + energy["non_bonded", 1, 1], energy["total"], delta=1e-7)
@@ -180,7 +179,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0, delta=1e-7)
-        self.assertAlmostEqual(energy["coulomb"], u_p3m, delta=1e-7)
+        self.assertAlmostEqual(energy["coulomb"], u_p3m, delta=1e-5)
         self.system.part[0].q = 0
         self.system.part[1].q = 0
         self.system.part[0].pos = [1, 2, 2]

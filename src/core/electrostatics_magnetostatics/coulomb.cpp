@@ -19,9 +19,6 @@
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
-// Real space cutoff
-double coulomb_cutoff;
-
 #ifdef ELECTROSTATICS
 #include "cells.hpp"
 #include "communication.hpp"
@@ -40,24 +37,11 @@ double coulomb_cutoff;
 
 #include <utils/constants.hpp>
 
+#include <cstdio>
+
 Coulomb_parameters coulomb;
 
 namespace Coulomb {
-
-void pressure_n(int &n_coulomb) {
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-    n_coulomb = 0;
-    break;
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    n_coulomb = 2;
-    break;
-  default:
-    n_coulomb = 1;
-  }
-}
-
 void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor,
                               const ParticleRange &particles) {
@@ -75,7 +59,7 @@ void calc_pressure_long_range(Observable_stat &virials,
   case COULOMB_P3M: {
     p3m_charge_assign(particles);
     auto const p3m_stress = p3m_calc_kspace_stress();
-    std::copy_n(p3m_stress.data(), 9, p_tensor.coulomb + 9);
+    std::copy_n(p3m_stress.data(), 9, p_tensor.coulomb.begin() + 9);
     virials.coulomb[1] = p3m_stress[0] + p3m_stress[4] + p3m_stress[8];
 
     break;
@@ -165,25 +149,6 @@ void deactivate() {
   }
 }
 
-void integrate_sanity_check() {
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-    break;
-  case COULOMB_DH:
-    break;
-  case COULOMB_RF:
-    break;
-#ifdef P3M
-  case COULOMB_P3M:
-    break;
-#endif /*P3M*/
-  default: {
-    runtimeErrorMsg()
-        << "npt only works with P3M, Debye-Huckel or reaction field";
-  }
-  }
-}
-
 void update_dependent_particles() {
   iccp3m_iteration(cell_structure.local_particles(),
                    cell_structure.ghost_particles());
@@ -224,18 +189,6 @@ void on_coulomb_change() {
   case COULOMB_MMM1D:
     MMM1D_init();
     break;
-  default:
-    break;
-  }
-}
-
-void on_resort_particles(const ParticleRange &particles) {
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_on_resort_particles();
-    break;
-#endif
   default:
     break;
   }
@@ -369,7 +322,7 @@ void calc_energy_long_range(Observable_stat &energy,
       energy.coulomb[1] +=
           0.5 * ELC_P3M_dielectric_layers_energy_self(particles);
 
-      //  assign both original and image charges now
+      // assign both original and image charges now
       ELC_p3m_charge_assign_both(particles);
       ELC_P3M_modify_p3m_sums_both(particles);
 
@@ -395,22 +348,6 @@ void calc_energy_long_range(Observable_stat &energy,
 #endif
   default:
     break;
-  }
-}
-
-int energy_n() {
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-    return 0;
-  case COULOMB_ELC_P3M:
-    return 3;
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    return 2;
-  case COULOMB_SCAFACOS:
-    return 2;
-  default:
-    return 1;
   }
 }
 
@@ -456,10 +393,7 @@ int elc_sanity_check() {
     return ES_ERROR;
   }
   case COULOMB_ELC_P3M:
-
   case COULOMB_P3M:
-    p3m.params.epsilon = P3M_EPSILON_METALLIC;
-    coulomb.method = COULOMB_ELC_P3M;
     return ES_OK;
   default:
     break;
@@ -510,8 +444,6 @@ int set_prefactor(double prefactor) {
   return ES_OK;
 }
 
-/** @brief Deactivates the current Coulomb method
- */
 void deactivate_method() {
   coulomb.prefactor = 0;
 

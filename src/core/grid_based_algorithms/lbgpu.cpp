@@ -36,7 +36,6 @@
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "statistics.hpp"
 
 #include <utils/constants.hpp>
 
@@ -132,18 +131,18 @@ void lb_reinit_fluid_gpu() {
  *  See @cite dunweg07a and @cite dhumieres09a.
  */
 void lb_reinit_parameters_gpu() {
-  lbpar_gpu.time_step = (float)time_step;
+  lbpar_gpu.time_step = static_cast<float>(time_step);
   lbpar_gpu.mu = 0.0;
 
   if (lbpar_gpu.viscosity > 0.0 && lbpar_gpu.agrid > 0.0 &&
       lbpar_gpu.tau > 0.0) {
     /* Eq. (80) @cite dunweg07a. */
-    lbpar_gpu.gamma_shear = 1. - 2. / (6. * lbpar_gpu.viscosity + 1.);
+    lbpar_gpu.gamma_shear = 1.f - 2.f / (6.f * lbpar_gpu.viscosity + 1.f);
   }
 
   if (lbpar_gpu.bulk_viscosity > 0.0) {
     /* Eq. (81) @cite dunweg07a. */
-    lbpar_gpu.gamma_bulk = 1. - 2. / (9. * lbpar_gpu.bulk_viscosity + 1.);
+    lbpar_gpu.gamma_bulk = 1.f - 2.f / (9.f * lbpar_gpu.bulk_viscosity + 1.f);
   }
 
   // By default, gamma_even and gamma_odd are chosen such that the MRT becomes
@@ -173,26 +172,23 @@ void lb_reinit_parameters_gpu() {
 
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
-    lbpar_gpu.dim_x = (unsigned int)round(
-        box_geo.length()[0] /
-        lbpar_gpu.agrid); // TODO code duplication with lb.c start
+    lbpar_gpu.dim_x =
+        static_cast<unsigned int>(round(box_geo.length()[0] / lbpar_gpu.agrid));
     lbpar_gpu.dim_y =
-        (unsigned int)round(box_geo.length()[1] / lbpar_gpu.agrid);
+        static_cast<unsigned int>(round(box_geo.length()[1] / lbpar_gpu.agrid));
     lbpar_gpu.dim_z =
-        (unsigned int)round(box_geo.length()[2] / lbpar_gpu.agrid);
+        static_cast<unsigned int>(round(box_geo.length()[2] / lbpar_gpu.agrid));
 
     unsigned int tmp[3];
-
     tmp[0] = lbpar_gpu.dim_x;
     tmp[1] = lbpar_gpu.dim_y;
     tmp[2] = lbpar_gpu.dim_z;
 
     /* sanity checks */
-    int dir;
-
-    for (dir = 0; dir < 3; dir++) {
+    for (int dir = 0; dir < 3; dir++) {
       /* check if box_l is compatible with lattice spacing */
-      if (fabs(box_geo.length()[dir] - tmp[dir] * lbpar_gpu.agrid) > 1.0e-3) {
+      if (fabs(box_geo.length()[dir] -
+               static_cast<float>(tmp[dir]) * lbpar_gpu.agrid) > 1.0e-3) {
         runtimeErrorMsg() << "Lattice spacing lbpar_gpu.agrid= "
                           << lbpar_gpu.agrid << " is incompatible with box_l["
                           << dir << "]=" << box_geo.length()[dir];
@@ -201,7 +197,7 @@ void lb_reinit_parameters_gpu() {
 
     lbpar_gpu.number_of_nodes =
         lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
-    lbpar_gpu.tau = (float)time_step; // TODO code duplication with lb.c end
+    lbpar_gpu.tau = static_cast<float>(time_step);
   }
 #endif
 
@@ -212,7 +208,7 @@ void lb_reinit_parameters_gpu() {
  *  All derived parameters and the fluid are reset to their default values.
  */
 void lb_init_gpu() {
-  /** set parameters for transfer to gpu */
+  /* set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 
   lb_init_GPU(&lbpar_gpu);
@@ -242,11 +238,11 @@ void lb_set_agrid_gpu(double agrid) {
   lbpar_gpu.agrid = static_cast<float>(agrid);
 
   lbpar_gpu.dim_x =
-      static_cast<unsigned int>(rint(box_geo.length()[0] / agrid));
+      static_cast<unsigned int>(round(box_geo.length()[0] / agrid));
   lbpar_gpu.dim_y =
-      static_cast<unsigned int>(rint(box_geo.length()[1] / agrid));
+      static_cast<unsigned int>(round(box_geo.length()[1] / agrid));
   lbpar_gpu.dim_z =
-      static_cast<unsigned int>(rint(box_geo.length()[2] / agrid));
+      static_cast<unsigned int>(round(box_geo.length()[2] / agrid));
   unsigned int tmp[3];
   tmp[0] = lbpar_gpu.dim_x;
   tmp[1] = lbpar_gpu.dim_y;
@@ -254,7 +250,8 @@ void lb_set_agrid_gpu(double agrid) {
   /* sanity checks */
   for (int dir = 0; dir < 3; dir++) {
     /* check if box_l is compatible with lattice spacing */
-    if (fabs(box_geo.length()[dir] - tmp[dir] * agrid) > ROUND_ERROR_PREC) {
+    if (fabs(box_geo.length()[dir] - static_cast<float>(tmp[dir]) * agrid) >
+        ROUND_ERROR_PREC) {
       runtimeErrorMsg() << "Lattice spacing p_agrid= " << agrid
                         << " is incompatible with box_l[" << dir
                         << "]=" << box_geo.length()[dir]

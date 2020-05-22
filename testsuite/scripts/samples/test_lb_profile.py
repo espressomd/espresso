@@ -20,7 +20,7 @@ import importlib_wrapper
 import numpy as np
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/lb_profile.py")
+    "@SAMPLES_DIR@/lb_profile.py", gpu=True)
 
 
 @skipIfMissingFeatures
@@ -31,7 +31,7 @@ class Sample(ut.TestCase):
         # compare the simulated data against the analytical solution
         sim = sample.lb_fluid_profile[:, 0, 0, 2]
         ana = sample.poiseuille_flow(sample.r, sample.r_max, 0.15)
-        self.assertLess(np.max(np.abs(sim - ana)), 0.12)
+        self.assertLess(np.max(np.abs(sim - ana)), 0.16)
 
 
 if __name__ == "__main__":

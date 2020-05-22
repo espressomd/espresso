@@ -103,7 +103,7 @@ void p3m_send_mesh::resize(const boost::mpi::communicator &comm,
 
 void p3m_send_mesh::gather_grid(Utils::Span<double *> meshes,
                                 const boost::mpi::communicator &comm,
-                                const int *dim) {
+                                const Utils::Vector3i &dim) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
   send_grid.resize(max * meshes.size());
   recv_grid.resize(max * meshes.size());
@@ -116,16 +116,16 @@ void p3m_send_mesh::gather_grid(Utils::Span<double *> meshes,
     if (s_size[s_dir] > 0)
       for (size_t i = 0; i < meshes.size(); i++) {
         fft_pack_block(meshes[i], send_grid.data() + i * s_size[s_dir],
-                       s_ld[s_dir], s_dim[s_dir], dim, 1);
+                       s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
       }
 
     /* communication */
     if (node_neighbors[s_dir] != comm.rank()) {
-      MPI_Sendrecv(send_grid.data(), meshes.size() * s_size[s_dir], MPI_DOUBLE,
-                   node_neighbors[s_dir], REQ_P3M_GATHER, recv_grid.data(),
-                   meshes.size() * r_size[r_dir], MPI_DOUBLE,
-                   node_neighbors[r_dir], REQ_P3M_GATHER, comm,
-                   MPI_STATUS_IGNORE);
+      MPI_Sendrecv(
+          send_grid.data(), static_cast<int>(meshes.size()) * s_size[s_dir],
+          MPI_DOUBLE, node_neighbors[s_dir], REQ_P3M_GATHER, recv_grid.data(),
+          static_cast<int>(meshes.size()) * r_size[r_dir], MPI_DOUBLE,
+          node_neighbors[r_dir], REQ_P3M_GATHER, comm, MPI_STATUS_IGNORE);
     } else {
       std::swap(send_grid, recv_grid);
     }
@@ -133,7 +133,7 @@ void p3m_send_mesh::gather_grid(Utils::Span<double *> meshes,
     if (r_size[r_dir] > 0) {
       for (size_t i = 0; i < meshes.size(); i++) {
         p3m_add_block(recv_grid.data() + i * r_size[r_dir], meshes[i],
-                      r_ld[r_dir], r_dim[r_dir], dim);
+                      r_ld[r_dir], r_dim[r_dir], dim.data());
       }
     }
   }
@@ -141,7 +141,7 @@ void p3m_send_mesh::gather_grid(Utils::Span<double *> meshes,
 
 void p3m_send_mesh::spread_grid(Utils::Span<double *> meshes,
                                 const boost::mpi::communicator &comm,
-                                const int *dim) {
+                                const Utils::Vector3i &dim) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
   send_grid.resize(max * meshes.size());
   recv_grid.resize(max * meshes.size());
@@ -154,15 +154,15 @@ void p3m_send_mesh::spread_grid(Utils::Span<double *> meshes,
     if (r_size[r_dir] > 0)
       for (size_t i = 0; i < meshes.size(); i++) {
         fft_pack_block(meshes[i], send_grid.data() + i * r_size[r_dir],
-                       r_ld[r_dir], r_dim[r_dir], dim, 1);
+                       r_ld[r_dir], r_dim[r_dir], dim.data(), 1);
       }
     /* communication */
     if (node_neighbors[r_dir] != comm.rank()) {
-      MPI_Sendrecv(send_grid.data(), r_size[r_dir] * meshes.size(), MPI_DOUBLE,
-                   node_neighbors[r_dir], REQ_P3M_SPREAD, recv_grid.data(),
-                   s_size[s_dir] * meshes.size(), MPI_DOUBLE,
-                   node_neighbors[s_dir], REQ_P3M_SPREAD, comm,
-                   MPI_STATUS_IGNORE);
+      MPI_Sendrecv(
+          send_grid.data(), r_size[r_dir] * static_cast<int>(meshes.size()),
+          MPI_DOUBLE, node_neighbors[r_dir], REQ_P3M_SPREAD, recv_grid.data(),
+          s_size[s_dir] * static_cast<int>(meshes.size()), MPI_DOUBLE,
+          node_neighbors[s_dir], REQ_P3M_SPREAD, comm, MPI_STATUS_IGNORE);
     } else {
       std::swap(send_grid, recv_grid);
     }
@@ -170,7 +170,7 @@ void p3m_send_mesh::spread_grid(Utils::Span<double *> meshes,
     if (s_size[s_dir] > 0) {
       for (size_t i = 0; i < meshes.size(); i++) {
         fft_unpack_block(recv_grid.data() + i * s_size[s_dir], meshes[i],
-                         s_ld[s_dir], s_dim[s_dir], dim, 1);
+                         s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
       }
     }
   }

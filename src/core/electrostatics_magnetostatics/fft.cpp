@@ -37,7 +37,9 @@ using Utils::get_linear_index;
 #include <fftw3.h>
 #include <mpi.h>
 
+#include <cstdio>
 #include <cstring>
+
 #include <utils/Span.hpp>
 
 /************************************************
@@ -489,7 +491,7 @@ void calc_2d_grid(int n, int grid[3]) {
 }
 } // namespace
 
-int fft_init(int const *ca_mesh_dim, int const *ca_mesh_margin,
+int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
              fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm) {
@@ -774,7 +776,7 @@ void fft_pack_block(double const *const in, double *const out,
   /* offsets for indices in output grid */
   int m_out_offset;
 
-  copy_size = element * size[2] * sizeof(double);
+  copy_size = element * size[2] * static_cast<int>(sizeof(double));
   m_in_offset = element * dim[2];
   s_in_offset = element * (dim[2] * (dim[1] - size[1]));
   m_out_offset = element * size[2];
@@ -804,7 +806,7 @@ void fft_unpack_block(double const *const in, double *const out,
   /* offsets for indices in output grid */
   int m_out_offset, s_out_offset;
 
-  copy_size = element * (size[2] * sizeof(double));
+  copy_size = element * size[2] * static_cast<int>(sizeof(double));
   m_out_offset = element * dim[2];
   s_out_offset = element * (dim[2] * (dim[1] - size[1]));
   m_in_offset = element * size[2];
