@@ -217,7 +217,7 @@ public:
             m_data[meta::linearized_index<sizeof...(idx) - 1, N...>{}(idx...)];
     }
 
-    /// \overload DEVICE_FUNC constexpr reference operator()(Idx... idx)
+    /// \overload
     template <typename... Idx>
     DEVICE_FUNC constexpr const_reference operator()(Idx... idx) const
 #ifdef NDEBUG
