@@ -122,9 +122,11 @@ struct check_dist {
 
         // Check if particles overlap and if so, cause NAN to appear
         // throughout the simulation
-        if (dr <= a(part_id(0, i)) + a(part_id(1, i))) {
-            dr = NAN;
-        }
+        // Currently out of use, though, since Lubrication isn't supported
+        // and this check isn't necessary for far field approximation
+        // if (dr <= a(part_id(0, i)) + a(part_id(1, i))) {
+        //     dr = NAN;
+        // }
 
         pd(0, i) = dx * dr_inv;
         pd(1, i) = dy * dr_inv;
