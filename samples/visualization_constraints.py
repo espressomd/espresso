@@ -60,7 +60,7 @@ visualizer = espressomd.visualization_opengl.openGLLive(
 
 if args.shape == "Wall":
     system.constraints.add(shape=espressomd.shapes.Wall(
-        dist=20, normal=[0.1, 0.0, 1]),
+        dist=20, normal=[0, 0, 1]),
         particle_type=0, penetrable=True)
 
 elif args.shape == "Sphere":
