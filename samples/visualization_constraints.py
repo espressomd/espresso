@@ -98,9 +98,9 @@ elif args.shape == "SimplePore":
 
 elif args.shape == "Slitpore":
     system.constraints.add(shape=espressomd.shapes.Slitpore(
-        channel_width=15, lower_smoothing_radius=3, upper_smoothing_radius=3,
-        pore_length=20, pore_mouth=30, pore_width=5), particle_type=0,
-        penetrable=True)
+        channel_width=15, lower_smoothing_radius=2, upper_smoothing_radius=3,
+        pore_length=20, pore_mouth=30, pore_width=10, dividing_plane=25),
+        particle_type=0, penetrable=True)
 
 elif args.shape == "HollowConicalFrustum":
     system.constraints.add(shape=espressomd.shapes.HollowConicalFrustum(
