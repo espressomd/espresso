@@ -72,7 +72,7 @@ inline bool is_none(Variant const &v) { return is_type<None>(v); }
 
 template <typename T, typename U>
 std::vector<Variant> pack_pair(const std::pair<T, U> &pair) {
-  return {{pair.first, pair.second}};
+  return {pair.first, pair.second};
 }
 
 template <typename T, typename U>
