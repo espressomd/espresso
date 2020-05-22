@@ -382,7 +382,7 @@ struct IdentityGenerator {
  *  Storage is column-major order.
  */
 template <typename T, typename Policy = policy::host>
-class device_matrix {
+class device_matrix { // NOLINT(bugprone-exception-escape)
     static_assert(policy::is_policy<Policy>::value,
                   "The execution policy must meet the requirements");
 

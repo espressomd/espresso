@@ -24,5 +24,6 @@ std::vector<double> sd_gpu(std::vector<double> const &x_host,
                            std::size_t n_part, double eta, double sqrt_kT_Dt,
                            std::size_t offset, std::size_t seed, int flg) {
   sd::solver<policy::device, double> viscous_force{eta, n_part};
+  // NOLINTNEXTLINE(clang-analyzer-core.NonNullParamChecker)
   return viscous_force.calc_vel(x_host, f_host, a_host, sqrt_kT_Dt, offset, seed, flg);
 }

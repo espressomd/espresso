@@ -301,7 +301,8 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
 
       // now wait while master node is busy ...
 
-      Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
+      Utils::Mpi::scatter_buffer(
+          v_sd.data(), static_cast<int>(n_part_local * 6), comm_cart, 0);
       sd_update_locally(particles);
     }
 
