@@ -145,19 +145,17 @@ void set_sd_viscosity(double eta) { sd_viscosity = eta; }
 double get_sd_viscosity() { return sd_viscosity; }
 
 void set_sd_device(std::string const &dev) {
-  if (dev == "cpu") {
+  device = INVALID;
 #ifdef STOKESIAN_DYNAMICS
+  if (dev == "cpu") {
     device = CPU;
-#else
-    device = INVALID;
+  }
 #endif
 #ifdef STOKESIAN_DYNAMICS_GPU
-  } else if (dev == "gpu") {
+  if (dev == "gpu") {
     device = GPU;
-#endif
-  } else {
-    device = INVALID;
   }
+#endif
 }
 
 std::string get_sd_device() {
