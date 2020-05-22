@@ -87,8 +87,7 @@ public:
 
   bool minimum_image_distance() const override { return false; }
 
-  void resort(bool global, ParticleList &pl,
-              std::vector<ParticleChange> &diff) override;
+  void resort(bool global, std::vector<ParticleChange> &diff) override;
 
 private:
   /** Fill local_cells list and ghost_cells list for use with domain

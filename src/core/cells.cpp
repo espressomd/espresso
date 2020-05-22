@@ -200,7 +200,7 @@ void cells_resort_particles(int global_flag) {
 
   ParticleList displaced_parts;
 
-  cell_structure.m_decomposition->resort(global_flag, displaced_parts, diff);
+  cell_structure.m_decomposition->resort(global_flag, diff);
 
   for (auto d : diff) {
     boost::apply_visitor(UpdateParticleIndexVisitor{&cell_structure}, d);

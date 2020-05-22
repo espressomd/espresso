@@ -58,8 +58,7 @@ public:
   AtomDecomposition(boost::mpi::communicator const &comm,
                     BoxGeometry const &box_geo);
 
-  void resort(bool global_flag, ParticleList &displaced_parts,
-              std::vector<ParticleChange> &diff) override;
+  void resort(bool global_flag, std::vector<ParticleChange> &diff) override;
 
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;

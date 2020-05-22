@@ -26,11 +26,9 @@ public:
    *
    * @param[in] global_flag Expect particles to be displaced by more than a
    * local box size.
-   * @param[inout] displaced_parts Particles to be sorted
    * @param[out] diff Cells that have been touched.
    */
-  virtual void resort(bool global_flag, ParticleList &displaced_parts,
-                      std::vector<ParticleChange> &diff) = 0;
+  virtual void resort(bool global_flag, std::vector<ParticleChange> &diff) = 0;
 
   /**
    * @brief Communicator for updating ghosts from the real particles.

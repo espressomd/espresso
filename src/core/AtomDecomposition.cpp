@@ -97,7 +97,7 @@ void AtomDecomposition::mark_cells() {
     }
   }
 }
-void AtomDecomposition::resort(bool global_flag, ParticleList &displaced_parts_,
+void AtomDecomposition::resort(bool global_flag,
                                std::vector<ParticleChange> &diff) {
   for (auto &p : local().particles()) {
     fold_position(p.r.p, p.l.i, m_box);
@@ -107,7 +107,6 @@ void AtomDecomposition::resort(bool global_flag, ParticleList &displaced_parts_,
 
   /* Local updates are a NoOp for this decomposition. */
   if (not global_flag) {
-    assert(displaced_parts_.empty());
     return;
   }
 
@@ -129,7 +128,7 @@ void AtomDecomposition::resort(bool global_flag, ParticleList &displaced_parts_,
   std::vector<std::vector<Particle>> recv_buf(comm.size());
   boost::mpi::all_to_all(comm, send_buf, recv_buf);
 
-  diff.push_back(std::addressof(local()));
+  diff.emplace_back(std::addressof(local()));
 
   /* Add new particles belonging to this node */
   for (auto &parts : recv_buf) {

@@ -147,7 +147,7 @@ void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
 }
 } // namespace
 
-void DomainDecomposition::resort(bool global, ParticleList &pl_,
+void DomainDecomposition::resort(bool global,
                                  std::vector<ParticleChange> &diff) {
   ParticleList displaced_parts;
 
