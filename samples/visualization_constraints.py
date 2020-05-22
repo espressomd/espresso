@@ -118,8 +118,14 @@ else:
     raise ValueError("Unknown shape '{}'".format(args.shape))
 
 for i in range(100):
-    rpos = np.random.random(3) * box_l
-    system.part.add(pos=rpos, type=1)
+    # place particles outside the shape
+    while True:
+        rpos = np.random.random(3) * box_l
+        dist = system.constraints[0].shape.calc_distance(position=rpos)
+        if dist[0] > 2.5:
+            break
+    # add initial velocities pointing away from the shape surface
+    system.part.add(pos=rpos, v=-dist[1] / np.linalg.norm(dist[1]), type=1)
 
 system.non_bonded_inter[1, 1].lennard_jones.set_params(
     epsilon=1.0, sigma=5.0, cutoff=15.0, shift="auto")
