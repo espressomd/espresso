@@ -18,6 +18,12 @@ boost::optional<Utils::Vector3d> get_node_velocity(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_velocity)
 
+boost::optional<Utils::Vector3d> get_node_last_applied_force(Utils::Vector3i ind) {
+  return lb_walberla()->get_node_last_applied_force(ind);
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_node_last_applied_force)
+
 boost::optional<double> get_node_density(Utils::Vector3i ind) {
   auto res = lb_walberla()->get_node_density(ind);
   return res;
