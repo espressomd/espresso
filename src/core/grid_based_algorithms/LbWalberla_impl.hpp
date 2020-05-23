@@ -416,12 +416,12 @@ public:
 
   // Velocity
   boost::optional<Utils::Vector3d>
-  get_node_velocity(const Utils::Vector3i node) const override {
+  get_node_velocity(const Utils::Vector3i node, bool consider_ghosts= false) const override {
     boost::optional<bool> is_boundary = get_node_is_boundary(node);
     if (is_boundary)    // is info available locally
       if (*is_boundary) // is the node a boundary
         return get_node_velocity_at_boundary(node);
-    auto const bc = get_block_and_cell(node, true);
+    auto const bc = get_block_and_cell(node, consider_ghosts);
     if (!bc)
       return {};
     auto const &vel_adaptor =
@@ -451,7 +451,7 @@ public:
           // outside ghost layers
           if (weight != 0) {
             auto res =
-                get_node_velocity(Utils::Vector3i{{node[0], node[1], node[2]}});
+                get_node_velocity(Utils::Vector3i{{node[0], node[1], node[2]}},true);
             if (!res) {
               printf("Pos: %g %g %g, Node %d %d %d, weight %g\n", pos[0],
                      pos[1], pos[2], node[0], node[1], node[2], weight);
