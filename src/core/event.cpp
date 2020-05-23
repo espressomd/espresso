@@ -81,7 +81,7 @@ void on_program_start() {
   init_node_grid();
 
   /* initially go for domain decomposition */
-  cells_re_init(CELL_STRUCTURE_DOMDEC, INACTIVE_CUTOFF);
+  cells_re_init(CELL_STRUCTURE_DOMDEC);
 
   /*
     call all initializations to do only on the master node here.
@@ -309,7 +309,7 @@ void on_parameter_change(int field) {
     break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();
-    cells_re_init(CELL_STRUCTURE_CURRENT, cell_structure.min_range);
+    cells_re_init(CELL_STRUCTURE_CURRENT);
     break;
   case FIELD_TEMPERATURE:
     on_temperature_change();

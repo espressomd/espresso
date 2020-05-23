@@ -83,7 +83,7 @@ extern bool rebuild_verletlist;
  *                @ref CELL_STRUCTURE_CURRENT for not changing it.
  *  @param range  Desired interaction range
  */
-void cells_re_init(int new_cs, double range);
+void cells_re_init(int new_cs);
 
 /** Sort the particles into the cells and initialize the ghost particle
  *  structures.

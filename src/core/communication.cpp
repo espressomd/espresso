@@ -495,12 +495,10 @@ void mpi_rescale_particles_slave(int, int dir) {
 
 void mpi_bcast_cell_structure(int cs) {
   mpi_call(mpi_bcast_cell_structure_slave, -1, cs);
-  cells_re_init(cs, cell_structure.min_range);
+  cells_re_init(cs);
 }
 
-void mpi_bcast_cell_structure_slave(int, int cs) {
-  cells_re_init(cs, cell_structure.min_range);
-}
+void mpi_bcast_cell_structure_slave(int, int cs) { cells_re_init(cs); }
 
 /*************** BCAST NPTISO GEOM *****************/
 

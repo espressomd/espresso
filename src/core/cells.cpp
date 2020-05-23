@@ -158,9 +158,11 @@ static void invalidate_ghosts() {
 
 /************************************************************/
 
-void cells_re_init(int new_cs, double range) {
+void cells_re_init(int new_cs) {
+  auto const range = interaction_range();
+
   if (cell_structure.m_decomposition) {
-    invalidate_ghosts();
+    cell_structure.clear_particle_index();
 
     auto local_parts = cell_structure.local_particles();
     std::vector<Particle> particles(local_parts.begin(), local_parts.end());
@@ -174,35 +176,15 @@ void cells_re_init(int new_cs, double range) {
     topology_init(new_cs, range);
   }
 
-  cell_structure.min_range = range;
   on_cell_structure_change();
 }
 
 /*************************************************/
 
-/**
- * @brief Apply a @ref ParticleChange to a particle index.
- */
-struct UpdateParticleIndexVisitor {
-  CellStructure *cs;
-
-  void operator()(int id) const { cs->update_particle_index(id, nullptr); }
-  void operator()(Cell *c) const { cs->update_particle_index(c->particles()); }
-};
-
 void cells_resort_particles(int global_flag) {
-  invalidate_ghosts();
-
   n_verlet_updates++;
 
-  static std::vector<ParticleChange> diff;
-  diff.clear();
-
-  cell_structure.m_decomposition->resort(global_flag, diff);
-
-  for (auto d : diff) {
-    boost::apply_visitor(UpdateParticleIndexVisitor{&cell_structure}, d);
-  }
+  cell_structure.resort_particles(global_flag);
 
 #ifdef ADDITIONAL_CHECKS
   /* at the end of the day, everything should be consistent again */
@@ -217,19 +199,12 @@ void cells_resort_particles(int global_flag) {
 
 void cells_on_geometry_change(bool fast) {
   auto const range = interaction_range();
-  cell_structure.min_range = range;
 
-  std::vector<ParticleChange> diff;
-
-  auto const failed = not cell_structure.m_decomposition->on_geometry_change(
-      fast, range, box_geo, local_geo, diff);
-
-  for (auto d : diff) {
-    boost::apply_visitor(UpdateParticleIndexVisitor{&cell_structure}, d);
-  }
+  auto const failed =
+      cell_structure.change_geometry(fast, range, box_geo, local_geo);
 
   if (failed) {
-    cells_re_init(cell_structure.type, range);
+    cells_re_init(cell_structure.type);
   }
 }
 

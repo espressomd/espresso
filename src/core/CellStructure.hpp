@@ -22,7 +22,9 @@
 #ifndef ESPRESSO_CELLSTRUCTURE_HPP
 #define ESPRESSO_CELLSTRUCTURE_HPP
 
+#include "BoxGeometry.hpp"
 #include "Cell.hpp"
+#include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "ParticleList.hpp"
 #include "ParticleRange.hpp"
@@ -140,6 +142,11 @@ public:
     }
   }
 
+  /**
+   * @brief Clear the particles index.
+   */
+  void clear_particle_index() { m_particle_index.clear(); }
+
 private:
   /**
    * @brief Append a particle to a list and update this
@@ -203,9 +210,6 @@ public:
 
   /** Maximal pair range supported by current cell system. */
   Utils::Vector3d max_range() const;
-
-  /** Minimum range that has to be supported. */
-  double min_range;
 
   /** Return the global local_cells */
   Utils::Span<Cell *> local_cells();
@@ -361,6 +365,36 @@ public:
       }
     }
   }
+
+public:
+  /**
+   * @brief Try to change geometry parameters.
+   *
+   * @param fast If true, should return asap.
+   * @param range New interaction range.
+   * @param box_geo New box geometry.
+   * @param local_geo New local box size.
+   * @return True if the change was possible.
+   */
+  bool change_geometry(bool fast, double range, BoxGeometry const &box_geo,
+                       LocalBox<double> const &local_box);
+
+private:
+  /** Go through ghost cells and remove the ghost entries from the
+      local particle index. */
+  void invalidate_ghosts() {
+    for (auto const &p : ghost_particles()) {
+      if (get_local_particle(p.identity()) == &p) {
+        update_particle_index(p.identity(), nullptr);
+      }
+    }
+  }
+
+public:
+  /**
+   * @brief Resort particles.
+   */
+  void resort_particles(int global_flag);
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP

@@ -135,3 +135,44 @@ ParticleRange CellStructure::ghost_particles() {
 Utils::Vector3d CellStructure::max_range() const {
   return decomposition().max_range();
 }
+
+namespace {
+/**
+ * @brief Apply a @ref ParticleChange to a particle index.
+ */
+struct UpdateParticleIndexVisitor {
+  CellStructure *cs;
+
+  void operator()(int id) const { cs->update_particle_index(id, nullptr); }
+  void operator()(Cell *c) const { cs->update_particle_index(c->particles()); }
+};
+} // namespace
+
+bool CellStructure::change_geometry(bool fast, double range,
+                                    BoxGeometry const &box_geo,
+                                    LocalBox<double> const &local_box) {
+
+  std::vector<ParticleChange> diff;
+
+  auto const failed = not m_decomposition->on_geometry_change(
+      fast, range, box_geo, local_box, diff);
+
+  for (auto d : diff) {
+    boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
+  }
+
+  return failed;
+}
+
+void CellStructure::resort_particles(int global_flag) {
+  invalidate_ghosts();
+
+  static std::vector<ParticleChange> diff;
+  diff.clear();
+
+  m_decomposition->resort(global_flag, diff);
+
+  for (auto d : diff) {
+    boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
+  }
+}
