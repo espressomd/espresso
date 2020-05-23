@@ -199,6 +199,22 @@ void DomainDecomposition::resort(bool global,
   } else {
     exchange_neighbors(displaced_parts, diff);
   }
+
+  if (not displaced_parts.empty()) {
+    auto sort_cell = local_cells()[0];
+
+    for (auto &part : displaced_parts) {
+      runtimeErrorMsg() << "Particle " << part.identity()
+                        << " moved more than"
+                           " one local box length in one timestep.";
+      sort_cell->particles().insert(std::move(part));
+
+      diff.emplace_back(sort_cell);
+    }
+
+    // cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+    // cell_structure.update_particle_index(sort_cell->particles());
+  }
 }
 void DomainDecomposition::mark_cells() {
   int cnt_c = 0;

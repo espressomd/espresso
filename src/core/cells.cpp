@@ -198,37 +198,19 @@ void cells_resort_particles(int global_flag) {
   static std::vector<ParticleChange> diff;
   diff.clear();
 
-  ParticleList displaced_parts;
-
   cell_structure.m_decomposition->resort(global_flag, diff);
 
   for (auto d : diff) {
     boost::apply_visitor(UpdateParticleIndexVisitor{&cell_structure}, d);
   }
 
-  if (not displaced_parts.empty()) {
-    auto sort_cell = cell_structure.local_cells()[0];
-
-    for (auto &part : displaced_parts) {
-      runtimeErrorMsg() << "Particle " << part.identity()
-                        << " moved more than"
-                           " one local box length in one timestep.";
-      sort_cell->particles().insert(std::move(part));
-    }
-
-    cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
-    cell_structure.update_particle_index(sort_cell->particles());
-  } else {
 #ifdef ADDITIONAL_CHECKS
-    /* at the end of the day, everything should be consistent again */
-    check_particle_consistency();
-    check_particle_sorting();
+  /* at the end of the day, everything should be consistent again */
+  check_particle_consistency();
+  check_particle_sorting();
 #endif
-  }
 
   rebuild_verletlist = true;
-
-  displaced_parts.clear();
 }
 
 /*************************************************/
