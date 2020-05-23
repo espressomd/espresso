@@ -416,7 +416,8 @@ public:
 
   // Velocity
   boost::optional<Utils::Vector3d>
-  get_node_velocity(const Utils::Vector3i node, bool consider_ghosts= false) const override {
+  get_node_velocity(const Utils::Vector3i node,
+                    bool consider_ghosts = false) const override {
     boost::optional<bool> is_boundary = get_node_is_boundary(node);
     if (is_boundary)    // is info available locally
       if (*is_boundary) // is the node a boundary
@@ -450,8 +451,8 @@ public:
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
-            auto res =
-                get_node_velocity(Utils::Vector3i{{node[0], node[1], node[2]}},true);
+            auto res = get_node_velocity(
+                Utils::Vector3i{{node[0], node[1], node[2]}}, true);
             if (!res) {
               printf("Pos: %g %g %g, Node %d %d %d, weight %g\n", pos[0],
                      pos[1], pos[2], node[0], node[1], node[2], weight);
@@ -705,9 +706,10 @@ public:
   };
 
   std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  node_indices_positions(bool include_ghosts=false) const override {
+  node_indices_positions(bool include_ghosts = false) const override {
     int ghost_offset = 0;
-    if (include_ghosts) ghost_offset=m_n_ghost_layers;
+    if (include_ghosts)
+      ghost_offset = m_n_ghost_layers;
     std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
     for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
       auto left = block->getAABB().min();
@@ -722,9 +724,12 @@ public:
       // Get field data which knows about the indices
       // In the loop, x,y,z are in block-local coordinates
       auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-      for (int x=-ghost_offset;x<int(pdf_field->xSize())+ghost_offset; x++) {
-      for (int y=-ghost_offset;y<int(pdf_field->ySize())+ghost_offset; y++) {
-      for (int z=-ghost_offset;z<int(pdf_field->zSize())+ghost_offset; z++) {
+      for (int x = -ghost_offset; x < int(pdf_field->xSize()) + ghost_offset;
+           x++) {
+        for (int y = -ghost_offset; y < int(pdf_field->ySize()) + ghost_offset;
+             y++) {
+          for (int z = -ghost_offset;
+               z < int(pdf_field->zSize()) + ghost_offset; z++) {
             res.push_back({index_offset + Utils::Vector3i{x, y, z},
                            pos_offset + Utils::Vector3d{double(x), double(y),
                                                         double(z)}});

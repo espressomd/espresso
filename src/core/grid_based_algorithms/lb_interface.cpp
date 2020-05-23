@@ -531,9 +531,9 @@ const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
     // reverts the correction done by walberla
     auto const revert_factor =
         lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() + 1.0 / 6.0);
-//        stress[1] /= revert_factor;
-//        stress[3] /= revert_factor;
-//        stress[4] /= revert_factor;
+    //        stress[1] /= revert_factor;
+    //        stress[3] /= revert_factor;
+    //        stress[4] /= revert_factor;
 
     return stress;
   }

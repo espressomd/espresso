@@ -132,15 +132,15 @@ class LBShearCommon:
                 v=SHEAR_VELOCITY,
                 h=H,
                 k_max=100)
-            v_measured=np.zeros((sample_points,3))
+            v_measured = np.zeros((sample_points, 3))
             for j in range(0, sample_points):
                 ind = np.max(((1, 1, 1), shear_plane_normal * j + 1), 0)
                 ind = np.array(ind, dtype=int)
                 v_measured[j] = self.lbf[ind[0], ind[1], ind[2]].velocity
 #            print(np.vstack((v_measured[:,1], v_expected)).T)
             np.testing.assert_allclose(
-                    v_measured,
-                    -np.outer(v_expected, shear_direction), atol=8E-4)
+                v_measured,
+                -np.outer(v_expected, shear_direction), atol=8E-4)
 
         # speed of sound of the LB fluid in MD units (agrid/tau is due to
         # LB->MD unit conversion)
@@ -177,14 +177,15 @@ class LBShearCommon:
     x = np.array((1, 0, 0), dtype=float)
     y = np.array((0, 1, 0), dtype=float)
     z = np.array((0, 0, 1), dtype=float)
-    
+
     def test_xy(self):
         self.check_profile(self.x, self.y)
         self.check_profile(self.x, -self.y)
-        
+
     def test_xz(self):
         self.check_profile(self.x, self.z)
         self.check_profile(self.x, -self.z)
+
     def test_yz(self):
         self.check_profile(self.y, self.z)
         self.check_profile(self.y, -self.z)

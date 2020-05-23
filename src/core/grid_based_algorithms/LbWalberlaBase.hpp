@@ -17,7 +17,8 @@ public:
 
   // Velocity
   virtual boost::optional<Utils::Vector3d>
-  get_node_velocity(const Utils::Vector3i node, bool consider_ghosts=false) const = 0;
+  get_node_velocity(const Utils::Vector3i node,
+                    bool consider_ghosts = false) const = 0;
   virtual bool set_node_velocity(const Utils::Vector3i &node,
                                  const Utils::Vector3d v) = 0;
   virtual boost::optional<Utils::Vector3d>

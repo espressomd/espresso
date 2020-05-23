@@ -16,14 +16,12 @@ Utils::Vector3d LBBoundary::get_force() const {
       auto const index = index_and_pos.first;
       auto const pos = index_and_pos.second * agrid;
       if (not shape().is_inside(pos)) {
-             auto node_force_density =
-                  lb_walberla()->get_node_boundary_force(index);
-              if (node_force_density) {
-                force += (*node_force_density);
-              }
-
-            }
-    }         // loop over lb cells
+        auto node_force_density = lb_walberla()->get_node_boundary_force(index);
+        if (node_force_density) {
+          force += (*node_force_density);
+        }
+      }
+    } // loop over lb cells
     return boost::mpi::all_reduce(comm_cart, force,
                                   std::plus<Utils::Vector3d>());
 #endif
