@@ -176,7 +176,7 @@ python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 1) # Walberla todo
 python_test(FILE lb_thermo_virtual.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE lb_poiseuille.py MAX_NUM_PROC 2 LABELS gpu)
-python_test(FILE lb_poiseuille_cylinder.py MAX_NUM_PROC 2 LABELS gpu) 
+python_test(FILE lb_poiseuille_cylinder.py MAX_NUM_PROC 1 LABELS gpu) 
 python_test(FILE lb_interpolation.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE analyze_gyration_tensor.py MAX_NUM_PROC 1)
 python_test(FILE oif_volume_conservation.py MAX_NUM_PROC 2)
