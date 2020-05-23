@@ -856,8 +856,9 @@ class openGLLive:
             pore_length = np.array(s[0].get_parameter('pore_length'))
             pore_mouth = np.array(s[0].get_parameter('pore_mouth'))
             pore_width = np.array(s[0].get_parameter('pore_width'))
+            dividing_plane = np.array(s[0].get_parameter('dividing_plane'))
             self.shapes['Shapes::Slitpore'].append(
-                [channel_width, lower_smoothing_radius, upper_smoothing_radius, pore_length, pore_mouth, pore_width, s[1]])
+                [channel_width, lower_smoothing_radius, upper_smoothing_radius, pore_length, pore_mouth, pore_width, dividing_plane, s[1]])
 
         for s in coll_shape_obj['Shapes::SpheroCylinder']:
             pos = np.array(s[0].get_parameter('center'))
@@ -1033,9 +1034,9 @@ class openGLLive:
 
         for s in self.shapes['Shapes::Slitpore']:
             draw_slitpore(
-                s[0], s[1], s[2], s[3], s[4], s[5], max(self.system.box_l), self._modulo_indexing(
-                    self.specs['constraint_type_colors'], s[6]),
-                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[6])], self.specs['quality_constraints'])
+                s[0], s[1], s[2], s[3], s[4], s[5], s[6], max(self.system.box_l), self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[7]),
+                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[7])], self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Wall']:
             draw_plane(
@@ -2120,6 +2121,7 @@ def draw_slitpore(
         pore_length,
         pore_mouth,
         pore_width,
+        dividing_plane,
         max_box_l,
         color,
         material,
@@ -2128,13 +2130,14 @@ def draw_slitpore(
     # If pore is large, an additional wall is necessary
     if (pore_width > 2. * lower_smoothing_radius):
         wall_0 = [
-            [0.5 * (max_box_l - pore_width) + lower_smoothing_radius,
+            [dividing_plane - 0.5 * pore_width + lower_smoothing_radius,
              0., pore_mouth - pore_length],
-            [0.5 * (max_box_l + pore_width) - lower_smoothing_radius,
+            [dividing_plane + 0.5 * pore_width - lower_smoothing_radius,
              0., pore_mouth - pore_length],
-            [0.5 * (max_box_l + pore_width) - lower_smoothing_radius,
+            [dividing_plane + 0.5 * pore_width - lower_smoothing_radius,
              max_box_l, pore_mouth - pore_length],
-            [0.5 * (max_box_l - pore_width) + lower_smoothing_radius, max_box_l, pore_mouth - pore_length]]
+            [dividing_plane - 0.5 * pore_width + lower_smoothing_radius,
+             max_box_l, pore_mouth - pore_length]]
         draw_plane(wall_0, color, material)
 
     # Add the remaining walls
@@ -2146,36 +2149,39 @@ def draw_slitpore(
 
     wall_2 = [
         [0., 0., pore_mouth],
-        [0.5 * (max_box_l - pore_width) -
+        [dividing_plane - 0.5 * pore_width -
          upper_smoothing_radius, 0., pore_mouth],
-        [0.5 * (max_box_l - pore_width) -
+        [dividing_plane - 0.5 * pore_width -
          upper_smoothing_radius, max_box_l, pore_mouth],
         [0., max_box_l, pore_mouth]]
 
     wall_3 = [
-        [0.5 * (max_box_l + pore_width) +
+        [dividing_plane + 0.5 * pore_width +
          upper_smoothing_radius, 0., pore_mouth],
         [max_box_l, 0., pore_mouth],
         [max_box_l, max_box_l, pore_mouth],
-        [0.5 * (max_box_l + pore_width) + upper_smoothing_radius, max_box_l, pore_mouth]]
+        [dividing_plane + 0.5 * pore_width +
+         upper_smoothing_radius, max_box_l, pore_mouth]]
 
     wall_4 = [
-        [0.5 * (max_box_l - pore_width), 0.,
+        [dividing_plane - 0.5 * pore_width, 0.,
          pore_mouth - upper_smoothing_radius],
-        [0.5 * (max_box_l - pore_width), max_box_l,
+        [dividing_plane - 0.5 * pore_width, max_box_l,
          pore_mouth - upper_smoothing_radius],
-        [0.5 * (max_box_l - pore_width), max_box_l, pore_mouth -
-         pore_length + lower_smoothing_radius],
-        [0.5 * (max_box_l - pore_width), 0., pore_mouth - pore_length + lower_smoothing_radius]]
+        [dividing_plane - 0.5 * pore_width, max_box_l,
+         pore_mouth - pore_length + lower_smoothing_radius],
+        [dividing_plane - 0.5 * pore_width, 0.,
+         pore_mouth - pore_length + lower_smoothing_radius]]
 
     wall_5 = [
-        [0.5 * (max_box_l + pore_width), 0.,
+        [dividing_plane + 0.5 * pore_width, 0.,
          pore_mouth - upper_smoothing_radius],
-        [0.5 * (max_box_l + pore_width), max_box_l,
+        [dividing_plane + 0.5 * pore_width, max_box_l,
          pore_mouth - upper_smoothing_radius],
-        [0.5 * (max_box_l + pore_width), max_box_l, pore_mouth -
-         pore_length + lower_smoothing_radius],
-        [0.5 * (max_box_l + pore_width), 0., pore_mouth - pore_length + lower_smoothing_radius]]
+        [dividing_plane + 0.5 * pore_width, max_box_l,
+         pore_mouth - pore_length + lower_smoothing_radius],
+        [dividing_plane + 0.5 * pore_width, 0.,
+         pore_mouth - pore_length + lower_smoothing_radius]]
 
     draw_plane(wall_1, color, material)
     draw_plane(wall_2, color, material)
@@ -2188,7 +2194,7 @@ def draw_slitpore(
 
     OpenGL.GL.glPushMatrix()
     quadric = OpenGL.GLU.gluNewQuadric()
-    OpenGL.GL.glTranslate(0.5 * max_box_l - upper_smoothing_radius -
+    OpenGL.GL.glTranslate(dividing_plane - upper_smoothing_radius -
                           0.5 * pore_width, 0, pore_mouth - upper_smoothing_radius)
     OpenGL.GL.glRotatef(ax, rx, ry, 0.)
 
