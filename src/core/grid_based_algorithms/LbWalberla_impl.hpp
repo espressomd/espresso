@@ -442,7 +442,8 @@ public:
   };
 
   boost::optional<Utils::Vector3d>
-  get_velocity_at_pos(const Utils::Vector3d &pos, bool consider_points_in_halo= false) const override {
+  get_velocity_at_pos(const Utils::Vector3d &pos,
+                      bool consider_points_in_halo = false) const override {
     if (!consider_points_in_halo and !pos_in_local_domain(pos))
       return {};
     if (consider_points_in_halo and !pos_in_local_halo(pos))

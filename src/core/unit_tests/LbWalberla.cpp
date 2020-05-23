@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(velocity) {
     } else {
       // Check that access to node velocity is not possible
       BOOST_CHECK(!lb.get_node_velocity(node));
-      BOOST_CHECK(!lb.get_velocity_at_pos(n_pos(node),true));
+      BOOST_CHECK(!lb.get_velocity_at_pos(n_pos(node), true));
     }
   }
 }
