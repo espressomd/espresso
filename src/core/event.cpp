@@ -199,6 +199,7 @@ void on_particle_change() {
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   reinit_electrostatics = true;
   reinit_magnetostatics = true;
+  recalc_forces = true;
 
   invalidate_obs();
 
@@ -250,8 +251,6 @@ void on_lbboundary_change() {
   recalc_forces = true;
 #endif
 }
-
-void on_resort_particles() { recalc_forces = true; }
 
 void on_boxl_change() {
   grid_changed_box_l(box_geo);
