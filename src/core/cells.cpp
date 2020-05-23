@@ -140,16 +140,6 @@ void topology_init(int cs, double range) {
   }
 }
 
-/** Go through ghost cells and remove the ghost entries from the
-    local particle index. */
-static void invalidate_ghosts() {
-  for (auto const &p : cell_structure.ghost_particles()) {
-    if (cell_structure.get_local_particle(p.identity()) == &p) {
-      cell_structure.update_particle_index(p.identity(), nullptr);
-    }
-  }
-}
-
 /*@}*/
 
 /************************************************************
