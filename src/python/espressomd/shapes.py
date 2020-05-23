@@ -129,7 +129,10 @@ class Slitpore(Shape, ScriptInterfaceHelper):
 
     """
 
-    .. image:: figures/slitpore.png
+    .. figure:: figures/slitpore.png
+       :alt: Schematic for the Slitpore shape with labeled geometrical parameters.
+       :align: center
+       :height: 8.00000cm
 
     Attributes
     ----------
