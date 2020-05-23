@@ -251,14 +251,14 @@ BOOST_AUTO_TEST_CASE(velocity) {
     if (lb.pos_in_local_halo(n_pos(node))) {
       // Check that the interpolated velocity at the node pos equals the node
       // vel
-      auto res = lb.get_velocity_at_pos(n_pos(node));
+      auto res = lb.get_velocity_at_pos(n_pos(node), true);
       BOOST_CHECK(res); // locally available
       auto v_exp = n_vel(node);
       BOOST_CHECK_SMALL((*res - n_vel(node)).norm(), eps); // value correct?
     } else {
       // Check that access to node velocity is not possible
       BOOST_CHECK(!lb.get_node_velocity(node));
-      BOOST_CHECK(!lb.get_velocity_at_pos(n_pos(node)));
+      BOOST_CHECK(!lb.get_velocity_at_pos(n_pos(node),true));
     }
   }
 }

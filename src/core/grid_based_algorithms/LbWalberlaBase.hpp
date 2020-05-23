@@ -22,7 +22,7 @@ public:
   virtual bool set_node_velocity(const Utils::Vector3i &node,
                                  const Utils::Vector3d v) = 0;
   virtual boost::optional<Utils::Vector3d>
-  get_velocity_at_pos(const Utils::Vector3d &position) const = 0;
+  get_velocity_at_pos(const Utils::Vector3d &position, bool consider_points_in_halo=false) const = 0;
 
   // Local force
   virtual bool add_force_at_pos(const Utils::Vector3d &position,

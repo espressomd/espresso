@@ -55,11 +55,11 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
 
-    auto res = lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid());
+    auto res = lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid(), true);
     if (!res) {
       auto folded_pos = folded_position(pos, box_geo);
       res = lb_walberla()->get_velocity_at_pos(folded_pos /
-                                               lb_lbfluid_get_agrid());
+                                               lb_lbfluid_get_agrid(), true);
     }
 
     if (!res) {

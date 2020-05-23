@@ -442,8 +442,10 @@ public:
   };
 
   boost::optional<Utils::Vector3d>
-  get_velocity_at_pos(const Utils::Vector3d &pos) const override {
-    if (!pos_in_local_domain(pos) and !pos_in_local_halo(pos))
+  get_velocity_at_pos(const Utils::Vector3d &pos, bool consider_points_in_halo= false) const override {
+    if (!consider_points_in_halo and !pos_in_local_domain(pos))
+      return {};
+    if (consider_points_in_halo and !pos_in_local_halo(pos))
       return {};
     Utils::Vector3d v{0.0, 0.0, 0.0};
     interpolate_bspline_at_pos(
