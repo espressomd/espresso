@@ -36,7 +36,7 @@ AGRID = .5
 EXT_FORCE = .1
 VISC = 2.7
 DENS = 1.7
-TIME_STEP = 0.1
+TIME_STEP = 0.05
 BOX_L = 8.0
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -49,7 +49,7 @@ OBS_PARAMS = {'n_r_bins': 25,
               'min_r': 0.0,
               'min_phi': -np.pi,
               'min_z': 0.0,
-              'max_r': BOX_L / 2.0 - 1,
+              'max_r': BOX_L / 2.0 - 1.0,
               'max_phi': np.pi,
               'max_z': BOX_L,
               'sampling_density': 1.0}
@@ -104,8 +104,8 @@ class LBPoiseuilleCommon:
         mid_indices = 3 * [int((BOX_L / AGRID) / 2)]
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
-        while diff > 0.0001:
-            self.system.integrator.run(1)
+        while diff > 1E-5:
+            self.system.integrator.run(5)
             new_val = self.lbf[mid_indices].velocity[
                 np.nonzero(self.params['axis'])[0]]
             diff = abs(new_val - old_val)
@@ -130,13 +130,15 @@ class LBPoiseuilleCommon:
             velocities[y] = np.mean(np.array(v_tmp))
             positions[y] = (y + 0.5) * AGRID
 
-        v_measured = velocities[2:-2]
+        v_measured = velocities[1:-1]
         v_expected = poiseuille_flow(
-            positions[2:-2] - 0.5 * BOX_L,
+            positions[1:-1] - 0.5 * BOX_L,
             BOX_L / 2.0 - 1.0,
             EXT_FORCE,
             VISC * DENS)
-        np.testing.assert_allclose(v_measured, v_expected, atol=1E-2)
+        f_half_correction = 0.5 * self.system.time_step * EXT_FORCE
+        np.testing.assert_allclose(
+            v_measured[1:-1] - f_half_correction, v_expected[1:-1], atol=0.0032)
 
     def prepare_obs(self):
         if self.params['axis'] == [1, 0, 0]:
@@ -157,7 +159,7 @@ class LBPoiseuilleCommon:
     def check_observable(self):
         self.prepare_obs()
         # gather some statistics for the observable accumulator
-        self.system.integrator.run(1)
+        self.system.integrator.run(5)
         obs_result = np.array(
             self.accumulator.get_mean()).reshape(OBS_PARAMS['n_r_bins'],
                                                  OBS_PARAMS['n_phi_bins'],
@@ -173,7 +175,9 @@ class LBPoiseuilleCommon:
             EXT_FORCE,
             VISC * DENS)
         v_measured = obs_result[:, 0, 0, 2]
-        np.testing.assert_allclose(v_measured, v_expected, atol=3.6E-3)
+        f_half_correction = 0.5 * self.system.time_step * EXT_FORCE
+        np.testing.assert_allclose(
+            v_measured[1:-1] - f_half_correction, v_expected[1:-1], atol=0.0037)
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]
@@ -204,5 +208,5 @@ class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.system.lbboundaries.clear()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ut.main()
