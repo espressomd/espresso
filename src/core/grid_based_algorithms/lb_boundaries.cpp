@@ -72,33 +72,20 @@ void lb_init_boundaries() {
 
     auto const agrid = lb_lbfluid_get_agrid();
 
-    for (auto index_and_pos : lb_walberla()->global_node_indices_positions()) {
+    for (auto index_and_pos : lb_walberla()->node_indices_positions(true)) {
       // Convert to MD units
       auto const index = index_and_pos.first;
       auto const pos = index_and_pos.second * agrid;
 
       for (auto it = lbboundaries.begin(); it != lbboundaries.end(); ++it) {
         double dist;
-        Utils::Vector3d tmp;
-        (**it).calc_dist(pos, dist, tmp);
 
-        //        printf("%d %d %d, %g %g %g: %g %g %g:
-        //        %g\n",index[0],index[1],index[2],pos[0],pos[1],pos[2],tmp[0],tmp[1],tmp[2],dist);
-        if (dist <= 0) {
-
-          // Set boundaries on the ghost layers
-          auto const grid = lb_walberla()->get_grid_dimensions();
-          for (int dx : {-1, 0, 1})
-            for (int dy : {-1, 0, 1})
-              for (int dz : {-1, 0, 1}) {
-                Utils::Vector3i shifted_index =
-                    index +
-                    Utils::Vector3i{dx * grid[0], dy * grid[1], dz * grid[2]};
+        if (not (*it)->shape().is_inside(pos)) {
+                auto v = (*it)->velocity();
+//                printf("%d %d %d, %g, %g %g, %d\n",index[0],index[1],index[2],v[0],v[1],v[2],this_node);
                 lb_walberla()->set_node_velocity_at_boundary(
-                    shifted_index,
+                    index,
                     (**it).velocity() / lb_lbfluid_get_lattice_speed());
-              }
-          break;
         } // if dist <=0
       }   // loop over boundaries
     }     // Loop over cells

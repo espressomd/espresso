@@ -80,9 +80,7 @@ public:
   virtual bool pos_in_local_halo(const Utils::Vector3d &pos) const = 0;
 
   virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  node_indices_positions() const = 0;
-  virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  global_node_indices_positions() const = 0;
+  node_indices_positions(bool include_ghosts) const = 0;
   virtual ~LbWalberlaBase() = default;
 };
 

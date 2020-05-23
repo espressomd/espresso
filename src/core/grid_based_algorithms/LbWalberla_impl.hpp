@@ -705,7 +705,9 @@ public:
   };
 
   std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  node_indices_positions() const override {
+  node_indices_positions(bool include_ghosts=false) const override {
+    int ghost_offset = 0;
+    if (include_ghosts) ghost_offset=m_n_ghost_layers;
     std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
     for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
       auto left = block->getAABB().min();
@@ -720,33 +722,13 @@ public:
       // Get field data which knows about the indices
       // In the loop, x,y,z are in block-local coordinates
       auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-      for (int x : Utils::make_lin_space(int(0), int(pdf_field->xSize()),
-                                         int(pdf_field->xSize()), false)) {
-        for (int y : Utils::make_lin_space(int(0), int(pdf_field->ySize()),
-                                           int(pdf_field->ySize()), false)) {
-          for (int z : Utils::make_lin_space(int(0), int(pdf_field->zSize()),
-                                             int(pdf_field->zSize()), false)) {
+      for (int x=-ghost_offset;x<int(pdf_field->xSize())+ghost_offset; x++) {
+      for (int y=-ghost_offset;y<int(pdf_field->ySize())+ghost_offset; y++) {
+      for (int z=-ghost_offset;z<int(pdf_field->zSize())+ghost_offset; z++) {
             res.push_back({index_offset + Utils::Vector3i{x, y, z},
                            pos_offset + Utils::Vector3d{double(x), double(y),
                                                         double(z)}});
           }
-        }
-      }
-    }
-    return res;
-  };
-  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
-  global_node_indices_positions() const override {
-    std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
-    for (int x : Utils::make_lin_space(int(0), int(m_grid_dimensions[0]),
-                                       int(m_grid_dimensions[0]), false)) {
-      for (int y : Utils::make_lin_space(int(0), int(m_grid_dimensions[1]),
-                                         int(m_grid_dimensions[1]), false)) {
-        for (int z : Utils::make_lin_space(int(0), int(m_grid_dimensions[2]),
-                                           int(m_grid_dimensions[2]), false)) {
-          res.push_back({Utils::Vector3i{x, y, z},
-                         Utils::Vector3d::broadcast(.5) +
-                             Utils::Vector3d{double(x), double(y), double(z)}});
         }
       }
     }
