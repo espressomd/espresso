@@ -127,15 +127,14 @@ for i in range(100):
         dist = system.constraints[0].shape.calc_distance(position=rpos)
         if dist[0] > 2.5:
             break
-    # add initial velocities pointing away from the shape surface
-    system.part.add(pos=rpos, v=-dist[1] / np.linalg.norm(dist[1]), type=1)
+    system.part.add(pos=rpos, type=1)
 
 system.non_bonded_inter[1, 1].lennard_jones.set_params(
     epsilon=1.0, sigma=5.0,
     cutoff=15.0, shift="auto")
 
 system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=200.0, sigma=5.0,
+    epsilon=20.0, sigma=5.0,
     cutoff=20.0, shift="auto")
 
 system.force_cap = 1000.0
