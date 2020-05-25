@@ -569,19 +569,30 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         system.part.add(pos=[0., 0., 0.], type=0)
         x = self.box_l / 2.0
+        d = 1 - np.sqrt(2) / 2
         parameters = [
             ([x, x, 1.], -4., [0., 0., -1.]),  # outside channel
             ([x, x, 15.], 5., [-1., 0., 0.]),  # inside channel
             ([x, x, 5.], 0., [0., 0., 0.]),  # on channel bottom surface
+            ([x - 5., x, 15.], 0., [0., 0., 0.]),  # on channel side surface
             ([x + 5., x, 15.], 0., [0., 0., 0.]),  # on channel side surface
-            ([x, x, 15.], 5., [-1., 0., 0.]),  # within mouth
-            ([x, x, 25.], 0., [0., 0., 0.]),  # on wall surface
+            ([x - 5. + 2 * d, x, 5. + 2 * d], 0., [0., 0., 0.]),  # lower circle
+            ([x + 5. - 2 * d, x, 5. + 2 * d], 0., [0., 0., 0.]),  # lower circle
+            ([x - 5. - 3 * d, x, 20. - 3 * d], 0., [0., 0., 0.]),  # upper circle
+            ([x + 5. + 3 * d, x, 20. - 3 * d], 0., [0., 0., 0.]),  # upper circle
+            ([1., x, 20.], 0., [0., 0., 0.]),  # on inner wall surface
+            ([x, x, 25.], 0., [0., 0., 0.]),  # on outer wall surface
             ([x, x, 27.], -2., [0., 0., 1.]),  # outside wall
         ]
         for pos, ref_mindist, ref_force in parameters:
             system.part[0].pos = pos
             system.integrator.run(recalc_forces=True, steps=0)
-            self.assertEqual(slitpore_constraint.min_dist(), ref_mindist)
+            obs_mindist = slitpore_constraint.min_dist()
+            self.assertAlmostEqual(obs_mindist, ref_mindist, places=10)
+            if (ref_mindist == 0. and obs_mindist != 0.):
+                # force direction on a circle is not well-defined due to
+                # numerical instability
+                continue
             np.testing.assert_almost_equal(
                 np.copy(slitpore_constraint.total_force()), ref_force, 10)
 
@@ -792,7 +803,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         # test summed forces on torus wall
         self.assertAlmostEqual(
-            -1.0 * torus_wall.total_force()[1],
+            torus_wall.total_force()[1],
             tests_common.lj_force(
                 espressomd,
                 cutoff=2.0,
@@ -800,7 +811,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 eps=1.0,
                 sig=1.0,
                 r=torus_constraint.min_dist()),
-            places=10)  # minus for Newton's third law
+            places=10)
 
         # check whether total_summed_outer_normal_force is correct
         y_part2 = self.box_l / 2.0 + 2.0 * radius - part_offset

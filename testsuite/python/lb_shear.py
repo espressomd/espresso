@@ -162,9 +162,10 @@ class LBShearCommon:
 #        p_expected = p_eq * np.identity(3) - dynamic_viscosity * shear_rate * (
 #            np.outer(shear_plane_normal, shear_direction) + np.transpose(np.outer(shear_plane_normal, shear_direction)))
 #        for n in (2, 3, 4), (3, 4, 2), (5, 4, 3):
-#            node_stress = np.copy(self.lbf[n[0], n[1], n[2]].stress)
+#            node_pressure_tensor = np.copy(
+#                self.lbf[n[0], n[1], n[2]].pressure_tensor)
 # WALBERLA TODO 
-#            np.testing.assert_allclose(node_stress,
+#            np.testing.assert_allclose(node_pressure_tensor,
 #                                       p_expected, atol=1E-5, rtol=5E-3)
 
         np.testing.assert_allclose(

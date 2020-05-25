@@ -214,7 +214,7 @@ void mpi_bcast_max_seen_particle_type(int s);
  *      \arg for \ref GatherStats::energy, calculate and reduce (sum up)
  *           energies, using \ref energy_calc.
  *      \arg for \ref GatherStats::pressure, calculate and reduce (sum up)
- *           pressure, stress tensor, using \ref pressure_calc.
+ *           pressure, using \ref pressure_calc.
  *      \arg for \ref GatherStats::pressure_v_comp, calculate and reduce
  *           (sum up) instantaneous pressure, using \ref pressure_calc.
  */

@@ -153,14 +153,34 @@ class Observables(ut.TestCase):
                                              err_msg="Data did not agree for observable ParticleBodyVelocities and particle derived values.",
                                              decimal=9)
 
-    def test_stress_tensor(self):
-        s = self.system.analysis.stress_tensor()["total"]
-        obs_data = espressomd.observables.StressTensor().calculate()
+    def test_energy(self):
+        s = self.system.analysis.energy()["total"]
+        obs_data = espressomd.observables.Energy().calculate()
+        self.assertEqual(obs_data.shape, (1,))
+        np.testing.assert_array_almost_equal(
+            obs_data,
+            s,
+            err_msg="Energy from analysis and observable did not agree",
+            decimal=9)
+
+    def test_pressure(self):
+        s = self.system.analysis.pressure()["total"]
+        obs_data = espressomd.observables.Pressure().calculate()
+        self.assertEqual(obs_data.shape, (1,))
+        np.testing.assert_array_almost_equal(
+            obs_data,
+            s,
+            err_msg="Pressure from analysis and observable did not agree",
+            decimal=9)
+
+    def test_pressure_tensor(self):
+        s = self.system.analysis.pressure_tensor()["total"]
+        obs_data = espressomd.observables.PressureTensor().calculate()
         self.assertEqual(obs_data.shape, s.shape)
         np.testing.assert_array_almost_equal(
-            s,
             obs_data,
-            err_msg="Stress tensor from analysis and observable did not agree",
+            s,
+            err_msg="Pressure tensor from analysis and observable did not agree",
             decimal=9)
 
     @utx.skipIfMissingFeatures('ELECTROSTATICS')

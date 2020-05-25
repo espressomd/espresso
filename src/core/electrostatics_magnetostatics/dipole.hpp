@@ -71,7 +71,11 @@ namespace Dipole {
 /** Number of electrostatic contributions to the system pressure calculation. */
 constexpr size_t pressure_n() { return 0; }
 
-/** Number of electrostatic contributions to the system energy calculation. */
+/** Number of electrostatic contributions to the system energy calculation.
+ *  - slot 0: energies from particle pairs and magnetic field constraints
+ *  - slot 1: energies from magnetostatics solvers
+ *  - slot 2: energy corrections
+ */
 inline size_t energy_n() {
   switch (dipole.method) {
   case DIPOLAR_NONE:

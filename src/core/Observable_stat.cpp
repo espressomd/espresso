@@ -23,29 +23,12 @@
 
 #include "config.hpp"
 
+#include "communication.hpp"
+
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-
-#include <boost/mpi/communicator.hpp>
-
-extern boost::mpi::communicator comm_cart;
-
-/** Tracker of observables */
-std::vector<Observable_stat_wrapper *> &registered_observables() {
-  static std::vector<Observable_stat_wrapper *> s_registered_observables;
-  return s_registered_observables;
-}
-
-void Observable_stat_wrapper::register_obs() {
-  registered_observables().push_back(this);
-}
-
-void invalidate_obs() {
-  for (auto *obs : registered_observables())
-    obs->is_initialized = false;
-}
 
 void Observable_stat::resize() {
   // number of chunks for different interaction types

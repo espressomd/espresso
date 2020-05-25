@@ -32,7 +32,7 @@
 
 extern ActorList energyActors;
 
-/** Recalculate energies (only if necessary). */
+/** Calculate energies. */
 void update_energy();
 
 /** Parallel energy calculation. */
@@ -43,5 +43,8 @@ void calc_long_range_energies(const ParticleRange &particles);
 
 /** Calculate the total energy of the system. */
 double calculate_current_potential_energy_of_system();
+
+/** Helper function for @ref Observables::Energy. */
+double observable_compute_energy();
 
 #endif

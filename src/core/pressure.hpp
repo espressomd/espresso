@@ -25,6 +25,8 @@
 #ifndef CORE_PRESSURE_HPP
 #define CORE_PRESSURE_HPP
 
+#include <utils/Vector.hpp>
+
 /** Parallel pressure calculation from a virial expansion.
  *  @param[in] v_comp flag which enables compensation of the velocities
  *                    required for deriving a pressure reflecting
@@ -34,12 +36,10 @@
  */
 void pressure_calc(bool v_comp);
 
-/** Helper function for @ref Observables::StressTensor.
- *  @param[out] output Destination array.
- */
-void observable_compute_stress_tensor(double *output);
+/** Helper function for @ref Observables::PressureTensor. */
+Utils::Vector9d observable_compute_pressure_tensor();
 
-/** Recalculate the virials, pressure and stress tensors (only if necessary).
+/** Calculate the scalar pressure and pressure tensor.
  *  @param[in] v_comp flag which enables compensation of the velocities
  *                    required for deriving a pressure reflecting
  *                    \ref nptiso_struct::p_inst (hence it only works with

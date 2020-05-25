@@ -521,7 +521,8 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
+const Utils::Vector6d
+lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     Utils::Vector6d stress = ::Communication::mpiCallbacks().call(
@@ -540,7 +541,7 @@ const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-const Utils::Vector6d lb_lbfluid_get_stress() {
+const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
   if (lattice_switch == ActiveLB::WALBERLA) {
     throw std::runtime_error("Not implemented yet");
   }
