@@ -28,7 +28,6 @@ struct Particle {
   double m_dipole_moment = 1.2;
   double mass = 3.;
   double charge = 0.0;
-  auto const &force() const { return m_force; }
   auto const &velocity() const { return m_vel; }
   auto const &dipole_moment() const { return m_dipole_moment; }
 };
@@ -43,7 +42,6 @@ template <> struct traits<Testing::Particle> {
   double velocity(Particle const &p) const { return p.velocity(); }
   double mass(Particle const &p) const { return p.mass; }
   double charge(Particle const &p) const { return p.charge; }
-  double force(Particle const &p) const { return p.force(); }
   double dipole_moment(Particle const &p) const { return p.dipole_moment(); }
 };
 } // namespace ParticleObservables

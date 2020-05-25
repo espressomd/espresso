@@ -66,12 +66,6 @@ BOOST_AUTO_TEST_CASE(obs) {
                            (Mass{}(parts[0]) + Mass{}(parts[1])));
   }
   {
-    parts[0].m_force = 1.3;
-    parts[1].m_force = 1.8;
-    auto const res = TotalForce{}(parts);
-    BOOST_CHECK(res == Force{}(parts[0]) + Force{}(parts[1]));
-  }
-  {
     auto const res = Positions{}(parts);
     BOOST_CHECK(res[0] == Position{}(parts[0]));
     BOOST_CHECK(res[1] == Position{}(parts[1]));
@@ -80,10 +74,5 @@ BOOST_AUTO_TEST_CASE(obs) {
     auto const res = Velocities{}(parts);
     BOOST_CHECK(res[0] == Velocity{}(parts[0]));
     BOOST_CHECK(res[1] == Velocity{}(parts[1]));
-  }
-  {
-    auto const res = Forces{}(parts);
-    BOOST_CHECK(res[0] == Force{}(parts[0]));
-    BOOST_CHECK(res[1] == Force{}(parts[1]));
   }
 }

@@ -40,14 +40,6 @@ template <> struct traits<Particle> {
     return p.p.mass;
   }
   auto charge(Particle const &p) const { return p.p.q; }
-  auto force(Particle const &p) const {
-#ifdef VIRTUAL_SITES
-    if (p.p.is_virtual)
-      // we exclude virtual particles since their force does not have a meaning
-      return decltype(p.f.f){};
-#endif
-    return p.f.f;
-  }
   auto dipole_moment(Particle const &p) const {
 #if defined(ROTATION) && defined(DIPOLES)
     return p.calc_dip();

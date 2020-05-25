@@ -30,6 +30,23 @@ namespace Observables {
  *  For \f$n\f$ particles, return \f$3 n\f$ forces ordered as
  *  \f$(f_x^1, f_y^1, f_z^1, \dots, f_x^n, f_y^n, f_z^n)\f$.
  */
-using ParticleForces = ParticleObservable<ParticleObservables::Forces>;
-} // namespace Observables
+class ParticleForces : public PidObservable {
+public:
+  using PidObservable::PidObservable;
+
+  std::vector<double>
+  evaluate(ParticleReferenceRange particles,
+           const ParticleObservables::traits<Particle> &traits) const override {
+    std::vector<double> res(n_values());
+    for (size_t i = 0; i < particles.size(); i++) {
+      res[3 * i + 0] = particles[i].get().f.f[0];
+      res[3 * i + 1] = particles[i].get().f.f[1];
+      res[3 * i + 2] = particles[i].get().f.f[2];
+    }
+    return res;
+  };
+  std::vector<size_t> shape() const override { return {ids().size(), 3}; }
+};
+
+} // Namespace Observables
 #endif

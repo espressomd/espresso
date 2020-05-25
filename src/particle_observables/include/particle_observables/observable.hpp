@@ -50,10 +50,8 @@ using Momentum = Product<Mass, Velocity>;
 using AverageMomentum = Average<Momentum>;
 using CenterOfMassPosition = WeightedAverage<Position, Mass>;
 using CenterOfMassVelocity = WeightedAverage<Velocity, Mass>;
-using TotalForce = Sum<Force>;
 using Positions = Map<Position>;
 using Velocities = Map<Velocity>;
-using Forces = Map<Force>;
 } // namespace ParticleObservables
 
 #endif // INCLUDE_OBSERVABLES_OBSERVABLE_HPP

@@ -71,14 +71,6 @@ struct Charge {
   }
 };
 
-struct Force {
-  template <class Particle, class Traits = default_traits<Particle>>
-  decltype(auto) operator()(Particle const &p,
-                            Traits particle_traits = {}) const {
-    return particle_traits.force(p);
-  }
-};
-
 struct DipoleMoment {
   template <class Particle, class Traits = default_traits<Particle>>
   decltype(auto) operator()(Particle const &p,
