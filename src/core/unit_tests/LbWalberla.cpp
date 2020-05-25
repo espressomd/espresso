@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE(velocity) {
       // Check that the interpolated velocity at the node pos equals the node
       // vel
       auto res = lb.get_velocity_at_pos(n_pos(node), true);
-      BOOST_CHECK(res); // locally available
+      BOOST_CHECK(res);                                    // locally available
       BOOST_CHECK_SMALL((*res - n_vel(node)).norm(), eps); // value correct?
     } else {
       // Check that access to node velocity is not possible
