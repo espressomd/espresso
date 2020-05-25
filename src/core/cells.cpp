@@ -232,9 +232,6 @@ void cells_update_ghosts(unsigned data_parts) {
     /* Resort cell system */
     cells_resort_particles(global);
 
-    /* Communication step: number of ghosts and ghost information */
-    ghost_communicator(cell_structure.m_decomposition->exchange_ghosts_comm(),
-                       GHOSTTRANS_PARTNUM);
     cell_structure.ghosts_update(data_parts);
 
     /* Add the ghost particles to the index if we don't already

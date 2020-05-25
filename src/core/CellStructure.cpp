@@ -172,6 +172,10 @@ void CellStructure::resort_particles(int global_flag) {
 
   m_decomposition->resort(global_flag, diff);
 
+  /* Communication step: number of ghosts and ghost information */
+  ghost_communicator(m_decomposition->exchange_ghosts_comm(),
+                     GHOSTTRANS_PARTNUM);
+
   for (auto d : diff) {
     boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
   }

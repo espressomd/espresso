@@ -67,6 +67,10 @@ public:
                       const BoxGeometry &box_geo,
                       const LocalBox<double> &local_geo);
 
+private:
+  void init(const boost::mpi::communicator &comm, double range,
+            const BoxGeometry &box_geo, const LocalBox<double> &local_geo);
+
 public:
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;

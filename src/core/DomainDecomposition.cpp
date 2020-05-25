@@ -630,7 +630,18 @@ DomainDecomposition::DomainDecomposition(const boost::mpi::communicator &comm,
                                          double range,
                                          const BoxGeometry &box_geo,
                                          const LocalBox<double> &local_geo)
-    : m_comm(comm), m_box(box_geo), m_local_box(local_geo) {
+    : m_comm(comm) {
+  init(comm, range, box_geo, local_geo);
+}
+
+void DomainDecomposition::init(const boost::mpi::communicator &comm,
+                               double range, const BoxGeometry &box_geo,
+                               const LocalBox<double> &local_geo) {
+  assert(comm.size() == comm.size());
+  m_comm = comm;
+  m_box = box_geo;
+  m_local_box = local_geo;
+
   /* set up new domain decomposition cell structure */
   create_cell_grid(range);
 
