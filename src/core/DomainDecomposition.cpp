@@ -23,14 +23,14 @@ Cell *DomainDecomposition::position_to_cell(const Utils::Vector3d &pos) {
        the particle belongs here and could otherwise potentially be dismissed
        due to rounding errors. */
     if (cpos[i] < 1) {
-      if ((!box_geo.periodic(i) or (pos[i] >= box_geo.length()[i])) &&
-          local_geo.boundary()[2 * i])
+      if ((!m_box.periodic(i) or (pos[i] >= m_box.length()[i])) &&
+          m_local_box.boundary()[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > cell_grid[i]) {
-      if ((!box_geo.periodic(i) or (pos[i] < box_geo.length()[i])) &&
-          local_geo.boundary()[2 * i + 1])
+      if ((!m_box.periodic(i) or (pos[i] < m_box.length()[i])) &&
+          m_local_box.boundary()[2 * i + 1])
         cpos[i] = cell_grid[i];
       else
         return nullptr;
@@ -76,16 +76,16 @@ void DomainDecomposition::move_left_or_right(ParticleList &src,
                                              ParticleList &right,
                                              int dir) const {
   for (auto it = src.begin(); it != src.end();) {
-    if ((get_mi_coord(it->r.p[dir], local_geo.my_left()[dir],
-                      box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) and
-        (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0))) {
+    if ((get_mi_coord(it->r.p[dir], m_local_box.my_left()[dir],
+                      m_box.length()[dir], m_box.periodic(dir)) < 0.0) and
+        (m_box.periodic(dir) || (m_local_box.boundary()[2 * dir] == 0))) {
       left.insert(std::move(*it));
       it = src.erase(it);
-    } else if ((get_mi_coord(it->r.p[dir], local_geo.my_right()[dir],
-                             box_geo.length()[dir],
-                             box_geo.periodic(dir)) >= 0.0) and
-               (box_geo.periodic(dir) ||
-                (local_geo.boundary()[2 * dir + 1] == 0))) {
+    } else if ((get_mi_coord(it->r.p[dir], m_local_box.my_right()[dir],
+                             m_box.length()[dir],
+                             m_box.periodic(dir)) >= 0.0) and
+               (m_box.periodic(dir) ||
+                (m_local_box.boundary()[2 * dir + 1] == 0))) {
       right.insert(std::move(*it));
       it = src.erase(it);
     } else {
@@ -96,20 +96,20 @@ void DomainDecomposition::move_left_or_right(ParticleList &src,
 
 void DomainDecomposition::exchange_neighbors(
     ParticleList &pl, std::vector<ParticleChange> &modified_cells) {
-  auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
+  auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(m_comm);
   static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
-    if (Utils::Mpi::cart_get<3>(comm).dims[dir] == 1) {
+    if (Utils::Mpi::cart_get<3>(m_comm).dims[dir] == 1) {
       continue;
       /* In this (common) case left and right neighbors are
          the same, and we need only one communication */
     }
-    if (Utils::Mpi::cart_get<3>(comm).dims[dir] == 2) {
+    if (Utils::Mpi::cart_get<3>(m_comm).dims[dir] == 2) {
       move_left_or_right(pl, send_buf_l, send_buf_l, dir);
 
-      Utils::Mpi::sendrecv(comm, node_neighbors[2 * dir], 0, send_buf_l,
+      Utils::Mpi::sendrecv(m_comm, node_neighbors[2 * dir], 0, send_buf_l,
                            node_neighbors[2 * dir], 0, recv_buf_l);
 
       send_buf_l.clear();
@@ -119,9 +119,9 @@ void DomainDecomposition::exchange_neighbors(
 
       move_left_or_right(pl, send_buf_l, send_buf_r, dir);
 
-      auto req_l = isendrecv(comm, node_neighbors[2 * dir], 0, send_buf_l,
+      auto req_l = isendrecv(m_comm, node_neighbors[2 * dir], 0, send_buf_l,
                              node_neighbors[2 * dir], 0, recv_buf_l);
-      auto req_r = isendrecv(comm, node_neighbors[2 * dir + 1], 0, send_buf_r,
+      auto req_r = isendrecv(m_comm, node_neighbors[2 * dir + 1], 0, send_buf_r,
                              node_neighbors[2 * dir + 1], 0, recv_buf_r);
 
       std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
@@ -153,7 +153,7 @@ void DomainDecomposition::resort(bool global,
 
   for (auto &c : local_cells()) {
     for (auto it = c->particles().begin(); it != c->particles().end();) {
-      fold_and_reset(*it, box_geo);
+      fold_and_reset(*it, m_box);
 
       auto target_cell = particle_to_cell(*it);
 
@@ -181,7 +181,7 @@ void DomainDecomposition::resort(bool global,
   }
 
   if (global) {
-    auto const grid = Utils::Mpi::cart_get<3>(comm).dims;
+    auto const grid = Utils::Mpi::cart_get<3>(m_comm).dims;
     /* Worst case we need grid - 1 rounds per direction.
      * This correctly implies that if there is only one node,
      * no action should be taken. */
@@ -189,7 +189,7 @@ void DomainDecomposition::resort(bool global,
     for (; rounds_left > 0; rounds_left--) {
       exchange_neighbors(displaced_parts, diff);
 
-      auto left_over = boost::mpi::all_reduce(comm, displaced_parts.size(),
+      auto left_over = boost::mpi::all_reduce(m_comm, displaced_parts.size(),
                                               std::plus<size_t>());
 
       if (left_over == 0) {
@@ -245,7 +245,7 @@ void DomainDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
 }
 Utils::Vector3d DomainDecomposition::max_range() const {
   auto dir_max_range = [this](int i) {
-    return std::min(0.5 * box_geo.length()[i], local_geo.length()[i]);
+    return std::min(0.5 * m_box.length()[i], m_local_box.length()[i]);
   };
 
   return {dir_max_range(0), dir_max_range(1), dir_max_range(2)};
@@ -256,14 +256,14 @@ int DomainDecomposition::calc_processor_min_num_cells() const {
      since this also ensures that the cell size is at most half the box
      length. However, if there is only one processor for a direction, there
      have to be at least two cells for this direction. */
-  return boost::accumulate(Utils::Mpi::cart_get<3>(comm).dims, 1,
+  return boost::accumulate(Utils::Mpi::cart_get<3>(m_comm).dims, 1,
                            [](int n_cells, int grid) {
                              return (grid == 1) ? 2 * n_cells : n_cells;
                            });
 }
 
 void DomainDecomposition::create_cell_grid(double range) {
-  auto const cart_info = Utils::Mpi::cart_get<3>(comm);
+  auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
 
   int i, n_local_cells, new_cells;
   double cell_range[3];
@@ -285,25 +285,25 @@ void DomainDecomposition::create_cell_grid(double range) {
     n_local_cells = cell_grid[0] * cell_grid[1] * cell_grid[2];
   } else {
     /* Calculate initial cell grid */
-    double volume = local_geo.length()[0];
+    double volume = m_local_box.length()[0];
     for (i = 1; i < 3; i++)
-      volume *= local_geo.length()[i];
+      volume *= m_local_box.length()[i];
     double scale = pow(DomainDecomposition::max_num_cells / volume, 1. / 3.);
     for (i = 0; i < 3; i++) {
       /* this is at least 1 */
-      cell_grid[i] = (int)ceil(local_geo.length()[i] * scale);
-      cell_range[i] = local_geo.length()[i] / cell_grid[i];
+      cell_grid[i] = (int)ceil(m_local_box.length()[i] * scale);
+      cell_range[i] = m_local_box.length()[i] / cell_grid[i];
 
       if (cell_range[i] < range) {
         /* ok, too many cells for this direction, set to minimum */
-        cell_grid[i] = (int)floor(local_geo.length()[i] / range);
+        cell_grid[i] = (int)floor(m_local_box.length()[i] / range);
         if (cell_grid[i] < 1) {
-          runtimeErrorMsg()
-              << "interaction range " << range << " in direction " << i
-              << " is larger than the local box size " << local_geo.length()[i];
+          runtimeErrorMsg() << "interaction range " << range << " in direction "
+                            << i << " is larger than the local box size "
+                            << m_local_box.length()[i];
           cell_grid[i] = 1;
         }
-        cell_range[i] = local_geo.length()[i] / cell_grid[i];
+        cell_range[i] = m_local_box.length()[i] / cell_grid[i];
       }
     }
 
@@ -330,7 +330,7 @@ void DomainDecomposition::create_cell_grid(double range) {
       }
 
       cell_grid[min_ind]--;
-      cell_range[min_ind] = local_geo.length()[min_ind] / cell_grid[min_ind];
+      cell_range[min_ind] = m_local_box.length()[min_ind] / cell_grid[min_ind];
     }
 
     /* sanity check */
@@ -354,7 +354,7 @@ void DomainDecomposition::create_cell_grid(double range) {
   for (i = 0; i < 3; i++) {
     ghost_cell_grid[i] = cell_grid[i] + 2;
     new_cells *= ghost_cell_grid[i];
-    cell_size[i] = local_geo.length()[i] / (double)cell_grid[i];
+    cell_size[i] = m_local_box.length()[i] / (double)cell_grid[i];
     inv_cell_size[i] = 1.0 / cell_size[i];
     cell_offset[i] = node_pos[i] * cell_grid[i];
   }
@@ -449,8 +449,8 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
   int dir, lr, i, cnt, n_comm_cells[3];
   Utils::Vector3i lc{}, hc{}, done{};
 
-  auto const comm_info = Utils::Mpi::cart_get<3>(comm);
-  auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
+  auto const comm_info = Utils::Mpi::cart_get<3>(m_comm);
+  auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(m_comm);
 
   /* calculate number of communications */
   size_t num = 0;
@@ -465,7 +465,7 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
   }
 
   /* prepare communicator */
-  auto ghost_comm = GhostCommunicator{comm, num};
+  auto ghost_comm = GhostCommunicator{m_comm, num};
 
   /* number of cells to communicate in a direction */
   n_comm_cells[0] = cell_grid[1] * cell_grid[2];
@@ -487,13 +487,13 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
       if (comm_info.dims[dir] == 1) {
         /* just copy cells on a single node */
         ghost_comm.communications[cnt].type = GHOST_LOCL;
-        ghost_comm.communications[cnt].node = comm.rank();
+        ghost_comm.communications[cnt].node = m_comm.rank();
 
         /* Buffer has to contain Send and Recv cells -> factor 2 */
         ghost_comm.communications[cnt].part_lists.resize(2 * n_comm_cells[dir]);
         /* prepare folding of ghost positions */
         ghost_comm.communications[cnt].shift =
-            shift(box_geo, local_geo, dir, lr);
+            shift(m_box, m_local_box, dir, lr);
 
         /* fill send ghost_comm cells */
         lc[dir] = hc[dir] = 1 + lr * (cell_grid[dir] - 1);
@@ -519,7 +519,7 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
             ghost_comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
             /* prepare folding of ghost positions */
             ghost_comm.communications[cnt].shift =
-                shift(box_geo, local_geo, dir, lr);
+                shift(m_box, m_local_box, dir, lr);
 
             lc[dir] = hc[dir] = 1 + lr * (cell_grid[dir] - 1);
 
@@ -549,7 +549,7 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
 }
 
 void DomainDecomposition::update_communicators_w_boxl() {
-  auto const cart_info = Utils::Mpi::cart_get<3>(comm);
+  auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
 
   int cnt = 0;
   /* direction loop: x, y, z */
@@ -558,9 +558,9 @@ void DomainDecomposition::update_communicators_w_boxl() {
     for (int lr = 0; lr < 2; lr++) {
       if (cart_info.dims[dir] == 1) {
         /* prepare folding of ghost positions */
-        if (local_geo.boundary()[2 * dir + lr] != 0) {
+        if (m_local_box.boundary()[2 * dir + lr] != 0) {
           m_exchange_ghosts_comm.communications[cnt].shift =
-              shift(box_geo, local_geo, dir, lr);
+              shift(m_box, m_local_box, dir, lr);
         }
         cnt++;
       } else {
@@ -568,9 +568,9 @@ void DomainDecomposition::update_communicators_w_boxl() {
         for (int i = 0; i < 2; i++) {
           if ((cart_info.coords[dir] + i) % 2 == 0) {
             /* prepare folding of ghost positions */
-            if (local_geo.boundary()[2 * dir + lr] != 0) {
+            if (m_local_box.boundary()[2 * dir + lr] != 0) {
               m_exchange_ghosts_comm.communications[cnt].shift =
-                  shift(box_geo, local_geo, dir, lr);
+                  shift(m_box, m_local_box, dir, lr);
             }
             cnt++;
           }
@@ -612,12 +612,12 @@ bool DomainDecomposition::on_geometry_change(
     return false;
   }
 
-  box_geo = new_box_geo;
-  local_geo = new_local_geo;
+  m_box = new_box_geo;
+  m_local_box = new_local_geo;
 
   /* otherwise, re-set our geometrical dimensions which have changed */
   for (int i = 0; i < 3; i++) {
-    cell_size[i] = local_geo.length()[i] / (double)cell_grid[i];
+    cell_size[i] = m_local_box.length()[i] / (double)cell_grid[i];
     inv_cell_size[i] = 1.0 / cell_size[i];
   }
 
@@ -630,7 +630,7 @@ DomainDecomposition::DomainDecomposition(const boost::mpi::communicator &comm,
                                          double range,
                                          const BoxGeometry &box_geo,
                                          const LocalBox<double> &local_geo)
-    : comm(comm), box_geo(box_geo), local_geo(local_geo) {
+    : m_comm(comm), m_box(box_geo), m_local_box(local_geo) {
   /* set up new domain decomposition cell structure */
   create_cell_grid(range);
 

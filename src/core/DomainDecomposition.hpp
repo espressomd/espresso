@@ -52,9 +52,9 @@ private:
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   Utils::Vector3d inv_cell_size = {};
 
-  boost::mpi::communicator comm;
-  BoxGeometry box_geo;
-  LocalBox<double> local_geo;
+  boost::mpi::communicator m_comm;
+  BoxGeometry m_box;
+  LocalBox<double> m_local_box;
   std::vector<Cell> cells;
   std::vector<Cell *> m_local_cells;
   std::vector<Cell *> m_ghost_cells;
@@ -67,6 +67,7 @@ public:
                       const BoxGeometry &box_geo,
                       const LocalBox<double> &local_geo);
 
+public:
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;
   }
