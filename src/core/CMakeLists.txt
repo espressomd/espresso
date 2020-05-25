@@ -107,6 +107,6 @@ endif(WITH_UNIT_TESTS)
 
 IF(WALBERLA)
 target_link_libraries(EspressoCore PUBLIC ${WALBERLA_LIBS})
-target_include_directories(EspressoCore PUBLIC "${walberla_SOURCE_DIR}/src")
+target_include_directories(EspressoCore PUBLIC "${WALBERLA_INCLUDE_DIRS}")
 target_include_directories(EspressoCore PUBLIC "${walberla_BINARY_DIR}/src")
 endif(WALBERLA)
