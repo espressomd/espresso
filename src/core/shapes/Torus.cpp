@@ -31,9 +31,9 @@ void Torus::calculate_dist(const Utils::Vector3d &pos, double &dist,
   auto const r_vec = c_dist - z * e_z;
   auto const r = r_vec.norm();
 
-  dist = (sqrt(Utils::sqr(r - m_rad) + z * z) - m_tube_rad) * m_direction;
+  dist = (std::sqrt(Utils::sqr(r - m_rad) + z * z) - m_tube_rad) * m_direction;
   Utils::Vector3d const dir_vec = c_dist - r_vec * m_rad / r;
   auto const dir_vec_norm = dir_vec / dir_vec.norm();
-  vec = -dir_vec_norm * dist;
+  vec = dir_vec_norm * std::abs(dist);
 }
 } // namespace Shapes
