@@ -5,7 +5,6 @@
 #include "config.hpp"
 
 #ifdef LB_WALBERLA
-#include "LbWalberlaBase.hpp"
 #include "blockforest/Initialization.h"
 #include "blockforest/StructuredBlockForest.h"
 #include "blockforest/communication/UniformBufferedScheme.h"
@@ -54,6 +53,8 @@
 #include "stencil/D3Q27.h"
 
 #include "timeloop/SweepTimeloop.h"
+
+#include "LbWalberlaBase.hpp"
 
 namespace walberla {
 
@@ -162,7 +163,7 @@ protected:
     }
 
     value_type operator()(const basefield_iterator &it) const {
-      const basefield_t *baseFieldPtr =
+      auto const  *baseFieldPtr =
           dynamic_cast<const basefield_t *>(it.getField());
       return baseFieldPtr->get(it);
     }
@@ -416,7 +417,7 @@ public:
 
   // Velocity
   boost::optional<Utils::Vector3d>
-  get_node_velocity(const Utils::Vector3i node,
+  get_node_velocity(const Utils::Vector3i& node,
                     bool consider_ghosts = false) const override {
     boost::optional<bool> is_boundary = get_node_is_boundary(node);
     if (is_boundary)    // is info available locally
@@ -430,7 +431,7 @@ public:
     return {to_vector3d(vel_adaptor->get((*bc).cell))};
   };
   bool set_node_velocity(const Utils::Vector3i &node,
-                         const Utils::Vector3d v) override {
+                         const Utils::Vector3d& v) override {
     auto bc = get_block_and_cell(node, false);
     if (!bc)
       return false;
@@ -496,7 +497,7 @@ public:
     return to_vector3d(force_field->get((*bc).cell)) * m_density;
   };
 
-  virtual boost::optional<Utils::Vector3d>
+  boost::optional<Utils::Vector3d>
   get_node_last_applied_force(const Utils::Vector3i &node) const override {
     auto const bc = get_block_and_cell(node, true);
     if (!bc)
@@ -522,8 +523,8 @@ public:
     density_interpolator->get(to_vector3(pos), &dens);
     return {m_density * dens};
   };
-  bool set_node_density(const Utils::Vector3i node,
-                        const double density) override {
+  bool set_node_density(const Utils::Vector3i& node,
+                        double density) override {
     auto bc = get_block_and_cell(node, false);
     if (!bc)
       return false;
@@ -540,7 +541,7 @@ public:
   };
 
   boost::optional<double>
-  get_node_density(const Utils::Vector3i node) const override {
+  get_node_density(const Utils::Vector3i& node) const override {
     auto bc = get_block_and_cell(node, false);
     if (!bc)
       return {boost::none};
@@ -567,7 +568,7 @@ public:
         boundary_handling->template getBoundaryCondition<UBB>(uid).getValue(
             (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]))};
   };
-  bool set_node_velocity_at_boundary(const Utils::Vector3i node,
+  bool set_node_velocity_at_boundary(const Utils::Vector3i& node,
                                      const Utils::Vector3d &v) override {
     auto bc = get_block_and_cell(node, true);
     if (!bc)
@@ -583,7 +584,7 @@ public:
     return true;
   };
   boost::optional<Utils::Vector3d>
-  get_node_boundary_force(const Utils::Vector3i node) const override {
+  get_node_boundary_force(const Utils::Vector3i& node) const override {
     auto bc = get_block_and_cell(node, true); // including ghosts
     if (!bc)
       return {boost::none};
@@ -641,7 +642,7 @@ public:
 
   // Pressure tensor
   boost::optional<Utils::Vector6d>
-  get_node_pressure_tensor(const Utils::Vector3i node) const override {
+  get_node_pressure_tensor(const Utils::Vector3i& node) const override {
     auto bc = get_block_and_cell(node, false);
     if (!bc)
       return {boost::none};
@@ -743,7 +744,7 @@ public:
     return res;
   };
 
-  virtual ~LbWalberla() = default;
+  override ~LbWalberla() = default;
 };
 } // namespace walberla
 #endif // LB_WALBERLA

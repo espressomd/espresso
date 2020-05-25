@@ -18,7 +18,7 @@
 
 void walberla_mpi_init() {
   int argc = 0;
-  char **argv = NULL;
+  char **argv = nullptr;
   static walberla::mpi::Environment m_env =
       walberla::mpi::Environment(argc, argv);
 }
