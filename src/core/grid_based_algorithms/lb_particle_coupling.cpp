@@ -198,10 +198,7 @@ bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const &local_box,
 bool in_local_halo(Vector3d const &pos) {
   auto const halo = 0.5 * lb_lbfluid_get_agrid();
 
-  if (in_local_domain(pos, local_geo, halo))
-    return true;
-
-  return false;
+  return in_local_domain(pos, local_geo, halo);
 }
 
 #ifdef ENGINE
