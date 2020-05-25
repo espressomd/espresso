@@ -131,13 +131,13 @@ class AnalyzeMassRelated(ut.TestCase):
             axis=0) / (3 * self.system.volume())
         np.testing.assert_allclose(
             P_kin, self.system.analysis.pressure()["kinetic"])
-        analyze_stress = np.diag(
-            self.system.analysis.stress_tensor()["kinetic"])
-        expected_stress = np.matmul(
+        analyze_pressure_tensor = np.diag(
+            self.system.analysis.pressure_tensor()["kinetic"])
+        expected_pressure_tensor = np.matmul(
             (no_virtual.v**2).T,
             no_virtual.mass) / (self.system.volume())
         np.testing.assert_allclose(
-            expected_stress, analyze_stress)
+            expected_pressure_tensor, analyze_pressure_tensor)
 
     def test_gyration_radius(self):
         if self.system.part.select(virtual=True):

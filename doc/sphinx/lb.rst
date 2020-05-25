@@ -181,12 +181,12 @@ Reading and setting properties of single lattice nodes
 
 Appending three indices to the ``lb`` object returns an object that represents the selected LB grid node and allows one to access all of its properties::
 
-    lb[x, y, z].density     # fluid density (one scalar for LB and CUDA)
-    lb[x, y, z].velocity    # fluid velocity (a numpy array of three floats)
-    lb[x, y, z].stress      # fluid pressure tensor (a symmetric 3x3 numpy array of floats)
-    lb[x, y, z].stress_neq  # nonequilbrium part of the pressure tensor (as above)
-    lb[x, y, z].boundary    # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 0)
-    lb[x, y, z].population  # 19 LB populations (a numpy array of 19 floats, check order from the source code)
+    lb[x, y, z].density              # fluid density (one scalar for LB and CUDA)
+    lb[x, y, z].velocity             # fluid velocity (a numpy array of three floats)
+    lb[x, y, z].pressure_tensor      # fluid pressure tensor (a symmetric 3x3 numpy array of floats)
+    lb[x, y, z].pressure_tensor_neq  # nonequilibrium part of the pressure tensor (as above)
+    lb[x, y, z].boundary             # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 0)
+    lb[x, y, z].population           # 19 LB populations (a numpy array of 19 floats, check order from the source code)
 
 All of these properties can be read and used in further calculations. Only the property ``population`` can be modified. The indices ``x,y,z`` are integers and enumerate the LB nodes in the three directions, starts with 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
 

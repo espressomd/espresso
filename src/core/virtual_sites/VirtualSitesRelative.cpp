@@ -191,9 +191,9 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
   }
 }
 
-// Rigid body contribution to scalar pressure and stress tensor
-Utils::Matrix<double, 3, 3> VirtualSitesRelative::stress_tensor() const {
-  Utils::Matrix<double, 3, 3> stress_tensor = {};
+// Rigid body contribution to scalar pressure and pressure tensor
+Utils::Matrix<double, 3, 3> VirtualSitesRelative::pressure_tensor() const {
+  Utils::Matrix<double, 3, 3> pressure_tensor = {};
 
   for (auto &p : cell_structure.local_particles()) {
     if (!p.p.is_virtual)
@@ -202,9 +202,9 @@ Utils::Matrix<double, 3, 3> VirtualSitesRelative::stress_tensor() const {
     // First obtain the real particle responsible for this virtual particle:
     const Particle *p_ref = get_reference_particle(p.p.vs_relative);
 
-    stress_tensor += constraint_stress(p.f.f, p_ref, p.p.vs_relative);
+    pressure_tensor += constraint_stress(p.f.f, p_ref, p.p.vs_relative);
   }
 
-  return stress_tensor;
+  return pressure_tensor;
 }
 #endif

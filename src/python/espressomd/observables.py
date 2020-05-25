@@ -324,9 +324,9 @@ class LBVelocityProfile(ProfileObservable):
 
 
 @script_interface_register
-class LBFluidStress(Observable):
+class LBFluidPressureTensor(Observable):
 
-    """Calculates the average stress of the LB fluid for all nodes.
+    """Calculates the average pressure tensor of the LB fluid for all nodes.
 
     Parameters
     ----------
@@ -337,7 +337,7 @@ class LBFluidStress(Observable):
     (3, 3) :obj:`ndarray` of :obj:`float`
 
     """
-    _so_name = "Observables::LBFluidStress"
+    _so_name = "Observables::LBFluidPressureTensor"
 
 
 @script_interface_register
@@ -599,16 +599,42 @@ class BondDihedrals(Observable):
 
 
 @script_interface_register
-class StressTensor(Observable):
+class Energy(Observable):
 
-    """Calculates the total stress tensor. See :ref:`stress tensor`.
+    """Calculates the total energy.
+
+    Returns
+    -------
+    :obj:`float`
+
+    """
+    _so_name = "Observables::Energy"
+
+
+@script_interface_register
+class Pressure(Observable):
+
+    """Calculates the total scalar pressure.
+
+    Returns
+    -------
+    :obj:`float`
+
+    """
+    _so_name = "Observables::Pressure"
+
+
+@script_interface_register
+class PressureTensor(Observable):
+
+    """Calculates the total pressure tensor.
 
     Returns
     -------
     (3, 3) :obj:`ndarray` of :obj:`float`
 
     """
-    _so_name = "Observables::StressTensor"
+    _so_name = "Observables::PressureTensor"
 
 
 @script_interface_register

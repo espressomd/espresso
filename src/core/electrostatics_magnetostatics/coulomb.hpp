@@ -60,7 +60,10 @@ struct Coulomb_parameters {
 extern Coulomb_parameters coulomb;
 
 namespace Coulomb {
-/** Number of electrostatic contributions to the system pressure calculation. */
+/** Number of electrostatic contributions to the system pressure calculation.
+ *  - slot 0: pressure from particle pairs
+ *  - slot 1: energies from electrostatics solvers
+ */
 inline size_t pressure_n() {
   switch (coulomb.method) {
   case COULOMB_NONE:
@@ -73,7 +76,11 @@ inline size_t pressure_n() {
   }
 }
 
-/** Number of electrostatic contributions to the system energy calculation. */
+/** Number of electrostatic contributions to the system energy calculation.
+ *  - slot 0: energies from particle pairs
+ *  - slot 1: energies from electrostatics solvers
+ *  - slot 2: energy corrections
+ */
 inline size_t energy_n() {
   switch (coulomb.method) {
   case COULOMB_NONE:
