@@ -803,7 +803,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         # test summed forces on torus wall
         self.assertAlmostEqual(
-            -1.0 * torus_wall.total_force()[1],
+            torus_wall.total_force()[1],
             tests_common.lj_force(
                 espressomd,
                 cutoff=2.0,
@@ -811,7 +811,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 eps=1.0,
                 sig=1.0,
                 r=torus_constraint.min_dist()),
-            places=10)  # minus for Newton's third law
+            places=10)
 
         # check whether total_summed_outer_normal_force is correct
         y_part2 = self.box_l / 2.0 + 2.0 * radius - part_offset
