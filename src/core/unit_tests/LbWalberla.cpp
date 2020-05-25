@@ -253,7 +253,6 @@ BOOST_AUTO_TEST_CASE(velocity) {
       // vel
       auto res = lb.get_velocity_at_pos(n_pos(node), true);
       BOOST_CHECK(res); // locally available
-      auto v_exp = n_vel(node);
       BOOST_CHECK_SMALL((*res - n_vel(node)).norm(), eps); // value correct?
     } else {
       // Check that access to node velocity is not possible
