@@ -17,11 +17,10 @@ public:
 
   // Velocity
   virtual boost::optional<Utils::Vector3d>
-  get_node_velocity(const Utils::Vector3i& node,
+  get_node_velocity(const Utils::Vector3i &node,
                     bool consider_ghosts = false) const = 0;
   virtual bool set_node_velocity(const Utils::Vector3i &node,
-                                 const Utils::Vector3d&
-                                 v) = 0;
+                                 const Utils::Vector3d &v) = 0;
   virtual boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &position,
                       bool consider_points_in_halo = false) const = 0;
@@ -38,18 +37,18 @@ public:
   // Density
   virtual boost::optional<double>
   get_density_at_pos(const Utils::Vector3d &position) = 0;
-  virtual bool set_node_density(const Utils::Vector3i& node,
+  virtual bool set_node_density(const Utils::Vector3i &node,
                                 double density) = 0;
   virtual boost::optional<double>
-  get_node_density(const Utils::Vector3i& node) const = 0;
+  get_node_density(const Utils::Vector3i &node) const = 0;
 
   // Boundary related
   virtual boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const = 0;
-  virtual bool set_node_velocity_at_boundary(const Utils::Vector3i& node,
+  virtual bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                              const Utils::Vector3d &v) = 0;
   virtual boost::optional<Utils::Vector3d>
-  get_node_boundary_force(const Utils::Vector3i& node) const = 0;
+  get_node_boundary_force(const Utils::Vector3i &node) const = 0;
   virtual bool remove_node_from_boundary(const Utils::Vector3i &node) = 0;
   virtual boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node) const = 0;
@@ -57,7 +56,7 @@ public:
 
   // Pressure tensor
   virtual boost::optional<Utils::Vector6d>
-  get_node_pressure_tensor(const Utils::Vector3i& node) const = 0;
+  get_node_pressure_tensor(const Utils::Vector3i &node) const = 0;
 
   // Global momentum
   virtual Utils::Vector3d get_momentum() const = 0;

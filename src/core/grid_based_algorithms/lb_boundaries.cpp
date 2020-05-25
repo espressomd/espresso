@@ -77,7 +77,7 @@ void lb_init_boundaries() {
       auto const index = index_and_pos.first;
       auto const pos = index_and_pos.second * agrid;
 
-      for (const auto& boundary: lbboundaries) {
+      for (const auto &boundary : lbboundaries) {
         double dist;
 
         if (boundary->shape().is_inside(pos)) {
