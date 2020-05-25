@@ -30,15 +30,13 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument("--wall", action="store_const", dest="shape", const="Wall",
                    default="Wall")
 for shape in ("Sphere", "Ellipsoid", "Cylinder", "SpheroCylinder", "Torus",
-              "Stomatocyte", "SimplePore", "Slitpore", "HollowConicalFrustum"):
+              "SimplePore", "Slitpore", "HollowConicalFrustum"):
     group.add_argument("--" + shape.lower(), action="store_const",
                        dest="shape", const=shape)
 args = parser.parse_args()
 
 
 required_features = ["LENNARD_JONES"]
-if args.shape == "Stomatocyte":
-    required_features.append("EXPERIMENTAL_FEATURES")
 espressomd.assert_features(required_features)
 
 box_l = 50.0
@@ -85,11 +83,6 @@ elif args.shape == "SpheroCylinder":
                                                direction=1, radius=10, length=30),
         particle_type=0,
         penetrable=True)
-
-elif args.shape == "Stomatocyte":
-    system.constraints.add(shape=espressomd.shapes.Stomatocyte(
-        inner_radius=3, outer_radius=7, axis=[1.0, 0.0, 0.0], center=[25] * 3,
-        layer_width=3, direction=1), particle_type=0, penetrable=True)
 
 elif args.shape == "SimplePore":
     system.constraints.add(shape=espressomd.shapes.SimplePore(

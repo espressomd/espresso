@@ -18,7 +18,6 @@
 import collections.abc
 
 from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectRegistry
-from .utils import requires_experimental_features
 
 
 class Shape:
@@ -160,31 +159,6 @@ class SpheroCylinder(Shape, ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::SpheroCylinder"
-
-
-@script_interface_register
-@requires_experimental_features("No test coverage")
-class Stomatocyte(Shape, ScriptInterfaceHelper):
-    """
-    Attributes
-    ----------
-    inner_radius : :obj:`float`
-        Inner radius of the stomatocyte.
-    outer_radius : :obj:`float`
-        Outer radius of the stomatocyte.
-    axis : (3,) array_like of :obj:`float`
-        Symmetry axis, prescribing the orientation of the stomatocyte.
-    center : (3,) array_like of :obj:`float`
-        Position of the stomatocyte.
-    layer_width : :obj:`float`
-        Scaling parameter.
-    direction : :obj:`int`
-        Surface orientation, for +1 the normal points
-        out of the mantel, for -1 it points inward.
-
-    """
-
-    _so_name = "Shapes::Stomatocyte"
 
 
 @script_interface_register
