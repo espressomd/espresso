@@ -743,7 +743,7 @@ public:
     return res;
   };
 
-  ~LbWalberla() = default override;
+  ~LbWalberla() override = default;
 };
 } // namespace walberla
 #endif // LB_WALBERLA
