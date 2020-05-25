@@ -8,7 +8,6 @@ Utils::Vector3d LBBoundary::get_force() const {
 #ifdef LB_BOUNDARIES
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    auto const grid = lb_walberla()->get_grid_dimensions();
     auto const agrid = lb_lbfluid_get_agrid();
     Utils::Vector3d force{0, 0, 0};
     for (auto index_and_pos : lb_walberla()->node_indices_positions(true)) {
