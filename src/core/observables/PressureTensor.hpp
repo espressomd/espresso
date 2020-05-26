@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2020 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,21 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "PidObservable.hpp"
+#ifndef OBSERVABLES_PRESSURETENSOR_HPP
 
-#include "fetch_particles.hpp"
-#include "particle_data.hpp"
-
-#include <boost/range/algorithm/transform.hpp>
+#include "Observable.hpp"
+#include "pressure.hpp"
+#include <vector>
 
 namespace Observables {
-std::vector<double> PidObservable::operator()() const {
-  std::vector<Particle> particles = fetch_particles(ids());
 
-  std::vector<const Particle *> particles_ptrs(particles.size());
-  boost::transform(particles, particles_ptrs.begin(),
-                   [](auto const &p) { return std::addressof(p); });
+class PressureTensor : public Observable {
+public:
+  std::vector<size_t> shape() const override { return {3, 3}; }
+  std::vector<double> operator()() const override {
+    return observable_compute_pressure_tensor().as_vector();
+  }
+};
 
-  return this->evaluate(particles_ptrs);
-}
-} // namespace Observables
+} // Namespace Observables
+
+#endif

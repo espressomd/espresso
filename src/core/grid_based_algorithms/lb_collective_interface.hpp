@@ -32,7 +32,7 @@ boost::optional<int> mpi_lb_get_boundary_flag(Utils::Vector3i const &index);
 boost::optional<Utils::Vector3d>
 mpi_lb_get_momentum_density(Utils::Vector3i const &index);
 boost::optional<Utils::Vector6d>
-mpi_lb_get_stress(Utils::Vector3i const &index);
+mpi_lb_get_pressure_tensor(Utils::Vector3i const &index);
 
 /* collective setter functions */
 void mpi_lb_set_population(Utils::Vector3i const &index,

@@ -22,7 +22,6 @@
 #include "virtual_sites.hpp"
 
 #ifdef VIRTUAL_SITES
-#include "Observable_stat.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
@@ -46,7 +45,6 @@ const std::shared_ptr<VirtualSites> &virtual_sites() { return m_virtual_sites; }
 void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
   m_virtual_sites = v;
   recalc_forces = true;
-  invalidate_obs();
 }
 
 #ifdef VIRTUAL_SITES_RELATIVE

@@ -231,12 +231,12 @@ cdef class HydrodynamicInteraction(Actor):
             cdef stdint.uint64_t _seed = seed
             lb_lbfluid_set_rng_state(seed)
 
-    property stress:
+    property pressure_tensor:
         def __get__(self):
-            cdef Vector6d stress = python_lbfluid_get_stress(self.agrid, self.tau)
-            return array_locked(np.array([[stress[0], stress[1], stress[3]],
-                                          [stress[1], stress[2], stress[4]],
-                                          [stress[3], stress[4], stress[5]]]))
+            cdef Vector6d tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
+            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
+                                          [tensor[1], tensor[2], tensor[4]],
+                                          [tensor[3], tensor[4], tensor[5]]]))
 
         def __set__(self, value):
             raise NotImplementedError
@@ -404,22 +404,22 @@ cdef class LBFluidRoutines:
         def __set__(self, value):
             python_lbnode_set_density(self.node, value)
 
-    property stress:
+    property pressure_tensor:
         def __get__(self):
-            cdef Vector6d stress = python_lbnode_get_stress(self.node)
-            return array_locked(np.array([[stress[0], stress[1], stress[3]],
-                                          [stress[1], stress[2], stress[4]],
-                                          [stress[3], stress[4], stress[5]]]))
+            cdef Vector6d tensor = python_lbnode_get_pressure_tensor(self.node)
+            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
+                                          [tensor[1], tensor[2], tensor[4]],
+                                          [tensor[3], tensor[4], tensor[5]]]))
 
         def __set__(self, value):
             raise NotImplementedError
 
-    property stress_neq:
+    property pressure_tensor_neq:
         def __get__(self):
-            cdef Vector6d stress = python_lbnode_get_stress_neq(self.node)
-            return array_locked(np.array([[stress[0], stress[1], stress[3]],
-                                          [stress[1], stress[2], stress[4]],
-                                          [stress[3], stress[4], stress[5]]]))
+            cdef Vector6d tensor = python_lbnode_get_pressure_tensor_neq(self.node)
+            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
+                                          [tensor[1], tensor[2], tensor[4]],
+                                          [tensor[3], tensor[4], tensor[5]]]))
 
         def __set__(self, value):
             raise NotImplementedError

@@ -324,9 +324,9 @@ class LBVelocityProfile(ProfileObservable):
 
 
 @script_interface_register
-class LBFluidStress(Observable):
+class LBFluidPressureTensor(Observable):
 
-    """Calculates the average stress of the LB fluid for all nodes.
+    """Calculates the average pressure tensor of the LB fluid for all nodes.
 
     Parameters
     ----------
@@ -337,7 +337,7 @@ class LBFluidStress(Observable):
     (3, 3) :obj:`ndarray` of :obj:`float`
 
     """
-    _so_name = "Observables::LBFluidStress"
+    _so_name = "Observables::LBFluidPressureTensor"
 
 
 @script_interface_register
@@ -599,16 +599,42 @@ class BondDihedrals(Observable):
 
 
 @script_interface_register
-class StressTensor(Observable):
+class Energy(Observable):
 
-    """Calculates the total stress tensor. See :ref:`stress tensor`.
+    """Calculates the total energy.
+
+    Returns
+    -------
+    :obj:`float`
+
+    """
+    _so_name = "Observables::Energy"
+
+
+@script_interface_register
+class Pressure(Observable):
+
+    """Calculates the total scalar pressure.
+
+    Returns
+    -------
+    :obj:`float`
+
+    """
+    _so_name = "Observables::Pressure"
+
+
+@script_interface_register
+class PressureTensor(Observable):
+
+    """Calculates the total pressure tensor.
 
     Returns
     -------
     (3, 3) :obj:`ndarray` of :obj:`float`
 
     """
-    _so_name = "Observables::StressTensor"
+    _so_name = "Observables::PressureTensor"
 
 
 @script_interface_register
@@ -883,3 +909,41 @@ class CylindricalLBVelocityProfile(ProfileObservable):
 
     """
     _so_name = "Observables::CylindricalLBVelocityProfile"
+
+
+@script_interface_register
+class RDF(Observable):
+
+    """Calculates a radial distribution function.
+    The result is normalized by the bulk concentration.
+
+    Parameters
+    ----------
+    ids1 : array_like of :obj:`int`
+        The ids of (existing) particles to calculate the distance from.
+    ids2 : array_like of :obj:`int`, optional
+        The ids of (existing) particles to calculate the distance to.
+        If not provided, use ``ids1``.
+    n_r_bins : :obj:`int`
+        Number of bins in radial direction.
+    min_r : :obj:`float`
+        Minimum ``r`` to consider.
+    max_r : :obj:`float`
+        Maximum ``r`` to consider.
+
+    Returns
+    -------
+    (``n_r_bins``,) :obj:`ndarray` of :obj:`float`
+        The RDF.
+
+    """
+    _so_name = "Observables::RDF"
+
+    def __init__(self, **kwargs):
+        if "oid" not in kwargs and "ids2" not in kwargs:
+            kwargs["ids2"] = []
+        super().__init__(**kwargs)
+
+    def bin_centers(self):
+        bin_width = (self.max_r - self.min_r) / self.n_r_bins
+        return self.min_r + (np.arange(self.n_r_bins) + 0.5) * bin_width

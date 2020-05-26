@@ -204,14 +204,15 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind);
  * @brief Get the LB fluid velocity for a single node.
  */
 const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
-const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind);
-const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind);
+const Utils::Vector6d lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind);
+const Utils::Vector6d
+lb_lbnode_get_pressure_tensor_neq(const Utils::Vector3i &ind);
 
-/** @brief Calculate the average stress of all nodes by accumulating over
- *  all nodes and dividing by the @ref LB_parameters_gpu::number_of_nodes.
- *  Returns the lower triangle of the LB stress tensor.
+/** @brief Calculate the average pressure tensor of all nodes by accumulating
+ *  over all nodes and dividing by the @ref LB_parameters_gpu::number_of_nodes.
+ *  Returns the lower triangle of the LB pressure tensor.
  */
-const Utils::Vector6d lb_lbfluid_get_stress();
+const Utils::Vector6d lb_lbfluid_get_pressure_tensor();
 
 /**
  * @brief Get the LB fluid boundary bool for a single node.

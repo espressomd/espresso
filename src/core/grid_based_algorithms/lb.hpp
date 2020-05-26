@@ -27,8 +27,8 @@
  *  This increases mainly cache efficiency. This is achieved by
  *  @ref lb_collide_stream.
  *
- *  The hydrodynamic fields, corresponding to density, velocity and stress, are
- *  stored in @ref LB_FluidNode in the array @ref lbfields, the populations
+ *  The hydrodynamic fields, corresponding to density, velocity and pressure,
+ *  are stored in @ref LB_FluidNode in the array @ref lbfields, the populations
  *  in @ref LB_Fluid in the array @ref lbfluid which is constructed as
  *  2 x (Nx x Ny x Nz) x 19 array.
  *
@@ -206,9 +206,9 @@ double lb_calc_density(std::array<double, 19> const &modes,
                        const LB_Parameters &lb_parameters);
 Utils::Vector3d lb_calc_momentum_density(std::array<double, 19> const &modes,
                                          Utils::Vector3d const &force_density);
-Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
-                               Utils::Vector3d const &force_density,
-                               const LB_Parameters &lb_parameters);
+Utils::Vector6d lb_calc_pressure_tensor(std::array<double, 19> const &modes,
+                                        Utils::Vector3d const &force_density,
+                                        const LB_Parameters &lb_parameters);
 
 /** Calculation of hydrodynamic modes.
  *

@@ -44,7 +44,6 @@ cdef extern from "particle_data.hpp":
 
 cdef extern from "Observable_stat.hpp":
     cdef cppclass Observable_stat_wrapper:
-        cbool is_initialized
         cbool v_comp
         Span[double] kinetic
         Span[double] bonded
@@ -64,9 +63,6 @@ cdef extern from "Observable_stat.hpp":
         Span[double] non_bonded_inter_contribution(int type1, int type2)
 
 cdef extern from "statistics.hpp":
-    int get_n_part_conf()
-    int get_n_configs()
-
     cdef vector[double] calc_structurefactor(PartCfg & , const vector[int] & p_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
     cdef double mindist(PartCfg & , const vector[int] & set1, const vector[int] & set2)
@@ -74,18 +70,9 @@ cdef extern from "statistics.hpp":
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef vector[double] centerofmass(PartCfg & , int part_type)
 
-    void calc_rdf(PartCfg & , vector[int] p1_types, vector[int] p2_types,
-                  double r_min, double r_max, int r_bins, vector[double] rdf)
-
-    void calc_rdf_av(PartCfg & , vector[int] p1_types, vector[int] p2_types,
-                     double r_min, double r_max, int r_bins, vector[double] rdf,
-                     int n_conf)
-
     Vector3d angularmomentum(PartCfg & , int p_type)
 
     void momentofinertiamatrix(PartCfg & , int p_type, double * MofImatrix)
-
-    void analyze_append(PartCfg & )
 
     void calc_part_distribution(
         PartCfg &, const vector[int] & p1_types, const vector[int] & p2_types,
@@ -100,8 +87,8 @@ cdef extern from "statistics_chain.hpp":
 cdef extern from "pressure_inline.hpp":
     cdef Observable_stat_wrapper obs_scalar_pressure
     cdef Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded
-    cdef Observable_stat_wrapper obs_stress_tensor
-    cdef Observable_stat_non_bonded_wrapper obs_stress_tensor_non_bonded
+    cdef Observable_stat_wrapper obs_pressure_tensor
+    cdef Observable_stat_non_bonded_wrapper obs_pressure_tensor_non_bonded
 
 cdef extern from "pressure.hpp":
     cdef void update_pressure(cbool)

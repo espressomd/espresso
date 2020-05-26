@@ -24,20 +24,15 @@ The direct analysis commands can be classified into two types:
 
     - :ref:`Energies`
     - :ref:`Pressure`
+    - :ref:`Pressure Tensor`
     - :ref:`Momentum of the System`
     - :ref:`Minimal distances between particles`
     - :ref:`Particles in the neighborhood`
     - :ref:`Particle distribution`
-    - :ref:`Radial distribution function` with ``rdf_type='rdf'``
     - :ref:`Structure factor`
     - :ref:`Center of mass`
     - :ref:`Moment of inertia matrix`
     - :ref:`Gyration tensor`
-    - :ref:`Stress Tensor`
-
-- Analysis on stored configurations, added by :meth:`espressomd.analyze.Analysis.append`:
-    - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
-    - :ref:`Chains`
 
 .. _Energies:
 
@@ -46,7 +41,7 @@ Energies
 :meth:`espressomd.analyze.Analysis.energy`
 
 Returns the energies of the system.
-The different energetic contributions to the total energy can also be obtained (kinetic, bonded,non-bonded, Coulomb).
+The different energetic contributions to the total energy can also be obtained (kinetic, bonded, non-bonded, Coulomb).
 
 For example, ::
 
@@ -126,29 +121,6 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
     >>> print(count)
     [ 1.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
-
-
-.. _Radial distribution function:
-
-Radial distribution function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.rdf`
-
-Calculates a radial distribution function for given particle type and binning.
-The ``rdf_type`` defines if the analysis is performed on the current configuration (``rdf_type='rdf'``)
-or on averaged configurations stored with :meth:`analyze.append() <espressomd.analyze.Analysis.append>` (``rdf_type='<rdf>'``).
-
-For example, ::
-
-    rdf_bins = 100
-    r_min = 0.0
-    r_max = system.box_l[0] / 2.0
-    r, rdf_01 = S.analysis.rdf(rdf_type='<rdf>', type_list_a=[0], type_list_b=[1],
-                               r_min=r_min, r_max=r_max, r_bins=rdf_bins)
-    rdf_fp = open("rdf.dat", 'w')
-    for i in range(rdf_bins):
-        rdf_fp.write("%1.5e %1.5e %1.5e %1.5e\n" % (r[i], rdf_01[i]))
-    rdf_fp.close()
 
 
 .. _Structure factor:
@@ -231,26 +203,26 @@ constraints of any kind are not currently accounted for in the pressure
 calculations. The pressure is no longer correct, e.g., when particles
 are confined to a plane.
 
-Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial pressure formula. Later when the user calculates the ensemble average via e.g. :math:`\langle p \rangle \approx 1/N \sum_{i=1}^N p_i` however the ensemble average with all interactions present is performed. That means the contributions are not easy to interpret! Those are the contributions to the stress/pressure in a system where all interactions are present and therefore in a coupled system.
+Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial pressure formula. Later when the user calculates the ensemble average via e.g. :math:`\langle p \rangle \approx 1/N \sum_{i=1}^N p_i` however the ensemble average with all interactions present is performed. That means the contributions are not easy to interpret! Those are the contributions to the pressure in a system where all interactions are present and therefore in a coupled system.
 
-.. _Stress Tensor:
+.. _Pressure Tensor:
 
-Stress Tensor
-~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.stress_tensor`
+Pressure Tensor
+~~~~~~~~~~~~~~~
+:meth:`espressomd.analyze.Analysis.pressure_tensor`
 
-Computes the volume averaged instantaneous stress tensor of the system with options which are
-described by in :meth:`espressomd.analyze.Analysis.stress_tensor`. It is called a stress tensor but the sign convention follows that of a pressure tensor.
-In general do only use it for (on average) homogeneous systems. For inhomogeneous systems you need to use the local stress tensor.
+Computes the volume averaged instantaneous pressure tensor of the system with options which are
+described by in :meth:`espressomd.analyze.Analysis.pressure_tensor`.
+In general do only use it for (on average) homogeneous systems. For inhomogeneous systems you need to use the local pressure tensor.
 
-The instantaneous virial stress tensor is calculated by
+The instantaneous virial pressure tensor is calculated by
 
 .. math:: p_{(k,l)} = \frac{\sum_{i} {m_{i}v_{i}^{(k)}v_{i}^{(l)}}}{V} + \frac{\sum_{j>i}{F_{ij}^{(k)}r_{ij}^{(l)}}}{V}
 
 where the notation is the same as for the pressure. The superscripts :math:`k`
 and :math:`l` correspond to the components in the tensors and vectors.
 
-If electrostatic interactions are present then also the coulombic parts of the stress tensor need to be calculated. If P3M is present, then the instantaneous stress tensor is added to the above equation in accordance with :cite:`essmann95a` :
+If electrostatic interactions are present then also the coulombic parts of the pressure tensor need to be calculated. If P3M is present, then the instantaneous pressure tensor is added to the above equation in accordance with :cite:`essmann95a` :
 
 .. math :: p^\text{Coulomb, P3M}_{(k,l)} =p^\text{Coulomb, P3M, dir}_{(k,l)} + p^\text{Coulomb, P3M, rec}_{(k,l)},
 
@@ -267,12 +239,12 @@ The long ranged (k-space) part is given by:
 
 where :math:`S(\vec{k})` is the Fourier transformed charge density. Compared to Essmann we do not have the contribution :math:`p^\text{corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
 
-Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial stress tensor formula.
-Later when the user calculates the stress tensor via :math:`\langle p_{(k,l)}\rangle  \approx 1/N \sum_{i=1}^N p_{k,l}` however the ensemble average with all interactions present is performed.
-That means the contributions are not easy to interpret! Those are the contributions to the stress/pressure in a system where all interactions are present and therefore in a coupled system.
+Note: The different contributions which are returned are the summands that arise from force splitting :math:`\vec{F}_{i,j}={\vec{F}_{i,j}}_\text{bonded}+{\vec{F}_{i,j}}_\text{nonbonded}+...` in the virial pressure tensor formula.
+Later when the user calculates the pressure tensor via :math:`\langle p_{(k,l)}\rangle  \approx 1/N \sum_{i=1}^N p_{k,l}` however the ensemble average with all interactions present is performed.
+That means the contributions are not easy to interpret! Those are the contributions to the pressure in a system where all interactions are present and therefore in a coupled system.
 
 Note that the angular velocities of the particles are not included in
-the calculation of the stress tensor.
+the calculation of the pressure tensor.
 
 .. _Chains:
 
@@ -502,6 +474,8 @@ documentation for all available observables in :mod:`espressomd.observables`.
    - :class:`~espressomd.observables.CosPersistenceAngles`: Cosine of angles between bonds. The ``i``-th value in the result vector corresponds to the cosine of the angle between
      bonds that are separated by ``i`` bonds. This observable might be useful for measuring the persistence length of a polymer.
 
+   - :class:`~espressomd.observables.RDF`: Radial distribution function. Can be used on two different sets of particles.
+
 - Profile observables sampling the spatial profile of various quantities:
 
    - :class:`~espressomd.observables.DensityProfile`
@@ -526,7 +500,11 @@ documentation for all available observables in :mod:`espressomd.observables`.
 
 - System-wide observables
 
-   - :class:`~espressomd.observables.StressTensor`: Total stress tensor (see :ref:`stress tensor`)
+   - :class:`~espressomd.observables.Energy`: Total energy (see :ref:`Energies`)
+
+   - :class:`~espressomd.observables.Pressure`: Total scalar pressure (see :ref:`Pressure`)
+
+   - :class:`~espressomd.observables.PressureTensor`: Total pressure tensor (see :ref:`Pressure Tensor`)
 
    - :class:`~espressomd.observables.DPDStress`
 
@@ -715,12 +693,39 @@ discussion is presented in Ref. :cite:`ramirez10a`.
 Accumulators
 ------------
 
+.. _Time series:
+
+Time series
+~~~~~~~~~~~
+
+In order to take snapshots of an observable,
+:class:`espressomd.accumulators.TimeSeries` can be used::
+
+    import espressomd
+    import espressomd.observables
+    import espressomd.accumulators
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
+    position_observable = espressomd.observables.ParticlePositions(ids=(0,))
+    accumulator = espressomd.accumulators.TimeSeries(
+        obs=position_observable, delta_N=2)
+    system.auto_update_accumulators.add(accumulator)
+    system.integrator.run(10)
+    print(accumulator.time_series())
+
+In the example above the automatic update of the accumulator is used. However,
+it's also possible to manually update the accumulator by calling
+:meth:`espressomd.accumulators.TimeSeries.update`.
+
 .. _Mean-variance calculator:
 
 Mean-variance calculator
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to calculate the running mean and variance of an observable
+In order to calculate the running mean and variance of an observable,
 :class:`espressomd.accumulators.MeanVarianceCalculator` can be used::
 
     import espressomd
@@ -730,14 +735,14 @@ In order to calculate the running mean and variance of an observable
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    system.part.add(id=0, pos=[5.0, 5.0, 5.0])
+    system.part.add(id=0, pos=[5.0, 5.0, 5.0], v=[0, 2, 0])
     position_observable = espressomd.observables.ParticlePositions(ids=(0,))
     accumulator = espressomd.accumulators.MeanVarianceCalculator(
-        obs=position_observable, delta_N=1)
+        obs=position_observable, delta_N=2)
     system.auto_update_accumulators.add(accumulator)
-    # Perform integration (not shown)
-    print accumulator.get_mean()
-    print accumulator.get_variance()
+    system.integrator.run(10)
+    print(accumulator.get_mean())
+    print(accumulator.get_variance())
 
 In the example above the automatic update of the accumulator is used. However,
 it's also possible to manually update the accumulator by calling

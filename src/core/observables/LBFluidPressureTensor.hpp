@@ -16,22 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_STRESSTENSOR_HPP
+#ifndef OBSERVABLES_LB_FLUID_STRESS_HPP
+#define OBSERVABLES_LB_FLUID_STRESS_HPP
 
 #include "Observable.hpp"
-#include "Particle.hpp"
-#include "pressure.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+
 #include <vector>
 
 namespace Observables {
-
-class StressTensor : public Observable {
+class LBFluidPressureTensor : public Observable {
 public:
   std::vector<size_t> shape() const override { return {3, 3}; }
   std::vector<double> operator()() const override {
-    std::vector<double> res(n_values());
-    observable_compute_stress_tensor(res.data());
-    return res;
+
+    auto const unit_conversion =
+        1. / (lb_lbfluid_get_agrid() * pow(lb_lbfluid_get_tau(), 2));
+    auto const lower_triangle =
+        lb_lbfluid_get_pressure_tensor() * unit_conversion;
+    return {lower_triangle[0], lower_triangle[1], lower_triangle[3],
+            lower_triangle[1], lower_triangle[2], lower_triangle[4],
+            lower_triangle[3], lower_triangle[4], lower_triangle[5]};
   }
 };
 

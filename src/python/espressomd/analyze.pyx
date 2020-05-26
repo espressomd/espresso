@@ -43,19 +43,6 @@ class Analysis:
             raise TypeError("An instance of System is required as argument")
         self._system = system
 
-    #
-    # Append configs
-    #
-
-    def append(self):
-        """Append configuration for averaged analysis."""
-        assert get_n_part(), "No particles to append!"
-        if get_n_configs() > 0:
-            assert analyze.get_n_part_conf() == get_n_part(), \
-                "All configurations stored must have the same length"
-
-        analyze.analyze_append(analyze.partCfg())
-
     def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particle types.
 
@@ -209,11 +196,12 @@ class Analysis:
             * ``"nonbonded", <type_i>, <type_j>``: nonbonded pressure which arises from the interactions between type_i and type_j
             * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and with the same mol_id
             * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb stress tensor.
-              For how the stress tensor is calculated, see below. The averaged value in an isotropic NVT simulation is equivalent to the average of
+            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb pressure tensor.
+              For how the pressure tensor is calculated, see :ref:`Pressure Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
               :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
-            * ``"dipolar"``: TODO
-            * ``"virtual_sites"``: Stress contribution due to virtual sites
+            * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"dipolar"``: not implemented
+            * ``"virtual_sites"``: Pressure contribution due to virtual sites
 
         """
         check_type_or_throw_except(v_comp, 1, bool, "v_comp must be a boolean")
@@ -221,10 +209,8 @@ class Analysis:
         # Dict to store the results
         p = OrderedDict()
 
-        # Update in ESPResSo core if necessary
-        if not (
-                analyze.obs_scalar_pressure.is_initialized and analyze.obs_scalar_pressure.v_comp == v_comp):
-            analyze.update_pressure(v_comp)
+        # Update in ESPResSo core
+        analyze.update_pressure(v_comp)
 
         # Total pressure
         p["total"] = analyze.obs_scalar_pressure.accumulate()
@@ -303,13 +289,13 @@ class Analysis:
 
         return p
 
-    def stress_tensor(self, v_comp=False):
-        """Calculate the instantaneous stress tensor (in parallel). This is
+    def pressure_tensor(self, v_comp=False):
+        """Calculate the instantaneous pressure_tensor (in parallel). This is
         sensible in an anisotropic system. Still it assumes that the system is
-        homogeneous since the volume averaged stress tensor is used. Do not use
-        this stress tensor in an (on average) inhomogeneous system. If the
-        system is (on average inhomogeneous) then use a local stress tensor.
-        In order to obtain the stress tensor, the ensemble average needs to be
+        homogeneous since the volume averaged pressure_tensor is used. Do not use
+        this pressure_tensor in an (on average) inhomogeneous system. If the
+        system is (on average inhomogeneous) then use a local pressure_tensor.
+        In order to obtain the pressure_tensor, the ensemble average needs to be
         calculated.
 
         Returns
@@ -317,17 +303,18 @@ class Analysis:
         :obj:`dict`
             A dictionary with the following keys:
 
-            * ``"total"``: total stress tensor
-            * ``"kinetic"``: kinetic stress tensor
-            * ``"bonded"``: total bonded stress tensor
-            * ``"bonded", <bond_type>``: bonded stress tensor which arises from the given bond_type
-            * ``"nonbonded"``: total nonbonded stress tensor
-            * ``"nonbonded", <type_i>, <type_j>``: nonbonded stress tensor which arises from the interactions between type_i and type_j
-            * ``"nonbonded_intra" <type_i>, <type_j>``: nonbonded stress tensor between short ranged forces between type i and j and with the same mol_id
-            * ``"nonbonded_inter" <type_i>, <type_j>``: nonbonded stress tensor between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Maxwell stress tensor, how it is calculated depends on the method
-            * ``"dipolar"``: TODO
-            * ``"virtual_sites"``: Stress tensor contribution for virtual sites
+            * ``"total"``: total pressure tensor
+            * ``"kinetic"``: kinetic pressure tensor
+            * ``"bonded"``: total bonded pressure tensor
+            * ``"bonded", <bond_type>``: bonded pressure tensor which arises from the given bond_type
+            * ``"nonbonded"``: total nonbonded pressure tensor
+            * ``"nonbonded", <type_i>, <type_j>``: nonbonded pressure tensor which arises from the interactions between type_i and type_j
+            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and with the same mol_id
+            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and different mol_ids
+            * ``"coulomb"``: Maxwell pressure tensor, how it is calculated depends on the method
+            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"dipolar"``: not implemented
+            * ``"virtual_sites"``: pressure tensor contribution for virtual sites
 
         """
         check_type_or_throw_except(v_comp, 1, bool, "v_comp must be a boolean")
@@ -335,16 +322,14 @@ class Analysis:
         # Dict to store the results
         p = OrderedDict()
 
-        # Update in ESPResSo core if necessary
-        if not (
-                analyze.obs_stress_tensor.is_initialized and analyze.obs_stress_tensor.v_comp == v_comp):
-            analyze.update_pressure(v_comp)
+        # Update in ESPResSo core
+        analyze.update_pressure(v_comp)
 
         # Total pressure
         cdef int i
         total = np.zeros(9)
         for i in range(9):
-            total[i] = analyze.obs_stress_tensor.accumulate(0.0, i)
+            total[i] = analyze.obs_pressure_tensor.accumulate(0.0, i)
 
         p["total"] = total.reshape((3, 3))
 
@@ -352,14 +337,14 @@ class Analysis:
 
         # Kinetic
         p["kinetic"] = create_nparray_from_double_span(
-            analyze.obs_stress_tensor.kinetic).reshape((3, 3))
+            analyze.obs_pressure_tensor.kinetic).reshape((3, 3))
 
         # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != BONDED_IA_NONE:
                 p["bonded", i] = np.reshape(create_nparray_from_double_span(
-                    analyze.obs_stress_tensor.bonded_contribution(i)), (3, 3))
+                    analyze.obs_pressure_tensor.bonded_contribution(i)), (3, 3))
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
 
@@ -373,17 +358,17 @@ class Analysis:
             for j in range(i, analyze.max_seen_particle_type):
                 p["non_bonded", i, j] = np.reshape(
                     create_nparray_from_double_span(
-                        analyze.obs_stress_tensor.non_bonded_contribution(i, j)), (3, 3))
+                        analyze.obs_pressure_tensor.non_bonded_contribution(i, j)), (3, 3))
                 total_non_bonded += p["non_bonded", i, j]
 
                 p["non_bonded_intra", i, j] = np.reshape(
                     create_nparray_from_double_span(
-                        analyze.obs_stress_tensor_non_bonded.non_bonded_intra_contribution(i, j)), (3, 3))
+                        analyze.obs_pressure_tensor_non_bonded.non_bonded_intra_contribution(i, j)), (3, 3))
                 total_non_bonded_intra += p["non_bonded_intra", i, j]
 
                 p["non_bonded_inter", i, j] = np.reshape(
                     create_nparray_from_double_span(
-                        analyze.obs_stress_tensor_non_bonded.non_bonded_inter_contribution(i, j)), (3, 3))
+                        analyze.obs_pressure_tensor_non_bonded.non_bonded_inter_contribution(i, j)), (3, 3))
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
 
         p["non_bonded_intra"] = total_non_bonded_intra
@@ -395,7 +380,7 @@ class Analysis:
             cdef np.ndarray coulomb
             coulomb = np.reshape(
                 create_nparray_from_double_span(
-                    analyze.obs_stress_tensor.coulomb), (-1, 3, 3))
+                    analyze.obs_pressure_tensor.coulomb), (-1, 3, 3))
             for i in range(coulomb.shape[0]):
                 p["coulomb", i] = coulomb[i]
             p["coulomb"] = np.sum(coulomb, axis=0)
@@ -405,7 +390,7 @@ class Analysis:
             cdef np.ndarray dipolar
             dipolar = np.reshape(
                 create_nparray_from_double_span(
-                    analyze.obs_stress_tensor.dipolar), (-1, 3, 3))
+                    analyze.obs_pressure_tensor.dipolar), (-1, 3, 3))
             for i in range(dipolar.shape[0]):
                 p["dipolar", i] = dipolar[i]
             p["dipolar"] = np.sum(dipolar, axis=0)
@@ -413,10 +398,10 @@ class Analysis:
         # virtual sites
         IF VIRTUAL_SITES_RELATIVE == 1:
             cdef np.ndarray virtual_sites
-            if analyze.obs_stress_tensor.virtual_sites.size():
+            if analyze.obs_pressure_tensor.virtual_sites.size():
                 virtual_sites = np.reshape(
                     create_nparray_from_double_span(
-                        analyze.obs_stress_tensor.virtual_sites), (-1, 3, 3))
+                        analyze.obs_pressure_tensor.virtual_sites), (-1, 3, 3))
                 for i in range(virtual_sites.shape[0]):
                     p["virtual_sites", i] = virtual_sites[i]
                 p["virtual_sites"] = np.sum(virtual_sites, axis=0)
@@ -442,8 +427,20 @@ class Analysis:
         Returns
         -------
         :obj:`dict`
-            A dictionary with keys ``total``, ``kinetic``, ``bonded``, ``nonbonded``,
-            ``coulomb``, ``external_fields``.
+            A dictionary with the following keys:
+
+            * ``"total"``: total energy
+            * ``"kinetic"``: linear and rotational kinetic energy
+            * ``"bonded"``: total bonded energy
+            * ``"bonded", <bond_type>``: bonded energy which arises from the given bond_type
+            * ``"nonbonded"``: total nonbonded energy
+            * ``"nonbonded", <type_i>, <type_j>``: nonbonded energy which arises from the interactions between type_i and type_j
+            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and with the same mol_id
+            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and different mol_ids
+            * ``"coulomb"``: Coulomb energy, how it is calculated depends on the method
+            * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"dipolar"``: dipolar energy
+            * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``) and their corrections (``i=2``)
 
 
         Examples
@@ -459,9 +456,8 @@ class Analysis:
 
         e = OrderedDict()
 
-        if not analyze.obs_energy.is_initialized:
-            analyze.update_energy()
-            handle_errors("calc_long_range_energies failed")
+        analyze.update_energy()
+        handle_errors("calc_long_range_energies failed")
 
         # Total energy
         cdef int i
@@ -682,90 +678,6 @@ class Analysis:
             analyze.partCfg(), sf_types, sf_order)
 
         return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
-
-    #
-    # RDF
-    #
-
-    def rdf(self, rdf_type=None, type_list_a=None, type_list_b=None,
-            r_min=0.0, r_max=None, r_bins=100, n_conf=None):
-        """
-        Calculate a radial distribution function.
-        The result is normalized by the spherical bin shell, the total number
-        of particle pairs and the system volume.
-
-
-        Parameters
-        ----------
-        rdf_type : :obj:`str`, \{'rdf', '<rdf>'\}
-            Type of analysis.
-        type_list_a : lists of :obj:`int`
-            Left :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
-        type_list_b : lists of :obj:`int`, optional
-            Right :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
-        r_min : :obj:`float`
-            Minimal distance to consider.
-        r_max : :obj:`float`
-            Maximal distance to consider.
-        r_bins : :obj:`int`
-            Number of bins.
-        n_conf : :obj:`int`, optional
-            If ``rdf_type`` is ``'<rdf>'`` this determines
-            the number of stored configs that are used (if
-            ``None``, all configurations are used).
-
-        Returns
-        -------
-        :obj:`ndarray`
-            Where [0] contains the midpoints of the bins,
-            and [1] contains the values of the rdf.
-
-        """
-
-        if rdf_type is None:
-            raise ValueError("rdf_type must not be empty!")
-        if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):
-            raise ValueError("type_list_a has to be a list!")
-        if (type_list_b is not None) and (
-                not hasattr(type_list_b, '__iter__')):
-            raise ValueError("type_list_b has to be a list!")
-        if type_list_b is None:
-            type_list_b = type_list_a
-
-        if rdf_type != 'rdf':
-            if get_n_configs() == 0:
-                raise ValueError("No configurations founds!\n",
-                                 "Use `analyze.append()` to save configurations,",
-                                 "or `analyze.rdf('rdf')` to only look at current RDF!""")
-            if n_conf is None:
-                n_conf = get_n_configs()
-
-        if r_max is None:
-            r_max = min(Globals().box_l) / 2
-
-        cdef vector[double] rdf
-        rdf.resize(r_bins)
-        cdef vector[int] p1_types = type_list_a
-        cdef vector[int] p2_types = type_list_b
-
-        if rdf_type == 'rdf':
-            analyze.calc_rdf(analyze.partCfg(), p1_types,
-                             p2_types, r_min, r_max, r_bins, rdf)
-        elif rdf_type == '<rdf>':
-            analyze.calc_rdf_av(
-                analyze.partCfg(), p1_types, p2_types, r_min,
-                r_max, r_bins, rdf, n_conf)
-        else:
-            raise ValueError("Unknown rdf_type value {!r}".format(rdf_type))
-
-        r = np.empty(r_bins)
-        bin_width = (r_max - r_min) / r_bins
-        rr = r_min + bin_width / 2.0
-        for i in range(r_bins):
-            r[i] = rr
-            rr += bin_width
-
-        return np.array([r, rdf])
 
     #
     # distribution

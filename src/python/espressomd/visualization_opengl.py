@@ -2139,6 +2139,8 @@ class Slitpore(Shape):
         self.pore_length = np.array(self.shape.get_parameter('pore_length'))
         self.pore_mouth = np.array(self.shape.get_parameter('pore_mouth'))
         self.pore_width = np.array(self.shape.get_parameter('pore_width'))
+        self.dividing_plane = np.array(
+            self.shape.get_parameter('dividing_plane'))
         self.max_box_l = max(self.box_l)
 
     def draw(self):
@@ -2146,13 +2148,14 @@ class Slitpore(Shape):
         # If pore is large, an additional wall is necessary
         if self.pore_width > 2. * self.lower_smoothing_radius:
             wall_0 = [
-                [0.5 * (self.max_box_l - self.pore_width) + self.lower_smoothing_radius,
+                [self.dividing_plane - 0.5 * self.pore_width + self.lower_smoothing_radius,
                  0., self.pore_mouth - self.pore_length],
-                [0.5 * (self.max_box_l + self.pore_width) - self.lower_smoothing_radius,
+                [self.dividing_plane + 0.5 * self.pore_width - self.lower_smoothing_radius,
                  0., self.pore_mouth - self.pore_length],
-                [0.5 * (self.max_box_l + self.pore_width) - self.lower_smoothing_radius,
-                 self.max_self.box_l, self.pore_mouth - self.pore_length],
-                [0.5 * (self.max_box_l - self.pore_width) + self.lower_smoothing_radius, self.max_box_l, self.pore_mouth - self.pore_length]]
+                [self.dividing_plane + 0.5 * self.pore_width - self.lower_smoothing_radius,
+                 self.max_box_l, self.pore_mouth - self.pore_length],
+                [self.dividing_plane - 0.5 * self.pore_width + self.lower_smoothing_radius,
+                 self.max_box_l, self.pore_mouth - self.pore_length]]
             draw_plane(wall_0, self.color, self.material)
 
         # Add the remaining walls
@@ -2164,36 +2167,39 @@ class Slitpore(Shape):
 
         wall_2 = [
             [0., 0., self.pore_mouth],
-            [0.5 * (self.max_box_l - self.pore_width) -
+            [self.dividing_plane - 0.5 * self.pore_width -
              self.upper_smoothing_radius, 0., self.pore_mouth],
-            [0.5 * (self.max_box_l - self.pore_width) -
+            [self.dividing_plane - 0.5 * self.pore_width -
              self.upper_smoothing_radius, self.max_box_l, self.pore_mouth],
             [0., self.max_box_l, self.pore_mouth]]
 
         wall_3 = [
-            [0.5 * (self.max_box_l + self.pore_width) +
+            [self.dividing_plane + 0.5 * self.pore_width +
              self.upper_smoothing_radius, 0., self.pore_mouth],
             [self.max_box_l, 0., self.pore_mouth],
             [self.max_box_l, self.max_box_l, self.pore_mouth],
-            [0.5 * (self.max_box_l + self.pore_width) + self.upper_smoothing_radius, self.max_box_l, self.pore_mouth]]
+            [self.dividing_plane + 0.5 * self.pore_width +
+             self.upper_smoothing_radius, self.max_box_l, self.pore_mouth]]
 
         wall_4 = [
-            [0.5 * (self.max_box_l - self.pore_width), 0.,
+            [self.dividing_plane - 0.5 * self.pore_width, 0.,
              self.pore_mouth - self.upper_smoothing_radius],
-            [0.5 * (self.max_box_l - self.pore_width), self.max_box_l,
+            [self.dividing_plane - 0.5 * self.pore_width, self.max_box_l,
              self.pore_mouth - self.upper_smoothing_radius],
-            [0.5 * (self.max_box_l - self.pore_width), self.max_box_l, self.pore_mouth -
-             self.pore_length + self.lower_smoothing_radius],
-            [0.5 * (self.max_box_l - self.pore_width), 0., self.pore_mouth - self.pore_length + self.lower_smoothing_radius]]
+            [self.dividing_plane - 0.5 * self.pore_width, self.max_box_l,
+             self.pore_mouth - self.pore_length + self.lower_smoothing_radius],
+            [self.dividing_plane - 0.5 * self.pore_width, 0.,
+             self.pore_mouth - self.pore_length + self.lower_smoothing_radius]]
 
         wall_5 = [
-            [0.5 * (self.max_box_l + self.pore_width), 0.,
+            [self.dividing_plane + 0.5 * self.pore_width, 0.,
              self.pore_mouth - self.upper_smoothing_radius],
-            [0.5 * (self.max_box_l + self.pore_width), self.max_box_l,
+            [self.dividing_plane + 0.5 * self.pore_width, self.max_box_l,
              self.pore_mouth - self.upper_smoothing_radius],
-            [0.5 * (self.max_box_l + self.pore_width), self.max_box_l, self.pore_mouth -
-             self.pore_length + self.lower_smoothing_radius],
-            [0.5 * (self.max_box_l + self.pore_width), 0., self.pore_mouth - self.pore_length + self.lower_smoothing_radius]]
+            [self.dividing_plane + 0.5 * self.pore_width, self.max_box_l,
+             self.pore_mouth - self.pore_length + self.lower_smoothing_radius],
+            [self.dividing_plane + 0.5 * self.pore_width, 0.,
+             self.pore_mouth - self.pore_length + self.lower_smoothing_radius]]
 
         draw_plane(wall_1, self.color, self.material)
         draw_plane(wall_2, self.color, self.material)
@@ -2206,7 +2212,7 @@ class Slitpore(Shape):
 
         OpenGL.GL.glPushMatrix()
         quadric = OpenGL.GLU.gluNewQuadric()
-        OpenGL.GL.glTranslate(0.5 * self.max_box_l - self.upper_smoothing_radius -
+        OpenGL.GL.glTranslate(self.dividing_plane - self.upper_smoothing_radius -
                               0.5 * self.pore_width, 0, self.pore_mouth - self.upper_smoothing_radius)
         OpenGL.GL.glRotatef(ax, rx, ry, 0.)
 

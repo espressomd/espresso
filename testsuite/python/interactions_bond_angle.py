@@ -128,10 +128,10 @@ class InteractionsAngleBondTest(ut.TestCase):
             # No pressure (isotropic compression preserves angles)
             self.assertAlmostEqual(
                 self.system.analysis.pressure()["bonded"], 0, delta=1E-12)
-            # Stress tensor trace=0 (isotropic compression preserves angles,
+            # Pressure tensor trace=0 (isotropic compression preserves angles,
             # consistency with pressure)
             self.assertAlmostEqual(
-                np.trace(self.system.analysis.stress_tensor()["bonded"]), 0, delta=1E-12)
+                np.trace(self.system.analysis.pressure_tensor()["bonded"]), 0, delta=1E-12)
 
             # Pressure_ij =sum_p 1/V *F_i r_j
             # with r position of particle p and F force on particle p.
@@ -143,7 +143,7 @@ class InteractionsAngleBondTest(ut.TestCase):
                 + np.outer(p2.f, self.system.distance_vec(p0, p2))
             p_tensor_expected /= self.system.volume()
             np.testing.assert_allclose(
-                self.system.analysis.stress_tensor()["bonded"],
+                self.system.analysis.pressure_tensor()["bonded"],
                 p_tensor_expected, atol=1E-12)
 
         # Remove bonds
