@@ -1265,7 +1265,7 @@ void ELC_P3M_self_forces(const ParticleRange &particles) {
 
   for (auto &p : particles) {
     if (p.r.p[2] < elc_params.space_layer) {
-      q = elc_params.delta_mid_bot * p.p.q * p.p.q;
+      q = coulomb.prefactor * elc_params.delta_mid_bot * p.p.q * p.p.q;
 
       pos[0] = p.r.p[0];
       pos[1] = p.r.p[1];
@@ -1275,7 +1275,7 @@ void ELC_P3M_self_forces(const ParticleRange &particles) {
       p3m_add_pair_force(q, d, d.norm(), p.f.f);
     }
     if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-      q = elc_params.delta_mid_top * p.p.q * p.p.q;
+      q = coulomb.prefactor * elc_params.delta_mid_top * p.p.q * p.p.q;
       pos[0] = p.r.p[0];
       pos[1] = p.r.p[1];
       pos[2] = 2 * elc_params.h - p.r.p[2];
