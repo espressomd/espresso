@@ -212,7 +212,7 @@ Run the following commands:
       py37-matplotlib py37-ipython py37-jupyter
     sudo port select --set cython cython37
     sudo port select --set python3 python37
-    sudo port select --set mpi openmpi-mp
+    sudo port select --set mpi openmpi-mp-fortran
 
 
 Installing packages using Homebrew
