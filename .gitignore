@@ -52,6 +52,7 @@ doc/dg/background_errors.unsorted
 
 # IDE
 .idea
+.vscode
 
 # Compiled python
 *.pyc
