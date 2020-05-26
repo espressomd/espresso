@@ -24,7 +24,7 @@ void walberla_mpi_init() {
 }
 
 namespace {
-std::unique_ptr<LbWalberlaBase> lb_walberla_instance;
+LbWalberlaBase *lb_walberla_instance = nullptr;
 }
 
 LbWalberlaBase *lb_walberla() {
@@ -32,7 +32,7 @@ LbWalberlaBase *lb_walberla() {
     throw std::runtime_error(
         "Attempted access to uninitialized LbWalberla instance.");
   }
-  return lb_walberla_instance.get();
+  return lb_walberla_instance;
 }
 
 void init_lb_walberla(double viscosity, double density, double agrid,
@@ -42,17 +42,17 @@ void init_lb_walberla(double viscosity, double density, double agrid,
   // handled from Python in a parallel simulation
   try {
 
-    lb_walberla_instance = std::make_unique<walberla::LbWalberlaD3Q19TRT>(
-        walberla::LbWalberlaD3Q19TRT{viscosity, density, agrid, tau,
-                                     box_dimensions, node_grid, 1});
+    lb_walberla_instance =
+        new walberla::LbWalberlaD3Q19TRT(walberla::LbWalberlaD3Q19TRT{
+            viscosity, density, agrid, tau, box_dimensions, node_grid, 1});
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
-    lb_walberla_instance.reset(nullptr);
+    lb_walberla_instance = nullptr;
   }
 }
 REGISTER_CALLBACK(init_lb_walberla)
 
-void destruct_lb_walberla() { lb_walberla_instance.reset(nullptr); }
+void destruct_lb_walberla() { delete lb_walberla_instance; }
 REGISTER_CALLBACK(destruct_lb_walberla)
 
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
