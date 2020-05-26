@@ -39,7 +39,7 @@ class ELC_vs_analytic(ut.TestCase):
     minimum_distance_to_wall = 0.1
     zPos = np.linspace(
         minimum_distance_to_wall,
-        box_l - minimum_distance_to_wall,
+        box_l - minimum_distance_to_wall - distance,
         number_samples)
     q = np.arange(-5.0, 5.1, 2.5)
     prefactor = 2.0
@@ -49,7 +49,7 @@ class ELC_vs_analytic(ut.TestCase):
         Testing ELC against the analytic solution for an infinite large simulation box with dielectric contrast on the bottom of the box, which can be calculated analytically with image charges.
         """
         self.system.part.add(id=1, pos=self.system.box_l / 2., q=self.q[0])
-        self.system.part.add(id=2, pos=self.system.box_l / 2. + [0, 0, 1],
+        self.system.part.add(id=2, pos=self.system.box_l / 2. + [0, 0, self.distance],
                              q=-self.q[0])
 
         self.system.box_l = [self.box_l, self.box_l, self.box_l + self.elc_gap]
