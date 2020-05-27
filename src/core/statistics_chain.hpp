@@ -28,17 +28,9 @@
 
 #include "PartCfg.hpp"
 
-/** \name Exported Variables */
-/************************************************************/
-/** Particles' initial positions (needed for g1(t), g2(t), g3(t)) */
-/*@{*/
-extern float *partCoord_g;
-extern float *partCM_g;
-extern int n_part_g;
-extern int n_chains_g;
-/*@}*/
-
-/** data for a system consisting of chains. TBRS. */
+/** \name Exported Variables
+ *  data for a system consisting of chains. TBRS.
+ */
 /*@{*/
 extern int chain_start;
 extern int chain_n_chains;

@@ -27,12 +27,6 @@
 #include "statistics.hpp"
 #include <vector>
 
-/** Particles' initial positions (needed for g1(t), g2(t), g3(t)) */
-/*@{*/
-float *partCoord_g = nullptr, *partCM_g = nullptr;
-int n_part_g = 0, n_chains_g = 0;
-/*@}*/
-
 /** data for a system consisting of chains. TBRS. */
 /*@{*/
 int chain_start = 0;

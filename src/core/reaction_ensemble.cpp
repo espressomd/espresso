@@ -422,11 +422,10 @@ void WangLandauReactionEnsemble::on_end_reaction(int &accepted_state) {
  * randomly in the box. Matching particles simply change the types. If there
  * are more reactants than products, old reactant particles are deleted.
  */
-bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
+void ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
 
   SingleReaction &current_reaction = reactions[reaction_id];
   current_reaction.tried_moves += 1;
-  bool reaction_is_accepted = false;
   particle_inside_exclusion_radius_touched = false;
   int old_state_index = -1; // for Wang-Landau algorithm
   on_reaction_entry(old_state_index);
@@ -434,7 +433,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     // makes sure, no incomplete reaction is performed -> only need to consider
     // rollback of complete reactions
     on_reaction_rejection_directly_after_entry(old_state_index);
-    return reaction_is_accepted;
+    return;
   }
 
   // calculate potential energy
@@ -509,7 +508,6 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
       delete_particle(to_be_deleted_hidden_ids[i]); // delete particle
     }
     current_reaction.accepted_moves += 1;
-    reaction_is_accepted = true;
   } else {
     // reject
     accepted_state = old_state_index;
@@ -523,10 +521,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     // 3) restore previously changed reactant particles
     restore_properties(changed_particles_properties,
                        number_of_saved_properties);
-    reaction_is_accepted = false;
   }
   on_end_reaction(accepted_state);
-  return reaction_is_accepted;
 }
 
 /**
@@ -758,7 +754,6 @@ int WangLandauReactionEnsemble::on_mc_use_WL_get_new_state() {
 bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     int type, int particle_number_of_type_to_be_changed, bool use_wang_landau) {
   m_tried_configurational_MC_moves += 1;
-  bool got_accepted = false;
   particle_inside_exclusion_radius_touched = false;
 
   int old_state_index = -1;
@@ -773,7 +768,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     if (use_wang_landau) {
       on_mc_rejection_directly_after_entry(old_state_index);
     }
-    return got_accepted;
+    return false;
   }
 
   const double E_pot_old = calculate_current_potential_energy_of_system();
@@ -865,21 +860,20 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
     m_accepted_configurational_MC_moves += 1;
-    got_accepted = true;
     if (use_wang_landau) {
       on_mc_accept(new_state_index);
     }
-  } else {
-    // reject
-    // modify wang_landau histogram and potential
-    if (use_wang_landau) {
-      on_mc_reject(old_state_index);
-    }
-    // create particles again at the positions they were
-    for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
-      place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
+    return true;
   }
-  return got_accepted;
+  // reject
+  // modify wang_landau histogram and potential
+  if (use_wang_landau) {
+    on_mc_reject(old_state_index);
+  }
+  // create particles again at the positions they were
+  for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
+    place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
+  return false;
 }
 
 ///////////////////////////////////////////// Wang-Landau algorithm
@@ -1260,13 +1254,9 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
  */
 int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
   m_WL_tries += reaction_steps;
-  bool got_accepted = false;
   for (int step = 0; step < reaction_steps; step++) {
     int reaction_id = i_random(reactions.size());
-    got_accepted = generic_oneway_reaction(reaction_id);
-    if (got_accepted) {
-      m_WL_accepted_moves += 1;
-    }
+    generic_oneway_reaction(reaction_id);
     if (can_refine_wang_landau_one_over_t() && m_WL_tries % 10000 == 0) {
       // check for convergence
       if (achieved_desired_number_of_refinements_one_over_t()) {

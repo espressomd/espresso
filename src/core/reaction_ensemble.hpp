@@ -165,7 +165,7 @@ public:
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
-  bool generic_oneway_reaction(int reaction_id);
+  void generic_oneway_reaction(int reaction_id);
   virtual void on_reaction_entry(int &old_state_index) {}
   virtual void
   on_reaction_rejection_directly_after_entry(int &old_state_index) {}
@@ -209,10 +209,6 @@ private:
       std::vector<int> &reactant_coefficients,
       std::vector<int> &product_coefficients); // should only be used when
                                                // defining a new reaction
-  int m_invalid_charge =
-      -10000; // this is the default charge which is assigned to a type which
-              // occurs in a reaction. this charge has to be overwritten. if it
-              // is not overwritten the reaction ensemble will complain.
   void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
   void hide_particle(int p_id, int previous_type);
@@ -319,7 +315,6 @@ private:
   double wang_landau_parameter = 1.0; // equals the logarithm to basis e of the
   // modification factor of the degeneracy of
   // states when the state is visited
-  double initial_wang_landau_parameter = 1.0;
 
   int int_fill_value = -10;
   double double_fill_value = -10.0;
@@ -341,7 +336,6 @@ private:
 
   void update_wang_landau_potential_and_histogram(
       int index_of_state_after_acceptance_or_rejection);
-  int m_WL_accepted_moves = 0;
   int m_WL_tries = 0;
   bool can_refine_wang_landau_one_over_t();
   bool m_system_is_in_1_over_t_regime = false;
