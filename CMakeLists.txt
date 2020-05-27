@@ -36,6 +36,7 @@ include(GNUInstallDirs)
 project(ESPResSo)
 include(FindPythonModule)
 include(option_enum)
+include(option_if_available)
 if(POLICY CMP0074)
   # make find_package() use <PackageName>_ROOT variables
   cmake_policy(SET CMP0074 NEW)
@@ -69,11 +70,11 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # ##############################################################################
 
 option(WITH_PYTHON "Build with Python bindings" ON)
-option(WITH_GSL "Build with GSL support" ON)
+option_if_available(WITH_GSL "Build with GSL support" ON)
 option(WITH_CUDA "Build with GPU support" OFF)
-option(WITH_HDF5 "Build with HDF5 support" ON)
+option_if_available(WITH_HDF5 "Build with HDF5 support" ON)
 option(WITH_TESTS "Enable tests" ON)
-option(WITH_SCAFACOS "Build with Scafacos support" OFF)
+option_if_available(WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
@@ -186,17 +187,34 @@ endif()
 
 # We need the parallel hdf5 version!
 if(WITH_HDF5)
+  # The FindHDF5 function will fall back to the serial version if no parallel
+  # version was found, and print to the CMake log that HDF5 was found. There is
+  # no QUIET argument to override that message. This can be confusing to people
+  # who are not familiar with the way hdf5 is distributed in Linux package
+  # repositories (libhdf5-dev is the serial version).
   set(HDF5_PREFER_PARALLEL 1)
   find_package(HDF5 "1.8" COMPONENTS C)
-  if(HDF5_IS_PARALLEL)
-    set(H5MD 1)
-    include(FindPythonModule)
-    find_python_module(h5py)
-    add_feature_info(HDF5 ON "parallel")
-  else()
-    unset(H5MD)
-    unset(HDF5_FOUND)
-  endif(HDF5_IS_PARALLEL)
+  if(HDF5_FOUND)
+    if(HDF5_IS_PARALLEL)
+      set(H5MD 1)
+      include(FindPythonModule)
+      find_python_module(h5py)
+      add_feature_info(HDF5 ON "parallel")
+    else()
+      unset(H5MD)
+      set(HDF5_FOUND FALSE)
+      if(NOT WITH_HDF5_IS_DEFAULT_VALUE)
+        message(
+          FATAL_ERROR
+            "Optional dependency HDF5 explicitly requested, but parallel version not found."
+        )
+      endif()
+    endif(HDF5_IS_PARALLEL)
+  elseif(NOT WITH_HDF5_IS_DEFAULT_VALUE)
+    message(
+      FATAL_ERROR
+        "Optional dependency HDF5 explicitly requested, but not found.")
+  endif(HDF5_FOUND)
 endif(WITH_HDF5)
 
 # Check for the h5xx submodule and try to check it out if not found or update it
@@ -220,6 +238,10 @@ if(WITH_SCAFACOS)
   pkg_check_modules(SCAFACOS scafacos)
   if(SCAFACOS_FOUND)
     set(SCAFACOS 1)
+  elseif(NOT WITH_SCAFACOS_IS_DEFAULT_VALUE)
+    message(
+      FATAL_ERROR
+        "Optional dependency ScaFaCoS explicitly requested, but not found.")
   endif(SCAFACOS_FOUND)
 endif(WITH_SCAFACOS)
 
@@ -227,6 +249,10 @@ if(WITH_GSL)
   find_package(GSL)
   if(GSL_FOUND)
     set(GSL 1)
+  elseif(NOT WITH_GSL_IS_DEFAULT_VALUE)
+    message(
+      FATAL_ERROR "Optional dependency GSL explicitly requested, but not found."
+    )
   endif(GSL_FOUND)
 endif(WITH_GSL)
 
