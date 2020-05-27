@@ -24,6 +24,8 @@ import espressomd.lb
 from espressomd.observables import LBFluidPressureTensor
 import sys
 
+from tests_common import get_lb_nodes_around_pos
+
 
 class TestLB:
 
@@ -331,32 +333,37 @@ class TestLB:
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):
         self.system.thermostat.turn_off()
-        self.system.actors.clear()
         self.system.part.clear()
-        v_part = np.array([1, 2, 3])
-        v_fluid = np.array([1.2, 4.3, 0.2])
+        self.system.actors.clear()
         self.lbf = self.lb_class(
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
-            agrid=self.params['agrid'],
-            tau=self.system.time_step,
-            ext_force_density=[0, 0, 0])
+                visc=self.params['viscosity'],
+                dens=self.params['dens'],
+                agrid=self.params['agrid'],
+                tau=self.system.time_step,
+                ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
-        if self.interpolation:
-            self.lbf.set_interpolation_order("quadratic")
         self.system.thermostat.set_lb(
-            LB_fluid=self.lbf,
-            seed=3,
-            gamma=self.params['friction'])
-        self.system.part.add(
-            pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
-        self.lbf[0, 0, 0].velocity = v_fluid
-        if self.interpolation:
-            v_fluid = self.lbf.get_interpolated_velocity(
-                self.system.part[0].pos)
-        self.system.integrator.run(1)
-        np.testing.assert_allclose(
-            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
+                LB_fluid=self.lbf,
+                seed=3,
+                gamma=self.params['friction'])
+        for n in self.lbf.nodes():
+                n.velocity = np.random.random(3) -.5
+                n.velocity = [3.,2.,1.]
+        for pos in [0,0,0], self.system.box_l, self.system.box_l/2,self.system.box_l/2-self.params['agrid']/2:
+            p = self.system.part.add(pos=pos,v=[1,2,3])
+
+            v_part = p.v 
+            coupling_pos = p.pos +self.system.time_step *p.v
+            v_fluid = self.lbf.get_interpolated_velocity(coupling_pos)
+            lb_nodes =get_lb_nodes_around_pos(coupling_pos,self.system,self.lbf)
+            
+            self.system.integrator.run(1)
+            np.testing.assert_allclose(
+                np.copy(p.f), -self.params['friction'] * (v_part - v_fluid), atol=1E-10)
+            applied_forces = np.array([n.last_applied_force for n in lb_nodes])
+            np.testing.assert_allclose(np.sum(applied_forces,axis=0),-np.copy(p.f),atol=1E-10)
+
+            p.remove()
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ext_force_density(self):

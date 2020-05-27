@@ -66,6 +66,7 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
     Vector3i lb_lbfluid_get_shape() except +
     const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
+    const Vector3d lb_lbnode_get_last_applied_force(const Vector3i & ind) except +
     void lb_lbnode_set_velocity(const Vector3i & ind, const Vector3d & u) except +
     double lb_lbnode_get_density(const Vector3i & ind) except +
     void lb_lbnode_set_density(const Vector3i & ind, double density) except +
@@ -80,8 +81,6 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     double lb_lbfluid_get_lattice_speed() except +
     void check_tau_time_step_consistency(double tau, double time_s) except +
     const Vector3d lb_lbfluid_get_interpolated_velocity(Vector3d & p) except +
-    const Vector3d lb_lbfluid_get_interpolated_to_be_applied_force(Vector3d & p) except +
-    const Vector3d lb_lbfluid_get_interpolated_last_applied_force(Vector3d & p) except +
     const Vector3d lb_lbfluid_add_force_at_pos(Vector3d & p, Vector3d & f) except +
 
 cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
@@ -160,6 +159,11 @@ cdef inline Vector3d python_lbnode_get_velocity(Vector3i node) except +:
     cdef double lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()
     cdef Vector3d c_velocity = lb_lbnode_get_velocity(node)
     return c_velocity * lattice_speed
+
+cdef inline Vector3d python_lbnode_get_last_applied_force(Vector3i node) except +:
+    cdef double conv = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()**2
+    cdef Vector3d c_f = lb_lbnode_get_last_applied_force(node)
+    return c_f * conv
 
 cdef inline Vector6d python_lbnode_get_pressure_tensor(Vector3i node) except +:
     cdef double tau = lb_lbfluid_get_tau()

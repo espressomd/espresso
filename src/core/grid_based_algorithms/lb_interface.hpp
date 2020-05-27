@@ -154,6 +154,14 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind);
 const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
 const Utils::Vector6d lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind);
 
+/**
+ * @brief Get force applied on an lb node during the previous integration step
+ */
+const Utils::Vector3d
+lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind);
+
+const Utils::Vector6d lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind);
+
 /** @brief Calculate the average pressure tensor of all nodes by accumulating
  *  over all nodes and dividing by the number of nodes.
  *  Returns the lower triangle of the LB pressure tensor.

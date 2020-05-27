@@ -498,8 +498,9 @@ public:
   };
 
   boost::optional<Utils::Vector3d>
-  get_node_last_applied_force(const Utils::Vector3i &node) const override {
-    auto const bc = get_block_and_cell(node, true);
+  get_node_last_applied_force(const Utils::Vector3i &node,
+                              bool consider_ghosts = false) const override {
+    auto const bc = get_block_and_cell(node, consider_ghosts);
     if (!bc)
       return {};
 

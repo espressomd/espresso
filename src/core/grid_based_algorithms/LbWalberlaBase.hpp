@@ -32,7 +32,8 @@ public:
   get_node_force_to_be_applied(const Utils::Vector3i &node) const = 0;
 
   virtual boost::optional<Utils::Vector3d>
-  get_node_last_applied_force(const Utils::Vector3i &node) const = 0;
+  get_node_last_applied_force(const Utils::Vector3i &node,
+                              bool consider_ghosts = false) const = 0;
 
   // Density
   virtual boost::optional<double>

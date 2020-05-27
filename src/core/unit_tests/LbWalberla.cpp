@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE(forces_initial_state) {
       auto res = lb.get_node_force_to_be_applied(n);
       BOOST_CHECK(res);
       BOOST_CHECK_SMALL((*res).norm(), 1E-10);
-      res = lb.get_node_last_applied_force(n);
+      res = lb.get_node_last_applied_force(n, true);
       BOOST_CHECK(res);
       BOOST_CHECK_SMALL((*res).norm(), 1E-10);
     }
@@ -391,7 +391,7 @@ BOOST_AUTO_TEST_CASE(force_book_keeping) {
     for (auto cn : {n, n + grid_dimensions, n - grid_dimensions,
                     n + Vector3i{{grid_dimensions[0], 0, 0}}}) {
       if (lb.node_in_local_halo(cn)) {
-        BOOST_CHECK_SMALL((*(lb.get_node_last_applied_force(cn)) - f).norm(),
+        BOOST_CHECK_SMALL((*(lb.get_node_last_applied_force(cn,true)) - f).norm(),
                           1E-10);
         BOOST_CHECK_SMALL((*(lb.get_node_force_to_be_applied(cn))).norm(),
                           1E-10);

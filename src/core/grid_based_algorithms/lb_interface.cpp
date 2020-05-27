@@ -521,6 +521,19 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
+const Utils::Vector3d
+lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind) {
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank,
+        Walberla::get_node_last_applied_force, ind);
+  }
+#endif
+
+  throw NoLBActive();
+}
+
 const Utils::Vector6d
 lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
