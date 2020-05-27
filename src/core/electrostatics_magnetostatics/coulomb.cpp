@@ -313,8 +313,8 @@ void calc_energy_long_range(Observable_stat &energy,
       energy.coulomb[1] = p3m_calc_kspace_forces(false, true, particles);
     else {
       energy.coulomb[1] = 0.5 * p3m_calc_kspace_forces(false, true, particles);
-      energy.coulomb[1] +=
-          0.5 * ELC_P3M_dielectric_layers_energy_self(particles);
+      energy.coulomb[1] += 0.5 * coulomb.prefactor *
+                           ELC_P3M_dielectric_layers_energy_self(particles);
 
       // assign both original and image charges now
       ELC_p3m_charge_assign_both(particles);
