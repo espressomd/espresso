@@ -57,11 +57,11 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
     auto res =
         lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid(), true);
-    if (!res) {
-      auto folded_pos = folded_position(pos, box_geo);
-      res = lb_walberla()->get_velocity_at_pos(
-          folded_pos / lb_lbfluid_get_agrid(), true);
-    }
+    //    if (!res) {
+    //      auto folded_pos = folded_position(pos, box_geo);
+    //      res = lb_walberla()->get_velocity_at_pos(
+    //          folded_pos / lb_lbfluid_get_agrid(), true);
+    //    }
 
     if (!res) {
       printf("%d: positoin: %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
@@ -84,8 +84,9 @@ void lb_lbinterpolation_add_force_density(
   case (InterpolationOrder::linear):
     if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-      lb_walberla()->add_force_at_pos(pos / lb_lbfluid_get_agrid(),
-                                      force_density);
+      if (!lb_walberla()->add_force_at_pos(pos / lb_lbfluid_get_agrid(),
+                                           force_density))
+        throw std::runtime_error("Could not apply force to lb.");
 #endif
     } else
       throw std::runtime_error("No LB active.");

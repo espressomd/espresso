@@ -374,8 +374,8 @@ cdef class LBFluidRoutines:
 
         def __set__(self, value):
             raise NotImplementedError
-    
+
     property last_applied_force:
         def __get__(self):
-            return make_array_locked(python_lbnode_get_last_applied_force(self.node))
-
+            return make_array_locked(
+                python_lbnode_get_last_applied_force(self.node))
