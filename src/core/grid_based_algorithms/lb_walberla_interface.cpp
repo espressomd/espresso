@@ -53,6 +53,7 @@ REGISTER_CALLBACK_ONE_RANK(get_node_pressure_tensor)
 
 void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u) {
   lb_walberla()->set_node_velocity(ind, u);
+  lb_walberla()->ghost_communication();
 }
 
 REGISTER_CALLBACK(set_node_velocity)
