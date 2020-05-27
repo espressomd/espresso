@@ -362,7 +362,7 @@ class TestLB:
             v_fluid = self.lbf.get_interpolated_velocity(coupling_pos)
             # Nodes to which forces will be interpolated
             lb_nodes = get_lb_nodes_around_pos(
-                coupling_pos, self.system, self.lbf)
+                coupling_pos, self.lbf)
 
             self.system.integrator.run(1)
             # Check friction force
