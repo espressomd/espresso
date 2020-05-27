@@ -96,7 +96,7 @@ set_default_value with_cuda false
 set_default_value with_cuda_compiler "nvcc"
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
-set_default_value with_scafacos true
+set_default_value with_scafacos false
 set_default_value test_timeout 300
 set_default_value hide_gpu false
 
