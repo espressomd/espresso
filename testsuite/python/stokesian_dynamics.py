@@ -8,7 +8,15 @@ from tests_common import abspath
 s = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 
-@utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
+def skipIfMissingFeatureStokesianDynamics():
+    """Specialized unittest skipIf decorator for missing Stokesian Dynamics."""
+    if not espressomd.has_features(["STOKESIAN_DYNAMICS"]) and (not espressomd.has_features(
+            ["STOKESIAN_DYNAMICS_GPU"]) or not espressomd.gpu_available()):
+        return ut.skip("Skipping test: feature STOKESIAN_DYNAMICS unavailable")
+    return utx._id
+
+
+@skipIfMissingFeatureStokesianDynamics()
 class StokesianDynamicsSetupTest(ut.TestCase):
     system = s
 
@@ -39,7 +47,7 @@ class StokesianDynamicsSetupTest(ut.TestCase):
             self.system.periodicity = [0, 1, 0]
 
 
-@utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
+@skipIfMissingFeatureStokesianDynamics()
 class StokesianDynamicsTest(ut.TestCase):
     system = s
 
@@ -106,7 +114,7 @@ class StokesianDynamicsTest(ut.TestCase):
         self.system.part.clear()
 
 
-@utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
+@skipIfMissingFeatureStokesianDynamics()
 class StokesianDiffusionTest(ut.TestCase):
     system = s
 
