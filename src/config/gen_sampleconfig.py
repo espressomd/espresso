@@ -17,9 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# This script appends the sample list of features to the file
-#   myconfig-sample.h.
-#
+
+# This script writes the sample list of features to myconfig-sample.hpp
+
 import time
 import string
 import fileinput
@@ -37,11 +37,8 @@ if len(sys.argv) != 2:
 
 deffilename = sys.argv[1]
 
-# print "Reading definitions from " + deffilename + "..."
 defs = featuredefs.defs(deffilename)
-# print "Done."
 
-# print "Writing " + hfilename + "..."
 featuresdone = set()
 
 for line in fileinput.input(deffilename):
