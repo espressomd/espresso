@@ -104,7 +104,7 @@ python_test(FILE interactions_non-bonded.py MAX_NUM_PROC 4)
 python_test(FILE observables.py MAX_NUM_PROC 4)
 python_test(FILE p3m_gpu.py MAX_NUM_PROC 4 LABELS gpu)
 python_test(FILE particle.py MAX_NUM_PROC 4)
-python_test(FILE stress.py MAX_NUM_PROC 4)
+python_test(FILE pressure.py MAX_NUM_PROC 4)
 python_test(FILE scafacos_dipoles_1d_2d.py MAX_NUM_PROC 4)
 python_test(FILE tabulated.py MAX_NUM_PROC 2)
 python_test(FILE particle_slice.py MAX_NUM_PROC 4)
@@ -205,10 +205,7 @@ python_test(FILE elc.py MAX_NUM_PROC 2)
 python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2)
 python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
-
-if(PY_H5PY)
-  python_test(FILE h5md.py MAX_NUM_PROC 2)
-endif(PY_H5PY)
+python_test(FILE h5md.py MAX_NUM_PROC 2)
 
 add_custom_target(
   python_test_data

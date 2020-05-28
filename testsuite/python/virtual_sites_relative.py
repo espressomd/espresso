@@ -305,16 +305,17 @@ class VirtualSites(ut.TestCase):
         self.run_test_lj()
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
-    def test_zz_stress_tensor(self):
+    def test_zz_pressure_tensor(self):
         system = self.system
         system.time_step = 0.01
         system.cell_system.skin = 0.1
         system.min_global_cut = 0.2
         # Should not have a pressure
         system.virtual_sites = VirtualSitesOff()
-        stress_vs = system.analysis.stress_tensor()["virtual_sites", 0]
+        pressure_tensor_vs = system.analysis.pressure_tensor()[
+            "virtual_sites", 0]
         p_vs = system.analysis.pressure()["virtual_sites", 0]
-        np.testing.assert_allclose(stress_vs, 0., atol=1e-10)
+        np.testing.assert_allclose(pressure_tensor_vs, 0., atol=1e-10)
         np.testing.assert_allclose(p_vs, 0., atol=1e-10)
 
         # vs relative contrib
@@ -326,22 +327,25 @@ class VirtualSites(ut.TestCase):
         p = system.part.add(pos=(0.1, 0, 0), id=2, ext_force=(-1, 0, 0))
         p.vs_auto_relate_to(0)
         system.integrator.run(0, recalc_forces=True)
-        stress_total = system.analysis.stress_tensor()["total"]
-        stress_vs_total = system.analysis.stress_tensor()["virtual_sites"]
-        stress_vs = system.analysis.stress_tensor()["virtual_sites", 0]
+        sim_pressure = system.analysis.pressure()
+        sim_pressure_tensor = system.analysis.pressure_tensor()
+        pressure_tensor_total = sim_pressure_tensor["total"]
+        pressure_tensor_vs_total = sim_pressure_tensor["virtual_sites"]
+        pressure_tensor_vs = sim_pressure_tensor["virtual_sites", 0]
+        p_total = sim_pressure["total"]
+        p_vs_total = sim_pressure["virtual_sites"]
+        p_vs = sim_pressure["virtual_sites", 0]
 
-        p_total = system.analysis.pressure()["total"]
-        p_vs_total = system.analysis.pressure()["virtual_sites"]
-        p_vs = system.analysis.pressure()["virtual_sites", 0]
-
-        # expected stress
+        # expected pressure_tensor
         s_expected = 1. / system.volume() * (
             np.outer(system.part[1].ext_force, system.distance_vec(
                 system.part[1], system.part[0]))
             + np.outer(system.part[2].ext_force, system.distance_vec(system.part[2], system.part[0])))
-        np.testing.assert_allclose(stress_total, s_expected, atol=1E-5)
-        np.testing.assert_allclose(stress_vs, s_expected, atol=1E-5)
-        np.testing.assert_allclose(stress_vs_total, s_expected, atol=1E-5)
+        np.testing.assert_allclose(
+            pressure_tensor_total, s_expected, atol=1E-5)
+        np.testing.assert_allclose(pressure_tensor_vs, s_expected, atol=1E-5)
+        np.testing.assert_allclose(
+            pressure_tensor_vs_total, s_expected, atol=1E-5)
 
         # Pressure
         self.assertAlmostEqual(p_total, np.sum(

@@ -58,9 +58,9 @@ void calc_pressure_long_range(Observable_stat &virials,
     break;
   case COULOMB_P3M: {
     p3m_charge_assign(particles);
-    auto const p3m_stress = p3m_calc_kspace_stress();
-    std::copy_n(p3m_stress.data(), 9, p_tensor.coulomb.begin() + 9);
-    virials.coulomb[1] = p3m_stress[0] + p3m_stress[4] + p3m_stress[8];
+    auto const p3m_p_tensor = p3m_calc_kspace_pressure_tensor();
+    std::copy_n(p3m_p_tensor.data(), 9, p_tensor.coulomb.begin() + 9);
+    virials.coulomb[1] = p3m_p_tensor[0] + p3m_p_tensor[4] + p3m_p_tensor[8];
 
     break;
   }
@@ -319,8 +319,8 @@ void calc_energy_long_range(Observable_stat &energy,
       energy.coulomb[1] = p3m_calc_kspace_forces(false, true, particles);
     else {
       energy.coulomb[1] = 0.5 * p3m_calc_kspace_forces(false, true, particles);
-      energy.coulomb[1] +=
-          0.5 * ELC_P3M_dielectric_layers_energy_self(particles);
+      energy.coulomb[1] += 0.5 * coulomb.prefactor *
+                           ELC_P3M_dielectric_layers_energy_self(particles);
 
       // assign both original and image charges now
       ELC_p3m_charge_assign_both(particles);

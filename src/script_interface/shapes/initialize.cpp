@@ -27,7 +27,6 @@
 #include "Slitpore.hpp"
 #include "Sphere.hpp"
 #include "SpheroCylinder.hpp"
-#include "Stomatocyte.hpp"
 #include "Torus.hpp"
 #include "Union.hpp"
 #include "Wall.hpp"
@@ -55,8 +54,6 @@ void initialize() {
       "Shapes::Rhomboid");
   ScriptInterface::register_new<ScriptInterface::Shapes::Slitpore>(
       "Shapes::Slitpore");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Stomatocyte>(
-      "Shapes::Stomatocyte");
   ScriptInterface::register_new<ScriptInterface::Shapes::SimplePore>(
       "Shapes::SimplePore");
   ScriptInterface::register_new<ScriptInterface::Shapes::Torus>(

@@ -18,7 +18,7 @@
 #
 from .grid cimport node_grid
 from . cimport integrate
-from .globals cimport FIELD_SKIN, FIELD_NODEGRID, FIELD_MAXNUMCELLS, FIELD_MINNUMCELLS
+from .globals cimport FIELD_SKIN, FIELD_NODEGRID
 from .globals cimport verlet_reuse, skin
 from .globals cimport mpi_bcast_parameter
 from .cellsystem cimport dd, cell_structure

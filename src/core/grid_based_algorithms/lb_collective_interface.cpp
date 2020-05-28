@@ -139,14 +139,14 @@ auto mpi_lb_get_momentum_density(Utils::Vector3i const &index) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_momentum_density)
 
-auto mpi_lb_get_stress(Utils::Vector3i const &index) {
+auto mpi_lb_get_pressure_tensor(Utils::Vector3i const &index) {
   return detail::lb_calc_fluid_kernel(
       index, [&](auto modes, auto force_density) {
-        return lb_calc_stress(modes, force_density, lbpar);
+        return lb_calc_pressure_tensor(modes, force_density, lbpar);
       });
 }
 
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_stress)
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_pressure_tensor)
 
 void mpi_bcast_lb_params_slave(LBParam field, LB_Parameters const &params) {
   lbpar = params;

@@ -152,8 +152,8 @@ void p3m_scaleby_box_l();
 double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               const ParticleRange &particles);
 
-/** Compute the k-space part of the stress tensor **/
-Utils::Vector9d p3m_calc_kspace_stress();
+/** Compute the k-space part of the pressure tensor **/
+Utils::Vector9d p3m_calc_kspace_pressure_tensor();
 
 /** Sanity checks */
 bool p3m_sanity_checks();

@@ -166,7 +166,7 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_almost_equal(f1_sim, f1_ref)
 
             # Pressure
-            # Isotropic pressure = 1/3 Trace Stress tensor
+            # Isotropic pressure = 1/3 trace(pressure tensor)
             # = 1/(3V) sum_i f_i r_i
             # where F is the force between the particles and r their distance
             p_expected = 1. / 3. * \
@@ -178,7 +178,7 @@ class InteractionsBondedTest(ut.TestCase):
             # P_ij = 1/V F_i r_j
             p_tensor_expected = np.outer(
                 f1_sim, self.axis * dist) / self.system.volume()
-            p_tensor_sim = self.system.analysis.stress_tensor()["total"]
+            p_tensor_sim = self.system.analysis.pressure_tensor()["total"]
             np.testing.assert_allclose(
                 p_tensor_sim, p_tensor_expected, atol=1E-12)
         if test_breakage:

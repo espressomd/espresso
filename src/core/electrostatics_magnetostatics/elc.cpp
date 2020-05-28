@@ -1244,8 +1244,8 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
 void ELC_P3M_self_forces(const ParticleRange &particles) {
   for (auto &p : particles) {
-    p.f.f += ELC_P3M_dielectric_layers_force_contribution(p.r.p, p.r.p,
-                                                          p.p.q * p.p.q);
+    p.f.f += coulomb.prefactor * ELC_P3M_dielectric_layers_force_contribution(
+                                     p.r.p, p.r.p, p.p.q * p.p.q);
   }
 }
 

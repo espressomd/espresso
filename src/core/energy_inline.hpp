@@ -321,9 +321,7 @@ inline void add_kinetic_energy(Particle const &p1) {
     /* the rotational part is added to the total kinetic energy;
      * Here we use the rotational inertia */
     obs_energy.local.kinetic[0] +=
-        0.5 * (Utils::sqr(p1.m.omega[0]) * p1.p.rinertia[0] +
-               Utils::sqr(p1.m.omega[1]) * p1.p.rinertia[1] +
-               Utils::sqr(p1.m.omega[2]) * p1.p.rinertia[2]);
+        0.5 * (hadamard_product(p1.m.omega, p1.m.omega) * p1.p.rinertia);
   }
 #endif
 }

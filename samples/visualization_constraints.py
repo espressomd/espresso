@@ -29,16 +29,14 @@ parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--wall", action="store_const", dest="shape", const="Wall",
                    default="Wall")
-for shape in ("Sphere", "Ellipsoid", "Cylinder", "SpheroCylinder",
-              "Stomatocyte", "SimplePore", "Slitpore", "HollowConicalFrustum"):
+for shape in ("Sphere", "Ellipsoid", "Cylinder", "SpheroCylinder", "Torus",
+              "SimplePore", "Slitpore", "HollowConicalFrustum"):
     group.add_argument("--" + shape.lower(), action="store_const",
                        dest="shape", const=shape)
 args = parser.parse_args()
 
 
 required_features = ["LENNARD_JONES"]
-if args.shape == "Stomatocyte":
-    required_features.append("EXPERIMENTAL_FEATURES")
 espressomd.assert_features(required_features)
 
 box_l = 50.0
@@ -60,7 +58,7 @@ visualizer = espressomd.visualization_opengl.openGLLive(
 
 if args.shape == "Wall":
     system.constraints.add(shape=espressomd.shapes.Wall(
-        dist=20, normal=[0.1, 0.0, 1]),
+        dist=20, normal=[0, 0, 1]),
         particle_type=0, penetrable=True)
 
 elif args.shape == "Sphere":
@@ -86,11 +84,6 @@ elif args.shape == "SpheroCylinder":
         particle_type=0,
         penetrable=True)
 
-elif args.shape == "Stomatocyte":
-    system.constraints.add(shape=espressomd.shapes.Stomatocyte(
-        inner_radius=3, outer_radius=7, axis=[1.0, 0.0, 0.0], center=[25] * 3,
-        layer_width=3, direction=1), particle_type=0, penetrable=True)
-
 elif args.shape == "SimplePore":
     system.constraints.add(shape=espressomd.shapes.SimplePore(
         center=[25, 25, 25], axis=[1, 0, 0], length=15, radius=12.5,
@@ -98,9 +91,9 @@ elif args.shape == "SimplePore":
 
 elif args.shape == "Slitpore":
     system.constraints.add(shape=espressomd.shapes.Slitpore(
-        channel_width=15, lower_smoothing_radius=3, upper_smoothing_radius=3,
-        pore_length=20, pore_mouth=30, pore_width=5), particle_type=0,
-        penetrable=True)
+        channel_width=15, lower_smoothing_radius=2, upper_smoothing_radius=3,
+        pore_length=20, pore_mouth=30, pore_width=10, dividing_plane=25),
+        particle_type=0, penetrable=True)
 
 elif args.shape == "HollowConicalFrustum":
     system.constraints.add(shape=espressomd.shapes.HollowConicalFrustum(
@@ -108,11 +101,22 @@ elif args.shape == "HollowConicalFrustum":
         axis=[0.0, 1.0, 1.0], center=[25, 25, 25], direction=1),
         particle_type=0, penetrable=True)
 
+elif args.shape == "Torus":
+    system.constraints.add(
+        shape=espressomd.shapes.Torus(center=[25] * 3, normal=[1, 1, 1],
+                                      direction=1, radius=15, tube_radius=6),
+        particle_type=0, penetrable=True)
+
 else:
     raise ValueError("Unknown shape '{}'".format(args.shape))
 
 for i in range(100):
-    rpos = np.random.random(3) * box_l
+    # place particles outside the shape
+    while True:
+        rpos = np.random.random(3) * box_l
+        dist = system.constraints[0].shape.calc_distance(position=rpos)
+        if dist[0] > 2.5:
+            break
     system.part.add(pos=rpos, type=1)
 
 system.non_bonded_inter[1, 1].lennard_jones.set_params(
@@ -126,7 +130,7 @@ system.integrator.set_steepest_descent(f_max=10, gamma=1e-3,
                                        max_displacement=0.05)
 system.integrator.run(500)
 system.integrator.set_vv()
-system.thermostat.set_langevin(kT=10.0, gamma=10, seed=42)
+system.thermostat.set_langevin(kT=10.0, gamma=0.1, seed=42)
 
 system.force_cap = 1000.0
 

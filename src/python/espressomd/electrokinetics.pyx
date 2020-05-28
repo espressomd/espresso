@@ -18,7 +18,7 @@ include "myconfig.pxi"
 IF CUDA:
     from .lb cimport HydrodynamicInteraction
     from .lb cimport lb_lbfluid_print_vtk_boundary
-    from .lb cimport python_lbnode_get_stress
+    from .lb cimport python_lbnode_get_pressure_tensor
     from .lb cimport lb_lbnode_is_index_valid
     from .lb cimport lb_lbfluid_set_lattice_switch
     from .lb cimport GPU
@@ -389,11 +389,11 @@ IF ELECTROKINETICS:
 
         property pressure:
             def __get__(self):
-                cdef Vector6d stress
-                stress = python_lbnode_get_stress(self.node)
-                return np.array([[stress[0], stress[1], stress[3]],
-                                 [stress[1], stress[2], stress[4]],
-                                 [stress[3], stress[4], stress[5]]])
+                cdef Vector6d pressure
+                pressure = python_lbnode_get_pressure_tensor(self.node)
+                return np.array([[pressure[0], pressure[1], pressure[3]],
+                                 [pressure[1], pressure[2], pressure[4]],
+                                 [pressure[3], pressure[4], pressure[5]]])
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
