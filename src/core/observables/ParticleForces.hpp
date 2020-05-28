@@ -35,12 +35,13 @@ public:
   using PidObservable::PidObservable;
 
   std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
+  evaluate(ParticleReferenceRange particles,
+           const ParticleObservables::traits<Particle> &traits) const override {
     std::vector<double> res(n_values());
     for (size_t i = 0; i < particles.size(); i++) {
-      res[3 * i + 0] = particles[i]->f.f[0];
-      res[3 * i + 1] = particles[i]->f.f[1];
-      res[3 * i + 2] = particles[i]->f.f[2];
+      res[3 * i + 0] = particles[i].get().f.f[0];
+      res[3 * i + 1] = particles[i].get().f.f[1];
+      res[3 * i + 2] = particles[i].get().f.f[2];
     }
     return res;
   };

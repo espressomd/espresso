@@ -48,6 +48,7 @@ unit_test(NAME triangle_functions_test SRC triangle_functions_test.cpp DEPENDS
 unit_test(NAME Bag_test SRC Bag_test.cpp DEPENDS utils Boost::serialization)
 unit_test(NAME integral_parameter_test SRC integral_parameter_test.cpp DEPENDS
           utils)
+unit_test(NAME flatten_test SRC flatten_test.cpp DEPENDS utils)
 
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp DEPENDS utils
           Boost::mpi MPI::MPI_CXX NUM_PROC 4)

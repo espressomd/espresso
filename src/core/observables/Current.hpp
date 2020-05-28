@@ -30,17 +30,15 @@ public:
   std::vector<size_t> shape() const override { return {3}; }
 
   std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
-    std::vector<double> res(n_values());
+  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+           const ParticleObservables::traits<Particle> &traits) const override {
+    Utils::Vector3d current{};
 #ifdef ELECTROSTATICS
     for (auto p : particles) {
-      double charge = p->p.q;
-      res[0] += charge * p->m.v[0];
-      res[1] += charge * p->m.v[1];
-      res[2] += charge * p->m.v[2];
+      current += (traits.charge(p) * traits.velocity(p));
     };
 #endif
-    return res;
+    return current.as_vector();
   };
 };
 
