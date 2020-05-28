@@ -358,8 +358,6 @@ General features
 
    .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
--  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
-
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
 
@@ -378,9 +376,6 @@ integrator or thermostat:
 -  ``NPT`` Enables an on-the-fly NPT integration scheme.
 
    .. seealso:: :ref:`Isotropic NPT thermostat`
-
-
--  ``REACTION_ENSEMBLE``
 
 -  ``ENGINE``
 

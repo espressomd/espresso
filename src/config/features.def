@@ -22,7 +22,6 @@ LANGEVIN_PER_PARTICLE
 BROWNIAN_PER_PARTICLE
 COLLISION_DETECTION
 NPT
-SWIMMER_REACTIONS
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY             implies ROTATION
 
@@ -85,10 +84,7 @@ HAT
 UMBRELLA                           requires EXPERIMENTAL_FEATURES
 GAY_BERNE                       implies ROTATION
 GAY_BERNE
-OVERLAPPED
 THOLE                           requires ELECTROSTATICS
-
-/* Fluid-Structure Interactions (object in fluid) */
 
 /* Immersed-Boundary Bayreuth version */
 SCAFACOS_DIPOLES                requires SCAFACOS
