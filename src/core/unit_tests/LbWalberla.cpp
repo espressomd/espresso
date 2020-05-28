@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(boundary) {
       // Check the value
       BOOST_CHECK_SMALL((*vel_check - vel).norm(), 1E-12);
       BOOST_CHECK(lb.remove_node_from_boundary(node));
-      auto res = lb.get_node_is_boundary(node);
+      auto res = lb.get_node_is_boundary(node, true);
       // Did we get a value?
       BOOST_CHECK(res);
       // Should not be a boundary node
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(boundary_flow_shear) {
       Vector3i node{x, y, lower};
       if (lb.node_in_local_halo(node)) {
         BOOST_CHECK(lb.set_node_velocity_at_boundary(node, Vector3d{}));
-        BOOST_CHECK(lb.get_node_is_boundary(node));
+        BOOST_CHECK(lb.get_node_is_boundary(node, true));
       }
       node[2] = upper;
       if (lb.node_in_local_halo(node)) {
