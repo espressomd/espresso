@@ -60,7 +60,7 @@ public:
 namespace detail {
 /**
  * Recursive implementation for finding the shape of a given `std::vector` of
- * types. A vector of extends for each dimension is constructed starting at
+ * types. A vector of extents is constructed starting at
  * the template specialization for `std::vector<T>`.
  */
 template <class T> struct shape_impl;
@@ -81,6 +81,20 @@ template <class T> struct shape_impl<std::vector<T>> {
 };
 } // namespace detail
 
+/**
+ * This class implements an interface to the `particle_observables` library that
+ * implements necessary algorithms needed for observables that are based on
+ * single particle properties.
+ * @tparam ObsType An observables composed of an algorithm from
+ * src/particle_observables/include/particle_observables/algorithms.hpp and two
+ * particle properties.
+ *
+ *  Example usage:
+ *  @code{.cpp}
+ *  using namespace ParticleObservables;
+ *  using CenterOfMass = ParticleObservable<WeightedAverage<Position, Mass>>;
+ *  @endcode
+ */
 template <class ObsType> class ParticleObservable : public PidObservable {
 public:
   using PidObservable::PidObservable;
