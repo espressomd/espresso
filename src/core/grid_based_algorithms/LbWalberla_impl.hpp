@@ -418,7 +418,8 @@ public:
   boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i &node,
                     bool consider_ghosts = false) const override {
-    boost::optional<bool> is_boundary = get_node_is_boundary(node);
+    boost::optional<bool> is_boundary =
+        get_node_is_boundary(node, consider_ghosts);
     if (is_boundary)    // is info available locally
       if (*is_boundary) // is the node a boundary
         return get_node_velocity_at_boundary(node);
@@ -615,8 +616,9 @@ public:
     return true;
   };
   boost::optional<bool>
-  get_node_is_boundary(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, true);
+  get_node_is_boundary(const Utils::Vector3i &node,
+                       bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(node, consider_ghosts);
     if (!bc)
       return {boost::none};
 

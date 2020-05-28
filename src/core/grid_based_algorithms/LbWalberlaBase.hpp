@@ -52,7 +52,8 @@ public:
   get_node_boundary_force(const Utils::Vector3i &node) const = 0;
   virtual bool remove_node_from_boundary(const Utils::Vector3i &node) = 0;
   virtual boost::optional<bool>
-  get_node_is_boundary(const Utils::Vector3i &node) const = 0;
+  get_node_is_boundary(const Utils::Vector3i &node,
+                       bool consider_ghosts = false) const = 0;
   virtual void clear_boundaries() = 0;
 
   // Pressure tensor
