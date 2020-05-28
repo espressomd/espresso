@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-from espressomd import lb, shapes, lbboundaries
+from espressomd import shapes, lbboundaries
 import numpy as np
 try:
     from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
