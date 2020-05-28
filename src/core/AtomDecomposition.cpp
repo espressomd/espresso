@@ -116,7 +116,7 @@ void AtomDecomposition::resort(bool global_flag,
        it != local().particles().end();) {
     auto const target_node = id_to_rank(it->identity());
     if (target_node != comm.rank()) {
-      diff.emplace_back(it->identity());
+      diff.emplace_back(RemovedParticle{it->identity()});
       send_buf.at(target_node).emplace_back(std::move(*it));
       it = local().particles().erase(it);
     } else {
@@ -128,7 +128,7 @@ void AtomDecomposition::resort(bool global_flag,
   std::vector<std::vector<Particle>> recv_buf(comm.size());
   boost::mpi::all_to_all(comm, send_buf, recv_buf);
 
-  diff.emplace_back(std::addressof(local()));
+  diff.emplace_back(ModifiedList{local().particles()});
 
   /* Add new particles belonging to this node */
   for (auto &parts : recv_buf) {

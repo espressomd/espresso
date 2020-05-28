@@ -143,8 +143,10 @@ namespace {
 struct UpdateParticleIndexVisitor {
   CellStructure *cs;
 
-  void operator()(int id) const { cs->update_particle_index(id, nullptr); }
-  void operator()(Cell *c) const { cs->update_particle_index(c->particles()); }
+  void operator()(RemovedParticle rp) const {
+    cs->update_particle_index(rp.id, nullptr);
+  }
+  void operator()(ModifiedList mp) const { cs->update_particle_index(mp.pl); }
 };
 } // namespace
 

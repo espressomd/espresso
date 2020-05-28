@@ -49,7 +49,7 @@ void DomainDecomposition::move_if_local(
 
     if (target_cell) {
       target_cell->particles().insert(std::move(part));
-      modified_cells.push_back(target_cell);
+      modified_cells.push_back(ModifiedList{target_cell->particles()});
     } else {
       rest.insert(std::move(part));
     }
@@ -165,17 +165,17 @@ void DomainDecomposition::resort(bool global,
 
       auto p = std::move(*it);
       it = c->particles().erase(it);
-      diff.emplace_back(c);
+      diff.emplace_back(ModifiedList{c->particles()});
 
       /* Particle is not local */
       if (target_cell == nullptr) {
-        diff.emplace_back(p.identity());
+        diff.emplace_back(RemovedParticle{p.identity()});
         displaced_parts.insert(std::move(p));
       }
       /* Particle belongs on this node but is in the wrong cell. */
       else if (target_cell != c) {
         target_cell->particles().insert(std::move(p));
-        diff.emplace_back(target_cell);
+        diff.emplace_back(ModifiedList{target_cell->particles()});
       }
     }
   }
@@ -209,7 +209,7 @@ void DomainDecomposition::resort(bool global,
                            " one local box length in one timestep.";
       sort_cell->particles().insert(std::move(part));
 
-      diff.emplace_back(sort_cell);
+      diff.emplace_back(ModifiedList{sort_cell->particles()});
     }
 
     // cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);

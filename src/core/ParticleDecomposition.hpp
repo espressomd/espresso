@@ -11,13 +11,18 @@
 
 #include <boost/variant.hpp>
 
+struct RemovedParticle {
+  int id;
+};
+
+struct ModifiedList {
+  ParticleList &pl;
+};
+
 /**
  * @brief Change of Particle Address.
- *
- * Either the id of a particle that was removed, or
- * a non-null pointer to a cell that has been modified.
  */
-using ParticleChange = boost::variant<int, Cell *>;
+using ParticleChange = boost::variant<RemovedParticle, ModifiedList>;
 
 class ParticleDecomposition {
 public:
