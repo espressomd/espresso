@@ -82,10 +82,6 @@ inline double calc_non_bonded_pair_energy(Particle const &p1,
                                           IA_parameters const &ia_params,
                                           Utils::Vector3d const &d,
                                           double const dist) {
-#ifdef NO_INTRA_NB
-  if (p1.p.mol_id == p2.p.mol_id)
-    return 0;
-#endif
 
   double ret = 0;
 

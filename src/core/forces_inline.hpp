@@ -120,10 +120,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
     Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
     Utils::Vector3d const &d, double const dist,
     Utils::Vector3d *torque1 = nullptr, Utils::Vector3d *torque2 = nullptr) {
-#ifdef NO_INTRA_NB
-  if (p1.p.mol_id == p2.p.mol_id)
-    return {};
-#endif
+
   Utils::Vector3d force{};
   double force_factor = 0;
 /* Lennard-Jones */
