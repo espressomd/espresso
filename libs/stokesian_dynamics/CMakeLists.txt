@@ -2,7 +2,8 @@ if(STOKESIAN_DYNAMICS_GPU)
   add_gpu_library(sd_gpu SHARED sd_gpu.cu)
   target_link_libraries(sd_gpu PRIVATE
     ${CUDA_CUBLAS_LIBRARIES}
-    ${CUDA_cusolver_LIBRARY})
+    ${CUDA_cusolver_LIBRARY}
+    Random123)
   target_compile_definitions(sd_gpu PUBLIC USE_THRUST)
   install(TARGETS sd_gpu LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 endif()
