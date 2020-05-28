@@ -62,8 +62,6 @@ class defs:
         derivations = list()
         # list of external features
         externals = set()
-        # list of features that are to be tested
-        notestfeatures = set()
 
         for line in fileinput.input(filename):
             line = line.strip()
@@ -133,11 +131,6 @@ class defs:
                         raise SyntaxError("<feature> requires <expr>", line)
                     requirements.append((feature, rest, toCPPExpr(rest)))
 
-                elif keyword == 'notest':
-                    if rest is not None:
-                        raise SyntaxError("<feature> notest", line)
-                    notestfeatures.add(feature)
-
         features = allfeatures.difference(derived)
         features = features.difference(externals)
         self.allfeatures = allfeatures
@@ -147,7 +140,6 @@ class defs:
         self.derived = derived
         self.derivations = derivations
         self.externals = externals
-        self.notestfeatures = notestfeatures
 
     def check_validity(self, activated):
         """Check whether a set of features is valid.
