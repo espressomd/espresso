@@ -97,10 +97,6 @@ SCAFACOS                        requires ELECTROSTATICS
 
 EXPERIMENTAL_FEATURES
 
-/* Strange features. Use only if you know what you are doing! */
-/* turn off certain nonbonded interactions within molecules */
-NO_INTRA_NB                     notest
-
 /* Debugging */
 ADDITIONAL_CHECKS
 

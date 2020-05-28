@@ -436,8 +436,6 @@ section :ref:`Isotropic non-bonded interactions`):
 
 -  ``HERTZIAN``
 
--  ``NO_INTRA_NB``
-
 -  ``MORSE`` Enable the Morse potential.
 
 -  ``BUCKINGHAM`` Enable the Buckingham potential.
