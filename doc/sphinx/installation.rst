@@ -364,8 +364,6 @@ General features
 
    .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
--  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
-
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
 
@@ -398,8 +396,6 @@ integrator or thermostat:
 
 
 -  ``MEMBRANE_COLLISION``
-
--  ``REACTION_ENSEMBLE``
 
 -  ``ENGINE``
 

@@ -46,7 +46,6 @@
 #define DIPOLES
 
 // Active matter
-#define SWIMMER_REACTIONS
 #define ENGINE
 
 // Hydrodynamics

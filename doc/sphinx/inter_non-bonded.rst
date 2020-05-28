@@ -707,7 +707,6 @@ To use the script, compile espresso with the following features:
     #define VIRTUAL_SITES_RELATIVE
     #define LENNARD_JONES
     #define THOLE
-    #define GHOSTS_HAVE_BONDS
 
 .. _Anisotropic non-bonded interactions:
 
