@@ -17,8 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 # This module parses the feature definition file features.def
-#
+
 import fileinput
 import re
 
@@ -146,14 +147,10 @@ class defs:
         """
         newset = activated.copy()
 
-        # print "Verifying: " + str(activated) + "..."
-
         # handle implications
         for feature, implied in self.implications:
-            # print feature, ' -> ', implied
             if feature in newset and implied not in newset:
                 newset.add(implied)
-        # print 'Implied set: ' + str(newset)
 
         # handle requirements
         featurevars = dict()
@@ -163,12 +160,8 @@ class defs:
             featurevars[feature] = feature in newset
 
         for feature, expr, _ in self.requirements:
-            # print 'Requirement: ', feature, ' -> ', expr
             if feature in newset:
                 if not eval(expr, featurevars):
                     return None
 
-        # print 'Resulting set: ' + str(newset)
         return newset
-
-# Test whether all implied features or features in an expression are defined
