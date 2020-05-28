@@ -127,6 +127,20 @@ no_rotation:
     - docker
     - linux
 
+ubuntu:20:
+  <<: *global_job_definition
+  stage: build
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:700579881dceba20fa27ec476a4b4e0746b72683
+  variables:
+     CC: 'gcc-9'
+     CXX: 'g++-9'
+  script:
+    - export with_cuda=false myconfig=maxset
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
 ### Builds with different Distributions
 
 debian:10:
