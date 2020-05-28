@@ -324,9 +324,6 @@ General features
 
 -  ``MMM1D_GPU``
 
--  ``_P3M_GPU_FLOAT``
-
-
 -  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
    the various magnetostatics algorithms, such as P3M are switched on.
 
