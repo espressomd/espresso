@@ -31,7 +31,7 @@
  *   - write functions for calculating force and energy
  *   - add calls to the force and energy calculation functions to the force
  *     calculation in the integration loop as well as to energy and
- *     pressure/stress tensor analysis
+ *     pressure tensor analysis
  *  * Python interface:
  *   - import the definition of the interaction struct from the core
  *   - implement a class for the bonded interaction derived from the Python
@@ -146,7 +146,7 @@
  *        retval = fene_pair_energy(iaparams, dx);
  *        break;
  *      @endcode
- *  * Pressure, stress tensor and virial calculation: if your bonded
+ *  * Pressure tensor and virial calculation: if your bonded
  *    interaction is not a pair bond or modifies the particles involved,
  *    you have to implement a custom solution for virial calculation.
  *    The pressure occurs twice, once for the parallelized isotropic pressure

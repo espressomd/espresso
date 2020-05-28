@@ -26,8 +26,14 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
-import h5py  # h5py has to be imported *after* espressomd (MPI)
 from espressomd.interactions import Virtual
+try:
+    import h5py  # h5py has to be imported *after* espressomd (MPI)
+    skipIfMissingPythonPackage = ut.case._id
+except ImportError:
+    skipIfMissingPythonPackage = ut.skip(
+        "Python module h5py not available, skipping test!")
+
 
 npart = 26
 
@@ -121,6 +127,7 @@ class CommonTests(ut.TestCase):
 
 
 @utx.skipIfMissingFeatures(['H5MD'])
+@skipIfMissingPythonPackage
 class H5mdTestOrdered(CommonTests):
 
     """
@@ -161,6 +168,7 @@ class H5mdTestOrdered(CommonTests):
 
 
 @utx.skipIfMissingFeatures(['H5MD'])
+@skipIfMissingPythonPackage
 class H5mdTestUnordered(CommonTests):
 
     """

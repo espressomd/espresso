@@ -20,7 +20,7 @@ import numpy as np
 
 import espressomd
 import espressomd.lb
-from espressomd.observables import LBFluidStress
+from espressomd.observables import LBFluidPressureTensor
 import sys
 
 
@@ -194,10 +194,10 @@ class TestLB:
         with self.assertRaises(RuntimeError):
             lbf.agrid = 0.2
 
-    def test_stress_tensor_observable(self):
+    def test_pressure_tensor_observable(self):
         """
-        Checks agreement between the LBFluidStress observable and per-node
-        stress summed up over the entire fluid.
+        Checks agreement between the LBFluidPressureTensor observable and
+        per-node pressure tensor summed up over the entire fluid.
 
         """
         system = self.system
@@ -215,19 +215,22 @@ class TestLB:
         system.actors.add(self.lbf)
         system.thermostat.set_lb(LB_fluid=self.lbf, seed=1)
         system.integrator.run(10)
-        stress = np.zeros((3, 3))
+        pressure_tensor = np.zeros((3, 3))
         agrid = self.params["agrid"]
         for n in self.lbf.nodes():
-            stress += n.stress
+            pressure_tensor += n.pressure_tensor
 
-        stress /= system.volume() / agrid**3
+        pressure_tensor /= system.volume() / agrid**3
 
-        obs = LBFluidStress()
-        obs_stress = obs.calculate()
-        np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
+        obs = LBFluidPressureTensor()
+        obs_pressure_tensor = obs.calculate()
         np.testing.assert_allclose(
-            np.copy(self.lbf.stress),
-            obs_stress,
+            pressure_tensor,
+            obs_pressure_tensor,
+            atol=1E-10)
+        np.testing.assert_allclose(
+            np.copy(self.lbf.pressure_tensor),
+            obs_pressure_tensor,
             atol=1E-10)
 
     def test_lb_node_set_get(self):

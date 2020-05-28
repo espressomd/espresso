@@ -149,15 +149,14 @@ class LBShearCommon:
         # defined as \sigma = -p 1 + \mu [\nabla * u + (\nabla * u)^T]
         # where 'p' is the static pressure, '\mu' is the dynamic viscosity,
         # '*' denotes the outer product and 'u' is the velocity field
-        # NOTE: the so called stress property of the fluid is actually the
-        # pressure tensor not the viscous stress tensor!
         shear_rate = SHEAR_VELOCITY / H
         dynamic_viscosity = self.lbf.viscosity * self.lbf.density
         p_expected = p_eq * np.identity(3) - dynamic_viscosity * shear_rate * (
             np.outer(shear_plane_normal, shear_direction) + np.transpose(np.outer(shear_plane_normal, shear_direction)))
         for n in (2, 3, 4), (3, 4, 2), (5, 4, 3):
-            node_stress = np.copy(self.lbf[n[0], n[1], n[2]].stress)
-            np.testing.assert_allclose(node_stress,
+            node_pressure_tensor = np.copy(
+                self.lbf[n[0], n[1], n[2]].pressure_tensor)
+            np.testing.assert_allclose(node_pressure_tensor,
                                        p_expected, atol=1E-5, rtol=5E-3)
 
         np.testing.assert_allclose(

@@ -25,7 +25,6 @@
  */
 #include "event.hpp"
 
-#include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
@@ -130,7 +129,6 @@ void on_integration_start() {
   npt_ensemble_init(box_geo);
 #endif
 
-  invalidate_obs();
   partCfg().invalidate();
   invalidate_fetch_cache();
 
@@ -189,7 +187,6 @@ void on_observable_calc() {
 
 void on_particle_charge_change() {
   reinit_electrostatics = true;
-  invalidate_obs();
 
   /* the particle information is no longer valid */
   partCfg().invalidate();
@@ -199,8 +196,7 @@ void on_particle_change() {
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   reinit_electrostatics = true;
   reinit_magnetostatics = true;
-
-  invalidate_obs();
+  recalc_forces = true;
 
   /* the particle information is no longer valid */
   partCfg().invalidate();
@@ -210,7 +206,6 @@ void on_particle_change() {
 }
 
 void on_coulomb_change() {
-  invalidate_obs();
 
 #ifdef ELECTROSTATICS
   Coulomb::on_coulomb_change();
@@ -229,29 +224,20 @@ void on_coulomb_change() {
 }
 
 void on_short_range_ia_change() {
-  invalidate_obs();
-
   cells_on_geometry_change(false);
 
   recalc_forces = true;
 }
 
-void on_constraint_change() {
-  invalidate_obs();
-  recalc_forces = true;
-}
+void on_constraint_change() { recalc_forces = true; }
 
 void on_lbboundary_change() {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-  invalidate_obs();
-
   LBBoundaries::lb_init_boundaries();
 
   recalc_forces = true;
 #endif
 }
-
-void on_resort_particles() { recalc_forces = true; }
 
 void on_boxl_change() {
   grid_changed_box_l(box_geo);
@@ -356,7 +342,6 @@ void on_parameter_change(int field) {
     break;
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
-    invalidate_obs();
     recalc_forces = true;
     break;
   case FIELD_THERMO_SWITCH:

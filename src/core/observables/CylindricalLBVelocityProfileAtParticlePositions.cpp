@@ -26,7 +26,8 @@
 
 namespace Observables {
 std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
-    Utils::Span<const Particle *const> particles) const {
+    Utils::Span<std::reference_wrapper<const Particle>> particles,
+    const ParticleObservables::traits<Particle> &traits) const {
   std::array<size_t, 3> n_bins{{n_r_bins, n_phi_bins, n_z_bins}};
   std::array<std::pair<double, double>, 3> limits{
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
@@ -34,7 +35,7 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
 
   for (auto p : particles) {
-    auto const pos = folded_position(p->r.p, box_geo);
+    auto const pos = folded_position(traits.position(p), box_geo);
     auto const v = lb_lbfluid_get_interpolated_velocity(pos) *
                    lb_lbfluid_get_lattice_speed();
 

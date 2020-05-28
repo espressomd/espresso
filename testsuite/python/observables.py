@@ -92,6 +92,11 @@ class Observables(ut.TestCase):
                 assert(self.system.part.exists(id))
 
             # Get data from particles
+            if pprop_name == "f":
+                for p_id in id_list:
+                    if self.system.part[p_id].virtual:
+                        id_list.remove(p_id)
+
             part_data = getattr(self.system.part[id_list], pprop_name)
 
             # Reshape and aggregate to linear array
@@ -153,24 +158,45 @@ class Observables(ut.TestCase):
                                              err_msg="Data did not agree for observable ParticleBodyVelocities and particle derived values.",
                                              decimal=9)
 
-    def test_stress_tensor(self):
-        s = self.system.analysis.stress_tensor()["total"]
-        obs_data = espressomd.observables.StressTensor().calculate()
+    def test_energy(self):
+        s = self.system.analysis.energy()["total"]
+        obs_data = espressomd.observables.Energy().calculate()
+        self.assertEqual(obs_data.shape, (1,))
+        np.testing.assert_array_almost_equal(
+            obs_data,
+            s,
+            err_msg="Energy from analysis and observable did not agree",
+            decimal=9)
+
+    def test_pressure(self):
+        s = self.system.analysis.pressure()["total"]
+        obs_data = espressomd.observables.Pressure().calculate()
+        self.assertEqual(obs_data.shape, (1,))
+        np.testing.assert_array_almost_equal(
+            obs_data,
+            s,
+            err_msg="Pressure from analysis and observable did not agree",
+            decimal=9)
+
+    def test_pressure_tensor(self):
+        s = self.system.analysis.pressure_tensor()["total"]
+        obs_data = espressomd.observables.PressureTensor().calculate()
         self.assertEqual(obs_data.shape, s.shape)
         np.testing.assert_array_almost_equal(
-            s,
             obs_data,
-            err_msg="Stress tensor from analysis and observable did not agree",
+            s,
+            err_msg="Pressure tensor from analysis and observable did not agree",
             decimal=9)
 
     @utx.skipIfMissingFeatures('ELECTROSTATICS')
     def test_current(self):
         obs_data = espressomd.observables.Current(
             ids=self.system.part[:].id).calculate()
-        part_data = self.system.part[:].q.dot(self.system.part[:].v)
+        part_data = self.system.part[:].q.dot(
+            self.system.part[:].v)
         self.assertEqual(obs_data.shape, part_data.shape)
         np.testing.assert_array_almost_equal(
-            obs_data, part_data, err_msg="Data did not agree for observable 'Current'", decimal=9)
+            obs_data, np.copy(part_data), err_msg="Data did not agree for observable 'Current'", decimal=9)
 
     @utx.skipIfMissingFeatures('ELECTROSTATICS')
     def test_dipolemoment(self):

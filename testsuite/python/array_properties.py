@@ -188,8 +188,8 @@ class ArrayPropertyTest(ArrayCommon):
         self.system.actors.add(lbf)
 
         self.assert_operator_usage_raises(lbf[0, 0, 0].velocity)
-        self.assert_operator_usage_raises(lbf[0, 0, 0].stress)
-        self.assert_operator_usage_raises(lbf[0, 0, 0].stress_neq)
+        self.assert_operator_usage_raises(lbf[0, 0, 0].pressure_tensor)
+        self.assert_operator_usage_raises(lbf[0, 0, 0].pressure_tensor_neq)
         self.assert_operator_usage_raises(lbf[0, 0, 0].population)
 
     @utx.skipIfMissingFeatures(["LANGEVIN_PER_PARTICLE",

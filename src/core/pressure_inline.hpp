@@ -35,9 +35,9 @@
 #include <utils/math/tensor_product.hpp>
 
 extern Observable_stat_wrapper obs_scalar_pressure;
-extern Observable_stat_wrapper obs_stress_tensor;
+extern Observable_stat_wrapper obs_pressure_tensor;
 extern Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded;
-extern Observable_stat_non_bonded_wrapper obs_stress_tensor_non_bonded;
+extern Observable_stat_non_bonded_wrapper obs_pressure_tensor_non_bonded;
 
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.
@@ -55,10 +55,10 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
     obs_scalar_pressure.local.non_bonded_contribution(
         p1.p.type, p2.p.type)[0] += d * force;
 
-    /* stress tensor part */
+    /* pressure tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        obs_stress_tensor.local.non_bonded_contribution(
+        obs_pressure_tensor.local.non_bonded_contribution(
             p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
 
     auto const p1molid = p1.p.mol_id;
@@ -69,7 +69,7 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 
       for (int k = 0; k < 3; k++)
         for (int l = 0; l < 3; l++)
-          obs_stress_tensor_non_bonded.local.non_bonded_intra_contribution(
+          obs_pressure_tensor_non_bonded.local.non_bonded_intra_contribution(
               p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
     } else {
       obs_scalar_pressure_non_bonded.local.non_bonded_inter_contribution(
@@ -77,7 +77,7 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 
       for (int k = 0; k < 3; k++)
         for (int l = 0; l < 3; l++)
-          obs_stress_tensor_non_bonded.local.non_bonded_inter_contribution(
+          obs_pressure_tensor_non_bonded.local.non_bonded_inter_contribution(
               p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
     }
   }
@@ -89,7 +89,7 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
-        obs_stress_tensor.local.coulomb[i * 3 + j] += p_coulomb[i][j];
+        obs_pressure_tensor.local.coulomb[i * 3 + j] += p_coulomb[i][j];
       }
     }
 
@@ -107,8 +107,8 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 }
 
 boost::optional<Utils::Matrix<double, 3, 3>>
-calc_bonded_virial_stress(Bonded_ia_parameters const &iaparams,
-                          Particle const &p1, Particle const &p2) {
+calc_bonded_virial_pressure_tensor(Bonded_ia_parameters const &iaparams,
+                                   Particle const &p1, Particle const &p2) {
   auto const dx = get_mi_vector(p1.r.p, p2.r.p, box_geo);
   Utils::Vector3d torque{};
   auto const result = calc_bond_pair_force(p1, p2, iaparams, dx, torque);
@@ -122,9 +122,9 @@ calc_bonded_virial_stress(Bonded_ia_parameters const &iaparams,
 }
 
 boost::optional<Utils::Matrix<double, 3, 3>>
-calc_bonded_three_body_stress(Bonded_ia_parameters const &iaparams,
-                              Particle const &p1, Particle const &p2,
-                              Particle const &p3) {
+calc_bonded_three_body_pressure_tensor(Bonded_ia_parameters const &iaparams,
+                                       Particle const &p1, Particle const &p2,
+                                       Particle const &p3) {
   switch (iaparams.type) {
   case BONDED_IA_ANGLE_HARMONIC:
   case BONDED_IA_ANGLE_COSINE:
@@ -150,14 +150,14 @@ calc_bonded_three_body_stress(Bonded_ia_parameters const &iaparams,
 }
 
 inline boost::optional<Utils::Matrix<double, 3, 3>>
-calc_bonded_stress(Bonded_ia_parameters const &iaparams, Particle &p1,
-                   Utils::Span<Particle *> partners) {
+calc_bonded_pressure_tensor(Bonded_ia_parameters const &iaparams, Particle &p1,
+                            Utils::Span<Particle *> partners) {
   switch (iaparams.num) {
   case 1:
-    return calc_bonded_virial_stress(iaparams, p1, *partners[0]);
+    return calc_bonded_virial_pressure_tensor(iaparams, p1, *partners[0]);
   case 2:
-    return calc_bonded_three_body_stress(iaparams, p1, *partners[0],
-                                         *partners[1]);
+    return calc_bonded_three_body_pressure_tensor(iaparams, p1, *partners[0],
+                                                  *partners[1]);
   default:
     runtimeWarningMsg() << "Unsupported bond type " +
                                std::to_string(iaparams.type) +
@@ -166,21 +166,21 @@ calc_bonded_stress(Bonded_ia_parameters const &iaparams, Particle &p1,
   }
 }
 
-inline bool add_bonded_stress(Particle &p1, int bond_id,
-                              Utils::Span<Particle *> partners) {
+inline bool add_bonded_pressure_tensor(Particle &p1, int bond_id,
+                                       Utils::Span<Particle *> partners) {
   auto const &iaparams = bonded_ia_params[bond_id];
 
-  auto const result = calc_bonded_stress(iaparams, p1, partners);
+  auto const result = calc_bonded_pressure_tensor(iaparams, p1, partners);
   if (result) {
-    auto const &stress = result.get();
+    auto const &tensor = result.get();
 
-    obs_scalar_pressure.local.bonded_contribution(bond_id)[0] += trace(stress);
+    obs_scalar_pressure.local.bonded_contribution(bond_id)[0] += trace(tensor);
 
-    /* stress tensor part */
+    /* pressure tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        obs_stress_tensor.local.bonded_contribution(bond_id)[k * 3 + l] +=
-            stress[k][l];
+        obs_pressure_tensor.local.bonded_contribution(bond_id)[k * 3 + l] +=
+            tensor[k][l];
 
     return false;
   }
@@ -201,15 +201,17 @@ inline void add_kinetic_virials(Particle const &p1, bool v_comp) {
 
   /* kinetic energy */
   if (v_comp) {
-    obs_scalar_pressure.local.kinetic[0] +=
-        (p1.m.v - (p1.f.f * (0.5 * time_step / p1.p.mass))).norm2() * p1.p.mass;
+    // velocity at half the time step: v(t + dt / 2) =
+    // v(t + dt) - a(t) * dt / 2 = v(t + dt) - F(t) * dt / m / 2
+    auto const v = p1.m.v - p1.f.f * (time_step / (2. * p1.p.mass));
+    obs_scalar_pressure.local.kinetic[0] += v.norm2() * p1.p.mass;
   } else {
     obs_scalar_pressure.local.kinetic[0] += p1.m.v.norm2() * p1.p.mass;
   }
 
   for (int k = 0; k < 3; k++)
     for (int l = 0; l < 3; l++)
-      obs_stress_tensor.local.kinetic[k * 3 + l] +=
+      obs_pressure_tensor.local.kinetic[k * 3 + l] +=
           (p1.m.v[k]) * (p1.m.v[l]) * p1.p.mass;
 }
 

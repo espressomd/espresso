@@ -72,15 +72,15 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     void lb_lbfluid_save_checkpoint(string filename, bool binary) except +
     void lb_lbfluid_load_checkpoint(string filename, bool binary) except +
     void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) except +
-    Vector6d lb_lbfluid_get_stress() except +
+    Vector6d lb_lbfluid_get_pressure_tensor() except +
     bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
     Vector3i lb_lbfluid_get_shape() except +
     const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
     void lb_lbnode_set_velocity(const Vector3i & ind, const Vector3d & u) except +
     double lb_lbnode_get_density(const Vector3i & ind) except +
     void lb_lbnode_set_density(const Vector3i & ind, double density) except +
-    const Vector6d lb_lbnode_get_stress(const Vector3i & ind) except +
-    const Vector6d lb_lbnode_get_stress_neq(const Vector3i & ind) except +
+    const Vector6d lb_lbnode_get_pressure_tensor(const Vector3i & ind) except +
+    const Vector6d lb_lbnode_get_pressure_tensor_neq(const Vector3i & ind) except +
     const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
     void lb_lbnode_set_pop(const Vector3i & ind, const Vector19d & populations) except +
     int lb_lbnode_get_boundary(const Vector3i & ind) except +
@@ -230,11 +230,11 @@ cdef inline Vector3d python_lbfluid_get_ext_force_density(p_agrid, p_tau):
         c_ext_force_density[i] /= p_agrid * p_agrid * p_tau * p_tau
     return c_ext_force_density
 
-cdef inline Vector6d python_lbfluid_get_stress(agrid, tau):
-    cdef Vector6d stress = lb_lbfluid_get_stress()
+cdef inline Vector6d python_lbfluid_get_pressure_tensor(agrid, tau):
+    cdef Vector6d tensor = lb_lbfluid_get_pressure_tensor()
     for i in range(6):
-        stress[i] *= 1. / agrid * 1. / tau**2.0
-    return stress
+        tensor[i] *= 1. / agrid * 1. / tau**2.0
+    return tensor
 
 cdef inline void python_lbnode_set_velocity(Vector3i node, Vector3d velocity):
     cdef double inv_lattice_speed = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid()
@@ -256,16 +256,16 @@ cdef inline double python_lbnode_get_density(Vector3i node):
     cdef double c_density = lb_lbnode_get_density(node)
     return c_density / agrid / agrid / agrid
 
-cdef inline Vector6d python_lbnode_get_stress(Vector3i node):
+cdef inline Vector6d python_lbnode_get_pressure_tensor(Vector3i node):
     cdef double tau = lb_lbfluid_get_tau()
     cdef double agrid = lb_lbfluid_get_agrid()
     cdef double unit_conversion = 1.0 / (tau * tau * agrid)
-    cdef Vector6d c_stress = lb_lbnode_get_stress(node)
-    return c_stress * unit_conversion
+    cdef Vector6d c_tensor = lb_lbnode_get_pressure_tensor(node)
+    return c_tensor * unit_conversion
 
-cdef inline Vector6d python_lbnode_get_stress_neq(Vector3i node):
+cdef inline Vector6d python_lbnode_get_pressure_tensor_neq(Vector3i node):
     cdef double tau = lb_lbfluid_get_tau()
     cdef double agrid = lb_lbfluid_get_agrid()
     cdef double unit_conversion = 1.0 / (tau * tau * agrid)
-    cdef Vector6d c_stress = lb_lbnode_get_stress_neq(node)
-    return c_stress * unit_conversion
+    cdef Vector6d c_tensor = lb_lbnode_get_pressure_tensor_neq(node)
+    return c_tensor * unit_conversion

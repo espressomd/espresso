@@ -25,25 +25,8 @@
 
 namespace Observables {
 
-class MagneticDipoleMoment : public PidObservable {
-public:
-  using PidObservable::PidObservable;
-  std::vector<size_t> shape() const override { return {3}; }
-
-  std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
-    std::vector<double> res(n_values(), 0.0);
-#ifdef DIPOLES
-    for (auto p : particles) {
-      auto const dip = p->calc_dip();
-      res[0] += dip[0];
-      res[1] += dip[1];
-      res[2] += dip[2];
-    }
-#endif
-    return res;
-  }
-};
+using MagneticDipoleMoment = ParticleObservable<
+    ParticleObservables::Sum<ParticleObservables::DipoleMoment>>;
 
 } // Namespace Observables
 

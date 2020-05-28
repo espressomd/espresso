@@ -398,7 +398,7 @@ Please note:
    needs to be adapted.
 
 -  The presence of rigid bodies constructed by means of virtual sites
-   adds a contribution to the pressure and stress tensor.
+   adds a contribution to the scalar pressure and pressure tensor.
 
 .. _Inertialess lattice-Boltzmann tracers:
 

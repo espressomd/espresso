@@ -30,14 +30,15 @@ public:
   std::vector<size_t> shape() const override { return {3}; }
 
   std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
+  evaluate(ParticleReferenceRange particles,
+           const ParticleObservables::traits<Particle> &traits) const override {
     std::vector<double> res(n_values());
     for (auto const &p : particles) {
-      if (p->p.is_virtual)
+      if (p.get().p.is_virtual)
         continue;
-      res[0] += p->f.f[0];
-      res[1] += p->f.f[1];
-      res[2] += p->f.f[2];
+      res[0] += p.get().f.f[0];
+      res[1] += p.get().f.f[1];
+      res[2] += p.get().f.f[2];
     }
     return res;
   }

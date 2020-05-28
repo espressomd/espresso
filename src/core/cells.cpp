@@ -331,8 +331,6 @@ void cells_resort_particles(int global_flag) {
   rebuild_verletlist = true;
 
   displaced_parts.clear();
-
-  on_resort_particles();
 }
 
 /*************************************************/
