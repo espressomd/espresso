@@ -341,6 +341,9 @@ General features
 -  ``LANGEVIN_PER_PARTICLE`` Allows to choose the Langevin temperature and friction coefficient
    per particle.
 
+-  ``BROWNIAN_PER_PARTICLE`` Allows to choose the Brownian temperature and friction coefficient
+   per particle.
+
 -  ``ROTATIONAL_INERTIA``
 
 -  ``EXTERNAL_FORCES`` Allows to define an arbitrary constant force for each particle
@@ -427,9 +430,11 @@ section :ref:`Isotropic non-bonded interactions`):
 -  ``LJCOS2`` Same as ``LJCOS``, but using a slightly different way of smoothing the
    connection to 0.
 
--  ``GAY_BERNE`` (experimental)
+-  ``WCA`` Enable the Weeks--Chandler--Andersen potential.
 
--  ``HERTZIAN``
+-  ``GAY_BERNE`` Enable the Gay--Berne potential (experimental).
+
+-  ``HERTZIAN`` Enable the Hertzian potential.
 
 -  ``MORSE`` Enable the Morse potential.
 
@@ -437,22 +442,24 @@ section :ref:`Isotropic non-bonded interactions`):
 
 -  ``SOFT_SPHERE`` Enable the soft sphere potential.
 
--  ``SMOOTH_STEP`` Enable the smooth step potential, a step potential with two length
-   scales.
+-  ``SMOOTH_STEP`` Enable the smooth step potential, a step potential with
+   two length scales.
 
--  ``BMHTF_NACL`` Enable the Born-Meyer-Huggins-Tosi-Fumi potential, which can be used
-   to model salt melts.
+-  ``BMHTF_NACL`` Enable the Born--Meyer--Huggins--Tosi--Fumi potential,
+   which can be used to model salt melts.
 
--  ``GAUSSIAN``
+-  ``GAUSSIAN`` Enable the Gaussian potential.
 
--  ``HAT``
+-  ``HAT`` Enable the Hat potential.
 
--  ``UMBRELLA`` (experimental)
+-  ``UMBRELLA`` Enable the umbrella potential (experimental).
 
 Some of the short-range interactions have additional features:
 
 -  ``LJGEN_SOFTCORE`` This modifies the generic Lennard-Jones potential
    (``LENNARD_JONES_GENERIC``) with tunable parameters.
+
+-  ``THOLE`` See :ref:`Thole correction`
 
 
 .. _Debug messages:
