@@ -25,7 +25,7 @@ if(Sphinx_FIND_VERSION)
   # Sphinx switched at some point from returning ther version on stdout to
   # printing it at stderr. Since we do not know ther version yet, we use stdout
   # if it matches a version regex, or stderr otherwise.
-  if(QUERY_VERSION_OUT MATCHES "[0-9.]+")
+  if(QUERY_VERSION_OUT MATCHES "[0-9]+\.[0-9.]+")
     set(QUERY_VERSION "${QUERY_VERSION_OUT}")
   else()
     set(QUERY_VERSION "${QUERY_VERSION_ERR}")
@@ -33,7 +33,7 @@ if(Sphinx_FIND_VERSION)
 
   if(NOT QUERY_VERSION_RESULT)
     string(REGEX MATCH
-                 "[0-9.]+"
+                 "[0-9]+\.[0-9.]+"
                  SPHINX_VERSION
                  "${QUERY_VERSION}")
   endif()
