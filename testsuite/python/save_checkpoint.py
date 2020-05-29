@@ -26,10 +26,10 @@ import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
 from espressomd import has_features
-if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
-    from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
-if has_features('ELECTROKINETICS'):
+if espressomd.has_features("LB_BOUNDARIES"):
+    from espressomd.lbboundaries import LBBoundary
+if espressomd.has_features('ELECTROKINETICS'):
     import espressomd.electrokinetics
 from espressomd.minimize_energy import steepest_descent
 from espressomd.shapes import Wall, Sphere
@@ -56,41 +56,41 @@ if checkpoint.has_checkpoints():
             os.remove(os.path.join(checkpoint.checkpoint_dir, filepath))
 
 LB_implementation = None
-if 'LB.CPU' in modes:
-    LB_implementation = espressomd.lb.LBFluid
-elif espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes:
+if espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes:
     LB_implementation = espressomd.lb.LBFluidWalberla
-elif 'LB.GPU' in modes and espressomd.gpu_available():
-    LB_implementation = espressomd.lb.LBFluidGPU
 if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
-        if 'EK.GPU' not in modes:
-            system.lbboundaries.add(
-                LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4, 1e-4, 0)))
+    if espressomd.has_features("LB_BOUNDARIES"):
+#        # TODO_WALBERLA
+#        if 'EK.GPU' not in modes:
+#            system.lbboundaries.add(
+#                LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4, 1e-4, 0)))
+        system.lbboundaries.add(
+            LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4, 1e-4, 0)))
 
 EK_implementation = None
-if 'EK.GPU' in modes and espressomd.gpu_available(
-) and espressomd.has_features('ELECTROKINETICS'):
-    EK_implementation = espressomd.electrokinetics
-    ek = EK_implementation.Electrokinetics(
-        agrid=0.5,
-        lb_density=26.15,
-        viscosity=1.7,
-        friction=0.0,
-        T=1.1,
-        prefactor=0.88,
-        stencil="linkcentered")
-    ek_species = EK_implementation.Species(
-        density=0.4,
-        D=0.02,
-        valency=0.3,
-        ext_force_density=[0.01, -0.08, 0.06])
-    ek.add_species(ek_species)
-    system.actors.add(ek)
+# TODO_WALBERLA
+#if 'EK.GPU' in modes and espressomd.gpu_available(
+#) and espressomd.has_features('ELECTROKINETICS'):
+#    EK_implementation = espressomd.electrokinetics
+#    ek = EK_implementation.Electrokinetics(
+#        agrid=0.5,
+#        lb_density=26.15,
+#        viscosity=1.7,
+#        friction=0.0,
+#        T=1.1,
+#        prefactor=0.88,
+#        stencil="linkcentered")
+#    ek_species = EK_implementation.Species(
+#        density=0.4,
+#        D=0.02,
+#        valency=0.3,
+#        ext_force_density=[0.01, -0.08, 0.06])
+#    ek.add_species(ek_species)
+#    system.actors.add(ek)
 
 system.part.add(pos=[1.0] * 3)
 system.part.add(pos=[1.0, 1.0, 2.0])
@@ -201,39 +201,42 @@ if espressomd.has_features("COLLISION_DETECTION"):
         mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
 
 if LB_implementation:
-    m = np.pi / 12
-    nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
-    ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
-    nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
-    # Create a 3D grid with deterministic values to fill the LB fluid lattice
-    grid_3D = np.fromfunction(
-        lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-        (nx, ny, nz), dtype=float)
-    for i in range(nx):
-        for j in range(ny):
-            for k in range(nz):
-                lbf[i, j, k].population = grid_3D[i, j, k] * np.arange(1, 20)
+#    # TODO WALBERLA
+#    m = np.pi / 12
+#    nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
+#    ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
+#    nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
+#    # Create a 3D grid with deterministic values to fill the LB fluid lattice
+#    grid_3D = np.fromfunction(
+#        lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+#        (nx, ny, nz), dtype=float)
+#    for i in range(nx):
+#        for j in range(ny):
+#            for k in range(nz):
+#                lbf[i, j, k].population = grid_3D[i, j, k] * np.arange(1, 20)
     cpt_mode = int("@TEST_BINARY@")
     # save LB checkpoint file
     lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
-    lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
+#    # TODO WALBERLA
+#    lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
 
-if EK_implementation:
-    m = np.pi / 12
-    nx = int(np.round(system.box_l[0] / ek.get_params()["agrid"]))
-    ny = int(np.round(system.box_l[1] / ek.get_params()["agrid"]))
-    nz = int(np.round(system.box_l[2] / ek.get_params()["agrid"]))
-    # Create a 3D grid with deterministic values to fill the LB fluid lattice
-    grid_3D = np.fromfunction(
-        lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-        (nx, ny, nz), dtype=float)
-    for i in range(nx):
-        for j in range(ny):
-            for k in range(nz):
-                ek_species[i, j, k].density = grid_3D[i, j, k]
-    # save LB checkpoint file
-    ek_cpt_path = checkpoint.checkpoint_dir + "/ek"
-    ek.save_checkpoint(ek_cpt_path)
+# TODO_WALBERLA
+#if EK_implementation:
+#    m = np.pi / 12
+#    nx = int(np.round(system.box_l[0] / ek.get_params()["agrid"]))
+#    ny = int(np.round(system.box_l[1] / ek.get_params()["agrid"]))
+#    nz = int(np.round(system.box_l[2] / ek.get_params()["agrid"]))
+#    # Create a 3D grid with deterministic values to fill the LB fluid lattice
+#    grid_3D = np.fromfunction(
+#        lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+#        (nx, ny, nz), dtype=float)
+#    for i in range(nx):
+#        for j in range(ny):
+#            for k in range(nz):
+#                ek_species[i, j, k].density = grid_3D[i, j, k]
+#    # save LB checkpoint file
+#    ek_cpt_path = checkpoint.checkpoint_dir + "/ek"
+#    ek.save_checkpoint(ek_cpt_path)
 
 # save checkpoint file
 checkpoint.save(0)
@@ -249,23 +252,24 @@ class TestCheckpointLB(ut.TestCase):
         self.assertTrue(os.path.isfile(checkpoint_filepath),
                         "checkpoint file not created")
 
-        if LB_implementation:
-            self.assertTrue(os.path.isfile(lbf_cpt_path),
-                            "LB checkpoint file not created")
+#        # TODO WALBERLA
+#        if LB_implementation:
+#            self.assertTrue(os.path.isfile(lbf_cpt_path),
+#                            "LB checkpoint file not created")
 
-            with open(lbf_cpt_path, "rb") as f:
-                lbf_cpt_str = f.read()
-            # write an LB checkpoint with missing data
-            with open(lbf_cpt_path[:-4] + "-corrupted.cpt", "wb") as f:
-                f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
-            # write an LB checkpoint with different box dimensions
-            with open(lbf_cpt_path[:-4] + "-wrong-boxdim.cpt", "wb") as f:
-                if cpt_mode == 1:
-                    # first dimension becomes 0
-                    f.write(8 * b"\x00" + lbf_cpt_str[8:])
-                else:
-                    # first dimension becomes larger
-                    f.write(b"1" + lbf_cpt_str)
+#            with open(lbf_cpt_path, "rb") as f:
+#                lbf_cpt_str = f.read()
+#            # write an LB checkpoint with missing data
+#            with open(lbf_cpt_path[:-4] + "-corrupted.cpt", "wb") as f:
+#                f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
+#            # write an LB checkpoint with different box dimensions
+#            with open(lbf_cpt_path[:-4] + "-wrong-boxdim.cpt", "wb") as f:
+#                if cpt_mode == 1:
+#                    # first dimension becomes 0
+#                    f.write(8 * b"\x00" + lbf_cpt_str[8:])
+#                else:
+#                    # first dimension becomes larger
+#                    f.write(b"1" + lbf_cpt_str)
 
 
 if __name__ == '__main__':
