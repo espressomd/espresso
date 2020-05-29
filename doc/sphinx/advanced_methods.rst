@@ -125,7 +125,7 @@ The following limitations currently apply for the collision detection:
 Lees-Edwards boundary conditions
 --------------------------------
 
-Lees-Edwards boundary conditions are not available in the current version of ESPResSo.
+Lees-Edwards boundary conditions are not available in the current version of |es|.
 
 .. _Immersed Boundary Method for soft elastic objects:
 
@@ -193,11 +193,10 @@ Note that the :class:`espressomd.interactions.IBM_VolCons` ``bond`` does not nee
 The comma is needed to force Python to create a tuple containing a single item.
 
 
-For a more detailed description, see e.g. Guckenberger and Gekle, J. Phys. Cond. Mat. (2017) or contact us.
-This feature probably does not work with advanced LB features such electro kinetics.
+For a more detailed description, see e.g. :cite:`guckenberger17a` or contact us.
+This feature probably does not work with advanced LB features such as electrokinetics.
 
-A sample script is provided in the :file:`/samples/immersed_boundary/` directory of the source distribution.
-
+A sample script is provided in the :file:`/samples/immersed_boundary/` directory.
 
 
 
@@ -208,16 +207,18 @@ Object-in-fluid
 If you plan to use this feature, please contact the Cell-in-fluid Research Group at the
 University of Zilina: ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
-When using this module, please cite :cite:`Cimrak2014` (BibTeX key Cimrak2014 in doc/sphinx/zrefs.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zrefs.bib)
+When using this module, please cite :cite:`Cimrak2014` (BibTeX key
+``Cimrak2014`` in :file:`doc/sphinx/zrefs.bib`) and :cite:`Cimrak2012`
+(BibTeX key ``Cimrak2012`` in :file:`doc/sphinx/zrefs.bib`)
 
 This documentation introduces the features of module Object-in-fluid (OIF).
-Even though ESPResSo was not primarily intended to work with closed
+Even though |es| was not primarily intended to work with closed
 objects, it is a flexible package and appears very suitable when one
 wants to model closed objects with elastic properties, especially if
 they are immersed in a moving fluid. Here we describe the module
-itself and offer some additional information to get you started with. Additionally, we
-provide a step by step tutorial that will show you how to use this
-module.
+itself and offer some additional information to get you started with.
+Additionally, we provide a step by step tutorial that will show you how
+to use this module.
 
 The OIF module was developed for simulations of red blood cells
 flowing through microfluidic devices and therefore the elasticity
@@ -226,10 +227,14 @@ are completely tunable and can be modified easily to allow the user to
 model any elastic object moving in fluid flow.
 
 
-
-
 |image1| |image2| |image3|
 
+.. |image1| image:: figures/oif1.png
+   :width: 30%
+.. |image2| image:: figures/oif2.png
+   :width: 30%
+.. |image3| image:: figures/oif3.png
+   :width: 30%
 
 
 Triangulations of elastic objects
@@ -239,25 +244,29 @@ To create an elastic object, we need a triangulation of the surface of
 this object. Sample triangulations are provided at
 `http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso
 <https://web.archive.org/web/20180719231829/http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso>`_.
-Users can create their own meshes, for example in gmsh, salome or any other meshing software. The
-required format is as follows:
+Users can create their own meshes, for example in gmsh, salome or any other
+meshing software. Two files are needed, one for the node positions and one
+for the connectivity of triangles:
 
-The file :file:`some_nodes.dat` should contain triplets of floats (one
-triplet per line), where each triplet represents the :math:`x, y` and
-:math:`z` coordinates of one node of the surface triangulation. No
-additional information should be written in this file, so this means
-that the number of lines equals to the number of surface nodes. The
-coordinates of the nodes should be specified in such a way that the
-approximate center of mass of the object corresponds to the origin
-(0,0,0). This is for convenience when placing the objects at desired
-locations later.
+* :file:`oif_nodes.dat` should contain triplets of floats (one
+  triplet per line), where each triplet represents the :math:`x, y` and
+  :math:`z` coordinates of one node of the surface triangulation. No
+  additional information should be written in this file, so this means
+  that the number of lines is equals to the number of surface nodes. The
+  coordinates of the nodes should be specified in such a way that the
+  approximate center of mass of the object corresponds to the origin
+  (0,0,0). This is for convenience when placing the objects at desired
+  locations later.
+* :file:`oif_triangles.dat` should contain triplets of numbers,
+  this time integers. These integers refer to the IDs of the nodes in
+  the :file:`oif_nodes.dat` file and specify which three nodes form a
+  triangle. Please note that the nodes' IDs start at 0, i.e.
+  the node written in the first line of :file:`oif_nodes.dat` has ID 0, the
+  node in the second line, has ID 1, etc.
 
-The file :file:`some_triangles.dat` should also contain triplets of
-numbers, this time integers. These integers refer to the IDs of the nodes in
-the :file:`some_nodes.dat` file and specify which three nodes form a
-triangle. Please, note that the nodes' IDs start at 0, i.e.
-the node written in the first line of :file:`some_nodes.dat` has ID 0, the
-node in the second line, has ID 1, etc.
+.. figure:: figures/oif.png
+   :width: 5.00000cm
+
 
 Description of sample script
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -314,7 +323,7 @@ just copies of the same template.
 
 The three mandatory arguments are ``nodes-file`` and ``triangles-file``
 that specify input data files with desired triangulation and ``system``
-that specifies the ESPResSo system. The relaxed mesh triangles should be
+that specifies the |es| system. The relaxed mesh triangles should be
 as close to equilateral as possible with average edge length
 approximately equal to the space discretisation step :math:`\Delta x`.
 While these lengths vary during the simulation, the connectivity of the
@@ -328,10 +337,8 @@ All other arguments are optional. ``resize`` defines resizing in the
 in this case, the cell radius will be 2. ``ks``, ``kb``, ``kal``,
 ``kag``, ``kv`` specify the elastic properties: stretching, bending,
 local area conservation, global area conservation and volume
-conservation respectively.
-
-The backslash allows the long command to continue over
-multiple lines.
+conservation respectively. These properties are described in
+:ref:`Object-in-fluid interactions`.
 
 ::
 
@@ -383,6 +390,13 @@ Their usage is described elsewhere.
 
 
 |image4| |image5| |image6|
+
+.. |image4| image:: figures/oifcylinder.png
+   :width: 3.60000cm
+.. |image5| image:: figures/oifrhomboid.png
+   :width: 7.80000cm
+.. |image6| image:: figures/oifchannel.png
+   :width: 5.50000cm
 
 Each wall and obstacle has to be specified separately as a fluid
 boundary and as a particle constraint. The former enters the simulation
@@ -524,8 +538,7 @@ specified before fluid, but it is really not recommended.
 Running the simulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The script can be executed
-in terminal using
+The script can be executed in the terminal with
 
 .. code-block:: bash
 
@@ -641,12 +654,12 @@ table will be used. It is also possible to specify your own lookup
 table. As an example, we might want to see a force magnitude in each
 surface node
 
-|image7|
 
-	Stretched sphere after some relaxation, showing magnitude
-	of total stretching force in each node.
+.. figure:: figures/oifstretched-sphere.png
+   :width: 4.00000cm
 
-
+   Stretched sphere after some relaxation, showing magnitude
+   of total stretching force in each node.
 
 
 
@@ -656,11 +669,11 @@ Color coding of scalar data by triangles
 It is also possible to save (and visualize) data corresponding to
 individual triangles
 
-|image8|
+.. figure:: figures/oifcolored-triangles.png
+   :width: 4.00000cm
 
-	Red blood cell showing
-	which triangles (local surface areas) are under most strain in shear
-	flow.
+   Red blood cell showing which triangles (local surface areas) are under
+   most strain in shear flow.
 
 In such case, the keyword ``POINT_DATA`` is changed to ``CELL_DATA`` and the number of
 triangles is given instead of number of mesh points.
@@ -734,7 +747,8 @@ Vector data for objects .vtk file
     ...
     v1-at-p391 v2-at-p391 v3-at-p392
 
-|image9|
+.. figure:: figures/oifvectordata.png
+   :width: 6.00000cm
 
    Example of vector data stored in points of the object
 
@@ -1056,7 +1070,7 @@ class OifCell
   :math:`\mathbf{fmetric}=(1,1,0,0,0,0)`, where the ones denote the
   elastic forces to be computed. The order is (stretching, bending,
   local area, global area, volume, total). The output is again a vector
-  with six elements, each corresponding to the requested fmetric/“naive
+  with six elements, each corresponding to the requested f-metric/“naive
   energy” computed as a sum of magnitudes of respective elastic forces
   over all nodes of the object.
 
@@ -1145,7 +1159,7 @@ Awareness of these classes is not necessary for a user of OIF module,
 but is essential for developers who wish to modify it because it shows
 how the object data are stored.
 
-classes FixedPoint and PartPoint
+classes ``FixedPoint`` and ``PartPoint``
 
 
 Class PartPoint represents a particle. These particles are then used as
@@ -1157,7 +1171,7 @@ particle. The FixedPoints of one OifCellType form a mesh that is
 centered around origin. Only after it is stretched and shifted to the
 object origin are the PartPoints of the given object created.
 
-classes Edge, Angle, Triangle, ThreeNeighbors
+classes ``Edge``, ``Angle``, ``Triangle``, ``ThreeNeighbors``
 
 
 These classes represent the building blocks of a mesh. They are used to
@@ -1166,7 +1180,7 @@ bending, Triangle for local and global area and volume and ThreeNeigbors
 for calculation of outward normal vector needed for cell-cell
 interaction.
 
-class Mesh
+class ``Mesh``
 
 
 This class holds all the information about the geometry of the object,
@@ -1176,25 +1190,6 @@ this type is created. This saves computational time, since the data for
 elastic interactions of the given object do not need to be recalculated
 every time.
 
-
-.. |image1| image:: figures/oif1.png
-   :width: 4.30000cm
-.. |image2| image:: figures/oif2.png
-   :width: 4.20000cm
-.. |image3| image:: figures/oif3.png
-   :width: 4.20000cm
-.. |image4| image:: figures/oifcylinder.png
-   :width: 2.30000cm
-.. |image5| image:: figures/oifrhomboid.png
-   :width: 5.20000cm
-.. |image6| image:: figures/oifchannel.png
-   :width: 4.00000cm
-.. |image7| image:: figures/oifstretched-sphere.png
-   :width: 4.00000cm
-.. |image8| image:: figures/oifcolored-triangles.png
-   :width: 4.00000cm
-.. |image9| image:: figures/oifvectordata.png
-   :width: 4.00000cm
 
 .. _Electrokinetics:
 
@@ -1538,10 +1533,6 @@ The local ``density`` and ``flux`` of a species can be obtained in the same fash
 .. [6]
    http://code.enthought.com/projects/mayavi/
 
-.. |image_oif_streching| image:: figures/stretching.png
-.. |image_oif_bending| image:: figures/bending.png
-.. |image_oif_area| image:: figures/arealocal.png
-.. |image_oif_volume| image:: figures/volume.png
 
 .. _Particle polarizability with thermalized cold Drude oscillators:
 
@@ -1810,8 +1801,8 @@ For a description of the available methods, see :class:`espressomd.reaction_ense
 
 .. _Converting tabulated reaction constants to internal units in ESPResSo:
 
-Converting tabulated reaction constants to internal units in ESPResSo
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Converting tabulated reaction constants to internal units in |es|
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The implementation in |es| requires that the dimension of :math:`\Gamma`
 is consistent with the internal unit of volume, :math:`\sigma^3`. The tabulated

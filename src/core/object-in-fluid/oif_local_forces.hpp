@@ -126,7 +126,7 @@ calc_oif_local(Particle const &p2, Particle const &p1, Particle const &p3,
   }
 
   /* bending
-     forceT1 is restoring force for triangle p1,p2,p3 and force2T restoring
+     forceT1 is restoring force for triangle p1,p2,p3 and forceT2 restoring
      force for triangle p2,p3,p4 p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2;
      p3 -= 0.5*forceT1+0.5*forceT2; p4 += forceT2; */
   if (iaparams.p.oif_local_forces.kb > TINY_OIF_ELASTICITY_COEFFICIENT) {

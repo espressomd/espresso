@@ -304,7 +304,7 @@ A separate rotational friction coefficient can be set by inputting
 thermalization on or off separately, maintaining the frictional behavior. This
 can be useful, for instance, in high Péclet number active matter systems, where
 one only wants to thermalize only the rotational degrees of freedom and
-translational motion is effected by the self-propulsion.
+translational motion is affected by the self-propulsion.
 
 The keywords ``gamma`` and ``gamma_rotate`` can be specified as a scalar, 
 or, with feature ``PARTICLE_ANISOTROPY`` compiled in, as the three eigenvalues 

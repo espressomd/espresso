@@ -462,6 +462,17 @@ It is positioned at ``center`` and has a radius ``radius`` with tube radius ``tu
 The ``normal`` parameter is the torus rotation axis, which is normalized in the program.
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
+.. figure:: figures/shape-torus.png
+   :alt: Visualization of a constraint with a Torus shape.
+   :align: center
+   :height: 6.00000cm
+
+Pictured is an example constraint with a ``Torus`` shape created with ::
+
+    torus = Torus(center=[25, 25, 25], normal=[1, 1, 1],
+                  direction=1, radius=15, tube_radius=6)
+    system.constraints.add(shape=torus, particle_type=0)
+
 
 HollowCone
 """"""""""
