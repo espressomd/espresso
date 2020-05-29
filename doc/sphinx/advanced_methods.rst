@@ -471,24 +471,6 @@ cross the cell. The force :math:`F_v(ABC)` is equally distributed to all three v
    :height: 4.00000cm
 
 
-.. _Out direction:
-
-Out direction
-^^^^^^^^^^^^^
-
-.. note::
-
-    This feature is experimental. Membranes can self-cross and cross
-    other membranes if sufficient force is applied from the LB fluid,
-    causing simulations to crash.
-
-This type of interaction is primarily for closed 3D immersed objects to
-compute the input for membrane collision. After creating the interaction
-with :class:`espressomd.interactions.MembraneCollisionInteraction`, the
-outward normal vector of a triangle is used to detect collisions with
-the outward normal vectors of other OIF object.
-
-
 Description of sample script
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
