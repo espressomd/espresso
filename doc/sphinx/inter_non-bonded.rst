@@ -18,9 +18,6 @@ explicitly set. A bonded interaction between a set of particles has to
 be specified explicitly by the command, while the command is used to
 define the interaction parameters.
 
-.. todo::
-    IMPLEMENT: print interaction list
-
 .. _Isotropic non-bonded interactions:
 
 Isotropic non-bonded interactions
@@ -33,12 +30,6 @@ Non-bonded interaction are configured via the :class:`espressomd.interactions.No
 This command defines an interaction between all particles of type ``type1`` and
 ``type2``. Possible interaction types and their parameters are
 listed below.
-
-.. todo::
-    Implement this functionality:
-    If the interaction is omitted, the command returns the
-    currently defined interaction between the two types using the syntax to
-    define the interaction
 
 For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
