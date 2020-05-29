@@ -188,25 +188,6 @@ The order of appearance corresponds to the order of the types in the argument ``
 For example if was set to ``types=[0, 1]`` then the first triple is associated to type 0 and
 the second triple to type 1.
 
-..
-	.. _Vkappa:
-
-	Vkappa
-	~~~~~~
-	:meth:`espressomd.analyze.Analysis.v_kappa`
-
-	.. todo:: Implementation appears to be incomplete
-
-	Calculates the compressibility :math:`V \times \kappa_T` through the
-	Volume fluctuations
-	:math:`V \times \kappa_T = \beta \left(\langle V^2\rangle - \langle V \rangle^2\right)`
-	:cite:`kolb99a`. Given no arguments this function calculates
-	and returns the current value of the running average for the volume
-	fluctuations. The ``mode=reset`` argument clears the currently stored values. With ``mode=read`` the
-	cumulative mean volume, cumulative mean squared volume and how many
-	samples were used can be retrieved. Likewise the option ``mode=set`` enables you to
-	set those.
-
 
 .. _Radial distribution function:
 
