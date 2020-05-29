@@ -789,5 +789,3 @@ side-by-side and end-to-end configurations. The exponents and are adjustable
 parameters of the potential. Several Gay--Berne parametrizations exist, the
 original one being :math:`k_1 = 3`, :math:`k_2 = 5`,
 :math:`\mu = 2` and :math:`\nu = 1`.
-
-.. |image_directional_lj| image:: figures/hbond.pdf
