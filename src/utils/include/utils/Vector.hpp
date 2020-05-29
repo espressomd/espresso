@@ -116,8 +116,8 @@ public:
     return ret;
   }
 
-  inline T norm2() const { return (*this) * (*this); }
-  inline T norm() const { return std::sqrt(norm2()); }
+  T norm2() const { return (*this) * (*this); }
+  T norm() const { return std::sqrt(norm2()); }
 
   /*
    * @brief Normalize the vector.
@@ -126,7 +126,7 @@ public:
    * if not zero, otherwise the vector is unchanged.
    */
 
-  inline Vector &normalize() {
+  Vector &normalize() {
     auto const l = norm();
     if (l > T(0)) {
       for (int i = 0; i < N; i++)
