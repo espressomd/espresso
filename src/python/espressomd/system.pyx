@@ -103,7 +103,7 @@ cdef class System:
         galilei
         """:class:`espressomd.galilei.GalileiTransform`"""
         integrator
-        """:class:`espressomd.integrate.IntegratorHandle`"""
+        """:class:`espressomd.integrate.Integrator`"""
         auto_update_accumulators
         """:class:`espressomd.accumulators.AutoUpdateAccumulators`"""
         constraints
