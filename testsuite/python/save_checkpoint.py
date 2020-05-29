@@ -64,16 +64,17 @@ if LB_implementation:
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
     if espressomd.has_features("LB_BOUNDARIES"):
-#        # TODO_WALBERLA
-#        if 'EK.GPU' not in modes:
-#            system.lbboundaries.add(
-#                LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4, 1e-4, 0)))
+        # TODO_WALBERLA
+        # if 'EK.GPU' not in modes:
+        #     system.lbboundaries.add(
+        #  LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4,
+        #  1e-4, 0)))
         system.lbboundaries.add(
             LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4, 1e-4, 0)))
 
 EK_implementation = None
 # TODO_WALBERLA
-#if 'EK.GPU' in modes and espressomd.gpu_available(
+# if 'EK.GPU' in modes and espressomd.gpu_available(
 #) and espressomd.has_features('ELECTROKINETICS'):
 #    EK_implementation = espressomd.electrokinetics
 #    ek = EK_implementation.Electrokinetics(
@@ -200,8 +201,8 @@ if espressomd.has_features("COLLISION_DETECTION"):
     system.collision_detection.set_params(
         mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
 
-if LB_implementation:
-#    # TODO WALBERLA
+# TODO WALBERLA
+# if LB_implementation:
 #    m = np.pi / 12
 #    nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
 #    ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
@@ -214,14 +215,13 @@ if LB_implementation:
 #        for j in range(ny):
 #            for k in range(nz):
 #                lbf[i, j, k].population = grid_3D[i, j, k] * np.arange(1, 20)
-    cpt_mode = int("@TEST_BINARY@")
-    # save LB checkpoint file
-    lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
-#    # TODO WALBERLA
+#    cpt_mode = int("@TEST_BINARY@")
+#    # save LB checkpoint file
+#    lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
 #    lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
 
-# TODO_WALBERLA
-#if EK_implementation:
+# TODO WALBERLA
+# if EK_implementation:
 #    m = np.pi / 12
 #    nx = int(np.round(system.box_l[0] / ek.get_params()["agrid"]))
 #    ny = int(np.round(system.box_l[1] / ek.get_params()["agrid"]))

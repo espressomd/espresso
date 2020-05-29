@@ -68,12 +68,10 @@ class CheckpointTest(ut.TestCase):
 #        for i in range(nx):
 #            for j in range(ny):
 #                for k in range(nz):
-#                    pass
-##                    # TODO WALBERLA
-##                    np.testing.assert_almost_equal(
-##                        np.copy(lbf[i, j, k].population),
-##                        grid_3D[i, j, k] * np.arange(1, 20),
-##                        decimal=precision)
+#                    np.testing.assert_almost_equal(
+#                        np.copy(lbf[i, j, k].population),
+#                        grid_3D[i, j, k] * np.arange(1, 20),
+#                        decimal=precision)
 #        state = lbf.get_params()
 #        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
 #        for key in reference:
