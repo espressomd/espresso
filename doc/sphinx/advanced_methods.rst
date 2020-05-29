@@ -3,7 +3,9 @@
 Advanced Methods
 ================
 
-.. todo:: Write short introduction
+This page documents advanced features of |es|. Be sure to read the relevant
+literature before using them.
+
 
 .. _Creating bonds when particles collide:
 
@@ -962,13 +964,6 @@ class OifCell
   the center of the object. It is computed as average of 6 mesh points
   that have extremal :math:`x, y` and :math:`z` coordinates at the time
   of object loading.
-
-| ``OifCell.get_approx_origin_folded()`` - outputs the approximate location
-  of the center of the object. It is computed as average of 6 mesh
-  points that have extremal :math:`x, y` and :math:`z` coordinates at
-  the time of object loading. For periodical movements the coordinates
-  are folded (always within the computational box). TODO: this is not
-  implemented yet, but it should be
 
 | ``OifCell.get_velocity()`` - outputs the average velocity of the
   object. Runs over all mesh points and outputs their average velocity.
