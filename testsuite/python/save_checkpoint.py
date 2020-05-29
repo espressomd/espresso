@@ -29,8 +29,9 @@ from espressomd import has_features
 import espressomd.lb
 if espressomd.has_features("LB_BOUNDARIES"):
     from espressomd.lbboundaries import LBBoundary
-if espressomd.has_features('ELECTROKINETICS'):
-    import espressomd.electrokinetics
+# TODO WALBERLA
+# if espressomd.has_features('ELECTROKINETICS'):
+#     import espressomd.electrokinetics
 from espressomd.minimize_energy import steepest_descent
 from espressomd.shapes import Wall, Sphere
 from espressomd import constraints
