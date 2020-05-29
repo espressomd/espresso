@@ -77,7 +77,7 @@ default:
      CC: 'gcc-9'
      CXX: 'g++-9'
   script:
-    - export with_cuda=false myconfig=default with_coverage=true with_walberla=true
+    - export with_cuda=false myconfig=default with_coverage=true with_scafacos=true with_walberla=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -90,7 +90,7 @@ maxset:
      CC: 'gcc-9'
      CXX: 'g++-9'
   script:
-    - export with_cuda=false myconfig=maxset with_coverage=true
+    - export with_cuda=false myconfig=maxset with_coverage=true with_scafacos=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -113,7 +113,7 @@ no_rotation:
      CC: 'gcc-9'
      CXX: 'g++-9'
   script:
-    - export with_cuda=false myconfig=no_rotation with_coverage=true
+    - export with_cuda=false myconfig=no_rotation with_coverage=true with_scafacos=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -197,7 +197,7 @@ clang-sanitizer:
      CC: 'clang-9'
      CXX: 'clang++-9'
   script:
-    - export myconfig=maxset with_cuda=true with_cuda_compiler=clang with_coverage=false
+    - export myconfig=maxset with_cuda=true with_cuda_compiler=clang with_coverage=false with_scafacos=true
     - export with_static_analysis=true test_timeout=900 with_asan=true with_ubsan=true
     - bash maintainer/CI/build_cmake.sh
   timeout: 2h
@@ -213,7 +213,7 @@ cuda10-maxset:
      CC: 'gcc-8'
      CXX: 'g++-8'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - export myconfig=maxset with_cuda=true with_coverage=false with_scafacos=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:
@@ -233,7 +233,7 @@ cuda9-maxset:
      CXX: 'g++-6'
      GCOV: 'gcov-6'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - export myconfig=maxset with_cuda=true with_coverage=true with_scafacos=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:
@@ -252,7 +252,7 @@ tutorials-samples-maxset:
      CC: 'gcc-8'
      CXX: 'g++-8'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export myconfig=maxset with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -267,7 +267,7 @@ tutorials-samples-default:
      CC: 'gcc-8'
      CXX: 'g++-8'
   script:
-    - export myconfig=default with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export myconfig=default with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -284,7 +284,7 @@ tutorials-samples-empty:
      CC: 'gcc-8'
      CXX: 'g++-8'
   script:
-    - export myconfig=empty with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export myconfig=empty with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 with_scafacos=false
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -301,7 +301,7 @@ tutorials-samples-no-gpu:
      CC: 'gcc-8'
      CXX: 'g++-8'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export myconfig=maxset with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 hide_gpu=true
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -317,7 +317,7 @@ installation:
      CC: 'gcc-8'
      CXX: 'g++-8'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export myconfig=maxset with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
     - export srcdir=${CI_PROJECT_DIR} build_type=Release
     - bash maintainer/CI/build_cmake.sh
     - cd build

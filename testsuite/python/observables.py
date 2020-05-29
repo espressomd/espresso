@@ -92,6 +92,11 @@ class Observables(ut.TestCase):
                 assert(self.system.part.exists(id))
 
             # Get data from particles
+            if pprop_name == "f":
+                for p_id in id_list:
+                    if self.system.part[p_id].virtual:
+                        id_list.remove(p_id)
+
             part_data = getattr(self.system.part[id_list], pprop_name)
 
             # Reshape and aggregate to linear array
@@ -187,10 +192,11 @@ class Observables(ut.TestCase):
     def test_current(self):
         obs_data = espressomd.observables.Current(
             ids=self.system.part[:].id).calculate()
-        part_data = self.system.part[:].q.dot(self.system.part[:].v)
+        part_data = self.system.part[:].q.dot(
+            self.system.part[:].v)
         self.assertEqual(obs_data.shape, part_data.shape)
         np.testing.assert_array_almost_equal(
-            obs_data, part_data, err_msg="Data did not agree for observable 'Current'", decimal=9)
+            obs_data, np.copy(part_data), err_msg="Data did not agree for observable 'Current'", decimal=9)
 
     @utx.skipIfMissingFeatures('ELECTROSTATICS')
     def test_dipolemoment(self):

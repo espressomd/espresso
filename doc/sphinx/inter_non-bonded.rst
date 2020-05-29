@@ -130,7 +130,7 @@ from a *minimal* distance :math:`r_\mathrm{min}`. This is an
 optional parameter, set to :math:`0` by default.
 
 A special case of the Lennard-Jones potential is the
-Weeks-Chandler-Andersen (WCA) potential, which one obtains by putting
+Weeks--Chandler--Andersen (WCA) potential, which one obtains by putting
 the cutoff into the minimum and shifting the potential to be continuous, choosing
 :math:`r_\mathrm{cut}=2^\frac{1}{6}\sigma` and :math:`c_\mathrm{shift}=` ``'auto'``. The WCA
 potential is purely repulsive, and is often used to mimic hard sphere repulsion.
@@ -185,14 +185,13 @@ on/off during a simulation.
 
 .. _Weeks-Chandler-Andersen interaction:
 
-Weeks-Chandler-Andersen interaction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Weeks--Chandler--Andersen interaction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
     Feature ``WCA`` required.
 
-
-The interface for the Weeks-Chandler-Andersen interactions is implemented in
+The interface for the Weeks--Chandler--Andersen interactions is implemented in
 :class:`espressomd.interactions.WCAInteraction`. They
 are configured via the syntax::
 
@@ -307,7 +306,7 @@ can be set via::
      system.non_bonded_inter[type1, type2].bmhtf.set_params(**kwargs)
 
 This defines an interaction with the *short-ranged part* of the
-Born-Meyer-Huggins-Tosi-Fumi potential between particles of the types ``type1``
+Born--Meyer--Huggins--Tosi--Fumi potential between particles of the types ``type1``
 and ``type2``, which is often used to simulate NaCl crystals. The potential is
 defined by:
 
@@ -403,13 +402,13 @@ Soft-sphere interaction
 .. note::
     Feature ``SOFT_SPHERE`` required.
 
-The interface for the Soft-sphere interaction is implemented in
+The interface for the soft-sphere interaction is implemented in
 :class:`espressomd.interactions.SoftSphereInteraction`. The Soft-sphere parameters
 can be set via::
 
     system.non_bonded_inter[type1, type2].soft_sphere.set_params(**kwargs)
 
-This defines a soft sphere interaction between particles of the types ``type1``
+This defines a soft-sphere interaction between particles of the types ``type1``
 and ``type2``, which is defined by a single power law:
 
 .. math:: V(r)=a\left(r-r_\mathrm{offset}\right)^{-n}
@@ -427,7 +426,7 @@ Hat interaction
 .. note::
     Feature ``HAT`` required.
 
-The interface for the Lennard-Jones interaction is implemented in
+The interface for the hat interaction is implemented in
 :class:`espressomd.interactions.HatInteraction`. The hat parameters
 can be set via::
 
@@ -451,7 +450,7 @@ which is zero for distances bigger than :math:`r_c` and continuous at distance :
 This is the standard conservative DPD potential and can be used in
 combination with :ref:`Dissipative Particle Dynamics (DPD)`.
 
-
+.. _Hertzian interaction:
 
 Hertzian interaction
 ~~~~~~~~~~~~~~~~~~~~
@@ -479,10 +478,10 @@ The potential has no singularity and is defined everywhere; the
 potential has a non-differentiable maximum at :math:`r=0`, where the force
 is undefined.
 
-.. _Gaussian:
+.. _Gaussian interaction:
 
-Gaussian
-~~~~~~~~
+Gaussian interaction
+~~~~~~~~~~~~~~~~~~~~
 
 .. note::
     Feature ``GAUSSIAN`` required.
@@ -597,8 +596,7 @@ and introduce the second set of parameters prefixed with ``trans_``.
 For :math:`w_\bot (r_{ij})` (parameter ``trans_weight_function``)
 the same options are available as for :math:`w_\parallel (r_{ij})`.
 
-Note: This interaction does *not* conserve angular
-momentum.
+Note: This interaction does *not* conserve angular momentum.
 
 A more detailed description of the interaction can be found in :cite:`soddeman03a`.
 
@@ -662,8 +660,8 @@ combinations. No further calls of :meth:`~espressomd.drude_helpers.add_drude_par
 follow. Set ``verbose`` to ``True`` to print out the coefficients, charge factors
 and involved types.
 
-The samples folder contains the script :file:`drude_bmimpf6.py` with a fully
-polarizable, coarse grained ionic liquid where this approach is applied.
+The samples folder contains the script :file:`/samples/drude_bmimpf6.py` with a
+fully polarizable, coarse grained ionic liquid where this approach is applied.
 To use the script, compile espresso with the following features:
 
 .. code-block:: c++
@@ -677,7 +675,6 @@ To use the script, compile espresso with the following features:
     #define VIRTUAL_SITES_RELATIVE
     #define LENNARD_JONES
     #define THOLE
-    #define GHOSTS_HAVE_BONDS
 
 .. _Anisotropic non-bonded interactions:
 
@@ -686,15 +683,20 @@ Anisotropic non-bonded interactions
 
 .. _Gay-Berne interaction:
 
-Gay-Berne interaction
-~~~~~~~~~~~~~~~~~~~~~
+Gay--Berne interaction
+~~~~~~~~~~~~~~~~~~~~~~
 
-The interface for a Gay-Berne interaction is provided by the :class:`espressomd.interactions.GayBerneInteraction` class. Interaction parameters can be set via::
+.. note::
+    Feature ``GAY_BERNE`` required.
+
+The interface for a Gay--Berne interaction is provided by the
+:class:`espressomd.interactions.GayBerneInteraction` class. Interaction
+parameters can be set via::
 
     system.non_bonded_inter[type1, type2].gay_berne.set_params(**kwargs)
 
-This defines a Gay-Berne potential for prolate and oblate particles
-between particles types ``type1`` and ``type2``. The Gay-Berne potential is an
+This defines a Gay--Berne potential for prolate and oblate particles
+between particles types ``type1`` and ``type2``. The Gay--Berne potential is an
 anisotropic version of the classic Lennard-Jones potential, with
 orientational dependence of the range :math:`\sigma_0` and the well-depth :math:`\epsilon_0`.
 
@@ -754,7 +756,7 @@ and :math:`\chi' = \left(k_2^{1/\mu} -  1\right)/\left(k_2^{1/\mu} + 1\right)`
 are responsible for the degree of anisotropy of the molecular properties. :math:`k_1` is
 the molecular elongation, and :math:`k_2` is the ratio of the potential well depths for the
 side-by-side and end-to-end configurations. The exponents and are adjustable
-parameters of the potential. Several Gay-Berne parametrizations exist, the
+parameters of the potential. Several Gay--Berne parametrizations exist, the
 original one being :math:`k_1 = 3`, :math:`k_2 = 5`,
 :math:`\mu = 2` and :math:`\nu = 1`.
 

@@ -332,9 +332,9 @@ are not applied to every particle individually but instead
 encoded in a dissipative interaction between particles :cite:`soddeman03a`.
 
 To realize a complete DPD fluid model in |es|, three parts are needed:
-The DPD thermostat, which controls the temperate, a dissipative
-interaction between the particles that make up the fluid,
-see :ref:`DPD interaction`, and a repulsive conservative force.
+the DPD thermostat, which controls the temperate, a dissipative interaction
+between the particles that make up the fluid, see :ref:`DPD interaction`,
+and a repulsive conservative force, see :ref:`Hat interaction`.
 
 The temperature is set via
 :py:meth:`espressomd.thermostat.Thermostat.set_dpd`
@@ -355,7 +355,7 @@ see :ref:`Isotropic non-bonded interactions`. A common choice is
 a force ramp which is implemented as :ref:`Hat interaction`.
 
 A complete example of setting up a DPD fluid and running it
-to sample the equation of state can be found in samples/dpd.py.
+to sample the equation of state can be found in :file:`/samples/dpd.py`.
 
 When using a Lennard-Jones interaction, :math:`{r_\mathrm{cut}} =
 2^{\frac{1}{6}} \sigma` is a good value to choose, so that the

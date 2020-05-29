@@ -318,9 +318,6 @@ General features
 
 -  ``MMM1D_GPU``
 
--  ``_P3M_GPU_FLOAT``
-
-
 -  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
    the various magnetostatics algorithms, such as P3M are switched on.
 
@@ -344,6 +341,9 @@ General features
 -  ``LANGEVIN_PER_PARTICLE`` Allows to choose the Langevin temperature and friction coefficient
    per particle.
 
+-  ``BROWNIAN_PER_PARTICLE`` Allows to choose the Brownian temperature and friction coefficient
+   per particle.
+
 -  ``ROTATIONAL_INERTIA``
 
 -  ``EXTERNAL_FORCES`` Allows to define an arbitrary constant force for each particle
@@ -360,8 +360,6 @@ General features
    molecules.
 
    .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
-
--  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
@@ -381,9 +379,6 @@ integrator or thermostat:
 -  ``NPT`` Enables an on-the-fly NPT integration scheme.
 
    .. seealso:: :ref:`Isotropic NPT thermostat`
-
-
--  ``REACTION_ENSEMBLE``
 
 -  ``ENGINE``
 
@@ -435,11 +430,11 @@ section :ref:`Isotropic non-bonded interactions`):
 -  ``LJCOS2`` Same as ``LJCOS``, but using a slightly different way of smoothing the
    connection to 0.
 
--  ``GAY_BERNE`` (experimental)
+-  ``WCA`` Enable the Weeks--Chandler--Andersen potential.
 
--  ``HERTZIAN``
+-  ``GAY_BERNE`` Enable the Gay--Berne potential (experimental).
 
--  ``NO_INTRA_NB``
+-  ``HERTZIAN`` Enable the Hertzian potential.
 
 -  ``MORSE`` Enable the Morse potential.
 
@@ -447,22 +442,24 @@ section :ref:`Isotropic non-bonded interactions`):
 
 -  ``SOFT_SPHERE`` Enable the soft sphere potential.
 
--  ``SMOOTH_STEP`` Enable the smooth step potential, a step potential with two length
-   scales.
+-  ``SMOOTH_STEP`` Enable the smooth step potential, a step potential with
+   two length scales.
 
--  ``BMHTF_NACL`` Enable the Born-Meyer-Huggins-Tosi-Fumi potential, which can be used
-   to model salt melts.
+-  ``BMHTF_NACL`` Enable the Born--Meyer--Huggins--Tosi--Fumi potential,
+   which can be used to model salt melts.
 
--  ``GAUSSIAN``
+-  ``GAUSSIAN`` Enable the Gaussian potential.
 
--  ``HAT``
+-  ``HAT`` Enable the Hat potential.
 
--  ``UMBRELLA`` (experimental)
+-  ``UMBRELLA`` Enable the umbrella potential (experimental).
 
 Some of the short-range interactions have additional features:
 
 -  ``LJGEN_SOFTCORE`` This modifies the generic Lennard-Jones potential
    (``LENNARD_JONES_GENERIC``) with tunable parameters.
+
+-  ``THOLE`` See :ref:`Thole correction`
 
 
 .. _Debug messages:
