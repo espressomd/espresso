@@ -47,16 +47,14 @@ simulations.  It is mainly developed at the Institute for
 Computational Physics of the University of Stuttgart, but has
 contributors from all over the world.
 
-
 ## Documentation
 
-You can find documentation on how to compile, use and develop ESPResSo
-on the homepage at [http://espressomd.org/html/doc/index.html](http://espressomd.org/html/doc/index.html).
-
-ESPResSo is intended to be used by people that have proper knowledge
-of simulation techniques and know how to use them. We do not take
-responsibility if you use ESPResSo to create and publish bogus
-results. You have been warned!
+The [user guide](http://espressomd.org/html/doc/index.html) will
+walk you through the basic usage of ESPResSo. Advanced simulation
+methods are extensively documented, with examples and links to the
+relevant literature. Additional resources can be found on the
+homepage at http://espressomd.org/wordpress/documentation/, such
+as tutorials and doxygen documentation.
 
 ## PLEASE CITE US!
 
