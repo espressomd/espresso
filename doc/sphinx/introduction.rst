@@ -622,7 +622,8 @@ older release, we recommend using the latest bugfix release from that
 line (for example 4.0.2 instead of 4.0), unless you need to capture the
 behavior of bugs for reproducibility reasons. When filing bug reports
 or citing |es|, the version should always be mentioned. See
-our policy on :ref:`bug reports <Contributing>` for more details.
+our policies on :ref:`bug reports <Contributing>` and
+:ref:`citing the software <How to cite ESPResSo>` for more details.
 
 Releases from 4.0 onwards can be found on
 `GitHub <https://github.com/espressomd/espresso/releases>`_.
@@ -681,4 +682,49 @@ guidelines:
 
 * No guarantees are made with respect to the C++ bindings in the simulation core.
 
+.. _How to cite ESPResSo:
+
+How to cite |es|
+^^^^^^^^^^^^^^^^
+
+Please cite :cite:`weik19a` (BibTeX key ``weik19a`` in :file:`doc/sphinx/zrefs.bib`)
+for |es| 4.0 and later, or :cite:`arnold13a` and :cite:`limbach06a`
+(BibTeX keys ``arnold13a`` and ``limbach06a`` in :file:`doc/sphinx/zrefs.bib`)
+for |es| 2.0 to 3.3. To find the version number, use the following command:
+
+.. code-block:: bash
+
+    ./pypresso -c "import espressomd.version;print(espressomd.version.friendly())"
+
+A number of algorithms in |es| are fairly advanced and unique to |es|.
+The authors of these contributions kindly ask you to cite the relevant
+publications, using the BibTeX entries indicated in this user guide.
+
+A complete citation would look like this:
+
+    Simulations were carried out with ESPResSo 4.1[24] using the ICC\*
+    algorithm[25].
+
+    | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
+      extensible software package for simulating soft matter systems.
+      *Eur. Phys. J. Spec. Top.* **227**, 1789--1816 (2019).
+      doi:\ `10.1140/epjst/e2019-800186-9 <https://doi.org/10.1140/epjst/e2019-800186-9>`_.
+    | [25] C. Tyagi, M. Süzen, M. Sega *et al.* An iterative, fast,
+      linear-scaling method for computing induced charges on arbitrary
+      dielectric boundaries. *J. Chem. Phys.* **132**, 154112 (2010).
+      doi:\ `10.1063/1.3376011 <https://doi.org/10.1063/1.3376011>`_.
+
+You may also provide the patch level, when relevant. If you developed code
+for |es| and made it available in a publicly accessible repository, you
+should consider providing the corresponding URL, for example in a footnote:
+
+    The method was implemented for ESPResSo 4.1.2[24]. The full code is
+    available online\*.
+
+    | \* https://github.com/username/espresso/tree/implemented-algorithm
+
+    | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
+      extensible software package for simulating soft matter systems.
+      *Eur. Phys. J. Spec. Top.* **227**, 1789--1816 (2019).
+      doi:\ `10.1140/epjst/e2019-800186-9 <https://doi.org/10.1140/epjst/e2019-800186-9>`_.
 
