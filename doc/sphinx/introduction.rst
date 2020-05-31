@@ -606,13 +606,35 @@ report so to the developers.
 
 
 
+.. _Software releases:
+
+Software releases
+-----------------
+
+|es| releases use the following versioning scheme: ``major.minor.patch_level``.
+New features are introduced in major and minor releases, while bugfix releases
+only patch bugs without adding or removing features. Since the ``patch_level``
+doesn't affect the capabilities of the software, it's common to refer to
+releases simply as ``major.minor``.
+
+New users should always choose the latest release. When opting for an
+older release, we recommend using the latest bugfix release from that
+line (for example 4.0.2 instead of 4.0), unless you need to capture the
+behavior of bugs for reproducibility reasons. When filing bug reports
+or citing |es|, the version should always be mentioned.
+
+Releases from 4.0 onwards can be found on
+`GitHub <https://github.com/espressomd/espresso/releases>`_.
+Older releases from 2.1 to 3.3 can be found in
+`GNU Savannah <http://download.savannah.gnu.org/releases/espressomd/>`_.
+See our policy on :ref:`API backward compatibility
+<Intended interface compatibility between ESPResSo versions>`
+if you need more details.
+
 .. _Intended interface compatibility between ESPResSo versions:
 
 Intended interface compatibility between |es| versions
-------------------------------------------------------
-
-We use the following versioning scheme:
-major.minor.patch_level
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 With regards to the stability of the Python interface, we have the following
 guidelines:
