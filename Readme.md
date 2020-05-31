@@ -67,15 +67,15 @@ together with past releases until 4.0. When choosing a release, we recommend tha
 you get the latest bugfix release in that line. For example, for 4.1 you would like
 to use 4.1.2.
 
-## PLEASE CITE US!
+### Please cite us!
 
-If you use ESPResSo and obtain scientific results that you publish, we
-would ask you to acknowledge the usage of ESPResSo by citing the relevant papers:
-http://espressomd.org/wordpress/about/please-cite-us/
-
-A number of algorithms in ESPResSo are fairly advanced and unique to
-ESPResSo. The authors of these contributions kindly ask you to cite the
-relevant publications, as indicated in the ESPResSo User's Guide.
+If you use ESPResSo to publish scientific results, we would ask you to
+acknowledge this usage by mentioning the software with its version number and
+[citing the relevant papers](http://espressomd.org/wordpress/about/please-cite-us/).
+A number of algorithms in ESPResSo are fairly advanced and unique to ESPResSo.
+The authors of these contributions kindly ask you to cite the relevant
+publications, as indicated in the documentation. For detailed instructions, see
+[How to cite ESPResSo](http://espressomd.org/html/doc/introduction.html#how-to-cite-espresso).
 
 ### Join the community
 
