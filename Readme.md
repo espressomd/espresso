@@ -77,6 +77,14 @@ A number of algorithms in ESPResSo are fairly advanced and unique to
 ESPResSo. The authors of these contributions kindly ask you to cite the
 relevant publications, as indicated in the ESPResSo User's Guide.
 
+### Join the community
+
+Please consider subscribing to our
+[mailing list](http://espressomd.org/wordpress/community-and-support/mailing-lists/)
+if you're actively using ESPResSo, as we occasionally need community
+feedback when making decisions on the future of specific features in
+upcoming releases. You'll also get notifications on bugfix releases.
+
 ## License
 
 Copyright (C) 2010-2019 The ESPResSo project

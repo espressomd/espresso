@@ -417,7 +417,7 @@ use. We distinguish between five levels:
 In the "Tested" column, we note whether there is an integration test for the method.
 
 If you believe that the status of a certain method is wrong, please
-report so to the developers.
+report so to the developers using the instructions in :ref:`Contributing`.
 
 .. tabularcolumns:: |l|c|c|c|
 
@@ -537,7 +537,8 @@ New users should always choose the latest release. When opting for an
 older release, we recommend using the latest bugfix release from that
 line (for example 4.0.2 instead of 4.0), unless you need to capture the
 behavior of bugs for reproducibility reasons. When filing bug reports
-or citing |es|, the version should always be mentioned.
+or citing |es|, the version should always be mentioned. See
+our policy on :ref:`bug reports <Contributing>` for more details.
 
 Releases from 4.0 onwards can be found on
 `GitHub <https://github.com/espressomd/espresso/releases>`_.
@@ -546,6 +547,30 @@ Older releases from 2.1 to 3.3 can be found in
 See our policy on :ref:`API backward compatibility
 <Intended interface compatibility between ESPResSo versions>`
 if you need more details.
+
+.. _Release workflow:
+
+Release workflow
+^^^^^^^^^^^^^^^^
+
+Major and minor releases are branched from the development branch ``python``.
+When a version ``X.Y.0`` is released, the ``python`` branch is copied
+to a new branch named ``X.Y``, at which point the ``python`` branch is ready
+to accept contributions for the ``X.Y+1.0`` release. The ``X.Y`` branch
+still gets bugfix releases ``X.Y.1``, ``X.Y.2``, ..., for several months.
+
+`GitHub milestones <https://github.com/espressomd/espresso/milestones>`_
+track the progress of each release. They can give you an idea of the changes
+in future releases, although it's more convenient to follow the live release
+notes in the `wiki <https://github.com/espressomd/espresso/wiki>`_ (listed
+under "Planned releases" in the side bar). These notes are updated monthly.
+Most users will only be interested in the live release notes of the
+planned bugfix release for the version of |es| they're using.
+
+If you're actively developing code for |es|, you might also be interested in
+the summaries of the `ESPResSo meetings
+<https://github.com/espressomd/espresso/wiki/Offline-Espresso-meeting>`_,
+where the core team discusses plans for future releases and feature freezes.
 
 .. _Intended interface compatibility between ESPResSo versions:
 
