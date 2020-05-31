@@ -9,7 +9,7 @@ time, we will not describe its contents in detail but rather request the
 reader to go directly to the URL. Among other things, one can find
 information about the following topics there:
 
--  Latest stable release of and older releases
+-  Latest stable release of |es| and older releases
 
 -  Obtaining development version of |es|
 
