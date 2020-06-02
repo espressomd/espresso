@@ -157,6 +157,24 @@ BOOST_AUTO_TEST_CASE(fold_coordinate_test) {
                     std::runtime_error);
 }
 
+BOOST_AUTO_TEST_CASE(fold_position_test) {
+  auto const box_l = Utils::Vector3d{2., 4., 6.};
+  auto box = BoxGeometry();
+  box.set_length(box_l);
+  box.set_periodic(0, true);
+  box.set_periodic(1, true);
+  box.set_periodic(2, false);
+  Utils::Vector3d pos{1., 5., 7.};
+  Utils::Vector3i img{0, 1, 1};
+  Utils::Vector3d expected_pos{1., 1., 7.};
+  Utils::Vector3i expected_img{0, 2, 1};
+
+  fold_position(pos, img, box);
+
+  BOOST_CHECK_SMALL((pos - expected_pos).norm(), epsilon<double>);
+  BOOST_CHECK_EQUAL((img - expected_img).norm2(), 0);
+}
+
 BOOST_AUTO_TEST_CASE(regular_decomposition_test) {
   auto const eps = std::numeric_limits<double>::epsilon();
 
