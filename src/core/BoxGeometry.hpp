@@ -69,6 +69,14 @@ public:
   double volume() const { return m_length[0] * m_length[1] * m_length[2]; }
 };
 
+/**
+ * @brief Get the minimum-image distance between two coordinates.
+ * @param a           First coordinate.
+ * @param b           Second coordinate.
+ * @param box_length  Box length.
+ * @param periodic    Box periodicity.
+ * @return Shortest distance between @p a and @p b.
+ */
 template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
   auto const dx = a - b;
 
@@ -79,6 +87,13 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
   return dx;
 }
 
+/**
+ * @brief Get the minimum-image vector between two coordinates.
+ * @param a     First coordinate.
+ * @param b     Second coordinate.
+ * @param box   Box parameters (side lengths, periodicity).
+ * @return Shortest vector between @p a and @p b.
+ */
 template <typename T>
 Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
                                   const Utils::Vector<T, 3> &b,
