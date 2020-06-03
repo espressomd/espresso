@@ -185,6 +185,10 @@ void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
  *  The modified quaternion approach", Omelyan 1998 (10.1063/1.168642).
  *  Please note that ESPResSo uses scalar-first notation for quaternions,
  *  while the paper use scalar-last notation.
+ *
+ *  For very high angular velocities (e.g. if the product of @ref time_step
+ *  with the largest component of @ref ParticleMomentum::omega "p.m.omega"
+ *  is superior to ~2.0), the calculation might fail.
  * \todo implement for fixed_coord_flag
  */
 void propagate_omega_quat_particle(Particle &p) {
@@ -208,11 +212,12 @@ void propagate_omega_quat_particle(Particle &p) {
 
   /* Taken from "On the numerical integration of motion for rigid polyatomics:
    * The modified quaternion approach", Omelyan (1998), Eq. 12.*/
-  auto const lambda =
-      1 - S[0] * time_step_squared_half -
-      sqrt(1 - time_step_squared *
-                   (S[0] + time_step * (S[1] + time_step_half / 2. *
-                                                   (S[2] - S[0] * S[0]))));
+  auto const square =
+      1 - time_step_squared *
+              (S[0] +
+               time_step * (S[1] + time_step_half / 2. * (S[2] - S[0] * S[0])));
+  assert(square >= 0.);
+  auto const lambda = 1 - S[0] * time_step_squared_half - sqrt(square);
 
   for (int j = 0; j < 3; j++) {
     p.m.omega[j] += time_step_half * Wd[j];
