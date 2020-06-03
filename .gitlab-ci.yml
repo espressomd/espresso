@@ -100,7 +100,7 @@ maxset-walberla:
   <<: *global_job_definition
   stage: build
   script:
-    - export with_cuda=false myconfig=maxset-walberla with_walberla=true with_coverage=true
+    - export with_cuda=false myconfig=maxset-walberla with_walberla=true with_coverage=true  check_procs=4
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
