@@ -38,7 +38,7 @@ find_package(HIP ${CUDACompilerHIP_FIND_VERSION} MODULE REQUIRED)
 set(CUDA 1)
 set(HIP 1)
 
-list(APPEND HIP_HCC_FLAGS
+list(APPEND HIP_HIPCC_FLAGS
        -std=c++${CMAKE_CUDA_STANDARD} -pedantic -Wall -Wextra
        -Wno-sign-compare -Wno-unused-function -Wno-unused-variable
        -Wno-unused-parameter -Wno-missing-braces -Wno-gnu-anonymous-struct
