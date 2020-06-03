@@ -21,10 +21,13 @@
 /** \file
  *  Molecular dynamics integrator for rotational motion.
  *
- *  A velocity Verlet <a
- * HREF="http://ciks.cbt.nist.gov/~garbocz/dpd1/dpd.html">algorithm</a>
- *  using quaternions is implemented to tackle rotational motion.
- *  See Allen 2017 for the quaternion components indexing used here.
+ *  A velocity Verlet algorithm using quaternions is implemented to tackle
+ *  rotational motion. See "Velocity Verlet algorithm for
+ *  dissipative-particle-dynamics-based models of suspensions", Martys
+ *  and Mountain 1999 (10.1103/PhysRevE.59.3733) for the method and
+ *  "Computer simulation of liquids", Allen and Tildesley 2017
+ *  (10.1093/oso/9780198803195.001.0001) for the quaternion components
+ *  indexing used here.
  *  A random torque and a friction
  *  term are added to provide the constant NVT conditions. Due to this feature
  * all particles are
@@ -52,7 +55,9 @@
 #include <cmath>
 
 /** Calculate the derivatives of the quaternion and angular acceleration
- *  for a given particle
+ *  for a given particle.
+ *  See "An improved algorithm for molecular dynamics simulation of rigid
+ *  molecules", Sonnenschein and Roland 1985 (10.1016/0021-9991(85)90151-2).
  *  @param[in]  p    %Particle
  *  @param[out] Qd   First derivative of the particle quaternion
  *  @param[out] Qdd  Second derivative of the particle quaternion
@@ -174,6 +179,8 @@ void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
 }
 
 /** propagate angular velocities and quaternions
+ *  See "On the numerical integration of motion for rigid polyatomics:
+ *  The modified quaternion approach", Omelyan 1998 (10.1063/1.168642).
  * \todo implement for fixed_coord_flag
  */
 void propagate_omega_quat_particle(Particle &p) {
@@ -196,7 +203,7 @@ void propagate_omega_quat_particle(Particle &p) {
   define_Qdd(p, Qd.data(), Qdd.data(), S.data(), Wd.data());
 
   /* Taken from "On the numerical integration of motion for rigid polyatomics:
-   * The modified quaternion approach", Omeylan, Igor (1998), Eq. 12.*/
+   * The modified quaternion approach", Omelyan (1998), Eq. 12.*/
   auto const lambda =
       1 - S[0] * time_step_squared_half -
       sqrt(1 - time_step_squared *
