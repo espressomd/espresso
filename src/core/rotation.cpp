@@ -21,10 +21,9 @@
 /** \file
  *  Molecular dynamics integrator for rotational motion.
  *
- *  A velocity Verlet <a
- * HREF="http://ciks.cbt.nist.gov/~garbocz/dpd1/dpd.html">algorithm</a>
- *  using quaternions is implemented to tackle rotational motion.
- *  See @cite allen2017 for the quaternion components indexing used here.
+ *  A velocity Verlet algorithm using quaternions is implemented to tackle
+ *  rotational motion. See @cite martys99a for the method and
+ *  @cite allen2017 for the quaternion components indexing used here.
  *  A random torque and a friction
  *  term are added to provide the constant NVT conditions. Due to this feature
  * all particles are
@@ -46,7 +45,7 @@
 
 /** Calculate the derivatives of the quaternion and angular acceleration
  *  for a given particle.
- *  See @cite sonnenschein85a
+ *  See @cite sonnenschein85a.
  *  @param[in]  p    %Particle
  *  @param[out] Qd   First derivative of the particle quaternion
  *  @param[out] Qdd  Second derivative of the particle quaternion
@@ -117,6 +116,7 @@ static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
 }
 
 /** propagate angular velocities and quaternions
+ *  See @cite omelyan98a.
  * \todo implement for fixed_coord_flag
  */
 void propagate_omega_quat_particle(Particle &p) {
@@ -133,7 +133,7 @@ void propagate_omega_quat_particle(Particle &p) {
 
   define_Qdd(p, Qd.data(), Qdd.data(), S.data(), Wd.data());
 
-  /* Eq. (12) @cite sonnenschein85a. */
+  /* Eq. (12) @cite omelyan98a. */
   auto const lambda =
       1 - S[0] * time_step_squared_half -
       sqrt(1 - time_step_squared *
