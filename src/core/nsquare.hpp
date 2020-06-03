@@ -60,7 +60,7 @@
 extern boost::optional<AtomDecomposition> ad;
 
 /** setup the nsquare topology */
-void nsq_topology_init(const boost::mpi::communicator &comm,
+AtomDecomposition *nsq_topology_init(const boost::mpi::communicator &comm,
                        const BoxGeometry &box_geo);
 
 #endif

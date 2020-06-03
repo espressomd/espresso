@@ -126,17 +126,16 @@ void topology_init(int cs, double range) {
     topology_init(cell_structure.type, range);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(comm_cart, range, box_geo, local_geo);
+    cell_structure.type = CELL_STRUCTURE_DOMDEC;
+    cell_structure.m_decomposition =
+        dd_topology_init(comm_cart, range, box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_init(comm_cart, box_geo);
+    cell_structure.type = CELL_STRUCTURE_NSQUARE;
+    cell_structure.m_decomposition = nsq_topology_init(comm_cart, box_geo);
     break;
   default:
-    fprintf(stderr,
-            "INTERNAL ERROR: attempting to sort the particles in an "
-            "unknown way (%d)\n",
-            cs);
-    errexit();
+    throw std::runtime_error("Unknown cell system type");
   }
 }
 

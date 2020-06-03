@@ -24,20 +24,18 @@
  */
 
 #include "domain_decomposition.hpp"
-#include "cells.hpp"
 
 #include "DomainDecomposition.hpp"
 
 DomainDecomposition dd;
 
 /************************************************************/
-void dd_topology_init(const boost::mpi::communicator &comm, double range,
+DomainDecomposition *dd_topology_init(const boost::mpi::communicator &comm, double range,
                       const BoxGeometry &box_geo,
                       const LocalBox<double> &local_geo) {
   dd = DomainDecomposition(comm, range, box_geo, local_geo);
 
-  cell_structure.type = CELL_STRUCTURE_DOMDEC;
-  cell_structure.m_decomposition = std::addressof(dd);
+  return std::addressof(dd);
 }
 
 /************************************************************/

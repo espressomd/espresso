@@ -587,10 +587,10 @@ bool DomainDecomposition::on_geometry_change(
     bool fast, double range, const BoxGeometry &new_box_geo,
     const LocalBox<double> &new_local_geo, std::vector<ParticleChange> &diff) {
   /* check that the CPU domains are still sufficiently large. */
-  for (int i = 0; i < 3; i++)
-    if (new_local_geo.length()[i] < range) {
-      return false;
-    }
+  if (boost::algorithm::any_of(new_local_geo.length(),
+                               [range](double l) { return l < range; })) {
+    return false;
+  }
 
   double min_cell_size =
       std::min(std::min(cell_size[0], cell_size[1]), cell_size[2]);
