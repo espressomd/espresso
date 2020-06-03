@@ -55,8 +55,9 @@
  *                   Lagrange parameter lambda
  *  @param[out] Wd   Angular acceleration of the particle
  */
-static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
-                       double S[3], double Wd[3]) {
+static void define_Qdd(Particle const &p, Utils::Vector4d &Qd,
+                       Utils::Vector4d &Qdd, Utils::Vector3d &S,
+                       Utils::Vector3d &Wd) {
   /* calculate the first derivative of the quaternion */
   /* Eq. (4) @cite sonnenschein85a */
   Qd[0] = 0.5 * (-p.r.quat[1] * p.m.omega[0] - p.r.quat[2] * p.m.omega[1] -
@@ -77,22 +78,16 @@ static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
     Wd[0] = (p.f.torque[0] + p.m.omega[1] * p.m.omega[2] *
                                  (p.p.rinertia[1] - p.p.rinertia[2])) /
             p.p.rinertia[0];
-  else
-    Wd[0] = 0.0;
   if (p.p.rotation & ROTATION_Y)
     Wd[1] = (p.f.torque[1] + p.m.omega[2] * p.m.omega[0] *
                                  (p.p.rinertia[2] - p.p.rinertia[0])) /
             p.p.rinertia[1];
-  else
-    Wd[1] = 0.0;
   if (p.p.rotation & ROTATION_Z)
     Wd[2] = (p.f.torque[2] + p.m.omega[0] * p.m.omega[1] *
                                  (p.p.rinertia[0] - p.p.rinertia[1])) /
             p.p.rinertia[2];
-  else
-    Wd[2] = 0.0;
 
-  auto const S1 = Qd[0] * Qd[0] + Qd[1] * Qd[1] + Qd[2] * Qd[2] + Qd[3] * Qd[3];
+  auto const S1 = Qd.norm2();
 
   /* Calculate the second derivative of the quaternion. */
   /* Eq. (8) @cite sonnenschein85a */
@@ -113,8 +108,8 @@ static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
       p.r.quat[3] * S1;
 
   S[0] = S1;
-  S[1] = Qd[0] * Qdd[0] + Qd[1] * Qdd[1] + Qd[2] * Qdd[2] + Qd[3] * Qdd[3];
-  S[2] = Qdd[0] * Qdd[0] + Qdd[1] * Qdd[1] + Qdd[2] * Qdd[2] + Qdd[3] * Qdd[3];
+  S[1] = Qd * Qdd;
+  S[2] = Qdd.norm2();
 }
 
 /** Propagate angular velocities and quaternions.
@@ -139,7 +134,7 @@ void propagate_omega_quat_particle(Particle &p) {
   // Clear rotational velocity for blocked rotation axes.
   p.m.omega = Utils::mask(p.p.rotation, p.m.omega);
 
-  define_Qdd(p, Qd.data(), Qdd.data(), S.data(), Wd.data());
+  define_Qdd(p, Qd, Qdd, S, Wd);
 
   /* Eq. (12) @cite omelyan98a. */
   auto const square =
