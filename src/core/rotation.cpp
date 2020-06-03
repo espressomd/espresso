@@ -121,6 +121,10 @@ static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
  *  See @cite omelyan98a. Please note that ESPResSo uses scalar-first
  *  notation for quaternions, while @cite omelyan98a use scalar-last
  *  notation.
+ *
+ *  For very high angular velocities (e.g. if the product of @ref time_step
+ *  with the largest component of @ref ParticleMomentum::omega "p.m.omega"
+ *  is superior to ~2.0), the calculation might fail.
  * \todo implement for fixed_coord_flag
  */
 void propagate_omega_quat_particle(Particle &p) {
@@ -138,11 +142,12 @@ void propagate_omega_quat_particle(Particle &p) {
   define_Qdd(p, Qd.data(), Qdd.data(), S.data(), Wd.data());
 
   /* Eq. (12) @cite omelyan98a. */
-  auto const lambda =
-      1 - S[0] * time_step_squared_half -
-      sqrt(1 - time_step_squared *
-                   (S[0] + time_step * (S[1] + time_step_half / 2. *
-                                                   (S[2] - S[0] * S[0]))));
+  auto const square =
+      1 - time_step_squared *
+              (S[0] +
+               time_step * (S[1] + time_step_half / 2. * (S[2] - S[0] * S[0])));
+  assert(square >= 0.);
+  auto const lambda = 1 - S[0] * time_step_squared_half - sqrt(square);
 
   p.m.omega += time_step_half * Wd;
   p.r.quat += time_step * (Qd + time_step_half * Qdd) - lambda * p.r.quat;
