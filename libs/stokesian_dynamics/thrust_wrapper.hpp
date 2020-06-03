@@ -10,7 +10,7 @@
 
 
 // Dependencies with THRUST
-#ifdef USE_THRUST
+#ifdef SD_USE_THRUST
 #  include <thrust/device_vector.h>
 #  include <thrust/execution_policy.h>
 #  include <thrust/tabulate.h>
@@ -31,6 +31,7 @@ namespace thrust_wrapper {
 
   // routines
   using thrust::copy;
+  using thrust::copy_n;
   using thrust::equal;
   using thrust::fill;
   using thrust::for_each;
@@ -98,6 +99,7 @@ namespace thrust_wrapper {
 
   // routines
   using std::copy;
+  using std::copy_n;
   using std::for_each;
   using std::get;
   using std::make_tuple;

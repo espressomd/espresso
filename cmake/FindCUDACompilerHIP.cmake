@@ -53,6 +53,12 @@ list(APPEND HIP_HIPCC_FLAGS_RELWITHASSERT -O3 -g)
 
 find_library(ROCFFT_LIB name "rocfft" PATHS ${ROCM_HOME}/lib)
 
+find_library(ROCBLAS_LIB name "rocblas" PATHS ${ROCM_HOME}/lib)
+set(CUDA_CUBLAS_LIBRARIES ${ROCBLAS_LIB})
+
+find_library(ROCSOLVER_LIB name "rocsolver" PATHS ${ROCM_HOME}/lib)
+set(CUDA_cusolver_LIBRARY ${ROCSOLVER_LIB})
+
 function(add_gpu_library)
   hip_add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})

@@ -32,12 +32,17 @@
 
 #include "thrust_wrapper.hpp"
 
-#ifdef __CUDACC__
+#ifdef SD_USE_CUDA
 #include <cublas_v2.h>
 #include <cusolverDn.h>
 #endif
 
-#ifdef __CUDACC__
+#ifdef SD_USE_ROCM
+#include <rocblas.h>
+#include <rocsolver.h>
+#endif
+
+#ifdef SD_USE_GPU
 #define DEVICE_FUNC __host__ __device__
 #else
 #define DEVICE_FUNC
@@ -100,7 +105,7 @@ unravel_index(std::size_t index, std::size_t lda) {
 /// \cond
 
 // LAPACK prototypes
-#ifndef __CUDACC__
+#ifndef SD_USE_GPU
 extern "C" {
 int dgemm_(char *transa, char *transb, int *m, int *n, int *k, double *alpha,
            double *a, int *lda, double *b, int *ldb, double *beta, double *c,
@@ -120,8 +125,8 @@ namespace internal {
 
 /** The `cublas` struct channels access to efficient basic matrix operations
  *  provided by either the cuBLAS library (after which it is named), which
- *  executes on the GPU, or by BLAS (Basic Linear Algebra Subprograms), which
- *  executes on the CPU.
+ *  executes on an Nvidia GPU, rocBLAS, which executes on an AMD GPU, or by
+ *  BLAS (Basic Linear Algebra Subprograms), which executes on the CPU.
  *  \tparam Policy Specifies whether the routines are executed on host or on
  *                 device, by either passing \ref policy::host or \ref
  *                 policy::device
@@ -130,8 +135,8 @@ namespace internal {
 template <typename Policy, typename T>
 struct cublas {};
 
-#ifdef __CUDACC__
-/** Basic matrix operations on device (GPU)
+#ifdef SD_USE_CUDA
+/** Basic matrix operations on device (Nvidia-GPU) using the cuBLAS library
  */
 template <>
 struct cublas<policy::device, double> {
@@ -210,7 +215,91 @@ struct cublas<policy::device, double> {
         cublasDestroy(handle);
     }
 };
+#elif defined(SD_USE_ROCM)
+/** Basic matrix operations on device (AMD-GPU) using the rocBLAS library
+ */
+template <>
+struct cublas<policy::device, double> {
+    /** Transpose matrix
+     *  \param A buffer on device for the matrix to be transposed.
+     *  \param C buffer on device to store the result. May be the same as A.
+     *  \param m number of rows of A
+     *  \param n number of columns of A
+     */
+    static void geam(double const *A, double *C, int m, int n) {
+        double const alpha = 1;
+        double const beta = 0;
+
+        MAYBE_UNUSED rocblas_status stat;
+        rocblas_handle handle;
+        stat = rocblas_create_handle(&handle);
+        assert(rocblas_status_success == stat);
+
+        stat = rocblas_dgeam(handle, rocblas_operation_transpose,
+                             rocblas_operation_transpose, n, m, &alpha, A, m,
+                             &beta, A, m, C, n);
+        assert(rocblas_status_success == stat);
+
+        rocblas_destroy_handle(handle);
+    }
+
+    /** Matrix matrix multiplication
+     *  \param A buffer on device for the matrix: first factor
+     *  \param B buffer on device for the matrix: second factor
+     *  \param C buffer on device to store the result
+     *  \param m number of rows of A
+     *  \param n number of columns of B
+     *  \param k number of columns of A, rows of B
+     */
+    static void gemm(const double *A, const double *B, double *C, int m, int k,
+                     int n) {
+        int lda = m, ldb = k, ldc = m;
+        double alpha = 1;
+        double beta = 0;
+
+        MAYBE_UNUSED rocblas_status stat;
+        rocblas_handle handle;
+        stat = rocblas_create_handle(&handle);
+        assert(rocblas_status_success == stat);
+
+        stat = rocblas_dgemm(handle, rocblas_operation_none,
+                             rocblas_operation_none, m, n, k, &alpha, A, lda,
+                             B, ldb, &beta, C, ldc);
+        assert(rocblas_status_success == stat);
+
+        rocblas_destroy_handle(handle);
+    }
+
+    /** Matrix vector multiplication
+     *  \param A buffer on device for the matrix
+     *  \param x buffer on device for the vector
+     *  \param y buffer on device for the result
+     *  \param m number of rows of A
+     *  \param n number of columns of A
+     */
+    static void gemv(const double *A, const double *x, double *y, int m,
+                     int n) {
+        int lda = m;
+        double alpha = 1;
+        double beta = 0;
+        int incx = 1;
+        int incy = 1;
+
+        MAYBE_UNUSED rocblas_status stat;
+        rocblas_handle handle;
+        stat = rocblas_create_handle(&handle);
+        assert(rocblas_status_success == stat);
+
+        stat = rocblas_dgemv(handle, rocblas_operation_none, m, n, &alpha, A,
+                             lda, x, incx, &beta, y, incy);
+        assert(rocblas_status_success == stat);
+
+        rocblas_destroy_handle(handle);
+    }
+};
 #else
+/** Basic matrix operations on host (CPU) using the BLAS library
+ */
 template <>
 struct cublas<policy::host, double> {
     /** Transpose matrix
@@ -271,24 +360,28 @@ struct cublas<policy::host, double> {
 #endif
 
 /** The `cusolver` struct channels access to efficient linear algebra solvers
- *  provided by either the cuSOLVER library (after which it is named), which
- *  executes on the GPU, or by LAPACK (Linear Algebra PACKage), which executes
- *  on the CPU.
+ *  provided by either the cuSolver library (after which it is named), which
+ *  executes on an Nvidia GPU, rocSolver, which executes on an AMD GPU, or by
+ *  LAPACK (Linear Algebra PACKage), which executes on the CPU.
  *  The first template parameter specifies whether the routines are executed on
  *  host or on device, by either passing `policy::host` or `policy::device`.
  *  The second template parameter specifies the data type (only `double` is 
  *  available).
+ *
+ *  Note: since at the time of writing, the rocSolver library lacks the
+ *  `dpotrs` function, the implementation for AMD GPUs is less efficient than
+ *  for the other platforms.
  */
 template <typename, typename>
 struct cusolver;
 
-#ifdef __CUDACC__
+#ifdef SD_USE_CUDA
 template <>
 struct cusolver<policy::device, double> {
     /** Computes the Cholesky factorization and the inverse of a real symmetric
      *  positive definite matrix, looking only in the top half of the symmetric
      *  matrix.
-     *  
+     *
      *  \param A buffer on device for the symmetric input matrix,
      *           serves as output for the Cholesky decomposition
      *  \param B buffer on device expects identity matrix,
@@ -324,13 +417,63 @@ struct cusolver<policy::device, double> {
         cusolverDnDestroy(handle);
     }
 };
+#elif defined(SD_USE_ROCM)
+// ROCm API documentation
+// https://rocsolver.readthedocs.io/en/latest/userguidedocu.html
+template <>
+struct cusolver<policy::device, double> {
+    /** Computes the Cholesky factorization and the inverse of a real symmetric
+     *  positive definite matrix, looking only in the top half of the symmetric
+     *  matrix.
+     *
+     *  \param A buffer on device for the symmetric input matrix,
+     *           serves as output for the Cholesky decomposition
+     *  \param B buffer on device expects identity matrix,
+     *           serves as output for the inverse
+     *  \param N size of the matrix
+     */
+    static void potrf(double *A, double *B, int N) {
+        // copy input so that it is available twice
+        thrust_wrapper::device_vector<double> C(N*N);
+        thrust_wrapper::copy_n(policy::device::par(), A, N*N, C.begin());
+
+        MAYBE_UNUSED rocsolver_status stat;
+        rocsolver_handle handle;
+        stat = rocsolver_create_handle(&handle);
+        assert(rocblas_status_success == stat);
+
+        // Cholesky decomposition
+        thrust_wrapper::device_vector<rocsolver_int> info(1);
+        stat = rocsolver_dpotrf(handle, rocblas_fill_upper, N, A, N, 
+                                thrust_wrapper::raw_pointer_cast(info.data()));
+        assert(rocblas_status_success == stat);
+        assert(info[0] == 0);
+
+        // Matrix inversion - relatively inefficient due to lack of rocsolver_dpotrs
+        thrust_wrapper::device_vector<rocsolver_int> ipiv(N);
+        stat = rocsolver_dgetrf(handle, N, N,
+                                thrust_wrapper::raw_pointer_cast(C.data()), N,
+                                thrust_wrapper::raw_pointer_cast(ipiv.data()),
+                                thrust_wrapper::raw_pointer_cast(info.data()));
+        assert(rocblas_status_success == stat);
+        assert(info[0] == 0);
+        
+        stat = rocsolver_dgetrs(handle, rocblas_operation_none, N, N,
+                                thrust_wrapper::raw_pointer_cast(C.data()), N,
+                                thrust_wrapper::raw_pointer_cast(ipiv.data()),
+                                B, N);
+        assert(rocblas_status_success == stat);
+
+        rocblas_destroy_handle(handle);
+    }
+};
 #else
 template <>
 struct cusolver<policy::host, double> {
     /** Computes the Cholesky factorization and the inverse of a real symmetric
      *  positive definite matrix, looking only in the top half of the symmetric
      *  matrix.
-     *  
+     *
      *  \param A buffer on host for the symmetric input matrix,
      *           serves as output for the Cholesky decomposition
      *  \param B buffer on host expects identity matrix,

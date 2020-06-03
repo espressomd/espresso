@@ -3,20 +3,23 @@
 
 #include <cstdio>
 #include <vector>
+#include <cmath>
 
-#include "thrust_wrapper.hpp"
 #include "device_matrix.hpp"
 #include "multi_array.hpp"
+#include "thrust_wrapper.hpp"
 
-#ifdef __CUDACC__
+
+#ifdef SD_USE_CUDA
 #include <curand_kernel.h>
+#elif defined(SD_USE_ROCM)
+#include <rocrand/rocrand.hpp>
 #else
 #include <Random123/philox.h>
-
 typedef r123::Philox2x64 RNG;
 #endif
 
-#ifdef __CUDACC__
+#ifdef SD_USE_GPU
 #define DEVICE_FUNC __host__ __device__
 #else
 #define DEVICE_FUNC
@@ -1224,16 +1227,20 @@ struct thermalizer {
     T sqrt_kT_Dt;
     std::size_t offset;
     std::size_t seed;
-#ifdef __CUDACC__
+#ifdef SD_USE_GPU
     __device__
 #endif
     T operator()(std::size_t index) {
-#ifdef __CUDACC__
+#ifdef SD_USE_CUDA //should be SD_USE_GPU in the end
         uint4 rnd_ints = curand_Philox4x32_10(make_uint4(offset >> 32, seed >> 32, index >> 32, index),
                                               make_uint2(offset, seed));
         T rnd = _curand_uniform_double_hq(rnd_ints.w, rnd_ints.x);
+#elif defined (SD_USE_ROCM)
+        rocrand_state_philox4x32_10 state(seed, index, offset);
+        T rnd = rocrand_uniform(&state);
 #else
         // get two 64-bit random unsigned integers (of which only one is used)
+        typedef r123::Philox2x64 RNG;
         RNG rng;
         RNG::ctr_type c;
         RNG::key_type k;
@@ -1576,4 +1583,5 @@ struct solver {
 };
 
 } // namespace sd
+
 #endif
