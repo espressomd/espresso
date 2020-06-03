@@ -296,7 +296,7 @@ Features
 
 This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
-will negatively effect |es|'s performance.
+will negatively affect |es|'s performance.
 
 Features can be activated in the configuration header :file:`myconfig.hpp` (see
 section :ref:`myconfig.hpp\: Activating and deactivating features`). To
