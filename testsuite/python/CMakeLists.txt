@@ -54,30 +54,29 @@ endfunction(PYTHON_TEST)
 
 # Checkpointing tests: semicolon-separated list of mutually-compatible features.
 # Separate features with hyphens, use a period to add an optional flag.
-# TODO WALBERLA
-#foreach(
-#  TEST_COMBINATION
-#  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt-minimization;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.sd;lb.off-therm.bd-int.bd
-#)
-#  if(${TEST_COMBINATION} MATCHES "\\.gpu")
-#    set(TEST_LABELS "gpu")
-#  else()
-#    set(TEST_LABELS "")
-#  endif()
-#  if(${TEST_COMBINATION} MATCHES "lb\\.off")
-#    set(TEST_BINARY_LIST "1")
-#  else()
-#    set(TEST_BINARY_LIST "1;0")
-#  endif()
-#  foreach(TEST_BINARY ${TEST_BINARY_LIST})
-#    python_test(FILE save_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS}
-#                SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
-#    python_test(
-#      FILE test_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX
-#      ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
-#      save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
-#  endforeach(TEST_BINARY)
-#endforeach(TEST_COMBINATION)
+foreach(
+  TEST_COMBINATION
+  lb.walberla-p3m.cpu-lj-therm.lb;lb.off-therm.npt-int.npt-minimization;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.sd;lb.off-therm.bd-int.bd
+)
+  if(${TEST_COMBINATION} MATCHES "\\.gpu")
+    set(TEST_LABELS "gpu")
+  else()
+    set(TEST_LABELS "")
+  endif()
+  if(${TEST_COMBINATION} MATCHES "lb\\.off")
+    set(TEST_BINARY_LIST "1")
+  else()
+    set(TEST_BINARY_LIST "1;0")
+  endif()
+  foreach(TEST_BINARY ${TEST_BINARY_LIST})
+    python_test(FILE save_checkpoint.py MAX_NUM_PROC 2 LABELS ${TEST_LABELS}
+                SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
+    python_test(
+      FILE test_checkpoint.py MAX_NUM_PROC 2 LABELS ${TEST_LABELS} SUFFIX
+      ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
+      save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
+  endforeach(TEST_BINARY)
+endforeach(TEST_COMBINATION)
 python_test(FILE cellsystem.py MAX_NUM_PROC 4)
 python_test(FILE tune_skin.py MAX_NUM_PROC 1)
 python_test(FILE constraint_homogeneous_magnetic_field.py MAX_NUM_PROC 4)

@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 import espressomd
 
-required_features = ["CUDA", "LB_BOUNDARIES_GPU"]
+required_features = ["LB_BOUNDARIES"]
 espressomd.assert_features(required_features)
 
 import espressomd.lb
@@ -38,8 +38,8 @@ system.time_step = 0.01
 system.cell_system.skin = 0.4
 n_steps = 500
 
-lb_fluid = espressomd.lb.LBFluidGPU(
-    agrid=1.0, dens=1.0, visc=1.0, tau=0.01, ext_force_density=[0, 0, 0.15], kT=1.0, seed=32)
+lb_fluid = espressomd.lb.LBFluidWalberla(
+    agrid=1.0, dens=1.0, visc=1.0, tau=0.01, ext_force_density=[0, 0, 0.15], kT=0.0)
 system.actors.add(lb_fluid)
 system.thermostat.set_lb(LB_fluid=lb_fluid, seed=23)
 fluid_obs = espressomd.observables.CylindricalLBVelocityProfile(

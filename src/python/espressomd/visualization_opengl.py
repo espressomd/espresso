@@ -935,11 +935,11 @@ class openGLLive():
                 for k in range(int(dims[2])):
                     n = np.array([i, j, k]) * cell_size
                     if self.specs['LB_draw_node_boundaries'] \
-                            and self.lb[i, j, k].boundary:
+                            and self.lb[i, j, k].is_boundary:
                         draw_box(n, cell_size, self.lb_box_color_boundary,
                                  self.materials['transparent2'], 5.0)
                     if self.specs['LB_draw_nodes'] \
-                            and not self.lb[i, j, k].boundary:
+                            and not self.lb[i, j, k].is_boundary:
                         draw_box(n, cell_size, self.lb_box_color,
                                  self.materials['transparent2'], 1.5)
 
@@ -1565,8 +1565,7 @@ class openGLLive():
                     # if 'agrid' in pa:
                     self.lb_params = a.get_params()
                     self.lb = a
-                    self.lb_is_cpu = not isinstance(
-                        a, espressomd.lb.LBFluidGPU)
+                    self.lb_is_cpu = True
                     break
 
         if self.specs['LB_draw_velocity_plane']:

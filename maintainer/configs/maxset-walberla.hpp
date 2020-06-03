@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOND_CONSTRAINT
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
-#define SWIMMER_REACTIONS
+#define BROWNIAN_PER_PARTICLE
 
 #define NPT
 
@@ -64,7 +64,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define OVERLAPPED
 #define WCA
 
 #ifdef P3M

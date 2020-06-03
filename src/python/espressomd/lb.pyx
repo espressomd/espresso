@@ -100,7 +100,7 @@ cdef class HydrodynamicInteraction(Actor):
         default_params = self.default_params()
         self._params['agrid'] = self.agrid
         self._params["tau"] = self.tau
-        self._params['dens'] = self.density
+        #self._params['dens'] = self.density
         self._params["kT"] = self.kT
         if self._params['kT'] > 0.0:
             self._params['seed'] = self.seed
@@ -256,7 +256,7 @@ IF LB_WALBERLA:
             pass
 
         def valid_keys(self):
-            return "agrid", "tau", "dens", "visc", "kT", "ext_force_density"
+            return "agrid", "tau", "dens", "visc", "bulk_visc", "kT", "ext_force_density"
 
         def validate_params(self):
             super(LBFluidWalberla, self).validate_params()
@@ -270,7 +270,7 @@ IF LB_WALBERLA:
                     "dens": -1.0,
                     "ext_force_density": [0.0, 0.0, 0.0],
                     "visc": -1.0,
-                    #                    "bulk_visc": -1.0,
+                    "bulk_visc": -1.0,
                     "tau": -1.0,
                     #                    "seed": None,
                     "kT": 0.}
