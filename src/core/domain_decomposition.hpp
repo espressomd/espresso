@@ -43,18 +43,17 @@
  *  2D representation of a linked cell grid: cell_grid =
  *  {4,4}, ghost_cell_grid = {6,6}
  *
- * Each cell has 3^D neighbor cells (For cell 14 they are
- * marked). Since we deal with pair forces, it is sufficient to
- * calculate only half of the interactions (Newtons law: action =
- * reaction). We have chosen the upper half e.g. all neighbor cells with
- * a higher linear index (For cell 14 they are marked in light
+ * Each cell has 3^D neighbor cells. Since we deal with pair forces, it is
+ * sufficient to calculate only half of the interactions (Newton's law:
+ * action = reaction). We have chosen the upper half e.g. all neighbor
+ * cells with a higher linear index (For cell 14 they are marked in light
  * blue). Caution: This implementation needs double sided ghost
  * communication! For single sided ghost communication one would need
  * some ghost-ghost cell interaction as well, which we do not need!
  *
  *  For more information on cells, see \ref cells.hpp.
  *
- *  Implementation in domain_decomposition.cpp.
+ *  Implementation in \ref domain_decomposition.cpp.
  */
 
 #include "cells.hpp"
@@ -82,11 +81,6 @@ struct DomainDecomposition {
   bool fully_connected[3];
 };
 
-/************************************************************/
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
 /** Information about the domain decomposition. */
 extern DomainDecomposition dd;
 
@@ -103,13 +97,6 @@ extern int max_num_cells;
  *  lists and eventually crash Espresso.
  */
 extern int min_num_cells;
-
-/*@}*/
-
-/************************************************************/
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
 
 /** adjust the domain decomposition to a change in the geometry.
  *  Tries to speed up things if possible.
@@ -150,17 +137,14 @@ void dd_topology_release();
 /** Just resort the particles. Used during integration. The particles
  *  are stored in the cell structure.
  *
- *  @param global Use DD_GLOBAL_EXCHANGE for global exchange and
- *      DD_NEIGHBOR_EXCHANGE for neighbor exchange (recommended for use within
- *      Molecular dynamics, or any other integration scheme using only local
- *      particle moves)
+ *  @param global If true, perform a global resorting.
  *  @param pl     List of particles
  *  @param grid   Number of nodes in each spatial dimension
  */
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
                                     const Utils::Vector3i &grid);
 
-/** calculate physical (processor) minimal number of cells */
+/** Calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells(const Utils::Vector3i &grid);
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
@@ -179,7 +163,5 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
  *  poststore
  */
 void dd_assign_prefetches(GhostCommunicator *comm);
-
-/*@}*/
 
 #endif

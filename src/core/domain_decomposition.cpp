@@ -38,33 +38,20 @@ using Utils::get_linear_index;
 
 #include <boost/mpi/collectives.hpp>
 
-/** Returns pointer to the cell which corresponds to the position if the
- *  position is in the nodes spatial domain otherwise a nullptr pointer.
- */
-Cell *dd_save_position_to_cell(const Utils::Vector3d &pos);
-
-/************************************************/
-/** \name Variables */
-/************************************************/
-/*@{*/
-
 DomainDecomposition dd;
 
 int max_num_cells = 32768;
 int min_num_cells = 1;
 
-/*@}*/
-
 /************************************************************/
-/** \name Private Functions */
+/* Private Functions */
 /************************************************************/
-/*@{*/
 
 /**
  *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
  *
- *  Calculates the cell grid, based on \ref local_geo and \param
- *  range . If the number of cells is larger than \ref
+ *  Calculates the cell grid, based on \ref local_geo and \p range.
+ *  If the number of cells is larger than \ref
  *  max_num_cells, it increases max_range until the number of cells is
  *  smaller or equal \ref max_num_cells. It sets: \ref
  *  DomainDecomposition::cell_grid, \ref
@@ -197,8 +184,8 @@ void dd_mark_cells() {
 /** Fill a communication cell pointer list. Fill the cell pointers of
  *  all cells which are inside a rectangular subgrid of the 3D cell
  *  grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
- *  lower left corner lc up to the high top corner hc. The cell
- *  pointer list part_lists must already be large enough.
+ *  lower left corner @p lc up to the high top corner @p hc. The cell
+ *  pointer list @p part_lists must already be large enough.
  *  \param part_lists  List of cell pointers to store the result.
  *  \param lc          lower left corner of the subgrid.
  *  \param hc          high up corner of the subgrid.
@@ -351,15 +338,15 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   }
 }
 
-/** Revert the order of a communicator: After calling this the
- *  communicator is working in reverted order with exchanged
- *  communication types GHOST_SEND <-> GHOST_RECV.
+/** Reverse the order of a communicator: After calling this the
+ *  communicator is working in reverse order with exchanged
+ *  communication types @ref GHOST_SEND <-> @ref GHOST_RECV.
  */
-void dd_revert_comm_order(GhostCommunicator *comm) {
+void dd_reverse_comm_order(GhostCommunicator *comm) {
   int i, j, nlist2;
   GhostCommunication tmp;
 
-  /* revert order */
+  /* reverse order */
   for (i = 0; i < (comm->num / 2); i++) {
     tmp = comm->comm[i];
     comm->comm[i] = comm->comm[comm->num - i - 1];
@@ -449,10 +436,9 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
   }
 }
 
-/** Init cell interactions for cell system domain decomposition.
- * initializes the interacting neighbor cell list of a cell The
- * created list of interacting neighbor cells is used by the Verlet
- * algorithm (see verlet.cpp) to build the verlet lists.
+/** Initialize cell interactions for cell system domain decomposition.
+ *  The created list of interacting neighbor cells is used by the Verlet
+ *  algorithm to build the Verlet lists.
  */
 void dd_init_cell_interactions(const Utils::Vector3i &grid) {
   int m, n, o, p, q, r, ind1, ind2;
@@ -505,8 +491,6 @@ void dd_init_cell_interactions(const Utils::Vector3i &grid) {
       }
 }
 
-/*************************************************/
-
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
@@ -542,8 +526,6 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
       {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]});
   return &(cells[ind]);
 }
-
-/*@}*/
 
 /************************************************************/
 /* Public Functions */
@@ -604,7 +586,6 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
   dd_update_communicators_w_boxl(grid);
 }
 
-/************************************************************/
 void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
                       const double range) {
   int c, p;
@@ -636,8 +617,8 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE,
                   grid);
 
-  /* collect forces has to be done in reverted order! */
-  dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
+  /* collect forces has to be done in reverse order! */
+  dd_reverse_comm_order(&cell_structure.collect_ghost_force_comm);
 
   dd_assign_prefetches(&cell_structure.ghost_cells_comm);
   dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
@@ -664,7 +645,6 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   }
 }
 
-/************************************************************/
 void dd_topology_release() {
   /* free ghost cell pointer list */
   realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
@@ -679,9 +659,9 @@ namespace {
 /**
  * @brief Move particles into the cell system if it belongs to this node.
  *
- * Moves all particles from src into the local cell
+ * Moves all particles from @p src into the local cell
  * system if they do belong here. Otherwise the
- * particles are moved into rest.
+ * particles are moved into @p rest.
  *
  * @param src Particles to move.
  * @param rest Output list for left-over particles.
@@ -708,10 +688,10 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
 /**
  * @brief Split particle list by direction.
  *
- * Moves all particles from src into left
- * and right depending if they belong to
+ * Moves all particles from @p src into @p left
+ * and @p right depending if they belong to
  * the left or right side from local node
- * in direction dir.
+ * in direction @p dir.
  *
  * @param src Particles to sort.
  * @param left Particles that should go to the left
@@ -815,8 +795,6 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
   }
 }
 
-/*************************************************/
-
 int calc_processor_min_num_cells(const Utils::Vector3i &grid) {
   int i, min = 1;
   /* the minimal number of cells can be lower if there are at least two nodes
@@ -830,5 +808,3 @@ int calc_processor_min_num_cells(const Utils::Vector3i &grid) {
       min *= 2;
   return min;
 }
-
-/************************************************************/
