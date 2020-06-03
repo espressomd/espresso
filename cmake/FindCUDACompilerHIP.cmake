@@ -27,8 +27,11 @@ find_package(HIP ${CUDACompilerHIP_FIND_VERSION} MODULE REQUIRED)
 # patch HCC_PATH environment variable and reload HIP
 if(HIP_VERSION VERSION_LESS 3.1)
   set(HCC_PATH "${HIP_ROOT_DIR}")
-else()
+elseif(HIP_VERSION VERSION_LESS 3.5)
   set(HCC_PATH "${ROCM_HOME}/hcc")
+else()
+  set(HIP_HIPCC_CMAKE_LINKER_HELPER "${HIP_HIPCC_EXECUTABLE}")
+  unset(HCC_PATH)
 endif()
 find_package(HIP ${CUDACompilerHIP_FIND_VERSION} MODULE REQUIRED)
 
