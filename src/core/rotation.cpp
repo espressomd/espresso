@@ -58,6 +58,8 @@
  *  for a given particle.
  *  See "An improved algorithm for molecular dynamics simulation of rigid
  *  molecules", Sonnenschein and Roland 1985 (10.1016/0021-9991(85)90151-2).
+ *  Please note that ESPResSo uses scalar-first notation for quaternions,
+ *  while the paper use scalar-last notation.
  *  @param[in]  p    %Particle
  *  @param[out] Qd   First derivative of the particle quaternion
  *  @param[out] Qdd  Second derivative of the particle quaternion
@@ -181,6 +183,8 @@ void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
 /** propagate angular velocities and quaternions
  *  See "On the numerical integration of motion for rigid polyatomics:
  *  The modified quaternion approach", Omelyan 1998 (10.1063/1.168642).
+ *  Please note that ESPResSo uses scalar-first notation for quaternions,
+ *  while the paper use scalar-last notation.
  * \todo implement for fixed_coord_flag
  */
 void propagate_omega_quat_particle(Particle &p) {
