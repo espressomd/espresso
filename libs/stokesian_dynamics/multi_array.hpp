@@ -108,8 +108,12 @@ struct check_bounds {
         using unpack = std::size_t[];
         return unpack{std::size_t(idx)...}[n] < unpack{std::size_t(N)...}[n]
                    ? check_bounds<n - 1, N...>{}(idx...)
+#ifdef __HIPCC__
+                   : throw std::out_of_range("index out of bounds");
+#else
                    : throw std::out_of_range("index out of bounds: " +
                                              std::to_string(n));
+#endif
     }
 };
 
@@ -120,8 +124,12 @@ struct check_bounds<0, N...> {
         using unpack = std::size_t[];
         return unpack{std::size_t(idx)...}[0] < unpack{std::size_t(N)...}[0]
                    ? false
+#ifdef __HIPCC__
+                   : throw std::out_of_range("index out of bounds: 0");
+#else
                    : throw std::out_of_range("index out of bounds: " +
                                              std::to_string(0));
+#endif
     }
 };
 

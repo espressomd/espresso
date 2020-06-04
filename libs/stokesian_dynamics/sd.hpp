@@ -1,7 +1,6 @@
 #ifndef SD_HPP
 #define SD_HPP
 
-#include <cstdio>
 #include <vector>
 #include <cmath>
 
@@ -120,7 +119,11 @@ struct check_dist {
         T dx = x(j + 0) - x(k + 0);
         T dy = x(j + 1) - x(k + 1);
         T dz = x(j + 2) - x(k + 2);
+#ifdef __HIPCC__
+        T dr = sqrtf(dx * dx + dy * dy + dz * dz);
+#else
         T dr = std::sqrt(dx * dx + dy * dy + dz * dz);
+#endif
         T dr_inv = 1 / dr;
 
         // Check if particles overlap and if so, cause NAN to appear
@@ -727,7 +730,11 @@ struct lubrication {
             double xi = dr - 2;
 
             double xi1 = 1 / xi;
+#ifdef __HIPCC__
+            double dlx = logf(xi1);
+#else
             double dlx = std::log(xi1);
+#endif
 
             double xdlx = xi * dlx;
             double dlx1 = dlx + xdlx;
