@@ -74,7 +74,6 @@ option(WITH_CUDA "Build with GPU support" OFF)
 option_if_available(WITH_HDF5 "Build with HDF5 support" ON)
 option(WITH_TESTS "Enable tests" ON)
 option_if_available(WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
-option_if_available(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" ON)
 option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
@@ -263,37 +262,13 @@ if(LAPACK_FOUND)
   set(LAPACK 1)
 endif()
 
-if(WITH_STOKESIAN_DYNAMICS)
-  if(BLAS AND LAPACK)
-    set(STOKESIAN_DYNAMICS 1)
-  endif()
-  if(CUDA)
-    set(STOKESIAN_DYNAMICS_GPU 1)
-  endif(CUDA)
-  if(NOT (STOKESIAN_DYNAMICS OR STOKESIAN_DYNAMICS_GPU)
-     AND NOT WITH_STOKESIAN_DYNAMICS_IS_DEFAULT_VALUE)
-    message(
-      FATAL_ERROR
-        "Optional feature Stokesian Dynamics explicitly requested, but dependencies not found."
-    )
-  endif()
-endif(WITH_STOKESIAN_DYNAMICS)
+if(BLAS AND LAPACK)
+  set(STOKESIAN_DYNAMICS 1)
+endif()
 
-#if((STOKESIAN_DYNAMICS OR STOKESIAN_DYNAMICS_GPU)
-#   AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
-#  find_package(Git)
-#  if(GIT_FOUND)
-#    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/stokesian_dynamics/.git")
-#      execute_process(
-#        COMMAND ${GIT_EXECUTABLE} submodule update --init --
-#                libs/stokesian_dynamics WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-#    else()
-#      execute_process(
-#        COMMAND ${GIT_EXECUTABLE} submodule update -- libs/stokesian_dynamics
-#        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-#    endif()
-#  endif()
-#endif()
+if(WITH_CUDA)
+  set(STOKESIAN_DYNAMICS_GPU 1)
+endif()
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)

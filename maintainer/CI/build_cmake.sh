@@ -122,9 +122,6 @@ fi
 if [ "${with_scafacos}" = true ]; then
     cmake_params="${cmake_params} -DWITH_SCAFACOS=ON"
 fi
-if [ "${with_stokesian_dynamics}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_STOKESIAN_DYNAMICS=ON"
-fi
 
 if [ "${with_fftw}" = true ]; then
     :
@@ -196,6 +193,17 @@ else
     fi
     echo "Copying ${myconfig}.hpp to ${builddir}/myconfig.hpp..."
     cp "${myconfig_file}" "${builddir}/myconfig.hpp"
+fi
+
+if [ "${with_stokesian_dynamics}" = true ]; then
+    cat >> "${builddir}/myconfig.hpp" <<EOF
+#ifdef CUDA
+#define STOKESIAN_DYNAMICS_GPU
+#endif
+#if defined(BLAS) && defined(LAPACK)
+#define STOKESIAN_DYNAMICS
+#endif
+EOF
 fi
 
 cmake ${cmake_params} "${srcdir}" || exit 1
