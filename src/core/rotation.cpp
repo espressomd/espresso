@@ -26,10 +26,9 @@
  *  @cite allen2017 for the quaternion components indexing used here.
  *  A random torque and a friction
  *  term are added to provide the constant NVT conditions. Due to this feature
- * all particles are
+ *  all particles are
  *  treated as 3D objects with 3 translational and 3 rotational degrees of
- * freedom if ROTATION
- *  flag is set in \ref config.hpp "config.hpp".
+ *  freedom if ROTATION is compiled in.
  */
 
 #include "rotation.hpp"
@@ -43,8 +42,8 @@
 
 #include <cmath>
 
-/** Calculate the derivatives of the quaternion and angular acceleration
- *  for a given particle.
+/** @brief Calculate the derivatives of the quaternion and angular
+ *  acceleration for a given particle.
  *  See @cite sonnenschein85a. Please note that ESPResSo uses scalar-first
  *  notation for quaternions, while @cite sonnenschein85a use scalar-last
  *  notation.
@@ -112,7 +111,7 @@ static void define_Qdd(Particle const &p, Utils::Vector4d &Qd,
   S[2] = Qdd.norm2();
 }
 
-/** Propagate angular velocities and quaternions.
+/**
  *  See @cite omelyan98a. Please note that ESPResSo uses scalar-first
  *  notation for quaternions, while @cite omelyan98a use scalar-last
  *  notation.
@@ -120,7 +119,8 @@ static void define_Qdd(Particle const &p, Utils::Vector4d &Qd,
  *  For very high angular velocities (e.g. if the product of @ref time_step
  *  with the largest component of @ref ParticleMomentum::omega "p.m.omega"
  *  is superior to ~2.0), the calculation might fail.
- * \todo implement for fixed_coord_flag
+ *
+ *  \todo implement for fixed_coord_flag
  */
 void propagate_omega_quat_particle(Particle &p) {
 
@@ -156,8 +156,6 @@ void propagate_omega_quat_particle(Particle &p) {
   }
 }
 
-/** convert the torques to the body-fixed frames and propagate angular
- * velocities */
 void convert_torques_propagate_omega(const ParticleRange &particles) {
   for (auto &p : particles) {
     // Skip particle if rotation is turned off entirely for it.
@@ -175,7 +173,7 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
     /* if the tensor of inertia is isotropic, the following refinement is not
        needed.
        Otherwise repeat this loop 2-3 times depending on the required accuracy
-       */
+     */
 
     const double rinertia_diff_01 = p.p.rinertia[0] - p.p.rinertia[1];
     const double rinertia_diff_12 = p.p.rinertia[1] - p.p.rinertia[2];
@@ -192,7 +190,6 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
   }
 }
 
-/** convert the torques to the body-fixed frames before the integration loop */
 void convert_initial_torques(const ParticleRange &particles) {
   for (auto &p : particles) {
     if (!p.p.rotation)
