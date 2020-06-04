@@ -50,11 +50,6 @@
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
 #define MMM1D_GPU
-#define STOKESIAN_DYNAMICS_GPU
-#endif
-
-#if defined(BLAS) && defined(LAPACK)
-#define STOKESIAN_DYNAMICS
 #endif
 
 #define TABULATED
