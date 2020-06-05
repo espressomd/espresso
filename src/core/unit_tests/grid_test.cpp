@@ -164,15 +164,32 @@ BOOST_AUTO_TEST_CASE(fold_position_test) {
   box.set_periodic(0, true);
   box.set_periodic(1, true);
   box.set_periodic(2, false);
-  Utils::Vector3d pos{1., 5., 7.};
-  Utils::Vector3i img{0, 1, 1};
-  Utils::Vector3d expected_pos{1., 1., 7.};
-  Utils::Vector3i expected_img{0, 2, 1};
 
-  fold_position(pos, img, box);
+  /* Wrapped */
+  {
+    Utils::Vector3d pos{-1.9, 4.1, 7.};
+    Utils::Vector3i img{0, 1, 1};
+    Utils::Vector3d const expected_pos{0.1, 0.1, 7.};
+    Utils::Vector3i const expected_img{-1, 2, 1};
 
-  BOOST_CHECK_SMALL((pos - expected_pos).norm(), epsilon<double>);
-  BOOST_CHECK_EQUAL((img - expected_img).norm2(), 0);
+    fold_position(pos, img, box);
+
+    BOOST_CHECK_SMALL((pos - expected_pos).norm(), 3 * epsilon<double>);
+    BOOST_CHECK_EQUAL((img - expected_img).norm2(), 0);
+  }
+
+  /* Not wrapped */
+  {
+    Utils::Vector3d pos{1., 3., 7.};
+    Utils::Vector3i img{0, -1, -1};
+    Utils::Vector3d const expected_pos{1., 3., 7.};
+    Utils::Vector3i const expected_img{0, -1, -1};
+
+    fold_position(pos, img, box);
+
+    BOOST_CHECK_SMALL((pos - expected_pos).norm(), 3 * epsilon<double>);
+    BOOST_CHECK_EQUAL((img - expected_img).norm2(), 0);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(regular_decomposition_test) {
