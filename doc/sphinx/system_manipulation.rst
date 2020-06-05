@@ -85,8 +85,8 @@ capping. Force capping is switched off by setting :math:`F_\mathrm{max}=0`.
 
 For simple systems, it is often more convenient to use the
 :ref:`Steepest descent` algorithm instead of writing a tailored warmup
-loop in Python. The steepest descent algorithm does both force capping
-and torque capping.
+loop in Python. The steepest descent algorithm will integrate the system
+while capping both the maximum displacement and maximum rotation.
 
 .. _Galilei Transform and Particle Velocity Manipulation:
 
