@@ -80,8 +80,13 @@ Force capping can be activated via  :class:`espressomd.system.System`::
 
 This command will limit the magnitude of the force to :math:`r F_\mathrm{max}`.
 Energies are not affected by the capping, so the energy can be used to
-identify the remaining overlap. The force capping is switched off by setting
-:math:`F_\mathrm{max}=0`.
+identify the remaining overlap. Torques are also not affected by the
+capping. Force capping is switched off by setting :math:`F_\mathrm{max}=0`.
+
+For simple systems, it is often more convenient to use the
+:ref:`Steepest descent` algorithm instead of writing a tailored warmup
+loop in Python. The steepest descent algorithm will integrate the system
+while capping both the maximum displacement and maximum rotation.
 
 .. _Galilei Transform and Particle Velocity Manipulation:
 
@@ -96,14 +101,14 @@ in affecting the velocity of the system. ::
 
 * Particle motion and rotation
 
-::
+  ::
 
     gt.kill_particle_motion()
 
-This command halts all particles in the current simulation, setting
-their velocities to zero, as well as their angular momentum if the
-option ``rotation`` is specified and the feature ``ROTATION`` has been
-compiled in.
+  This command halts all particles in the current simulation, setting
+  their velocities to zero, as well as their angular momentum if the
+  option ``rotation`` is specified and the feature ``ROTATION`` has been
+  compiled in.
 
 * Forces and torques acting on the particles
 
