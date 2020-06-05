@@ -67,6 +67,14 @@ together with past releases until 4.0. When choosing a release, we recommend tha
 you get the latest bugfix release in that line. For example, for 4.1 you would like
 to use 4.1.2.
 
+### Join the community
+
+Please consider subscribing to our
+[mailing list](http://espressomd.org/wordpress/community-and-support/mailing-lists/)
+if you're actively using ESPResSo, as we occasionally need community
+feedback when making decisions on the future of specific features in
+upcoming releases. You'll also get notifications on bugfix releases.
+
 ### Please cite us!
 
 If you use ESPResSo to publish scientific results, we would ask you to
@@ -76,14 +84,6 @@ A number of algorithms in ESPResSo are fairly advanced and unique to ESPResSo.
 The authors of these contributions kindly ask you to cite the relevant
 publications, as indicated in the documentation. For detailed instructions, see
 [How to cite ESPResSo](http://espressomd.org/html/doc/introduction.html#how-to-cite-espresso).
-
-### Join the community
-
-Please consider subscribing to our
-[mailing list](http://espressomd.org/wordpress/community-and-support/mailing-lists/)
-if you're actively using ESPResSo, as we occasionally need community
-feedback when making decisions on the future of specific features in
-upcoming releases. You'll also get notifications on bugfix releases.
 
 ## License
 
