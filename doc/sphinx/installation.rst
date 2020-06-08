@@ -485,7 +485,11 @@ Finally, there is a flag for debugging:
 Features marked as experimental
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
+Some of the above features are marked as EXPERIMENTAL. Activating these
+features can have unexpected side effects and some of them have known issues.
+If you activate any of these features, you should understand the corresponding
+source code and do extensive testing. Furthermore, it is necessary to define
+``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
 
 External features
@@ -507,6 +511,13 @@ using a CMake flag (see :ref:`Options and Variables`).
 
 - ``GSL`` Enables features relying on the GNU Scientific Library, e.g.
   :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
+
+- ``STOKESIAN_DYNAMICS`` Enables the Stokesian Dynamics feature for CPU
+  (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
+
+- ``STOKESIAN_DYNAMICS_GPU`` Enables the Stokesian Dynamics feature for GPU
+  (see :ref:`Stokesian Dynamics`). Requires thrust/cuBLAS/cuSolver for NVIDIA
+  GPUs or rocrand/rocthrust/rocblas/rocsolver for AMD GPUs.
 
 
 
@@ -669,6 +680,8 @@ options are available:
 * ``WITH_TESTS``: Enable tests
 
 * ``WITH_SCAFACOS``: Build with ScaFaCoS support
+
+* ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support
 
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
