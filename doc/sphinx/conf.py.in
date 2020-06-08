@@ -256,12 +256,10 @@ if sphinx.version_info[:3] < (2, 0, 1):
     autodoc_mock_imports.append('MDAnalysis')
 
 def setup(app):
-    
-    # Function name was changed from before version 1.8
-    try:
-        app.add_css_file('bibtex.css')
-    except AttributeError:
+    if sphinx.version_info[:2] < (1, 8):
         app.add_stylesheet('bibtex.css')
+    else:
+        app.add_css_file('bibtex.css')
 
 
 # -- Options for Cython ---------------------------------------------------

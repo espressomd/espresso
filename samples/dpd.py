@@ -21,7 +21,7 @@ varying density. The fluid is thermalized using a DPD thermostat.
 
 import espressomd
 
-required_features = ["DPD"]
+required_features = ["DPD", "HAT"]
 espressomd.assert_features(required_features)
 
 import numpy as np
