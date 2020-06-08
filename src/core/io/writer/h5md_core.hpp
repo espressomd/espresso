@@ -83,6 +83,17 @@ public:
   // the dataset in the order of ids (possibly slower on output for many
   // particles).
   bool &write_ordered() { return m_write_ordered; };
+
+  // Unit system
+  bool is_unit_system_defined() {
+    return m_time_unit.length() > 0 && m_mass_unit.length() > 0 && m_length_unit.length() > 0;
+  }
+  std::string &time_unit() { return m_time_unit; };
+  std::string &mass_unit() { return m_mass_unit; };
+  std::string &length_unit() { return m_length_unit; };
+  std::string &force_unit() { return m_force_unit; };
+  std::string &velocity_unit() { return m_velocity_unit; };
+  std::string &charge_unit() { return m_charge_unit; };
   /**
    * @brief Method to force flush to h5md file.
    */
@@ -179,10 +190,18 @@ private:
   boost::filesystem::path m_absolute_script_path = "nullptr";
   h5xx::file m_h5md_file;
 
+  std::string m_time_unit;
+  std::string m_length_unit;
+  std::string m_mass_unit;
+  std::string m_force_unit;
+  std::string m_velocity_unit;
+  std::string m_charge_unit;
+
   struct DatasetDescriptor {
     std::string path;
     hsize_t dim;
     h5xx::datatype type;
+    std::string unit;
   };
   std::vector<std::string> group_names;
   std::vector<DatasetDescriptor> dataset_descriptors;

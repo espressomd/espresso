@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Interface module for the H5md core implementation."""
-
-
+import collections
+import dataclasses
 import sys
 
 from ...script_interface import PScriptInterface  # pylint: disable=import
@@ -28,6 +28,21 @@ if 'H5MD' not in features():
         def __init__(self, *args, **kwargs):
             raise RuntimeError("H5md not available.")
 else:
+    @dataclasses.dataclass
+    class UnitSystem:
+        mass: str
+        time: str
+        length: str
+        charge: str
+        force: str = dataclasses.field(init=False, default='')
+        velocity: str = dataclasses.field(init=False, default='')
+
+        def __post_init__(self):
+            if self.length and self.mass and self.time:
+                self.force = '{} {} {}-2'.format(self.length, self.mass, self.time)
+            if self.length and self.time:
+                self.velocity = '{} {}-1'.format(self.length, self.time)
+
     class H5md:
 
         """H5md file object.
@@ -57,10 +72,14 @@ else:
         write_ordered : :obj:`bool`, optional
                         If particle properties should be ordered according to
                         ids.
-
+        unit_system : :obj: `UnitSystem`, optional
+                        Four available parameters: 'mass', 'length', 'time', 'charge'; the value should corresponds
+                        to the unit string defined ere https://nongnu.org/h5md/modules/units.html#unit-string,
+                        e.g. UnitSystem(time='ps', mass='u', length='ns', charge='e'}
+                
         """
 
-        def __init__(self, write_ordered=True, **kwargs):
+        def __init__(self, write_ordered=True, unit_system=None, **kwargs):
             self.valid_params = ['filename', "write_ordered"]
             if 'filename' not in kwargs:
                 raise ValueError("'filename' parameter missing.")
@@ -84,12 +103,20 @@ else:
                     raise ValueError(
                         "Unknown parameter {} for H5MD writer.".format(i))
 
+            if unit_system is None:
+                unit_system = UnitSystem('', '', '', '')
             self.h5md_instance = PScriptInterface(
                 "ScriptInterface::Writer::H5mdScript")
             self.h5md_instance.set_params(filename=kwargs['filename'],
                                           what=self.what_bin,
                                           scriptname=sys.argv[0],
-                                          write_ordered=write_ordered)
+                                          write_ordered=write_ordered,
+                                          mass_unit=unit_system.mass,
+                                          length_unit=unit_system.length,
+                                          time_unit=unit_system.time,
+                                          force_unit=unit_system.force,
+                                          velocity_unit=unit_system.velocity,
+                                          charge_unit=unit_system.charge)
             self.h5md_instance.call_method("init_file")
 
         def get_params(self):
