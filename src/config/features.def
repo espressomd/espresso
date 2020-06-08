@@ -120,3 +120,5 @@ SCAFACOS external
 GSL external
 BLAS external
 LAPACK external
+STOKESIAN_DYNAMICS external
+STOKESIAN_DYNAMICS_GPU external
