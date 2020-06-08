@@ -33,12 +33,14 @@ else:
         time: str
         length: str
         charge: str
-        force: str = dataclasses.field(init=False, default='')
+        force:
+            str = dataclasses.field(init=False, default='')
         velocity: str = dataclasses.field(init=False, default='')
 
         def __post_init__(self):
             if self.length and self.mass and self.time:
-                self.force = '{} {} {}-2'.format(self.length, self.mass, self.time)
+                self.force = '{} {} {}-2'.format(self.length,
+                                                 self.mass, self.time)
             if self.length and self.time:
                 self.velocity = '{} {}-1'.format(self.length, self.time)
 
@@ -75,7 +77,7 @@ else:
                         Four available parameters: 'mass', 'length', 'time', 'charge'; the value should corresponds
                         to the unit string defined ere https://nongnu.org/h5md/modules/units.html#unit-string,
                         e.g. UnitSystem(time='ps', mass='u', length='ns', charge='e'}
-                
+
         """
 
         def __init__(self, write_ordered=True, unit_system=None, **kwargs):

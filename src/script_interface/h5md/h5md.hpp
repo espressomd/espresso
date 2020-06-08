@@ -44,8 +44,7 @@ public:
                     {"force_unit", m_h5md->force_unit()},
                     {"velocity_unit", m_h5md->velocity_unit()},
                     {"charge_unit", m_h5md->charge_unit()},
-                    {"write_ordered", m_h5md->write_ordered()}
-    });
+                    {"write_ordered", m_h5md->write_ordered()}});
   };
 
   Variant call_method(const std::string &name,

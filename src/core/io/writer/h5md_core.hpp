@@ -86,7 +86,8 @@ public:
 
   // Unit system
   bool is_unit_system_defined() {
-    return m_time_unit.length() > 0 && m_mass_unit.length() > 0 && m_length_unit.length() > 0;
+    return m_time_unit.length() > 0 && m_mass_unit.length() > 0 &&
+           m_length_unit.length() > 0;
   }
   std::string &time_unit() { return m_time_unit; };
   std::string &mass_unit() { return m_mass_unit; };
