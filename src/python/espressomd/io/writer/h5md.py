@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Interface module for the H5md core implementation."""
-import collections
 import dataclasses
 import sys
 
