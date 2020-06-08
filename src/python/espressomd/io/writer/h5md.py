@@ -33,10 +33,8 @@ else:
         time: str
         length: str
         charge: str
-        force: str = dataclasses.field(
-            init=False, default='')
-        velocity: str = dataclasses.field(
-            init=False, default='')
+        force: str = dataclasses.field(init=False, default='')
+        velocity: str = dataclasses.field(init=False, default='')
 
         def __post_init__(self):
             if self.length and self.mass and self.time:
