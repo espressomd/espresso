@@ -21,16 +21,14 @@
 /** \file
  *  Molecular dynamics integrator for rotational motion.
  *
- *  A velocity Verlet <a
- * HREF="http://ciks.cbt.nist.gov/~garbocz/dpd1/dpd.html">algorithm</a>
- *  using quaternions is implemented to tackle rotational motion.
- *  See @cite allen2017 for the quaternion components indexing used here.
+ *  A velocity Verlet algorithm using quaternions is implemented to tackle
+ *  rotational motion. See @cite martys99a for the method and
+ *  @cite allen2017 for the quaternion components indexing used here.
  *  A random torque and a friction
  *  term are added to provide the constant NVT conditions. Due to this feature
- * all particles are
+ *  all particles are
  *  treated as 3D objects with 3 translational and 3 rotational degrees of
- * freedom if ROTATION
- *  flag is set in \ref config.hpp "config.hpp".
+ *  freedom if ROTATION is compiled in.
  */
 
 #include "rotation.hpp"
@@ -44,9 +42,11 @@
 
 #include <cmath>
 
-/** Calculate the derivatives of the quaternion and angular acceleration
- *  for a given particle.
- *  See @cite sonnenschein85a
+/** @brief Calculate the derivatives of the quaternion and angular
+ *  acceleration for a given particle.
+ *  See @cite sonnenschein85a. Please note that ESPResSo uses scalar-first
+ *  notation for quaternions, while @cite sonnenschein85a use scalar-last
+ *  notation.
  *  @param[in]  p    %Particle
  *  @param[out] Qd   First derivative of the particle quaternion
  *  @param[out] Qdd  Second derivative of the particle quaternion
@@ -54,8 +54,9 @@
  *                   Lagrange parameter lambda
  *  @param[out] Wd   Angular acceleration of the particle
  */
-static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
-                       double S[3], double Wd[3]) {
+static void define_Qdd(Particle const &p, Utils::Vector4d &Qd,
+                       Utils::Vector4d &Qdd, Utils::Vector3d &S,
+                       Utils::Vector3d &Wd) {
   /* calculate the first derivative of the quaternion */
   /* Eq. (4) @cite sonnenschein85a */
   Qd[0] = 0.5 * (-p.r.quat[1] * p.m.omega[0] - p.r.quat[2] * p.m.omega[1] -
@@ -76,22 +77,16 @@ static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
     Wd[0] = (p.f.torque[0] + p.m.omega[1] * p.m.omega[2] *
                                  (p.p.rinertia[1] - p.p.rinertia[2])) /
             p.p.rinertia[0];
-  else
-    Wd[0] = 0.0;
   if (p.p.rotation & ROTATION_Y)
     Wd[1] = (p.f.torque[1] + p.m.omega[2] * p.m.omega[0] *
                                  (p.p.rinertia[2] - p.p.rinertia[0])) /
             p.p.rinertia[1];
-  else
-    Wd[1] = 0.0;
   if (p.p.rotation & ROTATION_Z)
     Wd[2] = (p.f.torque[2] + p.m.omega[0] * p.m.omega[1] *
                                  (p.p.rinertia[0] - p.p.rinertia[1])) /
             p.p.rinertia[2];
-  else
-    Wd[2] = 0.0;
 
-  auto const S1 = Qd[0] * Qd[0] + Qd[1] * Qd[1] + Qd[2] * Qd[2] + Qd[3] * Qd[3];
+  auto const S1 = Qd.norm2();
 
   /* Calculate the second derivative of the quaternion. */
   /* Eq. (8) @cite sonnenschein85a */
@@ -112,12 +107,20 @@ static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
       p.r.quat[3] * S1;
 
   S[0] = S1;
-  S[1] = Qd[0] * Qdd[0] + Qd[1] * Qdd[1] + Qd[2] * Qdd[2] + Qd[3] * Qdd[3];
-  S[2] = Qdd[0] * Qdd[0] + Qdd[1] * Qdd[1] + Qdd[2] * Qdd[2] + Qdd[3] * Qdd[3];
+  S[1] = Qd * Qdd;
+  S[2] = Qdd.norm2();
 }
 
-/** propagate angular velocities and quaternions
- * \todo implement for fixed_coord_flag
+/**
+ *  See @cite omelyan98a. Please note that ESPResSo uses scalar-first
+ *  notation for quaternions, while @cite omelyan98a use scalar-last
+ *  notation.
+ *
+ *  For very high angular velocities (e.g. if the product of @ref time_step
+ *  with the largest component of @ref ParticleMomentum::omega "p.m.omega"
+ *  is superior to ~2.0), the calculation might fail.
+ *
+ *  \todo implement for fixed_coord_flag
  */
 void propagate_omega_quat_particle(Particle &p) {
 
@@ -131,14 +134,15 @@ void propagate_omega_quat_particle(Particle &p) {
   // Clear rotational velocity for blocked rotation axes.
   p.m.omega = Utils::mask(p.p.rotation, p.m.omega);
 
-  define_Qdd(p, Qd.data(), Qdd.data(), S.data(), Wd.data());
+  define_Qdd(p, Qd, Qdd, S, Wd);
 
-  /* Eq. (12) @cite sonnenschein85a. */
-  auto const lambda =
-      1 - S[0] * time_step_squared_half -
-      sqrt(1 - time_step_squared *
-                   (S[0] + time_step * (S[1] + time_step_half / 2. *
-                                                   (S[2] - S[0] * S[0]))));
+  /* Eq. (12) @cite omelyan98a. */
+  auto const square =
+      1 - time_step_squared *
+              (S[0] +
+               time_step * (S[1] + time_step_half / 2. * (S[2] - S[0] * S[0])));
+  assert(square >= 0.);
+  auto const lambda = 1 - S[0] * time_step_squared_half - sqrt(square);
 
   p.m.omega += time_step_half * Wd;
   p.r.quat += time_step * (Qd + time_step_half * Qdd) - lambda * p.r.quat;
@@ -152,8 +156,6 @@ void propagate_omega_quat_particle(Particle &p) {
   }
 }
 
-/** convert the torques to the body-fixed frames and propagate angular
- * velocities */
 void convert_torques_propagate_omega(const ParticleRange &particles) {
   for (auto &p : particles) {
     // Skip particle if rotation is turned off entirely for it.
@@ -171,7 +173,7 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
     /* if the tensor of inertia is isotropic, the following refinement is not
        needed.
        Otherwise repeat this loop 2-3 times depending on the required accuracy
-       */
+     */
 
     const double rinertia_diff_01 = p.p.rinertia[0] - p.p.rinertia[1];
     const double rinertia_diff_12 = p.p.rinertia[1] - p.p.rinertia[2];
@@ -188,7 +190,6 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
   }
 }
 
-/** convert the torques to the body-fixed frames before the integration loop */
 void convert_initial_torques(const ParticleRange &particles) {
   for (auto &p : particles) {
     if (!p.p.rotation)

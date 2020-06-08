@@ -21,16 +21,15 @@
 #include "fetch_particles.hpp"
 #include "particle_data.hpp"
 
-#include <boost/range/algorithm/transform.hpp>
+#include <functional>
 
 namespace Observables {
 std::vector<double> PidObservable::operator()() const {
   std::vector<Particle> particles = fetch_particles(ids());
 
-  std::vector<const Particle *> particles_ptrs(particles.size());
-  boost::transform(particles, particles_ptrs.begin(),
-                   [](auto const &p) { return std::addressof(p); });
-
-  return this->evaluate(particles_ptrs);
+  std::vector<std::reference_wrapper<const Particle>> particle_refs(
+      particles.begin(), particles.end());
+  return this->evaluate(ParticleReferenceRange(particle_refs),
+                        ParticleObservables::traits<Particle>{});
 }
 } // namespace Observables

@@ -43,18 +43,17 @@
  *  2D representation of a linked cell grid: cell_grid =
  *  {4,4}, ghost_cell_grid = {6,6}
  *
- * Each cell has 3^D neighbor cells (For cell 14 they are
- * marked). Since we deal with pair forces, it is sufficient to
- * calculate only half of the interactions (Newtons law: action =
- * reaction). We have chosen the upper half e.g. all neighbor cells with
- * a higher linear index (For cell 14 they are marked in light
+ * Each cell has 3^D neighbor cells. Since we deal with pair forces, it is
+ * sufficient to calculate only half of the interactions (Newton's law:
+ * action = reaction). We have chosen the upper half e.g. all neighbor
+ * cells with a higher linear index (For cell 14 they are marked in light
  * blue). Caution: This implementation needs double sided ghost
  * communication! For single sided ghost communication one would need
  * some ghost-ghost cell interaction as well, which we do not need!
  *
  *  For more information on cells, see \ref cells.hpp.
  *
- *  Implementation in domain_decomposition.cpp.
+ *  Implementation in \ref domain_decomposition.cpp.
  */
 
 #include "BoxGeometry.hpp"
@@ -90,20 +89,8 @@ struct DomainDecomposition {
   LocalBox<double> local_geo;
 };
 
-/************************************************************/
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
 /** Information about the domain decomposition. */
 extern DomainDecomposition dd;
-
-/*@}*/
-
-/************************************************************/
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
 
 /** adjust the domain decomposition to a change in the geometry.
  *  Tries to speed up things if possible.
@@ -132,18 +119,13 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
 /** Just resort the particles. Used during integration. The particles
  *  are stored in the cell structure.
  *
- *  @param global Use DD_GLOBAL_EXCHANGE for global exchange and
- *      DD_NEIGHBOR_EXCHANGE for neighbor exchange (recommended for use within
- *      Molecular dynamics, or any other integration scheme using only local
- *      particle moves)
+ *  @param global If true, perform a global resorting.
  *  @param pl     List of particles
  */
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
                                     std::vector<Cell *> &modified_cells);
 
-/** calculate physical (processor) minimal number of cells */
+/** Calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells(const Utils::Vector3i &grid);
-
-/*@}*/
 
 #endif

@@ -35,12 +35,13 @@ public:
   using PidObservable::PidObservable;
 
   std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
+  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+           const ParticleObservables::traits<Particle> &traits) const override {
     std::vector<double> res(n_values());
 
     for (size_t i = 0, end = n_values(); i < end; i++) {
-      auto const v =
-          get_mi_vector(particles[i]->r.p, particles[i + 1]->r.p, box_geo);
+      auto const v = get_mi_vector(traits.position(particles[i]),
+                                   traits.position(particles[i + 1]), box_geo);
       res[i] = v.norm();
     }
     return res;

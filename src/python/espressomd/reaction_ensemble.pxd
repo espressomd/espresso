@@ -45,7 +45,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         void delete_reaction(int reaction_id)
 
         vector[SingleReaction] reactions
-        int nr_different_types
         map[int, double] charges_of_types
         double temperature
         double exclusion_radius
@@ -65,8 +64,6 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
     cdef cppclass CWangLandauReactionEnsemble "ReactionEnsemble::WangLandauReactionEnsemble"(CReactionAlgorithm):
         CWangLandauReactionEnsemble(int seed)
         double wang_landau_parameter
-        double initial_wang_landau_parameter
-        int number_of_monte_carlo_moves_between_check_of_convergence
         double final_wang_landau_parameter
         string output_filename
         vector[double] minimum_energies_at_flat_index
