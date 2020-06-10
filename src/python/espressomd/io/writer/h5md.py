@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 """Interface module for the H5md core implementation."""
+
 import dataclasses
 import sys
 
@@ -32,6 +34,14 @@ if 'H5MD' not in features():
 else:
     @dataclasses.dataclass
     class UnitSystem:
+        """
+        Data class for writing H5MD trajectories with
+        `physical units <https://nongnu.org/h5md/modules/units.html>`.
+        There are four settable units: 'mass', 'length', 'time', 'charge'.
+        Units should be written as strings following the specifications defined
+        `here <https://nongnu.org/h5md/modules/units.html#unit-string>`,
+        e.g. ``UnitSystem(time='ps', mass='u', length='nm', charge='e')``.
+        """
         mass: str
         time: str
         length: str
@@ -50,8 +60,7 @@ else:
 
         """H5md file object.
 
-        Used for accessing the H5MD core implementation via the
-        PScriptInterface.
+        Used for accessing the H5MD core implementation.
 
         .. note::
            Bonds will be written to the file automatically if they exist.
@@ -59,26 +68,23 @@ else:
         Parameters
         ----------
         filename : :obj:`str`
-                   Name of the trajectory file.
+            Name of the trajectory file.
         write_pos : :obj:`bool`, optional
-                    If positions should be written.
+            If positions should be written.
         write_vel : :obj:`bool`, optional
-                    If velocities should be written.
+            If velocities should be written.
         write_force : :obj:`bool`, optional
-                      If forces should be written.
+            If forces should be written.
         write_species : :obj:`bool`, optional
-                     If types (called 'species' in the H5MD specification) should be written.
+            If types (called 'species' in the H5MD specification) should be written.
         write_mass : :obj:`bool`, optional
-                     If masses should be written.
+            If masses should be written.
         write_charge : :obj:`bool`, optional
-                       If charges should be written.
+            If charges should be written.
         write_ordered : :obj:`bool`, optional
-                        If particle properties should be ordered according to
-                        ids.
-        unit_system : :obj: `UnitSystem`, optional
-                        Four available parameters: 'mass', 'length', 'time', 'charge'; the value should corresponds
-                        to the unit string defined ere https://nongnu.org/h5md/modules/units.html#unit-string,
-                        e.g. UnitSystem(time='ps', mass='u', length='ns', charge='e'}
+            If particle properties should be ordered according to ids.
+        unit_system : :obj:`UnitSystem`, optional
+            Physical units for the data.
 
         """
 
@@ -123,7 +129,7 @@ else:
             self.h5md_instance.call_method("init_file")
 
         def get_params(self):
-            """Get the parameters from the scriptinterface."""
+            """Get the parameters from the script interface."""
             return self.h5md_instance.get_params()
 
         def write(self):
