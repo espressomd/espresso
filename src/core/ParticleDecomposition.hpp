@@ -92,14 +92,12 @@ public:
    * unchanged. In this case all pointers into the decomposition
    * stay valid.
    *
-   *  @param fast If true return asap.
    *  @param range Desired interaction range
    *  @param box_geo New box geometry.
    *  @param local_geo New local box.
    *  @return If the change was possible.
    */
-  virtual bool on_geometry_change(bool fast, double range,
-                                  const BoxGeometry &box_geo,
+  virtual bool on_geometry_change(double range, const BoxGeometry &box_geo,
                                   const LocalBox<double> &local_geo,
                                   std::vector<ParticleChange> &diff) = 0;
 

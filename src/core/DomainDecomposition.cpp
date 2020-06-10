@@ -584,7 +584,7 @@ void DomainDecomposition::update_communicators_w_boxl() {
 }
 
 bool DomainDecomposition::on_geometry_change(
-    bool fast, double range, const BoxGeometry &new_box_geo,
+    double range, const BoxGeometry &new_box_geo,
     const LocalBox<double> &new_local_geo, std::vector<ParticleChange> &diff) {
   /* check that the CPU domains are still sufficiently large. */
   if (boost::algorithm::any_of(new_local_geo.length(),
@@ -596,17 +596,16 @@ bool DomainDecomposition::on_geometry_change(
       std::min(std::min(cell_size[0], cell_size[1]), cell_size[2]);
 
   /* If new box length leads to too small cells, redo cell structure
-   using smaller number of cells. If we are not in a hurry, check if we can
-   maybe optimize the cell system by using smaller cells. */
-  auto const re_init = (range > min_cell_size) or ((not fast) and [&]() {
-                         for (int i = 0; i < 3; i++) {
-                           auto const poss_size = static_cast<int>(
-                               floor(new_local_geo.length()[i] / range));
-                           if (poss_size > cell_grid[i])
-                             return true;
-                         }
-                         return false;
-                       }());
+   using smaller number of cells. */
+  auto const re_init = (range > min_cell_size) or [&]() {
+    for (int i = 0; i < 3; i++) {
+      auto const poss_size =
+          static_cast<int>(floor(new_local_geo.length()[i] / range));
+      if (poss_size > cell_grid[i])
+        return true;
+    }
+    return false;
+  }();
 
   if (re_init) {
     return false;

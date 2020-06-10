@@ -32,7 +32,7 @@
 boost::optional<AtomDecomposition> ad;
 
 AtomDecomposition *nsq_topology_init(const boost::mpi::communicator &comm,
-                       const BoxGeometry &box_geo) {
+                                     const BoxGeometry &box_geo) {
   ad = AtomDecomposition(comm, box_geo);
 
   return ad.get_ptr();

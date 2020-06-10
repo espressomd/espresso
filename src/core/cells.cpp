@@ -149,10 +149,9 @@ void topology_init(int cs, double range) {
 
 void cells_re_init(int new_cs) {
   auto const range = interaction_range();
+  cell_structure.clear_particle_index();
 
   if (cell_structure.m_decomposition) {
-    cell_structure.clear_particle_index();
-
     auto local_parts = cell_structure.local_particles();
     std::vector<Particle> particles(local_parts.begin(), local_parts.end());
 

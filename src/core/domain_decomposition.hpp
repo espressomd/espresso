@@ -53,9 +53,9 @@ extern DomainDecomposition dd;
  *  @param comm MPI communicator to use for the cell system.
  *  @param range Desired interaction range
  */
-DomainDecomposition *dd_topology_init(const boost::mpi::communicator &comm, double range,
-                      const BoxGeometry &box_geo,
-                      const LocalBox<double> &local_geo);
+DomainDecomposition *dd_topology_init(const boost::mpi::communicator &comm,
+                                      double range, const BoxGeometry &box_geo,
+                                      const LocalBox<double> &local_geo);
 
 /*@}*/
 

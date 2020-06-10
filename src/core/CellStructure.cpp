@@ -156,8 +156,8 @@ bool CellStructure::change_geometry(bool fast, double range,
 
   std::vector<ParticleChange> diff;
 
-  auto const failed = not m_decomposition->on_geometry_change(
-      fast, range, box_geo, local_box, diff);
+  auto const failed =
+      not m_decomposition->on_geometry_change(range, box_geo, local_box, diff);
 
   for (auto d : diff) {
     boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
