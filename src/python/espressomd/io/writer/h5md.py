@@ -22,8 +22,11 @@ from ...script_interface import PScriptInterface  # pylint: disable=import
 from ...code_info import features
 
 if 'H5MD' not in features():
-    class H5md:
+    class UnitSystem:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("UnitSystem not available.")
 
+    class H5md:
         def __init__(self, *args, **kwargs):
             raise RuntimeError("H5md not available.")
 else:
