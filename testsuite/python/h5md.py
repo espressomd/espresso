@@ -134,6 +134,24 @@ class CommonTests(ut.TestCase):
             self.assertEqual(bond[0], i + 0)
             self.assertEqual(bond[1], i + 1)
 
+    def test_units(self):
+        self.assertEqual(
+            self.py_file['particles/atoms/id/time'].attrs['unit'], b'ps')
+        self.assertEqual(
+            self.py_file['particles/atoms/position/value'].attrs['unit'], b'm')
+        if espressomd.has_features(['ELECTROSTATICS']):
+            self.assertEqual(
+                self.py_file['particles/atoms/charge/value'].attrs['unit'], b'e')
+        if espressomd.has_features(['MASS']):
+            self.assertEqual(
+                self.py_file['particles/atoms/mass/value'].attrs['unit'], b'u')
+        self.assertEqual(
+            self.py_file['particles/atoms/force/value'].attrs['unit'],
+            b'm u ps-2')
+        self.assertEqual(
+            self.py_file['particles/atoms/velocity/value'].attrs['unit'],
+            b'm ps-1')
+
 
 @utx.skipIfMissingFeatures(['H5MD'])
 @skipIfMissingPythonPackage
@@ -147,6 +165,7 @@ class H5mdTestOrdered(CommonTests):
     def setUpClass(cls):
         write_ordered = True
         from espressomd.io.writer import h5md
+        h5_units = h5md.UnitSystem(time='ps', mass='u', length='m', charge='e')
         h5 = h5md.H5md(
             filename="test.h5",
             write_pos=True,
@@ -155,7 +174,8 @@ class H5mdTestOrdered(CommonTests):
             write_species=True,
             write_mass=True,
             write_charge=True,
-            write_ordered=write_ordered)
+            write_ordered=write_ordered,
+            unit_system=h5_units)
         h5.write()
         h5.flush()
         h5.close()
@@ -191,6 +211,7 @@ class H5mdTestUnordered(CommonTests):
     def setUpClass(cls):
         write_ordered = False
         from espressomd.io.writer import h5md
+        h5_units = h5md.UnitSystem(time='ps', mass='u', length='m', charge='e')
         h5 = h5md.H5md(
             filename="test.h5",
             write_pos=True,
@@ -199,7 +220,8 @@ class H5mdTestUnordered(CommonTests):
             write_species=True,
             write_mass=True,
             write_charge=True,
-            write_ordered=write_ordered)
+            write_ordered=write_ordered,
+            unit_system=h5_units)
         h5.write()
         h5.flush()
         h5.close()
