@@ -417,7 +417,7 @@ use. We distinguish between five levels:
 In the "Tested" column, we note whether there is an integration test for the method.
 
 If you believe that the status of a certain method is wrong, please
-report so to the developers.
+report so to the developers using the instructions in :ref:`Contributing`.
 
 .. tabularcolumns:: |l|c|c|c|
 
@@ -503,22 +503,125 @@ report so to the developers.
 
 
 
-Intended interface compatibility between ESPResSo versions
-----------------------------------------------------------
+.. _Software releases:
 
-We use the following versioning scheme:
-major.minor.patch_level
+Software releases
+-----------------
 
-With regards to the stability of the Python interface, we plan the following guidelines:
+|es| releases use the following versioning scheme: ``major.minor.patch_level``.
+New features are introduced in major and minor releases, while bugfix releases
+only patch bugs without adding or removing features. Since the ``patch_level``
+doesn't affect the capabilities of the software, it's common to refer to
+releases simply as ``major.minor``.
 
-  * patch_level: The Python interface will not change, if only the patch_level number is different. Example: 4.0.0 -> 4.0.1.
+New users should always choose the latest release. When opting for an
+older release, we recommend using the latest bugfix release from that
+line (for example 4.0.2 instead of 4.0), unless you need to capture the
+behavior of bugs for reproducibility reasons. When filing bug reports
+or citing |es|, the version should always be mentioned. See
+our policies on :ref:`bug reports <Contributing>` and
+:ref:`citing the software <How to cite ESPResSo>` for more details.
 
-  * minor: There will be no silent interface changes between two versions with different minor numbers. I.e., a simulation script will not silently produce different results with the new version. The interface can, however, be extended. In important cases, the interface can change in such a way that using the old interface produces a clear error message and the simulation is terminated. Example: 4.0.1 -> 4.1.0
+Releases from 4.0 onwards can be found on
+`GitHub <https://github.com/espressomd/espresso/releases>`_.
+Older releases from 2.1 to 3.3 can be found in
+`GNU Savannah <http://download.savannah.gnu.org/releases/espressomd/>`_.
+See our policy on :ref:`API backward compatibility
+<Intended interface compatibility between ESPResSo versions>`
+if you need more details.
 
-  * major: No guarantees are made for a transition between major versions. Example 4.1.2 -> 5.0.
+.. _Release workflow:
 
-  * No guarantees are made with regards to the development branch on GitHub.
+Release workflow
+^^^^^^^^^^^^^^^^
 
-  * No guarantees are made with respect to the C++ bindings in the simulation core.
+Major and minor releases are branched from the development branch ``python``.
+When a version ``X.Y.0`` is released, the ``python`` branch is copied
+to a new branch named ``X.Y``, at which point the ``python`` branch is ready
+to accept contributions for the ``X.Y+1.0`` release. The ``X.Y`` branch
+still gets bugfix releases ``X.Y.1``, ``X.Y.2``, ..., for several months.
 
+`GitHub milestones <https://github.com/espressomd/espresso/milestones>`_
+track the progress of each release. They can give you an idea of the changes
+in future releases, although it's more convenient to follow the live release
+notes in the `wiki <https://github.com/espressomd/espresso/wiki>`_ (listed
+under "Planned releases" in the side bar). These notes are updated monthly.
+Most users will only be interested in the live release notes of the
+planned bugfix release for the version of |es| they're using.
+
+If you're actively developing code for |es|, you might also be interested in
+the summaries of the `ESPResSo meetings
+<https://github.com/espressomd/espresso/wiki/Offline-Espresso-meeting>`_,
+where the core team discusses plans for future releases and feature freezes.
+
+.. _Intended interface compatibility between ESPResSo versions:
+
+Intended interface compatibility between |es| versions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+With regards to the stability of the Python interface, we have the following
+guidelines:
+
+* ``patch_level``: The Python interface will not change if only the
+  ``patch_level`` number is different. Example: 4.0.0 :math:`\to` 4.0.1.
+
+* ``minor``: There will be no silent interface changes between two versions
+  with different minor numbers, i.e. a simulation script will not silently
+  produce different results with the new version. The interface can, however,
+  be extended. In important cases, the interface can change in such a way
+  that using the old interface produces a clear error message and the
+  simulation is terminated. Example: 4.0.2 :math:`\to` 4.1.0.
+
+* ``major``: No guarantees are made for a transition between major versions.
+  Example: 4.1.2 :math:`\to` 5.0.
+
+* No guarantees are made with regards to the development branch on GitHub.
+
+* No guarantees are made with respect to the C++ bindings in the simulation core.
+
+.. _How to cite ESPResSo:
+
+How to cite |es|
+^^^^^^^^^^^^^^^^
+
+Please cite :cite:`weik19a` (BibTeX key ``weik19a`` in :file:`doc/sphinx/zrefs.bib`)
+for |es| 4.0 and later, or :cite:`arnold13a` and :cite:`limbach06a`
+(BibTeX keys ``arnold13a`` and ``limbach06a`` in :file:`doc/sphinx/zrefs.bib`)
+for |es| 2.0 to 3.3. To find the version number, use the following command:
+
+.. code-block:: bash
+
+    ./pypresso -c "import espressomd.version;print(espressomd.version.friendly())"
+
+A number of algorithms in |es| are fairly advanced and unique to |es|.
+The authors of these contributions kindly ask you to cite the relevant
+publications, using the BibTeX entries indicated in this user guide.
+
+A complete citation would look like this:
+
+    Simulations were carried out with ESPResSo 4.1[24] using the ICC\*
+    algorithm[25].
+
+    | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
+      extensible software package for simulating soft matter systems.
+      *Eur. Phys. J. Spec. Top.* **227**, 1789--1816 (2019).
+      doi:\ `10.1140/epjst/e2019-800186-9 <https://doi.org/10.1140/epjst/e2019-800186-9>`_.
+    | [25] C. Tyagi, M. Süzen, M. Sega *et al.* An iterative, fast,
+      linear-scaling method for computing induced charges on arbitrary
+      dielectric boundaries. *J. Chem. Phys.* **132**, 154112 (2010).
+      doi:\ `10.1063/1.3376011 <https://doi.org/10.1063/1.3376011>`_.
+
+You may also provide the patch level, when relevant. If you developed code
+for |es| and made it available in a publicly accessible repository, you
+should consider providing the corresponding URL, for example in a footnote:
+
+    The method was implemented for ESPResSo 4.1.2[24]. The full code is
+    available online\*.
+
+    | \* https://github.com/username/espresso/tree/implemented-algorithm
+
+    | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
+      extensible software package for simulating soft matter systems.
+      *Eur. Phys. J. Spec. Top.* **227**, 1789--1816 (2019).
+      doi:\ `10.1140/epjst/e2019-800186-9 <https://doi.org/10.1140/epjst/e2019-800186-9>`_.
 
