@@ -712,6 +712,40 @@ correct one with ``CUDA_BIN_PATH=/usr/local/cuda-10.0 cmake .. -DWITH_CUDA=ON``
 path with ``-DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-10.0``).
 
 
+.. _Configuring without a network connection:
+
+Configuring without a network connection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Several :ref:`external features <External features>` in |es| rely on
+external libraries that are downloaded automatically by CMake. When a
+network connection cannot be established due to firewall restrictions,
+the CMake logic needs editing:
+
+* ``WITH_HDF5``: when cloning |es|, the :file:`/libs/h5xx` folder will be
+  a git submodule containing a :file:`.git` subfolder. To prevent CMake from
+  updating this submodule with git, delete the corresponding command with:
+
+  .. code-block:: bash
+
+    sed -i '/execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs\/h5xx/,+1 d' CMakeLists.txt
+
+  When installing a release version of |es|, no network communication
+  is needed for HDF5.
+
+* ``WITH_STOKESIAN_DYNAMICS``: this library is installed using `FetchContent
+  <https://cmake.org/cmake/help/latest/module/FetchContent.html>`_.
+  The repository URL can be found in the ``GIT_REPOSITORY`` field of the
+  corresponding ``FetchContent_Declare()`` command. The ``GIT_TAG`` field
+  provides the commit. Clone this repository locally next to the |es|
+  folder and edit the |es| build system such that ``GIT_REPOSITORY`` points
+  to the absolute path of the Stokesian Dynamics clone, for example with:
+
+  .. code-block:: bash
+
+    sed -ri 's|GIT_REPOSITORY +.+/stokesian_dynamics|GIT_REPOSITORY /work/username/stokesian_dynamics|' CMakeLists.txt
+
+
 Compiling, testing and installing
 ---------------------------------
 
