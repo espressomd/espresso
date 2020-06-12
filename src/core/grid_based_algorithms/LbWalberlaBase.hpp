@@ -36,8 +36,6 @@ public:
                               bool consider_ghosts = false) const = 0;
 
   // Density
-  virtual boost::optional<double>
-  get_density_at_pos(const Utils::Vector3d &position) = 0;
   virtual bool set_node_density(const Utils::Vector3i &node,
                                 double density) = 0;
   virtual boost::optional<double>

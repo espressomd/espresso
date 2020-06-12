@@ -15,8 +15,6 @@
 #include "field/FlagField.h"
 #include "field/GhostLayerField.h"
 #include "field/adaptors/GhostLayerFieldAdaptor.h"
-#include "field/distributors/KernelDistributor.h"
-#include "field/interpolators/TrilinearFieldInterpolator.h"
 #include "lbm/boundary/UBB.h"
 #include "lbm/field/Adaptors.h"
 #include "lbm/field/PdfField.h"
@@ -40,8 +38,6 @@
 #include "field/FlagField.h"
 #include "field/adaptors/AdaptorCreators.h"
 #include "field/communication/PackInfo.h"
-#include "field/distributors/DistributorCreators.h"
-#include "field/interpolators/FieldInterpolatorCreators.h"
 #include "lbm/boundary/NoSlip.h"
 #include "lbm/boundary/UBB.h"
 #include "lbm/communication/PdfFieldPackInfo.h"
@@ -143,7 +139,7 @@ protected:
   using Boundaries =
       BoundaryHandling<FlagField, typename LatticeModel::Stencil, UBB>;
 
-  // Adaptors, interpolators, distributors
+  // Adaptors
   using DensityAdaptor = typename lbm::Adaptor<LatticeModel>::Density;
   using VelocityAdaptor = typename lbm::Adaptor<LatticeModel>::VelocityVector;
 
@@ -168,18 +164,17 @@ protected:
     }
   };
 
-  using VectorFieldAdaptorInterpolator =
-      field::TrilinearFieldInterpolator<VelocityAdaptor, FlagField>;
-  using ScalarFieldAdaptorInterpolator =
-      field::TrilinearFieldInterpolator<DensityAdaptor, FlagField>;
-
   // Member variables
+  // For unit conversions
   double m_agrid;
   double m_tau;
+
   double m_kT;
   double m_density;
+
   Utils::Vector3i m_grid_dimensions;
   int m_n_ghost_layers;
+
   // Block data access handles
   BlockDataID m_pdf_field_id;
   BlockDataID m_flag_field_id;
@@ -188,14 +183,15 @@ protected:
   BlockDataID m_force_to_be_applied_id;
 
   BlockDataID m_velocity_adaptor_id;
-  BlockDataID m_velocity_interpolator_id;
 
   BlockDataID m_density_adaptor_id;
-  BlockDataID m_density_interpolator_id;
+
   BlockDataID m_boundary_handling_id;
+
   using Communicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
   std::shared_ptr<Communicator> m_communication;
+
   // Block forest
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
@@ -388,17 +384,10 @@ public:
     m_velocity_adaptor_id = field::addFieldAdaptor<VelocityAdaptor>(
         m_blocks, m_pdf_field_id, "velocity adaptor");
 
-    m_velocity_interpolator_id =
-        field::addFieldInterpolator<VectorFieldAdaptorInterpolator, FlagField>(
-            m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
-
     m_density_adaptor_id = field::addFieldAdaptor<DensityAdaptor>(
         m_blocks, m_pdf_field_id, "density adaptor");
 
-    m_density_interpolator_id =
-        field::addFieldInterpolator<ScalarFieldAdaptorInterpolator, FlagField>(
-            m_blocks, m_density_adaptor_id, m_flag_field_id, Fluid_flag);
-
+    // Synchronize ghost layers
     (*m_communication)();
   };
   std::shared_ptr<LatticeModel> get_lattice_model() { return m_lattice_model; };
@@ -511,20 +500,6 @@ public:
   };
 
   // Density
-  boost::optional<double>
-  get_density_at_pos(const Utils::Vector3d &pos) override {
-
-    auto block = get_block(pos, true);
-    if (!block)
-      return {boost::none};
-
-    auto *density_interpolator =
-        block->template getData<ScalarFieldAdaptorInterpolator>(
-            m_density_interpolator_id);
-    double dens;
-    density_interpolator->get(to_vector3(pos), &dens);
-    return {m_density * dens};
-  };
   bool set_node_density(const Utils::Vector3i &node, double density) override {
     auto bc = get_block_and_cell(node, false);
     if (!bc)
