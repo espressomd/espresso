@@ -38,6 +38,12 @@ public:
     add_parameters({{"filename", m_h5md->filename()},
                     {"scriptname", m_h5md->scriptname()},
                     {"what", m_h5md->what()},
+                    {"mass_unit", m_h5md->mass_unit()},
+                    {"time_unit", m_h5md->time_unit()},
+                    {"length_unit", m_h5md->length_unit()},
+                    {"force_unit", m_h5md->force_unit()},
+                    {"velocity_unit", m_h5md->velocity_unit()},
+                    {"charge_unit", m_h5md->charge_unit()},
                     {"write_ordered", m_h5md->write_ordered()}});
   };
 

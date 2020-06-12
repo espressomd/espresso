@@ -43,11 +43,14 @@ for polymer in positions:
         if i > 0:
             system.part[id].add_bond((fene, id - 1))
 
-system.integrator.run(steps=0)
+h5_units = h5md.UnitSystem(time='ps', mass='u', length='nm', charge='e')
 h5_file = h5md.H5md(filename="sample.h5", write_pos=True, write_vel=True,
                     write_force=True, write_species=True, write_mass=False,
-                    write_charge=True, write_ordered=True)
-for i in range(1):
+                    write_charge=True, write_ordered=True, unit_system=h5_units)
+
+for i in range(2):
     h5_file.write()
+    system.integrator.run(steps=10)
+
 h5_file.flush()
 h5_file.close()

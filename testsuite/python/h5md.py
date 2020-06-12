@@ -60,6 +60,8 @@ class CommonTests(ut.TestCase):
             system.part[i].mass = 2.3
         if espressomd.has_features(['EXTERNAL_FORCES']):
             system.part[i].ext_force = [0.1, 0.2, 0.3]
+        if espressomd.has_features(['ELECTROSTATICS']):
+            system.part[i].q = i
 
     vb = Virtual()
     system.bonded_inter.add(vb)
@@ -73,7 +75,7 @@ class CommonTests(ut.TestCase):
     def setUpClass(cls):
         if os.path.isfile('test.h5'):
             os.remove('test.h5')
-        cls.py_file = cls.py_pos = cls.py_vel = cls.py_f = cls.py_id = cls.py_img = None
+        cls.py_file = cls.py_pos = cls.py_vel = cls.py_crg = cls.py_f = cls.py_id = cls.py_img = None
 
     def test_metadata(self):
         """Test if the H5MD metadata has been written properly."""
@@ -101,6 +103,13 @@ class CommonTests(ut.TestCase):
         np.testing.assert_allclose(
             [x for (_, x) in sorted(zip(self.py_id, self.py_img))], images)
 
+    @utx.skipIfMissingFeatures(['ELECTROSTATICS'])
+    def test_crg(self):
+        """Test if charges have been written properly."""
+        charges = np.arange(npart)
+        np.testing.assert_allclose(
+            [x for (_, x) in sorted(zip(self.py_id, self.py_crg))], charges)
+
     def test_vel(self):
         """Test if velocities have been written properly."""
         np.testing.assert_allclose(
@@ -125,6 +134,24 @@ class CommonTests(ut.TestCase):
             self.assertEqual(bond[0], i + 0)
             self.assertEqual(bond[1], i + 1)
 
+    def test_units(self):
+        self.assertEqual(
+            self.py_file['particles/atoms/id/time'].attrs['unit'], b'ps')
+        self.assertEqual(
+            self.py_file['particles/atoms/position/value'].attrs['unit'], b'm')
+        if espressomd.has_features(['ELECTROSTATICS']):
+            self.assertEqual(
+                self.py_file['particles/atoms/charge/value'].attrs['unit'], b'e')
+        if espressomd.has_features(['MASS']):
+            self.assertEqual(
+                self.py_file['particles/atoms/mass/value'].attrs['unit'], b'u')
+        self.assertEqual(
+            self.py_file['particles/atoms/force/value'].attrs['unit'],
+            b'm u ps-2')
+        self.assertEqual(
+            self.py_file['particles/atoms/velocity/value'].attrs['unit'],
+            b'm ps-1')
+
 
 @utx.skipIfMissingFeatures(['H5MD'])
 @skipIfMissingPythonPackage
@@ -138,6 +165,7 @@ class H5mdTestOrdered(CommonTests):
     def setUpClass(cls):
         write_ordered = True
         from espressomd.io.writer import h5md
+        h5_units = h5md.UnitSystem(time='ps', mass='u', length='m', charge='e')
         h5 = h5md.H5md(
             filename="test.h5",
             write_pos=True,
@@ -145,7 +173,9 @@ class H5mdTestOrdered(CommonTests):
             write_force=True,
             write_species=True,
             write_mass=True,
-            write_ordered=write_ordered)
+            write_charge=True,
+            write_ordered=write_ordered,
+            unit_system=h5_units)
         h5.write()
         h5.flush()
         h5.close()
@@ -153,6 +183,8 @@ class H5mdTestOrdered(CommonTests):
         cls.py_pos = cls.py_file['particles/atoms/position/value'][0]
         cls.py_img = cls.py_file['particles/atoms/image/value'][0]
         cls.py_vel = cls.py_file['particles/atoms/velocity/value'][0]
+        if espressomd.has_features(['ELECTROSTATICS']):
+            cls.py_crg = cls.py_file['particles/atoms/charge/value'][0]
         cls.py_f = cls.py_file['particles/atoms/force/value'][0]
         cls.py_id = cls.py_file['particles/atoms/id/value'][0]
         cls.py_bonds = cls.py_file['connectivity/atoms']
@@ -179,6 +211,7 @@ class H5mdTestUnordered(CommonTests):
     def setUpClass(cls):
         write_ordered = False
         from espressomd.io.writer import h5md
+        h5_units = h5md.UnitSystem(time='ps', mass='u', length='m', charge='e')
         h5 = h5md.H5md(
             filename="test.h5",
             write_pos=True,
@@ -186,7 +219,9 @@ class H5mdTestUnordered(CommonTests):
             write_force=True,
             write_species=True,
             write_mass=True,
-            write_ordered=write_ordered)
+            write_charge=True,
+            write_ordered=write_ordered,
+            unit_system=h5_units)
         h5.write()
         h5.flush()
         h5.close()
@@ -194,6 +229,8 @@ class H5mdTestUnordered(CommonTests):
         cls.py_pos = cls.py_file['particles/atoms/position/value'][0]
         cls.py_img = cls.py_file['particles/atoms/image/value'][0]
         cls.py_vel = cls.py_file['particles/atoms/velocity/value'][0]
+        if espressomd.has_features(['ELECTROSTATICS']):
+            cls.py_crg = cls.py_file['particles/atoms/charge/value'][0]
         cls.py_f = cls.py_file['particles/atoms/force/value'][0]
         cls.py_id = cls.py_file['particles/atoms/id/value'][0]
         cls.py_bonds = cls.py_file['connectivity/atoms']
