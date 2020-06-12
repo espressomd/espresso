@@ -1,4 +1,4 @@
-.. _Stokesian_Dynamics:
+.. _Stokesian Dynamics:
 
 Stokesian Dynamics
 ==================

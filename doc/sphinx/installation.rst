@@ -492,6 +492,8 @@ source code and do extensive testing. Furthermore, it is necessary to define
 ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
 
+.. _External features:
+
 External features
 ^^^^^^^^^^^^^^^^^
 
@@ -574,11 +576,11 @@ Then you can simply compile two different versions of |es| via:
 
 .. code-block:: bash
 
-    cd builddir1
+    cd $builddir1
     cmake ..
     make
 
-    cd builddir2
+    cd $builddir2
     cmake ..
     make
 
