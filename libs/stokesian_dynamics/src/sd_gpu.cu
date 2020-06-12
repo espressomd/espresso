@@ -1,7 +1,7 @@
 #include <vector>
 
-#include "sd.hpp"
-#include "sd_gpu.hpp"
+#include "stokesian_dynamics/sd.hpp"
+#include "stokesian_dynamics/sd_gpu.hpp"
 
 /** This executes the Stokesian Dynamics solver on the GPU. "_host" refers to
  *  data being stored on the host (in THRUST terminology, as opposed to 

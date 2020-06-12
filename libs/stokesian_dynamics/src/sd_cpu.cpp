@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
 
-#include "sd.hpp"
-#include "sd_cpu.hpp"
+#include "stokesian_dynamics/sd.hpp"
+#include "stokesian_dynamics/sd_cpu.hpp"
 
 /** This executes the Stokesian Dynamics solver on the CPU. "_host" refers to
  *  data being stored on the host (in THRUST terminology, as opposed to 

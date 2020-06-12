@@ -279,21 +279,21 @@ if(WITH_STOKESIAN_DYNAMICS)
   endif()
 endif(WITH_STOKESIAN_DYNAMICS)
 
-#if((STOKESIAN_DYNAMICS OR STOKESIAN_DYNAMICS_GPU)
-#   AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
-#  find_package(Git)
-#  if(GIT_FOUND)
-#    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/stokesian_dynamics/.git")
-#      execute_process(
-#        COMMAND ${GIT_EXECUTABLE} submodule update --init --
-#                libs/stokesian_dynamics WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-#    else()
-#      execute_process(
-#        COMMAND ${GIT_EXECUTABLE} submodule update -- libs/stokesian_dynamics
-#        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-#    endif()
-#  endif()
-#endif()
+if(WITH_STOKESIAN_DYNAMICS)
+  set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
+  cmake_minimum_required(VERSION 3.11)
+  include(FetchContent)
+  FetchContent_Declare(
+    stokesian_dynamics
+    GIT_REPOSITORY /work/jgrad/sd/
+    GIT_TAG        9e292d5
+  )
+  FetchContent_GetProperties(stokesian_dynamics)
+  if(NOT stokesian_dynamics_POPULATED)
+    FetchContent_Populate(stokesian_dynamics)
+    add_subdirectory(${stokesian_dynamics_SOURCE_DIR} ${stokesian_dynamics_BINARY_DIR})
+  endif()
+endif(WITH_STOKESIAN_DYNAMICS)
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)

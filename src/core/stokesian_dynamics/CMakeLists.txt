@@ -1,5 +1,5 @@
 target_include_directories(
-  EspressoCore PRIVATE ${CMAKE_SOURCE_DIR}/libs
+  EspressoCore PRIVATE ${stokesian_dynamics_SOURCE_DIR}/include
                        ${CMAKE_SOURCE_DIR}/src/core/stokesian_dynamics)
 
 target_sources(EspressoCore
