@@ -17,7 +17,6 @@
 #
 """Interface module for the H5md core implementation."""
 
-import dataclasses
 import sys
 
 from ...script_interface import PScriptInterface  # pylint: disable=import
@@ -32,7 +31,6 @@ if 'H5MD' not in features():
         def __init__(self, *args, **kwargs):
             raise RuntimeError("H5md not available.")
 else:
-    @dataclasses.dataclass
     class UnitSystem:
         """
         Data class for writing H5MD trajectories with
@@ -42,19 +40,25 @@ else:
         `here <https://nongnu.org/h5md/modules/units.html#unit-string>`,
         e.g. ``UnitSystem(time='ps', mass='u', length='nm', charge='e')``.
         """
-        mass: str
-        time: str
-        length: str
-        charge: str
-        force: str = dataclasses.field(init=False, default='')
-        velocity: str = dataclasses.field(init=False, default='')
 
-        def __post_init__(self):
+        def __init__(self, **kwargs):
+            self.mass = ''
+            self.time = ''
+            self.length = ''
+            self.charge = ''
+            for key, value in kwargs.items():
+                assert hasattr(self, key), 'unknown dimension ' + key
+                setattr(self, key, value or '')
+
             if self.length and self.mass and self.time:
                 self.force = '{} {} {}-2'.format(self.length,
                                                  self.mass, self.time)
+            else:
+                self.force = ''
             if self.length and self.time:
                 self.velocity = '{} {}-1'.format(self.length, self.time)
+            else:
+                self.velocity = ''
 
     class H5md:
 
