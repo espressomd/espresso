@@ -353,7 +353,7 @@ empty:
 rocm-maxset:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/rocm:06b6216c7aa3555bcf28c90734dbb84e7285c96f
+  image: docker.pkg.github.com/espressomd/docker/rocm:fd7ed514a00d38bf336299ddb34ffcdc8a42e906
   script:
     - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
     - export with_stokesian_dynamics=true
