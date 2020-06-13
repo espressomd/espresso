@@ -3,8 +3,8 @@
 
 #ifdef LB_WALBERLA
 #include "LbWalberlaBase.hpp"
-#include "LbWalberlaD3Q19TRT.hpp"
-
+//#include "LbWalberlaD3Q19TRT.hpp"
+#include "LbWalberlaD3Q19Thermalized.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -43,7 +43,7 @@ void init_lb_walberla(double viscosity, double density, double agrid,
   try {
 
     lb_walberla_instance =
-        new walberla::LbWalberlaD3Q19TRT(walberla::LbWalberlaD3Q19TRT{
+        new walberla::LbWalberlaD3Q19Thermalized(walberla::LbWalberlaD3Q19Thermalized{
             viscosity, density, agrid, tau, box_dimensions, node_grid, 1});
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();

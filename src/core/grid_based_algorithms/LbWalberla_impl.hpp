@@ -107,13 +107,16 @@ public:
     WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(force_field, {
       Cell cell(x, y, z);
       if (boundary_handling->isDomain(cell)) {
-        force_field->get(cell) += m_ext_force;
+        for (int i: {0,1,2}) 
+          force_field->get(x,y,z,i) += m_ext_force[i];
+        
       }
     });
     WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(force_to_be_applied, {
       Cell cell(x, y, z);
       if (boundary_handling->isDomain(cell)) {
-        force_to_be_applied->get(cell) = Vector3<real_t>{0};
+        for (int i: {0,1,2})  
+          force_to_be_applied->get(cell,i) = real_t{0};
       }
     });
   }
@@ -131,7 +134,7 @@ private:
 template <typename LatticeModel> class LbWalberla : public LbWalberlaBase {
 protected:
   // Type definitions
-  using VectorField = GhostLayerField<Vector3<real_t>, 1>;
+  using VectorField = GhostLayerField<real_t, 3>;
   using FlagField = walberla::FlagField<walberla::uint8_t>;
   using PdfField = lbm::PdfField<LatticeModel>;
 
@@ -329,12 +332,13 @@ public:
         true, true, true);
 
     m_last_applied_force_field_id = field::addToStorage<VectorField>(
-        m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
+        m_blocks, "force field", real_t{0}, field::fzyx,
         m_n_ghost_layers);
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
-        m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
+        m_blocks, "force field", real_t{0}, field::fzyx,
         m_n_ghost_layers);
   };
+
   void setup_with_valid_lattice_model() {
     m_pdf_field_id = lbm::addPdfFieldToStorage(
         m_blocks, "pdf field", *m_lattice_model, to_vector3(Utils::Vector3d{}),
@@ -372,12 +376,9 @@ public:
         Boundaries::getBlockSweep(m_boundary_handling_id), "boundary handling");
     m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                           "Reset force fields");
-    //        << timeloop::AfterFunction(communication, "communication");
     m_time_loop->add()
-        << timeloop::Sweep(
-               domain_decomposition::makeSharedSweep(
-                   lbm::makeCellwiseSweep<LatticeModel, FlagField>(
-                       m_pdf_field_id, m_flag_field_id, Fluid_flag)),
+        << 
+        timeloop::Sweep( typename LatticeModel::Sweep(m_pdf_field_id),
                "LB stream & collide")
         << timeloop::AfterFunction(*m_communication, "communication");
 
@@ -469,7 +470,8 @@ public:
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
         //        printf("%d %d %d: %g\n",node[0],node[1],node[2],weight);
-        force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
+        for (int i: {0,1,2})
+          force_field->get((*bc).cell,i) += real_t{force[i] * weight / m_density};
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
@@ -484,7 +486,10 @@ public:
 
     auto const &force_field =
         (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
-    return to_vector3d(force_field->get((*bc).cell)) * m_density;
+    return Utils::Vector3d{{
+      force_field->get((*bc).cell,0), 
+      force_field->get((*bc).cell,1), 
+      force_field->get((*bc).cell,2)}} * m_density;
   };
 
   boost::optional<Utils::Vector3d>
@@ -496,7 +501,10 @@ public:
 
     auto const &force_field = (*bc).block->template getData<VectorField>(
         m_last_applied_force_field_id);
-    return to_vector3d(force_field->get((*bc).cell)) * m_density;
+    return Utils::Vector3d{{
+      force_field->get((*bc).cell,0), 
+      force_field->get((*bc).cell,1), 
+      force_field->get((*bc).cell,2)}} * m_density;
   };
 
   // Density
@@ -650,9 +658,9 @@ public:
   };
 
   // Global parameters
-  double get_viscosity() const override {
-    return m_lattice_model->collisionModel().viscosity();
-  };
+//  double get_viscosity() const override {
+//    return m_lattice_model->collisionModel().viscosity();
+//  };
 
   double get_tau() const override { return m_tau; };
   double get_kT() const override { return m_kT; };
