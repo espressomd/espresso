@@ -56,7 +56,7 @@ class IntegratorNPT(ut.TestCase):
     def test_npt(self):
         self.S.integrator.run(800)
         avp = 0
-        n = 40000
+        n = 10000
         skip_p = 8
         ls = np.zeros(n)
         for t in range(n):

@@ -52,12 +52,12 @@ class CorrelatorTest(ut.TestCase):
 
         obs = espressomd.observables.ParticlePositions(ids=(0,))
         acc = espressomd.accumulators.Correlator(
-            obs1=obs, tau_lin=10, tau_max=10.0, delta_N=1,
+            obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="square_distance_componentwise")
 
-        s.integrator.run(1000)
+        s.integrator.run(100)
         s.auto_update_accumulators.add(acc)
-        s.integrator.run(20000)
+        s.integrator.run(2000)
 
         corr = acc.result()
 
