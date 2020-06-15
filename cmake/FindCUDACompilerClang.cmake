@@ -77,10 +77,8 @@ function(find_gpu_library)
   endif()
 endfunction(find_gpu_library)
 
-find_library(
-  CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
-                                    /usr/local/nvidia/lib
-                                    /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+find_gpu_library(VARNAME CUDA_LIBRARY NAMES cuda REQUIRED)
+find_gpu_library(VARNAME CUDART_LIBRARY NAMES cudart REQUIRED)
 find_gpu_library(VARNAME CUFFT_LIBRARY NAMES cufft REQUIRED)
 
 function(add_gpu_library)
