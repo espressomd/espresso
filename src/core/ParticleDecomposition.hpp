@@ -26,6 +26,13 @@ using ParticleChange = boost::variant<RemovedParticle, ModifiedList>;
 
 class ParticleDecomposition {
 public:
+  /** Exception indicating a range that is not
+   * supported by the cell system (typically because
+   * it is too larger).
+   */
+  struct RangeError : std::exception {};
+
+public:
   /**
    * @brief Resort particles.
    *

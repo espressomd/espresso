@@ -589,7 +589,8 @@ bool DomainDecomposition::on_geometry_change(
   /* check that the CPU domains are still sufficiently large. */
   if (boost::algorithm::any_of(new_local_geo.length(),
                                [range](double l) { return l < range; })) {
-    return false;
+
+    throw ParticleDecomposition::RangeError{};
   }
 
   double min_cell_size =
