@@ -1,6 +1,10 @@
 #include <iostream>
 #include <vector>
 
+#if THRUST_VERSION < 100908
+#define host_pinned_memory_resource universal_host_pinned_memory_resource
+#endif
+
 #include "stokesian_dynamics/sd.hpp"
 #include "stokesian_dynamics/sd_cpu.hpp"
 
