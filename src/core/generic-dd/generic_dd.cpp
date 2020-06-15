@@ -362,14 +362,9 @@ static void ensure_at_least_one_cell() {
 } // namespace impl
 
 void on_geometry_change(int flags, double range) {
-  auto grid_size = grid_instance()->grid_size();
-  // Don't change cell system if it is still sufficient
-  if (flags & CELL_FLAG_GRIDCHANGED ||
-      grid_size[0] != std::max<int>(box_geo.length()[0] / range, 1) ||
-      grid_size[1] != std::max<int>(box_geo.length()[1] / range, 1) ||
-      grid_size[2] != std::max<int>(box_geo.length()[2] / range, 1)) {
-    cells_re_init(CELL_STRUCTURE_CURRENT, range);
-  }
+  // librepa stores box, range, etc.
+  // Just reinit for safety.
+  cells_re_init(CELL_STRUCTURE_CURRENT, range);
 }
 
 void topology_init(double range, bool is_repart) {
