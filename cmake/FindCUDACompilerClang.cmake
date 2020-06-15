@@ -66,21 +66,25 @@ if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 3.8.9)
 endif()
 
 find_library(
-  CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
-                                    /usr/local/nvidia/lib
-                                    /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+  CUDA_LIBRARY NAMES cuda REQUIRED
+    PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib
+    /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
 find_library(
-  CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
-                                  /usr/local/nvidia/lib
-                                  /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+  CUDART_LIBRARY NAMES cudart REQUIRED
+    PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib
+    /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
 find_library(
-  CUDA_CUBLAS_LIBRARIES NAMES cublas PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
-                                    /usr/local/nvidia/lib
-                                    /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+  CUFFT_LIBRARY NAMES cufft REQUIRED
+    PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib
+    /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
 find_library(
-  CUDA_cusolver_LIBRARY NAMES cusolver PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
-                                  /usr/local/nvidia/lib
-                                  /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+  CUDA_CUBLAS_LIBRARIES NAMES cublas
+    PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib
+    /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+find_library(
+  CUDA_cusolver_LIBRARY NAMES cusolver
+    PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib
+    /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
 
 function(add_gpu_library)
   set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)

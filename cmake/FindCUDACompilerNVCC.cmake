@@ -56,11 +56,34 @@ list(APPEND CUDA_NVCC_FLAGS
        $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
        $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>)
 
+find_library(
+  CUDA_LIBRARY NAMES cuda REQUIRED
+  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
+        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+find_library(
+  CUDART_LIBRARY NAMES cudart REQUIRED
+  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
+        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+find_library(
+  CUFFT_LIBRARY NAMES cufft REQUIRED
+  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
+        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+find_library(
+  CUDA_CUBLAS_LIBRARIES NAMES cublas
+  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
+        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+find_library(
+  CUDA_cusolver_LIBRARY NAMES cusolver
+  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
+        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+
 function(add_gpu_library)
   cuda_add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})
   set_property(TARGET ${GPU_TARGET_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-  target_link_libraries(${GPU_TARGET_NAME} PRIVATE ${CUDA_CUFFT_LIBRARIES} utils Boost::serialization Boost::mpi)
+  target_link_libraries(${GPU_TARGET_NAME} PRIVATE
+    ${CUDA_LIBRARY} ${CUDART_LIBRARY} ${CUDA_CUFFT_LIBRARIES}
+    utils Boost::serialization Boost::mpi)
 endfunction()
 
 include(FindPackageHandleStandardArgs)
