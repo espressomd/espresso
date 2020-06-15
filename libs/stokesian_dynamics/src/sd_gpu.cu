@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "stokesian_dynamics/sd.hpp"
+#include "sd.hpp"
 #include "stokesian_dynamics/sd_gpu.hpp"
 
 /** This executes the Stokesian Dynamics solver on the GPU. "_host" refers to
