@@ -177,7 +177,7 @@ class Analysis:
 
         return analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
 
-    def pressure(self, v_comp=False):
+    def pressure(self):
         """Calculate the instantaneous pressure (in parallel). This is only
         sensible in an isotropic system which is homogeneous (on average)! Do
         not use this in an anisotropic or inhomogeneous system. In order to
@@ -204,13 +204,12 @@ class Analysis:
             * ``"virtual_sites"``: Pressure contribution due to virtual sites
 
         """
-        check_type_or_throw_except(v_comp, 1, bool, "v_comp must be a boolean")
 
         # Dict to store the results
         p = OrderedDict()
 
         # Update in ESPResSo core
-        analyze.update_pressure(v_comp)
+        analyze.update_pressure()
 
         # Total pressure
         p["total"] = analyze.obs_scalar_pressure.accumulate()
@@ -289,7 +288,7 @@ class Analysis:
 
         return p
 
-    def pressure_tensor(self, v_comp=False):
+    def pressure_tensor(self):
         """Calculate the instantaneous pressure_tensor (in parallel). This is
         sensible in an anisotropic system. Still it assumes that the system is
         homogeneous since the volume averaged pressure_tensor is used. Do not use
@@ -317,13 +316,12 @@ class Analysis:
             * ``"virtual_sites"``: pressure tensor contribution for virtual sites
 
         """
-        check_type_or_throw_except(v_comp, 1, bool, "v_comp must be a boolean")
 
         # Dict to store the results
         p = OrderedDict()
 
         # Update in ESPResSo core
-        analyze.update_pressure(v_comp)
+        analyze.update_pressure()
 
         # Total pressure
         cdef int i

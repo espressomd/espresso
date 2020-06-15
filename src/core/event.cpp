@@ -333,13 +333,6 @@ void on_parameter_change(int field) {
   case FIELD_NPTISO_PISTON:
     reinit_thermo = true;
     break;
-#ifdef NPT
-  case FIELD_INTEG_SWITCH:
-    if (integ_switch != INTEG_METHOD_NPT_ISO)
-      nptiso.invalidate_p_vel = true;
-    break;
-#endif
-    break;
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
     recalc_forces = true;

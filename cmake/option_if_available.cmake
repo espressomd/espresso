@@ -30,10 +30,12 @@
 # not the second time, the variable will still be flagged as a user-provided
 # value in the second CMake call.
 macro(option_if_available varname help_text default_value)
-  if("${${varname}}" STREQUAL "")
-    set(${varname}_IS_DEFAULT_VALUE TRUE)
-  else()
-    set(${varname}_IS_DEFAULT_VALUE FALSE)
+  if(NOT DEFINED ${varname}_IS_DEFAULT_VALUE)
+    if("${${varname}}" STREQUAL "")
+      set(${varname}_IS_DEFAULT_VALUE TRUE CACHE INTERNAL "does ${varname} contain the default value?")
+    else()
+      set(${varname}_IS_DEFAULT_VALUE FALSE CACHE INTERNAL "does ${varname} contain the default value?")
+    endif()
   endif()
   option(${varname} ${help_text} ${default_value})
 endmacro()

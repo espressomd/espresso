@@ -54,12 +54,21 @@ list(APPEND HIP_HIPCC_FLAGS_RELWITHDEBINFO -O2 -g -DNDEBUG)
 list(APPEND HIP_HIPCC_FLAGS_COVERAGE -O3 -g)
 list(APPEND HIP_HIPCC_FLAGS_RELWITHASSERT -O3 -g)
 
-find_library(ROCFFT_LIB name "rocfft" REQUIRED PATHS ${ROCM_HOME}/lib)
+function(find_gpu_library)
+  cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})
+  list(APPEND LIBRARY_PATHS ${ROCM_HOME}/lib)
+  if(LIBRARY_REQUIRED)
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH REQUIRED)
+  else()
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH)
+  endif()
+endfunction(find_gpu_library)
 
-find_library(ROCBLAS_LIB name "rocblas" PATHS ${ROCM_HOME}/lib)
+find_gpu_library(VARNAME ROCFFT_LIB NAMES rocfft REQUIRED)
+
+find_gpu_library(VARNAME ROCBLAS_LIB NAMES rocblas)
 set(CUDA_CUBLAS_LIBRARIES ${ROCBLAS_LIB})
-
-find_library(ROCSOLVER_LIB name "rocsolver" PATHS ${ROCM_HOME}/lib)
+find_gpu_library(VARNAME ROCSOLVER_LIB NAMES rocsolver)
 set(CUDA_cusolver_LIBRARY ${ROCSOLVER_LIB})
 
 function(add_gpu_library)

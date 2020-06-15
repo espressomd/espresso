@@ -56,26 +56,24 @@ list(APPEND CUDA_NVCC_FLAGS
        $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
        $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>)
 
-find_library(
-  CUDA_LIBRARY NAMES cuda REQUIRED
-  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
-        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
-find_library(
-  CUDART_LIBRARY NAMES cudart REQUIRED
-  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
-        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
-find_library(
-  CUFFT_LIBRARY NAMES cufft REQUIRED
-  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
-        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
-find_library(
-  CUDA_CUBLAS_LIBRARIES NAMES cublas
-  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
-        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
-find_library(
-  CUDA_cusolver_LIBRARY NAMES cusolver
-  PATHS ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
-        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+function(find_gpu_library)
+  cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})
+  list(APPEND LIBRARY_PATHS
+       ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
+       /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu)
+  if(LIBRARY_REQUIRED)
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH REQUIRED)
+  else()
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH)
+  endif()
+endfunction(find_gpu_library)
+
+find_gpu_library(VARNAME CUDA_LIBRARY NAMES cuda REQUIRED)
+find_gpu_library(VARNAME CUDART_LIBRARY NAMES cudart REQUIRED)
+find_gpu_library(VARNAME CUDA_CUFFT_LIBRARIES NAMES cufft REQUIRED)
+
+find_gpu_library(VARNAME CUDA_CUBLAS_LIBRARIES NAMES cublas REQUIRED)
+find_gpu_library(VARNAME CUDA_cusolver_LIBRARY NAMES cusolver REQUIRED)
 
 function(add_gpu_library)
   cuda_add_library(${ARGV})

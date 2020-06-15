@@ -184,16 +184,10 @@ class Observable_stat_wrapper : public Observable_stat {
 public:
   /** Observed statistic for the current MPI rank. */
   Observable_stat local;
-  /** Flag to signal if the observable measures instantaneous pressure, i.e.
-   *  the pressure with velocity compensation (half a time step), instead of
-   *  the conventional pressure. Only relevant for NpT simulations.
-   */
-  bool v_comp;
 
   explicit Observable_stat_wrapper(size_t chunk_size, bool pressure_obs = true)
       : Observable_stat{chunk_size, pressure_obs}, local{chunk_size,
-                                                         pressure_obs},
-        v_comp(false) {}
+                                                         pressure_obs} {}
 
   /** Gather the contributions from all MPI ranks. */
   void reduce() { local.reduce(data.data()); }
