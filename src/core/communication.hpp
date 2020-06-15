@@ -69,7 +69,6 @@ extern boost::mpi::communicator comm_cart;
 enum class GatherStats : int {
   energy,
   pressure,
-  pressure_v_comp,
   lb_fluid_momentum,
   lb_boundary_forces
 };
@@ -221,8 +220,6 @@ void mpi_bcast_max_seen_particle_type(int s);
  *           energies, using \ref energy_calc.
  *      \arg for \ref GatherStats::pressure, calculate and reduce (sum up)
  *           pressure, using \ref pressure_calc.
- *      \arg for \ref GatherStats::pressure_v_comp, calculate and reduce
- *           (sum up) instantaneous pressure, using \ref pressure_calc.
  *      \arg for \ref GatherStats::lb_fluid_momentum, use
  *           \ref lb_calc_fluid_momentum.
  *      \arg for \ref GatherStats::lb_boundary_forces, use
