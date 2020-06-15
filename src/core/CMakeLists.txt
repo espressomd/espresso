@@ -85,8 +85,8 @@ target_link_libraries(
 target_include_directories(
   EspressoCore
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-         "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>" SYSTEM
-  PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>" SYSTEM
+         "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>"
+  PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>"
   PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
 
 target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
