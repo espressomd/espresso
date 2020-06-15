@@ -36,10 +36,13 @@ namespace {
 
 /** Returns the center of mass of this subdomain.
  */
-std::pair<int, repa::Vec3d> center_of_mass_per_cell(repa::local_cell_index_type i) {
+std::pair<int, repa::Vec3d>
+center_of_mass_per_cell(repa::local_cell_index_type i) {
   int npart = 0;
   repa::Vec3d c = {{0., 0., 0.}};
 
+  assert(i >= 0);
+  assert(i < cell_structure.local_cells().size());
   for (const auto &p : cell_structure.local_cells()[i]->particles()) {
     npart++;
     for (int d = 0; d < 3; ++d)
@@ -61,7 +64,8 @@ struct GridImplementationWrapper {
 
   GridImplementationWrapper()
       : pargrid(nullptr), new_gridtype(repa::GridType::NONE) {
-    extra_params.subdomain_center_contribution_of_cell = center_of_mass_per_cell;
+    extra_params.subdomain_center_contribution_of_cell =
+        center_of_mass_per_cell;
     extra_params.init_part = "Cart3D";
   }
 
