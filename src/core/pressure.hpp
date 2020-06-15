@@ -28,24 +28,13 @@
 #include <utils/Vector.hpp>
 
 /** Parallel pressure calculation from a virial expansion.
- *  @param[in] v_comp flag which enables compensation of the velocities
- *                    required for deriving a pressure reflecting
- *                    \ref nptiso_struct::p_inst (hence it only works with
- *                    domain decomposition); naturally it therefore doesn't
- *                    make sense to use it without NpT.
  */
-void pressure_calc(bool v_comp);
+void pressure_calc();
 
 /** Helper function for @ref Observables::PressureTensor. */
 Utils::Vector9d observable_compute_pressure_tensor();
 
-/** Calculate the scalar pressure and pressure tensor.
- *  @param[in] v_comp flag which enables compensation of the velocities
- *                    required for deriving a pressure reflecting
- *                    \ref nptiso_struct::p_inst (hence it only works with
- *                    domain decomposition); naturally it therefore doesn't
- *                    make sense to use it without NpT.
- */
-void update_pressure(bool v_comp);
+/** Calculate the scalar pressure and pressure tensor. */
+void update_pressure();
 
 #endif

@@ -91,7 +91,7 @@ cdef extern from "pressure_inline.hpp":
     cdef Observable_stat_non_bonded_wrapper obs_pressure_tensor_non_bonded
 
 cdef extern from "pressure.hpp":
-    cdef void update_pressure(cbool)
+    cdef void update_pressure()
 
 cdef extern from "energy_inline.hpp":
     cdef Observable_stat_wrapper obs_energy

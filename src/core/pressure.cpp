@@ -26,8 +26,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
-#include "integrate.hpp"
-#include "npt.hpp"
 #include "pressure_inline.hpp"
 #include "virtual_sites.hpp"
 #include <boost/range/algorithm/copy.hpp>
@@ -81,7 +79,7 @@ static void add_single_particle_virials(Particle &p) {
   cell_structure.execute_bond_handler(p, add_bonded_pressure_tensor);
 }
 
-void pressure_calc(bool v_comp) {
+void pressure_calc() {
   auto const volume = box_geo.volume();
 
   if (!interactions_sanity_checks())
@@ -95,7 +93,7 @@ void pressure_calc(bool v_comp) {
   on_observable_calc();
 
   for (auto const &p : cell_structure.local_particles()) {
-    add_kinetic_virials(p, v_comp);
+    add_kinetic_virials(p);
   }
 
   short_range_loop([](Particle &p) { add_single_particle_virials(p); },
@@ -133,31 +131,17 @@ void pressure_calc(bool v_comp) {
   obs_pressure_tensor_non_bonded.reduce();
 }
 
-/** Reduce the system scalar pressure and pressure tensor from all MPI ranks.
- *  @param v_comp flag which enables compensation of the velocities required
- *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
- *                (hence it only works with domain decomposition); naturally it
- *                therefore doesn't make sense to use it without NpT.
- */
-void master_pressure_calc(bool v_comp) {
-  mpi_gather_stats(v_comp ? GatherStats::pressure_v_comp
-                          : GatherStats::pressure);
-
-  obs_scalar_pressure.v_comp = v_comp;
-  obs_pressure_tensor.v_comp = v_comp;
-}
-
-void update_pressure(bool v_comp) {
+void update_pressure() {
   obs_scalar_pressure.resize();
   obs_scalar_pressure_non_bonded.resize();
   obs_pressure_tensor.resize();
   obs_pressure_tensor_non_bonded.resize();
 
-  master_pressure_calc(v_comp);
+  mpi_gather_stats(GatherStats::pressure);
 }
 
 Utils::Vector9d observable_compute_pressure_tensor() {
-  update_pressure(true);
+  update_pressure();
   Utils::Vector9d pressure_tensor{};
   for (size_t j = 0; j < 9; j++) {
     pressure_tensor[j] = obs_pressure_tensor.accumulate(0, j);
