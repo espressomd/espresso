@@ -58,7 +58,6 @@ nptiso_struct nptiso = {0.0,
                         0.0,
                         {0.0, 0.0, 0.0},
                         {0.0, 0.0, 0.0},
-                        true,
                         0,
                         {NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},
                         0,
@@ -148,34 +147,13 @@ void master_pressure_calc(bool v_comp) {
   obs_pressure_tensor.v_comp = v_comp;
 }
 
-/** Calculate the sum of the ideal gas components of the instantaneous
- *  pressure, rescaled by the box dimensions.
- */
-double calculate_npt_p_vel_rescaled() {
-  Utils::Vector3d p_vel;
-  MPI_Reduce(nptiso.p_vel.data(), p_vel.data(), 3, MPI_DOUBLE, MPI_SUM, 0,
-             MPI_COMM_WORLD);
-  double acc = 0.0;
-  for (int i = 0; i < 3; i++)
-    if (nptiso.geometry & nptiso.nptgeom_dir[i])
-      acc += p_vel[i];
-  return acc / (nptiso.dimension * nptiso.volume);
-}
-
 void update_pressure(bool v_comp) {
   obs_scalar_pressure.resize();
   obs_scalar_pressure_non_bonded.resize();
   obs_pressure_tensor.resize();
   obs_pressure_tensor_non_bonded.resize();
 
-  if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
-      !(nptiso.invalidate_p_vel)) {
-    master_pressure_calc(false);
-    obs_scalar_pressure.kinetic[0] = calculate_npt_p_vel_rescaled();
-    obs_scalar_pressure.v_comp = true;
-  } else {
-    master_pressure_calc(v_comp);
-  }
+  master_pressure_calc(v_comp);
 }
 
 Utils::Vector9d observable_compute_pressure_tensor() {
