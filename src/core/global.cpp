@@ -244,17 +244,6 @@ void check_global_consistency() {
 
 /*************** BCAST PARAMETER ************/
 
-void mpi_bcast_parameter_slave(int i) {
-  common_bcast_parameter(i);
-  check_runtime_errors(comm_cart);
-}
+REGISTER_CALLBACK(common_bcast_parameter)
 
-REGISTER_CALLBACK(mpi_bcast_parameter_slave)
-
-int mpi_bcast_parameter(int i) {
-  Communication::mpiCallbacks().call(mpi_bcast_parameter_slave, i);
-
-  common_bcast_parameter(i);
-
-  return check_runtime_errors(comm_cart);
-}
+void mpi_bcast_parameter(int i) { mpi_call_all(common_bcast_parameter, i); }
