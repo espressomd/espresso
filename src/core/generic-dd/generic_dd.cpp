@@ -352,33 +352,10 @@ template <typename Func> void call_with_modified_cells_update(Func &&fn) {
  * If this cannot be ensured, aborts the program.
  */
 static void ensure_at_least_one_cell() {
-  // An alternative to the following is to simply abort if
-  // grid_instance()->n_local_cells() == 0. Note as below, do not use
-  // runtimeErrorMsg to abort in this case.
-  std::vector<int> ncells_per_proc;
-  boost::mpi::all_gather(comm_cart, grid_instance()->n_local_cells(),
-                         ncells_per_proc);
-  const auto is_zero = [](int i) { return i == 0; };
-
-  if (std::any_of(ncells_per_proc.begin(), ncells_per_proc.end(), is_zero)) {
-    // Try repartitioning, all cells equally weighted.
-    if (grid_instance()->n_local_cells() == 0)
-      std::cerr << "WARN: A process has 0 local cells. "
-                << "Trying to repartition as remedy." << std::endl;
-    grid_instance()->repartition(
-        []() {
-          return std::vector<double>(grid_instance()->n_local_cells(), 1.0);
-        },
-        [](int i, int j) { return 1.0; }, []() {});
-
-    if (grid_instance()->n_local_cells() == 0) {
-      // Don't use runtimeErrorMsg. This process will segfault on its way to the
-      // next runtime error message collection.
-      std::cerr << "ERROR: A process still has 0 local cells. "
-                << "System too small for this number of processes."
-                << std::endl;
-      MPI_Abort(comm_cart, 1);
-    }
+  // Note as below, do not use runtimeErrorMsg to abort in this case.
+  if (grid_instance()->n_local_cells() == 0) {
+    std::cerr << "ERROR: A process has 0 local cells." << std::endl;
+    MPI_Abort(comm_cart, 1);
   }
 }
 
