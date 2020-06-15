@@ -13,17 +13,15 @@
 
 #include "thrust_wrapper.hpp"
 
-#ifdef SD_USE_CUDA
+#if defined(__CUDACC__)
 #include <cublas_v2.h>
 #include <cusolverDn.h>
-#endif
-
-#ifdef SD_USE_ROCM
+#elif defined(__HIPCC__)
 #include <rocblas.h>
 #include <rocsolver.h>
 #endif
 
-#ifdef SD_USE_GPU
+#if defined(__CUDACC__) || defined(__HIPCC__)
 #define DEVICE_FUNC __host__ __device__
 #else
 #define DEVICE_FUNC
@@ -86,7 +84,7 @@ unravel_index(std::size_t index, std::size_t lda) {
 /// \cond
 
 // LAPACK prototypes
-#ifndef SD_USE_GPU
+#if !defined(__CUDACC__) && !defined(__HIPCC__)
 extern "C" {
 int dgemm_(char *transa, char *transb, int *m, int *n, int *k, double *alpha,
            double *a, int *lda, double *b, int *ldb, double *beta, double *c,
@@ -116,7 +114,7 @@ namespace internal {
 template <typename Policy, typename T>
 struct cublas {};
 
-#ifdef SD_USE_CUDA
+#if defined(__CUDACC__)
 /** Basic matrix operations on device (Nvidia-GPU) using the cuBLAS library
  */
 template <>
@@ -196,7 +194,7 @@ struct cublas<policy::device, double> {
         cublasDestroy(handle);
     }
 };
-#elif defined(SD_USE_ROCM)
+#elif defined(__HIPCC__)
 /** Basic matrix operations on device (AMD-GPU) using the rocBLAS library
  */
 template <>
@@ -356,7 +354,7 @@ struct cublas<policy::host, double> {
 template <typename, typename>
 struct cusolver;
 
-#ifdef SD_USE_CUDA
+#if defined(__CUDACC__)
 template <>
 struct cusolver<policy::device, double> {
     /** Computes the Cholesky factorization and the inverse of a real symmetric
@@ -398,7 +396,7 @@ struct cusolver<policy::device, double> {
         cusolverDnDestroy(handle);
     }
 };
-#elif defined(SD_USE_ROCM)
+#elif defined(__HIPCC__)
 // ROCm API documentation
 // https://rocsolver.readthedocs.io/en/latest/userguidedocu.html
 template <>

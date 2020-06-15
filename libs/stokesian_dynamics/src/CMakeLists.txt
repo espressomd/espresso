@@ -7,12 +7,7 @@ if(STOKESIAN_DYNAMICS_GPU)
     stokesian_dynamics
     ${CUDA_CUBLAS_LIBRARIES}
     ${CUDA_cusolver_LIBRARY})
-  target_compile_definitions(sd_gpu PRIVATE SD_USE_THRUST SD_USE_GPU)
-  if(HIP_VERSION)
-    target_compile_definitions(sd_gpu PRIVATE SD_USE_ROCM)
-  else()
-    target_compile_definitions(sd_gpu PRIVATE SD_USE_CUDA)
-  endif()
+  target_compile_definitions(sd_gpu PRIVATE SD_USE_THRUST)
   install(TARGETS sd_gpu
     EXPORT stokesiandynamics-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

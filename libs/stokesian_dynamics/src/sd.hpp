@@ -9,16 +9,16 @@
 #include "thrust_wrapper.hpp"
 
 
-#ifdef SD_USE_CUDA
+#if defined(__CUDACC__)
 #include <curand_kernel.h>
-#elif defined(SD_USE_ROCM)
+#elif defined(__HIPCC__)
 #include <rocrand/rocrand.hpp>
 #else
 #include <Random123/philox.h>
 typedef r123::Philox2x64 RNG;
 #endif
 
-#ifdef SD_USE_GPU
+#if defined(__CUDACC__) || defined(__HIPCC__)
 #define DEVICE_FUNC __host__ __device__
 #else
 #define DEVICE_FUNC
@@ -119,7 +119,7 @@ struct check_dist {
         T dx = x(j + 0) - x(k + 0);
         T dy = x(j + 1) - x(k + 1);
         T dz = x(j + 2) - x(k + 2);
-#ifdef __HIPCC__
+#if defined(__HIPCC__)
         T dr = sqrtf(dx * dx + dy * dy + dz * dz);
 #else
         T dr = std::sqrt(dx * dx + dy * dy + dz * dz);
@@ -730,7 +730,7 @@ struct lubrication {
             double xi = dr - 2;
 
             double xi1 = 1 / xi;
-#ifdef __HIPCC__
+#if defined(__HIPCC__)
             double dlx = logf(xi1);
 #else
             double dlx = std::log(xi1);
@@ -1234,15 +1234,15 @@ struct thermalizer {
     T sqrt_kT_Dt;
     std::size_t offset;
     std::size_t seed;
-#ifdef SD_USE_GPU
+#if defined(__CUDACC__) || defined(__HIPCC__)
     __device__
 #endif
     T operator()(std::size_t index) {
-#ifdef SD_USE_CUDA //should be SD_USE_GPU in the end
+#if defined(__CUDACC__)
         uint4 rnd_ints = curand_Philox4x32_10(make_uint4(offset >> 32, seed >> 32, index >> 32, index),
                                               make_uint2(offset, seed));
         T rnd = _curand_uniform_double_hq(rnd_ints.w, rnd_ints.x);
-#elif defined (SD_USE_ROCM)
+#elif defined (__HIPCC__)
         rocrand_state_philox4x32_10 state(seed, index, offset);
         T rnd = rocrand_uniform(&state);
 #else
