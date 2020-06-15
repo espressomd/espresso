@@ -61,7 +61,7 @@ function(find_gpu_library)
   endif()
 endfunction(find_gpu_library)
 
-find_library(ROCFFT_LIB name "rocfft" PATHS ${ROCM_HOME}/lib)
+find_gpu_library(VARNAME ROCFFT_LIB NAMES rocfft REQUIRED)
 
 function(add_gpu_library)
   hip_add_library(${ARGV})

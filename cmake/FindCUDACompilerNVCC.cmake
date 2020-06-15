@@ -68,6 +68,8 @@ function(find_gpu_library)
   endif()
 endfunction(find_gpu_library)
 
+find_gpu_library(VARNAME CUDA_CUFFT_LIBRARIES NAMES cufft REQUIRED)
+
 function(add_gpu_library)
   cuda_add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})
