@@ -56,6 +56,18 @@ list(APPEND CUDA_NVCC_FLAGS
        $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
        $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>)
 
+function(find_gpu_library)
+  cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})
+  list(APPEND LIBRARY_PATHS
+       ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
+       /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu)
+  if(LIBRARY_REQUIRED)
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH REQUIRED)
+  else()
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH)
+  endif()
+endfunction(find_gpu_library)
+
 function(add_gpu_library)
   cuda_add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})

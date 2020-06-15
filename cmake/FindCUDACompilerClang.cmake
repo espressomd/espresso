@@ -65,6 +65,18 @@ if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 3.8.9)
   set(gpu_interface_flags "${gpu_interface_flags} --cuda-gpu-arch=sm_52")
 endif()
 
+function(find_gpu_library)
+  cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})
+  list(APPEND LIBRARY_PATHS
+       ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
+       /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu)
+  if(LIBRARY_REQUIRED)
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH REQUIRED)
+  else()
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH)
+  endif()
+endfunction(find_gpu_library)
+
 find_library(
   CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
                                     /usr/local/nvidia/lib
