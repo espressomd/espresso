@@ -72,9 +72,6 @@ find_gpu_library(VARNAME CUDA_LIBRARY NAMES cuda REQUIRED)
 find_gpu_library(VARNAME CUDART_LIBRARY NAMES cudart REQUIRED)
 find_gpu_library(VARNAME CUDA_CUFFT_LIBRARIES NAMES cufft REQUIRED)
 
-find_gpu_library(VARNAME CUDA_CUBLAS_LIBRARIES NAMES cublas REQUIRED)
-find_gpu_library(VARNAME CUDA_cusolver_LIBRARY NAMES cusolver REQUIRED)
-
 function(add_gpu_library)
   cuda_add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})

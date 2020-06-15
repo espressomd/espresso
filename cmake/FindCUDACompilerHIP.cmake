@@ -66,11 +66,6 @@ endfunction(find_gpu_library)
 
 find_gpu_library(VARNAME ROCFFT_LIB NAMES rocfft REQUIRED)
 
-find_gpu_library(VARNAME ROCBLAS_LIB NAMES rocblas)
-set(CUDA_CUBLAS_LIBRARIES ${ROCBLAS_LIB})
-find_gpu_library(VARNAME ROCSOLVER_LIB NAMES rocsolver)
-set(CUDA_cusolver_LIBRARY ${ROCSOLVER_LIB})
-
 function(add_gpu_library)
   hip_add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})
