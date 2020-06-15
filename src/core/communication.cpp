@@ -372,9 +372,8 @@ void mpi_gather_stats(GatherStats job, double *result) {
     energy_calc(sim_time);
     break;
   case GatherStats::pressure:
-  case GatherStats::pressure_v_comp:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    pressure_calc(job == GatherStats::pressure_v_comp);
+    pressure_calc();
     break;
   case GatherStats::lb_fluid_momentum:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
@@ -402,8 +401,7 @@ void mpi_gather_stats_slave(int, int job_slave) {
     energy_calc(sim_time);
     break;
   case GatherStats::pressure:
-  case GatherStats::pressure_v_comp:
-    pressure_calc(job == GatherStats::pressure_v_comp);
+    pressure_calc();
     break;
   case GatherStats::lb_fluid_momentum:
     lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
