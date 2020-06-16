@@ -1,3 +1,24 @@
+/*
+ * Copyright (C) 2010-2020 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef ESPRESSO_DOMAIN_DECOMPOSITION_HPP
 #define ESPRESSO_DOMAIN_DECOMPOSITION_HPP
 
@@ -5,11 +26,6 @@
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
-
-#include <boost/range/numeric.hpp>
-
-#include <utils/index.hpp>
-#include <utils/mpi/cart_comm.hpp>
 
 /** @brief Structure containing the information about the cell grid used for
  * domain decomposition.
@@ -62,13 +78,9 @@ private:
   GhostCommunicator m_collect_ghost_force_comm;
 
 public:
-  DomainDecomposition(const boost::mpi::communicator &comm, double range,
+  DomainDecomposition(boost::mpi::communicator comm, double range,
                       const BoxGeometry &box_geo,
                       const LocalBox<double> &local_geo);
-
-private:
-  void init(const boost::mpi::communicator &comm, double range,
-            const BoxGeometry &box_geo, const LocalBox<double> &local_geo);
 
 public:
   GhostCommunicator const &exchange_ghosts_comm() const override {
@@ -114,7 +126,6 @@ private:
 
   int calc_processor_min_num_cells() const;
 
-private:
   Cell *position_to_cell(const Utils::Vector3d &pos);
 
   /**

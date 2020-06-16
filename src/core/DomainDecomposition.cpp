@@ -1,11 +1,35 @@
+/*
+ * Copyright (C) 2010-2020 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "DomainDecomposition.hpp"
 
 #include "errorhandling.hpp"
 
+#include <utils/index.hpp>
+#include <utils/mpi/cart_comm.hpp>
 #include <utils/mpi/sendrecv.hpp>
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/reverse.hpp>
+#include <boost/range/numeric.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
@@ -49,7 +73,7 @@ void DomainDecomposition::move_if_local(
 
     if (target_cell) {
       target_cell->particles().insert(std::move(part));
-      modified_cells.push_back(ModifiedList{target_cell->particles()});
+      modified_cells.emplace_back(ModifiedList{target_cell->particles()});
     } else {
       rest.insert(std::move(part));
     }
@@ -58,19 +82,6 @@ void DomainDecomposition::move_if_local(
   src.clear();
 }
 
-/**
- * @brief Split particle list by direction.
- *
- * Moves all particles from src into left
- * and right depending if they belong to
- * the left or right side from local node
- * in direction dir.
- *
- * @param src Particles to sort.
- * @param left Particles that should go to the left
- * @param right Particles that should go to the right
- * @param dir Direction to consider.
- */
 void DomainDecomposition::move_left_or_right(ParticleList &src,
                                              ParticleList &left,
                                              ParticleList &right,
@@ -211,9 +222,6 @@ void DomainDecomposition::resort(bool global,
 
       diff.emplace_back(ModifiedList{sort_cell->particles()});
     }
-
-    // cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
-    // cell_structure.update_particle_index(sort_cell->particles());
   }
 }
 void DomainDecomposition::mark_cells() {
@@ -548,22 +556,11 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
   return ghost_comm;
 }
 
-DomainDecomposition::DomainDecomposition(const boost::mpi::communicator &comm,
+DomainDecomposition::DomainDecomposition(boost::mpi::communicator comm,
                                          double range,
                                          const BoxGeometry &box_geo,
                                          const LocalBox<double> &local_geo)
-    : m_comm(comm) {
-  init(comm, range, box_geo, local_geo);
-}
-
-void DomainDecomposition::init(const boost::mpi::communicator &comm,
-                               double range, const BoxGeometry &box_geo,
-                               const LocalBox<double> &local_geo) {
-  assert(comm.size() == comm.size());
-  m_comm = comm;
-  m_box = box_geo;
-  m_local_box = local_geo;
-
+    : m_comm(std::move(comm)), m_box(box_geo), m_local_box(local_geo) {
   /* set up new domain decomposition cell structure */
   create_cell_grid(range);
 
