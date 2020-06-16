@@ -24,7 +24,7 @@
 #include <utils/Vector.hpp>
 
 /** @brief LB implementation currently active. */
-enum class ActiveLB { NONE, WALBERLA };
+enum class ActiveLB : int { NONE, WALBERLA };
 
 /** @brief Switch determining the type of lattice dynamics. */
 extern ActiveLB lattice_switch;

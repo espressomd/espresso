@@ -26,8 +26,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
-#include "integrate.hpp"
-#include "npt.hpp"
 #include "pressure_inline.hpp"
 #include "virtual_sites.hpp"
 #include <boost/range/algorithm/copy.hpp>
@@ -58,7 +56,6 @@ nptiso_struct nptiso = {0.0,
                         0.0,
                         {0.0, 0.0, 0.0},
                         {0.0, 0.0, 0.0},
-                        true,
                         0,
                         {NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},
                         0,
@@ -82,7 +79,7 @@ static void add_single_particle_virials(Particle &p) {
   cell_structure.execute_bond_handler(p, add_bonded_pressure_tensor);
 }
 
-void pressure_calc(bool v_comp) {
+void pressure_calc() {
   auto const volume = box_geo.volume();
 
   if (!interactions_sanity_checks())
@@ -96,7 +93,7 @@ void pressure_calc(bool v_comp) {
   on_observable_calc();
 
   for (auto const &p : cell_structure.local_particles()) {
-    add_kinetic_virials(p, v_comp);
+    add_kinetic_virials(p);
   }
 
   short_range_loop([](Particle &p) { add_single_particle_virials(p); },
@@ -134,52 +131,17 @@ void pressure_calc(bool v_comp) {
   obs_pressure_tensor_non_bonded.reduce();
 }
 
-/** Reduce the system scalar pressure and pressure tensor from all MPI ranks.
- *  @param v_comp flag which enables compensation of the velocities required
- *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
- *                (hence it only works with domain decomposition); naturally it
- *                therefore doesn't make sense to use it without NpT.
- */
-void master_pressure_calc(bool v_comp) {
-  mpi_gather_stats(v_comp ? GatherStats::pressure_v_comp
-                          : GatherStats::pressure);
-
-  obs_scalar_pressure.v_comp = v_comp;
-  obs_pressure_tensor.v_comp = v_comp;
-}
-
-/** Calculate the sum of the ideal gas components of the instantaneous
- *  pressure, rescaled by the box dimensions.
- */
-double calculate_npt_p_vel_rescaled() {
-  Utils::Vector3d p_vel;
-  MPI_Reduce(nptiso.p_vel.data(), p_vel.data(), 3, MPI_DOUBLE, MPI_SUM, 0,
-             MPI_COMM_WORLD);
-  double acc = 0.0;
-  for (int i = 0; i < 3; i++)
-    if (nptiso.geometry & nptiso.nptgeom_dir[i])
-      acc += p_vel[i];
-  return acc / (nptiso.dimension * nptiso.volume);
-}
-
-void update_pressure(bool v_comp) {
+void update_pressure() {
   obs_scalar_pressure.resize();
   obs_scalar_pressure_non_bonded.resize();
   obs_pressure_tensor.resize();
   obs_pressure_tensor_non_bonded.resize();
 
-  if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
-      !(nptiso.invalidate_p_vel)) {
-    master_pressure_calc(false);
-    obs_scalar_pressure.kinetic[0] = calculate_npt_p_vel_rescaled();
-    obs_scalar_pressure.v_comp = true;
-  } else {
-    master_pressure_calc(v_comp);
-  }
+  mpi_gather_stats(GatherStats::pressure);
 }
 
 Utils::Vector9d observable_compute_pressure_tensor() {
-  update_pressure(true);
+  update_pressure();
   Utils::Vector9d pressure_tensor{};
   for (size_t j = 0; j < 9; j++) {
     pressure_tensor[j] = obs_pressure_tensor.accumulate(0, j);

@@ -49,10 +49,6 @@ typedef struct {
   Utils::Vector3d p_vir;
   /** ideal gas components of \ref p_inst, derived from the velocities */
   Utils::Vector3d p_vel;
-  /** flag which indicates if \ref p_vel may (false) or may not (true) be used
-   *  in offline pressure calculations such as 'analyze p_inst'
-   */
-  bool invalidate_p_vel;
   /** geometry information for the NpT integrator. Holds the vector
    *  \< dir, dir, dir \> where a positive value for dir indicates that
    *  box movement is allowed in that direction. To check whether a

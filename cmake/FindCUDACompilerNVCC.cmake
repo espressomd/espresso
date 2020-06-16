@@ -56,11 +56,28 @@ list(APPEND CUDA_NVCC_FLAGS
        $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
        $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>)
 
+function(find_gpu_library)
+  cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})
+  list(APPEND LIBRARY_PATHS
+       ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
+       /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu)
+  if(LIBRARY_REQUIRED)
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH REQUIRED)
+  else()
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH)
+  endif()
+endfunction(find_gpu_library)
+
+find_gpu_library(VARNAME CUDA_LIBRARY NAMES cuda REQUIRED)
+find_gpu_library(VARNAME CUDART_LIBRARY NAMES cudart REQUIRED)
+find_gpu_library(VARNAME CUDA_CUFFT_LIBRARIES NAMES cufft REQUIRED)
+
 function(add_gpu_library)
   cuda_add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})
   set_property(TARGET ${GPU_TARGET_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-  target_link_libraries(${GPU_TARGET_NAME} PRIVATE ${CUDA_CUFFT_LIBRARIES} utils Boost::serialization Boost::mpi)
+  target_link_libraries(${GPU_TARGET_NAME} PRIVATE
+    ${CUDA_LIBRARY} ${CUDART_LIBRARY} ${CUDA_CUFFT_LIBRARIES})
 endfunction()
 
 include(FindPackageHandleStandardArgs)

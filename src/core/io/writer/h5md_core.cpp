@@ -149,18 +149,18 @@ void File::init_filestructure() {
 
   dataset_descriptors = {
       // path, dim, type
-      {"particles/atoms/box/edges", 1, type_double},
-      {"particles/atoms/mass/value", 2, type_double},
-      {"particles/atoms/charge/value", 2, type_double},
-      {"particles/atoms/id/value", 2, type_int},
-      {"particles/atoms/id/time", 1, type_double},
-      {"particles/atoms/id/step", 1, type_int},
-      {"particles/atoms/species/value", 2, type_int},
-      {"particles/atoms/position/value", 3, type_double},
-      {"particles/atoms/velocity/value", 3, type_double},
-      {"particles/atoms/force/value", 3, type_double},
-      {"particles/atoms/image/value", 3, type_int},
-      {"connectivity/atoms", 2, type_int},
+      {"particles/atoms/box/edges", 1, type_double, m_length_unit},
+      {"particles/atoms/mass/value", 2, type_double, m_mass_unit},
+      {"particles/atoms/charge/value", 2, type_double, m_charge_unit},
+      {"particles/atoms/id/value", 2, type_int, ""},
+      {"particles/atoms/id/time", 1, type_double, m_time_unit},
+      {"particles/atoms/id/step", 1, type_int, ""},
+      {"particles/atoms/species/value", 2, type_int, ""},
+      {"particles/atoms/position/value", 3, type_double, m_length_unit},
+      {"particles/atoms/velocity/value", 3, type_double, m_velocity_unit},
+      {"particles/atoms/force/value", 3, type_double, m_force_unit},
+      {"particles/atoms/image/value", 3, type_int, ""},
+      {"connectivity/atoms", 2, type_int, ""},
   };
 }
 
@@ -195,6 +195,10 @@ void File::create_datasets(bool only_load) {
       H5Pset_create_intermediate_group(lcpl_id, 1);
       datasets[path] = h5xx::dataset(m_h5md_file, path, descr.type, dataspace,
                                      storage, lcpl_id, H5P_DEFAULT);
+      // write only units attribute when the value is non-zero.
+      if (descr.unit.length() > 0) {
+        h5xx::write_attribute(datasets[path], "unit", descr.unit);
+      }
     }
   }
   if (!only_load)
@@ -258,6 +262,12 @@ void File::create_new_file(const std::string &filename) {
   h5xx::write_attribute(h5md_creator_group, "version", ESPRESSO_VERSION);
   auto h5md_author_group = h5xx::group(h5md_group, "author");
   h5xx::write_attribute(h5md_author_group, "name", "N/A");
+
+  if (is_unit_system_defined()) {
+    auto h5md_unit_module = h5xx::group(h5md_group, "modules/units");
+    std::vector<int> h5md_unit_module_version = {1, 0};
+    write_attribute(h5md_unit_module, "version", h5md_unit_module_version);
+  }
 
   bool only_load = false;
   create_datasets(only_load);

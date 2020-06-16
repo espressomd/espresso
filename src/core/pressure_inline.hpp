@@ -28,8 +28,6 @@
 #include "Observable_stat.hpp"
 #include "exclusions.hpp"
 #include "forces_inline.hpp"
-#include "integrate.hpp"
-#include "npt.hpp"
 #include "pressure.hpp"
 
 #include <utils/math/tensor_product.hpp>
@@ -190,24 +188,13 @@ inline bool add_bonded_pressure_tensor(Particle &p1, int bond_id,
 
 /** Calculate kinetic pressure (aka energy) for one particle.
  *  @param p1 particle for which to calculate pressure
- *  @param v_comp flag which enables compensation of the velocities required
- *     for deriving a pressure reflecting \ref nptiso_struct::p_inst
- *     (hence it only works with domain decomposition); naturally it
- *     therefore doesn't make sense to use it without NpT.
  */
-inline void add_kinetic_virials(Particle const &p1, bool v_comp) {
+inline void add_kinetic_virials(Particle const &p1) {
   if (p1.p.is_virtual)
     return;
 
   /* kinetic energy */
-  if (v_comp) {
-    // velocity at half the time step: v(t + dt / 2) =
-    // v(t + dt) - a(t) * dt / 2 = v(t + dt) - F(t) * dt / m / 2
-    auto const v = p1.m.v - p1.f.f * (time_step / (2. * p1.p.mass));
-    obs_scalar_pressure.local.kinetic[0] += v.norm2() * p1.p.mass;
-  } else {
-    obs_scalar_pressure.local.kinetic[0] += p1.m.v.norm2() * p1.p.mass;
-  }
+  obs_scalar_pressure.local.kinetic[0] += p1.m.v.norm2() * p1.p.mass;
 
   for (int k = 0; k < 3; k++)
     for (int l = 0; l < 3; l++)
