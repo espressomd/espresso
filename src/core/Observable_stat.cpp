@@ -72,6 +72,7 @@ void Observable_stat_non_bonded::resize() {
   non_bonded_inter = Utils::Span<double>(non_bonded_intra.end(), span_size);
 }
 
-void Observable_stat_base::reduce(double *out) const {
-  MPI_Reduce(data.data(), out, data.size(), MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+void Observable_stat_base::reduce() {
+  MPI_Reduce((comm_cart.rank() == 0) ? MPI_IN_PLACE : data.data(), data.data(),
+             data.size(), MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }

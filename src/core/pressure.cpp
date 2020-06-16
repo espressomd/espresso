@@ -36,17 +36,17 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 
 /** Scalar pressure of the system */
-Observable_stat_wrapper obs_scalar_pressure{1};
+Observable_stat obs_scalar_pressure{1};
 /** Pressure tensor of the system */
-Observable_stat_wrapper obs_pressure_tensor{9};
+Observable_stat obs_pressure_tensor{9};
 /** Contribution from the intra- and inter-molecular non-bonded interactions
  *  to the scalar pressure of the system.
  */
-Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded{1};
+Observable_stat_non_bonded obs_scalar_pressure_non_bonded{1};
 /** Contribution from the intra- and inter-molecular non-bonded interactions
  *  to the pressure tensor of the system.
  */
-Observable_stat_non_bonded_wrapper obs_pressure_tensor_non_bonded{9};
+Observable_stat_non_bonded obs_pressure_tensor_non_bonded{9};
 
 nptiso_struct nptiso = {0.0,
                         0.0,
@@ -66,8 +66,8 @@ nptiso_struct nptiso = {0.0,
 void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_pressure_long_range(obs_scalar_pressure.local,
-                                    obs_pressure_tensor.local, particles);
+  Coulomb::calc_pressure_long_range(obs_scalar_pressure, obs_pressure_tensor,
+                                    particles);
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
@@ -85,10 +85,10 @@ void pressure_calc() {
   if (!interactions_sanity_checks())
     return;
 
-  obs_scalar_pressure.local.resize_and_clear();
-  obs_scalar_pressure_non_bonded.local.resize_and_clear();
-  obs_pressure_tensor.local.resize_and_clear();
-  obs_pressure_tensor_non_bonded.local.resize_and_clear();
+  obs_scalar_pressure.resize_and_clear();
+  obs_scalar_pressure_non_bonded.resize_and_clear();
+  obs_pressure_tensor.resize_and_clear();
+  obs_pressure_tensor_non_bonded.resize_and_clear();
 
   on_observable_calc();
 
@@ -105,24 +105,24 @@ void pressure_calc() {
   calc_long_range_virials(cell_structure.local_particles());
 
 #ifdef VIRTUAL_SITES
-  if (!obs_scalar_pressure.local.virtual_sites.empty()) {
+  if (!obs_scalar_pressure.virtual_sites.empty()) {
     auto const vs_pressure_tensor = virtual_sites()->pressure_tensor();
 
-    obs_scalar_pressure.local.virtual_sites[0] += trace(vs_pressure_tensor);
+    obs_scalar_pressure.virtual_sites[0] += trace(vs_pressure_tensor);
     boost::copy(flatten(vs_pressure_tensor),
-                obs_pressure_tensor.local.virtual_sites.begin());
+                obs_pressure_tensor.virtual_sites.begin());
   }
 #endif
 
   /* rescale kinetic energy (=ideal contribution) */
-  obs_scalar_pressure.local.rescale(3.0 * volume);
+  obs_scalar_pressure.rescale(3.0 * volume);
 
-  obs_pressure_tensor.local.rescale(volume);
+  obs_pressure_tensor.rescale(volume);
 
   /* Intra- and Inter- part of nonbonded interaction */
-  obs_scalar_pressure_non_bonded.local.rescale(3.0 * volume);
+  obs_scalar_pressure_non_bonded.rescale(3.0 * volume);
 
-  obs_pressure_tensor_non_bonded.local.rescale(volume);
+  obs_pressure_tensor_non_bonded.rescale(volume);
 
   /* gather data */
   obs_scalar_pressure.reduce();
