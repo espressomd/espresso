@@ -47,4 +47,4 @@ cdef extern from "domain_decomposition.hpp":
         Vector3i cell_grid
         double cell_size[3]
 
-    extern DomainDecomposition dd
+    DomainDecomposition* get_domain_decomposition()

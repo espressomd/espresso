@@ -252,3 +252,7 @@ Cell *find_current_cell(const Particle &p) {
 
   return cell_structure.particle_to_cell(p);
 }
+
+DomainDecomposition *get_domain_decomposition() {
+  return dynamic_cast<DomainDecomposition *>(cell_structure.m_decomposition);
+}

@@ -39,6 +39,7 @@
  */
 
 #include "CellStructure.hpp"
+#include "DomainDecomposition.hpp"
 
 #include <utility>
 #include <vector>
@@ -130,5 +131,13 @@ void check_resort_particles();
  * @return pointer to the cell or nullptr if the particle is not on the node
  */
 Cell *find_current_cell(const Particle &p);
+
+/**
+ * @brief Return a pointer to the global DomainDecomposition.
+ *
+ * @return Pointer to the decomposition if it is settt and is DomainDecomposition,
+ *         nullptr otherwise.
+ */
+DomainDecomposition *get_domain_decomposition();
 
 #endif

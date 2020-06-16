@@ -23,7 +23,7 @@ from . cimport integrate
 from .globals cimport FIELD_SKIN, FIELD_NODEGRID
 from .globals cimport verlet_reuse, skin
 from .globals cimport mpi_bcast_parameter
-from .cellsystem cimport dd, cell_structure
+from .cellsystem cimport cell_structure
 from .utils cimport handle_errors
 from .utils import is_valid_type
 from .utils cimport Vector3i
@@ -69,6 +69,7 @@ cdef class CellSystem:
         s = {"use_verlet_list": cell_structure.use_verlet_list}
 
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
+            dd = get_domain_decomposition()
             s["type"] = "domain_decomposition"
             s["cell_grid"] = np.array([dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
             s["cell_size"] = np.array([dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
