@@ -30,14 +30,13 @@
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "ghosts.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_loop.hpp"
 
-#include "domain_decomposition.hpp"
-#include "nsquare.hpp"
+#include "AtomDecomposition.hpp"
+#include "DomainDecomposition.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -126,17 +125,15 @@ void topology_init(int cs, double range) {
   case CELL_STRUCTURE_NONEYET:
     topology_init(CELL_STRUCTURE_DOMDEC, range);
     break;
-  case CELL_STRUCTURE_CURRENT:
-    topology_init(cell_structure.type, range);
-    break;
   case CELL_STRUCTURE_DOMDEC:
     cell_structure.type = CELL_STRUCTURE_DOMDEC;
-    cell_structure.m_decomposition =
-        dd_topology_init(comm_cart, range, box_geo, local_geo);
+    cell_structure.m_decomposition = std::make_unique<DomainDecomposition>(
+        comm_cart, range, box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
     cell_structure.type = CELL_STRUCTURE_NSQUARE;
-    cell_structure.m_decomposition = nsq_topology_init(comm_cart, box_geo);
+    cell_structure.m_decomposition =
+        std::make_unique<AtomDecomposition>(comm_cart, box_geo);
     break;
   default:
     throw std::runtime_error("Unknown cell system type");
@@ -254,5 +251,6 @@ Cell *find_current_cell(const Particle &p) {
 }
 
 DomainDecomposition *get_domain_decomposition() {
-  return dynamic_cast<DomainDecomposition *>(cell_structure.m_decomposition);
+  return dynamic_cast<DomainDecomposition *>(
+      cell_structure.m_decomposition.get());
 }

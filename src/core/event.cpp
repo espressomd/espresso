@@ -302,7 +302,7 @@ void on_parameter_change(int field) {
     break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();
-    cells_re_init(CELL_STRUCTURE_CURRENT);
+    cells_re_init(cell_structure.type);
     break;
   case FIELD_TEMPERATURE:
     on_temperature_change();

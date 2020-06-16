@@ -62,7 +62,6 @@ private:
   GhostCommunicator m_collect_ghost_force_comm;
 
 public:
-  DomainDecomposition() = default;
   DomainDecomposition(const boost::mpi::communicator &comm, double range,
                       const BoxGeometry &box_geo,
                       const LocalBox<double> &local_geo);
@@ -91,8 +90,8 @@ public:
   }
 
   bool minimum_image_distance() const override { return false; }
-
   void resort(bool global, std::vector<ParticleChange> &diff) override;
+  Utils::Vector3d max_range() const override;
 
 private:
   /** Fill local_cells list and ghost_cells list for use with domain
@@ -112,12 +111,6 @@ private:
   void fill_comm_cell_lists(ParticleList **part_lists,
                             Utils::Vector3i const &lc,
                             Utils::Vector3i const &hc);
-
-  /** @brief Maximal interaction range supported with
-   *         the current geometry and node grid.
-   * @return Per-direction maximal range.
-   */
-  Utils::Vector3d max_range() const override;
 
   int calc_processor_min_num_cells() const;
 
@@ -192,12 +185,6 @@ private:
    */
   GhostCommunicator prepare_comm();
 
-  /** update the 'shift' member of those GhostCommunicators, which use
-   *  that value to speed up the folding process of its ghost members;
-   */
-  void update_communicators_w_boxl();
-
-public:
   /** Maximal number of cells per node. In order to avoid memory
    *  problems due to the cell grid one has to specify the maximal
    *  number of cells. If the number of cells is larger

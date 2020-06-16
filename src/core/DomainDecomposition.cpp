@@ -548,41 +548,6 @@ GhostCommunicator DomainDecomposition::prepare_comm() {
   return ghost_comm;
 }
 
-void DomainDecomposition::update_communicators_w_boxl() {
-  auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
-
-  int cnt = 0;
-  /* direction loop: x, y, z */
-  for (int dir = 0; dir < 3; dir++) {
-    /* lr loop: left right */
-    for (int lr = 0; lr < 2; lr++) {
-      if (cart_info.dims[dir] == 1) {
-        /* prepare folding of ghost positions */
-        if (m_local_box.boundary()[2 * dir + lr] != 0) {
-          m_exchange_ghosts_comm.communications[cnt].shift =
-              shift(m_box, m_local_box, dir, lr);
-        }
-        cnt++;
-      } else {
-        /* i: send/recv loop */
-        for (int i = 0; i < 2; i++) {
-          if ((cart_info.coords[dir] + i) % 2 == 0) {
-            /* prepare folding of ghost positions */
-            if (m_local_box.boundary()[2 * dir + lr] != 0) {
-              m_exchange_ghosts_comm.communications[cnt].shift =
-                  shift(m_box, m_local_box, dir, lr);
-            }
-            cnt++;
-          }
-          if ((cart_info.coords[dir] + (1 - i)) % 2 == 0) {
-            cnt++;
-          }
-        }
-      }
-    }
-  }
-}
-
 DomainDecomposition::DomainDecomposition(const boost::mpi::communicator &comm,
                                          double range,
                                          const BoxGeometry &box_geo,

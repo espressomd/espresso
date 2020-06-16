@@ -26,6 +26,7 @@
 #include "Cell.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
+#include "ParticleDecomposition.hpp"
 #include "ParticleList.hpp"
 #include "ParticleRange.hpp"
 #include "bond_error.hpp"
@@ -38,16 +39,12 @@
 
 #include <vector>
 
-class ParticleDecomposition;
-
 /** Cell Structure */
 enum {
   /** Flag indicating that there is no cell system yet. Only at the
    *  VERY beginning of the code startup.
    */
   CELL_STRUCTURE_NONEYET = -1,
-  /** Flag indicating that the current cell structure will be used further on */
-  CELL_STRUCTURE_CURRENT = 0,
   /** cell structure domain decomposition */
   CELL_STRUCTURE_DOMDEC = 1,
   /** cell structure n square */
@@ -98,7 +95,7 @@ private:
   std::vector<Particle *> m_particle_index;
 
 public:
-  ParticleDecomposition *m_decomposition = nullptr;
+  std::unique_ptr<ParticleDecomposition> m_decomposition = {};
 
   /**
    * @brief Update local particle index.
