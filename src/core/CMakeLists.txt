@@ -75,11 +75,11 @@ install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 target_link_libraries(
   EspressoCore
-  PRIVATE EspressoConfig shapes Profiler
+  PRIVATE EspressoConfig EspressoShapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
           $<$<BOOL:${SCAFACOS}>:Scafacos> cxx_interface
-  PUBLIC utils MPI::MPI_CXX Random123 particle_observables Boost::serialization
-         Boost::mpi "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
+  PUBLIC EspressoUtils MPI::MPI_CXX Random123 EspressoParticleObservables
+         Boost::serialization Boost::mpi "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
          $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>)
 
 target_include_directories(
