@@ -20,23 +20,14 @@ import espressomd
 from espressomd import constraints
 import numpy as np
 import unittest as ut
-import unittest_decorators as utx
 from tests_common import abspath
 
 s = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 
-def skipIfMissingFeatureStokesianDynamics():
-    """Specialized unittest skipIf decorator for missing Stokesian Dynamics."""
-    if not espressomd.has_features(["STOKESIAN_DYNAMICS"]) and (not espressomd.has_features(
-            ["STOKESIAN_DYNAMICS_GPU"]) or not espressomd.gpu_available()):
-        return ut.skip("Skipping test: feature STOKESIAN_DYNAMICS unavailable")
-    return utx._id
-
-
-@skipIfMissingFeatureStokesianDynamics()
 class StokesianDynamicsSetupTest(ut.TestCase):
     system = s
+    device = 'none'
 
     def setUp(self):
         self.system.box_l = [10] * 3
@@ -44,30 +35,29 @@ class StokesianDynamicsSetupTest(ut.TestCase):
         self.system.time_step = 1.0
         self.system.cell_system.skin = 0.4
 
-        # unset SD integrator so we can test whether set_sd fails
+        # unset SD integrator so we can test whether set_sd() fails.
         # set_nvt() is the only way to ensure that integ_switch is
         # set to a different value than INTEG_METHOD_SD
         self.system.integrator.set_nvt()
 
-    def test_pbc_checks(self):
-
+    def pbc_checks(self):
         self.system.periodicity = [0, 0, 1]
-        with (self.assertRaises(Exception)):
+        with self.assertRaises(Exception):
             self.system.integrator.set_sd(viscosity=1.0,
-                                          device="cpu",
+                                          device=self.device,
                                           radii={0: 1.0})
 
         self.system.periodicity = [0, 0, 0]
         self.system.integrator.set_sd(viscosity=1.0,
-                                      device="cpu",
+                                      device=self.device,
                                       radii={0: 1.0})
-        with (self.assertRaises(Exception)):
+        with self.assertRaises(Exception):
             self.system.periodicity = [0, 1, 0]
 
 
-@skipIfMissingFeatureStokesianDynamics()
 class StokesianDynamicsTest(ut.TestCase):
     system = s
+    device = 'none'
 
     # Digitized reference data of Figure 5b from
     # Durlofsky et al., J. Fluid Mech. 180, 21 (1987)
@@ -86,8 +76,7 @@ class StokesianDynamicsTest(ut.TestCase):
         self.system.part.add(pos=[7 * l_factor, 0, 0], rotation=[1, 1, 1])
 
         self.system.integrator.set_sd(viscosity=1.0 / (t_factor * l_factor),
-                                      device="cpu",
-                                      radii={0: 1.0 * l_factor})
+                                      device=self.device, radii={0: 1.0 * l_factor})
 
         gravity = constraints.Gravity(
             g=[0, -1.0 * l_factor / (t_factor**2), 0])
@@ -117,23 +106,14 @@ class StokesianDynamicsTest(ut.TestCase):
                 dist = np.sqrt((x_ref - x[idx])**2 + (y_ref - y[idx])**2)
                 self.assertLess(dist, 0.5 * l_factor)
 
-    def test_default(self):
-        self.falling_spheres(1.0, 1.0, 1.0)
-
-    def test_rescaled(self):
-        self.falling_spheres(1.0, 4.5, 2.5)
-
-    def test_different_time_step(self):
-        self.falling_spheres(0.7, 1.0, 1.0)
-
     def tearDown(self):
         self.system.constraints.clear()
         self.system.part.clear()
 
 
-@skipIfMissingFeatureStokesianDynamics()
 class StokesianDiffusionTest(ut.TestCase):
     system = s
+    device = 'none'
 
     kT = 1e-4
     R = 1.5
@@ -148,12 +128,12 @@ class StokesianDiffusionTest(ut.TestCase):
 
         self.system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
 
+    def check(self):
         self.system.integrator.set_sd(viscosity=self.eta,
-                                      device="cpu",
+                                      device=self.device,
                                       radii={0: self.R})
         self.system.thermostat.set_sd(kT=self.kT, seed=42)
 
-    def test(self):
         intsteps = int(100000 / self.system.time_step)
         pos = np.empty([intsteps + 1, 3])
         orientation = np.empty((intsteps + 1, 3))
@@ -206,7 +186,3 @@ class StokesianDiffusionTest(ut.TestCase):
         self.system.constraints.clear()
         self.system.part.clear()
         self.system.thermostat.set_sd(kT=0)
-
-
-if __name__ == '__main__':
-    ut.main()

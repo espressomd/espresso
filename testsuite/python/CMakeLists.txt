@@ -201,7 +201,9 @@ python_test(FILE time_series.py MAX_NUM_PROC 1)
 python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2 LABELS gpu)
-python_test(FILE stokesian_dynamics.py)
+python_test(FILE stokesian_dynamics_cpu.py MAX_NUM_PROC 4)
+python_test(FILE stokesian_dynamics_gpu.py MAX_NUM_PROC 4 LABELS gpu LABELS
+            long)
 python_test(FILE elc.py MAX_NUM_PROC 2)
 python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2)
 python_test(FILE rotation.py MAX_NUM_PROC 1)
@@ -223,6 +225,9 @@ add_custom_target(
     ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py
           ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/stokesian_dynamics.py
+    ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
     ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py
