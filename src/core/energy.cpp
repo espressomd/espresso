@@ -40,7 +40,7 @@
 ActorList energyActors;
 
 /** Energy of the system */
-Observable_stat_wrapper obs_energy{1, false};
+Observable_stat obs_energy{1, false};
 
 /** Reduce the system energy from all MPI ranks. */
 void master_energy_calc() { mpi_gather_stats(GatherStats::energy); }
@@ -49,7 +49,7 @@ void energy_calc(const double time) {
   if (!interactions_sanity_checks())
     return;
 
-  obs_energy.local.resize_and_clear();
+  obs_energy.resize_and_clear();
 
 #ifdef CUDA
   clear_energy_on_GPU();
@@ -76,7 +76,7 @@ void energy_calc(const double time) {
   calc_long_range_energies(cell_structure.local_particles());
 
   auto local_parts = cell_structure.local_particles();
-  Constraints::constraints.add_energy(local_parts, time, obs_energy.local);
+  Constraints::constraints.add_energy(local_parts, time, obs_energy);
 
 #ifdef CUDA
   copy_energy_from_GPU();
@@ -94,11 +94,11 @@ void update_energy() {
 void calc_long_range_energies(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_energy_long_range(obs_energy.local, particles);
+  Coulomb::calc_energy_long_range(obs_energy, particles);
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  Dipole::calc_energy_long_range(obs_energy.local, particles);
+  Dipole::calc_energy_long_range(obs_energy, particles);
 #endif /* ifdef DIPOLES */
 }
 
