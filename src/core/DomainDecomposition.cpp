@@ -583,49 +583,6 @@ void DomainDecomposition::update_communicators_w_boxl() {
   }
 }
 
-bool DomainDecomposition::on_geometry_change(
-    double range, const BoxGeometry &new_box_geo,
-    const LocalBox<double> &new_local_geo, std::vector<ParticleChange> &diff) {
-  /* check that the CPU domains are still sufficiently large. */
-  if (boost::algorithm::any_of(new_local_geo.length(),
-                               [range](double l) { return l < range; })) {
-
-    throw ParticleDecomposition::RangeError{};
-  }
-
-  double min_cell_size =
-      std::min(std::min(cell_size[0], cell_size[1]), cell_size[2]);
-
-  /* If new box length leads to too small cells, redo cell structure
-   using smaller number of cells. */
-  auto const re_init = (range > min_cell_size) or [&]() {
-    for (int i = 0; i < 3; i++) {
-      auto const poss_size =
-          static_cast<int>(floor(new_local_geo.length()[i] / range));
-      if (poss_size > cell_grid[i])
-        return true;
-    }
-    return false;
-  }();
-
-  if (re_init) {
-    return false;
-  }
-
-  m_box = new_box_geo;
-  m_local_box = new_local_geo;
-
-  /* otherwise, re-set our geometrical dimensions which have changed */
-  for (int i = 0; i < 3; i++) {
-    cell_size[i] = m_local_box.length()[i] / (double)cell_grid[i];
-    inv_cell_size[i] = 1.0 / cell_size[i];
-  }
-
-  update_communicators_w_boxl();
-
-  return true;
-}
-
 DomainDecomposition::DomainDecomposition(const boost::mpi::communicator &comm,
                                          double range,
                                          const BoxGeometry &box_geo,

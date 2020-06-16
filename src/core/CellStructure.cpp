@@ -150,22 +150,6 @@ struct UpdateParticleIndexVisitor {
 };
 } // namespace
 
-bool CellStructure::change_geometry(bool fast, double range,
-                                    BoxGeometry const &box_geo,
-                                    LocalBox<double> const &local_box) {
-
-  std::vector<ParticleChange> diff;
-
-  auto const failed =
-      not m_decomposition->on_geometry_change(range, box_geo, local_box, diff);
-
-  for (auto d : diff) {
-    boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
-  }
-
-  return failed;
-}
-
 void CellStructure::resort_particles(int global_flag) {
   invalidate_ghosts();
 

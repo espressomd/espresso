@@ -273,13 +273,6 @@ void on_cell_structure_change() {
 #ifdef DIPOLES
   Dipole::init();
 #endif /* ifdef DIPOLES */
-
-  if (lattice_switch == ActiveLB::CPU) {
-    runtimeErrorMsg()
-        << "The CPU LB does not currently support handling changes of the MD "
-           "cell geometry. Setup the cell system, skin and interactions before "
-           "activating the CPU LB.";
-  }
 }
 
 void on_temperature_change() { lb_lbfluid_reinit_parameters(); }

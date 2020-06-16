@@ -85,6 +85,8 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
 }
 
 void mpi_get_pairs_slave(int, int) {
+  on_observable_calc();
+
   double distance;
   boost::mpi::broadcast(comm_cart, distance, 0);
 
@@ -98,6 +100,8 @@ void mpi_get_pairs_slave(int, int) {
  */
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
   mpi_call(mpi_get_pairs_slave, 0, 0);
+  on_observable_calc();
+
   boost::mpi::broadcast(comm_cart, distance, 0);
 
   auto pairs = get_pairs(distance);
@@ -185,16 +189,7 @@ void cells_resort_particles(int global_flag) {
 
 /*************************************************/
 
-void cells_on_geometry_change(bool fast) {
-  auto const range = interaction_range();
-
-  auto const failed =
-      cell_structure.change_geometry(fast, range, box_geo, local_geo);
-
-  if (failed) {
-    cells_re_init(cell_structure.type);
-  }
-}
+void cells_on_geometry_change(bool fast) { cells_re_init(cell_structure.type); }
 
 /*************************************************/
 

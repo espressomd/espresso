@@ -366,19 +366,6 @@ public:
     }
   }
 
-public:
-  /**
-   * @brief Try to change geometry parameters.
-   *
-   * @param fast If true, should return asap.
-   * @param range New interaction range.
-   * @param box_geo New box geometry.
-   * @param local_geo New local box size.
-   * @return True if the change was possible.
-   */
-  bool change_geometry(bool fast, double range, BoxGeometry const &box_geo,
-                       LocalBox<double> const &local_box);
-
 private:
   /** Go through ghost cells and remove the ghost entries from the
       local particle index. */
