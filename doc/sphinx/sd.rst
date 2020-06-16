@@ -6,7 +6,7 @@ Stokesian Dynamics
 The Stokesian Dynamics method allows to study the behaviour of spherical
 particles in a viscous fluid. It is targeted at systems with very low Reynolds
 numbers. In such systems, particles stop moving immediately as soon as any
-force on them is removed. In other words, motion has no memory of the past. 
+force on them is removed. In other words, motion has no memory of the past.
 
 The integration scheme is relatively simple. Only the particle's positions,
 radii and forces (including torques) are needed to compute the momentary

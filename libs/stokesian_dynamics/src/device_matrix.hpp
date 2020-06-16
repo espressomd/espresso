@@ -3,7 +3,7 @@
  *  arithmetics on a parallel computing "device". Various BLAS and LAPACK
  *  routines are accessed for efficient matrix calculations.
  */
- 
+
 #ifndef SD_DEVICE_MATRIX_HPP
 #define SD_DEVICE_MATRIX_HPP
 
@@ -344,7 +344,7 @@ struct cublas<policy::host, double> {
  *  LAPACK (Linear Algebra PACKage), which executes on the CPU.
  *  The first template parameter specifies whether the routines are executed on
  *  host or on device, by either passing `policy::host` or `policy::device`.
- *  The second template parameter specifies the data type (only `double` is 
+ *  The second template parameter specifies the data type (only `double` is
  *  available).
  *
  *  Note: since at the time of writing, the rocSolver library lacks the
@@ -423,7 +423,7 @@ struct cusolver<policy::device, double> {
 
         // Cholesky decomposition
         thrust_wrapper::device_vector<rocsolver_int> info(1);
-        stat = rocsolver_dpotrf(handle, rocblas_fill_upper, N, A, N, 
+        stat = rocsolver_dpotrf(handle, rocblas_fill_upper, N, A, N,
                                 thrust_wrapper::raw_pointer_cast(info.data()));
         assert(rocblas_status_success == stat);
         assert(info[0] == 0);
@@ -436,7 +436,7 @@ struct cusolver<policy::device, double> {
                                 thrust_wrapper::raw_pointer_cast(info.data()));
         assert(rocblas_status_success == stat);
         assert(info[0] == 0);
-        
+
         stat = rocsolver_dgetrs(handle, rocblas_operation_none, N, N,
                                 thrust_wrapper::raw_pointer_cast(C.data()), N,
                                 thrust_wrapper::raw_pointer_cast(ipiv.data()),
@@ -596,8 +596,8 @@ public:
         assert(m_rows == B.m_rows);
         assert(m_cols == B.m_cols);
         device_matrix C(m_rows, m_cols);
-        thrust_wrapper::transform(Policy::par(), data(), data() + size(), 
-                                  B.data(), C.data(), 
+        thrust_wrapper::transform(Policy::par(), data(), data() + size(),
+                                  B.data(), C.data(),
                                   thrust_wrapper::plus<value_type>{});
         return C;
     }
@@ -610,8 +610,8 @@ public:
         assert(m_rows == B.m_rows);
         assert(m_cols == B.m_cols);
         device_matrix C(m_rows, m_cols);
-        thrust_wrapper::transform(Policy::par(), data(), data() + size(), 
-                                  B.data(), C.data(), 
+        thrust_wrapper::transform(Policy::par(), data(), data() + size(),
+                                  B.data(), C.data(),
                                   thrust_wrapper::minus<value_type>{});
         return C;
     }
@@ -621,8 +621,8 @@ public:
         static_assert(std::is_arithmetic<T>::value,
                       "Data type of device_matrix must be arithmetic for "
                       "arithmetic operations");
-        thrust_wrapper::transform(Policy::par(), data(), data() + size(), 
-                                  data(), 
+        thrust_wrapper::transform(Policy::par(), data(), data() + size(),
+                                  data(),
                                   thrust_wrapper::negate<value_type>{});
         return *this;
     }
@@ -635,7 +635,7 @@ public:
     /// Compare for exact bit-wise equality
     bool operator==(device_matrix const &B) const {
         return m_rows == B.m_rows && m_cols == B.m_cols &&
-               thrust_wrapper::equal(Policy::par(), data(), 
+               thrust_wrapper::equal(Policy::par(), data(),
                                      data() + size(), B.data());
     }
 
@@ -649,7 +649,7 @@ public:
                       "Data type of device_matrix must be arithmetic for "
                       "arithmetic operations");
         return m_rows == B.m_rows && m_cols == B.m_cols &&
-               thrust_wrapper::equal(Policy::par(), data(), data() + size(), 
+               thrust_wrapper::equal(Policy::par(), data(), data() + size(),
                       B.data(), internal::almostEqual<value_type>{epsilon});
     }
 

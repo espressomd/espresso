@@ -27,7 +27,7 @@ typedef r123::Philox2x64 RNG;
 
 /** \file
  *  This file contains computations required for Stokesian Dynamics, namely
- *  the particle's translational and angular velocities are computed from the 
+ *  the particle's translational and angular velocities are computed from the
  *  particle's positions and radii and the forces and torques that are acting
  *  on the particles.
  *
@@ -46,7 +46,7 @@ typedef r123::Philox2x64 RNG;
  *      "Dynamic simulation of hydrodynamically interacting suspensions"
  *      https://core.ac.uk/download/pdf/4895234.pdf
  *
- *  All references to formulae in this file refer to the paper 
+ *  All references to formulae in this file refer to the paper
  *  @cite durlofsky87a, unless otherwise noted.
  *
  *  As they state in the paragraph below equation (2.17) it may be useful to
@@ -87,7 +87,7 @@ enum flags {
 }
 
 /** This functor computes the distance between all particle pairs and checks
- *  for overlaps. 
+ *  for overlaps.
  *  A matrix containing unit vectors along particle center connection lines,
  *  and actual distances is the result of this operation.
  *  If there is a pair of particles which overlap, their distance
@@ -102,7 +102,7 @@ struct check_dist {
     device_vector_view<T, Policy> const x;
     /** contains particle radii */
     device_vector_view<T, Policy> const a;
-    /** contains various distance information. 
+    /** contains various distance information.
      *  pd[0] through pd[2] contain a unit vector connecting the particles
      *  pd[3] contains the actual distance
      */
@@ -212,7 +212,7 @@ struct mobility<Policy, T, true> {
     // This is independent of dr_inv, dx, dy, dz
     // (that is, the distance between particle centers)
     DEVICE_FUNC void operator()(std::size_t part_id) {
-        // Fill the self mobility terms 
+        // Fill the self mobility terms
         // These are the sub-tensors of the grand mobility matrix as shown
         // in equation (A 1) that are located on the diagonal.
         // This functor fills in the sub-tensors for one single particle and
@@ -256,7 +256,7 @@ struct mobility<Policy, T, true> {
 
         // These are the non-dimensionalizations as stated in the paragraph
         // below equation (A 1).
-        auto const visc1 = T{M_1_PI / 6. / eta / a(part_id)}; 
+        auto const visc1 = T{M_1_PI / 6. / eta / a(part_id)};
         auto const visc2 = T{visc1 / a(part_id)};
         auto const visc3 = T{visc2 / a(part_id)};
 
@@ -338,8 +338,8 @@ struct mobility<Policy, T, false> {
         // Combine components into unit vector along particle connection line
         multi_array<T, 3> e = {dx, dy, dz};
 
-        // This creates a lookup-table for the many e_i * e_j like 
-        // multiplications in equation (A 2). 
+        // This creates a lookup-table for the many e_i * e_j like
+        // multiplications in equation (A 2).
         auto ee = outer(e, e);
 
         // Several powers of inverted inter-particle distance
@@ -359,7 +359,7 @@ struct mobility<Policy, T, false> {
         T y12c = T{-3. / 8.} * dr_inv3;
 
         T x12g = T{9. / 4.} * dr_inv2 - T{18. / 5.} * dr_inv4;
-        T y12g = T{6. / 5.} * dr_inv4;                        
+        T y12g = T{6. / 5.} * dr_inv4;
 
         T y12h = T{-1.0 * 9. / 8.} * dr_inv3;
 
@@ -375,7 +375,7 @@ struct mobility<Policy, T, false> {
             for (std::size_t j = 0; j < 3; ++j) {
                 // if i and j are different from one another, this returns the
                 // "other" index missing in the set {0, 1, 2}
-                std::size_t k = (3 - i - j) % 3; 
+                std::size_t k = (3 - i - j) % 3;
 
                 mob_a(i, j) = x12a * ee(i, j) + y12a * (delta(i, j) - ee(i, j));
                 mob_b(i, j) = y12b * eps(i, j, k) * e(k);
@@ -507,7 +507,7 @@ struct mobility<Policy, T, false> {
             for (std::size_t j = 0; j < 3; ++j) {
                 zmuf(ph1 + i, ph2 + j) = visc1 * mob_a(i, j);
                 zmuf(ph3 + i, ph2 + j) = visc2 * mob_b(i, j);
-                zmuf(ph1 + i, ph4 + j) = 
+                zmuf(ph1 + i, ph4 + j) =
                     -visc2 * mob_b(j, i); // mob_b transpose
                 zmuf(ph3 + i, ph4 + j) = visc3 * mob_c(i, j);
 
@@ -522,8 +522,8 @@ struct mobility<Policy, T, false> {
                 // The paragraph under equation (A 1) claims that we would need
                 // exponent n=3, but n=2 yields correct results.
                 // Needs to be analytically verified.
-                zmus(ph1 + i, ph6 + j) = visc2 * mob_gt(i, j);  
-                zmus(ph2 + i, ph5 + j) = T{-1.0} * visc2 * mob_gt(i, j);  
+                zmus(ph1 + i, ph6 + j) = visc2 * mob_gt(i, j);
+                zmus(ph2 + i, ph5 + j) = T{-1.0} * visc2 * mob_gt(i, j);
 
                 // We don't know whether this is the correct exponent.
                 zmus(ph3 + i, ph6 + j) = visc3 * mob_ht(i, j);
@@ -571,7 +571,7 @@ struct lubrication {
         T a12 = T{.5} * (a(part_id(0, pair_id)) + a(part_id(1, pair_id)));
 
         if (dr/a12 < 4.0) {
-        
+
             // Compute indices that are needed to fill in the results of
             // calc_lub() into the correct locations of the grand resistance
             // matrix (the mobility inverse).
@@ -1255,7 +1255,7 @@ struct thermalizer {
         c[0] = offset;
         c[1] = index;
         RNG::ctr_type rint = rng(c, k);
-        
+
         // convert to uniform distribution
         uint64_t constexpr const max = std::numeric_limits<uint64_t>::max();
         double constexpr const fac = 1. / (max + 1.);
@@ -1265,14 +1265,14 @@ struct thermalizer {
 
         // sqrt(12) * (rnd - 0.5) is a uniformly distributed random number
         // with zero mean and unit variance.
-        
-        // sqrt(2 * kT * \Delta t) is the desired standard deviation for 
-        // random displacement. 
 
-        // NOTE: Here, we do not compute a random displacement but a random 
-        // velocity, therefore the standard deviation has been divided by 
+        // sqrt(2 * kT * \Delta t) is the desired standard deviation for
+        // random displacement.
+
+        // NOTE: Here, we do not compute a random displacement but a random
+        // velocity, therefore the standard deviation has been divided by
         // the time step (see sd_interface.cpp).
-        
+
         // why use the _curand_uniform_double_hq function?
         // I don't think it is meant to be used outside of the
         // curand_kernel.h file.
@@ -1318,8 +1318,8 @@ struct thermalizer {
          result is the finished mobility matrix that includes the short-ranged
          lubrication interactions.
 
-    The thermalisation is achieved by a generalization of the 
-    Einstein-Smoluchowski equation, which relates mobility and diffusion: 
+    The thermalisation is achieved by a generalization of the
+    Einstein-Smoluchowski equation, which relates mobility and diffusion:
 
             \f[D = \mu k_B T\f]
 
@@ -1328,10 +1328,10 @@ struct thermalizer {
     and along one degree of freedom is given by
 
             \f[\langle \Delta x^2 \rangle / \Delta t = 2 D\f]
-    
+
     By combining these two equations we get the random displacement, which we
     can then directly use to propagate the particles:
-    
+
             \f[\Delta x = \sqrt{2 k_B T \Delta t} \times \mu^{1/2} \cdot \Phi\f]
 
     where \f$\Phi\f$ is a random number drawn from a zero mean and unit
@@ -1352,7 +1352,7 @@ struct solver {
 
     template <typename U>
     using vector_type = typename Policy::template vector<U>;
-    
+
     /** viscosity of the Stokes fluid */
     T const eta;
     /** number of particles */
@@ -1379,7 +1379,7 @@ struct solver {
      *    \param rfe output, relating ambient shear flow to forces
      *    \param rse output, relating ambient shear flow to stresslets
      */
-    void invert_grand_mobility_matrix(device_matrix<T, Policy> &zmuf, 
+    void invert_grand_mobility_matrix(device_matrix<T, Policy> &zmuf,
                                       device_matrix<T, Policy> &zmus,
                                       device_matrix<T, Policy> &zmes,
                                       device_matrix<T, Policy> &rfu,
@@ -1413,7 +1413,7 @@ struct solver {
 
     /** Thermalization with stochastic force, making use of the fluctuation-
      *  dissipation-theorem.
-     *  
+     *
      *  \return stochastic force vector
      *  \param rfu_sqrt Square root of the resistance matrix
      *  \param size size of the force vector, is 6 times number of particles
@@ -1426,7 +1426,7 @@ struct solver {
                                   std::size_t offset, std::size_t seed) {
 
             // This method is combined from two locations,
-            // namely @cite banchio03a, 
+            // namely @cite banchio03a,
             // Banchio, Brady 2002 https://doi.org/10.1063/1.1571819
             // equation (6)
             //  -- and --
@@ -1460,7 +1460,7 @@ struct solver {
             //     \nabla \cdot R_{FU}^{-1} \Delta t
             //
             // But this seems to be omitted in most cases in the literature.
-            // It is also very unclear how to actually calculate it.    
+            // It is also very unclear how to actually calculate it.
     }
 
 
@@ -1548,7 +1548,7 @@ struct solver {
             }
         }
 
-        // The inverse of the resistance matrix will be the mobility matrix 
+        // The inverse of the resistance matrix will be the mobility matrix
         // which we need in the end
         device_matrix<T, Policy> rfu_inv;
         // The square root of R_FU is a byproduct of the matrix inversion,
@@ -1566,7 +1566,7 @@ struct solver {
         }
         // Finally, perform the matrix-multiplication
         // multiply the force vector onto the mobility matrix (Eq. 2.22)
-        
+
         // prepare the force vector
         assert(f_host.size() == 6 * n_part);
         vector_type<T> fext(f_host.begin(), f_host.end());

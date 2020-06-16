@@ -3,7 +3,7 @@
 
 /** \file
  *  This file provides a wrapper around THRUST functions and types. In case
- *  that CUDA/THRUST is not present, equivalent standard C++ types and 
+ *  that CUDA/THRUST is not present, equivalent standard C++ types and
  *  functions are used.
  */
 
@@ -94,8 +94,8 @@ namespace thrust_wrapper {
   using std::tuple;
 
   // dummy constants, they could be anything
-  const int host = 0; 
-  const int device = 0; 
+  const int host = 0;
+  const int device = 0;
 
   // routines
   using std::copy;
@@ -106,7 +106,7 @@ namespace thrust_wrapper {
   using std::tie;
 
   // tabulate doesn't exist in the standard library
-  template <typename DerivedPolicy, typename ForwardIterator, 
+  template <typename DerivedPolicy, typename ForwardIterator,
             typename UnaryOperation>
   void tabulate(const DerivedPolicy &,
                 ForwardIterator first,
@@ -127,7 +127,7 @@ namespace thrust_wrapper {
 
   // These wrapper functions are needed because the THRUST variant gets the
   // execution policy as argument, which the STD library one doesn't.
-  template <typename DerivedPolicy, typename InputIterator1, 
+  template <typename DerivedPolicy, typename InputIterator1,
             typename InputIterator2>
   bool equal(const DerivedPolicy &,
              InputIterator1 first1,
@@ -144,7 +144,7 @@ namespace thrust_wrapper {
     std::fill(first, last, value);
   }
 
-  template <typename DerivedPolicy, typename InputIterator, 
+  template <typename DerivedPolicy, typename InputIterator,
             typename UnaryFunction>
   void for_each(const DerivedPolicy &,
                 InputIterator first,
@@ -152,9 +152,9 @@ namespace thrust_wrapper {
                 UnaryFunction f) {
     std::for_each(first, last, f);
   }
-  
+
   // unary transform
-  template <typename DerivedPolicy, typename ForwardIterator, 
+  template <typename DerivedPolicy, typename ForwardIterator,
             typename OutputIterator, typename UnaryFunction>
   void transform(const DerivedPolicy &,
                  ForwardIterator first,
@@ -165,7 +165,7 @@ namespace thrust_wrapper {
   }
 
   // binary transform
-  template <typename DerivedPolicy, typename InputIterator1, 
+  template <typename DerivedPolicy, typename InputIterator1,
             typename InputIterator2, typename OutputIterator,
             typename BinaryFunction>
   bool transform(const DerivedPolicy &,
@@ -176,7 +176,7 @@ namespace thrust_wrapper {
                  BinaryFunction op) {
     return std::transform(first1, last1, first2, result, op);
   }
-    
+
 }
 
 

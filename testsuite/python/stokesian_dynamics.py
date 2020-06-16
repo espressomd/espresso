@@ -45,7 +45,7 @@ class StokesianDynamicsSetupTest(ut.TestCase):
         self.system.cell_system.skin = 0.4
 
         # unset SD integrator so we can test whether set_sd fails
-        # set_nvt() is the only way to ensure that integ_switch is 
+        # set_nvt() is the only way to ensure that integ_switch is
         # set to a different value than INTEG_METHOD_SD
         self.system.integrator.set_nvt()
 
@@ -170,8 +170,8 @@ class StokesianDiffusionTest(ut.TestCase):
 
         # NOTE on steps_per_slice:
         # The shorter these trajectories are, the more trajectories we get
-        # and the more accurate the result is. 
-        # However since we want to test that diffusion works for 
+        # and the more accurate the result is.
+        # However since we want to test that diffusion works for
         # "long" trajectories we won't go too low.
         n_steps_per_slice = 200
         n_slices = int(intsteps / n_steps_per_slice)

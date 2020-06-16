@@ -445,7 +445,7 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
                 sd_device_str = "cpu"
             ELIF STOKESIAN_DYNAMICS_GPU:
                 sd_device_str = "gpu"
-            return {"lubrication": False, "approximation_method": "fts", 
+            return {"lubrication": False, "approximation_method": "fts",
                     "self_mobility": True, "pair_mobility": True,
                     "device": sd_device_str}
 

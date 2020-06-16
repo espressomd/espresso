@@ -8,7 +8,7 @@
 #include "stokesian_dynamics/sd_cpu.hpp"
 
 /** This executes the Stokesian Dynamics solver on the CPU. "_host" refers to
- *  data being stored on the host (in THRUST terminology, as opposed to 
+ *  data being stored on the host (in THRUST terminology, as opposed to
  *  "device" storage), which is ordinary RAM.
  *
  *  \param x_host particle positions
