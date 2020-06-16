@@ -22,6 +22,7 @@
 #ifndef ESPRESSO_CELLSTRUCTURE_HPP
 #define ESPRESSO_CELLSTRUCTURE_HPP
 
+#include "AtomDecomposition.hpp"
 #include "BoxGeometry.hpp"
 #include "Cell.hpp"
 #include "LocalBox.hpp"
@@ -95,7 +96,8 @@ private:
   std::vector<Particle *> m_particle_index;
 
 public:
-  std::unique_ptr<ParticleDecomposition> m_decomposition = {};
+  std::unique_ptr<ParticleDecomposition> m_decomposition =
+      std::make_unique<AtomDecomposition>();
 
   /**
    * @brief Update local particle index.

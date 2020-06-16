@@ -152,17 +152,13 @@ void cells_re_init(int new_cs) {
   auto const range = interaction_range();
   cell_structure.clear_particle_index();
 
-  if (cell_structure.m_decomposition) {
-    auto local_parts = cell_structure.local_particles();
-    std::vector<Particle> particles(local_parts.begin(), local_parts.end());
+  auto local_parts = cell_structure.local_particles();
+  std::vector<Particle> particles(local_parts.begin(), local_parts.end());
 
-    topology_init(new_cs, range);
+  topology_init(new_cs, range);
 
-    for (auto &p : particles) {
-      cell_structure.add_particle(std::move(p));
-    }
-  } else {
-    topology_init(new_cs, range);
+  for (auto &p : particles) {
+    cell_structure.add_particle(std::move(p));
   }
 
   on_cell_structure_change();

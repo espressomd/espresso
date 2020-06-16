@@ -55,6 +55,7 @@ class AtomDecomposition : public ParticleDecomposition {
   BoxGeometry m_box;
 
 public:
+  AtomDecomposition() = default;
   AtomDecomposition(boost::mpi::communicator const &comm,
                     BoxGeometry const &box_geo);
 
