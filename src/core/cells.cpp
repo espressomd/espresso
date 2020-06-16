@@ -186,10 +186,6 @@ void cells_resort_particles(int global_flag) {
 
 /*************************************************/
 
-void cells_on_geometry_change(bool fast) { cells_re_init(cell_structure.type); }
-
-/*************************************************/
-
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
 

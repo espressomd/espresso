@@ -91,20 +91,6 @@ void cells_re_init(int new_cs);
  */
 void cells_resort_particles(int global_flag);
 
-/** This function is called whenever the cell system has to be
- *  reinitialized, e.g. if cutoffs have changed, or the skin, grid, ...
- *  It calculates the maximal interaction range, and as said reinitializes
- *  the cells structure if something significant has changed.
- *
- *  If the fast flag is set, the routine should try to save time.
- *  Currently this means that if the maximal range decreased, it does
- *  not reorganize the particles. This is used in the NpT algorithm to
- *  avoid frequent reorganization of particles.
- *
- *  @param fast If true, do not try to optimize the cell size.
- */
-void cells_on_geometry_change(bool fast);
-
 /** Update ghost information. If needed,
  *  the particles are also resorted.
  */

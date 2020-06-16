@@ -224,7 +224,7 @@ void on_coulomb_change() {
 }
 
 void on_short_range_ia_change() {
-  cells_on_geometry_change(false);
+  cells_re_init(cell_structure.type);
 
   recalc_forces = true;
 }
@@ -243,7 +243,7 @@ void on_boxl_change() {
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
      therefore recalculate them. */
-  cells_on_geometry_change(false);
+  cells_re_init(cell_structure.type);
 
 /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
@@ -296,8 +296,9 @@ void on_parameter_change(int field) {
 #endif
 #endif
   case FIELD_MIN_GLOBAL_CUT:
-  case FIELD_SKIN:
-    cells_on_geometry_change(false);
+  case FIELD_SKIN: {
+    cells_re_init(cell_structure.type);
+  }
     on_coulomb_change();
     break;
   case FIELD_NODEGRID:
