@@ -423,16 +423,14 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
         Parameters
         ----------
         viscosity : :obj:`float`
-            Bulk viscosity
+            Bulk viscosity.
         radii : :obj:`dict`
-            Dictionary that maps particle types to radii
-        device : :obj:`str`, optional
-            Device to execute on.  Possible values are
-            "cpu" and "gpu".
-        approximation_method : :obj:`str`, optional
-            Chooses the method of the mobility approximation. Possible values
-            are ``'ft'`` and ``'fts'``. ``'fts'`` is more accurate. Defaults
-            to ``'fts'``.
+            Dictionary that maps particle types to radii.
+        device : :obj:`str`, optional, \{'cpu', 'gpu'\}
+            Device to execute on.
+        approximation_method : :obj:`str`, optional, \{'ft', 'fts'\}
+            Chooses the method of the mobility approximation.
+            ``'fts'`` is more accurate. Default is ``'fts'``.
         self_mobility : :obj:`bool`, optional
             Switches off or on the mobility terms for single particles. Default
             is ``True``.
@@ -482,7 +480,7 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
                     "Stokesian Dynamics lubrication is not available yet")
             check_type_or_throw_except(
                 self._params["approximation_method"], 1, str,
-                "lubrication_method must be a string")
+                "approximation_method must be a string")
             if self._params["approximation_method"].lower() not in {
                     "ft", "fts"}:
                 raise ValueError(

@@ -52,7 +52,6 @@ class StokesianDynamicsTest(ut.TestCase):
     system = s
 
     # Digitized reference data of Figure 5b from
-    #
     # Durlofsky et al., J. Fluid Mech. 180, 21 (1987)
     # https://doi.org/10.1017/S002211208700171X
     data = np.loadtxt(abspath('data/dancing.txt'))

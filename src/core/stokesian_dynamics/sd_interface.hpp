@@ -17,6 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** @file
+ *  See @cite durlofsky87a for the Stokesian dynamics method used here.
+ *  See @cite banchio03a and @cite brady88a for the thermalization method.
+ */
+
 #ifndef STOKESIAN_DYNAMICS_INTERFACE_H
 #define STOKESIAN_DYNAMICS_INTERFACE_H
 

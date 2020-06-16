@@ -717,8 +717,7 @@ public:
  *
  *  Interestingly, by clever abuse of the rows and cols parameters and the data
  *  pointer, certain areas (e.g. blocks) of the referenced matrix could be
- *  accessed conveniently through a device_matrix_view object. 
- *  (This is not used in SD though?)
+ *  accessed conveniently through a device_matrix_view object.
  */
 template <typename T, typename Policy>
 class device_matrix_view {

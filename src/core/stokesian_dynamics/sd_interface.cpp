@@ -67,17 +67,17 @@ std::size_t sd_seed = 0UL;
 
 int sd_flags = 0;
 
-/* Buffer that holds local particle data, and all particles on the master node
-   used for sending particle data to master node */
+/** Buffer that holds local particle data, and all particles on the master node
+ *  used for sending particle data to master node. */
 std::vector<SD_particle_data> parts_buffer{};
 
-/* Buffer that holds the (translational and angular) velocities of the local
-   particles on each node, used for returning results */
+/** Buffer that holds the (translational and angular) velocities of the local
+ *  particles on each node, used for returning results. */
 std::vector<double> v_sd{};
 
 } // namespace
 
-/* packs selected properties of all local particles into a buffer */
+/** Pack selected properties of all local particles into a buffer. */
 void sd_gather_local_particles(ParticleRange const &parts) {
   std::size_t n_part = parts.size();
 
@@ -112,7 +112,7 @@ void sd_gather_local_particles(ParticleRange const &parts) {
   }
 }
 
-/* copies the new (translational and rotational) velocity to each particle */
+/** Update translational and rotational velocities of all particles. */
 void sd_update_locally(ParticleRange const &parts) {
   std::size_t i = 0;
 
