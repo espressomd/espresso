@@ -78,7 +78,7 @@ function(add_gpu_library)
   set_property(TARGET ${GPU_TARGET_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
   target_link_libraries(${GPU_TARGET_NAME} PRIVATE
     ${CUDA_LIBRARY} ${CUDART_LIBRARY} ${CUDA_CUFFT_LIBRARIES}
-    utils Boost::serialization Boost::mpi)
+    EspressoUtils Boost::serialization Boost::mpi)
 endfunction()
 
 include(FindPackageHandleStandardArgs)

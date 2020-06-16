@@ -4,8 +4,8 @@ set(SOURCE_FILES
     src/SpheroCylinder.cpp src/Torus.cpp src/Wall.cpp)
 
 add_library(EspressoShapes SHARED ${SOURCE_FILES})
-target_link_libraries(EspressoShapes PUBLIC utils PRIVATE Boost::boost
-                                                          cxx_interface)
+target_link_libraries(EspressoShapes PUBLIC EspressoUtils PRIVATE Boost::boost
+                                                                  cxx_interface)
 target_include_directories(
   EspressoShapes PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                         $<INSTALL_INTERFACE:include>)
