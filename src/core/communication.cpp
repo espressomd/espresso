@@ -110,7 +110,6 @@ int n_nodes = -1;
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
-  CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_resort_particles_slave)                                               \
@@ -493,12 +492,9 @@ void mpi_rescale_particles_slave(int, int dir) {
 
 /*************** BCAST CELL STRUCTURE *****************/
 
-void mpi_bcast_cell_structure(int cs) {
-  mpi_call(mpi_bcast_cell_structure_slave, -1, cs);
-  cells_re_init(cs);
-}
+REGISTER_CALLBACK(cells_re_init)
 
-void mpi_bcast_cell_structure_slave(int, int cs) { cells_re_init(cs); }
+void mpi_bcast_cell_structure(int cs) { mpi_call_all(cells_re_init, cs); }
 
 /*************** BCAST NPTISO GEOM *****************/
 

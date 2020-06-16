@@ -117,14 +117,7 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 
 /** Choose the topology init function of a certain cell system. */
 void topology_init(int cs, double range) {
-  /** broadcast the flag for using Verlet list */
-  boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
-
   switch (cs) {
-  /* Default to DD */
-  case CELL_STRUCTURE_NONEYET:
-    topology_init(CELL_STRUCTURE_DOMDEC, range);
-    break;
   case CELL_STRUCTURE_DOMDEC:
     cell_structure.type = CELL_STRUCTURE_DOMDEC;
     cell_structure.m_decomposition = std::make_unique<DomainDecomposition>(
