@@ -21,15 +21,12 @@
 
 #if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
 
-#include <iostream>
-#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <boost/config.hpp>
 
-// #include "cells.hpp"
 #include "ParticleRange.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -188,7 +185,6 @@ void set_sd_flags(int flg) { sd_flags = flg; }
 int get_sd_flags() { return sd_flags; }
 
 void propagate_vel_pos_sd(const ParticleRange &particles) {
-  // ParticleRange const &parts = cell_structure.local_cells().particles();
   std::size_t n_part_local = particles.size();
 
   if (this_node == 0) {

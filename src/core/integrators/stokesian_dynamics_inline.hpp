@@ -25,7 +25,7 @@
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #ifdef STOKESIAN_DYNAMICS
 
@@ -39,9 +39,7 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
   for (auto &p : particles) {
 
     // Translate particle
-    p.r.p[0] += p.m.v[0] * time_step;
-    p.r.p[1] += p.m.v[1] * time_step;
-    p.r.p[2] += p.m.v[2] * time_step;
+    p.r.p += p.m.v * time_step;
 
     // Perform rotation
     double norm = p.m.omega.norm();
@@ -51,10 +49,7 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
     }
 
     // Verlet criterion check
-    if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
-            Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
-            Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
-        skin2)
+    if ((p.r.p - p.l.p_old).norm2() > skin2)
       cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 }

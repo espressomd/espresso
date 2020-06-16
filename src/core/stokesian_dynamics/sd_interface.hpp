@@ -30,7 +30,7 @@
 
 #include <string>
 #include <unordered_map>
-#include <vector>
+#include <utils/Vector.hpp>
 
 #ifdef STOKESIAN_DYNAMICS
 
