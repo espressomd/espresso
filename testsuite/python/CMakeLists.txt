@@ -89,7 +89,7 @@ python_test(FILE dawaanr-and-bh-gpu.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE dds-and-bh-gpu.py MAX_NUM_PROC 4 LABELS gpu)
 python_test(FILE electrostaticInteractions.py MAX_NUM_PROC 2)
 python_test(FILE engine_langevin.py MAX_NUM_PROC 4)
-#python_test(FILE engine_lb.py MAX_NUM_PROC 2 LABELS gpu) # WALBERLA TODO
+python_test(FILE engine_lb.py MAX_NUM_PROC 2 LABELS gpu) 
 python_test(FILE experimental_decorator.py)
 python_test(FILE icc.py MAX_NUM_PROC 4)
 python_test(FILE magnetostaticInteractions.py MAX_NUM_PROC 1)

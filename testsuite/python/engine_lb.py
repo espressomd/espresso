@@ -84,7 +84,7 @@ class SwimmerTest():
         with self.assertRaises(Exception):
             swimmer.swimming = {"v_swim": 0.3, "f_swim": 0.6}
 
-    def test_momentum_conservation(self):
+    def WALBERLA_TODO_test_momentum_conservation(self):
         """friction as well as 'active' forces apply to particles
         and to the fluid, so total momentum is conserved
         """
