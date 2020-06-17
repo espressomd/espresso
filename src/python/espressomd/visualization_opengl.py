@@ -30,6 +30,7 @@ from matplotlib.pyplot import imsave
 
 import espressomd
 from .particle_data import ParticleHandle
+from .integrate import SteepestDescent
 
 
 class openGLLive():
@@ -591,6 +592,9 @@ class openGLLive():
         """Convenience method with a simple integration thread.
 
         """
+        if isinstance(self.system.integrator.get_state(), SteepestDescent):
+            raise RuntimeError(
+                "Cannot run visualizer with Steepest Descent integrator")
 
         def main():
             while True:
@@ -616,6 +620,9 @@ class openGLLive():
         """The blocking start method.
 
         """
+        if isinstance(self.system.integrator.get_state(), SteepestDescent):
+            raise RuntimeError(
+                "Cannot run visualizer with Steepest Descent integrator")
         self._init_opengl()
         self._init_espresso_visualization()
         self._init_controls()

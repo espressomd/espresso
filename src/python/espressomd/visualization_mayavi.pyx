@@ -21,6 +21,7 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 from .particle_data import ParticleHandle
 from .particle_data cimport *
+from .integrate import SteepestDescent
 from .interactions import NonBondedInteractions
 from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
 from .interactions cimport IA_parameters, get_ia_param, bonded_ia_params
@@ -282,6 +283,9 @@ cdef class mayaviLive:
         a secondary thread.
 
         """
+        if isinstance(self.system.integrator.get_state(), SteepestDescent):
+            raise RuntimeError(
+                "Cannot run visualizer with Steepest Descent integrator")
         assert isinstance(threading.current_thread(), threading._MainThread)
         self.gui.start_event_loop()
 
@@ -291,6 +295,9 @@ cdef class mayaviLive:
     def run(self, integ_steps=1):
         """Convenience method with a simple integration thread.
         """
+        if isinstance(self.system.integrator.get_state(), SteepestDescent):
+            raise RuntimeError(
+                "Cannot run visualizer with Steepest Descent integrator")
 
         def main():
             while True:
