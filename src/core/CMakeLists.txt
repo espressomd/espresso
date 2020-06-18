@@ -129,7 +129,8 @@ target_sources(EspressoCore PRIVATE ${GenericDD_SRC})
 if(REPA_FOUND)
   set_source_files_properties(
     ${GenericDD_SRC} PROPERTIES COMPILE_DEFINITIONS "HAVE_REPA"
-                                INCLUDE_DIRECTORIES ${REPA_INCLUDE_DIR})
+                                INCLUDE_DIRECTORIES ${REPA_INCLUDE_DIR}
+                                COMPILE_FLAGS "-std=c++17") # Hack
 endif(REPA_FOUND)
 
 if(WITH_UNIT_TESTS)

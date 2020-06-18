@@ -118,7 +118,14 @@ static int position_to_node(const Utils::Vector3d &pos) {
 /** Folded version of Pargrid::position_to_neighidx.
  */
 static int position_to_neighidx(const Utils::Vector3d &pos) {
-  return grid_instance()->position_to_neighidx(to_repa_vec(folded_pos(pos)));
+  const auto rank = position_to_node(pos);
+  const auto neighbors = grid_instance()->neighbor_ranks();
+  const auto it = std::find(neighbors.begin(), neighbors.end(), rank);
+  if (it == neighbors.end())
+    throw std::domain_error(
+        "position_to_neighidx: pos not in scope of this process.");
+  else
+    return std::distance(neighbors.begin(), it);
 }
 
 /** Maps a position "pos" to a cell, local or ghost.
@@ -195,13 +202,14 @@ static void exchange_particles_begin(bool global, ParticleList *pl) {
 
   // Some number that can be recognized if they appear in an error message
   static constexpr int GDD_EX_TAG = 11011;
+  const auto neigh_ranks = grid_instance()->neighbor_ranks();
   // On a global exchange, communicate with 1..n. On local exchange, only with
   // the neighbors.
-  auto neighbor_rank = [global](int neigh) {
-    return global ? neigh : grid_instance()->neighbor_rank(neigh);
+  auto comm_dest = [global, &neigh_ranks](int neigh) {
+    return global ? neigh : neigh_ranks[neigh];
   };
 
-  exchg::nneigh = global ? comm_cart.size() : grid_instance()->n_neighbors();
+  exchg::nneigh = global ? comm_cart.size() : neigh_ranks.size();
 
   // Send and receive data
   exchg::sendbuf.resize(exchg::nneigh);
@@ -210,7 +218,7 @@ static void exchange_particles_begin(bool global, ParticleList *pl) {
   exchg::rreq.reserve(exchg::nneigh);
   for (int i = 0; i < exchg::nneigh; i++) {
     exchg::rreq.push_back(
-        comm_cart.irecv(neighbor_rank(i), GDD_EX_TAG, exchg::recvbuf[i]));
+        comm_cart.irecv(comm_dest(i), GDD_EX_TAG, exchg::recvbuf[i]));
   }
 
   fill_sendbufs(global, pl, exchg::sendbuf);
@@ -220,7 +228,7 @@ static void exchange_particles_begin(bool global, ParticleList *pl) {
   exchg::sreq.reserve(exchg::nneigh);
   for (int i = 0; i < exchg::nneigh; i++) {
     exchg::sreq.push_back(
-        comm_cart.isend(neighbor_rank(i), GDD_EX_TAG, exchg::sendbuf[i]));
+        comm_cart.isend(comm_dest(i), GDD_EX_TAG, exchg::sendbuf[i]));
   }
 
   exchg::in_progress = true;
@@ -256,13 +264,22 @@ static void exchange_particles_end(std::vector<Cell *> &modified_cells) {
 /** Fills the neighbor lists of all local cells.
  */
 static void fill_cell_inter_lists() {
-  for (int i = 0; i < cell_structure.m_local_cells.size(); i++) {
+  auto cell_ptr = [](repa::local_or_ghost_cell_index_type i) {
+    if (i.is<repa::local_cell_index_type>())
+      return cell_structure.m_local_cells[i.as<repa::local_cell_index_type>()];
+    else
+      return cell_structure.m_ghost_cells[i.as<repa::ghost_cell_index_type>()];
+  };
+
+  for (const auto i : grid_instance()->local_cells()) {
     std::vector<Cell *> red_neighbors;
     std::vector<Cell *> black_neighbors;
 
     for (int n = 0; n < 27; ++n) {
+      const auto neighidx = grid_instance()->cell_neighbor_index(
+          repa::local_cell_index_type{i}, n);
       (n >= 1 && n < 14 ? red_neighbors : black_neighbors)
-          .push_back(&cells[grid_instance()->cell_neighbor_index(i, n)]);
+          .push_back(cell_ptr(neighidx));
     }
     cell_structure.m_local_cells[i]->m_neighbors =
         Neighbors<Cell *>(red_neighbors, black_neighbors);
@@ -282,14 +299,14 @@ static void fill_communicator(GhostCommunicator *comm) {
     comm->comm[i].type = GHOST_SEND;
     comm->comm[i].node = gexd.dest;
     comm->comm[i].part_lists.resize(gexd.send.size());
-    for (int j = 0; j < gexd.send.size(); ++j)
-      comm->comm[i].part_lists[j] = &cells[gexd.send[j]];
+    for (size_t j = 0; j < gexd.send.size(); ++j)
+      comm->comm[i].part_lists[j] = cell_structure.m_local_cells[gexd.send[j]];
 
     comm->comm[ncomm + i].type = GHOST_RECV;
     comm->comm[ncomm + i].node = gexd.dest;
     comm->comm[ncomm + i].part_lists.resize(gexd.recv.size());
-    for (int j = 0; j < gexd.recv.size(); ++j)
-      comm->comm[ncomm + i].part_lists[j] = &cells[gexd.recv[j]];
+    for (size_t j = 0; j < gexd.recv.size(); ++j)
+      comm->comm[ncomm + i].part_lists[j] = cell_structure.m_ghost_cells[gexd.recv[j]];
   }
 }
 
@@ -310,9 +327,9 @@ static void revert_communicator(GhostCommunicator *comm) {
  */
 static void mark_cells() {
   int c = 0;
-  for (int i = 0; i < grid_instance()->n_local_cells(); i++)
+  for (const auto i : grid_instance()->local_cells())
     cell_structure.m_local_cells[i] = &cells[c++];
-  for (int i = 0; i < grid_instance()->n_ghost_cells(); i++)
+  for (const auto i : grid_instance()->ghost_cells())
     cell_structure.m_ghost_cells[i] = &cells[c++];
 }
 
@@ -357,7 +374,7 @@ template <typename Func> void call_with_modified_cells_update(Func &&fn) {
  */
 static void ensure_at_least_one_cell() {
   // Note as below, do not use runtimeErrorMsg to abort in this case.
-  if (grid_instance()->n_local_cells() == 0) {
+  if (grid_instance()->local_cells().size() == 0) {
     std::cerr << "ERROR: A process has 0 local cells." << std::endl;
     MPI_Abort(comm_cart, 1);
   }
@@ -392,10 +409,10 @@ void topology_init(double range, bool is_repart) {
 
   impl::ensure_at_least_one_cell();
 
-  cells.resize(grid_instance()->n_local_cells() +
-               grid_instance()->n_ghost_cells());
-  cell_structure.m_local_cells.resize(grid_instance()->n_local_cells());
-  cell_structure.m_ghost_cells.resize(grid_instance()->n_ghost_cells());
+  cells.resize(grid_instance()->local_cells().size() +
+               grid_instance()->ghost_cells().size());
+  cell_structure.m_local_cells.resize(grid_instance()->local_cells().size());
+  cell_structure.m_ghost_cells.resize(grid_instance()->ghost_cells().size());
   cell_structure.max_range =
       impl::to_espresso_vec(grid_instance()->cell_size());
 
@@ -439,8 +456,16 @@ void repartition(const repart::Metric &m) {
     impl::exchange_particles_begin(true, &oobparts);
   };
 
-  using namespace std::placeholders;
-  auto ccm = std::bind(&repart::Metric::cell_cell_weight, m, _1, _2);
+  const auto nlocalcells = grid_instance()->local_cells().size();
+  auto ccm = [&m, nlocalcells](repa::local_cell_index_type i,
+                               repa::local_or_ghost_cell_index_type j) {
+    int idxj = 0;
+    j.visit([&idxj](repa::local_cell_index_type jval) { idxj = jval; },
+            [&idxj, nlocalcells](repa::ghost_cell_index_type jval) {
+              idxj = nlocalcells + jval;
+            });
+    return m.cell_cell_weight(i, idxj);
+  };
 
   if (grid_instance()->repartition(m, ccm, exchange_start_callback))
     cells_re_init(CELL_STRUCTURE_CURRENT, cell_structure.min_range, true);
