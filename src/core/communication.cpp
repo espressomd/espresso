@@ -496,6 +496,12 @@ REGISTER_CALLBACK(cells_re_init)
 
 void mpi_bcast_cell_structure(int cs) { mpi_call_all(cells_re_init, cs); }
 
+REGISTER_CALLBACK(cells_set_use_verlet_lists)
+
+void mpi_set_use_verlet_lists(bool use_verlet_lists) {
+  mpi_call_all(cells_set_use_verlet_lists, use_verlet_lists);
+}
+
 /*************** BCAST NPTISO GEOM *****************/
 
 void mpi_bcast_nptiso_geom() {

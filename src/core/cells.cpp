@@ -119,12 +119,10 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 void topology_init(int cs, double range) {
   switch (cs) {
   case CELL_STRUCTURE_DOMDEC:
-    cell_structure.type = CELL_STRUCTURE_DOMDEC;
     cell_structure.m_decomposition = std::make_unique<DomainDecomposition>(
         comm_cart, range, box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    cell_structure.type = CELL_STRUCTURE_NSQUARE;
     cell_structure.m_decomposition =
         std::make_unique<AtomDecomposition>(comm_cart, box_geo);
     break;
@@ -149,6 +147,7 @@ void cells_re_init(int new_cs) {
   std::vector<Particle> particles(local_parts.begin(), local_parts.end());
 
   topology_init(new_cs, range);
+  cell_structure.type = new_cs;
 
   for (auto &p : particles) {
     cell_structure.add_particle(std::move(p));
@@ -238,4 +237,8 @@ Cell *find_current_cell(const Particle &p) {
 DomainDecomposition *get_domain_decomposition() {
   return dynamic_cast<DomainDecomposition *>(
       cell_structure.m_decomposition.get());
+}
+
+void cells_set_use_verlet_lists(bool use_verlet_lists) {
+  cell_structure.use_verlet_list = use_verlet_lists;
 }

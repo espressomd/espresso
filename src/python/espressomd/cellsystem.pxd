@@ -24,6 +24,7 @@ from .utils cimport Vector3i
 
 cdef extern from "communication.hpp":
     void mpi_bcast_cell_structure(int cs)
+    void mpi_set_use_verlet_lists(bool use_verlet_lists)
     int n_nodes
     vector[int] mpi_resort_particles(int global_flag)
 

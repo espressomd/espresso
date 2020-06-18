@@ -86,6 +86,13 @@ extern bool rebuild_verletlist;
  */
 void cells_re_init(int new_cs);
 
+/**
+ * @brief Set use_verlet_lists
+ *
+ * @param use_verlet_lists Shoudl verlet lists be used?
+ */
+void cells_set_use_verlet_lists(bool use_verlet_lists);
+
 /** Sort the particles into the cells and initialize the ghost particle
  *  structures.
  */

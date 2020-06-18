@@ -242,6 +242,8 @@ void mpi_rescale_particles(int dir, double scale);
 /** Change the cell structure on all nodes. */
 void mpi_bcast_cell_structure(int cs);
 
+void mpi_set_use_verlet_lists(bool use_verlet_lists);
+
 /** Broadcast nptiso geometry parameter to all nodes. */
 void mpi_bcast_nptiso_geom();
 

@@ -40,9 +40,7 @@ cdef class CellSystem:
             in the algorithm.
 
         """
-
-        cell_structure.use_verlet_list = use_verlet_lists
-        # grid.h::node_grid
+        mpi_set_use_verlet_lists(use_verlet_lists)
         mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC)
 
         handle_errors("Error while initializing the cell system.")
@@ -59,8 +57,7 @@ cdef class CellSystem:
             lists for this algorithm.
 
         """
-        cell_structure.use_verlet_list = use_verlet_lists
-
+        mpi_set_use_verlet_lists(use_verlet_lists)
         mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE)
 
         return True
