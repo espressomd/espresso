@@ -306,7 +306,8 @@ static void fill_communicator(GhostCommunicator *comm) {
     comm->comm[ncomm + i].node = gexd.dest;
     comm->comm[ncomm + i].part_lists.resize(gexd.recv.size());
     for (size_t j = 0; j < gexd.recv.size(); ++j)
-      comm->comm[ncomm + i].part_lists[j] = cell_structure.m_ghost_cells[gexd.recv[j]];
+      comm->comm[ncomm + i].part_lists[j] =
+          cell_structure.m_ghost_cells[gexd.recv[j]];
   }
 }
 
