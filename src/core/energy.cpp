@@ -49,7 +49,7 @@ void energy_calc(const double time) {
   if (!interactions_sanity_checks())
     return;
 
-  obs_energy.resize_and_clear();
+  obs_energy.resize();
 
 #ifdef CUDA
   clear_energy_on_GPU();
@@ -83,7 +83,7 @@ void energy_calc(const double time) {
 #endif
 
   /* gather data */
-  obs_energy.reduce();
+  obs_energy.reduce(comm_cart);
 }
 
 void update_energy() {

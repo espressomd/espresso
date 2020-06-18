@@ -235,28 +235,24 @@ class Analysis:
         cdef int j
         cdef double total_intra
         cdef double total_inter
-        cdef double total_non_bonded
         total_inter = 0
         total_intra = 0
-        total_non_bonded = 0
 
         for i in range(analyze.max_seen_particle_type):
             for j in range(i, analyze.max_seen_particle_type):
-                val = analyze.obs_scalar_pressure.non_bonded_contribution(i, j)[
+                intra = analyze.obs_scalar_pressure.non_bonded_intra_contribution(i, j)[
                     0]
-                p["non_bonded", i, j] = val
-                total_non_bonded += val
-                val = analyze.obs_scalar_pressure_non_bonded.non_bonded_intra_contribution(i, j)[
+                total_intra += intra
+                p["non_bonded_intra", i, j] = intra
+                inter = analyze.obs_scalar_pressure.non_bonded_inter_contribution(i, j)[
                     0]
-                total_intra += val
-                p["non_bonded_intra", i, j] = val
-                val = analyze.obs_scalar_pressure_non_bonded.non_bonded_inter_contribution(i, j)[
-                    0]
-                total_inter += val
-                p["non_bonded_inter", i, j] = val
+                total_inter += inter
+                p["non_bonded_inter", i, j] = inter
+                p["non_bonded", i, j] = intra + inter
+
         p["non_bonded_intra"] = total_intra
         p["non_bonded_inter"] = total_inter
-        p["non_bonded"] = total_non_bonded
+        p["non_bonded"] = total_intra + total_inter
 
         # Electrostatics
         IF ELECTROSTATICS == 1:
@@ -348,30 +344,25 @@ class Analysis:
 
         # Non-Bonded interactions, total as well as intra and inter molecular
         cdef int j
-        total_non_bonded = np.zeros((3, 3))
         total_non_bonded_intra = np.zeros((3, 3))
         total_non_bonded_inter = np.zeros((3, 3))
 
         for i in range(analyze.max_seen_particle_type):
             for j in range(i, analyze.max_seen_particle_type):
-                p["non_bonded", i, j] = np.reshape(
-                    create_nparray_from_double_span(
-                        analyze.obs_pressure_tensor.non_bonded_contribution(i, j)), (3, 3))
-                total_non_bonded += p["non_bonded", i, j]
-
                 p["non_bonded_intra", i, j] = np.reshape(
                     create_nparray_from_double_span(
-                        analyze.obs_pressure_tensor_non_bonded.non_bonded_intra_contribution(i, j)), (3, 3))
+                        analyze.obs_pressure_tensor.non_bonded_intra_contribution(i, j)), (3, 3))
                 total_non_bonded_intra += p["non_bonded_intra", i, j]
 
                 p["non_bonded_inter", i, j] = np.reshape(
                     create_nparray_from_double_span(
-                        analyze.obs_pressure_tensor_non_bonded.non_bonded_inter_contribution(i, j)), (3, 3))
+                        analyze.obs_pressure_tensor.non_bonded_inter_contribution(i, j)), (3, 3))
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
+                p["non_bonded", i, j] = p["non_bonded_intra", i, j] + p["non_bonded_inter", i, j]
 
         p["non_bonded_intra"] = total_non_bonded_intra
         p["non_bonded_inter"] = total_non_bonded_inter
-        p["non_bonded"] = total_non_bonded
+        p["non_bonded"] = total_non_bonded_intra + total_non_bonded_inter
 
         # Electrostatics
         IF ELECTROSTATICS == 1:

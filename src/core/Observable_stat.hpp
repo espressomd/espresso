@@ -19,6 +19,8 @@
 #ifndef ESPRESSO_OBSERVABLE_STAT_HPP
 #define ESPRESSO_OBSERVABLE_STAT_HPP
 
+#include <boost/mpi/collectives/reduce.hpp>
+#include <boost/mpi/communicator.hpp>
 #include <boost/range/numeric.hpp>
 
 #include <utils/Span.hpp>
@@ -28,34 +30,39 @@
 #include <utility>
 #include <vector>
 
-/** Observable for system statistics.
- *  Store unidimensional (energy, scalar pressure) and multi-dimensional
- *  (pressure tensor) properties of the system and provide accumulation and
- *  reduction functionality.
- */
-class Observable_stat_base {
-protected:
+/** Observable for the scalar pressure, pressure tensor and energy. */
+class Observable_stat {
   /** Array for observables on each node. */
   std::vector<double> data;
   /** Number of doubles per data item */
   size_t m_chunk_size;
 
-public:
-  /** @param chunk_size Dimensionality of the data
+  /** Whether this observable is a pressure or energy observable */
+  bool m_pressure_obs;
+
+  /** Calculate the maximal number of non-bonded interaction pairs in the
+   *  system.
    */
-  explicit Observable_stat_base(size_t chunk_size) : m_chunk_size(chunk_size) {}
-
-  /** Resize the observable */
-  virtual void resize() = 0;
-
-  /** Resize and zero out the observable */
-  void resize_and_clear() {
-    resize();
-    std::fill(data.begin(), data.end(), 0);
+  static size_t max_non_bonded_pairs() {
+    extern int max_seen_particle_type;
+    return static_cast<size_t>(
+        (max_seen_particle_type * (max_seen_particle_type + 1)) / 2);
   }
 
-  /** Reduce contributions from all MPI ranks. */
-  void reduce();
+  /** Get contribution from a non-bonded interaction */
+  Utils::Span<double> non_bonded_contribution(Utils::Span<double> base_pointer,
+                                              int type1, int type2) const {
+    extern int max_seen_particle_type;
+    int offset = Utils::upper_triangular(
+        std::min(type1, type2), std::max(type1, type2), max_seen_particle_type);
+    return {base_pointer.begin() + offset * m_chunk_size, m_chunk_size};
+  }
+
+public:
+  explicit Observable_stat(size_t chunk_size, bool pressure_obs = true)
+      : m_chunk_size(chunk_size), m_pressure_obs(pressure_obs) {
+    resize();
+  }
 
   /** Accumulate values.
    *  @param acc    Initial value for the accumulator.
@@ -80,40 +87,11 @@ public:
     }
   }
 
-protected:
-  /** Get contribution from a non-bonded interaction */
-  Utils::Span<double> non_bonded_contribution(double *base_pointer, int type1,
-                                              int type2) const {
-    extern int max_seen_particle_type;
-    if (type1 > type2) {
-      using std::swap;
-      swap(type1, type2);
-    }
-    int offset = Utils::upper_triangular(type1, type2, max_seen_particle_type);
-    return Utils::Span<double>(base_pointer + offset * m_chunk_size,
-                               m_chunk_size);
-  }
-
-  /** Calculate the maximal number of non-bonded interaction pairs in the
-   *  system.
-   */
-  size_t max_non_bonded_pairs() {
-    extern int max_seen_particle_type;
-    return static_cast<size_t>(
-        (max_seen_particle_type * (max_seen_particle_type + 1)) / 2);
-  }
-};
-
-/** Observable for the scalar pressure, pressure tensor and energy. */
-class Observable_stat : public Observable_stat_base {
-private:
-  /** Whether this observable is a pressure or energy observable */
-  bool m_pressure_obs;
-
-public:
-  explicit Observable_stat(size_t chunk_size, bool pressure_obs = true)
-      : Observable_stat_base(chunk_size), m_pressure_obs(pressure_obs) {
-    resize_and_clear();
+  /** Reduce contributions from all MPI ranks. */
+  void reduce(boost::mpi::communicator const &comm) {
+    BOOST_MPI_CHECK_RESULT(
+        MPI_Reduce, ((comm.rank() == 0) ? MPI_IN_PLACE : data.data(),
+                     data.data(), data.size(), MPI_DOUBLE, MPI_SUM, 0, comm));
   }
 
   /** Contribution from linear and angular kinetic energy (accumulated). */
@@ -130,9 +108,13 @@ public:
   Utils::Span<double> virtual_sites;
   /** Contribution from external fields (accumulated). */
   Utils::Span<double> external_fields;
+  /** Contribution(s) from non-bonded intramolecular interactions. */
+  Utils::Span<double> non_bonded_intra;
+  /** Contribution(s) from non-bonded intermolecular interactions. */
+  Utils::Span<double> non_bonded_inter;
 
   /** Resize the observable */
-  void resize() final;
+  void resize();
 
   /** Get contribution from a bonded interaction */
   Utils::Span<double> bonded_contribution(int bond_id) {
@@ -142,39 +124,19 @@ public:
 
   /** Get contribution from a non-bonded interaction */
   Utils::Span<double> non_bonded_contribution(int type1, int type2) const {
-    return Observable_stat_base::non_bonded_contribution(non_bonded.data(),
-                                                         type1, type2);
+    return non_bonded_contribution(non_bonded, type1, type2);
   }
-};
-
-/** Structure used only in the pressure calculation to distinguish
- *  non-bonded intra- and inter- molecular contributions.
- */
-class Observable_stat_non_bonded : public Observable_stat_base {
-public:
-  explicit Observable_stat_non_bonded(size_t chunk_size)
-      : Observable_stat_base(chunk_size) {
-    resize_and_clear();
-  }
-
-  /** Contribution(s) from non-bonded intramolecular interactions. */
-  Utils::Span<double> non_bonded_intra;
-  /** Contribution(s) from non-bonded intermolecular interactions. */
-  Utils::Span<double> non_bonded_inter;
-
-  /** Resize the observable */
-  void resize() final;
 
   /** Get contribution from a non-bonded intramolecular interaction */
   Utils::Span<double> non_bonded_intra_contribution(int type1,
                                                     int type2) const {
-    return non_bonded_contribution(non_bonded_intra.data(), type1, type2);
+    return non_bonded_contribution(non_bonded_intra, type1, type2);
   }
 
   /** Get contribution from a non-bonded intermolecular interaction */
   Utils::Span<double> non_bonded_inter_contribution(int type1,
                                                     int type2) const {
-    return non_bonded_contribution(non_bonded_inter.data(), type1, type2);
+    return non_bonded_contribution(non_bonded_inter, type1, type2);
   }
 };
 
