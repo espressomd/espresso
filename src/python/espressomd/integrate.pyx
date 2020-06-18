@@ -114,7 +114,10 @@ cdef class Integrator:
         req = ["f_max", "gamma", "max_displacement"]
         for key in kwargs:
             if key not in req:
-                raise Exception("Set required parameter %s first." % key)
+                raise Exception("Unknown parameter %s." % key)
+        for key in req:
+            if key not in kwargs:
+                raise Exception("Missing required parameter %s." % key)
 
         self._steepest_descent_params.update(kwargs)
         self._method = "STEEPEST_DESCENT"
