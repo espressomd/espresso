@@ -57,8 +57,7 @@ class Observable_stat {
   }
 
 public:
-  explicit Observable_stat(size_t chunk_size, bool pressure_obs = true)
-      : m_chunk_size(chunk_size) {
+  explicit Observable_stat(size_t chunk_size) : m_chunk_size(chunk_size) {
     resize();
   }
 

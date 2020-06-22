@@ -40,7 +40,7 @@
 ActorList energyActors;
 
 /** Energy of the system */
-Observable_stat obs_energy{1, false};
+Observable_stat obs_energy{1};
 
 /** Reduce the system energy from all MPI ranks. */
 void master_energy_calc() { mpi_gather_stats(GatherStats::energy); }
