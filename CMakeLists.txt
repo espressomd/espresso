@@ -458,7 +458,7 @@ if (WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
-    GIT_TAG        f15fa5e49bd00934
+    GIT_TAG        64a4d68
     PATCH_COMMAND  patch -p0 --ignore-whitespace -i
                    ${PROJECT_SOURCE_DIR}/cmake/waLBerlaFunctions.patch
   )
