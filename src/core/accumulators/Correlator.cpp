@@ -35,12 +35,6 @@ int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }
 } // namespace
 
 namespace Accumulators {
-/** The minimal version of compression function */
-std::vector<double> compress_do_nothing(std::vector<double> const &A1,
-                                        std::vector<double> const &A2) {
-  return {};
-}
-
 /** Compress computing arithmetic mean: A_compressed=(A1+A2)/2 */
 std::vector<double> compress_linear(std::vector<double> const &A1,
                                     std::vector<double> const &A2) {
