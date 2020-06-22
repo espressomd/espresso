@@ -70,7 +70,7 @@ cdef _Observable_stat_to_dict(Observable_stat obs):
     # Kinetic
     p["kinetic"] = 0
     for kinetic_i in range(obs.kinetic.size()):
-      p["kinetic"] += obs.kinetic[kinetic_i]
+        p["kinetic"] += obs.kinetic[kinetic_i]
 
     # External
     p["external_fields"] = obs.external_fields[0]
@@ -389,7 +389,8 @@ class Analysis:
                     create_nparray_from_double_span(
                         analyze.obs_pressure_tensor.non_bonded_inter_contribution(i, j)), (3, 3))
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
-                p["non_bonded", i, j] = p["non_bonded_intra", i, j] + p["non_bonded_inter", i, j]
+                p["non_bonded", i, j] = p["non_bonded_intra", i, j] + \
+                    p["non_bonded_inter", i, j]
 
         p["non_bonded_intra"] = total_non_bonded_intra
         p["non_bonded_inter"] = total_non_bonded_inter
