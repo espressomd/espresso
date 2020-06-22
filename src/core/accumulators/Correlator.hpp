@@ -39,7 +39,7 @@
  *
  * To save memory, increase statistics and make the calculation possible for
  * many orders of magnitude in time, the blocking algorithm in
- * @cite frenkel02b (algorithm 8, chapter 4.4.2)
+ * @cite frenkel02b (algorithm 9, section 4.4.2 p. 95)
  * is applied. Thus not all As and Bs of the whole "past" are stored but
  * some of them are blocked. In this implementation, a blocking based on 2 is
  * always applied: all As and Bs not older than a certain tau_lin are stored
@@ -88,16 +88,16 @@
 /*
  * There is a lot of stuff to do:
  * ==============================
- * -> Expand the file_data_source so that one can specify which
+ * - Expand the file_data_source so that one can specify which
  *  columns of the file are to be processed
- * -> calculate an estimate of average values. This might be
- *  even necessary to calculate <(A-<A>)(B(tau)-<B>), which
+ * - calculate an estimate of average values. This might be
+ *  even necessary to calculate <(A-<A>)(B(tau)-<B>)>, which
  *  is often probably what people want
- * -> Use the A_args to calculate As and Bs only for particular
+ * - Use the A_args to calculate As and Bs only for particular
  *  particle types (especially and example, so that other people can follow)
- * -> Use the A_args to calculate molecular stuff in combination with
+ * - Use the A_args to calculate molecular stuff in combination with
  *  the topology concept
- * -> Write a destructor
+ * - Write a destructor
  */
 #ifndef _STATISTICS_CORRELATION_H
 #define _STATISTICS_CORRELATION_H
