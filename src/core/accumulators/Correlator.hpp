@@ -88,8 +88,9 @@
  * - Expand the file_data_source so that one can specify which
  *  columns of the file are to be processed
  * - calculate an estimate of average values. This might be
- *  even necessary to calculate @f$\left<\left(A(\tau)-\left<A\right>\right)\left(B(\tau)-\left<B\right>\right)\right>@f$, which
- *  is often probably what people want
+ *  even necessary to calculate
+ *  @f$\left<\left(A(\tau)-\left<A\right>\right)\left(B(\tau)-\left<B\right>\right)\right>@f$,
+ *  which is often probably what people want
  * - Use the A_args to calculate As and Bs only for particular
  *  particle types (especially and example, so that other people can follow)
  * - Use the A_args to calculate molecular stuff in combination with
