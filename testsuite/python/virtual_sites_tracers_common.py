@@ -73,6 +73,7 @@ class VirtualSitesTracersCommon:
     def test_ab_single_step(self):
         self.reset_lb()
         self.system.lbboundaries.clear()
+        self.system.part.clear()
         self.system.virtual_sites = VirtualSitesInertialessTracers()
 
         # Random velocities
@@ -80,10 +81,10 @@ class VirtualSitesTracersCommon:
             n.velocity = np.random.random(3) - .5
         force = [1, -2, 3]
         # Test several particle positions
-        for pos in [[3, 2, 1]]:
-            #, [0, 0, 0], self.system.box_l, self.system.box_l / \
-            #        2, self.system.box_l / 2 - self.lbf.agrid / 2:
-            # WALBERLA TODO
+        for pos in [[3, 2, 1], [0, 0, 0],
+                    self.system.box_l * 0.49,
+                    self.system.box_l,
+                    self.system.box_l * 0.99]:
             p = self.system.part.add(pos=pos, ext_force=force, virtual=True)
 
             coupling_pos = p.pos
@@ -92,6 +93,9 @@ class VirtualSitesTracersCommon:
             lb_nodes = get_lb_nodes_around_pos(
                 coupling_pos, self.lbf)
 
+            np.testing.assert_allclose(
+                [n.last_applied_force for n in lb_nodes],
+                np.zeros((len(lb_nodes), 3)))
             self.system.integrator.run(1)
             # Check particle velocity
             np.testing.assert_allclose(np.copy(p.v), v_fluid)
@@ -112,7 +116,6 @@ class VirtualSitesTracersCommon:
             applied_forces = np.array([n.last_applied_force for n in lb_nodes])
             np.testing.assert_allclose(
                 np.sum(applied_forces, axis=0), [0, 0, 0])
-            print("tracer single step test passed for pos", coupling_pos)
 
     def test_advection(self):
         self.reset_lb(ext_force_density=[0.1, 0, 0])
@@ -120,6 +123,7 @@ class VirtualSitesTracersCommon:
         system = self.system
 
         system.virtual_sites = VirtualSitesInertialessTracers()
+        system.part.clear()
 
         # Establish steady state flow field
         p = system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=True)
@@ -130,12 +134,10 @@ class VirtualSitesTracersCommon:
 
         # Perform integration
         for _ in range(2):
-            print(_)
             system.integrator.run(100)
             # compute expected position
             X = self.lbf.get_interpolated_velocity(
                 system.part[0].pos)[0] * system.time
-            print(p.pos, X)
             self.assertAlmostEqual(
                 system.part[0].pos[0] / X - 1, 0, delta=0.001)
 
@@ -200,7 +202,7 @@ class VirtualSitesTracersCommon:
         # Perform integration
         system.thermostat.turn_off()
         system.thermostat.set_langevin(kT=0, gamma=10, seed=1)
-        system.integrator.run(100)
+        system.integrator.run(150)
         angle = self.compute_angle()
         self.assertLess(angle, 1E-3)
 

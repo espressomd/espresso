@@ -31,11 +31,12 @@
 #include <algorithm>
 
 void VirtualSitesInertialessTracers::after_force_calc() {
-  cell_structure.ghosts_reduce_forces();
-
+  // Distribute summed-up forces from physical particles to ghosts
   init_forces_ghosts(cell_structure.ghost_particles());
-  // Now the forces are computed and need to go into the LB fluid
-  // Convert units from MD to LB
+  cells_update_ghosts(Cells::DATA_PART_FORCE);
+
+  // Apply particle forces to the LB fluid at particle positions
+  // For physical particles, also set particle velocity = fluid velocity
   for (auto &p : cell_structure.local_particles()) {
     if (!p.p.is_virtual)
       continue;
@@ -60,6 +61,9 @@ void VirtualSitesInertialessTracers::after_force_calc() {
       add_md_force(p.r.p / lb_lbfluid_get_agrid(), -p.f.f);
     }
   }
+
+  // Clear ghost forces to avoid double counting later
+  init_forces_ghosts(cell_structure.ghost_particles());
 }
 
 void VirtualSitesInertialessTracers::after_lb_propagation() {
