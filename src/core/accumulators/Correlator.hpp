@@ -82,22 +82,14 @@
  *
  * The correlation has to be initialized with all necessary information,
  * i.e. all function pointers, the dimensions of A and B and their dimensions,
- * etc. When new A and B values should be processed, a single call of
- * double_correlation_get_data() with the correlation object as an
- * argument is enough to update A and B and the correlation estimate.
- *
- * Eventually the correlation can be printed.
+ * etc.
  */
 
 /*
  * There is a lot of stuff to do:
  * ==============================
- * -> Write input functions that take TCL arrays for A and B to
- *  make the method available for TCL-coded variables
  * -> Expand the file_data_source so that one can specify which
  *  columns of the file are to be processed
- * -> Write more correlation operations (scalar product)
- * -> Write more observable
  * -> calculate an estimate of average values. This might be
  *  even necessary to calculate <(A-<A>)(B(tau)-<B>), which
  *  is often probably what people want
@@ -105,10 +97,7 @@
  *  particle types (especially and example, so that other people can follow)
  * -> Use the A_args to calculate molecular stuff in combination with
  *  the topology concept
- * -> Tidy up the parsers (just a bit)
- * -> Write some nice samples
  * -> Write a destructor
- * -> Finally: write the users guide
  */
 #ifndef _STATISTICS_CORRELATION_H
 #define _STATISTICS_CORRELATION_H
@@ -190,9 +179,6 @@ public:
 
   /** At the end of data collection, go through the whole hierarchy and
    *  correlate data left there.
-   *
-   *  This works pretty much the same as get_data, but does not feed on new
-   *  data, just uses what is already available.
    */
   int finalize();
 
