@@ -38,9 +38,6 @@ class Observable_stat {
   /** Number of doubles per data item */
   size_t m_chunk_size;
 
-  /** Whether this observable is a pressure or energy observable */
-  bool m_pressure_obs;
-
   /** Calculate the maximal number of non-bonded interaction pairs in the
    *  system.
    */
@@ -61,7 +58,7 @@ class Observable_stat {
 
 public:
   explicit Observable_stat(size_t chunk_size, bool pressure_obs = true)
-      : m_chunk_size(chunk_size), m_pressure_obs(pressure_obs) {
+      : m_chunk_size(chunk_size) {
     resize();
   }
 
