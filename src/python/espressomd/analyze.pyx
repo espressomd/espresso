@@ -65,10 +65,15 @@ cdef _Observable_stat_to_dict(Observable_stat obs):
     p = OrderedDict()
 
     # Total pressure
-    p["total"] = analyze.obs_scalar_pressure.accumulate()
+    p["total"] = obs.accumulate()
 
     # Kinetic
-    p["kinetic"] = obs.kinetic[0]
+    p["kinetic"] = 0
+    for kinetic_i in range(obs.kinetic.size()):
+      p["kinetic"] += obs.kinetic[kinetic_i]
+
+    # External
+    p["external_fields"] = obs.external_fields[0]
 
     # Bonded
     cdef int i
@@ -469,66 +474,10 @@ class Analysis:
 
         """
 
-        e = OrderedDict()
-
         analyze.update_energy()
         handle_errors("calc_long_range_energies failed")
 
-        # Total energy
-        cdef int i
-        total = analyze.obs_energy.kinetic[0]
-        total += calculate_current_potential_energy_of_system()
-
-        e["total"] = total
-        e["external_fields"] = analyze.obs_energy.external_fields[0]
-
-        # Individual components of the energy
-
-        # Kinetic energy
-        e["kinetic"] = analyze.obs_energy.kinetic[0]
-
-        # Non-bonded
-        cdef double total_bonded
-        total_bonded = 0
-        cdef double val
-        for i in range(bonded_ia_params.size()):
-            if bonded_ia_params[i].type != BONDED_IA_NONE:
-                val = analyze.obs_energy.bonded_contribution(i)[0]
-                e["bonded", i] = val
-                total_bonded += val
-        e["bonded"] = total_bonded
-
-        # Total non-bonded interactions
-        cdef int j
-        cdef double total_non_bonded
-        total_non_bonded = 0.
-
-        for i in range(analyze.max_seen_particle_type):
-            for j in range(i, analyze.max_seen_particle_type):
-                val = analyze.obs_energy.non_bonded_contribution(i, j)[0]
-                e["non_bonded", i, j] = val
-                total_non_bonded += val
-        e["non_bonded"] = total_non_bonded
-
-        # Electrostatics
-        IF ELECTROSTATICS == 1:
-            cdef np.ndarray coulomb_contributions
-            coulomb_contributions = create_nparray_from_double_span(
-                analyze.obs_energy.coulomb)
-            for i in range(len(coulomb_contributions)):
-                e["coulomb", i] = coulomb_contributions[i]
-            e["coulomb"] = np.sum(coulomb_contributions)
-
-        # Dipoles
-        IF DIPOLES == 1:
-            cdef np.ndarray dipolar_contributions
-            dipolar_contributions = create_nparray_from_double_span(
-                analyze.obs_energy.dipolar)
-            for i in range(len(dipolar_contributions)):
-                e["dipolar", i] = dipolar_contributions[i]
-            e["dipolar"] = np.sum(dipolar_contributions)
-
-        return e
+        return _Observable_stat_to_dict(analyze.obs_energy)
 
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):

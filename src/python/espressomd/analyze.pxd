@@ -45,8 +45,6 @@ cdef extern from "particle_data.hpp":
 cdef extern from "Observable_stat.hpp":
     cdef cppclass Observable_stat:
         Span[double] kinetic
-        Span[double] bonded
-        Span[double] non_bonded
         Span[double] coulomb
         Span[double] dipolar
         Span[double] virtual_sites
@@ -55,7 +53,6 @@ cdef extern from "Observable_stat.hpp":
         double accumulate2 "accumulate"(double acc, size_t column)
         double accumulate1 "accumulate"(double acc)
         Span[double] bonded_contribution(int bond_id)
-        Span[double] non_bonded_contribution(int type1, int type2)
         Span[double] non_bonded_intra_contribution(int type1, int type2)
         Span[double] non_bonded_inter_contribution(int type1, int type2)
 

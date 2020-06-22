@@ -21,6 +21,7 @@
 
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/range/algorithm/transform.hpp>
 #include <boost/range/numeric.hpp>
 
 #include <utils/Span.hpp>
@@ -98,8 +99,6 @@ public:
   Utils::Span<double> kinetic;
   /** Contribution(s) from bonded interactions. */
   Utils::Span<double> bonded;
-  /** Contribution(s) from non-bonded interactions. */
-  Utils::Span<double> non_bonded;
   /** Contribution(s) from Coulomb interactions. */
   Utils::Span<double> coulomb;
   /** Contribution(s) from dipolar interactions. */
@@ -122,9 +121,18 @@ public:
                                m_chunk_size);
   }
 
-  /** Get contribution from a non-bonded interaction */
-  Utils::Span<double> non_bonded_contribution(int type1, int type2) const {
-    return non_bonded_contribution(non_bonded, type1, type2);
+  void add_non_bonded_contribution(int type1, int type2,
+                                   Utils::Span<const double> data) {
+    auto const dest =
+        (type1 == type2)
+            ? non_bonded_contribution(non_bonded_intra, type1, type2)
+            : non_bonded_contribution(non_bonded_inter, type1, type2);
+
+    boost::transform(dest, data, dest.begin(), std::plus<>{});
+  }
+
+  void add_non_bonded_contribution(int type1, int type2, double data) {
+    add_non_bonded_contribution(type1, type2, {&data, 1});
   }
 
   /** Get contribution from a non-bonded intramolecular interaction */

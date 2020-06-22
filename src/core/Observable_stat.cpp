@@ -40,15 +40,14 @@ void Observable_stat::resize() {
   constexpr size_t n_kinetic = 1; // linear+angular kinetic energy: accumulated
 
   // resize vector
-  auto const total = n_kinetic + n_bonded + 3 * n_non_bonded + n_coulomb +
+  auto const total = n_kinetic + n_bonded + 2 * n_non_bonded + n_coulomb +
                      n_dipolar + n_vs + n_ext_fields;
   data = std::vector<double>(m_chunk_size * total);
 
   // spans for the different contributions
   kinetic = Utils::Span<double>(data.data(), m_chunk_size);
   bonded = Utils::Span<double>(kinetic.end(), n_bonded * m_chunk_size);
-  non_bonded = Utils::Span<double>(bonded.end(), n_non_bonded * m_chunk_size);
-  coulomb = Utils::Span<double>(non_bonded.end(), n_coulomb * m_chunk_size);
+  coulomb = Utils::Span<double>(bonded.end(), n_coulomb * m_chunk_size);
   dipolar = Utils::Span<double>(coulomb.end(), n_dipolar * m_chunk_size);
   virtual_sites = Utils::Span<double>(dipolar.end(), n_vs * m_chunk_size);
   external_fields =
@@ -59,4 +58,3 @@ void Observable_stat::resize() {
       Utils::Span<double>(non_bonded_intra.end(), n_non_bonded * m_chunk_size);
   assert(non_bonded_inter.end() == (data.data() + data.size()));
 }
-

@@ -188,8 +188,9 @@ inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
-    obs_energy.non_bonded_contribution(p1.p.type, p2.p.type)[0] +=
-        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist);
+    obs_energy.add_non_bonded_contribution(
+        p1.p.type, p2.p.type,
+        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist));
 
 #ifdef ELECTROSTATICS
   if (!obs_energy.coulomb.empty())
