@@ -79,7 +79,7 @@ std::vector<double> componentwise_product(std::vector<double> const &A,
                                           std::vector<double> const &B,
                                           Utils::Vector3d) {
   std::vector<double> C(A.size());
-  if (!(A.size() == B.size())) {
+  if (A.size() != B.size()) {
     throw std::runtime_error(
         "Error in componentwise product: The vector sizes do not match");
   }
@@ -108,7 +108,7 @@ std::vector<double> tensor_product(std::vector<double> const &A,
 std::vector<double> square_distance_componentwise(std::vector<double> const &A,
                                                   std::vector<double> const &B,
                                                   Utils::Vector3d) {
-  if (!(A.size() == B.size())) {
+  if (A.size() != B.size()) {
     throw std::runtime_error(
         "Error in square distance componentwise: The vector sizes do not "
         "match.");
@@ -128,7 +128,7 @@ std::vector<double> square_distance_componentwise(std::vector<double> const &A,
 std::vector<double> fcs_acf(std::vector<double> const &A,
                             std::vector<double> const &B,
                             Utils::Vector3d wsquare) {
-  if (!(A.size() == B.size())) {
+  if (A.size() != B.size()) {
     throw std::runtime_error(
         "Error in fcs acf: The vector sizes do not match.");
   }
@@ -169,7 +169,7 @@ int Correlator::get_correlation_time(double *correlation_time) {
     for (unsigned k = 1; k < m_n_result - 1; k++) {
       if (n_sweeps[k] == 0)
         break;
-      C_tau += (result[k][j] / (double)n_sweeps[k] -
+      C_tau += (result[k][j] / static_cast<double>(n_sweeps[k]) -
                 A_accumulated_average[j] * B_accumulated_average[j] / n_data /
                     n_data) /
                (result[0][j] / n_sweeps[0]) * m_dt * (tau[k] - tau[k - 1]);
@@ -177,8 +177,8 @@ int Correlator::get_correlation_time(double *correlation_time) {
       if (exp(-tau[k] * m_dt / C_tau) + 2 * sqrt(tau[k] * m_dt / n_data) >
           exp(-tau[k - 1] * m_dt / C_tau) +
               2 * sqrt(tau[k - 1] * m_dt / n_data)) {
-        correlation_time[j] =
-            C_tau * (1 + (2 * (double)tau[k] + 1) / (double)n_data);
+        correlation_time[j] = C_tau * (1 + static_cast<double>(2 * tau[k] + 1) /
+                                               static_cast<double>(n_data));
         ok_flag = true;
         break;
       }
@@ -196,7 +196,7 @@ void Correlator::initialize() {
   // Class members are assigned via the initializer list
 
   if (m_tau_lin == 1) { // use the default
-    m_tau_lin = (int)ceil(m_tau_max / m_dt);
+    m_tau_lin = static_cast<int>(ceil(m_tau_max / m_dt));
     if (m_tau_lin % 2)
       m_tau_lin += 1;
   }
@@ -360,7 +360,7 @@ void Correlator::update() {
   while (true) {
     if (((t - ((m_tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
          0)) {
-      if (i < (int(hierarchy_depth) - 1) && n_vals[i] > m_tau_lin) {
+      if (i < (hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
         highest_level_to_compress += 1;
         i++;
       } else
