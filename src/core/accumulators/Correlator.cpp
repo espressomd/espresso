@@ -136,8 +136,7 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
                             Utils::Vector3d wsquare) {
   if (!(A.size() == B.size())) {
     throw std::runtime_error(
-        "Error in square distance componentwise: The vector sizes do not "
-        "match.");
+        "Error in fcs acf: The vector sizes do not match.");
   }
 
   auto const C_size = A.size() / 3;
@@ -168,7 +167,7 @@ constexpr const char init_errors[][64] = {
     "No valid correlation given",                                    // 1
     "delta_t must be specified and > 0",                             // 2
     "tau_lin must be >= 2",                                          // 3
-    "tau_max must be >= delta_t",                                    // 4
+    "tau_max must be >= delta_t (delta_N too large)",                // 4
     "window_distance must be >1",                                    // 5
     "dimension of A was not >1",                                     // 6
     "dimension of B was not >1",                                     // 7
@@ -182,7 +181,7 @@ constexpr const char init_errors[][64] = {
     "dt is smaller than the MD timestep",                            // 15
     "dt is not a multiple of the MD timestep",                       // 16
     "cannot set compress2 for autocorrelation",                      // 17
-    "diA must be divisible by 3 for fcs_acf",                        // 18
+    "dimA must be divisible by 3 for fcs_acf",                       // 18
     "fcs_acf requires 3 additional parameters"                       // 19
 };
 
