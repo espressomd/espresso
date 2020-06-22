@@ -112,9 +112,7 @@ public:
     });
     WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(force_to_be_applied, {
       Cell cell(x, y, z);
-      if (boundary_handling->isDomain(cell)) {
-        force_to_be_applied->get(cell) = Vector3<real_t>{0};
-      }
+      force_to_be_applied->get(cell) = Vector3<real_t>{0};
     });
   }
 
@@ -468,7 +466,6 @@ public:
       if (bc) {
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
-        //        printf("%d %d %d: %g\n",node[0],node[1],node[2],weight);
         force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
       }
     };
