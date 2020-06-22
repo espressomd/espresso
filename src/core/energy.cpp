@@ -31,6 +31,7 @@
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
+#include "reduce_observable_stat.hpp"
 
 #include "short_range_loop.hpp"
 
@@ -83,7 +84,10 @@ void energy_calc(const double time) {
 #endif
 
   /* gather data */
-  obs_energy.reduce(comm_cart);
+  auto obs_energy_res = reduce(comm_cart, obs_energy);
+  if (obs_energy_res) {
+    std::swap(obs_energy, *obs_energy_res);
+  }
 }
 
 void update_energy() { master_energy_calc(); }

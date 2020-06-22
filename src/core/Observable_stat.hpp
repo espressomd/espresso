@@ -19,8 +19,6 @@
 #ifndef ESPRESSO_OBSERVABLE_STAT_HPP
 #define ESPRESSO_OBSERVABLE_STAT_HPP
 
-#include <boost/mpi/collectives/reduce.hpp>
-#include <boost/mpi/communicator.hpp>
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/numeric.hpp>
 
@@ -34,7 +32,7 @@
 /** Observable for the scalar pressure, pressure tensor and energy. */
 class Observable_stat {
   /** Array for observables on each node. */
-  std::vector<double> data;
+  std::vector<double> m_data;
   /** Number of doubles per data item */
   size_t m_chunk_size;
 
@@ -59,6 +57,12 @@ class Observable_stat {
 public:
   explicit Observable_stat(size_t chunk_size);
 
+  auto chunk_size() const { return m_chunk_size; }
+  Utils::Span<double> data_() { return {m_data.data(), m_data.size()}; }
+  Utils::Span<const double> data_() const {
+    return {m_data.data(), m_data.size()};
+  }
+
   /** Accumulate values.
    *  @param acc    Initial value for the accumulator.
    *  @param column Which column to sum up (only relevant for multi-dimensional
@@ -67,9 +71,10 @@ public:
   double accumulate(double acc = 0.0, size_t column = 0) {
     assert(column < m_chunk_size);
     if (m_chunk_size == 1)
-      return boost::accumulate(data, acc);
+      return boost::accumulate(m_data, acc);
 
-    for (auto it = data.begin() + column; it < data.end(); it += m_chunk_size)
+    for (auto it = m_data.begin() + column; it < m_data.end();
+         it += m_chunk_size)
       acc += *it;
     return acc;
   }
@@ -77,16 +82,9 @@ public:
   /** Rescale values */
   void rescale(double volume) {
     auto const factor = 1. / volume;
-    for (auto &e : data) {
+    for (auto &e : m_data) {
       e *= factor;
     }
-  }
-
-  /** Reduce contributions from all MPI ranks. */
-  void reduce(boost::mpi::communicator const &comm) {
-    BOOST_MPI_CHECK_RESULT(
-        MPI_Reduce, ((comm.rank() == 0) ? MPI_IN_PLACE : data.data(),
-                     data.data(), data.size(), MPI_DOUBLE, MPI_SUM, 0, comm));
   }
 
   /** Contribution from linear and angular kinetic energy (accumulated). */

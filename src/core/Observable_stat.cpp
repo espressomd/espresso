@@ -42,10 +42,10 @@ Observable_stat::Observable_stat(size_t chunk_size) : m_chunk_size(chunk_size) {
   // resize vector
   auto const total = n_kinetic + n_bonded + 2 * n_non_bonded + n_coulomb +
                      n_dipolar + n_vs + n_ext_fields;
-  data = std::vector<double>(m_chunk_size * total);
+  m_data = std::vector<double>(m_chunk_size * total);
 
   // spans for the different contributions
-  kinetic = Utils::Span<double>(data.data(), m_chunk_size);
+  kinetic = Utils::Span<double>(m_data.data(), m_chunk_size);
   bonded = Utils::Span<double>(kinetic.end(), n_bonded * m_chunk_size);
   coulomb = Utils::Span<double>(bonded.end(), n_coulomb * m_chunk_size);
   dipolar = Utils::Span<double>(coulomb.end(), n_dipolar * m_chunk_size);
@@ -56,5 +56,5 @@ Observable_stat::Observable_stat(size_t chunk_size) : m_chunk_size(chunk_size) {
       Utils::Span<double>(external_fields.end(), n_non_bonded * m_chunk_size);
   non_bonded_inter =
       Utils::Span<double>(non_bonded_intra.end(), n_non_bonded * m_chunk_size);
-  assert(non_bonded_inter.end() == (data.data() + data.size()));
+  assert(non_bonded_inter.end() == (m_data.data() + m_data.size()));
 }

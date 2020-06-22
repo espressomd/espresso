@@ -27,7 +27,9 @@
 #include "communication.hpp"
 #include "event.hpp"
 #include "pressure_inline.hpp"
+#include "reduce_observable_stat.hpp"
 #include "virtual_sites.hpp"
+
 #include <boost/range/algorithm/copy.hpp>
 
 #include "short_range_loop.hpp"
@@ -110,8 +112,15 @@ void pressure_calc() {
   obs_pressure_tensor.rescale(volume);
 
   /* gather data */
-  obs_scalar_pressure.reduce(comm_cart);
-  obs_pressure_tensor.reduce(comm_cart);
+  auto obs_scalar_pressure_res = reduce(comm_cart, obs_scalar_pressure);
+  if (obs_scalar_pressure_res) {
+    std::swap(obs_scalar_pressure, *obs_scalar_pressure_res);
+  }
+
+  auto obs_pressure_tensor_res = reduce(comm_cart, obs_pressure_tensor);
+  if (obs_pressure_tensor_res) {
+    std::swap(obs_pressure_tensor, *obs_pressure_tensor_res);
+  }
 }
 
 void update_pressure() { mpi_gather_stats(GatherStats::pressure); }

@@ -44,7 +44,8 @@ set(EspressoCore_SRC
     exclusions.cpp
     CellStructure.cpp
     PartCfg.cpp
-    AtomDecomposition.cpp)
+    AtomDecomposition.cpp
+    reduce_observable_stat.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
