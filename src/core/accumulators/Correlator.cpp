@@ -161,30 +161,6 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
   return C;
 }
 
-/* Error codes */
-constexpr const char init_errors[][64] = {
-    "",                                                              // 0
-    "No valid correlation given",                                    // 1
-    "delta_t must be specified and > 0",                             // 2
-    "tau_lin must be >= 2",                                          // 3
-    "tau_max must be >= delta_t (delta_N too large)",                // 4
-    "window_distance must be >1",                                    // 5
-    "dimension of A was not >1",                                     // 6
-    "dimension of B was not >1",                                     // 7
-    "dimension of B must match dimension of A ",                     // 8
-    "no proper function for first observable given",                 // 9
-    "no proper function for second observable given",                // 10
-    "no proper function for correlation operation given",            // 11
-    "no proper function for compression of first observable given",  // 12
-    "no proper function for compression of second observable given", // 13
-    "tau_lin must be divisible by 2",                                // 14
-    "dt is smaller than the MD timestep",                            // 15
-    "dt is not a multiple of the MD timestep",                       // 16
-    "cannot set compress2 for autocorrelation",                      // 17
-    "dimA must be divisible by 3 for fcs_acf",                       // 18
-    "fcs_acf requires 3 additional parameters"                       // 19
-};
-
 int Correlator::get_correlation_time(double *correlation_time) {
   // We calculate the correlation time for each m_dim_corr by normalizing the
   // correlation, integrating it and finding out where C(tau)=tau
@@ -232,15 +208,15 @@ void Correlator::initialize() {
   }
 
   if (m_tau_lin < 2) {
-    throw std::runtime_error(init_errors[3]);
+    throw std::runtime_error("tau_lin must be >= 2");
   }
 
   if (m_tau_lin % 2) {
-    throw std::runtime_error(init_errors[14]);
+    throw std::runtime_error("tau_lin must be divisible by 2");
   }
 
   if (m_tau_max <= m_dt) {
-    throw std::runtime_error(init_errors[4]);
+    throw std::runtime_error("tau_max must be >= delta_t (delta_N too large)");
   }
   // set hierarchy depth which can accommodate at least m_tau_max
   if ((m_tau_max / m_dt) < m_tau_lin) {
@@ -263,12 +239,13 @@ void Correlator::initialize() {
   dim_B = B_obs->n_values();
 
   if (dim_A < 1) {
-    throw std::runtime_error(init_errors[6]);
+    throw std::runtime_error("dimension of A was not >1");
   }
 
   // choose the correlation operation
   if (corr_operation_name.empty()) {
-    throw std::runtime_error(init_errors[11]); // there is no reasonable default
+    throw std::runtime_error(
+        "no proper function for correlation operation given");
   }
   if (corr_operation_name == "componentwise_product") {
     m_dim_corr = static_cast<int>(dim_A);
@@ -293,7 +270,7 @@ void Correlator::initialize() {
     m_correlation_args[1] = m_correlation_args[1] * m_correlation_args[1];
     m_correlation_args[2] = m_correlation_args[2] * m_correlation_args[2];
     if (dim_A % 3)
-      throw std::runtime_error(init_errors[18]);
+      throw std::runtime_error("dimA must be divisible by 3 for fcs_acf");
     m_dim_corr = static_cast<int>(dim_A) / 3;
     corr_operation = &fcs_acf;
   } else if (corr_operation_name == "scalar_product") {
@@ -301,7 +278,8 @@ void Correlator::initialize() {
     corr_operation = &scalar_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else {
-    throw std::runtime_error(init_errors[11]);
+    throw std::runtime_error(
+        "no proper function for correlation operation given");
   }
 
   // Choose the compression function
@@ -315,7 +293,8 @@ void Correlator::initialize() {
   } else if (compressA_name == "linear") {
     compressA = &compress_linear;
   } else {
-    throw std::runtime_error(init_errors[12]);
+    throw std::runtime_error(
+        "no proper function for compression of first observable given");
   }
 
   if (compressB_name.empty()) {
@@ -328,7 +307,8 @@ void Correlator::initialize() {
   } else if (compressB_name == "linear") {
     compressB = &compress_linear;
   } else {
-    throw std::runtime_error(init_errors[13]);
+    throw std::runtime_error(
+        "no proper function for compression of second observable given");
   }
 
   A.resize(std::array<int, 2>{{hierarchy_depth, m_tau_lin + 1}});
