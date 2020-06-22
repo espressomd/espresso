@@ -34,8 +34,6 @@
 
 extern Observable_stat obs_scalar_pressure;
 extern Observable_stat obs_pressure_tensor;
-extern Observable_stat_non_bonded obs_scalar_pressure_non_bonded;
-extern Observable_stat_non_bonded obs_pressure_tensor_non_bonded;
 
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.
@@ -50,34 +48,14 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 #endif
   {
     auto const force = calc_non_bonded_pair_force(p1, p2, d, dist);
-    obs_scalar_pressure.non_bonded_contribution(p1.p.type, p2.p.type)[0] +=
-        d * force;
+    auto const stress = tensor_product(d, force);
 
-    /* pressure tensor part */
-    for (int k = 0; k < 3; k++)
-      for (int l = 0; l < 3; l++)
-        obs_pressure_tensor.non_bonded_contribution(
-            p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
-
-    auto const p1molid = p1.p.mol_id;
-    auto const p2molid = p2.p.mol_id;
-    if (p1molid == p2molid) {
-      obs_scalar_pressure_non_bonded.non_bonded_intra_contribution(
-          p1.p.type, p2.p.type)[0] += d * force;
-
-      for (int k = 0; k < 3; k++)
-        for (int l = 0; l < 3; l++)
-          obs_pressure_tensor_non_bonded.non_bonded_intra_contribution(
-              p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
-    } else {
-      obs_scalar_pressure_non_bonded.non_bonded_inter_contribution(
-          p1.p.type, p2.p.type)[0] += d * force;
-
-      for (int k = 0; k < 3; k++)
-        for (int l = 0; l < 3; l++)
-          obs_pressure_tensor_non_bonded.non_bonded_inter_contribution(
-              p1.p.type, p2.p.type)[k * 3 + l] += force[k] * d[l];
-    }
+    auto const type1 = p1.p.mol_id;
+    auto const type2 = p2.p.mol_id;
+    obs_scalar_pressure.add_non_bonded_contribution(type1, type2,
+                                                    trace(stress));
+    obs_pressure_tensor.add_non_bonded_contribution(type1, type2,
+                                                    flatten(stress));
   }
 
 #ifdef ELECTROSTATICS

@@ -31,6 +31,7 @@
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
+#include "reduce_observable_stat.hpp"
 
 #include "short_range_loop.hpp"
 
@@ -40,7 +41,7 @@
 ActorList energyActors;
 
 /** Energy of the system */
-Observable_stat obs_energy{1, false};
+Observable_stat obs_energy{1};
 
 /** Reduce the system energy from all MPI ranks. */
 void master_energy_calc() { mpi_gather_stats(GatherStats::energy); }
@@ -49,7 +50,7 @@ void energy_calc(const double time) {
   if (!interactions_sanity_checks())
     return;
 
-  obs_energy.resize_and_clear();
+  obs_energy = Observable_stat{1};
 
 #ifdef CUDA
   clear_energy_on_GPU();
@@ -83,13 +84,13 @@ void energy_calc(const double time) {
 #endif
 
   /* gather data */
-  obs_energy.reduce();
+  auto obs_energy_res = reduce(comm_cart, obs_energy);
+  if (obs_energy_res) {
+    std::swap(obs_energy, *obs_energy_res);
+  }
 }
 
-void update_energy() {
-  obs_energy.resize();
-  master_energy_calc();
-}
+void update_energy() { master_energy_calc(); }
 
 void calc_long_range_energies(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS

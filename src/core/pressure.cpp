@@ -27,7 +27,9 @@
 #include "communication.hpp"
 #include "event.hpp"
 #include "pressure_inline.hpp"
+#include "reduce_observable_stat.hpp"
 #include "virtual_sites.hpp"
+
 #include <boost/range/algorithm/copy.hpp>
 
 #include "short_range_loop.hpp"
@@ -39,14 +41,6 @@
 Observable_stat obs_scalar_pressure{1};
 /** Pressure tensor of the system */
 Observable_stat obs_pressure_tensor{9};
-/** Contribution from the intra- and inter-molecular non-bonded interactions
- *  to the scalar pressure of the system.
- */
-Observable_stat_non_bonded obs_scalar_pressure_non_bonded{1};
-/** Contribution from the intra- and inter-molecular non-bonded interactions
- *  to the pressure tensor of the system.
- */
-Observable_stat_non_bonded obs_pressure_tensor_non_bonded{9};
 
 nptiso_struct nptiso = {0.0,
                         0.0,
@@ -85,10 +79,8 @@ void pressure_calc() {
   if (!interactions_sanity_checks())
     return;
 
-  obs_scalar_pressure.resize_and_clear();
-  obs_scalar_pressure_non_bonded.resize_and_clear();
-  obs_pressure_tensor.resize_and_clear();
-  obs_pressure_tensor_non_bonded.resize_and_clear();
+  obs_scalar_pressure = Observable_stat{1};
+  obs_pressure_tensor = Observable_stat{9};
 
   on_observable_calc();
 
@@ -119,26 +111,19 @@ void pressure_calc() {
 
   obs_pressure_tensor.rescale(volume);
 
-  /* Intra- and Inter- part of nonbonded interaction */
-  obs_scalar_pressure_non_bonded.rescale(3.0 * volume);
-
-  obs_pressure_tensor_non_bonded.rescale(volume);
-
   /* gather data */
-  obs_scalar_pressure.reduce();
-  obs_pressure_tensor.reduce();
-  obs_scalar_pressure_non_bonded.reduce();
-  obs_pressure_tensor_non_bonded.reduce();
+  auto obs_scalar_pressure_res = reduce(comm_cart, obs_scalar_pressure);
+  if (obs_scalar_pressure_res) {
+    std::swap(obs_scalar_pressure, *obs_scalar_pressure_res);
+  }
+
+  auto obs_pressure_tensor_res = reduce(comm_cart, obs_pressure_tensor);
+  if (obs_pressure_tensor_res) {
+    std::swap(obs_pressure_tensor, *obs_pressure_tensor_res);
+  }
 }
 
-void update_pressure() {
-  obs_scalar_pressure.resize();
-  obs_scalar_pressure_non_bonded.resize();
-  obs_pressure_tensor.resize();
-  obs_pressure_tensor_non_bonded.resize();
-
-  mpi_gather_stats(GatherStats::pressure);
-}
+void update_pressure() { mpi_gather_stats(GatherStats::pressure); }
 
 Utils::Vector9d observable_compute_pressure_tensor() {
   update_pressure();
