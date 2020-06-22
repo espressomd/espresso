@@ -114,12 +114,7 @@ void pressure_calc() {
   obs_pressure_tensor.reduce(comm_cart);
 }
 
-void update_pressure() {
-  obs_scalar_pressure.resize();
-  obs_pressure_tensor.resize();
-
-  mpi_gather_stats(GatherStats::pressure);
-}
+void update_pressure() { mpi_gather_stats(GatherStats::pressure); }
 
 Utils::Vector9d observable_compute_pressure_tensor() {
   update_pressure();

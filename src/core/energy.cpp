@@ -86,10 +86,7 @@ void energy_calc(const double time) {
   obs_energy.reduce(comm_cart);
 }
 
-void update_energy() {
-  obs_energy.resize();
-  master_energy_calc();
-}
+void update_energy() { master_energy_calc(); }
 
 void calc_long_range_energies(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
