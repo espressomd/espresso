@@ -129,7 +129,7 @@ std::vector<double> square_distance_componentwise(std::vector<double> const &A,
   return C;
 }
 
-// note: the argument name wsquare denotes that it value is w^2 while the user
+// note: the argument name wsquare denotes that its value is w^2 while the user
 // sets w
 std::vector<double> fcs_acf(std::vector<double> const &A,
                             std::vector<double> const &B,
@@ -593,6 +593,7 @@ std::string Correlator::get_internal_state() const {
 
   return ss.str();
 }
+
 void Correlator::set_internal_state(std::string const &state) {
   namespace iostreams = boost::iostreams;
   iostreams::array_source src(state.data(), state.size());
