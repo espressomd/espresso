@@ -25,7 +25,7 @@
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
-void Observable_stat::resize() {
+Observable_stat::Observable_stat(size_t chunk_size) : m_chunk_size(chunk_size) {
   // number of chunks for different interaction types
   auto constexpr n_coulomb = 3;
   auto constexpr n_dipolar = 3;

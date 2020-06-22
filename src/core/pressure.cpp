@@ -77,8 +77,8 @@ void pressure_calc() {
   if (!interactions_sanity_checks())
     return;
 
-  obs_scalar_pressure.resize();
-  obs_pressure_tensor.resize();
+  obs_scalar_pressure = Observable_stat{1};
+  obs_pressure_tensor = Observable_stat{9};
 
   on_observable_calc();
 

@@ -57,9 +57,7 @@ class Observable_stat {
   }
 
 public:
-  explicit Observable_stat(size_t chunk_size) : m_chunk_size(chunk_size) {
-    resize();
-  }
+  explicit Observable_stat(size_t chunk_size);
 
   /** Accumulate values.
    *  @param acc    Initial value for the accumulator.
@@ -107,9 +105,6 @@ public:
   Utils::Span<double> non_bonded_intra;
   /** Contribution(s) from non-bonded intermolecular interactions. */
   Utils::Span<double> non_bonded_inter;
-
-  /** Resize the observable */
-  void resize();
 
   /** Get contribution from a bonded interaction */
   Utils::Span<double> bonded_contribution(int bond_id) {

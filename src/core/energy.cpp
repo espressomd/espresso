@@ -49,7 +49,7 @@ void energy_calc(const double time) {
   if (!interactions_sanity_checks())
     return;
 
-  obs_energy.resize();
+  obs_energy = Observable_stat{1};
 
 #ifdef CUDA
   clear_energy_on_GPU();
