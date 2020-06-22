@@ -24,18 +24,15 @@
 #include "config.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 
 void Observable_stat::resize() {
   // number of chunks for different interaction types
-  auto const n_coulomb =
-      m_pressure_obs ? Coulomb::pressure_n() : Coulomb::energy_n();
-  auto const n_dipolar =
-      m_pressure_obs ? Dipole::pressure_n() : Dipole::energy_n();
-  size_t n_vs = 0;
+  auto constexpr n_coulomb = 3;
+  auto constexpr n_dipolar = 3;
 #ifdef VIRTUAL_SITES
-  n_vs = 1;
+  auto constexpr n_vs = 1;
+#else
+  auto constexpr n_vs = 0;
 #endif
   auto const n_bonded = bonded_ia_params.size();
   auto const n_non_bonded = max_non_bonded_pairs();
