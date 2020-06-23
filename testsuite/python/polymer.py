@@ -189,6 +189,18 @@ class PolymerPositions(ut.TestCase):
                 respect_constraints=True, seed=self.seed)
         self.system.constraints.remove(wall_constraint)
 
+    def test_failure(self):
+        """
+        Check the runtime error message.
+
+        """
+        with self.assertRaisesRegex(Exception, 'Failed to create polymer positions.'):
+            polymer.positions(
+                n_polymers=1, beads_per_chain=10,
+                start_positions=np.array([[0, 0, 0]]),
+                bond_length=self.box_l / 2, min_distance=self.box_l / 2.1,
+                bond_angle=np.pi, max_tries=2, seed=self.seed)
+
 
 if __name__ == "__main__":
     ut.main()

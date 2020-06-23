@@ -129,6 +129,18 @@ class Rotation(ut.TestCase):
         np.testing.assert_allclose(
             p.convert_vector_space_to_body(v_r), v, atol=1E-10)
 
+    def test_rotation_mpi_communication(self):
+        s = self.s
+        s.part.clear()
+        # place particle in cell with MPI rank 0
+        p = s.part.add(pos=0.01 * self.s.box_l, rotation=(1, 1, 1))
+        p.rotate((1, 0, 0), -np.pi / 2)
+        np.testing.assert_array_almost_equal(p.director, [0, 1, 0], decimal=10)
+        # place particle in cell with MPI rank N-1
+        p = s.part.add(pos=0.99 * self.s.box_l, rotation=(1, 1, 1))
+        p.rotate((1, 0, 0), -np.pi / 2)
+        np.testing.assert_array_almost_equal(p.director, [0, 1, 0], decimal=10)
+
 
 if __name__ == "__main__":
     ut.main()
