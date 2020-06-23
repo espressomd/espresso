@@ -126,7 +126,7 @@ class VirtualSitesTracersCommon:
         system.part.clear()
 
         # Establish steady state flow field
-        p = system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=True)
+        system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=True)
         system.integrator.run(400)
 
         system.part[0].pos = (0, 5.5, 5.5)
