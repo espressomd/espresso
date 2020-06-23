@@ -335,7 +335,7 @@ void calc_energy_long_range(Observable_stat &energy,
       // restore modified sums
       ELC_P3M_restore_p3m_sums(particles);
     }
-    energy.coulomb[2] = ELC_energy(particles);
+    energy.coulomb[1] += ELC_energy(particles);
     break;
 #endif
 #ifdef SCAFACOS

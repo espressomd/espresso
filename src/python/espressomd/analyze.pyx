@@ -64,7 +64,7 @@ cdef _Observable_stat_to_dict(Observable_stat obs, int size,
         * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded contribution between short ranged forces between type i and j and with the same mol_id
         * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded contribution between short ranged forces between type i and j and different mol_ids
         * ``"coulomb"``: Coulomb contribution, how it is calculated depends on the method
-        * ``"coulomb", <i>``: Coulomb contribution from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
+        * ``"coulomb", <i>``: Coulomb contribution from particle pairs (``i=0``), electrostatics solvers (``i=1``)
         * ``"dipolar"``: dipolar contribution, how it is calculated depends on the method
         * ``"dipolar", <i>``: dipolar contribution from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``) and their corrections (``i=2``)
         * ``"virtual_sites"``: virtual sites contribution
@@ -323,7 +323,7 @@ class Analysis:
             * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb pressure tensor.
               For how the pressure tensor is calculated, see :ref:`Pressure Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
               :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
-            * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: Pressure contribution from virtual sites
 
@@ -357,7 +357,7 @@ class Analysis:
             * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and with the same mol_id
             * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Maxwell pressure tensor, how it is calculated depends on the method
-            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
             * ``"virtual_sites"``: pressure tensor contribution from virtual sites
 
@@ -398,7 +398,7 @@ class Analysis:
             * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and with the same mol_id
             * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Coulomb energy, how it is calculated depends on the method
-            * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: dipolar energy
             * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``) and their corrections (``i=2``)
 
