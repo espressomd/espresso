@@ -19,7 +19,9 @@
 
 # For C-extern Analysis
 
+cimport numpy as np
 from .utils cimport Vector3i, Vector3d, Vector9d, Span
+from .utils cimport create_nparray_from_double_span
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 
@@ -94,3 +96,26 @@ cdef extern from "energy.hpp":
 
 cdef extern from "dpd.hpp":
     Vector9d dpd_stress()
+
+cdef inline get_obs_contribs(Span[double] contributions, int size):
+    """
+    Convert an Observable_stat range of contributions into a correctly
+    shaped numpy array.
+    """
+    cdef np.ndarray value
+    value = create_nparray_from_double_span(contributions)
+    if size == 9:
+        return value.reshape((-1, 3, 3))
+    else:
+        return value
+
+cdef inline get_obs_contrib(Span[double] contribution, int size):
+    """
+    Convert an Observable_stat contribution into a correctly
+    shaped numpy array. If the size is 1, decay to a float.
+    """
+    cdef np.ndarray value
+    value = get_obs_contribs(contribution, size)
+    if value.shape[0] == 1:
+        return value[0]
+    return value
