@@ -32,7 +32,6 @@
 
 #include <utils/math/tensor_product.hpp>
 
-extern Observable_stat obs_scalar_pressure;
 extern Observable_stat obs_pressure_tensor;
 
 /** Calculate non bonded energies between a pair of particles.

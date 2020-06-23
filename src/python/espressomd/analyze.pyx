@@ -20,6 +20,7 @@
 include "myconfig.pxi"
 from . cimport analyze
 from libcpp.vector cimport vector  # import std::vector as vector
+from libcpp cimport bool as cbool
 from .interactions cimport BONDED_IA_NONE
 from .interactions cimport bonded_ia_params
 import numpy as np
@@ -35,8 +36,19 @@ from .utils cimport create_nparray_from_double_array
 from .particle_data cimport get_n_part
 
 
-cdef _Observable_stat_to_dict(Observable_stat obs, int size):
+cdef _Observable_stat_to_dict(Observable_stat obs, int size,
+                              cbool calc_sp):
     """Transform an Observable_stat struct to a python dict.
+
+    Parameters
+    ----------
+    obs :
+        Core observable.
+    size : :obj:`int`, \{1, 9\}
+        Dimensionality of the data.
+    calc_sp : :obj:`bool`
+        Whether to calculate a scalar pressure (only relevant when
+        ``obs`` is a pressure tensor observable).
 
     Returns
     -------
@@ -61,7 +73,7 @@ cdef _Observable_stat_to_dict(Observable_stat obs, int size):
     """
 
     def set_initial():
-        if size == 9:
+        if size == 9 and not calc_sp:
             return np.zeros((3, 3), dtype=float)
         else:
             return 0.0
@@ -79,19 +91,23 @@ cdef _Observable_stat_to_dict(Observable_stat obs, int size):
         total = np.zeros((9,), dtype=float)
         for i in range(9):
             total[i] = obs.accumulate(0.0, i)
-        p["total"] = total.reshape((3, 3))
+        total = total.reshape((3, 3))
+        if calc_sp:
+            p["total"] = np.einsum('ii', total) / 3
+        else:
+            p["total"] = total
 
     # Kinetic
-    p["kinetic"] = get_obs_contrib(obs.kinetic, size)
+    p["kinetic"] = get_obs_contrib(obs.kinetic, size, calc_sp)
 
     # External
-    p["external_fields"] = get_obs_contrib(obs.external_fields, size)
+    p["external_fields"] = get_obs_contrib(obs.external_fields, size, calc_sp)
 
     # Bonded
     total_bonded = set_initial()
     for i in range(bonded_ia_params.size()):
         if bonded_ia_params[i].type != BONDED_IA_NONE:
-            val = get_obs_contrib(obs.bonded_contribution(i), size)
+            val = get_obs_contrib(obs.bonded_contribution(i), size, calc_sp)
             p["bonded", i] = val
             total_bonded += val
     p["bonded"] = total_bonded
@@ -103,12 +119,12 @@ cdef _Observable_stat_to_dict(Observable_stat obs, int size):
         for j in range(i, analyze.max_seen_particle_type):
             intra = get_obs_contrib(
                 obs.non_bonded_intra_contribution(
-                    i, j), size)
+                    i, j), size, calc_sp)
             total_intra += intra
             p["non_bonded_intra", i, j] = intra
             inter = get_obs_contrib(
                 obs.non_bonded_inter_contribution(
-                    i, j), size)
+                    i, j), size, calc_sp)
             total_inter += inter
             p["non_bonded_inter", i, j] = inter
             p["non_bonded", i, j] = intra + inter
@@ -120,7 +136,7 @@ cdef _Observable_stat_to_dict(Observable_stat obs, int size):
     # Electrostatics
     IF ELECTROSTATICS == 1:
         cdef np.ndarray coulomb
-        coulomb = get_obs_contribs(obs.coulomb, size)
+        coulomb = get_obs_contribs(obs.coulomb, size, calc_sp)
         for i in range(coulomb.shape[0]):
             p["coulomb", i] = coulomb[i]
         p["coulomb"] = np.sum(coulomb, axis=0)
@@ -128,7 +144,7 @@ cdef _Observable_stat_to_dict(Observable_stat obs, int size):
     # Dipoles
     IF DIPOLES == 1:
         cdef np.ndarray dipolar
-        dipolar = get_obs_contribs(obs.dipolar, size)
+        dipolar = get_obs_contribs(obs.dipolar, size, calc_sp)
         for i in range(dipolar.shape[0]):
             p["dipolar", i] = dipolar[i]
         p["dipolar"] = np.sum(dipolar, axis=0)
@@ -136,7 +152,7 @@ cdef _Observable_stat_to_dict(Observable_stat obs, int size):
     # virtual sites
     IF VIRTUAL_SITES == 1:
         cdef np.ndarray virtual_sites
-        virtual_sites = get_obs_contribs(obs.virtual_sites, size)
+        virtual_sites = get_obs_contribs(obs.virtual_sites, size, calc_sp)
         for i in range(virtual_sites.shape[0]):
             p["virtual_sites", i] = virtual_sites[i]
         p["virtual_sites"] = np.sum(virtual_sites, axis=0)
@@ -316,7 +332,7 @@ class Analysis:
         # Update in ESPResSo core
         analyze.update_pressure()
 
-        return _Observable_stat_to_dict(analyze.obs_scalar_pressure, 1)
+        return _Observable_stat_to_dict(analyze.obs_pressure_tensor, 9, True)
 
     def pressure_tensor(self):
         """Calculate the instantaneous pressure_tensor (in parallel). This is
@@ -350,7 +366,7 @@ class Analysis:
         # Update in ESPResSo core
         analyze.update_pressure()
 
-        return _Observable_stat_to_dict(analyze.obs_pressure_tensor, 9)
+        return _Observable_stat_to_dict(analyze.obs_pressure_tensor, 9, False)
 
     IF DPD == 1:
         def dpd_stress(self):
@@ -401,7 +417,7 @@ class Analysis:
         analyze.update_energy()
         handle_errors("calc_long_range_energies failed")
 
-        return _Observable_stat_to_dict(analyze.obs_energy, 1)
+        return _Observable_stat_to_dict(analyze.obs_energy, 1, False)
 
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):

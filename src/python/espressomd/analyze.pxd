@@ -20,6 +20,7 @@
 # For C-extern Analysis
 
 cimport numpy as np
+import numpy as np
 from .utils cimport Vector3i, Vector3d, Vector9d, Span
 from .utils cimport create_nparray_from_double_span
 from libcpp.vector cimport vector  # import std::vector as vector
@@ -81,7 +82,6 @@ cdef extern from "statistics_chain.hpp":
     array2 calc_rh(int, int, int)
 
 cdef extern from "pressure_inline.hpp":
-    cdef Observable_stat obs_scalar_pressure
     cdef Observable_stat obs_pressure_tensor
 
 cdef extern from "pressure.hpp":
@@ -97,25 +97,52 @@ cdef extern from "energy.hpp":
 cdef extern from "dpd.hpp":
     Vector9d dpd_stress()
 
-cdef inline get_obs_contribs(Span[double] contributions, int size):
+cdef inline get_obs_contribs(Span[double] contributions, int size,
+                             cbool calc_scalar_pressure):
     """
     Convert an Observable_stat range of contributions into a correctly
     shaped numpy array.
+
+    Parameters
+    ----------
+    contributions : (N,) array_like of :obj:`float`
+        Flattened array of energy/pressure contributions from an observable.
+    size : :obj:`int`, \{1, 9\}
+        Dimensionality of the data.
+    calc_scalar_pressure : :obj:`bool`
+        Whether to calculate a scalar pressure (only relevant when
+        ``contributions`` is a pressure tensor).
+
     """
     cdef np.ndarray value
     value = create_nparray_from_double_span(contributions)
     if size == 9:
-        return value.reshape((-1, 3, 3))
+        if calc_scalar_pressure:
+            return np.einsum('...ii', value.reshape((-1, 3, 3))) / 3
+        else:
+            return value.reshape((-1, 3, 3))
     else:
         return value
 
-cdef inline get_obs_contrib(Span[double] contribution, int size):
+cdef inline get_obs_contrib(Span[double] contribution, int size,
+                            cbool calc_scalar_pressure):
     """
     Convert an Observable_stat contribution into a correctly
     shaped numpy array. If the size is 1, decay to a float.
+
+    Parameters
+    ----------
+    contributions : (N,) array_like of :obj:`float`
+        Flattened array of energy/pressure contributions from an observable.
+    size : :obj:`int`, \{1, 9\}
+        Dimensionality of the data.
+    calc_scalar_pressure : :obj:`bool`
+        Whether to calculate a scalar pressure (only relevant when
+        ``contributions`` is a pressure tensor).
+
     """
     cdef np.ndarray value
-    value = get_obs_contribs(contribution, size)
+    value = get_obs_contribs(contribution, size, calc_scalar_pressure)
     if value.shape[0] == 1:
         return value[0]
     return value

@@ -37,8 +37,6 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-/** Scalar pressure of the system */
-Observable_stat obs_scalar_pressure{1};
 /** Pressure tensor of the system */
 Observable_stat obs_pressure_tensor{9};
 
@@ -55,17 +53,6 @@ nptiso_struct nptiso = {0.0,
                         0,
                         false,
                         0};
-
-/** Calculate the scalar pressure from the pressure tensor. */
-Observable_stat get_scalar_pressure(Observable_stat const &pressure_tensor) {
-  Observable_stat scalar_pressure{1};
-  auto it_scalar = scalar_pressure.data_().begin();
-  auto it_tensor = pressure_tensor.data_().begin();
-  auto it_tensor_end = pressure_tensor.data_().end();
-  for (; it_tensor < it_tensor_end; it_tensor += 9)
-    *(it_scalar++) += (it_tensor[0] + it_tensor[4] + it_tensor[8]) / 3.;
-  return scalar_pressure;
-}
 
 /** Calculate long-range virials (P3M, ...). */
 void calc_long_range_virials(const ParticleRange &particles) {
@@ -120,7 +107,6 @@ void pressure_calc() {
   if (obs_pressure_tensor_res) {
     std::swap(obs_pressure_tensor, *obs_pressure_tensor_res);
   }
-  obs_scalar_pressure = get_scalar_pressure(obs_pressure_tensor);
 }
 
 void update_pressure() { mpi_gather_stats(GatherStats::pressure); }
