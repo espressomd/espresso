@@ -82,7 +82,7 @@ cdef extern from "statistics_chain.hpp":
     array2 calc_rh(int, int, int)
 
 cdef extern from "pressure_inline.hpp":
-    cdef Observable_stat obs_pressure_tensor
+    cdef Observable_stat obs_pressure
 
 cdef extern from "pressure.hpp":
     cdef void update_pressure()

@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-/** Observable for the scalar pressure, pressure tensor and energy. */
+/** Observable for the pressure and energy. */
 class Observable_stat {
   /** Array for observables on each node. */
   std::vector<double> m_data;

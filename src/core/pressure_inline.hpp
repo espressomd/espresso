@@ -32,7 +32,7 @@
 
 #include <utils/math/tensor_product.hpp>
 
-extern Observable_stat obs_pressure_tensor;
+extern Observable_stat obs_pressure;
 
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.
@@ -51,18 +51,17 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 
     auto const type1 = p1.p.mol_id;
     auto const type2 = p2.p.mol_id;
-    obs_pressure_tensor.add_non_bonded_contribution(type1, type2,
-                                                    flatten(stress));
+    obs_pressure.add_non_bonded_contribution(type1, type2, flatten(stress));
   }
 
 #ifdef ELECTROSTATICS
-  if (!obs_pressure_tensor.coulomb.empty()) {
+  if (!obs_pressure.coulomb.empty()) {
     /* real space Coulomb */
     auto const p_coulomb = Coulomb::pair_pressure(p1, p2, d, dist);
 
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
-        obs_pressure_tensor.coulomb[i * 3 + j] += p_coulomb[i][j];
+        obs_pressure.coulomb[i * 3 + j] += p_coulomb[i][j];
       }
     }
   }
@@ -148,8 +147,7 @@ inline bool add_bonded_pressure_tensor(Particle &p1, int bond_id,
     /* pressure tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        obs_pressure_tensor.bonded_contribution(bond_id)[k * 3 + l] +=
-            tensor[k][l];
+        obs_pressure.bonded_contribution(bond_id)[k * 3 + l] += tensor[k][l];
 
     return false;
   }
@@ -167,8 +165,7 @@ inline void add_kinetic_virials(Particle const &p1) {
   /* kinetic pressure */
   for (int k = 0; k < 3; k++)
     for (int l = 0; l < 3; l++)
-      obs_pressure_tensor.kinetic[k * 3 + l] +=
-          (p1.m.v[k]) * (p1.m.v[l]) * p1.p.mass;
+      obs_pressure.kinetic[k * 3 + l] += p1.m.v[k] * p1.m.v[l] * p1.p.mass;
 }
 
 #endif

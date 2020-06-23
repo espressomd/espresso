@@ -38,7 +38,7 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 
 /** Pressure tensor of the system */
-Observable_stat obs_pressure_tensor{9};
+Observable_stat obs_pressure{9};
 
 nptiso_struct nptiso = {0.0,
                         0.0,
@@ -58,7 +58,7 @@ nptiso_struct nptiso = {0.0,
 void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_pressure_long_range(obs_pressure_tensor, particles);
+  Coulomb::calc_pressure_long_range(obs_pressure, particles);
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
@@ -76,7 +76,7 @@ void pressure_calc() {
   if (!interactions_sanity_checks())
     return;
 
-  obs_pressure_tensor = Observable_stat{9};
+  obs_pressure = Observable_stat{9};
 
   on_observable_calc();
 
@@ -93,19 +93,18 @@ void pressure_calc() {
   calc_long_range_virials(cell_structure.local_particles());
 
 #ifdef VIRTUAL_SITES
-  if (!obs_pressure_tensor.virtual_sites.empty()) {
-    auto const vs_pressure_tensor = virtual_sites()->pressure_tensor();
-    boost::copy(flatten(vs_pressure_tensor),
-                obs_pressure_tensor.virtual_sites.begin());
+  if (!obs_pressure.virtual_sites.empty()) {
+    auto const vs_pressure = virtual_sites()->pressure_tensor();
+    boost::copy(flatten(vs_pressure), obs_pressure.virtual_sites.begin());
   }
 #endif
 
-  obs_pressure_tensor.rescale(volume);
+  obs_pressure.rescale(volume);
 
   /* gather data */
-  auto obs_pressure_tensor_res = reduce(comm_cart, obs_pressure_tensor);
-  if (obs_pressure_tensor_res) {
-    std::swap(obs_pressure_tensor, *obs_pressure_tensor_res);
+  auto obs_pressure_res = reduce(comm_cart, obs_pressure);
+  if (obs_pressure_res) {
+    std::swap(obs_pressure, *obs_pressure_res);
   }
 }
 
@@ -115,7 +114,7 @@ Utils::Vector9d observable_compute_pressure_tensor() {
   update_pressure();
   Utils::Vector9d pressure_tensor{};
   for (size_t j = 0; j < 9; j++) {
-    pressure_tensor[j] = obs_pressure_tensor.accumulate(0, j);
+    pressure_tensor[j] = obs_pressure.accumulate(0, j);
   }
   return pressure_tensor;
 }
