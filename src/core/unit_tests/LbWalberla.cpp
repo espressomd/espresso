@@ -32,6 +32,30 @@ double tau = 0.34;
 double density = 2.5;
 Vector3i mpi_shape;
 
+//BOOST_AUTO_TEST_CASE(field_layout) {
+//  LbWalberlaD3Q19Thermalized lb = LbWalberlaD3Q19Thermalized(viscosity, density, agrid, tau,
+//                                             box_dimensions, mpi_shape, 2);
+//  lb.add_force_at_pos(Vector3d{{1.5,0.5,3.5}},Vector3d{{1,2,3}});
+//  lb.integrate();
+//  double tol=1E-14;
+//  for (int i=0;i<grid_dimensions[0];i++)
+//    for (int j=0;j<grid_dimensions[1];j++)
+//      for (int k=0;k<grid_dimensions[2];k++) {
+//        auto v = lb.get_node_velocity(Vector3i{{i,j,k}});
+//        if (v) {
+//          if ((*v).norm()>tol) {
+//             printf("%d %d %d: %g %g %g\n",i,j,k,(*v)[0],(*v)[1],(*v)[2]);
+//          }
+//        }
+//        auto f = lb.get_node_last_applied_force(Vector3i{{i,j,k}});
+//        if (f) {
+//          if ((*f).norm()>tol) {
+//             printf("f: %d %d %d: %g %g %g\n",i,j,k,(*f)[0],(*f)[1],(*f)[2]);
+//          }
+//        }
+//      }
+//}
+
 BOOST_AUTO_TEST_CASE(basic_params) {
   LbWalberlaD3Q19Thermalized lb = LbWalberlaD3Q19Thermalized(viscosity, density, agrid, tau,
                                              box_dimensions, mpi_shape, 2);
@@ -276,18 +300,19 @@ BOOST_AUTO_TEST_CASE(total_momentum) {
 BOOST_AUTO_TEST_CASE(integrate_with_volume_force) {
   LbWalberlaD3Q19Thermalized lb = LbWalberlaD3Q19Thermalized(viscosity, density, agrid, tau,
                                              box_dimensions, mpi_shape, 2);
-  auto f = Vector3d{0.015, 0.25, -0.22};
+  auto f = Vector3d{0.01, 0.2, -0.2};
   lb.set_external_force(f);
   BOOST_CHECK_SMALL(lb.get_momentum().norm(), 1E-10);
 
+  int n_nodes = grid_dimensions[0]*grid_dimensions[1]*grid_dimensions[2];
   for (int i = 1; i < 30; i++) {
     lb.integrate();
-    auto mom = lb.get_momentum();
-    auto mom_exp = (i + .5) * f * grid_dimensions[0] * grid_dimensions[1] *
-                   grid_dimensions[2];
+    auto mom = lb.get_momentum() / double(n_nodes);
+    auto mom_exp = (i + .5) * f;
     MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                   MPI_COMM_WORLD);
     BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-7);
+    printf("%g %g %g, %g %g %g\n",mom[0],mom[1],mom[2],mom_exp[0],mom_exp[1],mom_exp[2]);
   }
 }
 

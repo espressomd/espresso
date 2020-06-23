@@ -106,11 +106,9 @@ public:
 
     WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(force_field, {
       Cell cell(x, y, z);
-      if (boundary_handling->isDomain(cell)) {
-        for (int i: {0,1,2}) 
-          force_field->get(x,y,z,i) += m_ext_force[i];
+      for (int i: {0,1,2}) 
+        force_field->get(x,y,z,i) += m_ext_force[i];
         
-      }
     });
     WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(force_to_be_applied, {
       Cell cell(x, y, z);
