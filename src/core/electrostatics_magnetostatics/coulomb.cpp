@@ -42,8 +42,7 @@
 Coulomb_parameters coulomb;
 
 namespace Coulomb {
-void calc_pressure_long_range(Observable_stat &virials,
-                              Observable_stat &p_tensor,
+void calc_pressure_long_range(Observable_stat &p_tensor,
                               const ParticleRange &particles) {
   switch (coulomb.method) {
 #ifdef P3M
@@ -60,7 +59,6 @@ void calc_pressure_long_range(Observable_stat &virials,
     p3m_charge_assign(particles);
     auto const p3m_p_tensor = p3m_calc_kspace_pressure_tensor();
     std::copy_n(p3m_p_tensor.data(), 9, p_tensor.coulomb.begin() + 9);
-    virials.coulomb[1] = p3m_p_tensor[0] + p3m_p_tensor[4] + p3m_p_tensor[8];
 
     break;
   }

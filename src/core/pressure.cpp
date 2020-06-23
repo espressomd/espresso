@@ -56,12 +56,22 @@ nptiso_struct nptiso = {0.0,
                         false,
                         0};
 
+/** Calculate the scalar pressure from the pressure tensor. */
+Observable_stat get_scalar_pressure(Observable_stat const &pressure_tensor) {
+  Observable_stat scalar_pressure{1};
+  auto it_scalar = scalar_pressure.data_().begin();
+  auto it_tensor = pressure_tensor.data_().begin();
+  auto it_tensor_end = pressure_tensor.data_().end();
+  for (; it_tensor < it_tensor_end; it_tensor += 9)
+    *(it_scalar++) += (it_tensor[0] + it_tensor[4] + it_tensor[8]) / 3.;
+  return scalar_pressure;
+}
+
 /** Calculate long-range virials (P3M, ...). */
 void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_pressure_long_range(obs_scalar_pressure, obs_pressure_tensor,
-                                    particles);
+  Coulomb::calc_pressure_long_range(obs_pressure_tensor, particles);
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
@@ -79,7 +89,6 @@ void pressure_calc() {
   if (!interactions_sanity_checks())
     return;
 
-  obs_scalar_pressure = Observable_stat{1};
   obs_pressure_tensor = Observable_stat{9};
 
   on_observable_calc();
@@ -97,30 +106,21 @@ void pressure_calc() {
   calc_long_range_virials(cell_structure.local_particles());
 
 #ifdef VIRTUAL_SITES
-  if (!obs_scalar_pressure.virtual_sites.empty()) {
+  if (!obs_pressure_tensor.virtual_sites.empty()) {
     auto const vs_pressure_tensor = virtual_sites()->pressure_tensor();
-
-    obs_scalar_pressure.virtual_sites[0] += trace(vs_pressure_tensor);
     boost::copy(flatten(vs_pressure_tensor),
                 obs_pressure_tensor.virtual_sites.begin());
   }
 #endif
 
-  /* rescale kinetic energy (=ideal contribution) */
-  obs_scalar_pressure.rescale(3.0 * volume);
-
   obs_pressure_tensor.rescale(volume);
 
   /* gather data */
-  auto obs_scalar_pressure_res = reduce(comm_cart, obs_scalar_pressure);
-  if (obs_scalar_pressure_res) {
-    std::swap(obs_scalar_pressure, *obs_scalar_pressure_res);
-  }
-
   auto obs_pressure_tensor_res = reduce(comm_cart, obs_pressure_tensor);
   if (obs_pressure_tensor_res) {
     std::swap(obs_pressure_tensor, *obs_pressure_tensor_res);
   }
+  obs_scalar_pressure = get_scalar_pressure(obs_pressure_tensor);
 }
 
 void update_pressure() { mpi_gather_stats(GatherStats::pressure); }

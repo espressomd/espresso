@@ -52,14 +52,12 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 
     auto const type1 = p1.p.mol_id;
     auto const type2 = p2.p.mol_id;
-    obs_scalar_pressure.add_non_bonded_contribution(type1, type2,
-                                                    trace(stress));
     obs_pressure_tensor.add_non_bonded_contribution(type1, type2,
                                                     flatten(stress));
   }
 
 #ifdef ELECTROSTATICS
-  if (!obs_scalar_pressure.coulomb.empty()) {
+  if (!obs_pressure_tensor.coulomb.empty()) {
     /* real space Coulomb */
     auto const p_coulomb = Coulomb::pair_pressure(p1, p2, d, dist);
 
@@ -68,8 +66,6 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
         obs_pressure_tensor.coulomb[i * 3 + j] += p_coulomb[i][j];
       }
     }
-
-    obs_scalar_pressure.coulomb[0] += trace(p_coulomb);
   }
 #endif /*ifdef ELECTROSTATICS */
 
@@ -150,8 +146,6 @@ inline bool add_bonded_pressure_tensor(Particle &p1, int bond_id,
   if (result) {
     auto const &tensor = result.get();
 
-    obs_scalar_pressure.bonded_contribution(bond_id)[0] += trace(tensor);
-
     /* pressure tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
@@ -171,9 +165,7 @@ inline void add_kinetic_virials(Particle const &p1) {
   if (p1.p.is_virtual)
     return;
 
-  /* kinetic energy */
-  obs_scalar_pressure.kinetic[0] += p1.m.v.norm2() * p1.p.mass;
-
+  /* kinetic pressure */
   for (int k = 0; k < 3; k++)
     for (int l = 0; l < 3; l++)
       obs_pressure_tensor.kinetic[k * 3 + l] +=

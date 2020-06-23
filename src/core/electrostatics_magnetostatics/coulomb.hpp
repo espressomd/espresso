@@ -60,8 +60,7 @@ struct Coulomb_parameters {
 extern Coulomb_parameters coulomb;
 
 namespace Coulomb {
-void calc_pressure_long_range(Observable_stat &virials,
-                              Observable_stat &p_tensor,
+void calc_pressure_long_range(Observable_stat &p_tensor,
                               const ParticleRange &particles);
 
 void sanity_checks(int &state);
