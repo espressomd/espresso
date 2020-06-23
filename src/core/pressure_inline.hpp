@@ -32,16 +32,16 @@
 
 #include <utils/math/tensor_product.hpp>
 
-extern Observable_stat obs_pressure;
-
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.
  *  @param p2        pointer to particle 2.
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
+ *  @param[in,out] obs_pressure   pressure observable.
  */
 inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
-                                        Utils::Vector3d const &d, double dist) {
+                                        Utils::Vector3d const &d, double dist,
+                                        Observable_stat &obs_pressure) {
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
@@ -136,29 +136,12 @@ calc_bonded_pressure_tensor(Bonded_ia_parameters const &iaparams, Particle &p1,
   }
 }
 
-inline bool add_bonded_pressure_tensor(Particle &p1, int bond_id,
-                                       Utils::Span<Particle *> partners) {
-  auto const &iaparams = bonded_ia_params[bond_id];
-
-  auto const result = calc_bonded_pressure_tensor(iaparams, p1, partners);
-  if (result) {
-    auto const &tensor = result.get();
-
-    /* pressure tensor part */
-    for (int k = 0; k < 3; k++)
-      for (int l = 0; l < 3; l++)
-        obs_pressure.bonded_contribution(bond_id)[k * 3 + l] += tensor[k][l];
-
-    return false;
-  }
-
-  return true;
-}
-
 /** Calculate kinetic pressure (aka energy) for one particle.
- *  @param p1 particle for which to calculate pressure
+ *  @param[in] p1   particle for which to calculate pressure
+ *  @param[out]    obs_pressure  pressure observable
  */
-inline void add_kinetic_virials(Particle const &p1) {
+inline void add_kinetic_virials(Particle const &p1,
+                                Observable_stat &obs_pressure) {
   if (p1.p.is_virtual)
     return;
 
@@ -166,6 +149,29 @@ inline void add_kinetic_virials(Particle const &p1) {
   for (int k = 0; k < 3; k++)
     for (int l = 0; l < 3; l++)
       obs_pressure.kinetic[k * 3 + l] += p1.m.v[k] * p1.m.v[l] * p1.p.mass;
+}
+
+/** Add bonded energies for one particle to the energy observable.
+ *  @param[in] p   particle for which to calculate pressure
+ *  @param[out]    obs_pressure   pressure observable
+ */
+inline void add_bonded_virials(Particle &p, Observable_stat &obs_pressure) {
+  cell_structure.execute_bond_handler(p, [&obs_pressure](
+                                             Particle &p1, int bond_id,
+                                             Utils::Span<Particle *> partners) {
+    auto const &iaparams = bonded_ia_params[bond_id];
+    auto const result = calc_bonded_pressure_tensor(iaparams, p1, partners);
+    if (result) {
+      auto const &tensor = result.get();
+      /* pressure tensor part */
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
+          obs_pressure.bonded_contribution(bond_id)[k * 3 + l] += tensor[k][l];
+
+      return false;
+    }
+    return true;
+  });
 }
 
 #endif

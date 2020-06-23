@@ -24,6 +24,7 @@
 #ifdef CUDA
 
 #include "CudaHostAllocator.hpp"
+#include "Observable_stat.hpp"
 #include "ParticleRange.hpp"
 
 #include <utils/Span.hpp>
@@ -107,7 +108,7 @@ typedef struct {
 } CUDA_global_part_vars;
 
 void copy_forces_from_GPU(ParticleRange &particles);
-void copy_energy_from_GPU();
+void copy_energy_from_GPU(Observable_stat &obs_energy);
 void clear_energy_on_GPU();
 
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host();

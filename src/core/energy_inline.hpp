@@ -71,8 +71,6 @@
 #include "electrostatics_magnetostatics/dipole_inline.hpp"
 #endif
 
-extern Observable_stat obs_energy;
-
 /** Calculate non-bonded energies between a pair of particles.
  *  @param p1         particle 1.
  *  @param p2         particle 2.
@@ -179,10 +177,12 @@ inline double calc_non_bonded_pair_energy(Particle const &p1,
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
+ *  @param[in,out] obs_energy   energy observable.
  */
 inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
                                        Utils::Vector3d const &d,
-                                       double const dist, double const dist2) {
+                                       double const dist, double const dist2,
+                                       Observable_stat &obs_energy) {
   IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
 
 #ifdef EXCLUSIONS
@@ -279,32 +279,12 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
   throw BondInvalidSizeError(n_partners);
 }
 
-/** Add bonded energies for one particle to the energy observable.
- *  @param[in] p1   particle for which to calculate energies
- *  @param[in] bond_id Numeric id of the bond
- *  @param[in] partners Bond partners of particle.
- *
- *  @return True if bond was broken, false otherwise.
- */
-inline bool add_bonded_energy(Particle &p1, int bond_id,
-                              Utils::Span<Particle *> partners) {
-  auto const &iaparams = bonded_ia_params[bond_id];
-
-  auto const result = calc_bonded_energy(iaparams, p1, partners);
-
-  if (result) {
-    obs_energy.bonded_contribution(bond_id)[0] += result.get();
-
-    return false;
-  }
-
-  return true;
-}
-
 /** Add kinetic energies for one particle to the energy observable.
  *  @param[in] p1   particle for which to calculate energies
+ *  @param[out]    obs_energy   energy observable
  */
-inline void add_kinetic_energy(Particle const &p1) {
+inline void add_kinetic_energy(Particle const &p1,
+                               Observable_stat &obs_energy) {
   if (p1.p.is_virtual)
     return;
 
@@ -323,11 +303,22 @@ inline void add_kinetic_energy(Particle const &p1) {
 #endif
 }
 
-/** Add kinetic and bonded energies for one particle to the energy observable.
+/** Add bonded energies for one particle to the energy observable.
  *  @param[in] p   particle for which to calculate energies
+ *  @param[out]    obs_energy   energy observable
  */
-inline void add_single_particle_energy(Particle &p) {
-  cell_structure.execute_bond_handler(p, add_bonded_energy);
+inline void add_bonded_energy(Particle &p, Observable_stat &obs_energy) {
+  cell_structure.execute_bond_handler(
+      p, [&obs_energy](Particle &p1, int bond_id,
+                       Utils::Span<Particle *> partners) {
+        auto const &iaparams = bonded_ia_params[bond_id];
+        auto const result = calc_bonded_energy(iaparams, p1, partners);
+        if (result) {
+          obs_energy.bonded_contribution(bond_id)[0] += result.get();
+          return false;
+        }
+        return true;
+      });
 }
 
 #endif // ENERGY_INLINE_HPP

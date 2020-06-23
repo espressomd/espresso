@@ -37,9 +37,6 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-/** Pressure tensor of the system */
-Observable_stat obs_pressure{9};
-
 nptiso_struct nptiso = {0.0,
                         0.0,
                         0.0,
@@ -54,6 +51,11 @@ nptiso_struct nptiso = {0.0,
                         false,
                         0};
 
+/** Pressure tensor of the system */
+Observable_stat obs_pressure{9};
+
+Observable_stat const &get_obs_pressure() { return obs_pressure; }
+
 /** Calculate long-range virials (P3M, ...). */
 void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
@@ -64,10 +66,6 @@ void calc_long_range_virials(const ParticleRange &particles) {
   /* calculate k-space part of magnetostatic interaction. */
   Dipole::calc_pressure_long_range();
 #endif
-}
-
-static void add_single_particle_virials(Particle &p) {
-  cell_structure.execute_bond_handler(p, add_bonded_pressure_tensor);
 }
 
 void pressure_calc() {
@@ -81,13 +79,13 @@ void pressure_calc() {
   on_observable_calc();
 
   for (auto const &p : cell_structure.local_particles()) {
-    add_kinetic_virials(p);
+    add_kinetic_virials(p, obs_pressure);
   }
 
-  short_range_loop([](Particle &p) { add_single_particle_virials(p); },
+  short_range_loop([](Particle &p) { add_bonded_virials(p, obs_pressure); },
                    [](Particle &p1, Particle &p2, Distance const &d) {
-                     add_non_bonded_pair_virials(p1, p2, d.vec21,
-                                                 sqrt(d.dist2));
+                     add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
+                                                 obs_pressure);
                    });
 
   calc_long_range_virials(cell_structure.local_particles());

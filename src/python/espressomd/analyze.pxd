@@ -81,17 +81,13 @@ cdef extern from "statistics_chain.hpp":
     array4 calc_rg(int, int, int) except +
     array2 calc_rh(int, int, int)
 
-cdef extern from "pressure_inline.hpp":
-    cdef Observable_stat obs_pressure
-
 cdef extern from "pressure.hpp":
     cdef void update_pressure()
-
-cdef extern from "energy_inline.hpp":
-    cdef Observable_stat obs_energy
+    cdef const Observable_stat & get_obs_pressure()
 
 cdef extern from "energy.hpp":
     cdef void update_energy()
+    cdef const Observable_stat & get_obs_energy()
     double calculate_current_potential_energy_of_system()
 
 cdef extern from "dpd.hpp":

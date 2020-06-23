@@ -27,16 +27,20 @@
 #ifndef _ENERGY_H
 #define _ENERGY_H
 
+#include "Observable_stat.hpp"
 #include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
 
 extern ActorList energyActors;
 
-/** Calculate energies. */
-void update_energy();
-
 /** Parallel energy calculation. */
 void energy_calc(double time);
+
+/** Run @ref energy_calc in parallel. */
+void update_energy();
+
+/** Return the energy observable. */
+Observable_stat const &get_obs_energy();
 
 /** Calculate long-range energies (P3M, ...). */
 void calc_long_range_energies(const ParticleRange &particles);

@@ -25,16 +25,20 @@
 #ifndef CORE_PRESSURE_HPP
 #define CORE_PRESSURE_HPP
 
+#include "Observable_stat.hpp"
+
 #include <utils/Vector.hpp>
 
-/** Parallel pressure calculation from a virial expansion.
- */
+/** Parallel pressure calculation from a virial expansion. */
 void pressure_calc();
+
+/** Run @ref pressure_calc in parallel. */
+void update_pressure();
+
+/** Return the pressure observable. */
+Observable_stat const &get_obs_pressure();
 
 /** Helper function for @ref Observables::PressureTensor. */
 Utils::Vector9d observable_compute_pressure_tensor();
-
-/** Calculate the scalar pressure and pressure tensor. */
-void update_pressure();
 
 #endif

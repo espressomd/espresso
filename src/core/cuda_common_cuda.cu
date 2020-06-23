@@ -221,8 +221,7 @@ void clear_energy_on_GPU() {
   cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)));
 }
 
-void copy_energy_from_GPU() {
-  extern Observable_stat obs_energy;
+void copy_energy_from_GPU(Observable_stat &obs_energy) {
   if (!global_part_vars_host.communication_enabled)
     return;
   cuda_safe_mem(cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy),

@@ -332,7 +332,7 @@ class Analysis:
         # Update in ESPResSo core
         analyze.update_pressure()
 
-        return _Observable_stat_to_dict(analyze.obs_pressure, 9, True)
+        return _Observable_stat_to_dict(analyze.get_obs_pressure(), 9, True)
 
     def pressure_tensor(self):
         """Calculate the instantaneous pressure_tensor (in parallel). This is
@@ -366,7 +366,7 @@ class Analysis:
         # Update in ESPResSo core
         analyze.update_pressure()
 
-        return _Observable_stat_to_dict(analyze.obs_pressure, 9, False)
+        return _Observable_stat_to_dict(analyze.get_obs_pressure(), 9, False)
 
     IF DPD == 1:
         def dpd_stress(self):
@@ -417,7 +417,7 @@ class Analysis:
         analyze.update_energy()
         handle_errors("calc_long_range_energies failed")
 
-        return _Observable_stat_to_dict(analyze.obs_energy, 1, False)
+        return _Observable_stat_to_dict(analyze.get_obs_energy(), 1, False)
 
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
