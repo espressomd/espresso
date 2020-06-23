@@ -216,7 +216,7 @@ void calc_energy_long_range(Observable_stat &energy,
   case DIPOLAR_MDLC_P3M:
     dp3m_dipole_assign(particles);
     energy.dipolar[1] = dp3m_calc_kspace_forces(false, true, particles);
-    energy.dipolar[2] = add_mdlc_energy_corrections(particles);
+    energy.dipolar[1] += add_mdlc_energy_corrections(particles);
     break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
@@ -226,7 +226,7 @@ void calc_energy_long_range(Observable_stat &energy,
   case DIPOLAR_MDLC_DS:
     energy.dipolar[1] =
         magnetic_dipolar_direct_sum_calculations(false, true, particles);
-    energy.dipolar[2] = add_mdlc_energy_corrections(particles);
+    energy.dipolar[1] += add_mdlc_energy_corrections(particles);
     break;
 #endif
   case DIPOLAR_DS:

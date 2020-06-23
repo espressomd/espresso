@@ -28,7 +28,7 @@
 Observable_stat::Observable_stat(size_t chunk_size) : m_chunk_size(chunk_size) {
   // number of chunks for different interaction types
   auto constexpr n_coulomb = 2;
-  auto constexpr n_dipolar = 3;
+  auto constexpr n_dipolar = 2;
 #ifdef VIRTUAL_SITES
   auto constexpr n_vs = 1;
 #else

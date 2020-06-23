@@ -66,7 +66,7 @@ cdef _Observable_stat_to_dict(Observable_stat obs, int size,
         * ``"coulomb"``: Coulomb contribution, how it is calculated depends on the method
         * ``"coulomb", <i>``: Coulomb contribution from particle pairs (``i=0``), electrostatics solvers (``i=1``)
         * ``"dipolar"``: dipolar contribution, how it is calculated depends on the method
-        * ``"dipolar", <i>``: dipolar contribution from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``) and their corrections (``i=2``)
+        * ``"dipolar", <i>``: dipolar contribution from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
         * ``"virtual_sites"``: virtual sites contribution
         * ``"virtual_sites", <i>``: contribution from virtual site i
 
@@ -400,7 +400,7 @@ class Analysis:
             * ``"coulomb"``: Coulomb energy, how it is calculated depends on the method
             * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: dipolar energy
-            * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
 
 
         Examples
