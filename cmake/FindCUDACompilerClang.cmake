@@ -65,14 +65,21 @@ if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 3.8.9)
   set(gpu_interface_flags "${gpu_interface_flags} --cuda-gpu-arch=sm_52")
 endif()
 
-find_library(
-  CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
-                                    /usr/local/nvidia/lib
-                                    /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
-find_library(
-  CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
-                                  /usr/local/nvidia/lib
-                                  /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
+function(find_gpu_library)
+  cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})
+  list(APPEND LIBRARY_PATHS
+       ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
+       /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu)
+  if(LIBRARY_REQUIRED)
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH REQUIRED)
+  else()
+    find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH)
+  endif()
+endfunction(find_gpu_library)
+
+find_gpu_library(VARNAME CUDA_LIBRARY NAMES cuda REQUIRED)
+find_gpu_library(VARNAME CUDART_LIBRARY NAMES cudart REQUIRED)
+find_gpu_library(VARNAME CUFFT_LIBRARY NAMES cufft REQUIRED)
 
 function(add_gpu_library)
   set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)

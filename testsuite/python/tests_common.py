@@ -667,9 +667,9 @@ def fold_index(idx, shape):
 
     res = np.copy(idx)
     for i in range(len(idx)):
-        if res[i] >= shape[i]:
+        while res[i] >= shape[i]:
             res[i] -= shape[i]
-        elif res[i] < 0:
+        while res[i] < 0:
             res[i] += shape[i]
     return res
 
@@ -685,7 +685,7 @@ def get_lb_nodes_around_pos(pos, lbf):
     if np.all(lower_left_index == pos_lb_units):
         return [lbf[fold_index(lower_left_index, lbf.shape)]]
 
-    # Otherwise return 8 surroudning nodes
+    # Otherwise return 8 surrounding nodes
     res = []
     for i in (0, 1):
         for j in (0, 1):

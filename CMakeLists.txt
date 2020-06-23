@@ -422,6 +422,9 @@ endif()
 
 target_link_libraries(cxx_interface INTERFACE coverage_interface)
 
+# Give CMAKE_CXX_FLAGS higher precedence
+target_compile_options(cxx_interface INTERFACE ${CMAKE_CXX_FLAGS})
+
 #
 # Testing
 # ##############################################################################
@@ -455,7 +458,7 @@ if (WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
-    GIT_TAG        63d44cc9b624acc4
+    GIT_TAG        64a4d68
     PATCH_COMMAND  patch -p0 --ignore-whitespace -i
                    ${PROJECT_SOURCE_DIR}/cmake/waLBerlaFunctions.patch
   )

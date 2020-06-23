@@ -1,10 +1,8 @@
 --- cmake/waLBerlaFunctions.cmake
 +++ cmake/waLBerlaFunctions.cmake
-@@ -94,6 +94,7 @@ function ( waLBerla_add_module )
-         else()
-             add_library( ${moduleLibraryName} STATIC ${sourceFiles} ${otherFiles} )
-         endif( CUDA_FOUND )
-+  add_library(walberla::${moduleLibraryName} ALIAS ${moduleLibraryName})
+@@ -91,4 +91,5 @@ function ( waLBerla_add_module )
+     if ( hasSourceFiles )
+        add_library( ${moduleLibraryName} STATIC ${sourceFiles} ${otherFiles} )
++       add_library(walberla::${moduleLibraryName} ALIAS ${moduleLibraryName})
   	else( )
-  	   add_custom_target( ${moduleLibraryName} SOURCES ${sourceFiles} ${otherFiles} )  # dummy IDE target
-  	endif( )
+        add_custom_target( ${moduleLibraryName} SOURCES ${sourceFiles} ${otherFiles} )  # dummy IDE target

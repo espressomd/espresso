@@ -222,19 +222,19 @@ void clear_energy_on_GPU() {
 }
 
 void copy_energy_from_GPU() {
-  extern Observable_stat_wrapper obs_energy;
+  extern Observable_stat obs_energy;
   if (!global_part_vars_host.communication_enabled)
     return;
   cuda_safe_mem(cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy),
                            cudaMemcpyDeviceToHost));
-  if (!obs_energy.local.bonded.empty())
-    obs_energy.local.bonded[0] += energy_host.bonded;
-  if (!obs_energy.local.non_bonded.empty())
-    obs_energy.local.non_bonded[0] += energy_host.non_bonded;
-  if (!obs_energy.local.coulomb.empty())
-    obs_energy.local.coulomb[0] += energy_host.coulomb;
-  if (obs_energy.local.dipolar.size() >= 2)
-    obs_energy.local.dipolar[1] += energy_host.dipolar;
+  if (!obs_energy.bonded.empty())
+    obs_energy.bonded[0] += energy_host.bonded;
+  if (!obs_energy.non_bonded.empty())
+    obs_energy.non_bonded[0] += energy_host.non_bonded;
+  if (!obs_energy.coulomb.empty())
+    obs_energy.coulomb[0] += energy_host.coulomb;
+  if (obs_energy.dipolar.size() >= 2)
+    obs_energy.dipolar[1] += energy_host.dipolar;
 }
 
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {

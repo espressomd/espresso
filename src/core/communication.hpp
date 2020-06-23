@@ -66,7 +66,7 @@ extern int n_nodes;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
 /** Statistics to calculate */
-enum class GatherStats : int { energy, pressure, pressure_v_comp };
+enum class GatherStats : int { energy, pressure };
 
 /**
  * Default MPI tag used by callbacks.
@@ -215,8 +215,6 @@ void mpi_bcast_max_seen_particle_type(int s);
  *           energies, using \ref energy_calc.
  *      \arg for \ref GatherStats::pressure, calculate and reduce (sum up)
  *           pressure, using \ref pressure_calc.
- *      \arg for \ref GatherStats::pressure_v_comp, calculate and reduce
- *           (sum up) instantaneous pressure, using \ref pressure_calc.
  */
 void mpi_gather_stats(GatherStats job);
 

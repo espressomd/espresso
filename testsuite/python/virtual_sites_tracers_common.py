@@ -24,18 +24,22 @@ try:
 except ImportError:
     pass
 from espressomd.utils import handle_errors
+from tests_common import get_lb_nodes_around_pos
+
+import unittest_decorators as utx
 
 
 class VirtualSitesTracersCommon:
     box_height = 10.
     box_lw = 8.
     system = espressomd.System(box_l=(box_lw, box_lw, box_height))
-    system.time_step = 0.05
+    system.time_step = 0.08
     system.cell_system.skin = 0.1
 
     def reset_lb(self, ext_force_density=(0, 0, 0)):
         self.system.actors.clear()
         self.system.lbboundaries.clear()
+        self.system.thermostat.turn_off()
         self.lbf = self.LBClass(
             kT=0.0, agrid=1, dens=1, visc=1.8,
             tau=self.system.time_step, ext_force_density=ext_force_density)
@@ -65,30 +69,77 @@ class VirtualSitesTracersCommon:
         self.assertIsInstance(
             self.system.virtual_sites, VirtualSitesInertialessTracers)
 
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+    def test_ab_single_step(self):
+        self.reset_lb()
+        self.system.lbboundaries.clear()
+        self.system.part.clear()
+        self.system.virtual_sites = VirtualSitesInertialessTracers()
+
+        # Random velocities
+        for n in self.lbf.nodes():
+            n.velocity = np.random.random(3) - .5
+        force = [1, -2, 3]
+        # Test several particle positions
+        for pos in [[3, 2, 1], [0, 0, 0],
+                    self.system.box_l * 0.49,
+                    self.system.box_l,
+                    self.system.box_l * 0.99]:
+            p = self.system.part.add(pos=pos, ext_force=force, virtual=True)
+
+            coupling_pos = p.pos
+            v_fluid = np.copy(self.lbf.get_interpolated_velocity(coupling_pos))
+            # Nodes to which forces will be interpolated
+            lb_nodes = get_lb_nodes_around_pos(
+                coupling_pos, self.lbf)
+
+            np.testing.assert_allclose(
+                [n.last_applied_force for n in lb_nodes],
+                np.zeros((len(lb_nodes), 3)))
+            self.system.integrator.run(1)
+            # Check particle velocity
+            np.testing.assert_allclose(np.copy(p.v), v_fluid)
+
+            # particle position
+            np.testing.assert_allclose(
+                np.copy(p.pos),
+                coupling_pos + v_fluid * self.system.time_step)
+
+            # check transfer of particle force to fluid
+            applied_forces = np.array([n.last_applied_force for n in lb_nodes])
+            np.testing.assert_allclose(
+                np.sum(applied_forces, axis=0), force, atol=1E-10)
+
+            # Check that last_applied_force gets cleared
+            p.remove()
+            self.system.integrator.run(1)
+            applied_forces = np.array([n.last_applied_force for n in lb_nodes])
+            np.testing.assert_allclose(
+                np.sum(applied_forces, axis=0), [0, 0, 0])
+
     def test_advection(self):
         self.reset_lb(ext_force_density=[0.1, 0, 0])
         # System setup
         system = self.system
 
         system.virtual_sites = VirtualSitesInertialessTracers()
+        system.part.clear()
 
         # Establish steady state flow field
-        p = system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=True)
+        system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=True)
         system.integrator.run(400)
 
         system.part[0].pos = (0, 5.5, 5.5)
         system.time = 0
 
         # Perform integration
-        for _ in range(3):
-            print(_)
+        for _ in range(2):
             system.integrator.run(100)
             # compute expected position
             X = self.lbf.get_interpolated_velocity(
                 system.part[0].pos)[0] * system.time
-            print(p.pos, X)
             self.assertAlmostEqual(
-                system.part[0].pos[0] / X - 1, 0, delta=0.005)
+                system.part[0].pos[0] / X - 1, 0, delta=0.001)
 
     def compute_angle(self):
         system = self.system
@@ -120,10 +171,10 @@ class VirtualSitesTracersCommon:
         system.part.clear()
 
         # Add four particles
-        system.part.add(id=0, pos=[5, 5, 5], virtual=True)
-        system.part.add(id=1, pos=[5, 5, 6], virtual=True)
-        system.part.add(id=2, pos=[5, 6, 6], virtual=True)
-        system.part.add(id=3, pos=[5, 6, 5], virtual=True)
+        system.part.add(id=0, pos=[5, 5, 5])
+        system.part.add(id=1, pos=[5, 5, 6])
+        system.part.add(id=2, pos=[5, 6, 6])
+        system.part.add(id=3, pos=[5, 6, 5])
 
         # Add first triel, weak modulus
         from espressomd.interactions import IBM_Triel
@@ -146,99 +197,56 @@ class VirtualSitesTracersCommon:
         system.part[0].add_bond((tribend, 1, 2, 3))
 
         # twist
-        system.part[1].pos = [5.2, 5, 6]
-
-        self.reset_lb()
+        system.part[:].pos = system.part[:].pos + np.random.random((4, 3))
 
         # Perform integration
-        last_angle = self.compute_angle()
-        for _ in range(6):
-            system.integrator.run(430)
-            angle = self.compute_angle()
-            self.assertLess(angle, last_angle)
-            last_angle = angle
-        self.assertLess(angle, 0.03)
+        system.thermostat.turn_off()
+        system.thermostat.set_langevin(kT=0, gamma=10, seed=1)
+        system.integrator.run(150)
+        angle = self.compute_angle()
+        self.assertLess(angle, 1E-3)
 
-# WALBERLA TODO
-#    def test_triel(self):
-#        self.system.actors.clear()
-#        system = self.system
-#        system.virtual_sites = VirtualSitesInertialessTracers()
-#        system.virtual_sites = VirtualSitesInertialessTracers()
-#
-#        system.part.clear()
-#        # Add particles: 0-2 are non-bonded, 3-5 are weakly bonded, 6-8 are
-#        # strongly bonded
-#        system.part.add(id=0, pos=[5, 5, 5], virtual=True)
-#        system.part.add(id=1, pos=[5, 5, 6], virtual=True)
-#        system.part.add(id=2, pos=[5, 6, 6], virtual=True)
-#
-#        system.part.add(id=3, pos=[2, 5, 5], virtual=True)
-#        system.part.add(id=4, pos=[2, 5, 6], virtual=True)
-#        system.part.add(id=5, pos=[2, 6, 6], virtual=True)
-#
-#        system.part.add(id=6, pos=[4, 7, 7], virtual=True)
-#        system.part.add(id=7, pos=[4, 7, 8], virtual=True)
-#        system.part.add(id=8, pos=[4, 8, 8], virtual=True)
-#
-#        # Add triel, weak modulus for 3-5
-#        from espressomd.interactions import IBM_Triel
-#        triWeak = IBM_Triel(
-#            ind1=3, ind2=4, ind3=5, elasticLaw="Skalak", k1=5, k2=0, maxDist=2.4)
-#        system.bonded_inter.add(triWeak)
-#        system.part[3].add_bond((triWeak, 4, 5))
-#
-#        # Add triel, strong modulus for 6-8
-#        triStrong = IBM_Triel(
-#            ind1=6, ind2=7, ind3=8, elasticLaw="Skalak", k1=25, k2=0, maxDist=2.4)
-#        system.bonded_inter.add(triStrong)
-#        system.part[6].add_bond((triStrong, 7, 8))
-#
-#        self.reset_lb(ext_force_density=[0.1, 0, 0])
-#        # Perform integration
-#        system.integrator.run(4500)
-#
-#        # For the cpu variant, check particle velocities
-#        # WALBERLA TODO
-#        for p in system.part:
-#                np.testing.assert_allclose(
-#                    np.copy(p.v), np.copy(
-#                        self.lbf.get_interpolated_velocity(p.pos)),
-#                    atol=2E-2)
-#        # get new shapes
-#        dist1non = np.linalg.norm(
-#            np.array(system.part[1].pos - system.part[0].pos))
-#        dist2non = np.linalg.norm(
-#            np.array(system.part[2].pos - system.part[0].pos))
-#
-#        dist1weak = np.linalg.norm(
-#            np.array(system.part[3].pos - system.part[4].pos))
-#        dist2weak = np.linalg.norm(
-#            np.array(system.part[3].pos - system.part[5].pos))
-#
-#        dist1strong = np.linalg.norm(
-#            np.array(system.part[6].pos - system.part[7].pos))
-#        dist2strong = np.linalg.norm(
-#            np.array(system.part[6].pos - system.part[8].pos))
-#
-#        print("** Distances: non-bonded, weak, strong, expected")
-#        print(str(dist1non) + "    " + str(dist1weak)
-#              + "     " + str(dist1strong) + "    1")
-#        print(str(dist2non) + "    " + str(dist2weak)
-#              + "     " + str(dist2strong) + "    1.414")
-#
-#        # test:
-#        # non-bonded should move apart by the flow (control group)
-#        # weakly-bonded should stretch somewhat
-#        # strongly-bonded should basically not stretch
-#        self.assertGreater(dist1non, 1.5)
-#        self.assertAlmostEqual(dist1weak, 1, delta=0.2)
-#        self.assertAlmostEqual(dist1strong, 1, delta=0.04)
-#
-#        self.assertGreater(dist2non, 2)
-#        self.assertAlmostEqual(dist2weak, np.sqrt(2), delta=0.3)
-#        self.assertAlmostEqual(dist2strong, np.sqrt(2), delta=0.1)
-#
+    def test_triel(self):
+        self.system.actors.clear()
+        system = self.system
+        system.virtual_sites = VirtualSitesInertialessTracers()
+
+        system.part.clear()
+        # Add particles: 0-2 are non-bonded, 3-5 are  bound
+        non_bound = system.part.add(
+            id=[0, 1, 2], pos=[[5, 5, 5], [5, 5, 6], [5, 6, 6]])
+
+        system.part.add(id=3, pos=[2, 5, 5])
+        system.part.add(id=4, pos=[2, 5, 6])
+        system.part.add(id=5, pos=[2, 6, 6])
+
+        # Add triel for 3-5
+        from espressomd.interactions import IBM_Triel
+        tri = IBM_Triel(
+            ind1=3, ind2=4, ind3=5, elasticLaw="Skalak", k1=15, k2=0, maxDist=2.4)
+        system.bonded_inter.add(tri)
+        system.part[3].add_bond((tri, 4, 5))
+        system.thermostat.turn_off()
+        system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
+
+        system.part[:].pos = system.part[:].pos + np.array((
+            (0, 0, 0), (1, -.2, .3), (1, 1, 1),
+            (0, 0, 0), (1, -.2, .3), (1, 1, 1)))
+
+        distorted_pos = non_bound.pos
+
+        system.integrator.run(110)
+        # get new shapes
+        dist1bound = system.distance(system.part[3], system.part[4])
+        dist2bound = system.distance(system.part[3], system.part[5])
+
+        # check bound particles. Distance should restore to initial config
+        self.assertAlmostEqual(dist1bound, 1, delta=0.02)
+        self.assertAlmostEqual(dist2bound, np.sqrt(2), delta=0.01)
+
+        # chekc non-bound particles. Positions should still be distorted
+        np.testing.assert_allclose(np.copy(non_bound.pos), distorted_pos)
+
     def test_zz_without_lb(self):
         """Check behaviour without lb. Ignore non-virtual particles, complain on
         virtual ones.

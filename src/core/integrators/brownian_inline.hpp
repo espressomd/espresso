@@ -411,14 +411,14 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
         sigma_pos = BrownianThermostat::sigma(p.p.T, p.p.gamma_rot);
       } else {
         // just an indication of the infinity
-        sigma_pos = Utils::Vector3d{};
+        sigma_pos = {};
       }
     } else if (temperature > 0.) {
       // Default temperature but particle-specific gamma
       sigma_pos = BrownianThermostat::sigma(temperature, p.p.gamma_rot);
     } else {
       // just an indication of the infinity
-      sigma_pos = Utils::Vector3d{};
+      sigma_pos = {};
     }
   } // particle-specific gamma
   else {
@@ -428,7 +428,7 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
         sigma_pos = BrownianThermostat::sigma(p.p.T, brownian.gamma_rotation);
       } else {
         // just an indication of the infinity
-        sigma_pos = Utils::Vector3d{};
+        sigma_pos = {};
       }
     } else {
       // Default values for both

@@ -210,14 +210,11 @@ void add_swimmer_force(Particle &p) {
     const double direction =
         double(p.p.swim.push_pull) * p.p.swim.dipole_length;
     auto const director = p.r.calc_director();
-    auto const source_position =
-        folded_position(p.r.p + direction * director, box_geo);
+    auto const source_position = p.r.p + direction * director;
 
-    if (not in_local_halo(source_position)) {
-      return;
+    if (in_local_halo(source_position)) {
+      add_md_force(source_position, p.p.swim.f_swim * director);
     }
-
-    add_md_force(source_position, p.p.swim.f_swim * director);
   }
 }
 #endif

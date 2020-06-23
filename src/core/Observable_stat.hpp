@@ -54,10 +54,8 @@ public:
     std::fill(data.begin(), data.end(), 0);
   }
 
-  /** Gather the contributions from the current MPI rank.
-   *  @param[out] out Destination of the reduction.
-   */
-  void reduce(double *out) const;
+  /** Reduce contributions from all MPI ranks. */
+  void reduce();
 
   /** Accumulate values.
    *  @param acc    Initial value for the accumulator.
@@ -178,37 +176,6 @@ public:
                                                     int type2) const {
     return non_bonded_contribution(non_bonded_inter.data(), type1, type2);
   }
-};
-
-class Observable_stat_wrapper : public Observable_stat {
-public:
-  /** Observed statistic for the current MPI rank. */
-  Observable_stat local;
-  /** Flag to signal if the observable measures instantaneous pressure, i.e.
-   *  the pressure with velocity compensation (half a time step), instead of
-   *  the conventional pressure. Only relevant for NpT simulations.
-   */
-  bool v_comp;
-
-  explicit Observable_stat_wrapper(size_t chunk_size, bool pressure_obs = true)
-      : Observable_stat{chunk_size, pressure_obs}, local{chunk_size,
-                                                         pressure_obs},
-        v_comp(false) {}
-
-  /** Gather the contributions from all MPI ranks. */
-  void reduce() { local.reduce(data.data()); }
-};
-
-class Observable_stat_non_bonded_wrapper : public Observable_stat_non_bonded {
-public:
-  /** Observed statistic for the current MPI rank. */
-  Observable_stat_non_bonded local;
-
-  explicit Observable_stat_non_bonded_wrapper(size_t chunk_size)
-      : Observable_stat_non_bonded{chunk_size}, local{chunk_size} {}
-
-  /** Gather the contributions from all MPI ranks. */
-  void reduce() { local.reduce(data.data()); }
 };
 
 #endif // ESPRESSO_OBSERVABLE_STAT_HPP

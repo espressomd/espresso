@@ -53,118 +53,107 @@ namespace {
 /** Type describing global variables. These are accessible from the
  *  front end, and are distributed to all compute nodes.
  */
-typedef struct {
+struct Datafield {
   enum class Type { INT = 0, DOUBLE = 1, BOOL = 2, UNSIGNED_LONG = 3 };
+
+  Datafield(int *data, size_t dimension, const char *name)
+      : data(data), type(Type::INT), dimension(dimension), name(name) {}
+
+  Datafield(double *data, size_t dimension, const char *name)
+      : data(data), type(Type::DOUBLE), dimension(dimension), name(name) {}
+
+  Datafield(bool *data, size_t dimension, const char *name)
+      : data(data), type(Type::BOOL), dimension(dimension), name(name) {}
+
+  Datafield(unsigned long *data, size_t dimension, const char *name)
+      : data(data), type(Type::UNSIGNED_LONG), dimension(dimension),
+        name(name) {}
+
   /** Physical address of the variable. */
   void *data;
   /** Type of the variable. */
   Type type;
   /** Dimension of the variable. Typically in the range 1-3. */
-  int dimension;
+  size_t dimension;
   /** Name of the variable, mainly used for the front end and debugging */
   const char *name;
-} Datafield;
+};
 
 /** This array contains the description of all global variables.
  *
  *  Please declare where the variables come from.
  */
 const std::unordered_map<int, Datafield> fields{
-    {FIELD_BOXL,
-     {box_geo.m_length.data(), Datafield::Type::DOUBLE, 3,
-      "box_l"}}, /* 0  from grid.cpp */
+    {FIELD_BOXL, {box_geo.m_length.data(), 3, "box_l"}}, /* 0  from grid.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA,
-     {&langevin.gamma, Datafield::Type::DOUBLE, 1,
-      "langevin.gamma"}}, /* 5  from thermostat.cpp */
+     {&langevin.gamma, 1, "langevin.gamma"}}, /* 5  from thermostat.cpp */
 #else
     {FIELD_LANGEVIN_GAMMA,
-     {langevin.gamma.data(), Datafield::Type::DOUBLE, 3,
-      "langevin.gamma"}}, /* 5  from thermostat.cpp */
+     {langevin.gamma.data(), 3, "langevin.gamma"}}, /* 5  from thermostat.cpp */
 #endif // PARTICLE_ANISOTROPY
     {FIELD_INTEG_SWITCH,
-     {&integ_switch, Datafield::Type::INT, 1,
-      "integ_switch"}}, /* 7  from integrate.cpp */
+     {&integ_switch, 1, "integ_switch"}}, /* 7  from integrate.cpp */
     {FIELD_RIGIDBONDS,
-     {&n_rigidbonds, Datafield::Type::INT, 1,
-      "n_rigidbonds"}}, /* 19 from rattle.cpp */
-    {FIELD_NODEGRID,
-     {node_grid.data(), Datafield::Type::INT, 3,
-      "node_grid"}}, /* 20 from grid.cpp */
+     {&n_rigidbonds, 1, "n_rigidbonds"}}, /* 19 from rattle.cpp */
+    {FIELD_NODEGRID, {node_grid.data(), 3, "node_grid"}}, /* 20 from grid.cpp */
     {FIELD_NPTISO_G0,
-     {&npt_iso.gamma0, Datafield::Type::DOUBLE, 1,
-      "npt_iso.gamma0"}}, /* 21 from thermostat.cpp */
+     {&npt_iso.gamma0, 1, "npt_iso.gamma0"}}, /* 21 from thermostat.cpp */
     {FIELD_NPTISO_GV,
-     {&npt_iso.gammav, Datafield::Type::DOUBLE, 1,
-      "npt_iso.gammav"}}, /* 22 from thermostat.cpp */
+     {&npt_iso.gammav, 1, "npt_iso.gammav"}}, /* 22 from thermostat.cpp */
     {FIELD_NPTISO_PEXT,
-     {&nptiso.p_ext, Datafield::Type::DOUBLE, 1,
-      "npt_p_ext"}}, /* 23 from pressure.cpp */
+     {&nptiso.p_ext, 1, "npt_p_ext"}}, /* 23 from pressure.cpp */
     {FIELD_NPTISO_PINST,
-     {&nptiso.p_inst, Datafield::Type::DOUBLE, 1,
-      "npt_p_inst"}}, /* 24 from pressure.cpp */
+     {&nptiso.p_inst, 1, "npt_p_inst"}}, /* 24 from pressure.cpp */
     {FIELD_NPTISO_PDIFF,
-     {&nptiso.p_diff, Datafield::Type::DOUBLE, 1,
-      "npt_p_diff"}}, /* 26 from pressure.cpp */
+     {&nptiso.p_diff, 1, "npt_p_diff"}}, /* 26 from pressure.cpp */
     {FIELD_NPTISO_PISTON,
-     {&nptiso.piston, Datafield::Type::DOUBLE, 1,
-      "npt_piston"}}, /* 27 from pressure.cpp */
+     {&nptiso.piston, 1, "npt_piston"}}, /* 27 from pressure.cpp */
     {FIELD_PERIODIC,
-     {&box_geo.m_periodic, Datafield::Type::UNSIGNED_LONG, 1,
-      "periodicity"}}, /* 28 from BoxGeometry.hpp */
-    {FIELD_SKIN,
-     {&skin, Datafield::Type::DOUBLE, 1, "skin"}}, /* 29 from integrate.cpp */
+     {reinterpret_cast<size_t *>(&box_geo.m_periodic), 1,
+      "periodicity"}},                /* 28 from BoxGeometry.hpp */
+    {FIELD_SKIN, {&skin, 1, "skin"}}, /* 29 from integrate.cpp */
     {FIELD_TEMPERATURE,
-     {&temperature, Datafield::Type::DOUBLE, 1,
-      "temperature"}}, /* 30 from thermostat.cpp */
+     {&temperature, 1, "temperature"}}, /* 30 from thermostat.cpp */
     {FIELD_THERMO_SWITCH,
-     {&thermo_switch, Datafield::Type::INT, 1,
-      "thermo_switch"}}, /* 31 from thermostat.cpp */
-    {FIELD_SIMTIME,
-     {&sim_time, Datafield::Type::DOUBLE, 1,
-      "time"}}, /* 32 from integrate.cpp */
-    {FIELD_TIMESTEP,
-     {&time_step, Datafield::Type::DOUBLE, 1,
-      "time_step"}}, /* 33 from integrate.cpp */
+     {&thermo_switch, 1, "thermo_switch"}},         /* 31 from thermostat.cpp */
+    {FIELD_SIMTIME, {&sim_time, 1, "time"}},        /* 32 from integrate.cpp */
+    {FIELD_TIMESTEP, {&time_step, 1, "time_step"}}, /* 33 from integrate.cpp */
     {FIELD_LATTICE_SWITCH,
-     {&lattice_switch, Datafield::Type::INT, 1,
+     {reinterpret_cast<std::underlying_type_t<ActiveLB> *>(&lattice_switch), 1,
       "lattice_switch"}}, /* 37 from lattice.cpp */
     {FIELD_MIN_GLOBAL_CUT,
-     {&min_global_cut, Datafield::Type::DOUBLE, 1,
-      "min_global_cut"}}, /* 43 from interaction_data.cpp */
+     {&min_global_cut, 1, "min_global_cut"}}, /* 43 from interaction_data.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {&langevin.gamma_rotation, Datafield::Type::DOUBLE, 1,
+     {&langevin.gamma_rotation, 1,
       "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
 #else
     {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {langevin.gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
+     {langevin.gamma_rotation.data(), 3,
       "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
 #endif
-    {FIELD_MAX_OIF_OBJECTS,
-     {&max_oif_objects, Datafield::Type::INT, 1, "max_oif_objects"}},
+    {FIELD_MAX_OIF_OBJECTS, {&max_oif_objects, 1, "max_oif_objects"}},
     {FIELD_THERMALIZEDBONDS,
-     {&n_thermalized_bonds, Datafield::Type::INT, 1,
+     {&n_thermalized_bonds, 1,
       "n_thermalized_bonds"}}, /* 56 from thermalized_bond.cpp */
-    {FIELD_FORCE_CAP, {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap"}},
-    {FIELD_THERMO_VIRTUAL,
-     {&thermo_virtual, Datafield::Type::BOOL, 1, "thermo_virtual"}},
+    {FIELD_FORCE_CAP, {&force_cap, 1, "force_cap"}},
+    {FIELD_THERMO_VIRTUAL, {&thermo_virtual, 1, "thermo_virtual"}},
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_BROWNIAN_GAMMA_ROTATION,
-     {&brownian.gamma_rotation, Datafield::Type::DOUBLE, 1,
+     {&brownian.gamma_rotation, 1,
       "brownian.gamma_rotation"}}, /* 57 from thermostat.cpp */
 #else
     {FIELD_BROWNIAN_GAMMA_ROTATION,
-     {brownian.gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
+     {brownian.gamma_rotation.data(), 3,
       "brownian.gamma_rotation"}}, /* 57 from thermostat.cpp */
 #endif
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_BROWNIAN_GAMMA,
-     {&brownian.gamma, Datafield::Type::DOUBLE, 1,
-      "brownian.gamma"}}, /* 58  from thermostat.cpp */
+     {&brownian.gamma, 1, "brownian.gamma"}}, /* 58  from thermostat.cpp */
 #else
     {FIELD_BROWNIAN_GAMMA,
-     {brownian.gamma.data(), Datafield::Type::DOUBLE, 3,
+     {brownian.gamma.data(), 3,
       "brownian.gamma"}}, /* 58  from thermostat.cpp */
 #endif // PARTICLE_ANISOTROPY
 };
@@ -244,17 +233,6 @@ void check_global_consistency() {
 
 /*************** BCAST PARAMETER ************/
 
-void mpi_bcast_parameter_slave(int i) {
-  common_bcast_parameter(i);
-  check_runtime_errors(comm_cart);
-}
+REGISTER_CALLBACK(common_bcast_parameter)
 
-REGISTER_CALLBACK(mpi_bcast_parameter_slave)
-
-int mpi_bcast_parameter(int i) {
-  Communication::mpiCallbacks().call(mpi_bcast_parameter_slave, i);
-
-  common_bcast_parameter(i);
-
-  return check_runtime_errors(comm_cart);
-}
+void mpi_bcast_parameter(int i) { mpi_call_all(common_bcast_parameter, i); }
