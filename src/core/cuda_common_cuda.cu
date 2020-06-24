@@ -227,7 +227,7 @@ void copy_energy_from_GPU(Observable_stat &obs_energy) {
   cuda_safe_mem(cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy),
                            cudaMemcpyDeviceToHost));
   if (!obs_energy.coulomb.empty())
-    obs_energy.coulomb[0] += energy_host.coulomb;
+    obs_energy.coulomb[1] += energy_host.coulomb;
   if (obs_energy.dipolar.size() >= 2)
     obs_energy.dipolar[1] += energy_host.dipolar;
 }
