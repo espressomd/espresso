@@ -22,7 +22,6 @@
 
 #include "debug.hpp"
 
-#include "Observable_stat.hpp"
 #include "ParticleRange.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
@@ -221,15 +220,12 @@ void clear_energy_on_GPU() {
   cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)));
 }
 
-void copy_energy_from_GPU(Observable_stat &obs_energy) {
+CUDA_energy copy_energy_from_GPU() {
   if (!global_part_vars_host.communication_enabled)
-    return;
+    return {};
   cuda_safe_mem(cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy),
                            cudaMemcpyDeviceToHost));
-  if (!obs_energy.coulomb.empty())
-    obs_energy.coulomb[1] += energy_host.coulomb;
-  if (obs_energy.dipolar.size() >= 2)
-    obs_energy.dipolar[1] += energy_host.dipolar;
+  return energy_host;
 }
 
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {

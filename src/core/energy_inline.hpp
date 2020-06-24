@@ -279,17 +279,15 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
   throw BondInvalidSizeError(n_partners);
 }
 
-/** Add kinetic energies for one particle to the energy observable.
+/** Calculate kinetic energies for one particle.
  *  @param[in] p1   particle for which to calculate energies
- *  @param[out]    obs_energy   energy observable
  */
-inline void add_kinetic_energy(Particle const &p1,
-                               Observable_stat &obs_energy) {
+inline double calc_kinetic_energy(Particle const &p1) {
   if (p1.p.is_virtual)
-    return;
+    return 0.0;
 
   /* kinetic energy */
-  obs_energy.kinetic[0] += 0.5 * p1.p.mass * p1.m.v.norm2();
+  auto res = 0.5 * p1.p.mass * p1.m.v.norm2();
 
   // Note that rotational degrees of virtual sites are integrated
   // and therefore can contribute to kinetic energy
@@ -297,10 +295,10 @@ inline void add_kinetic_energy(Particle const &p1,
   if (p1.p.rotation) {
     /* the rotational part is added to the total kinetic energy;
      * Here we use the rotational inertia */
-    obs_energy.kinetic[0] +=
-        0.5 * (hadamard_product(p1.m.omega, p1.m.omega) * p1.p.rinertia);
+    res += 0.5 * (hadamard_product(p1.m.omega, p1.m.omega) * p1.p.rinertia);
   }
 #endif
+  return res;
 }
 
 /** Add bonded energies for one particle to the energy observable.

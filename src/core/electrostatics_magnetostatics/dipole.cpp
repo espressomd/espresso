@@ -205,33 +205,31 @@ void calc_long_range_force(const ParticleRange &particles) {
   }
 }
 
-void calc_energy_long_range(Observable_stat &energy,
-                            const ParticleRange &particles) {
+double calc_energy_long_range(const ParticleRange &particles) {
+  double energy = 0.;
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_P3M:
     dp3m_dipole_assign(particles);
-    energy.dipolar[1] = dp3m_calc_kspace_forces(false, true, particles);
+    energy = dp3m_calc_kspace_forces(false, true, particles);
     break;
   case DIPOLAR_MDLC_P3M:
     dp3m_dipole_assign(particles);
-    energy.dipolar[1] = dp3m_calc_kspace_forces(false, true, particles);
-    energy.dipolar[1] += add_mdlc_energy_corrections(particles);
+    energy = dp3m_calc_kspace_forces(false, true, particles);
+    energy += add_mdlc_energy_corrections(particles);
     break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    energy.dipolar[1] = dawaanr_calculations(false, true, particles);
+    energy = dawaanr_calculations(false, true, particles);
     break;
 #ifdef DP3M
   case DIPOLAR_MDLC_DS:
-    energy.dipolar[1] =
-        magnetic_dipolar_direct_sum_calculations(false, true, particles);
-    energy.dipolar[1] += add_mdlc_energy_corrections(particles);
+    energy = magnetic_dipolar_direct_sum_calculations(false, true, particles);
+    energy += add_mdlc_energy_corrections(particles);
     break;
 #endif
   case DIPOLAR_DS:
-    energy.dipolar[1] =
-        magnetic_dipolar_direct_sum_calculations(false, true, particles);
+    energy = magnetic_dipolar_direct_sum_calculations(false, true, particles);
     break;
   case DIPOLAR_DS_GPU: // NOLINT(bugprone-branch-clone)
     // do nothing: it's an actor
@@ -244,7 +242,7 @@ void calc_energy_long_range(Observable_stat &energy,
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
     assert(Scafacos::dipolar());
-    energy.dipolar[1] = Scafacos::long_range_energy();
+    energy = Scafacos::long_range_energy();
 #endif
   case DIPOLAR_NONE:
     break;
@@ -253,6 +251,7 @@ void calc_energy_long_range(Observable_stat &energy,
         << "energy calculation not implemented for dipolar method.";
     break;
   }
+  return energy;
 }
 
 int set_mesh() {
