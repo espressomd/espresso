@@ -58,6 +58,7 @@ cdef extern from "Observable_stat.hpp":
         Span[double] bonded_contribution(int bond_id)
         Span[double] non_bonded_intra_contribution(int type1, int type2)
         Span[double] non_bonded_inter_contribution(int type1, int type2)
+        size_t chunk_size()
 
 cdef extern from "statistics.hpp":
     cdef vector[double] calc_structurefactor(PartCfg & , const vector[int] & p_types, int order)

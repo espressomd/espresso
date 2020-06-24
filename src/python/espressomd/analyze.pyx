@@ -36,16 +36,13 @@ from .utils cimport create_nparray_from_double_array
 from .particle_data cimport get_n_part
 
 
-cdef _Observable_stat_to_dict(Observable_stat obs, int size,
-                              cbool calc_sp):
+cdef _Observable_stat_to_dict(Observable_stat obs, cbool calc_sp):
     """Transform an Observable_stat struct to a python dict.
 
     Parameters
     ----------
     obs :
         Core observable.
-    size : :obj:`int`, \{1, 9\}
-        Dimensionality of the data.
     calc_sp : :obj:`bool`
         Whether to calculate a scalar pressure (only relevant when
         ``obs`` is a pressure tensor observable).
@@ -71,6 +68,8 @@ cdef _Observable_stat_to_dict(Observable_stat obs, int size,
         * ``"virtual_sites", <i>``: contribution from virtual site i
 
     """
+
+    size = obs.chunk_size()
 
     def set_initial():
         if size == 9 and not calc_sp:
@@ -332,7 +331,7 @@ class Analysis:
         # Update in ESPResSo core
         analyze.update_pressure()
 
-        return _Observable_stat_to_dict(analyze.get_obs_pressure(), 9, True)
+        return _Observable_stat_to_dict(analyze.get_obs_pressure(), True)
 
     def pressure_tensor(self):
         """Calculate the instantaneous pressure_tensor (in parallel). This is
@@ -366,7 +365,7 @@ class Analysis:
         # Update in ESPResSo core
         analyze.update_pressure()
 
-        return _Observable_stat_to_dict(analyze.get_obs_pressure(), 9, False)
+        return _Observable_stat_to_dict(analyze.get_obs_pressure(), False)
 
     IF DPD == 1:
         def dpd_stress(self):
@@ -417,7 +416,7 @@ class Analysis:
         analyze.update_energy()
         handle_errors("calc_long_range_energies failed")
 
-        return _Observable_stat_to_dict(analyze.get_obs_energy(), 1, False)
+        return _Observable_stat_to_dict(analyze.get_obs_energy(), False)
 
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
