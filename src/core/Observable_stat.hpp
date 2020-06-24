@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-/** Observable for the scalar pressure, pressure tensor and energy. */
+/** Observable for the pressure and energy. */
 class Observable_stat {
   /** Array for observables on each node. */
   std::vector<double> m_data;
@@ -68,7 +68,7 @@ public:
    *  @param column Which column to sum up (only relevant for multi-dimensional
    *                observables).
    */
-  double accumulate(double acc = 0.0, size_t column = 0) {
+  double accumulate(double acc = 0.0, size_t column = 0) const {
     assert(column < m_chunk_size);
     if (m_chunk_size == 1)
       return boost::accumulate(m_data, acc);

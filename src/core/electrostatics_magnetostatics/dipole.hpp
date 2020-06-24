@@ -24,8 +24,6 @@
 #include <cstddef>
 
 #ifdef DIPOLES
-#include "Observable_stat.hpp"
-
 #include <utils/Vector.hpp>
 
 #include <ParticleRange.hpp>
@@ -80,8 +78,7 @@ void init();
 
 void calc_long_range_force(const ParticleRange &particles);
 
-void calc_energy_long_range(Observable_stat &energy,
-                            const ParticleRange &particles);
+double calc_energy_long_range(const ParticleRange &particles);
 
 int set_mesh();
 void bcast_params(const boost::mpi::communicator &comm);

@@ -37,11 +37,6 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 
-/** Scalar pressure of the system */
-Observable_stat obs_scalar_pressure{1};
-/** Pressure tensor of the system */
-Observable_stat obs_pressure_tensor{9};
-
 nptiso_struct nptiso = {0.0,
                         0.0,
                         0.0,
@@ -56,21 +51,22 @@ nptiso_struct nptiso = {0.0,
                         false,
                         0};
 
+/** Pressure tensor of the system */
+Observable_stat obs_pressure{9};
+
+Observable_stat const &get_obs_pressure() { return obs_pressure; }
+
 /** Calculate long-range virials (P3M, ...). */
 void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_pressure_long_range(obs_scalar_pressure, obs_pressure_tensor,
-                                    particles);
+  auto const coulomb_pressure = Coulomb::calc_pressure_long_range(particles);
+  boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
   Dipole::calc_pressure_long_range();
 #endif
-}
-
-static void add_single_particle_virials(Particle &p) {
-  cell_structure.execute_bond_handler(p, add_bonded_pressure_tensor);
 }
 
 void pressure_calc() {
@@ -79,47 +75,35 @@ void pressure_calc() {
   if (!interactions_sanity_checks())
     return;
 
-  obs_scalar_pressure = Observable_stat{1};
-  obs_pressure_tensor = Observable_stat{9};
+  obs_pressure = Observable_stat{9};
 
   on_observable_calc();
 
   for (auto const &p : cell_structure.local_particles()) {
-    add_kinetic_virials(p);
+    add_kinetic_virials(p, obs_pressure);
   }
 
-  short_range_loop([](Particle &p) { add_single_particle_virials(p); },
+  short_range_loop([](Particle &p) { add_bonded_virials(p, obs_pressure); },
                    [](Particle &p1, Particle &p2, Distance const &d) {
-                     add_non_bonded_pair_virials(p1, p2, d.vec21,
-                                                 sqrt(d.dist2));
+                     add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
+                                                 obs_pressure);
                    });
 
   calc_long_range_virials(cell_structure.local_particles());
 
 #ifdef VIRTUAL_SITES
-  if (!obs_scalar_pressure.virtual_sites.empty()) {
-    auto const vs_pressure_tensor = virtual_sites()->pressure_tensor();
-
-    obs_scalar_pressure.virtual_sites[0] += trace(vs_pressure_tensor);
-    boost::copy(flatten(vs_pressure_tensor),
-                obs_pressure_tensor.virtual_sites.begin());
+  if (!obs_pressure.virtual_sites.empty()) {
+    auto const vs_pressure = virtual_sites()->pressure_tensor();
+    boost::copy(flatten(vs_pressure), obs_pressure.virtual_sites.begin());
   }
 #endif
 
-  /* rescale kinetic energy (=ideal contribution) */
-  obs_scalar_pressure.rescale(3.0 * volume);
-
-  obs_pressure_tensor.rescale(volume);
+  obs_pressure.rescale(volume);
 
   /* gather data */
-  auto obs_scalar_pressure_res = reduce(comm_cart, obs_scalar_pressure);
-  if (obs_scalar_pressure_res) {
-    std::swap(obs_scalar_pressure, *obs_scalar_pressure_res);
-  }
-
-  auto obs_pressure_tensor_res = reduce(comm_cart, obs_pressure_tensor);
-  if (obs_pressure_tensor_res) {
-    std::swap(obs_pressure_tensor, *obs_pressure_tensor_res);
+  auto obs_pressure_res = reduce(comm_cart, obs_pressure);
+  if (obs_pressure_res) {
+    std::swap(obs_pressure, *obs_pressure_res);
   }
 }
 
@@ -129,7 +113,7 @@ Utils::Vector9d observable_compute_pressure_tensor() {
   update_pressure();
   Utils::Vector9d pressure_tensor{};
   for (size_t j = 0; j < 9; j++) {
-    pressure_tensor[j] = obs_pressure_tensor.accumulate(0, j);
+    pressure_tensor[j] = obs_pressure.accumulate(0, j);
   }
   return pressure_tensor;
 }

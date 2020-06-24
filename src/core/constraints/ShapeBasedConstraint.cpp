@@ -113,7 +113,8 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 
 void ShapeBasedConstraint::add_energy(const Particle &p,
                                       const Utils::Vector3d &folded_pos,
-                                      double t, Observable_stat &energy) const {
+                                      double t,
+                                      Observable_stat &obs_energy) const {
   double dist;
   double nonbonded_en = 0.0;
 

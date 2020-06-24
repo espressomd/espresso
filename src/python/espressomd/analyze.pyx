@@ -20,6 +20,7 @@
 include "myconfig.pxi"
 from . cimport analyze
 from libcpp.vector cimport vector  # import std::vector as vector
+from libcpp cimport bool as cbool
 from .interactions cimport BONDED_IA_NONE
 from .interactions cimport bonded_ia_params
 import numpy as np
@@ -32,12 +33,19 @@ from .utils import array_locked, is_valid_type
 from .utils cimport Vector3i, Vector3d, Vector9d
 from .utils cimport handle_errors, check_type_or_throw_except
 from .utils cimport create_nparray_from_double_array
-from .utils cimport create_nparray_from_double_span
 from .particle_data cimport get_n_part
 
 
-cdef _Observable_stat_to_dict(Observable_stat obs):
-    """Transform a scalar Observable_stat struct to a python dict.
+cdef _Observable_stat_to_dict(Observable_stat obs, cbool calc_sp):
+    """Transform an Observable_stat struct to a python dict.
+
+    Parameters
+    ----------
+    obs :
+        Core observable.
+    calc_sp : :obj:`bool`
+        Whether to calculate a scalar pressure (only relevant when
+        ``obs`` is a pressure tensor observable).
 
     Returns
     -------
@@ -52,56 +60,70 @@ cdef _Observable_stat_to_dict(Observable_stat obs):
         * ``"nonbonded", <type_i>, <type_j>``: nonbonded contribution which arises from the interactions between type_i and type_j
         * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded contribution between short ranged forces between type i and j and with the same mol_id
         * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded contribution between short ranged forces between type i and j and different mol_ids
-        * ``"coulomb"``: Coulomb contribution, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb contribution tensor.
-          For how the contribution tensor is calculated, see :ref:`Contribution Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
-          :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
-        * ``"coulomb", <i>``: Coulomb contribution from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
-        * ``"dipolar"``: not implemented
-        * ``"virtual_sites"``: Contribution contribution due to virtual sites
+        * ``"coulomb"``: Coulomb contribution, how it is calculated depends on the method
+        * ``"coulomb", <i>``: Coulomb contribution from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+        * ``"dipolar"``: dipolar contribution, how it is calculated depends on the method
+        * ``"dipolar", <i>``: dipolar contribution from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
+        * ``"virtual_sites"``: virtual sites contribution
+        * ``"virtual_sites", <i>``: contribution from virtual site i
 
     """
+
+    size = obs.chunk_size()
+
+    def set_initial():
+        if size == 9 and not calc_sp:
+            return np.zeros((3, 3), dtype=float)
+        else:
+            return 0.0
+
+    cdef int i
+    cdef int j
 
     # Dict to store the results
     p = OrderedDict()
 
-    # Total pressure
-    p["total"] = obs.accumulate()
+    # Total contribution
+    if size == 1:
+        p["total"] = obs.accumulate()
+    else:
+        total = np.zeros((9,), dtype=float)
+        for i in range(9):
+            total[i] = obs.accumulate(0.0, i)
+        total = total.reshape((3, 3))
+        if calc_sp:
+            p["total"] = np.einsum('ii', total) / 3
+        else:
+            p["total"] = total
 
     # Kinetic
-    p["kinetic"] = 0
-    for kinetic_i in range(obs.kinetic.size()):
-        p["kinetic"] += obs.kinetic[kinetic_i]
+    p["kinetic"] = get_obs_contrib(obs.kinetic, size, calc_sp)
 
     # External
-    p["external_fields"] = obs.external_fields[0]
+    p["external_fields"] = get_obs_contrib(obs.external_fields, size, calc_sp)
 
     # Bonded
-    cdef int i
-    cdef double val
-    cdef double total_bonded
-    total_bonded = 0
+    total_bonded = set_initial()
     for i in range(bonded_ia_params.size()):
         if bonded_ia_params[i].type != BONDED_IA_NONE:
-            val = obs.bonded_contribution(i)[0]
+            val = get_obs_contrib(obs.bonded_contribution(i), size, calc_sp)
             p["bonded", i] = val
             total_bonded += val
     p["bonded"] = total_bonded
 
     # Non-Bonded interactions, total as well as intra and inter molecular
-    cdef int j
-    cdef double total_intra
-    cdef double total_inter
-    total_inter = 0
-    total_intra = 0
-
+    total_intra = set_initial()
+    total_inter = set_initial()
     for i in range(analyze.max_seen_particle_type):
         for j in range(i, analyze.max_seen_particle_type):
-            intra = obs.non_bonded_intra_contribution(i, j)[
-                0]
+            intra = get_obs_contrib(
+                obs.non_bonded_intra_contribution(
+                    i, j), size, calc_sp)
             total_intra += intra
             p["non_bonded_intra", i, j] = intra
-            inter = obs.non_bonded_inter_contribution(i, j)[
-                0]
+            inter = get_obs_contrib(
+                obs.non_bonded_inter_contribution(
+                    i, j), size, calc_sp)
             total_inter += inter
             p["non_bonded_inter", i, j] = inter
             p["non_bonded", i, j] = intra + inter
@@ -113,8 +135,7 @@ cdef _Observable_stat_to_dict(Observable_stat obs):
     # Electrostatics
     IF ELECTROSTATICS == 1:
         cdef np.ndarray coulomb
-        coulomb = create_nparray_from_double_span(
-            obs.coulomb)
+        coulomb = get_obs_contribs(obs.coulomb, size, calc_sp)
         for i in range(coulomb.shape[0]):
             p["coulomb", i] = coulomb[i]
         p["coulomb"] = np.sum(coulomb, axis=0)
@@ -122,8 +143,7 @@ cdef _Observable_stat_to_dict(Observable_stat obs):
     # Dipoles
     IF DIPOLES == 1:
         cdef np.ndarray dipolar
-        dipolar = create_nparray_from_double_span(
-            obs.dipolar)
+        dipolar = get_obs_contribs(obs.dipolar, size, calc_sp)
         for i in range(dipolar.shape[0]):
             p["dipolar", i] = dipolar[i]
         p["dipolar"] = np.sum(dipolar, axis=0)
@@ -131,12 +151,10 @@ cdef _Observable_stat_to_dict(Observable_stat obs):
     # virtual sites
     IF VIRTUAL_SITES == 1:
         cdef np.ndarray virtual_sites
-        if obs.virtual_sites.size():
-            virtual_sites = create_nparray_from_double_span(
-                obs.virtual_sites)
-            for i in range(virtual_sites.shape[0]):
-                p["virtual_sites", i] = virtual_sites[i]
-            p["virtual_sites"] = np.sum(virtual_sites, axis=0)
+        virtual_sites = get_obs_contribs(obs.virtual_sites, size, calc_sp)
+        for i in range(virtual_sites.shape[0]):
+            p["virtual_sites", i] = virtual_sites[i]
+        p["virtual_sites"] = np.sum(virtual_sites, axis=0)
 
     return p
 
@@ -304,16 +322,16 @@ class Analysis:
             * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb pressure tensor.
               For how the pressure tensor is calculated, see :ref:`Pressure Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
               :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
-            * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
-            * ``"virtual_sites"``: Pressure contribution due to virtual sites
+            * ``"virtual_sites"``: Pressure contribution from virtual sites
 
         """
 
         # Update in ESPResSo core
         analyze.update_pressure()
 
-        return _Observable_stat_to_dict(analyze.obs_scalar_pressure)
+        return _Observable_stat_to_dict(analyze.get_obs_pressure(), True)
 
     def pressure_tensor(self):
         """Calculate the instantaneous pressure_tensor (in parallel). This is
@@ -338,96 +356,16 @@ class Analysis:
             * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and with the same mol_id
             * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Maxwell pressure tensor, how it is calculated depends on the method
-            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: not implemented
-            * ``"virtual_sites"``: pressure tensor contribution for virtual sites
+            * ``"virtual_sites"``: pressure tensor contribution from virtual sites
 
         """
-
-        # Dict to store the results
-        p = OrderedDict()
 
         # Update in ESPResSo core
         analyze.update_pressure()
 
-        # Total pressure
-        cdef int i
-        total = np.zeros(9)
-        for i in range(9):
-            total[i] = analyze.obs_pressure_tensor.accumulate(0.0, i)
-
-        p["total"] = total.reshape((3, 3))
-
-        # Individual components of the pressure
-
-        # Kinetic
-        p["kinetic"] = create_nparray_from_double_span(
-            analyze.obs_pressure_tensor.kinetic).reshape((3, 3))
-
-        # Bonded
-        total_bonded = np.zeros((3, 3))
-        for i in range(bonded_ia_params.size()):
-            if bonded_ia_params[i].type != BONDED_IA_NONE:
-                p["bonded", i] = np.reshape(create_nparray_from_double_span(
-                    analyze.obs_pressure_tensor.bonded_contribution(i)), (3, 3))
-                total_bonded += p["bonded", i]
-        p["bonded"] = total_bonded
-
-        # Non-Bonded interactions, total as well as intra and inter molecular
-        cdef int j
-        total_non_bonded_intra = np.zeros((3, 3))
-        total_non_bonded_inter = np.zeros((3, 3))
-
-        for i in range(analyze.max_seen_particle_type):
-            for j in range(i, analyze.max_seen_particle_type):
-                p["non_bonded_intra", i, j] = np.reshape(
-                    create_nparray_from_double_span(
-                        analyze.obs_pressure_tensor.non_bonded_intra_contribution(i, j)), (3, 3))
-                total_non_bonded_intra += p["non_bonded_intra", i, j]
-
-                p["non_bonded_inter", i, j] = np.reshape(
-                    create_nparray_from_double_span(
-                        analyze.obs_pressure_tensor.non_bonded_inter_contribution(i, j)), (3, 3))
-                total_non_bonded_inter += p["non_bonded_inter", i, j]
-                p["non_bonded", i, j] = p["non_bonded_intra", i, j] + \
-                    p["non_bonded_inter", i, j]
-
-        p["non_bonded_intra"] = total_non_bonded_intra
-        p["non_bonded_inter"] = total_non_bonded_inter
-        p["non_bonded"] = total_non_bonded_intra + total_non_bonded_inter
-
-        # Electrostatics
-        IF ELECTROSTATICS == 1:
-            cdef np.ndarray coulomb
-            coulomb = np.reshape(
-                create_nparray_from_double_span(
-                    analyze.obs_pressure_tensor.coulomb), (-1, 3, 3))
-            for i in range(coulomb.shape[0]):
-                p["coulomb", i] = coulomb[i]
-            p["coulomb"] = np.sum(coulomb, axis=0)
-
-        # Dipoles
-        IF DIPOLES == 1:
-            cdef np.ndarray dipolar
-            dipolar = np.reshape(
-                create_nparray_from_double_span(
-                    analyze.obs_pressure_tensor.dipolar), (-1, 3, 3))
-            for i in range(dipolar.shape[0]):
-                p["dipolar", i] = dipolar[i]
-            p["dipolar"] = np.sum(dipolar, axis=0)
-
-        # virtual sites
-        IF VIRTUAL_SITES_RELATIVE == 1:
-            cdef np.ndarray virtual_sites
-            if analyze.obs_pressure_tensor.virtual_sites.size():
-                virtual_sites = np.reshape(
-                    create_nparray_from_double_span(
-                        analyze.obs_pressure_tensor.virtual_sites), (-1, 3, 3))
-                for i in range(virtual_sites.shape[0]):
-                    p["virtual_sites", i] = virtual_sites[i]
-                p["virtual_sites"] = np.sum(virtual_sites, axis=0)
-
-        return p
+        return _Observable_stat_to_dict(analyze.get_obs_pressure(), False)
 
     IF DPD == 1:
         def dpd_stress(self):
@@ -459,9 +397,9 @@ class Analysis:
             * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and with the same mol_id
             * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and different mol_ids
             * ``"coulomb"``: Coulomb energy, how it is calculated depends on the method
-            * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``)
             * ``"dipolar"``: dipolar energy
-            * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``) and their corrections (``i=2``)
+            * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
 
 
         Examples
@@ -478,7 +416,7 @@ class Analysis:
         analyze.update_energy()
         handle_errors("calc_long_range_energies failed")
 
-        return _Observable_stat_to_dict(analyze.obs_energy)
+        return _Observable_stat_to_dict(analyze.get_obs_energy(), False)
 
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
