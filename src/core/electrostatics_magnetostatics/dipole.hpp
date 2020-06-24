@@ -24,8 +24,6 @@
 #include <cstddef>
 
 #ifdef DIPOLES
-#include "Observable_stat.hpp"
-
 #include <utils/Vector.hpp>
 
 #include <ParticleRange.hpp>

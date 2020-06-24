@@ -24,7 +24,6 @@
 #include <cstddef>
 
 #ifdef ELECTROSTATICS
-#include "Observable_stat.hpp"
 
 #include <ParticleRange.hpp>
 #include <utils/Vector.hpp>
@@ -60,8 +59,7 @@ struct Coulomb_parameters {
 extern Coulomb_parameters coulomb;
 
 namespace Coulomb {
-void calc_pressure_long_range(Observable_stat &p_tensor,
-                              const ParticleRange &particles);
+Utils::Vector9d calc_pressure_long_range(const ParticleRange &particles);
 
 void sanity_checks(int &state);
 double cutoff(const Utils::Vector3d &box_l);

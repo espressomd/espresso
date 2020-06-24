@@ -60,7 +60,8 @@ Observable_stat const &get_obs_pressure() { return obs_pressure; }
 void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_pressure_long_range(obs_pressure, particles);
+  auto const coulomb_pressure = Coulomb::calc_pressure_long_range(particles);
+  boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */

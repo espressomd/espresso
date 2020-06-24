@@ -42,8 +42,7 @@
 Coulomb_parameters coulomb;
 
 namespace Coulomb {
-void calc_pressure_long_range(Observable_stat &p_tensor,
-                              const ParticleRange &particles) {
+Utils::Vector9d calc_pressure_long_range(const ParticleRange &particles) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -57,10 +56,7 @@ void calc_pressure_long_range(Observable_stat &p_tensor,
     break;
   case COULOMB_P3M: {
     p3m_charge_assign(particles);
-    auto const p3m_p_tensor = p3m_calc_kspace_pressure_tensor();
-    std::copy_n(p3m_p_tensor.data(), 9, p_tensor.coulomb.begin() + 9);
-
-    break;
+    return p3m_calc_kspace_pressure_tensor();
   }
 #endif
   case COULOMB_MMM1D:
@@ -72,6 +68,7 @@ void calc_pressure_long_range(Observable_stat &p_tensor,
   default:
     break;
   }
+  return {};
 }
 
 void sanity_checks(int &state) {
