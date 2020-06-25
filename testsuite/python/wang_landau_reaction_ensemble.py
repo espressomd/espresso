@@ -66,7 +66,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.bonded_inter[0] = h
     system.part[0].add_bond((h, 1))
     WLRE = reaction_ensemble.WangLandauReactionEnsemble(
-        temperature=temperature, exclusion_radius=0, seed=69)
+        temperature=temperature, exclusion_radius=0, seed=86)
     WLRE.add_reaction(
         gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
         product_types=[1, 2], product_coefficients=[1, 1],
