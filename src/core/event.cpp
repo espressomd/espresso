@@ -263,9 +263,7 @@ void on_boxl_change() {
 void on_cell_structure_change() {
 /* Now give methods a chance to react to the change in cell
    structure. Most ES methods need to reinitialize, as they depend
-   on skin, node grid and so on. Only for a change in box length we
-   have separate, faster methods, as this might happen frequently
-   in a NpT simulation. */
+   on skin, node grid and so on. */
 #ifdef ELECTROSTATICS
   Coulomb::init();
 #endif /* ifdef ELECTROSTATICS */
