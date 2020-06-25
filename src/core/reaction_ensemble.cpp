@@ -641,39 +641,6 @@ Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
 }
 
 /**
- * Writes a random position inside the central box into the provided array.
- * Additionally it proposes points with a small radii more often than a uniform
- * random probability density would do it.
- */
-std::vector<double> ReactionAlgorithm::
-    get_random_position_in_box_enhanced_proposal_of_small_radii() {
-  double random_radius =
-      cyl_radius *
-      m_uniform_real_distribution(
-          m_generator); // for enhanced proposal of small radii, needs
-                        // correction within Metropolis hasting algorithm,
-                        // proposal density is
-                        // p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small
-                        // radii are proposed more often
-  double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
-  std::vector<double> out_pos(3);
-  out_pos[0] = random_radius * cos(phi);
-  out_pos[1] = random_radius * sin(phi);
-  while (std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) <=
-             std::pow(exclusion_radius, 2) or
-         std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) >
-             std::pow(cyl_radius, 2)) {
-    random_radius = cyl_radius * m_uniform_real_distribution(m_generator);
-    out_pos[0] = random_radius * cos(phi);
-    out_pos[1] = random_radius * sin(phi);
-  }
-  out_pos[0] += cyl_x;
-  out_pos[1] += cyl_y;
-  out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
-  return out_pos;
-}
-
-/**
  * Creates a particle at the end of the observed particle id range.
  */
 int ReactionAlgorithm::create_particle(int desired_type) {
@@ -803,8 +770,6 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     vel[1] = prefactor * m_normal_distribution(m_generator);
     vel[2] = prefactor * m_normal_distribution(m_generator);
     set_particle_v(p_id, vel);
-    // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
-    // //enhanced proposal of small radii
     place_particle(p_id, new_pos.data());
     auto const d_min = distto(partCfg(), new_pos, p_id);
     if (d_min < exclusion_radius)
@@ -1108,18 +1073,6 @@ inline double find_minimum_non_negative_value(std::vector<double> const &rng) {
       minimum = val;
   }
   return minimum;
-}
-
-/**
- * Finds the maximum in a double array and returns it.
- */
-double find_maximum(double const *const list, int len) {
-  double maximum = list[0];
-  for (int i = 0; i < len; i++) {
-    if (list[i] > maximum)
-      maximum = list[i];
-  }
-  return maximum;
 }
 
 /**
@@ -1492,29 +1445,6 @@ int WangLandauReactionEnsemble::
       collective_variables_maximum_values, delta_collective_variables_values,
       nr_collective_variables);
   return index;
-}
-
-/** Remove bins from the range of to be sampled values if they have not been
- *  sampled.
- *  Use with caution otherwise you produce unphysical results, do only use
- *  when you know what you want to do. This can make Wang-Landau converge on a
- *  reduced set gamma. Use this function e.g. in do_reaction_wang_landau(). For
- *  the diprotonic acid compare with @cite troester05a.
- */
-void WangLandauReactionEnsemble::remove_bins_that_have_not_been_sampled() {
-  int removed_bins = 0;
-  for (int k = 0; k < wang_landau_potential.size(); k++) {
-    if (wang_landau_potential[k] == 0) {
-      removed_bins += 1;
-      // criterion is derived from the canonical partition function and the
-      // ration of two summands for the same particle number
-      histogram[k] = int_fill_value;
-      wang_landau_potential[k] = double_fill_value;
-    }
-  }
-  printf("Removed %d bins from the Wang-Landau spectrum\n", removed_bins);
-  // update used bins
-  used_bins -= removed_bins;
 }
 
 /**

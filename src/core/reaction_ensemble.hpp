@@ -225,8 +225,6 @@ private:
 
   void add_types_to_index(std::vector<int> &type_list);
   Utils::Vector3d get_random_position_in_box();
-  std::vector<double>
-  get_random_position_in_box_enhanced_proposal_of_small_radii();
 };
 
 ///////////////////////////// actual declaration of specific reaction algorithms
@@ -348,7 +346,6 @@ private:
       DegreeOfAssociationCollectiveVariable &current_collective_variable);
   int get_num_needed_bins();
   void invalidate_bins();
-  void remove_bins_that_have_not_been_sampled();
   void reset_histogram();
   double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value,
                                                       double delta_CV);
