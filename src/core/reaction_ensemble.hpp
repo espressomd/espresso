@@ -419,7 +419,10 @@ double average_list_of_allowed_entries(const std::vector<T> &rng) {
       counter_allowed_entries += 1;
     }
   }
-  return static_cast<double>(result) / counter_allowed_entries;
+  if (counter_allowed_entries) {
+    return static_cast<double>(result) / counter_allowed_entries;
+  }
+  return 0.0;
 }
 
 /**
