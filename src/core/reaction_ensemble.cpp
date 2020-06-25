@@ -30,42 +30,10 @@
 #include <utils/constants.hpp>
 #include <utils/index.hpp>
 
-#include <boost/range/algorithm.hpp>
-
 #include <cstdio>
 #include <fstream>
 
 namespace ReactionEnsemble {
-/**
- *Calculates the average of an array (used for the histogram of the
- *Wang-Landau algorithm). It excludes values which are initialized to be
- *negative. Those values indicate that the Wang-Landau algorithm should not
- *sample those values. The values still occur in the list because we can only
- *store "rectangular" value ranges.
- */
-template <typename T>
-double average_list_of_allowed_entries(const std::vector<T> &rng) {
-  T result = 0;
-  int counter_allowed_entries = 0;
-  for (auto &val : rng) {
-    if (val >= 0) { // checks for validity of index i (think of energy
-                    // collective variables, in a cubic memory layout
-                    // there will be indices which are not allowed by
-                    // the energy boundaries. These values will be
-                    // initialized with a negative fill value)
-      result += val;
-      counter_allowed_entries += 1;
-    }
-  }
-  return static_cast<double>(result) / counter_allowed_entries;
-}
-
-/**
- * Checks whether a number is in an array.
- */
-inline bool is_in_vector(int value, std::vector<int> const &rng) {
-  return boost::range::find(rng, value) != rng.end();
-}
 
 /** Save minimum and maximum energies as a function of the other collective
  *  variables under min_boundaries_energies, max_boundaries_energies
@@ -1057,22 +1025,6 @@ void WangLandauReactionEnsemble::invalidate_bins() {
 
   used_bins =
       static_cast<int>(wang_landau_potential.size()) - empty_bins_in_memory;
-}
-
-/**
- * Finds the minimum non negative value in the provided double array and returns
- * this value.
- */
-inline double find_minimum_non_negative_value(std::vector<double> const &rng) {
-  double minimum = rng[0];
-  for (auto &val : rng) {
-    if (minimum < 0)
-      minimum = val; // think of negative histogram values that indicate not
-                     // allowed energies in the case of an energy observable
-    if (val < minimum && val >= 0)
-      minimum = val;
-  }
-  return minimum;
 }
 
 /**

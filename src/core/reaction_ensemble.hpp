@@ -23,9 +23,12 @@
 #include "particle_data.hpp"
 #include "random.hpp"
 
+#include <utils/Accumulator.hpp>
+
 #include <map>
 #include <string>
-#include <utils/Accumulator.hpp>
+
+#include <boost/range/algorithm.hpp>
 
 namespace ReactionEnsemble {
 
@@ -386,9 +389,61 @@ public:
   std::pair<double, double> measure_excess_chemical_potential(int reaction_id);
 };
 
-//////////////////////////////////////////////////////////////////free functions
+///////////////////////
+// utility functions //
+///////////////////////
+
 double calculate_factorial_expression(SingleReaction &current_reaction,
                                       std::map<int, int> &old_particle_numbers);
+
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
+
+/**
+ * Calculate the average of an array (used for the histogram of the
+ * Wang-Landau algorithm). It excludes values which are initialized to be
+ * negative. Those values indicate that the Wang-Landau algorithm should not
+ * sample those values. The values still occur in the list because we can only
+ * store "rectangular" value ranges.
+ */
+template <typename T>
+double average_list_of_allowed_entries(const std::vector<T> &rng) {
+  T result = 0;
+  int counter_allowed_entries = 0;
+  for (auto &val : rng) {
+    if (val >= 0) { // checks for validity of index i (think of energy
+                    // collective variables, in a cubic memory layout
+                    // there will be indices which are not allowed by
+                    // the energy boundaries. These values will be
+                    // initialized with a negative fill value)
+      result += val;
+      counter_allowed_entries += 1;
+    }
+  }
+  return static_cast<double>(result) / counter_allowed_entries;
+}
+
+/**
+ * Checks whether a number is in an array.
+ */
+inline bool is_in_vector(int value, std::vector<int> const &rng) {
+  return boost::range::find(rng, value) != rng.end();
+}
+
+/**
+ * Finds the minimum non negative value in the provided double array and returns
+ * this value.
+ */
+inline double find_minimum_non_negative_value(std::vector<double> const &rng) {
+  double minimum = rng[0];
+  for (auto &val : rng) {
+    if (minimum < 0)
+      minimum = val; // think of negative histogram values that indicate not
+                     // allowed energies in the case of an energy observable
+    if (val < minimum && val >= 0)
+      minimum = val;
+  }
+  return minimum;
+}
+
 } // namespace ReactionEnsemble
 #endif
