@@ -70,7 +70,7 @@ cdef class ReactionAlgorithm:
         # <volume>" if one wants to simulate e.g. in a system with constraint
         # (e.g. cuboid box with cylinder constraint, so that the particles are
         # only contained in the volume of the cylinder)
-        if(deref(self.RE).volume < 0):
+        if deref(self.RE).volume < 0:
             deref(self.RE).set_cuboid_reaction_ensemble_volume()
         deref(self.RE).exclusion_radius = self._params["exclusion_radius"]
 
@@ -249,13 +249,13 @@ cdef class ReactionAlgorithm:
         deref(self.RE).check_reaction_ensemble()
 
     def _validate_params_default_charge(self):
-        if(isinstance(self._params["default_charges"], dict) == False):
+        if not isinstance(self._params["default_charges"], dict):
             raise ValueError(
                 "No dictionary for relation between types and default charges provided.")
         # check electroneutrality of the provided reaction
-        if(self._params["check_for_electroneutrality"]):
+        if self._params["check_for_electroneutrality"]:
             charges = np.array(list(self._params["default_charges"].values()))
-            if(np.count_nonzero(charges) == 0):
+            if np.count_nonzero(charges) == 0:
                 # all particles have zero charge
                 # no need to check electroneutrality
                 return
@@ -516,7 +516,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         """
         status_wang_landau = deref(
             self.WLRptr).do_reaction(int(reaction_steps))
-        if(status_wang_landau < 0):
+        if status_wang_landau < 0:
             raise WangLandauHasConverged(
                 "The Wang-Landau algorithm has converged.")
 
