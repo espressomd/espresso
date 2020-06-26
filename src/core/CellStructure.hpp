@@ -198,8 +198,12 @@ public:
                      [this](int id) { return get_local_particle(id); });
   }
 
-  /** type descriptor */
-  int type = CELL_STRUCTURE_NSQUARE;
+private:
+  /** Active type in m_decomposition */
+  int m_type = CELL_STRUCTURE_NSQUARE;
+
+public:
+  int decomposition_type() const { return m_type; }
 
   bool use_verlet_list = true;
 

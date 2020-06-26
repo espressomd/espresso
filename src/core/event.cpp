@@ -133,11 +133,6 @@ void on_integration_start() {
   invalidate_fetch_cache();
 
 #ifdef ADDITIONAL_CHECKS
-
-  if (!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
-    runtimeErrorMsg() << "Nodes disagree about cell system type.";
-  }
-
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
@@ -224,7 +219,7 @@ void on_coulomb_change() {
 }
 
 void on_short_range_ia_change() {
-  cells_re_init(cell_structure.type);
+  cells_re_init(cell_structure.decomposition_type());
 
   recalc_forces = true;
 }
@@ -243,7 +238,7 @@ void on_boxl_change() {
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
      therefore recalculate them. */
-  cells_re_init(cell_structure.type);
+  cells_re_init(cell_structure.decomposition_type());
 
 /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
@@ -295,13 +290,13 @@ void on_parameter_change(int field) {
 #endif
   case FIELD_MIN_GLOBAL_CUT:
   case FIELD_SKIN: {
-    cells_re_init(cell_structure.type);
+    cells_re_init(cell_structure.decomposition_type());
   }
     on_coulomb_change();
     break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();
-    cells_re_init(cell_structure.type);
+    cells_re_init(cell_structure.decomposition_type());
     break;
   case FIELD_TEMPERATURE:
     on_temperature_change();

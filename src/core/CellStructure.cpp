@@ -171,7 +171,7 @@ void CellStructure::resort_particles(int global_flag) {
 void CellStructure::set_atom_decomposition(boost::mpi::communicator const &comm,
                                            BoxGeometry const &box) {
   set_particle_decomposition(std::make_unique<AtomDecomposition>(comm, box));
-  type = CELL_STRUCTURE_NSQUARE;
+  m_type = CELL_STRUCTURE_NSQUARE;
 }
 
 void CellStructure::set_domain_decomposition(
@@ -179,5 +179,5 @@ void CellStructure::set_domain_decomposition(
     LocalBox<double> const &local_geo) {
   set_particle_decomposition(
       std::make_unique<DomainDecomposition>(comm, range, box, local_geo));
-  type = CELL_STRUCTURE_DOMDEC;
+  m_type = CELL_STRUCTURE_DOMDEC;
 }

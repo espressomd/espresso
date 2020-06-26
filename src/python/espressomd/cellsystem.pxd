@@ -33,7 +33,7 @@ cdef extern from "cells.hpp":
     int CELL_STRUCTURE_NSQUARE
 
     ctypedef struct CellStructure:
-        int type
+        int decomposition_type()
         bool use_verlet_list
 
     CellStructure cell_structure

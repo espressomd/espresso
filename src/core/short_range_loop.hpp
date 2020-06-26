@@ -64,7 +64,7 @@ template <typename CellIterator, typename ParticleKernel, typename PairKernel,
 void decide_distance(CellIterator first, CellIterator last,
                      ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
                      VerletCriterion &&verlet_criterion) {
-  switch (cell_structure.type) {
+  switch (cell_structure.decomposition_type()) {
   case CELL_STRUCTURE_NSQUARE:
     Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),
