@@ -110,29 +110,6 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
   return pairs;
 }
 
-/************************************************************/
-/** \name Private Functions */
-/************************************************************/
-/*@{*/
-
-/** Choose the topology init function of a certain cell system. */
-void topology_init(int cs, double range) {
-  switch (cs) {
-  case CELL_STRUCTURE_DOMDEC:
-    cell_structure.m_decomposition = std::make_unique<DomainDecomposition>(
-        comm_cart, range, box_geo, local_geo);
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    cell_structure.m_decomposition =
-        std::make_unique<AtomDecomposition>(comm_cart, box_geo);
-    break;
-  default:
-    throw std::runtime_error("Unknown cell system type");
-  }
-}
-
-/*@}*/
-
 /************************************************************
  *            Exported Functions                            *
  ************************************************************/

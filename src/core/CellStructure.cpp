@@ -26,7 +26,7 @@
 
 #include <utils/contains.hpp>
 
-Cell *CellStructure::particle_to_cell(const Particle &p) const {
+Cell *CellStructure::particle_to_cell(const Particle &p) {
   return decomposition().particle_to_cell(p);
 }
 

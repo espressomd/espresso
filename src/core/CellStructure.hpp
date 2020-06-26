@@ -217,7 +217,7 @@ public:
    *  \return pointer to cell where to put the particle, nullptr
    *          if the particle does not belong on this node.
    */
-  Cell *particle_to_cell(const Particle &p) const;
+  Cell *particle_to_cell(const Particle &p);
 
   /**
    * @brief Add a particle.
