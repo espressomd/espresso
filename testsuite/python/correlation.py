@@ -27,31 +27,32 @@ import espressomd.accumulators
 
 class CorrelatorTest(ut.TestCase):
     # Handle for espresso system
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[10, 10, 10])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+
+    def tearDown(self):
+        self.system.part.clear()
 
     def test(self):
         s = self.system
-        s.box_l = [10, 10, 10]
-        s.cell_system.skin = 0.4
-        # s.periodicity=0,0,0
-        s.time_step = 0.01
         s.thermostat.turn_off()
         s.part.add(id=0, pos=(0, 0, 0), v=(1, 2, 3))
 
-        O = espressomd.observables.ParticlePositions(ids=(0,))
-        C2 = espressomd.accumulators.Correlator(
-            obs1=O, tau_lin=10, tau_max=10.0, delta_N=1,
+        obs = espressomd.observables.ParticlePositions(ids=(0,))
+        acc = espressomd.accumulators.Correlator(
+            obs1=obs, tau_lin=10, tau_max=10.0, delta_N=1,
             corr_operation="square_distance_componentwise")
 
         s.integrator.run(1000)
-        s.auto_update_accumulators.add(C2)
+        s.auto_update_accumulators.add(acc)
         s.integrator.run(20000)
 
-        corr = C2.result()
+        corr = acc.result()
 
         # Check pickling
-        C_unpickeled = pickle.loads(pickle.dumps(C2))
-        np.testing.assert_array_equal(corr, C_unpickeled.result())
+        acc_unpickeled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(corr, acc_unpickeled.result())
 
         for i in range(corr.shape[0]):
             t = corr[i, 0]

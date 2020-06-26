@@ -48,6 +48,9 @@ class TestCylindricalObservable(ut.TestCase):
         'max_z': 5.0,
     }
 
+    def tearDown(self):
+        self.system.part.clear()
+
     def swap_axis(self, arr, axis):
         if axis == 'x':
             arr = np.dot(

@@ -18,24 +18,19 @@
 #
 
 """
-Testmodule for the observable recorder.
+Testmodule for the time series accumulator.
 
 """
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
-from espressomd.observables import ParticlePositions
-from espressomd.accumulators import TimeSeries
+import espressomd
+import espressomd.observables
+import espressomd.accumulators
 
 N_PART = 100
 
 
 class TimeSeriesTest(ut.TestCase):
-
-    """
-    Test class for the observable time series.
-
-    """
 
     def test_time_series(self):
         """Check that accumulator results are the same as the respective numpy result.
@@ -45,8 +40,8 @@ class TimeSeriesTest(ut.TestCase):
         system = espressomd.System(box_l=3 * [1.])
         system.part.add(pos=np.random.random((N_PART, 3)))
 
-        obs = ParticlePositions(ids=system.part[:].id)
-        time_series = TimeSeries(obs=obs)
+        obs = espressomd.observables.ParticlePositions(ids=system.part[:].id)
+        acc = espressomd.accumulators.TimeSeries(obs=obs)
 
         positions = []
         for _ in range(10):
@@ -54,14 +49,16 @@ class TimeSeriesTest(ut.TestCase):
             positions.append(pos)
 
             system.part[:].pos = pos
-            time_series.update()
+            acc.update()
 
-        for result, expected in zip(time_series.time_series(), positions):
+        time_series = acc.time_series()
+
+        for result, expected in zip(time_series, positions):
             np.testing.assert_array_equal(
                 np.array(result).reshape((N_PART, 3)), expected)
 
-        time_series.clear()
-        self.assertEqual(len(time_series.time_series()), 0)
+        acc.clear()
+        self.assertEqual(len(acc.time_series()), 0)
 
 
 if __name__ == "__main__":

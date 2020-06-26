@@ -62,6 +62,9 @@ class CylindricalLBObservableCommon:
         'max_z': 5.0,
     }
 
+    def tearDown(self):
+        self.system.part.clear()
+
     def swap_axis(self, arr, axis):
         if axis == 'x':
             arr = np.dot(tests_common.rotation_matrix(

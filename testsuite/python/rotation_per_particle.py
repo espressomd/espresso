@@ -35,9 +35,9 @@ class Rotation(ut.TestCase):
            thermalized"""
         s = self.s
         s.thermostat.set_langevin(gamma=1, kT=1, seed=42)
-        for x in 0, 1:
-            for y in 0, 1:
-                for z in 0, 1:
+        for x in (0, 1):
+            for y in (0, 1):
+                for z in (0, 1):
                     s.part.clear()
                     s.part.add(id=0, pos=(0, 0, 0), rotation=(x, y, z),
                                quat=(1, 0, 0, 0), omega_body=(0, 0, 0),
@@ -63,7 +63,7 @@ class Rotation(ut.TestCase):
         s.part.clear()
         s.part.add(id=0, pos=(0.9, 0.9, 0.9), ext_torque=(1, 1, 1))
         s.thermostat.turn_off()
-        for dir in 0, 1, 2:
+        for dir in (0, 1, 2):
             # Reset orientation
             s.part[0].quat = [1, 0, 0, 0]
 
