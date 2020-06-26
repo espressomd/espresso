@@ -54,6 +54,7 @@ sample_test(FILE test_p3m.py SUFFIX cpu)
 sample_test(FILE test_p3m.py SUFFIX gpu LABELS "gpu")
 sample_test(FILE test_reaction_ensemble.py SUFFIX constant_pH_ensemble)
 sample_test(FILE test_reaction_ensemble.py SUFFIX reaction_ensemble)
+sample_test(FILE test_reaction_ensemble_complex_reaction.py)
 sample_test(FILE test_rigid_body.py)
 sample_test(FILE test_save_checkpoint.py)
 set_tests_properties(sample_save_checkpoint PROPERTIES FIXTURES_SETUP

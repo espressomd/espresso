@@ -98,7 +98,7 @@ numbers = {type_A: [], type_B: [], type_C: [], type_D: [], type_E: []}
 # warmup
 RE.reaction(200)
 
-for i in range(100):
+for i in range(200):
     RE.reaction(10)
     for _type in types:
         numbers[_type].append(system.number_of_particles(type=_type))
@@ -139,25 +139,19 @@ concentrations_sympy = {
 
 print("concentrations sampled with the reaction ensemble vs. analytical solutions:")
 for ptype in types:
-    print("type {}: {:.4f} +/- {:.4f} mol/l (95% CI), expected: {:.4f} mol/l"
+    print("  type {}: {:.4f} +/- {:.4f} mol/l (95% CI), expected: {:.4f} mol/l"
           .format(types_name[ptype],
                   concentrations[ptype],
                   concentrations_95ci[ptype],
                   concentrations_sympy[ptype]))
 
-
-def test_concentrations(types):
-    for type_ in types:
-        if abs(concentrations[type_] - concentrations_sympy[type_]) > 1e-3:
-            raise RuntimeError("wrong concentration for type ", type_)
-        else:
-            print("concentration correct for type ", type_)
-
-test_concentrations(types)
-
-print("check equations solution reaction ensemble, the next numbers should equal 0")
-print(K-((concentrations[type_C]/c_ref_in_mol_per_l)**nu_C*(concentrations[type_D]/c_ref_in_mol_per_l)**nu_D*(concentrations[type_E]/c_ref_in_mol_per_l)**nu_E*(concentrations[type_A]/c_ref_in_mol_per_l)**nu_A*(concentrations[type_B]/c_ref_in_mol_per_l)**nu_B))
-print(N0-(1.0/abs(nu_A)*concentrations[type_A]/conversion_inv_sigma_cube_to_mol_per_l*volume +1.0/nu_D*concentrations[type_D]/conversion_inv_sigma_cube_to_mol_per_l*volume))
-print(concentrations[type_A]/concentrations[type_B]-float(nu_A)/float(nu_B))
-print(concentrations[type_C]/concentrations[type_D]-float(nu_C)/float(nu_D))
-print(concentrations[type_C]/concentrations[type_E]-float(nu_C)/float(nu_E))
+K_sim = ((concentrations[type_C] / c_ref_in_mol_per_l)**nu_C
+         * (concentrations[type_D] / c_ref_in_mol_per_l)**nu_D
+         * (concentrations[type_E] / c_ref_in_mol_per_l)**nu_E
+         * (concentrations[type_A] / c_ref_in_mol_per_l)**nu_A
+         * (concentrations[type_B] / c_ref_in_mol_per_l)**nu_B)
+N0_sim = (1.0 / abs(nu_A) * concentrations[type_A] + 1.0 / nu_D *
+          concentrations[type_D]) / conversion_inv_sigma_cube_to_mol_per_l * volume
+print("properties of the simulated ensemble:")
+print("  K_sim = {:.1e} mol/l, expected: {:.1e} mol/l".format(K_sim, K))
+print("  N0_sim = {:.1f}, expected: {}".format(N0_sim, N0))
