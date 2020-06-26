@@ -38,7 +38,7 @@ cdef extern from "cells.hpp":
 
     CellStructure cell_structure
 
-    DomainDecomposition* get_domain_decomposition()
+    DomainDecomposition * get_domain_decomposition()
 
     vector[pair[int, int]] mpi_get_pairs(double distance)
 
