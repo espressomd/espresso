@@ -86,7 +86,7 @@ cdef class HydrodynamicInteraction(Actor):
                 "visc": -1.0,
                 "bulk_visc": -1.0,
                 "tau": -1.0,
-                "seed": None,
+                "seed": 0,
                 "kT": 0.}
 
     def _set_lattice_switch(self):
@@ -255,15 +255,6 @@ IF LB_WALBERLA:
         def _set_params_in_es_core(self):
             pass
 
-        def valid_keys(self):
-            return "agrid", "tau", "dens", "visc", "bulk_visc", "kT", "ext_force_density"
-
-        def validate_params(self):
-            super(LBFluidWalberla, self).validate_params()
-
-            if float(self._params["kT"]) != 0.:
-                raise ValueError(
-                    "The Walberla interface does not currently support thermalization (kT>0).")
 
         def default_params(self):
             return {"agrid": -1.0,
@@ -272,8 +263,8 @@ IF LB_WALBERLA:
                     "visc": -1.0,
                     "bulk_visc": -1.0,
                     "tau": -1.0,
-                    #                    "seed": None,
-                    "kT": 0.}
+                    "kT":0.0,
+                    "seed":0}
 
         def _set_lattice_switch(self):
             raise Exception("This may not be called")
@@ -281,7 +272,9 @@ IF LB_WALBERLA:
         def _activate_method(self):
             self.validate_params()
             mpi_init_lb_walberla(
-                self._params["visc"] * self._params['tau'] / self._params['agrid']**2, self._params["dens"], self._params["agrid"], self._params["tau"])
+                self._params["visc"] * self._params['tau'] / self._params['agrid']**2, self._params["dens"], self._params["agrid"], self._params["tau"],
+                self._params['kT']/(self._params['agrid']**2/self._params['tau']**2),
+                self._params['seed'])
             utils.handle_errors("LB fluid activation")
             self.ext_force_density = self._params["ext_force_density"]
 

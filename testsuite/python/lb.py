@@ -131,17 +131,12 @@ class TestLB:
 
             # check mass conversation
             self.assertAlmostEqual(fluid_mass, self.params["dens"],
-                                   delta=self.params["mass_prec_per_node"])
+                                   delta=1E-9)
 
             # check momentum conservation
-            # NOTE: this particle momentum prediction is due to the missing f/2 part in the
-            #       LB fluid.
-            particle_momentum = np.sum(
-                [p.mass * p.v + 0.5 * p.f * self.system.time_step for p in self.system.part], axis=0)
-            fluid_momentum = self.system.analysis.linear_momentum(False, True)
-            np.testing.assert_allclose(
-                particle_momentum + fluid_momentum, self.tot_mom,
-                atol=self.params['mom_prec'])
+            momentum = self.system.analysis.linear_momentum()
+            np.testing.assert_allclose(momentum, self.tot_mom,
+                atol=1E-9)
 
             # Calc particle temperature
             e = self.system.analysis.energy()
@@ -479,8 +474,6 @@ class TestLBWalberla(TestLB, ut.TestCase):
     def test_stress_tensor(self):
         print("stress tensor not implemented for walberla. skipping test.")
 
-    def test_mass_momentum_thermostat(self):
-        print("Thermalization not implemented for Walberla. skipping test")
 
     def test_parameter_change_without_seed(self):
         print("Thermalization not implemented for Walberla. skipping test")

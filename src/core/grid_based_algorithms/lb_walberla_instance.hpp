@@ -23,7 +23,7 @@ LbWalberlaBase *lb_walberla();
  *  @param tau    LB time step
  */
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
-                          double tau);
+                          double tau,double kT, unsigned int seed);
 
 /** @brief Destruct the LbWalberal instance and set lattice switch to NONE */
 void mpi_destruct_lb_walberla();

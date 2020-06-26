@@ -107,16 +107,17 @@ BOOST_AUTO_TEST_CASE(boundary_flow_single_node) {
   if (lb.node_in_local_halo(node)) {
     BOOST_CHECK(lb.set_node_velocity_at_boundary(node, vel));
   }
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 100; i++) {
     lb.integrate();
   }
   for (int j = 0; j < 9; j++) {
     auto v = lb.get_node_velocity(Vector3i{j, node[1], node[2]});
     if (v) {
       if (j != node[0]) {
-        BOOST_CHECK((*v)[0] > 1E-4);
-        BOOST_CHECK((*v)[1] > 1E-4);
-        BOOST_CHECK(fabs((*v)[2]) < 1E-12);
+        printf("%d: %g %g %g\n",j,(*v)[0],(*v)[1],(*v)[2]);
+        BOOST_TEST((*v)[0] > 1E-4);
+        BOOST_TEST((*v)[1] > 1E-4);
+        BOOST_TEST(fabs((*v)[2]) < 1E-11);
       }
     }
   }
@@ -307,6 +308,18 @@ BOOST_AUTO_TEST_CASE(integrate_with_volume_force) {
   int n_nodes = grid_dimensions[0]*grid_dimensions[1]*grid_dimensions[2];
   for (int i = 1; i < 30; i++) {
     lb.integrate();
+
+    auto v0= *(lb.get_node_velocity(Vector3i{{0,0,0}}));
+    for (int i=0;i<grid_dimensions[0];i++)
+      for (int j=0;j<grid_dimensions[1];j++)
+        for (int k=0;k<grid_dimensions[2];k++) {
+          BOOST_CHECK_SMALL(
+            (*(lb.get_node_velocity(Vector3i{{i,j,k}})) -v0).norm(),
+            1E-10);
+        }
+
+
+
     auto mom = lb.get_momentum() / double(n_nodes);
     auto mom_exp = (i + .5) * f;
     MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
