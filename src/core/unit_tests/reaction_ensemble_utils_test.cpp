@@ -32,15 +32,7 @@ BOOST_AUTO_TEST_CASE(find_minimum_non_negative_value_test) {
   BOOST_CHECK_EQUAL(find_minimum_non_negative_value({3, 2, 1}), 1);
   BOOST_CHECK_EQUAL(find_minimum_non_negative_value({-1, 2, 3}), 2);
   BOOST_CHECK_EQUAL(find_minimum_non_negative_value({-1, -2, -3}), -3);
-}
-
-BOOST_AUTO_TEST_CASE(is_in_vector_test) {
-  using namespace ReactionEnsemble;
-
-  BOOST_CHECK(is_in_vector(1, {1, 2, 3}));
-  BOOST_CHECK(is_in_vector(1, {3, 2, 1}));
-  BOOST_CHECK(not is_in_vector(1, {2, 3}));
-  BOOST_CHECK(not is_in_vector(1, {2, -1}));
+  BOOST_CHECK_THROW(find_minimum_non_negative_value({}), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(average_list_of_allowed_entries_test) {
@@ -55,6 +47,8 @@ BOOST_AUTO_TEST_CASE(average_list_of_allowed_entries_test) {
       average_list_of_allowed_entries(std::vector<double>{1.5, -3.}), 1.5, tol);
   BOOST_CHECK_CLOSE(
       average_list_of_allowed_entries(std::vector<int>{-1, -2, -3}), 0.0, tol);
+  BOOST_CHECK_CLOSE(average_list_of_allowed_entries(std::vector<double>{}), 0.0,
+                    tol);
 }
 
 BOOST_AUTO_TEST_CASE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i_test) {

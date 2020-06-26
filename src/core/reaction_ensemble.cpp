@@ -28,6 +28,7 @@
 #include "statistics.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/contains.hpp>
 #include <utils/index.hpp>
 
 #include <cstdio>
@@ -711,7 +712,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   int random_index_in_type_map = i_random(number_of_particles_with_type(type));
   int p_id = get_random_p_id(type, random_index_in_type_map);
   for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
-    while (is_in_vector(p_id, p_id_s_changed_particles)) {
+    while (Utils::contains(p_id_s_changed_particles, p_id)) {
       random_index_in_type_map = i_random(number_of_particles_with_type(type));
       p_id = get_random_p_id(
           type, random_index_in_type_map); // check whether you already touched

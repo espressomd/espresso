@@ -28,8 +28,6 @@
 #include <map>
 #include <string>
 
-#include <boost/range/algorithm.hpp>
-
 namespace ReactionEnsemble {
 
 struct SingleReaction {
@@ -426,26 +424,26 @@ double average_list_of_allowed_entries(const std::vector<T> &rng) {
 }
 
 /**
- * Checks whether a number is in an array.
- */
-inline bool is_in_vector(int value, std::vector<int> const &rng) {
-  return boost::range::find(rng, value) != rng.end();
-}
-
-/**
- * Finds the minimum non negative value in the provided double array and returns
+ * Finds the minimum non negative value in the provided range and returns
  * this value.
  */
 inline double find_minimum_non_negative_value(std::vector<double> const &rng) {
-  double minimum = rng[0];
-  for (auto &val : rng) {
-    if (minimum < 0)
-      minimum = val; // think of negative histogram values that indicate not
-                     // allowed energies in the case of an energy observable
-    if (val < minimum && val >= 0)
-      minimum = val;
+  if (rng.size() == 0)
+    throw std::runtime_error("range is empty\n");
+  // think of negative histogram values that indicate not
+  // allowed energies in the case of an energy observable
+  auto const it = std::min_element(rng.begin(), rng.end(),
+                                   [](double const &a, double const &b) {
+                                     if (a <= 0)
+                                       return false;
+                                     if (b <= 0)
+                                       return true;
+                                     return a < b;
+                                   });
+  if (it == rng.end() or *it < 0) {
+    return rng[rng.size() - 1];
   }
-  return minimum;
+  return *it;
 }
 
 } // namespace ReactionEnsemble
