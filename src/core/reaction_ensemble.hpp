@@ -428,7 +428,7 @@ double average_list_of_allowed_entries(const std::vector<T> &rng) {
  * this value.
  */
 inline double find_minimum_non_negative_value(std::vector<double> const &rng) {
-  if (rng.size() == 0)
+  if (rng.empty())
     throw std::runtime_error("range is empty\n");
   // think of negative histogram values that indicate not
   // allowed energies in the case of an energy observable
