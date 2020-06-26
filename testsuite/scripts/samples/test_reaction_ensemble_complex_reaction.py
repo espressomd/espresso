@@ -30,7 +30,7 @@ class Sample(ut.TestCase):
         err_msg = "Concentration of species {} doesn't match analytical result"
         for ptype in sample.types:
             self.assertAlmostEqual(sample.concentrations[ptype],
-                                   sample.concentrations_sympy[ptype],
+                                   sample.concentrations_numerical[ptype],
                                    delta=1e-3,
                                    msg=err_msg.format(sample.types_name[ptype]))
             self.assertLess(sample.concentrations_95ci[ptype], 1e-3,
