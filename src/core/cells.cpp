@@ -140,17 +140,17 @@ void topology_init(int cs, double range) {
 /************************************************************/
 
 void cells_re_init(int new_cs) {
-  auto const range = interaction_range();
-  cell_structure.clear_particle_index();
+  switch (new_cs) {
+  case CELL_STRUCTURE_DOMDEC:
+    cell_structure.set_domain_decomposition(comm_cart, interaction_range(),
+                                            box_geo, local_geo);
+    break;
+  case CELL_STRUCTURE_NSQUARE:
 
-  auto local_parts = cell_structure.local_particles();
-  std::vector<Particle> particles(local_parts.begin(), local_parts.end());
-
-  topology_init(new_cs, range);
-  cell_structure.type = new_cs;
-
-  for (auto &p : particles) {
-    cell_structure.add_particle(std::move(p));
+    cell_structure.set_atom_decomposition(comm_cart, box_geo);
+    break;
+  default:
+    throw std::runtime_error("Unknown cell system type");
   }
 
   on_cell_structure_change();

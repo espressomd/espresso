@@ -41,11 +41,7 @@
 #include <vector>
 
 /** Cell Structure */
-enum {
-  /** Flag indicating that there is no cell system yet. Only at the
-   *  VERY beginning of the code startup.
-   */
-  CELL_STRUCTURE_NONEYET = -1,
+enum CellStructureType : int {
   /** cell structure domain decomposition */
   CELL_STRUCTURE_DOMDEC = 1,
   /** cell structure n square */
@@ -203,7 +199,7 @@ public:
   }
 
   /** type descriptor */
-  int type = CELL_STRUCTURE_NONEYET;
+  int type = CELL_STRUCTURE_NSQUARE;
 
   bool use_verlet_list = true;
 
@@ -280,8 +276,12 @@ public:
    */
   void remove_all_particles();
 
+  const ParticleDecomposition &decomposition() const {
+    return assert(m_decomposition), *m_decomposition;
+  }
+
 private:
-  ParticleDecomposition &decomposition() const {
+  ParticleDecomposition &decomposition() {
     return assert(m_decomposition), *m_decomposition;
   }
 
@@ -381,6 +381,45 @@ public:
    * @brief Resort particles.
    */
   void resort_particles(int global_flag);
+
+private:
+  /** @brief Set the particle decomposition, keeping the particles. */
+  void set_particle_decomposition(
+      std::unique_ptr<ParticleDecomposition> &&decomposition) {
+    clear_particle_index();
+
+    auto local_parts = local_particles();
+    std::vector<Particle> particles(local_parts.begin(), local_parts.end());
+
+    m_decomposition = std::move(decomposition);
+
+    for (auto &p : particles) {
+      add_particle(std::move(p));
+    }
+  }
+
+public:
+  /**
+   * @brief Set the particle decomposition to
+   *        AtomDecomposition.
+   *
+   *        @param comm Communicator to use.
+   *        @param box Box Geometry
+   */
+  void set_atom_decomposition(boost::mpi::communicator const &comm,
+                              BoxGeometry const &box);
+
+  /**
+   * @brief Set the particle decomposition to
+   *        DomainDecomposition.
+   *
+   *        @param comm Cartesian communicator to use.
+   *        @param box Box Geometry
+   *        @param local_geo Geoemtry of the local box.
+   */
+  void set_domain_decomposition(boost::mpi::communicator const &comm,
+                                double range, BoxGeometry const &box,
+                                LocalBox<double> const &local_geo);
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP
