@@ -80,8 +80,7 @@ extern bool rebuild_verletlist;
 /*@{*/
 
 /** Reinitialize the cell structures.
- *  @param new_cs The new topology to use afterwards. May be set to
- *                @ref CELL_STRUCTURE_CURRENT for not changing it.
+ *  @param new_cs The new topology to use afterwards.
  */
 void cells_re_init(int new_cs);
 
