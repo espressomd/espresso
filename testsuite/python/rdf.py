@@ -28,6 +28,8 @@ class RdfTest(ut.TestCase):
 
     def setUp(self):
         self.s.box_l = 3 * [10]
+
+    def tearDown(self):
         self.s.part.clear()
 
     def bin_volumes(self, midpoints):
