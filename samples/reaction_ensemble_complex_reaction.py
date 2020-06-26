@@ -23,10 +23,15 @@ Guide for the reaction ensemble. The modeled reaction is
 
 import pprint
 import numpy as np
-import sympy
 
 import espressomd
 from espressomd import reaction_ensemble
+
+try:
+    import sympy
+    sympy_found = True
+except ImportError:
+    sympy_found = False
 
 # System parameters
 #############################################################
@@ -111,35 +116,44 @@ for ptype in types:
     concentrations_95ci[ptype] = 1.96 * np.std(numbers[ptype], ddof=1) / np.sqrt(len(
         numbers[ptype])) / volume * conversion_inv_sigma_cube_to_mol_per_l
 
-c_A, c_B, c_C, c_D, c_E = sympy.symbols('c_A, c_B, c_C, c_D, c_E')
-# K = c_C**nu_C * c_D**nu_D * c_E**nu_E * c_A**nu_A * c_B**nu_B
-eq1 = K - ((c_C / c_ref_in_mol_per_l)**nu_C * (c_D / c_ref_in_mol_per_l)**nu_D
-           * (c_E / c_ref_in_mol_per_l)**nu_E * (c_A / c_ref_in_mol_per_l)**nu_A
-           * (c_B / c_ref_in_mol_per_l)**nu_B)
-eq2 = N0 - (1.0 / abs(nu_A) * c_A / conversion_inv_sigma_cube_to_mol_per_l +
-            1.0 / nu_D * c_D / conversion_inv_sigma_cube_to_mol_per_l) * volume
-eq3 = c_A / c_B - float(nu_A) / float(nu_B)
-eq4 = c_C / c_D - float(nu_C) / float(nu_D)
-eq5 = c_C / c_E - float(nu_C) / float(nu_E)
-initial_guess = [
-    concentrations[type_A],
-    concentrations[type_B],
-    concentrations[type_C],
-    concentrations[type_D],
-    concentrations[type_E]]
+if sympy_found:
+    c_A, c_B, c_C, c_D, c_E = sympy.symbols('c_A, c_B, c_C, c_D, c_E')
+    # K = c_C**nu_C * c_D**nu_D * c_E**nu_E * c_A**nu_A * c_B**nu_B
+    eq1 = K - ((c_C / c_ref_in_mol_per_l)**nu_C
+               * (c_D / c_ref_in_mol_per_l)**nu_D
+               * (c_E / c_ref_in_mol_per_l)**nu_E
+               * (c_A / c_ref_in_mol_per_l)**nu_A
+               * (c_B / c_ref_in_mol_per_l)**nu_B)
+    eq2 = N0 - (1 / abs(nu_A) * c_A / conversion_inv_sigma_cube_to_mol_per_l +
+                1 / nu_D * c_D / conversion_inv_sigma_cube_to_mol_per_l) * volume
+    eq3 = c_A / c_B - float(nu_A) / float(nu_B)
+    eq4 = c_C / c_D - float(nu_C) / float(nu_D)
+    eq5 = c_C / c_E - float(nu_C) / float(nu_E)
+    initial_guess = [
+        concentrations[type_A],
+        concentrations[type_B],
+        concentrations[type_C],
+        concentrations[type_D],
+        concentrations[type_E]]
 
-c_A, c_B, c_C, c_D, c_E = sympy.nsolve(
-    (eq1, eq2, eq3, eq4, eq5), (c_A, c_B, c_C, c_D, c_E), initial_guess)
-concentrations_sympy = {
-    type_A: c_A,
-    type_B: c_B,
-    type_C: c_C,
-    type_D: c_D,
-    type_E: c_E}
+    c_A, c_B, c_C, c_D, c_E = sympy.nsolve(
+        (eq1, eq2, eq3, eq4, eq5), (c_A, c_B, c_C, c_D, c_E), initial_guess)
+    concentrations_sympy = {
+        type_A: c_A,
+        type_B: c_B,
+        type_C: c_C,
+        type_D: c_D,
+        type_E: c_E}
+else:
+    concentrations_sympy = {ptype: None for ptype in types}
 
-print("concentrations sampled with the reaction ensemble vs. analytical solutions:")
+print("concentrations sampled with the reaction ensemble"
+      + (sympy_found and " vs. analytical solutions:" or ""))
 for ptype in types:
-    print("  type {}: {:.4f} +/- {:.4f} mol/l (95% CI), expected: {:.4f} mol/l"
+    result_string = "  type {}: {:.4f} +/- {:.4f} mol/l (95% CI)"
+    if sympy_found:
+        result_string += ", expected: {:.4f} mol/l"
+    print(result_string
           .format(types_name[ptype],
                   concentrations[ptype],
                   concentrations_95ci[ptype],

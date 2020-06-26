@@ -21,6 +21,12 @@ import importlib_wrapper
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@SAMPLES_DIR@/reaction_ensemble_complex_reaction.py", random_seeds=False)
 
+try:
+    import sympy  # pylint: disable=unused-import
+    sympy_found = True
+except ImportError:
+    sympy_found = False
+
 
 @skipIfMissingFeatures
 class Sample(ut.TestCase):
@@ -29,10 +35,11 @@ class Sample(ut.TestCase):
     def test_concentrations(self):
         err_msg = "Concentration of species {} doesn't match analytical result"
         for ptype in sample.types:
-            self.assertAlmostEqual(sample.concentrations[ptype],
-                                   sample.concentrations_sympy[ptype],
-                                   delta=1e-3,
-                                   msg=err_msg.format(sample.types_name[ptype]))
+            if sympy_found:
+                self.assertAlmostEqual(sample.concentrations[ptype],
+                                       sample.concentrations_sympy[ptype],
+                                       delta=1e-3,
+                                       msg=err_msg.format(sample.types_name[ptype]))
             self.assertLess(sample.concentrations_95ci[ptype], 1e-3,
                             msg="95% confidence interval too large")
         self.assertAlmostEqual(sample.K_sim, sample.K, delta=1e-3)
