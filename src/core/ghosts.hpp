@@ -80,9 +80,8 @@
  *  The pststore is similar and postpones the write back of received data
  *  until a send operation (with a precreated send buffer) is finished.
  *
- *  The ghost communicators are created in the init routines of the cell
- *  systems, therefore have a look at @ref dd_topology_init or
- *  @ref nsq_topology_init for further details.
+ *  The ghost communicators are created by the cell
+ *  systems.
  */
 #include "ParticleList.hpp"
 

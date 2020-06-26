@@ -171,9 +171,9 @@ private:
    *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
    *
    *  Calculates the cell grid, based on the local box size and the range.
-   *  If the number of cells is larger than \ref max_num_cells,
+   *  If the number of cells is larger than max_num_cells,
    *  it increases max_range until the number of cells is
-   *  smaller or equal \ref max_num_cells. It sets:
+   *  smaller or equal max_num_cells. It sets:
    *  cell_grid,
    *  ghost_cell_grid,
    *  cell_size, and

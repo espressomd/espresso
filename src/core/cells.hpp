@@ -21,7 +21,7 @@
 #ifndef _CELLS_H
 #define _CELLS_H
 /** \file
- *  This file contains everything related to the cell structure / cell
+ *  This file contains everything related to the global cell structure / cell
  *  system.
  *
  *  The cell system (\ref CellStructure) describes how particles are
@@ -30,12 +30,12 @@
  *  interact with each other. The following cell systems are implemented:
  *
  *  - domain decomposition: The simulation box is divided spatially
- *    into cells (see \ref domain_decomposition.hpp). This is suitable for
+ *    into cells (see \ref DomainDecomposition.hpp). This is suitable for
  *    short range interactions.
  *  - nsquare: The particles are distributed equally on all nodes
- *    regardless their spatial position (see \ref nsquare.hpp). This is
- *    suitable for long range interactions that cannot be treated by a
- *    special method like P3M (see \ref p3m.hpp).
+ *    regardless their spatial position (see \ref AtomDecomposition.hpp).
+ *    This is suitable for long range interactions that cannot be treated by a
+ *    special method like P3M.
  */
 
 #include "CellStructure.hpp"
@@ -82,7 +82,6 @@ extern bool rebuild_verletlist;
 /** Reinitialize the cell structures.
  *  @param new_cs The new topology to use afterwards. May be set to
  *                @ref CELL_STRUCTURE_CURRENT for not changing it.
- *  @param range  Desired interaction range
  */
 void cells_re_init(int new_cs);
 
