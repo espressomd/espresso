@@ -406,8 +406,8 @@ void update_system_params() {
   int per[3] = {box_geo.periodic(0) != 0, box_geo.periodic(1) != 0,
                 box_geo.periodic(2) != 0};
 
-  auto const n_part = boost::mpi::all_reduce(comm_cart, cells_get_n_particles(),
-                                             std::plus<int>());
+  auto const n_part = boost::mpi::all_reduce(
+      comm_cart, cell_structure.local_particles().size(), std::plus<>());
   scafacos->set_common_parameters(box_geo.length().data(), per, n_part);
 }
 
