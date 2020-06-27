@@ -486,6 +486,9 @@ class TestLBWalberla(TestLB, ut.TestCase):
 
     def test_pressure_tensor_observable(self):
         print("Not supported by Walberla")
+    
+    def test_mass_momentum_thermostat(self):
+        print("Not supported by Walberla")
 
 
 if __name__ == "__main__":
