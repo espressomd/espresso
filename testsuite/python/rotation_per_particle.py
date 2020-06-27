@@ -133,11 +133,13 @@ class Rotation(ut.TestCase):
         # place particle in cell with MPI rank 0
         p = s.part.add(pos=0.01 * self.s.box_l, rotation=(1, 1, 1))
         p.rotate((1, 0, 0), -np.pi / 2)
-        np.testing.assert_array_almost_equal(p.director, [0, 1, 0], decimal=10)
+        np.testing.assert_array_almost_equal(
+            np.copy(p.director), [0, 1, 0], decimal=10)
         # place particle in cell with MPI rank N-1
         p = s.part.add(pos=0.99 * self.s.box_l, rotation=(1, 1, 1))
         p.rotate((1, 0, 0), -np.pi / 2)
-        np.testing.assert_array_almost_equal(p.director, [0, 1, 0], decimal=10)
+        np.testing.assert_array_almost_equal(
+            np.copy(p.director), [0, 1, 0], decimal=10)
 
 
 if __name__ == "__main__":

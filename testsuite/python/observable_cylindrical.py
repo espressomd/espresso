@@ -266,13 +266,14 @@ class TestCylindricalObservable(ut.TestCase):
         obs_bin_edges = observable.bin_edges()
         np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
         # check center
-        np.testing.assert_array_equal(observable.center, params['center'])
+        np.testing.assert_array_equal(
+            np.copy(observable.center), params['center'])
         observable.center = [3, 2, 1]
-        np.testing.assert_array_equal(observable.center, [3, 2, 1])
+        np.testing.assert_array_equal(np.copy(observable.center), [3, 2, 1])
         # check axis
-        np.testing.assert_array_equal(observable.axis, params['axis'])
+        np.testing.assert_array_equal(np.copy(observable.axis), params['axis'])
         observable.axis = [6, 5, 4]
-        np.testing.assert_array_equal(observable.axis, [6, 5, 4])
+        np.testing.assert_array_equal(np.copy(observable.axis), [6, 5, 4])
 
 
 if __name__ == "__main__":
