@@ -95,9 +95,9 @@ std::vector<double> tensor_product(std::vector<double> const &A,
   std::vector<double> C(A.size() * B.size());
   auto C_it = C.begin();
 
-  for (auto A_it = A.begin(); A_it != A.begin(); ++A_it) {
-    for (double B_it : B) {
-      *(C_it++) = *A_it * B_it;
+  for (double a : A) {
+    for (double b : B) {
+      *(C_it++) = a * b;
     }
   }
   assert(C_it == C.end());
