@@ -89,6 +89,10 @@ class CorrelatorTest(ut.TestCase):
 
         corr = acc.result()
 
+        # Check pickling
+        acc_unpickeled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(corr, acc_unpickeled.result())
+
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
         np.testing.assert_array_almost_equal(corr[:, 0], tau)
         for i in range(corr.shape[0]):
@@ -109,6 +113,10 @@ class CorrelatorTest(ut.TestCase):
         s.integrator.run(20000)
 
         corr = acc.result()
+
+        # Check pickling
+        acc_unpickeled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(corr, acc_unpickeled.result())
 
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
         np.testing.assert_array_almost_equal(corr[:, 0], tau)
@@ -139,6 +147,23 @@ class CorrelatorTest(ut.TestCase):
         np.testing.assert_array_almost_equal(corr[:, 0], tau)
         for i in range(corr.shape[0]):
             np.testing.assert_array_almost_equal(corr[i, 2:], np.sum(v**2))
+
+    def test_correlator_interface(self):
+        # test setters and getters
+        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        acc = espressomd.accumulators.Correlator(
+            obs1=obs, tau_lin=10, tau_max=12.0, delta_N=1,
+            corr_operation="scalar_product")
+        # check tau_lin
+        self.assertEqual(acc.tau_lin, 10)
+        # check tau_max
+        self.assertEqual(acc.tau_max, 12.)
+        # check delta_N
+        self.assertEqual(acc.delta_N, 1)
+        acc.delta_N = 2
+        self.assertEqual(acc.delta_N, 2)
+        # check corr_operation
+        self.assertEqual(acc.corr_operation, "scalar_product")
 
 
 if __name__ == "__main__":

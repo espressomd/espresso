@@ -23,6 +23,8 @@ Testmodule for the time series accumulator.
 """
 import unittest as ut
 import numpy as np
+import pickle
+
 import espressomd
 import espressomd.observables
 import espressomd.accumulators
@@ -52,6 +54,11 @@ class TimeSeriesTest(ut.TestCase):
             acc.update()
 
         time_series = acc.time_series()
+
+        # Check pickling
+        acc_unpickeled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(
+            time_series, acc_unpickeled.time_series())
 
         for result, expected in zip(time_series, positions):
             np.testing.assert_array_equal(result, expected)
