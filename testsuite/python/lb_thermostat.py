@@ -37,7 +37,7 @@ LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
              'tau': TIME_STEP,
-             'kT': 1*KT,
+             'kT': 1 * KT,
              'seed': 123}
 
 
@@ -52,18 +52,16 @@ class LBThermostatCommon:
     def test_fluid(self):
         self.prepare()
         self.system.integrator.run(100)
-        vs=[]
+        vs = []
         for i in range(1000):
-            v=self.lbf[0,0,0].velocity
+            v = self.lbf[0, 0, 0].velocity
             vs.append(v)
             print(v)
             self.system.integrator.run(1)
 
-        print(np.var(v),np.mean(v))
-        self.assertAlmostEqual(np.var(v),KT,delta=1E-3)
+        print(np.var(v), np.mean(v))
+        self.assertAlmostEqual(np.var(v), KT, delta=1E-3)
 
-
-    
     def prepare(self):
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
@@ -88,11 +86,11 @@ class LBThermostatCommon:
                                 bins=n_bins, density=False)
             data = hist[0] / float(v_stored.shape[0])
             bins = hist[1]
-            expected = [single_component_maxwell(bins[j], bins[j + 1], KT) for j in range(n_bins)]
+            expected = [single_component_maxwell(
+                bins[j], bins[j + 1], KT) for j in range(n_bins)]
             print(data)
             print(expected)
             print()
-            
 
 
 @utx.skipIfMissingFeatures("LB_WALBERLA")

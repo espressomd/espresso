@@ -3,8 +3,8 @@
 
 #ifdef LB_WALBERLA
 #include "LbWalberlaBase.hpp"
-#include "LbWalberlaD3Q19MRT.hpp"
 #include "LbWalberlaD3Q19FluctuatingMRT.hpp"
+#include "LbWalberlaD3Q19MRT.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -37,7 +37,8 @@ LbWalberlaBase *lb_walberla() {
 
 void init_lb_walberla(double viscosity, double density, double agrid,
                       double tau, const Utils::Vector3d &box_dimensions,
-                      const Utils::Vector3i &node_grid, double kT, unsigned int seed) {
+                      const Utils::Vector3i &node_grid, double kT,
+                      unsigned int seed) {
   // Exceptions need to be converted to runtime erros so they can be
   // handled from Python in a parallel simulation
   try {
@@ -47,9 +48,10 @@ void init_lb_walberla(double viscosity, double density, double agrid,
           new walberla::LbWalberlaD3Q19MRT(walberla::LbWalberlaD3Q19MRT{
               viscosity, density, agrid, tau, box_dimensions, node_grid, 1});
     } else { // thermarlized LB
-      lb_walberla_instance =
-          new walberla::LbWalberlaD3Q19FluctuatingMRT(walberla::LbWalberlaD3Q19FluctuatingMRT{
-              viscosity, density, agrid, tau, box_dimensions, node_grid, 1, kT, seed});
+      lb_walberla_instance = new walberla::LbWalberlaD3Q19FluctuatingMRT(
+          walberla::LbWalberlaD3Q19FluctuatingMRT{viscosity, density, agrid,
+                                                  tau, box_dimensions,
+                                                  node_grid, 1, kT, seed});
     }
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
@@ -65,7 +67,7 @@ void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau, double kT, unsigned int seed) {
   Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity,
                                          density * pow(agrid, 3), agrid, tau,
-                                         box_geo.length(), node_grid, kT,seed);
+                                         box_geo.length(), node_grid, kT, seed);
   if (lb_walberla_instance) {
     lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
     lb_lbfluid_sanity_checks();

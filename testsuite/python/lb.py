@@ -136,7 +136,7 @@ class TestLB:
             # check momentum conservation
             momentum = self.system.analysis.linear_momentum()
             np.testing.assert_allclose(momentum, self.tot_mom,
-                atol=1E-9)
+                                       atol=1E-9)
 
             # Calc particle temperature
             e = self.system.analysis.energy()
@@ -474,7 +474,6 @@ class TestLBWalberla(TestLB, ut.TestCase):
     def test_stress_tensor(self):
         print("stress tensor not implemented for walberla. skipping test.")
 
-
     def test_parameter_change_without_seed(self):
         print("Thermalization not implemented for Walberla. skipping test")
 
@@ -486,7 +485,7 @@ class TestLBWalberla(TestLB, ut.TestCase):
 
     def test_pressure_tensor_observable(self):
         print("Not supported by Walberla")
-    
+
     def test_mass_momentum_thermostat(self):
         print("Not supported by Walberla")
 
