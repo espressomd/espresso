@@ -278,13 +278,14 @@ class TestCylindricalObservable(ut.TestCase):
         self.assertEqual(observable.max_phi, 8)
         self.assertEqual(observable.max_z, 9)
         # check center
-        np.testing.assert_array_equal(observable.center, params['center'])
+        np.testing.assert_array_equal(
+            np.copy(observable.center), params['center'])
         observable.center = [3, 2, 1]
-        np.testing.assert_array_equal(observable.center, [3, 2, 1])
+        np.testing.assert_array_equal(np.copy(observable.center), [3, 2, 1])
         # check axis
-        np.testing.assert_array_equal(observable.axis, params['axis'])
+        np.testing.assert_array_equal(np.copy(observable.axis), params['axis'])
         observable.axis = [6, 5, 4]
-        np.testing.assert_array_equal(observable.axis, [6, 5, 4])
+        np.testing.assert_array_equal(np.copy(observable.axis), [6, 5, 4])
 
 
 if __name__ == "__main__":
