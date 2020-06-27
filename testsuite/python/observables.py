@@ -123,6 +123,12 @@ class Observables(ut.TestCase):
                 " and particle property " +
                 pprop_name, decimal=11)
 
+            # Test setters and getters
+            self.assertEqual(observable.ids, id_list)
+            new_pids = [id_list[0]]
+            observable.ids = new_pids
+            self.assertEqual(observable.ids, new_pids)
+
         return func
 
     test_pos = generate_test_for_pid_observable(

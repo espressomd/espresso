@@ -259,9 +259,9 @@ private:
   unsigned int dim_A; ///< dimensionality of A
   unsigned int dim_B; ///< dimensionality of B
 
-  using correlation_operation_type =
-      std::vector<double> (*)(std::vector<double> const &,
-                              std::vector<double> const &, Utils::Vector3d);
+  using correlation_operation_type = std::vector<double> (*)(
+      std::vector<double> const &, std::vector<double> const &,
+      Utils::Vector3d const &);
 
   correlation_operation_type corr_operation;
 
