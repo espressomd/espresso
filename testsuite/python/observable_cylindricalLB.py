@@ -232,6 +232,64 @@ class CylindricalLBObservableCommon:
         self.params['axis'] = 'z'
         self.perform_tests()
 
+    def test_cylindrical_lb_profile_interface(self):
+        # test setters and getters
+        params = self.params.copy()
+        params['n_r_bins'] = 4
+        params['n_phi_bins'] = 6
+        params['n_z_bins'] = 8
+        params['axis'] = [0.0, 1.0, 0.0]
+        params['sampling_density'] = 2
+        del params['ids']
+        observable = espressomd.observables.CylindricalLBVelocityProfile(
+            **params)
+        # check bins
+        self.assertEqual(observable.n_r_bins, params['n_r_bins'])
+        self.assertEqual(observable.n_phi_bins, params['n_phi_bins'])
+        self.assertEqual(observable.n_z_bins, params['n_z_bins'])
+        obs_data = observable.calculate()
+        self.assertEqual(len(obs_data), 4 * 6 * 8 * 3)
+        observable.n_r_bins = 1
+        observable.n_phi_bins = 2
+        observable.n_z_bins = 3
+        self.assertEqual(observable.n_r_bins, 1)
+        self.assertEqual(observable.n_phi_bins, 2)
+        self.assertEqual(observable.n_z_bins, 3)
+        obs_data = observable.calculate()
+        self.assertEqual(len(obs_data), 1 * 2 * 3 * 3)
+        # check edges lower corner
+        self.assertEqual(observable.min_r, params['min_r'])
+        self.assertEqual(observable.min_phi, params['min_phi'])
+        self.assertEqual(observable.min_z, params['min_z'])
+        observable.min_r = 4
+        observable.min_phi = 5
+        observable.min_z = 6
+        self.assertEqual(observable.min_r, 4)
+        self.assertEqual(observable.min_phi, 5)
+        self.assertEqual(observable.min_z, 6)
+        # check edges upper corner
+        self.assertEqual(observable.max_r, params['max_r'])
+        self.assertEqual(observable.max_phi, params['max_phi'])
+        self.assertEqual(observable.max_z, params['max_z'])
+        observable.max_r = 7
+        observable.max_phi = 8
+        observable.max_z = 9
+        self.assertEqual(observable.max_r, 7)
+        self.assertEqual(observable.max_phi, 8)
+        self.assertEqual(observable.max_z, 9)
+        # check center
+        np.testing.assert_array_equal(observable.center, params['center'])
+        observable.center = [3, 2, 1]
+        np.testing.assert_array_equal(observable.center, [3, 2, 1])
+        # check axis
+        np.testing.assert_array_equal(observable.axis, params['axis'])
+        observable.axis = [6, 5, 4]
+        np.testing.assert_array_equal(observable.axis, [6, 5, 4])
+        # check sampling_density
+        self.assertEqual(observable.sampling_density, 2)
+        observable.sampling_density = 3
+        self.assertEqual(observable.sampling_density, 3)
+
 
 class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
 

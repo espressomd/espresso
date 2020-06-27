@@ -71,6 +71,59 @@ class ProfileObservablesTest(ut.TestCase):
         self.assertEqual(density_profile.n_values(),
                          3 * self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
 
+    def test_pid_profile_interface(self):
+        # test setters and getters
+        params = {'ids': [0, 1],
+                  'n_x_bins': 4,
+                  'n_y_bins': 6,
+                  'n_z_bins': 8,
+                  'min_x': 0.0,
+                  'max_x': 1.0,
+                  'min_y': 2.0,
+                  'max_y': 3.0,
+                  'min_z': 4.0,
+                  'max_z': 5.0}
+        observable = espressomd.observables.DensityProfile(**params)
+        # check pids
+        self.assertEqual(observable.ids, params['ids'])
+        new_pids = [params['ids'][0]]
+        observable.ids = new_pids
+        self.assertEqual(observable.ids, new_pids)
+        # check bins
+        self.assertEqual(observable.n_x_bins, params['n_x_bins'])
+        self.assertEqual(observable.n_y_bins, params['n_y_bins'])
+        self.assertEqual(observable.n_z_bins, params['n_z_bins'])
+        obs_data = observable.calculate()
+        self.assertEqual(len(obs_data), 4 * 6 * 8)
+        observable.n_x_bins = 1
+        observable.n_y_bins = 2
+        observable.n_z_bins = 3
+        self.assertEqual(observable.n_x_bins, 1)
+        self.assertEqual(observable.n_y_bins, 2)
+        self.assertEqual(observable.n_z_bins, 3)
+        obs_data = observable.calculate()
+        self.assertEqual(len(obs_data), 1 * 2 * 3)
+        # check edges lower corner
+        self.assertEqual(observable.min_x, params['min_x'])
+        self.assertEqual(observable.min_y, params['min_y'])
+        self.assertEqual(observable.min_z, params['min_z'])
+        observable.min_x = 4
+        observable.min_y = 5
+        observable.min_z = 6
+        self.assertEqual(observable.min_x, 4)
+        self.assertEqual(observable.min_y, 5)
+        self.assertEqual(observable.min_z, 6)
+        # check edges upper corner
+        self.assertEqual(observable.max_x, params['max_x'])
+        self.assertEqual(observable.max_y, params['max_y'])
+        self.assertEqual(observable.max_z, params['max_z'])
+        observable.max_x = 7
+        observable.max_y = 8
+        observable.max_z = 9
+        self.assertEqual(observable.max_x, 7)
+        self.assertEqual(observable.max_y, 8)
+        self.assertEqual(observable.max_z, 9)
+
 
 if __name__ == '__main__':
     suite = ut.TestSuite()
