@@ -65,7 +65,7 @@ std::vector<double> compress_discard2(std::vector<double> const &A1,
 
 std::vector<double> scalar_product(std::vector<double> const &A,
                                    std::vector<double> const &B,
-                                   Utils::Vector3d) {
+                                   Utils::Vector3d const &) {
   if (A.size() != B.size()) {
     throw std::runtime_error(
         "Error in scalar product: The vector sizes do not match");
@@ -77,7 +77,7 @@ std::vector<double> scalar_product(std::vector<double> const &A,
 
 std::vector<double> componentwise_product(std::vector<double> const &A,
                                           std::vector<double> const &B,
-                                          Utils::Vector3d) {
+                                          Utils::Vector3d const &) {
   std::vector<double> C(A.size());
   if (A.size() != B.size()) {
     throw std::runtime_error(
@@ -91,7 +91,7 @@ std::vector<double> componentwise_product(std::vector<double> const &A,
 
 std::vector<double> tensor_product(std::vector<double> const &A,
                                    std::vector<double> const &B,
-                                   Utils::Vector3d) {
+                                   Utils::Vector3d const &) {
   std::vector<double> C(A.size() * B.size());
   auto C_it = C.begin();
 
@@ -107,7 +107,7 @@ std::vector<double> tensor_product(std::vector<double> const &A,
 
 std::vector<double> square_distance_componentwise(std::vector<double> const &A,
                                                   std::vector<double> const &B,
-                                                  Utils::Vector3d) {
+                                                  Utils::Vector3d const &) {
   if (A.size() != B.size()) {
     throw std::runtime_error(
         "Error in square distance componentwise: The vector sizes do not "
@@ -127,7 +127,7 @@ std::vector<double> square_distance_componentwise(std::vector<double> const &A,
 // sets w
 std::vector<double> fcs_acf(std::vector<double> const &A,
                             std::vector<double> const &B,
-                            Utils::Vector3d wsquare) {
+                            Utils::Vector3d const &wsquare) {
   if (A.size() != B.size()) {
     throw std::runtime_error(
         "Error in fcs acf: The vector sizes do not match.");
