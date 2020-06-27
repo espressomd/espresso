@@ -250,6 +250,13 @@ class CheckpointTest(ut.TestCase):
             system.auto_update_accumulators[0].get_variance(),
             np.array([0., 0.5, 2., 0., 0., 0.]))
 
+    def test_time_series(self):
+        expected = [[1, 1, 1, 1, 1, 2], [1, 2, 3, 1, 1, 2]]
+        np.testing.assert_array_equal(acc_time_series.time_series(), expected)
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[1].time_series(),
+            expected)
+
     @utx.skipIfMissingFeatures('P3M')
     @ut.skipIf('P3M.CPU' not in modes,
                "Skipping test due to missing combination.")
