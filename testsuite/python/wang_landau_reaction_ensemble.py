@@ -66,7 +66,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.bonded_inter[0] = h
     system.part[0].add_bond((h, 1))
     WLRE = reaction_ensemble.WangLandauReactionEnsemble(
-        temperature=temperature, exclusion_radius=0, seed=69)
+        temperature=temperature, exclusion_radius=0, seed=86)
     WLRE.add_reaction(
         gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
         product_types=[1, 2], product_coefficients=[1, 1],
@@ -82,7 +82,7 @@ class ReactionEnsembleTest(ut.TestCase):
     WLRE.add_collective_variable_degree_of_association(
         associated_type=0, min=0, max=1, corresponding_acid_types=[0, 1])
     WLRE.set_wang_landau_parameters(
-        final_wang_landau_parameter=0.5 * 1e-2,
+        final_wang_landau_parameter=0.8 * 1e-2,
         do_not_sample_reaction_partition_function=True,
         full_path_to_output_filename="WL_potential_out.dat")
 

@@ -41,9 +41,7 @@
 Coulomb_parameters coulomb;
 
 namespace Coulomb {
-void calc_pressure_long_range(Observable_stat &virials,
-                              Observable_stat &p_tensor,
-                              const ParticleRange &particles) {
+Utils::Vector9d calc_pressure_long_range(const ParticleRange &particles) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -57,11 +55,7 @@ void calc_pressure_long_range(Observable_stat &virials,
     break;
   case COULOMB_P3M: {
     p3m_charge_assign(particles);
-    auto const p3m_p_tensor = p3m_calc_kspace_pressure_tensor();
-    std::copy_n(p3m_p_tensor.data(), 9, p_tensor.coulomb.begin() + 9);
-    virials.coulomb[1] = p3m_p_tensor[0] + p3m_p_tensor[4] + p3m_p_tensor[8];
-
-    break;
+    return p3m_calc_kspace_pressure_tensor();
   }
 #endif
   case COULOMB_MMM1D:
@@ -73,6 +67,7 @@ void calc_pressure_long_range(Observable_stat &virials,
   default:
     break;
   }
+  return {};
 }
 
 void sanity_checks(int &state) {
@@ -293,8 +288,8 @@ void calc_long_range_force(const ParticleRange &particles) {
   /* Add fields from EK if enabled */
 }
 
-void calc_energy_long_range(Observable_stat &energy,
-                            const ParticleRange &particles) {
+double calc_energy_long_range(const ParticleRange &particles) {
+  double energy = 0.0;
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_P3M_GPU:
@@ -303,46 +298,47 @@ void calc_energy_long_range(Observable_stat &energy,
     break;
   case COULOMB_P3M:
     p3m_charge_assign(particles);
-    energy.coulomb[1] = p3m_calc_kspace_forces(false, true, particles);
+    energy = p3m_calc_kspace_forces(false, true, particles);
     break;
   case COULOMB_ELC_P3M:
     // assign the original charges first
     // they may not have been assigned yet
     p3m_charge_assign(particles);
     if (!elc_params.dielectric_contrast_on)
-      energy.coulomb[1] = p3m_calc_kspace_forces(false, true, particles);
+      energy = p3m_calc_kspace_forces(false, true, particles);
     else {
-      energy.coulomb[1] = 0.5 * p3m_calc_kspace_forces(false, true, particles);
-      energy.coulomb[1] += 0.5 * coulomb.prefactor *
-                           ELC_P3M_dielectric_layers_energy_self(particles);
+      energy = 0.5 * p3m_calc_kspace_forces(false, true, particles);
+      energy += 0.5 * coulomb.prefactor *
+                ELC_P3M_dielectric_layers_energy_self(particles);
 
       // assign both original and image charges now
       ELC_p3m_charge_assign_both(particles);
       ELC_P3M_modify_p3m_sums_both(particles);
 
-      energy.coulomb[1] += 0.5 * p3m_calc_kspace_forces(false, true, particles);
+      energy += 0.5 * p3m_calc_kspace_forces(false, true, particles);
 
       // assign only the image charges now
       ELC_p3m_charge_assign_image(particles);
       ELC_P3M_modify_p3m_sums_image(particles);
 
-      energy.coulomb[1] -= 0.5 * p3m_calc_kspace_forces(false, true, particles);
+      energy -= 0.5 * p3m_calc_kspace_forces(false, true, particles);
 
       // restore modified sums
       ELC_P3M_restore_p3m_sums(particles);
     }
-    energy.coulomb[2] = ELC_energy(particles);
+    energy += ELC_energy(particles);
     break;
 #endif
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     assert(!Scafacos::dipolar());
-    energy.coulomb[1] += Scafacos::long_range_energy();
+    energy += Scafacos::long_range_energy();
     break;
 #endif
   default:
     break;
   }
+  return energy;
 }
 
 int iccp3m_sanity_check() {

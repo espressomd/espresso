@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2020 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -18,37 +18,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *  Energy calculation.
- *
- *  Implementation in energy.cpp.
- */
 
-#ifndef _ENERGY_H
-#define _ENERGY_H
+#ifndef ESPRESSO_REDUCE_OBSERVABLE_STAT_HPP
+#define ESPRESSO_REDUCE_OBSERVABLE_STAT_HPP
 
 #include "Observable_stat.hpp"
-#include "ParticleRange.hpp"
-#include "actor/ActorList.hpp"
 
-extern ActorList energyActors;
+#include <boost/mpi/communicator.hpp>
+#include <boost/optional.hpp>
 
-/** Parallel energy calculation. */
-void energy_calc(double time);
-
-/** Run @ref energy_calc in parallel. */
-void update_energy();
-
-/** Return the energy observable. */
-Observable_stat const &get_obs_energy();
-
-/** Calculate long-range energies (P3M, ...). */
-void calc_long_range_energies(const ParticleRange &particles);
-
-/** Calculate the total energy of the system. */
-double calculate_current_potential_energy_of_system();
-
-/** Helper function for @ref Observables::Energy. */
-double observable_compute_energy();
-
-#endif
+/** Reduce contributions from all MPI ranks. */
+boost::optional<Observable_stat> reduce(boost::mpi::communicator const &comm,
+                                        Observable_stat const &obs);
+#endif // ESPRESSO_REDUCE_OBSERVABLE_STAT_HPP
