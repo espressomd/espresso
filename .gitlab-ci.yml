@@ -177,10 +177,21 @@ centos:7:
     - docker
     - linux
 
-fedora:
+fedora:31:
   <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos-python3:next
+  script:
+    - export with_cuda=false myconfig=maxset make_check_python=false
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
+fedora:32:
+  <<: *global_job_definition
+  stage: build
+  image: docker.pkg.github.com/espressomd/docker/fedora:fc7628d32de0fce605976ba9edebe7eff186e618
   script:
     - export with_cuda=false myconfig=maxset make_check_python=false
     - bash maintainer/CI/build_cmake.sh
@@ -337,10 +348,20 @@ ubuntu:wo-dependencies:
 
 ### Builds with ROCm
 
-rocm-maxset:
+rocm-maxset:3.0:
   <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm-python3:latest
+  script:
+    - export myconfig=maxset
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - amdgpu
+
+rocm-maxset:3.3:
+  <<: *global_job_definition
+  stage: build
+  image: docker.pkg.github.com/espressomd/docker/rocm:06b6216c7aa3555bcf28c90734dbb84e7285c96f
   script:
     - export myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
