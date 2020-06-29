@@ -46,6 +46,10 @@ public:
    * @brief Resort particles.
    *
    * After calling this function, every particle is in it's home cell.
+   * The output parameter is filled with the changes to the local
+   * particle content, which allows e.g. to keep particles indices
+   * in an efficient way.
+   *
    * This is a collective call.
    *
    * @param[in] global_flag Expect particles to be displaced by more than a
