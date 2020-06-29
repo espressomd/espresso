@@ -15,6 +15,10 @@ struct RemovedParticle {
   int id;
 };
 
+struct RemovedGhostParticle {
+  int id;
+};
+
 struct ModifiedList {
   ParticleList &pl;
 };
@@ -22,12 +26,27 @@ struct ModifiedList {
 /**
  * @brief Change of Particle Address.
  */
-using ParticleChange = boost::variant<RemovedParticle, ModifiedList>;
+using ParticleChange =
+    boost::variant<RemovedParticle, RemovedGhostParticle, ModifiedList>;
 
+/**
+ * @brief A distributed particle decomposition.
+ *
+ * An implementation of this class organizes particles into cells.
+ * It owns the particles, and provides a way of restoring the order
+ * when it is disturbed, and provides a description of the neighborhood
+ * relations between the cells, by which pair interactions with particles
+ * near-by can be calculated. Related to this it provides descriptions
+ * of the ghost communications by which particles can be synchronized that
+ * are not owned locally, but interact with local particles.
+ */
 class ParticleDecomposition {
 public:
   /**
    * @brief Resort particles.
+   *
+   * After calling this function, every particle is in it's home cell.
+   * This is a collective call.
    *
    * @param[in] global_flag Expect particles to be displaced by more than a
    * local box size.
@@ -79,7 +98,8 @@ public:
   virtual Utils::Vector3d max_range() const = 0;
   /**
    * @brief Return true if minimum image convention is
-   *        needed for distance calculation. */
+   *        needed for distance calculation.
+   */
   virtual bool minimum_image_distance() const = 0;
 
   virtual ~ParticleDecomposition() = default;

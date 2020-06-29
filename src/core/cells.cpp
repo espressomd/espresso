@@ -123,7 +123,6 @@ void cells_re_init(int new_cs) {
                                             box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
-
     cell_structure.set_atom_decomposition(comm_cart, box_geo);
     break;
   default:
@@ -211,9 +210,9 @@ Cell *find_current_cell(const Particle &p) {
   return cell_structure.particle_to_cell(p);
 }
 
-DomainDecomposition *get_domain_decomposition() {
-  return dynamic_cast<DomainDecomposition *>(
-      cell_structure.m_decomposition.get());
+const DomainDecomposition *get_domain_decomposition() {
+  return &dynamic_cast<const DomainDecomposition &>(
+      Utils::as_const(cell_structure).decomposition());
 }
 
 void cells_set_use_verlet_lists(bool use_verlet_lists) {

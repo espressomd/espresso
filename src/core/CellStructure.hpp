@@ -89,11 +89,19 @@ inline ParticleRange particles(Utils::Span<Cell *> cells) {
  */
 struct CellStructure {
 private:
+  /** The local id-to-particle index */
   std::vector<Particle *> m_particle_index;
-
-public:
+  /** Implementation of the primary particle decomposition */
   std::unique_ptr<ParticleDecomposition> m_decomposition =
       std::make_unique<AtomDecomposition>();
+  /** Active type in m_decomposition */
+  int m_type = CELL_STRUCTURE_NSQUARE;
+  /** One of @ref Cells::Resort, announces the level of resort needed.
+   */
+  unsigned m_resort_particles = Cells::RESORT_NONE;
+
+public:
+  bool use_verlet_list = true;
 
   /**
    * @brief Update local particle index.
@@ -198,14 +206,8 @@ public:
                      [this](int id) { return get_local_particle(id); });
   }
 
-private:
-  /** Active type in m_decomposition */
-  int m_type = CELL_STRUCTURE_NSQUARE;
-
 public:
   int decomposition_type() const { return m_type; }
-
-  bool use_verlet_list = true;
 
   /** Maximal pair range supported by current cell system. */
   Utils::Vector3d max_range() const;
@@ -280,6 +282,13 @@ public:
    */
   void remove_all_particles();
 
+  /**
+   * @brief Get the underlyind particle decomposition.
+   *
+   * Should be used solely for informative purposes.
+   *
+   * @return The active particle decomposition.
+   */
   const ParticleDecomposition &decomposition() const {
     return assert(m_decomposition), *m_decomposition;
   }
@@ -288,10 +297,6 @@ private:
   ParticleDecomposition &decomposition() {
     return assert(m_decomposition), *m_decomposition;
   }
-
-  /** One of @ref Cells::Resort, announces the level of resort needed.
-   */
-  unsigned m_resort_particles = Cells::RESORT_NONE;
 
 public:
   /**
@@ -327,6 +332,7 @@ public:
    */
   void ghosts_reduce_forces();
 
+private:
   /**
    * @brief Resolve ids to particles.
    *
@@ -349,9 +355,10 @@ public:
     return partners;
   }
 
+public:
   template <class Handler>
   void execute_bond_handler(Particle &p, Handler handler) {
-    for (auto const &bond : p.bonds()) {
+    for (const BondView bond : p.bonds()) {
       auto const partner_ids = bond.partner_ids();
 
       try {
@@ -424,6 +431,13 @@ public:
   void set_domain_decomposition(boost::mpi::communicator const &comm,
                                 double range, BoxGeometry const &box,
                                 LocalBox<double> const &local_geo);
+
+  /**
+   * @brief Return true if minimum image convention is
+   *        needed for distance calculation. */
+  bool minimum_image_distance() const {
+    return m_decomposition->minimum_image_distance();
+  }
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP
