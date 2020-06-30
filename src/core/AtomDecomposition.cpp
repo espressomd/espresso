@@ -33,15 +33,11 @@ void AtomDecomposition::configure_neighbors() {
 
   /* distribute force calculation work  */
   for (int n = 0; n < comm.size(); n++) {
-    auto const diff = n - comm.rank();
-    /* simple load balancing formula. Basically diff % n, where n >=
-       ad.comm.size(), n odd. The node itself is also left out, as it is
-       treated differently */
-    if (diff == 0) {
+    if (comm.rank() == n) {
       continue;
     }
 
-    if (((diff > 0 && (diff % 2) == 0) || (diff < 0 && ((-diff) % 2) == 1))) {
+    if (n < comm.rank()) {
       red_neighbors.push_back(&cells.at(n));
     } else {
       black_neighbors.push_back(&cells.at(n));
