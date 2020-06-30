@@ -29,13 +29,6 @@
  *  read/user-defined access from the script interface.
  */
 
-/** Broadcast a global variable.
- *  @param i  the number from @ref anonymous_namespace{global.cpp}::fields
- *            "fields" specifying which Datafield to broadcast.
- *  @return nonzero on error
- */
-int mpi_bcast_parameter(int i);
-
 /** @brief Check if all the global fields are synchronized between the nodes. */
 void check_global_consistency();
 
@@ -93,5 +86,12 @@ enum Fields {
   /** index of \ref BrownianThermostat::gamma_rotation */
   FIELD_BROWNIAN_GAMMA_ROTATION,
 };
+
+/** Broadcast a global variable.
+ *  @param i  the number from @ref anonymous_namespace{global.cpp}::fields
+ *            "fields" specifying which Datafield to broadcast.
+ *  @return nonzero on error
+ */
+void mpi_bcast_parameter(int i);
 
 #endif

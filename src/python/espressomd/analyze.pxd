@@ -19,7 +19,10 @@
 
 # For C-extern Analysis
 
+cimport numpy as np
+import numpy as np
 from .utils cimport Vector3i, Vector3d, Vector9d, Span
+from .utils cimport create_nparray_from_double_span
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 
@@ -43,11 +46,8 @@ cdef extern from "particle_data.hpp":
     int max_seen_particle_type
 
 cdef extern from "Observable_stat.hpp":
-    cdef cppclass Observable_stat_wrapper:
-        cbool v_comp
+    cdef cppclass Observable_stat:
         Span[double] kinetic
-        Span[double] bonded
-        Span[double] non_bonded
         Span[double] coulomb
         Span[double] dipolar
         Span[double] virtual_sites
@@ -56,11 +56,9 @@ cdef extern from "Observable_stat.hpp":
         double accumulate2 "accumulate"(double acc, size_t column)
         double accumulate1 "accumulate"(double acc)
         Span[double] bonded_contribution(int bond_id)
-        Span[double] non_bonded_contribution(int type1, int type2)
-
-    cdef cppclass Observable_stat_non_bonded_wrapper:
         Span[double] non_bonded_intra_contribution(int type1, int type2)
         Span[double] non_bonded_inter_contribution(int type1, int type2)
+        size_t chunk_size()
 
 cdef extern from "statistics.hpp":
     cdef vector[double] calc_structurefactor(PartCfg & , const vector[int] & p_types, int order)
@@ -84,21 +82,64 @@ cdef extern from "statistics_chain.hpp":
     array4 calc_rg(int, int, int) except +
     array2 calc_rh(int, int, int)
 
-cdef extern from "pressure_inline.hpp":
-    cdef Observable_stat_wrapper obs_scalar_pressure
-    cdef Observable_stat_non_bonded_wrapper obs_scalar_pressure_non_bonded
-    cdef Observable_stat_wrapper obs_pressure_tensor
-    cdef Observable_stat_non_bonded_wrapper obs_pressure_tensor_non_bonded
-
 cdef extern from "pressure.hpp":
-    cdef void update_pressure(cbool)
-
-cdef extern from "energy_inline.hpp":
-    cdef Observable_stat_wrapper obs_energy
+    cdef void update_pressure()
+    cdef const Observable_stat & get_obs_pressure()
 
 cdef extern from "energy.hpp":
     cdef void update_energy()
+    cdef const Observable_stat & get_obs_energy()
     double calculate_current_potential_energy_of_system()
 
 cdef extern from "dpd.hpp":
     Vector9d dpd_stress()
+
+cdef inline get_obs_contribs(Span[double] contributions, int size,
+                             cbool calc_scalar_pressure):
+    """
+    Convert an Observable_stat range of contributions into a correctly
+    shaped numpy array.
+
+    Parameters
+    ----------
+    contributions : (N,) array_like of :obj:`float`
+        Flattened array of energy/pressure contributions from an observable.
+    size : :obj:`int`, \{1, 9\}
+        Dimensionality of the data.
+    calc_scalar_pressure : :obj:`bool`
+        Whether to calculate a scalar pressure (only relevant when
+        ``contributions`` is a pressure tensor).
+
+    """
+    cdef np.ndarray value
+    value = create_nparray_from_double_span(contributions)
+    if size == 9:
+        if calc_scalar_pressure:
+            return np.einsum('...ii', value.reshape((-1, 3, 3))) / 3
+        else:
+            return value.reshape((-1, 3, 3))
+    else:
+        return value
+
+cdef inline get_obs_contrib(Span[double] contribution, int size,
+                            cbool calc_scalar_pressure):
+    """
+    Convert an Observable_stat contribution into a correctly
+    shaped numpy array. If the size is 1, decay to a float.
+
+    Parameters
+    ----------
+    contributions : (N,) array_like of :obj:`float`
+        Flattened array of energy/pressure contributions from an observable.
+    size : :obj:`int`, \{1, 9\}
+        Dimensionality of the data.
+    calc_scalar_pressure : :obj:`bool`
+        Whether to calculate a scalar pressure (only relevant when
+        ``contributions`` is a pressure tensor).
+
+    """
+    cdef np.ndarray value
+    value = get_obs_contribs(contribution, size, calc_scalar_pressure)
+    if value.shape[0] == 1:
+        return value[0]
+    return value

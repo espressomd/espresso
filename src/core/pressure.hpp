@@ -25,27 +25,20 @@
 #ifndef CORE_PRESSURE_HPP
 #define CORE_PRESSURE_HPP
 
+#include "Observable_stat.hpp"
+
 #include <utils/Vector.hpp>
 
-/** Parallel pressure calculation from a virial expansion.
- *  @param[in] v_comp flag which enables compensation of the velocities
- *                    required for deriving a pressure reflecting
- *                    \ref nptiso_struct::p_inst (hence it only works with
- *                    domain decomposition); naturally it therefore doesn't
- *                    make sense to use it without NpT.
- */
-void pressure_calc(bool v_comp);
+/** Parallel pressure calculation from a virial expansion. */
+void pressure_calc();
+
+/** Run @ref pressure_calc in parallel. */
+void update_pressure();
+
+/** Return the pressure observable. */
+Observable_stat const &get_obs_pressure();
 
 /** Helper function for @ref Observables::PressureTensor. */
 Utils::Vector9d observable_compute_pressure_tensor();
-
-/** Calculate the scalar pressure and pressure tensor.
- *  @param[in] v_comp flag which enables compensation of the velocities
- *                    required for deriving a pressure reflecting
- *                    \ref nptiso_struct::p_inst (hence it only works with
- *                    domain decomposition); naturally it therefore doesn't
- *                    make sense to use it without NpT.
- */
-void update_pressure(bool v_comp);
 
 #endif
