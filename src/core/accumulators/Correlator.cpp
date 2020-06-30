@@ -28,6 +28,8 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <utils/math/sqr.hpp>
+
 #include <limits>
 
 namespace {
@@ -117,7 +119,7 @@ std::vector<double> square_distance_componentwise(std::vector<double> const &A,
 
   std::transform(
       A.begin(), A.end(), B.begin(), C.begin(),
-      [](double a, double b) -> double { return (a - b) * (a - b); });
+      [](double a, double b) -> double { return Utils::sqr(a - b); });
 
   return C;
 }
@@ -144,7 +146,7 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
       auto const &a = A[3 * i + j];
       auto const &b = B[3 * i + j];
 
-      C[i] -= (a - b) * (a - b) / wsquare[j];
+      C[i] -= Utils::sqr(a - b) / wsquare[j];
     }
   }
 
@@ -259,9 +261,8 @@ void Correlator::initialize() {
         m_correlation_args[2] <= 0) {
       throw std::runtime_error("missing parameter for fcs_acf: w_x w_y w_z");
     }
-    m_correlation_args[0] = m_correlation_args[0] * m_correlation_args[0];
-    m_correlation_args[1] = m_correlation_args[1] * m_correlation_args[1];
-    m_correlation_args[2] = m_correlation_args[2] * m_correlation_args[2];
+    m_correlation_args =
+        Utils::hadamard_product(m_correlation_args, m_correlation_args);
     if (dim_A % 3)
       throw std::runtime_error("dimA must be divisible by 3 for fcs_acf");
     m_dim_corr = static_cast<int>(dim_A) / 3;
@@ -446,7 +447,6 @@ int Correlator::finalize() {
   // We must now go through the hierarchy and make sure there is space for the
   // new datapoint. For every hierarchy level we have to decide if it is
   // necessary to move something
-  int highest_level_to_compress;
 
   // mark the correlation as finalized
   finalized = true;
@@ -460,10 +460,9 @@ int Correlator::finalize() {
 
     while (vals_ll) {
       // Check, if we will want to push the value from the lowest level
+      int highest_level_to_compress = -1;
       if (vals_ll % 2) {
         highest_level_to_compress = ll;
-      } else {
-        highest_level_to_compress = -1;
       }
 
       int i = ll + 1; // lowest level for which we have to check for compression
@@ -533,14 +532,11 @@ std::vector<double> Correlator::get_correlation() {
   res.resize(m_n_result * cols);
 
   for (int i = 0; i < m_n_result; i++) {
-    res[cols * i + 0] = tau[i] * m_dt;
-    res[cols * i + 1] = n_sweeps[i];
+    auto const index = cols * i;
+    res[index + 0] = tau[i] * m_dt;
+    res[index + 1] = n_sweeps[i];
     for (int k = 0; k < m_dim_corr; k++) {
-      if (n_sweeps[i] > 0) {
-        res[cols * i + 2 + k] = result[i][k] / n_sweeps[i];
-      } else {
-        res[cols * i + 2 + k] = 0;
-      }
+      res[index + 2 + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
     }
   }
   return res;
