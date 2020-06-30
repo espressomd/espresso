@@ -163,8 +163,8 @@ void DomainDecomposition::resort(bool global,
   ParticleList displaced_parts;
 
   /* All ghosts will be removed or overwritten */
-  for(auto c: ghost_cells()) {
-    for(auto const&p: c->particles()) {
+  for (auto c : ghost_cells()) {
+    for (auto const &p : c->particles()) {
       diff.emplace_back(RemovedGhostParticle{p.identity()});
     }
   }

@@ -152,7 +152,7 @@ struct UpdateParticleIndexVisitor {
     /* Don't remove the particle if we also have the
      * original copy. */
     auto p_ptr = cs->get_local_particle(gp.id);
-    if(p_ptr and p_ptr->l.ghost) {
+    if (p_ptr and p_ptr->l.ghost) {
       cs->update_particle_index(gp.id, nullptr);
     }
   }
