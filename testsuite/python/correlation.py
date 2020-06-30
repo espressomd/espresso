@@ -176,6 +176,12 @@ class CorrelatorTest(ut.TestCase):
                 corr[i, 2:],
                 np.exp(-np.linalg.norm(v / w * tau[i])**2), decimal=10)
 
+        # check setter and getter
+        np.testing.assert_array_almost_equal(acc.args, w**2)
+        w_squared = np.array([4, 5, 6])**2
+        acc.args = w_squared
+        np.testing.assert_array_almost_equal(acc.args, w_squared)
+
     def test_correlator_interface(self):
         # test setters and getters
         obs = espressomd.observables.ParticleVelocities(ids=(0,))
