@@ -62,8 +62,8 @@ class CorrelatorTest(ut.TestCase):
         corr = acc.result()
 
         # Check pickling
-        acc_unpickeled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(corr, acc_unpickeled.result())
+        acc_unpickled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(corr, acc_unpickled.result())
 
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
         np.testing.assert_array_almost_equal(corr[:, 0], tau)
@@ -90,8 +90,8 @@ class CorrelatorTest(ut.TestCase):
         corr = acc.result()
 
         # Check pickling
-        acc_unpickeled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(corr, acc_unpickeled.result())
+        acc_unpickled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(corr, acc_unpickled.result())
 
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
         np.testing.assert_array_almost_equal(corr[:, 0], tau)
@@ -115,8 +115,8 @@ class CorrelatorTest(ut.TestCase):
         corr = acc.result()
 
         # Check pickling
-        acc_unpickeled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(corr, acc_unpickeled.result())
+        acc_unpickled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(corr, acc_unpickled.result())
 
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
         np.testing.assert_array_almost_equal(corr[:, 0], tau)
@@ -140,8 +140,8 @@ class CorrelatorTest(ut.TestCase):
         corr = acc.result()
 
         # Check pickling
-        acc_unpickeled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(corr, acc_unpickeled.result())
+        acc_unpickled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(corr, acc_unpickled.result())
 
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
         np.testing.assert_array_almost_equal(corr[:, 0], tau)
@@ -166,8 +166,8 @@ class CorrelatorTest(ut.TestCase):
         corr = acc.result()
 
         # Check pickling
-        acc_unpickeled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(corr, acc_unpickeled.result())
+        acc_unpickled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(corr, acc_unpickled.result())
 
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
         np.testing.assert_array_almost_equal(corr[:, 0], tau)
@@ -197,22 +197,31 @@ class CorrelatorTest(ut.TestCase):
         for tau_lin in (10, 20):
             for delta_N in (1, 2, 10):
                 tau_max = dt * delta_N * tau_lin
+                # linear, multiple and default (=multiple) tau correlator
                 acc_lin = espressomd.accumulators.Correlator(
                     obs1=obs, tau_lin=tau_lin, tau_max=0.99 * tau_max,
                     delta_N=delta_N, corr_operation="scalar_product")
                 acc_mul = espressomd.accumulators.Correlator(
                     obs1=obs, tau_lin=tau_lin, tau_max=1.0 * tau_max,
                     delta_N=delta_N, corr_operation="scalar_product")
+                acc_def = espressomd.accumulators.Correlator(
+                    obs1=obs, tau_lin=1, tau_max=tau_max,
+                    delta_N=delta_N, corr_operation="scalar_product")
                 corr_lin = acc_lin.result()
                 corr_mul = acc_mul.result()
-                corr_lin_upkl = pickle.loads(pickle.dumps(acc_lin))
-                corr_mul_upkl = pickle.loads(pickle.dumps(acc_mul))
-                np.testing.assert_array_equal(corr_lin, corr_lin_upkl.result())
-                np.testing.assert_array_equal(corr_mul, corr_mul_upkl.result())
+                corr_def = acc_mul.result()
+                # check tau
                 time_lin = dt * delta_N * np.arange(len(corr_lin))
                 time_mul = self.calc_tau(dt, tau_lin, len(corr_mul), delta_N)
                 np.testing.assert_array_almost_equal(corr_lin[:, 0], time_lin)
                 np.testing.assert_array_almost_equal(corr_mul[:, 0], time_mul)
+                np.testing.assert_array_almost_equal(corr_def[:, 0], time_mul)
+                self.assertEqual(acc_def.tau_lin, tau_lin)
+                # check pickling
+                corr_lin_upkl = pickle.loads(pickle.dumps(acc_lin))
+                corr_mul_upkl = pickle.loads(pickle.dumps(acc_mul))
+                np.testing.assert_array_equal(corr_lin, corr_lin_upkl.result())
+                np.testing.assert_array_equal(corr_mul, corr_mul_upkl.result())
 
 
 if __name__ == "__main__":
