@@ -156,42 +156,6 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
   return C;
 }
 
-int Correlator::get_correlation_time(double *correlation_time) {
-  // We calculate the correlation time for each m_dim_corr by normalizing the
-  // correlation, integrating it and finding out where C(tau)=tau
-  for (unsigned j = 0; j < m_dim_corr; j++) {
-    correlation_time[j] = 0.;
-  }
-
-  // here we still have to fix the stuff a bit!
-  for (unsigned j = 0; j < m_dim_corr; j++) {
-    double C_tau = 1 * m_dt;
-    bool ok_flag = false;
-    for (unsigned k = 1; k < m_n_result - 1; k++) {
-      if (n_sweeps[k] == 0)
-        break;
-      C_tau += (result[k][j] / static_cast<double>(n_sweeps[k]) -
-                A_accumulated_average[j] * B_accumulated_average[j] / n_data /
-                    n_data) /
-               (result[0][j] / n_sweeps[0]) * m_dt * (tau[k] - tau[k - 1]);
-
-      if (exp(-tau[k] * m_dt / C_tau) + 2 * sqrt(tau[k] * m_dt / n_data) >
-          exp(-tau[k - 1] * m_dt / C_tau) +
-              2 * sqrt(tau[k - 1] * m_dt / n_data)) {
-        correlation_time[j] = C_tau * (1 + static_cast<double>(2 * tau[k] + 1) /
-                                               static_cast<double>(n_data));
-        ok_flag = true;
-        break;
-      }
-    }
-    if (!ok_flag) {
-      correlation_time[j] = -1;
-    }
-  }
-
-  return 0;
-}
-
 void Correlator::initialize() {
   hierarchy_depth = 0;
   // Class members are assigned via the initializer list
