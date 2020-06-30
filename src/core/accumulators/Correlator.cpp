@@ -100,7 +100,6 @@ std::vector<double> tensor_product(std::vector<double> const &A,
       *(C_it++) = a * b;
     }
   }
-  assert(C_it == C.end());
 
   return C;
 }
