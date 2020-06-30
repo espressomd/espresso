@@ -243,8 +243,11 @@ class Correlator(ScriptInterfaceHelper):
 
     args: :obj:`float` of length 3
         Three floats which are passed as arguments to the correlation
-        function.  Currently it is only used by ``"fcs_acf"``.
-        Other correlation operations will ignore these values.
+        function. Currently it is only used by ``"fcs_acf"``, which
+        will square these values in the core; if you later decide to
+        update these weights with ``obs.args = [...]``, you'll have to
+        provide already squared values! Other correlation operations
+        will ignore these values.
     """
 
     _so_name = "Accumulators::Correlator"
