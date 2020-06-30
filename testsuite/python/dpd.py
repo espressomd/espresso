@@ -450,12 +450,12 @@ class DPDThermostat(ut.TestCase):
                     vel_diff = pair[1].v - pair[0].v
                     stress += calc_stress(dist, vel_diff)
 
-            stress /= np.prod(np.copy(s.box_l))
+            stress /= s.volume()
 
             dpd_stress = s.analysis.dpd_stress()
 
             dpd_obs = DPDStress()
-            obs_stress = np.array(dpd_obs.calculate()).reshape((3, 3))
+            obs_stress = dpd_obs.calculate()
 
             np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
             np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
