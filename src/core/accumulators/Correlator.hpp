@@ -211,16 +211,6 @@ public:
    */
   int finalize();
 
-  /** Return an estimate of the integrated correlation time
-   *
-   *  We calculate the correlation time for each dim_corr by normalizing the
-   * correlation,
-   * integrating it and finding out where C(tau)=tau;
-   *
-   */
-
-  int get_correlation_time(double *correlation_time);
-
   /** Return correlation result */
   std::vector<double> get_correlation();
 

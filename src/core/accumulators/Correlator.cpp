@@ -180,45 +180,6 @@ constexpr const char init_errors[][64] = {
     "fcs_acf requires 3 additional parameters"                       // 19
 };
 
-int Correlator::get_correlation_time(double *correlation_time) {
-  // We calculate the correlation time for each m_dim_corr by normalizing the
-  // correlation,
-  // integrating it and finding out where C(tau)=tau;
-  double C_tau;
-  int ok_flag;
-  for (unsigned j = 0; j < m_dim_corr; j++) {
-    correlation_time[j] = 0.;
-  }
-
-  // here we still have to fix the stuff a bit!
-  for (unsigned j = 0; j < m_dim_corr; j++) {
-    C_tau = 1 * m_dt;
-    ok_flag = 0;
-    for (unsigned k = 1; k < m_n_result - 1; k++) {
-      if (n_sweeps[k] == 0)
-        break;
-      C_tau += (result[k][j] / (double)n_sweeps[k] -
-                A_accumulated_average[j] * B_accumulated_average[j] / n_data /
-                    n_data) /
-               (result[0][j] / n_sweeps[0]) * m_dt * (tau[k] - tau[k - 1]);
-
-      if (exp(-tau[k] * m_dt / C_tau) + 2 * sqrt(tau[k] * m_dt / n_data) >
-          exp(-tau[k - 1] * m_dt / C_tau) +
-              2 * sqrt(tau[k - 1] * m_dt / n_data)) {
-        correlation_time[j] =
-            C_tau * (1 + (2 * (double)tau[k] + 1) / (double)n_data);
-        ok_flag = 1;
-        break;
-      }
-    }
-    if (!ok_flag) {
-      correlation_time[j] = -1;
-    }
-  }
-
-  return 0;
-}
-
 void Correlator::initialize() {
   unsigned int i, j, k;
   hierarchy_depth = 0;
