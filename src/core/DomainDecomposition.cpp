@@ -162,13 +162,6 @@ void DomainDecomposition::resort(bool global,
                                  std::vector<ParticleChange> &diff) {
   ParticleList displaced_parts;
 
-  /* All ghosts will be removed or overwritten */
-  for (auto c : ghost_cells()) {
-    for (auto const &p : c->particles()) {
-      diff.emplace_back(RemovedGhostParticle{p.identity()});
-    }
-  }
-
   for (auto &c : local_cells()) {
     for (auto it = c->particles().begin(); it != c->particles().end();) {
       fold_and_reset(*it, m_box);

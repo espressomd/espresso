@@ -148,14 +148,6 @@ struct UpdateParticleIndexVisitor {
     cs->update_particle_index(rp.id, nullptr);
   }
   void operator()(ModifiedList mp) const { cs->update_particle_index(mp.pl); }
-  void operator()(RemovedGhostParticle gp) const {
-    /* Don't remove the particle if we also have the
-     * original copy. */
-    auto p_ptr = cs->get_local_particle(gp.id);
-    if (p_ptr and p_ptr->l.ghost) {
-      cs->update_particle_index(gp.id, nullptr);
-    }
-  }
 };
 } // namespace
 

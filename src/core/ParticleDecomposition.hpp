@@ -15,10 +15,6 @@ struct RemovedParticle {
   int id;
 };
 
-struct RemovedGhostParticle {
-  int id;
-};
-
 struct ModifiedList {
   ParticleList &pl;
 };
@@ -26,8 +22,7 @@ struct ModifiedList {
 /**
  * @brief Change of Particle Address.
  */
-using ParticleChange =
-    boost::variant<RemovedParticle, RemovedGhostParticle, ModifiedList>;
+using ParticleChange = boost::variant<RemovedParticle, ModifiedList>;
 
 /**
  * @brief A distributed particle decomposition.
