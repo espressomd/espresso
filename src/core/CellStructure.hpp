@@ -356,6 +356,17 @@ private:
   }
 
 public:
+  /**
+   * @brief Execute kernel for every bond on particle.
+   * @tparam Handler Callable, which can be invoked with
+   *                 (Particle, int, Utils::Span<Particle *>),
+   *                 returning a bool.
+   * @param p Particles for whom the bonds are evaluated.
+   * @param handler is called for every bond, and handed
+   *                p, the bond id and a span with the bond
+   *                partners as arguments. Its return value
+   *                should indicate if the bond was broken.
+   */
   template <class Handler>
   void execute_bond_handler(Particle &p, Handler handler) {
     for (const BondView bond : p.bonds()) {
