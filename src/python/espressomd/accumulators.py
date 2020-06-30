@@ -190,10 +190,14 @@ class Correlator(ScriptInterfaceHelper):
     tau_lin : :obj:`int`
         The number of data-points for which the results are linearly spaced
         in ``tau``. This is a parameter of the multiple tau correlator. If you
-        want to use it, make sure that you know how it works. By default, it
-        is set equal to ``tau_max`` which results in the trivial linear
-        correlator. By setting ``tau_lin < tau_max`` the multiple
-        tau correlator is switched on. In many cases, ``tau_lin=16`` is a
+        want to use it, make sure that you know how it works. ``tau_lin`` must
+        be divisible by 2. By setting ``tau_lin`` such that
+        ``tau_max >= dt * delta_N * tau_lin``, the
+        multiple tau correlator is used, otherwise the trivial linear
+        correlator is used. By setting ``tau_lin = 1``, the value will be
+        overriden by ``tau_lin = ceil(tau_max / (dt * delta_N))``, which
+        will result in either the multiple or linear tau correlator.
+        In many cases, ``tau_lin=16`` is a
         good choice but this may strongly depend on the observables you are
         correlating. For more information, we recommend to read
         ref. :cite:`ramirez10a` or to perform your own tests.
