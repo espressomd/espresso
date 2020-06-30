@@ -645,19 +645,6 @@ void analyze_append(PartCfg &partCfg) {
   n_configs++;
 }
 
-void analyze_configs(double const *tmp_config, int count) {
-  int i;
-  n_part_conf = count;
-  configs.resize(n_configs + 1);
-  configs[n_configs].resize(3 * n_part_conf);
-  for (i = 0; i < n_part_conf; i++) {
-    configs[n_configs][3 * i] = tmp_config[3 * i];
-    configs[n_configs][3 * i + 1] = tmp_config[3 * i + 1];
-    configs[n_configs][3 * i + 2] = tmp_config[3 * i + 2];
-  }
-  n_configs++;
-}
-
 /****************************************************************************************
  *                                 Observables handling
  ****************************************************************************************/
