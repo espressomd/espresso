@@ -45,13 +45,13 @@ IF SCAFACOS == 1:
             self._set_params_in_es_core()
 
         def valid_keys(self):
-            tmp = ["method_name", "method_params", "prefactor"]
+            tmp = self.required_keys().copy()
             if not self.dipolar:
-                tmp.append("check_neutrality")
+                tmp.add("check_neutrality")
             return tmp
 
         def required_keys(self):
-            return "method_name", "method_params", "prefactor"
+            return {"method_name", "method_params", "prefactor"}
 
         def validate_params(self):
             return True
