@@ -25,20 +25,20 @@
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #include "cells.hpp"
 #include "h5md.hpp"
+#include "integrate.hpp"
 #include "partCfg_global.hpp"
 
 namespace ScriptInterface {
 namespace Writer {
-Variant H5mdScript::call_method(const std::string &name,
-                                const VariantMap &parameters) {
-  if (name == "init_file")
-    m_h5md->InitFile();
-  else if (name == "write")
-    m_h5md->Write(m_h5md->what(), partCfg(), cell_structure.local_particles());
+Variant H5md::call_method(const std::string &name,
+                          const VariantMap &parameters) {
+  if (name == "write")
+    m_h5md->write(cell_structure.local_particles(), sim_time,
+                  static_cast<int>(std::round(sim_time / time_step)));
   else if (name == "flush")
-    m_h5md->Flush();
+    m_h5md->flush();
   else if (name == "close")
-    m_h5md->Close();
+    m_h5md->close();
   return {};
 }
 
