@@ -112,16 +112,6 @@ class Correlator(ScriptInterfaceHelper):
           :math:`B`, i.e., :math:`C_{i \\cdot l_B + j} = A_i B_j`
           with :math:`l_B` the length of :math:`B`.
 
-        * ``"complex_conjugate_product"``: assuming that the observables
-          consist of a complex and real part
-          :math:`A=(A_x+iA_y)`, and :math:`B=(B_x+iB_y)`, this
-          operation computes the result :math:`C=(C_x+iC_y)`, as:
-
-          .. math::
-
-                C_x = A_xB_x + A_yB_y\\\\
-                C_y = A_yB_x - A_xB_y
-
         * ``"fcs_acf"``: Fluorescence Correlation Spectroscopy (FCS)
           autocorrelation function, i.e.,
 
