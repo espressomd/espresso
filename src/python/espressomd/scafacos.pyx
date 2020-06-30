@@ -60,7 +60,7 @@ IF SCAFACOS == 1:
             # Parameters are returned as strings
             # First word is method name, rest are key value pairs
             # which we convert to a dict
-            p = to_str(get_method_and_parameters().split(" "))
+            p = to_str(get_method_and_parameters()).split(" ")
             res = {}
             res["method_name"] = p[0]
 
