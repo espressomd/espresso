@@ -148,6 +148,34 @@ class CorrelatorTest(ut.TestCase):
         for i in range(corr.shape[0]):
             np.testing.assert_array_almost_equal(corr[i, 2:], np.sum(v**2))
 
+    def test_fcs(self):
+        s = self.system
+        v = np.array([1, 2, 3])
+        s.part.add(id=0, pos=(0, 0, 0), v=v)
+
+        w = np.array([3, 2, 1])
+        obs = espressomd.observables.ParticlePositions(ids=(0,))
+        acc = espressomd.accumulators.Correlator(
+            obs1=obs, tau_lin=10, tau_max=2.0, delta_N=1,
+            corr_operation="fcs_acf", args=w)
+
+        s.integrator.run(100)
+        s.auto_update_accumulators.add(acc)
+        s.integrator.run(2000)
+
+        corr = acc.result()
+
+        # Check pickling
+        acc_unpickeled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(corr, acc_unpickeled.result())
+
+        tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
+        np.testing.assert_array_almost_equal(corr[:, 0], tau)
+        for i in range(corr.shape[0]):
+            np.testing.assert_array_almost_equal(
+                corr[i, 2:],
+                np.exp(-np.linalg.norm(v / w * tau[i])**2), decimal=10)
+
     def test_correlator_interface(self):
         # test setters and getters
         obs = espressomd.observables.ParticleVelocities(ids=(0,))
