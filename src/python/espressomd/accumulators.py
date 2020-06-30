@@ -134,7 +134,8 @@ class Correlator(ScriptInterfaceHelper):
                - \\frac{\\Delta z_i^2(\\tau)}{w_z^2}
                \\right) \\right>
 
-          where
+          where :math:`N` is the average number of fluorophores in the
+          illumination area,
 
           .. math::
 
@@ -152,16 +153,28 @@ class Correlator(ScriptInterfaceHelper):
               \\frac{2z^2}{w_z^2} \\right).
 
           The values of :math:`w_x`, :math:`w_y`, and :math:`w_z`
-          are passed to the correlator as ``args``
+          are passed to the correlator as ``args``. The correlator calculates
 
-          The above equations are a
-          generalization of the formula presented by Hoefling
-          et. al. :cite:`hofling11a`. For more information, see
-          references therein. Per each 3 dimensions of the
+          .. math::
+
+               C_i(\\tau) =
+               \\exp \\left(
+               - \\frac{\\Delta x_i^2(\\tau)}{w_x^2}
+               - \\frac{\\Delta y_i^2(\\tau)}{w_y^2}
+               - \\frac{\\Delta z_i^2(\\tau)}{w_z^2}
+               \\right)
+
+          Per each 3 dimensions of the
           observable, one dimension of the correlation output
           is produced. If ``"fcs_acf"`` is used with other observables than
           :class:`espressomd.observables.ParticlePositions`, the physical
           meaning of the result is unclear.
+
+          The above equations are a
+          generalization of the formula presented by Hoefling
+          et. al. :cite:`hofling11a`. For more information, see
+          references therein.
+
 
     delta_N : :obj:`int`
         Number of timesteps between subsequent samples for the auto update mechanism.

@@ -131,7 +131,7 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
                             Utils::Vector3d wsquare) {
   if (!(A.size() == B.size())) {
     throw std::runtime_error(
-        "Error in fcs acf: The vector sizes do not match.");
+        "Error in fcs_acf: The vector sizes do not match.");
   }
 
   auto const C_size = A.size() / 3;
