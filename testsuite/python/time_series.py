@@ -56,9 +56,8 @@ class TimeSeriesTest(ut.TestCase):
         time_series = acc.time_series()
 
         # Check pickling
-        acc_unpickeled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(
-            time_series, acc_unpickeled.time_series())
+        acc_unpickled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(time_series, acc_unpickled.time_series())
 
         for result, expected in zip(time_series, positions):
             np.testing.assert_array_equal(
