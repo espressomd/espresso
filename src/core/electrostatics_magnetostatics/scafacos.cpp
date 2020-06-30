@@ -180,25 +180,6 @@ double pair_energy(double q1q2, double dist) {
     return 0.;
 }
 
-// Issues a runtime error if positions are outside the box domain
-// This is needed, because the scafacos grid sort produces an mpi deadlock
-// otherwise
-// Returns true if calculations can continue.
-bool check_position_validity(const std::vector<double> &pos) {
-  assert(pos.size() % 3 == 0);
-  for (int i = 0; i < pos.size() / 3; i++) {
-    for (int j = 0; j < 3; j++) {
-      if (pos[3 * i + j] < 0 || pos[3 * i + j] > box_geo.length()[j]) {
-        // Throwing exception rather than runtime error, because continuing will
-        // result in mpi deadlock
-        throw std::runtime_error("Particle position outside the box domain not "
-                                 "allowed for scafacos-based methods.");
-      }
-    }
-  }
-  return true;
-}
-
 void add_long_range_force() {
   particles.update_particle_data();
 
