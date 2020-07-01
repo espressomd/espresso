@@ -17,13 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Guide for the reaction ensemble and the constant pH ensemble.
+Guide for the reaction ensemble and the constant pH ensemble. The modeled
+reaction is :math:`\\mathrm{AH} \\leftrightarrow \\mathrm{A}^- + \\mathrm{H}^+`.
 """
-epilog = """You can choose in which ensemble you want to simulate via either
+epilog = __doc__.split(":math:")[0] + "AH <-> A- + H+. " + \
+    """You can choose in which ensemble you want to simulate via either
 providing --reaction_ensemble or --constant_pH_ensemble as command line
 argument to the script. Be aware that in the case of the reaction ensemble,
 the dissociation constant gamma is not the thermodynamic reaction constant K,
-but rather K * 1 mol/l and therefore carries a unit! In the case of the of the
+but rather K * 1 mol/l and therefore carries a unit! In the case of the
 constant pH method, gamma is the thermodynamic reaction constant!
 """
 import numpy as np
@@ -32,7 +34,7 @@ import argparse
 import espressomd
 from espressomd import reaction_ensemble
 
-parser = argparse.ArgumentParser(epilog=__doc__ + epilog)
+parser = argparse.ArgumentParser(epilog=epilog)
 group = parser.add_mutually_exclusive_group()
 group.add_argument('--reaction_ensemble', action='store_const', dest='mode',
                    const='reaction_ensemble')

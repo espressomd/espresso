@@ -131,6 +131,25 @@ class CoulombCloudWall(ut.TestCase):
         self.S.integrator.run(0)
         self.compare("scafacos_p3m", energy=True, prefactor=0.5)
 
+    @ut.skipIf(not espressomd.has_features(["SCAFACOS"])
+               or 'p3m' not in scafacos.available_methods(),
+               'Skipping test: missing feature SCAFACOS or p3m method')
+    def test_scafacos_p3m_tuning(self):
+        # check that the tuning function can be called without throwing
+        # an exception or causing an MPI deadlock
+        self.S.actors.add(
+            espressomd.electrostatics.Scafacos(
+                prefactor=0.5,
+                method_name="p3m",
+                method_params={
+                    "p3m_r_cut": -1.5,
+                    "p3m_grid": 64,
+                    "p3m_cao": 7,
+                    "p3m_alpha": 2.70746}))
+        self.S.integrator.run(0)
+        # check the scafacos script interface
+        self.assertEqual(self.S.actors[-1].get_params()['prefactor'], 0.5)
+
     @ut.skipIf(not espressomd.has_features("SCAFACOS")
                or 'p2nfft' not in scafacos.available_methods(),
                'Skipping test: missing feature SCAFACOS or p2nfft method')

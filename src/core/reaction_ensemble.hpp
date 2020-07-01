@@ -23,9 +23,10 @@
 #include "particle_data.hpp"
 #include "random.hpp"
 
+#include <utils/Accumulator.hpp>
+
 #include <map>
 #include <string>
-#include <utils/Accumulator.hpp>
 
 namespace ReactionEnsemble {
 
@@ -225,8 +226,6 @@ private:
 
   void add_types_to_index(std::vector<int> &type_list);
   Utils::Vector3d get_random_position_in_box();
-  std::vector<double>
-  get_random_position_in_box_enhanced_proposal_of_small_radii();
 };
 
 ///////////////////////////// actual declaration of specific reaction algorithms
@@ -348,7 +347,6 @@ private:
       DegreeOfAssociationCollectiveVariable &current_collective_variable);
   int get_num_needed_bins();
   void invalidate_bins();
-  void remove_bins_that_have_not_been_sampled();
   void reset_histogram();
   double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value,
                                                       double delta_CV);
@@ -389,9 +387,64 @@ public:
   std::pair<double, double> measure_excess_chemical_potential(int reaction_id);
 };
 
-//////////////////////////////////////////////////////////////////free functions
+///////////////////////
+// utility functions //
+///////////////////////
+
 double calculate_factorial_expression(SingleReaction &current_reaction,
                                       std::map<int, int> &old_particle_numbers);
+
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
+
+/**
+ * Calculate the average of an array (used for the histogram of the
+ * Wang-Landau algorithm). It excludes values which are initialized to be
+ * negative. Those values indicate that the Wang-Landau algorithm should not
+ * sample those values. The values still occur in the list because we can only
+ * store "rectangular" value ranges.
+ */
+template <typename T>
+double average_list_of_allowed_entries(const std::vector<T> &rng) {
+  T result = 0;
+  int counter_allowed_entries = 0;
+  for (auto &val : rng) {
+    if (val >= 0) { // checks for validity of index i (think of energy
+                    // collective variables, in a cubic memory layout
+                    // there will be indices which are not allowed by
+                    // the energy boundaries. These values will be
+                    // initialized with a negative fill value)
+      result += val;
+      counter_allowed_entries += 1;
+    }
+  }
+  if (counter_allowed_entries) {
+    return static_cast<double>(result) / counter_allowed_entries;
+  }
+  return 0.0;
+}
+
+/**
+ * Finds the minimum non negative value in the provided range and returns
+ * this value.
+ */
+inline double find_minimum_non_negative_value(std::vector<double> const &rng) {
+  if (rng.empty())
+    throw std::runtime_error("range is empty\n");
+  // think of negative histogram values that indicate not
+  // allowed energies in the case of an energy observable
+  auto const it = std::min_element(rng.begin(), rng.end(),
+                                   [](double const &a, double const &b) {
+                                     if (a <= 0)
+                                       return false;
+                                     if (b <= 0)
+                                       return true;
+                                     return a < b;
+                                   });
+  if (it == rng.end() or *it < 0) {
+    return rng[rng.size() - 1];
+  }
+  return *it;
+}
+
 } // namespace ReactionEnsemble
 #endif

@@ -136,7 +136,7 @@ class LBPoiseuilleCommon:
             BOX_L / 2.0 - 1.0,
             EXT_FORCE,
             VISC * DENS)
-        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
+        rmsd = np.linalg.norm(v_expected - v_measured)
         self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
 
     def prepare_obs(self):
