@@ -185,8 +185,8 @@ private:
   void create_cell_grid(double range);
 
   /** Init cell interactions for cell system domain decomposition.
-   * initializes the interacting neighbor cell list of a cell The
-   * created list of interacting neighbor cells is used by the Verlet
+   *  Initializes the interacting neighbor cell list of a cell.
+   *  This list of interacting neighbor cells is used by the Verlet
    * algorithm.
    */
   void init_cell_interactions();

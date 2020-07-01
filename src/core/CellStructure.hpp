@@ -283,7 +283,7 @@ public:
   void remove_all_particles();
 
   /**
-   * @brief Get the underlyind particle decomposition.
+   * @brief Get the underlying particle decomposition.
    *
    * Should be used solely for informative purposes.
    *
@@ -437,7 +437,7 @@ public:
    *
    *        @param comm Cartesian communicator to use.
    *        @param box Box Geometry
-   *        @param local_geo Geoemtry of the local box.
+   *        @param local_geo Geometry of the local box.
    */
   void set_domain_decomposition(boost::mpi::communicator const &comm,
                                 double range, BoxGeometry const &box,

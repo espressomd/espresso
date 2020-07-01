@@ -126,7 +126,7 @@ Cell *find_current_cell(const Particle &p);
 /**
  * @brief Return a pointer to the global DomainDecomposition.
  *
- * @return Pointer to the decomposition if it is settt and is
+ * @return Pointer to the decomposition if it is set and is
  * DomainDecomposition, nullptr otherwise.
  */
 const DomainDecomposition *get_domain_decomposition();

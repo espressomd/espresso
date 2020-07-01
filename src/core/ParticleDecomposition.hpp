@@ -40,7 +40,7 @@ public:
   /**
    * @brief Resort particles.
    *
-   * After calling this function, every particle is in it's home cell.
+   * After calling this function, every particle is in its home cell.
    * The output parameter is filled with the changes to the local
    * particle content, which allows e.g. to keep particles indices
    * in an efficient way.
