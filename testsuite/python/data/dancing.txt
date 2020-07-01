@@ -1,3 +1,6 @@
+# F-T-S trajectory digitized from Figure 5b in Durlofsky, Brady, Bossis
+# (1987). Dynamic simulation of hydrodynamically interacting particles.
+# Journal of Fluid Mechanics, 180, 21-49. doi:10.1017/S002211208700171X
 -5.0 0.0	0.0 0.0	7.0 0.0
 -4.99668 -0.713	-0.01829 -0.487	6.94144 -0.271
 -4.98734 -6.788	-0.02043 -6.451	6.96641 -5.903

@@ -29,13 +29,6 @@
  *  read/user-defined access from the script interface.
  */
 
-/** Broadcast a global variable.
- *  @param i  the number from @ref anonymous_namespace{global.cpp}::fields
- *            "fields" specifying which Datafield to broadcast.
- *  @return nonzero on error
- */
-int mpi_bcast_parameter(int i);
-
 /** @brief Check if all the global fields are synchronized between the nodes. */
 void check_global_consistency();
 
@@ -46,16 +39,10 @@ void check_global_consistency();
  */
 enum Fields {
   FIELD_BOXL = 0,
-  /** index of \ref DomainDecomposition::cell_grid */
-  FIELD_CELLGRID,
   /** index of \ref LangevinThermostat::gamma */
   FIELD_LANGEVIN_GAMMA,
   /** index of \ref integ_switch */
   FIELD_INTEG_SWITCH,
-  /** index of \ref max_num_cells  */
-  FIELD_MAXNUMCELLS,
-  /** index of \ref min_num_cells  */
-  FIELD_MINNUMCELLS,
   /** index of \ref n_rigidbonds */
   FIELD_RIGIDBONDS,
   /** index of \ref node_grid */
@@ -99,5 +86,12 @@ enum Fields {
   /** index of \ref BrownianThermostat::gamma_rotation */
   FIELD_BROWNIAN_GAMMA_ROTATION,
 };
+
+/** Broadcast a global variable.
+ *  @param i  the number from @ref anonymous_namespace{global.cpp}::fields
+ *            "fields" specifying which Datafield to broadcast.
+ *  @return nonzero on error
+ */
+void mpi_bcast_parameter(int i);
 
 #endif

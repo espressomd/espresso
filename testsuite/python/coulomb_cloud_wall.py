@@ -88,26 +88,9 @@ class CoulombCloudWall(ut.TestCase):
     # Tests for individual methods
 
     @utx.skipIfMissingFeatures(["P3M"])
-    def test_p3m_direct_caf(self):
+    def test_p3m_direct(self):
         """
-        This checks P3M with using the charge assignment
-        function (window function) directly by setting the
-        `inter` parameter to zero.
-
-        """
-
-        self.S.actors.add(
-            espressomd.electrostatics.P3M(
-                prefactor=3, r_cut=1.001, accuracy=1e-3,
-                mesh=64, cao=7, alpha=2.70746, tune=False, inter=0))
-        self.S.integrator.run(0)
-        self.compare("p3m", energy=True, prefactor=3)
-
-    @utx.skipIfMissingFeatures(["P3M"])
-    def test_p3m_interpolated_caf(self):
-        """
-        This checks P3M with using an interpolated charge assignment
-        function (window function), which is the default.
+        This checks P3M.
 
         """
 
@@ -147,6 +130,25 @@ class CoulombCloudWall(ut.TestCase):
                     "p3m_alpha": 2.70746}))
         self.S.integrator.run(0)
         self.compare("scafacos_p3m", energy=True, prefactor=0.5)
+
+    @ut.skipIf(not espressomd.has_features(["SCAFACOS"])
+               or 'p3m' not in scafacos.available_methods(),
+               'Skipping test: missing feature SCAFACOS or p3m method')
+    def test_scafacos_p3m_tuning(self):
+        # check that the tuning function can be called without throwing
+        # an exception or causing an MPI deadlock
+        self.S.actors.add(
+            espressomd.electrostatics.Scafacos(
+                prefactor=0.5,
+                method_name="p3m",
+                method_params={
+                    "p3m_r_cut": -1.5,
+                    "p3m_grid": 64,
+                    "p3m_cao": 7,
+                    "p3m_alpha": 2.70746}))
+        self.S.integrator.run(0)
+        # check the scafacos script interface
+        self.assertEqual(self.S.actors[-1].get_params()['prefactor'], 0.5)
 
     @ut.skipIf(not espressomd.has_features("SCAFACOS")
                or 'p2nfft' not in scafacos.available_methods(),

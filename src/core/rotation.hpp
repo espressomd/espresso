@@ -36,15 +36,17 @@
 #include <utils/math/quaternion.hpp>
 #include <utils/math/rotation_matrix.hpp>
 
-/** Propagate angular velocities and update quaternions on a particle */
+/** @brief Propagate angular velocities and update quaternions on a
+ *  particle.
+ */
 void propagate_omega_quat_particle(Particle &p);
 
-/** Convert torques to the body-fixed frame and propagate
-    angular velocities */
+/** @brief Convert torques to the body-fixed frame and propagate
+ *  angular velocities.
+ */
 void convert_torques_propagate_omega(const ParticleRange &particles);
 
-/** Convert torques to the body-fixed frame to start
-    the integration loop */
+/** Convert torques to the body-fixed frame before the integration loop. */
 void convert_initial_torques(const ParticleRange &particles);
 
 // Frame conversion routines

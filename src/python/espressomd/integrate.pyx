@@ -19,6 +19,7 @@
 from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
 include "myconfig.pxi"
 from .utils cimport handle_errors, check_type_or_throw_except
+from .utils import to_char_pointer
 from . cimport integrate
 
 cdef class IntegratorHandle:
@@ -100,12 +101,12 @@ cdef class IntegratorHandle:
         """
         self._integrator = BrownianDynamics()
 
-    def set_sd(self):
+    def set_sd(self, *args, **kwargs):
         """
-        Set the integration method to Stokesian Dynamics.
+        Set the integration method to Stokesian Dynamics (:class:`StokesianDynamics`).
 
         """
-        self._integrator = StokesianDynamics()
+        self._integrator = StokesianDynamics(*args, **kwargs)
 
 
 cdef class Integrator:
@@ -414,33 +415,101 @@ cdef class BrownianDynamics(Integrator):
         integrate_set_bd()
 
 
-IF STOKESIAN_DYNAMICS:
+IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
     cdef class StokesianDynamics(Integrator):
         """
-        Brownian Dynamics integrator.
+        Stokesian Dynamics integrator.
+
+        Parameters
+        ----------
+        viscosity : :obj:`float`
+            Bulk viscosity.
+        radii : :obj:`dict`
+            Dictionary that maps particle types to radii.
+        device : :obj:`str`, optional, \{'cpu', 'gpu'\}
+            Device to execute on.
+        approximation_method : :obj:`str`, optional, \{'ft', 'fts'\}
+            Chooses the method of the mobility approximation.
+            ``'fts'`` is more accurate. Default is ``'fts'``.
+        self_mobility : :obj:`bool`, optional
+            Switches off or on the mobility terms for single particles. Default
+            is ``True``.
+        pair_mobility : :obj:`bool`, optional
+            Switches off or on the hydrodynamic interactions between particles.
+            Default is ``True``.
 
         """
 
         def default_params(self):
-            return {}
+            IF STOKESIAN_DYNAMICS:
+                sd_device_str = "cpu"
+            ELIF STOKESIAN_DYNAMICS_GPU:
+                sd_device_str = "gpu"
+            return {"lubrication": False, "approximation_method": "fts",
+                    "self_mobility": True, "pair_mobility": True,
+                    "device": sd_device_str}
 
         def valid_keys(self):
             """All parameters that can be set.
 
             """
-            return {}
+            return {"radii", "viscosity", "device", "lubrication",
+                    "approximation_method", "self_mobility", "pair_mobility"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return {}
+            return {"radii", "viscosity"}
 
         def validate_params(self):
-            return True
+            check_type_or_throw_except(
+                self._params["viscosity"], 1, float,
+                "viscosity must be a number")
+            check_type_or_throw_except(
+                self._params["device"], 1, str,
+                "device must be a string")
+            check_type_or_throw_except(
+                self._params["radii"], 1, dict,
+                "radii must be a dictionary")
+            check_type_or_throw_except(
+                self._params["lubrication"], 1, bool,
+                "lubrication must be a bool")
+            if self._params["lubrication"]:
+                raise NotImplementedError(
+                    "Stokesian Dynamics lubrication is not available yet")
+            check_type_or_throw_except(
+                self._params["approximation_method"], 1, str,
+                "approximation_method must be a string")
+            if self._params["approximation_method"].lower() not in {
+                    "ft", "fts"}:
+                raise ValueError(
+                    "approximation_method must be either 'ft' or 'fts'")
+            check_type_or_throw_except(
+                self._params["self_mobility"], 1, bool,
+                "self_mobility must be a bool")
+            check_type_or_throw_except(
+                self._params["pair_mobility"], 1, bool,
+                "pair_mobility must be a bool")
 
         def _set_params_in_es_core(self):
             integrate_set_sd()
+            set_sd_radius_dict(self._params["radii"])
+            set_sd_device(to_char_pointer(self._params["device"].lower()))
+            set_sd_viscosity(self._params["viscosity"])
+            fl = flags.NONE
+            if self._params["lubrication"]:
+                fl = fl | flags.LUBRICATION
+            if self._params["approximation_method"].lower() == "fts":
+                fl = fl | flags.FTS
+            if self._params["self_mobility"]:
+                fl = fl | flags.SELF_MOBILITY
+            if self._params["pair_mobility"]:
+                fl = fl | flags.PAIR_MOBILITY
+            set_sd_flags(fl)
+
+            handle_errors(
+                "Encountered error while setting integration method to SD")
 
 ELSE:
     cdef class StokesianDynamics(Integrator):

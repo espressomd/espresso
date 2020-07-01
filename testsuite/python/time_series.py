@@ -18,24 +18,21 @@
 #
 
 """
-Testmodule for the observable recorder.
+Testmodule for the time series accumulator.
 
 """
 import unittest as ut
 import numpy as np
+import pickle
+
 import espressomd
-from espressomd.observables import ParticlePositions
-from espressomd.accumulators import TimeSeries
+import espressomd.observables
+import espressomd.accumulators
 
 N_PART = 100
 
 
 class TimeSeriesTest(ut.TestCase):
-
-    """
-    Test class for the observable time series.
-
-    """
 
     def test_time_series(self):
         """Check that accumulator results are the same as the respective numpy result.
@@ -45,8 +42,8 @@ class TimeSeriesTest(ut.TestCase):
         system = espressomd.System(box_l=3 * [1.])
         system.part.add(pos=np.random.random((N_PART, 3)))
 
-        obs = ParticlePositions(ids=system.part[:].id)
-        time_series = TimeSeries(obs=obs)
+        obs = espressomd.observables.ParticlePositions(ids=system.part[:].id)
+        acc = espressomd.accumulators.TimeSeries(obs=obs)
 
         positions = []
         for _ in range(10):
@@ -54,14 +51,19 @@ class TimeSeriesTest(ut.TestCase):
             positions.append(pos)
 
             system.part[:].pos = pos
-            time_series.update()
+            acc.update()
 
-        for result, expected in zip(time_series.time_series(), positions):
-            np.testing.assert_array_equal(
-                result, expected)
+        time_series = acc.time_series()
 
-        time_series.clear()
-        self.assertEqual(len(time_series.time_series()), 0)
+        # Check pickling
+        acc_unpickled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(time_series, acc_unpickled.time_series())
+
+        for result, expected in zip(time_series, positions):
+            np.testing.assert_array_equal(result, expected)
+
+        acc.clear()
+        self.assertEqual(len(acc.time_series()), 0)
 
 
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ class Tutorial(ut.TestCase):
 
     def test_rdf_curve(self):
         self.assertGreater(
-            np.corrcoef(tutorial.avg_rdf, tutorial.theo_rdf)[1, 0], 0.985)
+            np.corrcoef(tutorial.rdf, tutorial.theo_rdf)[1, 0], 0.985)
 
 
 if __name__ == "__main__":

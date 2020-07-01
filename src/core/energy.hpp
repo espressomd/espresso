@@ -27,40 +27,28 @@
 #ifndef _ENERGY_H
 #define _ENERGY_H
 
-/* include the energy files */
+#include "Observable_stat.hpp"
+#include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
-#include "statistics.hpp"
-
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-///
-extern Observable_stat energy, total_energy;
 
 extern ActorList energyActors;
-/*@}*/
 
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
+/** Parallel energy calculation. */
+void energy_calc(double time);
 
-/** allocate energy arrays and initialize with zero */
-void init_energies(Observable_stat *stat);
+/** Run @ref energy_calc in parallel. */
+void update_energy();
 
-/** on the master node: calc energies only if necessary */
-void master_energy_calc();
+/** Return the energy observable. */
+Observable_stat const &get_obs_energy();
 
-/** parallel energy calculation.
-    @param result non-zero only on master node; will contain the cumulative over
-   all nodes. */
-void energy_calc(double *result, double time);
-
-/** Calculate long range energies (P3M, ...). */
+/** Calculate long-range energies (P3M, ...). */
 void calc_long_range_energies(const ParticleRange &particles);
 
-/** Calculate the total energy */
+/** Calculate the total energy of the system. */
 double calculate_current_potential_energy_of_system();
 
-/*@}*/
+/** Helper function for @ref Observables::Energy. */
+double observable_compute_energy();
 
 #endif

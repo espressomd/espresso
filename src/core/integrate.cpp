@@ -34,23 +34,17 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
-#include "dpd.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
-#include "immersed_boundaries.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
-#include "pressure.hpp"
 #include "rattle.hpp"
 #include "rotation.hpp"
 #include "signalhandling.hpp"
@@ -203,7 +197,7 @@ int integrate(int n_steps, int reuse_forces) {
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
-      convert_initial_torques(cell_structure.local_cells().particles());
+      convert_initial_torques(cell_structure.local_particles());
 #endif
     }
 
@@ -220,18 +214,17 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_START_INSTRUMENTATION;
 #endif
-
   /* Integration loop */
   ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
     ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
 
-    auto particles = cell_structure.local_cells().particles();
+    auto particles = cell_structure.local_particles();
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
-      save_old_pos(particles, cell_structure.ghost_cells().particles());
+      save_old_pos(particles, cell_structure.ghost_particles());
 #endif
 
     bool early_exit = integrator_step_1(particles);
@@ -245,7 +238,7 @@ int integrate(int n_steps, int reuse_forces) {
     /* Correct those particle positions that participate in a rigid/constrained
      * bond */
     if (n_rigidbonds) {
-      correct_pos_shake(particles);
+      correct_pos_shake(cell_structure);
     }
 #endif
 
@@ -256,7 +249,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    particles = cell_structure.local_cells().particles();
+    particles = cell_structure.local_particles();
 
     force_calc(cell_structure);
 
@@ -267,7 +260,7 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
     if (n_rigidbonds) {
-      correct_vel_shake();
+      correct_vel_shake(cell_structure);
     }
 #endif
 
@@ -298,6 +291,7 @@ int integrate(int n_steps, int reuse_forces) {
 
   } // for-loop over integration steps
   ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
+
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
@@ -516,3 +510,9 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
   return ES_OK;
 }
 #endif
+
+double interaction_range() {
+  /* Consider skin only if there are actually interactions */
+  auto const max_cut = maximal_cutoff();
+  return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
+}

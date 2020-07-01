@@ -102,23 +102,11 @@ Global properties
 The properties of the cell system can be accessed by
 :class:`espressomd.system.System.cell_system`:
 
-    * :py:attr:`~espressomd.cellsystem.CellSystem.max_num_cells`
-
-    (int) Maximal number of cells for the link cell algorithm. Reasonable
-    values are between 125 and 1000, or for some problems ``n_part / nnodes``.
-
-    * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
-
-    (int) Minimal number of cells for the link cell algorithm. Reasonable
-    values range in :math:`10^{-6} N^2` to :math:`10^{-7} N^2`. In general
-    just make sure that the Verlet lists are not incredibly large. By default the
-    minimum is 0, but for the automatic P3M tuning it may be wise to set larger
-    values for high particle numbers.
-
     * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
 
     (int[3]) 3D node grid for real space domain decomposition (optional, if
-    unset an optimal set is chosen automatically).
+    unset an optimal set is chosen automatically). The domain decomposition
+    can be visualized with :file:`samples/visualization_cellsystem.py`.
 
     * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
 
@@ -280,7 +268,7 @@ A separate rotational friction coefficient can be set by inputting
 thermalization on or off separately, maintaining the frictional behavior. This
 can be useful, for instance, in high Péclet number active matter systems, where
 one only wants to thermalize only the rotational degrees of freedom and
-translational motion is effected by the self-propulsion.
+translational motion is affected by the self-propulsion.
 
 The keywords ``gamma`` and ``gamma_rotate`` can be specified as a scalar,
 or, with feature ``PARTICLE_ANISOTROPY`` compiled in, as the three eigenvalues
@@ -344,9 +332,9 @@ are not applied to every particle individually but instead
 encoded in a dissipative interaction between particles :cite:`soddeman03a`.
 
 To realize a complete DPD fluid model in |es|, three parts are needed:
-The DPD thermostat, which controls the temperate, a dissipative
-interaction between the particles that make up the fluid,
-see :ref:`DPD interaction`, and a repulsive conservative force.
+the DPD thermostat, which controls the temperate, a dissipative interaction
+between the particles that make up the fluid, see :ref:`DPD interaction`,
+and a repulsive conservative force, see :ref:`Hat interaction`.
 
 The temperature is set via
 :py:meth:`espressomd.thermostat.Thermostat.set_dpd`
@@ -367,7 +355,7 @@ see :ref:`Isotropic non-bonded interactions`. A common choice is
 a force ramp which is implemented as :ref:`Hat interaction`.
 
 A complete example of setting up a DPD fluid and running it
-to sample the equation of state can be found in samples/dpd.py.
+to sample the equation of state can be found in :file:`/samples/dpd.py`.
 
 When using a Lennard-Jones interaction, :math:`{r_\mathrm{cut}} =
 2^{\frac{1}{6}} \sigma` is a good value to choose, so that the

@@ -24,6 +24,8 @@
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
+#include <boost/range/algorithm.hpp>
+#include <iterator>
 #include <memory>
 
 #include "Observable.hpp"
@@ -35,10 +37,13 @@ namespace Observables {
 template <typename CoreLBObs>
 class LBProfileObservable
     : public AutoParameters<LBProfileObservable<CoreLBObs>, Observable> {
+  using Base = AutoParameters<LBProfileObservable<CoreLBObs>, Observable>;
+
 public:
   static_assert(
       std::is_base_of<::Observables::LBProfileObservable, CoreLBObs>::value,
       "");
+  using Base::Base;
   LBProfileObservable() {
     this->add_parameters(
         {{"n_x_bins",
@@ -145,14 +150,13 @@ public:
 
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
-    if (method == "calculate") {
-      return profile_observable()->operator()();
+    if (method == "edges") {
+      std::vector<Variant> variant_edges;
+      boost::copy(profile_observable()->edges(),
+                  std::back_inserter(variant_edges));
+      return variant_edges;
     }
-    if (method == "shape") {
-      auto const shape = profile_observable()->shape();
-      return std::vector<int>{shape.begin(), shape.end()};
-    }
-    return {};
+    return Base::call_method(method, parameters);
   }
 
   std::shared_ptr<::Observables::Observable> observable() const override {

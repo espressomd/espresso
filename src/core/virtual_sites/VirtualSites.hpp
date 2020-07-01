@@ -23,12 +23,12 @@
 
 /** \file
  *  This file contains routine to handle virtual sites
- *  Virtual sites are like particles, but they will be not integrated.
+ *  Virtual sites are like particles, but they will not be integrated.
  *  Step performed for virtual sites:
  *  - update virtual sites
  *  - calculate forces
  *  - distribute forces
- *  - move no-virtual particles
+ *  - move non-virtual particles
  *  - update virtual sites
  */
 
@@ -51,7 +51,7 @@ public:
   virtual void after_force_calc(){};
   virtual void after_lb_propagation(){};
   /** @brief Pressure contribution. */
-  virtual Utils::Matrix<double, 3, 3> stress_tensor() const { return {}; };
+  virtual Utils::Matrix<double, 3, 3> pressure_tensor() const { return {}; };
   /** @brief Enable/disable quaternion calculations for vs.*/
   void set_have_quaternion(const bool &have_quaternion) {
     m_have_quaternion = have_quaternion;

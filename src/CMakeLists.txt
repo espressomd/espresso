@@ -19,7 +19,9 @@
 #
 
 # Target for the unit tests
-add_custom_target(check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} $(ARGS) --output-on-failure)
+add_custom_target(
+  check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
+                           $(ARGS) --output-on-failure)
 
 if(WITH_TESTS)
   # Run unit tests on check
@@ -44,3 +46,5 @@ endif()
 if(WITH_PYTHON)
   add_subdirectory(python)
 endif()
+
+add_subdirectory(particle_observables)

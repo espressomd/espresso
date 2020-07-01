@@ -1,16 +1,25 @@
-add_library(sd_interface SHARED sd_interface.cpp)
-target_include_directories(sd_interface PRIVATE
-  ${CMAKE_BINARY_DIR}/src/core
-  ${CMAKE_SOURCE_DIR}/src/core
-  ${CMAKE_SOURCE_DIR}/src/core/stokesian_dynamics
-  ${CMAKE_SOURCE_DIR}/libs/stokesian_dynamics
-)
-target_link_libraries(sd_interface PUBLIC EspressoConfig Boost::mpi MPI::MPI_CXX Random123 utils)
+#
+# Copyright (C) 2019-2020 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-if (CUDA)
-  target_link_libraries(sd_interface PUBLIC sd_gpu)
-endif()
+target_include_directories(
+  EspressoCore PRIVATE ${CMAKE_SOURCE_DIR}/libs/stokesian_dynamics/include
+                       ${CMAKE_SOURCE_DIR}/src/core/stokesian_dynamics)
 
-if(BLAS AND LAPACK)
-  target_link_libraries(sd_interface PUBLIC sd_cpu)
-endif()
+target_sources(EspressoCore
+               PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sd_interface.cpp)

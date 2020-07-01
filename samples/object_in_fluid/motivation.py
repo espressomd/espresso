@@ -22,8 +22,7 @@ with solid obstacles. For more details, see :ref:`Object-in-fluid`.
 import espressomd
 
 required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES", "SOFT_SPHERE",
-                     "MEMBRANE_COLLISION", "OIF_GLOBAL_FORCES",
-                     "OIF_LOCAL_FORCES", "MASS"]
+                     "MASS"]
 espressomd.assert_features(required_features)
 
 from espressomd import lbboundaries
@@ -74,11 +73,6 @@ system.non_bonded_inter[0, 10].soft_sphere.set_params(
 system.non_bonded_inter[1, 10].soft_sphere.set_params(
     a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
 
-# cell-cell interactions
-system.non_bonded_inter[0, 1].membrane_collision.set_params(
-    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
-
-
 # fluid
 lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5, tau=0.1,
                             ext_force_density=[0.002, 0.0, 0.0])
@@ -122,22 +116,22 @@ output_vtk_rhomboid(
     back_shape, out_file=output_path + "/wallBack.vtk")
 
 # obstacle - cylinder A
-cylA_shape = shapes.Cylinder(center=[11.0, 2.0, 7.0], axis=[0.0, 0.0, 1.0],
-                             length=7.0, radius=2.0, direction=1)
+cylA_shape = shapes.Cylinder(center=[11.0, 2.0, boxZ / 2.], axis=[0.0, 0.0, 1.0],
+                             length=boxZ, radius=2.0, direction=1)
 boundaries.append(cylA_shape)
 output_vtk_cylinder(
     cylA_shape, n=20, out_file=output_path + "/cylinderA.vtk")
 
 # obstacle - cylinder B
-cylB_shape = shapes.Cylinder(center=[16.0, 8.0, 7.0], axis=[0.0, 0.0, 1.0],
-                             length=7.0, radius=2.0, direction=1)
+cylB_shape = shapes.Cylinder(center=[16.0, 8.0, boxZ / 2.], axis=[0.0, 0.0, 1.0],
+                             length=boxZ, radius=2.0, direction=1)
 boundaries.append(cylB_shape)
 output_vtk_cylinder(
     cylB_shape, n=20, out_file=output_path + "/cylinderB.vtk")
 
 # obstacle - cylinder C
-cylC_shape = shapes.Cylinder(center=[11.0, 12.0, 7.0], axis=[0.0, 0.0, 1.0],
-                             length=7.0, radius=2.0, direction=1)
+cylC_shape = shapes.Cylinder(center=[11.0, 12.0, boxZ / 2.], axis=[0.0, 0.0, 1.0],
+                             length=boxZ, radius=2.0, direction=1)
 boundaries.append(cylC_shape)
 output_vtk_cylinder(
     cylC_shape, n=20, out_file=output_path + "/cylinderC.vtk")

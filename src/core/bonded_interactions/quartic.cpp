@@ -39,9 +39,6 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,
   bonded_ia_params[bond_type].type = BONDED_IA_QUARTIC;
   bonded_ia_params[bond_type].num = 1;
 
-  // printf("quartic k0 %e k1 %e r %e r_cut %e\n",
-  // 	 k0, k1, r, r_cut);
-
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1);
 

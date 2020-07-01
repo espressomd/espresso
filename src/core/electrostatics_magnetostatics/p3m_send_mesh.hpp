@@ -66,15 +66,17 @@ public:
   void resize(const boost::mpi::communicator &comm,
               const p3m_local_mesh &local_mesh);
   void gather_grid(Utils::Span<double *> meshes,
-                   const boost::mpi::communicator &comm, const int *dim);
+                   const boost::mpi::communicator &comm,
+                   const Utils::Vector3i &dim);
   void gather_grid(double *mesh, const boost::mpi::communicator &comm,
-                   const int *dim) {
+                   const Utils::Vector3i &dim) {
     gather_grid(Utils::make_span(&mesh, 1), comm, dim);
   }
   void spread_grid(Utils::Span<double *> meshes,
-                   const boost::mpi::communicator &comm, const int *dim);
+                   const boost::mpi::communicator &comm,
+                   const Utils::Vector3i &dim);
   void spread_grid(double *mesh, const boost::mpi::communicator &comm,
-                   const int *dim) {
+                   const Utils::Vector3i &dim) {
     spread_grid(Utils::make_span(&mesh, 1), comm, dim);
   }
 };

@@ -17,6 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** @file
+ *  See @cite durlofsky87a for the Stokesian dynamics method used here.
+ *  See @cite banchio03a and @cite brady88a for the thermalization method.
+ */
+
 #ifndef STOKESIAN_DYNAMICS_INTERFACE_H
 #define STOKESIAN_DYNAMICS_INTERFACE_H
 
@@ -25,7 +30,7 @@
 
 #include <string>
 #include <unordered_map>
-#include <vector>
+#include <utils/Vector.hpp>
 
 #ifdef STOKESIAN_DYNAMICS
 
@@ -44,10 +49,8 @@ struct SD_particle_data {
   /* particle velocity */
   Utils::Vector3d vel = {0., 0., 0.};
 
-#ifdef ROTATION
   /* particle rotational velocity */
   Utils::Vector3d omega = {0., 0., 0.};
-#endif
 
   /* external force */
   Utils::Vector3d ext_force = {0.0, 0.0, 0.0};
@@ -74,9 +77,12 @@ int get_sd_flags();
 void set_sd_seed(std::size_t seed);
 std::size_t get_sd_seed();
 
-/* takes the forces and torques on all particles computes new velocities
- * acts on particles on all nodes */
-void propagate_vel_pos_sd();
+/** Takes the forces and torques on all particles and computes their
+ *  velocities. Acts globally on particles on all nodes; i.e. particle data
+ *  is gathered from all nodes and their velocities and angular velocities are
+ *  set according to the Stokesian Dynamics method.
+ */
+void propagate_vel_pos_sd(const ParticleRange &particles);
 
 #endif // STOKESIAN_DYNAMICS
 

@@ -31,7 +31,7 @@
  *   - write functions for calculating force and energy
  *   - add calls to the force and energy calculation functions to the force
  *     calculation in the integration loop as well as to energy and
- *     pressure/stress tensor analysis
+ *     pressure tensor analysis
  *  * Python interface:
  *   - import the definition of the interaction struct from the core
  *   - implement a class for the bonded interaction derived from the Python
@@ -126,27 +126,22 @@
  *        result = fene_pair_force(iaparams, dx);
  *        break;
  *      @endcode
- *    - in function @ref add_bonded_force(): add the new interaction to the
- *      switch statement if it is not a pairwise bond. For the harmonic angle,
- *      the code looks like this:
+ *    - in functions called by @ref add_bonded_force(): add the new interaction
+ *      to the switch statements if it is not a pairwise bond. For the harmonic
+ *      angle, the code looks like this:
  *      @code{.cpp}
  *      case BONDED_IA_ANGLE_HARMONIC:
- *        std::tie(force1, force2, force3) =
- *          angle_harmonic_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
- *        break;
+ *        return angle_harmonic_force(p1.r.p, p2.r.p, p3.r.p, iaparams);
  *      @endcode
  *  * In energy_inline.hpp:
  *    - include the header file of the new interaction
- *    - in function @ref add_bonded_energy(): add the new interaction to the
+ *    - in function @ref calc_bonded_energy(): add the new interaction to the
  *      switch statement. For the FENE bond, e.g., the code looks like this:
  *      @code{.cpp}
- *      boost::optional<double> retval;
- *      // ...
  *      case BONDED_IA_FENE:
- *        retval = fene_pair_energy(iaparams, dx);
- *        break;
+ *        return fene_pair_energy(iaparams, dx);
  *      @endcode
- *  * Pressure, stress tensor and virial calculation: if your bonded
+ *  * Pressure tensor and virial calculation: if your bonded
  *    interaction is not a pair bond or modifies the particles involved,
  *    you have to implement a custom solution for virial calculation.
  *    The pressure occurs twice, once for the parallelized isotropic pressure

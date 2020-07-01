@@ -52,12 +52,11 @@ import espressomd.lb
 
 box_l = 50
 system = espressomd.System(box_l=[box_l] * 3)
-system.set_random_state_PRNG()
 
 system.time_step = 0.01
 system.cell_system.skin = 0.1
 
-system.part.add(pos=[box_l / 2.0] * 3, fix=[1, 1, 1])
+system.part.add(pos=[box_l / 2.0] * 3, fix=[True, True, True])
 
 
 lb_params = {'agrid': 1, 'dens': 1, 'visc': 1, 'tau': 0.01,

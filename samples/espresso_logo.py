@@ -27,9 +27,7 @@ from espressomd.visualization_opengl import openGLLive
 
 box_l = 50
 system = espressomd.System(box_l=[box_l, 15, box_l])
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.random.seed(seed=system.seed)
+np.random.seed(seed=42)
 
 yoff = 3
 
@@ -136,7 +134,7 @@ for i in range(n_steam):
         pid = len(system.part) - 1
 
         if j == 0:
-            system.part[pid].fix = [1, 1, 1]
+            system.part[pid].fix = [True, True, True]
         else:
             system.part[pid].bonds = (fene, pid - 1)
 

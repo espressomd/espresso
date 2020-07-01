@@ -48,6 +48,12 @@ idx = "mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(".", "__")
 checkpoint = espressomd.checkpointing.Checkpoint(
     checkpoint_id=idx, checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
+# cleanup old checkpoint files
+if checkpoint.has_checkpoints():
+    for filepath in os.listdir(checkpoint.checkpoint_dir):
+        if filepath.endswith((".checkpoint", ".cpt")):
+            os.remove(os.path.join(checkpoint.checkpoint_dir, filepath))
+
 LB_implementation = None
 if 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
@@ -104,12 +110,16 @@ if espressomd.has_features('P3M') and 'P3M.CPU' in modes:
 
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
 acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
+acc_time_series = espressomd.accumulators.TimeSeries(obs=obs)
 acc.update()
+acc_time_series.update()
 system.part[0].pos = [1.0, 2.0, 3.0]
 acc.update()
+acc_time_series.update()
 
 
 system.auto_update_accumulators.add(acc)
+system.auto_update_accumulators.add(acc_time_series)
 
 # constraints
 system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
@@ -181,6 +191,7 @@ if 'THERM.LB' not in modes:
     system.part[1].add_bond((thermalized_bond, 0))
 checkpoint.register("system")
 checkpoint.register("acc")
+checkpoint.register("acc_time_series")
 # calculate forces
 system.integrator.run(0)
 particle_force0 = np.copy(system.part[0].f)

@@ -67,15 +67,15 @@ bool in_local_domain(Utils::Vector3d const &pos) {
  */
 void IBM_ForcesIntoFluid_CPU() {
   // Update the forces on the ghost particles
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
+  cell_structure.ghosts_update(Cells::DATA_PART_FORCE);
 
   // Loop over local cells
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (p.p.is_virtual)
       CoupleIBMParticleToFluid(&p);
   }
 
-  for (auto &p : cell_structure.ghost_cells().particles()) {
+  for (auto &p : cell_structure.ghost_particles()) {
     // for ghost particles we have to check if they lie
     // in the range of the local lattice nodes
     if (in_local_domain(p.r.p)) {
@@ -116,12 +116,10 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
 #endif
         p.r.p[2] = p.r.p[2] + p.m.v[2] * time_step;
 
-      // Check if the particle might have crossed a box border (criterion see
-      // e-mail Axel 28.8.2014)
-      // if possible, use resort_particles = Cells::RESORT_LOCAL)
+      // Check if the particle might have crossed a box border
       const double dist2 = (p.r.p - p.l.p_old).norm2();
       if (dist2 > skin2) {
-        set_resort_particles(Cells::RESORT_LOCAL);
+        cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
       }
     }
   }
@@ -286,7 +284,7 @@ void ParticleVelocitiesFromLB_CPU() {
   // Loop over particles in local cells.
   // Here all contributions are included: velocity, external force and
   // particle force.
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (p.p.is_virtual) {
       double dummy[3];
       // Get interpolated velocity and store in the force (!) field
@@ -297,7 +295,7 @@ void ParticleVelocitiesFromLB_CPU() {
 
   // Loop over particles in ghost cells
   // Here we only add the particle forces stemming from the ghosts
-  for (auto &p : cell_structure.ghost_cells().particles()) {
+  for (auto &p : cell_structure.ghost_particles()) {
     // This criterion include the halo on the left, but excludes the halo on
     // the right
     // Try if we have to use *1.5 on the right
@@ -333,11 +331,10 @@ void ParticleVelocitiesFromLB_CPU() {
   // real particles.
   // This could be solved by keeping a backup of the local forces before this
   // operation is attempted.
-  ghost_communicator(&cell_structure.collect_ghost_force_comm,
-                     GHOSTTRANS_FORCE);
+  cell_structure.ghosts_reduce_forces();
 
   // Transfer to velocity field
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (p.p.is_virtual) {
       p.m.v[0] = p.f.f[0];
       p.m.v[1] = p.f.f[1];

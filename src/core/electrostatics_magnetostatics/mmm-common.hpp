@@ -30,7 +30,6 @@
 #ifndef MMM_COMMON_H
 #define MMM_COMMON_H
 
-#include "polynom.hpp"
 #include "specfunc.hpp"
 
 #include <vector>
@@ -39,22 +38,20 @@
 /*@{*/
 #define C_2PI (2 * M_PI)
 #define C_GAMMA (0.57721566490153286060651209008)
-#define C_2LOG4PI (-5.0620484939385815859557831885)
-#define C_2PISQR (C_2PI * C_2PI)
 /*@}*/
 
 /** Table of the Taylor expansions of the modified polygamma functions */
-extern std::vector<Polynom> modPsi;
+extern std::vector<std::vector<double>> modPsi;
 extern int n_modPsi;
 
 /** Modified polygamma for even order 2*n, n >= 0 */
 inline double mod_psi_even(int n, double x) {
-  return evaluateAsTaylorSeriesAt(&modPsi[2 * n], x * x);
+  return evaluateAsTaylorSeriesAt(modPsi[2 * n], x * x);
 }
 
 /** Modified polygamma for odd order 2*n+1, n>= 0 */
 inline double mod_psi_odd(int n, double x) {
-  return x * evaluateAsTaylorSeriesAt(&modPsi[2 * n + 1], x * x);
+  return x * evaluateAsTaylorSeriesAt(modPsi[2 * n + 1], x * x);
 }
 
 /** Create the both the even and odd polygamma functions up to order 2*n */

@@ -49,7 +49,7 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.Slitpore`
     - :class:`espressomd.shapes.Sphere`
     - :class:`espressomd.shapes.SpheroCylinder`
-    - :class:`espressomd.shapes.Stomatocyte`
+    - :class:`espressomd.shapes.Torus`
     - :class:`espressomd.shapes.HollowConicalFrustum`
     - :class:`espressomd.shapes.Union`
 
@@ -194,7 +194,7 @@ vector so that the product of ``dist`` and ``normal`` is a point on the surface.
 Therefore negative distances are quite common!
 
 .. figure:: figures/shape-wall.png
-   :alt: Example constraint with a ``Wall`` shape.
+   :alt: Visualization of a constraint with a Wall shape.
    :align: center
    :height: 6.00000cm
 
@@ -220,7 +220,7 @@ and ``+1`` for outward.
 .. _shape-sphere:
 
 .. figure:: figures/shape-sphere.png
-   :alt: Example constraint with a ``Sphere`` shape.
+   :alt: Visualization of a constraint with a Sphere shape.
    :align: center
    :height: 6.00000cm
 
@@ -243,7 +243,7 @@ The distance to the surface is determined iteratively via Newton's method.
 .. _shape-ellipsoid:
 
 .. figure:: figures/shape-ellipsoid.png
-   :alt: Example constraint with an ``Ellipsoid`` shape.
+   :alt: Visualization of a constraint with an Ellipsoid shape.
    :align: center
    :height: 6.00000cm
 
@@ -263,9 +263,8 @@ The ``axis`` parameter is a vector along the cylinder axis, which is normalized 
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
 
-
 .. figure:: figures/shape-cylinder.png
-   :alt: Example constraint with a ``Cylinder`` shape.
+   :alt: Visualization of a constraint with a Cylinder shape.
    :align: center
    :height: 6.00000cm
 
@@ -311,15 +310,12 @@ Two parallel infinite planes, connected by a cylindrical orifice. The cylinder
 is connected to the planes by torus segments with an adjustable radius.
 
 Length and radius of the cylindrical pore can be set via the corresponding parameters
-(``length`` and ``radius``). The parameter ``center`` defines the central point of the pore.
+``length`` and ``radius``. The parameter ``center`` defines the central point of the pore.
 The orientation of the pore is given by the vector ``axis``, which points along the cylinder's symmetry axis.
-The pore openings are smoothed with torus segments, the radius of which can be set using the parameter ``smoothing_radius``.
-In the OpenGL visualizer, these torus segments are rendered as a half-torus instead of a quarter-torus.
-You can safely ignore this visual artifact, in the force/energy calculation, only a quarter-torus is used.
-
+The pore openings are smoothed with radius ``smoothing_radius``.
 
 .. figure:: figures/shape-simplepore.png
-   :alt: Example constraint with a ``SimplePore`` shape.
+   :alt: Visualization of a constraint with a SimplePore shape.
    :align: center
    :height: 6.00000cm
 
@@ -332,46 +328,9 @@ Pictured is an example constraint with a ``SimplePore`` shape created with ::
                       center=[25, 25, 25])
     system.constraints.add(shape=pore, particle_type=0, penetrable=True)
 
-
-Stomatocyte
-"""""""""""
-
-:class:`espressomd.shapes.Stomatocyte`
-
-A stomatocyte-shaped boundary surface.
-This command should be used with care.
-The position can be any point in the simulation box and is set via the (3,) array_like parameter ``center``.
-The orientation of the (cylindrically symmetric) stomatocyte is given by an ``axis`` (a (3,) array_like of :obj:`float`),
-which points in the direction of the symmetry axis and does not need to be normalized.
-The parameters: ``outer_radius``, ``inner_radius``, and ``layer_width``, specify the shape of the stomatocyte.
-Here inappropriate choices of these parameters can yield undesired results.
-The width ``layer_width`` is used as a scaling parameter.
-That is, a stomatocyte given by ``outer_radius:inner_radius:layer_width`` = 7:3:1
-is half the size of the stomatocyte given by 7:3:2.
-Not all choices of the parameters give reasonable values for the shape of the stomatocyte,
-but the combination 7:3:1 is a good point to start from when trying to modify the shape.
-
-
-.. figure:: figures/shape-stomatocyte1.png
-   :alt: Example constraint with a ``Stomatocyte`` shape.
-   :align: center
-   :height: 6.00000cm
-
-.. figure:: figures/shape-stomatocyte2.png
-   :alt: Close-up of the internal ``Stomatocyte`` structure.
-   :align: center
-   :height: 6.00000cm
-
-
-Pictured is an example constraint with a ``Stomatocyte`` shape (with a closeup of the internal structure) created with ::
-
-    stomatocyte = Stomatocyte(inner_radius=3,
-                              outer_radius=7,
-                              axis=[1.0, 0.0, 0.0],
-                              center=[25, 25, 25],
-                              layer_width=3,
-                              direction=1)
-    system.constraints.add(shape=stomatocyte, particle_type=0, penetrable=True)
+Note: in the OpenGL visualizer, if the OpenGL Extrusion library is not available,
+the smooth pore openings will be rendered using a sliced torus. You can safely
+ignore this visual artifact, it has no impact on the force/energy calculation.
 
 
 Slitpore
@@ -388,22 +347,21 @@ The region is described as a pore (lower vertical part of the "T"-shape) and a c
 .. _figure-slitpore:
 
 .. figure:: figures/slitpore.png
-   :alt: Schematic for the slitpore shape showing geometrical parameters
+   :alt: Schematic for the Slitpore shape with labeled geometrical parameters.
    :align: center
-   :height: 6.00000cm
+   :height: 10.00000cm
 
 The parameter ``channel_width`` specifies the distance between the top and the plateau edge.
 The parameter ``pore_length`` specifies the distance between the bottom and the plateau edge.
 The parameter ``pore_width`` specifies the distance between the two plateau edges, it is the space between the left and right walls of the pore region.
-The parameter ``pore_mouth`` specifies the location (z-coordinate) of the pore opening (center). It is always centered in the x-direction.
-The parameter ``dividing_plane`` specifies the location (z-coordinate) of the middle between the two walls.
+The parameters ``pore_mouth`` and ``dividing_plane`` specify the location in the z-coordinate resp. x-coordinate of the pore opening.
 
 All the edges  are smoothed via the parameters ``upper_smoothing_radius`` (for the concave corner at the edge of the plateau region) and ``lower_smoothing_radius`` (for the convex corner at the bottom of the pore region).
 The meaning of the geometrical parameters can be inferred from the schematic in Fig. :ref:`slitpore <figure-slitpore>`.
 
 
 .. figure:: figures/shape-slitpore.png
-   :alt: Example constraint with a ``Slitpore`` shape.
+   :alt: Visualization of a constraint with a Slitpore shape.
    :align: center
    :height: 6.00000cm
 
@@ -417,7 +375,7 @@ Pictured is an example constraint with a ``Slitpore`` shape created with ::
                         pore_length=20,
                         pore_mouth=30,
                         pore_width=5,
-                        dividing_plane=40)
+                        dividing_plane=25)
 
     system.constraints.add(shape=slitpore, particle_type=0, penetrable=True)
 
@@ -435,7 +393,7 @@ The direction ``direction`` determines the force direction, ``-1`` for inward an
 
 
 .. figure:: figures/shape-spherocylinder.png
-   :alt: Example constraint with a ``SpheroCylinder`` shape.
+   :alt: Visualization of a constraint with a SpheroCylinder shape.
    :align: center
    :height: 6.00000cm
 
@@ -449,6 +407,27 @@ Pictured is an example constraint with a ``SpheroCylinder`` shape created with :
     system.constraints.add(shape=spherocylinder, particle_type=0)
 
 
+Torus
+"""""
+
+:class:`espressomd.shapes.Torus`
+
+It is positioned at ``center`` and has a radius ``radius`` with tube radius ``tube_radius``.
+The ``normal`` parameter is the torus rotation axis, which is normalized in the program.
+The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
+
+.. figure:: figures/shape-torus.png
+   :alt: Visualization of a constraint with a Torus shape.
+   :align: center
+   :height: 6.00000cm
+
+Pictured is an example constraint with a ``Torus`` shape created with ::
+
+    torus = Torus(center=[25, 25, 25], normal=[1, 1, 1],
+                  direction=1, radius=15, tube_radius=6)
+    system.constraints.add(shape=torus, particle_type=0)
+
+
 HollowConicalFrustum
 """"""""""""""""""""
 
@@ -458,14 +437,17 @@ A hollow cone with round corners. The specific parameters
 are described in the shape's class :class:`espressomd.shapes.HollowConicalFrustum`.
 
 .. figure:: figures/shape-conical_frustum.png
-   :alt: Conical frustum shape schematic.
+   :alt: Visualization of a constraint with a HollowConicalFrustum shape.
    :align: center
    :height: 6.00000cm
 
 .. figure:: figures/conical_frustum.png
-   :alt: Schematic for the conical frustum shape showing geometrical parameters
+   :alt: Schematic for the HollowConicalFrustum shape with labeled geometrical parameters.
    :align: center
    :height: 6.00000cm
+
+Note: in the OpenGL visualizer, if the OpenGL Extrusion library is not available,
+the shape surface will be rendered with dots.
 
 
 Union

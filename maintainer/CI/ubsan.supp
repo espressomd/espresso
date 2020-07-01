@@ -1,0 +1,10 @@
+# Stuff occuring in boost directly
+null:boost/serialization/singleton.hpp
+null:boost/mpi/detail/binary_buffer_iprimitive.hpp
+null:boost/mpi/communicator.hpp
+
+# Caused by boost MPI
+null:stl_iterator.h
+
+# function calls with invalid pointers in Cython-generated code
+function:python/espressomd/*.cpp

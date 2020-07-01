@@ -1,5 +1,6 @@
 configure_tutorial_target(
-  TARGET tutorial_06
+  TARGET
+  tutorial_06
   DEPENDS
   06-active_matter.ipynb
   figures/friction.svg
@@ -17,7 +18,6 @@ configure_tutorial_target(
   solutions/flow_field.py
   solutions/rectification_geometry.py
   solutions/rectification_simulation.py
-  solutions/solutions.txt
-)
+  solutions/solutions.txt)
 
 nb_export(TARGET tutorial_06 SUFFIX "" FILE "06-active_matter.ipynb" HTML_RUN)

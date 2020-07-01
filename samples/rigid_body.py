@@ -19,42 +19,34 @@ Demonstrates the construction of a rigid object by means of the
 ``VIRTUAL_SITES_RELATIVE`` feature.
 """
 
-import espressomd
-required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
-espressomd.assert_features(required_features)
-from espressomd.virtual_sites import VirtualSitesRelative
+import enum
+import math
 
 import numpy as np
 
+import espressomd
+required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
+espressomd.assert_features(required_features)
+import espressomd.virtual_sites
+import espressomd.rotation
 
-box_l = 100
-system = espressomd.System(box_l=[box_l, box_l, box_l])
-system.set_random_state_PRNG()
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
+system = espressomd.System(box_l=[10.0] * 3)
+system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
 system.time_step = 0.01
-skin = 10.0
-system.cell_system.skin = skin
-system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
-
-# Particle types
-type_centre = 0
-type_A = 1
+system.thermostat.set_langevin(kT=1.0, gamma=20.0, seed=42)
 
 
-#############################################################
-print("** Placing particles")
-#############################################################
+class ParticleTypes(enum.IntEnum):
+    CENTER = enum.auto()
+    BRANCH = enum.auto()
 
-
-# start at p_id=1, and reserve p_id=0 for the centre bead.
-p_id = 1
 
 branch_len = 5
-x = y = z = box_l / 2
+center = 0.5 * system.box_l
 
-# place six branches, pointing +/-x +/-y and +/-z
-# note that we do not make the particles virtual at this point.
+# Place six branches, pointing +/-x +/-y and +/-z.
+# Note that we do not make the particles virtual at this point.
 # The script uses center of mass an moment of inertia analysis routines
 # to obtain the position and inertia moments of the central particle.
 # Once a particle is made virtual, it will no longer contribute to
@@ -63,47 +55,60 @@ x = y = z = box_l / 2
 
 for direction in np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
     for n in range(branch_len):
-        system.part.add(pos=[x, y, z] + (n + 1) * direction,
-                        type=type_A)
-        system.part.add(pos=[x, y, z] - (n + 1) * direction,
-                        type=type_A, virtual=True)
+        system.part.add(pos=center + (n + 1) * direction,
+                        type=ParticleTypes.BRANCH.value)
+        system.part.add(pos=center - (n + 1) * direction,
+                        type=ParticleTypes.BRANCH.value)
 
-system.virtual_sites = VirtualSitesRelative(have_velocity=True)
 
-# here we calculate the center of mass position (com) and the moment of
-# inertia (momI) of the object
-com = system.analysis.center_of_mass(p_type=type_A)
-print("center of mass is:", com)
+center_of_mass = system.analysis.center_of_mass(
+    p_type=ParticleTypes.BRANCH.value)
+print("Center of mass:", center_of_mass)
 
 # if using multiple nodes, we need to change min_global_cut to the largest
 # separation
-if system.cell_system.get_state()['n_nodes'] > 1:
-    max_dist = 0
-    for p in system.part:
-        dist = np.sum((p.pos - com)**2)
-        if dist > max_dist:
-            max_dist = dist
-    max_dist = np.sqrt(max_dist)
-    print("max dist is {}".format(max_dist))
-    system.min_global_cut = max_dist
+max_inter = np.max(np.linalg.norm(system.part[:].pos - center_of_mass, axis=1))
+system.min_global_cut = max_inter
 
-mat_I = system.analysis.moment_of_inertia_matrix(p_type=type_A)
+
+principal_moments, principal_axes = espressomd.rotation.diagonalized_inertia_tensor(
+    system.part[:].pos, system.part[:].mass)
 # in this simple case, the cluster has principal axes aligned with the box
-momI = [mat_I[0, 0], mat_I[1, 1], mat_I[2, 2]]
-print("moment of inertia is", momI)
+print("Principal moments: {}, principal axes tensor: {}".format(
+    principal_moments, principal_axes))
+
+# if we rotate the arms, we have to make sure that we set the quaternion of the
+# center particle accordingly while setting the principal moments of inertia
+AXIS = np.array([1., 0., 0.])
+ANGLE = np.pi / 4.0
+
+
+def rotate_vector(vector, axis, angle):
+    return axis * np.dot(axis, vector) + math.cos(angle) * np.cross(
+        np.cross(axis, vector), axis) + math.sin(angle) * np.cross(axis, vector)
+
+
+for p in system.part:
+    p.pos = rotate_vector(p.pos - center_of_mass, AXIS, ANGLE) + center_of_mass
+
+
+principal_moments, principal_axes = espressomd.rotation.diagonalized_inertia_tensor(
+    system.part[:].pos, system.part[:].mass)
+# after rotating the whole object the principal axes changed
+print("After rotating: principal moments: {}, principal axes tensor: {}".format(
+    principal_moments, principal_axes))
 
 # place center bead
 p_center = system.part.add(
-    pos=com, mass=branch_len * 6 + 1, rinertia=momI,
-    rotation=[1, 1, 1], type=type_centre)
+    pos=center_of_mass, mass=branch_len * 6 + 1, rinertia=principal_moments,
+    rotation=[1, 1, 1], type=ParticleTypes.CENTER.value, quat=espressomd.rotation.matrix_to_quat(principal_axes))
 
 # Relate the particles that make up the rigid body to the central particle.
 # This will also mark them as `virtual = True`
-for p in system.part:
-    if p != p_center:
-        p.vs_auto_relate_to(p_center.id)
+for p in system.part.select(type=ParticleTypes.BRANCH.value):
+    p.vs_auto_relate_to(p_center.id)
 
 for frame in range(200):
     system.integrator.run(100)
 
-print("**Simulation finished")
+print("Simulation finished")

@@ -69,4 +69,40 @@ public:
   double volume() const { return m_length[0] * m_length[1] * m_length[2]; }
 };
 
+/**
+ * @brief Get the minimum-image distance between two coordinates.
+ * @param a           Coordinate of the terminal point.
+ * @param b           Coordinate of the initial point.
+ * @param box_length  Box length.
+ * @param periodic    Box periodicity.
+ * @return Shortest distance from @p b to @p a across periodic images,
+ *         i.e. <tt>a - b</tt>. Can be negative.
+ */
+template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
+  auto const dx = a - b;
+
+  if (periodic && (std::fabs(dx) > (0.5 * box_length))) {
+    return dx - std::round(dx * (1. / box_length)) * box_length;
+  }
+
+  return dx;
+}
+
+/**
+ * @brief Get the minimum-image vector between two coordinates.
+ * @param a     Coordinate of the terminal point.
+ * @param b     Coordinate of the initial point.
+ * @param box   Box parameters (side lengths, periodicity).
+ * @return Vector from @p b to @p a that minimizes the distance across
+ *         periodic images, i.e. <tt>a - b</tt>.
+ */
+template <typename T>
+Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
+                                  const Utils::Vector<T, 3> &b,
+                                  const BoxGeometry &box) {
+  return {get_mi_coord(a[0], b[0], box.length()[0], box.periodic(0)),
+          get_mi_coord(a[1], b[1], box.length()[1], box.periodic(1)),
+          get_mi_coord(a[2], b[2], box.length()[2], box.periodic(2))};
+}
+
 #endif // CORE_BOX_GEOMETRY_HPP

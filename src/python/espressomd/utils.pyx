@@ -22,39 +22,6 @@ import numpy as np
 from libcpp.vector cimport vector
 include "myconfig.pxi"
 
-
-cdef np.ndarray create_nparray_from_int_list(const List[int] & il):
-    """
-    Returns a numpy array from an int list struct which is provided as argument.
-
-    Parameters
-    ----------
-    List[int] : List[int]* which is to be converted
-
-    """
-    numpyArray = np.zeros(il.size())
-    for i in range(il.size()):
-        numpyArray[i] = il[i]
-    return numpyArray
-
-cdef List[int] create_int_list_from_python_object(obj):
-    """
-    Returns a int list pointer from a python object which supports subscripts.
-
-    Parameters
-    ----------
-    obj :
-        python object which supports subscripts
-
-    """
-    cdef List[int] il
-    il.resize(len(obj))
-
-    for i in range(len(obj)):
-        il[i] = obj[i]
-
-    return il
-
 cpdef check_type_or_throw_except(x, n, t, msg):
     """
     Checks that x is of type t and that n values are given, otherwise throws
@@ -87,11 +54,11 @@ cpdef check_type_or_throw_except(x, n, t, msg):
 
 cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
     """
-    Returns a numpy array from double array
+    Returns a numpy array from double array.
 
     Parameters
     ----------
-    x : double* which is to be converted
+    x : C-style array of type double which is to be converted
     len_x: len of array
 
     """
@@ -99,6 +66,17 @@ cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
     for i in range(len_x):
         numpyArray[i] = x[i]
     return numpyArray
+
+cdef np.ndarray create_nparray_from_double_span(Span[double] x):
+    """
+    Returns a numpy array from double span.
+
+    Parameters
+    ----------
+    x : Span of type double which is to be converted
+
+    """
+    return create_nparray_from_double_array(x.data(), x.size())
 
 cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
     """

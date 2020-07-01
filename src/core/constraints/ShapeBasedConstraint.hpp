@@ -23,7 +23,7 @@
 
 #include "Constraint.hpp"
 #include "Particle.hpp"
-#include "energy.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include <shapes/NoWhere.hpp>
 #include <shapes/Shape.hpp>
 

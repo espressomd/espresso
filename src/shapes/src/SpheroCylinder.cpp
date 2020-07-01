@@ -49,7 +49,7 @@ void SpheroCylinder::calculate_dist(const Utils::Vector3d &pos, double &dist,
 
   if (r >= m_rad ||
       (z_abs >= m_half_length &&
-       std::sqrt(r * r + std::pow(z_abs - m_half_length, 2))) > m_rad) {
+       std::sqrt(r * r + std::pow(z_abs - m_half_length, 2)) > m_rad)) {
     /* Outside */
     if (z_abs >= m_half_length) {
       /* Closest feature: hemisphere */

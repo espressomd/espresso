@@ -20,13 +20,12 @@
  */
 #ifndef _GRID_H
 #define _GRID_H
-/** \file
+/** @file
  *  Domain decomposition for parallel computing.
  *
  *  The primary simulation box is divided into orthogonal rectangular
  *  subboxes which are assigned to the different nodes (or processes
- *  or threads if you want). This grid is described in \ref
- *  node_grid.
+ *  or threads if you want). This grid is described in @ref node_grid.
  *
  *  Implementation in grid.cpp.
  */
@@ -36,41 +35,30 @@
 
 #include "LocalBox.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <cassert>
 #include <limits>
 
 extern BoxGeometry box_geo;
 extern LocalBox<double> local_geo;
 
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
 /** The number of nodes in each spatial dimension. */
 extern Utils::Vector3i node_grid;
 
-/*@}*/
-
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
-
 /** Make sure that the node grid is set, eventually
-    determine one automatically. */
+ *  determine one automatically.
+ */
 void init_node_grid();
 
-/** map a spatial position to the node grid */
+/** @brief Map a spatial position to the node grid */
 int map_position_node_array(const Utils::Vector3d &pos);
 
-/** fill neighbor lists of node.
+/** @brief Fill neighbor lists of node.
  *
  * Calculates the numbers of the nearest neighbors for a node.
  *
- * \return Ranks of neighbors
+ * @return Ranks of neighbors
  */
 Utils::Vector<int, 6> calc_node_neighbors(const boost::mpi::communicator &comm);
 
@@ -88,38 +76,16 @@ void grid_changed_n_nodes();
 /** called from \ref mpi_bcast_parameter . */
 void grid_changed_box_l(const BoxGeometry &box);
 
-/** rescales the box in dimension 'dir' to the new value 'd_new', and rescales
- * the particles accordingly */
+/** @brief Rescale box in dimension @p dir to the new value @p d_new and
+ *  rescale the particles accordingly.
+ */
 void rescale_boxl(int dir, double d_new);
 
-template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
-  auto const dx = a - b;
-
-  if (periodic && (std::fabs(dx) > (0.5 * box_length))) {
-    return dx - std::round(dx * (1. / box_length)) * box_length;
-  }
-
-  return dx;
-}
-
-template <typename T>
-Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
-                                  const Utils::Vector<T, 3> &b,
-                                  const BoxGeometry &box) {
-  return {get_mi_coord(a[0], b[0], box.length()[0], box.periodic(0)),
-          get_mi_coord(a[1], b[1], box.length()[1], box.periodic(1)),
-          get_mi_coord(a[2], b[2], box.length()[2], box.periodic(2))};
-}
-
-/** fold a coordinate to primary simulation box.
-    \param pos         the position...
-    \param image_box   and the box
-    \param length the box length.
-   coordinate.
-
-    Both pos and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
+/** @brief Fold a coordinate to primary simulation box.
+ *  @param pos        coordinate to fold
+ *  @param image_box  image box offset
+ *  @param length     box length
+ */
 inline std::pair<double, int> fold_coordinate(double pos, int image_box,
                                               double const &length) {
   std::tie(pos, image_box) = Algorithm::periodic_fold(pos, image_box, length);
@@ -135,13 +101,11 @@ inline std::pair<double, int> fold_coordinate(double pos, int image_box,
   return {pos, image_box};
 }
 
-/** fold particle coordinates to primary simulation box.
-    \param pos the position...
-    \param image_box and the box
-
-    Both pos and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
+/** @brief Fold particle coordinates to primary simulation box.
+ *  @param[in,out] pos        coordinate to fold
+ *  @param[in,out] image_box  image box offset
+ *  @param[in] box            box parameters (side lengths, periodicity)
+ */
 inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
                           const BoxGeometry &box) {
   for (int i = 0; i < 3; i++) {
@@ -152,6 +116,11 @@ inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
   }
 }
 
+/** @brief Fold particle coordinates to primary simulation box.
+ *  @param p    coordinate to fold
+ *  @param box  box parameters (side lengths, periodicity)
+ *  @return Folded coordinates.
+ */
 inline Utils::Vector3d folded_position(const Utils::Vector3d &p,
                                        const BoxGeometry &box) {
   Utils::Vector3d p_folded;
@@ -166,11 +135,22 @@ inline Utils::Vector3d folded_position(const Utils::Vector3d &p,
   return p_folded;
 }
 
+/** @brief Calculate image box shift vector.
+ *  @param image_box  image box offset
+ *  @param box        box parameters (side lengths)
+ *  @return Image box coordinates.
+ */
 inline Utils::Vector3d image_shift(const Utils::Vector3i &image_box,
                                    const Utils::Vector3d &box) {
   return hadamard_product(image_box, box);
 }
 
+/** @brief Unfold particle coordinates to image box.
+ *  @param pos        coordinate to unfold
+ *  @param image_box  image box offset
+ *  @param box        box parameters (side lengths, periodicity)
+ *  @return Unfolded coordinates.
+ */
 inline Utils::Vector3d unfolded_position(const Utils::Vector3d &pos,
                                          const Utils::Vector3i &image_box,
                                          const Utils::Vector3d &box) {
@@ -188,5 +168,4 @@ inline Utils::Vector3d unfolded_position(const Utils::Vector3d &pos,
 LocalBox<double> regular_decomposition(const BoxGeometry &box,
                                        Utils::Vector3i const &node_pos,
                                        Utils::Vector3i const &node_grid);
-/*@}*/
 #endif

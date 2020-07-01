@@ -34,11 +34,6 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
     -------
     update()
         Update the accumulator (get the current values from the observable).
-    get_mean()
-        Returns the samples mean values of the respective observable with which the
-        accumulator was initialized.
-    get_variance()
-        Returns the samples variance for the observable.
 
     """
     _so_name = "Accumulators::MeanVarianceCalculator"
@@ -49,9 +44,16 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
     _so_creation_policy = "LOCAL"
 
     def get_mean(self):
+        """
+        Returns the samples mean values of the respective observable with
+        which the accumulator was initialized.
+        """
         return np.array(self.call_method("get_mean")).reshape(self.shape())
 
     def get_variance(self):
+        """
+        Returns the samples variance for the observable.
+        """
         return np.array(self.call_method("get_variance")).reshape(self.shape())
 
 
@@ -71,8 +73,6 @@ class TimeSeries(ScriptInterfaceHelper):
     -------
     update()
         Update the accumulator (get the current values from the observable).
-    time_series()
-        Returns the recorded values of the observable.
     clear()
         Clear the data
 
@@ -86,6 +86,9 @@ class TimeSeries(ScriptInterfaceHelper):
     _so_creation_policy = "LOCAL"
 
     def time_series(self):
+        """
+        Returns the recorded values of the observable.
+        """
         return np.array(self.call_method("time_series")).reshape(self.shape())
 
 
@@ -127,16 +130,6 @@ class Correlator(ScriptInterfaceHelper):
           :math:`B`, i.e., :math:`C_{i \\cdot l_B + j} = A_i B_j`
           with :math:`l_B` the length of :math:`B`.
 
-        * ``"complex_conjugate_product"``: assuming that the observables
-          consist of a complex and real part
-          :math:`A=(A_x+iA_y)`, and :math:`B=(B_x+iB_y)`, this
-          operation computes the result :math:`C=(C_x+iC_y)`, as:
-
-          .. math::
-
-                C_x = A_xB_x + A_yB_y\\\\
-                C_y = A_yB_x - A_xB_y
-
         * ``"fcs_acf"``: Fluorescence Correlation Spectroscopy (FCS)
           autocorrelation function, i.e.,
 
@@ -149,7 +142,8 @@ class Correlator(ScriptInterfaceHelper):
                - \\frac{\\Delta z_i^2(\\tau)}{w_z^2}
                \\right) \\right>
 
-          where
+          where :math:`N` is the average number of fluorophores in the
+          illumination area,
 
           .. math::
 
@@ -167,16 +161,28 @@ class Correlator(ScriptInterfaceHelper):
               \\frac{2z^2}{w_z^2} \\right).
 
           The values of :math:`w_x`, :math:`w_y`, and :math:`w_z`
-          are passed to the correlator as ``args``
+          are passed to the correlator as ``args``. The correlator calculates
 
-          The above equations are a
-          generalization of the formula presented by Hoefling
-          et. al. :cite:`hofling11a`. For more information, see
-          references therein. Per each 3 dimensions of the
+          .. math::
+
+               C_i(\\tau) =
+               \\exp \\left(
+               - \\frac{\\Delta x_i^2(\\tau)}{w_x^2}
+               - \\frac{\\Delta y_i^2(\\tau)}{w_y^2}
+               - \\frac{\\Delta z_i^2(\\tau)}{w_z^2}
+               \\right)
+
+          Per each 3 dimensions of the
           observable, one dimension of the correlation output
           is produced. If ``"fcs_acf"`` is used with other observables than
           :class:`espressomd.observables.ParticlePositions`, the physical
           meaning of the result is unclear.
+
+          The above equations are a
+          generalization of the formula presented by Hoefling
+          et. al. :cite:`hofling11a`. For more information, see
+          references therein.
+
 
     delta_N : :obj:`int`
         Number of timesteps between subsequent samples for the auto update mechanism.
@@ -192,10 +198,14 @@ class Correlator(ScriptInterfaceHelper):
     tau_lin : :obj:`int`
         The number of data-points for which the results are linearly spaced
         in ``tau``. This is a parameter of the multiple tau correlator. If you
-        want to use it, make sure that you know how it works. By default, it
-        is set equal to ``tau_max`` which results in the trivial linear
-        correlator. By setting ``tau_lin < tau_max`` the multiple
-        tau correlator is switched on. In many cases, ``tau_lin=16`` is a
+        want to use it, make sure that you know how it works. ``tau_lin`` must
+        be divisible by 2. By setting ``tau_lin`` such that
+        ``tau_max >= dt * delta_N * tau_lin``, the
+        multiple tau correlator is used, otherwise the trivial linear
+        correlator is used. By setting ``tau_lin = 1``, the value will be
+        overriden by ``tau_lin = ceil(tau_max / (dt * delta_N))``, which
+        will result in either the multiple or linear tau correlator.
+        In many cases, ``tau_lin=16`` is a
         good choice but this may strongly depend on the observables you are
         correlating. For more information, we recommend to read
         ref. :cite:`ramirez10a` or to perform your own tests.
@@ -233,8 +243,11 @@ class Correlator(ScriptInterfaceHelper):
 
     args: :obj:`float` of length 3
         Three floats which are passed as arguments to the correlation
-        function.  Currently it is only used by ``"fcs_acf"``.
-        Other correlation operations will ignore these values.
+        function. Currently it is only used by ``"fcs_acf"``, which
+        will square these values in the core; if you later decide to
+        update these weights with ``obs.args = [...]``, you'll have to
+        provide already squared values! Other correlation operations
+        will ignore these values.
     """
 
     _so_name = "Accumulators::Correlator"

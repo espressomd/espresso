@@ -348,7 +348,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
   }
   dphi = mask(p.p.rotation, dphi);
   double dphi_m = dphi.norm();
-  if (dphi_m) {
+  if (dphi_m != 0.) {
     auto const dphi_u = dphi / dphi_m;
     return local_rotate_particle_body(p, dphi_u, dphi_m);
   }
@@ -411,14 +411,14 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
         sigma_pos = BrownianThermostat::sigma(p.p.T, p.p.gamma_rot);
       } else {
         // just an indication of the infinity
-        sigma_pos = Utils::Vector3d{};
+        sigma_pos = {};
       }
     } else if (temperature > 0.) {
       // Default temperature but particle-specific gamma
       sigma_pos = BrownianThermostat::sigma(temperature, p.p.gamma_rot);
     } else {
       // just an indication of the infinity
-      sigma_pos = Utils::Vector3d{};
+      sigma_pos = {};
     }
   } // particle-specific gamma
   else {
@@ -428,7 +428,7 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
         sigma_pos = BrownianThermostat::sigma(p.p.T, brownian.gamma_rotation);
       } else {
         // just an indication of the infinity
-        sigma_pos = Utils::Vector3d{};
+        sigma_pos = {};
       }
     } else {
       // Default values for both
@@ -459,7 +459,7 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
   dphi = mask(p.p.rotation, dphi);
   // making the algorithm independent of the order of the rotations
   double dphi_m = dphi.norm();
-  if (dphi_m) {
+  if (dphi_m != 0) {
     auto const dphi_u = dphi / dphi_m;
     return local_rotate_particle_body(p, dphi_u, dphi_m);
   }
@@ -515,7 +515,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
       p.m.v += bd_random_walk_vel(brownian, p);
       /* Verlet criterion check */
       if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
-        set_resort_particles(Cells::RESORT_LOCAL);
+        cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
     }
 #ifdef ROTATION
     if (!p.p.rotation)

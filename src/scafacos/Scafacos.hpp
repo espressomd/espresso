@@ -28,8 +28,7 @@ namespace Scafacos {
 /** \brief Abstraction of a method from the scafacos library */
 
 struct Scafacos {
-  Scafacos(const std::string &_method, MPI_Comm comm,
-           const std::string &parameters);
+  Scafacos(std::string method, MPI_Comm comm, const std::string &parameters);
   ~Scafacos();
   /** Parse parameter string */
   void parse_parameters(const std::string &s);

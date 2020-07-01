@@ -47,7 +47,7 @@ auto mask_impl(Integral mask, T t, std::index_sequence<I...>) {
  * @tparam T implements the tuple interface(get, tuple_size, ...)
  * @tparam Integral An unsigned integral type
  * @param mask bit mask, if the i-th bit is set, the i-th element
- *        in @param t is copied to the output, otherwise it is set to zero.
+ *        in @p t is copied to the output, otherwise it is set to zero.
  * @param t input elements
  * @return t partially zeroed out according to mask
  */

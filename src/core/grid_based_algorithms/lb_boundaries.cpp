@@ -193,7 +193,7 @@ void lb_init_boundaries() {
       }
     }
     lbpar_gpu.number_of_boundnodes = number_of_boundnodes;
-    /**call of cuda fkt*/
+    /* call of cuda fkt */
     std::vector<float> boundary_velocity(3 * (lbboundaries.size() + 1));
     int n = 0;
     for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end();
@@ -212,7 +212,7 @@ void lb_init_boundaries() {
                            host_boundary_index_list.data(),
                            boundary_velocity.data());
 
-#endif /* defined ( CUDA) && defined (LB_BOUNDARIES_GPU) */
+#endif /* defined (CUDA) && defined (LB_BOUNDARIES_GPU) */
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
     auto const lblattice = lb_lbfluid_get_lattice();
@@ -238,7 +238,7 @@ void lb_init_boundaries() {
             auto const boundary_number =
                 std::distance(lbboundaries.begin(), boundary.base()) - 1;
             auto &node = lbfields[index];
-            node.boundary = boundary_number + 1;
+            node.boundary = static_cast<int>(boundary_number) + 1;
             node.slip_velocity =
                 (*boundary)->velocity() *
                 (lb_lbfluid_get_tau() / lb_lbfluid_get_agrid());
@@ -271,7 +271,7 @@ Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
-    mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
+    mpi_gather_stats(GatherStats::lb_boundary_forces, forces.data());
 #endif
   }
   auto const container_index = std::distance(lbboundaries.begin(), it);

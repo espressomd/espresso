@@ -23,9 +23,10 @@
 #include "particle_data.hpp"
 #include "random.hpp"
 
+#include <utils/Accumulator.hpp>
+
 #include <map>
 #include <string>
-#include <utils/Accumulator.hpp>
 
 namespace ReactionEnsemble {
 
@@ -166,7 +167,7 @@ public:
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
-  bool generic_oneway_reaction(int reaction_id);
+  void generic_oneway_reaction(int reaction_id);
   virtual void on_reaction_entry(int &old_state_index) {}
   virtual void
   on_reaction_rejection_directly_after_entry(int &old_state_index) {}
@@ -209,10 +210,6 @@ private:
       std::vector<int> &reactant_coefficients,
       std::vector<int> &product_coefficients); // should only be used when
                                                // defining a new reaction
-  int m_invalid_charge =
-      -10000; // this is the default charge which is assigned to a type which
-              // occurs in a reaction. this charge has to be overwritten. if it
-              // is not overwritten the reaction ensemble will complain.
   void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
   void hide_particle(int p_id, int previous_type);
@@ -229,8 +226,6 @@ private:
 
   void add_types_to_index(std::vector<int> &type_list);
   Utils::Vector3d get_random_position_in_box();
-  std::vector<double>
-  get_random_position_in_box_enhanced_proposal_of_small_radii();
 };
 
 ///////////////////////////// actual declaration of specific reaction algorithms
@@ -319,7 +314,6 @@ private:
   double wang_landau_parameter = 1.0; // equals the logarithm to basis e of the
   // modification factor of the degeneracy of
   // states when the state is visited
-  double initial_wang_landau_parameter = 1.0;
 
   int int_fill_value = -10;
   double double_fill_value = -10.0;
@@ -341,7 +335,6 @@ private:
 
   void update_wang_landau_potential_and_histogram(
       int index_of_state_after_acceptance_or_rejection);
-  int m_WL_accepted_moves = 0;
   int m_WL_tries = 0;
   bool can_refine_wang_landau_one_over_t();
   bool m_system_is_in_1_over_t_regime = false;
@@ -354,7 +347,6 @@ private:
       DegreeOfAssociationCollectiveVariable &current_collective_variable);
   int get_num_needed_bins();
   void invalidate_bins();
-  void remove_bins_that_have_not_been_sampled();
   void reset_histogram();
   double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value,
                                                       double delta_CV);
@@ -395,9 +387,64 @@ public:
   std::pair<double, double> measure_excess_chemical_potential(int reaction_id);
 };
 
-//////////////////////////////////////////////////////////////////free functions
+///////////////////////
+// utility functions //
+///////////////////////
+
 double calculate_factorial_expression(SingleReaction &current_reaction,
                                       std::map<int, int> &old_particle_numbers);
+
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
+
+/**
+ * Calculate the average of an array (used for the histogram of the
+ * Wang-Landau algorithm). It excludes values which are initialized to be
+ * negative. Those values indicate that the Wang-Landau algorithm should not
+ * sample those values. The values still occur in the list because we can only
+ * store "rectangular" value ranges.
+ */
+template <typename T>
+double average_list_of_allowed_entries(const std::vector<T> &rng) {
+  T result = 0;
+  int counter_allowed_entries = 0;
+  for (auto &val : rng) {
+    if (val >= 0) { // checks for validity of index i (think of energy
+                    // collective variables, in a cubic memory layout
+                    // there will be indices which are not allowed by
+                    // the energy boundaries. These values will be
+                    // initialized with a negative fill value)
+      result += val;
+      counter_allowed_entries += 1;
+    }
+  }
+  if (counter_allowed_entries) {
+    return static_cast<double>(result) / counter_allowed_entries;
+  }
+  return 0.0;
+}
+
+/**
+ * Finds the minimum non negative value in the provided range and returns
+ * this value.
+ */
+inline double find_minimum_non_negative_value(std::vector<double> const &rng) {
+  if (rng.empty())
+    throw std::runtime_error("range is empty\n");
+  // think of negative histogram values that indicate not
+  // allowed energies in the case of an energy observable
+  auto const it = std::min_element(rng.begin(), rng.end(),
+                                   [](double const &a, double const &b) {
+                                     if (a <= 0)
+                                       return false;
+                                     if (b <= 0)
+                                       return true;
+                                     return a < b;
+                                   });
+  if (it == rng.end() or *it < 0) {
+    return rng[rng.size() - 1];
+  }
+  return *it;
+}
+
 } // namespace ReactionEnsemble
 #endif

@@ -34,7 +34,6 @@ from .lb cimport lb_lbcoupling_set_rng_state
 from .lb cimport lb_lbcoupling_get_rng_state
 from .lb cimport lb_lbcoupling_is_seed_required
 from .lb cimport lb_lbfluid_get_kT
-from .utils import to_char_pointer
 
 
 def AssertThermostatType(*allowedthermostats):
@@ -126,12 +125,8 @@ cdef class Thermostat:
                                   act_on_virtual=thmst["act_on_virtual"],
                                   seed=thmst["seed"])
             if thmst["type"] == "SD":
-                self.set_sd(viscosity=thmst["viscosity"],
-                            device=thmst["device"],
-                            radii=thmst["radii"],
-                            kT=thmst["kT"],
-                            seed=thmst["seed"],
-                            flags=thmst["flags"])
+                self.set_sd(kT=thmst["kT"],
+                            seed=thmst["seed"])
 
     def get_ts(self):
         return thermo_switch
@@ -217,12 +212,8 @@ cdef class Thermostat:
             IF STOKESIAN_DYNAMICS:
                 sd_dict = {}
                 sd_dict["type"] = "SD"
-                sd_dict["viscosity"] = get_sd_viscosity()
-                sd_dict["device"] = get_sd_device()
-                sd_dict["radii"] = get_sd_radius_dict()
                 sd_dict["kT"] = get_sd_kT()
                 sd_dict["seed"] = get_sd_seed()
-                sd_dict["flags"] = get_sd_flags()
                 thermo_list.append(sd_dict)
         return thermo_list
 
@@ -719,47 +710,23 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_TEMPERATURE)
 
     IF STOKESIAN_DYNAMICS:
-        def set_sd(self, viscosity=None, device=None, radii=None, kT=None, seed=None,
-                   flags=SELF_MOBILITY | PAIR_MOBILITY | FTS):
+        def set_sd(self, kT=None, seed=None):
             """
-            Sets the SD thermostat with required parameters.  This
-            also activates hydrodynamic interactions and the SD
-            integrator.
+            Sets the SD thermostat with required parameters.
+
+            This thermostat requires the feature ``STOKESIAN_DYNAMICS`` or
+            ``STOKESIAN_DYNAMICS_GPU``.
 
             Parameters
             ----------
-            'viscosity' : :obj:`float`
-                    Bulk viscosity
-            'device' : :obj:`str`
-                       Device to execute on.  Possible values are
-                       "cpu" and "gpu".
-            'radii' : :obj:`dict`
-                      Dictionary that maps particle types to radii
-            'kT' : :obj:`float`
-                   Temperature
-            'seed' : :obj:`int`
-                     Seed for the random number generator
-            'flags' : :obj:`int`
-                      Bit mask for feature selection.
-                      Available features:
-
-                           NONE, SELF_MOBILITY, PAIR_MOBILITY, LUBRICATION, FTS
+            kT : :obj:`float`, optional
+                Temperature
+            seed : :obj:`int`, optional
+                Seed for the random number generator
 
             """
 
-            utils.check_type_or_throw_except(
-                viscosity, 1, float, "viscosity must be a number")
-            set_sd_viscosity(viscosity)
-
-            utils.check_type_or_throw_except(
-                device, 1, str, "device must be a string")
-            set_sd_device(to_char_pointer(device.lower()))
-
-            utils.check_type_or_throw_except(
-                radii, 1, dict, "radii must be a dictionary")
-            set_sd_radius_dict(radii)
-
-            if kT is None:
+            if (kT is None) or (kT == 0):
                 set_sd_kT(0.0)
             else:
                 utils.check_type_or_throw_except(
@@ -769,10 +736,6 @@ cdef class Thermostat:
                 utils.check_type_or_throw_except(
                     seed, 1, int, "seed must be an integer")
                 set_sd_seed(seed)
-
-            utils.check_type_or_throw_except(
-                flags, 1, int, "flags must be an integer")
-            set_sd_flags(flags)
 
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_SD)

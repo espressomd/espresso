@@ -30,7 +30,7 @@ import collections
 import functools
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
-from .utils cimport Vector3i, Vector3d, Vector4d, List
+from .utils cimport Vector3i, Vector3d, Vector4d
 from .grid cimport box_geo, folded_position, unfolded_position
 
 
@@ -88,7 +88,6 @@ cdef class ParticleHandle:
         The particle type for nonbonded interactions.
 
         type : :obj:`int`
-            Nonbonded interactions act between different types of particles.
 
         .. note::
            The value of ``type`` has to be an integer >= 0.
@@ -111,10 +110,11 @@ cdef class ParticleHandle:
         The molecule id of the Particle.
 
         mol_id : :obj:`int`
-            The particle ``mol_id`` is used to differentiate between
-            particles belonging to different molecules, e.g. when virtual
-            sites are used, or object-in-fluid cells. The default
-            ``mol_id`` for all particles is 0.
+
+        The particle ``mol_id`` is used to differentiate between
+        particles belonging to different molecules, e.g. when virtual
+        sites are used, or object-in-fluid cells. The default
+        ``mol_id`` for all particles is 0.
 
         .. note::
            The value of ``mol_id`` has to be an integer >= 0.
@@ -137,7 +137,6 @@ cdef class ParticleHandle:
         The unwrapped (not folded into central box) particle position.
 
         pos : (3,) array_like of :obj:`float`
-            The particles' absolute position.
 
         """
 
@@ -154,14 +153,13 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position( < Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
+            return make_array_locked(unfolded_position(< Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
 
     property pos_folded:
         """
         The wrapped (folded into central box) position vector of a particle.
 
         pos : (3,) array_like of :obj:`float`
-            The particles' position.
 
         .. note::
            Setting the folded position is ambiguous and is thus not possible, please use ``pos``.
@@ -220,7 +218,6 @@ cdef class ParticleHandle:
         The particle velocity in the lab frame.
 
         v : (3,) array_like of :obj:`float`
-            The particles' velocity
 
         .. note::
            The velocity remains variable and will be changed during integration.
@@ -245,7 +242,6 @@ cdef class ParticleHandle:
         The instantaneous force acting on this particle.
 
         f : (3,) array_like of :obj:`float`
-            The current forces on the particle
 
         .. note::
            Whereas the velocity is modified with respect to the velocity you set
@@ -272,9 +268,10 @@ cdef class ParticleHandle:
         one partner. You need to define a bonded interaction.
 
         bonds : list/tuple of tuples/lists
-            a bond tuple is specified as a bond identifier associated with
-            a particle ``(bond_ID, part_ID)``. A single particle may contain
-            multiple such tuples.
+
+        A bond tuple is specified as a bond identifier associated with
+        a particle ``(bond_ID, part_ID)``. A single particle may contain
+        multiple such tuples.
 
         See Also
         --------
@@ -304,25 +301,17 @@ cdef class ParticleHandle:
                         "Bonds have to specified as lists of tuples/lists or a single list.")
 
         def __get__(self):
-            self.update_particle_data()
             bonds = []
+
+            part_bonds = get_particle_bonds(self._id)
             # Go through the bond list of the particle
-            i = 0
-            while i < self.particle_data.bl.n:
+            for part_bond in part_bonds:
                 bond = []
-                # Bond type:
-                bond_id = self.particle_data.bl.e[i]
-                bond.append(BondedInteractions()[bond_id])
-                # Number of partners
-                nPartners = bonded_ia_params[bond_id].num
+                bond.append(BondedInteractions()[part_bond.bond_id()])
+                partner_ids = part_bond.partner_ids()
 
-                i += 1
-
-                # Copy bond partners
-                for j in range(nPartners):
-                    bond.append(self.particle_data.bl.e[i])
-                    i += 1
-                bonds.append(tuple(bond))
+                bonds.append(tuple(bond + [partner_ids[i]
+                                           for i in range(partner_ids.size())]))
 
             return tuple(bonds)
 
@@ -341,7 +330,6 @@ cdef class ParticleHandle:
         Particle mass.
 
         mass : :obj:`float`
-               The particle mass.
 
         See Also
         ----------
@@ -368,7 +356,6 @@ cdef class ParticleHandle:
             The particle angular velocity the lab frame.
 
             omega_lab : (3,) array_like of :obj:`float`
-                The particle's angular velocity measured from the lab frame.
 
             .. note::
                This needs the feature ``ROTATION``.
@@ -400,11 +387,9 @@ cdef class ParticleHandle:
 
         property quat:
             """
-            Particle quaternion representation.
+            Quaternion representation of the particle rotational position.
 
             quat : (4,) array_like of :obj:`float`
-                Sets the quaternion representation of the
-                rotational position of this particle.
 
             .. note::
                This needs the feature ``ROTATION``.
@@ -584,22 +569,17 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, mu_E):
-                cdef double _mu_E[3]
-
+                cdef Vector3d _mu_E
                 check_type_or_throw_except(
                     mu_E, 3, float, "mu_E has to be 3 floats.")
-
-                _mu_E[0] = mu_E[0]
-                _mu_E[1] = mu_E[1]
-                _mu_E[2] = mu_E[2]
-
+                for i in range(3):
+                    _mu_E[i] = mu_E[i]
                 set_particle_mu_E(self._id, _mu_E)
 
             def __get__(self):
-                cdef double mu_E[3]
-                get_particle_mu_E(self._id, mu_E)
-
-                return array_locked([mu_E[0], mu_E[1], mu_E[2]])
+                cdef Vector3d _mu_E
+                get_particle_mu_E(self._id, _mu_E)
+                return make_array_locked(_mu_E)
 
     property virtual:
         """Virtual flag.
@@ -1074,12 +1054,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef List[int] exclusions = self.particle_data.exclusions()
-
-                py_partners = []
-                for i in range(exclusions.n):
-                    py_partners.append(exclusions.e[i])
-                return array_locked(py_partners)
+                return array_locked(self.particle_data.exclusions())
 
         def add_exclusion(self, _partner):
             """
@@ -1862,15 +1837,21 @@ Set quat and scalar dipole moment (dipm) instead.")
             raise ValueError(
                 "When adding several particles at once, all lists of attributes have to have the same size")
 
-        # Place new particles and collect ids
-        ids = []
+        # If particle ids haven't been provided, use free ones
+        # beyond the highest existing one
+        if not "id" in Ps:
+            first_id = get_maximal_particle_id() + 1
+            Ps["id"] = range(first_id, first_id + n_parts)
+
+        # Place the particles
         for i in range(n_parts):
             P = {}
             for k in Ps:
                 P[k] = Ps[k][i]
-            ids.append(self._place_new_particle(P).id)
+            self._place_new_particle(P)
 
-        return self[ids]
+        # Return slice of added particles
+        return self[Ps["id"]]
 
     # Iteration over all existing particles
     def __iter__(self):

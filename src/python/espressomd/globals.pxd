@@ -23,8 +23,6 @@ cdef extern from "global.hpp":
     int FIELD_BOXL
     int FIELD_SKIN
     int FIELD_NODEGRID
-    int FIELD_MAXNUMCELLS
-    int FIELD_MINNUMCELLS
     int FIELD_NPTISO_PISTON
     int FIELD_NPTISO_PDIFF
     int FIELD_PERIODIC

@@ -59,7 +59,16 @@ ParallelScriptInterface::ParallelScriptInterface(std::string const &name)
 
 ParallelScriptInterface::~ParallelScriptInterface() {
   /* Delete the instances on the other nodes */
-  call(CallbackAction::DELETE);
+  try {
+    call(CallbackAction::DELETE);
+  } catch (...) {
+    /* We have to do MPI calls in the destructor, which
+       can cause exceptions. To avoid sanitizer warnings
+       about this, and to clarify we directly explicitly
+       call terminate, which would happen anyway.
+    */
+    std::terminate();
+  }
 }
 
 bool ParallelScriptInterface::operator==(ParallelScriptInterface const &rhs) {

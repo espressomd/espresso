@@ -28,7 +28,7 @@
 
 #include <memory>
 
-/** @brief get active virtual sites implementation */
+/** @brief Get active virtual sites implementation */
 const std::shared_ptr<VirtualSites> &virtual_sites();
 
 /** @brief Set active virtual sites implementation */
@@ -43,8 +43,6 @@ void vs_relate_to(int part_num, int relate_to);
 
 /** Setup the @ref ParticleProperties::vs_relative "vs_relative" of a particle
  *  so that the given virtual particle will follow the given real particle.
- *  Local version, expects both particles to be accessible through @ref
- *  local_particles and only executes the changes on the virtual site locally
  */
 void local_vs_relate_to(Particle &p_current, Particle const &p_relate_to);
 

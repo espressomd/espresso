@@ -20,10 +20,8 @@
 #define BOOST_TEST_MODULE Utils::Array test
 #define BOOST_TEST_DYN_LINK
 
-#include <array>
 #include <numeric>
 #include <sstream>
-#include <vector>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>

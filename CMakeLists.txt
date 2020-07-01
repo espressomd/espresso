@@ -1,5 +1,5 @@
 # Copyright (C) 2009-2019 The ESPResSo project
-# Copyright (C) 2009,2010 
+# Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This file is part of ESPResSo.
@@ -19,18 +19,33 @@
 #
 
 cmake_minimum_required(VERSION 3.10)
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.13)
-    cmake_policy(SET CMP0076 NEW)
+message(STATUS "CMake version: ${CMAKE_VERSION}")
+if(POLICY CMP0076)
+  # make target_sources() convert relative paths to absolute
+  cmake_policy(SET CMP0076 NEW)
 endif()
+if(POLICY CMP0025)
+  # make CXX_COMPILER_ID return "AppleClang" instead of "Clang" for Apple Clang
+  cmake_policy(SET CMP0025 NEW)
+endif()
+# CMake modules/macros are in a subdirectory to keep this file cleaner
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 include(FeatureSummary)
 include(GNUInstallDirs)
 project(ESPResSo)
-include(cmake/FindPythonModule.cmake)
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.12")
+include(option_enum)
+include(option_if_available)
+if(POLICY CMP0074)
+  # make find_package() use <PackageName>_ROOT variables
   cmake_policy(SET CMP0074 NEW)
 endif()
 
+# C++ standard
 enable_language(CXX)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(PROJECT_VERSION "4.2-dev")
 
@@ -38,39 +53,41 @@ set(PROJECT_VERSION "4.2-dev")
 # CMake internal vars
 #
 
-# Cmake modules/macros are in a subdirectory to keep this file cleaner
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
+# Select the build type
+option_enum(
+  varname "CMAKE_BUILD_TYPE" help_text "build type" default_value "Release"
+  possible_values
+  "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage;RelWithAssert")
+set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} -Og -g")
+set(CMAKE_CXX_FLAGS_RELWITHASSERT "${CMAKE_CXX_FLAGS_RELWITHASSERT} -O3 -g")
 
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
 
-######################################################################
+# ##############################################################################
 # User input options
-######################################################################
+# ##############################################################################
 
-option(WITH_PYTHON "Build with Python bindings"  ON)
-option(WITH_GSL    "Build with GSL support"  ON)
-option(WITH_CUDA   "Build with GPU support"  ON)
-option(WITH_HDF5   "Build with HDF5 support" ON)
-option(WITH_TESTS  "Enable tests"            ON)
-option(WITH_SCAFACOS "Build with Scafacos support" OFF)
-option(WITH_STOKESIAN "Build with Stokesian dynamics support" OFF)
-option(WITH_BENCHMARKS "Enable benchmarks"   OFF)
-option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+option(WITH_PYTHON "Build with Python bindings" ON)
+option_if_available(WITH_GSL "Build with GSL support" ON)
+option(WITH_CUDA "Build with GPU support" OFF)
+option_if_available(WITH_HDF5 "Build with HDF5 support" ON)
+option(WITH_TESTS "Enable tests" ON)
+option_if_available(WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
+option_if_available(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" ON)
+option(WITH_BENCHMARKS "Enable benchmarks" OFF)
+option(WITH_VALGRIND_INSTRUMENTATION
+       "Build with valgrind instrumentation markers" OFF)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
-   OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
+                                            "GNU")
   option(WITH_COVERAGE "Generate code coverage report" OFF)
   option(WITH_ASAN "Build with address sanitizer" OFF)
   option(WITH_UBSAN "Build with undefined behavior sanitizer" OFF)
 endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT APPLE)
   option(
     WITH_MSAN
     "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)"
@@ -79,7 +96,8 @@ endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 option(WITH_CCACHE "Use ccache compiler invocation." OFF)
 option(WITH_PROFILER "Enable profiler annotations." OFF)
-set(TEST_TIMEOUT "300" CACHE STRING "Timeout in seconds for each testsuite test")
+set(TEST_TIMEOUT "300" CACHE STRING
+                             "Timeout in seconds for each testsuite test")
 
 if(WITH_CCACHE)
   find_program(CCACHE ccache)
@@ -91,13 +109,12 @@ if(WITH_CCACHE)
   endif(CCACHE)
 endif(WITH_CCACHE)
 
-
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # choose the name of the config file
-set(MYCONFIG_NAME "myconfig.hpp"
-    CACHE STRING "Default name of the local config file")
+set(MYCONFIG_NAME "myconfig.hpp" CACHE STRING
+                                       "Default name of the local config file")
 
 # Check which config file to use
 include(MyConfig)
@@ -110,7 +127,8 @@ include(CheckCXXSourceCompiles)
 
 set(__PRETTYFUNC__ __func__)
 foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
-  check_cxx_source_compiles("
+  check_cxx_source_compiles(
+    "
      #include <string>
      int main() { std::string(${func_name}); }
      " result${func_name})
@@ -123,6 +141,30 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 #
 # Libraries
 #
+
+# CUDA compiler
+if(WITH_CUDA)
+  set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
+  set(MINIMAL_CUDA_VERSION 9.0)
+  option_enum(varname "WITH_CUDA_COMPILER" help_text "CUDA compiler"
+              default_value "nvcc" possible_values "nvcc;hip;clang")
+  if(WITH_CUDA_COMPILER STREQUAL "nvcc")
+    find_package(CUDA ${MINIMAL_CUDA_VERSION} REQUIRED)
+    find_package(CUDACompilerNVCC ${MINIMAL_CUDA_VERSION} REQUIRED)
+  elseif(WITH_CUDA_COMPILER STREQUAL "hip")
+    find_package(CUDACompilerHIP 1.5.18494 REQUIRED)
+  elseif(WITH_CUDA_COMPILER STREQUAL "clang")
+    if(WITH_COVERAGE)
+      message(
+        FATAL_ERROR
+          "Cannot enable code coverage with Clang as the CUDA compiler")
+    endif()
+    set(MINIMAL_CUDA_VERSION 8.0)
+    find_package(CUDACompilerClang 6.0 REQUIRED)
+  else()
+    message(FATAL_ERROR "Unknown CUDA compiler '${WITH_CUDA_COMPILER}'")
+  endif()
+endif(WITH_CUDA)
 
 find_package(PythonInterp 3.5 REQUIRED)
 
@@ -144,18 +186,33 @@ if(WITH_PYTHON)
 endif()
 
 # We need the parallel hdf5 version!
-if (WITH_HDF5)
+if(WITH_HDF5)
+  # The FindHDF5 function will fall back to the serial version if no parallel
+  # version was found, and print to the CMake log that HDF5 was found. There is
+  # no QUIET argument to override that message. This can be confusing to people
+  # who are not familiar with the way hdf5 is distributed in Linux package
+  # repositories (libhdf5-dev is the serial version).
   set(HDF5_PREFER_PARALLEL 1)
   find_package(HDF5 "1.8" COMPONENTS C)
-  if(HDF5_IS_PARALLEL)
-    set(H5MD 1)
-    include(FindPythonModule)
-    find_python_module(h5py)
-    add_feature_info(HDF5 ON "parallel")
-  else()
-    unset(H5MD)
-    unset(HDF5_FOUND)
-  endif(HDF5_IS_PARALLEL)
+  if(HDF5_FOUND)
+    if(HDF5_IS_PARALLEL)
+      set(H5MD 1)
+      add_feature_info(HDF5 ON "parallel")
+    else()
+      unset(H5MD)
+      set(HDF5_FOUND FALSE)
+      if(NOT WITH_HDF5_IS_DEFAULT_VALUE)
+        message(
+          FATAL_ERROR
+            "Optional dependency HDF5 explicitly requested, but parallel version not found."
+        )
+      endif()
+    endif(HDF5_IS_PARALLEL)
+  elseif(NOT WITH_HDF5_IS_DEFAULT_VALUE)
+    message(
+      FATAL_ERROR
+        "Optional dependency HDF5 explicitly requested, but not found.")
+  endif(HDF5_FOUND)
 endif(WITH_HDF5)
 
 # Check for the h5xx submodule and try to check it out if not found or update it
@@ -166,8 +223,7 @@ if(WITH_HDF5 AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
   if(GIT_FOUND)
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/h5xx/.git")
       execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --
-                              libs/h5xx
-                      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+                              libs/h5xx WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     else()
       execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs/h5xx
                       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -180,6 +236,10 @@ if(WITH_SCAFACOS)
   pkg_check_modules(SCAFACOS scafacos)
   if(SCAFACOS_FOUND)
     set(SCAFACOS 1)
+  elseif(NOT WITH_SCAFACOS_IS_DEFAULT_VALUE)
+    message(
+      FATAL_ERROR
+        "Optional dependency ScaFaCoS explicitly requested, but not found.")
   endif(SCAFACOS_FOUND)
 endif(WITH_SCAFACOS)
 
@@ -187,20 +247,51 @@ if(WITH_GSL)
   find_package(GSL)
   if(GSL_FOUND)
     set(GSL 1)
+  elseif(NOT WITH_GSL_IS_DEFAULT_VALUE)
+    message(
+      FATAL_ERROR "Optional dependency GSL explicitly requested, but not found."
+    )
   endif(GSL_FOUND)
 endif(WITH_GSL)
 
-if(WITH_STOKESIAN)
-  set(STOKESIAN_DYNAMICS 1)
-  find_package(BLAS)
-  if(BLAS_FOUND)
-    set(BLAS 1)
+find_package(BLAS)
+if(BLAS_FOUND)
+  set(BLAS 1)
+endif()
+find_package(LAPACK)
+if(LAPACK_FOUND)
+  set(LAPACK 1)
+endif()
+
+if(WITH_STOKESIAN_DYNAMICS)
+  if(BLAS AND LAPACK)
+    set(STOKESIAN_DYNAMICS 1)
   endif()
-  find_package(LAPACK)
-  if(LAPACK_FOUND)
-    set(LAPACK 1)
+  if(CUDA)
+    set(STOKESIAN_DYNAMICS_GPU 1)
+    if(HIP)
+      find_gpu_library(VARNAME CUDA_CUBLAS_LIBRARIES NAMES rocblas)
+      find_gpu_library(VARNAME CUDA_cusolver_LIBRARY NAMES rocsolver)
+    else()
+      if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
+        # when importing package cublas, CMake versions older than 3.12.2 will
+        # look for a library cublas_device that no longer exists in CUDA 10
+        cmake_minimum_required(VERSION 3.12.2)
+      endif()
+      find_gpu_library(VARNAME CUDA_CUBLAS_LIBRARIES NAMES cublas)
+      find_gpu_library(VARNAME CUDA_cusolver_LIBRARY NAMES cusolver)
+    endif()
+  endif(CUDA)
+  if(NOT (STOKESIAN_DYNAMICS
+          OR (STOKESIAN_DYNAMICS_GPU AND CUDA_CUBLAS_LIBRARIES
+              AND CUDA_cusolver_LIBRARY))
+     AND NOT WITH_STOKESIAN_DYNAMICS_IS_DEFAULT_VALUE)
+    message(
+      FATAL_ERROR
+        "Optional feature Stokesian Dynamics explicitly requested, but dependencies not found."
+    )
   endif()
-endif(WITH_STOKESIAN)
+endif(WITH_STOKESIAN_DYNAMICS)
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)
@@ -224,63 +315,47 @@ if(NOT TARGET MPI::MPI_CXX)
 
   # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
   foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
-     set_property(TARGET MPI::MPI_CXX
-            PROPERTY INTERFACE_COMPILE_OPTIONS ${_MPI_FLAG})
+    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS
+                                              ${_MPI_FLAG})
   endforeach()
 
-  set_property(TARGET MPI::MPI_CXX
-          PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
+  set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+                                            "${MPI_CXX_INCLUDE_PATH}")
 
   # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
   foreach(_MPI_FLAG ${MPI_CXX_LINK_FLAGS})
-  set_property(TARGET MPI::MPI_CXX
-          PROPERTY INTERFACE_LINK_LIBRARIES ${_MPI_FLAG})
+    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES
+                                              ${_MPI_FLAG})
   endforeach()
 
-  set_property(TARGET MPI::MPI_CXX
-          PROPERTY INTERFACE_LINK_LIBRARIES ${MPI_CXX_LIBRARIES})
+  set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES
+                                            ${MPI_CXX_LIBRARIES})
 endif()
 
-#######################################################################
+# ##############################################################################
 # Boost
-#######################################################################
+# ##############################################################################
 
-list(APPEND BOOST_COMPONENTS
-            mpi
-            serialization
-            filesystem
-            system)
+list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
 
 if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  set(BOOST_MINIMUM_VERSION "1.65.0")
-  if (CUDA_FOUND AND CUDA_VERSION VERSION_GREATER_EQUAL "9.0")
-    set(BOOST_MINIMUM_VERSION "1.66.0")
-  endif()
-else()
-  set(BOOST_MINIMUM_VERSION "1.58.0")
+set(BOOST_MINIMUM_VERSION "1.65.0")
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CUDA_FOUND
+   AND CUDA_VERSION VERSION_GREATER_EQUAL "9.0")
+  set(BOOST_MINIMUM_VERSION "1.66.0")
 endif()
 
-# old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures
+# old Boost.MPI versions contain a use-after-free bug that seems to only cause
+# crashes on 32-bit architectures
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   set(BOOST_MINIMUM_VERSION "1.67.0")
 endif()
 
 find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
-
-if(Boost_VERSION VERSION_GREATER_EQUAL 106400 AND Boost_VERSION VERSION_LESS 106500)
-  # Boost 1.64 has incompatible Serialization and MPI modules, see
-  # https://svn.boost.org/trac10/ticket/12723 . Some distributions, like Fedora,
-  # have backported the patch.
-  file(READ "${Boost_INCLUDE_DIR}/boost/mpi/detail/mpi_datatype_primitive.hpp"
-            boost_mpi_datatype_file)
-  if(boost_mpi_datatype_file MATCHES "boost::serialization::detail::get_data")
-    message(FATAL_ERROR "Boost 1.64 is unsupported")
-  endif()
-endif()
 
 #
 # Paths
@@ -292,62 +367,68 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 # Flags
 #
 
-# C++ standard
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-# CUDA compiler
-if(WITH_CUDA)
-  find_package(CUDACompiler REQUIRED)
-endif(WITH_CUDA)
-
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
-if(WARNINGS_ARE_ERRORS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-endif(WARNINGS_ARE_ERRORS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces")
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+add_library(coverage_interface INTERFACE)
+if(WITH_COVERAGE)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(
+      coverage_interface INTERFACE -g -fprofile-instr-generate
+                                   -fcoverage-mapping)
+  else()
+    target_compile_options(
+      coverage_interface INTERFACE -g --coverage -fprofile-arcs -ftest-coverage)
+    target_link_libraries(coverage_interface INTERFACE gcov)
+  endif()
 endif()
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0.0"))
-  # disable warnings from -Wextra
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-implicit-fallthrough")
+
+add_library(cxx_interface INTERFACE)
+target_compile_options(
+  cxx_interface
+  INTERFACE -Wall -Wextra $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+            # disable warnings from -Wextra
+            -Wno-sign-compare -Wno-unused-function -Wno-unused-variable
+            -Wno-unused-parameter -Wno-missing-braces
+            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered;-Wno-cast-function-type>
+            $<$<CXX_COMPILER_ID:Intel>:-wd592>)
+
+# disable more warnings from -Wextra
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES
+                                            "arm")
+  target_compile_options(cxx_interface INTERFACE -Wno-psabi)
 endif()
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # disable warnings from -Wextra
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-clobbered -Wno-cast-function-type")
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel"
+   AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
+                                                     VERSION_LESS "7.0.0"))
+  target_compile_options(cxx_interface INTERFACE -Wno-implicit-fallthrough)
 endif()
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  # disable warnings from -Wextra
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd592")
-endif()
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  # G++ and Intel don't know this flag
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID
+                                                STREQUAL "Intel")
+  target_compile_options(cxx_interface INTERFACE -Wno-unused-private-field)
 endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments")
+  target_compile_options(cxx_interface
+                         INTERFACE -Wno-gnu-zero-variadic-macro-arguments)
 endif()
-if(NOT
-   CMAKE_CXX_COMPILER_ID
-   STREQUAL
-   "GNU"
-   OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.5")
-  # older versions don't support -Wno-pedantic which we need in src/python
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
+                                               VERSION_GREATER "4.8.5")
+  # older GCC versions don't support -Wno-pedantic which we need in src/python
+  target_compile_options(cxx_interface INTERFACE -pedantic)
 endif()
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0")
-  # workaround for compiler crash related to decltype() and variadic template usage inside Boost
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX11_VARIADIC_TEMPLATES")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION
+                                              VERSION_LESS "16.0")
+  # workaround for compiler crash related to decltype() and variadic template
+  # usage inside Boost
+  target_compile_options(cxx_interface
+                         INTERFACE -DBOOST_NO_CXX11_VARIADIC_TEMPLATES)
 endif()
 
 # prevent 80-bit arithmetic on old Intel processors
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffloat-store")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4
+   AND CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
+  target_compile_options(cxx_interface INTERFACE -ffloat-store)
 endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
@@ -359,25 +440,33 @@ if(WITH_ASAN AND WITH_MSAN)
 endif()
 if(WITH_ASAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+  target_compile_options(cxx_interface INTERFACE -fsanitize=address
+                                                 -fno-omit-frame-pointer)
+  target_link_libraries(cxx_interface INTERFACE -fsanitize=address)
 endif()
 if(WITH_MSAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -fsanitize=memory -fno-omit-frame-pointer")
+  target_compile_options(cxx_interface INTERFACE -fsanitize=memory
+                                                 -fno-omit-frame-pointer)
+  target_link_libraries(cxx_interface INTERFACE -fsanitize=memory)
 endif()
 if(WITH_UBSAN)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+  target_compile_options(cxx_interface INTERFACE -fsanitize=undefined)
+  target_link_libraries(cxx_interface INTERFACE -fsanitize=undefined)
 endif()
+
+target_link_libraries(cxx_interface INTERFACE coverage_interface)
+
+# Give CMAKE_CXX_FLAGS higher precedence
+target_compile_options(cxx_interface INTERFACE ${CMAKE_CXX_FLAGS})
 
 #
 # Testing
-#######################################################################
+# ##############################################################################
 
 if(WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
-  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
 endif()
 
 if(WITH_TESTS)

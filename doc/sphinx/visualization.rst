@@ -84,7 +84,7 @@ Should be called after a separate thread containing ``update()`` has been starte
 | :meth:`espressomd.visualization.openGLLive.register_callback()`
 
 Registers the method ``callback()``, which is called every ``interval`` milliseconds. Useful for
-live plotting (see sample script samples/python/visualization.py).
+live plotting (see sample script :file:`/samples/visualization_ljliquid.py`).
 
 .. _Mayavi visualizer:
 
@@ -297,7 +297,7 @@ properties, etc.) or for demonstration purposes. The callbacks can be triggered
 by a timer or keyboard input::
 
     def foo():
-        print "foo"
+        print("foo")
 
     # Registers timed calls of foo()
     visualizer.register_callback(foo, interval=500)
@@ -308,7 +308,7 @@ by a timer or keyboard input::
         global temperature
         temperature += 0.1
         system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-        print "T =", system.thermostat.get_state()[0]['kT']
+        print("T =", system.thermostat.get_state()[0]['kT'])
 
     def decreaseTemp():
         global temperature
@@ -316,11 +316,11 @@ by a timer or keyboard input::
 
         if temperature > 0:
             system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-            print "T =", system.thermostat.get_state()[0]['kT']
+            print("T =", system.thermostat.get_state()[0]['kT'])
         else:
             temperature = 0
             system.thermostat.turn_off()
-            print "T = 0"
+            print("T = 0")
 
     # Registers input-based calls
     visualizer.keyboard_manager.register_button(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))

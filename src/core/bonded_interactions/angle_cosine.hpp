@@ -45,10 +45,9 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0);
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-angle_cosine_3body_forces(Utils::Vector3d const &r_mid,
-                          Utils::Vector3d const &r_left,
-                          Utils::Vector3d const &r_right,
-                          Bonded_ia_parameters const &iaparams) {
+angle_cosine_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+                   Utils::Vector3d const &r_right,
+                   Bonded_ia_parameters const &iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -61,20 +60,6 @@ angle_cosine_3body_forces(Utils::Vector3d const &r_mid,
   };
 
   return angle_generic_force(r_mid, r_left, r_right, forceFactor, false);
-}
-
-/** Compute the three-body angle interaction force.
- *  @param[in]  r_mid     Position of second/middle particle.
- *  @param[in]  r_left    Position of first/left particle.
- *  @param[in]  r_right   Position of third/right particle.
- *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @return the forces on the second, first and third particles.
- */
-inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-angle_cosine_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-                   Utils::Vector3d const &r_right,
-                   Bonded_ia_parameters const &iaparams) {
-  return angle_cosine_3body_forces(r_mid, r_left, r_right, iaparams);
 }
 
 /** Computes the three-body angle interaction energy.

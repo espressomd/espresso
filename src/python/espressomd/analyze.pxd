@@ -19,8 +19,12 @@
 
 # For C-extern Analysis
 
-from .utils cimport Vector3i, Vector3d, Vector9d, List
+cimport numpy as np
+import numpy as np
+from .utils cimport Vector3i, Vector3d, Vector9d, Span
+from .utils cimport create_nparray_from_double_span
 from libcpp.vector cimport vector  # import std::vector as vector
+from libcpp cimport bool as cbool
 
 cdef extern from "<array>" namespace "std" nogil:
     cdef cppclass array4 "std::array<double, 4>":
@@ -41,74 +45,101 @@ cdef extern from "partCfg_global.hpp":
 cdef extern from "particle_data.hpp":
     int max_seen_particle_type
 
+cdef extern from "Observable_stat.hpp":
+    cdef cppclass Observable_stat:
+        Span[double] kinetic
+        Span[double] coulomb
+        Span[double] dipolar
+        Span[double] virtual_sites
+        Span[double] external_fields
+        double accumulate(...)
+        double accumulate2 "accumulate"(double acc, size_t column)
+        double accumulate1 "accumulate"(double acc)
+        Span[double] bonded_contribution(int bond_id)
+        Span[double] non_bonded_intra_contribution(int type1, int type2)
+        Span[double] non_bonded_inter_contribution(int type1, int type2)
+        size_t chunk_size()
+
 cdef extern from "statistics.hpp":
-    int get_n_part_conf()
-    int get_n_configs()
-
-    ctypedef struct Observable_stat:
-        int init_status
-        List[double] data
-        int n_coulomb
-        int n_dipolar
-        int n_non_bonded
-        int n_virtual_sites
-        double * bonded
-        double * non_bonded
-        double * coulomb
-        double * dipolar
-        double * virtual_sites
-        double * external_fields
-
-    ctypedef struct Observable_stat_non_bonded:
-        pass
-
-    cdef vector[double] calc_structurefactor(PartCfg & , int * p_types, int n_types, int order)
+    cdef vector[double] calc_structurefactor(PartCfg & , const vector[int] & p_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
-    cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
-    cdef List[int] nbhood(PartCfg &, const Vector3d & pos, double r_catch, const Vector3i & planedims)
-    cdef double * obsstat_bonded(Observable_stat * stat, int j)
-    cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
-    cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)
-    cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
+    cdef double mindist(PartCfg & , const vector[int] & set1, const vector[int] & set2)
+    cdef vector[int] nbhood(PartCfg & , const Vector3d & pos, double r_catch, const Vector3i & planedims)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
-    cdef vector[double] centerofmass(PartCfg &, int part_type)
+    cdef vector[double] centerofmass(PartCfg & , int part_type)
 
-    void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
-                  double r_min, double r_max, int r_bins, vector[double] rdf)
+    Vector3d angularmomentum(PartCfg & , int p_type)
 
-    void calc_rdf_av(PartCfg &, vector[int] p1_types, vector[int] p2_types,
-                     double r_min, double r_max, int r_bins, vector[double] rdf,
-                     int n_conf)
-
-    Vector3d angularmomentum(PartCfg &, int p_type)
-
-    void momentofinertiamatrix(PartCfg &, int p_type, double * MofImatrix)
-
-    void analyze_append(PartCfg &)
+    void momentofinertiamatrix(PartCfg & , int p_type, double * MofImatrix)
 
     void calc_part_distribution(
-        PartCfg & , int * p1_types, int n_p1, int * p2_types, int n_p2,
+        PartCfg &, const vector[int] & p1_types, const vector[int] & p2_types,
         double r_min, double r_max, int r_bins, bint log_flag, double * low,
         double * dist)
 
 cdef extern from "statistics_chain.hpp":
-    array4 calc_re(PartCfg &, int, int, int)
-    array4 calc_rg(PartCfg &, int, int, int) except +
-    array2 calc_rh(PartCfg &, int, int, int)
+    array4 calc_re(int, int, int)
+    array4 calc_rg(int, int, int) except +
+    array2 calc_rh(int, int, int)
 
 cdef extern from "pressure.hpp":
-    cdef Observable_stat total_pressure
-    cdef Observable_stat_non_bonded total_pressure_non_bonded
-    cdef Observable_stat total_p_tensor
-    cdef Observable_stat_non_bonded total_p_tensor_non_bonded
-    cdef void update_pressure(int)
+    cdef void update_pressure()
+    cdef const Observable_stat & get_obs_pressure()
 
 cdef extern from "energy.hpp":
-    cdef Observable_stat total_energy
-    cdef Observable_stat_non_bonded total_energy_non_bonded
-    cdef void master_energy_calc()
-    cdef void init_energies(Observable_stat * stat)
+    cdef void update_energy()
+    cdef const Observable_stat & get_obs_energy()
     double calculate_current_potential_energy_of_system()
 
 cdef extern from "dpd.hpp":
     Vector9d dpd_stress()
+
+cdef inline get_obs_contribs(Span[double] contributions, int size,
+                             cbool calc_scalar_pressure):
+    """
+    Convert an Observable_stat range of contributions into a correctly
+    shaped numpy array.
+
+    Parameters
+    ----------
+    contributions : (N,) array_like of :obj:`float`
+        Flattened array of energy/pressure contributions from an observable.
+    size : :obj:`int`, \{1, 9\}
+        Dimensionality of the data.
+    calc_scalar_pressure : :obj:`bool`
+        Whether to calculate a scalar pressure (only relevant when
+        ``contributions`` is a pressure tensor).
+
+    """
+    cdef np.ndarray value
+    value = create_nparray_from_double_span(contributions)
+    if size == 9:
+        if calc_scalar_pressure:
+            return np.einsum('...ii', value.reshape((-1, 3, 3))) / 3
+        else:
+            return value.reshape((-1, 3, 3))
+    else:
+        return value
+
+cdef inline get_obs_contrib(Span[double] contribution, int size,
+                            cbool calc_scalar_pressure):
+    """
+    Convert an Observable_stat contribution into a correctly
+    shaped numpy array. If the size is 1, decay to a float.
+
+    Parameters
+    ----------
+    contributions : (N,) array_like of :obj:`float`
+        Flattened array of energy/pressure contributions from an observable.
+    size : :obj:`int`, \{1, 9\}
+        Dimensionality of the data.
+    calc_scalar_pressure : :obj:`bool`
+        Whether to calculate a scalar pressure (only relevant when
+        ``contributions`` is a pressure tensor).
+
+    """
+    cdef np.ndarray value
+    value = get_obs_contribs(contribution, size, calc_scalar_pressure)
+    if value.shape[0] == 1:
+        return value[0]
+    return value

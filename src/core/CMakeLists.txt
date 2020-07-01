@@ -1,5 +1,6 @@
 set(EspressoCore_SRC
     accumulators.cpp
+    bond_error.cpp
     cells.cpp
     collision.cpp
     comfixed_global.cpp
@@ -24,25 +25,27 @@ set(EspressoCore_SRC
     nsquare.cpp
     partCfg_global.cpp
     particle_data.cpp
-    particle_index.cpp
     polymer.cpp
-    polynom.cpp
     pressure.cpp
     rattle.cpp
     reaction_ensemble.cpp
     rotate_system.cpp
     rotation.cpp
+    Observable_stat.cpp
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp
-    specfunc.cpp
     statistics_chain.cpp
     statistics.cpp
     SystemInterface.cpp
     thermostat.cpp
     tuning.cpp
     virtual_sites.cpp
-    exclusions.cpp)
+    exclusions.cpp
+    CellStructure.cpp
+    PartCfg.cpp
+    AtomDecomposition.cpp
+    reduce_observable_stat.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
@@ -62,8 +65,7 @@ if(CUDA)
       grid_based_algorithms/fd-electrostatics_cuda.cu
       grid_based_algorithms/electrokinetics.cpp
       grid_based_algorithms/lbgpu.cpp
-      virtual_sites/lb_inertialess_tracers_cuda.cu
-      )
+      virtual_sites/lb_inertialess_tracers_cuda.cu)
 
   add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
 else(CUDA)
@@ -72,42 +74,23 @@ endif(CUDA)
 
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
-target_compile_options(
-  EspressoCore
-  PUBLIC
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CONFIG:Release>>:-g>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CONFIG:Release>>:-O0>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fprofile-instr-generate>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fcoverage-mapping>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:--coverage>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:-fprofile-arcs>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:-ftest-coverage>"
-)
-
 target_link_libraries(
   EspressoCore
-  PRIVATE EspressoConfig shapes Profiler
+  PRIVATE EspressoConfig EspressoShapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
-          "$<$<BOOL:${SCAFACOS}>:Scafacos>"
-  PUBLIC
-    utils
-    MPI::MPI_CXX
-    Random123
-    Boost::serialization
-    Boost::mpi
-    "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
-    "$<$<BOOL:${H5MD}>:Boost::filesystem>"
-    "$<$<BOOL:${H5MD}>:h5xx>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:gcov>")
+          $<$<BOOL:${SCAFACOS}>:Scafacos> cxx_interface
+  PUBLIC EspressoUtils MPI::MPI_CXX Random123 EspressoParticleObservables
+         Boost::serialization Boost::mpi "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
+         $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>)
 
 target_include_directories(
   EspressoCore
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-         "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>" SYSTEM
-  PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>" SYSTEM
+         "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>"
+  PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>"
   PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
 
-target_compile_definitions(EspressoCore PUBLIC "$<$<BOOL:${H5MD}>:H5XX_USE_MPI>")
+target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
 
 add_subdirectory(accumulators)
 add_subdirectory(actor)
@@ -128,7 +111,12 @@ if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
 
-if(WITH_STOKESIAN)
+if(STOKESIAN_DYNAMICS OR STOKESIAN_DYNAMICS_GPU)
   add_subdirectory(stokesian_dynamics)
-  target_link_libraries(EspressoCore PUBLIC sd_interface)
-endif(WITH_STOKESIAN)
+  if(STOKESIAN_DYNAMICS)
+    target_link_libraries(EspressoCore PRIVATE StokesianDynamics::sd_cpu)
+  endif()
+  if(STOKESIAN_DYNAMICS_GPU)
+    target_link_libraries(EspressoCore PRIVATE StokesianDynamics::sd_gpu)
+  endif()
+endif()

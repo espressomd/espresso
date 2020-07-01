@@ -220,15 +220,13 @@ void clear_energy_on_GPU() {
   cuda_safe_mem(cudaMemset(energy_device, 0, sizeof(CUDA_energy)));
 }
 
-void copy_energy_from_GPU() {
+CUDA_energy copy_energy_from_GPU() {
   if (!global_part_vars_host.communication_enabled)
-    return;
+    return {};
   cuda_safe_mem(cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy),
                            cudaMemcpyDeviceToHost));
-  copy_CUDA_energy_to_energy(energy_host);
+  return energy_host;
 }
-
-/** @name Generic copy functions from and to device */
 
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
   if (cudaSuccess != CU_err) {
@@ -254,5 +252,3 @@ void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
     }
   }
 }
-
-/*@}*/

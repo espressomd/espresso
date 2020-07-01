@@ -1,3 +1,8 @@
+# Invitation to the ESPResSo Summer School 2020
+
+The summer school will take place online on October 5-9 2020. Registration
+is now open on [CECAM](https://www.cecam.org/workshop-details/28).
+
 # ESPResSo
 
 [![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/python/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/commits/python)
@@ -47,45 +52,54 @@ simulations.  It is mainly developed at the Institute for
 Computational Physics of the University of Stuttgart, but has
 contributors from all over the world.
 
-
 ## Documentation
 
-You can find documentation on how to compile, use and develop ESPResSo
-on the homepage at [http://espressomd.org/html/doc/index.html](http://espressomd.org/html/doc/index.html).
+The [user guide](http://espressomd.org/html/doc/index.html) will
+walk you through the basic usage of ESPResSo. Advanced simulation
+methods are extensively documented, with examples and links to the
+relevant literature. Additional resources can be found on the
+homepage at http://espressomd.org/wordpress/documentation/, such
+as tutorials and doxygen documentation.
 
-ESPResSo is intended to be used by people that have proper knowledge
-of simulation techniques and know how to use them. We do not take
-responsibility if you use ESPResSo to create and publish bogus
-results. You have been warned!
+## Installation
 
-## PLEASE CITE US!
+Detailed installation instructions for Ubuntu and macOS can be found in the
+documentation, section [Installation](http://espressomd.org/html/doc/installation.html).
 
-If you use ESPResSo and obtain scientific results that you publish, we
-would ask you to acknowledge the usage of ESPResSo by citing the relevant papers:
-http://espressomd.org/wordpress/about/please-cite-us/
+For most users, we recommend downloading the latest release version of ESPResSo. You
+can find it in the [release page](https://github.com/espressomd/espresso/releases),
+together with past releases until 4.0. When choosing a release, we recommend that
+you get the latest bugfix release in that line. For example, for 4.1 you would like
+to use 4.1.2.
 
-A number of algorithms in ESPResSo are fairly advanced and unique to
-ESPResSo. The authors of these contributions kindly ask you to cite the
-relevant publications, as indicated in the ESPResSo User's Guide.
+### Join the community
+
+Please consider subscribing to our
+[mailing list](http://espressomd.org/wordpress/community-and-support/mailing-lists/)
+if you're actively using ESPResSo, as we occasionally need community
+feedback when making decisions on the future of specific features in
+upcoming releases. You'll also get notifications on bugfix releases.
+
+### Please cite us!
+
+If you use ESPResSo to publish scientific results, we would ask you to
+acknowledge this usage by mentioning the software with its version number and
+[citing the relevant papers](http://espressomd.org/wordpress/about/please-cite-us/).
+A number of algorithms in ESPResSo are fairly advanced and unique to ESPResSo.
+The authors of these contributions kindly ask you to cite the relevant
+publications, as indicated in the documentation. For detailed instructions, see
+[How to cite ESPResSo](http://espressomd.org/html/doc/introduction.html#how-to-cite-espresso).
 
 ## License
 
 Copyright (C) 2010-2019 The ESPResSo project
-Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-Max-Planck-Institute for Polymer Research, Theory Group
-  
-This file is part of ESPResSo.
-  
+
+Copyright (C) 2002-2010 Max-Planck-Institute for Polymer Research, Theory Group
+
 ESPResSo is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
 Free Software Foundation, either version 3 of the License, or (at your
 option) any later version.
- 
-ESPResSo is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
- 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+You should have received a [copy](COPYING) of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.

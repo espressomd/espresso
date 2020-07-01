@@ -177,23 +177,6 @@ used to cancel or add **only the short-range** electrostatic part
 of the P3M solver. A use case is described in :ref:`Particle polarizability with
 thermalized cold Drude oscillators`.
 
-.. _Subtracted Lennard-Jones bond:
-
-Subtracted Lennard-Jones bond
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-:class:`espressomd.interactions.SubtLJ` can be used to exclude certain particle
-pairs from the non-bonded :ref:`Lennard-Jones interaction`::
-
-    subtLJ = espressomd.interactions.SubtLJ()
-    system.bonded_inter.add(subtLJ)
-    system.part[0].add_bond((subt, 1))
-
-This bond subtracts the type-pair specific Lennard-Jones interaction between
-the involved particles. This interaction is useful when using other bond
-potentials which already include the short-ranged repulsion. This often the
-case for force fields or in general tabulated potentials.
-
 .. _Rigid bonds:
 
 Rigid bonds
@@ -447,6 +430,7 @@ The energy and force tables must be sampled from :math:`0` to :math:`2\pi`.
 For details of the interpolation, see :ref:`Tabulated interaction`.
 
 
+.. _Object-in-fluid interactions:
 
 Object-in-fluid interactions
 ----------------------------
@@ -474,19 +458,54 @@ This interaction comprises three different concepts. The local
 elasticity of biological membranes can be captured by three different
 elastic moduli. Stretching of the membrane, bending of the membrane and
 local preservation of the surface area. Parameters
-:math:`{L^0_{AB}},\ {k_s},\ {k_{slin}}` define the stretching,
+:math:`{L^0_{AB}},\ {k_s},\ {k_{s,\mathrm{lin}}}` define the stretching,
 parameters :math:`\phi,\ k_b` define the bending, and
-:math:`A_1,\ A_2,\ k_{al}` define the preservation of local area. They
-can be used all together, or, by setting any of
-:math:`k_s, k_{slin}, k_b, k_{al}` to zero, the corresponding modulus
+:math:`A_1,\ A_2,\ k_{al}` define the preservation of local area. The
+stretching force is applied first, followed by the bending force and
+finally the local area force. They can be used all together, or, by setting
+any of :math:`k_s, k_{s,\mathrm{lin}}, k_b, k_{al}` to zero, the corresponding modulus
 can be turned off.
+
+OIF local forces are asymmetric. After creating the interaction
+
+::
+
+    local_inter = OifLocalForces(r0=1.0, ks=0.5, kslin=0.0, phi0=1.7, kb=0.6,
+                                 A01=0.2, A02=0.3, kal=1.1, kvisc=0.7)
+
+it is important how the bond is created. Particles need to be mentioned
+in the correct order. Command
+
+::
+
+    p1.add_bond((local_inter, p0.part_id, p2.part_id, p3.part_id))
+
+creates a bond related to the triangles 012 and 123. The particle 0
+corresponds to point A1, particle 1 to C, particle 2 to B and particle 3
+to A2. There are two rules that need to be fulfilled:
+
+-  there has to be an edge between particles 1 and 2
+
+-  orientation of the triangle 012, that is the normal vector defined as
+   a vector product :math:`01 \times 02` must point to the inside of
+   the immersed object.
+
+Then the stretching force is applied to particles 1 and 2, with the
+relaxed length being 1.0. The bending force is applied to preserve the
+angle between triangles 012 and 123 with relaxed angle 1.7 and finally,
+local area force is applied to both triangles 012 and 123 with relaxed
+area of triangle 012 being 0.2 and relaxed area of triangle 123 being
+0.3.
+
+
+.. _Stretching:
 
 Stretching
 ^^^^^^^^^^
 
 For each edge of the mesh, :math:`L_{AB}` is the current distance between point :math:`A` and
 point :math:`B`. :math:`L^0_{AB}` is the distance between these points in the relaxed state, that
-is if the current edge has the length exactly , then no forces are
+is if the current edge has this length exactly, then no forces are
 added. :math:`\Delta L_{AB}` is the deviation from the relaxed
 state, that is :math:`\Delta L_{AB} = L_{AB} - L_{AB}^0`. The
 stretching force between :math:`A` and :math:`B` is calculated using
@@ -503,14 +522,15 @@ is a nonlinear function that resembles neo-Hookean behavior
    \kappa(\lambda_{AB}) = \frac{\lambda_{AB}^{0.5} + \lambda_{AB}^{-2.5}}
    {\lambda_{AB} + \lambda_{AB}^{-3}}.
 
-Typically, one wants either nonlinear or linear behavior and therefore
-one of :math:`k_s, k_{s,\mathrm{lin}}` is zero. Nonetheless the interaction will work if
-both constants are non-zero.
+Typically, one wants either nonlinear or linear behavior and therefore one of
+:math:`k_s, k_{s,\mathrm{lin}}` is zero. Nonetheless the interaction will work
+if both constants are non-zero.
 
-|image2|
+.. figure:: figures/oif-stretching.png
+   :height: 4.00000cm
 
-.. |image2| image:: figures/stretching.png
 
+.. _Bending:
 
 Bending
 ^^^^^^^
@@ -531,64 +551,35 @@ Here, :math:`n_{A_iBC}` is the unit normal vector to the triangle :math:`A_iBC`.
 The force :math:`F_{bi}(A_iBC)` is assigned
 to the vertex not belonging to the common edge. The opposite force
 divided by two is assigned to the two vertices lying on the common edge.
-This procedure is done twice, for :math:`i=1` and for
-:math:`i=2`.
+This procedure is done twice, for :math:`i=1` and for :math:`i=2`.
 
-|image3|
+Notice that concave objects can be created with :math:`\theta^0 > \pi`.
 
-.. |image3| image:: figures/bending.png
+.. figure:: figures/oif-bending.png
+   :height: 5.00000cm
 
+
+.. _Local area conservation:
 
 Local area conservation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-This interaction conserves the area of the triangles in the
-triangulation. The area constraint assigns the following shrinking/expanding force to
-vertex :math:`A`
+This interaction conserves the area of the triangles in the triangulation.
+The area constraint assigns the following shrinking/expanding force to
+vertex :math:`A`:
 
 .. math:: F_{AT} = k_{al} \vec{AT}\frac{\Delta S_\triangle}{t_a^2 + t_b^2 + t_c^2}
 
-where :math:`\Delta S_\triangle` is the difference between current :math:`S_\triangle` and area :math:`S^0` of the triangle in relaxed state, :math:`T` is the centroid of the triangle, and :math:`t_a, t_b, t_c` are the lengths of segments :math:`AT, BT, CT`, respectively. Similarly the
-analogical forces are assigned to :math:`B` and :math:`C`.
+where :math:`\Delta S_\triangle` is the difference between current :math:`S_\triangle`
+and area :math:`S^0` of the triangle in relaxed state, :math:`T` is the centroid of
+the triangle, and :math:`t_a, t_b, t_c` are the lengths of segments :math:`AT, BT, CT`,
+respectively. Similarly the analogue forces are assigned to :math:`B` and :math:`C`.
+
+.. figure:: figures/oif-arealocal.png
+   :height: 5.00000cm
 
 
-OIF local force is asymmetric. After creating the interaction
-
-::
-
-    local_inter = OifLocalForces(r0=1.0, ks=0.5, kslin=0.0, phi0=1.7, kb=0.6, A01=0.2,
-                                 A02=0.3, kal=1.1, kvisc=0.7)
-
-it is important how the bond is created. Particles need to be mentioned
-in the correct order. Command
-
-::
-
-    p1.add_bond((local_inter, p0.part_id, p2.part_id, p3.part_id))
-
-creates a bond related to the triangles 012 and 123. The particle 0
-corresponds to point A1, particle 1 to C, particle 2 to B and particle 3
-to A2. There are two rules that need to be fulfilled:
-
--  there has to be an edge between particles 1 and 2
-
--  orientation of the triangle 012, that is the normal vector defined as
-   a vector product :math:`01 \times 02`, must point to the inside of
-   the immersed object.
-
-Then the stretching force is applied to particles 1 and 2, with the
-relaxed length being 1.0. The bending force is applied to preserve the
-angle between triangles 012 and 123 with relaxed angle 1.7 and finally,
-local area force is applied to both triangles 012 and 123 with relaxed
-area of triangle 012 being 0.2 and relaxed area of triangle 123 being
-0.3.
-
-Notice that also concave objects can be defined. If :math:`\theta_0` is
-larger than :math:`\pi`, then the inner angle is concave.
-
-|image4|
-
-.. |image4| image:: figures/arealocal.png
+.. _OIF global forces:
 
 OIF global forces
 ~~~~~~~~~~~~~~~~~
@@ -596,8 +587,7 @@ OIF global forces
 OIF global forces are available through the
 :class:`espressomd.interactions.OifGlobalForces` class.
 
-This type of interaction is available solely for closed 3D immersed
-objects.
+This type of interaction is available solely for closed 3D immersed objects.
 
 It comprises two concepts: preservation of global surface
 and of volume of the object. The parameters :math:`S^0, k_{ag}`
@@ -606,43 +596,7 @@ define preservation of the surface while parameters
 used together, or, by setting either :math:`k_{ag}` or :math:`k_{v}` to
 zero, the corresponding modulus can be turned off.
 
-Global area conservation
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The global area conservation force is defined as
-
-
-.. math:: F_{ag}(A) = k_{ag} \frac{S^{c} - S^{c}_0}{S^{c}_0} \cdot S_{ABC} \cdot \frac{t_{a}}{|t_a|^2 + |t_b|^2 + |t_c|^2},
-
-where :math:`S^c` denotes the current surface of the immersed object, :math:`S^c_0` the surface in
-the relaxed state, :math:`S_{ABC}` is the surface of the triangle, :math:`T` is the centroid of the triangle, and :math:`t_a, t_b, t_c` are the lengths of segments :math:`AT, BT, CT`, respectively.
-
-
-
-Volume conservation
-^^^^^^^^^^^^^^^^^^^
-
-The deviation of the objects volume :math:`V` is computed from the volume in the
-resting shape :math:`\Delta V = V - V^0`. For each
-triangle the following force is computed
-
-.. math:: F_v(ABC) = -k_v\frac{\Delta V}{V^0} S_{ABC} n_{ABC}
-
-where :math:`S_{ABC}` is the area of triangle :math:`ABC`, :math:`n_{ABC}` is the
-normal unit vector of the plane spanned by :math:`ABC`, and :math:`k_v`
-is the volume constraint coefficient. The volume of one immersed object
-is computed from
-
-.. math:: V = \sum_{ABC}S_{ABC}\ n_{ABC}\cdot h_{ABC},
-
-where the sum is computed over all triangles of the mesh and :math:`h_{ABC}` is the
-normal vector from the centroid of triangle :math:`ABC` to any plane which does not
-cross the cell. The force :math:`F_v(ABC)` is equally distributed to all three vertices
-:math:`A, B, C.`
-
-
-This interaction is symmetric. After the definition of the interaction
-by
+These interactions are symmetric. After the definition of the interaction by
 
 ::
 
@@ -656,6 +610,47 @@ defined
     p0.add_bond((global_force_interaction, p1.part_id, p2.part_id))
 
 Triangle 012 must have correct orientation, that is the normal vector
-defined by a vector product :math:`01\times02`. The orientation must
-point inside the immersed object.
+defined by a vector product :math:`01\times02` must point to the inside of
+the immersed object.
+
+
+.. _Global area conservation:
+
+Global area conservation
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The global area conservation force is defined as
+
+
+.. math:: F_{ag}(A) = k_{ag} \frac{S^{c} - S^{c}_0}{S^{c}_0} \cdot S_{ABC} \cdot \frac{t_{a}}{|t_a|^2 + |t_b|^2 + |t_c|^2},
+
+where :math:`S^c` denotes the current surface of the immersed object, :math:`S^c_0` the surface in
+the relaxed state, :math:`S_{ABC}` is the surface of the triangle, :math:`T` is the centroid of the triangle, and :math:`t_a, t_b, t_c` are the lengths of segments :math:`AT, BT, CT`, respectively.
+
+
+.. _Volume conservation:
+
+Volume conservation
+^^^^^^^^^^^^^^^^^^^
+
+The deviation of the objects volume :math:`V` is computed from the volume
+in the resting shape :math:`\Delta V = V - V^0`. For each triangle, the
+following force is computed:
+
+.. math:: F_v(ABC) = -k_v\frac{\Delta V}{V^0} S_{ABC} n_{ABC}
+
+where :math:`S_{ABC}` is the area of triangle :math:`ABC`, :math:`n_{ABC}` is
+the normal unit vector of the plane spanned by :math:`ABC`, and :math:`k_v`
+is the volume constraint coefficient. The volume of one immersed object
+is computed from
+
+.. math:: V = \sum_{ABC}S_{ABC}\ n_{ABC}\cdot h_{ABC},
+
+where the sum is computed over all triangles of the mesh and :math:`h_{ABC}` is the
+normal vector from the centroid of triangle :math:`ABC` to any plane which does not
+cross the cell. The force :math:`F_v(ABC)` is equally distributed to all three vertices
+:math:`A, B, C.`
+
+.. figure:: figures/oif-volcons.png
+   :height: 4.00000cm
 

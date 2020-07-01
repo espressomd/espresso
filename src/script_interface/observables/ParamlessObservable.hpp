@@ -30,9 +30,11 @@
 #ifdef DPD
 #include "core/observables/DPDStress.hpp"
 #endif
-#include "core/observables/LBFluidStress.hpp"
+#include "core/observables/EnergyObservable.hpp"
+#include "core/observables/LBFluidPressureTensor.hpp"
 #include "core/observables/Observable.hpp"
-#include "core/observables/StressTensor.hpp"
+#include "core/observables/PressureObservable.hpp"
+#include "core/observables/PressureTensor.hpp"
 
 #include <memory>
 
@@ -56,10 +58,14 @@ private:
   std::shared_ptr<CoreObs> m_observable;
 };
 
+// clang-format off
 #define NEW_PARAMLESS_OBSERVABLE(name)                                         \
-  using name = ParamlessObservableInterface<::Observables::name>;
-NEW_PARAMLESS_OBSERVABLE(StressTensor)
-NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
+  using name = ParamlessObservableInterface<::Observables::name>; // NOLINT(bugprone-macro-parentheses)
+// clang-format on
+NEW_PARAMLESS_OBSERVABLE(Energy)
+NEW_PARAMLESS_OBSERVABLE(Pressure)
+NEW_PARAMLESS_OBSERVABLE(PressureTensor)
+NEW_PARAMLESS_OBSERVABLE(LBFluidPressureTensor)
 #ifdef DPD
 NEW_PARAMLESS_OBSERVABLE(DPDStress)
 #endif

@@ -69,7 +69,7 @@ class WidomInsertionTest(ut.TestCase):
     system.cell_system.set_n_square()
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
-    volume = np.prod(system.box_l)  # cuboid box
+    volume = system.volume()
 
     Widom = reaction_ensemble.WidomInsertion(
         temperature=TEMPERATURE, seed=1)

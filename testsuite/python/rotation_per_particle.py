@@ -33,9 +33,9 @@ class Rotation(ut.TestCase):
            thermalized"""
         s = self.s
         s.thermostat.set_langevin(gamma=1, kT=1, seed=42)
-        for x in 0, 1:
-            for y in 0, 1:
-                for z in 0, 1:
+        for x in (0, 1):
+            for y in (0, 1):
+                for z in (0, 1):
                     s.part.clear()
                     s.part.add(id=0, pos=(0, 0, 0), rotation=(x, y, z),
                                quat=(1, 0, 0, 0), omega_body=(0, 0, 0),
@@ -61,7 +61,7 @@ class Rotation(ut.TestCase):
         s.part.clear()
         s.part.add(id=0, pos=(0.9, 0.9, 0.9), ext_torque=(1, 1, 1))
         s.thermostat.turn_off()
-        for dir in 0, 1, 2:
+        for dir in (0, 1, 2):
             # Reset orientation
             s.part[0].quat = [1, 0, 0, 0]
 
@@ -126,6 +126,20 @@ class Rotation(ut.TestCase):
         self.assertAlmostEqual(np.dot(v, v), np.dot(v_r, v_r), delta=1e-10)
         np.testing.assert_allclose(
             p.convert_vector_space_to_body(v_r), v, atol=1E-10)
+
+    def test_rotation_mpi_communication(self):
+        s = self.s
+        s.part.clear()
+        # place particle in cell with MPI rank 0
+        p = s.part.add(pos=0.01 * self.s.box_l, rotation=(1, 1, 1))
+        p.rotate((1, 0, 0), -np.pi / 2)
+        np.testing.assert_array_almost_equal(
+            np.copy(p.director), [0, 1, 0], decimal=10)
+        # place particle in cell with MPI rank N-1
+        p = s.part.add(pos=0.99 * self.s.box_l, rotation=(1, 1, 1))
+        p.rotate((1, 0, 0), -np.pi / 2)
+        np.testing.assert_array_almost_equal(
+            np.copy(p.director), [0, 1, 0], decimal=10)
 
 
 if __name__ == "__main__":

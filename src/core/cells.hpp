@@ -38,29 +38,10 @@
  *    special method like P3M (see \ref p3m.hpp).
  */
 
+#include "CellStructure.hpp"
+
 #include <utility>
 #include <vector>
-
-#include "Particle.hpp"
-#include "ParticleIterator.hpp"
-#include "ghosts.hpp"
-
-#include "Cell.hpp"
-#include "ParticleRange.hpp"
-
-/** Cell Structure */
-enum {
-  /** Flag indicating that there is no cell system yet. Only at the
-   *  VERY beginning of the code startup.
-   */
-  CELL_STRUCTURE_NONEYET = -1,
-  /** Flag indicating that the current cell structure will be used further on */
-  CELL_STRUCTURE_CURRENT = 0,
-  /** cell structure domain decomposition */
-  CELL_STRUCTURE_DOMDEC = 1,
-  /** cell structure n square */
-  CELL_STRUCTURE_NSQUARE = 2
-};
 
 /** \name Flags for exchange_and_sort_particles: whether to do a global
  *  exchange or assume that particles did not move much (faster, used
@@ -73,88 +54,6 @@ enum {
   CELL_NEIGHBOR_EXCHANGE = 0,
   /** Flag for exchange_and_sort_particles : Do global exchange. */
   CELL_GLOBAL_EXCHANGE = 1
-};
-
-/*@}*/
-
-namespace Cells {
-enum Resort : unsigned {
-  RESORT_NONE = 0u,
-  RESORT_LOCAL = 1u,
-  RESORT_GLOBAL = 2u
-};
-}
-
-/** \name Flags for cells_on_geometry_change */
-/*@{*/
-
-/** Flag for cells_on_geometry_change: the processor grid has changed. */
-#define CELL_FLAG_GRIDCHANGED 1
-/** Flag for cells_on_geometry_change: skip shrinking of cells. */
-#define CELL_FLAG_FAST 2
-
-/*@}*/
-
-/************************************************/
-/** \name Data Types */
-/************************************************/
-/*@{*/
-
-/** List of cell pointers. */
-struct CellPList {
-  ParticleRange particles() const {
-    return {CellParticleIterator(cell, cell + n, 0),
-            CellParticleIterator(cell + n, cell + n, 0)};
-  }
-
-  Cell **begin() { return cell; }
-  Cell **end() { return cell + n; }
-
-  Cell *operator[](int i) { return assert(i < n), cell[i]; }
-
-  Cell **cell = nullptr;
-  int n = 0;
-};
-
-/** Describes a cell structure / cell system. Contains information
- *  about the communication of cell contents (particles, ghosts, ...)
- *  between different nodes and the relation between particle
- *  positions and the cell system. All other properties of the cell
- *  system which are not common between different cell systems have to
- *  be stored in separate structures.
- */
-struct CellStructure {
-  std::vector<Cell *> m_local_cells = {};
-  std::vector<Cell *> m_ghost_cells = {};
-
-  /** type descriptor */
-  int type = CELL_STRUCTURE_NONEYET;
-
-  bool use_verlet_list = true;
-
-  /** Maximal pair range supported by current cell system. */
-  Utils::Vector3d max_range = {};
-
-  /** Minimum range that has to be supported. */
-  double min_range;
-
-  /** Return the global local_cells */
-  CellPList local_cells();
-  /** Return the global ghost_cells */
-  CellPList ghost_cells();
-
-  /** Communicator to exchange ghost particles. */
-  GhostCommunicator exchange_ghosts_comm;
-  /** Communicator to collect ghost forces. */
-  GhostCommunicator collect_ghost_force_comm;
-
-  /** Cell system dependent function to find the right cell for a
-   *  particle.
-   *  \param  p Particle.
-   *  \return pointer to cell where to put the particle, nullptr
-   *          if the particle does not belong on this node.
-   */
-  Cell *(*particle_to_cell)(const Particle &p) = nullptr;
 };
 
 /*@}*/
@@ -189,9 +88,6 @@ extern bool rebuild_verletlist;
  */
 void cells_re_init(int new_cs, double range);
 
-/** Reallocate the list of all cells (\ref cells::cells). */
-void realloc_cells(int size);
-
 /** Sort the particles into the cells and initialize the ghost particle
  *  structures.
  */
@@ -202,22 +98,17 @@ void cells_resort_particles(int global_flag);
  *  It calculates the maximal interaction range, and as said reinitializes
  *  the cells structure if something significant has changed.
  *
- *  If bit @ref CELL_FLAG_FAST is set, the routine should try to save time.
+ *  If the fast flag is set, the routine should try to save time.
  *  Currently this means that if the maximal range decreased, it does
  *  not reorganize the particles. This is used in the NpT algorithm to
  *  avoid frequent reorganization of particles.
  *
- *  If bit @ref CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
- *  has changed, i. e. the grid or periodicity. In this case a full
- *  reorganization is due.
- *
- *  @param flags a bitmask of @ref CELL_FLAG_GRIDCHANGED,
- *               and/or @ref CELL_FLAG_FAST, see above.
+ *  @param fast If true, do not try to optimize the cell size.
  */
-void cells_on_geometry_change(int flags);
+void cells_on_geometry_change(bool fast);
 
-/** Update ghost information. If @ref resort_particles is not
- *  @ref Cells::RESORT_NONE, the particles are also resorted.
+/** Update ghost information. If needed,
+ *  the particles are also resorted.
  */
 void cells_update_ghosts(unsigned data_parts);
 
@@ -230,16 +121,6 @@ int cells_get_n_particles();
  * Pairs are sorted so that first.id < second.id
  */
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
-
-/**
- * @brief Increase the local resort level at least to @p level.
- */
-void set_resort_particles(Cells::Resort level);
-
-/**
- * @brief Get the currently scheduled resort level.
- */
-unsigned const &get_resort_particles();
 
 /** Check if a particle resorting is required. */
 void check_resort_particles();

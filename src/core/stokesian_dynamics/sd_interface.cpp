@@ -19,22 +19,18 @@
 
 #include "config.hpp"
 
-#ifdef STOKESIAN_DYNAMICS
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
 
-#include <iostream>
-#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <boost/config.hpp>
 
-#include "cells.hpp"
+#include "ParticleRange.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrate.hpp"
-//#include "partCfg_global.hpp"
-#include "ParticleRange.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
@@ -45,12 +41,12 @@
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
 
-#if defined(BLAS) && defined(LAPACK)
-#include "sd_cpu.hpp"
+#ifdef STOKESIAN_DYNAMICS
+#include "stokesian_dynamics/sd_cpu.hpp"
 #endif
 
-#ifdef CUDA
-#include "sd_gpu.hpp"
+#ifdef STOKESIAN_DYNAMICS_GPU
+#include "stokesian_dynamics/sd_gpu.hpp"
 #endif
 
 #include "sd_interface.hpp"
@@ -68,17 +64,17 @@ std::size_t sd_seed = 0UL;
 
 int sd_flags = 0;
 
-/* Buffer that holds local particle data, and all particles on the master node
-   used for sending particle data to master node */
+/** Buffer that holds local particle data, and all particles on the master node
+ *  used for sending particle data to master node. */
 std::vector<SD_particle_data> parts_buffer{};
 
-/* Buffer that holds the (translational and angular) velocities of the local
-   particles on each node, used for returning results */
-static std::vector<double> v_sd{};
+/** Buffer that holds the (translational and angular) velocities of the local
+ *  particles on each node, used for returning results. */
+std::vector<double> v_sd{};
 
 } // namespace
 
-/* packs selected properties of all local particles into a buffer */
+/** Pack selected properties of all local particles into a buffer. */
 void sd_gather_local_particles(ParticleRange const &parts) {
   std::size_t n_part = parts.size();
 
@@ -101,11 +97,9 @@ void sd_gather_local_particles(ParticleRange const &parts) {
     parts_buffer[i].ext_force[1] = p.f.f[1];
     parts_buffer[i].ext_force[2] = p.f.f[2];
 
-#ifdef ROTATION
     parts_buffer[i].ext_torque[0] = p.f.torque[0];
     parts_buffer[i].ext_torque[1] = p.f.torque[1];
     parts_buffer[i].ext_torque[2] = p.f.torque[2];
-#endif
 
     // radius_dict is not initialized on slave nodes -> need to assign radius
     // later on master node
@@ -115,9 +109,8 @@ void sd_gather_local_particles(ParticleRange const &parts) {
   }
 }
 
-/* copies the new (translational and rotational) velocity to each particle */
+/** Update translational and rotational velocities of all particles. */
 void sd_update_locally(ParticleRange const &parts) {
-  std::size_t n_part = parts.size();
   std::size_t i = 0;
 
   // Even though on the master node, the v_sd vector is larger than
@@ -136,11 +129,9 @@ void sd_update_locally(ParticleRange const &parts) {
     p.m.v[1] = v_sd[6 * i + 1];
     p.m.v[2] = v_sd[6 * i + 2];
 
-#ifdef ROTATION
     p.m.omega[0] = v_sd[6 * i + 3];
     p.m.omega[1] = v_sd[6 * i + 4];
     p.m.omega[2] = v_sd[6 * i + 5];
-#endif
 
     i++;
   }
@@ -151,13 +142,17 @@ void set_sd_viscosity(double eta) { sd_viscosity = eta; }
 double get_sd_viscosity() { return sd_viscosity; }
 
 void set_sd_device(std::string const &dev) {
+  device = INVALID;
+#ifdef STOKESIAN_DYNAMICS
   if (dev == "cpu") {
     device = CPU;
-  } else if (dev == "gpu") {
-    device = GPU;
-  } else {
-    device = INVALID;
   }
+#endif
+#ifdef STOKESIAN_DYNAMICS_GPU
+  if (dev == "gpu") {
+    device = GPU;
+  }
+#endif
 }
 
 std::string get_sd_device() {
@@ -189,11 +184,11 @@ void set_sd_flags(int flg) { sd_flags = flg; }
 
 int get_sd_flags() { return sd_flags; }
 
-void propagate_vel_pos_sd() {
-  std::size_t n_part_local = local_cells.particles().size();
+void propagate_vel_pos_sd(const ParticleRange &particles) {
+  std::size_t n_part_local = particles.size();
 
   if (this_node == 0) {
-    if (thermo_switch & THERMO_SD) {
+    if (integ_switch & INTEG_METHOD_SD) {
       if (BOOST_UNLIKELY(sd_viscosity < 0.0)) {
         runtimeErrorMsg() << "sd_viscosity has an invalid value: " +
                                  std::to_string(sd_viscosity);
@@ -206,7 +201,7 @@ void propagate_vel_pos_sd() {
         return;
       }
 
-      sd_gather_local_particles(local_cells.particles());
+      sd_gather_local_particles(particles);
       Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
 
       std::size_t n_part = parts_buffer.size();
@@ -220,7 +215,7 @@ void propagate_vel_pos_sd() {
       id.resize(n_part);
       x_host.resize(6 * n_part);
       f_host.resize(6 * n_part);
-      a_host.resize(6 * n_part);
+      a_host.resize(n_part);
 
       std::size_t i = 0;
       for (auto const &p : parts_buffer) {
@@ -238,17 +233,9 @@ void propagate_vel_pos_sd() {
         f_host[6 * i + 1] = p.ext_force[1];
         f_host[6 * i + 2] = p.ext_force[2];
 
-#ifdef ROTATION
         f_host[6 * i + 3] = p.ext_torque[0];
         f_host[6 * i + 4] = p.ext_torque[1];
         f_host[6 * i + 5] = p.ext_torque[2];
-#else
-        // Is that really what we want?
-        // SD method will return nonzero omegas nonetheless ...
-        f_host[6 * i + 3] = 0;
-        f_host[6 * i + 4] = 0;
-        f_host[6 * i + 5] = 0;
-#endif
 
         double radius = radius_dict[p.type];
 
@@ -268,19 +255,15 @@ void propagate_vel_pos_sd() {
       std::size_t offset = std::round(sim_time / time_step);
       switch (device) {
 
-#if defined(BLAS) && defined(LAPACK)
+#ifdef STOKESIAN_DYNAMICS
       case CPU:
-        // v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
-        //              sd_kT / time_step, offset, sd_seed, sd_flags);
         v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
                       std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
         break;
 #endif
 
-#ifdef CUDA
+#ifdef STOKESIAN_DYNAMICS_GPU
       case GPU:
-        // v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
-        //              sd_kT / time_step, offset, sd_seed, sd_flags);
         v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
                       std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
         break;
@@ -289,32 +272,34 @@ void propagate_vel_pos_sd() {
       default:
         runtimeErrorMsg()
             << "Invalid device for Stokesian dynamics. Available devices:"
-#if defined(BLAS) && defined(LAPACK)
+#ifdef STOKESIAN_DYNAMICS
                " cpu"
 #endif
-#ifdef CUDA
+#ifdef STOKESIAN_DYNAMICS_GPU
                " gpu"
 #endif
             ;
         return;
       }
 
-      Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
-      sd_update_locally(local_cells.particles());
+      Utils::Mpi::scatter_buffer(
+          v_sd.data(), static_cast<int>(n_part_local * 6), comm_cart, 0);
+      sd_update_locally(particles);
     }
 
   } else { // if (this_node == 0)
 
     if (thermo_switch & THERMO_SD) {
-      sd_gather_local_particles(local_cells.particles());
+      sd_gather_local_particles(particles);
       Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
 
       v_sd.resize(n_part_local * 6);
 
       // now wait while master node is busy ...
 
-      Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
-      sd_update_locally(local_cells.particles());
+      Utils::Mpi::scatter_buffer(
+          v_sd.data(), static_cast<int>(n_part_local * 6), comm_cart, 0);
+      sd_update_locally(particles);
     }
 
   } // if (this_node == 0) {...} else

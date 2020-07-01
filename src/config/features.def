@@ -22,9 +22,14 @@ LANGEVIN_PER_PARTICLE
 BROWNIAN_PER_PARTICLE
 COLLISION_DETECTION
 NPT
-SWIMMER_REACTIONS
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY             implies ROTATION
+STOKESIAN_DYNAMICS              requires BLAS and LAPACK
+STOKESIAN_DYNAMICS              implies ROTATION
+# Needs cuBLAS, which is expected to be included with CUDA
+STOKESIAN_DYNAMICS_GPU          requires CUDA
+STOKESIAN_DYNAMICS_GPU          implies ROTATION
+STOKESIAN_DYNAMICS_GPU          requires EXPERIMENTAL_FEATURES
 
 /* Rotation */
 ROTATION
@@ -34,7 +39,6 @@ ROTATIONAL_INERTIA              implies ROTATION
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
 MMM1D_GPU                       requires CUDA and ELECTROSTATICS
-_P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
 
 /* Magnetostatics */
 DIPOLES                         implies ROTATION
@@ -50,7 +54,6 @@ VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies ROTATION
 
-VIRTUAL_SITES_INERTIALESS_TRACERS
 VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
 
 /* DPD features */
@@ -83,13 +86,9 @@ MORSE
 BUCKINGHAM
 SOFT_SPHERE
 HAT
-UMBRELLA                           requires EXPERIMENTAL_FEATURES
+UMBRELLA                        requires EXPERIMENTAL_FEATURES
 GAY_BERNE                       implies ROTATION
-GAY_BERNE
-OVERLAPPED
 THOLE                           requires ELECTROSTATICS
-
-/* Fluid-Structure Interactions (object in fluid) */
 
 /* Immersed-Boundary Bayreuth version */
 SCAFACOS_DIPOLES                requires SCAFACOS
@@ -98,15 +97,12 @@ SCAFACOS                        requires ELECTROSTATICS
 
 EXPERIMENTAL_FEATURES
 
-/* Strange features. Use only if you know what you are doing! */
-/* turn off certain nonbonded interactions within molecules */
-NO_INTRA_NB                     notest
-
 /* Debugging */
 ADDITIONAL_CHECKS
 
 # External switches
 # Switches that are set by configure or gcc, not to be set manually
+# All these switches must also be present in cmake/cmake_config.cmakein
 CUDA external
 FFTW external
 H5MD external
@@ -114,4 +110,5 @@ SCAFACOS external
 GSL external
 BLAS external
 LAPACK external
-STOKESIAN_DYNAMICS external, implies ROTATION, requires BLAS and LAPACK
+STOKESIAN_DYNAMICS external
+STOKESIAN_DYNAMICS_GPU external

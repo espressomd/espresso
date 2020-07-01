@@ -22,51 +22,19 @@
 #include "reaction_ensemble.hpp"
 #include "Particle.hpp"
 #include "energy.hpp"
-#include "global.hpp"
+#include "grid.hpp"
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
+#include "statistics.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/contains.hpp>
 #include <utils/index.hpp>
 
 #include <cstdio>
 #include <fstream>
 
 namespace ReactionEnsemble {
-/**
- *Calculates the average of an array (used for the histogram of the
- *Wang-Landau algorithm). It excludes values which are initialized to be
- *negative. Those values indicate that the Wang-Landau algorithm should not
- *sample those values. The values still occur in the list because we can only
- *store "rectangular" value ranges.
- */
-template <typename T>
-double average_list_of_allowed_entries(const std::vector<T> &vector) {
-  double result = 0.0;
-  int counter_allowed_entries = 0;
-  for (int i = 0; i < vector.size(); i++) {
-    if (vector[i] >= 0) { // checks for validity of index i (think of energy
-                          // collective variables, in a cubic memory layout
-                          // there will be indices which are not allowed by
-                          // the energy boundaries. These values will be
-                          // initialized with a negative fill value)
-      result += static_cast<double>(vector[i]);
-      counter_allowed_entries += 1;
-    }
-  }
-  return result / counter_allowed_entries;
-}
-
-/**
- * Checks whether a number is in a std::vector of numbers.
- */
-template <typename T> bool is_in_list(T value, const std::vector<T> &list) {
-  for (int i = 0; i < list.size(); i++) {
-    if (std::abs(list[i] - value) < std::numeric_limits<double>::epsilon())
-      return true;
-  }
-  return false;
-}
 
 /** Save minimum and maximum energies as a function of the other collective
  *  variables under min_boundaries_energies, max_boundaries_energies
@@ -195,7 +163,6 @@ void ReactionAlgorithm::check_reaction_ensemble() {
 #endif
 }
 
-// boring helper functions
 /**
  * Automatically sets the volume which is used by the reaction ensemble to the
  * volume of a cuboid box
@@ -210,19 +177,16 @@ void ReactionAlgorithm::set_cuboid_reaction_ensemble_volume() {
  * acceptance probability
  */
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
-  double value;
-  if (nu_i == 0) {
-    value = 1.0;
-  } else {
-    value = 1.0;
+  double value = 1.0;
+  if (nu_i) {
     if (nu_i > 0) {
       for (int i = 1; i <= nu_i; i++) {
-        value = value * 1.0 / (Ni0 + i);
+        value /= Ni0 + i;
       }
     } else {
-      auto abs_nu_i = static_cast<int>(-1.0 * nu_i);
+      auto const abs_nu_i = std::abs(nu_i);
       for (int i = 0; i < abs_nu_i; i++) {
-        value = value * (Ni0 - i);
+        value *= Ni0 - i;
       }
     }
   }
@@ -422,11 +386,10 @@ void WangLandauReactionEnsemble::on_end_reaction(int &accepted_state) {
  * randomly in the box. Matching particles simply change the types. If there
  * are more reactants than products, old reactant particles are deleted.
  */
-bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
+void ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
 
   SingleReaction &current_reaction = reactions[reaction_id];
   current_reaction.tried_moves += 1;
-  bool reaction_is_accepted = false;
   particle_inside_exclusion_radius_touched = false;
   int old_state_index = -1; // for Wang-Landau algorithm
   on_reaction_entry(old_state_index);
@@ -434,7 +397,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     // makes sure, no incomplete reaction is performed -> only need to consider
     // rollback of complete reactions
     on_reaction_rejection_directly_after_entry(old_state_index);
-    return reaction_is_accepted;
+    return;
   }
 
   // calculate potential energy
@@ -475,8 +438,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   int accepted_state = -1;  // for Wang-Landau algorithm
   on_attempted_reaction(new_state_index);
 
-  bool const only_make_configuration_changing_move = false;
-  double bf = calculate_acceptance_probability(
+  constexpr bool only_make_configuration_changing_move = false;
+  auto const bf = calculate_acceptance_probability(
       current_reaction, E_pot_old, E_pot_new, old_particle_numbers,
       old_state_index, new_state_index, only_make_configuration_changing_move);
 
@@ -509,7 +472,6 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
       delete_particle(to_be_deleted_hidden_ids[i]); // delete particle
     }
     current_reaction.accepted_moves += 1;
-    reaction_is_accepted = true;
   } else {
     // reject
     accepted_state = old_state_index;
@@ -523,10 +485,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     // 3) restore previously changed reactant particles
     restore_properties(changed_particles_properties,
                        number_of_saved_properties);
-    reaction_is_accepted = false;
   }
   on_end_reaction(accepted_state);
-  return reaction_is_accepted;
 }
 
 /**
@@ -575,8 +535,8 @@ void ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
  */
 void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
 
-  auto part = get_particle_data(p_id);
-  double d_min = distto(partCfg(), part.r.p, p_id);
+  auto const part = get_particle_data(p_id);
+  auto const d_min = distto(partCfg(), part.r.p, p_id);
   if (d_min < exclusion_radius)
     particle_inside_exclusion_radius_touched = true;
 
@@ -595,7 +555,7 @@ void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
  * avoid the id range becoming excessively huge.
  */
 int ReactionAlgorithm::delete_particle(int p_id) {
-  int old_max_seen_id = get_maximal_particle_id();
+  auto const old_max_seen_id = get_maximal_particle_id();
   if (p_id == old_max_seen_id) {
     // last particle, just delete
     remove_particle(p_id);
@@ -646,39 +606,6 @@ Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
     out_pos[1] = box_geo.length()[1] * m_uniform_real_distribution(m_generator);
     out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   }
-  return out_pos;
-}
-
-/**
- * Writes a random position inside the central box into the provided array.
- * Additionally it proposes points with a small radii more often than a uniform
- * random probability density would do it.
- */
-std::vector<double> ReactionAlgorithm::
-    get_random_position_in_box_enhanced_proposal_of_small_radii() {
-  double random_radius =
-      cyl_radius *
-      m_uniform_real_distribution(
-          m_generator); // for enhanced proposal of small radii, needs
-                        // correction within Metropolis hasting algorithm,
-                        // proposal density is
-                        // p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small
-                        // radii are proposed more often
-  double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
-  std::vector<double> out_pos(3);
-  out_pos[0] = random_radius * cos(phi);
-  out_pos[1] = random_radius * sin(phi);
-  while (std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) <=
-             std::pow(exclusion_radius, 2) or
-         std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) >
-             std::pow(cyl_radius, 2)) {
-    random_radius = cyl_radius * m_uniform_real_distribution(m_generator);
-    out_pos[0] = random_radius * cos(phi);
-    out_pos[1] = random_radius * sin(phi);
-  }
-  out_pos[0] += cyl_x;
-  out_pos[1] += cyl_y;
-  out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   return out_pos;
 }
 
@@ -758,7 +685,6 @@ int WangLandauReactionEnsemble::on_mc_use_WL_get_new_state() {
 bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     int type, int particle_number_of_type_to_be_changed, bool use_wang_landau) {
   m_tried_configurational_MC_moves += 1;
-  bool got_accepted = false;
   particle_inside_exclusion_radius_touched = false;
 
   int old_state_index = -1;
@@ -773,7 +699,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     if (use_wang_landau) {
       on_mc_rejection_directly_after_entry(old_state_index);
     }
-    return got_accepted;
+    return false;
   }
 
   const double E_pot_old = calculate_current_potential_energy_of_system();
@@ -782,12 +708,11 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
                                          particle_number_of_type_to_be_changed);
   std::vector<int> p_id_s_changed_particles;
 
-  // save old_position
+  // heuristic to find a particle that hasn't been touched already
   int random_index_in_type_map = i_random(number_of_particles_with_type(type));
   int p_id = get_random_p_id(type, random_index_in_type_map);
   for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
-    // determine a p_id you have not touched yet
-    while (is_in_list(p_id, p_id_s_changed_particles)) {
+    while (Utils::contains(p_id_s_changed_particles, p_id)) {
       random_index_in_type_map = i_random(number_of_particles_with_type(type));
       p_id = get_random_p_id(
           type, random_index_in_type_map); // check whether you already touched
@@ -807,19 +732,15 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     p_id = p_id_s_changed_particles[i];
     // change particle position
     auto const new_pos = get_random_position_in_box();
-    double vel[3];
     auto const &p = get_particle_data(p_id);
-    vel[0] =
-        std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
-    vel[1] =
-        std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
-    vel[2] =
-        std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
+    auto const prefactor = std::sqrt(temperature / p.p.mass);
+    double vel[3];
+    vel[0] = prefactor * m_normal_distribution(m_generator);
+    vel[1] = prefactor * m_normal_distribution(m_generator);
+    vel[2] = prefactor * m_normal_distribution(m_generator);
     set_particle_v(p_id, vel);
-    // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
-    // //enhanced proposal of small radii
     place_particle(p_id, new_pos.data());
-    double d_min = distto(partCfg(), new_pos, p_id);
+    auto const d_min = distto(partCfg(), new_pos, p_id);
     if (d_min < exclusion_radius)
       particle_inside_exclusion_radius_touched = true;
   }
@@ -843,12 +764,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
         temp_unimportant_arbitrary_reaction, E_pot_old, E_pot_new,
         dummy_old_particle_numbers, old_state_index, new_state_index, true);
   } else {
-    bf = std::min(1.0, bf * exp(-beta * (E_pot_new - E_pot_old))); // Metropolis
-                                                                   // Algorithm
-                                                                   // since
-                                                                   // proposal
-                                                                   // density is
-                                                                   // symmetric
+    // Metropolis algorithm since proposal density is symmetric
+    bf = std::min(1.0, bf * exp(-beta * (E_pot_new - E_pot_old)));
   }
 
   // // correct for enhanced proposal of small radii by using the
@@ -861,28 +778,25 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   // bf = std::min(1.0,
   //     bf*exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
 
-  // Metropolis-Hastings Algorithm for asymmetric proposal density
+  // Metropolis-Hastings algorithm for asymmetric proposal density
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
     m_accepted_configurational_MC_moves += 1;
-    got_accepted = true;
     if (use_wang_landau) {
       on_mc_accept(new_state_index);
     }
-  } else {
-    // reject
-    // modify wang_landau histogram and potential
-    if (use_wang_landau) {
-      on_mc_reject(old_state_index);
-    }
-    // create particles again at the positions they were
-    for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
-      place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
+    return true;
   }
-  return got_accepted;
+  // reject
+  // modify wang_landau histogram and potential
+  if (use_wang_landau) {
+    on_mc_reject(old_state_index);
+  }
+  // create particles again at the positions they were
+  for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
+    place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
+  return false;
 }
-
-///////////////////////////////////////////// Wang-Landau algorithm
 
 /**
  * Adds a new collective variable (CV) of the type degree of association to the
@@ -1087,9 +1001,10 @@ void WangLandauReactionEnsemble::invalidate_bins() {
     int EnergyCollectiveVariable_index = 0;
     if (collective_variables.size() > 1)
       EnergyCollectiveVariable_index =
-          collective_variables.size() - 1; // assume the energy collective
-                                           // variable to be the last added
-                                           // collective variable
+          static_cast<int>(collective_variables.size()) -
+          1; // assume the energy collective
+             // variable to be the last added
+             // collective variable
     double current_energy =
         unraveled_index[EnergyCollectiveVariable_index] *
             collective_variables[EnergyCollectiveVariable_index]->delta_CV +
@@ -1109,35 +1024,8 @@ void WangLandauReactionEnsemble::invalidate_bins() {
     }
   }
 
-  used_bins = wang_landau_potential.size() - empty_bins_in_memory;
-}
-
-/**
- * Finds the minimum non negative value in the provided double array and returns
- * this value.
- */
-double find_minimum_non_negative_value(double const *const list, int len) {
-  double minimum = list[0];
-  for (int i = 0; i < len; i++) {
-    if (minimum < 0)
-      minimum = list[i]; // think of negative histogram values that indicate not
-                         // allowed energies in the case of an energy observable
-    if (list[i] < minimum && list[i] >= 0)
-      minimum = list[i];
-  }
-  return minimum;
-}
-
-/**
- * Finds the maximum in a double array and returns it.
- */
-double find_maximum(double const *const list, int len) {
-  double maximum = list[0];
-  for (int i = 0; i < len; i++) {
-    if (list[i] > maximum)
-      maximum = list[i];
-  }
-  return maximum;
+  used_bins =
+      static_cast<int>(wang_landau_potential.size()) - empty_bins_in_memory;
 }
 
 /**
@@ -1146,7 +1034,7 @@ double find_maximum(double const *const list, int len) {
 int WangLandauReactionEnsemble::initialize_wang_landau() {
 
   nr_subindices_of_collective_variable.resize(collective_variables.size(), 0);
-  int new_CV_i = collective_variables.size() - 1;
+  auto const new_CV_i = collective_variables.size() - 1;
   nr_subindices_of_collective_variable[new_CV_i] =
       int((collective_variables[new_CV_i]->CV_maximum -
            collective_variables[new_CV_i]->CV_minimum) /
@@ -1186,14 +1074,14 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
       only_make_configuration_changing_move) {
     bf = 1.0;
   } else {
-    double factorial_expr =
+    auto const factorial_expr =
         calculate_factorial_expression(current_reaction, old_particle_numbers);
     bf = std::pow(volume, current_reaction.nu_bar) * current_reaction.gamma *
          factorial_expr;
   }
 
   if (!do_energy_reweighting) {
-    bf = bf * exp(-beta * (E_pot_new - E_pot_old));
+    bf *= exp(-beta * (E_pot_new - E_pot_old));
   } else {
     // pass
   }
@@ -1211,25 +1099,20 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
       bf = std::min(1.0, bf * exp(wang_landau_potential[old_state_index] -
                                   wang_landau_potential[new_state_index]));
     } else {
-      if (histogram[new_state_index] >= 0 && histogram[old_state_index] < 0)
-        bf = 10; // this makes the reaction get accepted, since we found a state
-                 // in gamma
-      else if (histogram[new_state_index] < 0 && histogram[old_state_index] < 0)
-        bf = 10; // accept, in order to be able to sample new configs, which
-                 // might lie in gamma
-      else if (histogram[new_state_index] < 0 &&
-               histogram[old_state_index] >= 0)
-        bf = -10; // this makes the reaction get rejected, since the new state
+      if (histogram[old_state_index] < 0)
+        bf = 10; // accept the reaction if we found a state in gamma
+                 // (histogram[new_state_index] >= 0) or to sample new configs
+                 // which might lie in gamma(histogram[new_state_index] < 0)
+      else if (histogram[new_state_index] < 0)
+        bf = -10; // reject the reaction, since the new state
                   // is not in gamma while the old sate was in gamma
     }
   } else if (old_state_index < 0 && new_state_index >= 0) {
-    bf = 10; // this makes the reaction get accepted, since we found a state in
-             // gamma
-  } else if (old_state_index < 0 && new_state_index < 0) {
-    bf = 10; // accept, in order to be able to sample new configs, which might
-             // lie in gamma
+    bf = 10; // accept the reaction if we found a new state in gamma
+             // (new_state_index >= 0) or to sample new configs which
+             // might lie in gamma (new_state_index < 0)
   } else if (old_state_index >= 0 && new_state_index < 0) {
-    bf = -10; // this makes the reaction get rejected, since the new state is
+    bf = -10; // reject the reaction, since the new state is
               // not in gamma while the old sate was in gamma
   }
   return bf;
@@ -1248,13 +1131,9 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
  */
 int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
   m_WL_tries += reaction_steps;
-  bool got_accepted = false;
   for (int step = 0; step < reaction_steps; step++) {
     int reaction_id = i_random(reactions.size());
-    got_accepted = generic_oneway_reaction(reaction_id);
-    if (got_accepted) {
-      m_WL_accepted_moves += 1;
-    }
+    generic_oneway_reaction(reaction_id);
     if (can_refine_wang_landau_one_over_t() && m_WL_tries % 10000 == 0) {
       // check for convergence
       if (achieved_desired_number_of_refinements_one_over_t()) {
@@ -1270,12 +1149,11 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
     // for numerical stability here we also subtract the minimum positive value
     // of the wang_landau_potential from the wang_landau potential, allowed
     // since only the difference in the wang_landau potential is of interest.
-    double minimum_wang_landau_potential = find_minimum_non_negative_value(
-        wang_landau_potential.data(), wang_landau_potential.size());
+    double minimum_wang_landau_potential =
+        find_minimum_non_negative_value(wang_landau_potential);
     for (double &i : wang_landau_potential) {
       if (i >= 0) // check for whether we are in the
-                  // valid range of the collective
-                  // variable
+                  // valid range of the collective variable
         i -= minimum_wang_landau_potential;
     }
     // write out preliminary Wang-Landau potential results
@@ -1283,8 +1161,6 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
   }
   return 0;
 }
-
-// boring helper functions
 
 /** Increase the Wang-Landau potential and histogram at the current nbar */
 void WangLandauReactionEnsemble::update_wang_landau_potential_and_histogram(
@@ -1488,7 +1364,7 @@ int WangLandauReactionEnsemble::
                        flattened_index_with_EnergyCollectiveVariable);
   // use unraveled index
   const int nr_collective_variables =
-      collective_variables.size() -
+      static_cast<int>(collective_variables.size()) -
       1; // forget the last collective variable (the energy collective variable)
   std::vector<double> current_state(nr_collective_variables);
   for (int i = 0; i < nr_collective_variables; i++) {
@@ -1522,29 +1398,6 @@ int WangLandauReactionEnsemble::
       collective_variables_maximum_values, delta_collective_variables_values,
       nr_collective_variables);
   return index;
-}
-
-/** Remove bins from the range of to be sampled values if they have not been
- *  sampled.
- *  Use with caution otherwise you produce unphysical results, do only use
- *  when you know what you want to do. This can make Wang-Landau converge on a
- *  reduced set gamma. Use this function e.g. in do_reaction_wang_landau(). For
- *  the diprotonic acid compare with @cite troester05a.
- */
-void WangLandauReactionEnsemble::remove_bins_that_have_not_been_sampled() {
-  int removed_bins = 0;
-  for (int k = 0; k < wang_landau_potential.size(); k++) {
-    if (wang_landau_potential[k] == 0) {
-      removed_bins += 1;
-      // criterion is derived from the canonical partition function and the
-      // ration of two summands for the same particle number
-      histogram[k] = int_fill_value;
-      wang_landau_potential[k] = double_fill_value;
-    }
-  }
-  printf("Removed %d bins from the Wang-Landau spectrum\n", removed_bins);
-  // update used bins
-  used_bins -= removed_bins;
 }
 
 /**
@@ -1711,13 +1564,12 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
     std::map<int, int> &dummy_old_particle_numbers, int dummy_old_state_index,
     int dummy_new_state_index,
     bool dummy_only_make_configuration_changing_move) {
-  double ln_bf;
-  double pKa;
-  const double beta = 1.0 / temperature;
-  pKa = -current_reaction.nu_bar * log10(current_reaction.gamma);
-  ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar * 1.0 / beta *
-                                        log(10) * (m_constant_pH - pKa);
-  double bf = exp(-beta * ln_bf);
+  auto const beta = 1.0 / temperature;
+  auto const pKa = -current_reaction.nu_bar * log10(current_reaction.gamma);
+  auto const ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar / beta *
+                                                   log(10) *
+                                                   (m_constant_pH - pKa);
+  auto const bf = exp(-beta * ln_bf);
   return bf;
 }
 
@@ -1766,8 +1618,6 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   return result;
 }
 
-/////////////////////////////////////////////////////////////////free functions
-
 /**
  * Calculates the whole product of factorial expressions which occur in the
  * reaction ensemble acceptance probability.
@@ -1782,21 +1632,19 @@ calculate_factorial_expression(SingleReaction &current_reaction,
   for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
     int nu_i = -1 * current_reaction.reactant_coefficients[i];
     int N_i0 = old_particle_numbers[current_reaction.reactant_types[i]];
-    factorial_expr =
-        factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see @cite smith94c)
-                                          // since we only perform one reaction
-                                          // at one call of the function
+    factorial_expr *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
+        N_i0, nu_i); // zeta = 1 (see @cite smith94c)
+                     // since we only perform one reaction
+                     // at one call of the function
   }
   // factorial contribution of products
   for (int i = 0; i < current_reaction.product_types.size(); i++) {
     int nu_i = current_reaction.product_coefficients[i];
     int N_i0 = old_particle_numbers[current_reaction.product_types[i]];
-    factorial_expr =
-        factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see @cite smith94c)
-                                          // since we only perform one reaction
-                                          // at one call of the function
+    factorial_expr *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
+        N_i0, nu_i); // zeta = 1 (see @cite smith94c)
+                     // since we only perform one reaction
+                     // at one call of the function
   }
   return factorial_expr;
 }

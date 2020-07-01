@@ -20,6 +20,7 @@
 include "myconfig.pxi"
 from . cimport analyze
 from libcpp.vector cimport vector  # import std::vector as vector
+from libcpp cimport bool as cbool
 from .interactions cimport BONDED_IA_NONE
 from .interactions cimport bonded_ia_params
 import numpy as np
@@ -29,12 +30,133 @@ from .globals import Globals
 from collections import OrderedDict
 from .system import System
 from .utils import array_locked, is_valid_type
-from .utils cimport Vector3i, Vector3d, Vector9d, List
+from .utils cimport Vector3i, Vector3d, Vector9d
 from .utils cimport handle_errors, check_type_or_throw_except
-from .utils cimport create_nparray_from_double_array, \
-    create_nparray_from_int_list, \
-    create_int_list_from_python_object
+from .utils cimport create_nparray_from_double_array
 from .particle_data cimport get_n_part
+
+
+cdef _Observable_stat_to_dict(Observable_stat obs, cbool calc_sp):
+    """Transform an Observable_stat struct to a python dict.
+
+    Parameters
+    ----------
+    obs :
+        Core observable.
+    calc_sp : :obj:`bool`
+        Whether to calculate a scalar pressure (only relevant when
+        ``obs`` is a pressure tensor observable).
+
+    Returns
+    -------
+    :obj:`dict`
+        A dictionary with the following keys:
+
+        * ``"total"``: total contribution
+        * ``"kinetic"``: kinetic contribution
+        * ``"bonded"``: total bonded contribution
+        * ``"bonded", <bond_type>``: bonded contribution which arises from the given bond_type
+        * ``"nonbonded"``: total nonbonded contribution
+        * ``"nonbonded", <type_i>, <type_j>``: nonbonded contribution which arises from the interactions between type_i and type_j
+        * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded contribution between short ranged forces between type i and j and with the same mol_id
+        * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded contribution between short ranged forces between type i and j and different mol_ids
+        * ``"coulomb"``: Coulomb contribution, how it is calculated depends on the method
+        * ``"coulomb", <i>``: Coulomb contribution from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+        * ``"dipolar"``: dipolar contribution, how it is calculated depends on the method
+        * ``"dipolar", <i>``: dipolar contribution from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
+        * ``"virtual_sites"``: virtual sites contribution
+        * ``"virtual_sites", <i>``: contribution from virtual site i
+
+    """
+
+    size = obs.chunk_size()
+
+    def set_initial():
+        if size == 9 and not calc_sp:
+            return np.zeros((3, 3), dtype=float)
+        else:
+            return 0.0
+
+    cdef int i
+    cdef int j
+
+    # Dict to store the results
+    p = OrderedDict()
+
+    # Total contribution
+    if size == 1:
+        p["total"] = obs.accumulate()
+    else:
+        total = np.zeros((9,), dtype=float)
+        for i in range(9):
+            total[i] = obs.accumulate(0.0, i)
+        total = total.reshape((3, 3))
+        if calc_sp:
+            p["total"] = np.einsum('ii', total) / 3
+        else:
+            p["total"] = total
+
+    # Kinetic
+    p["kinetic"] = get_obs_contrib(obs.kinetic, size, calc_sp)
+
+    # External
+    p["external_fields"] = get_obs_contrib(obs.external_fields, size, calc_sp)
+
+    # Bonded
+    total_bonded = set_initial()
+    for i in range(bonded_ia_params.size()):
+        if bonded_ia_params[i].type != BONDED_IA_NONE:
+            val = get_obs_contrib(obs.bonded_contribution(i), size, calc_sp)
+            p["bonded", i] = val
+            total_bonded += val
+    p["bonded"] = total_bonded
+
+    # Non-Bonded interactions, total as well as intra and inter molecular
+    total_intra = set_initial()
+    total_inter = set_initial()
+    for i in range(analyze.max_seen_particle_type):
+        for j in range(i, analyze.max_seen_particle_type):
+            intra = get_obs_contrib(
+                obs.non_bonded_intra_contribution(
+                    i, j), size, calc_sp)
+            total_intra += intra
+            p["non_bonded_intra", i, j] = intra
+            inter = get_obs_contrib(
+                obs.non_bonded_inter_contribution(
+                    i, j), size, calc_sp)
+            total_inter += inter
+            p["non_bonded_inter", i, j] = inter
+            p["non_bonded", i, j] = intra + inter
+
+    p["non_bonded_intra"] = total_intra
+    p["non_bonded_inter"] = total_inter
+    p["non_bonded"] = total_intra + total_inter
+
+    # Electrostatics
+    IF ELECTROSTATICS == 1:
+        cdef np.ndarray coulomb
+        coulomb = get_obs_contribs(obs.coulomb, size, calc_sp)
+        for i in range(coulomb.shape[0]):
+            p["coulomb", i] = coulomb[i]
+        p["coulomb"] = np.sum(coulomb, axis=0)
+
+    # Dipoles
+    IF DIPOLES == 1:
+        cdef np.ndarray dipolar
+        dipolar = get_obs_contribs(obs.dipolar, size, calc_sp)
+        for i in range(dipolar.shape[0]):
+            p["dipolar", i] = dipolar[i]
+        p["dipolar"] = np.sum(dipolar, axis=0)
+
+    # virtual sites
+    IF VIRTUAL_SITES == 1:
+        cdef np.ndarray virtual_sites
+        virtual_sites = get_obs_contribs(obs.virtual_sites, size, calc_sp)
+        for i in range(virtual_sites.shape[0]):
+            p["virtual_sites", i] = virtual_sites[i]
+        p["virtual_sites"] = np.sum(virtual_sites, axis=0)
+
+    return p
 
 
 class Analysis:
@@ -43,19 +165,6 @@ class Analysis:
         if not isinstance(system, System):
             raise TypeError("An instance of System is required as argument")
         self._system = system
-
-    #
-    # Append configs
-    #
-
-    def append(self):
-        """Append configuration for averaged analysis."""
-        assert get_n_part(), "No particles to append!"
-        if get_n_configs() > 0:
-            assert analyze.get_n_part_conf() == get_n_part(), \
-                "All configurations stored must have the same length"
-
-        analyze.analyze_append(analyze.partCfg())
 
     def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particle types.
@@ -69,11 +178,8 @@ class Analysis:
 
         """
 
-        cdef List[int] set1
-        cdef List[int] set2
-
         if p1 == 'default' and p2 == 'default':
-            pass
+            return analyze.mindist(analyze.partCfg(), [], [])
         elif p1 == 'default' or p2 == 'default':
             raise ValueError("Both p1 and p2 have to be specified")
         else:
@@ -87,9 +193,7 @@ class Analysis:
                     raise TypeError(
                         "Particle types in p2 have to be of type int, got: " + repr(p2[i]))
 
-            set1 = create_int_list_from_python_object(p1)
-            set2 = create_int_list_from_python_object(p2)
-        return analyze.mindist(analyze.partCfg(), set1, set2)
+            return analyze.mindist(analyze.partCfg(), p1, p2)
 
     #
     # Analyze Linear Momentum
@@ -170,7 +274,6 @@ class Analysis:
         """
 
         cdef Vector3i planedims
-        cdef List[int] ids
         cdef Vector3d c_pos
 
         check_type_or_throw_except(
@@ -195,11 +298,9 @@ class Analysis:
         for i in range(3):
             c_pos[i] = pos[i]
 
-        ids = analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
+        return analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
 
-        return create_nparray_from_int_list(ids)
-
-    def pressure(self, v_comp=False):
+    def pressure(self):
         """Calculate the instantaneous pressure (in parallel). This is only
         sensible in an isotropic system which is homogeneous (on average)! Do
         not use this in an anisotropic or inhomogeneous system. In order to
@@ -218,105 +319,27 @@ class Analysis:
             * ``"nonbonded", <type_i>, <type_j>``: nonbonded pressure which arises from the interactions between type_i and type_j
             * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and with the same mol_id
             * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb stress tensor.
-              For how the stress tensor is calculated, see below. The averaged value in an isotropic NVT simulation is equivalent to the average of
+            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb pressure tensor.
+              For how the pressure tensor is calculated, see :ref:`Pressure Tensor`. The averaged value in an isotropic NVT simulation is equivalent to the average of
               :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
-            * ``"dipolar"``: TODO
-            * ``"virtual_sites"``: Stress contribution due to virtual sites
+            * ``"coulomb", <i>``: Coulomb pressure from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"dipolar"``: not implemented
+            * ``"virtual_sites"``: Pressure contribution from virtual sites
 
         """
-        v_comp = int(v_comp)
 
-        check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
+        # Update in ESPResSo core
+        analyze.update_pressure()
 
-        # Dict to store the results
-        p = OrderedDict()
+        return _Observable_stat_to_dict(analyze.get_obs_pressure(), True)
 
-        # Update in ESPResSo core if necessary
-        if analyze.total_pressure.init_status != 1 + v_comp:
-            analyze.update_pressure(v_comp)
-
-        # Individual components of the pressure
-
-        # Total pressure
-        cdef int i
-        total = 0
-        for i in range(analyze.total_pressure.data.n):
-            total += analyze.total_pressure.data.e[i]
-
-        p["total"] = total
-
-        # kinetic
-        p["kinetic"] = analyze.total_pressure.data.e[0]
-
-        # Bonded
-        cdef double total_bonded
-        total_bonded = 0
-        for i in range(bonded_ia_params.size()):
-            if bonded_ia_params[i].type != BONDED_IA_NONE:
-                p["bonded", i] = analyze.obsstat_bonded( & analyze.total_pressure, i)[0]
-                total_bonded += analyze.obsstat_bonded( & analyze.total_pressure, i)[0]
-        p["bonded"] = total_bonded
-
-        # Non-Bonded interactions, total as well as intra and inter molecular
-        cdef int j
-        cdef double total_intra
-        cdef double total_inter
-        cdef double total_non_bonded
-        total_inter = 0
-        total_intra = 0
-        total_non_bonded = 0
-
-        for i in range(analyze.max_seen_particle_type):
-            for j in range(i, analyze.max_seen_particle_type):
-                #      if checkIfParticlesInteract(i, j):
-                p["non_bonded", i, j] = analyze.obsstat_nonbonded( & analyze.total_pressure, i, j)[0]
-                total_non_bonded += analyze.obsstat_nonbonded( & analyze.total_pressure, i, j)[0]
-                total_intra += analyze.obsstat_nonbonded_intra( & analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_intra", i, j] = analyze.obsstat_nonbonded_intra( & analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_inter", i, j] = analyze.obsstat_nonbonded_inter( & analyze.total_pressure_non_bonded, i, j)[0]
-                total_inter += analyze.obsstat_nonbonded_inter( & analyze.total_pressure_non_bonded, i, j)[0]
-        p["non_bonded_intra"] = total_intra
-        p["non_bonded_inter"] = total_inter
-        p["non_bonded"] = total_non_bonded
-
-        # Electrostatics
-        IF ELECTROSTATICS == 1:
-            cdef double total_coulomb
-            total_coulomb = 0
-            for i in range(analyze.total_pressure.n_coulomb):
-                total_coulomb += analyze.total_pressure.coulomb[i]
-                p["coulomb", i] = analyze.total_pressure.coulomb[i]
-            p["coulomb"] = total_coulomb
-
-        # Dipoles
-        IF DIPOLES == 1:
-            cdef double total_dipolar
-            total_dipolar = 0
-            for i in range(analyze.total_pressure.n_dipolar):
-                total_dipolar += analyze.total_pressure.dipolar[i]
-                p["dipolar", i] = analyze.total_pressure.coulomb[i]
-            p["dipolar"] = total_dipolar
-
-        # virtual sites
-        IF VIRTUAL_SITES == 1:
-            p_vs = 0.
-            for i in range(analyze.total_pressure.n_virtual_sites):
-                p_vs += analyze.total_pressure.virtual_sites[i]
-                p["virtual_sites", i] = analyze.total_pressure.virtual_sites[
-                    0]
-            if analyze.total_pressure.n_virtual_sites:
-                p["virtual_sites"] = p_vs
-
-        return p
-
-    def stress_tensor(self, v_comp=False):
-        """Calculate the instantaneous stress tensor (in parallel). This is
+    def pressure_tensor(self):
+        """Calculate the instantaneous pressure_tensor (in parallel). This is
         sensible in an anisotropic system. Still it assumes that the system is
-        homogeneous since the volume averaged stress tensor is used. Do not use
-        this stress tensor in an (on average) inhomogeneous system. If the
-        system is (on average inhomogeneous) then use a local stress tensor.
-        In order to obtain the stress tensor, the ensemble average needs to be
+        homogeneous since the volume averaged pressure_tensor is used. Do not use
+        this pressure_tensor in an (on average) inhomogeneous system. If the
+        system is (on average inhomogeneous) then use a local pressure_tensor.
+        In order to obtain the pressure_tensor, the ensemble average needs to be
         calculated.
 
         Returns
@@ -324,118 +347,25 @@ class Analysis:
         :obj:`dict`
             A dictionary with the following keys:
 
-            * ``"total"``: total stress tensor
-            * ``"kinetic"``: kinetic stress tensor
-            * ``"bonded"``: total bonded stress tensor
-            * ``"bonded", <bond_type>``: bonded stress tensor which arises from the given bond_type
-            * ``"nonbonded"``: total nonbonded stress tensor
-            * ``"nonbonded", <type_i>, <type_j>``: nonbonded stress tensor which arises from the interactions between type_i and type_j
-            * ``"nonbonded_intra" <type_i>, <type_j>``: nonbonded stress tensor between short ranged forces between type i and j and with the same mol_id
-            * ``"nonbonded_inter" <type_i>, <type_j>``: nonbonded stress tensor between short ranged forces between type i and j and different mol_ids
-            * ``"coulomb"``: Maxwell stress tensor, how it is calculated depends on the method
-            * ``"dipolar"``: TODO
-            * ``"virtual_sites"``: Stress tensor contribution for virtual sites
+            * ``"total"``: total pressure tensor
+            * ``"kinetic"``: kinetic pressure tensor
+            * ``"bonded"``: total bonded pressure tensor
+            * ``"bonded", <bond_type>``: bonded pressure tensor which arises from the given bond_type
+            * ``"nonbonded"``: total nonbonded pressure tensor
+            * ``"nonbonded", <type_i>, <type_j>``: nonbonded pressure tensor which arises from the interactions between type_i and type_j
+            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and with the same mol_id
+            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure tensor between short ranged forces between type i and j and different mol_ids
+            * ``"coulomb"``: Maxwell pressure tensor, how it is calculated depends on the method
+            * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"dipolar"``: not implemented
+            * ``"virtual_sites"``: pressure tensor contribution from virtual sites
 
         """
-        v_comp = int(v_comp)
 
-        check_type_or_throw_except(v_comp, 1, int, "v_comp must be a boolean")
+        # Update in ESPResSo core
+        analyze.update_pressure()
 
-        # Dict to store the results
-        p = OrderedDict()
-
-        # Update in ESPResSo core if necessary
-        if analyze.total_p_tensor.init_status != 1 + v_comp:
-            analyze.update_pressure(v_comp)
-
-        # Individual components of the pressure
-
-        # Total pressure
-        cdef int i
-        total = np.zeros(9)
-        for i in range(9):
-            for k in range(analyze.total_p_tensor.data.n // 9):
-                total[i] += analyze.total_p_tensor.data.e[9 * k + i]
-
-        p["total"] = total.reshape((3, 3))
-
-        # kinetic
-        p["kinetic"] = create_nparray_from_double_array(
-            analyze.total_p_tensor.data.e, 9)
-        p["kinetic"] = p["kinetic"].reshape((3, 3))
-
-        # Bonded
-        total_bonded = np.zeros((3, 3))
-        for i in range(bonded_ia_params.size()):
-            if bonded_ia_params[i].type != BONDED_IA_NONE:
-                p["bonded", i] = np.reshape(create_nparray_from_double_array(
-                    analyze.obsstat_bonded( & analyze.total_p_tensor, i), 9),
-                    (3, 3))
-                total_bonded += p["bonded", i]
-        p["bonded"] = total_bonded
-
-        # Non-Bonded interactions, total as well as intra and inter molecular
-        cdef int j
-        total_non_bonded = np.zeros((3, 3))
-        total_non_bonded_intra = np.zeros((3, 3))
-        total_non_bonded_inter = np.zeros((3, 3))
-
-        for i in range(analyze.max_seen_particle_type):
-            for j in range(i, analyze.max_seen_particle_type):
-                #      if checkIfParticlesInteract(i, j):
-                p["non_bonded", i, j] = np.reshape(
-                    create_nparray_from_double_array(analyze.obsstat_nonbonded(
-                        & analyze.total_p_tensor, i, j), 9), (3, 3))
-                total_non_bonded += p["non_bonded", i, j]
-
-                p["non_bonded_intra", i, j] = np.reshape(
-                    create_nparray_from_double_array(
-                        analyze.obsstat_nonbonded_intra(
-                            & analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
-                total_non_bonded_intra += p["non_bonded_intra", i, j]
-
-                p["non_bonded_inter", i, j] = np.reshape(
-                    create_nparray_from_double_array(
-                        analyze.obsstat_nonbonded_inter(
-                            & analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
-                total_non_bonded_inter += p["non_bonded_inter", i, j]
-
-        p["non_bonded_intra"] = total_non_bonded_intra
-        p["non_bonded_inter"] = total_non_bonded_inter
-        p["non_bonded"] = total_non_bonded
-
-        # Electrostatics
-        IF ELECTROSTATICS == 1:
-            total_coulomb = np.zeros((3, 3))
-            for i in range(analyze.total_p_tensor.n_coulomb):
-                p["coulomb", i] = np.reshape(
-                    create_nparray_from_double_array(
-                        analyze.total_p_tensor.coulomb + 9 * i, 9), (3, 3))
-                total_coulomb += p["coulomb", i]
-            p["coulomb"] = total_coulomb
-
-        # Dipoles
-        IF DIPOLES == 1:
-            total_dipolar = np.zeros((3, 3))
-            for i in range(analyze.total_p_tensor.n_dipolar):
-                p["dipolar", i] = np.reshape(
-                    create_nparray_from_double_array(
-                        analyze.total_p_tensor.dipolar + 9 * i, 9), (3, 3))
-                total_dipolar += p["dipolar", i]
-            p["dipolar"] = total_dipolar
-
-        # virtual sites
-        IF VIRTUAL_SITES_RELATIVE == 1:
-            total_vs = np.zeros((3, 3))
-            for i in range(analyze.total_p_tensor.n_virtual_sites):
-                p["virtual_sites", i] = np.reshape(
-                    create_nparray_from_double_array(
-                        analyze.total_p_tensor.virtual_sites + 9 * i, 9), (3, 3))
-                total_vs += p["virtual_sites", i]
-            if analyze.total_p_tensor.n_virtual_sites:
-                p["virtual_sites"] = total_vs
-
-        return p
+        return _Observable_stat_to_dict(analyze.get_obs_pressure(), False)
 
     IF DPD == 1:
         def dpd_stress(self):
@@ -456,8 +386,20 @@ class Analysis:
         Returns
         -------
         :obj:`dict`
-            A dictionary with keys ``total``, ``kinetic``, ``bonded``, ``nonbonded``,
-            ``coulomb``, ``external_fields``.
+            A dictionary with the following keys:
+
+            * ``"total"``: total energy
+            * ``"kinetic"``: linear and rotational kinetic energy
+            * ``"bonded"``: total bonded energy
+            * ``"bonded", <bond_type>``: bonded energy which arises from the given bond_type
+            * ``"nonbonded"``: total nonbonded energy
+            * ``"nonbonded", <type_i>, <type_j>``: nonbonded energy which arises from the interactions between type_i and type_j
+            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and with the same mol_id
+            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded energy between short ranged forces between type i and j and different mol_ids
+            * ``"coulomb"``: Coulomb energy, how it is calculated depends on the method
+            * ``"coulomb", <i>``: Coulomb energy from particle pairs (``i=0``), electrostatics solvers (``i=1``)
+            * ``"dipolar"``: dipolar energy
+            * ``"dipolar", <i>``: dipolar energy from particle pairs and magnetic field constraints (``i=0``), magnetostatics solvers (``i=1``)
 
 
         Examples
@@ -470,79 +412,11 @@ class Analysis:
         >>> print(energy["external_fields"])
 
         """
-        #  assert len(self._system.part), "no particles in the system"
 
-        e = OrderedDict()
+        analyze.update_energy()
+        handle_errors("calc_long_range_energies failed")
 
-        if analyze.total_energy.init_status == 0:
-            analyze.init_energies( & analyze.total_energy)
-            analyze.master_energy_calc()
-            handle_errors("calc_long_range_energies failed")
-
-        # Individual components of the pressure
-
-        # Total energy
-        cdef int i
-        total = analyze.total_energy.data.e[0]  # kinetic energy
-        total += calculate_current_potential_energy_of_system()
-
-        e["total"] = total
-        e["external_fields"] = analyze.total_energy.external_fields[0]
-
-        # Kinetic energy
-        e["kinetic"] = analyze.total_energy.data.e[0]
-
-        # Non-bonded
-        cdef double total_bonded
-        total_bonded = 0
-        for i in range(bonded_ia_params.size()):
-            if bonded_ia_params[i].type != BONDED_IA_NONE:
-                e["bonded", i] = analyze.obsstat_bonded( & analyze.total_energy, i)[0]
-                total_bonded += analyze.obsstat_bonded( & analyze.total_energy, i)[0]
-        e["bonded"] = total_bonded
-
-        # Non-Bonded interactions, total as well as intra and inter molecular
-        cdef int j
-        cdef double total_intra
-        cdef double total_inter
-        cdef double total_non_bonded
-        total_inter = 0
-        total_intra = 0
-        total_non_bonded = 0.
-
-        for i in range(analyze.max_seen_particle_type):
-            for j in range(analyze.max_seen_particle_type):
-                #      if checkIfParticlesInteract(i, j):
-                e["non_bonded", i, j] = analyze.obsstat_nonbonded( & analyze.total_energy, i, j)[0]
-                if i <= j:
-                    total_non_bonded += analyze.obsstat_nonbonded( & analyze.total_energy, i, j)[0]
-        #       total_intra +=analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
-        #       e["non_bonded_intra",i,j] =analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
-        #       e["nonBondedInter",i,j] =analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
-        #       total_inter+= analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
-        # e["nonBondedIntra"]=total_intra
-        # e["nonBondedInter"]=total_inter
-        e["non_bonded"] = total_non_bonded
-
-        # Electrostatics
-        IF ELECTROSTATICS == 1:
-            cdef double total_coulomb
-            total_coulomb = 0
-            for i in range(analyze.total_energy.n_coulomb):
-                total_coulomb += analyze.total_energy.coulomb[i]
-                e["coulomb", i] = analyze.total_energy.coulomb[i]
-            e["coulomb"] = total_coulomb
-
-        # Dipoles
-        IF DIPOLES == 1:
-            cdef double total_dipolar
-            total_dipolar = 0
-            for i in range(analyze.total_energy.n_dipolar):
-                total_dipolar += analyze.total_energy.dipolar[i]
-                e["dipolar", i] = analyze.total_energy.dipolar[i]
-            e["dipolar"] = total_dipolar
-
-        return e
+        return _Observable_stat_to_dict(analyze.get_obs_energy(), False)
 
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
@@ -575,7 +449,6 @@ class Analysis:
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
         re = analyze.calc_re(
-            analyze.partCfg(),
             chain_start,
             number_of_chains,
             chain_length)
@@ -612,7 +485,6 @@ class Analysis:
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
         rg = analyze.calc_rg(
-            analyze.partCfg(),
             chain_start,
             number_of_chains,
             chain_length)
@@ -648,7 +520,6 @@ class Analysis:
 
         self.check_topology(chain_start, number_of_chains, chain_length)
         rh = analyze.calc_rh(
-            analyze.partCfg(),
             chain_start,
             number_of_chains,
             chain_length)
@@ -706,96 +577,10 @@ class Analysis:
         check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
-        p_types = create_int_list_from_python_object(sf_types)
-
-        sf = analyze.calc_structurefactor(analyze.partCfg(), p_types.e,
-                                          p_types.n, sf_order)
+        sf = analyze.calc_structurefactor(
+            analyze.partCfg(), sf_types, sf_order)
 
         return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
-
-    #
-    # RDF
-    #
-
-    def rdf(self, rdf_type=None, type_list_a=None, type_list_b=None,
-            r_min=0.0, r_max=None, r_bins=100, n_conf=None):
-        """
-        Calculate a radial distribution function.
-        The result is normalized by the spherical bin shell, the total number
-        of particle pairs and the system volume.
-
-
-        Parameters
-        ----------
-        rdf_type : :obj:`str`, \{'rdf', '<rdf>'\}
-            Type of analysis.
-        type_list_a : lists of :obj:`int`
-            Left :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
-        type_list_b : lists of :obj:`int`, optional
-            Right :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
-        r_min : :obj:`float`
-            Minimal distance to consider.
-        r_max : :obj:`float`
-            Maximal distance to consider.
-        r_bins : :obj:`int`
-            Number of bins.
-        n_conf : :obj:`int`, optional
-            If ``rdf_type`` is ``'<rdf>'`` this determines
-            the number of stored configs that are used (if
-            ``None``, all configurations are used).
-
-        Returns
-        -------
-        :obj:`ndarray`
-            Where [0] contains the midpoints of the bins,
-            and [1] contains the values of the rdf.
-
-        """
-
-        if rdf_type is None:
-            raise ValueError("rdf_type must not be empty!")
-        if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):
-            raise ValueError("type_list_a has to be a list!")
-        if (type_list_b is not None) and (
-                not hasattr(type_list_b, '__iter__')):
-            raise ValueError("type_list_b has to be a list!")
-        if type_list_b is None:
-            type_list_b = type_list_a
-
-        if rdf_type != 'rdf':
-            if get_n_configs() == 0:
-                raise ValueError("No configurations founds!\n",
-                                 "Use `analyze.append()` to save configurations,",
-                                 "or `analyze.rdf('rdf')` to only look at current RDF!""")
-            if n_conf is None:
-                n_conf = get_n_configs()
-
-        if r_max is None:
-            r_max = min(Globals().box_l) / 2
-
-        cdef vector[double] rdf
-        rdf.resize(r_bins)
-        cdef vector[int] p1_types = type_list_a
-        cdef vector[int] p2_types = type_list_b
-
-        if rdf_type == 'rdf':
-            analyze.calc_rdf(analyze.partCfg(), p1_types,
-                             p2_types, r_min, r_max, r_bins, rdf)
-        elif rdf_type == '<rdf>':
-            analyze.calc_rdf_av(
-                analyze.partCfg(), p1_types, p2_types, r_min,
-                r_max, r_bins, rdf, n_conf)
-        else:
-            raise ValueError("Unknown rdf_type value {!r}".format(rdf_type))
-
-        r = np.empty(r_bins)
-        bin_width = (r_max - r_min) / r_bins
-        rr = r_min + bin_width / 2.0
-        for i in range(r_bins):
-            r[i] = rr
-            rr += bin_width
-
-        return np.array([r, rdf])
 
     #
     # distribution
@@ -857,11 +642,8 @@ class Analysis:
         cdef vector[double] distribution
         distribution.resize(r_bins)
 
-        p1_types = create_int_list_from_python_object(type_list_a)
-        p2_types = create_int_list_from_python_object(type_list_b)
-
         analyze.calc_part_distribution(
-            analyze.partCfg(), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
+            analyze.partCfg(), type_list_a, type_list_b,
             r_min, r_max, r_bins, < bint > log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(

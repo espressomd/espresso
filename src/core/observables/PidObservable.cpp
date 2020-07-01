@@ -18,17 +18,18 @@
  */
 #include "PidObservable.hpp"
 
-#include "partCfg_global.hpp"
+#include "fetch_particles.hpp"
+#include "particle_data.hpp"
 
-#include <boost/range/algorithm/transform.hpp>
+#include <functional>
 
 namespace Observables {
 std::vector<double> PidObservable::operator()() const {
-  std::vector<const Particle *> particles(ids().size());
+  std::vector<Particle> particles = fetch_particles(ids());
 
-  boost::transform(ids(), particles.begin(),
-                   [](int id) { return &partCfg()[id]; });
-
-  return this->evaluate(particles);
+  std::vector<std::reference_wrapper<const Particle>> particle_refs(
+      particles.begin(), particles.end());
+  return this->evaluate(ParticleReferenceRange(particle_refs),
+                        ParticleObservables::traits<Particle>{});
 }
 } // namespace Observables

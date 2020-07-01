@@ -17,39 +17,46 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Simulate electrophoresis of a linear polymer using the P3M solver.
+Simulate electrophoresis of a linear polymer using the P3M electrostatics solver.
 """
+import logging
+
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.optimize
+
 import espressomd
+import espressomd.observables
+import espressomd.polymer
+from espressomd import electrostatics, interactions
+
+logging.basicConfig(level=logging.INFO)
+
 
 required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import interactions
-from espressomd import electrostatics
-import numpy as np
+N_SAMPLES = 1000
+N_INT_STEPS = 100
+E_FIELD = 1.0
+N_MONOMERS = 20
+N_IONS = 100
+WARM_STEPS = 20
+WARM_N_TIMES = 20
+MIN_DIST = 0.9
 
-# System parameters
-#############################################################
 
 system = espressomd.System(box_l=3 * [100.0])
 
-# Seed
-#############################################################
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.random.seed(seed=system.seed)
-
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.periodicity = [True, True, True]
-# system.cell_system.set_n_square(use_verlet_lists=False)
 
-# Non-bonded interactions
+# non-bonded interactions
 ###############################################################
 # WCA between monomers
 system.non_bonded_inter[0, 0].wca.set_params(epsilon=1, sigma=1)
 
-# WCA counterions - polymer
+# WCA counter-ions - polymer
 system.non_bonded_inter[0, 1].wca.set_params(epsilon=1, sigma=1)
 
 # WCA ions - polymer
@@ -59,214 +66,195 @@ system.non_bonded_inter[0, 2].wca.set_params(epsilon=1, sigma=1)
 system.non_bonded_inter[1, 2].wca.set_params(epsilon=1, sigma=1)
 
 
-# Bonded interactions
+# bonded interactions
 ################################################################
-# fene = interactions.FeneBond(k=10, d_r_max=2)
-# system.bonded_inter.add(fene)
-harmonic = interactions.HarmonicBond(k=10, r_0=2)
-harmonicangle = interactions.AngleHarmonic(bend=10, phi0=np.pi)
-system.bonded_inter.add(harmonic)
-system.bonded_inter.add(harmonicangle)
+harmonic_bond = interactions.HarmonicBond(k=10, r_0=2)
+angle_harmonic_bond = interactions.AngleHarmonic(bend=10, phi0=np.pi)
+system.bonded_inter.add(harmonic_bond)
+system.bonded_inter.add(angle_harmonic_bond)
 
 
-# Create Monomer beads and bonds
+# create monomer beads and bonds
 ##########################################################################
-n_monomers = 20
+init_polymer_pos = espressomd.polymer.linear_polymer_positions(n_polymers=1, beads_per_chain=N_MONOMERS, bond_length=2.0,
+                                                               seed=2, bond_angle=np.pi, min_distance=1.8, start_positions=np.array([system.box_l / 2.0]))
 
-init_polymer_pos = np.dstack(
-    (np.arange(n_monomers), np.zeros(n_monomers), np.zeros(n_monomers)))[0] + \
-    np.array([system.box_l[0] / 2 - n_monomers / 2,
-              system.box_l[1] / 2,
-              system.box_l[2] / 2])
+system.part.add(pos=init_polymer_pos[0], q=-np.ones(N_MONOMERS))
 
-system.part.add(pos=init_polymer_pos)
+for i in range(1, N_MONOMERS):
+    system.part[i].add_bond((harmonic_bond, i - 1))
+
+for i in range(1, N_MONOMERS - 1):
+    system.part[i].add_bond((angle_harmonic_bond, i - 1, i + 1))
 
 
-# system.part[:-1].add_bond((harmonic, np.arange(n_monomers)[1:]))
-# system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)[:-2],
-# np.arange(n_monomers)[2:]))
-
-# Particle creation with loops:
-for i in range(n_monomers):
-    if i > 0:
-        system.part[i].add_bond((harmonic, i - 1))
-
-for i in range(1, n_monomers - 1):
-    system.part[i].add_bond((harmonicangle, i - 1, i + 1))
-
-system.part[:n_monomers].q = -np.ones(n_monomers)
-
-# Create counterions
+# create counter-ions
 ###################################################################
-system.part.add(pos=np.random.random((n_monomers, 3)) * system.box_l,
-                q=np.ones(n_monomers, dtype=int),
-                type=np.ones(n_monomers, dtype=int))
+system.part.add(pos=np.random.random((N_MONOMERS, 3)) * system.box_l,
+                q=np.ones(N_MONOMERS),
+                type=np.ones(N_MONOMERS, dtype=int))
 
-# Create ions
+# create excess ions
 ###############################################################
-n_ions = 100
+system.part.add(pos=np.random.random((N_IONS, 3)) * system.box_l,
+                q=np.hstack((np.ones(N_IONS // 2), -np.ones(N_IONS // 2))),
+                type=np.array(np.hstack((np.ones(N_IONS // 2), 2 * np.ones(N_IONS // 2))), dtype=int))
 
-system.part.add(pos=np.random.random((n_ions, 3)) * system.box_l,
-                q=np.hstack((np.ones(n_ions // 2), -np.ones(n_ions // 2))),
-                type=np.array(np.hstack((np.ones(n_ions // 2), 2 * np.ones(n_ions // 2))), dtype=int))
+logging.info("particle types: {}\n".format(system.part[:].type))
+logging.info("total charge: {}".format(np.sum(system.part[:].q)))
 
-
-# Sign charges to particles after the particle creation:
-# system.part[2*n_monomers:2*n_monomers+n_ions/2] = np.ones(n_ions/2)
-# system.part[2*n_monomers+n_ions/2:] = -np.ones(n_ions/2)
-
-print("types:", system.part[:].type)
-print("")
-print("Q_tot:", np.sum(system.part[:].q))
-
-
-#############################################################
-#      Warmup                                               #
-#############################################################
-
-# warmup integration (steepest descent)
-warm_steps = 20
-warm_n_times = 20
-min_dist = 0.9
-
-# minimize energy using min_dist as the convergence criterion
+# warm-up integration
+###############################################################
 system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=0.01)
 i = 0
-while system.analysis.min_dist() < min_dist and i < warm_n_times:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
-    system.integrator.run(warm_steps)
+while system.analysis.min_dist() < MIN_DIST and i < WARM_N_TIMES:
+    logging.debug(
+        "total energy: {:+.2e}".format(system.analysis.energy()["total"]))
+    system.integrator.run(WARM_STEPS)
     i += 1
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
-print()
+logging.info(
+    "total energy after warm-up: {:+.2e}\n".format(system.analysis.energy()["total"]))
 system.integrator.set_vv()
 
-# activate thermostat
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
-#############################################################
-#      Sampling                                             #
-#############################################################
-#
-# Activate electrostatics
+# activate electrostatics
 #############################################################
 p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
-print("Tuning P3M")
-
 system.actors.add(p3m)
 
-print("P3M parameter:\n")
-p3m_params = p3m.get_params()
-for key in list(p3m_params.keys()):
-    print("{} = {}".format(key, p3m_params[key]))
-
-print(system.actors)
-
-# Apply external force
+# apply external force (external electric field)
 #############################################################
 n_part = len(system.part)
 system.part[:].ext_force = np.dstack(
-    (system.part[:].q * np.ones(n_part), np.zeros(n_part), np.zeros(n_part)))[0]
+    (system.part[:].q * np.ones(n_part) * E_FIELD, np.zeros(n_part), np.zeros(n_part)))[0]
 
-# print(system.part[:].ext_force)
+# equilibration
+#############################################################
+system.integrator.run(500)
 
-# Data arrays
-v_list = []
-pos_list = []
+# observables for core analysis
+#############################################################
+obs_persistence_angles = espressomd.observables.CosPersistenceAngles(
+    ids=system.part[:N_MONOMERS].id)
+acc_persistence_angles = espressomd.accumulators.MeanVarianceCalculator(
+    obs=obs_persistence_angles, delta_N=1)
+system.auto_update_accumulators.add(acc_persistence_angles)
 
-# Sampling Loop
-for i in range(4000):
+obs_bond_length = espressomd.observables.ParticleDistances(
+    ids=system.part[:N_MONOMERS].id)
+acc_bond_length = espressomd.accumulators.MeanVarianceCalculator(
+    obs=obs_bond_length, delta_N=1)
+system.auto_update_accumulators.add(acc_bond_length)
+
+# data storage for python analysis
+#############################################################
+pos = np.full((N_SAMPLES, N_MONOMERS, 3), np.nan)
+
+# sampling Loop
+#############################################################
+for i in range(N_SAMPLES):
     if i % 100 == 0:
-        print("\rSampling: %04i" % i, end='', flush=True)
-    system.integrator.run(steps=1)
-    v_list.append(system.part[:n_monomers].v)
-    pos_list.append(system.part[:n_monomers].pos)
+        logging.info("\rsampling: {:4d}".format(i))
+    system.integrator.run(N_INT_STEPS)
+    pos[i] = system.part[:N_MONOMERS].pos
 
-print("\nSampling finished!\n")
+logging.info("\nsampling finished!\n")
 
-# Data evaluation
+# data analysis
 ############################################################
-# Convert data to numpy arrays
-# shape = [time_step, monomer, coordinate]!
-v_list = np.array(v_list)
-pos_list = np.array(pos_list)
 
-# Calculate COM and COM velocity
-COM = pos_list.sum(axis=1) / n_monomers
-COM_v = (COM[1:] - COM[:-1]) / system.time_step
+# calculate center of mass (COM) and its velocity
+#############################################################
+COM = pos.sum(axis=1) / N_MONOMERS
+COM_v = (COM[1:] - COM[:-1]) / (N_INT_STEPS * system.time_step)
 
-# Calculate the Mobility mu = v/E
+# calculate the electrophoretic mobility mu = v/E
 ##################################
-mu = COM_v.mean() / 1.0
-print("MOBILITY", mu)
+mu = np.average(np.linalg.norm(COM_v, axis=1)) / E_FIELD
+logging.info("electrophoretic mobility: {}".format(mu))
 
-# Calculate the Persistence length
-# fits better for longer sampling
-##################################
-# this calculation method requires
-# numpy 1.10 or higher
-if tuple(map(int, np.__version__.split("."))) >= (1, 10):
-    from scipy.optimize import curve_fit
-    from numpy.linalg import norm
+# calculate the persistence length...
+#############################################################
 
-    # First get bond vectors
-    bond_vec = pos_list[:, 1:, :] - pos_list[:, :-1, :]
-    bond_abs = norm(bond_vec, axis=2, keepdims=True)
-    bond_abs_avg = bond_abs.mean(axis=0)[:, 0]
+# ...first python analysis
+total_sampling_positions = []
+total_cos_thetas = []
+for positions in pos:
+    bond_vectors = positions[1:, :] - positions[:-1, :]
+    bond_lengths = np.linalg.norm(bond_vectors, axis=1)
+    normed_bond_vectors = bond_vectors / bond_lengths[:, np.newaxis]
+    # positions at which the angles between bonds are actually measured
+    sampling_positions = np.insert(np.cumsum(bond_lengths)[:-1], 0, 0.0)
+    cos_thetas = np.zeros_like(sampling_positions)
+    for i in range(len(normed_bond_vectors)):
+        cos_thetas[i] = np.dot(normed_bond_vectors[0], normed_bond_vectors[i])
+    total_sampling_positions.append(sampling_positions)
+    total_cos_thetas.append(cos_thetas)
 
-    c_length = bond_abs_avg
-    for i in range(1, len(bond_abs_avg)):
-        c_length[i] += c_length[i - 1]
-
-    bv_norm = bond_vec / bond_abs
-
-    bv_zero = np.empty_like(bv_norm)
-    for i in range(bv_zero.shape[1]):
-        bv_zero[:, i, :] = bv_norm[:, 0, :]
-
-    # Calculate <cos(theta)>
-    cos_theta = (bv_zero * bv_norm).sum(axis=2).mean(axis=0)
-
-    def decay(x, lp):
-        return np.exp(-x / lp)
-
-    fit, _ = curve_fit(decay, c_length, cos_theta)
-
-    print(c_length.shape, cos_theta.shape)
-    print("PERSISTENCE LENGTH", fit[0])
-
-# Plot Results
-############################################################
-import matplotlib.pyplot as pp
-
-direction = ["x", "y", "z"]
-fig1 = pp.figure()
-ax = fig1.add_subplot(111)
-for i in range(3):
-    ax.plot(COM[:-500, i], label="COM pos %s" % direction[i])
-ax.legend(loc="best")
-ax.set_xlabel("time step")
-ax.set_ylabel("r")
-
-fig2 = pp.figure()
-ax = fig2.add_subplot(111)
-for i in range(3):
-    ax.plot(COM_v[:-500, i], label="COM v %s" % direction[i])
-ax.legend(loc="best")
-ax.set_xlabel("time step")
-ax.set_ylabel("v")
-
-if tuple(map(int, np.__version__.split("."))) >= (1, 10):
-    fig3 = pp.figure()
-    ax = fig3.add_subplot(111)
-    ax.plot(c_length, cos_theta, label="sim data")
-    ax.plot(c_length, decay(c_length, fit[0]), label="fit")
-    ax.legend(loc="best")
-    ax.set_xlabel("contour length")
-    ax.set_ylabel(r"$\langle \cos(\theta) \rangle$")
-
-pp.show()
+sampling_positions = np.average(np.array(total_sampling_positions), axis=0)
+cos_thetas = np.average(np.array(total_cos_thetas), axis=0)
 
 
-print("\nJob finished!\n")
+def exponential(x, lp):
+    return np.exp(-x / lp)
+
+
+opt, _ = scipy.optimize.curve_fit(exponential, sampling_positions, cos_thetas)
+persistence_length = opt[0]
+logging.info("persistence length (python analysis): {}".format(
+    persistence_length))
+
+# ...second by using observables
+
+
+def persistence_length_obs(
+        acc_bond_length, acc_persistence_angles, exponential):
+    bond_lengths_obs = np.array(acc_bond_length.get_mean())
+    sampling_positions_obs = np.insert(
+        np.cumsum(bond_lengths_obs)[:-1], 0, 0.0)
+    cos_thetas_obs = np.array(acc_persistence_angles.get_mean())
+    cos_thetas_obs = np.insert(cos_thetas_obs, 0, 1.0)
+
+    opt_obs, _ = scipy.optimize.curve_fit(
+        exponential, sampling_positions_obs, cos_thetas_obs)
+    return sampling_positions_obs, cos_thetas_obs, opt_obs[0]
+
+
+sampling_positions_obs, cos_thetas_obs, persistence_length_obs = persistence_length_obs(
+    acc_bond_length, acc_persistence_angles, exponential)
+logging.info("persistence length (observables): {}".format(
+    persistence_length_obs))
+
+# plot the results
+#############################################################
+fig, axs = plt.subplots(3)
+axs[0].plot(COM[:, 0], label="COM pos in x-direction")
+axs[0].plot(COM[:, 1], label="COM pos in y-direction")
+axs[0].plot(COM[:, 2], label="COM pos in z-direction")
+axs[0].legend()
+axs[0].set_xlabel("time step")
+axs[0].set_ylabel("r")
+
+axs[1].plot(COM_v[:, 0], label="COM v in x-direction")
+axs[1].plot(COM_v[:, 1], label="COM v in y-direction")
+axs[1].plot(COM_v[:, 2], label="COM v in z-direction")
+axs[1].legend()
+axs[1].set_xlabel("time step")
+axs[1].set_ylabel("v")
+
+axs[2].plot(sampling_positions, cos_thetas, 'o',
+            label="python analysis raw data")
+axs[2].plot(sampling_positions_obs, cos_thetas_obs, 'o',
+            label="observable analysis raw data")
+axs[2].plot(sampling_positions, exponential(sampling_positions,
+                                            opt[0]), label="exponential fit with python analysis")
+axs[2].plot(sampling_positions_obs, exponential(sampling_positions_obs,
+                                                persistence_length_obs), label="exponential fit with observable data")
+axs[2].legend()
+axs[2].set_xlabel("distance along polymer")
+axs[2].set_ylabel(r"$\langle \cos(\theta) \rangle$")
+
+plt.show()

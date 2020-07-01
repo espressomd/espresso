@@ -16,13 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
+#ifndef STOKESIAN_DYNAMICS_INLINE_HPP
+#define STOKESIAN_DYNAMICS_INLINE_HPP
 
 #include "ParticleRange.hpp"
 #include "config.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
+
+#include <utils/Vector.hpp>
 
 #ifdef STOKESIAN_DYNAMICS
 
@@ -31,26 +34,23 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
   auto const skin2 = Utils::sqr(0.5 * skin);
 
   // Compute new (translational and rotational) velocities
-  propagate_vel_pos_sd();
+  propagate_vel_pos_sd(particles);
 
   for (auto &p : particles) {
-    // Translate particle
-    p.r.p[0] += p.m.v[0] * time_step;
-    p.r.p[1] += p.m.v[1] * time_step;
-    p.r.p[2] += p.m.v[2] * time_step;
 
-#ifdef ROTATION
+    // Translate particle
+    p.r.p += p.m.v * time_step;
+
     // Perform rotation
-    local_rotate_particle(p, p.m.omega.normalize(),
-                          p.m.omega.norm() * time_step);
-#endif
+    double norm = p.m.omega.norm();
+    if (norm != 0) {
+      Utils::Vector3d omega_unit = (1 / norm) * p.m.omega;
+      local_rotate_particle(p, omega_unit, norm * time_step);
+    }
 
     // Verlet criterion check
-    if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
-            Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
-            Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
-        skin2)
-      set_resort_particles(Cells::RESORT_LOCAL);
+    if ((p.r.p - p.l.p_old).norm2() > skin2)
+      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 }
 
@@ -62,3 +62,4 @@ inline void stokesian_dynamics_step_1(const ParticleRange &particles) {
 inline void stokesian_dynamics_step_2(const ParticleRange &particles) {}
 
 #endif // STOKESIAN_DYNAMICS
+#endif

@@ -20,7 +20,7 @@ import numpy as np
 
 import espressomd
 import espressomd.lb
-from espressomd.observables import LBFluidStress
+from espressomd.observables import LBFluidPressureTensor
 import sys
 
 
@@ -194,10 +194,10 @@ class TestLB:
         with self.assertRaises(RuntimeError):
             lbf.agrid = 0.2
 
-    def test_stress_tensor_observable(self):
+    def test_pressure_tensor_observable(self):
         """
-        Checks agreement between the LBFluidStress observable and per-node
-        stress summed up over the entire fluid.
+        Checks agreement between the LBFluidPressureTensor observable and
+        per-node pressure tensor summed up over the entire fluid.
 
         """
         system = self.system
@@ -215,19 +215,22 @@ class TestLB:
         system.actors.add(self.lbf)
         system.thermostat.set_lb(LB_fluid=self.lbf, seed=1)
         system.integrator.run(10)
-        stress = np.zeros((3, 3))
+        pressure_tensor = np.zeros((3, 3))
         agrid = self.params["agrid"]
         for n in self.lbf.nodes():
-            stress += n.stress
+            pressure_tensor += n.pressure_tensor
 
-        stress /= system.volume() / agrid**3
+        pressure_tensor /= system.volume() / agrid**3
 
-        obs = LBFluidStress()
-        obs_stress = obs.calculate()
-        np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
+        obs = LBFluidPressureTensor()
+        obs_pressure_tensor = obs.calculate()
         np.testing.assert_allclose(
-            np.copy(self.lbf.stress),
-            obs_stress,
+            pressure_tensor,
+            obs_pressure_tensor,
+            atol=1E-10)
+        np.testing.assert_allclose(
+            np.copy(self.lbf.pressure_tensor),
+            obs_pressure_tensor,
             atol=1E-10)
 
     def test_lb_node_set_get(self):
@@ -314,6 +317,22 @@ class TestLB:
             self.system.actors.add(self.lbf)
         print("End of LB error messages", file=sys.stderr)
         sys.stderr.flush()
+
+    def test_agrid_rounding(self):
+        """Tests agrid*n ~= box_l for a case where rounding down is needed"""
+        system = self.system
+        old_l = system.box_l
+
+        n_part = 1000
+        phi = 0.05
+        lj_sig = 1.0
+        l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3 / phi)**(1. / 3.)
+        system.box_l = [l] * 3 * system.cell_system.node_grid
+        system.actors.add(self.lb_class(agrid=l / 31, dens=1,
+                                        visc=1, kT=0, tau=system.time_step))
+        system.integrator.run(steps=1)
+        system.actors.clear()
+        system.box_l = old_l
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):

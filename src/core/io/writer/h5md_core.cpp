@@ -20,7 +20,6 @@
  */
 
 #include "h5md_core.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -35,8 +34,8 @@ namespace H5md {
 static void backup_file(const std::string &from, const std::string &to) {
   if (this_node == 0) {
     /*
-     * If the file itself *and* a backup file exists something must
-     * went wrong before.
+     * If the file itself *and* a backup file exists, something must
+     * have gone wrong.
      */
     boost::filesystem::path pfrom(from), pto(to);
     try {
@@ -150,18 +149,18 @@ void File::init_filestructure() {
 
   dataset_descriptors = {
       // path, dim, type
-      {"particles/atoms/box/edges", 1, type_double},
-      {"particles/atoms/mass/value", 2, type_double},
-      {"particles/atoms/charge/value", 2, type_double},
-      {"particles/atoms/id/value", 2, type_int},
-      {"particles/atoms/id/time", 1, type_double},
-      {"particles/atoms/id/step", 1, type_int},
-      {"particles/atoms/species/value", 2, type_int},
-      {"particles/atoms/position/value", 3, type_double},
-      {"particles/atoms/velocity/value", 3, type_double},
-      {"particles/atoms/force/value", 3, type_double},
-      {"particles/atoms/image/value", 3, type_int},
-      {"connectivity/atoms", 2, type_int},
+      {"particles/atoms/box/edges", 1, type_double, m_length_unit},
+      {"particles/atoms/mass/value", 2, type_double, m_mass_unit},
+      {"particles/atoms/charge/value", 2, type_double, m_charge_unit},
+      {"particles/atoms/id/value", 2, type_int, ""},
+      {"particles/atoms/id/time", 1, type_double, m_time_unit},
+      {"particles/atoms/id/step", 1, type_int, ""},
+      {"particles/atoms/species/value", 2, type_int, ""},
+      {"particles/atoms/position/value", 3, type_double, m_length_unit},
+      {"particles/atoms/velocity/value", 3, type_double, m_velocity_unit},
+      {"particles/atoms/force/value", 3, type_double, m_force_unit},
+      {"particles/atoms/image/value", 3, type_int, ""},
+      {"connectivity/atoms", 2, type_int, ""},
   };
 }
 
@@ -196,6 +195,10 @@ void File::create_datasets(bool only_load) {
       H5Pset_create_intermediate_group(lcpl_id, 1);
       datasets[path] = h5xx::dataset(m_h5md_file, path, descr.type, dataspace,
                                      storage, lcpl_id, H5P_DEFAULT);
+      // write only units attribute when the value is non-zero.
+      if (descr.unit.length() > 0) {
+        h5xx::write_attribute(datasets[path], "unit", descr.unit);
+      }
     }
   }
   if (!only_load)
@@ -259,6 +262,12 @@ void File::create_new_file(const std::string &filename) {
   h5xx::write_attribute(h5md_creator_group, "version", ESPRESSO_VERSION);
   auto h5md_author_group = h5xx::group(h5md_group, "author");
   h5xx::write_attribute(h5md_author_group, "name", "N/A");
+
+  if (is_unit_system_defined()) {
+    auto h5md_unit_module = h5xx::group(h5md_group, "modules/units");
+    std::vector<int> h5md_unit_module_version = {1, 0};
+    write_attribute(h5md_unit_module, "version", h5md_unit_module_version);
+  }
 
   bool only_load = false;
   create_datasets(only_load);
@@ -331,18 +340,14 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
 
   if (!m_already_wrote_bonds) {
     int nbonds_local = bond.shape()[1];
-    for (auto it = current_particle.bl.begin();
-         it != current_particle.bl.end();) {
 
-      auto const n_partners = bonded_ia_params[*it++].num;
-
-      if (1 == n_partners) {
+    for (auto const &b : current_particle.bonds()) {
+      auto const partner_ids = b.partner_ids();
+      if (partner_ids.size() == 1) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
         bond[0][nbonds_local][0] = current_particle.p.identity;
-        bond[0][nbonds_local][1] = *it++;
+        bond[0][nbonds_local][1] = partner_ids[0];
         nbonds_local++;
-      } else {
-        it += n_partners;
       }
     }
   }
@@ -386,8 +391,6 @@ void File::Write(int write_dat, PartCfg &partCfg,
 
   if (m_write_ordered) {
     if (this_node == 0) {
-      /* Fetch bond info */
-      partCfg.update_bonds();
       // loop over all particles
       int particle_index = 0;
       for (auto const &current_particle : partCfg) {

@@ -20,7 +20,6 @@
  */
 
 #include <cmath>
-#include <limits>
 
 #define BOOST_TEST_MODULE ellipsoid test
 #define BOOST_TEST_DYN_LINK

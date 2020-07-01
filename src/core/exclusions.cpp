@@ -1,19 +1,18 @@
 #include "exclusions.hpp"
 
+#include <utils/contains.hpp>
+
 #ifdef EXCLUSIONS
 void add_exclusion(Particle *part, int part2) {
-  for (int i = 0; i < part->el.n; i++)
-    if (part->el.e[i] == part2)
-      return;
+  if (Utils::contains(part->exclusions(), part2))
+    return;
 
-  part->el.push_back(part2);
+  part->exclusions().push_back(part2);
 }
 
 void delete_exclusion(Particle *part, int part2) {
-  IntList &el = part->el;
+  auto &el = part->exclusions();
 
-  if (!el.empty()) {
-    el.erase(std::remove(el.begin(), el.end(), part2), el.end());
-  };
+  el.erase(std::remove(el.begin(), el.end(), part2), el.end());
 }
 #endif

@@ -120,10 +120,10 @@ class Scafacos1d2d(ut.TestCase):
 
             # Calculate errors
 
-            err_f = np.sum(np.sqrt(
-                np.sum((s.part[:].f - data[:, 7:10])**2, 1)), 0) / np.sqrt(data.shape[0])
-            err_t = np.sum(np.sqrt(np.sum(
-                (s.part[:].torque_lab - data[:, 10:13])**2, 1)), 0) / np.sqrt(data.shape[0])
+            err_f = np.sum(np.linalg.norm(
+                s.part[:].f - data[:, 7:10], axis=1)) / np.sqrt(data.shape[0])
+            err_t = np.sum(np.linalg.norm(
+                s.part[:].torque_lab - data[:, 10:13], axis=1)) / np.sqrt(data.shape[0])
             err_e = s.analysis.energy()["dipolar"] - ref_E
             print("Energy difference", err_e)
             print("Force difference", err_f)

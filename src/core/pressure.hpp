@@ -25,48 +25,20 @@
 #ifndef CORE_PRESSURE_HPP
 #define CORE_PRESSURE_HPP
 
-#include "statistics.hpp"
+#include "Observable_stat.hpp"
 
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-///
-extern Observable_stat virials, total_pressure, p_tensor, total_p_tensor;
-///
-extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded,
-    p_tensor_non_bonded, total_p_tensor_non_bonded;
-/*@}*/
+#include <utils/Vector.hpp>
 
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
-void init_virials(Observable_stat *stat);
-void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
-void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
-void init_p_tensor(Observable_stat *stat);
-void master_pressure_calc(int v_comp);
+/** Parallel pressure calculation from a virial expansion. */
+void pressure_calc();
 
-/** Calculates the pressure in the system from a virial expansion.
- *  @param[out] result Calculated scalar pressure
- *  @param[out] result_t Calculated stress tensor
- *  @param[out] result_nb Calculated intra- and inter-molecular nonbonded
- *                        contributions to the scalar pressure
- *  @param[out] result_t_nb Calculated intra- and inter-molecular nonbonded
- *                          contributions to the stress tensor
- *  @param[in] v_comp flag which enables (1) compensation of the velocities
- *                    required for deriving a pressure reflecting
- *                    \ref nptiso_struct::p_inst (hence it only works with
- *                    domain decomposition); naturally it therefore doesn't
- *                    make sense to use it without NpT.
- */
-void pressure_calc(double *result, double *result_t, double *result_nb,
-                   double *result_t_nb, int v_comp);
+/** Run @ref pressure_calc in parallel. */
+void update_pressure();
 
-/** Function to calculate stress tensor for the observables */
-int observable_compute_stress_tensor(int v_comp, double *A);
+/** Return the pressure observable. */
+Observable_stat const &get_obs_pressure();
 
-void update_pressure(int v_comp);
-
-/*@}*/
+/** Helper function for @ref Observables::PressureTensor. */
+Utils::Vector9d observable_compute_pressure_tensor();
 
 #endif

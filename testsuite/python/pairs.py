@@ -85,7 +85,6 @@ class PairTest(ut.TestCase):
 
     def test_dd(self):
         self.s.cell_system.set_domain_decomposition()
-        self.s.cell_system.min_num_cells = 8
         self.s.periodicity = [1, 1, 1]
 
         self.s.integrator.run(0)

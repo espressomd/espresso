@@ -55,9 +55,9 @@ struct EuclidianDistance {
 };
 
 /**
- * @brief Decided which distance function to use depending on the
-          cell system, and call the pair code.
-*/
+ * @brief Decide which distance function to use depending on the
+ * cell system, and call the pair code.
+ */
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename VerletCriterion>
 void decide_distance(CellIterator first, CellIterator last,
@@ -82,8 +82,7 @@ void decide_distance(CellIterator first, CellIterator last,
 }
 
 /**
- * @brief Functor that returns true for
- *        any arguments.
+ * @brief Functor that returns true for any argument.
  */
 struct True {
   template <class... T> bool operator()(T...) const { return true; }
@@ -97,7 +96,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
                       const VerletCriterion &verlet_criterion = {}) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-  assert(get_resort_particles() == Cells::RESORT_NONE);
+  assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   if (cell_structure.min_range != INACTIVE_CUTOFF) {
     auto first =
@@ -111,7 +110,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
 
     rebuild_verletlist = false;
   } else {
-    for (auto &p : cell_structure.local_cells().particles()) {
+    for (auto &p : cell_structure.local_particles()) {
       particle_kernel(p);
     }
   }

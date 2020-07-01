@@ -121,7 +121,10 @@ Writing H5MD-files
 
 .. note::
 
-    Requires ``H5MD`` external feature, enabled with ``-DWITH_HDF5=ON``.
+    Requires ``H5MD`` external feature, enabled with ``-DWITH_HDF5=ON``. Also
+    requires a parallel version of HDF5. On Ubuntu, this can be installed via
+    either ``libhdf5-openmpi-dev`` for OpenMPI or ``libhdf5-mpich-dev`` for
+    MPICH, but not ``libhdf5-dev`` which is the serial version.
 
 For large amounts of data it's a good idea to store it in the hdf5 (H5MD
 is based on hdf5) file format (see https://www.hdfgroup.org/ for
@@ -129,7 +132,8 @@ details). Currently |es| supports some basic functions for writing simulation
 data to H5MD files. The implementation is MPI-parallelized and is capable
 of dealing with varying numbers of particles.
 
-To write data in a hdf5-file according to the H5MD proposal (https://nongnu.org/h5md/), first an object of the class
+To write data in a hdf5-file according to the H5MD proposal (https://nongnu.org/h5md/),
+first an object of the class
 :class:`espressomd.io.writer.h5md.H5md` has to be created and linked to the
 respective hdf5-file. This may, for example, look like:
 
@@ -161,7 +165,10 @@ to the :class:`~espressomd.io.writer.h5md.H5md` class. Currently available:
     - ``write_mass``: particle masses
 
     - ``write_ordered``: if particles should be written ordered according to their
-      id (implies serial write).
+      id (implies serial write)
+
+    - ``unit_system``: optionally, physical units for time, mass, length and
+      electrical charge.
 
 In simulations with varying numbers of particles (MC or reactions), the
 size of the dataset will be adapted if the maximum number of particles
@@ -173,29 +180,35 @@ dataset for the ids to track which position/velocity/force/type/mass
 entry belongs to which particle. To write data to the hdf5 file, simply
 call the H5md object :meth:`~espressomd.io.writer.h5md.H5md.write` method without any arguments.
 
-.. code:: python
-
-    h5.write()
-
-
 After the last write call, you have to call the
 :meth:`~espressomd.io.writer.h5md.H5md.close` method to remove
 the backup file, close the datasets, etc.
 
 H5MD files can be read and modified with the python module h5py (for
 documentation see `h5py <https://docs.h5py.org/en/stable/>`_). For example,
-all positions stored in the file called "h5mdfile.h5" can be read using:
+all positions stored in the file called "sample.h5" can be read using:
 
 .. code:: python
 
     import h5py
-    h5file = h5py.File("h5mdfile.h5", 'r')
+    h5file = h5py.File("sample.h5", 'r')
     positions = h5file['particles/atoms/position/value']
+
+If the data was stored with `physical units
+<https://nongnu.org/h5md/modules/units.html>`_, they can be accessed with:
+
+.. code:: python
+
+    positions.attrs['unit']
+    forces = h5file['particles/atoms/force/value']
+    forces_unit = forces.attrs['unit']
+    sim_time = h5file['particles/atoms/id/time']
+    print('last frame: {:.3f} {}'.format(sim_time.value[-1], sim_time.attrs['unit'].decode('utf8')))
 
 Furthermore, the files can be inspected with the GUI tool hdfview or visually with the
 H5MD VMD plugin (see `H5MD plugin <https://github.com/h5md/VMD-h5mdplugin>`_).
 
-For other examples, see :file:`/samples/h5md.py`
+For an example involving physical units, see :file:`/samples/h5md.py`.
 
 
 .. _Writing MPI-IO binary files:
@@ -348,10 +361,12 @@ the system's particles.
     fp = open('trajectory.vcf', mode='w+t')
     vtf.writevcf(system, fp, types='all')
 
-.. _vtf_pid_map\: Going back and forth between |es| and VTF indexing:
+.. _vtf_pid_map\: Going back and forth between ESPResSo and VTF indexing:
 
+``vtf_pid_map``: Going back and forth between |es| and VTF indexing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :meth:`espressomd.io.writer.vtf.vtf_pid_map`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Generates a dictionary which maps |es| particle ``id`` to VTF indices.
 This is motivated by the fact that the list of |es| particle ``id`` is allowed to contain *holes* but VMD
 requires increasing and continuous indexing. The |es| ``id`` can be used as *key* to obtain the VTF index as the *value*, for example:

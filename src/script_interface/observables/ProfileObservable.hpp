@@ -34,7 +34,10 @@ namespace Observables {
 template <typename CoreObs>
 class ProfileObservable
     : public AutoParameters<ProfileObservable<CoreObs>, Observable> {
+  using Base = AutoParameters<ProfileObservable<CoreObs>, Observable>;
+
 public:
+  using Base::Base;
   ProfileObservable() {
     this->add_parameters(
         {{"n_x_bins",
@@ -94,6 +97,17 @@ public:
   }
 
   void construct(VariantMap const &params) override {}
+
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
+    if (method == "edges") {
+      std::vector<Variant> variant_edges;
+      boost::copy(profile_observable()->edges(),
+                  std::back_inserter(variant_edges));
+      return variant_edges;
+    }
+    return Base::call_method(method, parameters);
+  }
 
   std::shared_ptr<::Observables::ProfileObservable> profile_observable() const {
     return m_observable;

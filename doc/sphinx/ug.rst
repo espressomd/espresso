@@ -14,6 +14,7 @@
     system_manipulation.rst
     constraints.rst
     lb.rst
+    sd.rst
     analysis.rst
     io.rst
     visualization.rst
