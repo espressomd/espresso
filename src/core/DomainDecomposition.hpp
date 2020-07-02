@@ -44,11 +44,10 @@
  *  2D representation of a linked cell grid: cell_grid =
  *  {4,4}, ghost_cell_grid = {6,6}
  *
- * Each cell has 3^D neighbor cells (For cell 14 they are
- * marked). Since we deal with pair forces, it is sufficient to
- * calculate only half of the interactions (Newtons law: action =
- * reaction). We have chosen the upper half e.g. all neighbor cells with
- * a higher linear index (For cell 14 they are marked in light
+ * Each cell has 3^D neighbor cells. Since we deal with pair forces, it is
+ * sufficient to calculate only half of the interactions (Newton's law:
+ * action = reaction). We have chosen the upper half e.g. all neighbor
+ * cells with a higher linear index (for cell 14 they are marked in light
  * blue). Caution: This implementation needs double sided ghost
  * communication! For single sided ghost communication one would need
  * some ghost-ghost cell interaction as well, which we do not need!
