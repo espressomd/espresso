@@ -59,7 +59,7 @@ else:
 espressomd.assert_features(required_features)
 
 system = espressomd.System(box_l=[10, 10, 10])
-system.time_step = 1.0
+system.time_step = 1.5
 system.cell_system.skin = 0.4
 system.periodicity = [False, False, False]
 
@@ -77,7 +77,8 @@ system.constraints.add(gravity)
 obs = espressomd.observables.ParticlePositions(ids=system.part[:].id)
 acc = espressomd.accumulators.TimeSeries(obs=obs, delta_N=1)
 system.auto_update_accumulators.add(acc)
-intsteps = int(13000 / system.time_step)
+acc.update()
+intsteps = int(10500 / system.time_step)
 system.integrator.run(intsteps)
 
 positions = acc.time_series()
