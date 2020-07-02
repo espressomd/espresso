@@ -77,7 +77,8 @@ default:
      CC: 'gcc-9'
      CXX: 'g++-9'
   script:
-    - export with_cuda=false myconfig=default with_coverage=true with_scafacos=true
+    - export with_cuda=false myconfig=default with_coverage=true
+    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -90,7 +91,8 @@ maxset:
      CC: 'gcc-9'
      CXX: 'g++-9'
   script:
-    - export with_cuda=false myconfig=maxset with_coverage=true with_scafacos=true
+    - export with_cuda=false myconfig=maxset with_coverage=true
+    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -127,7 +129,7 @@ debian:10:
   stage: build
   image: docker.pkg.github.com/espressomd/docker/debian:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
-    - export with_cuda=false myconfig=maxset make_check_python=false
+    - export with_cuda=false myconfig=maxset make_check_python=false with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -138,7 +140,7 @@ opensuse:15.1:
   stage: build
   image: docker.pkg.github.com/espressomd/docker/opensuse:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
-    - export with_cuda=false myconfig=maxset make_check_python=false
+    - export with_cuda=false myconfig=maxset make_check_python=false with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -149,7 +151,7 @@ centos:7:
   stage: build
   image: docker.pkg.github.com/espressomd/docker/centos:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
-    - export with_cuda=false myconfig=maxset make_check_python=true
+    - export with_cuda=false myconfig=maxset make_check_python=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -160,7 +162,7 @@ fedora:32:
   stage: build
   image: docker.pkg.github.com/espressomd/docker/fedora:fc7628d32de0fce605976ba9edebe7eff186e618
   script:
-    - export with_cuda=false myconfig=maxset make_check_python=false
+    - export with_cuda=false myconfig=maxset make_check_python=false with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -187,8 +189,9 @@ clang-sanitizer:
      CC: 'clang-9'
      CXX: 'clang++-9'
   script:
-    - export myconfig=maxset with_cuda=true with_cuda_compiler=clang with_coverage=false with_scafacos=true
+    - export myconfig=maxset with_cuda=true with_cuda_compiler=clang with_coverage=false
     - export with_static_analysis=true test_timeout=900 with_asan=true with_ubsan=true
+    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   timeout: 2h
   tags:
@@ -203,7 +206,8 @@ cuda10-maxset:
      CC: 'gcc-8'
      CXX: 'g++-8'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false with_scafacos=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - export myconfig=maxset with_cuda=true with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:
@@ -223,7 +227,8 @@ cuda9-maxset:
      CXX: 'g++-6'
      GCOV: 'gcov-6'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=true with_scafacos=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - export myconfig=maxset with_cuda=true with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:
@@ -307,7 +312,8 @@ installation:
      CC: 'gcc-8'
      CXX: 'g++-8'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
+    - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export with_scafacos=true with_stokesian_dynamics=true
     - export srcdir=${CI_PROJECT_DIR} build_type=Release
     - bash maintainer/CI/build_cmake.sh
     - cd build
@@ -335,7 +341,8 @@ empty:
      CC: 'clang-9'
      CXX: 'clang++-9'
   script:
-    - export myconfig=empty with_cuda=true with_cuda_compiler=clang with_static_analysis=true with_scafacos=false
+    - export myconfig=empty with_cuda=true with_cuda_compiler=clang with_static_analysis=true
+    - export with_scafacos=false with_stokesian_dynamics=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -347,9 +354,10 @@ empty:
 rocm-maxset:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/rocm:06b6216c7aa3555bcf28c90734dbb84e7285c96f
+  image: docker.pkg.github.com/espressomd/docker/rocm:fd7ed514a00d38bf336299ddb34ffcdc8a42e906
   script:
     - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
+    - export with_stokesian_dynamics=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
@@ -360,6 +368,7 @@ rocm:latest:
   image: docker.pkg.github.com/espressomd/docker/rocm:latest_base
   script:
     - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
+    - export with_stokesian_dynamics=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
