@@ -16,34 +16,86 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+"""
+Stokesian Dynamics simulation of particle sedimentation.
+Reproduce the trajectory in Figure 5b from :cite:`durlofsky87a`.
+"""
 import espressomd
-from espressomd import constraints
+import espressomd.constraints
+import espressomd.observables
+import espressomd.accumulators
 import numpy as np
 import matplotlib.pyplot as plt
 
-espressomd.assert_features("STOKESIAN_DYNAMICS")
+import argparse
+
+parser = argparse.ArgumentParser(epilog=__doc__)
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--cpu', action='store_true', help='Use CPU implementation')
+group.add_argument('--gpu', action='store_true', help='Use GPU implementation')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--ft', action='store_true', help='Use FT approximation')
+group.add_argument('--fts', action='store_true', help='Use FTS approximation')
+args = parser.parse_args()
+
+required_features = ["STOKESIAN_DYNAMICS"]
+
+if args.gpu:
+    print("Using GPU implementation")
+    required_features.append("CUDA")
+    required_features.append("STOKESIAN_DYNAMICS_GPU")
+    sd_device = "gpu"
+else:
+    print("Using CPU implementation")
+    sd_device = "cpu"
+
+if args.ft:
+    print("Using FT approximation method")
+    sd_method = "ft"
+else:
+    print("Using FTS approximation method")
+    sd_method = "fts"
+
+espressomd.assert_features(required_features)
 
 system = espressomd.System(box_l=[10, 10, 10])
-system.time_step = 1.0
+system.time_step = 1.5
 system.cell_system.skin = 0.4
+system.periodicity = [False, False, False]
 
-system.integrator.set_sd(viscosity=1.0, radii={0: 1.0})
+system.integrator.set_sd(
+    viscosity=1.0, radii={0: 1.0}, device=sd_device,
+    approximation_method=sd_method)
 
 system.part.add(pos=[-5, 0, 0], rotation=[1, 1, 1])
 system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
 system.part.add(pos=[7, 0, 0], rotation=[1, 1, 1])
 
-gravity = constraints.Gravity(g=[0, -1, 0])
+gravity = espressomd.constraints.Gravity(g=[0, -1, 0])
 system.constraints.add(gravity)
 
-intsteps = int(13000 / system.time_step)
-pos = np.empty([intsteps, 3 * len(system.part)])
-for i in range(intsteps):
-    system.integrator.run(1)
-    for n, p in enumerate(system.part):
-        pos[i, 3 * n:3 * n + 3] = p.pos
+obs = espressomd.observables.ParticlePositions(ids=system.part[:].id)
+acc = espressomd.accumulators.TimeSeries(obs=obs, delta_N=1)
+system.auto_update_accumulators.add(acc)
+acc.update()
+intsteps = int(10500 / system.time_step)
+system.integrator.run(intsteps)
 
-for n, p in enumerate(system.part):
-    plt.plot(pos[:, 3 * n], pos[:, 3 * n + 1])
+positions = acc.time_series()
+ref_data = "../testsuite/python/data/dancing.txt"
+data = np.loadtxt(ref_data)
+
+for i in range(3):
+    plt.plot(positions[:, i, 0], positions[:, i, 1], linestyle='solid')
+
+plt.gca().set_prop_cycle(None)
+
+for i in range(0, 6, 2):
+    plt.plot(data[:, i], data[:, i + 1], linestyle='dashed')
+
+plt.title("Trajectory of sedimenting spheres\nsolid line: simulation "
+          "({} on {}), dashed line: paper (FTS)"
+          .format(sd_method.upper(), sd_device.upper()))
+plt.xlabel("x")
+plt.ylabel("y")
 plt.show()

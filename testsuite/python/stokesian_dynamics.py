@@ -17,26 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-from espressomd import constraints
+import espressomd.observables
+import espressomd.accumulators
+import espressomd.constraints
 import numpy as np
 import unittest as ut
-import unittest_decorators as utx
 from tests_common import abspath
 
 s = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 
-def skipIfMissingFeatureStokesianDynamics():
-    """Specialized unittest skipIf decorator for missing Stokesian Dynamics."""
-    if not espressomd.has_features(["STOKESIAN_DYNAMICS"]) and (not espressomd.has_features(
-            ["STOKESIAN_DYNAMICS_GPU"]) or not espressomd.gpu_available()):
-        return ut.skip("Skipping test: feature STOKESIAN_DYNAMICS unavailable")
-    return utx._id
-
-
-@skipIfMissingFeatureStokesianDynamics()
 class StokesianDynamicsSetupTest(ut.TestCase):
     system = s
+    device = 'none'
 
     def setUp(self):
         self.system.box_l = [10] * 3
@@ -44,30 +37,29 @@ class StokesianDynamicsSetupTest(ut.TestCase):
         self.system.time_step = 1.0
         self.system.cell_system.skin = 0.4
 
-        # unset SD integrator so we can test whether set_sd fails
+        # unset SD integrator so we can test whether set_sd() fails.
         # set_nvt() is the only way to ensure that integ_switch is
         # set to a different value than INTEG_METHOD_SD
         self.system.integrator.set_nvt()
 
-    def test_pbc_checks(self):
-
+    def pbc_checks(self):
         self.system.periodicity = [0, 0, 1]
-        with (self.assertRaises(Exception)):
+        with self.assertRaises(Exception):
             self.system.integrator.set_sd(viscosity=1.0,
-                                          device="cpu",
+                                          device=self.device,
                                           radii={0: 1.0})
 
         self.system.periodicity = [0, 0, 0]
         self.system.integrator.set_sd(viscosity=1.0,
-                                      device="cpu",
+                                      device=self.device,
                                       radii={0: 1.0})
-        with (self.assertRaises(Exception)):
+        with self.assertRaises(Exception):
             self.system.periodicity = [0, 1, 0]
 
 
-@skipIfMissingFeatureStokesianDynamics()
 class StokesianDynamicsTest(ut.TestCase):
     system = s
+    device = 'none'
 
     # Digitized reference data of Figure 5b from
     # Durlofsky et al., J. Fluid Mech. 180, 21 (1987)
@@ -79,61 +71,66 @@ class StokesianDynamicsTest(ut.TestCase):
         self.system.periodicity = [0, 0, 0]
         self.system.cell_system.skin = 0.4
 
-    def falling_spheres(self, time_step, l_factor, t_factor):
+    def falling_spheres(self, time_step, l_factor, t_factor,
+                        sd_method='fts', sd_short=False):
         self.system.time_step = time_step
         self.system.part.add(pos=[-5 * l_factor, 0, 0], rotation=[1, 1, 1])
         self.system.part.add(pos=[0 * l_factor, 0, 0], rotation=[1, 1, 1])
         self.system.part.add(pos=[7 * l_factor, 0, 0], rotation=[1, 1, 1])
 
-        self.system.integrator.set_sd(viscosity=1.0 / (t_factor * l_factor),
-                                      device="cpu",
-                                      radii={0: 1.0 * l_factor})
+        self.system.integrator.set_sd(
+            viscosity=1.0 / (t_factor * l_factor),
+            device=self.device, radii={0: 1.0 * l_factor},
+            approximation_method=sd_method)
 
-        gravity = constraints.Gravity(
+        gravity = espressomd.constraints.Gravity(
             g=[0, -1.0 * l_factor / (t_factor**2), 0])
         self.system.constraints.add(gravity)
         self.system.time_step = 1.0 * t_factor
 
-        intsteps = int(8000 * t_factor / self.system.time_step)
-        pos = np.empty([intsteps + 1, 3 * len(self.system.part)])
+        obs = espressomd.observables.ParticlePositions(ids=(0, 1, 2))
+        acc = espressomd.accumulators.TimeSeries(obs=obs, delta_N=1)
+        self.system.auto_update_accumulators.add(acc)
+        acc.update()
 
-        pos[0, :] = self.system.part[:].pos.flatten()
-        for i in range(intsteps):
-            self.system.integrator.run(1)
-            for n, p in enumerate(self.system.part):
-                pos[i + 1, 3 * n:3 * n + 3] = p.pos
+        if sd_short:
+            y_min = -80
+            intsteps = 1300
+        elif sd_method == 'fts':
+            y_min = -555
+            intsteps = 8000
+        else:
+            y_min = -200
+            intsteps = 3000
+        intsteps = int(intsteps * t_factor / self.system.time_step)
 
-        for i in range(self.data.shape[0]):
-            for n in range(3):
-                x_ref = self.data[i, 2 * n] * l_factor
-                y_ref = self.data[i, 2 * n + 1] * l_factor
-                x = pos[:, 3 * n]
-                y = pos[:, 3 * n + 1]
+        self.system.integrator.run(intsteps)
 
-                if y_ref < -555 * l_factor:
-                    continue
+        simul = acc.time_series()[:, :, 0:2]
+        paper = self.data.reshape([-1, 3, 2])
 
-                idx = np.abs(y - y_ref).argmin()
-                dist = np.sqrt((x_ref - x[idx])**2 + (y_ref - y[idx])**2)
-                self.assertLess(dist, 0.5 * l_factor)
-
-    def test_default(self):
-        self.falling_spheres(1.0, 1.0, 1.0)
-
-    def test_rescaled(self):
-        self.falling_spheres(1.0, 4.5, 2.5)
-
-    def test_different_time_step(self):
-        self.falling_spheres(0.7, 1.0, 1.0)
+        for pid in range(3):
+            dist = []
+            # the simulated trajectory is oversampled by a ratio of
+            # (90/t_factor):1 compared to the published trajectory
+            for desired in paper[:, pid] * l_factor:
+                if desired[1] < y_min * l_factor:
+                    break
+                # find the closest point in the simulated trajectory
+                idx = np.abs(simul[:, pid, 1] - desired[1]).argmin()
+                actual = simul[idx, pid]
+                dist.append(np.linalg.norm(actual - desired))
+            self.assertLess(idx, intsteps, msg='Insufficient sampling')
+            np.testing.assert_allclose(dist, 0, rtol=0, atol=0.5 * l_factor)
 
     def tearDown(self):
         self.system.constraints.clear()
         self.system.part.clear()
 
 
-@skipIfMissingFeatureStokesianDynamics()
 class StokesianDiffusionTest(ut.TestCase):
     system = s
+    device = 'none'
 
     kT = 1e-4
     R = 1.5
@@ -148,12 +145,12 @@ class StokesianDiffusionTest(ut.TestCase):
 
         self.system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
 
+    def check(self):
         self.system.integrator.set_sd(viscosity=self.eta,
-                                      device="cpu",
+                                      device=self.device,
                                       radii={0: self.R})
         self.system.thermostat.set_sd(kT=self.kT, seed=42)
 
-    def test(self):
         intsteps = int(100000 / self.system.time_step)
         pos = np.empty([intsteps + 1, 3])
         orientation = np.empty((intsteps + 1, 3))
@@ -206,7 +203,3 @@ class StokesianDiffusionTest(ut.TestCase):
         self.system.constraints.clear()
         self.system.part.clear()
         self.system.thermostat.set_sd(kT=0)
-
-
-if __name__ == '__main__':
-    ut.main()
