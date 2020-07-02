@@ -83,7 +83,7 @@ class StokesianDynamicsTest(ut.TestCase):
             device=self.device, radii={0: 1.0 * l_factor},
             approximation_method=sd_method)
 
-        gravity = constraints.Gravity(
+        gravity = espressomd.constraints.Gravity(
             g=[0, -1.0 * l_factor / (t_factor**2), 0])
         self.system.constraints.add(gravity)
         self.system.time_step = 1.0 * t_factor
