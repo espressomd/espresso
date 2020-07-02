@@ -83,8 +83,7 @@ void energy_calc(const double time) {
       [](Particle const &p1, Particle const &p2, Distance const &d) {
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                    obs_energy);
-      },
-      detail::True{});
+      });
 
   calc_long_range_energies(cell_structure.local_particles());
 

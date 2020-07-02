@@ -102,8 +102,7 @@ void pressure_calc() {
       [](Particle &p1, Particle &p2, Distance const &d) {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
                                     obs_pressure);
-      },
-      detail::True{});
+      });
 
   calc_long_range_virials(cell_structure.local_particles());
 

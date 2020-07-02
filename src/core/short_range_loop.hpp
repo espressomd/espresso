@@ -38,7 +38,7 @@ struct True {
 template <class BondKernel, class PairKernel,
           class VerletCriterion = detail::True>
 void short_range_loop(BondKernel bond_kernel, PairKernel pair_kernel,
-                      const VerletCriterion &verlet_criterion) {
+                      const VerletCriterion &verlet_criterion = {}) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
