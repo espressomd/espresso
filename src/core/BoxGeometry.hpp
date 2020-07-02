@@ -107,15 +107,11 @@ Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
           get_mi_coord(a[2], b[2], box.length()[2], box.periodic(2))};
 }
 
-/** fold a coordinate to primary simulation box.
-    \param pos         the position...
-    \param image_box   and the box
-    \param length the box length.
-   coordinate.
-
-    Both pos and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
+/** @brief Fold a coordinate to primary simulation box.
+ *  @param pos        coordinate to fold
+ *  @param image_box  image box offset
+ *  @param length     box length
+ */
 inline std::pair<double, int> fold_coordinate(double pos, int image_box,
                                               double const &length) {
   std::tie(pos, image_box) = Algorithm::periodic_fold(pos, image_box, length);
@@ -131,13 +127,11 @@ inline std::pair<double, int> fold_coordinate(double pos, int image_box,
   return {pos, image_box};
 }
 
-/** fold particle coordinates to primary simulation box.
-    \param pos the position...
-    \param image_box and the box
-
-    Both pos and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
+/** @brief Fold particle coordinates to primary simulation box.
+ *  @param[in,out] pos        coordinate to fold
+ *  @param[in,out] image_box  image box offset
+ *  @param[in] box            box parameters (side lengths, periodicity)
+ */
 inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
                           const BoxGeometry &box) {
   for (int i = 0; i < 3; i++) {
@@ -148,6 +142,11 @@ inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
   }
 }
 
+/** @brief Fold particle coordinates to primary simulation box.
+ *  @param p    coordinate to fold
+ *  @param box  box parameters (side lengths, periodicity)
+ *  @return Folded coordinates.
+ */
 inline Utils::Vector3d folded_position(const Utils::Vector3d &p,
                                        const BoxGeometry &box) {
   Utils::Vector3d p_folded;

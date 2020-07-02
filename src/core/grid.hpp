@@ -81,6 +81,11 @@ void grid_changed_box_l(const BoxGeometry &box);
  */
 void rescale_boxl(int dir, double d_new);
 
+/** @brief Calculate image box shift vector.
+ *  @param image_box  image box offset
+ *  @param box        box parameters (side lengths)
+ *  @return Image box coordinates.
+ */
 inline Utils::Vector3d image_shift(const Utils::Vector3i &image_box,
                                    const Utils::Vector3d &box) {
   return hadamard_product(image_box, box);
