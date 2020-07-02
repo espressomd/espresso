@@ -42,6 +42,9 @@ class StokesianDynamicsTest(sd.StokesianDynamicsTest):
     def test_different_time_step(self):
         self.falling_spheres(0.7, 1.0, 1.0)
 
+    def test_default_ft(self):
+        self.falling_spheres(1.0, 1.0, 1.0, 'ft')
+
 
 @utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
 class StokesianDiffusionTest(sd.StokesianDiffusionTest):
