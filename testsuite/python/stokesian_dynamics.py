@@ -37,22 +37,21 @@ class StokesianDynamicsSetupTest(ut.TestCase):
         self.system.time_step = 1.0
         self.system.cell_system.skin = 0.4
 
-        # unset SD integrator so we can test whether set_sd() fails.
-        # set_nvt() is the only way to ensure that integ_switch is
+        # unset SD integrator so we can test whether set_stokesian_dynamics()
+        # fails. set_nvt() is the only way to ensure that integ_switch is
         # set to a different value than INTEG_METHOD_SD
         self.system.integrator.set_nvt()
 
     def pbc_checks(self):
         self.system.periodicity = [0, 0, 1]
         with self.assertRaises(Exception):
-            self.system.integrator.set_sd(viscosity=1.0,
-                                          device=self.device,
-                                          radii={0: 1.0})
+            self.system.integrator.set_stokesian_dynamics(
+                viscosity=1.0, device=self.device, radii={0: 1.0})
 
         self.system.periodicity = [0, 0, 0]
-        self.system.integrator.set_sd(viscosity=1.0,
-                                      device=self.device,
-                                      radii={0: 1.0})
+        self.system.integrator.set_stokesian_dynamics(
+            viscosity=1.0, device=self.device, radii={0: 1.0})
+
         with self.assertRaises(Exception):
             self.system.periodicity = [0, 1, 0]
 
@@ -78,7 +77,7 @@ class StokesianDynamicsTest(ut.TestCase):
         self.system.part.add(pos=[0 * l_factor, 0, 0], rotation=[1, 1, 1])
         self.system.part.add(pos=[7 * l_factor, 0, 0], rotation=[1, 1, 1])
 
-        self.system.integrator.set_sd(
+        self.system.integrator.set_stokesian_dynamics(
             viscosity=1.0 / (t_factor * l_factor),
             device=self.device, radii={0: 1.0 * l_factor},
             approximation_method=sd_method)
@@ -146,10 +145,9 @@ class StokesianDiffusionTest(ut.TestCase):
         self.system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
 
     def check(self):
-        self.system.integrator.set_sd(viscosity=self.eta,
-                                      device=self.device,
-                                      radii={0: self.R})
-        self.system.thermostat.set_sd(kT=self.kT, seed=42)
+        self.system.integrator.set_stokesian_dynamics(
+            viscosity=self.eta, device=self.device, radii={0: self.R})
+        self.system.thermostat.set_stokesian(kT=self.kT, seed=42)
 
         intsteps = int(100000 / self.system.time_step)
         pos = np.empty([intsteps + 1, 3])
@@ -202,4 +200,4 @@ class StokesianDiffusionTest(ut.TestCase):
     def tearDown(self):
         self.system.constraints.clear()
         self.system.part.clear()
-        self.system.thermostat.set_sd(kT=0)
+        self.system.thermostat.set_stokesian(kT=0)

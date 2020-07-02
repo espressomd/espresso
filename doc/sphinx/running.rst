@@ -279,7 +279,7 @@ handle directly.
 Stokesian Dynamics
 ------------------
 
-:meth:`espressomd.integrate.IntegratorHandle.set_sd`
+:meth:`espressomd.integrate.IntegratorHandle.set_stokesian_dynamics`
 
 The Stokesian Dynamics method allows to study the behaviour of spherical
 particles in a viscous fluid. It is targeted at systems with very low Reynolds
@@ -306,7 +306,7 @@ The following minimal example illustrates how to use the SDM in |es|::
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     system.part.add(pos=[0, 0, 0], rotation=[1, 0, 0])
-    system.integrator.set_sd(viscosity=1.0, radii={0: 1.0})
+    system.integrator.set_stokesian_dynamics(viscosity=1.0, radii={0: 1.0})
 
     system.integrator.run(100)
 
@@ -314,8 +314,8 @@ Because there is no force on the particle yet, nothing will move. You will need
 to add your own actors to the system. The parameter ``radii`` is a dictionary
 that maps particle types to different radii. ``viscosity`` is the dynamic
 viscosity of the ambient infinite fluid. There are additional optional
-parameters for ``set_sd()``. For more information, see
-:py:meth:`espressomd.integrate.IntegratorHandle.set_sd()`.
+parameters for ``set_stokesian_dynamics()``. For more information, see
+:py:meth:`espressomd.integrate.IntegratorHandle.set_stokesian_dynamics()`.
 
 Note that this setup represents a system at zero temperature. In order to
 thermalize the system, the SD thermostat needs to be activated (see

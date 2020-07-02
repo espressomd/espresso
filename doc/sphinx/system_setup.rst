@@ -481,7 +481,7 @@ Stokesian thermostat
 In order to thermalize a Stokesian Dynamics simulation, the SD thermostat
 needs to be activated via::
 
-    system.thermostat.set_sd(kT=1.0, seed=43)
+    system.thermostat.set_stokesian(kT=1.0, seed=43)
 
 where ``kT`` denotes the desired temperature of the system, and ``seed`` the
 seed for the random number generator of the Stokesian Dynamics thermostat.

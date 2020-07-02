@@ -101,7 +101,7 @@ cdef class IntegratorHandle:
         """
         self._integrator = BrownianDynamics()
 
-    def set_sd(self, *args, **kwargs):
+    def set_stokesian_dynamics(self, *args, **kwargs):
         """
         Set the integration method to Stokesian Dynamics (:class:`StokesianDynamics`).
 
