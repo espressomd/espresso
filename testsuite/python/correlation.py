@@ -55,9 +55,9 @@ class CorrelatorTest(ut.TestCase):
             obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="square_distance_componentwise")
 
-        s.integrator.run(100)
+        s.integrator.run(1000)
         s.auto_update_accumulators.add(acc)
-        s.integrator.run(2000)
+        s.integrator.run(1000)
 
         corr = acc.result()
 
@@ -80,12 +80,11 @@ class CorrelatorTest(ut.TestCase):
 
         obs = espressomd.observables.ParticleVelocities(ids=(0,))
         acc = espressomd.accumulators.Correlator(
-            obs1=obs, tau_lin=10, tau_max=10.0, delta_N=1,
+            obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="tensor_product")
 
-        s.integrator.run(1000)
         s.auto_update_accumulators.add(acc)
-        s.integrator.run(20000)
+        s.integrator.run(1000)
 
         corr = acc.result()
 
@@ -105,12 +104,11 @@ class CorrelatorTest(ut.TestCase):
 
         obs = espressomd.observables.ParticleVelocities(ids=(0,))
         acc = espressomd.accumulators.Correlator(
-            obs1=obs, tau_lin=10, tau_max=10.0, delta_N=1,
+            obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="componentwise_product")
 
-        s.integrator.run(1000)
         s.auto_update_accumulators.add(acc)
-        s.integrator.run(20000)
+        s.integrator.run(1000)
 
         corr = acc.result()
 
@@ -130,12 +128,11 @@ class CorrelatorTest(ut.TestCase):
 
         obs = espressomd.observables.ParticleVelocities(ids=(0,))
         acc = espressomd.accumulators.Correlator(
-            obs1=obs, tau_lin=10, tau_max=10.0, delta_N=1,
+            obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="scalar_product")
 
-        s.integrator.run(1000)
         s.auto_update_accumulators.add(acc)
-        s.integrator.run(20000)
+        s.integrator.run(1000)
 
         corr = acc.result()
 
@@ -159,12 +156,10 @@ class CorrelatorTest(ut.TestCase):
             obs1=obs, tau_lin=10, tau_max=2.0, delta_N=1,
             corr_operation="fcs_acf", args=w)
 
-        s.integrator.run(100)
         s.auto_update_accumulators.add(acc)
-        s.integrator.run(2000)
+        s.integrator.run(1000)
 
         corr = acc.result()
-
         # Check pickling
         acc_unpickled = pickle.loads(pickle.dumps(acc))
         np.testing.assert_array_equal(corr, acc_unpickled.result())
