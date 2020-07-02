@@ -520,6 +520,7 @@ using a CMake flag (see :ref:`Options and Variables`).
 - ``STOKESIAN_DYNAMICS_GPU`` Enables the Stokesian Dynamics feature for GPU
   (see :ref:`Stokesian Dynamics`). Requires thrust/cuBLAS/cuSolver for NVIDIA
   GPUs or rocrand/rocthrust/rocblas/rocsolver for AMD GPUs.
+  Requires ``EXPERIMENTAL_FEATURES``.
 
 
 

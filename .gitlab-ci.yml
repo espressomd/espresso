@@ -341,7 +341,8 @@ empty:
      CC: 'clang-9'
      CXX: 'clang++-9'
   script:
-    - export myconfig=empty with_cuda=true with_cuda_compiler=clang with_static_analysis=true with_scafacos=false
+    - export myconfig=empty with_cuda=true with_cuda_compiler=clang with_static_analysis=true
+    - export with_scafacos=false with_stokesian_dynamics=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -356,7 +357,7 @@ rocm-maxset:
   image: docker.pkg.github.com/espressomd/docker/rocm:fd7ed514a00d38bf336299ddb34ffcdc8a42e906
   script:
     - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
-    - export with_stokesian_dynamics=true
+    - export with_stokesian_dynamics=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
@@ -367,7 +368,7 @@ rocm:latest:
   image: docker.pkg.github.com/espressomd/docker/rocm:latest_base
   script:
     - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
-    - export with_stokesian_dynamics=true
+    - export with_stokesian_dynamics=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
