@@ -20,12 +20,10 @@
 #define CORE_SHORT_RANGE_HPP
 
 #include "cells.hpp"
-#include "grid.hpp"
-#include "integrate.hpp"
 
 #include <profiler/profiler.hpp>
 
-#include <utility>
+#include <cassert>
 
 namespace detail {
 /**
