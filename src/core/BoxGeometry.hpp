@@ -73,7 +73,6 @@ public:
 };
 
 /**
-<<<<<<< HEAD
  * @brief Get the minimum-image distance between two coordinates.
  * @param a           Coordinate of the terminal point.
  * @param b           Coordinate of the initial point.
@@ -81,21 +80,6 @@ public:
  * @param periodic    Box periodicity.
  * @return Shortest distance from @p b to @p a across periodic images,
  *         i.e. <tt>a - b</tt>. Can be negative.
-=======
- * @brief Calculate the minimum image distance for one coordinate.
- *
- * If periodic is false, this just returns a - b, otherwise
- * it returns the shortest distance beween a - b over periodic boundaries.
- * The case where the a, b are separated by multiples of the box length
- * is handled correctly.
- *
- * @tparam T Floating point type
- * @param a Left operand
- * @param b Right operand
- * @param box_length Box length for the coordinate
- * @param periodic True if this direction is periodic.
- * @return Minimum image distance.
->>>>>>> core: Moved minimum image distance calculation to BoxGeometry.
  */
 template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
   auto const dx = a - b;
