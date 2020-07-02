@@ -125,8 +125,7 @@ cdef class Thermostat:
                                   act_on_virtual=thmst["act_on_virtual"],
                                   seed=thmst["seed"])
             if thmst["type"] == "SD":
-                self.set_sd(kT=thmst["kT"],
-                            seed=thmst["seed"])
+                self.set_stokesian(kT=thmst["kT"], seed=thmst["seed"])
 
     def get_ts(self):
         return thermo_switch
@@ -710,7 +709,7 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_TEMPERATURE)
 
     IF STOKESIAN_DYNAMICS:
-        def set_sd(self, kT=None, seed=None):
+        def set_stokesian(self, kT=None, seed=None):
             """
             Sets the SD thermostat with required parameters.
 

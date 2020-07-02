@@ -63,7 +63,7 @@ system.time_step = 1.5
 system.cell_system.skin = 0.4
 system.periodicity = [False, False, False]
 
-system.integrator.set_sd(
+system.integrator.set_stokesian_dynamics(
     viscosity=1.0, radii={0: 1.0}, device=sd_device,
     approximation_method=sd_method)
 

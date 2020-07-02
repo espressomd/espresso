@@ -155,7 +155,7 @@ if 'LB.OFF' in modes:
         system.thermostat.set_dpd(kT=1.0, seed=42)
     elif 'THERM.SDM' in modes and (has_features('STOKESIAN_DYNAMICS') or has_features('STOKESIAN_DYNAMICS_GPU')):
         system.periodicity = [0, 0, 0]
-        system.thermostat.set_sd(kT=1.0, seed=42)
+        system.thermostat.set_stokesian(kT=1.0, seed=42)
     # set integrator
     if 'INT.NPT' in modes and has_features('NPT'):
         system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01,
@@ -169,14 +169,14 @@ if 'LB.OFF' in modes:
         system.integrator.set_brownian_dynamics()
     elif 'INT.SDM.CPU' in modes and has_features('STOKESIAN_DYNAMICS'):
         system.periodicity = [0, 0, 0]
-        system.integrator.set_sd(approximation_method='ft', viscosity=0.5,
-                                 device='cpu', radii={0: 1.5},
-                                 pair_mobility=False, self_mobility=True)
+        system.integrator.set_stokesian_dynamics(
+            approximation_method='ft', device='cpu', viscosity=0.5,
+            radii={0: 1.5}, pair_mobility=False, self_mobility=True)
     elif 'INT.SDM.GPU' in modes and has_features('STOKESIAN_DYNAMICS_GPU') and espressomd.gpu_available():
         system.periodicity = [0, 0, 0]
-        system.integrator.set_sd(approximation_method='fts', viscosity=2.0,
-                                 device='gpu', radii={0: 1.0},
-                                 pair_mobility=True, self_mobility=False)
+        system.integrator.set_stokesian_dynamics(
+            approximation_method='fts', device='gpu', viscosity=2.0,
+            radii={0: 1.0}, pair_mobility=True, self_mobility=False)
     # set minimization
     if 'MINIMIZATION' in modes:
         steepest_descent(system, f_max=1, gamma=10, max_steps=0,
