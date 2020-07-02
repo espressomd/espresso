@@ -43,7 +43,6 @@ if(SPHINX_FOUND)
       "${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/particles.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/running.rst"
-      "${CMAKE_CURRENT_SOURCE_DIR}/sd.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/system_manipulation.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/system_setup.rst"
       "${CMAKE_CURRENT_SOURCE_DIR}/ug.rst"
