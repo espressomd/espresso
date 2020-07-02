@@ -510,7 +510,6 @@ public:
   /** Non-bonded pair loop with potential use
    * of verlet lists.
    * @param pair_kernel Kernel to apply
-   * @param verlet_criterion Filter for verlet lists.
    */
   template <class PairKernel> void non_bonded_loop(PairKernel pair_kernel) {
     link_cell(pair_kernel);
