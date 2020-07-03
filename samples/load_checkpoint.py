@@ -77,5 +77,4 @@ print("Integrating...")
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
-while True:
-    system.integrator.run(1000)
+system.integrator.run(1000)
