@@ -293,6 +293,23 @@ if(WITH_STOKESIAN_DYNAMICS)
   endif()
 endif(WITH_STOKESIAN_DYNAMICS)
 
+if(WITH_STOKESIAN_DYNAMICS)
+  set(CMAKE_INSTALL_LIBDIR
+      "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
+  cmake_minimum_required(VERSION 3.11)
+  include(FetchContent)
+  FetchContent_Declare(
+    stokesian_dynamics
+    GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
+    GIT_TAG 860ceac208175)
+  FetchContent_GetProperties(stokesian_dynamics)
+  if(NOT stokesian_dynamics_POPULATED)
+    FetchContent_Populate(stokesian_dynamics)
+    add_subdirectory(${stokesian_dynamics_SOURCE_DIR}
+                     ${stokesian_dynamics_BINARY_DIR})
+  endif()
+endif(WITH_STOKESIAN_DYNAMICS)
+
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)
   pkg_check_modules(VALGRIND valgrind)

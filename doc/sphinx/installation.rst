@@ -744,7 +744,7 @@ the CMake logic needs editing:
 
   .. code-block:: bash
 
-    sed -ri 's|GIT_REPOSITORY +.+/stokesian_dynamics|GIT_REPOSITORY /work/username/stokesian_dynamics|' CMakeLists.txt
+    sed -ri 's|GIT_REPOSITORY +.+stokesian-dynamics.git|GIT_REPOSITORY /work/username/stokesian_dynamics|' CMakeLists.txt
 
 
 Compiling, testing and installing
