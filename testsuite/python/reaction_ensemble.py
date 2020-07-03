@@ -93,12 +93,12 @@ class ReactionEnsembleTest(ut.TestCase):
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
-        RE.reaction(20 * N0)
+        RE.reaction(5 * N0)
 
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
-        num_samples = 1000
+        num_samples = 300
         for _ in range(num_samples):
             RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)
