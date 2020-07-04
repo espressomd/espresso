@@ -39,8 +39,8 @@ BOOST_AUTO_TEST_CASE(average_list_of_allowed_entries_test) {
   using namespace ReactionEnsemble;
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
 
-  BOOST_CHECK_CLOSE(
-      average_list_of_allowed_entries(std::vector<unsigned>{1, 2}), 1.5, tol);
+  BOOST_CHECK_CLOSE(average_list_of_allowed_entries(std::vector<long>{1, 2}),
+                    1.5, tol);
   BOOST_CHECK_CLOSE(
       average_list_of_allowed_entries(std::vector<double>{1, 2, -2}), 1.5, tol);
   BOOST_CHECK_CLOSE(
