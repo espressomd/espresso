@@ -839,7 +839,8 @@ scripts. Suitable IDEs are e.g. *Visual Studio Code* and *Spyder*. They can
 provide a workflow superior to that of a standard text editor as they offer
 useful features such as advanced code completion, debugging and analysis tools
 etc. The following example shows how to setup |es| in *Visual Studio Code* on
-Linux (tested with version 1.46.1).
+Linux (tested with version 1.46.1). The process should be similar for every
+Python IDE, namely the Python interpreter needs to be replaced.
 
 The ``pypresso`` executable can be set as a custom Python interpreter inside VS
 Code. |es| scripts can then be executed just like any other python script.
