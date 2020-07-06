@@ -131,24 +131,24 @@ Interpolating velocities
 To get interpolated velocity values between lattice nodes, the function::
 
     lb.get_interpolated_velocity(pos = [1.1,1.2,1.3])
-    
-with a single position  ``pos`` as an argument can be used. 
+
+with a single position  ``pos`` as an argument can be used.
 For the GPU fluid :class:`espressomd.lb.LBFluidGPU`
 also :py:meth:`espressomd.lb.LBFluidGPU.get_interpolated_fluid_velocity_at_positions()`
 is available, which expects a numpy array of positions as an argument.
 
 By default, the interpolation is done linearly between the nearest 8 LB nodes,
-but for the GPU implementation also a quadratic scheme involving 27 nodes is implemented 
-(see eqs. 297 and 301 in :cite:`duenweg08a`). 
-You can choose by calling 
+but for the GPU implementation also a quadratic scheme involving 27 nodes is implemented
+(see eqs. 297 and 301 in :cite:`duenweg08a`).
+You can choose by calling
 one of::
 
     lb.set_interpolation_order('linear')
     lb.set_interpolation_order('quadratic')
-    
+
 A note on boundaries:
 both interpolation schemes don't take into account the physical location of the boundaries
-(e.g. in the middle between two nodes for a planar wall) but will use the boundary node slip velocity 
+(e.g. in the middle between two nodes for a planar wall) but will use the boundary node slip velocity
 at the node position. This means that every interpolation involving at least one
 boundary node will introduce an error.
 
@@ -169,8 +169,8 @@ the :ref:`LB thermostat` (See more detailed description there). A short example 
 
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
-where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`, 
-``gamma`` the friction coefficient and ``seed`` the seed for the random number generator involved 
+where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`,
+``gamma`` the friction coefficient and ``seed`` the seed for the random number generator involved
 in the thermalization.
 
 

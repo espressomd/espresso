@@ -258,18 +258,18 @@ with internal constraints, using Lagrange multipliers.
 Setting up diamond polymer networks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:func:`espressomd.polymer.setup_diamond_polymer()` creates a diamond-structured 
+:func:`espressomd.polymer.setup_diamond_polymer()` creates a diamond-structured
 polymer network with 8 tetra-functional nodes
-connected by :math:`2*8` polymer chains of length ``MPC`` with the system box as 
+connected by :math:`2*8` polymer chains of length ``MPC`` with the system box as
 the unit cell. The box therefore has to be cubic.
 The diamond command creates ``16*MPC+8`` many particles
 which are connected via the provided bond type (the term plus 8 stems from adding 8 nodes which are connecting the chains).
-Chain monomers are placed at constant distance to each other 
+Chain monomers are placed at constant distance to each other
 along the vector connecting network nodes. The distance between monomers is
 ``system.box_l[0]*(0.25 * sqrt(3))/(MPC + 1)``, which should be taken into account
 when choosing the connecting bond.
-The starting particle id, the charges of monomers, the frequency 
-of charged monomers in the chains as well as the types of the node particles, 
+The starting particle id, the charges of monomers, the frequency
+of charged monomers in the chains as well as the types of the node particles,
 the charged and the uncharged chain particles can be set via keyword arguments, see :func:`espressomd.polymer.setup_diamond_polymer()`.
 
 .. _diamond:
@@ -279,7 +279,7 @@ the charged and the uncharged chain particles can be set via keyword arguments, 
    :height: 6.00000cm
 
    Diamond-like polymer network with ``MPC=15``.
-   
+
 For simulating compressed or stretched gels the function
 :meth:`espressomd.system.System.change_volume_and_rescale_particles` may be used.
 
