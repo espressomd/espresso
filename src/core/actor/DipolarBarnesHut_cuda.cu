@@ -561,7 +561,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
           } // if (ch >= 0)
         }
         missing_max = missing;
-        // Count of childs:
+        // Count of children:
         cnt += j;
       }
 
@@ -602,7 +602,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
       // (missing == 0) could be true and threads will move to next particles (k
       // += inc) only if previous conditions (m >= 0.0f) will be true. It can
       // happen only if cell will obtain the mass (only here below: "massd[k] =
-      // cm") or they will find the very last childs: particles. Before that:
+      // cm") or they will find the very last child: particles. Before that:
       // do/while loop will continue.
       if (missing == 0) {
         // all children are ready, so store computed information
