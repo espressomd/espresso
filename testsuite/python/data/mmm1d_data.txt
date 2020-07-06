@@ -1,4 +1,4 @@
-#the mmm1d forces were compared to P3M forces for a sufficiently big gap>70 sigma. The forces agreed within 1%. 
+#the mmm1d forces were compared to P3M forces for a sufficiently big gap>70 sigma. The forces agreed within 1%.
 #pid pos_x pos_y pos_z q f_x f_y f_z (for box_l 10 10 10)
 #the data was obtained with a run MMM1D(prefactor=1.0, maxPWerror=1e-20)
 0.000000000000000000e+00 2.699899999999999523e+00 6.149659999999999904e+00 5.340309999999999668e+00 0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00

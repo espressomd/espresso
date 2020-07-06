@@ -71,7 +71,7 @@ class Mpiio:
 
         if prefix is None:
             raise ValueError(
-                "Need to supply output prefix via 'prefix' kwarg.")
+                "Need to supply output prefix via the 'prefix' argument.")
         if not positions and not velocities and not types and not bonds:
             raise ValueError("No output fields chosen.")
 
@@ -92,7 +92,7 @@ class Mpiio:
         """
         if prefix is None:
             raise ValueError(
-                "Need to supply output prefix via 'prefix' kwarg.")
+                "Need to supply output prefix via the 'prefix' argument.")
         if not positions and not velocities and not types and not bonds:
             raise ValueError("No output fields chosen.")
 
