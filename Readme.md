@@ -28,9 +28,9 @@ ESPResSo is capable of doing classical Molecular dynamics simulations
 of many types of systems in different statistical ensembles (NVE, NVT,
 NPT) and non-equilibrium situations, using standard potentials such as
 the Lennard-Jones or Morse potential. It contains many advanced
-simulation algorithms, which take into account hydrodynamic (lattice
-Boltzmann) and electrostatic interactions (P3M, ELC, MMMxD). Rigid
-bodies can be modelled by virtual site interactions, and it can
+simulation algorithms, which take into account hydrodynamic
+(lattice-Boltzmann) and electrostatic interactions (P3M, ELC, MMMxD).
+Rigid bodies can be modelled by virtual site interactions, and it can
 integrate rotationally non-invariant particles.
 
 ESPResSo is free, open-source software (GPL). It is parallelized and

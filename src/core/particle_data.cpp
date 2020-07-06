@@ -289,10 +289,10 @@ struct UpdateOrientation {
  * or a position, or ...
  * New messages can be added here, if they
  * fulfill the type requirements, namely:
- * They either have an integer member id indicating
- * the particle that should be updated an operator()(const Particle&)
+ * They either have an integer member id indicating the particle
+ * that should be updated with an <tt>operator()(const Particle&)</tt>
  * that is called with the particle, or a tree of
- * variants with leafs that have such an operator() and member.
+ * variants with leaves that have such an <tt>operator()</tt> member.
  */
 using UpdateMessage = boost::variant
         < UpdatePropertyMessage

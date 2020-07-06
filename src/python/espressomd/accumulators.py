@@ -185,7 +185,7 @@ class Correlator(ScriptInterfaceHelper):
         ``tau_max >= dt * delta_N * tau_lin``, the
         multiple tau correlator is used, otherwise the trivial linear
         correlator is used. By setting ``tau_lin = 1``, the value will be
-        overriden by ``tau_lin = ceil(tau_max / (dt * delta_N))``, which
+        overridden by ``tau_lin = ceil(tau_max / (dt * delta_N))``, which
         will result in either the multiple or linear tau correlator.
         In many cases, ``tau_lin=16`` is a
         good choice but this may strongly depend on the observables you are

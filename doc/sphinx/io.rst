@@ -143,7 +143,7 @@ respective hdf5-file. This may, for example, look like:
     # ... add particles here
     h5 = h5md.H5md(filename="trajectory.h5", write_pos=True, write_vel=True)
 
-If a file with the given filename exists and has a valid H5MD structures,
+If a file with the given filename exists and has a valid H5MD structure,
 it will be backed up to a file with suffix ".bak". This backup file will be
 deleted when the new file is closed at the end of the simulation with
 ``h5.close()``.
