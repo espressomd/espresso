@@ -58,7 +58,7 @@ public:
   /**
    * @brief Responsible manager.
    */
-  Context *manager() const { return assert(m_manager), m_manager.get(); }
+  Context *manager() const { return m_manager.get(); }
 
 public:
   /**

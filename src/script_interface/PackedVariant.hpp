@@ -84,11 +84,11 @@ unpack(const PackedMap &v,
        std::unordered_map<ObjectId, ObjectRef> const &objects) {
   VariantMap ret;
 
-  boost::transform(v, std::inserter(ret, ret.end()),
-                   [&objects](auto const &kv) {
-                     return std::pair<std::string, Variant>{
-                         kv.first, unpack(kv.second, objects)};
-                   });
+  boost::transform(
+      v, std::inserter(ret, ret.end()),
+      [&objects](auto const &kv) -> std::pair<std::string, Variant> {
+        return {kv.first, unpack(kv.second, objects)};
+      });
 
   return ret;
 }

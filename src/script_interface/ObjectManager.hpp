@@ -37,7 +37,7 @@ public:
   std::shared_ptr<ObjectHandle> deserialize(std::string const &state_);
 
   /**
-   * @brief Serialize a script interface obejct into a binary representation.
+   * @brief Serialize a script interface object into a binary representation.
    */
   std::string serialize(const ObjectHandle *o) const;
 

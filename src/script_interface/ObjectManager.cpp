@@ -19,9 +19,10 @@ ObjectManager::deserialize(std::string const &state_) {
 }
 
 std::string ObjectManager::serialize(const ObjectHandle *o) const {
-  auto ctx = o->manager();
-  return assert(ctx),
-         Utils::pack(std::make_pair(policy(ctx), ctx->serialize(o)));
+  /* We treat objects without a context as local. */
+  auto ctx = o->manager() ? o->manager() : m_local_context.get();
+
+  return Utils::pack(std::make_pair(policy(ctx), ctx->serialize(o)));
 }
 
 ObjectManager::ObjectManager(Communication::MpiCallbacks &callbacks,
