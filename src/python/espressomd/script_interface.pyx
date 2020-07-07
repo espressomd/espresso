@@ -22,12 +22,13 @@ from libcpp.memory cimport make_shared
 
 cdef shared_ptr[ObjectManager] _om
 
-cdef class PObjectRef(object):
+cdef class PObjectRef:
     def __richcmp__(a, b, op):
+        cdef PObjectRef a_ = a
         cdef PObjectRef b_ = b
 
         if op == 2:
-            return a.sip == b_.sip
+            return a_.sip == b_.sip
         else:
             raise NotImplementedError
 
@@ -85,7 +86,11 @@ cdef class PScriptInterface:
             self.sip = sip_.sip
         else:
             global _om
-            self.set_sip(_om.get().make_shared(policy_, to_char_pointer(name), self._sanitize_params(kwargs)))
+            self.set_sip(
+                _om.get().make_shared(
+                    policy_,
+                    to_char_pointer(name),
+                    self._sanitize_params(kwargs)))
 
     def __richcmp__(a, b, op):
         if op == 2:
@@ -301,6 +306,7 @@ class ScriptInterfaceHelper(PScriptInterface):
         for method_name in self._so_bind_methods:
             setattr(self, method_name, self.generate_caller(method_name))
 
+
 class ScriptObjectRegistry(ScriptInterfaceHelper):
     """
     Base class for container-like classes such as
@@ -338,8 +344,10 @@ def _unpickle_script_object_registry(so_name, params, items):
         so.add(item)
     return so
 
+
 # Map from script object names to corresponding python classes
 _python_class_by_so_name = {}
+
 
 def script_interface_register(c):
     """Decorator used to register script interface classes
@@ -352,11 +360,11 @@ def script_interface_register(c):
     _python_class_by_so_name[c._so_name] = c
     return c
 
-cdef void init(MpiCallbacks &cb):
+
+cdef void init(MpiCallbacks & cb):
     cdef Factory[ObjectHandle] f
 
-    initialize(&f)
+    initialize( & f)
 
     global _om
     _om = make_shared[ObjectManager](cb, f)
-

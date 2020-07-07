@@ -96,16 +96,10 @@ template <> inline Viscous make_coupling<Viscous>(const VariantMap &params) {
 }
 
 template <> inline Scaled make_coupling<Scaled>(const VariantMap &params) {
-  auto scales_packed =
-      get_value_or<std::vector<Variant>>(params, "particle_scales", {});
-
-  std::unordered_map<int, double> scales;
-  for (auto const &kv : scales_packed) {
-    auto const kv_vec = get_value<std::vector<Variant>>(kv);
-
-    scales.insert(
-        {get_value<int>(kv_vec.at(0)), get_value<double>(kv_vec.at(1))});
-  }
+  auto scales = params.count("particle_scale")
+                    ? Utils::unpack<std::unordered_map<int, double>>(
+                          get_value<std::string>(params, "particle_scale"))
+                    : std::unordered_map<int, double>{};
 
   return Scaled{scales, get_value<double>(params, "default_scale")};
 }

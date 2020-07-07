@@ -24,7 +24,7 @@
 
 #include <boost/mpi.hpp>
 
-#include "GlobalContext.hpp"
+#include "script_interface/GlobalContext.hpp"
 
 namespace si = ScriptInterface;
 

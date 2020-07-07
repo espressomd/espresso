@@ -18,8 +18,8 @@
  */
 #include "initialize.hpp"
 
-#include "script_interface/ScriptInterface.hpp"
 #include "script_interface/ClassName.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include "Constraints.hpp"
 

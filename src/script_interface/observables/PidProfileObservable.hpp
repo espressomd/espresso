@@ -115,7 +115,7 @@ public:
   }
 
   Variant do_call_method(std::string const &method,
-                      VariantMap const &parameters) override {
+                         VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
       boost::copy(pid_profile_observable()->edges(),

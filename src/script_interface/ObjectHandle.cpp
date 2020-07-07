@@ -25,7 +25,7 @@
 namespace ScriptInterface {
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {
-  if(m_manager)
+  if (m_manager)
     m_manager->notify_set_parameter(this, name, value);
 
   this->do_set_parameter(name, value);

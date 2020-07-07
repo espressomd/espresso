@@ -23,8 +23,8 @@
 #include "AccumulatorBase.hpp"
 
 #include "core/accumulators.hpp"
-#include "script_interface/ScriptInterface.hpp"
 #include "script_interface/ObjectList.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace Accumulators {

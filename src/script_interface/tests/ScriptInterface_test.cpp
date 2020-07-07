@@ -27,8 +27,8 @@
 #include <boost/mpi.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "GlobalContext.hpp"
-#include "ScriptInterface.hpp"
+#include "script_interface/GlobalContext.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 using std::map;
 using std::string;

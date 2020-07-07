@@ -19,8 +19,8 @@
 #ifndef SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 #define SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 
-#include "script_interface/auto_parameters/AutoParameter.hpp"
 #include "script_interface/ObjectHandle.hpp"
+#include "script_interface/auto_parameters/AutoParameter.hpp"
 
 #include <unordered_map>
 #include <vector>

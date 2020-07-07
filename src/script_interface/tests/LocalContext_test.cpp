@@ -20,9 +20,8 @@
 #define BOOST_TEST_MODULE ScriptInterface::LocalContext test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
-#include <utils/keys.hpp>
 
-#include "LocalContext.hpp"
+#include "script_interface/LocalContext.hpp"
 
 namespace si = ScriptInterface;
 

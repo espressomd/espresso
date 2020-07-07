@@ -22,8 +22,8 @@
 #include "LBBoundary.hpp"
 
 #include "core/grid_based_algorithms/lb_boundaries.hpp"
-#include "script_interface/ScriptInterface.hpp"
 #include "script_interface/ObjectList.hpp"
+#include "script_interface/ScriptInterface.hpp"
 namespace ScriptInterface {
 namespace LBBoundaries {
 class LBBoundaries : public ObjectList<LBBoundary> {

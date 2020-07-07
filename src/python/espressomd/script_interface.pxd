@@ -61,7 +61,7 @@ cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface
 
 cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectManager:
-        ObjectManager(MpiCallbacks &, const Factory[ObjectHandle] &)
+        ObjectManager(MpiCallbacks & , const Factory[ObjectHandle] & )
         shared_ptr[ObjectHandle] make_shared(CreationPolicy, const string &, const VariantMap) except +
         shared_ptr[ObjectHandle] deserialize(const string &) except +
         string serialize(const ObjectHandle *) except +
