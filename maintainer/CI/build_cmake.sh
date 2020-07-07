@@ -127,7 +127,7 @@ if [ "${with_coverage}" = true ]; then
     bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
 fi
 
-cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params}"
+cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=4 ${cmake_params}"
 cmake_params="${cmake_params} -DCMAKE_CXX_FLAGS=${cxx_flags}"
 if [ "${with_cuda}" = true ]; then
   cmake_params="${cmake_params} -DCUDA_NVCC_FLAGS=${nvcc_flags}"

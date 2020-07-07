@@ -1,10 +1,5 @@
 if(NOT DEFINED TEST_NP)
-  include(ProcessorCount)
-  ProcessorCount(NP)
-  math(EXPR TEST_NP "${NP}/2 + 1")
-  if(${TEST_NP} GREATER 4)
-    set(TEST_NP 4)
-  endif()
+  set(TEST_NP 4)
 endif()
 
 if(EXISTS ${MPIEXEC})

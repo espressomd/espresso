@@ -393,6 +393,8 @@ ubuntu:armhf:
 
 ubuntu:i386:
   <<: *arch_definition
+  variables:
+     cmake_params: '-DTEST_NP=2'
   timeout: 1h
   only:
     - branches
