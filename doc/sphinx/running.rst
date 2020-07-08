@@ -279,14 +279,19 @@ handle directly.
 Stokesian Dynamics
 ------------------
 
+.. note::
+
+    Requires ``STOKESIAN_DYNAMICS`` external feature, enabled with
+    ``-DWITH_STOKESIAN_DYNAMICS=ON``.
+
 :meth:`espressomd.integrate.IntegratorHandle.set_stokesian_dynamics`
 
 The Stokesian Dynamics method allows to study the behaviour of spherical
 particles in a viscous fluid. It is targeted at systems with very low Reynolds
-numbers. In such systems, particles stop moving immediately as soon as any
-force on them is removed. In other words, motion has no memory of the past.
+numbers. In such systems, particles come to a rest almost immediately as soon as
+any force on them is removed. In other words, motion has no memory of the past.
 
-The integration scheme is relatively simple. Only the particle's positions,
+The integration scheme is relatively simple. Only the particles' positions,
 radii and forces (including torques) are needed to compute the momentary
 velocities (including angular velocities). The particle positions are
 integrated by the simple Euler scheme.
