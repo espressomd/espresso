@@ -1,7 +1,7 @@
 # ESPResSo
 
-[![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/python/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/commits/python)
-[![codecov](https://codecov.io/gh/espressomd/espresso/branch/python/graph/badge.svg)](https://codecov.io/gh/espressomd/espresso)
+[![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/4.1/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/commits/4.1)
+[![codecov](https://codecov.io/gh/espressomd/espresso/branch/4.1/graph/badge.svg)](https://codecov.io/gh/espressomd/espresso/branch/4.1)
 
 This is the Molecular Dynamics software ESPResSo ("Extensible
 Simulation Package for Research on Soft Matter Systems").
