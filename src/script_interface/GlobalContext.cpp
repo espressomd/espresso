@@ -21,9 +21,7 @@ void GlobalContext::remote_make_handle(ObjectId id, const std::string &name,
   cb_make_handle(id, name, pack(parameters));
 }
 
-void GlobalContext::notify_delete_handle(const ObjectHandle *o) {
-  cb_delete_handle(object_id(o));
-}
+void GlobalContext::notify_delete_handle(const ObjectHandle *o) {}
 
 void GlobalContext::set_parameter(ObjectId id, std::string const &name,
                                   PackedVariant const &value) {
@@ -57,7 +55,7 @@ void GlobalContext::notify_call_method(const ObjectHandle *o,
 std::shared_ptr<ObjectHandle>
 GlobalContext::make_shared(std::string const &name,
                            const VariantMap &parameters) {
-  auto sp = m_node_local_context->factory().make(name);
+  std::unique_ptr<ObjectHandle> sp = m_node_local_context->factory().make(name);
   set_manager(sp.get());
   set_name(sp.get(), m_node_local_context->factory().stable_name(name));
 
@@ -66,6 +64,12 @@ GlobalContext::make_shared(std::string const &name,
 
   sp->construct(parameters);
 
-  return sp;
+  return {sp.release(),
+          [global_context = this, deleter = sp.get_deleter()](ObjectHandle *o) {
+            /* Tell the others before invoking the destructor */
+            global_context->cb_delete_handle(object_id(o));
+
+            deleter(o);
+          }};
 }
 } // namespace ScriptInterface
