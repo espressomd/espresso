@@ -21,7 +21,7 @@ void GlobalContext::remote_make_handle(ObjectId id, const std::string &name,
   cb_make_handle(id, name, pack(parameters));
 }
 
-void GlobalContext::nofity_delete_handle(const ObjectHandle *o) {
+void GlobalContext::notify_delete_handle(const ObjectHandle *o) {
   cb_delete_handle(object_id(o));
 }
 
@@ -48,7 +48,7 @@ void GlobalContext::call_method(ObjectId id, std::string const &name,
   }
 }
 
-void GlobalContext::nofity_call_method(const ObjectHandle *o,
+void GlobalContext::notify_call_method(const ObjectHandle *o,
                                        std::string const &name,
                                        VariantMap const &arguments) {
   cb_call_method(object_id(o), name, pack(arguments));

@@ -63,8 +63,6 @@ private:
    */
   void make_handle(ObjectId id, const std::string &name,
                    const PackedMap &parameters);
-
-public:
   /**
    * @brief Create remote instances
    *
@@ -94,7 +92,7 @@ private:
                    PackedMap const &arguments);
 
 public:
-  void nofity_call_method(const ObjectHandle *o, std::string const &name,
+  void notify_call_method(const ObjectHandle *o, std::string const &name,
                           VariantMap const &arguments) override;
 
 private:
@@ -109,7 +107,7 @@ public:
    *
    * @param o Internal identified of the instance
    */
-  void nofity_delete_handle(const ObjectHandle *o) override;
+  void notify_delete_handle(const ObjectHandle *o) override;
 
   /**
    * @brief Get a new reference counted instance of a script interface by

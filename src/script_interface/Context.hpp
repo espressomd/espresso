@@ -20,7 +20,7 @@ public:
    * @param name Name of the method to call
    * @param arguments Arguments to the call
    */
-  virtual void nofity_call_method(const ObjectHandle *self,
+  virtual void notify_call_method(const ObjectHandle *self,
                                   std::string const &name,
                                   VariantMap const &arguments) = 0;
 
@@ -40,7 +40,7 @@ public:
    *
    * @param o Internal identified of the instance
    */
-  virtual void nofity_delete_handle(const ObjectHandle *self) = 0;
+  virtual void notify_delete_handle(const ObjectHandle *self) = 0;
 
   /**
    * @brief Get a new reference counted instance of a script interface by

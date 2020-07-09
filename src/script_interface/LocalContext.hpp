@@ -17,11 +17,11 @@ public:
 
   const Utils::Factory<ObjectHandle> &factory() const { return m_factory; }
 
-  void nofity_call_method(const ObjectHandle *, std::string const &,
+  void notify_call_method(const ObjectHandle *, std::string const &,
                           VariantMap const &) override {}
   void notify_set_parameter(const ObjectHandle *, std::string const &,
                             Variant const &) override {}
-  void nofity_delete_handle(const ObjectHandle *) override {}
+  void notify_delete_handle(const ObjectHandle *) override {}
 
   std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) override {

@@ -34,14 +34,14 @@ void ObjectHandle::set_parameter(const std::string &name,
 Variant ObjectHandle::call_method(const std::string &name,
                                   const VariantMap &params) {
   if (m_manager)
-    m_manager->nofity_call_method(this, name, params);
+    m_manager->notify_call_method(this, name, params);
 
   return this->do_call_method(name, params);
 }
 
 void ObjectHandle::delete_remote() {
   if (m_manager)
-    m_manager->nofity_delete_handle(this);
+    m_manager->notify_delete_handle(this);
 }
 
 ObjectHandle::~ObjectHandle() { this->do_destroy(); }
