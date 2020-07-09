@@ -2,6 +2,207 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 4.1.3
+==============
+
+This release provides a number of corrections for the ESPResSo 4.1 line.
+We recommend that this release be used for all production simulations.
+The interface has not been changed between ESPResSo 4.1.2 and 4.1.3.
+However, some bugs were discovered which can affect simulation results.
+Please find the list of changes below. The numbers in brackets refer to
+ticket numbers on https://github.com/espressomd/espresso
+
+Feature configuration at compile time
+
+* The number of features which need to be defined at compile time in
+  myconfig.hpp has been reduced. Features without performance impact
+  are now always present. These are:
+
+   * ``OIF_LOCAL_FORCES``
+   * ``OIF_GLOBAL_FORCES``
+
+General corrections and improvements:
+
+* Many bonded interactions were not considered in the bond cutoff calculation:
+  umbrella, OIF local, OIF global, IBM tribend, IBM volcons, angle harmonic,
+  angle cosine, angle cossquare, tabulated angle, bonded Coulomb, subtracted
+  bonded Coulomb, subtracted LJ, quartic, harmonic dumbbell. This can lead
+  to sub-optimal skin values when such bonds are used with an inter-particle
+  distance that is longer than other bonded (FENE, harmonic bond, rigid bond,
+  thermalized distance, tabulated bond, tabulated dihedral, dihedral, IBM
+  triel), non-bonded (LJ, Morse, Buckingham, etc.) and long-range
+  (electrostatics, magnetostatics) interactions in the same system. All
+  bonded interactions are now considered in the cutoff calculation (#3443).
+
+* Fix a bug in a rotation function that resulted in improper treatment of
+  rotation vectors with norm different from unity (#3559); all observable
+  classes inheriting from `CylindricalProfile` are affected
+
+* Fix a bug in the LB GPU implementation that lead to incorrect velocity
+  interpolation near LB boundaries (#3593)
+
+* Fix a bug in the LB CPU implementation that lead to incorrect grid sizes
+  (#3678)
+
+* Object-in-fluid bugfixes have been backported from the OIF development
+  branch; in particular, the bending force between two triangles is now
+  torque-free (#3385)
+
+* Rewrite the linear polymer position generator, which was inefficient and
+  frequently rejected valid positions (#3402, #3484, #3491)
+
+* Fix an error in the distance calculation of the `SpheroCylinder`
+  shape (#3629)
+
+* Fix a sign flip in the surface normal calculation of the `Torus`
+  shape (#3728)
+
+* Fix an `IndexError` when running `system.number_of_particles()` without a
+  value for the argument `type` (#3496, #3494) and fix the range check (#3536)
+
+* Fix a `NameError` when running `system.analysis.rdf()` without a value for
+  the argument `r_max` (#3496, #3494)
+
+* Fix a `NameError` raised by the OpenGL visualizer when drawing bonds in
+  periodic images of the unit cell (#3511)
+
+* Correctly calculate the orientation of bonds cut by the faces of the
+  simulation box in the OpenGL visualizer (#3511)
+
+* Fix a memory leak in the OpenGL visualizer when drawing shapes containing
+  cylindrical elements (`Cylinder`, `SpheroCylinder`, `SimplePore`,
+  `Slitpore`) and drawing bonds between particles (#3533)
+
+* Fix an issue in the OpenGL visualizer that drew the channel of the
+  `Slitpore` shape at the center of the box, instead of using the
+  `dividing_plane` attribute (#3728)
+
+* Fix a bug in the ELC algorithm that ignored the Coulomb prefactor (#3731).
+  The same bug is also present in MMM2D but could not be fixed.
+
+* Correctly check the P3M parameter `mesh` (#3676)
+
+* The LB checkpointing argument `binary` now takes a boolean value (#3541);
+  integers values 0 and 1 are still accepted (integers are implicitly cast
+  to boolean values)
+
+* Reinitialize the P3M and dipolar P3M solvers when the box size or skin
+  changes (#3717)
+
+* Clarify error messages in the Steepest Descent integrator (#3763)
+
+* Fix an incorrect formula in the `tensor_product` mode of the `Correlator`
+  class that always returned an array of 0's since 4.1.0 (#3781)
+
+* Fix a runtime error when calling the `get_params()` method of a
+  ScaFaCoS-based actor (#3784)
+
+Documentation and tutorials corrections and improvements:
+
+* Fix paragraph formatting in Jupyter notebooks and update Sphinx
+  bibliography (#3395).
+
+* The Sphinx documentation generation doesn't run in parallel any longer
+  due to plugin `sphinxcontrib.bibtex` throwing a warning when executed
+  with more than one thread in Sphinx v2.3.1 (#3393). The slowdown is not
+  significant (less than a second).
+
+* Fix compatibility issues with Sphinx 2.4.0 (#3480), 3.0.1 (#3642, #3659)
+  and 1.6.7 (#3743)
+
+* Clarify the quaternion formalism used in ESPResSo (#3392, #3748)
+
+* The `p3m.py` sample showcased an incorrect usage of the ELC actor
+  (the gap region was missing). The actor was removed and a new,
+  stand-alone sample `visualization_elc.py` was created (#3468)
+
+* The `visualization_constraints.py` sample showcased an incorrect
+  usage of the `Slitpore` and `Wall` shapes that lead to a discontinuous
+  potential; this is now fixed (#3728)
+
+* Correct errors in the documentation of the constructor parameters for
+  shape classes `Cylinder`, `SpheroCylinder`, `Rhomboid` (#3567), for
+  class `System` (#3542) and for cylindrical observables (#3569)
+
+* Correct an error in the formula of the electrostatic prefactor in the
+  electrostatics documentation, give the full expression of the
+  electrostatic prefactor in tutorials and samples (#3673)
+
+* Improve documentation of the `Slitpore` shape and document the
+  `Torus` shape (#3728)
+
+* Improve installation instructions (#3673, #3699, #3732)
+
+* Document `BoxGeometry`-related functions (#3747)
+
+* Explain release workflow and how to obtain released versions of
+  ESPResSo (#3745)
+
+* Improve citation instructions with examples (#3745)
+
+* General improvements (#3740, #3743)
+
+Build system and platform-related corrections and improvements:
+
+* The benchmarks can now be run with any MPI library supported by
+  ESPResSo (#3412)
+
+* The CMake logic was simplified (#3574, parts of #3582). The minimal
+  required Cython version is now checked. CMake now generates an error
+  message if `WITH_CLANG_TIDY` is `ON` but no Clang-Tidy can be found
+  with a version matching the Clang version. The CUDA library installed
+  via the Ubuntu package `nvidia-cuda-toolkit` is now correctly detected.
+
+* Add support for ROCm versions 3.0 (#3386), 3.1 (#3574) and 3.3 (#3623)
+
+* Fix compiler errors with HDF5 > 1.10.2 (#3604)
+
+* Fix compiler errors with Boost 1.73 (#3725)
+
+* Fix a deprecation warning from the `collections.abc` that will become
+  an error in the upcoming Python 3.9 interpreter (#3568)
+
+* Fix a compatibility issue with `pint` 0.10.1 in tutorial
+  12 - constant pH (#3423)
+
+Improved testing:
+
+* Fix a tolerance value that was incorrectly divided by 100, causing unit
+  tests to fail on i586 architectures (#3427)
+
+* Compile CUDA code in the Travis-CI image to detect more compiler
+  errors (#3699). GPU tests are skipped on Travis-CI.
+
+* Add a test for the ``Utils::get_n_triangle`` function used in OIF (#3391)
+
+* Add a test for sample `visualization_constraints.py` (#3533)
+
+* Add missing `LENNARD_JONES` and `GPU` feature guards in Python
+  tests (#3403, #3676)
+
+* Fix a few non-functional Python tests (#3419) and sample tests (#3791)
+
+* Improve testing of ELC (#3731)
+
+* Improve testing of the `Slitpore` shape (#3728)
+
+* Fix an issue in a core test (#3677)
+
+* Add cleanup function in the checkpointing tests (#3699)
+
+* Add a test for `fold_position()` (#3747)
+
+* Improve testing of observables, correlators and accumulators
+  (#3781, #3783, #3784)
+
+Under the hood changes:
+
+* Remove unused code (#3556, #3738)
+
+* Remove the unused `FindPythonModule` CMake module (#3736)
+
+* Update the espresso-ci bot scripts (#3613)
+
 ESPResSo 4.1.2
 ==============
 
