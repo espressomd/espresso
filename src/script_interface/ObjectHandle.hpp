@@ -44,7 +44,7 @@ public:
   /* Copy has unclear semantics, so it should not be allowed. */
   ObjectHandle(ObjectHandle const &) = delete;
   ObjectHandle &operator=(ObjectHandle const &) = delete;
-  virtual ~ObjectHandle();
+  virtual ~ObjectHandle() = default;
 
 private:
   friend class Context;
@@ -150,25 +150,6 @@ private:
 private:
   virtual std::string get_internal_state() const { return {}; }
   virtual void set_internal_state(std::string const &state) {}
-
-  /**
-   * @brief Call from the destructor of the Handle.
-   *
-   * This can use to customize the deletion of objects, e.g.
-   * to change when the remote objects are deleted.
-   * The default implementation just deletes all remote instances.
-   *
-   */
-  virtual void do_destroy() { delete_remote(); }
-
-protected:
-  /**
-   * @brief Delete remote instance of this object.
-   *
-   * Explicitly delete instances on other nodes, if any.
-   * This can only be called once.
-   */
-  void delete_remote();
 };
 } /* namespace ScriptInterface */
 #endif

@@ -36,13 +36,6 @@ public:
                                     Variant const &value) = 0;
 
   /**
-   * @brief Delete remote instances
-   *
-   * @param o Internal identified of the instance
-   */
-  virtual void notify_delete_handle(const ObjectHandle *self) = 0;
-
-  /**
    * @brief Get a new reference counted instance of a script interface by
    * name.
    *
@@ -106,7 +99,6 @@ public:
 
 protected:
   void set_manager(ObjectHandle *o) { o->m_manager = this->shared_from_this(); }
-
   void set_name(ObjectHandle *o, boost::string_ref name) const {
     o->m_name = name;
   }

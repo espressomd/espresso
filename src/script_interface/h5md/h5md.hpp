@@ -58,11 +58,7 @@ public:
             "time_unit", "force_unit", "velocity_unit", "charge_unit");
   }
 
-  ~H5md() { delete_remote(); }
-
 private:
-  void do_destroy() override {}
-
   std::shared_ptr<::Writer::H5md::File> m_h5md;
 };
 

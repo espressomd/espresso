@@ -103,13 +103,6 @@ private:
 
 public:
   /**
-   * @brief Delete remote instances
-   *
-   * @param o Internal identified of the instance
-   */
-  void notify_delete_handle(const ObjectHandle *o) override;
-
-  /**
    * @brief Get a new reference counted instance of a script interface by
    * name.
    *

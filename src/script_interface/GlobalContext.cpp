@@ -21,8 +21,6 @@ void GlobalContext::remote_make_handle(ObjectId id, const std::string &name,
   cb_make_handle(id, name, pack(parameters));
 }
 
-void GlobalContext::notify_delete_handle(const ObjectHandle *o) {}
-
 void GlobalContext::set_parameter(ObjectId id, std::string const &name,
                                   PackedVariant const &value) {
   try {
@@ -65,10 +63,16 @@ GlobalContext::make_shared(std::string const &name,
   sp->construct(parameters);
 
   return {sp.release(),
+          /* Custom deleter, we keep the corresponding global context,
+           * as well as the original deleter for the object. */
           [global_context = this, deleter = sp.get_deleter()](ObjectHandle *o) {
-            /* Tell the others before invoking the destructor */
+            /* Tell the other nodes before invoking the destructor, this is
+             * required
+             * to have synchronous destructors, which is needed by some client
+             * code. */
             global_context->cb_delete_handle(object_id(o));
 
+            /* Locally destroy the object. */
             deleter(o);
           }};
 }

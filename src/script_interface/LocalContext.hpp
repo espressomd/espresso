@@ -21,7 +21,6 @@ public:
                           VariantMap const &) override {}
   void notify_set_parameter(const ObjectHandle *, std::string const &,
                             Variant const &) override {}
-  void notify_delete_handle(const ObjectHandle *) override {}
 
   std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) override {

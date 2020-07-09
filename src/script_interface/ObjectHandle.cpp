@@ -39,10 +39,4 @@ Variant ObjectHandle::call_method(const std::string &name,
   return this->do_call_method(name, params);
 }
 
-void ObjectHandle::delete_remote() {
-  if (m_manager)
-    m_manager->notify_delete_handle(this);
-}
-
-ObjectHandle::~ObjectHandle() { this->do_destroy(); }
 } /* namespace ScriptInterface */
