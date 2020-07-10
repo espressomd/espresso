@@ -19,7 +19,6 @@
 
 #include "initialize.hpp"
 #include "pair_criteria.hpp"
-#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace PairCriteria {

@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "initialize.hpp"
 #include "Cylinder.hpp"
 #include "Ellipsoid.hpp"
 #include "HollowConicalFrustum.hpp"
@@ -31,12 +30,9 @@
 #include "Union.hpp"
 #include "Wall.hpp"
 
-#include "script_interface/ClassName.hpp"
-#include "script_interface/ScriptInterface.hpp"
+#include "initialize.hpp"
 
-#include <utils/tuple.hpp>
-
-#include <tuple>
+#include <script_interface/ClassName.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {

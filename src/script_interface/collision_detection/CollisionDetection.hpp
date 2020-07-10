@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_COLLISION_DETECTION_COLLISION_DETECTION_HPP
 
 #include "core/collision.hpp"
-#include "script_interface/ObjectHandle.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #ifdef COLLISION_DETECTION
 

@@ -17,9 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "script_interface/initialize.hpp"
-#include "script_interface/ScriptInterface.hpp"
-
 #include "AutoUpdateAccumulators.hpp"
 #include "Correlator.hpp"
 #include "MeanVarianceCalculator.hpp"

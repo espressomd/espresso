@@ -19,7 +19,6 @@
 #include "config.hpp"
 
 #include "initialize.hpp"
-#include "script_interface/ScriptInterface.hpp"
 
 #include "ActiveVirtualSitesHandle.hpp"
 #include "VirtualSitesInertialessTracers.hpp"

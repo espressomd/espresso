@@ -27,7 +27,6 @@
 #include "ProfileObservable.hpp"
 #include "RDF.hpp"
 #include "config.hpp"
-#include "script_interface/ScriptInterface.hpp"
 
 #include "core/observables/BondAngles.hpp"
 #include "core/observables/BondDihedrals.hpp"

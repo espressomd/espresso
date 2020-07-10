@@ -18,27 +18,23 @@
  */
 
 #include "initialize.hpp"
-#include "ScriptInterface.hpp"
-#include "cluster_analysis/initialize.hpp"
+
 #include "config.hpp"
+
+#include "cluster_analysis/initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "pair_criteria/initialize.hpp"
 #include "shapes/initialize.hpp"
 #ifdef H5MD
 #include "h5md/initialize.hpp"
 #endif
+#include "ComFixed.hpp"
 #include "accumulators/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "lbboundaries/initialize.hpp"
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
-
-#include "ComFixed.hpp"
-
 #include "virtual_sites/initialize.hpp"
-
-#include "GlobalContext.hpp"
-#include "LocalContext.hpp"
 
 namespace ScriptInterface {
 void initialize(Utils::Factory<ObjectHandle> *f) {

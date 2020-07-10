@@ -18,8 +18,7 @@
  */
 #include "config.hpp"
 
-#include "script_interface/ScriptInterface.hpp"
-#include "script_interface/initialize.hpp"
+#include "initialize.hpp"
 
 #include "CollisionDetection.hpp"
 

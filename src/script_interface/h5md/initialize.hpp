@@ -21,8 +21,11 @@
 #define SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
 
 #include "config.hpp"
-#include <script_interface/GlobalContext.hpp>
 #ifdef H5MD
+
+#include <script_interface/ObjectHandle.hpp>
+
+#include <utils/Factory.hpp>
 
 namespace ScriptInterface {
 namespace Writer {

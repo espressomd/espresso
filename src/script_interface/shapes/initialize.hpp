@@ -20,7 +20,9 @@
 #ifndef SCRIPT_INTERFACE_SHAPES_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_SHAPES_INITIALIZE_HPP
 
-#include "script_interface/GlobalContext.hpp"
+#include <script_interface/ObjectHandle.hpp>
+
+#include <utils/Factory.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {
