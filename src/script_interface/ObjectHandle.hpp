@@ -30,11 +30,7 @@ namespace ScriptInterface {
 class Context;
 
 /**
- * @brief Base class for generic script interfaces.
- *
- * See section @ref script_interface_howto for detailed instructions on how to
- * create derived classes.
- *
+ * @brief Base class for interface handles.
  */
 class ObjectHandle {
 protected:
@@ -127,7 +123,7 @@ public:
 
 private:
   /**
-   * @brief Local implementation of @function set_parameter
+   * @brief Local implementation of set_parameter
    */
   virtual void do_set_parameter(const std::string &, const Variant &) {}
 
@@ -139,7 +135,7 @@ public:
 
 private:
   /**
-   * @brief Local implementation of @do_call_method
+   * @brief Local implementation of do_call_method
    *
    * If not overridden by the implementation, this does nothing.
    */

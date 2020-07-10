@@ -58,7 +58,7 @@ namespace Observables {
 
 /** @name %Observables registration
  *  Convenience macro functions to automatize the registration of observable
- *  interfaces via @ref om->register_new<T>()
+ *  interfaces via a factory.
  */
 /*@{*/
 

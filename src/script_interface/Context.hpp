@@ -16,7 +16,7 @@ public:
   /**
    * @brief Call method on remote instances
    *
-   * @param o Internal identified of the instance
+   * @param self Internal identified of the instance
    * @param name Name of the method to call
    * @param arguments Arguments to the call
    */
@@ -27,7 +27,7 @@ public:
   /**
    * @brief Set a parameter on remote instances
    *
-   * @param o Internal identifier of the instance to be modified
+   * @param self Internal identifier of the instance to be modified
    * @param name Name of the parameter to change
    * @param value Value to set it to
    */

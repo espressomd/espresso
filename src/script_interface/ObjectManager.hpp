@@ -45,7 +45,7 @@ private:
   /**
    * @brief Map policy to context.
    *
-   * Inverse of @ref policy.
+   * Inverse of policy.
    */
   Context *context(CreationPolicy policy) const {
     switch (policy) {
@@ -61,7 +61,7 @@ private:
   /**
    * @brief Map context to policy.
    *
-   * Inverse of @ref context.
+   * Inverse of context.
    */
   CreationPolicy policy(Context *c) const {
     if (c == m_local_context.get()) {

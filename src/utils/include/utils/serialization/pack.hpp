@@ -28,8 +28,8 @@ template <class T> std::string pack(T const &v) {
  * @brief Unpack a serialize type into a string.
  *
  * @tparam T Serializable type
- * @param state String to construct the value from, as returned by @function
- * pack.
+ * @param state String to construct the value from, as returned by @ref
+ * Utils::pack.
  * @return Unpacked value
  */
 template <class T> T unpack(std::string const &state) {

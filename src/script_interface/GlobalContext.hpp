@@ -59,7 +59,7 @@ public:
 
 private:
   /**
-   * @brief Callback for @function remote_make_handle
+   * @brief Callback for remote_make_handle
    */
   void make_handle(ObjectId id, const std::string &name,
                    const PackedMap &parameters);
@@ -75,7 +75,7 @@ private:
 
 private:
   /**
-   * @brief Callback for @function remote_set_parameter
+   * @brief Callback for remote_set_parameter
    */
   void set_parameter(ObjectId id, std::string const &name,
                      PackedVariant const &value);
@@ -86,7 +86,7 @@ public:
 
 private:
   /**
-   * @brief Callback for @function remote_call_method
+   * @brief Callback for remote_call_method
    */
   void call_method(ObjectId id, std::string const &name,
                    PackedMap const &arguments);
@@ -97,7 +97,7 @@ public:
 
 private:
   /**
-   * @brief Callback for @function remote_delete_handle
+   * @brief Callback for remote_delete_handle
    */
   void delete_handle(ObjectId id) { m_local_objects.erase(id); }
 
