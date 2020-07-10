@@ -64,7 +64,7 @@ public:
     state.objects.resize(v.objects().size());
     boost::transform(
         v.objects(), state.objects.begin(), [this](auto const &kv) {
-          return std::make_pair(kv.first, serialize(kv.second.get()));
+          return std::make_pair(kv.first, this->serialize(kv.second.get()));
         });
 
     state.name = name(o).to_string();
@@ -82,7 +82,8 @@ public:
     std::unordered_map<ObjectId, ObjectRef> objects;
     boost::transform(state.objects, std::inserter(objects, objects.end()),
                      [this](auto const &kv) {
-                       return std::make_pair(kv.first, deserialize(kv.second));
+                       return std::make_pair(kv.first,
+                                             this->deserialize(kv.second));
                      });
 
     VariantMap params;
