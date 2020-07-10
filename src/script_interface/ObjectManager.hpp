@@ -66,7 +66,8 @@ private:
   CreationPolicy policy(Context *c) const {
     if (c == m_local_context.get()) {
       return CreationPolicy::LOCAL;
-    } else if (c == m_global_context.get()) {
+    }
+    if (c == m_global_context.get()) {
       return CreationPolicy::GLOBAL;
     }
 
