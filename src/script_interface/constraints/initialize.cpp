@@ -63,8 +63,9 @@ constexpr auto class_names() {
       ClassName<TabulatedPotentialField>{"Constraints::PotentialField"},
       ClassName<Gravity>{"Constraints::Gravity"},
       ClassName<FlowField>{"Constraints::FlowField"},
-      ClassName<HomogeneousFlowField>{"Constraints::HomogeneousFlowField"},
+      ClassName<HomogeneousFlowField> { "Constraints::HomogeneousFlowField" }
 #ifdef ELECTROSTATICS
+      ,
       ClassName<ElectricPotential>{"Constraints::ElectricPotential"},
       ClassName<LinearElectricPotential>{
           "Constraints::LinearElectricPotential"},

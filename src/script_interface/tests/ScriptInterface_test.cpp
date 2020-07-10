@@ -43,9 +43,9 @@ struct ScriptInterfaceTest : public ScriptInterface::ObjectHandle {
   Variant get_parameter(const std::string &name) const override {
     if (name == "test_parameter") {
       return test_parameter;
-    } else {
-      return none;
     }
+
+    return none;
   }
 
   /* Not needed for testing */
