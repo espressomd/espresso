@@ -180,13 +180,6 @@ public:
    */
   int finalize();
 
-  /** Return an estimate of the integrated correlation time
-   *
-   *  We calculate the correlation time for each dim_corr by normalizing the
-   *  correlation, integrating it and finding out where C(tau)=tau;
-   */
-  int get_correlation_time(double *correlation_time);
-
   /** Return correlation result */
   std::vector<double> get_correlation();
 
@@ -259,9 +252,9 @@ private:
   unsigned int dim_A; ///< dimensionality of A
   unsigned int dim_B; ///< dimensionality of B
 
-  using correlation_operation_type =
-      std::vector<double> (*)(std::vector<double> const &,
-                              std::vector<double> const &, Utils::Vector3d);
+  using correlation_operation_type = std::vector<double> (*)(
+      std::vector<double> const &, std::vector<double> const &,
+      Utils::Vector3d const &);
 
   correlation_operation_type corr_operation;
 

@@ -53,8 +53,9 @@ class ProfileObservablesTest(ut.TestCase):
         np.testing.assert_array_almost_equal(obs_data, np_hist)
         for i in range(3):
             np.testing.assert_array_almost_equal(obs_edges[i], np_edges[i])
-        self.assertEqual(np.prod(obs_data.shape),
-                         self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
+        np.testing.assert_array_equal(
+            obs_data.shape, [self.kwargs['n_x_bins'], self.kwargs['n_y_bins'],
+                             self.kwargs['n_z_bins']])
         np.testing.assert_array_almost_equal(
             obs_bin_edges[0, 0, 0],
             [self.kwargs['min_x'], self.kwargs['min_y'], self.kwargs['min_z']])
@@ -73,8 +74,9 @@ class ProfileObservablesTest(ut.TestCase):
         self.system.integrator.run(0)
         obs_data = density_profile.calculate()
         self.assertEqual(obs_data[0, 0, 1, 2], 2.0 / self.bin_volume)
-        self.assertEqual(np.prod(obs_data.shape),
-                         3 * self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
+        np.testing.assert_array_equal(
+            obs_data.shape, [self.kwargs['n_x_bins'], self.kwargs['n_y_bins'],
+                             self.kwargs['n_z_bins'], 3])
 
     def test_flux_density_profile(self):
         density_profile = espressomd.observables.FluxDensityProfile(
@@ -82,8 +84,66 @@ class ProfileObservablesTest(ut.TestCase):
         self.system.integrator.run(0)
         obs_data = density_profile.calculate()
         self.assertEqual(obs_data[0, 0, 1, 2], 2.0 / self.bin_volume)
-        self.assertEqual(np.prod(obs_data.shape),
-                         3 * self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
+        np.testing.assert_array_equal(
+            obs_data.shape, [self.kwargs['n_x_bins'], self.kwargs['n_y_bins'],
+                             self.kwargs['n_z_bins'], 3])
+
+    def test_pid_profile_interface(self):
+        # test setters and getters
+        params = {'ids': [0, 1],
+                  'n_x_bins': 4,
+                  'n_y_bins': 6,
+                  'n_z_bins': 8,
+                  'min_x': 0.0,
+                  'max_x': 1.0,
+                  'min_y': 2.0,
+                  'max_y': 3.0,
+                  'min_z': 4.0,
+                  'max_z': 5.0}
+        observable = espressomd.observables.DensityProfile(**params)
+        # check pids
+        self.assertEqual(observable.ids, params['ids'])
+        new_pids = [params['ids'][0]]
+        observable.ids = new_pids
+        self.assertEqual(observable.ids, new_pids)
+        # check bins
+        self.assertEqual(observable.n_x_bins, params['n_x_bins'])
+        self.assertEqual(observable.n_y_bins, params['n_y_bins'])
+        self.assertEqual(observable.n_z_bins, params['n_z_bins'])
+        obs_data = observable.calculate()
+        np.testing.assert_array_equal(obs_data.shape, [4, 6, 8])
+        observable.n_x_bins = 1
+        observable.n_y_bins = 2
+        observable.n_z_bins = 3
+        self.assertEqual(observable.n_x_bins, 1)
+        self.assertEqual(observable.n_y_bins, 2)
+        self.assertEqual(observable.n_z_bins, 3)
+        obs_data = observable.calculate()
+        np.testing.assert_array_equal(obs_data.shape, [1, 2, 3])
+        # check edges lower corner
+        self.assertEqual(observable.min_x, params['min_x'])
+        self.assertEqual(observable.min_y, params['min_y'])
+        self.assertEqual(observable.min_z, params['min_z'])
+        observable.min_x = 4
+        observable.min_y = 5
+        observable.min_z = 6
+        self.assertEqual(observable.min_x, 4)
+        self.assertEqual(observable.min_y, 5)
+        self.assertEqual(observable.min_z, 6)
+        obs_bin_edges = observable.bin_edges()
+        np.testing.assert_array_equal(obs_bin_edges[0, 0, 0], [4, 5, 6])
+        # check edges upper corner
+        self.assertEqual(observable.max_x, params['max_x'])
+        self.assertEqual(observable.max_y, params['max_y'])
+        self.assertEqual(observable.max_z, params['max_z'])
+        observable.max_x = 7
+        observable.max_y = 8
+        observable.max_z = 9
+        self.assertEqual(observable.max_x, 7)
+        self.assertEqual(observable.max_y, 8)
+        self.assertEqual(observable.max_z, 9)
+        obs_bin_edges = observable.bin_edges()
+        np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
 
 
 if __name__ == '__main__':

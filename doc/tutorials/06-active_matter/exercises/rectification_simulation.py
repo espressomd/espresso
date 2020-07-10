@@ -110,7 +110,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 ##########################################################################
 
 ## Exercise 2 ##
-# Complete the geometry from the LB-based 
+# Complete the geometry from the LB-based
 # script. You need to add types to the walls
 # and cone as well.
 

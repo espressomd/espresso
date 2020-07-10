@@ -46,6 +46,9 @@ class TestCylindricalObservable(ut.TestCase):
         'max_z': 5.0,
     }
 
+    def tearDown(self):
+        self.system.part.clear()
+
     def swap_axis(self, arr, axis):
         if axis == 'x':
             arr = np.dot(
@@ -207,6 +210,70 @@ class TestCylindricalObservable(ut.TestCase):
         self.velocity_profile_test()
         self.flux_density_profile_test()
         self.density_profile_test()
+
+    def test_cylindrical_pid_profile_interface(self):
+        # test setters and getters
+        params = self.params.copy()
+        params['n_r_bins'] = 4
+        params['n_phi_bins'] = 6
+        params['n_z_bins'] = 8
+        params['ids'] = [0, 1]
+        params['axis'] = [0.0, 1.0, 0.0]
+        self.system.part.add(id=0, pos=[0, 0, 0], type=0)
+        self.system.part.add(id=1, pos=[0, 0, 0], type=1)
+        observable = espressomd.observables.CylindricalDensityProfile(**params)
+        # check pids
+        self.assertEqual(observable.ids, params['ids'])
+        new_pids = [params['ids'][0]]
+        observable.ids = new_pids
+        self.assertEqual(observable.ids, new_pids)
+        # check bins
+        self.assertEqual(observable.n_r_bins, params['n_r_bins'])
+        self.assertEqual(observable.n_phi_bins, params['n_phi_bins'])
+        self.assertEqual(observable.n_z_bins, params['n_z_bins'])
+        obs_data = observable.calculate()
+        np.testing.assert_array_equal(obs_data.shape, [4, 6, 8])
+        observable.n_r_bins = 1
+        observable.n_phi_bins = 2
+        observable.n_z_bins = 3
+        self.assertEqual(observable.n_r_bins, 1)
+        self.assertEqual(observable.n_phi_bins, 2)
+        self.assertEqual(observable.n_z_bins, 3)
+        obs_data = observable.calculate()
+        np.testing.assert_array_equal(obs_data.shape, [1, 2, 3])
+        # check edges lower corner
+        self.assertEqual(observable.min_r, params['min_r'])
+        self.assertEqual(observable.min_phi, params['min_phi'])
+        self.assertEqual(observable.min_z, params['min_z'])
+        observable.min_r = 4
+        observable.min_phi = 5
+        observable.min_z = 6
+        self.assertEqual(observable.min_r, 4)
+        self.assertEqual(observable.min_phi, 5)
+        self.assertEqual(observable.min_z, 6)
+        obs_bin_edges = observable.bin_edges()
+        np.testing.assert_array_equal(obs_bin_edges[0, 0, 0], [4, 5, 6])
+        # check edges upper corner
+        self.assertEqual(observable.max_r, params['max_r'])
+        self.assertEqual(observable.max_phi, params['max_phi'])
+        self.assertEqual(observable.max_z, params['max_z'])
+        observable.max_r = 7
+        observable.max_phi = 8
+        observable.max_z = 9
+        self.assertEqual(observable.max_r, 7)
+        self.assertEqual(observable.max_phi, 8)
+        self.assertEqual(observable.max_z, 9)
+        obs_bin_edges = observable.bin_edges()
+        np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
+        # check center
+        np.testing.assert_array_equal(
+            np.copy(observable.center), params['center'])
+        observable.center = [3, 2, 1]
+        np.testing.assert_array_equal(np.copy(observable.center), [3, 2, 1])
+        # check axis
+        np.testing.assert_array_equal(np.copy(observable.axis), params['axis'])
+        observable.axis = [6, 5, 4]
+        np.testing.assert_array_equal(np.copy(observable.axis), [6, 5, 4])
 
 
 if __name__ == "__main__":

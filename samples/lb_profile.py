@@ -71,7 +71,6 @@ system.auto_update_accumulators.add(accumulator)
 system.integrator.run(n_steps)
 
 lb_fluid_profile = accumulator.get_mean()
-lb_fluid_profile = np.reshape(lb_fluid_profile, (100, 1, 1, 3))
 
 
 def poiseuille_flow(r, R, ext_force_density):

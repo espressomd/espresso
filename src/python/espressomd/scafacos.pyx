@@ -45,13 +45,13 @@ IF SCAFACOS == 1:
             self._set_params_in_es_core()
 
         def valid_keys(self):
-            tmp = ["method_name", "method_params", "prefactor"]
+            tmp = self.required_keys().copy()
             if not self.dipolar:
-                tmp.append("check_neutrality")
+                tmp.add("check_neutrality")
             return tmp
 
         def required_keys(self):
-            return "method_name", "method_params", "prefactor"
+            return {"method_name", "method_params", "prefactor"}
 
         def validate_params(self):
             return True
@@ -60,7 +60,7 @@ IF SCAFACOS == 1:
             # Parameters are returned as strings
             # First word is method name, rest are key value pairs
             # which we convert to a dict
-            p = to_str(get_method_and_parameters().split(" "))
+            p = to_str(get_method_and_parameters()).split(" ")
             res = {}
             res["method_name"] = p[0]
 

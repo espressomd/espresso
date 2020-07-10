@@ -614,8 +614,8 @@ special case of the velocity autocorrelation function.
 Let us consider a set of :math:`N` observable values as schematically
 shown in the figure above, where a value of index :math:`i` was
 measured at times :math:`i\delta t`. We are interested in computing the
-correlation function for a range 
-of lag times :math:`\tau = (i-j)\delta t` between the measurements 
+correlation function for a range
+of lag times :math:`\tau = (i-j)\delta t` between the measurements
 :math:`i` and :math:`j`. To simplify the notation, we drop
 :math:`\delta t` when referring to observables and lag times.
 
@@ -630,9 +630,9 @@ thumb, this is feasible if :math:`{\tau_{\mathrm{max}}}< 10^3`. The
 multiple tau correlator provides a solution to compute the correlation
 functions for arbitrary range of the lag times by coarse-graining the
 high :math:`\tau` values. It applies the naive algorithm to a relatively
-small range of lag times :math:`\tau \in [0:p-1]` 
-(:math:`p` corresponds to parameter ``tau_lin``). 
-This we refer to as compression level 0. 
+small range of lag times :math:`\tau \in [0:p-1]`
+(:math:`p` corresponds to parameter ``tau_lin``).
+This we refer to as compression level 0.
 To compute the correlations for lag times
 :math:`\tau \in [p:2(p-1)]`, the original data are first coarse-grained,
 so that :math:`m` values of the original data are compressed to produce

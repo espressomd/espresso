@@ -28,6 +28,8 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <utils/math/sqr.hpp>
+
 #include <limits>
 
 namespace {
@@ -65,7 +67,7 @@ std::vector<double> compress_discard2(std::vector<double> const &A1,
 
 std::vector<double> scalar_product(std::vector<double> const &A,
                                    std::vector<double> const &B,
-                                   Utils::Vector3d) {
+                                   Utils::Vector3d const &) {
   if (A.size() != B.size()) {
     throw std::runtime_error(
         "Error in scalar product: The vector sizes do not match");
@@ -77,7 +79,7 @@ std::vector<double> scalar_product(std::vector<double> const &A,
 
 std::vector<double> componentwise_product(std::vector<double> const &A,
                                           std::vector<double> const &B,
-                                          Utils::Vector3d) {
+                                          Utils::Vector3d const &) {
   std::vector<double> C(A.size());
   if (A.size() != B.size()) {
     throw std::runtime_error(
@@ -91,23 +93,22 @@ std::vector<double> componentwise_product(std::vector<double> const &A,
 
 std::vector<double> tensor_product(std::vector<double> const &A,
                                    std::vector<double> const &B,
-                                   Utils::Vector3d) {
+                                   Utils::Vector3d const &) {
   std::vector<double> C(A.size() * B.size());
   auto C_it = C.begin();
 
-  for (auto A_it = A.begin(); A_it != A.begin(); ++A_it) {
-    for (double B_it : B) {
-      *(C_it++) = *A_it * B_it;
+  for (double a : A) {
+    for (double b : B) {
+      *(C_it++) = a * b;
     }
   }
-  assert(C_it == C.end());
 
   return C;
 }
 
 std::vector<double> square_distance_componentwise(std::vector<double> const &A,
                                                   std::vector<double> const &B,
-                                                  Utils::Vector3d) {
+                                                  Utils::Vector3d const &) {
   if (A.size() != B.size()) {
     throw std::runtime_error(
         "Error in square distance componentwise: The vector sizes do not "
@@ -118,7 +119,7 @@ std::vector<double> square_distance_componentwise(std::vector<double> const &A,
 
   std::transform(
       A.begin(), A.end(), B.begin(), C.begin(),
-      [](double a, double b) -> double { return (a - b) * (a - b); });
+      [](double a, double b) -> double { return Utils::sqr(a - b); });
 
   return C;
 }
@@ -127,10 +128,10 @@ std::vector<double> square_distance_componentwise(std::vector<double> const &A,
 // sets w
 std::vector<double> fcs_acf(std::vector<double> const &A,
                             std::vector<double> const &B,
-                            Utils::Vector3d wsquare) {
+                            Utils::Vector3d const &wsquare) {
   if (A.size() != B.size()) {
     throw std::runtime_error(
-        "Error in fcs acf: The vector sizes do not match.");
+        "Error in fcs_acf: The vector sizes do not match.");
   }
 
   auto const C_size = A.size() / 3;
@@ -145,7 +146,7 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
       auto const &a = A[3 * i + j];
       auto const &b = B[3 * i + j];
 
-      C[i] -= (a - b) * (a - b) / wsquare[j];
+      C[i] -= Utils::sqr(a - b) / wsquare[j];
     }
   }
 
@@ -153,42 +154,6 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
                  [](double c) -> double { return std::exp(c); });
 
   return C;
-}
-
-int Correlator::get_correlation_time(double *correlation_time) {
-  // We calculate the correlation time for each m_dim_corr by normalizing the
-  // correlation, integrating it and finding out where C(tau)=tau
-  for (unsigned j = 0; j < m_dim_corr; j++) {
-    correlation_time[j] = 0.;
-  }
-
-  // here we still have to fix the stuff a bit!
-  for (unsigned j = 0; j < m_dim_corr; j++) {
-    double C_tau = 1 * m_dt;
-    bool ok_flag = false;
-    for (unsigned k = 1; k < m_n_result - 1; k++) {
-      if (n_sweeps[k] == 0)
-        break;
-      C_tau += (result[k][j] / static_cast<double>(n_sweeps[k]) -
-                A_accumulated_average[j] * B_accumulated_average[j] / n_data /
-                    n_data) /
-               (result[0][j] / n_sweeps[0]) * m_dt * (tau[k] - tau[k - 1]);
-
-      if (exp(-tau[k] * m_dt / C_tau) + 2 * sqrt(tau[k] * m_dt / n_data) >
-          exp(-tau[k - 1] * m_dt / C_tau) +
-              2 * sqrt(tau[k - 1] * m_dt / n_data)) {
-        correlation_time[j] = C_tau * (1 + static_cast<double>(2 * tau[k] + 1) /
-                                               static_cast<double>(n_data));
-        ok_flag = true;
-        break;
-      }
-    }
-    if (!ok_flag) {
-      correlation_time[j] = -1;
-    }
-  }
-
-  return 0;
 }
 
 void Correlator::initialize() {
@@ -260,9 +225,8 @@ void Correlator::initialize() {
         m_correlation_args[2] <= 0) {
       throw std::runtime_error("missing parameter for fcs_acf: w_x w_y w_z");
     }
-    m_correlation_args[0] = m_correlation_args[0] * m_correlation_args[0];
-    m_correlation_args[1] = m_correlation_args[1] * m_correlation_args[1];
-    m_correlation_args[2] = m_correlation_args[2] * m_correlation_args[2];
+    m_correlation_args =
+        Utils::hadamard_product(m_correlation_args, m_correlation_args);
     if (dim_A % 3)
       throw std::runtime_error("dimA must be divisible by 3 for fcs_acf");
     m_dim_corr = static_cast<int>(dim_A) / 3;
@@ -447,7 +411,6 @@ int Correlator::finalize() {
   // We must now go through the hierarchy and make sure there is space for the
   // new datapoint. For every hierarchy level we have to decide if it is
   // necessary to move something
-  int highest_level_to_compress;
 
   // mark the correlation as finalized
   finalized = true;
@@ -461,10 +424,9 @@ int Correlator::finalize() {
 
     while (vals_ll) {
       // Check, if we will want to push the value from the lowest level
+      int highest_level_to_compress = -1;
       if (vals_ll % 2) {
         highest_level_to_compress = ll;
-      } else {
-        highest_level_to_compress = -1;
       }
 
       int i = ll + 1; // lowest level for which we have to check for compression
@@ -534,14 +496,11 @@ std::vector<double> Correlator::get_correlation() {
   res.resize(m_n_result * cols);
 
   for (int i = 0; i < m_n_result; i++) {
-    res[cols * i + 0] = tau[i] * m_dt;
-    res[cols * i + 1] = n_sweeps[i];
+    auto const index = cols * i;
+    res[index + 0] = tau[i] * m_dt;
+    res[index + 1] = n_sweeps[i];
     for (int k = 0; k < m_dim_corr; k++) {
-      if (n_sweeps[i] > 0) {
-        res[cols * i + 2 + k] = result[i][k] / n_sweeps[i];
-      } else {
-        res[cols * i + 2 + k] = 0;
-      }
+      res[index + 2 + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
     }
   }
   return res;
