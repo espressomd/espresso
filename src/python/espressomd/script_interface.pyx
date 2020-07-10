@@ -105,7 +105,7 @@ cdef class PScriptInterface:
         """
         Get pointer to the core object.
         """
-    
+
         ret = PObjectRef()
         ret.sip = self.sip
         return ret
@@ -114,7 +114,7 @@ cdef class PScriptInterface:
         """
         Set the shared_ptr to an existing core object.
         """
-	
+
         self.sip = sip
 
     def call_method(self, method, **kwargs):
@@ -368,7 +368,7 @@ def script_interface_register(c):
        This will store a name<->class relationship in a registry, so that parameters
        of type object can be instantiated as the correct python class
     """
-    
+
     if not hasattr(c, "_so_name"):
         raise Exception("Python classes representing a script object must "
                         "define an _so_name attribute at class level")    
