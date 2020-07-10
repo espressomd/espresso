@@ -23,12 +23,9 @@ from libcpp.memory cimport make_shared
 cdef shared_ptr[ObjectManager] _om
 
 cdef class PObjectRef:
-    def __richcmp__(a, b, op):
-        cdef PObjectRef a_ = a
-        cdef PObjectRef b_ = b
-
+    def __richcmp__(PObjectRef a, PObjectRef b, op):
         if op == 2:
-            return a_.sip == b_.sip
+            return a.sip == b.sip
         else:
             raise NotImplementedError
 
@@ -105,14 +102,31 @@ cdef class PScriptInterface:
         return [to_str(p.data()) for p in self.sip.get().valid_parameters()]
 
     def get_sip(self):
+        """
+        Get pointer to the core object.
+        """
+    
         ret = PObjectRef()
         ret.sip = self.sip
         return ret
 
     cdef set_sip(self, shared_ptr[ObjectHandle] sip):
+        """
+        Set the shared_ptr to an existing core object.
+        """
+	
         self.sip = sip
 
     def call_method(self, method, **kwargs):
+        """
+        Call a method of the core class.
+        Parameters
+        ----------
+        method : Creation policy.
+            Name of the core method.
+        \*\*kwargs
+            Arguments for the method.
+        """    
         cdef VariantMap parameters
 
         for name in kwargs:
@@ -125,6 +139,7 @@ cdef class PScriptInterface:
         return res
 
     def name(self):
+        """Return name of the core class."""    
         return to_str(self.sip.get().name().data())
 
     def _serialize(self):
@@ -251,7 +266,6 @@ cdef variant_to_python_object(const Variant & value) except +:
 
 
 def _unpickle_so_class(so_name, state):
-    print("_unpickle_so_class", state)
     cdef PObjectRef so_ptr
     so_ptr = PObjectRef()
     global _om
@@ -345,7 +359,7 @@ def _unpickle_script_object_registry(so_name, params, items):
     return so
 
 
-# Map from script object names to corresponding python classes
+# Map from script object names to their corresponding python classes
 _python_class_by_so_name = {}
 
 
@@ -354,9 +368,11 @@ def script_interface_register(c):
        This will store a name<->class relationship in a registry, so that parameters
        of type object can be instantiated as the correct python class
     """
+    
     if not hasattr(c, "_so_name"):
-        raise Exception(
-            "Python classes representing a script object must define an _so_name attribute at class level")
+        raise Exception("Python classes representing a script object must "
+                        "define an _so_name attribute at class level")    
+
     _python_class_by_so_name[c._so_name] = c
     return c
 

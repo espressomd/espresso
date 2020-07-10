@@ -9,8 +9,6 @@ template <class T> struct ClassName {
   using class_type = T;
   const char *name;
 };
-
-template <class... Module> struct Modules {};
 } // namespace ScriptInterface
 
 #endif // ESPRESSO_CLASSTYPE_HPP

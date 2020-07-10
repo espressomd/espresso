@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2020 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,8 +26,8 @@ from libcpp cimport bool
 
 from boost cimport string_ref
 
-from utils cimport Span, Factory
-from communication cimport MpiCallbacks
+from .utils cimport Span, Factory
+from .communication cimport MpiCallbacks
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass Variant:
