@@ -26,8 +26,6 @@
 #include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
 
-#include <utils/make_function.hpp>
-
 namespace ScriptInterface {
 /**
  * @brief Description and getter/setter for a parameter.
@@ -141,11 +139,9 @@ struct AutoParameter {
    */
   template <typename F, typename G,
             /* Try to guess the type from the return type of the getter */
-            typename R = typename decltype(
-                Utils::make_function(std::declval<G>()))::result_type>
+            typename R = decltype(std::declval<G>()())>
   AutoParameter(const char *name, F const &set, G const &get)
-      : name(name), setter_(Utils::make_function(set)),
-        getter_(Utils::make_function(get)) {}
+      : name(name), setter_(set), getter_(get) {}
 
   /**
    * @brief Read-only parameter with a user-provided getter.
@@ -153,11 +149,10 @@ struct AutoParameter {
    */
   template <typename G,
             /* Try to guess the type from the return type of the getter */
-            typename R = typename decltype(
-                Utils::make_function(std::declval<G>()))::result_type>
+            typename R = decltype(std::declval<G>()())>
   AutoParameter(const char *name, ReadOnly, G const &get)
       : name(name), setter_([](Variant const &) { throw WriteError{}; }),
-        getter_(Utils::make_function(get)) {}
+        getter_(get) {}
 
   /** The interface name. */
   const std::string name;

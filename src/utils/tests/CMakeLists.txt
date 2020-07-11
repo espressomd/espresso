@@ -5,8 +5,6 @@ unit_test(NAME Vector_test SRC Vector_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Factory_test SRC Factory_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp DEPENDS
           EspressoUtils)
-unit_test(NAME make_function_test SRC make_function_test.cpp DEPENDS
-          EspressoUtils)
 unit_test(NAME keys_test SRC keys_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Cache_test SRC Cache_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME histogram SRC histogram.cpp DEPENDS EspressoUtils)
