@@ -48,15 +48,16 @@ cdef class PScriptInterface:
         Name of the core class to instantiate (method 1).
     \*\*kwargs
         Parameters for the core class constructor (method 1).
-    oid : :class:`PObjectId`
+    sip : :class:`PObjectRef`
         Object id of an existing core object (method 2).
+
     policy : :obj:`str`, \{'GLOBAL', 'LOCAL'\}
         Creation policy.
 
     Attributes
     ----------
 
-    sip: shared_ptr
+    sip: :class:`PObjectRef`
         Pointer to a ScriptInterface object in the core.
     policy_: :obj:`str`
         Creation policy.
