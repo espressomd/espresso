@@ -120,6 +120,7 @@ cdef class PScriptInterface:
     def call_method(self, method, **kwargs):
         """
         Call a method of the core class.
+
         Parameters
         ----------
         method : Creation policy.
