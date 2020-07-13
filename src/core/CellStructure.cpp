@@ -28,7 +28,7 @@
 
 #include <stdexcept>
 
-void CellStructure::check_particle_consistency() {
+void CellStructure::check_particle_index() {
   auto const max_id = get_max_local_particle_id();
 
   for (auto const &p : local_particles()) {
@@ -216,7 +216,7 @@ void CellStructure::resort_particles(int global_flag) {
   m_rebuild_verlet_list = true;
 
 #ifdef ADDITIONAL_CHECKS
-  check_particle_consistency();
+  check_particle_index();
   check_particle_sorting();
 #endif
 }
