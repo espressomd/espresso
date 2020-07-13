@@ -249,6 +249,7 @@ public:
   ParticleRange local_particles();
   ParticleRange ghost_particles();
 
+private:
   /** Cell system dependent function to find the right cell for a
    *  particle.
    *  \param  p Particle.
@@ -257,6 +258,7 @@ public:
    */
   Cell *particle_to_cell(const Particle &p);
 
+public:
   /**
    * @brief Add a particle.
    *
@@ -583,6 +585,15 @@ private:
   void check_particle_sorting();
 
 public:
+  /**
+   * @brief Find cell a particle is stored in.
+   *
+   * For local particles, this returns the cell they
+   * are stored in, otherwise nullptr is returned.
+   *
+   * @param p Particle to find cell for
+   * @return Cell for particle or nullptr.
+   */
   Cell *find_current_cell(const Particle &p) {
     assert(not get_resort_particles());
 
