@@ -516,8 +516,8 @@ class LangevinThermostat(ut.TestCase):
             system.auto_update_accumulators.add(omega_series)
 
         kT = 3.2
-        system.thermostat.set_langevin(kT=kT, gamma=2.1, seed=17)
-        steps = int(1e6)
+        system.thermostat.set_langevin(kT=kT, gamma=5.1, seed=17)
+        steps = int(2E5)
         system.integrator.run(steps)
 
         # test translational noise correlation

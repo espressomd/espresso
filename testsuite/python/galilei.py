@@ -23,13 +23,13 @@ import espressomd
 from espressomd.galilei import GalileiTransform
 
 BOX_L = np.array([10, 20, 30])
-N_PART = 500
 
 
 class Galilei(ut.TestCase):
     system = espressomd.System(box_l=BOX_L)
 
     def setUp(self):
+        N_PART = 500
         self.system.part.add(pos=BOX_L * np.random.random((N_PART, 3)),
                              v=-5. + 10. * np.random.random((N_PART, 3)),
                              f=np.random.random((N_PART, 3)))
@@ -43,15 +43,13 @@ class Galilei(ut.TestCase):
         g = GalileiTransform()
         g.kill_particle_motion()
 
-        np.testing.assert_array_equal(
-            np.copy(self.system.part[:].v), np.zeros((N_PART, 3)))
+        np.testing.assert_array_equal(np.copy(self.system.part[:].v), 0)
 
     def test_kill_particle_forces(self):
         g = GalileiTransform()
         g.kill_particle_forces()
 
-        np.testing.assert_array_equal(
-            np.copy(self.system.part[:].f), np.zeros((N_PART, 3)))
+        np.testing.assert_array_equal(np.copy(self.system.part[:].f), 0)
 
     def test_cms(self):
         parts = self.system.part[:]
@@ -59,7 +57,7 @@ class Galilei(ut.TestCase):
 
         total_mass = np.sum(parts.mass)
         com = np.sum(
-            np.multiply(parts.mass.reshape((N_PART, 1)), parts.pos), axis=0) / total_mass
+            np.multiply(parts.mass.reshape((-1, 1)), parts.pos), axis=0) / total_mass
 
         np.testing.assert_allclose(np.copy(g.system_CMS()), com)
 
@@ -68,7 +66,7 @@ class Galilei(ut.TestCase):
         g = GalileiTransform()
         total_mass = np.sum(parts.mass)
         com_v = np.sum(
-            np.multiply(parts.mass.reshape((N_PART, 1)), parts.v), axis=0) / total_mass
+            np.multiply(parts.mass.reshape((-1, 1)), parts.v), axis=0) / total_mass
 
         np.testing.assert_allclose(np.copy(g.system_CMS_velocity()), com_v)
 

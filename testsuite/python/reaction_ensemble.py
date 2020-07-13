@@ -54,7 +54,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system = espressomd.System(box_l=np.ones(3) * (N0 / c0)**(1.0 / 3.0))
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
-    volume = np.prod(system.box_l)  # cuboid box
+    volume = system.volume()
     # Calculate gamma which should lead to target_alpha with given N0 and V
     # Requires N0>>1, otherwise discrete character of N changes the statistics (N>20 should suffice)
     # gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
@@ -93,12 +93,12 @@ class ReactionEnsembleTest(ut.TestCase):
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
-        RE.reaction(20 * N0)
+        RE.reaction(5 * N0)
 
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
-        num_samples = 1000
+        num_samples = 300
         for _ in range(num_samples):
             RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)

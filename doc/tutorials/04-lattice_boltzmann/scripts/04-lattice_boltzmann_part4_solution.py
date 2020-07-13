@@ -61,7 +61,7 @@ for x in range(lbf.shape[0]):
     for y in range(lbf.shape[1]):
         v_tmp[y] = lbf[x, y, 0].velocity[1]
     fluid_velocities[x, 0] = (x + 0.5) * AGRID
-    fluid_velocities[x, 1] = np.average(v_tmp)               
+    fluid_velocities[x, 1] = np.average(v_tmp)
 
 
 def poiseuille_flow(x, force_density, dynamic_viscosity, height):

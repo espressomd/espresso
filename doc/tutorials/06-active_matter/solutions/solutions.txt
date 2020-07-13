@@ -23,9 +23,9 @@ E3. See solution script
 E4. See solution script
 E5. Rectification should be detectable when vel = 0.0 and vel = 5.0 are
     compared. The time it takes to evaluate the script is rather long,
-    about 20 minutes. It is suggested that the student does one of the 
+    about 20 minutes. It is suggested that the student does one of the
     other excercises in the mean time. Visualization can be accomplished
-    using paraview. This can also be combined with the visualization you 
+    using paraview. This can also be combined with the visualization you
     have of the boundaries from the rectification_geometry.py script.
 
 --- flow_field.py ---
@@ -41,7 +41,7 @@ E4. The coupling point inherits an effective hydrodynamic size from
     algorithm to remain stable for these parameter choices.
 E5. The fluid coupling point needs to be away from the particle, otherwise
     the force on the fluid couples directly back onto the particle and
-    this causes the speed to be negligible. A choice of around 1 agrid is 
+    this causes the speed to be negligible. A choice of around 1 agrid is
     recommended.
 E6. Three point coupling stencil for the interpolation of the particle and
     forces onto the fluid. This prevents the particle from experiencing

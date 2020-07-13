@@ -86,7 +86,7 @@ if { $draw_steam } then {
     mol selection {name S}
     mol material Ghost
     mol addrep top
-    
+
     # DRAW ARROWS IN THE STEAM
     # get steam atom positions
     set steamatoms [atomselect top "name S"]
@@ -96,7 +96,7 @@ if { $draw_steam } then {
 	global steamatoms steamgids
 	set n_steam 5
 	set l_steam 6
-    
+
 	$steamatoms update
 	set pos [$steamatoms get { x y z }]
 	# get steam bonds
@@ -119,34 +119,34 @@ if { $draw_steam } then {
 
     trace add variable vmd_frame(0) write update_steam_callback
     update_steam_callback {} 0 {}
-}    
+}
 
 # VIEWPOINT
 molinfo top set {center_matrix rotate_matrix scale_matrix global_matrix} \
-{ 
+{
 	{
 		{1 0 0 -9.804324}
 		{0 1 0 -9.545079}
 		{0 0 1 -9.741856}
 		{0 0 0 1}
 	} {
-		{1 0 0 0} 
-		{-0 1 -0.33 0} 
-		{0 0.33 1 0} 
+		{1 0 0 0}
+		{-0 1 -0.33 0}
+		{0 0.33 1 0}
 		{0 0 0 1}
 	} {
-		{0.175 0 0 0} 
-		{0 0.175 0 0} 
-		{0 0 0.175 0} 
+		{0.175 0 0 0}
+		{0 0.175 0 0}
+		{0 0 0.175 0}
 		{0 0 0 1}
 	} {
-		{1 0 0 0.05} 
-		{0 1 0 0.55} 
-		{0 0 1 0} 
+		{1 0 0 0.05}
+		{0 1 0 0.55}
+		{0 0 1 0}
 		{0 0 0 1}
 	}
 }
-	
+
 
 animate goto 24
 
@@ -155,14 +155,14 @@ render options Tachyon \
        -res 2000 2000 \
        -aasamples 4 -trans_vmd -mediumshade %s \
        -format TARGA -o %s.tga; \
-       convert -transparent -transparent '#e6edf9' -trim %s.tga %s.png; 
+       convert -transparent -transparent '#e6edf9' -trim %s.tga %s.png;
        rm %s.tga; display %s.png &"
 
 
 if { $render_images } then {
     if { $animate_steam } then {
 	file mkdir cup-animation
-	
+
 	for { set frame 24 } { $frame <= 50 } { incr frame } {
 	    animate goto $frame
 	    render Tachyon cup-animation/$frame \

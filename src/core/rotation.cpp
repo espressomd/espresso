@@ -45,7 +45,7 @@
 /** @brief Calculate the derivatives of the quaternion and angular
  *  acceleration for a given particle.
  *  See @cite sonnenschein85a. Please note that ESPResSo uses scalar-first
- *  notation for quaternions, while @cite sonnenschein85a use scalar-last
+ *  notation for quaternions, while @cite sonnenschein85a uses scalar-last
  *  notation.
  *  @param[in]  p    %Particle
  *  @param[out] Qd   First derivative of the particle quaternion
@@ -113,7 +113,7 @@ static void define_Qdd(Particle const &p, Utils::Vector4d &Qd,
 
 /**
  *  See @cite omelyan98a. Please note that ESPResSo uses scalar-first
- *  notation for quaternions, while @cite omelyan98a use scalar-last
+ *  notation for quaternions, while @cite omelyan98a uses scalar-last
  *  notation.
  *
  *  For very high angular velocities (e.g. if the product of @ref time_step
