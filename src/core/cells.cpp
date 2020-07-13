@@ -127,12 +127,6 @@ void cells_re_init(int new_cs) {
 
 /*************************************************/
 
-void cells_resort_particles(int global_flag) {
-  cell_structure.resort_particles(global_flag);
-}
-
-/*************************************************/
-
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
 
@@ -153,9 +147,9 @@ void cells_update_ghosts(unsigned data_parts) {
   auto constexpr resort_only_parts =
       Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
 
-  unsigned int localResort = cell_structure.get_resort_particles();
   auto const global_resort =
-      boost::mpi::all_reduce(comm_cart, localResort, std::bit_or<unsigned>());
+      boost::mpi::all_reduce(comm_cart, cell_structure.get_resort_particles(),
+                             std::bit_or<unsigned>());
 
   if (global_resort != Cells::RESORT_NONE) {
     int global = (global_resort & Cells::RESORT_GLOBAL)
@@ -163,8 +157,7 @@ void cells_update_ghosts(unsigned data_parts) {
                      : CELL_NEIGHBOR_EXCHANGE;
 
     /* Resort cell system */
-    cells_resort_particles(global);
-
+    cell_structure.resort_particles(global);
     cell_structure.ghosts_update(data_parts);
 
     /* Add the ghost particles to the index if we don't already

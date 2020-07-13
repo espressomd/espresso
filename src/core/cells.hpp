@@ -86,11 +86,6 @@ void cells_re_init(int new_cs);
  */
 void cells_set_use_verlet_lists(bool use_verlet_lists);
 
-/** Sort the particles into the cells and initialize the ghost particle
- *  structures.
- */
-void cells_resort_particles(int global_flag);
-
 /** Update ghost information. If needed,
  *  the particles are also resorted.
  */
