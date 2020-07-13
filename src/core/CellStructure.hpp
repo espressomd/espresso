@@ -243,8 +243,10 @@ public:
   /** Maximal pair range supported by current cell system. */
   Utils::Vector3d max_range() const;
 
-  /** Return the global local_cells */
+private:
   Utils::Span<Cell *> local_cells();
+
+public:
   ParticleRange local_particles();
   ParticleRange ghost_particles();
 
