@@ -127,7 +127,7 @@ ubuntu:wo-dependencies:
 debian:10:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/debian:446ff604bbfa63f30ddb462697fa0d0dc2630460
+  image: docker.pkg.github.com/espressomd/docker/debian:d496478230db4e5c286680e3bdc1621af1fccffc
   script:
     - export with_cuda=false myconfig=maxset make_check_python=false with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
@@ -135,12 +135,12 @@ debian:10:
     - docker
     - linux
 
-opensuse:15.1:
+opensuse:15.2:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/opensuse:446ff604bbfa63f30ddb462697fa0d0dc2630460
+  image: docker.pkg.github.com/espressomd/docker/opensuse:d496478230db4e5c286680e3bdc1621af1fccffc
   script:
-    - export with_cuda=false myconfig=maxset make_check_python=false
+    - export with_cuda=false myconfig=maxset make_check_python=false with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -221,14 +221,14 @@ cuda10-maxset:
 cuda9-maxset:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-18.04:06b6216c7aa3555bcf28c90734dbb84e7285c96f
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-18.04:d496478230db4e5c286680e3bdc1621af1fccffc
   variables:
      CC: 'gcc-6'
      CXX: 'g++-6'
      GCOV: 'gcov-6'
   script:
     - export myconfig=maxset with_cuda=true with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
-    - export with_scafacos=true
+    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:
@@ -354,7 +354,7 @@ empty:
 rocm-maxset:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/rocm:fd7ed514a00d38bf336299ddb34ffcdc8a42e906
+  image: docker.pkg.github.com/espressomd/docker/rocm:d496478230db4e5c286680e3bdc1621af1fccffc
   script:
     - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
     - export with_stokesian_dynamics=false
