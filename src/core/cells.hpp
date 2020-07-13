@@ -21,7 +21,7 @@
 #ifndef _CELLS_H
 #define _CELLS_H
 /** \file
- *  This file contains everything related to the cell structure / cell
+ *  This file contains everything related to the global cell structure / cell
  *  system.
  *
  *  The cell system (\ref CellStructure) describes how particles are
@@ -30,15 +30,16 @@
  *  interact with each other. The following cell systems are implemented:
  *
  *  - domain decomposition: The simulation box is divided spatially
- *    into cells (see \ref domain_decomposition.hpp). This is suitable for
+ *    into cells (see \ref DomainDecomposition.hpp). This is suitable for
  *    short range interactions.
  *  - nsquare: The particles are distributed equally on all nodes
- *    regardless their spatial position (see \ref nsquare.hpp). This is
- *    suitable for long range interactions that cannot be treated by a
- *    special method like P3M (see \ref p3m.hpp).
+ *    regardless their spatial position (see \ref AtomDecomposition.hpp).
+ *    This is suitable for long range interactions that cannot be treated by a
+ *    special method like P3M.
  */
 
 #include "CellStructure.hpp"
+#include "DomainDecomposition.hpp"
 
 #include <utility>
 #include <vector>
@@ -63,9 +64,6 @@ enum {
 /************************************************************/
 /*@{*/
 
-/** list of all cells. */
-extern std::vector<Cell> cells;
-
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
 
@@ -82,38 +80,26 @@ extern bool rebuild_verletlist;
 /*@{*/
 
 /** Reinitialize the cell structures.
- *  @param new_cs The new topology to use afterwards. May be set to
- *                @ref CELL_STRUCTURE_CURRENT for not changing it.
- *  @param range  Desired interaction range
+ *  @param new_cs The new topology to use afterwards.
  */
-void cells_re_init(int new_cs, double range);
+void cells_re_init(int new_cs);
+
+/**
+ * @brief Set use_verlet_lists
+ *
+ * @param use_verlet_lists Shoudl verlet lists be used?
+ */
+void cells_set_use_verlet_lists(bool use_verlet_lists);
 
 /** Sort the particles into the cells and initialize the ghost particle
  *  structures.
  */
 void cells_resort_particles(int global_flag);
 
-/** This function is called whenever the cell system has to be
- *  reinitialized, e.g. if cutoffs have changed, or the skin, grid, ...
- *  It calculates the maximal interaction range, and as said reinitializes
- *  the cells structure if something significant has changed.
- *
- *  If the fast flag is set, the routine should try to save time.
- *  Currently this means that if the maximal range decreased, it does
- *  not reorganize the particles. This is used in the NpT algorithm to
- *  avoid frequent reorganization of particles.
- *
- *  @param fast If true, do not try to optimize the cell size.
- */
-void cells_on_geometry_change(bool fast);
-
 /** Update ghost information. If needed,
  *  the particles are also resorted.
  */
 void cells_update_ghosts(unsigned data_parts);
-
-/** Calculate and return the total number of particles on this node. */
-int cells_get_n_particles();
 
 /**
  * @brief Get pairs closer than @p distance from the cells.
@@ -136,5 +122,13 @@ void check_resort_particles();
  * @return pointer to the cell or nullptr if the particle is not on the node
  */
 Cell *find_current_cell(const Particle &p);
+
+/**
+ * @brief Return a pointer to the global DomainDecomposition.
+ *
+ * @return Pointer to the decomposition if it is set and is
+ * DomainDecomposition, nullptr otherwise.
+ */
+const DomainDecomposition *get_domain_decomposition();
 
 #endif

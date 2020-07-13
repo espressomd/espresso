@@ -608,7 +608,7 @@ void lb_sanity_checks(const LB_Parameters &lb_parameters) {
   if (lb_parameters.viscosity <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann fluid viscosity not set";
   }
-  if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+  if (cell_structure.decomposition_type() != CELL_STRUCTURE_DOMDEC) {
     runtimeErrorMsg() << "LB requires domain-decomposition cellsystem";
   }
 }

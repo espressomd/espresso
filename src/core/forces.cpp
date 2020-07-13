@@ -125,8 +125,8 @@ void force_calc(CellStructure &cell_structure) {
           detect_collision(p1, p2, d.dist2);
 #endif
       },
-      VerletCriterion{skin, cell_structure.min_range, coulomb_cutoff,
-                      dipole_cutoff, collision_detection_cutoff()});
+      VerletCriterion{skin, interaction_range(), coulomb_cutoff, dipole_cutoff,
+                      collision_detection_cutoff()});
 
   Constraints::constraints.add_forces(particles, sim_time);
 

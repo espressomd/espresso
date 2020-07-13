@@ -24,6 +24,7 @@ from .utils cimport Vector3i
 
 cdef extern from "communication.hpp":
     void mpi_bcast_cell_structure(int cs)
+    void mpi_set_use_verlet_lists(bool use_verlet_lists)
     int n_nodes
     vector[int] mpi_resort_particles(int global_flag)
 
@@ -32,20 +33,19 @@ cdef extern from "cells.hpp":
     int CELL_STRUCTURE_NSQUARE
 
     ctypedef struct CellStructure:
-        int type
+        int decomposition_type()
         bool use_verlet_list
 
     CellStructure cell_structure
+
+    const DomainDecomposition * get_domain_decomposition()
 
     vector[pair[int, int]] mpi_get_pairs(double distance)
 
 cdef extern from "tuning.hpp":
     cdef void c_tune_skin "tune_skin" (double min_skin, double max_skin, double tol, int int_steps, bool adjust_max_skin)
 
-cdef extern from "domain_decomposition.hpp":
-    ctypedef struct  DomainDecomposition:
-        int cell_grid[3]
+cdef extern from "DomainDecomposition.hpp":
+    cppclass  DomainDecomposition:
+        Vector3i cell_grid
         double cell_size[3]
-        bool fully_connected[3]
-
-    extern DomainDecomposition dd

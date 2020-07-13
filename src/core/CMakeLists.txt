@@ -7,7 +7,6 @@ set(EspressoCore_SRC
     communication.cpp
     constraints.cpp
     debug.cpp
-    domain_decomposition.cpp
     dpd.cpp
     energy.cpp
     errorhandling.cpp
@@ -22,7 +21,6 @@ set(EspressoCore_SRC
     event.cpp
     integrate.cpp
     npt.cpp
-    nsquare.cpp
     partCfg_global.cpp
     particle_data.cpp
     polymer.cpp
@@ -45,7 +43,8 @@ set(EspressoCore_SRC
     CellStructure.cpp
     PartCfg.cpp
     AtomDecomposition.cpp
-    reduce_observable_stat.cpp)
+    reduce_observable_stat.cpp
+    DomainDecomposition.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
