@@ -177,13 +177,7 @@ void cells_update_ghosts(unsigned data_parts) {
 }
 
 Cell *find_current_cell(const Particle &p) {
-  assert(not cell_structure.get_resort_particles());
-
-  if (p.l.ghost) {
-    return nullptr;
-  }
-
-  return cell_structure.particle_to_cell(p);
+  return cell_structure.find_current_cell(p);
 }
 
 const DomainDecomposition *get_domain_decomposition() {

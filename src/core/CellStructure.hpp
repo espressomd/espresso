@@ -581,6 +581,17 @@ private:
    * to particles_to_cell.
    */
   void check_particle_sorting();
+
+public:
+  Cell *find_current_cell(const Particle &p) {
+    assert(not get_resort_particles());
+
+    if (p.l.ghost) {
+      return nullptr;
+    }
+
+    return particle_to_cell(p);
+  }
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP
