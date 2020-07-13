@@ -72,8 +72,6 @@
 
 int integ_switch = INTEG_METHOD_NVT;
 
-int n_verlet_updates = 0;
-
 double time_step = -1.0;
 
 double sim_time = 0.0;
@@ -206,7 +204,8 @@ int integrate(int n_steps, int reuse_forces) {
   if (check_runtime_errors(comm_cart))
     return 0;
 
-  n_verlet_updates = 0;
+  /** incremented if a Verlet update is done, aka particle resorting. */
+  int n_verlet_updates = 0;
 
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_START_INSTRUMENTATION;
@@ -242,6 +241,9 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef VIRTUAL_SITES
     virtual_sites()->update();
 #endif
+
+    if (cell_structure.get_resort_particles() >= Cells::RESORT_LOCAL)
+      n_verlet_updates++;
 
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());

@@ -32,7 +32,6 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "short_range_loop.hpp"
 
 #include "AtomDecomposition.hpp"
 #include "DomainDecomposition.hpp"
@@ -41,8 +40,6 @@
 
 #include <boost/range/adaptor/uniqued.hpp>
 #include <boost/range/algorithm/sort.hpp>
-
-#include <cstdio>
 
 /** Type of cell structure in use */
 CellStructure cell_structure;
@@ -131,8 +128,6 @@ void cells_re_init(int new_cs) {
 /*************************************************/
 
 void cells_resort_particles(int global_flag) {
-  n_verlet_updates++;
-
   cell_structure.resort_particles(global_flag);
 }
 
