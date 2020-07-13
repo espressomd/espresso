@@ -561,7 +561,23 @@ public:
   }
 
 private:
-  void check_particle_consistency();
+  /**
+   * @brief Check that particle index is commensurate with particles.
+   *
+   * For each local particles is checked that has a correct entry
+   * in the particles index, and that there are no excess (non-existing)
+   * particles in the index.
+   */
+  void check_particle_index();
+
+  /**
+   * @brief Check that particles are in the correct cell.
+   *
+   * This checks for all local particles that the result
+   * of particles_to_cell is the cell the particles is
+   * actually in, e.g. that the particles are sorted according
+   * to particles_to_cell.
+   */
   void check_particle_sorting();
 };
 
