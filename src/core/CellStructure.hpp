@@ -388,7 +388,7 @@ private:
     return partners;
   }
 
-public:
+private:
   /**
    * @brief Execute kernel for every bond on particle.
    * @tparam Handler Callable, which can be invoked with
