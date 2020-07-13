@@ -27,7 +27,6 @@
 #include "cells.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
@@ -135,12 +134,6 @@ void cells_resort_particles(int global_flag) {
   n_verlet_updates++;
 
   cell_structure.resort_particles(global_flag);
-
-#ifdef ADDITIONAL_CHECKS
-  /* at the end of the day, everything should be consistent again */
-  check_particle_consistency(cell_structure);
-  check_particle_sorting(cell_structure);
-#endif
 }
 
 /*************************************************/

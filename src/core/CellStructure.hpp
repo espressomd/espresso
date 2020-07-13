@@ -559,6 +559,10 @@ public:
       link_cell(pair_kernel);
     }
   }
+
+private:
+  void check_particle_consistency();
+  void check_particle_sorting();
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP
