@@ -36,9 +36,6 @@
 /** Switch determining which integrator to use. */
 extern int integ_switch;
 
-/** incremented if a Verlet update is done, aka particle resorting. */
-extern int n_verlet_updates;
-
 /** Time step for the integration. */
 extern double time_step;
 
