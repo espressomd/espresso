@@ -150,7 +150,7 @@ private:
 
   /**
    * @brief Creates a new H5MD file.
-   * @param filename The filename.
+   * @param file_path The filename.
    */
   void create_file(const std::string &file_path);
 
