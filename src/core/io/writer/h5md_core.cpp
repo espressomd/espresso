@@ -31,6 +31,7 @@ namespace Writer {
 namespace H5md {
 
 using MultiArray3i = boost::multi_array<int, 3>;
+using Vector1hs = Utils::Vector<hsize_t, 1>;
 using Vector2hs = Utils::Vector<hsize_t, 2>;
 using Vector3hs = Utils::Vector<hsize_t, 3>;
 
@@ -297,14 +298,11 @@ void File::write(const ParticleRange &particles, double time, int step,
   // calculate count and offset
   int prefix = 0;
   // calculate prefix for write of the current process
-  MPI_Exscan(&n_part_local, &prefix, 1, MPI_INT, MPI_SUM, m_comm);
+  BOOST_MPI_CHECK_RESULT(MPI_Exscan,
+                         (&n_part_local, &prefix, 1, MPI_INT, MPI_SUM, m_comm));
   auto const extents =
       static_cast<h5xx::dataspace>(datasets["particles/atoms/id/value"])
           .extents();
-
-  Utils::Vector<hsize_t, 1> offset_1d = {extents[0]};
-  Utils::Vector<hsize_t, 1> count_1d = {1};
-  Utils::Vector<hsize_t, 1> change_extent_1d = {1};
 
   auto const n_part_global =
       boost::mpi::all_reduce(m_comm, n_part_local, std::plus<int>());
@@ -313,12 +311,12 @@ void File::write(const ParticleRange &particles, double time, int step,
       prefix, n_part_global, particles, datasets["particles/atoms/id/value"],
       [](auto const &p) { return Utils::Vector<int, 1>{p.p.identity}; });
   write_dataset(Utils::Vector<double, 1>{time},
-                datasets["particles/atoms/id/time"], change_extent_1d,
+                datasets["particles/atoms/id/time"], Vector1hs{1},
 
-                offset_1d, count_1d);
+                Vector1hs{extents[0]}, Vector1hs{1});
   write_dataset(Utils::Vector<int, 1>{step},
-                datasets["particles/atoms/id/step"], change_extent_1d,
-                offset_1d, count_1d);
+                datasets["particles/atoms/id/step"], Vector1hs{1},
+                Vector1hs{extents[0]}, Vector1hs{1});
 
   write_td_particle_property<2>(
       prefix, n_part_global, particles,
@@ -368,7 +366,8 @@ void File::write_connectivity(const ParticleRange &particles) {
 
   int n_bonds_local = bond.shape()[1];
   int prefix_bonds = 0;
-  MPI_Exscan(&n_bonds_local, &prefix_bonds, 1, MPI_INT, MPI_SUM, m_comm);
+  BOOST_MPI_CHECK_RESULT(
+      MPI_Exscan, (&n_bonds_local, &prefix_bonds, 1, MPI_INT, MPI_SUM, m_comm));
   auto const n_bonds_total =
       boost::mpi::all_reduce(m_comm, n_bonds_local, std::plus<int>());
   auto const extents =
