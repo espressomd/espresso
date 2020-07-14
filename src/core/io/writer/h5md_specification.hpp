@@ -8,6 +8,12 @@
 namespace Writer {
 namespace H5md {
 
+/**
+ * @brief Layout information for H5MD files.
+ * In order to add a new particle property you have to add an entry to the
+ * H5MD_Specification::DATASETS member and extend the File::write() and the
+ * File::write_units() functions accordingly.
+ */
 struct H5MD_Specification {
 
   struct Dataset {

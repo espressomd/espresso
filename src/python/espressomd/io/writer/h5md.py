@@ -69,16 +69,16 @@ else:
 
         Parameters
         ----------
-        filename : :obj:`str`
-            Name of the trajectory file.
+        file_path : :obj:`str`
+            Path to the trajectory file.
         unit_system : :obj:`UnitSystem`, optional	
             Physical units for the data.
 
         """
 
-        def __init__(self, filename, unit_system=UnitSystem()):
+        def __init__(self, file_path, unit_system=UnitSystem()):
             self.h5md_instance = PScriptInterface(
-                "ScriptInterface::Writer::H5md", filename=filename, scriptname=sys.argv[0],
+                "ScriptInterface::Writer::H5md", file_path=file_path, script_path=sys.argv[0],
                 mass_unit=unit_system.mass, length_unit=unit_system.length, 
                 time_unit=unit_system.time,	
                 force_unit=unit_system.force,	

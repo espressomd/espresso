@@ -142,20 +142,19 @@ respective hdf5-file. This may, for example, look like:
     from espressomd.io.writer import h5md
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
-    h5 = h5md.H5md(filename="trajectory.h5")
+    h5 = h5md.H5md(file_path="trajectory.h5")
 
 An optional argument to the constructor of :class:`espressomd.io.writer.h5md.H5md` is
 an instance of :class:`espressomd.io.writer.h5md.UnitSystem` which encapsulates 
 physical units for time, mass, length and electrical charge.	
 
-If a file with the given filename exists and has a valid H5MD structure,
+If a file at the given filepath exists and has a valid H5MD structure,
 it will be backed up to a file with suffix ".bak". This backup file will be
 deleted when the new file is closed at the end of the simulation with
 ``h5.close()``.
 
 The current implementation allways writes the following properties: positions,
 velocities, forces, species (|es| types), charges, and masses of the particles.
-
 
 In simulations with varying numbers of particles (MC or reactions), the
 size of the dataset will be adapted if the maximum number of particles

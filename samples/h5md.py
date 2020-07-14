@@ -44,7 +44,7 @@ for polymer in positions:
             system.part[id].add_bond((fene, id - 1))
 
 h5_units = h5md.UnitSystem(time='ps', mass='u', length='nm', charge='e')
-h5_file = h5md.H5md(filename="sample.h5", unit_system=h5_units)
+h5_file = h5md.H5md(file_path="sample.h5", unit_system=h5_units)
 
 for i in range(2):
     h5_file.write()

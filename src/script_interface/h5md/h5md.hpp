@@ -36,8 +36,8 @@ class H5md : public AutoParameters<H5md> {
 public:
   H5md() {
     add_parameters(
-        {{"filename", m_h5md, &::Writer::H5md::File::filename},
-         {"scriptname", m_h5md, &::Writer::H5md::File::scriptname},
+        {{"file_path", m_h5md, &::Writer::H5md::File::file_path},
+         {"script_path", m_h5md, &::Writer::H5md::File::script_path},
          {"mass_unit", m_h5md, &::Writer::H5md::File::mass_unit},
          {"length_unit", m_h5md, &::Writer::H5md::File::length_unit},
          {"time_unit", m_h5md, &::Writer::H5md::File::time_unit},
@@ -54,7 +54,7 @@ public:
         make_shared_from_args<::Writer::H5md::File, std::string, std::string,
                               std::string, std::string, std::string,
                               std::string, std::string, std::string>(
-            params, "filename", "scriptname", "mass_unit", "length_unit",
+            params, "file_path", "script_path", "mass_unit", "length_unit",
             "time_unit", "force_unit", "velocity_unit", "charge_unit");
   }
 

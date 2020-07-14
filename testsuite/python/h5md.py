@@ -82,7 +82,7 @@ class H5mdTests(ut.TestCase):
         h5_units = espressomd.io.writer.h5md.UnitSystem(
             time='ps', mass='u', length='m', charge='e')
         h5 = espressomd.io.writer.h5md.H5md(
-            filename="test.h5", unit_system=h5_units)
+            file_path="test.h5", unit_system=h5_units)
         h5.write()
         h5.write()
         h5.flush()
@@ -105,7 +105,7 @@ class H5mdTests(ut.TestCase):
         os.remove("test.h5")
 
     def test_opening(self):
-        h5 = espressomd.io.writer.h5md.H5md(filename="test.h5")
+        h5 = espressomd.io.writer.h5md.H5md(file_path="test.h5")
         h5.close()
 
     def test_box(self):

@@ -86,16 +86,16 @@ void write_script(std::string const &target,
 
 /* Initialize the file related variables after parameters have been set. */
 void File::init_file() {
-  m_backup_filename = m_filename + ".bak";
-  boost::filesystem::path script_path(m_scriptname);
+  m_backup_filename = m_file_path + ".bak";
+  boost::filesystem::path script_path(m_script_path);
   m_absolute_script_path = boost::filesystem::canonical(script_path);
-  bool file_exists = boost::filesystem::exists(m_filename);
+  bool file_exists = boost::filesystem::exists(m_file_path);
   bool backup_file_exists = boost::filesystem::exists(m_backup_filename);
   /* Perform a barrier synchronization. Otherwise one process might already
    * create the file while another still checks for its existence. */
   MPI_Barrier(m_comm);
   if (file_exists) {
-    if (H5MD_Specification::is_compliant(m_filename)) {
+    if (H5MD_Specification::is_compliant(m_file_path)) {
       /*
        * If the file exists and has a valid H5MD structure, let's create a
        * backup of it. This has the advantage, that the new file can
@@ -103,15 +103,15 @@ void File::init_file() {
        * still have a valid trajectory, we can start from.
        */
       if (this_node == 0)
-        backup_file(m_filename, m_backup_filename);
-      load_file(m_filename);
+        backup_file(m_file_path, m_backup_filename);
+      load_file(m_file_path);
     } else {
       throw incompatible_h5mdfile();
     }
   } else {
     if (backup_file_exists)
       throw left_backupfile();
-    create_new_file(m_filename, box_geo);
+    create_new_file(m_file_path, box_geo);
   }
 }
 
