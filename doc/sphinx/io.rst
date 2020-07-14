@@ -153,7 +153,7 @@ it will be backed up to a file with suffix ".bak". This backup file will be
 deleted when the new file is closed at the end of the simulation with
 ``h5.close()``.
 
-The current implementation allways writes the following properties: positions,
+The current implementation always writes the following properties: positions,
 velocities, forces, species (|es| types), charges, and masses of the particles.
 
 In simulations with varying numbers of particles (MC or reactions), the
@@ -163,11 +163,11 @@ be written to the trajectory for the id. If you have a parallel
 simulation, please keep in mind that the sequence of particles in general
 changes from timestep to timestep. Therefore you have to always use the
 dataset for the ids to track which position/velocity/force/type/mass
-entry belongs to which particle. To write data to the hdf5 file, simply
-call the H5md object :meth:`~espressomd.io.writer.h5md.H5md.write` method without any arguments.
+entry belongs to which particle. To write data to the HDF5 file, simply
+call the method :meth:`~espressomd.io.writer.h5md.H5md.write` without any arguments.
 
-After the last write call, you have to call the
-:meth:`~espressomd.io.writer.h5md.H5md.close` method to remove
+After the last write, you have to call
+:meth:`~espressomd.io.writer.h5md.H5md.close` to remove
 the backup file, close the datasets, etc.
 
 H5MD files can be read and modified with the python module h5py (for
