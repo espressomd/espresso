@@ -37,18 +37,16 @@ using Vector2hs = Utils::Vector<hsize_t, 2>;
 using Vector3hs = Utils::Vector<hsize_t, 3>;
 
 static void backup_file(const std::string &from, const std::string &to) {
-  if (this_node == 0) {
-    /*
-     * If the file itself *and* a backup file exists, something must
-     * have gone wrong.
-     */
-    boost::filesystem::path pfrom(from), pto(to);
-    try {
-      boost::filesystem::copy_file(
-          pfrom, pto, boost::filesystem::copy_option::fail_if_exists);
-    } catch (const boost::filesystem::filesystem_error &e) {
-      throw left_backupfile();
-    }
+  /*
+   * If the file itself *and* a backup file exists, something must
+   * have gone wrong.
+   */
+  boost::filesystem::path pfrom(from), pto(to);
+  try {
+    boost::filesystem::copy_file(
+        pfrom, pto, boost::filesystem::copy_option::fail_if_exists);
+  } catch (const boost::filesystem::filesystem_error &e) {
+    throw left_backupfile();
   }
 }
 
@@ -93,7 +91,7 @@ void File::init_file(std::string const &file_path) {
   bool backup_file_exists = boost::filesystem::exists(m_backup_filename);
   /* Perform a barrier synchronization. Otherwise one process might already
    * create the file while another still checks for its existence. */
-  MPI_Barrier(m_comm);
+  m_comm.barrier();
   if (file_exists) {
     if (H5MD_Specification::is_compliant(file_path)) {
       /*
@@ -102,7 +100,7 @@ void File::init_file(std::string const &file_path) {
        * just be deleted if the simulation crashes at some point and we
        * still have a valid trajectory, we can start from.
        */
-      if (this_node == 0)
+      if (m_comm.rank() == 0)
         backup_file(file_path, m_backup_filename);
       load_file(file_path);
     } else {
@@ -235,9 +233,9 @@ void File::create_hard_links() {
 }
 
 void File::create_file(const std::string &file_path) {
-  if (this_node == 0)
+  if (m_comm.rank() == 0)
     write_script(file_path, m_absolute_script_path);
-  MPI_Barrier(m_comm);
+  m_comm.barrier();
   m_h5md_file = h5xx::file(file_path, m_comm, MPI_INFO_NULL, h5xx::file::out);
   create_groups();
   create_datasets();
@@ -247,7 +245,7 @@ void File::create_file(const std::string &file_path) {
 }
 
 void File::close() {
-  if (this_node == 0)
+  if (m_comm.rank() == 0)
     boost::filesystem::remove(m_backup_filename);
 }
 
