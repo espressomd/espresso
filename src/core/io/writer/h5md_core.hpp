@@ -64,14 +64,13 @@ public:
        std::string length_unit, std::string time_unit, std::string force_unit,
        std::string velocity_unit, std::string charge_unit,
        boost::mpi::communicator comm = boost::mpi::communicator())
-      : m_file_path(std::move(file_path)),
-        m_script_path(std::move(script_path)),
+      : m_script_path(std::move(script_path)),
         m_mass_unit(std::move(mass_unit)),
         m_length_unit(std::move(length_unit)),
         m_time_unit(std::move(time_unit)), m_force_unit(std::move(force_unit)),
         m_velocity_unit(std::move(velocity_unit)),
         m_charge_unit(std::move(charge_unit)), m_comm(std::move(comm)) {
-    init_file();
+    init_file(file_path);
   };
   ~File() = default;
 
@@ -86,15 +85,17 @@ public:
    * @param particles Particle range for which to write data.
    * @param time Simulation time.
    * @param step Simulation step (monotonically increasing).
-
+   * @param geometry A BoxGeometry instance that carries the information of the
+   * box dimensions.
    */
-  void write(const ParticleRange &particles, double time, int step);
+  void write(const ParticleRange &particles, double time, int step,
+             BoxGeometry const &geometry);
 
   /**
    * @brief Retrieve the path to the hdf5 file.
    * @return The path as a string.
    */
-  std::string &file_path() { return m_file_path; };
+  std::string file_path() const { return m_h5md_file.name(); };
 
   /**
    * @brief Retrieve the path to the simulation script.
@@ -147,21 +148,19 @@ private:
   /**
    * @brief Initialize the File object.
    */
-  void init_file();
+  void init_file(std::string const &file_path);
 
   /**
    * @brief Creates a new H5MD file.
    * @param filename The filename.
-   * @param geometry A BoxGeometry instance that carries the information of the
-   * box dimensions.
    */
-  void create_new_file(const std::string &filename, BoxGeometry &geometry);
+  void create_file(const std::string &file_path);
 
   /**
    * @brief Loads an existing H5MD file.
-   * @param filename The filename.
+   * @param file_path The filename.
    */
-  void load_file(const std::string &filename);
+  void load_file(const std::string &file_path);
 
   /**
    * @brief Create the HDF5 groups according to the H5MD specification.
@@ -193,7 +192,6 @@ private:
    * datasets.
    */
   void create_hard_links();
-  std::string m_file_path;
   std::string m_script_path;
   std::string m_mass_unit;
   std::string m_length_unit;

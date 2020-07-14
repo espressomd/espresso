@@ -85,17 +85,17 @@ void write_script(std::string const &target,
 }
 
 /* Initialize the file related variables after parameters have been set. */
-void File::init_file() {
-  m_backup_filename = m_file_path + ".bak";
+void File::init_file(std::string const &file_path) {
+  m_backup_filename = file_path + ".bak";
   boost::filesystem::path script_path(m_script_path);
   m_absolute_script_path = boost::filesystem::canonical(script_path);
-  bool file_exists = boost::filesystem::exists(m_file_path);
+  bool file_exists = boost::filesystem::exists(file_path);
   bool backup_file_exists = boost::filesystem::exists(m_backup_filename);
   /* Perform a barrier synchronization. Otherwise one process might already
    * create the file while another still checks for its existence. */
   MPI_Barrier(m_comm);
   if (file_exists) {
-    if (H5MD_Specification::is_compliant(m_file_path)) {
+    if (H5MD_Specification::is_compliant(file_path)) {
       /*
        * If the file exists and has a valid H5MD structure, let's create a
        * backup of it. This has the advantage, that the new file can
@@ -103,15 +103,15 @@ void File::init_file() {
        * still have a valid trajectory, we can start from.
        */
       if (this_node == 0)
-        backup_file(m_file_path, m_backup_filename);
-      load_file(m_file_path);
+        backup_file(file_path, m_backup_filename);
+      load_file(file_path);
     } else {
       throw incompatible_h5mdfile();
     }
   } else {
     if (backup_file_exists)
       throw left_backupfile();
-    create_new_file(m_file_path, box_geo);
+    create_file(file_path);
   }
 }
 
@@ -173,8 +173,8 @@ void File::create_datasets() {
   }
 }
 
-void File::load_file(const std::string &filename) {
-  m_h5md_file = h5xx::file(filename, m_comm, MPI_INFO_NULL, h5xx::file::out);
+void File::load_file(const std::string &file_path) {
+  m_h5md_file = h5xx::file(file_path, m_comm, MPI_INFO_NULL, h5xx::file::out);
   load_datasets();
 }
 
@@ -186,7 +186,8 @@ void write_box(const BoxGeometry &geometry, const h5xx::file &h5md_file,
                       h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 3}));
 }
 
-void write_attributes(const char *espresso_version, h5xx::file &h5md_file) {
+void write_attributes(const std::string &espresso_version,
+                      h5xx::file &h5md_file) {
   auto h5md_group = h5xx::group(h5md_file, "h5md");
   h5xx::write_attribute(h5md_group, "version", boost::array<hsize_t, 2>{1, 1});
   auto h5md_creator_group = h5xx::group(h5md_group, "creator");
@@ -233,11 +234,11 @@ void File::create_hard_links() {
   }
 }
 
-void File::create_new_file(const std::string &filename, BoxGeometry &geometry) {
+void File::create_file(const std::string &file_path) {
   if (this_node == 0)
-    write_script(filename, m_absolute_script_path);
+    write_script(file_path, m_absolute_script_path);
   MPI_Barrier(m_comm);
-  m_h5md_file = h5xx::file(filename, m_comm, MPI_INFO_NULL, h5xx::file::out);
+  m_h5md_file = h5xx::file(file_path, m_comm, MPI_INFO_NULL, h5xx::file::out);
   create_groups();
   create_datasets();
   write_attributes(ESPRESSO_VERSION, m_h5md_file);
@@ -291,8 +292,9 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
   }
 }
 
-void File::write(const ParticleRange &particles, double time, int step) {
-  write_box(box_geo, m_h5md_file, datasets["particles/atoms/box/edges/value"]);
+void File::write(const ParticleRange &particles, double time, int step,
+                 BoxGeometry const &geometry) {
+  write_box(geometry, m_h5md_file, datasets["particles/atoms/box/edges/value"]);
   write_connectivity(particles);
 
   int const n_part_local = particles.size();

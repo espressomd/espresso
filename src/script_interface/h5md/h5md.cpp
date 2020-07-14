@@ -24,9 +24,9 @@
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #include "cells.hpp"
+#include "grid.hpp"
 #include "h5md.hpp"
 #include "integrate.hpp"
-#include "partCfg_global.hpp"
 
 namespace ScriptInterface {
 namespace Writer {
@@ -34,7 +34,7 @@ Variant H5md::call_method(const std::string &name,
                           const VariantMap &parameters) {
   if (name == "write")
     m_h5md->write(cell_structure.local_particles(), sim_time,
-                  static_cast<int>(std::round(sim_time / time_step)));
+                  static_cast<int>(std::round(sim_time / time_step)), box_geo);
   else if (name == "flush")
     m_h5md->flush();
   else if (name == "close")
