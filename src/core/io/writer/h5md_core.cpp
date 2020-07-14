@@ -369,10 +369,10 @@ void File::write_connectivity(const ParticleRange &particles) {
   }
 
   int n_bonds_local = bond.shape()[1];
-  int n_bonds_total = n_bonds_local;
   int prefix_bonds = 0;
   MPI_Exscan(&n_bonds_local, &prefix_bonds, 1, MPI_INT, MPI_SUM, m_comm);
-  MPI_Allreduce(&n_bonds_local, &n_bonds_total, 1, MPI_INT, MPI_SUM, m_comm);
+  auto const n_bonds_total =
+      boost::mpi::all_reduce(m_comm, n_bonds_local, std::plus<int>());
   auto const extents =
       static_cast<h5xx::dataspace>(datasets["connectivity/atoms/value"])
           .extents();
