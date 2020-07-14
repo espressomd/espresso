@@ -21,9 +21,7 @@
 
 #include "h5md_core.hpp"
 #include "communication.hpp"
-#include "grid.hpp"
 #include "h5md_specification.hpp"
-#include "integrate.hpp"
 #include "version.hpp"
 
 #include <fstream>
@@ -334,7 +332,7 @@ void File::write(const ParticleRange &particles, double time, int step,
   write_td_particle_property<3>(
       prefix, n_part_global, particles,
       datasets["particles/atoms/position/value"],
-      [&](auto const &p) { return folded_position(p.r.p, box_geo); });
+      [&](auto const &p) { return folded_position(p.r.p, geometry); });
   write_td_particle_property<3>(prefix, n_part_global, particles,
                                 datasets["particles/atoms/image/value"],
                                 [](auto const &p) { return p.l.i; });

@@ -30,9 +30,7 @@
 #include <algorithm>
 #include <string>
 #include <unordered_map>
-#include <utility>
 
-#include "PartCfg.hpp"
 #include "ParticleRange.hpp"
 
 namespace h5xx {
