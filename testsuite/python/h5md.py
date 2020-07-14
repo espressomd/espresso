@@ -189,17 +189,17 @@ class H5mdTests(ut.TestCase):
             self.py_file['particles/atoms/id/time'].attrs['unit'], b'ps')
         self.assertEqual(
             self.py_file['particles/atoms/position/value'].attrs['unit'], b'm')
-        if espressomd.has_features(['ELECTROSTATICS']):	
-            self.assertEqual(	
-                self.py_file['particles/atoms/charge/value'].attrs['unit'], b'e')	
-        if espressomd.has_features(['MASS']):	
-            self.assertEqual(	
-                self.py_file['particles/atoms/mass/value'].attrs['unit'], b'u')	
-        self.assertEqual(	
-            self.py_file['particles/atoms/force/value'].attrs['unit'],	
-            b'm u ps-2')	
-        self.assertEqual(	
-            self.py_file['particles/atoms/velocity/value'].attrs['unit'],	
+        if espressomd.has_features(['ELECTROSTATICS']):
+            self.assertEqual(
+                self.py_file['particles/atoms/charge/value'].attrs['unit'], b'e')
+        if espressomd.has_features(['MASS']):
+            self.assertEqual(
+                self.py_file['particles/atoms/mass/value'].attrs['unit'], b'u')
+        self.assertEqual(
+            self.py_file['particles/atoms/force/value'].attrs['unit'],
+            b'm u ps-2')
+        self.assertEqual(
+            self.py_file['particles/atoms/velocity/value'].attrs['unit'],
             b'm ps-1')
 
     def test_links(self):
