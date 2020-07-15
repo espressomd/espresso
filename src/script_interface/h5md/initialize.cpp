@@ -21,7 +21,6 @@
 #ifdef H5MD
 #include "h5md.hpp"
 #include "initialize.hpp"
-#include "io/writer/h5md_core.hpp"
 
 namespace ScriptInterface {
 namespace Writer {

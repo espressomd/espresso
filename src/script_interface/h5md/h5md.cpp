@@ -18,20 +18,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include "config.hpp"
-#ifdef H5MD
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
-#include "cells.hpp"
-#include "grid.hpp"
+#include "config.hpp"
+#ifdef H5MD
+
 #include "h5md.hpp"
-#include "integrate.hpp"
+
+#include "core/cells.hpp"
+#include "core/grid.hpp"
+#include "core/integrate.hpp"
 
 namespace ScriptInterface {
 namespace Writer {
 Variant H5md::do_call_method(const std::string &name,
-                          const VariantMap &parameters) {
+                             const VariantMap &parameters) {
   if (name == "write")
     m_h5md->write(cell_structure.local_particles(), sim_time,
                   static_cast<int>(std::round(sim_time / time_step)), box_geo);
