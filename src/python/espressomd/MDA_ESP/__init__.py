@@ -66,7 +66,7 @@ from MDAnalysis.core.topology import Topology
 from MDAnalysis.core.topologyattrs import (
     Atomnames, Atomids, Atomtypes, Masses,
     Resids, Resnums, Segids, Resnames, AltLocs,
-    ICodes, Occupancies, Tempfactors, Charges
+    ICodes, Occupancies, Tempfactors, Charges, Bonds, Angles, Dihedrals
 )
 
 
@@ -144,12 +144,27 @@ class ESPParser(TopologyReaderBase):
         atomtypes = []
         masses = []
         charges = []
+        bonds = []
+        angles = []
+        dihedrals = []
 
         for p in espresso.part:
             names.append("A" + repr(p.type))
             atomtypes.append("T" + repr(p.type))
             masses.append(p.mass)
             charges.append(p.q)
+            for bond in p.bonds:
+                partner_ids = bond[1:]
+                n_partner = len(partner_ids)
+                if n_partner == 1:
+                    bonds.append((p.id, partner_ids[0]))
+                elif n_partner == 2:
+                    angles.append((partner_ids[0], p.id, partner_ids[1]))
+                elif n_partner == 3:
+                    dihedrals.append(
+                        (partner_ids[0], p.id, partner_ids[1], partner_ids[2]))
+                else:
+                    continue
         natoms = len(espresso.part)
         attrs = [Atomnames(np.array(names, dtype=object)),
                  Atomids(np.arange(natoms) + 1),
@@ -164,6 +179,7 @@ class ESPParser(TopologyReaderBase):
                  Tempfactors(np.zeros(natoms)),
                  ICodes(np.array([' '], dtype=object)),
                  Charges(np.array(charges)),
+                 Bonds(bonds)
                  ]
 
         top = Topology(natoms, 1, 1, attrs=attrs)
