@@ -28,6 +28,9 @@
 namespace ScriptInterface {
 using ObjectId = std::size_t;
 
+/**
+ * @brief Id for object.
+ */
 inline ObjectId object_id(const ObjectHandle *p) {
   return std::hash<const ObjectHandle *>{}(p);
 }
@@ -42,39 +45,74 @@ using PackedVariant = boost::make_recursive_variant<
 
 using PackedMap = std::vector<std::pair<std::string, PackedVariant>>;
 
-struct PackVisitor : recursive_visitor<PackVisitor, Variant, PackedVariant> {
+/**
+ * @brief Visitor that converts a Variant to a PackedVariant.
+ *
+ * While packing keeps track of all the ObjectRef values that
+ * were encountered, and stores them. This also keeps the
+ * referees alive if there are no other owners.
+ */
+struct PackVisitor : boost::static_visitor<PackedVariant> {
 private:
   mutable std::unordered_map<ObjectId, ObjectRef> m_objects;
 
 public:
   auto const &objects() const { return m_objects; }
 
-  using recursive_visitor<PackVisitor, Variant, PackedVariant>::operator();
-  template <class T> PackedVariant operator()(T &&val) const {
-    return std::forward<T>(val);
+  /* For the vector, we recurse into each element. */
+  auto operator()(const std::vector<Variant> &vec) const {
+    std::vector<PackedVariant> ret(vec.size());
+
+    boost::transform(vec, ret.begin(), [this](const Variant &v) {
+      return boost::apply_visitor(*this, v);
+    });
+
+    return ret;
   }
 
+  /* For object references we store the object reference, and
+   * replace it by just an id. */
   PackedVariant operator()(const ObjectRef &so_ptr) const {
     auto const oid = object_id(so_ptr.get());
     m_objects[oid] = so_ptr;
 
     return oid;
   }
+
+  /* Regular value are just verbatim copied into the result. */
+  template <class T> PackedVariant operator()(T &&val) const {
+    return std::forward<T>(val);
+  }
 };
 
-struct UnpackVisitor
-    : recursive_visitor<UnpackVisitor, PackedVariant, Variant> {
+/**
+ * @brief Visitor that converts a PackedVariant to a Variant.
+ *
+ * Object Id are replaced according to the provided object map.
+ */
+struct UnpackVisitor : boost::static_visitor<Variant> {
   std::unordered_map<ObjectId, ObjectRef> const &objects;
 
   explicit UnpackVisitor(std::unordered_map<ObjectId, ObjectRef> const &objects)
       : objects(objects) {}
 
-  using recursive_visitor<UnpackVisitor, PackedVariant, Variant>::operator();
+  /* For the vector, we recurse into each element. */
+  auto operator()(const std::vector<PackedVariant> &vec) const {
+    std::vector<Variant> ret(vec.size());
 
+    boost::transform(vec, ret.begin(), [this](const PackedVariant &v) {
+      return boost::apply_visitor(*this, v);
+    });
+
+    return ret;
+  }
+
+  /* Regular value are just verbatim copied into the result. */
   template <class T> Variant operator()(T &&val) const {
     return std::forward<T>(val);
   }
 
+  /* For object id's they are replaced by references accoding to the map. */
   Variant operator()(const ObjectId &id) const { return objects.at(id); }
 };
 
