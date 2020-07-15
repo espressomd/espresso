@@ -20,7 +20,7 @@
 */
 
 #include "ObjectHandle.hpp"
-#include "GlobalContext.hpp"
+#include "Context.hpp"
 
 namespace ScriptInterface {
 void ObjectHandle::set_parameter(const std::string &name,

@@ -21,7 +21,6 @@
 
 #include "Context.hpp"
 #include "ObjectHandle.hpp"
-#include "ObjectState.hpp"
 
 #include <utils/Factory.hpp>
 

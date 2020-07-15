@@ -23,7 +23,6 @@
 
 #include <utils/Span.hpp>
 
-#include <boost/mpi/communicator.hpp>
 #include <boost/utility/string_ref.hpp>
 
 namespace ScriptInterface {
