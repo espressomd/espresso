@@ -208,6 +208,7 @@ python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2)
 python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
+python_test(FILE mdanalysis.py MAX_NUM_PROC 2)
 
 add_custom_target(
   python_test_data
