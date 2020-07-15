@@ -19,6 +19,7 @@
 #ifndef SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 #define SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 
+#include "script_interface/Exception.hpp"
 #include "script_interface/ObjectHandle.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
@@ -88,15 +89,15 @@ class AutoParameters : public Base {
 
 public:
   /** @brief Exception thrown when accessing an unknown parameter */
-  struct UnknownParameter : public std::runtime_error {
+  struct UnknownParameter : public Exception {
     explicit UnknownParameter(std::string const &name)
-        : runtime_error("Unknown parameter '" + name + "'.") {}
+        : Exception("Unknown parameter '" + name + "'.") {}
   };
 
   /** @brief Exception thrown when writing to a read-only parameter */
-  struct WriteError : public std::runtime_error {
+  struct WriteError : public Exception {
     explicit WriteError(std::string const &name)
-        : runtime_error("Parameter " + name + " is read-only.") {}
+        : Exception("Parameter " + name + " is read-only.") {}
   };
 
 protected:

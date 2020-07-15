@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(make_shared_from_args_test) {
 
     BOOST_CHECK_THROW((make_shared_from_args<C, int, double, std::string>(
                           vals, "b", "a", "d")),
-                      std::out_of_range);
+                      Exception);
   }
 
   /* Wrong type */
@@ -73,6 +73,6 @@ BOOST_AUTO_TEST_CASE(make_shared_from_args_test) {
 
     BOOST_CHECK_THROW((make_shared_from_args<C, int, double, std::string>(
                           vals, "b", "a", "c")),
-                      std::runtime_error);
+                      Exception);
   }
 }

@@ -20,6 +20,7 @@
 #ifndef SCRIPT_INTERFACE_GET_VALUE_HPP
 #define SCRIPT_INTERFACE_GET_VALUE_HPP
 
+#include "Exception.hpp"
 #include "ObjectHandle.hpp"
 #include "Variant.hpp"
 
@@ -172,7 +173,7 @@ struct get_value_helper<
   std::shared_ptr<T> operator()(Variant const &v) const {
     auto so_ptr = boost::get<ObjectRef>(v);
     if (!so_ptr) {
-      throw std::runtime_error("Unknown Object");
+      throw boost::bad_get{};
     }
 
     auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
@@ -181,7 +182,7 @@ struct get_value_helper<
       return t_ptr;
     }
 
-    throw std::runtime_error("Wrong type");
+    throw boost::bad_get{};
   }
 };
 } // namespace detail
@@ -199,9 +200,8 @@ template <typename T> T get_value(Variant const &v) {
   try {
     return detail::get_value_helper<T>{}(v);
   } catch (const boost::bad_get &) {
-    throw std::runtime_error("Provided argument of type " +
-                             detail::type_label(v) + " is not convertible to " +
-                             Utils::demangle<T>());
+    throw Exception("Provided argument of type " + detail::type_label(v) +
+                    " is not convertible to " + Utils::demangle<T>());
   }
 }
 
@@ -216,7 +216,7 @@ T get_value(VariantMap const &vals, std::string const &name) {
   try {
     return get_value<T>(vals.at(name));
   } catch (std::out_of_range const &) {
-    throw std::out_of_range("Parameter '" + name + "' is missing.");
+    throw Exception("Parameter '" + name + "' is missing.");
   }
 }
 
