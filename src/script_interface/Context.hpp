@@ -20,11 +20,9 @@
 #define ESPRESSO_CONTEXT_HPP
 
 #include "ObjectHandle.hpp"
-#include "ObjectState.hpp"
 #include "Variant.hpp"
 
 #include <boost/utility/string_ref.hpp>
-#include <utils/serialization/pack.hpp>
 
 #include <memory>
 
@@ -64,57 +62,12 @@ public:
   /**
    * @brief String representation of the state of an object.
    */
-  std::string serialize(const ObjectHandle *o) const {
-    ObjectState state;
-
-    auto const params = o->get_parameters();
-    state.params.resize(params.size());
-
-    PackVisitor v;
-
-    /* Pack parameters and keep track of ObjectRef parameters */
-    boost::transform(params, state.params.begin(),
-                     [&v](auto const &kv) -> PackedMap::value_type {
-                       return {kv.first, boost::apply_visitor(v, kv.second)};
-                     });
-
-    /* Packed Object parameters */
-    state.objects.resize(v.objects().size());
-    boost::transform(
-        v.objects(), state.objects.begin(), [this](auto const &kv) {
-          return std::make_pair(kv.first, this->serialize(kv.second.get()));
-        });
-
-    state.name = name(o).to_string();
-    state.internal_state = o->get_internal_state();
-
-    return Utils::pack(state);
-  }
+  std::string serialize(const ObjectHandle *o) const;
 
   /**
    * @brief Make object from serialized state.
    */
-  ObjectRef deserialize(std::string const &state_) {
-    auto const state = Utils::unpack<ObjectState>(state_);
-
-    std::unordered_map<ObjectId, ObjectRef> objects;
-    boost::transform(state.objects, std::inserter(objects, objects.end()),
-                     [this](auto const &kv) {
-                       return std::make_pair(kv.first,
-                                             this->deserialize(kv.second));
-                     });
-
-    VariantMap params;
-    for (auto const &kv : state.params) {
-      params[kv.first] =
-          boost::apply_visitor(UnpackVisitor(objects), kv.second);
-    }
-
-    auto o = make_shared(state.name, params);
-    o->set_internal_state(state.internal_state);
-
-    return o;
-  }
+  ObjectRef deserialize(std::string const &state_);
 
 protected:
   void set_manager(ObjectHandle *o) { o->m_manager = this->shared_from_this(); }

@@ -21,6 +21,8 @@
 #include "GlobalContext.hpp"
 #include "LocalContext.hpp"
 
+#include <utils/serialization/pack.hpp>
+
 namespace ScriptInterface {
 std::shared_ptr<ObjectHandle>
 ObjectManager::make_shared(CreationPolicy policy, std::string const &name,
