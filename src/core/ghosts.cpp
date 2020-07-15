@@ -95,7 +95,7 @@ static size_t calc_transmit_size(unsigned data_parts) {
   return size;
 }
 
-static size_t calc_transmit_size(GhostCommunication &ghost_comm,
+static size_t calc_transmit_size(const GhostCommunication &ghost_comm,
                                  unsigned int data_parts) {
   if (data_parts & GHOSTTRANS_PARTNUM)
     return sizeof(int) * ghost_comm.part_lists.size();
@@ -108,7 +108,7 @@ static size_t calc_transmit_size(GhostCommunication &ghost_comm,
 }
 
 static void prepare_send_buffer(CommBuf &send_buffer,
-                                GhostCommunication &ghost_comm,
+                                const GhostCommunication &ghost_comm,
                                 unsigned int data_parts) {
   /* reallocate send buffer */
   send_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
@@ -165,7 +165,7 @@ static void prepare_ghost_cell(ParticleList *cell, int size) {
 }
 
 static void prepare_recv_buffer(CommBuf &recv_buffer,
-                                GhostCommunication &ghost_comm,
+                                const GhostCommunication &ghost_comm,
                                 unsigned int data_parts) {
   /* reallocate recv buffer */
   recv_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
@@ -174,7 +174,7 @@ static void prepare_recv_buffer(CommBuf &recv_buffer,
 }
 
 static void put_recv_buffer(CommBuf &recv_buffer,
-                            GhostCommunication &ghost_comm,
+                            const GhostCommunication &ghost_comm,
                             unsigned int data_parts) {
   /* put back data */
   auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
@@ -222,7 +222,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
 }
 
 static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
-                                        GhostCommunication &ghost_comm) {
+                                        const GhostCommunication &ghost_comm) {
   /* put back data */
   auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
   for (auto &part_list : ghost_comm.part_lists) {
@@ -234,7 +234,7 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
   }
 }
 
-static void cell_cell_transfer(GhostCommunication &ghost_comm,
+static void cell_cell_transfer(const GhostCommunication &ghost_comm,
                                unsigned int data_parts) {
   /* transfer data */
   auto const offset = ghost_comm.part_lists.size() / 2;
@@ -301,17 +301,17 @@ static bool is_poststorable(GhostCommunication const &ghost_comm,
   return is_recv_op(comm_type, node, this_node) && poststore;
 }
 
-void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
+void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
   if (GHOSTTRANS_NONE == data_parts)
     return;
 
   static CommBuf send_buffer, recv_buffer;
 
-  auto const &comm = gcr->mpi_comm;
+  auto const &comm = gcr.mpi_comm;
 
-  for (auto it = gcr->communications.begin(); it != gcr->communications.end();
+  for (auto it = gcr.communications.begin(); it != gcr.communications.end();
        ++it) {
-    GhostCommunication &ghost_comm = *it;
+    const GhostCommunication &ghost_comm = *it;
     int const comm_type = ghost_comm.type & GHOST_JOBMASK;
 
     if (comm_type == GHOST_LOCL) {
@@ -335,12 +335,12 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
     } else if (prefetch) {
       /* we do not send this time, let's look for a prefetch */
       auto prefetch_ghost_comm = std::find_if(
-          std::next(it), gcr->communications.end(),
+          std::next(it), gcr.communications.end(),
           [this_node = comm.rank()](GhostCommunication const &ghost_comm) {
             return is_prefetchable(ghost_comm, this_node);
           });
 
-      if (prefetch_ghost_comm != gcr->communications.end())
+      if (prefetch_ghost_comm != gcr.communications.end())
         prepare_send_buffer(send_buffer, *prefetch_ghost_comm, data_parts);
     }
 
@@ -401,12 +401,12 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
        * prefetch send. */
       /* find previous action where we recv and which has PSTSTORE set */
       auto poststore_ghost_comm = std::find_if(
-          std::make_reverse_iterator(it), gcr->communications.rend(),
+          std::make_reverse_iterator(it), gcr.communications.rend(),
           [this_node = comm.rank()](GhostCommunication const &ghost_comm) {
             return is_poststorable(ghost_comm, this_node);
           });
 
-      if (poststore_ghost_comm != gcr->communications.rend()) {
+      if (poststore_ghost_comm != gcr.communications.rend()) {
         assert(recv_buffer.size() ==
                calc_transmit_size(*poststore_ghost_comm, data_parts));
         /* as above */

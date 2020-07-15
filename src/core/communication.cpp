@@ -109,7 +109,6 @@ int n_nodes = -1;
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
-  CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_resort_particles_slave)                                               \
@@ -480,13 +479,14 @@ void mpi_rescale_particles_slave(int, int dir) {
 
 /*************** BCAST CELL STRUCTURE *****************/
 
-void mpi_bcast_cell_structure(int cs) {
-  mpi_call(mpi_bcast_cell_structure_slave, -1, cs);
-  cells_re_init(cs, cell_structure.min_range);
-}
+REGISTER_CALLBACK(cells_re_init)
 
-void mpi_bcast_cell_structure_slave(int, int cs) {
-  cells_re_init(cs, cell_structure.min_range);
+void mpi_bcast_cell_structure(int cs) { mpi_call_all(cells_re_init, cs); }
+
+REGISTER_CALLBACK(cells_set_use_verlet_lists)
+
+void mpi_set_use_verlet_lists(bool use_verlet_lists) {
+  mpi_call_all(cells_set_use_verlet_lists, use_verlet_lists);
 }
 
 /*************** BCAST NPTISO GEOM *****************/
@@ -636,7 +636,9 @@ std::vector<int> mpi_resort_particles(int global_flag) {
   clear_particle_node();
 
   std::vector<int> n_parts;
-  boost::mpi::gather(comm_cart, cells_get_n_particles(), n_parts, 0);
+  boost::mpi::gather(comm_cart,
+                     static_cast<int>(cell_structure.local_particles().size()),
+                     n_parts, 0);
 
   return n_parts;
 }
@@ -644,5 +646,6 @@ std::vector<int> mpi_resort_particles(int global_flag) {
 void mpi_resort_particles_slave(int global_flag, int) {
   cells_resort_particles(global_flag);
 
-  boost::mpi::gather(comm_cart, cells_get_n_particles(), 0);
+  boost::mpi::gather(
+      comm_cart, static_cast<int>(cell_structure.local_particles().size()), 0);
 }

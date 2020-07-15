@@ -152,7 +152,7 @@ int MMM1D_sanity_checks() {
     return 1;
   }
 
-  if (cell_structure.type != CELL_STRUCTURE_NSQUARE) {
+  if (cell_structure.decomposition_type() != CELL_STRUCTURE_NSQUARE) {
     runtimeErrorMsg() << "MMM1D requires n-square cellsystem";
     return 1;
   }

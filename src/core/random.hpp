@@ -70,8 +70,7 @@ namespace Random {
  *
  */
 template <RNGSalt salt>
-Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1,
-                                            int key2 = 0) {
+auto philox_4_uint64s(uint64_t counter, int key1, int key2 = 0) {
 
   using rng_type = r123::Philox4x64;
   using ctr_type = rng_type::ctr_type;
@@ -83,8 +82,7 @@ Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1,
   auto const id2 = static_cast<uint32_t>(key2);
   const key_type k{id1, id2};
 
-  auto const res = rng_type{}(c, k);
-  return {res[0], res[1], res[2], res[3]};
+  return rng_type{}(c, k);
 }
 
 /**

@@ -32,23 +32,31 @@
 namespace ScriptInterface {
 namespace Writer {
 
-class H5mdScript : public AutoParameters<H5mdScript> {
+class H5md : public AutoParameters<H5md> {
 public:
-  H5mdScript() : m_h5md(new ::Writer::H5md::File()) {
-    add_parameters({{"filename", m_h5md->filename()},
-                    {"scriptname", m_h5md->scriptname()},
-                    {"what", m_h5md->what()},
-                    {"mass_unit", m_h5md->mass_unit()},
-                    {"time_unit", m_h5md->time_unit()},
-                    {"length_unit", m_h5md->length_unit()},
-                    {"force_unit", m_h5md->force_unit()},
-                    {"velocity_unit", m_h5md->velocity_unit()},
-                    {"charge_unit", m_h5md->charge_unit()},
-                    {"write_ordered", m_h5md->write_ordered()}});
+  H5md() {
+    add_parameters(
+        {{"file_path", m_h5md, &::Writer::H5md::File::file_path},
+         {"script_path", m_h5md, &::Writer::H5md::File::script_path},
+         {"mass_unit", m_h5md, &::Writer::H5md::File::mass_unit},
+         {"length_unit", m_h5md, &::Writer::H5md::File::length_unit},
+         {"time_unit", m_h5md, &::Writer::H5md::File::time_unit},
+         {"force_unit", m_h5md, &::Writer::H5md::File::force_unit},
+         {"velocity_unit", m_h5md, &::Writer::H5md::File::velocity_unit},
+         {"charge_unit", m_h5md, &::Writer::H5md::File::charge_unit}});
   };
 
   Variant call_method(const std::string &name,
                       const VariantMap &parameters) override;
+
+  void construct(VariantMap const &params) override {
+    m_h5md =
+        make_shared_from_args<::Writer::H5md::File, std::string, std::string,
+                              std::string, std::string, std::string,
+                              std::string, std::string, std::string>(
+            params, "file_path", "script_path", "mass_unit", "length_unit",
+            "time_unit", "force_unit", "velocity_unit", "charge_unit");
+  }
 
 private:
   std::shared_ptr<::Writer::H5md::File> m_h5md;

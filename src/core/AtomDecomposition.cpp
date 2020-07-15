@@ -33,15 +33,11 @@ void AtomDecomposition::configure_neighbors() {
 
   /* distribute force calculation work  */
   for (int n = 0; n < comm.size(); n++) {
-    auto const diff = n - comm.rank();
-    /* simple load balancing formula. Basically diff % n, where n >=
-       ad.comm.size(), n odd. The node itself is also left out, as it is
-       treated differently */
-    if (diff == 0) {
+    if (comm.rank() == n) {
       continue;
     }
 
-    if (((diff > 0 && (diff % 2) == 0) || (diff < 0 && ((-diff) % 2) == 1))) {
+    if (n < comm.rank()) {
       red_neighbors.push_back(&cells.at(n));
     } else {
       black_neighbors.push_back(&cells.at(n));
@@ -97,30 +93,38 @@ void AtomDecomposition::mark_cells() {
     }
   }
 }
-void AtomDecomposition::resort(bool global_flag, ParticleList &displaced_parts,
-                               std::vector<Cell *> &modified_cells) {
+void AtomDecomposition::resort(bool global_flag,
+                               std::vector<ParticleChange> &diff) {
+  for (auto &p : local().particles()) {
+    fold_position(p.r.p, p.l.i, m_box);
+
+    p.l.p_old = p.r.p;
+  }
+
   /* Local updates are a NoOp for this decomposition. */
   if (not global_flag) {
-    assert(displaced_parts.empty());
     return;
   }
 
   /* Sort displaced particles by the node they belong to. */
   std::vector<std::vector<Particle>> send_buf(comm.size());
-  for (auto &p : displaced_parts) {
-    auto const target_node = id_to_rank(p.identity());
-    send_buf.at(target_node).emplace_back(std::move(p));
+  for (auto it = local().particles().begin();
+       it != local().particles().end();) {
+    auto const target_node = id_to_rank(it->identity());
+    if (target_node != comm.rank()) {
+      diff.emplace_back(RemovedParticle{it->identity()});
+      send_buf.at(target_node).emplace_back(std::move(*it));
+      it = local().particles().erase(it);
+    } else {
+      ++it;
+    }
   }
-  displaced_parts.clear();
 
   /* Exchange particles */
   std::vector<std::vector<Particle>> recv_buf(comm.size());
   boost::mpi::all_to_all(comm, send_buf, recv_buf);
 
-  if (std::any_of(recv_buf.begin(), recv_buf.end(),
-                  [](auto const &buf) { return not buf.empty(); })) {
-    modified_cells.push_back(std::addressof(local()));
-  }
+  diff.emplace_back(ModifiedList{local().particles()});
 
   /* Add new particles belonging to this node */
   for (auto &parts : recv_buf) {
@@ -130,8 +134,9 @@ void AtomDecomposition::resort(bool global_flag, ParticleList &displaced_parts,
   }
 }
 
-AtomDecomposition::AtomDecomposition(const boost::mpi::communicator &comm)
-    : comm(comm), cells(comm.size()) {
+AtomDecomposition::AtomDecomposition(const boost::mpi::communicator &comm,
+                                     BoxGeometry const &box_geo)
+    : comm(comm), cells(comm.size()), m_box(box_geo) {
   /* create communicators */
   configure_comms();
   /* configure neighbor relations */

@@ -80,7 +80,7 @@ void on_program_start() {
   init_node_grid();
 
   /* initially go for domain decomposition */
-  cells_re_init(CELL_STRUCTURE_DOMDEC, INACTIVE_CUTOFF);
+  cells_re_init(CELL_STRUCTURE_DOMDEC);
 
   /*
     call all initializations to do only on the master node here.
@@ -132,11 +132,6 @@ void on_integration_start() {
   invalidate_fetch_cache();
 
 #ifdef ADDITIONAL_CHECKS
-
-  if (!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
-    runtimeErrorMsg() << "Nodes disagree about cell system type.";
-  }
-
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
@@ -217,7 +212,7 @@ void on_coulomb_change() {
 }
 
 void on_short_range_ia_change() {
-  cells_on_geometry_change(false);
+  cells_re_init(cell_structure.decomposition_type());
 
   recalc_forces = true;
 }
@@ -236,7 +231,7 @@ void on_boxl_change() {
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
      therefore recalculate them. */
-  cells_on_geometry_change(false);
+  cells_re_init(cell_structure.decomposition_type());
 
 /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
@@ -256,9 +251,7 @@ void on_boxl_change() {
 void on_cell_structure_change() {
 /* Now give methods a chance to react to the change in cell
    structure. Most ES methods need to reinitialize, as they depend
-   on skin, node grid and so on. Only for a change in box length we
-   have separate, faster methods, as this might happen frequently
-   in a NpT simulation. */
+   on skin, node grid and so on. */
 #ifdef ELECTROSTATICS
   Coulomb::init();
 #endif /* ifdef ELECTROSTATICS */
@@ -266,7 +259,6 @@ void on_cell_structure_change() {
 #ifdef DIPOLES
   Dipole::init();
 #endif /* ifdef DIPOLES */
-
   if (lattice_switch == ActiveLB::WALBERLA) {
     runtimeErrorMsg()
         << "LB does not currently support handling changes of the MD "
@@ -300,13 +292,14 @@ void on_parameter_change(int field) {
 #endif
 #endif
   case FIELD_MIN_GLOBAL_CUT:
-  case FIELD_SKIN:
-    cells_on_geometry_change(false);
+  case FIELD_SKIN: {
+    cells_re_init(cell_structure.decomposition_type());
+  }
     on_coulomb_change();
     break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();
-    cells_re_init(CELL_STRUCTURE_CURRENT, cell_structure.min_range);
+    cells_re_init(cell_structure.decomposition_type());
     break;
   case FIELD_TEMPERATURE:
     on_temperature_change();

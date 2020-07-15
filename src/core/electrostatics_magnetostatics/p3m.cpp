@@ -29,14 +29,10 @@
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "fft.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "tuning.hpp"
@@ -983,7 +979,6 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
   double int_time;
   double r_cut_iL;
   double rs_err, ks_err;
-  int i, n_cells;
   char b[5 * ES_DOUBLE_SPACE + 3 * ES_INTEGER_SPACE + 128];
 
   /* initial checks. */
@@ -1572,7 +1567,7 @@ bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
     ret = true;
   }
 
-  if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+  if (cell_structure.decomposition_type() != CELL_STRUCTURE_DOMDEC) {
     runtimeErrorMsg()
         << "P3M at present requires the domain decomposition cell system";
     ret = true;
