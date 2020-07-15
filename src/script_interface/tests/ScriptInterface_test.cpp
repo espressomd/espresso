@@ -21,57 +21,66 @@
 
 #include <type_traits>
 
-#define BOOST_TEST_NO_MAIN
-#define BOOST_TEST_MODULE ScriptInterface test
+#define BOOST_TEST_MODULE ObjectHandle test
 #define BOOST_TEST_DYN_LINK
-#include <boost/mpi.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "script_interface/GlobalContext.hpp"
-#include "script_interface/ScriptInterface.hpp"
+#include <boost/variant.hpp>
 
-using std::map;
-using std::string;
-using std::vector;
+#include "script_interface/ScriptInterface.hpp"
 
 using namespace ScriptInterface;
 
+namespace Testing {
+/* Types to keep track on calls on our mock handle.*/
+namespace MockCall {
+struct Construct {
+  const VariantMap *params;
+
+  bool operator==(Construct const &rhs) const { return params == rhs.params; }
+};
+struct SetParameter {
+  const std::string *name;
+  const Variant *value;
+
+  bool operator==(SetParameter const &rhs) const {
+    return std::tie(name, value) == std::tie(rhs.name, rhs.value);
+  }
+};
+struct CallMethod {
+  const std::string *name;
+  const VariantMap *parameters;
+  bool operator==(CallMethod const &rhs) const {
+    return std::tie(name, parameters) == std::tie(rhs.name, rhs.parameters);
+  }
+};
+
+using Info = boost::variant<Construct, SetParameter, CallMethod>;
+} // namespace MockCall
+
 /**
- * @brief Mock to test ScriptInterface.
+ * @brief Mock Objecthandle that logs all method calls.
  */
-struct ScriptInterfaceTest : public ScriptInterface::ObjectHandle {
-  Variant get_parameter(const std::string &name) const override {
-    if (name == "test_parameter") {
-      return test_parameter;
-    }
+struct LogHandle : public ObjectHandle {
+  std::vector<MockCall::Info> call_log;
 
-    return none;
+  void do_construct(VariantMap const &params) override {
+    call_log.emplace_back(MockCall::Construct{&params});
   }
 
-  /* Not needed for testing */
-  Utils::Span<const boost::string_ref> valid_parameters() const override {
-    static std::array<const boost::string_ref, 1> params = {"test_parameter"};
-    return params;
-  }
-
-  void do_set_parameter(const string &name, const Variant &value) override {
-    if (name == "test_parameter") {
-      test_parameter = boost::get<int>(value);
-    }
+  void do_set_parameter(const std::string &name,
+                        const Variant &value) override {
+    call_log.emplace_back(MockCall::SetParameter{&name, &value});
   }
 
   Variant do_call_method(const std::string &name,
                          const VariantMap &params) override {
-    if (name == "test_method") {
-      test_method_called = true;
-    }
+    call_log.emplace_back(MockCall::CallMethod{&name, &params});
 
     return none;
   }
-
-  int test_parameter = -1;
-  bool test_method_called = false;
 };
+} // namespace Testing
 
 BOOST_AUTO_TEST_CASE(non_copyable) {
   static_assert(!std::is_copy_constructible<ObjectHandle>::value, "");
@@ -84,23 +93,51 @@ BOOST_AUTO_TEST_CASE(non_copyable) {
  * logic in the class).
  */
 BOOST_AUTO_TEST_CASE(default_implementation) {
-  ScriptInterfaceTest si_test;
+  Testing::LogHandle si_test;
 
   si_test.do_call_method("test_method", {});
 }
 
-BOOST_AUTO_TEST_CASE(set_parameter_test) {
-  boost::mpi::communicator world;
-  Communication::MpiCallbacks cb{world};
+/*
+ * Check that the call to ObjectHandle::construct is
+ * forwarded correctly to the implementation.
+ */
+BOOST_AUTO_TEST_CASE(do_construct_) {
+  using namespace Testing;
+  LogHandle log_handle;
+  VariantMap test_params;
 
-  if (world.rank() == 0) {
-  } else {
-    cb.loop();
-  }
+  log_handle.construct(test_params);
+  BOOST_CHECK(boost::get<MockCall::Construct>(log_handle.call_log[0]) ==
+              MockCall::Construct{&test_params});
 }
 
-int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
+/*
+ * Check that the call to ObjectHandle::set_parameter is
+ * forwarded correctly to the implementation.
+ */
+BOOST_AUTO_TEST_CASE(do_set_parameter_) {
+  using namespace Testing;
+  LogHandle log_handle;
+  std::string name;
+  Variant value;
 
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  log_handle.set_parameter(name, value);
+  BOOST_CHECK((boost::get<MockCall::SetParameter>(log_handle.call_log[0]) ==
+               MockCall::SetParameter{&name, &value}));
+}
+
+/*
+ * Check that the call to ObjectHandle::call_method is
+ * forwarded correctly to the implementation.
+ */
+BOOST_AUTO_TEST_CASE(do_call_method_) {
+  using namespace Testing;
+  LogHandle log_handle;
+  std::string name;
+  VariantMap params;
+
+  log_handle.call_method(name, params);
+  BOOST_CHECK((boost::get<MockCall::CallMethod>(log_handle.call_log[0]) ==
+               MockCall::CallMethod{&name, &params}));
 }
