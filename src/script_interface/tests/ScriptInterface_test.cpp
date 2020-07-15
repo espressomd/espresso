@@ -87,17 +87,6 @@ BOOST_AUTO_TEST_CASE(non_copyable) {
   static_assert(!std::is_copy_assignable<ObjectHandle>::value, "");
 }
 
-/**
- * We check the default implementations of set_parameters
- * and get_parameter of ScriptInterface (this is the only
- * logic in the class).
- */
-BOOST_AUTO_TEST_CASE(default_implementation) {
-  Testing::LogHandle si_test;
-
-  si_test.do_call_method("test_method", {});
-}
-
 /*
  * Check that the call to ObjectHandle::construct is
  * forwarded correctly to the implementation.
@@ -141,3 +130,70 @@ BOOST_AUTO_TEST_CASE(do_call_method_) {
   BOOST_CHECK((boost::get<MockCall::CallMethod>(log_handle.call_log[0]) ==
                MockCall::CallMethod{&name, &params}));
 }
+
+namespace Testing {
+/**
+ * Logging mock for Context.
+ */
+struct LogContext : public Context {
+  std::vector<std::pair<const ObjectHandle *, MockCall::Info>> call_log;
+
+  void notify_call_method(const ObjectHandle *o, std::string const &n,
+                          VariantMap const &p) override {
+    call_log.emplace_back(o, MockCall::CallMethod{&n, &p});
+  }
+  void notify_set_parameter(const ObjectHandle *o, std::string const &n,
+                            Variant const &v) override {
+    call_log.emplace_back(o, MockCall::SetParameter{&n, &v});
+  }
+
+  std::shared_ptr<ObjectHandle> make_shared(std::string const &,
+                                            const VariantMap &) override {
+    auto it = std::make_shared<Testing::LogHandle>();
+    set_manager(it.get());
+
+    return it;
+  }
+};
+
+/*
+ * Check that Objecthandle::set_parameter does
+ * notify the context.
+ */
+BOOST_AUTO_TEST_CASE(notify_set_parameter_) {
+  auto log_ctx = std::make_shared<Testing::LogContext>();
+
+  auto o = log_ctx->make_shared({}, {});
+
+  std::string name;
+  Variant value;
+
+  o->set_parameter(name, value);
+
+  auto const log_entry = log_ctx->call_log.at(0);
+  BOOST_CHECK_EQUAL(log_entry.first, o.get());
+
+  BOOST_CHECK((boost::get<MockCall::SetParameter>(log_entry.second) ==
+               MockCall::SetParameter{&name, &value}));
+}
+
+/*
+ * Check that Objecthandle::call_meothod does
+ * notify the context.
+ */
+BOOST_AUTO_TEST_CASE(notify_call_method_) {
+  auto log_ctx = std::make_shared<Testing::LogContext>();
+
+  auto o = log_ctx->make_shared({}, {});
+
+  std::string name;
+  VariantMap params;
+  o->call_method(name, params);
+
+  auto const log_entry = log_ctx->call_log.at(0);
+  BOOST_CHECK_EQUAL(log_entry.first, o.get());
+  BOOST_CHECK((boost::get<MockCall::CallMethod>(log_entry.second) ==
+               MockCall::CallMethod{&name, &params}));
+}
+
+} // namespace Testing
