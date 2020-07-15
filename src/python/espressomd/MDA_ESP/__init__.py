@@ -24,21 +24,19 @@ and the coordinates reader :class:`ESPReader`.
 
 A minimal working example is the following:
 
->>> # imports
 >>> import espressomd
 >>> from espressomd import MDA_ESP
 >>> import MDAnalysis as mda
 >>> # system setup
->>> system = espressomd.System()
+>>> system = espressomd.System(box_l=[10., 10., 10.])
 >>> system.time_step = 1.
 >>> system.cell_system.skin = 1.
->>> system.box_l = [10.,10.,10.]
->>> system.part.add(id=0,pos=[1.,2.,3.])
+>>> system.part.add(id=0, pos=[1., 2., 3.])
 >>> # set up the stream
 >>> eos = MDA_ESP.Stream(system)
->>> # feed Universe with a topology and with coordinates
->>> u = mda.Universe(eos.topology,eos.trajectory)
->>> print u
+>>> # feed Universe with a topology and coordinates
+>>> u = mda.Universe(eos.topology, eos.trajectory)
+>>> print(u)
 <Universe with 1 atoms>
 
 """
@@ -76,7 +74,7 @@ class Stream:
     Create an object that provides a MDAnalysis topology and a coordinate reader
 
     >>> eos = MDA_ESP.Stream(system)
-    >>> u = mda.Universe(eos.topology,eos.trajectory)
+    >>> u = mda.Universe(eos.topology, eos.trajectory)
 
     Parameters
     ----------
