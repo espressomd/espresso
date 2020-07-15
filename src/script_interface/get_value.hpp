@@ -234,14 +234,6 @@ T get_value_or(VariantMap const &vals, std::string const &name,
 }
 
 /**
- * @brief Make a new T with arguments extracted from a VariantMap.
- */
-template <typename T, typename... Types, typename... ArgNames>
-T make_from_args(VariantMap const &vals, ArgNames &&... args) {
-  return T{get_value<Types>(vals, std::forward<ArgNames>(args))...};
-}
-
-/**
  * @brief Make a new std::shared_ptr<T> with arguments extracted from a
  * VariantMap.
  */
