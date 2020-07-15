@@ -179,7 +179,9 @@ class ESPParser(TopologyReaderBase):
                  Tempfactors(np.zeros(natoms)),
                  ICodes(np.array([' '], dtype=object)),
                  Charges(np.array(charges)),
-                 Bonds(bonds)
+                 Bonds(bonds),
+                 Angles(angles),
+                 Dihedrals(dihedrals)
                  ]
 
         top = Topology(natoms, 1, 1, attrs=attrs)
