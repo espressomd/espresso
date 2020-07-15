@@ -18,8 +18,6 @@
  */
 #include "initialize.hpp"
 
-#include "script_interface/ClassName.hpp"
-
 #include "Constraints.hpp"
 
 #include "HomogeneousMagneticField.hpp"
@@ -53,33 +51,22 @@ using ElectricPotential = ExternalPotential<Charge, Interpolated<double, 1>>;
 using LinearElectricPotential = ExternalPotential<Charge, AffineMap<double, 1>>;
 using ElectricPlaneWave = ExternalField<Charge, PlaneWave<double, 3>>;
 
-constexpr auto class_names() {
-  return std::make_tuple(
-      ClassName<Constraints>{"Constraints::Constraints"},
-      ClassName<ShapeBasedConstraint>{"Constraints::ShapeBasedConstraint"},
-      ClassName<HomogeneousMagneticField>{
-          "Constraints::HomogeneousMagneticField"},
-      ClassName<TabulatedForceField>{"Constraints::ForceField"},
-      ClassName<TabulatedPotentialField>{"Constraints::PotentialField"},
-      ClassName<Gravity>{"Constraints::Gravity"},
-      ClassName<FlowField>{"Constraints::FlowField"},
-      ClassName<HomogeneousFlowField> { "Constraints::HomogeneousFlowField" }
-#ifdef ELECTROSTATICS
-      ,
-      ClassName<ElectricPotential>{"Constraints::ElectricPotential"},
-      ClassName<LinearElectricPotential>{
-          "Constraints::LinearElectricPotential"},
-      ClassName<ElectricPlaneWave> { "Constraints::ElectricPlaneWave" }
-#endif
-  );
-}
-
 void initialize(Utils::Factory<ObjectHandle> *om) {
-  Utils::for_each(
-      [om](auto name) {
-        om->register_new<typename decltype(name)::class_type>(name.name);
-      },
-      class_names());
+  om->register_new<Constraints>("Constraints::Constraints");
+  om->register_new<ShapeBasedConstraint>("Constraints::ShapeBasedConstraint");
+  om->register_new<HomogeneousMagneticField>(
+      "Constraints::HomogeneousMagneticField");
+  om->register_new<TabulatedForceField>("Constraints::ForceField");
+  om->register_new<TabulatedPotentialField>("Constraints::PotentialField");
+  om->register_new<Gravity>("Constraints::Gravity");
+  om->register_new<FlowField>("Constraints::FlowField");
+  om->register_new<HomogeneousFlowField>("Constraints::HomogeneousFlowField");
+#ifdef ELECTROSTATICS
+  om->register_new<ElectricPotential>("Constraints::ElectricPotential");
+  om->register_new<LinearElectricPotential>(
+      "Constraints::LinearElectricPotential");
+  om->register_new<ElectricPlaneWave>("Constraints::ElectricPlaneWave");
+#endif
 }
 } /* namespace Constraints */
 } /* namespace ScriptInterface */

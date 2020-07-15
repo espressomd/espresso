@@ -32,31 +32,21 @@
 
 #include "initialize.hpp"
 
-#include <script_interface/ClassName.hpp>
-
 namespace ScriptInterface {
 namespace Shapes {
-constexpr auto class_names() {
-  return std::make_tuple(
-      ClassName<HollowConicalFrustum>{"Shapes::HollowConicalFrustum"},
-      ClassName<Union>{"Shapes::Union"}, ClassName<NoWhere>{"Shapes::NoWhere"},
-      ClassName<Wall>{"Shapes::Wall"},
-      ClassName<Ellipsoid>{"Shapes::Ellipsoid"},
-      ClassName<Sphere>{"Shapes::Sphere"},
-      ClassName<Cylinder>{"Shapes::Cylinder"},
-      ClassName<SpheroCylinder>{"Shapes::SpheroCylinder"},
-      ClassName<Rhomboid>{"Shapes::Rhomboid"},
-      ClassName<Slitpore>{"Shapes::Slitpore"},
-      ClassName<SimplePore>{"Shapes::SimplePore"},
-      ClassName<Torus>{"Shapes::Torus"});
-}
-
 void initialize(Utils::Factory<ObjectHandle> *f) {
-  Utils::for_each(
-      [f](auto name) {
-        f->register_new<typename decltype(name)::class_type>(name.name);
-      },
-      class_names());
+  f->register_new<HollowConicalFrustum>("Shapes::HollowConicalFrustum");
+  f->register_new<Union>("Shapes::Union");
+  f->register_new<NoWhere>("Shapes::NoWhere");
+  f->register_new<Wall>("Shapes::Wall");
+  f->register_new<Ellipsoid>("Shapes::Ellipsoid");
+  f->register_new<Sphere>("Shapes::Sphere");
+  f->register_new<Cylinder>("Shapes::Cylinder");
+  f->register_new<SpheroCylinder>("Shapes::SpheroCylinder");
+  f->register_new<Rhomboid>("Shapes::Rhomboid");
+  f->register_new<Slitpore>("Shapes::Slitpore");
+  f->register_new<SimplePore>("Shapes::SimplePore");
+  f->register_new<Torus>("Shapes::Torus");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */
