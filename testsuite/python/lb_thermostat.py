@@ -1,20 +1,20 @@
 W Walberla todo
-## Copyright (C) 2010-2019 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 ##
-## This file is part of ESPResSo.
+# This file is part of ESPResSo.
 ##
-## ESPResSo is free software: you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 3 of the License, or
-## (at your option) any later version.
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 ##
-## ESPResSo is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 ##
-## You should have received a copy of the GNU General Public License
-## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #import unittest as ut
 #import unittest_decorators as utx
 #import numpy as np
@@ -23,8 +23,8 @@ W Walberla todo
 #from tests_common import single_component_maxwell
 #
 #"""
-#Check the lattice-Boltzmann thermostat with respect to the particle velocity
-#distribution.
+# Check the lattice-Boltzmann thermostat with respect to the particle velocity
+# distribution.
 #
 #
 #"""
@@ -34,7 +34,7 @@ W Walberla todo
 #VISC = 4 
 #DENS = 1.7
 #TIME_STEP = 0.05
-#LB_PARAMS = {'agrid': AGRID,
+# LB_PARAMS = {'agrid': AGRID,
 #             'dens': DENS,
 #             'visc': VISC,
 #             'tau': TIME_STEP,
@@ -42,7 +42,7 @@ W Walberla todo
 #             'seed': 123}
 #
 #
-#class LBThermostatCommon:
+# class LBThermostatCommon:
 #
 #    """Base class of the test that holds the test logic."""
 #    lbf = None
@@ -95,7 +95,7 @@ W Walberla todo
 #
 #
 #@utx.skipIfMissingFeatures("LB_WALBERLA")
-#class LBWalberlaThermostat(ut.TestCase, LBThermostatCommon):
+# class LBWalberlaThermostat(ut.TestCase, LBThermostatCommon):
 #
 #    """Test for the CPU implementation of the LB."""
 #
@@ -103,5 +103,5 @@ W Walberla todo
 #        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 #
 #
-#if __name__ == '__main__':
+# if __name__ == '__main__':
 #    ut.main()
