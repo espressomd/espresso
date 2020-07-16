@@ -137,20 +137,16 @@ struct AutoParameter {
    *            that return the parameter. The return type must be convertible
    *            to Variant.
    */
-  template <typename F, typename G,
-            /* Try to guess the type from the return type of the getter */
-            typename R = decltype(std::declval<G>()())>
-  AutoParameter(const char *name, F const &set, G const &get)
+  template <typename Setter, typename Getter>
+  AutoParameter(const char *name, Setter const &set, Getter const &get)
       : name(name), setter_(set), getter_(get) {}
 
   /**
    * @brief Read-only parameter with a user-provided getter.
    * @overload
    */
-  template <typename G,
-            /* Try to guess the type from the return type of the getter */
-            typename R = decltype(std::declval<G>()())>
-  AutoParameter(const char *name, ReadOnly, G const &get)
+  template <typename Getter>
+  AutoParameter(const char *name, ReadOnly, Getter const &get)
       : name(name), setter_([](Variant const &) { throw WriteError{}; }),
         getter_(get) {}
 

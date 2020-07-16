@@ -30,7 +30,6 @@
 #include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
-
 class GlobalContext : public Context {
   using ObjectId = std::size_t;
 
