@@ -43,7 +43,7 @@ public:
 
 private:
   friend class Context;
-  std::shared_ptr<Context> m_manager = {};
+  std::shared_ptr<Context> m_context = {};
   boost::string_ref m_name;
 
 public:
@@ -51,9 +51,9 @@ public:
 
 public:
   /**
-   * @brief Responsible manager.
+   * @brief Responsible context.
    */
-  Context *manager() const { return m_manager.get(); }
+  Context *context() const { return m_context.get(); }
 
 public:
   /**

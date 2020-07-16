@@ -25,16 +25,16 @@
 namespace ScriptInterface {
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {
-  if (m_manager)
-    m_manager->notify_set_parameter(this, name, value);
+  if (m_context)
+    m_context->notify_set_parameter(this, name, value);
 
   this->do_set_parameter(name, value);
 }
 
 Variant ObjectHandle::call_method(const std::string &name,
                                   const VariantMap &params) {
-  if (m_manager)
-    m_manager->notify_call_method(this, name, params);
+  if (m_context)
+    m_context->notify_call_method(this, name, params);
 
   return this->do_call_method(name, params);
 }

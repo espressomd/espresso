@@ -74,7 +74,7 @@ std::shared_ptr<ObjectHandle>
 GlobalContext::make_shared(std::string const &name,
                            const VariantMap &parameters) {
   std::unique_ptr<ObjectHandle> sp = m_node_local_context->factory().make(name);
-  set_manager(sp.get());
+  set_context(sp.get());
   set_name(sp.get(), m_node_local_context->factory().stable_name(name));
 
   auto const id = object_id(sp.get());

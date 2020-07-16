@@ -150,7 +150,7 @@ struct LogContext : public Context {
   std::shared_ptr<ObjectHandle> make_shared(std::string const &,
                                             const VariantMap &) override {
     auto it = std::make_shared<Testing::LogHandle>();
-    set_manager(it.get());
+    set_context(it.get());
 
     return it;
   }

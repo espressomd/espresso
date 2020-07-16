@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(GlobalContext_make_shared) {
   if (world.rank() == 0) {
     auto res = ctx->make_shared("Dummy", {});
     BOOST_REQUIRE(res != nullptr);
-    BOOST_CHECK_EQUAL(res->manager(), ctx.get());
+    BOOST_CHECK_EQUAL(res->context(), ctx.get());
     BOOST_CHECK_EQUAL(ctx->name(res.get()), "Dummy");
   } else {
     cb.loop();

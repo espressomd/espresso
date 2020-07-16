@@ -70,7 +70,12 @@ public:
   ObjectRef deserialize(std::string const &state_);
 
 protected:
-  void set_manager(ObjectHandle *o) { o->m_manager = this->shared_from_this(); }
+  /**
+   * @brief Set the context of an object to this.
+   *
+   * @param o Object to set the context for.
+   */
+  void set_context(ObjectHandle *o) { o->m_context = this->shared_from_this(); }
   void set_name(ObjectHandle *o, boost::string_ref name) const {
     o->m_name = name;
   }

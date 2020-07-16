@@ -42,7 +42,7 @@ public:
   std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) override {
     auto sp = m_factory.make(name);
-    set_manager(sp.get());
+    set_context(sp.get());
     set_name(sp.get(), m_factory.stable_name(name));
 
     sp->construct(parameters);
