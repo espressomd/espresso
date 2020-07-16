@@ -17,6 +17,7 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
 
 try:
     import MDAnalysis  # pylint: disable=unused-import
@@ -32,6 +33,21 @@ else:
 @skipIfMissingFeatures
 class Sample(ut.TestCase):
     system = sample.system
+
+    def test_universe(self):
+        system = self.system
+        u = sample.u
+        self.assertEqual(len(u.atoms), 10)
+        np.testing.assert_equal(u.atoms.ids, np.arange(10) + 1)
+        np.testing.assert_equal(u.atoms.types, sorted(5 * ['T0', 'T1']))
+        np.testing.assert_almost_equal(
+            u.atoms.charges, system.part[:].q, decimal=6)
+        np.testing.assert_almost_equal(
+            u.atoms.positions, system.part[:].pos, decimal=6)
+        np.testing.assert_almost_equal(
+            u.atoms.velocities, system.part[:].v, decimal=6)
+        np.testing.assert_almost_equal(
+            u.atoms.forces, system.part[:].f, decimal=6)
 
 
 if __name__ == "__main__":
