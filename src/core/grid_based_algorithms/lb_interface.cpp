@@ -534,6 +534,18 @@ lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
+void lb_lbfluid_write_vtk(int delta_N, unsigned flag_observables,
+                          std::string const &identifier) {
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    ::Communication::mpiCallbacks().call(Walberla::write_vtk, delta_N,
+                                         flag_observables, identifier);
+    return;
+  }
+#endif
+  throw NoLBActive();
+}
+
 const Utils::Vector6d
 lb_lbnode_get_pressure_tensor(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA

@@ -80,10 +80,28 @@ public:
   virtual bool node_in_local_halo(const Utils::Vector3i &node) const = 0;
   virtual bool pos_in_local_domain(const Utils::Vector3d &pos) const = 0;
   virtual bool pos_in_local_halo(const Utils::Vector3d &pos) const = 0;
+  /** @brief Write lattice observables to VTK files.
+   *
+   *  @param delta_N          Write frequency, if 0 write a single frame,
+   *         otherwise add a callback to write every @p delta_N LB steps
+   *         to a new file
+   *  @param flag_observables Which observables to measure (OR'ing of
+   *         @ref OutputVTK values)
+   *  @param identifier       Name of the VTK dataset
+   */
+  virtual void write_vtk(int delta_N, unsigned flag_observables,
+                         std::string const &identifier) = 0;
 
   virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
   node_indices_positions(bool include_ghosts) const = 0;
   virtual ~LbWalberlaBase() = default;
+};
+
+/** @brief LB statistics to write to VTK files */
+enum class OutputVTK : unsigned {
+  density = 1u << 0u,
+  velocity_vector = 1u << 1u,
+  pressure_tensor = 1u << 2u,
 };
 
 #endif // LB_WALBERLA
