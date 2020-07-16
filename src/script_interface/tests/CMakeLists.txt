@@ -1,6 +1,6 @@
 include(unit_test)
 
-unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp DEPENDS
+unit_test(NAME ObjectHandle_test SRC ObjectHandle_test.cpp DEPENDS
           ScriptInterface)
 unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp DEPENDS
           ScriptInterface)
