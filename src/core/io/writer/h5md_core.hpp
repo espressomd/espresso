@@ -26,18 +26,20 @@
 #include <boost/mpi/communicator.hpp>
 #include <h5xx/h5xx.hpp>
 
+#include <BoxGeometry.hpp>
 #include <algorithm>
 #include <string>
 #include <unordered_map>
 
-#include "PartCfg.hpp"
 #include "ParticleRange.hpp"
+
+namespace h5xx {
+template <typename T, size_t size>
+struct is_array<Utils::Vector<T, size>> : std::true_type {};
+} // namespace h5xx
 
 namespace Writer {
 namespace H5md {
-
-typedef boost::multi_array<double, 3> double_array_3d;
-typedef boost::multi_array<int, 3> int_array_3d;
 
 /**
  * @brief Class for writing H5MD files.
@@ -45,167 +47,160 @@ typedef boost::multi_array<int, 3> int_array_3d;
 class File {
 public:
   /**
-   * Constructor/destructor without arguments (due to script_interface).
    * @brief Constructor of the File class.
+   * @param file_path Name for the hdf5 file on disk.
+   * @param script_path Path to the simulation script.
+   * @param mass_unit The unit for mass.
+   * @param length_unit The unit for length.
+   * @param time_unit The unit for time.
+   * @param force_unit The unit for force.
+   * @param velocity_unit The unit for velocity.
+   * @param charge_unit The unit for charge.
+   * @param comm The MPI communicator.
    */
-  File() = default;
+  File(std::string file_path, std::string script_path, std::string mass_unit,
+       std::string length_unit, std::string time_unit, std::string force_unit,
+       std::string velocity_unit, std::string charge_unit,
+       boost::mpi::communicator comm = boost::mpi::communicator())
+      : m_script_path(std::move(script_path)),
+        m_mass_unit(std::move(mass_unit)),
+        m_length_unit(std::move(length_unit)),
+        m_time_unit(std::move(time_unit)), m_force_unit(std::move(force_unit)),
+        m_velocity_unit(std::move(velocity_unit)),
+        m_charge_unit(std::move(charge_unit)), m_comm(std::move(comm)) {
+    init_file(file_path);
+  };
   ~File() = default;
-  /**
-   * @brief Initialize the File object.
-   */
-  void InitFile();
+
   /**
    * @brief Method to perform the renaming of the temporary file from
    * "filename" + ".bak" to "filename".
    */
-  void Close();
+  void close();
 
-  enum WriteData {
-    W_POS = 1 << 0,
-    W_V = 1 << 1,
-    W_F = 1 << 2,
-    W_TYPE = 1 << 3,
-    W_MASS = 1 << 4,
-    W_CHARGE = 1 << 5
-  };
   /**
-   * @brief General method to write to the datasets which calls more specific
-   * write methods.
-   * Boolean values for position, velocity, force and mass.
+   * @brief Write data to the hdf5 file.
+   * @param particles Particle range for which to write data.
+   * @param time Simulation time.
+   * @param step Simulation step (monotonically increasing).
+   * @param geometry A BoxGeometry instance that carries the information of the
+   * box dimensions.
    */
-  void Write(int write_dat, PartCfg &partCfg, const ParticleRange &particles);
+  void write(const ParticleRange &particles, double time, int step,
+             BoxGeometry const &geometry);
 
-  std::string &filename() { return m_filename; };
-  std::string &scriptname() { return m_scriptname; };
-  // Returns the int that describes which data should be written to the dataset.
-  int &what() { return m_what; };
-  // Returns the boolean value that describes whether data should be written to
-  // the dataset in the order of ids (possibly slower on output for many
-  // particles).
-  bool &write_ordered() { return m_write_ordered; };
+  /**
+   * @brief Retrieve the path to the hdf5 file.
+   * @return The path as a string.
+   */
+  std::string file_path() const { return m_h5md_file.name(); };
 
-  // Unit system
-  bool is_unit_system_defined() {
-    return m_time_unit.length() > 0 && m_mass_unit.length() > 0 &&
-           m_length_unit.length() > 0;
-  }
-  std::string &time_unit() { return m_time_unit; };
+  /**
+   * @brief Retrieve the path to the simulation script.
+   * @return The path as a string.
+   */
+  std::string &script_path() { return m_script_path; };
+
+  /**
+   * @brief Retrieve the set mass unit.
+   * @return The unit as a string.
+   */
   std::string &mass_unit() { return m_mass_unit; };
-  std::string &length_unit() { return m_length_unit; };
-  std::string &force_unit() { return m_force_unit; };
-  std::string &velocity_unit() { return m_velocity_unit; };
-  std::string &charge_unit() { return m_charge_unit; };
+
   /**
-   * @brief Method to force flush to h5md file.
+   * @brief Retrieve the set length unit.
+   * @return The unit as a string.
    */
-  void Flush();
+  std::string &length_unit() { return m_length_unit; };
+
+  /**
+   * @brief Retrieve the set time unit.
+   * @return The unit as a string.
+   */
+  std::string &time_unit() { return m_time_unit; };
+
+  /**
+   * @brief Retrieve the set force unit.
+   * @return The unit as a string.
+   */
+  std::string &force_unit() { return m_force_unit; };
+
+  /**
+   * @brief Retrieve the set velocity unit.
+   * @return The unit as a string.
+   */
+  std::string &velocity_unit() { return m_velocity_unit; };
+
+  /**
+   * @brief Retrieve the set charge unit.
+   * @return The unit as a string.
+   */
+  std::string &charge_unit() { return m_charge_unit; };
+
+  /**
+   * @brief Method to enforce flushing the buffer to disk.
+   */
+  void flush();
 
 private:
-  boost::mpi::communicator m_hdf5_comm;
-  bool m_already_wrote_bonds = false;
-
   /**
-   * @brief Method to check if the H5MD structure is present in the file.
-   * Only call this on valid HDF5 files.
-   * @param filename The Name of the hdf5-file to check.
-   * @return TRUE if H5MD structure is present, FALSE else.
+   * @brief Initialize the File object.
    */
-  bool check_for_H5MD_structure(std::string const &filename);
-  /**
-   * @brief Method that performs all the low-level stuff for writing the
-   * particle
-   * positions to the dataset.
-   */
-  template <typename T>
-  void WriteDataset(T &data, const std::string &path,
-                    const std::vector<int> &change_extent, hsize_t *offset,
-                    hsize_t *count);
-
-  /**
-   * @brief Method that extends datasets by the given extent.
-   */
-  void ExtendDataset(const std::string &path,
-                     const std::vector<int> &change_extent);
-
-  /**
-   * @brief Method that returns chunk dimensions.
-   */
-  std::vector<hsize_t> create_chunk_dims(hsize_t dim, hsize_t size,
-                                         hsize_t chunk_size);
-
-  /*
-   * @brief Method to fill the arrays that are used by WriteDataset particle by
-   * particle.
-   */
-  void fill_arrays_for_h5md_write_with_particle_property(
-      int particle_index, int_array_3d &id, int_array_3d &typ,
-      double_array_3d &mass, double_array_3d &pos, int_array_3d &image,
-      double_array_3d &vel, double_array_3d &f, double_array_3d &charge,
-      Particle const &current_particle, int write_dat, int_array_3d &bond);
-  /*
-   * @brief Method to write the simulation script to the dataset.
-   */
-  void WriteScript(std::string const &filename);
+  void init_file(std::string const &file_path);
 
   /**
    * @brief Creates a new H5MD file.
-   * @param filename The filename
+   * @param file_path The filename.
    */
-  void create_new_file(const std::string &filename);
+  void create_file(const std::string &file_path);
 
   /**
    * @brief Loads an existing H5MD file.
-   * @param filename The filename
+   * @param file_path The filename.
    */
-  void load_file(const std::string &filename);
+  void load_file(const std::string &file_path);
 
   /**
-   * @brief Initializes the necessary data to create the datasets and
-   * attributes.
+   * @brief Create the HDF5 groups according to the H5MD specification.
    */
-  void init_filestructure();
+  void create_groups();
 
   /**
-   * @brief Creates the necessary HDF5 datasets.
-   * @param only_load Set this to true if you want to append to an existing
-   * file.
+   * @brief Creates the necessary HDF5 datasets according to the H5MD
+   * specification.
    */
-  void create_datasets(bool only_load);
+  void create_datasets();
 
   /**
-   * @brief Links the time and step datasets to of all properties to the time
-   * and step dataset of the id property. All properties are written at the same
-   * time.
+   * @brief Load datasets of the file.
    */
-  void create_links_for_time_and_step_datasets();
+  void load_datasets();
 
   /**
-   * Member variables.
+   * @brief Write the particle bonds (currently only pairs).
+   * @param particles Particle range for which to write bonds.
    */
-  int m_max_n_part = 0;
-  std::string m_filename;
-  std::string m_scriptname;
-  int m_what;
-  bool m_write_ordered;
-  std::string m_backup_filename;
-  boost::filesystem::path m_absolute_script_path = "nullptr";
-  h5xx::file m_h5md_file;
-
-  std::string m_time_unit;
-  std::string m_length_unit;
+  void write_connectivity(const ParticleRange &particles);
+  /**
+   * @brief Write the unit attributes.
+   */
+  void write_units();
+  /**
+   * @brief Create hard links for the time and step entries of time dependent
+   * datasets.
+   */
+  void create_hard_links();
+  std::string m_script_path;
   std::string m_mass_unit;
+  std::string m_length_unit;
+  std::string m_time_unit;
   std::string m_force_unit;
   std::string m_velocity_unit;
   std::string m_charge_unit;
-
-  struct DatasetDescriptor {
-    std::string path;
-    hsize_t dim;
-    h5xx::datatype type;
-    std::string unit;
-  };
-  std::vector<std::string> group_names;
-  std::vector<DatasetDescriptor> dataset_descriptors;
+  boost::mpi::communicator m_comm;
+  std::string m_backup_filename;
+  boost::filesystem::path m_absolute_script_path;
+  h5xx::file m_h5md_file;
   std::unordered_map<std::string, h5xx::dataset> datasets;
 };
 

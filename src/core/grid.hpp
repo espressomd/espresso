@@ -81,60 +81,6 @@ void grid_changed_box_l(const BoxGeometry &box);
  */
 void rescale_boxl(int dir, double d_new);
 
-/** @brief Fold a coordinate to primary simulation box.
- *  @param pos        coordinate to fold
- *  @param image_box  image box offset
- *  @param length     box length
- */
-inline std::pair<double, int> fold_coordinate(double pos, int image_box,
-                                              double const &length) {
-  std::tie(pos, image_box) = Algorithm::periodic_fold(pos, image_box, length);
-
-  if ((image_box == std::numeric_limits<int>::min()) ||
-      (image_box == std::numeric_limits<int>::max())) {
-    throw std::runtime_error(
-        "Overflow in the image box count while folding a particle coordinate "
-        "into the primary simulation box. Maybe a particle experienced a "
-        "huge force.");
-  }
-
-  return {pos, image_box};
-}
-
-/** @brief Fold particle coordinates to primary simulation box.
- *  @param[in,out] pos        coordinate to fold
- *  @param[in,out] image_box  image box offset
- *  @param[in] box            box parameters (side lengths, periodicity)
- */
-inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
-                          const BoxGeometry &box) {
-  for (int i = 0; i < 3; i++) {
-    if (box.periodic(i)) {
-      std::tie(pos[i], image_box[i]) =
-          fold_coordinate(pos[i], image_box[i], box.length()[i]);
-    }
-  }
-}
-
-/** @brief Fold particle coordinates to primary simulation box.
- *  @param p    coordinate to fold
- *  @param box  box parameters (side lengths, periodicity)
- *  @return Folded coordinates.
- */
-inline Utils::Vector3d folded_position(const Utils::Vector3d &p,
-                                       const BoxGeometry &box) {
-  Utils::Vector3d p_folded;
-  for (int i = 0; i < 3; i++) {
-    if (box.periodic(i)) {
-      p_folded[i] = Algorithm::periodic_fold(p[i], box.length()[i]);
-    } else {
-      p_folded[i] = p[i];
-    }
-  }
-
-  return p_folded;
-}
-
 /** @brief Calculate image box shift vector.
  *  @param image_box  image box offset
  *  @param box        box parameters (side lengths)

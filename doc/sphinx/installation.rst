@@ -881,6 +881,45 @@ start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
 You can find the official Jupyter documentation at
 https://jupyter.readthedocs.io/en/latest/running.html
 
+Running inside an IDE
+^^^^^^^^^^^^^^^^^^^^^
+
+You can use an integrated development environment (IDE) to develop and run |es|
+scripts. Suitable IDEs are e.g. *Visual Studio Code* and *Spyder*. They can
+provide a workflow superior to that of a standard text editor as they offer
+useful features such as advanced code completion, debugging and analysis tools
+etc. The following example shows how to setup |es| in *Visual Studio Code* on
+Linux (tested with version 1.46.1). The process should be similar for every
+Python IDE, namely the Python interpreter needs to be replaced.
+
+The ``pypresso`` executable can be set as a custom Python interpreter inside VS
+Code. |es| scripts can then be executed just like any other python script.
+Inside VS Code, the Python extension needs to be installed. Next, click the
+gear at the bottom left and choose *Settings*. Search for
+``Default Interpreter Path`` and change the setting to the path to your
+``pypresso`` executable, e.g.
+
+.. code-block:: none
+
+    ~/espresso/build/pypresso
+
+After that, you can open scripts and execute them with the keyboard shortcut
+Ctrl+F5.
+
+Fig. :ref:`vs-code-figure` shows the VS Code interface with the interpreter
+path set to ``pypresso``.
+
+.. note:: You may need to set the path relative to your home directory, i.e. ``~/path/to/pypresso``.
+
+.. _vs-code-figure:
+
+.. figure:: figures/vs-code-settings.png
+   :alt: Visual Studio Code interface with the default interpreter path set to the ``pypresso`` executable
+   :width: 55.0%
+   :align: center
+
+   Visual Studio Code interface
+
 .. _Debugging es:
 
 Debugging |es|

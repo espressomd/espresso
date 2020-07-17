@@ -24,21 +24,19 @@ and the coordinates reader :class:`ESPReader`.
 
 A minimal working example is the following:
 
->>> # imports
 >>> import espressomd
 >>> from espressomd import MDA_ESP
 >>> import MDAnalysis as mda
 >>> # system setup
->>> system = espressomd.System()
+>>> system = espressomd.System(box_l=[10., 10., 10.])
 >>> system.time_step = 1.
 >>> system.cell_system.skin = 1.
->>> system.box_l = [10.,10.,10.]
->>> system.part.add(id=0,pos=[1.,2.,3.])
+>>> system.part.add(id=0, pos=[1., 2., 3.])
 >>> # set up the stream
 >>> eos = MDA_ESP.Stream(system)
->>> # feed Universe with a topology and with coordinates
->>> u = mda.Universe(eos.topology,eos.trajectory)
->>> print u
+>>> # feed Universe with a topology and coordinates
+>>> u = mda.Universe(eos.topology, eos.trajectory)
+>>> print(u)
 <Universe with 1 atoms>
 
 """
@@ -66,7 +64,7 @@ from MDAnalysis.core.topology import Topology
 from MDAnalysis.core.topologyattrs import (
     Atomnames, Atomids, Atomtypes, Masses,
     Resids, Resnums, Segids, Resnames, AltLocs,
-    ICodes, Occupancies, Tempfactors, Charges
+    ICodes, Occupancies, Tempfactors, Charges, Bonds, Angles, Dihedrals
 )
 
 
@@ -76,7 +74,7 @@ class Stream:
     Create an object that provides a MDAnalysis topology and a coordinate reader
 
     >>> eos = MDA_ESP.Stream(system)
-    >>> u = mda.Universe(eos.topology,eos.trajectory)
+    >>> u = mda.Universe(eos.topology, eos.trajectory)
 
     Parameters
     ----------
@@ -144,12 +142,27 @@ class ESPParser(TopologyReaderBase):
         atomtypes = []
         masses = []
         charges = []
+        bonds = []
+        angles = []
+        dihedrals = []
 
         for p in espresso.part:
             names.append("A" + repr(p.type))
             atomtypes.append("T" + repr(p.type))
             masses.append(p.mass)
             charges.append(p.q)
+            for bond in p.bonds:
+                partner_ids = bond[1:]
+                n_partner = len(partner_ids)
+                if n_partner == 1:
+                    bonds.append((p.id, partner_ids[0]))
+                elif n_partner == 2:
+                    angles.append((partner_ids[0], p.id, partner_ids[1]))
+                elif n_partner == 3:
+                    dihedrals.append(
+                        (partner_ids[0], p.id, partner_ids[1], partner_ids[2]))
+                else:
+                    continue
         natoms = len(espresso.part)
         attrs = [Atomnames(np.array(names, dtype=object)),
                  Atomids(np.arange(natoms) + 1),
@@ -164,6 +177,9 @@ class ESPParser(TopologyReaderBase):
                  Tempfactors(np.zeros(natoms)),
                  ICodes(np.array([' '], dtype=object)),
                  Charges(np.array(charges)),
+                 Bonds(bonds),
+                 Angles(angles),
+                 Dihedrals(dihedrals)
                  ]
 
         top = Topology(natoms, 1, 1, attrs=attrs)

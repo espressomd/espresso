@@ -170,9 +170,9 @@ def linear_polymer_positions(**kwargs):
     return np.array(positions)
 
 
-def setup_diamond_polymer(system=None, bond=None, MPC=0, 
-                          dist_cM=1, val_cM=0.0, val_nodes=0.0, 
-                          start_id='auto', no_bonds=False, 
+def setup_diamond_polymer(system=None, bond=None, MPC=0,
+                          dist_cM=1, val_cM=0.0, val_nodes=0.0,
+                          start_id='auto', no_bonds=False,
                           type_nodes=0, type_nM=1, type_cM=2):
     """
     Places particles to form a diamond lattice shaped polymer.
@@ -183,13 +183,13 @@ def setup_diamond_polymer(system=None, bond=None, MPC=0,
     system : :class:`espressomd.system.System`, required
         System to which the particles will be added.
     bond : :class:`espressomd.interactions.BondedInteraction`, required if ``no_bonds == False``
-        The bond to be created between monomers. Should be compatible with the 
+        The bond to be created between monomers. Should be compatible with the
         spacing ``system.box_l[0]*(0.25 * sqrt(3))/(MPC + 1)`` between monomers.
     no_bonds : :obj:`bool`, optional
-        If True, the particles will only be placed in the system but not connected by bonds. 
+        If True, the particles will only be placed in the system but not connected by bonds.
         In that case, the ``bond`` argument can be omitted. Defaults to ``False``.
     MPC : :obj:`int`, optional
-        Monomers per chain, where chain refers to the connection 
+        Monomers per chain, where chain refers to the connection
         between the 8 lattice nodes of the diamond lattice.
         Defaults to 0.
     dist_cM : :obj:`int`, optional
@@ -200,7 +200,7 @@ def setup_diamond_polymer(system=None, bond=None, MPC=0,
         Valence of the node particles. Defaults to 0.
     start_id : :obj:`int` or ``'auto'``, optional
         Start id for particle creation. Subsequent ids will be contiguous integers.
-        If ``'auto'``, particle ids will start after the highest id of particles already in the system. 
+        If ``'auto'``, particle ids will start after the highest id of particles already in the system.
     type_nodes : :obj:`int`, optional
         Type assigned to the node particles. Defaults to 0.
     type_nM : :obj:`int`, optional
@@ -256,7 +256,7 @@ def setup_diamond_polymer(system=None, bond=None, MPC=0,
     node_ids = []
     current_id = start_id
     for node_pos in node_positions:
-        system.part.add(pos=node_pos, id=current_id, 
+        system.part.add(pos=node_pos, id=current_id,
                         type=type_nodes, q=val_nodes)
         node_ids.append(current_id)
         current_id += 1

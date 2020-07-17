@@ -32,7 +32,7 @@ espressomd.assert_features(required_features)
 
 parser = argparse.ArgumentParser(epilog=__doc__)
 parser.add_argument('cs_bulk', type=float,
-                    help="bulk salt concentration [1/sigma^3]")
+                    help="bulk salt concentration [1/sigma^3], e.g. 1e-3")
 args = parser.parse_args()
 
 # System parameters

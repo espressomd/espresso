@@ -43,10 +43,10 @@ espressomd.assert_features(required_features)
 
 parser = argparse.ArgumentParser(epilog=__doc__ + epilog)
 parser.add_argument('cs_bulk', type=float,
-                    help="bulk salt concentration [1/sigma^3]")
+                    help="bulk salt concentration [1/sigma^3], e.g. 1e-3")
 parser.add_argument('excess_chemical_potential', type=float,
-                    help="excess chemical potential [kT] "
-                         "(obtained from Widom's insertion method)")
+                    help="excess chemical potential [kT] (obtained from "
+                         "Widom's insertion method), e.g. -0.36")
 args = parser.parse_args()
 
 # System parameters

@@ -90,10 +90,10 @@ class ThermalizedBond(ut.TestCase):
         self.system.integrator.run(50)
 
         # Sampling
-        loops = 200
+        loops = 150
         v_stored = np.zeros((N2 * loops, 3))
         for i in range(loops):
-            self.system.integrator.run(12)
+            self.system.integrator.run(5)
             v_com = 1.0 / \
                 (m1 + m2) * \
                 (m1 * self.system.part[::2].v + m2 * self.system.part[1::2].v)
@@ -138,10 +138,10 @@ class ThermalizedBond(ut.TestCase):
         self.system.integrator.run(50)
 
         # Sampling
-        loops = 200
+        loops = 150
         v_stored = np.zeros((N2 * loops, 3))
         for i in range(loops):
-            self.system.integrator.run(12)
+            self.system.integrator.run(5)
             v_dist = self.system.part[1::2].v - self.system.part[::2].v
             v_stored[i * N2:(i + 1) * N2, :] = v_dist
 
