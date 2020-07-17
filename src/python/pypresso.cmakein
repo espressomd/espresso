@@ -59,6 +59,10 @@ case "$1" in
         shift
         exec lldb -- "@PYTHON_FRONTEND@" "$@"
         ;;
+    --coverage)
+        shift
+        exec coverage run --parallel-mode --include="*/espressomd/*" "$@"
+        ;;
     --valgrind)
         shift
         exec valgrind --leak-check=full "@PYTHON_FRONTEND@" "$@"
