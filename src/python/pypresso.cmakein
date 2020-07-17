@@ -61,7 +61,7 @@ case "$1" in
         ;;
     --coverage)
         shift
-        exec coverage run --parallel-mode --include="*/espressomd/*" "$@"
+        exec coverage run --rcfile="@PROJECT_SOURCE_DIR@/.coveragerc" "$@"
         ;;
     --valgrind)
         shift

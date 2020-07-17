@@ -60,6 +60,9 @@ list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
 list(REMOVE_DUPLICATES cython_SRC)
 
 add_library(pyx_interface INTERFACE)
+if(WITH_COVERAGE)
+  target_compile_options(pyx_interface INTERFACE -DCYTHON_TRACE)
+endif(WITH_COVERAGE)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_compile_options(
     pyx_interface
@@ -101,9 +104,9 @@ foreach(cython_file ${cython_SRC})
       OUTPUT ${outputpath}
       COMMAND
         ${CYTHON_EXECUTABLE} $<$<BOOL:${WARNINGS_ARE_ERRORS}>:--warning-errors>
-        -3 --cplus --directive embedsignature=True --directive binding=True -I
-        ${CMAKE_CURRENT_SOURCE_DIR} -I ${CMAKE_CURRENT_BINARY_DIR}
-        ${cython_file} -o ${outputpath}
+        -3 --cplus --directive embedsignature=True --directive binding=True
+        --directive linetrace=True -I ${CMAKE_CURRENT_SOURCE_DIR} -I
+        ${CMAKE_CURRENT_BINARY_DIR} ${cython_file} -o ${outputpath}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi ${cython_file}
               ${cython_HEADER})

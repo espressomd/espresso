@@ -1,0 +1,4 @@
+[run]
+plugins = Cython.Coverage
+source = ./src/python/espressomd
+parallel = True
