@@ -32,6 +32,7 @@ cdef extern from "thermostat.hpp":
     int THERMO_NPT_ISO
     int THERMO_DPD
     int THERMO_BROWNIAN
+    int THERMO_SD
 
     IF PARTICLE_ANISOTROPY:
         ctypedef struct langevin_thermostat_struct "LangevinThermostat":
@@ -68,6 +69,14 @@ cdef extern from "thermostat.hpp":
     stdint.uint64_t npt_iso_get_rng_state()
     IF DPD:
         stdint.uint64_t dpd_get_rng_state()
+
+cdef extern from "stokesian_dynamics/sd_interface.hpp":
+    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+        void set_sd_kT(double kT)
+        double get_sd_kT()
+
+        void set_sd_seed(size_t seed)
+        size_t get_sd_seed()
 
 cdef extern from "script_interface/Globals.hpp":
     # links intern C-struct with python object

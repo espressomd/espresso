@@ -288,6 +288,15 @@ void on_parameter_change(int field) {
     }
 #endif
 #endif
+#ifdef STOKESIAN_DYNAMICS
+    if (integ_switch == INTEG_METHOD_SD) {
+      if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2))
+        runtimeErrorMsg() << "Illegal box periodicity for Stokesian Dynamics: "
+                          << box_geo.periodic(0) << " " << box_geo.periodic(1)
+                          << " " << box_geo.periodic(2) << "\n"
+                          << "  Required: 0 0 0\n";
+    }
+#endif
   case FIELD_MIN_GLOBAL_CUT:
   case FIELD_SKIN: {
     cells_re_init(cell_structure.decomposition_type());

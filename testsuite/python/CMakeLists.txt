@@ -56,7 +56,7 @@ endfunction(PYTHON_TEST)
 # Separate features with hyphens, use a period to add an optional flag.
 foreach(
   TEST_COMBINATION
-  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt-minimization;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.sd;lb.off-therm.bd-int.bd
+  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt-minimization;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.sd;lb.off-therm.bd-int.bd;lb.off-therm.sdm-int.sdm.cpu;lb.off-therm.sdm-int.sdm.gpu
 )
   if(${TEST_COMBINATION} MATCHES "\\.gpu")
     set(TEST_LABELS "gpu")
@@ -200,9 +200,11 @@ python_test(FILE gpu_availability.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE features.py MAX_NUM_PROC 1)
 python_test(FILE galilei.py MAX_NUM_PROC 32)
 python_test(FILE time_series.py MAX_NUM_PROC 1)
-python_test(FILE linear_momentum.py)
+python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE stokesian_dynamics_cpu.py MAX_NUM_PROC 2)
+python_test(FILE stokesian_dynamics_gpu.py MAX_NUM_PROC 4 LABELS gpu)
 python_test(FILE elc.py MAX_NUM_PROC 2)
 python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2)
 python_test(FILE rotation.py MAX_NUM_PROC 1)
@@ -225,6 +227,9 @@ add_custom_target(
     ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py
           ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/stokesian_dynamics.py
+    ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
     ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py

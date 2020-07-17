@@ -46,6 +46,7 @@
 #define THERMO_NPT_ISO 4
 #define THERMO_LB 8
 #define THERMO_BROWNIAN 16
+#define THERMO_SD 32
 /*@}*/
 
 namespace Thermostat {

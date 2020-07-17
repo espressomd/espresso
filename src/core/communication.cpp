@@ -57,6 +57,7 @@
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
+#include "stokesian_dynamics/sd_interface.hpp"
 #include "virtual_sites.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
