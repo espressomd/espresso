@@ -23,7 +23,7 @@ function(PYTHON_TEST)
   endif()
 
   if(WITH_COVERAGE)
-    set(PYPRESSO_OPTIONS "${PYPRESSO_OPTIONS} --coverage")
+    set(PYPRESSO_OPTIONS --coverage)
   endif(WITH_COVERAGE)
 
   if(EXISTS ${MPIEXEC})
