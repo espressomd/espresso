@@ -195,5 +195,4 @@ BOOST_AUTO_TEST_CASE(notify_call_method_) {
   BOOST_CHECK((boost::get<MockCall::CallMethod>(log_entry.second) ==
                MockCall::CallMethod{&name, &params}));
 }
-
 } // namespace Testing

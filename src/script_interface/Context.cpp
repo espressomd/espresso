@@ -42,7 +42,7 @@ std::string Context::serialize(const ObjectHandle *o) const {
     return std::make_pair(kv.first, this->serialize(kv.second.get()));
   });
 
-  state.name = name(o).to_string();
+  state.name = o->name().to_string();
   state.internal_state = o->get_internal_state();
 
   return Utils::pack(state);

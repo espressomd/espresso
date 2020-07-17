@@ -32,10 +32,9 @@ class Context;
  * @brief Base class for interface handles.
  */
 class ObjectHandle {
-protected:
+public:
   ObjectHandle() = default;
 
-public:
   /* Copy has unclear semantics, so it should not be allowed. */
   ObjectHandle(ObjectHandle const &) = delete;
   ObjectHandle &operator=(ObjectHandle const &) = delete;

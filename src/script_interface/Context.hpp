@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_CONTEXT_HPP
-#define ESPRESSO_CONTEXT_HPP
+#ifndef ESPRESSO_SCRIPT_INTERFACE_CONTEXT_HPP
+#define ESPRESSO_SCRIPT_INTERFACE_CONTEXT_HPP
 
 #include "ObjectHandle.hpp"
 #include "Variant.hpp"
@@ -27,6 +27,15 @@
 #include <memory>
 
 namespace ScriptInterface {
+/**
+ * @brief Context of a object handle.
+ *
+ * Each instance of @c ObjectHandle can have an
+ * attached context, which can e.g. synchronize
+ * distributed copies of the instance. The context
+ * does also provide facilities for serializing
+ * Objects into a string representation.
+ */
 class Context : public std::enable_shared_from_this<Context> {
 public:
   /**
@@ -55,6 +64,10 @@ public:
    * @brief Get a new reference counted instance of a script interface by
    * name.
    *
+   * Objects created thru a Context get shared ownership of that context,
+   * e.g. the lifetime of the context is at least as long as the objects
+   * created by it. Therefor the object can always assume that the context
+   * is present.
    */
   virtual std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) = 0;
@@ -81,9 +94,13 @@ protected:
   }
 
 public:
+  /**
+   *  @brief Get the class name for an ObjectHandle instance.
+   *
+   *  This resturns the name by which the object was created.
+   */
   boost::string_ref name(const ObjectHandle *o) const { return o->name(); }
 
-public:
   virtual ~Context() = default;
 };
 } // namespace ScriptInterface

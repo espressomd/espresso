@@ -25,6 +25,13 @@
 #include <utils/Factory.hpp>
 
 namespace ScriptInterface {
+
+/**
+ * @brief Trivial context.
+ *
+ * This context just maintains a local copy of an
+ * object.
+ */
 class LocalContext : public Context {
   Utils::Factory<ObjectHandle> m_factory;
 

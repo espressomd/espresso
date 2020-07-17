@@ -30,6 +30,20 @@
 #include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
+
+/**
+ * @brief Global synchronizing context.
+ *
+ * Objects created in this context are synchronized
+ * between multiple MPI ranks. That is, for each instance
+ * created on the head node, a copy is created on all
+ * other ranks. If the original copy is mutated via
+ * set_parameters, this change is also applied to all the
+ * copies. Calls to call_method are also propagated to all
+ * ranks. The lifetime of the copies is tied to the original,
+ * if the original copy is destroyed on the head node,
+ * the remote copies are also destroyed.
+ */
 class GlobalContext : public Context {
   using ObjectId = std::size_t;
 
