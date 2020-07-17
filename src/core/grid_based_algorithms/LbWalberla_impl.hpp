@@ -15,11 +15,14 @@
 #include "field/FlagField.h"
 #include "field/GhostLayerField.h"
 #include "field/adaptors/GhostLayerFieldAdaptor.h"
+#include "field/vtk/FlagFieldCellFilter.h"
+#include "field/vtk/VTKWriter.h"
 #include "lbm/boundary/UBB.h"
 #include "lbm/field/Adaptors.h"
 #include "lbm/field/PdfField.h"
 #include "lbm/lattice_model/CollisionModel.h"
 #include "lbm/lattice_model/D3Q19.h"
+#include "lbm/vtk/all.h"
 #include "timeloop/SweepTimeloop.h"
 #include "utils/Vector.hpp"
 #include "utils/interpolation/bspline_3d.hpp"
@@ -721,6 +724,37 @@ public:
     }
     return res;
   };
+
+  void write_vtk(int delta_N, unsigned flag_observables,
+                 std::string const &identifier) {
+    unsigned write_frequency = (delta_N) ? static_cast<unsigned>(delta_N) : 1u;
+    auto pdf_field_vtk = vtk::createVTKOutput_BlockData(
+        m_blocks, identifier, uint_c(write_frequency), uint_c(0));
+    field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_id);
+    fluid_filter.addFlag(Fluid_flag);
+    pdf_field_vtk->addCellInclusionFilter(fluid_filter);
+    if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
+      pdf_field_vtk->addCellDataWriter(
+          make_shared<lbm::DensityVTKWriter<LatticeModel, float>>(
+              m_pdf_field_id, "DensityFromPDF"));
+    }
+    if (static_cast<unsigned>(OutputVTK::velocity_vector) & flag_observables) {
+      pdf_field_vtk->addCellDataWriter(
+          make_shared<lbm::VelocityVTKWriter<LatticeModel, float>>(
+              m_pdf_field_id, "VelocityFromPDF"));
+    }
+    if (static_cast<unsigned>(OutputVTK::pressure_tensor) & flag_observables) {
+      pdf_field_vtk->addCellDataWriter(
+          make_shared<lbm::PressureTensorVTKWriter<LatticeModel, float>>(
+              m_pdf_field_id, "PressureTensorFromPDF"));
+    }
+    if (delta_N) {
+      m_time_loop->addFuncAfterTimeStep(vtk::writeFiles(pdf_field_vtk),
+                                        "VTK (" + identifier + " data)");
+    } else {
+      vtk::writeFiles(pdf_field_vtk)();
+    }
+  }
 
   ~LbWalberla() override = default;
 };

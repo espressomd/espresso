@@ -18,6 +18,13 @@ boost::optional<Utils::Vector3d> get_node_velocity(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_velocity)
 
+void write_vtk(int delta_N, unsigned flag_observables,
+               std::string const &identifier) {
+  lb_walberla()->write_vtk(delta_N, flag_observables, identifier);
+}
+
+REGISTER_CALLBACK(write_vtk)
+
 boost::optional<Utils::Vector3d>
 get_node_last_applied_force(Utils::Vector3i ind) {
   return lb_walberla()->get_node_last_applied_force(ind);

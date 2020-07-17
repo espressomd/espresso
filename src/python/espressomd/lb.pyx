@@ -27,7 +27,7 @@ from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
 from . import utils
-from .utils import array_locked, is_valid_type
+from .utils import array_locked, is_valid_type, to_char_pointer
 from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
 from .globals cimport time_step
 
@@ -282,6 +282,33 @@ IF LB_WALBERLA:
         def _deactivate_method(self):
             mpi_destruct_lb_walberla()
             super()._deactivate_method()
+
+        def write_vtk(self, identifier, observables, delta_N=0):
+            """
+            Write lattice observables to VTK files.
+
+            Parameters
+            ----------
+            identifier : :obj:`str`
+                Name of the VTK dataset.
+            observables : :obj:`list`, \{'density', 'velocity_vector', 'pressure_tensor'\}
+                List of observables to write to the VTK files.
+            delta_N : :obj:`int`
+                Write frequency, if 0 write a single frame (default),
+                otherwise add a callback to write every ``delta_N`` LB steps
+                to a new file.
+            """
+            observable2enum = {
+                'density': < int > output_vtk_density,
+                'velocity_vector': < int > output_vtk_velocity_vector,
+                'pressure_tensor': < int > output_vtk_pressure_tensor}
+            if isinstance(observables, str):
+                observables = [observables]
+            flag = 0
+            for obs in set(observables):
+                assert obs in observable2enum, 'Unknown observable ' + obs
+                flag += observable2enum[obs]
+            lb_lbfluid_write_vtk(delta_N, flag, to_char_pointer(identifier))
 
 
 cdef class LBFluidRoutines:
