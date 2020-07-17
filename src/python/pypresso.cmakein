@@ -59,6 +59,10 @@ case "$1" in
         shift
         exec lldb -- "@PYTHON_FRONTEND@" "$@"
         ;;
+    --coverage)
+        shift
+        exec @PYTHON_EXECUTABLE@ -m coverage run --source=@CMAKE_BINARY_DIR@/testsuite/python  --rcfile="@PROJECT_SOURCE_DIR@/.coveragerc" "$@"
+        ;;
     --valgrind)
         shift
         exec valgrind --leak-check=full "@PYTHON_FRONTEND@" "$@"

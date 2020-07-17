@@ -14,6 +14,11 @@ coverage:
   status:
     project:
       default: false
+      integration_tests:
+        paths:
+          - testsuite/python/
+        enabled: yes
+        threshold: 1%
       tests:
         paths:
           - src/core/unit_tests/
