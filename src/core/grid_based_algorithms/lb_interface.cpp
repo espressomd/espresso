@@ -538,7 +538,7 @@ void lb_lbfluid_write_vtk(int delta_N, unsigned flag_observables,
                           std::string const &identifier) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call(Walberla::write_vtk, delta_N,
+    ::Communication::mpiCallbacks().call_all(Walberla::write_vtk, delta_N,
                                          flag_observables, identifier);
     return;
   }
