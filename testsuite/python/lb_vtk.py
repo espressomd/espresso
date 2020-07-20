@@ -43,7 +43,7 @@ class TestVTK(ut.TestCase):
         return VN.vtk_to_numpy(cell.GetArray(name)).reshape(shape, order='F')
 
     def test_vtk(self):
-        filepath = 'vtk_out/test_lb_vtk/simulation_step_9.vtu'
+        filepath = 'vtk_out/test_lb_vtk_end/simulation_step_0.vtu'
 
         # setup LB system
         self.system.actors.add(self.lbf)
@@ -58,9 +58,12 @@ class TestVTK(ut.TestCase):
             os.remove(filepath)
 
         # write VTK file
-        vtk_observables = ['density', 'velocity_vector', 'pressure_tensor']
-        self.lbf.write_vtk('test_lb_vtk', vtk_observables, 1)
+        # TODO WALBERLA
+        # vtk_observables = ['density', 'velocity_vector', 'pressure_tensor']
+        # self.lbf.write_vtk('test_lb_vtk_continuous', vtk_observables, 1)
         self.system.integrator.run(100)
+        vtk_observables = ['density', 'velocity_vector']
+        self.lbf.write_vtk('test_lb_vtk_end', vtk_observables, 0)
 
         # parse VTK file
         self.assertTrue(
