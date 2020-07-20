@@ -61,7 +61,7 @@ case "$1" in
         ;;
     --coverage)
         shift
-        exec coverage run --rcfile="@PROJECT_SOURCE_DIR@/.coveragerc" "$@"
+        exec @PYTHON_EXECUTABLE@ -m coverage run --source=@CMAKE_BINARY_DIR@/src/python/espressomd  --rcfile="@PROJECT_SOURCE_DIR@/.coveragerc" "$@"
         ;;
     --valgrind)
         shift
