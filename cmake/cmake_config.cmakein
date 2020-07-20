@@ -13,6 +13,14 @@
 
 #cmakedefine GSL
 
+#cmakedefine BLAS
+
+#cmakedefine LAPACK
+
+#cmakedefine STOKESIAN_DYNAMICS
+
+#cmakedefine STOKESIAN_DYNAMICS_GPU
+
 #cmakedefine VALGRIND_INSTRUMENTATION
 
 #define PACKAGE_NAME "${PROJECT_NAME}"

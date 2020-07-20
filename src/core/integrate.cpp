@@ -40,6 +40,7 @@
 #include "event.hpp"
 #include "forces.hpp"
 #include "global.hpp"
+#include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -53,6 +54,7 @@
 #include "integrators/brownian_inline.hpp"
 #include "integrators/langevin_inline.hpp"
 #include "integrators/steepest_descent.hpp"
+#include "integrators/stokesian_dynamics_inline.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt.hpp"
 
@@ -125,6 +127,11 @@ bool integrator_step_1(ParticleRange &particles) {
     // the Ermak-McCammon's Brownian Dynamics requires a single step
     // so, just skip here
     break;
+#ifdef STOKESIAN_DYNAMICS
+  case INTEG_METHOD_SD:
+    stokesian_dynamics_step_1(particles);
+    break;
+#endif // STOKESIAN_DYNAMICS
   default:
     throw std::runtime_error("Unknown value for integ_switch");
   }
@@ -150,6 +157,11 @@ void integrator_step_2(ParticleRange &particles) {
     // the Ermak-McCammon's Brownian Dynamics requires a single step
     brownian_dynamics_propagator(brownian, particles);
     break;
+#ifdef STOKESIAN_DYNAMICS
+  case INTEG_METHOD_SD:
+    stokesian_dynamics_step_2(particles);
+    break;
+#endif // STOKESIAN_DYNAMICS
   default:
     throw std::runtime_error("Unknown value for INTEG_SWITCH");
   }
@@ -202,7 +214,6 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_START_INSTRUMENTATION;
 #endif
-
   /* Integration loop */
   ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   int integrated_steps = 0;
@@ -282,6 +293,7 @@ int integrate(int n_steps, int reuse_forces) {
 
   } // for-loop over integration steps
   ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
+
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
@@ -418,6 +430,16 @@ void integrate_set_nvt() {
 void integrate_set_bd() {
   integ_switch = INTEG_METHOD_BD;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+}
+
+int integrate_set_sd() {
+  if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2)) {
+    runtimeErrorMsg() << "Stokesian Dynamics requires periodicity 0 0 0\n";
+    return ES_ERROR;
+  }
+  integ_switch = INTEG_METHOD_SD;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  return ES_OK;
 }
 
 #ifdef NPT

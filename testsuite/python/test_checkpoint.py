@@ -36,6 +36,14 @@ EK = ('EK.GPU' in modes and espressomd.gpu_available()
       and espressomd.has_features('ELECTROKINETICS'))
 
 
+def skipIfMissingFeatureStokesianDynamics():
+    """Specialized unittest skipIf decorator for missing Stokesian Dynamics."""
+    if not espressomd.has_features(["STOKESIAN_DYNAMICS"]) and (not espressomd.has_features(
+            ["STOKESIAN_DYNAMICS_GPU"]) or not espressomd.gpu_available()):
+        return ut.skip("Skipping test: feature STOKESIAN_DYNAMICS unavailable")
+    return utx._id
+
+
 class CheckpointTest(ut.TestCase):
 
     @classmethod
@@ -194,6 +202,14 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['gamma0'], 2.0)
         self.assertEqual(thmst['gammav'], 0.1)
 
+    @skipIfMissingFeatureStokesianDynamics()
+    @ut.skipIf('THERM.SDM' not in modes, 'SDM thermostat not in modes')
+    def test_thermostat_SDM(self):
+        thmst = system.thermostat.get_state()[0]
+        self.assertEqual(thmst['type'], 'SD')
+        self.assertEqual(thmst['kT'], 1.0)
+        self.assertEqual(thmst['seed'], 42)
+
     @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('INT.NPT' not in modes, 'NPT integrator not in modes')
     def test_integrator_NPT(self):
@@ -235,6 +251,31 @@ class CheckpointTest(ut.TestCase):
         self.assertIsInstance(integ, espressomd.integrate.BrownianDynamics)
         params = integ.get_params()
         self.assertEqual(params, {})
+
+    @utx.skipIfMissingFeatures('STOKESIAN_DYNAMICS')
+    @ut.skipIf('INT.SDM.CPU' not in modes, 'SDM CPU integrator not in modes')
+    def test_integrator_SDM_cpu(self):
+        integ = system.integrator.get_state()
+        self.assertIsInstance(integ, espressomd.integrate.StokesianDynamics)
+        expected_params = {
+            'approximation_method': 'ft', 'device': 'cpu', 'radii': {0: 1.5},
+            'viscosity': 0.5, 'lubrication': False, 'pair_mobility': False,
+            'self_mobility': True}
+        params = integ.get_params()
+        self.assertEqual(params, expected_params)
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures('STOKESIAN_DYNAMICS_GPU')
+    @ut.skipIf('INT.SDM.GPU' not in modes, 'SDM GPU integrator not in modes')
+    def test_integrator_SDM_gpu(self):
+        integ = system.integrator.get_state()
+        self.assertIsInstance(integ, espressomd.integrate.StokesianDynamics)
+        expected_params = {
+            'approximation_method': 'fts', 'device': 'gpu', 'radii': {0: 1.0},
+            'viscosity': 2.0, 'lubrication': False, 'pair_mobility': True,
+            'self_mobility': False}
+        params = integ.get_params()
+        self.assertEqual(params, expected_params)
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")

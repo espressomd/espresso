@@ -74,6 +74,7 @@ option(WITH_CUDA "Build with GPU support" OFF)
 option_if_available(WITH_HDF5 "Build with HDF5 support" ON)
 option(WITH_TESTS "Enable tests" ON)
 option_if_available(WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
+option_if_available(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" ON)
 option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
@@ -253,6 +254,62 @@ if(WITH_GSL)
     )
   endif(GSL_FOUND)
 endif(WITH_GSL)
+
+find_package(BLAS)
+if(BLAS_FOUND)
+  set(BLAS 1)
+endif()
+find_package(LAPACK)
+if(LAPACK_FOUND)
+  set(LAPACK 1)
+endif()
+
+if(WITH_STOKESIAN_DYNAMICS)
+  if(BLAS AND LAPACK)
+    set(STOKESIAN_DYNAMICS 1)
+  endif()
+  if(CUDA)
+    set(STOKESIAN_DYNAMICS_GPU 1)
+    if(HIP)
+      find_gpu_library(VARNAME CUDA_CUBLAS_LIBRARIES NAMES rocblas)
+      find_gpu_library(VARNAME CUDA_cusolver_LIBRARY NAMES rocsolver)
+    else()
+      if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
+        # when importing package cublas, CMake versions older than 3.12.2 will
+        # look for a library cublas_device that no longer exists in CUDA 10
+        cmake_minimum_required(VERSION 3.12.2)
+      endif()
+      find_gpu_library(VARNAME CUDA_CUBLAS_LIBRARIES NAMES cublas)
+      find_gpu_library(VARNAME CUDA_cusolver_LIBRARY NAMES cusolver)
+    endif()
+  endif(CUDA)
+  if(NOT (STOKESIAN_DYNAMICS
+          OR (STOKESIAN_DYNAMICS_GPU AND CUDA_CUBLAS_LIBRARIES
+              AND CUDA_cusolver_LIBRARY))
+     AND NOT WITH_STOKESIAN_DYNAMICS_IS_DEFAULT_VALUE)
+    message(
+      FATAL_ERROR
+        "Optional feature Stokesian Dynamics explicitly requested, but dependencies not found."
+    )
+  endif()
+endif(WITH_STOKESIAN_DYNAMICS)
+
+if(WITH_STOKESIAN_DYNAMICS)
+  set(CMAKE_INSTALL_LIBDIR
+      "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
+  cmake_minimum_required(VERSION 3.11)
+  include(FetchContent)
+  FetchContent_Declare(
+    stokesian_dynamics
+    GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
+    GIT_TAG 860ceac208175)
+  FetchContent_GetProperties(stokesian_dynamics)
+  if(NOT stokesian_dynamics_POPULATED)
+    FetchContent_Populate(stokesian_dynamics)
+    add_subdirectory(${stokesian_dynamics_SOURCE_DIR}
+                     ${stokesian_dynamics_BINARY_DIR})
+  endif()
+endif(WITH_STOKESIAN_DYNAMICS)
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)

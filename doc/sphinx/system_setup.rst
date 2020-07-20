@@ -473,6 +473,26 @@ can be omitted in subsequent calls of ``set_brownian()``. It is the user's
 responsibility to decide whether the thermostat should be deterministic (by
 using a fixed seed) or not (by using a randomized seed).
 
+.. _Stokesian thermostat:
+
+Stokesian thermostat
+~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+    Requires ``STOKESIAN_DYNAMICS`` external feature, enabled with
+    ``-DWITH_STOKESIAN_DYNAMICS=ON``.
+
+In order to thermalize a Stokesian Dynamics simulation, the SD thermostat
+needs to be activated via::
+
+    system.thermostat.set_stokesian(kT=1.0, seed=43)
+
+where ``kT`` denotes the desired temperature of the system, and ``seed`` the
+seed for the random number generator of the Stokesian Dynamics thermostat.
+It is independent from the other random number generators in |es|.
+
+
 .. _CUDA:
 
 CUDA

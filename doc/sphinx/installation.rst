@@ -485,8 +485,14 @@ Finally, there is a flag for debugging:
 Features marked as experimental
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
+Some of the above features are marked as EXPERIMENTAL. Activating these
+features can have unexpected side effects and some of them have known issues.
+If you activate any of these features, you should understand the corresponding
+source code and do extensive testing. Furthermore, it is necessary to define
+``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
+
+.. _External features:
 
 External features
 ^^^^^^^^^^^^^^^^^
@@ -507,6 +513,14 @@ using a CMake flag (see :ref:`Options and Variables`).
 
 - ``GSL`` Enables features relying on the GNU Scientific Library, e.g.
   :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
+
+- ``STOKESIAN_DYNAMICS`` Enables the Stokesian Dynamics feature for CPU
+  (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
+
+- ``STOKESIAN_DYNAMICS_GPU`` Enables the Stokesian Dynamics feature for GPU
+  (see :ref:`Stokesian Dynamics`). Requires thrust/cuBLAS/cuSolver for NVIDIA
+  GPUs or rocrand/rocthrust/rocblas/rocsolver for AMD GPUs.
+  Requires ``EXPERIMENTAL_FEATURES``.
 
 
 
@@ -563,11 +577,11 @@ Then you can simply compile two different versions of |es| via:
 
 .. code-block:: bash
 
-    cd builddir1
+    cd $builddir1
     cmake ..
     make
 
-    cd builddir2
+    cd $builddir2
     cmake ..
     make
 
@@ -670,6 +684,8 @@ options are available:
 
 * ``WITH_SCAFACOS``: Build with ScaFaCoS support
 
+* ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support
+
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
@@ -695,6 +711,40 @@ If you have multiple versions of the CUDA library installed, you can select the
 correct one with ``CUDA_BIN_PATH=/usr/local/cuda-10.0 cmake .. -DWITH_CUDA=ON``
 (with Clang as the CUDA compiler, you also need to override its default CUDA
 path with ``-DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-10.0``).
+
+
+.. _Configuring without a network connection:
+
+Configuring without a network connection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Several :ref:`external features <External features>` in |es| rely on
+external libraries that are downloaded automatically by CMake. When a
+network connection cannot be established due to firewall restrictions,
+the CMake logic needs editing:
+
+* ``WITH_HDF5``: when cloning |es|, the :file:`/libs/h5xx` folder will be
+  a git submodule containing a :file:`.git` subfolder. To prevent CMake from
+  updating this submodule with git, delete the corresponding command with:
+
+  .. code-block:: bash
+
+    sed -i '/execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs\/h5xx/,+1 d' CMakeLists.txt
+
+  When installing a release version of |es|, no network communication
+  is needed for HDF5.
+
+* ``WITH_STOKESIAN_DYNAMICS``: this library is installed using `FetchContent
+  <https://cmake.org/cmake/help/latest/module/FetchContent.html>`_.
+  The repository URL can be found in the ``GIT_REPOSITORY`` field of the
+  corresponding ``FetchContent_Declare()`` command. The ``GIT_TAG`` field
+  provides the commit. Clone this repository locally next to the |es|
+  folder and edit the |es| build system such that ``GIT_REPOSITORY`` points
+  to the absolute path of the Stokesian Dynamics clone, for example with:
+
+  .. code-block:: bash
+
+    sed -ri 's|GIT_REPOSITORY +.+stokesian-dynamics.git|GIT_REPOSITORY /work/username/stokesian_dynamics|' CMakeLists.txt
 
 
 Compiling, testing and installing

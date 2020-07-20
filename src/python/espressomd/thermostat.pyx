@@ -124,6 +124,8 @@ cdef class Thermostat:
                                   gamma_rotation=thmst["gamma_rotation"],
                                   act_on_virtual=thmst["act_on_virtual"],
                                   seed=thmst["seed"])
+            if thmst["type"] == "SD":
+                self.set_stokesian(kT=thmst["kT"], seed=thmst["seed"])
 
     def get_ts(self):
         return thermo_switch
@@ -205,6 +207,13 @@ cdef class Thermostat:
                 dpd_dict["kT"] = temperature
                 dpd_dict["seed"] = int(dpd_get_rng_state())
                 thermo_list.append(dpd_dict)
+        if (thermo_switch & THERMO_SD):
+            IF STOKESIAN_DYNAMICS:
+                sd_dict = {}
+                sd_dict["type"] = "SD"
+                sd_dict["kT"] = get_sd_kT()
+                sd_dict["seed"] = get_sd_seed()
+                thermo_list.append(sd_dict)
         return thermo_list
 
     def turn_off(self):
@@ -698,3 +707,35 @@ cdef class Thermostat:
 
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
+
+    IF STOKESIAN_DYNAMICS:
+        def set_stokesian(self, kT=None, seed=None):
+            """
+            Sets the SD thermostat with required parameters.
+
+            This thermostat requires the feature ``STOKESIAN_DYNAMICS`` or
+            ``STOKESIAN_DYNAMICS_GPU``.
+
+            Parameters
+            ----------
+            kT : :obj:`float`, optional
+                Temperature
+            seed : :obj:`int`, optional
+                Seed for the random number generator
+
+            """
+
+            if (kT is None) or (kT == 0):
+                set_sd_kT(0.0)
+            else:
+                utils.check_type_or_throw_except(
+                    kT, 1, float, "kT must be a float")
+                set_sd_kT(kT)
+
+                utils.check_type_or_throw_except(
+                    seed, 1, int, "seed must be an integer")
+                set_sd_seed(seed)
+
+            global thermo_switch
+            thermo_switch = (thermo_switch | THERMO_SD)
+            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
