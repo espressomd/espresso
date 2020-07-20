@@ -42,33 +42,7 @@ class TestVTK(ut.TestCase):
     def get_cell_array(self, cell, name, shape):
         return VN.vtk_to_numpy(cell.GetArray(name)).reshape(shape, order='F')
 
-    def test_vtk(self):
-        filepath = 'vtk_out/test_lb_vtk_end/simulation_step_0.vtu'
-
-        # setup LB system
-        self.system.actors.add(self.lbf)
-        if espressomd.has_features('LB_BOUNDARIES'):
-            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5)))
-            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=14.5)))
-
-        # cleanup action
-        if os.path.exists(filepath):
-            os.remove(filepath)
-
-        # write VTK file
-        # TODO WALBERLA
-        # vtk_observables = ['density', 'velocity_vector', 'pressure_tensor']
-        # self.lbf.write_vtk('test_lb_vtk_continuous', vtk_observables, 1)
-        self.system.integrator.run(100)
-        vtk_observables = ['density', 'velocity_vector']
-        self.lbf.write_vtk('test_lb_vtk_end', vtk_observables, 0)
-
-        # parse VTK file
-        self.assertTrue(
-            os.path.exists(filepath),
-            'VTK file not written to disk')
+    def parse_vtk(self, filepath, shape):
         reader = vtk.vtkXMLUnstructuredGridReader()
         reader.SetFileName(filepath)
         reader.Update()
@@ -76,37 +50,86 @@ class TestVTK(ut.TestCase):
         data = reader.GetOutput()
         cell = data.GetCellData()
 
+        vtk_density = self.get_cell_array(cell, 'DensityFromPDF', shape)
+        vtk_velocity = self.get_cell_array(
+            cell, 'VelocityFromPDF', shape + [3])
+        # TODO Walberla
+        # vtk_pressure = self.get_cell_array(
+        #     cell, 'PressureTensorFromPDF', shape + [3, 3])
+        return vtk_density, vtk_velocity
+
+    def test_vtk(self):
+        '''
+        Check VTK files. Keep in mind VTK files are written with
+        float precision.
+        '''
+
+        # setup LB system
+        self.system.actors.add(self.lbf)
         x_offset = 0
         shape = [16, 16, 16]
         if espressomd.has_features('LB_BOUNDARIES'):
+            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
+                shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5)))
+            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
+                shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5)))
             x_offset = 2
             shape[0] = 12
 
-        vtk_density = self.get_cell_array(cell, 'DensityFromPDF', shape)
-        # TODO Walberla
-        # vtk_velocity = self.get_cell_array(
-        #     cell, 'VelocityFromPDF', shape + [3])
-        # vtk_pressure = self.get_cell_array(
-        #     cell, 'PressureTensorFromPDF', shape + [3, 3])
+        n_steps = 100
+        lb_steps = int(np.floor(n_steps * self.lbf.tau))
+        filepaths = ['vtk_out/test_lb_vtk_end/simulation_step_0.vtu'] + \
+            ['vtk_out/test_lb_vtk_continuous/simulation_step_{}.vtu'.format(
+                i) for i in range(lb_steps)]
 
+        # cleanup action
+        for filepath in filepaths:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+
+        # write VTK files
+        # TODO Walberla: add 'pressure_tensor'
+        vtk_observables = ['density', 'velocity_vector']
+        self.lbf.write_vtk('test_lb_vtk_continuous', vtk_observables, 1)
+        self.system.integrator.run(n_steps)
+        vtk_observables = ['density', 'velocity_vector']
+        self.lbf.write_vtk('test_lb_vtk_end', vtk_observables, 0)
+
+        # check VTK files exist
+        for filepath in filepaths:
+            self.assertTrue(
+                os.path.exists(filepath),
+                'VTK file "{}" not written to disk'.format(filepath))
+
+        # check velocity profile is symmetric at all time steps
+        for filepath in filepaths:
+            vtk_velocity = self.parse_vtk(filepath, shape)[1]
+            v_profile = np.mean(
+                np.linalg.norm(vtk_velocity, axis=-1),
+                axis=(1, 2))
+            np.testing.assert_allclose(v_profile, v_profile[::-1], rtol=1e-5)
+
+        # check VTK values match node values in the final time step
         node_density = np.zeros(shape)
+        node_velocity = np.zeros(shape + [3])
         # TODO Walberla
-        # node_velocity = np.zeros(shape + [3])
         # node_pressure = np.zeros(shape + [3, 3])
         for i in range(shape[0]):
             for j in range(shape[1]):
                 for k in range(shape[2]):
                     node = self.lbf[i + x_offset, j, k]
                     node_density[i, j, k] = node.density
+                    node_velocity[i, j, k] = node.velocity
                     # TODO Walberla
-                    # node_velocity[i, j, k] = node.velocity
                     # node_pressure[i, j, k] = node.pressure_tensor
 
-        # VTK files are written with float precision
-        np.testing.assert_allclose(node_density, vtk_density, rtol=1e-5)
-        # TODO Walberla
-        # np.testing.assert_allclose(node_velocity, vtk_velocity, rtol=1e-5)
-        # np.testing.assert_allclose(node_pressure, vtk_pressure, rtol=1e-5)
+        for filepath in (filepaths[0], filepaths[-1]):
+            vtk_density, vtk_velocity = self.parse_vtk(filepath, shape)
+            np.testing.assert_allclose(vtk_density, node_density, rtol=5e-7)
+            np.testing.assert_allclose(
+                vtk_velocity, node_velocity * self.lbf.tau, rtol=5e-7)
+            # TODO Walberla
+            # np.testing.assert_allclose(node_pressure, vtk_pressure, rtol=5e-7)
 
 
 if __name__ == '__main__':
