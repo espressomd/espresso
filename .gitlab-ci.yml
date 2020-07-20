@@ -78,7 +78,7 @@ default:
      CXX: 'g++-9'
   script:
     - export with_cuda=false myconfig=default with_coverage=true
-    - export with_scafacos=true with_stokesian_dynamics=true
+    - export with_scafacos=true with_walberla=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
