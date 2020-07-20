@@ -36,8 +36,6 @@ class TestVTK(ut.TestCase):
     system = espressomd.System(box_l=3 * [16])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lbf = espressomd.lb.LBFluidWalberla(kT=0, agrid=1.0, dens=1.0, visc=1.0,
-                                        tau=0.1, ext_force_density=[0, 0.03, 0])
 
     def get_cell_array(self, cell, name, shape):
         return VN.vtk_to_numpy(cell.GetArray(name)).reshape(shape, order='F')
@@ -65,6 +63,9 @@ class TestVTK(ut.TestCase):
         '''
 
         # setup LB system
+        self.lbf = espressomd.lb.LBFluidWalberla(
+            kT=0, agrid=1.0, dens=1.0, visc=1.0, tau=0.1,
+            ext_force_density=[0, 0.03, 0])
         self.system.actors.add(self.lbf)
         x_offset = 0
         shape = [16, 16, 16]
