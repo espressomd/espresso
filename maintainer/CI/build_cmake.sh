@@ -290,6 +290,7 @@ if [ "${with_coverage}" = true ]; then
     lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
     lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
     python3 -m coverage combine testsuite/python
+    python3 -m coverage xml
     # Uploading report to Codecov
     if [ -z "${CODECOV_TOKEN}" ]; then
         bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
