@@ -3,8 +3,6 @@ codecov:
   branch: python
   notify:
     require_ci_to_pass: yes
-  ci:
-    - !travis-ci.org
 
 coverage:
   precision: 0
@@ -26,7 +24,7 @@ coverage:
         threshold: 1%
       core:
         paths:
-          - !src/core/unit_tests/
+          - "!src/core/unit_tests/"
         enabled: yes
         threshold: 1%
     patch:
@@ -50,3 +48,6 @@ comment:
 
 ignore:
   - "libs"
+fixes:
+  - "testsuite/python/save_checkpoint*::testsuite/python/save_checkpoint.py"
+  - "testsuite/python/test_checkpoint*::testsuite/python/test_checkpoint.py"
