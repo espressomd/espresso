@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(GlobalContext_serialization) {
       return d1->serialize();
     }();
 
-    auto d1 = si::Context::deserialize(serialized, *ctx);
+    auto d1 = si::ObjectHandle::deserialize(serialized, *ctx);
     BOOST_REQUIRE(d1);
     BOOST_CHECK_EQUAL(boost::get<int>(d1->get_parameter("id")), 1);
     auto d2 = boost::get<si::ObjectRef>(d1->get_parameter("object_param"));

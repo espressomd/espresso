@@ -144,6 +144,11 @@ private:
 public:
   std::string serialize() const;
 
+  /**
+   * @brief Make object from serialized state.
+   */
+  static ObjectRef deserialize(const std::string &state, Context &ctx);
+
 private:
   virtual std::string get_internal_state() const { return {}; }
   virtual void set_internal_state(std::string const &state) {}

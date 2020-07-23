@@ -69,4 +69,25 @@ std::string ObjectHandle::serialize() const {
   return Utils::pack(state);
 }
 
+ObjectRef ObjectHandle::deserialize(const std::string &packed_state,
+                                    Context &ctx) {
+  auto const state = Utils::unpack<ObjectState>(packed_state);
+
+  std::unordered_map<ObjectId, ObjectRef> objects;
+  boost::transform(state.objects, std::inserter(objects, objects.end()),
+                   [&ctx](auto const &kv) {
+                     return std::make_pair(kv.first,
+                                           deserialize(kv.second, ctx));
+                   });
+
+  VariantMap params;
+  for (auto const &kv : state.params) {
+    params[kv.first] = boost::apply_visitor(UnpackVisitor(objects), kv.second);
+  }
+
+  auto o = ctx.make_shared(state.name, params);
+  o->set_internal_state(state.internal_state);
+
+  return o;
+}
 } /* namespace ScriptInterface */

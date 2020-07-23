@@ -72,11 +72,6 @@ public:
   virtual std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) = 0;
 
-  /**
-   * @brief Make object from serialized state.
-   */
-  static ObjectRef deserialize(const std::string &state_, Context &ctx);
-
 protected:
   /**
    * @brief Set the context of an object to this.

@@ -38,7 +38,7 @@ ObjectManager::deserialize(std::string const &state_) {
   auto ctx = context(state.first);
   assert(ctx);
 
-  return ctx->deserialize(state.second, *ctx);
+  return ObjectHandle::deserialize(state.second, *ctx);
 }
 
 std::string ObjectManager::serialize(const ObjectHandle *o) const {
