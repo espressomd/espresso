@@ -54,12 +54,11 @@ LbGeneratorVector unthermalized_lbs() {
   });
 
   // Tthermalized D3Q19 MRT with kT set to 0
-   lbs.push_back(
-    [](Vector3i mpi_shape) {return
-    std::make_shared<LbWalberlaD3Q19FluctuatingMRT>(viscosity, density, agrid,
-    tau,
-                                               box_dimensions, mpi_shape, 1,
-                                               0.0, seed);});
+  lbs.push_back([](Vector3i mpi_shape) {
+    return std::make_shared<LbWalberlaD3Q19FluctuatingMRT>(
+        viscosity, density, agrid, tau, box_dimensions, mpi_shape, 1, 0.0,
+        seed);
+  });
   return lbs;
 }
 
