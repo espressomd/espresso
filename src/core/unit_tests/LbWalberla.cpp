@@ -24,12 +24,13 @@
 
 using Utils::Vector3d;
 using Utils::Vector3i;
+using Utils::hadamard_product;
 
 using walberla::LbWalberlaD3Q19FluctuatingMRT;
 using walberla::LbWalberlaD3Q19MRT;
 
-double viscosity = 3;
-Vector3d box_dimensions = {10, 12, 14};
+double viscosity = 0.4;
+Vector3d box_dimensions = {6, 6, 9};
 double agrid = 0.5;
 Vector3i grid_dimensions{int(box_dimensions[0] / agrid),
                          int(box_dimensions[1] / agrid),
@@ -38,6 +39,7 @@ double tau = 0.34;
 double density = 2.5;
 Vector3i mpi_shape;
 unsigned int seed = 1;
+double kT=0.00014;
 
 namespace bdata = boost::unit_test::data;
 
@@ -57,6 +59,20 @@ LbGeneratorVector unthermalized_lbs() {
   lbs.push_back([](Vector3i mpi_shape) {
     return std::make_shared<LbWalberlaD3Q19FluctuatingMRT>(
         viscosity, density, agrid, tau, box_dimensions, mpi_shape, 1, 0.0,
+        seed);
+  });
+  return lbs;
+}
+
+
+// Add all LBs with thermalization to be tested, here
+LbGeneratorVector thermalized_lbs() {
+  LbGeneratorVector lbs;
+  
+  // Tthermalized D3Q19 MRT with kT set to 0
+  lbs.push_back([](Vector3i mpi_shape) {
+    return std::make_shared<LbWalberlaD3Q19FluctuatingMRT>(
+        viscosity, density, agrid, tau, box_dimensions, mpi_shape, 1, kT,
         seed);
   });
   return lbs;
@@ -426,6 +442,61 @@ int main(int argc, char **argv) {
   return res;
 }
 
+
+BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
+                     lb_generator) {
+  auto lb = lb_generator(mpi_shape);
+
+  // Warmup
+  for (int i=0;i<100;i++) lb->integrate();
+  
+
+  // Sample
+  int steps=50000;
+
+  auto my_left = lb->get_local_domain().first;
+  auto my_right = lb->get_local_domain().second;
+  
+  Vector3d sum_v{}, sum_v_square{};
+  int count=0;
+  
+  for (int i=0;i<steps;i++) {
+    for (int x=my_left[0];x<my_right[0];x++) {
+    for (int y=my_left[1];y<my_right[1];y++) {
+    for (int z=my_left[2];z<my_right[2];z++) {
+    const Vector3i node{{x,y,z}};
+    if (lb->node_in_local_domain(node)) {
+      auto v = *(lb->get_node_velocity(node));
+      sum_v+=v;
+      sum_v_square +=hadamard_product(v,v);
+      count++;
+    }
+  }
+  }
+  }
+      lb->integrate();
+  }
+
+  // agregate
+  MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_INT, MPI_SUM,
+                    MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, sum_v.data(), 3, MPI_DOUBLE, MPI_SUM,
+                MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, sum_v_square.data(), 3, MPI_DOUBLE, MPI_SUM,
+                MPI_COMM_WORLD);
+  
+  // check
+  const double tol = 3E-6;
+  
+  BOOST_CHECK_SMALL(std::abs(sum_v[0]/count),tol*100); // boost oddity
+  BOOST_CHECK_SMALL(std::abs(sum_v[1]/count),tol*100);
+  BOOST_CHECK_SMALL(std::abs(sum_v[2]/count),tol*100);
+  
+  BOOST_CHECK_CLOSE(sum_v_square[0]/count,kT,tol);
+  BOOST_CHECK_CLOSE(sum_v_square[1]/count,kT,tol);
+  BOOST_CHECK_CLOSE(sum_v_square[2]/count,kT,tol);
+
+}
 #else // ifdef LB_WALBERLA
 int main(int argc, char **argv) {}
 #endif
