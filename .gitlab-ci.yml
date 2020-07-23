@@ -1,4 +1,4 @@
-image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:700579881dceba20fa27ec476a4b4e0746b72683
+image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:8a7d258889d87dcc9c96a200784b30b532d45b33
 
 stages:
   - prepare
@@ -221,7 +221,7 @@ cuda10-maxset:
 cuda9-maxset:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-18.04:d496478230db4e5c286680e3bdc1621af1fccffc
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-18.04:8a7d258889d87dcc9c96a200784b30b532d45b33
   variables:
      CC: 'gcc-6'
      CXX: 'g++-6'
