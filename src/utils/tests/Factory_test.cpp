@@ -54,8 +54,6 @@ BOOST_AUTO_TEST_CASE(regiser_class) {
 /* Check object construction. */
 BOOST_AUTO_TEST_CASE(make) {
   Utils::Factory<TestClass> factory;
-
-  /* Overload with explicit builder */
   factory.register_new<DerivedTestClass>("derived_test_class");
 
   /* Make a derived object */
@@ -64,4 +62,16 @@ BOOST_AUTO_TEST_CASE(make) {
 
   /* Check for correct (derived) type */
   BOOST_CHECK(dynamic_cast<DerivedTestClass *>(o.get()) != nullptr);
+}
+
+BOOST_AUTO_TEST_CASE(stable_name_) {
+  const std::string derived_class_name = "derived_test_class";
+
+  Utils::Factory<TestClass> factory;
+  factory.register_new<DerivedTestClass>(derived_class_name);
+
+  /* Make a object */
+  auto o = factory.make(derived_class_name);
+
+  BOOST_CHECK_EQUAL(factory.stable_name(*o.get()), derived_class_name);
 }

@@ -26,6 +26,7 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <typeindex>
 #include <unordered_map>
 
 namespace Utils {
@@ -109,7 +110,8 @@ public:
    * @param name Given name for the type, has to be unique in this Factory<T>.
    */
   template <typename Derived> void register_new(const std::string &name) {
-    m_map[name] = []() { return pointer_type(new Derived()); };
+    m_map.insert({name, []() { return pointer_type(new Derived()); }});
+    m_type_map.insert({typeid(Derived), name});
   }
 
   /**
@@ -126,9 +128,15 @@ public:
     throw std::out_of_range{"Unknown name"};
   }
 
+  const std::string &stable_name(T const &o) const {
+    return m_type_map.at(typeid(o));
+  }
+
 private:
   /** Maps names to construction functions. */
   std::unordered_map<std::string, builder_type> m_map;
+  /** Maps types to names */
+  std::unordered_map<std::type_index, std::string> m_type_map;
 };
 
 } /* namespace Utils */
