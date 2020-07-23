@@ -35,7 +35,10 @@ ObjectManager::deserialize(std::string const &state_) {
   auto const state =
       Utils::unpack<std::pair<CreationPolicy, std::string>>(state_);
 
-  return context(state.first)->deserialize(state.second);
+  auto ctx = context(state.first);
+  assert(ctx);
+
+  return ctx->deserialize(state.second, *ctx);
 }
 
 std::string ObjectManager::serialize(const ObjectHandle *o) const {

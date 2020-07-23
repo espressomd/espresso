@@ -48,14 +48,14 @@ std::string Context::serialize(const ObjectHandle *o) const {
   return Utils::pack(state);
 }
 
-ObjectRef Context::deserialize(const std::string &state_) {
+ObjectRef Context::deserialize(const std::string &state_, Context &ctx) {
   auto const state = Utils::unpack<ObjectState>(state_);
 
   std::unordered_map<ObjectId, ObjectRef> objects;
   boost::transform(state.objects, std::inserter(objects, objects.end()),
-                   [this](auto const &kv) {
+                   [&ctx](auto const &kv) {
                      return std::make_pair(kv.first,
-                                           this->deserialize(kv.second));
+                                           ctx.deserialize(kv.second, ctx));
                    });
 
   VariantMap params;
@@ -63,7 +63,7 @@ ObjectRef Context::deserialize(const std::string &state_) {
     params[kv.first] = boost::apply_visitor(UnpackVisitor(objects), kv.second);
   }
 
-  auto o = make_shared(state.name, params);
+  auto o = ctx.make_shared(state.name, params);
   o->set_internal_state(state.internal_state);
 
   return o;

@@ -80,7 +80,7 @@ public:
   /**
    * @brief Make object from serialized state.
    */
-  ObjectRef deserialize(std::string const &state_);
+  static ObjectRef deserialize(const std::string &state_, Context &ctx);
 
 protected:
   /**
