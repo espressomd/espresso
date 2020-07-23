@@ -22,15 +22,20 @@ function(PYTHON_TEST)
     set(TEST_NUM_PROC ${TEST_MAX_NUM_PROC})
   endif()
 
+  if(WITH_COVERAGE)
+    set(PYPRESSO_OPTIONS --coverage)
+  endif(WITH_COVERAGE)
+
   if(EXISTS ${MPIEXEC})
     add_test(
       NAME ${TEST_NAME}
       COMMAND
         ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
         ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso
-        ${TEST_FILE} ${MPIEXEC_POSTFLAGS})
+        ${PYPRESSO_OPTIONS} ${TEST_FILE} ${MPIEXEC_POSTFLAGS})
   else()
-    add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE})
+    add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
+             ${TEST_FILE})
   endif()
   set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC}
                                                DEPENDS "${TEST_DEPENDS}")
