@@ -141,6 +141,9 @@ private:
     return none;
   }
 
+public:
+  std::string serialize() const;
+
 private:
   virtual std::string get_internal_state() const { return {}; }
   virtual void set_internal_state(std::string const &state) {}

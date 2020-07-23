@@ -22,31 +22,6 @@
 #include <utils/serialization/pack.hpp>
 
 namespace ScriptInterface {
-std::string Context::serialize(const ObjectHandle *o) const {
-  ObjectState state;
-
-  auto const params = o->get_parameters();
-  state.params.resize(params.size());
-
-  PackVisitor v;
-
-  /* Pack parameters and keep track of ObjectRef parameters */
-  boost::transform(params, state.params.begin(),
-                   [&v](auto const &kv) -> PackedMap::value_type {
-                     return {kv.first, boost::apply_visitor(v, kv.second)};
-                   });
-
-  /* Packed Object parameters */
-  state.objects.resize(v.objects().size());
-  boost::transform(v.objects(), state.objects.begin(), [this](auto const &kv) {
-    return std::make_pair(kv.first, this->serialize(kv.second.get()));
-  });
-
-  state.name = o->name().to_string();
-  state.internal_state = o->get_internal_state();
-
-  return Utils::pack(state);
-}
 
 ObjectRef Context::deserialize(const std::string &state_, Context &ctx) {
   auto const state = Utils::unpack<ObjectState>(state_);

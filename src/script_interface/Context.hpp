@@ -73,11 +73,6 @@ public:
   make_shared(std::string const &name, const VariantMap &parameters) = 0;
 
   /**
-   * @brief String representation of the state of an object.
-   */
-  std::string serialize(const ObjectHandle *o) const;
-
-  /**
    * @brief Make object from serialized state.
    */
   static ObjectRef deserialize(const std::string &state_, Context &ctx);

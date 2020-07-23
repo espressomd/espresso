@@ -21,6 +21,10 @@
 
 #include "ObjectHandle.hpp"
 #include "Context.hpp"
+#include "ObjectState.hpp"
+#include "PackedVariant.hpp"
+
+#include <utils/serialization/pack.hpp>
 
 namespace ScriptInterface {
 void ObjectHandle::set_parameter(const std::string &name,
@@ -37,6 +41,32 @@ Variant ObjectHandle::call_method(const std::string &name,
     m_context->notify_call_method(this, name, params);
 
   return this->do_call_method(name, params);
+}
+
+std::string ObjectHandle::serialize() const {
+  ObjectState state;
+
+  auto const params = this->get_parameters();
+  state.params.resize(params.size());
+
+  PackVisitor v;
+
+  /* Pack parameters and keep track of ObjectRef parameters */
+  boost::transform(params, state.params.begin(),
+                   [&v](auto const &kv) -> PackedMap::value_type {
+                     return {kv.first, boost::apply_visitor(v, kv.second)};
+                   });
+
+  /* Packed Object parameters */
+  state.objects.resize(v.objects().size());
+  boost::transform(v.objects(), state.objects.begin(), [](auto const &kv) {
+    return std::make_pair(kv.first, kv.second->serialize());
+  });
+
+  state.name = name().to_string();
+  state.internal_state = get_internal_state();
+
+  return Utils::pack(state);
 }
 
 } /* namespace ScriptInterface */

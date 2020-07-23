@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(GlobalContext_serialization) {
       d2->set_parameter("id", 2);
       d3->set_parameter("id", 3);
 
-      return ctx->serialize(d1.get());
+      return d1->serialize();
     }();
 
     auto d1 = si::Context::deserialize(serialized, *ctx);
