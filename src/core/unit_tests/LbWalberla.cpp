@@ -37,7 +37,7 @@ Vector3i grid_dimensions{int(box_dimensions[0] / agrid),
 double tau = 0.34;
 double density = 2.5;
 Vector3i mpi_shape;
-unsigned int seed = 2;
+unsigned int seed = 1;
 
 namespace bdata = boost::unit_test::data;
 
@@ -54,12 +54,12 @@ LbGeneratorVector unthermalized_lbs() {
   });
 
   // Tthermalized D3Q19 MRT with kT set to 0
-  // lbs.push_back(
-  //  [](Vector3i mpi_shape) {return
-  //  std::make_shared<LbWalberlaD3Q19FluctuatingMRT>(viscosity, density, agrid,
-  //  tau,
-  //                                             box_dimensions, mpi_shape, 1,
-  //                                             seed, 0.0);});
+   lbs.push_back(
+    [](Vector3i mpi_shape) {return
+    std::make_shared<LbWalberlaD3Q19FluctuatingMRT>(viscosity, density, agrid,
+    tau,
+                                               box_dimensions, mpi_shape, 1,
+                                               0.0, seed);});
   return lbs;
 }
 

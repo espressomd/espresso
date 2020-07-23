@@ -11,8 +11,8 @@ public:
     const double omega_2 =
         (4 - 2 * omega) / (4 * magic_number * omega + 2 - omega);
     m_lattice_model = std::make_shared<lbm::FluctuatingMRT_LatticeModel>(
-        lbm::FluctuatingMRT_LatticeModel(m_last_applied_force_field_id, omega_2,
-                                         omega_2, omega_2, omega, 1, kT, seed));
+        lbm::FluctuatingMRT_LatticeModel(m_last_applied_force_field_id, omega,
+                                         omega, omega, omega, 1, kT, seed));
   };
   void set_viscosity(double viscosity) override {
     lbm::FluctuatingMRT_LatticeModel *lm =
@@ -22,9 +22,9 @@ public:
     const double omega_2 =
         (4 - 2 * omega) / (4 * magic_number * omega + 2 - omega);
     lm->omega_shear_ = omega;
-    lm->omega_odd_ = omega_2;
-    lm->omega_even_ = omega_2;
-    lm->omega_bulk_ = omega_2;
+    lm->omega_odd_ = omega;
+    lm->omega_even_ = omega;
+    lm->omega_bulk_ = omega;
   };
   double get_viscosity() const override {
     lbm::FluctuatingMRT_LatticeModel *lm =
@@ -47,7 +47,6 @@ public:
     lbm::FluctuatingMRT_LatticeModel *lm =
         dynamic_cast<lbm::FluctuatingMRT_LatticeModel *>(m_lattice_model.get());
     lm->time_step_ += 1;
-    printf("Time step is %d\n", lm->time_step_);
   };
 };
 
