@@ -124,7 +124,7 @@ public:
    * will return the name of the most derived type.
    *
    * @param o Object whose type is to be considered.
-   *  @throw  std::out_of_range If the type is not registered.
+   * @throw  std::out_of_range If the type is not registered.
    *
    * @return Name by which T can be made.
    */
