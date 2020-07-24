@@ -30,12 +30,26 @@
 #include <stdexcept>
 
 namespace ScriptInterface {
+
+/**
+ * @brief Manage object contexts.
+ *
+ * This owns object contexts and allows for
+ * creation and serialization of objects preserving
+ * their context.
+ */
 class ContextManager {
   std::shared_ptr<Context> m_local_context;
   std::shared_ptr<Context> m_global_context;
 
 public:
-  enum class CreationPolicy { LOCAL, GLOBAL };
+  /** Labels for context */
+  enum class CreationPolicy {
+    /** Corresponding to @c LocalContext */
+    LOCAL,
+    /** Corresponding to @c GlobalContext */
+    GLOBAL
+  };
 
   ContextManager(Communication::MpiCallbacks &callbacks,
                  const Utils::Factory<ObjectHandle> &factory);
