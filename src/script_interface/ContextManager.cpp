@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "ObjectManager.hpp"
+#include "ContextManager.hpp"
 
 #include "GlobalContext.hpp"
 #include "LocalContext.hpp"
@@ -25,13 +25,13 @@
 
 namespace ScriptInterface {
 std::shared_ptr<ObjectHandle>
-ObjectManager::make_shared(CreationPolicy policy, std::string const &name,
-                           const VariantMap &parameters) {
+ContextManager::make_shared(CreationPolicy policy, std::string const &name,
+                            const VariantMap &parameters) {
   return context(policy)->make_shared(name, parameters);
 }
 
 std::shared_ptr<ObjectHandle>
-ObjectManager::deserialize(std::string const &state_) {
+ContextManager::deserialize(std::string const &state_) {
   auto const state =
       Utils::unpack<std::pair<CreationPolicy, std::string>>(state_);
 
@@ -41,15 +41,15 @@ ObjectManager::deserialize(std::string const &state_) {
   return ObjectHandle::deserialize(state.second, *ctx);
 }
 
-std::string ObjectManager::serialize(const ObjectHandle *o) const {
+std::string ContextManager::serialize(const ObjectHandle *o) const {
   /* We treat objects without a context as local. */
   auto ctx = o->context() ? o->context() : m_local_context.get();
 
   return Utils::pack(std::make_pair(policy(ctx), o->serialize()));
 }
 
-ObjectManager::ObjectManager(Communication::MpiCallbacks &callbacks,
-                             const Utils::Factory<ObjectHandle> &factory) {
+ContextManager::ContextManager(Communication::MpiCallbacks &callbacks,
+                               const Utils::Factory<ObjectHandle> &factory) {
   auto local_context = std::make_shared<LocalContext>(factory);
 
   /* If there is only one node, we can treat all objects as local, and thus

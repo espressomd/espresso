@@ -20,7 +20,7 @@ from .utils cimport Vector3d, make_array_locked, handle_errors
 
 from libcpp.memory cimport make_shared
 
-cdef shared_ptr[ObjectManager] _om
+cdef shared_ptr[ContextManager] _om
 
 cdef class PObjectRef:
     def __richcmp__(PObjectRef a, PObjectRef b, op):
@@ -385,4 +385,4 @@ cdef void init(MpiCallbacks & cb):
     initialize( & f)
 
     global _om
-    _om = make_shared[ObjectManager](cb, f)
+    _om = make_shared[ContextManager](cb, f)

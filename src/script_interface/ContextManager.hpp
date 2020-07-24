@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_OBJECTMANAGER_HPP
-#define ESPRESSO_OBJECTMANAGER_HPP
+#ifndef ESPRESSO_CONTEXTMANAGER_HPP
+#define ESPRESSO_CONTEXTMANAGER_HPP
 
 #include "Context.hpp"
 #include "Variant.hpp"
@@ -30,15 +30,15 @@
 #include <stdexcept>
 
 namespace ScriptInterface {
-class ObjectManager {
+class ContextManager {
   std::shared_ptr<Context> m_local_context;
   std::shared_ptr<Context> m_global_context;
 
 public:
   enum class CreationPolicy { LOCAL, GLOBAL };
 
-  ObjectManager(Communication::MpiCallbacks &callbacks,
-                const Utils::Factory<ObjectHandle> &factory);
+  ContextManager(Communication::MpiCallbacks &callbacks,
+                 const Utils::Factory<ObjectHandle> &factory);
 
   /**
    * @brief Get a new reference counted instance of a script interface by
@@ -94,4 +94,4 @@ private:
 };
 } // namespace ScriptInterface
 
-#endif // ESPRESSO_OBJECTMANAGER_HPP
+#endif // ESPRESSO_CONTEXTMANAGER_HPP

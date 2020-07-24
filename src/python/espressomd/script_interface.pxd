@@ -51,17 +51,17 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         map[string, Variant] get_state() except +
         string_ref name()
 
-cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface::ObjectManager":
+cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterface::ContextManager":
     cdef cppclass CreationPolicy:
         pass
 
-cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface::ObjectManager::CreationPolicy":
+cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterface::ContextManager::CreationPolicy":
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
 
-cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface":
-    cdef cppclass ObjectManager:
-        ObjectManager(MpiCallbacks & , const Factory[ObjectHandle] & )
+cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterface":
+    cdef cppclass ContextManager:
+        ContextManager(MpiCallbacks & , const Factory[ObjectHandle] & )
         shared_ptr[ObjectHandle] make_shared(CreationPolicy, const string &, const VariantMap) except +
         shared_ptr[ObjectHandle] deserialize(const string &) except +
         string serialize(const ObjectHandle *) except +
