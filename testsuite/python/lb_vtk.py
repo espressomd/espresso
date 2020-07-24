@@ -21,8 +21,14 @@ import unittest_decorators as utx
 
 import os
 import numpy as np
-import vtk
-from vtk.util import numpy_support as VN
+
+try:
+    import vtk
+    from vtk.util import numpy_support as VN
+    skipIfMissingPythonPackage = ut.case._id
+except ImportError:
+    skipIfMissingPythonPackage = ut.skip(
+        "Python module vtk not available, skipping test!")
 
 import espressomd
 import espressomd.lb
@@ -31,6 +37,7 @@ if espressomd.has_features('LB_BOUNDARIES'):
     import espressomd.shapes
 
 
+@skipIfMissingPythonPackage
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class TestVTK(ut.TestCase):
     system = espressomd.System(box_l=3 * [16])
