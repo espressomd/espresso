@@ -337,8 +337,8 @@ public:
 
   void setup_with_valid_lattice_model() {
     m_pdf_field_id = lbm::addPdfFieldToStorage(
-        m_blocks, "pdf field", *m_lattice_model, to_vector3(Utils::Vector3d{}),
-        (real_t)1.0, m_n_ghost_layers);
+        m_blocks, "pdf field", *(m_lattice_model.get()),
+        to_vector3(Utils::Vector3d{}), (real_t)1.0, m_n_ghost_layers);
 
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
         m_blocks, "flag field", m_n_ghost_layers);
@@ -753,6 +753,15 @@ public:
                                         "VTK (" + identifier + " data)");
     } else {
       vtk::writeFiles(pdf_field_vtk)();
+    }
+  }
+
+  /** @brief call, if the lattice model was changed */
+  void on_lattice_model_change() {
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
+      auto pdf_field = b->template getData<PdfField>(m_pdf_field_id);
+      pdf_field->resetLatticeModel(*m_lattice_model);
+      pdf_field->latticeModel().configure(*b, *m_blocks);
     }
   }
 
