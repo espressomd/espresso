@@ -165,8 +165,7 @@ void mpi_init() {
 
   const void *_openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
   if (!_openmpi_symbol) {
-    fprintf(stderr, "%d: Aborting because unable to find OpenMPI symbol.\n",
-            this_node);
+    fprintf(stderr, "Aborting because unable to find OpenMPI symbol.\n");
     errexit();
   }
 
@@ -176,10 +175,8 @@ void mpi_init() {
   const void *handle = dlopen(_openmpi_info.dli_fname, mode);
 
   if (!handle) {
-    fprintf(stderr,
-            "%d: Aborting because unable to load libmpi into the "
-            "global symbol space.\n",
-            this_node);
+    fprintf(stderr, "Aborting because unable to load libmpi into the "
+                    "global symbol space.\n");
     errexit();
   }
 #endif
