@@ -153,6 +153,32 @@ static void openmpi_fix_vader() {
 }
 #endif
 
+/**
+ * @brief Init globals for communication.
+ */
+void init_communication() {
+  Communication::mpi_env = std::make_unique<boost::mpi::environment>();
+
+  MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
+  node_grid = Utils::Mpi::dims_create<3>(n_nodes);
+
+  comm_cart =
+      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
+
+  this_node = comm_cart.rank();
+
+  Communication::m_callbacks =
+      std::make_unique<Communication::MpiCallbacks>(comm_cart);
+
+#define CB(name) Communication::m_callbacks->add(&(name));
+  CALLBACK_LIST
+#undef CB
+
+  ErrorHandling::init_error_handling(mpiCallbacks());
+
+  on_program_start();
+}
+
 void mpi_init() {
 #ifdef OPEN_MPI
   openmpi_fix_vader();
@@ -181,33 +207,7 @@ void mpi_init() {
   }
 #endif
 
-#ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
-  Communication::mpi_env = std::make_unique<boost::mpi::environment>();
-#else
-  int argc{};
-  char **argv{};
-  Communication::mpi_env =
-      std::make_unique<boost::mpi::environment>(argc, argv);
-#endif
-
-  MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-  node_grid = Utils::Mpi::dims_create<3>(n_nodes);
-
-  comm_cart =
-      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
-
-  this_node = comm_cart.rank();
-
-  Communication::m_callbacks =
-      std::make_unique<Communication::MpiCallbacks>(comm_cart);
-
-#define CB(name) Communication::m_callbacks->add(&(name));
-  CALLBACK_LIST
-#undef CB
-
-  ErrorHandling::init_error_handling(mpiCallbacks());
-
-  on_program_start();
+  init_communication();
 }
 
 /****************** PLACE/PLACE NEW PARTICLE ************/
