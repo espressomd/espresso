@@ -157,22 +157,23 @@ void mpi_init() {
 #ifdef OPEN_MPI
   openmpi_fix_vader();
 
-  void *handle = nullptr;
-  int mode = RTLD_NOW | RTLD_GLOBAL;
 #ifdef RTLD_NOLOAD
-  mode |= RTLD_NOLOAD;
+  const int mode = RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD;
+#else
+  const int mode = RTLD_NOW | RTLD_GLOBAL;
 #endif
-  void *_openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
+
+  const void *_openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
   if (!_openmpi_symbol) {
     fprintf(stderr, "%d: Aborting because unable to find OpenMPI symbol.\n",
             this_node);
     errexit();
   }
+
   Dl_info _openmpi_info;
   dladdr(_openmpi_symbol, &_openmpi_info);
 
-  if (!handle)
-    handle = dlopen(_openmpi_info.dli_fname, mode);
+  const void *handle = dlopen(_openmpi_info.dli_fname, mode);
 
   if (!handle) {
     fprintf(stderr,
