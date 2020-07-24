@@ -144,19 +144,12 @@ int mpi_check_runtime_errors();
  *  so we set btl_vader_single_copy_mechanism = none.
  */
 static void openmpi_fix_vader() {
-  if (OMPI_MAJOR_VERSION < 2 || OMPI_MAJOR_VERSION > 3)
-    return;
-  if (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION == 1 &&
-      OMPI_RELEASE_VERSION >= 3)
-    return;
-  if (OMPI_MAJOR_VERSION == 3 &&
-      (OMPI_MINOR_VERSION > 0 || OMPI_RELEASE_VERSION > 0))
-    return;
-
-  std::string varname = "btl_vader_single_copy_mechanism";
-  std::string varval = "none";
-
-  setenv((std::string("OMPI_MCA_") + varname).c_str(), varval.c_str(), 0);
+  if ((OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION == 1 &&
+       OMPI_RELEASE_VERSION < 3) or
+      (OMPI_MAJOR_VERSION == 3 && OMPI_MINOR_VERSION == 0 &&
+       OMPI_RELEASE_VERSION == 0)) {
+    setenv("OMPI_MCA_btl_vader_single_copy_mechanism", "none", 0);
+  }
 }
 #endif
 
