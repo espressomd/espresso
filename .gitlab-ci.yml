@@ -383,7 +383,7 @@ osx:
     - export with_ccache=false myconfig=maxset with_cuda=false
     - bash maintainer/CI/build_cmake.sh
   tags:
-    - mac
+    - mac-test
 
 ### Builds with different compilers
 
