@@ -114,7 +114,21 @@ public:
     m_type_map.insert({typeid(Derived), name});
   }
 
-  const std::string &stable_name(T const &o) const {
+  /**
+   * @brief Look up name for type.
+   *
+   * For an object whose type can be created by
+   * the factory this returns the name under which
+   * it is registered.  This will consider the
+   * dynamic type of polymorphic objects, e.g. it
+   * will return the name of the most derived type.
+   *
+   * @param o Object whose type is to be considered.
+   *  @throw  std::out_of_range If the type is not registered.
+   *
+   * @return Name by which T can be made.
+   */
+  const std::string &type_name(T const &o) const {
     return m_type_map.at(typeid(o));
   }
 
@@ -124,7 +138,6 @@ private:
   /** Maps types to names */
   std::unordered_map<std::type_index, std::string> m_type_map;
 };
-
 } /* namespace Utils */
 
 #endif

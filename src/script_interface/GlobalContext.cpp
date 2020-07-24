@@ -99,6 +99,6 @@ GlobalContext::make_shared(std::string const &name,
 boost::string_ref GlobalContext::name(const ObjectHandle *o) const {
   assert(o);
 
-  return m_node_local_context->factory().stable_name(*o);
+  return m_node_local_context->factory().type_name(*o);
 }
 } // namespace ScriptInterface

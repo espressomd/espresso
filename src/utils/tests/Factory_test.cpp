@@ -73,5 +73,5 @@ BOOST_AUTO_TEST_CASE(stable_name_) {
   /* Make a object */
   auto o = factory.make(derived_class_name);
 
-  BOOST_CHECK_EQUAL(factory.stable_name(*o.get()), derived_class_name);
+  BOOST_CHECK_EQUAL(factory.type_name(*o.get()), derived_class_name);
 }

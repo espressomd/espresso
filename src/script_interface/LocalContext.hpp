@@ -59,7 +59,7 @@ public:
   boost::string_ref name(const ObjectHandle *o) const override {
     assert(o);
 
-    return factory().stable_name(*o);
+    return factory().type_name(*o);
   }
 };
 } // namespace ScriptInterface
