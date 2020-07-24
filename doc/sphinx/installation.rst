@@ -184,16 +184,26 @@ using the following commands:
     sudo rm -r ~/anaconda[23]
     sudo rm -r /Library/Python
 
-If you want to install MacPorts, download the installer package
-appropriate for your Mac OS X version from
-https://www.macports.org/install.php and install it.
-
-If you want to install Homebrew, use the following commands.
+Install the command line tools (gcc, git, make, etc.) with either:
 
 .. code-block:: bash
 
     sudo xcode-select --install
+
+or:
+
+.. code-block:: bash
+
     sudo xcodebuild -license accept
+
+If you want to install MacPorts, download the installer package
+appropriate for your Mac OS X version from
+https://www.macports.org/install.php and install it.
+
+If you want to install Homebrew, use the following command:
+
+.. code-block:: bash
+
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
 Installing packages using MacPorts
@@ -203,8 +213,6 @@ Run the following commands:
 
 .. code-block:: bash
 
-    sudo xcode-select --install
-    sudo xcodebuild -license accept
     sudo port selfupdate
     sudo port install cmake python37 py37-cython py37-numpy \
       openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
@@ -217,6 +225,8 @@ Run the following commands:
 
 Installing packages using Homebrew
 """"""""""""""""""""""""""""""""""
+
+Run the following commands:
 
 .. code-block:: bash
 
