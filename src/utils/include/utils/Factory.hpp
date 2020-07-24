@@ -114,20 +114,6 @@ public:
     m_type_map.insert({typeid(Derived), name});
   }
 
-  /**
-   * @brief Stable reference to class name.
-   *
-   */
-  const std::string &stable_name(const std::string &name) const {
-    auto it = m_map.find(name);
-
-    if (it != m_map.end()) {
-      return it->first;
-    }
-
-    throw std::out_of_range{"Unknown name"};
-  }
-
   const std::string &stable_name(T const &o) const {
     return m_type_map.at(typeid(o));
   }

@@ -75,7 +75,6 @@ GlobalContext::make_shared(std::string const &name,
                            const VariantMap &parameters) {
   std::unique_ptr<ObjectHandle> sp = m_node_local_context->factory().make(name);
   set_context(sp.get());
-  set_name(sp.get(), m_node_local_context->factory().stable_name(name));
 
   auto const id = object_id(sp.get());
   remote_make_handle(id, name, parameters);
@@ -95,5 +94,11 @@ GlobalContext::make_shared(std::string const &name,
             /* Locally destroy the object. */
             deleter(o);
           }};
+}
+
+boost::string_ref GlobalContext::name(const ObjectHandle *o) const {
+  assert(o);
+
+  return m_node_local_context->factory().stable_name(*o);
 }
 } // namespace ScriptInterface

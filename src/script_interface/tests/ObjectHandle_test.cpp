@@ -154,6 +154,10 @@ struct LogContext : public Context {
 
     return it;
   }
+
+  boost::string_ref name(const ObjectHandle *o) const override {
+    return "Dummy";
+  }
 };
 
 /*
@@ -178,7 +182,7 @@ BOOST_AUTO_TEST_CASE(notify_set_parameter_) {
 }
 
 /*
- * Check that Objecthandle::call_meothod does
+ * Check that Objecthandle::call_method does
  * notify the context.
  */
 BOOST_AUTO_TEST_CASE(notify_call_method_) {

@@ -140,6 +140,8 @@ public:
    */
   std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) override;
+
+  boost::string_ref name(const ObjectHandle *o) const override;
 };
 } // namespace ScriptInterface
 

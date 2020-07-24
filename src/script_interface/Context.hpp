@@ -79,17 +79,14 @@ protected:
    * @param o Object to set the context for.
    */
   void set_context(ObjectHandle *o) { o->m_context = this->shared_from_this(); }
-  void set_name(ObjectHandle *o, boost::string_ref name) const {
-    o->m_name = name;
-  }
 
 public:
   /**
    *  @brief Get the class name for an ObjectHandle instance.
    *
-   *  This resturns the name by which the object was created.
+   *  This returns the name by which the object can be created.
    */
-  boost::string_ref name(const ObjectHandle *o) const { return o->name(); }
+  virtual boost::string_ref name(const ObjectHandle *o) const = 0;
 
   virtual ~Context() = default;
 };

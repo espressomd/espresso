@@ -49,12 +49,8 @@ struct Dummy : si::ObjectHandle {
 };
 
 auto make_global_context(Communication::MpiCallbacks &cb) {
-  auto factory = []() {
-    Utils::Factory<si::ObjectHandle> factory;
-    factory.register_new<Dummy>("Dummy");
-
-    return factory;
-  }();
+  Utils::Factory<si::ObjectHandle> factory;
+  factory.register_new<Dummy>("Dummy");
 
   return std::make_shared<si::GlobalContext>(
       cb, std::make_shared<si::LocalContext>(factory));

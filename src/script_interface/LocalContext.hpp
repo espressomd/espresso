@@ -50,11 +50,16 @@ public:
   make_shared(std::string const &name, const VariantMap &parameters) override {
     auto sp = m_factory.make(name);
     set_context(sp.get());
-    set_name(sp.get(), m_factory.stable_name(name));
 
     sp->construct(parameters);
 
     return sp;
+  }
+
+  boost::string_ref name(const ObjectHandle *o) const override {
+    assert(o);
+
+    return factory().stable_name(*o);
   }
 };
 } // namespace ScriptInterface

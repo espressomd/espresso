@@ -90,4 +90,9 @@ ObjectRef ObjectHandle::deserialize(const std::string &packed_state,
 
   return o;
 }
+
+boost::string_ref ObjectHandle::name() const {
+  return context() ? context()->name(this) : boost::string_ref{};
+}
+
 } /* namespace ScriptInterface */

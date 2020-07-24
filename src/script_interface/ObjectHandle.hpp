@@ -43,10 +43,9 @@ public:
 private:
   friend class Context;
   std::shared_ptr<Context> m_context = {};
-  boost::string_ref m_name;
 
 public:
-  boost::string_ref name() const { return m_name; }
+  boost::string_ref name() const;
 
 public:
   /**
