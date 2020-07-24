@@ -28,16 +28,16 @@ distribution.
 
 """
 
-KT = 1 
-AGRID = 1
+KT = 1.5 
+AGRID = 0.5
 VISC = 4 
 DENS = 1.7
-TIME_STEP = 0.05
+TIME_STEP = 0.02
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
              'tau': TIME_STEP,
-             'kT': 1 * KT,
+             'kT': KT,
              'seed': 123}
 
 
@@ -53,21 +53,20 @@ class LBThermostatCommon:
         self.prepare()
         self.system.integrator.run(100)
         vs = []
-        for _ in range(1000):
-            v = self.lbf[0, 0, 0].velocity
-            vs.append(v)
-            print(v)
-            self.system.integrator.run(1)
+        for _ in range(100):
+            for n in self.lbf.nodes():
+                vs.append(n.velocity)
+            self.system.integrator.run(3)
 
-        print(np.var(v), np.mean(v))
-        self.assertAlmostEqual(np.var(v), KT, delta=1E-3)
+        self.assertAlmostEqual(np.var(vs), KT, delta=0.05)
 
     def prepare(self):
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=5.0)
 
-    def ixxtest_with_particles(self):
+    @ut.skipIf(True, "Walberla TODO")
+    def test_with_particles(self):
         self.prepare()
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l)
@@ -87,9 +86,7 @@ class LBThermostatCommon:
             bins = hist[1]
             expected = [single_component_maxwell(
                 bins[j], bins[j + 1], KT) for j in range(n_bins)]
-            print(data)
-            print(expected)
-            print()
+            np.testing.assert_allclose(data, expected)
 
 
 @utx.skipIfMissingFeatures("LB_WALBERLA")
