@@ -42,7 +42,7 @@ def configure_and_import(filepath,
                          cmd_arguments=None,
                          script_suffix=None,
                          move_to_script_dir=True,
-                         random_seeds=True,
+                         random_seeds=False,
                          mock_visualizers=True,
                          **parameters):
     """
