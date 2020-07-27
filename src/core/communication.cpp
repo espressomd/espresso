@@ -144,7 +144,7 @@ namespace {
  *  https://www.mail-archive.com/users@lists.open-mpi.org/msg32357.html,
  *  so we set btl_vader_single_copy_mechanism = none.
  */
-static void openmpi_fix_vader() {
+void openmpi_fix_vader() {
   if ((OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION == 1 &&
        OMPI_RELEASE_VERSION < 3) or
       (OMPI_MAJOR_VERSION == 3 && OMPI_MINOR_VERSION == 0 &&
