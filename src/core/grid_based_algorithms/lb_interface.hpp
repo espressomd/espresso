@@ -184,15 +184,6 @@ bool lb_lbnode_is_boundary(const Utils::Vector3i &ind);
  */
 const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind);
 
-/* IO routines */
-void lb_lbfluid_print_vtk_boundary(const std::string &filename);
-void lb_lbfluid_print_vtk_velocity(const std::string &filename,
-                                   std::vector<int> = {-1, -1, -1},
-                                   std::vector<int> = {-1, -1, -1});
-
-void lb_lbfluid_print_boundary(const std::string &filename);
-void lb_lbfluid_print_velocity(const std::string &filename);
-
 void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary);
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary);
 

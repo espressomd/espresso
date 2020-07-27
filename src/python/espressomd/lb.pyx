@@ -151,26 +151,6 @@ cdef class HydrodynamicInteraction(Actor):
             f[i] = force[i]
         lb_lbfluid_add_force_at_pos(p, f)
 
-    def print_vtk_velocity(self, path, bb1=None, bb2=None):
-        cdef vector[int] bb1_vec
-        cdef vector[int] bb2_vec
-        if bb1 is None or bb2 is None:
-            lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
-        else:
-            bb1_vec = bb1
-            bb2_vec = bb2
-            lb_lbfluid_print_vtk_velocity(
-                utils.to_char_pointer(path), bb1_vec, bb2_vec)
-
-    def print_vtk_boundary(self, path):
-        lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
-
-    def print_velocity(self, path):
-        lb_lbfluid_print_velocity(utils.to_char_pointer(path))
-
-    def print_boundary(self, path):
-        lb_lbfluid_print_boundary(utils.to_char_pointer(path))
-
     def save_checkpoint(self, path, binary):
         tmp_path = path + ".__tmp__"
         lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)

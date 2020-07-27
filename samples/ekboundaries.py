@@ -65,10 +65,3 @@ n_int_cycles = 1000
 for i in range(n_int_cycles):
     system.integrator.run(100)
     print("\rIntegrating: %03i" % i, end='', flush=True)
-
-    pos.print_vtk_density("ek/pos_dens_%i.vtk" % i)
-    neg.print_vtk_density("ek/neg_dens_%i.vtk" % i)
-    pos.print_vtk_flux("ek/pos_flux_%i.vtk" % i)
-    neg.print_vtk_flux("ek/neg_flux_%i.vtk" % i)
-    ek.print_vtk_velocity("ek/ekv_%i.vtk" % i)
-    ek.print_vtk_boundary("ek/ekb_%i.vtk" % i)

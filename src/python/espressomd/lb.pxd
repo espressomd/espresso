@@ -65,11 +65,6 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     const Vector3d lb_lbfluid_get_ext_force_density() except +
     double lb_lbfluid_get_bulk_viscosity() except +
     void lb_lbfluid_sanity_checks() except +
-    void lb_lbfluid_print_vtk_velocity(string filename) except +
-    void lb_lbfluid_print_vtk_velocity(string filename, vector[int] bb1, vector[int] bb2) except +
-    void lb_lbfluid_print_vtk_boundary(string filename) except +
-    void lb_lbfluid_print_velocity(string filename) except +
-    void lb_lbfluid_print_boundary(string filename) except +
     void lb_lbfluid_save_checkpoint(string filename, bool binary) except +
     void lb_lbfluid_load_checkpoint(string filename, bool binary) except +
     void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) except +
