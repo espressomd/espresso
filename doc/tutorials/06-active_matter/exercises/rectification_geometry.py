@@ -22,7 +22,6 @@
 #
 ##########################################################################
 
-from math import cos, pi, sin
 import numpy as np
 import os
 
@@ -31,7 +30,6 @@ espressomd.assert_features(["LB_BOUNDARIES"])
 from espressomd import lb
 from espressomd.lbboundaries import LBBoundary
 import espressomd.shapes
-from espressomd.shapes import Cylinder
 
 
 # Setup constants
@@ -74,7 +72,7 @@ system.actors.add(lbf)
 # Setup cylinder
 
 cylinder = LBBoundary(
-    shape=Cylinder(
+    shape=espressomd.shapes.Cylinder(
         center=BOX_L / 2.,
         axis=[1, 0, 0], radius=DIAMETER / 2.0, length=LENGTH, direction=-1))
 system.lbboundaries.add(cylinder)
@@ -84,13 +82,13 @@ system.lbboundaries.add(cylinder)
 ## Exercise 1 ##
 # Set up two walls to cap the cylinder respecting the padding
 # between them and the edge of the box, with a normal along the x-axis
-wall = ...
+wall = LBBoundary(shape=espressomd.shapes.Wall(...), ...)
 
 # Setup cone
 IRAD = 4.0
-ANGLE = pi / 4.0
-ORAD = (DIAMETER - IRAD) / sin(ANGLE)
-SHIFT = 0.25 * ORAD * cos(ANGLE)
+ANGLE = np.pi / 4.0
+ORAD = (DIAMETER - IRAD) / np.sin(ANGLE)
+SHIFT = 0.25 * ORAD * np.cos(ANGLE)
 
 hollow_cone = LBBoundary(shape=espressomd.shapes.HollowConicalFrustum(
     center=[BOX_L[0] / 2.0 - 1.3 * SHIFT, BOX_L[1] / 2.0, BOX_L[2] / 2.0],

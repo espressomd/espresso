@@ -22,7 +22,6 @@
 #
 ##########################################################################
 
-from math import cos, pi, sin  # pylint: disable=unused-import
 import numpy as np
 import os
 import argparse
@@ -30,7 +29,6 @@ import argparse
 import espressomd
 from espressomd import assert_features
 import espressomd.shapes
-from espressomd.shapes import Cylinder, Wall
 
 
 assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
@@ -40,15 +38,15 @@ assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
 
 def a2quat(phi, theta):
 
-    q1w = cos(theta / 2.0)
+    q1w = np.cos(theta / 2.0)
     q1x = 0
-    q1y = sin(theta / 2.0)
+    q1y = np.sin(theta / 2.0)
     q1z = 0
 
-    q2w = cos(phi / 2.0)
+    q2w = np.cos(phi / 2.0)
     q2x = 0
     q2y = 0
-    q2z = sin(phi / 2.0)
+    q2z = np.sin(phi / 2.0)
 
     q3w = (q1w * q2w - q1x * q2x - q1y * q2y - q1z * q2z)
     q3x = (q1w * q2x + q1x * q2w - q1y * q2z + q1z * q2y)
@@ -107,23 +105,20 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 ##########################################################################
 
 ## Exercise 2 ##
-# Complete the geometry from the LB-based
-# script. You need to add types to the walls
-# and cone as well.
+# Complete the geometry based on rectification_geometry.py
+# You need to add particle types to the walls, cylinder and cone.
 
-cylinder = Cylinder(...)
+cylinder = espressomd.shapes.Cylinder(...)
 system.constraints.add(shape=cylinder, particle_type=1)
 
 # Setup walls
-wall = Wall(...)
+wall = espressomd.shapes.Wall(...)
 system.constraints.add(shape=wall, particle_type=1)
 
-wall = Wall(...)
+wall = espressomd.shapes.Wall(...)
 system.constraints.add(shape=wall, particle_type=1)
 
 # Setup cone
-...
-
 hollow_cone = espressomd.shapes.HollowConicalFrustum(...)
 system.constraints.add(shape=hollow_cone, particle_type=1)
 
