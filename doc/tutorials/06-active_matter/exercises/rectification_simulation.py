@@ -61,7 +61,6 @@ def a2quat(phi, theta):
 ##########################################################################
 
 # Read in the active velocity from the command prompt
-
 parser = argparse.ArgumentParser()
 parser.add_argument("vel", type=float, help="Velocity of active particles.")
 args = parser.parse_args()
@@ -71,7 +70,6 @@ vel = args.vel
 ##########################################################################
 
 # create an output folder
-
 outdir = "./RESULTS_RECTIFICATION"
 os.makedirs(outdir, exist_ok=True)
 
@@ -86,7 +84,6 @@ PROD_LENGTH = 500
 TIME_STEP = 0.005
 
 # Setup the MD parameters
-
 box_l = np.array(
     [LENGTH + 2 * PADDING,
      DIAMETER + 2 * PADDING,
@@ -118,7 +115,6 @@ cylinder = Cylinder(...)
 system.constraints.add(shape=cylinder, particle_type=1)
 
 # Setup walls
-
 wall = Wall(...)
 system.constraints.add(shape=wall, particle_type=1)
 
@@ -126,7 +122,6 @@ wall = Wall(...)
 system.constraints.add(shape=wall, particle_type=1)
 
 # Setup cone
-
 ...
 
 hollow_cone = espressomd.shapes.HollowConicalFrustum(...)
@@ -175,13 +170,10 @@ for cntr in range(npart):
                     quat=quats, rotation=[1, 1, 1])
 
 ##########################################################################
-
 # Equilibrate
-
 system.integrator.run(25 * PROD_LENGTH)
 
 # Output the CMS coordinates
-
 with open("{}/CMS_{}.dat".format(outdir, vel), "w") as outfile:
     print("####################################################", file=outfile)
     print("#        time    CMS x coord    average CMS        #", file=outfile)

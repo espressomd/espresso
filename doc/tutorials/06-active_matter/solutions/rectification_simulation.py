@@ -65,6 +65,7 @@ parser.add_argument("vel", type=float, help="Velocity of active particles.")
 args = parser.parse_args()
 
 vel = args.vel
+
 ##########################################################################
 
 # create an output folder
@@ -82,7 +83,6 @@ PROD_LENGTH = 500
 TIME_STEP = 0.005
 
 # Setup the MD parameters
-
 BOX_L = np.array(
     [LENGTH + 2 * PADDING,
      DIAMETER + 2 * PADDING,
@@ -120,16 +120,12 @@ ANGLE = pi / 4.0
 ORAD = (DIAMETER - IRAD) / sin(ANGLE)
 SHIFT = 0.25 * ORAD * cos(ANGLE)
 
-conical_shape = espressomd.shapes.HollowConicalFrustum(center=[BOX_L[0] / 2.0 - 1.3 * SHIFT,
-                                                               BOX_L[1] / 2.0,
-                                                               BOX_L[2] / 2.0],
-                                                       axis=[-1, 0, 0],
-                                                       r1=ORAD,
-                                                       r2=IRAD,
-                                                       thickness=2.0,
-                                                       length=18,
-                                                       direction=1)
+conical_shape = espressomd.shapes.HollowConicalFrustum(
+    center=[BOX_L[0] / 2.0 - 1.3 * SHIFT, BOX_L[1] / 2.0, BOX_L[2] / 2.0],
+    axis=[-1, 0, 0], r1=ORAD, r2=IRAD, thickness=2.0, length=18,
+    direction=1)
 system.constraints.add(shape=conical_shape, particle_type=1)
+
 ##########################################################################
 #
 # We set up a WCA (almost-hard) interaction between the particles and the
