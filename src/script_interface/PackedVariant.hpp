@@ -57,6 +57,7 @@ private:
   mutable std::unordered_map<ObjectId, ObjectRef> m_objects;
 
 public:
+  /** @brief Map of objects whose references were replaced by ids. */
   auto const &objects() const { return m_objects; }
 
   /* For the vector, we recurse into each element. */
@@ -120,6 +121,17 @@ inline PackedVariant pack(const Variant &v) {
   return boost::apply_visitor(PackVisitor{}, v);
 }
 
+/**
+ * @brief Unpack a PackedVariant.
+ *
+ * Turn a PackedVariant into a Variant by replacing
+ * id's by references to actual objeccts according to
+ * an object map.
+ *
+ * @param v Packed Variant.
+ * @param objects Map of ids to reference.
+ * @return Transformed variant.
+ */
 inline Variant unpack(const PackedVariant &v,
                       std::unordered_map<ObjectId, ObjectRef> const &objects) {
   return boost::apply_visitor(UnpackVisitor{objects}, v);
@@ -135,6 +147,12 @@ inline PackedMap pack(const VariantMap &v) {
   return ret;
 }
 
+/**
+ * @brief Unpack a PackedMap.
+ *
+ * Applies @ref unpack to every value in the
+ * input map.
+ */
 inline VariantMap
 unpack(const PackedMap &v,
        std::unordered_map<ObjectId, ObjectRef> const &objects) {
