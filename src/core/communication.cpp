@@ -190,10 +190,8 @@ void openmpi_global_namespace() {
 } // namespace
 #endif
 
-/**
- * @brief Init globals for communication.
- */
-void communication_init(std::shared_ptr<boost::mpi::environment> mpi_env) {
+namespace Communication {
+void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   Communication::mpi_env = std::move(mpi_env);
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -215,14 +213,15 @@ void communication_init(std::shared_ptr<boost::mpi::environment> mpi_env) {
 
   on_program_start();
 }
+} // namespace Communication
 
-void mpi_init() {
+std::shared_ptr<boost::mpi::environment> mpi_init() {
 #ifdef OPEN_MPI
   openmpi_fix_vader();
   openmpi_global_namespace();
 #endif
 
-  communication_init(std::make_shared<boost::mpi::environment>());
+  return std::make_shared<boost::mpi::environment>();
 }
 
 /****************** PLACE/PLACE NEW PARTICLE ************/
