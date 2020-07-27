@@ -81,7 +81,7 @@ using namespace std;
 
 namespace Communication {
 auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
-std::unique_ptr<boost::mpi::environment> mpi_env;
+std::shared_ptr<boost::mpi::environment> mpi_env;
 } // namespace Communication
 
 boost::mpi::communicator comm_cart;
@@ -137,6 +137,7 @@ int mpi_check_runtime_errors();
  **********************************************/
 
 #if defined(OPEN_MPI)
+namespace {
 /** Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
  *  appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
  *  according to
@@ -151,13 +152,49 @@ static void openmpi_fix_vader() {
     setenv("OMPI_MCA_btl_vader_single_copy_mechanism", "none", 0);
   }
 }
+
+/**
+ * @brief Assure that openmpi is loaded to the global namespace.
+ *
+ * This was originally inspired by mpi4py
+ * (https://github.com/mpi4py/mpi4py/blob/4e3f47b6691c8f5a038e73f84b8d43b03f16627f/src/lib-mpi/compat/openmpi.h).
+ * It's needed because OpenMPI dlopens its submodules. These are unable to find
+ * the top-level OpenMPI library if that was dlopened itself, i.e. when the
+ * Python interpreter dlopens a module that is linked against OpenMPI. It's
+ * about some weird two-level symbol namespace thing.
+ */
+void openmpi_global_namespace() {
+#ifdef RTLD_NOLOAD
+  const int mode = RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD;
+#else
+  const int mode = RTLD_NOW | RTLD_GLOBAL;
+#endif
+
+  const void *_openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
+  if (!_openmpi_symbol) {
+    fprintf(stderr, "Aborting because unable to find OpenMPI symbol.\n");
+    errexit();
+  }
+
+  Dl_info _openmpi_info;
+  dladdr(_openmpi_symbol, &_openmpi_info);
+
+  const void *handle = dlopen(_openmpi_info.dli_fname, mode);
+
+  if (!handle) {
+    fprintf(stderr, "Aborting because unable to load libmpi into the "
+                    "global symbol space.\n");
+    errexit();
+  }
+}
+} // namespace
 #endif
 
 /**
  * @brief Init globals for communication.
  */
-void init_communication() {
-  Communication::mpi_env = std::make_unique<boost::mpi::environment>();
+void communication_init(std::shared_ptr<boost::mpi::environment> mpi_env) {
+  Communication::mpi_env = std::move(mpi_env);
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   node_grid = Utils::Mpi::dims_create<3>(n_nodes);
@@ -182,32 +219,10 @@ void init_communication() {
 void mpi_init() {
 #ifdef OPEN_MPI
   openmpi_fix_vader();
-
-#ifdef RTLD_NOLOAD
-  const int mode = RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD;
-#else
-  const int mode = RTLD_NOW | RTLD_GLOBAL;
+  openmpi_global_namespace();
 #endif
 
-  const void *_openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
-  if (!_openmpi_symbol) {
-    fprintf(stderr, "Aborting because unable to find OpenMPI symbol.\n");
-    errexit();
-  }
-
-  Dl_info _openmpi_info;
-  dladdr(_openmpi_symbol, &_openmpi_info);
-
-  const void *handle = dlopen(_openmpi_info.dli_fname, mode);
-
-  if (!handle) {
-    fprintf(stderr, "Aborting because unable to load libmpi into the "
-                    "global symbol space.\n");
-    errexit();
-  }
-#endif
-
-  init_communication();
+  communication_init(std::make_shared<boost::mpi::environment>());
 }
 
 /****************** PLACE/PLACE NEW PARTICLE ************/
