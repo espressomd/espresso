@@ -22,7 +22,6 @@
 #
 ##########################################################################
 
-from math import cos, pi, sin
 import numpy as np
 import os
 import argparse
@@ -30,7 +29,6 @@ import argparse
 import espressomd
 from espressomd import assert_features
 import espressomd.shapes
-from espressomd.shapes import Cylinder, Wall
 
 
 assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
@@ -40,15 +38,15 @@ assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
 
 def a2quat(phi, theta):
 
-    q1w = cos(theta / 2.0)
+    q1w = np.cos(theta / 2.0)
     q1x = 0
-    q1y = sin(theta / 2.0)
+    q1y = np.sin(theta / 2.0)
     q1z = 0
 
-    q2w = cos(phi / 2.0)
+    q2w = np.cos(phi / 2.0)
     q2x = 0
     q2y = 0
-    q2z = sin(phi / 2.0)
+    q2z = np.sin(phi / 2.0)
 
     q3w = (q1w * q2w - q1x * q2x - q1y * q2y - q1z * q2z)
     q3x = (q1w * q2x + q1x * q2w - q1y * q2z + q1z * q2y)
@@ -65,14 +63,15 @@ parser.add_argument("vel", type=float, help="Velocity of active particles.")
 args = parser.parse_args()
 
 vel = args.vel
+
 ##########################################################################
 
 # create an output folder
 outdir = "./RESULTS_RECTIFICATION"
 os.makedirs(outdir, exist_ok=True)
 
-# Setup the box (we pad the diameter to ensure that the constraints
-# are away from the edge of the box)
+# Setup the box (we pad the geometry to make sure
+# the constraints are away from the edges of the box)
 
 LENGTH = 100
 DIAMETER = 20
@@ -82,7 +81,6 @@ PROD_LENGTH = 500
 TIME_STEP = 0.005
 
 # Setup the MD parameters
-
 BOX_L = np.array(
     [LENGTH + 2 * PADDING,
      DIAMETER + 2 * PADDING,
@@ -102,34 +100,30 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 #
 ##########################################################################
 
-cylinder = Cylinder(
+cylinder = espressomd.shapes.Cylinder(
     center=0.5 * BOX_L,
     axis=[1, 0, 0], radius=DIAMETER / 2.0, length=LENGTH, direction=-1)
 system.constraints.add(shape=cylinder, particle_type=1)
 
 # Setup walls
-wall = Wall(dist=PADDING, normal=[1, 0, 0])
+wall = espressomd.shapes.Wall(dist=PADDING, normal=[1, 0, 0])
 system.constraints.add(shape=wall, particle_type=1)
 
-wall = Wall(dist=-(LENGTH + PADDING), normal=[-1, 0, 0])
+wall = espressomd.shapes.Wall(dist=-(LENGTH + PADDING), normal=[-1, 0, 0])
 system.constraints.add(shape=wall, particle_type=1)
 
 # Setup cone
 IRAD = 4.0
-ANGLE = pi / 4.0
-ORAD = (DIAMETER - IRAD) / sin(ANGLE)
-SHIFT = 0.25 * ORAD * cos(ANGLE)
+ANGLE = np.pi / 4.0
+ORAD = (DIAMETER - IRAD) / np.sin(ANGLE)
+SHIFT = 0.25 * ORAD * np.cos(ANGLE)
 
-conical_shape = espressomd.shapes.HollowConicalFrustum(center=[BOX_L[0] / 2.0 - 1.3 * SHIFT,
-                                                               BOX_L[1] / 2.0,
-                                                               BOX_L[2] / 2.0],
-                                                       axis=[-1, 0, 0],
-                                                       r1=ORAD,
-                                                       r2=IRAD,
-                                                       thickness=2.0,
-                                                       length=18,
-                                                       direction=1)
-system.constraints.add(shape=conical_shape, particle_type=1)
+hollow_cone = espressomd.shapes.HollowConicalFrustum(
+    center=[BOX_L[0] / 2.0 - 1.3 * SHIFT, BOX_L[1] / 2.0, BOX_L[2] / 2.0],
+    axis=[-1, 0, 0], r1=ORAD, r2=IRAD, thickness=2.0, length=18,
+    direction=1)
+system.constraints.add(shape=hollow_cone, particle_type=1)
+
 ##########################################################################
 #
 # We set up a WCA (almost-hard) interaction between the particles and the
