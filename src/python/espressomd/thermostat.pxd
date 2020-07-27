@@ -52,6 +52,10 @@ cdef extern from "thermostat.hpp":
         double gamma0
         double gammav
 
+    langevin_thermostat_struct langevin
+    brownian_thermostat_struct brownian
+    npt_iso_thermostat_struct npt_iso
+
     void langevin_set_rng_state(stdint.uint64_t counter)
     void brownian_set_rng_state(stdint.uint64_t counter)
     void npt_iso_set_rng_state(stdint.uint64_t counter)
