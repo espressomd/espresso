@@ -26,7 +26,7 @@ import numpy as np
 import os
 
 import espressomd
-espressomd.assert_features(["LB_BOUNDARIES"])
+espressomd.assert_features(["LB_WALBERLA", "LB_BOUNDARIES"])
 from espressomd import lb
 from espressomd.lbboundaries import LBBoundary
 import espressomd.shapes
@@ -56,7 +56,7 @@ system.time_step = TIME_STEP
 system.min_global_cut = 0.5
 
 # Setup LB fluid
-lbf = lb.LBFluid(agrid=0.5, dens=1.0, visc=1.0, tau=TIME_STEP)
+lbf = lb.LBFluidWalberla(agrid=0.5, dens=1.0, visc=1.0, tau=TIME_STEP)
 system.actors.add(lbf)
 
 ##########################################################################
@@ -100,6 +100,6 @@ system.lbboundaries.add(hollow_cone)
 ##########################################################################
 
 # Output the geometry
-lbf.print_vtk_boundary("{}/boundary.vtk".format(outdir))
+lbf.write_vtk("shape", "density")
 
 ##########################################################################
