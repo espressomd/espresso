@@ -30,8 +30,8 @@ class Sample(ut.TestCase):
     def test_persistence_length(self):
         # These two values differ due to undersampling, they converge
         # to the same value around N_SAMPLES=1000
-        self.assertAlmostEqual(sample.persistence_length, 30., delta=3)
-        self.assertAlmostEqual(sample.persistence_length_obs, 34.8, delta=3)
+        self.assertAlmostEqual(sample.persistence_length, 30., delta=3.5)
+        self.assertAlmostEqual(sample.persistence_length_obs, 34.8, delta=3.5)
 
     def test_mobility(self):
         self.assertAlmostEqual(sample.mu, 1.02, delta=0.02)
