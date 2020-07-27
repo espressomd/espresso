@@ -33,4 +33,4 @@ cdef extern from "boost/utility/string_ref.hpp" namespace "boost":
 
 cdef extern from "boost/mpi/environment.hpp" namespace "boost::mpi":
     cdef cppclass environment:
-      pass
+        pass
