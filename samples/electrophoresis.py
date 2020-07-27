@@ -32,6 +32,8 @@ from espressomd import electrostatics, interactions
 
 logging.basicConfig(level=logging.INFO)
 
+# Use a fixed int for a deterministic behavior
+np.random.seed()
 
 required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
