@@ -58,7 +58,7 @@ system.time_step = TIME_STEP
 system.min_global_cut = 0.5
 
 # Setup LB fluid
-lbf = lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=TIME_STEP)
+lbf = lb.LBFluidGPU(agrid=0.5, dens=1.0, visc=1.0, tau=TIME_STEP)
 system.actors.add(lbf)
 
 ##########################################################################
