@@ -20,18 +20,19 @@
 
 cmake_minimum_required(VERSION 3.4)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
-include(FeatureSummary)
-include(GNUInstallDirs)
-project(ESPResSo)
-if(NOT ${CMAKE_VERSION} VERSION_LESS "3.12")
-  cmake_policy(SET CMP0074 NEW)
-endif()
 
 # C++ standard
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+include(FeatureSummary)
+include(GNUInstallDirs)
+project(ESPResSo)
+if(NOT ${CMAKE_VERSION} VERSION_LESS "3.12")
+  cmake_policy(SET CMP0074 NEW)
+endif()
 
 set(PROJECT_VERSION "4.1.3")
 
