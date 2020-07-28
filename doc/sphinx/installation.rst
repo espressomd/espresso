@@ -186,15 +186,11 @@ using the following commands:
 
 If you want to install MacPorts, download the installer package
 appropriate for your Mac OS X version from
-https://www.macports.org/install.php and install it.
+https://www.macports.org/install.php and follow their
+installation instructions.
 
-If you want to install Homebrew, use the following commands.
-
-.. code-block:: bash
-
-    sudo xcode-select --install
-    sudo xcodebuild -license accept
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+If you want to install Homebrew, follow the installation
+instructions at https://docs.brew.sh/Installation.
 
 Installing packages using MacPorts
 """"""""""""""""""""""""""""""""""
@@ -203,8 +199,6 @@ Run the following commands:
 
 .. code-block:: bash
 
-    sudo xcode-select --install
-    sudo xcodebuild -license accept
     sudo port selfupdate
     sudo port install cmake python37 py37-cython py37-numpy \
       openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
@@ -217,6 +211,8 @@ Run the following commands:
 
 Installing packages using Homebrew
 """"""""""""""""""""""""""""""""""
+
+Run the following commands:
 
 .. code-block:: bash
 
