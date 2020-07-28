@@ -1,0 +1,18 @@
+name: run tests on mac
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@main
+    - run: |
+       brew install boost boost-mpi fftw
+       brew install hdf5-mpi
+       pip3 install numpy cython vtk h5py scipy
+    - run: |
+        export myconfig=maxset with_cuda=false
+        bash maintainer/CI/build_cmake.sh
