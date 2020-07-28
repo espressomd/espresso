@@ -7,7 +7,7 @@ configure_tutorial_target(
   figures/pusher-puller.svg
   figures/enhanced.svg
   figures/geometry.svg
-  figures/rectify.svg
+  figures/rectify.jpg
   figures/rectification.svg
   figures/flow_field.svg
   exercises/enhanced_diffusion.py
