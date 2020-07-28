@@ -35,7 +35,7 @@ KT = 0.8
 
 
 class TestLBPressureACF:
-    """Tests that the thermalized LB pressure auto correlation funciton
+    """Tests that the thermalized LB pressure auto correlation function
     is consistent with the chosen viscosity
     """
 
