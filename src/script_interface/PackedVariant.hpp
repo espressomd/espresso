@@ -30,9 +30,12 @@ using ObjectId = std::size_t;
 
 /**
  * @brief Id for object.
+ *
+ * This assigns every ObjectHandle a unique id.
  */
 inline ObjectId object_id(const ObjectHandle *p) {
-  return std::hash<const ObjectHandle *>{}(p);
+  static_assert(sizeof(const ObjectHandle *) <= sizeof(ObjectId), "");
+  return reinterpret_cast<ObjectId>(p);
 }
 
 /**
