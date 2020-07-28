@@ -222,7 +222,7 @@ Installing packages using Homebrew
 
     brew install cmake python cython boost boost-mpi fftw \
       doxygen gsl numpy ipython jupyter
-    brew install hdf5
+    brew install hdf5-mpi
     brew link --force cython
     pip install PyOpenGL matplotlib
 
