@@ -14,5 +14,5 @@ jobs:
        brew install hdf5-mpi
        pip3 install numpy cython vtk h5py scipy
     - run: |
-        export myconfig=maxset with_cuda=false
+        export myconfig=maxset with_cuda=false test_timeout=600
         bash maintainer/CI/build_cmake.sh

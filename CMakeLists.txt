@@ -31,6 +31,12 @@ endif()
 # CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# C++ standard
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 include(FeatureSummary)
 include(GNUInstallDirs)
 project(ESPResSo)
@@ -40,12 +46,6 @@ if(POLICY CMP0074)
   # make find_package() use <PackageName>_ROOT variables
   cmake_policy(SET CMP0074 NEW)
 endif()
-
-# C++ standard
-enable_language(CXX)
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(PROJECT_VERSION "4.2-dev")
 
