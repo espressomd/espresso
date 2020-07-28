@@ -21,8 +21,6 @@ import numpy as np
 
 import espressomd
 import espressomd.lb
-from espressomd.observables import LBFluidPressureTensor
-import sys
 from scipy.optimize import curve_fit
 
 AGRID = .5
