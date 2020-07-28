@@ -120,6 +120,14 @@ struct UnpackVisitor : boost::static_visitor<Variant> {
   Variant operator()(const ObjectId &id) const { return objects.at(id); }
 };
 
+/**
+ * @brief Transform a Variant to a PackedVariant
+ *
+ * Does apply @ref PackVisitor to a @ref Variant.
+ *
+ * @param v Input Variant
+ * @return Packed variant.
+ */
 inline PackedVariant pack(const Variant &v) {
   return boost::apply_visitor(PackVisitor{}, v);
 }
@@ -127,9 +135,7 @@ inline PackedVariant pack(const Variant &v) {
 /**
  * @brief Unpack a PackedVariant.
  *
- * Turn a PackedVariant into a Variant by replacing
- * id's by references to actual objeccts according to
- * an object map.
+ * Does apply @ref UnpackVisitor to a @ref Variant.
  *
  * @param v Packed Variant.
  * @param objects Map of ids to reference.
