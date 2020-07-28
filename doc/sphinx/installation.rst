@@ -184,27 +184,13 @@ using the following commands:
     sudo rm -r ~/anaconda[23]
     sudo rm -r /Library/Python
 
-Install the command line tools (gcc, git, make, etc.) with either:
-
-.. code-block:: bash
-
-    sudo xcode-select --install
-
-or:
-
-.. code-block:: bash
-
-    sudo xcodebuild -license accept
-
 If you want to install MacPorts, download the installer package
 appropriate for your Mac OS X version from
-https://www.macports.org/install.php and install it.
+https://www.macports.org/install.php and follow their
+installation instructions.
 
-If you want to install Homebrew, use the following command:
-
-.. code-block:: bash
-
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+If you want to install Homebrew, follow the installation
+instructions at https://docs.brew.sh/Installation.
 
 Installing packages using MacPorts
 """"""""""""""""""""""""""""""""""
