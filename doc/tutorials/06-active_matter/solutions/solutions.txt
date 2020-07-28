@@ -12,7 +12,8 @@ E3. See solution script
 --- rectification_geometry.py ---
 
 E1. See solution script
-E2. The 'clip' feature of paraview is particularly suited to the task.
+E2. Load the LB boundaries in paraview and process it as explained in the
+    Jupyter notebook.
 
 --- rectification_simulation.py ---
 

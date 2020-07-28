@@ -22,16 +22,14 @@
 #
 ##########################################################################
 
-from math import cos, pi, sin
 import numpy as np
 import os
 
 import espressomd
-espressomd.assert_features(["CUDA", "LB_BOUNDARIES_GPU"])
+espressomd.assert_features(["LB_BOUNDARIES"])
 from espressomd import lb
 from espressomd.lbboundaries import LBBoundary
 import espressomd.shapes
-from espressomd.shapes import Cylinder, Wall
 
 
 # Setup constants
@@ -58,8 +56,7 @@ system.time_step = TIME_STEP
 system.min_global_cut = 0.5
 
 # Setup LB fluid
-
-lbf = lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=TIME_STEP)
+lbf = lb.LBFluid(agrid=0.5, dens=1.0, visc=1.0, tau=TIME_STEP)
 system.actors.add(lbf)
 
 ##########################################################################
@@ -75,43 +72,34 @@ system.actors.add(lbf)
 # Setup cylinder
 
 cylinder = LBBoundary(
-    shape=Cylinder(
+    shape=espressomd.shapes.Cylinder(
         center=0.5 * BOX_L,
         axis=[1, 0, 0], radius=DIAMETER / 2.0, length=LENGTH, direction=-1))
 system.lbboundaries.add(cylinder)
 
 # Setup walls
-
-wall = LBBoundary(shape=Wall(dist=PADDING, normal=[1, 0, 0]))
+wall = LBBoundary(shape=espressomd.shapes.Wall(dist=PADDING, normal=[1, 0, 0]))
 system.lbboundaries.add(wall)
 
-wall = LBBoundary(shape=Wall(dist=-(LENGTH + PADDING), normal=[-1, 0, 0]))
+wall = LBBoundary(
+    shape=espressomd.shapes.Wall(dist=-(LENGTH + PADDING), normal=[-1, 0, 0]))
 system.lbboundaries.add(wall)
 
 # Setup cone
-
 IRAD = 4.0
-ANGLE = pi / 4.0
-ORAD = (DIAMETER - IRAD) / sin(ANGLE)
-SHIFT = 0.25 * ORAD * cos(ANGLE)
+ANGLE = np.pi / 4.0
+ORAD = (DIAMETER - IRAD) / np.sin(ANGLE)
+SHIFT = 0.25 * ORAD * np.cos(ANGLE)
 
-hollow_cone = LBBoundary(shape=espressomd.shapes.HollowConicalFrustum(center=[BOX_L[0] / 2.0 - 1.3 * SHIFT,
-                                                                              BOX_L[1] /
-                                                                              2.0,
-                                                                              BOX_L[2] / 2.0],
-                                                                      axis=[-1,
-                                                                            0, 0],
-                                                                      r1=ORAD,
-                                                                      r2=IRAD,
-                                                                      thickness=2.0,
-                                                                      length=18,
-                                                                      direction=1))
+hollow_cone = LBBoundary(shape=espressomd.shapes.HollowConicalFrustum(
+    center=[BOX_L[0] / 2.0 - 1.3 * SHIFT, BOX_L[1] / 2.0, BOX_L[2] / 2.0],
+    axis=[-1, 0, 0], r1=ORAD, r2=IRAD, thickness=2.0, length=18,
+    direction=1))
 system.lbboundaries.add(hollow_cone)
 
 ##########################################################################
 
 # Output the geometry
-
 lbf.print_vtk_boundary("{}/boundary.vtk".format(outdir))
 
 ##########################################################################
