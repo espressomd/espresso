@@ -19,7 +19,7 @@
 #ifndef ESPRESSO_SCRIPT_INTERFACE_OBJECTSTATE_HPP
 #define ESPRESSO_SCRIPT_INTERFACE_OBJECTSTATE_HPP
 
-#include "PackedVariant.hpp"
+#include "packed_variant.hpp"
 
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/variant.hpp>

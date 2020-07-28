@@ -20,7 +20,7 @@
 #include "GlobalContext.hpp"
 #include "Exception.hpp"
 #include "ObjectHandle.hpp"
-#include "PackedVariant.hpp"
+#include "packed_variant.hpp"
 
 #include <utils/serialization/pack.hpp>
 

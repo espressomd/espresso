@@ -22,7 +22,7 @@
 #include "ObjectHandle.hpp"
 #include "Context.hpp"
 #include "ObjectState.hpp"
-#include "PackedVariant.hpp"
+#include "packed_variant.hpp"
 
 #include <utils/serialization/pack.hpp>
 

@@ -23,7 +23,7 @@
 #include "LocalContext.hpp"
 #include "MpiCallbacks.hpp"
 #include "ObjectHandle.hpp"
-#include "PackedVariant.hpp"
+#include "packed_variant.hpp"
 
 #include <utils/Factory.hpp>
 
