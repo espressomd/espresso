@@ -31,6 +31,7 @@
 
 #include <profiler/profiler.hpp>
 #include <utils/Counter.hpp>
+#include <utils/math/sqr.hpp>
 #include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 
@@ -230,7 +231,9 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         throw std::runtime_error("The non-linear interpolation scheme is not "
                                  "implemented for the CPU LB.");
       case (InterpolationOrder::linear): {
-        auto const kT = lb_lbfluid_get_kT();
+        using Utils::sqr;
+        auto const kT = lb_lbfluid_get_kT() * sqr(lb_lbfluid_get_agrid()) /
+                        sqr(lb_lbfluid_get_tau());
         /* Eq. (16) @cite ahlrichs99a.
          * The factor 12 comes from the fact that we use random numbers
          * from -0.5 to 0.5 (equally distributed) which have variance 1/12.

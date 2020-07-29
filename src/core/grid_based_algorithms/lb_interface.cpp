@@ -68,9 +68,6 @@ void lb_lbfluid_propagate() {
   if (fluidstep >= factor) {
     fluidstep = 0;
     lb_lbfluid_update();
-    if (lb_lbfluid_get_kT() > 0.0) {
-      rng_counter_fluid->increment();
-    }
   }
 }
 

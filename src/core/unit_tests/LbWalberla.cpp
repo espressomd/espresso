@@ -350,6 +350,36 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force,
   }
 }
 
+BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
+                     bdata::make(thermalized_lbs()), lb_generator) {
+  auto lb = lb_generator(mpi_shape);
+  // auto f = Vector3d{0.15, 0.25, -0.22};
+  auto f = Vector3d{0.0006, -0.0013, 0.000528};
+  auto f2 = Vector3d{0.095, 0.23, -0.52};
+  lb->set_external_force(f);
+  lb->add_force_at_pos(Utils::Vector3d{2, 2, 2}, f2);
+  BOOST_CHECK_SMALL(lb->get_momentum().norm(), 1E-10);
+  lb->integrate();
+  auto mom = lb->get_momentum();
+  auto mom_exp =
+      1.5 * f * grid_dimensions[0] * grid_dimensions[1] * grid_dimensions[2] +
+      1.5 * f2;
+  MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
+                MPI_COMM_WORLD);
+  BOOST_CHECK_SMALL((mom - mom_exp).norm(), 4E-6);
+
+  for (int i = 1; i < 30; i++) {
+    lb->integrate();
+    auto mom_exp = (i + 1.5) * (f * grid_dimensions[0] * grid_dimensions[1] *
+                                grid_dimensions[2]) +
+                   f2;
+    auto mom = lb->get_momentum();
+    MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
+                  MPI_COMM_WORLD);
+    BOOST_CHECK_SMALL((mom - mom_exp).norm(), 2E-4);
+  }
+}
+
 BOOST_DATA_TEST_CASE(forces_initial_state, bdata::make(unthermalized_lbs()),
                      lb_generator) {
   auto lb = lb_generator(mpi_shape);

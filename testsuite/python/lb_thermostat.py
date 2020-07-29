@@ -28,11 +28,12 @@ distribution.
 
 """
 
-KT = 1.5 
-AGRID = 0.5
-VISC = 4 
+KT = 0.9 
+AGRID = 0.8
+VISC = 6 
 DENS = 1.7
-TIME_STEP = 0.02
+TIME_STEP = 0.008
+GAMMA = 2
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
@@ -45,7 +46,7 @@ class LBThermostatCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[AGRID * 12] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
@@ -63,30 +64,37 @@ class LBThermostatCommon:
     def prepare(self):
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=5.0)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=GAMMA)
 
-    @ut.skipIf(True, "Walberla TODO")
     def test_with_particles(self):
         self.prepare()
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l)
-        self.system.integrator.run(20)
+        self.system.integrator.run(500)
         N = len(self.system.part)
-        loops = 250
-        v_stored = np.zeros((N * loops, 3))
+        loops = 500
+        v_particles = np.zeros((N * loops, 3))
+        v_nodes = []
         for i in range(loops):
             self.system.integrator.run(3)
-            v_stored[i * N:(i + 1) * N, :] = self.system.part[:].v
+            if i % 10 == 0:
+                for n in self.lbf.nodes():
+                    v_nodes.append(n.velocity)
+            v_particles[i * N:(i + 1) * N, :] = self.system.part[:].v
+        self.assertAlmostEqual(np.var(v_nodes), KT, delta=0.01)
+        np.testing.assert_allclose(np.average(v_particles), 0, atol=0.02)
+        np.testing.assert_allclose(np.var(v_particles), KT, rtol=0.03)
+
         minmax = 3
         n_bins = 7
         for i in range(3):
-            hist = np.histogram(v_stored[:, i], range=(-minmax, minmax),
+            hist = np.histogram(v_particles[:, i], range=(-minmax, minmax),
                                 bins=n_bins, density=False)
-            data = hist[0] / float(v_stored.shape[0])
+            data = hist[0] / float(v_particles.shape[0])
             bins = hist[1]
             expected = [single_component_maxwell(
                 bins[j], bins[j + 1], KT) for j in range(n_bins)]
-            np.testing.assert_allclose(data, expected)
+            np.testing.assert_allclose(data, expected, atol=0.015)
 
 
 @utx.skipIfMissingFeatures("LB_WALBERLA")
