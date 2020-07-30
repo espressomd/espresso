@@ -87,7 +87,7 @@ system.part.add(
 
 # Setup the fluid (quiescent)
 lbf = lb.LBFluidWalberla(agrid=1.0, dens=1.0,
-                    visc=1.0, tau=TIME_STEP)
+                         visc=1.0, tau=TIME_STEP)
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=20.0, seed=42)
 

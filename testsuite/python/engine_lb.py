@@ -91,16 +91,16 @@ class SwimmerTest():
         self.add_all_types_of_swimmers(rotation=False)
 
         # Comments by Christoph Lohrmann from #3514:
-        # - why I used ` reuse_forces=True` : If I don't use it, ` force_calc()`  is 
-        # called the first time without LB-coupling. That means no friction for any 
+        # - why I used ` reuse_forces=True` : If I don't use it, ` force_calc()`  is
+        # called the first time without LB-coupling. That means no friction for any
         # swimmer and no additional force for the ` v_swim`  type swimmers. The 
-        # active force for the ` f_swim`  swimmers gets added anyway because it is 
-        # not derived from the coupling to LB. With ` reuse_forces`  at least both 
+        # active force for the ` f_swim`  swimmers gets added anyway because it is
+        # not derived from the coupling to LB. With ` reuse_forces`  at least both
         # types are treated the same.
-        # - Therefore, in the first halfstep, the active forces on the particles are 
+        # - Therefore, in the first halfstep, the active forces on the particles are
         # missing.  This creates the first half of the missing momentum.
         # - The LB fluid is always ahead by a half step (as checked by 
-        # ` test_ext_force_density()`  in ` lb.py` ). It is also not affected by the 
+        # ` test_ext_force_density()`  in ` lb.py` ). It is also not affected by the
         # ` reuse_forces`  in the first halfstep because ` force_calc()`  with 
         # coupling is called in the main integration loop before 
         # ` lb_lbfluid_propagate()` 
