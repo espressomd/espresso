@@ -638,17 +638,13 @@ calc_meshift(std::array<int, 3> const &mesh_size) {
 }
 
 template <int cao> void calc_influence_function_force() {
-  int i, n[3], ind;
-  int end[3];
-  int size = 1;
-
   auto const shifts = calc_meshift(
       {p3m.params.mesh[0], p3m.params.mesh[1], p3m.params.mesh[2]});
 
-  for (i = 0; i < 3; i++) {
-    size *= p3m.fft.plan[3].new_mesh[i];
-    end[i] = p3m.fft.plan[3].start[i] + p3m.fft.plan[3].new_mesh[i];
-  }
+  auto const size =
+      boost::accumulate(p3m.fft.plan[3].new_mesh, 1, std::multiplies<>());
+  auto const end = Utils::Vector3d{p3m.fft.plan[3].start} +
+                   Utils::Vector3d{p3m.fft.plan[3].new_mesh};
 
   p3m.g_force.resize(size);
 
@@ -664,10 +660,11 @@ template <int cao> void calc_influence_function_force() {
   auto const h = Utils::Vector3d{p3m.params.a};
   auto const box_l = box_geo.length();
 
+  Utils::Vector3i n{};
   for (n[0] = p3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
     for (n[1] = p3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
       for (n[2] = p3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        ind =
+        auto const ind =
             (n[2] - p3m.fft.plan[3].start[2]) +
             p3m.fft.plan[3].new_mesh[2] * ((n[1] - p3m.fft.plan[3].start[1]) +
                                            (p3m.fft.plan[3].new_mesh[1] *
