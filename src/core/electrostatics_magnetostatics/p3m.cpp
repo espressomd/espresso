@@ -637,39 +637,41 @@ calc_meshift(std::array<int, 3> const &mesh_size) {
   return ret;
 }
 
-template <int cao> void calc_influence_function_force() {
-  auto const shifts = calc_meshift(
-      {p3m.params.mesh[0], p3m.params.mesh[1], p3m.params.mesh[2]});
+template <int cao>
+void calc_influence_function_force(const P3MParameters &params,
+                                   const fft_data_struct &fft) {
+  auto const shifts =
+      calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});
 
   auto const size =
-      boost::accumulate(p3m.fft.plan[3].new_mesh, 1, std::multiplies<>());
-  auto const start = Utils::Vector3i{p3m.fft.plan[3].start};
-  auto const end = start + Utils::Vector3i{p3m.fft.plan[3].new_mesh};
+      boost::accumulate(fft.plan[3].new_mesh, 1, std::multiplies<>());
+  auto const start = Utils::Vector3i{fft.plan[3].start};
+  auto const end = start + Utils::Vector3i{fft.plan[3].new_mesh};
 
   p3m.g_force.resize(size);
 
   /* Skip influence function calculation in tuning mode,
      the results need not be correct for timing. */
-  if (p3m.params.tuning) {
+  if (params.tuning) {
     /* If resized, fill with zeros to avoid nan forces. */
     std::fill(p3m.g_force.begin(), p3m.g_force.end(), 0);
 
     return;
   }
 
-  auto const h = Utils::Vector3d{p3m.params.a};
+  auto const h = Utils::Vector3d{params.a};
   auto const box_l = box_geo.length();
 
   Utils::Vector3i n{};
-  for (n[0] = p3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
-    for (n[1] = p3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
-      for (n[2] = p3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
+  for (n[0] = fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
+    for (n[1] = fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
+      for (n[2] = fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
         auto const ind = Utils::get_linear_index(
-            n - start, Utils::Vector3i{p3m.fft.plan[3].new_mesh});
+            n - start, Utils::Vector3i{fft.plan[3].new_mesh});
 
-        if ((n[KX] % (p3m.params.mesh[RX] / 2) == 0) &&
-            (n[KY] % (p3m.params.mesh[RY] / 2) == 0) &&
-            (n[KZ] % (p3m.params.mesh[RZ] / 2) == 0)) {
+        if ((n[KX] % (params.mesh[RX] / 2) == 0) &&
+            (n[KY] % (params.mesh[RY] / 2) == 0) &&
+            (n[KZ] % (params.mesh[RZ] / 2) == 0)) {
           p3m.g_force[ind] = 0.0;
         } else {
           auto const k = 2 * Utils::pi() *
@@ -677,7 +679,7 @@ template <int cao> void calc_influence_function_force() {
                                          shifts[RY][n[KY]] / box_l[RY],
                                          shifts[RZ][n[KZ]] / box_l[RZ]};
 
-          p3m.g_force[ind] = G_opt<cao, 1>(p3m.params.alpha, k, h);
+          p3m.g_force[ind] = G_opt<cao, 1>(params.alpha, k, h);
         }
       }
     }
@@ -688,25 +690,25 @@ template <int cao> void calc_influence_function_force() {
 void p3m_calc_influence_function_force() {
   switch (p3m.params.cao) {
   case 1:
-    calc_influence_function_force<1>();
+    calc_influence_function_force<1>(p3m.params, p3m.fft);
     break;
   case 2:
-    calc_influence_function_force<2>();
+    calc_influence_function_force<2>(p3m.params, p3m.fft);
     break;
   case 3:
-    calc_influence_function_force<3>();
+    calc_influence_function_force<3>(p3m.params, p3m.fft);
     break;
   case 4:
-    calc_influence_function_force<4>();
+    calc_influence_function_force<4>(p3m.params, p3m.fft);
     break;
   case 5:
-    calc_influence_function_force<5>();
+    calc_influence_function_force<5>(p3m.params, p3m.fft);
     break;
   case 6:
-    calc_influence_function_force<6>();
+    calc_influence_function_force<6>(p3m.params, p3m.fft);
     break;
   case 7:
-    calc_influence_function_force<7>();
+    calc_influence_function_force<7>(p3m.params, p3m.fft);
     break;
   }
 }
