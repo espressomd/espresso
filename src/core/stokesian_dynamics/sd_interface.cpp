@@ -52,7 +52,6 @@
 namespace {
 /* type for particle data transfer between nodes */
 struct SD_particle_data {
-  int id = -1;
   int type = 0;
 
   /* particle position */
@@ -65,7 +64,6 @@ struct SD_particle_data {
   Utils::Vector3d ext_torque = {0.0, 0.0, 0.0};
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &id;
     ar &type;
     ar &pos;
     ar &ext_force;
@@ -105,7 +103,6 @@ void sd_gather_local_particles(ParticleRange const &parts) {
   std::size_t i = 0;
 
   for (auto const &p : parts) {
-    parts_buffer[i].id = p.p.is_virtual ? -1 : p.p.identity;
     parts_buffer[i].type = p.p.type;
     parts_buffer[i].pos = p.r.p;
 
@@ -214,21 +211,17 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
 
       std::size_t n_part = parts_buffer.size();
 
-      static std::vector<int> id{};
       static std::vector<double> x_host{};
       static std::vector<double> f_host{};
       static std::vector<double> a_host{};
 
       // n_part not expected to change, but anyway ...
-      id.resize(n_part);
       x_host.resize(6 * n_part);
       f_host.resize(6 * n_part);
       a_host.resize(n_part);
 
       std::size_t i = 0;
       for (auto const &p : parts_buffer) {
-        id[i] = parts_buffer[i].id;
-
         x_host[6 * i + 0] = p.pos[0];
         x_host[6 * i + 1] = p.pos[1];
         x_host[6 * i + 2] = p.pos[2];
