@@ -52,21 +52,11 @@
 namespace {
 /* type for particle data transfer between nodes */
 struct SD_particle_data {
-  int on_node = -1;
   int id = -1;
   int type = 0;
 
-  /* particle radius */
-  double r = -1;
-
   /* particle position */
   Utils::Vector3d pos = {0., 0., 0.};
-
-  /* particle velocity */
-  Utils::Vector3d vel = {0., 0., 0.};
-
-  /* particle rotational velocity */
-  Utils::Vector3d omega = {0., 0., 0.};
 
   /* external force */
   Utils::Vector3d ext_force = {0.0, 0.0, 0.0};
@@ -75,13 +65,9 @@ struct SD_particle_data {
   Utils::Vector3d ext_torque = {0.0, 0.0, 0.0};
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &on_node;
     ar &id;
     ar &type;
-    ar &r;
     ar &pos;
-    ar &vel;
-    ar &omega;
     ar &ext_force;
     ar &ext_torque;
   }
@@ -121,26 +107,11 @@ void sd_gather_local_particles(ParticleRange const &parts) {
   for (auto const &p : parts) {
     parts_buffer[i].id = p.p.is_virtual ? -1 : p.p.identity;
     parts_buffer[i].type = p.p.type;
+    parts_buffer[i].pos = p.r.p;
 
-    parts_buffer[i].pos[0] = p.r.p[0];
-    parts_buffer[i].pos[1] = p.r.p[1];
-    parts_buffer[i].pos[2] = p.r.p[2];
+    parts_buffer[i].ext_force = p.f.f;
 
-    // Velocity is not needed for SD, thus omit while gathering.
-    // Particle orientation is also not needed for SD
-    // since all particles are assumed spherical.
-
-    parts_buffer[i].ext_force[0] = p.f.f[0];
-    parts_buffer[i].ext_force[1] = p.f.f[1];
-    parts_buffer[i].ext_force[2] = p.f.f[2];
-
-    parts_buffer[i].ext_torque[0] = p.f.torque[0];
-    parts_buffer[i].ext_torque[1] = p.f.torque[1];
-    parts_buffer[i].ext_torque[2] = p.f.torque[2];
-
-    // radius_dict is not initialized on slave nodes -> need to assign radius
-    // later on master node
-    parts_buffer[i].r = 0;
+    parts_buffer[i].ext_torque = p.f.torque;
 
     i++;
   }
