@@ -73,7 +73,7 @@ if args.volcons:
     outputDir = "outputVolParaCUDA"
 
 # Add LB Fluid
-lbf = lb.LBFluid(agrid=1, dens=1, visc=1, tau=system.time_step,
+lbf = lb.LBFluidWalberla(agrid=1, dens=1, visc=1, tau=system.time_step,
                  ext_force_density=[force, 0, 0])
 system.actors.add(lbf)
 

@@ -59,7 +59,7 @@ system.min_global_cut = 0.5
 
 # Setup LB fluid
 
-lbf = lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=TIME_STEP)
+lbf = lb.LBFluidWalberla(agrid=1.0, dens=1.0, visc=1.0, tau=TIME_STEP)
 system.actors.add(lbf)
 
 ##########################################################################

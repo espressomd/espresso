@@ -35,7 +35,7 @@ system = espressomd.System(box_l=[BOX_L] * 3)
 system.time_step = TIME_STEP
 system.cell_system.skin = 0.4
 
-lbf = espressomd.lb.LBFluidGPU(
+lbf = espressomd.lb.LBFluidWalberla(
     agrid=AGRID, dens=DENSITY, visc=VISCOSITY, tau=TIME_STEP,
     ext_force_density=FORCE_DENSITY)
 system.actors.add(lbf)

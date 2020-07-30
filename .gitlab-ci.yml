@@ -257,7 +257,7 @@ tutorials-samples-maxset:
      CC: 'gcc-8'
      CXX: 'g++-8'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
+    - export myconfig=maxset-walberla with_cuda=true with_coverage=false with_scafacos=true with_walberla=True make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
