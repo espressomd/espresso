@@ -1458,35 +1458,6 @@ Checkpointing in the EK works quite similar to checkpointing in the LB, because 
 Output
 ~~~~~~
 
-.. _Fields:
-
-Fields
-^^^^^^
-
-::
-
-    ek.print_vtk_boundary(path)
-    ek.print_vtk_density(path)
-    ek.print_vtk_velocity(path)
-    ek.print_vtk_potential(path)
-
-A property of the fluid field can be exported into a
-file in one go. Currently supported
-are: density, velocity, potential and boundary, which give the LB fluid density, the LB fluid velocity,
-the electrostatic potential, and the location and type of the
-boundaries, respectively. The boundaries can only be printed when the
-``EK_BOUNDARIES`` is compiled in. The output is a vtk-file, which is readable by
-visualization software such as ParaView [5]_ and Mayavi2 [6]_.
-
-::
-
-    species.print_vtk_flux(path)
-    species.print_vtk_density(path)
-
-These commands are similar to the above. They enable the
-export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
-number density and flux of species ``species``, respectively.
-
 .. _Local Quantities:
 
 Local Quantities

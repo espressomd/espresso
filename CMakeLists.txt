@@ -529,8 +529,11 @@ if (WITH_WALBERLA)
   set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
   add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
   set(WALBERLA 1)
-  # TODO WALBERLA: remove -lmpi_cxx -lmpi (required to find symbol MPI::Datatype::Free() in VTK code)
-  set(WALBERLA_LIBS walberla::core walberla::domain_decomposition walberla::blockforest walberla::boundary walberla::core walberla::domain_decomposition walberla::field walberla::lbm walberla::timeloop walberla::vtk stdc++fs -lmpi_cxx -lmpi)
+  # TODO WALBERLA: remove -lmpi_cxx -lmpi (required to find symbol MPI::Datatype::Free() in VTK code) and -lstdc++fs
+  set(WALBERLA_LIBS walberla::core walberla::domain_decomposition walberla::blockforest walberla::boundary walberla::core walberla::domain_decomposition walberla::field walberla::lbm walberla::timeloop walberla::vtk)
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
+    set(WALBERLA_LIBS ${WALBERLA_LIBS} stdc++fs -lmpi_cxx -lmpi)
+  endif()
 endif(WITH_WALBERLA)
 
 #######################################################################

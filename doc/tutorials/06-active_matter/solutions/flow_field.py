@@ -113,9 +113,9 @@ with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
         # Output 50 simulations
         if k % (PROD_STEPS / 50) == 0:
             num = k // (PROD_STEPS // 50)
-            lbf.print_vtk_velocity("{}/lb_velocity_{}.vtk".format(outdir, num))
+            lbf.write_vtk(outdir, 'velocity_vector')
             system.part.writevtk(
-                "{}/position_{}.vtk".format(outdir, num), types=[0])
+                "vtk_out/{}/position_{}.vtk".format(outdir, num), types=[0])
 
         system.integrator.run(PROD_LENGTH)
 print()

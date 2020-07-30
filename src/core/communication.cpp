@@ -135,6 +135,8 @@ int mpi_check_runtime_errors();
  * procedures
  **********************************************/
 
+void walberla_mpi_init();
+
 #if defined(OPEN_MPI)
 namespace {
 /** Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
@@ -151,13 +153,6 @@ void openmpi_fix_vader() {
     setenv("OMPI_MCA_btl_vader_single_copy_mechanism", "none", 0);
   }
 }
-#endif
-
-void walberla_mpi_init();
-
-void mpi_init() {
-#ifdef OPEN_MPI
-  openmpi_fix_vader();
 
   /**
    * @brief Assure that openmpi is loaded to the global namespace.

@@ -26,7 +26,7 @@ import numpy as np
 import os
 
 import espressomd
-espressomd.assert_features(["LB_BOUNDARIES"])
+espressomd.assert_features(["LB_WALBERLA", "LB_BOUNDARIES"])
 from espressomd import lb
 from espressomd.lbboundaries import LBBoundary
 import espressomd.shapes
@@ -100,6 +100,6 @@ system.lbboundaries.add(hollow_cone)
 ##########################################################################
 
 # Output the geometry
-lbf.print_vtk_boundary("{}/boundary.vtk".format(outdir))
+lbf.write_vtk("shape", "density")
 
 ##########################################################################

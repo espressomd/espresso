@@ -28,7 +28,7 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test_file_generation(self):
-        filepath = os.path.join(tutorial.outdir, "boundary.vtk")
+        filepath = "vtk_out/shape/simulation_step_0.vtu"
         self.assertTrue(os.path.isfile(filepath), filepath + " not created")
 
 
