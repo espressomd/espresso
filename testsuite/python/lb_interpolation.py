@@ -76,7 +76,6 @@ class LBInterpolation:
         # Check interpolated vel at upper boundary. The node position is at
         # box_l[0]-agrid/2.
 
-        # WALBERLA TODO
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity(
                 [self.system.box_l[0] - AGRID / 2, 0, 0])),
