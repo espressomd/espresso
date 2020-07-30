@@ -136,13 +136,16 @@ void propagate_omega_quat_particle(Particle &p) {
 
   define_Qdd(p, Qd, Qdd, S, Wd);
 
+  auto const time_step_squared = time_step * time_step;
+  auto const time_step_half = 0.5 * time_step;
+
   /* Eq. (12) @cite omelyan98a. */
   auto const square =
       1 - time_step_squared *
               (S[0] +
                time_step * (S[1] + time_step_half / 2. * (S[2] - S[0] * S[0])));
   assert(square >= 0.);
-  auto const lambda = 1 - S[0] * time_step_squared_half - sqrt(square);
+  auto const lambda = 1 - S[0] * 0.5 * time_step_squared - sqrt(square);
 
   p.m.omega += time_step_half * Wd;
   p.r.quat += time_step * (Qd + time_step_half * Qdd) - lambda * p.r.quat;
@@ -165,7 +168,7 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
     convert_torque_to_body_frame_apply_fix(p);
 
     // Propagation of angular velocities
-    p.m.omega += hadamard_division(time_step_half * p.f.torque, p.p.rinertia);
+    p.m.omega += hadamard_division(0.5 * time_step * p.f.torque, p.p.rinertia);
 
     // zeroth estimate of omega
     Utils::Vector3d omega_0 = p.m.omega;
@@ -185,7 +188,7 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
       Wd[1] = p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
       Wd[2] = p.m.omega[0] * p.m.omega[1] * rinertia_diff_01 / p.p.rinertia[2];
 
-      p.m.omega = omega_0 + time_step_half * Wd;
+      p.m.omega = omega_0 + 0.5 * time_step * Wd;
     }
   }
 }
