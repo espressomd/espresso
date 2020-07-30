@@ -183,8 +183,6 @@ int get_sd_flags() { return sd_flags; }
 void propagate_vel_pos_sd(const ParticleRange &particles,
                           const boost::mpi::communicator &comm,
                           const size_t time_index, const double time_step) {
-  assert(device != INVALID);
-
   static std::vector<SD_particle_data> parts_buffer{};
 
   parts_buffer.clear();
