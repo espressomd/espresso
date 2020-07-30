@@ -689,7 +689,7 @@ template <size_t cao, size_t S, size_t m> struct InfluenceFunction {
 };
 
 template <size_t cao>
-using EnergyInfluenceFunction = InfluenceFunction<cao, 0, 0>;
+using InfluenceFunctionEnergy = InfluenceFunction<cao, 0, 0>;
 template <size_t cao>
 using InfluenceFunctionForce = InfluenceFunction<cao, 1, 0>;
 } /* namespace */
@@ -699,112 +699,9 @@ void p3m_calc_influence_function_force() {
       p3m.params.cao, p3m.params, p3m.fft);
 }
 
-namespace {
-
-template <int cao> inline double perform_aliasing_sums_energy(int const n[3]) {
-  using Utils::int_pow;
-  double numerator = 0.0, denominator = 0.0;
-  /* lots of temporary variables... */
-  double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
-  double limit = 30;
-
-  f1 = Utils::sqr(Utils::pi() / (p3m.params.alpha));
-
-  for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX] * mx;
-    sx = int_pow<2 * cao>(sinc(nmx / (double)p3m.params.mesh[RX]));
-    for (my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      nmy = p3m.meshift_y[n[KY]] + p3m.params.mesh[RY] * my;
-      sy = sx * int_pow<2 * cao>(sinc(nmy / (double)p3m.params.mesh[RY]));
-      for (mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-        nmz = p3m.meshift_z[n[KZ]] + p3m.params.mesh[RZ] * mz;
-        sz = sy * int_pow<2 * cao>(sinc(nmz / (double)p3m.params.mesh[RZ]));
-        /* k = 2*pi * (nx/lx, ny/ly, nz/lz); expo = -k^2 / 4*alpha^2 */
-        nm2 = Utils::sqr(nmx / box_geo.length()[RX]) +
-              Utils::sqr(nmy / box_geo.length()[RY]) +
-              Utils::sqr(nmz / box_geo.length()[RZ]);
-        expo = f1 * nm2;
-        f2 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
-
-        numerator += f2;
-        denominator += sz;
-      }
-    }
-  }
-
-  return numerator / Utils::sqr(denominator);
-}
-
-template <int cao> void calc_influence_function_energy() {
-  int i, n[3], ind;
-  int end[3];
-  int start[3];
-  int size = 1;
-
-  p3m_calc_meshift();
-
-  for (i = 0; i < 3; i++) {
-    size *= p3m.fft.plan[3].new_mesh[i];
-    end[i] = p3m.fft.plan[3].start[i] + p3m.fft.plan[3].new_mesh[i];
-    start[i] = p3m.fft.plan[3].start[i];
-  }
-
-  p3m.g_energy.resize(size);
-
-  /* Skip influence function calculation in tuning mode,
-     the results need not be correct for timing. */
-  if (p3m.params.tuning)
-    return;
-
-  ind = 0;
-
-  for (n[0] = start[0]; n[0] < end[0]; n[0]++) {
-    for (n[1] = start[1]; n[1] < end[1]; n[1]++) {
-      for (n[2] = start[2]; n[2] < end[2]; n[2]++) {
-        ind = (n[2] - start[2]) +
-              p3m.fft.plan[3].new_mesh[2] * (n[1] - start[1]) +
-              p3m.fft.plan[3].new_mesh[2] * p3m.fft.plan[3].new_mesh[1] *
-                  (n[0] - start[0]);
-        if ((n[KX] % (p3m.params.mesh[RX] / 2) == 0) &&
-            (n[KY] % (p3m.params.mesh[RY] / 2) == 0) &&
-            (n[KZ] % (p3m.params.mesh[RZ] / 2) == 0)) {
-          p3m.g_energy[ind] = 0.0;
-        }
-
-        else
-          p3m.g_energy[ind] =
-              perform_aliasing_sums_energy<cao>(n) / Utils::pi();
-      }
-    }
-  }
-}
-
-} /* namespace */
-
 void p3m_calc_influence_function_energy() {
-  switch (p3m.params.cao) {
-  case 1:
-    calc_influence_function_energy<1>();
-    break;
-  case 2:
-    calc_influence_function_energy<2>();
-    break;
-  case 3:
-    calc_influence_function_energy<3>();
-    break;
-  case 4:
-    calc_influence_function_energy<4>();
-    break;
-  case 5:
-    calc_influence_function_energy<5>();
-    break;
-  case 6:
-    calc_influence_function_energy<6>();
-    break;
-  case 7:
-    calc_influence_function_energy<7>();
-    break;
-  }
+  p3m.g_energy = Utils::integral_parameter<InfluenceFunctionEnergy, 1, 7>(
+      p3m.params.cao, p3m.params, p3m.fft);
 }
 
 #define P3M_TUNE_MAX_CUTS 50
