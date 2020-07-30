@@ -119,22 +119,33 @@ void sd_update_locally(ParticleRange const &parts) {
   }
 }
 
-void set_sd_viscosity(double eta) { sd_viscosity = eta; }
+void set_sd_viscosity(double eta) {
+  if (eta < 0.0) {
+    throw std::runtime_error("Viscosity has an invalid value: " +
+                             std::to_string(eta));
+  }
+
+  sd_viscosity = eta;
+}
 
 double get_sd_viscosity() { return sd_viscosity; }
 
 void set_sd_device(std::string const &dev) {
-  device = INVALID;
 #ifdef STOKESIAN_DYNAMICS
   if (dev == "cpu") {
     device = CPU;
+    return;
   }
 #endif
 #ifdef STOKESIAN_DYNAMICS_GPU
   if (dev == "gpu") {
     device = GPU;
+
+    return;
   }
 #endif
+
+  throw std::runtime_error("Invalid device " + dev);
 }
 
 std::string get_sd_device() {
@@ -149,12 +160,27 @@ std::string get_sd_device() {
 }
 
 void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
+  /* Check that radii are positive */
+  for (auto const &kv : x) {
+    if (kv.second < 0.) {
+      throw std::runtime_error(
+          "Particle radii need to be positive, radius for type " +
+          std::to_string(kv.first) + " is " + std::to_string(kv.second));
+    }
+  }
+
   radius_dict = x;
 }
 
 std::unordered_map<int, double> get_sd_radius_dict() { return radius_dict; }
 
-void set_sd_kT(double kT) { sd_kT = kT; }
+void set_sd_kT(double kT) {
+  if (kT < 0.0) {
+    throw std::runtime_error("kT has an invalid value: " + std::to_string(kT));
+  }
+
+  sd_kT = kT;
+}
 
 double get_sd_kT() { return sd_kT; }
 
@@ -166,7 +192,13 @@ void set_sd_flags(int flg) { sd_flags = flg; }
 
 int get_sd_flags() { return sd_flags; }
 
+namespace {
+auto calculate_velocities() {}
+} // namespace
+
 void propagate_vel_pos_sd(const ParticleRange &particles) {
+  assert(device != INVALID);
+
   static std::vector<SD_particle_data> parts_buffer{};
 
   parts_buffer.clear();
@@ -177,18 +209,6 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
   /** Buffer that holds local particle data, and all particles on the master
    * node used for sending particle data to master node. */
   if (this_node == 0) {
-    if (BOOST_UNLIKELY(sd_viscosity < 0.0)) {
-      runtimeErrorMsg() << "sd_viscosity has an invalid value: " +
-                               std::to_string(sd_viscosity);
-      return;
-    }
-
-    if (BOOST_UNLIKELY(sd_kT < 0.0)) {
-      runtimeErrorMsg() << "sd_kT has an invalid value: " +
-                               std::to_string(sd_kT);
-      return;
-    }
-
     std::size_t n_part = parts_buffer.size();
 
     static std::vector<double> x_host{};
@@ -219,14 +239,6 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
 
       double radius = radius_dict[p.type];
 
-      if (BOOST_UNLIKELY(radius < 0.0)) {
-        runtimeErrorMsg() << "particle of type " +
-                                 std::to_string(int(parts_buffer[i].type)) +
-                                 " has an invalid radius: " +
-                                 std::to_string(radius);
-        return;
-      }
-
       a_host[i] = radius;
 
       ++i;
@@ -234,7 +246,6 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
 
     std::size_t offset = std::round(sim_time / time_step);
     switch (device) {
-
 #ifdef STOKESIAN_DYNAMICS
     case CPU:
       v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
@@ -248,18 +259,8 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
                     std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
       break;
 #endif
-
     default:
-      runtimeErrorMsg()
-          << "Invalid device for Stokesian dynamics. Available devices:"
-#ifdef STOKESIAN_DYNAMICS
-             " cpu"
-#endif
-#ifdef STOKESIAN_DYNAMICS_GPU
-             " gpu"
-#endif
-          ;
-      return;
+      throw std::runtime_error("Stokesian dynamics device not set.");
     }
   } else { // if (this_node == 0)
     v_sd.resize(particles.size() * 6);
