@@ -667,7 +667,8 @@ void calc_influence_function_force(const P3MParameters &params,
     for (n[1] = fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
       for (n[2] = fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
         auto const ind = Utils::get_linear_index(
-            n - start, Utils::Vector3i{fft.plan[3].new_mesh});
+            n - start, Utils::Vector3i{fft.plan[3].new_mesh},
+            Utils::MemoryOrder::ROW_MAJOR);
 
         if ((n[KX] % (params.mesh[RX] / 2) == 0) &&
             (n[KY] % (params.mesh[RY] / 2) == 0) &&
