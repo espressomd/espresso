@@ -643,8 +643,8 @@ template <int cao> void calc_influence_function_force() {
 
   auto const size =
       boost::accumulate(p3m.fft.plan[3].new_mesh, 1, std::multiplies<>());
-  auto const end = Utils::Vector3d{p3m.fft.plan[3].start} +
-                   Utils::Vector3d{p3m.fft.plan[3].new_mesh};
+  auto const start = Utils::Vector3i{p3m.fft.plan[3].start};
+  auto const end = start + Utils::Vector3i{p3m.fft.plan[3].new_mesh};
 
   p3m.g_force.resize(size);
 
@@ -664,11 +664,8 @@ template <int cao> void calc_influence_function_force() {
   for (n[0] = p3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
     for (n[1] = p3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
       for (n[2] = p3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        auto const ind =
-            (n[2] - p3m.fft.plan[3].start[2]) +
-            p3m.fft.plan[3].new_mesh[2] * ((n[1] - p3m.fft.plan[3].start[1]) +
-                                           (p3m.fft.plan[3].new_mesh[1] *
-                                            (n[0] - p3m.fft.plan[3].start[0])));
+        auto const ind = Utils::get_linear_index(
+            n - start, Utils::Vector3i{p3m.fft.plan[3].new_mesh});
 
         if ((n[KX] % (p3m.params.mesh[RX] / 2) == 0) &&
             (n[KY] % (p3m.params.mesh[RY] / 2) == 0) &&
