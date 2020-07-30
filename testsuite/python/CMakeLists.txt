@@ -128,6 +128,7 @@ python_test(FILE writevtf.py MAX_NUM_PROC 4)
 #python_test(FILE ek_eof_one_species_x.py MAX_NUM_PROC 1 LABELS gpu) # TODO WALBERLA
 #python_test(FILE ek_eof_one_species_y.py MAX_NUM_PROC 1 LABELS gpu) TODO WALBERLA
 #python_test(FILE ek_eof_one_species_z.py MAX_NUM_PROC 1 LABELS gpu) TODO WALBERLA
+#python_test(FILE lb_pressure_tensor_acf.py MAX_NUM_PROC 4 LABELS gpu long)
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE brownian_dynamics.py MAX_NUM_PROC 1)

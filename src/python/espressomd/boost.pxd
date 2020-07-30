@@ -30,3 +30,7 @@ cdef extern from "boost/utility/string_ref.hpp" namespace "boost":
 
         string to_string()
         const char * data()
+
+cdef extern from "boost/mpi/environment.hpp" namespace "boost::mpi":
+    cdef cppclass environment:
+        pass
