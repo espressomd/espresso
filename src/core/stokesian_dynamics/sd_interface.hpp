@@ -25,39 +25,15 @@
 #ifndef STOKESIAN_DYNAMICS_INTERFACE_H
 #define STOKESIAN_DYNAMICS_INTERFACE_H
 
-#include "ParticleRange.hpp"
 #include "config.hpp"
+
+#ifdef STOKESIAN_DYNAMICS
+#include "ParticleRange.hpp"
+
+#include <boost/mpi/communicator.hpp>
 
 #include <string>
 #include <unordered_map>
-#include <utils/Vector.hpp>
-
-#ifdef STOKESIAN_DYNAMICS
-
-/* type for particle data transfer between nodes */
-struct SD_particle_data {
-  int on_node = -1;
-  int id = -1;
-  int type = 0;
-
-  /* particle radius */
-  double r = -1;
-
-  /* particle position */
-  Utils::Vector3d pos = {0., 0., 0.};
-
-  /* particle velocity */
-  Utils::Vector3d vel = {0., 0., 0.};
-
-  /* particle rotational velocity */
-  Utils::Vector3d omega = {0., 0., 0.};
-
-  /* external force */
-  Utils::Vector3d ext_force = {0.0, 0.0, 0.0};
-
-  /* external torque */
-  Utils::Vector3d ext_torque = {0.0, 0.0, 0.0};
-};
 
 void set_sd_viscosity(double eta);
 double get_sd_viscosity();
@@ -82,7 +58,9 @@ std::size_t get_sd_seed();
  *  is gathered from all nodes and their velocities and angular velocities are
  *  set according to the Stokesian Dynamics method.
  */
-void propagate_vel_pos_sd(const ParticleRange &particles);
+void propagate_vel_pos_sd(const ParticleRange &particles,
+                          const boost::mpi::communicator &comm,
+                          size_t time_index, double time_step);
 
 #endif // STOKESIAN_DYNAMICS
 

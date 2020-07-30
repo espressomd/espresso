@@ -19,22 +19,25 @@
 #ifndef STOKESIAN_DYNAMICS_INLINE_HPP
 #define STOKESIAN_DYNAMICS_INLINE_HPP
 
-#include "ParticleRange.hpp"
 #include "config.hpp"
+
+#ifdef STOKESIAN_DYNAMICS
+#include "ParticleRange.hpp"
+#include "communication.hpp"
+#include "integrate.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
 
 #include <utils/Vector.hpp>
 
-#ifdef STOKESIAN_DYNAMICS
-
 inline void
 stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
   auto const skin2 = Utils::sqr(0.5 * skin);
 
   // Compute new (translational and rotational) velocities
-  propagate_vel_pos_sd(particles);
+  propagate_vel_pos_sd(particles, comm_cart, std::round(sim_time / time_step),
+                       time_step);
 
   for (auto &p : particles) {
 
