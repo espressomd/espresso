@@ -25,7 +25,6 @@
 #ifndef STOKESIAN_DYNAMICS_INTERFACE_H
 #define STOKESIAN_DYNAMICS_INTERFACE_H
 
-
 #include "config.hpp"
 
 #ifdef STOKESIAN_DYNAMICS
@@ -60,7 +59,8 @@ std::size_t get_sd_seed();
  *  set according to the Stokesian Dynamics method.
  */
 void propagate_vel_pos_sd(const ParticleRange &particles,
-                          const boost::mpi::communicator &comm);
+                          const boost::mpi::communicator &comm,
+                          const size_t time_index, const double time_step);
 
 #endif // STOKESIAN_DYNAMICS
 

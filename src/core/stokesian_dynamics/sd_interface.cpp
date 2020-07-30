@@ -28,8 +28,6 @@
 #include "stokesian_dynamics/sd_gpu.hpp"
 #endif
 
-#include "integrate.hpp"
-
 #include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
@@ -183,7 +181,8 @@ void set_sd_flags(int flg) { sd_flags = flg; }
 int get_sd_flags() { return sd_flags; }
 
 void propagate_vel_pos_sd(const ParticleRange &particles,
-                          const boost::mpi::communicator &comm) {
+                          const boost::mpi::communicator &comm,
+                          const size_t time_index, const double time_step) {
   assert(device != INVALID);
 
   static std::vector<SD_particle_data> parts_buffer{};
@@ -231,19 +230,20 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
       ++i;
     }
 
-    std::size_t offset = std::round(sim_time / time_step);
     switch (device) {
 #ifdef STOKESIAN_DYNAMICS
     case CPU:
-      v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                    std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
+      v_sd =
+          sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
+                 std::sqrt(sd_kT / time_step), time_index, sd_seed, sd_flags);
       break;
 #endif
 
 #ifdef STOKESIAN_DYNAMICS_GPU
     case GPU:
-      v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                    std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
+      v_sd =
+          sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
+                 std::sqrt(sd_kT / time_step), time_index, sd_seed, sd_flags);
       break;
 #endif
     default:
@@ -253,8 +253,8 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
     v_sd.resize(particles.size() * 6);
   } // if (this_node == 0) {...} else
 
-  Utils::Mpi::scatter_buffer(
-      v_sd.data(), static_cast<int>(particles.size() * 6), comm, 0);
+  Utils::Mpi::scatter_buffer(v_sd.data(),
+                             static_cast<int>(particles.size() * 6), comm, 0);
   sd_update_locally(particles);
 }
 
