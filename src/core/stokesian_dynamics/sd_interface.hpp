@@ -60,7 +60,7 @@ std::size_t get_sd_seed();
  */
 void propagate_vel_pos_sd(const ParticleRange &particles,
                           const boost::mpi::communicator &comm,
-                          const size_t time_index, const double time_step);
+                          size_t time_index, double time_step);
 
 #endif // STOKESIAN_DYNAMICS
 
