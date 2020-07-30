@@ -428,9 +428,6 @@ void mpi_gather_stats_slave(int, int job_slave) {
 /*************** TIME STEP ************/
 void mpi_set_time_step_slave(double dt) {
   time_step = dt;
-  time_step_squared = time_step * time_step;
-  time_step_squared_half = time_step_squared / 2.;
-  time_step_half = time_step / 2.;
 
   on_parameter_change(FIELD_TIMESTEP);
 }

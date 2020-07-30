@@ -41,9 +41,6 @@ extern int n_verlet_updates;
 
 /** Time step for the integration. */
 extern double time_step;
-extern double time_step_half;
-extern double time_step_squared;
-extern double time_step_squared_half;
 
 /** Actual simulation time (only on MASTER NODE). */
 extern double sim_time;
