@@ -154,40 +154,40 @@ void openmpi_fix_vader() {
   }
 }
 
-  /**
-   * @brief Assure that openmpi is loaded to the global namespace.
-   *
-   * This was originally inspired by mpi4py
-   * (https://github.com/mpi4py/mpi4py/blob/4e3f47b6691c8f5a038e73f84b8d43b03f16627f/src/lib-mpi/compat/openmpi.h).
-   * It's needed because OpenMPI dlopens its submodules. These are unable to
-   * find the top-level OpenMPI library if that was dlopened itself, i.e. when
-   * the Python interpreter dlopens a module that is linked against OpenMPI.
-   * It's about some weird two-level symbol namespace thing.
-   */
-  void openmpi_global_namespace() {
+/**
+ * @brief Assure that openmpi is loaded to the global namespace.
+ *
+ * This was originally inspired by mpi4py
+ * (https://github.com/mpi4py/mpi4py/blob/4e3f47b6691c8f5a038e73f84b8d43b03f16627f/src/lib-mpi/compat/openmpi.h).
+ * It's needed because OpenMPI dlopens its submodules. These are unable to
+ * find the top-level OpenMPI library if that was dlopened itself, i.e. when
+ * the Python interpreter dlopens a module that is linked against OpenMPI.
+ * It's about some weird two-level symbol namespace thing.
+ */
+void openmpi_global_namespace() {
 #ifdef RTLD_NOLOAD
-    const int mode = RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD;
+  const int mode = RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD;
 #else
-    const int mode = RTLD_NOW | RTLD_GLOBAL;
+  const int mode = RTLD_NOW | RTLD_GLOBAL;
 #endif
 
-    const void *_openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
-    if (!_openmpi_symbol) {
-      fprintf(stderr, "Aborting because unable to find OpenMPI symbol.\n");
-      errexit();
-    }
-
-    Dl_info _openmpi_info;
-    dladdr(_openmpi_symbol, &_openmpi_info);
-
-    const void *handle = dlopen(_openmpi_info.dli_fname, mode);
-
-    if (!handle) {
-      fprintf(stderr, "Aborting because unable to load libmpi into the "
-                      "global symbol space.\n");
-      errexit();
-    }
+  const void *_openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
+  if (!_openmpi_symbol) {
+    fprintf(stderr, "Aborting because unable to find OpenMPI symbol.\n");
+    errexit();
   }
+
+  Dl_info _openmpi_info;
+  dladdr(_openmpi_symbol, &_openmpi_info);
+
+  const void *handle = dlopen(_openmpi_info.dli_fname, mode);
+
+  if (!handle) {
+    fprintf(stderr, "Aborting because unable to load libmpi into the "
+                    "global symbol space.\n");
+    errexit();
+  }
+}
 } // namespace
 #endif
 
