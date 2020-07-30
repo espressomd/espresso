@@ -69,11 +69,6 @@ struct p3m_data_struct {
   /** square of sum of charges (only on master node). */
   double square_sum_q;
 
-  /** help variable for calculation of aliasing sums */
-  std::vector<double> meshift_x;
-  std::vector<double> meshift_y;
-  std::vector<double> meshift_z;
-
   /** Spatial differential operator in k-space. We use an i*k differentiation.
    */
   std::array<std::vector<double>, 3> d_op;

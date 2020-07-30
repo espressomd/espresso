@@ -98,9 +98,6 @@ static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
  */
 static bool p3m_sanity_checks_boxl();
 
-/** Shift the mesh points by mesh/2 */
-static void p3m_calc_meshift();
-
 /** Calculate the Fourier transformed differential operator.
  *  Remark: This is done on the level of n-vectors and not k-vectors,
  *          i.e. the prefactor i*2*PI/L is missing!
@@ -583,30 +580,7 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
   return 0.0;
 }
 
-void p3m_calc_meshift() {
-  p3m.meshift_x.resize(p3m.params.mesh[0]);
-  p3m.meshift_y.resize(p3m.params.mesh[1]);
-  p3m.meshift_z.resize(p3m.params.mesh[2]);
-
-  p3m.meshift_x[0] = p3m.meshift_y[0] = p3m.meshift_z[0] = 0;
-  for (int i = 1; i <= p3m.params.mesh[RX] / 2; i++) {
-    p3m.meshift_x[i] = i;
-    p3m.meshift_x[p3m.params.mesh[0] - i] = -i;
-  }
-
-  for (int i = 1; i <= p3m.params.mesh[RY] / 2; i++) {
-    p3m.meshift_y[i] = i;
-    p3m.meshift_y[p3m.params.mesh[1] - i] = -i;
-  }
-
-  for (int i = 1; i <= p3m.params.mesh[RZ] / 2; i++) {
-    p3m.meshift_z[i] = i;
-    p3m.meshift_z[p3m.params.mesh[2] - i] = -i;
-  }
-}
-
 void p3m_calc_differential_operator() {
-
   for (int i = 0; i < 3; i++) {
     p3m.d_op[i].resize(p3m.params.mesh[i]);
     p3m.d_op[i][0] = 0;
@@ -639,7 +613,8 @@ calc_meshift(std::array<int, 3> const &mesh_size) {
 
 template <size_t cao, size_t S, size_t m> struct InfluenceFunction {
   std::vector<double> operator()(const P3MParameters &params,
-                                 const fft_data_struct &fft) const {
+                                 const fft_data_struct &fft,
+                                 const Utils::Vector3d &box_l) const {
     auto const shifts =
         calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});
 
@@ -658,7 +633,6 @@ template <size_t cao, size_t S, size_t m> struct InfluenceFunction {
     }
 
     auto const h = Utils::Vector3d{params.a};
-    auto const box_l = box_geo.length();
 
     Utils::Vector3i n{};
     for (n[0] = fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
@@ -696,12 +670,12 @@ using InfluenceFunctionForce = InfluenceFunction<cao, 1, 0>;
 
 void p3m_calc_influence_function_force() {
   p3m.g_force = Utils::integral_parameter<InfluenceFunctionForce, 1, 7>(
-      p3m.params.cao, p3m.params, p3m.fft);
+      p3m.params.cao, p3m.params, p3m.fft, box_geo.length());
 }
 
 void p3m_calc_influence_function_energy() {
   p3m.g_energy = Utils::integral_parameter<InfluenceFunctionEnergy, 1, 7>(
-      p3m.params.cao, p3m.params, p3m.fft);
+      p3m.params.cao, p3m.params, p3m.fft, box_geo.length());
 }
 
 #define P3M_TUNE_MAX_CUTS 50
