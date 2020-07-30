@@ -24,6 +24,7 @@
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
+#include "communication.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -34,7 +35,7 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
   auto const skin2 = Utils::sqr(0.5 * skin);
 
   // Compute new (translational and rotational) velocities
-  propagate_vel_pos_sd(particles);
+  propagate_vel_pos_sd(particles, comm_cart);
 
   for (auto &p : particles) {
 

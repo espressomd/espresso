@@ -17,19 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "sd_interface.hpp"
 
 #if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+#ifdef STOKESIAN_DYNAMICS
+#include "stokesian_dynamics/sd_cpu.hpp"
+#endif
 
-#include <string>
-#include <unordered_map>
-#include <vector>
+#ifdef STOKESIAN_DYNAMICS_GPU
+#include "stokesian_dynamics/sd_gpu.hpp"
+#endif
 
-#include <boost/config.hpp>
-
-#include "ParticleRange.hpp"
-#include "communication.hpp"
-#include "errorhandling.hpp"
 #include "integrate.hpp"
 
 #include <utils/Vector.hpp>
@@ -39,15 +37,7 @@
 #include <boost/range/algorithm.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>
 
-#ifdef STOKESIAN_DYNAMICS
-#include "stokesian_dynamics/sd_cpu.hpp"
-#endif
-
-#ifdef STOKESIAN_DYNAMICS_GPU
-#include "stokesian_dynamics/sd_gpu.hpp"
-#endif
-
-#include "sd_interface.hpp"
+#include <vector>
 
 namespace {
 /* type for particle data transfer between nodes */
@@ -107,7 +97,7 @@ void sd_update_locally(ParticleRange const &parts) {
     }
 
     // Copy velocities
-    p.m.v[0] = v_sd[6 * i];
+    p.m.v[0] = v_sd[6 * i + 0];
     p.m.v[1] = v_sd[6 * i + 1];
     p.m.v[2] = v_sd[6 * i + 2];
 
@@ -192,11 +182,8 @@ void set_sd_flags(int flg) { sd_flags = flg; }
 
 int get_sd_flags() { return sd_flags; }
 
-namespace {
-auto calculate_velocities() {}
-} // namespace
-
-void propagate_vel_pos_sd(const ParticleRange &particles) {
+void propagate_vel_pos_sd(const ParticleRange &particles,
+                          const boost::mpi::communicator &comm) {
   assert(device != INVALID);
 
   static std::vector<SD_particle_data> parts_buffer{};
@@ -204,11 +191,11 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
   parts_buffer.clear();
   boost::transform(particles, std::back_inserter(parts_buffer),
                    [](auto const &p) { return SD_particle_data(p); });
-  Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
+  Utils::Mpi::gather_buffer(parts_buffer, comm, 0);
 
   /** Buffer that holds local particle data, and all particles on the master
    * node used for sending particle data to master node. */
-  if (this_node == 0) {
+  if (comm.rank() == 0) {
     std::size_t n_part = parts_buffer.size();
 
     static std::vector<double> x_host{};
@@ -267,7 +254,7 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
   } // if (this_node == 0) {...} else
 
   Utils::Mpi::scatter_buffer(
-      v_sd.data(), static_cast<int>(particles.size() * 6), comm_cart, 0);
+      v_sd.data(), static_cast<int>(particles.size() * 6), comm, 0);
   sd_update_locally(particles);
 }
 

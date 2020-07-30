@@ -25,14 +25,16 @@
 #ifndef STOKESIAN_DYNAMICS_INTERFACE_H
 #define STOKESIAN_DYNAMICS_INTERFACE_H
 
-#include "ParticleRange.hpp"
+
 #include "config.hpp"
+
+#ifdef STOKESIAN_DYNAMICS
+#include "ParticleRange.hpp"
+
+#include <boost/mpi/communicator.hpp>
 
 #include <string>
 #include <unordered_map>
-#include <utils/Vector.hpp>
-
-#ifdef STOKESIAN_DYNAMICS
 
 void set_sd_viscosity(double eta);
 double get_sd_viscosity();
@@ -57,7 +59,8 @@ std::size_t get_sd_seed();
  *  is gathered from all nodes and their velocities and angular velocities are
  *  set according to the Stokesian Dynamics method.
  */
-void propagate_vel_pos_sd(const ParticleRange &particles);
+void propagate_vel_pos_sd(const ParticleRange &particles,
+                          const boost::mpi::communicator &comm);
 
 #endif // STOKESIAN_DYNAMICS
 
