@@ -58,16 +58,12 @@ struct SD_particle_data {
   Utils::Vector3d pos = {0., 0., 0.};
 
   /* external force */
-  Utils::Vector3d ext_force = {0.0, 0.0, 0.0};
-
-  /* external torque */
-  Utils::Vector3d ext_torque = {0.0, 0.0, 0.0};
+  ParticleForce ext_force;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &type;
     ar &pos;
     ar &ext_force;
-    ar &ext_torque;
   }
 };
 
@@ -105,10 +101,7 @@ void sd_gather_local_particles(ParticleRange const &parts) {
   for (auto const &p : parts) {
     parts_buffer[i].type = p.p.type;
     parts_buffer[i].pos = p.r.p;
-
-    parts_buffer[i].ext_force = p.f.f;
-
-    parts_buffer[i].ext_torque = p.f.torque;
+    parts_buffer[i].ext_force = p.f;
 
     i++;
   }
@@ -230,13 +223,13 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
         x_host[6 * i + 4] = 0;
         x_host[6 * i + 5] = 0;
 
-        f_host[6 * i + 0] = p.ext_force[0];
-        f_host[6 * i + 1] = p.ext_force[1];
-        f_host[6 * i + 2] = p.ext_force[2];
+        f_host[6 * i + 0] = p.ext_force.f[0];
+        f_host[6 * i + 1] = p.ext_force.f[1];
+        f_host[6 * i + 2] = p.ext_force.f[2];
 
-        f_host[6 * i + 3] = p.ext_torque[0];
-        f_host[6 * i + 4] = p.ext_torque[1];
-        f_host[6 * i + 5] = p.ext_torque[2];
+        f_host[6 * i + 3] = p.ext_force.torque[0];
+        f_host[6 * i + 4] = p.ext_force.torque[1];
+        f_host[6 * i + 5] = p.ext_force.torque[2];
 
         double radius = radius_dict[p.type];
 
