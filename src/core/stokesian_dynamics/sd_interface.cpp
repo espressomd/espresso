@@ -31,12 +31,12 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrate.hpp"
-#include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
 
+#include <boost/range/algorithm.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>
 
 #ifdef STOKESIAN_DYNAMICS
@@ -52,6 +52,10 @@
 namespace {
 /* type for particle data transfer between nodes */
 struct SD_particle_data {
+  SD_particle_data() = default;
+  explicit SD_particle_data(Particle const &p)
+      : type(p.p.type), pos(p.r.p), ext_force(p.f) {}
+
   int type = 0;
 
   /* particle position */
@@ -79,10 +83,6 @@ std::size_t sd_seed = 0UL;
 
 int sd_flags = 0;
 
-/** Buffer that holds local particle data, and all particles on the master node
- *  used for sending particle data to master node. */
-std::vector<SD_particle_data> parts_buffer{};
-
 /** Buffer that holds the (translational and angular) velocities of the local
  *  particles on each node, used for returning results. */
 std::vector<double> v_sd{};
@@ -90,22 +90,6 @@ std::vector<double> v_sd{};
 } // namespace
 
 BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
-
-/** Pack selected properties of all local particles into a buffer. */
-void sd_gather_local_particles(ParticleRange const &parts) {
-  std::size_t n_part = parts.size();
-
-  parts_buffer.resize(n_part);
-  std::size_t i = 0;
-
-  for (auto const &p : parts) {
-    parts_buffer[i].type = p.p.type;
-    parts_buffer[i].pos = p.r.p;
-    parts_buffer[i].ext_force = p.f;
-
-    i++;
-  }
-}
 
 /** Update translational and rotational velocities of all particles. */
 void sd_update_locally(ParticleRange const &parts) {
@@ -183,120 +167,107 @@ void set_sd_flags(int flg) { sd_flags = flg; }
 int get_sd_flags() { return sd_flags; }
 
 void propagate_vel_pos_sd(const ParticleRange &particles) {
-  std::size_t n_part_local = particles.size();
+  static std::vector<SD_particle_data> parts_buffer{};
 
+  parts_buffer.clear();
+  boost::transform(particles, std::back_inserter(parts_buffer),
+                   [](auto const &p) { return SD_particle_data(p); });
+  Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
+
+  /** Buffer that holds local particle data, and all particles on the master
+   * node used for sending particle data to master node. */
   if (this_node == 0) {
-    if (integ_switch & INTEG_METHOD_SD) {
-      if (BOOST_UNLIKELY(sd_viscosity < 0.0)) {
-        runtimeErrorMsg() << "sd_viscosity has an invalid value: " +
-                                 std::to_string(sd_viscosity);
-        return;
-      }
-
-      if (BOOST_UNLIKELY(sd_kT < 0.0)) {
-        runtimeErrorMsg() << "sd_kT has an invalid value: " +
-                                 std::to_string(sd_viscosity);
-        return;
-      }
-
-      sd_gather_local_particles(particles);
-      Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
-
-      std::size_t n_part = parts_buffer.size();
-
-      static std::vector<double> x_host{};
-      static std::vector<double> f_host{};
-      static std::vector<double> a_host{};
-
-      // n_part not expected to change, but anyway ...
-      x_host.resize(6 * n_part);
-      f_host.resize(6 * n_part);
-      a_host.resize(n_part);
-
-      std::size_t i = 0;
-      for (auto const &p : parts_buffer) {
-        x_host[6 * i + 0] = p.pos[0];
-        x_host[6 * i + 1] = p.pos[1];
-        x_host[6 * i + 2] = p.pos[2];
-        // Actual orientation is not needed, just need default.
-        x_host[6 * i + 3] = 1;
-        x_host[6 * i + 4] = 0;
-        x_host[6 * i + 5] = 0;
-
-        f_host[6 * i + 0] = p.ext_force.f[0];
-        f_host[6 * i + 1] = p.ext_force.f[1];
-        f_host[6 * i + 2] = p.ext_force.f[2];
-
-        f_host[6 * i + 3] = p.ext_force.torque[0];
-        f_host[6 * i + 4] = p.ext_force.torque[1];
-        f_host[6 * i + 5] = p.ext_force.torque[2];
-
-        double radius = radius_dict[p.type];
-
-        if (BOOST_UNLIKELY(radius < 0.0)) {
-          runtimeErrorMsg()
-              << "particle of type " +
-                     std::to_string(int(parts_buffer[i].type)) +
-                     " has an invalid radius: " + std::to_string(radius);
-          return;
-        }
-
-        a_host[i] = radius;
-
-        ++i;
-      }
-
-      std::size_t offset = std::round(sim_time / time_step);
-      switch (device) {
-
-#ifdef STOKESIAN_DYNAMICS
-      case CPU:
-        v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                      std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
-        break;
-#endif
-
-#ifdef STOKESIAN_DYNAMICS_GPU
-      case GPU:
-        v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                      std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
-        break;
-#endif
-
-      default:
-        runtimeErrorMsg()
-            << "Invalid device for Stokesian dynamics. Available devices:"
-#ifdef STOKESIAN_DYNAMICS
-               " cpu"
-#endif
-#ifdef STOKESIAN_DYNAMICS_GPU
-               " gpu"
-#endif
-            ;
-        return;
-      }
-
-      Utils::Mpi::scatter_buffer(
-          v_sd.data(), static_cast<int>(n_part_local * 6), comm_cart, 0);
-      sd_update_locally(particles);
+    if (BOOST_UNLIKELY(sd_viscosity < 0.0)) {
+      runtimeErrorMsg() << "sd_viscosity has an invalid value: " +
+                               std::to_string(sd_viscosity);
+      return;
     }
 
+    if (BOOST_UNLIKELY(sd_kT < 0.0)) {
+      runtimeErrorMsg() << "sd_kT has an invalid value: " +
+                               std::to_string(sd_kT);
+      return;
+    }
+
+    std::size_t n_part = parts_buffer.size();
+
+    static std::vector<double> x_host{};
+    static std::vector<double> f_host{};
+    static std::vector<double> a_host{};
+
+    x_host.resize(6 * n_part);
+    f_host.resize(6 * n_part);
+    a_host.resize(n_part);
+
+    std::size_t i = 0;
+    for (auto const &p : parts_buffer) {
+      x_host[6 * i + 0] = p.pos[0];
+      x_host[6 * i + 1] = p.pos[1];
+      x_host[6 * i + 2] = p.pos[2];
+      // Actual orientation is not needed, just need default.
+      x_host[6 * i + 3] = 1;
+      x_host[6 * i + 4] = 0;
+      x_host[6 * i + 5] = 0;
+
+      f_host[6 * i + 0] = p.ext_force.f[0];
+      f_host[6 * i + 1] = p.ext_force.f[1];
+      f_host[6 * i + 2] = p.ext_force.f[2];
+
+      f_host[6 * i + 3] = p.ext_force.torque[0];
+      f_host[6 * i + 4] = p.ext_force.torque[1];
+      f_host[6 * i + 5] = p.ext_force.torque[2];
+
+      double radius = radius_dict[p.type];
+
+      if (BOOST_UNLIKELY(radius < 0.0)) {
+        runtimeErrorMsg() << "particle of type " +
+                                 std::to_string(int(parts_buffer[i].type)) +
+                                 " has an invalid radius: " +
+                                 std::to_string(radius);
+        return;
+      }
+
+      a_host[i] = radius;
+
+      ++i;
+    }
+
+    std::size_t offset = std::round(sim_time / time_step);
+    switch (device) {
+
+#ifdef STOKESIAN_DYNAMICS
+    case CPU:
+      v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
+                    std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
+      break;
+#endif
+
+#ifdef STOKESIAN_DYNAMICS_GPU
+    case GPU:
+      v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
+                    std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
+      break;
+#endif
+
+    default:
+      runtimeErrorMsg()
+          << "Invalid device for Stokesian dynamics. Available devices:"
+#ifdef STOKESIAN_DYNAMICS
+             " cpu"
+#endif
+#ifdef STOKESIAN_DYNAMICS_GPU
+             " gpu"
+#endif
+          ;
+      return;
+    }
   } else { // if (this_node == 0)
-
-    if (thermo_switch & THERMO_SD) {
-      sd_gather_local_particles(particles);
-      Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
-
-      v_sd.resize(n_part_local * 6);
-
-      // now wait while master node is busy ...
-
-      Utils::Mpi::scatter_buffer(
-          v_sd.data(), static_cast<int>(n_part_local * 6), comm_cart, 0);
-      sd_update_locally(particles);
-    }
-
+    v_sd.resize(particles.size() * 6);
   } // if (this_node == 0) {...} else
+
+  Utils::Mpi::scatter_buffer(
+      v_sd.data(), static_cast<int>(particles.size() * 6), comm_cart, 0);
+  sd_update_locally(particles);
 }
 
 #endif // STOKESIAN_DYNAMICS
