@@ -267,25 +267,7 @@ if(WITH_STOKESIAN_DYNAMICS)
   if(BLAS AND LAPACK)
     set(STOKESIAN_DYNAMICS 1)
   endif()
-  if(CUDA)
-    set(STOKESIAN_DYNAMICS_GPU 1)
-    if(HIP)
-      find_gpu_library(VARNAME CUDA_CUBLAS_LIBRARIES NAMES rocblas)
-      find_gpu_library(VARNAME CUDA_cusolver_LIBRARY NAMES rocsolver)
-    else()
-      if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
-        # when importing package cublas, CMake versions older than 3.12.2 will
-        # look for a library cublas_device that no longer exists in CUDA 10
-        cmake_minimum_required(VERSION 3.12.2)
-      endif()
-      find_gpu_library(VARNAME CUDA_CUBLAS_LIBRARIES NAMES cublas)
-      find_gpu_library(VARNAME CUDA_cusolver_LIBRARY NAMES cusolver)
-    endif()
-  endif(CUDA)
-  if(NOT (STOKESIAN_DYNAMICS
-          OR (STOKESIAN_DYNAMICS_GPU AND CUDA_CUBLAS_LIBRARIES
-              AND CUDA_cusolver_LIBRARY))
-     AND NOT WITH_STOKESIAN_DYNAMICS_IS_DEFAULT_VALUE)
+  if(NOT STOKESIAN_DYNAMICS AND NOT WITH_STOKESIAN_DYNAMICS_IS_DEFAULT_VALUE)
     message(
       FATAL_ERROR
         "Optional feature Stokesian Dynamics explicitly requested, but dependencies not found."
