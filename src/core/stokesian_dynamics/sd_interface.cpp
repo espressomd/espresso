@@ -35,11 +35,11 @@
 #include "rotation.hpp"
 #include "thermostat.hpp"
 
-#include "serialization/SD_particle_data.hpp"
-
 #include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
+
+#include <boost/serialization/is_bitwise_serializable.hpp>
 
 #ifdef STOKESIAN_DYNAMICS
 #include "stokesian_dynamics/sd_cpu.hpp"
@@ -52,6 +52,43 @@
 #include "sd_interface.hpp"
 
 namespace {
+/* type for particle data transfer between nodes */
+struct SD_particle_data {
+  int on_node = -1;
+  int id = -1;
+  int type = 0;
+
+  /* particle radius */
+  double r = -1;
+
+  /* particle position */
+  Utils::Vector3d pos = {0., 0., 0.};
+
+  /* particle velocity */
+  Utils::Vector3d vel = {0., 0., 0.};
+
+  /* particle rotational velocity */
+  Utils::Vector3d omega = {0., 0., 0.};
+
+  /* external force */
+  Utils::Vector3d ext_force = {0.0, 0.0, 0.0};
+
+  /* external torque */
+  Utils::Vector3d ext_torque = {0.0, 0.0, 0.0};
+
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar &on_node;
+    ar &id;
+    ar &type;
+    ar &r;
+    ar &pos;
+    ar &vel;
+    ar &omega;
+    ar &ext_force;
+    ar &ext_torque;
+  }
+};
+
 double sd_viscosity = -1.0;
 
 enum { CPU, GPU, INVALID } device = INVALID;
@@ -73,6 +110,8 @@ std::vector<SD_particle_data> parts_buffer{};
 std::vector<double> v_sd{};
 
 } // namespace
+
+BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
 
 /** Pack selected properties of all local particles into a buffer. */
 void sd_gather_local_particles(ParticleRange const &parts) {

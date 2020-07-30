@@ -34,31 +34,6 @@
 
 #ifdef STOKESIAN_DYNAMICS
 
-/* type for particle data transfer between nodes */
-struct SD_particle_data {
-  int on_node = -1;
-  int id = -1;
-  int type = 0;
-
-  /* particle radius */
-  double r = -1;
-
-  /* particle position */
-  Utils::Vector3d pos = {0., 0., 0.};
-
-  /* particle velocity */
-  Utils::Vector3d vel = {0., 0., 0.};
-
-  /* particle rotational velocity */
-  Utils::Vector3d omega = {0., 0., 0.};
-
-  /* external force */
-  Utils::Vector3d ext_force = {0.0, 0.0, 0.0};
-
-  /* external torque */
-  Utils::Vector3d ext_torque = {0.0, 0.0, 0.0};
-};
-
 void set_sd_viscosity(double eta);
 double get_sd_viscosity();
 
