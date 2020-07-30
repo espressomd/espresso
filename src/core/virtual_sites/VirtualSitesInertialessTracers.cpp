@@ -47,8 +47,6 @@ void VirtualSitesInertialessTracers::after_force_calc() {
     if (in_local_halo(p.r.p)) {
       add_md_force(p.r.p / lb_lbfluid_get_agrid(), -p.f.f);
     }
-    p.m.v = lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
-            lb_lbfluid_get_lattice_speed();
   };
   for (auto const &p : cell_structure.ghost_particles()) {
     if (!p.p.is_virtual)
@@ -74,6 +72,8 @@ void VirtualSitesInertialessTracers::after_lb_propagation() {
       runtimeErrorMsg() << "LB needs to be active for inertialess tracers.";
       return;
     };
+    p.m.v = lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
+            lb_lbfluid_get_lattice_speed();
     for (int i = 0; i < 3; i++) {
       if (!(p.p.ext_flag & COORD_FIXED(i))) {
         p.r.p[i] += p.m.v[i] * time_step;

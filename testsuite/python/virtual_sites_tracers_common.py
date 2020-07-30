@@ -88,7 +88,6 @@ class VirtualSitesTracersCommon:
             p = self.system.part.add(pos=pos, ext_force=force, virtual=True)
 
             coupling_pos = p.pos
-            v_fluid = np.copy(self.lbf.get_interpolated_velocity(coupling_pos))
             # Nodes to which forces will be interpolated
             lb_nodes = get_lb_nodes_around_pos(
                 coupling_pos, self.lbf)
@@ -97,6 +96,9 @@ class VirtualSitesTracersCommon:
                 [n.last_applied_force for n in lb_nodes],
                 np.zeros((len(lb_nodes), 3)))
             self.system.integrator.run(1)
+            
+            v_fluid = np.copy(self.lbf.get_interpolated_velocity(coupling_pos))
+            
             # Check particle velocity
             np.testing.assert_allclose(np.copy(p.v), v_fluid)
 
