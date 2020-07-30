@@ -31,8 +31,6 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
-#include "rotation.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
