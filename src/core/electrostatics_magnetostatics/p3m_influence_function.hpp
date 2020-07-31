@@ -29,151 +29,162 @@
 
 #include <cmath>
 
+namespace detail {
+enum : int { RX = 0, RY = 1, RZ = 2 };
+
+std::array<std::vector<int>, 3> inline calc_meshift(
+    std::array<int, 3> const &mesh_size) {
+  std::array<std::vector<int>, 3> ret;
+
+  for (size_t i = 0; i < 3; i++) {
+    ret[i].resize(mesh_size[i]);
+
+    ret[i][0] = 0;
+    for (int j = 1; j <= mesh_size[i] / 2; j++) {
+      ret[i][j] = j;
+      ret[i][mesh_size[i] - j] = -j;
+    }
+  }
+
+  return ret;
+}
+
+template <typename T> T g_ewald(T alpha, T k2) {
+  auto constexpr limit = T{30};
+  auto const exponent = Utils::sqr(1. / (2. * alpha)) * k2;
+  return (exponent < limit) ? std::exp(-exponent) * (4. * Utils::pi<T>() / k2)
+                            : 0.0;
+}
+
+template <size_t S, size_t m>
+std::pair<double, double> aliasing_sums_ik(size_t cao, double alpha,
+                                           const Utils::Vector3d &k,
+                                           const Utils::Vector3d &h) {
+  using Utils::int_pow;
+  using Utils::pi;
+  using Utils::sinc;
+  using Utils::Vector3d;
+
+  double numerator = 0.0;
+  double denominator = 0.0;
+
+  for (int mx = -m; mx <= m; mx++) {
+    for (int my = -m; my <= m; my++) {
+      for (int mz = -m; mz <= m; mz++) {
+        auto const km =
+            k + 2 * pi() * Vector3d{mx / h[RX], my / h[RY], mz / h[RZ]};
+        auto const U2 = std::pow(sinc(0.5 * km[RX] * h[RX] / pi()) *
+                                     sinc(0.5 * km[RY] * h[RY] / pi()) *
+                                     sinc(0.5 * km[RZ] * h[RZ] / pi()),
+                                 2 * cao);
+
+        numerator += U2 * g_ewald(alpha, km.norm2()) * int_pow<S>(k * km);
+        denominator += U2;
+      }
+    }
+  }
+  return {numerator, denominator};
+}
+} // namespace detail
+
 /**
- * @brief Functor for calculating the Hockney/Eastwood/Ballenegger
- *        generic P3M influence function.
+ * @brief Hockney/Eastwood/Ballenegger optimal influence function.
  *
- * @tparam cao Charge assignment order.
- * @tparam S Power of the differential operator e.g. 0 for energy,
- *           1 for force and so on.
+ *  This implements Eq. 30 of @cite cerda08d, which can be used
+ *  for monopole and dipole P3M by choosing the appropriate S factor.
+ *
+ * @tparam S Order of the differential operator, e.g. 0 for potential,
+ *          1 for electric field, ...
  * @tparam m Number of aliasing terms to take into account.
+ * @tparam Real Floating-point type.
+ *
+ * @param cao Charge assignment order.
+ * @param alpha Ewald splitting parameter.
+ * @param k k Vector to evaluate the function for.
+ * @param h Grid spacing.
  */
-template <size_t cao, size_t S, size_t m> struct InfluenceFunction {
-private:
+template <size_t S, size_t m, class T>
+double G_opt(size_t cao, T alpha, const Utils::Vector3<T> &k,
+             const Utils::Vector3<T> &h) {
+  using Utils::int_pow;
+  using Utils::sqr;
+
+  auto const k2 = k.norm2();
+  if (k2 == 0.0) {
+    return 0.0;
+  }
+
+  const auto as = detail::aliasing_sums_ik<S, m>(cao, alpha, k, h);
+  return as.first / (int_pow<S>(k2) * sqr(as.second));
+}
+
+/**
+ * @brief Map influence function over a grid.
+ *
+ * This evaluates the optimal influence function @ref G_opt
+ * over a regular grid of k vectors, and returns the values as a vector.
+ *
+ *  @tparam S Order of the differential operator, e.g. 0 for potential,
+ *          1 for electric field...
+ * @tparam m Number of aliasing terms to take into account.
+ * @tparam Real Floating-point type.
+ *
+ * @param params P3M parameters
+ * @param fft Grid description
+ * @param box_l Box size
+ * @return Values of G_opt at regular grid points.
+ */
+template <size_t S, size_t m = 0>
+std::vector<double> grid_influence_function(const P3MParameters &params,
+                                            const fft_data_struct &fft,
+                                            const Utils::Vector3d &box_l) {
   enum : int { RX = 0, RY = 1, RZ = 2 };
   enum : int { KY = 0, KZ = 1, KX = 2 };
 
-  std::array<std::vector<int>, 3>
-  calc_meshift(std::array<int, 3> const &mesh_size) const {
-    std::array<std::vector<int>, 3> ret;
+  auto const shifts =
+      detail::calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});
 
-    for (size_t i = 0; i < 3; i++) {
-      ret[i].resize(mesh_size[i]);
+  auto const size =
+      boost::accumulate(fft.plan[3].new_mesh, 1, std::multiplies<>());
+  auto const start = Utils::Vector3i{fft.plan[3].start};
+  auto const end = start + Utils::Vector3i{fft.plan[3].new_mesh};
 
-      ret[i][0] = 0;
-      for (int j = 1; j <= mesh_size[i] / 2; j++) {
-        ret[i][j] = j;
-        ret[i][mesh_size[i] - j] = -j;
-      }
-    }
+  /* The influence function grid */
+  auto g = std::vector<double>(size, 0.);
 
-    return ret;
-  }
-
-  template <typename T> T g_ewald(T alpha, T k2) const {
-    auto constexpr limit = T{30};
-    auto const exponent = Utils::sqr(1. / (2. * alpha)) * k2;
-    return (exponent < limit) ? std::exp(-exponent) * (4. * Utils::pi<T>() / k2)
-                              : 0.0;
-  }
-
-  std::pair<double, double> aliasing_sums_ik(double alpha,
-                                             const Utils::Vector3d &k,
-                                             const Utils::Vector3d &h) const {
-    using Utils::int_pow;
-    using Utils::pi;
-    using Utils::sinc;
-    using Utils::Vector3d;
-
-    double numerator = 0.0;
-    double denominator = 0.0;
-
-    for (int mx = -m; mx <= m; mx++) {
-      for (int my = -m; my <= m; my++) {
-        for (int mz = -m; mz <= m; mz++) {
-          auto const km =
-              k + 2 * pi() * Vector3d{mx / h[RX], my / h[RY], mz / h[RZ]};
-          auto const U2 = int_pow<2 * cao>(sinc(0.5 * km[RX] * h[RX] / pi()) *
-                                           sinc(0.5 * km[RY] * h[RY] / pi()) *
-                                           sinc(0.5 * km[RZ] * h[RZ] / pi()));
-
-          numerator += U2 * g_ewald(alpha, km.norm2()) * int_pow<S>(k * km);
-          denominator += U2;
-        }
-      }
-    }
-    return {numerator, denominator};
-  }
-
-  /**
-   * @brief Optimal influence function.
-   *  This implements Eq. 30 of @cite cerda08d, which can be used
-   *  for monopole and dipole P3M by choosing the appropriate S factor.
-   */
-  double G_opt(double alpha, const Utils::Vector3d &k,
-               const Utils::Vector3d &h) const {
-    using Utils::int_pow;
-    using Utils::sqr;
-
-    auto const k2 = k.norm2();
-    if (k2 == 0.0) {
-      return 0.0;
-    }
-
-    const auto as = aliasing_sums_ik(alpha, k, h);
-    return as.first / (int_pow<S>(k2) * sqr(as.second));
-  }
-
-public:
-  /**
-   * @brief Map influence function over a grid.
-   *
-   * This evaluates the optimal influence function @ref InfluenceFunction::G_opt
-   * over a regular grid of k vectors, and returns the values as a vector.
-   *
-   * @param params P3M parameters
-   * @param fft Grid description
-   * @param box_l Box size
-   * @return Values of G_opt at regular grid points.
-   */
-  std::vector<double> operator()(const P3MParameters &params,
-                                 const fft_data_struct &fft,
-                                 const Utils::Vector3d &box_l) const {
-    auto const shifts =
-        calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});
-
-    auto const size =
-        boost::accumulate(fft.plan[3].new_mesh, 1, std::multiplies<>());
-    auto const start = Utils::Vector3i{fft.plan[3].start};
-    auto const end = start + Utils::Vector3i{fft.plan[3].new_mesh};
-
-    /* The influence function grid */
-    auto g = std::vector<double>(size, 0.);
-
-    /* Skip influence function calculation in tuning mode,
-       the results need not be correct for timing. */
-    if (params.tuning) {
-      return g;
-    }
-
-    auto const h = Utils::Vector3d{params.a};
-
-    Utils::Vector3i n{};
-    for (n[0] = fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
-      for (n[1] = fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
-        for (n[2] = fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-          auto const ind = Utils::get_linear_index(
-              n - start, Utils::Vector3i{fft.plan[3].new_mesh},
-              Utils::MemoryOrder::ROW_MAJOR);
-
-          if ((n[KX] % (params.mesh[RX] / 2) == 0) &&
-              (n[KY] % (params.mesh[RY] / 2) == 0) &&
-              (n[KZ] % (params.mesh[RZ] / 2) == 0)) {
-            g[ind] = 0.0;
-          } else {
-            auto const k = 2 * Utils::pi() *
-                           Utils::Vector3d{shifts[RX][n[KX]] / box_l[RX],
-                                           shifts[RY][n[KY]] / box_l[RY],
-                                           shifts[RZ][n[KZ]] / box_l[RZ]};
-
-            g[ind] = G_opt(params.alpha, k, h);
-          }
-        }
-      }
-    }
-
+  /* Skip influence function calculation in tuning mode,
+     the results need not be correct for timing. */
+  if (params.tuning) {
     return g;
   }
-};
+
+  auto const h = Utils::Vector3d{params.a};
+
+  Utils::Vector3i n{};
+  for (n[0] = fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
+    for (n[1] = fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
+      for (n[2] = fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
+        auto const ind = Utils::get_linear_index(
+            n - start, Utils::Vector3i{fft.plan[3].new_mesh},
+            Utils::MemoryOrder::ROW_MAJOR);
+
+        if ((n[KX] % (params.mesh[RX] / 2) == 0) &&
+            (n[KY] % (params.mesh[RY] / 2) == 0) &&
+            (n[KZ] % (params.mesh[RZ] / 2) == 0)) {
+          g[ind] = 0.0;
+        } else {
+          auto const k = 2 * Utils::pi() *
+                         Utils::Vector3d{shifts[RX][n[KX]] / box_l[RX],
+                                         shifts[RY][n[KY]] / box_l[RY],
+                                         shifts[RZ][n[KZ]] / box_l[RZ]};
+
+          g[ind] = G_opt<S, m>(params.cao, params.alpha, k, h);
+        }
+      }
+    }
+  }
+
+  return g;
+}
 
 #endif // ESPRESSO_P3M_INFLUENCE_FUNCTION_HPP

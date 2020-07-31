@@ -593,21 +593,14 @@ void p3m_calc_differential_operator() {
   }
 }
 
-namespace {
-template <size_t cao>
-using InfluenceFunctionEnergy = InfluenceFunction<cao, 0, 0>;
-template <size_t cao>
-using InfluenceFunctionForce = InfluenceFunction<cao, 1, 0>;
-} /* namespace */
-
 void p3m_calc_influence_function_force() {
-  p3m.g_force = Utils::integral_parameter<InfluenceFunctionForce, 1, 7>(
-      p3m.params.cao, p3m.params, p3m.fft, box_geo.length());
+  p3m.g_force =
+      grid_influence_function<1>(p3m.params, p3m.fft, box_geo.length());
 }
 
 void p3m_calc_influence_function_energy() {
-  p3m.g_energy = Utils::integral_parameter<InfluenceFunctionEnergy, 1, 7>(
-      p3m.params.cao, p3m.params, p3m.fft, box_geo.length());
+  p3m.g_energy =
+      grid_influence_function<0>(p3m.params, p3m.fft, box_geo.length());
 }
 
 #define P3M_TUNE_MAX_CUTS 50
