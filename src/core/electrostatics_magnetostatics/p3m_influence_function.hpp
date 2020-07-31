@@ -19,6 +19,8 @@
 #ifndef ESPRESSO_P3M_INFLUENCE_FUNCTION_HPP
 #define ESPRESSO_P3M_INFLUENCE_FUNCTION_HPP
 
+#include "electrostatics_magnetostatics/p3m-common.hpp"
+
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/int_pow.hpp>
@@ -96,7 +98,7 @@ std::pair<double, double> aliasing_sums_ik(size_t cao, double alpha,
  * @tparam S Order of the differential operator, e.g. 0 for potential,
  *          1 for electric field, ...
  * @tparam m Number of aliasing terms to take into account.
- * @tparam Real Floating-point type.
+ * @tparam T Floating-point type.
  *
  * @param cao Charge assignment order.
  * @param alpha Ewald splitting parameter.
@@ -124,18 +126,20 @@ double G_opt(size_t cao, T alpha, const Utils::Vector3<T> &k,
  * This evaluates the optimal influence function @ref G_opt
  * over a regular grid of k vectors, and returns the values as a vector.
  *
- *  @tparam S Order of the differential operator, e.g. 0 for potential,
+ * @tparam S Order of the differential operator, e.g. 0 for potential,
  *          1 for electric field...
  * @tparam m Number of aliasing terms to take into account.
  *
  * @param params P3M parameters
- * @param fft Grid description
+ * @param n_start Lower left corner of the grid
+ * @param n_end Upper right corner of the grid.
  * @param box_l Box size
  * @return Values of G_opt at regular grid points.
  */
 template <size_t S, size_t m = 0>
 std::vector<double> grid_influence_function(const P3MParameters &params,
-                                            const fft_data_struct &fft,
+                                            const Utils::Vector3i &n_start,
+                                            const Utils::Vector3i &n_end,
                                             const Utils::Vector3d &box_l) {
   enum : int { RX = 0, RY = 1, RZ = 2 };
   enum : int { KY = 0, KZ = 1, KX = 2 };
@@ -143,13 +147,11 @@ std::vector<double> grid_influence_function(const P3MParameters &params,
   auto const shifts =
       detail::calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});
 
-  auto const size =
-      boost::accumulate(fft.plan[3].new_mesh, 1, std::multiplies<>());
-  auto const start = Utils::Vector3i{fft.plan[3].start};
-  auto const end = start + Utils::Vector3i{fft.plan[3].new_mesh};
+  auto const size = n_end - n_start;
 
   /* The influence function grid */
-  auto g = std::vector<double>(size, 0.);
+  auto g =
+      std::vector<double>(boost::accumulate(size, 1, std::multiplies<>()), 0.);
 
   /* Skip influence function calculation in tuning mode,
      the results need not be correct for timing. */
@@ -160,13 +162,11 @@ std::vector<double> grid_influence_function(const P3MParameters &params,
   auto const h = Utils::Vector3d{params.a};
 
   Utils::Vector3i n{};
-  for (n[0] = fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
-    for (n[1] = fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
-      for (n[2] = fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        auto const ind = Utils::get_linear_index(
-            n - start, Utils::Vector3i{fft.plan[3].new_mesh},
-            Utils::MemoryOrder::ROW_MAJOR);
-
+  for (n[0] = n_start[0]; n[0] < n_end[0]; n[0]++) {
+    for (n[1] = n_start[1]; n[1] < n_end[1]; n[1]++) {
+      for (n[2] = n_start[2]; n[2] < n_end[2]; n[2]++) {
+        auto const ind = Utils::get_linear_index(n - n_start, size,
+                                                 Utils::MemoryOrder::ROW_MAJOR);
         if ((n[KX] % (params.mesh[RX] / 2) == 0) &&
             (n[KY] % (params.mesh[RY] / 2) == 0) &&
             (n[KZ] % (params.mesh[RZ] / 2) == 0)) {

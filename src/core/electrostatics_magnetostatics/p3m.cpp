@@ -594,13 +594,19 @@ void p3m_calc_differential_operator() {
 }
 
 void p3m_calc_influence_function_force() {
-  p3m.g_force =
-      grid_influence_function<1>(p3m.params, p3m.fft, box_geo.length());
+  auto const start = Utils::Vector3i{p3m.fft.plan[3].start};
+  auto const size = Utils::Vector3i{p3m.fft.plan[3].new_mesh};
+
+  p3m.g_force = grid_influence_function<1>(p3m.params, start, start + size,
+                                           box_geo.length());
 }
 
 void p3m_calc_influence_function_energy() {
-  p3m.g_energy =
-      grid_influence_function<0>(p3m.params, p3m.fft, box_geo.length());
+  auto const start = Utils::Vector3i{p3m.fft.plan[3].start};
+  auto const size = Utils::Vector3i{p3m.fft.plan[3].new_mesh};
+
+  p3m.g_energy = grid_influence_function<0>(p3m.params, start, start + size,
+                                            box_geo.length());
 }
 
 #define P3M_TUNE_MAX_CUTS 50
