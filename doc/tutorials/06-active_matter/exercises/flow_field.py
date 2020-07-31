@@ -104,9 +104,8 @@ system.part.add(
 ##########################################################################
 
 # Setup the fluid (quiescent)
-
-lbf = lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0,
-                    tau=TIME_STEP)
+lbf = lb.LBFluidWalberla(agrid=1.0, dens=1.0,
+                         visc=1.0, tau=TIME_STEP)
 ## Exercise 6 ##
 # Can the particle rotate in the flow field?
 system.actors.add(lbf)
@@ -115,8 +114,13 @@ system.thermostat.set_lb(LB_fluid=lbf, gamma=20.0, seed=42)
 ##########################################################################
 
 # Output the coordinates
+vtk_base_dir = 'vtk_out/RESULTS_FLOW_FIELD'
+vtk_identifier = "T_{}_P_{}".format(mode, pos)
+vtk_outdir = os.path.join(vtk_base_dir, vtk_identifier)
+lb_vtk = lbf.add_vtk_writer(vtk_identifier, 'velocity_vector',
+                            base_folder=vtk_base_dir)
 
-with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
+with open("{}/trajectory.dat".format(vtk_outdir), 'w') as outfile:
     print("####################################################", file=outfile)
     print("#        time        position       velocity       #", file=outfile)
     print("####################################################", file=outfile)
@@ -132,9 +136,9 @@ with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
         # Output 50 simulations
         if k % (PROD_STEPS / 50) == 0:
             num = k / (PROD_STEPS / 50)
-            lbf.write_vtk(outdir, 'velocity_vector')
+            lb_vtk.write()
             system.part.writevtk(
-                "vtk_out/{}/position_{}.vtk".format(outdir, num), types=[0])
+                "{}/position_{}.vtk".format(vtk_outdir, num), types=[0])
 
         system.integrator.run(PROD_LENGTH)
 

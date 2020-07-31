@@ -144,6 +144,12 @@ protected:
   using DensityAdaptor = typename lbm::Adaptor<LatticeModel>::Density;
   using VelocityAdaptor = typename lbm::Adaptor<LatticeModel>::VelocityVector;
 
+  /** VTK writers that are executed automatically */
+  std::map<std::string, std::pair<std::shared_ptr<vtk::VTKOutput>, bool>>
+      m_vtk_auto;
+  /** VTK writers that are executed manually */
+  std::map<std::string, std::shared_ptr<vtk::VTKOutput>> m_vtk_manual;
+
   template <typename VectorField> class force_vector_adaptor_function {
   public:
     typedef VectorField basefield_t;
@@ -389,7 +395,13 @@ public:
   };
   std::shared_ptr<LatticeModel> get_lattice_model() { return m_lattice_model; };
 
-  void integrate() override { m_time_loop->singleStep(); };
+  void integrate() override {
+    m_time_loop->singleStep();
+    for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
+      if (it->second.second)
+        vtk::writeFiles(it->second.first)();
+    }
+  };
 
   void ghost_communication() override { (*m_communication)(); }
 
@@ -725,14 +737,29 @@ public:
     return res;
   };
 
-  void write_vtk(int delta_N, unsigned flag_observables,
-                 std::string const &identifier) {
-    unsigned write_frequency = (delta_N) ? static_cast<unsigned>(delta_N) : 1u;
+  void create_vtk(int delta_N, unsigned flag_observables,
+                  std::string const &identifier, std::string const &base_folder,
+                  std::string const &prefix) {
+    // VTKOuput object must be unique
+    std::stringstream unique_identifier;
+    unique_identifier << base_folder << "/" << identifier;
+    std::string const vtk_uid = unique_identifier.str();
+    if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end() or
+        m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
+      throw std::runtime_error("VTKOutput object " + vtk_uid +
+                               " already exists");
+    }
+
+    // instantiate VTKOutput object
+    unsigned const write_freq = (delta_N) ? static_cast<unsigned>(delta_N) : 1u;
     auto pdf_field_vtk = vtk::createVTKOutput_BlockData(
-        m_blocks, identifier, uint_c(write_frequency), uint_c(0));
+        m_blocks, identifier, uint_c(write_freq), uint_c(0), false, base_folder,
+        prefix, true, true);
     field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_id);
     fluid_filter.addFlag(Fluid_flag);
     pdf_field_vtk->addCellInclusionFilter(fluid_filter);
+
+    // add writers
     if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
       pdf_field_vtk->addCellDataWriter(
           make_shared<lbm::DensityVTKWriter<LatticeModel, float>>(
@@ -748,12 +775,39 @@ public:
           make_shared<lbm::PressureTensorVTKWriter<LatticeModel, float>>(
               m_pdf_field_id, "PressureTensorFromPDF"));
     }
+
+    // register object
     if (delta_N) {
-      m_time_loop->addFuncAfterTimeStep(vtk::writeFiles(pdf_field_vtk),
-                                        "VTK (" + identifier + " data)");
+      m_vtk_auto[vtk_uid] = {pdf_field_vtk, true};
     } else {
-      vtk::writeFiles(pdf_field_vtk)();
+      m_vtk_manual[vtk_uid] = pdf_field_vtk;
     }
+  }
+
+  /** Manually call a VTK callback */
+  void write_vtk(std::string const &vtk_uid) {
+    if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
+      throw std::runtime_error("VTKOutput object " + vtk_uid +
+                               " is an automatic observable");
+    }
+    if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
+      throw std::runtime_error("VTKOutput object " + vtk_uid +
+                               " doesn't exist");
+    }
+    vtk::writeFiles(m_vtk_manual[vtk_uid])();
+  }
+
+  /** Activate or deactivate a VTK callback */
+  virtual void switch_vtk(std::string const &vtk_uid, int status) {
+    if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
+      throw std::runtime_error("VTKOutput object " + vtk_uid +
+                               " is a manual observable");
+    }
+    if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
+      throw std::runtime_error("VTKOutput object " + vtk_uid +
+                               " doesn't exist");
+    }
+    m_vtk_auto[vtk_uid].second = status;
   }
 
   /** @brief call, if the lattice model was changed */

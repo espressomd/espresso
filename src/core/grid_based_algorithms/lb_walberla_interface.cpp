@@ -18,12 +18,26 @@ boost::optional<Utils::Vector3d> get_node_velocity(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_velocity)
 
-void write_vtk(int delta_N, unsigned flag_observables,
-               std::string const &identifier) {
-  lb_walberla()->write_vtk(delta_N, flag_observables, identifier);
+void create_vtk(int delta_N, unsigned flag_observables,
+                std::string const &identifier, std::string const &base_folder,
+                std::string const &prefix) {
+  lb_walberla()->create_vtk(delta_N, flag_observables, identifier, base_folder,
+                            prefix);
+}
+
+REGISTER_CALLBACK(create_vtk)
+
+void write_vtk(std::string const &vtk_uid) {
+  lb_walberla()->write_vtk(vtk_uid);
 }
 
 REGISTER_CALLBACK(write_vtk)
+
+void switch_vtk(std::string const &vtk_uid, int status) {
+  lb_walberla()->switch_vtk(vtk_uid, status);
+}
+
+REGISTER_CALLBACK(switch_vtk)
 
 boost::optional<Utils::Vector3d>
 get_node_last_applied_force(Utils::Vector3i ind) {

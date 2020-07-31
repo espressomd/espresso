@@ -38,16 +38,17 @@ cdef class HydrodynamicInteraction(Actor):
     #
     #
 
-cdef extern from "grid_based_algorithms/LbWalberlaBase.hpp" namespace 'OutputVTK':
+IF LB_WALBERLA:
+    cdef extern from "grid_based_algorithms/LbWalberlaBase.hpp":
 
-    cdef OutputVTK output_vtk_density 'OutputVTK::density'
-    cdef OutputVTK output_vtk_velocity_vector 'OutputVTK::velocity_vector'
-    cdef OutputVTK output_vtk_pressure_tensor 'OutputVTK::pressure_tensor'
+        cdef enum OutputVTK:
+            pass
 
-cdef extern from "grid_based_algorithms/LbWalberlaBase.hpp":
+    cdef extern from "grid_based_algorithms/LbWalberlaBase.hpp" namespace 'OutputVTK':
 
-    cdef enum OutputVTK:
-        pass
+        cdef OutputVTK output_vtk_density 'OutputVTK::density'
+        cdef OutputVTK output_vtk_velocity_vector 'OutputVTK::velocity_vector'
+        cdef OutputVTK output_vtk_pressure_tensor 'OutputVTK::pressure_tensor'
 
 cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace "ActiveLB":
     cdef ActiveLB NONE
@@ -68,7 +69,9 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     void lb_lbfluid_save_checkpoint(string filename, bool binary) except +
     void lb_lbfluid_load_checkpoint(string filename, bool binary) except +
     void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) except +
-    void lb_lbfluid_write_vtk(int delta_N, unsigned flag_observables, const string identifier) except +
+    void lb_lbfluid_create_vtk(int delta_N, unsigned flag_observables, const string identifier, const string base_folder, const string execution_folder) except +
+    void lb_lbfluid_switch_vtk(const string vtk_uid, int status) except +
+    void lb_lbfluid_write_vtk(const string vtk_uid) except +
     Vector6d lb_lbfluid_get_pressure_tensor() except +
     bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
     Vector3i lb_lbfluid_get_shape() except +

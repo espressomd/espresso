@@ -80,7 +80,7 @@ public:
   virtual bool node_in_local_halo(const Utils::Vector3i &node) const = 0;
   virtual bool pos_in_local_domain(const Utils::Vector3d &pos) const = 0;
   virtual bool pos_in_local_halo(const Utils::Vector3d &pos) const = 0;
-  /** @brief Write lattice observables to VTK files.
+  /** @brief Create a VTK observable.
    *
    *  @param delta_N          Write frequency, if 0 write a single frame,
    *         otherwise add a callback to write every @p delta_N LB steps
@@ -88,9 +88,24 @@ public:
    *  @param flag_observables Which observables to measure (OR'ing of
    *         @ref OutputVTK values)
    *  @param identifier       Name of the VTK dataset
+   *  @param base_folder      Path to the VTK folder
+   *  @param prefix           Prefix of the VTK files
    */
-  virtual void write_vtk(int delta_N, unsigned flag_observables,
-                         std::string const &identifier) = 0;
+  virtual void create_vtk(int delta_N, unsigned flag_observables,
+                          std::string const &identifier,
+                          std::string const &base_folder,
+                          std::string const &prefix) = 0;
+  /** @brief Write a VTK observable to disk.
+   *
+   *  @param vtk_uid          Name of the VTK object
+   */
+  virtual void write_vtk(std::string const &vtk_uid) = 0;
+  /** @brief Toggle a VTK observable on/off.
+   *
+   *  @param vtk_uid          Name of the VTK object
+   *  @param status           1 to switch on, 0 to switch off
+   */
+  virtual void switch_vtk(std::string const &vtk_uid, int status) = 0;
 
   virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
   node_indices_positions(bool include_ghosts) const = 0;

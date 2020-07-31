@@ -32,6 +32,85 @@ from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
 from .globals cimport time_step
 
 
+IF LB_WALBERLA:
+
+    vtk_registry = {}
+
+    class VTKOutput:
+        """
+        VTK callback.
+
+        Parameters
+        ----------
+        vtk_uid: :obj:`str`
+            Unique identifier for the VTK callback.
+        delta_N: :obj:`int`
+            Frequency of writing in LB steps (0 if manual callback).
+        """
+
+        def __init__(self, vtk_uid, delta_N):
+            self.vtk_uid = vtk_uid
+            self.delta_N = delta_N
+
+        def write(self):
+            raise NotImplementedError()
+
+        def disable(self):
+            raise NotImplementedError()
+
+        def enable(self):
+            raise NotImplementedError()
+
+    class VTKOutputAutomatic(VTKOutput):
+        """
+        Automatic VTK callback. Can be disabled at any time and re-enabled later.
+
+        Please note that the internal VTK counter is no longer incremented
+        when the callback is disabled, which means the number of LB steps
+        between two frames will not always be an integer multiple of delta_N.
+        """
+
+        def __init__(self, *args):
+            super().__init__(*args)
+            self.enabled = True
+
+        def __repr__(self):
+            return "<{}.{}: writes to '{}' every {} LB steps{}>".format(
+                self.__class__.__module__, self.__class__.__name__, self.vtk_uid, self.delta_N, '' if self.enabled else ' (disabled)')
+
+        def write(self):
+            raise RuntimeError(
+                'This is an automatic VTK callback that writes every {} LB time steps, cannot be triggered manually'.format(
+                    self.delta_N))
+
+        def enable(self):
+            lb_lbfluid_switch_vtk(to_char_pointer(self.vtk_uid), 1)
+            self.enabled = True
+
+        def disable(self):
+            lb_lbfluid_switch_vtk(to_char_pointer(self.vtk_uid), 0)
+            self.enabled = False
+
+    class VTKOutputManual(VTKOutput):
+        """
+        Manual VTK callback. Can be called at any time to take a snapshot
+        of the current state of the LB fluid.
+        """
+
+        def __repr__(self):
+            return "<{}.{}: writes to '{}' on demand>".format(
+                self.__class__.__module__, self.__class__.__name__, self.vtk_uid)
+
+        def write(self):
+            lb_lbfluid_write_vtk(to_char_pointer(self.vtk_uid))
+
+        def disable(self):
+            raise RuntimeError('Manual VTK callbacks cannot be disabled')
+
+        def enable(self):
+            raise RuntimeError('Manual VTK callbacks cannot be enabled')
+
+
 def _construct(cls, params):
     obj = cls(**params)
     obj._params = params
@@ -263,9 +342,13 @@ IF LB_WALBERLA:
             mpi_destruct_lb_walberla()
             super()._deactivate_method()
 
-        def write_vtk(self, identifier, observables, delta_N=0):
+        def add_vtk_writer(self, identifier, observables, delta_N=0,
+                           base_folder='vtk_out', prefix='simulation_step'):
             """
-            Write lattice observables to VTK files.
+            Create a VTK observable.
+
+            Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
+            Summary is written to ``<base_folder>/<identifier>.pvd``.
 
             Parameters
             ----------
@@ -277,18 +360,44 @@ IF LB_WALBERLA:
                 Write frequency, if 0 write a single frame (default),
                 otherwise add a callback to write every ``delta_N`` LB steps
                 to a new file.
+            base_folder : :obj:`str`
+                Path to the output VTK folder.
+            prefix : :obj:`str`
+                Prefix for VTK files.
             """
+            # sanity checks
+            utils.check_type_or_throw_except(
+                delta_N, 1, int, "delta_N must be 1 integer")
+            assert delta_N >= 0, 'delta_N must be a positive integer'
+            utils.check_type_or_throw_except(
+                identifier, 1, str, "identifier must be 1 string")
+            assert os.path.sep not in identifier, 'identifier must be a string, not a filepath'
+            vtk_uid = base_folder + '/' + identifier
+            vtk_path = os.path.abspath(vtk_uid)
+            if vtk_path in vtk_registry:
+                raise RuntimeError(
+                    'VTK identifier "{}" would overwrite files written by VTK identifier "{}"'.format(
+                        vtk_path, vtk_registry[vtk_path]))
+            vtk_registry[vtk_path] = vtk_uid
+            if isinstance(observables, str):
+                observables = [observables]
+            # construct VTK callback
             observable2enum = {
                 'density': < int > output_vtk_density,
                 'velocity_vector': < int > output_vtk_velocity_vector,
                 'pressure_tensor': < int > output_vtk_pressure_tensor}
-            if isinstance(observables, str):
-                observables = [observables]
             flag = 0
             for obs in set(observables):
-                assert obs in observable2enum, 'Unknown observable ' + obs
+                if obs not in observable2enum:
+                    raise ValueError('Unknown VTK observable ' + obs)
                 flag += observable2enum[obs]
-            lb_lbfluid_write_vtk(delta_N, flag, to_char_pointer(identifier))
+            lb_lbfluid_create_vtk(delta_N, flag, to_char_pointer(identifier),
+                                  to_char_pointer(base_folder),
+                                  to_char_pointer(prefix))
+            if delta_N:
+                return VTKOutputAutomatic(vtk_uid, delta_N)
+            else:
+                return VTKOutputManual(vtk_uid, delta_N)
 
 
 cdef class LBFluidRoutines:
