@@ -127,7 +127,6 @@ double G_opt(size_t cao, T alpha, const Utils::Vector3<T> &k,
  *  @tparam S Order of the differential operator, e.g. 0 for potential,
  *          1 for electric field...
  * @tparam m Number of aliasing terms to take into account.
- * @tparam Real Floating-point type.
  *
  * @param params P3M parameters
  * @param fft Grid description
