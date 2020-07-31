@@ -32,6 +32,7 @@
 /**
  * @brief Functor for calculating the Hockney/Eastwood/Ballenegger
  *        generic P3M influence function.
+ *
  * @tparam cao Charge assignment order.
  * @tparam S Power of the differential operator e.g. 0 for energy,
  *           1 for force and so on.
@@ -94,6 +95,11 @@ private:
     return {numerator, denominator};
   }
 
+  /**
+   * @brief Optimal influence function.
+   *  This implements Eq. 30 of @cite cerda08d, which can be used
+   *  for monopole and dipole P3M by choosing the appropriate S factor.
+   */
   double G_opt(double alpha, const Utils::Vector3d &k,
                const Utils::Vector3d &h) const {
     using Utils::int_pow;
@@ -109,6 +115,17 @@ private:
   }
 
 public:
+  /**
+   * @brief Map influence function over a grid.
+   *
+   * This evaluates the optimal influence function @ref InfluenceFunction::G_opt
+   * over a regular grid of k vectors, and returns the values as a vector.
+   *
+   * @param params P3M parameters
+   * @param fft Grid description
+   * @param box_l Box size
+   * @return Values of G_opt at regular grid points.
+   */
   std::vector<double> operator()(const P3MParameters &params,
                                  const fft_data_struct &fft,
                                  const Utils::Vector3d &box_l) const {
