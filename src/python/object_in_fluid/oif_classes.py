@@ -109,7 +109,8 @@ class Edge:
 
     def __init__(self, A, B):
         if not all(isinstance(x, (PartPoint, FixedPoint)) for x in [A, B]):
-            TypeError("Arguments to Edge must be FixedPoint or PartPoint.")
+            raise TypeError(
+                "Arguments to Edge must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
 
@@ -126,7 +127,8 @@ class Triangle:
 
     def __init__(self, A, B, C):
         if not all(isinstance(x, (PartPoint, FixedPoint)) for x in [A, B, C]):
-            TypeError("Arguments to Triangle must be FixedPoint or PartPoint.")
+            raise TypeError(
+                "Arguments to Triangle must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
         self.C = C
@@ -147,7 +149,8 @@ class Angle:
     def __init__(self, A, B, C, D):
         if not all(isinstance(x, (PartPoint, FixedPoint))
                    for x in [A, B, C, D]):
-            TypeError("Arguments to Angle must be FixedPoint or PartPoint.")
+            raise TypeError(
+                "Arguments to Angle must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
         self.C = C
@@ -168,7 +171,7 @@ class ThreeNeighbors:
 
     def __init__(self, A, B, C):
         if not all(isinstance(x, (PartPoint, FixedPoint)) for x in [A, B, C]):
-            TypeError(
+            raise TypeError(
                 "Arguments to ThreeNeighbors must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
