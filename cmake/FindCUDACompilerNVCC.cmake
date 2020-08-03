@@ -82,5 +82,5 @@ endfunction()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  CudaCompilerNVCC REQUIRED_VARS CMAKE_CUDA_COMPILER VERSION_VAR
+  CUDACompilerNVCC REQUIRED_VARS CMAKE_CUDA_COMPILER VERSION_VAR
   CMAKE_CUDA_COMPILER_VERSION)

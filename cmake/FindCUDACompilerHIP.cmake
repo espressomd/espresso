@@ -73,4 +73,4 @@ endfunction()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  CudaCompilerHIP REQUIRED_VARS HIP_HIPCC_EXECUTABLE VERSION_VAR HIP_VERSION)
+  CUDACompilerHIP REQUIRED_VARS HIP_HIPCC_EXECUTABLE VERSION_VAR HIP_VERSION)
