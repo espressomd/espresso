@@ -95,7 +95,7 @@ system.integrator.run(sim_steps)
 
 # because stretched polymers are not too impressive...
 print("simulating a slow compression...")
-for d in np.arange(1, 15):
+for _ in np.arange(1, 15):
     system.change_volume_and_rescale_particles(
         d_new=system.box_l[0] - 1, dir='xyz')
     print("box now at ", system.box_l)
