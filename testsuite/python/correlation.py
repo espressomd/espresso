@@ -33,6 +33,7 @@ class CorrelatorTest(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.auto_update_accumulators.clear()
 
     def calc_tau(self, time_step, tau_lin, length, delta_N=1):
         tau = []
