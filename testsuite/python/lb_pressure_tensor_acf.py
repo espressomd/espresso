@@ -58,20 +58,19 @@ class TestLBPressureACF:
         system.integrator.run(500)
 
         # sampling
-        steps = 50000
-        p_global = np.zeros((steps, 3, 3))
-        p_node = np.zeros((steps, 3, 3))
+        p_global = np.zeros((self.steps, 3, 3))
+        p_node = np.zeros((self.steps, 3, 3))
 
         node = lb[0, 0, 0]
 
-        for i in range(steps):
+        for i in range(self.steps):
             p_node[i] = node.pressure_tensor
             p_global[i] = lb.pressure_tensor
 
             system.integrator.run(2)
 
         # Test that <sigma_[i!=j]> ~=0 and sigma_[ij]=sigma_[ji]
-        tol_global = 4 / np.sqrt(steps)
+        tol_global = 4 / np.sqrt(self.steps)
         tol_node = tol_global * np.sqrt(N_CELLS**3)
 
         # check single node
@@ -101,7 +100,7 @@ class TestLBPressureACF:
                 # Calculate acf
                 tmp = np.correlate(
                     p_global[:, i, j], p_global[:, i, j], mode="full")
-                acf = tmp[len(tmp) // 2:] / steps
+                acf = tmp[len(tmp) // 2:] / self.steps
 
                 # integrate first part numerically, fit exponential to tail
                 t_max_fit = 50 * TAU
@@ -132,6 +131,7 @@ class TestLBPressureACFCPU(TestLBPressureACF, ut.TestCase):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluid
+        self.steps = 4000
 
 
 @utx.skipIfMissingGPU()
@@ -139,6 +139,7 @@ class TestLBPressureACFGPU(TestLBPressureACF, ut.TestCase):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidGPU
+        self.steps = 15000
 
 
 if __name__ == "__main__":
