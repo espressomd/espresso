@@ -253,6 +253,7 @@ class Correlator(ScriptInterfaceHelper):
     _so_name = "Accumulators::Correlator"
     _so_bind_methods = (
         "update",
+        "shape",
         "finalize")
     _so_creation_policy = "LOCAL"
 
@@ -269,8 +270,8 @@ class Correlator(ScriptInterfaceHelper):
             the values of the correlation function. The number of these columns
             is the dimension of the output of the correlation operation.
         """
-        res = np.array(self.call_method("get_correlation"))
-        return res.reshape((self.n_result, 2 + self.dim_corr))
+        return np.array(self.call_method(
+            "get_correlation")).reshape(self.shape())
 
 
 @script_interface_register

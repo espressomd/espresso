@@ -182,13 +182,14 @@ public:
 
   /** Return correlation result */
   std::vector<double> get_correlation();
+  std::vector<size_t> shape() const override {
+    return {m_n_result, 2 + m_dim_corr};
+  }
 
   int tau_lin() const { return m_tau_lin; }
   double tau_max() const { return m_tau_max; }
   double last_update() const { return m_last_update; }
   double dt() const { return m_dt; }
-  size_t dim_corr() const { return m_dim_corr; }
-  size_t n_result() const { return m_n_result; }
 
   Utils::Vector3d const &correlation_args() const { return m_correlation_args; }
   void set_correlation_args(Utils::Vector3d const &args) {

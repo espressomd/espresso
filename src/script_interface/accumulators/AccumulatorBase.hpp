@@ -35,6 +35,14 @@ public:
                      },
                      [this]() { return accumulator()->delta_N(); }}});
   }
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
+    if (method == "shape") {
+      auto const shape = accumulator()->shape();
+      return std::vector<int>{shape.begin(), shape.end()};
+    }
+    return {};
+  }
   virtual std::shared_ptr<const ::Accumulators::AccumulatorBase>
   accumulator() const = 0;
   virtual std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() = 0;

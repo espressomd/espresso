@@ -51,10 +51,8 @@ public:
          {"corr_operation", m_correlator, &CoreCorr::correlation_operation},
          {"args", m_correlator, &CoreCorr::set_correlation_args,
           &CoreCorr::correlation_args},
-         {"dim_corr", m_correlator, &CoreCorr::dim_corr},
          {"obs1", Utils::as_const(m_obs1)},
-         {"obs2", Utils::as_const(m_obs2)},
-         {"n_result", m_correlator, &CoreCorr::n_result}});
+         {"obs2", Utils::as_const(m_obs2)}});
   }
 
   void construct(VariantMap const &args) override {
@@ -87,7 +85,7 @@ public:
     if (method == "get_correlation")
       return correlator()->get_correlation();
 
-    return {};
+    return AccumulatorBase::call_method(method, parameters);
   }
 
   Variant get_state() const override {

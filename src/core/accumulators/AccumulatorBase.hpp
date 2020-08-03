@@ -19,6 +19,8 @@
 #ifndef CORE_ACCUMULATORS_ACCUMULATORBASE
 #define CORE_ACCUMULATORS_ACCUMULATORBASE
 
+#include <vector>
+
 namespace Accumulators {
 
 class AccumulatorBase {
@@ -28,6 +30,8 @@ public:
   virtual ~AccumulatorBase() = default;
 
   virtual void update() = 0;
+  /** Dimensions needed to reshape the flat array returned by the accumulator */
+  virtual std::vector<size_t> shape() const = 0;
 
 private:
   // Number of timesteps between automatic updates.
