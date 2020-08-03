@@ -187,8 +187,8 @@ public:
   double tau_max() const { return m_tau_max; }
   double last_update() const { return m_last_update; }
   double dt() const { return m_dt; }
-  int dim_corr() const { return m_dim_corr; }
-  int n_result() const { return m_n_result; }
+  size_t dim_corr() const { return m_dim_corr; }
+  size_t n_result() const { return m_n_result; }
 
   Utils::Vector3d const &correlation_args() const { return m_correlation_args; }
   void set_correlation_args(Utils::Vector3d const &args) {
@@ -216,16 +216,16 @@ private:
 
   int hierarchy_depth; ///< maximum level of data compression
   int m_tau_lin;       ///< number of frames in the linear correlation
-  int m_dim_corr;
-  double m_dt;      ///< time interval at which samples arrive
-  double m_tau_max; ///< maximum time for which the correlation should be
-                    ///< calculated
+  size_t m_dim_corr;   ///< number of columns for the correlation
+  double m_dt;         ///< time interval at which samples arrive
+  double m_tau_max;    ///< maximum time for which the correlation should be
+                       ///< calculated
 
   std::string compressA_name;
   std::string compressB_name;
   std::string corr_operation_name; ///< Name of the correlation operator
 
-  int m_n_result; ///< the total number of result values
+  size_t m_n_result; ///< the total number of result values
 
   std::shared_ptr<Observables::Observable> A_obs;
   std::shared_ptr<Observables::Observable> B_obs;
@@ -237,20 +237,20 @@ private:
   boost::multi_array<double, 2> result; ///< output quantity
 
   /// number of correlation sweeps at a particular value of tau
-  std::vector<unsigned int> n_sweeps;
+  std::vector<size_t> n_sweeps;
   /// number of data values already present at a particular value of tau
-  std::vector<unsigned int> n_vals;
+  std::vector<unsigned> n_vals;
   /// index of the newest entry in each hierarchy level
-  std::vector<unsigned int> newest;
+  std::vector<size_t> newest;
 
   std::vector<double> A_accumulated_average; ///< all A values are added up here
   std::vector<double> B_accumulated_average; ///< all B values are added up here
-  unsigned int n_data; ///< a counter for calculated averages and variances
+  size_t n_data; ///< a counter for calculated averages and variances
 
   double m_last_update;
 
-  unsigned int dim_A; ///< dimensionality of A
-  unsigned int dim_B; ///< dimensionality of B
+  size_t dim_A; ///< dimensionality of A
+  size_t dim_B; ///< dimensionality of B
 
   using correlation_operation_type = std::vector<double> (*)(
       std::vector<double> const &, std::vector<double> const &,

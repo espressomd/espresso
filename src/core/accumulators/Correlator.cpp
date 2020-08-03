@@ -141,7 +141,7 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
 
   std::vector<double> C(C_size, 0);
 
-  for (unsigned i = 0; i < C_size; i++) {
+  for (size_t i = 0; i < C_size; i++) {
     for (int j = 0; j < 3; j++) {
       auto const &a = A[3 * i + j];
       auto const &b = B[3 * i + j];
@@ -207,15 +207,15 @@ void Correlator::initialize() {
         "no proper function for correlation operation given");
   }
   if (corr_operation_name == "componentwise_product") {
-    m_dim_corr = static_cast<int>(dim_A);
+    m_dim_corr = dim_A;
     corr_operation = &componentwise_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
-    m_dim_corr = static_cast<int>(dim_A * dim_B);
+    m_dim_corr = dim_A * dim_B;
     corr_operation = &tensor_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "square_distance_componentwise") {
-    m_dim_corr = static_cast<int>(dim_A);
+    m_dim_corr = dim_A;
     corr_operation = &square_distance_componentwise;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "fcs_acf") {
@@ -229,7 +229,7 @@ void Correlator::initialize() {
         Utils::hadamard_product(m_correlation_args, m_correlation_args);
     if (dim_A % 3)
       throw std::runtime_error("dimA must be divisible by 3 for fcs_acf");
-    m_dim_corr = static_cast<int>(dim_A) / 3;
+    m_dim_corr = dim_A / 3;
     corr_operation = &fcs_acf;
   } else if (corr_operation_name == "scalar_product") {
     m_dim_corr = 1;
@@ -279,19 +279,19 @@ void Correlator::initialize() {
   B_accumulated_average = std::vector<double>(dim_B, 0);
 
   m_n_result = m_tau_lin + 1 + (m_tau_lin + 1) / 2 * (hierarchy_depth - 1);
-  n_sweeps = std::vector<unsigned int>(m_n_result, 0);
+  n_sweeps = std::vector<size_t>(m_n_result, 0);
   n_vals = std::vector<unsigned int>(hierarchy_depth, 0);
 
-  result.resize(std::array<int, 2>{{m_n_result, m_dim_corr}});
+  result.resize(std::array<size_t, 2>{{m_n_result, m_dim_corr}});
 
-  for (int i = 0; i < m_n_result; i++) {
-    for (int j = 0; j < m_dim_corr; j++) {
+  for (size_t i = 0; i < m_n_result; i++) {
+    for (size_t j = 0; j < m_dim_corr; j++) {
       // and initialize the values
       result[i][j] = 0;
     }
   }
 
-  newest = std::vector<unsigned int>(hierarchy_depth, m_tau_lin);
+  newest = std::vector<size_t>(hierarchy_depth, m_tau_lin);
 
   tau.resize(m_n_result);
   for (int i = 0; i < m_tau_lin + 1; i++) {
@@ -361,11 +361,11 @@ void Correlator::update() {
 
   // Now we update the cumulated averages and variances of A and B
   n_data++;
-  for (unsigned k = 0; k < dim_A; k++) {
+  for (size_t k = 0; k < dim_A; k++) {
     A_accumulated_average[k] += A[0][newest[0]][k];
   }
 
-  for (unsigned k = 0; k < dim_B; k++) {
+  for (size_t k = 0; k < dim_B; k++) {
     B_accumulated_average[k] += B[0][newest[0]][k];
   }
 
@@ -378,7 +378,7 @@ void Correlator::update() {
     assert(temp.size() == m_dim_corr);
 
     n_sweeps[j]++;
-    for (unsigned k = 0; k < m_dim_corr; k++) {
+    for (size_t k = 0; k < m_dim_corr; k++) {
       result[j][k] += temp[k];
     }
   }
@@ -395,7 +395,7 @@ void Correlator::update() {
       assert(temp.size() == m_dim_corr);
 
       n_sweeps[index_res]++;
-      for (unsigned k = 0; k < m_dim_corr; k++) {
+      for (size_t k = 0; k < m_dim_corr; k++) {
         result[index_res][k] += temp[k];
       }
     }
@@ -478,7 +478,7 @@ int Correlator::finalize() {
           assert(temp.size() == m_dim_corr);
 
           n_sweeps[index_res]++;
-          for (unsigned k = 0; k < m_dim_corr; k++) {
+          for (size_t k = 0; k < m_dim_corr; k++) {
             result[index_res][k] += temp[k];
           }
         }
@@ -492,14 +492,14 @@ std::vector<double> Correlator::get_correlation() {
   std::vector<double> res;
 
   // time + n_sweeps + corr_1...corr_n
-  int const cols = 2 + m_dim_corr;
+  size_t const cols = 2 + m_dim_corr;
   res.resize(m_n_result * cols);
 
-  for (int i = 0; i < m_n_result; i++) {
+  for (size_t i = 0; i < m_n_result; i++) {
     auto const index = cols * i;
     res[index + 0] = tau[i] * m_dt;
     res[index + 1] = n_sweeps[i];
-    for (int k = 0; k < m_dim_corr; k++) {
+    for (size_t k = 0; k < m_dim_corr; k++) {
       res[index + 2 + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
     }
   }
