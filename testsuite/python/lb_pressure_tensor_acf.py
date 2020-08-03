@@ -52,7 +52,7 @@ class TestLBPressureACF:
         lb = self.lb_class(agrid=AGRID, dens=DENS, visc=VISC,
                            tau=TAU, kT=KT, seed=SEED)
         system.actors.add(lb)
-        system.thermostat.set_lb(LB_fluid=lb, seed=2)
+        system.thermostat.set_lb(LB_fluid=lb, seed=SEED + 1)
 
         # Warmup
         system.integrator.run(500)
@@ -78,7 +78,7 @@ class TestLBPressureACF:
         for i in range(3):
             for j in range(i + 1, 3):
                 avg_ij = np.average(p_node[:, i, j])
-                avg_ji = np.average(p_node[:, i, j])
+                avg_ji = np.average(p_node[:, j, i])
                 self.assertEqual(avg_ij, avg_ji)
 
                 self.assertLess(avg_ij, tol_node)
@@ -87,7 +87,7 @@ class TestLBPressureACF:
         for i in range(3):
             for j in range(i + 1, 3):
                 avg_ij = np.average(p_global[:, i, j])
-                avg_ji = np.average(p_global[:, i, j])
+                avg_ji = np.average(p_global[:, j, i])
                 self.assertEqual(avg_ij, avg_ji)
 
                 self.assertLess(avg_ij, tol_global)
@@ -126,13 +126,12 @@ class TestLBPressureACF:
         self.assertAlmostEqual(np.average(all_viscs),
                                VISC * DENS, delta=VISC * DENS * .07)
 
+
 # DISABLE CPU TEST UNTIL #3804 IS SOLVED
-# class TestLBPressureACFCPU(TestLBPressureACF, ut.TestCase):
-#
-#    def setUp(self):
-#        self.lb_class = espressomd.lb.LBFluid
-#
-#
+class TestLBPressureACFCPU(TestLBPressureACF, ut.TestCase):
+
+    def setUp(self):
+        self.lb_class = espressomd.lb.LBFluid
 
 
 @utx.skipIfMissingGPU()
