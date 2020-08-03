@@ -410,15 +410,6 @@ ubuntu:s390x:
 
 ### Builds with OS X
 
-osx:
-  <<: *global_job_definition
-  stage: build
-  script:
-    - export with_ccache=false myconfig=maxset with_cuda=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - mac
-
 osx-cuda:
   <<: *global_job_definition
   stage: build
