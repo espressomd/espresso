@@ -183,8 +183,14 @@ public:
   /** Return correlation result */
   std::vector<double> get_correlation();
   std::vector<size_t> shape() const override {
-    return {m_n_result, 2 + m_dim_corr};
+    std::vector<size_t> shape = m_shape;
+    shape.insert(shape.begin(), m_n_result);
+    return shape;
   }
+  std::vector<int> get_correlation_sweeps() const {
+    return std::vector<int>(n_sweeps.begin(), n_sweeps.end());
+  }
+  std::vector<double> get_correlation_lags() const;
 
   int tau_lin() const { return m_tau_lin; }
   double tau_max() const { return m_tau_max; }
@@ -250,8 +256,9 @@ private:
 
   double m_last_update;
 
-  size_t dim_A; ///< dimensionality of A
-  size_t dim_B; ///< dimensionality of B
+  size_t dim_A;                ///< dimensionality of A
+  size_t dim_B;                ///< dimensionality of B
+  std::vector<size_t> m_shape; ///< dimensionality of the correlation
 
   using correlation_operation_type = std::vector<double> (*)(
       std::vector<double> const &, std::vector<double> const &,

@@ -211,6 +211,7 @@ class BrownianDynamics(ut.TestCase):
 
         # Check MSD
         msd = c_pos.result()
+        tau = c_pos.correlation_lags()
         system.auto_update_accumulators.clear()
 
         def expected_msd(x):
@@ -218,7 +219,7 @@ class BrownianDynamics(ut.TestCase):
 
         for i in range(2, 6):
             np.testing.assert_allclose(
-                msd[i, 2:5], expected_msd(msd[i, 0]), rtol=0.02)
+                msd[i], expected_msd(tau[i]), rtol=0.02)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):

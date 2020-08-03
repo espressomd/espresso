@@ -46,9 +46,35 @@ class CorrelatorTest(ut.TestCase):
             factor *= 2
         return time_step * np.array(tau[:length]) * delta_N
 
+    def check_sizes(self, acc, steps, linear=False):
+        sizes = acc.correlation_sizes()
+        tau_lin = acc.tau_lin
+        max_lin = np.arange(steps, steps - tau_lin - 1, -1)
+        if linear:
+            np.testing.assert_equal(sizes, max_lin)
+        else:
+            np.testing.assert_equal(sizes[:tau_lin + 1], max_lin)
+            block_size = tau_lin // 2
+            i = block_size + 1
+            for _ in range(2):
+                j = i + block_size
+                k = j + block_size
+                np.testing.assert_allclose(sizes[i:j] / sizes[j:k], 2, atol=.5)
+                i = j
+
+    def check_pickling(self, acc):
+        corr = acc.result()
+        lags = acc.correlation_lags()
+        sizes = acc.correlation_sizes()
+        acc_unpickled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(acc_unpickled.result(), corr)
+        np.testing.assert_array_equal(acc_unpickled.correlation_lags(), lags)
+        np.testing.assert_array_equal(acc_unpickled.correlation_sizes(), sizes)
+
     def test_square_distance_componentwise(self):
         s = self.system
-        s.part.add(id=0, pos=(0, 0, 0), v=(1, 2, 3))
+        v = np.array([1, 2, 3])
+        s.part.add(id=0, pos=(0, 0, 0), v=v)
 
         obs = espressomd.observables.ParticlePositions(ids=(0,))
         acc = espressomd.accumulators.Correlator(
@@ -60,18 +86,12 @@ class CorrelatorTest(ut.TestCase):
         s.integrator.run(1000)
 
         corr = acc.result()
-
-        # Check pickling
-        acc_unpickled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(corr, acc_unpickled.result())
-
+        self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
-        np.testing.assert_array_almost_equal(corr[:, 0], tau)
+        np.testing.assert_array_almost_equal(acc.correlation_lags(), tau)
+        self.check_sizes(acc, 1000)
         for i in range(corr.shape[0]):
-            t = corr[i, 0]
-            self.assertAlmostEqual(corr[i, 2], t * t, places=3)
-            self.assertAlmostEqual(corr[i, 3], 4 * t * t, places=3)
-            self.assertAlmostEqual(corr[i, 4], 9 * t * t, places=3)
+            np.testing.assert_array_almost_equal(corr[i], [v**2 * tau[i]**2])
 
     def test_tensor_product(self):
         s = self.system
@@ -80,22 +100,20 @@ class CorrelatorTest(ut.TestCase):
 
         obs = espressomd.observables.ParticleVelocities(ids=(0,))
         acc = espressomd.accumulators.Correlator(
-            obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
+            obs1=obs, tau_lin=12, tau_max=2, delta_N=1,
             corr_operation="tensor_product")
 
         s.auto_update_accumulators.add(acc)
         s.integrator.run(1000)
 
         corr = acc.result()
-
-        # Check pickling
-        acc_unpickled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(corr, acc_unpickled.result())
-
+        self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
-        np.testing.assert_array_almost_equal(corr[:, 0], tau)
+        np.testing.assert_array_almost_equal(acc.correlation_lags(), tau)
+        corr_ref = np.kron(v, v).reshape((3, 3))
+        self.check_sizes(acc, 1000)
         for i in range(corr.shape[0]):
-            np.testing.assert_array_almost_equal(corr[i, 2:], np.kron(v, v))
+            np.testing.assert_array_almost_equal(corr[i], corr_ref)
 
     def test_componentwise_product(self):
         s = self.system
@@ -111,15 +129,12 @@ class CorrelatorTest(ut.TestCase):
         s.integrator.run(1000)
 
         corr = acc.result()
-
-        # Check pickling
-        acc_unpickled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(corr, acc_unpickled.result())
-
+        self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
-        np.testing.assert_array_almost_equal(corr[:, 0], tau)
+        np.testing.assert_array_almost_equal(acc.correlation_lags(), tau)
+        self.check_sizes(acc, 1000)
         for i in range(corr.shape[0]):
-            np.testing.assert_array_almost_equal(corr[i, 2:], v**2)
+            np.testing.assert_array_almost_equal(corr[i], [v**2])
 
     def test_scalar_product(self):
         s = self.system
@@ -135,15 +150,12 @@ class CorrelatorTest(ut.TestCase):
         s.integrator.run(1000)
 
         corr = acc.result()
-
-        # Check pickling
-        acc_unpickled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(corr, acc_unpickled.result())
-
+        self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
-        np.testing.assert_array_almost_equal(corr[:, 0], tau)
+        np.testing.assert_array_almost_equal(acc.correlation_lags(), tau)
+        self.check_sizes(acc, 1000)
         for i in range(corr.shape[0]):
-            np.testing.assert_array_almost_equal(corr[i, 2:], np.sum(v**2))
+            np.testing.assert_array_almost_equal(corr[i], [np.sum(v**2)])
 
     def test_fcs(self):
         s = self.system
@@ -153,23 +165,21 @@ class CorrelatorTest(ut.TestCase):
         w = np.array([3, 2, 1])
         obs = espressomd.observables.ParticlePositions(ids=(0,))
         acc = espressomd.accumulators.Correlator(
-            obs1=obs, tau_lin=10, tau_max=2.0, delta_N=1,
-            corr_operation="fcs_acf", args=w)
+            obs1=obs, tau_lin=10, tau_max=9.9 * self.system.time_step,
+            delta_N=1, corr_operation="fcs_acf", args=w)
 
         s.auto_update_accumulators.add(acc)
         s.integrator.run(1000)
 
         corr = acc.result()
-        # Check pickling
-        acc_unpickled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(corr, acc_unpickled.result())
-
+        self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
-        np.testing.assert_array_almost_equal(corr[:, 0], tau)
+        np.testing.assert_array_almost_equal(acc.correlation_lags(), tau)
+        self.check_sizes(acc, 1000, linear=True)
         for i in range(corr.shape[0]):
             np.testing.assert_array_almost_equal(
-                corr[i, 2:],
-                np.exp(-np.linalg.norm(v / w * tau[i])**2), decimal=10)
+                corr[i],
+                [np.exp(-np.linalg.norm(v / w * tau[i])**2)], decimal=10)
 
         # check setter and getter
         np.testing.assert_array_almost_equal(np.copy(acc.args), w**2)
@@ -208,21 +218,20 @@ class CorrelatorTest(ut.TestCase):
                 acc_def = espressomd.accumulators.Correlator(
                     obs1=obs, tau_lin=1, tau_max=tau_max,
                     delta_N=delta_N, corr_operation="scalar_product")
-                corr_lin = acc_lin.result()
-                corr_mul = acc_mul.result()
-                corr_def = acc_mul.result()
+                lin_tau = acc_lin.correlation_lags()
+                mul_tau = acc_mul.correlation_lags()
+                def_tau = acc_mul.correlation_lags()
                 # check tau
-                time_lin = dt * delta_N * np.arange(len(corr_lin))
-                time_mul = self.calc_tau(dt, tau_lin, len(corr_mul), delta_N)
-                np.testing.assert_array_almost_equal(corr_lin[:, 0], time_lin)
-                np.testing.assert_array_almost_equal(corr_mul[:, 0], time_mul)
-                np.testing.assert_array_almost_equal(corr_def[:, 0], time_mul)
+                time_lin = dt * delta_N * np.arange(len(lin_tau))
+                time_mul = self.calc_tau(dt, tau_lin, len(mul_tau), delta_N)
+                np.testing.assert_array_almost_equal(lin_tau, time_lin)
+                np.testing.assert_array_almost_equal(mul_tau, time_mul)
+                np.testing.assert_array_almost_equal(def_tau, time_mul)
                 self.assertEqual(acc_def.tau_lin, tau_lin)
                 # check pickling
-                corr_lin_upkl = pickle.loads(pickle.dumps(acc_lin))
-                corr_mul_upkl = pickle.loads(pickle.dumps(acc_mul))
-                np.testing.assert_array_equal(corr_lin, corr_lin_upkl.result())
-                np.testing.assert_array_equal(corr_mul, corr_mul_upkl.result())
+                self.check_pickling(acc_lin)
+                self.check_pickling(acc_lin)
+                self.check_pickling(acc_def)
 
 
 if __name__ == "__main__":

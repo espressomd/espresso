@@ -119,8 +119,8 @@ for index, N in enumerate(N_MONOMERS):
     corrdata = correlator.result()
 
     rh_results[index] = np.average(rhs)
-    tau = corrdata[1:, 0]
-    msd = corrdata[1:, 2] + corrdata[1:, 3] + corrdata[1:, 4]
+    tau = correlator.correlation_lags()[1:]
+    msd = corrdata[1:, 0] + corrdata[1:, 1] + corrdata[1:, 2]
     np.save('msd_{}'.format(N), np.c_[tau, msd])
 
 np.save('rh.npy', rh_results)

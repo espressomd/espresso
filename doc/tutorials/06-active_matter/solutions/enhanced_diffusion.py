@@ -119,12 +119,21 @@ for run in range(5):
     # Finalize the accumulators and write to disk
     system.auto_update_accumulators.remove(msd)
     msd.finalize()
-    np.savetxt("{}/msd_{}_{}.dat".format(outdir, vel, run), msd.result())
+    np.savetxt("{}/msd_{}_{}.dat".format(outdir, vel, run),
+               np.column_stack((msd.correlation_lags(),
+                                msd.correlation_sizes(),
+                                msd.result().reshape([-1, 3]))))
 
     system.auto_update_accumulators.remove(vacf)
     vacf.finalize()
-    np.savetxt("{}/vacf_{}_{}.dat".format(outdir, vel, run), vacf.result())
+    np.savetxt("{}/vacf_{}_{}.dat".format(outdir, vel, run),
+               np.column_stack((vacf.correlation_lags(),
+                                vacf.correlation_sizes(),
+                                vacf.result().reshape([-1, 1]))))
 
     system.auto_update_accumulators.remove(avacf)
     avacf.finalize()
-    np.savetxt("{}/avacf_{}_{}.dat".format(outdir, vel, run), avacf.result())
+    np.savetxt("{}/avacf_{}_{}.dat".format(outdir, vel, run),
+               np.column_stack((avacf.correlation_lags(),
+                                avacf.correlation_sizes(),
+                                avacf.result().reshape([-1, 1]))))

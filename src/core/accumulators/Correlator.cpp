@@ -25,11 +25,13 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/range/algorithm/transform.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <utils/math/sqr.hpp>
 
+#include <algorithm>
 #include <limits>
 
 namespace {
@@ -208,14 +210,27 @@ void Correlator::initialize() {
   }
   if (corr_operation_name == "componentwise_product") {
     m_dim_corr = dim_A;
+    m_shape = A_obs->shape();
     corr_operation = &componentwise_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
     m_dim_corr = dim_A * dim_B;
+    auto const shape_A = A_obs->shape();
+    auto const shape_B = B_obs->shape();
+    if (!(shape_A.size() == 1 || (shape_A.size() == 2 && shape_A[0] == 1))) {
+      throw std::runtime_error(
+          "tensor_product requires vectors, but observable A is a matrix");
+    }
+    if (!(shape_B.size() == 1 || (shape_B.size() == 2 && shape_B[0] == 1))) {
+      throw std::runtime_error(
+          "tensor_product requires vectors, but observable B is a matrix");
+    }
+    m_shape = {dim_A, dim_B};
     corr_operation = &tensor_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "square_distance_componentwise") {
     m_dim_corr = dim_A;
+    m_shape = A_obs->shape();
     corr_operation = &square_distance_componentwise;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "fcs_acf") {
@@ -230,9 +245,25 @@ void Correlator::initialize() {
     if (dim_A % 3)
       throw std::runtime_error("dimA must be divisible by 3 for fcs_acf");
     m_dim_corr = dim_A / 3;
+    m_shape = A_obs->shape();
+    if (m_shape.back() != 3)
+      throw std::runtime_error(
+          "the last dimension of dimA must be 3 for fcs_acf");
+    m_shape.pop_back();
     corr_operation = &fcs_acf;
   } else if (corr_operation_name == "scalar_product") {
     m_dim_corr = 1;
+    auto const shape_A = A_obs->shape();
+    auto const shape_B = B_obs->shape();
+    if (!(shape_A.size() == 1 || (shape_A.size() == 2 && shape_A[0] == 1))) {
+      throw std::runtime_error(
+          "scalar_product requires vectors, but observable A is a matrix");
+    }
+    if (!(shape_B.size() == 1 || (shape_B.size() == 2 && shape_B[0] == 1))) {
+      throw std::runtime_error(
+          "scalar_product requires vectors, but observable B is a matrix");
+    }
+    m_shape = {1};
     corr_operation = &scalar_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else {
@@ -489,20 +520,21 @@ int Correlator::finalize() {
 }
 
 std::vector<double> Correlator::get_correlation() {
-  std::vector<double> res;
-
-  // time + n_sweeps + corr_1...corr_n
-  size_t const cols = 2 + m_dim_corr;
-  res.resize(m_n_result * cols);
+  std::vector<double> res(m_n_result * m_dim_corr);
 
   for (size_t i = 0; i < m_n_result; i++) {
-    auto const index = cols * i;
-    res[index + 0] = tau[i] * m_dt;
-    res[index + 1] = n_sweeps[i];
+    auto const index = m_dim_corr * i;
     for (size_t k = 0; k < m_dim_corr; k++) {
-      res[index + 2 + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
+      res[index + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
     }
   }
+  return res;
+}
+
+std::vector<double> Correlator::get_correlation_lags() const {
+  std::vector<double> res(m_n_result);
+  boost::transform(tau, res.begin(),
+                   [dt = m_dt](auto const &a) { return a * dt; });
   return res;
 }
 
@@ -512,6 +544,7 @@ std::string Correlator::get_internal_state() const {
 
   oa << t;
   oa << m_n_result;
+  oa << m_shape;
   oa << A;
   oa << B;
   oa << result;
@@ -534,6 +567,7 @@ void Correlator::set_internal_state(std::string const &state) {
 
   ia >> t;
   ia >> m_n_result;
+  ia >> m_shape;
   ia >> A;
   ia >> B;
   ia >> result;

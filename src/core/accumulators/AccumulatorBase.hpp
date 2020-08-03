@@ -19,6 +19,7 @@
 #ifndef CORE_ACCUMULATORS_ACCUMULATORBASE
 #define CORE_ACCUMULATORS_ACCUMULATORBASE
 
+#include <cstddef>
 #include <vector>
 
 namespace Accumulators {

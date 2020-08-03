@@ -259,19 +259,22 @@ class Correlator(ScriptInterfaceHelper):
 
     def result(self):
         """
-        Returns
-        -------
-
-        numpy.ndarray
-            The result of the correlation function as a 2d-array.
-            The first column contains the values of the lag time tau.
-            The second column contains the number of values used to
-            perform the averaging of the correlation. Further columns contain
-            the values of the correlation function. The number of these columns
-            is the dimension of the output of the correlation operation.
+        Get correlation.
         """
         return np.array(self.call_method(
             "get_correlation")).reshape(self.shape())
+
+    def correlation_lags(self):
+        """
+        Get time lags of the correlation.
+        """
+        return np.array(self.call_method("correlation_lags"))
+
+    def correlation_sizes(self):
+        """
+        Get samples sizes for each time lag.
+        """
+        return np.array(self.call_method("correlation_sizes"), dtype=int)
 
 
 @script_interface_register

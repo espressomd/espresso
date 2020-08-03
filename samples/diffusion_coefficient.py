@@ -55,27 +55,30 @@ system.integrator.run(1000000)
 c_pos.finalize()
 c_vel.finalize()
 
-np.savetxt("msd.dat", c_pos.result())
-np.savetxt("vacf.dat", c_vel.result())
+msd = np.column_stack((c_pos.correlation_lags(),
+                       c_pos.correlation_sizes(),
+                       c_pos.result().reshape([-1, 3])))
+vacf = np.column_stack((c_vel.correlation_lags(),
+                        c_vel.correlation_sizes(),
+                        c_vel.result().reshape([-1, 1])))
+np.savetxt("msd.dat", msd)
+np.savetxt("vacf.dat", vacf)
 
 # Integral of vacf via Green-Kubo
 # D= 1/3 int_0^infty <v(t_0)v(t_0+t)> dt
 
-vacf = c_vel.result()
 # Integrate with trapezoidal rule
 I = np.trapz(vacf[:, 2], vacf[:, 0])
 ratio = 1. / 3. * I / (kT / gamma)
 print("Ratio of measured and expected diffusion coefficients from Green-Kubo:",
       ratio)
 
-# Check MSD
-msd = c_pos.result()
-
 
 def expected_msd(x):
     return 2. * kT / gamma * x
 
 
+# Check MSD
 print("Ratio of expected and measured msd")
 print("#time ratio_x ratio_y ratio_z")
 for i in range(4, msd.shape[0], 4):
