@@ -165,7 +165,7 @@ void openmpi_fix_vader() {
  */
 void openmpi_global_namespace() {
   if (OMPI_MAJOR_VERSION >= 3)
-      return;
+    return;
 #ifdef RTLD_NOLOAD
   const int mode = RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD;
 #else
