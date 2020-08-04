@@ -164,6 +164,8 @@ void openmpi_fix_vader() {
  * about some weird two-level symbol namespace thing.
  */
 void openmpi_global_namespace() {
+  if (OMPI_MAJOR_VERSION >= 3)
+      return;
 #ifdef RTLD_NOLOAD
   const int mode = RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD;
 #else
