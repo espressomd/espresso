@@ -456,9 +456,6 @@ endif()
 
 target_link_libraries(cxx_interface INTERFACE coverage_interface)
 
-# Give CMAKE_CXX_FLAGS higher precedence
-target_compile_options(cxx_interface INTERFACE ${CMAKE_CXX_FLAGS})
-
 #
 # Testing
 # ##############################################################################
