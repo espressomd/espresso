@@ -202,7 +202,7 @@ cdef class ReactionAlgorithm:
         for k in self._valid_keys_add():
             try:
                 self._params[k] = kwargs[k]
-            except BaseException:
+            except Exception:
                 pass
         self._check_lengths_of_arrays()
         self._validate_params_default_charge()

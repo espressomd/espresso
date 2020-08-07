@@ -49,7 +49,7 @@ try:
           "\nMOVE: (JOYSTICK AXIS), (KEYBOARD i/j/k/l)"
           "\nACTION BUTTON: (JOYSTICK A), (KEYBOARD p)"
           "\nRESTART: (JOYSTICK START), (KEYBOARD b)")
-except BaseException:
+except ImportError:
     has_pygame = False
     print("\nCONTROLS:"
           "\nMOVE: (KEYBOARD i/j/k/l)"

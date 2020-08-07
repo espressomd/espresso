@@ -52,10 +52,10 @@ if use_opengl:
 
 try:
     import midi
-except BaseException:
+except ImportError:
     try:
         from pygame import midi
-    except BaseException:
+    except ImportError:
         from portmidi import midi
 midi.init()
 
