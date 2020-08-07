@@ -215,16 +215,6 @@ void Correlator::initialize() {
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
     m_dim_corr = dim_A * dim_B;
-    auto const shape_A = A_obs->shape();
-    auto const shape_B = B_obs->shape();
-    if (!(shape_A.size() == 1 || (shape_A.size() == 2 && shape_A[0] == 1))) {
-      throw std::runtime_error(
-          "tensor_product requires vectors, but observable A is a matrix");
-    }
-    if (!(shape_B.size() == 1 || (shape_B.size() == 2 && shape_B[0] == 1))) {
-      throw std::runtime_error(
-          "tensor_product requires vectors, but observable B is a matrix");
-    }
     m_shape = {dim_A, dim_B};
     corr_operation = &tensor_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
@@ -253,16 +243,6 @@ void Correlator::initialize() {
     corr_operation = &fcs_acf;
   } else if (corr_operation_name == "scalar_product") {
     m_dim_corr = 1;
-    auto const shape_A = A_obs->shape();
-    auto const shape_B = B_obs->shape();
-    if (!(shape_A.size() == 1 || (shape_A.size() == 2 && shape_A[0] == 1))) {
-      throw std::runtime_error(
-          "scalar_product requires vectors, but observable A is a matrix");
-    }
-    if (!(shape_B.size() == 1 || (shape_B.size() == 2 && shape_B[0] == 1))) {
-      throw std::runtime_error(
-          "scalar_product requires vectors, but observable B is a matrix");
-    }
     m_shape = {1};
     corr_operation = &scalar_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
