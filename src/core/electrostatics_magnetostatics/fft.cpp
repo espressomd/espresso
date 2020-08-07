@@ -277,25 +277,21 @@ int calc_send_block(const int *pos1, const int *grid1, const int *pos2,
 void pack_block_permute1(double const *const in, double *const out,
                          const int *start, const int *size, const int *dim,
                          int element) {
-  /* slow, mid and fast changing indices for input grid */
-  int s, m, f, e;
-  /* linear index of in grid, linear index of out grid */
-  int li_in, li_out = 0;
+
   /* offsets for indices in input grid */
-  int m_in_offset, s_in_offset;
+  auto const m_in_offset = element * (dim[2] - size[2]);
+  auto const s_in_offset = element * (dim[2] * (dim[1] - size[1]));
   /* offset for mid changing indices of output grid */
-  int m_out_offset;
+  auto const m_out_offset = (element * size[0]) - element;
+  /* linear index of in grid, linear index of out grid */
+  int li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
+  int li_out = 0;
 
-  m_in_offset = element * (dim[2] - size[2]);
-  s_in_offset = element * (dim[2] * (dim[1] - size[1]));
-  m_out_offset = (element * size[0]) - element;
-  li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
-
-  for (s = 0; s < size[0]; s++) { /* fast changing out */
+  for (int s = 0; s < size[0]; s++) { /* fast changing out */
     li_out = element * s;
-    for (m = 0; m < size[1]; m++) {   /* slow changing out */
-      for (f = 0; f < size[2]; f++) { /* mid  changing out */
-        for (e = 0; e < element; e++)
+    for (int m = 0; m < size[1]; m++) {   /* slow changing out */
+      for (int f = 0; f < size[2]; f++) { /* mid  changing out */
+        for (int e = 0; e < element; e++)
           out[li_out++] = in[li_in++];
         li_out += m_out_offset;
       }
@@ -329,28 +325,22 @@ void pack_block_permute1(double const *const in, double *const out,
 void pack_block_permute2(double const *const in, double *const out,
                          const int *start, const int *size, const int *dim,
                          int element) {
-  /* slow, mid and fast changing indices for input grid */
-  int s, m, f, e;
-  /* linear index of in grid, linear index of out grid */
-  int li_in, li_out = 0;
+
   /* offsets for indices in input grid */
-  int m_in_offset, s_in_offset;
+  auto const m_in_offset = element * (dim[2] - size[2]);
+  auto const s_in_offset = element * (dim[2] * (dim[1] - size[1]));
   /* offset for slow changing index of output grid */
-  int s_out_offset;
-  /* start index for mid changing index of output grid */
-  int m_out_start;
+  auto const s_out_offset = (element * size[0] * size[1]) - element;
+  /* linear index of in grid, linear index of out grid */
+  int li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
+  int li_out = 0;
 
-  m_in_offset = element * (dim[2] - size[2]);
-  s_in_offset = element * (dim[2] * (dim[1] - size[1]));
-  s_out_offset = (element * size[0] * size[1]) - element;
-  li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
-
-  for (s = 0; s < size[0]; s++) { /* mid changing out */
-    m_out_start = element * (s * size[1]);
-    for (m = 0; m < size[1]; m++) { /* fast changing out */
+  for (int s = 0; s < size[0]; s++) { /* mid changing out */
+    auto const m_out_start = element * (s * size[1]);
+    for (int m = 0; m < size[1]; m++) { /* fast changing out */
       li_out = m_out_start + element * m;
-      for (f = 0; f < size[2]; f++) { /* slow  changing out */
-        for (e = 0; e < element; e++)
+      for (int f = 0; f < size[2]; f++) { /* slow  changing out */
+        for (int e = 0; e < element; e++)
           out[li_out++] = in[li_in++];
         li_out += s_out_offset;
       }
@@ -767,20 +757,16 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
 void fft_pack_block(double const *const in, double *const out,
                     int const start[3], int const size[3], int const dim[3],
                     int element) {
-  /* linear index of in grid, linear index of out grid */
-  int li_in, li_out = 0;
-  /* copy size */
-  int copy_size;
-  /* offsets for indices in input grid */
-  int m_in_offset, s_in_offset;
-  /* offsets for indices in output grid */
-  int m_out_offset;
 
-  copy_size = element * size[2] * static_cast<int>(sizeof(double));
-  m_in_offset = element * dim[2];
-  s_in_offset = element * (dim[2] * (dim[1] - size[1]));
-  m_out_offset = element * size[2];
-  li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
+  auto const copy_size = element * size[2] * static_cast<int>(sizeof(double));
+  /* offsets for indices in input grid */
+  auto const m_in_offset = element * dim[2];
+  auto const s_in_offset = element * (dim[2] * (dim[1] - size[1]));
+  /* offsets for indices in output grid */
+  auto const m_out_offset = element * size[2];
+  /* linear index of in grid, linear index of out grid */
+  int li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
+  int li_out = 0;
 
   for (int s = 0; s < size[0]; s++) {
     for (int m = 0; m < size[1]; m++) {
@@ -795,25 +781,19 @@ void fft_pack_block(double const *const in, double *const out,
 void fft_unpack_block(double const *const in, double *const out,
                       int const start[3], int const size[3], int const dim[3],
                       int element) {
-  /* mid and slow changing indices */
-  int m, s;
-  /* linear index of in grid, linear index of out grid */
-  int li_in = 0, li_out;
-  /* copy size */
-  int copy_size;
-  /* offset for indices in input grid */
-  int m_in_offset;
+
+  auto const copy_size = element * size[2] * static_cast<int>(sizeof(double));
   /* offsets for indices in output grid */
-  int m_out_offset, s_out_offset;
+  auto const m_out_offset = element * dim[2];
+  auto const s_out_offset = element * (dim[2] * (dim[1] - size[1]));
+  /* offset for indices in input grid */
+  auto const m_in_offset = element * size[2];
+  /* linear index of in grid, linear index of out grid */
+  int li_in = 0;
+  int li_out = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
 
-  copy_size = element * size[2] * static_cast<int>(sizeof(double));
-  m_out_offset = element * dim[2];
-  s_out_offset = element * (dim[2] * (dim[1] - size[1]));
-  m_in_offset = element * size[2];
-  li_out = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
-
-  for (s = 0; s < size[0]; s++) {
-    for (m = 0; m < size[1]; m++) {
+  for (int s = 0; s < size[0]; s++) {
+    for (int m = 0; m < size[1]; m++) {
       memmove(&(out[li_out]), &(in[li_in]), copy_size);
       li_in += m_in_offset;
       li_out += m_out_offset;
