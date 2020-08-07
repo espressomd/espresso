@@ -260,19 +260,32 @@ class Correlator(ScriptInterfaceHelper):
     def result(self):
         """
         Get correlation.
+
+        Returns
+        -------
+        :obj:`ndarray` of :obj:`float`
+            The result of the correlation function. The shape of the array
+            is determined by the shape of the input observable(s) and the
+            correlation operation.
         """
         return np.array(self.call_method(
             "get_correlation")).reshape(self.shape())
 
     def correlation_lags(self):
         """
-        Get time lags of the correlation.
+        Returns
+        -------
+        :obj:`ndarray` of :obj:`float`
+            Time lags of the correlation.
         """
         return np.array(self.call_method("correlation_lags"))
 
     def correlation_sizes(self):
         """
-        Get samples sizes for each time lag.
+        Returns
+        -------
+        :obj:`ndarray` of :obj:`int`
+            Samples sizes for each time lag.
         """
         return np.array(self.call_method("correlation_sizes"), dtype=int)
 
