@@ -211,7 +211,7 @@ class BrownianDynamics(ut.TestCase):
 
         # Check MSD
         msd = c_pos.result()
-        tau = c_pos.correlation_lags()
+        tau = c_pos.lag_times()
         system.auto_update_accumulators.clear()
 
         def expected_msd(x):

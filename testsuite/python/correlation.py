@@ -48,7 +48,7 @@ class CorrelatorTest(ut.TestCase):
         return time_step * np.array(tau[:length]) * delta_N
 
     def check_sizes(self, acc, steps, linear=False):
-        sizes = acc.correlation_sizes()
+        sizes = acc.sample_sizes()
         tau_lin = acc.tau_lin
         max_lin = np.arange(steps, steps - tau_lin - 1, -1)
         if linear:
@@ -65,12 +65,12 @@ class CorrelatorTest(ut.TestCase):
 
     def check_pickling(self, acc):
         corr = acc.result()
-        lags = acc.correlation_lags()
-        sizes = acc.correlation_sizes()
+        lags = acc.lag_times()
+        sizes = acc.sample_sizes()
         acc_unpickled = pickle.loads(pickle.dumps(acc))
         np.testing.assert_array_equal(acc_unpickled.result(), corr)
-        np.testing.assert_array_equal(acc_unpickled.correlation_lags(), lags)
-        np.testing.assert_array_equal(acc_unpickled.correlation_sizes(), sizes)
+        np.testing.assert_array_equal(acc_unpickled.lag_times(), lags)
+        np.testing.assert_array_equal(acc_unpickled.sample_sizes(), sizes)
 
     def test_square_distance_componentwise(self):
         s = self.system
@@ -89,7 +89,7 @@ class CorrelatorTest(ut.TestCase):
         corr = acc.result()
         self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
-        np.testing.assert_array_almost_equal(acc.correlation_lags(), tau)
+        np.testing.assert_array_almost_equal(acc.lag_times(), tau)
         self.check_sizes(acc, 1000)
         for i in range(corr.shape[0]):
             np.testing.assert_array_almost_equal(corr[i], [v**2 * tau[i]**2])
@@ -110,7 +110,7 @@ class CorrelatorTest(ut.TestCase):
         corr = acc.result()
         self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
-        np.testing.assert_array_almost_equal(acc.correlation_lags(), tau)
+        np.testing.assert_array_almost_equal(acc.lag_times(), tau)
         corr_ref = np.kron(v, v).reshape((3, 3))
         self.check_sizes(acc, 1000)
         for i in range(corr.shape[0]):
@@ -132,7 +132,7 @@ class CorrelatorTest(ut.TestCase):
         corr = acc.result()
         self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
-        np.testing.assert_array_almost_equal(acc.correlation_lags(), tau)
+        np.testing.assert_array_almost_equal(acc.lag_times(), tau)
         self.check_sizes(acc, 1000)
         for i in range(corr.shape[0]):
             np.testing.assert_array_almost_equal(corr[i], [v**2])
@@ -153,7 +153,7 @@ class CorrelatorTest(ut.TestCase):
         corr = acc.result()
         self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
-        np.testing.assert_array_almost_equal(acc.correlation_lags(), tau)
+        np.testing.assert_array_almost_equal(acc.lag_times(), tau)
         self.check_sizes(acc, 1000)
         for i in range(corr.shape[0]):
             np.testing.assert_array_almost_equal(corr[i], [np.sum(v**2)])
@@ -175,7 +175,7 @@ class CorrelatorTest(ut.TestCase):
         corr = acc.result()
         self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
-        np.testing.assert_array_almost_equal(acc.correlation_lags(), tau)
+        np.testing.assert_array_almost_equal(acc.lag_times(), tau)
         self.check_sizes(acc, 1000, linear=True)
         for i in range(corr.shape[0]):
             np.testing.assert_array_almost_equal(
@@ -219,9 +219,9 @@ class CorrelatorTest(ut.TestCase):
                 acc_def = espressomd.accumulators.Correlator(
                     obs1=obs, tau_lin=1, tau_max=tau_max,
                     delta_N=delta_N, corr_operation="scalar_product")
-                lin_tau = acc_lin.correlation_lags()
-                mul_tau = acc_mul.correlation_lags()
-                def_tau = acc_mul.correlation_lags()
+                lin_tau = acc_lin.lag_times()
+                mul_tau = acc_mul.lag_times()
+                def_tau = acc_mul.lag_times()
                 # check tau
                 time_lin = dt * delta_N * np.arange(len(lin_tau))
                 time_mul = self.calc_tau(dt, tau_lin, len(mul_tau), delta_N)

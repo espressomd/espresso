@@ -55,11 +55,11 @@ system.integrator.run(1000000)
 c_pos.finalize()
 c_vel.finalize()
 
-msd = np.column_stack((c_pos.correlation_lags(),
-                       c_pos.correlation_sizes(),
+msd = np.column_stack((c_pos.lag_times(),
+                       c_pos.sample_sizes(),
                        c_pos.result().reshape([-1, 3])))
-vacf = np.column_stack((c_vel.correlation_lags(),
-                        c_vel.correlation_sizes(),
+vacf = np.column_stack((c_vel.lag_times(),
+                        c_vel.sample_sizes(),
                         c_vel.result().reshape([-1, 1])))
 np.savetxt("msd.dat", msd)
 np.savetxt("vacf.dat", vacf)

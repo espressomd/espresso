@@ -465,7 +465,7 @@ class LangevinThermostat(ut.TestCase):
         # Integral of vacf via Green-Kubo D = int_0^infty <v(t_0)v(t_0+t)> dt
         # (or 1/3, since we work componentwise)
         acf = c.result()
-        tau = c.correlation_lags()
+        tau = c.lag_times()
 
         # Integrate with trapezoidal rule
         for i in range(3):

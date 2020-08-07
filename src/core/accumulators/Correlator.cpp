@@ -511,7 +511,7 @@ std::vector<double> Correlator::get_correlation() {
   return res;
 }
 
-std::vector<double> Correlator::get_correlation_lags() const {
+std::vector<double> Correlator::get_lag_times() const {
   std::vector<double> res(m_n_result);
   boost::transform(tau, res.begin(),
                    [dt = m_dt](auto const &a) { return a * dt; });

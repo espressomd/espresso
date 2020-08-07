@@ -119,7 +119,7 @@ for index, N in enumerate(N_MONOMERS):
     corrdata = correlator.result()
 
     rh_results[index] = np.average(rhs)
-    tau = correlator.correlation_lags()[1:]
+    tau = correlator.lag_times()[1:]
     msd = corrdata[1:, 0] + corrdata[1:, 1] + corrdata[1:, 2]
     np.save('msd_{}'.format(N), np.c_[tau, msd])
 

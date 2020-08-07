@@ -271,23 +271,23 @@ class Correlator(ScriptInterfaceHelper):
         return np.array(self.call_method(
             "get_correlation")).reshape(self.shape())
 
-    def correlation_lags(self):
+    def lag_times(self):
         """
         Returns
         -------
         :obj:`ndarray` of :obj:`float`
-            Time lags of the correlation.
+            Lag times of the correlation.
         """
-        return np.array(self.call_method("correlation_lags"))
+        return np.array(self.call_method("get_lag_times"))
 
-    def correlation_sizes(self):
+    def sample_sizes(self):
         """
         Returns
         -------
         :obj:`ndarray` of :obj:`int`
-            Samples sizes for each time lag.
+            Samples sizes for each lag time.
         """
-        return np.array(self.call_method("correlation_sizes"), dtype=int)
+        return np.array(self.call_method("get_samples_sizes"), dtype=int)
 
 
 @script_interface_register

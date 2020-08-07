@@ -187,10 +187,10 @@ public:
     shape.insert(shape.begin(), m_n_result);
     return shape;
   }
-  std::vector<int> get_correlation_sweeps() const {
+  std::vector<int> get_samples_sizes() const {
     return std::vector<int>(n_sweeps.begin(), n_sweeps.end());
   }
-  std::vector<double> get_correlation_lags() const;
+  std::vector<double> get_lag_times() const;
 
   int tau_lin() const { return m_tau_lin; }
   double tau_max() const { return m_tau_max; }

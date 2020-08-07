@@ -69,10 +69,10 @@ system.integrator.run(300000)
 
 # Finalize the correlation calculation and write the results to a file
 c.finalize()
-np.savetxt("res.dat", np.column_stack((c.correlation_lags(),
-                                       c.correlation_sizes(),
+np.savetxt("res.dat", np.column_stack((c.lag_times(),
+                                       c.sample_sizes(),
                                        c.result().reshape([-1, 3]))))
 fcs.finalize()
-np.savetxt("fcs.dat", np.column_stack((fcs.correlation_lags(),
-                                       fcs.correlation_sizes(),
+np.savetxt("fcs.dat", np.column_stack((fcs.lag_times(),
+                                       fcs.sample_sizes(),
                                        fcs.result().reshape([-1, 1]))))

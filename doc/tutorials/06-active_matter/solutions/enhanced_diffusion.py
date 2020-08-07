@@ -120,20 +120,20 @@ for run in range(5):
     system.auto_update_accumulators.remove(msd)
     msd.finalize()
     np.savetxt("{}/msd_{}_{}.dat".format(outdir, vel, run),
-               np.column_stack((msd.correlation_lags(),
-                                msd.correlation_sizes(),
+               np.column_stack((msd.lag_times(),
+                                msd.sample_sizes(),
                                 msd.result().reshape([-1, 3]))))
 
     system.auto_update_accumulators.remove(vacf)
     vacf.finalize()
     np.savetxt("{}/vacf_{}_{}.dat".format(outdir, vel, run),
-               np.column_stack((vacf.correlation_lags(),
-                                vacf.correlation_sizes(),
+               np.column_stack((vacf.lag_times(),
+                                vacf.sample_sizes(),
                                 vacf.result().reshape([-1, 1]))))
 
     system.auto_update_accumulators.remove(avacf)
     avacf.finalize()
     np.savetxt("{}/avacf_{}_{}.dat".format(outdir, vel, run),
-               np.column_stack((avacf.correlation_lags(),
-                                avacf.correlation_sizes(),
+               np.column_stack((avacf.lag_times(),
+                                avacf.sample_sizes(),
                                 avacf.result().reshape([-1, 1]))))

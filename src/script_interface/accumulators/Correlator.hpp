@@ -84,10 +84,10 @@ public:
       correlator()->finalize();
     if (method == "get_correlation")
       return correlator()->get_correlation();
-    if (method == "correlation_lags")
-      return correlator()->get_correlation_lags();
-    if (method == "correlation_sizes")
-      return correlator()->get_correlation_sweeps();
+    if (method == "get_lag_times")
+      return correlator()->get_lag_times();
+    if (method == "get_samples_sizes")
+      return correlator()->get_samples_sizes();
 
     return AccumulatorBase::call_method(method, parameters);
   }
