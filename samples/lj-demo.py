@@ -528,7 +528,7 @@ def midi_thread():
                             # rotate clockwise
                             mayavi_rotation_angle += mayavi_rotation_angle_step * \
                                 data2
-                        elif data2 >= 65:
+                        else:
                             # rotate counterclockwise
                             mayavi_rotation_angle -= mayavi_rotation_angle_step * \
                                 (data2 - 64)
