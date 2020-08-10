@@ -1460,7 +1460,7 @@ void ELC_P3M_restore_p3m_sums(ParticleRange const &particles) {
 
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
 
-  p3m.sum_qpart = static_cast<int>(std::round(tot_sums[0]));
+  p3m.sum_qpart = (int)(tot_sums[0] + 0.1);
   p3m.sum_q2 = tot_sums[1];
   p3m.square_sum_q = Utils::sqr(tot_sums[2]);
 }
