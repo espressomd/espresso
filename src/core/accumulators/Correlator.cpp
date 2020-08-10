@@ -288,13 +288,13 @@ void Correlator::initialize() {
   A_accumulated_average = std::vector<double>(dim_A, 0);
   B_accumulated_average = std::vector<double>(dim_B, 0);
 
-  m_n_result = m_tau_lin + 1 + (m_tau_lin + 1) / 2 * (m_hierarchy_depth - 1);
-  n_sweeps = std::vector<size_t>(m_n_result, 0);
+  auto const n_result = n_values();
+  n_sweeps = std::vector<size_t>(n_result, 0);
   n_vals = std::vector<unsigned int>(m_hierarchy_depth, 0);
 
-  result.resize(std::array<size_t, 2>{{m_n_result, m_dim_corr}});
+  result.resize(std::array<size_t, 2>{{n_result, m_dim_corr}});
 
-  for (size_t i = 0; i < m_n_result; i++) {
+  for (size_t i = 0; i < n_result; i++) {
     for (size_t j = 0; j < m_dim_corr; j++) {
       // and initialize the values
       result[i][j] = 0;
@@ -303,7 +303,7 @@ void Correlator::initialize() {
 
   newest = std::vector<size_t>(m_hierarchy_depth, m_tau_lin);
 
-  tau.resize(m_n_result);
+  tau.resize(n_result);
   for (int i = 0; i < m_tau_lin + 1; i++) {
     tau[i] = i;
   }
@@ -499,9 +499,10 @@ int Correlator::finalize() {
 }
 
 std::vector<double> Correlator::get_correlation() {
-  std::vector<double> res(m_n_result * m_dim_corr);
+  auto const n_result = n_values();
+  std::vector<double> res(n_result * m_dim_corr);
 
-  for (size_t i = 0; i < m_n_result; i++) {
+  for (size_t i = 0; i < n_result; i++) {
     auto const index = m_dim_corr * i;
     for (size_t k = 0; k < m_dim_corr; k++) {
       res[index + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
@@ -511,7 +512,7 @@ std::vector<double> Correlator::get_correlation() {
 }
 
 std::vector<double> Correlator::get_lag_times() const {
-  std::vector<double> res(m_n_result);
+  std::vector<double> res(n_values());
   boost::transform(tau, res.begin(),
                    [dt = m_dt](auto const &a) { return a * dt; });
   return res;
@@ -522,7 +523,6 @@ std::string Correlator::get_internal_state() const {
   boost::archive::binary_oarchive oa(ss);
 
   oa << t;
-  oa << m_n_result;
   oa << m_shape;
   oa << A;
   oa << B;
@@ -545,7 +545,6 @@ void Correlator::set_internal_state(std::string const &state) {
   boost::archive::binary_iarchive ia(ss);
 
   ia >> t;
-  ia >> m_n_result;
   ia >> m_shape;
   ia >> A;
   ia >> B;

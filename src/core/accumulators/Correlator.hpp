@@ -182,9 +182,12 @@ public:
 
   /** Return correlation result */
   std::vector<double> get_correlation();
+  size_t n_values() const {
+    return m_tau_lin + 1 + (m_tau_lin + 1) / 2 * (m_hierarchy_depth - 1);
+  }
   std::vector<size_t> shape() const override {
     std::vector<size_t> shape = m_shape;
-    shape.insert(shape.begin(), m_n_result);
+    shape.insert(shape.begin(), n_values());
     return shape;
   }
   std::vector<int> get_samples_sizes() const {
@@ -231,8 +234,6 @@ private:
   std::string compressA_name;
   std::string compressB_name;
   std::string corr_operation_name; ///< Name of the correlation operator
-
-  size_t m_n_result; ///< the total number of result values
 
   std::shared_ptr<Observables::Observable> A_obs;
   std::shared_ptr<Observables::Observable> B_obs;
