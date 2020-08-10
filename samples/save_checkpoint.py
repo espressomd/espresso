@@ -41,7 +41,7 @@ if not checkpoint.checkpoint_signals:
     checkpoint.register_signal(signal.SIGINT)
 
 # test for user data
-myvar = "some script variable"  # lgtm[py/multiple-definition]
+myvar = "some script variable"
 checkpoint.register("myvar")
 myvar = "updated value"  # demo of how the register function works
 

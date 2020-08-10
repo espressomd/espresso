@@ -283,12 +283,12 @@ void pack_block_permute1(double const *const in, double *const out,
   auto const s_in_offset = element * (dim[2] * (dim[1] - size[1]));
   /* offset for mid changing indices of output grid */
   auto const m_out_offset = (element * size[0]) - element;
-  /* linear index of in grid, linear index of out grid */
+  /* linear index of in grid */
   int li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
-  int li_out = 0;
 
   for (int s = 0; s < size[0]; s++) { /* fast changing out */
-    li_out = element * s;
+    /* linear index of out grid */
+    int li_out = element * s;
     for (int m = 0; m < size[1]; m++) {   /* slow changing out */
       for (int f = 0; f < size[2]; f++) { /* mid  changing out */
         for (int e = 0; e < element; e++)
@@ -331,14 +331,14 @@ void pack_block_permute2(double const *const in, double *const out,
   auto const s_in_offset = element * (dim[2] * (dim[1] - size[1]));
   /* offset for slow changing index of output grid */
   auto const s_out_offset = (element * size[0] * size[1]) - element;
-  /* linear index of in grid, linear index of out grid */
+  /* linear index of in grid */
   int li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
-  int li_out = 0;
 
   for (int s = 0; s < size[0]; s++) { /* mid changing out */
     auto const m_out_start = element * (s * size[1]);
     for (int m = 0; m < size[1]; m++) { /* fast changing out */
-      li_out = m_out_start + element * m;
+      /* linear index of out grid */
+      int li_out = m_out_start + element * m;
       for (int f = 0; f < size[2]; f++) { /* slow  changing out */
         for (int e = 0; e < element; e++)
           out[li_out++] = in[li_in++];
