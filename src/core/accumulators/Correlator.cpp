@@ -159,7 +159,6 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
 }
 
 void Correlator::initialize() {
-  hierarchy_depth = 0;
   // Class members are assigned via the initializer list
 
   if (m_tau_lin == 1) { // use the default
@@ -181,9 +180,9 @@ void Correlator::initialize() {
   }
   // set hierarchy depth which can accommodate at least m_tau_max
   if ((m_tau_max / m_dt) < m_tau_lin) {
-    hierarchy_depth = 1;
+    m_hierarchy_depth = 1;
   } else {
-    hierarchy_depth = static_cast<int>(
+    m_hierarchy_depth = static_cast<int>(
         ceil(1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0)));
   }
 
@@ -280,18 +279,18 @@ void Correlator::initialize() {
         "no proper function for compression of second observable given");
   }
 
-  A.resize(std::array<int, 2>{{hierarchy_depth, m_tau_lin + 1}});
+  A.resize(std::array<int, 2>{{m_hierarchy_depth, m_tau_lin + 1}});
   std::fill_n(A.data(), A.num_elements(), std::vector<double>(dim_A, 0));
-  B.resize(std::array<int, 2>{{hierarchy_depth, m_tau_lin + 1}});
+  B.resize(std::array<int, 2>{{m_hierarchy_depth, m_tau_lin + 1}});
   std::fill_n(B.data(), B.num_elements(), std::vector<double>(dim_B, 0));
 
   n_data = 0;
   A_accumulated_average = std::vector<double>(dim_A, 0);
   B_accumulated_average = std::vector<double>(dim_B, 0);
 
-  m_n_result = m_tau_lin + 1 + (m_tau_lin + 1) / 2 * (hierarchy_depth - 1);
+  m_n_result = m_tau_lin + 1 + (m_tau_lin + 1) / 2 * (m_hierarchy_depth - 1);
   n_sweeps = std::vector<size_t>(m_n_result, 0);
-  n_vals = std::vector<unsigned int>(hierarchy_depth, 0);
+  n_vals = std::vector<unsigned int>(m_hierarchy_depth, 0);
 
   result.resize(std::array<size_t, 2>{{m_n_result, m_dim_corr}});
 
@@ -302,14 +301,14 @@ void Correlator::initialize() {
     }
   }
 
-  newest = std::vector<size_t>(hierarchy_depth, m_tau_lin);
+  newest = std::vector<size_t>(m_hierarchy_depth, m_tau_lin);
 
   tau.resize(m_n_result);
   for (int i = 0; i < m_tau_lin + 1; i++) {
     tau[i] = i;
   }
 
-  for (int j = 1; j < hierarchy_depth; j++) {
+  for (int j = 1; j < m_hierarchy_depth; j++) {
     for (int k = 0; k < m_tau_lin / 2; k++) {
       tau[m_tau_lin + 1 + (j - 1) * m_tau_lin / 2 + k] =
           (k + (m_tau_lin / 2) + 1) * (1 << j);
@@ -335,7 +334,7 @@ void Correlator::update() {
   while (true) {
     if (((t - ((m_tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
          0)) {
-      if (i < (hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
+      if (i < (m_hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
         highest_level_to_compress += 1;
         i++;
       } else
@@ -426,7 +425,7 @@ int Correlator::finalize() {
   // mark the correlation as finalized
   finalized = true;
 
-  for (int ll = 0; ll < hierarchy_depth - 1; ll++) {
+  for (int ll = 0; ll < m_hierarchy_depth - 1; ll++) {
     int vals_ll; // number of values remaining in the lowest level
     if (n_vals[ll] > m_tau_lin + 1)
       vals_ll = m_tau_lin + static_cast<int>(n_vals[ll]) % 2;
@@ -445,7 +444,7 @@ int Correlator::finalize() {
       // space for the new value
       while (highest_level_to_compress > -1) {
         if (n_vals[i] % 2) {
-          if (i < (hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
+          if (i < (m_hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
             highest_level_to_compress += 1;
             i++;
           } else {

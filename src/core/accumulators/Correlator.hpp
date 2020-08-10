@@ -221,12 +221,12 @@ private:
                                       ///< correlation may need (currently
                                       ///< only used by fcs_acf)
 
-  int hierarchy_depth; ///< maximum level of data compression
-  int m_tau_lin;       ///< number of frames in the linear correlation
-  size_t m_dim_corr;   ///< number of columns for the correlation
-  double m_dt;         ///< time interval at which samples arrive
-  double m_tau_max;    ///< maximum time for which the correlation should be
-                       ///< calculated
+  int m_hierarchy_depth; ///< maximum level of data compression
+  int m_tau_lin;         ///< number of frames in the linear correlation
+  size_t m_dim_corr;     ///< number of columns for the correlation
+  double m_dt;           ///< time interval at which samples arrive
+  double m_tau_max;      ///< maximum time for which the correlation should be
+                         ///< calculated
 
   std::string compressA_name;
   std::string compressB_name;
