@@ -110,13 +110,13 @@ cdef class mayaviLive:
             IF LENNARD_JONES:
                 try:
                     radius = 0.5 * get_ia_param(t, t).lj.sig
-                except BaseException:
+                except Exception:
                     radius = 0.
             IF WCA:
                 if radius == 0:
                     try:
                         radius = 0.5 * get_ia_param(t, t).wca.sig
-                    except BaseException:
+                    except Exception:
                         radius = 0.
 
             if radius == 0:
@@ -131,7 +131,7 @@ cdef class mayaviLive:
         else:
             try:
                 radius = self.particle_sizes[t]
-            except BaseException:
+            except Exception:
                 radius = radius_from_lj(t)
         return radius
 

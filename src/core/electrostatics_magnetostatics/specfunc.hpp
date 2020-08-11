@@ -105,7 +105,7 @@ inline double evaluateAsChebychevSeriesAt(Utils::Span<const double> series,
   assert(series.size() >= 3);
 
   const double *c = series.data();
-  double x2 = 2.0 * x;
+  double const x2 = 2.0 * x;
   double dd = c[series.size() - 1];
   double d = x2 * dd + c[series.size() - 2];
   for (auto j = static_cast<int>(series.size()) - 3; j >= 1; j--) {

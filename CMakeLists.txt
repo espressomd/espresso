@@ -385,10 +385,17 @@ endif()
 add_library(cxx_interface INTERFACE)
 target_compile_options(
   cxx_interface
-  INTERFACE -Wall -Wextra $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+  INTERFACE -Wall
+            -Wextra
+            $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+            # add extra warnings
+            $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
             # disable warnings from -Wextra
-            -Wno-sign-compare -Wno-unused-function -Wno-unused-variable
-            -Wno-unused-parameter -Wno-missing-braces
+            -Wno-sign-compare
+            -Wno-unused-function
+            -Wno-unused-variable
+            -Wno-unused-parameter
+            -Wno-missing-braces
             $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered;-Wno-cast-function-type>
             $<$<CXX_COMPILER_ID:Intel>:-wd592>)
 
@@ -455,9 +462,6 @@ if(WITH_UBSAN)
 endif()
 
 target_link_libraries(cxx_interface INTERFACE coverage_interface)
-
-# Give CMAKE_CXX_FLAGS higher precedence
-target_compile_options(cxx_interface INTERFACE ${CMAKE_CXX_FLAGS})
 
 #
 # Testing

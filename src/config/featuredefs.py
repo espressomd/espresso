@@ -50,8 +50,6 @@ class defs:
     def __init__(self, filename):
         # complete set of all defined features
         allfeatures = set()
-        # allfeatures minus externals and derived
-        features = set()
         # list of implications (pairs of feature -> implied feature)
         implications = list()
         # list of requirements (pairs of feature -> requirement expr)
@@ -131,8 +129,10 @@ class defs:
                         raise SyntaxError("<feature> requires <expr>", line)
                     requirements.append((feature, rest, toCPPExpr(rest)))
 
+        # allfeatures minus externals and derived
         features = allfeatures.difference(derived)
         features = features.difference(externals)
+
         self.allfeatures = allfeatures
         self.features = features
         self.requirements = requirements

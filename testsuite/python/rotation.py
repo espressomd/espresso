@@ -3,7 +3,7 @@ import unittest as ut
 
 try:
     import scipy.spatial.transform as sst
-except BaseException:
+except ImportError:
     pass
 
 import espressomd.rotation
