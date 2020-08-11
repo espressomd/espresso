@@ -217,15 +217,14 @@ void distribute(int size) {
  *  See @cite yeh99a.
  */
 static void add_dipole_force(const ParticleRange &particles) {
-  double pref = coulomb.prefactor * 4 * M_PI * ux * uy * uz;
-  int size = 3;
+  double const pref = coulomb.prefactor * 4 * M_PI * ux * uy * uz;
+  int const size = 3;
 
   auto local_particles = particles;
 
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
-  double shift = 0.5 * box_geo.length()[2];
-  double field_tot = 0;
+  double const shift = 0.5 * box_geo.length()[2];
 
   // collect moments
 
@@ -258,7 +257,7 @@ static void add_dipole_force(const ParticleRange &particles) {
   distribute(size);
 
   // Yeh + Berkowitz dipole term @cite yeh99a
-  field_tot = gblcblk[0];
+  double field_tot = gblcblk[0];
 
   // Const. potential contribution
   if (elc_params.const_pot) {
@@ -281,11 +280,11 @@ static void add_dipole_force(const ParticleRange &particles) {
  *  See @cite yeh99a.
  */
 static double dipole_energy(const ParticleRange &particles) {
-  double pref = coulomb.prefactor * 2 * M_PI * ux * uy * uz;
-  int size = 7;
+  double const pref = coulomb.prefactor * 2 * M_PI * ux * uy * uz;
+  int const size = 7;
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
-  double shift = 0.5 * box_geo.length()[2];
+  double const shift = 0.5 * box_geo.length()[2];
 
   // collect moments
 
@@ -354,18 +353,18 @@ static double dipole_energy(const ParticleRange &particles) {
 /*****************************************************************/
 
 inline double image_sum_b(double q, double z) {
-  double shift = 0.5 * box_geo.length()[2];
-  double fac = elc_params.delta_mid_top * elc_params.delta_mid_bot;
-  double image_sum =
+  double const shift = 0.5 * box_geo.length()[2];
+  double const fac = elc_params.delta_mid_top * elc_params.delta_mid_bot;
+  double const image_sum =
       (q / (1.0 - fac) * (z - 2.0 * fac * box_geo.length()[2] / (1.0 - fac))) -
       q * shift / (1 - fac);
   return image_sum;
 }
 
 inline double image_sum_t(double q, double z) {
-  double shift = 0.5 * box_geo.length()[2];
-  double fac = elc_params.delta_mid_top * elc_params.delta_mid_bot;
-  double image_sum =
+  double const shift = 0.5 * box_geo.length()[2];
+  double const fac = elc_params.delta_mid_top * elc_params.delta_mid_bot;
+  double const image_sum =
       (q / (1.0 - fac) * (z + 2.0 * fac * box_geo.length()[2] / (1.0 - fac))) -
       q * shift / (1 - fac);
   return image_sum;
@@ -373,13 +372,12 @@ inline double image_sum_t(double q, double z) {
 
 /*****************************************************************/
 static double z_energy(const ParticleRange &particles) {
-  double pref = coulomb.prefactor * 2 * M_PI * ux * uy;
-  int size = 4;
+  double const pref = coulomb.prefactor * 2 * M_PI * ux * uy;
+  int const size = 4;
 
-  double eng = 0;
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
-  double shift = 0.5 * box_geo.length()[2];
+  double const shift = 0.5 * box_geo.length()[2];
 
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot) {
@@ -398,10 +396,10 @@ static double z_energy(const ParticleRange &particles) {
         }
       }
     } else {
-      double delta = elc_params.delta_mid_top * elc_params.delta_mid_bot;
-      double fac_delta_mid_bot = elc_params.delta_mid_bot / (1 - delta);
-      double fac_delta_mid_top = elc_params.delta_mid_top / (1 - delta);
-      double fac_delta = delta / (1 - delta);
+      double const delta = elc_params.delta_mid_top * elc_params.delta_mid_bot;
+      double const fac_delta_mid_bot = elc_params.delta_mid_bot / (1 - delta);
+      double const fac_delta_mid_top = elc_params.delta_mid_top / (1 - delta);
+      double const fac_delta = delta / (1 - delta);
 
       clear_vec(gblcblk, size);
       for (auto &p : particles) {
@@ -443,6 +441,7 @@ static double z_energy(const ParticleRange &particles) {
   }
   distribute(size);
 
+  double eng = 0;
   if (this_node == 0)
     eng -= pref * (gblcblk[1] * gblcblk[2] - gblcblk[0] * gblcblk[3]);
 
@@ -451,11 +450,11 @@ static double z_energy(const ParticleRange &particles) {
 
 /*****************************************************************/
 static void add_z_force(const ParticleRange &particles) {
-  double pref = coulomb.prefactor * 2 * M_PI * ux * uy;
+  double const pref = coulomb.prefactor * 2 * M_PI * ux * uy;
 
   if (elc_params.dielectric_contrast_on) {
     auto local_particles = particles;
-    int size = 1;
+    int const size = 1;
     if (elc_params.const_pot) {
       clear_vec(gblcblk, size);
       /* just counter the 2 pi |z| contribution stemming from P3M */
@@ -466,10 +465,10 @@ static void add_z_force(const ParticleRange &particles) {
           gblcblk[0] += elc_params.delta_mid_top * p.p.q;
       }
     } else {
-      double delta = elc_params.delta_mid_top * elc_params.delta_mid_bot;
-      double fac_delta_mid_bot = elc_params.delta_mid_bot / (1 - delta);
-      double fac_delta_mid_top = elc_params.delta_mid_top / (1 - delta);
-      double fac_delta = delta / (1 - delta);
+      double const delta = elc_params.delta_mid_top * elc_params.delta_mid_bot;
+      double const fac_delta_mid_bot = elc_params.delta_mid_bot / (1 - delta);
+      double const fac_delta_mid_top = elc_params.delta_mid_top / (1 - delta);
+      double const fac_delta = delta / (1 - delta);
 
       clear_vec(gblcblk, size);
       for (auto &p : local_particles) {
@@ -717,10 +716,9 @@ static void setup_Q(int q, double omega, const ParticleRange &particles) {
 }
 
 static void add_P_force(const ParticleRange &particles) {
-  int ic;
-  int size = 4;
+  int const size = 4;
 
-  ic = 0;
+  int ic = 0;
   for (auto &p : particles) {
     p.f.f[0] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
                 partblk[size * ic + POQECM] * gblcblk[POQESP] +
@@ -735,11 +733,11 @@ static void add_P_force(const ParticleRange &particles) {
 }
 
 static double P_energy(double omega, int n_part) {
-  int size = 4;
+  int const size = 4;
   double eng = 0;
-  double pref = 1 / omega;
+  double const pref = 1 / omega;
 
-  for (unsigned ic = 0; ic < n_part; ic++) {
+  for (int ic = 0; ic < n_part; ic++) {
     eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
                    partblk[size * ic + POQESM] * gblcblk[POQESP] +
                    partblk[size * ic + POQECP] * gblcblk[POQECM] +
@@ -750,10 +748,9 @@ static double P_energy(double omega, int n_part) {
 }
 
 static void add_Q_force(const ParticleRange &particles) {
-  int ic;
-  int size = 4;
+  int const size = 4;
 
-  ic = 0;
+  int ic = 0;
   for (auto &p : particles) {
     p.f.f[1] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
                 partblk[size * ic + POQECM] * gblcblk[POQESP] +
@@ -768,11 +765,11 @@ static void add_Q_force(const ParticleRange &particles) {
 }
 
 static double Q_energy(double omega, int n_part) {
-  int size = 4;
+  int const size = 4;
   double eng = 0;
-  double pref = 1 / omega;
+  double const pref = 1 / omega;
 
-  for (unsigned ic = 0; ic < n_part; ic++) {
+  for (int ic = 0; ic < n_part; ic++) {
     eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
                    partblk[size * ic + POQESM] * gblcblk[POQESP] +
                    partblk[size * ic + POQECP] * gblcblk[POQECM] +
@@ -917,13 +914,11 @@ static void setup_PQ(int p, int q, double omega,
 
 static void add_PQ_force(int p, int q, double omega,
                          const ParticleRange &particles) {
-  int ic;
+  double const pref_x = C_2PI * ux * p / omega;
+  double const pref_y = C_2PI * uy * q / omega;
+  int const size = 8;
 
-  double pref_x = C_2PI * ux * p / omega;
-  double pref_y = C_2PI * uy * q / omega;
-  int size = 8;
-
-  ic = 0;
+  int ic = 0;
   for (auto &p : particles) {
     p.f.f[0] += pref_x * (partblk[size * ic + PQESCM] * gblcblk[PQECCP] +
                           partblk[size * ic + PQESSM] * gblcblk[PQECSP] -
@@ -954,11 +949,11 @@ static void add_PQ_force(int p, int q, double omega,
 }
 
 static double PQ_energy(double omega, int n_part) {
-  int size = 8;
+  int const size = 8;
   double eng = 0;
-  double pref = 1 / omega;
+  double const pref = 1 / omega;
 
-  for (unsigned ic = 0; ic < n_part; ic++) {
+  for (int ic = 0; ic < n_part; ic++) {
     eng += pref * (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
                    partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
                    partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
@@ -1053,9 +1048,9 @@ double ELC_energy(const ParticleRange &particles) {
 }
 
 int ELC_tune(double error) {
-  double err;
-  double h = elc_params.h, lz = box_geo.length()[2];
-  double min_inv_boxl = std::min(ux, uy);
+  double const h = elc_params.h;
+  double lz = box_geo.length()[2];
+  double const min_inv_boxl = std::min(ux, uy);
 
   if (elc_params.dielectric_contrast_on) {
     // adjust lz according to dielectric layer method
@@ -1067,6 +1062,7 @@ int ELC_tune(double error) {
 
   elc_params.far_cut = min_inv_boxl;
 
+  double err;
   do {
     const auto prefactor = 2 * Utils::pi() * elc_params.far_cut;
 
@@ -1277,7 +1273,7 @@ void ELC_p3m_charge_assign_both(const ParticleRange &particles) {
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
-  for (auto &p : particles) {
+  for (auto const &p : particles) {
     if (p.p.q != 0.0) {
       p3m_assign_charge(p.p.q, p.r.p, p3m.inter_weights);
       assign_image_charge(p);
@@ -1290,7 +1286,7 @@ void ELC_p3m_charge_assign_image(const ParticleRange &particles) {
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
-  for (auto &p : particles) {
+  for (auto const &p : particles) {
     if (p.p.q != 0.0) {
       assign_image_charge(p);
     }
@@ -1325,7 +1321,7 @@ Utils::Vector3d ELC_P3M_dielectric_layers_force_contribution(
 
 double ELC_P3M_dielectric_layers_energy_contribution(
     Utils::Vector3d const &pos1, Utils::Vector3d const &pos2, double q1q2) {
-  double eng = {};
+  double eng = 0.0;
 
   if (pos1[2] < elc_params.space_layer) {
     auto const q = elc_params.delta_mid_bot * q1q2;

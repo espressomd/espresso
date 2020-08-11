@@ -460,9 +460,6 @@ class Mesh:
              rotate=None):
         mesh = Mesh(system=self.system)
         mesh.ids_extremal_points = self.ids_extremal_points
-        rotation = np.array([[1.0, 0.0, 0.0],
-                             [0.0, 1.0, 0.0],
-                             [0.0, 0.0, 1.0]])
 
         if rotate is not None:
             # variables for rotation
@@ -474,8 +471,7 @@ class Mesh:
             sc = np.sin(rotate[2])
             rotation = np.array(
                 [[cb * cc, sa * sb * cc - ca * sc, sc * sa + cc * sb * ca],
-                 [cb * sc, ca * cc + sa * sb *
-                  sc, sc * sb * ca - cc * sa],
+                 [cb * sc, ca * cc + sa * sb * sc, sc * sb * ca - cc * sa],
                  [-sb, cb * sa, ca * cb]])
 
         for point in self.points:

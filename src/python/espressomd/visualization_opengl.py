@@ -971,7 +971,7 @@ class openGLLive():
                 if radius == 0:
                     radius = self.system.non_bonded_inter[part_type, part_type].wca.get_params()[
                         'sigma'] * 0.5
-            except BaseException:
+            except Exception:
                 radius = 0.5
             if radius == 0:
                 radius = 0.5
