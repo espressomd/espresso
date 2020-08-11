@@ -44,8 +44,8 @@ public:
   void set_internal_state(std::string const &);
 
   const std::vector<std::vector<double>> &time_series() const { return m_data; }
-  std::vector<std::size_t> shape() const {
-    std::vector<std::size_t> shape{m_data.size()};
+  std::vector<size_t> shape() const override {
+    std::vector<size_t> shape{m_data.size()};
     auto obs_shape = m_obs->shape();
     shape.insert(shape.end(), obs_shape.begin(), obs_shape.end());
     return shape;
