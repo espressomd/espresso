@@ -38,6 +38,8 @@ from .analyze import Analysis
 from .galilei import GalileiTransform
 from .constraints import Constraints
 from .accumulators import AutoUpdateAccumulators
+IF LB_WALBERLA:
+    from .lb import _vtk_registry
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
     from .ekboundaries import EKBoundaries
@@ -109,6 +111,8 @@ cdef class System:
         comfixed
         """:class:`espressomd.comfixed.ComFixed`"""
         _active_virtual_sites_handle
+        IF LB_WALBERLA:
+            _vtk_registry
 
     def __init__(self, **kwargs):
         global _system_created
@@ -146,6 +150,8 @@ cdef class System:
             IF VIRTUAL_SITES:
                 self._active_virtual_sites_handle = ActiveVirtualSitesHandle(
                     implementation=VirtualSitesOff())
+            IF LB_WALBERLA:
+                self._vtk_registry = _vtk_registry
             _system_created = True
         else:
             raise RuntimeError(
@@ -178,6 +184,9 @@ cdef class System:
         IF COLLISION_DETECTION:
             odict['collision_detection'] = System.__getattribute__(
                 self, "collision_detection")
+        IF LB_WALBERLA:
+            odict['_vtk_registry'] = System.__getattribute__(
+                self, "_vtk_registry")
         return odict
 
     def __setstate__(self, params):

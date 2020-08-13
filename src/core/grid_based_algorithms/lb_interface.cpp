@@ -425,15 +425,16 @@ lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-void lb_lbfluid_create_vtk(int delta_N, unsigned flag_observables,
+void lb_lbfluid_create_vtk(unsigned delta_N, unsigned initial_count,
+                           unsigned flag_observables,
                            std::string const &identifier,
                            std::string const &base_folder,
                            std::string const &prefix) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     ::Communication::mpiCallbacks().call_all(Walberla::create_vtk, delta_N,
-                                             flag_observables, identifier,
-                                             base_folder, prefix);
+                                             initial_count, flag_observables,
+                                             identifier, base_folder, prefix);
     return;
   }
 #endif

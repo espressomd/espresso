@@ -19,11 +19,13 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import os
 
 import espressomd
 import espressomd.checkpointing
 import espressomd.virtual_sites
 import espressomd.integrate
+import espressomd.lb
 from espressomd.shapes import Sphere, Wall
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
@@ -85,6 +87,42 @@ class CheckpointTest(ut.TestCase):
 #        for key in reference:
 #            self.assertIn(key, state)
 #            self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
+
+    @utx.skipIfMissingFeatures('LB_WALBERLA')
+    @ut.skipIf('LB.WALBERLA' not in modes, 'waLBerla LBM not in modes')
+    def test_VTK(self):
+        for vtk_registry in (system._vtk_registry,
+                             espressomd.lb._vtk_registry):
+            key = 'vtk_out/auto_@TEST_BINARY@'
+            self.assertIn(key, vtk_registry.map)
+            obj = vtk_registry.map[key]
+            self.assertIsInstance(obj, espressomd.lb.VTKOutputAutomatic)
+            self.assertEqual(obj._params['vtk_uid'], key)
+            self.assertEqual(obj._params['delta_N'], 1)
+            self.assertFalse(obj._params['enabled'])
+            self.assertEqual(obj._params['observables'],
+                             {'density', 'velocity_vector'})
+            self.assertIn(
+                "writes to '{}' every 1 LB step (disabled)>".format(key),
+                repr(obj))
+            key = 'vtk_out/manual_@TEST_BINARY@'
+            self.assertIn(key, vtk_registry.map)
+            obj = vtk_registry.map[key]
+            self.assertIsInstance(obj, espressomd.lb.VTKOutputManual)
+            self.assertEqual(obj._params['vtk_uid'], key)
+            self.assertEqual(obj._params['delta_N'], 0)
+            self.assertEqual(obj._params['observables'], {'density'})
+            self.assertIn("writes to '{}' on demand>".format(key), repr(obj))
+        # check file numbering when resuming VTK write operations
+        filepath_template = key + '/simulation_step_{}.vtu'
+        vtk_manual = system._vtk_registry.map[key]
+        self.assertTrue(os.path.isfile(filepath_template.format(0)))
+        self.assertFalse(os.path.isfile(filepath_template.format(1)))
+        self.assertFalse(os.path.isfile(filepath_template.format(2)))
+        vtk_manual.write()
+        self.assertTrue(os.path.isfile(filepath_template.format(0)))
+        self.assertTrue(os.path.isfile(filepath_template.format(1)))
+        self.assertFalse(os.path.isfile(filepath_template.format(2)))
 
     @utx.skipIfMissingFeatures('ELECTROKINETICS')
     @ut.skipIf(not EK, "Skipping test due to missing mode.")

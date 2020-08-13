@@ -146,7 +146,8 @@ double lb_lbfluid_get_lattice_speed();
 /**
  * @brief Create a VTK observable.
  */
-void lb_lbfluid_create_vtk(int delta_N, unsigned flag_observables,
+void lb_lbfluid_create_vtk(unsigned delta_N, unsigned initial_count,
+                           unsigned flag_observables,
                            std::string const &identifier,
                            std::string const &base_folder,
                            std::string const &prefix);

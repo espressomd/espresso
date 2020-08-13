@@ -14,9 +14,9 @@ boost::optional<Utils::Vector3d>
 get_node_last_applied_force(Utils::Vector3i ind);
 boost::optional<double> get_node_density(Utils::Vector3i ind);
 boost::optional<bool> get_node_is_boundary(Utils::Vector3i ind);
-void create_vtk(int delta_N, unsigned flag_observables,
-                std::string const &identifier, std::string const &base_folder,
-                std::string const &prefix);
+void create_vtk(unsigned delta_N, unsigned initial_count,
+                unsigned flag_observables, std::string const &identifier,
+                std::string const &base_folder, std::string const &prefix);
 void write_vtk(std::string const &vtk_uid);
 void switch_vtk(std::string const &vtk_uid, int status);
 // boost::optional<Utils::Vector19d> get_node_pop(Utils::Vector3i ind);

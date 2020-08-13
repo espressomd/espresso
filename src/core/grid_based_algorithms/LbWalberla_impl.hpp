@@ -737,9 +737,9 @@ public:
     return res;
   };
 
-  void create_vtk(int delta_N, unsigned flag_observables,
-                  std::string const &identifier, std::string const &base_folder,
-                  std::string const &prefix) {
+  void create_vtk(unsigned delta_N, unsigned initial_count,
+                  unsigned flag_observables, std::string const &identifier,
+                  std::string const &base_folder, std::string const &prefix) {
     // VTKOuput object must be unique
     std::stringstream unique_identifier;
     unique_identifier << base_folder << "/" << identifier;
@@ -754,7 +754,7 @@ public:
     unsigned const write_freq = (delta_N) ? static_cast<unsigned>(delta_N) : 1u;
     auto pdf_field_vtk = vtk::createVTKOutput_BlockData(
         m_blocks, identifier, uint_c(write_freq), uint_c(0), false, base_folder,
-        prefix, true, true);
+        prefix, true, true, true, true, uint_c(initial_count));
     field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_id);
     fluid_filter.addFlag(Fluid_flag);
     pdf_field_vtk->addCellInclusionFilter(fluid_filter);

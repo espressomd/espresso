@@ -284,6 +284,21 @@ if 'LB.OFF' in modes:
 #    ek_cpt_path = checkpoint.checkpoint_dir + "/ek"
 #    ek.save_checkpoint(ek_cpt_path)
 
+if LB_implementation:
+    # cleanup old VTK files
+    if checkpoint.has_checkpoints():
+        if os.path.isfile('vtk_out/auto_@TEST_BINARY@.pvd'):
+            os.remove('vtk_out/auto_@TEST_BINARY@.pvd')
+        if os.path.isfile('vtk_out/manual_@TEST_BINARY@.pvd'):
+            os.remove('vtk_out/manual_@TEST_BINARY@.pvd')
+    # create VTK callbacks
+    vtk_auto = lbf.add_vtk_writer(
+        'auto_@TEST_BINARY@', ('density', 'velocity_vector'), delta_N=1)
+    vtk_auto.disable()
+    vtk_manual = lbf.add_vtk_writer(
+        'manual_@TEST_BINARY@', 'density', delta_N=0)
+    vtk_manual.write()
+
 # save checkpoint file
 checkpoint.save(0)
 

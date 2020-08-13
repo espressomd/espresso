@@ -85,13 +85,15 @@ public:
    *  @param delta_N          Write frequency, if 0 write a single frame,
    *         otherwise add a callback to write every @p delta_N LB steps
    *         to a new file
+   *  @param initial_count    Initial execution count
    *  @param flag_observables Which observables to measure (OR'ing of
    *         @ref OutputVTK values)
    *  @param identifier       Name of the VTK dataset
    *  @param base_folder      Path to the VTK folder
    *  @param prefix           Prefix of the VTK files
    */
-  virtual void create_vtk(int delta_N, unsigned flag_observables,
+  virtual void create_vtk(unsigned delta_N, unsigned initial_count,
+                          unsigned flag_observables,
                           std::string const &identifier,
                           std::string const &base_folder,
                           std::string const &prefix) = 0;

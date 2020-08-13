@@ -34,23 +34,75 @@ from .globals cimport time_step
 
 IF LB_WALBERLA:
 
-    vtk_registry = {}
+    import lxml.etree
+
+    class VTKRegistry:
+
+        def __init__(self):
+            self.map = {}
+            self.collisions = {}
+
+        def _register_vtk_object(self, vtk_uid, vtk_obj):
+            self.map[vtk_uid] = vtk_obj
+            self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
+
+        def __getstate__(self):
+            return self.map
+
+        def __setstate__(self, active_vtk_objects):
+            self.map = {}
+            self.collisions = {}
+            for vtk_uid, vtk_obj in active_vtk_objects.items():
+                self.map[vtk_uid] = vtk_obj
+                self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
+
+    _vtk_registry = VTKRegistry()
 
     class VTKOutput:
         """
         VTK callback.
-
-        Parameters
-        ----------
-        vtk_uid: :obj:`str`
-            Unique identifier for the VTK callback.
-        delta_N: :obj:`int`
-            Frequency of writing in LB steps (0 if manual callback).
         """
+        observable2enum = {
+            'density': < int > output_vtk_density,
+            'velocity_vector': < int > output_vtk_velocity_vector,
+            'pressure_tensor': < int > output_vtk_pressure_tensor}
 
-        def __init__(self, vtk_uid, delta_N):
-            self.vtk_uid = vtk_uid
-            self.delta_N = delta_N
+        def __init__(self, vtk_uid, identifier, observables, delta_N,
+                     base_folder, prefix):
+            observables = set(observables)
+            flag = sum(self.observable2enum[obs] for obs in observables)
+            self._params = {
+                'vtk_uid': vtk_uid, 'identifier': identifier, 'prefix': prefix,
+                'delta_N': delta_N, 'base_folder': base_folder, 'flag': flag,
+                'enabled': True, 'initial_count': 0, 'observables': observables}
+            self._set_params_in_es_core()
+
+        def __getstate__(self):
+            odict = self._params.copy()
+            # get initial execution counter
+            pvd = os.path.abspath(self._params['vtk_uid']) + '.pvd'
+            if os.path.isfile(pvd):
+                tree = lxml.etree.parse(pvd)
+                nodes = tree.xpath('/VTKFile/Collection/DataSet')
+                if nodes:
+                    odict['initial_count'] = int(
+                        nodes[-1].attrib['timestep']) + 1
+            return odict
+
+        def __setstate__(self, params):
+            self._params = params
+            self._set_params_in_es_core()
+
+        def _set_params_in_es_core(self):
+            _vtk_registry._register_vtk_object(self._params['vtk_uid'], self)
+            lb_lbfluid_create_vtk(self._params['delta_N'],
+                                  self._params['initial_count'],
+                                  self._params['flag'],
+                                  to_char_pointer(self._params['identifier']),
+                                  to_char_pointer(self._params['base_folder']),
+                                  to_char_pointer(self._params['prefix']))
+            if not self._params['enabled']:
+                self.disable()
 
         def write(self):
             raise NotImplementedError()
@@ -70,26 +122,24 @@ IF LB_WALBERLA:
         between two frames will not always be an integer multiple of delta_N.
         """
 
-        def __init__(self, *args):
-            super().__init__(*args)
-            self.enabled = True
-
         def __repr__(self):
-            return "<{}.{}: writes to '{}' every {} LB steps{}>".format(
-                self.__class__.__module__, self.__class__.__name__, self.vtk_uid, self.delta_N, '' if self.enabled else ' (disabled)')
+            return "<{}.{}: writes to '{}' every {} LB step{}{}>".format(
+                self.__class__.__module__, self.__class__.__name__,
+                self._params['vtk_uid'], self._params['delta_N'],
+                '' if self._params['delta_N'] == 1 else 's',
+                '' if self._params['enabled'] else ' (disabled)')
 
         def write(self):
             raise RuntimeError(
-                'This is an automatic VTK callback that writes every {} LB time steps, cannot be triggered manually'.format(
-                    self.delta_N))
+                'Automatic VTK callbacks writes automaticall, cannot be triggered manually')
 
         def enable(self):
-            lb_lbfluid_switch_vtk(to_char_pointer(self.vtk_uid), 1)
-            self.enabled = True
+            lb_lbfluid_switch_vtk(to_char_pointer(self._params['vtk_uid']), 1)
+            self._params['enabled'] = True
 
         def disable(self):
-            lb_lbfluid_switch_vtk(to_char_pointer(self.vtk_uid), 0)
-            self.enabled = False
+            lb_lbfluid_switch_vtk(to_char_pointer(self._params['vtk_uid']), 0)
+            self._params['enabled'] = False
 
     class VTKOutputManual(VTKOutput):
         """
@@ -99,10 +149,11 @@ IF LB_WALBERLA:
 
         def __repr__(self):
             return "<{}.{}: writes to '{}' on demand>".format(
-                self.__class__.__module__, self.__class__.__name__, self.vtk_uid)
+                self.__class__.__module__, self.__class__.__name__,
+                self._params['vtk_uid'])
 
         def write(self):
-            lb_lbfluid_write_vtk(to_char_pointer(self.vtk_uid))
+            lb_lbfluid_write_vtk(to_char_pointer(self._params['vtk_uid']))
 
         def disable(self):
             raise RuntimeError('Manual VTK callbacks cannot be disabled')
@@ -372,32 +423,29 @@ IF LB_WALBERLA:
             utils.check_type_or_throw_except(
                 identifier, 1, str, "identifier must be 1 string")
             assert os.path.sep not in identifier, 'identifier must be a string, not a filepath'
-            vtk_uid = base_folder + '/' + identifier
-            vtk_path = os.path.abspath(vtk_uid)
-            if vtk_path in vtk_registry:
-                raise RuntimeError(
-                    'VTK identifier "{}" would overwrite files written by VTK identifier "{}"'.format(
-                        vtk_path, vtk_registry[vtk_path]))
-            vtk_registry[vtk_path] = vtk_uid
             if isinstance(observables, str):
                 observables = [observables]
-            # construct VTK callback
-            observable2enum = {
-                'density': < int > output_vtk_density,
-                'velocity_vector': < int > output_vtk_velocity_vector,
-                'pressure_tensor': < int > output_vtk_pressure_tensor}
-            flag = 0
-            for obs in set(observables):
-                if obs not in observable2enum:
+            for obs in observables:
+                if obs not in VTKOutput.observable2enum:
                     raise ValueError('Unknown VTK observable ' + obs)
-                flag += observable2enum[obs]
-            lb_lbfluid_create_vtk(delta_N, flag, to_char_pointer(identifier),
-                                  to_char_pointer(base_folder),
-                                  to_char_pointer(prefix))
+            vtk_uid = base_folder + '/' + identifier
+            vtk_path = os.path.abspath(vtk_uid)
+            if vtk_path in _vtk_registry.collisions:
+                raise RuntimeError(
+                    'VTK identifier "{}" would overwrite files written by VTK identifier "{}"'.format(
+                        vtk_uid, _vtk_registry.collisions[vtk_path]))
+            args = (
+                vtk_uid,
+                identifier,
+                observables,
+                delta_N,
+                base_folder,
+                prefix)
             if delta_N:
-                return VTKOutputAutomatic(vtk_uid, delta_N)
+                obj = VTKOutputAutomatic(*args)
             else:
-                return VTKOutputManual(vtk_uid, delta_N)
+                obj = VTKOutputManual(*args)
+            return obj
 
 
 cdef class LBFluidRoutines:

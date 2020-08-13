@@ -18,11 +18,11 @@ boost::optional<Utils::Vector3d> get_node_velocity(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_velocity)
 
-void create_vtk(int delta_N, unsigned flag_observables,
-                std::string const &identifier, std::string const &base_folder,
-                std::string const &prefix) {
-  lb_walberla()->create_vtk(delta_N, flag_observables, identifier, base_folder,
-                            prefix);
+void create_vtk(unsigned delta_N, unsigned initial_count,
+                unsigned flag_observables, std::string const &identifier,
+                std::string const &base_folder, std::string const &prefix) {
+  lb_walberla()->create_vtk(delta_N, initial_count, flag_observables,
+                            identifier, base_folder, prefix);
 }
 
 REGISTER_CALLBACK(create_vtk)
