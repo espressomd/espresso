@@ -118,7 +118,7 @@ vtk_base_dir = 'vtk_out/RESULTS_FLOW_FIELD'
 vtk_identifier = "T_{}_P_{}".format(mode, pos)
 vtk_outdir = os.path.join(vtk_base_dir, vtk_identifier)
 lb_vtk = lbf.add_vtk_writer(vtk_identifier, 'velocity_vector',
-                            base_folder=vtk_base_dir)
+                            base_folder=vtk_base_dir, prefix='lb_velocity')
 
 with open("{}/trajectory.dat".format(vtk_outdir), 'w') as outfile:
     print("####################################################", file=outfile)
