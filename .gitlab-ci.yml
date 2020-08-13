@@ -384,17 +384,6 @@ rocm:latest:
     - amdgpu
   when: manual
 
-### Builds with OS X
-
-osx:
-  <<: *global_job_definition
-  stage: build
-  script:
-    - export with_ccache=false myconfig=maxset with_cuda=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - mac
-
 ### Builds with different compilers
 
 intel:19:

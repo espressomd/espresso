@@ -63,11 +63,7 @@ public:
       m_accumulator->clear();
     }
 
-    if (method == "shape") {
-      auto const shape = m_accumulator->shape();
-      return std::vector<int>{shape.begin(), shape.end()};
-    }
-    return {};
+    return AccumulatorBase::call_method(method, parameters);
   }
 
   Variant get_state() const override {

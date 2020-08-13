@@ -352,9 +352,11 @@ class CheckpointTest(ut.TestCase):
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(
-            acc.get_mean(), np.array([[1.0, 1.5, 2.0], [1.0, 1.0, 2.0]]))
+            acc_mean_variance.get_mean(),
+            np.array([[1.0, 1.5, 2.0], [1.0, 1.0, 2.0]]))
         np.testing.assert_array_equal(
-            acc.get_variance(), np.array([[0., 0.5, 2.], [0., 0., 0.]]))
+            acc_mean_variance.get_variance(),
+            np.array([[0., 0.5, 2.], [0., 0., 0.]]))
         np.testing.assert_array_equal(
             system.auto_update_accumulators[0].get_variance(),
             np.array([[0., 0.5, 2.], [0., 0., 0.]]))
@@ -364,6 +366,14 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(acc_time_series.time_series(), expected)
         np.testing.assert_array_equal(
             system.auto_update_accumulators[1].time_series(),
+            expected)
+
+    def test_correlator(self):
+        expected = np.zeros((36, 2, 3))
+        expected[0:2] = [[[1, 2.5, 5], [1, 1, 4]], [[1, 2, 3], [1, 1, 4]]]
+        np.testing.assert_array_equal(acc_correlator.result(), expected)
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[2].result(),
             expected)
 
     @utx.skipIfMissingFeatures('P3M')
