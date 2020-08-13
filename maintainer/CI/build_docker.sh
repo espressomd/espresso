@@ -31,6 +31,6 @@ make_check=${make_check}
 build_type=RelWithAssert
 myconfig=maxset
 EOF
-image="espressomd/docker-ubuntu-20.04:06b6216c7aa3555bcf28c90734dbb84e7285c96f"
+image="espressomd/docker-ubuntu-20.04:8a7d258889d87dcc9c96a200784b30b532d45b33"
 
 docker run -u espresso --env-file "${ENV_FILE}" -v "${PWD}:/travis" -it "${image}" /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1
