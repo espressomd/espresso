@@ -44,6 +44,7 @@ using Utils::strcat_alloc;
 
 #include <cstdio>
 #include <limits>
+#include <tuple>
 
 /** How many trial calculations in @ref mmm1d_tune */
 #define TEST_INTEGRATIONS 1000
@@ -253,7 +254,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
       k0 = K0(fq * rxy_d);
       k1 = K1(fq * rxy_d);
 #else
-      LPK01(fq * rxy_d, &k0, &k1);
+      std::tie(k0, k1) = LPK01(fq * rxy_d);
 #endif
       sr += bp * k1 * cos(fq * z_d);
       sz += bp * k0 * sin(fq * z_d);

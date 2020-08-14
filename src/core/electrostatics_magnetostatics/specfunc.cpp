@@ -398,18 +398,18 @@ double LPK1(double x) {
   }
 }
 
-void LPK01(double x, double *K0, double *K1) {
+std::tuple<double, double> LPK01(double x) {
   if (x >= 27.) {
     auto const tmp = .5 * exp(-x) / sqrt(x);
-    *K0 = tmp * ak0_cs[0];
-    *K1 = tmp * ak1_cs[0];
-    return;
+    auto const K0 = tmp * ak0_cs[0];
+    auto const K1 = tmp * ak1_cs[0];
+    return {K0, K1};
   }
   if (x >= 23.) {
     auto const tmp = exp(-x) / sqrt(x), xx = (16. / 3.) / x - 5. / 3.;
-    *K0 = tmp * (xx * ak0_cs[1] + 0.5 * ak0_cs[0]);
-    *K1 = tmp * (xx * ak1_cs[1] + 0.5 * ak1_cs[0]);
-    return;
+    auto const K0 = tmp * (xx * ak0_cs[1] + 0.5 * ak0_cs[0]);
+    auto const K1 = tmp * (xx * ak1_cs[1] + 0.5 * ak1_cs[0]);
+    return {K0, K1};
   }
   if (x > 2) {
     int j = ak01_orders[((int)x) - 2];
@@ -437,9 +437,9 @@ void LPK01(double x, double *K0, double *K1) {
       dd1 = tmp1;
     }
     auto const tmp = exp(-x) / sqrt(x);
-    *K0 = tmp * (0.5 * (s0[0] + x2 * d0) - dd0);
-    *K1 = tmp * (0.5 * (s1[0] + x2 * d1) - dd1);
-    return;
+    auto const K0 = tmp * (0.5 * (s0[0] + x2 * d0) - dd0);
+    auto const K1 = tmp * (0.5 * (s1[0] + x2 * d1) - dd1);
+    return {K0, K1};
   }
   /* x <= 2 */
   {
@@ -459,8 +459,8 @@ void LPK01(double x, double *K0, double *K1) {
       dd1 = tmp1;
     }
     auto const tmp = log(x) - M_LN2;
-    *K0 = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
-    *K1 = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
+    auto K0 = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
+    auto K1 = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
 
     /* K0/K1 correction */
     j = 9;
@@ -476,8 +476,8 @@ void LPK01(double x, double *K0, double *K1) {
       dd0 = tmp0;
       dd1 = tmp1;
     }
-    *K0 += (0.5 * (x2 * d0 + bk0_cs[0]) - dd0);
-    *K1 += (0.5 * (x2 * d1 + bk1_cs[0]) - dd1) / x;
-    return;
+    K0 += (0.5 * (x2 * d0 + bk0_cs[0]) - dd0);
+    K1 += (0.5 * (x2 * d1 + bk1_cs[0]) - dd1) / x;
+    return {K0, K1};
   }
 }
