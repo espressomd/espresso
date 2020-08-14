@@ -266,8 +266,8 @@ static double ai12_cs[22] = {
     -0.00000000000000003};
 /*@}*/
 
-/** Coefficients for Maclaurin summation in hzeta().
- *  B_{2j}/(2j)!
+/** Coefficients for Maclaurin summation in hzeta(). Evaluated as inverse
+ *  numbers, i.e. @f$ \displaystyle\frac{B_{2j}}{(2j)!} @f$.
  */
 static double const hzeta_c[15] = {
     1.00000000000000000000000000000,     0.083333333333333333333333333333,
@@ -291,8 +291,8 @@ double hzeta(double s, double q) {
     double p3 = pow(q / (2.0 + q), s);
     return p1 * (1.0 + p2 + p3);
   }
-  /* Euler-Maclaurin summation formula
-   * [Moshier, p. 400, with several typo corrections]
+  /** Euler-Maclaurin summation formula from @cite moshier89a p. 400, with
+   *  several typo corrections.
    */
   auto const pmax = pow(kmax + q, -s);
   auto scp = s;

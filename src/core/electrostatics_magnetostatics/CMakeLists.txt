@@ -6,7 +6,7 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/magnetic_non_p3m_methods.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/mdlc_correction.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/mmm1d.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/mmm-common.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/mmm-modpsi.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/p3m-common.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/p3m_send_mesh.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/p3m.cpp

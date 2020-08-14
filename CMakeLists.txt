@@ -396,7 +396,7 @@ target_compile_options(
             -Wno-unused-variable
             -Wno-unused-parameter
             -Wno-missing-braces
-            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered;-Wno-cast-function-type>
+            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
             $<$<CXX_COMPILER_ID:Intel>:-wd592>)
 
 # disable more warnings from -Wextra
@@ -422,6 +422,10 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
                                                VERSION_GREATER "4.8.5")
   # older GCC versions don't support -Wno-pedantic which we need in src/python
   target_compile_options(cxx_interface INTERFACE -pedantic)
+endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
+                                            VERSION_GREATER_EQUAL "8.1.0")
+  target_compile_options(cxx_interface INTERFACE -Wno-cast-function-type)
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION
                                               VERSION_LESS "16.0")
