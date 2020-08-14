@@ -30,7 +30,7 @@
 #ifndef MMM_COMMON_H
 #define MMM_COMMON_H
 
-#include "mmm-base.hpp"
+#include "mmm-modpsi.hpp"
 
 #include "specfunc.hpp"
 
