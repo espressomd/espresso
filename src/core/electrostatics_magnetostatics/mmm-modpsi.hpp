@@ -24,8 +24,8 @@
  *  CPU and GPU implementations.
  */
 
-#ifndef MMM_BASE_H
-#define MMM_BASE_H
+#ifndef MMM_MODPSI_HPP
+#define MMM_MODPSI_HPP
 
 #include <vector>
 

@@ -20,6 +20,9 @@
  *  This file contains the code for the polygamma expansions used for the
  *  near formulas of MMM1D on GPU.
  */
+#ifndef MMM_COMMON_CUDA_HPP
+#define MMM_COMMON_CUDA_HPP
+
 #include "cuda_utils.hpp"
 #include "electrostatics_magnetostatics/mmm-modpsi.hpp"
 #include "specfunc_cuda.hpp"
@@ -103,3 +106,5 @@ __device__ mmm1dgpu_real dev_mod_psi_odd(int n, mmm1dgpu_real x) {
                  &device_linModPsi[device_linModPsi_offsets[2 * n + 1]],
                  device_linModPsi_lengths[2 * n + 1], x * x);
 }
+
+#endif
