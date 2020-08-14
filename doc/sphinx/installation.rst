@@ -621,7 +621,7 @@ each variant having different activated features, and for as many
 platforms as you want.
 
 Once you've run ``ccmake``, you can list the configured variables with
-``cmake -LAH -N | less`` (uses a pager) or with ``ccmake ..`` and pressing
+``cmake -LAH -N .. | less`` (uses a pager) or with ``ccmake ..`` and pressing
 key ``t`` to toggle the advanced mode on (uses the curses interface).
 
 **Example:**

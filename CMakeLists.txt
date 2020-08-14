@@ -301,7 +301,10 @@ if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND NOT (CMAKE_CXX_COMPILER_ID ST
 endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # disable warnings from -Wextra
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-clobbered -Wno-cast-function-type")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-clobbered")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.1.0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type")
+  endif()
 endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   # disable warnings from -Wextra

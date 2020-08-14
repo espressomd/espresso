@@ -16,12 +16,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+/* Original gsl header
+ * specfunc/bessel_K0.cpp
+ *
+ * Copyright (C) 1996, 1997, 1998, 1999, 2000 Gerard Jungman
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+/* Original Author: G. Jungman */
+
+/** \file
+ *  This file contains implementations for the modified Bessel functions of
+ *  first and second kind. The implementations are based on the GSL code (see
+ *  the original GSL header above) and are duplicated from \ref specfunc.cpp.
+ */
 #include "config.hpp"
 
 const mmm1dgpu_real M_LN2f = M_LN2;
 
-// Adapted from specfunc.c and polynom.h
-
+/** @name Chebyshev expansions based on SLATEC bk0(), bk0e() */
+/*@{*/
 __constant__ static mmm1dgpu_real bk0_data[11] = {
     -.5 - 0.03532739323390276872, 0.3442898999246284869,
     0.03597993651536150163,       0.00126461541144692592,
@@ -47,14 +75,20 @@ __constant__ static mmm1dgpu_real ak02_data[14] = {
     -0.00000000000020743,      0.00000000000001925,  -0.00000000000000192,
     0.00000000000000020,       -0.00000000000000002};
 __constant__ static int ak02_size = 13;
+/*@}*/
 
+/** @name Chebyshev expansions based on SLATEC besi0() */
+/*@{*/
 __constant__ static mmm1dgpu_real bi0_data[12] = {
     5.5 - .07660547252839144951, 1.92733795399380827000, .22826445869203013390,
     .01304891466707290428,       .00043442709008164874,  .00000942265768600193,
     .00000014340062895106,       .00000000161384906966,  .00000000001396650044,
     .00000000000009579451,       .00000000000000053339,  .00000000000000000245};
 __constant__ static int bi0_size = 12;
+/*@}*/
 
+/** @name Chebyshev expansions based on SLATEC besk1(), besk1e() */
+/*@{*/
 __constant__ static mmm1dgpu_real bk1_data[11] = {
     1.5 + 0.0253002273389477705, -0.3531559607765448760, -0.1226111808226571480,
     -0.0069757238596398643,      -0.0001730288957513052, -0.0000024334061415659,
@@ -78,13 +112,17 @@ __constant__ static mmm1dgpu_real ak12_data[14] = {
     0.00000000000023720,       -0.00000000000002176, 0.00000000000000215,
     -0.00000000000000022,      0.00000000000000002};
 __constant__ static int ak12_size = 14;
+/*@}*/
 
+/** @name Chebyshev expansions based on SLATEC besi1(), besi1e() */
+/*@{*/
 __constant__ static mmm1dgpu_real bi1_data[11] = {
     1.75 - 0.001971713261099859, 0.407348876675464810, 0.034838994299959456,
     0.001545394556300123,        0.000041888521098377, 0.000000764902676483,
     0.000000010042493924,        0.000000000099322077, 0.000000000000766380,
     0.000000000000004741,        0.000000000000000024};
 __constant__ static int bi1_size = 11;
+/*@}*/
 
 __device__ mmm1dgpu_real evaluateAsChebychevSeriesAt(mmm1dgpu_real *c, int n,
                                                      mmm1dgpu_real x) {

@@ -256,8 +256,8 @@ static Polynom ai12_cs{ai12_data};
  * chebychev expansions
  ************************************************/
 
-/* coefficients for Maclaurin summation in hzeta()
- * B_{2j}/(2j)!
+/** Coefficients for Maclaurin summation in hzeta(). Evaluated as inverse
+ *  numbers, i.e. @f$ \displaystyle\frac{B_{2j}}{(2j)!} @f$.
  */
 static double hzeta_c[15] = {
     1.00000000000000000000000000000,     0.083333333333333333333333333333,
@@ -287,8 +287,8 @@ double hzeta(double s, double q) {
     double p3 = pow(q / (2.0 + q), s);
     return p1 * (1.0 + p2 + p3);
   }
-  /* Euler-Maclaurin summation formula
-   * [Moshier, p. 400, with several typo corrections]
+  /** Euler-Maclaurin summation formula from Moshier "Methods and Programs for
+   *  Mathematical Functions", 1989, p. 400, with several typo corrections.
    */
   pmax = pow(kmax + q, -s);
   scp = s;

@@ -63,7 +63,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
 
   /* Truncate to 63 chars to fit struct. */
   if (strlen(proc_name) > 63)
-    proc_name[63] = 0;
+    proc_name[63] = '\0';
 
   for (int i = 0; i < n_gpus; ++i) {
     /* Check if device has at least minimum compute capability */
@@ -71,6 +71,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
       EspressoGpuDevice device;
       if (cuda_get_device_props(i, device) == ES_OK) {
         strncpy(device.proc_name, proc_name, 64);
+        device.proc_name[63] = '\0';
         devices.push_back(device);
       }
     }
