@@ -32,19 +32,15 @@ static void preparePolygammaEven(int n, double binom,
                                  std::vector<double> &series) {
   /* (-0.5 n) psi^2n/2n! (-0.5 n) and psi^(2n+1)/(2n)! series expansions
      note that BOTH carry 2n! */
-  int order;
-  double deriv;
-  double maxx, x_order, coeff, pref;
-
-  deriv = 2 * n;
+  auto const deriv = static_cast<double>(2 * n);
   if (n == 0) {
     // psi^0 has a slightly different series expansion
-    maxx = 0.25;
+    double maxx = 0.25;
     series.resize(1);
     series[0] = 2 * (1 - C_GAMMA);
-    for (order = 1;; order += 1) {
-      x_order = 2 * order;
-      coeff = -2 * hzeta(x_order + 1, 2);
+    for (int order = 1;; order += 1) {
+      auto const x_order = static_cast<double>(2 * order);
+      auto const coeff = -2 * hzeta(x_order + 1, 2);
       if (fabs(maxx * coeff) * (4.0 / 3.0) < ROUND_ERROR_PREC)
         break;
       series.push_back(coeff);
@@ -53,13 +49,13 @@ static void preparePolygammaEven(int n, double binom,
     }
   } else {
     // even, n > 0
-    maxx = 1;
-    pref = 2;
+    double maxx = 1;
+    double pref = 2;
 
-    for (order = 0;; order++) {
+    for (int order = 0;; order++) {
       // only even exponents of x
-      x_order = 2 * order;
-      coeff = pref * hzeta(1 + deriv + x_order, 2);
+      auto const x_order = static_cast<double>(2 * order);
+      auto const coeff = pref * hzeta(1 + deriv + x_order, 2);
       if ((fabs(maxx * coeff) * (4.0 / 3.0) < ROUND_ERROR_PREC) &&
           (x_order > deriv))
         break;
@@ -74,19 +70,15 @@ static void preparePolygammaEven(int n, double binom,
 
 static void preparePolygammaOdd(int n, double binom,
                                 std::vector<double> &series) {
-  int order;
-  double deriv;
-  double maxx, x_order, coeff, pref;
-
-  deriv = 2 * n + 1;
-  maxx = 0.5;
+  auto const deriv = static_cast<double>(2 * n + 1);
+  auto maxx = 0.5;
   // to get 1/(2n)! instead of 1/(2n+1)!
-  pref = 2 * deriv * (1 + deriv);
+  auto pref = 2 * deriv * (1 + deriv);
 
-  for (order = 0;; order++) {
+  for (int order = 0;; order++) {
     // only odd exponents of x
-    x_order = 2 * order + 1;
-    coeff = pref * hzeta(1 + deriv + x_order, 2);
+    auto const x_order = static_cast<double>(2 * order + 1);
+    auto const coeff = pref * hzeta(1 + deriv + x_order, 2);
     if ((fabs(maxx * coeff) * (4.0 / 3.0) < ROUND_ERROR_PREC) &&
         (x_order > deriv))
       break;
@@ -99,20 +91,18 @@ static void preparePolygammaOdd(int n, double binom,
 }
 
 void create_mod_psi_up_to(int new_n) {
-  int n;
-  double binom;
   auto const old_n = static_cast<int>(modPsi.size() >> 1);
   if (new_n > old_n) {
     modPsi.resize(2 * new_n);
 
-    binom = 1.0;
-    for (n = 0; n < old_n; n++)
-      binom *= (-0.5 - n) / (double)(n + 1);
+    double binom = 1.0;
+    for (int n = 0; n < old_n; n++)
+      binom *= (-0.5 - n) / static_cast<double>(n + 1);
 
-    for (; n < new_n; n++) {
+    for (int n = old_n; n < new_n; n++) {
       preparePolygammaEven(n, binom, modPsi[2 * n]);
       preparePolygammaOdd(n, binom, modPsi[2 * n + 1]);
-      binom *= (-0.5 - n) / (double)(n + 1);
+      binom *= (-0.5 - n) / static_cast<double>(n + 1);
     }
   }
 }

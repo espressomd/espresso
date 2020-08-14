@@ -126,11 +126,10 @@ __constant__ static int bi1_size = 11;
 
 __device__ mmm1dgpu_real evaluateAsChebychevSeriesAt(mmm1dgpu_real const *c,
                                                      int n, mmm1dgpu_real x) {
-  int j;
   mmm1dgpu_real x2 = 2 * x;
   mmm1dgpu_real dd = c[n - 1];
   mmm1dgpu_real d = x2 * dd + c[n - 2];
-  for (j = n - 3; j >= 1; j--) {
+  for (int j = n - 3; j >= 1; j--) {
     mmm1dgpu_real tmp = d;
     d = x2 * d - dd + c[j];
     dd = tmp;
