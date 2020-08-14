@@ -179,6 +179,7 @@ void MMM1D_init() {
 
 void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
                                   double r, Utils::Vector3d &force) {
+  auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
   int dim;
   Utils::Vector3d F;
   double rxy2, rxy2_d, z_d;
@@ -276,6 +277,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
 
 double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
                                  double r2, double r) {
+  auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
   double rxy2, rxy2_d, z_d;
   double E;
 

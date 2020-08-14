@@ -39,14 +39,12 @@ __constant__ int device_linModPsi_offsets[2 * modpsi_order],
 __constant__ mmm1dgpu_real device_linModPsi[modpsi_constant_size];
 
 int modpsi_init() {
-  if (n_modPsi < modpsi_order) {
-    create_mod_psi_up_to(modpsi_order);
-  }
+  create_mod_psi_up_to(modpsi_order);
 
   // linearize the coefficients array
-  linModPsi_offsets.resize(2 * n_modPsi);
-  linModPsi_lengths.resize(2 * n_modPsi);
-  for (int i = 0; i < 2 * n_modPsi; i++) {
+  linModPsi_offsets.resize(modPsi.size());
+  linModPsi_lengths.resize(modPsi.size());
+  for (int i = 0; i < modPsi.size(); i++) {
     if (i == 0)
       linModPsi_offsets[i] = 0;
     else
@@ -54,9 +52,9 @@ int modpsi_init() {
           linModPsi_offsets[i - 1] + linModPsi_lengths[i - 1];
     linModPsi_lengths[i] = modPsi[i].size();
   }
-  linModPsi.resize(linModPsi_offsets[2 * n_modPsi - 1] +
-                   linModPsi_lengths[2 * n_modPsi - 1]);
-  for (int i = 0; i < 2 * n_modPsi; i++) {
+  linModPsi.resize(linModPsi_offsets[modPsi.size() - 1] +
+                   linModPsi_lengths[modPsi.size() - 1]);
+  for (int i = 0; i < modPsi.size(); i++) {
     for (int j = 0; j < modPsi[i].size(); j++) {
       linModPsi[linModPsi_offsets[i] + j] =
           (mmm1dgpu_real)modPsi[i][j]; // cast to single-precision if necessary
@@ -67,21 +65,22 @@ int modpsi_init() {
     cudaSetDevice(d);
 
     // copy to GPU
-    int linModPsiSize = linModPsi_offsets[2 * n_modPsi - 1] +
-                        linModPsi_lengths[2 * n_modPsi - 1];
+    int linModPsiSize = linModPsi_offsets[modPsi.size() - 1] +
+                        linModPsi_lengths[modPsi.size() - 1];
     if (linModPsiSize > modpsi_constant_size) {
       printf("ERROR: __constant__ device_linModPsi[] is not large enough\n");
       std::abort();
     }
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi_offsets),
                                      linModPsi_offsets.data(),
-                                     2 * n_modPsi * sizeof(int)));
+                                     modPsi.size() * sizeof(int)));
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi_lengths),
                                      linModPsi_lengths.data(),
-                                     2 * n_modPsi * sizeof(int)));
+                                     modPsi.size() * sizeof(int)));
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi),
                                      linModPsi.data(),
                                      linModPsiSize * sizeof(mmm1dgpu_real)));
+    auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_n_modPsi), &n_modPsi,
                                      sizeof(int)));
   }

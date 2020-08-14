@@ -37,7 +37,6 @@
 
 /** Table of the Taylor expansions of the modified polygamma functions */
 extern std::vector<std::vector<double>> modPsi;
-extern int n_modPsi;
 
 /** Create both the even and odd polygamma functions up to order 2*n */
 void create_mod_psi_up_to(int n);

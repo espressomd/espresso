@@ -27,7 +27,6 @@
 #include <cmath>
 
 std::vector<std::vector<double>> modPsi;
-int n_modPsi = 0;
 
 static void preparePolygammaEven(int n, double binom,
                                  std::vector<double> &series) {
@@ -102,17 +101,15 @@ static void preparePolygammaOdd(int n, double binom,
 void create_mod_psi_up_to(int new_n) {
   int n;
   double binom;
-
-  if (new_n > n_modPsi) {
-    int old = n_modPsi;
-    n_modPsi = new_n;
-    modPsi.resize(2 * n_modPsi);
+  auto const old_n = static_cast<int>(modPsi.size() >> 1);
+  if (new_n > old_n) {
+    modPsi.resize(2 * new_n);
 
     binom = 1.0;
-    for (n = 0; n < old; n++)
+    for (n = 0; n < old_n; n++)
       binom *= (-0.5 - n) / (double)(n + 1);
 
-    for (; n < n_modPsi; n++) {
+    for (; n < new_n; n++) {
       preparePolygammaEven(n, binom, modPsi[2 * n]);
       preparePolygammaOdd(n, binom, modPsi[2 * n + 1]);
       binom *= (-0.5 - n) / (double)(n + 1);
