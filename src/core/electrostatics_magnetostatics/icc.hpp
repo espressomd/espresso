@@ -27,7 +27,7 @@
  *  field at the interface with charge surface segments. The charge
  *  density of the surface segments have to be determined
  *  self-consistently using an iterative scheme. It can at present -
- *  despite its name - be used with P3M, ELCP3M, MMM2D and MMM1D. For
+ *  despite its name - be used with P3M, ELCP3M and MMM1D. For
  *  details see: @cite tyagi10a
  *
  *  To set up ICCP3M, first the dielectric boundary has to be modeled

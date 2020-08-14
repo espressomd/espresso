@@ -25,7 +25,6 @@
 #ifdef DIPOLAR_DIRECT_SUM
 
 #include "cuda_utils.hpp"
-#include <cstdio>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!

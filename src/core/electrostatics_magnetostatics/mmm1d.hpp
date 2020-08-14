@@ -19,13 +19,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** \file
-    MMM1D algorithm for long range Coulomb interactions.
-    Implementation of the MMM1D method for the calculation of the electrostatic
-    interaction in one dimensionally periodic systems. For details on the
-    method see MMM in general. The MMM1D method works only with the nsquared,
-    since neither the near nor far formula can be decomposed. However, this
-    implementation is reasonably fast, so that one can use up to 200 charges
-    easily in a simulation.  */
+ *  MMM1D algorithm for long range %Coulomb interactions.
+ *  Implementation of the MMM1D method for the calculation of the electrostatic
+ *  interaction in one dimensionally periodic systems. For details on the
+ *  method see MMM in general. The MMM1D method works only with the nsquared,
+ *  since neither the near nor far formula can be decomposed. However, this
+ *  implementation is reasonably fast, so that one can use up to 200 charges
+ *  easily in a simulation.
+ */
 #ifndef MMM1D_H
 #define MMM1D_H
 
@@ -37,8 +38,7 @@
 typedef struct {
   /** square of the switching radius */
   double far_switch_radius_2;
-  /** @copybrief MMM2D_struct::maxPWerror
-   *
+  /** Maximal allowed pairwise error for the potential and force.
    *  This error ignores prefactors, i.e. this is for a pure lattice 1/r-sum.
    */
   double maxPWerror;
@@ -69,8 +69,10 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
 double mmm1d_coulomb_pair_energy(double q1q2, Utils::Vector3d const &d,
                                  double r2, double r);
 
-/** Tuning of the parameters which are not set by the user, e.g. the
- *  switching radius or the bessel_cutoff. Call this only on the master node.
+/** Tuning of the parameters which are not set by the user. Tune either the
+ *  @ref MMM1D_struct::far_switch_radius_2 "switching radius" or the
+ *  @ref MMM1D_struct::bessel_cutoff "Bessel cutoff". Call this only
+ *  on the master node.
  *
  *  @param log contains information about the tuning (tried values and errors)
  *  @retval ES_OK
