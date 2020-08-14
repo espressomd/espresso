@@ -46,18 +46,11 @@
 /** Hurwitz zeta function. This function was taken from the GSL code. */
 double hzeta(double order, double x);
 
-/** Modified Bessel function of first kind, order 0. This function was taken
- *  from the GSL code. Precise roughly up to machine precision.
- */
-double I0(double x);
-/** Modified Bessel function of first kind, order 1. This function was taken
- *  from the GSL code. Precise roughly up to machine precision.
- */
-double I1(double x);
 /** Modified Bessel function of second kind, order 0. This function was taken
  *  from the GSL code. Precise roughly up to machine precision.
  */
 double K0(double x);
+
 /** Modified Bessel function of second kind, order 1. This function was taken
  *  from the GSL code. Precise roughly up to machine precision.
  */
