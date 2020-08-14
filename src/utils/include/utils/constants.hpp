@@ -43,6 +43,13 @@ template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_pi_i() {
   return 0.56418958354775627928034964498;
 }
 
+/**
+ * @brief Euler-Mascheroni constant.
+ */
+template <class T = double> DEVICE_QUALIFIER constexpr T gamma() {
+  return 0.57721566490153286060651209008;
+}
+
 /// error code if no error occurred
 #define ES_OK 0
 /// error code if an error occurred

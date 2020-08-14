@@ -29,12 +29,6 @@
 
 #include <vector>
 
-/** \name Math constants */
-/*@{*/
-#define C_2PI (2 * M_PI)
-#define C_GAMMA (0.57721566490153286060651209008)
-/*@}*/
-
 /** Table of the Taylor expansions of the modified polygamma functions */
 extern std::vector<std::vector<double>> modPsi;
 

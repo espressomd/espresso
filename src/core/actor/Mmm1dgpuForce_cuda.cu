@@ -41,12 +41,11 @@ float multigpu_factors[] = {1.0};
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "mmm-common_cuda.hpp"
 
+#include <utils/constants.hpp>
+
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
-
-const mmm1dgpu_real C_GAMMAf = C_GAMMA;
-const mmm1dgpu_real C_2PIf = C_2PI;
 
 __constant__ mmm1dgpu_real far_switch_radius_2[1] = {0.05 * 0.05};
 __constant__ mmm1dgpu_real boxz[1];
@@ -185,8 +184,9 @@ __global__ void sumKernel(mmm1dgpu_real *data, int N) {
 
 __global__ void besselTuneKernel(int *result, mmm1dgpu_real far_switch_radius,
                                  int maxCut) {
-  mmm1dgpu_real arg = C_2PIf * *uz * far_switch_radius;
-  mmm1dgpu_real pref = 4 * *uz * max(1.0f, C_2PIf * *uz);
+  const mmm1dgpu_real c_2pif = 2 * Utils::pi<mmm1dgpu_real>();
+  mmm1dgpu_real arg = c_2pif * *uz * far_switch_radius;
+  mmm1dgpu_real pref = 4 * *uz * max(1.0f, c_2pif * *uz);
   mmm1dgpu_real err;
   int P = 1;
   do {
@@ -322,6 +322,8 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
   if (tStop < 0)
     tStop = N * N;
 
+  const mmm1dgpu_real c_2pif = 2 * Utils::pi<mmm1dgpu_real>();
+
   for (int tid =
            static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x) + tStart;
        tid < tStop; tid += static_cast<int>(blockDim.x * gridDim.x)) {
@@ -381,14 +383,14 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
     } else // far formula
     {
       for (int p = 1; p < *bessel_cutoff; p++) {
-        mmm1dgpu_real arg = C_2PIf * *uz * static_cast<mmm1dgpu_real>(p);
+        mmm1dgpu_real arg = c_2pif * *uz * static_cast<mmm1dgpu_real>(p);
         sum_r +=
             static_cast<mmm1dgpu_real>(p) * dev_K1(arg * rxy) * cos(arg * z);
         sum_z +=
             static_cast<mmm1dgpu_real>(p) * dev_K0(arg * rxy) * sin(arg * z);
       }
-      sum_r *= sqpow(*uz) * 4 * C_2PIf;
-      sum_z *= sqpow(*uz) * 4 * C_2PIf;
+      sum_r *= sqpow(*uz) * 4 * c_2pif;
+      sum_z *= sqpow(*uz) * 4 * c_2pif;
       sum_r += 2 * *uz / rxy;
     }
 
@@ -411,6 +413,9 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
                                int pairs, int tStart, int tStop) {
   if (tStop < 0)
     tStop = N * N;
+
+  const mmm1dgpu_real c_2pif = 2 * Utils::pi<mmm1dgpu_real>();
+  const mmm1dgpu_real c_gammaf = 2 * Utils::gamma<mmm1dgpu_real>();
 
   HIP_DYNAMIC_SHARED(mmm1dgpu_real, partialsums)
   if (!pairs) {
@@ -451,15 +456,15 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
       }
 
       sum_e *= -1 * *uz;
-      sum_e -= 2 * *uz * C_GAMMAf;
+      sum_e -= 2 * *uz * c_gammaf;
       sum_e += rsqrt(rxy2 + sqpow(z));
       sum_e += rsqrt(rxy2 + sqpow(z + *boxz));
       sum_e += rsqrt(rxy2 + sqpow(z - *boxz));
     } else // far formula
     {
-      sum_e = -(log(rxy * *uz / 2) + C_GAMMAf) / 2;
+      sum_e = -(log(rxy * *uz / 2) + c_gammaf) / 2;
       for (int p = 1; p < *bessel_cutoff; p++) {
-        mmm1dgpu_real arg = C_2PIf * *uz * static_cast<mmm1dgpu_real>(p);
+        mmm1dgpu_real arg = c_2pif * *uz * static_cast<mmm1dgpu_real>(p);
         sum_e += dev_K0(arg * rxy) * cos(arg * z);
       }
       sum_e *= *uz * 4;

@@ -34,6 +34,8 @@
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 
+#include <utils/constants.hpp>
+
 #ifdef P3M
 
 /****************************************
@@ -146,11 +148,12 @@ void ELC_setup_constants() {
 template <size_t dir>
 static std::vector<SCCache> sc_cache(const ParticleRange &particles, int n_freq,
                                      double u) {
+  constexpr double c_2pi = 2 * Utils::pi();
   auto const n_part = particles.size();
   std::vector<SCCache> ret(n_freq * n_part);
 
   for (size_t freq = 1; freq <= n_freq; freq++) {
-    double pref = C_2PI * u * freq;
+    double pref = c_2pi * u * freq;
 
     size_t o = (freq - 1) * n_part;
     for (auto const &part : particles) {
@@ -914,8 +917,9 @@ static void setup_PQ(int p, int q, double omega,
 
 static void add_PQ_force(int p, int q, double omega,
                          const ParticleRange &particles) {
-  double const pref_x = C_2PI * ux * p / omega;
-  double const pref_y = C_2PI * uy * q / omega;
+  constexpr double c_2pi = 2 * Utils::pi();
+  double const pref_x = c_2pi * ux * p / omega;
+  double const pref_y = c_2pi * uy * q / omega;
   int const size = 8;
 
   int ic = 0;
@@ -971,6 +975,7 @@ static double PQ_energy(double omega, int n_part) {
 /*****************************************************************/
 
 void ELC_add_force(const ParticleRange &particles) {
+  constexpr double c_2pi = 2 * Utils::pi();
   auto const n_scxcache = int(ceil(elc_params.far_cut / ux) + 1);
   auto const n_scycache = int(ceil(elc_params.far_cut / uy) + 1);
 
@@ -982,14 +987,14 @@ void ELC_add_force(const ParticleRange &particles) {
 
   /* the second condition is just for the case of numerical accident */
   for (int p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
-    auto const omega = C_2PI * ux * p;
+    auto const omega = c_2pi * ux * p;
     setup_P(p, omega, particles);
     distribute(4);
     add_P_force(particles);
   }
 
   for (int q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
-    auto const omega = C_2PI * uy * q;
+    auto const omega = c_2pi * uy * q;
     setup_Q(q, omega, particles);
     distribute(4);
     add_Q_force(particles);
@@ -1000,7 +1005,7 @@ void ELC_add_force(const ParticleRange &particles) {
                         elc_params.far_cut2 &&
                     q <= n_scycache;
          q++) {
-      auto const omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
+      auto const omega = c_2pi * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
       setup_PQ(p, q, omega, particles);
       distribute(8);
       add_PQ_force(p, q, omega, particles);
@@ -1009,6 +1014,7 @@ void ELC_add_force(const ParticleRange &particles) {
 }
 
 double ELC_energy(const ParticleRange &particles) {
+  constexpr double c_2pi = 2 * Utils::pi();
   auto eng = dipole_energy(particles);
   eng += z_energy(particles);
 
@@ -1021,13 +1027,13 @@ double ELC_energy(const ParticleRange &particles) {
 
   /* the second condition is just for the case of numerical accident */
   for (int p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
-    auto const omega = C_2PI * ux * p;
+    auto const omega = c_2pi * ux * p;
     setup_P(p, omega, particles);
     distribute(4);
     eng += P_energy(omega, n_localpart);
   }
   for (int q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
-    auto const omega = C_2PI * uy * q;
+    auto const omega = c_2pi * uy * q;
     setup_Q(q, omega, particles);
     distribute(4);
     eng += Q_energy(omega, n_localpart);
@@ -1037,7 +1043,7 @@ double ELC_energy(const ParticleRange &particles) {
                         elc_params.far_cut2 &&
                     q <= n_scycache;
          q++) {
-      auto const omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
+      auto const omega = c_2pi * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
       setup_PQ(p, q, omega, particles);
       distribute(8);
       eng += PQ_energy(omega, n_localpart);

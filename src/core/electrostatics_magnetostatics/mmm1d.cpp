@@ -43,6 +43,7 @@ using Utils::strcat_alloc;
 #include <utils/math/sqr.hpp>
 
 #include <cstdio>
+#include <limits>
 
 /** How many trial calculations */
 #define TEST_INTEGRATIONS 1000
@@ -178,6 +179,7 @@ void MMM1D_init() {
 
 void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
                                   double r, Utils::Vector3d &force) {
+  constexpr double c_2pi = 2 * Utils::pi();
   auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
@@ -244,7 +246,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
       if (bessel_radii[bp - 1] < rxy)
         break;
 
-      auto const fq = C_2PI * bp;
+      auto const fq = c_2pi * bp;
       double k0, k1;
 #ifdef BESSEL_MACHINE_PREC
       k0 = K0(fq * rxy_d);
@@ -255,8 +257,8 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
       sr += bp * k1 * cos(fq * z_d);
       sz += bp * k0 * sin(fq * z_d);
     }
-    sr *= uz2 * 4 * C_2PI;
-    sz *= uz2 * 4 * C_2PI;
+    sr *= uz2 * 4 * c_2pi;
+    sz *= uz2 * 4 * c_2pi;
 
     auto const pref = sr / rxy + 2 * uz / rxy2;
 
@@ -271,6 +273,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
   if (chpref == 0)
     return 0;
 
+  constexpr double c_2pi = 2 * Utils::pi();
   auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
@@ -279,7 +282,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
 
   if (rxy2 <= mmm1d_params.far_switch_radius_2) {
     /* near range formula */
-    E = -2 * C_GAMMA;
+    E = -2 * Utils::gamma();
 
     /* polygamma summation */
     double r2n = 1.0;
@@ -313,12 +316,12 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
     auto const rxy_d = rxy * uz;
     /* The first Bessel term will compensate a little bit the
        log term, so add them close together */
-    E = -0.25 * log(rxy2_d) + 0.5 * (M_LN2 - C_GAMMA);
+    E = -0.25 * log(rxy2_d) + 0.5 * (M_LN2 - Utils::gamma());
     for (int bp = 1; bp < MAXIMAL_B_CUT; bp++) {
       if (bessel_radii[bp - 1] < rxy)
         break;
 
-      auto const fq = C_2PI * bp;
+      auto const fq = c_2pi * bp;
       E += K0(fq * rxy_d) * cos(fq * z_d);
     }
     E *= 4 * uz;
@@ -331,7 +334,7 @@ int mmm1d_tune(char **log) {
   if (MMM1D_sanity_checks())
     return ES_ERROR;
   char buffer[32 + 2 * ES_DOUBLE_SPACE + ES_INTEGER_SPACE];
-  double min_time = 1e200;
+  double min_time = std::numeric_limits<double>::infinity();
   double min_rad = -1;
   auto const maxrad = box_geo.length()[2];
   double switch_radius;
