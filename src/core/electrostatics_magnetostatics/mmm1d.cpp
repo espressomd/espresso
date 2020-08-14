@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** \file
- *  MMM1D algorithm for long range Coulomb interaction.
+ *  MMM1D algorithm for long range %Coulomb interaction.
  *
  *  For more information about MMM1D, see \ref mmm1d.hpp "mmm1d.hpp".
  */
@@ -45,19 +45,20 @@ using Utils::strcat_alloc;
 #include <cstdio>
 #include <limits>
 
-/** How many trial calculations */
+/** How many trial calculations in @ref mmm1d_tune */
 #define TEST_INTEGRATIONS 1000
 
 /** Largest numerically stable cutoff for Bessel function. Don't
-    change without improving the formulas. */
+ *  change without improving the formulas.
+ */
 #define MAXIMAL_B_CUT 30
 
-/** minimal radius for the far formula in multiples of box_l[2] */
+/** Minimal radius for the far formula in multiples of box_l[2] */
 #define MIN_RAD 0.01
 
-/** if you define this, the Besselfunctions are calculated up
-    to machine precision, otherwise 10^-14, which should be
-    definitely enough for daily life. */
+/* if you define this, the Bessel functions are calculated up
+ * to machine precision, otherwise 10^-14, which should be
+ * definitely enough for daily life. */
 #undef BESSEL_MACHINE_PREC
 
 #ifndef BESSEL_MACHINE_PREC
@@ -65,7 +66,7 @@ using Utils::strcat_alloc;
 #define K1 LPK1
 #endif
 
-/** inverse box dimensions and other constants */
+/** @name inverse box dimensions and other constants */
 /*@{*/
 static double uz, L2, uz2, prefuz2, prefL3_i;
 /*@}*/

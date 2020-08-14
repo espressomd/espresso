@@ -20,7 +20,7 @@
  */
 /** \file
  *  Common parts of the MMM family of methods for the electrostatic
- *  interaction, MMM1D, MMM2D and ELC. This file contains the code for the
+ *  interaction: MMM1D and ELC. This file contains the code for the
  *  CPU and GPU implementations.
  */
 
@@ -32,7 +32,9 @@
 /** Table of the Taylor expansions of the modified polygamma functions */
 extern std::vector<std::vector<double>> modPsi;
 
-/** Create both the even and odd polygamma functions up to order 2*n */
-void create_mod_psi_up_to(int n);
+/** Create both the even and odd polygamma functions up to order
+ *  <tt>2*new_n</tt>
+ */
+void create_mod_psi_up_to(int new_n);
 
 #endif

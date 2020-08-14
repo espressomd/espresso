@@ -17,5 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** Rotate all particle coordinates around an axis given by phi,theta through
- * the center of mass by an angle alpha */
+ *  the center of mass by an angle alpha
+ */
 void rotate_system(double phi, double theta, double alpha);
