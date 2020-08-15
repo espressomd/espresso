@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef ES_SCAFACOS_SCAFACOS_HPP
+#define ES_SCAFACOS_SCAFACOS_HPP
 
 #include <fcs.h>
 #include <list>
@@ -104,3 +106,4 @@ struct Scafacos {
 };
 
 } // namespace Scafacos
+#endif

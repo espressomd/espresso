@@ -23,6 +23,8 @@
  *
  *  Implementation in debug.cpp.
  */
+#ifndef DEBUG_HPP
+#define DEBUG_HPP
 
 #include "config.hpp"
 
@@ -40,3 +42,5 @@ void check_particle_consistency();
 void check_particle_sorting();
 
 extern int this_node;
+
+#endif

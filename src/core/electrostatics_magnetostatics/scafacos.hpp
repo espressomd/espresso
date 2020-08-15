@@ -23,8 +23,8 @@
  * This file contains the c-type wrapper interface to the (oop-) scafacos
  * interface. */
 
-#ifndef __SCAFACOS_HPP
-#define __SCAFACOS_HPP
+#ifndef ES_CORE_ELECTROSTATICS_MAGNETOSTATICS_SCAFACOS_HPP
+#define ES_CORE_ELECTROSTATICS_MAGNETOSTATICS_SCAFACOS_HPP
 
 #include "config.hpp"
 
