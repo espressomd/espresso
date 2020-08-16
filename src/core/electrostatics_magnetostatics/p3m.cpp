@@ -188,7 +188,7 @@ void p3m_init() {
 
     int ca_mesh_size = fft_init(p3m.local_mesh.dim, p3m.local_mesh.margin,
                                 p3m.params.mesh, p3m.params.mesh_off,
-                                &p3m.ks_pnum, p3m.fft, node_grid, comm_cart);
+                                p3m.ks_pnum, p3m.fft, node_grid, comm_cart);
     p3m.rs_mesh.resize(ca_mesh_size);
     for (auto &e : p3m.E_mesh) {
       e.resize(ca_mesh_size);

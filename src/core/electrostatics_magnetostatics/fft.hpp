@@ -168,36 +168,37 @@ struct fft_data_struct {
 
 /** Initialize everything connected to the 3D-FFT.
  *
- *  \param ca_mesh_dim     Local CA mesh dimensions.
- *  \param ca_mesh_margin  Local CA mesh margins.
- *  \param global_mesh_dim Global CA mesh dimensions.
- *  \param global_mesh_off Global CA mesh offset.
- *  \param ks_pnum         Number of permutations in k-space.
- *  \param fft             FFT plan.
- *  \param grid            Number of nodes in each spatial dimension.
- *  \param comm            MPI communicator.
+ *  \param[in]  ca_mesh_dim     Local CA mesh dimensions.
+ *  \param[in]  ca_mesh_margin  Local CA mesh margins.
+ *  \param[in]  global_mesh_dim Global CA mesh dimensions.
+ *  \param[in]  global_mesh_off Global CA mesh offset.
+ *  \param[out] ks_pnum         Number of permutations in k-space.
+ *  \param[out] fft             FFT plan.
+ *  \param[in]  grid            Number of nodes in each spatial dimension.
+ *  \param[in]  comm            MPI communicator.
  *  \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  */
 int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
-             int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft, const Utils::Vector3i &grid,
+             int const *global_mesh_dim, double const *global_mesh_off,
+             int &ks_pnum, fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm);
 
 /** Perform an in-place forward 3D FFT.
  *  \warning The content of \a data is overwritten.
  *  \param[in,out] data  Mesh.
- *  \param fft           FFT plan.
- *  \param comm          MPI communicator
+ *  \param[in,out] fft   FFT plan.
+ *  \param[in]     comm  MPI communicator
  */
 void fft_perform_forw(double *data, fft_data_struct &fft,
                       const boost::mpi::communicator &comm);
 
 /** Perform an in-place backward 3D FFT.
  *  \warning The content of \a data is overwritten.
- *  \param[in,out] data   Mesh.
- *  \param check_complex  Throw an error if the complex component is non-zero.
- *  \param fft            FFT plan.
- *  \param comm           MPI communicator.
+ *  \param[in,out] data           Mesh.
+ *  \param[in]     check_complex  Throw an error if the complex component is
+ *                                non-zero.
+ *  \param[in,out] fft            FFT plan.
+ *  \param[in]     comm           MPI communicator.
  */
 void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
                       const boost::mpi::communicator &comm);

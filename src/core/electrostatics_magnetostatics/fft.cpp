@@ -476,8 +476,8 @@ void calc_2d_grid(int n, int grid[3]) {
 } // namespace
 
 int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
-             int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft, const Utils::Vector3i &grid,
+             int const *global_mesh_dim, double const *global_mesh_off,
+             int &ks_pnum, fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm) {
   int i, j;
   /* helpers */
@@ -622,13 +622,13 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
   for (i = 1; i < 4; i++) {
     fft.plan[i].pack_function = pack_block_permute2;
   }
-  (*ks_pnum) = 6;
+  ks_pnum = 6;
   if (fft.plan[1].row_dir == 2) {
     fft.plan[1].pack_function = fft_pack_block;
-    (*ks_pnum) = 4;
+    ks_pnum = 4;
   } else if (fft.plan[1].row_dir == 1) {
     fft.plan[1].pack_function = pack_block_permute1;
-    (*ks_pnum) = 5;
+    ks_pnum = 5;
   }
 
   fft.send_buf.resize(fft.max_comm_size);

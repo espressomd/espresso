@@ -210,7 +210,7 @@ void dp3m_init() {
 
     int ca_mesh_size = fft_init(dp3m.local_mesh.dim, dp3m.local_mesh.margin,
                                 dp3m.params.mesh, dp3m.params.mesh_off,
-                                &dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
+                                dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
     dp3m.rs_mesh.resize(ca_mesh_size);
     dp3m.ks_mesh.resize(ca_mesh_size);
 
