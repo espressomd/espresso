@@ -59,16 +59,13 @@ using Utils::strcat_alloc;
 #include <cstdio>
 #include <cstring>
 
-/************************************************
- * variables
- ************************************************/
 p3m_data_struct p3m;
 
-/* @name Index helpers for direct and reciprocal space
- * After the FFT the data is in order YZX, which
- * means that Y is the slowest changing index.
- * The defines are here to not get confused and
- * be able to easily change the order.
+/** @name Index helpers for direct and reciprocal space
+ *  After the FFT the data is in order YZX, which
+ *  means that Y is the slowest changing index.
+ *  The defines are here to not get confused and
+ *  be able to easily change the order.
  */
 /*@{*/
 #define RX 0
@@ -110,7 +107,7 @@ static void p3m_calc_differential_operator();
  *  Each node calculates only the values for its domain in k-space
  *  (see fft.plan[3].mesh and fft.plan[3].start).
  *
- *  See also: @cite hockney88a 8-22 (p275). Note the somewhat
+ *  See also: @cite hockney88a eq. 8-22 (p. 275). Note the somewhat
  *  different convention for the prefactors, which is described in
  *  @cite deserno98a @cite deserno98b.
  */
@@ -139,7 +136,7 @@ static double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                                    double sum_q2, double alpha_L);
 
 /** Calculate the analytic expression of the error estimate for the
- *  P3M method in @cite hockney88a (eq. (8.23)) in
+ *  P3M method in @cite hockney88a (eq. 8-23 p. 275) in
  *  order to obtain the rms error in the force for a system of N
  *  randomly distributed particles in a cubic box (k-space part).
  *  \param prefac   Prefactor of Coulomb interaction.
@@ -490,8 +487,6 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               ? boost::make_optional(calc_dipole_moment(
                                     comm_cart, particles, box_geo))
                               : boost::none;
-
-  /* === k-space calculations === */
 
   /* === k-space force calculation  === */
   if (force_flag) {

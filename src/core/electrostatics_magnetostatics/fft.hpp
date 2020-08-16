@@ -50,10 +50,6 @@
 #include <boost/mpi/communicator.hpp>
 #include <fftw3.h>
 
-/************************************************
- * data types
- ************************************************/
-
 /** Aligned allocator for fft data. */
 template <class T> struct fft_allocator {
   typedef T value_type;
@@ -128,9 +124,9 @@ struct fft_forw_plan {
   int element;
 };
 
-/** Additional information for backwards FFT.*/
+/** Additional information for backwards FFT. */
 struct fft_back_plan {
-  /** plan direction. (e.g. fftw macro)*/
+  /** plan direction. (e.g. fftw macro) */
   int dir;
   /** plan for fft. */
   fftw_plan our_fftw_plan;
@@ -170,10 +166,6 @@ struct fft_data_struct {
   fft_vector<double> data_buf;
 };
 
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
-
 /** Initialize everything connected to the 3D-FFT.
  *
  *  \param ca_mesh_dim     Local CA mesh dimensions.
@@ -210,14 +202,15 @@ void fft_perform_forw(double *data, fft_data_struct &fft,
 void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
                       const boost::mpi::communicator &comm);
 
-/** pack a block (size[3] starting at start[3]) of an input 3d-grid
- *  with dimension dim[3] into an output 3d-block with dimension size[3].
+/** Pack a block (<tt>size[3]</tt> starting at <tt>start[3]</tt>) of an input
+ *  3d-grid with dimension <tt>dim[3]</tt> into an output 3d-block with
+ *  dimension <tt>size[3]</tt>.
  *
- *    The block with dimensions (size[0], size[1], size[2]) is stored
- *    in 'row-major-order' or 'C-order', that means the first index is
- *    changing slowest when running through the linear array. The
- *    element (i0 (slow), i1 (mid), i2 (fast)) has the linear index
- *    li = i2 + size[2] * (i1 + (size[1]*i0))
+ *  The block with dimensions <tt>(size[0], size[1], size[2])</tt> is stored
+ *  in 'row-major-order' or 'C-order', that means the first index is
+ *  changing slowest when running through the linear array. The
+ *  element (@c i0 (slow), @c i1 (mid), @c i2 (fast)) has the linear index
+ *  <tt>li = i2 + size[2] * (i1 + (size[1] * i0))</tt>.
  *
  *  \param[in]  in      pointer to input 3d-grid.
  *  \param[out] out     pointer to output 3d-grid (block).
@@ -229,8 +222,8 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
 void fft_pack_block(double const *in, double *out, int const start[3],
                     int const size[3], int const dim[3], int element);
 
-/** unpack a 3d-grid input block (size[3]) into an output 3d-grid
- *  with dimension dim[3] at start position start[3].
+/** Unpack a 3d-grid input block (<tt>size[3]</tt>) into an output 3d-grid
+ *  with dimension <tt>dim[3]</tt> at start position <tt>start[3]</tt>.
  *
  *  see also \ref fft_pack_block.
  *
@@ -244,7 +237,6 @@ void fft_pack_block(double const *in, double *out, int const start[3],
 void fft_unpack_block(double const *in, double *out, int const start[3],
                       int const size[3], int const dim[3], int element);
 
-/*@}*/
-#endif
+#endif // defined(P3M) || defined(DP3M)
 
 #endif

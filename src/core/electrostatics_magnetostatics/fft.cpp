@@ -42,13 +42,8 @@ using Utils::get_linear_index;
 
 #include <utils/Span.hpp>
 
-/************************************************
- * DEFINES
- ************************************************/
-
 /** @name MPI tags for FFT communication */
 /*@{*/
-/** Tag for communication in fft_init() */
 /** Tag for communication in forw_grid_comm() */
 #define REQ_FFT_FORW 301
 /** Tag for communication in back_grid_comm() */
@@ -60,16 +55,15 @@ namespace {
  *  communicate to each other, when you change the node grid.
  *  Changing the domain decomposition requires communication. This
  *  function finds (hopefully) the best way to do this. As input it
- *  needs the two grids (grid1, grid2) and a linear list (node_list1)
- *  with the node identities for grid1. The linear list (node_list2)
+ *  needs the two grids (@p grid1, @p grid2) and a linear list (@p node_list1)
+ *  with the node identities for @p grid1. The linear list (@p node_list2)
  *  for the second grid is calculated. For the communication group of
- *  the calling node it calculates a list (group) with the node
- *  identities and the positions (pos1, pos2) of that nodes in grid1
- *  and grid2. The return value is the size of the communication
+ *  the calling node it calculates a list (@c group) with the node
+ *  identities and the positions (@p my_pos, @p pos) of that nodes in @p grid1
+ *  and @p grid2. The return value is the size of the communication
  *  group. It gives -1 if the two grids do not fit to each other
- *  (grid1 and grid2 have to be component wise multiples of each
- *  other. see e.g. \ref calc_2d_grid in \ref grid.cpp for how to do
- *  this.).
+ *  (@p grid1 and @p grid2 have to be component-wise multiples of each
+ *  other, see e.g. \ref calc_2d_grid for how to do this).
  *
  *  \param[in]  grid1       The node grid you start with.
  *  \param[in]  grid2       The node grid you want to have.
@@ -637,7 +631,6 @@ int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
     (*ks_pnum) = 5;
   }
 
-  /* Factor 2 for complex numbers */
   fft.send_buf.resize(fft.max_comm_size);
   fft.recv_buf.resize(fft.max_comm_size);
   fft.data_buf.resize(fft.max_mesh_size);
@@ -701,7 +694,7 @@ void fft_perform_forw(double *data, fft_data_struct &fft,
   /* ===== second direction ===== */
   /* communication to current dir row format (in is data) */
   forw_grid_comm(fft.plan[2], data, fft.data_buf.data(), fft, comm);
-  /* perform FFT (in/out is fft.data_buf)*/
+  /* perform FFT (in/out is fft.data_buf) */
   fftw_execute_dft(fft.plan[2].our_fftw_plan, c_data_buf, c_data_buf);
   /* ===== third direction  ===== */
   /* communication to current dir row format (in is fft.data_buf) */
@@ -736,7 +729,7 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
   /* ===== first direction  ===== */
   /* perform FFT (in is data) */
   fftw_execute_dft(fft.back[1].our_fftw_plan, c_data, c_data);
-  /* throw away the (hopefully) empty complex component (in is data)*/
+  /* throw away the (hopefully) empty complex component (in is data) */
   for (int i = 0; i < fft.plan[1].new_size; i++) {
     fft.data_buf[i] = data[2 * i]; /* real value */
     // Vincent:
