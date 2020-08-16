@@ -246,8 +246,9 @@ add_custom_target(
           parallel_odd ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
 add_custom_target(
-  check_python_gpu COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                           -j${TEST_NP} -L gpu ${CTEST_ARGS} --output-on-failure)
+  check_python_gpu
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L gpu
+          ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_gpu pypresso python_test_data)
 
 add_custom_target(
