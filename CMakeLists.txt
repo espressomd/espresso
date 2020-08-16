@@ -485,6 +485,7 @@ if(WITH_TESTS)
   if(WITH_PYTHON)
     add_subdirectory(testsuite)
   endif(WITH_PYTHON)
+  set(CTEST_ARGS "" CACHE STRING "Extra arguments to give to ctest calls")
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)

@@ -52,6 +52,6 @@ tutorial_test(FILE test_12-constant_pH.py)
 
 add_custom_target(
   check_tutorials COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                          -j${TEST_NP} $(ARGS) --output-on-failure)
+                          -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)
 
 add_dependencies(check_tutorials pypresso local_tutorials)

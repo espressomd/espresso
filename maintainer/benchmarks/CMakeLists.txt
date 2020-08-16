@@ -114,6 +114,6 @@ python_benchmark(
 
 add_custom_target(
   benchmark_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                           $(ARGS) --output-on-failure)
+                           ${CTEST_ARGS} --output-on-failure)
 
 add_dependencies(benchmark benchmark_python)
