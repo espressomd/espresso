@@ -147,7 +147,7 @@ inline Variant unpack(const PackedVariant &v,
 }
 
 inline PackedMap pack(const VariantMap &v) {
-  std::vector<std::pair<std::string, PackedVariant>> ret(v.size());
+  PackedMap ret(v.size());
 
   boost::transform(v, ret.begin(), [](auto const &kv) {
     return std::pair<std::string, PackedVariant>{kv.first, pack(kv.second)};
