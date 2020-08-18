@@ -60,12 +60,13 @@ public:
    * This function is called on object creation with user
    * provided parameters. This can be used if the SO has required parameters,
    * it represents some type that can not reasonably be default constructed,
-   * or if the core implementation has to be chosen by a parameter.
-   * It is guaranteed that no getter or setter functions from this interface
-   * is called before construct (only name() and valid_parameters()),
+   * or if the core implementation has to be chosen by a parameter. It is
+   * guaranteed that no getter or setter functions from this interface is
+   * called before construction (only @ref name() and @ref valid_parameters()),
    * and it is only called once.
    *
-   * The default implementation just calls set_parameter for every parameter.
+   * The default implementation just calls @ref set_parameter for every
+   * parameter.
    *
    * @param params The parameters to the constructor. Only parameters that
    *               are valid for a default-constructed object are valid.
@@ -81,7 +82,7 @@ private:
 
 public:
   /**
-   * @brief get current parameters.
+   * @brief Get current parameters.
    * @return Parameters set in class.
    */
   VariantMap get_parameters() const {
@@ -95,10 +96,7 @@ public:
   }
 
   /**
-   * @brief Get required and optional parameters for class
-   *
-   * Get required and optional parameters for class.
-   *
+   * @brief Get required and optional parameters for class.
    * @return Expected parameters.
    */
   virtual Utils::Span<const boost::string_ref> valid_parameters() const {
@@ -120,7 +118,7 @@ public:
 
 private:
   /**
-   * @brief Local implementation of set_parameter
+   * @brief Local implementation of @ref set_parameter.
    */
   virtual void do_set_parameter(const std::string &, const Variant &) {}
 
@@ -132,7 +130,7 @@ public:
 
 private:
   /**
-   * @brief Local implementation of do_call_method
+   * @brief Local implementation of @c do_call_method.
    *
    * If not overridden by the implementation, this does nothing.
    */

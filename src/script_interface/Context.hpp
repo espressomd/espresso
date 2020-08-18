@@ -28,7 +28,7 @@
 
 namespace ScriptInterface {
 /**
- * @brief Context of a object handle.
+ * @brief Context of an object handle.
  *
  * Each instance of @c ObjectHandle can have an
  * attached context, which can e.g. synchronize
@@ -41,7 +41,7 @@ public:
   /**
    * @brief Call method on remote instances
    *
-   * @param self Internal identified of the instance
+   * @param self Internal identifier of the instance
    * @param name Name of the method to call
    * @param arguments Arguments to the call
    */
@@ -66,7 +66,7 @@ public:
    *
    * Objects created thru a Context get shared ownership of that context,
    * e.g. the lifetime of the context is at least as long as the objects
-   * created by it. Therefor the object can always assume that the context
+   * created by it. Therefore the object can always assume that the context
    * is present.
    */
   virtual std::shared_ptr<ObjectHandle>

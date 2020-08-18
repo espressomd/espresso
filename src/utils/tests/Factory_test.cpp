@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(stable_name_) {
   Utils::Factory<TestClass> factory;
   factory.register_new<DerivedTestClass>(derived_class_name);
 
-  /* Make a object */
+  /* Make an object */
   auto o = factory.make(derived_class_name);
 
   BOOST_CHECK_EQUAL(factory.type_name(*o.get()), derived_class_name);

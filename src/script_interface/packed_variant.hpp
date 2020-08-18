@@ -51,8 +51,8 @@ using PackedMap = std::vector<std::pair<std::string, PackedVariant>>;
 /**
  * @brief Visitor that converts a Variant to a PackedVariant.
  *
- * While packing keeps track of all the ObjectRef values that
- * were encountered, and stores them. This also keeps the
+ * While packing, keeps track of all the ObjectRef values that
+ * were encountered and stores them. This also keeps the
  * referees alive if there are no other owners.
  */
 struct PackVisitor : boost::static_visitor<PackedVariant> {
@@ -92,7 +92,7 @@ public:
 /**
  * @brief Visitor that converts a PackedVariant to a Variant.
  *
- * Object Id are replaced according to the provided object map.
+ * ObjectId are replaced according to the provided object map.
  */
 struct UnpackVisitor : boost::static_visitor<Variant> {
   std::unordered_map<ObjectId, ObjectRef> const &objects;
@@ -123,7 +123,7 @@ struct UnpackVisitor : boost::static_visitor<Variant> {
 /**
  * @brief Transform a Variant to a PackedVariant
  *
- * Does apply @ref PackVisitor to a @ref Variant.
+ * Applies @ref PackVisitor to a @ref Variant.
  *
  * @param v Input Variant
  * @return Packed variant.
@@ -135,7 +135,7 @@ inline PackedVariant pack(const Variant &v) {
 /**
  * @brief Unpack a PackedVariant.
  *
- * Does apply @ref UnpackVisitor to a @ref Variant.
+ * Applies @ref UnpackVisitor to a @ref Variant.
  *
  * @param v Packed Variant.
  * @param objects Map of ids to reference.
@@ -146,6 +146,12 @@ inline Variant unpack(const PackedVariant &v,
   return boost::apply_visitor(UnpackVisitor{objects}, v);
 }
 
+/**
+ * @brief Pack a VariantMap.
+ *
+ * Applies @ref pack to every value in the
+ * input map.
+ */
 inline PackedMap pack(const VariantMap &v) {
   PackedMap ret(v.size());
 

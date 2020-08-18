@@ -38,8 +38,8 @@ namespace ScriptInterface {
  * between multiple MPI ranks. That is, for each instance
  * created on the head node, a copy is created on all
  * other ranks. If the original copy is mutated via
- * set_parameters, this change is also applied to all the
- * copies. Calls to call_method are also propagated to all
+ * @ref notify_set_parameter(), this change is also applied to all the
+ * copies. Calls to @ref notify_call_method() are also propagated to all
  * ranks. The lifetime of the copies is tied to the original,
  * if the original copy is destroyed on the head node,
  * the remote copies are also destroyed.
@@ -90,7 +90,7 @@ public:
 
 private:
   /**
-   * @brief Callback for remote_make_handle
+   * @brief Callback for @c cb_make_handle
    */
   void make_handle(ObjectId id, const std::string &name,
                    const PackedMap &parameters);
@@ -106,7 +106,7 @@ private:
 
 private:
   /**
-   * @brief Callback for remote_set_parameter
+   * @brief Callback for @c cb_set_parameter
    */
   void set_parameter(ObjectId id, std::string const &name,
                      PackedVariant const &value);
@@ -117,7 +117,7 @@ public:
 
 private:
   /**
-   * @brief Callback for remote_call_method
+   * @brief Callback for @c cb_call_method
    */
   void call_method(ObjectId id, std::string const &name,
                    PackedMap const &arguments);
@@ -128,15 +128,14 @@ public:
 
 private:
   /**
-   * @brief Callback for remote_delete_handle
+   * @brief Callback for @c cb_delete_handle
    */
   void delete_handle(ObjectId id) { m_local_objects.erase(id); }
 
 public:
   /**
-   * @brief Get a new reference counted instance of a script interface by
-   * name.
-   *
+   * @brief Get a new reference counted instance of a script interface
+   * object by name.
    */
   std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) override;
