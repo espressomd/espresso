@@ -128,7 +128,7 @@ cdef class PScriptInterface:
             Name of the core method.
         \*\*kwargs
             Arguments for the method.
-        """    
+        """
         cdef VariantMap parameters
 
         for name in kwargs:
@@ -141,7 +141,7 @@ cdef class PScriptInterface:
         return res
 
     def name(self):
-        """Return name of the core class."""    
+        """Return name of the core class."""
         return to_str(self.sip.get().name().data())
 
     def _serialize(self):
@@ -366,14 +366,15 @@ _python_class_by_so_name = {}
 
 
 def script_interface_register(c):
-    """Decorator used to register script interface classes
-       This will store a name<->class relationship in a registry, so that parameters
-       of type object can be instantiated as the correct python class
+    """
+    Decorator used to register script interface classes.
+    This will store a name<->class relationship in a registry, so that
+    parameters of type object can be instantiated as the correct python class.
     """
 
     if not hasattr(c, "_so_name"):
         raise Exception("Python classes representing a script object must "
-                        "define an _so_name attribute at class level")    
+                        "define an _so_name attribute at class level")
 
     _python_class_by_so_name[c._so_name] = c
     return c
