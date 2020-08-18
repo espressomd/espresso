@@ -34,6 +34,7 @@ using ObjectId = std::size_t;
  * This assigns every ObjectHandle a unique id.
  */
 inline ObjectId object_id(const ObjectHandle *p) {
+  // NOLINTNEXTLINE(bugprone-sizeof-expression)
   static_assert(sizeof(const ObjectHandle *) <= sizeof(ObjectId), "");
   return reinterpret_cast<ObjectId>(p);
 }
