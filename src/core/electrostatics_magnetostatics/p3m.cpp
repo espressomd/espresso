@@ -965,8 +965,7 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((box_geo.length()[0] == box_geo.length()[1]) &&
           (box_geo.length()[1] == box_geo.length()[2]))) {
-      *log = strcat_alloc(
-          *log, "{049 P3M_init: Nonmetallic epsilon requires cubic box} ");
+      runtimeErrorMsg() << "P3M_init: Nonmetallic epsilon requires cubic box";
       return ES_ERROR;
     }
   }
@@ -988,8 +987,7 @@ int p3m_adaptive_tune(char **log) {
   *log = strcat_alloc(*log, b);
 
   if (p3m.sum_qpart == 0) {
-    *log = strcat_alloc(*log,
-                        "no charged particles in the system, cannot tune P3M");
+    runtimeErrorMsg() << "no charged particles in the system";
     return ES_ERROR;
   }
 
@@ -1143,8 +1141,7 @@ int p3m_adaptive_tune(char **log) {
   }
 
   if (time_best == 1e20) {
-    *log = strcat_alloc(*log,
-                        "failed to tune P3M parameters to required accuracy\n");
+    runtimeErrorMsg() << "failed to reach requested accuracy";
     return ES_ERROR;
   }
 

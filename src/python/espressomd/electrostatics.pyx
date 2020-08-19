@@ -323,9 +323,7 @@ IF P3M == 1:
                                        -1.0,
                                        self._params["accuracy"])
             resp = python_p3m_adaptive_tune()
-            if resp:
-                raise Exception(
-                    "failed to tune P3M parameters to required accuracy")
+            handle_errors("P3M tuning failed")
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
@@ -447,9 +445,7 @@ IF P3M == 1:
                                            -1.0,
                                            self._params["accuracy"])
                 resp = python_p3m_adaptive_tune()
-                if resp:
-                    raise Exception(
-                        "failed to tune P3M parameters to required accuracy")
+                handle_errors("P3MGPU tuning failed")
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
