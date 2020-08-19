@@ -114,7 +114,8 @@ class P3M_tuning_test(ut.TestCase):
         self.system.time_step = 0.01
         self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]], q=[-1, 1])
 
-        solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2)
+        solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2,
+                                                  epsilon='metallic')
         try:
             self.system.actors.add(solver)
         except Exception as err:
@@ -127,7 +128,8 @@ class P3M_tuning_test(ut.TestCase):
         self.system.time_step = 0.01
         self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]], q=[-1, 1])
 
-        solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
+        solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2,
+                                               epsilon='metallic')
         try:
             self.system.actors.add(solver)
         except Exception as err:
