@@ -28,7 +28,7 @@ Several modes are available for different types of binding.
     import espressomd
     from espressomd.interactions import HarmonicBond
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     bond_centers = HarmonicBond(k=1000, r_0=<CUTOFF>)
     system.bonded_inter.add(bond_centers)
     system.collision_detection.set_params(mode="bind_centers", distance=<CUTOFF>,

@@ -44,7 +44,7 @@ activation to achieve the given accuracy::
     import espressomd
     from espressomd import electrostatics
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[10, 10, 10])
     solver = electrostatics.<SOLVER>(prefactor=C, <ADDITIONAL REQUIRED PARAMETERS>)
     system.actors.add(solver)
 
