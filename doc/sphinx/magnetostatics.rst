@@ -27,9 +27,15 @@ relative permittivity of the background material, respectively.
 
 Magnetostatic interactions are activated via the actor framework::
 
-    from espressomd.magnetostatics import DipolarDirectSumCpu
+    import espressomd
+    import espressomd.magnetostatics
 
-    direct_sum = DipolarDirectSumCpu(prefactor=1)
+    system = espressomd.System(box_l=[10, 10, 10])
+    system.time_step = 0.01
+    system.part.add(pos=[[0, 0, 0], [1, 1, 1]],
+                    rotation=2 * [(1, 1, 1)], dip=2 * [(1, 0, 0)])
+
+    direct_sum = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1)
     system.actors.add(direct_sum)
     # ...
     system.actors.remove(direct_sum)
@@ -49,7 +55,8 @@ Dipolar P3M
 This is the dipolar version of the P3M algorithm, described in :cite:`cerda08d`.
 
 Make sure that you know the relevance of the P3M parameters before using
-P3M! If you are not sure, read the following references
+P3M! If you are not sure, read the following references:
+:cite:`ewald21,hockney88,kolafa92,deserno98a,deserno98b,deserno00,deserno00a,cerda08d`.
 
 Note that dipolar P3M does not work with non-cubic boxes.
 

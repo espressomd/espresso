@@ -35,20 +35,22 @@ Note that using the electrostatic interaction also requires assigning charges to
 the particles via the particle property
 :py:attr:`espressomd.particle_data.ParticleHandle.q`.
 
-This example shows the general usage of an electrostatic method ``<SOLVER>``.
-All of them need the Bjerrum length and a set of other required parameters.
-First, an instance of the solver is created and only after adding it to the actors
-list, it is activated. Internally the method calls a tuning routine on
-activation to achieve the given accuracy::
+All solvers need a prefactor and a set of other required parameters.
+This example shows the general usage of the electrostatic method ``P3M``.
+An instance of the solver is created and added to the actors list, at which
+point it will be automatically activated. This activation will internally
+call a tuning function to achieve the requested accuracy::
 
     import espressomd
-    from espressomd import electrostatics
+    import espressomd.electrostatics
 
     system = espressomd.System(box_l=[10, 10, 10])
-    solver = electrostatics.<SOLVER>(prefactor=C, <ADDITIONAL REQUIRED PARAMETERS>)
+    system.time_step = 0.01
+    system.part.add(pos=[[0, 0, 0], [1, 1, 1]], q=[-1, 1])
+    solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-3)
     system.actors.add(solver)
 
-where the prefactor :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`
+where the prefactor is defined as :math:`C` in Eqn. :eq:`coulomb_prefactor`.
 
 .. _Coulomb P3M:
 
