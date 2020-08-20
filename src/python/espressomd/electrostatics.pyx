@@ -316,6 +316,7 @@ IF P3M == 1:
 
         def _tune(self):
             set_prefactor(self._params["prefactor"])
+            p3m_set_eps(self._params["epsilon"])
             python_p3m_set_tune_params(self._params["r_cut"],
                                        self._params["mesh"],
                                        self._params["cao"],
@@ -438,6 +439,7 @@ IF P3M == 1:
 
             def _tune(self):
                 set_prefactor(self._params["prefactor"])
+                p3m_set_eps(self._params["epsilon"])
                 python_p3m_set_tune_params(self._params["r_cut"],
                                            self._params["mesh"],
                                            self._params["cao"],
