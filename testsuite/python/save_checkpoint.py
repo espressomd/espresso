@@ -109,17 +109,22 @@ if espressomd.has_features('P3M') and 'P3M.CPU' in modes:
     system.actors.add(p3m)
 
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
-acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
+acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc_time_series = espressomd.accumulators.TimeSeries(obs=obs)
-acc.update()
+acc_correlator = espressomd.accumulators.Correlator(
+    obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
+    corr_operation="componentwise_product")
+acc_mean_variance.update()
 acc_time_series.update()
+acc_correlator.update()
 system.part[0].pos = [1.0, 2.0, 3.0]
-acc.update()
+acc_mean_variance.update()
 acc_time_series.update()
+acc_correlator.update()
 
-
-system.auto_update_accumulators.add(acc)
+system.auto_update_accumulators.add(acc_mean_variance)
 system.auto_update_accumulators.add(acc_time_series)
+system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
 system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
@@ -203,8 +208,9 @@ if 'THERM.LB' not in modes:
     system.bonded_inter.add(thermalized_bond)
     system.part[1].add_bond((thermalized_bond, 0))
 checkpoint.register("system")
-checkpoint.register("acc")
+checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
+checkpoint.register("acc_correlator")
 # calculate forces
 system.integrator.run(0)
 particle_force0 = np.copy(system.part[0].f)

@@ -47,10 +47,9 @@ public:
   virtual std::vector<double> operator()() const = 0;
 
   /** Size of the flat array returned by the observable */
-  int n_values() const {
+  size_t n_values() const {
     auto const v = shape();
-    return static_cast<int>(
-        std::accumulate(v.begin(), v.end(), 1, std::multiplies<>()));
+    return std::accumulate(v.begin(), v.end(), 1u, std::multiplies<>());
   }
 
   /** Dimensions needed to reshape the flat array returned by the observable */

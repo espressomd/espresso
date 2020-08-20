@@ -43,7 +43,6 @@ class Correlator : public AccumulatorBase {
 
 public:
   Correlator() {
-    using Utils::as_const;
     /* Only args can be changed after construction. */
     add_parameters(
         {{"tau_lin", m_correlator, &CoreCorr::tau_lin},
@@ -53,10 +52,8 @@ public:
          {"corr_operation", m_correlator, &CoreCorr::correlation_operation},
          {"args", m_correlator, &CoreCorr::set_correlation_args,
           &CoreCorr::correlation_args},
-         {"dim_corr", m_correlator, &CoreCorr::dim_corr},
-         {"obs1", as_const(m_obs1)},
-         {"obs2", as_const(m_obs2)},
-         {"n_result", m_correlator, &CoreCorr::n_result}});
+         {"obs1", Utils::as_const(m_obs1)},
+         {"obs2", Utils::as_const(m_obs2)}});
   }
 
   void do_construct(VariantMap const &args) override {
@@ -88,8 +85,12 @@ public:
       correlator()->finalize();
     if (method == "get_correlation")
       return correlator()->get_correlation();
+    if (method == "get_lag_times")
+      return correlator()->get_lag_times();
+    if (method == "get_samples_sizes")
+      return correlator()->get_samples_sizes();
 
-    return {};
+    return AccumulatorBase::call_method(method, parameters);
   }
 
   std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {

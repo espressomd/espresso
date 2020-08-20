@@ -69,11 +69,8 @@ public:
 
     if (method == "get_variance")
       return mean_variance_calculator()->get_variance();
-    if (method == "shape") {
-      auto const shape = m_accumulator->shape();
-      return std::vector<int>{shape.begin(), shape.end()};
-    }
-    return {};
+
+    return AccumulatorBase::call_method(method, parameters);
   }
 
   std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {

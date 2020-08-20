@@ -19,7 +19,7 @@
 
 # This script generates a summary of all Doxygen warnings that require fixing.
 
-DOXYGEN=$(cmake -LA -N | grep "DOXYGEN_EXECUTABLE:FILEPATH" | cut -d'=' -f2-)
+DOXYGEN=$(cmake -LA -N . | grep "DOXYGEN_EXECUTABLE:FILEPATH" | cut -d'=' -f2-)
 if ! hash "${DOXYGEN}" 2>/dev/null; then
     echo "No doxygen found."
     exit 2

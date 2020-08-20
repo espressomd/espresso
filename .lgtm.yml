@@ -1,0 +1,9 @@
+extraction:
+  cpp:
+    after_prepare: "pip3 install numpy cython"
+    configure:
+      command:
+      - "mkdir build"
+      - "cd build && cmake .."
+    index:
+      build_command: "cd build && make -j2"

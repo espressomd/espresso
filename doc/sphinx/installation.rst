@@ -186,15 +186,11 @@ using the following commands:
 
 If you want to install MacPorts, download the installer package
 appropriate for your Mac OS X version from
-https://www.macports.org/install.php and install it.
+https://www.macports.org/install.php and follow their
+installation instructions.
 
-If you want to install Homebrew, use the following commands.
-
-.. code-block:: bash
-
-    sudo xcode-select --install
-    sudo xcodebuild -license accept
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+If you want to install Homebrew, follow the installation
+instructions at https://docs.brew.sh/Installation.
 
 Installing packages using MacPorts
 """"""""""""""""""""""""""""""""""
@@ -203,8 +199,6 @@ Run the following commands:
 
 .. code-block:: bash
 
-    sudo xcode-select --install
-    sudo xcodebuild -license accept
     sudo port selfupdate
     sudo port install cmake python37 py37-cython py37-numpy \
       openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
@@ -218,11 +212,13 @@ Run the following commands:
 Installing packages using Homebrew
 """"""""""""""""""""""""""""""""""
 
+Run the following commands:
+
 .. code-block:: bash
 
     brew install cmake python cython boost boost-mpi fftw \
       doxygen gsl numpy ipython jupyter
-    brew install hdf5
+    brew install hdf5-mpi
     brew link --force cython
     pip install PyOpenGL matplotlib
 
@@ -616,7 +612,7 @@ each variant having different activated features, and for as many
 platforms as you want.
 
 Once you've run ``ccmake``, you can list the configured variables with
-``cmake -LAH -N | less`` (uses a pager) or with ``ccmake ..`` and pressing
+``cmake -LAH -N .. | less`` (uses a pager) or with ``ccmake ..`` and pressing
 key ``t`` to toggle the advanced mode on (uses the curses interface).
 
 **Example:**

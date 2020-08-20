@@ -75,9 +75,6 @@ int integ_switch = INTEG_METHOD_NVT;
 int n_verlet_updates = 0;
 
 double time_step = -1.0;
-double time_step_half = -1.0;
-double time_step_squared = -1.0;
-double time_step_squared_half = -1.0;
 
 double sim_time = 0.0;
 double skin = 0.0;

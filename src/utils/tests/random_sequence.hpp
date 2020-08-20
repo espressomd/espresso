@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef RANDOM_SEQUENCE_HPP
+#define RANDOM_SEQUENCE_HPP
+
 namespace Testing {
 namespace RandomSequence {
 
@@ -2522,3 +2525,4 @@ static const double values[] = {
     8.03228185e-01, 1.88864574e-01, 4.64225071e-02, 2.85621607e-01};
 }
 } // namespace Testing
+#endif

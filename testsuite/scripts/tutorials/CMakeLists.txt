@@ -40,8 +40,7 @@ tutorial_test(FILE test_04-lattice_boltzmann_part4.py LABELS "gpu")
 tutorial_test(FILE test_04-lattice_boltzmann_part4_solution.py LABELS "gpu")
 tutorial_test(FILE test_05-raspberry_electrophoresis.py LABELS "gpu")
 tutorial_test(FILE test_06-active_matter__flow_field.py LABELS "gpu")
-tutorial_test(FILE test_06-active_matter__rectification_geometry.py LABELS
-              "gpu")
+tutorial_test(FILE test_06-active_matter__rectification_geometry.py)
 tutorial_test(FILE test_06-active_matter__enhanced_diffusion.py)
 tutorial_test(FILE test_06-active_matter__rectification_simulation.py)
 tutorial_test(FILE test_07-electrokinetics.py LABELS "gpu")
@@ -53,6 +52,6 @@ tutorial_test(FILE test_12-constant_pH.py)
 
 add_custom_target(
   check_tutorials COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                          -j${TEST_NP} $(ARGS) --output-on-failure)
+                          -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)
 
 add_dependencies(check_tutorials pypresso local_tutorials)

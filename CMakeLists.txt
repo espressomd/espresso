@@ -31,6 +31,12 @@ endif()
 # CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# C++ standard
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 include(FeatureSummary)
 include(GNUInstallDirs)
 project(ESPResSo)
@@ -40,12 +46,6 @@ if(POLICY CMP0074)
   # make find_package() use <PackageName>_ROOT variables
   cmake_policy(SET CMP0074 NEW)
 endif()
-
-# C++ standard
-enable_language(CXX)
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(PROJECT_VERSION "4.2-dev")
 
@@ -267,25 +267,7 @@ if(WITH_STOKESIAN_DYNAMICS)
   if(BLAS AND LAPACK)
     set(STOKESIAN_DYNAMICS 1)
   endif()
-  if(CUDA)
-    set(STOKESIAN_DYNAMICS_GPU 1)
-    if(HIP)
-      find_gpu_library(VARNAME CUDA_CUBLAS_LIBRARIES NAMES rocblas)
-      find_gpu_library(VARNAME CUDA_cusolver_LIBRARY NAMES rocsolver)
-    else()
-      if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
-        # when importing package cublas, CMake versions older than 3.12.2 will
-        # look for a library cublas_device that no longer exists in CUDA 10
-        cmake_minimum_required(VERSION 3.12.2)
-      endif()
-      find_gpu_library(VARNAME CUDA_CUBLAS_LIBRARIES NAMES cublas)
-      find_gpu_library(VARNAME CUDA_cusolver_LIBRARY NAMES cusolver)
-    endif()
-  endif(CUDA)
-  if(NOT (STOKESIAN_DYNAMICS
-          OR (STOKESIAN_DYNAMICS_GPU AND CUDA_CUBLAS_LIBRARIES
-              AND CUDA_cusolver_LIBRARY))
-     AND NOT WITH_STOKESIAN_DYNAMICS_IS_DEFAULT_VALUE)
+  if(NOT STOKESIAN_DYNAMICS AND NOT WITH_STOKESIAN_DYNAMICS_IS_DEFAULT_VALUE)
     message(
       FATAL_ERROR
         "Optional feature Stokesian Dynamics explicitly requested, but dependencies not found."
@@ -403,11 +385,18 @@ endif()
 add_library(cxx_interface INTERFACE)
 target_compile_options(
   cxx_interface
-  INTERFACE -Wall -Wextra $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+  INTERFACE -Wall
+            -Wextra
+            $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+            # add extra warnings
+            $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
             # disable warnings from -Wextra
-            -Wno-sign-compare -Wno-unused-function -Wno-unused-variable
-            -Wno-unused-parameter -Wno-missing-braces
-            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered;-Wno-cast-function-type>
+            -Wno-sign-compare
+            -Wno-unused-function
+            -Wno-unused-variable
+            -Wno-unused-parameter
+            -Wno-missing-braces
+            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
             $<$<CXX_COMPILER_ID:Intel>:-wd592>)
 
 # disable more warnings from -Wextra
@@ -433,6 +422,10 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
                                                VERSION_GREATER "4.8.5")
   # older GCC versions don't support -Wno-pedantic which we need in src/python
   target_compile_options(cxx_interface INTERFACE -pedantic)
+endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
+                                            VERSION_GREATER_EQUAL "8.1.0")
+  target_compile_options(cxx_interface INTERFACE -Wno-cast-function-type)
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION
                                               VERSION_LESS "16.0")
@@ -474,9 +467,6 @@ endif()
 
 target_link_libraries(cxx_interface INTERFACE coverage_interface)
 
-# Give CMAKE_CXX_FLAGS higher precedence
-target_compile_options(cxx_interface INTERFACE ${CMAKE_CXX_FLAGS})
-
 #
 # Testing
 # ##############################################################################
@@ -495,6 +485,9 @@ if(WITH_TESTS)
   if(WITH_PYTHON)
     add_subdirectory(testsuite)
   endif(WITH_PYTHON)
+  set(CTEST_ARGS ""
+      CACHE STRING
+            "Extra arguments to give to ctest calls (separated by semicolons)")
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)

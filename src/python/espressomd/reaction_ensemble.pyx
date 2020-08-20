@@ -200,10 +200,8 @@ cdef class ReactionAlgorithm:
             self._params[k] = kwargs[k]
 
         for k in self._valid_keys_add():
-            try:
+            if k in kwargs:
                 self._params[k] = kwargs[k]
-            except BaseException:
-                pass
         self._check_lengths_of_arrays()
         self._validate_params_default_charge()
         self._set_params_in_es_core_add()
