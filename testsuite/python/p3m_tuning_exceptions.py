@@ -26,8 +26,16 @@ class P3M_tuning_test(ut.TestCase):
     system = espressomd.System(box_l=[10., 10., 10.])
 
     def setUp(self):
-        self.system.part.clear()
         self.system.actors.clear()
+        self.system.part.clear()
+        self.system.box_l = [10., 10., 10.]
+
+    def add_charged_particles(self):
+        self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]], q=[-1, 1])
+
+    def add_magnetic_particles(self):
+        self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]],
+                             rotation=2 * [(1, 1, 1)], dip=2 * [(1, 0, 0)])
 
     ##################################################
     # block of tests where the time_step is negative #
@@ -38,7 +46,7 @@ class P3M_tuning_test(ut.TestCase):
     def test_01_time_not_set_p3m_gpu(self):
         import espressomd.electrostatics
 
-        self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]], q=[-1, 1])
+        self.add_charged_particles()
 
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2)
         with self.assertRaisesRegex(Exception, 'p3m_adaptive_tune: ERROR: time_step not set'):
@@ -48,7 +56,7 @@ class P3M_tuning_test(ut.TestCase):
     def test_01_time_not_set_p3m_cpu(self):
         import espressomd.electrostatics
 
-        self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]], q=[-1, 1])
+        self.add_charged_particles()
 
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
         with self.assertRaisesRegex(Exception, 'p3m_adaptive_tune: ERROR: time_step not set'):
@@ -58,8 +66,7 @@ class P3M_tuning_test(ut.TestCase):
     def test_01_time_not_set_dp3m_cpu(self):
         import espressomd.magnetostatics
 
-        self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]],
-                             rotation=2 * [(1, 1, 1)], dip=2 * [(1, 0, 0)])
+        self.add_magnetic_particles()
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
@@ -112,7 +119,7 @@ class P3M_tuning_test(ut.TestCase):
         import espressomd.electrostatics
 
         self.system.time_step = 0.01
-        self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]], q=[-1, 1])
+        self.add_charged_particles()
 
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2,
                                                   epsilon='metallic')
@@ -126,7 +133,7 @@ class P3M_tuning_test(ut.TestCase):
         import espressomd.electrostatics
 
         self.system.time_step = 0.01
-        self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]], q=[-1, 1])
+        self.add_charged_particles()
 
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2,
                                                epsilon='metallic')
@@ -140,8 +147,7 @@ class P3M_tuning_test(ut.TestCase):
         import espressomd.magnetostatics
 
         self.system.time_step = 0.01
-        self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]],
-                             rotation=2 * [(1, 1, 1)], dip=2 * [(1, 0, 0)])
+        self.add_magnetic_particles()
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
