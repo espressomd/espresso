@@ -124,9 +124,9 @@ IF DP3M == 1:
             if self._params["epsilon"] == "metallic":
                 self._params["epsilon"] = 0.0
 
-            if not (is_valid_type(self._params["epsilon"], float)
-                    or self._params["epsilon"] == "metallic"):
-                raise ValueError("epsilon should be a double or 'metallic'")
+            check_type_or_throw_except(
+                self._params["epsilon"], 1, float,
+                "epsilon should be a double or 'metallic'")
 
             if not (self._params["inter"] == default_params["inter"]
                     or self._params["inter"] > 0):

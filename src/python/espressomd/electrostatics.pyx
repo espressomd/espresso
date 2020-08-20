@@ -260,12 +260,12 @@ IF P3M == 1:
             if self._params["tune"] and not (self._params["accuracy"] >= 0):
                 raise ValueError("P3M accuracy has to be positive")
 
-            if not (is_valid_type(self._params["epsilon"], float)
-                    or self._params["epsilon"] == "metallic"):
-                raise ValueError("epsilon should be a double or 'metallic'")
-
             if self._params["epsilon"] == "metallic":
                 self._params["epsilon"] = 0.0
+
+            check_type_or_throw_except(
+                self._params["epsilon"], 1, float,
+                "epsilon should be a double or 'metallic'")
 
             if self._params["mesh_off"] != default_params["mesh_off"]:
                 check_type_or_throw_except(self._params["mesh_off"], 3, float,
@@ -400,13 +400,12 @@ IF P3M == 1:
                 if not (self._params["accuracy"] >= 0):
                     raise ValueError("P3M accuracy has to be positive")
 
-                if not (is_valid_type(self._params["epsilon"], float)
-                        or self._params["epsilon"] == "metallic"):
-                    raise ValueError(
-                        "epsilon should be a double or 'metallic'")
-
                 if self._params["epsilon"] == "metallic":
                     self._params["epsilon"] = 0.0
+
+                check_type_or_throw_except(
+                    self._params["epsilon"], 1, float,
+                    "epsilon should be a double or 'metallic'")
 
                 if self._params["mesh_off"] != default_params["mesh_off"]:
                     check_type_or_throw_except(self._params["mesh_off"], 3, float,
