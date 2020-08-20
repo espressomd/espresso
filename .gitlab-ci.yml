@@ -214,6 +214,8 @@ cuda11-maxset:
     - docker
     - linux
     - cuda
+  only:
+    - schedules
 
 cuda10-maxset:
   <<: *global_job_definition
