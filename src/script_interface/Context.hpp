@@ -19,6 +19,14 @@
 #ifndef ESPRESSO_SCRIPT_INTERFACE_CONTEXT_HPP
 #define ESPRESSO_SCRIPT_INTERFACE_CONTEXT_HPP
 
+/** @file
+ *
+ *  @ref ScriptInterface::Context decorates @ref ScriptInterface::ObjectHandle
+ *  objects with a context: a creation policy (local object, local object
+ *  with remote copies) and a communication facility to synchronize an object
+ *  on the head node with remote copies (serialization, callback mechanism).
+ */
+
 #include "ObjectHandle.hpp"
 #include "Variant.hpp"
 
@@ -30,7 +38,7 @@ namespace ScriptInterface {
 /**
  * @brief Context of an object handle.
  *
- * Each instance of @c ObjectHandle can have an
+ * Each instance of @ref ObjectHandle can have an
  * attached context, which can e.g. synchronize
  * distributed copies of the instance. The context
  * does also provide facilities for serializing

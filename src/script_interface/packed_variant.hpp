@@ -36,11 +36,17 @@ using ObjectId = std::size_t;
 inline ObjectId object_id(const ObjectHandle *p) {
   // NOLINTNEXTLINE(bugprone-sizeof-expression)
   static_assert(sizeof(const ObjectHandle *) <= sizeof(ObjectId), "");
+  // Use the pointer value as the unique identifier.
+  // This function is only called on the head node.
   return reinterpret_cast<ObjectId>(p);
 }
 
 /**
- * @brief Variant value with references replaced by ids.
+ * @brief Packed version of @ref Variant.
+ *
+ * When packing variants by @ref PackVisitor, objects of type
+ * @ref ObjectRef are packed as @ref ObjectId. Other than that,
+ * all other types allowed in @ref Variant must appear here.
  */
 using PackedVariant = boost::make_recursive_variant<
     None, bool, int, double, std::string, std::vector<int>, std::vector<double>,

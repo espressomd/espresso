@@ -19,6 +19,14 @@
 #ifndef ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
 #define ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
 
+/** @file
+ *
+ *  Infrastructure to synchronize objects created on the head node
+ *  with their corresponding remote copies.
+ *
+ *  Implementation in @ref GlobalContext.cpp.
+ */
+
 #include "Context.hpp"
 #include "LocalContext.hpp"
 #include "MpiCallbacks.hpp"
@@ -136,6 +144,8 @@ public:
   /**
    * @brief Get a new reference counted instance of a script interface
    * object by name.
+   *
+   * Remote objects are automatically constructed.
    */
   std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) override;

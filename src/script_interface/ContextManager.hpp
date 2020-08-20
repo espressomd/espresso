@@ -19,6 +19,20 @@
 #ifndef ESPRESSO_CONTEXTMANAGER_HPP
 #define ESPRESSO_CONTEXTMANAGER_HPP
 
+/** @file
+ *
+ *  @ref ScriptInterface::ContextManager manages object creation with policies
+ *  @ref ScriptInterface::ContextManager::CreationPolicy "CreationPolicy".
+ *  Object creation is delegated to @ref ScriptInterface::GlobalContext and
+ *  @ref ScriptInterface::LocalContext. @ref ScriptInterface::ContextManager
+ *  serves as their public interface. If there is only 1 MPI rank, no
+ *  communication takes place and all objects are created locally via
+ *  @ref ScriptInterface::LocalContext, including those with policy
+ *  @ref ScriptInterface::ContextManager::CreationPolicy::GLOBAL "GLOBAL".
+ *
+ *  Implementation in @ref ContextManager.cpp.
+ */
+
 #include "Context.hpp"
 #include "Variant.hpp"
 
@@ -64,7 +78,7 @@ public:
 
   /**
    * @brief Get a new reference counted instance of a script interface from
-   *         a serialized state.
+   * a serialized state.
    */
   std::shared_ptr<ObjectHandle> deserialize(std::string const &state_);
 

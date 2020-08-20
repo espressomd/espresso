@@ -17,6 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** @file
+ *
+ *  Infrastructure to synchronize objects created on the head node with
+ *  their corresponding remote copies. Methods of script interface
+ *  classes may throw exceptions of type @ref ScriptInterface::Exception.
+ *  These exceptions will halt the flow of the program on the head node.
+ *  The same exceptions will be thrown in the remote copies but will
+ *  be silenced, since they are redundant. Other types of exceptions
+ *  are not silenced.
+ *
+ *  Implementation of @ref GlobalContext.hpp.
+ */
+
 #include "GlobalContext.hpp"
 #include "Exception.hpp"
 #include "ObjectHandle.hpp"

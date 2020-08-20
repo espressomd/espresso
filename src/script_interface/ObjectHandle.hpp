@@ -55,7 +55,7 @@ public:
 
 public:
   /**
-   * @brief Constructor
+   * @brief Construct the handled object.
    *
    * This function is called on object creation with user
    * provided parameters. This can be used if the SO has required parameters,
