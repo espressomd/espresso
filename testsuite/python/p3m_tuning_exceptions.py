@@ -109,6 +109,50 @@ class P3M_tuning_test(ut.TestCase):
         with self.assertRaisesRegex(Exception, 'dipolar P3M tuning failed: ERROR: no dipolar particles in the system'):
             self.system.actors.add(solver)
 
+    #######################################
+    # block of tests with non-cubic boxes #
+    #######################################
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures("P3M")
+    def test_03_non_cubic_box_p3m_gpu(self):
+        import espressomd.electrostatics
+
+        self.system.box_l = [10., 10., 20.]
+        self.system.time_step = 0.01
+        self.add_charged_particles()
+
+        solver = espressomd.electrostatics.P3MGPU(
+            prefactor=2, accuracy=1e-2, epsilon=1)
+        with self.assertRaisesRegex(Exception, 'p3m_adaptive_tune: ERROR: non-metallic epsilon requires cubic box'):
+            self.system.actors.add(solver)
+
+    @utx.skipIfMissingFeatures("P3M")
+    def test_03_non_cubic_box_p3m_cpu(self):
+        import espressomd.electrostatics
+
+        self.system.box_l = [10., 10., 20.]
+        self.system.time_step = 0.01
+        self.add_charged_particles()
+
+        solver = espressomd.electrostatics.P3M(
+            prefactor=2, accuracy=1e-2, epsilon=1)
+        with self.assertRaisesRegex(Exception, 'p3m_adaptive_tune: ERROR: non-metallic epsilon requires cubic box'):
+            self.system.actors.add(solver)
+
+    @utx.skipIfMissingFeatures("DP3M")
+    def test_03_non_cubic_box_dp3m_cpu(self):
+        import espressomd.magnetostatics
+
+        self.system.box_l = [10., 10., 20.]
+        self.system.time_step = 0.01
+        self.add_magnetic_particles()
+
+        solver = espressomd.magnetostatics.DipolarP3M(
+            prefactor=2, accuracy=1e-2)
+        with self.assertRaisesRegex(Exception, 'dipolar P3M tuning failed: ERROR: dipolar P3M requires a cubic box'):
+            self.system.actors.add(solver)
+
     ###########################################################
     # block of tests where tuning should not throw exceptions #
     ###########################################################
