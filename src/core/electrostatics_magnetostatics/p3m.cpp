@@ -965,7 +965,7 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((box_geo.length()[0] == box_geo.length()[1]) &&
           (box_geo.length()[1] == box_geo.length()[2]))) {
-      runtimeErrorMsg() << "P3M_init: Nonmetallic epsilon requires cubic box";
+      runtimeErrorMsg() << "non-metallic epsilon requires cubic box";
       return ES_ERROR;
     }
   }
@@ -1315,7 +1315,7 @@ bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
           (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-      runtimeErrorMsg() << "P3M_init: Nonmetallic epsilon requires cubic box";
+      runtimeErrorMsg() << "P3M_init: non-metallic epsilon requires cubic box";
       ret = true;
     }
   }
