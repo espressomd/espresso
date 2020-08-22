@@ -58,6 +58,9 @@ enum P3M_TUNE_ERROR {
 /** This value indicates metallic boundary conditions. */
 #define P3M_EPSILON_METALLIC 0.0
 
+/** Default for boundary conditions in magnetic calculations. */
+#define P3M_EPSILON_MAGNETIC 0.0
+
 /** increment size of charge assignment fields. */
 #define CA_INCREMENT 32
 /** precision limit for the r_cut zero */
