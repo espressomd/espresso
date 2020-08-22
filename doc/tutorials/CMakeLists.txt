@@ -53,24 +53,24 @@ function(NB_EXPORT)
   set(PY_FILE "${NB_FILE_BASE}.py")
 
   if(${NB_EXPORT_HTML_RUN})
-    set(HTML_FILE_DEPENDS "${NB_FILE_BASE}.run${NB_FILE_EXT}")
+    set(NB_FILE_RUN "${NB_FILE_BASE}.run${NB_FILE_EXT}")
     add_custom_command(
-      OUTPUT "${HTML_FILE_DEPENDS}"
+      OUTPUT ${NB_FILE_RUN}
       DEPENDS
         "${NB_FILE};${NB_EXPORT_ADD_SCRIPTS};${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py;${CMAKE_BINARY_DIR}/testsuite/scripts/importlib_wrapper.py"
       COMMAND
-        "${CMAKE_BINARY_DIR}/pypresso"
-        "${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py" "--input"
-        "${NB_FILE}" "--output" "${HTML_FILE_DEPENDS}" "--substitutions"
-        ${NB_EXPORT_VAR_SUBST} "--scripts" ${NB_EXPORT_ADD_SCRIPTS})
+        ${CMAKE_BINARY_DIR}/pypresso
+        ${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py --execute
+        --input ${NB_FILE} --output ${NB_FILE_RUN} --substitutions
+        ${NB_EXPORT_VAR_SUBST} --scripts ${NB_EXPORT_ADD_SCRIPTS})
   else()
-    set(HTML_FILE_DEPENDS "${NB_FILE}")
+    set(NB_FILE_RUN ${NB_FILE})
   endif()
 
   add_custom_command(
-    OUTPUT ${HTML_FILE} DEPENDS ${HTML_FILE_DEPENDS};${NB_EXPORT_ADD_SCRIPTS}
+    OUTPUT ${HTML_FILE} DEPENDS ${NB_FILE_RUN};${NB_EXPORT_ADD_SCRIPTS}
     COMMAND ${IPYTHON_EXECUTABLE} nbconvert --to "html" --output ${HTML_FILE}
-            ${HTML_FILE_DEPENDS})
+            ${NB_FILE_RUN})
 
   add_custom_command(
     OUTPUT ${PY_FILE} DEPENDS ${NB_FILE}

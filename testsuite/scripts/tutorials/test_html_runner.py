@@ -91,7 +91,9 @@ plt.show()
                '--input', f_input,
                '--output', f_output,
                '--scripts', f_script,
-               '--substitutions', 'global_var=20']
+               '--substitutions', 'global_var=20',
+               '--execute']
+        print('Running command ' + ' '.join(cmd))
         completedProc = subprocess.run(cmd)
         # check the command ran without any error
         self.assertEqual(completedProc.returncode, 0, 'non-zero return code')
