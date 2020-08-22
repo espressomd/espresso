@@ -19,9 +19,10 @@
 """
 This script processes Jupyter notebooks. External Python scripts
 can be inserted as new code cells (e.g. solutions to exercises).
-The notebook may also be executed, if necessary with modified
-global variables to reduce runtime. The processed notebook can
-then be converted to HTML externally.
+Hidden solutions from the ``exercise2`` plugin can be converted
+to code cells. The notebook may also be executed, if necessary
+with modified global variables to reduce runtime. The processed
+notebook can then be converted to HTML externally.
 """
 
 import argparse
@@ -36,6 +37,8 @@ parser.add_argument('--substitutions', nargs='*',
                     help='Variables to substitute')
 parser.add_argument('--scripts', nargs='*',
                     help='Scripts to insert in new cells')
+parser.add_argument('--exercise2', action='store_true',
+                    help='Convert exercise2 solutions into code cells')
 parser.add_argument('--execute', action='store_true',
                     help='Run the script')
 args = parser.parse_args()
@@ -128,6 +131,36 @@ def split_matplotlib_cells(nb):
                 nb['cells'][i]['source'] = '\n'.join(lines).rstrip('\n')
 
 
+def convert_exercise2_to_code(nb):
+    """
+    Walk through the notebook cells and remove metadata associated with
+    the ``exercise2`` plugin from the contributed nbextensions. Solution
+    Markdown cells containing python code are converted to code cells.
+    """
+    for i in range(len(nb['cells']) - 1, 0, -1):
+        cell = nb['cells'][i]
+        cell_above = nb['cells'][i - 1]
+        # remove empty code cells after a solution cell
+        if cell['cell_type'] == 'code' and cell['source'].strip() == '' \
+                and 'solution2' in cell_above['metadata'] \
+                and 'solution2_first' not in cell_above['metadata'] \
+                and 'solution2' not in cell['metadata']:
+            nb['cells'].pop(i)
+            continue
+        # convert solution markdown cells into code cells
+        if cell['cell_type'] == 'markdown' and 'solution2' in cell['metadata'] \
+                and 'solution2_first' not in cell['metadata']:
+            lines = cell['source'].strip().split('\n')
+            if lines[0].startswith(
+                    '```python') and lines[-1].startswith('```'):
+                source = '\n'.join(lines[1:-1]).strip()
+                nb['cells'][i] = nbformat.v4.new_code_cell(source=source)
+        # remove exercise2 metadata
+        for key in ('solution2', 'solution2_first'):
+            if key in cell['metadata']:
+                del cell['metadata'][key]
+
+
 def execute_notebook(nb, src, cell_separator):
     """
     Run the notebook in a python3 kernel. The ESPResSo visualizers are
@@ -168,6 +201,9 @@ disable_plot_interactivity(nb)
 
 # guard against a jupyter bug involving matplotlib
 split_matplotlib_cells(nb)
+
+if args.exercise2:
+    convert_exercise2_to_code(nb)
 
 if args.substitutions or args.execute:
     # substitute global variables

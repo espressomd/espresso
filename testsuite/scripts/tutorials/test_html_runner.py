@@ -130,6 +130,77 @@ plt.show()
         self.assertEqual(nb_output['cells'][4]['cell_type'], 'code')
         self.assertEqual(nb_output['cells'][4]['source'], 'global_var = 20')
 
+    def test_exercise2_plugin(self):
+        f_input = '@CMAKE_CURRENT_BINARY_DIR@/test_html_runner_exercise2.ipynb'
+        f_output = '@CMAKE_CURRENT_BINARY_DIR@/test_html_runner_exercise2.run.ipynb'
+        # setup
+        if os.path.isfile(f_output):
+            os.remove(f_output)
+        with open(f_input, 'w', encoding='utf-8') as f:
+            nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
+            # question with 2 answers and an empty cell
+            cell_md = nbformat.v4.new_markdown_cell(source='Question 1')
+            cell_md['metadata']['solution2_first'] = True
+            cell_md['metadata']['solution2'] = 'shown'
+            nb['cells'].append(cell_md)
+            code = '```python\n1\n```'
+            cell_md = nbformat.v4.new_markdown_cell(source=code)
+            cell_md['metadata']['solution2'] = 'shown'
+            nb['cells'].append(cell_md)
+            cell_md = nbformat.v4.new_markdown_cell(source='1b')
+            cell_md['metadata']['solution2'] = 'shown'
+            nb['cells'].append(cell_md)
+            cell_code = nbformat.v4.new_code_cell(source='')
+            nb['cells'].append(cell_code)
+            # question with 1 answer and a non-empty cell
+            cell_md = nbformat.v4.new_markdown_cell(source='Question 2')
+            cell_md['metadata']['solution2_first'] = True
+            cell_md['metadata']['solution2'] = 'hidden'
+            nb['cells'].append(cell_md)
+            code = '```python\n2\nglobal_var = 5\n```'
+            cell_md = nbformat.v4.new_markdown_cell(source=code)
+            cell_md['metadata']['solution2'] = 'hidden'
+            nb['cells'].append(cell_md)
+            cell_code = nbformat.v4.new_code_cell(source='3')
+            nb['cells'].append(cell_code)
+            nbformat.write(nb, f)
+        # run command
+        cmd = ['@CMAKE_BINARY_DIR@/pypresso',
+               '@CMAKE_BINARY_DIR@/doc/tutorials/html_runner.py',
+               '--input', f_input,
+               '--output', f_output,
+               '--substitutions', 'global_var=20',
+               '--exercise2']
+        print('Running command ' + ' '.join(cmd))
+        completedProc = subprocess.run(cmd)
+        # check the command ran without any error
+        self.assertEqual(completedProc.returncode, 0, 'non-zero return code')
+        self.assertTrue(os.path.isfile(f_output), f_output + ' not created')
+        # read processed notebook
+        with open(f_output, encoding='utf-8') as f:
+            nb_output = nbformat.read(f, as_version=4)
+        # check cells
+        cells = iter(nb_output['cells'])
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'markdown')
+        self.assertEqual(cell['source'], 'Question 1')
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'code')
+        self.assertEqual(cell['source'], '1')
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'markdown')
+        self.assertEqual(cell['source'], '1b')
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'markdown')
+        self.assertEqual(cell['source'], 'Question 2')
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'code')
+        self.assertEqual(cell['source'], '2\nglobal_var = 20')
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'code')
+        self.assertEqual(cell['source'], '3')
+        self.assertEqual(next(cells, 'EOF'), 'EOF')
+
 
 if __name__ == "__main__":
     ut.main()
