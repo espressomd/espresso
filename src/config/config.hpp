@@ -46,11 +46,6 @@
 #define P3M_N_INTERPOL 32768
 #endif
 
-/** P3M: Default for boundary condition: Epsilon of the surrounding medium. */
-#ifndef P3M_EPSILON
-#define P3M_EPSILON 0.0
-#endif
-
 /** P3M: Default for boundary condition in magnetic calculations. */
 #ifndef P3M_EPSILON_MAGNETIC
 #define P3M_EPSILON_MAGNETIC 0.0
