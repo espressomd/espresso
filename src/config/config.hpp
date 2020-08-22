@@ -39,13 +39,6 @@
 
 #include "config-features.hpp"
 
-/** P3M: Default for number of interpolation points of the charge
- *  assignment function.
- */
-#ifndef P3M_N_INTERPOL
-#define P3M_N_INTERPOL 32768
-#endif
-
 /** P3M: Default for offset of first mesh point from the origin (left
  *  down corner of the simulation box).
  */
