@@ -44,6 +44,9 @@
  *  first and second kind. The implementations are based on the GSL code (see
  *  the original GSL header above) and are duplicated from \ref specfunc.cpp.
  */
+#ifndef ESPRESSO_CORE_ACTOR_SPECFUNC_CUDA_HPP
+#define ESPRESSO_CORE_ACTOR_SPECFUNC_CUDA_HPP
+
 #include "config.hpp"
 
 const mmm1dgpu_real M_LN2f = M_LN2;
@@ -173,3 +176,4 @@ __device__ mmm1dgpu_real dev_K1(mmm1dgpu_real x) {
   }
   return exp(-x) * c * rsqrt(x);
 }
+#endif
