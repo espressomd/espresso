@@ -45,6 +45,8 @@ list(APPEND HIP_HIPCC_FLAGS
        -Wno-nested-anon-types -Wno-gnu-zero-variadic-macro-arguments
        -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier
        $<$<VERSION_GREATER_EQUAL:${HIP_VERSION},3.3>:-Wno-deprecated-copy>
+       $<$<VERSION_GREATER_EQUAL:${HIP_VERSION},3.7>:-Wno-c++17-extensions>
+       $<$<VERSION_GREATER_EQUAL:${HIP_VERSION},3.7>:-Wno-unused-command-line-argument>
        $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>)
 
 list(APPEND HIP_HIPCC_FLAGS_DEBUG -g)
