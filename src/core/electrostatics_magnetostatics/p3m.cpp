@@ -604,8 +604,6 @@ void p3m_calc_influence_function_energy() {
                                             box_geo.length());
 }
 
-#define P3M_TUNE_MAX_CUTS 50
-
 /** Get the minimal error for this combination of parameters.
  *
  *  The real space error is tuned such that it contributes half of the

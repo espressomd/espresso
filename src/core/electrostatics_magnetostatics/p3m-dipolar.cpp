@@ -993,8 +993,6 @@ double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]) {
 
 /*****************************************************************************/
 
-#define P3M_TUNE_MAX_CUTS 50
-
 /** @copybrief p3m_get_accuracy
  *
  *  The real space error is tuned such that it contributes half of the
