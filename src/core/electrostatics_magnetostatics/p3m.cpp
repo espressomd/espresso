@@ -1003,13 +1003,8 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.mesh[0] == 0 || p3m.params.mesh[1] == 0 ||
       p3m.params.mesh[2] == 0) {
     /* Medium-educated guess for the minimal mesh */
-    mesh_density_min =
-        pow(p3m.sum_qpart / (box_geo.length()[0] * box_geo.length()[1] *
-                             box_geo.length()[2]),
-            1.0 / 3.0);
-    mesh_density_max = 512 / pow(box_geo.length()[0] * box_geo.length()[1] *
-                                     box_geo.length()[2],
-                                 1.0 / 3.0);
+    mesh_density_min = pow(p3m.sum_qpart / box_geo.volume(), 1.0 / 3.0);
+    mesh_density_max = 512 / pow(box_geo.volume(), 1.0 / 3.0);
     tune_mesh = true;
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
@@ -1195,7 +1190,7 @@ double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                             double sum_q2, double alpha_L) {
   return (2.0 * prefac * sum_q2 * exp(-Utils::sqr(r_cut_iL * alpha_L))) /
          sqrt((double)n_c_part * r_cut_iL * box_geo.length()[0] *
-              box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
+              box_geo.volume());
 }
 
 double p3m_k_space_error(double prefac, const int mesh[3], int cao,

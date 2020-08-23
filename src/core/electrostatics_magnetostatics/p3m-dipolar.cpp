@@ -834,7 +834,7 @@ void dp3m_calc_influence_function_force() {
   }
   dp3m.g_force.resize(size);
   double fak1 = Utils::int_pow<3>(dp3m.params.mesh[0]) * 2.0 /
-                (box_geo.length()[0] * box_geo.length()[0]);
+                Utils::int_pow<2>(box_geo.length()[0]);
 
   int n[3];
   for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
@@ -920,7 +920,7 @@ void dp3m_calc_influence_function_energy() {
   }
   dp3m.g_energy.resize(size);
   double fak1 = Utils::int_pow<3>(dp3m.params.mesh[0]) * 2.0 /
-                (box_geo.length()[0] * box_geo.length()[0]);
+                Utils::int_pow<2>(box_geo.length()[0]);
 
   int n[3];
   for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
