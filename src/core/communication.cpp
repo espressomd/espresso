@@ -57,6 +57,7 @@
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
+#include "stokesian_dynamics/sd_interface.hpp"
 #include "virtual_sites.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -80,7 +81,7 @@ using namespace std;
 
 namespace Communication {
 auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
-std::unique_ptr<boost::mpi::environment> mpi_env;
+std::shared_ptr<boost::mpi::environment> mpi_env;
 } // namespace Communication
 
 boost::mpi::communicator comm_cart;
@@ -110,7 +111,6 @@ int n_nodes = -1;
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
-  CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_resort_particles_slave)                                               \
@@ -137,67 +137,64 @@ int mpi_check_runtime_errors();
  **********************************************/
 
 #if defined(OPEN_MPI)
+namespace {
 /** Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
  *  appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
  *  according to
  *  https://www.mail-archive.com/users@lists.open-mpi.org/msg32357.html,
  *  so we set btl_vader_single_copy_mechanism = none.
  */
-static void openmpi_fix_vader() {
-  if (OMPI_MAJOR_VERSION < 2 || OMPI_MAJOR_VERSION > 3)
-    return;
-  if (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION == 1 &&
-      OMPI_RELEASE_VERSION >= 3)
-    return;
-  if (OMPI_MAJOR_VERSION == 3 &&
-      (OMPI_MINOR_VERSION > 0 || OMPI_RELEASE_VERSION > 0))
-    return;
-
-  std::string varname = "btl_vader_single_copy_mechanism";
-  std::string varval = "none";
-
-  setenv((std::string("OMPI_MCA_") + varname).c_str(), varval.c_str(), 0);
+void openmpi_fix_vader() {
+  if ((OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION == 1 &&
+       OMPI_RELEASE_VERSION < 3) or
+      (OMPI_MAJOR_VERSION == 3 && OMPI_MINOR_VERSION == 0 &&
+       OMPI_RELEASE_VERSION == 0)) {
+    setenv("OMPI_MCA_btl_vader_single_copy_mechanism", "none", 0);
+  }
 }
-#endif
 
-void mpi_init() {
-#ifdef OPEN_MPI
-  openmpi_fix_vader();
-
-  void *handle = nullptr;
-  int mode = RTLD_NOW | RTLD_GLOBAL;
+/**
+ * @brief Assure that openmpi is loaded to the global namespace.
+ *
+ * This was originally inspired by mpi4py
+ * (https://github.com/mpi4py/mpi4py/blob/4e3f47b6691c8f5a038e73f84b8d43b03f16627f/src/lib-mpi/compat/openmpi.h).
+ * It's needed because OpenMPI dlopens its submodules. These are unable to find
+ * the top-level OpenMPI library if that was dlopened itself, i.e. when the
+ * Python interpreter dlopens a module that is linked against OpenMPI. It's
+ * about some weird two-level symbol namespace thing.
+ */
+void openmpi_global_namespace() {
+  if (OMPI_MAJOR_VERSION >= 3)
+    return;
 #ifdef RTLD_NOLOAD
-  mode |= RTLD_NOLOAD;
+  const int mode = RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD;
+#else
+  const int mode = RTLD_NOW | RTLD_GLOBAL;
 #endif
-  void *_openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
+
+  const void *_openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
   if (!_openmpi_symbol) {
-    fprintf(stderr, "%d: Aborting because unable to find OpenMPI symbol.\n",
-            this_node);
+    fprintf(stderr, "Aborting because unable to find OpenMPI symbol.\n");
     errexit();
   }
+
   Dl_info _openmpi_info;
   dladdr(_openmpi_symbol, &_openmpi_info);
 
-  if (!handle)
-    handle = dlopen(_openmpi_info.dli_fname, mode);
+  const void *handle = dlopen(_openmpi_info.dli_fname, mode);
 
   if (!handle) {
-    fprintf(stderr,
-            "%d: Aborting because unable to load libmpi into the "
-            "global symbol space.\n",
-            this_node);
+    fprintf(stderr, "Aborting because unable to load libmpi into the "
+                    "global symbol space.\n");
     errexit();
   }
+}
+} // namespace
 #endif
 
-#ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
-  Communication::mpi_env = std::make_unique<boost::mpi::environment>();
-#else
-  int argc{};
-  char **argv{};
-  Communication::mpi_env =
-      std::make_unique<boost::mpi::environment>(argc, argv);
-#endif
+namespace Communication {
+void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
+  Communication::mpi_env = std::move(mpi_env);
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   node_grid = Utils::Mpi::dims_create<3>(n_nodes);
@@ -217,6 +214,16 @@ void mpi_init() {
   ErrorHandling::init_error_handling(mpiCallbacks());
 
   on_program_start();
+}
+} // namespace Communication
+
+std::shared_ptr<boost::mpi::environment> mpi_init() {
+#ifdef OPEN_MPI
+  openmpi_fix_vader();
+  openmpi_global_namespace();
+#endif
+
+  return std::make_shared<boost::mpi::environment>();
 }
 
 /****************** PLACE/PLACE NEW PARTICLE ************/
@@ -423,9 +430,6 @@ void mpi_gather_stats_slave(int, int job_slave) {
 /*************** TIME STEP ************/
 void mpi_set_time_step_slave(double dt) {
   time_step = dt;
-  time_step_squared = time_step * time_step;
-  time_step_squared_half = time_step_squared / 2.;
-  time_step_half = time_step / 2.;
 
   on_parameter_change(FIELD_TIMESTEP);
 }
@@ -493,13 +497,14 @@ void mpi_rescale_particles_slave(int, int dir) {
 
 /*************** BCAST CELL STRUCTURE *****************/
 
-void mpi_bcast_cell_structure(int cs) {
-  mpi_call(mpi_bcast_cell_structure_slave, -1, cs);
-  cells_re_init(cs, cell_structure.min_range);
-}
+REGISTER_CALLBACK(cells_re_init)
 
-void mpi_bcast_cell_structure_slave(int, int cs) {
-  cells_re_init(cs, cell_structure.min_range);
+void mpi_bcast_cell_structure(int cs) { mpi_call_all(cells_re_init, cs); }
+
+REGISTER_CALLBACK(cells_set_use_verlet_lists)
+
+void mpi_set_use_verlet_lists(bool use_verlet_lists) {
+  mpi_call_all(cells_set_use_verlet_lists, use_verlet_lists);
 }
 
 /*************** BCAST NPTISO GEOM *****************/
@@ -649,7 +654,9 @@ std::vector<int> mpi_resort_particles(int global_flag) {
   clear_particle_node();
 
   std::vector<int> n_parts;
-  boost::mpi::gather(comm_cart, cells_get_n_particles(), n_parts, 0);
+  boost::mpi::gather(comm_cart,
+                     static_cast<int>(cell_structure.local_particles().size()),
+                     n_parts, 0);
 
   return n_parts;
 }
@@ -657,5 +664,6 @@ std::vector<int> mpi_resort_particles(int global_flag) {
 void mpi_resort_particles_slave(int global_flag, int) {
   cells_resort_particles(global_flag);
 
-  boost::mpi::gather(comm_cart, cells_get_n_particles(), 0);
+  boost::mpi::gather(
+      comm_cart, static_cast<int>(cell_structure.local_particles().size()), 0);
 }

@@ -39,9 +39,7 @@
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "tuning.hpp"
@@ -212,7 +210,7 @@ void dp3m_init() {
 
     int ca_mesh_size = fft_init(dp3m.local_mesh.dim, dp3m.local_mesh.margin,
                                 dp3m.params.mesh, dp3m.params.mesh_off,
-                                &dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
+                                dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
     dp3m.rs_mesh.resize(ca_mesh_size);
     dp3m.ks_mesh.resize(ca_mesh_size);
 
@@ -1681,7 +1679,7 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
     ret = true;
   }
 
-  if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+  if (cell_structure.decomposition_type() != CELL_STRUCTURE_DOMDEC) {
     runtimeErrorMsg() << "dipolar P3M at present requires the domain "
                          "decomposition cell system";
     ret = true;

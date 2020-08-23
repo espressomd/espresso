@@ -22,15 +22,20 @@ function(PYTHON_TEST)
     set(TEST_NUM_PROC ${TEST_MAX_NUM_PROC})
   endif()
 
+  if(WITH_COVERAGE)
+    set(PYPRESSO_OPTIONS --coverage)
+  endif(WITH_COVERAGE)
+
   if(EXISTS ${MPIEXEC})
     add_test(
       NAME ${TEST_NAME}
       COMMAND
         ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
         ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso
-        ${TEST_FILE} ${MPIEXEC_POSTFLAGS})
+        ${PYPRESSO_OPTIONS} ${TEST_FILE} ${MPIEXEC_POSTFLAGS})
   else()
-    add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE})
+    add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
+             ${TEST_FILE})
   endif()
   set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC}
                                                DEPENDS "${TEST_DEPENDS}")
@@ -56,7 +61,7 @@ endfunction(PYTHON_TEST)
 # Separate features with hyphens, use a period to add an optional flag.
 foreach(
   TEST_COMBINATION
-  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt-minimization;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.sd;lb.off-therm.bd-int.bd
+  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt-minimization;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.sd;lb.off-therm.bd-int.bd;lb.off-therm.sdm-int.sdm.cpu;lb.off-therm.sdm-int.sdm.gpu
 )
   if(${TEST_COMBINATION} MATCHES "\\.gpu")
     set(TEST_LABELS "gpu")
@@ -118,6 +123,7 @@ python_test(FILE widom_insertion.py MAX_NUM_PROC 1)
 python_test(FILE constant_pH.py MAX_NUM_PROC 4)
 python_test(FILE writevtf.py MAX_NUM_PROC 4)
 python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 LABELS gpu long)
+python_test(FILE lb_pressure_tensor_acf.py MAX_NUM_PROC 4 LABELS gpu long)
 python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE ek_eof_one_species_x.py MAX_NUM_PROC 1 LABELS gpu)
@@ -200,14 +206,16 @@ python_test(FILE gpu_availability.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE features.py MAX_NUM_PROC 1)
 python_test(FILE galilei.py MAX_NUM_PROC 32)
 python_test(FILE time_series.py MAX_NUM_PROC 1)
-python_test(FILE linear_momentum.py)
+python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE stokesian_dynamics_cpu.py MAX_NUM_PROC 2)
 python_test(FILE elc.py MAX_NUM_PROC 2)
 python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2)
 python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
+python_test(FILE mdanalysis.py MAX_NUM_PROC 2)
 
 add_custom_target(
   python_test_data
@@ -225,6 +233,9 @@ add_custom_target(
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py
           ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/stokesian_dynamics.py
+    ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND
     ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py
     ${CMAKE_CURRENT_BINARY_DIR})
@@ -232,21 +243,22 @@ add_custom_target(
 add_custom_target(
   check_python_parallel_odd
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L
-          parallel_odd $(ARGS) --output-on-failure)
+          parallel_odd ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
 add_custom_target(
-  check_python_gpu COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                           -j${TEST_NP} -L gpu $(ARGS) --output-on-failure)
+  check_python_gpu
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L gpu
+          ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_gpu pypresso python_test_data)
 
 add_custom_target(
   check_python_skip_long
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -LE
-          long $(ARGS) --output-on-failure)
+          long ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_skip_long pypresso python_test_data)
 
 add_custom_target(
   check_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                       -j${TEST_NP} $(ARGS) --output-on-failure)
+                       -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python pypresso python_test_data)
 add_dependencies(check check_python)

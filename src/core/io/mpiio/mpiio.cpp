@@ -91,9 +91,9 @@ static void mpiio_dump_array(const std::string &fn, T *arr, size_t len,
                       MPI_INFO_NULL, &f);
   if (ret) {
     char buf[MPI_MAX_ERROR_STRING];
-    int len;
-    MPI_Error_string(ret, buf, &len);
-    buf[len] = '\0';
+    int buf_len;
+    MPI_Error_string(ret, buf, &buf_len);
+    buf[buf_len] = '\0';
     fprintf(stderr, "MPI-IO Error: Could not open file \"%s\": %s\n",
             fn.c_str(), buf);
     errexit();
@@ -116,15 +116,14 @@ static void mpiio_dump_array(const std::string &fn, T *arr, size_t len,
  * \param fields The dumped fields
  */
 static void dump_info(const std::string &fn, unsigned fields) {
-  static std::vector<int> npartners;
-  int success;
   FILE *f = fopen(fn.c_str(), "wb");
   if (!f) {
     fprintf(stderr, "MPI-IO Error: Could not open %s for writing.\n",
             fn.c_str());
     errexit();
   }
-  success = (fwrite(&fields, sizeof(fields), 1, f) == 1);
+  static std::vector<int> npartners;
+  int success = (fwrite(&fields, sizeof(fields), 1, f) == 1);
   // Pack the necessary information of bonded_ia_params:
   // The number of partners. This is needed to interpret the bond IntList.
   if (bonded_ia_params.size() > npartners.size())
@@ -151,8 +150,7 @@ static void dump_info(const std::string &fn, unsigned fields) {
 void mpi_mpiio_common_write(const char *filename, unsigned fields,
                             const ParticleRange &particles) {
   std::string fnam(filename);
-  int nlocalpart = cells_get_n_particles(), pref = 0, bpref = 0;
-  int rank;
+  int const nlocalpart = static_cast<int>(particles.size());
   // Keep static buffers in order not having to allocate them on every
   // function call
   static std::vector<double> pos, vel;
@@ -160,6 +158,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields,
 
   // Nlocalpart prefixes
   // Prefixes based for arrays: 3 * pref for vel, pos.
+  int pref = 0, bpref = 0;
   MPI_Exscan(&nlocalpart, &pref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
   // Realloc static buffers if necessary
@@ -194,6 +193,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields,
     i3 += 3;
   }
 
+  int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0)
     dump_info(fnam + ".head", fields);
@@ -225,7 +225,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields,
     }
 
     // Determine the prefixes in the bond file
-    int bonds_size = bonds.size();
+    int bonds_size = static_cast<int>(bonds.size());
     MPI_Exscan(&bonds_size, &bpref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     mpiio_dump_array<int>(fnam + ".boff", &bonds_size, 1, rank, MPI_INT);
@@ -270,9 +270,9 @@ static void mpiio_read_array(const std::string &fn, T *arr, size_t len,
 
   if (ret) {
     char buf[MPI_MAX_ERROR_STRING];
-    int len;
-    MPI_Error_string(ret, buf, &len);
-    buf[len] = '\0';
+    int buf_len;
+    MPI_Error_string(ret, buf, &buf_len);
+    buf[buf_len] = '\0';
     fprintf(stderr, "MPI-IO Error: Could not open file \"%s\": %s\n",
             fn.c_str(), buf);
     errexit();

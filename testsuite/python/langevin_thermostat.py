@@ -463,15 +463,14 @@ class LangevinThermostat(ut.TestCase):
         """
         c = corr
         # Integral of vacf via Green-Kubo D = int_0^infty <v(t_0)v(t_0+t)> dt
-        # (o 1/3, since we work componentwise)
-        i = p.id
-        acf = c.result()[:, [0, 2 + 3 * i, 2 + 3 * i + 1, 2 + 3 * i + 2]]
-        np.savetxt("acf.dat", acf)
+        # (or 1/3, since we work componentwise)
+        acf = c.result()
+        tau = c.lag_times()
 
         # Integrate with trapezoidal rule
-        for coord in [1, 2, 3]:
-            I = np.trapz(acf[:, coord], acf[:, 0])
-            ratio = I / (kT / gamma[coord - 1])
+        for i in range(3):
+            I = np.trapz(acf[:, p.id, i], tau)
+            ratio = I / (kT / gamma[i])
             self.assertAlmostEqual(ratio, 1., delta=0.07)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
@@ -516,8 +515,8 @@ class LangevinThermostat(ut.TestCase):
             system.auto_update_accumulators.add(omega_series)
 
         kT = 3.2
-        system.thermostat.set_langevin(kT=kT, gamma=2.1, seed=17)
-        steps = int(1e6)
+        system.thermostat.set_langevin(kT=kT, gamma=5.1, seed=17)
+        steps = int(2E5)
         system.integrator.run(steps)
 
         # test translational noise correlation

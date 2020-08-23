@@ -180,25 +180,6 @@ double pair_energy(double q1q2, double dist) {
   return 0.;
 }
 
-// Issues a runtime error if positions are outside the box domain
-// This is needed, because the scafacos grid sort produces an mpi deadlock
-// otherwise
-// Returns true if calculations can continue.
-bool check_position_validity(const std::vector<double> &pos) {
-  assert(pos.size() % 3 == 0);
-  for (int i = 0; i < pos.size() / 3; i++) {
-    for (int j = 0; j < 3; j++) {
-      if (pos[3 * i + j] < 0 || pos[3 * i + j] > box_geo.length()[j]) {
-        // Throwing exception rather than runtime error, because continuing will
-        // result in mpi deadlock
-        throw std::runtime_error("Particle position outside the box domain not "
-                                 "allowed for scafacos-based methods.");
-      }
-    }
-  }
-  return true;
-}
-
 void add_long_range_force() {
   particles.update_particle_data();
 
@@ -406,8 +387,8 @@ void update_system_params() {
   int per[3] = {box_geo.periodic(0) != 0, box_geo.periodic(1) != 0,
                 box_geo.periodic(2) != 0};
 
-  auto const n_part = boost::mpi::all_reduce(comm_cart, cells_get_n_particles(),
-                                             std::plus<int>());
+  auto const n_part = boost::mpi::all_reduce(
+      comm_cart, cell_structure.local_particles().size(), std::plus<>());
   scafacos->set_common_parameters(box_geo.length().data(), per, n_part);
 }
 

@@ -97,6 +97,7 @@ set_default_value with_cuda_compiler "nvcc"
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_scafacos false
+set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 300
 set_default_value hide_gpu false
 
@@ -120,6 +121,13 @@ if [ "${with_ccache}" = true ]; then
 fi
 if [ "${with_scafacos}" = true ]; then
     cmake_params="${cmake_params} -DWITH_SCAFACOS=ON"
+else
+    cmake_params="${cmake_params} -DWITH_SCAFACOS=OFF"
+fi
+if [ "${with_stokesian_dynamics}" = true ]; then
+    cmake_params="${cmake_params} -DWITH_STOKESIAN_DYNAMICS=ON"
+else
+    cmake_params="${cmake_params} -DWITH_STOKESIAN_DYNAMICS=OFF"
 fi
 
 if [ "${with_fftw}" = true ]; then
@@ -281,11 +289,13 @@ if [ "${with_coverage}" = true ]; then
     lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
     lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
     lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
+    python3 -m coverage combine testsuite/python
+    python3 -m coverage xml
     # Uploading report to Codecov
     if [ -z "${CODECOV_TOKEN}" ]; then
         bash <(curl -s https://codecov.io/bash) -X gcov || echo "Codecov did not collect coverage reports"
     else
-        bash <(curl -s https://codecov.io/bash) -t "${CODECOV_TOKEN}" -X gcov || echo "Codecov did not collect coverage reports"
+        bash <(curl -s https://codecov.io/bash) -X gcov -t "${CODECOV_TOKEN}" || echo "Codecov did not collect coverage reports"
     fi
 fi
 

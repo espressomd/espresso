@@ -34,7 +34,7 @@ tol = 1.0e-13
 
 def pressure_tensor_kinetic(vel):
     '''Analytical result for convective pressure tensor'''
-    return np.einsum('ij,ik->jk', vel, vel) / np.prod(np.copy(system.box_l))
+    return np.einsum('ij,ik->jk', vel, vel) / system.volume()
 
 
 def pressure_tensor_bonded(pos):
@@ -43,7 +43,7 @@ def pressure_tensor_bonded(pos):
     for p1, p2 in zip(pos[0::2], pos[1::2]):
         r = p1 - p2
         f = -1.0e4 * r
-        tensor += np.einsum('i,j', f, r) / np.prod(np.copy(system.box_l))
+        tensor += np.einsum('i,j', f, r) / system.volume()
     return tensor
 
 
@@ -56,7 +56,7 @@ def pressure_tensor_nonbonded(particle_pairs):
             r = np.linalg.norm(d)
             r_hat = d / r
             f = (24.0 * 1.0 * (2.0 * 1.0**12 / r**13 - 1.0**6 / r**7)) * r_hat
-            tensor += np.einsum('i,j', f, d) / np.prod(np.copy(system.box_l))
+            tensor += np.einsum('i,j', f, d) / system.volume()
     return tensor
 
 
@@ -68,7 +68,7 @@ def pressure_tensor_nonbonded_inter(particle_pairs):
             d = np.linalg.norm(r)
             r_hat = r / d
             f = (24.0 * 1.0 * (2.0 * 1.0**12 / d**13 - 1.0**6 / d**7)) * r_hat
-            tensor += np.einsum('i,j', f, r) / np.prod(np.copy(system.box_l))
+            tensor += np.einsum('i,j', f, r) / system.volume()
     return tensor
 
 
@@ -80,7 +80,7 @@ def pressure_tensor_nonbonded_intra(particle_pairs):
             d = np.linalg.norm(r)
             r_hat = r / d
             f = (24.0 * 1.0 * (2.0 * 1.0**12 / d**13 - 1.0**6 / d**7)) * r_hat
-            tensor += np.einsum('i,j', f, r) / np.prod(np.copy(system.box_l))
+            tensor += np.einsum('i,j', f, r) / system.volume()
     return tensor
 
 
@@ -265,7 +265,7 @@ class PressureFENE(ut.TestCase):
         tensor = np.zeros([3, 3])
         vec_r = pos_1 - pos_2
         f = -fene_force2(vec_r, k, d_r_max, r_0)
-        tensor += np.einsum('i,j', f, vec_r) / np.prod(np.copy(system.box_l))
+        tensor += np.einsum('i,j', f, vec_r) / system.volume()
         return tensor
 
     def test_fene(self):

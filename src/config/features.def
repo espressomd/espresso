@@ -24,6 +24,12 @@ COLLISION_DETECTION
 NPT
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY             implies ROTATION
+STOKESIAN_DYNAMICS              requires BLAS and LAPACK
+STOKESIAN_DYNAMICS              implies ROTATION
+# Needs cuBLAS, which is expected to be included with CUDA
+STOKESIAN_DYNAMICS_GPU          requires CUDA
+STOKESIAN_DYNAMICS_GPU          implies ROTATION
+STOKESIAN_DYNAMICS_GPU          requires EXPERIMENTAL_FEATURES
 
 /* Rotation */
 ROTATION
@@ -96,8 +102,13 @@ ADDITIONAL_CHECKS
 
 # External switches
 # Switches that are set by configure or gcc, not to be set manually
+# All these switches must also be present in cmake/cmake_config.cmakein
 CUDA external
 FFTW external
 H5MD external
 SCAFACOS external
 GSL external
+BLAS external
+LAPACK external
+STOKESIAN_DYNAMICS external
+STOKESIAN_DYNAMICS_GPU external

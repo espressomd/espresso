@@ -35,6 +35,14 @@ EK = ('EK.GPU' in modes and espressomd.gpu_available()
       and espressomd.has_features('ELECTROKINETICS'))
 
 
+def skipIfMissingFeatureStokesianDynamics():
+    """Specialized unittest skipIf decorator for missing Stokesian Dynamics."""
+    if not espressomd.has_features(["STOKESIAN_DYNAMICS"]) and (not espressomd.has_features(
+            ["STOKESIAN_DYNAMICS_GPU"]) or not espressomd.gpu_available()):
+        return ut.skip("Skipping test: feature STOKESIAN_DYNAMICS unavailable")
+    return utx._id
+
+
 class CheckpointTest(ut.TestCase):
 
     @classmethod
@@ -191,6 +199,14 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['gamma0'], 2.0)
         self.assertEqual(thmst['gammav'], 0.1)
 
+    @skipIfMissingFeatureStokesianDynamics()
+    @ut.skipIf('THERM.SDM' not in modes, 'SDM thermostat not in modes')
+    def test_thermostat_SDM(self):
+        thmst = system.thermostat.get_state()[0]
+        self.assertEqual(thmst['type'], 'SD')
+        self.assertEqual(thmst['kT'], 1.0)
+        self.assertEqual(thmst['seed'], 42)
+
     @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('INT.NPT' not in modes, 'NPT integrator not in modes')
     def test_integrator_NPT(self):
@@ -233,6 +249,31 @@ class CheckpointTest(ut.TestCase):
         params = integ.get_params()
         self.assertEqual(params, {})
 
+    @utx.skipIfMissingFeatures('STOKESIAN_DYNAMICS')
+    @ut.skipIf('INT.SDM.CPU' not in modes, 'SDM CPU integrator not in modes')
+    def test_integrator_SDM_cpu(self):
+        integ = system.integrator.get_state()
+        self.assertIsInstance(integ, espressomd.integrate.StokesianDynamics)
+        expected_params = {
+            'approximation_method': 'ft', 'device': 'cpu', 'radii': {0: 1.5},
+            'viscosity': 0.5, 'lubrication': False, 'pair_mobility': False,
+            'self_mobility': True}
+        params = integ.get_params()
+        self.assertEqual(params, expected_params)
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures('STOKESIAN_DYNAMICS_GPU')
+    @ut.skipIf('INT.SDM.GPU' not in modes, 'SDM GPU integrator not in modes')
+    def test_integrator_SDM_gpu(self):
+        integ = system.integrator.get_state()
+        self.assertIsInstance(integ, espressomd.integrate.StokesianDynamics)
+        expected_params = {
+            'approximation_method': 'fts', 'device': 'gpu', 'radii': {0: 1.0},
+            'viscosity': 2.0, 'lubrication': False, 'pair_mobility': True,
+            'self_mobility': False}
+        params = integ.get_params()
+        self.assertEqual(params, expected_params)
+
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
     def test_non_bonded_inter(self):
@@ -270,9 +311,11 @@ class CheckpointTest(ut.TestCase):
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(
-            acc.get_mean(), np.array([[1.0, 1.5, 2.0], [1.0, 1.0, 2.0]]))
+            acc_mean_variance.get_mean(),
+            np.array([[1.0, 1.5, 2.0], [1.0, 1.0, 2.0]]))
         np.testing.assert_array_equal(
-            acc.get_variance(), np.array([[0., 0.5, 2.], [0., 0., 0.]]))
+            acc_mean_variance.get_variance(),
+            np.array([[0., 0.5, 2.], [0., 0., 0.]]))
         np.testing.assert_array_equal(
             system.auto_update_accumulators[0].get_variance(),
             np.array([[0., 0.5, 2.], [0., 0., 0.]]))
@@ -282,6 +325,14 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(acc_time_series.time_series(), expected)
         np.testing.assert_array_equal(
             system.auto_update_accumulators[1].time_series(),
+            expected)
+
+    def test_correlator(self):
+        expected = np.zeros((36, 2, 3))
+        expected[0:2] = [[[1, 2.5, 5], [1, 1, 4]], [[1, 2, 3], [1, 1, 4]]]
+        np.testing.assert_array_equal(acc_correlator.result(), expected)
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[2].result(),
             expected)
 
     @utx.skipIfMissingFeatures('P3M')
@@ -310,7 +361,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(len(system.lbboundaries), 1)
         np.testing.assert_allclose(
             np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
-        self.assertEqual(type(system.lbboundaries[0].shape), Wall)
+        self.assertIsInstance(system.lbboundaries[0].shape, Wall)
 
     def test_constraints(self):
         from espressomd import constraints
@@ -318,25 +369,25 @@ class CheckpointTest(ut.TestCase):
                          8 - int(not espressomd.has_features("ELECTROSTATICS")))
         c = system.constraints
 
-        self.assertEqual(type(c[0].shape), Sphere)
+        self.assertIsInstance(c[0].shape, Sphere)
         self.assertAlmostEqual(c[0].shape.radius, 0.1, delta=1E-10)
         self.assertEqual(c[0].particle_type, 17)
 
-        self.assertEqual(type(c[1].shape), Wall)
+        self.assertIsInstance(c[1].shape, Wall)
         np.testing.assert_allclose(np.copy(c[1].shape.normal),
                                    [1. / np.sqrt(3)] * 3)
 
-        self.assertEqual(type(c[2]), constraints.Gravity)
+        self.assertIsInstance(c[2], constraints.Gravity)
         np.testing.assert_allclose(np.copy(c[2].g), [1., 2., 3.])
 
-        self.assertEqual(type(c[3]), constraints.HomogeneousMagneticField)
+        self.assertIsInstance(c[3], constraints.HomogeneousMagneticField)
         np.testing.assert_allclose(np.copy(c[3].H), [1., 2., 3.])
 
-        self.assertEqual(type(c[4]), constraints.HomogeneousFlowField)
+        self.assertIsInstance(c[4], constraints.HomogeneousFlowField)
         np.testing.assert_allclose(np.copy(c[4].u), [1., 2., 3.])
         self.assertAlmostEqual(c[4].gamma, 2.3, delta=1E-10)
 
-        self.assertEqual(type(c[5]), constraints.PotentialField)
+        self.assertIsInstance(c[5], constraints.PotentialField)
         self.assertEqual(c[5].field.shape, (14, 16, 18, 1))
         self.assertAlmostEqual(c[5].default_scale, 1.6, delta=1E-10)
         np.testing.assert_allclose(np.copy(c[5].origin), [-0.5, -0.5, -0.5])
@@ -346,7 +397,7 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(c[5].field), np.copy(ref_pot.field),
                                    atol=1e-10)
 
-        self.assertEqual(type(c[6]), constraints.ForceField)
+        self.assertIsInstance(c[6], constraints.ForceField)
         self.assertEqual(c[6].field.shape, (14, 16, 18, 3))
         self.assertAlmostEqual(c[6].default_scale, 1.4, delta=1E-10)
         np.testing.assert_allclose(np.copy(c[6].origin), [-0.5, -0.5, -0.5])
@@ -357,7 +408,7 @@ class CheckpointTest(ut.TestCase):
                                    atol=1e-10)
 
         if espressomd.has_features("ELECTROSTATICS"):
-            self.assertEqual(type(c[7]), constraints.ElectricPlaneWave)
+            self.assertIsInstance(c[7], constraints.ElectricPlaneWave)
             np.testing.assert_allclose(np.copy(c[7].E0), [1., -2., 3.])
             np.testing.assert_allclose(np.copy(c[7].k), [-.1, .2, .3])
             self.assertAlmostEqual(c[7].omega, 5., delta=1E-10)

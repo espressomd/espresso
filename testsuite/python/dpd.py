@@ -82,7 +82,7 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
-        loops = 250
+        loops = 100
         v_stored = np.zeros((N * loops, 3))
         for i in range(loops):
             s.integrator.run(10)
@@ -111,7 +111,7 @@ class DPDThermostat(ut.TestCase):
         s.part.add(pos=s.box_l * np.random.random((N // 2, 3)),
                    type=N // 2 * [1])
         kT = 2.3
-        gamma = 1.5
+        gamma = 3.5
         s.thermostat.set_dpd(kT=kT, seed=42)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.0,
@@ -123,7 +123,7 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
-        loops = 400
+        loops = 250
         v_stored = np.zeros((N * loops, 3))
         for i in range(loops):
             s.integrator.run(10)
@@ -418,7 +418,7 @@ class DPDThermostat(ut.TestCase):
             stress_pair = np.outer(dist, force_pair)
             return stress_pair
 
-        n_part = 1000
+        n_part = 200
         r_cut = 1.0
         gamma = 5.
         r_cut = 1.0
@@ -435,7 +435,7 @@ class DPDThermostat(ut.TestCase):
         s.integrator.run(10)
 
         for kT in [0., 2.]:
-            s.thermostat.set_dpd(kT=kT)
+            s.thermostat.set_dpd(kT=kT, seed=3)
             # run 1 integration step to get velocities
             s.part[:].v = np.zeros((n_part, 3))
             s.integrator.run(steps=1)
@@ -450,12 +450,12 @@ class DPDThermostat(ut.TestCase):
                     vel_diff = pair[1].v - pair[0].v
                     stress += calc_stress(dist, vel_diff)
 
-            stress /= np.prod(np.copy(s.box_l))
+            stress /= s.volume()
 
             dpd_stress = s.analysis.dpd_stress()
 
             dpd_obs = DPDStress()
-            obs_stress = np.array(dpd_obs.calculate()).reshape((3, 3))
+            obs_stress = dpd_obs.calculate()
 
             np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
             np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)

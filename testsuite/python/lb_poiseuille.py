@@ -120,7 +120,7 @@ class LBPoiseuilleCommon:
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
                                      VISC * DENS)
-        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
+        rmsd = np.linalg.norm(v_expected - v_measured)
         self.assertLess(rmsd, 0.015 * AGRID / TIME_STEP)
 
 
@@ -180,7 +180,7 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
                                      VISC * DENS)
-        rmsd = np.sqrt(np.sum(np.square(v_expected - velocities[:, 1])))
+        rmsd = np.linalg.norm(v_expected - velocities[:, 1])
         self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
 
 

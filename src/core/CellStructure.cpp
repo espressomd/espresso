@@ -21,7 +21,14 @@
 
 #include "CellStructure.hpp"
 
+#include "AtomDecomposition.hpp"
+#include "DomainDecomposition.hpp"
+
 #include <utils/contains.hpp>
+
+Cell *CellStructure::particle_to_cell(const Particle &p) {
+  return decomposition().particle_to_cell(p);
+}
 
 void CellStructure::remove_particle(int id) {
   auto remove_all_bonds_to = [id](BondList &bl) {
@@ -34,7 +41,7 @@ void CellStructure::remove_particle(int id) {
     }
   };
 
-  for (auto c : m_local_cells) {
+  for (auto c : decomposition().local_cells()) {
     auto &parts = c->particles();
 
     for (auto it = parts.begin(); it != parts.end();) {
@@ -83,7 +90,7 @@ int CellStructure::get_max_local_particle_id() const {
 }
 
 void CellStructure::remove_all_particles() {
-  for (auto c : m_local_cells) {
+  for (auto c : decomposition().local_cells()) {
     c->particles().clear();
   }
 
@@ -106,8 +113,71 @@ static unsigned map_data_parts(unsigned data_parts) {
 }
 
 void CellStructure::ghosts_update(unsigned data_parts) {
-  ghost_communicator(&exchange_ghosts_comm, map_data_parts(data_parts));
+  ghost_communicator(decomposition().exchange_ghosts_comm(),
+                     map_data_parts(data_parts));
 }
 void CellStructure::ghosts_reduce_forces() {
-  ghost_communicator(&collect_ghost_force_comm, GHOSTTRANS_FORCE);
+  ghost_communicator(decomposition().collect_ghost_force_comm(),
+                     GHOSTTRANS_FORCE);
+}
+
+Utils::Span<Cell *> CellStructure::local_cells() {
+  return decomposition().local_cells();
+}
+
+ParticleRange CellStructure::local_particles() {
+  return Cells::particles(decomposition().local_cells());
+}
+
+ParticleRange CellStructure::ghost_particles() {
+  return Cells::particles(decomposition().ghost_cells());
+}
+
+Utils::Vector3d CellStructure::max_range() const {
+  return decomposition().max_range();
+}
+
+namespace {
+/**
+ * @brief Apply a @ref ParticleChange to a particle index.
+ */
+struct UpdateParticleIndexVisitor {
+  CellStructure *cs;
+
+  void operator()(RemovedParticle rp) const {
+    cs->update_particle_index(rp.id, nullptr);
+  }
+  void operator()(ModifiedList mp) const { cs->update_particle_index(mp.pl); }
+};
+} // namespace
+
+void CellStructure::resort_particles(int global_flag) {
+  invalidate_ghosts();
+
+  static std::vector<ParticleChange> diff;
+  diff.clear();
+
+  m_decomposition->resort(global_flag, diff);
+
+  /* Communication step: number of ghosts and ghost information */
+  ghost_communicator(m_decomposition->exchange_ghosts_comm(),
+                     GHOSTTRANS_PARTNUM);
+
+  for (auto d : diff) {
+    boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
+  }
+}
+
+void CellStructure::set_atom_decomposition(boost::mpi::communicator const &comm,
+                                           BoxGeometry const &box) {
+  set_particle_decomposition(std::make_unique<AtomDecomposition>(comm, box));
+  m_type = CELL_STRUCTURE_NSQUARE;
+}
+
+void CellStructure::set_domain_decomposition(
+    boost::mpi::communicator const &comm, double range, BoxGeometry const &box,
+    LocalBox<double> const &local_geo) {
+  set_particle_decomposition(
+      std::make_unique<DomainDecomposition>(comm, range, box, local_geo));
+  m_type = CELL_STRUCTURE_DOMDEC;
 }

@@ -186,15 +186,11 @@ using the following commands:
 
 If you want to install MacPorts, download the installer package
 appropriate for your Mac OS X version from
-https://www.macports.org/install.php and install it.
+https://www.macports.org/install.php and follow their
+installation instructions.
 
-If you want to install Homebrew, use the following commands.
-
-.. code-block:: bash
-
-    sudo xcode-select --install
-    sudo xcodebuild -license accept
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+If you want to install Homebrew, follow the installation
+instructions at https://docs.brew.sh/Installation.
 
 Installing packages using MacPorts
 """"""""""""""""""""""""""""""""""
@@ -203,8 +199,6 @@ Run the following commands:
 
 .. code-block:: bash
 
-    sudo xcode-select --install
-    sudo xcodebuild -license accept
     sudo port selfupdate
     sudo port install cmake python37 py37-cython py37-numpy \
       openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
@@ -218,11 +212,13 @@ Run the following commands:
 Installing packages using Homebrew
 """"""""""""""""""""""""""""""""""
 
+Run the following commands:
+
 .. code-block:: bash
 
     brew install cmake python cython boost boost-mpi fftw \
       doxygen gsl numpy ipython jupyter
-    brew install hdf5
+    brew install hdf5-mpi
     brew link --force cython
     pip install PyOpenGL matplotlib
 
@@ -485,8 +481,14 @@ Finally, there is a flag for debugging:
 Features marked as experimental
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
+Some of the above features are marked as EXPERIMENTAL. Activating these
+features can have unexpected side effects and some of them have known issues.
+If you activate any of these features, you should understand the corresponding
+source code and do extensive testing. Furthermore, it is necessary to define
+``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
+
+.. _External features:
 
 External features
 ^^^^^^^^^^^^^^^^^
@@ -507,6 +509,14 @@ using a CMake flag (see :ref:`Options and Variables`).
 
 - ``GSL`` Enables features relying on the GNU Scientific Library, e.g.
   :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
+
+- ``STOKESIAN_DYNAMICS`` Enables the Stokesian Dynamics feature for CPU
+  (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
+
+- ``STOKESIAN_DYNAMICS_GPU`` Enables the Stokesian Dynamics feature for GPU
+  (see :ref:`Stokesian Dynamics`). Requires thrust/cuBLAS/cuSolver for NVIDIA
+  GPUs or rocrand/rocthrust/rocblas/rocsolver for AMD GPUs.
+  Requires ``EXPERIMENTAL_FEATURES``.
 
 
 
@@ -563,11 +573,11 @@ Then you can simply compile two different versions of |es| via:
 
 .. code-block:: bash
 
-    cd builddir1
+    cd $builddir1
     cmake ..
     make
 
-    cd builddir2
+    cd $builddir2
     cmake ..
     make
 
@@ -602,7 +612,7 @@ each variant having different activated features, and for as many
 platforms as you want.
 
 Once you've run ``ccmake``, you can list the configured variables with
-``cmake -LAH -N | less`` (uses a pager) or with ``ccmake ..`` and pressing
+``cmake -LAH -N .. | less`` (uses a pager) or with ``ccmake ..`` and pressing
 key ``t`` to toggle the advanced mode on (uses the curses interface).
 
 **Example:**
@@ -670,6 +680,8 @@ options are available:
 
 * ``WITH_SCAFACOS``: Build with ScaFaCoS support
 
+* ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support
+
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
@@ -695,6 +707,40 @@ If you have multiple versions of the CUDA library installed, you can select the
 correct one with ``CUDA_BIN_PATH=/usr/local/cuda-10.0 cmake .. -DWITH_CUDA=ON``
 (with Clang as the CUDA compiler, you also need to override its default CUDA
 path with ``-DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-10.0``).
+
+
+.. _Configuring without a network connection:
+
+Configuring without a network connection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Several :ref:`external features <External features>` in |es| rely on
+external libraries that are downloaded automatically by CMake. When a
+network connection cannot be established due to firewall restrictions,
+the CMake logic needs editing:
+
+* ``WITH_HDF5``: when cloning |es|, the :file:`/libs/h5xx` folder will be
+  a git submodule containing a :file:`.git` subfolder. To prevent CMake from
+  updating this submodule with git, delete the corresponding command with:
+
+  .. code-block:: bash
+
+    sed -i '/execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs\/h5xx/,+1 d' CMakeLists.txt
+
+  When installing a release version of |es|, no network communication
+  is needed for HDF5.
+
+* ``WITH_STOKESIAN_DYNAMICS``: this library is installed using `FetchContent
+  <https://cmake.org/cmake/help/latest/module/FetchContent.html>`_.
+  The repository URL can be found in the ``GIT_REPOSITORY`` field of the
+  corresponding ``FetchContent_Declare()`` command. The ``GIT_TAG`` field
+  provides the commit. Clone this repository locally next to the |es|
+  folder and edit the |es| build system such that ``GIT_REPOSITORY`` points
+  to the absolute path of the Stokesian Dynamics clone, for example with:
+
+  .. code-block:: bash
+
+    sed -ri 's|GIT_REPOSITORY +.+stokesian-dynamics.git|GIT_REPOSITORY /work/username/stokesian_dynamics|' CMakeLists.txt
 
 
 Compiling, testing and installing
@@ -830,6 +876,45 @@ start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
 
 You can find the official Jupyter documentation at
 https://jupyter.readthedocs.io/en/latest/running.html
+
+Running inside an IDE
+^^^^^^^^^^^^^^^^^^^^^
+
+You can use an integrated development environment (IDE) to develop and run |es|
+scripts. Suitable IDEs are e.g. *Visual Studio Code* and *Spyder*. They can
+provide a workflow superior to that of a standard text editor as they offer
+useful features such as advanced code completion, debugging and analysis tools
+etc. The following example shows how to setup |es| in *Visual Studio Code* on
+Linux (tested with version 1.46.1). The process should be similar for every
+Python IDE, namely the Python interpreter needs to be replaced.
+
+The ``pypresso`` executable can be set as a custom Python interpreter inside VS
+Code. |es| scripts can then be executed just like any other python script.
+Inside VS Code, the Python extension needs to be installed. Next, click the
+gear at the bottom left and choose *Settings*. Search for
+``Default Interpreter Path`` and change the setting to the path to your
+``pypresso`` executable, e.g.
+
+.. code-block:: none
+
+    ~/espresso/build/pypresso
+
+After that, you can open scripts and execute them with the keyboard shortcut
+Ctrl+F5.
+
+Fig. :ref:`vs-code-figure` shows the VS Code interface with the interpreter
+path set to ``pypresso``.
+
+.. note:: You may need to set the path relative to your home directory, i.e. ``~/path/to/pypresso``.
+
+.. _vs-code-figure:
+
+.. figure:: figures/vs-code-settings.png
+   :alt: Visual Studio Code interface with the default interpreter path set to the ``pypresso`` executable
+   :width: 55.0%
+   :align: center
+
+   Visual Studio Code interface
 
 .. _Debugging es:
 

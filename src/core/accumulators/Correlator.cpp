@@ -25,11 +25,13 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/range/algorithm/transform.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <utils/math/sqr.hpp>
 
+#include <algorithm>
 #include <limits>
 
 namespace {
@@ -141,7 +143,7 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
 
   std::vector<double> C(C_size, 0);
 
-  for (unsigned i = 0; i < C_size; i++) {
+  for (size_t i = 0; i < C_size; i++) {
     for (int j = 0; j < 3; j++) {
       auto const &a = A[3 * i + j];
       auto const &b = B[3 * i + j];
@@ -157,7 +159,6 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
 }
 
 void Correlator::initialize() {
-  hierarchy_depth = 0;
   // Class members are assigned via the initializer list
 
   if (m_tau_lin == 1) { // use the default
@@ -179,9 +180,9 @@ void Correlator::initialize() {
   }
   // set hierarchy depth which can accommodate at least m_tau_max
   if ((m_tau_max / m_dt) < m_tau_lin) {
-    hierarchy_depth = 1;
+    m_hierarchy_depth = 1;
   } else {
-    hierarchy_depth = static_cast<int>(
+    m_hierarchy_depth = static_cast<int>(
         ceil(1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0)));
   }
 
@@ -207,15 +208,18 @@ void Correlator::initialize() {
         "no proper function for correlation operation given");
   }
   if (corr_operation_name == "componentwise_product") {
-    m_dim_corr = static_cast<int>(dim_A);
+    m_dim_corr = dim_A;
+    m_shape = A_obs->shape();
     corr_operation = &componentwise_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
-    m_dim_corr = static_cast<int>(dim_A * dim_B);
+    m_dim_corr = dim_A * dim_B;
+    m_shape = {dim_A, dim_B};
     corr_operation = &tensor_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "square_distance_componentwise") {
-    m_dim_corr = static_cast<int>(dim_A);
+    m_dim_corr = dim_A;
+    m_shape = A_obs->shape();
     corr_operation = &square_distance_componentwise;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "fcs_acf") {
@@ -229,10 +233,16 @@ void Correlator::initialize() {
         Utils::hadamard_product(m_correlation_args, m_correlation_args);
     if (dim_A % 3)
       throw std::runtime_error("dimA must be divisible by 3 for fcs_acf");
-    m_dim_corr = static_cast<int>(dim_A) / 3;
+    m_dim_corr = dim_A / 3;
+    m_shape = A_obs->shape();
+    if (m_shape.back() != 3)
+      throw std::runtime_error(
+          "the last dimension of dimA must be 3 for fcs_acf");
+    m_shape.pop_back();
     corr_operation = &fcs_acf;
   } else if (corr_operation_name == "scalar_product") {
     m_dim_corr = 1;
+    m_shape = {1};
     corr_operation = &scalar_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else {
@@ -269,36 +279,36 @@ void Correlator::initialize() {
         "no proper function for compression of second observable given");
   }
 
-  A.resize(std::array<int, 2>{{hierarchy_depth, m_tau_lin + 1}});
+  A.resize(std::array<int, 2>{{m_hierarchy_depth, m_tau_lin + 1}});
   std::fill_n(A.data(), A.num_elements(), std::vector<double>(dim_A, 0));
-  B.resize(std::array<int, 2>{{hierarchy_depth, m_tau_lin + 1}});
+  B.resize(std::array<int, 2>{{m_hierarchy_depth, m_tau_lin + 1}});
   std::fill_n(B.data(), B.num_elements(), std::vector<double>(dim_B, 0));
 
   n_data = 0;
   A_accumulated_average = std::vector<double>(dim_A, 0);
   B_accumulated_average = std::vector<double>(dim_B, 0);
 
-  m_n_result = m_tau_lin + 1 + (m_tau_lin + 1) / 2 * (hierarchy_depth - 1);
-  n_sweeps = std::vector<unsigned int>(m_n_result, 0);
-  n_vals = std::vector<unsigned int>(hierarchy_depth, 0);
+  auto const n_result = n_values();
+  n_sweeps = std::vector<size_t>(n_result, 0);
+  n_vals = std::vector<unsigned int>(m_hierarchy_depth, 0);
 
-  result.resize(std::array<int, 2>{{m_n_result, m_dim_corr}});
+  result.resize(std::array<size_t, 2>{{n_result, m_dim_corr}});
 
-  for (int i = 0; i < m_n_result; i++) {
-    for (int j = 0; j < m_dim_corr; j++) {
+  for (size_t i = 0; i < n_result; i++) {
+    for (size_t j = 0; j < m_dim_corr; j++) {
       // and initialize the values
       result[i][j] = 0;
     }
   }
 
-  newest = std::vector<unsigned int>(hierarchy_depth, m_tau_lin);
+  newest = std::vector<size_t>(m_hierarchy_depth, m_tau_lin);
 
-  tau.resize(m_n_result);
+  tau.resize(n_result);
   for (int i = 0; i < m_tau_lin + 1; i++) {
     tau[i] = i;
   }
 
-  for (int j = 1; j < hierarchy_depth; j++) {
+  for (int j = 1; j < m_hierarchy_depth; j++) {
     for (int k = 0; k < m_tau_lin / 2; k++) {
       tau[m_tau_lin + 1 + (j - 1) * m_tau_lin / 2 + k] =
           (k + (m_tau_lin / 2) + 1) * (1 << j);
@@ -324,7 +334,7 @@ void Correlator::update() {
   while (true) {
     if (((t - ((m_tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
          0)) {
-      if (i < (hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
+      if (i < (m_hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
         highest_level_to_compress += 1;
         i++;
       } else
@@ -361,11 +371,11 @@ void Correlator::update() {
 
   // Now we update the cumulated averages and variances of A and B
   n_data++;
-  for (unsigned k = 0; k < dim_A; k++) {
+  for (size_t k = 0; k < dim_A; k++) {
     A_accumulated_average[k] += A[0][newest[0]][k];
   }
 
-  for (unsigned k = 0; k < dim_B; k++) {
+  for (size_t k = 0; k < dim_B; k++) {
     B_accumulated_average[k] += B[0][newest[0]][k];
   }
 
@@ -378,7 +388,7 @@ void Correlator::update() {
     assert(temp.size() == m_dim_corr);
 
     n_sweeps[j]++;
-    for (unsigned k = 0; k < m_dim_corr; k++) {
+    for (size_t k = 0; k < m_dim_corr; k++) {
       result[j][k] += temp[k];
     }
   }
@@ -395,7 +405,7 @@ void Correlator::update() {
       assert(temp.size() == m_dim_corr);
 
       n_sweeps[index_res]++;
-      for (unsigned k = 0; k < m_dim_corr; k++) {
+      for (size_t k = 0; k < m_dim_corr; k++) {
         result[index_res][k] += temp[k];
       }
     }
@@ -415,7 +425,7 @@ int Correlator::finalize() {
   // mark the correlation as finalized
   finalized = true;
 
-  for (int ll = 0; ll < hierarchy_depth - 1; ll++) {
+  for (int ll = 0; ll < m_hierarchy_depth - 1; ll++) {
     int vals_ll; // number of values remaining in the lowest level
     if (n_vals[ll] > m_tau_lin + 1)
       vals_ll = m_tau_lin + static_cast<int>(n_vals[ll]) % 2;
@@ -434,7 +444,7 @@ int Correlator::finalize() {
       // space for the new value
       while (highest_level_to_compress > -1) {
         if (n_vals[i] % 2) {
-          if (i < (hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
+          if (i < (m_hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
             highest_level_to_compress += 1;
             i++;
           } else {
@@ -478,7 +488,7 @@ int Correlator::finalize() {
           assert(temp.size() == m_dim_corr);
 
           n_sweeps[index_res]++;
-          for (unsigned k = 0; k < m_dim_corr; k++) {
+          for (size_t k = 0; k < m_dim_corr; k++) {
             result[index_res][k] += temp[k];
           }
         }
@@ -489,20 +499,22 @@ int Correlator::finalize() {
 }
 
 std::vector<double> Correlator::get_correlation() {
-  std::vector<double> res;
+  auto const n_result = n_values();
+  std::vector<double> res(n_result * m_dim_corr);
 
-  // time + n_sweeps + corr_1...corr_n
-  int const cols = 2 + m_dim_corr;
-  res.resize(m_n_result * cols);
-
-  for (int i = 0; i < m_n_result; i++) {
-    auto const index = cols * i;
-    res[index + 0] = tau[i] * m_dt;
-    res[index + 1] = n_sweeps[i];
-    for (int k = 0; k < m_dim_corr; k++) {
-      res[index + 2 + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
+  for (size_t i = 0; i < n_result; i++) {
+    auto const index = m_dim_corr * i;
+    for (size_t k = 0; k < m_dim_corr; k++) {
+      res[index + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
     }
   }
+  return res;
+}
+
+std::vector<double> Correlator::get_lag_times() const {
+  std::vector<double> res(n_values());
+  boost::transform(tau, res.begin(),
+                   [dt = m_dt](auto const &a) { return a * dt; });
   return res;
 }
 
@@ -511,7 +523,7 @@ std::string Correlator::get_internal_state() const {
   boost::archive::binary_oarchive oa(ss);
 
   oa << t;
-  oa << m_n_result;
+  oa << m_shape;
   oa << A;
   oa << B;
   oa << result;
@@ -533,7 +545,7 @@ void Correlator::set_internal_state(std::string const &state) {
   boost::archive::binary_iarchive ia(ss);
 
   ia >> t;
-  ia >> m_n_result;
+  ia >> m_shape;
   ia >> A;
   ia >> B;
   ia >> result;

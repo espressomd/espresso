@@ -19,9 +19,8 @@ the pace with current developments both in the algorithms and software.
 
 The kernel of |es| is written in C++ with computational efficiency in mind.
 Interaction between the user and the simulation engine is provided via a
-*Python scripting interface*. This enables setup of arbitrarily complex systems
-which users might want to simulate in future, as well as modifying simulation
-parameters during runtime.
+*Python scripting interface*. This enables setup of arbitrarily complex
+systems, with simulation parameters that can be modified at runtime.
 
 .. _Guiding principles:
 
@@ -37,22 +36,24 @@ model, simulation and analysis methods he or she is using.
 It is expected that the users of |es| and readers of this user guide have a
 thorough understanding of simulation methods and algorithms they are planning
 to use. They should have passed a basic course on molecular simulations or read
-one of the renown textbooks, :cite:`frenkel02b`. It is not necessary to
+one of the renown textbooks, e.g. :cite:`frenkel02b`. It is not necessary to
 understand everything that is contained in |es|, but it is inevitable to
 understand all methods that you want to use. Using the program as a black box
 without proper understanding of the background will most probably result in
 wasted user and computer time with no useful output.
 
 To enable future extensions, the functionality of the program is kept as
-general as possible. It is modularized, so that extensions to some parts of the
-program (implementing a new potential) can be done by modifying or adding only
-few files, leaving most of the code untouched.
+general as possible. It is modularized, so that extensions to some parts
+of the program (e.g. implementing a new potential) can be done by modifying
+or adding only a few files, leaving most of the code untouched.
 
-To facilitate the understanding and the extensibility, much emphasis is put on
-readability of the code. Hard-coded assembler loops are generally avoided in
-hope that the overhead in computer time will be more than compensated for by
-saving much of the user time while trying to understand what the code is
-supposed to do.
+Much emphasis is put on readability of the code. To cite a few examples,
+hard-coded C-style for loops are generally avoided in favor of modern C++
+range-based for loops or STL accumulators and algorithms, and output
+parameters are often avoided by returning a ``std::tuple``. In addition,
+vector algebra can be expressed in few lines of code thanks to the
+``Utils::Vector`` class that provides overloads for elementary operations,
+the dot product, the cross product and operations with matrices.
 
 Hand-in-hand with the extensibility and readability of the code comes the
 flexibility of the whole program. On the one hand, it is provided by the
@@ -63,15 +64,15 @@ can change all available parameters. Where possible, default values are
 avoided, providing the user with the possibility of choice. |es| cannot be
 aware whether your particles are representing atoms or billiard balls, so it
 cannot check if the chosen parameters make sense and it is the user's
-responsibility to make sure they do. In fact, |es| can be used to play billiard
-(see the sample script in :file:`samples/billiard.py`)!
+responsibility to make sure they do. In fact, |es| can be used to play
+billiard (see sample script :file:`samples/billiard.py`)!
 
 On the other hand, flexibility of |es| stems from the employment of a scripting
 language at the steering level. Apart from the ability to modify the simulation
 and system parameters at runtime, many simple tasks which are not
 computationally critical can be implemented at this level, without even
 touching the C++-kernel. For example, simple problem-specific analysis routines
-can be implemented in this way and made interact with the simulation core.
+can be implemented in this way and made to interact with the simulation core.
 Another example of the program's flexibility is the possibility to integrate
 system setup, simulation and analysis in one single control script. |es|
 provides commands to create particles and set up interactions between them.
@@ -87,7 +88,7 @@ Basic program structure
 -----------------------
 
 As already mentioned, |es| consists of two components. The simulation engine is
-written in C and C++ for the sake of computational efficiency. The steering or
+written in C++ for the sake of computational efficiency. The steering or
 control level is interfaced to the kernel via an interpreter of Python
 scripting languages.
 
@@ -433,6 +434,10 @@ report so to the developers using the instructions in :ref:`Contributing`.
 | Isotropic NPT                  | Experimental           | None             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Quaternion Integrator          | Core                   | Good             | Yes        |
++--------------------------------+------------------------+------------------+------------+
+| Stokesian Dynamics on CPU      | Single                 | None             | Yes        |
++--------------------------------+------------------------+------------------+------------+
+| Stokesian Dynamics on GPU      | Experimental           | None             | No         |
 +--------------------------------+------------------------+------------------+------------+
 |                                **Interactions**                                         |
 +--------------------------------+------------------------+------------------+------------+

@@ -203,7 +203,7 @@ class Correlator(ScriptInterfaceHelper):
         ``tau_max >= dt * delta_N * tau_lin``, the
         multiple tau correlator is used, otherwise the trivial linear
         correlator is used. By setting ``tau_lin = 1``, the value will be
-        overriden by ``tau_lin = ceil(tau_max / (dt * delta_N))``, which
+        overridden by ``tau_lin = ceil(tau_max / (dt * delta_N))``, which
         will result in either the multiple or linear tau correlator.
         In many cases, ``tau_lin=16`` is a
         good choice but this may strongly depend on the observables you are
@@ -243,31 +243,51 @@ class Correlator(ScriptInterfaceHelper):
 
     args: :obj:`float` of length 3
         Three floats which are passed as arguments to the correlation
-        function.  Currently it is only used by ``"fcs_acf"``.
-        Other correlation operations will ignore these values.
+        function. Currently it is only used by ``"fcs_acf"``, which
+        will square these values in the core; if you later decide to
+        update these weights with ``obs.args = [...]``, you'll have to
+        provide already squared values! Other correlation operations
+        will ignore these values.
     """
 
     _so_name = "Accumulators::Correlator"
     _so_bind_methods = (
         "update",
+        "shape",
         "finalize")
     _so_creation_policy = "LOCAL"
 
     def result(self):
         """
+        Get correlation.
+
         Returns
         -------
-
-        numpy.ndarray
-            The result of the correlation function as a 2d-array.
-            The first column contains the values of the lag time tau.
-            The second column contains the number of values used to
-            perform the averaging of the correlation. Further columns contain
-            the values of the correlation function. The number of these columns
-            is the dimension of the output of the correlation operation.
+        :obj:`ndarray` of :obj:`float`
+            The result of the correlation function. The shape of the array
+            is determined by the shape of the input observable(s) and the
+            correlation operation.
         """
-        res = np.array(self.call_method("get_correlation"))
-        return res.reshape((self.n_result, 2 + self.dim_corr))
+        return np.array(self.call_method(
+            "get_correlation")).reshape(self.shape())
+
+    def lag_times(self):
+        """
+        Returns
+        -------
+        :obj:`ndarray` of :obj:`float`
+            Lag times of the correlation.
+        """
+        return np.array(self.call_method("get_lag_times"))
+
+    def sample_sizes(self):
+        """
+        Returns
+        -------
+        :obj:`ndarray` of :obj:`int`
+            Samples sizes for each lag time.
+        """
+        return np.array(self.call_method("get_samples_sizes"), dtype=int)
 
 
 @script_interface_register

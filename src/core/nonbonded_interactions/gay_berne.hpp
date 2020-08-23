@@ -24,6 +24,10 @@
 /** \file
  *  Routines to calculate the Gay-Berne potential between particle pairs.
  *
+ *  Please note that contrary to the original paper @cite gay81a, here the GB
+ *  prefactor @f$ \varepsilon_0 @f$ is not raised to the power of @f$ \nu @f$,
+ *  in agreement with the convention used in the GB literature.
+ *
  *  Implementation in \ref gay_berne.cpp.
  */
 

@@ -102,5 +102,5 @@ endfunction()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  CudaCompilerClang REQUIRED_VARS CMAKE_CUDA_COMPILER VERSION_VAR
+  CUDACompilerClang REQUIRED_VARS CMAKE_CUDA_COMPILER VERSION_VAR
   CMAKE_CUDA_COMPILER_VERSION)

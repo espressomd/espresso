@@ -7,7 +7,6 @@ set(EspressoCore_SRC
     communication.cpp
     constraints.cpp
     debug.cpp
-    domain_decomposition.cpp
     dpd.cpp
     energy.cpp
     errorhandling.cpp
@@ -22,7 +21,6 @@ set(EspressoCore_SRC
     event.cpp
     integrate.cpp
     npt.cpp
-    nsquare.cpp
     partCfg_global.cpp
     particle_data.cpp
     polymer.cpp
@@ -45,7 +43,8 @@ set(EspressoCore_SRC
     CellStructure.cpp
     PartCfg.cpp
     AtomDecomposition.cpp
-    reduce_observable_stat.cpp)
+    reduce_observable_stat.cpp
+    DomainDecomposition.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
@@ -75,20 +74,18 @@ endif(CUDA)
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 target_link_libraries(
-  EspressoCore
-  PRIVATE EspressoConfig EspressoShapes Profiler
-          "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
-          $<$<BOOL:${SCAFACOS}>:Scafacos> cxx_interface
+  EspressoCore PRIVATE EspressoConfig EspressoShapes Profiler
+                       $<$<BOOL:${SCAFACOS}>:Scafacos> cxx_interface
   PUBLIC EspressoUtils MPI::MPI_CXX Random123 EspressoParticleObservables
          Boost::serialization Boost::mpi "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
-         $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>)
+         $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>
+         "$<$<BOOL:${FFTW3_FOUND}>:FFTW3::FFTW3>")
 
 target_include_directories(
   EspressoCore
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
          "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>"
-  PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>"
-  PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
+         "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>")
 
 target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
 
@@ -110,3 +107,13 @@ add_subdirectory(virtual_sites)
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
+
+if(STOKESIAN_DYNAMICS OR STOKESIAN_DYNAMICS_GPU)
+  add_subdirectory(stokesian_dynamics)
+  if(STOKESIAN_DYNAMICS)
+    target_link_libraries(EspressoCore PRIVATE StokesianDynamics::sd_cpu)
+  endif()
+  if(STOKESIAN_DYNAMICS_GPU)
+    target_link_libraries(EspressoCore PRIVATE StokesianDynamics::sd_gpu)
+  endif()
+endif()

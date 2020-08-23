@@ -142,33 +142,19 @@ respective hdf5-file. This may, for example, look like:
     from espressomd.io.writer import h5md
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
-    h5 = h5md.H5md(filename="trajectory.h5", write_pos=True, write_vel=True)
+    h5 = h5md.H5md(file_path="trajectory.h5")
 
-If a file with the given filename exists and has a valid H5MD structures,
+An optional argument to the constructor of :class:`espressomd.io.writer.h5md.H5md` is
+an instance of :class:`espressomd.io.writer.h5md.UnitSystem` which encapsulates 
+physical units for time, mass, length and electrical charge.	
+
+If a file at the given filepath exists and has a valid H5MD structure,
 it will be backed up to a file with suffix ".bak". This backup file will be
 deleted when the new file is closed at the end of the simulation with
 ``h5.close()``.
 
-The current implementation allows to write the following properties: positions,
-velocities, forces, species (|es| types), and masses of the particles. In order
-to write any property, you have to set the respective boolean flag as an option
-to the :class:`~espressomd.io.writer.h5md.H5md` class. Currently available:
-
-    - ``write_pos``: particle positions
-
-    - ``write_vel``: particle velocities
-
-    - ``write_force``: particle forces
-
-    - ``write_species``: particle types
-
-    - ``write_mass``: particle masses
-
-    - ``write_ordered``: if particles should be written ordered according to their
-      id (implies serial write)
-
-    - ``unit_system``: optionally, physical units for time, mass, length and
-      electrical charge.
+The current implementation always writes the following properties: positions,
+velocities, forces, species (|es| types), charges, and masses of the particles.
 
 In simulations with varying numbers of particles (MC or reactions), the
 size of the dataset will be adapted if the maximum number of particles
@@ -177,11 +163,11 @@ be written to the trajectory for the id. If you have a parallel
 simulation, please keep in mind that the sequence of particles in general
 changes from timestep to timestep. Therefore you have to always use the
 dataset for the ids to track which position/velocity/force/type/mass
-entry belongs to which particle. To write data to the hdf5 file, simply
-call the H5md object :meth:`~espressomd.io.writer.h5md.H5md.write` method without any arguments.
+entry belongs to which particle. To write data to the HDF5 file, simply
+call the method :meth:`~espressomd.io.writer.h5md.H5md.write` without any arguments.
 
-After the last write call, you have to call the
-:meth:`~espressomd.io.writer.h5md.H5md.close` method to remove
+After the last write, you have to call
+:meth:`~espressomd.io.writer.h5md.H5md.close` to remove
 the backup file, close the datasets, etc.
 
 H5MD files can be read and modified with the python module h5py (for

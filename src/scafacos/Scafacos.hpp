@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef ES_SCAFACOS_SCAFACOS_HPP
+#define ES_SCAFACOS_SCAFACOS_HPP
 
 #include <fcs.h>
 #include <list>
@@ -66,13 +68,13 @@ struct Scafacos {
   void run(std::vector<double> &charges, std::vector<double> &positions,
            std::vector<double> &fields, std::vector<double> &potentials);
 
-/** Calculate fields and potentials for dipoles */
 #ifdef FCS_ENABLE_DIPOLES
+  /** Calculate fields and potentials for dipoles */
   void run_dipolar(std::vector<double> &dipoles, std::vector<double> &positions,
                    std::vector<double> &fields,
                    std::vector<double> &potentials);
-
 #endif
+
   /** Tune parameters */
   void tune(std::vector<double> &charges, std::vector<double> &positions);
   /** Get shortrange cutoff (0.0 if not supported) */
@@ -103,3 +105,4 @@ struct Scafacos {
 };
 
 } // namespace Scafacos
+#endif

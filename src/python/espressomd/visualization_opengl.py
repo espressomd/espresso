@@ -759,12 +759,18 @@ class openGLLive():
     def _update_cells(self):
         self.cell_box_origins = []
         cell_system_state = self.system.cell_system.get_state()
-        self.cell_size = cell_system_state['cell_size']
-        for i in range(cell_system_state['cell_grid'][0]):
-            for j in range(cell_system_state['cell_grid'][1]):
-                for k in range(cell_system_state['cell_grid'][2]):
-                    self.cell_box_origins.append(
-                        np.array([i, j, k]) * self.cell_size)
+        # Not all particle decompositions have a cell grid, if
+        # it does not exist in the cell system state, we just
+        # ignore it
+        try:
+            self.cell_size = cell_system_state['cell_size']
+            for i in range(cell_system_state['cell_grid'][0]):
+                for j in range(cell_system_state['cell_grid'][1]):
+                    for k in range(cell_system_state['cell_grid'][2]):
+                        self.cell_box_origins.append(
+                            np.array([i, j, k]) * self.cell_size)
+        except KeyError:
+            pass
 
     def _update_nodes(self):
         self.node_box_origins = []
@@ -965,7 +971,7 @@ class openGLLive():
                 if radius == 0:
                     radius = self.system.non_bonded_inter[part_type, part_type].wca.get_params()[
                         'sigma'] * 0.5
-            except BaseException:
+            except Exception:
                 radius = 0.5
             if radius == 0:
                 radius = 0.5

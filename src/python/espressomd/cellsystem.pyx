@@ -16,19 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import numpy as np
+from libcpp.cast cimport dynamic_cast
 from .grid cimport node_grid
 from . cimport integrate
 from .globals cimport FIELD_SKIN, FIELD_NODEGRID
 from .globals cimport verlet_reuse, skin
 from .globals cimport mpi_bcast_parameter
-from .cellsystem cimport dd, cell_structure
-import numpy as np
+from .cellsystem cimport cell_structure
 from .utils cimport handle_errors
 from .utils import is_valid_type
+from .utils cimport Vector3i
 
 cdef class CellSystem:
-    def set_domain_decomposition(self, use_verlet_lists=True,
-                                 fully_connected=[False, False, False]):
+    def set_domain_decomposition(self, use_verlet_lists=True):
         """
         Activates domain decomposition cell system.
 
@@ -39,10 +40,7 @@ cdef class CellSystem:
             in the algorithm.
 
         """
-
-        cell_structure.use_verlet_list = use_verlet_lists
-        dd.fully_connected = fully_connected
-        # grid.h::node_grid
+        mpi_set_use_verlet_lists(use_verlet_lists)
         mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC)
 
         handle_errors("Error while initializing the cell system.")
@@ -59,44 +57,42 @@ cdef class CellSystem:
             lists for this algorithm.
 
         """
-        cell_structure.use_verlet_list = use_verlet_lists
-
+        mpi_set_use_verlet_lists(use_verlet_lists)
         mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE)
-        # @TODO: gathering should be interface independent
-        # return mpi_gather_runtime_errors(interp, TCL_OK)
+
         return True
 
     def get_state(self):
         s = {"use_verlet_list": cell_structure.use_verlet_list}
 
-        if cell_structure.type == CELL_STRUCTURE_DOMDEC:
+        if cell_structure.decomposition_type() == CELL_STRUCTURE_DOMDEC:
+            dd = get_domain_decomposition()
             s["type"] = "domain_decomposition"
-        if cell_structure.type == CELL_STRUCTURE_NSQUARE:
+            s["cell_grid"] = np.array(
+                [dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
+            s["cell_size"] = np.array(
+                [dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
+
+        if cell_structure.decomposition_type() == CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
 
         s["skin"] = skin
         s["verlet_reuse"] = verlet_reuse
         s["n_nodes"] = n_nodes
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
-        s["cell_grid"] = np.array(
-            [dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
-        s["cell_size"] = np.array(
-            [dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
-        s["fully_connected"] = dd.fully_connected
 
         return s
 
     def __getstate__(self):
         s = {"use_verlet_list": cell_structure.use_verlet_list}
 
-        if cell_structure.type == CELL_STRUCTURE_DOMDEC:
+        if cell_structure.decomposition_type() == CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
-        if cell_structure.type == CELL_STRUCTURE_NSQUARE:
+        if cell_structure.decomposition_type() == CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
 
         s["skin"] = skin
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
-        s["fully_connected"] = dd.fully_connected
         return s
 
     def __setstate__(self, d):

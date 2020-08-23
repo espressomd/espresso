@@ -18,14 +18,13 @@
 #
 import sys
 from . import script_interface
-
-cdef extern from "communication.hpp":
-    void mpi_init()
-    void mpi_loop()
-    int this_node
+from . cimport communication
+from libcpp.memory cimport shared_ptr
+from boost cimport environment
 
 # Main code
-mpi_init()
+cdef shared_ptr[environment] mpi_env = communication.mpi_init()
+communication.init(mpi_env)
 
 # Initialize script interface
 # Has to be _after_ mpi_init
@@ -33,6 +32,6 @@ script_interface.init()
 
 # Block the slaves in the callback loop
 # The master is just returning to the user script
-if this_node != 0:
-    mpi_loop()
+if communication.this_node != 0:
+    communication.mpi_loop()
     sys.exit(0)

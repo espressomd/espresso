@@ -100,7 +100,7 @@ cdef class PScriptInterface:
         try:
             ptr = get_instance(oid).lock()
             self.set_sip(ptr)
-        except BaseException:
+        except Exception:
             raise Exception("Could not get sip for given_id")
 
     def id(self):

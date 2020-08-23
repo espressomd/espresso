@@ -25,7 +25,7 @@ from .globals cimport timing_samples
 from .globals cimport forcecap_set
 from .globals cimport forcecap_get
 from .utils import array_locked
-from .utils cimport Vector3d, make_array_locked
+from .utils cimport Vector3d, make_array_locked, handle_errors
 
 cdef class Globals:
     property box_l:
@@ -68,6 +68,7 @@ cdef class Globals:
                 box_geo.set_periodic(i, _periodic[i])
 
             mpi_bcast_parameter(FIELD_PERIODIC)
+            handle_errors("Error while assigning system periodicity")
 
         def __get__(self):
             periodicity = np.zeros(3)

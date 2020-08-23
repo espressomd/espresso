@@ -24,6 +24,10 @@ add_custom_target(
 sample_test(FILE test_billiard.py)
 sample_test(FILE test_chamber_game.py)
 sample_test(FILE test_constraints.py)
+sample_test(FILE test_dancing.py SUFFIX cpu_ft)
+sample_test(FILE test_dancing.py SUFFIX cpu_fts)
+sample_test(FILE test_dancing.py SUFFIX gpu_ft LABELS "gpu")
+sample_test(FILE test_dancing.py SUFFIX gpu_fts LABELS "gpu")
 sample_test(FILE test_diffusion_coefficient.py)
 sample_test(FILE test_dpd.py)
 sample_test(FILE test_drude_bmimpf6.py SUFFIX cpu)
@@ -38,7 +42,7 @@ if(HDF5_FOUND)
 endif()
 sample_test(FILE test_lbf.py SUFFIX cpu)
 sample_test(FILE test_lbf.py SUFFIX gpu LABELS "gpu")
-sample_test(FILE test_lb_profile.py)
+sample_test(FILE test_lb_profile.py LABELS "gpu")
 sample_test(FILE test_lj_liquid_distribution.py)
 sample_test(FILE test_lj_liquid.py)
 sample_test(FILE test_lj_liquid_structurefactor.py)
@@ -83,6 +87,6 @@ sample_test(FILE test_immersed_boundary.py)
 
 add_custom_target(
   check_samples COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                        -j${TEST_NP} $(ARGS) --output-on-failure)
+                        -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)
 
 add_dependencies(check_samples pypresso local_samples)

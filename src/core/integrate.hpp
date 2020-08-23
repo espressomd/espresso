@@ -31,6 +31,7 @@
 #define INTEG_METHOD_NVT 1
 #define INTEG_METHOD_STEEPEST_DESCENT 2
 #define INTEG_METHOD_BD 3
+#define INTEG_METHOD_SD 7
 
 /** Switch determining which integrator to use. */
 extern int integ_switch;
@@ -40,9 +41,6 @@ extern int n_verlet_updates;
 
 /** Time step for the integration. */
 extern double time_step;
-extern double time_step_half;
-extern double time_step_squared;
-extern double time_step_squared_half;
 
 /** Actual simulation time (only on MASTER NODE). */
 extern double sim_time;
@@ -125,6 +123,9 @@ void integrate_set_nvt();
 
 /** @brief Set the Brownian Dynamics integrator. */
 void integrate_set_bd();
+
+/** @brief Set the Stokesian Dynamics integrator. */
+int integrate_set_sd();
 
 /** @brief Set the velocity Verlet integrator modified for the NpT ensemble
  *  with isotropic rescaling.

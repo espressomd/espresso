@@ -93,8 +93,8 @@ MpiCallbacks &mpiCallbacks();
  * the slave nodes. It is denoted by *_slave.
  **************************************************/
 
-/** Initialize MPI and determine \ref n_nodes and \ref this_node. */
-void mpi_init();
+/** Initialize MPI. */
+std::shared_ptr<boost::mpi::environment> mpi_init();
 
 /** @brief Call a slave function.
  *  @tparam Args   Slave function argument types
@@ -242,6 +242,8 @@ void mpi_rescale_particles(int dir, double scale);
 /** Change the cell structure on all nodes. */
 void mpi_bcast_cell_structure(int cs);
 
+void mpi_set_use_verlet_lists(bool use_verlet_lists);
+
 /** Broadcast nptiso geometry parameter to all nodes. */
 void mpi_bcast_nptiso_geom();
 
@@ -282,4 +284,17 @@ void mpi_galilei_transform();
  */
 std::vector<int> mpi_resort_particles(int global_flag);
 
+/**
+ * @brief Init globals for communication.
+ *
+ * and calls @ref on_program_start. Keeps a copy of
+ * the pointer to the mpi environment to keep it alive
+ * while the program is loaded.
+ *
+ * @param mpi_env Mpi environment that should be used,
+ *
+ */
+namespace Communication {
+void init(std::shared_ptr<boost::mpi::environment> mpi_env);
+}
 #endif

@@ -109,17 +109,22 @@ if espressomd.has_features('P3M') and 'P3M.CPU' in modes:
     system.actors.add(p3m)
 
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
-acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
+acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc_time_series = espressomd.accumulators.TimeSeries(obs=obs)
-acc.update()
+acc_correlator = espressomd.accumulators.Correlator(
+    obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
+    corr_operation="componentwise_product")
+acc_mean_variance.update()
 acc_time_series.update()
+acc_correlator.update()
 system.part[0].pos = [1.0, 2.0, 3.0]
-acc.update()
+acc_mean_variance.update()
 acc_time_series.update()
+acc_correlator.update()
 
-
-system.auto_update_accumulators.add(acc)
+system.auto_update_accumulators.add(acc_mean_variance)
 system.auto_update_accumulators.add(acc_time_series)
+system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
 system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
@@ -153,6 +158,9 @@ if 'LB.OFF' in modes:
         system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1, seed=42)
     elif 'THERM.DPD' in modes and has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
+    elif 'THERM.SDM' in modes and (has_features('STOKESIAN_DYNAMICS') or has_features('STOKESIAN_DYNAMICS_GPU')):
+        system.periodicity = [0, 0, 0]
+        system.thermostat.set_stokesian(kT=1.0, seed=42)
     # set integrator
     if 'INT.NPT' in modes and has_features('NPT'):
         system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01,
@@ -164,6 +172,16 @@ if 'LB.OFF' in modes:
         system.integrator.set_nvt()
     elif 'INT.BD' in modes:
         system.integrator.set_brownian_dynamics()
+    elif 'INT.SDM.CPU' in modes and has_features('STOKESIAN_DYNAMICS'):
+        system.periodicity = [0, 0, 0]
+        system.integrator.set_stokesian_dynamics(
+            approximation_method='ft', device='cpu', viscosity=0.5,
+            radii={0: 1.5}, pair_mobility=False, self_mobility=True)
+    elif 'INT.SDM.GPU' in modes and has_features('STOKESIAN_DYNAMICS_GPU') and espressomd.gpu_available():
+        system.periodicity = [0, 0, 0]
+        system.integrator.set_stokesian_dynamics(
+            approximation_method='fts', device='gpu', viscosity=2.0,
+            radii={0: 1.0}, pair_mobility=True, self_mobility=False)
     # set minimization
     if 'MINIMIZATION' in modes:
         steepest_descent(system, f_max=1, gamma=10, max_steps=0,
@@ -190,8 +208,9 @@ if 'THERM.LB' not in modes:
     system.bonded_inter.add(thermalized_bond)
     system.part[1].add_bond((thermalized_bond, 0))
 checkpoint.register("system")
-checkpoint.register("acc")
+checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
+checkpoint.register("acc_correlator")
 # calculate forces
 system.integrator.run(0)
 particle_force0 = np.copy(system.part[0].f)

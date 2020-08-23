@@ -22,6 +22,7 @@
 #include "algorithm/for_each_pair.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
+#include "integrate.hpp"
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <profiler/profiler.hpp>
@@ -63,21 +64,18 @@ template <typename CellIterator, typename ParticleKernel, typename PairKernel,
 void decide_distance(CellIterator first, CellIterator last,
                      ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
                      VerletCriterion &&verlet_criterion) {
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_DOMDEC:
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), EuclidianDistance{},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
-  case CELL_STRUCTURE_NSQUARE:
+  if (cell_structure.minimum_image_distance()) {
     Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),
         std::forward<PairKernel>(pair_kernel), MinimalImageDistance{box_geo},
         std::forward<VerletCriterion>(verlet_criterion),
         cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
+  } else {
+    Algorithm::for_each_pair(
+        first, last, std::forward<ParticleKernel>(particle_kernel),
+        std::forward<PairKernel>(pair_kernel), EuclidianDistance{},
+        std::forward<VerletCriterion>(verlet_criterion),
+        cell_structure.use_verlet_list, rebuild_verletlist);
   }
 }
 
@@ -98,7 +96,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
 
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
-  if (cell_structure.min_range != INACTIVE_CUTOFF) {
+  if (interaction_range() != INACTIVE_CUTOFF) {
     auto first =
         boost::make_indirect_iterator(cell_structure.local_cells().begin());
     auto last =

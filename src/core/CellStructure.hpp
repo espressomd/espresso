@@ -22,8 +22,12 @@
 #ifndef ESPRESSO_CELLSTRUCTURE_HPP
 #define ESPRESSO_CELLSTRUCTURE_HPP
 
+#include "AtomDecomposition.hpp"
+#include "BoxGeometry.hpp"
 #include "Cell.hpp"
+#include "LocalBox.hpp"
 #include "Particle.hpp"
+#include "ParticleDecomposition.hpp"
 #include "ParticleList.hpp"
 #include "ParticleRange.hpp"
 #include "bond_error.hpp"
@@ -37,13 +41,7 @@
 #include <vector>
 
 /** Cell Structure */
-enum {
-  /** Flag indicating that there is no cell system yet. Only at the
-   *  VERY beginning of the code startup.
-   */
-  CELL_STRUCTURE_NONEYET = -1,
-  /** Flag indicating that the current cell structure will be used further on */
-  CELL_STRUCTURE_CURRENT = 0,
+enum CellStructureType : int {
   /** cell structure domain decomposition */
   CELL_STRUCTURE_DOMDEC = 1,
   /** cell structure n square */
@@ -91,9 +89,20 @@ inline ParticleRange particles(Utils::Span<Cell *> cells) {
  */
 struct CellStructure {
 private:
+  /** The local id-to-particle index */
   std::vector<Particle *> m_particle_index;
+  /** Implementation of the primary particle decomposition */
+  std::unique_ptr<ParticleDecomposition> m_decomposition =
+      std::make_unique<AtomDecomposition>();
+  /** Active type in m_decomposition */
+  int m_type = CELL_STRUCTURE_NSQUARE;
+  /** One of @ref Cells::Resort, announces the level of resort needed.
+   */
+  unsigned m_resort_particles = Cells::RESORT_NONE;
 
 public:
+  bool use_verlet_list = true;
+
   /**
    * @brief Update local particle index.
    *
@@ -137,13 +146,9 @@ public:
   }
 
   /**
-   * @brief Update local particle index.
-   *
-   * @param pl List of particles whose index entries should be updated.
+   * @brief Clear the particles index.
    */
-  void update_particle_index(ParticleList *pl) {
-    assert(pl), update_particle_index(*pl);
-  }
+  void clear_particle_index() { m_particle_index.clear(); }
 
 private:
   /**
@@ -201,36 +206,16 @@ public:
                      [this](int id) { return get_local_particle(id); });
   }
 
-  std::vector<Cell *> m_local_cells = {};
-  std::vector<Cell *> m_ghost_cells = {};
-
-  /** type descriptor */
-  int type = CELL_STRUCTURE_NONEYET;
-
-  bool use_verlet_list = true;
+public:
+  int decomposition_type() const { return m_type; }
 
   /** Maximal pair range supported by current cell system. */
-  Utils::Vector3d max_range = {};
-
-  /** Minimum range that has to be supported. */
-  double min_range;
+  Utils::Vector3d max_range() const;
 
   /** Return the global local_cells */
-  Utils::Span<Cell *> local_cells() {
-    return {m_local_cells.data(), m_local_cells.size()};
-  }
-
-  ParticleRange local_particles() {
-    return Cells::particles(Utils::make_span(m_local_cells));
-  }
-  ParticleRange ghost_particles() {
-    return Cells::particles(Utils::make_span(m_ghost_cells));
-  }
-
-  /** Communicator to exchange ghost particles. */
-  GhostCommunicator exchange_ghosts_comm;
-  /** Communicator to collect ghost forces. */
-  GhostCommunicator collect_ghost_force_comm;
+  Utils::Span<Cell *> local_cells();
+  ParticleRange local_particles();
+  ParticleRange ghost_particles();
 
   /** Cell system dependent function to find the right cell for a
    *  particle.
@@ -238,7 +223,7 @@ public:
    *  \return pointer to cell where to put the particle, nullptr
    *          if the particle does not belong on this node.
    */
-  Cell *(*particle_to_cell)(const Particle &p) = nullptr;
+  Cell *particle_to_cell(const Particle &p);
 
   /**
    * @brief Add a particle.
@@ -297,10 +282,21 @@ public:
    */
   void remove_all_particles();
 
-private:
-  /** One of @ref Cells::Resort, announces the level of resort needed.
+  /**
+   * @brief Get the underlying particle decomposition.
+   *
+   * Should be used solely for informative purposes.
+   *
+   * @return The active particle decomposition.
    */
-  unsigned m_resort_particles = Cells::RESORT_NONE;
+  const ParticleDecomposition &decomposition() const {
+    return assert(m_decomposition), *m_decomposition;
+  }
+
+private:
+  ParticleDecomposition &decomposition() {
+    return assert(m_decomposition), *m_decomposition;
+  }
 
 public:
   /**
@@ -336,6 +332,7 @@ public:
    */
   void ghosts_reduce_forces();
 
+private:
   /**
    * @brief Resolve ids to particles.
    *
@@ -345,7 +342,7 @@ public:
    * @param partner_ids Ids to resolve.
    * @return Vector of Particle pointers.
    */
-  inline auto resolve_bond_partners(Utils::Span<const int> partner_ids) {
+  auto resolve_bond_partners(Utils::Span<const int> partner_ids) {
     boost::container::static_vector<Particle *, 4> partners;
     get_local_particles(partner_ids, std::back_inserter(partners));
 
@@ -358,9 +355,21 @@ public:
     return partners;
   }
 
+public:
+  /**
+   * @brief Execute kernel for every bond on particle.
+   * @tparam Handler Callable, which can be invoked with
+   *                 (Particle, int, Utils::Span<Particle *>),
+   *                 returning a bool.
+   * @param p Particles for whom the bonds are evaluated.
+   * @param handler is called for every bond, and handed
+   *                p, the bond id and a span with the bond
+   *                partners as arguments. Its return value
+   *                should indicate if the bond was broken.
+   */
   template <class Handler>
   void execute_bond_handler(Particle &p, Handler handler) {
-    for (auto const &bond : p.bonds()) {
+    for (const BondView bond : p.bonds()) {
       auto const partner_ids = bond.partner_ids();
 
       try {
@@ -376,6 +385,69 @@ public:
         bond_broken_error(p.identity(), partner_ids);
       }
     }
+  }
+
+private:
+  /** Go through ghost cells and remove the ghost entries from the
+      local particle index. */
+  void invalidate_ghosts() {
+    for (auto const &p : ghost_particles()) {
+      if (get_local_particle(p.identity()) == &p) {
+        update_particle_index(p.identity(), nullptr);
+      }
+    }
+  }
+
+public:
+  /**
+   * @brief Resort particles.
+   */
+  void resort_particles(int global_flag);
+
+private:
+  /** @brief Set the particle decomposition, keeping the particles. */
+  void set_particle_decomposition(
+      std::unique_ptr<ParticleDecomposition> &&decomposition) {
+    clear_particle_index();
+
+    auto local_parts = local_particles();
+    std::vector<Particle> particles(local_parts.begin(), local_parts.end());
+
+    m_decomposition = std::move(decomposition);
+
+    for (auto &p : particles) {
+      add_particle(std::move(p));
+    }
+  }
+
+public:
+  /**
+   * @brief Set the particle decomposition to
+   *        AtomDecomposition.
+   *
+   *        @param comm Communicator to use.
+   *        @param box Box Geometry
+   */
+  void set_atom_decomposition(boost::mpi::communicator const &comm,
+                              BoxGeometry const &box);
+
+  /**
+   * @brief Set the particle decomposition to
+   *        DomainDecomposition.
+   *
+   *        @param comm Cartesian communicator to use.
+   *        @param box Box Geometry
+   *        @param local_geo Geometry of the local box.
+   */
+  void set_domain_decomposition(boost::mpi::communicator const &comm,
+                                double range, BoxGeometry const &box,
+                                LocalBox<double> const &local_geo);
+
+  /**
+   * @brief Return true if minimum image convention is
+   *        needed for distance calculation. */
+  bool minimum_image_distance() const {
+    return m_decomposition->minimum_image_distance();
   }
 };
 

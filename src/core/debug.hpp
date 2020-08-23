@@ -23,6 +23,8 @@
  *
  *  Implementation in debug.cpp.
  */
+#ifndef DEBUG_HPP
+#define DEBUG_HPP
 
 /** this performs a lot of tests which will very likely detect corruptions of
  *  the cell structure.
@@ -36,3 +38,5 @@ void check_particle_consistency();
  * they should be.
  */
 void check_particle_sorting();
+
+#endif

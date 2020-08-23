@@ -31,6 +31,12 @@ endif()
 # CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# C++ standard
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 include(FeatureSummary)
 include(GNUInstallDirs)
 project(ESPResSo)
@@ -40,12 +46,6 @@ if(POLICY CMP0074)
   # make find_package() use <PackageName>_ROOT variables
   cmake_policy(SET CMP0074 NEW)
 endif()
-
-# C++ standard
-enable_language(CXX)
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(PROJECT_VERSION "4.2-dev")
 
@@ -74,6 +74,7 @@ option(WITH_CUDA "Build with GPU support" OFF)
 option_if_available(WITH_HDF5 "Build with HDF5 support" ON)
 option(WITH_TESTS "Enable tests" ON)
 option_if_available(WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
+option_if_available(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" ON)
 option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
@@ -253,6 +254,44 @@ if(WITH_GSL)
   endif(GSL_FOUND)
 endif(WITH_GSL)
 
+find_package(BLAS)
+if(BLAS_FOUND)
+  set(BLAS 1)
+endif()
+find_package(LAPACK)
+if(LAPACK_FOUND)
+  set(LAPACK 1)
+endif()
+
+if(WITH_STOKESIAN_DYNAMICS)
+  if(BLAS AND LAPACK)
+    set(STOKESIAN_DYNAMICS 1)
+  endif()
+  if(NOT STOKESIAN_DYNAMICS AND NOT WITH_STOKESIAN_DYNAMICS_IS_DEFAULT_VALUE)
+    message(
+      FATAL_ERROR
+        "Optional feature Stokesian Dynamics explicitly requested, but dependencies not found."
+    )
+  endif()
+endif(WITH_STOKESIAN_DYNAMICS)
+
+if(WITH_STOKESIAN_DYNAMICS)
+  set(CMAKE_INSTALL_LIBDIR
+      "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
+  cmake_minimum_required(VERSION 3.11)
+  include(FetchContent)
+  FetchContent_Declare(
+    stokesian_dynamics
+    GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
+    GIT_TAG 860ceac208175)
+  FetchContent_GetProperties(stokesian_dynamics)
+  if(NOT stokesian_dynamics_POPULATED)
+    FetchContent_Populate(stokesian_dynamics)
+    add_subdirectory(${stokesian_dynamics_SOURCE_DIR}
+                     ${stokesian_dynamics_BINARY_DIR})
+  endif()
+endif(WITH_STOKESIAN_DYNAMICS)
+
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)
   pkg_check_modules(VALGRIND valgrind)
@@ -346,11 +385,18 @@ endif()
 add_library(cxx_interface INTERFACE)
 target_compile_options(
   cxx_interface
-  INTERFACE -Wall -Wextra $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+  INTERFACE -Wall
+            -Wextra
+            $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+            # add extra warnings
+            $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
             # disable warnings from -Wextra
-            -Wno-sign-compare -Wno-unused-function -Wno-unused-variable
-            -Wno-unused-parameter -Wno-missing-braces
-            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered;-Wno-cast-function-type>
+            -Wno-sign-compare
+            -Wno-unused-function
+            -Wno-unused-variable
+            -Wno-unused-parameter
+            -Wno-missing-braces
+            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
             $<$<CXX_COMPILER_ID:Intel>:-wd592>)
 
 # disable more warnings from -Wextra
@@ -376,6 +422,10 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
                                                VERSION_GREATER "4.8.5")
   # older GCC versions don't support -Wno-pedantic which we need in src/python
   target_compile_options(cxx_interface INTERFACE -pedantic)
+endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
+                                            VERSION_GREATER_EQUAL "8.1.0")
+  target_compile_options(cxx_interface INTERFACE -Wno-cast-function-type)
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION
                                               VERSION_LESS "16.0")
@@ -417,9 +467,6 @@ endif()
 
 target_link_libraries(cxx_interface INTERFACE coverage_interface)
 
-# Give CMAKE_CXX_FLAGS higher precedence
-target_compile_options(cxx_interface INTERFACE ${CMAKE_CXX_FLAGS})
-
 #
 # Testing
 # ##############################################################################
@@ -438,6 +485,9 @@ if(WITH_TESTS)
   if(WITH_PYTHON)
     add_subdirectory(testsuite)
   endif(WITH_PYTHON)
+  set(CTEST_ARGS ""
+      CACHE STRING
+            "Extra arguments to give to ctest calls (separated by semicolons)")
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)

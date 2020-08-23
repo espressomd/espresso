@@ -19,8 +19,28 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
+
+def set_seed(code):
+    np_seed = "np.random.seed()"
+    assert np_seed in code
+    return code.replace(np_seed, "np.random.seed(42)")
+
+
+def set_p3m_params(code):
+    p3m = "electrostatics.P3M(prefactor=1.0, accuracy=1e-2)"
+    assert p3m in code
+    return code.replace(
+        p3m, "electrostatics.P3M(prefactor=1, mesh=[16, 16, 16], cao=1, accuracy=1e-2, r_cut=3.7, alpha=0.2, tune=False)")
+
+
+def make_deterministic(code):
+    code = set_seed(code)
+    code = set_p3m_params(code)
+    return code
+
+
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/electrophoresis.py", N_SAMPLES=400)
+    "@SAMPLES_DIR@/electrophoresis.py", N_SAMPLES=400, substitutions=make_deterministic, random_seeds=False)
 
 
 @skipIfMissingFeatures

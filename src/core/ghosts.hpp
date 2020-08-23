@@ -32,26 +32,7 @@
  *  The ghost communication transfers data from cells on one node to cells on
  *  another node during the integration process. Note that data can only be
  *  transferred from one cell to one other, and the contents of the other cell
- *  will be overwritten. This communication is invoked by the integrator, at
- *  four different times in an integration step. These steps are reflected in
- *  @ref cell_structure structure, since they are treated differently by
- *  different cell systems:
- *  - @ref CellStructure::m_ghost_cells are used to transfer the cell sizes,
- *    i.e., make sure that for all later transfers the target cell has the same
- *    size as the source cell.
- *  - @ref CellStructure::exchange_ghosts_comm sets up all information on the
- *    ghosts that is necessary. Normally transfers the (shifted) position and
- *    particle properties.
- *  - @ref cells_update_ghosts is used to update the particle properties if no
- *    particles have been moved between cells. Therefore only the positions are
- *    transferred, otherwise this normally looks pretty much like the
- *    @ref CellStructure::exchange_ghosts_comm.
- *  - @ref CellStructure::collect_ghost_force_comm finally is used to transfer
- *    back forces that were exerted on a ghost particle. They are simply added
- *    again to the force of the real particle. The communication process is
- *    therefore inverted with respect to
- *    @ref CellStructure::exchange_ghosts_comm and @ref cells_update_ghosts,
- *    i.e., sending is replaced by receiving and the other way round.
+ *  will be overwritten.
  *
  *  The particle data that has to be transferred, and especially from where to
  *  where, heavily depends on the cell system. In ESPResSo, this is abstracted
@@ -99,9 +80,8 @@
  *  The pststore is similar and postpones the write back of received data
  *  until a send operation (with a precreated send buffer) is finished.
  *
- *  The ghost communicators are created in the init routines of the cell
- *  systems, therefore have a look at @ref dd_topology_init or
- *  @ref nsq_topology_init for further details.
+ *  The ghost communicators are created by the cell
+ *  systems.
  */
 #include "ParticleList.hpp"
 
@@ -186,7 +166,7 @@ struct GhostCommunicator {
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
-void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts);
+void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts);
 
 /*@}*/
 

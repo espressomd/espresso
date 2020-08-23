@@ -107,7 +107,7 @@ class BrownianDynamics(ut.TestCase):
 
     def test_vel_dist_global_temp(self):
         """Test velocity distribution for global temperature."""
-        self.check_vel_dist_global_temp(False, loops=1500)
+        self.check_vel_dist_global_temp(False, loops=200)
 
     def test_vel_dist_global_temp_initial_forces(self):
         """Test velocity distribution for global Brownian parameters,
@@ -116,7 +116,7 @@ class BrownianDynamics(ut.TestCase):
         self.check_vel_dist_global_temp(True, loops=170)
 
     @utx.skipIfMissingFeatures("BROWNIAN_PER_PARTICLE")
-    def test_05__brownian_per_particle(self):
+    def test_05_brownian_per_particle(self):
         """Test Brownian dynamics with particle specific kT and gamma. Covers all combinations of
            particle specific gamma and temp set or not set.
         """
@@ -130,7 +130,7 @@ class BrownianDynamics(ut.TestCase):
 
         kT = 0.9
         gamma = 3.2
-        gamma2 = 14.3
+        gamma2 = 4.3
         kT2 = 1.5
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
         # Set different kT on 2nd half of particles
@@ -142,7 +142,7 @@ class BrownianDynamics(ut.TestCase):
             system.part[int(N / 4):int(3 * N / 4)].gamma = gamma2
 
         system.integrator.run(50)
-        loops = 300
+        loops = 200
 
         v_kT = np.zeros((int(N / 2) * loops, 3))
         v_kT2 = np.zeros((int(N / 2 * loops), 3))
@@ -200,17 +200,18 @@ class BrownianDynamics(ut.TestCase):
 
         pos_obs = ParticlePositions(ids=(p.id,))
 
-        c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
+        c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=1,
                            corr_operation="square_distance_componentwise",
                            compress1="discard1")
         system.auto_update_accumulators.add(c_pos)
 
-        system.integrator.run(500000)
+        system.integrator.run(30000)
 
         c_pos.finalize()
 
         # Check MSD
         msd = c_pos.result()
+        tau = c_pos.lag_times()
         system.auto_update_accumulators.clear()
 
         def expected_msd(x):
@@ -218,7 +219,7 @@ class BrownianDynamics(ut.TestCase):
 
         for i in range(2, 6):
             np.testing.assert_allclose(
-                msd[i, 2:5], expected_msd(msd[i, 0]), rtol=0.02)
+                msd[i], expected_msd(tau[i]), rtol=0.02)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):
@@ -267,7 +268,7 @@ class BrownianDynamics(ut.TestCase):
 
         kT = 3.2
         system.thermostat.set_brownian(kT=kT, gamma=2.1, seed=17)
-        steps = int(1e6)
+        steps = int(1e4)
         system.integrator.run(steps)
         system.auto_update_accumulators.clear()
 
