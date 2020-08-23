@@ -220,7 +220,7 @@ void distribute(int size) {
  *  See @cite yeh99a.
  */
 static void add_dipole_force(const ParticleRange &particles) {
-  double const pref = coulomb.prefactor * 4 * M_PI * ux * uy * uz;
+  double const pref = coulomb.prefactor * 4 * Utils::pi() * ux * uy * uz;
   int const size = 3;
 
   auto local_particles = particles;
@@ -283,7 +283,7 @@ static void add_dipole_force(const ParticleRange &particles) {
  *  See @cite yeh99a.
  */
 static double dipole_energy(const ParticleRange &particles) {
-  double const pref = coulomb.prefactor * 2 * M_PI * ux * uy * uz;
+  double const pref = coulomb.prefactor * 2 * Utils::pi() * ux * uy * uz;
   int const size = 7;
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
@@ -375,7 +375,7 @@ inline double image_sum_t(double q, double z) {
 
 /*****************************************************************/
 static double z_energy(const ParticleRange &particles) {
-  double const pref = coulomb.prefactor * 2 * M_PI * ux * uy;
+  double const pref = coulomb.prefactor * 2 * Utils::pi() * ux * uy;
   int const size = 4;
 
   /* for nonneutral systems, this shift gives the background contribution
@@ -453,7 +453,7 @@ static double z_energy(const ParticleRange &particles) {
 
 /*****************************************************************/
 static void add_z_force(const ParticleRange &particles) {
-  double const pref = coulomb.prefactor * 2 * M_PI * ux * uy;
+  double const pref = coulomb.prefactor * 2 * Utils::pi() * ux * uy;
 
   if (elc_params.dielectric_contrast_on) {
     auto local_particles = particles;
@@ -508,9 +508,9 @@ static void add_z_force(const ParticleRange &particles) {
 /*****************************************************************/
 
 static void setup_P(int p, double omega, const ParticleRange &particles) {
-  double const pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
+  double const pref = -coulomb.prefactor * 4 * Utils::pi() * ux * uy /
                       (expm1(omega * box_geo.length()[2]));
-  double const pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
+  double const pref_di = coulomb.prefactor * 4 * Utils::pi() * ux * uy;
   int const size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
@@ -613,9 +613,9 @@ static void setup_P(int p, double omega, const ParticleRange &particles) {
 }
 
 static void setup_Q(int q, double omega, const ParticleRange &particles) {
-  double const pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
+  double const pref = -coulomb.prefactor * 4 * Utils::pi() * ux * uy /
                       (expm1(omega * box_geo.length()[2]));
-  double const pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
+  double const pref_di = coulomb.prefactor * 4 * Utils::pi() * ux * uy;
   int const size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
@@ -787,9 +787,9 @@ static double Q_energy(double omega, int n_part) {
 
 static void setup_PQ(int p, int q, double omega,
                      const ParticleRange &particles) {
-  double const pref = -coulomb.prefactor * 8 * M_PI * ux * uy /
+  double const pref = -coulomb.prefactor * 8 * Utils::pi() * ux * uy /
                       (expm1(omega * box_geo.length()[2]));
-  double const pref_di = coulomb.prefactor * 8 * M_PI * ux * uy;
+  double const pref_di = coulomb.prefactor * 8 * Utils::pi() * ux * uy;
   int const size = 8;
   double lclimgebot[8], lclimgetop[8], lclimge[8];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;

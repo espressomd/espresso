@@ -392,7 +392,7 @@ auto calc_dipole_moment(boost::mpi::communicator const &comm,
 
 void add_dipole_correction(Utils::Vector3d const &box_dipole,
                            const ParticleRange &particles) {
-  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+  auto const pref = coulomb.prefactor * 4 * Utils::pi() / box_geo.volume() /
                     (2 * p3m.params.epsilon + 1);
 
   auto const dm = pref * box_dipole;
@@ -403,7 +403,7 @@ void add_dipole_correction(Utils::Vector3d const &box_dipole,
 }
 
 double dipole_correction_energy(Utils::Vector3d const &box_dipole) {
-  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+  auto const pref = coulomb.prefactor * 4 * Utils::pi() / box_geo.volume() /
                     (2 * p3m.params.epsilon + 1);
 
   return pref * box_dipole.norm2();
@@ -629,9 +629,10 @@ static double p3m_get_accuracy(const int mesh[3], int cao, double r_cut_iL,
   rs_err = p3m_real_space_error(coulomb.prefactor, r_cut_iL, p3m.sum_qpart,
                                 p3m.sum_q2, 0);
 
-  if (M_SQRT2 * rs_err > p3m.params.accuracy) {
+  if (Utils::sqrt_2() * rs_err > p3m.params.accuracy) {
     /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
-    alpha_L = sqrt(log(M_SQRT2 * rs_err / p3m.params.accuracy)) / r_cut_iL;
+    alpha_L =
+        sqrt(log(Utils::sqrt_2() * rs_err / p3m.params.accuracy)) / r_cut_iL;
   } else {
     /* even alpha=0 is ok, however, we cannot choose it since it kills the
        k-space error formula.

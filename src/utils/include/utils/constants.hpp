@@ -23,11 +23,12 @@
 
 #include <boost/math/constants/constants.hpp>
 
+namespace Utils {
+
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
 /*************************************************************/
 /*@{*/
-namespace Utils {
 
 /**
  * @brief Ratio of diameter and circumference of a circle.
@@ -50,6 +51,22 @@ template <class T = double> DEVICE_QUALIFIER constexpr T gamma() {
   return 0.57721566490153286060651209008;
 }
 
+/**
+ * @brief Natural logarithm of 2.
+ */
+template <class T = double> DEVICE_QUALIFIER constexpr T ln_2() {
+  return 0.6931471805599453094172321214581766;
+}
+
+/**
+ * @brief Square root of 2.
+ */
+template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_2() {
+  return 1.4142135623730950488016887242096981;
+}
+
+/*@}*/
+
 /// error code if no error occurred
 #define ES_OK 0
 /// error code if an error occurred
@@ -64,7 +81,5 @@ template <class T = double> DEVICE_QUALIFIER constexpr T gamma() {
 #define ES_DOUBLE_SPACE 27
 
 } // namespace Utils
-
-/*@}*/
 
 #endif

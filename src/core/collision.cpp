@@ -30,6 +30,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
 
+#include <utils/constants.hpp>
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
@@ -345,7 +346,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // three_particle_angle_resolution steps and by adding the id
   // of the bond for zero degrees.
   auto const bond_id = static_cast<int>(
-      floor(phi / M_PI *
+      floor(phi / Utils::pi() *
                 (collision_params.three_particle_angle_resolution - 1) +
             0.5) +
       collision_params.bond_three_particles);

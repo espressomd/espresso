@@ -721,7 +721,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
 
 double calc_surface_term(bool force_flag, bool energy_flag,
                          const ParticleRange &particles) {
-  auto const pref = dipole.prefactor * 4 * M_PI / box_geo.volume() /
+  auto const pref = dipole.prefactor * 4 * Utils::pi() / box_geo.volume() /
                     (2 * dp3m.params.epsilon + 1);
   double suma, a[3];
   double en;
@@ -1021,7 +1021,7 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
                                         r_cut_iL, dp3m.sum_dip_part,
                                         dp3m.sum_mu2, 0.001);
 
-  if (M_SQRT2 * rs_err > dp3m.params.accuracy) {
+  if (Utils::sqrt_2() * rs_err > dp3m.params.accuracy) {
     /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
     alpha_L = dp3m_rtbisection(
         box_geo.length()[0], dipole.prefactor, r_cut_iL, dp3m.sum_dip_part,
