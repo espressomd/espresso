@@ -348,6 +348,11 @@ NEW_THERMOSTAT(thermalized_bond)
 NEW_THERMOSTAT(dpd)
 #endif
 
+/* Exported thermostat globals */
+extern LangevinThermostat langevin;
+extern BrownianThermostat brownian;
+extern IsotropicNptThermostat npt_iso;
+
 /** Initialize constants of the thermostat at the start of integration */
 void thermo_init();
 

@@ -21,10 +21,14 @@
 #ifndef SCRIPT_INTERFACE_CLUSTER_ANALYSIS_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_CLUSTER_ANALYSIS_INITIALIZE_HPP
 
+#include <script_interface/ObjectHandle.hpp>
+
+#include <utils/Factory.hpp>
+
 namespace ScriptInterface {
 namespace ClusterAnalysis {
 
-void initialize();
+void initialize(Utils::Factory<ObjectHandle> *om);
 
 } /* namespace ClusterAnalysis */
 } /* namespace ScriptInterface */

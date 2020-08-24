@@ -52,6 +52,10 @@ cdef extern from "thermostat.hpp":
         double gamma0
         double gammav
 
+    langevin_thermostat_struct langevin
+    brownian_thermostat_struct brownian
+    npt_iso_thermostat_struct npt_iso
+
     void langevin_set_rng_state(stdint.uint64_t counter)
     void brownian_set_rng_state(stdint.uint64_t counter)
     void npt_iso_set_rng_state(stdint.uint64_t counter)
@@ -77,12 +81,6 @@ cdef extern from "stokesian_dynamics/sd_interface.hpp":
 
         void set_sd_seed(size_t seed)
         size_t get_sd_seed()
-
-cdef extern from "script_interface/Globals.hpp":
-    # links intern C-struct with python object
-    cdef extern langevin_thermostat_struct langevin
-    cdef extern brownian_thermostat_struct brownian
-    cdef extern npt_iso_thermostat_struct npt_iso
 
 cdef extern from "npt.hpp":
     ctypedef struct nptiso_struct:

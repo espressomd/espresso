@@ -19,10 +19,15 @@
 
 #ifndef ESPRESSO_SCRIPTINTERFACE_ACCUMULATORS_INITIALIZE_HPP
 #define ESPRESSO_SCRIPTINTERFACE_ACCUMULATORS_INITIALIZE_HPP
+
+#include <script_interface/ObjectHandle.hpp>
+
+#include <utils/Factory.hpp>
+
 namespace ScriptInterface {
 namespace Accumulators {
 
-void initialize();
+void initialize(Utils::Factory<ObjectHandle> *om);
 
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */

@@ -45,9 +45,7 @@ public:
               m_lbboundary->set_shape(m_shape->shape());
             };
           },
-          [this]() {
-            return (m_shape != nullptr) ? m_shape->id() : ObjectId();
-          }}});
+          [this]() { return m_shape; }}});
 #ifdef EK_BOUNDARIES
     add_parameters({{"charge_density",
                      [this](Variant const &value) {
@@ -63,7 +61,7 @@ public:
 #endif
   }
 
-  Variant call_method(const std::string &name, const VariantMap &) override {
+  Variant do_call_method(const std::string &name, const VariantMap &) override {
     if (name == "get_force") {
       // The get force method uses mpi callbacks on lb cpu
       if (this_node == 0) {

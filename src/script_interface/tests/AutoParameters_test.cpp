@@ -67,12 +67,9 @@ BOOST_AUTO_TEST_CASE(add_parameters) {
 BOOST_AUTO_TEST_CASE(exceptions) {
   A a{0, 42};
 
-  BOOST_CHECK_EXCEPTION(a.get_parameter("unknown"),
-                        AutoParameters<A>::UnknownParameter,
-                        [](std::runtime_error const &) { return true; });
-  BOOST_CHECK_EXCEPTION(a.set_parameter("unknown", 12),
-                        AutoParameters<A>::UnknownParameter,
-                        [](std::runtime_error const &) { return true; });
-  BOOST_CHECK_EXCEPTION(a.set_parameter("j", 12), AutoParameters<A>::WriteError,
-                        [](std::runtime_error const &) { return true; });
+  BOOST_CHECK_THROW(a.get_parameter("unknown"),
+                    AutoParameters<A>::UnknownParameter);
+  BOOST_CHECK_THROW(a.set_parameter("unknown", 12),
+                    AutoParameters<A>::UnknownParameter);
+  BOOST_CHECK_THROW(a.set_parameter("j", 12), AutoParameters<A>::WriteError);
 }

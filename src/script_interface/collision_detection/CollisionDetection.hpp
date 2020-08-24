@@ -22,8 +22,8 @@
 #ifndef SCRIPT_INTERFACE_COLLISION_DETECTION_COLLISION_DETECTION_HPP
 #define SCRIPT_INTERFACE_COLLISION_DETECTION_COLLISION_DETECTION_HPP
 
-#include "../ScriptInterfaceBase.hpp"
 #include "core/collision.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #ifdef COLLISION_DETECTION
 
@@ -55,8 +55,8 @@ public:
          {"part_type_after_glueing",
           collision_params.part_type_after_glueing}});
   };
-  Variant call_method(const std::string &name,
-                      const VariantMap &params) override {
+  Variant do_call_method(const std::string &name,
+                         const VariantMap &params) override {
     if (name == "validate") {
       return validate_collision_parameters();
     };

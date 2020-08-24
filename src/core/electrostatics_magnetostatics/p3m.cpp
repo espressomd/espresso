@@ -965,8 +965,7 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((box_geo.length()[0] == box_geo.length()[1]) &&
           (box_geo.length()[1] == box_geo.length()[2]))) {
-      *log = strcat_alloc(
-          *log, "{049 P3M_init: Nonmetallic epsilon requires cubic box} ");
+      runtimeErrorMsg() << "non-metallic epsilon requires cubic box";
       return ES_ERROR;
     }
   }
@@ -988,8 +987,7 @@ int p3m_adaptive_tune(char **log) {
   *log = strcat_alloc(*log, b);
 
   if (p3m.sum_qpart == 0) {
-    *log = strcat_alloc(*log,
-                        "no charged particles in the system, cannot tune P3M");
+    runtimeErrorMsg() << "no charged particles in the system";
     return ES_ERROR;
   }
 
@@ -1114,6 +1112,8 @@ int p3m_adaptive_tune(char **log) {
         p3m_m_time(log, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
                    r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* some error occurred during the tuning force evaluation */
+    if (tmp_time == -P3M_TUNE_FAIL)
+      return ES_ERROR;
     /* this mesh does not work at all */
     if (tmp_time < 0.0)
       continue;
@@ -1141,8 +1141,7 @@ int p3m_adaptive_tune(char **log) {
   }
 
   if (time_best == 1e20) {
-    *log = strcat_alloc(*log,
-                        "failed to tune P3M parameters to required accuracy\n");
+    runtimeErrorMsg() << "failed to reach requested accuracy";
     return ES_ERROR;
   }
 
@@ -1316,7 +1315,7 @@ bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
           (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-      runtimeErrorMsg() << "P3M_init: Nonmetallic epsilon requires cubic box";
+      runtimeErrorMsg() << "P3M_init: non-metallic epsilon requires cubic box";
       ret = true;
     }
   }

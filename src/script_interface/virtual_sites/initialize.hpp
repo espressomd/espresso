@@ -20,10 +20,14 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_INITIALIZE_HPP
 
+#include <script_interface/ObjectHandle.hpp>
+
+#include <utils/Factory.hpp>
+
 namespace ScriptInterface {
 namespace VirtualSites {
 
-void initialize();
+void initialize(Utils::Factory<ObjectHandle> *om);
 
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */
