@@ -102,6 +102,31 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                                    [-p3m_force, 0, 0], atol=1E-5)
         self.system.actors.remove(p3m)
 
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_p3m_non_metallic(self):
+        prefactor = 1.1
+        box_vol = self.system.volume()
+        self.system.part[0].pos = [1.0, 2.0, 2.0]
+        self.system.part[1].pos = [3.0, 2.0, 2.0]
+        for epsilon_power in range(-4, 5):
+            epsilon = 10**epsilon_power
+            # reference value for energy only calculated for prefactor = 1,
+            # the formula is not an exact fit for small epsilon values
+            p3m_energy = -4 * np.pi / box_vol * 8 / (2 + 1 / epsilon) - 0.5
+            p3m_energy *= prefactor / 1.01053
+            p3m = espressomd.electrostatics.P3M(prefactor=prefactor,
+                                                accuracy=9.910945054074526e-08,
+                                                mesh=[22, 22, 22],
+                                                cao=7,
+                                                epsilon=epsilon,
+                                                r_cut=8.906249999999998,
+                                                alpha=0.387611049779351,
+                                                tune=False)
+            self.system.actors.add(p3m)
+            self.assertAlmostEqual(self.system.analysis.energy()['coulomb'],
+                                   p3m_energy, places=3)
+            self.system.actors.remove(p3m)
+
     def test_dh(self):
         dh_params = dict(prefactor=1.2, kappa=0.8, r_cut=2.0)
         dh = espressomd.electrostatics.DH(

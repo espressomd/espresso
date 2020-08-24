@@ -261,11 +261,11 @@ IF P3M == 1:
                 raise ValueError("P3M accuracy has to be positive")
 
             if self._params["epsilon"] == "metallic":
-                self._params = 0.0
+                self._params["epsilon"] = 0.0
 
-            if not (is_valid_type(self._params["epsilon"], float)
-                    or self._params["epsilon"] == "metallic"):
-                raise ValueError("epsilon should be a double or 'metallic'")
+            check_type_or_throw_except(
+                self._params["epsilon"], 1, float,
+                "epsilon should be a double or 'metallic'")
 
             if self._params["mesh_off"] != default_params["mesh_off"]:
                 check_type_or_throw_except(self._params["mesh_off"], 3, float,
@@ -273,8 +273,7 @@ IF P3M == 1:
 
             if not (self._params["alpha"] == default_params["alpha"]
                     or self._params["alpha"] > 0):
-                raise ValueError(
-                    "alpha should be positive")
+                raise ValueError("alpha should be positive")
 
         def valid_keys(self):
             return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
@@ -317,15 +316,14 @@ IF P3M == 1:
 
         def _tune(self):
             set_prefactor(self._params["prefactor"])
+            p3m_set_eps(self._params["epsilon"])
             python_p3m_set_tune_params(self._params["r_cut"],
                                        self._params["mesh"],
                                        self._params["cao"],
                                        -1.0,
                                        self._params["accuracy"])
             resp = python_p3m_adaptive_tune()
-            if resp:
-                raise Exception(
-                    "failed to tune P3M parameters to required accuracy")
+            handle_errors("P3M tuning failed")
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
@@ -402,13 +400,12 @@ IF P3M == 1:
                 if not (self._params["accuracy"] >= 0):
                     raise ValueError("P3M accuracy has to be positive")
 
-                # if self._params["epsilon"] == "metallic":
-                #  self._params = 0.0
+                if self._params["epsilon"] == "metallic":
+                    self._params["epsilon"] = 0.0
 
-                if not (is_valid_type(self._params["epsilon"], float)
-                        or self._params["epsilon"] == "metallic"):
-                    raise ValueError(
-                        "epsilon should be a double or 'metallic'")
+                check_type_or_throw_except(
+                    self._params["epsilon"], 1, float,
+                    "epsilon should be a double or 'metallic'")
 
                 if self._params["mesh_off"] != default_params["mesh_off"]:
                     check_type_or_throw_except(self._params["mesh_off"], 3, float,
@@ -441,15 +438,14 @@ IF P3M == 1:
 
             def _tune(self):
                 set_prefactor(self._params["prefactor"])
+                p3m_set_eps(self._params["epsilon"])
                 python_p3m_set_tune_params(self._params["r_cut"],
                                            self._params["mesh"],
                                            self._params["cao"],
                                            -1.0,
                                            self._params["accuracy"])
                 resp = python_p3m_adaptive_tune()
-                if resp:
-                    raise Exception(
-                        "failed to tune P3M parameters to required accuracy")
+                handle_errors("P3MGPU tuning failed")
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
