@@ -55,11 +55,12 @@ enum P3M_TUNE_ERROR {
   P3M_TUNE_ACCURACY_TOO_LARGE = 32
 };
 
-/** This value for p3m.epsilon indicates metallic boundary conditions. */
+/** This value indicates metallic boundary conditions. */
 #define P3M_EPSILON_METALLIC 0.0
 
-/** increment size of charge assignment fields. */
-#define CA_INCREMENT 32
+/** Default for boundary conditions in magnetic calculations. */
+#define P3M_EPSILON_MAGNETIC 0.0
+
 /** precision limit for the r_cut zero */
 #define P3M_RCUT_PREC 1e-3
 /** granularity of the time measurement */
@@ -118,7 +119,7 @@ typedef struct {
   double accuracy = 0.0;
 
   /** epsilon of the "surrounding dielectric". */
-  double epsilon = P3M_EPSILON;
+  double epsilon = P3M_EPSILON_METALLIC;
   /** cutoff for charge assignment. */
   double cao_cut[3] = {};
   /** mesh constant. */
