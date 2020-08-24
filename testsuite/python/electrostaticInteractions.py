@@ -21,7 +21,7 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd
-from espressomd import electrostatics
+import espressomd.electrostatics
 
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
@@ -38,6 +38,9 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         if not self.system.part.exists(1):
             self.system.part.add(
                 id=1, pos=(3.0, 2.0, 2.0), q=-1)
+
+    def tearDown(self):
+        self.system.actors.clear()
 
     def calc_dh_potential(self, r, df_params):
         kT = 1.0
@@ -100,7 +103,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                                    [p3m_force, 0, 0], atol=1E-5)
         np.testing.assert_allclose(np.copy(self.system.part[1].f),
                                    [-p3m_force, 0, 0], atol=1E-10)
-        self.system.actors.remove(p3m)
 
     def test_dh(self):
         dh_params = dict(prefactor=1.2, kappa=0.8, r_cut=2.0)
@@ -131,7 +133,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         np.testing.assert_allclose(u_dh_core, u_dh, atol=1e-7)
         np.testing.assert_allclose(f_dh_core, -f_dh, atol=1e-2)
-        self.system.actors.remove(dh)
 
     def test_rf(self):
         """Tests the ReactionField coulomb interaction by comparing the
@@ -173,7 +174,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         np.testing.assert_allclose(u_rf_core, u_rf, atol=1e-7)
         np.testing.assert_allclose(f_rf_core, -f_rf, atol=1e-2)
-        self.system.actors.remove(rf)
 
 
 if __name__ == "__main__":

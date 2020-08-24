@@ -1804,6 +1804,8 @@ int p3m_adaptive_tune(char **log) {
         p3m_m_time(log, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
                    r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* some error occurred during the tuning force evaluation */
+    if (tmp_time == -P3M_TUNE_FAIL)
+      return ES_ERROR;
     /* this mesh does not work at all */
     if (tmp_time < 0.0)
       continue;

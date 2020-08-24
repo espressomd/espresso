@@ -126,9 +126,9 @@ IF DP3M == 1:
             if self._params["epsilon"] == "metallic":
                 self._params["epsilon"] = 0.0
 
-            if not (is_valid_type(self._params["epsilon"], float)
-                    or self._params["epsilon"] == "metallic"):
-                raise ValueError("epsilon should be a double or 'metallic'")
+            check_type_or_throw_except(
+                self._params["epsilon"], 1, float,
+                "epsilon should be a double or 'metallic'")
 
             if not (self._params["inter"] == default_params["inter"]
                     or self._params["inter"] > 0):
@@ -179,9 +179,7 @@ IF DP3M == 1:
                 self._params["r_cut"], self._params["mesh"],
                 self._params["cao"], -1., self._params["accuracy"], self._params["inter"])
             resp, log = self.python_dp3m_adaptive_tune()
-            if resp:
-                raise Exception(
-                    "failed to tune dipolar P3M parameters to required accuracy")
+            handle_errors("dipolar P3M tuning failed")
             print(to_str(log))
             self._params.update(self._get_params_from_es_core())
 
@@ -208,8 +206,7 @@ IF DP3M == 1:
             cdef char * log = NULL
             cdef int response
             response = dp3m_adaptive_tune(& log)
-            handle_errors(
-                "dipolar P3M_init: k-space cutoff is larger than half of box dimension")
+            handle_errors("dipolar P3M tuning failed")
             return response, log
 
         def python_dp3m_set_params(self, p_r_cut, p_mesh, p_cao, p_alpha,

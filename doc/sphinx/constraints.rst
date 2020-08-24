@@ -167,7 +167,7 @@ Available shapes
 Python syntax::
 
     import espressomd from espressomd.shapes import <SHAPE>
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
 ``<SHAPE>`` can be any of the available shapes.
 

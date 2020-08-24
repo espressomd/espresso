@@ -42,7 +42,7 @@ window with ``start()``. See the following minimal code example::
     from espressomd import visualization
     from threading import Thread
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     system.box_l = [10, 10, 10]

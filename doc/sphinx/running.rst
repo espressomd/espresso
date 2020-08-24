@@ -105,7 +105,7 @@ A code snippet would look like::
 
     import espressomd
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
@@ -195,7 +195,7 @@ In this way, just compiling in the ``ROTATION`` feature no longer changes the ph
 The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation enabled on the x axis::
 
     import espressomd
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.part.add(pos=(0, 0, 0), rotation=(1, 0, 0))
 
 Notes:
