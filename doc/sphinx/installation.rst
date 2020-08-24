@@ -89,7 +89,11 @@ are required:
 .. code-block:: bash
 
     sudo apt install python3-matplotlib python3-scipy ipython3 jupyter-notebook
-    sudo pip3 install 'pint>=0.9'
+    pip3 install --user 'pint>=0.9' 'jupyter_contrib_nbextensions==0.5.1' \
+                        'sphinx>=1.6.7,!=2.1.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5'
+    jupyter contrib nbextension install --user
+    jupyter nbextension enable rubberband/main
+    jupyter nbextension enable exercise2/main
 
 Nvidia GPU acceleration
 """""""""""""""""""""""
@@ -829,10 +833,10 @@ to actually write a simulation script for |es|.
 Running an interactive notebook
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Running the Jupyter interpreter requires using the ``ipypresso`` script, which
+Running a Jupyter session requires using the ``ipypresso`` script, which
 is also located in the build directory (its name comes from the IPython
 interpreter, today known as Jupyter). To run the tutorials, you will need
-to start the Jupyter interpreter in notebook mode:
+to start a Jupyter session:
 
 .. code-block:: bash
 
@@ -858,11 +862,16 @@ will exit the Python interpreter and Jupyter will notify you that the current
 Python kernel stopped. If a cell takes too long to execute, you may interrupt
 it with the stop button.
 
-To close the Jupyter notebook, go to the terminal where it was started and use
+Solutions cells are created using the ``exercise2`` plugin from nbextensions.
+To prevent solution code cells from running when clicking on "Run All", these
+code cells need to be converted to Markdown cells and fenced with `````python``
+and ```````.
+
+To close the Jupyter session, go to the terminal where it was started and use
 the keyboard shortcut Ctrl+C twice.
 
-When starting the Jupyter interpreter in notebook mode, you may see the
-following warning in the terminal:
+When starting a Jupyter session, you may see the following warning in the
+terminal:
 
 .. code-block:: none
 
