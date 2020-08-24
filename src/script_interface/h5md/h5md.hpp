@@ -31,7 +31,6 @@
 
 namespace ScriptInterface {
 namespace Writer {
-
 class H5md : public AutoParameters<H5md> {
 public:
   H5md() {
@@ -46,10 +45,11 @@ public:
          {"charge_unit", m_h5md, &::Writer::H5md::File::charge_unit}});
   };
 
-  Variant call_method(const std::string &name,
-                      const VariantMap &parameters) override;
+private:
+  Variant do_call_method(const std::string &name,
+                         const VariantMap &parameters) override;
 
-  void construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &params) override {
     m_h5md =
         make_shared_from_args<::Writer::H5md::File, std::string, std::string,
                               std::string, std::string, std::string,
@@ -58,7 +58,6 @@ public:
             "time_unit", "force_unit", "velocity_unit", "charge_unit");
   }
 
-private:
   std::shared_ptr<::Writer::H5md::File> m_h5md;
 };
 

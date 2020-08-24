@@ -25,16 +25,17 @@
 #include "Constraint.hpp"
 
 #include "core/constraints.hpp"
+
+#include "script_interface/ObjectList.hpp"
 #include "script_interface/ScriptInterface.hpp"
-#include "script_interface/ScriptObjectRegistry.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
-class Constraints : public ScriptObjectRegistry<Constraint> {
-  void add_in_core(std::shared_ptr<Constraint> obj_ptr) override {
+class Constraints : public ObjectList<Constraint> {
+  void add_in_core(std::shared_ptr<Constraint> const &obj_ptr) override {
     ::Constraints::constraints.add(obj_ptr->constraint());
   }
-  void remove_in_core(std::shared_ptr<Constraint> obj_ptr) override {
+  void remove_in_core(std::shared_ptr<Constraint> const &obj_ptr) override {
     ::Constraints::constraints.remove(obj_ptr->constraint());
   };
 };

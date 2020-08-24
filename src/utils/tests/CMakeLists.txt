@@ -5,8 +5,6 @@ unit_test(NAME Vector_test SRC Vector_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Factory_test SRC Factory_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp DEPENDS
           EspressoUtils)
-unit_test(NAME make_function_test SRC make_function_test.cpp DEPENDS
-          EspressoUtils)
 unit_test(NAME keys_test SRC keys_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Cache_test SRC Cache_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME histogram SRC histogram.cpp DEPENDS EspressoUtils)
@@ -58,6 +56,8 @@ unit_test(NAME Bag_test SRC Bag_test.cpp DEPENDS EspressoUtils
 unit_test(NAME integral_parameter_test SRC integral_parameter_test.cpp DEPENDS
           EspressoUtils)
 unit_test(NAME flatten_test SRC flatten_test.cpp DEPENDS EspressoUtils)
+unit_test(NAME pack_test SRC pack_test.cpp DEPENDS Boost::serialization
+          EspressoUtils)
 
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp DEPENDS
           EspressoUtils Boost::mpi MPI::MPI_CXX NUM_PROC 4)

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2013-2020 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,15 +22,14 @@ from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp.memory cimport shared_ptr
-from libcpp.memory cimport weak_ptr
 from libcpp cimport bool
 
 from boost cimport string_ref
 
-from .utils cimport Span
+from .utils cimport Span, Factory
+from .communication cimport MpiCallbacks
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
-    void initialize()
     cdef cppclass Variant:
         Variant()
         Variant(const Variant & )
@@ -40,48 +39,37 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
     bool is_none(const Variant &)
     ctypedef unordered_map[string, Variant] VariantMap
 
-cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
-    T get_value[T](const Variant T)
-
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
-    cdef cppclass ObjectId:
-        ObjectId()
-        string to_string()
-        bool operator == (const ObjectId & rhs)
-        bool operator != (const ObjectId & rhs)
-
     Variant make_variant[T](const T & x)
 
-    cdef cppclass ScriptInterfaceBase:
-        const string name()
-        void construct(const VariantMap &) except +
+    cdef cppclass ObjectHandle:
         VariantMap get_parameters() except +
         Span[const string_ref] valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
         Variant call_method(const string & name, const VariantMap & parameters) except +
-        ObjectId id() except +
         void set_state(map[string, Variant]) except +
         map[string, Variant] get_state() except +
-        string serialize() except +
+        string_ref name()
 
-        @staticmethod
-        shared_ptr[ScriptInterfaceBase] unserialize(const string & state) except +
-
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
+cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterface::ContextManager":
     cdef cppclass CreationPolicy:
         pass
-    shared_ptr[ScriptInterfaceBase] make_shared(const string & name, CreationPolicy policy) except +
-    weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id) except +
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase::CreationPolicy":
+cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterface::ContextManager::CreationPolicy":
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
 
-cdef variant_to_python_object(const Variant & value) except +
-cdef Variant python_object_to_variant(value)
+cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterface":
+    cdef cppclass ContextManager:
+        ContextManager(MpiCallbacks & , const Factory[ObjectHandle] & )
+        shared_ptr[ObjectHandle] make_shared(CreationPolicy, const string &, const VariantMap) except +
+        shared_ptr[ObjectHandle] deserialize(const string &) except +
+        string serialize(const ObjectHandle *) except +
 
-cdef class PScriptInterface:
-    cdef shared_ptr[ScriptInterfaceBase] sip
-    cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
-    cdef VariantMap _sanitize_params(self, in_params) except *
+cdef extern from "script_interface/initialize.hpp" namespace "ScriptInterface":
+    void initialize(Factory[ObjectHandle] *)
+
+cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
+    T get_value[T](const Variant T)
+
+cdef void init(MpiCallbacks &)

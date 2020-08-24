@@ -116,9 +116,9 @@ BOOST_AUTO_TEST_CASE(pointer_to_method) {
   {
     auto c_ptr = std::make_shared<C>();
 
-    auto p_setter_getter = AutoParameter("name", c_ptr, &C::setter_getter);
-    p_setter_getter.set(5);
-    BOOST_CHECK(5 == boost::get<int>(p_setter_getter.get()));
+    auto p_setgetter = AutoParameter("name", c_ptr, &C::setter_getter);
+    p_setgetter.set(5);
+    BOOST_CHECK(5 == boost::get<int>(p_setgetter.get()));
   }
 
   {

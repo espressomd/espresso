@@ -45,13 +45,13 @@ public:
         [this]() { return m_constraint->field(); }));
   }
 
-  void construct(VariantMap const &args) override {
+  void do_construct(VariantMap const &args) override {
     m_constraint = std::make_shared<CoreField>(
         detail::make_coupling<Coupling>(args), detail::make_field<Field>(args));
   }
 
-  Variant call_method(const std::string &name,
-                      VariantMap const &args) override {
+  Variant do_call_method(const std::string &name,
+                         VariantMap const &args) override {
     if (name == "_eval_field") {
       return m_constraint->field()(get_value<Utils::Vector3d>(args, "x"),
                                    get_value_or<double>(args, "t", 0.));

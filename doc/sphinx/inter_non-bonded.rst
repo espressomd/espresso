@@ -620,7 +620,7 @@ that the Thole correction acts between all dipoles, intra- and intermolecular.
 Again, the accuracy is related to the P3M accuracy and the split between
 short-range and long-range electrostatics interaction. It is configured by::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.non_bonded_inter[type_1,type_2].thole.set_params(scaling_coeff=<float>, q1q2=<float>)
 
 with parameters:

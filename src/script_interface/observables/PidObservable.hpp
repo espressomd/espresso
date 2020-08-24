@@ -56,7 +56,7 @@ public:
                            [this]() { return m_observable->ids(); }}});
   }
 
-  void construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &params) override {
     m_observable =
         make_shared_from_args<CorePidObs, std::vector<int>>(params, "ids");
   }
