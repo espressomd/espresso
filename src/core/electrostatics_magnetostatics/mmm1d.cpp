@@ -79,8 +79,8 @@ static std::vector<double> bessel_radii;
 
 static double far_error(int P, double minrad) {
   // this uses an upper bound to all force components and the potential
-  auto const rhores = 2 * M_PI * uz * minrad;
-  auto const pref = 4 * uz * std::max(1.0, 2 * M_PI * uz);
+  auto const rhores = 2 * Utils::pi() * uz * minrad;
+  auto const pref = 4 * uz * std::max(1.0, 2 * Utils::pi() * uz);
 
   return pref * K1(rhores * P) * exp(rhores) / rhores * (P - 1 + 1 / rhores);
 }
@@ -318,7 +318,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
     auto const rxy_d = rxy * uz;
     /* The first Bessel term will compensate a little bit the
        log term, so add them close together */
-    E = -0.25 * log(rxy2_d) + 0.5 * (M_LN2 - Utils::gamma());
+    E = -0.25 * log(rxy2_d) + 0.5 * (Utils::ln_2() - Utils::gamma());
     for (int bp = 1; bp < MAXIMAL_B_CUT; bp++) {
       if (bessel_radii[bp - 1] < rxy)
         break;

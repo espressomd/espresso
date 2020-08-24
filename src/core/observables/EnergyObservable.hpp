@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef OBSERVABLES_ENERGY_HPP
+#define OBSERVABLES_ENERGY_HPP
 
 #include "Observable.hpp"
 #include "energy.hpp"

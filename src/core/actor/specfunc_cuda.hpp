@@ -44,9 +44,12 @@
  *  first and second kind. The implementations are based on the GSL code (see
  *  the original GSL header above) and are duplicated from \ref specfunc.cpp.
  */
+#ifndef ESPRESSO_CORE_ACTOR_SPECFUNC_CUDA_HPP
+#define ESPRESSO_CORE_ACTOR_SPECFUNC_CUDA_HPP
+
 #include "config.hpp"
 
-const mmm1dgpu_real M_LN2f = M_LN2;
+#include <utils/constants.hpp>
 
 /** @name Chebyshev expansions based on SLATEC bk0(), bk0e() */
 /*@{*/
@@ -155,7 +158,7 @@ __device__ mmm1dgpu_real dev_K0(mmm1dgpu_real x) {
   if (x <= 2) {
     mmm1dgpu_real I0 =
         evaluateAsChebychevSeriesAt(bi0_data, bi0_size, x * x / 4.5f - 1.0f);
-    return (-log(x) + M_LN2f) * I0 + c;
+    return (-log(x) + Utils::ln_2<mmm1dgpu_real>()) * I0 + c;
   }
   return exp(-x) * c * rsqrt(x);
 }
@@ -169,7 +172,8 @@ __device__ mmm1dgpu_real dev_K1(mmm1dgpu_real x) {
   if (x <= 2) {
     mmm1dgpu_real I1 = x * evaluateAsChebychevSeriesAt(bi1_data, bi1_size,
                                                        x * x / 4.5f - 1.0f);
-    return (log(x) - M_LN2f) * I1 + c / x;
+    return (log(x) - Utils::ln_2<mmm1dgpu_real>()) * I1 + c / x;
   }
   return exp(-x) * c * rsqrt(x);
 }
+#endif
