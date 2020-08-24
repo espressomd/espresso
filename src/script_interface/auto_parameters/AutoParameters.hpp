@@ -19,7 +19,8 @@
 #ifndef SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 #define SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 
-#include "script_interface/ScriptInterfaceBase.hpp"
+#include "script_interface/Exception.hpp"
+#include "script_interface/ObjectHandle.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
 #include <unordered_map>
@@ -82,21 +83,21 @@ namespace ScriptInterface {
  * (this has to be captured in the lambdas to have access to the member
  * functions of the class).
  */
-template <typename Derived, typename Base = ScriptInterfaceBase>
+template <typename Derived, typename Base = ObjectHandle>
 class AutoParameters : public Base {
-  static_assert(std::is_base_of<ScriptInterfaceBase, Base>::value, "");
+  static_assert(std::is_base_of<ObjectHandle, Base>::value, "");
 
 public:
   /** @brief Exception thrown when accessing an unknown parameter */
-  struct UnknownParameter : public std::runtime_error {
+  struct UnknownParameter : public Exception {
     explicit UnknownParameter(std::string const &name)
-        : runtime_error("Unknown parameter '" + name + "'.") {}
+        : Exception("Unknown parameter '" + name + "'.") {}
   };
 
   /** @brief Exception thrown when writing to a read-only parameter */
-  struct WriteError : public std::runtime_error {
+  struct WriteError : public Exception {
     explicit WriteError(std::string const &name)
-        : runtime_error("Parameter " + name + " is read-only.") {}
+        : Exception("Parameter " + name + " is read-only.") {}
   };
 
 protected:
@@ -112,7 +113,7 @@ protected:
   }
 
 public:
-  /* ScriptInterfaceBase implementation */
+  /* ObjectHandle implementation */
   Utils::Span<const boost::string_ref> valid_parameters() const final {
     static std::vector<boost::string_ref> valid_params;
     valid_params.clear();
@@ -132,7 +133,7 @@ public:
     }
   }
 
-  void set_parameter(const std::string &name, const Variant &value) final {
+  void do_set_parameter(const std::string &name, const Variant &value) final {
     try {
       m_parameters.at(name).set(value);
     } catch (AutoParameter::WriteError const &e) {

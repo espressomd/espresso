@@ -30,6 +30,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
 
+#include <utils/constants.hpp>
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
@@ -77,8 +78,9 @@ Particle &get_part(int id) {
 }
 } // namespace
 
-/** @brief Return true if a bond between the centers of the colliding particles
- * needs to be placed. At this point, all modes need this */
+/** @brief Return true if a bond between the centers of the colliding
+ *  particles needs to be placed. At this point, all modes need this.
+ */
 inline bool bind_centers() {
   // Note that the glue to surface mode adds bonds between the centers
   // but does so later in the process. This is needed to guarantee that
@@ -253,8 +255,9 @@ void queue_collision(const int part1, const int part2) {
   local_collision_queue.push_back({part1, part2});
 }
 
-/** @brief Calculate position of vs for GLUE_TO_SURFACE mode
- *    Returns id of particle to bind vs to */
+/** @brief Calculate position of vs for GLUE_TO_SURFACE mode.
+ *  Returns id of particle to bind vs to.
+ */
 const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
                                             const Particle &p2,
                                             Utils::Vector3d &pos) {
@@ -345,16 +348,12 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // three_particle_angle_resolution steps and by adding the id
   // of the bond for zero degrees.
   auto const bond_id = static_cast<int>(
-      floor(phi / M_PI *
-                (collision_params.three_particle_angle_resolution - 1) +
-            0.5) +
+      floor(0.5 + phi / Utils::pi() *
+                      (collision_params.three_particle_angle_resolution - 1)) +
       collision_params.bond_three_particles);
 
   // Create the bond
-
-  // First, fill bond data structure
   const std::array<int, 2> bondT = {p1.p.identity, p2.p.identity};
-
   p.bonds().insert({bond_id, bondT});
 }
 

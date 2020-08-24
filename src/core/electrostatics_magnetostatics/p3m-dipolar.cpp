@@ -61,6 +61,8 @@ using Utils::sinc;
  * DEFINES
  ************************************************/
 
+#define DP3M_RTBISECTION_ERROR 9999999
+
 /************************************************
  * variables
  ************************************************/
@@ -210,7 +212,7 @@ void dp3m_init() {
 
     int ca_mesh_size = fft_init(dp3m.local_mesh.dim, dp3m.local_mesh.margin,
                                 dp3m.params.mesh, dp3m.params.mesh_off,
-                                &dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
+                                dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
     dp3m.rs_mesh.resize(ca_mesh_size);
     dp3m.ks_mesh.resize(ca_mesh_size);
 
@@ -721,7 +723,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
 
 double calc_surface_term(bool force_flag, bool energy_flag,
                          const ParticleRange &particles) {
-  auto const pref = dipole.prefactor * 4 * M_PI / box_geo.volume() /
+  auto const pref = dipole.prefactor * 4 * Utils::pi() / box_geo.volume() /
                     (2 * dp3m.params.epsilon + 1);
   double suma, a[3];
   double en;
@@ -834,7 +836,7 @@ void dp3m_calc_influence_function_force() {
   }
   dp3m.g_force.resize(size);
   double fak1 = Utils::int_pow<3>(dp3m.params.mesh[0]) * 2.0 /
-                (box_geo.length()[0] * box_geo.length()[0]);
+                Utils::int_pow<2>(box_geo.length()[0]);
 
   int n[3];
   for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
@@ -920,7 +922,7 @@ void dp3m_calc_influence_function_energy() {
   }
   dp3m.g_energy.resize(size);
   double fak1 = Utils::int_pow<3>(dp3m.params.mesh[0]) * 2.0 /
-                (box_geo.length()[0] * box_geo.length()[0]);
+                Utils::int_pow<2>(box_geo.length()[0]);
 
   int n[3];
   for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
@@ -993,8 +995,6 @@ double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]) {
 
 /*****************************************************************************/
 
-#define P3M_TUNE_MAX_CUTS 50
-
 /** @copybrief p3m_get_accuracy
  *
  *  The real space error is tuned such that it contributes half of the
@@ -1021,13 +1021,17 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
                                         r_cut_iL, dp3m.sum_dip_part,
                                         dp3m.sum_mu2, 0.001);
 
-  if (M_SQRT2 * rs_err > dp3m.params.accuracy) {
+  if (Utils::sqrt_2() * rs_err > dp3m.params.accuracy) {
     /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
     alpha_L = dp3m_rtbisection(
         box_geo.length()[0], dipole.prefactor, r_cut_iL, dp3m.sum_dip_part,
         dp3m.sum_mu2, 0.0001 * box_geo.length()[0], 5.0 * box_geo.length()[0],
         0.0001, dp3m.params.accuracy);
-
+    if (alpha_L == -DP3M_RTBISECTION_ERROR) {
+      *_rs_err = -1;
+      *_ks_err = -1;
+      return -DP3M_RTBISECTION_ERROR;
+    }
   }
 
   else
@@ -1128,9 +1132,11 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
      is initially 0 and therefore
      has infinite error estimate, as required. Therefore if the high boundary
      fails, there is no possible r_cut */
-  if ((*_accuracy = dp3m_get_accuracy(mesh, cao, r_cut_iL_max, _alpha_L,
-                                      &rs_err, &ks_err)) >
-      dp3m.params.accuracy) {
+  *_accuracy =
+      dp3m_get_accuracy(mesh, cao, r_cut_iL_max, _alpha_L, &rs_err, &ks_err);
+  if (*_accuracy == -DP3M_RTBISECTION_ERROR)
+    return *_accuracy;
+  if (*_accuracy > dp3m.params.accuracy) {
     /* print result */
     sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e accuracy not achieved\n",
             mesh, cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
@@ -1145,8 +1151,11 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
       break;
 
     /* bisection */
-    if (dp3m_get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err) >
-        dp3m.params.accuracy)
+    auto const tmp_accuracy =
+        dp3m_get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err);
+    if (tmp_accuracy == -DP3M_RTBISECTION_ERROR)
+      return tmp_accuracy;
+    if (tmp_accuracy > dp3m.params.accuracy)
       r_cut_iL_min = r_cut_iL;
     else
       r_cut_iL_max = r_cut_iL;
@@ -1169,6 +1178,9 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
 
   *_accuracy =
       dp3m_get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err);
+  if (*_accuracy == -DP3M_RTBISECTION_ERROR) {
+    return *_accuracy;
+  }
 
   /* print result */
   sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8d\n", mesh, cao, r_cut_iL,
@@ -1216,7 +1228,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     tmp_time = dp3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                             &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out if the force evaluation is not working */
-    if (tmp_time == -P3M_TUNE_FAIL)
+    if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
       return tmp_time;
     /* cao is too large for this grid, but still the accuracy cannot be
      * achieved, give up */
@@ -1255,7 +1267,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
           dp3m_mc_time(log, mesh, cao + final_dir, r_cut_iL_min, r_cut_iL_max,
                        &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
       /* bail out on errors, as usual */
-      if (tmp_time == -P3M_TUNE_FAIL)
+      if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
         return tmp_time;
       /* in this direction, we cannot optimise, since we get into precision
        * trouble */
@@ -1306,7 +1318,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     tmp_time = dp3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                             &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out on errors, as usual */
-    if (tmp_time == -P3M_TUNE_FAIL)
+    if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
       return tmp_time;
     /* if we cannot meet the precision anymore, give up */
     if (tmp_time < 0)
@@ -1368,8 +1380,7 @@ int dp3m_adaptive_tune(char **logger) {
   *logger = strcat_alloc(*logger, b);
 
   if (dp3m.sum_dip_part == 0) {
-    *logger = strcat_alloc(
-        *logger, "no dipolar particles in the system, cannot tune dipolar P3M");
+    runtimeErrorMsg() << "no dipolar particles in the system";
     return ES_ERROR;
   }
 
@@ -1428,7 +1439,7 @@ int dp3m_adaptive_tune(char **logger) {
         dp3m_m_time(logger, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
                     r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* some error occurred during the tuning force evaluation */
-    if (tmp_time == -1)
+    if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
       return ES_ERROR;
     /* this mesh does not work at all */
     if (tmp_time < 0)
@@ -1453,9 +1464,7 @@ int dp3m_adaptive_tune(char **logger) {
   }
 
   if (time_best == 1e20) {
-    *logger = strcat_alloc(
-        *logger,
-        "failed to tune dipolar P3M parameters to required accuracy\n");
+    runtimeErrorMsg() << "failed to reach requested accuracy";
     return ES_ERROR;
   }
 
@@ -1614,9 +1623,11 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
   fmid = P3M_DIPOLAR_real_space_error(box_size, prefac, r_cut_iL, n_c_part,
                                       sum_q2, x2) -
          constant;
-  if (f * fmid >= 0.0)
-    fprintf(stderr,
-            "Root must be bracketed for bisection in dp3m_rtbisection\n");
+  if (f * fmid >= 0.0) {
+    runtimeErrorMsg()
+        << "Root must be bracketed for bisection in dp3m_rtbisection";
+    return -DP3M_RTBISECTION_ERROR;
+  }
   rtb = f < 0.0 ? (dx = x2 - x1, x1)
                 : (dx = x1 - x2,
                    x2); // Orient the search dx, and set rtb to x1 or x2 ...
@@ -1629,8 +1640,8 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
     if (fabs(dx) < xacc || fmid == 0.0)
       return rtb;
   }
-  fprintf(stderr, "Too many bisections in JJ_rtbissection\n");
-  return -9999999.9999;
+  runtimeErrorMsg() << "Too many bisections in dp3m_rtbisection";
+  return -DP3M_RTBISECTION_ERROR;
 }
 
 /************************************************************/

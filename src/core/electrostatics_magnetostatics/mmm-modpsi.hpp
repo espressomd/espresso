@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
  *
  * This file is part of ESPResSo.
  *
@@ -16,3 +18,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/** \file
+ *  Common parts of the MMM family of methods for the electrostatic
+ *  interaction: MMM1D and ELC. This file contains the code for the
+ *  CPU and GPU implementations.
+ */
+
+#ifndef MMM_MODPSI_HPP
+#define MMM_MODPSI_HPP
+
+#include <vector>
+
+/** Table of the Taylor expansions of the modified polygamma functions */
+extern std::vector<std::vector<double>> modPsi;
+
+/** Create both the even and odd polygamma functions up to order
+ *  <tt>2*new_n</tt>
+ */
+void create_mod_psi_up_to(int new_n);
+
+#endif

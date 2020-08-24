@@ -23,11 +23,12 @@
 #define SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
 
 #include "AccumulatorBase.hpp"
+
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/observables/Observable.hpp"
 
 #include "core/accumulators/Correlator.hpp"
-#include "script_interface/observables/Observable.hpp"
 
 #include "utils/Vector.hpp"
 #include "utils/as_const.hpp"
@@ -55,7 +56,7 @@ public:
          {"obs2", Utils::as_const(m_obs2)}});
   }
 
-  void construct(VariantMap const &args) override {
+  void do_construct(VariantMap const &args) override {
     set_from_args(m_obs1, args, "obs1");
     if (args.count("obs2"))
       set_from_args(m_obs2, args, "obs2");
@@ -76,8 +77,8 @@ public:
     return m_correlator;
   }
 
-  Variant call_method(std::string const &method,
-                      VariantMap const &parameters) override {
+  Variant do_call_method(std::string const &method,
+                         VariantMap const &parameters) override {
     if (method == "update")
       correlator()->update();
     if (method == "finalize")
@@ -92,17 +93,8 @@ public:
     return AccumulatorBase::call_method(method, parameters);
   }
 
-  Variant get_state() const override {
-    std::vector<Variant> state(2);
-    state[0] = ScriptInterfaceBase::get_state();
-    state[1] = m_correlator->get_internal_state();
-
-    return state;
-  }
-
   std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
-    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(
-        m_correlator);
+    return m_correlator;
   }
 
   std::shared_ptr<const ::Accumulators::AccumulatorBase>
@@ -112,18 +104,19 @@ public:
   }
 
 private:
-  void set_state(Variant const &state) override {
-    auto const &state_vec = boost::get<std::vector<Variant>>(state);
-
-    ScriptInterfaceBase::set_state(state_vec.at(0));
-    m_correlator->set_internal_state(boost::get<std::string>(state_vec.at(1)));
-  }
-
   /* The actual correlator */
   std::shared_ptr<CoreCorr> m_correlator;
 
   std::shared_ptr<Observables::Observable> m_obs1;
   std::shared_ptr<Observables::Observable> m_obs2;
+
+  std::string get_internal_state() const override {
+    return m_correlator->get_internal_state();
+  }
+
+  void set_internal_state(std::string const &state) override {
+    m_correlator->set_internal_state(state);
+  }
 };
 
 } // namespace Accumulators

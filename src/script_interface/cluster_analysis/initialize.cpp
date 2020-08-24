@@ -20,17 +20,12 @@
 #include "initialize.hpp"
 #include "Cluster.hpp"
 #include "ClusterStructure.hpp"
-#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {
-
-void initialize() {
-  ScriptInterface::register_new<
-      ScriptInterface::ClusterAnalysis::ClusterStructure>(
-      "ClusterAnalysis::ClusterStructure");
-  ScriptInterface::register_new<ScriptInterface::ClusterAnalysis::Cluster>(
-      "ClusterAnalysis::Cluster");
+void initialize(Utils::Factory<ObjectHandle> *om) {
+  om->register_new<ClusterStructure>("ClusterAnalysis::ClusterStructure");
+  om->register_new<ClusterAnalysis::Cluster>("ClusterAnalysis::Cluster");
 }
 } /* namespace ClusterAnalysis */
 } /* namespace ScriptInterface */

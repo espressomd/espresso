@@ -211,7 +211,7 @@ capabilities. The usage is quite simple:
 .. code:: python
 
     from espressomd.io.mppiio import mpiio
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     # ... add particles here
     mpiio.write("/tmp/mydata", positions=True, velocities=True, types=True, bonds=True)
 

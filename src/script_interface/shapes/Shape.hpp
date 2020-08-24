@@ -35,8 +35,8 @@ public:
    */
   virtual std::shared_ptr<::Shapes::Shape> shape() const = 0;
 
-  Variant call_method(std::string const &name,
-                      VariantMap const &params) override {
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
     if (name == "calc_distance") {
       auto const pos = get_value<Utils::Vector3d>(params.at("position"));
       double dist;

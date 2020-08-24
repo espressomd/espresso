@@ -1,4 +1,4 @@
-image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:8a7d258889d87dcc9c96a200784b30b532d45b33
+image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:e583d4b2eb8eedd10068957f952bd67008475ee5
 
 stages:
   - prepare
@@ -124,7 +124,7 @@ no_rotation:
 ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:fc7628d32de0fce605976ba9edebe7eff186e618
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:e583d4b2eb8eedd10068957f952bd67008475ee5
   script:
     - export myconfig=maxset with_cuda=false make_check_unit_tests=false make_check_python=false
     - bash maintainer/CI/build_cmake.sh
@@ -209,6 +209,24 @@ clang-sanitizer:
     - linux
     - cuda
 
+cuda11-maxset:
+  <<: *global_job_definition
+  stage: build
+  image: docker.pkg.github.com/espressomd/docker/cuda:e583d4b2eb8eedd10068957f952bd67008475ee5
+  variables:
+     CC: 'gcc-9'
+     CXX: 'g++-9'
+  script:
+    - export myconfig=maxset with_cuda=true with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - export with_scafacos=true with_stokesian_dynamics=true
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+  only:
+    - schedules
+
 cuda10-maxset:
   <<: *global_job_definition
   stage: build
@@ -240,11 +258,6 @@ cuda9-maxset:
     - export myconfig=maxset with_cuda=true with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
-  artifacts:
-    paths:
-    - build/
-    expire_in: 1 week
-  when: on_success
   tags:
     - docker
     - linux
@@ -468,7 +481,7 @@ check_cuda_maxset_no_gpu:
   <<: *global_job_definition
   stage: additional_checks
   when: on_success
-  needs: 
+  needs:
     - cuda10-maxset
   script:
     - export CUDA_VISIBLE_DEVICES=""
@@ -481,9 +494,9 @@ check_cuda_maxset_no_gpu:
 
 check_with_odd_no_of_processors:
   <<: *global_job_definition
-  stage: additional_checks 
+  stage: additional_checks
   when: on_success
-  needs: 
+  needs:
     - cuda10-maxset
   script:
     - cd ${CI_PROJECT_DIR}/build
@@ -519,7 +532,7 @@ check_with_odd_no_of_processors:
 #  dependencies:
 #    - check_sphinx
 #  script:
-#    - cd ${CI_PROJECT_DIR}/build/doc/sphinx/html && 
+#    - cd ${CI_PROJECT_DIR}/build/doc/sphinx/html &&
 #      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
 #
 
