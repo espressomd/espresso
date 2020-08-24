@@ -36,6 +36,5 @@ std::array<H5MD_Specification::Dataset, 30> H5MD_Specification::DATASETS = {{
     {"connectivity/atoms", "step", 1, H5T_NATIVE_INT, 1, true},
     {"connectivity/atoms", "time", 1, H5T_NATIVE_DOUBLE, 1, true},
 }};
-
 }
 } // namespace Writer

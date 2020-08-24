@@ -38,8 +38,8 @@ class MPIIOScript : public AutoParameters<MPIIOScript> {
 public:
   MPIIOScript() { add_parameters({}); }
 
-  Variant call_method(const std::string &name,
-                      const VariantMap &parameters) override {
+  Variant do_call_method(const std::string &name,
+                         const VariantMap &parameters) override {
 
     auto pref = get_value<std::string>(parameters.at("prefix"));
     auto pos = get_value<bool>(parameters.at("pos"));

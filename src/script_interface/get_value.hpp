@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2019 The ESPResSo project
+ * Copyright (C) 2016-2020 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -20,10 +20,11 @@
 #ifndef SCRIPT_INTERFACE_GET_VALUE_HPP
 #define SCRIPT_INTERFACE_GET_VALUE_HPP
 
-#include "ScriptInterfaceBase.hpp"
+#include "Exception.hpp"
+#include "ObjectHandle.hpp"
 #include "Variant.hpp"
 
-#include "utils/demangle.hpp"
+#include <utils/demangle.hpp>
 
 #include <boost/range/algorithm/transform.hpp>
 
@@ -167,16 +168,12 @@ template <> struct get_value_helper<std::vector<double>, void> {
 template <typename T>
 struct get_value_helper<
     std::shared_ptr<T>,
-    typename std::enable_if<std::is_base_of<ScriptInterfaceBase, T>::value,
+    typename std::enable_if<std::is_base_of<ObjectHandle, T>::value,
                             void>::type> {
   std::shared_ptr<T> operator()(Variant const &v) const {
-    auto const object_id = boost::get<ObjectId>(v);
-    if (object_id == ObjectId()) {
-      return nullptr;
-    }
-    auto so_ptr = ScriptInterfaceBase::get_instance(object_id).lock();
+    auto so_ptr = boost::get<ObjectRef>(v);
     if (!so_ptr) {
-      throw std::runtime_error("Unknown Object.");
+      throw boost::bad_get{};
     }
 
     auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
@@ -184,7 +181,8 @@ struct get_value_helper<
     if (t_ptr) {
       return t_ptr;
     }
-    throw std::runtime_error("Wrong type: " + so_ptr->name());
+
+    throw boost::bad_get{};
   }
 };
 } // namespace detail
@@ -202,9 +200,8 @@ template <typename T> T get_value(Variant const &v) {
   try {
     return detail::get_value_helper<T>{}(v);
   } catch (const boost::bad_get &) {
-    throw std::runtime_error("Provided argument of type " +
-                             detail::type_label(v) + " is not convertible to " +
-                             Utils::demangle<T>());
+    throw Exception("Provided argument of type " + detail::type_label(v) +
+                    " is not convertible to " + Utils::demangle<T>());
   }
 }
 
@@ -219,7 +216,7 @@ T get_value(VariantMap const &vals, std::string const &name) {
   try {
     return get_value<T>(vals.at(name));
   } catch (std::out_of_range const &) {
-    throw std::out_of_range("Parameter '" + name + "' is missing.");
+    throw Exception("Parameter '" + name + "' is missing.");
   }
 }
 
@@ -234,14 +231,6 @@ T get_value_or(VariantMap const &vals, std::string const &name,
     return get_value<T>(vals.at(name));
   }
   return default_;
-}
-
-/**
- * @brief Make a new T with arguments extracted from a VariantMap.
- */
-template <typename T, typename... Types, typename... ArgNames>
-T make_from_args(VariantMap const &vals, ArgNames &&... args) {
-  return T{get_value<Types>(vals, std::forward<ArgNames>(args))...};
 }
 
 /**

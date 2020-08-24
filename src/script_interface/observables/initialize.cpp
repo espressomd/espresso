@@ -27,7 +27,6 @@
 #include "ProfileObservable.hpp"
 #include "RDF.hpp"
 #include "config.hpp"
-#include "script_interface/ScriptInterface.hpp"
 
 #include "core/observables/BondAngles.hpp"
 #include "core/observables/BondDihedrals.hpp"
@@ -59,35 +58,34 @@ namespace Observables {
 
 /** @name %Observables registration
  *  Convenience macro functions to automatize the registration of observable
- *  interfaces via @ref ScriptInterface::register_new<T>()
+ *  interfaces via a factory.
  */
 /*@{*/
 
 /** Register a @ref ScriptInterface::Observables::ParamlessObservableInterface
  *  "ParamlessObservableInterface"
  */
-#define REGISTER(name)                                                         \
-  ScriptInterface::register_new<name>("Observables::" #name "");
+#define REGISTER(name) om->register_new<name>("Observables::" #name "");
 
 /** Register a @ref ScriptInterface::Observables::ProfileObservable
  *  "ProfileObservable"
  */
 #define REGISTER_PROFILE_OBS(name)                                             \
-  ScriptInterface::register_new<ProfileObservable<::Observables::name>>(       \
+  om->register_new<ProfileObservable<::Observables::name>>(                    \
       "Observables::" #name "");
 
 /** Register a @ref ScriptInterface::Observables::PidObservable
  *  "PidObservable"
  */
 #define REGISTER_PID_OBS(name)                                                 \
-  ScriptInterface::register_new<PidObservable<::Observables::name>>(           \
-      "Observables::" #name "");
+  om->register_new<PidObservable<::Observables::name>>("Observables::" #name   \
+                                                       "");
 
 /** Register a @ref ScriptInterface::Observables::PidProfileObservable
  *  "PidProfileObservable"
  */
 #define REGISTER_PID_PROFILE_OBS(name)                                         \
-  ScriptInterface::register_new<PidProfileObservable<::Observables::name>>(    \
+  om->register_new<PidProfileObservable<::Observables::name>>(                 \
       "Observables::" #name "");
 
 /** Register a @ref
@@ -95,29 +93,27 @@ namespace Observables {
  *  "CylindricalPidProfileObservable"
  */
 #define REGISTER_CYLPID_PROFILE_OBS(name)                                      \
-  ScriptInterface::register_new<                                               \
-      CylindricalPidProfileObservable<::Observables::name>>(                   \
+  om->register_new<CylindricalPidProfileObservable<::Observables::name>>(      \
       "Observables::" #name "");
 
 /** Register a @ref ScriptInterface::Observables::CylindricalLBProfileObservable
  *  "CylindricalLBProfileObservable"
  */
 #define REGISTER_CYLLB_OBS(name)                                               \
-  ScriptInterface::register_new<                                               \
-      CylindricalLBProfileObservable<::Observables::name>>(                    \
+  om->register_new<CylindricalLBProfileObservable<::Observables::name>>(       \
       "Observables::" #name "");
 
 /** Register an @ref ScriptInterface::Observables::LBProfileObservable
  *  "LBProfileObservable"
  */
 #define REGISTER_LB_OBS(name)                                                  \
-  ScriptInterface::register_new<LBProfileObservable<::Observables::name>>(     \
+  om->register_new<LBProfileObservable<::Observables::name>>(                  \
       "Observables::" #name "");
 /*@}*/
 
-void initialize() {
+void initialize(Utils::Factory<ObjectHandle> *om) {
   // Manual registration:
-  //  ScriptInterface::register_new<ScriptInterface::Observables::ParticleVelocities>::
+  //  om->register_new<ScriptInterface::Observables::ParticleVelocities>::
   //    register_new("Observables::ParticleVelocities");
 
   REGISTER(Energy);
@@ -154,7 +150,6 @@ void initialize() {
 #ifdef DPD
   REGISTER(DPDStress)
 #endif
-
   REGISTER(LBFluidPressureTensor);
   REGISTER_CYLPID_PROFILE_OBS(
       CylindricalLBFluxDensityProfileAtParticlePositions);

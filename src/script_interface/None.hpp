@@ -22,6 +22,8 @@
 
 #include <boost/serialization/access.hpp>
 
+#include <cstddef>
+
 namespace ScriptInterface {
 
 /**

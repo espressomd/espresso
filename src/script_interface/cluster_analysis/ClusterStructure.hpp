@@ -23,10 +23,9 @@
 #define SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
 
 #include "core/cluster_analysis/ClusterStructure.hpp"
+
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/pair_criteria/pair_criteria.hpp"
-
-#include <utils/Factory.hpp>
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {
@@ -43,30 +42,20 @@ public:
               m_cluster_structure.set_pair_criterion(m_pc->pair_criterion());
             };
           },
-          [this]() { return (m_pc != nullptr) ? m_pc->id() : ObjectId(); }}});
+          [this]() { return m_pc; }}});
   };
-  Variant call_method(std::string const &method,
-                      VariantMap const &parameters) override {
+  Variant do_call_method(std::string const &method,
+                         VariantMap const &parameters) override {
     if (method == "get_cluster") {
-
       // Note: Cluster objects are generated on the fly, to avoid having to
       // store a script interface object for all clusters (which can by
       // thousands)
-      auto c =
-          std::dynamic_pointer_cast<Cluster>(ScriptInterfaceBase::make_shared(
-              "ClusterAnalysis::Cluster",
-              ScriptInterfaceBase::CreationPolicy::LOCAL));
-      c->set_cluster(m_cluster_structure.clusters.at(
-          boost::get<int>(parameters.at("id"))));
+      auto c = std::dynamic_pointer_cast<Cluster>(
+          context()->make_shared("ClusterAnalysis::Cluster", {}));
+      c->set_cluster(
+          m_cluster_structure.clusters.at(get_value<int>(parameters.at("id"))));
 
-      // Store a temporary copy of the most recent cluster being returned.
-      // This ensures, that the reference count of the shared_ptr doesn't go
-      // to zero, while it is passed to Python.
-      // (At some point, it is converted to an ObjectId, which is passed
-      //  to Python, where a new script object is constructed. While it is
-      // passed as ObjectId, no one holds an instance of the shared_ptr)
-      m_tmp_cluster = c;
-      return m_tmp_cluster->id();
+      return c;
     }
     if (method == "cluster_ids") {
       std::vector<int> cluster_ids;
@@ -80,7 +69,7 @@ public:
     }
     if (method == "cid_for_particle") {
       return m_cluster_structure.cluster_id.at(
-          boost::get<int>(parameters.at("pid")));
+          get_value<int>(parameters.at("pid")));
     }
     if (method == "clear") {
       m_cluster_structure.clear();
@@ -100,7 +89,6 @@ public:
 private:
   ::ClusterAnalysis::ClusterStructure m_cluster_structure;
   std::shared_ptr<PairCriteria::PairCriterion> m_pc;
-  std::shared_ptr<Cluster> m_tmp_cluster;
 };
 
 } /* namespace ClusterAnalysis */
