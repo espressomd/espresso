@@ -34,7 +34,6 @@
 #include "thermostat.hpp"
 
 #include <boost/mpi/collectives/reduce.hpp>
-#include <utils/NoOp.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/tensor_product.hpp>
 
