@@ -24,13 +24,13 @@
 #include "dpd.hpp"
 
 #ifdef DPD
+#include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
-#include "short_range_loop.hpp"
 #include "thermostat.hpp"
 
 #include <boost/mpi/collectives/reduce.hpp>

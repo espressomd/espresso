@@ -38,8 +38,10 @@
  *    special method like P3M.
  */
 
+#include "Cell.hpp"
 #include "CellStructure.hpp"
 #include "DomainDecomposition.hpp"
+#include "Particle.hpp"
 
 #include <utility>
 #include <vector>
@@ -59,20 +61,8 @@ enum {
 
 /*@}*/
 
-/************************************************************/
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
-
-/*@}*/
-
-/************************************************************/
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
 
 /** Reinitialize the cell structures.
  *  @param new_cs The new topology to use afterwards.
@@ -100,8 +90,6 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
 /** Check if a particle resorting is required. */
 void check_resort_particles();
-
-/*@}*/
 
 /**
  * @brief Find the cell in which a particle is stored.

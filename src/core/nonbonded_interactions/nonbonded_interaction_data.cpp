@@ -25,7 +25,6 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "errorhandling.hpp"
 #include "grid.hpp"
 
 #include "serialization/IA_parameters.hpp"
@@ -48,10 +47,6 @@ int max_seen_particle_type = 0;
 std::vector<IA_parameters> ia_params;
 
 double min_global_cut = INACTIVE_CUTOFF;
-
-/*****************************************
- * function prototypes
- *****************************************/
 
 /*****************************************
  * general low-level functions

@@ -28,7 +28,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "virtual_sites/VirtualSitesRelative.hpp"
+#include "virtual_sites.hpp"
 
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>

@@ -27,15 +27,14 @@
 #include "cells.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
-#include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include "AtomDecomposition.hpp"
 #include "DomainDecomposition.hpp"
+#include "ParticleDecomposition.hpp"
 
+#include <utils/math/sqr.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/range/adaptor/uniqued.hpp>

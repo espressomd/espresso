@@ -20,7 +20,6 @@
  */
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <memory>
 #include <mpi.h>
 #ifdef OPEN_MPI
@@ -32,33 +31,23 @@
 
 #include "errorhandling.hpp"
 
+#include "CellStructure.hpp"
 #include "EspressoSystemInterface.hpp"
-#include "Particle.hpp"
-#include "bonded_interactions/bonded_tab.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
-#include "collision.hpp"
 #include "cuda_interface.hpp"
 #include "energy.hpp"
 #include "event.hpp"
-#include "forces.hpp"
 #include "galilei.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
-#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
 #include "integrators/steepest_descent.hpp"
-#include "io/mpiio/mpiio.hpp"
-#include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "npt.hpp"
-#include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
-#include "rotation.hpp"
-#include "stokesian_dynamics/sd_interface.hpp"
-#include "virtual_sites.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
@@ -66,9 +55,6 @@
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
 #include "serialization/IA_parameters.hpp"
-
-#include <utils/Counter.hpp>
-#include <utils/u32_to_u64.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/range/algorithm/min_element.hpp>

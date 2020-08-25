@@ -31,24 +31,18 @@
 #ifdef ELECTROSTATICS
 
 #include <cmath>
-#include <cstddef>
 #include <cstdlib>
-
-#include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "forces.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-
-#include "short_range_loop.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
+
+#include <utils/constants.hpp>
 
 iccp3m_struct iccp3m_cfg;
 
@@ -101,7 +95,7 @@ int iccp3m_iteration(const ParticleRange &particles,
         << "ICCP3M: nonpositive dielectric constant is not allowed.";
   }
 
-  auto const pref = 1.0 / (coulomb.prefactor * 6.283185307);
+  auto const pref = 1.0 / (coulomb.prefactor * 2 * Utils::pi());
   iccp3m_cfg.citeration = 0;
 
   double globalmax = 1e100;
