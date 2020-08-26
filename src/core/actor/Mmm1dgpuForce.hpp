@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef ESPRESSO_CORE_ACTOR_MMM1DGPUFORCE_HPP
+#define ESPRESSO_CORE_ACTOR_MMM1DGPUFORCE_HPP
+
 #include "config.hpp"
 
 #ifdef MMM1D_GPU
@@ -77,4 +80,5 @@ private:
   void check_periodicity();
 };
 
+#endif
 #endif

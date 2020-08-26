@@ -22,9 +22,8 @@
 
 namespace ScriptInterface {
 namespace MPIIO {
-void initialize() {
-  ScriptInterface::register_new<ScriptInterface::MPIIO::MPIIOScript>(
-      "ScriptInterface::MPIIO::MPIIOScript");
+void initialize(Utils::Factory<ObjectHandle> *om) {
+  om->register_new<MPIIOScript>("ScriptInterface::MPIIO::MPIIOScript");
 }
 } // namespace MPIIO
 } // namespace ScriptInterface

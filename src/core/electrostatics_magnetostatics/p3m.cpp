@@ -392,7 +392,7 @@ auto calc_dipole_moment(boost::mpi::communicator const &comm,
 
 void add_dipole_correction(Utils::Vector3d const &box_dipole,
                            const ParticleRange &particles) {
-  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+  auto const pref = coulomb.prefactor * 4 * Utils::pi() / box_geo.volume() /
                     (2 * p3m.params.epsilon + 1);
 
   auto const dm = pref * box_dipole;
@@ -403,7 +403,7 @@ void add_dipole_correction(Utils::Vector3d const &box_dipole,
 }
 
 double dipole_correction_energy(Utils::Vector3d const &box_dipole) {
-  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+  auto const pref = coulomb.prefactor * 4 * Utils::pi() / box_geo.volume() /
                     (2 * p3m.params.epsilon + 1);
 
   return pref * box_dipole.norm2();
@@ -604,8 +604,6 @@ void p3m_calc_influence_function_energy() {
                                             box_geo.length());
 }
 
-#define P3M_TUNE_MAX_CUTS 50
-
 /** Get the minimal error for this combination of parameters.
  *
  *  The real space error is tuned such that it contributes half of the
@@ -629,9 +627,10 @@ static double p3m_get_accuracy(const int mesh[3], int cao, double r_cut_iL,
   rs_err = p3m_real_space_error(coulomb.prefactor, r_cut_iL, p3m.sum_qpart,
                                 p3m.sum_q2, 0);
 
-  if (M_SQRT2 * rs_err > p3m.params.accuracy) {
+  if (Utils::sqrt_2() * rs_err > p3m.params.accuracy) {
     /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
-    alpha_L = sqrt(log(M_SQRT2 * rs_err / p3m.params.accuracy)) / r_cut_iL;
+    alpha_L =
+        sqrt(log(Utils::sqrt_2() * rs_err / p3m.params.accuracy)) / r_cut_iL;
   } else {
     /* even alpha=0 is ok, however, we cannot choose it since it kills the
        k-space error formula.
@@ -965,8 +964,7 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((box_geo.length()[0] == box_geo.length()[1]) &&
           (box_geo.length()[1] == box_geo.length()[2]))) {
-      *log = strcat_alloc(
-          *log, "{049 P3M_init: Nonmetallic epsilon requires cubic box} ");
+      runtimeErrorMsg() << "non-metallic epsilon requires cubic box";
       return ES_ERROR;
     }
   }
@@ -988,8 +986,7 @@ int p3m_adaptive_tune(char **log) {
   *log = strcat_alloc(*log, b);
 
   if (p3m.sum_qpart == 0) {
-    *log = strcat_alloc(*log,
-                        "no charged particles in the system, cannot tune P3M");
+    runtimeErrorMsg() << "no charged particles in the system";
     return ES_ERROR;
   }
 
@@ -1002,13 +999,8 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.mesh[0] == 0 || p3m.params.mesh[1] == 0 ||
       p3m.params.mesh[2] == 0) {
     /* Medium-educated guess for the minimal mesh */
-    mesh_density_min =
-        pow(p3m.sum_qpart / (box_geo.length()[0] * box_geo.length()[1] *
-                             box_geo.length()[2]),
-            1.0 / 3.0);
-    mesh_density_max = 512 / pow(box_geo.length()[0] * box_geo.length()[1] *
-                                     box_geo.length()[2],
-                                 1.0 / 3.0);
+    mesh_density_min = pow(p3m.sum_qpart / box_geo.volume(), 1.0 / 3.0);
+    mesh_density_max = 512 / pow(box_geo.volume(), 1.0 / 3.0);
     tune_mesh = true;
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
@@ -1114,6 +1106,8 @@ int p3m_adaptive_tune(char **log) {
         p3m_m_time(log, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
                    r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* some error occurred during the tuning force evaluation */
+    if (tmp_time == -P3M_TUNE_FAIL)
+      return ES_ERROR;
     /* this mesh does not work at all */
     if (tmp_time < 0.0)
       continue;
@@ -1141,8 +1135,7 @@ int p3m_adaptive_tune(char **log) {
   }
 
   if (time_best == 1e20) {
-    *log = strcat_alloc(*log,
-                        "failed to tune P3M parameters to required accuracy\n");
+    runtimeErrorMsg() << "failed to reach requested accuracy";
     return ES_ERROR;
   }
 
@@ -1194,7 +1187,7 @@ double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                             double sum_q2, double alpha_L) {
   return (2.0 * prefac * sum_q2 * exp(-Utils::sqr(r_cut_iL * alpha_L))) /
          sqrt((double)n_c_part * r_cut_iL * box_geo.length()[0] *
-              box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
+              box_geo.volume());
 }
 
 double p3m_k_space_error(double prefac, const int mesh[3], int cao,
@@ -1316,7 +1309,7 @@ bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
           (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-      runtimeErrorMsg() << "P3M_init: Nonmetallic epsilon requires cubic box";
+      runtimeErrorMsg() << "P3M_init: non-metallic epsilon requires cubic box";
       ret = true;
     }
   }

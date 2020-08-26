@@ -38,7 +38,7 @@ find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_LIBRARIES
 
 mark_as_advanced(FFTW3_LIBRARIES FFTW3_INCLUDE_DIR)
 
-if(FFTW3_FOUND)
+if(FFTW3_FOUND AND NOT TARGET FFTW3::FFTW3)
   add_library(FFTW3::FFTW3 INTERFACE IMPORTED)
   target_include_directories(FFTW3::FFTW3 INTERFACE "${FFTW3_INCLUDE_DIR}")
   target_link_libraries(FFTW3::FFTW3 INTERFACE "${FFTW3_LIBRARIES}")

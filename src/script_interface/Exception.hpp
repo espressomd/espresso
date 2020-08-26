@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The ESPResSo project
+ * Copyright (C) 2020 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,13 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_GLOBALS_HPP
-#define SCRIPT_INTERFACE_GLOBALS_HPP
+#ifndef ESPRESSO_EXCEPTIONS_HPP
+#define ESPRESSO_EXCEPTIONS_HPP
 
-#include "thermostat.hpp"
+#include <stdexcept>
+#include <string>
 
-extern LangevinThermostat langevin;
-extern BrownianThermostat brownian;
-extern IsotropicNptThermostat npt_iso;
+namespace ScriptInterface {
+struct Exception : public std::exception {
+  explicit Exception(const char *msg) : message(msg) {}
+  explicit Exception(std::string msg) : message(std::move(msg)) {}
 
-#endif
+  const char *what() const noexcept override { return message.c_str(); }
+
+private:
+  std::string message;
+};
+} // namespace ScriptInterface
+
+#endif // ESPRESSO_EXCEPTIONS_HPP

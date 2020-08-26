@@ -23,9 +23,8 @@
 #define SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_HPP
 
 #include "core/cluster_analysis/Cluster.hpp"
-#include "script_interface/ScriptInterface.hpp"
 
-#include <utils/Factory.hpp>
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {
@@ -33,8 +32,8 @@ namespace ClusterAnalysis {
 class Cluster : public AutoParameters<Cluster> {
 public:
   Cluster() = default;
-  Variant call_method(std::string const &method,
-                      VariantMap const &parameters) override {
+  Variant do_call_method(std::string const &method,
+                         VariantMap const &parameters) override {
     if (method == "particle_ids") {
       return m_cluster->particles;
     }
@@ -51,7 +50,7 @@ public:
       double mean_sq_residual;
       double df;
       std::tie(df, mean_sq_residual) =
-          m_cluster->fractal_dimension(boost::get<double>(parameters.at("dr")));
+          m_cluster->fractal_dimension(get_value<double>(parameters.at("dr")));
       return std::vector<double>({df, mean_sq_residual});
     }
     if (method == "center_of_mass") {

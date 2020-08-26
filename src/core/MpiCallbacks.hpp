@@ -38,6 +38,9 @@
 #include <utility>
 
 namespace Communication {
+
+class MpiCallbacks;
+
 /**
  * This namespace contains tag types
  * to indicate what to do with the return
@@ -365,7 +368,8 @@ public:
         -> std::enable_if_t<
             std::is_void<decltype(std::declval<void (*)(Args...)>()(
                 std::forward<ArgRef>(args)...))>::value> {
-      assert(m_cb), m_cb->call(m_id, std::forward<ArgRef>(args)...);
+      if (m_cb)
+        m_cb->call(m_id, std::forward<ArgRef>(args)...);
     }
 
     ~CallbackHandle() {
@@ -374,6 +378,7 @@ public:
     }
 
     MpiCallbacks *cb() const { return m_cb; }
+    int id() const { return m_id; }
   };
 
   /* Avoid accidental copy, leads to mpi deadlock
@@ -391,9 +396,9 @@ private:
   }
 
 public:
-  explicit MpiCallbacks(boost::mpi::communicator &comm,
+  explicit MpiCallbacks(boost::mpi::communicator comm,
                         bool abort_on_exit = true)
-      : m_abort_on_exit(abort_on_exit), m_comm(comm) {
+      : m_abort_on_exit(abort_on_exit), m_comm(std::move(comm)) {
     /** Add a dummy at id 0 for loop abort. */
     m_callback_map.add(nullptr);
 
@@ -719,7 +724,7 @@ private:
   /**
    * The MPI communicator used for the callbacks.
    */
-  boost::mpi::communicator &m_comm;
+  boost::mpi::communicator m_comm;
 
   /**
    * Internal storage for the callback functions.
