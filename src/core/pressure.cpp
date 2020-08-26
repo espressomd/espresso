@@ -26,6 +26,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
 #include "reduce_observable_stat.hpp"
 #include "virtual_sites.hpp"
@@ -102,7 +103,8 @@ void pressure_calc() {
       [](Particle &p1, Particle &p2, Distance const &d) {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
                                     obs_pressure);
-      });
+      },
+      maximal_cutoff());
 
   calc_long_range_virials(cell_structure.local_particles());
 

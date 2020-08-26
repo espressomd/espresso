@@ -40,6 +40,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_loop.hpp"
 
 #include <profiler/profiler.hpp>
@@ -125,6 +126,7 @@ void force_calc(CellStructure &cell_structure) {
           detect_collision(p1, p2, d.dist2);
 #endif
       },
+      maximal_cutoff(),
       VerletCriterion{skin, interaction_range(), coulomb_cutoff, dipole_cutoff,
                       collision_detection_cutoff()});
 

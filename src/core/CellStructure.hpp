@@ -33,7 +33,6 @@
 #include "algorithm/link_cell.hpp"
 #include "bond_error.hpp"
 #include "ghosts.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
@@ -517,8 +516,7 @@ public:
    * @param pair_kernel Kernel to apply
    */
   template <class PairKernel> void non_bonded_loop(PairKernel pair_kernel) {
-    if (maximal_cutoff() > 0.)
-      link_cell(pair_kernel);
+    link_cell(pair_kernel);
   }
 
   /** Non-bonded pair loop with potential use
@@ -529,8 +527,6 @@ public:
   template <class PairKernel, class VerletCriterion>
   void non_bonded_loop(PairKernel &&pair_kernel,
                        const VerletCriterion &verlet_criterion) {
-    if (maximal_cutoff() <= 0.)
-      return;
     /* In this case the verlet list update is attached to
      * the pair kernel, and the verlet list is rebuilt as
      * we go. */
