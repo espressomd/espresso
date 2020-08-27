@@ -110,10 +110,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.system.part[1].pos = [3.0, 2.0, 2.0]
         for epsilon_power in range(-4, 5):
             epsilon = 10**epsilon_power
-            # reference value for energy only calculated for prefactor = 1,
-            # the formula is not an exact fit for small epsilon values
-            p3m_energy = -4 * np.pi / box_vol * 8 / (2 + 1 / epsilon) - 0.5
-            p3m_energy *= prefactor / 1.01053
+            p3m_energy = np.pi / box_vol * 16 / (1 + 2 * epsilon) - 0.501
+            p3m_energy *= prefactor
             p3m = espressomd.electrostatics.P3M(prefactor=prefactor,
                                                 accuracy=9.910945054074526e-08,
                                                 mesh=[22, 22, 22],
