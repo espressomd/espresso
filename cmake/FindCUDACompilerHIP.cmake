@@ -27,21 +27,26 @@ find_package(HIP ${CUDACompilerHIP_FIND_VERSION} MODULE REQUIRED)
 # patch HCC_PATH environment variable and reload HIP
 if(HIP_VERSION VERSION_LESS 3.1)
   set(HCC_PATH "${HIP_ROOT_DIR}")
-else()
+elseif(HIP_VERSION VERSION_LESS 3.5)
   set(HCC_PATH "${ROCM_HOME}/hcc")
+else()
+  set(HIP_HIPCC_CMAKE_LINKER_HELPER "${HIP_HIPCC_EXECUTABLE}")
+  unset(HCC_PATH)
 endif()
 find_package(HIP ${CUDACompilerHIP_FIND_VERSION} MODULE REQUIRED)
 
 set(CUDA 1)
 set(HIP 1)
 
-list(APPEND HIP_HCC_FLAGS
+list(APPEND HIP_HIPCC_FLAGS
        -std=c++${CMAKE_CUDA_STANDARD} -pedantic -Wall -Wextra
        -Wno-sign-compare -Wno-unused-function -Wno-unused-variable
        -Wno-unused-parameter -Wno-missing-braces -Wno-gnu-anonymous-struct
        -Wno-nested-anon-types -Wno-gnu-zero-variadic-macro-arguments
        -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier
        $<$<VERSION_GREATER_EQUAL:${HIP_VERSION},3.3>:-Wno-deprecated-copy>
+       $<$<VERSION_GREATER_EQUAL:${HIP_VERSION},3.7>:-Wno-c++17-extensions>
+       $<$<VERSION_GREATER_EQUAL:${HIP_VERSION},3.7>:-Wno-unused-command-line-argument>
        $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>)
 
 list(APPEND HIP_HIPCC_FLAGS_DEBUG -g)
