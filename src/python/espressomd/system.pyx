@@ -112,7 +112,7 @@ cdef class System:
 
     def __init__(self, **kwargs):
         global _system_created
-        if (not _system_created):
+        if not _system_created:
             self.globals = Globals()
             if 'box_l' not in kwargs:
                 raise ValueError("Required argument box_l not provided.")
@@ -123,7 +123,7 @@ cdef class System:
                     System.__setattr__(self, arg, kwargs.get(arg))
                 else:
                     raise ValueError(
-                        "Property {} can not be set via argument to System class.".format(arg))
+                        f"Property {arg} can not be set via argument to System class.")
             self.actors = Actors()
             self.analysis = Analysis(self)
             self.auto_update_accumulators = AutoUpdateAccumulators()

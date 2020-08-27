@@ -186,12 +186,12 @@ class Analysis:
             for i in range(len(p1)):
                 if not is_valid_type(p1[i], int):
                     raise TypeError(
-                        "Particle types in p1 have to be of type int, got: " + repr(p1[i]))
+                        f"Particle types in p1 have to be of type int, got: {repr(p1[i])}")
 
             for i in range(len(p2)):
                 if not is_valid_type(p2[i], int):
                     raise TypeError(
-                        "Particle types in p2 have to be of type int, got: " + repr(p2[i]))
+                        f"Particle types in p2 have to be of type int, got: {repr(p2[i])}")
 
             return analyze.mindist(analyze.partCfg(), p1, p2)
 
@@ -249,7 +249,7 @@ class Analysis:
                 "The p_type keyword argument must be provided (particle type)")
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
         if p_type < 0 or p_type >= analyze.max_seen_particle_type:
-            raise ValueError("Particle type {} does not exist!".format(p_type))
+            raise ValueError(f"Particle type {p_type} does not exist!")
 
         return analyze.centerofmass(analyze.partCfg(), p_type)
 
@@ -736,8 +736,7 @@ class Analysis:
             check_type_or_throw_except(
                 ptype, 1, int, "particle type has to be an int")
             if ptype < 0 or ptype >= analyze.max_seen_particle_type:
-                raise ValueError(
-                    "Particle type {} does not exist!".format(ptype))
+                raise ValueError(f"Particle type {ptype} does not exist!")
         selection = self._system.part.select(lambda p: (p.type in p_type))
         cm = np.mean(selection.pos, axis=0)
         mat = np.zeros(shape=(3, 3))
@@ -787,7 +786,7 @@ class Analysis:
                 "The p_type keyword argument must be provided (particle type)")
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
         if p_type < 0 or p_type >= analyze.max_seen_particle_type:
-            raise ValueError("Particle type {} does not exist!".format(p_type))
+            raise ValueError(f"Particle type {p_type} does not exist!")
 
         analyze.momentofinertiamatrix(
             analyze.partCfg(), p_type, MofImatrix)

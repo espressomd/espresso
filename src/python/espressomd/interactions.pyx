@@ -1825,37 +1825,37 @@ class BondedInteractionNotDefined:
             self.__class__.__name__ + " not compiled into ESPResSo core")
 
     def type_number(self):
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def type_name(self):
         """Name of interaction type.
 
         """
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def valid_keys(self):
         """All parameters that can be set.
 
         """
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
 
         """
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def _get_params_from_es_core(self):
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def _set_params_in_es_core(self):
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
 
 class FeneBond(BondedInteraction):
@@ -2591,8 +2591,8 @@ class TabulatedAngle(_TabulatedBase):
         """
         phi = [self._params["min"], self._params["max"]]
         if abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - self.pi) > 1e-5:
-            raise ValueError("Tabulated angle expects forces/energies "
-                             "within the range [0, pi], got " + str(phi))
+            raise ValueError(f"Tabulated angle expects forces/energies "
+                             f"within the range [0, pi], got {phi}")
 
 
 class TabulatedDihedral(_TabulatedBase):
@@ -2631,8 +2631,8 @@ class TabulatedDihedral(_TabulatedBase):
         """
         phi = [self._params["min"], self._params["max"]]
         if abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - 2 * self.pi) > 1e-5:
-            raise ValueError("Tabulated dihedral expects forces/energies "
-                             "within the range [0, 2*pi], got " + str(phi))
+            raise ValueError(f"Tabulated dihedral expects forces/energies "
+                             f"within the range [0, 2*pi], got {phi}")
 
 
 IF TABULATED == 1:
@@ -3313,7 +3313,7 @@ class BondedInteractions:
         # Check if the bonded interaction exists in ESPResSo core
         if bond_type == -1:
             raise ValueError(
-                "The bonded interaction with the id " + str(key) + " is not yet defined.")
+                f"The bonded interaction with the id {key} is not yet defined.")
 
         # Find the appropriate class representing such a bond
         bond_class = bonded_interaction_classes[bond_type]

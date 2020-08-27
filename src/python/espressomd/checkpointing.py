@@ -67,7 +67,7 @@ class Checkpoint:
         # update checkpoint counter
         self.counter = 0
         while os.path.isfile(os.path.join(
-                self.checkpoint_dir, "{}.checkpoint".format(self.counter))):
+                self.checkpoint_dir, f"{self.counter}.checkpoint")):
             self.counter += 1
 
         # init signals
@@ -134,11 +134,11 @@ class Checkpoint:
             # if not a in dir(self.calling_module):
             if not self.__hasattr_submodule(self.calling_module, a):
                 raise KeyError(
-                    "The given object '{}' was not found in the current scope.".format(a))
+                    f"The given object '{a}' was not found in the current scope.")
 
             if a in self.checkpoint_objects:
                 raise KeyError(
-                    "The given object '{}' is already registered for checkpointing.".format(a))
+                    f"The given object '{a}' is already registered for checkpointing.")
 
             self.checkpoint_objects.append(a)
 
@@ -154,7 +154,7 @@ class Checkpoint:
         for a in args:
             if not isinstance(a, str) or a not in self.checkpoint_objects:
                 raise KeyError(
-                    "The given object '{}' was not registered for checkpointing yet.".format(a))
+                    f"The given object '{a}' was not registered for checkpointing yet.")
 
             self.checkpoint_objects.remove(a)
 
@@ -204,7 +204,7 @@ class Checkpoint:
         if checkpoint_index is None:
             checkpoint_index = self.counter
         filename = os.path.join(
-            self.checkpoint_dir, "{}.checkpoint".format(checkpoint_index))
+            self.checkpoint_dir, f"{checkpoint_index}.checkpoint")
 
         tmpname = filename + ".__tmp__"
         with open(tmpname, "wb") as checkpoint_file:
@@ -226,7 +226,7 @@ class Checkpoint:
             checkpoint_index = self.get_last_checkpoint_index()
 
         filename = os.path.join(
-            self.checkpoint_dir, "{}.checkpoint".format(checkpoint_index))
+            self.checkpoint_dir, f"{checkpoint_index}.checkpoint")
         with open(filename, "rb") as f:
             checkpoint_data = pickle.load(f)
 
@@ -288,7 +288,7 @@ class Checkpoint:
 
         if signum in self.checkpoint_signals:
             raise KeyError(
-                "The signal {} is already registered for checkpointing.".format(signum))
+                f"The signal {signum} is already registered for checkpointing.")
 
         signal.signal(signum, self.__signal_handler)
         self.checkpoint_signals.append(signum)
