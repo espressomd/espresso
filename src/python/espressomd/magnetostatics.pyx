@@ -102,17 +102,14 @@ IF DP3M == 1:
                 raise ValueError("P3M r_cut has to be >=0")
 
             if is_valid_type(self._params["mesh"], int):
-                if self._params["mesh"] % 2 != 0 and self._params["mesh"] != -1:
-                    raise ValueError(
-                        "P3M requires an even number of mesh points in all directions")
+                pass
             else:
                 check_type_or_throw_except(self._params["mesh"], 3, int,
-                                           "P3M mesh has to be an integer or integer list of length 3")
-                if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
-                   (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
-                   (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
+                                           "DipolarP3M mesh has to be an integer or integer list of length 3")
+                if (self._params["mesh"][0] != self._params["mesh"][1]) or \
+                   (self._params["mesh"][0] != self._params["mesh"][2]):
                     raise ValueError(
-                        "P3M requires an even number of mesh points in all directions")
+                        "DipolarP3M requires a cubic box")
 
             if not (self._params["cao"] >= -1 and self._params["cao"] <= 7):
                 raise ValueError(
