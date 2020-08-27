@@ -259,8 +259,8 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
           double const U2 = dp3m_perform_aliasing_sums_dipolar_self_energy(n);
           node_phi +=
               dp3m.g_energy[ind] * U2 *
-              (Utils::sqr(dp3m.d_op[n[0]]) + Utils::sqr(dp3m.d_op[n[1]]) +
-               Utils::sqr(dp3m.d_op[n[2]]));
+              (Utils::sqr(dp3m.d_op[0][n[0]]) + Utils::sqr(dp3m.d_op[0][n[1]]) +
+               Utils::sqr(dp3m.d_op[0][n[2]]));
         }
       }
     }
@@ -506,18 +506,20 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
           for (j[2] = 0; j[2] < dp3m.fft.plan[3].new_mesh[2]; j[2]++) {
             node_k_space_energy_dip +=
                 dp3m.g_energy[i] *
-                (Utils::sqr(dp3m.rs_mesh_dip[0][ind] *
-                                dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
-                            dp3m.rs_mesh_dip[1][ind] *
-                                dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
-                            dp3m.rs_mesh_dip[2][ind] *
-                                dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]]) +
-                 Utils::sqr(dp3m.rs_mesh_dip[0][ind + 1] *
-                                dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
-                            dp3m.rs_mesh_dip[1][ind + 1] *
-                                dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
-                            dp3m.rs_mesh_dip[2][ind + 1] *
-                                dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]]));
+                (Utils::sqr(
+                     dp3m.rs_mesh_dip[0][ind] *
+                         dp3m.d_op[0][j[2] + dp3m.fft.plan[3].start[2]] +
+                     dp3m.rs_mesh_dip[1][ind] *
+                         dp3m.d_op[0][j[0] + dp3m.fft.plan[3].start[0]] +
+                     dp3m.rs_mesh_dip[2][ind] *
+                         dp3m.d_op[0][j[1] + dp3m.fft.plan[3].start[1]]) +
+                 Utils::sqr(
+                     dp3m.rs_mesh_dip[0][ind + 1] *
+                         dp3m.d_op[0][j[2] + dp3m.fft.plan[3].start[2]] +
+                     dp3m.rs_mesh_dip[1][ind + 1] *
+                         dp3m.d_op[0][j[0] + dp3m.fft.plan[3].start[0]] +
+                     dp3m.rs_mesh_dip[2][ind + 1] *
+                         dp3m.d_op[0][j[1] + dp3m.fft.plan[3].start[1]]));
             ind += 2;
             i++;
           }
@@ -565,18 +567,18 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
             // tmp0 = Re(mu)*k,   tmp1 = Im(mu)*k
 
             tmp0 = dp3m.rs_mesh_dip[0][ind] *
-                       dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
+                       dp3m.d_op[0][j[2] + dp3m.fft.plan[3].start[2]] +
                    dp3m.rs_mesh_dip[1][ind] *
-                       dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
+                       dp3m.d_op[0][j[0] + dp3m.fft.plan[3].start[0]] +
                    dp3m.rs_mesh_dip[2][ind] *
-                       dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]];
+                       dp3m.d_op[0][j[1] + dp3m.fft.plan[3].start[1]];
 
             tmp1 = dp3m.rs_mesh_dip[0][ind + 1] *
-                       dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
+                       dp3m.d_op[0][j[2] + dp3m.fft.plan[3].start[2]] +
                    dp3m.rs_mesh_dip[1][ind + 1] *
-                       dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
+                       dp3m.d_op[0][j[0] + dp3m.fft.plan[3].start[0]] +
                    dp3m.rs_mesh_dip[2][ind + 1] *
-                       dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]];
+                       dp3m.d_op[0][j[1] + dp3m.fft.plan[3].start[1]];
 
             /* the optimal influence function is the same for torques
                and energy */
@@ -596,11 +598,13 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0]; j[0]++) {
           for (j[1] = 0; j[1] < dp3m.fft.plan[3].new_mesh[1]; j[1]++) {
             for (j[2] = 0; j[2] < dp3m.fft.plan[3].new_mesh[2]; j[2]++) {
-              dp3m.rs_mesh[ind] = dp3m.d_op[j[d] + dp3m.fft.plan[3].start[d]] *
-                                  dp3m.ks_mesh[ind];
+              dp3m.rs_mesh[ind] =
+                  dp3m.d_op[0][j[d] + dp3m.fft.plan[3].start[d]] *
+                  dp3m.ks_mesh[ind];
               ind++;
-              dp3m.rs_mesh[ind] = dp3m.d_op[j[d] + dp3m.fft.plan[3].start[d]] *
-                                  dp3m.ks_mesh[ind];
+              dp3m.rs_mesh[ind] =
+                  dp3m.d_op[0][j[d] + dp3m.fft.plan[3].start[d]] *
+                  dp3m.ks_mesh[ind];
               ind++;
             }
           }
@@ -637,17 +641,17 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                j[2]++) { // j[2]=n_x
             // tmp0 = Im(mu)*k,   tmp1 = -Re(mu)*k
             tmp0 = dp3m.rs_mesh_dip[0][ind + 1] *
-                       dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
+                       dp3m.d_op[0][j[2] + dp3m.fft.plan[3].start[2]] +
                    dp3m.rs_mesh_dip[1][ind + 1] *
-                       dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
+                       dp3m.d_op[0][j[0] + dp3m.fft.plan[3].start[0]] +
                    dp3m.rs_mesh_dip[2][ind + 1] *
-                       dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]];
+                       dp3m.d_op[0][j[1] + dp3m.fft.plan[3].start[1]];
             tmp1 = dp3m.rs_mesh_dip[0][ind] *
-                       dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] +
+                       dp3m.d_op[0][j[2] + dp3m.fft.plan[3].start[2]] +
                    dp3m.rs_mesh_dip[1][ind] *
-                       dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] +
+                       dp3m.d_op[0][j[0] + dp3m.fft.plan[3].start[0]] +
                    dp3m.rs_mesh_dip[2][ind] *
-                       dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]];
+                       dp3m.d_op[0][j[1] + dp3m.fft.plan[3].start[1]];
             dp3m.ks_mesh[ind] = tmp0 * dp3m.g_force[i];
             dp3m.ks_mesh[ind + 1] = -tmp1 * dp3m.g_force[i];
             ind += 2;
@@ -666,23 +670,23 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                j[1]++) { // j[1]=n_z
             for (j[2] = 0; j[2] < dp3m.fft.plan[3].new_mesh[2];
                  j[2]++) { // j[2]=n_x
-              tmp0 = dp3m.d_op[j[d] + dp3m.fft.plan[3].start[d]] *
+              tmp0 = dp3m.d_op[0][j[d] + dp3m.fft.plan[3].start[d]] *
                      dp3m.ks_mesh[ind];
               dp3m.rs_mesh_dip[0][ind] =
-                  dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] * tmp0;
+                  dp3m.d_op[0][j[2] + dp3m.fft.plan[3].start[2]] * tmp0;
               dp3m.rs_mesh_dip[1][ind] =
-                  dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] * tmp0;
+                  dp3m.d_op[0][j[0] + dp3m.fft.plan[3].start[0]] * tmp0;
               dp3m.rs_mesh_dip[2][ind] =
-                  dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]] * tmp0;
+                  dp3m.d_op[0][j[1] + dp3m.fft.plan[3].start[1]] * tmp0;
               ind++;
-              tmp0 = dp3m.d_op[j[d] + dp3m.fft.plan[3].start[d]] *
+              tmp0 = dp3m.d_op[0][j[d] + dp3m.fft.plan[3].start[d]] *
                      dp3m.ks_mesh[ind];
               dp3m.rs_mesh_dip[0][ind] =
-                  dp3m.d_op[j[2] + dp3m.fft.plan[3].start[2]] * tmp0;
+                  dp3m.d_op[0][j[2] + dp3m.fft.plan[3].start[2]] * tmp0;
               dp3m.rs_mesh_dip[1][ind] =
-                  dp3m.d_op[j[0] + dp3m.fft.plan[3].start[0]] * tmp0;
+                  dp3m.d_op[0][j[0] + dp3m.fft.plan[3].start[0]] * tmp0;
               dp3m.rs_mesh_dip[2][ind] =
-                  dp3m.d_op[j[1] + dp3m.fft.plan[3].start[1]] * tmp0;
+                  dp3m.d_op[0][j[1] + dp3m.fft.plan[3].start[1]] * tmp0;
               ind++;
             }
           }
@@ -814,12 +818,12 @@ void dp3m_calc_differential_operator() {
   double dmesh;
 
   dmesh = (double)dp3m.params.mesh[0];
-  dp3m.d_op.resize(dp3m.params.mesh[0]);
+  dp3m.d_op[0].resize(dp3m.params.mesh[0]);
 
   for (i = 0; i < dp3m.params.mesh[0]; i++)
-    dp3m.d_op[i] = (double)i - std::round((double)i / dmesh) * dmesh;
+    dp3m.d_op[0][i] = (double)i - std::round((double)i / dmesh) * dmesh;
 
-  dp3m.d_op[dp3m.params.mesh[0] / 2] = 0;
+  dp3m.d_op[0][dp3m.params.mesh[0] / 2] = 0;
 }
 
 /*****************************************************************************/
@@ -857,11 +861,11 @@ void dp3m_calc_influence_function_force() {
           double nominator[1] = {0.0};
           double denominator = dp3m_perform_aliasing_sums_force(n, nominator);
           double fak2 = nominator[0];
-          fak2 /=
-              pow(Utils::sqr(dp3m.d_op[n[0]]) + Utils::sqr(dp3m.d_op[n[1]]) +
-                      Utils::sqr(dp3m.d_op[n[2]]),
-                  3) *
-              Utils::sqr(denominator);
+          fak2 /= pow(Utils::sqr(dp3m.d_op[0][n[0]]) +
+                          Utils::sqr(dp3m.d_op[0][n[1]]) +
+                          Utils::sqr(dp3m.d_op[0][n[2]]),
+                      3) *
+                  Utils::sqr(denominator);
           dp3m.g_force[ind] = fak1 * fak2;
         }
       }
@@ -896,8 +900,8 @@ double dp3m_perform_aliasing_sums_force(const int n[3], double nominator[1]) {
         expo = f2 * nm2;
         f3 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
 
-        n_nm = dp3m.d_op[n[0]] * nmx + dp3m.d_op[n[1]] * nmy +
-               dp3m.d_op[n[2]] * nmz;
+        n_nm = dp3m.d_op[0][n[0]] * nmx + dp3m.d_op[0][n[1]] * nmy +
+               dp3m.d_op[0][n[2]] * nmz;
         n_nm3 = Utils::int_pow<3>(n_nm);
 
         nominator[0] += f3 * n_nm3;
@@ -943,11 +947,11 @@ void dp3m_calc_influence_function_energy() {
           double nominator[1] = {0.0};
           double denominator = dp3m_perform_aliasing_sums_energy(n, nominator);
           double fak2 = nominator[0];
-          fak2 /=
-              pow(Utils::sqr(dp3m.d_op[n[0]]) + Utils::sqr(dp3m.d_op[n[1]]) +
-                      Utils::sqr(dp3m.d_op[n[2]]),
-                  2) *
-              Utils::sqr(denominator);
+          fak2 /= pow(Utils::sqr(dp3m.d_op[0][n[0]]) +
+                          Utils::sqr(dp3m.d_op[0][n[1]]) +
+                          Utils::sqr(dp3m.d_op[0][n[2]]),
+                      2) *
+                  Utils::sqr(denominator);
           dp3m.g_energy[ind] = fak1 * fak2;
         }
       }
@@ -982,8 +986,8 @@ double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]) {
         expo = f2 * nm2;
         f3 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
 
-        n_nm = dp3m.d_op[n[0]] * nmx + dp3m.d_op[n[1]] * nmy +
-               dp3m.d_op[n[2]] * nmz;
+        n_nm = dp3m.d_op[0][n[0]] * nmx + dp3m.d_op[0][n[1]] * nmy +
+               dp3m.d_op[0][n[2]] * nmz;
         n_nm2 = n_nm * n_nm;
         nominator[0] += f3 * n_nm2;
         denominator += sz;

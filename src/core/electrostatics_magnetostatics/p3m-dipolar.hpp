@@ -40,6 +40,7 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
+#include "p3m-data_struct.hpp"
 #include "p3m_interpolation.hpp"
 #include "p3m_send_mesh.hpp"
 
@@ -47,10 +48,8 @@
 #include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
 
-struct dp3m_data_struct {
+struct dp3m_data_struct : public p3m_data_struct_base {
   dp3m_data_struct();
-
-  P3MParameters params;
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
@@ -71,18 +70,7 @@ struct dp3m_data_struct {
   /** help variable for calculation of aliasing sums */
   std::vector<double> meshift;
 
-  /** Spatial differential operator in k-space. We use an i*k differentiation.
-   */
-  std::vector<double> d_op;
-  /** Force optimised influence function (k-space) */
-  std::vector<double> g_force;
-  /** Energy optimised influence function (k-space) */
-  std::vector<double> g_energy;
-
   p3m_interpolation_cache inter_weights;
-
-  /** number of permutations in k_space */
-  int ks_pnum;
 
   /** send/recv mesh sizes */
   p3m_send_mesh sm;
