@@ -67,8 +67,6 @@ struct dp3m_data_struct : public p3m_data_struct_base {
 
   /** position shift for calc. of first assignment mesh point. */
   double pos_shift;
-  /** help variable for calculation of aliasing sums */
-  std::vector<double> meshift;
 
   p3m_interpolation_cache inter_weights;
 
