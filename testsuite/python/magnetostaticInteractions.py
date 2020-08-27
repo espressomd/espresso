@@ -17,6 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+import unittest_decorators as utx
+import numpy as np
+
 import espressomd
 from espressomd import magnetostatics
 from tests_common import generate_test_for_class
@@ -33,6 +36,7 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.actors.clear()
 
     if espressomd.has_features(["DP3M"]):
         test_DP3M = generate_test_for_class(
@@ -48,6 +52,67 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
             test_DdsRCpu = generate_test_for_class(
                 system, magnetostatics.DipolarDirectSumWithReplicaCpu,
                 dict(prefactor=3.4, n_replica=2))
+
+    @utx.skipIfMissingFeatures(["DP3M"])
+    def test_dp3m(self):
+        self.system.time_step = 0.01
+        prefactor = 1.1
+        self.system.part[0].pos = [1.0, 2.0, 2.0]
+        self.system.part[1].pos = [3.0, 2.0, 2.0]
+        dp3m_energy = 1.6733349639532644
+        dp3m_force = np.array([-3.54175042, -4.6761059, 9.96632774])
+        dp3m = espressomd.magnetostatics.DipolarP3M(
+            prefactor=prefactor,
+            accuracy=9.995178689932661e-07,
+            mesh=[49, 49, 49],
+            mesh_off=[0.5, 0.5, 0.5],
+            cao=7,
+            r_cut=4.739799499511719,
+            alpha=0.9056147262573242,
+            alpha_L=9.056147262573242,
+            r_cut_iL=0.4739799499511719,
+            cao_cut=3 * [0.7142857142857142],
+            a=3 * [0.2040816326530612],
+            additional_mesh=[0., 0., 0.],
+            tune=False)
+        self.system.actors.add(dp3m)
+        self.assertAlmostEqual(self.system.analysis.energy()['dipolar'],
+                               dp3m_energy, places=5)
+        # need to update forces
+        self.system.integrator.run(0)
+        np.testing.assert_allclose(np.copy(self.system.part[0].f),
+                                   dp3m_force, atol=1E-5)
+        np.testing.assert_allclose(np.copy(self.system.part[1].f),
+                                   -dp3m_force, atol=1E-5)
+
+    @utx.skipIfMissingFeatures(["DP3M"])
+    def test_dp3m_non_metallic(self):
+        self.system.time_step = 0.01
+        prefactor = 1.1
+        self.system.part[0].pos = [1.0, 2.0, 2.0]
+        self.system.part[1].pos = [3.0, 2.0, 2.0]
+        for epsilon_power in range(-4, 5):
+            epsilon = 10**epsilon_power
+            dp3m_energy = 1.66706 / (1 + 2 * epsilon) + 1.673333
+            dp3m = espressomd.magnetostatics.DipolarP3M(
+                prefactor=prefactor,
+                accuracy=9.995178689932661e-07,
+                mesh=[49, 49, 49],
+                mesh_off=[0.5, 0.5, 0.5],
+                cao=7,
+                epsilon=epsilon,
+                r_cut=4.739799499511719,
+                alpha=0.9056147262573242,
+                alpha_L=9.056147262573242,
+                r_cut_iL=0.4739799499511719,
+                cao_cut=3 * [0.7142857142857142],
+                a=3 * [0.2040816326530612],
+                additional_mesh=[0., 0., 0.],
+                tune=False)
+            self.system.actors.add(dp3m)
+            self.assertAlmostEqual(self.system.analysis.energy()['dipolar'],
+                                   dp3m_energy, places=3)
+            self.system.actors.remove(dp3m)
 
 
 if __name__ == "__main__":
