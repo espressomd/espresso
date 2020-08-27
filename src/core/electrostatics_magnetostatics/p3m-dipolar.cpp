@@ -112,9 +112,6 @@ static double calc_surface_term(bool force_flag, bool energy_flag,
 /************************************************************/
 /*@{*/
 
-// These 3 functions are to tune the P3M code in the case of dipolar
-// interactions
-
 double P3M_DIPOLAR_real_space_error(double box_size, double prefac,
                                     double r_cut_iL, int n_c_part,
                                     double sum_q2, double alpha_L);
@@ -221,7 +218,7 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
                           double accuracy, int n_interpol) {
   if (r_cut >= 0) {
     dp3m.params.r_cut = r_cut;
-    dp3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
+    dp3m.params.r_cut_iL = r_cut / box_geo.length()[0];
   }
 
   if (mesh >= 0)
@@ -256,7 +253,7 @@ int dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
     return -3;
 
   dp3m.params.r_cut = r_cut;
-  dp3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
+  dp3m.params.r_cut_iL = r_cut / box_geo.length()[0];
   dp3m.params.mesh[2] = dp3m.params.mesh[1] = dp3m.params.mesh[0] = mesh;
   dp3m.params.cao = cao;
 
@@ -386,8 +383,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
   double tmp0, tmp1;
 
   auto const dipole_prefac =
-      dipole.prefactor /
-      (double)(dp3m.params.mesh[0] * dp3m.params.mesh[1] * dp3m.params.mesh[2]);
+      dipole.prefactor / Utils::int_pow<3>(dp3m.params.mesh[0]);
 
   if (dp3m.sum_mu2 > 0) {
     /* Gather information for FFT grid inside the nodes domain (inner local
@@ -454,7 +450,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         k_space_energy_dip -=
             dipole.prefactor *
             (dp3m.sum_mu2 * 2 *
-             pow(dp3m.params.alpha_L * (1. / box_geo.length()[0]), 3) *
+             pow(dp3m.params.alpha_L / box_geo.length()[0], 3) *
              Utils::sqrt_pi_i() / 3.0);
 
         auto const volume = box_geo.volume();
@@ -850,15 +846,13 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
 static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
                            double r_cut_iL_max, double *_r_cut_iL,
                            double *_alpha_L, double *_accuracy) {
-  double int_time;
   double r_cut_iL;
-  double rs_err, ks_err, mesh_size, k_cut;
-  int i, n_cells;
+  double rs_err, ks_err;
   char b[3 * ES_INTEGER_SPACE + 3 * ES_DOUBLE_SPACE + 128];
 
   /* initial checks. */
-  mesh_size = box_geo.length()[0] / (double)mesh;
-  k_cut = mesh_size * cao / 2.0;
+  auto const mesh_size = box_geo.length()[0] / static_cast<double>(mesh);
+  auto const k_cut = mesh_size * cao / 2.0;
 
   auto const min_box_l = *boost::min_element(box_geo.length());
   auto const min_local_box_l = *boost::min_element(local_geo.length());
@@ -912,7 +906,7 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
     runtimeErrorMsg() << "dipolar P3M: tuning when dlc needs to be fixed";
   }
 
-  int_time = dp3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
+  double const int_time = dp3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -P3M_TUNE_FAIL) {
     *log = strcat_alloc(*log, "tuning failed, test integration not possible\n");
     return int_time;
@@ -925,8 +919,8 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
   }
 
   /* print result */
-  sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8d\n", mesh, cao, r_cut_iL,
-          *_alpha_L, *_accuracy, rs_err, ks_err, (int)int_time);
+  sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8.0f\n", mesh, cao, r_cut_iL,
+          *_alpha_L, *_accuracy, rs_err, ks_err, int_time);
   *log = strcat_alloc(*log, b);
   return int_time;
 }
@@ -1152,8 +1146,8 @@ int dp3m_adaptive_tune(char **logger) {
 
     r_cut_iL_min = 0;
     r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2) - skin;
-    r_cut_iL_min *= (1. / box_geo.length()[0]);
-    r_cut_iL_max *= (1. / box_geo.length()[0]);
+    r_cut_iL_min *= 1. / box_geo.length()[0];
+    r_cut_iL_max *= 1. / box_geo.length()[0];
   } else {
     r_cut_iL_min = r_cut_iL_max = dp3m.params.r_cut_iL;
 
@@ -1229,12 +1223,8 @@ int dp3m_adaptive_tune(char **logger) {
 }
 
 void dp3m_count_magnetic_particles() {
-  double node_sums[2], tot_sums[2];
-
-  for (int i = 0; i < 2; i++) {
-    node_sums[i] = 0.0;
-    tot_sums[i] = 0.0;
-  }
+  double node_sums[2] = {0, 0};
+  double tot_sums[2] = {0, 0};
 
   for (auto const &p : cell_structure.local_particles()) {
     if (p.p.dipm != 0.0) {
@@ -1254,18 +1244,19 @@ REGISTER_CALLBACK(dp3m_count_magnetic_particles)
 static double dp3m_k_space_error(double box_size, double prefac, int mesh,
                                  int cao, int n_c_part, double sum_q2,
                                  double alpha_L) {
-  int nx, ny, nz;
-  double he_q = 0.0, mesh_i = 1. / mesh, alpha_L_i = 1. / alpha_L;
-  double alias1, alias2, n2, cs;
+  double he_q = 0.0;
+  auto const mesh_i = 1. / mesh;
+  auto const alpha_L_i = 1. / alpha_L;
 
-  for (nx = -mesh / 2; nx < mesh / 2; nx++)
-    for (ny = -mesh / 2; ny < mesh / 2; ny++)
-      for (nz = -mesh / 2; nz < mesh / 2; nz++)
+  for (int nx = -mesh / 2; nx < mesh / 2; nx++)
+    for (int ny = -mesh / 2; ny < mesh / 2; ny++)
+      for (int nz = -mesh / 2; nz < mesh / 2; nz++)
         if ((nx != 0) || (ny != 0) || (nz != 0)) {
-          n2 = Utils::sqr(nx) + Utils::sqr(ny) + Utils::sqr(nz);
-          cs = p3m_analytic_cotangent_sum(nx, mesh_i, cao) *
-               p3m_analytic_cotangent_sum(ny, mesh_i, cao) *
-               p3m_analytic_cotangent_sum(nz, mesh_i, cao);
+          auto const n2 = Utils::sqr(nx) + Utils::sqr(ny) + Utils::sqr(nz);
+          auto const cs = p3m_analytic_cotangent_sum(nx, mesh_i, cao) *
+                          p3m_analytic_cotangent_sum(ny, mesh_i, cao) *
+                          p3m_analytic_cotangent_sum(nz, mesh_i, cao);
+          double alias1, alias2;
           dp3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i,
                                   &alias1, &alias2);
           double d = alias1 - Utils::sqr(alias2 / cs) / Utils::int_pow<3>(n2);
@@ -1275,8 +1266,8 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
             he_q += d;
         }
 
-  return 8. * Utils::pi() * Utils::pi() / 3. * sum_q2 *
-         sqrt(he_q / (double)n_c_part) / Utils::int_pow<4>(box_size);
+  return 8. * Utils::sqr(Utils::pi()) / 3. * sum_q2 * sqrt(he_q / n_c_part) /
+         Utils::int_pow<4>(box_size);
 }
 
 /** Tuning dipolar-P3M */
@@ -1284,28 +1275,26 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
                              int cao, double alpha_L_i, double *alias1,
                              double *alias2) {
   using Utils::sinc;
-  int mx, my, mz;
-  double nmx, nmy, nmz;
-  double fnmx, fnmy, fnmz;
 
-  double ex, ex2, nm2, U2, factor1;
-
-  factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
+  auto const factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
 
   *alias1 = *alias2 = 0.0;
-  for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    fnmx = mesh_i * (nmx = nx + mx * mesh);
-    for (my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      fnmy = mesh_i * (nmy = ny + my * mesh);
-      for (mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-        fnmz = mesh_i * (nmz = nz + mz * mesh);
+  for (int mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+    auto const nmx = nx + mx * mesh;
+    auto const fnmx = mesh_i * nmx;
+    for (int my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+      auto const nmy = ny + my * mesh;
+      auto const fnmy = mesh_i * nmy;
+      for (int mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+        auto const nmz = nz + mz * mesh;
+        auto const fnmz = mesh_i * nmz;
 
-        nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
-        ex2 = Utils::sqr(ex = exp(-factor1 * nm2));
+        auto const nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
+        auto const ex = std::exp(-factor1 * nm2);
 
-        U2 = pow(sinc(fnmx) * sinc(fnmy) * sinc(fnmz), 2.0 * cao);
+        auto const U2 = pow(sinc(fnmx) * sinc(fnmy) * sinc(fnmz), 2.0 * cao);
 
-        *alias1 += ex2 * nm2;
+        *alias1 += Utils::sqr(ex) * nm2;
         *alias2 += U2 * ex * pow((nx * nmx + ny * nmy + nz * nmz), 3.) / nm2;
       }
     }
@@ -1355,10 +1344,10 @@ double P3M_DIPOLAR_real_space_error(double box_size, double prefac,
 double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
                         int n_c_part, double sum_q2, double x1, double x2,
                         double xacc, double tuned_accuracy) {
-  int j;
-  double dx, f, fmid, xmid, rtb, constant, JJ_RTBIS_MAX = 40;
+  constexpr int JJ_RTBIS_MAX = 40;
+  double dx, f, fmid, rtb;
 
-  constant = tuned_accuracy / sqrt(2.);
+  auto const constant = tuned_accuracy / sqrt(2.);
 
   f = P3M_DIPOLAR_real_space_error(box_size, prefac, r_cut_iL, n_c_part, sum_q2,
                                    x1) -
@@ -1371,12 +1360,12 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
         << "Root must be bracketed for bisection in dp3m_rtbisection";
     return -DP3M_RTBISECTION_ERROR;
   }
-  rtb = f < 0.0 ? (dx = x2 - x1, x1)
-                : (dx = x1 - x2,
-                   x2); // Orient the search dx, and set rtb to x1 or x2 ...
-  for (j = 1; j <= JJ_RTBIS_MAX; j++) {
+  // Orient the search dx, and set rtb to x1 or x2 ...
+  rtb = f < 0.0 ? (dx = x2 - x1, x1) : (dx = x1 - x2, x2);
+  for (int j = 1; j <= JJ_RTBIS_MAX; j++) {
+    auto const xmid = rtb + (dx *= 0.5);
     fmid = P3M_DIPOLAR_real_space_error(box_size, prefac, r_cut_iL, n_c_part,
-                                        sum_q2, xmid = rtb + (dx *= 0.5)) -
+                                        sum_q2, xmid) -
            constant;
     if (fmid <= 0.0)
       rtb = xmid;
@@ -1390,8 +1379,7 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
 /************************************************************/
 
 void dp3m_init_a_ai_cao_cut() {
-  int i;
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     dp3m.params.ai[i] = (double)dp3m.params.mesh[i] / box_geo.length()[i];
     dp3m.params.a[i] = 1.0 / dp3m.params.ai[i];
     dp3m.params.cao_cut[i] = 0.5 * dp3m.params.a[i] * dp3m.params.cao;
@@ -1401,9 +1389,8 @@ void dp3m_init_a_ai_cao_cut() {
 /*****************************************************************************/
 
 bool dp3m_sanity_checks_boxl() {
-  int i;
   bool ret = false;
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     /* check k-space cutoff */
     if (dp3m.params.cao_cut[i] >= 0.5 * box_geo.length()[i]) {
       runtimeErrorMsg() << "dipolar P3M_init: k-space cutoff "
@@ -1480,7 +1467,7 @@ void dp3m_scaleby_box_l() {
   }
 
   dp3m.params.r_cut = dp3m.params.r_cut_iL * box_geo.length()[0];
-  dp3m.params.alpha = dp3m.params.alpha_L * (1. / box_geo.length()[0]);
+  dp3m.params.alpha = dp3m.params.alpha_L / box_geo.length()[0];
   dp3m_init_a_ai_cao_cut();
   p3m_calc_lm_ld_pos(dp3m.local_mesh, dp3m.params);
   dp3m_sanity_checks_boxl();
@@ -1491,14 +1478,13 @@ void dp3m_scaleby_box_l() {
 
 /** Calculate the dipolar-P3M energy correction */
 void dp3m_compute_constants_energy_dipolar() {
-  double Eself, Ukp3m;
 
   if (dp3m.energy_correction != 0.0)
     return;
 
-  Ukp3m = dp3m_average_dipolar_self_energy() * box_geo.volume();
+  auto const Ukp3m = dp3m_average_dipolar_self_energy() * box_geo.volume();
 
-  Eself = -(2 * pow(dp3m.params.alpha_L, 3) * Utils::sqrt_pi_i() / 3.0);
+  auto const Eself = -2 * pow(dp3m.params.alpha_L, 3) * Utils::sqrt_pi_i() / 3;
 
   dp3m.energy_correction =
       -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * Utils::pi() / 3.);
