@@ -189,7 +189,7 @@ void p3m_calc_lm_ld_pos(p3m_local_mesh &local_mesh,
 #endif /* P3M || DP3M */
 
 namespace detail {
-/** Calculate a mesh shift sequence.
+/** Calculate indices that shift @ref P3MParameters::mesh "mesh" by `mesh/2`.
  *  For each mesh size @f$ n @f$ in @c mesh_size, create a sequence of integer
  *  values @f$ \left( 0, \ldots, \lfloor n/2 \rfloor, -\lfloor n/2 \rfloor,
  *  \ldots, -1\right) @f$ if @c zero_out_midpoint is false, otherwise

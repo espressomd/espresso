@@ -41,13 +41,6 @@ struct p3m_data_struct_base {
   /** number of permutations in k_space */
   int ks_pnum;
 
-  /** Calculate indices that shift @ref P3MParameters::mesh "mesh" by `mesh/2`.
-   */
-  std::array<std::vector<int>, 3> calc_meshift() {
-    return detail::calc_meshift(
-        {params.mesh[0], params.mesh[1], params.mesh[2]}, false);
-  }
-
   /** Calculate the Fourier transformed differential operator.
    *  Remark: This is done on the level of n-vectors and not k-vectors,
    *  i.e. the prefactor @f$ 2i\pi/L @f$ is missing!
