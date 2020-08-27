@@ -33,6 +33,9 @@ cpdef check_type_or_throw_except(x, n, t, msg):
     # Check whether x is an array/list/tuple or a single value
     if n > 1:
         if hasattr(x, "__getitem__"):
+            if len(x) != n:
+                raise ValueError(
+                    msg + f" -- {len(x)} values were given but {n} were expected.")
             for i in range(len(x)):
                 if not isinstance(x[i], t):
                     if not ((t == float and is_valid_type(x[i], int))
