@@ -105,14 +105,45 @@ static void dp3m_compute_constants_energy_dipolar();
  *  the expression for the optimal influence function (see
  *  @cite hockney88a : 8-22, p. 275).
  *
+ *  \tparam S          order (2 for energy, 3 for forces)
  *  \param shift       shift for a given n-vector
  *  \param d_op        differential operator for a given n-vector
  *  \return The result of the fraction.
  */
-static double dp3m_perform_aliasing_sums_force(Utils::Vector3i const &shift,
-                                               Utils::Vector3i const &d_op);
-static double dp3m_perform_aliasing_sums_energy(Utils::Vector3i const &shift,
-                                                Utils::Vector3i const &d_op);
+template <size_t S>
+double dp3m_perform_aliasing_sums(Utils::Vector3i const &shift,
+                                  Utils::Vector3i const &d_op) {
+  using Utils::int_pow;
+  constexpr double limit = 30;
+
+  double numerator = 0.0;
+  double denominator = 0.0;
+
+  auto const f1 = 1.0 / static_cast<double>(dp3m.params.mesh[0]);
+  auto const f2 = Utils::sqr(Utils::pi() / (dp3m.params.alpha_L));
+
+  for (double mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+    auto const nmx = shift[0] + dp3m.params.mesh[0] * mx;
+    auto const sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
+    for (double my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+      auto const nmy = shift[1] + dp3m.params.mesh[0] * my;
+      auto const sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
+      for (double mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+        auto const nmz = shift[2] + dp3m.params.mesh[0] * mz;
+        auto const sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
+        auto const nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
+        auto const exponent = f2 * nm2;
+        if (exponent < limit) {
+          auto const f3 = sz * exp(-exponent) / nm2;
+          auto const n_nm = d_op[0] * nmx + d_op[1] * nmy + d_op[2] * nmz;
+          numerator += f3 * int_pow<S>(n_nm);
+        }
+        denominator += sz;
+      }
+    }
+  }
+  return numerator / (int_pow<S>(d_op.norm2()) * Utils::sqr(denominator));
+}
 
 static double dp3m_k_space_error(double box_size, double prefac, int mesh,
                                  int cao, int n_c_part, double sum_q2,
@@ -818,46 +849,10 @@ void dp3m_calc_influence_function_force() {
                                              shifts[0][n[2]]};
           auto const d_op = Utils::Vector3i{
               dp3m.d_op[0][n[0]], dp3m.d_op[0][n[1]], dp3m.d_op[0][n[2]]};
-          auto const fak2 = dp3m_perform_aliasing_sums_force(shift, d_op);
+          auto const fak2 = dp3m_perform_aliasing_sums<3>(shift, d_op);
           dp3m.g_force[ind] = fak1 * fak2;
         }
       }
-}
-
-/*****************************************************************************/
-
-double dp3m_perform_aliasing_sums_force(Utils::Vector3i const &shift,
-                                        Utils::Vector3i const &d_op) {
-  constexpr double limit = 30;
-
-  double numerator = 0.0;
-  double denominator = 0.0;
-
-  auto const f1 = 1.0 / static_cast<double>(dp3m.params.mesh[0]);
-  auto const f2 = Utils::sqr(Utils::pi() / (dp3m.params.alpha_L));
-
-  for (double mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    auto const nmx = shift[0] + dp3m.params.mesh[0] * mx;
-    auto const sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
-    for (double my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      auto const nmy = shift[1] + dp3m.params.mesh[0] * my;
-      auto const sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
-      for (double mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-        auto const nmz = shift[2] + dp3m.params.mesh[0] * mz;
-        auto const sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
-        auto const nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
-        auto const exponent = f2 * nm2;
-        if (exponent < limit) {
-          auto const f3 = sz * exp(-exponent) / nm2;
-          auto const n_nm = d_op[0] * nmx + d_op[1] * nmy + d_op[2] * nmz;
-          numerator += f3 * Utils::int_pow<3>(n_nm);
-        }
-        denominator += sz;
-      }
-    }
-  }
-  return numerator /
-         (Utils::int_pow<3>(d_op.norm2()) * Utils::sqr(denominator));
 }
 
 /*****************************************************************************/
@@ -890,45 +885,10 @@ void dp3m_calc_influence_function_energy() {
                                              shifts[0][n[2]]};
           auto const d_op = Utils::Vector3i{
               dp3m.d_op[0][n[0]], dp3m.d_op[0][n[1]], dp3m.d_op[0][n[2]]};
-          auto const fak2 = dp3m_perform_aliasing_sums_energy(shift, d_op);
+          auto const fak2 = dp3m_perform_aliasing_sums<2>(shift, d_op);
           dp3m.g_energy[ind] = fak1 * fak2;
         }
       }
-}
-
-/*****************************************************************************/
-
-double dp3m_perform_aliasing_sums_energy(Utils::Vector3i const &shift,
-                                         Utils::Vector3i const &d_op) {
-  constexpr double limit = 30;
-
-  double numerator = 0.0;
-  double denominator = 0.0;
-
-  auto const f1 = 1.0 / static_cast<double>(dp3m.params.mesh[0]);
-  auto const f2 = Utils::sqr(Utils::pi() / dp3m.params.alpha_L);
-
-  for (double mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    auto const nmx = shift[0] + dp3m.params.mesh[0] * mx;
-    auto const sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
-    for (double my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      auto const nmy = shift[1] + dp3m.params.mesh[0] * my;
-      auto const sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
-      for (double mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-        auto const nmz = shift[2] + dp3m.params.mesh[0] * mz;
-        auto const sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
-        auto const nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
-        auto const exponent = f2 * nm2;
-        if (exponent < limit) {
-          auto const f3 = sz * exp(-exponent) / nm2;
-          auto const n_nm = d_op[0] * nmx + d_op[1] * nmy + d_op[2] * nmz;
-          numerator += f3 * Utils::sqr(n_nm);
-        }
-        denominator += sz;
-      }
-    }
-  }
-  return numerator / (Utils::sqr(d_op.norm2()) * Utils::sqr(denominator));
 }
 
 /*****************************************************************************/
