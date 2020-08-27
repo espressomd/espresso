@@ -227,35 +227,29 @@ void dp3m_init() {
 }
 
 double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
-  int end[3];
-  int size = 1;
-  for (int i = 0; i < 3; i++) {
-    size *= dp3m.fft.plan[3].new_mesh[i];
-    end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
-  }
+
+  auto const n_start = Utils::Vector3i{dp3m.fft.plan[3].start};
+  auto const n_size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
+  auto const n_end = n_start + n_size;
 
   auto const meshifts = dp3m.calc_meshift();
   int const *shifts = meshifts[0].data();
 
-  int n[3];
+  Utils::Vector3i n{};
   double node_phi = 0.0;
-  for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++) {
-    for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++) {
-      for (n[2] = dp3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        int const ind = (n[2] - dp3m.fft.plan[3].start[2]) +
-                        dp3m.fft.plan[3].new_mesh[2] *
-                            ((n[1] - dp3m.fft.plan[3].start[1]) +
-                             (dp3m.fft.plan[3].new_mesh[1] *
-                              (n[0] - dp3m.fft.plan[3].start[0])));
-
+  for (n[0] = n_start[0]; n[0] < n_end[0]; n[0]++) {
+    for (n[1] = n_start[1]; n[1] < n_end[1]; n[1]++) {
+      for (n[2] = n_start[2]; n[2] < n_end[2]; n[2]++) {
         if (((n[0] == 0) && (n[1] == 0) && (n[2] == 0)) ||
             ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
              (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
              (n[2] % (dp3m.params.mesh[0] / 2) == 0))) {
           node_phi += 0.0;
         } else {
+          auto const ind = Utils::get_linear_index(
+              n - n_start, n_size, Utils::MemoryOrder::ROW_MAJOR);
           double const U2 =
-              dp3m_perform_aliasing_sums_dipolar_self_energy(n, shifts);
+              dp3m_perform_aliasing_sums_dipolar_self_energy(n.data(), shifts);
           node_phi +=
               dp3m.g_energy[ind] * U2 *
               (Utils::sqr(dp3m.d_op[0][n[0]]) + Utils::sqr(dp3m.d_op[0][n[1]]) +
@@ -803,29 +797,23 @@ double calc_surface_term(bool force_flag, bool energy_flag,
 /*****************************************************************************/
 
 void dp3m_calc_influence_function_force() {
-  int end[3];
-  int size = 1;
+  auto const n_start = Utils::Vector3i{dp3m.fft.plan[3].start};
+  auto const n_size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
+  auto const n_end = n_start + n_size;
 
-  for (int i = 0; i < 3; i++) {
-    size *= dp3m.fft.plan[3].new_mesh[i];
-    end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
-  }
-  dp3m.g_force.resize(size);
+  dp3m.g_force.resize(n_size[0] * n_size[1] * n_size[2]);
   double fak1 = Utils::int_pow<3>(dp3m.params.mesh[0]) * 2.0 /
                 Utils::int_pow<2>(box_geo.length()[0]);
 
   auto const meshifts = dp3m.calc_meshift();
   int const *shifts = meshifts[0].data();
 
-  int n[3];
-  for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
-    for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++)
-      for (n[2] = dp3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        int const ind = (n[2] - dp3m.fft.plan[3].start[2]) +
-                        dp3m.fft.plan[3].new_mesh[2] *
-                            ((n[1] - dp3m.fft.plan[3].start[1]) +
-                             (dp3m.fft.plan[3].new_mesh[1] *
-                              (n[0] - dp3m.fft.plan[3].start[0])));
+  Utils::Vector3i n{};
+  for (n[0] = n_start[0]; n[0] < n_end[0]; n[0]++)
+    for (n[1] = n_start[1]; n[1] < n_end[1]; n[1]++)
+      for (n[2] = n_start[2]; n[2] < n_end[2]; n[2]++) {
+        auto const ind = Utils::get_linear_index(n - n_start, n_size,
+                                                 Utils::MemoryOrder::ROW_MAJOR);
 
         if (((n[0] == 0) && (n[1] == 0) && (n[2] == 0)) ||
             ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
@@ -835,7 +823,7 @@ void dp3m_calc_influence_function_force() {
         } else {
           double nominator[1] = {0.0};
           double denominator =
-              dp3m_perform_aliasing_sums_force(n, nominator, shifts);
+              dp3m_perform_aliasing_sums_force(n.data(), nominator, shifts);
           double fak2 = nominator[0];
           fak2 /= pow(Utils::sqr(dp3m.d_op[0][n[0]]) +
                           Utils::sqr(dp3m.d_op[0][n[1]]) +
@@ -892,29 +880,23 @@ double dp3m_perform_aliasing_sums_force(const int n[3], double nominator[1],
 /*****************************************************************************/
 
 void dp3m_calc_influence_function_energy() {
-  int end[3];
-  int size = 1;
+  auto const n_start = Utils::Vector3i{dp3m.fft.plan[3].start};
+  auto const n_size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
+  auto const n_end = n_start + n_size;
 
-  for (int i = 0; i < 3; i++) {
-    size *= dp3m.fft.plan[3].new_mesh[i];
-    end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
-  }
-  dp3m.g_energy.resize(size);
+  dp3m.g_energy.resize(n_size[0] * n_size[1] * n_size[2]);
   double fak1 = Utils::int_pow<3>(dp3m.params.mesh[0]) * 2.0 /
                 Utils::int_pow<2>(box_geo.length()[0]);
 
   auto const meshifts = dp3m.calc_meshift();
   int const *shifts = meshifts[0].data();
 
-  int n[3];
-  for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
-    for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++)
-      for (n[2] = dp3m.fft.plan[3].start[2]; n[2] < end[2]; n[2]++) {
-        int const ind = (n[2] - dp3m.fft.plan[3].start[2]) +
-                        dp3m.fft.plan[3].new_mesh[2] *
-                            ((n[1] - dp3m.fft.plan[3].start[1]) +
-                             (dp3m.fft.plan[3].new_mesh[1] *
-                              (n[0] - dp3m.fft.plan[3].start[0])));
+  Utils::Vector3i n{};
+  for (n[0] = n_start[0]; n[0] < n_end[0]; n[0]++)
+    for (n[1] = n_start[1]; n[1] < n_end[1]; n[1]++)
+      for (n[2] = n_start[2]; n[2] < n_end[2]; n[2]++) {
+        auto const ind = Utils::get_linear_index(n - n_start, n_size,
+                                                 Utils::MemoryOrder::ROW_MAJOR);
 
         if (((n[0] == 0) && (n[1] == 0) && (n[2] == 0)) ||
             ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
@@ -924,7 +906,7 @@ void dp3m_calc_influence_function_energy() {
         } else {
           double nominator[1] = {0.0};
           double denominator =
-              dp3m_perform_aliasing_sums_energy(n, nominator, shifts);
+              dp3m_perform_aliasing_sums_energy(n.data(), nominator, shifts);
           double fak2 = nominator[0];
           fak2 /= pow(Utils::sqr(dp3m.d_op[0][n[0]]) +
                           Utils::sqr(dp3m.d_op[0][n[1]]) +
