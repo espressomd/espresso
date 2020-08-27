@@ -166,7 +166,7 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.5 REQUIRED)
+find_package(PythonInterp 3.6 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.26 REQUIRED)
