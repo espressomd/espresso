@@ -28,10 +28,11 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
 
     def setUp(self):
         self.system.box_l = [10, 10, 10]
-        if not self.system.part.exists(0):
-            self.system.part.add(id=0, pos=(0.1, 0.1, 0.1), dip=(1.3, 2.1, -6))
-        if not self.system.part.exists(1):
-            self.system.part.add(id=1, pos=(0, 0, 0), dip=(7.3, 6.1, -4))
+        self.system.part.add(id=0, pos=(0.1, 0.1, 0.1), dip=(1.3, 2.1, -6))
+        self.system.part.add(id=1, pos=(0, 0, 0), dip=(7.3, 6.1, -4))
+
+    def tearDown(self):
+        self.system.part.clear()
 
     if espressomd.has_features(["DP3M"]):
         test_DP3M = generate_test_for_class(
