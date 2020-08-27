@@ -148,8 +148,6 @@ double dp3m_average_dipolar_self_energy() {
 /************************************************************/
 
 dp3m_data_struct::dp3m_data_struct() {
-  params.epsilon = P3M_EPSILON_MAGNETIC;
-
   /* local_mesh is uninitialized */
   /* sm is uninitialized */
   sum_dip_part = 0;
