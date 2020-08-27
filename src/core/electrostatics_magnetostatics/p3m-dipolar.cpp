@@ -264,21 +264,19 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
 double
 dp3m_perform_aliasing_sums_dipolar_self_energy(Utils::Vector3i const &shift) {
   double u_sum = 0.0;
-  /* lots of temporary variables... */
-  double f1, sx, sy, sz, mx, my, mz, nmx, nmy, nmz;
-  int limit = P3M_BRILLOUIN + 5;
+  constexpr int limit = P3M_BRILLOUIN + 5;
 
-  f1 = 1.0 / (double)dp3m.params.mesh[0];
+  auto const f1 = 1.0 / static_cast<double>(dp3m.params.mesh[0]);
 
-  for (mx = -limit; mx <= limit; mx++) {
-    nmx = shift[0] + dp3m.params.mesh[0] * mx;
-    sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
-    for (my = -limit; my <= limit; my++) {
-      nmy = shift[1] + dp3m.params.mesh[0] * my;
-      sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
-      for (mz = -limit; mz <= limit; mz++) {
-        nmz = shift[2] + dp3m.params.mesh[0] * mz;
-        sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
+  for (double mx = -limit; mx <= limit; mx++) {
+    auto const nmx = shift[0] + dp3m.params.mesh[0] * mx;
+    auto const sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
+    for (double my = -limit; my <= limit; my++) {
+      auto const nmy = shift[1] + dp3m.params.mesh[0] * my;
+      auto const sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
+      for (double mz = -limit; mz <= limit; mz++) {
+        auto const nmz = shift[2] + dp3m.params.mesh[0] * mz;
+        auto const sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
         u_sum += sz;
       }
     }
@@ -830,41 +828,36 @@ void dp3m_calc_influence_function_force() {
 
 double dp3m_perform_aliasing_sums_force(Utils::Vector3i const &shift,
                                         Utils::Vector3i const &d_op) {
-  /* lots of temporary variables... */
-  double sx, sy, sz, f1, f2, f3, mx, my, mz, nmx, nmy, nmz, nm2, expo;
-  double limit = 30;
-  double n_nm;
-  double n_nm3;
+  constexpr double limit = 30;
 
   double numerator = 0.0;
   double denominator = 0.0;
 
-  f1 = 1.0 / (double)dp3m.params.mesh[0];
-  f2 = Utils::sqr(Utils::pi() / (dp3m.params.alpha_L));
+  auto const f1 = 1.0 / static_cast<double>(dp3m.params.mesh[0]);
+  auto const f2 = Utils::sqr(Utils::pi() / (dp3m.params.alpha_L));
 
-  for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    nmx = shift[0] + dp3m.params.mesh[0] * mx;
-    sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
-    for (my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      nmy = shift[1] + dp3m.params.mesh[0] * my;
-      sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
-      for (mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-        nmz = shift[2] + dp3m.params.mesh[0] * mz;
-        sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
-
-        nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
-        expo = f2 * nm2;
-        f3 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
-
-        n_nm = d_op[0] * nmx + d_op[1] * nmy + d_op[2] * nmz;
-        n_nm3 = Utils::int_pow<3>(n_nm);
-
-        numerator += f3 * n_nm3;
+  for (double mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+    auto const nmx = shift[0] + dp3m.params.mesh[0] * mx;
+    auto const sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
+    for (double my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+      auto const nmy = shift[1] + dp3m.params.mesh[0] * my;
+      auto const sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
+      for (double mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+        auto const nmz = shift[2] + dp3m.params.mesh[0] * mz;
+        auto const sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
+        auto const nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
+        auto const exponent = f2 * nm2;
+        if (exponent < limit) {
+          auto const f3 = sz * exp(-exponent) / nm2;
+          auto const n_nm = d_op[0] * nmx + d_op[1] * nmy + d_op[2] * nmz;
+          numerator += f3 * Utils::int_pow<3>(n_nm);
+        }
         denominator += sz;
       }
     }
   }
-  return numerator / (pow(d_op.norm2(), 3) * Utils::sqr(denominator));
+  return numerator /
+         (Utils::int_pow<3>(d_op.norm2()) * Utils::sqr(denominator));
 }
 
 /*****************************************************************************/
@@ -907,40 +900,35 @@ void dp3m_calc_influence_function_energy() {
 
 double dp3m_perform_aliasing_sums_energy(Utils::Vector3i const &shift,
                                          Utils::Vector3i const &d_op) {
-  /* lots of temporary variables... */
-  double sx, sy, sz, f1, f2, f3, mx, my, mz, nmx, nmy, nmz, nm2, expo;
-  double limit = 30;
-  double n_nm;
-  double n_nm2;
+  constexpr double limit = 30;
 
   double numerator = 0.0;
   double denominator = 0.0;
 
-  f1 = 1.0 / (double)dp3m.params.mesh[0];
-  f2 = Utils::sqr(Utils::pi() / (dp3m.params.alpha_L));
+  auto const f1 = 1.0 / static_cast<double>(dp3m.params.mesh[0]);
+  auto const f2 = Utils::sqr(Utils::pi() / dp3m.params.alpha_L);
 
-  for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    nmx = shift[0] + dp3m.params.mesh[0] * mx;
-    sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
-    for (my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      nmy = shift[1] + dp3m.params.mesh[0] * my;
-      sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
-      for (mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-        nmz = shift[2] + dp3m.params.mesh[0] * mz;
-        sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
-
-        nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
-        expo = f2 * nm2;
-        f3 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
-
-        n_nm = d_op[0] * nmx + d_op[1] * nmy + d_op[2] * nmz;
-        n_nm2 = n_nm * n_nm;
-        numerator += f3 * n_nm2;
+  for (double mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+    auto const nmx = shift[0] + dp3m.params.mesh[0] * mx;
+    auto const sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
+    for (double my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+      auto const nmy = shift[1] + dp3m.params.mesh[0] * my;
+      auto const sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
+      for (double mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+        auto const nmz = shift[2] + dp3m.params.mesh[0] * mz;
+        auto const sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
+        auto const nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
+        auto const exponent = f2 * nm2;
+        if (exponent < limit) {
+          auto const f3 = sz * exp(-exponent) / nm2;
+          auto const n_nm = d_op[0] * nmx + d_op[1] * nmy + d_op[2] * nmz;
+          numerator += f3 * Utils::sqr(n_nm);
+        }
         denominator += sz;
       }
     }
   }
-  return numerator / (pow(d_op.norm2(), 2) * Utils::sqr(denominator));
+  return numerator / (Utils::sqr(d_op.norm2()) * Utils::sqr(denominator));
 }
 
 /*****************************************************************************/
