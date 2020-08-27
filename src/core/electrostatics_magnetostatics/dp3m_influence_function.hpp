@@ -144,4 +144,73 @@ std::vector<double> grid_influence_function(P3MParameters const &params,
   return g;
 }
 
+double G_opt_dipolar_self_energy(P3MParameters const &params,
+                                 Utils::Vector3i const &shift) {
+  using Utils::sinc;
+  double u_sum = 0.0;
+  constexpr int limit = P3M_BRILLOUIN + 5;
+
+  auto const f1 = 1.0 / static_cast<double>(params.mesh[0]);
+
+  for (double mx = -limit; mx <= limit; mx++) {
+    auto const nmx = shift[0] + params.mesh[0] * mx;
+    auto const sx = std::pow(sinc(f1 * nmx), 2.0 * params.cao);
+    for (double my = -limit; my <= limit; my++) {
+      auto const nmy = shift[1] + params.mesh[0] * my;
+      auto const sy = sx * std::pow(sinc(f1 * nmy), 2.0 * params.cao);
+      for (double mz = -limit; mz <= limit; mz++) {
+        auto const nmz = shift[2] + params.mesh[0] * mz;
+        auto const sz = sy * std::pow(sinc(f1 * nmz), 2.0 * params.cao);
+        u_sum += sz;
+      }
+    }
+  }
+  return u_sum;
+}
+
+/**
+ * @brief Calculate self-energy of the influence function.
+ *
+ * @param params DP3M parameters
+ * @param n_start Lower left corner of the grid
+ * @param n_end Upper right corner of the grid.
+ * @param g Energies on the grid.
+ * @return Total self-energy.
+ */
+double grid_influence_function_self_energy(P3MParameters const &params,
+                                           Utils::Vector3i const &n_start,
+                                           Utils::Vector3i const &n_end,
+                                           std::vector<double> const &g) {
+  auto const size = n_end - n_start;
+
+  auto const shifts =
+      detail::calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});
+  auto const d_ops = detail::calc_meshift(
+      {params.mesh[0], params.mesh[1], params.mesh[2]}, true);
+
+  double energy = 0.0;
+  Utils::Vector3i n{};
+  for (n[0] = n_start[0]; n[0] < n_end[0]; n[0]++) {
+    for (n[1] = n_start[1]; n[1] < n_end[1]; n[1]++) {
+      for (n[2] = n_start[2]; n[2] < n_end[2]; n[2]++) {
+        if (((n[0] % (params.mesh[0] / 2) == 0) &&
+             (n[1] % (params.mesh[0] / 2) == 0) &&
+             (n[2] % (params.mesh[0] / 2) == 0))) {
+          energy += 0.0;
+        } else {
+          auto const ind = Utils::get_linear_index(
+              n - n_start, size, Utils::MemoryOrder::ROW_MAJOR);
+          auto const shift = Utils::Vector3i{shifts[0][n[0]], shifts[0][n[1]],
+                                             shifts[0][n[2]]};
+          auto const d_op =
+              Utils::Vector3i{d_ops[0][n[0]], d_ops[0][n[1]], d_ops[0][n[2]]};
+          auto const U2 = G_opt_dipolar_self_energy(params, shift);
+          energy += g[ind] * U2 * d_op.norm2();
+        }
+      }
+    }
+  }
+  return energy;
+}
+
 #endif

@@ -47,11 +47,10 @@
 
 #include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
-#include <utils/math/sinc.hpp>
-using Utils::sinc;
 #include <utils/constants.hpp>
 #include <utils/integral_parameter.hpp>
 #include <utils/math/int_pow.hpp>
+#include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
@@ -132,12 +131,19 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
 
 /*@}*/
 
-/************************************************************/
-/* functions related to the correction of the dipolar p3m-energy */
+/** Correction of the dipolar p3m-energy. */
+double dp3m_average_dipolar_self_energy() {
+  auto const start = Utils::Vector3i{dp3m.fft.plan[3].start};
+  auto const size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
 
-static double dp3m_average_dipolar_self_energy(double box_l, int mesh);
-static double
-dp3m_perform_aliasing_sums_dipolar_self_energy(Utils::Vector3i const &shift);
+  auto const node_phi = grid_influence_function_self_energy(
+      dp3m.params, start, start + size, dp3m.g_energy);
+
+  double phi = 0.0;
+  MPI_Reduce(&node_phi, &phi, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  phi /= 3. * box_geo.length()[0] * Utils::int_pow<3>(dp3m.params.mesh[0]);
+  return phi * Utils::pi();
+}
 
 /************************************************************/
 
@@ -207,67 +213,6 @@ void dp3m_init() {
 
     dp3m_count_magnetic_particles();
   }
-}
-
-double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
-
-  auto const n_start = Utils::Vector3i{dp3m.fft.plan[3].start};
-  auto const n_size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
-  auto const n_end = n_start + n_size;
-
-  auto const shifts = dp3m.calc_meshift();
-
-  Utils::Vector3i n{};
-  double node_phi = 0.0;
-  for (n[0] = n_start[0]; n[0] < n_end[0]; n[0]++) {
-    for (n[1] = n_start[1]; n[1] < n_end[1]; n[1]++) {
-      for (n[2] = n_start[2]; n[2] < n_end[2]; n[2]++) {
-        if (((n[0] == 0) && (n[1] == 0) && (n[2] == 0)) ||
-            ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
-             (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
-             (n[2] % (dp3m.params.mesh[0] / 2) == 0))) {
-          node_phi += 0.0;
-        } else {
-          auto const ind = Utils::get_linear_index(
-              n - n_start, n_size, Utils::MemoryOrder::ROW_MAJOR);
-          auto const shift = Utils::Vector3i{shifts[0][n[0]], shifts[0][n[1]],
-                                             shifts[0][n[2]]};
-          auto const d_op = Utils::Vector3i{
-              dp3m.d_op[0][n[0]], dp3m.d_op[0][n[1]], dp3m.d_op[0][n[2]]};
-          auto const U2 = dp3m_perform_aliasing_sums_dipolar_self_energy(shift);
-          node_phi += dp3m.g_energy[ind] * U2 * d_op.norm2();
-        }
-      }
-    }
-  }
-
-  double phi = 0.0;
-  MPI_Reduce(&node_phi, &phi, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-  phi *= Utils::pi() / 3. / box_l / pow(mesh, 3.0);
-  return phi;
-}
-
-double
-dp3m_perform_aliasing_sums_dipolar_self_energy(Utils::Vector3i const &shift) {
-  double u_sum = 0.0;
-  constexpr int limit = P3M_BRILLOUIN + 5;
-
-  auto const f1 = 1.0 / static_cast<double>(dp3m.params.mesh[0]);
-
-  for (double mx = -limit; mx <= limit; mx++) {
-    auto const nmx = shift[0] + dp3m.params.mesh[0] * mx;
-    auto const sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
-    for (double my = -limit; my <= limit; my++) {
-      auto const nmy = shift[1] + dp3m.params.mesh[0] * my;
-      auto const sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
-      for (double mz = -limit; mz <= limit; mz++) {
-        auto const nmz = shift[2] + dp3m.params.mesh[0] * mz;
-        auto const sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
-        u_sum += sz;
-      }
-    }
-  }
-  return u_sum;
 }
 
 /******************
@@ -1340,6 +1285,7 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
 void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
                              int cao, double alpha_L_i, double *alias1,
                              double *alias2) {
+  using Utils::sinc;
   int mx, my, mz;
   double nmx, nmy, nmz;
   double fnmx, fnmy, fnmz;
@@ -1552,10 +1498,7 @@ void dp3m_compute_constants_energy_dipolar() {
   if (dp3m.energy_correction != 0.0)
     return;
 
-  auto const volume = box_geo.volume();
-  Ukp3m = dp3m_average_dipolar_self_energy(box_geo.length()[0],
-                                           dp3m.params.mesh[0]) *
-          volume;
+  Ukp3m = dp3m_average_dipolar_self_energy() * box_geo.volume();
 
   Eself = -(2 * pow(dp3m.params.alpha_L, 3) * Utils::sqrt_pi_i() / 3.0);
 
