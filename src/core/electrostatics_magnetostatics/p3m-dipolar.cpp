@@ -101,20 +101,18 @@ static void dp3m_compute_constants_energy_dipolar();
 
 /** Calculate the aliasing sums for the optimal influence function.
  *
- *  Calculates the aliasing sums in the nominator and denominator of
+ *  Calculates the aliasing sums in the numerator and denominator of
  *  the expression for the optimal influence function (see
  *  @cite hockney88a : 8-22, p. 275).
  *
- *  \param  n           n-vector for which the aliasing sum is to be performed
- *  \param  nominator   aliasing sums in the nominator
- *  \retval denominator aliasing sum in the denominator
+ *  \param shift       shift for a given n-vector
+ *  \param d_op        differential operator for a given n-vector
+ *  \return The result of the fraction.
  */
-static double dp3m_perform_aliasing_sums_force(const int n[3],
-                                               double nominator[1],
-                                               const int shifts[]);
-static double dp3m_perform_aliasing_sums_energy(const int n[3],
-                                                double nominator[1],
-                                                const int shifts[]);
+static double dp3m_perform_aliasing_sums_force(Utils::Vector3i const &shift,
+                                               Utils::Vector3i const &d_op);
+static double dp3m_perform_aliasing_sums_energy(Utils::Vector3i const &shift,
+                                                Utils::Vector3i const &d_op);
 
 static double dp3m_k_space_error(double box_size, double prefac, int mesh,
                                  int cao, int n_c_part, double sum_q2,
@@ -153,8 +151,7 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
 
 static double dp3m_average_dipolar_self_energy(double box_l, int mesh);
 static double
-dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3],
-                                               const int shifts[]);
+dp3m_perform_aliasing_sums_dipolar_self_energy(Utils::Vector3i const &shift);
 
 /************************************************************/
 
@@ -232,8 +229,7 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
   auto const n_size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
   auto const n_end = n_start + n_size;
 
-  auto const meshifts = dp3m.calc_meshift();
-  int const *shifts = meshifts[0].data();
+  auto const shifts = dp3m.calc_meshift();
 
   Utils::Vector3i n{};
   double node_phi = 0.0;
@@ -248,12 +244,12 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
         } else {
           auto const ind = Utils::get_linear_index(
               n - n_start, n_size, Utils::MemoryOrder::ROW_MAJOR);
-          double const U2 =
-              dp3m_perform_aliasing_sums_dipolar_self_energy(n.data(), shifts);
-          node_phi +=
-              dp3m.g_energy[ind] * U2 *
-              (Utils::sqr(dp3m.d_op[0][n[0]]) + Utils::sqr(dp3m.d_op[0][n[1]]) +
-               Utils::sqr(dp3m.d_op[0][n[2]]));
+          auto const shift = Utils::Vector3i{shifts[0][n[0]], shifts[0][n[1]],
+                                             shifts[0][n[2]]};
+          auto const d_op = Utils::Vector3i{
+              dp3m.d_op[0][n[0]], dp3m.d_op[0][n[1]], dp3m.d_op[0][n[2]]};
+          auto const U2 = dp3m_perform_aliasing_sums_dipolar_self_energy(shift);
+          node_phi += dp3m.g_energy[ind] * U2 * d_op.norm2();
         }
       }
     }
@@ -265,8 +261,8 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
   return phi;
 }
 
-double dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3],
-                                                      const int shifts[]) {
+double
+dp3m_perform_aliasing_sums_dipolar_self_energy(Utils::Vector3i const &shift) {
   double u_sum = 0.0;
   /* lots of temporary variables... */
   double f1, sx, sy, sz, mx, my, mz, nmx, nmy, nmz;
@@ -275,13 +271,13 @@ double dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3],
   f1 = 1.0 / (double)dp3m.params.mesh[0];
 
   for (mx = -limit; mx <= limit; mx++) {
-    nmx = shifts[n[0]] + dp3m.params.mesh[0] * mx;
+    nmx = shift[0] + dp3m.params.mesh[0] * mx;
     sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
     for (my = -limit; my <= limit; my++) {
-      nmy = shifts[n[1]] + dp3m.params.mesh[0] * my;
+      nmy = shift[1] + dp3m.params.mesh[0] * my;
       sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
       for (mz = -limit; mz <= limit; mz++) {
-        nmz = shifts[n[2]] + dp3m.params.mesh[0] * mz;
+        nmz = shift[2] + dp3m.params.mesh[0] * mz;
         sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
         u_sum += sz;
       }
@@ -805,8 +801,7 @@ void dp3m_calc_influence_function_force() {
   double fak1 = Utils::int_pow<3>(dp3m.params.mesh[0]) * 2.0 /
                 Utils::int_pow<2>(box_geo.length()[0]);
 
-  auto const meshifts = dp3m.calc_meshift();
-  int const *shifts = meshifts[0].data();
+  auto const shifts = dp3m.calc_meshift();
 
   Utils::Vector3i n{};
   for (n[0] = n_start[0]; n[0] < n_end[0]; n[0]++)
@@ -821,15 +816,11 @@ void dp3m_calc_influence_function_force() {
              (n[2] % (dp3m.params.mesh[0] / 2) == 0))) {
           dp3m.g_force[ind] = 0.0;
         } else {
-          double nominator[1] = {0.0};
-          double denominator =
-              dp3m_perform_aliasing_sums_force(n.data(), nominator, shifts);
-          double fak2 = nominator[0];
-          fak2 /= pow(Utils::sqr(dp3m.d_op[0][n[0]]) +
-                          Utils::sqr(dp3m.d_op[0][n[1]]) +
-                          Utils::sqr(dp3m.d_op[0][n[2]]),
-                      3) *
-                  Utils::sqr(denominator);
+          auto const shift = Utils::Vector3i{shifts[0][n[0]], shifts[0][n[1]],
+                                             shifts[0][n[2]]};
+          auto const d_op = Utils::Vector3i{
+              dp3m.d_op[0][n[0]], dp3m.d_op[0][n[1]], dp3m.d_op[0][n[2]]};
+          auto const fak2 = dp3m_perform_aliasing_sums_force(shift, d_op);
           dp3m.g_force[ind] = fak1 * fak2;
         }
       }
@@ -837,44 +828,43 @@ void dp3m_calc_influence_function_force() {
 
 /*****************************************************************************/
 
-double dp3m_perform_aliasing_sums_force(const int n[3], double nominator[1],
-                                        const int shifts[]) {
-  double denominator = 0.0;
+double dp3m_perform_aliasing_sums_force(Utils::Vector3i const &shift,
+                                        Utils::Vector3i const &d_op) {
   /* lots of temporary variables... */
   double sx, sy, sz, f1, f2, f3, mx, my, mz, nmx, nmy, nmz, nm2, expo;
   double limit = 30;
   double n_nm;
   double n_nm3;
 
-  nominator[0] = 0.0;
+  double numerator = 0.0;
+  double denominator = 0.0;
 
   f1 = 1.0 / (double)dp3m.params.mesh[0];
   f2 = Utils::sqr(Utils::pi() / (dp3m.params.alpha_L));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    nmx = shifts[n[0]] + dp3m.params.mesh[0] * mx;
+    nmx = shift[0] + dp3m.params.mesh[0] * mx;
     sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
     for (my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      nmy = shifts[n[1]] + dp3m.params.mesh[0] * my;
+      nmy = shift[1] + dp3m.params.mesh[0] * my;
       sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
       for (mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-        nmz = shifts[n[2]] + dp3m.params.mesh[0] * mz;
+        nmz = shift[2] + dp3m.params.mesh[0] * mz;
         sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
 
         nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
         expo = f2 * nm2;
         f3 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
 
-        n_nm = dp3m.d_op[0][n[0]] * nmx + dp3m.d_op[0][n[1]] * nmy +
-               dp3m.d_op[0][n[2]] * nmz;
+        n_nm = d_op[0] * nmx + d_op[1] * nmy + d_op[2] * nmz;
         n_nm3 = Utils::int_pow<3>(n_nm);
 
-        nominator[0] += f3 * n_nm3;
+        numerator += f3 * n_nm3;
         denominator += sz;
       }
     }
   }
-  return denominator;
+  return numerator / (pow(d_op.norm2(), 3) * Utils::sqr(denominator));
 }
 
 /*****************************************************************************/
@@ -888,8 +878,7 @@ void dp3m_calc_influence_function_energy() {
   double fak1 = Utils::int_pow<3>(dp3m.params.mesh[0]) * 2.0 /
                 Utils::int_pow<2>(box_geo.length()[0]);
 
-  auto const meshifts = dp3m.calc_meshift();
-  int const *shifts = meshifts[0].data();
+  auto const shifts = dp3m.calc_meshift();
 
   Utils::Vector3i n{};
   for (n[0] = n_start[0]; n[0] < n_end[0]; n[0]++)
@@ -904,15 +893,11 @@ void dp3m_calc_influence_function_energy() {
              (n[2] % (dp3m.params.mesh[0] / 2) == 0))) {
           dp3m.g_energy[ind] = 0.0;
         } else {
-          double nominator[1] = {0.0};
-          double denominator =
-              dp3m_perform_aliasing_sums_energy(n.data(), nominator, shifts);
-          double fak2 = nominator[0];
-          fak2 /= pow(Utils::sqr(dp3m.d_op[0][n[0]]) +
-                          Utils::sqr(dp3m.d_op[0][n[1]]) +
-                          Utils::sqr(dp3m.d_op[0][n[2]]),
-                      2) *
-                  Utils::sqr(denominator);
+          auto const shift = Utils::Vector3i{shifts[0][n[0]], shifts[0][n[1]],
+                                             shifts[0][n[2]]};
+          auto const d_op = Utils::Vector3i{
+              dp3m.d_op[0][n[0]], dp3m.d_op[0][n[1]], dp3m.d_op[0][n[2]]};
+          auto const fak2 = dp3m_perform_aliasing_sums_energy(shift, d_op);
           dp3m.g_energy[ind] = fak1 * fak2;
         }
       }
@@ -920,43 +905,42 @@ void dp3m_calc_influence_function_energy() {
 
 /*****************************************************************************/
 
-double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1],
-                                         const int shifts[]) {
-  double denominator = 0.0;
+double dp3m_perform_aliasing_sums_energy(Utils::Vector3i const &shift,
+                                         Utils::Vector3i const &d_op) {
   /* lots of temporary variables... */
   double sx, sy, sz, f1, f2, f3, mx, my, mz, nmx, nmy, nmz, nm2, expo;
   double limit = 30;
   double n_nm;
   double n_nm2;
 
-  nominator[0] = 0.0;
+  double numerator = 0.0;
+  double denominator = 0.0;
 
   f1 = 1.0 / (double)dp3m.params.mesh[0];
   f2 = Utils::sqr(Utils::pi() / (dp3m.params.alpha_L));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    nmx = shifts[n[0]] + dp3m.params.mesh[0] * mx;
+    nmx = shift[0] + dp3m.params.mesh[0] * mx;
     sx = pow(sinc(f1 * nmx), 2.0 * dp3m.params.cao);
     for (my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      nmy = shifts[n[1]] + dp3m.params.mesh[0] * my;
+      nmy = shift[1] + dp3m.params.mesh[0] * my;
       sy = sx * pow(sinc(f1 * nmy), 2.0 * dp3m.params.cao);
       for (mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-        nmz = shifts[n[2]] + dp3m.params.mesh[0] * mz;
+        nmz = shift[2] + dp3m.params.mesh[0] * mz;
         sz = sy * pow(sinc(f1 * nmz), 2.0 * dp3m.params.cao);
 
         nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
         expo = f2 * nm2;
         f3 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
 
-        n_nm = dp3m.d_op[0][n[0]] * nmx + dp3m.d_op[0][n[1]] * nmy +
-               dp3m.d_op[0][n[2]] * nmz;
+        n_nm = d_op[0] * nmx + d_op[1] * nmy + d_op[2] * nmz;
         n_nm2 = n_nm * n_nm;
-        nominator[0] += f3 * n_nm2;
+        numerator += f3 * n_nm2;
         denominator += sz;
       }
     }
   }
-  return denominator;
+  return numerator / (pow(d_op.norm2(), 2) * Utils::sqr(denominator));
 }
 
 /*****************************************************************************/
