@@ -89,12 +89,6 @@ static bool dp3m_sanity_checks_boxl();
 /** Shift the mesh points by mesh/2 */
 static void dp3m_calc_meshift();
 
-/** Calculate the Fourier transformed differential operator.
- *  Remark: This is done on the level of n-vectors and not k-vectors,
- *          i.e. the prefactor i*2*PI/L is missing!
- */
-static void dp3m_calc_differential_operator();
-
 /** Calculate the influence function optimized for the dipolar forces. */
 static void dp3m_calc_influence_function_force();
 
@@ -222,7 +216,7 @@ void dp3m_init() {
 
     /* k-space part: */
 
-    dp3m_calc_differential_operator();
+    dp3m.calc_differential_operator();
 
     dp3m_calc_influence_function_force();
     dp3m_calc_influence_function_energy();
@@ -809,21 +803,6 @@ void dp3m_calc_meshift() {
   dp3m.meshift.resize(dp3m.params.mesh[0]);
   for (i = 0; i < dp3m.params.mesh[0]; i++)
     dp3m.meshift[i] = i - std::round(i / dmesh) * dmesh;
-}
-
-/*****************************************************************************/
-
-void dp3m_calc_differential_operator() {
-  int i;
-  double dmesh;
-
-  dmesh = (double)dp3m.params.mesh[0];
-  dp3m.d_op[0].resize(dp3m.params.mesh[0]);
-
-  for (i = 0; i < dp3m.params.mesh[0]; i++)
-    dp3m.d_op[0][i] = (double)i - std::round((double)i / dmesh) * dmesh;
-
-  dp3m.d_op[0][dp3m.params.mesh[0] / 2] = 0;
 }
 
 /*****************************************************************************/

@@ -34,6 +34,9 @@
  */
 #include "config.hpp"
 
+#include <array>
+#include <vector>
+
 #if defined(P3M) || defined(DP3M)
 
 #include "LocalBox.hpp"
@@ -187,5 +190,33 @@ void p3m_calc_lm_ld_pos(p3m_local_mesh &local_mesh,
                         const P3MParameters &params);
 
 #endif /* P3M || DP3M */
+
+namespace detail {
+/** Calculate a mesh shift sequence.
+ *  For each mesh size @f$ n @f$ in @c mesh_size, create a sequence of integer
+ *  values @f$ \left( 0, \ldots, \lfloor n/2 \rfloor, -\lfloor n/2 \rfloor,
+ *  \ldots, -1\right) @f$ if @c zero_out_midpoint is false, otherwise
+ *  @f$ \left( 0, \ldots, \lfloor n/2 - 1 \rfloor, 0, -\lfloor n/2 \rfloor,
+ *  \ldots, -1\right) @f$.
+ */
+std::array<std::vector<int>, 3> inline calc_meshift(
+    std::array<int, 3> const &mesh_size, bool zero_out_midpoint = false) {
+  std::array<std::vector<int>, 3> ret;
+
+  for (size_t i = 0; i < 3; i++) {
+    ret[i].resize(mesh_size[i]);
+
+    ret[i][0] = 0;
+    for (int j = 1; j <= mesh_size[i] / 2; j++) {
+      ret[i][j] = j;
+      ret[i][mesh_size[i] - j] = -j;
+    }
+    if (zero_out_midpoint)
+      ret[i][mesh_size[i] / 2] = 0;
+  }
+
+  return ret;
+}
+} // namespace detail
 
 #endif /* _P3M_COMMON_H */

@@ -34,23 +34,6 @@
 namespace detail {
 enum : int { RX = 0, RY = 1, RZ = 2 };
 
-std::array<std::vector<int>, 3> inline calc_meshift(
-    std::array<int, 3> const &mesh_size) {
-  std::array<std::vector<int>, 3> ret;
-
-  for (size_t i = 0; i < 3; i++) {
-    ret[i].resize(mesh_size[i]);
-
-    ret[i][0] = 0;
-    for (int j = 1; j <= mesh_size[i] / 2; j++) {
-      ret[i][j] = j;
-      ret[i][mesh_size[i] - j] = -j;
-    }
-  }
-
-  return ret;
-}
-
 template <typename T> T g_ewald(T alpha, T k2) {
   auto constexpr limit = T{30};
   auto const exponent = Utils::sqr(1. / (2. * alpha)) * k2;

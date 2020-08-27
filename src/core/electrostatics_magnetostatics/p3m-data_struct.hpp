@@ -32,7 +32,7 @@ struct p3m_data_struct_base {
 
   /** Spatial differential operator in k-space. We use an i*k differentiation.
    */
-  std::array<std::vector<double>, 3> d_op;
+  std::array<std::vector<int>, 3> d_op;
   /** Force optimised influence function (k-space) */
   std::vector<double> g_force;
   /** Energy optimised influence function (k-space) */
@@ -40,6 +40,15 @@ struct p3m_data_struct_base {
 
   /** number of permutations in k_space */
   int ks_pnum;
+
+  /** Calculate the Fourier transformed differential operator.
+   *  Remark: This is done on the level of n-vectors and not k-vectors,
+   *  i.e. the prefactor @f$ 2i\pi/L @f$ is missing!
+   */
+  void calc_differential_operator() {
+    d_op = detail::calc_meshift(
+        {params.mesh[0], params.mesh[1], params.mesh[2]}, true);
+  }
 };
 
 #endif

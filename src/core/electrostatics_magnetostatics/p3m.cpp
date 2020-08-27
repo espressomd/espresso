@@ -95,12 +95,6 @@ static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
  */
 static bool p3m_sanity_checks_boxl();
 
-/** Calculate the Fourier transformed differential operator.
- *  Remark: This is done on the level of n-vectors and not k-vectors,
- *          i.e. the prefactor i*2*PI/L is missing!
- */
-static void p3m_calc_differential_operator();
-
 /** Calculate the optimal influence function of @cite hockney88a.
  *  (optimised for force calculations)
  *
@@ -195,7 +189,7 @@ void p3m_init() {
     }
 
     /* k-space part: */
-    p3m_calc_differential_operator();
+    p3m.calc_differential_operator();
 
     /* fix box length dependent constants */
     p3m_scaleby_box_l();
@@ -573,19 +567,6 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
   } /* if (energy_flag) */
 
   return 0.0;
-}
-
-void p3m_calc_differential_operator() {
-  for (int i = 0; i < 3; i++) {
-    p3m.d_op[i].resize(p3m.params.mesh[i]);
-    p3m.d_op[i][0] = 0;
-    p3m.d_op[i][p3m.params.mesh[i] / 2] = 0.0;
-
-    for (int j = 1; j < p3m.params.mesh[i] / 2; j++) {
-      p3m.d_op[i][j] = j;
-      p3m.d_op[i][p3m.params.mesh[i] - j] = -j;
-    }
-  }
 }
 
 void p3m_calc_influence_function_force() {
