@@ -125,25 +125,20 @@ IF DP3M == 1:
                 self._params["epsilon"], 1, float,
                 "epsilon should be a double or 'metallic'")
 
-            if not (self._params["inter"] == default_params["inter"]
-                    or self._params["inter"] > 0):
-                raise ValueError("inter should be a positive integer")
-
             if self._params["mesh_off"] != default_params["mesh_off"]:
                 check_type_or_throw_except(self._params["mesh_off"], 3, float,
                                            "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
 
         def valid_keys(self):
             return ["prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
-                    "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai",
-                    "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "tune"]
+                    "cao", "accuracy", "epsilon", "cao_cut", "a", "ai",
+                    "alpha", "r_cut", "cao3", "additional_mesh", "tune"]
 
         def required_keys(self):
             return ["accuracy", ]
 
         def default_params(self):
             return {"cao": -1,
-                    "inter": -1,
                     "r_cut": -1,
                     "accuracy": -1,
                     "mesh": -1,
@@ -171,7 +166,7 @@ IF DP3M == 1:
             dp3m_set_eps(self._params["epsilon"])
             self.python_dp3m_set_tune_params(
                 self._params["r_cut"], self._params["mesh"],
-                self._params["cao"], -1., self._params["accuracy"], self._params["inter"])
+                self._params["cao"], -1., self._params["accuracy"])
             resp, log = self.python_dp3m_adaptive_tune()
             handle_errors("dipolar P3M tuning failed")
             print(to_str(log))
@@ -221,23 +216,21 @@ IF DP3M == 1:
             dp3m_set_params(r_cut, mesh, cao, alpha, accuracy)
 
         def python_dp3m_set_tune_params(self, p_r_cut, p_mesh, p_cao, p_alpha,
-                                        p_accuracy, p_n_interpol):
+                                        p_accuracy):
             cdef int mesh
             cdef double r_cut
             cdef int cao
             cdef double alpha
             cdef double accuracy
-            cdef int n_interpol
             r_cut = p_r_cut
             cao = p_cao
             alpha = p_alpha
             accuracy = p_accuracy
-            n_interpol = p_n_interpol
             if hasattr(p_mesh, "__getitem__"):
                 mesh = p_mesh[0]
             else:
                 mesh = p_mesh
-            dp3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy, n_interpol)
+            dp3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy)
 
 IF DIPOLES == 1:
     cdef class DipolarDirectSumCpu(MagnetostaticInteraction):

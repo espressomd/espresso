@@ -211,7 +211,7 @@ void dp3m_init() {
  ******************/
 
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
-                          double accuracy, int n_interpol) {
+                          double accuracy) {
   if (r_cut >= 0) {
     dp3m.params.r_cut = r_cut;
     dp3m.params.r_cut_iL = r_cut / box_geo.length()[0];

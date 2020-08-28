@@ -84,7 +84,7 @@ extern dp3m_data_struct dp3m;
 
 /** @copydoc p3m_set_tune_params */
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
-                          double accuracy, int n_interpol);
+                          double accuracy);
 
 /** @copydoc p3m_set_params */
 int dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
