@@ -25,6 +25,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+#include <utils/index.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
@@ -32,6 +33,8 @@
 #include <boost/range/numeric.hpp>
 
 #include <cmath>
+
+#if defined(DP3M)
 
 /** Calculate the aliasing sums for the optimal influence function.
  *
@@ -77,7 +80,8 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
       }
     }
   }
-  return numerator / (int_pow<S>(d_op.norm2()) * Utils::sqr(denominator));
+  return numerator / (int_pow<S>(static_cast<double>(d_op.norm2())) *
+                      Utils::sqr(denominator));
 }
 
 /**
@@ -213,4 +217,5 @@ double grid_influence_function_self_energy(P3MParameters const &params,
   return energy;
 }
 
+#endif
 #endif

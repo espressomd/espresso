@@ -23,6 +23,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+#include <utils/index.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>

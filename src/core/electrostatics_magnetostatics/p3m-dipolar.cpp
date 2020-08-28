@@ -1259,7 +1259,8 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
           double alias1, alias2;
           dp3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i,
                                   &alias1, &alias2);
-          double d = alias1 - Utils::sqr(alias2 / cs) / Utils::int_pow<3>(n2);
+          double d = alias1 - Utils::sqr(alias2 / cs) /
+                                  Utils::int_pow<3>(static_cast<double>(n2));
           /* at high precisions, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
           if (d > 0 && (fabs(d / alias1) > ROUND_ERROR_PREC))
