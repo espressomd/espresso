@@ -150,6 +150,8 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
                                    double alpha_L_i, double *alias1,
                                    double *alias2);
 
+/*@}*/
+
 p3m_data_struct::p3m_data_struct() {
   /* local_mesh is uninitialized */
   /* sm is uninitialized */
@@ -173,7 +175,7 @@ void p3m_init() {
     return;
   }
 
-  p3m.params.cao3 = p3m.params.cao * p3m.params.cao * p3m.params.cao;
+  p3m.params.cao3 = Utils::int_pow<3>(p3m.params.cao);
 
   /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and
    * the cutoff for charge assignment p3m.params.cao_cut */
@@ -192,7 +194,6 @@ void p3m_init() {
     e.resize(ca_mesh_size);
   }
 
-  /* k-space part: */
   p3m.calc_differential_operator();
 
   /* fix box length dependent constants */
@@ -225,8 +226,6 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
   if (accuracy >= 0)
     p3m.params.accuracy = accuracy;
 }
-
-/*@}*/
 
 int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
                    double accuracy) {

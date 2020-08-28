@@ -43,6 +43,7 @@
  *  @cite hockney88a : 8-22, p. 275).
  *
  *  \tparam S          order (2 for energy, 3 for forces)
+ *  \param params      DP3M parameters
  *  \param shift       shift for a given n-vector
  *  \param d_op        differential operator for a given n-vector
  *  \return The result of the fraction.
@@ -58,7 +59,7 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
   double denominator = 0.0;
 
   auto const f1 = 1.0 / static_cast<double>(params.mesh[0]);
-  auto const f2 = Utils::sqr(Utils::pi() / (params.alpha_L));
+  auto const f2 = Utils::sqr(Utils::pi() / params.alpha_L);
 
   for (double mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     auto const nmx = shift[0] + params.mesh[0] * mx;
@@ -116,7 +117,8 @@ std::vector<double> grid_influence_function(P3MParameters const &params,
     return g;
   }
 
-  double fak1 = Utils::int_pow<3>(params.mesh[0]) * 2.0 / Utils::sqr(box_l[0]);
+  double fak1 = Utils::int_pow<3>(static_cast<double>(params.mesh[0])) * 2.0 /
+                Utils::sqr(box_l[0]);
 
   auto const shifts =
       detail::calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});

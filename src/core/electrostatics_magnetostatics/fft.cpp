@@ -71,6 +71,7 @@ namespace {
  *  \param[out] node_list2  Linear node index list for grid2.
  *  \param[out] pos         Positions of the nodes in grid2
  *  \param[out] my_pos      Position of comm.rank() in grid2.
+ *  \param[in]  comm        MPI communicator.
  *  \return Size of the communication group.
  */
 boost::optional<std::vector<int>>

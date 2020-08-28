@@ -47,9 +47,11 @@ std::pair<double, double> aliasing_sums_ik(size_t cao, double alpha,
                                            const Utils::Vector3d &k,
                                            const Utils::Vector3d &h) {
   using Utils::int_pow;
-  using Utils::pi;
   using Utils::sinc;
   using Utils::Vector3d;
+
+  constexpr double two_pi = 2 * Utils::pi();
+  constexpr double two_pi_i = 1 / two_pi;
 
   double numerator = 0.0;
   double denominator = 0.0;
@@ -58,10 +60,10 @@ std::pair<double, double> aliasing_sums_ik(size_t cao, double alpha,
     for (int my = -m; my <= m; my++) {
       for (int mz = -m; mz <= m; mz++) {
         auto const km =
-            k + 2 * pi() * Vector3d{mx / h[RX], my / h[RY], mz / h[RZ]};
-        auto const U2 = std::pow(sinc(0.5 * km[RX] * h[RX] / pi()) *
-                                     sinc(0.5 * km[RY] * h[RY] / pi()) *
-                                     sinc(0.5 * km[RZ] * h[RZ] / pi()),
+            k + two_pi * Vector3d{mx / h[RX], my / h[RY], mz / h[RZ]};
+        auto const U2 = std::pow(sinc(km[RX] * h[RX] * two_pi_i) *
+                                     sinc(km[RY] * h[RY] * two_pi_i) *
+                                     sinc(km[RZ] * h[RZ] * two_pi_i),
                                  2 * cao);
 
         numerator += U2 * g_ewald(alpha, km.norm2()) * int_pow<S>(k * km);

@@ -82,10 +82,6 @@ struct dp3m_data_struct : public p3m_data_struct_base {
 /** dipolar P3M parameters. */
 extern dp3m_data_struct dp3m;
 
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
-
 /** @copydoc p3m_set_tune_params */
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
                           double accuracy, int n_interpol);
@@ -290,8 +286,6 @@ inline double dp3m_pair_energy(Particle const &p1, Particle const &p2,
   }
   return 0.0;
 }
-
-/*@}*/
 
 #endif /* DP3M */
 #endif /* _P3M_DIPOLES_H */
