@@ -61,21 +61,6 @@ using Utils::strcat_alloc;
 
 p3m_data_struct p3m;
 
-/** @name Index helpers for direct and reciprocal space
- *  After the FFT the data is in order YZX, which
- *  means that Y is the slowest changing index.
- *  The defines are here to not get confused and
- *  be able to easily change the order.
- */
-/*@{*/
-#define RX 0
-#define RY 1
-#define RZ 2
-#define KY 0
-#define KZ 1
-#define KX 2
-/*@}*/
-
 /** \name Private Functions */
 /*@{*/
 
@@ -412,6 +397,8 @@ double dipole_correction_energy(Utils::Vector3d const &box_dipole) {
  *  eq. (2.8) is not present here since M is the empty set in our simulations.
  */
 Utils::Vector9d p3m_calc_kspace_pressure_tensor() {
+  using namespace detail::FFT_indexing;
+
   Utils::Vector9d node_k_space_pressure_tensor{};
 
   if (p3m.sum_q2 > 0) {

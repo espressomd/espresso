@@ -58,6 +58,17 @@ enum P3M_TUNE_ERROR {
   P3M_TUNE_ACCURACY_TOO_LARGE = 32
 };
 
+namespace detail {
+/** @brief Index helpers for direct and reciprocal space.
+ *  After the FFT the data is in order YZX, which
+ *  means that Y is the slowest changing index.
+ */
+namespace FFT_indexing {
+enum FFT_REAL_VECTOR : int { RX = 0, RY = 1, RZ = 2 };
+enum FFT_WAVE_VECTOR : int { KY = 0, KZ = 1, KX = 2 };
+} // namespace FFT_indexing
+} // namespace detail
+
 /** This value indicates metallic boundary conditions. */
 #define P3M_EPSILON_METALLIC 0.0
 

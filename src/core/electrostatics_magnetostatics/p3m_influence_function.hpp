@@ -33,8 +33,6 @@
 #include <cmath>
 
 namespace detail {
-enum : int { RX = 0, RY = 1, RZ = 2 };
-
 template <typename T> T g_ewald(T alpha, T k2) {
   auto constexpr limit = T{30};
   auto const exponent = Utils::sqr(1. / (2. * alpha)) * k2;
@@ -46,6 +44,7 @@ template <size_t S, size_t m>
 std::pair<double, double> aliasing_sums_ik(size_t cao, double alpha,
                                            const Utils::Vector3d &k,
                                            const Utils::Vector3d &h) {
+  using namespace detail::FFT_indexing;
   using Utils::int_pow;
   using Utils::sinc;
   using Utils::Vector3d;
@@ -127,8 +126,7 @@ std::vector<double> grid_influence_function(const P3MParameters &params,
                                             const Utils::Vector3i &n_start,
                                             const Utils::Vector3i &n_end,
                                             const Utils::Vector3d &box_l) {
-  enum : int { RX = 0, RY = 1, RZ = 2 };
-  enum : int { KY = 0, KZ = 1, KX = 2 };
+  using namespace detail::FFT_indexing;
 
   auto const shifts =
       detail::calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});
