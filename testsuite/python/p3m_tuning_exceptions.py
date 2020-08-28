@@ -194,7 +194,7 @@ class P3M_tuning_test(ut.TestCase):
         self.add_magnetic_particles()
 
         solver = espressomd.magnetostatics.DipolarP3M(
-            prefactor=2, accuracy=1e-2)
+            prefactor=2, accuracy=1e-2, mesh=49)
         try:
             self.system.actors.add(solver)
         except Exception as err:
