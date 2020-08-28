@@ -185,10 +185,6 @@ void dp3m_init() {
     p3m_calc_local_ca_mesh(dp3m.local_mesh, dp3m.params, local_geo, skin);
 
     dp3m.sm.resize(comm_cart, dp3m.local_mesh);
-
-    /* fix box length dependent constants */
-    dp3m_scaleby_box_l();
-
     int ca_mesh_size = fft_init(dp3m.local_mesh.dim, dp3m.local_mesh.margin,
                                 dp3m.params.mesh, dp3m.params.mesh_off,
                                 dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
@@ -199,12 +195,10 @@ void dp3m_init() {
       val.resize(ca_mesh_size);
     }
 
-    /* k-space part: */
-
     dp3m.calc_differential_operator();
 
-    dp3m_calc_influence_function_force();
-    dp3m_calc_influence_function_energy();
+    /* fix box length dependent constants */
+    dp3m_scaleby_box_l();
 
     dp3m_count_magnetic_particles();
   }
@@ -814,7 +808,6 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
   dp3m.params.mesh[0] = dp3m.params.mesh[1] = dp3m.params.mesh[2] = mesh;
   dp3m.params.cao = cao;
   dp3m.params.alpha_L = alpha_L;
-  dp3m_scaleby_box_l();
   /* initialize p3m structures */
   mpi_bcast_coulomb_params();
   /* perform force calculation test */
@@ -1210,7 +1203,6 @@ int dp3m_adaptive_tune(char **logger) {
   dp3m.params.cao = cao;
   dp3m.params.alpha_L = alpha_L;
   dp3m.params.accuracy = accuracy;
-  dp3m_scaleby_box_l();
   /* broadcast tuned p3m parameters */
   mpi_bcast_coulomb_params();
   /* Tell the user about the outcome */
