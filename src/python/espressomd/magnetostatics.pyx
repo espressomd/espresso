@@ -233,7 +233,10 @@ IF DP3M == 1:
             alpha = p_alpha
             accuracy = p_accuracy
             n_interpol = p_n_interpol
-            mesh = p_mesh
+            if hasattr(p_mesh, "__getitem__"):
+                mesh = p_mesh[0]
+            else:
+                mesh = p_mesh
             dp3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy, n_interpol)
 
 IF DIPOLES == 1:
