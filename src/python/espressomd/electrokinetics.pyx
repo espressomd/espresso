@@ -43,7 +43,7 @@ IF ELECTROKINETICS:
                     return ElectrokineticsRoutines(np.array(key))
             else:
                 raise Exception(
-                    "%s is not a valid key. Should be a point on the nodegrid e.g. ek[0,0,0]," % key)
+                    f"{key} is not a valid key. Should be a point on the nodegrid e.g. ek[0,0,0].")
 
         def validate_params(self):
             """
@@ -431,7 +431,7 @@ IF ELECTROKINETICS:
                     return SpecieRoutines(np.array(key), self.id)
             else:
                 raise Exception(
-                    "%s is not a valid key. Should be a point on the nodegrid e.g. species[0,0,0]," % key)
+                    f"{key} is not a valid key. Should be a point on the nodegrid e.g. species[0,0,0].")
 
         def __init__(self, **kwargs):
             Species.py_number_of_species += 1
@@ -449,7 +449,7 @@ IF ELECTROKINETICS:
                 if k in self.valid_keys():
                     self._params[k] = kwargs[k]
                 else:
-                    raise KeyError("%s is not a valid key" % k)
+                    raise KeyError(f"{k} is not a valid key")
 
         def valid_keys(self):
             """

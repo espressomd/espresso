@@ -131,7 +131,7 @@ def linear_polymer_positions(**kwargs):
 
     for k in kwargs:
         if k not in valid_keys:
-            raise ValueError("Unknown parameter '%s'" % k)
+            raise ValueError(f"Unknown parameter '{k}'")
         params[k] = kwargs[k]
 
     for k in required_keys:

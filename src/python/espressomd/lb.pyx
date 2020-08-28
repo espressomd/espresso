@@ -57,7 +57,7 @@ cdef class HydrodynamicInteraction(Actor):
                 return LBFluidRoutines(np.array(key))
         else:
             raise Exception(
-                "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," % key)
+                f"{key} is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0].")
 
     # validate the given parameters on actor initialization
     ####################################################
