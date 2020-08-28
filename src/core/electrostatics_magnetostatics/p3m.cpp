@@ -166,36 +166,39 @@ void p3m_init() {
     // prefactor is zero: electrostatics switched off
     p3m.params.r_cut = 0.0;
     p3m.params.r_cut_iL = 0.0;
-  } else {
-    if (p3m_sanity_checks()) {
-      return;
-    }
-    p3m.params.cao3 = p3m.params.cao * p3m.params.cao * p3m.params.cao;
-
-    /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and
-     * the cutoff for charge assignment p3m.params.cao_cut */
-    p3m_init_a_ai_cao_cut();
-
-    p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
-
-    p3m.sm.resize(comm_cart, p3m.local_mesh);
-
-    int ca_mesh_size = fft_init(p3m.local_mesh.dim, p3m.local_mesh.margin,
-                                p3m.params.mesh, p3m.params.mesh_off,
-                                p3m.ks_pnum, p3m.fft, node_grid, comm_cart);
-    p3m.rs_mesh.resize(ca_mesh_size);
-    for (auto &e : p3m.E_mesh) {
-      e.resize(ca_mesh_size);
-    }
-
-    /* k-space part: */
-    p3m.calc_differential_operator();
-
-    /* fix box length dependent constants */
-    p3m_scaleby_box_l();
-
-    p3m_count_charged_particles();
+    return;
   }
+
+  if (p3m_sanity_checks()) {
+    return;
+  }
+
+  p3m.params.cao3 = p3m.params.cao * p3m.params.cao * p3m.params.cao;
+
+  /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and
+   * the cutoff for charge assignment p3m.params.cao_cut */
+  p3m_init_a_ai_cao_cut();
+
+  p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
+
+  p3m.sm.resize(comm_cart, p3m.local_mesh);
+
+  int ca_mesh_size =
+      fft_init(p3m.local_mesh.dim, p3m.local_mesh.margin, p3m.params.mesh,
+               p3m.params.mesh_off, p3m.ks_pnum, p3m.fft, node_grid, comm_cart);
+  p3m.rs_mesh.resize(ca_mesh_size);
+
+  for (auto &e : p3m.E_mesh) {
+    e.resize(ca_mesh_size);
+  }
+
+  /* k-space part: */
+  p3m.calc_differential_operator();
+
+  /* fix box length dependent constants */
+  p3m_scaleby_box_l();
+
+  p3m_count_charged_particles();
 }
 
 void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,

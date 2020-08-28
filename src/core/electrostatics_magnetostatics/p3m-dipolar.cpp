@@ -172,36 +172,39 @@ void dp3m_init() {
     // dipolar prefactor is zero: magnetostatics switched off
     dp3m.params.r_cut = 0.0;
     dp3m.params.r_cut_iL = 0.0;
-  } else {
-    if (dp3m_sanity_checks(node_grid))
-      return;
-
-    dp3m.params.cao3 = Utils::int_pow<3>(dp3m.params.cao);
-
-    /* initializes the (inverse) mesh constant dp3m.params.a (dp3m.params.ai)
-     * and the cutoff for charge assignment dp3m.params.cao_cut */
-    dp3m_init_a_ai_cao_cut();
-
-    p3m_calc_local_ca_mesh(dp3m.local_mesh, dp3m.params, local_geo, skin);
-
-    dp3m.sm.resize(comm_cart, dp3m.local_mesh);
-    int ca_mesh_size = fft_init(dp3m.local_mesh.dim, dp3m.local_mesh.margin,
-                                dp3m.params.mesh, dp3m.params.mesh_off,
-                                dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
-    dp3m.rs_mesh.resize(ca_mesh_size);
-    dp3m.ks_mesh.resize(ca_mesh_size);
-
-    for (auto &val : dp3m.rs_mesh_dip) {
-      val.resize(ca_mesh_size);
-    }
-
-    dp3m.calc_differential_operator();
-
-    /* fix box length dependent constants */
-    dp3m_scaleby_box_l();
-
-    dp3m_count_magnetic_particles();
+    return;
   }
+
+  if (dp3m_sanity_checks(node_grid)) {
+    return;
+  }
+
+  dp3m.params.cao3 = Utils::int_pow<3>(dp3m.params.cao);
+
+  /* initializes the (inverse) mesh constant dp3m.params.a (dp3m.params.ai)
+   * and the cutoff for charge assignment dp3m.params.cao_cut */
+  dp3m_init_a_ai_cao_cut();
+
+  p3m_calc_local_ca_mesh(dp3m.local_mesh, dp3m.params, local_geo, skin);
+
+  dp3m.sm.resize(comm_cart, dp3m.local_mesh);
+
+  int ca_mesh_size = fft_init(dp3m.local_mesh.dim, dp3m.local_mesh.margin,
+                              dp3m.params.mesh, dp3m.params.mesh_off,
+                              dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
+  dp3m.rs_mesh.resize(ca_mesh_size);
+  dp3m.ks_mesh.resize(ca_mesh_size);
+
+  for (auto &val : dp3m.rs_mesh_dip) {
+    val.resize(ca_mesh_size);
+  }
+
+  dp3m.calc_differential_operator();
+
+  /* fix box length dependent constants */
+  dp3m_scaleby_box_l();
+
+  dp3m_count_magnetic_particles();
 }
 
 /******************
