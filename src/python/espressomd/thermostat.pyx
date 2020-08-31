@@ -668,6 +668,7 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_NPTISO_GV)
 
     IF DPD:
+        @AssertThermostatType(THERMO_DPD, THERMO_LANGEVIN, THERMO_LB)
         def set_dpd(self, kT=None, seed=None):
             """
             Sets the DPD thermostat with required parameters 'kT'.
@@ -709,6 +710,7 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_TEMPERATURE)
 
     IF STOKESIAN_DYNAMICS:
+        @AssertThermostatType(THERMO_SD)
         def set_stokesian(self, kT=None, seed=None):
             """
             Sets the SD thermostat with required parameters.
