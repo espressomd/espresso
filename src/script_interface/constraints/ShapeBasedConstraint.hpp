@@ -51,13 +51,11 @@ public:
                          m_constraint->set_shape(m_shape->shape());
                        };
                      },
-                     [this]() {
-                       return (m_shape != nullptr) ? m_shape->id() : ObjectId();
-                     }},
+                     [this]() { return m_shape; }},
                     {"particle_velocity", m_constraint->velocity()}});
   }
 
-  Variant call_method(std::string const &name, VariantMap const &) override {
+  Variant do_call_method(std::string const &name, VariantMap const &) override {
     if (name == "total_force") {
       return shape_based_constraint()->total_force();
     }

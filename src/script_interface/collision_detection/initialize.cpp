@@ -18,18 +18,16 @@
  */
 #include "config.hpp"
 
-#include "script_interface/ScriptInterface.hpp"
-#include "script_interface/initialize.hpp"
+#include "initialize.hpp"
 
 #include "CollisionDetection.hpp"
 
 namespace ScriptInterface {
 namespace CollisionDetection {
 
-void initialize() {
+void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef COLLISION_DETECTION
-  ScriptInterface::register_new<
-      ScriptInterface::CollisionDetection::CollisionDetection>(
+  om->register_new<CollisionDetection>(
       "CollisionDetection::CollisionDetection");
 #endif
 }

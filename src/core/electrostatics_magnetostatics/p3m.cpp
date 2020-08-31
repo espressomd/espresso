@@ -61,21 +61,6 @@ using Utils::strcat_alloc;
 
 p3m_data_struct p3m;
 
-/** @name Index helpers for direct and reciprocal space
- *  After the FFT the data is in order YZX, which
- *  means that Y is the slowest changing index.
- *  The defines are here to not get confused and
- *  be able to easily change the order.
- */
-/*@{*/
-#define RX 0
-#define RY 1
-#define RZ 2
-#define KY 0
-#define KZ 1
-#define KX 2
-/*@}*/
-
 /** \name Private Functions */
 /*@{*/
 
@@ -94,12 +79,6 @@ static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
  *  necessary when the box length changes
  */
 static bool p3m_sanity_checks_boxl();
-
-/** Calculate the Fourier transformed differential operator.
- *  Remark: This is done on the level of n-vectors and not k-vectors,
- *          i.e. the prefactor i*2*PI/L is missing!
- */
-static void p3m_calc_differential_operator();
 
 /** Calculate the optimal influence function of @cite hockney88a.
  *  (optimised for force calculations)
@@ -156,6 +135,8 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
                                    double alpha_L_i, double *alias1,
                                    double *alias2);
 
+/*@}*/
+
 p3m_data_struct::p3m_data_struct() {
   /* local_mesh is uninitialized */
   /* sm is uninitialized */
@@ -172,36 +153,38 @@ void p3m_init() {
     // prefactor is zero: electrostatics switched off
     p3m.params.r_cut = 0.0;
     p3m.params.r_cut_iL = 0.0;
-  } else {
-    if (p3m_sanity_checks()) {
-      return;
-    }
-    p3m.params.cao3 = p3m.params.cao * p3m.params.cao * p3m.params.cao;
-
-    /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and
-     * the cutoff for charge assignment p3m.params.cao_cut */
-    p3m_init_a_ai_cao_cut();
-
-    p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
-
-    p3m.sm.resize(comm_cart, p3m.local_mesh);
-
-    int ca_mesh_size = fft_init(p3m.local_mesh.dim, p3m.local_mesh.margin,
-                                p3m.params.mesh, p3m.params.mesh_off,
-                                p3m.ks_pnum, p3m.fft, node_grid, comm_cart);
-    p3m.rs_mesh.resize(ca_mesh_size);
-    for (auto &e : p3m.E_mesh) {
-      e.resize(ca_mesh_size);
-    }
-
-    /* k-space part: */
-    p3m_calc_differential_operator();
-
-    /* fix box length dependent constants */
-    p3m_scaleby_box_l();
-
-    p3m_count_charged_particles();
+    return;
   }
+
+  if (p3m_sanity_checks()) {
+    return;
+  }
+
+  p3m.params.cao3 = Utils::int_pow<3>(p3m.params.cao);
+
+  /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and
+   * the cutoff for charge assignment p3m.params.cao_cut */
+  p3m_init_a_ai_cao_cut();
+
+  p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
+
+  p3m.sm.resize(comm_cart, p3m.local_mesh);
+
+  int ca_mesh_size =
+      fft_init(p3m.local_mesh.dim, p3m.local_mesh.margin, p3m.params.mesh,
+               p3m.params.mesh_off, p3m.ks_pnum, p3m.fft, node_grid, comm_cart);
+  p3m.rs_mesh.resize(ca_mesh_size);
+
+  for (auto &e : p3m.E_mesh) {
+    e.resize(ca_mesh_size);
+  }
+
+  p3m.calc_differential_operator();
+
+  /* fix box length dependent constants */
+  p3m_scaleby_box_l();
+
+  p3m_count_charged_particles();
 }
 
 void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
@@ -228,8 +211,6 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
   if (accuracy >= 0)
     p3m.params.accuracy = accuracy;
 }
-
-/*@}*/
 
 int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
                    double accuracy) {
@@ -392,7 +373,7 @@ auto calc_dipole_moment(boost::mpi::communicator const &comm,
 
 void add_dipole_correction(Utils::Vector3d const &box_dipole,
                            const ParticleRange &particles) {
-  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+  auto const pref = coulomb.prefactor * 4 * Utils::pi() / box_geo.volume() /
                     (2 * p3m.params.epsilon + 1);
 
   auto const dm = pref * box_dipole;
@@ -403,7 +384,7 @@ void add_dipole_correction(Utils::Vector3d const &box_dipole,
 }
 
 double dipole_correction_energy(Utils::Vector3d const &box_dipole) {
-  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+  auto const pref = coulomb.prefactor * 4 * Utils::pi() / box_geo.volume() /
                     (2 * p3m.params.epsilon + 1);
 
   return pref * box_dipole.norm2();
@@ -416,6 +397,8 @@ double dipole_correction_energy(Utils::Vector3d const &box_dipole) {
  *  eq. (2.8) is not present here since M is the empty set in our simulations.
  */
 Utils::Vector9d p3m_calc_kspace_pressure_tensor() {
+  using namespace detail::FFT_indexing;
+
   Utils::Vector9d node_k_space_pressure_tensor{};
 
   if (p3m.sum_q2 > 0) {
@@ -575,19 +558,6 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
   return 0.0;
 }
 
-void p3m_calc_differential_operator() {
-  for (int i = 0; i < 3; i++) {
-    p3m.d_op[i].resize(p3m.params.mesh[i]);
-    p3m.d_op[i][0] = 0;
-    p3m.d_op[i][p3m.params.mesh[i] / 2] = 0.0;
-
-    for (int j = 1; j < p3m.params.mesh[i] / 2; j++) {
-      p3m.d_op[i][j] = j;
-      p3m.d_op[i][p3m.params.mesh[i] - j] = -j;
-    }
-  }
-}
-
 void p3m_calc_influence_function_force() {
   auto const start = Utils::Vector3i{p3m.fft.plan[3].start};
   auto const size = Utils::Vector3i{p3m.fft.plan[3].new_mesh};
@@ -603,8 +573,6 @@ void p3m_calc_influence_function_energy() {
   p3m.g_energy = grid_influence_function<0>(p3m.params, start, start + size,
                                             box_geo.length());
 }
-
-#define P3M_TUNE_MAX_CUTS 50
 
 /** Get the minimal error for this combination of parameters.
  *
@@ -629,9 +597,10 @@ static double p3m_get_accuracy(const int mesh[3], int cao, double r_cut_iL,
   rs_err = p3m_real_space_error(coulomb.prefactor, r_cut_iL, p3m.sum_qpart,
                                 p3m.sum_q2, 0);
 
-  if (M_SQRT2 * rs_err > p3m.params.accuracy) {
+  if (Utils::sqrt_2() * rs_err > p3m.params.accuracy) {
     /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
-    alpha_L = sqrt(log(M_SQRT2 * rs_err / p3m.params.accuracy)) / r_cut_iL;
+    alpha_L =
+        sqrt(log(Utils::sqrt_2() * rs_err / p3m.params.accuracy)) / r_cut_iL;
   } else {
     /* even alpha=0 is ok, however, we cannot choose it since it kills the
        k-space error formula.
@@ -965,8 +934,7 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((box_geo.length()[0] == box_geo.length()[1]) &&
           (box_geo.length()[1] == box_geo.length()[2]))) {
-      *log = strcat_alloc(
-          *log, "{049 P3M_init: Nonmetallic epsilon requires cubic box} ");
+      runtimeErrorMsg() << "non-metallic epsilon requires cubic box";
       return ES_ERROR;
     }
   }
@@ -988,8 +956,7 @@ int p3m_adaptive_tune(char **log) {
   *log = strcat_alloc(*log, b);
 
   if (p3m.sum_qpart == 0) {
-    *log = strcat_alloc(*log,
-                        "no charged particles in the system, cannot tune P3M");
+    runtimeErrorMsg() << "no charged particles in the system";
     return ES_ERROR;
   }
 
@@ -1002,13 +969,8 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.mesh[0] == 0 || p3m.params.mesh[1] == 0 ||
       p3m.params.mesh[2] == 0) {
     /* Medium-educated guess for the minimal mesh */
-    mesh_density_min =
-        pow(p3m.sum_qpart / (box_geo.length()[0] * box_geo.length()[1] *
-                             box_geo.length()[2]),
-            1.0 / 3.0);
-    mesh_density_max = 512 / pow(box_geo.length()[0] * box_geo.length()[1] *
-                                     box_geo.length()[2],
-                                 1.0 / 3.0);
+    mesh_density_min = pow(p3m.sum_qpart / box_geo.volume(), 1.0 / 3.0);
+    mesh_density_max = 512 / pow(box_geo.volume(), 1.0 / 3.0);
     tune_mesh = true;
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
@@ -1114,6 +1076,8 @@ int p3m_adaptive_tune(char **log) {
         p3m_m_time(log, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
                    r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* some error occurred during the tuning force evaluation */
+    if (tmp_time == -P3M_TUNE_FAIL)
+      return ES_ERROR;
     /* this mesh does not work at all */
     if (tmp_time < 0.0)
       continue;
@@ -1141,8 +1105,7 @@ int p3m_adaptive_tune(char **log) {
   }
 
   if (time_best == 1e20) {
-    *log = strcat_alloc(*log,
-                        "failed to tune P3M parameters to required accuracy\n");
+    runtimeErrorMsg() << "failed to reach requested accuracy";
     return ES_ERROR;
   }
 
@@ -1194,7 +1157,7 @@ double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                             double sum_q2, double alpha_L) {
   return (2.0 * prefac * sum_q2 * exp(-Utils::sqr(r_cut_iL * alpha_L))) /
          sqrt((double)n_c_part * r_cut_iL * box_geo.length()[0] *
-              box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
+              box_geo.volume());
 }
 
 double p3m_k_space_error(double prefac, const int mesh[3], int cao,
@@ -1316,7 +1279,7 @@ bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
     if (!((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
           (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-      runtimeErrorMsg() << "P3M_init: Nonmetallic epsilon requires cubic box";
+      runtimeErrorMsg() << "P3M_init: non-metallic epsilon requires cubic box";
       ret = true;
     }
   }

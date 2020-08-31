@@ -24,31 +24,11 @@
 
 #include <type_traits>
 
+#include "ContextManager.hpp"
+#include "ObjectHandle.hpp"
 #include "Variant.hpp"
-
-#include "ScriptInterfaceBase.hpp"
+#include "auto_parameters/AutoParameters.hpp"
 #include "get_value.hpp"
 #include "initialize.hpp"
-#include "script_interface/auto_parameters/AutoParameters.hpp"
-#include "utils/Factory.hpp"
-
-/** @namespace ScriptInterface
- *  @brief Interface to core functions for Python bindings.
- *  See page @ref script_interface for detailed instructions.
- */
-namespace ScriptInterface {
-template <typename T> static void register_new(std::string const &name) {
-  static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "");
-
-  /* Register with the factory */
-  Utils::Factory<ScriptInterfaceBase>::register_new<T>(name);
-}
-
-inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
-  const auto id = boost::get<ObjectId>(value);
-
-  return ScriptInterfaceBase::get_instance(id).lock();
-}
-} /* namespace ScriptInterface */
 
 #endif

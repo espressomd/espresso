@@ -426,7 +426,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a valid key" % k)
+                raise KeyError(f"{k} is not a valid key")
 
         self._set_params_in_es_core()
 
@@ -449,7 +449,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a valid key" % k)
+                raise KeyError(f"{k} is not a valid key")
 
         self._set_params_in_es_core()
 
@@ -495,7 +495,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a valid key" % k)
+                raise KeyError(f"{k} is not a valid key")
 
         self.WLRptr.reset(new CWangLandauReactionEnsemble(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.WLRptr.get()
@@ -539,7 +539,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             if k in self._valid_keys_add_collective_variable_degree_of_association():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a valid key" % k)
+                raise KeyError(f"{k} is not a valid key")
 
         for k in self._required_keys_add_collective_variable_degree_of_association():
             if k not in kwargs:
@@ -591,7 +591,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             if k in self._valid_keys_add_collective_variable_potential_energy():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a valid key" % k)
+                raise KeyError(f"{k} is not a valid key")
 
             for k in self._required_keys_add_collective_variable_potential_energy():
                 if k not in kwargs:
@@ -633,7 +633,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             if k in self._valid_keys_set_wang_landau_parameters():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a valid key" % k)
+                raise KeyError(f"{k} is not a valid key")
 
         deref(self.WLRptr).final_wang_landau_parameter = self._params[
             "final_wang_landau_parameter"]
@@ -760,7 +760,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a valid key" % k)
+                raise KeyError(f"{k} is not a valid key")
 
         self._set_params_in_es_core()
 

@@ -1067,27 +1067,26 @@ cdef class ParticleHandle:
 
             """
             if _partner in self.exclusions:
-                raise Exception("Exclusion id {} already in exclusion list of particle {}".format(
-                    _partner, self._id))
+                raise Exception(
+                    f"Exclusion id {_partner} already in exclusion list of particle {self._id}")
 
             check_type_or_throw_except(
                 _partner, 1, int, "PID of partner has to be an int.")
             if self._id == _partner:
                 raise Exception(
-                    "Cannot exclude of a particle with itself!\n->particle id %i, partner %i." % (self._id, _partner))
+                    "Cannot exclude of a particle with itself!\n"
+                    f"->particle id {self._id}, partner {_partner}.")
             if change_exclusion(self._id, _partner, 0) == 1:
-                raise Exception("Particle with id " +
-                                str(_partner) + " does not exist.")
+                raise Exception(f"Particle with id {_partner} does not exist.")
 
         def delete_exclusion(self, _partner):
             check_type_or_throw_except(
                 _partner, 1, int, "PID of partner has to be an int.")
             if _partner not in self.exclusions:
-                raise Exception("Particle with id " +
-                                str(_partner) + " is not in exclusion list.")
+                raise Exception(
+                    f"Particle with id {_partner} is not in exclusion list.")
             if change_exclusion(self._id, _partner, 1) == 1:
-                raise Exception("Particle with id " +
-                                str(_partner) + " does not exist.")
+                raise Exception(f"Particle with id {_partner} does not exist.")
 
     IF ENGINE:
         property swimming:
@@ -1379,8 +1378,8 @@ cdef class ParticleHandle:
         """
 
         if tuple(_bond) in self.bonds:
-            raise Exception("Bond {} already exists on particle {}.".format(
-                tuple(_bond), self._id))
+            raise Exception(
+                f"Bond {tuple(_bond)} already exists on particle {self._id}.")
 
         bond = list(_bond)  # As we will modify it
         self.check_bond_or_throw_exception(bond)
@@ -1523,14 +1522,16 @@ cdef class _ParticleSliceImpl:
             self.id_selection = np.array(slice_, dtype=int)
         else:
             raise TypeError(
-                "ParticleSlice must be initialized with an instance of slice or range, or with a list, tuple, or ndarray of ints, but got {} of type {}".format((str(slice_), str(type(slice_)))))
+                f"ParticleSlice must be initialized with an instance of "
+                f"slice or range, or with a list, tuple, or ndarray of ints, "
+                f"but got {slice_} of type {type(slice_)}")
 
     def _id_selection_from_slice(self, slice_):
         """Returns an ndarray of particle ids to be included in the
         ParticleSlice for a given range or slice object.
         """
         # Prevent negative bounds
-        if (not slice_.start is None and slice_.start < 0) or\
+        if (not slice_.start is None and slice_.start < 0) or \
            (not slice_.stop is None and slice_.stop < 0):
             raise IndexError(
                 "Negative start and end ids are not supported on ParticleSlice")
@@ -1555,9 +1556,9 @@ cdef class _ParticleSliceImpl:
         for pid in pid_list:
             if not is_valid_type(pid, int):
                 raise TypeError(
-                    "Particle id must be an integer but got " + str(pid))
+                    f"Particle id must be an integer but got {pid}")
             if not particle_exists(pid):
-                raise IndexError("Particle does not exist " + str(pid))
+                raise IndexError(f"Particle does not exist {pid}")
 
     def __iter__(self):
         return self._id_gen()
@@ -1606,9 +1607,9 @@ cdef class _ParticleSliceImpl:
         pl = ParticleList()
         for i in self.id_selection:
             if pl.exists(i):
-                res += str(pl[i]) + ", "
+                res += f"{pl[i]}, "
         # Remove final comma
-        return "ParticleSlice([" + res[:-2] + "])"
+        return f"ParticleSlice([{res[:-2]}])"
 
     def update(self, P):
         if "id" in P:
@@ -1662,7 +1663,7 @@ class ParticleSlice(_ParticleSliceImpl):
     def __setattr__(self, name, value):
         if name != "_chunk_size" and not hasattr(ParticleHandle, name):
             raise AttributeError(
-                "ParticleHandle does not have the attribute {}.".format(name))
+                f"ParticleHandle does not have the attribute {name}.")
         super().__setattr__(name, value)
 
 
@@ -1796,7 +1797,7 @@ cdef class ParticleList:
             P["id"] = get_maximal_particle_id() + 1
         else:
             if particle_exists(P["id"]):
-                raise Exception("Particle %d already exists." % P["id"])
+                raise Exception(f"Particle {P['id']} already exists.")
 
         # Prevent setting of contradicting attributes
         IF DIPOLES:
@@ -2119,20 +2120,19 @@ def _add_particle_slice_properties():
                 elif np.shape(values)[0] == N:
                     set_slice_one_for_each(particle_slice, attribute, values)
                 else:
-                    raise Exception("Shape of value (%s) does not broadcast to shape of attribute (%s)." % (
-                        np.shape(values), target_shape))
+                    raise Exception(
+                        f"Value shape {np.shape(values)} does not broadcast to attribute shape {target_shape}.")
 
                 return
 
             else:  # fixed length vector quantity
-
                 if target_shape == np.shape(values):
                     set_slice_one_for_all(particle_slice, attribute, values)
                 elif target_shape == tuple(np.shape(values)[1:]) and np.shape(values)[0] == N:
                     set_slice_one_for_each(particle_slice, attribute, values)
                 else:
-                    raise Exception("Shape of value (%s) does not broadcast to shape of attribute (%s)." % (
-                        np.shape(values), target_shape))
+                    raise Exception(
+                        f"Value shape {np.shape(values)} does not broadcast to attribute shape {target_shape}.")
 
                 return
 

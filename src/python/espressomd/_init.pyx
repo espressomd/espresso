@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import sys
-from . import script_interface
+from . cimport script_interface
 from . cimport communication
 from libcpp.memory cimport shared_ptr
 from boost cimport environment
@@ -28,7 +28,7 @@ communication.init(mpi_env)
 
 # Initialize script interface
 # Has to be _after_ mpi_init
-script_interface.init()
+script_interface.init(communication.mpiCallbacks())
 
 # Block the slaves in the callback loop
 # The master is just returning to the user script

@@ -216,6 +216,8 @@ python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
 python_test(FILE mdanalysis.py MAX_NUM_PROC 2)
+python_test(FILE p3m_tuning_exceptions.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE utils.py MAX_NUM_PROC 1)
 
 add_custom_target(
   python_test_data
@@ -243,21 +245,22 @@ add_custom_target(
 add_custom_target(
   check_python_parallel_odd
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L
-          parallel_odd $(ARGS) --output-on-failure)
+          parallel_odd ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
 add_custom_target(
-  check_python_gpu COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                           -j${TEST_NP} -L gpu $(ARGS) --output-on-failure)
+  check_python_gpu
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L gpu
+          ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_gpu pypresso python_test_data)
 
 add_custom_target(
   check_python_skip_long
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -LE
-          long $(ARGS) --output-on-failure)
+          long ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_skip_long pypresso python_test_data)
 
 add_custom_target(
   check_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                       -j${TEST_NP} $(ARGS) --output-on-failure)
+                       -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python pypresso python_test_data)
 add_dependencies(check check_python)

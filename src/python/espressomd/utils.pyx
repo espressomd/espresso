@@ -33,23 +33,26 @@ cpdef check_type_or_throw_except(x, n, t, msg):
     # Check whether x is an array/list/tuple or a single value
     if n > 1:
         if hasattr(x, "__getitem__"):
+            if len(x) != n:
+                raise ValueError(
+                    msg + f" -- {len(x)} values were given but {n} were expected.")
             for i in range(len(x)):
                 if not isinstance(x[i], t):
                     if not ((t == float and is_valid_type(x[i], int))
                             or (t == float and issubclass(type(x[i]), np.integer))) \
                             and not (t == int and issubclass(type(x[i]), np.integer)):
                         raise ValueError(
-                            msg + " -- Item " + str(i) + " was of type " + type(x[i]).__name__)
+                            msg + f" -- Item {i} was of type {type(x[i]).__name__}")
         else:
             # if n>1, but the user passed a single value, also throw exception
             raise ValueError(
-                msg + " -- A single value was given but " + str(n) + " were expected.")
+                msg + f" -- A single value was given but {n} were expected.")
     else:
         # N=1 and a single value
         if not isinstance(x, t):
             if not (t == float and is_valid_type(x, int)) and not (
                     t == int and issubclass(type(x), np.integer)):
-                raise ValueError(msg + " -- Got an " + type(x).__name__)
+                raise ValueError(msg + f" -- Got an {type(x).__name__}")
 
 
 cdef np.ndarray create_nparray_from_double_array(double * x, int len_x):
@@ -93,14 +96,16 @@ cdef check_range_or_except(D, name, v_min, incl_min, v_max, incl_max):
                                 or (not incl_min and not all(v > v_min for v in x)))) or \
            (v_max != "inf" and ((incl_max and not all(v <= v_max for v in x))
                                 or (not incl_max and not all(v < v_max for v in x)))):
-            raise ValueError("In " + name + ": Some values in " + str(x) + "are out of range " +
-                             ("[" if incl_min else "]") + str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))
+            raise ValueError(f"In {name}: Some values in {x} are out of"
+                             f" range {'[' if incl_min else ']'}{v_min},"
+                             f"{v_max}{']' if incl_max else '['}")
     # Single Value
     else:
         if (v_min != "inf" and ((incl_min and x < v_min) or (not incl_min and x <= v_min)) or
                 v_max != "inf" and ((incl_max and x > v_max) or (not incl_max and x >= v_max))):
-            raise ValueError("In " + name + ": Value " + str(x) + " is out of range " + ("[" if incl_min else "]") +
-                             str(v_min) + "," + str(v_max) + ("]" if incl_max else "["))
+            raise ValueError(f"In {name}: Value {x} is out of"
+                             f" range {'[' if incl_min else ']'}{v_min},"
+                             f"{v_max}{']' if incl_max else '['}")
 
 
 def to_char_pointer(s):
@@ -286,10 +291,9 @@ def requires_experimental_features(reason):
 
     def exception_raiser(self, *args, **kwargs):
         raise Exception(
-            "Class " +
-            self.__class__.__name__ +
-            " is experimental. Define EXPERIMENTAL_FEATURES in myconfig.hpp to use it.\nReason: " +
-            reason)
+            f"Class {self.__class__.__name__} is experimental. Define "
+            "EXPERIMENTAL_FEATURES in myconfig.hpp to use it.\n"
+            f"Reason: {reason}")
 
     def modifier(cls):
         cls.__init__ = exception_raiser

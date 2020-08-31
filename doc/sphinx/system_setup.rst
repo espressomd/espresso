@@ -71,17 +71,17 @@ Accessing module states
 
 Some variables like or are no longer directly available as attributes.
 In these cases they can be easily derived from the corresponding Python
-objects like
+objects like::
 
-``n_part = len(espressomd.System().part[:].pos)``
+    n_part = len(system.part[:].pos)
 
 or by calling the corresponding ``get_state()`` methods like::
 
-    temperature = espressomd.System().thermostat.get_state()[0]['kT']
+    temperature = system.thermostat.get_state()[0]['kT']
 
-    gamma = espressomd.System().thermostat.get_state()[0]['gamma']
+    gamma = system.thermostat.get_state()[0]['gamma']
 
-    gamma_rot = espressomd.System().thermostat.get_state()[0]['gamma_rotation']
+    gamma_rot = system.thermostat.get_state()[0]['gamma_rotation']
 
 .. _Cellsystems:
 
@@ -112,7 +112,7 @@ The properties of the cell system can be accessed by
 
     (float) Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
 
-Details about the cell system can be obtained by :meth:`espressomd.System().cell_system.get_state() <espressomd.cellsystem.CellSystem.get_state>`:
+Details about the cell system can be obtained by :meth:`espressomd.system.System.cell_system.get_state() <espressomd.cellsystem.CellSystem.get_state>`:
 
     * ``cell_grid``       Dimension of the inner cell grid.
     * ``cell_size``       Box-length of a cell.
@@ -132,7 +132,7 @@ selects the domain decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
 domain decomposition is used, but not the Verlet lists. ::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     system.cell_system.set_domain_decomposition(use_verlet_lists=True)
 
@@ -161,7 +161,7 @@ particles, giving an unfavorable computation time scaling of
 interaction in the cell model require the calculation of all pair
 interactions. ::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     system.cell_system.set_n_square()
 
@@ -221,10 +221,8 @@ class :class:`espressomd.thermostat.Thermostat` has to be invoked.
 Best explained in an example::
 
     import espressomd
-    system = espressomd.System()
-    therm = system.Thermostat()
-
-    therm.set_langevin(kT=1.0, gamma=1.0, seed=41)
+    system = espressomd.System(box_l=[1, 1, 1])
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=41)
 
 As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`.
 
@@ -383,7 +381,7 @@ For example::
 
     import espressomd
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=41)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
@@ -416,7 +414,7 @@ The system integrator should be also changed.
 Best explained in an example::
 
     import espressomd
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=41)
     system.integrator.set_brownian_dynamics()
 
@@ -505,7 +503,7 @@ example ``lbfluid``. If you do not choose the GPU manually before that,
 CUDA internally chooses one, which is normally the most powerful GPU
 available, but load-independent. ::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     dev = system.cuda_init_handle.device
     system.cuda_init_handle.device = dev
@@ -539,7 +537,7 @@ List available CUDA devices
 If you want to list available CUDA devices
 you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g., ::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     print(system.cuda_init_handle.device_list)
 
@@ -555,7 +553,7 @@ When you start ``pypresso`` your first GPU should be selected.
 If you wanted to use the second GPU, this can be done
 by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     system.cuda_init_handle.device = 1
 

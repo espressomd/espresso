@@ -20,6 +20,7 @@
 #define CORE_UTILS_SERIALIZATION_UNORDERED_MAP_HPP
 
 #include <boost/serialization/split_free.hpp>
+#include <boost/serialization/utility.hpp>
 
 #include <unordered_map>
 

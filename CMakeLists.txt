@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 if(POLICY CMP0076)
   # make target_sources() convert relative paths to absolute
@@ -166,7 +166,7 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.5 REQUIRED)
+find_package(PythonInterp 3.6 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.26 REQUIRED)
@@ -278,7 +278,6 @@ endif(WITH_STOKESIAN_DYNAMICS)
 if(WITH_STOKESIAN_DYNAMICS)
   set(CMAKE_INSTALL_LIBDIR
       "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
-  cmake_minimum_required(VERSION 3.11)
   include(FetchContent)
   FetchContent_Declare(
     stokesian_dynamics
@@ -485,6 +484,9 @@ if(WITH_TESTS)
   if(WITH_PYTHON)
     add_subdirectory(testsuite)
   endif(WITH_PYTHON)
+  set(CTEST_ARGS ""
+      CACHE STRING
+            "Extra arguments to give to ctest calls (separated by semicolons)")
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)

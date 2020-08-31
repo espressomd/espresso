@@ -1,5 +1,5 @@
-add_library(ScriptInterface SHARED initialize.cpp ScriptInterfaceBase.cpp
-                                   ParallelScriptInterface.cpp)
+add_library(ScriptInterface SHARED initialize.cpp ObjectHandle.cpp
+                                   GlobalContext.cpp ContextManager.cpp)
 
 add_subdirectory(accumulators)
 add_subdirectory(collision_detection)
@@ -22,3 +22,5 @@ target_link_libraries(
   PRIVATE cxx_interface)
 
 target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)
+
+add_subdirectory(tests)

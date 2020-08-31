@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "initialize.hpp"
 #include "Cylinder.hpp"
 #include "Ellipsoid.hpp"
 #include "HollowConicalFrustum.hpp"
@@ -30,34 +29,24 @@
 #include "Torus.hpp"
 #include "Union.hpp"
 #include "Wall.hpp"
-#include "script_interface/ScriptInterface.hpp"
+
+#include "initialize.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
-void initialize() {
-  ScriptInterface::register_new<ScriptInterface::Shapes::HollowConicalFrustum>(
-      "Shapes::HollowConicalFrustum");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Union>(
-      "Shapes::Union");
-  ScriptInterface::register_new<ScriptInterface::Shapes::NoWhere>(
-      "Shapes::NoWhere");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Wall>("Shapes::Wall");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Ellipsoid>(
-      "Shapes::Ellipsoid");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Sphere>(
-      "Shapes::Sphere");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Cylinder>(
-      "Shapes::Cylinder");
-  ScriptInterface::register_new<ScriptInterface::Shapes::SpheroCylinder>(
-      "Shapes::SpheroCylinder");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Rhomboid>(
-      "Shapes::Rhomboid");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Slitpore>(
-      "Shapes::Slitpore");
-  ScriptInterface::register_new<ScriptInterface::Shapes::SimplePore>(
-      "Shapes::SimplePore");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Torus>(
-      "Shapes::Torus");
+void initialize(Utils::Factory<ObjectHandle> *f) {
+  f->register_new<HollowConicalFrustum>("Shapes::HollowConicalFrustum");
+  f->register_new<Union>("Shapes::Union");
+  f->register_new<NoWhere>("Shapes::NoWhere");
+  f->register_new<Wall>("Shapes::Wall");
+  f->register_new<Ellipsoid>("Shapes::Ellipsoid");
+  f->register_new<Sphere>("Shapes::Sphere");
+  f->register_new<Cylinder>("Shapes::Cylinder");
+  f->register_new<SpheroCylinder>("Shapes::SpheroCylinder");
+  f->register_new<Rhomboid>("Shapes::Rhomboid");
+  f->register_new<Slitpore>("Shapes::Slitpore");
+  f->register_new<SimplePore>("Shapes::SimplePore");
+  f->register_new<Torus>("Shapes::Torus");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

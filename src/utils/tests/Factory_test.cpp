@@ -29,10 +29,8 @@
 
 #include "utils/Factory.hpp"
 
-namespace Testing {
-
 struct TestClass {
-  virtual void method() {}
+  virtual void method() = 0;
   virtual ~TestClass() = default;
 };
 
@@ -40,42 +38,40 @@ struct DerivedTestClass : public TestClass {
   void method() override {}
 };
 
-struct OtherDerivedTestClass : public TestClass {};
-
-} /* namespace Testing */
+struct OtherDerivedTestClass : public TestClass {
+  void method() override {}
+};
 
 /* Check registration of construction functions */
 BOOST_AUTO_TEST_CASE(regiser_class) {
-  using namespace Testing;
-  typedef Utils::Factory<TestClass> Factory;
+  Utils::Factory<TestClass> factory;
 
-  /* Overload with explicit builder */
-  Factory::register_new("test_class",
-                        Utils::Factory<TestClass>::builder<TestClass>);
-  Utils::Factory<TestClass>::register_new(
-      "derived_test_class",
-      Utils::Factory<TestClass>::builder<DerivedTestClass>);
-  /* Overload with default builder */
-  Utils::Factory<TestClass>::register_new<OtherDerivedTestClass>(
-      "other_derived_class");
+  factory.register_new<OtherDerivedTestClass>("other_derived_class");
 
-  /* All three builders should be present. */
-  BOOST_CHECK(Factory::has_builder("test_class"));
-  BOOST_CHECK(Factory::has_builder("derived_test_class"));
-  BOOST_CHECK(Factory::has_builder("other_derived_class"));
+  BOOST_CHECK(factory.has_builder("other_derived_class"));
 }
 
 /* Check object construction. */
 BOOST_AUTO_TEST_CASE(make) {
-  using namespace Testing;
-  /* Make a base object */
-  std::unique_ptr<TestClass> o = Utils::Factory<TestClass>::make("test_class");
-  BOOST_CHECK(o != nullptr);
+  Utils::Factory<TestClass> factory;
+  factory.register_new<DerivedTestClass>("derived_test_class");
 
   /* Make a derived object */
-  o = Utils::Factory<TestClass>::make("derived_test_class");
-  BOOST_CHECK(o != nullptr);
+  auto o = factory.make("derived_test_class");
+  BOOST_CHECK(o);
 
   /* Check for correct (derived) type */
   BOOST_CHECK(dynamic_cast<DerivedTestClass *>(o.get()) != nullptr);
+}
+
+BOOST_AUTO_TEST_CASE(stable_name_) {
+  const std::string derived_class_name = "derived_test_class";
+
+  Utils::Factory<TestClass> factory;
+  factory.register_new<DerivedTestClass>(derived_class_name);
+
+  /* Make an object */
+  auto o = factory.make(derived_class_name);
+
+  BOOST_CHECK_EQUAL(factory.type_name(*o.get()), derived_class_name);
 }

@@ -33,7 +33,7 @@ def minor():
 def friendly():
     """Dot version of the version.
     """
-    return "{}.{}".format(major(), minor())
+    return f"{major()}.{minor()}"
 
 
 def git_branch():
