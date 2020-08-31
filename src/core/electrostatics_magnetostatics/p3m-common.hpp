@@ -34,6 +34,9 @@
  */
 #include "config.hpp"
 
+#include <array>
+#include <vector>
+
 #if defined(P3M) || defined(DP3M)
 
 #include "LocalBox.hpp"
@@ -55,11 +58,19 @@ enum P3M_TUNE_ERROR {
   P3M_TUNE_ACCURACY_TOO_LARGE = 32
 };
 
+namespace detail {
+/** @brief Index helpers for direct and reciprocal space.
+ *  After the FFT the data is in order YZX, which
+ *  means that Y is the slowest changing index.
+ */
+namespace FFT_indexing {
+enum FFT_REAL_VECTOR : int { RX = 0, RY = 1, RZ = 2 };
+enum FFT_WAVE_VECTOR : int { KY = 0, KZ = 1, KX = 2 };
+} // namespace FFT_indexing
+} // namespace detail
+
 /** This value indicates metallic boundary conditions. */
 #define P3M_EPSILON_METALLIC 0.0
-
-/** Default for boundary conditions in magnetic calculations. */
-#define P3M_EPSILON_MAGNETIC 0.0
 
 /** precision limit for the r_cut zero */
 #define P3M_RCUT_PREC 1e-3
@@ -187,5 +198,32 @@ void p3m_calc_lm_ld_pos(p3m_local_mesh &local_mesh,
                         const P3MParameters &params);
 
 #endif /* P3M || DP3M */
+
+namespace detail {
+/** Calculate indices that shift @ref P3MParameters::mesh "mesh" by `mesh/2`.
+ *  For each mesh size @f$ n @f$ in @c mesh_size, create a sequence of integer
+ *  values @f$ \left( 0, \ldots, \lfloor n/2 \rfloor, -\lfloor n/2 \rfloor,
+ *  \ldots, -1\right) @f$ if @c zero_out_midpoint is false, otherwise
+ *  @f$ \left( 0, \ldots, \lfloor n/2 - 1 \rfloor, 0, -\lfloor n/2 \rfloor,
+ *  \ldots, -1\right) @f$.
+ */
+std::array<std::vector<int>, 3> inline calc_meshift(
+    std::array<int, 3> const &mesh_size, bool zero_out_midpoint = false) {
+  std::array<std::vector<int>, 3> ret{};
+
+  for (size_t i = 0; i < 3; i++) {
+    ret[i] = std::vector<int>(mesh_size[i]);
+
+    for (int j = 1; j <= mesh_size[i] / 2; j++) {
+      ret[i][j] = j;
+      ret[i][mesh_size[i] - j] = -j;
+    }
+    if (zero_out_midpoint)
+      ret[i][mesh_size[i] / 2] = 0;
+  }
+
+  return ret;
+}
+} // namespace detail
 
 #endif /* _P3M_COMMON_H */

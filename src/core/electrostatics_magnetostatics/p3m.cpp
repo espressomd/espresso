@@ -61,21 +61,6 @@ using Utils::strcat_alloc;
 
 p3m_data_struct p3m;
 
-/** @name Index helpers for direct and reciprocal space
- *  After the FFT the data is in order YZX, which
- *  means that Y is the slowest changing index.
- *  The defines are here to not get confused and
- *  be able to easily change the order.
- */
-/*@{*/
-#define RX 0
-#define RY 1
-#define RZ 2
-#define KY 0
-#define KZ 1
-#define KX 2
-/*@}*/
-
 /** \name Private Functions */
 /*@{*/
 
@@ -94,12 +79,6 @@ static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
  *  necessary when the box length changes
  */
 static bool p3m_sanity_checks_boxl();
-
-/** Calculate the Fourier transformed differential operator.
- *  Remark: This is done on the level of n-vectors and not k-vectors,
- *          i.e. the prefactor i*2*PI/L is missing!
- */
-static void p3m_calc_differential_operator();
 
 /** Calculate the optimal influence function of @cite hockney88a.
  *  (optimised for force calculations)
@@ -156,6 +135,8 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
                                    double alpha_L_i, double *alias1,
                                    double *alias2);
 
+/*@}*/
+
 p3m_data_struct::p3m_data_struct() {
   /* local_mesh is uninitialized */
   /* sm is uninitialized */
@@ -172,36 +153,38 @@ void p3m_init() {
     // prefactor is zero: electrostatics switched off
     p3m.params.r_cut = 0.0;
     p3m.params.r_cut_iL = 0.0;
-  } else {
-    if (p3m_sanity_checks()) {
-      return;
-    }
-    p3m.params.cao3 = p3m.params.cao * p3m.params.cao * p3m.params.cao;
-
-    /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and
-     * the cutoff for charge assignment p3m.params.cao_cut */
-    p3m_init_a_ai_cao_cut();
-
-    p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
-
-    p3m.sm.resize(comm_cart, p3m.local_mesh);
-
-    int ca_mesh_size = fft_init(p3m.local_mesh.dim, p3m.local_mesh.margin,
-                                p3m.params.mesh, p3m.params.mesh_off,
-                                p3m.ks_pnum, p3m.fft, node_grid, comm_cart);
-    p3m.rs_mesh.resize(ca_mesh_size);
-    for (auto &e : p3m.E_mesh) {
-      e.resize(ca_mesh_size);
-    }
-
-    /* k-space part: */
-    p3m_calc_differential_operator();
-
-    /* fix box length dependent constants */
-    p3m_scaleby_box_l();
-
-    p3m_count_charged_particles();
+    return;
   }
+
+  if (p3m_sanity_checks()) {
+    return;
+  }
+
+  p3m.params.cao3 = Utils::int_pow<3>(p3m.params.cao);
+
+  /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and
+   * the cutoff for charge assignment p3m.params.cao_cut */
+  p3m_init_a_ai_cao_cut();
+
+  p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
+
+  p3m.sm.resize(comm_cart, p3m.local_mesh);
+
+  int ca_mesh_size =
+      fft_init(p3m.local_mesh.dim, p3m.local_mesh.margin, p3m.params.mesh,
+               p3m.params.mesh_off, p3m.ks_pnum, p3m.fft, node_grid, comm_cart);
+  p3m.rs_mesh.resize(ca_mesh_size);
+
+  for (auto &e : p3m.E_mesh) {
+    e.resize(ca_mesh_size);
+  }
+
+  p3m.calc_differential_operator();
+
+  /* fix box length dependent constants */
+  p3m_scaleby_box_l();
+
+  p3m_count_charged_particles();
 }
 
 void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
@@ -228,8 +211,6 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
   if (accuracy >= 0)
     p3m.params.accuracy = accuracy;
 }
-
-/*@}*/
 
 int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
                    double accuracy) {
@@ -416,6 +397,8 @@ double dipole_correction_energy(Utils::Vector3d const &box_dipole) {
  *  eq. (2.8) is not present here since M is the empty set in our simulations.
  */
 Utils::Vector9d p3m_calc_kspace_pressure_tensor() {
+  using namespace detail::FFT_indexing;
+
   Utils::Vector9d node_k_space_pressure_tensor{};
 
   if (p3m.sum_q2 > 0) {
@@ -573,19 +556,6 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
   } /* if (energy_flag) */
 
   return 0.0;
-}
-
-void p3m_calc_differential_operator() {
-  for (int i = 0; i < 3; i++) {
-    p3m.d_op[i].resize(p3m.params.mesh[i]);
-    p3m.d_op[i][0] = 0;
-    p3m.d_op[i][p3m.params.mesh[i] / 2] = 0.0;
-
-    for (int j = 1; j < p3m.params.mesh[i] / 2; j++) {
-      p3m.d_op[i][j] = j;
-      p3m.d_op[i][p3m.params.mesh[i] - j] = -j;
-    }
-  }
 }
 
 void p3m_calc_influence_function_force() {
