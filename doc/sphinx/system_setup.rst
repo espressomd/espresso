@@ -193,11 +193,8 @@ Thermostats
 -----------
 
 The thermostat can be controlled by the class :class:`espressomd.thermostat.Thermostat`.
-
-The different available thermostats will be described in the following
-subsections. Note that for a simulation of the NPT ensemble, you need to
-use a standard thermostat for the particle velocities (Langevin or DPD),
-and a thermostat for the box geometry (the isotropic NPT thermostat).
+The different thermostats available in |es| will be described in the following
+subsections.
 
 You may combine different thermostats at your own risk by turning them
 on one by one. Note that there is only one temperature for all
