@@ -130,7 +130,9 @@ cdef class Thermostat:
                                   seed=thmst["seed"])
                 brownian_set_rng_counter(thmst["counter"])
             if thmst["type"] == "SD":
-                self.set_stokesian(kT=thmst["kT"], seed=thmst["seed"])
+                IF STOKESIAN_DYNAMICS:
+                    self.set_stokesian(kT=thmst["kT"], seed=thmst["seed"])
+                    stokesian_set_rng_counter(thmst["counter"])
 
     def get_ts(self):
         return thermo_switch
@@ -216,12 +218,13 @@ cdef class Thermostat:
                 dpd_dict["seed"] = dpd_get_rng_seed()
                 dpd_dict["counter"] = dpd_get_rng_counter()
                 thermo_list.append(dpd_dict)
-        if (thermo_switch & THERMO_SD):
+        if thermo_switch & THERMO_SD:
             IF STOKESIAN_DYNAMICS:
                 sd_dict = {}
                 sd_dict["type"] = "SD"
                 sd_dict["kT"] = get_sd_kT()
-                sd_dict["seed"] = get_sd_seed()
+                sd_dict["seed"] = stokesian_get_rng_seed()
+                sd_dict["counter"] = stokesian_get_rng_counter()
                 thermo_list.append(sd_dict)
         return thermo_list
 
@@ -728,7 +731,7 @@ cdef class Thermostat:
             Parameters
             ----------
             kT : :obj:`float`, optional
-                Temperature
+                Temperature.
             seed : :obj:`int`, optional
                 Seed for the random number generator
 
@@ -736,14 +739,23 @@ cdef class Thermostat:
 
             if (kT is None) or (kT == 0):
                 set_sd_kT(0.0)
+                if stokesian_is_seed_required():
+                    stokesian_set_rng_seed(0)
             else:
                 utils.check_type_or_throw_except(
                     kT, 1, float, "kT must be a float")
                 set_sd_kT(kT)
 
-                utils.check_type_or_throw_except(
-                    seed, 1, int, "seed must be an integer")
-                set_sd_seed(seed)
+                # Seed is required if the RNG is not initialized
+                if seed is None and stokesian_is_seed_required():
+                    raise ValueError(
+                        "A seed has to be given as keyword argument on first activation of the thermostat")
+                if seed is not None:
+                    utils.check_type_or_throw_except(
+                        seed, 1, int, "seed must be an integer")
+                    if seed < 0:
+                        raise ValueError("seed must be a positive integer")
+                    stokesian_set_rng_seed(seed)
 
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_SD)

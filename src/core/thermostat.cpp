@@ -82,6 +82,9 @@ ThermalizedBondThermostat thermalized_bond = {};
 #ifdef DPD
 DPDThermostat dpd = {};
 #endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+StokesianThermostat stokesian = {};
+#endif
 
 REGISTER_THERMOSTAT_CALLBACKS(langevin)
 REGISTER_THERMOSTAT_CALLBACKS(brownian)
@@ -89,6 +92,9 @@ REGISTER_THERMOSTAT_CALLBACKS(npt_iso)
 REGISTER_THERMOSTAT_CALLBACKS(thermalized_bond)
 #ifdef DPD
 REGISTER_THERMOSTAT_CALLBACKS(dpd)
+#endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+REGISTER_THERMOSTAT_CALLBACKS(stokesian)
 #endif
 
 void thermo_init() {

@@ -210,6 +210,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['type'], 'SD')
         self.assertEqual(thmst['kT'], 1.0)
         self.assertEqual(thmst['seed'], 42)
+        self.assertEqual(thmst['counter'], 0)
 
     @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('INT.NPT' not in modes, 'NPT integrator not in modes')

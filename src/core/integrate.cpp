@@ -330,6 +330,11 @@ void philox_counter_increment() {
     dpd_rng_counter_increment();
   }
 #endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+  if (thermo_switch & THERMO_SD) {
+    stokesian_rng_counter_increment();
+  }
+#endif
   if (n_thermalized_bonds) {
     thermalized_bond_rng_counter_increment();
   }
