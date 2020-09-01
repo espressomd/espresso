@@ -210,6 +210,15 @@ the temperature of a thermostat, you actually do not define the
 temperature, but the value of the thermal energy :math:`k_B T` in the
 current unit system (see the discussion on units, Section :ref:`On units`).
 
+All thermostats have a ``seed`` argument that controls the state of the random
+number generator (Philox Counter-based RNG). This seed is required on first
+activation of a thermostat, unless stated otherwise. It can be omitted in
+subsequent calls of the method that activates the same thermostat. The random
+sequence also depends on a monotonically increasing global counter that is
+incremented after each integration step. It is the user's responsibility to
+decide whether the thermostats should be deterministic (by using a fixed seed)
+or not (by using a randomized seed).
+
 .. _Langevin thermostat:
 
 Langevin thermostat
@@ -250,12 +259,6 @@ The random process :math:`\eta(t)` is discretized by drawing an uncorrelated ran
 The distribution of :math:`\overline{\eta}` is uniform and satisfies
 
 .. math:: <\overline{\eta}> = 0 , <\overline{\eta}\overline{\eta}> = 1/dt
-
-The keyword ``seed`` controls the state of the random number generator (Philox
-Counter-based RNG) and is required on first activation of the thermostat. It
-can be omitted in subsequent calls of ``set_langevin()``. It is the user's
-responsibility to decide whether the thermostat should be deterministic (by
-using a fixed seed) or not (by using a randomized seed).
 
 If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
 also coupled to the thermostat. If only the first two arguments are
@@ -299,10 +302,8 @@ The LB fluid can be used to thermalize particles, while also including their hyd
 The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
 Temperature is set via the ``kT`` argument of the LB fluid.
 
-Furthermore a ``seed`` has to be given for the
-thermalization of the particle coupling. The magnitude of the frictional coupling can be adjusted by
-the parameter ``gamma``.
-To enable the LB thermostat, use::
+The magnitude of the frictional coupling can be adjusted by the
+parameter ``gamma``. To enable the LB thermostat, use::
 
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
@@ -464,12 +465,6 @@ A rotational motion is implemented similarly.
 Note: the rotational Brownian dynamics implementation is compatible with particles which have
 the isotropic moment of inertia tensor only. Otherwise, the viscous terminal angular velocity
 is not defined, i.e. it has no constant direction over the time.
-
-The keyword ``seed`` controls the state of the random number generator (Philox
-Counter-based RNG) and is required on first activation of the thermostat. It
-can be omitted in subsequent calls of ``set_brownian()``. It is the user's
-responsibility to decide whether the thermostat should be deterministic (by
-using a fixed seed) or not (by using a randomized seed).
 
 .. _Stokesian thermostat:
 

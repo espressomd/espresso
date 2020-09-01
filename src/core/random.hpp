@@ -98,6 +98,10 @@ auto philox_4_uint64s(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
  *
  * @tparam salt RNG salt
  * @tparam N    Size of the noise vector
+ * @param counter counter for random number generation
+ * @param seed seed for random number generation
+ * @param key1 key for random number generation
+ * @param key2 key for random number generation
  *
  * @return Vector of uniform random numbers.
  */
@@ -130,10 +134,11 @@ auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
  * This breaks statistics in rare cases but allows for consistent RNG
  * counters across MPI ranks.
  *
- * @param counter counter for the random number generation
+ * @tparam salt decorrelates different thermostat types
+ * @param counter counter for random number generation
+ * @param seed seed for random number generation
  * @param key1 key for random number generation
  * @param key2 key for random number generation
- * @tparam salt decorrelates different thermostat types
  *
  * @return Vector of Gaussian random numbers.
  *
