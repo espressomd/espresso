@@ -196,8 +196,12 @@ The thermostat can be controlled by the class :class:`espressomd.thermostat.Ther
 The different thermostats available in |es| will be described in the following
 subsections.
 
-You may combine different thermostats at your own risk by turning them
-on one by one. Note that there is only one temperature for all
+You may combine different thermostats at your own risk by turning them on
+one by one. The list of active thermostats can be cleared at any time with
+:py:meth:`system.thermostat.turn_off() <espressomd.thermostat.Thermostat.turn_off>`.
+Not all combinations of thermostats are allowed, though (see
+:py:func:`espressomd.thermostat.AssertThermostatType` for details).
+Note that there is only one temperature for all
 thermostats, although for some thermostats like the Langevin thermostat,
 particles can be assigned individual temperatures.
 
