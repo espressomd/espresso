@@ -487,8 +487,7 @@ needs to be activated via::
     system.thermostat.set_stokesian(kT=1.0, seed=43)
 
 where ``kT`` denotes the desired temperature of the system, and ``seed`` the
-seed for the random number generator of the Stokesian Dynamics thermostat.
-It is independent from the other random number generators in |es|.
+seed for the random number generator.
 
 
 .. _CUDA:

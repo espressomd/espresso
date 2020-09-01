@@ -61,18 +61,24 @@ cdef extern from "thermostat.hpp":
     void npt_iso_set_rng_state(stdint.uint32_t counter)
     IF DPD:
         void dpd_set_rng_state(stdint.uint32_t counter)
+    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+        void stokesian_set_rng_state(stdint.uint32_t counter)
 
     cbool langevin_is_seed_required()
     cbool brownian_is_seed_required()
     cbool npt_iso_is_seed_required()
     IF DPD:
         cbool dpd_is_seed_required()
+    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+        cbool stokesian_is_seed_required()
 
     stdint.uint32_t langevin_get_rng_state()
     stdint.uint32_t brownian_get_rng_state()
     stdint.uint32_t npt_iso_get_rng_state()
     IF DPD:
         stdint.uint32_t dpd_get_rng_state()
+    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+        stdint.uint32_t stokesian_get_rng_state()
 
     stdint.uint64_t get_thermostat_counter()
     void set_thermostat_counter(stdint.uint64_t value)
@@ -81,9 +87,6 @@ cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
         void set_sd_kT(double kT)
         double get_sd_kT()
-
-        void set_sd_seed(size_t seed)
-        size_t get_sd_seed()
 
 cdef extern from "npt.hpp":
     ctypedef struct nptiso_struct:

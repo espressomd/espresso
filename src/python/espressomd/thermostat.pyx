@@ -211,12 +211,12 @@ cdef class Thermostat:
                 dpd_dict["kT"] = temperature
                 dpd_dict["seed"] = dpd_get_rng_state()
                 thermo_list.append(dpd_dict)
-        if (thermo_switch & THERMO_SD):
+        if thermo_switch & THERMO_SD:
             IF STOKESIAN_DYNAMICS:
                 sd_dict = {}
                 sd_dict["type"] = "SD"
                 sd_dict["kT"] = get_sd_kT()
-                sd_dict["seed"] = get_sd_seed()
+                sd_dict["seed"] = stokesian_get_rng_state()
                 thermo_list.append(sd_dict)
         return thermo_list
 
@@ -723,7 +723,7 @@ cdef class Thermostat:
             Parameters
             ----------
             kT : :obj:`float`, optional
-                Temperature
+                Temperature.
             seed : :obj:`int`, optional
                 Seed of the philox RNG, required if kT > 0.
 
@@ -731,14 +731,23 @@ cdef class Thermostat:
 
             if (kT is None) or (kT == 0):
                 set_sd_kT(0.0)
+                if stokesian_is_seed_required():
+                    stokesian_set_rng_state(0)
             else:
                 utils.check_type_or_throw_except(
                     kT, 1, float, "kT must be a float")
                 set_sd_kT(kT)
 
-                utils.check_type_or_throw_except(
-                    seed, 1, int, "seed must be an integer")
-                set_sd_seed(seed)
+                # Seed is required if the RNG is not initialized
+                if seed is None and stokesian_is_seed_required():
+                    raise ValueError(
+                        "A seed has to be given as keyword argument on first activation of the thermostat")
+                if seed is not None:
+                    utils.check_type_or_throw_except(
+                        seed, 1, int, "seed must be an integer")
+                    if seed < 0:
+                        raise ValueError("seed must be a positive integer")
+                    stokesian_set_rng_state(seed)
 
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_SD)
