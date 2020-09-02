@@ -32,10 +32,11 @@ public:
   void init_volume_conservation(CellStructure &cs);
   void volume_conservation(CellStructure &cs);
   int volume_conservation_set_params(int bond_type, int softID, double kappaV);
+
+private:
   void calc_volumes(CellStructure &cs);
   void calc_volume_force(CellStructure &cs);
 
-private:
   const int MaxNumIBM;
   std::vector<double> VolumesCurrent;
   bool VolumeInitDone = false;

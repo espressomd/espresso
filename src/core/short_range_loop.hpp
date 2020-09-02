@@ -19,99 +19,33 @@
 #ifndef CORE_SHORT_RANGE_HPP
 #define CORE_SHORT_RANGE_HPP
 
-#include "algorithm/for_each_pair.hpp"
 #include "cells.hpp"
-#include "grid.hpp"
-#include "integrate.hpp"
 
-#include <boost/iterator/indirect_iterator.hpp>
 #include <profiler/profiler.hpp>
 
-#include <utility>
-
-/**
- * @brief Distance vector and length handed to pair kernels.
- */
-struct Distance {
-  explicit Distance(Utils::Vector3d const &vec21)
-      : vec21(vec21), dist2(vec21.norm2()) {}
-
-  Utils::Vector3d vec21;
-  double dist2;
-};
+#include <cassert>
 
 namespace detail {
-struct MinimalImageDistance {
-  const BoxGeometry box;
-
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(get_mi_vector(p1.r.p, p2.r.p, box));
-  }
-};
-
-struct EuclidianDistance {
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(p1.r.p - p2.r.p);
-  }
-};
-
 /**
- * @brief Decide which distance function to use depending on the
- * cell system, and call the pair code.
- */
-template <typename CellIterator, typename ParticleKernel, typename PairKernel,
-          typename VerletCriterion>
-void decide_distance(CellIterator first, CellIterator last,
-                     ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
-                     VerletCriterion &&verlet_criterion) {
-  if (cell_structure.minimum_image_distance()) {
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), MinimalImageDistance{box_geo},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-  } else {
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), EuclidianDistance{},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-  }
-}
-
-/**
- * @brief Functor that returns true for any argument.
+ * @brief Functor that returns true for
+ *        any arguments.
  */
 struct True {
   template <class... T> bool operator()(T...) const { return true; }
 };
 } // namespace detail
 
-template <class ParticleKernel, class PairKernel,
+template <class BondKernel, class PairKernel,
           class VerletCriterion = detail::True>
-void short_range_loop(ParticleKernel &&particle_kernel,
-                      PairKernel &&pair_kernel,
+void short_range_loop(BondKernel bond_kernel, PairKernel pair_kernel,
+                      double distance_cutoff = 1.,
                       const VerletCriterion &verlet_criterion = {}) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
-  if (interaction_range() != INACTIVE_CUTOFF) {
-    auto first =
-        boost::make_indirect_iterator(cell_structure.local_cells().begin());
-    auto last =
-        boost::make_indirect_iterator(cell_structure.local_cells().end());
-
-    detail::decide_distance(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), verlet_criterion);
-
-    rebuild_verletlist = false;
-  } else {
-    for (auto &p : cell_structure.local_particles()) {
-      particle_kernel(p);
-    }
-  }
+  cell_structure.bond_loop(bond_kernel);
+  if (distance_cutoff > 0.)
+    cell_structure.non_bonded_loop(pair_kernel, verlet_criterion);
 }
-
 #endif

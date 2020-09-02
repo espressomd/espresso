@@ -26,29 +26,23 @@ namespace Algorithm {
  *        and over all pairs within the cells and with
  *        their neighbors.
  */
-template <typename CellIterator, typename ParticleKernel, typename PairKernel,
-          typename DistanceFunction>
+template <typename CellIterator, typename PairKernel>
 void link_cell(CellIterator first, CellIterator last,
-               ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
-               DistanceFunction &&distance_function) {
+               PairKernel &&pair_kernel) {
   for (; first != last; ++first) {
     for (auto it = first->particles().begin(); it != first->particles().end();
          ++it) {
       auto &p1 = *it;
 
-      particle_kernel(p1);
-
       /* Pairs in this cell */
       for (auto jt = std::next(it); jt != first->particles().end(); ++jt) {
-        auto const dist = distance_function(p1, *jt);
-        pair_kernel(p1, *jt, dist);
+        pair_kernel(p1, *jt);
       }
 
       /* Pairs with neighbors */
       for (auto &neighbor : first->neighbors().red()) {
         for (auto &p2 : neighbor->particles()) {
-          auto const dist = distance_function(p1, p2);
-          pair_kernel(p1, p2, dist);
+          pair_kernel(p1, p2);
         }
       }
     }

@@ -74,9 +74,6 @@ enum {
  * Functions
  ************************************************/
 
-/*    Other Functions                           */
-/************************************************/
-
 /** Invalidate \ref particle_node. This has to be done
  *  at the beginning of the integration.
  */

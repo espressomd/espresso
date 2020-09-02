@@ -21,7 +21,6 @@
 
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
-#include "debug.hpp"
 
 /** Syntactic sugar */
 #define espressoSystemInterface EspressoSystemInterface::Instance()
