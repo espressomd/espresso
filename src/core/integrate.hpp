@@ -56,7 +56,9 @@ extern bool set_py_interrupt;
 
 double interaction_range();
 
-/** check sanity of integrator params */
+/** Check integrator parameters and incompatibilities between the integrator
+ *  and the currently active thermostat(s).
+ */
 void integrator_sanity_checks();
 
 /** Integrate equations of motion

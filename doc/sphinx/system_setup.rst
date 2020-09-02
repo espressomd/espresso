@@ -201,7 +201,8 @@ one by one. The list of active thermostats can be cleared at any time with
 :py:meth:`system.thermostat.turn_off() <espressomd.thermostat.Thermostat.turn_off>`.
 Not all combinations of thermostats are allowed, though (see
 :py:func:`espressomd.thermostat.AssertThermostatType` for details).
-Note that there is only one temperature for all
+Some integrators only work with a specific thermostat and throw an
+error otherwise. Note that there is only one temperature for all
 thermostats, although for some thermostats like the Langevin thermostat,
 particles can be assigned individual temperatures.
 

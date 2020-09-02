@@ -67,7 +67,6 @@ system.box_l = [box_l, box_l, box_z + elc_gap]
 system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
-system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 # Visualizer
 visualizer = visualization_opengl.openGLLive(
@@ -128,6 +127,8 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
 
 steepest_descent(system, f_max=10, gamma=10, max_steps=2000,
                  max_displacement=0.1)
+
+system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)

@@ -44,7 +44,6 @@ np.random.seed(seed=42)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=0.1, gamma=20.0, seed=42)
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=0, sigma=1, cutoff=2, shift="auto")
@@ -64,5 +63,7 @@ else:
 
 steepest_descent(system, f_max=10, gamma=50.0, max_steps=1000,
                  max_displacement=0.2)
+
+system.thermostat.set_langevin(kT=0.1, gamma=20.0, seed=42)
 
 visualizer.run(1)
