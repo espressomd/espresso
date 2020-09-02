@@ -160,7 +160,7 @@ inline double collision_detection_cutoff() {
   if (collision_params.mode)
     return collision_params.distance;
 #endif
-  return 0.;
+  return -1.;
 }
 
 #endif

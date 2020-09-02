@@ -20,8 +20,6 @@
 
 #include "config.hpp"
 
-#include "debug.hpp"
-
 #include "ParticleRange.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"

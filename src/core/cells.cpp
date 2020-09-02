@@ -27,29 +27,21 @@
 #include "cells.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
-#include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "short_range_loop.hpp"
 
-#include "AtomDecomposition.hpp"
 #include "DomainDecomposition.hpp"
+#include "ParticleDecomposition.hpp"
 
-#include <utils/NoOp.hpp>
+#include <utils/math/sqr.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/range/adaptor/uniqued.hpp>
 #include <boost/range/algorithm/sort.hpp>
 
-#include <cstdio>
-
 /** Type of cell structure in use */
 CellStructure cell_structure;
-
-bool rebuild_verletlist = true;
 
 /**
  * @brief Get pairs closer than distance from the cells.
@@ -72,7 +64,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
       ret.emplace_back(p1.p.identity, p2.p.identity);
   };
 
-  short_range_loop(Utils::NoOp{}, pair_kernel);
+  cell_structure.non_bonded_loop(pair_kernel);
 
   /* Sort pairs */
   for (auto &pair : ret) {
@@ -134,22 +126,6 @@ void cells_re_init(int new_cs) {
 
 /*************************************************/
 
-void cells_resort_particles(int global_flag) {
-  n_verlet_updates++;
-
-  cell_structure.resort_particles(global_flag);
-
-#ifdef ADDITIONAL_CHECKS
-  /* at the end of the day, everything should be consistent again */
-  check_particle_consistency();
-  check_particle_sorting();
-#endif
-
-  rebuild_verletlist = true;
-}
-
-/*************************************************/
-
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
 
@@ -170,9 +146,9 @@ void cells_update_ghosts(unsigned data_parts) {
   auto constexpr resort_only_parts =
       Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
 
-  unsigned int localResort = cell_structure.get_resort_particles();
   auto const global_resort =
-      boost::mpi::all_reduce(comm_cart, localResort, std::bit_or<unsigned>());
+      boost::mpi::all_reduce(comm_cart, cell_structure.get_resort_particles(),
+                             std::bit_or<unsigned>());
 
   if (global_resort != Cells::RESORT_NONE) {
     int global = (global_resort & Cells::RESORT_GLOBAL)
@@ -180,8 +156,7 @@ void cells_update_ghosts(unsigned data_parts) {
                      : CELL_NEIGHBOR_EXCHANGE;
 
     /* Resort cell system */
-    cells_resort_particles(global);
-
+    cell_structure.resort_particles(global);
     cell_structure.ghosts_update(data_parts);
 
     /* Add the ghost particles to the index if we don't already
@@ -201,13 +176,7 @@ void cells_update_ghosts(unsigned data_parts) {
 }
 
 Cell *find_current_cell(const Particle &p) {
-  assert(not cell_structure.get_resort_particles());
-
-  if (p.l.ghost) {
-    return nullptr;
-  }
-
-  return cell_structure.particle_to_cell(p);
+  return cell_structure.find_current_cell(p);
 }
 
 const DomainDecomposition *get_domain_decomposition() {
