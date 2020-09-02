@@ -309,11 +309,11 @@ The following minimal example illustrates how to use the SDM in |es|::
 
     import espressomd
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.periodicity = [False, False, False]
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     system.part.add(pos=[0, 0, 0], rotation=[1, 0, 0])
     system.integrator.set_stokesian_dynamics(viscosity=1.0, radii={0: 1.0})
-
     system.integrator.run(100)
 
 Because there is no force on the particle yet, nothing will move. You will need
