@@ -37,7 +37,6 @@ extern int this_node;
 
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
-#include "debug.hpp"
 #include "errorhandling.hpp"
 
 #include "grid_based_algorithms/OptionalCounter.hpp"

@@ -26,6 +26,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
 #include "reduce_observable_stat.hpp"
 #include "virtual_sites.hpp"
@@ -83,11 +84,27 @@ void pressure_calc() {
     add_kinetic_virials(p, obs_pressure);
   }
 
-  short_range_loop([](Particle &p) { add_bonded_virials(p, obs_pressure); },
-                   [](Particle &p1, Particle &p2, Distance const &d) {
-                     add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
-                                                 obs_pressure);
-                   });
+  short_range_loop(
+      [](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+        auto const &iaparams = bonded_ia_params[bond_id];
+        auto const result = calc_bonded_pressure_tensor(iaparams, p1, partners);
+        if (result) {
+          auto const &tensor = result.get();
+          /* pressure tensor part */
+          for (int k = 0; k < 3; k++)
+            for (int l = 0; l < 3; l++)
+              obs_pressure.bonded_contribution(bond_id)[k * 3 + l] +=
+                  tensor[k][l];
+
+          return false;
+        }
+        return true;
+      },
+      [](Particle &p1, Particle &p2, Distance const &d) {
+        add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
+                                    obs_pressure);
+      },
+      maximal_cutoff());
 
   calc_long_range_virials(cell_structure.local_particles());
 

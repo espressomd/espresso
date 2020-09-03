@@ -28,7 +28,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "virtual_sites/VirtualSitesRelative.hpp"
+#include "virtual_sites.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/mpi/all_compare.hpp>
@@ -104,12 +104,6 @@ bool validate_collision_parameters() {
 
     // Cache square of cutoff
     collision_params.distance2 = Utils::sqr(collision_params.distance);
-
-    if (collision_params.distance > min_global_cut) {
-      runtimeErrorMsg() << "The minimum global cutoff (System.min_global_cut) "
-                           "must be larger or equal the collision detection "
-                           "distance.";
-    }
   }
 
 #ifndef VIRTUAL_SITES_RELATIVE
@@ -243,8 +237,7 @@ bool validate_collision_parameters() {
       make_particle_type_exist(collision_params.part_type_after_glueing);
   }
 
-  recalc_forces = true;
-  rebuild_verletlist = true;
+  on_short_range_ia_change();
 
   return true;
 }
@@ -294,8 +287,9 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
 }
 
 // Considers three particles for three_particle_binding and performs
-// the binding if the criteria are met //
-void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
+// the binding if the criteria are met
+void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
+                                   Particle const &p2) {
   // If p1 and p2 are not closer or equal to the cutoff distance, skip
   // p1:
   if (get_mi_vector(p.r.p, p1.r.p, box_geo).norm() > collision_params.distance)
