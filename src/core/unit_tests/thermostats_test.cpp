@@ -40,7 +40,7 @@ extern double temperature;
 
 // multiply by 100 because BOOST_CHECK_CLOSE takes a percentage tolerance,
 // and by 6 to account for error accumulation in thermostat functions
-auto const tol = 6 * 100 * std::numeric_limits<double>::epsilon();
+constexpr auto tol = 6 * 100 * std::numeric_limits<double>::epsilon();
 
 Particle particle_factory() {
   Particle p{};
@@ -214,12 +214,12 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
 BOOST_AUTO_TEST_CASE(test_noise_statistics) {
   time_step = 1.0;
   temperature = 2.0;
-  constexpr size_t const sample_size = 1'000'000;
+  constexpr size_t const sample_size = 10'000;
   auto thermostat = thermostat_factory<LangevinThermostat>();
   auto p1 = particle_factory();
   auto p2 = particle_factory();
-  p1.p.identity = 1;
-  p2.p.identity = 3;
+  p1.p.identity = 0;
+  p2.p.identity = 1;
 
   auto const correlation = std::get<3>(noise_statistics(
       [&p1, &p2, &thermostat]() -> std::array<VariantVectorXd, 3> {
@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
       } else {
         expected = 0.0;
       }
-      BOOST_CHECK(correlation_almost_equal(correlation, i, j, expected, 2e-3));
+      BOOST_CHECK(correlation_almost_equal(correlation, i, j, expected, 3e-2));
     }
   }
 }
@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
 BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
   time_step = 1.0;
   temperature = 2.0;
-  constexpr size_t const sample_size = 500'000;
+  constexpr size_t const sample_size = 10'000;
   auto thermostat = thermostat_factory<BrownianThermostat>();
   auto p = particle_factory();
 #ifdef ROTATION
@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
       sample_size));
   for (size_t i = 0; i < correlation.size(); ++i) {
     for (size_t j = i + 1; j < correlation.size(); ++j) {
-      BOOST_CHECK(correlation_almost_equal(correlation, i, j, 0.0, 5e-2));
+      BOOST_CHECK(correlation_almost_equal(correlation, i, j, 0.0, 4e-2));
     }
   }
 }
@@ -280,7 +280,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
 BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
   time_step = 1.0;
   temperature = 2.0;
-  constexpr size_t const sample_size = 500'000;
+  constexpr size_t const sample_size = 10'000;
   auto thermostat = thermostat_factory<LangevinThermostat>();
   auto p = particle_factory();
 #ifdef ROTATION
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
       sample_size));
   for (size_t i = 0; i < correlation.size(); ++i) {
     for (size_t j = i + 1; j < correlation.size(); ++j) {
-      BOOST_CHECK(correlation_almost_equal(correlation, i, j, 0.0, 5e-2));
+      BOOST_CHECK(correlation_almost_equal(correlation, i, j, 0.0, 3e-2));
     }
   }
 }
@@ -313,7 +313,7 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
   thermo_switch |= THERMO_NPT_ISO;
   time_step = 1.0;
   temperature = 2.0;
-  constexpr size_t const sample_size = 500'000;
+  constexpr size_t const sample_size = 10'000;
   IsotropicNptThermostat thermostat{};
   thermostat.rng_initialize(0);
   thermostat.gamma0 = 2.0;
@@ -333,7 +333,7 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
       sample_size));
   for (size_t i = 0; i < correlation.size(); ++i) {
     for (size_t j = i + 1; j < correlation.size(); ++j) {
-      BOOST_CHECK(correlation_almost_equal(correlation, i, j, 0.0, 5e-2));
+      BOOST_CHECK(correlation_almost_equal(correlation, i, j, 0.0, 2e-2));
     }
   }
 }
