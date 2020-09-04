@@ -24,6 +24,7 @@
 
 #include "config.hpp"
 
+#include "Particle.hpp"
 #include "random.hpp"
 #include "thermostat.hpp"
 

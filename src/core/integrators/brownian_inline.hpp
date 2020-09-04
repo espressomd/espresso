@@ -24,8 +24,8 @@
 
 #include "config.hpp"
 
-#include "CellStructure.hpp"
 #include "ParticleRange.hpp"
+#include "cells.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"

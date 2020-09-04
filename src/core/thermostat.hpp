@@ -26,8 +26,6 @@
 
 #include "config.hpp"
 
-#include "Particle.hpp"
-#include "random.hpp"
 #include "rotation.hpp"
 
 #include <utils/Vector.hpp>
@@ -36,7 +34,6 @@
 
 #include <cmath>
 #include <cstdint>
-#include <tuple>
 
 /** \name Thermostat switches */
 /*@{*/

@@ -27,10 +27,14 @@
  */
 
 #include "integrate.hpp"
-#include "Particle.hpp"
+#include "integrators/brownian_inline.hpp"
+#include "integrators/steepest_descent.hpp"
+#include "integrators/stokesian_dynamics_inline.hpp"
+#include "integrators/velocity_verlet_inline.hpp"
+#include "integrators/velocity_verlet_npt.hpp"
+
+#include "ParticleRange.hpp"
 #include "accumulators.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -51,22 +55,12 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
-#include "integrators/brownian_inline.hpp"
-#include "integrators/steepest_descent.hpp"
-#include "integrators/stokesian_dynamics_inline.hpp"
-#include "integrators/velocity_verlet_inline.hpp"
-#include "integrators/velocity_verlet_npt.hpp"
-
 #include <profiler/profiler.hpp>
 #include <utils/Counter.hpp>
-#include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
 
-#include <cmath>
 #include <cstdint>
-#include <mpi.h>
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>

@@ -24,8 +24,10 @@
 
 #include "config.hpp"
 
+#include "Particle.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
+#include "rotation.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
