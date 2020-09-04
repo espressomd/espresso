@@ -97,8 +97,7 @@ class LangevinThermostat(ut.TestCase):
         force3 = np.copy(system.part[0].f)
         np.testing.assert_equal(np.all(np.not_equal(force2, force3)), True)
 
-        # Same seed should not give the same force (with a different counter
-        # state)
+        # Same seed should not give the same force with different counter state
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
@@ -115,6 +114,17 @@ class LangevinThermostat(ut.TestCase):
         system.integrator.run(1)
         force5 = np.copy(system.part[0].f)
         np.testing.assert_equal(np.all(np.not_equal(force4, force5)), True)
+
+        # Same seed should give the same force with same counter state
+        system.part.clear()
+        system.part.add(pos=[0, 0, 0])
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
+        system.integrator.run(0, recalc_forces=True)
+        force6 = np.copy(system.part[0].f)
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
+        system.integrator.run(0, recalc_forces=True)
+        force7 = np.copy(system.part[0].f)
+        np.testing.assert_almost_equal(force6, force7)
 
     def test_02__friction_trans(self):
         """Tests the translational friction-only part of the thermostat."""
@@ -215,7 +225,7 @@ class LangevinThermostat(ut.TestCase):
 
         kT = 1.1
         gamma = 3.5
-        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=33)
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
 
         # Warmup
         system.integrator.run(20)
@@ -231,7 +241,7 @@ class LangevinThermostat(ut.TestCase):
 
         v_minmax = 5
         bins = 4
-        error_tol = 0.01
+        error_tol = 0.015
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
         if espressomd.has_features("ROTATION"):
@@ -298,7 +308,7 @@ class LangevinThermostat(ut.TestCase):
                     system.part[int(N / 2):].omega_body
         v_minmax = 5
         bins = 4
-        error_tol = 0.012
+        error_tol = 0.015
         self.check_velocity_distribution(v_kT, v_minmax, bins, error_tol, kT)
         self.check_velocity_distribution(v_kT2, v_minmax, bins, error_tol, kT2)
 
