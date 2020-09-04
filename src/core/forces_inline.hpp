@@ -39,7 +39,6 @@
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
-#include "integrators/langevin_inline.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -61,6 +60,7 @@
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
+#include "thermostats/langevin_inline.hpp"
 
 #ifdef DIPOLES
 #include "electrostatics_magnetostatics/dipole_inline.hpp"

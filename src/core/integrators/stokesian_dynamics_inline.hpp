@@ -31,6 +31,8 @@
 
 #include <utils/Vector.hpp>
 
+#include <cstdint>
+
 inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
                                                  uint64_t counter) {
   auto const skin2 = Utils::sqr(0.5 * skin);
