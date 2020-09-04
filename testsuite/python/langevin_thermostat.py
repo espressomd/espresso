@@ -241,7 +241,7 @@ class LangevinThermostat(ut.TestCase):
 
         v_minmax = 5
         bins = 4
-        error_tol = 0.015
+        error_tol = 0.016
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
         if espressomd.has_features("ROTATION"):
@@ -308,7 +308,7 @@ class LangevinThermostat(ut.TestCase):
                     system.part[int(N / 2):].omega_body
         v_minmax = 5
         bins = 4
-        error_tol = 0.015
+        error_tol = 0.016
         self.check_velocity_distribution(v_kT, v_minmax, bins, error_tol, kT)
         self.check_velocity_distribution(v_kT2, v_minmax, bins, error_tol, kT2)
 
