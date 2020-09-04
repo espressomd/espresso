@@ -30,6 +30,7 @@
 #include "npt.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
+#include "velocity_verlet_npt_inline.hpp"
 
 #include <utils/math/sqr.hpp>
 

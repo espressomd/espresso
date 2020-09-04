@@ -31,6 +31,7 @@
 #include "Particle.hpp"
 #include "integrators/brownian_inline.hpp"
 #include "integrators/langevin_inline.hpp"
+#include "integrators/velocity_verlet_npt_inline.hpp"
 #include "random_test.hpp"
 #include "thermostat.hpp"
 
