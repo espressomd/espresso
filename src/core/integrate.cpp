@@ -106,7 +106,6 @@ void integrator_sanity_checks() {
  *  @return whether or not to stop the integration loop early.
  */
 bool integrator_step_1(ParticleRange &particles) {
-  auto const counter = integrator_counter.value();
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     if (steepest_descent_step(particles))
@@ -117,7 +116,7 @@ bool integrator_step_1(ParticleRange &particles) {
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_1(particles, counter);
+    velocity_verlet_npt_step_1(particles, integrator_counter.value());
     break;
 #endif
   case INTEG_METHOD_BD:
@@ -126,7 +125,7 @@ bool integrator_step_1(ParticleRange &particles) {
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
-    stokesian_dynamics_step_1(particles, counter);
+    stokesian_dynamics_step_1(particles, integrator_counter.value());
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
@@ -137,7 +136,6 @@ bool integrator_step_1(ParticleRange &particles) {
 
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
-  auto const counter = integrator_counter.value();
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -147,12 +145,13 @@ void integrator_step_2(ParticleRange &particles) {
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_2(particles, counter);
+    velocity_verlet_npt_step_2(particles, integrator_counter.value());
     break;
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles, counter);
+    brownian_dynamics_propagator(brownian, particles,
+                                 integrator_counter.value());
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
