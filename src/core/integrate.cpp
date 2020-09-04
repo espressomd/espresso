@@ -92,9 +92,6 @@ void notify_sig_int() {
 }
 } // namespace
 
-/** Thermostats increment the RNG counter here. */
-void philox_counter_increment();
-
 void integrator_sanity_checks() {
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
@@ -150,7 +147,8 @@ void integrator_step_2(ParticleRange &particles) {
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles);
+    brownian_dynamics_propagator(brownian, particles, time_step, skin,
+                                 sim_time);
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
@@ -188,7 +186,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    force_calc(cell_structure);
+    force_calc(cell_structure, time_step);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -250,7 +248,7 @@ int integrate(int n_steps, int reuse_forces) {
 
     particles = cell_structure.local_particles();
 
-    force_calc(cell_structure);
+    force_calc(cell_structure, time_step);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
@@ -311,33 +309,6 @@ int integrate(int n_steps, int reuse_forces) {
   }
 #endif
   return integrated_steps;
-}
-
-void philox_counter_increment() {
-  if (thermo_switch & THERMO_LANGEVIN) {
-    langevin_rng_counter_increment();
-  }
-  if (thermo_switch & THERMO_BROWNIAN) {
-    brownian_rng_counter_increment();
-  }
-#ifdef NPT
-  if (thermo_switch & THERMO_NPT_ISO) {
-    npt_iso_rng_counter_increment();
-  }
-#endif
-#ifdef DPD
-  if (thermo_switch & THERMO_DPD) {
-    dpd_rng_counter_increment();
-  }
-#endif
-#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
-  if (thermo_switch & THERMO_SD) {
-    stokesian_rng_counter_increment();
-  }
-#endif
-  if (n_thermalized_bonds) {
-    thermalized_bond_rng_counter_increment();
-  }
 }
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {

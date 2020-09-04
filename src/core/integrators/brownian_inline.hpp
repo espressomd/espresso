@@ -504,7 +504,9 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
 #endif // ROTATION
 
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
-                                         const ParticleRange &particles) {
+                                         const ParticleRange &particles,
+                                         double time_step, double skin,
+                                         double &sim_time) {
   for (auto &p : particles) {
     // Don't propagate translational degrees of freedom of vs
     extern bool thermo_virtual;

@@ -29,6 +29,7 @@
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "integrate.hpp"
 #include "npt.hpp"
 #include "thermostat.hpp"
 
@@ -106,7 +107,7 @@ void thermo_init() {
     return;
   }
   if (thermo_switch & THERMO_LANGEVIN)
-    langevin.recalc_prefactors();
+    langevin.recalc_prefactors(time_step);
 #ifdef DPD
   if (thermo_switch & THERMO_DPD)
     dpd_init();
@@ -116,10 +117,37 @@ void thermo_init() {
     if (nptiso.piston == 0.0) {
       thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
     } else {
-      npt_iso.recalc_prefactors(nptiso.piston);
+      npt_iso.recalc_prefactors(nptiso.piston, time_step);
     }
   }
 #endif
   if (thermo_switch & THERMO_BROWNIAN)
     brownian.recalc_prefactors();
+}
+
+void philox_counter_increment() {
+  if (thermo_switch & THERMO_LANGEVIN) {
+    langevin_rng_counter_increment();
+  }
+  if (thermo_switch & THERMO_BROWNIAN) {
+    brownian_rng_counter_increment();
+  }
+#ifdef NPT
+  if (thermo_switch & THERMO_NPT_ISO) {
+    npt_iso_rng_counter_increment();
+  }
+#endif
+#ifdef DPD
+  if (thermo_switch & THERMO_DPD) {
+    dpd_rng_counter_increment();
+  }
+#endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+  if (thermo_switch & THERMO_SD) {
+    stokesian_rng_counter_increment();
+  }
+#endif
+  if (n_thermalized_bonds) {
+    thermalized_bond_rng_counter_increment();
+  }
 }

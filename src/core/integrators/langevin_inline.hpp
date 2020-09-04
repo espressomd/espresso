@@ -36,10 +36,11 @@
  *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
+ *  @param[in]     time_step      Time step
  */
 inline Utils::Vector3d
-friction_thermo_langevin(LangevinThermostat const &langevin,
-                         Particle const &p) {
+friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
+                         double time_step) {
   // Early exit for virtual particles without thermostat
   if (p.p.is_virtual && !thermo_virtual) {
     return {};
@@ -97,10 +98,11 @@ friction_thermo_langevin(LangevinThermostat const &langevin,
  *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
+ *  @param[in]     time_step      Time step
  */
 inline Utils::Vector3d
 friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
-                                  Particle const &p) {
+                                  Particle const &p, double time_step) {
 
   auto pref_friction = -langevin.gamma_rotation;
   auto pref_noise = langevin.pref_noise_rotation;
