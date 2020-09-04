@@ -11,7 +11,7 @@ After the tutorial, students should be able to
     * how to use an auto correlation function to estimate correlation times and how that affects error estimation
 
 
-## Learning objectives (Espresso)
+## Learning objectives (ESPResSo)
 
 After the tutorial, students should be able to 
 
