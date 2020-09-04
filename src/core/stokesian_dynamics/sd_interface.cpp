@@ -180,7 +180,7 @@ int get_sd_flags() { return sd_flags; }
 
 void propagate_vel_pos_sd(const ParticleRange &particles,
                           const boost::mpi::communicator &comm,
-                          const double time_step) {
+                          const double time_step, uint64_t counter) {
   static std::vector<SD_particle_data> parts_buffer{};
 
   parts_buffer.clear();
@@ -231,7 +231,7 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
     case CPU:
       v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
                     std::sqrt(sd_kT / time_step),
-                    static_cast<std::size_t>(integrator_counter.value()),
+                    static_cast<std::size_t>(counter),
                     static_cast<std::size_t>(stokesian.rng_seed()), sd_flags);
       break;
 #endif
@@ -240,7 +240,7 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
     case GPU:
       v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
                     std::sqrt(sd_kT / time_step),
-                    static_cast<std::size_t>(integrator_counter.value()),
+                    static_cast<std::size_t>(counter),
                     static_cast<std::size_t>(stokesian.rng_seed()), sd_flags);
       break;
 #endif

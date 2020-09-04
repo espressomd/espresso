@@ -57,7 +57,7 @@ int get_sd_flags();
  */
 void propagate_vel_pos_sd(const ParticleRange &particles,
                           const boost::mpi::communicator &comm,
-                          double time_step);
+                          double time_step, uint64_t counter);
 
 #endif // STOKESIAN_DYNAMICS
 

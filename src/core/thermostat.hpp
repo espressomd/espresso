@@ -358,13 +358,15 @@ void thermo_init();
  *  @param npt_iso     Parameters
  *  @param vel         particle velocity
  *  @param p_identity  particle identity
+ *  @param counter     RNG counter
  *  @return noise added to the velocity, already rescaled by
  *          dt/2 (contained in prefactors)
  */
 template <size_t step>
 inline Utils::Vector3d
 friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
-                       Utils::Vector3d const &vel, int p_identity) {
+                       Utils::Vector3d const &vel, int p_identity,
+                       uint64_t counter) {
   static_assert(step == 1 or step == 2, "NPT only has 2 integration steps");
   constexpr auto const salt =
       (step == 1) ? RNGSalt::NPTISO0_HALF_STEP1 : RNGSalt::NPTISO0_HALF_STEP2;
@@ -372,8 +374,8 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
     if (npt_iso.pref_noise_0 > 0.0) {
       return npt_iso.pref_rescale_0 * vel +
              npt_iso.pref_noise_0 *
-                 Random::noise_uniform<salt>(integrator_counter.value(),
-                                             npt_iso.rng_seed(), p_identity);
+                 Random::noise_uniform<salt>(counter, npt_iso.rng_seed(),
+                                             p_identity);
     }
     return npt_iso.pref_rescale_0 * vel;
   }
@@ -384,13 +386,12 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
  *  nptiso_struct::p_diff
  */
 inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
-                                     double p_diff) {
+                                     double p_diff, uint64_t counter) {
   if (thermo_switch & THERMO_NPT_ISO) {
     if (npt_iso.pref_noise_V > 0.0) {
       return npt_iso.pref_rescale_V * p_diff +
-             npt_iso.pref_noise_V *
-                 Random::noise_uniform<RNGSalt::NPTISOV, 1>(
-                     integrator_counter.value(), npt_iso.rng_seed(), 0);
+             npt_iso.pref_noise_V * Random::noise_uniform<RNGSalt::NPTISOV, 1>(
+                                        counter, npt_iso.rng_seed(), 0);
     }
     return npt_iso.pref_rescale_V * p_diff;
   }

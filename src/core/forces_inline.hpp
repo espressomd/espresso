@@ -100,25 +100,27 @@ inline ParticleForce external_force(Particle const &p) {
   return f;
 }
 
-inline ParticleForce thermostat_force(Particle const &p) {
+inline ParticleForce thermostat_force(Particle const &p, uint64_t counter) {
   extern LangevinThermostat langevin;
   if (!(thermo_switch & THERMO_LANGEVIN)) {
     return {};
   }
 
 #ifdef ROTATION
-  return {friction_thermo_langevin(langevin, p),
-          p.p.rotation ? convert_vector_body_to_space(
-                             p, friction_thermo_langevin_rotation(langevin, p))
-                       : Utils::Vector3d{}};
+  return {friction_thermo_langevin(langevin, p, counter),
+          p.p.rotation
+              ? convert_vector_body_to_space(
+                    p, friction_thermo_langevin_rotation(langevin, p, counter))
+              : Utils::Vector3d{}};
 #else
-  return friction_thermo_langevin(langevin, p);
+  return friction_thermo_langevin(langevin, p, counter);
 #endif
 }
 
 /** Initialize the forces for a real particle */
-inline ParticleForce init_local_particle_force(Particle const &part) {
-  return thermostat_force(part) + external_force(part);
+inline ParticleForce init_local_particle_force(Particle const &part,
+                                               uint64_t counter) {
+  return thermostat_force(part, counter) + external_force(part);
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(
@@ -234,7 +236,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force(Particle const &p1,
  */
 inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
                                       Utils::Vector3d const &d, double dist,
-                                      double dist2) {
+                                      double dist2, uint64_t counter) {
   IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
   Utils::Vector3d force{};
   Utils::Vector3d *torque1 = nullptr;
@@ -289,7 +291,7 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
   /** The inter dpd force should not be part of the virial */
 #ifdef DPD
   if (thermo_switch & THERMO_DPD) {
-    force += dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
+    force += dpd_pair_force(p1, p2, ia_params, d, dist, dist2, counter);
   }
 #endif
 

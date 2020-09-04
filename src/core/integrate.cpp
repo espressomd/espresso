@@ -107,6 +107,7 @@ void integrator_sanity_checks() {
  *  @return whether or not to stop the integration loop early.
  */
 bool integrator_step_1(ParticleRange &particles) {
+  auto const counter = integrator_counter.value();
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     if (steepest_descent_step(particles))
@@ -117,7 +118,7 @@ bool integrator_step_1(ParticleRange &particles) {
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_1(particles);
+    velocity_verlet_npt_step_1(particles, counter);
     break;
 #endif
   case INTEG_METHOD_BD:
@@ -126,7 +127,7 @@ bool integrator_step_1(ParticleRange &particles) {
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
-    stokesian_dynamics_step_1(particles);
+    stokesian_dynamics_step_1(particles, counter);
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
@@ -138,6 +139,7 @@ bool integrator_step_1(ParticleRange &particles) {
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
   extern BrownianThermostat brownian;
+  auto const counter = integrator_counter.value();
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -147,12 +149,12 @@ void integrator_step_2(ParticleRange &particles) {
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_2(particles);
+    velocity_verlet_npt_step_2(particles, counter);
     break;
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles);
+    brownian_dynamics_propagator(brownian, particles, counter);
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
@@ -190,7 +192,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    force_calc(cell_structure);
+    force_calc(cell_structure, integrator_counter.value());
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -251,7 +253,7 @@ int integrate(int n_steps, int reuse_forces) {
 
     particles = cell_structure.local_particles();
 
-    force_calc(cell_structure);
+    force_calc(cell_structure, integrator_counter.value());
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();

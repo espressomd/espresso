@@ -46,11 +46,11 @@ using Utils::Vector3d;
  *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
  *     seed-per-node)
  */
-Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
+Vector3d dpd_noise(uint32_t pid1, uint32_t pid2, uint64_t counter) {
   extern DPDThermostat dpd;
-  return Random::noise_uniform<RNGSalt::SALT_DPD>(
-      integrator_counter.value(), dpd.rng_seed(), (pid1 < pid2) ? pid2 : pid1,
-      (pid1 < pid2) ? pid1 : pid2);
+  return Random::noise_uniform<RNGSalt::SALT_DPD>(counter, dpd.rng_seed(),
+                                                  (pid1 < pid2) ? pid2 : pid1,
+                                                  (pid1 < pid2) ? pid1 : pid2);
 }
 
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
@@ -117,7 +117,7 @@ Vector3d dpd_pair_force(DPDParameters const &params, Vector3d const &v,
 Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
                                IA_parameters const &ia_params,
                                Utils::Vector3d const &d, double dist,
-                               double dist2) {
+                               double dist2, uint64_t counter) {
   if (ia_params.dpd_radial.cutoff <= 0.0 && ia_params.dpd_trans.cutoff <= 0.0) {
     return {};
   }
@@ -125,7 +125,7 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
   auto const v21 = p1.m.v - p2.m.v;
   auto const noise_vec =
       (ia_params.dpd_radial.pref > 0.0 || ia_params.dpd_trans.pref > 0.0)
-          ? dpd_noise(p1.p.identity, p2.p.identity)
+          ? dpd_noise(p1.p.identity, p2.p.identity, counter)
           : Vector3d{};
 
   auto const f_r = dpd_pair_force(ia_params.dpd_radial, v21, dist, noise_vec);

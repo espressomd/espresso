@@ -36,10 +36,11 @@
  *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
+ *  @param[in]     counter        RNG counter
  */
 inline Utils::Vector3d
-friction_thermo_langevin(LangevinThermostat const &langevin,
-                         Particle const &p) {
+friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
+                         uint64_t counter) {
   // Early exit for virtual particles without thermostat
   if (p.p.is_virtual && !thermo_virtual) {
     return {};
@@ -85,9 +86,8 @@ friction_thermo_langevin(LangevinThermostat const &langevin,
 #endif // PARTICLE_ANISOTROPY
 
   return friction_op * velocity +
-         noise_op *
-             Random::noise_uniform<RNGSalt::LANGEVIN>(
-                 integrator_counter.value(), langevin.rng_seed(), p.p.identity);
+         noise_op * Random::noise_uniform<RNGSalt::LANGEVIN>(
+                        counter, langevin.rng_seed(), p.p.identity);
 }
 
 #ifdef ROTATION
@@ -97,10 +97,11 @@ friction_thermo_langevin(LangevinThermostat const &langevin,
  *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
+ *  @param[in]     counter        RNG counter
  */
 inline Utils::Vector3d
 friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
-                                  Particle const &p) {
+                                  Particle const &p, uint64_t counter) {
 
   auto pref_friction = -langevin.gamma_rotation;
   auto pref_noise = langevin.pref_noise_rotation;
@@ -118,7 +119,7 @@ friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
 #endif // LANGEVIN_PER_PARTICLE
 
   auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN_ROT>(
-      integrator_counter.value(), langevin.rng_seed(), p.p.identity);
+      counter, langevin.rng_seed(), p.p.identity);
   return hadamard_product(pref_friction, p.m.omega) +
          hadamard_product(pref_noise, noise);
 }

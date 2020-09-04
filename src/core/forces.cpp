@@ -49,7 +49,7 @@
 
 ActorList forceActors;
 
-void init_forces(const ParticleRange &particles) {
+void init_forces(const ParticleRange &particles, uint64_t counter) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
@@ -63,7 +63,7 @@ void init_forces(const ParticleRange &particles) {
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    p.f = init_local_particle_force(p);
+    p.f = init_local_particle_force(p, counter);
   }
 
   /* initialize ghost forces with zero
@@ -80,7 +80,7 @@ void init_forces_ghosts(const ParticleRange &particles) {
   }
 }
 
-void force_calc(CellStructure &cell_structure) {
+void force_calc(CellStructure &cell_structure, uint64_t const counter) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   espressoSystemInterface.update();
@@ -94,7 +94,7 @@ void force_calc(CellStructure &cell_structure) {
 #ifdef ELECTROSTATICS
   iccp3m_iteration(particles, cell_structure.ghost_particles());
 #endif
-  init_forces(particles);
+  init_forces(particles, counter);
 
   for (auto &forceActor : forceActors) {
     forceActor->computeForces(espressoSystemInterface);
@@ -119,8 +119,9 @@ void force_calc(CellStructure &cell_structure) {
 
   short_range_loop(
       add_bonded_force,
-      [](Particle &p1, Particle &p2, Distance const &d) {
-        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
+      [&counter](Particle &p1, Particle &p2, Distance const &d) {
+        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
+                                  counter);
 #ifdef COLLISION_DETECTION
         if (collision_params.mode != COLLISION_MODE_OFF)
           detect_collision(p1, p2, d.dist2);

@@ -163,10 +163,12 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
  *  From eq. (14.37) in @cite Schlick2010.
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              %Particle
+ *  @param[in]     counter        RNG counter
  *  @param[in]     dt             Time interval
  */
 inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
-                                      Particle const &p, double dt) {
+                                      Particle const &p, uint64_t counter,
+                                      double dt) {
   // skip the translation thermalizing for virtual sites unless enabled
   extern bool thermo_virtual;
   if (p.p.is_virtual && !thermo_virtual)
@@ -213,7 +215,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
   // magnitude defined in the second eq. (14.38), Schlick2010.
   Utils::Vector3d delta_pos_body{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(
-      integrator_counter.value(), brownian.rng_seed(), p.p.identity);
+      counter, brownian.rng_seed(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -265,9 +267,10 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
  *  From eq. (10.2.16) in @cite Pottier2010.
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              %Particle
+ *  @param[in]     counter        RNG counter
  */
 inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
-                                          Particle const &p) {
+                                          Particle const &p, uint64_t counter) {
   // skip the translation thermalizing for virtual sites unless enabled
   extern bool thermo_virtual;
   if (p.p.is_virtual && !thermo_virtual)
@@ -290,7 +293,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
 #endif // BROWNIAN_PER_PARTICLE
 
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(
-      integrator_counter.value(), brownian.rng_seed(), p.identity());
+      counter, brownian.rng_seed(), p.identity());
   Utils::Vector3d velocity = {};
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -395,10 +398,12 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
  *  An analogy of eq. (14.37) in @cite Schlick2010.
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              %Particle
+ *  @param[in]     counter        RNG counter
  *  @param[in]     dt             Time interval
  */
 inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
-                                          Particle const &p, double dt) {
+                                          Particle const &p, uint64_t counter,
+                                          double dt) {
   // first, set defaults
   Thermostat::GammaType sigma_pos = brownian.sigma_pos_rotation;
 
@@ -439,7 +444,7 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
 
   Utils::Vector3d dphi = {};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(
-      integrator_counter.value(), brownian.rng_seed(), p.p.identity);
+      counter, brownian.rng_seed(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -470,9 +475,11 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
  *  An analogy of eq. (10.2.16) in @cite Pottier2010.
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              %Particle
+ *  @param[in]     counter        RNG counter
  */
 inline Utils::Vector3d
-bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
+bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p,
+                       uint64_t counter) {
   double sigma_vel;
 
   // Override defaults if per-particle values for T and gamma are given
@@ -490,7 +497,7 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
 
   Utils::Vector3d domega{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(
-      integrator_counter.value(), brownian.rng_seed(), p.p.identity);
+      counter, brownian.rng_seed(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -504,15 +511,16 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
 #endif // ROTATION
 
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
-                                         const ParticleRange &particles) {
+                                         const ParticleRange &particles,
+                                         uint64_t counter) {
   for (auto &p : particles) {
     // Don't propagate translational degrees of freedom of vs
     extern bool thermo_virtual;
     if (!(p.p.is_virtual) or thermo_virtual) {
       p.r.p += bd_drag(brownian.gamma, p, time_step);
       p.m.v = bd_drag_vel(brownian.gamma, p);
-      p.r.p += bd_random_walk(brownian, p, time_step);
-      p.m.v += bd_random_walk_vel(brownian, p);
+      p.r.p += bd_random_walk(brownian, p, counter, time_step);
+      p.m.v += bd_random_walk_vel(brownian, p, counter);
       /* Verlet criterion check */
       if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
         cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
@@ -523,8 +531,8 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
     convert_torque_to_body_frame_apply_fix(p);
     p.r.quat = bd_drag_rot(brownian.gamma_rotation, p, time_step);
     p.m.omega = bd_drag_vel_rot(brownian.gamma_rotation, p);
-    p.r.quat = bd_random_walk_rot(brownian, p, time_step);
-    p.m.omega += bd_random_walk_vel_rot(brownian, p);
+    p.r.quat = bd_random_walk_rot(brownian, p, counter, time_step);
+    p.m.omega += bd_random_walk_vel_rot(brownian, p, counter);
 #endif // ROTATION
   }
   sim_time += time_step;
