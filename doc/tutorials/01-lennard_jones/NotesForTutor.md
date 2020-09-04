@@ -32,3 +32,4 @@ After the tutorial, students should be able to
 * Non-bonded interactions are defined between pairs of particle types.
   Mention that type=0 is implied when creating particles without specifying one.
 * Explain Lennard-Jones cutoff and shift.
+* Explain steepest descent.
