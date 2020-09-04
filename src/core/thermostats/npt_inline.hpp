@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef VELOCITY_VERLET_NPT_INLINE_HPP
-#define VELOCITY_VERLET_NPT_INLINE_HPP
+#ifndef THERMOSTATS_NPT_INLINE_HPP
+#define THERMOSTATS_NPT_INLINE_HPP
 
 #include "config.hpp"
 

@@ -18,17 +18,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file */
 
-#ifndef LANGEVIN_INLINE_HPP
-#define LANGEVIN_INLINE_HPP
+#ifndef THERMOSTATS_LANGEVIN_INLINE_HPP
+#define THERMOSTATS_LANGEVIN_INLINE_HPP
 
 #include "config.hpp"
 
-#include <utils/Vector.hpp>
-
 #include "random.hpp"
 #include "thermostat.hpp"
+
+#include <utils/Vector.hpp>
 
 /** Langevin thermostat for particle translational velocities.
  *  Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).

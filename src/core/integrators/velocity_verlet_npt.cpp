@@ -26,11 +26,10 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
-#include "velocity_verlet_npt_inline.hpp"
+#include "thermostats/npt_inline.hpp"
 
 #include <utils/math/sqr.hpp>
 

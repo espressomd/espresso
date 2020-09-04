@@ -28,11 +28,11 @@
 #include <utils/Vector.hpp>
 
 #include "Particle.hpp"
-#include "integrators/brownian_inline.hpp"
-#include "integrators/langevin_inline.hpp"
-#include "integrators/velocity_verlet_npt_inline.hpp"
 #include "random_test.hpp"
 #include "thermostat.hpp"
+#include "thermostats/brownian_inline.hpp"
+#include "thermostats/langevin_inline.hpp"
+#include "thermostats/npt_inline.hpp"
 
 #include <array>
 
