@@ -35,7 +35,6 @@
 int thermo_switch = THERMO_OFF;
 double temperature = 0.0;
 bool thermo_virtual = true;
-Utils::Counter<uint64_t> thermostat_counter;
 
 using Thermostat::GammaType;
 
@@ -61,18 +60,6 @@ using Thermostat::GammaType;
   }                                                                            \
                                                                                \
   uint32_t thermostat##_get_rng_state() { return (thermostat).rng_seed(); }
-
-static void mpi_set_thermostat_counter(const uint64_t value) {
-  thermostat_counter = Utils::Counter<uint64_t>{value};
-}
-
-REGISTER_CALLBACK(mpi_set_thermostat_counter)
-
-void set_thermostat_counter(uint64_t value) {
-  mpi_call_all(mpi_set_thermostat_counter, value);
-}
-
-uint64_t get_thermostat_counter() { return thermostat_counter.value(); }
 
 LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};

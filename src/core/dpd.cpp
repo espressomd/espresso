@@ -49,7 +49,7 @@ using Utils::Vector3d;
 Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
   extern DPDThermostat dpd;
   return Random::noise_uniform<RNGSalt::SALT_DPD>(
-      thermostat_counter.value(), dpd.rng_seed(), (pid1 < pid2) ? pid2 : pid1,
+      integrator_counter.value(), dpd.rng_seed(), (pid1 < pid2) ? pid2 : pid1,
       (pid1 < pid2) ? pid1 : pid2);
 }
 

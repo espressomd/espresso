@@ -213,7 +213,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
   // magnitude defined in the second eq. (14.38), Schlick2010.
   Utils::Vector3d delta_pos_body{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(
-      thermostat_counter.value(), brownian.rng_seed(), p.p.identity);
+      integrator_counter.value(), brownian.rng_seed(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -290,7 +290,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
 #endif // BROWNIAN_PER_PARTICLE
 
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(
-      thermostat_counter.value(), brownian.rng_seed(), p.identity());
+      integrator_counter.value(), brownian.rng_seed(), p.identity());
   Utils::Vector3d velocity = {};
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -439,7 +439,7 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
 
   Utils::Vector3d dphi = {};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(
-      thermostat_counter.value(), brownian.rng_seed(), p.p.identity);
+      integrator_counter.value(), brownian.rng_seed(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -490,7 +490,7 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
 
   Utils::Vector3d domega{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(
-      thermostat_counter.value(), brownian.rng_seed(), p.p.identity);
+      integrator_counter.value(), brownian.rng_seed(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))

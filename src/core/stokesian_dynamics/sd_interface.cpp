@@ -231,7 +231,7 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
     case CPU:
       v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
                     std::sqrt(sd_kT / time_step),
-                    static_cast<std::size_t>(thermostat_counter.value()),
+                    static_cast<std::size_t>(integrator_counter.value()),
                     static_cast<std::size_t>(stokesian.rng_seed()), sd_flags);
       break;
 #endif
@@ -240,7 +240,7 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
     case GPU:
       v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
                     std::sqrt(sd_kT / time_step),
-                    static_cast<std::size_t>(thermostat_counter.value()),
+                    static_cast<std::size_t>(integrator_counter.value()),
                     static_cast<std::size_t>(stokesian.rng_seed()), sd_flags);
       break;
 #endif

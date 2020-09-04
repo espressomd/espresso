@@ -94,12 +94,10 @@ cdef class Thermostat:
     def __getstate__(self):
         # Attributes to pickle.
         thermolist = self.get_state()
-        counter_state = get_thermostat_counter()
-        return (thermolist, counter_state)
+        return thermolist
 
     def __setstate__(self, state):
-        thermolist, counter_state = state
-        set_thermostat_counter(counter_state)
+        thermolist = state
 
         if thermolist == []:
             return

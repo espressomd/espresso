@@ -59,11 +59,14 @@
 #include "integrators/velocity_verlet_npt.hpp"
 
 #include <profiler/profiler.hpp>
+#include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
+
 #include <cmath>
+#include <cstdint>
 #include <mpi.h>
 
 #ifdef VALGRIND_INSTRUMENTATION
@@ -71,6 +74,8 @@
 #endif
 
 int integ_switch = INTEG_METHOD_NVT;
+
+Utils::Counter<uint64_t> integrator_counter;
 
 double time_step = -1.0;
 
@@ -224,7 +229,7 @@ int integrate(int n_steps, int reuse_forces) {
     if (early_exit)
       break;
 
-    thermostat_counter.increment();
+    integrator_counter.increment();
 
 #ifdef BOND_CONSTRAINT
     /* Correct those particle positions that participate in a rigid/constrained
@@ -489,3 +494,15 @@ double interaction_range() {
   auto const max_cut = maximal_cutoff();
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
+
+static void mpi_set_integrator_counter(const uint64_t value) {
+  integrator_counter = Utils::Counter<uint64_t>{value};
+}
+
+REGISTER_CALLBACK(mpi_set_integrator_counter)
+
+void set_integrator_counter(uint64_t value) {
+  mpi_call_all(mpi_set_integrator_counter, value);
+}
+
+uint64_t get_integrator_counter() { return integrator_counter.value(); }

@@ -31,11 +31,12 @@
 #include "random.hpp"
 #include "rotation.hpp"
 
-#include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
+
 #include <cmath>
+#include <cstdint>
 #include <tuple>
 
 /** \name Thermostat switches */
@@ -87,12 +88,6 @@ extern double temperature;
 
 /** True if the thermostat should act on virtual particles. */
 extern bool thermo_virtual;
-
-extern Utils::Counter<uint64_t> thermostat_counter;
-
-uint64_t get_thermostat_counter();
-
-void set_thermostat_counter(uint64_t value);
 
 /************************************************
  * parameter structs
@@ -377,7 +372,7 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
     if (npt_iso.pref_noise_0 > 0.0) {
       return npt_iso.pref_rescale_0 * vel +
              npt_iso.pref_noise_0 *
-                 Random::noise_uniform<salt>(thermostat_counter.value(),
+                 Random::noise_uniform<salt>(integrator_counter.value(),
                                              npt_iso.rng_seed(), p_identity);
     }
     return npt_iso.pref_rescale_0 * vel;
@@ -395,7 +390,7 @@ inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
       return npt_iso.pref_rescale_V * p_diff +
              npt_iso.pref_noise_V *
                  Random::noise_uniform<RNGSalt::NPTISOV, 1>(
-                     thermostat_counter.value(), npt_iso.rng_seed(), 0);
+                     integrator_counter.value(), npt_iso.rng_seed(), 0);
     }
     return npt_iso.pref_rescale_V * p_diff;
   }
