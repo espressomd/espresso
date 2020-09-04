@@ -69,10 +69,10 @@ void velocity_verlet_npt_finalize_p_inst() {
     }
   }
 
-  double p_tmp = 0.0;
-  MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  double p_sum = 0.0;
+  MPI_Reduce(&nptiso.p_inst, &p_sum, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   if (this_node == 0) {
-    nptiso.p_inst = p_tmp / (nptiso.dimension * nptiso.volume);
+    nptiso.p_inst = p_sum / (nptiso.dimension * nptiso.volume);
     nptiso.p_diff = nptiso.p_diff +
                     (nptiso.p_inst - nptiso.p_ext) * 0.5 * time_step +
                     friction_thermV_nptiso(npt_iso, nptiso.p_diff);
