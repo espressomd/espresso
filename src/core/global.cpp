@@ -29,6 +29,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
@@ -45,9 +46,6 @@
 #include <unordered_map>
 
 extern double force_cap;
-extern LangevinThermostat langevin;
-extern BrownianThermostat brownian;
-extern IsotropicNptThermostat npt_iso;
 
 namespace {
 

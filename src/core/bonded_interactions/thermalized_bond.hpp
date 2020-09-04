@@ -33,7 +33,6 @@ extern int n_thermalized_bonds;
 
 #include "Particle.hpp"
 #include "bonded_interaction_data.hpp"
-#include "integrate.hpp"
 #include "random.hpp"
 #include "thermostat.hpp"
 

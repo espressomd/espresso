@@ -22,10 +22,6 @@
 #define BOOST_TEST_MODULE Thermostats test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
-#include <cmath>
-#include <limits>
-
-#include <utils/Vector.hpp>
 
 #include "Particle.hpp"
 #include "random_test.hpp"
@@ -34,7 +30,11 @@
 #include "thermostats/langevin_inline.hpp"
 #include "thermostats/npt_inline.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <array>
+#include <cmath>
+#include <limits>
 
 // multiply by 100 because BOOST_CHECK_CLOSE takes a percentage tolerance,
 // and by 6 to account for error accumulation in thermostat functions

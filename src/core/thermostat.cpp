@@ -23,15 +23,14 @@
  */
 #include <boost/mpi.hpp>
 
-#include <utils/u32_to_u64.hpp>
-
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "thermostat.hpp"
+
+#include <cstdint>
 
 int thermo_switch = THERMO_OFF;
 double temperature = 0.0;
