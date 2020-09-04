@@ -27,7 +27,6 @@
 #include "config.hpp"
 
 #include "Particle.hpp"
-#include "integrate.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
 
@@ -115,7 +114,7 @@ public:
   /** Recalculate prefactors.
    *  Needs to be called every time the parameters are changed.
    */
-  void recalc_prefactors() {
+  void recalc_prefactors(double time_step) {
     pref_friction = -gamma;
     pref_noise = sigma(temperature, time_step, gamma);
     // If gamma_rotation is not set explicitly, use the translational one.
@@ -252,14 +251,14 @@ public:
   /** Recalculate prefactors.
    *  Needs to be called every time the parameters are changed.
    */
-  void recalc_prefactors(double piston) {
+  void recalc_prefactors(double piston, double time_step) {
 #ifdef NPT
     assert(piston > 0.0);
     auto const half_time_step = time_step / 2.0;
     pref_rescale_0 = -gamma0 * half_time_step;
-    pref_noise_0 = sigma(temperature, gamma0);
+    pref_noise_0 = sigma(temperature, gamma0, time_step);
     pref_rescale_V = -gammav * half_time_step / piston;
-    pref_noise_V = sigma(temperature, gammav);
+    pref_noise_V = sigma(temperature, gammav, time_step);
 #endif
   }
   /** Calculate the noise prefactor.
@@ -267,7 +266,7 @@ public:
    *  with @f$ \sigma_\eta @f$ the standard deviation of the random uniform
    *  process @f$ \eta(t) @f$.
    */
-  static double sigma(double kT, double gamma) {
+  static double sigma(double kT, double gamma, double time_step) {
     // random uniform noise has variance 1/12; the temperature
     // coefficient of 2 is canceled out by the half time step
     constexpr auto const temp_coeff = 12.0;

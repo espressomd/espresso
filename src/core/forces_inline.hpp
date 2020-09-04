@@ -100,27 +100,29 @@ inline ParticleForce external_force(Particle const &p) {
   return f;
 }
 
-inline ParticleForce thermostat_force(Particle const &p, uint64_t counter) {
+inline ParticleForce thermostat_force(Particle const &p, uint64_t counter,
+                                      double time_step) {
   extern LangevinThermostat langevin;
   if (!(thermo_switch & THERMO_LANGEVIN)) {
     return {};
   }
 
 #ifdef ROTATION
-  return {friction_thermo_langevin(langevin, p, counter),
-          p.p.rotation
-              ? convert_vector_body_to_space(
-                    p, friction_thermo_langevin_rotation(langevin, p, counter))
-              : Utils::Vector3d{}};
+  return {friction_thermo_langevin(langevin, p, counter, time_step),
+          p.p.rotation ? convert_vector_body_to_space(
+                             p, friction_thermo_langevin_rotation(
+                                    langevin, p, counter, time_step))
+                       : Utils::Vector3d{}};
 #else
-  return friction_thermo_langevin(langevin, p, counter);
+  return friction_thermo_langevin(langevin, p, counter, time_step);
 #endif
 }
 
 /** Initialize the forces for a real particle */
 inline ParticleForce init_local_particle_force(Particle const &part,
-                                               uint64_t counter) {
-  return thermostat_force(part, counter) + external_force(part);
+                                               uint64_t counter,
+                                               double time_step) {
+  return thermostat_force(part, counter, time_step) + external_force(part);
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(

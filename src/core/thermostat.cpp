@@ -29,6 +29,7 @@
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "integrate.hpp"
 #include "npt.hpp"
 #include "thermostat.hpp"
 
@@ -92,7 +93,7 @@ void thermo_init() {
     return;
   }
   if (thermo_switch & THERMO_LANGEVIN)
-    langevin.recalc_prefactors();
+    langevin.recalc_prefactors(time_step);
 #ifdef DPD
   if (thermo_switch & THERMO_DPD)
     dpd_init();
@@ -102,7 +103,7 @@ void thermo_init() {
     if (nptiso.piston == 0.0) {
       thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
     } else {
-      npt_iso.recalc_prefactors(nptiso.piston);
+      npt_iso.recalc_prefactors(nptiso.piston, time_step);
     }
   }
 #endif

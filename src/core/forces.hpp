@@ -38,11 +38,10 @@
 
 extern ActorList forceActors;
 
-/******************* forces.cpp *******************/
-
 /** initialize real particle forces with thermostat forces and
     ghost particle forces with zero. */
-void init_forces(const ParticleRange &particles, uint64_t counter);
+void init_forces(const ParticleRange &particles, uint64_t counter,
+                 double time_step);
 
 /** Set forces of all ghosts to zero */
 void init_forces_ghosts(const ParticleRange &particles);
@@ -57,7 +56,8 @@ void init_forces_ghosts(const ParticleRange &particles);
  *  <li> Calculate long range interaction forces
  *  </ol>
  */
-void force_calc(CellStructure &cell_structure, uint64_t counter);
+void force_calc(CellStructure &cell_structure, uint64_t counter,
+                double time_step);
 
 /** Calculate long range forces (P3M, ...). */
 void calc_long_range_forces(const ParticleRange &particles);

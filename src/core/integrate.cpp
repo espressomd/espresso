@@ -154,7 +154,8 @@ void integrator_step_2(ParticleRange &particles) {
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles, counter);
+    brownian_dynamics_propagator(brownian, particles, counter, time_step, skin,
+                                 sim_time);
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
@@ -192,7 +193,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    force_calc(cell_structure, integrator_counter.value());
+    force_calc(cell_structure, integrator_counter.value(), time_step);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -253,7 +254,7 @@ int integrate(int n_steps, int reuse_forces) {
 
     particles = cell_structure.local_particles();
 
-    force_calc(cell_structure, integrator_counter.value());
+    force_calc(cell_structure, integrator_counter.value(), time_step);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();

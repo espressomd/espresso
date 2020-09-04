@@ -37,10 +37,11 @@
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
  *  @param[in]     counter        RNG counter
+ *  @param[in]     time_step      Time step
  */
 inline Utils::Vector3d
 friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
-                         uint64_t counter) {
+                         uint64_t counter, double time_step) {
   // Early exit for virtual particles without thermostat
   if (p.p.is_virtual && !thermo_virtual) {
     return {};
@@ -98,10 +99,12 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
  *  @param[in]     counter        RNG counter
+ *  @param[in]     time_step      Time step
  */
 inline Utils::Vector3d
 friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
-                                  Particle const &p, uint64_t counter) {
+                                  Particle const &p, uint64_t counter,
+                                  double time_step) {
 
   auto pref_friction = -langevin.gamma_rotation;
   auto pref_noise = langevin.pref_noise_rotation;
