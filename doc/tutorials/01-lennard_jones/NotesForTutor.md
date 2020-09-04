@@ -29,3 +29,6 @@ After the tutorial, students should be able to
 
 * Re-explain Langevin equation
 * Mention efficiency (loops and lists) vs. numpy arrays at the cost of some readability.
+* Non-bonded interactions are defined between pairs of particle types.
+  Mention that type=0 is implied when creating particles without specifying one.
+* Explain Lennard-Jones cutoff and shift.
