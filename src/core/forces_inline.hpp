@@ -192,15 +192,14 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 #ifdef GAY_BERNE
   // The gb force function isn't inlined, probably due to its size
   if (dist < ia_params.gay_berne.cut) {
-    auto const forces =
-        gb_pair_force(p1.r.calc_director(), p2.r.calc_director(), ia_params, d,
-                      dist, torque1, torque2);
-    force += std::get<0>(forces);
+    auto const pf = gb_pair_force(p1.r.calc_director(), p2.r.calc_director(),
+                                  ia_params, d, dist, torque1);
+    force += pf.f;
     if (torque1) {
-      *torque1 += std::get<1>(forces);
+      *torque1 += pf.torque;
     }
     if (torque2) {
-      *torque2 += std::get<2>(forces);
+      *torque2 -= pf.torque + vector_product(d, pf.f);
     }
   }
 #endif

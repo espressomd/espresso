@@ -31,7 +31,9 @@
  *  Implementation in \ref gay_berne.cpp.
  */
 
+#include "Particle.hpp"
 #include "nonbonded_interaction_data.hpp"
+
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
@@ -42,16 +44,16 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double mu, double nu);
 
 /** Calculate Gay-Berne force and torques */
-inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-gb_pair_force(Utils::Vector3d const &ui, Utils::Vector3d const &uj,
-              IA_parameters const &ia_params, Utils::Vector3d const &d,
-              double dist, bool calc_torque1, bool calc_torque2) {
+inline ParticleForce gb_pair_force(Utils::Vector3d const &ui,
+                                   Utils::Vector3d const &uj,
+                                   IA_parameters const &ia_params,
+                                   Utils::Vector3d const &d, double dist,
+                                   bool calc_torque) {
   using Utils::int_pow;
   using Utils::sqr;
 
   if (dist >= ia_params.gay_berne.cut) {
-    return std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
-                           Utils::Vector3d{});
+    return {};
   }
 
   auto const e0 = ia_params.gay_berne.eps;
@@ -86,8 +88,6 @@ gb_pair_force(Utils::Vector3d const &ui, Utils::Vector3d const &uj,
   auto Koef1 = mu / e2;
   auto Koef2 = int_pow<3>(s1) * 0.5;
 
-  Utils::Vector3d force, torque1, torque2;
-
   auto const X = s0 / (dist - s + s0);
   auto const Xcut = s0 / (ia_params.gay_berne.cut - s + s0);
 
@@ -118,22 +118,14 @@ gb_pair_force(Utils::Vector3d const &ui, Utils::Vector3d const &uj,
                                  0.5 * Koef1 * chi2 * (sqr(tt1) - sqr(tt2))) -
            (Bra12 - Bra12Cut) * 0.5 * Koef2 * chi1 * (sqr(oo1) - sqr(oo2)));
 
-  /*--------------------------------------------------------------------*/
+  ParticleForce force{-dU_dr * d - dU_da * ui - dU_db * uj};
 
-  force = -dU_dr * d - dU_da * ui - dU_db * uj;
-
-  if (calc_torque1) {
-    /* calculate torque:  torque = u_i x G   */
+  if (calc_torque) {
+    // torque = u_i x G
     auto const G2 = -dU_da * d - dU_dc * uj;
-    torque1 = vector_product(ui, G2);
-
-    if (calc_torque2) {
-      /* calculate torque:  torque = u_j x G     */
-      auto const G1 = -dU_db * d - dU_dc * ui;
-      torque2 = vector_product(uj, G1);
-    }
+    force.torque = vector_product(ui, G2);
   }
-  return std::make_tuple(force, torque1, torque2);
+  return force;
 }
 
 /** Calculate Gay-Berne energy */
