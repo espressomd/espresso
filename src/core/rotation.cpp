@@ -162,7 +162,7 @@ void propagate_omega_quat_particle(Particle &p) {
 void convert_torques_propagate_omega(const ParticleRange &particles) {
   for (auto &p : particles) {
     // Skip particle if rotation is turned off entirely for it.
-    if (!p.p.rotation)
+    if (p.p.rotation == ROTATION_FIXED)
       continue;
 
     convert_torque_to_body_frame_apply_fix(p);
@@ -188,7 +188,7 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
       Wd[1] = p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
       Wd[2] = p.m.omega[0] * p.m.omega[1] * rinertia_diff_01 / p.p.rinertia[2];
 
-      p.m.omega = omega_0 + 0.5 * time_step * Wd;
+      p.m.omega = omega_0 + (0.5 * time_step) * Wd;
     }
   }
 }
