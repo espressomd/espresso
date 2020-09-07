@@ -109,6 +109,7 @@ add_subdirectory(07-electrokinetics)
 add_subdirectory(08-visualization)
 add_subdirectory(11-ferrofluid)
 add_subdirectory(12-constant_pH)
+add_subdirectory(13-charged_rod)
 
 configure_file(Readme.rst ${CMAKE_CURRENT_BINARY_DIR}/Readme.rst COPYONLY)
 configure_file(html_runner.py ${CMAKE_CURRENT_BINARY_DIR}/html_runner.py)
