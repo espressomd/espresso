@@ -56,6 +56,11 @@ class Integrator_test(ut.TestCase):
         with self.assertRaisesRegex(Exception, self.msg + 'The VV integrator is incompatible with the currently active combination of thermostats'):
             self.system.integrator.run(0)
 
+    def test_brownian_integrator_no_thermostat(self):
+        self.system.integrator.set_brownian_dynamics()
+        with self.assertRaisesRegex(Exception, self.msg + 'The BD integrator requires the BD thermostat'):
+            self.system.integrator.run(0)
+
     def test_brownian_integrator_brownian_thermostat(self):
         self.system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
         self.system.integrator.set_brownian_dynamics()
