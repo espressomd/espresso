@@ -39,8 +39,6 @@
 
 #include <vector>
 
-extern StokesianThermostat stokesian;
-
 namespace {
 /* type for particle data transfer between nodes */
 struct SD_particle_data {

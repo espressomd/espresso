@@ -21,7 +21,8 @@
 /** \file
  *  Implementation of \ref thermostat.hpp.
  */
-#include <boost/mpi.hpp>
+
+#include "config.hpp"
 
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
@@ -29,6 +30,8 @@
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "thermostat.hpp"
+
+#include <boost/mpi.hpp>
 
 #include <cstdint>
 
@@ -39,9 +42,9 @@ bool thermo_virtual = true;
 using Thermostat::GammaType;
 
 /**
- * @brief Register a thermostat's MPI callbacks
+ * @brief Create MPI callbacks of thermostat objects
  *
- * @param thermostat        The thermostat global variable
+ * @param thermostat        The thermostat object name
  */
 #define REGISTER_THERMOSTAT_CALLBACKS(thermostat)                              \
   void mpi_##thermostat##_set_rng_seed(uint32_t const seed) {                  \
@@ -54,15 +57,6 @@ using Thermostat::GammaType;
     mpi_call_all(mpi_##thermostat##_set_rng_seed, seed);                       \
   }                                                                            \
                                                                                \
-  uint32_t thermostat##_get_rng_seed() { return (thermostat).rng_seed(); }     \
-                                                                               \
-  void thermostat##_rng_counter_increment() { (thermostat).rng_increment(); }  \
-                                                                               \
-  bool thermostat##_is_seed_required() {                                       \
-    /* Seed is required if rng is not initialized */                           \
-    return !(thermostat).rng_is_initialized();                                 \
-  }                                                                            \
-                                                                               \
   void mpi_##thermostat##_set_rng_counter(uint64_t const value) {              \
     (thermostat).set_rng_counter(value);                                       \
   }                                                                            \
@@ -71,9 +65,7 @@ using Thermostat::GammaType;
                                                                                \
   void thermostat##_set_rng_counter(uint64_t const value) {                    \
     mpi_call_all(mpi_##thermostat##_set_rng_counter, value);                   \
-  }                                                                            \
-                                                                               \
-  uint64_t thermostat##_get_rng_counter() { return (thermostat).rng_counter(); }
+  }
 
 LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};
@@ -126,27 +118,27 @@ void thermo_init() {
 
 void philox_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN) {
-    langevin_rng_counter_increment();
+    langevin.rng_increment();
   }
   if (thermo_switch & THERMO_BROWNIAN) {
-    brownian_rng_counter_increment();
+    brownian.rng_increment();
   }
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO) {
-    npt_iso_rng_counter_increment();
+    npt_iso.rng_increment();
   }
 #endif
 #ifdef DPD
   if (thermo_switch & THERMO_DPD) {
-    dpd_rng_counter_increment();
+    dpd.rng_increment();
   }
 #endif
 #if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
   if (thermo_switch & THERMO_SD) {
-    stokesian_rng_counter_increment();
+    stokesian.rng_increment();
   }
 #endif
   if (n_thermalized_bonds) {
-    thermalized_bond_rng_counter_increment();
+    thermalized_bond.rng_increment();
   }
 }

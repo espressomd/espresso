@@ -100,8 +100,8 @@ public:
   void set_rng_counter(uint64_t value) {
     m_rng_counter = Utils::Counter<uint64_t>(0u, value);
   }
-  /** Is the RNG counter initialized */
-  bool rng_is_initialized() const { return !!m_rng_seed; }
+  /** Is the RNG seed required */
+  bool is_seed_required() const { return !m_rng_seed; }
   uint32_t rng_seed() const { return m_rng_seed.value(); }
 
 private:
@@ -328,17 +328,13 @@ struct StokesianThermostat : public BaseThermostat {
  ************************************************/
 
 /**
- * @brief Register a thermostat public interface
+ * @brief Register MPI callbacks of thermostat objects
  *
- * @param thermostat        The thermostat name
+ * @param thermostat        The thermostat object name
  */
 #define NEW_THERMOSTAT(thermostat)                                             \
-  bool thermostat##_is_seed_required();                                        \
-  void thermostat##_rng_counter_increment();                                   \
-  void thermostat##_set_rng_seed(uint32_t const seed);                         \
-  void thermostat##_set_rng_counter(uint64_t const seed);                      \
-  uint32_t thermostat##_get_rng_seed();                                        \
-  uint64_t thermostat##_get_rng_counter();
+  void thermostat##_set_rng_seed(uint32_t seed);                               \
+  void thermostat##_set_rng_counter(uint64_t seed);
 
 NEW_THERMOSTAT(langevin)
 NEW_THERMOSTAT(brownian)
@@ -355,8 +351,12 @@ NEW_THERMOSTAT(stokesian)
 extern LangevinThermostat langevin;
 extern BrownianThermostat brownian;
 extern IsotropicNptThermostat npt_iso;
+extern ThermalizedBondThermostat thermalized_bond;
 #ifdef DPD
 extern DPDThermostat dpd;
+#endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+extern StokesianThermostat stokesian;
 #endif
 
 /** Initialize constants of the thermostat at the start of integration */

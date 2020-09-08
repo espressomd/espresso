@@ -34,27 +34,45 @@ cdef extern from "thermostat.hpp":
     int THERMO_BROWNIAN
     int THERMO_SD
 
+    cdef cppclass BaseThermostat:
+        stdint.uint32_t rng_seed()
+        stdint.uint64_t rng_counter()
+        cbool is_seed_required()
+
     IF PARTICLE_ANISOTROPY:
-        ctypedef struct langevin_thermostat_struct "LangevinThermostat":
+        cdef cppclass LangevinThermostat(BaseThermostat):
             Vector3d gamma_rotation
             Vector3d gamma
-        ctypedef struct brownian_thermostat_struct "BrownianThermostat":
+        cdef cppclass BrownianThermostat(BaseThermostat):
             Vector3d gamma_rotation
             Vector3d gamma
     ELSE:
-        ctypedef struct langevin_thermostat_struct "LangevinThermostat":
+        cdef cppclass LangevinThermostat(BaseThermostat):
             double gamma_rotation
             double gamma
-        ctypedef struct brownian_thermostat_struct "BrownianThermostat":
+        cdef cppclass BrownianThermostat(BaseThermostat):
             double gamma_rotation
             double gamma
-    ctypedef struct npt_iso_thermostat_struct "IsotropicNptThermostat":
+    cdef cppclass IsotropicNptThermostat(BaseThermostat):
         double gamma0
         double gammav
+    cdef cppclass ThermalizedBondThermostat(BaseThermostat):
+        pass
+    IF DPD:
+        cdef cppclass DPDThermostat(BaseThermostat):
+            pass
+    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+        cdef cppclass StokesianThermostat(BaseThermostat):
+            pass
 
-    langevin_thermostat_struct langevin
-    brownian_thermostat_struct brownian
-    npt_iso_thermostat_struct npt_iso
+    LangevinThermostat langevin
+    BrownianThermostat brownian
+    IsotropicNptThermostat npt_iso
+    ThermalizedBondThermostat thermalized_bond
+    IF DPD:
+        DPDThermostat dpd
+    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+        StokesianThermostat stokesian
 
     void langevin_set_rng_seed(stdint.uint32_t seed)
     void brownian_set_rng_seed(stdint.uint32_t seed)
@@ -71,30 +89,6 @@ cdef extern from "thermostat.hpp":
         void dpd_set_rng_counter(stdint.uint64_t counter)
     IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
         void stokesian_set_rng_counter(stdint.uint64_t counter)
-
-    cbool langevin_is_seed_required()
-    cbool brownian_is_seed_required()
-    cbool npt_iso_is_seed_required()
-    IF DPD:
-        cbool dpd_is_seed_required()
-    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
-        cbool stokesian_is_seed_required()
-
-    stdint.uint32_t langevin_get_rng_seed()
-    stdint.uint32_t brownian_get_rng_seed()
-    stdint.uint32_t npt_iso_get_rng_seed()
-    IF DPD:
-        stdint.uint32_t dpd_get_rng_seed()
-    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
-        stdint.uint32_t stokesian_get_rng_seed()
-
-    stdint.uint64_t langevin_get_rng_counter()
-    stdint.uint64_t brownian_get_rng_counter()
-    stdint.uint64_t npt_iso_get_rng_counter()
-    IF DPD:
-        stdint.uint64_t dpd_get_rng_counter()
-    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
-        stdint.uint64_t stokesian_get_rng_counter()
 
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):

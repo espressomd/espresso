@@ -24,6 +24,8 @@ from libcpp.vector cimport vector
 from libcpp cimport bool as cbool
 from libc cimport stdint
 
+from .thermostat cimport thermalized_bond
+
 include "myconfig.pxi"
 
 # force include of config.hpp
@@ -526,10 +528,8 @@ cdef extern from "object-in-fluid/oif_local_forces.hpp":
 
 cdef extern from "bonded_interactions/thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
+
 cdef extern from "thermostat.hpp":
-    cbool thermalized_bond_is_seed_required()
-    stdint.uint32_t thermalized_bond_get_rng_seed()
-    stdint.uint64_t thermalized_bond_get_rng_counter()
     void thermalized_bond_set_rng_seed(stdint.uint32_t seed)
     void thermalized_bond_set_rng_counter(stdint.uint64_t counter)
 

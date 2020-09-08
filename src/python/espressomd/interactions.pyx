@@ -2119,12 +2119,12 @@ class ThermalizedBond(BondedInteraction):
                  bonded_ia_params[
                      self._bond_id].p.thermalized_bond.gamma_distance,
              "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut,
-             "_counter": thermalized_bond_get_rng_counter(),
-             "seed": thermalized_bond_get_rng_seed()
+             "_counter": thermalized_bond.rng_counter(),
+             "seed": thermalized_bond.rng_seed()
              }
 
     def _set_params_in_es_core(self):
-        if self.params["seed"] is None and thermalized_bond_is_seed_required():
+        if self.params["seed"] is None and thermalized_bond.is_seed_required():
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermalized bond")
         if self.params["seed"] is not None:
