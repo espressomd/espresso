@@ -109,28 +109,15 @@ class IntegratorSteepestDescent(ut.TestCase):
         np.testing.assert_allclose(np.copy(self.system.part[:].v), 0.)
         np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.)
         self.assertEqual(steps, 0)
-
-    def test_convergence(self):
-        # set up particles such that convergence is reached in 1 step
-        max_disp = 0.05
-        self.system.part.add(pos=[0, 0, 0], type=0)
-        self.system.part.add(pos=[0, 0, self.lj_cut - max_disp / 2], type=0)
-        # converges in 1 step
-        sd_params = {"f_max": 1.0, "gamma": 0.1, "max_displacement": max_disp}
-        self.system.integrator.set_steepest_descent(**sd_params)
-        nsteps = self.system.integrator.run(0)
-        self.assertEqual(nsteps, 0)
-        nsteps = self.system.integrator.run(1)
-        self.assertEqual(nsteps, 1)
-        # system has already converged
-        nsteps = self.system.integrator.run(1)
-        self.assertEqual(nsteps, 0)
         # never converges, even when the system is in an energy minimum,
         # because f_max = 0.
         sd_params["f_max"] = 0.0
         self.system.integrator.set_steepest_descent(**sd_params)
-        nsteps = self.system.integrator.run(1)
-        self.assertEqual(nsteps, 1)
+        steps = self.system.integrator.run(10)
+        np.testing.assert_allclose(np.copy(self.system.part[:].pos), positions)
+        np.testing.assert_allclose(np.copy(self.system.part[:].v), 0.)
+        np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.)
+        self.assertEqual(steps, 10)
 
     def test_rescaling(self):
         self.system.part.add(pos=[5., 5., 4.9], type=0)
