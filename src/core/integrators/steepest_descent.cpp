@@ -113,7 +113,3 @@ void mpi_bcast_steepest_descent_worker(int, int) {
   MPI_Bcast(&params.gamma, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&params.max_displacement, 1, MPI_DOUBLE, 0, comm_cart);
 }
-
-int steepest_descent(const int max_steps) {
-  return integrate(max_steps, -1);
-}

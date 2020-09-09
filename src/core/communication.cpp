@@ -275,14 +275,14 @@ void mpi_remove_particle_slave(int pnode, int part) {
 }
 
 /********************* STEEPEST DESCENT ********/
-static int mpi_steepest_descent_slave(int steps, int) {
-  return steepest_descent(steps);
+static int mpi_steepest_descent_slave(int steps) {
+  return integrate(steps, -1);
 }
 REGISTER_CALLBACK_MASTER_RANK(mpi_steepest_descent_slave)
 
 int mpi_steepest_descent(int steps) {
   return mpi_call(Communication::Result::master_rank,
-                  mpi_steepest_descent_slave, steps, 0);
+                  mpi_steepest_descent_slave, steps);
 }
 
 /********************* INTEGRATE ********/
