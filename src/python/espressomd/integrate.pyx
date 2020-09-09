@@ -64,9 +64,6 @@ cdef class IntegratorHandle:
         Set the integration method to steepest descent
         (:class:`SteepestDescent`).
 
-        .. seealso::
-            :func:`espressomd.minimize_energy.steepest_descent`
-
         """
         self._integrator = SteepestDescent(*args, **kwargs)
 

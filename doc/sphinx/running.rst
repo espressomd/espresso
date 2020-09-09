@@ -263,17 +263,6 @@ Usage example::
     system.integrator.run(20)
     system.integrator.set_vv()  # to switch back to velocity Verlet
 
-A wrapper function :func:`~espressomd.minimize_energy.steepest_descent` is
-available to set up the steepest descent integrator while preserving the
-original integrator. The snippet above can be rewritten to::
-
-    from espressomd.minimize_energy import steepest_descent
-    steepest_descent(system, f_max=0, gamma=0.1, max_displacement=0.1, max_steps=20)
-
-This convenience function only exists for historical reasons and remains available
-for backward compatibility. New scripts should setup the steepest descent
-integrator with the :meth:`~espressomd.integrate.IntegratorHandle.set_steepest_descent`
-handle directly.
 
 .. _Stokesian Dynamics:
 
