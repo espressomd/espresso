@@ -441,6 +441,8 @@ int integrate_set_steepest_descent(const double f_max, const double gamma,
   steepest_descent_init(f_max, gamma, max_displacement);
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  // broadcast integrator parameters to all nodes
+  mpi_bcast_steepest_descent();
   return ES_OK;
 }
 

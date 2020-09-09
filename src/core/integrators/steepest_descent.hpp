@@ -48,6 +48,8 @@ struct SteepestDescentParameters {
  */
 void steepest_descent_init(double f_max, double gamma, double max_displacement);
 
+void mpi_bcast_steepest_descent_worker(int, int);
+
 /** Steepest descent main integration loop
  *
  *  Integration stops when the maximal force is lower than the user limit

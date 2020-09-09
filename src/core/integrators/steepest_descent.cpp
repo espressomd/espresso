@@ -33,6 +33,8 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
 
+#include <mpi.h>
+
 #include <algorithm>
 #include <limits>
 
@@ -106,7 +108,12 @@ void steepest_descent_init(const double f_max, const double gamma,
   params.max_displacement = max_displacement;
 }
 
+void mpi_bcast_steepest_descent_worker(int, int) {
+  MPI_Bcast(&params.f_max, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&params.gamma, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&params.max_displacement, 1, MPI_DOUBLE, 0, comm_cart);
+}
+
 int steepest_descent(const int max_steps) {
-  MPI_Bcast(&params, sizeof(SteepestDescentParameters), MPI_BYTE, 0, comm_cart);
   return integrate(max_steps, -1);
 }

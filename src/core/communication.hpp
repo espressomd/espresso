@@ -194,6 +194,9 @@ int mpi_integrate(int n_steps, int reuse_forces);
 /** Start steepest descent. */
 int mpi_steepest_descent(int steps);
 
+/** Broadcast steepest descent parameters */
+void mpi_bcast_steepest_descent();
+
 void mpi_bcast_all_ia_params();
 
 /** Send new IA params.

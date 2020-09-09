@@ -98,6 +98,7 @@ int n_nodes = -1;
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
+  CB(mpi_bcast_steepest_descent_worker)                                        \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
@@ -505,6 +506,13 @@ void mpi_bcast_nptiso_geom_slave(int, int) {
   MPI_Bcast(&nptiso.dimension, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&nptiso.cubic_box, 1, MPI_LOGICAL, 0, comm_cart);
   MPI_Bcast(&nptiso.non_const_dim, 1, MPI_INT, 0, comm_cart);
+}
+
+/*************** BCAST STEEPEST DESCENT *****************/
+
+void mpi_bcast_steepest_descent() {
+  mpi_call(mpi_bcast_steepest_descent_worker, -1, 0);
+  mpi_bcast_steepest_descent_worker(-1, 0);
 }
 
 /******************* BCAST CUDA GLOBAL PART VARS ********************/
