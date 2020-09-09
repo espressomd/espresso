@@ -32,4 +32,7 @@ After the tutorial, students should be able to
 * Non-bonded interactions are defined between pairs of particle types.
   Mention that type=0 is implied when creating particles without specifying one.
 * Explain Lennard-Jones cutoff and shift.
-* Explain steepest descent.
+* Explain steepest descent: In general overlap removal can
+  be done in multiple ways (warmup with force capping, 
+  small time step, etc.).
+  Additionally the steepest descent algorithm can get trapped in local minima and the convergence criterion is system-dependent.
