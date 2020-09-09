@@ -100,15 +100,13 @@ bool steepest_descent_step(const ParticleRange &particles) {
 }
 
 void steepest_descent_init(const double f_max, const double gamma,
-                           const int max_steps, const double max_displacement) {
+                           const double max_displacement) {
   params.f_max = f_max;
   params.gamma = gamma;
-  params.max_steps = max_steps;
   params.max_displacement = max_displacement;
 }
 
 int steepest_descent(const int max_steps) {
-  params.max_steps = max_steps;
   MPI_Bcast(&params, sizeof(SteepestDescentParameters), MPI_BYTE, 0, comm_cart);
-  return integrate(params.max_steps, -1);
+  return integrate(max_steps, -1);
 }

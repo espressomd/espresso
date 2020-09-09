@@ -87,7 +87,7 @@ class IntegratorSteepestDescent(ut.TestCase):
         self.system.part.add(pos=[0, 0, self.lj_cut - max_disp / 2], type=0)
         sd_params = {"f_max": 1e-6, "gamma": 0.1, "max_displacement": max_disp}
         self.system.integrator.set_steepest_descent(**sd_params)
-        # no displacement if max_steps = 0
+        # no displacement for 0 steps
         positions = np.copy(self.system.part[:].pos)
         steps = self.system.integrator.run(0)
         np.testing.assert_allclose(np.copy(self.system.part[:].pos), positions)
@@ -96,7 +96,7 @@ class IntegratorSteepestDescent(ut.TestCase):
         self.assertAlmostEqual(np.sum(self.system.part[:].f[:, 2]), 0.)
         self.assertLess(self.system.part[:].f[0, 2], -1.)
         self.assertEqual(steps, 0)
-        # displacement = max_disp if max_steps = 1
+        # displacement = max_disp for 1 step
         positions[:, 2] += [-max_disp, max_disp]
         steps = self.system.integrator.run(1)
         np.testing.assert_allclose(np.copy(self.system.part[:].pos), positions)

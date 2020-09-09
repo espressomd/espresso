@@ -34,8 +34,6 @@ struct SteepestDescentParameters {
   double f_max;
   /** Dampening constant */
   double gamma;
-  /** Maximal number of integration steps */
-  int max_steps;
   /** Maximal particle displacement
    *
    *  Maximal distance that a particle can travel during one integration step,
@@ -48,16 +46,15 @@ struct SteepestDescentParameters {
  *
  *  Sets the parameters in @ref SteepestDescentParameters
  */
-void steepest_descent_init(double f_max, double gamma, int max_steps,
-                           double max_displacement);
+void steepest_descent_init(double f_max, double gamma, double max_displacement);
 
 /** Steepest descent main integration loop
  *
  *  Integration stops when the maximal force is lower than the user limit
  *  @ref SteepestDescentParameters::f_max "f_max" or when the maximal number
- *  of steps @ref SteepestDescentParameters::max_steps "max_steps" is reached.
+ *  of steps @p max_steps is reached.
  *
- *  @param max_steps New value for @ref SteepestDescentParameters::max_steps
+ *  @param max_steps Maximal number of integration steps
  *  @return number of integrated steps
  */
 int steepest_descent(int max_steps);

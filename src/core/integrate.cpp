@@ -425,7 +425,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 }
 
 int integrate_set_steepest_descent(const double f_max, const double gamma,
-                                   const int max_steps,
                                    const double max_displacement) {
   if (f_max < 0.0) {
     runtimeErrorMsg() << "The maximal force must be positive.\n";
@@ -439,11 +438,7 @@ int integrate_set_steepest_descent(const double f_max, const double gamma,
     runtimeErrorMsg() << "The maximal displacement must be positive.\n";
     return ES_ERROR;
   }
-  if (max_steps < 0) {
-    runtimeErrorMsg() << "The maximal number of steps must be positive.\n";
-    return ES_ERROR;
-  }
-  steepest_descent_init(f_max, gamma, max_steps, max_displacement);
+  steepest_descent_init(f_max, gamma, max_displacement);
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
   return ES_OK;

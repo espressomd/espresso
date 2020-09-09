@@ -247,7 +247,7 @@ the following steepest descent algorithm:
 
 .. math:: \vec{r}_{i+1} = \vec{r}_i + \min(\gamma \vec{F}_i, \vec{r}_{\text{max_displacement}}),
 
-while the maximal force is bigger than ``f_max`` or for at most ``max_steps`` times. The energy
+while the maximal force is bigger than ``f_max`` or for at most ``steps`` times. The energy
 is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.
 The combination of ``gamma`` and ``max_displacement`` can be used to get a poor man's adaptive update.
 Rotational degrees of freedom are treated similarly: each particle is
@@ -260,7 +260,7 @@ Usage example::
 
     system.integrator.set_steepest_descent(
         f_max=0, gamma=0.1, max_displacement=0.1)
-    system.integrator.run(20)
+    system.integrator.run(20)   # maximal number of steps
     system.integrator.set_vv()  # to switch back to velocity Verlet
 
 
