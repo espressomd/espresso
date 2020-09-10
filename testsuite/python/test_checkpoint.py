@@ -282,31 +282,31 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
     def test_non_bonded_inter(self):
-        state = system.non_bonded_inter[
+        params1 = system.non_bonded_inter[
             0, 0].lennard_jones._get_params_from_es_core()
-        state2 = system.non_bonded_inter[
+        params2 = system.non_bonded_inter[
             3, 0].lennard_jones._get_params_from_es_core()
-        reference = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2,
-                     'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
+        reference1 = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2,
+                      'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
         reference2 = {'shift': 0.1, 'sigma': 1.7, 'epsilon': 1.2,
                       'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
-        self.assertEqual(
-            len(set(state.items()) & set(reference.items())), len(reference))
-        self.assertEqual(len(set(state2.items()) & set(
-            reference2.items())), len(reference2))
+        self.assertEqual(params1, reference1)
+        self.assertEqual(params2, reference2)
 
     def test_bonded_inter(self):
+        state = system.part[1].bonds[0][0]._get_params_from_es_core()
+        reference = {'r_0': 0.0, 'k': 1.0, 'r_cut': 0.0}
+        self.assertEqual(state, reference)
         state = system.part[1].bonds[0][0].params
-        reference = {'r_0': 0.0, 'k': 1.0}
-        for key in reference:
-            self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
+        self.assertEqual(state, reference)
         if 'THERM.LB' not in modes:
-            state = system.part[1].bonds[1][0].params
+            state = system.part[1].bonds[1][0]._get_params_from_es_core()
             reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
                          'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51,
                          '_counter': 0}
-            for key in reference:
-                self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
+            self.assertEqual(state, reference)
+            state = system.part[1].bonds[1][0].params
+            self.assertEqual(state, reference)
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
