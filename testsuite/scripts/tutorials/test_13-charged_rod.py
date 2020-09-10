@@ -35,11 +35,10 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test_equilibration(self):
-        #TODO 
-        #this is just a placeholder
+        # TODO 
+        # this is just a placeholder
         self.assertLess(tutorial.energies[-1], tutorial.energies[0])
-        
-    
+
     def test_file_generation(self):
         # test .vsf/.vcf files exist
         for name in ["ion_condensation.vcf", "ion_condensation.vsf"]:
