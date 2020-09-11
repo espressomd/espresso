@@ -17,15 +17,31 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
+import scipy.optimize
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part2.py",
-    gpu=True, STEPS=4000)
+    gpu=True, STEPS=8000, cutoff_limit=66)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
+
+    def test_ballistic_regime(self):
+        for (tau_p, tau, msd) in zip(tutorial.tau_p_values,
+                                     tutorial.tau_results,
+                                     tutorial.msd_results):
+            popt, _ = scipy.optimize.curve_fit(
+                tutorial.quadratic, tau[:tau_p], msd[:tau_p])
+            residuals = msd[:tau_p] - tutorial.quadratic(tau[:tau_p], *popt)
+            np.testing.assert_allclose(residuals, 0, rtol=0, atol=1e-3)
+
+    def test_diffusion_coefficient(self):
+        D_val = tutorial.diffusion_results
+        D_ref = tutorial.lbf.kT / np.array(tutorial.lb_gammas)
+        np.testing.assert_allclose(D_val, D_ref, rtol=0, atol=0.1)
 
 
 if __name__ == "__main__":
