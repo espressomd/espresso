@@ -1005,21 +1005,21 @@ __device__ void apply_forces(unsigned int index, Utils::Array<float, 19> &mode,
   u[1] = d_v[index].v[1];
   u[2] = d_v[index].v[2];
 
-  C[0] += (1.0f + para->gamma_bulk) * u[0] *
+  C[0] += (1.0f + para->gamma_shear) * u[0] *
               node_f.force_density[0 * para->number_of_nodes + index] +
           1.0f / 3.0f * (para->gamma_bulk - para->gamma_shear) *
               (u[0] * node_f.force_density[0 * para->number_of_nodes + index] +
                u[1] * node_f.force_density[1 * para->number_of_nodes + index] +
                u[2] * node_f.force_density[2 * para->number_of_nodes + index]);
 
-  C[2] += (1.0f + para->gamma_bulk) * u[1] *
+  C[2] += (1.0f + para->gamma_shear) * u[1] *
               node_f.force_density[1 * para->number_of_nodes + index] +
           1.0f / 3.0f * (para->gamma_bulk - para->gamma_shear) *
               (u[0] * node_f.force_density[0 * para->number_of_nodes + index] +
                u[1] * node_f.force_density[1 * para->number_of_nodes + index] +
                u[2] * node_f.force_density[2 * para->number_of_nodes + index]);
 
-  C[5] += (1.0f + para->gamma_bulk) * u[2] *
+  C[5] += (1.0f + para->gamma_shear) * u[2] *
               node_f.force_density[2 * para->number_of_nodes + index] +
           1.0f / 3.0f * (para->gamma_bulk - para->gamma_shear) *
               (u[0] * node_f.force_density[0 * para->number_of_nodes + index] +

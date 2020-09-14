@@ -893,13 +893,13 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
                  density;
 
   double C[6];
-  C[0] = (1. + lb_parameters.gamma_bulk) * u[0] * f[0] +
+  C[0] = (1. + lb_parameters.gamma_shear) * u[0] * f[0] +
          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
              (u * f);
-  C[2] = (1. + lb_parameters.gamma_bulk) * u[1] * f[1] +
+  C[2] = (1. + lb_parameters.gamma_shear) * u[1] * f[1] +
          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
              (u * f);
-  C[5] = (1. + lb_parameters.gamma_bulk) * u[2] * f[2] +
+  C[5] = (1. + lb_parameters.gamma_shear) * u[2] * f[2] +
          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
              (u * f);
   C[1] =
