@@ -28,12 +28,6 @@ class Integrator_test(ut.TestCase):
     system.cell_system.skin = 0.4
     msg = 'Encountered errors during integrate: ERROR: '
 
-    def assertCanIntegrate(self):
-        try:
-            self.system.integrator.run(1)
-        except Exception as err:
-            self.fail(f'integrator raised Exception("{err}")')
-
     def setUp(self):
         self.system.part.add(pos=(0, 0, 0))
         self.system.integrator.set_vv()
@@ -42,17 +36,6 @@ class Integrator_test(ut.TestCase):
     def tearDown(self):
         self.system.thermostat.turn_off()
         self.system.part.clear()
-
-    def test_vv_integrator_langevin_thermostat(self):
-        self.system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
-        self.system.integrator.set_vv()
-        self.assertCanIntegrate()
-
-    @utx.skipIfMissingFeatures("DPD")
-    def test_vv_integrator_dpd_thermostat(self):
-        self.system.thermostat.set_dpd(kT=1.0, seed=42)
-        self.system.integrator.set_vv()
-        self.assertCanIntegrate()
 
     def test_vv_integrator_brownian_thermostat(self):
         self.system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
@@ -64,17 +47,6 @@ class Integrator_test(ut.TestCase):
         self.system.integrator.set_brownian_dynamics()
         with self.assertRaisesRegex(Exception, self.msg + 'The BD integrator requires the BD thermostat'):
             self.system.integrator.run(0)
-
-    def test_brownian_integrator_brownian_thermostat(self):
-        self.system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
-        self.system.integrator.set_brownian_dynamics()
-        self.assertCanIntegrate()
-
-    @utx.skipIfMissingFeatures("NPT")
-    def test_npt_integrator_npt_thermostat(self):
-        self.system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=42)
-        self.system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
-        self.assertCanIntegrate()
 
     @utx.skipIfMissingFeatures("NPT")
     def test_brownian_integrator_npt_thermostat(self):
@@ -104,19 +76,6 @@ class Integrator_test(ut.TestCase):
             viscosity=1.0, radii={0: 1.0})
         with self.assertRaisesRegex(Exception, self.msg + 'The SD integrator requires the SD thermostat'):
             self.system.integrator.run(0)
-
-    @utx.skipIfMissingFeatures("STOKESIAN_DYNAMICS")
-    def test_stokesian_integrator_stokesian_thermostat(self):
-        self.system.periodicity = 3 * [False]
-        self.system.thermostat.set_stokesian(kT=1.0, seed=42)
-        self.system.integrator.set_stokesian_dynamics(
-            viscosity=1.0, radii={0: 1.0})
-        self.assertCanIntegrate()
-
-    def test_steepest_descent_integrator_no_thermostat(self):
-        self.system.integrator.set_steepest_descent(
-            f_max=0, gamma=0.1, max_displacement=0.1)
-        self.assertCanIntegrate()
 
     def test_steepest_descent_integrator_langevin_thermostat(self):
         self.system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
