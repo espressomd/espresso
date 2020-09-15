@@ -32,7 +32,7 @@ VISC = 1.8
 KT = 0.8
 
 
-class TestLBPressureACF:
+class TestLBPressureTensor:
     """Tests that the thermalized LB pressure auto correlation function
     is consistent with the chosen viscosity
     """
@@ -46,7 +46,7 @@ class TestLBPressureACF:
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 
-    def test(self):
+    def sample_pressure_tensor(self):
         # Setup
         system = self.system
         lb = self.lb_class(agrid=AGRID, dens=DENS, visc=VISC,
@@ -58,46 +58,62 @@ class TestLBPressureACF:
         system.integrator.run(500)
 
         # Sampling
-        p_global = np.zeros((self.steps, 3, 3))
-        p_node0 = np.zeros((self.steps, 3, 3))
-        p_node1 = np.zeros((self.steps, 3, 3))
+        self.p_global = np.zeros((self.steps, 3, 3))
+        self.p_node0 = np.zeros((self.steps, 3, 3))
+        self.p_node1 = np.zeros((self.steps, 3, 3))
 
         node0 = lb[0, 0, 0]
         node1 = lb[3 * [N_CELLS // 2]]
 
         for i in range(self.steps):
-            p_node0[i] = node0.pressure_tensor
-            p_node1[i] = node1.pressure_tensor
-            p_global[i] = lb.pressure_tensor
+            self.p_node0[i] = node0.pressure_tensor
+            self.p_node1[i] = node1.pressure_tensor
+            self.p_global[i] = lb.pressure_tensor
 
             system.integrator.run(2)
 
-        # Dimensionalized sound speed for D3Q19 LB
-        c_s = np.sqrt(1 / 3) * AGRID / TAU
+    def assert_allclose_matrix(self, x, y, atol_diag, atol_offdiag):
+        assert x.shape == y.shape
+        n = min(x.shape)
+        mask_offdiag = ~np.identity(n, dtype=bool)
 
-        # Test time average of pressure tensor
-        p_avg_expected = np.diag(3 * [DENS * c_s**2])
+        np.testing.assert_allclose(np.diag(x), np.diag(y), atol=atol_diag)
         np.testing.assert_allclose(
-            np.mean(p_global, axis=0),
-            p_avg_expected, atol=c_s**2 / 50)
-        np.testing.assert_allclose(
-            np.mean(p_node0, axis=0),
-            p_avg_expected, atol=c_s**2 / 50)
-        np.testing.assert_allclose(
-            np.mean(p_node1, axis=0),
-            p_avg_expected, atol=c_s**2 / 50)
+            x[mask_offdiag],
+            y[mask_offdiag],
+            atol=atol_offdiag)
+
+    def test_averages(self):
+        # Sound speed for D3Q19 in LB lattice units
+        c_s_lb = np.sqrt(1 / 3)
+        # And in MD units
+        c_s = c_s_lb * AGRID / TAU
+
+        # Test time average of pressure tensor against expectation ...
+        p_avg_expected = np.diag(3 * [DENS * c_s**2 + KT / AGRID**3])
+
+        # ... globally,
+        self.assert_allclose_matrix(
+            np.mean(self.p_global, axis=0),
+            p_avg_expected, atol_diag=c_s_lb**2 / 6, atol_offdiag=c_s_lb**2 / 9)
+
+        # ... for two nodes.
+        for time_series in [self.p_node0, self.p_node1]:
+            self.assert_allclose_matrix(
+                np.mean(time_series, axis=0),
+                p_avg_expected, atol_diag=c_s_lb**2 * 10, atol_offdiag=c_s_lb**2 * 6)
 
         # Test that <sigma_[i!=j]> ~=0 and sigma_[ij]=sigma_[ji]
         tol_global = 4 / np.sqrt(self.steps)
         tol_node = tol_global * np.sqrt(N_CELLS**3)
 
-        # check single node
+        # check for the two sampled nodes
         for i in range(3):
             for j in range(i + 1, 3):
-                avg_node0_ij = np.average(p_node0[:, i, j])
-                avg_node0_ji = np.average(p_node0[:, j, i])
-                avg_node1_ij = np.average(p_node1[:, i, j])
-                avg_node1_ji = np.average(p_node1[:, j, i])
+                avg_node0_ij = np.average(self.p_node0[:, i, j])
+                avg_node0_ji = np.average(self.p_node0[:, j, i])
+                avg_node1_ij = np.average(self.p_node1[:, i, j])
+                avg_node1_ji = np.average(self.p_node1[:, j, i])
 
                 self.assertEqual(avg_node0_ij, avg_node0_ji)
                 self.assertEqual(avg_node1_ij, avg_node1_ji)
@@ -108,12 +124,30 @@ class TestLBPressureACF:
         # check system-wide pressure
         for i in range(3):
             for j in range(i + 1, 3):
-                avg_ij = np.average(p_global[:, i, j])
-                avg_ji = np.average(p_global[:, j, i])
+                avg_ij = np.average(self.p_global[:, i, j])
+                avg_ji = np.average(self.p_global[:, j, i])
                 self.assertEqual(avg_ij, avg_ji)
 
                 self.assertLess(avg_ij, tol_global)
 
+
+class TestLBPressureTensorCPU(TestLBPressureTensor, ut.TestCase):
+
+    def setUp(self):
+        self.lb_class = espressomd.lb.LBFluid
+        self.steps = 5000
+        self.sample_pressure_tensor()
+
+
+@utx.skipIfMissingGPU()
+class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
+
+    def setUp(self):
+        self.lb_class = espressomd.lb.LBFluidGPU
+        self.steps = 50000
+        self.sample_pressure_tensor()
+
+    def test_gk_viscosity(self):
         # Check that stress auto correlatin matches dynamic viscosity
         # eta = V/kT integral(stress acf)
         all_viscs = []
@@ -122,7 +156,8 @@ class TestLBPressureACF:
 
                 # Calculate acf
                 tmp = np.correlate(
-                    p_global[:, i, j], p_global[:, i, j], mode="full")
+                    self.p_global[:, i, j],
+                    self.p_global[:, i, j], mode="full")
                 acf = tmp[len(tmp) // 2:] / self.steps
 
                 # integrate first part numerically, fit exponential to tail
@@ -138,7 +173,7 @@ class TestLBPressureACF:
 
                 integral = numeric_integral + tail
 
-                measured_visc = integral * system.volume() / KT
+                measured_visc = integral * self.system.volume() / KT
 
                 self.assertAlmostEqual(
                     measured_visc, VISC * DENS, delta=VISC * DENS * .15)
@@ -147,22 +182,6 @@ class TestLBPressureACF:
         # Check average over xy, xz and yz against tighter limit
         self.assertAlmostEqual(np.average(all_viscs),
                                VISC * DENS, delta=VISC * DENS * .07)
-
-
-# DISABLE CPU TEST UNTIL FAST ENOUGH TEST OR VARIANCE MATRIX IS AVAILABLE
-# class TestLBPressureACFCPU(TestLBPressureACF, ut.TestCase):
-#
-#    def setUp(self):
-#        self.lb_class = espressomd.lb.LBFluid
-#        self.steps = 50000
-
-
-@utx.skipIfMissingGPU()
-class TestLBPressureACFGPU(TestLBPressureACF, ut.TestCase):
-
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidGPU
-        self.steps = 50000
 
 
 if __name__ == "__main__":
