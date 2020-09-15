@@ -37,39 +37,26 @@ class Integrator_test(ut.TestCase):
         self.system.thermostat.turn_off()
         self.system.part.clear()
 
-    def test_vv_integrator_brownian_thermostat(self):
+    def test_vv_integrator(self):
         self.system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
         self.system.integrator.set_vv()
         with self.assertRaisesRegex(Exception, self.msg + 'The VV integrator is incompatible with the currently active combination of thermostats'):
             self.system.integrator.run(0)
 
-    def test_brownian_integrator_no_thermostat(self):
+    def test_brownian_integrator(self):
         self.system.integrator.set_brownian_dynamics()
         with self.assertRaisesRegex(Exception, self.msg + 'The BD integrator requires the BD thermostat'):
             self.system.integrator.run(0)
 
     @utx.skipIfMissingFeatures("NPT")
-    def test_brownian_integrator_npt_thermostat(self):
-        self.system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=42)
-        self.system.integrator.set_brownian_dynamics()
-        with self.assertRaisesRegex(Exception, self.msg + 'The BD integrator requires the BD thermostat'):
-            self.system.integrator.run(0)
-
-    @utx.skipIfMissingFeatures("NPT")
-    def test_npt_integrator_brownian_thermostat(self):
+    def test_npt_integrator(self):
         self.system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
         self.system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
         with self.assertRaisesRegex(Exception, self.msg + 'The NpT integrator requires the NpT thermostat'):
             self.system.integrator.run(0)
 
-    def test_brownian_integrator_langevin_thermostat(self):
-        self.system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
-        self.system.integrator.set_brownian_dynamics()
-        with self.assertRaisesRegex(Exception, self.msg + 'The BD integrator requires the BD thermostat'):
-            self.system.integrator.run(0)
-
     @utx.skipIfMissingFeatures("STOKESIAN_DYNAMICS")
-    def test_stokesian_integrator_langevin_thermostat(self):
+    def test_stokesian_integrator(self):
         self.system.periodicity = 3 * [False]
         self.system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
         self.system.integrator.set_stokesian_dynamics(
@@ -77,7 +64,7 @@ class Integrator_test(ut.TestCase):
         with self.assertRaisesRegex(Exception, self.msg + 'The SD integrator requires the SD thermostat'):
             self.system.integrator.run(0)
 
-    def test_steepest_descent_integrator_langevin_thermostat(self):
+    def test_steepest_descent_integrator(self):
         self.system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
         self.system.integrator.set_steepest_descent(
             f_max=0, gamma=0.1, max_displacement=0.1)
