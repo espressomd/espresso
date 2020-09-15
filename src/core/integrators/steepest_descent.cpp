@@ -31,9 +31,8 @@
 
 #include <boost/algorithm/clamp.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/operations.hpp>
-
-#include <mpi.h>
 
 #include <algorithm>
 #include <limits>
@@ -109,7 +108,6 @@ void steepest_descent_init(const double f_max, const double gamma,
 }
 
 void mpi_bcast_steepest_descent_worker(int, int) {
-  MPI_Bcast(&params.f_max, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(&params.gamma, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(&params.max_displacement, 1, MPI_DOUBLE, 0, comm_cart);
+  namespace mpi = boost::mpi;
+  mpi::broadcast(comm_cart, params, 0);
 }

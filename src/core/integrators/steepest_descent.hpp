@@ -40,6 +40,14 @@ struct SteepestDescentParameters {
    *  in one direction.
    */
   double max_displacement;
+
+private:
+  friend boost::serialization::access;
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar &f_max;
+    ar &gamma;
+    ar &max_displacement;
+  }
 };
 
 /** Steepest descent initializer
