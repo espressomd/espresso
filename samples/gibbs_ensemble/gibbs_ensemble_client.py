@@ -120,6 +120,32 @@ class Manipulator():
         '''Removes the last added particle (reverts insert particle).'''
         self._system.part[self._system.part.highest_particle_id].remove()
 
+    def energy(self):
+        density = len(self._system.part) / self._system.volume()
+        E_sim = self._system.analysis.energy()["total"]
+        E_tail = calc_tail_correction(density)
+        E_shift = calc_shift_correction(density) 
+        return E_sim + E_tail + E_shift
+
+
+def calc_tail_correction(density):
+    '''
+    Calculates the tail correction to the energies of the box.
+    '''
+    # eq 3.2.5
+    return 8.0 / 3.0 * np.pi * density * lj_epsilon * \
+        lj_sigma**3 * (1.0 / 3.0 * np.power(lj_cutoff / lj_sigma, -9) -
+                       np.power(lj_cutoff / lj_sigma, -3))
+
+
+def calc_shift_correction(density):
+    '''
+    Calculates the shift correction to the energies of the box.
+    '''
+    # difference in the potential integrated from 0 to cutoff distance
+    return -8.0 / 3.0 * np.pi * density * \
+        lj_epsilon * np.power(lj_cutoff, 3) * 4.0 * lj_shift
+
 
 def recv_data(socket):
     '''Receives data and return it.'''
@@ -152,7 +178,6 @@ msg = recv_data(socket)
 box_l = init_box_l
 system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.cell_system.set_n_square()
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=lj_epsilon,
                                                        sigma=lj_sigma,
                                                        cutoff=lj_cutoff,
@@ -165,7 +190,7 @@ for i in range(particle_number):
     system.part.add(pos=np.random.rand(3) * box_l, type=0, id=i)
 
 # send the initial energy
-energy = system.analysis.energy()['total']
+energy = manipulator.energy()
 send_data(pickle.dumps([MSG_ENERGY, energy]), socket)
 
 while msg[0] != MSG_END:
@@ -190,7 +215,7 @@ while msg[0] != MSG_END:
         manipulator.remove_particle_revert()
 
     # calculation energy and send it to the host
-    energy = system.analysis.energy()['total']
+    energy = manipulator.energy()
     send_data(pickle.dumps([MSG_ENERGY, energy]), socket)
 
 # closing the socket

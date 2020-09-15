@@ -40,6 +40,8 @@ import struct
 import random
 import matplotlib.pyplot as plt
 import argparse
+import logging as log
+log.basicConfig(filename="gibbs.log", level=log.INFO)
 
 from espressomd import assert_features
 assert_features("LENNARD_JONES")
@@ -67,7 +69,7 @@ init_box_l = 7.55
 # temperature
 kT = 1.15
 # maximum of the volume exchanged in the logarithmic space
-DV_MAX = 0.5
+DV_MAX = 0.1
 PARTICLE_RADIUS = 0.5
 
 # LJ-parameters
@@ -78,7 +80,7 @@ LJ_SHIFT = 0.0
 
 # Monte-Carlo parameters
 INIT_MOVE_CHANCE = 0.16
-EXCHANGE_CHANCE = 0.8
+EXCHANGE_CHANCE = 0.5
 VOLUME_CHANCE = 1.0 - INIT_MOVE_CHANCE - EXCHANGE_CHANCE
 
 # socket parameters
@@ -131,7 +133,6 @@ class Box:
     box_l_old = init_box_l
     n_particles = int(global_num_particles / 2)
     energy = 0.0
-    energy_corrected = 0.0
     energy_old = 1.0e100
     conn = 0
     adr = 0
@@ -143,8 +144,7 @@ class Box:
             self.energy = msg[1]
             return 0
         else:
-            print("ERROR during energy recv")
-            return 1
+            raise RuntimeError("ERROR during energy recv")
 
     def recv_data(self):
         '''Received the data send from the client.'''
@@ -165,63 +165,57 @@ class Box:
         self.conn.send(packet)
 
 
-def calc_tail_correction(box, lj_epsilon, lj_sigma, lj_cutoff):
+def select_box(n_part_0, n_part_1):
     '''
-    Calculates the tail correction to the energies of the box.
+    Returns a random box index 0 or 1, where the probability is proportional
+    to the number of particles in the respective boxes
     '''
-    # eq 3.2.5
-    return 8.0 / 3.0 * np.pi * box.n_particles / box.box_l**3 * lj_epsilon * \
-        lj_sigma**3 * (1.0 / 3.0 * np.power(lj_cutoff / lj_sigma, -9) -
-                       np.power(lj_cutoff / lj_sigma, -3))
+    n_total = n_part_0 + n_part_1
+    if random.randint(0, n_total - 1) < n_part_0:
+        return 0
+    else:
+        return 1
 
 
-def calc_shift_correction(box, lj_epsilon, lj_cutoff, lj_shift):
-    '''
-    Calculates the shift correction to the energies of the box.
-    '''
-    # difference in the potential integrated from 0 to cutoff distance
-    return -8.0 / 3.0 * np.pi * box.n_particles / box.box_l**3 * \
-        lj_epsilon * np.power(lj_cutoff, 3) * 4.0 * lj_shift
-
-
-def move_particle(boxes, global_num_particles):
+def move_particle(box):
     '''
     Tries a displacement move and stores the new energy in the corresponding box
     '''
-    if random.randint(0, global_num_particles - 1) < boxes[0].n_particles:
-        rand_box = 0
-    else:
-        rand_box = 1
-    boxes[rand_box].send_data(pickle.dumps([MSG_MOVE_PART, 0]))
-    boxes[rand_box].recv_energy()
-    return rand_box
+    box.send_data(pickle.dumps([MSG_MOVE_PART, 0]))
+    box.recv_energy()
 
 
 def exchange_volume(boxes, global_volume):
     '''
     Tries a volume exchange move and stores the new energy in the boxes
     '''
-    boxes[0].box_l_old = boxes[0].box_l
-    boxes[1].box_l_old = boxes[1].box_l
 
-    # calculate the exchanged volume
-    rand_box = random.randint(0, NUMBER_OF_CLIENTS - 1)
-    vol2 = global_volume - boxes[rand_box].box_l**3
-    lnvn = np.log(boxes[rand_box].box_l**3 / vol2) + \
+    rand_box = random.randint(0, 1)
+    if boxes[rand_box].n_particles == 0:
+        rand_box = (rand_box + 1) % 2
+
+    lead_box = boxes[rand_box]
+    other_box = boxes[(rand_box + 1) % 2]
+
+    lead_box.box_l_old = lead_box.box_l
+    other_box.box_l_old = other_box.box_l
+
+    vol2 = global_volume - lead_box.box_l**3
+    lnvn = np.log(lead_box.box_l**3 / vol2) + \
         (random.random() - 0.5) * DV_MAX
     vol1 = global_volume * np.exp(lnvn) / (1 + np.exp(lnvn))
     vol2 = global_volume - vol1
-    boxes[rand_box].box_l = np.cbrt(vol1)
-    boxes[rand_box].send_data(pickle.dumps(
-        [MSG_CHANGE_VOLUME, boxes[rand_box].box_l]))
+    log.info("exchange volume %g->%g", lead_box.box_l, np.cbrt(vol1))
 
-    boxes[(rand_box + 1) % 2].box_l = np.cbrt(vol2)
-    boxes[(rand_box + 1) % 2].send_data(pickle.dumps([MSG_CHANGE_VOLUME,
-                                                      boxes[(rand_box + 1) % 2].box_l]))
+    lead_box.box_l = np.cbrt(vol1)
+    lead_box.send_data(pickle.dumps(
+        [MSG_CHANGE_VOLUME, lead_box.box_l]))
 
-    boxes[rand_box].recv_energy()
-    boxes[(rand_box + 1) % 2].recv_energy()
-    return rand_box
+    other_box.box_l = np.cbrt(vol2)
+    other_box.send_data(pickle.dumps([MSG_CHANGE_VOLUME, other_box.box_l]))
+
+    lead_box.recv_energy()
+    other_box.recv_energy()
 
 
 def exchange_particle(boxes):
@@ -231,25 +225,32 @@ def exchange_particle(boxes):
     rand_box = random.randint(0, 1)
     if boxes[rand_box].n_particles == 0:
         rand_box = (rand_box + 1) % 2
-    boxes[rand_box].n_particles -= 1
-    boxes[(rand_box + 1) % 2].n_particles += 1
-    boxes[rand_box].send_data(pickle.dumps([MSG_EXCHANGE_PART_REMOVE, 0]))
-    boxes[(rand_box + 1) %
-          2].send_data(pickle.dumps([MSG_EXCHANGE_PART_ADD, 0]))
 
-    boxes[rand_box].recv_energy()
-    boxes[(rand_box + 1) % 2].recv_energy()
-    return rand_box
+    log.info("exchange particle %d", rand_box)
+    source_box = boxes[rand_box]
+    dest_box = boxes[(rand_box + 1) % 2]
+
+    source_box.n_particles -= 1
+    dest_box.n_particles += 1
+
+    source_box.send_data(pickle.dumps([MSG_EXCHANGE_PART_REMOVE, 0]))
+    dest_box.send_data(pickle.dumps([MSG_EXCHANGE_PART_ADD, 0]))
+
+    source_box.recv_energy()
+    dest_box.recv_energy()
+
+    return source_box, dest_box
 
 
-def check_make_move(boxes, inner_potential, rand_box):
+def check_make_move(box, inner_potential):
     '''
     Returns whether the last displacement move was valid or not and reverts the changes
     if it was invalid.
     '''
     if random.random() > inner_potential:
-        boxes[rand_box].send_data(pickle.dumps([MSG_MOVE_PART_REVERT, 0]))
-        boxes[rand_box].recv_energy()
+        log.info("revert move")
+        box.send_data(pickle.dumps([MSG_MOVE_PART_REVERT, 0]))
+        box.recv_energy()
         return False
     return True
 
@@ -264,6 +265,7 @@ def check_exchange_volume(boxes, inner_potential):
         (boxes[1].box_l**3 / boxes[1].box_l_old **
          3)**(boxes[1].n_particles + 1)
     if random.random() > volume_factor * inner_potential:
+        log.info("revert exchange volume")
         boxes[0].send_data(pickle.dumps(
             [MSG_CHANGE_VOLUME, boxes[0].box_l_old]))
         boxes[0].box_l = boxes[0].box_l_old
@@ -277,24 +279,24 @@ def check_exchange_volume(boxes, inner_potential):
     return True
 
 
-def check_exchange_particle(boxes, inner_potential, rand_box):
+def check_exchange_particle(source_box, dest_box, inner_potential):
     '''
     Returns whether the last particle exchange move was valid or not and reverts the changes
     if it was invalid.
     '''
-    exchange_factor = (boxes[rand_box].n_particles) / \
-        (boxes[(rand_box + 1) % 2].n_particles + 1.0) * \
-        boxes[(rand_box + 1) % 2].box_l**3 / boxes[rand_box].box_l**3
+    exchange_factor = (source_box.n_particles) / \
+        (dest_box.n_particles + 1.0) * \
+        dest_box.box_l**3 / source_box.box_l**3
     if random.random() > exchange_factor * inner_potential:
-        boxes[rand_box].n_particles += 1
-        boxes[(rand_box + 1) % 2].n_particles -= 1
-        boxes[rand_box].send_data(pickle.dumps(
+        log.info("revert exchange particle")
+        source_box.n_particles += 1
+        dest_box.n_particles -= 1
+        source_box.send_data(pickle.dumps(
             [MSG_EXCHANGE_PART_REMOVE_REVERT, 0]))
-        boxes[(rand_box + 1) %
-              2].send_data(pickle.dumps([MSG_EXCHANGE_PART_ADD_REVERT, 0]))
+        dest_box.send_data(pickle.dumps([MSG_EXCHANGE_PART_ADD_REVERT, 0]))
 
-        boxes[rand_box].recv_energy()
-        boxes[(rand_box + 1) % 2].recv_energy()
+        source_box.recv_energy()
+        dest_box.recv_energy()
         return False
     return True
 
@@ -325,9 +327,6 @@ for i in range(NUMBER_OF_CLIENTS):
     boxes[i].send_data(pickle.dumps([MSG_START, 0]))
 
     boxes[i].recv_energy()
-    boxes[i].energy_old = boxes[i].energy + \
-        calc_tail_correction(boxes[i], LJ_EPSILON, LJ_SIGMA, LJ_CUTOFF) + \
-        calc_shift_correction(boxes[i], LJ_EPSILON, LJ_CUTOFF, LJ_SHIFT)
 
 # observables
 densities = [[], []]
@@ -340,15 +339,13 @@ move_steps_tried = 1
 volume_steps_tried = 1
 exchange_steps_tried = 1
 
-# rand_box defines on which box the move acts on.
-rand_box = 0
 
 # only do displacements during the warm up
 move_chance = 1.0
 # Monte-Carlo loop
 for i in range(steps):
-    print("\rIntegrating: {0:3.0f}%".format(
-        100 * i / steps), end='', flush=True)
+    # print("\rIntegrating: {0:3.0f}%".format(
+    #    100 * i / steps), end='', flush=True)
 
     # warm up ends after 1000 steps
     if i == warm_up_steps:
@@ -360,60 +357,44 @@ for i in range(steps):
     # choose step and send the command to execute to the clients, then receive
     # the energies.
     if rand <= move_chance:
-        rand_box = move_particle(boxes, global_num_particles)
+        idx = select_box(boxes[0].n_particles, boxes[1].n_particles)
+        log.info("move particle in box %d", idx)
+        box = boxes[idx]
+        move_particle(box)
         move_steps_tried += 1
 
     elif rand <= move_chance + VOLUME_CHANCE:
-        rand_box = exchange_volume(boxes, global_volume)
+        exchange_volume(boxes, global_volume)
         volume_steps_tried += 1
 
     else:
-        rand_box = exchange_particle(boxes)
+        source_box, dest_box = exchange_particle(boxes)
         exchange_steps_tried += 1
-
-    # calculate the correction energies of the lj tail and shift.
-    if rand <= move_chance:
-        boxes[rand_box].energy_corrected = boxes[rand_box].energy + \
-            calc_tail_correction(boxes[rand_box], LJ_EPSILON, LJ_SIGMA, LJ_CUTOFF) + \
-            calc_shift_correction(
-            boxes[rand_box],
-            LJ_EPSILON,
-            LJ_CUTOFF,
-            LJ_SHIFT)
-        boxes[(rand_box + 1) % 2].energy_corrected = \
-            boxes[(rand_box + 1) % 2].energy_old
-
-    else:
-        boxes[0].energy_corrected = boxes[0].energy + \
-            calc_tail_correction(boxes[0], LJ_EPSILON, LJ_SIGMA, LJ_CUTOFF) + \
-            calc_shift_correction(boxes[0], LJ_EPSILON, LJ_CUTOFF, LJ_SHIFT)
-        boxes[1].energy_corrected = boxes[1].energy + \
-            calc_tail_correction(boxes[1], LJ_EPSILON, LJ_SIGMA, LJ_CUTOFF) + \
-            calc_shift_correction(boxes[1], LJ_EPSILON, LJ_CUTOFF, LJ_SHIFT)
 
     # test if the move will be accepted and undo the last step if it was not
     # accepted.
-    delta_energy = boxes[0].energy_corrected + boxes[1].energy_corrected - \
+    delta_energy = boxes[0].energy + boxes[1].energy - \
         boxes[0].energy_old - boxes[1].energy_old
     # limitation to delta_energy to circumvent calculating the exponential of
     # too large inner potentials, which could cause some error messages.
     if delta_energy < -10.0 * kT:
         delta_energy = -10.0 * kT
 
+    log.info("dE: %g", delta_energy)
     inner_potential = np.exp(-1.0 / kT * delta_energy)
-    accepted = True
-
     if rand <= move_chance:
-        accepted = check_make_move(boxes, inner_potential, rand_box)
+        accepted = check_make_move(box, inner_potential)
     elif rand <= move_chance + VOLUME_CHANCE:
         accepted = check_exchange_volume(boxes, inner_potential)
     else:
-        accepted = check_exchange_particle(boxes, inner_potential, rand_box)
+        accepted = check_exchange_particle(
+            source_box, dest_box, inner_potential)
 
     if accepted:
+        log.info("accepted")
         # keep the changes.
-        boxes[0].energy_old = boxes[0].energy_corrected
-        boxes[1].energy_old = boxes[1].energy_corrected
+        boxes[0].energy_old = boxes[0].energy
+        boxes[1].energy_old = boxes[1].energy
         accepted_steps += 1
         if rand <= move_chance:
             accepted_steps_move += 1
@@ -424,7 +405,13 @@ for i in range(steps):
         densities[0].append(boxes[0].n_particles / boxes[0].box_l**3)
         densities[1].append(boxes[1].n_particles / boxes[1].box_l**3)
 
+        if i % 50 == 0: print(densities[0][-1], densities[1][-1])
         list_indices.append(i)
+
+        assert boxes[0].n_particles + \
+            boxes[1].n_particles == global_num_particles
+        assert abs(boxes[0].box_l**3 + boxes[1].box_l**3 - global_volume) \
+            < 1E-8 * global_volume
 
 
 print("Acceptance rate global:\t {}".format(accepted_steps / float(steps)))
