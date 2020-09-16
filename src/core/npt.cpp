@@ -22,11 +22,21 @@
 #include "errorhandling.hpp"
 #include "integrate.hpp"
 
+#include <boost/mpi/collectives/broadcast.hpp>
+#include <boost/mpi/operations.hpp>
+
 #ifdef NPT
 void synchronize_npt_state() {
-  MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);
+  boost::mpi::broadcast(comm_cart, nptiso.p_inst, 0);
+  boost::mpi::broadcast(comm_cart, nptiso.p_diff, 0);
+  boost::mpi::broadcast(comm_cart, nptiso.volume, 0);
+}
+
+void mpi_bcast_nptiso_geom_worker(int, int) {
+  boost::mpi::broadcast(comm_cart, nptiso.geometry, 0);
+  boost::mpi::broadcast(comm_cart, nptiso.dimension, 0);
+  boost::mpi::broadcast(comm_cart, nptiso.cubic_box, 0);
+  boost::mpi::broadcast(comm_cart, nptiso.non_const_dim, 0);
 }
 
 void npt_ensemble_init(const BoxGeometry &box) {
@@ -71,4 +81,6 @@ void npt_add_virial_contribution(const Utils::Vector3d &force,
     }
   }
 }
+#else  // NPT
+void mpi_bcast_nptiso_geom_worker(int, int) {}
 #endif // NPT
