@@ -33,6 +33,10 @@
 
 #include <utils/math/sqr.hpp>
 
+#include <boost/mpi/collectives.hpp>
+
+#include <functional>
+
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
   extern IsotropicNptThermostat npt_iso;
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -70,7 +74,7 @@ void velocity_verlet_npt_finalize_p_inst() {
   }
 
   double p_sum = 0.0;
-  MPI_Reduce(&nptiso.p_inst, &p_sum, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  boost::mpi::reduce(comm_cart, nptiso.p_inst, p_sum, std::plus<double>(), 0);
   if (this_node == 0) {
     nptiso.p_inst = p_sum / (nptiso.dimension * nptiso.volume);
     nptiso.p_diff = nptiso.p_diff +
