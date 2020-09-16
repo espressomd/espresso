@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from libc cimport stdint
 from libcpp cimport bool as cbool
 from libcpp.string cimport string
 from libcpp.unordered_map cimport unordered_map
@@ -34,6 +35,9 @@ cdef extern from "integrate.hpp" nogil:
     cdef extern cbool skin_set
     cdef extern cbool set_py_interrupt
     cdef void integrate_set_bd()
+
+    stdint.uint64_t get_integrator_counter()
+    void set_integrator_counter(stdint.uint64_t value)
 
 IF NPT:
     cdef extern from "integrate.hpp" nogil:

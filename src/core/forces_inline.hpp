@@ -39,7 +39,6 @@
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
-#include "integrators/langevin_inline.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -61,6 +60,7 @@
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
+#include "thermostats/langevin_inline.hpp"
 
 #ifdef DIPOLES
 #include "electrostatics_magnetostatics/dipole_inline.hpp"
@@ -100,25 +100,29 @@ inline ParticleForce external_force(Particle const &p) {
   return f;
 }
 
-inline ParticleForce thermostat_force(Particle const &p) {
+inline ParticleForce thermostat_force(Particle const &p, uint64_t counter,
+                                      double time_step) {
   extern LangevinThermostat langevin;
   if (!(thermo_switch & THERMO_LANGEVIN)) {
     return {};
   }
 
 #ifdef ROTATION
-  return {friction_thermo_langevin(langevin, p),
+  return {friction_thermo_langevin(langevin, p, counter, time_step),
           p.p.rotation ? convert_vector_body_to_space(
-                             p, friction_thermo_langevin_rotation(langevin, p))
+                             p, friction_thermo_langevin_rotation(
+                                    langevin, p, counter, time_step))
                        : Utils::Vector3d{}};
 #else
-  return friction_thermo_langevin(langevin, p);
+  return friction_thermo_langevin(langevin, p, counter, time_step);
 #endif
 }
 
 /** Initialize the forces for a real particle */
-inline ParticleForce init_local_particle_force(Particle const &part) {
-  return thermostat_force(part) + external_force(part);
+inline ParticleForce init_local_particle_force(Particle const &part,
+                                               uint64_t counter,
+                                               double time_step) {
+  return thermostat_force(part, counter, time_step) + external_force(part);
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(
@@ -234,7 +238,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force(Particle const &p1,
  */
 inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
                                       Utils::Vector3d const &d, double dist,
-                                      double dist2) {
+                                      double dist2, uint64_t counter) {
   IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
   Utils::Vector3d force{};
   Utils::Vector3d *torque1 = nullptr;
@@ -289,7 +293,7 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
   /** The inter dpd force should not be part of the virial */
 #ifdef DPD
   if (thermo_switch & THERMO_DPD) {
-    force += dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
+    force += dpd_pair_force(p1, p2, ia_params, d, dist, dist2, counter);
   }
 #endif
 

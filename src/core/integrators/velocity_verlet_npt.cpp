@@ -26,14 +26,17 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
+#include "thermostats/npt_inline.hpp"
 
 #include <utils/math/sqr.hpp>
 
-void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
+#include <cstdint>
+
+void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
+                                             uint64_t counter) {
   extern IsotropicNptThermostat npt_iso;
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 
@@ -41,7 +44,8 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
     // Virtual sites are not propagated during integration
     if (p.p.is_virtual)
       continue;
-    auto const noise = friction_therm0_nptiso<2>(npt_iso, p.m.v, p.p.identity);
+    auto const noise =
+        friction_therm0_nptiso<2>(npt_iso, p.m.v, p.p.identity, counter);
     for (int j = 0; j < 3; j++) {
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
@@ -58,7 +62,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
 }
 
 /** Scale and communicate instantaneous NpT pressure */
-void velocity_verlet_npt_finalize_p_inst() {
+void velocity_verlet_npt_finalize_p_inst(uint64_t counter) {
   extern IsotropicNptThermostat npt_iso;
   /* finalize derivation of p_inst */
   nptiso.p_inst = 0.0;
@@ -69,21 +73,22 @@ void velocity_verlet_npt_finalize_p_inst() {
     }
   }
 
-  double p_tmp = 0.0;
-  MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  double p_sum = 0.0;
+  MPI_Reduce(&nptiso.p_inst, &p_sum, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   if (this_node == 0) {
-    nptiso.p_inst = p_tmp / (nptiso.dimension * nptiso.volume);
+    nptiso.p_inst = p_sum / (nptiso.dimension * nptiso.volume);
     nptiso.p_diff = nptiso.p_diff +
                     (nptiso.p_inst - nptiso.p_ext) * 0.5 * time_step +
-                    friction_thermV_nptiso(npt_iso, nptiso.p_diff);
+                    friction_thermV_nptiso(npt_iso, nptiso.p_diff, counter);
   }
 }
 
-void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
+                                       uint64_t counter) {
   double scal[3] = {0., 0., 0.}, L_new = 0.0;
 
   /* finalize derivation of p_inst */
-  velocity_verlet_npt_finalize_p_inst();
+  velocity_verlet_npt_finalize_p_inst(counter);
 
   /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and
    * vel-rescaling
@@ -152,7 +157,8 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
   cells_re_init(cell_structure.decomposition_type());
 }
 
-void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
+                                       uint64_t counter) {
   extern IsotropicNptThermostat npt_iso;
 #ifdef NPT
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -170,7 +176,7 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #ifdef NPT
         auto const noise =
-            friction_therm0_nptiso<1>(npt_iso, p.m.v, p.p.identity);
+            friction_therm0_nptiso<1>(npt_iso, p.m.v, p.p.identity, counter);
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
           p.m.v[j] += (p.f.f[j] * time_step / 2.0 + noise[j]) / p.p.mass;
@@ -184,17 +190,19 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
   }
 }
 
-void velocity_verlet_npt_step_1(const ParticleRange &particles) {
-  velocity_verlet_npt_propagate_vel(particles);
-  velocity_verlet_npt_propagate_pos(particles);
+void velocity_verlet_npt_step_1(const ParticleRange &particles,
+                                uint64_t counter) {
+  velocity_verlet_npt_propagate_vel(particles, counter);
+  velocity_verlet_npt_propagate_pos(particles, counter);
   sim_time += time_step;
 }
 
-void velocity_verlet_npt_step_2(const ParticleRange &particles) {
-  velocity_verlet_npt_propagate_vel_final(particles);
+void velocity_verlet_npt_step_2(const ParticleRange &particles,
+                                uint64_t counter) {
+  velocity_verlet_npt_propagate_vel_final(particles, counter);
 #ifdef ROTATION
   convert_torques_propagate_omega(particles);
 #endif
-  velocity_verlet_npt_finalize_p_inst();
+  velocity_verlet_npt_finalize_p_inst(counter);
 }
 #endif

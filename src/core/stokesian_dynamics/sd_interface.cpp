@@ -28,6 +28,8 @@
 #include "stokesian_dynamics/sd_gpu.hpp"
 #endif
 
+#include "thermostat.hpp"
+
 #include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
@@ -36,6 +38,8 @@
 #include <boost/serialization/is_bitwise_serializable.hpp>
 
 #include <vector>
+
+extern StokesianThermostat stokesian;
 
 namespace {
 /* type for particle data transfer between nodes */
@@ -66,8 +70,6 @@ enum { CPU, GPU, INVALID } device = INVALID;
 std::unordered_map<int, double> radius_dict;
 
 double sd_kT = 0.0;
-
-std::size_t sd_seed = 0UL;
 
 int sd_flags = 0;
 
@@ -172,17 +174,13 @@ void set_sd_kT(double kT) {
 
 double get_sd_kT() { return sd_kT; }
 
-void set_sd_seed(std::size_t seed) { sd_seed = seed; }
-
-std::size_t get_sd_seed() { return sd_seed; }
-
 void set_sd_flags(int flg) { sd_flags = flg; }
 
 int get_sd_flags() { return sd_flags; }
 
 void propagate_vel_pos_sd(const ParticleRange &particles,
                           const boost::mpi::communicator &comm,
-                          const size_t time_index, const double time_step) {
+                          const double time_step, uint64_t counter) {
   static std::vector<SD_particle_data> parts_buffer{};
 
   parts_buffer.clear();
@@ -231,17 +229,19 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
     switch (device) {
 #ifdef STOKESIAN_DYNAMICS
     case CPU:
-      v_sd =
-          sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                 std::sqrt(sd_kT / time_step), time_index, sd_seed, sd_flags);
+      v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
+                    std::sqrt(sd_kT / time_step),
+                    static_cast<std::size_t>(counter),
+                    static_cast<std::size_t>(stokesian.rng_seed()), sd_flags);
       break;
 #endif
 
 #ifdef STOKESIAN_DYNAMICS_GPU
     case GPU:
-      v_sd =
-          sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                 std::sqrt(sd_kT / time_step), time_index, sd_seed, sd_flags);
+      v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
+                    std::sqrt(sd_kT / time_step),
+                    static_cast<std::size_t>(counter),
+                    static_cast<std::size_t>(stokesian.rng_seed()), sd_flags);
       break;
 #endif
     default:

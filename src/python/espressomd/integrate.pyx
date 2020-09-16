@@ -32,18 +32,19 @@ cdef class IntegratorHandle:
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
-        return self._integrator
+        return (self._integrator, get_integrator_counter())
 
     def __setstate__(self, state):
-        self._integrator = state
+        self._integrator, counter = state
         self._integrator._set_params_in_es_core()
+        set_integrator_counter(counter)
 
     def get_state(self):
         """
         Return the integrator.
 
         """
-        return self.__getstate__()
+        return self.__getstate__()[0]
 
     def __init__(self):
         self.set_nvt()

@@ -29,6 +29,7 @@
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "integrate.hpp"
 #include "npt.hpp"
 #include "thermostat.hpp"
 
@@ -44,29 +45,22 @@ using Thermostat::GammaType;
  * @param thermostat        The thermostat global variable
  */
 #define REGISTER_THERMOSTAT_CALLBACKS(thermostat)                              \
-  void mpi_bcast_##thermostat##_rng_counter_slave(const uint64_t seed) {       \
+  void mpi_##thermostat##_set_rng_state(const uint32_t seed) {                 \
     (thermostat).rng_initialize(seed);                                         \
   }                                                                            \
                                                                                \
-  REGISTER_CALLBACK(mpi_bcast_##thermostat##_rng_counter_slave)                \
-                                                                               \
-  void mpi_bcast_##thermostat##_rng_counter(const uint64_t seed) {             \
-    mpi_call(mpi_bcast_##thermostat##_rng_counter_slave, seed);                \
-  }                                                                            \
-                                                                               \
-  void thermostat##_rng_counter_increment() { (thermostat).rng_increment(); }  \
+  REGISTER_CALLBACK(mpi_##thermostat##_set_rng_state)                          \
                                                                                \
   bool thermostat##_is_seed_required() {                                       \
     /* Seed is required if rng is not initialized */                           \
     return !(thermostat).rng_is_initialized();                                 \
   }                                                                            \
                                                                                \
-  void thermostat##_set_rng_state(const uint64_t seed) {                       \
-    mpi_bcast_##thermostat##_rng_counter(seed);                                \
-    (thermostat).rng_initialize(seed);                                         \
+  void thermostat##_set_rng_state(const uint32_t seed) {                       \
+    mpi_call_all(mpi_##thermostat##_set_rng_state, seed);                      \
   }                                                                            \
                                                                                \
-  uint64_t thermostat##_get_rng_state() { return (thermostat).rng_get(); }
+  uint32_t thermostat##_get_rng_state() { return (thermostat).rng_seed(); }
 
 LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};
@@ -75,6 +69,9 @@ ThermalizedBondThermostat thermalized_bond = {};
 #ifdef DPD
 DPDThermostat dpd = {};
 #endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+StokesianThermostat stokesian = {};
+#endif
 
 REGISTER_THERMOSTAT_CALLBACKS(langevin)
 REGISTER_THERMOSTAT_CALLBACKS(brownian)
@@ -82,6 +79,9 @@ REGISTER_THERMOSTAT_CALLBACKS(npt_iso)
 REGISTER_THERMOSTAT_CALLBACKS(thermalized_bond)
 #ifdef DPD
 REGISTER_THERMOSTAT_CALLBACKS(dpd)
+#endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+REGISTER_THERMOSTAT_CALLBACKS(stokesian)
 #endif
 
 void thermo_init() {
@@ -93,7 +93,7 @@ void thermo_init() {
     return;
   }
   if (thermo_switch & THERMO_LANGEVIN)
-    langevin.recalc_prefactors();
+    langevin.recalc_prefactors(time_step);
 #ifdef DPD
   if (thermo_switch & THERMO_DPD)
     dpd_init();
@@ -103,7 +103,7 @@ void thermo_init() {
     if (nptiso.piston == 0.0) {
       thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
     } else {
-      npt_iso.recalc_prefactors(nptiso.piston);
+      npt_iso.recalc_prefactors(nptiso.piston, time_step);
     }
   }
 #endif

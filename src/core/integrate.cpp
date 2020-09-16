@@ -27,10 +27,14 @@
  */
 
 #include "integrate.hpp"
-#include "Particle.hpp"
+#include "integrators/brownian_inline.hpp"
+#include "integrators/steepest_descent.hpp"
+#include "integrators/stokesian_dynamics_inline.hpp"
+#include "integrators/velocity_verlet_inline.hpp"
+#include "integrators/velocity_verlet_npt.hpp"
+
+#include "ParticleRange.hpp"
 #include "accumulators.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -51,26 +55,20 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
-#include "integrators/brownian_inline.hpp"
-#include "integrators/langevin_inline.hpp"
-#include "integrators/steepest_descent.hpp"
-#include "integrators/stokesian_dynamics_inline.hpp"
-#include "integrators/velocity_verlet_inline.hpp"
-#include "integrators/velocity_verlet_npt.hpp"
-
 #include <profiler/profiler.hpp>
-#include <utils/Vector.hpp>
-#include <utils/constants.hpp>
+#include <utils/Counter.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
-#include <cmath>
-#include <mpi.h>
+
+#include <cstdint>
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
 #endif
 
 int integ_switch = INTEG_METHOD_NVT;
+
+Utils::Counter<uint64_t> integrator_counter;
 
 double time_step = -1.0;
 
@@ -92,9 +90,6 @@ void notify_sig_int() {
 }
 } // namespace
 
-/** Thermostats increment the RNG counter here. */
-void philox_counter_increment();
-
 void integrator_sanity_checks() {
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
@@ -115,7 +110,7 @@ bool integrator_step_1(ParticleRange &particles) {
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_1(particles);
+    velocity_verlet_npt_step_1(particles, integrator_counter.value());
     break;
 #endif
   case INTEG_METHOD_BD:
@@ -124,7 +119,7 @@ bool integrator_step_1(ParticleRange &particles) {
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
-    stokesian_dynamics_step_1(particles);
+    stokesian_dynamics_step_1(particles, integrator_counter.value());
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
@@ -135,7 +130,6 @@ bool integrator_step_1(ParticleRange &particles) {
 
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
-  extern BrownianThermostat brownian;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -145,12 +139,13 @@ void integrator_step_2(ParticleRange &particles) {
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_2(particles);
+    velocity_verlet_npt_step_2(particles, integrator_counter.value());
     break;
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles);
+    brownian_dynamics_propagator(brownian, particles,
+                                 integrator_counter.value());
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
@@ -188,7 +183,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    force_calc(cell_structure);
+    force_calc(cell_structure, integrator_counter.value(), time_step);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -227,8 +222,7 @@ int integrate(int n_steps, int reuse_forces) {
     if (early_exit)
       break;
 
-    /* Propagate philox rng counters */
-    philox_counter_increment();
+    integrator_counter.increment();
 
 #ifdef BOND_CONSTRAINT
     /* Correct those particle positions that participate in a rigid/constrained
@@ -250,7 +244,7 @@ int integrate(int n_steps, int reuse_forces) {
 
     particles = cell_structure.local_particles();
 
-    force_calc(cell_structure);
+    force_calc(cell_structure, integrator_counter.value(), time_step);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
@@ -311,28 +305,6 @@ int integrate(int n_steps, int reuse_forces) {
   }
 #endif
   return integrated_steps;
-}
-
-void philox_counter_increment() {
-  if (thermo_switch & THERMO_LANGEVIN) {
-    langevin_rng_counter_increment();
-  }
-  if (thermo_switch & THERMO_BROWNIAN) {
-    brownian_rng_counter_increment();
-  }
-#ifdef NPT
-  if (thermo_switch & THERMO_NPT_ISO) {
-    npt_iso_rng_counter_increment();
-  }
-#endif
-#ifdef DPD
-  if (thermo_switch & THERMO_DPD) {
-    dpd_rng_counter_increment();
-  }
-#endif
-  if (n_thermalized_bonds) {
-    thermalized_bond_rng_counter_increment();
-  }
 }
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
@@ -515,3 +487,15 @@ double interaction_range() {
   auto const max_cut = maximal_cutoff();
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
+
+static void mpi_set_integrator_counter(const uint64_t value) {
+  integrator_counter = Utils::Counter<uint64_t>{value};
+}
+
+REGISTER_CALLBACK(mpi_set_integrator_counter)
+
+void set_integrator_counter(uint64_t value) {
+  mpi_call_all(mpi_set_integrator_counter, value);
+}
+
+uint64_t get_integrator_counter() { return integrator_counter.value(); }

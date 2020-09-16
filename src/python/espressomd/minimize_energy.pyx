@@ -46,7 +46,7 @@ def steepest_descent(system, *args, **kwargs):
 
     """
     cdef object old_integrator
-    old_integrator = system.integrator.get_state()
+    old_integrator = system.integrator.__getstate__()
     system.integrator.set_steepest_descent(*args, **kwargs)
     steps = system.integrator.run(kwargs['max_steps'])
     system.integrator.__setstate__(old_integrator)

@@ -27,11 +27,18 @@
  *  Implementation in \ref integrate.cpp.
  */
 
+#include <utils/Counter.hpp>
+
+#include <cstdint>
+
+/** \name Integrator switches */
+/*@{*/
 #define INTEG_METHOD_NPT_ISO 0
 #define INTEG_METHOD_NVT 1
 #define INTEG_METHOD_STEEPEST_DESCENT 2
 #define INTEG_METHOD_BD 3
 #define INTEG_METHOD_SD 7
+/*@}*/
 
 /** Switch determining which integrator to use. */
 extern int integ_switch;
@@ -144,3 +151,9 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
                                 bool zdir_rescale, bool cubic_box);
 
 #endif
+
+extern Utils::Counter<uint64_t> integrator_counter;
+
+uint64_t get_integrator_counter();
+
+void set_integrator_counter(uint64_t value);
