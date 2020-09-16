@@ -90,11 +90,12 @@ for s in [["Anion", "Cation"], ["Anion", "Anion"], ["Cation", "Cation"]]:
 
 
 print("\n--->WCA Equilibration")
+min_sigma = min(wca_sigmas.values())
 max_sigma = max(wca_sigmas.values())
 min_dist = 0.0
 
 system.integrator.set_steepest_descent(f_max=0, gamma=10,
-                                       max_displacement=max_sigma * 0.01)
+                                       max_displacement=min_sigma * 0.01)
 
 while min_dist < max_sigma:
     min_dist = system.analysis.min_dist()

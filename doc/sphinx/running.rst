@@ -271,10 +271,11 @@ The ``f_max`` parameter can be set to zero to prevent the integrator from
 halting when a specific force/torque is reached. The integration can then
 be carried out in a loop with a custom convergence criterion::
 
-    max_sigma = 5
+    min_sigma = 1  # size of the smallest particle
+    max_sigma = 5  # size of the largest particle
     min_dist = 0.0
     system.integrator.set_steepest_descent(f_max=0, gamma=10,
-                                           max_displacement=max_sigma * 0.01)
+                                           max_displacement=min_sigma * 0.01)
     # gradient descent until particles are separated by at least max_sigma
     while min_dist < max_sigma:
         min_dist = system.analysis.min_dist()
