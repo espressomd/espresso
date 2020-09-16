@@ -99,6 +99,36 @@ void integrator_sanity_checks() {
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
   }
+  switch (integ_switch) {
+  case INTEG_METHOD_STEEPEST_DESCENT:
+    if (thermo_switch != THERMO_OFF)
+      runtimeErrorMsg()
+          << "The steepest descent integrator is incompatible with thermostats";
+    break;
+  case INTEG_METHOD_NVT:
+    if (thermo_switch & (THERMO_NPT_ISO | THERMO_BROWNIAN | THERMO_SD))
+      runtimeErrorMsg() << "The VV integrator is incompatible with the "
+                           "currently active combination of thermostats";
+    break;
+#ifdef NPT
+  case INTEG_METHOD_NPT_ISO:
+    if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_NPT_ISO)
+      runtimeErrorMsg() << "The NpT integrator requires the NpT thermostat";
+    break;
+#endif
+  case INTEG_METHOD_BD:
+    if (thermo_switch != THERMO_BROWNIAN)
+      runtimeErrorMsg() << "The BD integrator requires the BD thermostat";
+    break;
+#ifdef STOKESIAN_DYNAMICS
+  case INTEG_METHOD_SD:
+    if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_SD)
+      runtimeErrorMsg() << "The SD integrator requires the SD thermostat";
+    break;
+#endif
+  default:
+    runtimeErrorMsg() << "Unknown value for integ_switch";
+  }
 }
 
 /** @brief Calls the hook for propagation kernels before the force calculation
@@ -168,7 +198,7 @@ int integrate(int n_steps, int reuse_forces) {
   /* Prepare the integrator */
   on_integration_start();
 
-  /* if any method vetoes (P3M not initialized), immediately bail out */
+  /* if any method vetoes (e.g. P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
     return 0;
 
@@ -395,7 +425,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 }
 
 int integrate_set_steepest_descent(const double f_max, const double gamma,
-                                   const int max_steps,
                                    const double max_displacement) {
   if (f_max < 0.0) {
     runtimeErrorMsg() << "The maximal force must be positive.\n";
@@ -409,13 +438,11 @@ int integrate_set_steepest_descent(const double f_max, const double gamma,
     runtimeErrorMsg() << "The maximal displacement must be positive.\n";
     return ES_ERROR;
   }
-  if (max_steps < 0) {
-    runtimeErrorMsg() << "The maximal number of steps must be positive.\n";
-    return ES_ERROR;
-  }
-  steepest_descent_init(f_max, gamma, max_steps, max_displacement);
+  steepest_descent_init(f_max, gamma, max_displacement);
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  // broadcast integrator parameters to all nodes
+  mpi_bcast_steepest_descent();
   return ES_OK;
 }
 
