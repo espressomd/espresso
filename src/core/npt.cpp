@@ -23,7 +23,7 @@
 #include "integrate.hpp"
 
 #ifdef NPT
-void synchronize_npt_state(int n_steps) {
+void synchronize_npt_state() {
   MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);

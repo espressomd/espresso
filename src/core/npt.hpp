@@ -84,9 +84,8 @@ extern nptiso_struct nptiso;
 /*@}*/
 
 /** @brief Synchronizes NpT state such as instantaneous and average pressure
- *  @param n_steps Number of integration steps since the last sync
  */
-void synchronize_npt_state(int n_steps);
+void synchronize_npt_state();
 void npt_ensemble_init(const BoxGeometry &box);
 void integrator_npt_sanity_checks();
 void npt_reset_instantaneous_virials();

@@ -326,7 +326,7 @@ int integrate(int n_steps, int reuse_forces) {
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    synchronize_npt_state(n_steps);
+    synchronize_npt_state();
   }
 #endif
   return integrated_steps;
