@@ -229,14 +229,15 @@ Thermostats
 -----------
 
 The thermostat can be controlled by the class :class:`espressomd.thermostat.Thermostat`.
+The different thermostats available in |es| will be described in the following
+subsections.
 
-The different available thermostats will be described in the following
-subsections. Note that for a simulation of the NPT ensemble, you need to
-use a standard thermostat for the particle velocities (Langevin or DPD),
-and a thermostat for the box geometry (the isotropic NPT thermostat).
-
-You may combine different thermostats at your own risk by turning them
-on one by one. Note that there is only one temperature for all
+You may combine different thermostats at your own risk by turning them on
+one by one. The list of active thermostats can be cleared at any time with
+:py:meth:`system.thermostat.turn_off() <espressomd.thermostat.Thermostat.turn_off>`.
+Not all combinations of thermostats are allowed, though (see
+:py:func:`espressomd.thermostat.AssertThermostatType` for details).
+Note that there is only one temperature for all
 thermostats, although for some thermostats like the Langevin thermostat,
 particles can be assigned individual temperatures.
 
