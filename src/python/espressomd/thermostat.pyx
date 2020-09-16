@@ -37,15 +37,26 @@ from .lb cimport lb_lbfluid_get_kT
 
 
 def AssertThermostatType(*allowedthermostats):
-    """Assert that only a certain thermostat is active
+    """Assert that only a certain group of thermostats is active at a time.
 
-    Decorator class to assure that only a given thermostat is active
-    at a time.  Usage:
+    Decorator class to ensure that only specific combinations of thermostats
+    can be activated together by the user. Usage::
 
-        >>> @AssertThermostatType(THERMO_LANGEVIN)
-        >>> def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
+        cdef class Thermostat:
+            @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
+            def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
+                     act_on_virtual=False, seed=None):
+                ...
 
-    This will prefix an assertion for ``THERMO_LANGEVIN`` to the call.
+    This will prefix an assertion that prevents setting up the Langevin
+    thermostat if the list of active thermostats contains anything other
+    than the DPD and Langevin thermostats.
+
+    Parameters
+    ----------
+    allowedthermostats : :obj:`str`
+        Allowed list of thermostats which are known to be compatible
+        with one another.
 
     """
     def decoratorfunction(function):
@@ -680,6 +691,7 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_NPTISO_GV)
 
     IF DPD:
+        @AssertThermostatType(THERMO_DPD, THERMO_LANGEVIN, THERMO_LB)
         def set_dpd(self, kT=None, seed=None):
             """
             Sets the DPD thermostat with required parameters 'kT'.
@@ -721,6 +733,7 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_TEMPERATURE)
 
     IF STOKESIAN_DYNAMICS:
+        @AssertThermostatType(THERMO_SD)
         def set_stokesian(self, kT=None, seed=None):
             """
             Sets the SD thermostat with required parameters.

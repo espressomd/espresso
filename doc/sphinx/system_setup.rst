@@ -193,14 +193,16 @@ Thermostats
 -----------
 
 The thermostat can be controlled by the class :class:`espressomd.thermostat.Thermostat`.
+The different thermostats available in |es| will be described in the following
+subsections.
 
-The different available thermostats will be described in the following
-subsections. Note that for a simulation of the NPT ensemble, you need to
-use a standard thermostat for the particle velocities (Langevin or DPD),
-and a thermostat for the box geometry (the isotropic NPT thermostat).
-
-You may combine different thermostats at your own risk by turning them
-on one by one. Note that there is only one temperature for all
+You may combine different thermostats at your own risk by turning them on
+one by one. The list of active thermostats can be cleared at any time with
+:py:meth:`system.thermostat.turn_off() <espressomd.thermostat.Thermostat.turn_off>`.
+Not all combinations of thermostats are allowed, though (see
+:py:func:`espressomd.thermostat.AssertThermostatType` for details).
+Some integrators only work with a specific thermostat and throw an
+error otherwise. Note that there is only one temperature for all
 thermostats, although for some thermostats like the Langevin thermostat,
 particles can be assigned individual temperatures.
 
@@ -303,8 +305,12 @@ Temperature is set via the ``kT`` argument of the LB fluid.
 The magnitude of the frictional coupling can be adjusted by the
 parameter ``gamma``. To enable the LB thermostat, use::
 
+    import espressomd
+    import espressomd.lb
+    system = espressomd.System(box_l=[1, 1, 1])
+    lbf = espressomd.lb.LBFluid(agrid=1, dens=1, visc=1, tau=0.01)
+    system.actors.add(lbf)
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
-
 
 No other thermostatting mechanism is necessary
 then. Please switch off any other thermostat before starting the LB
@@ -335,7 +341,7 @@ and a repulsive conservative force, see :ref:`Hat interaction`.
 
 The temperature is set via
 :py:meth:`espressomd.thermostat.Thermostat.set_dpd`
-which takes ``kT`` as the only argument.
+which takes ``kT`` and ``seed`` as arguments.
 
 The friction coefficients and cutoff are controlled via the
 :ref:`DPD interaction` on a per type-pair basis. For details
@@ -477,7 +483,15 @@ Stokesian thermostat
 In order to thermalize a Stokesian Dynamics simulation, the SD thermostat
 needs to be activated via::
 
+    import espressomd
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.periodicity = [False, False, False]
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
+    system.part.add(pos=[0, 0, 0], rotation=[1, 0, 0], ext_force=[0, 0, -1])
     system.thermostat.set_stokesian(kT=1.0, seed=43)
+    system.integrator.set_stokesian_dynamics(viscosity=1.0, radii={0: 1.0})
+    system.integrator.run(100)
 
 where ``kT`` denotes the desired temperature of the system, and ``seed`` the
 seed for the random number generator.

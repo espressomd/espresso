@@ -275,7 +275,7 @@ if(WITH_STOKESIAN_DYNAMICS)
   endif()
 endif(WITH_STOKESIAN_DYNAMICS)
 
-if(WITH_STOKESIAN_DYNAMICS)
+if(STOKESIAN_DYNAMICS)
   set(CMAKE_INSTALL_LIBDIR
       "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
   include(FetchContent)
@@ -289,7 +289,7 @@ if(WITH_STOKESIAN_DYNAMICS)
     add_subdirectory(${stokesian_dynamics_SOURCE_DIR}
                      ${stokesian_dynamics_BINARY_DIR})
   endif()
-endif(WITH_STOKESIAN_DYNAMICS)
+endif(STOKESIAN_DYNAMICS)
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)
