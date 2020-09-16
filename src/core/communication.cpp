@@ -97,7 +97,6 @@ int n_nodes = -1;
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
-  CB(mpi_bcast_nptiso_geom_worker)                                             \
   CB(mpi_bcast_steepest_descent_worker)                                        \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_resort_particles_slave)                                               \
@@ -496,10 +495,14 @@ void mpi_set_use_verlet_lists(bool use_verlet_lists) {
 
 /*************** BCAST NPTISO GEOM *****************/
 
+#ifdef NPT
+REGISTER_CALLBACK(mpi_bcast_nptiso_geom_worker)
+
 void mpi_bcast_nptiso_geom() {
   mpi_call(mpi_bcast_nptiso_geom_worker, -1, 0);
   mpi_bcast_nptiso_geom_worker(-1, 0);
 }
+#endif
 
 /*************** BCAST STEEPEST DESCENT *****************/
 

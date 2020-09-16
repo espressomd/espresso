@@ -81,6 +81,4 @@ void npt_add_virial_contribution(const Utils::Vector3d &force,
     }
   }
 }
-#else  // NPT
-void mpi_bcast_nptiso_geom_worker(int, int) {}
 #endif // NPT
