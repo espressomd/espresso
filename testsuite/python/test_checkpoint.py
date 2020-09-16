@@ -302,8 +302,7 @@ class CheckpointTest(ut.TestCase):
         if 'THERM.LB' not in modes:
             state = system.part[1].bonds[1][0]._get_params_from_es_core()
             reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
-                         'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51,
-                         '_counter': 0}
+                         'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
             self.assertEqual(state, reference)
             state = system.part[1].bonds[1][0].params
             self.assertEqual(state, reference)

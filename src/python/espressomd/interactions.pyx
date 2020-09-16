@@ -2089,7 +2089,17 @@ class ThermalizedBond(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
+        counter = None
+        # Interaction id as argument
+        if len(args) == 2 and is_valid_type(args[0], int):
+            counter = args[1]
+            args = (args[0],)
         super().__init__(*args, **kwargs)
+        if counter is not None:
+            thermalized_bond_set_rng_counter(counter)
+
+    def __reduce__(self):
+        return (self.__class__, (self._bond_id, thermalized_bond.rng_counter()))
 
     def type_number(self):
         return BONDED_IA_THERMALIZED_DIST
@@ -2099,13 +2109,13 @@ class ThermalizedBond(BondedInteraction):
 
     def valid_keys(self):
         return {"temp_com", "gamma_com", "temp_distance",
-                "gamma_distance", "r_cut", "seed", "_counter"}
+                "gamma_distance", "r_cut", "seed"}
 
     def required_keys(self):
         return {"temp_com", "gamma_com", "temp_distance", "gamma_distance"}
 
     def set_default_params(self):
-        self._params = {"r_cut": 0., "seed": None, "_counter": None}
+        self._params = {"r_cut": 0., "seed": None}
 
     def _get_params_from_es_core(self):
         return \
@@ -2119,7 +2129,6 @@ class ThermalizedBond(BondedInteraction):
                  bonded_ia_params[
                      self._bond_id].p.thermalized_bond.gamma_distance,
              "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut,
-             "_counter": thermalized_bond.rng_counter(),
              "seed": thermalized_bond.rng_seed()
              }
 
@@ -2133,8 +2142,6 @@ class ThermalizedBond(BondedInteraction):
             if self.params["seed"] < 0:
                 raise ValueError("seed must be a positive integer")
             thermalized_bond_set_rng_seed(self.params["seed"])
-        if self.params.get("_counter") is not None:
-            thermalized_bond_set_rng_counter(self.params["_counter"])
 
         thermalized_bond_set_params(
             self._bond_id, self._params["temp_com"], self._params["gamma_com"],
