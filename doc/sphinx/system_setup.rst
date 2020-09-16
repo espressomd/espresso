@@ -214,10 +214,8 @@ All thermostats have a ``seed`` argument that controls the state of the random
 number generator (Philox Counter-based RNG). This seed is required on first
 activation of a thermostat, unless stated otherwise. It can be omitted in
 subsequent calls of the method that activates the same thermostat. The random
-sequence also depends on a monotonically increasing global counter that is
-incremented after each integration step. It is the user's responsibility to
-decide whether the thermostats should be deterministic (by using a fixed seed)
-or not (by using a randomized seed).
+sequence also depends on the thermostats counters that are
+incremented after each integration step.
 
 .. _Langevin thermostat:
 
