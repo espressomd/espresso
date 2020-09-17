@@ -34,7 +34,7 @@ import nbconvert
 sphinx_docs = {}
 
 
-def detect_invalid_urls(nb):
+def detect_invalid_urls(nb, sphinx_root='.'):
     '''
     Find all links. Check that links to the Sphinx documentation are valid
     (the target HTML files exist and contain the anchors). These links are
@@ -61,6 +61,7 @@ def detect_invalid_urls(nb):
     root = lxml.etree.fromstring(html_string, parser=html_parser)
     # process all links
     espressomd_website_root = 'http://espressomd.org/html/doc/'
+    sphinx_html_root = os.path.join(sphinx_root, 'doc', 'sphinx', 'html')
     broken_links = []
     for link in root.xpath('//a'):
         url = link.attrib.get('href', '')
@@ -74,7 +75,7 @@ def detect_invalid_urls(nb):
                 url = url.split('?', 1)[0]
             # check file exists
             basename = url.split(espressomd_website_root, 1)[1]
-            filepath = os.path.join('doc', 'sphinx', 'html', basename)
+            filepath = os.path.join(sphinx_html_root, basename)
             if not os.path.isfile(filepath):
                 broken_links.append(f'{url} does not exist')
                 continue
