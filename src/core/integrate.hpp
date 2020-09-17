@@ -36,9 +36,6 @@
 /** Switch determining which integrator to use. */
 extern int integ_switch;
 
-/** incremented if a Verlet update is done, aka particle resorting. */
-extern int n_verlet_updates;
-
 /** Time step for the integration. */
 extern double time_step;
 
@@ -59,7 +56,9 @@ extern bool set_py_interrupt;
 
 double interaction_range();
 
-/** check sanity of integrator params */
+/** Check integrator parameters and incompatibilities between the integrator
+ *  and the currently active thermostat(s).
+ */
 void integrator_sanity_checks();
 
 /** Integrate equations of motion
@@ -115,7 +114,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces);
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
  */
-int integrate_set_steepest_descent(double f_max, double gamma, int max_steps,
+int integrate_set_steepest_descent(double f_max, double gamma,
                                    double max_displacement);
 
 /** @brief Set the velocity Verlet integrator for the NVT ensemble. */

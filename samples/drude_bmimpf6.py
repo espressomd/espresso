@@ -32,7 +32,6 @@ espressomd.assert_features(required_features)
 
 import espressomd.observables
 import espressomd.accumulators
-from espressomd.minimize_energy import steepest_descent
 from espressomd.electrostatics import P3M
 from espressomd.interactions import ThermalizedBond, HarmonicBond
 from espressomd import drude_helpers
@@ -252,8 +251,10 @@ for i in range(n_ionpairs):
 print("\n-->E minimization")
 print("Before: {:.2e}".format(system.analysis.energy()["total"]))
 n_max_steps = 100000
-steepest_descent(system, f_max=5.0, gamma=0.01, max_steps=n_max_steps,
-                 max_displacement=0.01)
+system.integrator.set_steepest_descent(f_max=5.0, gamma=0.01,
+                                       max_displacement=0.01)
+system.integrator.run(n_max_steps)
+system.integrator.set_vv()
 print("After: {:.2e}".format(system.analysis.energy()["total"]))
 
 # THERMOSTAT

@@ -116,7 +116,7 @@ cdef class System:
 
     def __init__(self, **kwargs):
         global _system_created
-        if (not _system_created):
+        if not _system_created:
             self.globals = Globals()
             if 'box_l' not in kwargs:
                 raise ValueError("Required argument box_l not provided.")
@@ -127,7 +127,7 @@ cdef class System:
                     System.__setattr__(self, arg, kwargs.get(arg))
                 else:
                     raise ValueError(
-                        "Property {} can not be set via argument to System class.".format(arg))
+                        f"Property {arg} can not be set via argument to System class.")
             self.actors = Actors()
             self.analysis = Analysis(self)
             self.auto_update_accumulators = AutoUpdateAccumulators()
@@ -169,21 +169,21 @@ cdef class System:
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['part'] = System.__getattribute__(self, "part")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
-        odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(
             self, "auto_update_accumulators")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
         odict['constraints'] = System.__getattribute__(self, "constraints")
         odict['galilei'] = System.__getattribute__(self, "galilei")
-        odict['integrator'] = System.__getattribute__(self, "integrator")
-        IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
-            odict['lbboundaries'] = System.__getattribute__(
-                self, "lbboundaries")
-        odict['thermostat'] = System.__getattribute__(self, "thermostat")
         IF COLLISION_DETECTION:
             odict['collision_detection'] = System.__getattribute__(
                 self, "collision_detection")
+        odict['actors'] = System.__getattribute__(self, "actors")
+        IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+            odict['lbboundaries'] = System.__getattribute__(
+                self, "lbboundaries")
+        odict['integrator'] = System.__getattribute__(self, "integrator")
+        odict['thermostat'] = System.__getattribute__(self, "thermostat")
         IF LB_WALBERLA:
             odict['_vtk_registry'] = System.__getattribute__(
                 self, "_vtk_registry")

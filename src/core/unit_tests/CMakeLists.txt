@@ -29,8 +29,8 @@ unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp DEPENDS
           EspressoUtils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp DEPENDS
           EspressoUtils)
+unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp DEPENDS EspressoUtils)
-unit_test(NAME verlet_ia_test SRC verlet_ia_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Particle_test SRC Particle_test.cpp DEPENDS EspressoUtils
           Boost::serialization)
 unit_test(NAME field_coupling_couplings SRC field_coupling_couplings_test.cpp

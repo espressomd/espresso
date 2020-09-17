@@ -20,7 +20,6 @@
  */
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <memory>
 #include <mpi.h>
 #ifdef OPEN_MPI
@@ -32,32 +31,22 @@
 
 #include "errorhandling.hpp"
 
+#include "CellStructure.hpp"
 #include "EspressoSystemInterface.hpp"
-#include "Particle.hpp"
-#include "bonded_interactions/bonded_tab.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
-#include "collision.hpp"
 #include "cuda_interface.hpp"
 #include "energy.hpp"
 #include "event.hpp"
-#include "forces.hpp"
 #include "galilei.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
-#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
 #include "integrators/steepest_descent.hpp"
-#include "io/mpiio/mpiio.hpp"
-#include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "npt.hpp"
-#include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
-#include "rotation.hpp"
-#include "stokesian_dynamics/sd_interface.hpp"
-#include "virtual_sites.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
@@ -65,9 +54,6 @@
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
 #include "serialization/IA_parameters.hpp"
-
-#include <utils/Counter.hpp>
-#include <utils/u32_to_u64.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/range/algorithm/min_element.hpp>
@@ -111,6 +97,7 @@ int n_nodes = -1;
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
+  CB(mpi_bcast_steepest_descent_worker)                                        \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
@@ -294,7 +281,7 @@ void mpi_remove_particle_slave(int pnode, int part) {
 
 /********************* STEEPEST DESCENT ********/
 static int mpi_steepest_descent_slave(int steps, int) {
-  return steepest_descent(steps);
+  return integrate(steps, -1);
 }
 REGISTER_CALLBACK_MASTER_RANK(mpi_steepest_descent_slave)
 
@@ -508,6 +495,13 @@ void mpi_bcast_nptiso_geom_slave(int, int) {
   MPI_Bcast(&nptiso.non_const_dim, 1, MPI_INT, 0, comm_cart);
 }
 
+/*************** BCAST STEEPEST DESCENT *****************/
+
+void mpi_bcast_steepest_descent() {
+  mpi_call(mpi_bcast_steepest_descent_worker, -1, 0);
+  mpi_bcast_steepest_descent_worker(-1, 0);
+}
+
 /******************* BCAST CUDA GLOBAL PART VARS ********************/
 
 void mpi_bcast_cuda_global_part_vars() {
@@ -636,7 +630,7 @@ void mpi_loop() {
 
 std::vector<int> mpi_resort_particles(int global_flag) {
   mpi_call(mpi_resort_particles_slave, global_flag, 0);
-  cells_resort_particles(global_flag);
+  cell_structure.resort_particles(global_flag);
 
   clear_particle_node();
 
@@ -649,7 +643,7 @@ std::vector<int> mpi_resort_particles(int global_flag) {
 }
 
 void mpi_resort_particles_slave(int global_flag, int) {
-  cells_resort_particles(global_flag);
+  cell_structure.resort_particles(global_flag);
 
   boost::mpi::gather(
       comm_cart, static_cast<int>(cell_structure.local_particles().size()), 0);

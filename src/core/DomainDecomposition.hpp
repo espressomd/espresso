@@ -81,7 +81,6 @@ public:
                       const BoxGeometry &box_geo,
                       const LocalBox<double> &local_geo);
 
-public:
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;
   }
@@ -100,9 +99,12 @@ public:
     return position_to_cell(p.r.p);
   }
 
-  bool minimum_image_distance() const override { return false; }
   void resort(bool global, std::vector<ParticleChange> &diff) override;
   Utils::Vector3d max_range() const override;
+
+  boost::optional<BoxGeometry> minimum_image_distance() const override {
+    return {};
+  }
 
 private:
   /** Fill local_cells list and ghost_cells list for use with domain

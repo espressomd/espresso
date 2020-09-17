@@ -229,7 +229,7 @@ class CheckpointTest(ut.TestCase):
         thmst = system.thermostat.get_state()[0]
         self.assertEqual(thmst['type'], 'DPD')
         self.assertEqual(thmst['kT'], 1.0)
-        self.assertEqual(thmst['seed'], 42)
+        self.assertEqual(thmst['seed'], 42 + 6)
 
     @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('THERM.NPT' not in modes, 'NPT thermostat not in modes')

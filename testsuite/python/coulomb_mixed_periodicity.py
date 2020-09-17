@@ -44,11 +44,8 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.S.box_l = (10, 10, 10)
         self.S.time_step = 0.01
         self.S.cell_system.skin = 0.
-        while self.S.actors:
-            del self.S.actors[0]
+        self.S.actors.clear()
 
-        #  Clear actors that might be left from prev tests
-        self.S.part.clear()
         data = np.genfromtxt(tests_common.abspath(
             "data/coulomb_mixed_periodicity_system.data"))
 
@@ -61,6 +58,9 @@ class CoulombMixedPeriodicity(ut.TestCase):
             f = particle[5:]
             self.S.part.add(id=int(id), pos=pos, q=q)
             self.forces[id] = f
+
+    def tearDown(self):
+        self.S.part.clear()
 
     def compare(self, method_name, energy=True):
         # Compare forces and energy now in the system to stored ones

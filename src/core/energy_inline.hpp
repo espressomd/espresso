@@ -301,22 +301,4 @@ inline double calc_kinetic_energy(Particle const &p1) {
   return res;
 }
 
-/** Add bonded energies for one particle to the energy observable.
- *  @param[in] p   particle for which to calculate energies
- *  @param[out]    obs_energy   energy observable
- */
-inline void add_bonded_energy(Particle &p, Observable_stat &obs_energy) {
-  cell_structure.execute_bond_handler(
-      p, [&obs_energy](Particle &p1, int bond_id,
-                       Utils::Span<Particle *> partners) {
-        auto const &iaparams = bonded_ia_params[bond_id];
-        auto const result = calc_bonded_energy(iaparams, p1, partners);
-        if (result) {
-          obs_energy.bonded_contribution(bond_id)[0] += result.get();
-          return false;
-        }
-        return true;
-      });
-}
-
 #endif // ENERGY_INLINE_HPP

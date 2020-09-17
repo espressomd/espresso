@@ -137,8 +137,8 @@ cdef class CellSystem:
 
         def __set__(self, _node_grid):
             if not np.prod(_node_grid) == n_nodes:
-                raise ValueError("Number of available nodes " + str(
-                    n_nodes) + " and imposed node grid " + str(_node_grid) + " do not agree.")
+                raise ValueError(
+                    f"Number of available nodes {n_nodes} and imposed node grid {_node_grid} do not agree.")
             else:
                 node_grid[0] = _node_grid[0]
                 node_grid[1] = _node_grid[1]

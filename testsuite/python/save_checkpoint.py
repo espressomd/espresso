@@ -32,7 +32,6 @@ if espressomd.has_features("LB_BOUNDARIES"):
 # TODO WALBERLA
 # if espressomd.has_features('ELECTROKINETICS'):
 #     import espressomd.electrokinetics
-from espressomd.minimize_energy import steepest_descent
 from espressomd.shapes import Wall, Sphere
 from espressomd import constraints
 
@@ -149,10 +148,6 @@ if 'LB.OFF' in modes:
         system.integrator.set_stokesian_dynamics(
             approximation_method='fts', device='gpu', viscosity=2.0,
             radii={0: 1.0}, pair_mobility=True, self_mobility=False)
-    # set minimization
-    if 'MINIMIZATION' in modes:
-        steepest_descent(system, f_max=1, gamma=10, max_steps=0,
-                         max_displacement=0.01)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
@@ -227,32 +222,6 @@ EK_implementation = None
 #        ext_force_density=[0.01, -0.08, 0.06])
 #    ek.add_species(ek_species)
 #    system.actors.add(ek)
-
-if 'LB.OFF' in modes:
-    # set thermostat
-    if 'THERM.LANGEVIN' in modes:
-        system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
-    elif 'THERM.BD' in modes:
-        system.thermostat.set_brownian(kT=1.0, gamma=2.0, seed=42)
-    elif 'THERM.NPT' in modes and has_features('NPT'):
-        system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1, seed=42)
-    elif 'THERM.DPD' in modes and has_features('DPD'):
-        system.thermostat.set_dpd(kT=1.0, seed=42)
-    # set integrator
-    if 'INT.NPT' in modes and has_features('NPT'):
-        system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01,
-                                            direction=[1, 0, 0])
-    elif 'INT.SD' in modes:
-        system.integrator.set_steepest_descent(f_max=2.0, gamma=0.1,
-                                               max_displacement=0.01)
-    elif 'INT.NVT' in modes:
-        system.integrator.set_nvt()
-    elif 'INT.BD' in modes:
-        system.integrator.set_brownian_dynamics()
-    # set minimization
-    if 'MINIMIZATION' in modes:
-        steepest_descent(system, f_max=1, gamma=10, max_steps=0,
-                         max_displacement=0.01)
 
 # TODO WALBERLA
 # if LB_implementation:

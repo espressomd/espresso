@@ -6,7 +6,6 @@ set(EspressoCore_SRC
     comfixed_global.cpp
     communication.cpp
     constraints.cpp
-    debug.cpp
     dpd.cpp
     energy.cpp
     errorhandling.cpp

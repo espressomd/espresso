@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 if(POLICY CMP0076)
   # make target_sources() convert relative paths to absolute
@@ -167,7 +167,7 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.5 REQUIRED)
+find_package(PythonInterp 3.6 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.26 REQUIRED)
@@ -276,10 +276,9 @@ if(WITH_STOKESIAN_DYNAMICS)
   endif()
 endif(WITH_STOKESIAN_DYNAMICS)
 
-if(WITH_STOKESIAN_DYNAMICS)
+if(STOKESIAN_DYNAMICS)
   set(CMAKE_INSTALL_LIBDIR
       "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
-  cmake_minimum_required(VERSION 3.11)
   include(FetchContent)
   FetchContent_Declare(
     stokesian_dynamics
@@ -291,7 +290,7 @@ if(WITH_STOKESIAN_DYNAMICS)
     add_subdirectory(${stokesian_dynamics_SOURCE_DIR}
                      ${stokesian_dynamics_BINARY_DIR})
   endif()
-endif(WITH_STOKESIAN_DYNAMICS)
+endif(STOKESIAN_DYNAMICS)
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)

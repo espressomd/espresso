@@ -20,7 +20,6 @@
 #
 import espressomd
 from espressomd import assert_features, electrostatics
-from espressomd.minimize_energy import steepest_descent
 from espressomd.observables import RDF
 from espressomd.accumulators import MeanVarianceCalculator
 import numpy
@@ -91,13 +90,18 @@ for s in [["Anion", "Cation"], ["Anion", "Anion"], ["Cation", "Cation"]]:
 
 
 print("\n--->WCA Equilibration")
+min_sigma = min(wca_sigmas.values())
 max_sigma = max(wca_sigmas.values())
 min_dist = 0.0
 
+system.integrator.set_steepest_descent(f_max=0, gamma=10,
+                                       max_displacement=min_sigma * 0.01)
+
 while min_dist < max_sigma:
-    steepest_descent(system, f_max=0, gamma=10, max_steps=10,
-                     max_displacement=max_sigma * 0.01)
     min_dist = system.analysis.min_dist()
+    system.integrator.run(10)
+
+system.integrator.set_vv()
 
 # Set thermostat
 system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
