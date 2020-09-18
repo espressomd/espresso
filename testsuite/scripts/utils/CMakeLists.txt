@@ -22,7 +22,7 @@ function(UTILS_TEST)
   set(utils_tests ${utils_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
 endfunction(UTILS_TEST)
 
-sample_test(FILE test_maintainer_CI_jupyter_warnings.py)
+utils_test(FILE test_maintainer_CI_jupyter_warnings.py)
 
 add_custom_target(
   check_utils COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
