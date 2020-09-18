@@ -2089,7 +2089,17 @@ class ThermalizedBond(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
+        counter = None
+        # Interaction id as argument
+        if len(args) == 2 and is_valid_type(args[0], int):
+            counter = args[1]
+            args = (args[0],)
         super().__init__(*args, **kwargs)
+        if counter is not None:
+            thermalized_bond_set_rng_counter(counter)
+
+    def __reduce__(self):
+        return (self.__class__, (self._bond_id, thermalized_bond.rng_counter()))
 
     def type_number(self):
         return BONDED_IA_THERMALIZED_DIST
@@ -2119,11 +2129,11 @@ class ThermalizedBond(BondedInteraction):
                  bonded_ia_params[
                      self._bond_id].p.thermalized_bond.gamma_distance,
              "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut,
-             "seed": thermalized_bond_get_rng_state()
+             "seed": thermalized_bond.rng_seed()
              }
 
     def _set_params_in_es_core(self):
-        if self.params["seed"] is None and thermalized_bond_is_seed_required():
+        if self.params["seed"] is None and thermalized_bond.is_seed_required():
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermalized bond")
         if self.params["seed"] is not None:
@@ -2131,7 +2141,7 @@ class ThermalizedBond(BondedInteraction):
                 self.params["seed"], 1, int, "seed must be a positive integer")
             if self.params["seed"] < 0:
                 raise ValueError("seed must be a positive integer")
-            thermalized_bond_set_rng_state(self.params["seed"])
+            thermalized_bond_set_rng_seed(self.params["seed"])
 
         thermalized_bond_set_params(
             self._bond_id, self._params["temp_com"], self._params["gamma_com"],

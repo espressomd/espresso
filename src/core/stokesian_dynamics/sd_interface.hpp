@@ -50,9 +50,6 @@ double get_sd_kT();
 void set_sd_flags(int flg);
 int get_sd_flags();
 
-void set_sd_seed(std::size_t seed);
-std::size_t get_sd_seed();
-
 /** Takes the forces and torques on all particles and computes their
  *  velocities. Acts globally on particles on all nodes; i.e. particle data
  *  is gathered from all nodes and their velocities and angular velocities are
@@ -60,7 +57,7 @@ std::size_t get_sd_seed();
  */
 void propagate_vel_pos_sd(const ParticleRange &particles,
                           const boost::mpi::communicator &comm,
-                          size_t time_index, double time_step);
+                          double time_step);
 
 #endif // STOKESIAN_DYNAMICS
 
