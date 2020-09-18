@@ -27,10 +27,14 @@
  */
 
 #include "integrate.hpp"
-#include "Particle.hpp"
+#include "integrators/brownian_inline.hpp"
+#include "integrators/steepest_descent.hpp"
+#include "integrators/stokesian_dynamics_inline.hpp"
+#include "integrators/velocity_verlet_inline.hpp"
+#include "integrators/velocity_verlet_npt.hpp"
+
+#include "ParticleRange.hpp"
 #include "accumulators.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -51,20 +55,9 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
-#include "integrators/brownian_inline.hpp"
-#include "integrators/langevin_inline.hpp"
-#include "integrators/steepest_descent.hpp"
-#include "integrators/stokesian_dynamics_inline.hpp"
-#include "integrators/velocity_verlet_inline.hpp"
-#include "integrators/velocity_verlet_npt.hpp"
-
 #include <profiler/profiler.hpp>
-#include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
-#include <cmath>
-#include <mpi.h>
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
@@ -91,9 +84,6 @@ void notify_sig_int() {
   set_py_interrupt = true; // global to notify Python
 }
 } // namespace
-
-/** Thermostats increment the RNG counter here. */
-void philox_counter_increment();
 
 void integrator_sanity_checks() {
   if (time_step < 0.0) {
@@ -165,7 +155,6 @@ bool integrator_step_1(ParticleRange &particles) {
 
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
-  extern BrownianThermostat brownian;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -218,7 +207,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    force_calc(cell_structure);
+    force_calc(cell_structure, time_step);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -280,7 +269,7 @@ int integrate(int n_steps, int reuse_forces) {
 
     particles = cell_structure.local_particles();
 
-    force_calc(cell_structure);
+    force_calc(cell_structure, time_step);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
@@ -339,32 +328,10 @@ int integrate(int n_steps, int reuse_forces) {
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    synchronize_npt_state(n_steps);
+    synchronize_npt_state();
   }
 #endif
   return integrated_steps;
-}
-
-void philox_counter_increment() {
-  if (thermo_switch & THERMO_LANGEVIN) {
-    langevin_rng_counter_increment();
-  }
-  if (thermo_switch & THERMO_BROWNIAN) {
-    brownian_rng_counter_increment();
-  }
-#ifdef NPT
-  if (thermo_switch & THERMO_NPT_ISO) {
-    npt_iso_rng_counter_increment();
-  }
-#endif
-#ifdef DPD
-  if (thermo_switch & THERMO_DPD) {
-    dpd_rng_counter_increment();
-  }
-#endif
-  if (n_thermalized_bonds) {
-    thermalized_bond_rng_counter_increment();
-  }
 }
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {

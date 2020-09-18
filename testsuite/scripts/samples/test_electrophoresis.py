@@ -50,11 +50,11 @@ class Sample(ut.TestCase):
     def test_persistence_length(self):
         # These two values differ due to undersampling, they converge
         # to the same value around N_SAMPLES=1000
-        self.assertAlmostEqual(sample.persistence_length, 30., delta=3)
-        self.assertAlmostEqual(sample.persistence_length_obs, 34.8, delta=3)
+        self.assertAlmostEqual(sample.persistence_length, 38.2, delta=1)
+        self.assertAlmostEqual(sample.persistence_length_obs, 48.3, delta=1)
 
     def test_mobility(self):
-        self.assertAlmostEqual(sample.mu, 1.02, delta=0.02)
+        self.assertAlmostEqual(sample.mu, 1.05, delta=0.02)
 
     def test_electrophoresis_gradient(self):
         # the force is applied along the x-axis

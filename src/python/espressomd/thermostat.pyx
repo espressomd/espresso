@@ -119,6 +119,7 @@ cdef class Thermostat:
                                   gamma_rotation=thmst["gamma_rotation"],
                                   act_on_virtual=thmst["act_on_virtual"],
                                   seed=thmst["seed"])
+                langevin_set_rng_counter(thmst["counter"])
             if thmst["type"] == "LB":
                 self.set_lb(
                     LB_fluid=thmst["LB_fluid"],
@@ -128,15 +129,21 @@ cdef class Thermostat:
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], gamma0=thmst["gamma0"],
                              gammav=thmst["gammav"], seed=thmst["seed"])
+                npt_iso_set_rng_counter(thmst["counter"])
             if thmst["type"] == "DPD":
-                self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
+                if DPD:
+                    self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
+                    dpd_set_rng_counter(thmst["counter"])
             if thmst["type"] == "BROWNIAN":
                 self.set_brownian(kT=thmst["kT"], gamma=thmst["gamma"],
                                   gamma_rotation=thmst["gamma_rotation"],
                                   act_on_virtual=thmst["act_on_virtual"],
                                   seed=thmst["seed"])
+                brownian_set_rng_counter(thmst["counter"])
             if thmst["type"] == "SD":
-                self.set_stokesian(kT=thmst["kT"], seed=thmst["seed"])
+                IF STOKESIAN_DYNAMICS:
+                    self.set_stokesian(kT=thmst["kT"], seed=thmst["seed"])
+                    stokesian_set_rng_counter(thmst["counter"])
 
     def get_ts(self):
         return thermo_switch
@@ -153,7 +160,8 @@ cdef class Thermostat:
             lang_dict["type"] = "LANGEVIN"
             lang_dict["kT"] = temperature
             lang_dict["act_on_virtual"] = thermo_virtual
-            lang_dict["seed"] = int(langevin_get_rng_state())
+            lang_dict["seed"] = langevin.rng_seed()
+            lang_dict["counter"] = langevin.rng_counter()
             IF PARTICLE_ANISOTROPY:
                 lang_dict["gamma"] = [langevin.gamma[0],
                                       langevin.gamma[1],
@@ -176,7 +184,8 @@ cdef class Thermostat:
             lang_dict["type"] = "BROWNIAN"
             lang_dict["kT"] = temperature
             lang_dict["act_on_virtual"] = thermo_virtual
-            lang_dict["seed"] = int(brownian_get_rng_state())
+            lang_dict["seed"] = brownian.rng_seed()
+            lang_dict["counter"] = brownian.rng_counter()
             IF PARTICLE_ANISOTROPY:
                 lang_dict["gamma"] = [brownian.gamma[0],
                                       brownian.gamma[1],
@@ -206,7 +215,8 @@ cdef class Thermostat:
             npt_dict = {}
             npt_dict["type"] = "NPT_ISO"
             npt_dict["kT"] = temperature
-            npt_dict["seed"] = int(npt_iso_get_rng_state())
+            npt_dict["seed"] = npt_iso.rng_seed()
+            npt_dict["counter"] = npt_iso.rng_counter()
             npt_dict["gamma0"] = npt_iso.gamma0
             npt_dict["gammav"] = npt_iso.gammav
             npt_dict.update(nptiso)
@@ -216,14 +226,16 @@ cdef class Thermostat:
                 dpd_dict = {}
                 dpd_dict["type"] = "DPD"
                 dpd_dict["kT"] = temperature
-                dpd_dict["seed"] = int(dpd_get_rng_state())
+                dpd_dict["seed"] = dpd.rng_seed()
+                dpd_dict["counter"] = dpd.rng_counter()
                 thermo_list.append(dpd_dict)
-        if (thermo_switch & THERMO_SD):
+        if thermo_switch & THERMO_SD:
             IF STOKESIAN_DYNAMICS:
                 sd_dict = {}
                 sd_dict["type"] = "SD"
                 sd_dict["kT"] = get_sd_kT()
-                sd_dict["seed"] = get_sd_seed()
+                sd_dict["seed"] = stokesian.rng_seed()
+                sd_dict["counter"] = stokesian.rng_counter()
                 thermo_list.append(sd_dict)
         return thermo_list
 
@@ -356,7 +368,7 @@ cdef class Thermostat:
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
 
         # Seed is required if the RNG is not initialized
-        if seed is None and langevin_is_seed_required():
+        if seed is None and langevin.is_seed_required():
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermostat")
 
@@ -365,7 +377,7 @@ cdef class Thermostat:
                 seed, 1, int, "seed must be a positive integer")
             if seed < 0:
                 raise ValueError("seed must be a positive integer")
-            langevin_set_rng_state(seed)
+            langevin_set_rng_seed(seed)
 
         global temperature
         temperature = float(kT)
@@ -506,7 +518,7 @@ cdef class Thermostat:
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
 
         # Seed is required if the RNG is not initialized
-        if seed is None and brownian_is_seed_required():
+        if seed is None and brownian.is_seed_required():
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermostat")
 
@@ -515,7 +527,7 @@ cdef class Thermostat:
                 seed, 1, int, "seed must be a positive integer")
             if seed < 0:
                 raise ValueError("seed must be a positive integer")
-            brownian_set_rng_state(seed)
+            brownian_set_rng_seed(seed)
 
         global temperature
         temperature = float(kT)
@@ -655,7 +667,7 @@ cdef class Thermostat:
                 raise ValueError("temperature must be a positive number")
 
             # Seed is required if the RNG is not initialized
-            if seed is None and npt_iso_is_seed_required():
+            if seed is None and npt_iso.is_seed_required():
                 raise ValueError(
                     "A seed has to be given as keyword argument on first activation of the thermostat")
 
@@ -664,7 +676,7 @@ cdef class Thermostat:
                     seed, 1, int, "seed must be a positive integer")
                 if seed < 0:
                     raise ValueError("seed must be a positive integer")
-                npt_iso_set_rng_state(seed)
+                npt_iso_set_rng_seed(seed)
 
             global temperature
             temperature = float(kT)
@@ -701,7 +713,7 @@ cdef class Thermostat:
                 raise ValueError("temperature must be a positive number")
 
             # Seed is required if the RNG is not initialized
-            if seed is None and dpd_is_seed_required():
+            if seed is None and dpd.is_seed_required():
                 raise ValueError(
                     "A seed has to be given as keyword argument on first activation of the thermostat")
 
@@ -710,7 +722,7 @@ cdef class Thermostat:
                     seed, 1, int, "seed must be a positive integer")
                 if seed < 0:
                     raise ValueError("seed must be a positive integer")
-                dpd_set_rng_state(seed)
+                dpd_set_rng_seed(seed)
 
             global temperature
             temperature = float(kT)
@@ -732,7 +744,7 @@ cdef class Thermostat:
             Parameters
             ----------
             kT : :obj:`float`, optional
-                Temperature
+                Temperature.
             seed : :obj:`int`, optional
                 Seed for the random number generator
 
@@ -740,14 +752,23 @@ cdef class Thermostat:
 
             if (kT is None) or (kT == 0):
                 set_sd_kT(0.0)
+                if stokesian.is_seed_required():
+                    stokesian_set_rng_seed(0)
             else:
                 utils.check_type_or_throw_except(
                     kT, 1, float, "kT must be a float")
                 set_sd_kT(kT)
 
-                utils.check_type_or_throw_except(
-                    seed, 1, int, "seed must be an integer")
-                set_sd_seed(seed)
+                # Seed is required if the RNG is not initialized
+                if seed is None and stokesian.is_seed_required():
+                    raise ValueError(
+                        "A seed has to be given as keyword argument on first activation of the thermostat")
+                if seed is not None:
+                    utils.check_type_or_throw_except(
+                        seed, 1, int, "seed must be an integer")
+                    if seed < 0:
+                        raise ValueError("seed must be a positive integer")
+                    stokesian_set_rng_seed(seed)
 
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_SD)
