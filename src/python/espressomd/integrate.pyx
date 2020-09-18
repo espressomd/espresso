@@ -64,9 +64,6 @@ cdef class IntegratorHandle:
         Set the integration method to steepest descent
         (:class:`SteepestDescent`).
 
-        .. seealso::
-            :func:`espressomd.minimize_energy.steepest_descent`
-
         """
         self._integrator = SteepestDescent(*args, **kwargs)
 
@@ -232,19 +229,17 @@ cdef class SteepestDescent(Integrator):
     max_displacement : :obj:`float`
         Maximal allowed displacement per step. Typical values for a LJ liquid
         are in the range of 0.1% to 10% of the particle sigma.
-    max_steps : :obj:`int`
-        Maximal number of iterations. Gets updated at each call to :meth:`run`.
 
     """
 
     def default_params(self):
-        return {"max_steps": 0}
+        return {}
 
     def valid_keys(self):
         """All parameters that can be set.
 
         """
-        return {"f_max", "gamma", "max_displacement", "max_steps"}
+        return {"f_max", "gamma", "max_displacement"}
 
     def required_keys(self):
         """Parameters that have to be set.
@@ -259,13 +254,10 @@ cdef class SteepestDescent(Integrator):
             self._params["gamma"], 1, float, "gamma must be a float")
         check_type_or_throw_except(
             self._params["max_displacement"], 1, float, "max_displacement must be a float")
-        check_type_or_throw_except(
-            self._params["max_steps"], 1, int, "max_steps must be an int")
 
     def _set_params_in_es_core(self):
         if integrate_set_steepest_descent(self._params["f_max"],
                                           self._params["gamma"],
-                                          self._params["max_steps"],
                                           self._params["max_displacement"]):
             handle_errors(
                 "Encountered errors setting up the steepest descent integrator")
@@ -287,7 +279,6 @@ cdef class SteepestDescent(Integrator):
         """
         check_type_or_throw_except(steps, 1, int, "steps must be an int")
         assert steps >= 0, "steps has to be positive"
-        self._params["max_steps"] = steps
 
         integrated = mpi_steepest_descent(steps)
 
