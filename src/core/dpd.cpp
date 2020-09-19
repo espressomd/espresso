@@ -47,9 +47,9 @@ using Utils::Vector3d;
  *     seed-per-node)
  */
 Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
-  extern DPDThermostat dpd;
   return Random::noise_uniform<RNGSalt::SALT_DPD>(
-      dpd.rng_get(), (pid1 < pid2) ? pid2 : pid1, (pid1 < pid2) ? pid1 : pid2);
+      dpd.rng_counter(), dpd.rng_seed(), (pid1 < pid2) ? pid2 : pid1,
+      (pid1 < pid2) ? pid1 : pid2);
 }
 
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
