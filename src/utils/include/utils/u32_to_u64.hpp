@@ -23,7 +23,7 @@
 #include <utility>
 
 namespace Utils {
-constexpr inline uint64_t u32_to_u64(uint32_t high, uint64_t low) {
+constexpr inline uint64_t u32_to_u64(uint32_t high, uint32_t low) {
   return (static_cast<uint64_t>(high) << 32) | static_cast<uint64_t>(low);
 }
 
