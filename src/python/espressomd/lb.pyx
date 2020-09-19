@@ -174,7 +174,8 @@ cdef class HydrodynamicInteraction(Actor):
         Parameters
         ----------
         interpolation_order : :obj:`str`, \{"linear", "quadratic"\}
-            Interpolation order. For the CPU implementation of LB, only
+            ``"linear"`` for trilinear interpolation, ``"quadratic"`` for
+            quadratic interpolation. For the CPU implementation of LB, only
             ``"linear"`` is available.
 
         """
@@ -191,7 +192,7 @@ cdef class HydrodynamicInteraction(Actor):
         Parameters
         ----------
         pos : (3,) array_like of :obj:`float`
-              The position at which velocity is requested.
+            The position at which velocity is requested.
 
         Returns
         -------
