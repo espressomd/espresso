@@ -41,10 +41,9 @@ import random
 import matplotlib.pyplot as plt
 import argparse
 import logging as log
+import gibbs
 log.basicConfig(filename="gibbs.log", level=log.INFO)
 
-from espressomd import assert_features
-assert_features("LENNARD_JONES")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--seed', type=int, nargs=1)
@@ -70,13 +69,6 @@ init_box_l = 7.55
 kT = 1.15
 # maximum of the volume exchanged in the logarithmic space
 DV_MAX = 0.1
-PARTICLE_RADIUS = 0.5
-
-# LJ-parameters
-LJ_EPSILON = 1.0
-LJ_SIGMA = 2.0 * PARTICLE_RADIUS
-LJ_CUTOFF = 2.5
-LJ_SHIFT = 0.0
 
 # Monte-Carlo parameters
 INIT_MOVE_CHANCE = 0.16
@@ -87,18 +79,6 @@ VOLUME_CHANCE = 1.0 - INIT_MOVE_CHANCE - EXCHANGE_CHANCE
 HOST = 'localhost'
 PORT = 31415
 NUMBER_OF_CLIENTS = 2
-
-# Message identifiers
-MSG_START = 0
-MSG_END = 1
-MSG_MOVE_PART = 2
-MSG_MOVE_PART_REVERT = 21
-MSG_CHANGE_VOLUME = 3
-MSG_EXCHANGE_PART_ADD = 4
-MSG_EXCHANGE_PART_ADD_REVERT = 41
-MSG_EXCHANGE_PART_REMOVE = 5
-MSG_EXCHANGE_PART_REMOVE_REVERT = 51
-MSG_ENERGY = 6
 
 # script locations
 espresso_executable = "../pypresso"
@@ -140,7 +120,7 @@ class Box:
     def recv_energy(self):
         '''Received the energy data from the client.'''
         msg = self.recv_data()
-        if msg[0] == MSG_ENERGY:
+        if msg[0] == gibbs.MessageId.ENERGY:
             self.energy = msg[1]
             return 0
         else:
@@ -181,7 +161,7 @@ def move_particle(box):
     '''
     Tries a displacement move and stores the new energy in the corresponding box
     '''
-    box.send_data(pickle.dumps([MSG_MOVE_PART, 0]))
+    box.send_data(pickle.dumps([gibbs.MessageId.MOVE_PART, 0]))
     box.recv_energy()
 
 
@@ -209,10 +189,11 @@ def exchange_volume(boxes, global_volume):
 
     lead_box.box_l = np.cbrt(vol1)
     lead_box.send_data(pickle.dumps(
-        [MSG_CHANGE_VOLUME, lead_box.box_l]))
+        [gibbs.MessageId.CHANGE_VOLUME, lead_box.box_l]))
 
     other_box.box_l = np.cbrt(vol2)
-    other_box.send_data(pickle.dumps([MSG_CHANGE_VOLUME, other_box.box_l]))
+    other_box.send_data(pickle.dumps(
+        [gibbs.MessageId.CHANGE_VOLUME, other_box.box_l]))
 
     lead_box.recv_energy()
     other_box.recv_energy()
@@ -233,8 +214,9 @@ def exchange_particle(boxes):
     source_box.n_particles -= 1
     dest_box.n_particles += 1
 
-    source_box.send_data(pickle.dumps([MSG_EXCHANGE_PART_REMOVE, 0]))
-    dest_box.send_data(pickle.dumps([MSG_EXCHANGE_PART_ADD, 0]))
+    source_box.send_data(pickle.dumps(
+        [gibbs.MessageId.EXCHANGE_PART_REMOVE, 0]))
+    dest_box.send_data(pickle.dumps([gibbs.MessageId.EXCHANGE_PART_ADD, 0]))
 
     source_box.recv_energy()
     dest_box.recv_energy()
@@ -249,7 +231,7 @@ def check_make_move(box, inner_potential):
     '''
     if random.random() > inner_potential:
         log.info("revert move")
-        box.send_data(pickle.dumps([MSG_MOVE_PART_REVERT, 0]))
+        box.send_data(pickle.dumps([gibbs.MessageId.MOVE_PART_REVERT, 0]))
         box.recv_energy()
         return False
     return True
@@ -267,10 +249,10 @@ def check_exchange_volume(boxes, inner_potential):
     if random.random() > volume_factor * inner_potential:
         log.info("revert exchange volume")
         boxes[0].send_data(pickle.dumps(
-            [MSG_CHANGE_VOLUME, boxes[0].box_l_old]))
+            [gibbs.MessageId.CHANGE_VOLUME, boxes[0].box_l_old]))
         boxes[0].box_l = boxes[0].box_l_old
         boxes[1].send_data(pickle.dumps(
-            [MSG_CHANGE_VOLUME, boxes[1].box_l_old]))
+            [gibbs.MessageId.CHANGE_VOLUME, boxes[1].box_l_old]))
         boxes[1].box_l = boxes[1].box_l_old
 
         boxes[0].recv_energy()
@@ -292,8 +274,9 @@ def check_exchange_particle(source_box, dest_box, inner_potential):
         source_box.n_particles += 1
         dest_box.n_particles -= 1
         source_box.send_data(pickle.dumps(
-            [MSG_EXCHANGE_PART_REMOVE_REVERT, 0]))
-        dest_box.send_data(pickle.dumps([MSG_EXCHANGE_PART_ADD_REVERT, 0]))
+            [gibbs.MessageId.EXCHANGE_PART_REMOVE_REVERT, 0]))
+        dest_box.send_data(pickle.dumps(
+            [gibbs.MessageId.EXCHANGE_PART_ADD_REVERT, 0]))
 
         source_box.recv_energy()
         dest_box.recv_energy()
@@ -315,16 +298,15 @@ random.seed(seed)
 # start clients and connections
 for i in range(NUMBER_OF_CLIENTS):
     boxes.append(Box())
-    lj_arguments = ["-lj", str(LJ_EPSILON), str(LJ_SIGMA), str(LJ_CUTOFF),
-                    str(LJ_SHIFT)]
+
     arguments = ["-n", str(boxes[i].n_particles), "-s",
                  str(random.randint(0, np.iinfo(np.int32).max)), "-bl",
                  str(boxes[i].box_l)]
     subprocess.Popen([espresso_executable] + [client_script] +
-                     arguments + lj_arguments)
+                     arguments)
 
     boxes[i].conn, boxes[i].adr = s.accept()
-    boxes[i].send_data(pickle.dumps([MSG_START, 0]))
+    boxes[i].send_data(pickle.dumps([gibbs.MessageId.START, 0]))
 
     boxes[i].recv_energy()
 
@@ -405,7 +387,8 @@ for i in range(steps):
         densities[0].append(boxes[0].n_particles / boxes[0].box_l**3)
         densities[1].append(boxes[1].n_particles / boxes[1].box_l**3)
 
-        if i % 50 == 0: print(densities[0][-1], densities[1][-1])
+        if i % 50 == 0:
+            print(densities[0][-1], densities[1][-1])
         list_indices.append(i)
 
         assert boxes[0].n_particles + \
@@ -433,5 +416,5 @@ plt.show()
 
 # closing the socket
 for i in range(NUMBER_OF_CLIENTS):
-    boxes[i].send_data(pickle.dumps([MSG_END, 0]))
+    boxes[i].send_data(pickle.dumps([gibbs.MessageId.END, 0]))
 s.close()

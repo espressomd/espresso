@@ -28,6 +28,8 @@ import numpy as np
 import pickle
 import struct
 import argparse
+import gibbs
+
 
 espressomd.assert_features("LENNARD_JONES")
 
@@ -35,29 +37,16 @@ seed = None
 init_box_l = None
 particle_number = None
 
-lj_epsilon = None
-lj_sigma = None
-lj_cutoff = None
-lj_shift = None
+lj_epsilon = 1.0
+lj_sigma = 1.0
+lj_cutoff = 2.5
+lj_shift = 0
 
 HOST = 'localhost'
 PORT = 31415
 
-# Message identifiers
-MSG_START = 0
-MSG_END = 1
-MSG_MOVE_PART = 2
-MSG_MOVE_PART_REVERT = 21
-MSG_CHANGE_VOLUME = 3
-MSG_EXCHANGE_PART_ADD = 4
-MSG_EXCHANGE_PART_ADD_REVERT = 41
-MSG_EXCHANGE_PART_REMOVE = 5
-MSG_EXCHANGE_PART_REMOVE_REVERT = 51
-MSG_ENERGY = 6
-
 parser = argparse.ArgumentParser()
 parser.add_argument('-n', '--number-particles', type=int, nargs=1)
-parser.add_argument('-lj', '--lj-params', type=float, nargs=4)
 parser.add_argument('-s', '--seed', type=int, nargs=1)
 parser.add_argument('-bl', '--box-length', type=float, nargs=1)
 
@@ -65,11 +54,6 @@ args = parser.parse_args()
 
 if args.number_particles:
     particle_number = args.number_particles[0]
-if args.lj_params:
-    lj_epsilon = args.lj_params[0]
-    lj_sigma = args.lj_params[1]
-    lj_cutoff = args.lj_params[2]
-    lj_shift = args.lj_params[3]
 if args.seed:
     seed = args.seed[0]
 if args.box_length:
@@ -124,7 +108,7 @@ class Manipulator():
         density = len(self._system.part) / self._system.volume()
         E_sim = self._system.analysis.energy()["total"]
         E_tail = calc_tail_correction(density)
-        E_shift = calc_shift_correction(density) 
+        E_shift = calc_shift_correction(density)
         return E_sim + E_tail + E_shift
 
 
@@ -191,32 +175,32 @@ for i in range(particle_number):
 
 # send the initial energy
 energy = manipulator.energy()
-send_data(pickle.dumps([MSG_ENERGY, energy]), socket)
+send_data(pickle.dumps([gibbs.MessageId.ENERGY, energy]), socket)
 
-while msg[0] != MSG_END:
+while msg[0] != gibbs.MessageId.END:
     # receive command to execute next step
     msg = recv_data(socket)
-    if msg[0] == MSG_END:
+    if msg[0] == gibbs.MessageId.END:
         break
-    elif msg[0] == MSG_MOVE_PART:
+    elif msg[0] == gibbs.MessageId.MOVE_PART:
         manipulator.move_particle()
-    elif msg[0] == MSG_CHANGE_VOLUME:
+    elif msg[0] == gibbs.MessageId.CHANGE_VOLUME:
         box_l = msg[1]
         manipulator.change_volume_and_rescale_particles(box_l)
-    elif msg[0] == MSG_EXCHANGE_PART_ADD:
+    elif msg[0] == gibbs.MessageId.EXCHANGE_PART_ADD:
         manipulator.insert_particle()
-    elif msg[0] == MSG_EXCHANGE_PART_REMOVE:
+    elif msg[0] == gibbs.MessageId.EXCHANGE_PART_REMOVE:
         manipulator.remove_particle()
-    elif msg[0] == MSG_MOVE_PART_REVERT:
+    elif msg[0] == gibbs.MessageId.MOVE_PART_REVERT:
         manipulator.move_particle_revert()
-    elif msg[0] == MSG_EXCHANGE_PART_ADD_REVERT:
+    elif msg[0] == gibbs.MessageId.EXCHANGE_PART_ADD_REVERT:
         manipulator.remove_last_added_particle()
-    elif msg[0] == MSG_EXCHANGE_PART_REMOVE_REVERT:
+    elif msg[0] == gibbs.MessageId.EXCHANGE_PART_REMOVE_REVERT:
         manipulator.remove_particle_revert()
 
     # calculation energy and send it to the host
     energy = manipulator.energy()
-    send_data(pickle.dumps([MSG_ENERGY, energy]), socket)
+    send_data(pickle.dumps([gibbs.MessageId.ENERGY, energy]), socket)
 
 # closing the socket
 socket.close()
