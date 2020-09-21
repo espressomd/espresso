@@ -30,7 +30,6 @@ if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
 import espressomd.electrokinetics
-from espressomd.minimize_energy import steepest_descent
 from espressomd.shapes import Wall, Sphere
 from espressomd import constraints
 
@@ -182,10 +181,6 @@ if 'LB.OFF' in modes:
         system.integrator.set_stokesian_dynamics(
             approximation_method='fts', device='gpu', viscosity=2.0,
             radii={0: 1.0}, pair_mobility=True, self_mobility=False)
-    # set minimization
-    if 'MINIMIZATION' in modes:
-        steepest_descent(system, f_max=1, gamma=10, max_steps=0,
-                         max_displacement=0.01)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
