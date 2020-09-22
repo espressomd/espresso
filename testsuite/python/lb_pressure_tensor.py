@@ -90,6 +90,7 @@ class TestLBPressureTensor:
         c_s = c_s_lb * AGRID / TAU
 
         # Test time average of pressure tensor against expectation ...
+        # eq. (19) in ladd01a (https://doi.org/10.1023/A:1010414013942)
         p_avg_expected = np.diag(3 * [DENS * c_s**2 + KT / AGRID**3])
 
         # ... globally,
@@ -103,11 +104,11 @@ class TestLBPressureTensor:
                 np.mean(time_series, axis=0),
                 p_avg_expected, atol_diag=c_s_lb**2 * 10, atol_offdiag=c_s_lb**2 * 6)
 
-        # Test that <sigma_[i!=j]> ~=0 and sigma_[ij]=sigma_[ji]
+        # Test that <sigma_[i!=j]> ~=0 and sigma_[ij]==sigma_[ji] ...
         tol_global = 4 / np.sqrt(self.steps)
         tol_node = tol_global * np.sqrt(N_CELLS**3)
 
-        # check for the two sampled nodes
+        # ... for the two sampled nodes
         for i in range(3):
             for j in range(i + 1, 3):
                 avg_node0_ij = np.average(self.p_node0[:, i, j])
@@ -121,7 +122,7 @@ class TestLBPressureTensor:
                 self.assertLess(avg_node0_ij, tol_node)
                 self.assertLess(avg_node1_ij, tol_node)
 
-        # check system-wide pressure
+        # ... for the system-wide pressure tensor
         for i in range(3):
             for j in range(i + 1, 3):
                 avg_ij = np.average(self.p_global[:, i, j])
@@ -149,7 +150,8 @@ class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
 
     def test_gk_viscosity(self):
         # Check that stress auto correlatin matches dynamic viscosity
-        # eta = V/kT integral(stress acf)
+        # eta = V/kT integral (stress acf), e.g., eq. (5) in Cui et. et al
+        # (https://doi.org/10.1080/00268979609484542).
         all_viscs = []
         for i in range(3):
             for j in range(i + 1, 3):
