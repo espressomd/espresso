@@ -62,6 +62,7 @@ class TestLBPressureTensor:
         self.p_node0 = np.zeros((self.steps, 3, 3))
         self.p_node1 = np.zeros((self.steps, 3, 3))
 
+        # Define two sample nodes, at the corner and in the center
         node0 = lb[0, 0, 0]
         node1 = lb[3 * [N_CELLS // 2]]
 
@@ -73,6 +74,10 @@ class TestLBPressureTensor:
             system.integrator.run(2)
 
     def assert_allclose_matrix(self, x, y, atol_diag, atol_offdiag):
+        """Assert that all elements x_ij, y_ij are close with
+        different absolute tolerances for on- an off-diagol elements.
+
+        """
         assert x.shape == y.shape
         n = min(x.shape)
         mask_offdiag = ~np.identity(n, dtype=bool)
@@ -90,7 +95,10 @@ class TestLBPressureTensor:
         c_s = c_s_lb * AGRID / TAU
 
         # Test time average of pressure tensor against expectation ...
-        # eq. (19) in ladd01a (https://doi.org/10.1023/A:1010414013942)
+        # eq. (19) in ladd01a (https://doi.org/10.1023/A:1010414013942):
+        # Pi_eq = rho c_s^2 I + rho u * u = rho c_s^2 I + 2 / V (m u^2 / 2),
+        # with 3x3-identity matrix I . Equipartition: m u^2 / 2 = kT /2,
+        # Pi_eq = rho c_s^2 I + kT / V
         p_avg_expected = np.diag(3 * [DENS * c_s**2 + KT / AGRID**3])
 
         # ... globally,
@@ -152,6 +160,7 @@ class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
         # Check that stress auto correlatin matches dynamic viscosity
         # eta = V/kT integral (stress acf), e.g., eq. (5) in Cui et. et al
         # (https://doi.org/10.1080/00268979609484542).
+        # Cannot be run for CPU with sufficent statistics without CI timeout.
         all_viscs = []
         for i in range(3):
             for j in range(i + 1, 3):
