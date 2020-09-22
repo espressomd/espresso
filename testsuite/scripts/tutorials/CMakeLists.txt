@@ -48,7 +48,6 @@ tutorial_test(FILE test_11-ferrofluid_1.py)
 tutorial_test(FILE test_11-ferrofluid_2.py)
 tutorial_test(FILE test_11-ferrofluid_3.py)
 tutorial_test(FILE test_12-constant_pH.py)
-tutorial_test(FILE test_13-charged_rod.py)
 
 add_custom_target(
   check_tutorials COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
