@@ -5,8 +5,12 @@
 After the tutorial, students should be able to 
 
 * explain
-    * role of Lennard-Jones potential
+    * role of Lennard-Jones potential:
+      * noble gases
+      * first MD simulations by Verlet et al. (liquid argon)
     * role of radial distribution function
+      * relation to structure factor
+      * LJ agrees well with experiments for noble gases!
     * connection between mean squared displacement and diffusion coefficient
     * how to use an auto correlation function to estimate correlation times and how that affects error estimation
 
@@ -31,9 +35,11 @@ After the tutorial, students should be able to
 * Mention efficiency (loops and lists) vs. numpy arrays at the cost of some readability.
 * Non-bonded interactions are defined between pairs of particle types.
   Mention that type=0 is implied when creating particles without specifying one.
-* Explain Lennard-Jones cutoff and shift.
+* Explain Lennard-Jones cutoff and shift - we don't shift here to make energies comparable to historic simulations (Verlet at al.).
+* Explain reduced units - here: LJ units!
 * Explain steepest descent: In general overlap removal can
   be done in multiple ways (warmup with force capping, 
   small time step, etc.).
   Additionally the steepest descent algorithm can get trapped in local minima and the convergence criterion is system-dependent.
 * Mention that accumulators are updated auomatically.
+* Statistical independent measurements for t > correlation time.
