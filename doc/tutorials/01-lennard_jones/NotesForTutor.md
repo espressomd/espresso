@@ -11,7 +11,6 @@ After the tutorial, students should be able to
     * role of radial distribution function
       * relation to structure factor
       * LJ agrees well with experiments for noble gases!
-    * connection between mean squared displacement and diffusion coefficient
     * how to use an auto correlation function to estimate correlation times and how that affects error estimation
 
 
