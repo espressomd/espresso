@@ -28,9 +28,6 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def test_global_variables(self):
-        self.assertLess(tutorial.standard_error_total_energy, 2.5)
-
     def test_rdf_curve(self):
         self.assertGreater(
             np.corrcoef(tutorial.rdf, tutorial.theo_rdf)[1, 0], 0.985)
