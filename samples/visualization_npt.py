@@ -24,7 +24,6 @@ from threading import Thread
 
 import espressomd
 from espressomd.interactions import HarmonicBond
-from espressomd.minimize_energy import steepest_descent
 import espressomd.visualization_opengl
 
 required_features = ["NPT", "LENNARD_JONES"]
@@ -52,8 +51,9 @@ for i in range(0, n_part - 1, 2):
     system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
 
 print("E before minimization:", system.analysis.energy()["total"])
-steepest_descent(system, f_max=0.0, gamma=30.0, max_steps=10000,
-                 max_displacement=0.1)
+system.integrator.set_steepest_descent(f_max=0.0, gamma=30.0,
+                                       max_displacement=0.1)
+system.integrator.run(10000)
 print("E after minimization:", system.analysis.energy()["total"])
 
 system.thermostat.set_npt(kT=2.0, gamma0=1.0, gammav=0.01, seed=42)

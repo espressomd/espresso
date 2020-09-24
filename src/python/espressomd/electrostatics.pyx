@@ -314,6 +314,15 @@ IF P3M == 1:
             p3m_set_eps(self._params["epsilon"])
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
+        def tune(self, **tune_params_subset):
+            # update the three necessary parameters if not provided by the user
+            default_params = self.default_params()
+            for key in ["r_cut", "mesh", "cao"]:
+                if key not in tune_params_subset:
+                    tune_params_subset[key] = default_params[key]
+
+            super().tune(**tune_params_subset)
+
         def _tune(self):
             set_prefactor(self._params["prefactor"])
             p3m_set_eps(self._params["epsilon"])
@@ -435,6 +444,16 @@ IF P3M == 1:
                 params["prefactor"] = coulomb.prefactor
                 params["tune"] = self._params["tune"]
                 return params
+
+            def tune(self, **tune_params_subset):
+                # update the three necessary parameters if not provided by the
+                # user
+                default_params = self.default_params()
+                for key in ["r_cut", "mesh", "cao"]:
+                    if key not in tune_params_subset:
+                        tune_params_subset[key] = default_params[key]
+
+                super().tune(**tune_params_subset)
 
             def _tune(self):
                 set_prefactor(self._params["prefactor"])

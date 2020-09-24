@@ -42,10 +42,10 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 
-#include "utils/u32_to_u64.hpp"
 #include <utils/Counter.hpp>
 #include <utils/index.hpp>
 #include <utils/math/matrix_vector_product.hpp>
+#include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 using Utils::get_linear_index;
 #include <utils/constants.hpp>
@@ -841,7 +841,7 @@ lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes,
     using rng_type = r123::Philox4x64;
     using ctr_type = rng_type::ctr_type;
 
-    const r123::Philox4x64::ctr_type c{
+    const ctr_type c{
         {rng_counter->value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
     const T rootdensity =
         std::sqrt(std::fabs(modes[0] + lb_parameters.density));
@@ -894,13 +894,13 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
                  density;
 
   double C[6];
-  C[0] = (1. + lb_parameters.gamma_bulk) * u[0] * f[0] +
+  C[0] = (1. + lb_parameters.gamma_shear) * u[0] * f[0] +
          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
              (u * f);
-  C[2] = (1. + lb_parameters.gamma_bulk) * u[1] * f[1] +
+  C[2] = (1. + lb_parameters.gamma_shear) * u[1] * f[1] +
          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
              (u * f);
-  C[5] = (1. + lb_parameters.gamma_bulk) * u[2] * f[2] +
+  C[5] = (1. + lb_parameters.gamma_shear) * u[2] * f[2] +
          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
              (u * f);
   C[1] =
