@@ -20,22 +20,21 @@ import importlib_wrapper
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/01-lennard_jones/01-lennard_jones.py",
-    substitutions=lambda code: code.replace('r_star = ', 'r_star = r #', 1))
+    "@TUTORIALS_DIR@/01-lennard_jones/01-lennard_jones.py")
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
-    system = tutorial.system
 
     def test_rdf(self):
-        rms = np.sqrt(((tutorial.rdf - tutorial.theo_rdf)**2).mean()) / len(tutorial.r)
-        self.assertLess(rms, 5e-4)
+        np.testing.assert_allclose(tutorial.rdf, tutorial.theo_rdf,
+            rtol=0.0, atol=0.1)
 
     def test_potential_energy(self):
-        # Test that the potential energy/particle agrees with the value from Verlet, Phys. Rev. 1967
-        self.assertLess(np.abs(tutorial.sim_energy + 5.38)/5.38,0.01)
-
+        # Test that the potential energy/particle agrees with
+        # the value from Verlet, Phys. Rev. 1967
+        ref_energy = -5.38
+        self.assertAlmostEqual(tutorial.sim_energy, ref_energy, 1)
 
 if __name__ == "__main__":
     ut.main()
