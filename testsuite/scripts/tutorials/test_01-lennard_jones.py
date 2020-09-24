@@ -28,13 +28,14 @@ class Tutorial(ut.TestCase):
 
     def test_rdf(self):
         np.testing.assert_allclose(tutorial.rdf, tutorial.theo_rdf,
-            rtol=0.0, atol=0.1)
+                                   rtol=0.0, atol=0.1)
 
     def test_potential_energy(self):
         # Test that the potential energy/particle agrees with
         # the value from Verlet, Phys. Rev. 1967
         ref_energy = -5.38
         self.assertAlmostEqual(tutorial.sim_energy, ref_energy, 1)
+
 
 if __name__ == "__main__":
     ut.main()
