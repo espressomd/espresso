@@ -28,9 +28,13 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def test_rdf_curve(self):
-        self.assertGreater(
-            np.corrcoef(tutorial.rdf, tutorial.theo_rdf)[1, 0], 0.985)
+    def test_rdf(self):
+        rms = np.sqrt(((tutorial.rdf - tutorial.theo_rdf)**2).mean()) / len(tutorial.r)
+        self.assertLess(rms, 5e-4)
+
+    def test_potential_energy(self):
+        # Test that the potential energy/particle agrees with the value from Verlet, Phys. Rev. 1967
+        self.assertLess(np.abs(tutorial.sim_energy + 5.38)/5.38,0.01)
 
 
 if __name__ == "__main__":
