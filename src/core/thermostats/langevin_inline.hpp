@@ -18,17 +18,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file */
 
-#ifndef LANGEVIN_INLINE_HPP
-#define LANGEVIN_INLINE_HPP
+#ifndef THERMOSTATS_LANGEVIN_INLINE_HPP
+#define THERMOSTATS_LANGEVIN_INLINE_HPP
 
 #include "config.hpp"
 
-#include <utils/Vector.hpp>
-
+#include "Particle.hpp"
 #include "random.hpp"
 #include "thermostat.hpp"
+
+#include <utils/Vector.hpp>
 
 /** Langevin thermostat for particle translational velocities.
  *  Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).
@@ -36,10 +36,11 @@
  *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
+ *  @param[in]     time_step      Time step
  */
 inline Utils::Vector3d
-friction_thermo_langevin(LangevinThermostat const &langevin,
-                         Particle const &p) {
+friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
+                         double time_step) {
   // Early exit for virtual particles without thermostat
   if (p.p.is_virtual && !thermo_virtual) {
     return {};
@@ -85,8 +86,9 @@ friction_thermo_langevin(LangevinThermostat const &langevin,
 #endif // PARTICLE_ANISOTROPY
 
   return friction_op * velocity +
-         noise_op * Random::noise_uniform<RNGSalt::LANGEVIN>(langevin.rng_get(),
-                                                             p.p.identity);
+         noise_op *
+             Random::noise_uniform<RNGSalt::LANGEVIN>(
+                 langevin.rng_counter(), langevin.rng_seed(), p.p.identity);
 }
 
 #ifdef ROTATION
@@ -96,10 +98,11 @@ friction_thermo_langevin(LangevinThermostat const &langevin,
  *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
+ *  @param[in]     time_step      Time step
  */
 inline Utils::Vector3d
 friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
-                                  Particle const &p) {
+                                  Particle const &p, double time_step) {
 
   auto pref_friction = -langevin.gamma_rotation;
   auto pref_noise = langevin.pref_noise_rotation;
@@ -117,7 +120,7 @@ friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
 #endif // LANGEVIN_PER_PARTICLE
 
   auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN_ROT>(
-      langevin.rng_get(), p.p.identity);
+      langevin.rng_counter(), langevin.rng_seed(), p.p.identity);
   return hadamard_product(pref_friction, p.m.omega) +
          hadamard_product(pref_noise, noise);
 }

@@ -191,8 +191,19 @@ void mpi_remove_particle(int node, int id);
  */
 int mpi_integrate(int n_steps, int reuse_forces);
 
-/** Start steepest descent. */
+/** Steepest descent main integration loop
+ *
+ *  Integration stops when the maximal force is lower than the user limit
+ *  @ref SteepestDescentParameters::f_max "f_max" or when the maximal number
+ *  of steps @p steps is reached.
+ *
+ *  @param steps Maximal number of integration steps
+ *  @return number of integrated steps
+ */
 int mpi_steepest_descent(int steps);
+
+/** Broadcast steepest descent parameters */
+void mpi_bcast_steepest_descent();
 
 void mpi_bcast_all_ia_params();
 

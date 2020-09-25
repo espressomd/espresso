@@ -61,7 +61,7 @@ endfunction(PYTHON_TEST)
 # Separate features with hyphens, use a period to add an optional flag.
 foreach(
   TEST_COMBINATION
-  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt-minimization;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.sd;lb.off-therm.bd-int.bd;lb.off-therm.sdm-int.sdm.cpu;lb.off-therm.sdm-int.sdm.gpu
+  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-therm.bd-int.bd;lb.off-therm.sdm-int.sdm.cpu
 )
   if(${TEST_COMBINATION} MATCHES "\\.gpu")
     set(TEST_LABELS "gpu")
@@ -217,6 +217,7 @@ python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
 python_test(FILE mdanalysis.py MAX_NUM_PROC 2)
 python_test(FILE p3m_tuning_exceptions.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE integrator_exceptions.py MAX_NUM_PROC 1)
 python_test(FILE utils.py MAX_NUM_PROC 1)
 
 add_custom_target(

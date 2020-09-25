@@ -21,7 +21,6 @@
 import espressomd
 from espressomd import assert_features, electrostatics, electrostatic_extensions
 from espressomd.shapes import Wall
-from espressomd.minimize_energy import steepest_descent
 from espressomd import visualization_opengl
 import numpy
 from threading import Thread
@@ -67,7 +66,6 @@ system.box_l = [box_l, box_l, box_z + elc_gap]
 system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
-system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 # Visualizer
 visualizer = visualization_opengl.openGLLive(
@@ -126,8 +124,12 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
     system.non_bonded_inter[types[s[0]], types[s[1]]].lennard_jones.set_params(
         epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-steepest_descent(system, f_max=10, gamma=10, max_steps=2000,
-                 max_displacement=0.1)
+system.integrator.set_steepest_descent(f_max=10, gamma=10,
+                                       max_displacement=0.1)
+system.integrator.run(2000)
+system.integrator.set_vv()
+
+system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)
