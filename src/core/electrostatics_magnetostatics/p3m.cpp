@@ -192,6 +192,9 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
   if (r_cut >= 0) {
     p3m.params.r_cut = r_cut;
     p3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
+  } else if (r_cut == -1.0) {
+    p3m.params.r_cut = 0;
+    p3m.params.r_cut_iL = 0;
   }
 
   if (mesh[0] >= 0) {

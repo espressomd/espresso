@@ -49,7 +49,7 @@
 
 ActorList forceActors;
 
-void init_forces(const ParticleRange &particles) {
+void init_forces(const ParticleRange &particles, double time_step) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
@@ -63,7 +63,7 @@ void init_forces(const ParticleRange &particles) {
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    p.f = init_local_particle_force(p);
+    p.f = init_local_particle_force(p, time_step);
   }
 
   /* initialize ghost forces with zero
@@ -80,7 +80,7 @@ void init_forces_ghosts(const ParticleRange &particles) {
   }
 }
 
-void force_calc(CellStructure &cell_structure) {
+void force_calc(CellStructure &cell_structure, double time_step) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   espressoSystemInterface.update();
@@ -94,7 +94,7 @@ void force_calc(CellStructure &cell_structure) {
 #ifdef ELECTROSTATICS
   iccp3m_iteration(particles, cell_structure.ghost_particles());
 #endif
-  init_forces(particles);
+  init_forces(particles, time_step);
 
   for (auto &forceActor : forceActors) {
     forceActor->computeForces(espressoSystemInterface);

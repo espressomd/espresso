@@ -21,7 +21,6 @@ Visualize the simulation of a linear polymer.
 import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd import visualization
-from espressomd.minimize_energy import steepest_descent
 import numpy as np
 import argparse
 
@@ -44,7 +43,6 @@ np.random.seed(seed=42)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=0.1, gamma=20.0, seed=42)
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=0, sigma=1, cutoff=2, shift="auto")
@@ -62,7 +60,11 @@ if args.visualizer == "mayavi":
 else:
     visualizer = visualization.openGLLive(system, bond_type_radius=[0.3])
 
-steepest_descent(system, f_max=10, gamma=50.0, max_steps=1000,
-                 max_displacement=0.2)
+system.integrator.set_steepest_descent(f_max=10, gamma=50.0,
+                                       max_displacement=0.2)
+system.integrator.run(1000)
+system.integrator.set_vv()
+
+system.thermostat.set_langevin(kT=0.1, gamma=20.0, seed=42)
 
 visualizer.run(1)

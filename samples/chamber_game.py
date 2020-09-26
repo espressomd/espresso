@@ -29,7 +29,6 @@ import time
 
 import espressomd
 import espressomd.shapes
-import espressomd.minimize_energy
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
 required_features = ["LENNARD_JONES", "WCA", "MASS",
@@ -294,9 +293,10 @@ p_temp_dec = system.part.add(
     fix=[True, True, True])
 
 # MINIMIZE ENERGY
-espressomd.minimize_energy.steepest_descent(system, f_max=100, gamma=30.0,
-                                            max_steps=10000,
-                                            max_displacement=0.01)
+system.integrator.set_steepest_descent(f_max=100, gamma=30.0,
+                                       max_displacement=0.01)
+system.integrator.run(10000)
+system.integrator.set_vv()
 p_startpos = system.part[:].pos
 
 # THERMOSTAT
