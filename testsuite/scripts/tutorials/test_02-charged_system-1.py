@@ -17,17 +17,24 @@
 
 import unittest as ut
 import importlib_wrapper
-import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/02-charged_system/02-charged_system-1.py")
+    "@TUTORIALS_DIR@/02-charged_system/02-charged_system-1.py",
+    N_frames = 20, steps_per_frame = 100, warmup_steps = 1000,
+    N_frames_salt = 200)
+
 
 @skipIfMissingFeatures
-class Tutorial(ut.TestCase):
+class Tutorial02_1(ut.TestCase):
     system = tutorial.system
 
-    def test_energy_equilibration(self):
-        pass
+    def test_overcharging(self):
+        """ 
+        Test that adding salt leads to a positive layer around the rod
+        """
+
+        self.assertGreater(max(tutorial.charge_hist), 1.05)
+
 
 if __name__ == "__main__":
     ut.main()
