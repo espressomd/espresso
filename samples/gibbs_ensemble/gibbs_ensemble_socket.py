@@ -216,7 +216,7 @@ def exchange_particle(boxes):
 
     source_box.send_data(pickle.dumps(
         [gibbs.MessageId.EXCHANGE_PART_REMOVE, 0]))
-    dest_box.send_data(pickle.dumps([gibbs.MessageId.EXCHANGE_PART_ADD, 0]))
+    dest_box.send_data(pickle.dumps([gibbs.MessageId.EXCHANGE_PART_ADD, 1]))
 
     source_box.recv_energy()
     dest_box.recv_energy()
@@ -299,9 +299,8 @@ random.seed(seed)
 for i in range(NUMBER_OF_CLIENTS):
     boxes.append(Box())
 
-    arguments = ["-n", str(boxes[i].n_particles), "-s",
-                 str(random.randint(0, np.iinfo(np.int32).max)), "-bl",
-                 str(boxes[i].box_l)]
+    arguments = ["--seed", str(random.randint(0, np.iinfo(np.int32).max)), 
+                 "--port", str(PORT)]
     subprocess.Popen([espresso_executable] + [client_script] +
                      arguments)
 
@@ -309,6 +308,15 @@ for i in range(NUMBER_OF_CLIENTS):
     boxes[i].send_data(pickle.dumps([gibbs.MessageId.START, 0]))
 
     boxes[i].recv_energy()
+
+# set initial volume and particles
+for box in boxes:
+    box.send_data(pickle.dumps(
+        [gibbs.MessageId.CHANGE_VOLUME, box.box_l]))
+    box.recv_energy()
+    box.send_data(pickle.dumps(
+        [gibbs.MessageId.EXCHANGE_PART_ADD, box.n_particles]))
+    box.recv_energy()
 
 # observables
 densities = [[], []]
