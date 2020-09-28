@@ -59,7 +59,7 @@ def calc_tail_correction(density, lj_epsilon, lj_sigma, lj_cutoff):
                        np.power(lj_cutoff / lj_sigma, -3))
 
 
-def calc_shift_correction(density, lj_epsilon, lj_sigma, lj_cutoff, lj_shift):
+def calc_shift_correction(density, lj_epsilon, lj_cutoff, lj_shift):
     '''
     Calculates the shift correction to the energies of the box.
     '''
@@ -83,12 +83,8 @@ class LJGibbsClient(gibbs.Client):
         """Add Lennard-Jones shift and tail correction to the energy"""
         return super().energy() + \
             calc_tail_correction(self.density(), self._lj_epsilon, self._lj_sigma, self._lj_cutoff) + \
-            calc_shift_correction(
-            self.density(),
-            self._lj_epsilon,
-            self._lj_sigma,
-            self._lj_cutoff,
-            self._lj_shift)
+            calc_shift_correction(self.density(), self._lj_epsilon,
+                                  self._lj_cutoff, self._lj_shift)
 
 
 
