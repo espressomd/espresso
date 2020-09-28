@@ -20,8 +20,8 @@ import importlib_wrapper
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/02-charged_system/02-charged_system-1.py",
-    N_frames = 20, steps_per_frame = 100, warmup_steps = 1000,
-    N_frames_salt = 200)
+    N_frames=20, steps_per_frame=100, warmup_steps=1000,
+    N_frames_salt=200)
 
 
 @skipIfMissingFeatures
