@@ -5,34 +5,39 @@ Try to put the focus on the first tutorial.
 In 1.5h one should theoretically get through the first two tutorials, but key concepts are mainly introduced in the first one, the second one only introducing a external field.
 The third tutorial deals mainly with physical concepts, the only new espresso-specific thing is the setup of a 3D system, i.e. no more DLC.
 
-## Learning Objectives (Physics):
+## Learning Objectives (Physics)
  1. Tutorial:
    - Understand role and importance of order parameter lambda ($\lambda \approx 1 \implies$ no large scale strcture, $\lambda > 2 \implies$ formation of chain- and ring-like structures)
-   - How to set up the system correctly (especially randomly assigning magnetic moment vectors):
-     - Randomly picking vectors would introduce bias
-     - Randomly picking angles introduces bias
-     - Correct way shown in solution
-   - What cluster distribution one expects
-   - If more time available: What changes with different lambdas
-
+   - What cluster distribution one expects (probability decreases with size of clusters)
+   
  2. Tutorial:
-   - $\alpha$-parameter comparable to $\lambda$, w.r.t. external field
-   - External force/field introduces ordering of moments 
-   - Corrections in the analytical models: Due to torque from dipole-dipole interactions
+   - alpha-parameter compares external field coupling to thermal energy
+   - External force/field introduces ordering of moments
+   - The Langevin magnetization curve gives a theoretical prediction for magnetization of non-interacting dipoles
+   - Field perpendicular to particle layer shows noticable deviations from Langevin-curve due to torque from dipole-dipole interactions
 
-
-## Learning Objectives (ESPResSo):
- 1. Tutorial:
+## Learning Objectives (Espresso):
+ 1. Tutorial: 
    - How to setup P3M for dipole interactions
-   - (Roughly) how to perform cluster analysis
-   - Using DLC (analogous to ELC) for quasi 2D system with 3D moment directions
+   - How to set up randomly distributed dipole moments without bias:
+     - Randomly picking cartesian vectors with x, y, z \in [-1,1] would introduce bias
+     - Randomly picking angles (phi \in [0,2pi], theta \in [0,pi]) introduces bias
+     - Correct way shown in solution (accounts for jacobian)
+   - Basics of how to perform cluster analysis
+   - If more time available or if asked: What changes with different lambdas
+     - This is not documented in the tutorial
+     - For a visual understanding of the meaning of lambda, re-run the tutorial with a different value, e.g. lambda = 0.5, 7
+     - Discuss the resulting video
 
  2. Tutorial:
    - How to setup a external field
+   - how to sample magnetization curves on a quasi-2D system
+   - As sampling of the magnetization curves takes a while, depending on remaining time it might be sensible to only sample perpendicular direction and skip the cells pertaining to the parallel measurements. Go directly to plotting (of course only perpendicular).
 
 ## Points to Mention Throughout the Tutorial:
  1. Tutorial:
-   - Importance of correct setup for non-biased results
+   - Importance of correct setup for non-biased results (especially important for magentic systems!)
+   - Using DLC (analogous to ELC) for quasi 2D system with 3D moment directions
    - Idea of a quasi-2D-System with 3D Moments
  2. Tutorial:
    - Appeal of simulations as "numerical" experiment and benchmark against theoretical models
