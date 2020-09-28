@@ -128,4 +128,4 @@ class Client():
             self._send_data(pickle.dumps([MessageId.ENERGY, energy]))
 
         # closing the socket
-        self, _socket.close()
+        self._socket.close()
