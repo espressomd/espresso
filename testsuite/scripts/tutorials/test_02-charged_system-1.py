@@ -20,8 +20,8 @@ import importlib_wrapper
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/02-charged_system/02-charged_system-1.py",
-    N_frames=20, steps_per_frame=100, warmup_steps=1000,
-    N_frames_salt=200)
+    N_samples=2, steps_per_sample=2, warmup_steps=1000,
+    N_samples_salt=200)
 
 
 @skipIfMissingFeatures
@@ -33,7 +33,7 @@ class Tutorial02_1(ut.TestCase):
         Test that adding salt leads to a positive layer around the rod
         """
 
-        self.assertGreater(max(tutorial.charge_hist), 1.05)
+        self.assertGreater(max(tutorial.charge_hist), 1.2)
 
 
 if __name__ == "__main__":
