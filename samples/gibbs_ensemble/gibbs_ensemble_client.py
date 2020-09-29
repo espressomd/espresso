@@ -53,8 +53,8 @@ if args.seed:
 def calc_tail_correction(density, lj_epsilon, lj_sigma, lj_cutoff):
     '''
     Calculates the tail correction to the energies of the box.
+    eq 3.2.5
     '''
-    # eq 3.2.5
     return 8.0 / 3.0 * np.pi * density * lj_epsilon * \
         lj_sigma**3 * (1.0 / 3.0 * np.power(lj_cutoff / lj_sigma, -9) -
                        np.power(lj_cutoff / lj_sigma, -3))
@@ -63,8 +63,8 @@ def calc_tail_correction(density, lj_epsilon, lj_sigma, lj_cutoff):
 def calc_shift_correction(density, lj_epsilon, lj_cutoff, lj_shift):
     '''
     Calculates the shift correction to the energies of the box.
+    difference in the potential integrated from 0 to cutoff distance
     '''
-    # difference in the potential integrated from 0 to cutoff distance
     return -8.0 / 3.0 * np.pi * density * \
         lj_epsilon * np.power(lj_cutoff, 3) * 4.0 * lj_shift
 
