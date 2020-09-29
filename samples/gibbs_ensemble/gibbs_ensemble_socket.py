@@ -42,7 +42,7 @@ import matplotlib.pyplot as plt
 import argparse
 import logging as log
 import gibbs
-
+import time
 
 
 parser = argparse.ArgumentParser()
@@ -232,7 +232,7 @@ def check_make_move(box, inner_potential):
     if random.random() > inner_potential:
         log.info("revert move")
         box.send_data(pickle.dumps([gibbs.MessageId.MOVE_PART_REVERT, 0]))
-        box.recv_energy()
+        box.energy = box.energy_old
         return False
     return True
 
@@ -249,14 +249,15 @@ def check_exchange_volume(boxes, inner_potential):
     if random.random() > volume_factor * inner_potential:
         log.info("revert exchange volume")
         boxes[0].send_data(pickle.dumps(
-            [gibbs.MessageId.CHANGE_VOLUME, boxes[0].box_l_old]))
+            [gibbs.MessageId.CHANGE_VOLUME_REVERT, boxes[0].box_l_old]))
         boxes[0].box_l = boxes[0].box_l_old
         boxes[1].send_data(pickle.dumps(
-            [gibbs.MessageId.CHANGE_VOLUME, boxes[1].box_l_old]))
+            [gibbs.MessageId.CHANGE_VOLUME_REVERT, boxes[1].box_l_old]))
         boxes[1].box_l = boxes[1].box_l_old
 
-        boxes[0].recv_energy()
-        boxes[1].recv_energy()
+        boxes[0].energy = boxes[0].energy_old
+        boxes[1].energy = boxes[1].energy_old
+
         return False
     return True
 
@@ -278,8 +279,8 @@ def check_exchange_particle(source_box, dest_box, inner_potential):
         dest_box.send_data(pickle.dumps(
             [gibbs.MessageId.EXCHANGE_PART_ADD_REVERT, 0]))
 
-        source_box.recv_energy()
-        dest_box.recv_energy()
+        source_box.energy = source_box.energy_old
+        dest_box.energy = dest_box.energy_old
         return False
     return True
 
@@ -333,6 +334,7 @@ exchange_steps_tried = 1
 # only do displacements during the warm up
 move_chance = 1.0
 # Monte-Carlo loop
+tick = time.time()
 for i in range(steps):
     # print("\rIntegrating: {0:3.0f}%".format(
     #    100 * i / steps), end='', flush=True)
@@ -380,11 +382,11 @@ for i in range(steps):
         accepted = check_exchange_particle(
             source_box, dest_box, inner_potential)
 
+    boxes[0].energy_old = boxes[0].energy
+    boxes[1].energy_old = boxes[1].energy
     if accepted:
         log.info("accepted")
         # keep the changes.
-        boxes[0].energy_old = boxes[0].energy
-        boxes[1].energy_old = boxes[1].energy
         accepted_steps += 1
         if rand <= move_chance:
             accepted_steps_move += 1
@@ -396,13 +398,14 @@ for i in range(steps):
         densities[1].append(boxes[1].n_particles / boxes[1].box_l**3)
 
         if i % 50 == 0:
-            print(densities[0][-1], densities[1][-1])
+            tock = time.time()
+            print(densities[0][-1], densities[1][-1], tock - tick)
+            assert boxes[0].n_particles + \
+                boxes[1].n_particles == global_num_particles
+            assert abs(boxes[0].box_l**3 + boxes[1].box_l**3 - global_volume) \
+                < 1E-8 * global_volume
+            tick = time.time()
         list_indices.append(i)
-
-        assert boxes[0].n_particles + \
-            boxes[1].n_particles == global_num_particles
-        assert abs(boxes[0].box_l**3 + boxes[1].box_l**3 - global_volume) \
-            < 1E-8 * global_volume
 
 
 print("Acceptance rate global:\t {}".format(accepted_steps / float(steps)))

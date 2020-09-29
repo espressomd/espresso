@@ -97,6 +97,8 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=LJ_EPSILON,
                                                        sigma=LJ_SIGMA,
                                                        cutoff=LJ_CUTOFF,
                                                        shift=LJ_SHIFT)
+system.cell_system.set_domain_decomposition(use_verlet_lists=False)
+system.cell_system.skin = 0
 
 gibbs_client = LJGibbsClient(system, LJ_EPSILON, LJ_SIGMA, LJ_CUTOFF, LJ_SHIFT)
 gibbs_client.run(args.host, args.port)

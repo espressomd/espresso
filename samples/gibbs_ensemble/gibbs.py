@@ -10,6 +10,7 @@ class MessageId:
     MOVE_PART = 2
     MOVE_PART_REVERT = 21
     CHANGE_VOLUME = 3
+    CHANGE_VOLUME_REVERT = 31
     EXCHANGE_PART_ADD = 4
     EXCHANGE_PART_ADD_REVERT = 41
     EXCHANGE_PART_REMOVE = 5
@@ -108,24 +109,31 @@ class Client():
                 break
             elif msg[0] == MessageId.MOVE_PART:
                 self.move_particle()
+                self._send_data(pickle.dumps(
+                    [MessageId.ENERGY, self.energy()]))
             elif msg[0] == MessageId.CHANGE_VOLUME:
+                box_l = msg[1]
+                self.change_volume_and_rescale_particles(box_l)
+                self._send_data(pickle.dumps(
+                    [MessageId.ENERGY, self.energy()]))
+            elif msg[0] == MessageId.CHANGE_VOLUME_REVERT:
                 box_l = msg[1]
                 self.change_volume_and_rescale_particles(box_l)
             elif msg[0] == MessageId.EXCHANGE_PART_ADD:
                 n = msg[1]
                 self.insert_particle(n)
+                self._send_data(pickle.dumps(
+                    [MessageId.ENERGY, self.energy()]))
             elif msg[0] == MessageId.EXCHANGE_PART_REMOVE:
                 self.remove_particle()
+                self._send_data(pickle.dumps(
+                    [MessageId.ENERGY, self.energy()]))
             elif msg[0] == MessageId.MOVE_PART_REVERT:
                 self.move_particle_revert()
             elif msg[0] == MessageId.EXCHANGE_PART_ADD_REVERT:
                 self.remove_last_added_particle()
             elif msg[0] == MessageId.EXCHANGE_PART_REMOVE_REVERT:
                 self.remove_particle_revert()
-
-            # calculation energy and send it to the host
-            energy = self.energy()
-            self._send_data(pickle.dumps([MessageId.ENERGY, energy]))
 
         # closing the socket
         self._socket.close()
