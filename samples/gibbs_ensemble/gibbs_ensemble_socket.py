@@ -33,7 +33,10 @@ Phase diagrams of Lennard-Jones fluids'.
 """
 
 import argparse
+import enum
 import logging as log
+import matplotlib.pyplot as plt
+import numpy as np
 import pickle
 import random
 import socket
@@ -41,8 +44,6 @@ import struct
 import subprocess
 import time
 
-import matplotlib.pyplot as plt
-import numpy as np
 
 import gibbs
 
@@ -80,6 +81,16 @@ VOLUME_CHANCE = 1.0 - INIT_MOVE_CHANCE - EXCHANGE_CHANCE
 HOST = 'localhost'
 PORT = 31415
 NUMBER_OF_CLIENTS = 2
+
+REPORT_INTERVAL = 50  # moves
+
+
+@enum.unique
+class Moves(enum.Enum):
+    MOVE_PARTICLE = 1
+    EXCHANGE_VOLUME = 2
+    EXCHANGE_PARTICLE = 3
+
 
 # script locations
 espresso_executable = "../pypresso"
@@ -350,6 +361,7 @@ for i in range(steps):
     # choose step and send the command to execute to the clients, then receive
     # the energies.
     if rand <= move_chance:
+        current_move = Moves.MOVE_PARTICLE
         idx = select_box(boxes[0].n_particles, boxes[1].n_particles)
         log.info("move particle in box %d", idx)
         box = boxes[idx]
@@ -357,10 +369,12 @@ for i in range(steps):
         move_steps_tried += 1
 
     elif rand <= move_chance + VOLUME_CHANCE:
+        current_move = Moves.EXCHANGE_VOLUME
         exchange_volume(boxes, global_volume)
         volume_steps_tried += 1
 
     else:
+        current_move = Moves.EXCHANGE_PARTICLE
         source_box, dest_box = exchange_particle(boxes)
         exchange_steps_tried += 1
 
@@ -375,38 +389,46 @@ for i in range(steps):
 
     log.info("dE: %g", delta_energy)
     inner_potential = np.exp(-1.0 / kT * delta_energy)
-    if rand <= move_chance:
+    if current_move == Moves.MOVE_PARTICLE:
         accepted = check_make_move(box, inner_potential)
-    elif rand <= move_chance + VOLUME_CHANCE:
+    elif current_move == Moves.EXCHANGE_VOLUME:
         accepted = check_exchange_volume(boxes, inner_potential)
-    else:
+    elif current_move == Moves.EXCHANGE_PARTICLE: 
         accepted = check_exchange_particle(
             source_box, dest_box, inner_potential)
+    else:
+        raise Exception("Unkhandled move type " + current_move)
 
+    # accounting
     boxes[0].energy_old = boxes[0].energy
     boxes[1].energy_old = boxes[1].energy
     if accepted:
         log.info("accepted")
         # keep the changes.
         accepted_steps += 1
-        if rand <= move_chance:
+        if current_move == Moves.MOVE_PARTICLE:
             accepted_steps_move += 1
-        elif rand <= move_chance + VOLUME_CHANCE:
+        elif current_move == Moves.EXCHANGE_VOLUME:
             accepted_steps_volume += 1
-        else:
+        elif current_move == Moves.EXCHANGE_PARTICLE:
             accepted_steps_exchange += 1
+        else: 
+            raise Exception("Unhandled move type " + current_move)
+
         densities[0].append(boxes[0].n_particles / boxes[0].box_l**3)
         densities[1].append(boxes[1].n_particles / boxes[1].box_l**3)
+        list_indices.append(i)
 
-        if i % 50 == 0:
+        if i % REPORT_INTERVAL == 0 and i > 0:
             tock = time.time()
-            print(densities[0][-1], densities[1][-1], tock - tick)
+            print("step %d, densities %.3f %.3f, %.2f sec / move" % 
+                  (i, densities[0][-1], densities[1][-1], 
+                   (tock - tick) / REPORT_INTERVAL))
             assert boxes[0].n_particles + \
                 boxes[1].n_particles == global_num_particles
             assert abs(boxes[0].box_l**3 + boxes[1].box_l**3 - global_volume) \
                 < 1E-8 * global_volume
             tick = time.time()
-        list_indices.append(i)
 
 
 print("Acceptance rate global:\t {}".format(accepted_steps / float(steps)))
