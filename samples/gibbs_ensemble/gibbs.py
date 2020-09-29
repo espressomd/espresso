@@ -45,14 +45,14 @@ class Client:
         '''Revert the last movement step.'''
         self._system.part[self._last_modified_pid].pos = self._saved_pos
 
-    def backup_particle(self, p):
+    def particle_state(self, p):
         """This implementation only saves position"""
-        self._saved_particle_state = {'id': p.id, 'pos': p.pos}
+        return {'id': p.id, 'pos': p.pos}
 
     def remove_particle(self):
         '''Removes a random particle. The old position and index are saved'''
         p = self.random_particle()
-        self.backup_particle(p)
+        self._saved_particle_state = self.particle_state(p)
         p.remove()
 
     def remove_particle_revert(self):
