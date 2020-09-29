@@ -22,11 +22,12 @@ simulation boxes and communicates the energies to the host. The Monte-Carlo
 part of the simulation is done by the :file:`gibbs_ensemble_socket.py` script.
 """
 
-import espressomd
-import numpy as np
 import argparse
-import gibbs
 
+import numpy as np
+
+import espressomd
+import gibbs
 
 espressomd.assert_features("LENNARD_JONES")
 
@@ -90,7 +91,7 @@ class LJGibbsClient(gibbs.Client):
 
 # init system
 # The intial system has to be big enough to fit twice the
-# maximuminteraction range
+# maximum interaction range
 box_l = 3 * LJ_CUTOFF
 system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=LJ_EPSILON,

@@ -1,10 +1,13 @@
+import enum
+import pickle
 import socket
 import struct
-import pickle
+
 import numpy as np
 
 
-class MessageId:
+@enum.unique
+class MessageId(enum.Enum):
     START = 0
     END = 1
     MOVE_PART = 2
@@ -18,12 +21,11 @@ class MessageId:
     ENERGY = 6
 
 
-class Client():
+class Client:
     '''
     Base class for a Gibbs ensemble client. Each client runs a single
     system, executes requested changes and returns energies.
     '''
-    _system = None
 
     def __init__(self, system):
         self._system = system
@@ -90,7 +92,53 @@ class Client():
         packet = length + data
         self._socket.send(packet)
 
+    def handle_move_particle(self):
+        self.move_particle()
+        self._send_data(pickle.dumps(
+            [MessageId.ENERGY, self.energy()]))
+
+    def handle_move_particle_revert(self):
+        self.move_particle_revert()
+
+    def handle_change_volume(self, box_l):
+        self.change_volume_and_rescale_particles(box_l)
+        self._send_data(pickle.dumps(
+            [MessageId.ENERGY, self.energy()]))
+
+    def handle_change_volume_revert(self, box_l): 
+        self.change_volume_and_rescale_particles(box_l)
+
+    def handle_add_particle(self, n):
+        self.insert_particle(n)
+        self._send_data(pickle.dumps(
+            [MessageId.ENERGY, self.energy()]))
+
+    def handle_add_particle_revert(self):
+        self.remove_last_added_particle()
+
+    def handle_remove_particle(self):
+        self.remove_particle()
+        self._send_data(pickle.dumps(
+            [MessageId.ENERGY, self.energy()]))
+
+    def handle_remove_particle_revert(self):
+        self.remove_particle_revert()
+
     def run(self, host, port):
+        # mapping between messages and handler functions
+        message_handlers = {
+            MessageId.MOVE_PART: self.handle_move_particle,
+            MessageId.MOVE_PART_REVERT: self.handle_move_particle_revert,
+
+            MessageId.CHANGE_VOLUME: self.handle_change_volume,
+            MessageId.CHANGE_VOLUME_REVERT: self.handle_change_volume_revert,
+
+            MessageId.EXCHANGE_PART_ADD: self.handle_add_particle,
+            MessageId.EXCHANGE_PART_ADD_REVERT: self.handle_add_particle_revert,
+
+            MessageId.EXCHANGE_PART_REMOVE: self.handle_remove_particle,
+            MessageId.EXCHANGE_PART_REMOVE_REVERT: self.handle_remove_particle_revert}
+
         # init socket
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect((host, port))
@@ -107,33 +155,10 @@ class Client():
             msg = self._recv_data()
             if msg[0] == MessageId.END:
                 break
-            elif msg[0] == MessageId.MOVE_PART:
-                self.move_particle()
-                self._send_data(pickle.dumps(
-                    [MessageId.ENERGY, self.energy()]))
-            elif msg[0] == MessageId.CHANGE_VOLUME:
-                box_l = msg[1]
-                self.change_volume_and_rescale_particles(box_l)
-                self._send_data(pickle.dumps(
-                    [MessageId.ENERGY, self.energy()]))
-            elif msg[0] == MessageId.CHANGE_VOLUME_REVERT:
-                box_l = msg[1]
-                self.change_volume_and_rescale_particles(box_l)
-            elif msg[0] == MessageId.EXCHANGE_PART_ADD:
-                n = msg[1]
-                self.insert_particle(n)
-                self._send_data(pickle.dumps(
-                    [MessageId.ENERGY, self.energy()]))
-            elif msg[0] == MessageId.EXCHANGE_PART_REMOVE:
-                self.remove_particle()
-                self._send_data(pickle.dumps(
-                    [MessageId.ENERGY, self.energy()]))
-            elif msg[0] == MessageId.MOVE_PART_REVERT:
-                self.move_particle_revert()
-            elif msg[0] == MessageId.EXCHANGE_PART_ADD_REVERT:
-                self.remove_last_added_particle()
-            elif msg[0] == MessageId.EXCHANGE_PART_REMOVE_REVERT:
-                self.remove_particle_revert()
 
-        # closing the socket
+            # Handle remaining messages according to the registered message handlers
+            # Pass any arguments to the handler.
+            message_handlers[msg[0]](*msg[1:])
+
+        # close the socket
         self._socket.close()

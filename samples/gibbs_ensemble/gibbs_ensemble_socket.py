@@ -32,18 +32,19 @@ of the used potential can be found in 'B. Smit, J. Chem. Phys. 96 (11), 1992,
 Phase diagrams of Lennard-Jones fluids'.
 """
 
-import socket
-import numpy as np
-import pickle
-import subprocess
-import struct
-import random
-import matplotlib.pyplot as plt
 import argparse
 import logging as log
-import gibbs
+import pickle
+import random
+import socket
+import struct
+import subprocess
 import time
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+import gibbs
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--seed', type=int, nargs=1)
@@ -161,7 +162,7 @@ def move_particle(box):
     '''
     Tries a displacement move and stores the new energy in the corresponding box
     '''
-    box.send_data(pickle.dumps([gibbs.MessageId.MOVE_PART, 0]))
+    box.send_data(pickle.dumps([gibbs.MessageId.MOVE_PART]))
     box.recv_energy()
 
 
@@ -215,7 +216,7 @@ def exchange_particle(boxes):
     dest_box.n_particles += 1
 
     source_box.send_data(pickle.dumps(
-        [gibbs.MessageId.EXCHANGE_PART_REMOVE, 0]))
+        [gibbs.MessageId.EXCHANGE_PART_REMOVE]))
     dest_box.send_data(pickle.dumps([gibbs.MessageId.EXCHANGE_PART_ADD, 1]))
 
     source_box.recv_energy()
@@ -231,7 +232,7 @@ def check_make_move(box, inner_potential):
     '''
     if random.random() > inner_potential:
         log.info("revert move")
-        box.send_data(pickle.dumps([gibbs.MessageId.MOVE_PART_REVERT, 0]))
+        box.send_data(pickle.dumps([gibbs.MessageId.MOVE_PART_REVERT]))
         box.energy = box.energy_old
         return False
     return True
@@ -275,9 +276,9 @@ def check_exchange_particle(source_box, dest_box, inner_potential):
         source_box.n_particles += 1
         dest_box.n_particles -= 1
         source_box.send_data(pickle.dumps(
-            [gibbs.MessageId.EXCHANGE_PART_REMOVE_REVERT, 0]))
+            [gibbs.MessageId.EXCHANGE_PART_REMOVE_REVERT]))
         dest_box.send_data(pickle.dumps(
-            [gibbs.MessageId.EXCHANGE_PART_ADD_REVERT, 0]))
+            [gibbs.MessageId.EXCHANGE_PART_ADD_REVERT]))
 
         source_box.energy = source_box.energy_old
         dest_box.energy = dest_box.energy_old
@@ -306,7 +307,7 @@ for i in range(NUMBER_OF_CLIENTS):
                      arguments)
 
     boxes[i].conn, boxes[i].adr = s.accept()
-    boxes[i].send_data(pickle.dumps([gibbs.MessageId.START, 0]))
+    boxes[i].send_data(pickle.dumps([gibbs.MessageId.START]))
 
     boxes[i].recv_energy()
 
@@ -427,5 +428,5 @@ plt.show()
 
 # closing the socket
 for i in range(NUMBER_OF_CLIENTS):
-    boxes[i].send_data(pickle.dumps([gibbs.MessageId.END, 0]))
+    boxes[i].send_data(pickle.dumps([gibbs.MessageId.END]))
 s.close()
