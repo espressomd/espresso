@@ -42,7 +42,7 @@ import matplotlib.pyplot as plt
 import argparse
 import logging as log
 import gibbs
-log.basicConfig(filename="gibbs.log", level=log.INFO)
+
 
 
 parser = argparse.ArgumentParser()
@@ -53,7 +53,7 @@ parser.add_argument('-E', '--espresso-executable', nargs=1)
 parser.add_argument('-C', '--client-script', nargs=1)
 parser.add_argument('-n', '--number-of-particles', type=int, nargs=1)
 parser.add_argument('-l', '--box-length', type=float, nargs=1)
-parser.add_argument('-T', '--temperature', type=float, nargs=1)
+parser.add_argument('-T', '--temperature', type=float, nargs=1, required=True)
 
 args = parser.parse_args()
 
