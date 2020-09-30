@@ -19,6 +19,7 @@ class MessageId(enum.Enum):
     EXCHANGE_PART_REMOVE = 5
     EXCHANGE_PART_REMOVE_REVERT = 51
     ENERGY = 6
+    CONSISTENCY_CHECK = 7
 
 
 class Client:
@@ -107,6 +108,11 @@ class Client:
     def handle_remove_particle_revert(self):
         self.remove_particle_revert()
 
+    def handle_consistency_check(self):
+        send_data(self._socket,
+                  [len(self._system.part),
+                   self._system.box_l[0]])
+
     def run(self, host, port):
         # mapping between messages and handler functions
         message_handlers = {
@@ -120,7 +126,9 @@ class Client:
             MessageId.EXCHANGE_PART_ADD_REVERT: self.handle_add_particle_revert,
 
             MessageId.EXCHANGE_PART_REMOVE: self.handle_remove_particle,
-            MessageId.EXCHANGE_PART_REMOVE_REVERT: self.handle_remove_particle_revert}
+            MessageId.EXCHANGE_PART_REMOVE_REVERT: self.handle_remove_particle_revert,
+
+            MessageId.CONSISTENCY_CHECK: self.handle_consistency_check}
 
         # init socket
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
