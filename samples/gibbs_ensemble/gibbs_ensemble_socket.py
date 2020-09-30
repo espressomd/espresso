@@ -67,9 +67,9 @@ args = parser.parse_args()
 # system parameters
 seed = None
 steps = 50000
-warm_up_steps = 200
+warm_up_steps = 400
 # number of particles in both boxes combined
-global_num_particles = 256
+global_num_particles = 400 
 # starting box length
 init_box_l = 7.55
 # temperature
