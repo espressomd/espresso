@@ -434,9 +434,9 @@ for i in range(steps):
         # timing
         tock = time.time()
 
-        print("step %d, densities %.3f %.3f, %.2f sec / move" % 
+        print("step %d, densities %.3f %.3f, %.f ms / move" % 
               (i, densities[0][-1], densities[1][-1], 
-               (tock - tick) / REPORT_INTERVAL))
+               (tock - tick) * 1000 / REPORT_INTERVAL))
 
         # consistency check
         assert boxes[0].n_particles + \

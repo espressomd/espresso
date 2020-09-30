@@ -147,7 +147,7 @@ class Client:
         self._socket.close()
 
 
-MAX_MSG_SIZE = 256 
+MAX_MSG_SIZE = 64 
 
 
 def recv_data(socket):
@@ -158,4 +158,8 @@ def recv_data(socket):
 
 def send_data(socket, data):
     '''Send the data packet.'''
-    socket.send(pickle.dumps(data))
+    # Get rid of data overhead caused by numpy data types
+    converted = [float(i) if isinstance(i, np.float) else i for i in data]
+    pickled = pickle.dumps(converted)
+    assert len(pickled) < MAX_MSG_SIZE
+    socket.send(pickled)
