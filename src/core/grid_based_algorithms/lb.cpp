@@ -852,7 +852,7 @@ lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes,
         rng_type{}(c, {{static_cast<uint64_t>(index), 2ul}}),
         rng_type{}(c, {{static_cast<uint64_t>(index), 3ul}})};
 
-    auto rng = [&](int i) { return uniform(noise[i / 4][i % 4]); };
+    auto rng = [&](int i) { return uniform(noise[i / 4][i % 4]) - 0.5; };
 
     return {/* conserved modes */
             {modes[0], modes[1], modes[2], modes[3],
