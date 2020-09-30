@@ -105,7 +105,7 @@ A code snippet would look like::
 
     import espressomd
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=42)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
@@ -204,7 +204,7 @@ In this way, just compiling in the ``ROTATION`` feature no longer changes the ph
 The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation enabled on the x axis::
 
     import espressomd
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.part.add(pos=(0, 0, 0), rotation=(1, 0, 0))
 
 Notes:
@@ -241,16 +241,18 @@ This feature is used to propagate each particle by a small distance parallel to 
 When only conservative forces for which a potential exists are in use, this is equivalent to a steepest descent energy minimization.
 A common application is removing overlap between randomly placed particles.
 
-Please note that the behavior is undefined if a thermostat is activated.
-It runs a simple steepest descent algorithm:
+Please note that the behavior is undefined if a thermostat is activated,
+in which case the integrator will generate an error. The integrator runs
+the following steepest descent algorithm:
 
 .. math:: \vec{r}_{i+1} = \vec{r}_i + \min(\gamma \vec{F}_i, \vec{r}_{\text{max_displacement}}),
 
-while the maximal force is bigger than ``f_max`` or for at most ``max_steps`` times. The energy
+while the maximal force/torque is bigger than ``f_max`` or for at most ``steps`` times. The energy
 is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.
 The combination of ``gamma`` and ``max_displacement`` can be used to get a poor man's adaptive update.
 Rotational degrees of freedom are treated similarly: each particle is
-rotated around an axis parallel to the torque acting on the particle.
+rotated around an axis parallel to the torque acting on the particle,
+with ``max_displacement`` interpreted as the maximal rotation angle.
 Please be aware of the fact that this needs not to converge to a local
 minimum in periodic boundary conditions. Translational and rotational
 coordinates that are fixed using the ``fix`` and ``rotation`` attribute of particles are not altered.
@@ -259,20 +261,54 @@ Usage example::
 
     system.integrator.set_steepest_descent(
         f_max=0, gamma=0.1, max_displacement=0.1)
-    system.integrator.run(20)
+    system.integrator.run(20)   # maximal number of steps
     system.integrator.set_vv()  # to switch back to velocity Verlet
 
-A wrapper function :func:`~espressomd.minimize_energy.steepest_descent` is
-available to set up the steepest descent integrator while preserving the
-original integrator. The snippet above can be rewritten to::
+Using a custom convergence criterion
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    from espressomd.minimize_energy import steepest_descent
-    steepest_descent(system, f_max=0, gamma=0.1, max_displacement=0.1, max_steps=20)
+The ``f_max`` parameter can be set to zero to prevent the integrator from
+halting when a specific force/torque is reached. The integration can then
+be carried out in a loop with a custom convergence criterion::
 
-This convenience function only exists for historical reasons and remains available
-for backward compatibility. New scripts should setup the steepest descent
-integrator with the :meth:`~espressomd.integrate.IntegratorHandle.set_steepest_descent`
-handle directly.
+    min_sigma = 1  # size of the smallest particle
+    max_sigma = 5  # size of the largest particle
+    min_dist = 0.0
+    system.integrator.set_steepest_descent(f_max=0, gamma=10,
+                                           max_displacement=min_sigma * 0.01)
+    # gradient descent until particles are separated by at least max_sigma
+    while min_dist < max_sigma:
+        min_dist = system.analysis.min_dist()
+        system.integrator.run(10)
+    system.integrator.set_vv()
+
+When writing a custom convergence criterion based on forces or torques, keep
+in mind that particles whose motion and rotation are fixed in space along
+some or all axes with ``fix`` or ``rotation`` need to be filtered from the
+force/torque observable used in the custom convergence criterion. Since these
+two properties can be cast to boolean values, they can be used as masks to
+remove forces/torques that are ignored by the integrator::
+
+    particles = system.part[:]
+    max_force = np.max(np.linalg.norm(particles.f * np.logical_not(particles.fix), axis=1))
+    max_torque = np.max(np.linalg.norm(particles.torque_lab * np.logical_not(particles.rotation), axis=1))
+
+Virtual sites can also be an issue since the force on the virtual site is
+transferred to the target particle at the beginning of the integration loop.
+The correct forces need to be re-calculated after running the integration::
+
+    def convergence_criterion(forces):
+        '''Function that decides when the gradient descent has converged'''
+        return ...
+    p1 = system.part.add(id=0, pos=[0, 0, 0], type=1)
+    p2 = system.part.add(id=1, pos=[0, 0, 0.1], type=1)
+    p2.vs_auto_relate_to(p1.id)
+    system.integrator.set_steepest_descent(f_max=800, gamma=1.0, max_displacement=0.01)
+    while convergence_criterion(system.part[:].f):
+        system.integrator.run(10)
+        system.integrator.run(0, recalc_forces=True)  # re-calculate forces from virtual sites
+    system.integrator.set_vv()
+
 
 .. _Stokesian Dynamics:
 
@@ -308,11 +344,11 @@ The following minimal example illustrates how to use the SDM in |es|::
 
     import espressomd
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.periodicity = [False, False, False]
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     system.part.add(pos=[0, 0, 0], rotation=[1, 0, 0])
     system.integrator.set_stokesian_dynamics(viscosity=1.0, radii={0: 1.0})
-
     system.integrator.run(100)
 
 Because there is no force on the particle yet, nothing will move. You will need

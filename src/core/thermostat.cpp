@@ -21,16 +21,19 @@
 /** \file
  *  Implementation of \ref thermostat.hpp.
  */
-#include <boost/mpi.hpp>
 
-#include <utils/u32_to_u64.hpp>
+#include "config.hpp"
 
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "integrate.hpp"
 #include "npt.hpp"
 #include "thermostat.hpp"
+
+#include <boost/mpi.hpp>
+
+#include <cstdint>
 
 int thermo_switch = THERMO_OFF;
 double temperature = 0.0;
@@ -39,34 +42,30 @@ bool thermo_virtual = true;
 using Thermostat::GammaType;
 
 /**
- * @brief Register a thermostat's MPI callbacks
+ * @brief Create MPI callbacks of thermostat objects
  *
- * @param thermostat        The thermostat global variable
+ * @param thermostat        The thermostat object name
  */
 #define REGISTER_THERMOSTAT_CALLBACKS(thermostat)                              \
-  void mpi_bcast_##thermostat##_rng_counter_slave(const uint64_t seed) {       \
+  void mpi_##thermostat##_set_rng_seed(uint32_t const seed) {                  \
     (thermostat).rng_initialize(seed);                                         \
   }                                                                            \
                                                                                \
-  REGISTER_CALLBACK(mpi_bcast_##thermostat##_rng_counter_slave)                \
+  REGISTER_CALLBACK(mpi_##thermostat##_set_rng_seed)                           \
                                                                                \
-  void mpi_bcast_##thermostat##_rng_counter(const uint64_t seed) {             \
-    mpi_call(mpi_bcast_##thermostat##_rng_counter_slave, seed);                \
+  void thermostat##_set_rng_seed(uint32_t const seed) {                        \
+    mpi_call_all(mpi_##thermostat##_set_rng_seed, seed);                       \
   }                                                                            \
                                                                                \
-  void thermostat##_rng_counter_increment() { (thermostat).rng_increment(); }  \
-                                                                               \
-  bool thermostat##_is_seed_required() {                                       \
-    /* Seed is required if rng is not initialized */                           \
-    return !(thermostat).rng_is_initialized();                                 \
+  void mpi_##thermostat##_set_rng_counter(uint64_t const value) {              \
+    (thermostat).set_rng_counter(value);                                       \
   }                                                                            \
                                                                                \
-  void thermostat##_set_rng_state(const uint64_t seed) {                       \
-    mpi_bcast_##thermostat##_rng_counter(seed);                                \
-    (thermostat).rng_initialize(seed);                                         \
-  }                                                                            \
+  REGISTER_CALLBACK(mpi_##thermostat##_set_rng_counter)                        \
                                                                                \
-  uint64_t thermostat##_get_rng_state() { return (thermostat).rng_get(); }
+  void thermostat##_set_rng_counter(uint64_t const value) {                    \
+    mpi_call_all(mpi_##thermostat##_set_rng_counter, value);                   \
+  }
 
 LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};
@@ -75,6 +74,9 @@ ThermalizedBondThermostat thermalized_bond = {};
 #ifdef DPD
 DPDThermostat dpd = {};
 #endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+StokesianThermostat stokesian = {};
+#endif
 
 REGISTER_THERMOSTAT_CALLBACKS(langevin)
 REGISTER_THERMOSTAT_CALLBACKS(brownian)
@@ -82,6 +84,9 @@ REGISTER_THERMOSTAT_CALLBACKS(npt_iso)
 REGISTER_THERMOSTAT_CALLBACKS(thermalized_bond)
 #ifdef DPD
 REGISTER_THERMOSTAT_CALLBACKS(dpd)
+#endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+REGISTER_THERMOSTAT_CALLBACKS(stokesian)
 #endif
 
 void thermo_init() {
@@ -93,7 +98,7 @@ void thermo_init() {
     return;
   }
   if (thermo_switch & THERMO_LANGEVIN)
-    langevin.recalc_prefactors();
+    langevin.recalc_prefactors(time_step);
 #ifdef DPD
   if (thermo_switch & THERMO_DPD)
     dpd_init();
@@ -103,10 +108,37 @@ void thermo_init() {
     if (nptiso.piston == 0.0) {
       thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
     } else {
-      npt_iso.recalc_prefactors(nptiso.piston);
+      npt_iso.recalc_prefactors(nptiso.piston, time_step);
     }
   }
 #endif
   if (thermo_switch & THERMO_BROWNIAN)
     brownian.recalc_prefactors();
+}
+
+void philox_counter_increment() {
+  if (thermo_switch & THERMO_LANGEVIN) {
+    langevin.rng_increment();
+  }
+  if (thermo_switch & THERMO_BROWNIAN) {
+    brownian.rng_increment();
+  }
+#ifdef NPT
+  if (thermo_switch & THERMO_NPT_ISO) {
+    npt_iso.rng_increment();
+  }
+#endif
+#ifdef DPD
+  if (thermo_switch & THERMO_DPD) {
+    dpd.rng_increment();
+  }
+#endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+  if (thermo_switch & THERMO_SD) {
+    stokesian.rng_increment();
+  }
+#endif
+  if (n_thermalized_bonds) {
+    thermalized_bond.rng_increment();
+  }
 }

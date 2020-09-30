@@ -216,7 +216,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         for key in self._int_mode:
             if self._int_mode[key] == int_mode:
                 return key
-        raise Exception("Unknown integer collision mode %d" % int_mode)
+        raise Exception(f"Unknown integer collision mode {int_mode}")
 
     # Pickle support
     def __reduce__(self):

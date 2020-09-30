@@ -27,10 +27,14 @@
  */
 
 #include "integrate.hpp"
-#include "Particle.hpp"
+#include "integrators/brownian_inline.hpp"
+#include "integrators/steepest_descent.hpp"
+#include "integrators/stokesian_dynamics_inline.hpp"
+#include "integrators/velocity_verlet_inline.hpp"
+#include "integrators/velocity_verlet_npt.hpp"
+
+#include "ParticleRange.hpp"
 #include "accumulators.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -51,28 +55,15 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
-#include "integrators/brownian_inline.hpp"
-#include "integrators/langevin_inline.hpp"
-#include "integrators/steepest_descent.hpp"
-#include "integrators/stokesian_dynamics_inline.hpp"
-#include "integrators/velocity_verlet_inline.hpp"
-#include "integrators/velocity_verlet_npt.hpp"
-
 #include <profiler/profiler.hpp>
-#include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
-#include <cmath>
-#include <mpi.h>
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
 #endif
 
 int integ_switch = INTEG_METHOD_NVT;
-
-int n_verlet_updates = 0;
 
 double time_step = -1.0;
 
@@ -94,12 +85,39 @@ void notify_sig_int() {
 }
 } // namespace
 
-/** Thermostats increment the RNG counter here. */
-void philox_counter_increment();
-
 void integrator_sanity_checks() {
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
+  }
+  switch (integ_switch) {
+  case INTEG_METHOD_STEEPEST_DESCENT:
+    if (thermo_switch != THERMO_OFF)
+      runtimeErrorMsg()
+          << "The steepest descent integrator is incompatible with thermostats";
+    break;
+  case INTEG_METHOD_NVT:
+    if (thermo_switch & (THERMO_NPT_ISO | THERMO_BROWNIAN | THERMO_SD))
+      runtimeErrorMsg() << "The VV integrator is incompatible with the "
+                           "currently active combination of thermostats";
+    break;
+#ifdef NPT
+  case INTEG_METHOD_NPT_ISO:
+    if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_NPT_ISO)
+      runtimeErrorMsg() << "The NpT integrator requires the NpT thermostat";
+    break;
+#endif
+  case INTEG_METHOD_BD:
+    if (thermo_switch != THERMO_BROWNIAN)
+      runtimeErrorMsg() << "The BD integrator requires the BD thermostat";
+    break;
+#ifdef STOKESIAN_DYNAMICS
+  case INTEG_METHOD_SD:
+    if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_SD)
+      runtimeErrorMsg() << "The SD integrator requires the SD thermostat";
+    break;
+#endif
+  default:
+    runtimeErrorMsg() << "Unknown value for integ_switch";
   }
 }
 
@@ -137,7 +155,6 @@ bool integrator_step_1(ParticleRange &particles) {
 
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
-  extern BrownianThermostat brownian;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -170,7 +187,7 @@ int integrate(int n_steps, int reuse_forces) {
   /* Prepare the integrator */
   on_integration_start();
 
-  /* if any method vetoes (P3M not initialized), immediately bail out */
+  /* if any method vetoes (e.g. P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
     return 0;
 
@@ -190,7 +207,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    force_calc(cell_structure);
+    force_calc(cell_structure, time_step);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -206,7 +223,8 @@ int integrate(int n_steps, int reuse_forces) {
   if (check_runtime_errors(comm_cart))
     return 0;
 
-  n_verlet_updates = 0;
+  /* incremented if a Verlet update is done, aka particle resorting. */
+  int n_verlet_updates = 0;
 
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_START_INSTRUMENTATION;
@@ -243,12 +261,15 @@ int integrate(int n_steps, int reuse_forces) {
     virtual_sites()->update();
 #endif
 
+    if (cell_structure.get_resort_particles() >= Cells::RESORT_LOCAL)
+      n_verlet_updates++;
+
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
     particles = cell_structure.local_particles();
 
-    force_calc(cell_structure);
+    force_calc(cell_structure, time_step);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
@@ -305,32 +326,10 @@ int integrate(int n_steps, int reuse_forces) {
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    synchronize_npt_state(n_steps);
+    synchronize_npt_state();
   }
 #endif
   return integrated_steps;
-}
-
-void philox_counter_increment() {
-  if (thermo_switch & THERMO_LANGEVIN) {
-    langevin_rng_counter_increment();
-  }
-  if (thermo_switch & THERMO_BROWNIAN) {
-    brownian_rng_counter_increment();
-  }
-#ifdef NPT
-  if (thermo_switch & THERMO_NPT_ISO) {
-    npt_iso_rng_counter_increment();
-  }
-#endif
-#ifdef DPD
-  if (thermo_switch & THERMO_DPD) {
-    dpd_rng_counter_increment();
-  }
-#endif
-  if (n_thermalized_bonds) {
-    thermalized_bond_rng_counter_increment();
-  }
 }
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
@@ -393,7 +392,6 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 }
 
 int integrate_set_steepest_descent(const double f_max, const double gamma,
-                                   const int max_steps,
                                    const double max_displacement) {
   if (f_max < 0.0) {
     runtimeErrorMsg() << "The maximal force must be positive.\n";
@@ -407,13 +405,11 @@ int integrate_set_steepest_descent(const double f_max, const double gamma,
     runtimeErrorMsg() << "The maximal displacement must be positive.\n";
     return ES_ERROR;
   }
-  if (max_steps < 0) {
-    runtimeErrorMsg() << "The maximal number of steps must be positive.\n";
-    return ES_ERROR;
-  }
-  steepest_descent_init(f_max, gamma, max_steps, max_displacement);
+  steepest_descent_init(f_max, gamma, max_displacement);
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  // broadcast integrator parameters to all nodes
+  mpi_bcast_steepest_descent();
   return ES_OK;
 }
 

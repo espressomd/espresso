@@ -26,12 +26,16 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
+#include "thermostats/npt_inline.hpp"
 
 #include <utils/math/sqr.hpp>
+
+#include <boost/mpi/collectives.hpp>
+
+#include <functional>
 
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
   extern IsotropicNptThermostat npt_iso;
@@ -69,10 +73,10 @@ void velocity_verlet_npt_finalize_p_inst() {
     }
   }
 
-  double p_tmp = 0.0;
-  MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  double p_sum = 0.0;
+  boost::mpi::reduce(comm_cart, nptiso.p_inst, p_sum, std::plus<double>(), 0);
   if (this_node == 0) {
-    nptiso.p_inst = p_tmp / (nptiso.dimension * nptiso.volume);
+    nptiso.p_inst = p_sum / (nptiso.dimension * nptiso.volume);
     nptiso.p_diff = nptiso.p_diff +
                     (nptiso.p_inst - nptiso.p_ext) * 0.5 * time_step +
                     friction_thermV_nptiso(npt_iso, nptiso.p_diff);

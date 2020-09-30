@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 if(POLICY CMP0076)
   # make target_sources() convert relative paths to absolute
@@ -166,7 +166,7 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.5 REQUIRED)
+find_package(PythonInterp 3.6 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.26 REQUIRED)
@@ -275,10 +275,9 @@ if(WITH_STOKESIAN_DYNAMICS)
   endif()
 endif(WITH_STOKESIAN_DYNAMICS)
 
-if(WITH_STOKESIAN_DYNAMICS)
+if(STOKESIAN_DYNAMICS)
   set(CMAKE_INSTALL_LIBDIR
       "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
-  cmake_minimum_required(VERSION 3.11)
   include(FetchContent)
   FetchContent_Declare(
     stokesian_dynamics
@@ -290,7 +289,7 @@ if(WITH_STOKESIAN_DYNAMICS)
     add_subdirectory(${stokesian_dynamics_SOURCE_DIR}
                      ${stokesian_dynamics_BINARY_DIR})
   endif()
-endif(WITH_STOKESIAN_DYNAMICS)
+endif(STOKESIAN_DYNAMICS)
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)
@@ -385,11 +384,18 @@ endif()
 add_library(cxx_interface INTERFACE)
 target_compile_options(
   cxx_interface
-  INTERFACE -Wall -Wextra $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+  INTERFACE -Wall
+            -Wextra
+            $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+            # add extra warnings
+            $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
             # disable warnings from -Wextra
-            -Wno-sign-compare -Wno-unused-function -Wno-unused-variable
-            -Wno-unused-parameter -Wno-missing-braces
-            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered;-Wno-cast-function-type>
+            -Wno-sign-compare
+            -Wno-unused-function
+            -Wno-unused-variable
+            -Wno-unused-parameter
+            -Wno-missing-braces
+            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
             $<$<CXX_COMPILER_ID:Intel>:-wd592>)
 
 # disable more warnings from -Wextra
@@ -415,6 +421,10 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
                                                VERSION_GREATER "4.8.5")
   # older GCC versions don't support -Wno-pedantic which we need in src/python
   target_compile_options(cxx_interface INTERFACE -pedantic)
+endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
+                                            VERSION_GREATER_EQUAL "8.1.0")
+  target_compile_options(cxx_interface INTERFACE -Wno-cast-function-type)
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION
                                               VERSION_LESS "16.0")
@@ -456,9 +466,6 @@ endif()
 
 target_link_libraries(cxx_interface INTERFACE coverage_interface)
 
-# Give CMAKE_CXX_FLAGS higher precedence
-target_compile_options(cxx_interface INTERFACE ${CMAKE_CXX_FLAGS})
-
 #
 # Testing
 # ##############################################################################
@@ -477,6 +484,9 @@ if(WITH_TESTS)
   if(WITH_PYTHON)
     add_subdirectory(testsuite)
   endif(WITH_PYTHON)
+  set(CTEST_ARGS ""
+      CACHE STRING
+            "Extra arguments to give to ctest calls (separated by semicolons)")
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)

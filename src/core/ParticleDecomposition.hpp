@@ -114,10 +114,11 @@ public:
    */
   virtual Utils::Vector3d max_range() const = 0;
   /**
-   * @brief Return true if minimum image convention is
-   *        needed for distance calculation.
+   * @brief Return the box geometry needed for distance calculation
+   *        if minimum image convention should be used needed for
+   *        distance calculation.
    */
-  virtual bool minimum_image_distance() const = 0;
+  virtual boost::optional<BoxGeometry> minimum_image_distance() const = 0;
 
   virtual ~ParticleDecomposition() = default;
 };

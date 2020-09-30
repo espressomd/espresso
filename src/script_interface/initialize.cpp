@@ -18,47 +18,41 @@
  */
 
 #include "initialize.hpp"
-#include "cluster_analysis/initialize.hpp"
+
 #include "config.hpp"
+
+#include "cluster_analysis/initialize.hpp"
 #include "constraints/initialize.hpp"
 #include "pair_criteria/initialize.hpp"
 #include "shapes/initialize.hpp"
 #ifdef H5MD
 #include "h5md/initialize.hpp"
 #endif
+#include "ComFixed.hpp"
 #include "accumulators/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "lbboundaries/initialize.hpp"
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
-
-#include "ComFixed.hpp"
-
-#include "ParallelScriptInterface.hpp"
-
-#include "core/communication.hpp"
 #include "virtual_sites/initialize.hpp"
 
 namespace ScriptInterface {
-
-void initialize() {
-  ParallelScriptInterface::initialize(Communication::mpiCallbacks());
-
-  Shapes::initialize();
-  Constraints::initialize();
+void initialize(Utils::Factory<ObjectHandle> *f) {
+  Shapes::initialize(f);
+  Constraints::initialize(f);
 #ifdef H5MD
-  Writer::initialize();
+  Writer::initialize(f);
 #endif
-  Accumulators::initialize();
-  Observables::initialize();
-  ClusterAnalysis::initialize();
-  LBBoundaries::initialize();
-  PairCriteria::initialize();
-  VirtualSites::initialize();
-  MPIIO::initialize();
-  CollisionDetection::initialize();
+  Accumulators::initialize(f);
+  Observables::initialize(f);
+  ClusterAnalysis::initialize(f);
+  LBBoundaries::initialize(f);
+  PairCriteria::initialize(f);
+  VirtualSites::initialize(f);
+  MPIIO::initialize(f);
+  CollisionDetection::initialize(f);
 
-  ScriptInterface::register_new<ComFixed>("ComFixed");
+  f->register_new<ComFixed>("ComFixed");
 }
 
 } /* namespace ScriptInterface */

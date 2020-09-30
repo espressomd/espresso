@@ -17,18 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
-#ifdef H5MD
 #ifndef SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
+
+#include "config.hpp"
+#ifdef H5MD
+
+#include <script_interface/ObjectHandle.hpp>
+
+#include <utils/Factory.hpp>
 
 namespace ScriptInterface {
 namespace Writer {
 
-void initialize();
+void initialize(Utils::Factory<ObjectHandle> *om);
 
 } /* namespace Writer */
 } /* namespace ScriptInterface */
 
-#endif // SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
 #endif // H5MD
+#endif // SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP

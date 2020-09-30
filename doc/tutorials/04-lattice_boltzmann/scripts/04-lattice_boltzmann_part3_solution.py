@@ -24,7 +24,6 @@ espressomd.assert_features(['LENNARD_JONES'])
 import espressomd.accumulators
 import espressomd.observables
 import espressomd.polymer
-import espressomd.minimize_energy
 
 # Setup constant
 TIME_STEP = 0.01
@@ -67,12 +66,12 @@ for index, N in enumerate(N_MONOMERS):
 
     logging.info("Warming up the polymer chain.")
     system.time_step = 0.002
-    espressomd.minimize_energy.steepest_descent(
-        system,
+    system.integrator.set_steepest_descent(
         f_max=1.0,
         gamma=10,
-        max_steps=2000,
         max_displacement=0.01)
+    system.integrator.run(2000)
+    system.integrator.set_vv()
     logging.info("Warmup finished.")
 
     logging.info("Equilibration.")
@@ -119,8 +118,8 @@ for index, N in enumerate(N_MONOMERS):
     corrdata = correlator.result()
 
     rh_results[index] = np.average(rhs)
-    tau = corrdata[1:, 0]
-    msd = corrdata[1:, 2] + corrdata[1:, 3] + corrdata[1:, 4]
+    tau = correlator.lag_times()[1:]
+    msd = corrdata[1:, 0] + corrdata[1:, 1] + corrdata[1:, 2]
     np.save('msd_{}'.format(N), np.c_[tau, msd])
 
 np.save('rh.npy', rh_results)

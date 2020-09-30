@@ -29,6 +29,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
@@ -39,14 +40,12 @@
 #include <utils/mpi/all_compare.hpp>
 
 #include <boost/functional/hash.hpp>
+#include <boost/mpi/collectives.hpp>
 
 #include <functional>
 #include <unordered_map>
 
 extern double force_cap;
-extern LangevinThermostat langevin;
-extern BrownianThermostat brownian;
-extern IsotropicNptThermostat npt_iso;
 
 namespace {
 
@@ -186,21 +185,24 @@ std::size_t hash_value(Datafield const &field) {
 void common_bcast_parameter(int i) {
   switch (fields.at(i).type) {
   case Datafield::Type::INT:
-    MPI_Bcast((int *)fields.at(i).data, fields.at(i).dimension, MPI_INT, 0,
-              comm_cart);
+    boost::mpi::broadcast(comm_cart, reinterpret_cast<int *>(fields.at(i).data),
+                          fields.at(i).dimension, 0);
     break;
   case Datafield::Type::UNSIGNED_LONG:
-    MPI_Bcast((unsigned long *)fields.at(i).data, fields.at(i).dimension,
-              MPI_UNSIGNED_LONG, 0, comm_cart);
+    boost::mpi::broadcast(comm_cart,
+                          reinterpret_cast<unsigned long *>(fields.at(i).data),
+                          fields.at(i).dimension, 0);
     break;
   case Datafield::Type::BOOL:
     static_assert(sizeof(bool) == sizeof(char),
                   "bool datatype does not have the expected size");
-    MPI_Bcast((char *)fields.at(i).data, 1, MPI_CHAR, 0, comm_cart);
+    boost::mpi::broadcast(comm_cart,
+                          reinterpret_cast<char *>(fields.at(i).data), 1, 0);
     break;
   case Datafield::Type::DOUBLE:
-    MPI_Bcast((double *)fields.at(i).data, fields.at(i).dimension, MPI_DOUBLE,
-              0, comm_cart);
+    boost::mpi::broadcast(comm_cart,
+                          reinterpret_cast<double *>(fields.at(i).data),
+                          fields.at(i).dimension, 0);
     break;
   default:
     throw std::runtime_error("Unknown type.");

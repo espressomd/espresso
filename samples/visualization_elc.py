@@ -26,7 +26,6 @@ import numpy as np
 
 import espressomd
 import espressomd.shapes
-from espressomd.minimize_energy import steepest_descent
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
 from espressomd import visualization
@@ -66,8 +65,10 @@ system.non_bonded_inter[0, 0].wca.set_params(epsilon=1.0, sigma=1.0)
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total=", energy['total'])
-steepest_descent(system, f_max=10, gamma=50.0, max_steps=1000,
-                 max_displacement=0.2)
+system.integrator.set_steepest_descent(f_max=10, gamma=50.0,
+                                       max_displacement=0.2)
+system.integrator.run(1000)
+system.integrator.set_vv()
 energy = system.analysis.energy()
 print("After Minimization: E_total=", energy['total'])
 

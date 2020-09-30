@@ -21,7 +21,6 @@
 #ifdef DIPOLAR_DIRECT_SUM
 
 #include "Actor.hpp"
-#include "DipolarDirectSum_cuda.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"

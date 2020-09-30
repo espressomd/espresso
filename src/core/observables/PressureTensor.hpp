@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef OBSERVABLES_PRESSURETENSOR_HPP
+#define OBSERVABLES_PRESSURETENSOR_HPP
 
 #include "Observable.hpp"
 #include "pressure.hpp"

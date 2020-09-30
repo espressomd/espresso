@@ -35,7 +35,10 @@
 
 /** @brief Parameters for the ELC method */
 typedef struct {
-  /** @copybrief MMM2D_struct::maxPWerror */
+  /** Maximal allowed pairwise error for the potential and force.
+   *  Used at least by the near formula, since this does the error control at
+   *  runtime.
+   */
   double maxPWerror;
   /** Cutoff of the exponential sum. Since in all other MMM methods this is
    *  the far formula, we call it here the same, although in the ELC context

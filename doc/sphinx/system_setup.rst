@@ -71,17 +71,17 @@ Accessing module states
 
 Some variables like or are no longer directly available as attributes.
 In these cases they can be easily derived from the corresponding Python
-objects like
+objects like::
 
-``n_part = len(espressomd.System().part[:].pos)``
+    n_part = len(system.part[:].pos)
 
 or by calling the corresponding ``get_state()`` methods like::
 
-    temperature = espressomd.System().thermostat.get_state()[0]['kT']
+    temperature = system.thermostat.get_state()[0]['kT']
 
-    gamma = espressomd.System().thermostat.get_state()[0]['gamma']
+    gamma = system.thermostat.get_state()[0]['gamma']
 
-    gamma_rot = espressomd.System().thermostat.get_state()[0]['gamma_rotation']
+    gamma_rot = system.thermostat.get_state()[0]['gamma_rotation']
 
 .. _Cellsystems:
 
@@ -112,7 +112,7 @@ The properties of the cell system can be accessed by
 
     (float) Skin for the Verlet list. This value has to be set, otherwise the simulation will not start.
 
-Details about the cell system can be obtained by :meth:`espressomd.System().cell_system.get_state() <espressomd.cellsystem.CellSystem.get_state>`:
+Details about the cell system can be obtained by :meth:`espressomd.system.System.cell_system.get_state() <espressomd.cellsystem.CellSystem.get_state>`:
 
     * ``cell_grid``       Dimension of the inner cell grid.
     * ``cell_size``       Box-length of a cell.
@@ -132,7 +132,7 @@ selects the domain decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
 domain decomposition is used, but not the Verlet lists. ::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     system.cell_system.set_domain_decomposition(use_verlet_lists=True)
 
@@ -161,7 +161,7 @@ particles, giving an unfavorable computation time scaling of
 interaction in the cell model require the calculation of all pair
 interactions. ::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     system.cell_system.set_n_square()
 
@@ -193,14 +193,16 @@ Thermostats
 -----------
 
 The thermostat can be controlled by the class :class:`espressomd.thermostat.Thermostat`.
+The different thermostats available in |es| will be described in the following
+subsections.
 
-The different available thermostats will be described in the following
-subsections. Note that for a simulation of the NPT ensemble, you need to
-use a standard thermostat for the particle velocities (Langevin or DPD),
-and a thermostat for the box geometry (the isotropic NPT thermostat).
-
-You may combine different thermostats at your own risk by turning them
-on one by one. Note that there is only one temperature for all
+You may combine different thermostats at your own risk by turning them on
+one by one. The list of active thermostats can be cleared at any time with
+:py:meth:`system.thermostat.turn_off() <espressomd.thermostat.Thermostat.turn_off>`.
+Not all combinations of thermostats are allowed, though (see
+:py:func:`espressomd.thermostat.AssertThermostatType` for details).
+Some integrators only work with a specific thermostat and throw an
+error otherwise. Note that there is only one temperature for all
 thermostats, although for some thermostats like the Langevin thermostat,
 particles can be assigned individual temperatures.
 
@@ -209,6 +211,13 @@ the current value of the Boltzmann constant. Therefore, when specifying
 the temperature of a thermostat, you actually do not define the
 temperature, but the value of the thermal energy :math:`k_B T` in the
 current unit system (see the discussion on units, Section :ref:`On units`).
+
+All thermostats have a ``seed`` argument that controls the state of the random
+number generator (Philox Counter-based RNG). This seed is required on first
+activation of a thermostat, unless stated otherwise. It can be omitted in
+subsequent calls of the method that activates the same thermostat. The random
+sequence also depends on the thermostats counters that are
+incremented after each integration step.
 
 .. _Langevin thermostat:
 
@@ -221,10 +230,8 @@ class :class:`espressomd.thermostat.Thermostat` has to be invoked.
 Best explained in an example::
 
     import espressomd
-    system = espressomd.System()
-    therm = system.Thermostat()
-
-    therm.set_langevin(kT=1.0, gamma=1.0, seed=41)
+    system = espressomd.System(box_l=[1, 1, 1])
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=41)
 
 As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`.
 
@@ -252,12 +259,6 @@ The random process :math:`\eta(t)` is discretized by drawing an uncorrelated ran
 The distribution of :math:`\overline{\eta}` is uniform and satisfies
 
 .. math:: <\overline{\eta}> = 0 , <\overline{\eta}\overline{\eta}> = 1/dt
-
-The keyword ``seed`` controls the state of the random number generator (Philox
-Counter-based RNG) and is required on first activation of the thermostat. It
-can be omitted in subsequent calls of ``set_langevin()``. It is the user's
-responsibility to decide whether the thermostat should be deterministic (by
-using a fixed seed) or not (by using a randomized seed).
 
 If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
 also coupled to the thermostat. If only the first two arguments are
@@ -301,13 +302,15 @@ The LB fluid can be used to thermalize particles, while also including their hyd
 The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
 Temperature is set via the ``kT`` argument of the LB fluid.
 
-Furthermore a ``seed`` has to be given for the
-thermalization of the particle coupling. The magnitude of the frictional coupling can be adjusted by
-the parameter ``gamma``.
-To enable the LB thermostat, use::
+The magnitude of the frictional coupling can be adjusted by the
+parameter ``gamma``. To enable the LB thermostat, use::
 
+    import espressomd
+    import espressomd.lb
+    system = espressomd.System(box_l=[1, 1, 1])
+    lbf = espressomd.lb.LBFluid(agrid=1, dens=1, visc=1, tau=0.01)
+    system.actors.add(lbf)
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
-
 
 No other thermostatting mechanism is necessary
 then. Please switch off any other thermostat before starting the LB
@@ -338,7 +341,7 @@ and a repulsive conservative force, see :ref:`Hat interaction`.
 
 The temperature is set via
 :py:meth:`espressomd.thermostat.Thermostat.set_dpd`
-which takes ``kT`` as the only argument.
+which takes ``kT`` and ``seed`` as arguments.
 
 The friction coefficients and cutoff are controlled via the
 :ref:`DPD interaction` on a per type-pair basis. For details
@@ -383,7 +386,7 @@ For example::
 
     import espressomd
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=41)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
@@ -416,7 +419,7 @@ The system integrator should be also changed.
 Best explained in an example::
 
     import espressomd
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=41)
     system.integrator.set_brownian_dynamics()
 
@@ -467,12 +470,6 @@ Note: the rotational Brownian dynamics implementation is compatible with particl
 the isotropic moment of inertia tensor only. Otherwise, the viscous terminal angular velocity
 is not defined, i.e. it has no constant direction over the time.
 
-The keyword ``seed`` controls the state of the random number generator (Philox
-Counter-based RNG) and is required on first activation of the thermostat. It
-can be omitted in subsequent calls of ``set_brownian()``. It is the user's
-responsibility to decide whether the thermostat should be deterministic (by
-using a fixed seed) or not (by using a randomized seed).
-
 .. _Stokesian thermostat:
 
 Stokesian thermostat
@@ -486,11 +483,18 @@ Stokesian thermostat
 In order to thermalize a Stokesian Dynamics simulation, the SD thermostat
 needs to be activated via::
 
+    import espressomd
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.periodicity = [False, False, False]
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
+    system.part.add(pos=[0, 0, 0], rotation=[1, 0, 0], ext_force=[0, 0, -1])
     system.thermostat.set_stokesian(kT=1.0, seed=43)
+    system.integrator.set_stokesian_dynamics(viscosity=1.0, radii={0: 1.0})
+    system.integrator.run(100)
 
 where ``kT`` denotes the desired temperature of the system, and ``seed`` the
-seed for the random number generator of the Stokesian Dynamics thermostat.
-It is independent from the other random number generators in |es|.
+seed for the random number generator.
 
 
 .. _CUDA:
@@ -505,7 +509,7 @@ example ``lbfluid``. If you do not choose the GPU manually before that,
 CUDA internally chooses one, which is normally the most powerful GPU
 available, but load-independent. ::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     dev = system.cuda_init_handle.device
     system.cuda_init_handle.device = dev
@@ -539,7 +543,7 @@ List available CUDA devices
 If you want to list available CUDA devices
 you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g., ::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     print(system.cuda_init_handle.device_list)
 
@@ -555,7 +559,7 @@ When you start ``pypresso`` your first GPU should be selected.
 If you wanted to use the second GPU, this can be done
 by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     system.cuda_init_handle.device = 1
 

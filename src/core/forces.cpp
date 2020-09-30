@@ -40,6 +40,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_loop.hpp"
 
 #include <profiler/profiler.hpp>
@@ -48,7 +49,7 @@
 
 ActorList forceActors;
 
-void init_forces(const ParticleRange &particles) {
+void init_forces(const ParticleRange &particles, double time_step) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
@@ -62,7 +63,7 @@ void init_forces(const ParticleRange &particles) {
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    p.f = init_local_particle_force(p);
+    p.f = init_local_particle_force(p, time_step);
   }
 
   /* initialize ghost forces with zero
@@ -79,7 +80,7 @@ void init_forces_ghosts(const ParticleRange &particles) {
   }
 }
 
-void force_calc(CellStructure &cell_structure) {
+void force_calc(CellStructure &cell_structure, double time_step) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   espressoSystemInterface.update();
@@ -93,7 +94,7 @@ void force_calc(CellStructure &cell_structure) {
 #ifdef ELECTROSTATICS
   iccp3m_iteration(particles, cell_structure.ghost_particles());
 #endif
-  init_forces(particles);
+  init_forces(particles, time_step);
 
   for (auto &forceActor : forceActors) {
     forceActor->computeForces(espressoSystemInterface);
@@ -117,7 +118,7 @@ void force_calc(CellStructure &cell_structure) {
 #endif
 
   short_range_loop(
-      [](Particle &p) { add_single_particle_force(p); },
+      add_bonded_force,
       [](Particle &p1, Particle &p2, Distance const &d) {
         add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
 #ifdef COLLISION_DETECTION
@@ -125,6 +126,7 @@ void force_calc(CellStructure &cell_structure) {
           detect_collision(p1, p2, d.dist2);
 #endif
       },
+      maximal_cutoff(),
       VerletCriterion{skin, interaction_range(), coulomb_cutoff, dipole_cutoff,
                       collision_detection_cutoff()});
 

@@ -30,7 +30,6 @@ if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
 import espressomd.electrokinetics
-from espressomd.minimize_energy import steepest_descent
 from espressomd.shapes import Wall, Sphere
 from espressomd import constraints
 
@@ -109,17 +108,22 @@ if espressomd.has_features('P3M') and 'P3M.CPU' in modes:
     system.actors.add(p3m)
 
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
-acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
+acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc_time_series = espressomd.accumulators.TimeSeries(obs=obs)
-acc.update()
+acc_correlator = espressomd.accumulators.Correlator(
+    obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
+    corr_operation="componentwise_product")
+acc_mean_variance.update()
 acc_time_series.update()
+acc_correlator.update()
 system.part[0].pos = [1.0, 2.0, 3.0]
-acc.update()
+acc_mean_variance.update()
 acc_time_series.update()
+acc_correlator.update()
 
-
-system.auto_update_accumulators.add(acc)
+system.auto_update_accumulators.add(acc_mean_variance)
 system.auto_update_accumulators.add(acc_time_series)
+system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
 system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
@@ -177,10 +181,6 @@ if 'LB.OFF' in modes:
         system.integrator.set_stokesian_dynamics(
             approximation_method='fts', device='gpu', viscosity=2.0,
             radii={0: 1.0}, pair_mobility=True, self_mobility=False)
-    # set minimization
-    if 'MINIMIZATION' in modes:
-        steepest_descent(system, f_max=1, gamma=10, max_steps=0,
-                         max_displacement=0.01)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
@@ -203,8 +203,9 @@ if 'THERM.LB' not in modes:
     system.bonded_inter.add(thermalized_bond)
     system.part[1].add_bond((thermalized_bond, 0))
 checkpoint.register("system")
-checkpoint.register("acc")
+checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
+checkpoint.register("acc_correlator")
 # calculate forces
 system.integrator.run(0)
 particle_force0 = np.copy(system.part[0].f)

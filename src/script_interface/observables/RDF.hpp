@@ -65,7 +65,7 @@ public:
           [this]() { return rdf_observable()->max_r; }}});
   }
 
-  void construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &params) override {
     m_observable = make_shared_from_args<::Observables::RDF, std::vector<int>,
                                          std::vector<int>, int, double, double>(
         params, "ids1", "ids2", "n_r_bins", "min_r", "max_r");

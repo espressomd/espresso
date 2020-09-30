@@ -87,7 +87,7 @@ class LangevinThermostat(ut.TestCase):
         system.part.add(pos=[0, 0, 0])
         system.integrator.run(1)
         force2 = np.copy(system.part[0].f)
-        np.testing.assert_equal(np.any(np.not_equal(force1, force2)), True)
+        np.testing.assert_equal(np.all(np.not_equal(force1, force2)), True)
 
         # Different seed should give a different force
         system.part.clear()
@@ -95,20 +95,36 @@ class LangevinThermostat(ut.TestCase):
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(1)
         force3 = np.copy(system.part[0].f)
-        np.testing.assert_equal(np.any(np.not_equal(force2, force3)), True)
+        np.testing.assert_equal(np.all(np.not_equal(force2, force3)), True)
 
-        # Same seed should give the same force
+        # Same seed should not give the same force with different counter state
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
-        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(1)
         force4 = np.copy(system.part[0].f)
+        np.testing.assert_equal(np.all(np.not_equal(force3, force4)), True)
+
+        # Seed offset should not give the same force with a lag
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         system.integrator.run(1)
+        system.part[0].pos = system.part[0].v = [0, 0, 0]
+        system.integrator.run(1)
         force5 = np.copy(system.part[0].f)
-        np.testing.assert_almost_equal(force4, force5)
+        np.testing.assert_equal(np.all(np.not_equal(force4, force5)), True)
+
+        # Same seed should give the same force with same counter state
+        system.part.clear()
+        system.part.add(pos=[0, 0, 0])
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
+        system.integrator.run(0, recalc_forces=True)
+        force6 = np.copy(system.part[0].f)
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
+        system.integrator.run(0, recalc_forces=True)
+        force7 = np.copy(system.part[0].f)
+        np.testing.assert_almost_equal(force6, force7)
 
     def test_02__friction_trans(self):
         """Tests the translational friction-only part of the thermostat."""
@@ -225,7 +241,7 @@ class LangevinThermostat(ut.TestCase):
 
         v_minmax = 5
         bins = 4
-        error_tol = 0.01
+        error_tol = 0.016
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
         if espressomd.has_features("ROTATION"):
@@ -292,7 +308,7 @@ class LangevinThermostat(ut.TestCase):
                     system.part[int(N / 2):].omega_body
         v_minmax = 5
         bins = 4
-        error_tol = 0.012
+        error_tol = 0.016
         self.check_velocity_distribution(v_kT, v_minmax, bins, error_tol, kT)
         self.check_velocity_distribution(v_kT2, v_minmax, bins, error_tol, kT2)
 
@@ -463,15 +479,14 @@ class LangevinThermostat(ut.TestCase):
         """
         c = corr
         # Integral of vacf via Green-Kubo D = int_0^infty <v(t_0)v(t_0+t)> dt
-        # (o 1/3, since we work componentwise)
-        i = p.id
-        acf = c.result()[:, [0, 2 + 3 * i, 2 + 3 * i + 1, 2 + 3 * i + 2]]
-        np.savetxt("acf.dat", acf)
+        # (or 1/3, since we work componentwise)
+        acf = c.result()
+        tau = c.lag_times()
 
         # Integrate with trapezoidal rule
-        for coord in [1, 2, 3]:
-            I = np.trapz(acf[:, coord], acf[:, 0])
-            ratio = I / (kT / gamma[coord - 1])
+        for i in range(3):
+            I = np.trapz(acf[:, p.id, i], tau)
+            ratio = I / (kT / gamma[i])
             self.assertAlmostEqual(ratio, 1., delta=0.07)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")

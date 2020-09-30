@@ -96,7 +96,7 @@ Galilei Transform and Particle Velocity Manipulation
 The following class :class:`espressomd.galilei.GalileiTransform` may be useful
 in affecting the velocity of the system. ::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     gt = system.galilei
 
 * Particle motion and rotation

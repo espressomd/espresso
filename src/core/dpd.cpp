@@ -24,16 +24,16 @@
 #include "dpd.hpp"
 
 #ifdef DPD
+#include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
+#include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
-#include "short_range_loop.hpp"
 #include "thermostat.hpp"
 
 #include <boost/mpi/collectives/reduce.hpp>
-#include <utils/NoOp.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/tensor_product.hpp>
 
@@ -47,9 +47,9 @@ using Utils::Vector3d;
  *     seed-per-node)
  */
 Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
-  extern DPDThermostat dpd;
   return Random::noise_uniform<RNGSalt::SALT_DPD>(
-      dpd.rng_get(), (pid1 < pid2) ? pid2 : pid1, (pid1 < pid2) ? pid1 : pid2);
+      dpd.rng_counter(), dpd.rng_seed(), (pid1 < pid2) ? pid2 : pid1,
+      (pid1 < pid2) ? pid1 : pid2);
 }
 
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
@@ -142,8 +142,7 @@ static auto dpd_viscous_stress_local() {
   on_observable_calc();
 
   Utils::Vector<Vector3d, 3> stress{};
-  short_range_loop(
-      Utils::NoOp{},
+  cell_structure.non_bonded_loop(
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
         auto const v21 = p1.m.v - p2.m.v;
 

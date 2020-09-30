@@ -224,6 +224,7 @@ void DomainDecomposition::resort(bool global,
     }
   }
 }
+
 void DomainDecomposition::mark_cells() {
   int cnt_c = 0;
 

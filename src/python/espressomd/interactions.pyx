@@ -1825,37 +1825,37 @@ class BondedInteractionNotDefined:
             self.__class__.__name__ + " not compiled into ESPResSo core")
 
     def type_number(self):
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def type_name(self):
         """Name of interaction type.
 
         """
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def valid_keys(self):
         """All parameters that can be set.
 
         """
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
 
         """
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def _get_params_from_es_core(self):
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
     def _set_params_in_es_core(self):
-        raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
+        raise Exception(f"{self.name} has to be defined in myconfig.hpp.")
 
 
 class FeneBond(BondedInteraction):
@@ -2089,7 +2089,17 @@ class ThermalizedBond(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
+        counter = None
+        # Interaction id as argument
+        if len(args) == 2 and is_valid_type(args[0], int):
+            counter = args[1]
+            args = (args[0],)
         super().__init__(*args, **kwargs)
+        if counter is not None:
+            thermalized_bond_set_rng_counter(counter)
+
+    def __reduce__(self):
+        return (self.__class__, (self._bond_id, thermalized_bond.rng_counter()))
 
     def type_number(self):
         return BONDED_IA_THERMALIZED_DIST
@@ -2119,11 +2129,11 @@ class ThermalizedBond(BondedInteraction):
                  bonded_ia_params[
                      self._bond_id].p.thermalized_bond.gamma_distance,
              "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut,
-             "seed": thermalized_bond_get_rng_state()
+             "seed": thermalized_bond.rng_seed()
              }
 
     def _set_params_in_es_core(self):
-        if self.params["seed"] is None and thermalized_bond_is_seed_required():
+        if self.params["seed"] is None and thermalized_bond.is_seed_required():
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermalized bond")
         if self.params["seed"] is not None:
@@ -2131,7 +2141,7 @@ class ThermalizedBond(BondedInteraction):
                 self.params["seed"], 1, int, "seed must be a positive integer")
             if self.params["seed"] < 0:
                 raise ValueError("seed must be a positive integer")
-            thermalized_bond_set_rng_state(self.params["seed"])
+            thermalized_bond_set_rng_seed(self.params["seed"])
 
         thermalized_bond_set_params(
             self._bond_id, self._params["temp_com"], self._params["gamma_com"],
@@ -2591,8 +2601,8 @@ class TabulatedAngle(_TabulatedBase):
         """
         phi = [self._params["min"], self._params["max"]]
         if abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - self.pi) > 1e-5:
-            raise ValueError("Tabulated angle expects forces/energies "
-                             "within the range [0, pi], got " + str(phi))
+            raise ValueError(f"Tabulated angle expects forces/energies "
+                             f"within the range [0, pi], got {phi}")
 
 
 class TabulatedDihedral(_TabulatedBase):
@@ -2631,8 +2641,8 @@ class TabulatedDihedral(_TabulatedBase):
         """
         phi = [self._params["min"], self._params["max"]]
         if abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - 2 * self.pi) > 1e-5:
-            raise ValueError("Tabulated dihedral expects forces/energies "
-                             "within the range [0, 2*pi], got " + str(phi))
+            raise ValueError(f"Tabulated dihedral expects forces/energies "
+                             f"within the range [0, 2*pi], got {phi}")
 
 
 IF TABULATED == 1:
@@ -3313,7 +3323,7 @@ class BondedInteractions:
         # Check if the bonded interaction exists in ESPResSo core
         if bond_type == -1:
             raise ValueError(
-                "The bonded interaction with the id " + str(key) + " is not yet defined.")
+                f"The bonded interaction with the id {key} is not yet defined.")
 
         # Find the appropriate class representing such a bond
         bond_class = bonded_interaction_classes[bond_type]

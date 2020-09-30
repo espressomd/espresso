@@ -27,13 +27,15 @@
 
 #include <shapes/Ellipsoid.hpp>
 
+#include <utils/constants.hpp>
+
 bool check_distance_function(const Shapes::Shape &s) {
   double semiaxes[3] = {3.1, 2.2, 1.3};
 
   int N = 100;
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
-      double theta = 2. * i / N * M_PI;
+      double theta = 2. * i / N * Utils::pi();
       double v = j / (N - 1.);
 
       Utils::Vector3d dist;

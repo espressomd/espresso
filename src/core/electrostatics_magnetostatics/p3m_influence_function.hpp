@@ -23,6 +23,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+#include <utils/index.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
@@ -32,25 +33,6 @@
 #include <cmath>
 
 namespace detail {
-enum : int { RX = 0, RY = 1, RZ = 2 };
-
-std::array<std::vector<int>, 3> inline calc_meshift(
-    std::array<int, 3> const &mesh_size) {
-  std::array<std::vector<int>, 3> ret;
-
-  for (size_t i = 0; i < 3; i++) {
-    ret[i].resize(mesh_size[i]);
-
-    ret[i][0] = 0;
-    for (int j = 1; j <= mesh_size[i] / 2; j++) {
-      ret[i][j] = j;
-      ret[i][mesh_size[i] - j] = -j;
-    }
-  }
-
-  return ret;
-}
-
 template <typename T> T g_ewald(T alpha, T k2) {
   auto constexpr limit = T{30};
   auto const exponent = Utils::sqr(1. / (2. * alpha)) * k2;
@@ -62,10 +44,13 @@ template <size_t S, size_t m>
 std::pair<double, double> aliasing_sums_ik(size_t cao, double alpha,
                                            const Utils::Vector3d &k,
                                            const Utils::Vector3d &h) {
+  using namespace detail::FFT_indexing;
   using Utils::int_pow;
-  using Utils::pi;
   using Utils::sinc;
   using Utils::Vector3d;
+
+  constexpr double two_pi = 2 * Utils::pi();
+  constexpr double two_pi_i = 1 / two_pi;
 
   double numerator = 0.0;
   double denominator = 0.0;
@@ -74,10 +59,10 @@ std::pair<double, double> aliasing_sums_ik(size_t cao, double alpha,
     for (int my = -m; my <= m; my++) {
       for (int mz = -m; mz <= m; mz++) {
         auto const km =
-            k + 2 * pi() * Vector3d{mx / h[RX], my / h[RY], mz / h[RZ]};
-        auto const U2 = std::pow(sinc(0.5 * km[RX] * h[RX] / pi()) *
-                                     sinc(0.5 * km[RY] * h[RY] / pi()) *
-                                     sinc(0.5 * km[RZ] * h[RZ] / pi()),
+            k + two_pi * Vector3d{mx / h[RX], my / h[RY], mz / h[RZ]};
+        auto const U2 = std::pow(sinc(km[RX] * h[RX] * two_pi_i) *
+                                     sinc(km[RY] * h[RY] * two_pi_i) *
+                                     sinc(km[RZ] * h[RZ] * two_pi_i),
                                  2 * cao);
 
         numerator += U2 * g_ewald(alpha, km.norm2()) * int_pow<S>(k * km);
@@ -141,8 +126,7 @@ std::vector<double> grid_influence_function(const P3MParameters &params,
                                             const Utils::Vector3i &n_start,
                                             const Utils::Vector3i &n_end,
                                             const Utils::Vector3d &box_l) {
-  enum : int { RX = 0, RY = 1, RZ = 2 };
-  enum : int { KY = 0, KZ = 1, KX = 2 };
+  using namespace detail::FFT_indexing;
 
   auto const shifts =
       detail::calc_meshift({params.mesh[0], params.mesh[1], params.mesh[2]});

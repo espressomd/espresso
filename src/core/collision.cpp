@@ -28,8 +28,9 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "virtual_sites/VirtualSitesRelative.hpp"
+#include "virtual_sites.hpp"
 
+#include <utils/constants.hpp>
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
@@ -77,8 +78,9 @@ Particle &get_part(int id) {
 }
 } // namespace
 
-/** @brief Return true if a bond between the centers of the colliding particles
- * needs to be placed. At this point, all modes need this */
+/** @brief Return true if a bond between the centers of the colliding
+ *  particles needs to be placed. At this point, all modes need this.
+ */
 inline bool bind_centers() {
   // Note that the glue to surface mode adds bonds between the centers
   // but does so later in the process. This is needed to guarantee that
@@ -102,12 +104,6 @@ bool validate_collision_parameters() {
 
     // Cache square of cutoff
     collision_params.distance2 = Utils::sqr(collision_params.distance);
-
-    if (collision_params.distance > min_global_cut) {
-      runtimeErrorMsg() << "The minimum global cutoff (System.min_global_cut) "
-                           "must be larger or equal the collision detection "
-                           "distance.";
-    }
   }
 
 #ifndef VIRTUAL_SITES_RELATIVE
@@ -241,8 +237,7 @@ bool validate_collision_parameters() {
       make_particle_type_exist(collision_params.part_type_after_glueing);
   }
 
-  recalc_forces = true;
-  rebuild_verletlist = true;
+  on_short_range_ia_change();
 
   return true;
 }
@@ -253,8 +248,9 @@ void queue_collision(const int part1, const int part2) {
   local_collision_queue.push_back({part1, part2});
 }
 
-/** @brief Calculate position of vs for GLUE_TO_SURFACE mode
- *    Returns id of particle to bind vs to */
+/** @brief Calculate position of vs for GLUE_TO_SURFACE mode.
+ *  Returns id of particle to bind vs to.
+ */
 const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
                                             const Particle &p2,
                                             Utils::Vector3d &pos) {
@@ -291,8 +287,9 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
 }
 
 // Considers three particles for three_particle_binding and performs
-// the binding if the criteria are met //
-void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
+// the binding if the criteria are met
+void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
+                                   Particle const &p2) {
   // If p1 and p2 are not closer or equal to the cutoff distance, skip
   // p1:
   if (get_mi_vector(p.r.p, p1.r.p, box_geo).norm() > collision_params.distance)
@@ -345,16 +342,12 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // three_particle_angle_resolution steps and by adding the id
   // of the bond for zero degrees.
   auto const bond_id = static_cast<int>(
-      floor(phi / M_PI *
-                (collision_params.three_particle_angle_resolution - 1) +
-            0.5) +
+      floor(0.5 + phi / Utils::pi() *
+                      (collision_params.three_particle_angle_resolution - 1)) +
       collision_params.bond_three_particles);
 
   // Create the bond
-
-  // First, fill bond data structure
   const std::array<int, 2> bondT = {p1.p.identity, p2.p.identity};
-
   p.bonds().insert({bond_id, bondT});
 }
 

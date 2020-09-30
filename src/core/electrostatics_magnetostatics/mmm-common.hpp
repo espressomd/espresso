@@ -20,8 +20,8 @@
  */
 /** \file
  *  Common parts of the MMM family of methods for the electrostatic
- *  interaction, MMM1D, MMM2D and ELC. This file contains the code for the
- *  polygamma expansions used for the near formulas of MMM1D and MMM2D.
+ *  interaction: MMM1D and ELC. This file contains the code for the
+ *  polygamma expansions used for the near formulas of MMM1D.
  *
  *  The expansion of the polygamma functions is fairly easy and follows
  *  directly from @cite abramowitz65a. For details, see @cite arnold02a.
@@ -30,31 +30,20 @@
 #ifndef MMM_COMMON_H
 #define MMM_COMMON_H
 
+#include "mmm-modpsi.hpp"
+
 #include "specfunc.hpp"
 
 #include <vector>
 
-/** \name Math constants */
-/*@{*/
-#define C_2PI (2 * M_PI)
-#define C_GAMMA (0.57721566490153286060651209008)
-/*@}*/
-
-/** Table of the Taylor expansions of the modified polygamma functions */
-extern std::vector<std::vector<double>> modPsi;
-extern int n_modPsi;
-
-/** Modified polygamma for even order 2*n, n >= 0 */
+/** Modified polygamma for even order <tt>2*n, n >= 0</tt> */
 inline double mod_psi_even(int n, double x) {
   return evaluateAsTaylorSeriesAt(modPsi[2 * n], x * x);
 }
 
-/** Modified polygamma for odd order 2*n+1, n>= 0 */
+/** Modified polygamma for odd order <tt>2*n+1, n>= 0</tt> */
 inline double mod_psi_odd(int n, double x) {
   return x * evaluateAsTaylorSeriesAt(modPsi[2 * n + 1], x * x);
 }
-
-/** Create the both the even and odd polygamma functions up to order 2*n */
-void create_mod_psi_up_to(int n);
 
 #endif

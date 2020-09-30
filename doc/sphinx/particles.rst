@@ -25,7 +25,7 @@ In order to add particles to the system, call
 :meth:`espressomd.particle_data.ParticleList.add`::
 
     import espressomd
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.part.add(pos=[1.0, 1.0, 1.0], id=0, type=0)
 
 This command adds a single particle to the system with properties given
@@ -308,7 +308,7 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     import espressomd
     from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.virtual_sites = VirtualSitesRelative(have_quaternion=False)
     # or
     system.virtual_sites = VirtualSitesOff()
@@ -439,7 +439,7 @@ Particle ids can be stored in a map for each
 individual type::
 
     import espressomd
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.setup_type_map([_type])
     system.number_of_particles(_type)
 
@@ -454,7 +454,7 @@ The keyword
 particles which have the given type. For counting the number of particles of a given type you could also use :meth:`espressomd.particle_data.ParticleList.select` ::
 
     import espressomd
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     ...
     number_of_particles = len(system.part.select(type=type))
 
@@ -483,7 +483,7 @@ Langevin swimmers
 
     import espressomd
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     system.part.add(id=0, pos=[1, 0, 0], swimming={'f_swim': 0.03})
 
@@ -510,7 +510,7 @@ Lattice-Boltzmann (LB) swimmers
 
     import espressomd
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
 
     system.part.add(id=1, pos=[2, 0, 0], rotation=[1, 1, 1], swimming={
         'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0})

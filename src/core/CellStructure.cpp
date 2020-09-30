@@ -26,6 +26,52 @@
 
 #include <utils/contains.hpp>
 
+#include <stdexcept>
+
+void CellStructure::check_particle_index() {
+  auto const max_id = get_max_local_particle_id();
+
+  for (auto const &p : local_particles()) {
+    auto const id = p.identity();
+
+    if (id < 0 || id > max_id) {
+      throw std::runtime_error("Particle id out of bounds.");
+    }
+
+    if (get_local_particle(id) != &p) {
+      throw std::runtime_error("Invalid local particle index entry.");
+    }
+  }
+
+  /* checks: local particle id */
+  int local_part_cnt = 0;
+  for (int n = 0; n < get_max_local_particle_id() + 1; n++) {
+    if (get_local_particle(n) != nullptr) {
+      local_part_cnt++;
+      if (get_local_particle(n)->p.identity != n) {
+        throw std::runtime_error("local_particles part has corrupted id.");
+      }
+    }
+  }
+
+  if (local_part_cnt != local_particles().size()) {
+    throw std::runtime_error(
+        std::to_string(local_particles().size()) + " parts in cells but " +
+        std::to_string(local_part_cnt) + " parts in local_particles");
+  }
+}
+
+void CellStructure::check_particle_sorting() {
+  for (auto cell : local_cells()) {
+    for (auto const &p : cell->particles()) {
+      if (particle_to_cell(p) != cell) {
+        throw std::runtime_error("misplaced particle with id " +
+                                 std::to_string(p.identity()));
+      }
+    }
+  }
+}
+
 Cell *CellStructure::particle_to_cell(const Particle &p) {
   return decomposition().particle_to_cell(p);
 }
@@ -166,6 +212,13 @@ void CellStructure::resort_particles(int global_flag) {
   for (auto d : diff) {
     boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
   }
+
+  m_rebuild_verlet_list = true;
+
+#ifdef ADDITIONAL_CHECKS
+  check_particle_index();
+  check_particle_sorting();
+#endif
 }
 
 void CellStructure::set_atom_decomposition(boost::mpi::communicator const &comm,

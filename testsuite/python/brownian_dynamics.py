@@ -195,7 +195,7 @@ class BrownianDynamics(ut.TestCase):
         system.part.clear()
         p = system.part.add(pos=(0, 0, 0), id=0)
         system.time_step = dt
-        system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=42)
+        system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
         system.cell_system.skin = 0.4
 
         pos_obs = ParticlePositions(ids=(p.id,))
@@ -211,6 +211,7 @@ class BrownianDynamics(ut.TestCase):
 
         # Check MSD
         msd = c_pos.result()
+        tau = c_pos.lag_times()
         system.auto_update_accumulators.clear()
 
         def expected_msd(x):
@@ -218,7 +219,7 @@ class BrownianDynamics(ut.TestCase):
 
         for i in range(2, 6):
             np.testing.assert_allclose(
-                msd[i, 2:5], expected_msd(msd[i, 0]), rtol=0.02)
+                msd[i], expected_msd(tau[i]), rtol=0.02)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):

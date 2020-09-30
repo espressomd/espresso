@@ -50,8 +50,11 @@ list(APPEND CUDA_NVCC_FLAGS_MINSIZEREL -O2 -Xptxas=-O2 -Xcompiler=-Os -DNDEBUG)
 list(APPEND CUDA_NVCC_FLAGS_RELWITHDEBINFO -O2 -g -Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG)
 list(APPEND CUDA_NVCC_FLAGS_COVERAGE -O3 -g -Xptxas=-O3 -Xcompiler=-Og,-g)
 list(APPEND CUDA_NVCC_FLAGS_RELWITHASSERT -O3 -g -Xptxas=-O3 -Xcompiler=-O3,-g)
+if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 11)
+  list(APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_30,code=sm_30)
+endif()
 list(APPEND CUDA_NVCC_FLAGS
-       -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52
+       -gencode=arch=compute_52,code=sm_52
        -gencode=arch=compute_52,code=compute_52 -std=c++${CMAKE_CUDA_STANDARD}
        $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
        $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>)
@@ -60,6 +63,7 @@ function(find_gpu_library)
   cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})
   list(APPEND LIBRARY_PATHS
        ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
+       ${CUDA_TOOLKIT_ROOT_DIR}/compat
        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu)
   if(LIBRARY_REQUIRED)
     find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH REQUIRED)
@@ -82,5 +86,5 @@ endfunction()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  CudaCompilerNVCC REQUIRED_VARS CMAKE_CUDA_COMPILER VERSION_VAR
+  CUDACompilerNVCC REQUIRED_VARS CMAKE_CUDA_COMPILER VERSION_VAR
   CMAKE_CUDA_COMPILER_VERSION)

@@ -18,16 +18,18 @@ import numpy as np
 from .utils import to_char_pointer, to_str
 from .utils cimport Vector3d, make_array_locked, handle_errors
 
-cdef class PObjectId:
-    """Python interface to a core ObjectId object."""
+from libcpp.memory cimport make_shared
 
-    cdef ObjectId id
+cdef shared_ptr[ContextManager] _om
 
-    def __richcmp__(PObjectId a, PObjectId b, op):
+cdef class PObjectRef:
+    def __richcmp__(PObjectRef a, PObjectRef b, op):
         if op == 2:
-            return a.id == b.id
+            return a.sip == b.sip
         else:
             raise NotImplementedError
+
+    cdef shared_ptr[ObjectHandle] sip
 
 cdef class PScriptInterface:
 
@@ -46,23 +48,29 @@ cdef class PScriptInterface:
         Name of the core class to instantiate (method 1).
     \*\*kwargs
         Parameters for the core class constructor (method 1).
-    oid : :class:`PObjectId`
+    sip : :class:`PObjectRef`
         Object id of an existing core object (method 2).
+
     policy : :obj:`str`, \{'GLOBAL', 'LOCAL'\}
         Creation policy.
 
     Attributes
     ----------
 
-    sip: shared_ptr
+    sip: :class:`PObjectRef`
         Pointer to a ScriptInterface object in the core.
     policy_: :obj:`str`
         Creation policy.
 
     """
 
-    def __init__(self, name=None, policy="GLOBAL", oid=None, **kwargs):
+    cdef shared_ptr[ObjectHandle] sip
+    cdef set_sip(self, shared_ptr[ObjectHandle] sip)
+    cdef VariantMap _sanitize_params(self, in_params) except *
+
+    def __init__(self, name=None, policy="GLOBAL", sip=None, **kwargs):
         cdef CreationPolicy policy_
+        cdef PObjectRef sip_
 
         if policy == "GLOBAL":
             policy_ = GLOBAL
@@ -71,15 +79,20 @@ cdef class PScriptInterface:
         else:
             raise Exception("Unknown policy '{}'.".format(policy))
 
-        if oid:
-            self.set_sip_via_oid(oid)
+        if sip:
+            sip_ = sip
+            self.sip = sip_.sip
         else:
-            self.set_sip(make_shared(to_char_pointer(name), policy_))
-            self.sip.get().construct(self._sanitize_params(kwargs))
+            global _om
+            self.set_sip(
+                _om.get().make_shared(
+                    policy_,
+                    to_char_pointer(name),
+                    self._sanitize_params(kwargs)))
 
     def __richcmp__(a, b, op):
         if op == 2:
-            return a.id() == b.id()
+            return a.get_sip() == b.get_sip()
         else:
             raise NotImplementedError
 
@@ -89,25 +102,21 @@ cdef class PScriptInterface:
     def _valid_parameters(self):
         return [to_str(p.data()) for p in self.sip.get().valid_parameters()]
 
-    cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip):
-        self.sip = sip
-
-    def set_sip_via_oid(self, PObjectId id):
-        """Set the shared_ptr to an existing core ScriptInterface object via
-        its object id.
+    def get_sip(self):
         """
-        oid = id.id
-        try:
-            ptr = get_instance(oid).lock()
-            self.set_sip(ptr)
-        except BaseException:
-            raise Exception("Could not get sip for given_id")
+        Get pointer to the core object.
+        """
 
-    def id(self):
-        """Return the core class object id (:class:`PObjectId`)."""
-        oid = PObjectId()
-        oid.id = self.sip.get().id()
-        return oid
+        ret = PObjectRef()
+        ret.sip = self.sip
+        return ret
+
+    cdef set_sip(self, shared_ptr[ObjectHandle] sip):
+        """
+        Set the shared_ptr to an existing core object.
+        """
+
+        self.sip = sip
 
     def call_method(self, method, **kwargs):
         """
@@ -119,7 +128,6 @@ cdef class PScriptInterface:
             Name of the core method.
         \*\*kwargs
             Arguments for the method.
-
         """
         cdef VariantMap parameters
 
@@ -134,27 +142,23 @@ cdef class PScriptInterface:
 
     def name(self):
         """Return name of the core class."""
-        return to_str(self.sip.get().name())
+        return to_str(self.sip.get().name().data())
 
     def _serialize(self):
-        return self.sip.get().serialize()
+        global _om
+        return _om.get().serialize(self.sip.get())
 
     def _unserialize(self, state):
-        cdef shared_ptr[ScriptInterfaceBase] so_ptr = ScriptInterfaceBase.unserialize(state)
+        global _om
+        cdef shared_ptr[ObjectHandle] so_ptr = _om.get().deserialize(state)
         self.set_sip(so_ptr)
 
     cdef VariantMap _sanitize_params(self, in_params) except *:
         cdef VariantMap out_params
-        cdef Variant v
-
-        valid_params = self._valid_parameters()
 
         for pname in in_params:
-            if pname in valid_params:
-                out_params[to_char_pointer(pname)] = python_object_to_variant(
-                    in_params[pname])
-            else:
-                raise RuntimeError("Unknown parameter '{}'".format(pname))
+            out_params[to_char_pointer(pname)] = python_object_to_variant(
+                in_params[pname])
 
         return out_params
 
@@ -178,19 +182,19 @@ cdef class PScriptInterface:
 
 cdef Variant python_object_to_variant(value):
     """Convert Python objects to C++ Variant objects."""
-    cdef Variant v
+
     cdef vector[Variant] vec
-    cdef PObjectId oid
+    cdef PObjectRef oref
 
     if value is None:
         return Variant()
 
-    # The order is important, the object character should be preserved
-    # even if the PScriptInterface derived class is iterable.
+    # The order is important, the object character should
+    # be preserved even if the PScriptInterface derived class
+    # is iterable.
     if isinstance(value, PScriptInterface):
-        # Map python object to id
-        oid = value.id()
-        return make_variant[ObjectId](oid.id)
+        oref = value.get_sip()
+        return make_variant(oref.sip)
     elif hasattr(value, '__iter__') and not(type(value) == str):
         for e in value:
             vec.push_back(python_object_to_variant(e))
@@ -208,9 +212,9 @@ cdef Variant python_object_to_variant(value):
 
 cdef variant_to_python_object(const Variant & value) except +:
     """Convert C++ Variant objects to Python objects."""
-    cdef ObjectId oid
+
     cdef vector[Variant] vec
-    cdef shared_ptr[ScriptInterfaceBase] ptr
+    cdef shared_ptr[ObjectHandle] ptr
     if is_none(value):
         return None
     if is_type[bool](value):
@@ -227,18 +231,12 @@ cdef variant_to_python_object(const Variant & value) except +:
         return get_value[vector[double]](value)
     if is_type[Vector3d](value):
         return make_array_locked(get_value[Vector3d](value))
-    if is_type[ObjectId](value):
+    if is_type[shared_ptr[ObjectHandle]](value):
         # Get the id and build a corresponding object
-        oid = get_value[ObjectId](value)
+        ptr = get_value[shared_ptr[ObjectHandle]](value)
 
-        # ObjectId is nullable, and the default id corresponds to "null".
-        if oid != ObjectId():
-            ptr = get_instance(oid).lock()
-
-            if not ptr:
-                raise Exception("Object failed to exist.")
-
-            so_name = to_str(ptr.get().name())
+        if ptr:
+            so_name = to_str(ptr.get().name().data())
             if not so_name:
                 raise Exception(
                     "Script object without name returned from the core")
@@ -251,10 +249,10 @@ cdef variant_to_python_object(const Variant & value) except +:
                 # for the script object name
                 pclass = ScriptInterfaceHelper
 
-            poid = PObjectId()
-            poid.id = ptr.get().id()
+            pptr = PObjectRef()
+            pptr.sip = ptr
 
-            return pclass(oid=poid)
+            return pclass(sip=pptr)
         else:
             return None
     if is_type[vector[Variant]](value):
@@ -270,24 +268,18 @@ cdef variant_to_python_object(const Variant & value) except +:
 
 
 def _unpickle_so_class(so_name, state):
-    cdef shared_ptr[ScriptInterfaceBase] sip = ScriptInterfaceBase.unserialize(state)
+    cdef PObjectRef so_ptr
+    so_ptr = PObjectRef()
+    global _om
+    so_ptr.sip = _om.get().deserialize(state)
 
-    poid = PObjectId()
-    poid.id = sip.get().id()
-
-    so = _python_class_by_so_name[so_name](oid=poid)
+    so = _python_class_by_so_name[so_name](sip=so_ptr)
     so.define_bound_methods()
 
     return so
 
 
 class ScriptInterfaceHelper(PScriptInterface):
-
-    """
-    Base class from which to derive most interfaces to core ScriptInterface
-    classes.
-    """
-
     _so_name = None
     _so_bind_methods = ()
     _so_creation_policy = "GLOBAL"
@@ -332,7 +324,6 @@ class ScriptInterfaceHelper(PScriptInterface):
 
 
 class ScriptObjectRegistry(ScriptInterfaceHelper):
-
     """
     Base class for container-like classes such as
     :class:`~espressomd.constraints.Constraints` and
@@ -377,15 +368,22 @@ _python_class_by_so_name = {}
 def script_interface_register(c):
     """
     Decorator used to register script interface classes.
-    This will store a name-to-class relationship in a registry, so that
-    parameters of type object can be instantiated as the correct python class
+    This will store a name<->class relationship in a registry, so that
+    parameters of type object can be instantiated as the correct python class.
     """
+
     if not hasattr(c, "_so_name"):
         raise Exception("Python classes representing a script object must "
                         "define an _so_name attribute at class level")
+
     _python_class_by_so_name[c._so_name] = c
     return c
 
 
-def init():
-    initialize()
+cdef void init(MpiCallbacks & cb):
+    cdef Factory[ObjectHandle] f
+
+    initialize( & f)
+
+    global _om
+    _om = make_shared[ContextManager](cb, f)
