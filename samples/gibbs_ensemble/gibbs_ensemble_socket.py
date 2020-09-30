@@ -185,7 +185,7 @@ def move_particle(box):
     '''
     Tries a displacement move and stores the new energy in the corresponding box
     '''
-    gibbs.send_data(box.conn,[gibbs.MessageId.MOVE_PART])
+    gibbs.send_data(box.conn, [gibbs.MessageId.MOVE_PART])
     box.recv_energy()
 
 
@@ -212,10 +212,14 @@ def exchange_volume(boxes, global_volume):
     log.info("exchange volume %g->%g", lead_box.box_l, np.cbrt(vol1))
 
     lead_box.box_l = np.cbrt(vol1)
-    gibbs.send_data(lead_box.conn,[gibbs.MessageId.CHANGE_VOLUME, lead_box.box_l])
+    gibbs.send_data(
+        lead_box.conn, [
+            gibbs.MessageId.CHANGE_VOLUME, lead_box.box_l])
 
     other_box.box_l = np.cbrt(vol2)
-    gibbs.send_data(other_box.conn,[gibbs.MessageId.CHANGE_VOLUME, other_box.box_l])
+    gibbs.send_data(
+        other_box.conn, [
+            gibbs.MessageId.CHANGE_VOLUME, other_box.box_l])
 
     lead_box.recv_energy()
     other_box.recv_energy()
@@ -236,15 +240,13 @@ def exchange_particle(boxes):
     source_box.n_particles -= 1
     dest_box.n_particles += 1
 
-    gibbs.send_data(source_box.conn,[gibbs.MessageId.EXCHANGE_PART_REMOVE])
-    gibbs.send_data(dest_box.conn,[gibbs.MessageId.EXCHANGE_PART_ADD, 1])
+    gibbs.send_data(source_box.conn, [gibbs.MessageId.EXCHANGE_PART_REMOVE])
+    gibbs.send_data(dest_box.conn, [gibbs.MessageId.EXCHANGE_PART_ADD, 1])
 
     source_box.recv_energy()
     dest_box.recv_energy()
 
     return source_box, dest_box
-
-
 
 
 def check_make_move(box, inner_potential):
@@ -254,7 +256,7 @@ def check_make_move(box, inner_potential):
     '''
     if random.random() > inner_potential:
         log.info("revert move")
-        gibbs.send_data(box.conn,[gibbs.MessageId.MOVE_PART_REVERT])
+        gibbs.send_data(box.conn, [gibbs.MessageId.MOVE_PART_REVERT])
         box.energy = box.energy_old
         return False
     return True
@@ -272,10 +274,10 @@ def check_exchange_volume(boxes, inner_potential):
     if random.random() > volume_factor * inner_potential:
         log.info("revert exchange volume")
         gibbs.send_data(boxes[0].conn,
-            [gibbs.MessageId.CHANGE_VOLUME_REVERT, boxes[0].box_l_old])
+                        [gibbs.MessageId.CHANGE_VOLUME_REVERT, boxes[0].box_l_old])
         boxes[0].box_l = boxes[0].box_l_old
         gibbs.send_data(boxes[1].conn,
-            [gibbs.MessageId.CHANGE_VOLUME_REVERT, boxes[1].box_l_old])
+                        [gibbs.MessageId.CHANGE_VOLUME_REVERT, boxes[1].box_l_old])
         boxes[1].box_l = boxes[1].box_l_old
 
         boxes[0].energy = boxes[0].energy_old
@@ -298,9 +300,9 @@ def check_exchange_particle(source_box, dest_box, inner_potential):
         source_box.n_particles += 1
         dest_box.n_particles -= 1
         gibbs.send_data(source_box.conn,
-            [gibbs.MessageId.EXCHANGE_PART_REMOVE_REVERT])
+                        [gibbs.MessageId.EXCHANGE_PART_REMOVE_REVERT])
         gibbs.send_data(dest_box.conn,
-            [gibbs.MessageId.EXCHANGE_PART_ADD_REVERT])
+                        [gibbs.MessageId.EXCHANGE_PART_ADD_REVERT])
 
         source_box.energy = source_box.energy_old
         dest_box.energy = dest_box.energy_old
@@ -338,10 +340,10 @@ for box in boxes:
     box.n_particles = int(global_num_particles / 2)
 
     gibbs.send_data(box.conn,
-        [gibbs.MessageId.CHANGE_VOLUME, box.box_l])
+                    [gibbs.MessageId.CHANGE_VOLUME, box.box_l])
     box.recv_energy()
     gibbs.send_data(box.conn,
-        [gibbs.MessageId.EXCHANGE_PART_ADD, box.n_particles])
+                    [gibbs.MessageId.EXCHANGE_PART_ADD, box.n_particles])
     box.recv_energy()
     box.energy_old = box.energy  # in case the first move is reverted
 

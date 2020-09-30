@@ -78,7 +78,7 @@ class Client:
     def handle_move_particle(self):
         self.move_particle()
         send_data(self._socket,
-            [MessageId.ENERGY, self.energy()])
+                  [MessageId.ENERGY, self.energy()])
 
     def handle_move_particle_revert(self):
         self.move_particle_revert()
@@ -86,7 +86,7 @@ class Client:
     def handle_change_volume(self, box_l):
         self.change_volume_and_rescale_particles(box_l)
         send_data(self._socket,
-            [MessageId.ENERGY, self.energy()])
+                  [MessageId.ENERGY, self.energy()])
 
     def handle_change_volume_revert(self, box_l): 
         self.change_volume_and_rescale_particles(box_l)
@@ -94,7 +94,7 @@ class Client:
     def handle_add_particle(self, n):
         self.insert_particle(n)
         send_data(self._socket,
-            [MessageId.ENERGY, self.energy()])
+                  [MessageId.ENERGY, self.energy()])
 
     def handle_add_particle_revert(self):
         self.remove_last_added_particle()
@@ -102,7 +102,7 @@ class Client:
     def handle_remove_particle(self):
         self.remove_particle()
         send_data(self._socket,
-            [MessageId.ENERGY, self.energy()])
+                  [MessageId.ENERGY, self.energy()])
 
     def handle_remove_particle_revert(self):
         self.remove_particle_revert()
@@ -131,7 +131,7 @@ class Client:
 
         # send the initial energy
         energy = self.energy()
-        send_data(self._socket,[MessageId.ENERGY, energy])
+        send_data(self._socket, [MessageId.ENERGY, energy])
 
         while msg[0] != MessageId.END:
             # receive command to execute next step
@@ -146,14 +146,16 @@ class Client:
         # close the socket
         self._socket.close()
 
+
 MAX_MSG_SIZE = 256 
 
+
 def recv_data(socket):
-        '''Receives data and return it.'''
-        # The first 4 bytes encode the length of the messages received.
-        return pickle.loads(socket.recv(MAX_MSG_SIZE))
+    '''Receives data and return it.'''
+    # The first 4 bytes encode the length of the messages received.
+    return pickle.loads(socket.recv(MAX_MSG_SIZE))
+
 
 def send_data(socket, data):
-        '''Send the data packet.'''
-        socket.send(pickle.dumps(data))
-
+    '''Send the data packet.'''
+    socket.send(pickle.dumps(data))

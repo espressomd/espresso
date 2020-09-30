@@ -29,14 +29,13 @@ class Sample(ut.TestCase):
     sample
 
     def test(self):
-        self.assertEqual(sample.kT, 0.1) # specified in cmake list
-        
+        self.assertEqual(sample.kT, 0.1)  # specified in cmake list
+
         # Check densities. The system will not have converged after 1k steps,
         # but the two densities should be subtantially different
         last_densities = [sample.densities[0][-1], sample.densities[1][-1]]
         self.assertLess(min(last_densities), 0.25)
         self.assertGreater(max(last_densities), 0.4)
-
 
 
 if __name__ == "__main__":
