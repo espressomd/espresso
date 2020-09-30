@@ -38,6 +38,6 @@ The third tutorial deals mainly with physical concepts, the only new espresso-sp
  1. Tutorial:
    - Importance of correct setup for non-biased results (especially important for magnetic systems!)
    - Using DLC (analogous to ELC) for quasi 2D system with 3D moment directions
-   - Idea of a quasi-2D-System with 3D Moments
+   - Idea of a quasi-2D-System with 3D moments
  2. Tutorial:
    - Appeal of simulations as "numerical" experiment and benchmark against theoretical models
