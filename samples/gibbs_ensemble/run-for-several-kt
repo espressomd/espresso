@@ -20,9 +20,10 @@ fi
 
 for kT in $*
 do
-  for seed in 1 2 3
+  for seed in 1 2 3 4 5
   do
-    $espresso gibbs_ensemble_socket.py -C $client_script --seed $seed -P $port -T $kT --output-file ${output_base}-kT-$kT-seed-$seed.pcl &
+    output_name=${output_base}-kT-$kT-seed-$seed
+    $espresso gibbs_ensemble_socket.py -C $client_script --seed $seed -P $port -T $kT --steps 80000 --output-file ${output_name}.pkl & 
     let port=$port+1
   done
 done

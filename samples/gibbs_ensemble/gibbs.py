@@ -147,7 +147,7 @@ class Client:
         self._socket.close()
 
 
-MAX_MSG_SIZE = 64 
+MAX_MSG_SIZE = 128 
 
 
 def recv_data(socket):

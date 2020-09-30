@@ -67,11 +67,11 @@ args = parser.parse_args()
 # system parameters
 seed = None
 steps = 50000
-warm_up_steps = 400
+warm_up_steps = 800
 # number of particles in both boxes combined
-global_num_particles = 400 
+global_num_particles = 500 
 # starting box length
-init_box_l = 8.761
+init_box_l = 9.437 
 # temperature
 kT = 1.15
 plot = False
@@ -82,7 +82,7 @@ DV_MAX = 0.1
 
 # Monte-Carlo parameters
 INIT_MOVE_CHANCE = 0.16
-EXCHANGE_CHANCE = 0.5
+EXCHANGE_CHANCE = 0.7
 VOLUME_CHANCE = 1.0 - INIT_MOVE_CHANCE - EXCHANGE_CHANCE
 
 # socket parameters
