@@ -71,7 +71,7 @@ warm_up_steps = 400
 # number of particles in both boxes combined
 global_num_particles = 400 
 # starting box length
-init_box_l = 7.55
+init_box_l = 8.761
 # temperature
 kT = 1.15
 plot = False
