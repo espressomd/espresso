@@ -41,4 +41,4 @@ After the tutorial, students should be able to
   small time step, etc.).
   Additionally the steepest descent algorithm can get trapped in local minima and the convergence criterion is system-dependent.
 * Mention that accumulators are updated auomatically.
-* Statistical independent measurements for t > correlation time.
+* Statistically independent measurements for t > correlation time.
