@@ -161,30 +161,12 @@ class Box:
 
     def recv_energy(self):
         '''Received the energy data from the client.'''
-        msg = self.recv_data()
+        msg = gibbs.recv_data(self.conn)
         if msg[0] == gibbs.MessageId.ENERGY:
             self.energy = msg[1]
             return 0
         else:
             raise RuntimeError("ERROR during energy recv")
-
-    def recv_data(self):
-        '''Received the data send from the client.'''
-        # The first 4 bytes encode the length of the messages received.
-        buf = b''
-        while len(buf) < 4:
-            buf += self.conn.recv(4 - len(buf))
-        length = struct.unpack('!I', buf)[0]
-        d = self.conn.recv(length)
-        msg = pickle.loads(d)
-        return(msg)
-
-    def send_data(self, data):
-        '''Send the data packet to the client.'''
-        # The first 4 bytes encode the length of the messages sent.
-        length = struct.pack('>I', len(data))
-        packet = length + data
-        self.conn.send(packet)
 
 
 def select_box(n_part_0, n_part_1):
@@ -203,7 +185,7 @@ def move_particle(box):
     '''
     Tries a displacement move and stores the new energy in the corresponding box
     '''
-    box.send_data(pickle.dumps([gibbs.MessageId.MOVE_PART]))
+    gibbs.send_data(box.conn,[gibbs.MessageId.MOVE_PART])
     box.recv_energy()
 
 
@@ -230,12 +212,10 @@ def exchange_volume(boxes, global_volume):
     log.info("exchange volume %g->%g", lead_box.box_l, np.cbrt(vol1))
 
     lead_box.box_l = np.cbrt(vol1)
-    lead_box.send_data(pickle.dumps(
-        [gibbs.MessageId.CHANGE_VOLUME, lead_box.box_l]))
+    gibbs.send_data(lead_box.conn,[gibbs.MessageId.CHANGE_VOLUME, lead_box.box_l])
 
     other_box.box_l = np.cbrt(vol2)
-    other_box.send_data(pickle.dumps(
-        [gibbs.MessageId.CHANGE_VOLUME, other_box.box_l]))
+    gibbs.send_data(other_box.conn,[gibbs.MessageId.CHANGE_VOLUME, other_box.box_l])
 
     lead_box.recv_energy()
     other_box.recv_energy()
@@ -256,14 +236,15 @@ def exchange_particle(boxes):
     source_box.n_particles -= 1
     dest_box.n_particles += 1
 
-    source_box.send_data(pickle.dumps(
-        [gibbs.MessageId.EXCHANGE_PART_REMOVE]))
-    dest_box.send_data(pickle.dumps([gibbs.MessageId.EXCHANGE_PART_ADD, 1]))
+    gibbs.send_data(source_box.conn,[gibbs.MessageId.EXCHANGE_PART_REMOVE])
+    gibbs.send_data(dest_box.conn,[gibbs.MessageId.EXCHANGE_PART_ADD, 1])
 
     source_box.recv_energy()
     dest_box.recv_energy()
 
     return source_box, dest_box
+
+
 
 
 def check_make_move(box, inner_potential):
@@ -273,7 +254,7 @@ def check_make_move(box, inner_potential):
     '''
     if random.random() > inner_potential:
         log.info("revert move")
-        box.send_data(pickle.dumps([gibbs.MessageId.MOVE_PART_REVERT]))
+        gibbs.send_data(box.conn,[gibbs.MessageId.MOVE_PART_REVERT])
         box.energy = box.energy_old
         return False
     return True
@@ -290,11 +271,11 @@ def check_exchange_volume(boxes, inner_potential):
          3)**(boxes[1].n_particles + 1)
     if random.random() > volume_factor * inner_potential:
         log.info("revert exchange volume")
-        boxes[0].send_data(pickle.dumps(
-            [gibbs.MessageId.CHANGE_VOLUME_REVERT, boxes[0].box_l_old]))
+        gibbs.send_data(boxes[0].conn,
+            [gibbs.MessageId.CHANGE_VOLUME_REVERT, boxes[0].box_l_old])
         boxes[0].box_l = boxes[0].box_l_old
-        boxes[1].send_data(pickle.dumps(
-            [gibbs.MessageId.CHANGE_VOLUME_REVERT, boxes[1].box_l_old]))
+        gibbs.send_data(boxes[1].conn,
+            [gibbs.MessageId.CHANGE_VOLUME_REVERT, boxes[1].box_l_old])
         boxes[1].box_l = boxes[1].box_l_old
 
         boxes[0].energy = boxes[0].energy_old
@@ -316,10 +297,10 @@ def check_exchange_particle(source_box, dest_box, inner_potential):
         log.info("revert exchange particle")
         source_box.n_particles += 1
         dest_box.n_particles -= 1
-        source_box.send_data(pickle.dumps(
-            [gibbs.MessageId.EXCHANGE_PART_REMOVE_REVERT]))
-        dest_box.send_data(pickle.dumps(
-            [gibbs.MessageId.EXCHANGE_PART_ADD_REVERT]))
+        gibbs.send_data(source_box.conn,
+            [gibbs.MessageId.EXCHANGE_PART_REMOVE_REVERT])
+        gibbs.send_data(dest_box.conn,
+            [gibbs.MessageId.EXCHANGE_PART_ADD_REVERT])
 
         source_box.energy = source_box.energy_old
         dest_box.energy = dest_box.energy_old
@@ -348,7 +329,7 @@ for i in range(NUMBER_OF_CLIENTS):
                      arguments)
 
     boxes[i].conn, boxes[i].adr = s.accept()
-    boxes[i].send_data(pickle.dumps([gibbs.MessageId.START]))
+    gibbs.send_data(boxes[i].conn, [gibbs.MessageId.START])
     boxes[i].recv_energy()
 
 # set initial volume and particles, recv initial energy
@@ -356,11 +337,11 @@ for box in boxes:
     box.box_l = init_box_l
     box.n_particles = int(global_num_particles / 2)
 
-    box.send_data(pickle.dumps(
-        [gibbs.MessageId.CHANGE_VOLUME, box.box_l]))
+    gibbs.send_data(box.conn,
+        [gibbs.MessageId.CHANGE_VOLUME, box.box_l])
     box.recv_energy()
-    box.send_data(pickle.dumps(
-        [gibbs.MessageId.EXCHANGE_PART_ADD, box.n_particles]))
+    gibbs.send_data(box.conn,
+        [gibbs.MessageId.EXCHANGE_PART_ADD, box.n_particles])
     box.recv_energy()
     box.energy_old = box.energy  # in case the first move is reverted
 
@@ -497,5 +478,5 @@ if output_file:
 
 # closing the socket
 for i in range(NUMBER_OF_CLIENTS):
-    boxes[i].send_data(pickle.dumps([gibbs.MessageId.END]))
+    gibbs.send_data(boxes[i].conn, [gibbs.MessageId.END])
 s.close()

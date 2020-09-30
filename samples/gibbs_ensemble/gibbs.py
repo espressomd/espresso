@@ -75,51 +75,34 @@ class Client:
     def energy(self):
         return self._system.analysis.energy()["total"]
 
-    def _recv_data(self):
-        '''Receives data and return it.'''
-        # The first 4 bytes encode the length of the messages received.
-        buf = b''
-        while len(buf) < 4:
-            buf += self._socket.recv(4 - len(buf))
-        length = struct.unpack('!I', buf)[0]
-        msg = pickle.loads(self._socket.recv(length))
-        return msg
-
-    def _send_data(self, data):
-        '''Send the data packet.'''
-        # The first 4 bytes encode the length of the messages sent.
-        length = struct.pack('>I', len(data))
-        packet = length + data
-        self._socket.send(packet)
-
     def handle_move_particle(self):
         self.move_particle()
-        self._send_data(pickle.dumps(
-            [MessageId.ENERGY, self.energy()]))
+        send_data(self._socket,
+            [MessageId.ENERGY, self.energy()])
 
     def handle_move_particle_revert(self):
         self.move_particle_revert()
 
     def handle_change_volume(self, box_l):
         self.change_volume_and_rescale_particles(box_l)
-        self._send_data(pickle.dumps(
-            [MessageId.ENERGY, self.energy()]))
+        send_data(self._socket,
+            [MessageId.ENERGY, self.energy()])
 
     def handle_change_volume_revert(self, box_l): 
         self.change_volume_and_rescale_particles(box_l)
 
     def handle_add_particle(self, n):
         self.insert_particle(n)
-        self._send_data(pickle.dumps(
-            [MessageId.ENERGY, self.energy()]))
+        send_data(self._socket,
+            [MessageId.ENERGY, self.energy()])
 
     def handle_add_particle_revert(self):
         self.remove_last_added_particle()
 
     def handle_remove_particle(self):
         self.remove_particle()
-        self._send_data(pickle.dumps(
-            [MessageId.ENERGY, self.energy()]))
+        send_data(self._socket,
+            [MessageId.ENERGY, self.energy()])
 
     def handle_remove_particle_revert(self):
         self.remove_particle_revert()
@@ -142,17 +125,17 @@ class Client:
         # init socket
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect((host, port))
-        msg = self._recv_data()
+        msg = recv_data(self._socket)
         if msg[0] != MessageId.START:
             raise Exception("Invalid message received from controller")
 
         # send the initial energy
         energy = self.energy()
-        self._send_data(pickle.dumps([MessageId.ENERGY, energy]))
+        send_data(self._socket,[MessageId.ENERGY, energy])
 
         while msg[0] != MessageId.END:
             # receive command to execute next step
-            msg = self._recv_data()
+            msg = recv_data(self._socket)
             if msg[0] == MessageId.END:
                 break
 
@@ -162,3 +145,15 @@ class Client:
 
         # close the socket
         self._socket.close()
+
+MAX_MSG_SIZE = 256 
+
+def recv_data(socket):
+        '''Receives data and return it.'''
+        # The first 4 bytes encode the length of the messages received.
+        return pickle.loads(socket.recv(MAX_MSG_SIZE))
+
+def send_data(socket, data):
+        '''Send the data packet.'''
+        socket.send(pickle.dumps(data))
+
