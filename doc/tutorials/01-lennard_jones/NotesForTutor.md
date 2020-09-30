@@ -1,6 +1,6 @@
 # Hints for Tutors: Tutorial 01 - Lennard Jones
 
-## Learning objectives (physics):
+## Learning objectives (physics)
 
 After the tutorial, students should be able to 
 
@@ -18,8 +18,8 @@ After the tutorial, students should be able to
 
 After the tutorial, students should be able to 
 
-* instance a simulation object and set basic parameters like time step
-* add particles to a simulation, 
+* instance a system object and set basic parameters like the time step
+* add particles to a simulation
 * access and change particle properties
 * set up non-bonded interactions
 * explain the role of particle type
