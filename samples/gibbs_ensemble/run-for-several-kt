@@ -1,0 +1,29 @@
+#!/bin/bash
+
+espresso=../../build/pypresso
+client_script=lj_gibbs_client.py
+output_base=lj_gibbs
+port=10000
+
+if [[ ! -e $espresso ]]
+then
+    echo Invalid path to pypresso script: $espresso
+  exit 1
+fi
+
+if [[ ! -s $client_script ]]
+then
+  echo Client script not found: $client_script
+  exit 1
+fi
+
+
+for kT in $*
+do
+  for seed in 1 2 3
+  do
+    $espresso gibbs_ensemble_socket.py -C $client_script --seed $seed -P $port -T $kT --output-file ${output_base}-kT-$kT-seed-$seed.pcl &
+    let port=$port+1
+  done
+done
+wait
