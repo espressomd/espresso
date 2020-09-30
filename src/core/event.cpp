@@ -89,7 +89,9 @@ static int reinit_particle_comm_gpu = true;
 void on_program_start() {
 
 #ifdef CUDA
-  cuda_init();
+  if (this_node == 0) {
+    cuda_init();
+  }
 #endif
 
   /*
