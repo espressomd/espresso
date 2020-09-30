@@ -20,8 +20,8 @@ import importlib_wrapper
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/02-charged_system/02-charged_system-1.py",
-    N_samples=2, steps_per_sample=2, warmup_steps=1000,
-    N_samples_salt=200)
+    N_SAMPLES=2, STEPS_PER_SAMPLE=2, WARMUP_STEPS=1000,
+    N_SAMPLES_SALT=200)
 
 
 @skipIfMissingFeatures
