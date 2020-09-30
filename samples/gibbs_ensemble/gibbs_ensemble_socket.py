@@ -34,12 +34,14 @@ Phase diagrams of Lennard-Jones fluids'.
 
 import argparse
 import enum
+import importlib
 import logging as log
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import random
 import socket
+import sys
 import struct
 import subprocess
 import time
@@ -48,27 +50,33 @@ import time
 import gibbs
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-s', '--seed', type=int, nargs=1)
-parser.add_argument('-S', '--steps', type=int, nargs=1)
-parser.add_argument('-w', '--warm_up_steps', type=int, nargs=1)
-parser.add_argument('-E', '--espresso-executable', nargs=1)
-parser.add_argument('-C', '--client-script', nargs=1)
-parser.add_argument('-n', '--number-of-particles', type=int, nargs=1)
-parser.add_argument('-l', '--box-length', type=float, nargs=1)
-parser.add_argument('-T', '--temperature', type=float, nargs=1, required=True)
+parser.add_argument('-s', '--seed', type=int)
+parser.add_argument('-S', '--steps', type=int)
+parser.add_argument('-w', '--warm_up_steps', type=int)
+parser.add_argument('-n', '--number-of-particles', type=int)
+parser.add_argument('-l', '--box-length', type=float)
+parser.add_argument('-T', '--temperature', type=float, required=True)
+parser.add_argument('-E', '--espresso-executable')
+parser.add_argument('-C', '--client-script', required=True)
+parser.add_argument('-P', '--port', type=int)
+parser.add_argument('-o', '--output-file')
+parser.add_argument('-p', '--plot', action='store_true')
 
 args = parser.parse_args()
 
 # system parameters
 seed = None
 steps = 50000
-warm_up_steps = 1000
+warm_up_steps = 200
 # number of particles in both boxes combined
 global_num_particles = 256
 # starting box length
 init_box_l = 7.55
 # temperature
 kT = 1.15
+plot = False
+output_file = None
+
 # maximum of the volume exchanged in the logarithmic space
 DV_MAX = 0.1
 
@@ -79,10 +87,10 @@ VOLUME_CHANCE = 1.0 - INIT_MOVE_CHANCE - EXCHANGE_CHANCE
 
 # socket parameters
 HOST = 'localhost'
-PORT = 31415
+port = 31415
 NUMBER_OF_CLIENTS = 2
 
-REPORT_INTERVAL = 50  # moves
+REPORT_INTERVAL = 200  # moves
 
 
 @enum.unique
@@ -92,26 +100,48 @@ class Moves(enum.Enum):
     EXCHANGE_PARTICLE = 3
 
 
-# script locations
-espresso_executable = "../pypresso"
-client_script = "./gibbs_ensemble_client.py"
-
 if args.seed:
-    seed = args.seed[0]
+    seed = args.seed
+
 if args.steps:
-    steps = args.steps[0]
+    steps = args.steps
+
 if args.warm_up_steps:
-    warm_up_steps = args.warm_up_steps[0]
+    warm_up_steps = args.warm_up_steps
+
 if args.espresso_executable:
-    espresso_executable = args.espresso_executable[0]
-if args.client_script:
-    client_script = args.client_script[0]
+    espresso_executable = args.espresso_executable
+else: 
+    # If 'espressomd' can be imported, use the current interpreter to launch 
+    # the clients
+    if importlib.find_loader("espressomd") is not None: 
+        espresso_executable = sys.executable
+    else:
+        raise Exception(
+            "Espresso executable could not be determined automatically. Please specify as argument using -E")
+
+client_script = args.client_script
+
+if args.port:
+    port = args.port
+
+if args.output_file:
+    output_file = args.output_file
+if args.plot:
+    plot = args.plot
+if plot is None and output_file is None:
+    raise Exception("Specify at least one of --output-file or --plot")
+
 if args.number_of_particles:
-    global_num_particles = args.number_of_particles[0]
+    global_num_particles = args.number_of_particles
+if global_num_particles % 2 == 1:
+    raise Exception("The number of particles has to be even")
+
 if args.temperature:
-    kT = args.temperature[0]
+    kT = args.temperature
+
 if args.box_length:
-    init_box_l = args.box_length[0]
+    init_box_l = args.box_length
 
 global_volume = 2.0 * init_box_l**3
 
@@ -121,13 +151,13 @@ class Box:
     Box class, which contains the data of one system and controls the
     connection to the respective client.
     '''
-    box_l = init_box_l
-    box_l_old = init_box_l
-    n_particles = int(global_num_particles / 2)
-    energy = 0.0
-    energy_old = 1.0e100
-    conn = 0
-    adr = 0
+
+    def __init__(self):
+        self.box_l = None
+        self.box_l_old = None
+        self.energy = None
+        self.energy_old = None
+        self.n_particles = 0
 
     def recv_energy(self):
         '''Received the energy data from the client.'''
@@ -301,7 +331,7 @@ def check_exchange_particle(source_box, dest_box, inner_potential):
 # init socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-s.bind((HOST, PORT))
+s.bind((HOST, port))
 s.listen(NUMBER_OF_CLIENTS)
 
 boxes = []
@@ -313,35 +343,41 @@ for i in range(NUMBER_OF_CLIENTS):
     boxes.append(Box())
 
     arguments = ["--seed", str(random.randint(0, np.iinfo(np.int32).max)), 
-                 "--port", str(PORT)]
+                 "--port", str(port)]
     subprocess.Popen([espresso_executable] + [client_script] +
                      arguments)
 
     boxes[i].conn, boxes[i].adr = s.accept()
     boxes[i].send_data(pickle.dumps([gibbs.MessageId.START]))
-
     boxes[i].recv_energy()
 
-# set initial volume and particles
+# set initial volume and particles, recv initial energy
 for box in boxes:
+    box.box_l = init_box_l
+    box.n_particles = int(global_num_particles / 2)
+
     box.send_data(pickle.dumps(
         [gibbs.MessageId.CHANGE_VOLUME, box.box_l]))
     box.recv_energy()
     box.send_data(pickle.dumps(
         [gibbs.MessageId.EXCHANGE_PART_ADD, box.n_particles]))
     box.recv_energy()
+    box.energy_old = box.energy  # in case the first move is reverted
+
 
 # observables
 densities = [[], []]
 list_indices = []
-accepted_steps = 0
-accepted_steps_move = 1
-accepted_steps_volume = 1
-accepted_steps_exchange = 1
-move_steps_tried = 1
-volume_steps_tried = 1
-exchange_steps_tried = 1
 
+# Acceptance rate accounting
+accepted_moves = {
+    Moves.MOVE_PARTICLE: 0,
+    Moves.EXCHANGE_VOLUME: 0,
+    Moves.EXCHANGE_PARTICLE: 0}
+tried_moves = {
+    Moves.MOVE_PARTICLE: 0,
+    Moves.EXCHANGE_VOLUME: 0,
+    Moves.EXCHANGE_PARTICLE: 0}
 
 # only do displacements during the warm up
 move_chance = 1.0
@@ -366,28 +402,25 @@ for i in range(steps):
         log.info("move particle in box %d", idx)
         box = boxes[idx]
         move_particle(box)
-        move_steps_tried += 1
 
     elif rand <= move_chance + VOLUME_CHANCE:
         current_move = Moves.EXCHANGE_VOLUME
         exchange_volume(boxes, global_volume)
-        volume_steps_tried += 1
-
     else:
         current_move = Moves.EXCHANGE_PARTICLE
         source_box, dest_box = exchange_particle(boxes)
-        exchange_steps_tried += 1
 
     # test if the move will be accepted and undo the last step if it was not
     # accepted.
+
+    # Calculate energy difference for full system 
     delta_energy = boxes[0].energy + boxes[1].energy - \
         boxes[0].energy_old - boxes[1].energy_old
-    # limitation to delta_energy to circumvent calculating the exponential of
-    # too large inner potentials, which could cause some error messages.
-    if delta_energy < -10.0 * kT:
-        delta_energy = -10.0 * kT
-
     log.info("dE: %g", delta_energy)
+
+    # clip energy difference to prevent overflows in exponential
+    delta_energy = np.clip(delta_energy, -100 * kT, 100 * kT)
+
     inner_potential = np.exp(-1.0 / kT * delta_energy)
     if current_move == Moves.MOVE_PARTICLE:
         accepted = check_make_move(box, inner_potential)
@@ -400,53 +433,67 @@ for i in range(steps):
         raise Exception("Unkhandled move type " + current_move)
 
     # accounting
-    boxes[0].energy_old = boxes[0].energy
-    boxes[1].energy_old = boxes[1].energy
+    tried_moves[current_move] += 1
+    if accepted:
+        accepted_moves[current_move] += 1
+
     if accepted:
         log.info("accepted")
-        # keep the changes.
-        accepted_steps += 1
-        if current_move == Moves.MOVE_PARTICLE:
-            accepted_steps_move += 1
-        elif current_move == Moves.EXCHANGE_VOLUME:
-            accepted_steps_volume += 1
-        elif current_move == Moves.EXCHANGE_PARTICLE:
-            accepted_steps_exchange += 1
-        else: 
-            raise Exception("Unhandled move type " + current_move)
-
+        # store observables
         densities[0].append(boxes[0].n_particles / boxes[0].box_l**3)
         densities[1].append(boxes[1].n_particles / boxes[1].box_l**3)
         list_indices.append(i)
 
-        if i % REPORT_INTERVAL == 0 and i > 0:
-            tock = time.time()
-            print("step %d, densities %.3f %.3f, %.2f sec / move" % 
-                  (i, densities[0][-1], densities[1][-1], 
-                   (tock - tick) / REPORT_INTERVAL))
-            assert boxes[0].n_particles + \
-                boxes[1].n_particles == global_num_particles
-            assert abs(boxes[0].box_l**3 + boxes[1].box_l**3 - global_volume) \
-                < 1E-8 * global_volume
-            tick = time.time()
+    boxes[0].energy_old = boxes[0].energy
+    boxes[1].energy_old = boxes[1].energy
+
+    if i % REPORT_INTERVAL == 0 and i > 0:
+        # timing
+        tock = time.time()
+
+        print("step %d, densities %.3f %.3f, %.2f sec / move" % 
+              (i, densities[0][-1], densities[1][-1], 
+               (tock - tick) / REPORT_INTERVAL))
+
+        # consistency check
+        assert boxes[0].n_particles + \
+            boxes[1].n_particles == global_num_particles
+        assert abs(boxes[0].box_l**3 + boxes[1].box_l**3 - global_volume) \
+            < 1E-8 * global_volume
+
+        # timing
+        tick = time.time()
 
 
-print("Acceptance rate global:\t {}".format(accepted_steps / float(steps)))
+print(
+    "Acceptance rate global:\t {}".format(
+        np.sum(
+            list(
+                accepted_moves.values())) /
+        np.sum(
+            list(
+                tried_moves.values()))))
 print("Acceptance rate moving:\t {}".format(
-    accepted_steps_move / float(move_steps_tried)))
+    accepted_moves[Moves.MOVE_PARTICLE] / tried_moves[Moves.MOVE_PARTICLE]))
 print("Acceptance rate volume exchange:\t {}".format(
-    accepted_steps_volume / float(volume_steps_tried)))
+    accepted_moves[Moves.EXCHANGE_VOLUME] / tried_moves[Moves.EXCHANGE_VOLUME]))
 print("Acceptance rate particle exchange:\t {}".format(
-    accepted_steps_exchange / float(exchange_steps_tried)))
+    accepted_moves[Moves.EXCHANGE_PARTICLE] / tried_moves[Moves.EXCHANGE_PARTICLE]))
 
 
-plt.figure()
-plt.ylabel('density')
-plt.xlabel('number of steps')
-plt.plot(list_indices[100:], densities[0][100:], label="box 0")
-plt.plot(list_indices[100:], densities[1][100:], label="box 1")
-plt.legend()
-plt.show()
+if plot:
+    plt.figure()
+    plt.ylabel('density')
+    plt.xlabel('number of steps')
+    plt.plot(list_indices[100:], densities[0][100:], label="box 0")
+    plt.plot(list_indices[100:], densities[1][100:], label="box 1")
+    plt.legend()
+    plt.show()
+
+if output_file:
+    with open(output_file, "wb") as f:
+        pickle.dump({"args": args, "densities": densities,
+                     "list_indices": list_indices}, f)
 
 # closing the socket
 for i in range(NUMBER_OF_CLIENTS):
