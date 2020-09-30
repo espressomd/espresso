@@ -114,7 +114,7 @@ if args.espresso_executable:
 else: 
     # If 'espressomd' can be imported, use the current interpreter to launch 
     # the clients
-    if importlib.find_loader("espressomd") is not None: 
+    if importlib.util.find_spec("espressomd") is not None: 
         espresso_executable = sys.executable
     else:
         raise Exception(
