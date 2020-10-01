@@ -157,7 +157,7 @@ plt.show()
             cell_md['metadata']['solution2_first'] = True
             cell_md['metadata']['solution2'] = 'hidden'
             nb['cells'].append(cell_md)
-            code = '```python\n2\nglobal_var = 5\n```'
+            code = '```python\n2\nimport matplotlib.pyplot\nglobal_var = 5\n```'
             cell_md = nbformat.v4.new_markdown_cell(source=code)
             cell_md['metadata']['solution2'] = 'hidden'
             nb['cells'].append(cell_md)
@@ -195,7 +195,10 @@ plt.show()
         self.assertEqual(cell['source'], 'Question 2')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
-        self.assertEqual(cell['source'], '2\nglobal_var = 20')
+        self.assertEqual(cell['source'], '2\nimport matplotlib.pyplot')
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'code')
+        self.assertEqual(cell['source'], 'global_var = 20')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
         self.assertEqual(cell['source'], '3')
