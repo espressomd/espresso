@@ -35,10 +35,10 @@ class Tutorial(ut.TestCase):
             tutorial.magnetization_para[0],
             tutorial.magnetization_perp[0])
         self.assertGreater(
-            tutorial.magnetization_para[0] / tutorial.N,
+            tutorial.magnetization_para[0] / tutorial.N_PART,
             langevin_magnetization_curve)
         self.assertLess(
-            tutorial.magnetization_perp[0] / tutorial.N,
+            tutorial.magnetization_perp[0] / tutorial.N_PART,
             langevin_magnetization_curve)
 
 
