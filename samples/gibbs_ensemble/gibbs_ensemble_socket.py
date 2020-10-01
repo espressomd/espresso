@@ -148,6 +148,14 @@ if args.box_length:
 
 global_volume = 2.0 * init_box_l**3
 
+def recv_both_energies(boxes):
+    if boxes[0].n_particles < boxes[1].n_particles:
+        boxes[0].recv_energy()
+        boxes[1].recv_energy()
+    else:
+        boxes[1].recv_energy()
+        boxes[0].recv_energy()
+
 
 class Box:
     '''
@@ -224,8 +232,7 @@ def exchange_volume(boxes, global_volume):
         other_box.conn, [
             gibbs.MessageId.CHANGE_VOLUME, other_box.box_l])
 
-    lead_box.recv_energy()
-    other_box.recv_energy()
+    recv_both_energies(boxes)
 
 
 def exchange_particle(boxes):
@@ -246,8 +253,7 @@ def exchange_particle(boxes):
     gibbs.send_data(source_box.conn, [gibbs.MessageId.EXCHANGE_PART_REMOVE])
     gibbs.send_data(dest_box.conn, [gibbs.MessageId.EXCHANGE_PART_ADD, 1])
 
-    source_box.recv_energy()
-    dest_box.recv_energy()
+    recv_both_energies((source_box, dest_box))
 
     return source_box, dest_box
 
