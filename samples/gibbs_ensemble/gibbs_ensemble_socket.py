@@ -79,6 +79,9 @@ output_file = None
 
 # maximum of the volume exchanged in the logarithmic space
 DV_MAX = 0.1
+# maximum displacement for particle move
+DX_MAX = 0.5
+
 
 # Monte-Carlo parameters
 INIT_MOVE_CHANCE = 0.16
@@ -185,7 +188,7 @@ def move_particle(box):
     '''
     Tries a displacement move and stores the new energy in the corresponding box
     '''
-    gibbs.send_data(box.conn, [gibbs.MessageId.MOVE_PART])
+    gibbs.send_data(box.conn, [gibbs.MessageId.MOVE_PART, DX_MAX])
     box.recv_energy()
 
 

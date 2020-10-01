@@ -35,12 +35,12 @@ class Client:
         id = np.random.choice(self._system.part[:].id)
         return self._system.part[id]
 
-    def move_particle(self):
+    def move_particle(self, max_step_size):
         '''Moves a particle to a new random position. The old position is saved in _old_part_position.'''
         p = self.random_particle()
         self._last_modified_pid = p.id
         self._saved_pos = p.pos
-        p.pos = np.random.random(3) * self._system.box_l
+        p.pos = p.pos + np.random.random(3) * max_step_size
 
     def move_particle_revert(self):
         '''Revert the last movement step.'''
@@ -76,8 +76,8 @@ class Client:
     def energy(self):
         return self._system.analysis.energy()["total"]
 
-    def handle_move_particle(self):
-        self.move_particle()
+    def handle_move_particle(self, max_step_size):
+        self.move_particle(max_step_size)
         send_data(self._socket,
                   [MessageId.ENERGY, self.energy()])
 
