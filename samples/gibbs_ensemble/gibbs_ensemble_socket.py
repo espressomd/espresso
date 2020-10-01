@@ -443,6 +443,12 @@ for i in range(steps):
             boxes[1].n_particles == global_num_particles
         assert abs(boxes[0].box_l**3 + boxes[1].box_l**3 - global_volume) \
             < 1E-8 * global_volume
+        # compare notes with clients
+        for box in boxes: 
+            gibbs.send_data(box.conn, [gibbs.MessageId.CONSISTENCY_CHECK])
+            remote_n, remote_l = gibbs.recv_data(box.conn)
+            assert box.n_particles == remote_n
+            assert box.box_l == remote_l
 
         # timing
         tick = time.time()
