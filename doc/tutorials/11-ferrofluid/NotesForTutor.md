@@ -2,13 +2,13 @@
 
 ## General Remarks:
 Try to put the focus on the first tutorial.
-In 1.5h one should theoretically get through the first two tutorials, but key concepts are mainly introduced in the first one, the second one only introducing a external field.
+In 1.5h one should theoretically get through the first two tutorials, but key concepts are mainly introduced in the first one, the second one only introduces an external field.
 The third tutorial deals mainly with physical concepts, the only new espresso-specific thing is the setup of a 3D system, i.e. no more DLC.
 
 ## Learning Objectives (Physics)
  1. Tutorial:
-   - Understand role and importance of order parameter lambda ($\lambda \approx 1 \implies$ no large scale strcture, $\lambda > 2 \implies$ formation of chain- and ring-like structures)
-   - What cluster distribution one expects (probability decreases with size of clusters)
+   - Understand the role and importance of the order parameter lambda ($\lambda \approx 1 \implies$ no large scale structure, $\lambda > 2 \implies$ formation of chain- and ring-like structures)
+   - Which cluster distribution is expected (probability decreases with size of clusters)
    
  2. Tutorial:
    - alpha-parameter compares external field coupling to thermal energy
@@ -18,7 +18,7 @@ The third tutorial deals mainly with physical concepts, the only new espresso-sp
 
 ## Learning Objectives (Espresso):
  1. Tutorial: 
-   - How to setup P3M for dipole interactions
+   - How to setup P3M for dipolar interactions
    - How to set up randomly distributed dipole moments without bias:
      - Randomly picking cartesian vectors with x, y, z \in [-1,1] would introduce bias
      - Randomly picking angles (phi \in [0,2pi], theta \in [0,pi]) introduces bias
@@ -30,14 +30,14 @@ The third tutorial deals mainly with physical concepts, the only new espresso-sp
      - Discuss the resulting video
 
  2. Tutorial:
-   - How to setup a external field
-   - how to sample magnetization curves on a quasi-2D system
-   - As sampling of the magnetization curves takes a while, depending on remaining time it might be sensible to only sample perpendicular direction and skip the cells pertaining to the parallel measurements. Go directly to plotting (of course only perpendicular).
+   - How to setup an external field
+   - How to sample magnetization curves on a quasi-2D system
+   - As sampling of the magnetization curves takes a while, depending on remaining time it might be sensible to only sample the perpendicular direction and skip the cells pertaining to the parallel measurements. Go directly to plotting (of course only perpendicular).
 
 ## Points to Mention Throughout the Tutorial:
  1. Tutorial:
-   - Importance of correct setup for non-biased results (especially important for magentic systems!)
+   - Importance of correct setup for non-biased results (especially important for magnetic systems!)
    - Using DLC (analogous to ELC) for quasi 2D system with 3D moment directions
-   - Idea of a quasi-2D-System with 3D Moments
+   - Idea of a quasi-2D-System with 3D moments
  2. Tutorial:
    - Appeal of simulations as "numerical" experiment and benchmark against theoretical models
