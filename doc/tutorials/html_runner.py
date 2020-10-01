@@ -196,14 +196,15 @@ if args.scripts:
     for filepath in args.scripts:
         add_cell_from_script(nb, filepath)
 
+# convert solution cells to code cells
+if args.exercise2:
+    convert_exercise2_to_code(nb)
+
 # disable plot interactivity
 disable_plot_interactivity(nb)
 
 # guard against a jupyter bug involving matplotlib
 split_matplotlib_cells(nb)
-
-if args.exercise2:
-    convert_exercise2_to_code(nb)
 
 if args.substitutions or args.execute:
     # substitute global variables
