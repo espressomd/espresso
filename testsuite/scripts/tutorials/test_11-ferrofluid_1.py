@@ -22,7 +22,7 @@ import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/11-ferrofluid/11-ferrofluid_part1.py",
-    equil_steps=200, equil_rounds=10, N=1200)
+    equil_steps=200, equil_rounds=10, N_PART=1200)
 
 
 @skipIfMissingFeatures
