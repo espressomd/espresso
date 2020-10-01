@@ -148,6 +148,7 @@ if args.box_length:
 
 global_volume = 2.0 * init_box_l**3
 
+
 def recv_both_energies(boxes):
     if boxes[0].n_particles < boxes[1].n_particles:
         boxes[0].recv_energy()
