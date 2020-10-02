@@ -20,7 +20,7 @@ import importlib_wrapper
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/01-lennard_jones/01-lennard_jones.py")
+    "@TUTORIALS_DIR@/01-lennard_jones/01-lennard_jones.py", N_SAMPLES=300)
 
 
 @skipIfMissingFeatures
@@ -34,7 +34,8 @@ class Tutorial(ut.TestCase):
         # Test that the potential energy/particle agrees with
         # the value from Verlet, Phys. Rev. 1967
         ref_energy = -5.38
-        self.assertAlmostEqual(tutorial.sim_energy, ref_energy, 1)
+        self.assertAlmostEqual(
+            tutorial.mean_pot_energy_corrected, ref_energy, 1)
 
 
 if __name__ == "__main__":
