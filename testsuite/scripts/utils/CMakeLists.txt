@@ -1,4 +1,5 @@
-# Copyright (C) 2019 The ESPResSo project
+#
+# Copyright (C) 2020 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,27 +15,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-import unittest as ut
-import importlib_wrapper
+function(UTILS_TEST)
+  python_scripts_test(${ARGV} TYPE utils) # forward arguments
+  set(utils_tests ${utils_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
+endfunction(UTILS_TEST)
 
-tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/02-charged_system/02-charged_system-1.py",
-    N_SAMPLES=2, STEPS_PER_SAMPLE=2, WARMUP_STEPS=1000,
-    N_SAMPLES_SALT=200)
+utils_test(FILE test_maintainer_CI_jupyter_warnings.py)
 
-
-@skipIfMissingFeatures
-class Tutorial02_1(ut.TestCase):
-    system = tutorial.system
-
-    def test_overcharging(self):
-        """ 
-        Test that adding salt leads to a positive layer around the rod
-        """
-
-        self.assertGreater(max(tutorial.charge_hist), 1.2)
-
-
-if __name__ == "__main__":
-    ut.main()
+add_custom_target(
+  check_utils COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
+                      -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)

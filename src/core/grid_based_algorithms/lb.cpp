@@ -42,10 +42,10 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 
-#include "utils/u32_to_u64.hpp"
 #include <utils/Counter.hpp>
 #include <utils/index.hpp>
 #include <utils/math/matrix_vector_product.hpp>
+#include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 using Utils::get_linear_index;
 #include <utils/constants.hpp>
@@ -841,7 +841,7 @@ lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes,
     using rng_type = r123::Philox4x64;
     using ctr_type = rng_type::ctr_type;
 
-    const r123::Philox4x64::ctr_type c{
+    const ctr_type c{
         {rng_counter->value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
     const T rootdensity =
         std::sqrt(std::fabs(modes[0] + lb_parameters.density));
@@ -853,7 +853,7 @@ lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes,
         rng_type{}(c, {{static_cast<uint64_t>(index), 2ul}}),
         rng_type{}(c, {{static_cast<uint64_t>(index), 3ul}})};
 
-    auto rng = [&](int i) { return uniform(noise[i / 4][i % 4]); };
+    auto rng = [&](int i) { return uniform(noise[i / 4][i % 4]) - 0.5; };
 
     return {/* conserved modes */
             {modes[0], modes[1], modes[2], modes[3],

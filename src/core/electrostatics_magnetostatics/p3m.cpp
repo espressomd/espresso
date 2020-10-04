@@ -80,6 +80,10 @@ static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
  */
 static bool p3m_sanity_checks_boxl();
 
+/** Checks that necessary parameters are set
+ */
+static bool p3m_sanity_checks_parameters();
+
 /** Calculate the optimal influence function of @cite hockney88a.
  *  (optimised for force calculations)
  *
@@ -156,7 +160,7 @@ void p3m_init() {
     return;
   }
 
-  if (p3m_sanity_checks()) {
+  if (p3m_sanity_checks_parameters()) {
     return;
   }
 
@@ -165,6 +169,10 @@ void p3m_init() {
   /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and
    * the cutoff for charge assignment p3m.params.cao_cut */
   p3m_init_a_ai_cao_cut();
+
+  if (p3m_sanity_checks()) {
+    return;
+  }
 
   p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
 
@@ -192,6 +200,9 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
   if (r_cut >= 0) {
     p3m.params.r_cut = r_cut;
     p3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
+  } else if (r_cut == -1.0) {
+    p3m.params.r_cut = 0;
+    p3m.params.r_cut_iL = 0;
   }
 
   if (mesh[0] >= 0) {
@@ -1287,14 +1298,8 @@ bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
   return ret;
 }
 
-bool p3m_sanity_checks() {
-  bool ret = false;
-
-  if (p3m_sanity_checks_system(node_grid))
-    ret = true;
-
-  if (p3m_sanity_checks_boxl())
-    ret = true;
+bool p3m_sanity_checks_parameters() {
+  bool ret{false};
 
   if (p3m.params.mesh[0] == 0) {
     runtimeErrorMsg() << "P3M_init: mesh size is not yet set";
@@ -1308,6 +1313,20 @@ bool p3m_sanity_checks() {
     runtimeErrorMsg() << "P3M_init: alpha must be >0";
     ret = true;
   }
+  return ret;
+}
+
+bool p3m_sanity_checks() {
+  bool ret = false;
+
+  if (p3m_sanity_checks_system(node_grid))
+    ret = true;
+
+  if (p3m_sanity_checks_boxl())
+    ret = true;
+
+  if (p3m_sanity_checks_parameters())
+    ret = true;
 
   return ret;
 }

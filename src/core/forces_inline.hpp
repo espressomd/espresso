@@ -39,7 +39,6 @@
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
-#include "integrators/langevin_inline.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -61,6 +60,7 @@
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
+#include "thermostats/langevin_inline.hpp"
 
 #ifdef DIPOLES
 #include "electrostatics_magnetostatics/dipole_inline.hpp"
@@ -100,25 +100,27 @@ inline ParticleForce external_force(Particle const &p) {
   return f;
 }
 
-inline ParticleForce thermostat_force(Particle const &p) {
+inline ParticleForce thermostat_force(Particle const &p, double time_step) {
   extern LangevinThermostat langevin;
   if (!(thermo_switch & THERMO_LANGEVIN)) {
     return {};
   }
 
 #ifdef ROTATION
-  return {friction_thermo_langevin(langevin, p),
+  return {friction_thermo_langevin(langevin, p, time_step),
           p.p.rotation ? convert_vector_body_to_space(
-                             p, friction_thermo_langevin_rotation(langevin, p))
+                             p, friction_thermo_langevin_rotation(langevin, p,
+                                                                  time_step))
                        : Utils::Vector3d{}};
 #else
-  return friction_thermo_langevin(langevin, p);
+  return friction_thermo_langevin(langevin, p, time_step);
 #endif
 }
 
 /** Initialize the forces for a real particle */
-inline ParticleForce init_local_particle_force(Particle const &part) {
-  return thermostat_force(part) + external_force(part);
+inline ParticleForce init_local_particle_force(Particle const &part,
+                                               double time_step) {
+  return thermostat_force(part, time_step) + external_force(part);
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(

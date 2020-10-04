@@ -26,9 +26,6 @@
 
 #include "config.hpp"
 
-#include "Particle.hpp"
-#include "integrate.hpp"
-#include "random.hpp"
 #include "rotation.hpp"
 
 #include <utils/Counter.hpp>
@@ -36,7 +33,7 @@
 
 #include <boost/optional.hpp>
 #include <cmath>
-#include <tuple>
+#include <cstdint>
 
 /** \name Thermostat switches */
 /*@{*/
@@ -95,29 +92,23 @@ extern bool thermo_virtual;
 struct BaseThermostat {
 public:
   /** Initialize or re-initialize the RNG counter with a seed. */
-  void rng_initialize(uint64_t const seed) {
-    rng_counter = Utils::Counter<uint64_t>(seed);
-  }
+  void rng_initialize(uint32_t const seed) { m_rng_seed = seed; }
   /** Increment the RNG counter */
-  void rng_increment() {
-    if (!rng_counter) {
-      throw "The RNG counter is not initialized";
-    }
-    rng_counter.get().increment();
-  }
+  void rng_increment() { m_rng_counter.increment(); }
   /** Get current value of the RNG */
-  uint64_t rng_get() const {
-    if (!rng_counter) {
-      throw "The RNG counter is not initialized";
-    }
-    return rng_counter.get().value();
+  uint64_t rng_counter() const { return m_rng_counter.value(); }
+  void set_rng_counter(uint64_t value) {
+    m_rng_counter = Utils::Counter<uint64_t>(0u, value);
   }
-  /** Is the RNG counter initialized */
-  bool rng_is_initialized() const { return static_cast<bool>(rng_counter); }
+  /** Is the RNG seed required */
+  bool is_seed_required() const { return !m_rng_seed; }
+  uint32_t rng_seed() const { return m_rng_seed.value(); }
 
 private:
   /** RNG counter. */
-  boost::optional<Utils::Counter<uint64_t>> rng_counter;
+  Utils::Counter<uint64_t> m_rng_counter;
+  /** RNG seed */
+  boost::optional<uint32_t> m_rng_seed;
 };
 
 /** %Thermostat for Langevin dynamics. */
@@ -129,7 +120,7 @@ public:
   /** Recalculate prefactors.
    *  Needs to be called every time the parameters are changed.
    */
-  void recalc_prefactors() {
+  void recalc_prefactors(double time_step) {
     pref_friction = -gamma;
     pref_noise = sigma(temperature, time_step, gamma);
     // If gamma_rotation is not set explicitly, use the translational one.
@@ -266,14 +257,14 @@ public:
   /** Recalculate prefactors.
    *  Needs to be called every time the parameters are changed.
    */
-  void recalc_prefactors(double piston) {
+  void recalc_prefactors(double piston, double time_step) {
 #ifdef NPT
     assert(piston > 0.0);
     auto const half_time_step = time_step / 2.0;
     pref_rescale_0 = -gamma0 * half_time_step;
-    pref_noise_0 = sigma(temperature, gamma0);
+    pref_noise_0 = sigma(temperature, gamma0, time_step);
     pref_rescale_V = -gammav * half_time_step / piston;
-    pref_noise_V = sigma(temperature, gammav);
+    pref_noise_V = sigma(temperature, gammav, time_step);
 #endif
   }
   /** Calculate the noise prefactor.
@@ -281,7 +272,7 @@ public:
    *  with @f$ \sigma_\eta @f$ the standard deviation of the random uniform
    *  process @f$ \eta(t) @f$.
    */
-  static double sigma(double kT, double gamma) {
+  static double sigma(double kT, double gamma, double time_step) {
     // random uniform noise has variance 1/12; the temperature
     // coefficient of 2 is canceled out by the half time step
     constexpr auto const temp_coeff = 12.0;
@@ -325,20 +316,25 @@ struct ThermalizedBondThermostat : public BaseThermostat {};
 struct DPDThermostat : public BaseThermostat {};
 #endif
 
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+/** %Thermostat for Stokesian dynamics. */
+struct StokesianThermostat : public BaseThermostat {
+  StokesianThermostat() { rng_initialize(0); }
+};
+#endif
+
 /************************************************
  * functions
  ************************************************/
 
 /**
- * @brief Register a thermostat public interface
+ * @brief Register MPI callbacks of thermostat objects
  *
- * @param thermostat        The thermostat name
+ * @param thermostat        The thermostat object name
  */
 #define NEW_THERMOSTAT(thermostat)                                             \
-  bool thermostat##_is_seed_required();                                        \
-  void thermostat##_rng_counter_increment();                                   \
-  void thermostat##_set_rng_state(uint64_t counter);                           \
-  uint64_t thermostat##_get_rng_state();
+  void thermostat##_set_rng_seed(uint32_t seed);                               \
+  void thermostat##_set_rng_counter(uint64_t seed);
 
 NEW_THERMOSTAT(langevin)
 NEW_THERMOSTAT(brownian)
@@ -347,58 +343,26 @@ NEW_THERMOSTAT(thermalized_bond)
 #ifdef DPD
 NEW_THERMOSTAT(dpd)
 #endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+NEW_THERMOSTAT(stokesian)
+#endif
 
 /* Exported thermostat globals */
 extern LangevinThermostat langevin;
 extern BrownianThermostat brownian;
 extern IsotropicNptThermostat npt_iso;
+extern ThermalizedBondThermostat thermalized_bond;
+#ifdef DPD
+extern DPDThermostat dpd;
+#endif
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+extern StokesianThermostat stokesian;
+#endif
 
 /** Initialize constants of the thermostat at the start of integration */
 void thermo_init();
 
-#ifdef NPT
-/** Add velocity-dependent noise and friction for NpT-sims to the particle's
- *  velocity
- *  @tparam step       Which half time step to integrate (1 or 2)
- *  @param npt_iso     Parameters
- *  @param vel         particle velocity
- *  @param p_identity  particle identity
- *  @return noise added to the velocity, already rescaled by
- *          dt/2 (contained in prefactors)
- */
-template <size_t step>
-inline Utils::Vector3d
-friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
-                       Utils::Vector3d const &vel, int p_identity) {
-  static_assert(step == 1 or step == 2, "NPT only has 2 integration steps");
-  constexpr auto const salt =
-      (step == 1) ? RNGSalt::NPTISO0_HALF_STEP1 : RNGSalt::NPTISO0_HALF_STEP2;
-  if (thermo_switch & THERMO_NPT_ISO) {
-    if (npt_iso.pref_noise_0 > 0.0) {
-      return npt_iso.pref_rescale_0 * vel +
-             npt_iso.pref_noise_0 *
-                 Random::noise_uniform<salt>(npt_iso.rng_get(), p_identity);
-    }
-    return npt_iso.pref_rescale_0 * vel;
-  }
-  return {};
-}
-
-/** Add p_diff-dependent noise and friction for NpT-sims to \ref
- *  nptiso_struct::p_diff
- */
-inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
-                                     double p_diff) {
-  if (thermo_switch & THERMO_NPT_ISO) {
-    if (npt_iso.pref_noise_V > 0.0) {
-      return npt_iso.pref_rescale_V * p_diff +
-             npt_iso.pref_noise_V * Random::noise_uniform<RNGSalt::NPTISOV, 1>(
-                                        npt_iso.rng_get(), 0);
-    }
-    return npt_iso.pref_rescale_V * p_diff;
-  }
-  return 0.0;
-}
-#endif // NPT
+/** Increment RNG counters */
+void philox_counter_increment();
 
 #endif
