@@ -54,7 +54,7 @@ parser.add_argument('-s', '--seed', type=int)
 parser.add_argument('-S', '--steps', type=int)
 parser.add_argument('-w', '--warm_up_steps', type=int)
 parser.add_argument('-n', '--number-of-particles', type=int)
-parser.add_argument('-l', '--box-length', type=float)
+parser.add_argument('-d', '--density', type=float)
 parser.add_argument('-T', '--temperature', type=float, required=True)
 parser.add_argument('-E', '--espresso-executable')
 parser.add_argument('-C', '--client-script', required=True)
@@ -69,9 +69,9 @@ seed = None
 steps = 250000
 warm_up_steps = 800
 # number of particles in both boxes combined
-global_num_particles = 500 
+global_num_particles = 256 
 # starting box length
-init_box_l = 9.437 
+init_density = 0.4
 # temperature
 kT = 1.15
 plot = False
@@ -84,8 +84,8 @@ DX_MAX = 0.5
 
 
 # Monte-Carlo parameters
-INIT_MOVE_CHANCE = 0.16
-EXCHANGE_CHANCE = 0.7
+INIT_MOVE_CHANCE = 1/3
+EXCHANGE_CHANCE = 1/3
 VOLUME_CHANCE = 1.0 - INIT_MOVE_CHANCE - EXCHANGE_CHANCE
 
 # socket parameters
@@ -143,10 +143,10 @@ if global_num_particles % 2 == 1:
 if args.temperature:
     kT = args.temperature
 
-if args.box_length:
-    init_box_l = args.box_length
+if args.density:
+    init_density = args.density
 
-global_volume = 2.0 * init_box_l**3
+global_volume = global_num_particles / init_density
 
 
 def recv_both_energies(boxes):
@@ -206,12 +206,8 @@ def exchange_volume(boxes, global_volume):
     Tries a volume exchange move and stores the new energy in the boxes
     '''
 
-    rand_box = random.randint(0, 1)
-    if boxes[rand_box].n_particles == 0:
-        rand_box = (rand_box + 1) % 2
-
-    lead_box = boxes[rand_box]
-    other_box = boxes[(rand_box + 1) % 2]
+    lead_box = boxes[0]
+    other_box = boxes[1]
 
     lead_box.box_l_old = lead_box.box_l
     other_box.box_l_old = other_box.box_l
@@ -303,7 +299,7 @@ def check_exchange_particle(source_box, dest_box, inner_potential):
     if it was invalid.
     '''
     exchange_factor = (source_box.n_particles) / \
-        (dest_box.n_particles + 1.0) * \
+        (dest_box.n_particles) * \
         dest_box.box_l**3 / source_box.box_l**3
     if random.random() > exchange_factor * inner_potential:
         log.info("revert exchange particle")
@@ -345,8 +341,9 @@ for i in range(NUMBER_OF_CLIENTS):
     boxes[i].recv_energy()
 
 # set initial volume and particles, recv initial energy
+boxes[0].box_l = np.cbrt(global_volume *0.5)
+boxes[1].box_l = np.cbrt(global_volume *0.5)
 for box in boxes:
-    box.box_l = init_box_l
     box.n_particles = int(global_num_particles / 2)
 
     gibbs.send_data(box.conn,
@@ -444,8 +441,9 @@ for i in range(steps):
         # timing
         tock = time.time()
 
-        print("step %d, densities %.3f %.3f, %.f ms / move" % 
+        print("step %d, densities %.3f %.3f, volumes %.2f, %.2f %.f ms / move" % 
               (i, densities[0][-1], densities[1][-1], 
+              boxes[0].box_l**3, boxes[1].box_l**3,
                (tock - tick) * 1000 / REPORT_INTERVAL))
 
         # consistency check
