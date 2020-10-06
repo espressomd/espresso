@@ -17,6 +17,7 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part3.py",
@@ -37,6 +38,11 @@ class Tutorial(ut.TestCase):
         msg = 'The R_h exponent should be close to 0.333'
         self.assertGreater(tutorial.rh_exponent, 0.30, msg=msg)
         self.assertLess(tutorial.rh_exponent, 0.50, msg=msg)
+
+    def test_diffusion_coefficients(self):
+        reference = [0.0363, 0.0269, 0.0234]
+        np.testing.assert_allclose(tutorial.diffusion_msd, reference, rtol=0.1)
+        np.testing.assert_allclose(tutorial.diffusion_gk, reference, rtol=0.1)
 
 
 if __name__ == "__main__":
