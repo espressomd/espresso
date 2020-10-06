@@ -66,6 +66,7 @@
 
 #define TABULATED
 #define LENNARD_JONES
+#define WCA
 #define LENNARD_JONES_GENERIC
 #define LJGEN_SOFTCORE
 #define LJCOS
