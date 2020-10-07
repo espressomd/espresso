@@ -23,3 +23,13 @@
 ## Espresso learning goals
 
 * Using correlators
+
+# Part 4: Planar Poiseuille flow
+
+## Physical learning goals
+
+* Modeling a laminar fluid flow between two walls
+
+## Espresso learning goals
+
+* Setting up an LB fluid and LB boundaries
