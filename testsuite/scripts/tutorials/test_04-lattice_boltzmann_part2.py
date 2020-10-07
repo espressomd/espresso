@@ -21,8 +21,7 @@ import numpy as np
 import scipy.optimize
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part2.py",
-    gpu=True, STEPS=8000, cutoff_limit=66)
+    "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part2.py")
 
 
 @skipIfMissingFeatures
@@ -40,7 +39,7 @@ class Tutorial(ut.TestCase):
 
     def test_diffusion_coefficient(self):
         D_val = tutorial.diffusion_results
-        D_ref = tutorial.lbf.kT / np.array(tutorial.lb_gammas)
+        D_ref = tutorial.KT / np.array(tutorial.gammas)
         np.testing.assert_allclose(D_val, D_ref, rtol=0, atol=0.1)
 
 

@@ -19,9 +19,14 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
+if '@TEST_SUFFIX@' == 'rouse':
+    params = {}
+elif '@TEST_SUFFIX@' == 'zimm':
+    params = {'LOOPS': 2000, 'POLYMER_MODEL': 'Zimm', 'gpu': True}
+
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part3.py",
-    LOOPS=2000, gpu=True)
+    script_suffix="@TEST_SUFFIX@", **params)
 
 
 @skipIfMissingFeatures
@@ -41,8 +46,9 @@ class Tutorial(ut.TestCase):
 
     def test_diffusion_coefficients(self):
         reference = [0.0363, 0.0269, 0.0234]
-        np.testing.assert_allclose(tutorial.diffusion_msd, reference, rtol=0.1)
-        np.testing.assert_allclose(tutorial.diffusion_gk, reference, rtol=0.1)
+        np.testing.assert_allclose(
+            tutorial.diffusion_msd, reference, rtol=0.15)
+        np.testing.assert_allclose(tutorial.diffusion_gk, reference, rtol=0.15)
 
 
 if __name__ == "__main__":

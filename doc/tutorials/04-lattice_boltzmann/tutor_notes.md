@@ -1,3 +1,13 @@
+# Part 1: Lattice-Boltzmann
+
+## Physical learning goals
+
+* Learning basic concepts of the LBM
+
+## Espresso learning goals
+
+* Learning the LB interface in ESPResSo
+
 # Part 2: Brownian motion of a sphere in a fluid
 
 ## Physical learning goals
@@ -6,10 +16,6 @@
 * Learning the basics of Brownian motion
 * Modeling the Brownian motion of a spherical object
 * Calculating the diffusion coefficient of a spherical object
-
-## Espresso learning goals
-
-* Setting up a LB fluid with particle coupling
 
 # Part 3: Brownian motion of a polymer in a fluid
 
@@ -20,6 +26,7 @@
 * Reproducing theoretical results of the Flory theory of polymers
 * Using the Green-Kubo relation to calculate the diffusion coefficient of a polymer
 * Estimating the correlation-corrected standard error of the mean of a time series
+* Observing the effect of implicit hydrodynamics vs. LB hydrodynamics on polymer diffusion
 
 ## Espresso learning goals
 
