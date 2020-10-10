@@ -9,6 +9,6 @@ nb_export(TARGET tutorial_04 SUFFIX "1" FILE "04-lattice_boltzmann_part1.ipynb"
 nb_export(TARGET tutorial_04 SUFFIX "2" FILE "04-lattice_boltzmann_part2.ipynb"
           HTML_RUN)
 nb_export(TARGET tutorial_04 SUFFIX "3" FILE "04-lattice_boltzmann_part3.ipynb"
-          HTML_RUN)
+          HTML_RUN VAR_SUBST "STEPS=200;BOX_L=16;N_MONOMERS=[6,8,10,12,14]")
 nb_export(TARGET tutorial_04 SUFFIX "4" FILE "04-lattice_boltzmann_part4.ipynb"
           HTML_RUN)

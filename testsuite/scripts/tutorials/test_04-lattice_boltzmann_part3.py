@@ -43,12 +43,19 @@ class Tutorial(ut.TestCase):
         msg = 'The R_h exponent should be close to 0.333'
         self.assertGreater(tutorial.rh_exponent, 0.30, msg=msg)
         self.assertLess(tutorial.rh_exponent, 0.50, msg=msg)
+        np.testing.assert_allclose(tutorial.rf2_rg2_ratio, 6.0, atol=1.0,
+                                   err_msg='R_F^2/R_g^2 should be close to 6.0')
 
     def test_diffusion_coefficients(self):
-        reference = [0.0363, 0.0269, 0.0234]
-        np.testing.assert_allclose(
-            tutorial.diffusion_msd, reference, rtol=0.15)
-        np.testing.assert_allclose(tutorial.diffusion_gk, reference, rtol=0.15)
+        # polymer diffusion
+        ref_D = [0.0363, 0.0269, 0.0234]
+        np.testing.assert_allclose(tutorial.diffusion_msd, ref_D, rtol=0.15)
+        np.testing.assert_allclose(tutorial.diffusion_gk, ref_D, rtol=0.15)
+        # monomer diffusion
+        if tutorial.POLYMER_MODEL == 'Rouse':
+            ref_D0 = tutorial.KT / tutorial.GAMMA
+            self.assertAlmostEqual(tutorial.popt_msd[0], ref_D0, delta=0.02)
+            self.assertAlmostEqual(tutorial.popt_gk[0], ref_D0, delta=0.02)
 
 
 if __name__ == "__main__":
