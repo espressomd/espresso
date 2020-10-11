@@ -224,15 +224,7 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
                                       Utils::Vector3d const &d, double dist,
                                       double dist2) {
   IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
-  Utils::Vector3d force{};
-  Utils::Vector3d *torque1 = nullptr;
-  Utils::Vector3d *torque2 = nullptr;
-#if defined(ROTATION) || defined(DIPOLES)
-  Utils::Vector3d _torque1{};
-  Utils::Vector3d _torque2{};
-  torque1 = &_torque1;
-  torque2 = &_torque2;
-#endif
+  ParticleForce pf{};
 
   /***********************************************/
   /* non-bonded pair potentials                  */
@@ -242,14 +234,7 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
 #ifdef EXCLUSIONS
     if (do_nonbonded(p1, p2))
 #endif
-    {
-      auto const pf = calc_non_bonded_pair_force(p1, p2, ia_params, d, dist);
-      force += pf.f;
-#if defined(ROTATION) || defined(DIPOLES)
-      *torque1 += pf.torque;
-      *torque2 += calc_opposing_torque(pf, d);
-#endif
-    }
+      pf += calc_non_bonded_pair_force(p1, p2, ia_params, d, dist);
   }
 
   /***********************************************/
@@ -259,7 +244,7 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
 #ifdef ELECTROSTATICS
   {
     auto const forces = Coulomb::pair_force(p1, p2, d, dist);
-    force += std::get<0>(forces);
+    pf.f += std::get<0>(forces);
 #ifdef P3M
     // forces from the virtual charges
     p1.f.f += std::get<1>(forces);
@@ -273,17 +258,19 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
   /* but nothing afterwards                                            */
   /*********************************************************************/
 #ifdef NPT
-  npt_add_virial_contribution(force, d);
+  npt_add_virial_contribution(pf.f, d);
 #endif
 
   /***********************************************/
   /* thermostat                                  */
   /***********************************************/
 
-  /** The inter dpd force should not be part of the virial */
+  /* The inter dpd force should not be part of the virial */
 #ifdef DPD
   if (thermo_switch & THERMO_DPD) {
-    force += dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
+    auto const force = dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
+    p1.f.f += force;
+    p2.f.f -= force;
   }
 #endif
 
@@ -293,23 +280,18 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
 
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */
-  {
-    auto const forces = Dipole::pair_force(p1, p2, d, dist, dist2);
-    force += std::get<0>(forces);
-    *torque1 += std::get<1>(forces);
-    *torque2 += std::get<2>(forces);
-  }
-#endif /* ifdef DIPOLES */
+  pf += Dipole::pair_force(p1, p2, d, dist, dist2);
+#endif
 
   /***********************************************/
   /* add total non-bonded forces to particles    */
   /***********************************************/
 
-  p1.f.f += force;
-  p2.f.f -= force;
+  p1.f += pf;
 #if defined(ROTATION) || defined(DIPOLES)
-  p1.f.torque += *torque1;
-  p2.f.torque += *torque2;
+  p2.f += {-pf.f, calc_opposing_torque(pf, d)};
+#else
+  p2.f.f -= pf.f;
 #endif
 }
 
