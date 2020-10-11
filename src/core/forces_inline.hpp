@@ -121,10 +121,11 @@ inline ParticleForce init_local_particle_force(Particle const &part) {
   return thermostat_force(part) + external_force(part);
 }
 
-inline ParticleForce
-calc_non_bonded_pair_force_parts(Particle const &p1, Particle const &p2,
-                                 IA_parameters const &ia_params,
-                                 Utils::Vector3d const &d, double const dist) {
+inline ParticleForce calc_non_bonded_pair_force(Particle const &p1,
+                                                Particle const &p2,
+                                                IA_parameters const &ia_params,
+                                                Utils::Vector3d const &d,
+                                                double const dist) {
 
   ParticleForce pf{};
   double force_factor = 0;
@@ -198,22 +199,6 @@ calc_non_bonded_pair_force_parts(Particle const &p1, Particle const &p2,
 #endif
   pf.f += force_factor * d;
   return pf;
-}
-
-inline ParticleForce calc_non_bonded_pair_force(Particle const &p1,
-                                                Particle const &p2,
-                                                IA_parameters const &ia_params,
-                                                Utils::Vector3d const &d,
-                                                double dist) {
-  return calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist);
-}
-
-inline ParticleForce calc_non_bonded_pair_force(Particle const &p1,
-                                                Particle const &p2,
-                                                Utils::Vector3d const &d,
-                                                double dist) {
-  IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
-  return calc_non_bonded_pair_force(p1, p2, ia_params, d, dist);
 }
 
 inline Utils::Vector3d calc_opposing_torque(ParticleForce const &pf,

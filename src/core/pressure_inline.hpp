@@ -46,7 +46,8 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
   if (do_nonbonded(p1, p2))
 #endif
   {
-    auto const force = calc_non_bonded_pair_force(p1, p2, d, dist).f;
+    IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
+    auto const force = calc_non_bonded_pair_force(p1, p2, ia_params, d, dist).f;
     auto const stress = tensor_product(d, force);
 
     auto const type1 = p1.p.mol_id;
