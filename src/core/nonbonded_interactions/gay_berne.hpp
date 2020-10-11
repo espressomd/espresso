@@ -47,8 +47,7 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
 inline ParticleForce gb_pair_force(Utils::Vector3d const &ui,
                                    Utils::Vector3d const &uj,
                                    IA_parameters const &ia_params,
-                                   Utils::Vector3d const &d, double dist,
-                                   bool calc_torque) {
+                                   Utils::Vector3d const &d, double dist) {
   using Utils::int_pow;
   using Utils::sqr;
 
@@ -118,14 +117,13 @@ inline ParticleForce gb_pair_force(Utils::Vector3d const &ui,
                                  0.5 * Koef1 * chi2 * (sqr(tt1) - sqr(tt2))) -
            (Bra12 - Bra12Cut) * 0.5 * Koef2 * chi1 * (sqr(oo1) - sqr(oo2)));
 
-  ParticleForce force{-dU_dr * d - dU_da * ui - dU_db * uj};
+  // torque = u_i x G
+  auto const G2 = -dU_da * d - dU_dc * uj;
 
-  if (calc_torque) {
-    // torque = u_i x G
-    auto const G2 = -dU_da * d - dU_dc * uj;
-    force.torque = vector_product(ui, G2);
-  }
-  return force;
+  ParticleForce pf{-dU_dr * d - dU_da * ui - dU_db * uj,
+                   vector_product(ui, G2)};
+
+  return pf;
 }
 
 /** Calculate Gay-Berne energy */

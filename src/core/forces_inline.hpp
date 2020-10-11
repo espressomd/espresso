@@ -121,12 +121,12 @@ inline ParticleForce init_local_particle_force(Particle const &part) {
   return thermostat_force(part) + external_force(part);
 }
 
-inline Utils::Vector3d calc_non_bonded_pair_force_parts(
-    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
-    Utils::Vector3d const &d, double const dist,
-    Utils::Vector3d *torque1 = nullptr, Utils::Vector3d *torque2 = nullptr) {
+inline ParticleForce
+calc_non_bonded_pair_force_parts(Particle const &p1, Particle const &p2,
+                                 IA_parameters const &ia_params,
+                                 Utils::Vector3d const &d, double const dist) {
 
-  Utils::Vector3d force{};
+  ParticleForce pf{};
   double force_factor = 0;
 /* Lennard-Jones */
 #ifdef LENNARD_JONES
@@ -182,7 +182,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 #endif
 /* Thole damping */
 #ifdef THOLE
-  force += thole_pair_force(p1, p2, ia_params, d, dist);
+  pf.f += thole_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /* tabulated */
 #ifdef TABULATED
@@ -192,35 +192,39 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 #ifdef GAY_BERNE
   // The gb force function isn't inlined, probably due to its size
   if (dist < ia_params.gay_berne.cut) {
-    auto const pf = gb_pair_force(p1.r.calc_director(), p2.r.calc_director(),
-                                  ia_params, d, dist, torque1);
-    force += pf.f;
-    if (torque1) {
-      *torque1 += pf.torque;
-    }
-    if (torque2) {
-      *torque2 -= pf.torque + vector_product(d, pf.f);
-    }
+    pf += gb_pair_force(p1.r.calc_director(), p2.r.calc_director(), ia_params,
+                        d, dist);
   }
 #endif
-  force += force_factor * d;
-  return force;
+  pf.f += force_factor * d;
+  return pf;
 }
 
-inline Utils::Vector3d calc_non_bonded_pair_force(
-    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
-    Utils::Vector3d const &d, double dist, Utils::Vector3d *torque1 = nullptr,
-    Utils::Vector3d *torque2 = nullptr) {
-  return calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, torque1,
-                                          torque2);
+inline ParticleForce calc_non_bonded_pair_force(Particle const &p1,
+                                                Particle const &p2,
+                                                IA_parameters const &ia_params,
+                                                Utils::Vector3d const &d,
+                                                double dist) {
+  return calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist);
 }
 
-inline Utils::Vector3d calc_non_bonded_pair_force(Particle const &p1,
-                                                  Particle const &p2,
-                                                  Utils::Vector3d const &d,
-                                                  double dist) {
+inline ParticleForce calc_non_bonded_pair_force(Particle const &p1,
+                                                Particle const &p2,
+                                                Utils::Vector3d const &d,
+                                                double dist) {
   IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
   return calc_non_bonded_pair_force(p1, p2, ia_params, d, dist);
+}
+
+inline Utils::Vector3d calc_opposing_torque(ParticleForce const &pf,
+                                            Utils::Vector3d const &d) {
+#ifdef ROTATION
+  // guard against numerical instability in the vector product
+  if (pf.torque[0] != 0. || pf.torque[1] != 0. || pf.torque[2] != 0.) {
+    return -(pf.torque + vector_product(d, pf.f));
+  }
+#endif
+  return {};
 }
 
 /** Calculate non-bonded forces between a pair of particles and update their
@@ -253,8 +257,14 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
 #ifdef EXCLUSIONS
     if (do_nonbonded(p1, p2))
 #endif
-      force += calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, torque1,
-                                          torque2);
+    {
+      auto const pf = calc_non_bonded_pair_force(p1, p2, ia_params, d, dist);
+      force += pf.f;
+#if defined(ROTATION) || defined(DIPOLES)
+      *torque1 += pf.torque;
+      *torque2 += calc_opposing_torque(pf, d);
+#endif
+    }
   }
 
   /***********************************************/

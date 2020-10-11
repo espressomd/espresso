@@ -61,7 +61,8 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           double t) {
 
   double dist = 0.;
-  Utils::Vector3d dist_vec, force1{}, torque1{}, torque2{}, outer_normal_vec;
+  Utils::Vector3d dist_vec{}, force{}, outer_normal_vec{};
+  ParticleForce pf{};
 
   IA_parameters const &ia_params = *get_ia_param(p.p.type, part_rep.p.type);
 
@@ -70,11 +71,10 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
-      force1 = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec,
-                                          dist, &torque1, &torque2);
+      pf = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec, dist);
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-        force1 +=
+        force =
             dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist * dist);
         // Additional use of DPD here requires counter increase
         dpd_rng_counter_increment();
@@ -82,12 +82,12 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 #endif
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
-        force1 = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec,
-                                            -dist, &torque1, &torque2);
+        pf =
+            calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec, -dist);
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
-          force1 += dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
-                                   dist * dist);
+          force = dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
+                                 dist * dist);
           // Additional use of DPD here requires counter increase
           dpd_rng_counter_increment();
         }
@@ -100,14 +100,15 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     }
   }
 
-  m_local_force -= force1;
-  m_outer_normal_force -= outer_normal_vec * force1;
+  auto const local_force = force + pf.f;
+  m_local_force -= local_force;
+  m_outer_normal_force -= outer_normal_vec * local_force;
 
 #ifdef ROTATION
-  part_rep.f.torque += torque2;
-  return {force1, torque1};
+  part_rep.f.torque += calc_opposing_torque(pf, dist_vec);
+  return {local_force, pf.torque};
 #else
-  return force1;
+  return local_force;
 #endif
 }
 
