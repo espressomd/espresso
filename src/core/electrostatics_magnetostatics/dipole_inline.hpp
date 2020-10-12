@@ -26,18 +26,17 @@
 
 namespace Dipole {
 // forces_inline
-inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
-           double dist, double dist2) {
-  Utils::Vector3d force{}, torque1{}, torque2{};
+inline ParticleForce pair_force(Particle const &p1, Particle const &p2,
+                                Utils::Vector3d const &d, double dist,
+                                double dist2) {
+  ParticleForce pf{};
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     // fall trough
   case DIPOLAR_P3M: {
     double eng;
-    std::tie(eng, force, torque1, torque2) =
-        dp3m_pair_force(p1, p2, d, dist2, dist);
+    std::tie(eng, pf) = dp3m_pair_force(p1, p2, d, dist2, dist);
 #ifdef NPT
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
@@ -48,7 +47,7 @@ pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
   default:
     break;
   }
-  return std::make_tuple(force, torque1, torque2);
+  return pf;
 }
 
 // energy_inline
