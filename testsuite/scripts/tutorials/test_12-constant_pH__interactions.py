@@ -17,7 +17,6 @@
 
 import unittest as ut
 import importlib_wrapper
-import numpy as np
 
 try:
     import pint  # pylint: disable=unused-import
@@ -27,7 +26,9 @@ except ImportError:
         "Python module pint not available, skipping test!")
 else:
     tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-        "@TUTORIALS_DIR@/12-constant_pH/12-constant_pH.py")
+        "@TUTORIALS_DIR@/12-constant_pH/12-constant_pH.py",
+        USE_WCA=True, USE_ELECTROSTATICS=True, NUM_PHS=3, NUM_SAMPLES=2, PROB_REACTION=1.0,
+        script_suffix="interactions")
 
 
 @skipIfMissingFeatures
@@ -35,13 +36,7 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test(self):
-        expected_values = 1. / (1 + 10**(tutorial.pK - tutorial.pHs))
-        simulated_values = tutorial.av_alpha
-        simulated_values_error = tutorial.err_alpha
-        # test alpha +/- 0.05 and standard error of alpha less than 0.05
-        np.testing.assert_allclose(expected_values, simulated_values, rtol=0,
-                                   atol=0.05)
-        self.assertLess(np.max(simulated_values_error), 0.05)
+        pass
 
 
 if __name__ == "__main__":

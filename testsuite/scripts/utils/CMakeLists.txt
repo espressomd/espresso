@@ -1,4 +1,5 @@
-# Copyright (C) 2019 The ESPResSo project
+#
+# Copyright (C) 2020 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,20 +15,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-import unittest as ut
-import importlib_wrapper
+function(UTILS_TEST)
+  python_scripts_test(${ARGV} TYPE utils) # forward arguments
+  set(utils_tests ${utils_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
+endfunction(UTILS_TEST)
 
+utils_test(FILE test_maintainer_CI_jupyter_warnings.py)
 
-tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/04-lattice_boltzmann/scripts/04-lattice_boltzmann_part3_solution.py",
-    gpu=True, LOOPS=100, STEPS=1, N_MONOMERS=[10])
-
-
-@skipIfMissingFeatures
-class Tutorial(ut.TestCase):
-    system = tutorial.system
-
-
-if __name__ == "__main__":
-    ut.main()
+add_custom_target(
+  check_utils COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
+                      -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)

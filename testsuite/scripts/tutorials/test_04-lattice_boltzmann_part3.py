@@ -17,15 +17,45 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
+
+if '@TEST_SUFFIX@' == 'rouse':
+    params = {}
+elif '@TEST_SUFFIX@' == 'zimm':
+    params = {'LOOPS': 2000, 'POLYMER_MODEL': 'Zimm', 'gpu': True}
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part3.py",
-    gpu=True)
+    script_suffix="@TEST_SUFFIX@", **params)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
+
+    def test_exponents(self):
+        msg = 'The R_F exponent should be close to 0.588'
+        self.assertGreater(tutorial.rf_exponent, 0.50, msg=msg)
+        self.assertLess(tutorial.rf_exponent, 0.85, msg=msg)
+        msg = 'The R_g exponent should be close to 0.588'
+        self.assertGreater(tutorial.rg_exponent, 0.50, msg=msg)
+        self.assertLess(tutorial.rg_exponent, 0.75, msg=msg)
+        msg = 'The R_h exponent should be close to 0.333'
+        self.assertGreater(tutorial.rh_exponent, 0.30, msg=msg)
+        self.assertLess(tutorial.rh_exponent, 0.50, msg=msg)
+        np.testing.assert_allclose(tutorial.rf2_rg2_ratio, 6.0, atol=1.0,
+                                   err_msg='R_F^2/R_g^2 should be close to 6.0')
+
+    def test_diffusion_coefficients(self):
+        # polymer diffusion
+        ref_D = [0.0363, 0.0269, 0.0234]
+        np.testing.assert_allclose(tutorial.diffusion_msd, ref_D, rtol=0.15)
+        np.testing.assert_allclose(tutorial.diffusion_gk, ref_D, rtol=0.15)
+        # monomer diffusion
+        if tutorial.POLYMER_MODEL == 'Rouse':
+            ref_D0 = tutorial.KT / tutorial.GAMMA
+            self.assertAlmostEqual(tutorial.popt_msd[0], ref_D0, delta=0.02)
+            self.assertAlmostEqual(tutorial.popt_gk[0], ref_D0, delta=0.02)
 
 
 if __name__ == "__main__":

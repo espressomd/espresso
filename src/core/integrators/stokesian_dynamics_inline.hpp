@@ -36,8 +36,7 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
   auto const skin2 = Utils::sqr(0.5 * skin);
 
   // Compute new (translational and rotational) velocities
-  propagate_vel_pos_sd(particles, comm_cart, std::round(sim_time / time_step),
-                       time_step);
+  propagate_vel_pos_sd(particles, comm_cart, time_step);
 
   for (auto &p : particles) {
 

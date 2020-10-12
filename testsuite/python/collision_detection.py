@@ -254,6 +254,7 @@ class CollisionDetection(ut.TestCase):
             epsilon=1, sigma=0.1, cutoff=2**(1. / 6) * 0.1, shift="auto")
 
         # Remove overlap between particles
+        self.s.thermostat.turn_off()
         self.s.integrator.set_steepest_descent(
             f_max=0,
             gamma=1,
@@ -485,6 +486,7 @@ class CollisionDetection(ut.TestCase):
             epsilon=1, sigma=0.1, cutoff=2**(1. / 6) * 0.1, shift="auto")
 
         # Remove overlap between particles
+        self.s.thermostat.turn_off()
         self.s.integrator.set_steepest_descent(
             f_max=0,
             gamma=1,

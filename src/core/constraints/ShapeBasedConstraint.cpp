@@ -24,6 +24,7 @@
 #include "errorhandling.hpp"
 #include "forces_inline.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "thermostat.hpp"
 
 namespace Constraints {
 Utils::Vector3d ShapeBasedConstraint::total_force() const {
@@ -80,7 +81,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
         dpd_force =
             dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist * dist);
         // Additional use of DPD here requires counter increase
-        dpd_rng_counter_increment();
+        dpd.rng_increment();
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
@@ -92,7 +93,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
           dpd_force = dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
                                      dist * dist);
           // Additional use of DPD here requires counter increase
-          dpd_rng_counter_increment();
+          dpd.rng_increment();
         }
 #endif
       }
