@@ -59,15 +59,18 @@ double ShapeBasedConstraint::min_dist(const ParticleRange &particles) {
 ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           Utils::Vector3d const &folded_pos,
                                           double t) {
-
-  double dist = 0.;
-  Utils::Vector3d dist_vec{}, dpd_force{}, outer_normal_vec{};
   ParticleForce pf{};
-
   IA_parameters const &ia_params = *get_ia_param(p.p.type, part_rep.p.type);
 
   if (checkIfInteraction(ia_params)) {
+    double dist = 0.;
+    Utils::Vector3d dist_vec;
     m_shape->calculate_dist(folded_pos, dist, dist_vec);
+
+#ifdef DPD
+    Utils::Vector3d dpd_force{};
+#endif
+    Utils::Vector3d outer_normal_vec{};
 
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
@@ -98,15 +101,16 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                         << " violated by particle " << p.p.identity << " dist "
                         << dist;
     }
-  }
 
 #ifdef ROTATION
-  part_rep.f.torque += calc_opposing_force(pf, dist_vec).torque;
+    part_rep.f.torque += calc_opposing_force(pf, dist_vec).torque;
 #endif
-
-  pf.f += dpd_force;
-  m_local_force -= pf.f;
-  m_outer_normal_force -= outer_normal_vec * pf.f;
+#ifdef DPD
+    pf.f += dpd_force;
+#endif
+    m_local_force -= pf.f;
+    m_outer_normal_force -= outer_normal_vec * pf.f;
+  }
   return pf;
 }
 
@@ -114,29 +118,26 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
                                       const Utils::Vector3d &folded_pos,
                                       double t,
                                       Observable_stat &obs_energy) const {
-  double dist;
-  double nonbonded_en = 0.0;
+  double energy = 0.0;
 
   IA_parameters const &ia_params = *get_ia_param(p.p.type, part_rep.p.type);
 
-  dist = 0.;
   if (checkIfInteraction(ia_params)) {
+    double dist = 0.0;
     Utils::Vector3d vec;
     m_shape->calculate_dist(folded_pos, dist, vec);
     if (dist > 0) {
-      nonbonded_en =
-          calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, dist);
+      energy = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, dist);
     } else if ((dist <= 0) && m_penetrable) {
       if (!m_only_positive && (dist < 0)) {
-        nonbonded_en = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec,
-                                                   -1.0 * dist);
+        energy = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec,
+                                             -1.0 * dist);
       }
     } else {
       runtimeErrorMsg() << "Constraint violated by particle " << p.p.identity;
     }
   }
   if (part_rep.p.type >= 0)
-    obs_energy.add_non_bonded_contribution(p.p.type, part_rep.p.type,
-                                           nonbonded_en);
+    obs_energy.add_non_bonded_contribution(p.p.type, part_rep.p.type, energy);
 }
 } // namespace Constraints
