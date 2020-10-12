@@ -1,8 +1,3 @@
-# Invitation to the ESPResSo Summer School 2020
-
-The summer school will take place online on October 5-9 2020. Registration
-is now open on [CECAM](https://www.cecam.org/workshop-details/28).
-
 # ESPResSo
 
 [![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/python/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/commits/python)
