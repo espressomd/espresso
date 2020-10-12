@@ -61,7 +61,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           double t) {
 
   double dist = 0.;
-  Utils::Vector3d dist_vec{}, force{}, outer_normal_vec{};
+  Utils::Vector3d dist_vec{}, dpd_force{}, outer_normal_vec{};
   ParticleForce pf{};
 
   IA_parameters const &ia_params = *get_ia_param(p.p.type, part_rep.p.type);
@@ -74,7 +74,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
       pf = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec, dist);
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-        force =
+        dpd_force =
             dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist * dist);
         // Additional use of DPD here requires counter increase
         dpd_rng_counter_increment();
@@ -86,8 +86,8 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
             calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec, -dist);
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
-          force = dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
-                                 dist * dist);
+          dpd_force = dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
+                                     dist * dist);
           // Additional use of DPD here requires counter increase
           dpd_rng_counter_increment();
         }
@@ -100,16 +100,14 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     }
   }
 
-  auto const local_force = force + pf.f;
-  m_local_force -= local_force;
-  m_outer_normal_force -= outer_normal_vec * local_force;
-
 #ifdef ROTATION
-  part_rep.f.torque += calc_opposing_torque(pf, dist_vec);
-  return {local_force, pf.torque};
-#else
-  return local_force;
+  part_rep.f.torque += calc_opposing_force(pf, dist_vec).torque;
 #endif
+
+  pf.f += dpd_force;
+  m_local_force -= pf.f;
+  m_outer_normal_force -= outer_normal_vec * pf.f;
+  return pf;
 }
 
 void ShapeBasedConstraint::add_energy(const Particle &p,

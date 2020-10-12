@@ -201,15 +201,18 @@ inline ParticleForce calc_non_bonded_pair_force(Particle const &p1,
   return pf;
 }
 
-inline Utils::Vector3d calc_opposing_torque(ParticleForce const &pf,
-                                            Utils::Vector3d const &d) {
+inline ParticleForce calc_opposing_force(ParticleForce const &pf,
+                                         Utils::Vector3d const &d) {
+  ParticleForce out{-pf.f};
 #ifdef ROTATION
-  // guard against numerical instability in the vector product
+  // if torque is a null vector, the opposing torque is a null vector too
+  // (this check guards from returning a small yet non-null opposing
+  // torque due to numerical imprecision)
   if (pf.torque[0] != 0. || pf.torque[1] != 0. || pf.torque[2] != 0.) {
-    return -(pf.torque + vector_product(d, pf.f));
+    out.torque = -(pf.torque + vector_product(d, pf.f));
   }
 #endif
-  return {};
+  return out;
 }
 
 /** Calculate non-bonded forces between a pair of particles and update their
@@ -288,11 +291,7 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
   /***********************************************/
 
   p1.f += pf;
-#if defined(ROTATION) || defined(DIPOLES)
-  p2.f += {-pf.f, calc_opposing_torque(pf, d)};
-#else
-  p2.f.f -= pf.f;
-#endif
+  p2.f += calc_opposing_force(pf, d);
 }
 
 /** Compute the bonded interaction force between particle pairs.
