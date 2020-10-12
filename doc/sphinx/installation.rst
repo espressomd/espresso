@@ -37,7 +37,7 @@ The following tools libraries, including header files, are required to be able
 to compile and use |es|:
 
 CMake
-    The build system is based on CMake
+    The build system is based on CMake. At least version 3.11 is required.
 
 C++ Compiler
     C++14 capable C++ compiler (e.g., gcc 5 or later)
@@ -60,7 +60,7 @@ Python
 
 Cython
     Cython is used for connecting the C++ core to Python.
-    At least version 0.23 is required.
+    At least version 0.26 is required.
 
 
 .. _Installing requirements on Ubuntu Linux:
@@ -68,14 +68,13 @@ Cython
 Installing requirements on Ubuntu Linux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To make |es| run on 18.04 LTS, its dependencies can be installed with:
+To compile |es| on Ubuntu 20.04 LTS, install the following dependencies:
 
 .. code-block:: bash
 
     sudo apt install build-essential cmake cython3 python3-numpy \
       libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
       python3-opengl libgsl-dev
-
 
 Optionally the ccmake utility can be installed for easier configuration:
 
@@ -94,6 +93,13 @@ are required:
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
+
+To compile |es| on Ubuntu 18.04 LTS, you will need to install a more recent
+version of CMake with:
+
+.. code-block:: bash
+
+    pip3 install --user 'cmake>=3.11'
 
 Nvidia GPU acceleration
 """""""""""""""""""""""
@@ -114,6 +120,8 @@ system header files as shown in the following example for Ubuntu 18.04:
 
     sudo sed -i 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
     sudo sed -i 's/than 6/than 7/g' /usr/include/crt/host_config.h
+
+|es| supports CUDA versions 9, 10, 11.
 
 AMD GPU acceleration
 """"""""""""""""""""
