@@ -37,7 +37,7 @@ The following tools libraries, including header files, are required to be able
 to compile and use |es|:
 
 CMake
-    The build system is based on CMake. At least version 3.11 is required.
+    The build system is based on CMake.
 
 C++ Compiler
     C++14 capable C++ compiler (e.g., gcc 5 or later)
@@ -60,7 +60,6 @@ Python
 
 Cython
     Cython is used for connecting the C++ core to Python.
-    At least version 0.26 is required.
 
 
 .. _Installing requirements on Ubuntu Linux:
@@ -99,7 +98,7 @@ version of CMake with:
 
 .. code-block:: bash
 
-    pip3 install --user 'cmake>=3.11'
+    pip3 install --user cmake
 
 Nvidia GPU acceleration
 """""""""""""""""""""""
@@ -120,8 +119,6 @@ system header files as shown in the following example for Ubuntu 18.04:
 
     sudo sed -i 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
     sudo sed -i 's/than 6/than 7/g' /usr/include/crt/host_config.h
-
-|es| supports CUDA versions 9, 10, 11.
 
 AMD GPU acceleration
 """"""""""""""""""""
