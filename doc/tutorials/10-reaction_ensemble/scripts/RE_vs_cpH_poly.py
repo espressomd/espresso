@@ -190,7 +190,7 @@ for i in range(n_steps_thermalization + n_steps_production):
           system.number_of_particles(type=type_OH), 'Cl-',
           system.number_of_particles(type=type_Cl), 'NA+',
           system.number_of_particles(type=type_Na))
-    if (i > n_steps_thermalization):  # just a bit of thermalization before starting to gain informations about the properties of the system
+    if (i > n_steps_thermalization):  # just a bit of thermalization before starting to gain information about the properties of the system
         alpha.append(system.number_of_particles(type=type_A) / N0)
         nHA.append(system.number_of_particles(type=type_HA))
         nA.append(system.number_of_particles(type=type_A))

@@ -2025,7 +2025,7 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
           dp3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i,
                                   &alias1, &alias2);
           double d = alias1 - Utils::sqr(alias2 / cs) / (n2 * n2 * n2);
-          /* at high precisions, d can become negative due to extinction;
+          /* at high precision, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
           if (d > 0 && (fabs(d / alias1) > ROUND_ERROR_PREC))
             he_q += d;

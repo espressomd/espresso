@@ -239,7 +239,7 @@ static void prepare_scy_cache(const ParticleRange &particles);
 /** clear the image contributions if there is no dielectric contrast and no
  *  image charges */
 static void clear_image_contributions(int size);
-/** gather the informations for the far away image charges */
+/** gather the information for the far away image charges */
 static void gather_image_contributions(int size);
 /** spread the top/bottom sums */
 static void distribute(int size, double fac);

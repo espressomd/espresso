@@ -1913,7 +1913,7 @@ double p3m_k_space_error(double prefac, const int mesh[3], int cao,
                                  &alias1, &alias2);
 
           double d = alias1 - Utils::sqr(alias2 / cs) / n2;
-          /* at high precisions, d can become negative due to extinction;
+          /* at high precision, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
           if (d > 0 && (fabs(d / alias1) > ROUND_ERROR_PREC))
             he_q += d;

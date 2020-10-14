@@ -75,7 +75,7 @@ class TestLBPressureTensor:
 
     def assert_allclose_matrix(self, x, y, atol_diag, atol_offdiag):
         """Assert that all elements x_ij, y_ij are close with
-        different absolute tolerances for on- an off-diagol elements.
+        different absolute tolerances for on- an off-diagonal elements.
 
         """
         assert x.shape == y.shape
@@ -157,10 +157,10 @@ class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
         self.sample_pressure_tensor()
 
     def test_gk_viscosity(self):
-        # Check that stress auto correlatin matches dynamic viscosity
+        # Check that stress auto correlation matches dynamic viscosity
         # eta = V/kT integral (stress acf), e.g., eq. (5) in Cui et. et al
         # (https://doi.org/10.1080/00268979609484542).
-        # Cannot be run for CPU with sufficent statistics without CI timeout.
+        # Cannot be run for CPU with sufficient statistics without CI timeout.
         all_viscs = []
         for i in range(3):
             for j in range(i + 1, 3):

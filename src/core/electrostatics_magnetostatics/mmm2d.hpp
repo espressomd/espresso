@@ -21,7 +21,7 @@
 /** \file
     MMM2D algorithm for long range Coulomb interaction
     in 2d+h geometries.  Implementation of the MMM2D method for the calculation
-    of the electrostatic interaction for two dimensionally periodic systems.
+    of the electrostatic interaction for two-dimensionally periodic systems.
     For details on the method see MMM general. The MMM2D method works only with
     the layered or nsquared  "cell system".  The tuning is not automated, since
     the only tunable parameter is the cell size, which can be changed easily in

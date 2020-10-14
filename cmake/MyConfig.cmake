@@ -25,7 +25,7 @@ if (ENV{ESPRESSO_MYCONFIG})
   set(MYCONFIG_FILE ENV{ESPRESSO_MYCONFIG})
 else()
   # test whether MYCONFIG_NAME is found in the object or source dir
-  find_file(MYCONFIG_FILE 
+  find_file(MYCONFIG_FILE
     NAMES ${MYCONFIG_NAME}
     PATHS ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}
     NO_DEFAULT_PATH)
