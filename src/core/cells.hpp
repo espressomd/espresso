@@ -72,7 +72,7 @@ void cells_re_init(int new_cs);
 /**
  * @brief Set use_verlet_lists
  *
- * @param use_verlet_lists Shoudl verlet lists be used?
+ * @param use_verlet_lists Should verlet lists be used?
  */
 void cells_set_use_verlet_lists(bool use_verlet_lists);
 

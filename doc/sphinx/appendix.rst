@@ -46,7 +46,7 @@ one has to use a different convergence factor, namely
    \tilde\phi_\beta(x,y,z)=\,\sum_{(k,l,m)\neq 0} \frac{e^{-\beta
        r_{klm}}}{r_{klm}}.
 
-The limit :math:`\tilde{E}` exists, but differs for three dimensionally
+The limit :math:`\tilde{E}` exists, but differs for three-dimensionally
 periodic systems by some multiple of the square of the dipole moment
 from the spherical limit as obtained by the Ewald
 summation :cite:`smith81a`. From the physical point of view
@@ -59,7 +59,7 @@ difference to the Ewald methods only depends on the dipole moment of the
 system, the correction can be calculated easily in linear time and can
 be ignored with respect to accuracy as well as to computation time.
 
-For one or two dimensionally systems, however, :math:`\tilde{E}=E`, the
+For one- or two-dimensionally systems, however, :math:`\tilde{E}=E`, the
 convergence factor approach equals the spherical summation limit of the
 Ewald sum, and MMM1D and MMM2D do not require a dipole correction.
 
@@ -327,7 +327,7 @@ their interactions with their images. For details, refer to
 MMM1D theory
 ~~~~~~~~~~~~
 
-In one dimensionally periodic systems with z being the periodic
+In one-dimensionally periodic systems with z being the periodic
 coordinate, the far formula looks like
 
 .. math::
@@ -362,8 +362,8 @@ the near formula is
    \end{array}
 
 where :math:`\rho` denotes the xy-distance of the particles. As for the
-two dimensional periodic case, the obtained energy is equal to the one
-dimensional Ewald sum. Algorithmically, MMM1D is uninteresting, since
+two-dimensional periodic case, the obtained energy is equal to the
+one-dimensional Ewald sum. Algorithmically, MMM1D is uninteresting, since
 neither the near nor far formula allow a product decomposition or
 similar tricks. MMM1D has to be implemented as a simple NxN loop.
 However, the formulas can be evaluated efficiently, so that MMM1D can
@@ -379,8 +379,8 @@ The ELC method differs from the other MMM algorithms in that it is not
 an algorithm for the calculation of the electrostatic interaction, but
 rather represents a correction term which allows to use any method for
 three-dimensionally periodic systems with spherical summation order for
-two-dimensional periodicity. The basic idea is to expand the two
-dimensional slab system of height h in the non-periodic z-coordinate to
+two-dimensional periodicity. The basic idea is to expand the
+two-dimensional slab system of height h in the non-periodic z-coordinate to
 a system with periodicity in all three dimensions, with a period of
 :math:`\lambda_z > h`, which leaves an empty gap of height
 :math:`\delta = \lambda_z - h` above the particles in the simulation box.
@@ -466,8 +466,8 @@ error, i.e. the maximal error of the :math:`\psi` expression decreases
 exponentially with the cutoffs. In turn, the computation time grows
 logarithmically with the accuracy. This is quite in contrast to the
 Ewald methods, for which decreasing the error bound can lead to
-excessive computation time. For example, P3M cannot reach precisions
-above :math:`10^{-5}` in general. The precise form of the error
+excessive computation time. For example, P3M cannot reach a precision
+beyond :math:`10^{-5}` in general. The precise form of the error
 estimates is of little importance here, for details see
 :cite:`arnold02c,arnold02d`.
 

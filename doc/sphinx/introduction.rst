@@ -527,7 +527,7 @@ or citing |es|, the version should always be mentioned. See
 our policies on :ref:`bug reports <Contributing>` and
 :ref:`citing the software <How to cite ESPResSo>` for more details.
 
-Releases from 4.0 onwards can be found on
+Releases from 4.0 onward can be found on
 `GitHub <https://github.com/espressomd/espresso/releases>`_.
 Older releases from 2.1 to 3.3 can be found in
 `GNU Savannah <http://download.savannah.gnu.org/releases/espressomd/>`_.

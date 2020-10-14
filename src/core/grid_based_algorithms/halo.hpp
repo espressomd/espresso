@@ -118,7 +118,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
 void halo_free_fieldtype(Fieldtype *ftype);
 
 /** Preparation of the halo parallelization scheme. Sets up the
- *  necessary datastructures for \ref halo_communication
+ *  necessary data structures for \ref halo_communication
  *  @param[in,out] hc       halo communicator being created
  *  @param[in]     lattice  lattice the communication is created for
  *  @param fieldtype        field layout of the lattice data
@@ -129,7 +129,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice const *lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype,
                                 const Utils::Vector3i &local_node_grid);
 
-/** Frees datastructures associated with a halo communicator
+/** Frees data structures associated with a halo communicator
  *  @param[in,out] hc  halo communicator to be released
  */
 void release_halo_communication(HaloCommunicator *hc);
