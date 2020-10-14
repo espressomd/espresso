@@ -37,7 +37,7 @@ The following tools libraries, including header files, are required to be able
 to compile and use |es|:
 
 CMake
-    The build system is based on CMake
+    The build system is based on CMake.
 
 C++ Compiler
     C++14 capable C++ compiler (e.g., gcc 5 or later)
@@ -60,7 +60,6 @@ Python
 
 Cython
     Cython is used for connecting the C++ core to Python.
-    At least version 0.23 is required.
 
 
 .. _Installing requirements on Ubuntu Linux:
@@ -68,14 +67,13 @@ Cython
 Installing requirements on Ubuntu Linux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To make |es| run on 18.04 LTS, its dependencies can be installed with:
+To compile |es| on Ubuntu 20.04 LTS, install the following dependencies:
 
 .. code-block:: bash
 
     sudo apt install build-essential cmake cython3 python3-numpy \
       libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
       python3-opengl libgsl-dev
-
 
 Optionally the ccmake utility can be installed for easier configuration:
 
@@ -94,6 +92,13 @@ are required:
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
+
+To compile |es| on Ubuntu 18.04 LTS, you will need to install a more recent
+version of CMake with:
+
+.. code-block:: bash
+
+    pip3 install --user cmake
 
 Nvidia GPU acceleration
 """""""""""""""""""""""

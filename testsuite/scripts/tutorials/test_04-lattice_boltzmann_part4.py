@@ -21,8 +21,7 @@ import numpy as np
 
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part4.py",
-    gpu=True)
+    "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part4.py")
 
 
 @skipIfMissingFeatures
@@ -31,7 +30,7 @@ class Tutorial(ut.TestCase):
 
     def test_flow_profile(self):
         analytical = tutorial.y_values
-        simulation = tutorial.fluid_velocities[:, 1]
+        simulation = tutorial.fluid_velocities
         rmsd = np.sqrt(np.mean(np.square(analytical - simulation)))
         self.assertLess(rmsd, 2e-5 * tutorial.AGRID / tutorial.lbf.tau)
 

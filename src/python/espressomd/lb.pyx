@@ -169,6 +169,36 @@ def _construct(cls, params):
 
 
 cdef class HydrodynamicInteraction(Actor):
+    """
+    Base class for LB implementations.
+
+    Parameters
+    ----------
+    agrid : :obj:`float`
+        Lattice constant. The box size in every direction must be an integer
+        multiple of ``agrid``.
+    tau : :obj:`float`
+        LB time step. The MD time step must be an integer multiple of ``tau``.
+    dens : :obj:`float`
+        Fluid density.
+    visc : :obj:`float`
+        Fluid kinematic viscosity.
+    bulk_visc : :obj:`float`, optional
+        Fluid bulk viscosity.
+    gamma_odd : :obj:`int`, optional
+        Relaxation parameter :math:`\\gamma_{\\textrm{odd}}` for kinetic modes.
+    gamma_even : :obj:`int`, optional
+        Relaxation parameter :math:`\\gamma_{\\textrm{even}}` for kinetic modes.
+    ext_force_density : (3,) array_like of :obj:`float`, optional
+        Force density applied on the fluid.
+    kT : :obj:`float`, optional
+        Thermal energy of the simulated heat bath (for thermalized fluids).
+        Set it to 0 for an unthermalized fluid.
+    seed : :obj:`int`, optional
+        Initial counter value (or seed) of the philox RNG.
+        Required for a thermalized fluid. Must be positive.
+    """
+
     def _lb_init(self):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
@@ -247,7 +277,7 @@ cdef class HydrodynamicInteraction(Actor):
         Parameters
         ----------
         pos : (3,) array_like of :obj:`float`
-              The position at which velocity is requested.
+            The position at which velocity is requested.
 
         Returns
         -------
@@ -358,7 +388,8 @@ cdef class HydrodynamicInteraction(Actor):
 IF LB_WALBERLA:
     cdef class LBFluidWalberla(HydrodynamicInteraction):
         """
-        Initialize the lattice-Boltzmann method for hydrodynamic flow using Walberla
+        Initialize the lattice-Boltzmann method for hydrodynamic flow using waLBerla.
+        See :class:`HydrodynamicInteraction` for the list of parameters.
 
         """
 

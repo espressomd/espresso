@@ -17,20 +17,23 @@
 
 import unittest as ut
 import importlib_wrapper
-import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/02-charged_system/02-charged_system-1.py",
-    num_steps_equilibration=100, num_configs=50, integ_steps_per_config=100)
+    N_SAMPLES=2, STEPS_PER_SAMPLE=2, WARMUP_STEPS=1000,
+    N_SAMPLES_SALT=200)
 
 
 @skipIfMissingFeatures
-class Tutorial(ut.TestCase):
+class Tutorial02_1(ut.TestCase):
     system = tutorial.system
 
-    def test_distance_Na_Cl(self):
-        d_Na_Cl = tutorial.r[np.argmax(tutorial.rdf_01)]
-        self.assertLess(abs(d_Na_Cl - 1.05), 0.1)
+    def test_overcharging(self):
+        """ 
+        Test that adding salt leads to a positive layer around the rod
+        """
+
+        self.assertGreater(max(tutorial.charge_hist), 1.2)
 
 
 if __name__ == "__main__":
