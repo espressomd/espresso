@@ -238,7 +238,7 @@ class _Interpolated(Constraint):
     """
 
     def __init__(self, **kwargs):
-        if "oid" not in kwargs:
+        if "sip" not in kwargs:
             field = kwargs.pop("field")
             shape, codim = self._unpack_dims(field)
             super().__init__(_field_shape=shape, _field_codim=codim,
@@ -403,7 +403,7 @@ class Gravity(Constraint):
     """
 
     def __init__(self, **kwargs):
-        if "oid" not in kwargs:
+        if "sip" not in kwargs:
             kwargs["value"] = kwargs.pop("g")
         super().__init__(**kwargs)
 
@@ -441,7 +441,7 @@ class LinearElectricPotential(Constraint):
     """
 
     def __init__(self, phi0=0, **kwargs):
-        if "oid" not in kwargs:
+        if "sip" not in kwargs:
             kwargs["A"] = -np.array(kwargs.pop("E"))
             kwargs["b"] = phi0
         super().__init__(**kwargs)
@@ -489,7 +489,7 @@ class ElectricPlaneWave(Constraint):
     _so_name = "Constraints::ElectricPlaneWave"
 
     def __init__(self, phi=0, **kwargs):
-        if "oid" not in kwargs:
+        if "sip" not in kwargs:
             kwargs["amplitude"] = kwargs.pop("E0")
             kwargs["wave_vector"] = kwargs.pop("k")
             kwargs["frequency"] = kwargs.pop("omega")
@@ -561,7 +561,7 @@ class HomogeneousFlowField(Constraint):
     """
 
     def __init__(self, **kwargs):
-        if "oid" not in kwargs:
+        if "sip" not in kwargs:
             kwargs["value"] = kwargs.pop("u")
         super().__init__(**kwargs)
 

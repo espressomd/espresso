@@ -23,7 +23,8 @@
 #define SCRIPT_INTERFACE_SHAPES_SHAPE_UNION_HPP
 
 #include "Shape.hpp"
-#include "script_interface/ScriptObjectRegistry.hpp"
+#include "script_interface/ObjectList.hpp"
+
 #include <shapes/Union.hpp>
 
 namespace ScriptInterface {
@@ -33,8 +34,8 @@ class Union : public Shape {
 public:
   Union() : m_core_shape(new ::Shapes::Union()) {}
 
-  Variant call_method(std::string const &name,
-                      VariantMap const &params) override {
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
     if (name == "add") {
       auto const shape =
           get_value<std::shared_ptr<Shapes::Shape>>(params.at("shape"));
@@ -50,7 +51,7 @@ public:
       std::vector<Variant> ret;
       ret.reserve(m_shapes.size());
       for (auto const &s : m_shapes) {
-        ret.emplace_back(s->id());
+        ret.emplace_back(s);
       }
       return ret;
     } else if (name == "clear") {
@@ -63,7 +64,7 @@ public:
     } else if (name == "empty") {
       return m_shapes.empty();
     }
-    return Shape::call_method(name, params);
+    return Shape::do_call_method(name, params);
   }
   std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_core_shape;

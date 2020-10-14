@@ -620,7 +620,7 @@ that the Thole correction acts between all dipoles, intra- and intermolecular.
 Again, the accuracy is related to the P3M accuracy and the split between
 short-range and long-range electrostatics interaction. It is configured by::
 
-    system = espressomd.System()
+    system = espressomd.System(box_l=[1, 1, 1])
     system.non_bonded_inter[type_1,type_2].thole.set_params(scaling_coeff=<float>, q1q2=<float>)
 
 with parameters:
@@ -689,7 +689,8 @@ parameters can be set via::
 This defines a Gay--Berne potential for prolate and oblate particles
 between particles types ``type1`` and ``type2``. The Gay--Berne potential is an
 anisotropic version of the classic Lennard-Jones potential, with
-orientational dependence of the range :math:`\sigma_0` and the well-depth :math:`\epsilon_0`.
+orientational dependence of the range :math:`\sigma_0` and the well-depth
+:math:`\varepsilon_0`.
 
 Assume two particles with orientations given by the unit vectors
 :math:`\mathbf{\hat{u}}_i` and :math:`\mathbf{\hat{u}}_j` and
@@ -700,7 +701,7 @@ particles is given by
 .. math::
 
    V(\mathbf{r}_{ij}, \mathbf{\hat{u}}_i, \mathbf{\hat{u}}_j) = 4
-     \epsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i,
+     \varepsilon(\mathbf{\hat{r}}_{ij}, \mathbf{\hat{u}}_i,
      \mathbf{\hat{u}}_j) \left( \tilde{r}_{ij}^{-12}-\tilde{r}_{ij}^{-6}
      \right),
 
@@ -730,9 +731,9 @@ and
 .. math::
 
    \begin{gathered}
-     \epsilon(\mathbf{\hat{r}}, \mathbf{\hat{u}}_i,
+     \varepsilon(\mathbf{\hat{r}}, \mathbf{\hat{u}}_i,
      \mathbf{\hat{u}}_j) = \\
-     \epsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i
+     \varepsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i
        \cdot \mathbf{\hat{u}}_j)^{2} \right)^{-\frac {\nu}{2}} \left[1-\frac
        {\chi'}{2} \left( \frac { (\mathbf{\hat{r}} \cdot
            \mathbf{\hat{u}}_i+ \mathbf{\hat{r}} \cdot
@@ -741,6 +742,10 @@ and
            \mathbf{\hat{u}}_i-\mathbf{\hat{r}} \cdot
            \mathbf{\hat{u}}_j)^{2}} {1-\chi' \, \mathbf{\hat{u}}_i \cdot
            \mathbf{\hat{u}}_j } \right) \right]^{\mu}.\end{gathered}
+
+Note that contrary to the original paper :cite:`gay81a`, here
+:math:`\varepsilon_0` is not raised to the power of :math:`\nu`,
+in agreement with the convention used in the Gay--Berne literature.
 
 The parameters :math:`\chi = \left(k_1^{2} - 1\right)/\left(k_1^{2} + 1\right)`
 and :math:`\chi' = \left(k_2^{1/\mu} -  1\right)/\left(k_2^{1/\mu} + 1\right)`

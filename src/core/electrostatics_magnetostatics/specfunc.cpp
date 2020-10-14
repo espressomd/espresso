@@ -47,6 +47,8 @@
 #include "specfunc.hpp"
 #include <cmath>
 
+#include <utils/constants.hpp>
+
 /************************************************
  * chebychev expansions
  ************************************************/
@@ -121,43 +123,6 @@ static double bi0_cs[12] = {
     .01304891466707290428,       .00043442709008164874,  .00000942265768600193,
     .00000014340062895106,       .00000000161384906966,  .00000000001396650044,
     .00000000000009579451,       .00000000000000053339,  .00000000000000000245};
-
-/** Series for @c ai0.
- *  On the interval 1.25000d-01 to 3.33333d-01
- *  |             Label            |   Value  |
- *  | ---------------------------: | :------- |
- *  |          with weighted error | 7.87e-17 |
- *  |           log weighted error | 16.10    |
- *  | significant figures required | 14.69    |
- *  |      decimal places required | 16.76    |
- */
-static double ai0_cs[21] = {
-    .75 + .07575994494023796, .00759138081082334,  .00041531313389237,
-    .00001070076463439,       -.00000790117997921, -.00000078261435014,
-    .00000027838499429,       .00000000825247260,  -.00000001204463945,
-    .00000000155964859,       .00000000022925563,  -.00000000011916228,
-    .00000000001757854,       .00000000000112822,  -.00000000000114684,
-    .00000000000027155,       -.00000000000002415, -.00000000000000608,
-    .00000000000000314,       -.00000000000000071, .00000000000000007};
-
-/** Series for @c ai02.
- *  On the interval 0. to 1.25000d-01
- *  |             Label            |   Value  |
- *  | ---------------------------: | :------- |
- *  |          with weighted error | 3.79e-17 |
- *  |           log weighted error | 16.42    |
- *  | significant figures required | 14.86    |
- *  |      decimal places required | 17.09    |
- */
-static double ai02_cs[22] = {
-    .75 + .05449041101410882, .00336911647825569,  .00006889758346918,
-    .00000289137052082,       .00000020489185893,  .00000002266668991,
-    .00000000339623203,       .00000000049406022,  .00000000001188914,
-    -.00000000003149915,      -.00000000001321580, -.00000000000179419,
-    .00000000000071801,       .00000000000038529,  .00000000000001539,
-    -.00000000000004151,      -.00000000000000954, .00000000000000382,
-    .00000000000000176,       -.00000000000000034, -.00000000000000027,
-    .00000000000000003};
 /*@}*/
 
 /** @name Chebyshev expansions based on SLATEC besk1(), besk1e() */
@@ -227,47 +192,10 @@ static double bi1_cs[11] = {
     0.001545394556300123,        0.000041888521098377, 0.000000764902676483,
     0.000000010042493924,        0.000000000099322077, 0.000000000000766380,
     0.000000000000004741,        0.000000000000000024};
-
-/** Series for @c ai1.
- *  On the interval 1.25000d-01 to 3.33333d-01
- *  |             Label            |   Value  |
- *  | ---------------------------: | :------- |
- *  |          with weighted error | 6.98e-17 |
- *  |           log weighted error | 16.16    |
- *  | significant figures required | 14.53    |
- *  |      decimal places required | 16.82    |
- */
-static double ai1_cs[21] = {
-    .75 - 0.02846744181881479, -0.01922953231443221, -0.00061151858579437,
-    -0.00002069971253350,      0.00000858561914581,  0.00000104949824671,
-    -0.00000029183389184,      -0.00000001559378146, 0.00000001318012367,
-    -0.00000000144842341,      -0.00000000029085122, 0.00000000012663889,
-    -0.00000000001664947,      -0.00000000000166665, 0.00000000000124260,
-    -0.00000000000027315,      0.00000000000002023,  0.00000000000000730,
-    -0.00000000000000333,      0.00000000000000071,  -0.00000000000000006};
-
-/** Series for @c ai12.
- *  On the interval 0. to 1.25000d-01
- *  |             Label            |   Value  |
- *  | ---------------------------: | :------- |
- *  |          with weighted error | 3.55e-17 |
- *  |           log weighted error | 16.45    |
- *  | significant figures required | 14.69    |
- *  |      decimal places required | 17.12    |
- */
-static double ai12_cs[22] = {
-    .75 + 0.02857623501828014, -0.00976109749136147, -0.00011058893876263,
-    -0.00000388256480887,      -0.00000025122362377, -0.00000002631468847,
-    -0.00000000383538039,      -0.00000000055897433, -0.00000000001897495,
-    0.00000000003252602,       0.00000000001412580,  0.00000000000203564,
-    -0.00000000000071985,      -0.00000000000040836, -0.00000000000002101,
-    0.00000000000004273,       0.00000000000001041,  -0.00000000000000382,
-    -0.00000000000000186,      0.00000000000000033,  0.00000000000000028,
-    -0.00000000000000003};
 /*@}*/
 
-/** Coefficients for Maclaurin summation in hzeta().
- *  B_{2j}/(2j)!
+/** Coefficients for Maclaurin summation in hzeta(). Evaluated as inverse
+ *  numbers, i.e. @f$ \displaystyle\frac{B_{2j}}{(2j)!} @f$.
  */
 static double const hzeta_c[15] = {
     1.00000000000000000000000000000,     0.083333333333333333333333333333,
@@ -291,8 +219,8 @@ double hzeta(double s, double q) {
     double p3 = pow(q / (2.0 + q), s);
     return p1 * (1.0 + p2 + p3);
   }
-  /* Euler-Maclaurin summation formula
-   * [Moshier, p. 400, with several typo corrections]
+  /** Euler-Maclaurin summation formula from @cite moshier89a p. 400, with
+   *  several typo corrections.
    */
   auto const pmax = pow(kmax + q, -s);
   auto scp = s;
@@ -312,40 +240,16 @@ double hzeta(double s, double q) {
   return ans;
 }
 
-double I0(double x) {
-  double c, y = fabs(x);
-  if (y <= 3.0)
-    return evaluateAsChebychevSeriesAt(bi0_cs, y * y / 4.5 - 1.0);
-
-  c = (y <= 8.0) ? evaluateAsChebychevSeriesAt(ai0_cs, (48.0 / y - 11.0) / 5.0)
-                 : evaluateAsChebychevSeriesAt(ai02_cs, 16.0 / y - 1.0);
-  return exp(y) * c / sqrt(y);
-}
-
 double K0(double x) {
   double c, I0;
   if (x <= 2.0) {
     c = evaluateAsChebychevSeriesAt(bk0_cs, 0.5 * x * x - 1.0);
     I0 = evaluateAsChebychevSeriesAt(bi0_cs, x * x / 4.5 - 1.0);
-    return (-log(x) + M_LN2) * I0 + c;
+    return (-log(x) + Utils::ln_2()) * I0 + c;
   }
   c = (x <= 8.0) ? evaluateAsChebychevSeriesAt(ak0_cs, (16.0 / x - 5.0) / 3.0)
                  : evaluateAsChebychevSeriesAt(ak02_cs, 16.0 / x - 1.0);
   return exp(-x) * c / sqrt(x);
-}
-
-double I1(double x) {
-  double c, y = fabs(x);
-  if (y <= 3.0) {
-    c = evaluateAsChebychevSeriesAt(bi1_cs, y * y / 4.5 - 1.0);
-    return x * c;
-  }
-  c = (y <= 8.0) ? evaluateAsChebychevSeriesAt(ai1_cs, (48.0 / y - 11.0) / 5.0)
-                 : evaluateAsChebychevSeriesAt(ai12_cs, 16.0 / y - 1.0);
-  c = c / sqrt(y);
-  if (x < 0)
-    c = -c;
-  return exp(y) * c;
 }
 
 double K1(double x) {
@@ -353,7 +257,7 @@ double K1(double x) {
   if (x <= 2.0) {
     c = evaluateAsChebychevSeriesAt(bk1_cs, 0.5 * x * x - 1.0);
     I1 = x * evaluateAsChebychevSeriesAt(bi1_cs, x * x / 4.5 - 1.0);
-    return (log(x) - M_LN2) * I1 + c / x;
+    return (log(x) - Utils::ln_2()) * I1 + c / x;
   }
   c = (x <= 8.0) ? evaluateAsChebychevSeriesAt(ak1_cs, (16.0 / x - 5.0) / 3.0)
                  : evaluateAsChebychevSeriesAt(ak12_cs, 16.0 / x - 1.0);
@@ -418,7 +322,7 @@ double LPK0(double x) {
       d0 = x2 * d0 - dd0 + bi0_cs[j];
       dd0 = tmp0;
     }
-    auto const tmp = log(x) - M_LN2;
+    auto const tmp = log(x) - Utils::ln_2();
     ret = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
 
     /* K0/K1 correction */
@@ -479,7 +383,7 @@ double LPK1(double x) {
       d1 = x2 * d1 - dd1 + bi1_cs[j];
       dd1 = tmp1;
     }
-    auto const tmp = log(x) - M_LN2;
+    auto const tmp = log(x) - Utils::ln_2();
     ret = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
 
     /* K0/K1 correction */
@@ -496,18 +400,18 @@ double LPK1(double x) {
   }
 }
 
-void LPK01(double x, double *K0, double *K1) {
+std::tuple<double, double> LPK01(double x) {
   if (x >= 27.) {
     auto const tmp = .5 * exp(-x) / sqrt(x);
-    *K0 = tmp * ak0_cs[0];
-    *K1 = tmp * ak1_cs[0];
-    return;
+    auto const K0 = tmp * ak0_cs[0];
+    auto const K1 = tmp * ak1_cs[0];
+    return {K0, K1};
   }
   if (x >= 23.) {
     auto const tmp = exp(-x) / sqrt(x), xx = (16. / 3.) / x - 5. / 3.;
-    *K0 = tmp * (xx * ak0_cs[1] + 0.5 * ak0_cs[0]);
-    *K1 = tmp * (xx * ak1_cs[1] + 0.5 * ak1_cs[0]);
-    return;
+    auto const K0 = tmp * (xx * ak0_cs[1] + 0.5 * ak0_cs[0]);
+    auto const K1 = tmp * (xx * ak1_cs[1] + 0.5 * ak1_cs[0]);
+    return {K0, K1};
   }
   if (x > 2) {
     int j = ak01_orders[((int)x) - 2];
@@ -535,9 +439,9 @@ void LPK01(double x, double *K0, double *K1) {
       dd1 = tmp1;
     }
     auto const tmp = exp(-x) / sqrt(x);
-    *K0 = tmp * (0.5 * (s0[0] + x2 * d0) - dd0);
-    *K1 = tmp * (0.5 * (s1[0] + x2 * d1) - dd1);
-    return;
+    auto const K0 = tmp * (0.5 * (s0[0] + x2 * d0) - dd0);
+    auto const K1 = tmp * (0.5 * (s1[0] + x2 * d1) - dd1);
+    return {K0, K1};
   }
   /* x <= 2 */
   {
@@ -556,9 +460,9 @@ void LPK01(double x, double *K0, double *K1) {
       dd0 = tmp0;
       dd1 = tmp1;
     }
-    auto const tmp = log(x) - M_LN2;
-    *K0 = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
-    *K1 = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
+    auto const tmp = log(x) - Utils::ln_2();
+    auto K0 = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
+    auto K1 = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
 
     /* K0/K1 correction */
     j = 9;
@@ -574,8 +478,8 @@ void LPK01(double x, double *K0, double *K1) {
       dd0 = tmp0;
       dd1 = tmp1;
     }
-    *K0 += (0.5 * (x2 * d0 + bk0_cs[0]) - dd0);
-    *K1 += (0.5 * (x2 * d1 + bk1_cs[0]) - dd1) / x;
-    return;
+    K0 += (0.5 * (x2 * d0 + bk0_cs[0]) - dd0);
+    K1 += (0.5 * (x2 * d1 + bk1_cs[0]) - dd1) / x;
+    return {K0, K1};
   }
 }

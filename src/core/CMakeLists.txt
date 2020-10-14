@@ -6,7 +6,6 @@ set(EspressoCore_SRC
     comfixed_global.cpp
     communication.cpp
     constraints.cpp
-    debug.cpp
     dpd.cpp
     energy.cpp
     errorhandling.cpp
@@ -69,20 +68,18 @@ endif(CUDA)
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 target_link_libraries(
-  EspressoCore
-  PRIVATE EspressoConfig EspressoShapes Profiler
-          "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
-          $<$<BOOL:${SCAFACOS}>:Scafacos> cxx_interface
+  EspressoCore PRIVATE EspressoConfig EspressoShapes Profiler
+                       $<$<BOOL:${SCAFACOS}>:Scafacos> cxx_interface
   PUBLIC EspressoUtils MPI::MPI_CXX Random123 EspressoParticleObservables
          Boost::serialization Boost::mpi "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
-         $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>)
+         $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>
+         "$<$<BOOL:${FFTW3_FOUND}>:FFTW3::FFTW3>")
 
 target_include_directories(
   EspressoCore
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
          "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>"
-  PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>"
-  PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
+         "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>")
 
 target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
 

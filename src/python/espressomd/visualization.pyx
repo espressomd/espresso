@@ -22,7 +22,7 @@ try:
         from .visualization_mayavi import mayaviLive
     else:
         raise ImportError("Cannot connect to X server")
-except BaseException as e:
+except Exception as e:
     if isinstance(e, ImportError) or isinstance(e, RuntimeError) and \
             e.args[0] == 'No pyface.toolkits plugin could be loaded for wx':
         class mayaviLive:

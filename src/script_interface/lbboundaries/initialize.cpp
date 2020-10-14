@@ -18,7 +18,6 @@
  */
 
 #include "initialize.hpp"
-#include "script_interface/ScriptInterface.hpp"
 
 #include "LBBoundaries.hpp"
 #include "LBBoundary.hpp"
@@ -26,12 +25,9 @@
 namespace ScriptInterface {
 namespace LBBoundaries {
 
-void initialize() {
-  ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundaries>(
-      "LBBoundaries::LBBoundaries");
-
-  ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundary>(
-      "LBBoundaries::LBBoundary");
+void initialize(Utils::Factory<ObjectHandle> *om) {
+  om->register_new<LBBoundaries>("LBBoundaries::LBBoundaries");
+  om->register_new<LBBoundary>("LBBoundaries::LBBoundary");
 }
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */

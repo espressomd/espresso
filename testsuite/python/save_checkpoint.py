@@ -32,7 +32,6 @@ if espressomd.has_features("LB_BOUNDARIES"):
 # TODO WALBERLA
 # if espressomd.has_features('ELECTROKINETICS'):
 #     import espressomd.electrokinetics
-from espressomd.minimize_energy import steepest_descent
 from espressomd.shapes import Wall, Sphere
 from espressomd import constraints
 
@@ -76,15 +75,22 @@ if espressomd.has_features('P3M') and 'P3M.CPU' in modes:
     system.actors.add(p3m)
 
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
-acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
+acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc_time_series = espressomd.accumulators.TimeSeries(obs=obs)
-acc.update()
+acc_correlator = espressomd.accumulators.Correlator(
+    obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
+    corr_operation="componentwise_product")
+acc_mean_variance.update()
 acc_time_series.update()
+acc_correlator.update()
 system.part[0].pos = [1.0, 2.0, 3.0]
-acc.update()
+acc_mean_variance.update()
 acc_time_series.update()
-system.auto_update_accumulators.add(acc)
+acc_correlator.update()
+
+system.auto_update_accumulators.add(acc_mean_variance)
 system.auto_update_accumulators.add(acc_time_series)
+system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
 system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
@@ -142,10 +148,6 @@ if 'LB.OFF' in modes:
         system.integrator.set_stokesian_dynamics(
             approximation_method='fts', device='gpu', viscosity=2.0,
             radii={0: 1.0}, pair_mobility=True, self_mobility=False)
-    # set minimization
-    if 'MINIMIZATION' in modes:
-        steepest_descent(system, f_max=1, gamma=10, max_steps=0,
-                         max_displacement=0.01)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
@@ -169,9 +171,9 @@ if 'THERM.LB' not in modes:
     system.part[1].add_bond((thermalized_bond, 0))
 
 checkpoint.register("system")
-checkpoint.register("acc")
+checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
-
+checkpoint.register("acc_correlator")
 # calculate forces
 system.integrator.run(0)
 particle_force0 = np.copy(system.part[0].f)
@@ -221,32 +223,6 @@ EK_implementation = None
 #    ek.add_species(ek_species)
 #    system.actors.add(ek)
 
-if 'LB.OFF' in modes:
-    # set thermostat
-    if 'THERM.LANGEVIN' in modes:
-        system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
-    elif 'THERM.BD' in modes:
-        system.thermostat.set_brownian(kT=1.0, gamma=2.0, seed=42)
-    elif 'THERM.NPT' in modes and has_features('NPT'):
-        system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1, seed=42)
-    elif 'THERM.DPD' in modes and has_features('DPD'):
-        system.thermostat.set_dpd(kT=1.0, seed=42)
-    # set integrator
-    if 'INT.NPT' in modes and has_features('NPT'):
-        system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01,
-                                            direction=[1, 0, 0])
-    elif 'INT.SD' in modes:
-        system.integrator.set_steepest_descent(f_max=2.0, gamma=0.1,
-                                               max_displacement=0.01)
-    elif 'INT.NVT' in modes:
-        system.integrator.set_nvt()
-    elif 'INT.BD' in modes:
-        system.integrator.set_brownian_dynamics()
-    # set minimization
-    if 'MINIMIZATION' in modes:
-        steepest_descent(system, f_max=1, gamma=10, max_steps=0,
-                         max_displacement=0.01)
-
 # TODO WALBERLA
 # if LB_implementation:
 #    m = np.pi / 12
@@ -283,6 +259,21 @@ if 'LB.OFF' in modes:
 #    # save LB checkpoint file
 #    ek_cpt_path = checkpoint.checkpoint_dir + "/ek"
 #    ek.save_checkpoint(ek_cpt_path)
+
+if LB_implementation:
+    # cleanup old VTK files
+    if checkpoint.has_checkpoints():
+        if os.path.isfile('vtk_out/auto_@TEST_BINARY@.pvd'):
+            os.remove('vtk_out/auto_@TEST_BINARY@.pvd')
+        if os.path.isfile('vtk_out/manual_@TEST_BINARY@.pvd'):
+            os.remove('vtk_out/manual_@TEST_BINARY@.pvd')
+    # create VTK callbacks
+    vtk_auto = lbf.add_vtk_writer(
+        'auto_@TEST_BINARY@', ('density', 'velocity_vector'), delta_N=1)
+    vtk_auto.disable()
+    vtk_manual = lbf.add_vtk_writer(
+        'manual_@TEST_BINARY@', 'density', delta_N=0)
+    vtk_manual.write()
 
 # save checkpoint file
 checkpoint.save(0)

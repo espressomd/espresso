@@ -19,11 +19,13 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import os
 
 import espressomd
 import espressomd.checkpointing
 import espressomd.virtual_sites
 import espressomd.integrate
+import espressomd.lb
 from espressomd.shapes import Sphere, Wall
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
@@ -85,6 +87,42 @@ class CheckpointTest(ut.TestCase):
 #        for key in reference:
 #            self.assertIn(key, state)
 #            self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
+
+    @utx.skipIfMissingFeatures('LB_WALBERLA')
+    @ut.skipIf('LB.WALBERLA' not in modes, 'waLBerla LBM not in modes')
+    def test_VTK(self):
+        for vtk_registry in (system._vtk_registry,
+                             espressomd.lb._vtk_registry):
+            key = 'vtk_out/auto_@TEST_BINARY@'
+            self.assertIn(key, vtk_registry.map)
+            obj = vtk_registry.map[key]
+            self.assertIsInstance(obj, espressomd.lb.VTKOutputAutomatic)
+            self.assertEqual(obj._params['vtk_uid'], key)
+            self.assertEqual(obj._params['delta_N'], 1)
+            self.assertFalse(obj._params['enabled'])
+            self.assertEqual(obj._params['observables'],
+                             {'density', 'velocity_vector'})
+            self.assertIn(
+                "writes to '{}' every 1 LB step (disabled)>".format(key),
+                repr(obj))
+            key = 'vtk_out/manual_@TEST_BINARY@'
+            self.assertIn(key, vtk_registry.map)
+            obj = vtk_registry.map[key]
+            self.assertIsInstance(obj, espressomd.lb.VTKOutputManual)
+            self.assertEqual(obj._params['vtk_uid'], key)
+            self.assertEqual(obj._params['delta_N'], 0)
+            self.assertEqual(obj._params['observables'], {'density'})
+            self.assertIn("writes to '{}' on demand>".format(key), repr(obj))
+        # check file numbering when resuming VTK write operations
+        filepath_template = key + '/simulation_step_{}.vtu'
+        vtk_manual = system._vtk_registry.map[key]
+        self.assertTrue(os.path.isfile(filepath_template.format(0)))
+        self.assertFalse(os.path.isfile(filepath_template.format(1)))
+        self.assertFalse(os.path.isfile(filepath_template.format(2)))
+        vtk_manual.write()
+        self.assertTrue(os.path.isfile(filepath_template.format(0)))
+        self.assertTrue(os.path.isfile(filepath_template.format(1)))
+        self.assertFalse(os.path.isfile(filepath_template.format(2)))
 
     @utx.skipIfMissingFeatures('ELECTROKINETICS')
     @ut.skipIf(not EK, "Skipping test due to missing mode.")
@@ -191,7 +229,7 @@ class CheckpointTest(ut.TestCase):
         thmst = system.thermostat.get_state()[0]
         self.assertEqual(thmst['type'], 'DPD')
         self.assertEqual(thmst['kT'], 1.0)
-        self.assertEqual(thmst['seed'], 42)
+        self.assertEqual(thmst['seed'], 42 + 6)
 
     @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('THERM.NPT' not in modes, 'NPT thermostat not in modes')
@@ -314,9 +352,11 @@ class CheckpointTest(ut.TestCase):
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(
-            acc.get_mean(), np.array([[1.0, 1.5, 2.0], [1.0, 1.0, 2.0]]))
+            acc_mean_variance.get_mean(),
+            np.array([[1.0, 1.5, 2.0], [1.0, 1.0, 2.0]]))
         np.testing.assert_array_equal(
-            acc.get_variance(), np.array([[0., 0.5, 2.], [0., 0., 0.]]))
+            acc_mean_variance.get_variance(),
+            np.array([[0., 0.5, 2.], [0., 0., 0.]]))
         np.testing.assert_array_equal(
             system.auto_update_accumulators[0].get_variance(),
             np.array([[0., 0.5, 2.], [0., 0., 0.]]))
@@ -326,6 +366,14 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(acc_time_series.time_series(), expected)
         np.testing.assert_array_equal(
             system.auto_update_accumulators[1].time_series(),
+            expected)
+
+    def test_correlator(self):
+        expected = np.zeros((36, 2, 3))
+        expected[0:2] = [[[1, 2.5, 5], [1, 1, 4]], [[1, 2, 3], [1, 1, 4]]]
+        np.testing.assert_array_equal(acc_correlator.result(), expected)
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[2].result(),
             expected)
 
     @utx.skipIfMissingFeatures('P3M')

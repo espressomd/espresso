@@ -41,7 +41,7 @@ public:
     add_parameters({{"obs", Utils::as_const(m_obs)}});
   }
 
-  void construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &params) override {
     set_from_args(m_obs, params, "obs");
 
     if (m_obs)
@@ -59,8 +59,8 @@ public:
     return m_accumulator;
   }
 
-  Variant call_method(std::string const &method,
-                      VariantMap const &parameters) override {
+  Variant do_call_method(std::string const &method,
+                         VariantMap const &parameters) override {
     if (method == "update") {
       mean_variance_calculator()->update();
     }
@@ -69,23 +69,12 @@ public:
 
     if (method == "get_variance")
       return mean_variance_calculator()->get_variance();
-    if (method == "shape") {
-      auto const shape = m_accumulator->shape();
-      return std::vector<int>{shape.begin(), shape.end()};
-    }
-    return {};
-  }
 
-  Variant get_state() const override {
-    std::vector<Variant> state(2);
-    state[0] = ScriptInterfaceBase::get_state();
-    state[1] = mean_variance_calculator()->get_internal_state();
-    return state;
+    return AccumulatorBase::call_method(method, parameters);
   }
 
   std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
-    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(
-        m_accumulator);
+    return m_accumulator;
   }
 
   std::shared_ptr<const ::Accumulators::AccumulatorBase>
@@ -95,16 +84,17 @@ public:
   }
 
 private:
-  void set_state(Variant const &state) override {
-    auto const &state_vec = boost::get<std::vector<Variant>>(state);
-    ScriptInterfaceBase::set_state(state_vec.at(0));
-    mean_variance_calculator()->set_internal_state(
-        boost::get<std::string>(state_vec.at(1)));
-  }
-
   /* The actual accumulator */
   std::shared_ptr<::Accumulators::MeanVarianceCalculator> m_accumulator;
   std::shared_ptr<Observables::Observable> m_obs;
+
+  std::string get_internal_state() const override {
+    return m_accumulator->get_internal_state();
+  }
+
+  void set_internal_state(std::string const &state) override {
+    m_accumulator->set_internal_state(state);
+  }
 };
 
 } // namespace Accumulators

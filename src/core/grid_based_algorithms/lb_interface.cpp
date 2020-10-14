@@ -425,12 +425,37 @@ lb_lbnode_get_last_applied_force(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-void lb_lbfluid_write_vtk(int delta_N, unsigned flag_observables,
-                          std::string const &identifier) {
+void lb_lbfluid_create_vtk(unsigned delta_N, unsigned initial_count,
+                           unsigned flag_observables,
+                           std::string const &identifier,
+                           std::string const &base_folder,
+                           std::string const &prefix) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::write_vtk, delta_N,
-                                             flag_observables, identifier);
+    ::Communication::mpiCallbacks().call_all(Walberla::create_vtk, delta_N,
+                                             initial_count, flag_observables,
+                                             identifier, base_folder, prefix);
+    return;
+  }
+#endif
+  throw NoLBActive();
+}
+
+void lb_lbfluid_write_vtk(std::string const &vtk_uid) {
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    ::Communication::mpiCallbacks().call_all(Walberla::write_vtk, vtk_uid);
+    return;
+  }
+#endif
+  throw NoLBActive();
+}
+
+void lb_lbfluid_switch_vtk(std::string const &vtk_uid, int status) {
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    ::Communication::mpiCallbacks().call_all(Walberla::switch_vtk, vtk_uid,
+                                             status);
     return;
   }
 #endif

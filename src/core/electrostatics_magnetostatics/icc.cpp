@@ -31,25 +31,18 @@
 #ifdef ELECTROSTATICS
 
 #include <cmath>
-#include <cstddef>
 #include <cstdlib>
-
-#include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "forces.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-
-#include "short_range_loop.hpp"
-#include <utils/NoOp.hpp>
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
+
+#include <utils/constants.hpp>
 
 iccp3m_struct iccp3m_cfg;
 
@@ -102,7 +95,7 @@ int iccp3m_iteration(const ParticleRange &particles,
         << "ICCP3M: nonpositive dielectric constant is not allowed.";
   }
 
-  auto const pref = 1.0 / (coulomb.prefactor * 6.283185307);
+  auto const pref = 1.0 / (coulomb.prefactor * 2 * Utils::pi());
   iccp3m_cfg.citeration = 0;
 
   double globalmax = 1e100;
@@ -197,9 +190,9 @@ void force_calc_iccp3m(const ParticleRange &particles,
                        const ParticleRange &ghost_particles) {
   init_forces_iccp3m(particles, ghost_particles);
 
-  short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2,
-                                     Distance const &d) {
-    /* calc non-bonded interactions */
+  cell_structure.non_bonded_loop([](Particle &p1, Particle &p2,
+                                    Distance const &d) {
+    /* calc non bonded interactions */
     add_non_bonded_pair_force_iccp3m(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
   });
 

@@ -241,10 +241,10 @@ def main():
                         p.pos = ball_start_pos
                         p.v = [0, 0, 0]
                     elif p.id == 5:
-                        for p in system.part:
-                            p.pos = spawnpos[p.id]
-                            p.v = [0, 0, 0]
-                            p.fix = [False, True, False]
+                        for p2 in system.part:
+                            p2.pos = spawnpos[p2.id]
+                            p2.v = [0, 0, 0]
+                            p2.fix = [False, True, False]
                         ball.fix = [True, True, True]
                         pool.update_cueball_force()
                         pool.stopped = True

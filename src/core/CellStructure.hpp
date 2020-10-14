@@ -30,11 +30,13 @@
 #include "ParticleDecomposition.hpp"
 #include "ParticleList.hpp"
 #include "ParticleRange.hpp"
+#include "algorithm/link_cell.hpp"
 #include "bond_error.hpp"
 #include "ghosts.hpp"
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
+#include <boost/iterator/indirect_iterator.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
@@ -80,6 +82,32 @@ inline ParticleRange particles(Utils::Span<Cell *> cells) {
 }
 } // namespace Cells
 
+/**
+ * @brief Distance vector and length handed to pair kernels.
+ */
+struct Distance {
+  explicit Distance(Utils::Vector3d const &vec21)
+      : vec21(vec21), dist2(vec21.norm2()) {}
+
+  Utils::Vector3d vec21;
+  double dist2;
+};
+namespace detail {
+struct MinimalImageDistance {
+  const BoxGeometry box;
+
+  Distance operator()(Particle const &p1, Particle const &p2) const {
+    return Distance(get_mi_vector(p1.r.p, p2.r.p, box));
+  }
+};
+
+struct EuclidianDistance {
+  Distance operator()(Particle const &p1, Particle const &p2) const {
+    return Distance(p1.r.p - p2.r.p);
+  }
+};
+} // namespace detail
+
 /** Describes a cell structure / cell system. Contains information
  *  about the communication of cell contents (particles, ghosts, ...)
  *  between different nodes and the relation between particle
@@ -102,6 +130,9 @@ private:
 
 public:
   bool use_verlet_list = true;
+
+  bool m_rebuild_verlet_list = true;
+  std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
 
   /**
    * @brief Update local particle index.
@@ -212,11 +243,14 @@ public:
   /** Maximal pair range supported by current cell system. */
   Utils::Vector3d max_range() const;
 
-  /** Return the global local_cells */
+private:
   Utils::Span<Cell *> local_cells();
+
+public:
   ParticleRange local_particles();
   ParticleRange ghost_particles();
 
+private:
   /** Cell system dependent function to find the right cell for a
    *  particle.
    *  \param  p Particle.
@@ -225,6 +259,7 @@ public:
    */
   Cell *particle_to_cell(const Particle &p);
 
+public:
   /**
    * @brief Add a particle.
    *
@@ -293,7 +328,6 @@ public:
     return assert(m_decomposition), *m_decomposition;
   }
 
-private:
   ParticleDecomposition &decomposition() {
     return assert(m_decomposition), *m_decomposition;
   }
@@ -327,6 +361,7 @@ public:
    * Cells::DataPart
    */
   void ghosts_update(unsigned data_parts);
+
   /**
    * @brief Add forces from ghost particles to real particles.
    */
@@ -355,7 +390,6 @@ private:
     return partners;
   }
 
-public:
   /**
    * @brief Execute kernel for every bond on particle.
    * @tparam Handler Callable, which can be invoked with
@@ -387,9 +421,10 @@ public:
     }
   }
 
-private:
-  /** Go through ghost cells and remove the ghost entries from the
-      local particle index. */
+  /**
+   * @brief Go through ghost cells and remove the ghost entries from the
+   * local particle index.
+   */
   void invalidate_ghosts() {
     for (auto const &p : ghost_particles()) {
       if (get_local_particle(p.identity()) == &p) {
@@ -443,11 +478,130 @@ public:
                                 double range, BoxGeometry const &box,
                                 LocalBox<double> const &local_geo);
 
+public:
+  template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
+    for (auto &p : local_particles()) {
+      execute_bond_handler(p, bond_kernel);
+    }
+  }
+
+private:
   /**
-   * @brief Return true if minimum image convention is
-   *        needed for distance calculation. */
-  bool minimum_image_distance() const {
-    return m_decomposition->minimum_image_distance();
+   * @brief Run link_cell algorithm for local cells.
+   *
+   * @tparam Kernel Needs to be callable with (Particle, Particle, Distance).
+   * @param kernel Pair kernel functor.
+   */
+  template <class Kernel> void link_cell(Kernel kernel) {
+    auto const maybe_box = decomposition().minimum_image_distance();
+    auto const first = boost::make_indirect_iterator(local_cells().begin());
+    auto const last = boost::make_indirect_iterator(local_cells().end());
+
+    if (maybe_box) {
+      Algorithm::link_cell(
+          first, last,
+          [&kernel, df = detail::MinimalImageDistance{*maybe_box}](
+              Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
+    } else {
+      Algorithm::link_cell(
+          first, last,
+          [&kernel, df = detail::EuclidianDistance{}](
+              Particle &p1, Particle &p2) { kernel(p1, p2, df(p1, p2)); });
+    }
+  }
+
+public:
+  /** Non-bonded pair loop with potential use
+   * of verlet lists.
+   * @param pair_kernel Kernel to apply
+   */
+  template <class PairKernel> void non_bonded_loop(PairKernel pair_kernel) {
+    link_cell(pair_kernel);
+  }
+
+  /** Non-bonded pair loop with potential use
+   * of verlet lists.
+   * @param pair_kernel Kernel to apply
+   * @param verlet_criterion Filter for verlet lists.
+   */
+  template <class PairKernel, class VerletCriterion>
+  void non_bonded_loop(PairKernel &&pair_kernel,
+                       const VerletCriterion &verlet_criterion) {
+    /* In this case the verlet list update is attached to
+     * the pair kernel, and the verlet list is rebuilt as
+     * we go. */
+    if (use_verlet_list && m_rebuild_verlet_list) {
+      m_verlet_list.clear();
+
+      link_cell([&pair_kernel, &verlet_criterion,
+                 this](Particle &p1, Particle &p2, Distance const &d) {
+        if (verlet_criterion(p1, p2, d)) {
+          m_verlet_list.emplace_back(&p1, &p2);
+          pair_kernel(p1, p2, d);
+        }
+      });
+
+      m_rebuild_verlet_list = false;
+    } else if (use_verlet_list && not m_rebuild_verlet_list) {
+      auto const maybe_box = decomposition().minimum_image_distance();
+      /* In this case the pair kernel is just run over the verlet list. */
+      if (maybe_box) {
+        auto const distance_function = detail::MinimalImageDistance{*maybe_box};
+        for (auto &pair : m_verlet_list) {
+          pair_kernel(*pair.first, *pair.second,
+                      distance_function(*pair.first, *pair.second));
+        }
+      } else {
+        auto const distance_function = detail::EuclidianDistance{};
+        for (auto &pair : m_verlet_list) {
+          pair_kernel(*pair.first, *pair.second,
+                      distance_function(*pair.first, *pair.second));
+        }
+      }
+    } else {
+      /* No verlet lists, just run the kernel with pairs from the cells. */
+      link_cell(pair_kernel);
+    }
+  }
+
+private:
+  /**
+   * @brief Check that particle index is commensurate with particles.
+   *
+   * For each local particles is checked that has a correct entry
+   * in the particles index, and that there are no excess (non-existing)
+   * particles in the index.
+   */
+  void check_particle_index();
+
+  /**
+   * @brief Check that particles are in the correct cell.
+   *
+   * This checks for all local particles that the result
+   * of particles_to_cell is the cell the particles is
+   * actually in, e.g. that the particles are sorted according
+   * to particles_to_cell.
+   */
+  void check_particle_sorting();
+
+public:
+  /**
+   * @brief Find cell a particle is stored in.
+   *
+   * For local particles, this returns the cell they
+   * are stored in, otherwise nullptr is returned.
+   *
+   * @param p Particle to find cell for
+   * @return Cell for particle or nullptr.
+   */
+  Cell *find_current_cell(const Particle &p) {
+    assert(not get_resort_particles());
+
+    if (p.l.ghost) {
+      return nullptr;
+    }
+
+    return particle_to_cell(p);
   }
 };
 

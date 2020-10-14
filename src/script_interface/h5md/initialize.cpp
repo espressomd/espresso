@@ -21,13 +21,11 @@
 #ifdef H5MD
 #include "h5md.hpp"
 #include "initialize.hpp"
-#include "io/writer/h5md_core.hpp"
 
 namespace ScriptInterface {
 namespace Writer {
-void initialize() {
-  ScriptInterface::register_new<ScriptInterface::Writer::H5md>(
-      "ScriptInterface::Writer::H5md");
+void initialize(Utils::Factory<ObjectHandle> *om) {
+  om->register_new<H5md>("ScriptInterface::Writer::H5md");
 }
 } /* namespace Writer */
 } /* namespace ScriptInterface */

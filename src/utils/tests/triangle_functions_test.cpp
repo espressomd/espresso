@@ -81,10 +81,11 @@ BOOST_AUTO_TEST_CASE(angle_triangles) {
   angle_btw_triangles(B,C,A,D) so that N1 = CB x CA and N2 = CA x CD.
   */
 
+  constexpr double half_pi = Utils::pi() / 2.0;
   const Utils::Vector3d a{1, 1, 1}, b{2, 1, 1}, c{1, 2, 1}, d{1, 1, 2};
   using Utils::angle_btw_triangles;
-  BOOST_CHECK_SMALL(std::abs(angle_btw_triangles(b, a, c, d) - M_PI / 2.0),
+  BOOST_CHECK_SMALL(std::abs(angle_btw_triangles(b, a, c, d) - half_pi),
                     epsilon);
-  BOOST_CHECK_SMALL(std::abs(angle_btw_triangles(b, c, a, d) - 3 * M_PI / 2.0),
+  BOOST_CHECK_SMALL(std::abs(angle_btw_triangles(b, c, a, d) - 3 * half_pi),
                     epsilon);
 }

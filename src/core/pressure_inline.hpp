@@ -151,27 +151,4 @@ inline void add_kinetic_virials(Particle const &p1,
       obs_pressure.kinetic[k * 3 + l] += p1.m.v[k] * p1.m.v[l] * p1.p.mass;
 }
 
-/** Add bonded energies for one particle to the energy observable.
- *  @param[in] p   particle for which to calculate pressure
- *  @param[out]    obs_pressure   pressure observable
- */
-inline void add_bonded_virials(Particle &p, Observable_stat &obs_pressure) {
-  cell_structure.execute_bond_handler(p, [&obs_pressure](
-                                             Particle &p1, int bond_id,
-                                             Utils::Span<Particle *> partners) {
-    auto const &iaparams = bonded_ia_params[bond_id];
-    auto const result = calc_bonded_pressure_tensor(iaparams, p1, partners);
-    if (result) {
-      auto const &tensor = result.get();
-      /* pressure tensor part */
-      for (int k = 0; k < 3; k++)
-        for (int l = 0; l < 3; l++)
-          obs_pressure.bonded_contribution(bond_id)[k * 3 + l] += tensor[k][l];
-
-      return false;
-    }
-    return true;
-  });
-}
-
 #endif

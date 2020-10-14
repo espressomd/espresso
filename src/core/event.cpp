@@ -25,7 +25,6 @@
  */
 #include "event.hpp"
 
-#include "Particle.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -111,11 +110,6 @@ void on_integration_start() {
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
 #endif
-
-  // Here we initialize volume conservation
-  // This function checks if the reference volumes have been set and if
-  // necessary calculates them
-  immersed_boundaries.init_volume_conservation(cell_structure);
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
@@ -249,6 +243,8 @@ void on_boxl_change() {
 }
 
 void on_cell_structure_change() {
+  clear_particle_node();
+
 /* Now give methods a chance to react to the change in cell
    structure. Most ES methods need to reinitialize, as they depend
    on skin, node grid and so on. */
@@ -378,4 +374,9 @@ void update_dependent_particles() {
 #ifdef ELECTROSTATICS
   Coulomb::update_dependent_particles();
 #endif
+
+  // Here we initialize volume conservation
+  // This function checks if the reference volumes have been set and if
+  // necessary calculates them
+  immersed_boundaries.init_volume_conservation(cell_structure);
 }

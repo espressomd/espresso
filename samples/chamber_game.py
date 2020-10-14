@@ -29,7 +29,6 @@ import time
 
 import espressomd
 import espressomd.shapes
-import espressomd.minimize_energy
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
 required_features = ["LENNARD_JONES", "WCA", "MASS",
@@ -49,7 +48,7 @@ try:
           "\nMOVE: (JOYSTICK AXIS), (KEYBOARD i/j/k/l)"
           "\nACTION BUTTON: (JOYSTICK A), (KEYBOARD p)"
           "\nRESTART: (JOYSTICK START), (KEYBOARD b)")
-except BaseException:
+except ImportError:
     has_pygame = False
     print("\nCONTROLS:"
           "\nMOVE: (KEYBOARD i/j/k/l)"
@@ -294,15 +293,10 @@ p_temp_dec = system.part.add(
     fix=[True, True, True])
 
 # MINIMIZE ENERGY
-
-energy = system.analysis.energy()
-#print("Before Minimization: E_total = {}".format(energy['total']))
-espressomd.minimize_energy.steepest_descent(system, f_max=100, gamma=30.0,
-                                            max_steps=10000,
-                                            max_displacement=0.01)
-energy = system.analysis.energy()
-#print("After Minimization: E_total = {}".format(energy['total']))
-
+system.integrator.set_steepest_descent(f_max=100, gamma=30.0,
+                                       max_displacement=0.01)
+system.integrator.run(10000)
+system.integrator.set_vv()
 p_startpos = system.part[:].pos
 
 # THERMOSTAT
@@ -413,7 +407,6 @@ def main():
 
     zoom_eq = 5.0
     zoom_v = 0.0
-    zoom_a = 0.0
     zoom = zoom_eq
     zoom_dt = 0.01
 

@@ -44,11 +44,7 @@ public:
                        ::set_virtual_sites(
                            m_active_implementation->virtual_sites());
                      },
-                     [this]() {
-                       return (this->m_active_implementation != nullptr)
-                                  ? this->m_active_implementation->id()
-                                  : ObjectId();
-                     }}});
+                     [this]() { return m_active_implementation; }}});
   }
 
 private:

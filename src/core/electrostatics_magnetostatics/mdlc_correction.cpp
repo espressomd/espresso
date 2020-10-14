@@ -34,6 +34,8 @@
 #include "grid.hpp"
 #include "particle_data.hpp"
 
+#include <utils/constants.hpp>
+
 DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
 
 static double mu_max;
@@ -106,8 +108,8 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
   double s1z, s2z, s3z, s4z;
   double ss;
 
-  auto const facux = 2.0 * M_PI / box_geo.length()[0];
-  auto const facuy = 2.0 * M_PI / box_geo.length()[1];
+  auto const facux = 2.0 * Utils::pi() / box_geo.length()[0];
+  auto const facuy = 2.0 * Utils::pi() / box_geo.length()[1];
   double energy = 0.0;
 
   for (int ix = -kcut; ix <= +kcut; ix++) {
@@ -223,7 +225,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
 
   // Multiply by the factors we have left during the loops
 
-  auto const piarea = M_PI / (box_geo.length()[0] * box_geo.length()[1]);
+  auto const piarea = Utils::pi() / (box_geo.length()[0] * box_geo.length()[1]);
 
   for (int j = 0; j < n_local_particles; j++) {
     fs[j] *= piarea;
@@ -239,8 +241,8 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
  *  %Algorithm implemented accordingly to @cite brodka04a.
  */
 double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
-  auto const facux = 2.0 * M_PI / box_geo.length()[0];
-  auto const facuy = 2.0 * M_PI / box_geo.length()[1];
+  auto const facux = 2.0 * Utils::pi() / box_geo.length()[0];
+  auto const facuy = 2.0 * Utils::pi() / box_geo.length()[1];
 
   double energy = 0.0;
   for (int ix = -kcut; ix <= +kcut; ix++) {
@@ -294,7 +296,7 @@ double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
 
   // Multiply by the factors we have left during the loops
 
-  auto const piarea = M_PI / (box_geo.length()[0] * box_geo.length()[1]);
+  auto const piarea = Utils::pi() / (box_geo.length()[0] * box_geo.length()[1]);
   energy *= (-piarea);
   return (this_node == 0) ? energy : 0.0;
 }
@@ -337,7 +339,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
 
 #if defined(ROTATION) && defined(DP3M)
       auto const dip = p.calc_dip();
-      auto const correc = 4. * M_PI / volume;
+      auto const correc = 4. * Utils::pi() / volume;
       Utils::Vector3d d;
       // in the Next lines: the second term (correc*...) is the SDC
       // correction for the torques
@@ -385,16 +387,16 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
 #ifdef DP3M
     if (dipole.method == DIPOLAR_MDLC_P3M) {
       if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
-        dip_DLC_energy += dipole.prefactor * 2. * M_PI / volume * mz2;
+        dip_DLC_energy += dipole.prefactor * 2 * Utils::pi() / volume * mz2;
       } else {
         dip_DLC_energy +=
-            dipole.prefactor * 2. * M_PI / volume *
+            dipole.prefactor * 2 * Utils::pi() / volume *
             (mz2 - mtot * mtot / (2.0 * dp3m.params.epsilon + 1.0));
       }
     } else
 #endif
     {
-      dip_DLC_energy += dipole.prefactor * 2. * M_PI / volume * mz2;
+      dip_DLC_energy += dipole.prefactor * 2 * Utils::pi() / volume * mz2;
       fprintf(stderr, "You are not using the P3M method, therefore "
                       "dp3m.params.epsilon unknown, I assume metallic borders "
                       "\n");

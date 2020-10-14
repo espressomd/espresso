@@ -127,7 +127,7 @@ public:
     });
   };
 
-  void construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &params) override {
     m_observable =
         make_shared_from_args<CoreObs, std::vector<int>, Utils::Vector3d,
                               Utils::Vector3d, int, int, int, double, double,
@@ -137,15 +137,15 @@ public:
             "max_z");
   }
 
-  Variant call_method(std::string const &method,
-                      VariantMap const &parameters) override {
+  Variant do_call_method(std::string const &method,
+                         VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
       boost::copy(cylindrical_pid_profile_observable()->edges(),
                   std::back_inserter(variant_edges));
       return variant_edges;
     }
-    return Base::call_method(method, parameters);
+    return Base::do_call_method(method, parameters);
   }
 
   std::shared_ptr<::Observables::Observable> observable() const override {

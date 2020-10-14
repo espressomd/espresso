@@ -24,7 +24,6 @@ partitioned. Only the domain of MPI rank 0 will be shown in wireframe.
 """
 
 import espressomd
-from espressomd.minimize_energy import steepest_descent
 from espressomd.visualization_opengl import openGLLive
 import numpy as np
 
@@ -55,8 +54,10 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total = {}".format(energy['total']))
-steepest_descent(system, f_max=50, gamma=30.0, max_steps=10000,
-                 max_displacement=0.001)
+system.integrator.set_steepest_descent(f_max=50, gamma=30.0,
+                                       max_displacement=0.001)
+system.integrator.run(10000)
+system.integrator.set_vv()
 energy = system.analysis.energy()
 print("After Minimization: E_total = {}".format(energy['total']))
 

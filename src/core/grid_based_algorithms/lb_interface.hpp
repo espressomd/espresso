@@ -144,10 +144,23 @@ double lb_lbfluid_get_kT();
 double lb_lbfluid_get_lattice_speed();
 
 /**
- * @brief Write lattice observables to a VTK file.
+ * @brief Create a VTK observable.
  */
-void lb_lbfluid_write_vtk(int delta_N, unsigned flag_observables,
-                          std::string const &identifier);
+void lb_lbfluid_create_vtk(unsigned delta_N, unsigned initial_count,
+                           unsigned flag_observables,
+                           std::string const &identifier,
+                           std::string const &base_folder,
+                           std::string const &prefix);
+
+/**
+ * @brief Write a VTK observable to disk.
+ */
+void lb_lbfluid_write_vtk(std::string const &vtk_uid);
+
+/**
+ * @brief Toggle a VTK observable on/off.
+ */
+void lb_lbfluid_switch_vtk(std::string const &vtk_uid, int status);
 
 /**
  * @brief Get the LB fluid density for a single node.

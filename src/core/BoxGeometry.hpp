@@ -25,6 +25,7 @@
 
 #include <bitset>
 #include <cassert>
+#include <cmath>
 
 class BoxGeometry {
 public:
@@ -92,6 +93,9 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
 
 /**
  * @brief Get the minimum-image vector between two coordinates.
+ *
+ * @tparam T Floating point type.
+ *
  * @param a     Coordinate of the terminal point.
  * @param b     Coordinate of the initial point.
  * @param box   Box parameters (side lengths, periodicity).

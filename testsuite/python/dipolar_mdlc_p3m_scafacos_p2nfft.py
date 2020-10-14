@@ -38,15 +38,18 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
        2d: as long as this test AND the scafacos_dipolar_1d_2d test passes, we are safe.
        3d: as long as the independently written p3m and p2nfft agree, we are safe.
     """
-    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.time_step = 0.01
-    s.cell_system.skin = .4
-    s.periodicity = [1, 1, 1]
-    s.thermostat.turn_off()
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.time_step = 0.01
+    system.cell_system.skin = .4
+    system.periodicity = [1, 1, 1]
+    system.thermostat.turn_off()
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.actors.clear()
 
     def test_mdlc(self):
-        s = self.s
-        s.part.clear()
+        s = self.system
         rho = 0.3
 
         # This is only for box size calculation. The actual particle number is
@@ -91,13 +94,11 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         self.assertLessEqual(abs(err_t), tol_t, "Torque difference too large")
         self.assertLessEqual(abs(err_f), tol_f, "Force difference too large")
 
-        s.part.clear()
         del s.actors[0]
         del s.actors[0]
 
     def test_p3m(self):
-        s = self.s
-        s.part.clear()
+        s = self.system
         rho = 0.09
 
         # This is only for box size calculation. The actual particle number is
@@ -139,13 +140,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         self.assertLessEqual(abs(err_t), tol_t, "Torque difference too large")
         self.assertLessEqual(abs(err_f), tol_f, "Force difference too large")
 
-        s.part.clear()
-        del s.actors[0]
-
     @utx.skipIfMissingFeatures("SCAFACOS_DIPOLES")
     def test_scafacos_dipoles(self):
-        s = self.s
-        s.part.clear()
+        s = self.system
         rho = 0.09
 
         # This is only for box size calculation. The actual particle number is
@@ -197,9 +194,6 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         self.assertLessEqual(abs(err_e), tol_e, "Energy difference too large")
         self.assertLessEqual(abs(err_t), tol_t, "Torque difference too large")
         self.assertLessEqual(abs(err_f), tol_f, "Force difference too large")
-
-        s.part.clear()
-        del s.actors[0]
 
 
 if __name__ == "__main__":

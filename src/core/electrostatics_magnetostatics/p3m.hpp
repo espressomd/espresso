@@ -39,6 +39,7 @@
 
 #include "fft.hpp"
 #include "p3m-common.hpp"
+#include "p3m-data_struct.hpp"
 #include "p3m_interpolation.hpp"
 #include "p3m_send_mesh.hpp"
 
@@ -50,10 +51,8 @@
  * data types
  ************************************************/
 
-struct p3m_data_struct {
+struct p3m_data_struct : public p3m_data_struct_base {
   p3m_data_struct();
-
-  P3MParameters params;
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
@@ -69,23 +68,7 @@ struct p3m_data_struct {
   /** square of sum of charges (only on master node). */
   double square_sum_q;
 
-  /** help variable for calculation of aliasing sums */
-  std::vector<double> meshift_x;
-  std::vector<double> meshift_y;
-  std::vector<double> meshift_z;
-
-  /** Spatial differential operator in k-space. We use an i*k differentiation.
-   */
-  std::array<std::vector<double>, 3> d_op;
-  /** Force optimised influence function (k-space) */
-  std::vector<double> g_force;
-  /** Energy optimised influence function (k-space) */
-  std::vector<double> g_energy;
-
   p3m_interpolation_cache inter_weights;
-
-  /** number of permutations in k_space */
-  int ks_pnum;
 
   /** send/recv mesh sizes */
   p3m_send_mesh sm;

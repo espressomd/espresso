@@ -21,7 +21,6 @@
 import espressomd
 from espressomd import electrostatics, electrostatic_extensions, assert_features
 from espressomd.shapes import Wall
-from espressomd.minimize_energy import steepest_descent
 import numpy
 
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
@@ -67,7 +66,6 @@ system.box_l = [box_l, box_l, box_z + elc_gap]
 system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
-system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 # Uniform electric field between two parallel plates
 # E = V/d in units of V/m
@@ -123,10 +121,14 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total=", energy['total'])
-steepest_descent(system, f_max=10, gamma=50.0, max_steps=1000,
-                 max_displacement=0.2)
+system.integrator.set_steepest_descent(f_max=10, gamma=50.0,
+                                       max_displacement=0.2)
+system.integrator.run(1000)
+system.integrator.set_vv()
 energy = system.analysis.energy()
 print("After Minimization: E_total=", energy['total'])
+
+system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)

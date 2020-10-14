@@ -219,13 +219,24 @@ Output for visualization
 |es| implements the :meth:`LBFluidWalberla.write_vtk()` command to output
 one or multiple fluid field data into a single file::
 
-    lb.write_vtk('fluid_velocity', ['velocity_vector'])
+
+    vtk_obs = ['density', 'velocity_vector']
+    # create a VTK callback that automatically writes every 10 LB steps
+    lb_vtk = lbf.add_vtk_writer('vtk_automatic', vtk_obs, delta_N=10)
+    self.system.integrator.run(100)
+    # can be deactivated
+    lb_vtk.disable()
+    self.system.integrator.run(10)
+    lb_vtk.enable()
+    # create a VTK callback that writes on demand
+    lb_vtk = lbf.add_vtk_writer('vtk_now', vtk_obs)
+    lb_vtk.write()
 
 Currently supported fluid properties are the density, velocity vector
 and pressure tensor. By default, the properties of the current state
 of the fluid are written to disk. To add a callback that writes to
 disk continuously, use the optional argument ``delta_N`` to indicate
-the level of subsampling. This callback cannot be deactivated.
+the level of subsampling. Such a callback can be deactivated.
 
 The VTK format is readable by visualization software such as ParaView [1]_
 or Mayavi2 [2]_. If you plan to use ParaView for visualization, note that also the particle

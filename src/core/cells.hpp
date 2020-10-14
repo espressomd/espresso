@@ -38,8 +38,10 @@
  *    special method like P3M.
  */
 
+#include "Cell.hpp"
 #include "CellStructure.hpp"
 #include "DomainDecomposition.hpp"
+#include "Particle.hpp"
 
 #include <utility>
 #include <vector>
@@ -59,25 +61,8 @@ enum {
 
 /*@}*/
 
-/************************************************************/
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
-
-/** If non-zero, cell systems should reset the position for checking
- *  the Verlet criterion. Moreover, the Verlet list has to be rebuilt.
- */
-extern bool rebuild_verletlist;
-
-/*@}*/
-
-/************************************************************/
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
 
 /** Reinitialize the cell structures.
  *  @param new_cs The new topology to use afterwards.
@@ -90,11 +75,6 @@ void cells_re_init(int new_cs);
  * @param use_verlet_lists Shoudl verlet lists be used?
  */
 void cells_set_use_verlet_lists(bool use_verlet_lists);
-
-/** Sort the particles into the cells and initialize the ghost particle
- *  structures.
- */
-void cells_resort_particles(int global_flag);
 
 /** Update ghost information. If needed,
  *  the particles are also resorted.
@@ -110,8 +90,6 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
 /** Check if a particle resorting is required. */
 void check_resort_particles();
-
-/*@}*/
 
 /**
  * @brief Find the cell in which a particle is stored.
