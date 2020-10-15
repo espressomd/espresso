@@ -17,6 +17,7 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
 
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
@@ -29,15 +30,16 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test(self):
+        langevin_magnetization_curve = tutorial.L(np.array(tutorial.alphas))
         self.assertGreater(
             tutorial.magnetization_para[0],
             tutorial.magnetization_perp[0])
         self.assertGreater(
-            tutorial.magnetization_para_star[0],
-            tutorial.L(tutorial.alphas[0]))
+            tutorial.magnetization_para[0] / tutorial.N_PART,
+            langevin_magnetization_curve)
         self.assertLess(
-            tutorial.magnetization_perp_star[0],
-            tutorial.L(tutorial.alphas[0]))
+            tutorial.magnetization_perp[0] / tutorial.N_PART,
+            langevin_magnetization_curve)
 
 
 if __name__ == "__main__":

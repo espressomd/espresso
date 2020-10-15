@@ -74,7 +74,9 @@ static int reinit_magnetostatics = false;
 
 void on_program_start() {
 #ifdef CUDA
-  cuda_init();
+  if (this_node == 0) {
+    cuda_init();
+  }
 #endif
 
   init_node_grid();
