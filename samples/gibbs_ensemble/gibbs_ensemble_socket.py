@@ -86,8 +86,8 @@ DX_MAX = 0.5
 
 
 # Monte-Carlo parameters
-INIT_MOVE_CHANCE = 1/3
-EXCHANGE_CHANCE = 1/3
+INIT_MOVE_CHANCE = 1 / 3
+EXCHANGE_CHANCE = 1 / 3
 VOLUME_CHANCE = 1.0 - INIT_MOVE_CHANCE - EXCHANGE_CHANCE
 
 # socket parameters
@@ -343,8 +343,8 @@ for i in range(NUMBER_OF_CLIENTS):
     boxes[i].recv_energy()
 
 # set initial volume and particles, recv initial energy
-boxes[0].box_l = np.cbrt(global_volume *0.5)
-boxes[1].box_l = np.cbrt(global_volume *0.5)
+boxes[0].box_l = np.cbrt(global_volume * 0.5)
+boxes[1].box_l = np.cbrt(global_volume * 0.5)
 for box in boxes:
     box.n_particles = int(global_num_particles / 2)
 
@@ -445,7 +445,7 @@ for i in range(steps):
 
         print("step %d, densities %.3f %.3f, volumes %.2f, %.2f %.f ms / move" % 
               (i, densities[0][-1], densities[1][-1], 
-              boxes[0].box_l**3, boxes[1].box_l**3,
+               boxes[0].box_l**3, boxes[1].box_l**3,
                (tock - tick) * 1000 / REPORT_INTERVAL))
 
         # consistency check
@@ -460,9 +460,7 @@ for i in range(steps):
             print(box.energy, remote_energy)
             assert box.n_particles == remote_n
             assert box.box_l == remote_l
-            assert np.abs(box.energy - remote_energy) <1E-10*kT
-            
-
+            assert np.abs(box.energy - remote_energy) < 1E-10 * kT
 
         # timing
         tick = time.time()
