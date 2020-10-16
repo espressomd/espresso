@@ -373,6 +373,7 @@ rocm-maxset:3.0:
   tags:
     - docker
     - linux
+    - qemu
   when: manual
 
 ubuntu:arm64:
