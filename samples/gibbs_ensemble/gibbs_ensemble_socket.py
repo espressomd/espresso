@@ -36,6 +36,8 @@ import argparse
 import enum
 import importlib
 import logging as log
+import sys
+log.basicConfig(level=log.INFO, stream=sys.stdout)
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
@@ -93,7 +95,7 @@ HOST = 'localhost'
 port = 31415
 NUMBER_OF_CLIENTS = 2
 
-REPORT_INTERVAL = 200  # moves
+REPORT_INTERVAL = 1  # moves
 
 
 @enum.unique
@@ -454,9 +456,13 @@ for i in range(steps):
         # compare notes with clients
         for box in boxes: 
             gibbs.send_data(box.conn, [gibbs.MessageId.CONSISTENCY_CHECK])
-            remote_n, remote_l = gibbs.recv_data(box.conn)
+            remote_n, remote_l, remote_energy = gibbs.recv_data(box.conn)
+            print(box.energy, remote_energy)
             assert box.n_particles == remote_n
             assert box.box_l == remote_l
+            assert np.abs(box.energy - remote_energy) <1E-10*kT
+            
+
 
         # timing
         tick = time.time()

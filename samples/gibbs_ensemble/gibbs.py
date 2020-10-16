@@ -111,7 +111,7 @@ class Client:
     def handle_consistency_check(self):
         send_data(self._socket,
                   [len(self._system.part),
-                   self._system.box_l[0]])
+                   self._system.box_l[0],float(self.energy())])
 
     def run(self, host, port):
         # mapping between messages and handler functions
