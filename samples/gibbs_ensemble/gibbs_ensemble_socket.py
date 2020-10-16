@@ -95,7 +95,7 @@ HOST = 'localhost'
 port = 31415
 NUMBER_OF_CLIENTS = 2
 
-REPORT_INTERVAL = 1  # moves
+REPORT_INTERVAL = 1000  # moves
 
 
 @enum.unique
