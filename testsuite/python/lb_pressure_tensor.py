@@ -21,7 +21,10 @@ import numpy as np
 
 import espressomd
 import espressomd.lb
-from scipy.optimize import curve_fit
+try:
+    from scipy.optimize import curve_fit
+except ImportError:
+    pass
 
 AGRID = .5
 N_CELLS = 12
@@ -156,6 +159,7 @@ class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
         self.steps = 50000
         self.sample_pressure_tensor()
 
+    @utx.skipIfMissingModules('scipy')
     def test_gk_viscosity(self):
         # Check that stress auto correlation matches dynamic viscosity
         # eta = V/kT integral (stress acf), e.g., eq. (5) in Cui et. et al
