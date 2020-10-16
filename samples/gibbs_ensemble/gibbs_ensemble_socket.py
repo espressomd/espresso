@@ -44,7 +44,6 @@ import pickle
 import random
 import socket
 import sys
-import struct
 import subprocess
 import time
 
