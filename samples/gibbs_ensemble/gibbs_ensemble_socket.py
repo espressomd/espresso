@@ -443,10 +443,11 @@ for i in range(steps):
         # timing
         tock = time.time()
 
-        print("step %d, densities %.3f %.3f, volumes %.2f, %.2f %.f ms / move" % 
-              (i, densities[0][-1], densities[1][-1], 
-               boxes[0].box_l**3, boxes[1].box_l**3,
-               (tock - tick) * 1000 / REPORT_INTERVAL))
+        if len(densities[0]):
+            print("step %d, densities %.3f %.3f, volumes %.2f, %.2f %.f ms / move" % 
+                  (i, densities[0][-1], densities[1][-1], 
+                   boxes[0].box_l**3, boxes[1].box_l**3,
+                   (tock - tick) * 1000 / REPORT_INTERVAL))
 
         # consistency check
         assert boxes[0].n_particles + \
