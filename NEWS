@@ -2,6 +2,60 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 4.1.4
+==============
+
+This release provides a number of corrections for the ESPResSo 4.1 line.
+We recommend that this release be used for all production simulations.
+The interface has not been changed between ESPResSo 4.1.3 and 4.1.4.
+However, some bugs were discovered which can affect simulation results.
+Please find the list of changes below. The numbers in brackets refer to
+ticket numbers on https://github.com/espressomd/espresso
+
+General corrections and improvements:
+
+* Fix a bug in the LB CPU implementation that lead to incorrect
+  LB shear stress tensors in thermalized fluids since 4.1.0 (#3847)
+
+* Fix a bug in the LB CPU and GPU implementations that lead to
+  `gamma_bulk` being used in place of `gamma_shear` in the second
+  order term for forces in all previous ESPResSo versions (#3885)
+
+* Fix a bug that always set the epsilon value to zero in `P3M` and
+  `P3MGPU` actors since 4.0.0 (#3869)
+
+* Fix an issue in the Python script interface that rejected integer
+  epsilon values in the `P3M` and `P3MGPU` actors, and the `'metallic'`
+  epsilon value in the `P3M` actor (#3869)
+
+* Fix the exception mechanism in the `P3M`, `P3MGPU` and `DipolarP3M`
+  code to forward errors to the Python interface instead of silencing
+  them or running infinite loops (#3869)
+
+* Fix range checks in the OIF code that failed to raise `TypeError`
+  exceptions (#3846)
+
+Documentation and tutorials corrections and improvements:
+
+* Explain the discrepancy between the Gay-Berne formula from the user
+  guide and from the original paper (#3839)
+
+* Add note explaining the P3M algorithm works with non-metallic epsilon
+  values only when the box is cubic (#3869)
+
+Build system and platform-related corrections and improvements:
+
+* Fix several CMake warnings raised by CMake 3.17 and above (#3830, #3859)
+
+Improved testing:
+
+* Add a test to check the off-diagonal elements of the LB stress tensor
+  in long simulations of thermalized fluids (#3847)
+
+Under the hood changes:
+
+* Remove unnecessary memory allocation on GPU from MPI worker nodes (#3911)
+
 ESPResSo 4.1.3
 ==============
 
