@@ -358,16 +358,6 @@ rocm-maxset:3.0:
   tags:
     - amdgpu
 
-rocm-maxset:3.3:
-  <<: *global_job_definition
-  stage: build
-  image: docker.pkg.github.com/espressomd/docker/rocm:06b6216c7aa3555bcf28c90734dbb84e7285c96f
-  script:
-    - export myconfig=maxset
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - amdgpu
-
 ### Builds on different architectures
 
 .arch_template: &arch_definition
