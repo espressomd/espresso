@@ -36,3 +36,12 @@ repos:
         always_run: false
         exclude: '.*\.(sh|py|sh\.in|cmakein)|.git'
         types: [file, executable]
+
+    -   id: pylint
+        name: pylint
+        entry: sh maintainer/lint/pylint.sh
+        language: system
+        always_run: false
+        files: '.*\.py'
+        args: ["--score=no", "--reports=no", "--output-format=text"]
+        log_file: pylint.log
