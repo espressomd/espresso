@@ -620,7 +620,7 @@ You may also provide the patch level, when relevant. If you developed code
 for |es| and made it available in a publicly accessible repository, you
 should consider providing the corresponding URL, for example in a footnote:
 
-    The method was implemented for ESPResSo 4.1.2[24]. The full code is
+    The method was implemented for ESPResSo 4.1.4[24]. The full code is
     available online\*.
 
     | \* https://github.com/username/espresso/tree/implemented-algorithm
