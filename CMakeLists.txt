@@ -34,7 +34,7 @@ if(NOT ${CMAKE_VERSION} VERSION_LESS "3.12")
   cmake_policy(SET CMP0074 NEW)
 endif()
 
-set(PROJECT_VERSION "4.1.3")
+set(PROJECT_VERSION "4.1.4")
 
 #
 # CMake internal vars
