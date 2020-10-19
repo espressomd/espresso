@@ -59,21 +59,21 @@ double K0(double x);
  */
 double K1(double x);
 
-/** Besselfunctions K0 at x.
+/** Bessel function K0 at x.
  *  The implementation has an absolute precision of around 10^(-14), which is
  *  comparable to the relative precision sqrt implementation of current
  *  hardware.
  */
 double LPK0(double x);
 
-/** Besselfunctions K1 at x.
+/** Bessel function K1 at x.
  *  The implementation has an absolute precision of around 10^(-14), which is
  *  comparable to the relative precision sqrt implementation of current
  *  hardware.
  */
 double LPK1(double x);
 
-/** Besselfunctions K0 and K1 at x.
+/** Bessel functions K0 and K1 at x.
  *  The implementation has an absolute precision of around 10^(-14), which is
  *  comparable to the relative precision sqrt implementation of current
  *  hardware.

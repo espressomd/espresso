@@ -53,9 +53,9 @@ using Utils::strcat_alloc;
 /** minimal radius for the far formula in multiples of box_l[2] */
 #define MIN_RAD 0.01
 
-/** if you define this, the Besselfunctions are calculated up
-    to machine precision, otherwise 10^-14, which should be
-    definitely enough for daily life. */
+/* if you define this, the Bessel functions are calculated up
+ * to machine precision, otherwise 10^-14, which should be
+ * definitely enough for daily life. */
 #undef BESSEL_MACHINE_PREC
 
 #ifndef BESSEL_MACHINE_PREC
@@ -63,7 +63,7 @@ using Utils::strcat_alloc;
 #define K1 LPK1
 #endif
 
-/** inverse box dimensions and other constants */
+/** @name inverse box dimensions and other constants */
 /*@{*/
 static double uz, L2, uz2, prefuz2, prefL3_i;
 /*@}*/

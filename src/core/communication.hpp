@@ -51,7 +51,7 @@
 
 #include "MpiCallbacks.hpp"
 
-/** Included needed by callbacks. */
+/* Includes needed by callbacks. */
 #include "cuda_init.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 #include "particle_data.hpp"

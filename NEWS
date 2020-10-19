@@ -149,7 +149,7 @@ General corrections and improvements:
   class that always returned an array of 0's since 4.1.0 (#3781)
 
 * Fix a runtime error when calling the `get_params()` method of a
-  ScaFaCos-based actor (#3784)
+  ScaFaCoS-based actor (#3784)
 
 Documentation and tutorials corrections and improvements:
 

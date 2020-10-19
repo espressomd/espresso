@@ -465,7 +465,7 @@ class LangevinThermostat(ut.TestCase):
         """
         c = corr
         # Integral of vacf via Green-Kubo D = int_0^infty <v(t_0)v(t_0+t)> dt
-        # (o 1/3, since we work componentwise)
+        # (or 1/3, since we work componentwise)
         i = p.id
         acf = c.result()[:, [0, 2 + 3 * i, 2 + 3 * i + 1, 2 + 3 * i + 2]]
         np.savetxt("acf.dat", acf)
