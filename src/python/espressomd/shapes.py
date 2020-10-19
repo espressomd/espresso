@@ -25,6 +25,28 @@ class Shape:
 
 
 @script_interface_register
+class Quarterpipe(Shape, ScriptInterfaceHelper):
+    """
+    A quarterpipe, built by subtracting a ``pi/2`` segment of a cylinder from a cuboid
+
+    Attributes
+    ----------
+    center : (3,) array_like of :obj:`float`
+        Coordinates of the center of the quarterpipe.
+    axis : (3,) array_like of :obj:`float`
+        Axis of the cylinder.
+    orientation : (3,) array_like of :obj:`float`
+        direction in which the quarterpipe points from center
+    radius : :obj:`float`
+        Radius of the pipe.
+    height : :obj:`float`
+        height of the quarterpipe along ``axis``
+
+    """
+    _so_name = "Shapes::Quarterpipe"
+
+
+@script_interface_register
 class Cylinder(Shape, ScriptInterfaceHelper):
     """
     A cylinder shape.

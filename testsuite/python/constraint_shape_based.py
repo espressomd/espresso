@@ -44,6 +44,93 @@ class ShapeBasedConstraintTest(ut.TestCase):
                         semiaxis2 * v])
         return pos + center
 
+    def test_quarterpipe(self):
+        """
+        Test implementation of concave_corner
+        """
+        CENTER = np.array([1.1, -1.2, 0.4])
+        AXIS = np.array([0, 0, 1])
+        ORIENTATION = np.array([1, -1, 0]) / np.sqrt(2)  # lower right corner
+        RADIUS = 2
+        HEIGHT = 1.3
+
+        # test parameters and normalization
+        corner = espressomd.shapes.Quarterpipe(center=CENTER,
+                                               axis=2 * AXIS, 
+                                               orientation=3 * ORIENTATION,
+                                               radius=RADIUS, 
+                                               height=HEIGHT)
+
+        np.testing.assert_almost_equal(np.copy(corner.center), CENTER)
+        np.testing.assert_almost_equal(np.copy(corner.axis), AXIS)
+        np.testing.assert_almost_equal(
+            np.copy(corner.orientation), ORIENTATION)
+        self.assertAlmostEqual(corner.radius, RADIUS)
+        self.assertAlmostEqual(corner.height, HEIGHT)
+
+        UPPER_POINT = np.array([RADIUS, 0, 0])
+
+        # Test some points         
+        test_points = [CENTER,
+                       CENTER + (RADIUS - 0.2) * np.array([1, 0, 0]),
+                       CENTER + (RADIUS - 0.3) * ORIENTATION,
+                       CENTER + [0.2, 0.3, 0],
+                       CENTER + [-1.5 * RADIUS, -RADIUS, 0],
+                       CENTER + [1.6 * RADIUS, -0.8 * RADIUS, -0.2 * HEIGHT],
+                       CENTER + [0.9 * RADIUS, -1.7 * RADIUS, 0.1 * HEIGHT],
+                       CENTER + [0.9 * RADIUS, -1.7 * RADIUS, -0.8 * HEIGHT],
+                       CENTER + [0.9 * RADIUS, -1.7 * RADIUS, +0.9 * HEIGHT],
+                       CENTER + 1.01 * RADIUS * ORIENTATION,
+                       CENTER + [0.98 * RADIUS, -0.9 * RADIUS, 0],
+                       CENTER + [0.98 * RADIUS, -0.9 * RADIUS, 0.8 * HEIGHT],
+                       CENTER + [0.98 * RADIUS, -0.9 * RADIUS, -0.9 * HEIGHT],
+                       CENTER + [0.98 * RADIUS, -0.9 * RADIUS, 0.499 * HEIGHT],
+                       CENTER + [0.98 * RADIUS, -0.9 *
+                                 RADIUS, -0.498 * HEIGHT],
+                       CENTER + 2 * RADIUS * ORIENTATION
+
+                       ]
+        test_distances = [RADIUS,
+                          0.2,
+                          0.3,
+                          np.linalg.norm(UPPER_POINT - [0.2, 0.3, 0]),
+                          1.5 * RADIUS,
+                          0.6 * RADIUS,
+                          0.7 * RADIUS,
+                          np.sqrt((0.7 * RADIUS)**2 + (0.3 * HEIGHT)**2),
+                          np.sqrt((0.7 * RADIUS)**2 + (0.4 * HEIGHT)**2),
+                          -0.01 * RADIUS,
+                          -0.02 * RADIUS,
+                          0.3 * HEIGHT,
+                          0.4 * HEIGHT,
+                          -0.001 * HEIGHT,
+                          -0.002 * HEIGHT,
+                          (2 - np.sqrt(2)) * RADIUS
+                          ]
+
+        test_vecs = [-RADIUS * ORIENTATION,
+                     0.2 * np.array([-1, 0, 0]),
+                     -0.3 * ORIENTATION,
+                     [0.2, 0.3, 0] - UPPER_POINT,
+                     [-1.5 * RADIUS, 0, 0],
+                     [0.6 * RADIUS, 0, 0],
+                     [0, -0.7 * RADIUS, 0],
+                     [0, -0.7 * RADIUS, -0.3 * HEIGHT],
+                     [0, -0.7 * RADIUS, 0.4 * HEIGHT],
+                     0.01 * RADIUS * ORIENTATION,
+                     [-0.02 * RADIUS, 0, 0],
+                     [0, 0, 0.3 * HEIGHT],
+                     [0, 0, -0.4 * HEIGHT],
+                     [0, 0, -0.001 * HEIGHT],
+                     [0, 0, 0.002 * HEIGHT],
+                     (2 - np.sqrt(2)) * RADIUS * ORIENTATION
+                     ]
+
+        for pos, dist, vec in zip(test_points, test_distances, test_vecs):
+            dist_es, vec_es = corner.calc_distance(position=pos)
+            self.assertAlmostEqual(dist_es, dist)
+            np.testing.assert_almost_equal(np.copy(vec_es), vec)
+
     def test_hollow_conical_frustum(self):
         """
         Test implementation of conical frustum shape.

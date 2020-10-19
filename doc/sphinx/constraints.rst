@@ -51,6 +51,7 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.SpheroCylinder`
     - :class:`espressomd.shapes.Torus`
     - :class:`espressomd.shapes.HollowConicalFrustum`
+    - :class:`espressomd.shapes.Quarterpipe`
     - :class:`espressomd.shapes.Union`
 
 
@@ -448,6 +449,35 @@ are described in the shape's class :class:`espressomd.shapes.HollowConicalFrustu
 
 Note: in the OpenGL visualizer, if the OpenGL Extrusion library is not available,
 the shape surface will be rendered with dots.
+
+
+Quarterpipe
+""""""""""""
+
+:class:`espressomd.shapes.Quarterpipe`
+
+A quarterpipe which can be used to connect two walls or rhomboids in a smooth way.
+The shape is constructed by removing a quarter cylinder of radius ``radius``
+from a cuboid with side length ``radius``.
+It can be created via ::
+
+    shape=espressomd.shapes.Quarterpipe(center=[25]*3, axis=[1, 0, 0],
+                                        orientation=[0, 1, 1], radius=25,
+                                        height=30)
+                                         
+A cross section with an explanation of the parameters is shown in the figure below.
+The three-dimensional shape is an extrusion of this profile.
+
+.. figure:: figures/quarterpipe.png
+   :alt: Cross section of the quarterpipe shape.
+   :height: 4.00000cm
+
+``center`` defines the  center of the cylinder. 
+``axis`` is the axis of the cylinder, orthogonal to the curve of the pipe.
+``orientation`` points from ``center`` along the symmetry axis of the quarterpipe.
+``radius`` is the radius of the pipe.
+``height`` is the extent of the shape along ``axis`` (symmetric in both directions
+starting from ``center``).
 
 
 Union

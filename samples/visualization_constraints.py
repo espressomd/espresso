@@ -30,7 +30,7 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument("--wall", action="store_const", dest="shape", const="Wall",
                    default="Wall")
 for shape in ("Sphere", "Ellipsoid", "Cylinder", "SpheroCylinder", "Torus",
-              "SimplePore", "Slitpore", "HollowConicalFrustum"):
+              "SimplePore", "Slitpore", "HollowConicalFrustum", "Quarterpipe"):
     group.add_argument("--" + shape.lower(), action="store_const",
                        dest="shape", const=shape)
 args = parser.parse_args()
@@ -106,6 +106,14 @@ elif args.shape == "Torus":
         shape=espressomd.shapes.Torus(center=[25] * 3, normal=[1, 1, 1],
                                       direction=1, radius=15, tube_radius=6),
         particle_type=0, penetrable=True)
+
+elif args.shape == "Quarterpipe":
+    system.constraints.add(
+        shape=espressomd.shapes.Quarterpipe(center=[25, 15, 15], axis=[1, 0, 0],
+                                            orientation=[0, 1, 1], radius=25,
+                                            height=30),
+        particle_type=0, penetrable=True)
+
 
 else:
     raise ValueError("Unknown shape '{}'".format(args.shape))

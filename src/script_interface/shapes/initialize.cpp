@@ -21,6 +21,7 @@
 #include "Ellipsoid.hpp"
 #include "HollowConicalFrustum.hpp"
 #include "NoWhere.hpp"
+#include "Quarterpipe.hpp"
 #include "Rhomboid.hpp"
 #include "SimplePore.hpp"
 #include "Slitpore.hpp"
@@ -35,6 +36,7 @@
 namespace ScriptInterface {
 namespace Shapes {
 void initialize(Utils::Factory<ObjectHandle> *f) {
+  f->register_new<Quarterpipe>("Shapes::Quarterpipe");
   f->register_new<HollowConicalFrustum>("Shapes::HollowConicalFrustum");
   f->register_new<Union>("Shapes::Union");
   f->register_new<NoWhere>("Shapes::NoWhere");

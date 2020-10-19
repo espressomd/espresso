@@ -67,7 +67,7 @@ sample_test(FILE test_visualization_cellsystem.py)
 sample_test(FILE test_visualization_charged.py)
 foreach(
   var_constraint_shape
-  wall;sphere;ellipsoid;cylinder;spherocylinder;simplepore;slitpore;torus;hollowconicalfrustum
+  wall;sphere;ellipsoid;cylinder;spherocylinder;simplepore;slitpore;torus;hollowconicalfrustum;quarterpipe
 )
   sample_test(FILE test_visualization_constraints.py SUFFIX
               ${var_constraint_shape})
