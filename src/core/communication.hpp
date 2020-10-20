@@ -219,10 +219,10 @@ void mpi_bcast_all_ia_params();
  */
 void mpi_bcast_ia_params(int i, int j);
 
-/** Send new size of \ref ia_params.
+/** Resize \ref ia_params.
  *  \param s   the new size for \ref ia_params.
  */
-void mpi_bcast_max_seen_particle_type(int s);
+void mpi_realloc_ia_params(int s);
 
 /** Gather data for analysis.
  *  \param[in] job what to do:

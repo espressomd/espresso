@@ -345,9 +345,7 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 /*************** BCAST IA SIZE ************/
 
 REGISTER_CALLBACK(realloc_ia_params)
-void mpi_bcast_max_seen_particle_type(int ns) {
-  mpi_call_all(realloc_ia_params, ns);
-}
+void mpi_realloc_ia_params(int ns) { mpi_call_all(realloc_ia_params, ns); }
 
 /*************** GATHER ************/
 void mpi_gather_stats(GatherStats job, double *result) {
