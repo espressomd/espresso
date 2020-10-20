@@ -310,39 +310,31 @@ inline bool is_tabulated_bond(BondedInteraction const type) {
           type == BONDED_IA_TABULATED_DIHEDRAL);
 }
 
+REGISTER_CALLBACK(mpi_bcast_ia_params_slave)
+
 void mpi_bcast_ia_params(int i, int j) {
-  mpi_call(mpi_bcast_ia_params_slave, i, j);
-
-  if (j >= 0) {
-    /* non-bonded interaction parameters */
-    boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-  } else {
-    /* bonded interaction parameters */
-    MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
-              comm_cart);
-    /* For tabulated potentials we have to send the tables extra */
-    if (is_tabulated_bond(bonded_ia_params[i].type)) {
-      boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
-    }
-  }
-
-  on_short_range_ia_change();
+  mpi_call_all(mpi_bcast_ia_params_slave, i, j);
 }
 
 void mpi_bcast_ia_params_slave(int i, int j) {
-  if (j >= 0) { /* non-bonded interaction parameters */
-
+  if (j >= 0) {
+    // non-bonded interaction parameters
     boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-  } else {                   /* bonded interaction parameters */
-    make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
-    if (is_tabulated_bond(bonded_ia_params[i].type)) {
-      delete bonded_ia_params[i].p.tab.pot;
+  } else {
+    // bonded interaction parameters
+    if (this_node) {
+      make_bond_type_exist(i); // realloc bonded_ia_params on slave nodes!
+      if (is_tabulated_bond(bonded_ia_params[i].type)) {
+        delete bonded_ia_params[i].p.tab.pot;
+      }
     }
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
-    /* For tabulated potentials we have to send the tables extra */
+    // for tabulated potentials we have to send the tables extra
     if (is_tabulated_bond(bonded_ia_params[i].type)) {
-      bonded_ia_params[i].p.tab.pot = new TabulatedPotential();
+      if (this_node) {
+        bonded_ia_params[i].p.tab.pot = new TabulatedPotential();
+      }
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
   }
