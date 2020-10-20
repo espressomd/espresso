@@ -192,7 +192,7 @@ void force_calc_iccp3m(const ParticleRange &particles,
 
   cell_structure.non_bonded_loop([](Particle &p1, Particle &p2,
                                     Distance const &d) {
-    /* calc non bonded interactions */
+    /* calc non-bonded interactions */
     add_non_bonded_pair_force_iccp3m(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
   });
 
