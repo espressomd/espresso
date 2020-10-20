@@ -347,18 +347,6 @@ int remove_particle(int part);
 /** Remove all particles. */
 void remove_all_particles();
 
-/** Used by \ref mpi_place_particle, should not be used elsewhere.
- *  Move a particle to a new position. If it does not exist, it is created.
- *  The position must be on the local node!
- *
- *  @param id    the identity of the particle to move
- *  @param pos   its new position
- *  @param _new  if true, the particle is allocated, else has to exists already
- *
- *  @return Pointer to the particle.
- */
-Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
-
 /** Used for example by \ref mpi_send_exclusion.
  *  Locally add an exclusion to a particle.
  *  @param part1 the identity of the first exclusion partner

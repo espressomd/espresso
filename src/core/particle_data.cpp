@@ -597,6 +597,36 @@ void prefetch_particle_data(Utils::Span<const int> in_ids) {
   }
 }
 
+/** Move a particle to a new position. If it does not exist, it is created.
+ *  The position must be on the local node!
+ *
+ *  @param id    the identity of the particle to move
+ *  @param pos   its new position
+ *  @param _new  if true, the particle is allocated, else has to exists already
+ *
+ *  @return Pointer to the particle.
+ */
+Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
+  auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
+  auto i = Utils::Vector3i{};
+  fold_position(pp, i, box_geo);
+
+  if (_new) {
+    Particle new_part;
+    new_part.p.identity = id;
+    new_part.r.p = pp;
+    new_part.l.i = i;
+
+    return cell_structure.add_local_particle(std::move(new_part));
+  }
+
+  auto pt = cell_structure.get_local_particle(id);
+  pt->r.p = pp;
+  pt->l.i = i;
+
+  return pt;
+}
+
 boost::optional<int> mpi_place_new_particle_local(int p_id,
                                                   Utils::Vector3d const &pos) {
   auto p = local_place_particle(p_id, pos, 1);
@@ -617,6 +647,38 @@ REGISTER_CALLBACK_ONE_RANK(mpi_place_new_particle_local)
 int mpi_place_new_particle(int p_id, const Utils::Vector3d &pos) {
   return mpi_call(Communication::Result::one_rank, mpi_place_new_particle_local,
                   p_id, pos);
+}
+
+void mpi_place_particle_local(int pnode, int p_id) {
+  if (pnode == this_node) {
+    Utils::Vector3d pos;
+    comm_cart.recv(0, SOME_TAG, pos);
+    local_place_particle(p_id, pos, 0);
+  }
+
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_place_particle_local)
+
+/** Move particle to a position on a node.
+ *  Also calls \ref on_particle_change.
+ *  \param node  the node to attach it to.
+ *  \param p_id  the particle to move.
+ *  \param pos   the particles position.
+ */
+void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
+  mpi_call(mpi_place_particle_local, node, p_id);
+
+  if (node == this_node)
+    local_place_particle(p_id, pos, 0);
+  else {
+    comm_cart.send(node, SOME_TAG, pos);
+  }
+
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  on_particle_change();
 }
 
 int place_particle(int p_id, const double *pos) {
@@ -891,27 +953,6 @@ int remove_particle(int p_id) {
   particle_node.erase(p_id);
 
   return ES_OK;
-}
-
-Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
-  auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
-  auto i = Utils::Vector3i{};
-  fold_position(pp, i, box_geo);
-
-  if (_new) {
-    Particle new_part;
-    new_part.p.identity = id;
-    new_part.r.p = pp;
-    new_part.l.i = i;
-
-    return cell_structure.add_local_particle(std::move(new_part));
-  }
-
-  auto pt = cell_structure.get_local_particle(id);
-  pt->r.p = pp;
-  pt->l.i = i;
-
-  return pt;
 }
 
 /** Locally rescale all particles on current node.

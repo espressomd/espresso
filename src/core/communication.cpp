@@ -85,7 +85,6 @@ int n_nodes = -1;
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST                                                          \
   CB(mpi_who_has_slave)                                                        \
-  CB(mpi_place_particle_slave)                                                 \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_remove_particle_slave)                                                \
@@ -199,32 +198,6 @@ std::shared_ptr<boost::mpi::environment> mpi_init() {
 #endif
 
   return std::make_shared<boost::mpi::environment>();
-}
-
-/****************** PLACE/PLACE NEW PARTICLE ************/
-
-void mpi_place_particle(int node, int id, const Utils::Vector3d &pos) {
-  mpi_call(mpi_place_particle_slave, node, id);
-
-  if (node == this_node)
-    local_place_particle(id, pos, 0);
-  else {
-    comm_cart.send(node, SOME_TAG, pos);
-  }
-
-  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
-  on_particle_change();
-}
-
-void mpi_place_particle_slave(int pnode, int part) {
-  if (pnode == this_node) {
-    Utils::Vector3d pos;
-    comm_cart.recv(0, SOME_TAG, pos);
-    local_place_particle(part, pos, 0);
-  }
-
-  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
-  on_particle_change();
 }
 
 /****************** REMOVE PARTICLE ************/

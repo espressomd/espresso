@@ -153,14 +153,6 @@ auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** Move particle to a position on a node.
- *  Also calls \ref on_particle_change.
- *  \param id    the particle to move.
- *  \param node  the node to attach it to.
- *  \param pos   the particles position.
- */
-void mpi_place_particle(int node, int id, const Utils::Vector3d &pos);
-
 /** Send exclusions.
  *  Also calls \ref on_particle_change.
  *  \param part     identity of first particle of the exclusion.
