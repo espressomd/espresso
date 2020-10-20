@@ -123,7 +123,7 @@ struct UnpackVisitor : boost::static_visitor<Variant> {
     return std::forward<T>(val);
   }
 
-  /* For object id's they are replaced by references accoding to the map. */
+  /* For object id's they are replaced by references according to the map. */
   Variant operator()(const ObjectId &id) const { return objects.at(id); }
 };
 

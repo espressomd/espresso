@@ -21,7 +21,7 @@
 /** \file
  *  MMM1D algorithm for long range %Coulomb interactions.
  *  Implementation of the MMM1D method for the calculation of the electrostatic
- *  interaction in one dimensionally periodic systems. For details on the
+ *  interaction in one-dimensionally periodic systems. For details on the
  *  method see MMM in general. The MMM1D method works only with the nsquared,
  *  since neither the near nor far formula can be decomposed. However, this
  *  implementation is reasonably fast, so that one can use up to 200 charges
