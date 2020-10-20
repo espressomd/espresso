@@ -25,7 +25,7 @@
 #include "hat.hpp"
 
 #ifdef HAT
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

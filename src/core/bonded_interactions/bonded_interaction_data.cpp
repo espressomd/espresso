@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "bonded_interaction_data.hpp"
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/range/algorithm/copy.hpp>

@@ -204,26 +204,6 @@ int mpi_steepest_descent(int steps);
 /** Broadcast steepest descent parameters */
 void mpi_bcast_steepest_descent();
 
-void mpi_bcast_all_ia_params();
-
-/** Send new IA params.
- *  Also calls \ref on_short_range_ia_change.
- *
- *  Used for both bonded and non-bonded interaction parameters. Therefore
- *  @p i and @p j are used depending on their value:
- *
- *  \param i   particle type for non-bonded interaction parameters /
- *             bonded interaction type number.
- *  \param j   if not negative: particle type for non-bonded interaction
- *             parameters / if negative: flag for bonded interaction
- */
-void mpi_bcast_ia_params(int i, int j);
-
-/** Resize \ref ia_params.
- *  \param s   the new size for \ref ia_params.
- */
-void mpi_realloc_ia_params(int s);
-
 /** Gather data for analysis.
  *  \param[in] job what to do:
  *      \arg for \ref GatherStats::energy, calculate and reduce (sum up)

@@ -25,7 +25,7 @@
 #include "lj.hpp"
 
 #ifdef LENNARD_JONES
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

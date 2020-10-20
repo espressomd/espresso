@@ -20,8 +20,8 @@
  */
 #include "bonded_interactions/bonded_tab.hpp"
 
-#include "communication.hpp"
 #include "errorhandling.hpp"
+#include "interactions.hpp"
 
 int tabulated_bonded_set_params(int bond_type,
                                 TabulatedBondedInteraction tab_type, double min,

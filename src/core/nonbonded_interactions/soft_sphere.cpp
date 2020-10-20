@@ -26,7 +26,7 @@
 #include "soft_sphere.hpp"
 
 #ifdef SOFT_SPHERE
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

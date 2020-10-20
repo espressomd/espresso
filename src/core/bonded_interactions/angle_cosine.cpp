@@ -24,7 +24,7 @@
  */
 #include "angle_cosine.hpp"
 
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

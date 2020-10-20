@@ -19,7 +19,7 @@
 
 #include "oif_local_forces.hpp"
 
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

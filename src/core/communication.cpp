@@ -33,7 +33,6 @@
 
 #include "CellStructure.hpp"
 #include "EspressoSystemInterface.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "cuda_interface.hpp"
 #include "energy.hpp"
@@ -53,8 +52,6 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
-
-#include "serialization/IA_parameters.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/range/algorithm/min_element.hpp>
@@ -92,7 +89,6 @@ int n_nodes = -1;
 #define CALLBACK_LIST                                                          \
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_place_particle_slave)                                                 \
-  CB(mpi_bcast_ia_params_slave)                                                \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_remove_particle_slave)                                                \
@@ -294,58 +290,6 @@ int mpi_integrate(int n_steps, int reuse_forces) {
   return mpi_call(Communication::Result::reduction, std::plus<int>(),
                   mpi_integrate_slave, n_steps, reuse_forces);
 }
-
-/*************** BCAST IA ************/
-static void mpi_bcast_all_ia_params_slave() {
-  boost::mpi::broadcast(comm_cart, ia_params, 0);
-}
-
-REGISTER_CALLBACK(mpi_bcast_all_ia_params_slave)
-
-void mpi_bcast_all_ia_params() { mpi_call_all(mpi_bcast_all_ia_params_slave); }
-
-inline bool is_tabulated_bond(BondedInteraction const type) {
-  return (type == BONDED_IA_TABULATED_DISTANCE or
-          type == BONDED_IA_TABULATED_ANGLE or
-          type == BONDED_IA_TABULATED_DIHEDRAL);
-}
-
-REGISTER_CALLBACK(mpi_bcast_ia_params_slave)
-
-void mpi_bcast_ia_params(int i, int j) {
-  mpi_call_all(mpi_bcast_ia_params_slave, i, j);
-}
-
-void mpi_bcast_ia_params_slave(int i, int j) {
-  if (j >= 0) {
-    // non-bonded interaction parameters
-    boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-  } else {
-    // bonded interaction parameters
-    if (this_node) {
-      make_bond_type_exist(i); // realloc bonded_ia_params on slave nodes!
-      if (is_tabulated_bond(bonded_ia_params[i].type)) {
-        delete bonded_ia_params[i].p.tab.pot;
-      }
-    }
-    MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
-              comm_cart);
-    // for tabulated potentials we have to send the tables extra
-    if (is_tabulated_bond(bonded_ia_params[i].type)) {
-      if (this_node) {
-        bonded_ia_params[i].p.tab.pot = new TabulatedPotential();
-      }
-      boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
-    }
-  }
-
-  on_short_range_ia_change();
-}
-
-/*************** BCAST IA SIZE ************/
-
-REGISTER_CALLBACK(realloc_ia_params)
-void mpi_realloc_ia_params(int ns) { mpi_call_all(realloc_ia_params, ns); }
 
 /*************** GATHER ************/
 void mpi_gather_stats(GatherStats job, double *result) {

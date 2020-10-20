@@ -25,7 +25,7 @@
 #include "smooth_step.hpp"
 
 #ifdef SMOOTH_STEP
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 
