@@ -597,15 +597,37 @@ void prefetch_particle_data(Utils::Span<const int> in_ids) {
   }
 }
 
-int place_particle(int part, const double *pos) {
+boost::optional<int> mpi_place_new_particle_local(int p_id,
+                                                  Utils::Vector3d const &pos) {
+  auto p = local_place_particle(p_id, pos, 1);
+  on_particle_change();
+  if (p) {
+    return comm_cart.rank();
+  }
+  return {};
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_place_new_particle_local)
+
+/** Create particle at a position on a node.
+ *  Also calls \ref on_particle_change.
+ *  \param p_id  the particle to create.
+ *  \param pos   the particles position.
+ */
+int mpi_place_new_particle(int p_id, const Utils::Vector3d &pos) {
+  return mpi_call(Communication::Result::one_rank, mpi_place_new_particle_local,
+                  p_id, pos);
+}
+
+int place_particle(int p_id, const double *pos) {
   Utils::Vector3d p{pos[0], pos[1], pos[2]};
 
-  if (particle_exists(part)) {
-    mpi_place_particle(get_particle_node(part), part, p);
+  if (particle_exists(p_id)) {
+    mpi_place_particle(get_particle_node(p_id), p_id, p);
 
     return ES_PART_OK;
   }
-  particle_node[part] = mpi_place_new_particle(part, p);
+  particle_node[p_id] = mpi_place_new_particle(p_id, p);
 
   return ES_PART_CREATED;
 }

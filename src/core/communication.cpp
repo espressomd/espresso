@@ -227,26 +227,6 @@ void mpi_place_particle_slave(int pnode, int part) {
   on_particle_change();
 }
 
-boost::optional<int> mpi_place_new_particle_slave(int part,
-                                                  Utils::Vector3d const &pos) {
-  auto p = local_place_particle(part, pos, 1);
-
-  on_particle_change();
-
-  if (p) {
-    return comm_cart.rank();
-  }
-
-  return {};
-}
-
-REGISTER_CALLBACK_ONE_RANK(mpi_place_new_particle_slave)
-
-int mpi_place_new_particle(int id, const Utils::Vector3d &pos) {
-  return mpi_call(Communication::Result::one_rank, mpi_place_new_particle_slave,
-                  id, pos);
-}
-
 /****************** REMOVE PARTICLE ************/
 void mpi_remove_particle(int pnode, int part) {
   mpi_call_all(mpi_remove_particle_slave, pnode, part);

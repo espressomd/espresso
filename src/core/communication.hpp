@@ -161,13 +161,6 @@ void mpi_loop();
  */
 void mpi_place_particle(int node, int id, const Utils::Vector3d &pos);
 
-/** Create particle at a position on a node.
- *  Also calls \ref on_particle_change.
- *  \param id    the particle to create.
- *  \param pos   the particles position.
- */
-int mpi_place_new_particle(int id, const Utils::Vector3d &pos);
-
 /** Send exclusions.
  *  Also calls \ref on_particle_change.
  *  \param part     identity of first particle of the exclusion.
