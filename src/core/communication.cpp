@@ -116,8 +116,6 @@ CALLBACK_LIST
 
 #undef CB
 
-int mpi_check_runtime_errors();
-
 /**********************************************
  * procedures
  **********************************************/
