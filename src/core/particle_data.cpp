@@ -932,6 +932,25 @@ const std::vector<BondView> &get_particle_bonds(int part) {
   return ret;
 }
 
+void mpi_remove_particle_local(int, int part) {
+  if (part != -1) {
+    cell_structure.remove_particle(part);
+  } else {
+    cell_structure.remove_all_particles();
+  }
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_remove_particle_local)
+
+/** Remove a particle.
+ *  Also calls \ref on_particle_change.
+ *  \param p_id  the particle to remove, use -1 to remove all particles.
+ */
+void mpi_remove_particle(int, int p_id) {
+  mpi_call_all(mpi_remove_particle_local, -1, p_id);
+}
+
 void remove_all_particles() {
   mpi_remove_particle(-1, -1);
   clear_particle_node();
@@ -945,10 +964,8 @@ int remove_particle(int p_id) {
     remove_id_from_map(p_id, type);
   }
 
-  auto const pnode = get_particle_node(p_id);
-
   particle_node[p_id] = -1;
-  mpi_remove_particle(pnode, p_id);
+  mpi_remove_particle(-1, p_id);
 
   particle_node.erase(p_id);
 

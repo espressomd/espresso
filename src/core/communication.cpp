@@ -87,7 +87,6 @@ int n_nodes = -1;
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
-  CB(mpi_remove_particle_slave)                                                \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
@@ -198,21 +197,6 @@ std::shared_ptr<boost::mpi::environment> mpi_init() {
 #endif
 
   return std::make_shared<boost::mpi::environment>();
-}
-
-/****************** REMOVE PARTICLE ************/
-void mpi_remove_particle(int pnode, int part) {
-  mpi_call_all(mpi_remove_particle_slave, pnode, part);
-}
-
-void mpi_remove_particle_slave(int pnode, int part) {
-  if (part != -1) {
-    cell_structure.remove_particle(part);
-  } else {
-    cell_structure.remove_all_particles();
-  }
-
-  on_particle_change();
 }
 
 /********************* STEEPEST DESCENT ********/

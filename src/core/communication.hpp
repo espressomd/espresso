@@ -161,13 +161,6 @@ void mpi_loop();
  */
 void mpi_send_exclusion(int part, int part2, int _delete);
 
-/** Remove a particle.
- *  Also calls \ref on_particle_change.
- *  \param id    the particle to remove.
- *  \param node  the node it is attached to.
- */
-void mpi_remove_particle(int node, int id);
-
 /** Start integrator.
  *  @param n_steps       how many steps to do.
  *  @param reuse_forces  whether to trust the old forces for the first half step
