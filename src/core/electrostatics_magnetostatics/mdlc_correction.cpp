@@ -36,18 +36,25 @@
 
 #include <utils/constants.hpp>
 
+#include <boost/mpi.hpp>
+#include <boost/mpi/operations.hpp>
+
 DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
 
-static double mu_max;
-
-void calc_mu_max() {
-  auto local_particles = cell_structure.local_particles();
-  mu_max = std::accumulate(
+/** Calculate the maximal dipole moment in the system */
+double calc_mu_max() {
+  auto const local_particles = cell_structure.local_particles();
+  auto const mu_max_local = std::accumulate(
       local_particles.begin(), local_particles.end(), 0.0,
       [](double mu, Particle const &p) { return std::max(mu, p.p.dipm); });
 
-  MPI_Allreduce(MPI_IN_PLACE, &mu_max, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
+  double mu_max;
+  boost::mpi::reduce(comm_cart, mu_max_local, mu_max,
+                     boost::mpi::maximum<double>(), 0);
+  return mu_max;
 }
+
+REGISTER_CALLBACK_MASTER_RANK(calc_mu_max)
 
 inline double g1_DLC_dip(double g, double x) {
   auto const c = g / x;
@@ -409,8 +416,8 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
 
 /** Compute the cut-off in the DLC dipolar part to get a certain accuracy.
  *  We assume particles to have all the same value of the dipolar momentum
- *  modulus (@ref mu_max). @ref mu_max is taken as the largest value of mu
- *  inside the system. If we assume the gap has a width @c gap_size (within
+ *  modulus, which is taken as the largest value of mu  inside the system.
+ *  If we assume the gap has a width @c gap_size (within
  *  which there is no particles): <tt>Lz = h + gap_size</tt>
  *
  *  BE CAREFUL:
@@ -419,9 +426,10 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
  *     it makes no sense to have an accurate result for DLC-dipolar.
  */
 int mdlc_tune(double error) {
-  mpi_bcast_max_mu(); /* we take the maximum dipole in the system, to be sure
-                         that the errors in the other case
-                         will be equal or less than for this one */
+  /* we take the maximum dipole in the system, to be sure that the errors
+   * in the other case will be equal or less than for this one */
+  auto const mu_max = mpi_call(Communication::Result::master_rank, calc_mu_max);
+  auto const mu_max_sq = mu_max * mu_max;
 
   const double n = get_n_part();
   auto const lx = box_geo.length()[0];
@@ -455,8 +463,7 @@ int mdlc_tune(double error) {
                           9.0 * exp(-2.0 * gc * h) * g1_DLC_dip(gc, lz + h));
     auto const fa1 = 0.5 * sqrt(Utils::pi() / (2.0 * a)) * fa0;
     auto const fa2 = g2_DLC_dip(gc, lz);
-    auto const de =
-        n * (mu_max * mu_max) / (4.0 * (exp(gc * lz) - 1.0)) * (fa1 + fa2);
+    auto const de = n * mu_max_sq / (4.0 * (exp(gc * lz) - 1.0)) * (fa1 + fa2);
     if (de < error) {
       flag = true;
       break;

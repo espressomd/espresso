@@ -242,9 +242,6 @@ void mpi_bcast_cuda_global_part_vars();
  */
 int mpi_iccp3m_init();
 
-/** Calculate the maximal dipole moment in the system (part of MDLC) */
-void mpi_bcast_max_mu();
-
 /** @name Galilei and other
  *  - set all particle velocities and rotational inertias to zero
  *  - set all forces and torques on the particles to zero

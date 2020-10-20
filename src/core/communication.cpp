@@ -50,7 +50,6 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/range/algorithm/min_element.hpp>
@@ -484,14 +483,6 @@ int mpi_iccp3m_init() {
   on_particle_charge_change();
   return check_runtime_errors(comm_cart);
 }
-#endif
-
-/********************* CALC MU MAX ********/
-
-#ifdef DP3M
-REGISTER_CALLBACK(calc_mu_max)
-
-void mpi_bcast_max_mu() { mpi_call_all(calc_mu_max); }
 #endif
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
