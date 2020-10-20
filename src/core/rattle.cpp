@@ -197,7 +197,7 @@ void correct_pos_shake(CellStructure &cs) {
   check_resort_particles();
 }
 
-/**The forces are transfered temporarily from f.f member of particle structure
+/**The forces are transferred temporarily from f.f member of particle structure
    to r.p_old,
     which is idle now and initialize the velocity correction vector to zero at
    f.f[3]

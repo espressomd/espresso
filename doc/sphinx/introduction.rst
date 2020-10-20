@@ -527,7 +527,7 @@ or citing |es|, the version should always be mentioned. See
 our policies on :ref:`bug reports <Contributing>` and
 :ref:`citing the software <How to cite ESPResSo>` for more details.
 
-Releases from 4.0 onwards can be found on
+Releases from 4.0 onward can be found on
 `GitHub <https://github.com/espressomd/espresso/releases>`_.
 Older releases from 2.1 to 3.3 can be found in
 `GNU Savannah <http://download.savannah.gnu.org/releases/espressomd/>`_.
@@ -620,7 +620,7 @@ You may also provide the patch level, when relevant. If you developed code
 for |es| and made it available in a publicly accessible repository, you
 should consider providing the corresponding URL, for example in a footnote:
 
-    The method was implemented for ESPResSo 4.1.2[24]. The full code is
+    The method was implemented for ESPResSo 4.1.4[24]. The full code is
     available online\*.
 
     | \* https://github.com/username/espresso/tree/implemented-algorithm

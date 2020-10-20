@@ -1110,7 +1110,7 @@ cdef class ParticleHandle:
             *and* constant velocity at the same time. The setting both ``v_swim`` and
             ``f_swim`` to 0.0 thus disables swimming. This option applies to all
             non-lattice-Boltzmann thermostats. Note that there is no real difference
-            between ``v_swim`` and ``f_swim`` since the latter may aways be chosen such that
+            between ``v_swim`` and ``f_swim`` since the latter may always be chosen such that
             the same terminal velocity is achieved for a given friction coefficient.
 
 
@@ -1267,7 +1267,7 @@ cdef class ParticleHandle:
         ----------
         bond : :obj:`tuple`
             tuple where the first element is either a bond ID of a bond type,
-            and the last element is the ID of the parter particle to be bonded
+            and the last element is the ID of the partner particle to be bonded
             to.
 
 
@@ -1347,7 +1347,7 @@ cdef class ParticleHandle:
         ----------
         _bond : :obj:`tuple`
             tuple where the first element is either a bond ID of a bond type,
-            and the last element is the ID of the parter particle to be bonded
+            and the last element is the ID of the partner particle to be bonded
             to.
 
 
