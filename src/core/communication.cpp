@@ -89,7 +89,6 @@ int n_nodes = -1;
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_remove_particle_slave)                                                \
-  CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
@@ -387,29 +386,6 @@ void mpi_bcast_coulomb_params_slave(int, int) {
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
   on_coulomb_change();
 #endif
-}
-
-/****************** RESCALE PARTICLES ************/
-
-void mpi_rescale_particles(int dir, double scale) {
-  int pnode;
-
-  mpi_call(mpi_rescale_particles_slave, -1, dir);
-  for (pnode = 0; pnode < n_nodes; pnode++) {
-    if (pnode == this_node) {
-      local_rescale_particles(dir, scale);
-    } else {
-      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
-    }
-  }
-  on_particle_change();
-}
-
-void mpi_rescale_particles_slave(int, int dir) {
-  double scale = 0.0;
-  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-  local_rescale_particles(dir, scale);
-  on_particle_change();
 }
 
 /*************** BCAST CELL STRUCTURE *****************/

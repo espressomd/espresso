@@ -892,6 +892,10 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
   return pt;
 }
 
+/** Locally rescale all particles on current node.
+ *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
+ *  @param scale factor by which to rescale (>1: stretch, <1: contract)
+ */
 void local_rescale_particles(int dir, double scale) {
   for (auto &p : cell_structure.local_particles()) {
     if (dir < 3)
@@ -900,6 +904,27 @@ void local_rescale_particles(int dir, double scale) {
       p.r.p *= scale;
     }
   }
+}
+
+void mpi_rescale_particles_local(int, int dir) {
+  double scale = 0.0;
+  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+  local_rescale_particles(dir, scale);
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_rescale_particles_local)
+
+void mpi_rescale_particles(int dir, double scale) {
+  mpi_call(mpi_rescale_particles_local, -1, dir);
+  for (int pnode = 0; pnode < n_nodes; pnode++) {
+    if (pnode == this_node) {
+      local_rescale_particles(dir, scale);
+    } else {
+      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    }
+  }
+  on_particle_change();
 }
 
 #ifdef EXCLUSIONS

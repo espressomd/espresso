@@ -223,9 +223,6 @@ void mpi_set_time_step(double time_step);
 /** Send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
-/** Rescale all particle positions in direction @p dir by a factor @p scale. */
-void mpi_rescale_particles(int dir, double scale);
-
 /** Change the cell structure on all nodes. */
 void mpi_bcast_cell_structure(int cs);
 

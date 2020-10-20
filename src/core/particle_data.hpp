@@ -367,12 +367,8 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
  */
 void local_change_exclusion(int part1, int part2, int _delete);
 
-/** Used by \ref mpi_rescale_particles, should not be used elsewhere.
- *  Locally rescale all particles on current node.
- *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
- *  @param scale factor by which to rescale (>1: stretch, <1: contract)
- */
-void local_rescale_particles(int dir, double scale);
+/** Rescale all particle positions in direction @p dir by a factor @p scale. */
+void mpi_rescale_particles(int dir, double scale);
 
 /** Automatically add the next \<distance\> neighbors in each molecule to the
  *  exclusion list.
