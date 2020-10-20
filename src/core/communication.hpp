@@ -201,9 +201,6 @@ int mpi_integrate(int n_steps, int reuse_forces);
  */
 int mpi_steepest_descent(int steps);
 
-/** Broadcast steepest descent parameters */
-void mpi_bcast_steepest_descent();
-
 /** Gather data for analysis.
  *  \param[in] job what to do:
  *      \arg for \ref GatherStats::energy, calculate and reduce (sum up)

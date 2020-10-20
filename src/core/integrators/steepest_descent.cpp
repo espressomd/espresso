@@ -110,3 +110,9 @@ void steepest_descent_init(const double f_max, const double gamma,
 void mpi_bcast_steepest_descent_worker(int, int) {
   boost::mpi::broadcast(comm_cart, params, 0);
 }
+
+REGISTER_CALLBACK(mpi_bcast_steepest_descent_worker)
+
+void mpi_bcast_steepest_descent() {
+  mpi_call_all(mpi_bcast_steepest_descent_worker, -1, 0);
+}

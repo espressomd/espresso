@@ -43,7 +43,6 @@
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
-#include "integrators/steepest_descent.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 
@@ -91,7 +90,6 @@ int n_nodes = -1;
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
-  CB(mpi_bcast_steepest_descent_worker)                                        \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
@@ -424,13 +422,6 @@ REGISTER_CALLBACK(cells_set_use_verlet_lists)
 
 void mpi_set_use_verlet_lists(bool use_verlet_lists) {
   mpi_call_all(cells_set_use_verlet_lists, use_verlet_lists);
-}
-
-/*************** BCAST STEEPEST DESCENT *****************/
-
-void mpi_bcast_steepest_descent() {
-  mpi_call(mpi_bcast_steepest_descent_worker, -1, 0);
-  mpi_bcast_steepest_descent_worker(-1, 0);
 }
 
 /******************* BCAST CUDA GLOBAL PART VARS ********************/
