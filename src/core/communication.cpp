@@ -304,6 +304,12 @@ REGISTER_CALLBACK(mpi_bcast_all_ia_params_slave)
 
 void mpi_bcast_all_ia_params() { mpi_call_all(mpi_bcast_all_ia_params_slave); }
 
+inline bool is_tabulated_bond(BondedInteraction const type) {
+  return (type == BONDED_IA_TABULATED_DISTANCE or
+          type == BONDED_IA_TABULATED_ANGLE or
+          type == BONDED_IA_TABULATED_DIHEDRAL);
+}
+
 void mpi_bcast_ia_params(int i, int j) {
   mpi_call(mpi_bcast_ia_params_slave, i, j);
 
@@ -315,9 +321,7 @@ void mpi_bcast_ia_params(int i, int j) {
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
     /* For tabulated potentials we have to send the tables extra */
-    if (bonded_ia_params[i].type == BONDED_IA_TABULATED_DISTANCE or
-        bonded_ia_params[i].type == BONDED_IA_TABULATED_ANGLE or
-        bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
+    if (is_tabulated_bond(bonded_ia_params[i].type)) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
   }
@@ -334,9 +338,7 @@ void mpi_bcast_ia_params_slave(int i, int j) {
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
     /* For tabulated potentials we have to send the tables extra */
-    if (bonded_ia_params[i].type == BONDED_IA_TABULATED_DISTANCE or
-        bonded_ia_params[i].type == BONDED_IA_TABULATED_ANGLE or
-        bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
+    if (is_tabulated_bond(bonded_ia_params[i].type)) {
       auto *tab_pot = new TabulatedPotential();
       boost::mpi::broadcast(comm_cart, *tab_pot, 0);
 
