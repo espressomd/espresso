@@ -44,7 +44,6 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
 #include "integrators/steepest_descent.hpp"
-#include "npt.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 
@@ -427,17 +426,6 @@ REGISTER_CALLBACK(cells_set_use_verlet_lists)
 void mpi_set_use_verlet_lists(bool use_verlet_lists) {
   mpi_call_all(cells_set_use_verlet_lists, use_verlet_lists);
 }
-
-/*************** BCAST NPTISO GEOM *****************/
-
-#ifdef NPT
-REGISTER_CALLBACK(mpi_bcast_nptiso_geom_worker)
-
-void mpi_bcast_nptiso_geom() {
-  mpi_call(mpi_bcast_nptiso_geom_worker, -1, 0);
-  mpi_bcast_nptiso_geom_worker(-1, 0);
-}
-#endif
 
 /*************** BCAST STEEPEST DESCENT *****************/
 

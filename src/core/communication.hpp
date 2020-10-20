@@ -234,9 +234,6 @@ void mpi_bcast_cell_structure(int cs);
 
 void mpi_set_use_verlet_lists(bool use_verlet_lists);
 
-/** Broadcast nptiso geometry parameters to all nodes. */
-void mpi_bcast_nptiso_geom();
-
 /** Broadcast @ref CUDA_global_part_vars structure */
 void mpi_bcast_cuda_global_part_vars();
 
