@@ -66,21 +66,6 @@ using Communication::mpiCallbacks;
 int this_node = -1;
 int n_nodes = -1;
 
-// if you want to add a callback, add it here, and here only
-#define CALLBACK_LIST                                                          \
-  CB(mpi_gather_stats_slave)                                                   \
-
-// create the forward declarations
-#define CB(name) void name(int node, int param);
-#ifndef DOXYGEN
-/* this conditional on DOXYGEN prevents an interaction in Doxygen between
- * CALLBACK_LIST and whatever follows next, e.g. a function "int foo();"
- * would otherwise become "CALLBACK_LIST int foo();" */
-CALLBACK_LIST
-#endif
-
-#undef CB
-
 /**********************************************
  * procedures
  **********************************************/
@@ -156,10 +141,6 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   Communication::m_callbacks =
       std::make_unique<Communication::MpiCallbacks>(comm_cart);
 
-#define CB(name) Communication::m_callbacks->add(&(name));
-  CALLBACK_LIST
-#undef CB
-
   ErrorHandling::init_error_handling(mpiCallbacks());
 
   on_program_start();
@@ -173,31 +154,6 @@ std::shared_ptr<boost::mpi::environment> mpi_init() {
 #endif
 
   return std::make_shared<boost::mpi::environment>();
-}
-
-/*************** GATHER ************/
-void mpi_gather_stats(GatherStats job, double *result) {
-  auto job_slave = static_cast<int>(job);
-  switch (job) {
-  default:
-    fprintf(
-        stderr,
-        "%d: INTERNAL ERROR: illegal request %d for mpi_gather_stats_slave\n",
-        this_node, job_slave);
-    errexit();
-  }
-}
-
-void mpi_gather_stats_slave(int, int job_slave) {
-  auto job = static_cast<GatherStats>(job_slave);
-  switch (job) {
-  default:
-    fprintf(
-        stderr,
-        "%d: INTERNAL ERROR: illegal request %d for mpi_gather_stats_slave\n",
-        this_node, job_slave);
-    errexit();
-  }
 }
 
 /*********************** MAIN LOOP for slaves ****************/

@@ -39,14 +39,12 @@
  *  following:
  *  - write the @c mpi_* function that is executed on the master
  *  - write the @c mpi_*_slave function
- *  - in communication.cpp add your slave function to \ref CALLBACK_LIST or
- *    register it with one of the @c REGISTER_CALLBACK macros
+ *  - register your slave function with one of the @c REGISTER_CALLBACK macros
  *
  *  After this, your procedure is free to do anything. However, it has
  *  to be in (MPI) sync with what your new @c mpi_*_slave does. This
  *  procedure is called immediately after the broadcast with the
- *  arbitrary integer as parameter. To this aim it has also to be added
- *  to \ref CALLBACK_LIST.
+ *  arbitrary integer as parameter.
  */
 
 #include "MpiCallbacks.hpp"
@@ -65,9 +63,6 @@ extern int this_node;
 extern int n_nodes;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
-/** Statistics to calculate */
-enum class GatherStats : int {
-};
 
 /**
  * Default MPI tag used by callbacks.
@@ -148,10 +143,6 @@ auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
 
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
-
-/** Gather data for analysis.
- */
-void mpi_gather_stats(GatherStats job, double *result = nullptr);
 
 namespace Communication {
 /**
