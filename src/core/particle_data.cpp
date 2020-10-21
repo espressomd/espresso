@@ -314,10 +314,7 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 };
 } // namespace
 
-/**
- * @brief Callback for \ref mpi_send_update_message.
- */
-void mpi_update_particle_slave(int node, int id) {
+void mpi_send_update_message_local(int node, int id) {
   if (node == comm_cart.rank()) {
     UpdateMessage msg{};
     comm_cart.recv(0, SOME_TAG, msg);
@@ -326,6 +323,8 @@ void mpi_update_particle_slave(int node, int id) {
 
   on_particle_change();
 }
+
+REGISTER_CALLBACK(mpi_send_update_message_local)
 
 /**
  * @brief Send a particle update message.
@@ -348,7 +347,7 @@ void mpi_update_particle_slave(int node, int id) {
 void mpi_send_update_message(int id, const UpdateMessage &msg) {
   auto const pnode = get_particle_node(id);
 
-  mpi_call(mpi_update_particle_slave, pnode, id);
+  mpi_call(mpi_send_update_message_local, pnode, id);
 
   /* If the particle is remote, send the
    * message to the target, otherwise we
