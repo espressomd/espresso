@@ -31,8 +31,6 @@
 
 #include "errorhandling.hpp"
 
-#include "EspressoSystemInterface.hpp"
-#include "cuda_interface.hpp"
 #include "energy.hpp"
 #include "event.hpp"
 #include "global.hpp"
@@ -81,7 +79,6 @@ int n_nodes = -1;
 #define CALLBACK_LIST                                                          \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
-  CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -287,24 +284,6 @@ void mpi_bcast_coulomb_params_slave(int, int) {
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
   on_coulomb_change();
-#endif
-}
-
-/******************* BCAST CUDA GLOBAL PART VARS ********************/
-
-void mpi_bcast_cuda_global_part_vars() {
-#ifdef CUDA
-  mpi_call(mpi_bcast_cuda_global_part_vars_slave, 1,
-           0); // third parameter is meaningless
-  mpi_bcast_cuda_global_part_vars_slave(-1, 0);
-#endif
-}
-
-void mpi_bcast_cuda_global_part_vars_slave(int, int) {
-#ifdef CUDA
-  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
-            sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-  espressoSystemInterface.requestParticleStructGpu();
 #endif
 }
 

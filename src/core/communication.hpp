@@ -175,9 +175,6 @@ void mpi_set_time_step(double time_step);
 /** Send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
-/** Broadcast @ref CUDA_global_part_vars structure */
-void mpi_bcast_cuda_global_part_vars();
-
 /** Perform iccp3m initialization.
  *  @return non-zero value on error
  */

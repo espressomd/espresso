@@ -21,6 +21,7 @@
 
 #ifdef CUDA
 
+#include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "grid.hpp"
@@ -160,6 +161,16 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
   }
 }
 
-void cuda_bcast_global_part_params() { mpi_bcast_cuda_global_part_vars(); }
+void cuda_bcast_global_part_params_local(int, int) {
+  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
+            sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+  espressoSystemInterface.requestParticleStructGpu();
+}
+
+REGISTER_CALLBACK(cuda_bcast_global_part_params_local)
+
+void cuda_bcast_global_part_params() {
+  mpi_call_all(cuda_bcast_global_part_params_local, -1, -1);
+}
 
 #endif /* ifdef CUDA */
