@@ -36,7 +36,6 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "pressure.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
@@ -187,10 +186,6 @@ std::shared_ptr<boost::mpi::environment> mpi_init() {
 void mpi_gather_stats(GatherStats job, double *result) {
   auto job_slave = static_cast<int>(job);
   switch (job) {
-  case GatherStats::pressure:
-    mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    pressure_calc();
-    break;
   case GatherStats::lb_fluid_momentum:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
     lb_calc_fluid_momentum(result, lbpar, lbfields, lblattice);
@@ -213,9 +208,6 @@ void mpi_gather_stats(GatherStats job, double *result) {
 void mpi_gather_stats_slave(int, int job_slave) {
   auto job = static_cast<GatherStats>(job_slave);
   switch (job) {
-  case GatherStats::pressure:
-    pressure_calc();
-    break;
   case GatherStats::lb_fluid_momentum:
     lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
     break;

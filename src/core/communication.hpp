@@ -67,7 +67,6 @@ extern int n_nodes;
 extern boost::mpi::communicator comm_cart;
 /** Statistics to calculate */
 enum class GatherStats : int {
-  pressure,
   lb_fluid_momentum,
   lb_boundary_forces
 };
@@ -154,8 +153,6 @@ void mpi_loop();
 
 /** Gather data for analysis.
  *  \param[in] job what to do:
- *      \arg for \ref GatherStats::pressure, calculate and reduce (sum up)
- *           pressure, using \ref pressure_calc.
  *      \arg for \ref GatherStats::lb_fluid_momentum, use
  *           \ref lb_calc_fluid_momentum.
  *      \arg for \ref GatherStats::lb_boundary_forces, use
