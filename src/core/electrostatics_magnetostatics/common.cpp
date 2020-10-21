@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2020 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -18,31 +18,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *
- *  Implementation of \ref debye_hueckel.hpp
- */
 
-#include "debye_hueckel.hpp"
+#include "communication.hpp"
+#include "event.hpp"
 
-#ifdef ELECTROSTATICS
 #include "electrostatics_magnetostatics/common.hpp"
 
-Debye_hueckel_params dh_params{};
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
-int dh_set_params(double kappa, double r_cut) {
-  if (dh_params.kappa < 0.0)
-    return -1;
+#include <mpi.h>
 
-  if (dh_params.r_cut < 0.0)
-    return -2;
+void mpi_bcast_coulomb_params_local(int, int) {
+#ifdef ELECTROSTATICS
+  MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
+  Coulomb::bcast_coulomb_params();
+#endif
 
-  dh_params.kappa = kappa;
-  dh_params.r_cut = r_cut;
+#ifdef DIPOLES
+  MPI_Bcast(&dipole, sizeof(Dipole_parameters), MPI_BYTE, 0, comm_cart);
+  Dipole::set_method_local(dipole.method);
+  Dipole::bcast_params(comm_cart);
+#endif
 
-  mpi_bcast_coulomb_params();
-
-  return 1;
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
+  on_coulomb_change();
+#endif
 }
 
+REGISTER_CALLBACK(mpi_bcast_coulomb_params_local)
+
+void mpi_bcast_coulomb_params() {
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
+  mpi_call_all(mpi_bcast_coulomb_params_local, -1, -1);
 #endif
+}

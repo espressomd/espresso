@@ -21,7 +21,7 @@
 
 #include "DipolarDirectSum.hpp"
 #include "EspressoSystemInterface.hpp"
-#include "communication.hpp"
+#include "electrostatics_magnetostatics/common.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 

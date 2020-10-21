@@ -25,6 +25,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "dipole.hpp"
+#include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"

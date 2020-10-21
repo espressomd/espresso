@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
- * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
- *   Max-Planck-Institute for Polymer Research, Theory Group
+ * Copyright (C) 2020 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -18,31 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *
- *  Implementation of \ref debye_hueckel.hpp
- */
 
-#include "debye_hueckel.hpp"
-
-#ifdef ELECTROSTATICS
-#include "electrostatics_magnetostatics/common.hpp"
-
-Debye_hueckel_params dh_params{};
-
-int dh_set_params(double kappa, double r_cut) {
-  if (dh_params.kappa < 0.0)
-    return -1;
-
-  if (dh_params.r_cut < 0.0)
-    return -2;
-
-  dh_params.kappa = kappa;
-  dh_params.r_cut = r_cut;
-
-  mpi_bcast_coulomb_params();
-
-  return 1;
-}
-
-#endif
+/** Send new Coulomb/Dipole parameters. */
+void mpi_bcast_coulomb_params();

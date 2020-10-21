@@ -163,9 +163,6 @@ void mpi_loop();
  */
 void mpi_gather_stats(GatherStats job, double *result = nullptr);
 
-/** Send new Coulomb parameters. */
-void mpi_bcast_coulomb_params();
-
 namespace Communication {
 /**
  * @brief Init globals for communication.

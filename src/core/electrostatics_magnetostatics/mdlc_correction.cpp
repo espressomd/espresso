@@ -27,6 +27,7 @@
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "errorhandling.hpp"

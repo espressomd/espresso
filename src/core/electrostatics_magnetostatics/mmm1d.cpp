@@ -28,13 +28,13 @@
 
 #ifdef ELECTROSTATICS
 #include "cells.hpp"
-#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "mmm-common.hpp"
 #include "specfunc.hpp"
 #include "tuning.hpp"
 
+#include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
 #include <utils/strcat_alloc.hpp>

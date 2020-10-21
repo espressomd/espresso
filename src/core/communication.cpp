@@ -37,9 +37,6 @@
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
-
 #include <boost/mpi.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 #include <boost/serialization/array.hpp>
@@ -74,7 +71,6 @@ int n_nodes = -1;
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST                                                          \
   CB(mpi_gather_stats_slave)                                                   \
-  CB(mpi_bcast_coulomb_params_slave)                                           \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -222,35 +218,6 @@ void mpi_gather_stats_slave(int, int job_slave) {
         this_node, job_slave);
     errexit();
   }
-}
-
-/*************** BCAST COULOMB ************/
-void mpi_bcast_coulomb_params() {
-#if defined(ELECTROSTATICS) || defined(DIPOLES)
-  mpi_call(mpi_bcast_coulomb_params_slave, 1, 0);
-  mpi_bcast_coulomb_params_slave(-1, 0);
-#endif
-}
-
-void mpi_bcast_coulomb_params_slave(int, int) {
-
-#ifdef ELECTROSTATICS
-  MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
-
-  Coulomb::bcast_coulomb_params();
-#endif
-
-#ifdef DIPOLES
-  MPI_Bcast(&dipole, sizeof(Dipole_parameters), MPI_BYTE, 0, comm_cart);
-
-  Dipole::set_method_local(dipole.method);
-
-  Dipole::bcast_params(comm_cart);
-#endif
-
-#if defined(ELECTROSTATICS) || defined(DIPOLES)
-  on_coulomb_change();
-#endif
 }
 
 /*********************** MAIN LOOP for slaves ****************/
