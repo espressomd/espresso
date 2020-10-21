@@ -1219,6 +1219,12 @@ const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 
 ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
 
+void mpi_lb_lbfluid_calc_fluid_momentum_local(int, int) {
+  lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
+}
+
+REGISTER_CALLBACK(mpi_lb_lbfluid_calc_fluid_momentum_local)
+
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
   Utils::Vector3d fluid_momentum{};
   if (lattice_switch == ActiveLB::GPU) {
@@ -1226,7 +1232,8 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
     lb_calc_fluid_momentum_GPU(fluid_momentum.data());
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-    mpi_gather_stats(GatherStats::lb_fluid_momentum, fluid_momentum.data());
+    mpi_call(mpi_lb_lbfluid_calc_fluid_momentum_local, -1, -1);
+    lb_calc_fluid_momentum(fluid_momentum.data(), lbpar, lbfields, lblattice);
   }
   return fluid_momentum;
 }

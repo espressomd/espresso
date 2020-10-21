@@ -35,7 +35,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/range/algorithm/min_element.hpp>
@@ -181,10 +180,6 @@ std::shared_ptr<boost::mpi::environment> mpi_init() {
 void mpi_gather_stats(GatherStats job, double *result) {
   auto job_slave = static_cast<int>(job);
   switch (job) {
-  case GatherStats::lb_fluid_momentum:
-    mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    lb_calc_fluid_momentum(result, lbpar, lbfields, lblattice);
-    break;
 #ifdef LB_BOUNDARIES
   case GatherStats::lb_boundary_forces:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
@@ -203,9 +198,6 @@ void mpi_gather_stats(GatherStats job, double *result) {
 void mpi_gather_stats_slave(int, int job_slave) {
   auto job = static_cast<GatherStats>(job_slave);
   switch (job) {
-  case GatherStats::lb_fluid_momentum:
-    lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
-    break;
 #ifdef LB_BOUNDARIES
   case GatherStats::lb_boundary_forces:
     lb_collect_boundary_forces(nullptr);
