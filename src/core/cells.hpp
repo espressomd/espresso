@@ -46,20 +46,16 @@
 #include <utility>
 #include <vector>
 
-/** \name Flags for exchange_and_sort_particles: whether to do a global
+/** Flags for particle exchange and resorting: whether to do a global
  *  exchange or assume that particles did not move much (faster, used
  *  during integration, where moving far is a catastrophe anyways).
  */
-/*@{*/
-
 enum {
-  /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
+  /** Do neighbor exchange. */
   CELL_NEIGHBOR_EXCHANGE = 0,
-  /** Flag for exchange_and_sort_particles : Do global exchange. */
+  /** Do global exchange. */
   CELL_GLOBAL_EXCHANGE = 1
 };
-
-/*@}*/
 
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
@@ -70,9 +66,10 @@ extern CellStructure cell_structure;
 void cells_re_init(int new_cs);
 
 /**
- * @brief Set use_verlet_lists
+ * @brief Set @ref CellStructure::use_verlet_list
+ * "cell_structure::use_verlet_list"
  *
- * @param use_verlet_lists Should verlet lists be used?
+ * @param use_verlet_lists Should Verlet lists be used?
  */
 void cells_set_use_verlet_lists(bool use_verlet_lists);
 
@@ -104,8 +101,7 @@ Cell *find_current_cell(const Particle &p);
 /**
  * @brief Return a pointer to the global DomainDecomposition.
  *
- * @return Pointer to the decomposition if it is set and is
- * DomainDecomposition, nullptr otherwise.
+ * @return Pointer to the decomposition if it is set, nullptr otherwise.
  */
 const DomainDecomposition *get_domain_decomposition();
 

@@ -86,9 +86,6 @@ void mpi_get_pairs_slave(int, int) {
   Utils::Mpi::gather_buffer(local_pairs, comm_cart);
 }
 
-/**
- * @brief Collect pairs from all nodes.
- */
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
   mpi_call(mpi_get_pairs_slave, 0, 0);
   on_observable_calc();
@@ -101,12 +98,6 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 
   return pairs;
 }
-
-/************************************************************
- *            Exported Functions                            *
- ************************************************************/
-
-/************************************************************/
 
 void cells_re_init(int new_cs) {
   switch (new_cs) {
@@ -124,8 +115,6 @@ void cells_re_init(int new_cs) {
   on_cell_structure_change();
 }
 
-/*************************************************/
-
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
 
@@ -140,7 +129,6 @@ void check_resort_particles() {
   cell_structure.set_resort_particles(level);
 }
 
-/*************************************************/
 void cells_update_ghosts(unsigned data_parts) {
   /* data parts that are only updated on resort */
   auto constexpr resort_only_parts =
