@@ -153,24 +153,6 @@ auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** Start integrator.
- *  @param n_steps       how many steps to do.
- *  @param reuse_forces  whether to trust the old forces for the first half step
- *  @return nonzero on error
- */
-int mpi_integrate(int n_steps, int reuse_forces);
-
-/** Steepest descent main integration loop
- *
- *  Integration stops when the maximal force is lower than the user limit
- *  @ref SteepestDescentParameters::f_max "f_max" or when the maximal number
- *  of steps @p steps is reached.
- *
- *  @param steps Maximal number of integration steps
- *  @return number of integrated steps
- */
-int mpi_steepest_descent(int steps);
-
 /** Gather data for analysis.
  *  \param[in] job what to do:
  *      \arg for \ref GatherStats::energy, calculate and reduce (sum up)

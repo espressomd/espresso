@@ -188,30 +188,6 @@ std::shared_ptr<boost::mpi::environment> mpi_init() {
   return std::make_shared<boost::mpi::environment>();
 }
 
-/********************* STEEPEST DESCENT ********/
-static int mpi_steepest_descent_slave(int steps, int) {
-  return integrate(steps, -1);
-}
-REGISTER_CALLBACK_MASTER_RANK(mpi_steepest_descent_slave)
-
-int mpi_steepest_descent(int steps) {
-  return mpi_call(Communication::Result::master_rank,
-                  mpi_steepest_descent_slave, steps, 0);
-}
-
-/********************* INTEGRATE ********/
-static int mpi_integrate_slave(int n_steps, int reuse_forces) {
-  integrate(n_steps, reuse_forces);
-
-  return check_runtime_errors_local();
-}
-REGISTER_CALLBACK_REDUCTION(mpi_integrate_slave, std::plus<int>())
-
-int mpi_integrate(int n_steps, int reuse_forces) {
-  return mpi_call(Communication::Result::reduction, std::plus<int>(),
-                  mpi_integrate_slave, n_steps, reuse_forces);
-}
-
 /*************** GATHER ************/
 void mpi_gather_stats(GatherStats job, double *result) {
   auto job_slave = static_cast<int>(job);

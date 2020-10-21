@@ -391,6 +391,29 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   return ES_OK;
 }
 
+static int mpi_steepest_descent_local(int steps, int) {
+  return integrate(steps, -1);
+}
+REGISTER_CALLBACK_MASTER_RANK(mpi_steepest_descent_local)
+
+int mpi_steepest_descent(int steps) {
+  return mpi_call(Communication::Result::master_rank,
+                  mpi_steepest_descent_local, steps, 0);
+}
+
+static int mpi_integrate_local(int n_steps, int reuse_forces) {
+  integrate(n_steps, reuse_forces);
+
+  return check_runtime_errors_local();
+}
+
+REGISTER_CALLBACK_REDUCTION(mpi_integrate_local, std::plus<int>())
+
+int mpi_integrate(int n_steps, int reuse_forces) {
+  return mpi_call(Communication::Result::reduction, std::plus<int>(),
+                  mpi_integrate_local, n_steps, reuse_forces);
+}
+
 int integrate_set_steepest_descent(const double f_max, const double gamma,
                                    const double max_displacement) {
   if (f_max < 0.0) {
