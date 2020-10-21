@@ -31,13 +31,11 @@
 
 #include "errorhandling.hpp"
 
-#include "energy.hpp"
 #include "event.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "integrate.hpp"
 #include "pressure.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -189,10 +187,6 @@ std::shared_ptr<boost::mpi::environment> mpi_init() {
 void mpi_gather_stats(GatherStats job, double *result) {
   auto job_slave = static_cast<int>(job);
   switch (job) {
-  case GatherStats::energy:
-    mpi_call(mpi_gather_stats_slave, -1, job_slave);
-    energy_calc(sim_time);
-    break;
   case GatherStats::pressure:
     mpi_call(mpi_gather_stats_slave, -1, job_slave);
     pressure_calc();
@@ -219,9 +213,6 @@ void mpi_gather_stats(GatherStats job, double *result) {
 void mpi_gather_stats_slave(int, int job_slave) {
   auto job = static_cast<GatherStats>(job_slave);
   switch (job) {
-  case GatherStats::energy:
-    energy_calc(sim_time);
-    break;
   case GatherStats::pressure:
     pressure_calc();
     break;
