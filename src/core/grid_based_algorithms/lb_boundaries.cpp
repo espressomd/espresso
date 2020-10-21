@@ -253,6 +253,14 @@ void lb_init_boundaries() {
   }
 }
 
+#if defined(LB_BOUNDARIES)
+void lb_collect_boundary_forces_local(int, int) {
+  lb_collect_boundary_forces(nullptr);
+}
+
+REGISTER_CALLBACK(lb_collect_boundary_forces_local)
+#endif
+
 Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
   Utils::Vector3d force{};
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
@@ -271,7 +279,8 @@ Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
-    mpi_gather_stats(GatherStats::lb_boundary_forces, forces.data());
+    mpi_call(lb_collect_boundary_forces_local, -1, -1);
+    lb_collect_boundary_forces(forces.data());
 #endif
   }
   auto const container_index = std::distance(lbboundaries.begin(), it);

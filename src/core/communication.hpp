@@ -67,7 +67,6 @@ extern int n_nodes;
 extern boost::mpi::communicator comm_cart;
 /** Statistics to calculate */
 enum class GatherStats : int {
-  lb_boundary_forces
 };
 
 /**
@@ -151,11 +150,6 @@ auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
 void mpi_loop();
 
 /** Gather data for analysis.
- *  \param[in] job what to do:
- *      \arg for \ref GatherStats::lb_boundary_forces, use
- *           \ref lb_collect_boundary_forces.
- *  \param[out] result where to store values gathered by
- *      \ref GatherStats::lb_boundary_forces
  */
 void mpi_gather_stats(GatherStats job, double *result = nullptr);
 
