@@ -89,6 +89,17 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 void check_resort_particles();
 
 /**
+ * @brief Resort the particles.
+ *
+ * This function resorts the particles on the nodes.
+ *
+ * @param global_flag If true a global resort is done,
+ *        if false particles are only exchanges between neighbors.
+ * @return The number of particles on the nodes after the resort.
+ */
+std::vector<int> mpi_resort_particles(int global_flag);
+
+/**
  * @brief Find the cell in which a particle is stored.
  *
  * Uses position_to_cell on p.r.p. If this is not on the node's domain,

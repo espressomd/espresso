@@ -43,7 +43,6 @@
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "pressure.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -88,7 +87,6 @@ int n_nodes = -1;
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
-  CB(mpi_resort_particles_slave)                                               \
   CB(mpi_rotate_system_slave)                                                  \
 
 // create the forward declarations
@@ -435,25 +433,4 @@ void mpi_galilei_transform() {
 void mpi_loop() {
   if (this_node != 0)
     mpiCallbacks().loop();
-}
-
-std::vector<int> mpi_resort_particles(int global_flag) {
-  mpi_call(mpi_resort_particles_slave, global_flag, 0);
-  cell_structure.resort_particles(global_flag);
-
-  clear_particle_node();
-
-  std::vector<int> n_parts;
-  boost::mpi::gather(comm_cart,
-                     static_cast<int>(cell_structure.local_particles().size()),
-                     n_parts, 0);
-
-  return n_parts;
-}
-
-void mpi_resort_particles_slave(int global_flag, int) {
-  cell_structure.resort_particles(global_flag);
-
-  boost::mpi::gather(
-      comm_cart, static_cast<int>(cell_structure.local_particles().size()), 0);
 }

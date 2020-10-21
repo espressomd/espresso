@@ -221,17 +221,6 @@ Utils::Vector3d mpi_system_CMS_velocity();
 void mpi_galilei_transform();
 /*@}*/
 
-/**
- * @brief Resort the particles.
- *
- * This function resorts the particles on the nodes.
- *
- * @param global_flag If true a global resort is done,
- *        if false particles are only exchanges between neighbors.
- * @return The number of particles on the nodes after the resort.
- */
-std::vector<int> mpi_resort_particles(int global_flag);
-
 namespace Communication {
 /**
  * @brief Init globals for communication.

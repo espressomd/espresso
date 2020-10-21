@@ -30,6 +30,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "particle_data.hpp"
 
 #include "DomainDecomposition.hpp"
 #include "ParticleDecomposition.hpp"
@@ -99,6 +100,29 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
   Utils::Mpi::gather_buffer(pairs, comm_cart);
 
   return pairs;
+}
+
+void mpi_resort_particles_local(int global_flag, int) {
+  cell_structure.resort_particles(global_flag);
+
+  boost::mpi::gather(
+      comm_cart, static_cast<int>(cell_structure.local_particles().size()), 0);
+}
+
+REGISTER_CALLBACK(mpi_resort_particles_local)
+
+std::vector<int> mpi_resort_particles(int global_flag) {
+  mpi_call(mpi_resort_particles_local, global_flag, 0);
+  cell_structure.resort_particles(global_flag);
+
+  clear_particle_node();
+
+  std::vector<int> n_parts;
+  boost::mpi::gather(comm_cart,
+                     static_cast<int>(cell_structure.local_particles().size()),
+                     n_parts, 0);
+
+  return n_parts;
 }
 
 void cells_re_init(int new_cs) {
