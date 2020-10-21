@@ -509,7 +509,7 @@ const Particle &get_particle_data(int part) {
   return *cache_ptr;
 }
 
-void mpi_get_particles_slave(int, int) {
+void mpi_get_particles_local(int, int) {
   std::vector<int> ids;
   boost::mpi::scatter(comm_cart, ids, 0);
 
@@ -522,6 +522,8 @@ void mpi_get_particles_slave(int, int) {
   Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), 0);
 }
 
+REGISTER_CALLBACK(mpi_get_particles_local)
+
 /**
  * @brief Get multiple particles at once.
  *
@@ -529,10 +531,10 @@ void mpi_get_particles_slave(int, int) {
  *
  * @param ids The ids of the particles that should be returned.
  *
- * @returns The particle data.
+ * @returns The particle list.
  */
 std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
-  mpi_call(mpi_get_particles_slave, 0, 0);
+  mpi_call(mpi_get_particles_local, 0, 0);
   /* Return value */
   std::vector<Particle> parts(ids.size());
 
