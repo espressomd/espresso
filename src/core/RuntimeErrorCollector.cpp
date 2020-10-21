@@ -27,7 +27,6 @@
 #include <sstream>
 #include <utility>
 
-using namespace std;
 using boost::mpi::all_reduce;
 using boost::mpi::communicator;
 
@@ -57,39 +56,40 @@ void RuntimeErrorCollector::message(RuntimeError::ErrorLevel level,
                                     const std::string &msg,
                                     const char *function, const char *file,
                                     const int line) {
-  m_errors.emplace_back(level, m_comm.rank(), msg, string(function),
-                        string(file), line);
+  m_errors.emplace_back(level, m_comm.rank(), msg, std::string(function),
+                        std::string(file), line);
 }
 
-void RuntimeErrorCollector::warning(const string &msg, const char *function,
-                                    const char *file, const int line) {
+void RuntimeErrorCollector::warning(const std::string &msg,
+                                    const char *function, const char *file,
+                                    const int line) {
   m_errors.emplace_back(RuntimeError::ErrorLevel::WARNING, m_comm.rank(), msg,
-                        string(function), string(file), line);
+                        std::string(function), std::string(file), line);
 }
 
 void RuntimeErrorCollector::warning(const char *msg, const char *function,
                                     const char *file, const int line) {
-  warning(string(msg), function, file, line);
+  warning(std::string(msg), function, file, line);
 }
 
-void RuntimeErrorCollector::warning(const ostringstream &mstr,
+void RuntimeErrorCollector::warning(const std::ostringstream &mstr,
                                     const char *function, const char *file,
                                     const int line) {
   warning(mstr.str(), function, file, line);
 }
 
-void RuntimeErrorCollector::error(const string &msg, const char *function,
+void RuntimeErrorCollector::error(const std::string &msg, const char *function,
                                   const char *file, const int line) {
   m_errors.emplace_back(RuntimeError::ErrorLevel::ERROR, m_comm.rank(), msg,
-                        string(function), string(file), line);
+                        std::string(function), std::string(file), line);
 }
 
 void RuntimeErrorCollector::error(const char *msg, const char *function,
                                   const char *file, const int line) {
-  error(string(msg), function, file, line);
+  error(std::string(msg), function, file, line);
 }
 
-void RuntimeErrorCollector::error(const ostringstream &mstr,
+void RuntimeErrorCollector::error(const std::ostringstream &mstr,
                                   const char *function, const char *file,
                                   const int line) {
   error(mstr.str(), function, file, line);
@@ -112,8 +112,8 @@ int RuntimeErrorCollector::count(RuntimeError::ErrorLevel level) {
 
 void RuntimeErrorCollector::clear() { m_errors.clear(); }
 
-vector<RuntimeError> RuntimeErrorCollector::gather() {
-  vector<RuntimeError> all_errors{};
+std::vector<RuntimeError> RuntimeErrorCollector::gather() {
+  std::vector<RuntimeError> all_errors{};
   std::swap(all_errors, m_errors);
 
   Utils::Mpi::gather_buffer(all_errors, m_comm);

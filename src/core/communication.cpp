@@ -37,8 +37,6 @@
 #include <boost/mpi.hpp>
 #include <utils/mpi/cart_comm.hpp>
 
-using namespace std;
-
 namespace Communication {
 auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
 std::shared_ptr<boost::mpi::environment> mpi_env;
