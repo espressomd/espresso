@@ -169,9 +169,6 @@ void mpi_loop();
  */
 void mpi_gather_stats(GatherStats job, double *result = nullptr);
 
-/** Send new \ref time_step and rescale the velocities accordingly. */
-void mpi_set_time_step(double time_step);
-
 /** Send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 

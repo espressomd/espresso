@@ -532,3 +532,18 @@ double interaction_range() {
   auto const max_cut = maximal_cutoff();
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
+
+void mpi_set_time_step_local(double dt) {
+  time_step = dt;
+  on_parameter_change(FIELD_TIMESTEP);
+}
+
+REGISTER_CALLBACK(mpi_set_time_step_local)
+
+void mpi_set_time_step(double time_s) {
+  if (time_s <= 0.)
+    throw std::invalid_argument("time_step must be > 0.");
+  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
+    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
+  mpi_call_all(mpi_set_time_step_local, time_s);
+}

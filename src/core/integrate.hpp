@@ -166,4 +166,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
                                 bool xdir_rescale, bool ydir_rescale,
                                 bool zdir_rescale, bool cubic_box);
 
+/** Send new \ref time_step and rescale the velocities accordingly. */
+void mpi_set_time_step(double time_step);
+
 #endif
