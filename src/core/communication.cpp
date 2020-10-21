@@ -32,13 +32,9 @@
 #include "errorhandling.hpp"
 
 #include "event.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 
 #include <boost/mpi.hpp>
-#include <boost/range/algorithm/min_element.hpp>
-#include <boost/serialization/array.hpp>
-#include <boost/serialization/string.hpp>
 #include <utils/mpi/cart_comm.hpp>
 
 using namespace std;
@@ -65,10 +61,6 @@ using Communication::mpiCallbacks;
 
 int this_node = -1;
 int n_nodes = -1;
-
-/**********************************************
- * procedures
- **********************************************/
 
 #if defined(OPEN_MPI)
 namespace {
@@ -155,8 +147,6 @@ std::shared_ptr<boost::mpi::environment> mpi_init() {
 
   return std::make_shared<boost::mpi::environment>();
 }
-
-/*********************** MAIN LOOP for slaves ****************/
 
 void mpi_loop() {
   if (this_node != 0)

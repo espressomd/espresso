@@ -49,11 +49,6 @@
 
 #include "MpiCallbacks.hpp"
 
-/* Includes needed by callbacks. */
-#include "Particle.hpp"
-#include "cuda_init.hpp"
-#include "grid_based_algorithms/lb_constants.hpp"
-
 #include <boost/mpi/communicator.hpp>
 #include <vector>
 

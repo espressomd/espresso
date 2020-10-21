@@ -24,6 +24,7 @@
 #include <boost/mpi/collectives.hpp>
 
 #include <iostream>
+#include <sstream>
 #include <utility>
 
 using namespace std;
