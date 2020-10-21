@@ -166,11 +166,6 @@ void mpi_gather_stats(GatherStats job, double *result = nullptr);
 /** Send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
-/** Perform iccp3m initialization.
- *  @return non-zero value on error
- */
-int mpi_iccp3m_init();
-
 namespace Communication {
 /**
  * @brief Init globals for communication.

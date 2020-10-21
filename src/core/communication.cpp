@@ -39,7 +39,6 @@
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
-#include "electrostatics_magnetostatics/icc.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/range/algorithm/min_element.hpp>
@@ -253,25 +252,6 @@ void mpi_bcast_coulomb_params_slave(int, int) {
   on_coulomb_change();
 #endif
 }
-
-/********************* ICCP3M INIT ********/
-#ifdef ELECTROSTATICS
-void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {
-  iccp3m_cfg = iccp3m_cfg_;
-
-  on_particle_charge_change();
-  check_runtime_errors(comm_cart);
-}
-
-REGISTER_CALLBACK(mpi_iccp3m_init_slave)
-
-int mpi_iccp3m_init() {
-  mpi_call(mpi_iccp3m_init_slave, iccp3m_cfg);
-
-  on_particle_charge_change();
-  return check_runtime_errors(comm_cart);
-}
-#endif
 
 /*********************** MAIN LOOP for slaves ****************/
 
