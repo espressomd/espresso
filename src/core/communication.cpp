@@ -353,21 +353,6 @@ void mpi_bcast_cuda_global_part_vars_slave(int, int) {
 #endif
 }
 
-/********************* SET EXCLUSION ********/
-#ifdef EXCLUSIONS
-void mpi_send_exclusion_slave(int part1, int part2, int _delete) {
-  local_change_exclusion(part1, part2, _delete);
-  on_particle_change();
-}
-
-REGISTER_CALLBACK(mpi_send_exclusion_slave)
-
-void mpi_send_exclusion(int part1, int part2, int _delete) {
-  mpi_call(mpi_send_exclusion_slave, part1, part2, _delete);
-  mpi_send_exclusion_slave(part1, part2, _delete);
-}
-#endif
-
 /********************* ICCP3M INIT ********/
 #ifdef ELECTROSTATICS
 void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {

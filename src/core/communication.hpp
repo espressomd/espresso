@@ -153,14 +153,6 @@ auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** Send exclusions.
- *  Also calls \ref on_particle_change.
- *  \param part     identity of first particle of the exclusion.
- *  \param part2    identity of second particle of the exclusion.
- *  \param _delete  if true, do not add the exclusion, rather delete it if found
- */
-void mpi_send_exclusion(int part, int part2, int _delete);
-
 /** Start integrator.
  *  @param n_steps       how many steps to do.
  *  @param reuse_forces  whether to trust the old forces for the first half step

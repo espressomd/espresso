@@ -1009,6 +1009,11 @@ void mpi_rescale_particles(int dir, double scale) {
 }
 
 #ifdef EXCLUSIONS
+/** Locally add an exclusion to a particle.
+ *  @param part1 the identity of the first exclusion partner
+ *  @param part2 the identity of the second exclusion partner
+ *  @param _delete if true, delete the exclusion instead of add
+ */
 void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
     for (auto &p : cell_structure.local_particles()) {
@@ -1051,6 +1056,23 @@ void add_partner(std::vector<int> &il, int i, int j, int distance) {
   il.push_back(distance);
 }
 } // namespace
+
+void mpi_send_exclusion_local(int part1, int part2, int _delete) {
+  local_change_exclusion(part1, part2, _delete);
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_send_exclusion_local)
+
+/** Send exclusions.
+ *  Also calls \ref on_particle_change.
+ *  \param part1    identity of first particle of the exclusion.
+ *  \param part2    identity of second particle of the exclusion.
+ *  \param _delete  if true, do not add the exclusion, rather delete it if found
+ */
+void mpi_send_exclusion(int part1, int part2, int _delete) {
+  mpi_call_all(mpi_send_exclusion_local, part1, part2, _delete);
+}
 
 int change_exclusion(int part1, int part2, int _delete) {
   if (particle_exists(part1) && particle_exists(part2)) {

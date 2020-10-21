@@ -347,14 +347,6 @@ int remove_particle(int part);
 /** Remove all particles. */
 void remove_all_particles();
 
-/** Used for example by \ref mpi_send_exclusion.
- *  Locally add an exclusion to a particle.
- *  @param part1 the identity of the first exclusion partner
- *  @param part2 the identity of the second exclusion partner
- *  @param _delete if true, delete the exclusion instead of add
- */
-void local_change_exclusion(int part1, int part2, int _delete);
-
 /** Rescale all particle positions in direction @p dir by a factor @p scale. */
 void mpi_rescale_particles(int dir, double scale);
 
