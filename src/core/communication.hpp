@@ -206,21 +206,6 @@ void mpi_bcast_cuda_global_part_vars();
  */
 int mpi_iccp3m_init();
 
-/** @name Galilei and other
- *  - set all particle velocities and rotational inertias to zero
- *  - set all forces and torques on the particles to zero
- *  - calculate the centre of mass (CMS)
- *  - calculate the velocity of the CMS
- *  - remove the CMS velocity from the system
- */
-/*@{*/
-void mpi_kill_particle_motion(int rotation);
-void mpi_kill_particle_forces(int torque);
-Utils::Vector3d mpi_system_CMS();
-Utils::Vector3d mpi_system_CMS_velocity();
-void mpi_galilei_transform();
-/*@}*/
-
 namespace Communication {
 /**
  * @brief Init globals for communication.

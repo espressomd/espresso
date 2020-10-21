@@ -20,11 +20,18 @@
  */
 
 #include "galilei.hpp"
+#include "ParticleRange.hpp"
 #include "cells.hpp"
+#include "communication.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 
 #include <boost/range/numeric.hpp>
+#include <boost/serialization/utility.hpp>
+
+#include <utils/Vector.hpp>
+
+#include <utility>
 
 /** Stop particle motion by setting the velocity of each particle to zero. */
 void local_kill_particle_motion(int omega, const ParticleRange &particles) {
@@ -81,4 +88,61 @@ void local_galilei_transform(const Utils::Vector3d &cmsvel) {
   for (auto &p : cell_structure.local_particles()) {
     p.m.v -= cmsvel;
   }
+}
+
+void mpi_kill_particle_motion_local(int rotation) {
+  local_kill_particle_motion(rotation, cell_structure.local_particles());
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_kill_particle_motion_local)
+
+void mpi_kill_particle_motion(int rotation) {
+  mpi_call_all(mpi_kill_particle_motion_local, rotation);
+}
+
+void mpi_kill_particle_forces_local(int torque) {
+  local_kill_particle_forces(torque, cell_structure.local_particles());
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_kill_particle_forces_local)
+
+void mpi_kill_particle_forces(int torque) {
+  mpi_call_all(mpi_kill_particle_forces_local, torque);
+}
+
+struct pair_sum {
+  template <class T, class U>
+  auto operator()(std::pair<T, U> l, std::pair<T, U> r) const {
+    return std::pair<T, U>{l.first + r.first, l.second + r.second};
+  }
+};
+
+Utils::Vector3d mpi_system_CMS() {
+  auto const data =
+      mpi_call(Communication::Result::reduction, pair_sum{}, local_system_CMS);
+  return data.first / data.second;
+}
+
+REGISTER_CALLBACK_REDUCTION(local_system_CMS_velocity, pair_sum{})
+
+Utils::Vector3d mpi_system_CMS_velocity() {
+  auto const data = mpi_call(Communication::Result::reduction, pair_sum{},
+                             local_system_CMS_velocity);
+  return data.first / data.second;
+}
+
+REGISTER_CALLBACK_REDUCTION(local_system_CMS, pair_sum{})
+
+void mpi_galilei_transform_local(Utils::Vector3d const &cmsvel) {
+  local_galilei_transform(cmsvel);
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_galilei_transform_local)
+
+void mpi_galilei_transform() {
+  auto const cmsvel = mpi_system_CMS_velocity();
+  mpi_call_all(mpi_galilei_transform_local, cmsvel);
 }
