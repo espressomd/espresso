@@ -392,7 +392,7 @@ void add_exclusion(Particle *part, int part2);
 
 void auto_exclusion(int distance);
 
-void mpi_who_has_slave(int, int) {
+void mpi_who_has_local(int, int) {
   static std::vector<int> sendbuf;
 
   auto local_particles = cell_structure.local_particles();
@@ -411,8 +411,10 @@ void mpi_who_has_slave(int, int) {
   MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, SOME_TAG, comm_cart);
 }
 
+REGISTER_CALLBACK(mpi_who_has_local)
+
 void mpi_who_has() {
-  mpi_call(mpi_who_has_slave, -1, 0);
+  mpi_call(mpi_who_has_local, -1, 0);
 
   auto local_particles = cell_structure.local_particles();
 

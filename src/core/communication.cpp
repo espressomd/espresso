@@ -79,11 +79,9 @@ int n_nodes = -1;
 
 // if you want to add a callback, add it here, and here only
 #define CALLBACK_LIST                                                          \
-  CB(mpi_who_has_slave)                                                        \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
-  CB(mpi_rotate_system_slave)                                                  \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
