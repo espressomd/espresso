@@ -23,8 +23,6 @@ from libcpp.pair cimport pair
 from .utils cimport Vector3i
 
 cdef extern from "communication.hpp":
-    void mpi_bcast_cell_structure(int cs)
-    void mpi_set_use_verlet_lists(bool use_verlet_lists)
     int n_nodes
 
 cdef extern from "cells.hpp":
@@ -41,6 +39,8 @@ cdef extern from "cells.hpp":
 
     vector[pair[int, int]] mpi_get_pairs(double distance)
     vector[int] mpi_resort_particles(int global_flag)
+    void mpi_bcast_cell_structure(int cs)
+    void mpi_set_use_verlet_lists(bool use_verlet_lists)
 
 cdef extern from "tuning.hpp":
     cdef void c_tune_skin "tune_skin" (double min_skin, double max_skin, double tol, int int_steps, bool adjust_max_skin)

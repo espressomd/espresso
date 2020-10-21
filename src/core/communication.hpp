@@ -193,11 +193,6 @@ void mpi_set_time_step(double time_step);
 /** Send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
-/** Change the cell structure on all nodes. */
-void mpi_bcast_cell_structure(int cs);
-
-void mpi_set_use_verlet_lists(bool use_verlet_lists);
-
 /** Broadcast @ref CUDA_global_part_vars structure */
 void mpi_bcast_cuda_global_part_vars();
 

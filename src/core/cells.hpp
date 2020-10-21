@@ -65,13 +65,16 @@ extern CellStructure cell_structure;
  */
 void cells_re_init(int new_cs);
 
+/** Change the cell structure on all nodes. */
+void mpi_bcast_cell_structure(int cs);
+
 /**
  * @brief Set @ref CellStructure::use_verlet_list
  * "cell_structure::use_verlet_list"
  *
  * @param use_verlet_lists Should Verlet lists be used?
  */
-void cells_set_use_verlet_lists(bool use_verlet_lists);
+void mpi_set_use_verlet_lists(bool use_verlet_lists);
 
 /** Update ghost information. If needed,
  *  the particles are also resorted.

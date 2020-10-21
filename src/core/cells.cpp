@@ -141,6 +141,10 @@ void cells_re_init(int new_cs) {
   on_cell_structure_change();
 }
 
+REGISTER_CALLBACK(cells_re_init)
+
+void mpi_bcast_cell_structure(int cs) { mpi_call_all(cells_re_init, cs); }
+
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
 
@@ -198,6 +202,12 @@ const DomainDecomposition *get_domain_decomposition() {
       Utils::as_const(cell_structure).decomposition());
 }
 
-void cells_set_use_verlet_lists(bool use_verlet_lists) {
+void mpi_set_use_verlet_lists_local(bool use_verlet_lists) {
   cell_structure.use_verlet_list = use_verlet_lists;
+}
+
+REGISTER_CALLBACK(mpi_set_use_verlet_lists_local)
+
+void mpi_set_use_verlet_lists(bool use_verlet_lists) {
+  mpi_call_all(mpi_set_use_verlet_lists_local, use_verlet_lists);
 }
