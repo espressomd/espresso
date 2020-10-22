@@ -362,23 +362,6 @@ empty:
     - linux
     - cuda
 
-### Builds with different compilers
-
-intel:19:
-  <<: *global_job_definition
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/intel-python3:19
-  script:
-    - export myconfig=maxset with_cuda=true with_coverage=false I_MPI_SHM_LMT=shm
-    - export cmake_params="-DCMAKE_CXX_FLAGS=-O2"
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-    - cuda
-    - icp
-  when: manual
-
 check_sphinx:
   <<: *global_job_definition
   stage: additional_checks
