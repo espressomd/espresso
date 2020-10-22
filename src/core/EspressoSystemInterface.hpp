@@ -22,7 +22,7 @@
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 
-/** Syntactic sugar */
+/* Syntactic sugar */
 #define espressoSystemInterface EspressoSystemInterface::Instance()
 
 class EspressoSystemInterface : public SystemInterface {
@@ -144,7 +144,7 @@ public:
   };
 #endif
 
-#endif
+#endif // ifdef CUDA
 
   Utils::Vector3d box() const override;
 
