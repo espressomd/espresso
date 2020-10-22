@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cuda_wrapper.hpp"
+#include <cuda.h>
 
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
@@ -178,29 +178,27 @@ void EspressoSystemInterface::split_particle_struct() {
   dim3 block(512, 1, 1);
 
   if (m_needsQGpu && m_needsRGpu)
-    hipLaunchKernelGGL(split_kernel_rq, dim3(grid), dim3(block), 0, nullptr,
-                       device_particles.data(), m_r_gpu_begin, m_q_gpu_begin,
-                       n);
+    split_kernel_rq<<<dim3(grid), dim3(block), 0, nullptr>>>(
+        device_particles.data(), m_r_gpu_begin, m_q_gpu_begin, n);
   if (m_needsQGpu && !m_needsRGpu)
-    hipLaunchKernelGGL(split_kernel_q, dim3(grid), dim3(block), 0, nullptr,
-                       device_particles.data(), m_q_gpu_begin, n);
+    split_kernel_q<<<dim3(grid), dim3(block), 0, nullptr>>>(
+        device_particles.data(), m_q_gpu_begin, n);
   if (!m_needsQGpu && m_needsRGpu)
-    hipLaunchKernelGGL(split_kernel_r, dim3(grid), dim3(block), 0, nullptr,
-                       device_particles.data(), m_r_gpu_begin, n);
+    split_kernel_r<<<dim3(grid), dim3(block), 0, nullptr>>>(
+        device_particles.data(), m_r_gpu_begin, n);
 #ifdef CUDA
   if (m_needsVGpu)
-    hipLaunchKernelGGL(split_kernel_v, dim3(grid), dim3(block), 0, nullptr,
-                       device_particles.data(), m_v_gpu_begin, n);
+    split_kernel_v<<<dim3(grid), dim3(block), 0, nullptr>>>(
+        device_particles.data(), m_v_gpu_begin, n);
 #endif
 #ifdef DIPOLES
   if (m_needsDipGpu)
-    hipLaunchKernelGGL(split_kernel_dip, dim3(grid), dim3(block), 0, nullptr,
-                       device_particles.data(), m_dip_gpu_begin, n);
+    split_kernel_dip<<<dim3(grid), dim3(block), 0, nullptr>>>(
+        device_particles.data(), m_dip_gpu_begin, n);
 
 #endif
 
   if (m_needsDirectorGpu)
-    hipLaunchKernelGGL(split_kernel_director, dim3(grid), dim3(block), 0,
-                       nullptr, device_particles.data(), m_director_gpu_begin,
-                       n);
+    split_kernel_director<<<dim3(grid), dim3(block), 0, nullptr>>>(
+        device_particles.data(), m_director_gpu_begin, n);
 }

@@ -362,31 +362,6 @@ empty:
     - linux
     - cuda
 
-### Builds with ROCm
-
-rocm-maxset:
-  <<: *global_job_definition
-  stage: build
-  image: docker.pkg.github.com/espressomd/docker/rocm:cb775a82f49a7f6d4a806f17358caec797f48f73
-  script:
-    - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
-    - export with_stokesian_dynamics=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - amdgpu
-
-rocm:latest:
-  <<: *global_job_definition
-  stage: build
-  image: docker.pkg.github.com/espressomd/docker/rocm:latest_base
-  script:
-    - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
-    - export with_stokesian_dynamics=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - amdgpu
-  when: manual
-
 ### Builds with different compilers
 
 intel:19:
