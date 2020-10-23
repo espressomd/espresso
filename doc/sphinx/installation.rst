@@ -120,21 +120,6 @@ system header files as shown in the following example for Ubuntu 18.04:
     sudo sed -i 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
     sudo sed -i 's/than 6/than 7/g' /usr/include/crt/host_config.h
 
-AMD GPU acceleration
-""""""""""""""""""""
-
-If your computer has an AMD graphics card, you should also download and install the
-ROCm SDK to make use of GPU computation:
-
-.. code-block:: bash
-
-    wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
-    echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
-    sudo apt update
-    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand rocthrust
-
-After installing the ROCm SDK, please reboot your computer.
-
 
 .. _Installing requirements on other Linux distributions:
 
@@ -523,8 +508,7 @@ using a CMake flag (see :ref:`Options and Variables`).
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
 
 - ``STOKESIAN_DYNAMICS_GPU`` Enables the Stokesian Dynamics feature for GPU
-  (see :ref:`Stokesian Dynamics`). Requires thrust/cuBLAS/cuSolver for NVIDIA
-  GPUs or rocrand/rocthrust/rocblas/rocsolver for AMD GPUs.
+  (see :ref:`Stokesian Dynamics`). Requires thrust/cuBLAS/cuSolver.
   Requires ``EXPERIMENTAL_FEATURES``.
 
 
@@ -706,9 +690,7 @@ by calling ``cmake`` with the command line argument ``-D``:
 When an option is activated, additional options may become available.
 For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with
 ``-D WITH_CUDA_COMPILER=<compiler_id>``, where ``<compiler_id>`` can be
-``nvcc`` (default), ``clang`` or ``hip``. For ``hip``, an additional
-``-D ROCM_HOME=<path_to_rocm>`` variable becomes available, with default value
-``ROCM_HOME=/opt/rocm``.
+``nvcc`` (default) or ``clang``.
 
 Environment variables can be passed to CMake. For example, to select Clang, use
 ``CC=clang CXX=clang++ cmake .. -DWITH_CUDA=ON -DWITH_CUDA_COMPILER=clang``.

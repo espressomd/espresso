@@ -21,7 +21,7 @@
  *  The method concept is revealed within @cite burtscher11a
  */
 
-#include "cuda_wrapper.hpp"
+#include <cuda.h>
 
 #include "../cuda_init.hpp"
 #include "../cuda_utils.hpp"
@@ -232,10 +232,6 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
   inc = static_cast<int>(blockDim.x * gridDim.x);
   // Just a regular 1D GPU index
   i = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
-  // AMD-specific threads sync
-#if defined(__HIPCC__) and not defined(__CUDACC__)
-  __syncthreads();
-#endif
 
   // Iterate over all bodies assigned to thread.
   while (i < bhpara->nbodies) {
@@ -263,12 +259,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
 
     // Global memory writing related threads sync
     if (lps++ > THREADS2) {
-      // AMD-specific threads sync
-#if defined(__HIPCC__) and not defined(__CUDACC__)
-      atomicInc((unsigned int *)bhpara->max_lps, 0);
-#else
       *bhpara->max_lps = lps;
-#endif
     }
     //.. now wait for global memory updates. This impacts on race conditions and
     // frameworks level optimizations. Further kernels contain a similar code
@@ -452,16 +443,9 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
         lps = 0;
       }
     }
-    // AMD-specific threads sync
-#if defined(__HIPCC__) and not defined(__CUDACC__)
-    __syncthreads();
-#endif
   }
   // Record maximum tree depth:
   atomicMax((int *)&maxdepthd, localmaxdepth);
-#if defined(__HIPCC__) and not defined(__CUDACC__)
-  __syncthreads();
-#endif
 }
 
 /******************************************************************************/
@@ -926,7 +910,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
       node[MAXDEPTH * THREADS5 / WARPSIZE];
   __shared__ float dq[MAXDEPTH * THREADS5 / WARPSIZE];
   dds_float sum = 0.0;
-  HIP_DYNAMIC_SHARED(dds_float, res)
+  extern __shared__ dds_float res[];
 
   float b, d1, dd5;
 
@@ -1181,10 +1165,10 @@ int energyBH(BHData *bh_data, dds_float k, float *E) {
 
 // Function to set the BH method parameters.
 void setBHPrecision(float *epssq, float *itolsq) {
-  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(epssqd), epssq, sizeof(float), 0,
+  cuda_safe_mem(cudaMemcpyToSymbol(epssqd, epssq, sizeof(float), 0,
                                    cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(itolsqd), itolsq, sizeof(float),
-                                   0, cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpyToSymbol(itolsqd, itolsq, sizeof(float), 0,
+                                   cudaMemcpyHostToDevice));
 }
 
 // An allocation of the GPU device memory and an initialization where it is
@@ -1287,8 +1271,8 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 // Populating of array pointers allocated in GPU device before.
 // Copy the particle data to the Barnes-Hut related arrays.
 void fillConstantPointers(float *r, float *dip, BHData bh_data) {
-  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(bhpara), &bh_data, sizeof(BHData),
-                                   0, cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpyToSymbol(bhpara, &bh_data, sizeof(BHData), 0,
+                                   cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float),
                            cudaMemcpyDeviceToDevice));
   cuda_safe_mem(cudaMemcpy(bh_data.u, dip, 3 * bh_data.nbodies * sizeof(float),
