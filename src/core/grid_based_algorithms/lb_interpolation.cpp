@@ -64,7 +64,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
     //    }
 
     if (!res) {
-      printf("%d: positoin: %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
+      printf("%d: position: %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
       throw std::runtime_error(
           "Interpolated velocity could not be obtained from Walberla");
     }
