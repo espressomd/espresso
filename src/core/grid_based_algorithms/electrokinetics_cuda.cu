@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cuda_wrapper.hpp"
+#include <cuda.h>
 
 #include "config.hpp"
 #ifdef CUDA            /* Terminates at end of file */
 #ifdef ELECTROKINETICS /* Terminates at end of file */
 
-#include "cufft_wrapper.hpp"
+#include <cufft.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -2341,7 +2341,7 @@ int ek_init() {
 
   if (!ek_initialized) {
     if (cudaGetSymbolAddress((void **)&ek_parameters_gpu_pointer,
-                             HIP_SYMBOL(ek_parameters_gpu)) != cudaSuccess) {
+                             ek_parameters_gpu) != cudaSuccess) {
       fprintf(stderr, "ERROR: Fetching constant memory pointer\n");
 
       return 1;
@@ -2427,8 +2427,8 @@ int ek_init() {
                    ek_parameters.number_of_nodes * 13 * sizeof(ekfloat)));
 #endif
 
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
-                                     &ek_parameters, sizeof(EK_parameters)));
+    cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+                                     sizeof(EK_parameters)));
 
     lb_get_para_pointer(&ek_lbparameters_gpu);
     lb_set_ek_pointer(ek_parameters_gpu_pointer);
@@ -2482,8 +2482,8 @@ int ek_init() {
     }
 
     ek_parameters.charge_potential = electrostatics->getGrid().grid;
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
-                                     &ek_parameters, sizeof(EK_parameters)));
+    cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+                                     sizeof(EK_parameters)));
 
     // clear initial LB force and finish up
     blocks_per_grid_x = static_cast<int>(
@@ -2510,8 +2510,8 @@ int ek_init() {
 
       return 1;
     }
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
-                                     &ek_parameters, sizeof(EK_parameters)));
+    cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+                                     sizeof(EK_parameters)));
 
     blocks_per_grid_x =
         static_cast<int>((ek_parameters.number_of_nodes +
@@ -2526,8 +2526,8 @@ int ek_init() {
     LBBoundaries::lb_init_boundaries();
     lb_get_boundary_force_pointer(&ek_lb_boundary_force);
 
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
-                                     &ek_parameters, sizeof(EK_parameters)));
+    cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
+                                     sizeof(EK_parameters)));
 #endif
 
     ek_integrate_electrostatics();

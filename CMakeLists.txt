@@ -147,12 +147,10 @@ if(WITH_CUDA)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
   set(MINIMAL_CUDA_VERSION 9.0)
   option_enum(varname "WITH_CUDA_COMPILER" help_text "CUDA compiler"
-              default_value "nvcc" possible_values "nvcc;hip;clang")
+              default_value "nvcc" possible_values "nvcc;clang")
   if(WITH_CUDA_COMPILER STREQUAL "nvcc")
     find_package(CUDA ${MINIMAL_CUDA_VERSION} REQUIRED)
     find_package(CUDACompilerNVCC ${MINIMAL_CUDA_VERSION} REQUIRED)
-  elseif(WITH_CUDA_COMPILER STREQUAL "hip")
-    find_package(CUDACompilerHIP 1.5.18494 REQUIRED)
   elseif(WITH_CUDA_COMPILER STREQUAL "clang")
     if(WITH_COVERAGE)
       message(

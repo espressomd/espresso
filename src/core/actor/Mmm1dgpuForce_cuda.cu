@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cuda_wrapper.hpp"
+#include <cuda.h>
 
 #include "actor/Mmm1dgpuForce.hpp"
 #include "cuda_utils.hpp"
@@ -161,7 +161,7 @@ __device__ void sumReduction(mmm1dgpu_real *input, mmm1dgpu_real *sum) {
 }
 
 __global__ void sumKernel(mmm1dgpu_real *data, int N) {
-  HIP_DYNAMIC_SHARED(mmm1dgpu_real, partialsums)
+  extern __shared__ mmm1dgpu_real partialsums[];
   if (blockIdx.x != 0)
     return;
   auto tid = static_cast<int>(threadIdx.x);
@@ -233,8 +233,8 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
     int *dev_cutoff;
     int maxCut = 30;
     cuda_safe_mem(cudaMalloc((void **)&dev_cutoff, sizeof(int)));
-    hipLaunchKernelGGL(besselTuneKernel, dim3(1), dim3(1), 0, nullptr,
-                       dev_cutoff, far_switch_radius, maxCut);
+    besselTuneKernel<<<dim3(1), dim3(1), 0, nullptr>>>(
+        dev_cutoff, far_switch_radius, maxCut);
     cuda_safe_mem(cudaMemcpy(&bessel_cutoff, dev_cutoff, sizeof(int),
                              cudaMemcpyDeviceToHost));
     cudaFree(dev_cutoff);
@@ -274,33 +274,29 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
     if (_far_switch_radius >= 0) {
       mmm1d_params.far_switch_radius_2 =
           _far_switch_radius * _far_switch_radius;
-      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(::far_switch_radius_2),
-                                       &_far_switch_radius_2,
-                                       sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(cudaMemcpyToSymbol(
+          ::far_switch_radius_2, &_far_switch_radius_2, sizeof(mmm1dgpu_real)));
       far_switch_radius = _far_switch_radius;
     }
     if (_boxz > 0) {
       host_boxz = _boxz;
-      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(::boxz), &_boxz,
-                                       sizeof(mmm1dgpu_real)));
-      cuda_safe_mem(
-          cudaMemcpyToSymbol(HIP_SYMBOL(::uz), &_uz, sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(cudaMemcpyToSymbol(::boxz, &_boxz, sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(cudaMemcpyToSymbol(::uz, &_uz, sizeof(mmm1dgpu_real)));
     }
     if (_coulomb_prefactor != 0) {
-      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(::coulomb_prefactor),
-                                       &_coulomb_prefactor,
+      cuda_safe_mem(cudaMemcpyToSymbol(::coulomb_prefactor, &_coulomb_prefactor,
                                        sizeof(mmm1dgpu_real)));
       coulomb_prefactor = _coulomb_prefactor;
     }
     if (_bessel_cutoff > 0) {
       mmm1d_params.bessel_cutoff = _bessel_cutoff;
-      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(::bessel_cutoff),
-                                       &_bessel_cutoff, sizeof(int)));
+      cuda_safe_mem(
+          cudaMemcpyToSymbol(::bessel_cutoff, &_bessel_cutoff, sizeof(int)));
       bessel_cutoff = _bessel_cutoff;
     }
     if (_maxPWerror > 0) {
       mmm1d_params.maxPWerror = _maxPWerror;
-      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(::maxPWerror), &_maxPWerror,
+      cuda_safe_mem(cudaMemcpyToSymbol(::maxPWerror, &_maxPWerror,
                                        sizeof(mmm1dgpu_real)));
       maxPWerror = _maxPWerror;
     }
@@ -417,7 +413,7 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
   const mmm1dgpu_real c_2pif = 2 * Utils::pi<mmm1dgpu_real>();
   const mmm1dgpu_real c_gammaf = 2 * Utils::gamma<mmm1dgpu_real>();
 
-  HIP_DYNAMIC_SHARED(mmm1dgpu_real, partialsums)
+  extern __shared__ mmm1dgpu_real partialsums[];
   if (!pairs) {
     partialsums[threadIdx.x] = 0;
     __syncthreads();
