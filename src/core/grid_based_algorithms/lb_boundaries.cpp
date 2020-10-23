@@ -198,9 +198,9 @@ void lb_init_boundaries() {
     int n = 0;
     for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end();
          ++lbb, n++) {
-      boundary_velocity[3 * n + 0] = (**lbb).velocity()[0];
-      boundary_velocity[3 * n + 1] = (**lbb).velocity()[1];
-      boundary_velocity[3 * n + 2] = (**lbb).velocity()[2];
+      boundary_velocity[3 * n + 0] = static_cast<float>((**lbb).velocity()[0]);
+      boundary_velocity[3 * n + 1] = static_cast<float>((**lbb).velocity()[1]);
+      boundary_velocity[3 * n + 2] = static_cast<float>((**lbb).velocity()[2]);
     }
 
     boundary_velocity[3 * lbboundaries.size() + 0] = 0.0f;
