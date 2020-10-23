@@ -22,7 +22,7 @@
  *
  *  The corresponding header file is p3m_gpu_error.hpp.
  */
-#include "cuda_wrapper.hpp"
+#include <cuda.h>
 
 #include <cstdio>
 #include <thrust/device_vector.h>

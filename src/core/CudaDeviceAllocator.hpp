@@ -3,7 +3,7 @@
 
 #include <utils/device_qualifier.hpp>
 
-#ifndef DEVICE_COMPILER
+#ifndef __CUDACC__
 #error "This header can only be used with a CUDA-capable compiler."
 #endif
 
