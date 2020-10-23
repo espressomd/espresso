@@ -74,7 +74,7 @@ inline Utils::Vector6d to_vector6d(const Matrix3<real_t> m) {
 inline Utils::Vector3i to_vector3i(const std::array<int, 3> v) {
   return Utils::Vector3i{v[0], v[1], v[2]};
 }
-/** Sweep that swaps force_toe_be_applied and last_applied_force
+/** Sweep that swaps force_to_be_applied and last_applied_force
 and resets force_to_be_applied to the global external force
 */
 template <typename PdfField, typename ForceField, typename BoundaryHandling>
