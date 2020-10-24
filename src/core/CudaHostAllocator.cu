@@ -1,6 +1,6 @@
 #include "CudaHostAllocator.hpp"
 
-#include "cuda_wrapper.hpp"
+#include <cuda.h>
 
 #include <stdexcept>
 

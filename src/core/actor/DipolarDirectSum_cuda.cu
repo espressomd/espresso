@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "cuda_wrapper.hpp"
+#include <cuda.h>
 
 #include "config.hpp"
 #include <thrust/device_ptr.h>
@@ -227,7 +227,7 @@ __global__ void DipolarDirectSum_kernel_energy(dds_float pf, int n, float *pos,
 
   auto i = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
   dds_float sum = 0.0;
-  HIP_DYNAMIC_SHARED(dds_float, res)
+  extern __shared__ dds_float res[];
 
   // There is one thread per particle. Each thread computes interactions
   // with particles whose id is larger than the thread id.
