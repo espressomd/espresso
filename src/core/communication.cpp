@@ -116,8 +116,6 @@ CALLBACK_LIST
 
 #undef CB
 
-int mpi_check_runtime_errors();
-
 /**********************************************
  * procedures
  **********************************************/
@@ -306,43 +304,38 @@ REGISTER_CALLBACK(mpi_bcast_all_ia_params_slave)
 
 void mpi_bcast_all_ia_params() { mpi_call_all(mpi_bcast_all_ia_params_slave); }
 
+inline bool is_tabulated_bond(BondedInteraction const type) {
+  return (type == BONDED_IA_TABULATED_DISTANCE or
+          type == BONDED_IA_TABULATED_ANGLE or
+          type == BONDED_IA_TABULATED_DIHEDRAL);
+}
+
+REGISTER_CALLBACK(mpi_bcast_ia_params_slave)
+
 void mpi_bcast_ia_params(int i, int j) {
-  mpi_call(mpi_bcast_ia_params_slave, i, j);
-
-  if (j >= 0) {
-    /* non-bonded interaction parameters */
-    boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-  } else {
-    /* bonded interaction parameters */
-    MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
-              comm_cart);
-    /* For tabulated potentials we have to send the tables extra */
-    if (bonded_ia_params[i].type == BONDED_IA_TABULATED_DISTANCE or
-        bonded_ia_params[i].type == BONDED_IA_TABULATED_ANGLE or
-        bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
-      boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
-    }
-  }
-
-  on_short_range_ia_change();
+  mpi_call_all(mpi_bcast_ia_params_slave, i, j);
 }
 
 void mpi_bcast_ia_params_slave(int i, int j) {
-  if (j >= 0) { /* non-bonded interaction parameters */
-
+  if (j >= 0) {
+    // non-bonded interaction parameters
     boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-  } else {                   /* bonded interaction parameters */
-    make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
+  } else {
+    // bonded interaction parameters
+    if (this_node) {
+      make_bond_type_exist(i); // realloc bonded_ia_params on slave nodes!
+      if (is_tabulated_bond(bonded_ia_params[i].type)) {
+        delete bonded_ia_params[i].p.tab.pot;
+      }
+    }
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
-    /* For tabulated potentials we have to send the tables extra */
-    if (bonded_ia_params[i].type == BONDED_IA_TABULATED_DISTANCE or
-        bonded_ia_params[i].type == BONDED_IA_TABULATED_ANGLE or
-        bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
-      auto *tab_pot = new TabulatedPotential();
-      boost::mpi::broadcast(comm_cart, *tab_pot, 0);
-
-      bonded_ia_params[i].p.tab.pot = tab_pot;
+    // for tabulated potentials we have to send the tables extra
+    if (is_tabulated_bond(bonded_ia_params[i].type)) {
+      if (this_node) {
+        bonded_ia_params[i].p.tab.pot = new TabulatedPotential();
+      }
+      boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
   }
 
@@ -352,9 +345,7 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 /*************** BCAST IA SIZE ************/
 
 REGISTER_CALLBACK(realloc_ia_params)
-void mpi_bcast_max_seen_particle_type(int ns) {
-  mpi_call_all(realloc_ia_params, ns);
-}
+void mpi_realloc_ia_params(int ns) { mpi_call_all(realloc_ia_params, ns); }
 
 /*************** GATHER ************/
 void mpi_gather_stats(GatherStats job, double *result) {

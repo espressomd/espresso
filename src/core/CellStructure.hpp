@@ -142,7 +142,7 @@ public:
    *
    * @param id Entry to update.
    * @param p Pointer to the particle.
-   **/
+   */
   void update_particle_index(int id, Particle *p) {
     assert(id >= 0);
     assert(not p or id == p->identity());
@@ -160,7 +160,7 @@ public:
    * index.
    *
    * @param p Pointer to the particle.
-   **/
+   */
   void update_particle_index(Particle &p) {
     update_particle_index(p.identity(), std::addressof(p));
   }

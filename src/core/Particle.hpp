@@ -60,7 +60,7 @@ struct ParticleProperties {
   int identity = -1;
   /** Molecule identifier. */
   int mol_id = 0;
-  /** particle type, used for non bonded interactions. */
+  /** particle type, used for non-bonded interactions. */
   int type = 0;
 
   /** particle mass */
