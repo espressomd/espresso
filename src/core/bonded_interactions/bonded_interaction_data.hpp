@@ -16,6 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/** @file
+ *  Data structures for bonded interactions.
+ *  For more information on how to add new interactions, see @ref bondedIA_new.
+ */
 #ifndef _BONDED_INTERACTION_DATA_HPP
 #define _BONDED_INTERACTION_DATA_HPP
 
@@ -29,14 +33,7 @@
 #include <boost/optional.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
-/** @file
- *  Data structures for bonded interactions.
- *  For more information on how to add new interactions, see @ref bondedIA_new.
- */
-
-/** \name Type codes of bonded interactions
- *  Enumeration of implemented bonded interactions.
- */
+/** Type codes of bonded interactions. */
 enum BondedInteraction : int {
   /** This bonded interaction was not set. */
   BONDED_IA_NONE = -1,
@@ -77,7 +74,8 @@ enum BondedInteraction : int {
   /** Type of bonded interaction is a wall repulsion (immersed boundary). */
   BONDED_IA_IBM_TRIEL,
   /** Type of bonded interaction is volume conservation force (immersed
-     boundary). */
+   *  boundary).
+   */
   BONDED_IA_IBM_VOLUME_CONSERVATION,
   /** Type of bonded interaction is bending force (immersed boundary). */
   BONDED_IA_IBM_TRIBEND,
@@ -168,7 +166,7 @@ struct Harmonic_bond_parameters {
   double cutoff() const { return r_cut; }
 };
 
-/** Parameters for Thermalized bond **/
+/** Parameters for Thermalized bond */
 struct Thermalized_bond_parameters {
   double temp_com;
   double gamma_com;
@@ -293,13 +291,15 @@ struct Umbrella_bond_parameters {
 
 /** Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM */
 struct Rigid_bond_parameters {
-  /**Square of the length of Constrained Bond*/
+  /** Square of the length of Constrained Bond */
   double d2;
-  /**Positional Tolerance/Accuracy value for termination of RATTLE/SHAKE
-   * iterations during position corrections*/
+  /** Positional Tolerance/Accuracy value for termination of RATTLE/SHAKE
+   *  iterations during position corrections
+   */
   double p_tol;
-  /**Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations
-   * during velocity corrections */
+  /** Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations
+   *  during velocity corrections
+   */
   double v_tol;
 
   double cutoff() const { return std::sqrt(d2); }
@@ -307,7 +307,7 @@ struct Rigid_bond_parameters {
 
 enum class tElasticLaw { NeoHookean, Skalak };
 
-/** Parameters for IBM elastic triangle (triel) **/
+/** Parameters for IBM elastic triangle (triel) */
 struct IBM_Triel_Parameters {
   // These values encode the reference state
   double l0;
@@ -333,7 +333,7 @@ struct IBM_Triel_Parameters {
   double cutoff() const { return maxDist; }
 };
 
-/** Parameters for IBM volume conservation bond **/
+/** Parameters for IBM volume conservation bond */
 struct IBM_VolCons_Parameters {
   /** ID of the large soft particle to which this node belongs */
   int softID;
@@ -345,7 +345,7 @@ struct IBM_VolCons_Parameters {
   double cutoff() const { return -1.; }
 };
 
-/** Parameters for IBM tribend **/
+/** Parameters for IBM tribend */
 struct IBM_Tribend_Parameters {
   /** Interaction data */
   double kb;
@@ -387,11 +387,11 @@ union Bond_parameters {
 
 /** Defines parameters for a bonded interaction. */
 struct Bonded_ia_parameters {
-  /** bonded interaction type. See \ref BONDED_IA_FENE "Type code for bonded" */
+  /** Interaction type. */
   BondedInteraction type;
-  /** (Number of particles - 1) interacting for that type */
+  /** Number of bonds (N_part - 1) for that interaction type. */
   int num;
-  /** union to store the different bonded interaction parameters. */
+  /** Interaction parameters. */
   Bond_parameters p;
 };
 
@@ -405,8 +405,7 @@ extern std::vector<Bonded_ia_parameters> bonded_ia_params;
  */
 void make_bond_type_exist(int type);
 
-/**
- * @brief Checks both particles for a specific bond, even on ghost particles.
+/** @brief Checks both particles for a specific bond, even on ghost particles.
  *
  *  @param p Particle to check for the bond.
  *  @param p_partner   bond partner
