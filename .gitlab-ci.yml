@@ -160,9 +160,9 @@ centos:7:
 fedora:32:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/fedora:fc7628d32de0fce605976ba9edebe7eff186e618
+  image: docker.pkg.github.com/espressomd/docker/fedora:4f126520866e84a4883355ffe8710040bf20051c
   script:
-    - export with_cuda=false myconfig=maxset make_check_python=false with_stokesian_dynamics=true
+    - export with_cuda=false myconfig=maxset make_check_python=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -361,48 +361,6 @@ empty:
     - docker
     - linux
     - cuda
-
-### Builds with ROCm
-
-rocm-maxset:
-  <<: *global_job_definition
-  stage: build
-  image: docker.pkg.github.com/espressomd/docker/rocm:cb775a82f49a7f6d4a806f17358caec797f48f73
-  script:
-    - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
-    - export with_stokesian_dynamics=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - amdgpu
-
-rocm:latest:
-  <<: *global_job_definition
-  stage: build
-  image: docker.pkg.github.com/espressomd/docker/rocm:latest_base
-  script:
-    - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
-    - export with_stokesian_dynamics=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - amdgpu
-  when: manual
-
-### Builds with different compilers
-
-intel:19:
-  <<: *global_job_definition
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/intel-python3:19
-  script:
-    - export myconfig=maxset with_cuda=true with_coverage=false I_MPI_SHM_LMT=shm
-    - export cmake_params="-DCMAKE_CXX_FLAGS=-O2"
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-    - cuda
-    - icp
-  when: manual
 
 check_sphinx:
   <<: *global_job_definition

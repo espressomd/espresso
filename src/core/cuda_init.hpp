@@ -110,5 +110,5 @@ int cuda_get_device_props(int dev, EspressoGpuDevice &d);
 /** Current error message of CUDA. */
 extern const char *cuda_error;
 
-#endif
+#endif // ifdef CUDA
 #endif
