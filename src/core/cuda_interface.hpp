@@ -49,8 +49,8 @@ struct CUDA_ParticleParametersSwimming {
  */
 struct CUDA_particle_data {
   using Vector3f = Utils::Vector3f;
-//   // This has to stay in front of the struct for memmove reasons
 #ifdef ENGINE
+  // This has to stay in front of the struct for memmove reasons
   CUDA_ParticleParametersSwimming swim;
 #endif
 
@@ -145,4 +145,4 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
 void cuda_bcast_global_part_params();
 #endif /* ifdef CUDA */
 
-#endif /* ifdef CUDA_INTERFACE_HPP */
+#endif /* ifdef CORE_CUDA_INTERFACE_HPP */

@@ -19,6 +19,8 @@
 #ifndef _FD_ELECTROSTATICS_HPP
 #define _FD_ELECTROSTATICS_HPP
 
+#include <cufft.h>
+
 #define PI_FLOAT 3.14159265358979323846f
 
 class FdElectrostatics {

@@ -16,13 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "cuda_wrapper.hpp"
+#include <cuda.h>
 
 // TODO: throw exceptions upon errors initialization
 
 #include "cuda_utils.hpp"
-#include "cufft_wrapper.hpp"
 #include "grid_based_algorithms/fd-electrostatics.cuh"
+#include <cufft.h>
 #include <stdexcept>
 #include <string>
 //#include <cuda_interface.hpp>
@@ -97,8 +97,8 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
     throw std::runtime_error("Failed to allocate");
   }
 
-  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(fde_parameters_gpu), &parameters,
-                                   sizeof(Parameters)));
+  cuda_safe_mem(
+      cudaMemcpyToSymbol(fde_parameters_gpu, &parameters, sizeof(Parameters)));
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
