@@ -453,8 +453,6 @@ documentation for all available observables in :mod:`espressomd.observables`.
 
 - Observables working on a given set of particles and returning reduced quantities:
 
-   - :class:`~espressomd.observables.Current`: Total current of the system
-
    - :class:`~espressomd.observables.DipoleMoment`: Total electric dipole moment of the system obtained based on unfolded positions
 
    - :class:`~espressomd.observables.MagneticDipoleMoment`: Total magnetic dipole moment of the system based on the :attr:`espressomd.particle_data.ParticleHandle.dip` property.

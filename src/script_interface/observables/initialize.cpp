@@ -33,7 +33,6 @@
 #include "core/observables/ComPosition.hpp"
 #include "core/observables/ComVelocity.hpp"
 #include "core/observables/CosPersistenceAngles.hpp"
-#include "core/observables/Current.hpp"
 #include "core/observables/CylindricalDensityProfile.hpp"
 #include "core/observables/CylindricalFluxDensityProfile.hpp"
 #include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
@@ -127,7 +126,6 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   REGISTER_PID_OBS(ParticleAngularVelocities);
   REGISTER_PID_OBS(ParticleBodyAngularVelocities);
 #endif
-  REGISTER_PID_OBS(Current);
 #ifdef ELECTROSTATICS
   REGISTER_PID_OBS(DipoleMoment);
 #endif
