@@ -5,9 +5,9 @@ namespace walberla {
 class LbWalberlaD3Q19MRT : public LbWalberla<lbm::MRT_LatticeModel> {
 public:
   void construct_lattice_model(double viscosity) {
-    const double omega = 2 / (6 * viscosity + 1);
-    const double magic_number = 3. / 16.;
-    const double omega_2 =
+    const real_t omega = 2 / (6 * real_c(viscosity) + 1);
+    const real_t magic_number = real_c(3.) / real_c(16.);
+    const real_t omega_2 =
         (4 - 2 * omega) / (4 * magic_number * omega + 2 - omega);
     m_lattice_model =
         std::make_shared<lbm::MRT_LatticeModel>(lbm::MRT_LatticeModel(
@@ -16,9 +16,9 @@ public:
   void set_viscosity(double viscosity) override {
     lbm::MRT_LatticeModel *lm =
         dynamic_cast<lbm::MRT_LatticeModel *>(m_lattice_model.get());
-    const double omega = 2 / (6 * viscosity + 1);
-    const double magic_number = 3. / 16.;
-    const double omega_2 =
+    const real_t omega = 2 / (6 * real_c(viscosity) + 1);
+    const real_t magic_number = real_c(3.) / real_c(16.);
+    const real_t omega_2 =
         (4 - 2 * omega) / (4 * magic_number * omega + 2 - omega);
     lm->omega_shear_ = omega;
     lm->omega_odd_ = omega_2;

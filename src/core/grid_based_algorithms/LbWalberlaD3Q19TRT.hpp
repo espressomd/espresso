@@ -20,13 +20,13 @@ public:
     m_lattice_model =
         std::make_shared<LatticeModelD3Q19TRT>(LatticeModelD3Q19TRT(
             lbm::collision_model::TRT::constructWithMagicNumber(
-                lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
+                lbm::collision_model::omegaFromViscosity(real_c(viscosity))),
             lbm::force_model::GuoField<VectorField>(
                 m_last_applied_force_field_id)));
   };
   void set_viscosity(double viscosity) override {
     get_lattice_model()->collisionModel().resetWithMagicNumber(
-        lbm::collision_model::omegaFromViscosity((real_t)viscosity));
+        lbm::collision_model::omegaFromViscosity(real_c(viscosity)));
   };
 };
 

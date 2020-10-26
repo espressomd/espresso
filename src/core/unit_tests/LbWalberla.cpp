@@ -488,14 +488,18 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
   auto my_right = lb->get_local_domain().second;
 
   Vector3d sum_v{}, sum_v_square{};
-  const int count = (my_right[0] - my_left[0]) * (my_right[1] - my_left[1]) *
-                    (my_right[2] - my_left[2]);
+  auto const count =
+      static_cast<int>((my_right[0] - my_left[0]) * (my_right[1] - my_left[1]) *
+                       (my_right[2] - my_left[2]));
 
   for (int i = 0; i < steps; i++) {
     Vector3d step_v{}, step_v_square{};
-    for (int x = my_left[0]; x < my_right[0]; x++) {
-      for (int y = my_left[1]; y < my_right[1]; y++) {
-        for (int z = my_left[2]; z < my_right[2]; z++) {
+    for (int x = static_cast<int>(my_left[0]);
+         x < static_cast<int>(my_right[0]); x++) {
+      for (int y = static_cast<int>(my_left[1]);
+           y < static_cast<int>(my_right[1]); y++) {
+        for (int z = static_cast<int>(my_left[2]);
+             z < static_cast<int>(my_right[2]); z++) {
           const Vector3i node{{x, y, z}};
           if (lb->node_in_local_domain(node)) {
             auto v = *(lb->get_node_velocity(node));

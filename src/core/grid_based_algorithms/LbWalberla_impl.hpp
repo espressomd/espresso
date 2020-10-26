@@ -63,13 +63,13 @@ const FlagUID UBB_flag("velocity bounce back");
 
 // Vector conversion helpers
 inline Utils::Vector3d to_vector3d(const Vector3<real_t> v) {
-  return Utils::Vector3d{v[0], v[1], v[2]};
+  return Utils::Vector3d{double_c(v[0]), double_c(v[1]), double_c(v[2])};
 }
 inline Vector3<real_t> to_vector3(const Utils::Vector3d v) {
-  return Vector3<real_t>{v[0], v[1], v[2]};
+  return Vector3<real_t>{real_c(v[0]), real_c(v[1]), real_c(v[2])};
 }
 inline Utils::Vector6d to_vector6d(const Matrix3<real_t> m) {
-  return Utils::Vector6d{m[0], m[3], m[4], m[6], m[7], m[8]};
+  return Utils::Vector6d{double_c(m[0]), double_c(m[3]), double_c(m[4]), double_c(m[6]), double_c(m[7]), double_c(m[8])};
 }
 inline Utils::Vector3i to_vector3i(const std::array<int, 3> v) {
   return Utils::Vector3i{v[0], v[1], v[2]};
@@ -223,7 +223,7 @@ protected:
   IBlock *get_block_extended(const PosVector &pos) const {
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       if (b->getAABB()
-              .getExtended(m_n_ghost_layers)
+              .getExtended(real_c(m_n_ghost_layers))
               .contains(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]))) {
         return &(*b);
       }
@@ -436,7 +436,7 @@ public:
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
     const real_t density = pdf_field->getDensity((*bc).cell);
     pdf_field->setDensityAndVelocity(
-        (*bc).cell, Vector3<double>{v[0], v[1], v[2]}, density);
+        (*bc).cell, Vector3<real_t>{real_c(v[0]), real_c(v[1]), real_c(v[2])}, density);
     return true;
   };
 
@@ -479,7 +479,7 @@ public:
             m_force_to_be_applied_id);
         for (int i : {0, 1, 2})
           force_field->get((*bc).cell, i) +=
-              real_t{force[i] * weight / m_density};
+              real_c(force[i] * weight / m_density);
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
@@ -524,10 +524,10 @@ public:
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
     auto const &vel_adaptor =
         (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
-    Vector3<double> v = vel_adaptor->get((*bc).cell);
+    Vector3<real_t> v = vel_adaptor->get((*bc).cell);
 
     pdf_field->setDensityAndVelocity(
-        (*bc).cell, Vector3<double>{v[0], v[1], v[2]}, density / m_density);
+        (*bc).cell, v, real_c(density / m_density));
 
     return true;
   };
@@ -620,7 +620,7 @@ public:
   void clear_boundaries() override {
     const CellInterval &domain_bb_in_global_cell_coordinates =
         m_blocks->getCellBBFromAABB(
-            m_blocks->begin()->getAABB().getExtended(1.0 * n_ghost_layers()));
+            m_blocks->begin()->getAABB().getExtended(real_c(n_ghost_layers())));
     for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
 
       Boundaries *boundary_handling =
@@ -651,7 +651,7 @@ public:
       auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
       Vector3<real_t> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-        double local_dens = pdf_field->getDensityAndVelocity(local_v, x, y, z);
+        real_t local_dens = pdf_field->getDensityAndVelocity(local_v, x, y, z);
         mom += local_dens * local_v;
       });
     }
