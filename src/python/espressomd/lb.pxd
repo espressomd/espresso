@@ -27,7 +27,6 @@ from .actors cimport Actor
 from .utils cimport Vector3d
 from .utils cimport Vector3i
 from .utils cimport Vector6d
-from .utils cimport Vector19d
 
 cdef class HydrodynamicInteraction(Actor):
     pass
