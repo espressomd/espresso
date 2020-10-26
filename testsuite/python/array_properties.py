@@ -191,10 +191,8 @@ class ArrayPropertyTest(ArrayCommon):
 
         self.assert_operator_usage_raises(lbf[0, 0, 0].velocity)
 #        self.assert_operator_usage_raises(lbf[0, 0, 0].pressure_tensor) Walberla TODO
-# WALBERLA TODO
 #        self.assert_operator_usage_raises(lbf[0, 0, 0].pressure_tensor_neq) # WALBERLA TODO
-# self.assert_operator_usage_raises(lbf[0, 0, 0].population) # WALBERLA
-# TODO
+        self.assert_operator_usage_raises(lbf[0, 0, 0].population)
 
     @utx.skipIfMissingFeatures(["LANGEVIN_PER_PARTICLE",
                                 "PARTICLE_ANISOTROPY"])
