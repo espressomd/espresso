@@ -303,17 +303,37 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
 
   // Check that momentum stays zero after initial integration
   lb->integrate();
-  BOOST_CHECK_SMALL(lb->get_momentum().norm(), 1E-10);
+  lb->integrate();
+  Vector3d mom = lb->get_momentum();
+  MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
+                MPI_COMM_WORLD);
+  BOOST_CHECK_SMALL(mom.norm(), 1E-10);
 
-  // Chekc that momentum changes as expected when applying forces
+  // Check that momentum changes as expected when applying forces
   // auto f = Vector3d{0.15, 0.25, -0.22};
   // auto f = Vector3d{0.0006, -0.0013, 0.000528};
-  auto f = Vector3d{0., 0., 0.};
+  auto f = Vector3d{-0., 0., 0.};
   auto f2 = Vector3d{0.1, 0.23, -0.52};
   lb->set_external_force(f);
-  lb->add_force_at_pos(Utils::Vector3d{2, 2, 2}, f2);
+  Vector3d force_location{1.5, 1.5, 1.5};
+  Vector3i force_node{int(force_location[0]), int(force_location[1]),
+                      int(force_location[2])};
+
+  lb->add_force_at_pos(force_location, f2);
   lb->integrate();
-  auto mom = lb->get_momentum();
+  for (auto n : all_nodes_incl_ghosts(1)) {
+    if (lb->node_in_local_halo(n)) {
+      if (n == force_node) {
+        BOOST_CHECK_SMALL(
+            (*(lb->get_node_last_applied_force(n, true)) - f - f2).norm(),
+            1E-10);
+      } else {
+        BOOST_CHECK_SMALL(
+            (*(lb->get_node_last_applied_force(n, true)) - f).norm(), 1E-10);
+      }
+    }
+  }
+  mom = lb->get_momentum();
 
   // Expected momentum = momentum added in prev. time step
   // + f/2 from velocity shift due to last applied forces
@@ -453,6 +473,16 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
       if (lb->node_in_local_halo(cn)) {
         BOOST_CHECK_SMALL(
             (*(lb->get_node_last_applied_force(cn, true)) - f).norm(), 1E-10);
+        BOOST_CHECK_SMALL((*(lb->get_node_force_to_be_applied(cn))).norm(),
+                          1E-10);
+      }
+    }
+    lb->integrate();
+    for (auto cn : {n, n + grid_dimensions, n - grid_dimensions,
+                    n + Vector3i{{grid_dimensions[0], 0, 0}}}) {
+      if (lb->node_in_local_halo(cn)) {
+        BOOST_CHECK_SMALL((*(lb->get_node_last_applied_force(cn, true))).norm(),
+                          1E-10);
         BOOST_CHECK_SMALL((*(lb->get_node_force_to_be_applied(cn))).norm(),
                           1E-10);
       }
