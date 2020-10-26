@@ -386,7 +386,6 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
       1.5 * f2;
   MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                 MPI_COMM_WORLD);
-  auto d = mom - mom_exp;
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
 
   // check that momentum doesn't drift when no force is applied again
