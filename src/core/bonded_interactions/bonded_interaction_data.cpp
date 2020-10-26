@@ -38,8 +38,6 @@ auto cutoff(int type, Bond_parameters const &bp) {
     return bp.fene.cutoff();
   case BONDED_IA_HARMONIC:
     return bp.harmonic.cutoff();
-  case BONDED_IA_HARMONIC_DUMBBELL:
-    return bp.harmonic_dumbbell.cutoff();
   case BONDED_IA_QUARTIC:
     return bp.quartic.cutoff();
   case BONDED_IA_BONDED_COULOMB:

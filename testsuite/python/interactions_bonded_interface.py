@@ -121,15 +121,6 @@ class ParticleProperties(ut.TestCase):
         0, espressomd.interactions.HarmonicBond, {"r_0": 1.1, "k": 5.2})
     test_harmonic2 = generateTestForBondParams(
         0, espressomd.interactions.HarmonicBond, {"r_0": 1.1, "k": 5.2, "r_cut": 1.3})
-
-    # HarmonicDumbbell has only interface tests, so it is marked as
-    # experimental
-    if espressomd.has_features(["ROTATION", "EXPERIMENTAL_FEATURES"]):
-        test_harmonic_dumbbell = generateTestForBondParams(
-            0, espressomd.interactions.HarmonicDumbbellBond, {"k1": 1.1, "k2": 2.2, "r_0": 1.5})
-        test_harmonic_dumbbell2 = generateTestForBondParams(
-            0, espressomd.interactions.HarmonicDumbbellBond, {"k1": 1.1, "k2": 2.2, "r_0": 1.5, "r_cut": 1.9})
-
     test_dihedral = generateTestForBondParams(
         0, espressomd.interactions.Dihedral, {"mult": 3.0, "bend": 5.2, "phase": 3.})
 

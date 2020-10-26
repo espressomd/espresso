@@ -87,34 +87,6 @@ The third, optional parameter defines a cutoff radius. Whenever a
 harmonic bond gets longer than :math:`r_\mathrm{cut}`, the bond will be reported as broken,
 and a background error will be raised.
 
-.. _Harmonic Dumbbell Bond:
-
-Harmonic Dumbbell Bond
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. note::
-
-    Requires ``ROTATION`` feature.
-
-
-A harmonic Dumbbell bond can be instantiated via
-:class:`espressomd.interactions.HarmonicDumbbellBond`::
-
-    from espressomd.interactions import HarmonicDumbbellBond
-    hdb = HarmonicDumbbellBond(k1=<float>, k2=<float>, r_0=<float>, r_cut=<float>)
-
-
-This bond is similar to the normal harmonic bond in such a way that it
-sets up a harmonic potential, i.e. a spring, between the two particles.
-Additionally the orientation of the first particle in the bond will be aligned along
-the distance vector between both particles. This alignment can be
-controlled by the second harmonic constant :math:`k_2`. Keep in mind that orientation will
-oscillate around the distance vector and some kind of
-friction needs to be present for it to relax.
-
-The roles of the parameters :math:`k_1, r_0, r_\mathrm{cut}` are exactly the same as for the
-harmonic bond.
-
 .. _Quartic bond:
 
 Quartic bond
