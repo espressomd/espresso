@@ -36,7 +36,6 @@
 #include "bonded_interactions/dihedral.hpp"
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
-#include "bonded_interactions/harmonic_dumbbell.hpp"
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/umbrella.hpp"
 #include "errorhandling.hpp"
@@ -219,10 +218,6 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
     switch (type) {
     case BONDED_IA_FENE:
       return fene_pair_energy(iaparams, dx);
-#ifdef ROTATION
-    case BONDED_IA_HARMONIC_DUMBBELL:
-      return harmonic_dumbbell_pair_energy(p1.r.calc_director(), iaparams, dx);
-#endif
     case BONDED_IA_HARMONIC:
       return harmonic_pair_energy(iaparams, dx);
     case BONDED_IA_QUARTIC:

@@ -30,7 +30,6 @@
 #include "bonded_interactions/dihedral.hpp"
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
-#include "bonded_interactions/harmonic_dumbbell.hpp"
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
@@ -311,18 +310,6 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
   switch (iaparams.type) {
   case BONDED_IA_FENE:
     return fene_pair_force(iaparams, dx);
-#ifdef ROTATION
-  case BONDED_IA_HARMONIC_DUMBBELL: {
-    auto values =
-        harmonic_dumbbell_pair_force(p1.r.calc_director(), iaparams, dx);
-    if (values) {
-      torque = std::get<1>(values.get());
-      return boost::optional<Utils::Vector3d>(std::get<0>(values.get()));
-    }
-
-    return {};
-  }
-#endif
   case BONDED_IA_HARMONIC:
     return harmonic_pair_force(iaparams, dx);
   case BONDED_IA_QUARTIC:

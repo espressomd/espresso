@@ -482,7 +482,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         Bonded_coulomb_bond_parameters bonded_coulomb
         Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr
         Harmonic_bond_parameters harmonic
-        Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_harmonic_bond_parameters angle_harmonic
         Angle_cosine_bond_parameters angle_cosine
         Angle_cossquare_bond_parameters angle_cossquare
@@ -550,10 +549,6 @@ cdef extern from "immersed_boundary/ibm_triel.hpp":
 cdef extern from "immersed_boundary/ibm_tribend.hpp":
     int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const cbool flat)
 
-IF ROTATION:
-    cdef extern from "bonded_interactions/harmonic_dumbbell.hpp":
-        int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, double r_cut)
-
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef enum TabulatedBondedInteraction:
         TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
@@ -576,7 +571,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_NONE = -1,
         BONDED_IA_FENE,
         BONDED_IA_HARMONIC,
-        BONDED_IA_HARMONIC_DUMBBELL,
         BONDED_IA_BONDED_COULOMB,
         BONDED_IA_BONDED_COULOMB_SR,
         BONDED_IA_DIHEDRAL,
