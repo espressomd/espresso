@@ -81,8 +81,7 @@ boost::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_virial_pressure_tensor(Bonded_ia_parameters const &iaparams,
                                    Particle const &p1, Particle const &p2) {
   auto const dx = get_mi_vector(p1.r.p, p2.r.p, box_geo);
-  Utils::Vector3d torque{};
-  auto const result = calc_bond_pair_force(p1, p2, iaparams, dx, torque);
+  auto const result = calc_bond_pair_force(p1, p2, iaparams, dx);
   if (result) {
     auto const &force = result.get();
 
