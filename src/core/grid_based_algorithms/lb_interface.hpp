@@ -39,18 +39,14 @@ void lb_lbfluid_propagate();
  */
 void lb_lbfluid_on_integration_start();
 
-/** Perform a full initialization of
- *  the lattice Boltzmann system. All derived parameters
+/** @brief Perform a full initialization of
+ *  the lattice-Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values.
  */
 void lb_lbfluid_init();
 
-/** (Re-)initialize the fluid. */
+/** @brief (Re-)initialize the fluid. */
 void lb_lbfluid_reinit_fluid();
-
-/** (Re-)initialize the derived parameters for the lattice Boltzmann system.
- *  The current state of the fluid is unchanged.
- */
 
 /**
  * @brief Get the current counter of the Philox RNG.
@@ -101,7 +97,14 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
 /**
  * @brief Set the LB fluid populations for a single node.
  */
-void lb_lbnode_set_pop(const Utils::Vector3i &ind, const Utils::Vector19d &pop);
+void lb_lbnode_set_pop(const Utils::Vector3i &ind,
+                       const std::vector<double> &pop);
+
+/**
+ * @brief Set force applied on an lb node during the previous integration step
+ */
+void lb_lbnode_set_last_applied_force(const Utils::Vector3i &ind,
+                                      const Utils::Vector3d &force);
 
 /**
  * @brief Get the LB time step.
@@ -195,7 +198,7 @@ bool lb_lbnode_is_boundary(const Utils::Vector3i &ind);
 /**
  * @brief Get the LB fluid populations for a single node.
  */
-const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind);
+const std::vector<double> lb_lbnode_get_pop(const Utils::Vector3i &ind);
 
 void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary);
 void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary);

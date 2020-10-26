@@ -55,6 +55,8 @@
 
 #include "LbWalberlaBase.hpp"
 
+#include <vector>
+
 namespace walberla {
 
 // Flags marking fluid and boundaries
@@ -69,11 +71,13 @@ inline Vector3<real_t> to_vector3(const Utils::Vector3d v) {
   return Vector3<real_t>{real_c(v[0]), real_c(v[1]), real_c(v[2])};
 }
 inline Utils::Vector6d to_vector6d(const Matrix3<real_t> m) {
-  return Utils::Vector6d{double_c(m[0]), double_c(m[3]), double_c(m[4]), double_c(m[6]), double_c(m[7]), double_c(m[8])};
+  return Utils::Vector6d{double_c(m[0]), double_c(m[3]), double_c(m[4]),
+                         double_c(m[6]), double_c(m[7]), double_c(m[8])};
 }
 inline Utils::Vector3i to_vector3i(const std::array<int, 3> v) {
   return Utils::Vector3i{v[0], v[1], v[2]};
 }
+
 /** Sweep that swaps force_to_be_applied and last_applied_force
 and resets force_to_be_applied to the global external force
 */
@@ -213,6 +217,10 @@ protected:
 
   // ResetForce sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField, Boundaries>> m_reset_force;
+
+  size_t stencil_size() const override {
+    return static_cast<size_t>(LatticeModel::Stencil::Size);
+  }
 
   // Helpers to retrieve blocks and cells
   struct BlockAndCell {
@@ -436,7 +444,8 @@ public:
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
     const real_t density = pdf_field->getDensity((*bc).cell);
     pdf_field->setDensityAndVelocity(
-        (*bc).cell, Vector3<real_t>{real_c(v[0]), real_c(v[1]), real_c(v[2])}, density);
+        (*bc).cell, Vector3<real_t>{real_c(v[0]), real_c(v[1]), real_c(v[2])},
+        density);
     return true;
   };
 
@@ -494,10 +503,25 @@ public:
 
     auto const &force_field =
         (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
-    return Utils::Vector3d{{force_field->get((*bc).cell, 0),
-                            force_field->get((*bc).cell, 1),
-                            force_field->get((*bc).cell, 2)}} *
+    return Utils::Vector3d{{force_field->get((*bc).cell, uint_t(0u)),
+                            force_field->get((*bc).cell, uint_t(1u)),
+                            force_field->get((*bc).cell, uint_t(2u))}} *
            m_density;
+  };
+
+  bool set_node_last_applied_force(Utils::Vector3i const &node,
+                                   Utils::Vector3d const &force) override {
+    auto bc = get_block_and_cell(node, false);
+    if (!bc)
+      return false;
+
+    auto force_field = (*bc).block->template getData<VectorField>(
+        m_last_applied_force_field_id);
+    for (uint_t f = 0u; f < 3u; ++f) {
+      force_field->get((*bc).cell, f) = real_c(force[f] / m_density);
+    }
+
+    return true;
   };
 
   boost::optional<Utils::Vector3d>
@@ -507,13 +531,47 @@ public:
     if (!bc)
       return {};
 
-    auto const &force_field = (*bc).block->template getData<VectorField>(
+    auto const force_field = (*bc).block->template getData<VectorField>(
         m_last_applied_force_field_id);
-    return Utils::Vector3d{{force_field->get((*bc).cell, 0),
-                            force_field->get((*bc).cell, 1),
-                            force_field->get((*bc).cell, 2)}} *
+    return Utils::Vector3d{double_c(force_field->get((*bc).cell, uint_t(0u))),
+                           double_c(force_field->get((*bc).cell, uint_t(1u))),
+                           double_c(force_field->get((*bc).cell, uint_t(2u)))} *
            m_density;
+    ;
   };
+
+  // Population
+  bool set_node_pop(const Utils::Vector3i &node,
+                    std::vector<double> const &population) override {
+    auto bc = get_block_and_cell(node, false);
+    if (!bc)
+      return false;
+
+    auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
+    constexpr auto FSize = LatticeModel::Stencil::Size;
+    assert(population.size() == FSize);
+    for (uint_t f = 0u; f < FSize; ++f) {
+      pdf_field->get((*bc).cell, f) = real_c(population[f]);
+    }
+
+    return true;
+  }
+
+  boost::optional<std::vector<double>>
+  get_node_pop(const Utils::Vector3i &node) const override {
+    auto bc = get_block_and_cell(node, false);
+    if (!bc)
+      return {boost::none};
+
+    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    constexpr auto FSize = LatticeModel::Stencil::Size;
+    std::vector<double> population(FSize);
+    for (uint_t f = 0u; f < FSize; ++f) {
+      population[f] = double_c(pdf_field->get((*bc).cell, f));
+    }
+
+    return {population};
+  }
 
   // Density
   bool set_node_density(const Utils::Vector3i &node, double density) override {
@@ -526,8 +584,8 @@ public:
         (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
     Vector3<real_t> v = vel_adaptor->get((*bc).cell);
 
-    pdf_field->setDensityAndVelocity(
-        (*bc).cell, v, real_c(density / m_density));
+    pdf_field->setDensityAndVelocity((*bc).cell, v,
+                                     real_c(density / m_density));
 
     return true;
   };

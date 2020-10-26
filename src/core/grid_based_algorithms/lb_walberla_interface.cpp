@@ -9,6 +9,8 @@
 
 #include "boost/optional.hpp"
 
+#include <vector>
+
 namespace Walberla {
 
 boost::optional<Utils::Vector3d> get_node_velocity(Utils::Vector3i ind) {
@@ -59,11 +61,11 @@ boost::optional<bool> get_node_is_boundary(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_is_boundary)
 
-//.gboost::optional<Utils::Vector19d> get_node_pop(Utils::Vector3i ind) {
-//.g  return lb_walberla()->get_node_pop(ind);
-//.g}
-//.g
-//.gREGISTER_CALLBACK_ONE_RANK(get_node_pop)
+boost::optional<std::vector<double>> get_node_pop(Utils::Vector3i ind) {
+  return lb_walberla()->get_node_pop(ind);
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_node_pop)
 
 boost::optional<Utils::Vector6d> get_node_pressure_tensor(Utils::Vector3i ind) {
   auto res = lb_walberla()->get_node_pressure_tensor(ind);
@@ -79,9 +81,16 @@ void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u) {
 
 REGISTER_CALLBACK(set_node_velocity)
 
+void set_node_last_applied_force(Utils::Vector3i ind, Utils::Vector3d f) {
+  lb_walberla()->set_node_last_applied_force(ind, f);
+}
+
+REGISTER_CALLBACK(set_node_last_applied_force)
+
 void set_ext_force_density(Utils::Vector3d f) {
   lb_walberla()->set_external_force(f);
 }
+
 REGISTER_CALLBACK(set_ext_force_density)
 
 void set_node_density(Utils::Vector3i ind, double density) {
@@ -90,11 +99,11 @@ void set_node_density(Utils::Vector3i ind, double density) {
 
 REGISTER_CALLBACK(set_node_density)
 
-//.gvoid set_node_pop(Utils::Vector3i ind, Utils::Vector19d pop) {
-//.g  lb_walberla()->set_node_pop(ind, pop);
-//.g}
-//.g
-//.gREGISTER_CALLBACK(set_node_pop)
+void set_node_pop(Utils::Vector3i ind, std::vector<double> pop) {
+  lb_walberla()->set_node_pop(ind, pop);
+}
+
+REGISTER_CALLBACK(set_node_pop)
 
 Utils::Vector3d get_momentum() { return lb_walberla()->get_momentum(); }
 

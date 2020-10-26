@@ -242,15 +242,19 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
       cpfile << std::fixed;
     }
 
-    double pop[19];
+    double laf[3];
     Utils::Vector3i ind;
     auto const gridsize = lb_walberla()->get_grid_dimensions();
+    auto const pop_size = lb_walberla()->stencil_size();
+    std::vector<double> pop(pop_size);
 
     if (!binary) {
       cpfile << gridsize[0] << " " << gridsize[1] << " " << gridsize[2] << "\n";
+      cpfile << pop_size << "\n";
     } else {
       cpfile.write(reinterpret_cast<const char *>(gridsize.data()),
                    3 * sizeof(gridsize[0]));
+      cpfile.write(reinterpret_cast<const char *>(&pop_size), sizeof(pop_size));
     }
 
     for (int i = 0; i < gridsize[0]; i++) {
@@ -259,14 +263,22 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
           ind[0] = i;
           ind[1] = j;
           ind[2] = k;
-          auto pop = lb_lbnode_get_pop(ind);
+          auto const pop = lb_lbnode_get_pop(ind);
+          auto const laf = lb_lbnode_get_last_applied_force(ind);
           if (!binary) {
-            for (int n = 0; n < 19; n++) {
-              cpfile << pop[n] << "\n";
+            for (size_t n = 0; n < pop_size; n++) {
+              cpfile << pop[n] << " ";
             }
+            cpfile << "\n";
+            for (size_t n = 0; n < 3; n++) {
+              cpfile << laf[n] << " ";
+            }
+            cpfile << "\n";
           } else {
-            cpfile.write(reinterpret_cast<char *>(&pop[0]),
+            cpfile.write(reinterpret_cast<const char *>(pop.data()),
                          19 * sizeof(double));
+            cpfile.write(reinterpret_cast<const char *>(laf.data()),
+                         3 * sizeof(double));
           }
         }
       }
@@ -287,23 +299,29 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
       throw std::runtime_error(err_msg + "could not open file for reading.");
     }
 
-    Utils::Vector19d pop;
+    auto const pop_size = lb_walberla()->stencil_size();
+    size_t saved_pop_size;
+    Utils::Vector3d laf;
     Utils::Vector3i ind;
     auto const gridsize = lb_walberla()->get_grid_dimensions();
     int saved_gridsize[3];
     if (!binary) {
-      res = fscanf(cpfile, "%i %i %i\n", &saved_gridsize[0], &saved_gridsize[1],
-                   &saved_gridsize[2]);
+      res = fscanf(cpfile, "%i %i %i\n%zu\n", &saved_gridsize[0],
+                   &saved_gridsize[1], &saved_gridsize[2], &saved_pop_size);
       if (res == EOF) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "EOF found.");
       }
-      if (res != 3) {
+      if (res != 4) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     } else {
       if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
+        fclose(cpfile);
+        throw std::runtime_error(err_msg + "incorrectly formatted data.");
+      }
+      if (fread(&saved_pop_size, sizeof(size_t), 1, cpfile) != 1) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
@@ -319,7 +337,14 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
                                ' ' + std::to_string(gridsize[1]) + ' ' +
                                std::to_string(gridsize[2]) + "].");
     }
+    if (saved_pop_size != pop_size) {
+      fclose(cpfile);
+      throw std::runtime_error(err_msg + "population size mismatch, read " +
+                               std::to_string(saved_pop_size) + ", expected " +
+                               std::to_string(pop_size) + ".");
+    }
 
+    std::vector<double> pop(saved_pop_size);
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
         for (int k = 0; k < gridsize[2]; k++) {
@@ -327,28 +352,45 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
           ind[1] = j;
           ind[2] = k;
           if (!binary) {
-            res = fscanf(cpfile,
-                         "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf "
-                         "%lf %lf %lf %lf %lf %lf \n",
-                         &pop[0], &pop[1], &pop[2], &pop[3], &pop[4], &pop[5],
-                         &pop[6], &pop[7], &pop[8], &pop[9], &pop[10], &pop[11],
-                         &pop[12], &pop[13], &pop[14], &pop[15], &pop[16],
-                         &pop[17], &pop[18]);
+            for (size_t f = 0; f < saved_pop_size; ++f) {
+              res = fscanf(cpfile, "%lf ", &pop[f]);
+              if (res == EOF) {
+                fclose(cpfile);
+                throw std::runtime_error(err_msg + "EOF found.");
+              }
+              if (res != 1) {
+                fclose(cpfile);
+                throw std::runtime_error(err_msg +
+                                         "incorrectly formatted data.");
+              }
+            }
+            res = fscanf(cpfile, "\n");
             if (res == EOF) {
               fclose(cpfile);
               throw std::runtime_error(err_msg + "EOF found.");
             }
-            if (res != 19) {
+            res = fscanf(cpfile, "%lf %lf %lf \n", &laf[0], &laf[1], &laf[2]);
+            if (res == EOF) {
+              fclose(cpfile);
+              throw std::runtime_error(err_msg + "EOF found.");
+            }
+            if (res != 3) {
               fclose(cpfile);
               throw std::runtime_error(err_msg + "incorrectly formatted data.");
             }
           } else {
-            if (fread(pop.data(), sizeof(double), 19, cpfile) != 19) {
+            if (fread(pop.data(), sizeof(double), saved_pop_size, cpfile) !=
+                saved_pop_size) {
+              fclose(cpfile);
+              throw std::runtime_error(err_msg + "incorrectly formatted data.");
+            }
+            if (fread(laf.data(), sizeof(double), 3, cpfile) != 3) {
               fclose(cpfile);
               throw std::runtime_error(err_msg + "incorrectly formatted data.");
             }
           }
           lb_lbnode_set_pop(ind, pop);
+          lb_lbnode_set_last_applied_force(ind, laf);
         }
       }
     }
@@ -499,14 +541,13 @@ bool lb_lbnode_is_boundary(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
-  //#ifdef LB_WALBERLA
-  //  if (lattice_switch == ActiveLB::WALBERLA) {
-  //    return ::Communication::mpiCallbacks().call(
-  //        ::Communication::Result::one_rank, Walberla::get_node_pop, ind);
-  //  }
-  throw std::runtime_error("Not implemented.");
-  //#endif
+const std::vector<double> lb_lbnode_get_pop(const Utils::Vector3i &ind) {
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, Walberla::get_node_pop, ind);
+  }
+#endif
   throw NoLBActive();
 }
 
@@ -524,27 +565,38 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
 
 void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
                             const Utils::Vector3d &u) {
-#ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
     ::Communication::mpiCallbacks().call_all(Walberla::set_node_velocity, ind,
                                              u);
-  } else
 #endif
+  } else {
     throw NoLBActive();
+  }
+}
+
+void lb_lbnode_set_last_applied_force(const Utils::Vector3i &ind,
+                                      const Utils::Vector3d &f) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(
+        Walberla::set_node_last_applied_force, ind, f);
+#endif
+  } else {
+    throw NoLBActive();
+  }
 }
 
 void lb_lbnode_set_pop(const Utils::Vector3i &ind,
-                       const Utils::Vector19d &p_pop) {
-  throw std::runtime_error("Not implemented");
-  //  if (lattice_switch == ActiveLB::WALBERLA) {
-  //#ifdef LB_WALBERLA
-  //    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind,
-  //                                             p_pop);
-  //#endif
-  //    throw std::runtime_error("Not implemented");
-  //  } else {
-  //    throw NoLBActive();
-  //  }
+                       const std::vector<double> &p_pop) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind,
+                                             p_pop);
+#endif
+  } else {
+    throw NoLBActive();
+  }
 }
 
 ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }

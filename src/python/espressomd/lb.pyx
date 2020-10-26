@@ -28,7 +28,7 @@ from . cimport cuda_init
 from . import cuda_init
 from . import utils
 from .utils import array_locked, is_valid_type, to_char_pointer
-from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
+from .utils cimport Vector3i, Vector3d, Vector6d, make_array_locked, create_nparray_from_double_array
 from .globals cimport time_step
 
 
@@ -528,32 +528,15 @@ cdef class LBFluidRoutines:
 
     property population:
         def __get__(self):
-            cdef Vector19d double_return
-            double_return = lb_lbnode_get_pop(self.node)
-            return array_locked(np.array([double_return[0],
-                                          double_return[1],
-                                          double_return[2],
-                                          double_return[3],
-                                          double_return[4],
-                                          double_return[5],
-                                          double_return[6],
-                                          double_return[7],
-                                          double_return[8],
-                                          double_return[9],
-                                          double_return[10],
-                                          double_return[11],
-                                          double_return[12],
-                                          double_return[13],
-                                          double_return[14],
-                                          double_return[15],
-                                          double_return[16],
-                                          double_return[17],
-                                          double_return[18]]
-                                         ))
+            cdef vector[double] pop
+            pop = lb_lbnode_get_pop(self.node)
+            return array_locked(
+                create_nparray_from_double_array(pop.data(), pop.size()))
 
         def __set__(self, population):
-            cdef Vector19d _population
-            for i in range(19):
+            cdef vector[double] _population
+            _population.resize(len(population))
+            for i in range(len(population)):
                 _population[i] = population[i]
             lb_lbnode_set_pop(self.node, _population)
 
@@ -568,3 +551,9 @@ cdef class LBFluidRoutines:
         def __get__(self):
             return make_array_locked(
                 python_lbnode_get_last_applied_force(self.node))
+
+        def __set__(self, force):
+            cdef Vector3d _force
+            for i in range(3):
+                _force[i] = force[i]
+            python_lbnode_set_last_applied_force(self.node, _force)

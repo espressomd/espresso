@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 # Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
@@ -43,31 +44,37 @@ class LbWalberlaTest(ut.TestCase):
         for i in range(int(max_ind[0])):
             for j in range(int(max_ind[1])):
                 for k in range(int(max_ind[2])):
+                    # velocity
                     np.testing.assert_allclose(
                         lbf[i, j, k].velocity, [0, 0, 0], atol=1E-15)
                     v = np.array((i * .5, j * 1.5, k * 2.5))
                     lbf[i, j, k].velocity = v
                     np.testing.assert_allclose(
                         lbf[i, j, k].velocity, v, atol=1E-10)
-
+                    # density
                     self.assertAlmostEqual( 
                         lbf[i, j, k].density, dens_init, delta=1E-10)
                     rho = i * j * k * 0.5 + 0.8
                     lbf[i, j, k].density = rho
                     self.assertAlmostEqual(
                         lbf[i, j, k].density, rho, delta=1E-10)
-
-# WALBERLA TODO
-#                    pop = np.array((i * j * k, i, -i, j, -j, k, -k,
-#                                    i + j, i - j, -i + j, -i - j, i + k, i - k, -i + k, -i - k, j + k, j - k, -j + k, -j - k))
-#                    lbf[i, j, k].population = pop
-#                    lb_pop = lbf[i, j, k].population
-#                    np.testing.assert_allclose(
-#                        lb_pop, pop, atol=1E-10)
+                    # population
+                    pop = np.array((i * j * k, i, -i, j, -j, k, -k,
+                                    i + j, i - j, -i + j, -i - j, i + k,
+                                    i - k, -i + k, -i - k, j + k, j - k,
+                                    -j + k, -j - k))
+                    lbf[i, j, k].population = pop
+                    lb_pop = lbf[i, j, k].population
+                    np.testing.assert_allclose(lb_pop, pop, atol=1E-10)
+                    # last applied force
+                    last_applied_force = np.array((i, -j, 1 + k))
+                    lbf[i, j, k].last_applied_force = last_applied_force
+                    lb_last_applied_force = lbf[i, j, k].last_applied_force
+                    np.testing.assert_allclose(
+                        lb_last_applied_force, last_applied_force, atol=1E-10)
 
         s.actors.remove(lbf)
 
 
 if __name__ == "__main__":
-    # print("Features: ", espressomd.features())
     ut.main()

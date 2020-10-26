@@ -52,7 +52,7 @@ IF LB_WALBERLA:
 
 cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace "ActiveLB":
     cdef ActiveLB NONE
-    cdef ActiveLB WALBERLA 
+    cdef ActiveLB WALBERLA
 
 cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
@@ -78,11 +78,12 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
     const Vector3d lb_lbnode_get_last_applied_force(const Vector3i & ind) except +
     void lb_lbnode_set_velocity(const Vector3i & ind, const Vector3d & u) except +
+    void lb_lbnode_set_last_applied_force(const Vector3i & ind, const Vector3d & f) except +
     double lb_lbnode_get_density(const Vector3i & ind) except +
     void lb_lbnode_set_density(const Vector3i & ind, double density) except +
     const Vector6d lb_lbnode_get_pressure_tensor(const Vector3i & ind) except +
-    const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
-    void lb_lbnode_set_pop(const Vector3i & ind, const Vector19d & populations) except +
+    const vector[double] lb_lbnode_get_pop(const Vector3i & ind) except +
+    void lb_lbnode_set_pop(const Vector3i & ind, const vector[double] & populations) except +
     bool lb_lbnode_is_boundary(const Vector3i & ind) except +
     stdint.uint64_t lb_lbfluid_get_rng_state() except +
     void lb_lbfluid_set_rng_state(stdint.uint64_t) except +
@@ -169,6 +170,11 @@ cdef inline Vector3d python_lbnode_get_velocity(Vector3i node) except +:
     cdef double lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()
     cdef Vector3d c_velocity = lb_lbnode_get_velocity(node)
     return c_velocity * lattice_speed
+
+cdef inline void python_lbnode_set_last_applied_force(Vector3i node, Vector3d force) except +:
+    cdef double inv_conv = lb_lbfluid_get_tau()**2 / lb_lbfluid_get_agrid()
+    cdef Vector3d c_f = force * inv_conv
+    lb_lbnode_set_last_applied_force(node, c_f)
 
 cdef inline Vector3d python_lbnode_get_last_applied_force(Vector3i node) except +:
     cdef double conv = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau()**2

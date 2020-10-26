@@ -15,6 +15,8 @@ public:
 
   virtual void ghost_communication() = 0;
 
+  virtual size_t stencil_size() const = 0;
+
   // Velocity
   virtual boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i &node,
@@ -31,9 +33,18 @@ public:
   virtual boost::optional<Utils::Vector3d>
   get_node_force_to_be_applied(const Utils::Vector3i &node) const = 0;
 
+  // Last applied force
   virtual boost::optional<Utils::Vector3d>
   get_node_last_applied_force(const Utils::Vector3i &node,
                               bool consider_ghosts = false) const = 0;
+  virtual bool set_node_last_applied_force(const Utils::Vector3i &node,
+                                           const Utils::Vector3d &force) = 0;
+
+  // Population
+  virtual boost::optional<std::vector<double>>
+  get_node_pop(const Utils::Vector3i &node) const = 0;
+  virtual bool set_node_pop(const Utils::Vector3i &node,
+                            std::vector<double> const &population) = 0;
 
   // Density
   virtual bool set_node_density(const Utils::Vector3i &node,

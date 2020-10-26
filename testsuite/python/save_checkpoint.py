@@ -223,24 +223,25 @@ EK_implementation = None
 #    ek.add_species(ek_species)
 #    system.actors.add(ek)
 
-# TODO WALBERLA
-# if LB_implementation:
-#    m = np.pi / 12
-#    nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
-#    ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
-#    nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
-#    # Create a 3D grid with deterministic values to fill the LB fluid lattice
-#    grid_3D = np.fromfunction(
-#        lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-#        (nx, ny, nz), dtype=float)
-#    for i in range(nx):
-#        for j in range(ny):
-#            for k in range(nz):
-#                lbf[i, j, k].population = grid_3D[i, j, k] * np.arange(1, 20)
-#    cpt_mode = int("@TEST_BINARY@")
-#    # save LB checkpoint file
-#    lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
-#    lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
+if LB_implementation:
+    m = np.pi / 12
+    nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
+    ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
+    nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
+    # Create a 3D grid with deterministic values to fill the LB fluid lattice
+    grid_3D = np.fromfunction(
+        lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+        (nx, ny, nz), dtype=float)
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                lbf[i, j, k].population = grid_3D[i, j, k] * np.arange(1, 20)
+                lbf[i, j, k].last_applied_force = grid_3D[i, j, k] * \
+                    np.arange(1, 4)
+    cpt_mode = int("@TEST_BINARY@")
+    # save LB checkpoint file
+    lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
+    lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
 
 # TODO WALBERLA
 # if EK_implementation:
@@ -289,24 +290,23 @@ class TestCheckpointLB(ut.TestCase):
         self.assertTrue(os.path.isfile(checkpoint_filepath),
                         "checkpoint file not created")
 
-#        # TODO WALBERLA
-#        if LB_implementation:
-#            self.assertTrue(os.path.isfile(lbf_cpt_path),
-#                            "LB checkpoint file not created")
+        if LB_implementation:
+            self.assertTrue(os.path.isfile(lbf_cpt_path),
+                            "LB checkpoint file not created")
 
-#            with open(lbf_cpt_path, "rb") as f:
-#                lbf_cpt_str = f.read()
-#            # write an LB checkpoint with missing data
-#            with open(lbf_cpt_path[:-4] + "-corrupted.cpt", "wb") as f:
-#                f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
-#            # write an LB checkpoint with different box dimensions
-#            with open(lbf_cpt_path[:-4] + "-wrong-boxdim.cpt", "wb") as f:
-#                if cpt_mode == 1:
-#                    # first dimension becomes 0
-#                    f.write(8 * b"\x00" + lbf_cpt_str[8:])
-#                else:
-#                    # first dimension becomes larger
-#                    f.write(b"1" + lbf_cpt_str)
+            with open(lbf_cpt_path, "rb") as f:
+                lbf_cpt_str = f.read()
+            # write an LB checkpoint with missing data
+            with open(lbf_cpt_path[:-4] + "-corrupted.cpt", "wb") as f:
+                f.write(lbf_cpt_str[:len(lbf_cpt_str) // 2])
+            # write an LB checkpoint with different box dimensions
+            with open(lbf_cpt_path[:-4] + "-wrong-boxdim.cpt", "wb") as f:
+                if cpt_mode == 1:
+                    # first dimension becomes 0
+                    f.write(8 * b"\x00" + lbf_cpt_str[8:])
+                else:
+                    # first dimension becomes larger
+                    f.write(b"1" + lbf_cpt_str)
 
 
 if __name__ == '__main__':

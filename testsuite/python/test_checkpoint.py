@@ -56,37 +56,46 @@ class CheckpointTest(ut.TestCase):
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         cls.checkpoint.load(0)
 
-#    # TODO WALBERLA
-#    @ut.skipIf(not LB, "Skipping test due to missing mode.")
-#    def test_LB(self):
-#        lbf = system.actors[0]
-#        cpt_mode = int("@TEST_BINARY@")
-#        cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
-#        with self.assertRaises(RuntimeError):
-#            lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
-#        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
-#            lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
-#        lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
-#        precision = 9 if "LB.WALBERLA" in modes else 5
-#        m = np.pi / 12
-#        nx = lbf.shape[0]
-#        ny = lbf.shape[1]
-#        nz = lbf.shape[2]
-#        grid_3D = np.fromfunction(
-#            lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-#            (nx, ny, nz), dtype=float)
-#        for i in range(nx):
-#            for j in range(ny):
-#                for k in range(nz):
-#                    np.testing.assert_almost_equal(
-#                        np.copy(lbf[i, j, k].population),
-#                        grid_3D[i, j, k] * np.arange(1, 20),
-#                        decimal=precision)
-#        state = lbf.get_params()
-#        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
-#        for key in reference:
-#            self.assertIn(key, state)
-#            self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
+    # TODO WALBERLA
+    @ut.skipIf(not LB, "Skipping test due to missing mode.")
+    def test_LB(self):
+        for actor in system.actors.active_actors:
+            if isinstance(actor, espressomd.lb.LBFluidWalberla):
+                lbf = actor
+                break
+        else:
+            raise RuntimeError('LB actor not found')
+        cpt_mode = int("@TEST_BINARY@")
+        cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
+        with self.assertRaises(RuntimeError):
+            lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+            lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+        lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
+        precision = 9 if "LB.WALBERLA" in modes else 5
+        m = np.pi / 12
+        nx = lbf.shape[0]
+        ny = lbf.shape[1]
+        nz = lbf.shape[2]
+        grid_3D = np.fromfunction(
+            lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+            (nx, ny, nz), dtype=float)
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    np.testing.assert_almost_equal(
+                        np.copy(lbf[i, j, k].population),
+                        grid_3D[i, j, k] * np.arange(1, 20),
+                        decimal=precision)
+                    np.testing.assert_almost_equal(
+                        np.copy(lbf[i, j, k].last_applied_force),
+                        grid_3D[i, j, k] * np.arange(1, 4),
+                        decimal=precision)
+        state = lbf.get_params()
+        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
+        for key in reference:
+            self.assertIn(key, state)
+            self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
 
     @utx.skipIfMissingFeatures('LB_WALBERLA')
     @ut.skipIf('LB.WALBERLA' not in modes, 'waLBerla LBM not in modes')
