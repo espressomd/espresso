@@ -25,8 +25,8 @@ simulations, due to the large time- and length scales of the studied
 processes.
 
 ESPResSo is capable of doing classical Molecular dynamics simulations
-of many types of systems in different statistical ensembles (NVE, NVT,
-NPT) and non-equilibrium situations, using standard potentials such as
+of many types of systems in different statistical ensembles (microcanonical, canonical,
+isobaric-isothermal, (semi-)grand canonical, reaction, constant pH, Gibbs ensemble) and non-equilibrium situations, using standard potentials such as
 the Lennard-Jones or Morse potential. It contains many advanced
 simulation algorithms, which take into account hydrodynamic
 (lattice-Boltzmann) and electrostatic interactions (P3M, ELC, MMMxD).

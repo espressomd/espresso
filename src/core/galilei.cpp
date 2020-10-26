@@ -18,9 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *
- */
 
 #include "galilei.hpp"
 #include "cells.hpp"
@@ -29,8 +26,7 @@
 
 #include <boost/range/numeric.hpp>
 
-/* Stop the particle motion by setting the
-   velocity of each particle to zero */
+/** Stop particle motion by setting the velocity of each particle to zero. */
 void local_kill_particle_motion(int omega, const ParticleRange &particles) {
   for (auto &p : particles) {
     if (omega) {
@@ -41,8 +37,7 @@ void local_kill_particle_motion(int omega, const ParticleRange &particles) {
   }
 }
 
-/* Set all the forces acting on the particles
-   to zero */
+/** Set all the forces acting on the particles to zero */
 void local_kill_particle_forces(int torque, const ParticleRange &particles) {
   for (auto &p : particles) {
     if (torque) {
@@ -53,7 +48,7 @@ void local_kill_particle_forces(int torque, const ParticleRange &particles) {
   }
 }
 
-/* Calculate the CMS of the system */
+/** Calculate the CMS of the system */
 std::pair<Utils::Vector3d, double> local_system_CMS() {
   return boost::accumulate(
       cell_structure.local_particles(), std::pair<Utils::Vector3d, double>{},
@@ -68,6 +63,7 @@ std::pair<Utils::Vector3d, double> local_system_CMS() {
       });
 }
 
+/** Calculate the CMS velocity of the system */
 std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
   return boost::accumulate(
       cell_structure.local_particles(), std::pair<Utils::Vector3d, double>{},
@@ -80,7 +76,7 @@ std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
       });
 }
 
-/* Remove the CMS velocity */
+/** Remove the CMS velocity */
 void local_galilei_transform(const Utils::Vector3d &cmsvel) {
   for (auto &p : cell_structure.local_particles()) {
     p.m.v -= cmsvel;

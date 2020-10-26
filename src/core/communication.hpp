@@ -83,7 +83,7 @@ MpiCallbacks &mpiCallbacks();
 } // namespace Communication
 
 /**************************************************
- * for every procedure requesting a MPI negotiation
+ * for every procedure requesting a MPI negotiation,
  * a slave exists which processes this request on
  * the slave nodes. It is denoted by *_slave.
  **************************************************/
@@ -167,8 +167,7 @@ int mpi_place_new_particle(int id, const Utils::Vector3d &pos);
  *  Also calls \ref on_particle_change.
  *  \param part     identity of first particle of the exclusion.
  *  \param part2    identity of second particle of the exclusion.
- *  \param _delete  if true, do not add the exclusion, rather delete it if
- *                  found
+ *  \param _delete  if true, do not add the exclusion, rather delete it if found
  */
 void mpi_send_exclusion(int part, int part2, int _delete);
 
@@ -208,17 +207,17 @@ void mpi_bcast_all_ia_params();
  *  Used for both bonded and non-bonded interaction parameters. Therefore
  *  @p i and @p j are used depending on their value:
  *
- *  \param i   particle type for non bonded-interaction parameters /
+ *  \param i   particle type for non-bonded interaction parameters /
  *             bonded interaction type number.
  *  \param j   if not negative: particle type for non-bonded interaction
  *             parameters / if negative: flag for bonded interaction
  */
 void mpi_bcast_ia_params(int i, int j);
 
-/** Send new size of \ref ia_params.
+/** Resize \ref ia_params.
  *  \param s   the new size for \ref ia_params.
  */
-void mpi_bcast_max_seen_particle_type(int s);
+void mpi_realloc_ia_params(int s);
 
 /** Gather data for analysis.
  *  \param[in] job what to do:
@@ -243,14 +242,14 @@ void mpi_bcast_cell_structure(int cs);
 
 void mpi_set_use_verlet_lists(bool use_verlet_lists);
 
-/** Broadcast nptiso geometry parameter to all nodes. */
+/** Broadcast nptiso geometry parameters to all nodes. */
 void mpi_bcast_nptiso_geom();
 
 /** Broadcast @ref CUDA_global_part_vars structure */
 void mpi_bcast_cuda_global_part_vars();
 
 /** Perform iccp3m initialization.
- *  @return nonzero on error
+ *  @return non-zero value on error
  */
 int mpi_iccp3m_init();
 
@@ -283,6 +282,7 @@ void mpi_galilei_transform();
  */
 std::vector<int> mpi_resort_particles(int global_flag);
 
+namespace Communication {
 /**
  * @brief Init globals for communication.
  *
@@ -290,10 +290,8 @@ std::vector<int> mpi_resort_particles(int global_flag);
  * the pointer to the mpi environment to keep it alive
  * while the program is loaded.
  *
- * @param mpi_env Mpi environment that should be used,
- *
+ * @param mpi_env MPI environment that should be used
  */
-namespace Communication {
 void init(std::shared_ptr<boost::mpi::environment> mpi_env);
-}
+} // namespace Communication
 #endif

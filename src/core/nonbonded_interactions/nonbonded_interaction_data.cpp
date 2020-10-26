@@ -73,7 +73,7 @@ void ia_params_set_state(std::string const &state) {
   ia_params.clear();
   ia >> ia_params;
   ia >> max_seen_particle_type;
-  mpi_bcast_max_seen_particle_type(max_seen_particle_type);
+  mpi_realloc_ia_params(max_seen_particle_type);
   mpi_bcast_all_ia_params();
 }
 
@@ -199,12 +199,10 @@ double maximal_cutoff() {
   return max_cut;
 }
 
-/** This function increases the LOCAL ia_params field for non-bonded
-   interactions
-    to the given size. This function is not exported
-    since it does not do this on all nodes. Use
-    make_particle_type_exist for that.
-*/
+/** Increase the LOCAL @ref ia_params field for non-bonded interactions
+ *  to the given size. This function is not exported since it does not
+ *  do this on all nodes. Use @ref make_particle_type_exist for that.
+ */
 void realloc_ia_params(int nsize) {
   if (nsize <= max_seen_particle_type)
     return;
@@ -233,7 +231,7 @@ bool is_new_particle_type(int type) {
 
 void make_particle_type_exist(int type) {
   if (is_new_particle_type(type))
-    mpi_bcast_max_seen_particle_type(type + 1);
+    mpi_realloc_ia_params(type + 1);
 }
 
 void make_particle_type_exist_local(int type) {
@@ -251,7 +249,7 @@ int interactions_sanity_checks() {
 
 #ifdef DIPOLES
   Dipole::nonbonded_sanity_check(state);
-#endif /* ifdef  DIPOLES */
+#endif /* ifdef DIPOLES */
 
   return state;
 }
