@@ -8,27 +8,15 @@
 #include "blockforest/Initialization.h"
 #include "blockforest/StructuredBlockForest.h"
 #include "blockforest/communication/UniformBufferedScheme.h"
-#include "boost/optional.hpp"
-#include "boost/tuple/tuple.hpp"
 #include "boundary/BoundaryHandling.h"
-#include "core/mpi/Environment.h"
-#include "field/FlagField.h"
 #include "field/GhostLayerField.h"
 #include "field/adaptors/GhostLayerFieldAdaptor.h"
 #include "field/vtk/FlagFieldCellFilter.h"
 #include "field/vtk/VTKWriter.h"
-#include "lbm/boundary/UBB.h"
-#include "lbm/field/Adaptors.h"
-#include "lbm/field/PdfField.h"
 #include "lbm/lattice_model/CollisionModel.h"
 #include "lbm/lattice_model/D3Q19.h"
 #include "lbm/vtk/all.h"
 #include "timeloop/SweepTimeloop.h"
-#include "utils/Vector.hpp"
-#include "utils/interpolation/bspline_3d.hpp"
-#include "utils/math/make_lin_space.hpp"
-
-#include "boundary/BoundaryHandling.h"
 
 #include "core/mpi/Environment.h"
 #include "core/mpi/MPIManager.h"
@@ -44,6 +32,7 @@
 #include "lbm/boundary/NoSlip.h"
 #include "lbm/boundary/UBB.h"
 #include "lbm/communication/PdfFieldPackInfo.h"
+#include "lbm/field/Adaptors.h"
 #include "lbm/field/AddToStorage.h"
 #include "lbm/field/PdfField.h"
 #include "lbm/lattice_model/D3Q19.h"
@@ -54,6 +43,13 @@
 #include "timeloop/SweepTimeloop.h"
 
 #include "LbWalberlaBase.hpp"
+
+#include <utils/Vector.hpp>
+#include <utils/interpolation/bspline_3d.hpp>
+#include <utils/math/make_lin_space.hpp>
+
+#include <boost/optional.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <vector>
 

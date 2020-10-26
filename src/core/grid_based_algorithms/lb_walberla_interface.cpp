@@ -5,9 +5,11 @@
 #include "MpiCallbacks.hpp"
 #include "lb_interface.hpp"
 #include "lb_walberla_instance.hpp"
-#include "utils/Vector.hpp"
 
-#include "boost/optional.hpp"
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <vector>
 

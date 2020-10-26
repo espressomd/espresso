@@ -4,8 +4,9 @@
 #include "config.hpp"
 
 #ifdef LB_WALBERLA
-#include "boost/optional.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
 
 /** Class that runs and controls the LB on WaLBerla
  */

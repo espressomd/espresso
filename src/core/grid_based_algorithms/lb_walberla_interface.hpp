@@ -5,7 +5,7 @@
 
 #ifdef LB_WALBERLA
 
-#include "boost/optional.hpp"
+#include <boost/optional.hpp>
 
 #include <vector>
 

@@ -34,6 +34,8 @@
 #include <utils/index.hpp>
 using Utils::get_linear_index;
 
+#include <boost/serialization/vector.hpp>
+
 #include <cstdio>
 #include <fstream>
 
