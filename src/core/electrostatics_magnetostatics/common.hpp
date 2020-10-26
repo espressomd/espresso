@@ -16,6 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef ELECTROSTATICS_MAGNETOSTATICS_COMMON_HPP
+#define ELECTROSTATICS_MAGNETOSTATICS_COMMON_HPP
 
 /** Send new Coulomb/Dipole parameters. */
 void mpi_bcast_coulomb_params();
+
+#endif
