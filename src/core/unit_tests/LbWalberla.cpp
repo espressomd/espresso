@@ -362,7 +362,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
 }
 
-// this can be mergd with ther thermalized test, once that passes
+// this can be merged with the thermalized test, once that passes
 BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
                      bdata::make(unthermalized_lbs()), lb_generator) {
   auto lb = lb_generator(mpi_shape);
@@ -371,7 +371,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
   lb->integrate();
   BOOST_CHECK_SMALL(lb->get_momentum().norm(), 1E-10);
 
-  // Chekc that momentum changes as expected when applying forces
+  // Check that momentum changes as expected when applying forces
   auto f = Vector3d{0.0006, -0.0013, 0.000528};
   auto f2 = Vector3d{0.095, 0.23, -0.52};
   lb->set_external_force(f);
@@ -392,7 +392,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
   lb->set_external_force(Vector3d{});
   lb->integrate();
   // The expected moment is just that applied during a single time step
-  // No f/2 correciotn, since no force was applied in last time step
+  // No f/2 correction, since no force was applied in last time step
   mom_exp =
       1 * f * grid_dimensions[0] * grid_dimensions[1] * grid_dimensions[2] +
       1 * f2;
@@ -548,7 +548,7 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
     lb->integrate();
   }
 
-  // agregate
+  // aggregate
   MPI_Allreduce(MPI_IN_PLACE, sum_v.data(), 3, MPI_DOUBLE, MPI_SUM,
                 MPI_COMM_WORLD);
   MPI_Allreduce(MPI_IN_PLACE, sum_v_square.data(), 3, MPI_DOUBLE, MPI_SUM,
