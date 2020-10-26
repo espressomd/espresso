@@ -36,9 +36,6 @@
  */
 constexpr double INACTIVE_CUTOFF = -1.;
 
-/* Data Types */
-/************************************************************/
-
 /** Lennard-Jones with shift */
 struct LJ_Parameters {
   double eps = 0.0;
@@ -268,10 +265,6 @@ struct IA_parameters {
 
 extern std::vector<IA_parameters> ia_params;
 
-/************************************************
- * exported variables
- ************************************************/
-
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
 
@@ -289,11 +282,6 @@ double maximal_cutoff_bonded();
  */
 extern double min_global_cut;
 
-/*****************
-*******************************
-* exported functions
-************************************************/
-
 /**
  * @brief Get interaction parameters between particle types i and j
  *
@@ -304,7 +292,7 @@ extern double min_global_cut;
  * @param j Second type, has to be smaller than @ref max_seen_particle_type.
  *
  * @return Pointer to interaction parameters for the type pair.
- * */
+ */
 inline IA_parameters *get_ia_param(int i, int j) {
   assert(i >= 0 && i < max_seen_particle_type);
   assert(j >= 0 && j < max_seen_particle_type);
@@ -313,17 +301,17 @@ inline IA_parameters *get_ia_param(int i, int j) {
                                             max_seen_particle_type)];
 }
 
-/** Get interaction parameters between particle sorts i and j.
+/** Get interaction parameters between particle types i and j.
  *  Slower than @ref get_ia_param, but can also be used on not
  *  yet present particle types
  */
 IA_parameters *get_ia_param_safe(int i, int j);
 
-/** @brief Get the state of all non bonded interactions.
+/** @brief Get the state of all non-bonded interactions.
  */
 std::string ia_params_get_state();
 
-/** @brief Set the state of all non bonded interactions.
+/** @brief Set the state of all non-bonded interactions.
  */
 void ia_params_set_state(std::string const &);
 
@@ -354,7 +342,7 @@ void reset_ia_params();
 /** Check whether all force calculation routines are properly initialized. */
 int interactions_sanity_checks();
 
-/**  check if a non bonded interaction is defined */
+/** Check if a non-bonded interaction is defined */
 inline bool checkIfInteraction(IA_parameters const &data) {
   return data.max_cut != INACTIVE_CUTOFF;
 }
@@ -385,25 +373,25 @@ public:
     if (dist2 > m_eff_max_cut2)
       return false;
 
-// Within real space cutoff of electrostatics and both charged
 #ifdef ELECTROSTATICS
+    // Within real space cutoff of electrostatics and both charged
     if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
       return true;
 #endif
 
-// Within dipolar cutoff and both carry magnetic moments
 #ifdef DIPOLES
+    // Within dipolar cutoff and both carry magnetic moments
     if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
       return true;
 #endif
 
-// Collision detection
 #ifdef COLLISION_DETECTION
+    // Collision detection
     if (dist2 <= m_collision_cut2)
       return true;
 #endif
 
-    // Within short-range distance (incl dpd and the like)
+    // Within short-range distance (including dpd and the like)
     auto const max_cut = get_ia_param(p1.p.type, p2.p.type)->max_cut;
     return static_cast<bool>((max_cut != INACTIVE_CUTOFF) &&
                              (dist2 <= Utils::sqr(max_cut + m_skin)));

@@ -797,7 +797,8 @@ public:
 
   void create_vtk(unsigned delta_N, unsigned initial_count,
                   unsigned flag_observables, std::string const &identifier,
-                  std::string const &base_folder, std::string const &prefix) {
+                  std::string const &base_folder,
+                  std::string const &prefix) override {
     // VTKOuput object must be unique
     std::stringstream unique_identifier;
     unique_identifier << base_folder << "/" << identifier;
@@ -843,7 +844,7 @@ public:
   }
 
   /** Manually call a VTK callback */
-  void write_vtk(std::string const &vtk_uid) {
+  void write_vtk(std::string const &vtk_uid) override {
     if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
       throw std::runtime_error("VTKOutput object " + vtk_uid +
                                " is an automatic observable");
@@ -856,7 +857,7 @@ public:
   }
 
   /** Activate or deactivate a VTK callback */
-  virtual void switch_vtk(std::string const &vtk_uid, int status) {
+  virtual void switch_vtk(std::string const &vtk_uid, int status) override {
     if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
       throw std::runtime_error("VTKOutput object " + vtk_uid +
                                " is a manual observable");

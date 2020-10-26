@@ -43,7 +43,7 @@ namespace H5md {
 
 /**
  * @brief Class for writing H5MD files.
- **/
+ */
 class File {
 public:
   /**

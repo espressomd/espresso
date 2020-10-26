@@ -20,18 +20,12 @@
  */
 #ifndef GALILEI_H
 #define GALILEI_H
-/** \file
- *
- */
 
 #include <utils/Vector.hpp>
 
 #include "ParticleRange.hpp"
 #include <utility>
 
-/** broadcasts reaction parameters and sets up an entry in the ia_params, so
-    that the Verlet radius is equal or bigger than the reaction range.
-**/
 void local_kill_particle_motion(int, const ParticleRange &particles);
 void local_kill_particle_forces(int, const ParticleRange &particles);
 std::pair<Utils::Vector3d, double> local_system_CMS();

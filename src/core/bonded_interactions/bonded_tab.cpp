@@ -37,6 +37,11 @@ int tabulated_bonded_set_params(int bond_type,
   make_bond_type_exist(bond_type);
 
   /* set types */
+  if (bonded_ia_params[bond_type].type == BONDED_IA_TABULATED_DISTANCE or
+      bonded_ia_params[bond_type].type == BONDED_IA_TABULATED_ANGLE or
+      bonded_ia_params[bond_type].type == BONDED_IA_TABULATED_DIHEDRAL) {
+    delete bonded_ia_params[bond_type].p.tab.pot;
+  }
   auto tab_pot = bonded_ia_params[bond_type].p.tab.pot = new TabulatedPotential;
   bonded_ia_params[bond_type].p.tab.type = tab_type;
 
