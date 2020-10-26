@@ -194,11 +194,6 @@ if LB_implementation:
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
     if espressomd.has_features("LB_BOUNDARIES"):
-        # TODO_WALBERLA
-        # if 'EK.GPU' not in modes:
-        #     system.lbboundaries.add(
-        #  LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4,
-        #  1e-4, 0)))
         system.lbboundaries.add(
             LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4, 1e-4, 0)))
 

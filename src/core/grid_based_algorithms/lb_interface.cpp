@@ -276,7 +276,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
             cpfile << "\n";
           } else {
             cpfile.write(reinterpret_cast<const char *>(pop.data()),
-                         19 * sizeof(double));
+                         pop_size * sizeof(double));
             cpfile.write(reinterpret_cast<const char *>(laf.data()),
                          3 * sizeof(double));
           }

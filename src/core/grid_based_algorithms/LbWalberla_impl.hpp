@@ -503,9 +503,9 @@ public:
 
     auto const &force_field =
         (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
-    return Utils::Vector3d{{force_field->get((*bc).cell, uint_t(0u)),
-                            force_field->get((*bc).cell, uint_t(1u)),
-                            force_field->get((*bc).cell, uint_t(2u))}} *
+    return Utils::Vector3d{double_c(force_field->get((*bc).cell, uint_t(0u))),
+                           double_c(force_field->get((*bc).cell, uint_t(1u))),
+                           double_c(force_field->get((*bc).cell, uint_t(2u)))} *
            m_density;
   };
 
@@ -598,7 +598,7 @@ public:
 
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
 
-    return {m_density * pdf_field->getDensity((*bc).cell)};
+    return {m_density * double_c(pdf_field->getDensity((*bc).cell))};
   };
 
   // Boundary related
