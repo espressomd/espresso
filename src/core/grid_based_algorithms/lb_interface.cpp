@@ -391,11 +391,12 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
               throw std::runtime_error(err_msg + "incorrectly formatted data.");
             }
           }
-          lb_lbnode_set_pop(ind, pop);
-          lb_lbnode_set_last_applied_force(ind, laf);
+          lb_lbnode_set_pop(ind, pop, true);
+          lb_lbnode_set_last_applied_force(ind, laf, true);
         }
       }
     }
+    ::Communication::mpiCallbacks().call_all(Walberla::do_ghost_communication);
     if (!binary) {
       // skip spaces
       for (int n = 0; n < 2; ++n) {
@@ -553,11 +554,12 @@ const std::vector<double> lb_lbnode_get_pop(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
+void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density,
+                           bool defer_ghost_update) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     ::Communication::mpiCallbacks().call_all(Walberla::set_node_density, ind,
-                                             p_density);
+                                             p_density, defer_ghost_update);
   } else
 #endif
   {
@@ -566,11 +568,11 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
 }
 
 void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
-                            const Utils::Vector3d &u) {
+                            const Utils::Vector3d &u, bool defer_ghost_update) {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     ::Communication::mpiCallbacks().call_all(Walberla::set_node_velocity, ind,
-                                             u);
+                                             u, defer_ghost_update);
 #endif
   } else {
     throw NoLBActive();
@@ -578,11 +580,12 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
 }
 
 void lb_lbnode_set_last_applied_force(const Utils::Vector3i &ind,
-                                      const Utils::Vector3d &f) {
+                                      const Utils::Vector3d &f,
+                                      bool defer_ghost_update) {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     ::Communication::mpiCallbacks().call_all(
-        Walberla::set_node_last_applied_force, ind, f);
+        Walberla::set_node_last_applied_force, ind, f, defer_ghost_update);
 #endif
   } else {
     throw NoLBActive();
@@ -590,11 +593,12 @@ void lb_lbnode_set_last_applied_force(const Utils::Vector3i &ind,
 }
 
 void lb_lbnode_set_pop(const Utils::Vector3i &ind,
-                       const std::vector<double> &p_pop) {
+                       const std::vector<double> &p_pop,
+                       bool defer_ghost_update) {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind,
-                                             p_pop);
+    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind, p_pop,
+                                             defer_ghost_update);
 #endif
   } else {
     throw NoLBActive();

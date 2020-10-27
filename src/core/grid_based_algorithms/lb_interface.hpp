@@ -86,25 +86,29 @@ void lb_lbfluid_sanity_checks();
 /**
  * @brief Set the LB density for a single node.
  */
-void lb_lbnode_set_density(const Utils::Vector3i &ind, double density);
+void lb_lbnode_set_density(const Utils::Vector3i &ind, double density,
+                           bool defer_ghost_update = false);
 
 /**
  * @brief Set the LB fluid velocity for a single node.
  */
 void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
-                            const Utils::Vector3d &u);
+                            const Utils::Vector3d &u,
+                            bool defer_ghost_update = false);
 
 /**
  * @brief Set the LB fluid populations for a single node.
  */
 void lb_lbnode_set_pop(const Utils::Vector3i &ind,
-                       const std::vector<double> &pop);
+                       const std::vector<double> &pop,
+                       bool defer_ghost_update = false);
 
 /**
  * @brief Set force applied on an lb node during the previous integration step
  */
 void lb_lbnode_set_last_applied_force(const Utils::Vector3i &ind,
-                                      const Utils::Vector3d &force);
+                                      const Utils::Vector3d &force,
+                                      bool defer_ghost_update = false);
 
 /**
  * @brief Get the LB time step.

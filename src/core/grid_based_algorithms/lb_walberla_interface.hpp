@@ -24,11 +24,16 @@ void switch_vtk(std::string const &vtk_uid, int status);
 boost::optional<std::vector<double>> get_node_pop(Utils::Vector3i ind);
 boost::optional<Utils::Vector6d> get_node_pressure_tensor(Utils::Vector3i ind);
 
-void set_node_last_applied_force(Utils::Vector3i ind, Utils::Vector3d f);
-void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u);
+void set_node_last_applied_force(Utils::Vector3i ind, Utils::Vector3d f,
+                                 bool defer_ghost_update);
+void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u,
+                       bool defer_ghost_update);
 void set_ext_force_density(Utils::Vector3d f);
-void set_node_density(Utils::Vector3i ind, double density);
-void set_node_pop(Utils::Vector3i ind, std::vector<double> pop);
+void set_node_density(Utils::Vector3i ind, double density,
+                      bool defer_ghost_update);
+void set_node_pop(Utils::Vector3i ind, std::vector<double> pop,
+                  bool defer_ghost_update);
+void do_ghost_communication();
 
 Utils::Vector3d get_momentum();
 
