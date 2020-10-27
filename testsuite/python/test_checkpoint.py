@@ -56,7 +56,6 @@ class CheckpointTest(ut.TestCase):
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         cls.checkpoint.load(0)
 
-    # TODO WALBERLA
     @ut.skipIf(not LB, "Skipping test due to missing mode.")
     def test_LB(self):
         for actor in system.actors.active_actors:
@@ -441,7 +440,7 @@ class CheckpointTest(ut.TestCase):
         self.assertAlmostEqual(c[4].gamma, 2.3, delta=1E-10)
 
         self.assertIsInstance(c[5], constraints.PotentialField)
-        self.assertEqual(c[5].field.shape, (14, 16, 18, 1))
+        self.assertEqual(c[5].field.shape, (8, 9, 10, 1))
         self.assertAlmostEqual(c[5].default_scale, 1.6, delta=1E-10)
         np.testing.assert_allclose(np.copy(c[5].origin), [-0.5, -0.5, -0.5])
         np.testing.assert_allclose(np.copy(c[5].grid_spacing), np.ones(3))
@@ -451,7 +450,7 @@ class CheckpointTest(ut.TestCase):
                                    atol=1e-10)
 
         self.assertIsInstance(c[6], constraints.ForceField)
-        self.assertEqual(c[6].field.shape, (14, 16, 18, 3))
+        self.assertEqual(c[6].field.shape, (8, 9, 10, 3))
         self.assertAlmostEqual(c[6].default_scale, 1.4, delta=1E-10)
         np.testing.assert_allclose(np.copy(c[6].origin), [-0.5, -0.5, -0.5])
         np.testing.assert_allclose(np.copy(c[6].grid_spacing), np.ones(3))
