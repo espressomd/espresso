@@ -85,6 +85,7 @@ REGISTER_CALLBACK(set_node_velocity)
 
 void set_node_last_applied_force(Utils::Vector3i ind, Utils::Vector3d f) {
   lb_walberla()->set_node_last_applied_force(ind, f);
+  lb_walberla()->ghost_communication();
 }
 
 REGISTER_CALLBACK(set_node_last_applied_force)
@@ -97,12 +98,14 @@ REGISTER_CALLBACK(set_ext_force_density)
 
 void set_node_density(Utils::Vector3i ind, double density) {
   lb_walberla()->set_node_density(ind, density);
+  lb_walberla()->ghost_communication();
 }
 
 REGISTER_CALLBACK(set_node_density)
 
 void set_node_pop(Utils::Vector3i ind, std::vector<double> pop) {
   lb_walberla()->set_node_pop(ind, pop);
+  lb_walberla()->ghost_communication();
 }
 
 REGISTER_CALLBACK(set_node_pop)
