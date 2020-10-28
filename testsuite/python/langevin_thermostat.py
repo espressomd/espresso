@@ -35,9 +35,14 @@ class LangevinThermostat(ut.TestCase):
     system.cell_system.skin = 0
     system.periodicity = [0, 0, 0]
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         np.random.seed(42)
+
+    def tearDown(self):
+        self.system.time_step = 1e-12
+        self.system.cell_system.skin = 0.0
+        self.system.part.clear()
+        self.system.auto_update_accumulators.clear()
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
         """check the recorded particle distributions in velocity against a
@@ -63,7 +68,6 @@ class LangevinThermostat(ut.TestCase):
         """Test for RNG seed consistency."""
         system = self.system
         system.time_step = 0.01
-        system.part.clear()
         system.part.add(pos=[0, 0, 0])
 
         kT = 1.1
@@ -136,7 +140,6 @@ class LangevinThermostat(ut.TestCase):
         v0 = np.array((5., 5., 5.))
 
         system.time_step = 0.0005
-        system.part.clear()
         system.part.add(pos=(0, 0, 0), v=v0)
         if espressomd.has_features("MASS"):
             system.part[0].mass = 3
@@ -174,7 +177,6 @@ class LangevinThermostat(ut.TestCase):
         o0 = np.array((5., 5., 5.))
 
         system.time_step = 0.0001
-        system.part.clear()
         system.part.add(pos=(0, 0, 0), omega_body=o0, rotation=(1, 1, 1))
         if espressomd.has_features("ROTATIONAL_INERTIA"):
             system.part[0].rinertia = [2, 2, 2]
@@ -213,7 +215,6 @@ class LangevinThermostat(ut.TestCase):
         """
         N = 200
         system = self.system
-        system.part.clear()
         system.time_step = 0.06
 
         # Place particles
@@ -265,7 +266,6 @@ class LangevinThermostat(ut.TestCase):
         """
         N = 400
         system = self.system
-        system.part.clear()
         system.time_step = 0.06
         system.part.add(pos=np.random.random((N, 3)))
         if espressomd.has_features("ROTATION"):
@@ -330,7 +330,6 @@ class LangevinThermostat(ut.TestCase):
     def test_06__diffusion(self):
         """This tests rotational and translational diffusion coeff via Green-Kubo"""
         system = self.system
-        system.part.clear()
 
         kT = 1.37
         dt = 0.1
@@ -493,7 +492,6 @@ class LangevinThermostat(ut.TestCase):
     def test_07__virtual(self):
         system = self.system
         system.time_step = 0.01
-        system.part.clear()
 
         virtual = system.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
         physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
@@ -517,7 +515,6 @@ class LangevinThermostat(ut.TestCase):
         """Checks that the Langevin noise is uncorrelated"""
 
         system = self.system
-        system.part.clear()
         system.time_step = 0.01
         system.cell_system.skin = 0.1
         system.part.add(id=(1, 2), pos=np.zeros((2, 3)))

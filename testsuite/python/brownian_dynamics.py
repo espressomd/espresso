@@ -34,9 +34,14 @@ class BrownianDynamics(ut.TestCase):
     system.periodicity = [0, 0, 0]
     system.integrator.set_brownian_dynamics()
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         np.random.seed(42)
+
+    def tearDown(self):
+        self.system.time_step = 1e-12
+        self.system.cell_system.skin = 0.0
+        self.system.part.clear()
+        self.system.auto_update_accumulators.clear()
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
         """check the recorded particle distributions in velocity against a
@@ -70,7 +75,6 @@ class BrownianDynamics(ut.TestCase):
         """
         N = 200
         system = self.system
-        system.part.clear()
         system.time_step = 1.6
 
         # Place particles
@@ -122,7 +126,6 @@ class BrownianDynamics(ut.TestCase):
         """
         N = 400
         system = self.system
-        system.part.clear()
         system.time_step = 1.9
         system.part.add(pos=np.random.random((N, 3)))
         if espressomd.has_features("ROTATION"):
@@ -192,7 +195,6 @@ class BrownianDynamics(ut.TestCase):
         dt = 0.5
 
         system = self.system
-        system.part.clear()
         p = system.part.add(pos=(0, 0, 0), id=0)
         system.time_step = dt
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
@@ -225,7 +227,6 @@ class BrownianDynamics(ut.TestCase):
     def test_07__virtual(self):
         system = self.system
         system.time_step = 0.01
-        system.part.clear()
 
         virtual = system.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
         physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
@@ -253,7 +254,6 @@ class BrownianDynamics(ut.TestCase):
         """Checks that the Brownian noise is uncorrelated"""
 
         system = self.system
-        system.part.clear()
         system.time_step = 0.01
         system.cell_system.skin = 0.1
         system.part.add(id=(0, 1), pos=np.zeros((2, 3)))
@@ -270,7 +270,6 @@ class BrownianDynamics(ut.TestCase):
         system.thermostat.set_brownian(kT=kT, gamma=2.1, seed=17)
         steps = int(1e4)
         system.integrator.run(steps)
-        system.auto_update_accumulators.clear()
 
         # test translational noise correlation
         vel = np.array(vel_series.time_series())
