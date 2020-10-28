@@ -185,6 +185,8 @@ class TestLB:
             np.copy(self.lbf[0, 0, 0].velocity), [1, 2, 3], atol=1E-10)
         with self.assertRaises(Exception):
             self.lbf[0, 0, 0].velocity = [1, 2]
+        with self.assertRaises(Exception):
+            self.lbf[0, 1].velocity = [1, 2, 3]
 
     def test_raise_if_not_active(self):
         lbf = self.lb_class(visc=1.0, dens=1.0, agrid=1.0, tau=0.1)

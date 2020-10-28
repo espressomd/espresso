@@ -85,9 +85,8 @@ cdef class HydrodynamicInteraction(Actor):
         if isinstance(key, (tuple, list, np.ndarray)):
             if len(key) == 3:
                 return LBFluidRoutines(np.array(key))
-        else:
-            raise Exception(
-                f"{key} is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0].")
+        raise Exception(
+            f"{key} is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0].")
 
     # validate the given parameters on actor initialization
     ####################################################
