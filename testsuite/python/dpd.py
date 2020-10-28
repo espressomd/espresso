@@ -29,8 +29,7 @@ from tests_common import single_component_maxwell
 @utx.skipIfMissingFeatures("DPD")
 class DPDThermostat(ut.TestCase):
 
-    """Tests the velocity distribution created by the dpd thermostat against
-       the single component Maxwell distribution."""
+    """Tests the velocity distribution created by the DPD thermostat."""
 
     s = espressomd.System(box_l=3 * [10.0])
     s.time_step = 0.01

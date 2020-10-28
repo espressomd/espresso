@@ -27,13 +27,12 @@ from tests_common import single_component_maxwell
 
 class LangevinThermostat(ut.TestCase):
 
-    """Tests the velocity distribution created by the Langevin thermostat
-       against the single component Maxwell distribution."""
-
+    """Tests velocity distributions and diffusion for Langevin Dynamics"""
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.set_domain_decomposition(use_verlet_lists=True)
     system.cell_system.skin = 0
     system.periodicity = [0, 0, 0]
+    system.integrator.set_vv()
 
     def setUp(self):
         np.random.seed(42)
