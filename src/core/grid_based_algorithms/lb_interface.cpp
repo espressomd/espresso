@@ -396,8 +396,9 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
 const Utils::Vector3d lb_lbfluid_get_ext_force_density() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    return {{lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1],
-             lbpar_gpu.ext_force_density[2]}};
+    return {static_cast<double>(lbpar_gpu.ext_force_density[0]),
+            static_cast<double>(lbpar_gpu.ext_force_density[1]),
+            static_cast<double>(lbpar_gpu.ext_force_density[2])};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -1015,8 +1016,9 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
     auto const single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                                   ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, &host_print_values);
-    return {{host_print_values.v[0], host_print_values.v[1],
-             host_print_values.v[2]}};
+    return {static_cast<double>(host_print_values.v[0]),
+            static_cast<double>(host_print_values.v[1]),
+            static_cast<double>(host_print_values.v[2])};
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -1052,7 +1054,7 @@ lb_lbnode_get_pressure_tensor_neq(const Utils::Vector3i &ind) {
                                   ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, &host_print_values);
     for (int i = 0; i < 6; i++) {
-      tensor[i] = host_print_values.pi[i];
+      tensor[i] = static_cast<double>(host_print_values.pi[i]);
     }
     return tensor;
 #endif //  CUDA
@@ -1074,7 +1076,7 @@ const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
     std::for_each(host_values.begin(), host_values.end(),
                   [&tensor](LB_rho_v_pi_gpu &v) {
                     for (int i = 0; i < 6; i++)
-                      tensor[i] += v.pi[i];
+                      tensor[i] += static_cast<double>(v.pi[i]);
                   });
 
     // Normalize
@@ -1137,7 +1139,7 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
     lb_lbfluid_get_population(ind, population);
     Utils::Vector19d p_pop;
     for (int i = 0; i < LBQ; ++i)
-      p_pop[i] = population[i];
+      p_pop[i] = static_cast<double>(population[i]);
     return p_pop;
 #else
     return {};
@@ -1204,7 +1206,7 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
     float population[19];
 
     for (int i = 0; i < LBQ; ++i)
-      population[i] = p_pop[i];
+      population[i] = static_cast<float>(p_pop[i]);
 
     lb_lbfluid_set_population(ind, population);
 #endif //  CUDA

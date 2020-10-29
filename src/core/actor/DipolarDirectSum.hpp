@@ -61,7 +61,7 @@ public:
     dds_float box[3];
     int per[3];
     for (int i = 0; i < 3; i++) {
-      box[i] = s.box()[i];
+      box[i] = static_cast<dds_float>(s.box()[i]);
       per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_force(
@@ -72,7 +72,7 @@ public:
     dds_float box[3];
     int per[3];
     for (int i = 0; i < 3; i++) {
-      box[i] = s.box()[i];
+      box[i] = static_cast<dds_float>(s.box()[i]);
       per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_energy(

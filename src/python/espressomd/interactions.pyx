@@ -2205,124 +2205,6 @@ IF THOLE:
         def required_keys(self):
             return {"scaling_coeff", "q1q2"}
 
-IF ROTATION:
-
-    @requires_experimental_features("No test coverage")
-    class HarmonicDumbbellBond(BondedInteraction):
-
-        """
-        Harmonic Dumbbell bond.
-
-        Parameters
-        ----------
-        k1 : :obj:`float`
-            Magnitude of the bond interaction.
-        k2 : :obj:`float`
-            Magnitude of the angular interaction.
-        r_0 : :obj:`float`
-            Equilibrium bond length.
-        r_cut : :obj:`float`, optional
-            Maximum distance beyond which the bond is considered broken.
-
-        """
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
-        def type_number(self):
-            return BONDED_IA_HARMONIC_DUMBBELL
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "HARMONIC_DUMBBELL"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"k1", "k2", "r_0", "r_cut"}
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return {"k1", "k2", "r_0"}
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {"r_cut": 0.}
-
-        def _get_params_from_es_core(self):
-            return \
-                {"k1": bonded_ia_params[self._bond_id].p.harmonic_dumbbell.k1,
-                 "k2": bonded_ia_params[self._bond_id].p.harmonic_dumbbell.k2,
-                 "r_0": bonded_ia_params[self._bond_id].p.harmonic_dumbbell.r,
-                 "r_cut": bonded_ia_params[self._bond_id].p.harmonic_dumbbell.r_cut}
-
-        def _set_params_in_es_core(self):
-            harmonic_dumbbell_set_params(
-                self._bond_id, self._params["k1"], self._params["k2"],
-                self._params["r_0"], self._params["r_cut"])
-
-IF ROTATION != 1:
-
-    class HarmonicDumbbellBond(BondedInteraction):
-
-        """
-        Harmonic Dumbbell bond.
-
-        Requires feature ``ROTATION``.
-
-        """
-
-        def __init__(self, *args, **kwargs):
-            raise Exception(
-                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
-
-        def type_number(self):
-            raise Exception(
-                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            raise Exception(
-                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            raise Exception(
-                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            raise Exception(
-                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            raise Exception(
-                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
-
-        def _get_params_from_es_core(self):
-            raise Exception(
-                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
-
-        def _set_params_in_es_core(self):
-            raise Exception(
-                "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
-
 
 IF BOND_CONSTRAINT == 1:
 
@@ -3275,7 +3157,6 @@ class QuarticBond(BondedInteraction):
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
     int(BONDED_IA_HARMONIC): HarmonicBond,
-    int(BONDED_IA_HARMONIC_DUMBBELL): HarmonicDumbbellBond,
     int(BONDED_IA_RIGID_BOND): RigidBond,
     int(BONDED_IA_DIHEDRAL): Dihedral,
     int(BONDED_IA_TABULATED_DISTANCE): TabulatedDistance,

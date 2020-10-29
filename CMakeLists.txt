@@ -387,6 +387,8 @@ target_compile_options(
             $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
             # add extra warnings
             $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
+            $<$<CXX_COMPILER_ID:Clang>:-Wrange-loop-analysis>
+            -Wfloat-conversion
             # disable warnings from -Wextra
             -Wno-sign-compare
             -Wno-unused-function

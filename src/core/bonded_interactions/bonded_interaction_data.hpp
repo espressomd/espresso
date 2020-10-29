@@ -367,7 +367,6 @@ union Bond_parameters {
   Oif_global_forces_bond_parameters oif_global_forces;
   Oif_local_forces_bond_parameters oif_local_forces;
   Harmonic_bond_parameters harmonic;
-  Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
   Quartic_bond_parameters quartic;
   Bonded_coulomb_bond_parameters bonded_coulomb;
   Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr;

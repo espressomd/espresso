@@ -114,26 +114,6 @@ class ComVelocity(Observable):
 
 
 @script_interface_register
-class Current(Observable):
-
-    """Calculates the electric current for particles with given ids.
-
-    Output format: :math:`\\left(\\sum_i q_i v^x_i, \\sum_i q_i v^y_i, \\sum_i q_i v^z_i, \\right)`
-
-    Parameters
-    ----------
-    ids : array_like of :obj:`int`
-        The ids of (existing) particles to take into account.
-
-    Returns
-    -------
-    (3,) :obj:`ndarray` of :obj:`float`
-
-    """
-    _so_name = "Observables::Current"
-
-
-@script_interface_register
 class DensityProfile(ProfileObservable):
 
     """Calculates the particle density profile for particles with given ids.
