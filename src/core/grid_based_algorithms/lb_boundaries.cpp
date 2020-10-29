@@ -77,12 +77,10 @@ void lb_init_boundaries() {
       auto const index = index_and_pos.first;
       auto const pos = index_and_pos.second * agrid;
 
-      for (auto it = lbboundaries.begin(); it != lbboundaries.end(); ++it) {
-        double dist;
-
-        if (not(*it)->shape().is_inside(pos)) {
+      for (auto const &lbboundary : lbboundaries) {
+        if (not lbboundary->shape().is_inside(pos)) {
           lb_walberla()->set_node_velocity_at_boundary(
-              index, (**it).velocity() / lb_lbfluid_get_lattice_speed());
+              index, lbboundary->velocity() / lb_lbfluid_get_lattice_speed());
         }
       }
     }
