@@ -964,7 +964,7 @@ void auto_exclusions(int distance) {
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
     auto const p1 = part1.p.identity;
-    for (auto const &bond : part1.bonds()) {
+    for (auto const bond : part1.bonds()) {
       if ((bond.partner_ids().size() == 1) and (bond.partner_ids()[0] != p1)) {
         auto const p2 = bond.partner_ids()[0];
         add_partner(partners[p1], p1, p2, 1);
