@@ -635,7 +635,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             default_params = self.default_params()
 
             self.thisptr.set_params(
-                box_geo.length()[2], coulomb.prefactor,
+                < mmm1dgpu_real > box_geo.length()[2], < mmm1dgpu_real > coulomb.prefactor,
                 self._params["maxPWerror"], self._params["far_switch_radius"],
                 self._params["bessel_cutoff"])
 

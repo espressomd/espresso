@@ -55,7 +55,8 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
   auto const smallest_bin_volume =
       pi() * pow(r_limits.first + delta_r, 2.0) * delta_phi / (2.0 * pi());
   auto const min_n_samples = std::max(
-      n_z_bins, static_cast<size_t>(smallest_bin_volume * sampling_density));
+      n_z_bins,
+      static_cast<size_t>(std::round(smallest_bin_volume * sampling_density)));
   auto const delta_z = (z_limits.second - z_limits.first) / min_n_samples;
 
   auto const r_range =
@@ -84,9 +85,10 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
     return arc_length(r_bin) / arc_length(0);
   };
   auto phis = [n_phi_samples, n_phi_bins, phi_limits](int r_bin) {
-    auto const phis_range =
-        make_lin_space(phi_limits.first, phi_limits.second,
-                       n_phi_bins * n_phi_samples(r_bin), /*endpoint */ false);
+    auto const phis_range = make_lin_space(
+        phi_limits.first, phi_limits.second,
+        n_phi_bins * static_cast<size_t>(std::round(n_phi_samples(r_bin))),
+        /*endpoint */ false);
     return phis_range;
   };
   // Calculate the sampling positions

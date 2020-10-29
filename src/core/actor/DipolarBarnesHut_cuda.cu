@@ -250,7 +250,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
       j = 0;
       for (l = 0; l < 3; l++)
         if (root[l] < p[l])
-          j += pow(2, l);
+          j += static_cast<int>(pow(2, l));
     }
 
     // Follow path to leaf cell. Should not happen at the first iteration of
@@ -283,7 +283,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
       // j=0..7 determines the octant in a binary representations.
       for (l = 0; l < 3; l++)
         if (bhpara->r[3 * n + l] < p[l])
-          j += pow(2, l);
+          j += static_cast<int>(pow(2, l));
       ch = bhpara->child[n * 8 + j];
     }
     // Now we are deep enough in the tree, passed all levels of cells and
@@ -390,7 +390,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             j = 0;
             for (l = 0; l < 3; l++)
               if (pos[l] < bhpara->r[3 * ch + l])
-                j += pow(2, l);
+                j += static_cast<int>(pow(2, l));
             // New element just appeared in the chain of cells. Hence, that what
             // supposed to be a child ("ch") before entering the present
             // iteration, now will be a child of the new cell (after this
@@ -406,7 +406,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // given thread and block against new octant cell (pos[l]):
             for (l = 0; l < 3; l++)
               if (pos[l] < p[l])
-                j += pow(2, l);
+                j += static_cast<int>(pow(2, l));
 
             // Now the current cell's child should be considering in the new
             // particle new octant:
