@@ -81,13 +81,11 @@ void lb_init_boundaries() {
         double dist;
 
         if (not(*it)->shape().is_inside(pos)) {
-          //                printf("%d %d %d, %g, %g %g,
-          //                %d\n",index[0],index[1],index[2],v[0],v[1],v[2],this_node);
           lb_walberla()->set_node_velocity_at_boundary(
               index, (**it).velocity() / lb_lbfluid_get_lattice_speed());
-        } // if dist <=0
-      }   // loop over boundaries
-    }     // Loop over cells
+        }
+      }
+    }
 #endif
 #endif
   } // lattice switch is WALBERLA
