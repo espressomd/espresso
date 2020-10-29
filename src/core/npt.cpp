@@ -39,6 +39,12 @@ void mpi_bcast_nptiso_geom_worker(int, int) {
   boost::mpi::broadcast(comm_cart, nptiso.non_const_dim, 0);
 }
 
+REGISTER_CALLBACK(mpi_bcast_nptiso_geom_worker)
+
+void mpi_bcast_nptiso_geom() {
+  mpi_call_all(mpi_bcast_nptiso_geom_worker, -1, 0);
+}
+
 void npt_ensemble_init(const BoxGeometry &box) {
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     /* prepare NpT-integration */

@@ -210,4 +210,20 @@ void init_forces_iccp3m(const ParticleRange &particles,
   }
 }
 
+void mpi_iccp3m_init_local(const iccp3m_struct &iccp3m_cfg_) {
+  iccp3m_cfg = iccp3m_cfg_;
+
+  on_particle_charge_change();
+  check_runtime_errors(comm_cart);
+}
+
+REGISTER_CALLBACK(mpi_iccp3m_init_local)
+
+int mpi_iccp3m_init() {
+  mpi_call(mpi_iccp3m_init_local, iccp3m_cfg);
+
+  on_particle_charge_change();
+  return check_runtime_errors(comm_cart);
+}
+
 #endif

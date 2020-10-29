@@ -25,7 +25,7 @@
 #include "bonded_coulomb_sr.hpp"
 
 #ifdef ELECTROSTATICS
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

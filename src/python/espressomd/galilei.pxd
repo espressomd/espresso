@@ -18,7 +18,7 @@
 #
 from .utils cimport Vector3d
 
-cdef extern from "communication.hpp":
+cdef extern from "galilei.hpp":
     void mpi_kill_particle_motion(int rotation)
     void mpi_kill_particle_forces(int torque)
     Vector3d mpi_system_CMS()

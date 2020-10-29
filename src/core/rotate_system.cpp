@@ -69,7 +69,7 @@ void local_rotate_system(double phi, double theta, double alpha,
   update_dependent_particles();
 }
 
-void mpi_rotate_system_slave(int, int) {
+void mpi_rotate_system_local(int, int) {
   std::array<double, 3> params;
   mpi::broadcast(comm_cart, params, 0);
 
@@ -77,8 +77,10 @@ void mpi_rotate_system_slave(int, int) {
                       cell_structure.local_particles());
 }
 
+REGISTER_CALLBACK(mpi_rotate_system_local)
+
 void mpi_rotate_system(double phi, double theta, double alpha) {
-  mpi_call(mpi_rotate_system_slave, 0, 0);
+  mpi_call(mpi_rotate_system_local, 0, 0);
 
   std::array<double, 3> params{{phi, theta, alpha}};
   mpi::broadcast(comm_cart, params, 0);

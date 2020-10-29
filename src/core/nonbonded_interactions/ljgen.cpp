@@ -25,7 +25,7 @@
 #include "ljgen.hpp"
 
 #ifdef LENNARD_JONES_GENERIC
-#include "communication.hpp"
+#include "interactions.hpp"
 #include "lj.hpp"
 
 #include <utils/constants.hpp>

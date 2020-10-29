@@ -207,12 +207,9 @@ cdef class HydrodynamicInteraction(Actor):
         return _construct, (self.__class__, self._params), None
 
     def __getitem__(self, key):
-        if isinstance(key, (tuple, list, np.ndarray)):
-            if len(key) == 3:
-                return LBFluidRoutines(np.array(key))
-        else:
-            raise Exception(
-                f"{key} is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0].")
+        utils.check_type_or_throw_except(
+            key, 3, int, "The index of an lb fluid node consists of three integers, e.g. lbf[0,0,0]")
+        return LBFluidRoutines(key)
 
     # validate the given parameters on actor initialization
     #
@@ -501,14 +498,13 @@ cdef class LBFluidRoutines:
 
         def __set__(self, value):
             cdef Vector3d c_velocity
-            if all(is_valid_type(v, float) for v in value) and len(value) == 3:
-                c_velocity[0] = value[0]
-                c_velocity[1] = value[1]
-                c_velocity[2] = value[2]
-                python_lbnode_set_velocity(self.node, c_velocity)
-            else:
-                raise ValueError(
-                    "Velocity has to be of shape 3 and type float.")
+            utils.check_type_or_throw_except(
+                value, 3, float, "velocity has to be 3 floats")
+            c_velocity[0] = value[0]
+            c_velocity[1] = value[1]
+            c_velocity[2] = value[2]
+            python_lbnode_set_velocity(self.node, c_velocity)
+
     property density:
         def __get__(self):
             return python_lbnode_get_density(self.node)

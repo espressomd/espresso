@@ -54,7 +54,7 @@ void ClusterStructure::run_for_all_pairs() {
 void ClusterStructure::run_for_bonded_particles() {
   clear();
   for (const auto &p : partCfg()) {
-    for (auto const &bond : p.bonds()) {
+    for (auto const bond : p.bonds()) {
       if (bond.partner_ids().size() == 1) {
         add_pair(p, get_particle_data(bond.partner_ids()[0]));
       }

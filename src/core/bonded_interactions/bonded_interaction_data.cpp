@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "bonded_interaction_data.hpp"
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -38,8 +38,6 @@ auto cutoff(int type, Bond_parameters const &bp) {
     return bp.fene.cutoff();
   case BONDED_IA_HARMONIC:
     return bp.harmonic.cutoff();
-  case BONDED_IA_HARMONIC_DUMBBELL:
-    return bp.harmonic_dumbbell.cutoff();
   case BONDED_IA_QUARTIC:
     return bp.quartic.cutoff();
   case BONDED_IA_BONDED_COULOMB:

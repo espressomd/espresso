@@ -25,7 +25,7 @@
 #include "bmhtf-nacl.hpp"
 
 #ifdef BMHTF_NACL
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

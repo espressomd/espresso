@@ -33,6 +33,7 @@
  */
 
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/dp3m_influence_function.hpp"
 
 #ifdef DP3M

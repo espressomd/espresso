@@ -22,6 +22,7 @@
 #ifdef ELECTROSTATICS
 #include "cells.hpp"
 #include "communication.hpp"
+#include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"

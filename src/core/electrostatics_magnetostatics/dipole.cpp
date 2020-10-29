@@ -23,6 +23,7 @@
 
 #include "actor/DipolarBarnesHut.hpp"
 #include "actor/DipolarDirectSum.hpp"
+#include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"

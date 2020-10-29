@@ -23,13 +23,23 @@
 
 #include <utils/Vector.hpp>
 
-#include "ParticleRange.hpp"
-#include <utility>
+/** Stop particle motion by setting the velocity of each particle to zero.
+ *  @param rotation  if true, also set particle angular velocities to zero
+ */
+void mpi_kill_particle_motion(int rotation);
 
-void local_kill_particle_motion(int, const ParticleRange &particles);
-void local_kill_particle_forces(int, const ParticleRange &particles);
-std::pair<Utils::Vector3d, double> local_system_CMS();
-std::pair<Utils::Vector3d, double> local_system_CMS_velocity();
-void local_galilei_transform(const Utils::Vector3d &cmsvel);
+/** Set all the forces acting on the particles to zero.
+ *  @param torque  if true, also set particle torques to zero
+ */
+void mpi_kill_particle_forces(int torque);
+
+/** Calculate the CMS of the system */
+Utils::Vector3d mpi_system_CMS();
+
+/** Calculate the CMS velocity of the system */
+Utils::Vector3d mpi_system_CMS_velocity();
+
+/** Remove the CMS velocity */
+void mpi_galilei_transform();
 
 #endif

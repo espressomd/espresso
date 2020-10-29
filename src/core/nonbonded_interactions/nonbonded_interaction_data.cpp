@@ -24,8 +24,8 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "collision.hpp"
-#include "communication.hpp"
 #include "grid.hpp"
+#include "interactions.hpp"
 
 #include "serialization/IA_parameters.hpp"
 

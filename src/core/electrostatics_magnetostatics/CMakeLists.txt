@@ -1,6 +1,7 @@
 target_sources(
   EspressoCore
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/debye_hueckel.cpp
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/common.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/debye_hueckel.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/elc.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/icc.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/magnetic_non_p3m_methods.cpp

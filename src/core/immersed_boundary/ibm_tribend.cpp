@@ -20,8 +20,8 @@
 #include "immersed_boundary/ibm_tribend.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "communication.hpp"
 #include "grid.hpp"
+#include "interactions.hpp"
 #include "particle_data.hpp"
 
 #include <utils/constants.hpp>

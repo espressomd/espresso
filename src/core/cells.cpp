@@ -30,6 +30,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "particle_data.hpp"
 
 #include "DomainDecomposition.hpp"
 #include "ParticleDecomposition.hpp"
@@ -75,7 +76,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   return ret;
 }
 
-void mpi_get_pairs_slave(int, int) {
+void mpi_get_pairs_local(int, int) {
   on_observable_calc();
 
   double distance;
@@ -86,11 +87,10 @@ void mpi_get_pairs_slave(int, int) {
   Utils::Mpi::gather_buffer(local_pairs, comm_cart);
 }
 
-/**
- * @brief Collect pairs from all nodes.
- */
+REGISTER_CALLBACK(mpi_get_pairs_local)
+
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
-  mpi_call(mpi_get_pairs_slave, 0, 0);
+  mpi_call(mpi_get_pairs_local, 0, 0);
   on_observable_calc();
 
   boost::mpi::broadcast(comm_cart, distance, 0);
@@ -102,11 +102,28 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
   return pairs;
 }
 
-/************************************************************
- *            Exported Functions                            *
- ************************************************************/
+void mpi_resort_particles_local(int global_flag, int) {
+  cell_structure.resort_particles(global_flag);
 
-/************************************************************/
+  boost::mpi::gather(
+      comm_cart, static_cast<int>(cell_structure.local_particles().size()), 0);
+}
+
+REGISTER_CALLBACK(mpi_resort_particles_local)
+
+std::vector<int> mpi_resort_particles(int global_flag) {
+  mpi_call(mpi_resort_particles_local, global_flag, 0);
+  cell_structure.resort_particles(global_flag);
+
+  clear_particle_node();
+
+  std::vector<int> n_parts;
+  boost::mpi::gather(comm_cart,
+                     static_cast<int>(cell_structure.local_particles().size()),
+                     n_parts, 0);
+
+  return n_parts;
+}
 
 void cells_re_init(int new_cs) {
   switch (new_cs) {
@@ -124,7 +141,9 @@ void cells_re_init(int new_cs) {
   on_cell_structure_change();
 }
 
-/*************************************************/
+REGISTER_CALLBACK(cells_re_init)
+
+void mpi_bcast_cell_structure(int cs) { mpi_call_all(cells_re_init, cs); }
 
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
@@ -140,7 +159,6 @@ void check_resort_particles() {
   cell_structure.set_resort_particles(level);
 }
 
-/*************************************************/
 void cells_update_ghosts(unsigned data_parts) {
   /* data parts that are only updated on resort */
   auto constexpr resort_only_parts =
@@ -184,6 +202,12 @@ const DomainDecomposition *get_domain_decomposition() {
       Utils::as_const(cell_structure).decomposition());
 }
 
-void cells_set_use_verlet_lists(bool use_verlet_lists) {
+void mpi_set_use_verlet_lists_local(bool use_verlet_lists) {
   cell_structure.use_verlet_list = use_verlet_lists;
+}
+
+REGISTER_CALLBACK(mpi_set_use_verlet_lists_local)
+
+void mpi_set_use_verlet_lists(bool use_verlet_lists) {
+  mpi_call_all(mpi_set_use_verlet_lists_local, use_verlet_lists);
 }
