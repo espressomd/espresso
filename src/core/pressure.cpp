@@ -124,7 +124,11 @@ void pressure_calc() {
   }
 }
 
-void update_pressure() { mpi_gather_stats(GatherStats::pressure); }
+void update_pressure_local(int, int) { pressure_calc(); }
+
+REGISTER_CALLBACK(update_pressure_local)
+
+void update_pressure() { mpi_call_all(update_pressure_local, -1, -1); }
 
 Utils::Vector9d observable_compute_pressure_tensor() {
   update_pressure();

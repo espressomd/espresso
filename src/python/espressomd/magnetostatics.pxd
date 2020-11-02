@@ -17,7 +17,7 @@
 include "myconfig.pxi"
 
 IF DIPOLES == 1:
-    cdef extern from "communication.hpp":
+    cdef extern from "electrostatics_magnetostatics/common.hpp":
         void mpi_bcast_coulomb_params()
 
     cdef extern from "electrostatics_magnetostatics/dipole.hpp":

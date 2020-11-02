@@ -28,6 +28,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "global.hpp"
+#include "particle_data.hpp"
 
 #include <boost/algorithm/clamp.hpp>
 #include <mpi.h>

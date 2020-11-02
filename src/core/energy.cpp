@@ -31,6 +31,7 @@
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
+#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "reduce_observable_stat.hpp"
 
@@ -45,9 +46,6 @@ ActorList energyActors;
 Observable_stat obs_energy{1};
 
 Observable_stat const &get_obs_energy() { return obs_energy; }
-
-/** Reduce the system energy from all MPI ranks. */
-void master_energy_calc() { mpi_gather_stats(GatherStats::energy); }
 
 void energy_calc(const double time) {
   if (!interactions_sanity_checks())
@@ -107,7 +105,11 @@ void energy_calc(const double time) {
   }
 }
 
-void update_energy() { master_energy_calc(); }
+void update_energy_local(int, int) { energy_calc(sim_time); }
+
+REGISTER_CALLBACK(update_energy_local)
+
+void update_energy() { mpi_call_all(update_energy_local, -1, -1); }
 
 void calc_long_range_energies(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS

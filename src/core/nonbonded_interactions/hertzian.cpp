@@ -25,7 +25,7 @@
 #include "hertzian.hpp"
 
 #ifdef HERTZIAN
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

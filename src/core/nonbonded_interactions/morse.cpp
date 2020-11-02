@@ -25,7 +25,7 @@
 #include "morse.hpp"
 
 #ifdef MORSE
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

@@ -391,6 +391,29 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   return ES_OK;
 }
 
+static int mpi_steepest_descent_local(int steps, int) {
+  return integrate(steps, -1);
+}
+REGISTER_CALLBACK_MASTER_RANK(mpi_steepest_descent_local)
+
+int mpi_steepest_descent(int steps) {
+  return mpi_call(Communication::Result::master_rank,
+                  mpi_steepest_descent_local, steps, 0);
+}
+
+static int mpi_integrate_local(int n_steps, int reuse_forces) {
+  integrate(n_steps, reuse_forces);
+
+  return check_runtime_errors_local();
+}
+
+REGISTER_CALLBACK_REDUCTION(mpi_integrate_local, std::plus<int>())
+
+int mpi_integrate(int n_steps, int reuse_forces) {
+  return mpi_call(Communication::Result::reduction, std::plus<int>(),
+                  mpi_integrate_local, n_steps, reuse_forces);
+}
+
 int integrate_set_steepest_descent(const double f_max, const double gamma,
                                    const double max_displacement) {
   if (f_max < 0.0) {
@@ -508,4 +531,19 @@ double interaction_range() {
   /* Consider skin only if there are actually interactions */
   auto const max_cut = maximal_cutoff();
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
+}
+
+void mpi_set_time_step_local(double dt) {
+  time_step = dt;
+  on_parameter_change(FIELD_TIMESTEP);
+}
+
+REGISTER_CALLBACK(mpi_set_time_step_local)
+
+void mpi_set_time_step(double time_s) {
+  if (time_s <= 0.)
+    throw std::invalid_argument("time_step must be > 0.");
+  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
+    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
+  mpi_call_all(mpi_set_time_step_local, time_s);
 }

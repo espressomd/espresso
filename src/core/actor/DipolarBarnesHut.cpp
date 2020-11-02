@@ -19,8 +19,8 @@
 
 #include "DipolarBarnesHut.hpp"
 #include "EspressoSystemInterface.hpp"
-#include "communication.hpp"
 #include "config.hpp"
+#include "electrostatics_magnetostatics/common.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "grid.hpp"

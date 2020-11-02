@@ -113,6 +113,24 @@ int integrate(int n_steps, int reuse_forces);
  */
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces);
 
+/** Start integrator.
+ *  @param n_steps       how many steps to do.
+ *  @param reuse_forces  whether to trust the old forces for the first half step
+ *  @return nonzero on error
+ */
+int mpi_integrate(int n_steps, int reuse_forces);
+
+/** Steepest descent main integration loop
+ *
+ *  Integration stops when the maximal force is lower than the user limit
+ *  @ref SteepestDescentParameters::f_max "f_max" or when the maximal number
+ *  of steps @p steps is reached.
+ *
+ *  @param steps Maximal number of integration steps
+ *  @return number of integrated steps
+ */
+int mpi_steepest_descent(int steps);
+
 /** @brief Set the steepest descent integrator for energy minimization.
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
@@ -147,5 +165,8 @@ int integrate_set_sd();
 int integrate_set_npt_isotropic(double ext_pressure, double piston,
                                 bool xdir_rescale, bool ydir_rescale,
                                 bool zdir_rescale, bool cubic_box);
+
+/** Send new \ref time_step and rescale the velocities accordingly. */
+void mpi_set_time_step(double time_step);
 
 #endif

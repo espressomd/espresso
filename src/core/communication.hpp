@@ -39,22 +39,15 @@
  *  following:
  *  - write the @c mpi_* function that is executed on the master
  *  - write the @c mpi_*_slave function
- *  - in communication.cpp add your slave function to \ref CALLBACK_LIST or
- *    register it with one of the @c REGISTER_CALLBACK macros
+ *  - register your slave function with one of the @c REGISTER_CALLBACK macros
  *
  *  After this, your procedure is free to do anything. However, it has
  *  to be in (MPI) sync with what your new @c mpi_*_slave does. This
  *  procedure is called immediately after the broadcast with the
- *  arbitrary integer as parameter. To this aim it has also to be added
- *  to \ref CALLBACK_LIST.
+ *  arbitrary integer as parameter.
  */
 
 #include "MpiCallbacks.hpp"
-
-/* Includes needed by callbacks. */
-#include "Particle.hpp"
-#include "cuda_init.hpp"
-#include "grid_based_algorithms/lb_constants.hpp"
 
 #include <boost/mpi/communicator.hpp>
 #include <vector>
@@ -65,13 +58,6 @@ extern int this_node;
 extern int n_nodes;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
-/** Statistics to calculate */
-enum class GatherStats : int {
-  energy,
-  pressure,
-  lb_fluid_momentum,
-  lb_boundary_forces
-};
 
 /**
  * Default MPI tag used by callbacks.
@@ -152,147 +138,6 @@ auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
 
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
-
-/** Move particle to a position on a node.
- *  Also calls \ref on_particle_change.
- *  \param id    the particle to move.
- *  \param node  the node to attach it to.
- *  \param pos   the particles position.
- */
-void mpi_place_particle(int node, int id, const Utils::Vector3d &pos);
-
-/** Create particle at a position on a node.
- *  Also calls \ref on_particle_change.
- *  \param id    the particle to create.
- *  \param pos   the particles position.
- */
-int mpi_place_new_particle(int id, const Utils::Vector3d &pos);
-
-/** Send exclusions.
- *  Also calls \ref on_particle_change.
- *  \param part     identity of first particle of the exclusion.
- *  \param part2    identity of second particle of the exclusion.
- *  \param _delete  if true, do not add the exclusion, rather delete it if found
- */
-void mpi_send_exclusion(int part, int part2, int _delete);
-
-/** Remove a particle.
- *  Also calls \ref on_particle_change.
- *  \param id    the particle to remove.
- *  \param node  the node it is attached to.
- */
-void mpi_remove_particle(int node, int id);
-
-/** Start integrator.
- *  @param n_steps       how many steps to do.
- *  @param reuse_forces  whether to trust the old forces for the first half step
- *  @return nonzero on error
- */
-int mpi_integrate(int n_steps, int reuse_forces);
-
-/** Steepest descent main integration loop
- *
- *  Integration stops when the maximal force is lower than the user limit
- *  @ref SteepestDescentParameters::f_max "f_max" or when the maximal number
- *  of steps @p steps is reached.
- *
- *  @param steps Maximal number of integration steps
- *  @return number of integrated steps
- */
-int mpi_steepest_descent(int steps);
-
-/** Broadcast steepest descent parameters */
-void mpi_bcast_steepest_descent();
-
-void mpi_bcast_all_ia_params();
-
-/** Send new IA params.
- *  Also calls \ref on_short_range_ia_change.
- *
- *  Used for both bonded and non-bonded interaction parameters. Therefore
- *  @p i and @p j are used depending on their value:
- *
- *  \param i   particle type for non-bonded interaction parameters /
- *             bonded interaction type number.
- *  \param j   if not negative: particle type for non-bonded interaction
- *             parameters / if negative: flag for bonded interaction
- */
-void mpi_bcast_ia_params(int i, int j);
-
-/** Resize \ref ia_params.
- *  \param s   the new size for \ref ia_params.
- */
-void mpi_realloc_ia_params(int s);
-
-/** Gather data for analysis.
- *  \param[in] job what to do:
- *      \arg for \ref GatherStats::energy, calculate and reduce (sum up)
- *           energies, using \ref energy_calc.
- *      \arg for \ref GatherStats::pressure, calculate and reduce (sum up)
- *           pressure, using \ref pressure_calc.
- *      \arg for \ref GatherStats::lb_fluid_momentum, use
- *           \ref lb_calc_fluid_momentum.
- *      \arg for \ref GatherStats::lb_boundary_forces, use
- *           \ref lb_collect_boundary_forces.
- *  \param[out] result where to store values gathered by
- *      \ref GatherStats::lb_fluid_momentum,
- *      \ref GatherStats::lb_boundary_forces
- */
-void mpi_gather_stats(GatherStats job, double *result = nullptr);
-
-/** Send new \ref time_step and rescale the velocities accordingly. */
-void mpi_set_time_step(double time_step);
-
-/** Send new Coulomb parameters. */
-void mpi_bcast_coulomb_params();
-
-/** Rescale all particle positions in direction @p dir by a factor @p scale. */
-void mpi_rescale_particles(int dir, double scale);
-
-/** Change the cell structure on all nodes. */
-void mpi_bcast_cell_structure(int cs);
-
-void mpi_set_use_verlet_lists(bool use_verlet_lists);
-
-/** Broadcast nptiso geometry parameters to all nodes. */
-void mpi_bcast_nptiso_geom();
-
-/** Broadcast @ref CUDA_global_part_vars structure */
-void mpi_bcast_cuda_global_part_vars();
-
-/** Perform iccp3m initialization.
- *  @return non-zero value on error
- */
-int mpi_iccp3m_init();
-
-/** Calculate the maximal dipole moment in the system (part of MDLC) */
-void mpi_bcast_max_mu();
-
-/** @name Galilei and other
- *  - set all particle velocities and rotational inertias to zero
- *  - set all forces and torques on the particles to zero
- *  - calculate the centre of mass (CMS)
- *  - calculate the velocity of the CMS
- *  - remove the CMS velocity from the system
- */
-/*@{*/
-void mpi_kill_particle_motion(int rotation);
-void mpi_kill_particle_forces(int torque);
-Utils::Vector3d mpi_system_CMS();
-Utils::Vector3d mpi_system_CMS_velocity();
-void mpi_galilei_transform();
-/*@}*/
-
-/**
- * @brief Resort the particles.
- *
- * This function resorts the particles on the nodes.
- *
- * @param global_flag If true a global resort is done,
- *        if false particles are only exchanges between neighbors.
- * @return The number of particles on the nodes after the resort.
- */
-std::vector<int> mpi_resort_particles(int global_flag);
 
 namespace Communication {
 /**

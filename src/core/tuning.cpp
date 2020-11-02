@@ -22,7 +22,6 @@
  *  Implementation of tuning.hpp.
  */
 #include "cells.hpp"
-#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"

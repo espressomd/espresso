@@ -347,32 +347,8 @@ int remove_particle(int part);
 /** Remove all particles. */
 void remove_all_particles();
 
-/** Used by \ref mpi_place_particle, should not be used elsewhere.
- *  Move a particle to a new position. If it does not exist, it is created.
- *  The position must be on the local node!
- *
- *  @param id    the identity of the particle to move
- *  @param pos   its new position
- *  @param _new  if true, the particle is allocated, else has to exists already
- *
- *  @return Pointer to the particle.
- */
-Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
-
-/** Used for example by \ref mpi_send_exclusion.
- *  Locally add an exclusion to a particle.
- *  @param part1 the identity of the first exclusion partner
- *  @param part2 the identity of the second exclusion partner
- *  @param _delete if true, delete the exclusion instead of add
- */
-void local_change_exclusion(int part1, int part2, int _delete);
-
-/** Used by \ref mpi_rescale_particles, should not be used elsewhere.
- *  Locally rescale all particles on current node.
- *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
- *  @param scale factor by which to rescale (>1: stretch, <1: contract)
- */
-void local_rescale_particles(int dir, double scale);
+/** Rescale all particle positions in direction @p dir by a factor @p scale. */
+void mpi_rescale_particles(int dir, double scale);
 
 /** Automatically add the next \<distance\> neighbors in each molecule to the
  *  exclusion list.

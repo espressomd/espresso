@@ -23,7 +23,7 @@
  *  Implementation of \ref harmonic.hpp
  */
 #include "harmonic.hpp"
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

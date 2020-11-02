@@ -25,7 +25,7 @@
 #include "gay_berne.hpp"
 
 #ifdef GAY_BERNE
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>

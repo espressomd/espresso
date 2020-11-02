@@ -46,20 +46,16 @@
 #include <utility>
 #include <vector>
 
-/** \name Flags for exchange_and_sort_particles: whether to do a global
+/** Flags for particle exchange and resorting: whether to do a global
  *  exchange or assume that particles did not move much (faster, used
  *  during integration, where moving far is a catastrophe anyways).
  */
-/*@{*/
-
 enum {
-  /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
+  /** Do neighbor exchange. */
   CELL_NEIGHBOR_EXCHANGE = 0,
-  /** Flag for exchange_and_sort_particles : Do global exchange. */
+  /** Do global exchange. */
   CELL_GLOBAL_EXCHANGE = 1
 };
-
-/*@}*/
 
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
@@ -69,12 +65,16 @@ extern CellStructure cell_structure;
  */
 void cells_re_init(int new_cs);
 
+/** Change the cell structure on all nodes. */
+void mpi_bcast_cell_structure(int cs);
+
 /**
- * @brief Set use_verlet_lists
+ * @brief Set @ref CellStructure::use_verlet_list
+ * "cell_structure::use_verlet_list"
  *
- * @param use_verlet_lists Should verlet lists be used?
+ * @param use_verlet_lists Should Verlet lists be used?
  */
-void cells_set_use_verlet_lists(bool use_verlet_lists);
+void mpi_set_use_verlet_lists(bool use_verlet_lists);
 
 /** Update ghost information. If needed,
  *  the particles are also resorted.
@@ -92,6 +92,17 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 void check_resort_particles();
 
 /**
+ * @brief Resort the particles.
+ *
+ * This function resorts the particles on the nodes.
+ *
+ * @param global_flag If true a global resort is done,
+ *        if false particles are only exchanges between neighbors.
+ * @return The number of particles on the nodes after the resort.
+ */
+std::vector<int> mpi_resort_particles(int global_flag);
+
+/**
  * @brief Find the cell in which a particle is stored.
  *
  * Uses position_to_cell on p.r.p. If this is not on the node's domain,
@@ -104,8 +115,7 @@ Cell *find_current_cell(const Particle &p);
 /**
  * @brief Return a pointer to the global DomainDecomposition.
  *
- * @return Pointer to the decomposition if it is set and is
- * DomainDecomposition, nullptr otherwise.
+ * @return Pointer to the decomposition if it is set, nullptr otherwise.
  */
 const DomainDecomposition *get_domain_decomposition();
 
