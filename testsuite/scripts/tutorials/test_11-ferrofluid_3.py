@@ -35,10 +35,10 @@ class Tutorial(ut.TestCase):
 
     def test(self):
         self.assertGreater(
-            tutorial.magnetizations[1] / tutorial.N,
+            tutorial.magnetizations[0] / tutorial.N,
             tutorial.L(tutorial.alpha_mean_field(tutorial.alphas[1], tutorial.dip_lambda, tutorial.phi)))
         self.assertLess(
-            tutorial.magnetizations[1] / tutorial.N,
+            tutorial.magnetizations[0] / tutorial.N,
             1)
         self.assertAlmostEqual(
             tutorial.chi, reference_chi, delta=0.45)
