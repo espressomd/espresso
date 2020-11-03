@@ -166,7 +166,7 @@ endif(WITH_CUDA)
 find_package(PythonInterp 3.6 REQUIRED)
 
 if(WITH_PYTHON)
-  find_package(Cython 0.26 REQUIRED)
+  find_package(Cython 0.29 REQUIRED)
   find_package(PythonHeaders REQUIRED)
   find_package(NumPy REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
