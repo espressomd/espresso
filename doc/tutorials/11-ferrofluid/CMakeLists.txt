@@ -12,4 +12,5 @@ nb_export(TARGET tutorial_11 SUFFIX "2" FILE "11-ferrofluid_part2.ipynb"
 nb_export(
   TARGET tutorial_11 SUFFIX "3" FILE "11-ferrofluid_part3.ipynb" HTML_RUN
   VAR_SUBST
-  "equil_steps=100;equil_rounds=10;alphas=[0.5,1,2,4,8];loops=200;loops_m=100")
+  "equil_steps=100;equil_rounds=10;alphas=[0,0.5,1,2,4,8];loops=200;loops_m=100"
+)

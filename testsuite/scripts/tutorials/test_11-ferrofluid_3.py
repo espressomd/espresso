@@ -26,7 +26,7 @@ reference_chi = 0.86
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/11-ferrofluid/11-ferrofluid_part3.py",
-    equil_steps=200, equil_rounds=10, loops=250, alphas=[0.5])
+    equil_steps=200, equil_rounds=10, loops=250, alphas=[0, 0.5])
 
 
 @skipIfMissingFeatures
@@ -34,14 +34,15 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test(self):
-        self.assertGreater(
-            tutorial.magnetizations[0] / tutorial.N,
-            tutorial.L(tutorial.alpha_mean_field(tutorial.alphas[1], tutorial.dip_lambda, tutorial.phi)))
-        self.assertLess(
-            tutorial.magnetizations[0] / tutorial.N,
-            1)
-        self.assertAlmostEqual(
-            tutorial.chi, reference_chi, delta=0.45)
+        tutorial_magnetization = tutorial.magnetizations[1] / tutorial.N
+        reference_magnetization = tutorial.L(
+            tutorial.alpha_mean_field(
+                tutorial.alphas[1],
+                tutorial.dip_lambda,
+                tutorial.phi))
+        self.assertGreater(tutorial_magnetization, reference_magnetization)
+        self.assertLess(tutorial_magnetization, 1)
+        self.assertAlmostEqual(tutorial.chi, reference_chi, delta=0.45)
 
 
 if __name__ == "__main__":
