@@ -129,7 +129,6 @@ Installing requirements on other Linux distributions
 Please refer to the following Dockerfiles to find the minimum set of packages
 required to compile |es| on other Linux distributions:
 
-* `CentOS <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-centos>`_
 * `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`_
 * `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`_
 * `OpenSUSE <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-opensuse>`_
