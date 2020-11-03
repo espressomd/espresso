@@ -145,7 +145,7 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 # CUDA compiler
 if(WITH_CUDA)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
-  set(MINIMAL_CUDA_VERSION 9.0)
+  set(MINIMAL_CUDA_VERSION 10.0)
   option_enum(varname "WITH_CUDA_COMPILER" help_text "CUDA compiler"
               default_value "nvcc" possible_values "nvcc;clang")
   if(WITH_CUDA_COMPILER STREQUAL "nvcc")
@@ -157,8 +157,7 @@ if(WITH_CUDA)
         FATAL_ERROR
           "Cannot enable code coverage with Clang as the CUDA compiler")
     endif()
-    set(MINIMAL_CUDA_VERSION 8.0)
-    find_package(CUDACompilerClang 6.0 REQUIRED)
+    find_package(CUDACompilerClang 9.0 REQUIRED)
   else()
     message(FATAL_ERROR "Unknown CUDA compiler '${WITH_CUDA_COMPILER}'")
   endif()
