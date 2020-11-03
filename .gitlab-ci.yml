@@ -127,7 +127,7 @@ ubuntu:wo-dependencies:
 debian:10:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/debian:d496478230db4e5c286680e3bdc1621af1fccffc
+  image: docker.pkg.github.com/espressomd/docker/debian:d372d95f6906c16abd9b47b994034a22981a9ff2
   script:
     - export with_cuda=false myconfig=maxset make_check_python=false with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
