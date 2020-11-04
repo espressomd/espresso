@@ -1,8 +1,9 @@
 extraction:
   cpp:
-    after_prepare: "pip3 install numpy cython"
+    after_prepare: "pip3 install --user numpy cython 'cmake==3.17'"
     configure:
       command:
+      - export PATH="${HOME}/.local/bin:${PATH}"
       - "mkdir build"
       - "cd build && cmake .."
     index:
