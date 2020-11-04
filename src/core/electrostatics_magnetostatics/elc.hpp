@@ -31,12 +31,12 @@
 
 #include "config.hpp"
 
+#ifdef P3M
+
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
-
-#ifdef P3M
 
 /** @brief Parameters for the ELC method */
 typedef struct {

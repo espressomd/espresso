@@ -22,13 +22,13 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_EXTERNAL_FIELD_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_EXTERNAL_FIELD_HPP
 
-#include "core/constraints/Constraint.hpp"
-#include "core/constraints/ExternalField.hpp"
-#include "script_interface/ScriptInterface.hpp"
-
 #include "couplings.hpp"
 #include "fields.hpp"
 
+#include "script_interface/ScriptInterface.hpp"
+
+#include "core/constraints/Constraint.hpp"
+#include "core/constraints/ExternalField.hpp"
 #include "core/grid.hpp"
 
 #include <utils/Vector.hpp>

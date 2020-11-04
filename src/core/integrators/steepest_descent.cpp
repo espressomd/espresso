@@ -20,6 +20,7 @@
  */
 
 #include "integrators/steepest_descent.hpp"
+
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"

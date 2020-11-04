@@ -28,28 +28,26 @@
 
 #include "config.hpp"
 
-#include "icc.hpp"
-
 #ifdef ELECTROSTATICS
 
-#include <cmath>
-#include <cstdlib>
+#include "icc.hpp"
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "errorhandling.hpp"
-#include "event.hpp"
-
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
+#include "errorhandling.hpp"
+#include "event.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
 #include <mpi.h>
 
+#include <cmath>
+#include <cstdlib>
 #include <tuple>
 
 iccp3m_struct iccp3m_cfg;

@@ -24,12 +24,12 @@
  *
  */
 
+#include "grid_based_algorithms/lattice.hpp"
+
 #include <boost/range/numeric.hpp>
 
-#include "grid_based_algorithms/lattice.hpp"
-#include <utils/index.hpp>
-
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 
 #include <cmath>
 #include <functional>

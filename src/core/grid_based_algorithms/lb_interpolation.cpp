@@ -17,13 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "lb_interpolation.hpp"
+
 #include "communication.hpp"
 #include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
-#include <utils/Vector.hpp>
-
 #include "lb.hpp"
+
+#include <utils/Vector.hpp>
 
 #include <algorithm>
 #include <cstddef>

@@ -23,6 +23,7 @@
  *  Implementation of \ref quartic.hpp
  */
 #include "quartic.hpp"
+
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "interactions.hpp"
 

@@ -21,11 +21,11 @@
 #define CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
 
 #include "pair_criteria/pair_criteria.hpp"
-#include <map>
 
 #include "Cluster.hpp"
 #include "Particle.hpp"
 
+#include <map>
 #include <memory>
 
 namespace ClusterAnalysis {

@@ -1,11 +1,10 @@
 #ifndef CORE_IO_WRITER_H5MD_HPP
 #define CORE_IO_WRITER_H5MD_HPP
 
-#include <array>
-
 #include <h5xx/h5xx.hpp>
 
 #include <algorithm>
+#include <array>
 #include <string>
 
 namespace Writer {

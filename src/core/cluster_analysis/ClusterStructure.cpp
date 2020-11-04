@@ -17,15 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ClusterStructure.hpp"
+
 #include "Cluster.hpp"
 #include "PartCfg.hpp"
 #include "errorhandling.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
-#include <algorithm>
-#include <memory>
+
 #include <utils/for_each_pair.hpp>
 
+#include <algorithm>
+#include <memory>
 #include <utility>
 #include <vector>
 

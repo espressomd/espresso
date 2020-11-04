@@ -24,10 +24,10 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
+#include "core/observables/Observable.hpp"
+
 #include <memory>
 #include <stdexcept>
-
-#include "core/observables/Observable.hpp"
 
 namespace ScriptInterface {
 namespace Observables {

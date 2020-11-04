@@ -19,10 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
 #include <shapes/SpheroCylinder.hpp>
 
 #include <utils/Vector.hpp>
+
+#include <cmath>
 
 namespace Shapes {
 

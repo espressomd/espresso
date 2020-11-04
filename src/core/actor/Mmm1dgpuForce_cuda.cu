@@ -19,10 +19,18 @@
 
 #include "config.hpp"
 
-#include <cuda.h>
+#ifdef MMM1D_GPU
 
+#include "EspressoSystemInterface.hpp"
 #include "actor/Mmm1dgpuForce.hpp"
+#include "actor/mmm-common_cuda.hpp"
 #include "cuda_utils.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/mmm1d.hpp"
+
+#include <utils/constants.hpp>
+
+#include <cuda.h>
 
 #include <cstddef>
 #include <iostream>
@@ -31,20 +39,11 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-#ifdef MMM1D_GPU
-
 // the code is mostly multi-GPU capable, but ESPResSo is not yet
 const int deviceCount = 1;
 float multigpu_factors[] = {1.0};
 #undef cudaSetDevice
 #define cudaSetDevice(d)
-
-#include "EspressoSystemInterface.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "mmm-common_cuda.hpp"
-
-#include <utils/constants.hpp>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!

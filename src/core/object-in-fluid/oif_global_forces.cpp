@@ -25,16 +25,16 @@
 #include "grid.hpp"
 #include "interactions.hpp"
 
-#include <utils/math/triangle_functions.hpp>
-using Utils::angle_btw_triangles;
-using Utils::area_triangle;
-using Utils::get_n_triangle;
-
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+#include <utils/math/triangle_functions.hpp>
 
 #include <mpi.h>
+
+using Utils::angle_btw_triangles;
+using Utils::area_triangle;
+using Utils::get_n_triangle;
 
 int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
                                  double V0, double kv) {

@@ -19,13 +19,13 @@
 #ifndef OBSERVABLES_LBPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_LBPROFILEOBSERVABLE_HPP
 
-#include <cmath>
-#include <cstddef>
-
 #include "ProfileObservable.hpp"
 #include "grid.hpp"
 
 #include <utils/Vector.hpp>
+
+#include <cmath>
+#include <cstddef>
 
 namespace Observables {
 

@@ -24,28 +24,30 @@
 
 #include "config.hpp"
 
+#ifdef P3M
+
+#include "electrostatics_magnetostatics/elc.hpp"
+
+#include "electrostatics_magnetostatics/common.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/mmm-common.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
+
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "mmm-common.hpp"
-
-#include <cmath>
-#include <cstddef>
-#include <vector>
-#include <mpi.h>
-
-#include "electrostatics_magnetostatics/common.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
-#ifdef P3M
+#include <mpi.h>
+
+#include <cmath>
+#include <cstddef>
+#include <vector>
 
 /****************************************
  * LOCAL DEFINES

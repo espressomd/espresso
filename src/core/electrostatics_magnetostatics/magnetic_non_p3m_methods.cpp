@@ -21,13 +21,15 @@
 
 #include "config.hpp"
 
+#ifdef DIPOLES
+
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 
-#ifdef DIPOLES
-#include "cells.hpp"
-#include "communication.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+
+#include "cells.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 

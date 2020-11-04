@@ -24,8 +24,8 @@
 
 #include "AccumulatorBase.hpp"
 #include "core/accumulators/MeanVarianceCalculator.hpp"
-#include "observables/Observable.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/observables/Observable.hpp"
 
 #include "utils/as_const.hpp"
 

@@ -18,10 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <vector>
-
-#include <boost/mpi.hpp>
-
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE scatter_buffer test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
@@ -29,10 +25,14 @@
 #include <boost/test/unit_test.hpp>
 
 #include "utils/mpi/scatter_buffer.hpp"
-using Utils::Mpi::scatter_buffer;
-namespace mpi = boost::mpi;
+
+#include <boost/mpi.hpp>
 
 #include <algorithm>
+#include <vector>
+
+using Utils::Mpi::scatter_buffer;
+namespace mpi = boost::mpi;
 
 void check_pointer(mpi::communicator comm, int root) {
   std::vector<int> buf;

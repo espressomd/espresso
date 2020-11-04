@@ -32,6 +32,8 @@
 #include "config.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
@@ -40,21 +42,18 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
-#include <utils/mpi/all_compare.hpp>
-
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-
 #ifdef SCAFACOS
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #endif
+
+#include <utils/mpi/all_compare.hpp>
 
 #include <mpi.h>
 

@@ -20,8 +20,9 @@
 #define SCRIPT_INTERFACE_ACCUMULATORS_TIME_SERIES_HPP
 
 #include "AccumulatorBase.hpp"
+#include "script_interface/observables/Observable.hpp"
+
 #include "core/accumulators/TimeSeries.hpp"
-#include "observables/Observable.hpp"
 
 #include <boost/range/algorithm/transform.hpp>
 #include <utils/as_const.hpp>

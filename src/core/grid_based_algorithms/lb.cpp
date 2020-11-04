@@ -45,9 +45,8 @@
 #include <utils/index.hpp>
 #include <utils/math/matrix_vector_product.hpp>
 #include <utils/math/sqr.hpp>
-#include <utils/uniform.hpp>
-using Utils::get_linear_index;
 #include <utils/memory.hpp>
+#include <utils/uniform.hpp>
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
@@ -65,6 +64,8 @@ using Utils::get_linear_index;
 #include <functional>
 #include <iostream>
 #include <stdexcept>
+
+using Utils::get_linear_index;
 
 namespace {
 /** Basis of the mode space as described in @cite dunweg07a */

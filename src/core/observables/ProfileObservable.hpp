@@ -19,14 +19,15 @@
 #ifndef OBSERVABLES_PROFILEOBSERVABLE_HPP
 #define OBSERVABLES_PROFILEOBSERVABLE_HPP
 
-#include <boost/range/algorithm.hpp>
-#include <array>
-#include <cstddef>
-#include <vector>
+#include "Observable.hpp"
 
 #include <utils/math/make_lin_space.hpp>
 
-#include "Observable.hpp"
+#include <boost/range/algorithm.hpp>
+
+#include <array>
+#include <cstddef>
+#include <vector>
 
 namespace Observables {
 

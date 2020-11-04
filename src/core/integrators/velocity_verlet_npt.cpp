@@ -21,6 +21,7 @@
 
 #ifdef NPT
 #include "velocity_verlet_npt.hpp"
+
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"

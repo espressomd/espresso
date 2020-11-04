@@ -25,7 +25,8 @@
 
 #ifdef ELECTROSTATICS
 
-#include <ParticleRange.hpp>
+#include "ParticleRange.hpp"
+
 #include <utils/Vector.hpp>
 
 /** Type codes for the type of %Coulomb interaction.

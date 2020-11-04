@@ -19,11 +19,11 @@
 #ifndef UTILS_VEC_ROTATE_HPP
 #define UTILS_VEC_ROTATE_HPP
 
-#include <cmath>
-#include <tuple>
-
 #include "utils/Vector.hpp"
 #include "utils/math/sqr.hpp"
+
+#include <cmath>
+#include <tuple>
 
 namespace Utils {
 /**

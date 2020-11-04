@@ -20,13 +20,13 @@
 #ifndef ERROR_HANDLING_RUNTIMEERRORCOLLECTOR_HPP
 #define ERROR_HANDLING_RUNTIMEERRORCOLLECTOR_HPP
 
-#include <sstream>
-#include <string>
-#include <vector>
+#include "RuntimeError.hpp"
 
 #include <boost/mpi/communicator.hpp>
 
-#include "RuntimeError.hpp"
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace ErrorHandling {
 

@@ -32,8 +32,8 @@
 #include <utils/index.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <string>
 #include <vector>
 

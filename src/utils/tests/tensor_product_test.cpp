@@ -23,12 +23,13 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <utils/Vector.hpp>
 #include "utils/math/tensor_product.hpp"
 using Utils::tensor_product;
 
-#include <type_traits>
+#include <utils/Vector.hpp>
+
 #include <cstddef>
+#include <type_traits>
 
 BOOST_AUTO_TEST_CASE(square) {
   Utils::Vector<int, 4> x{1, 2, 3, 4};

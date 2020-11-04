@@ -19,9 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <limits>
-#include <numeric>
-
 #define BOOST_TEST_MODULE RunningAverage test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -34,6 +31,8 @@
 #include <cmath>
 #include <cstddef>
 #include <iterator>
+#include <limits>
+#include <numeric>
 
 using namespace Testing;
 

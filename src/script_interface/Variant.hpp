@@ -20,7 +20,8 @@
 #define SCRIPT_INTERFACE_VARIANT_HPP
 
 #include "None.hpp"
-#include "utils/Vector.hpp"
+
+#include <utils/Vector.hpp>
 
 #include <boost/variant.hpp>
 

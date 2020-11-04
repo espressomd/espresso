@@ -22,6 +22,7 @@
  *  Implementation of pressure.hpp.
  */
 
+#include "pressure.hpp"
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
@@ -33,12 +34,9 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
-#include "pressure.hpp"
 #include "pressure_inline.hpp"
 #include "reduce_observable_stat.hpp"
 #include "virtual_sites.hpp"
-
-#include <boost/range/algorithm/copy.hpp>
 
 #include "short_range_loop.hpp"
 
@@ -47,6 +45,8 @@
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
+
+#include <boost/range/algorithm/copy.hpp>
 
 #include <algorithm>
 #include <cmath>

@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <utils/index.hpp>
 
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
@@ -27,6 +26,7 @@
 #include "lb_interpolation.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 
 #include <boost/optional.hpp>
 

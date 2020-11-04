@@ -1,12 +1,12 @@
 #ifndef ESPRESSO_UTILS_BAG_HPP
 #define ESPRESSO_UTILS_BAG_HPP
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
+
 #include <cstddef>
 #include <utility>
 #include <vector>
-
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/vector.hpp>
 
 namespace Utils {
 /**

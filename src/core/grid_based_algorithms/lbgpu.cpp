@@ -24,15 +24,16 @@
 
 #include "config.hpp"
 
-#include "lbgpu.hpp"
 #ifdef CUDA
-#include "errorhandling.hpp"
-#include "lb-d3q19.hpp"
+
+#include "lbgpu.hpp"
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "lb-d3q19.hpp"
 
 #include <cmath>
 #include <vector>

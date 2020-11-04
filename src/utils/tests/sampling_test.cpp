@@ -20,7 +20,6 @@
 #define BOOST_TEST_MODULE sampling test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
-#include <utility>
 
 #include <utils/Histogram.hpp>
 #include <utils/constants.hpp>
@@ -29,6 +28,7 @@
 
 #include <array>
 #include <cstddef>
+#include <utility>
 
 BOOST_AUTO_TEST_CASE(get_cylindrical_sampling_positions_test) {
   auto const min_r = 0.0;

@@ -21,9 +21,10 @@
 
 #include "config.hpp"
 
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "grid.hpp"

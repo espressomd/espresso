@@ -21,15 +21,6 @@
 #ifndef _LJGEN_H
 #define _LJGEN_H
 
-#include "config.hpp"
-
-#ifdef LENNARD_JONES_GENERIC
-
-#include <utils/Vector.hpp>
-#include <utils/math/sqr.hpp>
-
-#include <cmath>
-
 /** \file
  *  Routines to calculate the generalized Lennard-Jones potential between
  *  particle pairs. "Generalized" here means that the LJ energy is of the form
@@ -45,7 +36,16 @@
  *  Implementation in \ref ljgen.cpp.
  */
 
+#include "config.hpp"
+
+#ifdef LENNARD_JONES_GENERIC
+
 #include "nonbonded_interaction_data.hpp"
+
+#include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
+
+#include <cmath>
 
 int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double shift, double offset, double a1,

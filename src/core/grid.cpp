@@ -25,15 +25,17 @@
  */
 
 #include "grid.hpp"
+
 #include "communication.hpp"
 #include "global.hpp"
 #include "particle_data.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/mpi/cart_comm.hpp>
 
 #include <boost/algorithm/clamp.hpp>
+
 #include <mpi.h>
-#include <utils/mpi/cart_comm.hpp>
 
 #include <cmath>
 

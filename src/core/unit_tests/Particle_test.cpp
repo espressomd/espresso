@@ -23,14 +23,14 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
+#include "Particle.hpp"
+#include "config.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
-#include "Particle.hpp"
-#include "config.hpp"
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 #include <algorithm>
 #include <array>

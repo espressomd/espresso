@@ -19,18 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
-
 #define BOOST_TEST_MODULE ellipsoid test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include <shapes/Ellipsoid.hpp>
-
 #include <shapes/Shape.hpp>
+
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
+#include <cmath>
 #include <cstdlib>
 
 bool check_distance_function(const Shapes::Shape &s) {

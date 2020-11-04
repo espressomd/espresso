@@ -19,14 +19,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "communication.hpp"
-#include "config.hpp"
-#include "event.hpp"
-
 #include "electrostatics_magnetostatics/common.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+
+#include "communication.hpp"
+#include "config.hpp"
+#include "event.hpp"
 
 #include <mpi.h>
 

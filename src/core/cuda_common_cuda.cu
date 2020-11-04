@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <cuda.h>
-
 #include "config.hpp"
 
 #include "ParticleRange.hpp"
@@ -29,8 +27,11 @@
 #include "CudaDeviceAllocator.hpp"
 #include "CudaHostAllocator.hpp"
 
-#include <thrust/device_vector.h>
 #include <utils/constants.hpp>
+
+#include <thrust/device_vector.h>
+
+#include <cuda.h>
 
 #include <cstddef>
 

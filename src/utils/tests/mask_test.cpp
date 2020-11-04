@@ -21,8 +21,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <utils/mask.hpp>
 #include <utils/get.hpp>
+#include <utils/mask.hpp>
 
 #include <cstdint>
 #include <string>

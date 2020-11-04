@@ -22,25 +22,19 @@
  *  The corresponding header file is lbgpu.cuh.
  */
 
-#include <cuda.h>
-#include <curand_kernel.h>
-
 #include "config.hpp"
 
-extern int this_node;
-
 #ifdef CUDA
-#include <cassert>
-
-#include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
-#include "errorhandling.hpp"
 
 #include "grid_based_algorithms/OptionalCounter.hpp"
 #include "grid_based_algorithms/lb-d3q19.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
+
+#include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/Array.hpp>
 #include <utils/Counter.hpp>
@@ -52,11 +46,17 @@ extern int this_node;
 #include <thrust/host_vector.h>
 #include <thrust/transform_reduce.h>
 
+#include <cuda.h>
+#include <curand_kernel.h>
+
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
+
+extern int this_node;
 
 /** device_rho_v: struct for hydrodynamic fields: this is for internal use
  *  (i.e. stores values in LB units) and should not used for

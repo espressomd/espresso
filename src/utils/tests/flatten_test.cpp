@@ -20,13 +20,14 @@
 #define BOOST_TEST_MODULE flatten test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
+
+#include <utils/flatten.hpp>
+
 #include <algorithm>
+#include <array>
 #include <iterator>
 #include <list>
-#include <utils/flatten.hpp>
 #include <vector>
-
-#include <array>
 
 BOOST_AUTO_TEST_CASE(flatten_) {
   using Utils::flatten;

@@ -19,11 +19,11 @@
 #ifndef UTILS_MATRIX_VECTOR_PRODUCT_HPP
 #define UTILS_MATRIX_VECTOR_PRODUCT_HPP
 
+#include "utils/get.hpp"
+
 #include <array>
 #include <cstddef>
 #include <utility>
-
-#include "utils/get.hpp"
 
 namespace Utils {
 

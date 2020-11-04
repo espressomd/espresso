@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef ACTOR_DIPOLARDIRECTSUM_HPP
+#define ACTOR_DIPOLARDIRECTSUM_HPP
+
 #include "config.hpp"
 
 #ifdef DIPOLAR_DIRECT_SUM
@@ -28,9 +31,6 @@
 #include "grid.hpp"
 
 #include <memory>
-
-#ifndef ACTOR_DIPOLARDIRECTSUM_HPP
-#define ACTOR_DIPOLARDIRECTSUM_HPP
 
 // This needs to be done in the .cu file too!!!!!
 typedef float dds_float;

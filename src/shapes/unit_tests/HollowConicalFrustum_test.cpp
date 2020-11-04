@@ -21,9 +21,10 @@
 
 #define BOOST_TEST_MODULE Cone test
 #define BOOST_TEST_DYN_LINK
-
 #include <boost/test/unit_test.hpp>
+
 #include <shapes/HollowConicalFrustum.hpp>
+
 #include <utils/Vector.hpp>
 
 #include <limits>

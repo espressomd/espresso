@@ -36,9 +36,9 @@
 
 #include <boost/mpi.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <algorithm>
 #include <stdexcept>
 #include <utility>
 

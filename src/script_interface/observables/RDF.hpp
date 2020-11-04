@@ -25,14 +25,14 @@
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/observables/Observable.hpp"
 
+#include "core/observables/RDF.hpp"
+
 #include <boost/range/algorithm.hpp>
 
 #include <cstddef>
 #include <iterator>
 #include <memory>
 #include <vector>
-
-#include "core/observables/RDF.hpp"
 
 namespace ScriptInterface {
 namespace Observables {

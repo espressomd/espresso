@@ -22,9 +22,11 @@
  *  Implementation of dpd.hpp.
  */
 #include "config.hpp"
-#include "dpd.hpp"
 
 #ifdef DPD
+
+#include "dpd.hpp"
+
 #include "MpiCallbacks.hpp"
 #include "cells.hpp"
 #include "communication.hpp"

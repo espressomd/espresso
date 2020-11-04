@@ -19,16 +19,16 @@
 #ifndef OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 
-#include <boost/range/algorithm.hpp>
-#include <vector>
-
 #include "Observable.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/make_lin_space.hpp>
 
+#include <boost/range/algorithm.hpp>
+
 #include <array>
 #include <cstddef>
+#include <vector>
 
 namespace Observables {
 

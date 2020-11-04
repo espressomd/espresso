@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <boost/mpi/collectives.hpp>
 
 #include "ShapeBasedConstraint.hpp"
+
 #include "BoxGeometry.hpp"
 #include "communication.hpp"
 #include "config.hpp"
@@ -31,6 +31,8 @@
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
+
+#include <boost/mpi/collectives.hpp>
 
 #include <algorithm>
 #include <functional>

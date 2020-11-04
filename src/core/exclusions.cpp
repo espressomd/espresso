@@ -1,12 +1,13 @@
 #include "config.hpp"
 
+#ifdef EXCLUSIONS
+
 #include "exclusions.hpp"
 
 #include <utils/contains.hpp>
 
 #include <algorithm>
 
-#ifdef EXCLUSIONS
 void add_exclusion(Particle *part, int part2) {
   if (Utils::contains(part->exclusions(), part2))
     return;

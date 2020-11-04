@@ -31,12 +31,13 @@
 
 #include "config.hpp"
 
+#ifdef UMBRELLA
+
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <utils/Vector.hpp>
 
-#ifdef UMBRELLA
 #include <boost/optional.hpp>
 
 /** Set the parameters of an umbrella bond

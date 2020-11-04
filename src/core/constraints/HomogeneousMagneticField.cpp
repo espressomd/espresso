@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "HomogeneousMagneticField.hpp"
+
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "config.hpp"

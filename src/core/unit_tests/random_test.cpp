@@ -22,15 +22,15 @@
 #define BOOST_TEST_MODULE PRNG test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
-#include <cstddef>
-#include <tuple>
-
-#include <utils/Vector.hpp>
 
 #include "random.hpp"
 #include "random_test.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <array>
+#include <cstddef>
+#include <tuple>
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(test_noise_statistics) {

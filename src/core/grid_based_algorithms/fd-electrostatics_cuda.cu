@@ -16,17 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <cuda.h>
 
 // TODO: throw exceptions upon errors initialization
 
-#include "cuda_utils.hpp"
 #include "grid_based_algorithms/fd-electrostatics.cuh"
+//#include <cuda_interface.hpp>
+
+#include "cuda_utils.hpp"
+
+#include <cuda.h>
 #include <cufft.h>
+
+#include <cstdio>
 #include <stdexcept>
 #include <string>
-//#include <cuda_interface.hpp>
-#include <cstdio>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!

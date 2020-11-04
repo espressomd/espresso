@@ -20,6 +20,8 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
+#include "utils/Array.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -30,8 +32,6 @@
 #include <numeric>
 #include <type_traits>
 #include <vector>
-
-#include "utils/Array.hpp"
 
 namespace Utils {
 

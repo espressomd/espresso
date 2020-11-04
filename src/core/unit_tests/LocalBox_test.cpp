@@ -19,13 +19,14 @@
 
 #define BOOST_TEST_MODULE tests
 #define BOOST_TEST_DYN_LINK
-#include <boost/range/algorithm/equal.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <LocalBox.hpp>
+#include "LocalBox.hpp"
 
 #include <utils/Array.hpp>
 #include <utils/Vector.hpp>
+
+#include <boost/range/algorithm/equal.hpp>
 
 #include <algorithm>
 #include <limits>

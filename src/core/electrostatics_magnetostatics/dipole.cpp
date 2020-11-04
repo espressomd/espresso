@@ -19,9 +19,9 @@
 
 #include "config.hpp"
 
-#include "electrostatics_magnetostatics/dipole.hpp"
-
 #ifdef DIPOLES
+
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 #include "actor/DipolarBarnesHut.hpp"
 #include "actor/DipolarDirectSum.hpp"

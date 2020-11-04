@@ -19,9 +19,9 @@
 #ifndef CORE_UNIT_TESTS_MOCK_CELL_HPP
 #define CORE_UNIT_TESTS_MOCK_CELL_HPP
 
-#include <vector>
-
 #include <utils/Span.hpp>
+
+#include <vector>
 
 namespace Testing {
 template <typename Particle> class Cell {

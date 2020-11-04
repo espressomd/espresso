@@ -19,15 +19,16 @@
 
 #include "config.hpp"
 
-#include <memory>
+#ifdef DIPOLAR_DIRECT_SUM
 
 #include "DipolarDirectSum.hpp"
+
 #include "EspressoSystemInterface.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 
-#ifdef DIPOLAR_DIRECT_SUM
+#include <memory>
 
 std::unique_ptr<DipolarDirectSum> dipolarDirectSum;
 

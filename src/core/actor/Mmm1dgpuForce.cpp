@@ -17,14 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "config.hpp"
+
+#ifdef MMM1D_GPU
+
 #include "actor/Mmm1dgpuForce.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
 
 #include <stdexcept>
-
-#ifdef MMM1D_GPU
 
 void Mmm1dgpuForce::check_periodicity() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {

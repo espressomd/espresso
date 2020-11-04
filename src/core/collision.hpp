@@ -21,6 +21,9 @@
 
 #include "config.hpp"
 
+#include "BondList.hpp"
+#include "Particle.hpp"
+
 /** \name bits of possible modes for collision handling.
  *  The modes can be combined by or-ing together, but not all combinations are
  *  possible.
@@ -40,9 +43,6 @@
 /// Three particle binding mode
 #define COLLISION_MODE_BIND_THREE_PARTICLES 16
 /*@}*/
-
-#include "BondList.hpp"
-#include "Particle.hpp"
 
 class Collision_parameters {
 public:

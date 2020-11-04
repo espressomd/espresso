@@ -25,15 +25,18 @@
 #ifndef CORE_PRESSURE_INLINE_HPP
 #define CORE_PRESSURE_INLINE_HPP
 
+#include "config.hpp"
+
+#include "pressure.hpp"
+
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
-#include "config.hpp"
 #include "errorhandling.hpp"
 #include "exclusions.hpp"
 #include "forces_inline.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "pressure.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>

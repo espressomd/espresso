@@ -34,12 +34,12 @@
 
 #include "config.hpp"
 
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/common.hpp"
-#include "electrostatics_magnetostatics/dp3m_influence_function.hpp"
-
 #ifdef DP3M
 
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+
+#include "electrostatics_magnetostatics/common.hpp"
+#include "electrostatics_magnetostatics/dp3m_influence_function.hpp"
 #include "electrostatics_magnetostatics/fft.hpp"
 #include "electrostatics_magnetostatics/p3m-common.hpp"
 #include "electrostatics_magnetostatics/p3m_interpolation.hpp"
@@ -55,18 +55,21 @@
 #include "tuning.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/strcat_alloc.hpp>
-using Utils::strcat_alloc;
 #include <utils/constants.hpp>
 #include <utils/integral_parameter.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
+#include <utils/strcat_alloc.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
+
+#include <mpi.h>
+
 #include <algorithm>
 #include <cstdio>
-#include <mpi.h>
+
+using Utils::strcat_alloc;
 
 /************************************************
  * DEFINES

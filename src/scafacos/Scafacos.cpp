@@ -18,6 +18,7 @@
  */
 
 #include "Scafacos.hpp"
+
 #include <cassert>
 #include <stdexcept>
 #include <string>

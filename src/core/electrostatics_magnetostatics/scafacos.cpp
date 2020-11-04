@@ -24,29 +24,15 @@
 
 #include "config.hpp"
 
-#include "electrostatics_magnetostatics/scafacos.hpp"
-
 #if defined(SCAFACOS)
 
-#include <utils/Vector.hpp>
-
-#include <boost/mpi/collectives.hpp>
-#include <boost/range/algorithm/min_element.hpp>
-
-#include <algorithm>
-#include <cmath>
-#include <cassert>
-#include <functional>
-#include <limits>
-#include <list>
-#include <numeric>
-#include <stdexcept>
-#include <string>
-#include <vector>
+#include "electrostatics_magnetostatics/scafacos.hpp"
 
 #include "Scafacos.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
@@ -54,8 +40,21 @@
 #include "particle_data.hpp"
 #include "tuning.hpp"
 
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
+#include <utils/Vector.hpp>
+
+#include <boost/mpi/collectives.hpp>
+#include <boost/range/algorithm/min_element.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <functional>
+#include <limits>
+#include <list>
+#include <numeric>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #if defined(SCAFACOS_DIPOLES) && !defined(FCS_ENABLE_DIPOLES)
 #error                                                                         \

@@ -21,6 +21,7 @@
 
 #include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
+
 #include <utils/Vector.hpp>
 
 #include <cstdint>

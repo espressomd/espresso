@@ -17,35 +17,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cuda.h>
-
 #include "config.hpp"
+
 #ifdef CUDA            /* Terminates at end of file */
 #ifdef ELECTROKINETICS /* Terminates at end of file */
 
-#include <cufft.h>
-#include <cstddef>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-
-#include <thrust/device_ptr.h>
-#include <thrust/functional.h>
-#include <thrust/transform_reduce.h>
-
-#include <utils/memory.hpp>
+#include "grid_based_algorithms/electrokinetics.hpp"
 
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
 #include "fd-electrostatics.cuh"
-#include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
+
+#include <utils/memory.hpp>
+
+#include <thrust/device_ptr.h>
+#include <thrust/functional.h>
+#include <thrust/transform_reduce.h>
+
+#include <cuda.h>
+#include <cufft.h>
+
+#include <cstddef>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!

@@ -29,9 +29,9 @@
 
 #include "config.hpp"
 
-#include "nonbonded_interaction_data.hpp"
-
 #ifdef SMOOTH_STEP
+
+#include "nonbonded_interaction_data.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>

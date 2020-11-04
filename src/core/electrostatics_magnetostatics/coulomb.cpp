@@ -19,9 +19,10 @@
 
 #include "config.hpp"
 
+#ifdef ELECTROSTATICS
+
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
-#ifdef ELECTROSTATICS
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -30,8 +31,8 @@
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/p3m-common.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "electrostatics_magnetostatics/reaction_field.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"

@@ -22,10 +22,11 @@
 #include <boost/test/unit_test.hpp>
 
 #include "utils/math/sinc.hpp"
-using Utils::sinc;
 
 #include <cmath>
 #include <cstdlib>
+
+using Utils::sinc;
 
 BOOST_AUTO_TEST_CASE(zero) { BOOST_CHECK(1.0 == sinc(0.0)); }
 

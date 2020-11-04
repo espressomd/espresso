@@ -21,9 +21,9 @@
 #ifndef SIGNAL_HANDLER_HPP
 #define SIGNAL_HANDLER_HPP
 
-#include <csignal>
-
 #include "errorhandling.hpp"
+
+#include <csignal>
 
 /** @brief RAII guard for signal handling
  *

@@ -100,19 +100,19 @@
 #ifndef _STATISTICS_CORRELATION_H
 #define _STATISTICS_CORRELATION_H
 
-#include <boost/multi_array.hpp>
-#include <boost/serialization/access.hpp>
-
-#include <memory>
-#include <utility>
-
 #include "AccumulatorBase.hpp"
 #include "integrate.hpp"
 #include "observables/Observable.hpp"
+
 #include <utils/Vector.hpp>
 
+#include <boost/multi_array.hpp>
+#include <boost/serialization/access.hpp>
+
 #include <cstddef>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace Accumulators {

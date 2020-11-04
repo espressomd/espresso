@@ -34,8 +34,8 @@
 #include <boost/range/algorithm.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <iterator>
 #include <stdexcept>
