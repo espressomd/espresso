@@ -18,7 +18,6 @@
  */
 #include "config.hpp"
 #include "Particle.hpp"
-#include "partCfg_global.hpp"
 #ifdef GSL
 #include "gsl/gsl_fit.h"
 #endif

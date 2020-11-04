@@ -26,14 +26,12 @@
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/quaternion.hpp>
 
 #include <cmath>

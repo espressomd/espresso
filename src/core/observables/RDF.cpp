@@ -20,7 +20,6 @@
 
 #include "BoxGeometry.hpp"
 #include "fetch_particles.hpp"
-#include "particle_data.hpp"
 #include "grid.hpp"
 
 #include <utils/Span.hpp>

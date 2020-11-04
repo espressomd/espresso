@@ -24,9 +24,7 @@
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/collectives/all_to_all.hpp>
-#include <boost/serialization/vector.hpp>
 
-#include <cassert>
 #include <cstddef>
 #include <limits>
 #include <vector>

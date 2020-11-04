@@ -31,15 +31,12 @@
 
 #include "cells.hpp"
 #include "communication.hpp"
-#include "cuda_interface.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "halo.hpp"
 #include "integrate.hpp"
 #include "lb-d3q19.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 
 #include <utils/Counter.hpp>
@@ -48,10 +45,8 @@
 #include <utils/index.hpp>
 #include <utils/math/matrix_vector_product.hpp>
 #include <utils/math/sqr.hpp>
-#include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 using Utils::get_linear_index;
-#include <utils/constants.hpp>
 #include <utils/memory.hpp>
 
 #include <Random123/philox.h>

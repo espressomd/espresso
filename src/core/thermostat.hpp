@@ -26,8 +26,6 @@
 
 #include "config.hpp"
 
-#include "rotation.hpp"
-
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 

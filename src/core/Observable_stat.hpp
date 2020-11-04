@@ -29,7 +29,6 @@
 #include <cassert>
 #include <cstddef>
 #include <functional>
-#include <utility>
 #include <vector>
 
 /** Observable for the pressure and energy. */

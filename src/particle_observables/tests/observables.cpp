@@ -25,7 +25,6 @@
 
 #include "mock.hpp"
 
-#include <memory>
 #include <type_traits>
 
 namespace Testing {

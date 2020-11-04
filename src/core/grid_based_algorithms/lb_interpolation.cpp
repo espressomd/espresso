@@ -16,17 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <boost/mpi/collectives.hpp>
 
 #include "communication.hpp"
 #include "config.hpp"
-#include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include <utils/Vector.hpp>
 
 #include "lb.hpp"
-#include "lbgpu.hpp"
 
 #include <algorithm>
 #include <cstddef>

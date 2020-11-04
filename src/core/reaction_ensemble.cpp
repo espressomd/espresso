@@ -24,7 +24,6 @@
 #include "config.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
 #include "partCfg_global.hpp"
 #include "statistics.hpp"
 

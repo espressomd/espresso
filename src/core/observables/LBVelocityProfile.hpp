@@ -20,9 +20,7 @@
 #define OBSERVABLES_LBVELOCITYPROFILE_HPP
 
 #include "LBProfileObservable.hpp"
-#include "Particle.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <vector>
 

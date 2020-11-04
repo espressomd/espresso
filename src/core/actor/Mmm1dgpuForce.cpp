@@ -18,8 +18,6 @@
  */
 #include "config.hpp"
 #include "actor/Mmm1dgpuForce.hpp"
-#include "EspressoSystemInterface.hpp"
-#include "communication.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "grid.hpp"

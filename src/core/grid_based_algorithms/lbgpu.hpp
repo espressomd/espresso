@@ -30,7 +30,6 @@
 #ifdef CUDA
 #include "OptionalCounter.hpp"
 
-#include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 
 #include <cstddef>

@@ -29,7 +29,6 @@
 #include "nonbonded_interaction_data.hpp"
 
 #include <utils/constants.hpp>
-#include <utils/math/sqr.hpp>
 
 int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double sig, double cut, double k1, double k2,

@@ -31,8 +31,6 @@
 #include <list>
 #include <string>
 
-#include "Particle.hpp"
-
 namespace Scafacos {
 #if defined(SCAFACOS)
 /** Near-field pair force */

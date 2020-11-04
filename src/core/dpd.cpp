@@ -36,7 +36,6 @@
 #include "random.hpp"
 #include "thermostat.hpp"
 
-#include <boost/mpi/collectives/reduce.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>

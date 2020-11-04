@@ -21,7 +21,6 @@
 
 #include "h5md_core.hpp"
 #include "Particle.hpp"
-#include "communication.hpp"
 #include "h5md_specification.hpp"
 #include "version.hpp"
 

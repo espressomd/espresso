@@ -23,12 +23,10 @@
 
 #include "Actor.hpp"
 #include "DipolarBarnesHut_cuda.cuh"
-#include "EspressoSystemInterface.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 
 #include <memory>
 

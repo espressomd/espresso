@@ -43,8 +43,6 @@
 
 #include "BondList.hpp"
 #include "Particle.hpp"
-#include "integrate.hpp"
-#include "virtual_sites.hpp"
 
 class Collision_parameters {
 public:

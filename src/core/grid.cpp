@@ -25,7 +25,6 @@
  */
 
 #include "grid.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "global.hpp"
 #include "particle_data.hpp"

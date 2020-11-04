@@ -27,7 +27,6 @@
 #include <h5xx/h5xx.hpp>
 
 #include <BoxGeometry.hpp>
-#include <algorithm>
 #include <string>
 #include <unordered_map>
 

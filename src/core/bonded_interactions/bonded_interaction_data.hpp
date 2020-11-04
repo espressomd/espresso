@@ -24,15 +24,10 @@
 #define _BONDED_INTERACTION_DATA_HPP
 
 #include "BondList.hpp"
-#include "CellStructure.hpp"
 #include "Particle.hpp"
 #include "TabulatedPotential.hpp"
 
-#include <utils/Span.hpp>
-
 #include <boost/algorithm/cxx11/any_of.hpp>
-#include <boost/optional.hpp>
-#include <boost/range/algorithm/transform.hpp>
 
 #include <cassert>
 #include <cmath>

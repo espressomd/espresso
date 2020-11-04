@@ -25,7 +25,6 @@
 
 #include <utils/constants.hpp>
 
-#include <algorithm>
 #include <cassert>
 #include <vector>
 

@@ -45,16 +45,12 @@
 
 #include <array>
 #include <boost/optional.hpp>
-#include <memory>
-
-#include "errorhandling.hpp"
 
 #include "halo.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
-#include <utils/serialization/multi_array.hpp>
 
 #include <cstddef>
 #include <cstdint>

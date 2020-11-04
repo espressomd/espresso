@@ -39,7 +39,6 @@
 #include <functional>
 #include <limits>
 #include <list>
-#include <memory>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -50,7 +49,6 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"

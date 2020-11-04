@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <memory>
 #include <numeric>
-#include <type_traits>
 #include <vector>
 
 #define BOOST_TEST_MODULE ParticleIterator test

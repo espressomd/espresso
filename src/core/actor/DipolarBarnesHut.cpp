@@ -25,7 +25,6 @@
 #include "electrostatics_magnetostatics/common.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
-#include "grid.hpp"
 
 #include <memory>
 

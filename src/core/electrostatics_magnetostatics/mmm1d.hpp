@@ -32,8 +32,6 @@
 
 #include "config.hpp"
 
-#include "Particle.hpp"
-
 #include <utils/Vector.hpp>
 
 #ifdef ELECTROSTATICS

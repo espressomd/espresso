@@ -30,8 +30,6 @@
 
 #include <boost/optional.hpp>
 
-#include <algorithm>
-
 using Utils::get_linear_index;
 
 /* LB CPU callback interface */

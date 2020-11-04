@@ -46,12 +46,10 @@
 using Utils::get_linear_index;
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
-#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <vector>

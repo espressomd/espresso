@@ -22,7 +22,6 @@
 #include "BoxGeometry.hpp"
 #include "CylindricalPidProfileObservable.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
 
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>

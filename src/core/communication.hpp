@@ -53,7 +53,6 @@
 
 #include <memory>
 #include <utility>
-#include <vector>
 
 /** The number of this node. */
 extern int this_node;

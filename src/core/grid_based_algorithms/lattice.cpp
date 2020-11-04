@@ -26,9 +26,7 @@
 
 #include <boost/range/numeric.hpp>
 
-#include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
-#include <utils/constants.hpp>
 #include <utils/index.hpp>
 
 #include <utils/Vector.hpp>

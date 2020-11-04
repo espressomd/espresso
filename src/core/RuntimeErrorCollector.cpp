@@ -18,7 +18,6 @@
  */
 #include "RuntimeErrorCollector.hpp"
 
-#include "communication.hpp"
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/mpi/collectives.hpp>

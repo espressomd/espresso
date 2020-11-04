@@ -37,7 +37,6 @@
 #include "integrate.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/mask.hpp>
 
 #include <cassert>

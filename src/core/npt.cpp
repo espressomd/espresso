@@ -25,7 +25,6 @@
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/collectives/broadcast.hpp>
-#include <boost/mpi/operations.hpp>
 
 #include <algorithm>
 #include <cmath>

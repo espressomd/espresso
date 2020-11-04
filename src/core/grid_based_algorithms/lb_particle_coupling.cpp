@@ -19,28 +19,21 @@
 #include "lb_particle_coupling.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/OptionalCounter.hpp"
-#include "grid_based_algorithms/lattice.hpp"
 #include "integrate.hpp"
 #include "lb_interface.hpp"
 #include "lb_interpolation.hpp"
 #include "lbgpu.hpp"
-#include "particle_data.hpp"
 #include "random.hpp"
 
 #include <profiler/profiler.hpp>
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
-#include <utils/u32_to_u64.hpp>
-#include <utils/uniform.hpp>
 
-#include <Random123/philox.h>
 #include <boost/mpi.hpp>
 
 #include <cmath>

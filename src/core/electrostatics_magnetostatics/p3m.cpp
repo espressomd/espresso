@@ -64,7 +64,6 @@ using Utils::strcat_alloc;
 #include <complex>
 #include <cstddef>
 #include <cstdio>
-#include <cstring>
 #include <functional>
 
 p3m_data_struct p3m;

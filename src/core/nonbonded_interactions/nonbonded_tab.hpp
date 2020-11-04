@@ -38,8 +38,6 @@
 
 #include <utils/Vector.hpp>
 
-#include <algorithm>
-#include <cassert>
 #include <vector>
 
 /** Set the parameters of a non-bonded tabulated potential.

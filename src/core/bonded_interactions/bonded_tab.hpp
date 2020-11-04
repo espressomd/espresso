@@ -37,7 +37,6 @@
 #include <tuple>
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/optional.hpp>

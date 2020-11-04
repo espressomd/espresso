@@ -33,7 +33,6 @@
 #include "electrostatics_magnetostatics/scafacos.hpp"
 
 #include "ParticleRange.hpp"
-#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -45,7 +44,6 @@
 #include <boost/mpi/collectives.hpp>
 
 #include <cassert>
-#include <cstddef>
 #include <cstdio>
 
 Dipole_parameters dipole = {

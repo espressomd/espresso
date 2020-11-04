@@ -29,20 +29,12 @@
 #include "errorhandling.hpp"
 #include "lb-d3q19.hpp"
 
-#include "Particle.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
-#include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb_boundaries.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-
-#include <utils/constants.hpp>
 
 #include <cmath>
-#include <cstdlib>
 #include <vector>
 
 LB_parameters_gpu lbpar_gpu = {

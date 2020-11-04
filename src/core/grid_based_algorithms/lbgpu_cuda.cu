@@ -31,9 +31,6 @@ extern int this_node;
 
 #ifdef CUDA
 #include <cassert>
-#include <cstdio>
-#include <cstdlib>
-#include <vector>
 
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"

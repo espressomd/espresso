@@ -22,8 +22,6 @@
 #include "OptionalCounter.hpp"
 #include "ParticleRange.hpp"
 
-#include <utils/Counter.hpp>
-
 #include <boost/serialization/access.hpp>
 
 #include <cstdint>

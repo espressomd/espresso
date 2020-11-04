@@ -27,7 +27,6 @@
 #ifdef LENNARD_JONES_GENERIC
 #include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
-#include "lj.hpp"
 
 #include <utils/constants.hpp>
 

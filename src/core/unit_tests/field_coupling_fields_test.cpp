@@ -24,7 +24,6 @@
 #include "field_coupling/fields/AffineMap.hpp"
 #include "field_coupling/fields/Constant.hpp"
 #include "field_coupling/fields/Interpolated.hpp"
-#include "field_coupling/fields/PlaneWave.hpp"
 #include "field_coupling/fields/jacobian_type.hpp"
 
 #include <utils/Vector.hpp>

@@ -21,10 +21,7 @@
 
 #include <shapes/Sphere.hpp>
 
-#include <utils/math/sqr.hpp>
 #include <utils/Vector.hpp>
-
-#include <cmath>
 
 namespace Shapes {
 void Sphere::calculate_dist(const Utils::Vector3d &pos, double &dist,

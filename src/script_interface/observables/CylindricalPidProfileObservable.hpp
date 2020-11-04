@@ -29,7 +29,6 @@
 #include <memory>
 #include <vector>
 
-#include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include "Observable.hpp"

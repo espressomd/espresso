@@ -38,7 +38,6 @@
 #include <cmath>
 #include <cstddef>
 #include <functional>
-#include <limits>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>

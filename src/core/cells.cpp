@@ -39,9 +39,6 @@
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
-#include <boost/range/adaptor/uniqued.hpp>
-#include <boost/range/algorithm/sort.hpp>
-
 #include <algorithm>
 #include <functional>
 #include <stdexcept>

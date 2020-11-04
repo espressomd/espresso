@@ -30,7 +30,6 @@
 #include "config.hpp"
 
 #ifdef ELECTROSTATICS
-#include "Particle.hpp"
 
 #include <utils/Vector.hpp>
 

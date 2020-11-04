@@ -28,8 +28,6 @@
 
 #ifdef ELECTROSTATICS
 
-#include "Particle.hpp"
-
 #include <utils/Vector.hpp>
 
 #include <cmath>
