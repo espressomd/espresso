@@ -24,16 +24,19 @@
 #include "dpd.hpp"
 
 #ifdef DPD
+#include "MpiCallbacks.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 #include "thermostat.hpp"
 
 #include <boost/mpi/collectives/reduce.hpp>
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/tensor_product.hpp>
 

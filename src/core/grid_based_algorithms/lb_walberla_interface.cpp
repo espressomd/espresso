@@ -76,20 +76,16 @@ boost::optional<Utils::Vector6d> get_node_pressure_tensor(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_pressure_tensor)
 
-void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u,
-                       bool defer_ghost_update) {
+void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u) {
   lb_walberla()->set_node_velocity(ind, u);
-  if (!defer_ghost_update)
-    lb_walberla()->ghost_communication();
+  lb_walberla()->ghost_communication();
 }
 
 REGISTER_CALLBACK(set_node_velocity)
 
-void set_node_last_applied_force(Utils::Vector3i ind, Utils::Vector3d f,
-                                 bool defer_ghost_update) {
+void set_node_last_applied_force(Utils::Vector3i ind, Utils::Vector3d f) {
   lb_walberla()->set_node_last_applied_force(ind, f);
-  if (!defer_ghost_update)
-    lb_walberla()->ghost_communication();
+  lb_walberla()->ghost_communication();
 }
 
 REGISTER_CALLBACK(set_node_last_applied_force)
@@ -100,23 +96,27 @@ void set_ext_force_density(Utils::Vector3d f) {
 
 REGISTER_CALLBACK(set_ext_force_density)
 
-void set_node_density(Utils::Vector3i ind, double density,
-                      bool defer_ghost_update) {
+void set_node_density(Utils::Vector3i ind, double density) {
   lb_walberla()->set_node_density(ind, density);
-  if (!defer_ghost_update)
-    lb_walberla()->ghost_communication();
+  lb_walberla()->ghost_communication();
 }
 
 REGISTER_CALLBACK(set_node_density)
 
-void set_node_pop(Utils::Vector3i ind, std::vector<double> pop,
-                  bool defer_ghost_update) {
+void set_node_pop(Utils::Vector3i ind, std::vector<double> pop) {
   lb_walberla()->set_node_pop(ind, pop);
-  if (!defer_ghost_update)
-    lb_walberla()->ghost_communication();
+  lb_walberla()->ghost_communication();
 }
 
 REGISTER_CALLBACK(set_node_pop)
+
+void set_node_from_checkpoint(Utils::Vector3i ind, std::vector<double> pop,
+                              Utils::Vector3d f) {
+  lb_walberla()->set_node_pop(ind, pop);
+  lb_walberla()->set_node_last_applied_force(ind, f);
+}
+
+REGISTER_CALLBACK(set_node_from_checkpoint)
 
 void do_ghost_communication() { lb_walberla()->ghost_communication(); }
 

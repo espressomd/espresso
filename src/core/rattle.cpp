@@ -32,6 +32,7 @@ int n_rigidbonds = 0;
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

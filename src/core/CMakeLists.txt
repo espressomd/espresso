@@ -17,6 +17,7 @@ set(EspressoCore_SRC
     global.cpp
     grid.cpp
     immersed_boundaries.cpp
+    interactions.cpp
     event.cpp
     integrate.cpp
     npt.cpp

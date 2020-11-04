@@ -25,11 +25,11 @@
 
 #include <cmath>
 
-using namespace std;
-
 namespace Shapes {
 void Slitpore::calculate_dist(const Utils::Vector3d &pos, double &dist,
                               Utils::Vector3d &vec) const {
+  using std::sqrt;
+
   // the left circles
   Utils::Vector2d c11 = {dividing_plane() - m_pore_width / 2 -
                              m_upper_smoothing_radius,

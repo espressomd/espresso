@@ -847,7 +847,7 @@ public:
   }
 
   /** Activate or deactivate a VTK callback */
-  virtual void switch_vtk(std::string const &vtk_uid, int status) override {
+  void switch_vtk(std::string const &vtk_uid, int status) override {
     if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
       throw std::runtime_error("VTKOutput object " + vtk_uid +
                                " is a manual observable");

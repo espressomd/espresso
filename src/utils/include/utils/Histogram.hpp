@@ -33,7 +33,7 @@ namespace Utils {
 
 inline size_t calculate_bin_index(double value, double bin_size,
                                   double offset) {
-  return std::floor((value - offset) / bin_size);
+  return static_cast<size_t>(std::floor((value - offset) / bin_size));
 }
 
 /**

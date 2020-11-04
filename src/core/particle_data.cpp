@@ -314,10 +314,7 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 };
 } // namespace
 
-/**
- * @brief Callback for \ref mpi_send_update_message.
- */
-void mpi_update_particle_slave(int node, int id) {
+void mpi_send_update_message_local(int node, int id) {
   if (node == comm_cart.rank()) {
     UpdateMessage msg{};
     comm_cart.recv(0, SOME_TAG, msg);
@@ -326,6 +323,8 @@ void mpi_update_particle_slave(int node, int id) {
 
   on_particle_change();
 }
+
+REGISTER_CALLBACK(mpi_send_update_message_local)
 
 /**
  * @brief Send a particle update message.
@@ -348,7 +347,7 @@ void mpi_update_particle_slave(int node, int id) {
 void mpi_send_update_message(int id, const UpdateMessage &msg) {
   auto const pnode = get_particle_node(id);
 
-  mpi_call(mpi_update_particle_slave, pnode, id);
+  mpi_call(mpi_send_update_message_local, pnode, id);
 
   /* If the particle is remote, send the
    * message to the target, otherwise we
@@ -393,7 +392,7 @@ void add_exclusion(Particle *part, int part2);
 
 void auto_exclusion(int distance);
 
-void mpi_who_has_slave(int, int) {
+void mpi_who_has_local(int, int) {
   static std::vector<int> sendbuf;
 
   auto local_particles = cell_structure.local_particles();
@@ -412,8 +411,10 @@ void mpi_who_has_slave(int, int) {
   MPI_Send(sendbuf.data(), n_part, MPI_INT, 0, SOME_TAG, comm_cart);
 }
 
+REGISTER_CALLBACK(mpi_who_has_local)
+
 void mpi_who_has() {
-  mpi_call(mpi_who_has_slave, -1, 0);
+  mpi_call(mpi_who_has_local, -1, 0);
 
   auto local_particles = cell_structure.local_particles();
 
@@ -509,7 +510,7 @@ const Particle &get_particle_data(int part) {
   return *cache_ptr;
 }
 
-void mpi_get_particles_slave(int, int) {
+void mpi_get_particles_local(int, int) {
   std::vector<int> ids;
   boost::mpi::scatter(comm_cart, ids, 0);
 
@@ -522,6 +523,8 @@ void mpi_get_particles_slave(int, int) {
   Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), 0);
 }
 
+REGISTER_CALLBACK(mpi_get_particles_local)
+
 /**
  * @brief Get multiple particles at once.
  *
@@ -529,10 +532,10 @@ void mpi_get_particles_slave(int, int) {
  *
  * @param ids The ids of the particles that should be returned.
  *
- * @returns The particle data.
+ * @returns The particle list.
  */
 std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
-  mpi_call(mpi_get_particles_slave, 0, 0);
+  mpi_call(mpi_get_particles_local, 0, 0);
   /* Return value */
   std::vector<Particle> parts(ids.size());
 
@@ -597,15 +600,99 @@ void prefetch_particle_data(Utils::Span<const int> in_ids) {
   }
 }
 
-int place_particle(int part, const double *pos) {
+/** Move a particle to a new position. If it does not exist, it is created.
+ *  The position must be on the local node!
+ *
+ *  @param id    the identity of the particle to move
+ *  @param pos   its new position
+ *  @param _new  if true, the particle is allocated, else has to exists already
+ *
+ *  @return Pointer to the particle.
+ */
+Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
+  auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
+  auto i = Utils::Vector3i{};
+  fold_position(pp, i, box_geo);
+
+  if (_new) {
+    Particle new_part;
+    new_part.p.identity = id;
+    new_part.r.p = pp;
+    new_part.l.i = i;
+
+    return cell_structure.add_local_particle(std::move(new_part));
+  }
+
+  auto pt = cell_structure.get_local_particle(id);
+  pt->r.p = pp;
+  pt->l.i = i;
+
+  return pt;
+}
+
+boost::optional<int> mpi_place_new_particle_local(int p_id,
+                                                  Utils::Vector3d const &pos) {
+  auto p = local_place_particle(p_id, pos, 1);
+  on_particle_change();
+  if (p) {
+    return comm_cart.rank();
+  }
+  return {};
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_place_new_particle_local)
+
+/** Create particle at a position on a node.
+ *  Also calls \ref on_particle_change.
+ *  \param p_id  the particle to create.
+ *  \param pos   the particles position.
+ */
+int mpi_place_new_particle(int p_id, const Utils::Vector3d &pos) {
+  return mpi_call(Communication::Result::one_rank, mpi_place_new_particle_local,
+                  p_id, pos);
+}
+
+void mpi_place_particle_local(int pnode, int p_id) {
+  if (pnode == this_node) {
+    Utils::Vector3d pos;
+    comm_cart.recv(0, SOME_TAG, pos);
+    local_place_particle(p_id, pos, 0);
+  }
+
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_place_particle_local)
+
+/** Move particle to a position on a node.
+ *  Also calls \ref on_particle_change.
+ *  \param node  the node to attach it to.
+ *  \param p_id  the particle to move.
+ *  \param pos   the particles position.
+ */
+void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
+  mpi_call(mpi_place_particle_local, node, p_id);
+
+  if (node == this_node)
+    local_place_particle(p_id, pos, 0);
+  else {
+    comm_cart.send(node, SOME_TAG, pos);
+  }
+
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  on_particle_change();
+}
+
+int place_particle(int p_id, const double *pos) {
   Utils::Vector3d p{pos[0], pos[1], pos[2]};
 
-  if (particle_exists(part)) {
-    mpi_place_particle(get_particle_node(part), part, p);
+  if (particle_exists(p_id)) {
+    mpi_place_particle(get_particle_node(p_id), p_id, p);
 
     return ES_PART_OK;
   }
-  particle_node[part] = mpi_place_new_particle(part, p);
+  particle_node[p_id] = mpi_place_new_particle(p_id, p);
 
   return ES_PART_CREATED;
 }
@@ -848,6 +935,25 @@ const std::vector<BondView> &get_particle_bonds(int part) {
   return ret;
 }
 
+void mpi_remove_particle_local(int, int part) {
+  if (part != -1) {
+    cell_structure.remove_particle(part);
+  } else {
+    cell_structure.remove_all_particles();
+  }
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_remove_particle_local)
+
+/** Remove a particle.
+ *  Also calls \ref on_particle_change.
+ *  \param p_id  the particle to remove, use -1 to remove all particles.
+ */
+void mpi_remove_particle(int, int p_id) {
+  mpi_call_all(mpi_remove_particle_local, -1, p_id);
+}
+
 void remove_all_particles() {
   mpi_remove_particle(-1, -1);
   clear_particle_node();
@@ -861,37 +967,18 @@ int remove_particle(int p_id) {
     remove_id_from_map(p_id, type);
   }
 
-  auto const pnode = get_particle_node(p_id);
-
   particle_node[p_id] = -1;
-  mpi_remove_particle(pnode, p_id);
+  mpi_remove_particle(-1, p_id);
 
   particle_node.erase(p_id);
 
   return ES_OK;
 }
 
-Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
-  auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
-  auto i = Utils::Vector3i{};
-  fold_position(pp, i, box_geo);
-
-  if (_new) {
-    Particle new_part;
-    new_part.p.identity = id;
-    new_part.r.p = pp;
-    new_part.l.i = i;
-
-    return cell_structure.add_local_particle(std::move(new_part));
-  }
-
-  auto pt = cell_structure.get_local_particle(id);
-  pt->r.p = pp;
-  pt->l.i = i;
-
-  return pt;
-}
-
+/** Locally rescale all particles on current node.
+ *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
+ *  @param scale factor by which to rescale (>1: stretch, <1: contract)
+ */
 void local_rescale_particles(int dir, double scale) {
   for (auto &p : cell_structure.local_particles()) {
     if (dir < 3)
@@ -902,7 +989,33 @@ void local_rescale_particles(int dir, double scale) {
   }
 }
 
+void mpi_rescale_particles_local(int, int dir) {
+  double scale = 0.0;
+  MPI_Recv(&scale, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+  local_rescale_particles(dir, scale);
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_rescale_particles_local)
+
+void mpi_rescale_particles(int dir, double scale) {
+  mpi_call(mpi_rescale_particles_local, -1, dir);
+  for (int pnode = 0; pnode < n_nodes; pnode++) {
+    if (pnode == this_node) {
+      local_rescale_particles(dir, scale);
+    } else {
+      MPI_Send(&scale, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    }
+  }
+  on_particle_change();
+}
+
 #ifdef EXCLUSIONS
+/** Locally add an exclusion to a particle.
+ *  @param part1 the identity of the first exclusion partner
+ *  @param part2 the identity of the second exclusion partner
+ *  @param _delete if true, delete the exclusion instead of add
+ */
 void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
     for (auto &p : cell_structure.local_particles()) {
@@ -946,6 +1059,23 @@ void add_partner(std::vector<int> &il, int i, int j, int distance) {
 }
 } // namespace
 
+void mpi_send_exclusion_local(int part1, int part2, int _delete) {
+  local_change_exclusion(part1, part2, _delete);
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_send_exclusion_local)
+
+/** Send exclusions.
+ *  Also calls \ref on_particle_change.
+ *  \param part1    identity of first particle of the exclusion.
+ *  \param part2    identity of second particle of the exclusion.
+ *  \param _delete  if true, do not add the exclusion, rather delete it if found
+ */
+void mpi_send_exclusion(int part1, int part2, int _delete) {
+  mpi_call_all(mpi_send_exclusion_local, part1, part2, _delete);
+}
+
 int change_exclusion(int part1, int part2, int _delete) {
   if (particle_exists(part1) && particle_exists(part2)) {
     mpi_send_exclusion(part1, part2, _delete);
@@ -964,7 +1094,7 @@ void auto_exclusions(int distance) {
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
     auto const p1 = part1.p.identity;
-    for (auto const &bond : part1.bonds()) {
+    for (auto const bond : part1.bonds()) {
       if ((bond.partner_ids().size() == 1) and (bond.partner_ids()[0] != p1)) {
         auto const p2 = bond.partner_ids()[0];
         add_partner(partners[p1], p1, p2, 1);

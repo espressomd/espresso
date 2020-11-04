@@ -23,7 +23,7 @@
  *  Implementation of \ref quartic.hpp
  */
 #include "quartic.hpp"
-#include "communication.hpp"
+#include "interactions.hpp"
 
 int quartic_set_params(int bond_type, double k0, double k1, double r,
                        double r_cut) {

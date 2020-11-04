@@ -25,7 +25,7 @@
 #include "ljcos2.hpp"
 
 #ifdef LJCOS2
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

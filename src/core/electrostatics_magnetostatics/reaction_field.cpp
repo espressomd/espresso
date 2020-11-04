@@ -25,7 +25,7 @@
 #include "reaction_field.hpp"
 
 #ifdef ELECTROSTATICS
-#include "communication.hpp"
+#include "common.hpp"
 
 Reaction_field_params rf_params{};
 

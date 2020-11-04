@@ -39,7 +39,7 @@ bool check_charge_neutrality(ParticleRange &prange,
   for (auto const &p : prange) {
     auto const &q = p.p.q;
 
-    if (q) {
+    if (q != 0.0) {
       q_sum(q);
       q_min = std::min(q_min, std::abs(q));
     }

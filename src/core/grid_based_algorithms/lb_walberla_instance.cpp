@@ -47,7 +47,7 @@ void init_lb_walberla(double viscosity, double density, double agrid,
       lb_walberla_instance =
           new walberla::LbWalberlaD3Q19MRT(walberla::LbWalberlaD3Q19MRT{
               viscosity, density, agrid, tau, box_dimensions, node_grid, 1});
-    } else { // thermarlized LB
+    } else { // thermalized LB
       lb_walberla_instance = new walberla::LbWalberlaD3Q19FluctuatingMRT(
           walberla::LbWalberlaD3Q19FluctuatingMRT{viscosity, density, agrid,
                                                   tau, box_dimensions,

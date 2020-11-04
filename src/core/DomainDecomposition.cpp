@@ -285,7 +285,8 @@ void DomainDecomposition::create_cell_grid(double range) {
 
   if (range <= 0.) {
     /* this is the non-interacting case */
-    const int cells_per_dir = std::ceil(std::pow(min_num_cells, 1. / 3.));
+    auto const cells_per_dir =
+        static_cast<int>(std::ceil(std::pow(min_num_cells, 1. / 3.)));
 
     cell_grid[0] = cells_per_dir;
     cell_grid[1] = cells_per_dir;

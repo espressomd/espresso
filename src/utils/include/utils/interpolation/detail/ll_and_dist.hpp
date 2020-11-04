@@ -50,7 +50,7 @@ struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 1>> {
       auto const fractional_index =
           (pos[dim] - offset[dim]) / grid_spacing[dim];
 
-      const int nmp = std::floor(fractional_index + 0.5);
+      auto const nmp = static_cast<int>(std::floor(fractional_index + 0.5));
       dist[dim] = fractional_index - nmp;
       ll[dim] = nmp - (order - 1) / 2;
     }
@@ -69,7 +69,7 @@ struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 0>> {
       auto const fractional_index =
           (pos[dim] - offset[dim]) / grid_spacing[dim];
 
-      const int nmp = std::floor(fractional_index);
+      auto const nmp = static_cast<int>(std::floor(fractional_index));
       dist[dim] = fractional_index - nmp - 0.5;
       ll[dim] = nmp - (order - 1) / 2;
     }

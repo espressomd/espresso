@@ -25,7 +25,7 @@
 #include "gaussian.hpp"
 
 #ifdef GAUSSIAN
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 

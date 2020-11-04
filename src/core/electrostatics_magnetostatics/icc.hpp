@@ -103,6 +103,11 @@ void iccp3m_alloc_lists();
  */
 int iccp3m_sanity_check();
 
+/** Perform iccp3m initialization.
+ *  @return non-zero value on error
+ */
+int mpi_iccp3m_init();
+
 #endif /* ELECTROSTATICS */
 
 #endif /* ICCP3M_H */

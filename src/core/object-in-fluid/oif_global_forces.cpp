@@ -21,9 +21,9 @@
 
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "communication.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "interactions.hpp"
 
 #include <utils/math/triangle_functions.hpp>
 using Utils::angle_btw_triangles;

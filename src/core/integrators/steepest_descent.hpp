@@ -56,7 +56,8 @@ private:
  */
 void steepest_descent_init(double f_max, double gamma, double max_displacement);
 
-void mpi_bcast_steepest_descent_worker(int, int);
+/** Broadcast steepest descent parameters */
+void mpi_bcast_steepest_descent();
 
 /** Steepest descent integrator
  *  @return whether the maximum force/torque encountered is below the user

@@ -23,7 +23,7 @@
  *  Implementation of \ref umbrella.hpp
  */
 #include "umbrella.hpp"
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #ifdef UMBRELLA
 

@@ -43,15 +43,13 @@ cdef extern from "global.hpp":
 
     void mpi_bcast_parameter(int p)
 
-cdef extern from "communication.hpp":
-    void mpi_set_time_step(double time_step) except +
-
 cdef extern from "integrate.hpp":
     double time_step
     extern int integ_switch
     extern double sim_time
     extern double verlet_reuse
     extern double skin
+    void mpi_set_time_step(double time_step) except +
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern int max_seen_particle_type

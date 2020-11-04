@@ -25,7 +25,7 @@
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 
 #ifdef TABULATED
-#include "communication.hpp"
+#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 
