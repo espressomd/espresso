@@ -14,7 +14,7 @@ public:
       : LbWalberla(viscosity, density, agrid, tau, box_dimensions, node_grid,
                    n_ghost_layers) {
     construct_lattice_model(viscosity);
-    setup_with_valid_lattice_model();
+    setup_with_valid_lattice_model(density);
   };
   void construct_lattice_model(double viscosity) {
     m_lattice_model =

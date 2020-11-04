@@ -177,7 +177,6 @@ protected:
   double m_tau;
 
   double m_kT;
-  double m_density;
 
   Utils::Vector3i m_grid_dimensions;
   int m_n_ghost_layers;
@@ -300,7 +299,6 @@ public:
              const Utils::Vector3i &node_grid, int n_ghost_layers) {
     m_agrid = agrid;
     m_tau = tau;
-    m_density = density;
     m_n_ghost_layers = n_ghost_layers;
     m_kT = 0;
 
@@ -345,10 +343,10 @@ public:
         m_blocks, "force field", real_t{0}, field::fzyx, m_n_ghost_layers);
   };
 
-  void setup_with_valid_lattice_model() {
+  void setup_with_valid_lattice_model(double density) {
     m_pdf_field_id = lbm::addPdfFieldToStorage(
         m_blocks, "pdf field", *(m_lattice_model.get()),
-        to_vector3(Utils::Vector3d{}), (real_t)1.0, m_n_ghost_layers);
+        to_vector3(Utils::Vector3d{}), real_t(density), m_n_ghost_layers);
 
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
         m_blocks, "flag field", m_n_ghost_layers);
@@ -483,8 +481,7 @@ public:
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
         for (int i : {0, 1, 2})
-          force_field->get((*bc).cell, i) +=
-              real_c(force[i] * weight / m_density);
+          force_field->get((*bc).cell, i) += real_c(force[i] * weight);
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
@@ -501,8 +498,7 @@ public:
         (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
     return Utils::Vector3d{double_c(force_field->get((*bc).cell, uint_t(0u))),
                            double_c(force_field->get((*bc).cell, uint_t(1u))),
-                           double_c(force_field->get((*bc).cell, uint_t(2u)))} *
-           m_density;
+                           double_c(force_field->get((*bc).cell, uint_t(2u)))};
   };
 
   bool set_node_last_applied_force(Utils::Vector3i const &node,
@@ -514,7 +510,7 @@ public:
     auto force_field = (*bc).block->template getData<VectorField>(
         m_last_applied_force_field_id);
     for (uint_t f = 0u; f < 3u; ++f) {
-      force_field->get((*bc).cell, f) = real_c(force[f] / m_density);
+      force_field->get((*bc).cell, f) = real_c(force[f]);
     }
 
     return true;
@@ -531,8 +527,7 @@ public:
         m_last_applied_force_field_id);
     return Utils::Vector3d{double_c(force_field->get((*bc).cell, uint_t(0u))),
                            double_c(force_field->get((*bc).cell, uint_t(1u))),
-                           double_c(force_field->get((*bc).cell, uint_t(2u)))} *
-           m_density;
+                           double_c(force_field->get((*bc).cell, uint_t(2u)))};
     ;
   };
 
@@ -580,8 +575,7 @@ public:
         (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
     Vector3<real_t> v = vel_adaptor->get((*bc).cell);
 
-    pdf_field->setDensityAndVelocity((*bc).cell, v,
-                                     real_c(density / m_density));
+    pdf_field->setDensityAndVelocity((*bc).cell, v, real_c(density));
 
     return true;
   };
@@ -594,7 +588,7 @@ public:
 
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
 
-    return {m_density * double_c(pdf_field->getDensity((*bc).cell))};
+    return {double_c(pdf_field->getDensity((*bc).cell))};
   };
 
   // Boundary related
@@ -647,8 +641,8 @@ public:
 
     auto const uid = bh->getBoundaryUID(UBB_flag);
     auto const &ubb = bh->template getBoundaryCondition<UBB>(uid);
-    return {m_density * to_vector3d(ubb.getForce((*bc).cell.x(), (*bc).cell.y(),
-                                                 (*bc).cell.z()))};
+    return {to_vector3d(
+        ubb.getForce((*bc).cell.x(), (*bc).cell.y(), (*bc).cell.z()))};
   };
   bool remove_node_from_boundary(const Utils::Vector3i &node) override {
     auto bc = get_block_and_cell(node, true);
@@ -709,14 +703,14 @@ public:
         mom += local_dens * local_v;
       });
     }
-    return m_density * to_vector3d(mom);
+    return to_vector3d(mom);
   };
   // Global external force
   void set_external_force(const Utils::Vector3d &ext_force) override {
-    m_reset_force->set_ext_force(ext_force / m_density);
+    m_reset_force->set_ext_force(ext_force);
   };
   Utils::Vector3d get_external_force() const override {
-    return m_reset_force->get_ext_force() * m_density;
+    return m_reset_force->get_ext_force();
   };
 
   // Global parameters

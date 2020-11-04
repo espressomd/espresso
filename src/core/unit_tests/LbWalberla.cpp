@@ -96,6 +96,10 @@ BOOST_DATA_TEST_CASE(basic_params, bdata::make(all_lbs()), lb_generator) {
   double new_viscosity = 2.0;
   lb->set_viscosity(new_viscosity);
   BOOST_CHECK_CLOSE(lb->get_viscosity(), new_viscosity, 1E-11);
+  auto my_left = lb->get_local_domain().first;
+  Vector3i n{static_cast<int>(my_left[0]), static_cast<int>(my_left[1]),
+             static_cast<int>(my_left[2])};
+  BOOST_CHECK_CLOSE(*(lb->get_node_density(n)), density, 1E-10);
 }
 
 BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
@@ -313,7 +317,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
   // auto f = Vector3d{0.15, 0.25, -0.22};
   // auto f = Vector3d{0.0006, -0.0013, 0.000528};
   auto f = Vector3d{-0., 0., 0.};
-  auto f2 = Vector3d{0.1, 0.23, -0.52};
+  auto f2 = Vector3d{0.1, 0.2, -0.3};
   lb->set_external_force(f);
   Vector3d force_location{1.5, 1.5, 1.5};
   Vector3i force_node{int(force_location[0]), int(force_location[1]),
@@ -343,10 +347,9 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
   MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                 MPI_COMM_WORLD);
   auto d = mom - mom_exp;
-  // WALBERLA TODO
-  // BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
-  printf("%g %g %g | %g %g %g | %g %g %g\n", mom[0], mom[1], mom[2], mom_exp[0],
-         mom_exp[1], mom_exp[2], d[0], d[1], d[2]);
+  BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
+  printf("thermalized: %g %g %g | %g %g %g | %g %g %g\n", mom[0], mom[1],
+         mom[2], mom_exp[0], mom_exp[1], mom_exp[2], d[0], d[1], d[2]);
 
   // check that momentum doesn't drift when no force is applied again
   lb->set_external_force(Vector3d{});
@@ -372,7 +375,8 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
   BOOST_CHECK_SMALL(lb->get_momentum().norm(), 1E-10);
 
   // Check that momentum changes as expected when applying forces
-  auto f = Vector3d{0.0006, -0.0013, 0.000528};
+  // auto f = Vector3d{0.0006, -0.0013, 0.000528};
+  Vector3d f{};
   auto f2 = Vector3d{0.095, 0.23, -0.52};
   lb->set_external_force(f);
   lb->add_force_at_pos(Utils::Vector3d{2, 2, 2}, f2);
@@ -386,6 +390,9 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
       1.5 * f2;
   MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                 MPI_COMM_WORLD);
+  auto d = mom - mom_exp;
+  printf("%g %g %g | %g %g %g | %g %g %g\n", mom[0], mom[1], mom[2], mom_exp[0],
+         mom_exp[1], mom_exp[2], d[0], d[1], d[2]);
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
 
   // check that momentum doesn't drift when no force is applied again
@@ -532,8 +539,9 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
           const Vector3i node{{x, y, z}};
           if (lb->node_in_local_domain(node)) {
             auto v = *(lb->get_node_velocity(node));
-            step_v += v;
-            step_v_square += hadamard_product(v, v);
+            auto rho = *(lb->get_node_density(node));
+            step_v += v * rho;
+            step_v_square += rho * hadamard_product(v, v);
           }
         }
       }

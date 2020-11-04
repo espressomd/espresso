@@ -46,7 +46,7 @@ public:
                    n_ghost_layers) {
     m_kT = kT;
     construct_lattice_model(viscosity, kT, seed);
-    setup_with_valid_lattice_model();
+    setup_with_valid_lattice_model(density);
   };
   void integrate() override {
     m_time_loop->singleStep();

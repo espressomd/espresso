@@ -9,9 +9,12 @@ public:
     const real_t magic_number = real_c(3.) / real_c(16.);
     const real_t omega_2 =
         (4 - 2 * omega) / (4 * magic_number * omega + 2 - omega);
-    m_lattice_model =
-        std::make_shared<lbm::MRT_LatticeModel>(lbm::MRT_LatticeModel(
-            m_last_applied_force_field_id, omega_2, omega_2, omega_2, omega));
+    m_lattice_model = std::make_shared<lbm::MRT_LatticeModel>(
+        lbm::MRT_LatticeModel(m_last_applied_force_field_id,
+                              omega,   // bulk
+                              omega,   // even
+                              omega_2, // odd
+                              omega)); // shear
   };
   void set_viscosity(double viscosity) override {
     lbm::MRT_LatticeModel *lm =
@@ -22,8 +25,9 @@ public:
         (4 - 2 * omega) / (4 * magic_number * omega + 2 - omega);
     lm->omega_shear_ = omega;
     lm->omega_odd_ = omega_2;
-    lm->omega_even_ = omega_2;
-    lm->omega_bulk_ = omega_2;
+    lm->omega_even_ = omega;
+    lm->omega_bulk_ = omega;
+    on_lattice_model_change();
   };
   double get_viscosity() const override {
     lbm::MRT_LatticeModel *lm =
@@ -36,7 +40,7 @@ public:
       : LbWalberla(viscosity, density, agrid, tau, box_dimensions, node_grid,
                    n_ghost_layers) {
     construct_lattice_model(viscosity);
-    setup_with_valid_lattice_model();
+    setup_with_valid_lattice_model(density);
   };
 };
 
