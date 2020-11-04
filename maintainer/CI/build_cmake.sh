@@ -226,6 +226,11 @@ fi
 if [ "${run_checks}" = true ]; then
     start "TEST"
 
+    # fail if built with CUDA but no compatible GPU was found
+    if [ "${with_cuda}" = true ] && [ "${hide_gpu}" != true ]; then
+        ./pypresso -c "import espressomd;assert espressomd.gpu_available(), 'No GPU available'" || exit 1
+    fi
+
     # unit tests
     if [ "${make_check_unit_tests}" = true ]; then
         make -j${build_procs} check_unit_tests ${make_params} || exit 1
