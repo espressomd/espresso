@@ -61,7 +61,7 @@ enum {
 #ifdef EXTERNAL_FORCES
 /**
  *  \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
- *  coord.
+ *  @c coord.
  */
 #define COORD_FIXED(coord) (2u << (coord))
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of

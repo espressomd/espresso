@@ -20,7 +20,6 @@
 // TODO: throw exceptions upon errors initialization
 
 #include "grid_based_algorithms/fd-electrostatics.cuh"
-//#include <cuda_interface.hpp>
 
 #include "cuda_utils.hpp"
 

@@ -25,7 +25,6 @@
 
 #include "utils/statistics/RunningAverage.hpp"
 
-/* random sequence */
 #include "random_sequence.hpp"
 
 #include <cmath>

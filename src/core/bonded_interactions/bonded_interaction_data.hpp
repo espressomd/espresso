@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef _BONDED_INTERACTION_DATA_HPP
+#define _BONDED_INTERACTION_DATA_HPP
 /** @file
  *  Data structures for bonded interactions.
  *  For more information on how to add new interactions, see @ref bondedIA_new.
  */
-#ifndef _BONDED_INTERACTION_DATA_HPP
-#define _BONDED_INTERACTION_DATA_HPP
 
 #include "BondList.hpp"
 #include "Particle.hpp"
@@ -407,8 +407,8 @@ void make_bond_type_exist(int type);
 
 /** @brief Checks both particles for a specific bond, even on ghost particles.
  *
- *  @param p Particle to check for the bond.
- *  @param p_partner   bond partner
+ *  @param p           particle to check for the bond
+ *  @param p_partner   possible bond partner
  *  @param bond_type   enum bond type
  */
 inline bool pair_bond_enum_exists_on(Particle const &p,
@@ -434,9 +434,9 @@ inline bool pair_bond_enum_exists_between(Particle const &p1,
   if (&p1 == &p2)
     return false;
 
-  // Check if particles have bonds and search for the bond of
-  // interest with are_bonded(). Could be saved on both sides (and both could
-  // have other bonds), so we need to check both.
+  // Check if particles have bonds and search for the bond of interest.
+  // Could be saved on both sides (and both could have other bonds), so
+  // we need to check both.
   return pair_bond_enum_exists_on(p1, p2, bond) or
          pair_bond_enum_exists_on(p2, p1, bond);
 }

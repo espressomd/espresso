@@ -122,14 +122,15 @@ void resize_buffers(size_t number_of_particles) {
 #endif
 }
 
-/** setup and call particle reallocation from the host
- *  Note that in addition to calling this function the parameters must be
+/**
+ * @brief Setup and call particle reallocation from the host.
+ * Note that in addition to calling this function the parameters must be
  * broadcast with either:
- * 1) cuda_bcast_global_part_params(); (when just being executed on the master
- * node) or
- * 2) MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
- * sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart); (when executed on all
- * nodes)
+ * 1. @ref cuda_bcast_global_part_params() (when just being executed on the
+ *    head node) or
+ * 2. `MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
+ *    sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart)` (when executed
+ *    on all nodes)
  */
 void gpu_init_particle_comm() {
   if (this_node == 0 && global_part_vars_host.communication_enabled == 0) {
