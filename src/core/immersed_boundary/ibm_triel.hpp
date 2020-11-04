@@ -20,8 +20,15 @@
 #ifndef IBM_TRIEL_H
 #define IBM_TRIEL_H
 
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "config.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+
+#include <tuple>
 
 /** Set the IBM Triel parameters.
  *  Also calculate and store the reference state.

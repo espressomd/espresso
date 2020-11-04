@@ -32,6 +32,7 @@
 #include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 
+#include <cstddef>
 #include <random>
 #include <vector>
 

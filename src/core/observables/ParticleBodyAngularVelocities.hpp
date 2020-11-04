@@ -22,6 +22,9 @@
 #include "PidObservable.hpp"
 #include "integrate.hpp"
 
+#include <utils/Span.hpp>
+
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

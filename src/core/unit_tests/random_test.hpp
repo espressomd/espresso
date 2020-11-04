@@ -26,7 +26,14 @@
 #include <boost/accumulators/statistics/variates/covariate.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/variant.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
 #include <functional>
+#include <numeric>
 #include <tuple>
 
 #include <utils/Vector.hpp>

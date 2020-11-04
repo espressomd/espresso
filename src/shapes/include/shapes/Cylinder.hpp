@@ -24,6 +24,7 @@
 
 #include "Shape.hpp"
 #include <utils/Vector.hpp>
+#include <utility>
 
 namespace Shapes {
 class Cylinder : public Shape {

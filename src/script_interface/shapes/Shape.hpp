@@ -25,6 +25,12 @@
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include <shapes/Shape.hpp>
 
+#include <utils/Vector.hpp>
+
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace ScriptInterface {
 namespace Shapes {
 

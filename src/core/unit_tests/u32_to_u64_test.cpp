@@ -21,6 +21,9 @@
 
 #include "utils/u32_to_u64.hpp"
 
+#include <cstdint>
+#include <utility>
+
 BOOST_AUTO_TEST_CASE(u32_to_u64) {
   constexpr const uint64_t expected = (4ul << 32) | (11ul);
   BOOST_CHECK(expected == Utils::u32_to_u64(4u, 11u));

@@ -34,6 +34,9 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include "halo.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <cstdlib>
 #include <cstring>
 
 /** Primitive fieldtypes and their initializers */

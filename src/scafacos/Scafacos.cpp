@@ -19,6 +19,10 @@
 
 #include "Scafacos.hpp"
 #include <cassert>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Scafacos {
 

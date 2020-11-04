@@ -22,6 +22,8 @@
 #include "LBProfileObservable.hpp"
 #include "Particle.hpp"
 
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

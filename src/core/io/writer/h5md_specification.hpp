@@ -5,6 +5,9 @@
 
 #include <h5xx/h5xx.hpp>
 
+#include <algorithm>
+#include <string>
+
 namespace Writer {
 namespace H5md {
 

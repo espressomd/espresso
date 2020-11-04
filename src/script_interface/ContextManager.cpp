@@ -23,6 +23,11 @@
 
 #include <utils/serialization/pack.hpp>
 
+#include <cassert>
+#include <memory>
+#include <string>
+#include <utility>
+
 namespace ScriptInterface {
 std::shared_ptr<ObjectHandle>
 ContextManager::make_shared(CreationPolicy policy, std::string const &name,

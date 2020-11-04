@@ -20,9 +20,17 @@
 
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
+#include "config.hpp"
 #include "grid.hpp"
 #include "lb.hpp"
+#include "lb_constants.hpp"
 #include "lb_interpolation.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+
+#include <algorithm>
 
 using Utils::get_linear_index;
 

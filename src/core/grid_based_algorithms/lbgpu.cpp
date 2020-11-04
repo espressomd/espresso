@@ -22,6 +22,8 @@
  *  The corresponding header file is lbgpu.hpp.
  */
 
+#include "config.hpp"
+
 #include "lbgpu.hpp"
 #ifdef CUDA
 #include "errorhandling.hpp"
@@ -41,6 +43,7 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <vector>
 
 LB_parameters_gpu lbpar_gpu = {
     // rho

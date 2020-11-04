@@ -23,7 +23,11 @@
  *  Implementation of \ref dihedral.hpp
  */
 #include "dihedral.hpp"
+
+#include "bonded_interaction_data.hpp"
 #include "interactions.hpp"
+
+#include <utils/constants.hpp>
 
 int dihedral_set_params(int bond_type, int mult, double bend, double phase) {
   if (bond_type < 0)

@@ -26,6 +26,9 @@
 #include <utils/index.hpp>
 
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <functional>
 #include <utility>
 #include <vector>
 

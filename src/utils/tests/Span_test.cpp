@@ -24,7 +24,10 @@
 #include "utils/Span.hpp"
 using Utils::Span;
 
+#include <cstddef>
 #include <numeric>
+#include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {

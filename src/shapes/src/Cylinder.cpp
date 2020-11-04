@@ -22,6 +22,12 @@
 #include <cmath>
 #include <shapes/Cylinder.hpp>
 
+#include <utils/Vector.hpp>
+
+#include <cassert>
+#include <tuple>
+#include <utility>
+
 namespace Shapes {
 
 std::pair<double, double> Cylinder::dist_half_pore(double r, double z) const {

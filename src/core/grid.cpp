@@ -30,9 +30,13 @@
 #include "global.hpp"
 #include "particle_data.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <boost/algorithm/clamp.hpp>
 #include <mpi.h>
 #include <utils/mpi/cart_comm.hpp>
+
+#include <cmath>
 
 /**********************************************
  * variables

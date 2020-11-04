@@ -35,11 +35,17 @@
 #include "DomainDecomposition.hpp"
 #include "ParticleDecomposition.hpp"
 
+#include <utils/as_const.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/range/adaptor/uniqued.hpp>
 #include <boost/range/algorithm/sort.hpp>
+
+#include <algorithm>
+#include <functional>
+#include <stdexcept>
+#include <vector>
 
 /** Type of cell structure in use */
 CellStructure cell_structure;

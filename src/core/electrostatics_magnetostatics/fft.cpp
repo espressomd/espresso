@@ -25,6 +25,8 @@
  *
  */
 
+#include "config.hpp"
+
 #include "fft.hpp"
 
 #if defined(P3M) || defined(DP3M)
@@ -34,13 +36,20 @@ using Utils::permute_ifield;
 #include <utils/index.hpp>
 using Utils::get_linear_index;
 
+#include <boost/none.hpp>
+#include <boost/optional.hpp>
+
 #include <fftw3.h>
 #include <mpi.h>
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <stdexcept>
+#include <utility>
 
 #include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 
 /** @name MPI tags for FFT communication */
 /*@{*/

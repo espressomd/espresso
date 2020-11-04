@@ -27,7 +27,13 @@
  *  Implementation in \ref hertzian.cpp.
  */
 
+#include "config.hpp"
+
 #include "nonbonded_interaction_data.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <cmath>
 
 #ifdef HERTZIAN
 

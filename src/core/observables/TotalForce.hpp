@@ -21,6 +21,7 @@
 
 #include "PidObservable.hpp"
 
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

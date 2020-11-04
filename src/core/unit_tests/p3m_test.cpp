@@ -23,6 +23,10 @@
 
 #include "electrostatics_magnetostatics/p3m-common.hpp"
 
+#include <array>
+#include <cstddef>
+#include <vector>
+
 BOOST_AUTO_TEST_CASE(calc_meshift_false) {
   std::array<std::vector<int>, 3> const ref = {
       std::vector<int>{0}, std::vector<int>{0, 1, -2, -1},

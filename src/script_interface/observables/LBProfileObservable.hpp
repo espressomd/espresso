@@ -25,8 +25,12 @@
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include <boost/range/algorithm.hpp>
+
+#include <cstddef>
 #include <iterator>
+#include <type_traits>
 #include <memory>
+#include <vector>
 
 #include "Observable.hpp"
 #include "core/observables/LBProfileObservable.hpp"

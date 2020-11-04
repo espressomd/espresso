@@ -31,6 +31,11 @@
 #include <boost/test/unit_test.hpp>
 
 #include "utils/mpi/gather_buffer.hpp"
+
+#include <algorithm>
+#include <iterator>
+#include <tuple>
+
 using Utils::Mpi::gather_buffer;
 namespace mpi = boost::mpi;
 

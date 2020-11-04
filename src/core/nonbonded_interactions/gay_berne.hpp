@@ -31,11 +31,16 @@
  *  Implementation in \ref gay_berne.cpp.
  */
 
+#include "config.hpp"
+
 #include "Particle.hpp"
 #include "nonbonded_interaction_data.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
+
+#include <cmath>
 
 #ifdef GAY_BERNE
 

@@ -27,6 +27,11 @@
  * Algorithms for tuple-like inhomogeneous containers.
  */
 
+#include <cstddef>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
 namespace Utils {
 namespace detail {
 template <class F, class Tuple, std::size_t... I>

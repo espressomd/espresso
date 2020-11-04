@@ -12,6 +12,8 @@
 #include <thrust/device_ptr.h>
 #include <thrust/device_reference.h>
 
+#include <cstddef>
+
 /**
  * @brief Allocator that uses CUDA to allocate GPU memory.
  *

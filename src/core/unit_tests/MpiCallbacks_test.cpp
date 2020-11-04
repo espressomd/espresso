@@ -31,6 +31,8 @@
 #include <boost/mpi.hpp>
 #include <boost/optional.hpp>
 
+#include <algorithm>
+#include <functional>
 #include <string>
 
 static bool called = false;

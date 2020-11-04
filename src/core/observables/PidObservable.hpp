@@ -27,8 +27,16 @@
 #include "ParticleTraits.hpp"
 
 #include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 #include <utils/flatten.hpp>
 
+#include <boost/range/algorithm/copy.hpp>
+
+#include <cstddef>
+#include <functional>
+#include <iterator>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace Observables {

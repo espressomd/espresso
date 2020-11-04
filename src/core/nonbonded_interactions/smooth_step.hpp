@@ -27,9 +27,16 @@
  *  Implementation in \ref smooth_step.cpp.
  */
 
+#include "config.hpp"
+
 #include "nonbonded_interaction_data.hpp"
 
 #ifdef SMOOTH_STEP
+
+#include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
+
+#include <cmath>
 
 int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
                            double eps, double k0, double sig, double cut);

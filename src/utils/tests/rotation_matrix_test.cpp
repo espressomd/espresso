@@ -24,6 +24,11 @@
 #include <utils/math/rotation_matrix.hpp>
 #include <utils/math/vec_rotate.hpp>
 
+#include <utils/Vector.hpp>
+
+#include <cmath>
+#include <limits>
+
 using namespace Utils;
 
 BOOST_AUTO_TEST_CASE(rotation_matrix_test) {

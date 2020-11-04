@@ -28,7 +28,12 @@
 #include <boost/range/numeric.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <complex>
+#include <iterator>
+#include <limits>
+#include <stdexcept>
+#include <type_traits>
 #include <numeric>
 #include <vector>
 

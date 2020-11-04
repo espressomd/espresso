@@ -21,6 +21,8 @@
 
 #include <utils/Vector.hpp>
 
+#include <cstddef>
+
 namespace FieldCoupling {
 namespace Fields {
 namespace detail {

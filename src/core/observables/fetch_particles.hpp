@@ -23,8 +23,11 @@
 #include "grid.hpp"
 #include "particle_data.hpp"
 
+#include <utils/Span.hpp>
+
 #include <boost/algorithm/clamp.hpp>
 
+#include <cstddef>
 #include <vector>
 
 /** Fetch a group of particles.

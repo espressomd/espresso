@@ -27,6 +27,9 @@
 #include <utils/Vector.hpp>
 #include <utils/math/make_lin_space.hpp>
 
+#include <array>
+#include <cstddef>
+
 namespace Observables {
 
 /** Cylindrical profile observable */

@@ -20,6 +20,7 @@
 #define UTILS_MATRIX_VECTOR_PRODUCT_HPP
 
 #include <array>
+#include <cstddef>
 #include <utility>
 
 #include "utils/get.hpp"

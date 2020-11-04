@@ -23,9 +23,11 @@
 
 #include "config.hpp"
 
+#include "Particle.hpp"
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
 #include "bonded_interactions/dihedral.hpp"
 #include "bonded_interactions/fene.hpp"
@@ -49,6 +51,7 @@
 #include "nonbonded_interactions/ljcos2.hpp"
 #include "nonbonded_interactions/ljgen.hpp"
 #include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "nonbonded_interactions/smooth_step.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
@@ -73,6 +76,13 @@
 #ifdef DPD
 #include "dpd.hpp"
 #endif
+
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+
+#include <tuple>
 
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(Particle const &) { return {}; }

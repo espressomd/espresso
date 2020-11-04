@@ -29,6 +29,12 @@
 
 #include "utils/Array.hpp"
 using Utils::Array;
+#include <utils/get.hpp>
+
+#include <algorithm>
+#include <iterator>
+#include <stdexcept>
+#include <type_traits>
 
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {
   static_assert(4 == Array<int, 4>().size(), "");

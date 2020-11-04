@@ -53,7 +53,12 @@
 
 #include <utils/Counter.hpp>
 #include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 #include <utils/serialization/multi_array.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 
 /** Counter for the RNG */
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;

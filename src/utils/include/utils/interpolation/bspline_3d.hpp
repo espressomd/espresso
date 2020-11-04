@@ -24,6 +24,9 @@
 #include "detail/ll_and_dist.hpp"
 #include "utils/math/bspline.hpp"
 
+#include <array>
+#include <cstddef>
+
 namespace Utils {
 namespace Interpolation {
 /**

@@ -25,6 +25,7 @@
 #include <boost/serialization/vector.hpp>
 
 #include <sstream>
+#include <string>
 
 namespace Accumulators {
 void TimeSeries::update() { m_data.emplace_back(m_obs->operator()()); }

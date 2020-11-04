@@ -19,6 +19,8 @@
 /// \file
 /// \brief Main of the Bayreuth Immersed-Boundary implementation
 
+#include "config.hpp"
+
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
@@ -32,6 +34,8 @@
 #include "lb_inertialess_tracers_cuda_interface.hpp"
 
 #include <utils/math/sqr.hpp>
+
+#include <cstddef>
 
 // ****** Functions for internal use ********
 

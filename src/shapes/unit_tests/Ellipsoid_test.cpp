@@ -27,7 +27,11 @@
 
 #include <shapes/Ellipsoid.hpp>
 
+#include <shapes/Shape.hpp>
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+
+#include <cstdlib>
 
 bool check_distance_function(const Shapes::Shape &s) {
   double semiaxes[3] = {3.1, 2.2, 1.3};

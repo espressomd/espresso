@@ -23,8 +23,11 @@
 #define SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
 
 #include <boost/range/algorithm.hpp>
+#include <cstddef>
 #include <iterator>
+#include <type_traits>
 #include <memory>
+#include <vector>
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"

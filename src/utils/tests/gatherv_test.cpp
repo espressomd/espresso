@@ -26,7 +26,9 @@
 #include "utils/mpi/gatherv.hpp"
 using Utils::Mpi::gatherv;
 
+#include <algorithm>
 #include <string>
+#include <vector>
 
 namespace mpi = boost::mpi;
 

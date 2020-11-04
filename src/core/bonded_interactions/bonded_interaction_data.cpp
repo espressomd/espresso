@@ -28,6 +28,9 @@
 
 #include <utils/constants.hpp>
 
+#include <algorithm>
+#include <stdexcept>
+
 std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 auto cutoff(int type, Bond_parameters const &bp) {

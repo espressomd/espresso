@@ -24,6 +24,8 @@
 #include <utils/math/coordinate_transformation.hpp>
 #include <utils/math/vec_rotate.hpp>
 
+#include <cmath>
+
 using Utils::Vector3d;
 
 BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_test) {

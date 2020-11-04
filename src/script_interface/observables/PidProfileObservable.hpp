@@ -23,10 +23,14 @@
 #define SCRIPT_INTERFACE_OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/observables/Observable.hpp"
 
 #include <boost/range/algorithm.hpp>
+#include <cstddef>
 #include <iterator>
+#include <type_traits>
 #include <memory>
+#include <vector>
 
 #include "core/observables/DensityProfile.hpp"
 #include "core/observables/FluxDensityProfile.hpp"

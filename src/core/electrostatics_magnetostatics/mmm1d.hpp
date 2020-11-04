@@ -30,7 +30,11 @@
 #ifndef MMM1D_H
 #define MMM1D_H
 
+#include "config.hpp"
+
 #include "Particle.hpp"
+
+#include <utils/Vector.hpp>
 
 #ifdef ELECTROSTATICS
 

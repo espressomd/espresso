@@ -38,8 +38,10 @@
 
 #include <cmath>
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/int_pow.hpp>
+#include <utils/math/sqr.hpp>
 
 int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
                       double offset, double w);

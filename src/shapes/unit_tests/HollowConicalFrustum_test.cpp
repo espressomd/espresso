@@ -26,6 +26,8 @@
 #include <shapes/HollowConicalFrustum.hpp>
 #include <utils/Vector.hpp>
 
+#include <limits>
+
 BOOST_AUTO_TEST_CASE(dist_function) {
   constexpr double L = 8.0;
   constexpr double R1 = 2.0;

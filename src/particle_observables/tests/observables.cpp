@@ -25,6 +25,9 @@
 
 #include "mock.hpp"
 
+#include <memory>
+#include <type_traits>
+
 namespace Testing {
 template <class T> struct strip_args {
   template <class... Args> decltype(auto) operator()(Args...) const {

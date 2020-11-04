@@ -19,11 +19,16 @@
 #ifndef SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARIES_HPP
 #define SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARIES_HPP
 
+#include "config.hpp"
+
 #include "LBBoundary.hpp"
 
 #include "core/grid_based_algorithms/lb_boundaries.hpp"
 #include "script_interface/ObjectList.hpp"
 #include "script_interface/ScriptInterface.hpp"
+
+#include <memory>
+
 namespace ScriptInterface {
 namespace LBBoundaries {
 class LBBoundaries : public ObjectList<LBBoundary> {

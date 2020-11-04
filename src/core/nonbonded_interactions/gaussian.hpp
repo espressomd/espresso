@@ -27,7 +27,14 @@
  *  Implementation in \ref gaussian.cpp.
  */
 
+#include "config.hpp"
+
 #include "nonbonded_interaction_data.hpp"
+
+#include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
+
+#include <cmath>
 
 #ifdef GAUSSIAN
 

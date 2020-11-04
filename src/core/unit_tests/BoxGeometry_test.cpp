@@ -23,6 +23,10 @@
 
 #include <BoxGeometry.hpp>
 
+#include <utils/Vector.hpp>
+
+#include <stdexcept>
+
 BOOST_AUTO_TEST_CASE(periodicity_test) {
   /* getter/default */
   {

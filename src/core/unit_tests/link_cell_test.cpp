@@ -25,7 +25,10 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Cell.hpp"
+#include "Particle.hpp"
 #include "algorithm/link_cell.hpp"
+
+#include <utility>
 
 BOOST_AUTO_TEST_CASE(link_cell) {
   const unsigned n_cells = 10;

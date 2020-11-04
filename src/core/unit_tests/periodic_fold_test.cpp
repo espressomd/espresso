@@ -23,6 +23,10 @@
 
 #include "algorithm/periodic_fold.hpp"
 
+#include <cmath>
+#include <limits>
+#include <utility>
+
 BOOST_AUTO_TEST_CASE(with_image_count) {
   using Algorithm::periodic_fold;
 

@@ -22,7 +22,14 @@
 #include "CylindricalLBVelocityProfile.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include <utils/Histogram.hpp>
+#include <utils/Vector.hpp>
 #include <utils/math/coordinate_transformation.hpp>
+
+#include <array>
+#include <cstddef>
+#include <functional>
+#include <utility>
+#include <vector>
 
 namespace Observables {
 

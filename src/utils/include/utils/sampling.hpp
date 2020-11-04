@@ -19,6 +19,10 @@
 #ifndef UTILS_SAMPLING_HPP
 #define UTILS_SAMPLING_HPP
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <iterator>
 #include <limits>
 #include <utility>
 #include <vector>

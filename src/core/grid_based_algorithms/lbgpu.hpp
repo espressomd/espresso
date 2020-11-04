@@ -33,6 +33,10 @@
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
  * explicitly. This saves a lot of multiplications with 1's and 0's

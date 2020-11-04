@@ -32,6 +32,10 @@
 /* random sequence */
 #include "random_sequence.hpp"
 
+#include <cmath>
+#include <cstddef>
+#include <iterator>
+
 using namespace Testing;
 
 BOOST_AUTO_TEST_CASE(simple_tests) {

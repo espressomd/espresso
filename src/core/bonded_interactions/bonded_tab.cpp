@@ -23,6 +23,12 @@
 #include "errorhandling.hpp"
 #include "interactions.hpp"
 
+#include <utils/constants.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <vector>
+
 int tabulated_bonded_set_params(int bond_type,
                                 TabulatedBondedInteraction tab_type, double min,
                                 double max, std::vector<double> const &energy,

@@ -22,6 +22,8 @@
 #include <cmath>
 #include <shapes/SpheroCylinder.hpp>
 
+#include <utils/Vector.hpp>
+
 namespace Shapes {
 
 void SpheroCylinder::calculate_dist(const Utils::Vector3d &pos, double &dist,

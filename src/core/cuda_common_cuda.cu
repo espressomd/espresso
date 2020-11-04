@@ -32,6 +32,8 @@
 #include <thrust/device_vector.h>
 #include <utils/constants.hpp>
 
+#include <cstddef>
+
 extern int this_node;
 
 template <class T>

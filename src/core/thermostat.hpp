@@ -32,6 +32,8 @@
 #include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
+
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 

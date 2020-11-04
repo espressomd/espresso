@@ -26,6 +26,7 @@
 
 #ifdef GAY_BERNE
 #include "interactions.hpp"
+#include "nonbonded_interaction_data.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>

@@ -27,7 +27,10 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <boost/optional.hpp>
 #include <boost/variant.hpp>
+
+#include <vector>
 
 struct RemovedParticle {
   int id;

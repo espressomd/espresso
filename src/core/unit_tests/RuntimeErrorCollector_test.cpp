@@ -22,6 +22,8 @@
 /* Unit tests for the ErrorHandling::RuntimeErrorCollector class. */
 
 #include <algorithm>
+#include <functional>
+#include <vector>
 #include <memory>
 
 #include <boost/mpi.hpp>

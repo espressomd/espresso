@@ -25,6 +25,7 @@
 
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
+#include "config.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
@@ -42,8 +43,13 @@
 #include <boost/functional/hash.hpp>
 #include <boost/mpi/collectives.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <functional>
+#include <stdexcept>
+#include <type_traits>
 #include <unordered_map>
+#include <utility>
 
 extern double force_cap;
 

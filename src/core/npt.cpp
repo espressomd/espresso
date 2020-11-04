@@ -22,8 +22,14 @@
 #include "errorhandling.hpp"
 #include "integrate.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/operations.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
 
 #ifdef NPT
 void synchronize_npt_state() {

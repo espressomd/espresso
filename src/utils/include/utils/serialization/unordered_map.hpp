@@ -22,6 +22,7 @@
 #include <boost/serialization/split_free.hpp>
 #include <boost/serialization/utility.hpp>
 
+#include <cstddef>
 #include <unordered_map>
 
 namespace boost {

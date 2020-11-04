@@ -21,6 +21,15 @@
 
 #include "CylindricalPidProfileObservable.hpp"
 
+#include "Particle.hpp"
+#include "observables/ParticleTraits.hpp"
+
+#include <utils/Span.hpp>
+
+#include <cstddef>
+#include <functional>
+#include <vector>
+
 namespace Observables {
 class CylindricalLBFluxDensityProfileAtParticlePositions
     : public CylindricalPidProfileObservable {

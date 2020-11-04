@@ -17,9 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.hpp"
+
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
 #ifdef ELECTROSTATICS
+#include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
@@ -28,6 +31,7 @@
 #include "electrostatics_magnetostatics/icc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/p3m-common.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "electrostatics_magnetostatics/reaction_field.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
@@ -36,9 +40,15 @@
 #include "integrate.hpp"
 #include "npt.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
+#include <mpi.h>
+
+#include <algorithm>
+#include <cassert>
 #include <cstdio>
+#include <limits>
 
 Coulomb_parameters coulomb;
 

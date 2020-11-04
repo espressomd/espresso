@@ -20,9 +20,12 @@
 #define UTILS_HISTOGRAM_HPP
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <numeric>
+#include <stdexcept>
 #include <vector>
 
 #include "Span.hpp"

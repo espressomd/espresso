@@ -26,11 +26,23 @@
 #define CORE_PRESSURE_INLINE_HPP
 
 #include "Observable_stat.hpp"
+#include "Particle.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "config.hpp"
+#include "errorhandling.hpp"
 #include "exclusions.hpp"
 #include "forces_inline.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure.hpp"
 
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 #include <utils/math/tensor_product.hpp>
+
+#include <boost/optional.hpp>
+
+#include <string>
+#include <tuple>
 
 /** Calculate non-bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.

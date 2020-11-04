@@ -32,13 +32,21 @@
  *  The corresponding header file is p3m-dipolar.hpp.
  */
 
+#include "config.hpp"
+
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/dp3m_influence_function.hpp"
 
 #ifdef DP3M
 
+#include "electrostatics_magnetostatics/fft.hpp"
+#include "electrostatics_magnetostatics/p3m-common.hpp"
+#include "electrostatics_magnetostatics/p3m_interpolation.hpp"
+#include "electrostatics_magnetostatics/p3m_send_mesh.hpp"
+
 #include "Particle.hpp"
+#include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -46,6 +54,7 @@
 #include "integrate.hpp"
 #include "tuning.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
 #include <utils/constants.hpp>
@@ -55,6 +64,7 @@ using Utils::strcat_alloc;
 #include <utils/math/sqr.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
+#include <algorithm>
 #include <cstdio>
 #include <mpi.h>
 

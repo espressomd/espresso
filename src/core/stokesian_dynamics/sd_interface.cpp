@@ -24,6 +24,9 @@
 
 #include "thermostat.hpp"
 
+#include "Particle.hpp"
+#include "ParticleRange.hpp"
+
 #include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
@@ -31,7 +34,13 @@
 #include <boost/range/algorithm.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>
 
+#include <cmath>
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+#include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {

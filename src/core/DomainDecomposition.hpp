@@ -27,6 +27,18 @@
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 
+#include "Cell.hpp"
+#include "Particle.hpp"
+#include "ParticleList.hpp"
+#include "ghosts.hpp"
+
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+
+#include <vector>
+
 /** @brief Structure containing the information about the cell grid used for
  * domain decomposition.
  *

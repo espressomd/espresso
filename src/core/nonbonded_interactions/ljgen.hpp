@@ -25,6 +25,11 @@
 
 #ifdef LENNARD_JONES_GENERIC
 
+#include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
+
+#include <cmath>
+
 /** \file
  *  Routines to calculate the generalized Lennard-Jones potential between
  *  particle pairs. "Generalized" here means that the LJ energy is of the form

@@ -20,6 +20,7 @@
 #include "config.hpp"
 
 #ifdef NPT
+#include "velocity_verlet_npt.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -28,13 +29,18 @@
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "particle_data.hpp"
+#include "rotation.hpp"
 #include "thermostat.hpp"
 #include "thermostats/npt_inline.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives.hpp>
 
+#include <mpi.h>
+
+#include <cmath>
 #include <functional>
 
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {

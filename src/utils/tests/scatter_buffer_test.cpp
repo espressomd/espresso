@@ -33,6 +33,8 @@
 using Utils::Mpi::scatter_buffer;
 namespace mpi = boost::mpi;
 
+#include <algorithm>
+
 void check_pointer(mpi::communicator comm, int root) {
   std::vector<int> buf;
 

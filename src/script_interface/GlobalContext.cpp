@@ -37,6 +37,11 @@
 
 #include <utils/serialization/pack.hpp>
 
+#include <cassert>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
 namespace ScriptInterface {
 void GlobalContext::make_handle(ObjectId id, const std::string &name,
                                 const PackedMap &parameters) {

@@ -27,6 +27,8 @@
 #include "Particle.hpp"
 #include "pair_criteria/pair_criteria.hpp"
 
+#include <memory>
+
 namespace ClusterAnalysis {
 
 /** @brief Holds the result and parameters of a cluster analysis */

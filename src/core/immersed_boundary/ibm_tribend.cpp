@@ -19,12 +19,17 @@
 
 #include "immersed_boundary/ibm_tribend.hpp"
 
+#include "BoxGeometry.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 #include "interactions.hpp"
 #include "particle_data.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+
+#include <cmath>
+#include <tuple>
 
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,

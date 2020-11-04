@@ -24,6 +24,7 @@
 #ifdef ELECTROKINETICS /* Terminates at end of file */
 
 #include <cufft.h>
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <sstream>

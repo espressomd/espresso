@@ -19,6 +19,7 @@
 #include "reaction_ensemble.hpp"
 
 #include <limits>
+#include <stdexcept>
 #include <vector>
 
 #define BOOST_TEST_MODULE ReactionEnsemble test

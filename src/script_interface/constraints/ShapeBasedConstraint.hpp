@@ -26,7 +26,10 @@
 #include "core/cells.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ShapeBasedConstraint.hpp"
+
 #include "script_interface/shapes/Shape.hpp"
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace Constraints {

@@ -17,11 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.hpp"
+
 #include <cuda.h>
 
 #include "actor/Mmm1dgpuForce.hpp"
 #include "cuda_utils.hpp"
 
+#include <cstddef>
 #include <iostream>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)

@@ -22,6 +22,7 @@
 #include <shapes/Sphere.hpp>
 
 #include <utils/math/sqr.hpp>
+#include <utils/Vector.hpp>
 
 #include <cmath>
 

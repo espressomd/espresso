@@ -22,6 +22,7 @@
 #include "virtual_sites.hpp"
 
 #ifdef VIRTUAL_SITES
+#include "Particle.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
@@ -31,9 +32,12 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/quaternion.hpp>
 
+#include <cmath>
+#include <cstdio>
 #include <tuple>
 
 namespace {

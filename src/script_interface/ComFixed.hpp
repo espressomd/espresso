@@ -26,6 +26,8 @@
 
 #include "core/comfixed_global.hpp"
 
+#include <vector>
+
 namespace ScriptInterface {
 
 class ComFixed : public AutoParameters<ComFixed> {

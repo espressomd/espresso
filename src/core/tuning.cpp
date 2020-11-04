@@ -32,6 +32,11 @@
 #include <boost/range/algorithm/min_element.hpp>
 #include <nonbonded_interactions/nonbonded_interaction_data.hpp>
 
+#include <mpi.h>
+
+#include <algorithm>
+#include <cmath>
+
 int timing_samples = 10;
 
 double time_force_calc(int default_samples) {

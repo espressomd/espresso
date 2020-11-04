@@ -23,7 +23,11 @@
 #define SCRIPT_INTERFACE_OBSERVABLES_PROFILEOBSERVABLE_HPP
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/observables/Observable.hpp"
+#include <cstddef>
+#include <iterator>
 #include <memory>
+#include <vector>
 
 #include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/ProfileObservable.hpp"

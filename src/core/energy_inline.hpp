@@ -28,6 +28,7 @@
 #include <boost/range/algorithm/find_if.hpp>
 
 #include "Observable_stat.hpp"
+#include "Particle.hpp"
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
@@ -69,6 +70,11 @@
 #ifdef DIPOLES
 #include "electrostatics_magnetostatics/dipole_inline.hpp"
 #endif
+
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
 
 /** Calculate non-bonded energies between a pair of particles.
  *  @param p1         particle 1.

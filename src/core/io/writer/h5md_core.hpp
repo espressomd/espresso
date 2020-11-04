@@ -33,6 +33,13 @@
 
 #include "ParticleRange.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <cstddef>
+#include <exception>
+#include <type_traits>
+#include <utility>
+
 namespace h5xx {
 template <typename T, size_t size>
 struct is_array<Utils::Vector<T, size>> : std::true_type {};

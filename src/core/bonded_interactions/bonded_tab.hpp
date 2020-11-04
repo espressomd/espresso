@@ -30,13 +30,20 @@
 
 #include "config.hpp"
 
+#include "TabulatedPotential.hpp"
 #include "angle_common.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/dihedral.hpp"
 #include <tuple>
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
+
+#include <boost/optional.hpp>
+
+#include <cmath>
+#include <vector>
 
 /** Set the parameters of a bonded tabulated potential.
  *  ia_params and force/energy tables are communicated to each node.

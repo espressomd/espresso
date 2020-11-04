@@ -2,6 +2,7 @@
 
 #include <cuda.h>
 
+#include <cstddef>
 #include <stdexcept>
 
 void cuda_malloc_host(void **p, std::size_t n) {

@@ -24,6 +24,8 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
+#include <array>
+#include <iterator>
 #include <sstream>
 
 #include "BondList.hpp"

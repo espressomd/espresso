@@ -24,6 +24,9 @@
 
 #include "Particle.hpp"
 
+#include <algorithm>
+#include <utility>
+
 namespace ClusterAnalysis {
 
 /** @brief Represents a single cluster of particles */

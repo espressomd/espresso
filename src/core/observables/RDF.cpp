@@ -18,9 +18,14 @@
  */
 #include "RDF.hpp"
 
+#include "BoxGeometry.hpp"
 #include "fetch_particles.hpp"
 #include "particle_data.hpp"
+#include "grid.hpp"
 
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
+#include <utils/constants.hpp>
 #include <utils/for_each_pair.hpp>
 #include <utils/math/int_pow.hpp>
 

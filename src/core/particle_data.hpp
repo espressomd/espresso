@@ -42,6 +42,7 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <cstddef>
 #include <memory>
 
 /************************************************

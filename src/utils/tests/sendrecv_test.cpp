@@ -24,6 +24,7 @@
 #include <boost/mpi.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include <array>
 #include <string>
 
 #include "utils/mpi/sendrecv.hpp"

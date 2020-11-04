@@ -32,6 +32,7 @@
 
 #include "communication.hpp"
 #include "event.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lattice.hpp"
@@ -44,11 +45,15 @@
 
 using Utils::get_linear_index;
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
 #include <algorithm>
+#include <cstddef>
+#include <iterator>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 namespace LBBoundaries {

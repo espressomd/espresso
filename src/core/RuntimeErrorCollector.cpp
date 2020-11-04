@@ -23,6 +23,8 @@
 
 #include <boost/mpi/collectives.hpp>
 
+#include <algorithm>
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <utility>

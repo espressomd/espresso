@@ -1,7 +1,11 @@
 #ifndef ESPRESSO_EXCLUSIONS_HPP
 #define ESPRESSO_EXCLUSIONS_HPP
 
+#include "config.hpp"
+
 #include "Particle.hpp"
+
+#include <algorithm>
 
 #ifdef EXCLUSIONS
 /** Determine if the non-bonded interactions between @p p1 and @p p2 should be

@@ -19,10 +19,15 @@
 #ifndef OBSERVABLES_PERSISTENCEANGLES_HPP
 #define OBSERVABLES_PERSISTENCEANGLES_HPP
 
+#include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
+#include "grid.hpp"
+
+#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

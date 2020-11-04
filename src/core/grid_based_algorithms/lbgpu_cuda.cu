@@ -55,6 +55,7 @@ extern int this_node;
 #include <thrust/host_vector.h>
 #include <thrust/transform_reduce.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>

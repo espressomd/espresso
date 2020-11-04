@@ -30,7 +30,12 @@
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <type_traits>
 #include <unordered_map>
+#include <vector>
 
 namespace ScriptInterface {
 class ObjectHandle;

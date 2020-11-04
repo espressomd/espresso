@@ -23,7 +23,12 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <utils/Vector.hpp>
+#include <utils/constants.hpp>
 #include "utils/math/triangle_functions.hpp"
+
+#include <cstdlib>
+#include <limits>
 
 auto const epsilon = std::numeric_limits<double>::epsilon();
 

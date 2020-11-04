@@ -40,6 +40,7 @@
 #include <utils/constants.hpp>
 #include <utils/mask.hpp>
 
+#include <cassert>
 #include <cmath>
 
 /** @brief Calculate the derivatives of the quaternion and angular

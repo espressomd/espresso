@@ -26,9 +26,16 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
+#include <utils/Span.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
 #include "Particle.hpp"
+#include "config.hpp"
+
+#include <algorithm>
+#include <array>
+#include <sstream>
+#include <vector>
 
 BOOST_AUTO_TEST_CASE(comparison) {
   {

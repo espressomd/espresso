@@ -1,6 +1,10 @@
+#include "config.hpp"
+
 #include "exclusions.hpp"
 
 #include <utils/contains.hpp>
+
+#include <algorithm>
 
 #ifdef EXCLUSIONS
 void add_exclusion(Particle *part, int part2) {

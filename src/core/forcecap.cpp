@@ -25,7 +25,13 @@
  */
 
 #include "forcecap.hpp"
+
+#include "Particle.hpp"
 #include "global.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <cmath>
 
 double force_cap = 0.0;
 

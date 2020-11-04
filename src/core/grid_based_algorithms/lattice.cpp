@@ -31,6 +31,14 @@
 #include <utils/constants.hpp>
 #include <utils/index.hpp>
 
+#include <utils/Vector.hpp>
+
+#include <cmath>
+#include <functional>
+#include <limits>
+#include <stdexcept>
+#include <string>
+
 Lattice::Lattice(double agrid, double offset, int halo_size,
                  Utils::Vector3d const &local_box,
                  Utils::Vector3d const &my_right,

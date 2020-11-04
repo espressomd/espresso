@@ -20,13 +20,17 @@
  */
 
 #include "integrators/steepest_descent.hpp"
+#include "Particle.hpp"
+#include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "config.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/algorithm/clamp.hpp>
@@ -35,6 +39,7 @@
 #include <boost/mpi/operations.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 /** Currently active steepest descent instance */

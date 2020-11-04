@@ -30,6 +30,8 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
+#include <memory>
+
 #ifndef ACTOR_DIPOLARBARNESHUT_HPP
 #define ACTOR_DIPOLARBARNESHUT_HPP
 

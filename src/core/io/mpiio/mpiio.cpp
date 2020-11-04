@@ -54,6 +54,8 @@
 #include "cells.hpp"
 #include "errorhandling.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
@@ -62,10 +64,14 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <cerrno>
+#include <cstddef>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <sys/stat.h>
+#include <utility>
 #include <vector>
 
 namespace Mpiio {

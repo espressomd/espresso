@@ -27,6 +27,9 @@
 #include <utils/index.hpp>
 #include <utils/sampling.hpp>
 
+#include <array>
+#include <cstddef>
+
 BOOST_AUTO_TEST_CASE(get_cylindrical_sampling_positions_test) {
   auto const min_r = 0.0;
   auto const max_r = 5.0;

@@ -16,12 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "config.hpp"
 #include "actor/Mmm1dgpuForce.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
+
+#include <stdexcept>
 
 #ifdef MMM1D_GPU
 

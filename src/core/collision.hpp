@@ -19,6 +19,8 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
+#include "config.hpp"
+
 /** \name bits of possible modes for collision handling.
  *  The modes can be combined by or-ing together, but not all combinations are
  *  possible.
@@ -39,6 +41,7 @@
 #define COLLISION_MODE_BIND_THREE_PARTICLES 16
 /*@}*/
 
+#include "BondList.hpp"
 #include "Particle.hpp"
 #include "integrate.hpp"
 #include "virtual_sites.hpp"

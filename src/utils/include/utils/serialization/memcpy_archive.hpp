@@ -26,7 +26,9 @@
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/serialization.hpp>
 
+#include <cstddef>
 #include <cstring>
+#include <type_traits>
 
 namespace Utils {
 /** @brief Type trait to indicate that a type is

@@ -29,6 +29,8 @@
 
 #include "utils/Factory.hpp"
 
+#include <string>
+
 struct TestClass {
   virtual void method() = 0;
   virtual ~TestClass() = default;

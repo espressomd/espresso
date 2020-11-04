@@ -27,11 +27,17 @@
  *  Implementation in \ref oif_local_forces.cpp
  */
 
+#include "config.hpp"
+
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 #include <utils/Vector.hpp>
 #include <utils/math/triangle_functions.hpp>
+
+#include <cmath>
+#include <tuple>
 
 // set parameters for local forces
 int oif_local_forces_set_params(int bond_type, double r0, double ks,

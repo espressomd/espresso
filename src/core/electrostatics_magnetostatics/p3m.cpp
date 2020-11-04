@@ -27,6 +27,7 @@
 #ifdef P3M
 
 #include "Particle.hpp"
+#include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
@@ -42,6 +43,8 @@
 #include "p3m_gpu_error.hpp"
 #endif
 
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>
 using Utils::sinc;
@@ -56,9 +59,13 @@ using Utils::strcat_alloc;
 #include <boost/range/numeric.hpp>
 #include <mpi.h>
 
+#include <algorithm>
+#include <cassert>
 #include <complex>
+#include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <functional>
 
 p3m_data_struct p3m;
 

@@ -21,6 +21,9 @@
 
 #include <utils/uniform.hpp>
 
+#include <cstdint>
+#include <limits>
+
 BOOST_AUTO_TEST_CASE(limits) {
   /* 0 maps to epsilon */
   BOOST_CHECK_SMALL(Utils::uniform(0ul),

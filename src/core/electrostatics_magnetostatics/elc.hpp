@@ -29,7 +29,12 @@
 #ifndef _ELC_H
 #define _ELC_H
 
+#include "config.hpp"
+
 #include "Particle.hpp"
+#include "ParticleRange.hpp"
+
+#include <utils/Vector.hpp>
 
 #ifdef P3M
 

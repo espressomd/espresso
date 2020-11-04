@@ -28,6 +28,10 @@
 #include <shapes/Union.hpp>
 #include <shapes/Wall.hpp>
 
+#include <utils/Vector.hpp>
+
+#include <algorithm>
+
 BOOST_AUTO_TEST_CASE(dist_function) {
   {
     auto wall1 = std::make_shared<Shapes::Wall>();

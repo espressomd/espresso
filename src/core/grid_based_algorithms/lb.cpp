@@ -43,8 +43,11 @@
 #include "random.hpp"
 
 #include <utils/Counter.hpp>
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 #include <utils/index.hpp>
 #include <utils/math/matrix_vector_product.hpp>
+#include <utils/math/sqr.hpp>
 #include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 using Utils::get_linear_index;
@@ -53,13 +56,20 @@ using Utils::get_linear_index;
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
+#include <boost/optional.hpp>
 #include <boost/range/numeric.hpp>
 #include <mpi.h>
 #include <profiler/profiler.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <functional>
 #include <iostream>
+#include <stdexcept>
 
 namespace {
 /** Basis of the mode space as described in @cite dunweg07a */

@@ -20,6 +20,7 @@
 #define OBSERVABLES_LBPROFILEOBSERVABLE_HPP
 
 #include <cmath>
+#include <cstddef>
 
 #include "ProfileObservable.hpp"
 #include "grid.hpp"

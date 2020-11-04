@@ -29,10 +29,19 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <algorithm>
+#include <array>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <functional>
 #include <limits>
+#include <numeric>
+#include <sstream>
+#include <stdexcept>
 
 namespace {
 int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }

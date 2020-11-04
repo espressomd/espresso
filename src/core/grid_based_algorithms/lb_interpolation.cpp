@@ -28,6 +28,10 @@
 #include "lb.hpp"
 #include "lbgpu.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <stdexcept>
+
 namespace {
 InterpolationOrder interpolation_order = InterpolationOrder::linear;
 }

@@ -24,6 +24,7 @@
 #include <utils/index.hpp>
 
 #include <array>
+#include <cstddef>
 #include <boost/test/unit_test.hpp>
 
 BOOST_AUTO_TEST_CASE(ravel_index_test) {

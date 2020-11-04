@@ -28,6 +28,7 @@
 #include "cells.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
+#include "rotation.hpp"
 #include "thermostat.hpp"
 #include "thermostats/brownian_inline.hpp"
 

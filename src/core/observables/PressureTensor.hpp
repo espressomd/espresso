@@ -21,6 +21,7 @@
 
 #include "Observable.hpp"
 #include "pressure.hpp"
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

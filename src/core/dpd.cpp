@@ -21,6 +21,7 @@
 /** \file
  *  Implementation of dpd.hpp.
  */
+#include "config.hpp"
 #include "dpd.hpp"
 
 #ifdef DPD
@@ -38,7 +39,13 @@
 #include <boost/mpi/collectives/reduce.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 #include <utils/math/tensor_product.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <functional>
 
 using Utils::Vector3d;
 

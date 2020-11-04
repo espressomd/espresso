@@ -20,6 +20,13 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include <utils/Histogram.hpp>
 
+#include <array>
+#include <cstddef>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace Observables {
 
 std::vector<double> LBVelocityProfile::operator()() const {

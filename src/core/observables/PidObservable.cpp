@@ -18,6 +18,7 @@
  */
 #include "PidObservable.hpp"
 
+#include "ParticleTraits.hpp"
 #include "fetch_particles.hpp"
 #include "particle_data.hpp"
 

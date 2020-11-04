@@ -26,10 +26,16 @@
 
 #include "Particle.hpp"
 #include "TabulatedPotential.hpp"
+#include "config.hpp"
 #include "dpd.hpp"
 
 #include <utils/index.hpp>
 #include <utils/math/sqr.hpp>
+
+#include <cassert>
+#include <algorithm>
+#include <string>
+#include <vector>
 
 /** Cutoff for deactivated interactions. Must be negative, so that even
  *  particles on top of each other don't interact by chance.

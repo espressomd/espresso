@@ -24,6 +24,9 @@
 #include "utils/math/sinc.hpp"
 using Utils::sinc;
 
+#include <cmath>
+#include <cstdlib>
+
 BOOST_AUTO_TEST_CASE(zero) { BOOST_CHECK(1.0 == sinc(0.0)); }
 
 BOOST_AUTO_TEST_CASE(approx) {

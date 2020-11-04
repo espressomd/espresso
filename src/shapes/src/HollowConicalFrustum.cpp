@@ -22,6 +22,8 @@
 #include <utils/Vector.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 
+#include <cstdlib>
+
 namespace Shapes {
 
 void HollowConicalFrustum::calculate_dist(const Utils::Vector3d &pos,

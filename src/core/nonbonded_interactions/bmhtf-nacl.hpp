@@ -27,9 +27,14 @@
  *  Implementation in \ref bmhtf-nacl.cpp.
  */
 
+#include "config.hpp"
+
 #include "nonbonded_interaction_data.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
+
+#include <cmath>
 
 #ifdef BMHTF_NACL
 

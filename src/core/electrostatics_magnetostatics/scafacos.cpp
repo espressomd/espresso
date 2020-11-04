@@ -22,18 +22,27 @@
  *  Provide a C-like interface for ScaFaCoS.
  */
 
+#include "config.hpp"
+
 #include "electrostatics_magnetostatics/scafacos.hpp"
 
 #if defined(SCAFACOS)
+
+#include <utils/Vector.hpp>
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cassert>
+#include <functional>
 #include <limits>
+#include <list>
 #include <memory>
 #include <numeric>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "Scafacos.hpp"

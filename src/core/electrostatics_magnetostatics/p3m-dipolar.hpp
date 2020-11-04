@@ -45,8 +45,14 @@
 #include "p3m_send_mesh.hpp"
 
 #include <ParticleRange.hpp>
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
+
+#include <cmath>
+#include <array>
+#include <tuple>
+#include <vector>
 
 struct dp3m_data_struct : public p3m_data_struct_base {
   dp3m_data_struct();

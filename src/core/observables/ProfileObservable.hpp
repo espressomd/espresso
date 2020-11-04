@@ -20,6 +20,8 @@
 #define OBSERVABLES_PROFILEOBSERVABLE_HPP
 
 #include <boost/range/algorithm.hpp>
+#include <array>
+#include <cstddef>
 #include <vector>
 
 #include <utils/math/make_lin_space.hpp>

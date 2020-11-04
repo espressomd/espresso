@@ -31,6 +31,10 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include <mpi.h>
 
+#include <utils/Vector.hpp>
+
+#include <vector>
+
 /** \name Types of halo communications */
 /*@{*/
 #define HALO_LOCL                                                              \

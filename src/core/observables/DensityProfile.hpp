@@ -19,8 +19,15 @@
 #ifndef OBSERVABLES_DENSITYPROFILE_HPP
 #define OBSERVABLES_DENSITYPROFILE_HPP
 
+#include "BoxGeometry.hpp"
 #include "PidProfileObservable.hpp"
+#include "grid.hpp"
+
 #include <utils/Histogram.hpp>
+
+#include <array>
+#include <cstddef>
+#include <utility>
 #include <vector>
 
 namespace Observables {

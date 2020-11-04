@@ -19,10 +19,15 @@
 #ifndef OBSERVABLES_PARTICLEDIHEDRALS_HPP
 #define OBSERVABLES_PARTICLEDIHEDRALS_HPP
 
+#include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
+#include "grid.hpp"
+
+#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

@@ -22,7 +22,11 @@
 #include "AccumulatorBase.hpp"
 #include "observables/Observable.hpp"
 
+#include <cstddef>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Accumulators {
 

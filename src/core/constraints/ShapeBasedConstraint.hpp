@@ -22,10 +22,13 @@
 #include <memory>
 
 #include "Constraint.hpp"
+#include "Observable_stat.hpp"
 #include "Particle.hpp"
+#include "ParticleRange.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include <shapes/NoWhere.hpp>
 #include <shapes/Shape.hpp>
+#include <utils/Vector.hpp>
 
 namespace Constraints {
 

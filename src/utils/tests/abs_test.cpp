@@ -23,6 +23,7 @@
 #include <utils/math/abs.hpp>
 
 #include <cmath>
+#include <type_traits>
 
 BOOST_AUTO_TEST_CASE(abs_test) {
   using Utils::abs;

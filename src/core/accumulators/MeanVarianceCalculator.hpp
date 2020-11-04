@@ -23,6 +23,11 @@
 #include "observables/Observable.hpp"
 #include <utils/Accumulator.hpp>
 
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace Accumulators {
 
 class MeanVarianceCalculator : public AccumulatorBase {

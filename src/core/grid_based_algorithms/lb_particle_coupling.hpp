@@ -24,6 +24,10 @@
 
 #include <utils/Counter.hpp>
 
+#include <boost/serialization/access.hpp>
+
+#include <cstdint>
+
 /** Calculate particle lattice interactions.
  *  So far, only viscous coupling with Stokesian friction is implemented.
  *  Include all particle-lattice forces in this function.

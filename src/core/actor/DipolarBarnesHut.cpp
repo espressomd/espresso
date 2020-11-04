@@ -18,12 +18,16 @@
  */
 
 #include "DipolarBarnesHut.hpp"
+
 #include "EspressoSystemInterface.hpp"
+#include "actor/ActorList.hpp"
 #include "config.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
+
+#include <memory>
 
 #ifdef DIPOLAR_BARNES_HUT
 

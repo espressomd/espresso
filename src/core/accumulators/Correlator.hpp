@@ -111,6 +111,11 @@
 #include "observables/Observable.hpp"
 #include <utils/Vector.hpp>
 
+#include <algorithm>
+#include <cstddef>
+#include <string>
+#include <vector>
+
 namespace Accumulators {
 
 /** The main correlator class

@@ -17,12 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.hpp"
 #include "cuda_init.hpp"
 #ifdef CUDA
 #include "communication.hpp"
 
 #include <utils/constants.hpp>
 
+#include <algorithm>
 #include <cstring>
 #include <iterator>
 #include <mpi.h>

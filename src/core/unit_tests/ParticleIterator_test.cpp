@@ -34,6 +34,9 @@ using Cell = Testing::Cell<Particle>;
 
 #include "ParticleIterator.hpp"
 
+#include <cstddef>
+#include <iterator>
+
 std::vector<std::unique_ptr<Cell>> make_cells(std::size_t n) {
   std::vector<std::unique_ptr<Cell>> cells(n);
 

@@ -26,6 +26,8 @@
  *  \ref icc.hpp.
  */
 
+#include "config.hpp"
+
 #include "icc.hpp"
 
 #ifdef ELECTROSTATICS
@@ -34,6 +36,7 @@
 #include <cstdlib>
 
 #include "Particle.hpp"
+#include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -42,7 +45,12 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+
+#include <mpi.h>
+
+#include <tuple>
 
 iccp3m_struct iccp3m_cfg;
 

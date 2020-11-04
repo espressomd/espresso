@@ -28,6 +28,8 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/version.hpp>
+
+#include <cstddef>
 #include <type_traits>
 
 /**

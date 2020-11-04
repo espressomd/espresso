@@ -24,6 +24,8 @@
 
 #include <utils/math/make_lin_space.hpp>
 
+#include <algorithm>
+#include <limits>
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(make_lin_space_test) {

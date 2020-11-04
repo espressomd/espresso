@@ -26,6 +26,11 @@
 #include "field_coupling/couplings/Scaled.hpp"
 #include "field_coupling/couplings/Viscous.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <algorithm>
+#include <unordered_map>
+
 using namespace FieldCoupling::Coupling;
 
 BOOST_AUTO_TEST_CASE(charge) {

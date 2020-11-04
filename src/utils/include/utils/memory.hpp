@@ -19,6 +19,7 @@
 #ifndef CORE_UTILS_MEMORY_HPP
 #define CORE_UTILS_MEMORY_HPP
 
+#include <cstddef>
 #include <cstdlib>
 #include <new>
 #include <stdexcept>

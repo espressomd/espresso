@@ -25,6 +25,11 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/get_value.hpp"
 
+#include <memory>
+#include <string>
+#include <type_traits>
+#include <vector>
+
 namespace ScriptInterface {
 /**
  * @brief Owning list of ObjectHandles

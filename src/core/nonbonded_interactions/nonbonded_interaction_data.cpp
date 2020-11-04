@@ -40,6 +40,11 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 
+#include <utils/index.hpp>
+
+#include <sstream>
+#include <utility>
+
 /****************************************
  * variables
  *****************************************/

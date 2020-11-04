@@ -22,8 +22,11 @@
  *
  *  Implementation of \ref umbrella.hpp
  */
+#include "config.hpp"
 #include "umbrella.hpp"
 #include "interactions.hpp"
+
+#include <utils/constants.hpp>
 
 #ifdef UMBRELLA
 

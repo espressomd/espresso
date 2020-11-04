@@ -30,6 +30,10 @@
 
 #include "Particle.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <cmath>
+
 /** Structure to hold Debye-Hueckel Parameters. */
 typedef struct {
   /** Cutoff for Debye-Hueckel interaction. */

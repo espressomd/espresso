@@ -20,6 +20,7 @@
  */
 
 #include "communication.hpp"
+#include "config.hpp"
 #include "event.hpp"
 
 #include "electrostatics_magnetostatics/common.hpp"

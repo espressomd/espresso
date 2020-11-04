@@ -22,9 +22,12 @@
 #include <boost/test/unit_test.hpp>
 
 #include <utils/mask.hpp>
+#include <utils/get.hpp>
 
 #include <cstdint>
+#include <string>
 #include <tuple>
+#include <type_traits>
 
 BOOST_AUTO_TEST_CASE(mask_) {
   using Utils::get;

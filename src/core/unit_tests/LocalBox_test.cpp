@@ -24,6 +24,10 @@
 
 #include <LocalBox.hpp>
 
+#include <utils/Array.hpp>
+#include <utils/Vector.hpp>
+
+#include <algorithm>
 #include <limits>
 
 /* Check that the box corners and side length agree. */

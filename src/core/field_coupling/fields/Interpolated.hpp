@@ -33,6 +33,8 @@
 #include <boost/multi_array.hpp>
 
 #include <array>
+#include <cstddef>
+#include <vector>
 
 namespace FieldCoupling {
 namespace Fields {

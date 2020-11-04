@@ -36,6 +36,8 @@
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
+#include <cstddef>
+
 // To avoid include of communication.hpp in cuda file
 extern int this_node;
 

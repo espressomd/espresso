@@ -20,7 +20,10 @@
  */
 #include "bond_error.hpp"
 
+#include "RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
+
+#include <utils/Span.hpp>
 
 void bond_broken_error(int id, Utils::Span<const int> partner_ids) {
   auto error_msg = runtimeErrorMsg();

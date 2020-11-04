@@ -21,6 +21,8 @@
 #define OBSERVABLES_OBSERVABLE_HPP
 
 #include <fstream>
+#include <cstddef>
+#include <functional>
 #include <numeric>
 #include <string>
 #include <vector>

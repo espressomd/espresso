@@ -19,6 +19,8 @@
 #ifndef ESPRESSO_COULOMB_INLINE_HPP
 #define ESPRESSO_COULOMB_INLINE_HPP
 
+#include "config.hpp"
+
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
 #ifdef ELECTROSTATICS

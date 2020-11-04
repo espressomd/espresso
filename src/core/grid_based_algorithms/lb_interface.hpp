@@ -24,6 +24,10 @@
 #include "grid_based_algorithms/lb_constants.hpp"
 #include <utils/Vector.hpp>
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 /** @brief LB implementation currently active. */
 enum class ActiveLB : int { NONE, CPU, GPU };
 

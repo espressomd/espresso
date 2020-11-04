@@ -1,6 +1,7 @@
 #ifndef ESPRESSO_CUDA_HOST_ALLOCATOR_HPP
 #define ESPRESSO_CUDA_HOST_ALLOCATOR_HPP
 
+#include <cstddef>
 #include <type_traits>
 #include <vector>
 

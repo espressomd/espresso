@@ -18,11 +18,18 @@
  */
 #include "ClusterStructure.hpp"
 #include "Cluster.hpp"
+#include "PartCfg.hpp"
+#include "errorhandling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
+#include "particle_data.hpp"
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
 #include <utils/for_each_pair.hpp>
+
+#include <utility>
+#include <vector>
 
 namespace ClusterAnalysis {
 

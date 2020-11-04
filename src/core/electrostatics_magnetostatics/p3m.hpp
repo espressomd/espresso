@@ -44,8 +44,12 @@
 #include "p3m_send_mesh.hpp"
 
 #include <ParticleRange.hpp>
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
+
+#include <cmath>
+#include <array>
 
 /************************************************
  * data types

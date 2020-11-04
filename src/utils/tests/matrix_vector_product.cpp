@@ -24,6 +24,7 @@
 
 #include "utils/math/matrix_vector_product.hpp"
 
+#include <array>
 #include <limits>
 
 extern constexpr std::array<std::array<int, 3>, 3> matrix{

@@ -30,8 +30,10 @@
 #include "bonded_interaction_data.hpp"
 #include "grid.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cmath>
 #include <tuple>
 
 /** Set parameters for the angle potential. */

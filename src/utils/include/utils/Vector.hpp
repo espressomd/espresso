@@ -23,10 +23,12 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <initializer_list>
 #include <iterator>
 #include <numeric>
+#include <type_traits>
 #include <vector>
 
 #include "utils/Array.hpp"

@@ -21,8 +21,10 @@
 
 #include "DomainDecomposition.hpp"
 
+#include "RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/index.hpp>
 #include <utils/mpi/cart_comm.hpp>
 #include <utils/mpi/sendrecv.hpp>
@@ -30,6 +32,14 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/reverse.hpp>
 #include <boost/range/numeric.hpp>
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <functional>
+#include <iterator>
+#include <utility>
 
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.

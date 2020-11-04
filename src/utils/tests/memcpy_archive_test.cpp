@@ -30,6 +30,7 @@
  */
 #include <boost/serialization/version.hpp>
 
+#include <utils/Span.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
 #include <utils/Vector.hpp>

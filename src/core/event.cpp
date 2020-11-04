@@ -29,6 +29,7 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
+#include "config.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "errorhandling.hpp"
@@ -38,6 +39,7 @@
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
+#include "integrate.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
@@ -53,6 +55,8 @@
 #ifdef SCAFACOS
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #endif
+
+#include <mpi.h>
 
 /** whether the thermostat has to be reinitialized before integration */
 static bool reinit_thermo = true;

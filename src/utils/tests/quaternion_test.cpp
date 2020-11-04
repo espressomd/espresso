@@ -21,6 +21,9 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <utils/Vector.hpp>
+
+#include <cmath>
 #include <limits>
 
 #include "utils/math/quaternion.hpp"

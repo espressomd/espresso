@@ -21,11 +21,13 @@
 #ifndef ESPRESSO_P3M_SEND_MESH_HPP
 #define ESPRESSO_P3M_SEND_MESH_HPP
 
+#include "config.hpp"
 #include "p3m-common.hpp"
 
 #if defined(P3M) || defined(DP3M)
 
 #include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
 
