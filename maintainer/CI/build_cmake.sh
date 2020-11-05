@@ -300,11 +300,11 @@ if [ "${with_coverage}" = true ]; then
     python3 -m coverage combine testsuite/python
     python3 -m coverage xml
     echo "Uploading to Codecov..."
+    codecov_opts="-X gcov -X coveragepy"
     if [ -z "${CODECOV_TOKEN}" ]; then
-        bash <(curl -s https://codecov.io/bash) -X gcov -X coveragepy || echo "Codecov did not collect coverage reports"
-    else
-        bash <(curl -s https://codecov.io/bash) -X gcov -X coveragepy -t "${CODECOV_TOKEN}" || echo "Codecov did not collect coverage reports"
+        codecov_opts="${codecov_opts} -t '${CODECOV_TOKEN}'"
     fi
+    bash <(curl -s https://codecov.io/bash) ${codecov_opts} || echo "Codecov did not collect coverage reports"
     end "COVERAGE"
 fi
 
