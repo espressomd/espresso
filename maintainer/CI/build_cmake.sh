@@ -304,7 +304,8 @@ if [ "${with_coverage}" = true ]; then
     if [ -z "${CODECOV_TOKEN}" ]; then
         codecov_opts="${codecov_opts} -t '${CODECOV_TOKEN}'"
     fi
-    bash <(curl -s https://codecov.io/bash) ${codecov_opts} || echo "Codecov did not collect coverage reports"
+    bash <(curl --fail --silent --show-error https://codecov.io/bash 2>./codecov_stderr) ${codecov_opts} || echo "Codecov did not collect coverage reports"
+    cat ./codecov_stderr
     end "COVERAGE"
 fi
 
