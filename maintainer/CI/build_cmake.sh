@@ -301,9 +301,9 @@ if [ "${with_coverage}" = true ]; then
     python3 -m coverage xml
     echo "Uploading to Codecov..."
     if [ -z "${CODECOV_TOKEN}" ]; then
-        bash <(curl -s https://codecov.io/bash) -X gcov || echo "Codecov did not collect coverage reports"
+        bash <(curl -s https://codecov.io/bash) -X gcov -X coveragepy || echo "Codecov did not collect coverage reports"
     else
-        bash <(curl -s https://codecov.io/bash) -X gcov -t "${CODECOV_TOKEN}" || echo "Codecov did not collect coverage reports"
+        bash <(curl -s https://codecov.io/bash) -X gcov -X coveragepy -t "${CODECOV_TOKEN}" || echo "Codecov did not collect coverage reports"
     fi
     end "COVERAGE"
 fi
