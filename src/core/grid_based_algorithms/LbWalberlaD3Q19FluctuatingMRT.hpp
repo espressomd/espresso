@@ -42,7 +42,7 @@ public:
                                 const Utils::Vector3i &node_grid,
                                 int n_ghost_layers, double kT,
                                 unsigned int seed)
-      : LbWalberla(viscosity, density, agrid, tau, box_dimensions, node_grid,
+      : LbWalberla(viscosity, agrid, tau, box_dimensions, node_grid,
                    n_ghost_layers) {
     m_kT = kT;
     construct_lattice_model(viscosity, kT, seed);

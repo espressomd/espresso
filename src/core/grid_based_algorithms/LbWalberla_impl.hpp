@@ -294,7 +294,7 @@ protected:
   };
 
 public:
-  LbWalberla(double viscosity, double density, double agrid, double tau,
+  LbWalberla(double viscosity, double agrid, double tau,
              const Utils::Vector3d &box_dimensions,
              const Utils::Vector3i &node_grid, int n_ghost_layers) {
     m_agrid = agrid;
