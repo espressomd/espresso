@@ -35,14 +35,6 @@ EK = ('EK.GPU' in modes and espressomd.gpu_available()
       and espressomd.has_features('ELECTROKINETICS'))
 
 
-def skipIfMissingFeatureStokesianDynamics():
-    """Specialized unittest skipIf decorator for missing Stokesian Dynamics."""
-    if not espressomd.has_features(["STOKESIAN_DYNAMICS"]) and (not espressomd.has_features(
-            ["STOKESIAN_DYNAMICS_GPU"]) or not espressomd.gpu_available()):
-        return ut.skip("Skipping test: feature STOKESIAN_DYNAMICS unavailable")
-    return utx._id
-
-
 class CheckpointTest(ut.TestCase):
 
     @classmethod
@@ -203,7 +195,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['gamma0'], 2.0)
         self.assertEqual(thmst['gammav'], 0.1)
 
-    @skipIfMissingFeatureStokesianDynamics()
+    @utx.skipIfMissingFeatures('STOKESIAN_DYNAMICS')
     @ut.skipIf('THERM.SDM' not in modes, 'SDM thermostat not in modes')
     def test_thermostat_SDM(self):
         thmst = system.thermostat.get_state()[0]
@@ -255,27 +247,13 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(params, {})
 
     @utx.skipIfMissingFeatures('STOKESIAN_DYNAMICS')
-    @ut.skipIf('INT.SDM.CPU' not in modes, 'SDM CPU integrator not in modes')
-    def test_integrator_SDM_cpu(self):
+    @ut.skipIf('INT.SDM' not in modes, 'SDM integrator not in modes')
+    def test_integrator_SDM(self):
         integ = system.integrator.get_state()
         self.assertIsInstance(integ, espressomd.integrate.StokesianDynamics)
         expected_params = {
-            'approximation_method': 'ft', 'device': 'cpu', 'radii': {0: 1.5},
-            'viscosity': 0.5, 'lubrication': False, 'pair_mobility': False,
-            'self_mobility': True}
-        params = integ.get_params()
-        self.assertEqual(params, expected_params)
-
-    @utx.skipIfMissingGPU()
-    @utx.skipIfMissingFeatures('STOKESIAN_DYNAMICS_GPU')
-    @ut.skipIf('INT.SDM.GPU' not in modes, 'SDM GPU integrator not in modes')
-    def test_integrator_SDM_gpu(self):
-        integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.StokesianDynamics)
-        expected_params = {
-            'approximation_method': 'fts', 'device': 'gpu', 'radii': {0: 1.0},
-            'viscosity': 2.0, 'lubrication': False, 'pair_mobility': True,
-            'self_mobility': False}
+            'approximation_method': 'ft', 'radii': {0: 1.5}, 'viscosity': 0.5,
+            'lubrication': False, 'pair_mobility': False, 'self_mobility': True}
         params = integ.get_params()
         self.assertEqual(params, expected_params)
 

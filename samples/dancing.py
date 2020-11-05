@@ -31,23 +31,9 @@ import argparse
 
 parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
-group.add_argument('--cpu', action='store_true', help='Use CPU implementation')
-group.add_argument('--gpu', action='store_true', help='Use GPU implementation')
-group = parser.add_mutually_exclusive_group()
 group.add_argument('--ft', action='store_true', help='Use FT approximation')
 group.add_argument('--fts', action='store_true', help='Use FTS approximation')
 args = parser.parse_args()
-
-required_features = ["STOKESIAN_DYNAMICS"]
-
-if args.gpu:
-    print("Using GPU implementation")
-    required_features.append("CUDA")
-    required_features.append("STOKESIAN_DYNAMICS_GPU")
-    sd_device = "gpu"
-else:
-    print("Using CPU implementation")
-    sd_device = "cpu"
 
 if args.ft:
     print("Using FT approximation method")
@@ -56,7 +42,7 @@ else:
     print("Using FTS approximation method")
     sd_method = "fts"
 
-espressomd.assert_features(required_features)
+espressomd.assert_features("STOKESIAN_DYNAMICS")
 
 system = espressomd.System(box_l=[10, 10, 10])
 system.time_step = 1.5
@@ -64,8 +50,7 @@ system.cell_system.skin = 0.4
 system.periodicity = [False, False, False]
 
 system.integrator.set_stokesian_dynamics(
-    viscosity=1.0, radii={0: 1.0}, device=sd_device,
-    approximation_method=sd_method)
+    viscosity=1.0, radii={0: 1.0}, approximation_method=sd_method)
 
 system.part.add(pos=[-5, 0, 0], rotation=[1, 1, 1])
 system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
@@ -94,8 +79,7 @@ for i in range(0, 6, 2):
     plt.plot(data[:, i], data[:, i + 1], linestyle='dashed')
 
 plt.title("Trajectory of sedimenting spheres\nsolid line: simulation "
-          "({} on {}), dashed line: paper (FTS)"
-          .format(sd_method.upper(), sd_device.upper()))
+          "({}), dashed line: paper (FTS)".format(sd_method.upper()))
 plt.xlabel("x")
 plt.ylabel("y")
 plt.show()

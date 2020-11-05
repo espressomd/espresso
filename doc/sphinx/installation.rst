@@ -491,12 +491,8 @@ using a CMake flag (see :ref:`Options and Variables`).
 - ``GSL`` Enables features relying on the GNU Scientific Library, e.g.
   :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
 
-- ``STOKESIAN_DYNAMICS`` Enables the Stokesian Dynamics feature for CPU
+- ``STOKESIAN_DYNAMICS`` Enables the Stokesian Dynamics feature
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
-
-- ``STOKESIAN_DYNAMICS_GPU`` Enables the Stokesian Dynamics feature for GPU
-  (see :ref:`Stokesian Dynamics`). Requires thrust/cuBLAS/cuSolver.
-  Requires ``EXPERIMENTAL_FEATURES``.
 
 
 

@@ -406,7 +406,7 @@ cdef class BrownianDynamics(Integrator):
         integrate_set_bd()
 
 
-IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+IF STOKESIAN_DYNAMICS:
     cdef class StokesianDynamics(Integrator):
         """
         Stokesian Dynamics integrator.
@@ -417,8 +417,6 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
             Bulk viscosity.
         radii : :obj:`dict`
             Dictionary that maps particle types to radii.
-        device : :obj:`str`, optional, \{'cpu', 'gpu'\}
-            Device to execute on.
         approximation_method : :obj:`str`, optional, \{'ft', 'fts'\}
             Chooses the method of the mobility approximation.
             ``'fts'`` is more accurate. Default is ``'fts'``.
@@ -432,20 +430,15 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
         """
 
         def default_params(self):
-            IF STOKESIAN_DYNAMICS:
-                sd_device_str = "cpu"
-            ELIF STOKESIAN_DYNAMICS_GPU:
-                sd_device_str = "gpu"
             return {"lubrication": False, "approximation_method": "fts",
-                    "self_mobility": True, "pair_mobility": True,
-                    "device": sd_device_str}
+                    "self_mobility": True, "pair_mobility": True}
 
         def valid_keys(self):
             """All parameters that can be set.
 
             """
-            return {"radii", "viscosity", "device", "lubrication",
-                    "approximation_method", "self_mobility", "pair_mobility"}
+            return {"radii", "viscosity", "lubrication", "approximation_method",
+                    "self_mobility", "pair_mobility"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -457,9 +450,6 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
             check_type_or_throw_except(
                 self._params["viscosity"], 1, float,
                 "viscosity must be a number")
-            check_type_or_throw_except(
-                self._params["device"], 1, str,
-                "device must be a string")
             check_type_or_throw_except(
                 self._params["radii"], 1, dict,
                 "radii must be a dictionary")
@@ -486,7 +476,6 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
         def _set_params_in_es_core(self):
             integrate_set_sd()
             set_sd_radius_dict(self._params["radii"])
-            set_sd_device(to_char_pointer(self._params["device"].lower()))
             set_sd_viscosity(self._params["viscosity"])
             fl = flags.NONE
             if self._params["lubrication"]:
