@@ -61,9 +61,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
         } else
           // Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt)
           p.m.v[j] += p.f.f[j] * time_step / 2.0 / p.p.mass;
-#ifdef EXTERNAL_FORCES
       }
-#endif
     }
   }
 }
