@@ -408,12 +408,16 @@ IF LB_WALBERLA:
 
         def _activate_method(self):
             self.validate_params()
+
+            # unit conversion
+            lb_visc = self._params["visc"] * \
+                self._params['tau'] / self._params['agrid']**2
+            lb_dens = self._params['dens'] * self._params['agrid']**3
+            lb_kT = self._params['kT'] * \
+                self._params['tau']**2 / self._params['agrid']**2 
             mpi_init_lb_walberla(
-                self._params["visc"] * self._params['tau'] /
-                self._params['agrid']**2, self._params["dens"], self._params["agrid"], self._params["tau"],
-                self._params['kT'] / (self._params['agrid']
-                                      ** 2 / self._params['tau']**2),
-                self._params['seed'])
+                lb_visc, lb_dens, self._params["agrid"], self._params["tau"],
+                lb_kT, self._params['seed'])
             utils.handle_errors("LB fluid activation")
             self.ext_force_density = self._params["ext_force_density"]
 
