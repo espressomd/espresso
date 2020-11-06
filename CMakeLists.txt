@@ -83,7 +83,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
                                             "GNU")
-  option(WITH_COVERAGE "Generate code coverage report" OFF)
+  option(WITH_COVERAGE "Generate code coverage report for C++ code" OFF)
+  option(WITH_COVERAGE_PYTHON "Generate code coverage report for Python code"
+         OFF)
   option(WITH_ASAN "Build with address sanitizer" OFF)
   option(WITH_UBSAN "Build with undefined behavior sanitizer" OFF)
 endif()
