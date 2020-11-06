@@ -46,7 +46,7 @@
 
 // the code is mostly multi-GPU capable, but ESPResSo is not yet
 const int deviceCount = 1;
-float multigpu_factors[] = {1.0};
+
 #undef cudaSetDevice
 #define cudaSetDevice(d)
 
@@ -63,11 +63,6 @@ __constant__ mmm1dgpu_real maxPWerror[1] = {1e-5};
 // we size plentiful.
 const int modpsi_order = 30;
 const int modpsi_constant_size = modpsi_order * modpsi_order * 2;
-
-// linearized array on host
-std::vector<int> linModPsi_offsets;
-std::vector<int> linModPsi_lengths;
-std::vector<mmm1dgpu_real> linModPsi;
 
 // linearized array on device
 __constant__ int device_n_modPsi[1] = {0};
@@ -90,23 +85,23 @@ __device__ mmm1dgpu_real dev_mod_psi_odd(int n, mmm1dgpu_real x) {
 int modpsi_init() {
   create_mod_psi_up_to(modpsi_order);
 
-  // linearize the coefficients array
-  linModPsi_offsets.resize(modPsi.size());
-  linModPsi_lengths.resize(modPsi.size());
-  for (int i = 0; i < modPsi.size(); i++) {
-    if (i == 0)
-      linModPsi_offsets[i] = 0;
-    else
+  // linearized array on host
+  std::vector<int> linModPsi_offsets(modPsi.size());
+  std::vector<int> linModPsi_lengths(modPsi.size());
+  for (size_t i = 0; i < modPsi.size(); i++) {
+    if (i)
       linModPsi_offsets[i] =
           linModPsi_offsets[i - 1] + linModPsi_lengths[i - 1];
     linModPsi_lengths[i] = modPsi[i].size();
   }
-  linModPsi.resize(linModPsi_offsets[modPsi.size() - 1] +
-                   linModPsi_lengths[modPsi.size() - 1]);
-  for (int i = 0; i < modPsi.size(); i++) {
-    for (int j = 0; j < modPsi[i].size(); j++) {
+
+  // linearize the coefficients array
+  std::vector<mmm1dgpu_real> linModPsi(linModPsi_offsets[modPsi.size() - 1] +
+                                       linModPsi_lengths[modPsi.size() - 1]);
+  for (size_t i = 0; i < modPsi.size(); i++) {
+    for (size_t j = 0; j < modPsi[i].size(); j++) {
       linModPsi[linModPsi_offsets[i] + j] =
-          (mmm1dgpu_real)modPsi[i][j]; // cast to single-precision if necessary
+          static_cast<mmm1dgpu_real>(modPsi[i][j]);
     }
   }
 
