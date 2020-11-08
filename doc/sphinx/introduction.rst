@@ -292,7 +292,7 @@ directory :file:`/doc/tutorials` or `online on GitHub <https://github.com/espres
 Currently, the following tutorials are available:
 
 * :file:`01-lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid.
-* :file:`02-charged_system`: Modelling of charged systems such as ionic crystals.
+* :file:`02-charged_system`: Modelling of ion condensation around a charged rod.
 * :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice-Boltzmann method.
 * :file:`05-raspberry_electrophoresis`: Extended objects in a lattice-Boltzmann fluid, raspberry particles.
 * :file:`06-active_matter`: Modelling of self-propelling particles.

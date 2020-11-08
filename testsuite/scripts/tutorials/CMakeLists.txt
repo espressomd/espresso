@@ -27,12 +27,6 @@ add_custom_target(
 
 tutorial_test(FILE test_01-lennard_jones.py)
 tutorial_test(FILE test_02-charged_system-1.py)
-tutorial_test(FILE test_02-charged_system-2.py)
-tutorial_test(FILE test_02-charged_system__scripts__nacl.py)
-tutorial_test(FILE test_02-charged_system__scripts__nacl_units_confined.py)
-tutorial_test(FILE test_02-charged_system__scripts__nacl_units_confined_vis.py)
-tutorial_test(FILE test_02-charged_system__scripts__nacl_units.py)
-tutorial_test(FILE test_02-charged_system__scripts__nacl_units_vis.py)
 tutorial_test(FILE test_04-lattice_boltzmann_part2.py)
 tutorial_test(FILE test_04-lattice_boltzmann_part3.py SUFFIX rouse)
 tutorial_test(FILE test_04-lattice_boltzmann_part3.py SUFFIX zimm LABELS "gpu")
