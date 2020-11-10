@@ -4,7 +4,7 @@ function(BENCHMARK_TEST)
 endfunction(BENCHMARK_TEST)
 
 # configure Python module importlib_wrapper.py
-add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso
+add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
          ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
 set_tests_properties(importlib_wrapper PROPERTIES FIXTURES_SETUP
                                                   IMPORTLIB_WRAPPER)

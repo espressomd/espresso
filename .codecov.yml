@@ -45,6 +45,8 @@ comment: false
 
 ignore:
   - "libs"
+  - "doc/tutorials"
+  - "samples"
 fixes:
   - "testsuite/python/save_checkpoint*::testsuite/python/save_checkpoint.py"
   - "testsuite/python/test_checkpoint*::testsuite/python/test_checkpoint.py"
