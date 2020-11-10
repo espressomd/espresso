@@ -57,7 +57,7 @@ endfunction(PYTHON_TEST)
 # Separate features with hyphens, use a period to add an optional flag.
 foreach(
   TEST_COMBINATION
-  lb.walberla-p3m.cpu-lj-therm.lb;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-therm.bd-int.bd;lb.off-therm.sdm-int.sdm.cpu
+  lb.walberla-p3m.cpu-lj-therm.lb;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-therm.bd-int.bd;lb.off-therm.sdm-int.sdm
 )
   if(${TEST_COMBINATION} MATCHES "\\.gpu")
     set(TEST_LABELS "gpu")
