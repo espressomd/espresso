@@ -549,7 +549,7 @@ In the script, we have used the commands such as
     cell.output_vtk_pos_folded(filename="output/sim1/cell_" + str(i) + ".vtk")
 
 to output the information about cell in every pass of the simulation
-loop. These files can then be used for inspection in ParaView [#5]_ and
+loop. These files can then be used for inspection in ParaView and
 creation of animations. It is also possible to save a .vtk file for the
 fluid. And obviously, one can save various types of other data into text
 or data files for further processing and analysis.
@@ -559,7 +559,7 @@ or data files for further processing and analysis.
 Visualization in ParaView
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For visualization we suggest the free software ParaView. All .vtk
+For visualization we suggest the free software ParaView [5]_. All .vtk
 files (boundaries, fluid, objects at all time steps) can be loaded at
 the same time. The loading is a two step process, because only after
 pressing the Apply button, are the files actually imported. Using the
@@ -1480,7 +1480,7 @@ The local ``density`` and ``flux`` of a species can be obtained in the same fash
     species[0, 0, 0].density
     species[0, 0, 0].flux
 
-.. [#5]
+.. [5]
    https://www.paraview.org/
 
 
