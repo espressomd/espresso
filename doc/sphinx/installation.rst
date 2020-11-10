@@ -93,13 +93,6 @@ are required:
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
 
-To compile |es| on Ubuntu 18.04 LTS, you will need to install a more recent
-version of CMake with:
-
-.. code-block:: bash
-
-    pip3 install --user cmake
-
 Nvidia GPU acceleration
 """""""""""""""""""""""
 
@@ -110,16 +103,11 @@ CUDA SDK to make use of GPU computation:
 
     sudo apt install nvidia-cuda-toolkit
 
-On Ubuntu, the default GCC compiler is too recent for nvcc, which will generate
-compiler errors. You can either install an older version of GCC and select it
-with environment variables ``CC`` and ``CXX`` when building |es|, or edit the
-system header files as shown in the following example for Ubuntu 18.04:
-
-.. code-block:: bash
-
-    sudo sed -i 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
-    sudo sed -i 's/than 6/than 7/g' /usr/include/crt/host_config.h
-
+On Ubuntu 20.04, the default GCC compiler is too recent for nvcc, which will
+generate compiler errors. You can either install an older version of GCC and
+select it with environment variables ``CC`` and ``CXX`` when building |es|,
+or edit the system header files as shown in the following
+`patch for Ubuntu 20.04 <https://github.com/espressomd/espresso/issues/3654#issuecomment-612165048>`_.
 
 .. _Installing requirements on other Linux distributions:
 
@@ -129,7 +117,6 @@ Installing requirements on other Linux distributions
 Please refer to the following Dockerfiles to find the minimum set of packages
 required to compile |es| on other Linux distributions:
 
-* `CentOS <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-centos>`_
 * `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`_
 * `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`_
 * `OpenSUSE <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-opensuse>`_
@@ -504,12 +491,8 @@ using a CMake flag (see :ref:`Options and Variables`).
 - ``GSL`` Enables features relying on the GNU Scientific Library, e.g.
   :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
 
-- ``STOKESIAN_DYNAMICS`` Enables the Stokesian Dynamics feature for CPU
+- ``STOKESIAN_DYNAMICS`` Enables the Stokesian Dynamics feature
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
-
-- ``STOKESIAN_DYNAMICS_GPU`` Enables the Stokesian Dynamics feature for GPU
-  (see :ref:`Stokesian Dynamics`). Requires thrust/cuBLAS/cuSolver.
-  Requires ``EXPERIMENTAL_FEATURES``.
 
 
 

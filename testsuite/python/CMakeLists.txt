@@ -22,10 +22,6 @@ function(PYTHON_TEST)
     set(TEST_NUM_PROC ${TEST_MAX_NUM_PROC})
   endif()
 
-  if(WITH_COVERAGE)
-    set(PYPRESSO_OPTIONS --coverage)
-  endif(WITH_COVERAGE)
-
   if(EXISTS ${MPIEXEC})
     add_test(
       NAME ${TEST_NAME}
@@ -211,7 +207,7 @@ python_test(FILE time_series.py MAX_NUM_PROC 1)
 python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2 LABELS gpu)
-python_test(FILE stokesian_dynamics_cpu.py MAX_NUM_PROC 2)
+python_test(FILE stokesian_dynamics.py MAX_NUM_PROC 2)
 python_test(FILE elc.py MAX_NUM_PROC 2)
 python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2)
 python_test(FILE rotation.py MAX_NUM_PROC 1)

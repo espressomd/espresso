@@ -22,43 +22,39 @@ import espressomd.accumulators
 import espressomd.constraints
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 from tests_common import abspath
 
 s = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 
+@utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
 class StokesianDynamicsSetupTest(ut.TestCase):
     system = s
-    device = 'none'
 
-    def setUp(self):
+    def test_pbc_checks(self):
         self.system.box_l = [10] * 3
 
         self.system.time_step = 1.0
         self.system.cell_system.skin = 0.4
-
-        # unset SD integrator so we can test whether set_stokesian_dynamics()
-        # fails. set_nvt() is the only way to ensure that integ_switch is
-        # set to a different value than INTEG_METHOD_SD
         self.system.integrator.set_nvt()
 
-    def pbc_checks(self):
         self.system.periodicity = [0, 0, 1]
         with self.assertRaises(Exception):
             self.system.integrator.set_stokesian_dynamics(
-                viscosity=1.0, device=self.device, radii={0: 1.0})
+                viscosity=1.0, radii={0: 1.0})
 
         self.system.periodicity = [0, 0, 0]
         self.system.integrator.set_stokesian_dynamics(
-            viscosity=1.0, device=self.device, radii={0: 1.0})
+            viscosity=1.0, radii={0: 1.0})
 
         with self.assertRaises(Exception):
             self.system.periodicity = [0, 1, 0]
 
 
+@utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
 class StokesianDynamicsTest(ut.TestCase):
     system = s
-    device = 'none'
 
     # Digitized reference data of Figure 5b from
     # Durlofsky et al., J. Fluid Mech. 180, 21 (1987)
@@ -70,6 +66,10 @@ class StokesianDynamicsTest(ut.TestCase):
         self.system.periodicity = [0, 0, 0]
         self.system.cell_system.skin = 0.4
 
+    def tearDown(self):
+        self.system.constraints.clear()
+        self.system.part.clear()
+
     def falling_spheres(self, time_step, l_factor, t_factor,
                         sd_method='fts', sd_short=False):
         self.system.time_step = time_step
@@ -79,8 +79,7 @@ class StokesianDynamicsTest(ut.TestCase):
 
         self.system.integrator.set_stokesian_dynamics(
             viscosity=1.0 / (t_factor * l_factor),
-            device=self.device, radii={0: 1.0 * l_factor},
-            approximation_method=sd_method)
+            radii={0: 1.0 * l_factor}, approximation_method=sd_method)
 
         gravity = espressomd.constraints.Gravity(
             g=[0, -1.0 * l_factor / (t_factor**2), 0])
@@ -122,14 +121,22 @@ class StokesianDynamicsTest(ut.TestCase):
             self.assertLess(idx, intsteps, msg='Insufficient sampling')
             np.testing.assert_allclose(dist, 0, rtol=0, atol=0.5 * l_factor)
 
-    def tearDown(self):
-        self.system.constraints.clear()
-        self.system.part.clear()
+    def test_default(self):
+        self.falling_spheres(1.0, 1.0, 1.0)
+
+    def test_rescaled(self):
+        self.falling_spheres(1.0, 4.5, 2.5)
+
+    def test_different_time_step(self):
+        self.falling_spheres(0.7, 1.0, 1.0)
+
+    def test_default_ft(self):
+        self.falling_spheres(1.0, 1.0, 1.0, 'ft')
 
 
+@utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
 class StokesianDiffusionTest(ut.TestCase):
     system = s
-    device = 'none'
 
     kT = 1e-4
     R = 1.5
@@ -144,9 +151,14 @@ class StokesianDiffusionTest(ut.TestCase):
 
         self.system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
 
-    def check(self):
+    def tearDown(self):
+        self.system.constraints.clear()
+        self.system.part.clear()
+        self.system.thermostat.set_stokesian(kT=0)
+
+    def test(self):
         self.system.integrator.set_stokesian_dynamics(
-            viscosity=self.eta, device=self.device, radii={0: self.R})
+            viscosity=self.eta, radii={0: self.R})
         self.system.thermostat.set_stokesian(kT=self.kT, seed=42)
 
         intsteps = int(100000 / self.system.time_step)
@@ -197,7 +209,6 @@ class StokesianDiffusionTest(ut.TestCase):
             Dr_measured,
             delta=Dr_expected * 0.1)
 
-    def tearDown(self):
-        self.system.constraints.clear()
-        self.system.part.clear()
-        self.system.thermostat.set_stokesian(kT=0)
+
+if __name__ == '__main__':
+    ut.main()

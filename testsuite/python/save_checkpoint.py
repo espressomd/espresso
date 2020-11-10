@@ -124,7 +124,7 @@ if 'LB.OFF' in modes:
         system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1, seed=42)
     elif 'THERM.DPD' in modes and has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
-    elif 'THERM.SDM' in modes and (has_features('STOKESIAN_DYNAMICS') or has_features('STOKESIAN_DYNAMICS_GPU')):
+    elif 'THERM.SDM' in modes and has_features('STOKESIAN_DYNAMICS'):
         system.periodicity = [0, 0, 0]
         system.thermostat.set_stokesian(kT=1.0, seed=42)
     # set integrator
@@ -138,16 +138,11 @@ if 'LB.OFF' in modes:
         system.integrator.set_nvt()
     elif 'INT.BD' in modes:
         system.integrator.set_brownian_dynamics()
-    elif 'INT.SDM.CPU' in modes and has_features('STOKESIAN_DYNAMICS'):
+    elif 'INT.SDM' in modes and has_features('STOKESIAN_DYNAMICS'):
         system.periodicity = [0, 0, 0]
         system.integrator.set_stokesian_dynamics(
-            approximation_method='ft', device='cpu', viscosity=0.5,
-            radii={0: 1.5}, pair_mobility=False, self_mobility=True)
-    elif 'INT.SDM.GPU' in modes and has_features('STOKESIAN_DYNAMICS_GPU') and espressomd.gpu_available():
-        system.periodicity = [0, 0, 0]
-        system.integrator.set_stokesian_dynamics(
-            approximation_method='fts', device='gpu', viscosity=2.0,
-            radii={0: 1.0}, pair_mobility=True, self_mobility=False)
+            approximation_method='ft', viscosity=0.5, radii={0: 1.5},
+            pair_mobility=False, self_mobility=True)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(

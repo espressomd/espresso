@@ -24,6 +24,7 @@ with_fftw=${with_fftw}
 with_coverage=false
 with_cuda=true
 with_scafacos=true
+hide_gpu=true
 CC=gcc-8
 CXX=g++-8
 check_procs=${check_procs}

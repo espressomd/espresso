@@ -19,9 +19,8 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
-sd_device = "--gpu" if "gpu" in "@TEST_SUFFIX@" else "--cpu"
 sd_method = "--fts" if "fts" in "@TEST_SUFFIX@" else "--ft"
-if sd_method == "--fts" and sd_device == "--cpu":
+if sd_method == "--fts":
     y_min = -555
     intsteps = 5500
 else:
@@ -30,8 +29,7 @@ else:
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@SAMPLES_DIR@/dancing.py", script_suffix="@TEST_SUFFIX@",
-    gpu=(sd_device == "--gpu"), cmd_arguments=[sd_device, sd_method],
-    intsteps=intsteps,
+    cmd_arguments=[sd_method], intsteps=intsteps,
     ref_data="@CMAKE_SOURCE_DIR@/testsuite/python/data/dancing.txt")
 
 

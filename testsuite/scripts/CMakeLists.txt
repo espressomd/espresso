@@ -18,7 +18,8 @@ macro(PYTHON_SCRIPTS_TEST)
     configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency})
   endforeach(dependency)
   string(REGEX REPLACE "^test_" "${TEST_TYPE}_" TEST_NAME ${TEST_NAME})
-  add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE_CONFIGURED})
+  add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
+           ${TEST_FILE_CONFIGURED})
   set_tests_properties(${TEST_NAME} PROPERTIES FIXTURES_REQUIRED
                                                IMPORTLIB_WRAPPER)
   set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")

@@ -738,8 +738,7 @@ cdef class Thermostat:
             """
             Sets the SD thermostat with required parameters.
 
-            This thermostat requires the feature ``STOKESIAN_DYNAMICS`` or
-            ``STOKESIAN_DYNAMICS_GPU``.
+            This thermostat requires the feature ``STOKESIAN_DYNAMICS``.
 
             Parameters
             ----------

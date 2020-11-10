@@ -4,7 +4,7 @@ function(SAMPLE_TEST)
 endfunction(SAMPLE_TEST)
 
 # configure Python module importlib_wrapper.py
-add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso
+add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
          ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
 set_tests_properties(importlib_wrapper PROPERTIES FIXTURES_SETUP
                                                   IMPORTLIB_WRAPPER)
@@ -26,8 +26,6 @@ sample_test(FILE test_chamber_game.py)
 sample_test(FILE test_constraints.py)
 sample_test(FILE test_dancing.py SUFFIX cpu_ft)
 sample_test(FILE test_dancing.py SUFFIX cpu_fts)
-sample_test(FILE test_dancing.py SUFFIX gpu_ft LABELS "gpu")
-sample_test(FILE test_dancing.py SUFFIX gpu_fts LABELS "gpu")
 sample_test(FILE test_diffusion_coefficient.py)
 sample_test(FILE test_dpd.py)
 sample_test(FILE test_drude_bmimpf6.py SUFFIX cpu)

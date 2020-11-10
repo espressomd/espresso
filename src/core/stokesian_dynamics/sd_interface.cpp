@@ -19,14 +19,8 @@
 
 #include "sd_interface.hpp"
 
-#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
 #ifdef STOKESIAN_DYNAMICS
 #include "stokesian_dynamics/sd_cpu.hpp"
-#endif
-
-#ifdef STOKESIAN_DYNAMICS_GPU
-#include "stokesian_dynamics/sd_gpu.hpp"
-#endif
 
 #include "thermostat.hpp"
 
@@ -37,6 +31,7 @@
 #include <boost/range/algorithm.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>
 
+#include <string>
 #include <vector>
 
 namespace {
@@ -62,8 +57,6 @@ struct SD_particle_data {
 };
 
 double sd_viscosity = -1.0;
-
-enum { CPU, GPU, INVALID } device = INVALID;
 
 std::unordered_map<int, double> radius_dict;
 
@@ -117,35 +110,6 @@ void set_sd_viscosity(double eta) {
 }
 
 double get_sd_viscosity() { return sd_viscosity; }
-
-void set_sd_device(std::string const &dev) {
-#ifdef STOKESIAN_DYNAMICS
-  if (dev == "cpu") {
-    device = CPU;
-    return;
-  }
-#endif
-#ifdef STOKESIAN_DYNAMICS_GPU
-  if (dev == "gpu") {
-    device = GPU;
-
-    return;
-  }
-#endif
-
-  throw std::runtime_error("Invalid device " + dev);
-}
-
-std::string get_sd_device() {
-  switch (device) {
-  case CPU:
-    return "cpu";
-  case GPU:
-    return "gpu";
-  default:
-    return "invalid";
-  }
-}
 
 void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
   /* Check that radii are positive */
@@ -224,27 +188,10 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
       ++i;
     }
 
-    switch (device) {
-#ifdef STOKESIAN_DYNAMICS
-    case CPU:
-      v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                    std::sqrt(sd_kT / time_step),
-                    static_cast<std::size_t>(stokesian.rng_counter()),
-                    static_cast<std::size_t>(stokesian.rng_seed()), sd_flags);
-      break;
-#endif
-
-#ifdef STOKESIAN_DYNAMICS_GPU
-    case GPU:
-      v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                    std::sqrt(sd_kT / time_step),
-                    static_cast<std::size_t>(stokesian.rng_counter()),
-                    static_cast<std::size_t>(stokesian.rng_seed()), sd_flags);
-      break;
-#endif
-    default:
-      throw std::runtime_error("Stokesian dynamics device not set.");
-    }
+    v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
+                  std::sqrt(sd_kT / time_step),
+                  static_cast<std::size_t>(stokesian.rng_counter()),
+                  static_cast<std::size_t>(stokesian.rng_seed()), sd_flags);
   } else { // if (this_node == 0)
     v_sd.resize(particles.size() * 6);
   } // if (this_node == 0) {...} else
