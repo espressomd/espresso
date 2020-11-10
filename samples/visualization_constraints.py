@@ -109,9 +109,9 @@ elif args.shape == "Torus":
 
 elif args.shape == "Quarterpipe":
     system.constraints.add(
-        shape=espressomd.shapes.Quarterpipe(center=[25, 15, 15], axis=[1, 0, 0],
-                                            orientation=[0, 1, 1], radius=25,
-                                            height=30),
+        shape=espressomd.shapes.Quarterpipe(center=[25, 3, 3], axis=[1, 0, 0],
+                                            orientation=[0, 1, 1], radius=40,
+                                            height=50),
         particle_type=0, penetrable=True)
 
 

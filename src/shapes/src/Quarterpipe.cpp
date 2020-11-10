@@ -19,6 +19,7 @@
 
 #include <shapes/Quarterpipe.hpp>
 #include <utils/Vector.hpp>
+#include <utils/constants.hpp>
 #include <utils/math/abs.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 #include <utils/math/vec_rotate.hpp>
@@ -86,7 +87,7 @@ void Quarterpipe::calculate_dist(const Utils::Vector3d &pos, double &dist,
       // Distinguish the Zones
       if (dist_plane_1 >= 0. and dist_plane_2 >= 0.) {
         // Zone 9
-        auto corner_point = std::sqrt(2.) * m_radius * m_orientation;
+        auto corner_point = Utils::sqrt_2() * m_radius * m_orientation;
         vec = pos_projected - corner_point;
         dist = vec.norm();
       } else if (dist_plane_1 < 0. and dist_plane_2 < 0.) {
