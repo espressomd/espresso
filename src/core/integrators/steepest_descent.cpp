@@ -21,11 +21,11 @@
 
 #include "integrators/steepest_descent.hpp"
 
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 
 #include <utils/Vector.hpp>

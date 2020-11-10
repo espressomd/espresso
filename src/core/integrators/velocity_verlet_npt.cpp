@@ -22,6 +22,7 @@
 #ifdef NPT
 #include "velocity_verlet_npt.hpp"
 
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -29,7 +30,6 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
 #include "thermostats/npt_inline.hpp"

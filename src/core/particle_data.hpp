@@ -58,19 +58,6 @@ enum {
   ES_PART_CREATED = 1
 };
 
-#ifdef EXTERNAL_FORCES
-/**
- *  \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
- *  @c coord.
- */
-#define COORD_FIXED(coord) (2u << (coord))
-/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
- *  the coordinates is fixed. */
-#define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-#else
-#define COORD_FIXED(coord) (0)
-#endif
-
 /************************************************
  * Functions
  ************************************************/

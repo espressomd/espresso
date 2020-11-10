@@ -22,7 +22,6 @@
 #include "PartCfg.hpp"
 #include "errorhandling.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp"
 
 #include <utils/for_each_pair.hpp>
 

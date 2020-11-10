@@ -27,7 +27,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
 
