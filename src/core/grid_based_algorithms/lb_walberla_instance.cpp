@@ -65,9 +65,9 @@ REGISTER_CALLBACK(destruct_lb_walberla)
 
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau, double kT, unsigned int seed) {
-  Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity,
-                                         density * pow(agrid, 3), agrid, tau,
-                                         box_geo.length(), node_grid, kT, seed);
+  Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity, density,
+                                         agrid, tau, box_geo.length(),
+                                         node_grid, kT, seed);
   if (lb_walberla_instance) {
     lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
     lb_lbfluid_sanity_checks();

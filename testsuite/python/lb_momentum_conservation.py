@@ -62,7 +62,7 @@ class Momentum(object):
 
         # Initial momentum before integration = 0
         np.testing.assert_allclose(
-            self.system.analysis.linear_momentum(), [0., 0., 0.])
+            self.system.analysis.linear_momentum(), [0., 0., 0.], atol=1E-12)
 
         ext_fluid_force = self.system.volume() * np.array(
             LB_PARAMS['ext_force_density'])
