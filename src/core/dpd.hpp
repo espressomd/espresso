@@ -35,14 +35,6 @@
 
 struct IA_parameters;
 
-struct DPDParameters {
-  double gamma = 0.;
-  double k = 1.;
-  double cutoff = -1.;
-  int wf = 0;
-  double pref = 0.0;
-};
-
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
                    double r_c, int wf, double tgamma, double tr_c, int twf);
 void dpd_init();

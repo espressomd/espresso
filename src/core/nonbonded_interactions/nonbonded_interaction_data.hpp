@@ -27,7 +27,6 @@
 #include "Particle.hpp"
 #include "TabulatedPotential.hpp"
 #include "config.hpp"
-#include "dpd.hpp"
 
 #include <utils/index.hpp>
 #include <utils/math/sqr.hpp>
@@ -182,6 +181,15 @@ struct GayBerne_Parameters {
 struct Thole_Parameters {
   double scaling_coeff;
   double q1q2;
+};
+
+/** DPD potential */
+struct DPDParameters {
+  double gamma = 0.;
+  double k = 1.;
+  double cutoff = -1.;
+  int wf = 0;
+  double pref = 0.0;
 };
 
 /** Data structure containing the interaction parameters for non-bonded
