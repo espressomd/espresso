@@ -61,7 +61,7 @@ cdef extern from "thermostat.hpp":
     IF DPD:
         cdef cppclass DPDThermostat(BaseThermostat):
             pass
-    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+    IF STOKESIAN_DYNAMICS:
         cdef cppclass StokesianThermostat(BaseThermostat):
             pass
 
@@ -71,7 +71,7 @@ cdef extern from "thermostat.hpp":
     ThermalizedBondThermostat thermalized_bond
     IF DPD:
         DPDThermostat dpd
-    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+    IF STOKESIAN_DYNAMICS:
         StokesianThermostat stokesian
 
     void langevin_set_rng_seed(stdint.uint32_t seed)
@@ -79,7 +79,7 @@ cdef extern from "thermostat.hpp":
     void npt_iso_set_rng_seed(stdint.uint32_t seed)
     IF DPD:
         void dpd_set_rng_seed(stdint.uint32_t seed)
-    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+    IF STOKESIAN_DYNAMICS:
         void stokesian_set_rng_seed(stdint.uint32_t seed)
 
     void langevin_set_rng_counter(stdint.uint64_t counter)
@@ -87,11 +87,11 @@ cdef extern from "thermostat.hpp":
     void npt_iso_set_rng_counter(stdint.uint64_t counter)
     IF DPD:
         void dpd_set_rng_counter(stdint.uint64_t counter)
-    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+    IF STOKESIAN_DYNAMICS:
         void stokesian_set_rng_counter(stdint.uint64_t counter)
 
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
-    IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
+    IF STOKESIAN_DYNAMICS:
         void set_sd_kT(double kT)
         double get_sd_kT()
 

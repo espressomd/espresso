@@ -295,18 +295,23 @@ else
 fi
 
 if [ "${with_coverage}" = true ]; then
+    start "COVERAGE"
     cd "${builddir}"
+    echo "Running lcov and gcov..."
     lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
     lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
     lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
+    echo "Running python3-coverage..."
     python3 -m coverage combine testsuite/python
     python3 -m coverage xml
-    # Uploading report to Codecov
+    echo "Uploading to Codecov..."
+    codecov_opts="-X gcov -X coveragepy"
     if [ -z "${CODECOV_TOKEN}" ]; then
-        bash <(curl -s https://codecov.io/bash) -X gcov || echo "Codecov did not collect coverage reports"
-    else
-        bash <(curl -s https://codecov.io/bash) -X gcov -t "${CODECOV_TOKEN}" || echo "Codecov did not collect coverage reports"
+        codecov_opts="${codecov_opts} -t '${CODECOV_TOKEN}'"
     fi
+    bash <(curl --fail --silent --show-error https://codecov.io/bash 2>./codecov_stderr) ${codecov_opts} || echo "Codecov did not collect coverage reports"
+    cat ./codecov_stderr
+    end "COVERAGE"
 fi
 
 trap : 0
