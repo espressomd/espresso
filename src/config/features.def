@@ -26,10 +26,6 @@ ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY             implies ROTATION
 STOKESIAN_DYNAMICS              requires BLAS and LAPACK
 STOKESIAN_DYNAMICS              implies ROTATION
-# Needs cuBLAS, which is expected to be included with CUDA
-STOKESIAN_DYNAMICS_GPU          requires CUDA
-STOKESIAN_DYNAMICS_GPU          implies ROTATION
-STOKESIAN_DYNAMICS_GPU          requires EXPERIMENTAL_FEATURES
 
 /* Rotation */
 ROTATION
@@ -111,4 +107,3 @@ GSL external
 BLAS external
 LAPACK external
 STOKESIAN_DYNAMICS external
-STOKESIAN_DYNAMICS_GPU external

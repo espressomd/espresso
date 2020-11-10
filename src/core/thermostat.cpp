@@ -74,7 +74,7 @@ ThermalizedBondThermostat thermalized_bond = {};
 #ifdef DPD
 DPDThermostat dpd = {};
 #endif
-#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+#ifdef STOKESIAN_DYNAMICS
 StokesianThermostat stokesian = {};
 #endif
 
@@ -85,7 +85,7 @@ REGISTER_THERMOSTAT_CALLBACKS(thermalized_bond)
 #ifdef DPD
 REGISTER_THERMOSTAT_CALLBACKS(dpd)
 #endif
-#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+#ifdef STOKESIAN_DYNAMICS
 REGISTER_THERMOSTAT_CALLBACKS(stokesian)
 #endif
 
@@ -133,7 +133,7 @@ void philox_counter_increment() {
     dpd.rng_increment();
   }
 #endif
-#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+#ifdef STOKESIAN_DYNAMICS
   if (thermo_switch & THERMO_SD) {
     stokesian.rng_increment();
   }

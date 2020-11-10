@@ -316,7 +316,7 @@ struct ThermalizedBondThermostat : public BaseThermostat {};
 struct DPDThermostat : public BaseThermostat {};
 #endif
 
-#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+#ifdef STOKESIAN_DYNAMICS
 /** %Thermostat for Stokesian dynamics. */
 struct StokesianThermostat : public BaseThermostat {
   StokesianThermostat() { rng_initialize(0); }
@@ -343,7 +343,7 @@ NEW_THERMOSTAT(thermalized_bond)
 #ifdef DPD
 NEW_THERMOSTAT(dpd)
 #endif
-#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+#ifdef STOKESIAN_DYNAMICS
 NEW_THERMOSTAT(stokesian)
 #endif
 
@@ -355,7 +355,7 @@ extern ThermalizedBondThermostat thermalized_bond;
 #ifdef DPD
 extern DPDThermostat dpd;
 #endif
-#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
+#ifdef STOKESIAN_DYNAMICS
 extern StokesianThermostat stokesian;
 #endif
 
