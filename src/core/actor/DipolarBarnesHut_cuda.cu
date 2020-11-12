@@ -21,19 +21,21 @@
  *  The method concept is revealed within @cite burtscher11a
  */
 
-#include <cuda.h>
-
-#include "../cuda_init.hpp"
-#include "../cuda_utils.hpp"
 #include "config.hpp"
-#include <thrust/device_ptr.h>
-#include <thrust/reduce.h>
-
-typedef float dds_float;
 
 #ifdef DIPOLAR_BARNES_HUT
 
 #include "DipolarBarnesHut_cuda.cuh"
+
+#include "cuda_init.hpp"
+#include "cuda_utils.hpp"
+
+#include <thrust/device_ptr.h>
+#include <thrust/reduce.h>
+
+#include <cuda.h>
+
+typedef float dds_float;
 
 #define IND (blockDim.x * blockIdx.x + threadIdx.x)
 

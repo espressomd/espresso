@@ -28,8 +28,11 @@ using Utils::for_each_cartesian_pair;
 using Utils::for_each_cartesian_pair_if;
 using Utils::for_each_pair;
 
+#include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <numeric>
+#include <utility>
 #include <vector>
 
 using PairContainer = std::vector<std::pair<size_t, size_t>>;

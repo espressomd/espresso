@@ -31,6 +31,7 @@
 #include <boost/range/numeric.hpp>
 
 #include <cmath>
+#include <cstddef>
 
 namespace detail {
 template <typename T> T g_ewald(T alpha, T k2) {

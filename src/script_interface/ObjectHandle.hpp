@@ -25,6 +25,9 @@
 
 #include <boost/utility/string_ref.hpp>
 
+#include <memory>
+#include <string>
+
 namespace ScriptInterface {
 class Context;
 

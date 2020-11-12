@@ -20,8 +20,10 @@
 #define ES_SCAFACOS_SCAFACOS_HPP
 
 #include <fcs.h>
-#include <list>
+
 #include <mpi.h>
+
+#include <list>
 #include <string>
 #include <vector>
 

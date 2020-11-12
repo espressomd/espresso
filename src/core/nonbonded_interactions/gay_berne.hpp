@@ -31,13 +31,18 @@
  *  Implementation in \ref gay_berne.cpp.
  */
 
+#include "config.hpp"
+
+#ifdef GAY_BERNE
+
 #include "Particle.hpp"
 #include "nonbonded_interaction_data.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
-#ifdef GAY_BERNE
+#include <cmath>
 
 int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double sig, double cut, double k1, double k2,

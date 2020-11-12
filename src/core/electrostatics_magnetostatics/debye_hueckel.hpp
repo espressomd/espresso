@@ -21,16 +21,18 @@
 #ifndef DEBYE_HUECKEL_H
 #define DEBYE_HUECKEL_H
 /** \file
- *  Routines to calculate the Debye_Hueckel  Energy or/and Debye_Hueckel force
+ *  Routines to calculate the Debye-Hueckel energy and force
  *  for a particle pair.
  */
 #include "config.hpp"
 
 #ifdef ELECTROSTATICS
 
-#include "Particle.hpp"
+#include <utils/Vector.hpp>
 
-/** Structure to hold Debye-Hueckel Parameters. */
+#include <cmath>
+
+/** Structure to hold Debye-Hueckel parameters. */
 typedef struct {
   /** Cutoff for Debye-Hueckel interaction. */
   double r_cut;
@@ -38,22 +40,18 @@ typedef struct {
   double kappa;
 } Debye_hueckel_params;
 
-/** Structure containing the Debye-Hueckel parameters. */
+/** Debye-Hueckel parameters. */
 extern Debye_hueckel_params dh_params;
-
-/** \name Functions */
-/************************************************************/
-/*@{*/
 
 int dh_set_params(double kappa, double r_cut);
 
-/** Computes the Debye_Hueckel pair force and adds this
-    force to the particle forces.
-    @param q1q2      Product of the charges on p1 and p2.
-    @param d         Vector pointing from p1 to p2.
-    @param dist      Distance between p1 and p2.
-    @param force     returns the force on particle 1.
-*/
+/** Computes the Debye-Hueckel pair force and adds this
+ *  force to the particle forces.
+ *  @param q1q2      Product of the charges on p1 and p2.
+ *  @param d         Vector pointing from p1 to p2.
+ *  @param dist      Distance between p1 and p2.
+ *  @param force     returns the force on particle 1.
+ */
 inline void add_dh_coulomb_pair_force(double const q1q2,
                                       Utils::Vector3d const &d,
                                       double const dist,
@@ -61,7 +59,7 @@ inline void add_dh_coulomb_pair_force(double const q1q2,
   if (dist < dh_params.r_cut) {
     double fac;
     if (dh_params.kappa > 0.0) {
-      /* debye hueckel case: */
+      /* Debye-Hueckel case: */
       double kappa_dist = dh_params.kappa * dist;
       fac =
           q1q2 * (exp(-kappa_dist) / (dist * dist * dist)) * (1.0 + kappa_dist);
@@ -82,7 +80,6 @@ inline double dh_coulomb_pair_energy(double const q1q2, double const dist) {
   }
   return 0.0;
 }
-/*@}*/
 #endif
 
 #endif

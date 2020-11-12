@@ -19,6 +19,8 @@
 #ifndef ALGORITHM_LINK_CELL_HPP
 #define ALGORITHM_LINK_CELL_HPP
 
+#include <iterator>
+
 namespace Algorithm {
 
 /**

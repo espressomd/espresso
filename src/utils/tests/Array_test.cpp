@@ -19,15 +19,21 @@
 
 #define BOOST_TEST_MODULE Utils::Array test
 #define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
-#include <numeric>
-#include <sstream>
+#include <utils/Array.hpp>
+#include <utils/get.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/test/unit_test.hpp>
 
-#include "utils/Array.hpp"
+#include <algorithm>
+#include <iterator>
+#include <numeric>
+#include <sstream>
+#include <stdexcept>
+#include <type_traits>
+
 using Utils::Array;
 
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {

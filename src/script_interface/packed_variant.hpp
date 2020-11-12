@@ -21,9 +21,12 @@
 
 #include "Variant.hpp"
 
+#include <cstddef>
 #include <functional>
+#include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace ScriptInterface {
 using ObjectId = std::size_t;

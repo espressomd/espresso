@@ -26,6 +26,8 @@
 #include "core/virtual_sites.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
+#include <memory>
+
 namespace ScriptInterface {
 namespace VirtualSites {
 

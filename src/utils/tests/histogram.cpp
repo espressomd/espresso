@@ -22,6 +22,13 @@
 
 #include "utils/Histogram.hpp"
 
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <stdexcept>
+#include <utility>
+#include <vector>
+
 BOOST_AUTO_TEST_CASE(histogram) {
   std::array<size_t, 2> n_bins{{10, 10}};
   std::array<std::pair<double, double>, 2> limits{

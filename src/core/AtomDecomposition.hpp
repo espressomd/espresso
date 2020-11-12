@@ -22,12 +22,17 @@
 #ifndef ESPRESSO_ATOM_DECOMPOSITION_HPP
 #define ESPRESSO_ATOM_DECOMPOSITION_HPP
 
+#include "Particle.hpp"
 #include "ParticleDecomposition.hpp"
+#include "ghosts.hpp"
 
+#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
+#include <boost/optional.hpp>
 
+#include <utility>
 #include <vector>
 
 /**

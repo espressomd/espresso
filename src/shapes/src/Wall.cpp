@@ -21,6 +21,8 @@
 
 #include <shapes/Wall.hpp>
 
+#include <utils/Vector.hpp>
+
 namespace Shapes {
 
 void Wall::calculate_dist(const Utils::Vector3d &pos, double &dist,

@@ -22,14 +22,16 @@
 #include "config.hpp"
 
 #ifdef STOKESIAN_DYNAMICS
+#include "CellStructure.hpp"
 #include "ParticleRange.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 
 inline void
 stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {

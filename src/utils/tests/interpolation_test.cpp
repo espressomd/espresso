@@ -26,10 +26,15 @@ using Utils::Interpolation::bspline_3d;
 using Utils::Interpolation::bspline_3d_accumulate;
 using Utils::Interpolation::detail::ll_and_dist;
 
+#include "utils/Vector.hpp"
+#include "utils/math/bspline.hpp"
 #include "utils/math/gaussian.hpp"
 #include "utils/raster.hpp"
 
+#include <algorithm>
+#include <array>
 #include <limits>
+#include <vector>
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_1) {
   auto const block =

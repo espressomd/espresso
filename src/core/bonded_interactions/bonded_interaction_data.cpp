@@ -19,14 +19,12 @@
 #include "bonded_interaction_data.hpp"
 #include "interactions.hpp"
 
-#include <boost/algorithm/cxx11/any_of.hpp>
-#include <boost/range/algorithm/copy.hpp>
 #include <boost/range/numeric.hpp>
 
-#include <boost/range/algorithm/find.hpp>
-#include <errorhandling.hpp>
-
 #include <utils/constants.hpp>
+
+#include <algorithm>
+#include <stdexcept>
 
 std::vector<Bonded_ia_parameters> bonded_ia_params;
 

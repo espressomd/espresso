@@ -19,6 +19,7 @@
 #ifndef UTILS_LIST_CONTAINS_HPP
 #define UTILS_LIST_CONTAINS_HPP
 
+#include <algorithm>
 #include <iterator>
 
 namespace Utils {

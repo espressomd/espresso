@@ -36,6 +36,9 @@
 #include <utils/math/quaternion.hpp>
 #include <utils/math/rotation_matrix.hpp>
 
+#include <cmath>
+#include <utility>
+
 /** @brief Propagate angular velocities and update quaternions on a
  *  particle.
  */

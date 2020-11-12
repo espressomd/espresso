@@ -19,9 +19,17 @@
 #ifndef OBSERVABLES_CYLINDRICALFLUXDENSITYPROFILE_HPP
 #define OBSERVABLES_CYLINDRICALFLUXDENSITYPROFILE_HPP
 
+#include "BoxGeometry.hpp"
 #include "CylindricalPidProfileObservable.hpp"
-#include "integrate.hpp"
+#include "grid.hpp"
+
 #include <utils/Histogram.hpp>
+#include <utils/math/coordinate_transformation.hpp>
+
+#include <array>
+#include <cstddef>
+#include <utility>
+#include <vector>
 
 namespace Observables {
 class CylindricalFluxDensityProfile : public CylindricalPidProfileObservable {

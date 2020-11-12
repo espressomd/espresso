@@ -20,6 +20,7 @@
  */
 
 #include "galilei.hpp"
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -31,6 +32,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <algorithm>
 #include <utility>
 
 /** Stop particle motion by setting the velocity of each particle to zero. */

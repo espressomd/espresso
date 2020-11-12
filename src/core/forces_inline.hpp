@@ -23,9 +23,12 @@
 
 #include "config.hpp"
 
+#include "forces.hpp"
+
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
 #include "bonded_interactions/dihedral.hpp"
 #include "bonded_interactions/fene.hpp"
@@ -33,9 +36,6 @@
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
-#include "errorhandling.hpp"
-#include "exclusions.hpp"
-#include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
@@ -49,17 +49,14 @@
 #include "nonbonded_interactions/ljcos2.hpp"
 #include "nonbonded_interactions/ljgen.hpp"
 #include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "nonbonded_interactions/smooth_step.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
-#include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
-#include "rotation.hpp"
-#include "thermostat.hpp"
-#include "thermostats/langevin_inline.hpp"
 
 #ifdef DIPOLES
 #include "electrostatics_magnetostatics/dipole_inline.hpp"
@@ -70,9 +67,25 @@
 #include "bonded_interactions/bonded_coulomb_sr.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
+
 #ifdef DPD
 #include "dpd.hpp"
 #endif
+
+#include "Particle.hpp"
+#include "errorhandling.hpp"
+#include "exclusions.hpp"
+#include "npt.hpp"
+#include "rotation.hpp"
+#include "thermostat.hpp"
+#include "thermostats/langevin_inline.hpp"
+
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+
+#include <tuple>
 
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(Particle const &) { return {}; }

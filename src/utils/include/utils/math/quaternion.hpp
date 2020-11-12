@@ -25,11 +25,11 @@
  *  Quaternion algebra.
  */
 
-#include <cmath>
-#include <limits>
-
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
+
+#include <cmath>
+#include <limits>
 
 namespace Utils {
 

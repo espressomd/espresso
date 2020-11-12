@@ -18,6 +18,7 @@
  */
 #include <cmath>
 #include <shapes/Torus.hpp>
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 namespace Shapes {

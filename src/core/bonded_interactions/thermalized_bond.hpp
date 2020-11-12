@@ -36,6 +36,13 @@ extern int n_thermalized_bonds;
 #include "random.hpp"
 #include "thermostat.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+
+#include <cmath>
+#include <tuple>
+
 /** Set the parameters of a thermalized bond
  *
  *  @retval ES_OK on success

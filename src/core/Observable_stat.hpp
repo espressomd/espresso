@@ -26,7 +26,9 @@
 #include <utils/index.hpp>
 
 #include <algorithm>
-#include <utility>
+#include <cassert>
+#include <cstddef>
+#include <functional>
 #include <vector>
 
 /** Observable for the pressure and energy. */

@@ -19,15 +19,21 @@
 
 #include "ImmersedBoundaries.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "interactions.hpp"
 
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
+#include <mpi.h>
+
 #include <cstdio>
+#include <utility>
 
 /** Volume conservation.
  *  Calculate volumes, volume force and add it to each virtual particle.

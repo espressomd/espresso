@@ -25,8 +25,12 @@
 using Utils::Interpolation::bspline_3d_gradient;
 using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
+#include "utils/Vector.hpp"
+#include "utils/math/bspline.hpp"
 #include "utils/math/gaussian.hpp"
 #include "utils/raster.hpp"
+
+#include <array>
 
 BOOST_AUTO_TEST_CASE(number_of_points) {
   int count = 0;

@@ -21,16 +21,19 @@
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
+#include "Particle.hpp"
 #include "cells.hpp"
-#include "forces_inline.hpp"
+#include "forces.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/math/tensor_product.hpp>
+
+#include <stdexcept>
 
 namespace {
 /**

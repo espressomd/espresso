@@ -16,7 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <boost/mpi/collectives.hpp>
+
+#include "lb_interpolation.hpp"
 
 #include "communication.hpp"
 #include "config.hpp"
@@ -24,7 +25,11 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
+
 #include <utils/Vector.hpp>
+
+#include <algorithm>
+#include <stdexcept>
 
 namespace {
 InterpolationOrder interpolation_order = InterpolationOrder::linear;

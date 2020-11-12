@@ -23,6 +23,7 @@
  *  Implementation of \ref harmonic.hpp
  */
 #include "harmonic.hpp"
+#include "bonded_interaction_data.hpp"
 #include "interactions.hpp"
 
 #include <utils/constants.hpp>

@@ -22,7 +22,12 @@
 
 #include "config.hpp"
 
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <tuple>
 
 /** Set the IBM Tribend parameters.
  *  Also calculate and store the reference state.

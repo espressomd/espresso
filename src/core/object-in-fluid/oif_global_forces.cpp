@@ -19,19 +19,22 @@
 
 #include "oif_global_forces.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 #include "interactions.hpp"
 
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
+#include <utils/constants.hpp>
 #include <utils/math/triangle_functions.hpp>
+
+#include <mpi.h>
+
 using Utils::angle_btw_triangles;
 using Utils::area_triangle;
 using Utils::get_n_triangle;
-
-#include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 
 int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
                                  double V0, double kv) {

@@ -21,6 +21,7 @@
 
 #include <shapes/Slitpore.hpp>
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <cmath>

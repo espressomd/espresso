@@ -25,6 +25,7 @@
  */
 
 #include <cassert>
+#include <cstddef>
 #include <set>
 #include <unordered_map>
 

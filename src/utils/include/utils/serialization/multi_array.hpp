@@ -24,6 +24,8 @@
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <cstddef>
+
 namespace boost {
 namespace serialization {
 

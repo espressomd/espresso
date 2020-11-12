@@ -24,9 +24,16 @@
 #include "random.hpp"
 
 #include <utils/Accumulator.hpp>
+#include <utils/Vector.hpp>
 
+#include <algorithm>
 #include <map>
+#include <memory>
+#include <random>
+#include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace ReactionEnsemble {
 

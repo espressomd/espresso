@@ -19,12 +19,14 @@
 #ifndef LBBOUNDARIES_LBBOUNDARY_HPP
 #define LBBOUNDARIES_LBBOUNDARY_HPP
 
-#include <memory>
-
 #include "config.hpp"
+
 #include <shapes/NoWhere.hpp>
 #include <shapes/Shape.hpp>
+
 #include <utils/Vector.hpp>
+
+#include <memory>
 
 namespace LBBoundaries {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)

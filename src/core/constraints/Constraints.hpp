@@ -19,6 +19,7 @@
 #ifndef CORE_CONSTRAINTS_CONSTRAINTS_HPP
 #define CORE_CONSTRAINTS_CONSTRAINTS_HPP
 
+#include "Observable_stat.hpp"
 #include "grid.hpp"
 #include "statistics.hpp"
 

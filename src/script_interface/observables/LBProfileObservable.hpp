@@ -24,12 +24,16 @@
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
-#include <boost/range/algorithm.hpp>
-#include <iterator>
-#include <memory>
-
 #include "Observable.hpp"
 #include "core/observables/LBProfileObservable.hpp"
+
+#include <boost/range/algorithm.hpp>
+
+#include <cstddef>
+#include <iterator>
+#include <memory>
+#include <type_traits>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Observables {

@@ -25,7 +25,12 @@
 #include "core/cluster_analysis/ClusterStructure.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/cluster_analysis/Cluster.hpp"
 #include "script_interface/pair_criteria/pair_criteria.hpp"
+
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {

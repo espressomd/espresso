@@ -24,9 +24,12 @@
  */
 #include "angle_cosine.hpp"
 
+#include "bonded_interaction_data.hpp"
 #include "interactions.hpp"
 
 #include <utils/constants.hpp>
+
+#include <cmath>
 
 int angle_cosine_set_params(int bond_type, double bend, double phi0) {
   if (bond_type < 0)

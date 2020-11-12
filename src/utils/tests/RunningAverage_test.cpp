@@ -19,18 +19,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
-#include <limits>
-#include <numeric>
-
 #define BOOST_TEST_MODULE RunningAverage test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "utils/statistics/RunningAverage.hpp"
 
-/* random sequence */
 #include "random_sequence.hpp"
+
+#include <cmath>
+#include <cstddef>
+#include <iterator>
+#include <limits>
+#include <numeric>
 
 using namespace Testing;
 

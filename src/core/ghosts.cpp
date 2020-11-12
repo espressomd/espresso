@@ -44,6 +44,9 @@
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
+#include <cassert>
+#include <functional>
+#include <iterator>
 #include <vector>
 
 /** Tag for ghosts communications. */

@@ -18,15 +18,19 @@
  */
 
 #define BOOST_TEST_NO_MAIN
-#define BOOST_TEST_MODULE all_compare test
+#define BOOST_TEST_MODULE Utils::Mpi::gatherv_test test
 #define BOOST_TEST_DYN_LINK
-#include <boost/mpi.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "utils/mpi/gatherv.hpp"
-using Utils::Mpi::gatherv;
+#include <utils/mpi/gatherv.hpp>
 
+#include <boost/mpi.hpp>
+
+#include <algorithm>
 #include <string>
+#include <vector>
+
+using Utils::Mpi::gatherv;
 
 namespace mpi = boost::mpi;
 

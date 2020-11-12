@@ -21,7 +21,9 @@
 #include <boost/range/algorithm/remove_if.hpp>
 #include <boost/range/numeric.hpp>
 
+#include <algorithm>
 #include <cassert>
+#include <limits>
 #include <vector>
 
 namespace Accumulators {

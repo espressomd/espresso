@@ -21,6 +21,8 @@
 
 #include "Observable.hpp"
 #include "energy.hpp"
+
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

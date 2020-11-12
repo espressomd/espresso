@@ -27,6 +27,8 @@
 #include "config.hpp"
 #include "grid.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <tuple>
 
 /** Compute the cosine of the angle between three particles.

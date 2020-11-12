@@ -19,18 +19,20 @@
 #ifndef ESPRESSO_COULOMB_INLINE_HPP
 #define ESPRESSO_COULOMB_INLINE_HPP
 
-#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "config.hpp"
 
 #ifdef ELECTROSTATICS
-#include <utils/Vector.hpp>
-#include <utils/math/tensor_product.hpp>
 
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/reaction_field.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
+
+#include <utils/Vector.hpp>
+#include <utils/math/tensor_product.hpp>
 
 namespace Coulomb {
 inline Utils::Vector3d central_force(double const q1q2,

@@ -39,8 +39,11 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
+#include "integrate.hpp"
+#include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_loop.hpp"
+#include "virtual_sites.hpp"
 
 #include <profiler/profiler.hpp>
 

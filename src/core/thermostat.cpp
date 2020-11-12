@@ -33,6 +33,7 @@
 
 #include <boost/mpi.hpp>
 
+#include <algorithm>
 #include <cstdint>
 
 int thermo_switch = THERMO_OFF;

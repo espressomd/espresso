@@ -19,7 +19,7 @@
 #ifndef UTILS_MATH_GAUSSIAN_HPP
 #define UTILS_MATH_GAUSSIAN_HPP
 
-#include <utils/Vector.hpp>
+#include "utils/Vector.hpp"
 
 #include <cmath>
 

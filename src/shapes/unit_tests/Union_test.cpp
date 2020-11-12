@@ -19,14 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <memory>
-
 #define BOOST_TEST_MODULE Union test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include <shapes/Union.hpp>
 #include <shapes/Wall.hpp>
+
+#include <utils/Vector.hpp>
+
+#include <algorithm>
+#include <memory>
 
 BOOST_AUTO_TEST_CASE(dist_function) {
   {

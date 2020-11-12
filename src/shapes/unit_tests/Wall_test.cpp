@@ -23,7 +23,10 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <shapes/Shape.hpp>
 #include <shapes/Wall.hpp>
+
+#include <utils/Vector.hpp>
 
 bool check_distance_function(const Shapes::Shape &s) {
   for (int i = 0; i < 100; i++)

@@ -17,22 +17,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file */
-
 #include "reaction_ensemble.hpp"
 #include "Particle.hpp"
+#include "config.hpp"
 #include "energy.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
 #include "partCfg_global.hpp"
 #include "statistics.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/contains.hpp>
 #include <utils/index.hpp>
 
+#include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
+#include <iterator>
+#include <limits>
+#include <vector>
 
 namespace ReactionEnsemble {
 

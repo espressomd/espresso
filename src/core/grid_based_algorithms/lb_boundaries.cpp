@@ -28,6 +28,7 @@
 #include "grid_based_algorithms/lb_boundaries.hpp"
 
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
@@ -35,13 +36,14 @@
 #include "lbboundaries/LBBoundary.hpp"
 
 #include <utils/index.hpp>
-using Utils::get_linear_index;
-#include <utils/constants.hpp>
 
-#include <algorithm>
-#include <limits>
+#include <boost/range/adaptor/reversed.hpp>
+#include <boost/range/algorithm.hpp>
+
 #include <memory>
 #include <vector>
+
+using Utils::get_linear_index;
 
 namespace LBBoundaries {
 

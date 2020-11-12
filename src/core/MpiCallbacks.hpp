@@ -31,11 +31,14 @@
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/optional.hpp>
 #include <boost/range/algorithm/remove_if.hpp>
 
 #include <functional>
 #include <initializer_list>
+#include <memory>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 namespace Communication {

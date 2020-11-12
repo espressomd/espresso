@@ -33,6 +33,12 @@
 
 #include "bonded_interaction_data.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+
+#include <cmath>
+
 /** Set the parameters for the bonded Coulomb potential
  *
  *  @retval ES_OK on success

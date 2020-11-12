@@ -20,6 +20,7 @@
 #define UTILS_TYPE_TRAITS_HPP
 
 #include <climits>
+#include <cstddef>
 #include <type_traits>
 
 namespace Utils {

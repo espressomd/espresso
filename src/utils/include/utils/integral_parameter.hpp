@@ -21,7 +21,9 @@
 #ifndef ESPRESSO_INTEGRAL_PARAMETER_HPP
 #define ESPRESSO_INTEGRAL_PARAMETER_HPP
 
+#include <cstddef>
 #include <stdexcept>
+#include <utility>
 
 namespace Utils {
 namespace detail {

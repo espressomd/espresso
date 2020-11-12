@@ -23,12 +23,16 @@
 #define SCRIPT_INTERFACE_RDF_HPP
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
-
-#include <boost/range/algorithm.hpp>
-#include <iterator>
-#include <memory>
+#include "script_interface/observables/Observable.hpp"
 
 #include "core/observables/RDF.hpp"
+
+#include <boost/range/algorithm.hpp>
+
+#include <cstddef>
+#include <iterator>
+#include <memory>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Observables {

@@ -21,9 +21,14 @@
 
 #include "config.hpp"
 
+#include "CellStructure.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "cells.hpp"
+#include "integrate.hpp"
 #include "rotation.hpp"
+
+#include <utils/math/sqr.hpp>
 
 /** Propagate the velocities and positions. Integration steps before force
  *  calculation of the Velocity Verlet integrator: <br> \f[ v(t+0.5 \Delta t) =

@@ -22,7 +22,6 @@
 #include "config.hpp"
 
 #ifdef NPT
-#include "Particle.hpp"
 #include "ParticleRange.hpp"
 
 /** Special propagator for NpT isotropic.

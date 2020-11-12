@@ -37,15 +37,20 @@
 
 #ifdef P3M
 
-#include "fft.hpp"
-#include "p3m-common.hpp"
-#include "p3m-data_struct.hpp"
-#include "p3m_interpolation.hpp"
-#include "p3m_send_mesh.hpp"
+#include "electrostatics_magnetostatics/fft.hpp"
+#include "electrostatics_magnetostatics/p3m-common.hpp"
+#include "electrostatics_magnetostatics/p3m-data_struct.hpp"
+#include "electrostatics_magnetostatics/p3m_interpolation.hpp"
+#include "electrostatics_magnetostatics/p3m_send_mesh.hpp"
 
-#include <ParticleRange.hpp>
+#include "ParticleRange.hpp"
+
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
+
+#include <array>
+#include <cmath>
 
 /************************************************
  * data types

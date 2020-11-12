@@ -19,14 +19,16 @@
 #ifndef ESPRESSO_MEMCPY_ARCHIVE_HPP
 #define ESPRESSO_MEMCPY_ARCHIVE_HPP
 
-#include <utils/Span.hpp>
+#include "utils/Span.hpp"
 
 #include <boost/mpl/bool.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/serialization.hpp>
 
+#include <cstddef>
 #include <cstring>
+#include <type_traits>
 
 namespace Utils {
 /** @brief Type trait to indicate that a type is

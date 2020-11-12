@@ -36,11 +36,13 @@
 
 #include <utils/Cache.hpp>
 #include <utils/constants.hpp>
+#include <utils/keys.hpp>
 #include <utils/mpi/gatherv.hpp>
 
 #include <boost/algorithm/cxx11/copy_if.hpp>
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/scatter.hpp>
+#include <boost/optional.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/range/numeric.hpp>
 #include <boost/serialization/variant.hpp>
@@ -48,9 +50,9 @@
 #include <boost/variant.hpp>
 
 #include <cmath>
+#include <cstddef>
 #include <unordered_map>
 #include <unordered_set>
-#include <utils/keys.hpp>
 
 namespace {
 /**

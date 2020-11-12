@@ -24,27 +24,36 @@
  *  For more information about MMM1D, see \ref mmm1d.hpp "mmm1d.hpp".
  */
 
-#include "electrostatics_magnetostatics/mmm1d.hpp"
+#include "config.hpp"
 
 #ifdef ELECTROSTATICS
-#include "cells.hpp"
-#include "errorhandling.hpp"
-#include "grid.hpp"
-#include "mmm-common.hpp"
-#include "specfunc.hpp"
-#include "tuning.hpp"
+
+#include "electrostatics_magnetostatics/mmm1d.hpp"
 
 #include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/mmm-common.hpp"
+#include "electrostatics_magnetostatics/mmm-modpsi.hpp"
 
-#include <utils/strcat_alloc.hpp>
-using Utils::strcat_alloc;
+#include "cells.hpp"
+#include "errorhandling.hpp"
+#include "grid.hpp"
+#include "specfunc.hpp"
+#include "tuning.hpp"
+
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
+#include <utils/strcat_alloc.hpp>
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <limits>
 #include <tuple>
+#include <vector>
+
+using Utils::strcat_alloc;
 
 /** How many trial calculations in @ref mmm1d_tune */
 #define TEST_INTEGRATIONS 1000

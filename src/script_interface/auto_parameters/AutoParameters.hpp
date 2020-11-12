@@ -23,7 +23,11 @@
 #include "script_interface/ObjectHandle.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
+#include <stdexcept>
+#include <string>
+#include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace ScriptInterface {

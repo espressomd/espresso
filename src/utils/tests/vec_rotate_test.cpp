@@ -19,12 +19,14 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/vec_rotate.hpp>
 using Utils::vec_rotate;
 
 #include <cmath>
 #include <limits>
+#include <tuple>
 
 BOOST_AUTO_TEST_CASE(rotation) {
   using std::cos;

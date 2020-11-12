@@ -234,9 +234,6 @@ add_custom_target(
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py
           ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
-    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/stokesian_dynamics.py
-    ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND
     ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py
     ${CMAKE_CURRENT_BINARY_DIR})

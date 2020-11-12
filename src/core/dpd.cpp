@@ -21,9 +21,12 @@
 /** \file
  *  Implementation of dpd.hpp.
  */
-#include "dpd.hpp"
+#include "config.hpp"
 
 #ifdef DPD
+
+#include "dpd.hpp"
+
 #include "MpiCallbacks.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -35,10 +38,15 @@
 #include "random.hpp"
 #include "thermostat.hpp"
 
-#include <boost/mpi/collectives/reduce.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 #include <utils/math/tensor_product.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <functional>
 
 using Utils::Vector3d;
 

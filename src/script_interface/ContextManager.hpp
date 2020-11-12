@@ -40,8 +40,10 @@
 
 #include <utils/Factory.hpp>
 
+#include <cassert>
 #include <memory>
 #include <stdexcept>
+#include <string>
 
 namespace ScriptInterface {
 

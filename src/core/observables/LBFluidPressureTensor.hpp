@@ -22,6 +22,7 @@
 #include "Observable.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

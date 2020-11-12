@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "lb_interface.hpp"
+#include "BoxGeometry.hpp"
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
 #include "config.hpp"
@@ -26,18 +27,27 @@
 #include "integrate.hpp"
 #include "lb-d3q19.hpp"
 #include "lb_boundaries.hpp"
+#include "lb_constants.hpp"
 #include "lb_interpolation.hpp"
 #include "lb_walberla_instance.hpp"
 #include "lb_walberla_interface.hpp"
 
 #include <utils/Counter.hpp>
+#include <utils/Vector.hpp>
 #include <utils/index.hpp>
 using Utils::get_linear_index;
 
 #include <boost/serialization/vector.hpp>
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <fstream>
+#include <functional>
+#include <limits>
+#include <memory>
+#include <stdexcept>
+#include <string>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 

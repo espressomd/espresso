@@ -29,6 +29,8 @@ using namespace FieldCoupling;
 
 #include <utils/Vector.hpp>
 
+#include <type_traits>
+
 template <bool linear> struct Id {
   static constexpr const bool is_linear = linear;
   mutable int count = 0;

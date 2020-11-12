@@ -20,7 +20,10 @@
 #define CONSTRAINTS_HOMOGENEOUSMAGNETICFIELD_HPP
 
 #include "Constraint.hpp"
+#include "Observable_stat.hpp"
 #include "Particle.hpp"
+
+#include <utils/Vector.hpp>
 
 namespace Constraints {
 

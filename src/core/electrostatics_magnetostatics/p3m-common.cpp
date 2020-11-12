@@ -26,9 +26,11 @@
 #if defined(P3M) || defined(DP3M)
 #include "errorhandling.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cmath>
 #include <cstdio>
 
 /* For debug messages */

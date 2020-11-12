@@ -19,13 +19,18 @@
 #ifndef CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 #define CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 
-#include <memory>
-
 #include "Constraint.hpp"
+#include "Observable_stat.hpp"
 #include "Particle.hpp"
+#include "ParticleRange.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
 #include <shapes/NoWhere.hpp>
 #include <shapes/Shape.hpp>
+
+#include <utils/Vector.hpp>
+
+#include <memory>
 
 namespace Constraints {
 

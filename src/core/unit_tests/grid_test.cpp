@@ -23,8 +23,11 @@
 
 #include "grid.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 template <class T> auto const epsilon = std::numeric_limits<T>::epsilon();
 
