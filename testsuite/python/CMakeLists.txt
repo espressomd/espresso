@@ -133,7 +133,7 @@ python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE brownian_dynamics.py MAX_NUM_PROC 1)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
-python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1 LABELS gpu) #TODO WALBERLA 
+python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1) #TODO WALBERLA
 python_test(FILE domain_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt.py MAX_NUM_PROC 4)
 python_test(FILE integrator_steepest_descent.py MAX_NUM_PROC 4)
