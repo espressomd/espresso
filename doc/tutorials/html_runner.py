@@ -136,7 +136,24 @@ def convert_exercise2_to_code(nb):
             if lines[0].strip() == '```python' and lines[-1].strip() == '```':
                 source = '\n'.join(lines[1:-1]).strip()
                 nb['cells'][i] = nbformat.v4.new_code_cell(source=source)
+                nb['cells'][i]['metadata'] = cell['metadata']
                 nb['cells'][i]['metadata']['solution2'] = 'shown'
+
+
+def convert_exercise2_to_markdown(nb):
+    """
+    Walk through the notebook cells and convert exercise2 Python cells
+    to exercise2 Markdown cells using a fenced code block.
+    """
+    for i, cell in enumerate(nb['cells']):
+        if 'solution2' in cell['metadata']:
+            cell['metadata']['solution2'] = 'hidden'
+        # convert solution code cells into markdown cells
+        if cell['cell_type'] == 'code' and 'solution2' in cell['metadata']:
+            content = '```python\n' + cell['source'] + '\n```'
+            nb['cells'][i] = nbformat.v4.new_markdown_cell(source=content)
+            nb['cells'][i]['metadata'] = cell['metadata']
+            nb['cells'][i]['metadata']['solution2'] = 'hidden'
 
 
 def execute_notebook(nb, src, cell_separator, notebook_filepath):
@@ -207,6 +224,21 @@ def handle_ci_case(args):
         nbformat.write(nb, f)
 
 
+def handle_exercise2_case(args):
+    # parse original notebook
+    with open(args.input, encoding='utf-8') as f:
+        nb = nbformat.read(f, as_version=4)
+
+    if args.to_md:
+        convert_exercise2_to_markdown(nb)
+    else:
+        convert_exercise2_to_code(nb)
+
+    # write edited notebook
+    with open(args.input, 'w', encoding='utf-8') as f:
+        nbformat.write(nb, f)
+
+
 parser = argparse.ArgumentParser(description='Process Jupyter notebooks.',
                                  epilog=__doc__)
 subparsers = parser.add_subparsers(help='Submodules')
@@ -228,6 +260,17 @@ parser_ci.add_argument('--remove-empty-cells', action='store_true',
 parser_ci.add_argument('--execute', action='store_true',
                        help='run the notebook')
 parser_ci.set_defaults(callback=handle_ci_case)
+# exercise2 module
+parser_exercise2 = subparsers.add_parser(
+    'exercise2', help='module for exercise2 conversion (Markdown <-> Python)')
+parser_exercise2.add_argument('input', type=str, help='path to the Jupyter '
+                              'notebook (in-place conversion)')
+group_exercise2 = parser_exercise2.add_mutually_exclusive_group(required=True)
+group_exercise2.add_argument('--to-md', action='store_true',
+                             help='convert solution cells to Markdown')
+group_exercise2.add_argument('--to-py', action='store_true',
+                             help='convert solution cells to Python')
+parser_exercise2.set_defaults(callback=handle_exercise2_case)
 
 
 if __name__ == "__main__":

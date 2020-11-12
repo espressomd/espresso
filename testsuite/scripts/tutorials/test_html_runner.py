@@ -155,6 +155,7 @@ plt.show()
             code = '```python\n1\n```'
             cell_md = nbformat.v4.new_markdown_cell(source=code)
             cell_md['metadata']['solution2'] = 'shown'
+            cell_md['metadata']['key'] = 'value'
             nb['cells'].append(cell_md)
             cell_md = nbformat.v4.new_markdown_cell(source='1b')
             cell_md['metadata']['solution2'] = 'shown'
@@ -196,6 +197,7 @@ plt.show()
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
         self.assertEqual(cell['source'], '1')
+        self.assertEqual(cell['metadata']['key'], 'value')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'markdown')
         self.assertEqual(cell['source'], '1b')
@@ -211,6 +213,65 @@ plt.show()
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
         self.assertEqual(cell['source'], '3')
+        self.assertEqual(next(cells, 'EOF'), 'EOF')
+
+    def test_exercise2_conversion(self):
+        f_input = '@CMAKE_CURRENT_BINARY_DIR@/test_html_runner_exercise2_conversion.ipynb'
+        # setup
+        with open(f_input, 'w', encoding='utf-8') as f:
+            nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
+            # question and code answer
+            cell_md = nbformat.v4.new_markdown_cell(source='Question 1')
+            cell_md['metadata']['solution2_first'] = True
+            cell_md['metadata']['solution2'] = 'hidden'
+            nb['cells'].append(cell_md)
+            code = '```python\n1\n```'
+            cell_md = nbformat.v4.new_markdown_cell(source=code)
+            cell_md['metadata']['solution2'] = 'hidden'
+            cell_md['metadata']['key'] = 'value'
+            nb['cells'].append(cell_md)
+            nbformat.write(nb, f)
+        # run command and check for errors
+        cmd = ['exercise2', '--to-py', f_input]
+        try:
+            args = html_runner.parser.parse_args(cmd)
+            args.callback(args)
+        except BaseException:
+            self.failed_to_run(cmd)
+        # read processed notebook
+        with open(f_input, encoding='utf-8') as f:
+            nb_output = nbformat.read(f, as_version=4)
+        # check cells
+        cells = iter(nb_output['cells'])
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'markdown')
+        self.assertEqual(cell['source'], 'Question 1')
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'code')
+        self.assertEqual(cell['source'], '1')
+        self.assertEqual(cell['metadata']['solution2'], 'shown')
+        self.assertEqual(cell['metadata']['key'], 'value')
+        self.assertEqual(next(cells, 'EOF'), 'EOF')
+        # run command and check for errors
+        cmd = ['exercise2', '--to-md', f_input]
+        try:
+            args = html_runner.parser.parse_args(cmd)
+            args.callback(args)
+        except BaseException:
+            self.failed_to_run(cmd)
+        # read processed notebook
+        with open(f_input, encoding='utf-8') as f:
+            nb_output = nbformat.read(f, as_version=4)
+        # check cells
+        cells = iter(nb_output['cells'])
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'markdown')
+        self.assertEqual(cell['source'], 'Question 1')
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'markdown')
+        self.assertEqual(cell['source'], '```python\n1\n```')
+        self.assertEqual(cell['metadata']['solution2'], 'hidden')
+        self.assertEqual(cell['metadata']['key'], 'value')
         self.assertEqual(next(cells, 'EOF'), 'EOF')
 
 
