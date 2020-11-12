@@ -89,6 +89,13 @@ def add_cell_from_script(nb, filepath):
     nb['cells'].append(cell_code)
 
 
+def remove_empty_cells(nb):
+    for i in range(len(nb['cells']) - 1, 0, -1):
+        cell = nb['cells'][i]
+        if cell['source'].strip() == '':
+            nb['cells'].pop(i)
+
+
 def disable_plot_interactivity(nb):
     """
     Replace all occurrences of the magic command ``%matplotlib notebook``
@@ -133,32 +140,20 @@ def split_matplotlib_cells(nb):
 
 def convert_exercise2_to_code(nb):
     """
-    Walk through the notebook cells and remove metadata associated with
-    the ``exercise2`` plugin from the contributed nbextensions. Solution
-    Markdown cells containing python code are converted to code cells.
+    Walk through the notebook cells and convert exercise2 Markdown cells
+    containing fenced python code to exercise2 code cells.
     """
-    for i in range(len(nb['cells']) - 1, 0, -1):
-        cell = nb['cells'][i]
-        cell_above = nb['cells'][i - 1]
-        # remove empty code cells after a solution cell
-        if cell['cell_type'] == 'code' and cell['source'].strip() == '' \
-                and 'solution2' in cell_above['metadata'] \
-                and 'solution2_first' not in cell_above['metadata'] \
-                and 'solution2' not in cell['metadata']:
-            nb['cells'].pop(i)
-            continue
+    for i, cell in enumerate(nb['cells']):
+        if 'solution2' in cell['metadata']:
+            cell['metadata']['solution2'] = 'shown'
         # convert solution markdown cells into code cells
         if cell['cell_type'] == 'markdown' and 'solution2' in cell['metadata'] \
                 and 'solution2_first' not in cell['metadata']:
             lines = cell['source'].strip().split('\n')
-            if lines[0].startswith(
-                    '```python') and lines[-1].startswith('```'):
+            if lines[0].strip() == '```python' and lines[-1].strip() == '```':
                 source = '\n'.join(lines[1:-1]).strip()
                 nb['cells'][i] = nbformat.v4.new_code_cell(source=source)
-        # remove exercise2 metadata
-        for key in ('solution2', 'solution2_first'):
-            if key in cell['metadata']:
-                del cell['metadata'][key]
+                nb['cells'][i]['metadata']['solution2'] = 'shown'
 
 
 def execute_notebook(nb, src, cell_separator):
@@ -199,6 +194,7 @@ if args.scripts:
 # convert solution cells to code cells
 if args.exercise2:
     convert_exercise2_to_code(nb)
+    remove_empty_cells(nb)
 
 # disable plot interactivity
 disable_plot_interactivity(nb)
