@@ -26,23 +26,6 @@ notebook can then be converted to HTML externally.
 """
 
 import argparse
-
-parser = argparse.ArgumentParser(description='Process Jupyter notebooks.',
-                                 epilog=__doc__)
-parser.add_argument('--input', type=str, nargs=1, required=True,
-                    help='Path to the original Jupyter notebook')
-parser.add_argument('--output', type=str, nargs=1,
-                    help='Path to the processed Jupyter notebook')
-parser.add_argument('--substitutions', nargs='*',
-                    help='Variables to substitute')
-parser.add_argument('--scripts', nargs='*',
-                    help='Scripts to insert in new cells')
-parser.add_argument('--exercise2', action='store_true',
-                    help='Convert exercise2 solutions into code cells')
-parser.add_argument('--execute', action='store_true',
-                    help='Run the script')
-args = parser.parse_args()
-
 import nbformat
 import re
 import os
@@ -156,7 +139,7 @@ def convert_exercise2_to_code(nb):
                 nb['cells'][i]['metadata']['solution2'] = 'shown'
 
 
-def execute_notebook(nb, src, cell_separator):
+def execute_notebook(nb, src, cell_separator, notebook_filepath):
     """
     Run the notebook in a python3 kernel. The ESPResSo visualizers are
     disabled to prevent the kernel from crashing and to allow running
@@ -176,44 +159,77 @@ def execute_notebook(nb, src, cell_separator):
     set_code_cells(nb, src.split(cell_separator))
 
 
-notebook_filepath = args.input[0]
-if args.output:
-    notebook_filepath_edited = args.output[0]
-else:
-    notebook_filepath_edited = notebook_filepath + '~'
+def handle_ci_case(args):
+    notebook_filepath = args.input
+    if args.output:
+        notebook_filepath_edited = args.output
+    else:
+        notebook_filepath_edited = notebook_filepath + '~'
 
-# parse original notebook
-with open(notebook_filepath, encoding='utf-8') as f:
-    nb = nbformat.read(f, as_version=4)
+    # parse original notebook
+    with open(notebook_filepath, encoding='utf-8') as f:
+        nb = nbformat.read(f, as_version=4)
 
-# add new cells containing the solutions
-if args.scripts:
-    for filepath in args.scripts:
-        add_cell_from_script(nb, filepath)
+    # add new cells containing the solutions
+    if args.scripts:
+        for filepath in args.scripts:
+            add_cell_from_script(nb, filepath)
 
-# convert solution cells to code cells
-if args.exercise2:
-    convert_exercise2_to_code(nb)
-    remove_empty_cells(nb)
+    # convert solution cells to code cells
+    if args.exercise2:
+        convert_exercise2_to_code(nb)
 
-# disable plot interactivity
-disable_plot_interactivity(nb)
+    # remove empty cells (e.g. those below exercise2 cells)
+    if args.remove_empty_cells:
+        remove_empty_cells(nb)
 
-# guard against a jupyter bug involving matplotlib
-split_matplotlib_cells(nb)
+    # disable plot interactivity
+    disable_plot_interactivity(nb)
 
-if args.substitutions or args.execute:
-    # substitute global variables
-    cell_separator = '\n##{}\n'.format(uuid.uuid4().hex)
-    src = cell_separator.join(get_code_cells(nb))
-    new_values = args.substitutions or []
-    parameters = dict(x.split('=', 1) for x in new_values)
-    src = iw.substitute_variable_values(src, strings_as_is=True,
-                                        keep_original=False, **parameters)
-    set_code_cells(nb, src.split(cell_separator))
+    # guard against a jupyter bug involving matplotlib
+    split_matplotlib_cells(nb)
+
+    if args.substitutions or args.execute:
+        # substitute global variables
+        cell_separator = '\n##{}\n'.format(uuid.uuid4().hex)
+        src = cell_separator.join(get_code_cells(nb))
+        new_values = args.substitutions or []
+        parameters = dict(x.split('=', 1) for x in new_values)
+        src = iw.substitute_variable_values(src, strings_as_is=True,
+                                            keep_original=False, **parameters)
+        set_code_cells(nb, src.split(cell_separator))
+
     if args.execute:
-        execute_notebook(nb, src, cell_separator)
+        execute_notebook(nb, src, cell_separator, args.input)
 
-# write edited notebook
-with open(notebook_filepath_edited, 'w', encoding='utf-8') as f:
-    nbformat.write(nb, f)
+    # write edited notebook
+    with open(notebook_filepath_edited, 'w', encoding='utf-8') as f:
+        nbformat.write(nb, f)
+
+
+parser = argparse.ArgumentParser(description='Process Jupyter notebooks.',
+                                 epilog=__doc__)
+subparsers = parser.add_subparsers(help='Submodules')
+# CI module
+parser_ci = subparsers.add_parser(
+    'ci', help='module for CI (variable substitution, code execution, etc.)')
+parser_ci.add_argument('--input', type=str, required=True,
+                       help='path to the original Jupyter notebook')
+parser_ci.add_argument('--output', type=str,
+                       help='path to the processed Jupyter notebook')
+parser_ci.add_argument('--substitutions', nargs='*',
+                       help='variables to substitute')
+parser_ci.add_argument('--scripts', nargs='*',
+                       help='scripts to insert in new cells')
+parser_ci.add_argument('--exercise2', action='store_true',
+                       help='convert exercise2 solutions into code cells')
+parser_ci.add_argument('--remove-empty-cells', action='store_true',
+                       help='remove empty cells')
+parser_ci.add_argument('--execute', action='store_true',
+                       help='run the notebook')
+parser_ci.set_defaults(callback=handle_ci_case)
+
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    args.callback(args)

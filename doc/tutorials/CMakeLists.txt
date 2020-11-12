@@ -60,9 +60,10 @@ function(NB_EXPORT)
         "${NB_FILE};${NB_EXPORT_ADD_SCRIPTS};${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py;${CMAKE_BINARY_DIR}/testsuite/scripts/importlib_wrapper.py"
       COMMAND
         ${CMAKE_BINARY_DIR}/pypresso
-        ${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py --execute --exercise2
-        --input ${NB_FILE} --output ${NB_FILE_RUN} --substitutions
-        ${NB_EXPORT_VAR_SUBST} --scripts ${NB_EXPORT_ADD_SCRIPTS})
+        ${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py ci --execute
+        --exercise2 --remove-empty-cells --input ${NB_FILE} --output
+        ${NB_FILE_RUN} --substitutions ${NB_EXPORT_VAR_SUBST} --scripts
+        ${NB_EXPORT_ADD_SCRIPTS})
   else()
     set(NB_FILE_RUN ${NB_FILE})
   endif()
@@ -72,7 +73,7 @@ function(NB_EXPORT)
     DEPENDS ${NB_FILE_RUN};${NB_EXPORT_ADD_SCRIPTS}
     COMMAND
       ${CMAKE_BINARY_DIR}/pypresso
-      ${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py --exercise2 --input
+      ${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py ci --exercise2 --input
       ${NB_FILE_RUN} --output ${NB_FILE_RUN}~
     COMMAND ${IPYTHON_EXECUTABLE} nbconvert --to "html" --output ${HTML_FILE}
             ${NB_FILE_RUN}~)
@@ -82,7 +83,7 @@ function(NB_EXPORT)
     DEPENDS ${NB_FILE}
     COMMAND
       ${CMAKE_BINARY_DIR}/pypresso
-      ${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py --exercise2 --input
+      ${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py ci --exercise2 --input
       ${NB_FILE} --output ${NB_FILE}~
     COMMAND ${IPYTHON_EXECUTABLE} nbconvert --to "python" --output ${PY_FILE}
             ${NB_FILE}~)

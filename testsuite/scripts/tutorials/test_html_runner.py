@@ -18,8 +18,11 @@
 import unittest as ut
 import os
 import sys
-import subprocess
 import nbformat
+import traceback
+
+sys.path.insert(0, '@CMAKE_BINARY_DIR@/doc/tutorials')
+import html_runner
 
 
 class HtmlRunner(ut.TestCase):
@@ -69,6 +72,12 @@ plt.show()
             "version": ".".join(map(str, sys.version_info[:3]))}
     }
 
+    def failed_to_run(self, cmd):
+        traceback.print_exc()
+        self.fail('Could not run @CMAKE_BINARY_DIR@/pypresso '
+                  '@CMAKE_BINARY_DIR@/doc/tutorials/html_runner.py ' +
+                  ' '.join(cmd))
+
     def test_html_wrapper(self):
         f_input = '@CMAKE_CURRENT_BINARY_DIR@/test_html_runner_notebook.ipynb'
         f_output = '@CMAKE_CURRENT_BINARY_DIR@/test_html_runner_notebook.run.ipynb'
@@ -85,18 +94,18 @@ plt.show()
             cell_code = nbformat.v4.new_code_cell(source=self.cell_py_src)
             nb['cells'].append(cell_code)
             nbformat.write(nb, f)
-        # run command
-        cmd = ['@CMAKE_BINARY_DIR@/pypresso',
-               '@CMAKE_BINARY_DIR@/doc/tutorials/html_runner.py',
+        # run command and check for errors
+        cmd = ['ci',
                '--input', f_input,
                '--output', f_output,
                '--scripts', f_script,
                '--substitutions', 'global_var=20',
                '--execute']
-        print('Running command ' + ' '.join(cmd))
-        completedProc = subprocess.run(cmd)
-        # check the command ran without any error
-        self.assertEqual(completedProc.returncode, 0, 'non-zero return code')
+        try:
+            args = html_runner.parser.parse_args(cmd)
+            args.callback(args)
+        except BaseException:
+            self.failed_to_run(cmd)
         self.assertTrue(os.path.isfile(f_output), f_output + ' not created')
         # read processed notebook
         with open(f_output, encoding='utf-8') as f:
@@ -164,17 +173,17 @@ plt.show()
             cell_code = nbformat.v4.new_code_cell(source='3')
             nb['cells'].append(cell_code)
             nbformat.write(nb, f)
-        # run command
-        cmd = ['@CMAKE_BINARY_DIR@/pypresso',
-               '@CMAKE_BINARY_DIR@/doc/tutorials/html_runner.py',
+        # run command and check for errors
+        cmd = ['ci',
                '--input', f_input,
                '--output', f_output,
                '--substitutions', 'global_var=20',
-               '--exercise2']
-        print('Running command ' + ' '.join(cmd))
-        completedProc = subprocess.run(cmd)
-        # check the command ran without any error
-        self.assertEqual(completedProc.returncode, 0, 'non-zero return code')
+               '--exercise2', '--remove-empty-cells']
+        try:
+            args = html_runner.parser.parse_args(cmd)
+            args.callback(args)
+        except BaseException:
+            self.failed_to_run(cmd)
         self.assertTrue(os.path.isfile(f_output), f_output + ' not created')
         # read processed notebook
         with open(f_output, encoding='utf-8') as f:
