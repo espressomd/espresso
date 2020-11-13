@@ -16,11 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <algorithm>
-#include <memory>
-#include <numeric>
-#include <type_traits>
-#include <vector>
 
 #define BOOST_TEST_MODULE ParticleIterator test
 #define BOOST_TEST_DYN_LINK
@@ -33,6 +28,13 @@ using Testing::Particle;
 using Cell = Testing::Cell<Particle>;
 
 #include "ParticleIterator.hpp"
+
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+#include <memory>
+#include <numeric>
+#include <vector>
 
 std::vector<std::unique_ptr<Cell>> make_cells(std::size_t n) {
   std::vector<std::unique_ptr<Cell>> cells(n);

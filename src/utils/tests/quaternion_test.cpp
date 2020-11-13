@@ -21,9 +21,12 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <limits>
-
 #include "utils/math/quaternion.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <cmath>
+#include <limits>
 
 constexpr int w = -5;
 constexpr int x = 2;

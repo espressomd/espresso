@@ -26,11 +26,17 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
 #include <utils/statistics/RunningAverage.hpp>
 
 #include <boost/range/algorithm/max_element.hpp>
 #include <boost/range/algorithm/min_element.hpp>
-#include <nonbonded_interactions/nonbonded_interaction_data.hpp>
+
+#include <mpi.h>
+
+#include <algorithm>
+#include <cmath>
 
 int timing_samples = 10;
 

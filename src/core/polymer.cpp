@@ -29,16 +29,25 @@
 
 #include "polymer.hpp"
 
+#include "BoxGeometry.hpp"
 #include "constraints.hpp"
+#include "constraints/Constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
+#include "grid.hpp"
 #include "random.hpp"
+#include "statistics.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/vec_rotate.hpp>
 
+#include <boost/optional.hpp>
+
 #include <cmath>
+#include <cstddef>
+#include <memory>
 #include <stdexcept>
+#include <vector>
 
 template <class RNG> static Utils::Vector3d random_position(RNG &rng) {
   Utils::Vector3d v;

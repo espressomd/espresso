@@ -28,6 +28,14 @@
 
 #include <boost/range/algorithm/transform.hpp>
 
+#include <cstddef>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
 namespace ScriptInterface {
 namespace detail {
 struct type_label_visitor : boost::static_visitor<std::string> {

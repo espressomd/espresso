@@ -30,7 +30,6 @@
  */
 
 #include "PartCfg.hpp"
-#include "Particle.hpp"
 
 #include <utils/Vector.hpp>
 

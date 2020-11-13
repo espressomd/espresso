@@ -29,11 +29,18 @@
  *  Implementation in \ref dihedral.cpp.
  */
 
+#include "BoxGeometry.hpp"
 #include "bonded_interaction_data.hpp"
+#include "config.hpp"
 #include "grid.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+
+#include <boost/optional.hpp>
+
+#include <cmath>
+#include <tuple>
 
 /** set dihedral parameters
  *

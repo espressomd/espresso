@@ -22,7 +22,12 @@
 #include "grid.hpp"
 #include "particle_data.hpp"
 
+#include <utils/Span.hpp>
+
 #include <boost/algorithm/clamp.hpp>
+
+#include <algorithm>
+#include <cstddef>
 
 void PartCfg::update() {
   if (m_valid)

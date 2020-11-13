@@ -19,7 +19,11 @@
 
 #include <shapes/SimplePore.hpp>
 
+#include <utils/Vector.hpp>
+
 #include <cassert>
+#include <cmath>
+#include <tuple>
 
 namespace Shapes {
 /**

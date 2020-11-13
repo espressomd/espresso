@@ -19,8 +19,18 @@
 #ifndef OBSERVABLES_CYLINDRICALVELOCITYPROFILE_HPP
 #define OBSERVABLES_CYLINDRICALVELOCITYPROFILE_HPP
 
+#include "BoxGeometry.hpp"
 #include "CylindricalPidProfileObservable.hpp"
+#include "grid.hpp"
+
 #include <utils/Histogram.hpp>
+#include <utils/Span.hpp>
+#include <utils/math/coordinate_transformation.hpp>
+
+#include <array>
+#include <cstddef>
+#include <utility>
+#include <vector>
 
 namespace Observables {
 class CylindricalVelocityProfile : public CylindricalPidProfileObservable {

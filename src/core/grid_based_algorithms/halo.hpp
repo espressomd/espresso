@@ -29,7 +29,12 @@
 #define _HALO_HPP
 
 #include "grid_based_algorithms/lattice.hpp"
+
+#include <utils/Vector.hpp>
+
 #include <mpi.h>
+
+#include <vector>
 
 /** \name Types of halo communications */
 /*@{*/

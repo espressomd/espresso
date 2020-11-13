@@ -26,6 +26,8 @@
 #include "fene.hpp"
 #include "interactions.hpp"
 
+#include "bonded_interaction_data.hpp"
+
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 

@@ -85,7 +85,13 @@
  */
 #include "ParticleList.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <boost/mpi/communicator.hpp>
+
+#include <cstddef>
+#include <utility>
+#include <vector>
 
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/

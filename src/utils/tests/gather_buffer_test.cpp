@@ -18,12 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <random>
-#include <string>
-#include <vector>
-
-#include <boost/mpi.hpp>
-
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE gather_buffer test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
@@ -31,6 +25,15 @@
 #include <boost/test/unit_test.hpp>
 
 #include "utils/mpi/gather_buffer.hpp"
+
+#include <boost/mpi.hpp>
+
+#include <algorithm>
+#include <iterator>
+#include <string>
+#include <tuple>
+#include <vector>
+
 using Utils::Mpi::gather_buffer;
 namespace mpi = boost::mpi;
 

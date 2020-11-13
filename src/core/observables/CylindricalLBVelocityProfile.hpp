@@ -21,6 +21,9 @@
 
 #include "CylindricalLBProfileObservable.hpp"
 
+#include <cstddef>
+#include <vector>
+
 namespace Observables {
 class CylindricalLBVelocityProfile : public CylindricalLBProfileObservable {
 public:

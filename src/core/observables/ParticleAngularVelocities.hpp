@@ -21,8 +21,11 @@
 
 #include "PidObservable.hpp"
 #include "integrate.hpp"
-
 #include "rotation.hpp"
+
+#include <utils/Span.hpp>
+
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

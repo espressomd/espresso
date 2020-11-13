@@ -19,10 +19,10 @@
 #ifndef OPTIONAL_COUNTER_HPP
 #define OPTIONAL_COUNTER_HPP
 
+#include <utils/Counter.hpp>
+
 #include <cstdint>
 #include <utility>
-
-#include <utils/Counter.hpp>
 
 /** Re-implementation of a boost::optional for a RNG counter.
  *

@@ -22,6 +22,10 @@
 
 #include "utils/Accumulator.hpp"
 
+#include <algorithm>
+#include <limits>
+#include <vector>
+
 BOOST_AUTO_TEST_CASE(accumulator) {
   auto acc = Utils::Accumulator(4);
   auto test_data1 = std::vector<double>{{0.0, 1.0, 2.0, 3.0}};

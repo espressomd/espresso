@@ -24,6 +24,7 @@
 
 #include "memory.hpp"
 
+#include <cstddef>
 #include <cstring>
 
 namespace Utils {

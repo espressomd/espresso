@@ -43,17 +43,18 @@
 #include "grid_based_algorithms/lb-d3q19.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 
-#include <array>
-#include <boost/optional.hpp>
-#include <memory>
-
-#include "errorhandling.hpp"
-
 #include "halo.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/Span.hpp>
-#include <utils/serialization/multi_array.hpp>
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 
 /** Counter for the RNG */
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;

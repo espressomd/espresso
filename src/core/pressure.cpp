@@ -22,21 +22,36 @@
  *  Implementation of pressure.hpp.
  */
 
+#include "pressure.hpp"
 #include "Observable_stat.hpp"
+#include "Particle.hpp"
+#include "ParticleRange.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "config.hpp"
 #include "event.hpp"
+#include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "npt.hpp"
 #include "pressure_inline.hpp"
 #include "reduce_observable_stat.hpp"
 #include "virtual_sites.hpp"
-
-#include <boost/range/algorithm/copy.hpp>
 
 #include "short_range_loop.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
+
+#include <boost/range/algorithm/copy.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <utility>
 
 nptiso_struct nptiso = {0.0,
                         0.0,

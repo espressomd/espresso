@@ -40,9 +40,13 @@
 
 #include "lbboundaries/LBBoundary.hpp"
 
+#include "config.hpp"
+
 #include <utils/Span.hpp>
 
 #include <array>
+#include <memory>
+#include <vector>
 
 namespace LBBoundaries {
 using LB_Fluid = std::array<Utils::Span<double>, 19>;

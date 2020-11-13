@@ -26,12 +26,14 @@
  *  Random number generation using Philox.
  */
 
-#include <Random123/philox.h>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 
+#include <Random123/philox.h>
+
+#include <cstddef>
 #include <random>
 #include <vector>
 

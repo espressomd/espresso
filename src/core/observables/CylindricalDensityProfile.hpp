@@ -20,8 +20,17 @@
 #define OBSERVABLES_CYLINDRICALDENSITYPROFILE_HPP
 
 #include "CylindricalPidProfileObservable.hpp"
+
+#include "BoxGeometry.hpp"
+#include "grid.hpp"
+
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
+
+#include <array>
+#include <cstddef>
+#include <utility>
+#include <vector>
 
 namespace Observables {
 class CylindricalDensityProfile : public CylindricalPidProfileObservable {

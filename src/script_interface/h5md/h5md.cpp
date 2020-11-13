@@ -29,6 +29,9 @@
 #include "core/grid.hpp"
 #include "core/integrate.hpp"
 
+#include <cmath>
+#include <string>
+
 namespace ScriptInterface {
 namespace Writer {
 Variant H5md::do_call_method(const std::string &name,

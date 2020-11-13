@@ -22,16 +22,22 @@
 #ifndef ESPRESSO_H5MD_CORE_HPP
 #define ESPRESSO_H5MD_CORE_HPP
 
+#include "BoxGeometry.hpp"
+#include "ParticleRange.hpp"
+
+#include <utils/Vector.hpp>
+
 #include <boost/filesystem.hpp>
 #include <boost/mpi/communicator.hpp>
+
 #include <h5xx/h5xx.hpp>
 
-#include <BoxGeometry.hpp>
-#include <algorithm>
+#include <cstddef>
+#include <exception>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
-
-#include "ParticleRange.hpp"
+#include <utility>
 
 namespace h5xx {
 template <typename T, size_t size>

@@ -18,11 +18,12 @@
  */
 #include "RuntimeErrorCollector.hpp"
 
-#include "communication.hpp"
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/mpi/collectives.hpp>
 
+#include <algorithm>
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <utility>

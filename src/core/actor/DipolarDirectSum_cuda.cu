@@ -16,15 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <cuda.h>
 
 #include "config.hpp"
-#include <thrust/device_ptr.h>
-#include <thrust/reduce.h>
 
 #ifdef DIPOLAR_DIRECT_SUM
 
 #include "cuda_utils.hpp"
+
+#include <thrust/device_ptr.h>
+#include <thrust/reduce.h>
+
+#include <cuda.h>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!

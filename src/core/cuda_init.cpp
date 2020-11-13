@@ -17,15 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cuda_init.hpp"
+#include "config.hpp"
+
 #ifdef CUDA
+
+#include "cuda_init.hpp"
+
 #include "communication.hpp"
 
 #include <utils/constants.hpp>
 
+#include <mpi.h>
+
+#include <algorithm>
 #include <cstring>
 #include <iterator>
-#include <mpi.h>
 #include <set>
 
 /** Helper class force device set.

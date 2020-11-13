@@ -21,7 +21,6 @@
 
 #include "config.hpp"
 #include <utils/Vector.hpp>
-#include <vector>
 
 /** @todo: Turn needsXY in getter/setter **/
 

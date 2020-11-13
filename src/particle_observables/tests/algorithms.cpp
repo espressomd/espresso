@@ -22,6 +22,10 @@
 
 #include <particle_observables/algorithms.hpp>
 
+#include <algorithm>
+#include <numeric>
+#include <vector>
+
 using namespace ParticleObservables;
 
 namespace Testing {

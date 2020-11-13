@@ -32,13 +32,21 @@
  *  The corresponding header file is p3m-dipolar.hpp.
  */
 
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/common.hpp"
-#include "electrostatics_magnetostatics/dp3m_influence_function.hpp"
+#include "config.hpp"
 
 #ifdef DP3M
 
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+
+#include "electrostatics_magnetostatics/common.hpp"
+#include "electrostatics_magnetostatics/dp3m_influence_function.hpp"
+#include "electrostatics_magnetostatics/fft.hpp"
+#include "electrostatics_magnetostatics/p3m-common.hpp"
+#include "electrostatics_magnetostatics/p3m_interpolation.hpp"
+#include "electrostatics_magnetostatics/p3m_send_mesh.hpp"
+
 #include "Particle.hpp"
+#include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -46,17 +54,22 @@
 #include "integrate.hpp"
 #include "tuning.hpp"
 
-#include <utils/strcat_alloc.hpp>
-using Utils::strcat_alloc;
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/integral_parameter.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
+#include <utils/strcat_alloc.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
-#include <cstdio>
+
 #include <mpi.h>
+
+#include <algorithm>
+#include <cstdio>
+
+using Utils::strcat_alloc;
 
 /************************************************
  * DEFINES

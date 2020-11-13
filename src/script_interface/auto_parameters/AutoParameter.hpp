@@ -19,12 +19,13 @@
 #ifndef SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETER_HPP
 #define SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETER_HPP
 
-#include <functional>
-#include <memory>
-#include <utility>
-
 #include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
+
+#include <functional>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace ScriptInterface {
 /**

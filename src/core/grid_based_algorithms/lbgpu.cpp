@@ -22,25 +22,21 @@
  *  The corresponding header file is lbgpu.hpp.
  */
 
-#include "lbgpu.hpp"
-#ifdef CUDA
-#include "errorhandling.hpp"
-#include "lb-d3q19.hpp"
+#include "config.hpp"
 
-#include "Particle.hpp"
+#ifdef CUDA
+
+#include "lbgpu.hpp"
+
 #include "communication.hpp"
 #include "cuda_interface.hpp"
-#include "global.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb_boundaries.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-
-#include <utils/constants.hpp>
+#include "lb-d3q19.hpp"
 
 #include <cmath>
-#include <cstdlib>
+#include <vector>
 
 LB_parameters_gpu lbpar_gpu = {
     // rho

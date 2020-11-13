@@ -22,6 +22,8 @@
 #include "jacobian_type.hpp"
 #include <utils/Vector.hpp>
 
+#include <cstddef>
+
 namespace FieldCoupling {
 namespace Fields {
 

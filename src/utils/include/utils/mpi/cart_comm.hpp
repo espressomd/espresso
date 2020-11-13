@@ -26,6 +26,9 @@
 
 #include <mpi.h>
 
+#include <cstddef>
+#include <utility>
+
 namespace Utils {
 namespace Mpi {
 

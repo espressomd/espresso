@@ -31,6 +31,8 @@
 
 #include <utils/Vector.hpp>
 
+#include <cstddef>
+
 class Lattice {
 public:
   using index_t = int;

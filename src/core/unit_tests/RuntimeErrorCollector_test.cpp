@@ -21,11 +21,6 @@
 
 /* Unit tests for the ErrorHandling::RuntimeErrorCollector class. */
 
-#include <algorithm>
-#include <memory>
-
-#include <boost/mpi.hpp>
-
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE RuntimeError test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
@@ -33,6 +28,12 @@
 #include <boost/test/unit_test.hpp>
 
 #include "RuntimeErrorCollector.hpp"
+
+#include <boost/mpi.hpp>
+
+#include <algorithm>
+#include <functional>
+#include <vector>
 
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);

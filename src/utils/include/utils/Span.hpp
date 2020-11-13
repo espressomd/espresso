@@ -19,13 +19,13 @@
 #ifndef UTILS_SPAN_HPP
 #define UTILS_SPAN_HPP
 
+#include "device_qualifier.hpp"
+
 #include <cassert>
 #include <cstddef>
 #include <iterator>
 #include <stdexcept>
 #include <type_traits>
-
-#include "device_qualifier.hpp"
 
 namespace Utils {
 namespace detail {

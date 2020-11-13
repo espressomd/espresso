@@ -21,6 +21,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 namespace ScriptInterface {
 struct Exception : public std::exception {

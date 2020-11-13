@@ -25,15 +25,20 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "utils/Vector.hpp"
+using Utils::Vector;
+
 #include <boost/range/numeric.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <complex>
+#include <iterator>
+#include <limits>
 #include <numeric>
+#include <stdexcept>
+#include <type_traits>
 #include <vector>
-
-#include "utils/Vector.hpp"
-using Utils::Vector;
 
 /* Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
 #define TEST_NUMBERS                                                           \

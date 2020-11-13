@@ -26,6 +26,7 @@
 
 #ifdef BUCKINGHAM
 #include "interactions.hpp"
+#include "nonbonded_interaction_data.hpp"
 
 #include <utils/constants.hpp>
 

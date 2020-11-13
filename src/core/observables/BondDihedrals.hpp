@@ -19,10 +19,15 @@
 #ifndef OBSERVABLES_PARTICLEDIHEDRALS_HPP
 #define OBSERVABLES_PARTICLEDIHEDRALS_HPP
 
+#include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
+#include "grid.hpp"
+
+#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace Observables {
@@ -48,14 +53,14 @@ public:
                             traits.position(particles[0]), box_geo);
     auto v2 = get_mi_vector(traits.position(particles[2]),
                             traits.position(particles[1]), box_geo);
-    auto c1 = vector_product(v1, v2);
+    auto c1 = Utils::vector_product(v1, v2);
     for (size_t i = 0, end = n_values(); i < end; i++) {
       auto v3 = get_mi_vector(traits.position(particles[i + 3]),
                               traits.position(particles[i + 2]), box_geo);
       auto c2 = vector_product(v2, v3);
       /* the 2-argument arctangent returns an angle in the range [-pi, pi] that
        * allows for an unambiguous determination of the 4th particle position */
-      res[i] = atan2((vector_product(c1, c2) * v2) / v2.norm(), c1 * c2);
+      res[i] = atan2((Utils::vector_product(c1, c2) * v2) / v2.norm(), c1 * c2);
       v1 = v2;
       v2 = v3;
       c1 = c2;

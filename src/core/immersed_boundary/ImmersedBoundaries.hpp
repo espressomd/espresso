@@ -21,7 +21,8 @@
 
 #include "config.hpp"
 
-#include <CellStructure.hpp>
+#include "CellStructure.hpp"
+
 #include <vector>
 
 class ImmersedBoundaries {

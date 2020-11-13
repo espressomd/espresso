@@ -35,6 +35,7 @@
 #include "config.hpp"
 
 #include <array>
+#include <cstddef>
 #include <vector>
 
 #if defined(P3M) || defined(DP3M)

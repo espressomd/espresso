@@ -26,7 +26,15 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <boost/multi_array.hpp>
+
+#include <algorithm>
+#include <cstddef>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Constraints {

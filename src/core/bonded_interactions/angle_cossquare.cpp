@@ -24,7 +24,12 @@
  */
 #include "angle_cossquare.hpp"
 
+#include "bonded_interaction_data.hpp"
 #include "interactions.hpp"
+
+#include <utils/constants.hpp>
+
+#include <cmath>
 
 int angle_cossquare_set_params(int bond_type, double bend, double phi0) {
   if (bond_type < 0)

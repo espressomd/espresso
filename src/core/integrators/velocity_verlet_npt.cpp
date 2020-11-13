@@ -20,6 +20,9 @@
 #include "config.hpp"
 
 #ifdef NPT
+#include "velocity_verlet_npt.hpp"
+
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -27,14 +30,18 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
-#include "particle_data.hpp"
+#include "rotation.hpp"
 #include "thermostat.hpp"
 #include "thermostats/npt_inline.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives.hpp>
 
+#include <mpi.h>
+
+#include <cmath>
 #include <functional>
 
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
@@ -54,9 +61,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
         } else
           // Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt)
           p.m.v[j] += p.f.f[j] * time_step / 2.0 / p.p.mass;
-#ifdef EXTERNAL_FORCES
       }
-#endif
     }
   }
 }
@@ -158,9 +163,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
 
 void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
   extern IsotropicNptThermostat npt_iso;
-#ifdef NPT
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
-#endif
 
   for (auto &p : particles) {
 #ifdef ROTATION
@@ -172,7 +175,6 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
       continue;
     for (int j = 0; j < 3; j++) {
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
-#ifdef NPT
         auto const noise =
             friction_therm0_nptiso<1>(npt_iso, p.m.v, p.p.identity);
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
@@ -180,7 +182,6 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
           p.m.v[j] += (p.f.f[j] * time_step / 2.0 + noise[j]) / p.p.mass;
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
         } else
-#endif
           // Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
           p.m.v[j] += p.f.f[j] * time_step / 2.0 / p.p.mass;
       }

@@ -28,9 +28,8 @@
 
 #include "angle_common.hpp"
 #include "bonded_interaction_data.hpp"
-#include "grid.hpp"
 
-#include <utils/constants.hpp>
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <tuple>

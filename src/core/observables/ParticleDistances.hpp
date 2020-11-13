@@ -19,9 +19,14 @@
 #ifndef OBSERVABLES_PARTICLEDISTANCES_HPP
 #define OBSERVABLES_PARTICLEDISTANCES_HPP
 
+#include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
+#include "grid.hpp"
+
+#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

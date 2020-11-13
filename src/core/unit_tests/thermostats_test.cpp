@@ -24,6 +24,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
+#include "config.hpp"
+#include "random.hpp"
 #include "random_test.hpp"
 #include "thermostat.hpp"
 #include "thermostats/brownian_inline.hpp"
@@ -34,7 +36,9 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <limits>
+#include <tuple>
 
 // multiply by 100 because BOOST_CHECK_CLOSE takes a percentage tolerance,
 // and by 6 to account for error accumulation in thermostat functions

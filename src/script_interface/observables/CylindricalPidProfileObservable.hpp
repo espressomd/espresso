@@ -22,15 +22,18 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
 
-#include <boost/range/algorithm.hpp>
-#include <iterator>
-#include <memory>
-
-#include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include "Observable.hpp"
 #include "core/observables/CylindricalPidProfileObservable.hpp"
+
+#include <boost/range/algorithm.hpp>
+
+#include <cstddef>
+#include <iterator>
+#include <memory>
+#include <type_traits>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Observables {

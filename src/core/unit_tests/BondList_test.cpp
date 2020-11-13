@@ -21,12 +21,14 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "BondList.hpp"
+
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
+#include <array>
+#include <iterator>
 #include <sstream>
-
-#include "BondList.hpp"
 
 BOOST_AUTO_TEST_CASE(BondView_) {
   /* Dummy values */

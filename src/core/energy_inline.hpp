@@ -25,9 +25,9 @@
 #define ENERGY_INLINE_HPP
 
 #include "config.hpp"
-#include <boost/range/algorithm/find_if.hpp>
 
-#include "Observable_stat.hpp"
+#include "energy.hpp"
+
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
@@ -38,7 +38,6 @@
 #include "bonded_interactions/harmonic.hpp"
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/umbrella.hpp"
-#include "errorhandling.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -56,19 +55,28 @@
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
+
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
 #include "bonded_interactions/bonded_coulomb_sr.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
-#include "cells.hpp"
-#include "exclusions.hpp"
-
-#include "energy.hpp"
 
 #ifdef DIPOLES
 #include "electrostatics_magnetostatics/dipole_inline.hpp"
 #endif
+
+#include "Observable_stat.hpp"
+#include "Particle.hpp"
+#include "cells.hpp"
+#include "errorhandling.hpp"
+#include "exclusions.hpp"
+
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+#include <boost/range/algorithm/find_if.hpp>
 
 /** Calculate non-bonded energies between a pair of particles.
  *  @param p1         particle 1.

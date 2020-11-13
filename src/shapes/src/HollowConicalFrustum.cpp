@@ -16,11 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <boost/algorithm/clamp.hpp>
 
 #include <shapes/HollowConicalFrustum.hpp>
+
 #include <utils/Vector.hpp>
 #include <utils/math/coordinate_transformation.hpp>
+
+#include <boost/algorithm/clamp.hpp>
+
+#include <cstdlib>
 
 namespace Shapes {
 

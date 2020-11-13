@@ -17,27 +17,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "electrostatics_magnetostatics/dipole.hpp"
+#include "config.hpp"
 
 #ifdef DIPOLES
+
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 #include "actor/DipolarBarnesHut.hpp"
 #include "actor/DipolarDirectSum.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
+#include "electrostatics_magnetostatics/p3m-common.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 
-#include "communication.hpp"
+#include "ParticleRange.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
 #include <boost/mpi/collectives.hpp>
+
+#include <cassert>
 #include <cstdio>
 
 Dipole_parameters dipole = {

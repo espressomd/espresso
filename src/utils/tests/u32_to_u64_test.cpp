@@ -15,11 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Utils::sgn test
+#define BOOST_TEST_MODULE Utils::u32_to_u64 test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "utils/u32_to_u64.hpp"
+
+#include <cstdint>
+#include <utility>
 
 BOOST_AUTO_TEST_CASE(u32_to_u64) {
   constexpr const uint64_t expected = (4ul << 32) | (11ul);

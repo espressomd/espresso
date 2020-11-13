@@ -29,9 +29,14 @@
 #ifndef _ELC_H
 #define _ELC_H
 
-#include "Particle.hpp"
+#include "config.hpp"
 
 #ifdef P3M
+
+#include "Particle.hpp"
+#include "ParticleRange.hpp"
+
+#include <utils/Vector.hpp>
 
 /** @brief Parameters for the ELC method */
 typedef struct {

@@ -28,7 +28,6 @@
 #include "ObjectHandle.hpp"
 #include "Variant.hpp"
 #include "auto_parameters/AutoParameters.hpp"
-#include "get_value.hpp"
 #include "initialize.hpp"
 
 #endif

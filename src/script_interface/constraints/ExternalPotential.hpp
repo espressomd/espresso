@@ -22,12 +22,17 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_EXTERNAL_POTENTIAL_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_EXTERNAL_POTENTIAL_HPP
 
+#include "core/constraints/Constraint.hpp"
 #include "core/constraints/ExternalPotential.hpp"
 
 #include "couplings.hpp"
 #include "fields.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace Constraints {

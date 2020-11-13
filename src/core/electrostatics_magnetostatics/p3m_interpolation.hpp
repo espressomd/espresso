@@ -28,6 +28,7 @@
 #include <boost/range/algorithm/copy.hpp>
 
 #include <cassert>
+#include <cstddef>
 #include <tuple>
 #include <vector>
 

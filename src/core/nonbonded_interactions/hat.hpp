@@ -33,6 +33,8 @@
 
 #include "nonbonded_interaction_data.hpp"
 
+#include <utils/Vector.hpp>
+
 int hat_set_params(int part_type_a, int part_type_b, double Fmax, double r);
 
 /** Resultant force due to a hat potential between two

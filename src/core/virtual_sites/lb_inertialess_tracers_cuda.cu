@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <cuda.h>
 
 // *******
 // This is an internal file of the IMMERSED BOUNDARY implementation
@@ -27,14 +26,19 @@
 
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) && defined(CUDA)
 
+#include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
+
 #include "Particle.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
-#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
+
+#include <cuda.h>
+
+#include <cstddef>
 
 // To avoid include of communication.hpp in cuda file
 extern int this_node;

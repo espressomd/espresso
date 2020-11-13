@@ -31,35 +31,41 @@
 
 #include "cells.hpp"
 #include "communication.hpp"
-#include "cuda_interface.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "halo.hpp"
 #include "integrate.hpp"
 #include "lb-d3q19.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 
 #include <utils/Counter.hpp>
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 #include <utils/index.hpp>
 #include <utils/math/matrix_vector_product.hpp>
-#include <utils/u32_to_u64.hpp>
-#include <utils/uniform.hpp>
-using Utils::get_linear_index;
-#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 #include <utils/memory.hpp>
+#include <utils/uniform.hpp>
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
+#include <boost/optional.hpp>
 #include <boost/range/numeric.hpp>
 #include <mpi.h>
 #include <profiler/profiler.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <functional>
 #include <iostream>
+#include <stdexcept>
+
+using Utils::get_linear_index;
 
 namespace {
 /** Basis of the mode space as described in @cite dunweg07a */

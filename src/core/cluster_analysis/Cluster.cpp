@@ -16,19 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "Particle.hpp"
-#include "partCfg_global.hpp"
+
+#include "config.hpp"
+
 #ifdef GSL
 #include "gsl/gsl_fit.h"
 #endif
-#include <utils/Vector.hpp>
-#include <vector>
 
 #include "Cluster.hpp"
 
+#include "BoxGeometry.hpp"
+#include "Particle.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <cmath>
+#include <cstddef>
+#include <numeric>
+#include <vector>
 
 namespace ClusterAnalysis {
 

@@ -20,10 +20,12 @@
 #define BOOST_TEST_MODULE make_lin_space test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
-#include <cmath>
 
 #include <utils/math/make_lin_space.hpp>
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(make_lin_space_test) {

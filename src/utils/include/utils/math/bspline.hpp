@@ -20,7 +20,7 @@
 #define UTILS_MATH_BSPLINE_HPP
 
 #include "sqr.hpp"
-#include <utils/device_qualifier.hpp>
+#include "utils/device_qualifier.hpp"
 
 #include <stdexcept>
 #include <type_traits>

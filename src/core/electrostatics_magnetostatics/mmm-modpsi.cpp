@@ -21,8 +21,8 @@
 
 #include "config.hpp"
 
-#include "mmm-common.hpp"
 #include "mmm-modpsi.hpp"
+#include "specfunc.hpp"
 
 #include <utils/constants.hpp>
 

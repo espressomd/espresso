@@ -22,11 +22,13 @@
  *  Implementation of nonbonded_interaction_data.hpp
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "collision.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
 #include "interactions.hpp"
-
 #include "serialization/IA_parameters.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -37,8 +39,10 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
+#include <utils/index.hpp>
+
+#include <sstream>
+#include <utility>
 
 /****************************************
  * variables

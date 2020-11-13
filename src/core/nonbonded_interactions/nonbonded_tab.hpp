@@ -33,7 +33,12 @@
 
 #ifdef TABULATED
 
+#include "TabulatedPotential.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <vector>
 
 /** Set the parameters of a non-bonded tabulated potential.
  *  ia_params and force/energy tables are communicated to each node

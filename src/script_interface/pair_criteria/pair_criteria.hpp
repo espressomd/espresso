@@ -24,6 +24,8 @@
 
 #include "../auto_parameters/AutoParameters.hpp"
 #include "core/pair_criteria/pair_criteria.hpp"
+
+#include <memory>
 #include <string>
 
 namespace ScriptInterface {

@@ -16,13 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <utils/index.hpp>
 
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
+#include "config.hpp"
 #include "grid.hpp"
 #include "lb.hpp"
+#include "lb_constants.hpp"
 #include "lb_interpolation.hpp"
+
+#include <utils/Vector.hpp>
+#include <utils/index.hpp>
+
+#include <boost/optional.hpp>
 
 using Utils::get_linear_index;
 

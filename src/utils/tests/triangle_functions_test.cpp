@@ -25,6 +25,12 @@
 
 #include "utils/math/triangle_functions.hpp"
 
+#include <utils/Vector.hpp>
+#include <utils/constants.hpp>
+
+#include <cstdlib>
+#include <limits>
+
 auto const epsilon = std::numeric_limits<double>::epsilon();
 
 BOOST_AUTO_TEST_CASE(normal_) {
