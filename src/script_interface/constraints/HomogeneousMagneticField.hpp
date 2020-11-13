@@ -25,6 +25,13 @@
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/HomogeneousMagneticField.hpp"
 
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/constraints/Constraint.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <memory>
+
 namespace ScriptInterface {
 namespace Constraints {
 

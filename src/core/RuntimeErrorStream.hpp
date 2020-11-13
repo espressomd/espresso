@@ -19,10 +19,10 @@
 #ifndef ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
 #define ERROR_HANDLING_RUNTIME_ERROR_STREAM_HPP
 
+#include "RuntimeError.hpp"
+
 #include <sstream>
 #include <string>
-
-#include "RuntimeError.hpp"
 
 namespace ErrorHandling {
 

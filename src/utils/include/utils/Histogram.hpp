@@ -19,15 +19,18 @@
 #ifndef UTILS_HISTOGRAM_HPP
 #define UTILS_HISTOGRAM_HPP
 
+#include "utils/Span.hpp"
+#include "utils/constants.hpp"
+#include "utils/index.hpp"
+
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <numeric>
+#include <stdexcept>
 #include <vector>
-
-#include "Span.hpp"
-#include "constants.hpp"
-#include "utils/index.hpp"
 
 namespace Utils {
 

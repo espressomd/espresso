@@ -25,12 +25,10 @@
  *
  */
 
-#include <boost/range/adaptor/reversed.hpp>
-#include <boost/range/algorithm.hpp>
-
 #include "grid_based_algorithms/lb_boundaries.hpp"
 
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
@@ -40,16 +38,20 @@
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/index.hpp>
 
-using Utils::get_linear_index;
-
-#include <utils/constants.hpp>
+#include <boost/range/adaptor/reversed.hpp>
+#include <boost/range/algorithm.hpp>
 
 #include <algorithm>
-#include <limits>
+#include <cstddef>
+#include <iterator>
 #include <memory>
+#include <stdexcept>
 #include <vector>
+
+using Utils::get_linear_index;
 
 namespace LBBoundaries {
 

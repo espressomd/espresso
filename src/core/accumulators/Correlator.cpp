@@ -17,8 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Correlator.hpp"
+
 #include "integrate.hpp"
 
+#include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 #include <utils/serialization/multi_array.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -29,10 +32,15 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include <utils/math/sqr.hpp>
-
 #include <algorithm>
-#include <limits>
+#include <array>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <functional>
+#include <numeric>
+#include <sstream>
+#include <stdexcept>
 
 namespace {
 int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }

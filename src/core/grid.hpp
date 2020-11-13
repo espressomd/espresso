@@ -31,14 +31,12 @@
  */
 
 #include "BoxGeometry.hpp"
-#include "algorithm/periodic_fold.hpp"
 
 #include "LocalBox.hpp"
 
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <limits>
 
 extern BoxGeometry box_geo;
 extern LocalBox<double> local_geo;

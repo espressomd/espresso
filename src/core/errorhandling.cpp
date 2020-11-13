@@ -30,6 +30,8 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
 
+#include <cstdlib>
+#include <functional>
 #include <memory>
 
 namespace ErrorHandling {

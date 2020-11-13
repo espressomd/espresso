@@ -25,6 +25,10 @@
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
+#include <utils/Span.hpp>
+
+#include <cstddef>
+
 Observable_stat::Observable_stat(size_t chunk_size) : m_chunk_size(chunk_size) {
   // number of chunks for different interaction types
   auto constexpr n_coulomb = 2;

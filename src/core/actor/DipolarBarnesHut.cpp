@@ -17,15 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DipolarBarnesHut.hpp"
-#include "EspressoSystemInterface.hpp"
 #include "config.hpp"
+
+#ifdef DIPOLAR_BARNES_HUT
+
+#include "DipolarBarnesHut.hpp"
+
+#include "EspressoSystemInterface.hpp"
+#include "actor/ActorList.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
-#include "grid.hpp"
 
-#ifdef DIPOLAR_BARNES_HUT
+#include <memory>
 
 std::unique_ptr<DipolarBarnesHut> dipolarBarnesHut;
 

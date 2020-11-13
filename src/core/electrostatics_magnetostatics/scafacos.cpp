@@ -22,33 +22,39 @@
  *  Provide a C-like interface for ScaFaCoS.
  */
 
-#include "electrostatics_magnetostatics/scafacos.hpp"
+#include "config.hpp"
 
 #if defined(SCAFACOS)
+
+#include "electrostatics_magnetostatics/scafacos.hpp"
+
+#include "Scafacos.hpp"
+#include "cells.hpp"
+#include "communication.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+#include "errorhandling.hpp"
+#include "event.hpp"
+#include "grid.hpp"
+#include "integrate.hpp"
+#include "particle_data.hpp"
+#include "tuning.hpp"
+
+#include <utils/Vector.hpp>
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <functional>
 #include <limits>
-#include <memory>
+#include <list>
 #include <numeric>
+#include <stdexcept>
+#include <string>
 #include <vector>
-
-#include "Scafacos.hpp"
-#include "cells.hpp"
-#include "communication.hpp"
-#include "errorhandling.hpp"
-#include "event.hpp"
-#include "global.hpp"
-#include "grid.hpp"
-#include "integrate.hpp"
-#include "particle_data.hpp"
-#include "tuning.hpp"
-
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 
 #if defined(SCAFACOS_DIPOLES) && !defined(FCS_ENABLE_DIPOLES)
 #error                                                                         \

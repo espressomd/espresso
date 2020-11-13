@@ -26,6 +26,9 @@
 #include "utils/Cache.hpp"
 using Utils::Cache;
 
+#include <type_traits>
+#include <vector>
+
 BOOST_AUTO_TEST_CASE(types) {
   using cache_type = Cache<int, char>;
   static_assert(std::is_same<cache_type::key_type, int>::value, "");

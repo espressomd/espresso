@@ -24,6 +24,8 @@
 
 #include "Shape.hpp"
 
+#include <utils/Vector.hpp>
+
 namespace Shapes {
 class Slitpore : public Shape {
 public:

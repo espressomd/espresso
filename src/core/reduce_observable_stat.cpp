@@ -22,6 +22,7 @@
 #include "reduce_observable_stat.hpp"
 
 #include <boost/mpi/collectives/reduce.hpp>
+#include <boost/optional.hpp>
 
 #include <functional>
 

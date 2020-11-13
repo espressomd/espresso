@@ -19,11 +19,13 @@
 #define BOOST_TEST_MODULE observables_test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
-#include <vector>
 
 #include <particle_observables/observable.hpp>
 
 #include "mock.hpp"
+
+#include <type_traits>
+#include <vector>
 
 namespace Testing {
 template <class T> struct strip_args {

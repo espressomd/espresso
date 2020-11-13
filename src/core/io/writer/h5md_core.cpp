@@ -20,11 +20,22 @@
  */
 
 #include "h5md_core.hpp"
-#include "communication.hpp"
+
+#include "Particle.hpp"
 #include "h5md_specification.hpp"
 #include "version.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <boost/mpi/collectives.hpp>
+
+#include <mpi.h>
+
+#include <algorithm>
+#include <cstddef>
 #include <fstream>
+#include <functional>
+#include <stdexcept>
 #include <vector>
 
 namespace Writer {

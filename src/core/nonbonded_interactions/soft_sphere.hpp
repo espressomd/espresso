@@ -33,6 +33,10 @@
 
 #include "nonbonded_interaction_data.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <cmath>
+
 int soft_sphere_set_params(int part_type_a, int part_type_b, double a, double n,
                            double cut, double offset);
 

@@ -18,6 +18,7 @@
  */
 
 #include "ActorList.hpp"
+#include "Actor.hpp"
 #include <algorithm>
 #include <cassert>
 

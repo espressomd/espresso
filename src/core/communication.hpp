@@ -50,7 +50,9 @@
 #include "MpiCallbacks.hpp"
 
 #include <boost/mpi/communicator.hpp>
-#include <vector>
+
+#include <memory>
+#include <utility>
 
 /** The number of this node. */
 extern int this_node;

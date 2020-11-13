@@ -58,7 +58,8 @@ unit_test(NAME integral_parameter_test SRC integral_parameter_test.cpp DEPENDS
 unit_test(NAME flatten_test SRC flatten_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME pack_test SRC pack_test.cpp DEPENDS Boost::serialization
           EspressoUtils)
-
+unit_test(NAME u32_to_u64_test SRC u32_to_u64_test.cpp DEPENDS EspressoUtils
+          NUM_PROC 1)
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp DEPENDS
           EspressoUtils Boost::mpi MPI::MPI_CXX NUM_PROC 4)
 unit_test(NAME scatter_buffer_test SRC scatter_buffer_test.cpp DEPENDS

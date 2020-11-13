@@ -27,6 +27,13 @@
  */
 
 #include "bonded_interaction_data.hpp"
+#include "config.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
+
+#include <cmath>
 
 /** Set the parameters for the FENE potential
  *

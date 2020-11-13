@@ -39,14 +39,6 @@ cdef extern from "TabulatedPotential.hpp":
         vector[double] energy_tab
         vector[double] force_tab
 
-cdef extern from "dpd.hpp":
-    cdef struct DPDParameters:
-        double gamma
-        double k
-        double cutoff
-        int wf
-        double pref
-
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef struct LJ_Parameters:
         double eps
@@ -152,6 +144,13 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef struct Thole_Parameters:
         double scaling_coeff
         double q1q2
+
+    cdef struct DPDParameters:
+        double gamma
+        double k
+        double cutoff
+        int wf
+        double pref
 
     cdef struct IA_parameters:
         LJ_Parameters lj

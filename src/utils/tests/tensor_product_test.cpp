@@ -26,6 +26,9 @@
 #include "utils/math/tensor_product.hpp"
 using Utils::tensor_product;
 
+#include <utils/Vector.hpp>
+
+#include <cstddef>
 #include <type_traits>
 
 BOOST_AUTO_TEST_CASE(square) {

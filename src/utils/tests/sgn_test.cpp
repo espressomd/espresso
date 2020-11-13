@@ -15,8 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Utils::int_pow function. */
-
 #define BOOST_TEST_MODULE Utils::sgn test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>

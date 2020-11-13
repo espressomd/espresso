@@ -19,10 +19,13 @@
 #ifndef CLUSTER_ANALYSIS_CLUSTER_HPP
 #define CLUSTER_ANALYSIS_CLUSTER_HPP
 
-#include <utils/Vector.hpp>
-#include <vector>
-
 #include "Particle.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <algorithm>
+#include <utility>
+#include <vector>
 
 namespace ClusterAnalysis {
 

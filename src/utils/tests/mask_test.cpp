@@ -21,10 +21,13 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <utils/get.hpp>
 #include <utils/mask.hpp>
 
 #include <cstdint>
+#include <string>
 #include <tuple>
+#include <type_traits>
 
 BOOST_AUTO_TEST_CASE(mask_) {
   using Utils::get;

@@ -45,9 +45,10 @@
  *  Implementation of \ref specfunc.hpp.
  */
 #include "specfunc.hpp"
-#include <cmath>
 
 #include <utils/constants.hpp>
+
+#include <cmath>
 
 /************************************************
  * chebychev expansions

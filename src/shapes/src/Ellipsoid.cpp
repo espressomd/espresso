@@ -21,9 +21,10 @@
 
 #include <shapes/Ellipsoid.hpp>
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <cmath>
+#include <algorithm>
 
 namespace Shapes {
 void Ellipsoid::calculate_dist(const Utils::Vector3d &pos, double &dist,

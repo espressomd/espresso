@@ -21,7 +21,8 @@
 
 #include <shapes/Rhomboid.hpp>
 
-#include <cmath>
+#include <utils/Vector.hpp>
+
 #include <functional>
 
 namespace Shapes {

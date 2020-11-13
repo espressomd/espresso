@@ -27,6 +27,8 @@
 #include "io/writer/h5md_core.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include <memory>
 #include <string>
 
 namespace ScriptInterface {

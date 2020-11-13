@@ -26,6 +26,12 @@
 
 #include <utils/serialization/pack.hpp>
 
+#include <iterator>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+
 namespace ScriptInterface {
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {

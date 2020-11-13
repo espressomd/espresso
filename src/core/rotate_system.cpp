@@ -17,14 +17,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Particle.hpp"
+#include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "config.hpp"
 #include "event.hpp"
 #include "rotation.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/vec_rotate.hpp>
 
 #include <boost/mpi/collectives.hpp>
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <functional>
 
 namespace mpi = boost::mpi;
 

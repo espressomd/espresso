@@ -16,22 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef _BONDED_INTERACTION_DATA_HPP
+#define _BONDED_INTERACTION_DATA_HPP
 /** @file
  *  Data structures for bonded interactions.
  *  For more information on how to add new interactions, see @ref bondedIA_new.
  */
-#ifndef _BONDED_INTERACTION_DATA_HPP
-#define _BONDED_INTERACTION_DATA_HPP
 
-#include "CellStructure.hpp"
-#include "Particle.hpp"
 #include "TabulatedPotential.hpp"
 
-#include <utils/Span.hpp>
-
-#include <boost/algorithm/cxx11/any_of.hpp>
-#include <boost/optional.hpp>
-#include <boost/range/algorithm/transform.hpp>
+#include <cassert>
+#include <cmath>
+#include <limits>
+#include <vector>
 
 /** Type codes of bonded interactions. */
 enum BondedInteraction : int {
@@ -403,42 +400,6 @@ extern std::vector<Bonded_ia_parameters> bonded_ia_params;
  *  2: Use only in connection with creating new or overwriting old bond types
  */
 void make_bond_type_exist(int type);
-
-/** @brief Checks both particles for a specific bond, even on ghost particles.
- *
- *  @param p Particle to check for the bond.
- *  @param p_partner   bond partner
- *  @param bond_type   enum bond type
- */
-inline bool pair_bond_enum_exists_on(Particle const &p,
-                                     Particle const &p_partner,
-                                     BondedInteraction bond_type) {
-  return boost::algorithm::any_of(
-      p.bonds(),
-      [bond_type, partner_id = p_partner.identity()](BondView const &bond) {
-        return (bonded_ia_params[bond.bond_id()].type == bond_type) and
-               (bond.partner_ids()[0] == partner_id);
-      });
-}
-
-/** @brief Checks both particles for a specific bond, even on ghost particles.
- *
- *  @param p1     particle on which the bond may be stored
- *  @param p2     particle on which the bond may be stored
- *  @param bond   numerical bond type
- */
-inline bool pair_bond_enum_exists_between(Particle const &p1,
-                                          Particle const &p2,
-                                          BondedInteraction bond) {
-  if (&p1 == &p2)
-    return false;
-
-  // Check if particles have bonds and search for the bond of
-  // interest with are_bonded(). Could be saved on both sides (and both could
-  // have other bonds), so we need to check both.
-  return pair_bond_enum_exists_on(p1, p2, bond) or
-         pair_bond_enum_exists_on(p2, p1, bond);
-}
 
 /** Calculate the maximal cutoff of bonded interactions, required to
  *  determine the cell size for communication.

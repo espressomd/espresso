@@ -20,10 +20,12 @@
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE all_compare test
 #define BOOST_TEST_DYN_LINK
-#include <boost/mpi.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "utils/mpi/all_compare.hpp"
+#include <utils/mpi/all_compare.hpp>
+
+#include <boost/mpi.hpp>
+
 using Utils::Mpi::all_compare;
 
 namespace mpi = boost::mpi;

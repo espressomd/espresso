@@ -27,13 +27,15 @@
 
 #include "config.hpp"
 
-#include <utils/memory.hpp>
-
 #include "communication.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "halo.hpp"
 
+#include <utils/Vector.hpp>
+#include <utils/memory.hpp>
+
+#include <cstdlib>
 #include <cstring>
 
 /** Primitive fieldtypes and their initializers */

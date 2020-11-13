@@ -17,15 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <memory>
+#include "config.hpp"
+
+#ifdef DIPOLAR_DIRECT_SUM
 
 #include "DipolarDirectSum.hpp"
+
 #include "EspressoSystemInterface.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 
-#ifdef DIPOLAR_DIRECT_SUM
+#include <memory>
 
 std::unique_ptr<DipolarDirectSum> dipolarDirectSum;
 

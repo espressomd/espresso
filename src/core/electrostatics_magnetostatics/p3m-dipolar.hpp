@@ -36,17 +36,25 @@
 #include "config.hpp"
 
 #ifdef DP3M
-#include "Particle.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
-#include "fft.hpp"
-#include "p3m-common.hpp"
-#include "p3m-data_struct.hpp"
-#include "p3m_interpolation.hpp"
-#include "p3m_send_mesh.hpp"
 
-#include <ParticleRange.hpp>
+#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/fft.hpp"
+#include "electrostatics_magnetostatics/p3m-common.hpp"
+#include "electrostatics_magnetostatics/p3m-data_struct.hpp"
+#include "electrostatics_magnetostatics/p3m_interpolation.hpp"
+#include "electrostatics_magnetostatics/p3m_send_mesh.hpp"
+
+#include "Particle.hpp"
+#include "ParticleRange.hpp"
+
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
+
+#include <array>
+#include <cmath>
+#include <tuple>
+#include <vector>
 
 struct dp3m_data_struct : public p3m_data_struct_base {
   dp3m_data_struct();

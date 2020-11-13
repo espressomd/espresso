@@ -23,7 +23,7 @@
 
 #include <utils/Span.hpp>
 
-#include <stdexcept>
+#include <exception>
 
 void bond_broken_error(int id, Utils::Span<const int> partner_ids);
 

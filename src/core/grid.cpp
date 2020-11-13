@@ -25,14 +25,19 @@
  */
 
 #include "grid.hpp"
-#include "cells.hpp"
+
 #include "communication.hpp"
 #include "global.hpp"
 #include "particle_data.hpp"
 
-#include <boost/algorithm/clamp.hpp>
-#include <mpi.h>
+#include <utils/Vector.hpp>
 #include <utils/mpi/cart_comm.hpp>
+
+#include <boost/algorithm/clamp.hpp>
+
+#include <mpi.h>
+
+#include <cmath>
 
 /**********************************************
  * variables

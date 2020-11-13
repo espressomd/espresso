@@ -23,8 +23,15 @@
 #if defined(P3M) || defined(DP3M)
 
 #include "fft.hpp"
+#include "p3m-common.hpp"
 
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 #include <utils/mpi/cart_comm.hpp>
+
+#include <mpi.h>
+
+#include <cstddef>
 
 void p3m_send_mesh::resize(const boost::mpi::communicator &comm,
                            const p3m_local_mesh &local_mesh) {

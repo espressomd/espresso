@@ -23,8 +23,10 @@
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 
-#include <array>
 #include <boost/test/unit_test.hpp>
+
+#include <array>
+#include <cstddef>
 
 BOOST_AUTO_TEST_CASE(ravel_index_test) {
   const std::array<std::size_t, 4> unravelled_indices{{12, 23, 5, 51}};

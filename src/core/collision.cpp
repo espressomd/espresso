@@ -20,6 +20,7 @@
 #include "collision.hpp"
 
 #ifdef COLLISION_DETECTION
+#include "Cell.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
@@ -30,7 +31,9 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "virtual_sites.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
@@ -39,6 +42,12 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/serialization.hpp>
 
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <stdexcept>
+#include <string>
+#include <utility>
 #include <vector>
 
 /// Data type holding the info about a single collision

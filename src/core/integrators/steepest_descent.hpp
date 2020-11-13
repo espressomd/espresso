@@ -24,6 +24,8 @@
 
 #include "ParticleRange.hpp"
 
+#include <boost/serialization/access.hpp>
+
 /** Parameters for the steepest descent algorithm */
 struct SteepestDescentParameters {
   /** Maximal particle force

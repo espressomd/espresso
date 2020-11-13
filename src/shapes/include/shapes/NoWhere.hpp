@@ -22,9 +22,9 @@
 #ifndef SHAPES_NOWHERE_HPP
 #define SHAPES_NOWHERE_HPP
 
-#include <limits>
-
 #include "Shape.hpp"
+
+#include <limits>
 
 namespace Shapes {
 

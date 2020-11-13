@@ -18,24 +18,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <cstdio>
-#include <cstdlib>
-#include <memory>
-#include <mpi.h>
-#ifdef OPEN_MPI
-#include <dlfcn.h>
-#endif
-#include <cassert>
 
 #include "communication.hpp"
 
 #include "errorhandling.hpp"
-
 #include "event.hpp"
 #include "grid.hpp"
 
-#include <boost/mpi.hpp>
 #include <utils/mpi/cart_comm.hpp>
+
+#include <boost/mpi.hpp>
+
+#include <mpi.h>
+#ifdef OPEN_MPI
+#include <dlfcn.h>
+#endif
+
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <memory>
 
 namespace Communication {
 auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();

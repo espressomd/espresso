@@ -24,6 +24,10 @@
 
 #include <utils/Factory.hpp>
 
+#include <memory>
+#include <string>
+#include <utility>
+
 namespace ScriptInterface {
 
 /**

@@ -25,6 +25,13 @@
 
 #include "utils/tuple.hpp"
 
+#include <array>
+#include <functional>
+#include <memory>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
 BOOST_AUTO_TEST_CASE(for_each) {
   using Utils::for_each;
 

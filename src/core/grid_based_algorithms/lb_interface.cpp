@@ -17,23 +17,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "lb_interface.hpp"
+#include "BoxGeometry.hpp"
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "electrokinetics.hpp"
+#include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "halo.hpp"
 #include "lb-d3q19.hpp"
 #include "lb.hpp"
+#include "lb_boundaries.hpp"
 #include "lb_collective_interface.hpp"
+#include "lb_constants.hpp"
 #include "lb_interpolation.hpp"
 #include "lbgpu.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/index.hpp>
 using Utils::get_linear_index;
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <fstream>
+#include <limits>
+#include <stdexcept>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 

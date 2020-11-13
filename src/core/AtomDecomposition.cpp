@@ -21,11 +21,13 @@
 
 #include "AtomDecomposition.hpp"
 
-#include <boost/mpi/collectives/all_to_all.hpp>
-#include <boost/serialization/vector.hpp>
+#include <utils/Vector.hpp>
 
-#include <cassert>
+#include <boost/mpi/collectives/all_to_all.hpp>
+
+#include <cstddef>
 #include <limits>
+#include <vector>
 
 void AtomDecomposition::configure_neighbors() {
   std::vector<Cell *> red_neighbors;

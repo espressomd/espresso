@@ -55,6 +55,9 @@
 #include <ParticleRange.hpp>
 #include <utils/Vector.hpp>
 
+#include <algorithm>
+#include <vector>
+
 /** ICCP3M data structure */
 struct iccp3m_struct {
   int n_ic;                  /**< Last induced id (cannot be smaller than 2) */

@@ -31,6 +31,8 @@
 
 #include <utils/Vector.hpp>
 
+#include <cstddef>
+
 /** Add velocity-dependent noise and friction for NpT-sims to the particle's
  *  velocity
  *  @tparam step       Which half time step to integrate (1 or 2)

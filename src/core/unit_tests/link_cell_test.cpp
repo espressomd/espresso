@@ -16,16 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <algorithm>
-#include <functional>
-#include <vector>
 
 #define BOOST_TEST_MODULE link_cell test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "Cell.hpp"
 #include "algorithm/link_cell.hpp"
+
+#include "Cell.hpp"
+#include "Particle.hpp"
+
+#include <utility>
+#include <vector>
 
 BOOST_AUTO_TEST_CASE(link_cell) {
   const unsigned n_cells = 10;

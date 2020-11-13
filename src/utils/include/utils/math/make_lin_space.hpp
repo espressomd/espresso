@@ -24,6 +24,8 @@
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/range/iterator_range.hpp>
 
+#include <cstddef>
+
 namespace Utils {
 /**
  * @brief Equally spaced values in interval

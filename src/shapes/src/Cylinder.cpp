@@ -19,8 +19,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
 #include <shapes/Cylinder.hpp>
+
+#include <utils/Vector.hpp>
+
+#include <cassert>
+#include <cmath>
+#include <tuple>
+#include <utility>
 
 namespace Shapes {
 

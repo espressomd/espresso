@@ -24,12 +24,15 @@
  *  Various procedures concerning interactions between particles.
  */
 
-#include "Particle.hpp"
 #include "TabulatedPotential.hpp"
-#include "dpd.hpp"
+#include "config.hpp"
 
 #include <utils/index.hpp>
-#include <utils/math/sqr.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <string>
+#include <vector>
 
 /** Cutoff for deactivated interactions. Must be negative, so that even
  *  particles on top of each other don't interact by chance.
@@ -176,6 +179,15 @@ struct GayBerne_Parameters {
 struct Thole_Parameters {
   double scaling_coeff;
   double q1q2;
+};
+
+/** DPD potential */
+struct DPDParameters {
+  double gamma = 0.;
+  double k = 1.;
+  double cutoff = -1.;
+  int wf = 0;
+  double pref = 0.0;
 };
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -347,54 +359,4 @@ inline bool checkIfInteraction(IA_parameters const &data) {
   return data.max_cut != INACTIVE_CUTOFF;
 }
 
-/** Returns true if the particles are to be considered for short range
- *  interactions.
- */
-class VerletCriterion {
-  const double m_skin;
-  const double m_eff_max_cut2;
-  const double m_eff_coulomb_cut2 = 0.;
-  const double m_eff_dipolar_cut2 = 0.;
-  const double m_collision_cut2 = 0.;
-
-public:
-  VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
-                  double dipolar_cut = 0.,
-                  double collision_detection_cutoff = 0.)
-      : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
-        m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
-        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)),
-        m_collision_cut2(Utils::sqr(collision_detection_cutoff)) {}
-
-  template <typename Distance>
-  bool operator()(const Particle &p1, const Particle &p2,
-                  Distance const &dist) const {
-    auto const &dist2 = dist.dist2;
-    if (dist2 > m_eff_max_cut2)
-      return false;
-
-#ifdef ELECTROSTATICS
-    // Within real space cutoff of electrostatics and both charged
-    if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
-      return true;
-#endif
-
-#ifdef DIPOLES
-    // Within dipolar cutoff and both carry magnetic moments
-    if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
-      return true;
-#endif
-
-#ifdef COLLISION_DETECTION
-    // Collision detection
-    if (dist2 <= m_collision_cut2)
-      return true;
-#endif
-
-    // Within short-range distance (including dpd and the like)
-    auto const max_cut = get_ia_param(p1.p.type, p2.p.type)->max_cut;
-    return static_cast<bool>((max_cut != INACTIVE_CUTOFF) &&
-                             (dist2 <= Utils::sqr(max_cut + m_skin)));
-  }
-};
 #endif

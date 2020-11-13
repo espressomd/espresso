@@ -19,10 +19,14 @@
 #ifndef OBSERVABLES_BONDANGLES_HPP
 #define OBSERVABLES_BONDANGLES_HPP
 
+#include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
+#include "grid.hpp"
+
 #include <utils/Vector.hpp>
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace Observables {

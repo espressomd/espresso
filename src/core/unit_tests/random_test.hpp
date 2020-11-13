@@ -18,21 +18,25 @@
  */
 #ifndef CORE_UNIT_TESTS_RANDOM_TEST_HPP
 #define CORE_UNIT_TESTS_RANDOM_TEST_HPP
+#include <boost/test/unit_test.hpp>
 
 /* Helper functions to compute random numbers covariance in a single pass */
+
+#include <utils/Vector.hpp>
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
 #include <boost/accumulators/statistics/variates/covariate.hpp>
-#include <boost/test/unit_test.hpp>
 #include <boost/variant.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
 #include <functional>
+#include <numeric>
 #include <tuple>
-
-#include <utils/Vector.hpp>
-
-#include "random.hpp"
-
 #include <vector>
 
 namespace Utils {

@@ -22,6 +22,7 @@
 #include "utils/Vector.hpp"
 
 #include <algorithm>
+#include <cstddef>
 
 namespace Utils {
 template <typename T, size_t N, size_t M>

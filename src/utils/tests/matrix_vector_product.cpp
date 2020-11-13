@@ -19,11 +19,13 @@
 
 #define BOOST_TEST_MODULE matrix_vector_product test
 #define BOOST_TEST_DYN_LINK
-#include <boost/range/numeric.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include "utils/math/matrix_vector_product.hpp"
 
+#include <boost/range/numeric.hpp>
+
+#include <array>
 #include <limits>
 
 extern constexpr std::array<std::array<int, 3>, 3> matrix{

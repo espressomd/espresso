@@ -20,7 +20,12 @@
 #define CORE_EXTERNAL_FIELD_FIELDS_PLAIN_WAVE_HPP
 
 #include "jacobian_type.hpp"
+
 #include <utils/Vector.hpp>
+#include <utils/math/tensor_product.hpp>
+
+#include <cmath>
+#include <cstddef>
 
 namespace FieldCoupling {
 namespace Fields {

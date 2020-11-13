@@ -50,6 +50,11 @@
 #include <boost/mpi/communicator.hpp>
 #include <fftw3.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <new>
+#include <vector>
+
 /** Aligned allocator for fft data. */
 template <class T> struct fft_allocator {
   typedef T value_type;

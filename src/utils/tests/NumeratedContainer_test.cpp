@@ -27,6 +27,8 @@
 
 #include "utils/NumeratedContainer.hpp"
 
+#include <stdexcept>
+
 using namespace Utils;
 
 BOOST_AUTO_TEST_CASE(il_constructor) {

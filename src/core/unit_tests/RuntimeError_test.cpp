@@ -21,9 +21,6 @@
 
 /* Unit tests for the ErrorHandling::RuntimeError class. */
 
-#include <sstream>
-#include <string>
-
 #define BOOST_TEST_MODULE RuntimeError test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -32,6 +29,9 @@
 #include <boost/archive/text_oarchive.hpp>
 
 #include "RuntimeError.hpp"
+
+#include <sstream>
+#include <string>
 
 using ErrorHandling::RuntimeError;
 using std::string;

@@ -19,15 +19,22 @@
 
 #include "immersed_boundary/ibm_triel.hpp"
 
+#include "BoxGeometry.hpp"
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 #include "interactions.hpp"
 #include "particle_data.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <boost/optional.hpp>
+
+#include <cmath>
 #include <cstdio>
+#include <tuple>
 
 namespace {
 /** Rotate calculated trielastic forces in the 2d plane back to the 3d plane.

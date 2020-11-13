@@ -23,6 +23,8 @@
 
 #include "utils/contains.hpp"
 
+#include <iterator>
+
 BOOST_AUTO_TEST_CASE(contains_test) {
   using Utils::contains;
 

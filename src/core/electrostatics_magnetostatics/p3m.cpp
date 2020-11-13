@@ -22,43 +22,53 @@
  *
  *  The corresponding header file is @ref p3m.hpp.
  */
-#include "p3m.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 
 #ifdef P3M
 
-#include "Particle.hpp"
-#include "cells.hpp"
-#include "communication.hpp"
 #include "electrostatics_magnetostatics/common.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/p3m_influence_function.hpp"
+
+#include "Particle.hpp"
+#include "ParticleRange.hpp"
+#include "cells.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "fft.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "tuning.hpp"
+
 #ifdef CUDA
 #include "p3m_gpu_error.hpp"
 #endif
 
-#include <utils/math/int_pow.hpp>
-#include <utils/math/sinc.hpp>
-using Utils::sinc;
-#include <utils/strcat_alloc.hpp>
-using Utils::strcat_alloc;
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/integral_parameter.hpp>
+#include <utils/math/int_pow.hpp>
+#include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
+#include <utils/strcat_alloc.hpp>
 
 #include <boost/optional.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 #include <boost/range/numeric.hpp>
+
 #include <mpi.h>
 
+#include <algorithm>
+#include <cassert>
 #include <complex>
+#include <cstddef>
 #include <cstdio>
-#include <cstring>
+#include <functional>
+
+using Utils::sinc;
+using Utils::strcat_alloc;
 
 p3m_data_struct p3m;
 

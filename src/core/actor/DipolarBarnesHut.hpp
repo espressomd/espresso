@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef ACTOR_DIPOLARBARNESHUT_HPP
+#define ACTOR_DIPOLARBARNESHUT_HPP
 
 #include "config.hpp"
 
@@ -23,15 +25,12 @@
 
 #include "Actor.hpp"
 #include "DipolarBarnesHut_cuda.cuh"
-#include "EspressoSystemInterface.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 
-#ifndef ACTOR_DIPOLARBARNESHUT_HPP
-#define ACTOR_DIPOLARBARNESHUT_HPP
+#include <memory>
 
 // This needs to be done in the .cu file too
 typedef float dds_float;

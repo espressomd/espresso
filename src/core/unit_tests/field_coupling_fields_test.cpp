@@ -24,15 +24,18 @@
 #include "field_coupling/fields/AffineMap.hpp"
 #include "field_coupling/fields/Constant.hpp"
 #include "field_coupling/fields/Interpolated.hpp"
-#include "field_coupling/fields/PlaneWave.hpp"
 #include "field_coupling/fields/jacobian_type.hpp"
 
-#include "utils/interpolation/bspline_3d.hpp"
-#include "utils/interpolation/bspline_3d_gradient.hpp"
+#include <utils/Vector.hpp>
+#include <utils/interpolation/bspline_3d.hpp>
+#include <utils/interpolation/bspline_3d_gradient.hpp>
 #include <utils/math/gaussian.hpp>
 #include <utils/raster.hpp>
 
+#include <array>
+#include <cstddef>
 #include <limits>
+#include <type_traits>
 
 using namespace FieldCoupling::Fields;
 

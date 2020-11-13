@@ -20,13 +20,14 @@
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE sendrecv test
 #define BOOST_TEST_DYN_LINK
-
-#include <boost/mpi.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <string>
-
 #include "utils/mpi/sendrecv.hpp"
+
+#include <boost/mpi.hpp>
+
+#include <array>
+#include <string>
 
 using Utils::Mpi::isendrecv;
 using Utils::Mpi::sendrecv;

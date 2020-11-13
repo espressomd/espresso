@@ -19,8 +19,16 @@
 #ifndef OBSERVABLES_FLUXDENSITYPROFILE_HPP
 #define OBSERVABLES_FLUXDENSITYPROFILE_HPP
 
+#include "BoxGeometry.hpp"
 #include "PidProfileObservable.hpp"
+#include "grid.hpp"
 
+#include <utils/Histogram.hpp>
+#include <utils/Span.hpp>
+
+#include <array>
+#include <cstddef>
+#include <limits>
 #include <vector>
 
 namespace Observables {

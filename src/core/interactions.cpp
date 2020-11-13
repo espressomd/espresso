@@ -20,6 +20,7 @@
  */
 #include "communication.hpp"
 
+#include "TabulatedPotential.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "event.hpp"
 

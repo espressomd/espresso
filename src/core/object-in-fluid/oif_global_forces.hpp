@@ -23,7 +23,7 @@
  *  for a particle triple (triangle from mesh). See @cite dupin07a.
  */
 
-#include <CellStructure.hpp>
+#include "CellStructure.hpp"
 
 #include <utils/Vector.hpp>
 

@@ -24,9 +24,11 @@
 #include <cstddef>
 
 #ifdef DIPOLES
+
+#include "ParticleRange.hpp"
+
 #include <utils/Vector.hpp>
 
-#include <ParticleRange.hpp>
 #include <boost/mpi/communicator.hpp>
 
 /** Type codes for the type of dipolar interaction.

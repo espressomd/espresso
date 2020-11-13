@@ -26,8 +26,10 @@
 
 #ifdef LJCOS
 #include "interactions.hpp"
+#include "nonbonded_interaction_data.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset) {

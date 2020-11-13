@@ -19,6 +19,8 @@
 #ifndef LB_COLLECTIVE_INTERFACE_HPP
 #define LB_COLLECTIVE_INTERFACE_HPP
 
+#include "grid_based_algorithms/lb_constants.hpp"
+
 #include <boost/optional.hpp>
 #include <utils/Vector.hpp>
 

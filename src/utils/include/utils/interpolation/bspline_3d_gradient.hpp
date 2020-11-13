@@ -26,6 +26,7 @@
 #include "utils/math/tensor_product.hpp"
 
 #include <array>
+#include <cstddef>
 
 namespace Utils {
 namespace Interpolation {

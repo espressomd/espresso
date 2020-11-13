@@ -27,6 +27,7 @@
 using Utils::Mpi::all_gatherv;
 
 #include <string>
+#include <vector>
 
 namespace mpi = boost::mpi;
 

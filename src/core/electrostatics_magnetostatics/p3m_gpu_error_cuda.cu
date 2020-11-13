@@ -22,24 +22,28 @@
  *
  *  The corresponding header file is p3m_gpu_error.hpp.
  */
-#include <cuda.h>
 
-#include <cstdio>
+#include "p3m_gpu_error.hpp"
+
+#include "cuda_utils.hpp"
+
+#include <utils/math/int_pow.hpp>
+#include <utils/math/sinc.hpp>
+#include <utils/math/sqr.hpp>
+
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>
 
-#include "cuda_utils.hpp"
-#include "p3m_gpu_error.hpp"
+#include <cuda.h>
 
-#include <utils/math/int_pow.hpp>
-using Utils::int_pow;
-#include <utils/math/sinc.hpp>
-#include <utils/math/sqr.hpp>
-using Utils::sqr;
+#include <cstdio>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
+
+using Utils::int_pow;
+using Utils::sqr;
 
 /** @todo Extend to higher order. This comes from some 1/sin expansion in
  *  @cite hockney88a

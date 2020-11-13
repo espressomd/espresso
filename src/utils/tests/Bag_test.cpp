@@ -26,6 +26,9 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/range/algorithm/find.hpp>
 
+#include <algorithm>
+#include <array>
+#include <cstddef>
 #include <memory>
 #include <sstream>
 
