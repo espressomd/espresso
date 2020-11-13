@@ -292,13 +292,13 @@ directory :file:`/doc/tutorials` or `online on GitHub <https://github.com/espres
 Currently, the following tutorials are available:
 
 * :file:`lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid.
+* :file:`visualization`: Using the online visualizers of |es|.
 * :file:`charged_system`: Modelling of ion condensation around a charged rod.
+* :file:`ferrofluid`: Modelling a colloidal suspension of magnetic particles.
 * :file:`lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice-Boltzmann method.
 * :file:`raspberry_electrophoresis`: Extended objects in a lattice-Boltzmann fluid, raspberry particles.
 * :file:`active_matter`: Modelling of self-propelling particles.
 * :file:`electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
-* :file:`visualization`: Using the online visualizers of |es|.
-* :file:`ferrofluid`: Modelling a colloidal suspension of magnetic particles.
 * :file:`constant_pH`: Modelling the titration of a weak acid using the constant pH method
 
 .. _Sample scripts:
