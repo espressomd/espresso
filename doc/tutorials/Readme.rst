@@ -7,15 +7,15 @@ Overview
 This folder contains tutorials that introduce the use of ESPResSo for different
 physical systems. Currently, the following tutorials are available:
 
-* ``01-lennard_jones``: Modelling of a single-component and a two-component Lennard-Jones liquid
-* ``02-charged_system``: Modelling of ion condensation around a charged rod
-* ``04-lattice_boltzmann``: Simulations including hydrodynamic interactions using the lattice-Boltzmann method
-* ``05-raspberry_electrophoresis``: Extended objects in a lattice-Boltzmann fluid, raspberry particles
-* ``06-active_matter``: Modelling of self-propelling particles
-* ``07-electrokinetics``: Modelling electrokinetics together with hydrodynamic interactions
-* ``08-visualization``: Using the online visualizers of ESPResSo
-* ``11-ferrofluid``: Modelling a monolayer ferrofluid system
-* ``12-constant_pH``: Modelling the titration of a weak acid using the constant pH method
+* ``lennard_jones``: Modelling of a single-component and a two-component Lennard-Jones liquid
+* ``charged_system``: Modelling of ion condensation around a charged rod
+* ``lattice_boltzmann``: Simulations including hydrodynamic interactions using the lattice-Boltzmann method
+* ``raspberry_electrophoresis``: Extended objects in a lattice-Boltzmann fluid, raspberry particles
+* ``active_matter``: Modelling of self-propelling particles
+* ``electrokinetics``: Modelling electrokinetics together with hydrodynamic interactions
+* ``visualization``: Using the online visualizers of ESPResSo
+* ``ferrofluid``: Modelling a monolayer ferrofluid system
+* ``constant_pH``: Modelling the titration of a weak acid using the constant pH method
 
 Using the tutorials
 -------------------

@@ -291,15 +291,15 @@ physical systems. You can also find the tutorials and related scripts in the
 directory :file:`/doc/tutorials` or `online on GitHub <https://github.com/espressomd/espresso/blob/python/doc/tutorials/>`_.
 Currently, the following tutorials are available:
 
-* :file:`01-lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid.
-* :file:`02-charged_system`: Modelling of ion condensation around a charged rod.
-* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice-Boltzmann method.
-* :file:`05-raspberry_electrophoresis`: Extended objects in a lattice-Boltzmann fluid, raspberry particles.
-* :file:`06-active_matter`: Modelling of self-propelling particles.
-* :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
-* :file:`08-visualization`: Using the online visualizers of |es|.
-* :file:`11-ferrofluid`: Modelling a colloidal suspension of magnetic particles.
-* :file:`12-constant_pH`: Modelling the titration of a weak acid using the constant pH method
+* :file:`lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid.
+* :file:`charged_system`: Modelling of ion condensation around a charged rod.
+* :file:`lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice-Boltzmann method.
+* :file:`raspberry_electrophoresis`: Extended objects in a lattice-Boltzmann fluid, raspberry particles.
+* :file:`active_matter`: Modelling of self-propelling particles.
+* :file:`electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
+* :file:`visualization`: Using the online visualizers of |es|.
+* :file:`ferrofluid`: Modelling a colloidal suspension of magnetic particles.
+* :file:`constant_pH`: Modelling the titration of a weak acid using the constant pH method
 
 .. _Sample scripts:
 
