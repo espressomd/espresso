@@ -22,10 +22,6 @@ function(PYTHON_TEST)
     set(TEST_NUM_PROC ${TEST_MAX_NUM_PROC})
   endif()
 
-  if(WITH_COVERAGE)
-    set(PYPRESSO_OPTIONS --coverage)
-  endif(WITH_COVERAGE)
-
   if(EXISTS ${MPIEXEC})
     add_test(
       NAME ${TEST_NAME}

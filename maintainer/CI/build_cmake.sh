@@ -78,6 +78,7 @@ set_default_value srcdir "$(pwd)"
 set_default_value cmake_params ""
 set_default_value with_fftw true
 set_default_value with_coverage false
+set_default_value with_coverage_python ${with_coverage}
 set_default_value with_ubsan false
 set_default_value with_asan false
 set_default_value with_static_analysis false
@@ -109,6 +110,8 @@ fi
 
 if [ "${with_coverage}" = true ]; then
     build_type="Coverage"
+fi
+if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ] ; then
     bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
 fi
 
@@ -140,6 +143,10 @@ if [ "${with_coverage}" = true ]; then
     cmake_params="-DWITH_COVERAGE=ON ${cmake_params}"
 fi
 
+if [ "${with_coverage_python}" = true ]; then
+    cmake_params="-DWITH_COVERAGE_PYTHON=ON ${cmake_params}"
+fi
+
 if [ "${with_asan}" = true ]; then
     cmake_params="-DWITH_ASAN=ON ${cmake_params}"
 fi
@@ -169,7 +176,7 @@ builddir="${srcdir}/build"
 outp srcdir builddir \
     make_check_unit_tests make_check_python make_check_tutorials make_check_samples make_check_benchmarks \
     cmake_params with_fftw \
-    with_coverage \
+    with_coverage with_coverage_python \
     with_ubsan with_asan \
     check_odd_only \
     with_static_analysis myconfig \
@@ -289,16 +296,20 @@ else
     end "TEST"
 fi
 
-if [ "${with_coverage}" = true ]; then
+if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     start "COVERAGE"
     cd "${builddir}"
-    echo "Running lcov and gcov..."
-    lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
-    lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-    lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
-    echo "Running python3-coverage..."
-    python3 -m coverage combine testsuite/python
-    python3 -m coverage xml
+    if [ "${with_coverage}" = true ]; then
+        echo "Running lcov and gcov..."
+        lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
+        lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+        lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
+    fi
+    if [ "${with_coverage_python}" = true ]; then
+        echo "Running python3-coverage..."
+        python3 -m coverage combine testsuite/python testsuite/scripts/tutorials testsuite/scripts/samples
+        python3 -m coverage xml
+    fi
     echo "Uploading to Codecov..."
     codecov_opts="-X gcov -X coveragepy"
     if [ -z "${CODECOV_TOKEN}" ]; then

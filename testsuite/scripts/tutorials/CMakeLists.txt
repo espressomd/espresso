@@ -5,9 +5,9 @@ endfunction(TUTORIAL_TEST)
 
 # configure Python modules importlib_wrapper.py and html_runner.py
 configure_file(test_html_runner.py ${CMAKE_CURRENT_BINARY_DIR})
-add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso
+add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
          ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
-add_test(html_runner ${CMAKE_BINARY_DIR}/pypresso
+add_test(html_runner ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
          ${CMAKE_CURRENT_BINARY_DIR}/test_html_runner.py)
 set_tests_properties(importlib_wrapper PROPERTIES FIXTURES_SETUP
                                                   IMPORTLIB_WRAPPER)
