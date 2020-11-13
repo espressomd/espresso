@@ -25,6 +25,19 @@ sys.path.insert(0, '@CMAKE_BINARY_DIR@/doc/tutorials')
 import html_runner
 
 
+def skipIfMissingModules(x): return x
+
+
+try:
+    import yaml  # pylint: disable=unused-import
+    import autopep8  # pylint: disable=unused-import
+except ImportError:
+    skipIfMissingModules = ut.skip(
+        "Python modules 'yaml' or 'autopep8' not available, skipping test!")
+else:
+    def skipIfMissingModules(x): return x
+
+
 class HtmlRunner(ut.TestCase):
     """
     Test the :file:`doc/tutorials/html_runner.py` script. A new Jupyter
@@ -272,6 +285,45 @@ plt.show()
         self.assertEqual(cell['source'], '```python\n1\n```')
         self.assertEqual(cell['metadata']['solution2'], 'hidden')
         self.assertEqual(cell['metadata']['key'], 'value')
+        self.assertEqual(next(cells, 'EOF'), 'EOF')
+
+    @skipIfMissingModules
+    def test_exercise2_autopep8(self):
+        f_input = '@CMAKE_CURRENT_BINARY_DIR@/test_html_runner_exercise2_autopep8.ipynb'
+        # setup
+        with open(f_input, 'w', encoding='utf-8') as f:
+            nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
+            # question and code answer
+            cell_md = nbformat.v4.new_markdown_cell(source='Question 1')
+            cell_md['metadata']['solution2_first'] = True
+            cell_md['metadata']['solution2'] = 'hidden'
+            nb['cells'].append(cell_md)
+            code = '```python\n\nif 1: #comment\n  print( [5+1,4])\n\n```'
+            cell_md = nbformat.v4.new_markdown_cell(source=code)
+            cell_md['metadata']['solution2'] = 'hidden'
+            nb['cells'].append(cell_md)
+            nbformat.write(nb, f)
+        # run command and check for errors
+        cmd = ['exercise2', '--pep8', f_input]
+        try:
+            args = html_runner.parser.parse_args(cmd)
+            args.callback(args)
+        except BaseException:
+            self.failed_to_run(cmd)
+        # read processed notebook
+        with open(f_input, encoding='utf-8') as f:
+            nb_output = nbformat.read(f, as_version=4)
+        # check cells
+        cells = iter(nb_output['cells'])
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'markdown')
+        self.assertEqual(cell['source'], 'Question 1')
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'markdown')
+        self.assertEqual(
+            cell['source'],
+            '```python\nif 1:  # comment\n    print([5 + 1, 4])\n```')
+        self.assertEqual(cell['metadata']['solution2'], 'hidden')
         self.assertEqual(next(cells, 'EOF'), 'EOF')
 
 

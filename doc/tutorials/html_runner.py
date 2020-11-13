@@ -156,6 +156,43 @@ def convert_exercise2_to_markdown(nb):
             nb['cells'][i]['metadata']['solution2'] = 'hidden'
 
 
+def apply_autopep8(nb):
+    import yaml
+    import autopep8
+
+    def get_autopep8_options():
+        options = {'aggressive': 0, 'ignore': [], 'max_line_length': 120}
+        with open('@CMAKE_SOURCE_DIR@/.pre-commit-config.yaml') as f:
+            pre_config = yaml.safe_load(f)
+        for repo in pre_config['repos']:
+            for hook in repo['hooks']:
+                if hook['id'] == 'autopep8':
+                    for arg in hook['args']:
+                        if arg == '--aggressive':
+                            options['aggressive'] += 1
+                        elif arg.startswith('--ignore='):
+                            options['ignore'] = arg.split('=', 1)[0].split(',')
+                    return options
+        return options
+
+    pep8_opts = get_autopep8_options()
+    for cell in nb['cells']:
+        source = None
+        header = ''
+        footer = ''
+        if cell['cell_type'] == 'code':
+            source = cell['source']
+        elif cell['cell_type'] == 'markdown' and 'solution2' in cell['metadata']:
+            lines = cell['source'].strip().split('\n')
+            if lines[0].strip() == '```python' and lines[-1].strip() == '```':
+                source = '\n'.join(lines[1:-1])
+                header = lines[0] + '\n'
+                footer = '\n' + lines[-1]
+        if source is not None:
+            source = autopep8.fix_code(source, options=pep8_opts).strip()
+            cell['source'] = header + source + footer
+
+
 def execute_notebook(nb, src, cell_separator, notebook_filepath):
     """
     Run the notebook in a python3 kernel. The ESPResSo visualizers are
@@ -231,8 +268,12 @@ def handle_exercise2_case(args):
 
     if args.to_md:
         convert_exercise2_to_markdown(nb)
-    else:
+    elif args.to_py:
         convert_exercise2_to_code(nb)
+    elif args.pep8:
+        convert_exercise2_to_code(nb)
+        apply_autopep8(nb)
+        convert_exercise2_to_markdown(nb)
 
     # write edited notebook
     with open(args.input, 'w', encoding='utf-8') as f:
@@ -270,6 +311,8 @@ group_exercise2.add_argument('--to-md', action='store_true',
                              help='convert solution cells to Markdown')
 group_exercise2.add_argument('--to-py', action='store_true',
                              help='convert solution cells to Python')
+group_exercise2.add_argument('--pep8', action='store_true',
+                             help='apply autopep8 formatting')
 parser_exercise2.set_defaults(callback=handle_exercise2_case)
 
 
