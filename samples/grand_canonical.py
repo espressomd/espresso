@@ -89,7 +89,7 @@ for type_1 in types:
             epsilon=wca_eps, sigma=wca_sig)
 
 RE = reaction_ensemble.ReactionEnsemble(
-    temperature=temperature, exclusion_radius=2.0, seed=3)
+    temperature=temperature, exclusion_radius=wca_sig, seed=3)
 RE.add_reaction(
     gamma=cs_bulk**2 * np.exp(excess_chemical_potential_pair / temperature),
     reactant_types=[], reactant_coefficients=[], product_types=[1, 2],
