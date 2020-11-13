@@ -25,6 +25,7 @@ from .interactions cimport BONDED_IA_NONE
 from .interactions cimport bonded_ia_params
 import numpy as np
 cimport numpy as np
+import scipy.signal
 from .globals import Globals
 
 from collections import OrderedDict
@@ -34,6 +35,61 @@ from .utils cimport Vector3i, Vector3d, Vector9d
 from .utils cimport handle_errors, check_type_or_throw_except
 from .utils cimport create_nparray_from_double_array
 from .particle_data cimport get_n_part
+
+
+def autocorrelation(time_series):
+    """
+    Calculate the unnormalized autocorrelation function :math:`R_{XX}`
+    of an observable :math:`X` measured at time :math:`t` with constant
+    time step for lag times :math:`\\tau` such that:
+
+    :math:`\\displaystyle R_{XX}(\\tau) = \\frac{1}{N - \\tau} \\sum_{t=0}^{N - \\tau} X_{t} \\cdot X_{t + \\tau}`
+
+    This is a scipy implementation of the algorithm described
+    in :cite:`debuyl18a` that uses FFT. This implementation:
+
+    - doesn't subtract the mean of the time series before calculating the ACF,
+    - doesn't normalize the ACF by the variance of the time series,
+    - assumes the time series is aperiodic (i.e. uses zero-padding).
+
+    Parameters
+    ----------
+    time_series : (N,) or (N, M) array_like of :obj:`float`
+        Time series to correlate. For multi-dimensional data, M is the
+        number of columns.
+
+    Returns
+    -------
+    (N,) array_like of :obj:`float`
+        The time series autocorrelation function.
+    """
+    def acf_1d(signal, n_with_padding, n):
+        acf = scipy.signal.correlate(signal, signal, mode="full", method="fft")
+        acf = acf[-n_with_padding:][:n] / (n - np.arange(n))
+        return acf
+
+    if not isinstance(time_series, np.ndarray):
+        time_series = np.array(time_series)
+
+    n = time_series.shape[0]
+    if n == 0:
+        return np.array([], dtype=float)
+
+    n_with_padding = 2**int(np.ceil(np.log2(n)) + 1)
+    signal_padded = np.zeros(n_with_padding)
+
+    if time_series.ndim == 1:
+        signal_padded[:n] = time_series
+        return acf_1d(signal_padded, n_with_padding, n)
+    elif time_series.ndim == 2:
+        signal_acf = np.zeros(n)
+        for i in range(time_series.shape[1]):
+            signal_padded[:n] = time_series[:, i]
+            signal_acf += acf_1d(signal_padded, n_with_padding, n)
+        return signal_acf
+    else:
+        raise ValueError(f"Only 1-dimensional and 2-dimensional time series "
+                         f"are supported, got shape {time_series.shape}")
 
 
 cdef _Observable_stat_to_dict(Observable_stat obs, cbool calc_sp):
