@@ -89,7 +89,7 @@ class Observables(ut.TestCase):
                         self.N_PART * .9),
                     replace=False))
             for id in id_list:
-                assert(self.system.part.exists(id))
+                self.assertTrue(self.system.part.exists(id))
 
             # Get data from particles
             if pprop_name == "f":
