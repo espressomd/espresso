@@ -104,7 +104,10 @@ class VirtualSitesTracersCommon:
         n1 = n1 / norm1
         n2 = n2 / norm2
 
-        alpha = np.arccos(np.dot(n1, n2))
+        cos_alpha = np.dot(n1, n2)
+        if cos_alpha > 1:
+            cos_alpha = 1
+        alpha = np.arccos(cos_alpha)
         return alpha
 
     def test_tribend(self):
