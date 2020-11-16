@@ -48,13 +48,20 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
         Returns the samples mean values of the respective observable with
         which the accumulator was initialized.
         """
-        return np.array(self.call_method("get_mean")).reshape(self.shape())
+        return np.array(self.call_method("mean")).reshape(self.shape())
 
     def get_variance(self):
         """
         Returns the samples variance for the observable.
         """
-        return np.array(self.call_method("get_variance")).reshape(self.shape())
+        return np.array(self.call_method("variance")).reshape(self.shape())
+
+    def get_std_error(self):
+        """
+        Returns the standard error calculated from the samples variance for the observable by
+        assuming uncorrelated samples.
+        """
+        return np.array(self.call_method("std_error")).reshape(self.shape())
 
 
 @script_interface_register

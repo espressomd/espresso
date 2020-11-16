@@ -49,9 +49,9 @@ class Accumulator {
 public:
   explicit Accumulator(std::size_t N) : m_n(0), m_acc_data(N) {}
   void operator()(const std::vector<double> &);
-  std::vector<double> get_mean() const;
-  std::vector<double> get_variance() const;
-  std::vector<double> get_std_error() const;
+  std::vector<double> mean() const;
+  std::vector<double> variance() const;
+  std::vector<double> std_error() const;
 
 private:
   std::size_t m_n;
@@ -88,7 +88,7 @@ inline void Accumulator::operator()(const std::vector<double> &data) {
   }
 }
 
-inline std::vector<double> Accumulator::get_mean() const {
+inline std::vector<double> Accumulator::mean() const {
   std::vector<double> res;
   std::transform(
       m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
@@ -96,7 +96,7 @@ inline std::vector<double> Accumulator::get_mean() const {
   return res;
 }
 
-inline std::vector<double> Accumulator::get_variance() const {
+inline std::vector<double> Accumulator::variance() const {
   std::vector<double> res;
   if (m_n == 1) {
     res = std::vector<double>(m_acc_data.size(),
@@ -107,23 +107,21 @@ inline std::vector<double> Accumulator::get_variance() const {
         [this](const AccumulatorData<double> &acc_data) {
           return acc_data.m /
                  (static_cast<double>(m_n) -
-                  1); // numerically stable sample variance, see
-                      // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+                  1);
         });
   }
   return res;
 }
 
 /**
-returns the standard error of the mean of uncorrelated data. if data are
-correlated the correlation time needs to be known...
+ * Returns the standard error of the mean assuming uncorrelated samples.
 */
-inline std::vector<double> Accumulator::get_std_error() const {
-  auto const variance = get_variance();
-  std::vector<double> std_error(variance.size());
-  std::transform(variance.begin(), variance.end(), std_error.begin(),
+inline std::vector<double> Accumulator::std_error() const {
+  auto const var = variance();
+  std::vector<double> err(var.size());
+  std::transform(var.begin(), var.end(), err.begin(),
                  [this](double d) { return std::sqrt(d / m_n); });
-  return std_error;
+  return err;
 }
 
 } // namespace Utils
