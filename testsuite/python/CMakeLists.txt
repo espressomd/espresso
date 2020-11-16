@@ -36,8 +36,8 @@ function(PYTHON_TEST)
   set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC}
                                                DEPENDS "${TEST_DEPENDS}")
 
-  if("gpu" IN_LIST TEST_LABELS)
-    set_tests_properties(${TEST_NAME} PROPERTIES RUN_SERIAL ON)
+  if("gpu" IN_LIST TEST_LABELS AND WITH_CUDA)
+    set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
   endif()
 
   if(${TEST_MAX_NUM_PROC} LESS 2)
