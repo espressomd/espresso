@@ -21,11 +21,11 @@ import unittest as ut
 import unittest_decorators as utx
 
 import espressomd
-from tests_common import single_component_maxwell
+from thermostats_common import ThermostatsCommon
 
 
 @utx.skipIfMissingFeatures(["MASS"])
-class ThermalizedBond(ut.TestCase):
+class ThermalizedBond(ut.TestCase, ThermostatsCommon):
 
     """Tests the two velocity distributions for COM and distance created by the
        thermalized bond independently against the single component Maxwell
@@ -39,23 +39,6 @@ class ThermalizedBond(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         np.random.seed(42)
-
-    def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
-        """check the recorded particle distributions in velocity against a
-           histogram with n_bins bins. Drop velocities outside minmax. Check
-           individual histogram bins up to an accuracy of error_tol against the
-           analytical result for kT."""
-
-        for i in range(3):
-            hist = np.histogram(
-                vel[:, i], range=(-minmax, minmax), bins=n_bins, density=False)
-            data = hist[0] / float(vel.shape[0])
-            bins = hist[1]
-
-            for j in range(n_bins):
-                found = data[j]
-                expected = single_component_maxwell(bins[j], bins[j + 1], kT)
-                self.assertAlmostEqual(found, expected, delta=error_tol)
 
     def test_com_langevin(self):
         """Test for COM thermalization."""

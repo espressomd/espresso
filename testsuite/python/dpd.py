@@ -23,11 +23,11 @@ from itertools import product
 
 import espressomd
 from espressomd.observables import DPDStress
-from tests_common import single_component_maxwell
+from thermostats_common import ThermostatsCommon
 
 
 @utx.skipIfMissingFeatures("DPD")
-class DPDThermostat(ut.TestCase):
+class DPDThermostat(ut.TestCase, ThermostatsCommon):
 
     """Tests the velocity distribution created by the DPD thermostat."""
 
@@ -42,26 +42,6 @@ class DPDThermostat(ut.TestCase):
         s = self.s
         s.part.clear()
         s.thermostat.turn_off()
-
-    def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
-        """check the recorded particle distributions in velocity against a
-           histogram with n_bins bins. Drop velocities outside minmax. Check
-           individual histogram bins up to an accuracy of error_tol against
-           the analytical result for kT."""
-        for i in range(3):
-            hist = np.histogram(
-                vel[:, i], range=(-minmax, minmax), bins=n_bins, density=False)
-            data = hist[0] / float(vel.shape[0])
-            bins = hist[1]
-            for j in range(n_bins):
-                found = data[j]
-                expected = single_component_maxwell(bins[j], bins[j + 1], kT)
-                self.assertAlmostEqual(found, expected, delta=error_tol)
-
-    def test_aa_verify_single_component_maxwell(self):
-        """Verifies the normalization of the analytical expression."""
-        self.assertAlmostEqual(
-            single_component_maxwell(-10, 10, 4.), 1., delta=1E-4)
 
     def check_total_zero(self):
         v_total = np.sum(self.s.part[:].v, axis=0)

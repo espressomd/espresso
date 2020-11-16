@@ -1,0 +1,229 @@
+#
+# Copyright (C) 2013-2020 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+import numpy as np
+
+import espressomd
+from espressomd.accumulators import TimeSeries
+from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
+
+
+def single_component_maxwell(x1, x2, kT):
+    """Integrate the probability density from x1 to x2 using the trapezoidal rule"""
+    x = np.linspace(x1, x2, 1000)
+    return np.trapz(np.exp(-x**2 / (2. * kT)), x) / np.sqrt(2. * np.pi * kT)
+
+
+class ThermostatsCommon:
+
+    """Tests the velocity distribution created by a thermostat."""
+
+    def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
+        """Check the recorded particle distributions in velocity against a
+           histogram with n_bins bins. Drop velocities outside minmax. Check
+           individual histogram bins up to an accuracy of error_tol against
+           the analytical result for kT."""
+        for i in range(3):
+            hist = np.histogram(
+                vel[:, i], range=(-minmax, minmax), bins=n_bins, density=False)
+            data = hist[0] / float(vel.shape[0])
+            bins = hist[1]
+            for j in range(n_bins):
+                found = data[j]
+                expected = single_component_maxwell(bins[j], bins[j + 1], kT)
+                self.assertAlmostEqual(found, expected, delta=error_tol)
+
+    def test_00_verify_single_component_maxwell(self):
+        """Verifies the normalization of the analytical expression."""
+        self.assertAlmostEqual(
+            single_component_maxwell(-10, 10, 4.), 1., delta=1E-4)
+
+    def check_global(self, N, kT, loops, v_minmax,
+                     n_bins, error_tol, recalc_forces):
+        """
+        Test Langevin/Brownian dynamics velocity distribution with global kT
+        and gamma.
+
+        Parameters
+        ----------
+        N : :obj:`int`
+            Number of particles.
+        kT : :obj:`float`
+            Global temperature.
+        loops : :obj:`int`
+            Number of sampling loops.
+        v_minmax : :obj:`float`
+            Velocity range.
+        n_bins : :obj:`int`
+            Number of bins.
+        error_tol : :obj:`float`
+            Error tolerance.
+        recalc_forces : :obj:`bool`
+            True if the forces should be recalculated after every step.
+        """
+        system = self.system
+
+        # Place particles
+        system.part.add(pos=np.random.random((N, 3)))
+
+        # Enable rotation if compiled in
+        if espressomd.has_features("ROTATION"):
+            system.part[:].rotation = [1, 1, 1]
+
+        # Warmup
+        system.integrator.run(20)
+
+        # Sampling
+        v_stored = np.zeros((N * loops, 3))
+        omega_stored = np.zeros((N * loops, 3))
+        for i in range(loops):
+            system.integrator.run(1, recalc_forces=recalc_forces)
+            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
+            if espressomd.has_features("ROTATION"):
+                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
+
+        self.check_velocity_distribution(
+            v_stored, v_minmax, n_bins, error_tol, kT)
+        if espressomd.has_features("ROTATION"):
+            self.check_velocity_distribution(
+                omega_stored, v_minmax, n_bins, error_tol, kT)
+
+    def check_per_particle(self, N, kT, kT2, gamma2,
+                           loops, v_minmax, n_bins, error_tol):
+        """
+        Test Langevin/Brownian dynamics velocity distribution with
+        particle-specific kT and gamma. Covers all combinations of particle
+        specific-gamma and temp set or not set.
+
+        Parameters
+        ----------
+        N : :obj:`int`
+            Number of particles.
+        kT : :obj:`float`
+            Global temperature.
+        kT2 : :obj:`float`
+            Per-particle temperature.
+        gamma2 : :obj:`float`
+            Per-particle gamma.
+        loops : :obj:`int`
+            Number of sampling loops.
+        v_minmax : :obj:`float`
+            Velocity range.
+        n_bins : :obj:`int`
+            Number of bins.
+        error_tol : :obj:`float`
+            Error tolerance.
+        """
+        system = self.system
+        system.part.add(pos=np.random.random((N, 3)))
+        if espressomd.has_features("ROTATION"):
+            system.part[:].rotation = [1, 1, 1]
+
+        # Set different kT on 2nd half of particles
+        system.part[int(N / 2):].temp = kT2
+        # Set different gamma on half of the particles (overlap over both kTs)
+        if espressomd.has_features("PARTICLE_ANISOTROPY"):
+            system.part[int(N / 4):int(3 * N / 4)].gamma = 3 * [gamma2]
+        else:
+            system.part[int(N / 4):int(3 * N / 4)].gamma = gamma2
+
+        system.integrator.run(50)
+
+        v_kT = np.zeros((int(N / 2) * loops, 3))
+        v_kT2 = np.zeros((int(N / 2 * loops), 3))
+
+        if espressomd.has_features("ROTATION"):
+            omega_kT = np.zeros((int(N / 2) * loops, 3))
+            omega_kT2 = np.zeros((int(N / 2 * loops), 3))
+
+        for i in range(loops):
+            system.integrator.run(1)
+            v_kT[int(i * N / 2):int((i + 1) * N / 2),
+                 :] = system.part[:int(N / 2)].v
+            v_kT2[int(i * N / 2):int((i + 1) * N / 2),
+                  :] = system.part[int(N / 2):].v
+
+            if espressomd.has_features("ROTATION"):
+                omega_kT[int(i * N / 2):int((i + 1) * N / 2), :] = \
+                    system.part[:int(N / 2)].omega_body
+                omega_kT2[int(i * N / 2):int((i + 1) * N / 2), :] = \
+                    system.part[int(N / 2):].omega_body
+
+        self.check_velocity_distribution(v_kT, v_minmax, n_bins, error_tol, kT)
+        self.check_velocity_distribution(
+            v_kT2, v_minmax, n_bins, error_tol, kT2)
+        if espressomd.has_features("ROTATION"):
+            self.check_velocity_distribution(
+                omega_kT, v_minmax, n_bins, error_tol, kT)
+            self.check_velocity_distribution(
+                omega_kT2, v_minmax, n_bins, error_tol, kT2)
+
+    def check_noise_correlation(self, kT, steps, delta):
+        """Test the Langevin/Brownian noise is uncorrelated.
+
+        Parameters
+        ----------
+        kT : :obj:`float`
+            Global temperature.
+        steps : :obj:`int`
+            Number of sampling steps.
+        delta : :obj:`float`
+            Error tolerance.
+        """
+
+        system = self.system
+        vel_obs = ParticleVelocities(ids=system.part[:].id)
+        vel_series = TimeSeries(obs=vel_obs)
+        system.auto_update_accumulators.add(vel_series)
+        if espressomd.has_features("ROTATION"):
+            system.part[:].rotation = (1, 1, 1)
+            omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
+            omega_series = TimeSeries(obs=omega_obs)
+            system.auto_update_accumulators.add(omega_series)
+
+        system.integrator.run(steps)
+
+        # test translational noise correlation
+        vel = np.array(vel_series.time_series())
+        for ind in range(2):
+            for i in range(3):
+                for j in range(i, 3):
+                    corrcoef = np.dot(
+                        vel[:, ind, i], vel[:, ind, j]) / steps / kT
+                    if i == j:
+                        self.assertAlmostEqual(corrcoef, 1.0, delta=delta)
+                    else:
+                        self.assertAlmostEqual(corrcoef, 0.0, delta=delta)
+
+        # test rotational noise correlation
+        if espressomd.has_features("ROTATION"):
+            omega = np.array(omega_series.time_series())
+            for ind in range(2):
+                for i in range(3):
+                    for j in range(3):
+                        corrcoef = np.dot(
+                            omega[:, ind, i], omega[:, ind, j]) / steps / kT
+                        if i == j:
+                            self.assertAlmostEqual(corrcoef, 1.0, delta=delta)
+                        else:
+                            self.assertAlmostEqual(corrcoef, 0.0, delta=delta)
+                        # translational and angular velocities should be
+                        # independent
+                        corrcoef = np.dot(
+                            vel[:, ind, i], omega[:, ind, j]) / steps / kT
+                        self.assertAlmostEqual(corrcoef, 0.0, delta=delta)
