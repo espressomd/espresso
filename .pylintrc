@@ -68,6 +68,7 @@ disable=all
 # it should appear only once). See also the "--disable" option for examples.
 enable=dangerous-default-value, # W0102
        wildcard-import, # W0401
+       assert-on-tuple, # W0199
        unused-import, # W0611
        unused-variable, # W0612
        unused-argument, # W0613

@@ -28,11 +28,18 @@ Shapes define geometries which can be used in |es| either as
 constraints in particle interactions or as a boundary for a
 lattice-Boltzmann fluid.
 
-To avoid unexpected behavior make sure all parts of your shape are
+To avoid unexpected behavior, make sure all parts of your shape are
 within the central box since the distance to the shape is calculated only
-within the central box. If parts of the shape are placed
-outside of the central box these parts are truncated by the box boundaries. This may
-or may not be desired as for example in the case of a cylinder without or with cylinder cover.
+within the central box. If parts of the shape are placed outside of the
+central box, these parts are truncated by the box boundaries. This may
+be desired as for example in the case of a cylinder shape whose end caps
+could extend outside the box boundaries to create an infinite rod.
+
+In addition, particles will not interact with periodic images of shapes,
+therefore make sure the shapes are not too close to any of the six sides
+of the box. If the distance between the shape and the nearest box boundary
+is less than the interaction cutoff, the potential will be discontinuous
+when the particle crosses that periodic boundary.
 
 A shape is instantiated by calling its constructor. If you wanted to
 create a wall shape you could do::

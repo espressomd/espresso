@@ -57,12 +57,13 @@ function(NB_EXPORT)
     add_custom_command(
       OUTPUT ${NB_FILE_RUN}
       DEPENDS
-        "${NB_FILE};${NB_EXPORT_ADD_SCRIPTS};${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py;${CMAKE_BINARY_DIR}/testsuite/scripts/importlib_wrapper.py"
+        "${NB_FILE};${NB_EXPORT_ADD_SCRIPTS};${CMAKE_BINARY_DIR}/doc/tutorials/convert.py;${CMAKE_BINARY_DIR}/testsuite/scripts/importlib_wrapper.py"
       COMMAND
         ${CMAKE_BINARY_DIR}/pypresso
-        ${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py --execute --exercise2
-        --input ${NB_FILE} --output ${NB_FILE_RUN} --substitutions
-        ${NB_EXPORT_VAR_SUBST} --scripts ${NB_EXPORT_ADD_SCRIPTS})
+        ${CMAKE_BINARY_DIR}/doc/tutorials/convert.py ci --execute --exercise2
+        --remove-empty-cells --input ${NB_FILE} --output ${NB_FILE_RUN}
+        --substitutions ${NB_EXPORT_VAR_SUBST} --scripts
+        ${NB_EXPORT_ADD_SCRIPTS})
   else()
     set(NB_FILE_RUN ${NB_FILE})
   endif()
@@ -71,9 +72,8 @@ function(NB_EXPORT)
     OUTPUT ${HTML_FILE}
     DEPENDS ${NB_FILE_RUN};${NB_EXPORT_ADD_SCRIPTS}
     COMMAND
-      ${CMAKE_BINARY_DIR}/pypresso
-      ${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py --exercise2 --input
-      ${NB_FILE_RUN} --output ${NB_FILE_RUN}~
+      ${CMAKE_BINARY_DIR}/pypresso ${CMAKE_BINARY_DIR}/doc/tutorials/convert.py
+      ci --exercise2 --input ${NB_FILE_RUN} --output ${NB_FILE_RUN}~
     COMMAND ${IPYTHON_EXECUTABLE} nbconvert --to "html" --output ${HTML_FILE}
             ${NB_FILE_RUN}~)
 
@@ -81,9 +81,8 @@ function(NB_EXPORT)
     OUTPUT ${PY_FILE}
     DEPENDS ${NB_FILE}
     COMMAND
-      ${CMAKE_BINARY_DIR}/pypresso
-      ${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py --exercise2 --input
-      ${NB_FILE} --output ${NB_FILE}~
+      ${CMAKE_BINARY_DIR}/pypresso ${CMAKE_BINARY_DIR}/doc/tutorials/convert.py
+      ci --exercise2 --input ${NB_FILE} --output ${NB_FILE}~
     COMMAND ${IPYTHON_EXECUTABLE} nbconvert --to "python" --output ${PY_FILE}
             ${NB_FILE}~)
 
@@ -100,15 +99,15 @@ add_custom_target(tutorials_html)
 add_custom_target(tutorials_python)
 
 # Here: add new directory
-add_subdirectory(01-lennard_jones)
-add_subdirectory(02-charged_system)
-add_subdirectory(04-lattice_boltzmann)
-add_subdirectory(05-raspberry_electrophoresis)
-add_subdirectory(06-active_matter)
-add_subdirectory(07-electrokinetics)
-add_subdirectory(08-visualization)
-add_subdirectory(11-ferrofluid)
-add_subdirectory(12-constant_pH)
+add_subdirectory(lennard_jones)
+add_subdirectory(charged_system)
+add_subdirectory(lattice_boltzmann)
+add_subdirectory(raspberry_electrophoresis)
+add_subdirectory(active_matter)
+add_subdirectory(electrokinetics)
+add_subdirectory(visualization)
+add_subdirectory(ferrofluid)
+add_subdirectory(constant_pH)
 
 configure_file(Readme.rst ${CMAKE_CURRENT_BINARY_DIR}/Readme.rst COPYONLY)
-configure_file(html_runner.py ${CMAKE_CURRENT_BINARY_DIR}/html_runner.py)
+configure_file(convert.py ${CMAKE_CURRENT_BINARY_DIR}/convert.py)
