@@ -62,15 +62,15 @@ class DPDThermostat(ut.TestCase, ThermostatsCommon):
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
         loops = 100
-        v_stored = np.zeros((N * loops, 3))
+        v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             s.integrator.run(10)
-            v_stored[i * N:(i + 1) * N, :] = s.part[:].v
+            v_stored[i] = s.part[:].v
         v_minmax = 5
         bins = 5
         error_tol = 0.01
         self.check_velocity_distribution(
-            v_stored, v_minmax, bins, error_tol, kT)
+            v_stored.reshape((-1, 3)), v_minmax, bins, error_tol, kT)
 
         if not with_langevin:
             self.check_total_zero()
@@ -103,15 +103,15 @@ class DPDThermostat(ut.TestCase, ThermostatsCommon):
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
         loops = 250
-        v_stored = np.zeros((N * loops, 3))
+        v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             s.integrator.run(10)
-            v_stored[i * N:(i + 1) * N, :] = s.part[:].v
+            v_stored[i] = s.part[:].v
         v_minmax = 5
         bins = 5
         error_tol = 0.01
         self.check_velocity_distribution(
-            v_stored, v_minmax, bins, error_tol, kT)
+            v_stored.reshape((-1, 3)), v_minmax, bins, error_tol, kT)
         self.check_total_zero()
 
     def test_disable(self):
@@ -150,15 +150,15 @@ class DPDThermostat(ut.TestCase, ThermostatsCommon):
         s.integrator.run(250)
 
         loops = 250
-        v_stored = np.zeros((N * loops, 3))
+        v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             s.integrator.run(10)
-            v_stored[i * N:(i + 1) * N, :] = s.part[:].v
+            v_stored[i] = s.part[:].v
         v_minmax = 5
         bins = 5
         error_tol = 0.012
         self.check_velocity_distribution(
-            v_stored, v_minmax, bins, error_tol, kT)
+            v_stored.reshape((-1, 3)), v_minmax, bins, error_tol, kT)
 
     def test_const_weight_function(self):
         s = self.s

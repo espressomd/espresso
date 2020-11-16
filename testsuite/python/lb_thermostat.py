@@ -61,15 +61,15 @@ class LBThermostatCommon(ThermostatsCommon):
         self.system.integrator.run(20)
         N = len(self.system.part)
         loops = 250
-        v_stored = np.zeros((N * loops, 3))
+        v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             self.system.integrator.run(3)
-            v_stored[i * N:(i + 1) * N, :] = self.system.part[:].v
+            v_stored[i] = self.system.part[:].v
         minmax = 5
         n_bins = 7
         error_tol = 0.01
         self.check_velocity_distribution(
-            v_stored, minmax, n_bins, error_tol, KT)
+            v_stored.reshape((-1, 3)), minmax, n_bins, error_tol, KT)
 
 
 class LBCPUThermostat(ut.TestCase, LBThermostatCommon):

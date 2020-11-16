@@ -53,7 +53,7 @@ class ThermostatsCommon:
         self.assertAlmostEqual(
             single_component_maxwell(-10, 10, 4.), 1., delta=1E-4)
 
-    def check_global(self, N, kT, loops, v_minmax,
+    def check_global(self, N, kT, steps, v_minmax,
                      n_bins, error_tol, recalc_forces):
         """
         Test Langevin/Brownian dynamics velocity distribution with global kT
@@ -65,8 +65,8 @@ class ThermostatsCommon:
             Number of particles.
         kT : :obj:`float`
             Global temperature.
-        loops : :obj:`int`
-            Number of sampling loops.
+        steps : :obj:`int`
+            Number of sampling steps.
         v_minmax : :obj:`float`
             Velocity range.
         n_bins : :obj:`int`
@@ -89,22 +89,22 @@ class ThermostatsCommon:
         system.integrator.run(20)
 
         # Sampling
-        v_stored = np.zeros((N * loops, 3))
-        omega_stored = np.zeros((N * loops, 3))
-        for i in range(loops):
+        v_stored = np.zeros((steps, N, 3))
+        omega_stored = np.zeros((steps, N, 3))
+        for i in range(steps):
             system.integrator.run(1, recalc_forces=recalc_forces)
-            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
+            v_stored[i] = system.part[:].v
             if espressomd.has_features("ROTATION"):
-                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
+                omega_stored[i] = system.part[:].omega_body
 
         self.check_velocity_distribution(
-            v_stored, v_minmax, n_bins, error_tol, kT)
+            v_stored.reshape((-1, 3)), v_minmax, n_bins, error_tol, kT)
         if espressomd.has_features("ROTATION"):
             self.check_velocity_distribution(
-                omega_stored, v_minmax, n_bins, error_tol, kT)
+                omega_stored.reshape((-1, 3)), v_minmax, n_bins, error_tol, kT)
 
     def check_per_particle(self, N, kT_global, kT_local, gamma_local,
-                           loops, v_minmax, n_bins, error_tol):
+                           steps, v_minmax, n_bins, error_tol):
         """
         Test Langevin/Brownian dynamics velocity distribution with global and
         particle-specific kT/gamma. Covers all combinations of particle
@@ -120,8 +120,8 @@ class ThermostatsCommon:
             Per-particle temperature.
         gamma_local : :obj:`float`
             Per-particle gamma.
-        loops : :obj:`int`
-            Number of sampling loops.
+        steps : :obj:`int`
+            Number of sampling steps.
         v_minmax : :obj:`float`
             Velocity range.
         n_bins : :obj:`int`
@@ -161,17 +161,17 @@ class ThermostatsCommon:
             system.auto_update_accumulators.add(omega_acc_global)
             system.auto_update_accumulators.add(omega_acc_local)
 
-        system.integrator.run(loops)
+        system.integrator.run(steps)
 
-        vel_global = np.reshape(vel_acc_global.time_series(), (-1, 3))
-        vel_local = np.reshape(vel_acc_local.time_series(), (-1, 3))
+        vel_global = vel_acc_global.time_series().reshape((-1, 3))
+        vel_local = vel_acc_local.time_series().reshape((-1, 3))
         self.check_velocity_distribution(
             vel_global, v_minmax, n_bins, error_tol, kT_global)
         self.check_velocity_distribution(
             vel_local, v_minmax, n_bins, error_tol, kT_local)
         if espressomd.has_features("ROTATION"):
-            omega_global = np.reshape(omega_acc_global.time_series(), (-1, 3))
-            omega_local = np.reshape(omega_acc_local.time_series(), (-1, 3))
+            omega_global = omega_acc_global.time_series().reshape((-1, 3))
+            omega_local = omega_acc_local.time_series().reshape((-1, 3))
             self.check_velocity_distribution(
                 omega_global, v_minmax, n_bins, error_tol, kT_global)
             self.check_velocity_distribution(
