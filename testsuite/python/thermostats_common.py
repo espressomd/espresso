@@ -103,22 +103,22 @@ class ThermostatsCommon:
             self.check_velocity_distribution(
                 omega_stored, v_minmax, n_bins, error_tol, kT)
 
-    def check_per_particle(self, N, kT, kT2, gamma2,
+    def check_per_particle(self, N, kT_global, kT_local, gamma_local,
                            loops, v_minmax, n_bins, error_tol):
         """
-        Test Langevin/Brownian dynamics velocity distribution with
-        particle-specific kT and gamma. Covers all combinations of particle
+        Test Langevin/Brownian dynamics velocity distribution with global and
+        particle-specific kT/gamma. Covers all combinations of particle
         specific-gamma and temp set or not set.
 
         Parameters
         ----------
         N : :obj:`int`
             Number of particles.
-        kT : :obj:`float`
+        kT_global : :obj:`float`
             Global temperature.
-        kT2 : :obj:`float`
+        kT_local : :obj:`float`
             Per-particle temperature.
-        gamma2 : :obj:`float`
+        gamma_local : :obj:`float`
             Per-particle gamma.
         loops : :obj:`int`
             Number of sampling loops.
@@ -134,44 +134,48 @@ class ThermostatsCommon:
         if espressomd.has_features("ROTATION"):
             system.part[:].rotation = [1, 1, 1]
 
-        # Set different kT on 2nd half of particles
-        system.part[int(N / 2):].temp = kT2
-        # Set different gamma on half of the particles (overlap over both kTs)
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            system.part[int(N / 4):int(3 * N / 4)].gamma = 3 * [gamma2]
-        else:
-            system.part[int(N / 4):int(3 * N / 4)].gamma = gamma2
+            gamma_local = 3 * [gamma_local]
+
+        # Set different kT on 2nd half of particles
+        system.part[N // 2:].temp = kT_local
+        # Set different gamma on half of the particles (overlap over both kTs)
+        system.part[N // 4:3 * N // 4].gamma = gamma_local
 
         system.integrator.run(50)
 
-        v_kT = np.zeros((int(N / 2) * loops, 3))
-        v_kT2 = np.zeros((int(N / 2 * loops), 3))
+        vel_obs_global = ParticleVelocities(ids=system.part[:N // 2].id)
+        vel_obs_local = ParticleVelocities(ids=system.part[N // 2:].id)
+        vel_acc_global = TimeSeries(obs=vel_obs_global)
+        vel_acc_local = TimeSeries(obs=vel_obs_local)
+        system.auto_update_accumulators.add(vel_acc_global)
+        system.auto_update_accumulators.add(vel_acc_local)
 
         if espressomd.has_features("ROTATION"):
-            omega_kT = np.zeros((int(N / 2) * loops, 3))
-            omega_kT2 = np.zeros((int(N / 2 * loops), 3))
+            omega_obs_global = ParticleBodyAngularVelocities(
+                ids=system.part[:N // 2].id)
+            omega_obs_local = ParticleBodyAngularVelocities(
+                ids=system.part[N // 2:].id)
+            omega_acc_global = TimeSeries(obs=omega_obs_global)
+            omega_acc_local = TimeSeries(obs=omega_obs_local)
+            system.auto_update_accumulators.add(omega_acc_global)
+            system.auto_update_accumulators.add(omega_acc_local)
 
-        for i in range(loops):
-            system.integrator.run(1)
-            v_kT[int(i * N / 2):int((i + 1) * N / 2),
-                 :] = system.part[:int(N / 2)].v
-            v_kT2[int(i * N / 2):int((i + 1) * N / 2),
-                  :] = system.part[int(N / 2):].v
+        system.integrator.run(loops)
 
-            if espressomd.has_features("ROTATION"):
-                omega_kT[int(i * N / 2):int((i + 1) * N / 2), :] = \
-                    system.part[:int(N / 2)].omega_body
-                omega_kT2[int(i * N / 2):int((i + 1) * N / 2), :] = \
-                    system.part[int(N / 2):].omega_body
-
-        self.check_velocity_distribution(v_kT, v_minmax, n_bins, error_tol, kT)
+        vel_global = np.reshape(vel_acc_global.time_series(), (-1, 3))
+        vel_local = np.reshape(vel_acc_local.time_series(), (-1, 3))
         self.check_velocity_distribution(
-            v_kT2, v_minmax, n_bins, error_tol, kT2)
+            vel_global, v_minmax, n_bins, error_tol, kT_global)
+        self.check_velocity_distribution(
+            vel_local, v_minmax, n_bins, error_tol, kT_local)
         if espressomd.has_features("ROTATION"):
+            omega_global = np.reshape(omega_acc_global.time_series(), (-1, 3))
+            omega_local = np.reshape(omega_acc_local.time_series(), (-1, 3))
             self.check_velocity_distribution(
-                omega_kT, v_minmax, n_bins, error_tol, kT)
+                omega_global, v_minmax, n_bins, error_tol, kT_global)
             self.check_velocity_distribution(
-                omega_kT2, v_minmax, n_bins, error_tol, kT2)
+                omega_local, v_minmax, n_bins, error_tol, kT_local)
 
     def check_noise_correlation(self, kT, steps, delta):
         """Test the Langevin/Brownian noise is uncorrelated.
