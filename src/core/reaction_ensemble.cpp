@@ -1611,14 +1611,13 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   current_reaction.accumulator_exponentials(exponential);
 
   std::pair<double, double> result = std::make_pair(
-      -temperature *
-          log(current_reaction.accumulator_exponentials.mean()[0]),
+      -temperature * log(current_reaction.accumulator_exponentials.mean()[0]),
       std::abs(-temperature /
                current_reaction.accumulator_exponentials.mean()[0] *
                current_reaction.accumulator_exponentials
                    .std_error()[0])); // excess chemical potential; error
-                                          // excess chemical potential,
-                                          // determined via error propagation
+                                      // excess chemical potential,
+                                      // determined via error propagation
   return result;
 }
 

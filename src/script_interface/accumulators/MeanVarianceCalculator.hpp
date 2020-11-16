@@ -61,10 +61,14 @@ public:
 
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
-    if (method == "update") mean_variance_calculator()->update();
-    if (method == "mean") return mean_variance_calculator()->mean();
-    if (method == "variance") return mean_variance_calculator()->variance();
-    if (method == "std_error") return mean_variance_calculator()->std_error();
+    if (method == "update")
+      mean_variance_calculator()->update();
+    if (method == "mean")
+      return mean_variance_calculator()->mean();
+    if (method == "variance")
+      return mean_variance_calculator()->variance();
+    if (method == "std_error")
+      return mean_variance_calculator()->std_error();
     return AccumulatorBase::call_method(method, parameters);
   }
 

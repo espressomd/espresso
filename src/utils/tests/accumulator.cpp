@@ -35,10 +35,9 @@ BOOST_AUTO_TEST_CASE(accumulator) {
   BOOST_CHECK(acc.variance() ==
               std::vector<double>(4, std::numeric_limits<double>::max()));
   acc(test_data2);
+  BOOST_CHECK((acc.mean() == std::vector<double>{{0.75, 2.25, 2.75, 3.75}}));
   BOOST_CHECK(
-      (acc.mean() == std::vector<double>{{0.75, 2.25, 2.75, 3.75}}));
-  BOOST_CHECK((acc.variance() ==
-               std::vector<double>{{1.125, 3.125, 1.125, 1.125}}));
+      (acc.variance() == std::vector<double>{{1.125, 3.125, 1.125, 1.125}}));
   BOOST_CHECK(
       (acc.std_error() == std::vector<double>{{0.75, 1.25, 0.75, 0.75}}));
 }

@@ -21,9 +21,10 @@
 Testmodule for the observable accumulator.
 
 """
-import sys
 import unittest as ut
+
 import numpy as np
+
 import espressomd
 import espressomd.observables
 import espressomd.accumulators
@@ -63,14 +64,14 @@ class AccumulatorTest(ut.TestCase):
             self.system.integrator.run(1)
         self.assertEqual(self.pos_obs, self.pos_obs_acc.get_params()['obs'])
         np.testing.assert_allclose(
-            self.pos_obs_acc.get_mean(),
+            self.pos_obs_acc.mean(),
             np.mean(self.positions, axis=0), atol=1e-4)
         variance = np.var(self.positions, axis=0, ddof=1)
         np.testing.assert_allclose(
-            self.pos_obs_acc.get_variance(),
+            self.pos_obs_acc.variance(),
             variance, atol=1e-4)
         np.testing.assert_allclose(
-            self.pos_obs_acc.get_std_error(),
+            self.pos_obs_acc.std_error(),
             np.sqrt(variance / len(self.positions)), atol=1e-4)
 
 

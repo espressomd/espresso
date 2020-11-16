@@ -102,20 +102,18 @@ inline std::vector<double> Accumulator::variance() const {
     res = std::vector<double>(m_acc_data.size(),
                               std::numeric_limits<double>::max());
   } else {
-    std::transform(
-        m_acc_data.begin(), m_acc_data.end(), std::back_inserter(res),
-        [this](const AccumulatorData<double> &acc_data) {
-          return acc_data.m /
-                 (static_cast<double>(m_n) -
-                  1);
-        });
+    std::transform(m_acc_data.begin(), m_acc_data.end(),
+                   std::back_inserter(res),
+                   [this](const AccumulatorData<double> &acc_data) {
+                     return acc_data.m / (static_cast<double>(m_n) - 1);
+                   });
   }
   return res;
 }
 
 /**
  * Returns the standard error of the mean assuming uncorrelated samples.
-*/
+ */
 inline std::vector<double> Accumulator::std_error() const {
   auto const var = variance();
   std::vector<double> err(var.size());
