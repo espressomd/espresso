@@ -42,6 +42,73 @@ class DPDThermostat(ut.TestCase, ThermostatsCommon):
         s = self.s
         s.part.clear()
         s.thermostat.turn_off()
+        s.integrator.set_vv()
+
+    def test_01__rng(self):
+        """Test for RNG consistency."""
+        def reset_particles():
+            self.s.part.clear()
+            p = self.s.part.add(pos=[0, 0, 0])
+            _ = self.s.part.add(pos=[0, 0, 1])
+            return p
+
+        system = self.s
+
+        kT = 2.3
+        gamma = 1.5
+
+        # No seed should throw exception
+        with self.assertRaises(ValueError):
+            system.thermostat.set_dpd(kT=kT)
+
+        system.thermostat.set_dpd(kT=kT, seed=41)
+        system.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=0, gamma=gamma, r_cut=1.5,
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
+
+        # run(0) does not increase the philox counter and should give the same
+        # force
+        p = reset_particles()
+        system.integrator.run(0, recalc_forces=True)
+        force0 = np.copy(p.f)
+        system.integrator.run(0, recalc_forces=True)
+        force1 = np.copy(p.f)
+        np.testing.assert_almost_equal(force0, force1)
+
+        # run(1) should give a different force
+        p = reset_particles()
+        system.integrator.run(1)
+        force2 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force1, force2)))
+
+        # Different seed should give a different force with same counter state
+        # force2: dpd.rng_counter() = 1, dpd.rng_seed() = 41
+        # force3: dpd.rng_counter() = 1, dpd.rng_seed() = 42
+        p = reset_particles()
+        system.integrator.run(0, recalc_forces=True)
+        force2 = np.copy(p.f)
+        system.thermostat.set_dpd(kT=kT, seed=42)
+        system.integrator.run(0, recalc_forces=True)
+        force3 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force2, force3)))
+
+        # Same seed should not give the same force with different counter state
+        p = reset_particles()
+        system.thermostat.set_dpd(kT=kT, seed=42)
+        system.integrator.run(1)
+        force4 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force3, force4)))
+
+        # Seed offset should not give the same force with a lag
+        # force4: dpd.rng_counter() = 2, dpd.rng_seed() = 42
+        # force5: dpd.rng_counter() = 3, dpd.rng_seed() = 41
+        reset_particles()
+        system.thermostat.set_dpd(kT=kT, seed=41)
+        system.integrator.run(1)
+        p = reset_particles()
+        system.integrator.run(0, recalc_forces=True)
+        force5 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force4, force5)))
 
     def check_total_zero(self):
         v_total = np.sum(self.s.part[:].v, axis=0)

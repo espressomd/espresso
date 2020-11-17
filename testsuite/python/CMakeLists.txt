@@ -219,6 +219,7 @@ python_test(FILE mdanalysis.py MAX_NUM_PROC 2)
 python_test(FILE p3m_tuning_exceptions.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE integrator_exceptions.py MAX_NUM_PROC 1)
 python_test(FILE utils.py MAX_NUM_PROC 1)
+python_test(FILE npt_thermostat.py MAX_NUM_PROC 4)
 
 add_custom_target(
   python_test_data

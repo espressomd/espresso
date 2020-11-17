@@ -42,6 +42,78 @@ class ThermalizedBond(ut.TestCase, ThermostatsCommon):
         self.system.cell_system.skin = 0.0
         self.system.part.clear()
         self.system.auto_update_accumulators.clear()
+        self.system.thermostat.turn_off()
+
+    def test_01__rng(self):
+        """Test for RNG consistency."""
+        def reset_particle():
+            self.system.part.clear()
+            p = self.system.part.add(pos=[0, 0, 0])
+            if espressomd.has_features("ROTATION"):
+                p.rotation = [1, 1, 1]
+                # Make sure rinertia does not change diff coeff
+                if espressomd.has_features("ROTATIONAL_INERTIA"):
+                    p.rinertia = [0.4, 0.4, 0.4]
+            return p
+
+        system = self.system
+        system.time_step = 0.01
+
+        kT = 1.1
+        gamma = 3.5
+        pos2force = np.sqrt(2 * kT / gamma * system.time_step)
+        omega2torque = np.sqrt(2 * kT / gamma * system.time_step)
+
+        # No seed should throw exception
+        with self.assertRaises(ValueError):
+            system.thermostat.set_brownian(kT=kT, gamma=gamma)
+
+        system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
+
+        # run(0) does not increase the philox counter and should give no force
+        p = reset_particle()
+        system.integrator.run(0)
+        force0 = np.copy(p.pos) / pos2force
+        np.testing.assert_almost_equal(force0, 0)
+
+        # run(1) should give a force
+        p = reset_particle()
+        system.integrator.run(1)
+        force1 = np.copy(p.pos) / pos2force
+        self.assertTrue(np.all(np.not_equal(force1, [0, 0, 0])))
+        if espressomd.has_features("ROTATION"):
+            torque1 = np.copy(p.omega_body) / omega2torque
+            self.assertTrue(np.all(np.not_equal(torque1, [0, 0, 0])))
+
+        # Same seed should not give the same force with different counter state
+        # force1: brownian.rng_counter() = 1, brownian.rng_seed() = 41
+        # force2: brownian.rng_counter() = 2, brownian.rng_seed() = 41
+        p = reset_particle()
+        system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
+        system.integrator.run(1)
+        force2 = np.copy(p.pos) / pos2force
+        self.assertTrue(np.all(np.not_equal(force2, force1)))
+        if espressomd.has_features("ROTATION"):
+            torque2 = np.copy(p.omega_body) / omega2torque
+            self.assertTrue(np.all(np.not_equal(torque2, torque1)))
+
+        # Seed offset should not give the same force with a lag
+        # force3: brownian.rng_counter() = 3, brownian.rng_seed() = 42
+        # force4: brownian.rng_counter() = 4, brownian.rng_seed() = 41
+        p = reset_particle()
+        system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=42)
+        system.integrator.run(1)
+        force3 = np.copy(p.pos) / pos2force
+        if espressomd.has_features("ROTATION"):
+            torque3 = np.copy(p.omega_body) / omega2torque
+        p = reset_particle()
+        system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
+        system.integrator.run(1)
+        force4 = np.copy(p.pos) / pos2force
+        self.assertTrue(np.all(np.not_equal(force3, force4)))
+        if espressomd.has_features("ROTATION"):
+            torque4 = np.copy(p.omega_body) / omega2torque
+            self.assertTrue(np.all(np.not_equal(torque3, torque4)))
 
     def check_vel_dist_global_temp(self, recalc_forces, loops):
         """Test velocity distribution for global temperature parameters.

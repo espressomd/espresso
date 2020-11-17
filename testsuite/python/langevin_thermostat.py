@@ -32,7 +32,6 @@ class ThermalizedBond(ut.TestCase, ThermostatsCommon):
     system.cell_system.set_domain_decomposition(use_verlet_lists=True)
     system.cell_system.skin = 0
     system.periodicity = [0, 0, 0]
-    system.integrator.set_vv()
 
     def setUp(self):
         np.random.seed(42)
@@ -42,12 +41,18 @@ class ThermalizedBond(ut.TestCase, ThermostatsCommon):
         self.system.cell_system.skin = 0.0
         self.system.part.clear()
         self.system.auto_update_accumulators.clear()
+        self.system.thermostat.turn_off()
+        self.system.integrator.set_vv()
 
-    def test_01__langevin_seed(self):
-        """Test for RNG seed consistency."""
+    def test_01__rng(self):
+        """Test for RNG consistency."""
+        def reset_particle():
+            self.system.part.clear()
+            p = system.part.add(pos=[0, 0, 0])
+            return p
+
         system = self.system
         system.time_step = 0.01
-        system.part.add(pos=[0, 0, 0])
 
         kT = 1.1
         gamma = 3.5
@@ -58,56 +63,49 @@ class ThermalizedBond(ut.TestCase, ThermostatsCommon):
 
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
 
-        #'integrate 0' does not increase the philox counter and should give the same force
-        system.integrator.run(0)
-        force0 = np.copy(system.part[0].f)
-        system.integrator.run(0)
-        force1 = np.copy(system.part[0].f)
+        # run(0) does not increase the philox counter and should give the same
+        # force
+        p = reset_particle()
+        system.integrator.run(0, recalc_forces=True)
+        force0 = np.copy(p.f)
+        system.integrator.run(0, recalc_forces=True)
+        force1 = np.copy(p.f)
         np.testing.assert_almost_equal(force0, force1)
 
-        #'integrate 1' should give a different force
-        system.part.clear()
-        system.part.add(pos=[0, 0, 0])
+        # run(1) should give a different force
+        p = reset_particle()
         system.integrator.run(1)
-        force2 = np.copy(system.part[0].f)
-        np.testing.assert_equal(np.all(np.not_equal(force1, force2)), True)
+        force2 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force1, force2)))
 
-        # Different seed should give a different force
-        system.part.clear()
-        system.part.add(pos=[0, 0, 0])
+        # Different seed should give a different force with same counter state
+        # force2: langevin.rng_counter() = 1, langevin.rng_seed() = 41
+        # force3: langevin.rng_counter() = 1, langevin.rng_seed() = 42
+        p = reset_particle()
+        system.integrator.run(0, recalc_forces=True)
+        force2 = np.copy(p.f)
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
-        system.integrator.run(1)
-        force3 = np.copy(system.part[0].f)
-        np.testing.assert_equal(np.all(np.not_equal(force2, force3)), True)
+        system.integrator.run(0, recalc_forces=True)
+        force3 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force2, force3)))
 
         # Same seed should not give the same force with different counter state
-        system.part.clear()
-        system.part.add(pos=[0, 0, 0])
+        p = reset_particle()
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(1)
-        force4 = np.copy(system.part[0].f)
-        np.testing.assert_equal(np.all(np.not_equal(force3, force4)), True)
+        force4 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force3, force4)))
 
         # Seed offset should not give the same force with a lag
-        system.part.clear()
-        system.part.add(pos=[0, 0, 0])
+        # force4: langevin.rng_counter() = 2, langevin.rng_seed() = 42
+        # force5: langevin.rng_counter() = 3, langevin.rng_seed() = 41
+        reset_particle()
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         system.integrator.run(1)
-        system.part[0].pos = system.part[0].v = [0, 0, 0]
-        system.integrator.run(1)
-        force5 = np.copy(system.part[0].f)
-        np.testing.assert_equal(np.all(np.not_equal(force4, force5)), True)
-
-        # Same seed should give the same force with same counter state
-        system.part.clear()
-        system.part.add(pos=[0, 0, 0])
-        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
+        p = reset_particle()
         system.integrator.run(0, recalc_forces=True)
-        force6 = np.copy(system.part[0].f)
-        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
-        system.integrator.run(0, recalc_forces=True)
-        force7 = np.copy(system.part[0].f)
-        np.testing.assert_almost_equal(force6, force7)
+        force5 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force4, force5)))
 
     def test_02__friction_trans(self):
         """Tests the translational friction-only part of the thermostat."""
