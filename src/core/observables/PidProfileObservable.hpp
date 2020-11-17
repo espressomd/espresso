@@ -19,11 +19,9 @@
 #ifndef OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
 
-#include "Observable.hpp"
-#include "Particle.hpp"
 #include "PidObservable.hpp"
 #include "ProfileObservable.hpp"
-#include "integrate.hpp"
+
 #include <vector>
 
 namespace Observables {

@@ -24,6 +24,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 
@@ -39,43 +40,37 @@ public:
                       double max_z, bool allow_empty_bins = false)
       : ProfileObservable(min_x, max_x, min_y, max_y, min_z, max_z, n_x_bins,
                           n_y_bins, n_z_bins),
-        sampling_delta_x(sampling_delta_x), sampling_delta_y(sampling_delta_y),
-        sampling_delta_z(sampling_delta_z),
-        sampling_offset_x(sampling_offset_x),
-        sampling_offset_y(sampling_offset_y),
-        sampling_offset_z(sampling_offset_z),
+        sampling_delta{sampling_delta_x, sampling_delta_y, sampling_delta_z},
+        sampling_offset{sampling_offset_x, sampling_offset_y, sampling_offset_z},
         allow_empty_bins(allow_empty_bins) {
     calculate_sampling_positions();
   }
-  double sampling_delta_x;
-  double sampling_delta_y;
-  double sampling_delta_z;
-  double sampling_offset_x;
-  double sampling_offset_y;
-  double sampling_offset_z;
+  std::array<double, 3> sampling_delta;
+  std::array<double, 3> sampling_offset;
   bool allow_empty_bins;
+  std::vector<Utils::Vector3d> sampling_positions;
   void calculate_sampling_positions() {
     sampling_positions.clear();
-    if (sampling_delta_x == 0 or sampling_delta_y == 0 or sampling_delta_z == 0)
+    if (sampling_delta[0] == 0 or sampling_delta[1] == 0 or
+        sampling_delta[2] == 0)
       throw std::runtime_error("Parameter delta_x/y/z must not be zero!");
-    const auto n_samples_x =
-        static_cast<size_t>(std::rint((max_x - min_x) / sampling_delta_x));
-    const auto n_samples_y =
-        static_cast<size_t>(std::rint((max_y - min_y) / sampling_delta_y));
-    const auto n_samples_z =
-        static_cast<size_t>(std::rint((max_z - min_z) / sampling_delta_z));
+    const auto n_samples_x = static_cast<size_t>(
+        std::rint((limits[0].second - limits[0].first) / sampling_delta[0]));
+    const auto n_samples_y = static_cast<size_t>(
+        std::rint((limits[1].second - limits[1].first) / sampling_delta[1]));
+    const auto n_samples_z = static_cast<size_t>(
+        std::rint((limits[2].second - limits[2].first) / sampling_delta[2]));
     for (size_t x = 0; x < n_samples_x; ++x) {
       for (size_t y = 0; y < n_samples_y; ++y) {
         for (size_t z = 0; z < n_samples_z; ++z) {
           sampling_positions.push_back(Utils::Vector3d{
-              {min_x + sampling_offset_x + x * sampling_delta_x,
-               min_y + sampling_offset_y + y * sampling_delta_y,
-               min_z + sampling_offset_z + z * sampling_delta_z}});
+              {limits[0].first + sampling_offset[0] + x * sampling_delta[0],
+               limits[1].first + sampling_offset[1] + y * sampling_delta[1],
+               limits[2].first + sampling_offset[2] + z * sampling_delta[2]}});
         }
       }
     }
   }
-  std::vector<Utils::Vector3d> sampling_positions;
 };
 
 } // namespace Observables

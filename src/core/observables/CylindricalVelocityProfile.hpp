@@ -40,10 +40,6 @@ public:
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    std::array<size_t, 3> n_bins{{n_r_bins, n_phi_bins, n_z_bins}};
-    std::array<std::pair<double, double>, 3> limits{
-        {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
-         std::make_pair(min_z, max_z)}};
     Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
 
     for (auto p : particles) {
@@ -64,7 +60,7 @@ public:
     return hist_tmp;
   }
   std::vector<size_t> shape() const override {
-    return {n_r_bins, n_phi_bins, n_z_bins, 3};
+    return {n_bins[0], n_bins[1], n_bins[2], 3};
   }
 };
 

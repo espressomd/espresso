@@ -67,59 +67,76 @@ public:
          [this]() { return cylindrical_profile_observable()->axis; }},
         {"n_r_bins",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->n_r_bins =
+           cylindrical_profile_observable()->n_bins[0] =
                static_cast<size_t>(get_value<int>(v));
          },
          [this]() {
-           return static_cast<int>(cylindrical_profile_observable()->n_r_bins);
+           return static_cast<int>(cylindrical_profile_observable()->n_bins[0]);
          }},
         {"n_phi_bins",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->n_phi_bins =
+           cylindrical_profile_observable()->n_bins[1] =
                static_cast<size_t>(get_value<int>(v));
          },
          [this]() {
-           return static_cast<int>(
-               cylindrical_profile_observable()->n_phi_bins);
+           return static_cast<int>(cylindrical_profile_observable()->n_bins[1]);
          }},
         {"n_z_bins",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->n_z_bins =
+           cylindrical_profile_observable()->n_bins[2] =
                static_cast<size_t>(get_value<int>(v));
          },
          [this]() {
-           return static_cast<int>(cylindrical_profile_observable()->n_z_bins);
+           return static_cast<int>(cylindrical_profile_observable()->n_bins[2]);
          }},
         {"min_r",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->min_r = get_value<double>(v);
+           cylindrical_profile_observable()->limits[0].first =
+               get_value<double>(v);
          },
-         [this]() { return cylindrical_profile_observable()->min_r; }},
+         [this]() {
+           return cylindrical_profile_observable()->limits[0].first;
+         }},
         {"min_phi",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->min_phi = get_value<double>(v);
+           cylindrical_profile_observable()->limits[1].first =
+               get_value<double>(v);
          },
-         [this]() { return cylindrical_profile_observable()->min_phi; }},
+         [this]() {
+           return cylindrical_profile_observable()->limits[1].first;
+         }},
         {"min_z",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->min_z = get_value<double>(v);
+           cylindrical_profile_observable()->limits[2].first =
+               get_value<double>(v);
          },
-         [this]() { return cylindrical_profile_observable()->min_z; }},
+         [this]() {
+           return cylindrical_profile_observable()->limits[2].first;
+         }},
         {"max_r",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->max_r = get_value<double>(v);
+           cylindrical_profile_observable()->limits[0].second =
+               get_value<double>(v);
          },
-         [this]() { return cylindrical_profile_observable()->max_r; }},
+         [this]() {
+           return cylindrical_profile_observable()->limits[0].second;
+         }},
         {"max_phi",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->max_phi = get_value<double>(v);
+           cylindrical_profile_observable()->limits[1].second =
+               get_value<double>(v);
          },
-         [this]() { return cylindrical_profile_observable()->max_phi; }},
+         [this]() {
+           return cylindrical_profile_observable()->limits[1].second;
+         }},
         {"max_z",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->max_z = get_value<double>(v);
+           cylindrical_profile_observable()->limits[2].second =
+               get_value<double>(v);
          },
-         [this]() { return cylindrical_profile_observable()->max_z; }},
+         [this]() {
+           return cylindrical_profile_observable()->limits[2].second;
+         }},
         {"sampling_density",
          [this](const Variant &v) {
            cylindrical_profile_observable()->sampling_density =
