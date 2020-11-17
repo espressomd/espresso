@@ -32,8 +32,8 @@ Tests for the LB fluid profile observables.
 TIME_STEP = 0.1
 AGRID = 0.7
 BOX_L_X = 17.0 * AGRID
-BOX_L_Y = 17.0 * AGRID
-BOX_L_Z = 17.0 * AGRID
+BOX_L_Y = 15.0 * AGRID
+BOX_L_Z = 13.0 * AGRID
 VISC = .7
 DENS = 1.7
 LB_PARAMS = {'agrid': AGRID,

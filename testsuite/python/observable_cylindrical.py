@@ -32,7 +32,7 @@ class TestCylindricalObservable(ut.TestCase):
     system.cell_system.skin = 0.4
 
     params = {
-        'ids': range(100),
+        'ids': list(range(100)),
         'center': [7.5, 7.5, 7.5],  # center of the histogram
         'axis': 'y',
         'n_r_bins': 4,  # number of bins in r
@@ -86,7 +86,7 @@ class TestCylindricalObservable(ut.TestCase):
         self.v_r = .75
         self.v_phi = 2.5
         self.v_z = 1.5
-        for i in range(len(self.params['ids'])):
+        for i in self.params['ids']:
             position = np.array(
                 [a * np.cos(i * 2.0 * np.pi / (len(self.params['ids']) + 1)),
                  b * np.sin(i * 2.0 * np.pi / (len(self.params['ids']) + 1)),
