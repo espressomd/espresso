@@ -35,9 +35,9 @@ namespace Observables {
 /** Cartesian profile observable */
 class ProfileObservable : virtual public Observable {
 public:
-  ProfileObservable(double min_x, double max_x, double min_y, double max_y,
-                    double min_z, double max_z, int n_x_bins, int n_y_bins,
-                    int n_z_bins)
+  ProfileObservable(int n_x_bins, int n_y_bins, int n_z_bins, double min_x,
+                    double max_x, double min_y, double max_y, double min_z,
+                    double max_z)
       : limits{{std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
                 std::make_pair(min_z, max_z)}},
         n_bins{{static_cast<size_t>(n_x_bins), static_cast<size_t>(n_y_bins),

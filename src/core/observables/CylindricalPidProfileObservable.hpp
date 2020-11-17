@@ -31,12 +31,12 @@ public:
                                   Utils::Vector3d const &center,
                                   Utils::Vector3d const &axis, int n_r_bins,
                                   int n_phi_bins, int n_z_bins, double min_r,
-                                  double min_phi, double min_z, double max_r,
-                                  double max_phi, double max_z)
+                                  double max_r, double min_phi, double max_phi,
+                                  double min_z, double max_z)
       : PidObservable(ids),
-        CylindricalProfileObservable(center, axis, min_r, max_r, min_phi,
-                                     max_phi, min_z, max_z, n_r_bins,
-                                     n_phi_bins, n_z_bins) {}
+        CylindricalProfileObservable(center, axis, n_r_bins, n_phi_bins,
+                                     n_z_bins, min_r, max_r, min_phi, max_phi,
+                                     min_z, max_z) {}
 };
 
 } // Namespace Observables

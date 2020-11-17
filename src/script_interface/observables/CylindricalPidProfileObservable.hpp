@@ -154,7 +154,7 @@ public:
                               Utils::Vector3d, int, int, int, double, double,
                               double, double, double, double>(
             params, "ids", "center", "axis", "n_r_bins", "n_phi_bins",
-            "n_z_bins", "min_r", "min_phi", "min_z", "max_r", "max_phi",
+            "n_z_bins", "min_r", "max_r", "min_phi", "max_phi", "min_z",
             "max_z");
   }
 

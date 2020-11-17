@@ -30,11 +30,11 @@ namespace Observables {
 class PidProfileObservable : public PidObservable, public ProfileObservable {
 public:
   PidProfileObservable(std::vector<int> const &ids, int n_x_bins, int n_y_bins,
-                       int n_z_bins, double min_x, double min_y, double min_z,
-                       double max_x, double max_y, double max_z)
+                       int n_z_bins, double min_x, double max_x, double min_y,
+                       double max_y, double min_z, double max_z)
       : PidObservable(ids),
-        ProfileObservable(min_x, max_x, min_y, max_y, min_z, max_z, n_x_bins,
-                          n_y_bins, n_z_bins) {}
+        ProfileObservable(n_x_bins, n_y_bins, n_z_bins, min_x, max_x, min_y,
+                          max_y, min_z, max_z) {}
 };
 
 } // Namespace Observables

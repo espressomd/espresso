@@ -115,8 +115,8 @@ public:
     m_observable =
         make_shared_from_args<CoreObs, std::vector<int>, int, int, int, double,
                               double, double, double, double, double>(
-            params, "ids", "n_x_bins", "n_y_bins", "n_z_bins", "min_x", "min_y",
-            "min_z", "max_x", "max_y", "max_z");
+            params, "ids", "n_x_bins", "n_y_bins", "n_z_bins", "min_x", "max_x",
+            "min_y", "max_y", "min_z", "max_z");
   }
 
   Variant do_call_method(std::string const &method,

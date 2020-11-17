@@ -36,12 +36,13 @@ public:
                       double sampling_delta_z, double sampling_offset_x,
                       double sampling_offset_y, double sampling_offset_z,
                       int n_x_bins, int n_y_bins, int n_z_bins, double min_x,
-                      double min_y, double min_z, double max_x, double max_y,
+                      double max_x, double min_y, double max_y, double min_z,
                       double max_z, bool allow_empty_bins = false)
-      : ProfileObservable(min_x, max_x, min_y, max_y, min_z, max_z, n_x_bins,
-                          n_y_bins, n_z_bins),
+      : ProfileObservable(n_x_bins, n_y_bins, n_z_bins, min_x, max_x, min_y,
+                          max_y, min_z, max_z),
         sampling_delta{sampling_delta_x, sampling_delta_y, sampling_delta_z},
-        sampling_offset{sampling_offset_x, sampling_offset_y, sampling_offset_z},
+        sampling_offset{sampling_offset_x, sampling_offset_y,
+                        sampling_offset_z},
         allow_empty_bins(allow_empty_bins) {
     calculate_sampling_positions();
   }
