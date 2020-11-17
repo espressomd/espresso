@@ -214,10 +214,10 @@ logging.info("persistence length (python analysis): {}".format(
 
 def persistence_length_obs(
         acc_bond_length, acc_persistence_angles, exponential):
-    bond_lengths_obs = np.array(acc_bond_length.get_mean())
+    bond_lengths_obs = np.array(acc_bond_length.mean())
     sampling_positions_obs = np.insert(
         np.cumsum(bond_lengths_obs)[:-1], 0, 0.0)
-    cos_thetas_obs = np.array(acc_persistence_angles.get_mean())
+    cos_thetas_obs = np.array(acc_persistence_angles.mean())
     cos_thetas_obs = np.insert(cos_thetas_obs, 0, 1.0)
 
     opt_obs, _ = scipy.optimize.curve_fit(

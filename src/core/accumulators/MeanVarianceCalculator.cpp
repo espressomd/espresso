@@ -33,12 +33,14 @@
 namespace Accumulators {
 void MeanVarianceCalculator::update() { m_acc(m_obs->operator()()); }
 
-std::vector<double> MeanVarianceCalculator::get_mean() {
-  return m_acc.get_mean();
+std::vector<double> MeanVarianceCalculator::mean() { return m_acc.mean(); }
+
+std::vector<double> MeanVarianceCalculator::variance() {
+  return m_acc.variance();
 }
 
-std::vector<double> MeanVarianceCalculator::get_variance() {
-  return m_acc.get_variance();
+std::vector<double> MeanVarianceCalculator::std_error() {
+  return m_acc.std_error();
 }
 
 std::string MeanVarianceCalculator::get_internal_state() const {

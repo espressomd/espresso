@@ -402,9 +402,9 @@ else:
 
     file_traj.close()
 
-    rdf_00 = acc_00.get_mean()
-    rdf_11 = acc_11.get_mean()
-    rdf_01 = acc_01.get_mean()
+    rdf_00 = acc_00.mean()
+    rdf_11 = acc_11.mean()
+    rdf_01 = acc_01.mean()
     r = obs_01.bin_centers()
     np.savetxt(args.path + "rdf.dat", np.c_[r, rdf_00, rdf_11, rdf_01])
     print("\n-->Done")
