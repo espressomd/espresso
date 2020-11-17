@@ -76,9 +76,12 @@ default:
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
+     with_cuda: 'false'
+     myconfig: 'default'
+     with_coverage: 'true'
+     with_scafacos: 'true'
+     with_stokesian_dynamics: 'true'
   script:
-    - export with_cuda=false myconfig=default with_coverage=true
-    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -90,9 +93,12 @@ maxset:
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
+     with_cuda: 'false'
+     myconfig: 'maxset'
+     with_coverage: 'true'
+     with_scafacos: 'true'
+     with_stokesian_dynamics: 'true'
   script:
-    - export with_cuda=false myconfig=maxset with_coverage=true
-    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -104,8 +110,11 @@ no_rotation:
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
+     with_cuda: 'false'
+     myconfig: 'no_rotation'
+     with_coverage: 'true'
+     with_scafacos: 'true'
   script:
-    - export with_cuda=false myconfig=no_rotation with_coverage=true with_scafacos=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -115,8 +124,12 @@ ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
   image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:e583d4b2eb8eedd10068957f952bd67008475ee5
+  variables:
+     myconfig: 'maxset'
+     with_cuda: 'false'
+     make_check_unit_tests: 'false'
+     make_check_python: 'false'
   script:
-    - export myconfig=maxset with_cuda=false make_check_unit_tests=false make_check_python=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -128,8 +141,12 @@ debian:10:
   <<: *global_job_definition
   stage: build
   image: docker.pkg.github.com/espressomd/docker/debian:d372d95f6906c16abd9b47b994034a22981a9ff2
+  variables:
+     with_cuda: 'false'
+     myconfig: 'maxset'
+     make_check_python: 'false'
+     with_stokesian_dynamics: 'true'
   script:
-    - export with_cuda=false myconfig=maxset make_check_python=false with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -139,8 +156,12 @@ opensuse:15.2:
   <<: *global_job_definition
   stage: build
   image: docker.pkg.github.com/espressomd/docker/opensuse:d496478230db4e5c286680e3bdc1621af1fccffc
+  variables:
+     with_cuda: 'false'
+     myconfig: 'maxset'
+     make_check_python: 'false'
+     with_stokesian_dynamics: 'true'
   script:
-    - export with_cuda=false myconfig=maxset make_check_python=false with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -150,8 +171,12 @@ fedora:32:
   <<: *global_job_definition
   stage: build
   image: docker.pkg.github.com/espressomd/docker/fedora:4f126520866e84a4883355ffe8710040bf20051c
+  variables:
+     with_cuda: 'false'
+     myconfig: 'maxset'
+     make_check_python: 'true'
+     with_stokesian_dynamics: 'true'
   script:
-    - export with_cuda=false myconfig=maxset make_check_python=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -161,8 +186,11 @@ fedora:latest:
   <<: *global_job_definition
   stage: build
   image: docker.pkg.github.com/espressomd/docker/fedora:latest_base
+  variables:
+     with_cuda: 'false'
+     myconfig: 'maxset'
+     make_check_python: 'false'
   script:
-    - export with_cuda=false myconfig=maxset make_check_python=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -177,10 +205,17 @@ clang-sanitizer:
   variables:
      CC: 'clang-9'
      CXX: 'clang++-9'
+     myconfig: 'maxset'
+     with_cuda: 'true'
+     with_cuda_compiler: 'clang'
+     with_coverage: 'false'
+     with_static_analysis: 'true'
+     test_timeout: '900'
+     with_asan: 'true'
+     with_ubsan: 'true'
+     with_scafacos: 'true'
+     with_stokesian_dynamics: 'true'
   script:
-    - export myconfig=maxset with_cuda=true with_cuda_compiler=clang with_coverage=false
-    - export with_static_analysis=true test_timeout=900 with_asan=true with_ubsan=true
-    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   timeout: 2h
   tags:
@@ -196,9 +231,14 @@ cuda11-maxset:
      CC: 'gcc-9'
      CXX: 'g++-9'
      GCOV: 'gcov-9'
+     myconfig: 'maxset'
+     with_cuda: 'true'
+     with_coverage: 'true'
+     test_timeout: '900'
+     srcdir: '${CI_PROJECT_DIR}'
+     with_scafacos: 'true'
+     with_stokesian_dynamics: 'true'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
-    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -211,9 +251,14 @@ cuda10-maxset:
   variables:
      CC: 'gcc-8'
      CXX: 'g++-8'
+     myconfig: 'maxset'
+     with_cuda: 'true'
+     with_coverage: 'false'
+     test_timeout: '900'
+     srcdir: '${CI_PROJECT_DIR}'
+     with_scafacos: 'true'
+     with_stokesian_dynamics: 'true'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
-    - export with_scafacos=true with_stokesian_dynamics=true
     - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:
@@ -230,9 +275,18 @@ tutorials-samples-maxset:
   variables:
      CC: 'gcc-8'
      CXX: 'g++-8'
+     myconfig: 'maxset'
+     with_cuda: 'true'
+     with_coverage: 'false'
+     with_scafacos: 'true'
+     make_check_unit_tests: 'false'
+     make_check_python: 'false'
+     make_check_tutorials: 'true'
+     make_check_samples: 'true'
+     make_check_benchmarks: 'false'
+     with_coverage_python: 'true'
+     test_timeout: '1200'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
-    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false with_coverage_python=true test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -245,9 +299,17 @@ tutorials-samples-default:
   variables:
      CC: 'gcc-8'
      CXX: 'g++-8'
+     myconfig: 'default'
+     with_cuda: 'true'
+     with_coverage: 'false'
+     with_scafacos: 'true'
+     make_check_unit_tests: 'false'
+     make_check_python: 'false'
+     make_check_tutorials: 'true'
+     make_check_samples: 'true'
+     make_check_benchmarks: 'false'
+     test_timeout: '1200'
   script:
-    - export myconfig=default with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
-    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -262,9 +324,18 @@ tutorials-samples-empty:
   variables:
      CC: 'gcc-8'
      CXX: 'g++-8'
+     myconfig: 'empty'
+     with_cuda: 'true'
+     with_coverage: 'false'
+     with_scafacos: 'true'
+     make_check_unit_tests: 'false'
+     make_check_python: 'false'
+     make_check_tutorials: 'true'
+     make_check_samples: 'true'
+     make_check_benchmarks: 'false'
+     test_timeout: '1200'
+     with_scafacos: 'false'
   script:
-    - export myconfig=empty with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
-    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 with_scafacos=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -279,9 +350,18 @@ tutorials-samples-no-gpu:
   variables:
      CC: 'gcc-8'
      CXX: 'g++-8'
+     myconfig: 'maxset'
+     with_cuda: 'true'
+     with_coverage: 'false'
+     with_scafacos: 'true'
+     make_check_unit_tests: 'false'
+     make_check_python: 'false'
+     make_check_tutorials: 'true'
+     make_check_samples: 'true'
+     make_check_benchmarks: 'false'
+     test_timeout: '1200'
+     hide_gpu: 'true'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false with_scafacos=true make_check_unit_tests=false make_check_python=false
-    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 hide_gpu=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -295,10 +375,16 @@ installation:
   variables:
      CC: 'gcc-8'
      CXX: 'g++-8'
+     myconfig: 'maxset'
+     with_cuda: 'true'
+     with_coverage: 'false'
+     make_check_unit_tests: 'false'
+     make_check_python: 'false'
+     with_scafacos: 'true'
+     with_stokesian_dynamics: 'true'
+     srcdir: '${CI_PROJECT_DIR}'
+     build_type: 'Release'
   script:
-    - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
-    - export with_scafacos=true with_stokesian_dynamics=true
-    - export srcdir=${CI_PROJECT_DIR} build_type=Release
     - bash maintainer/CI/build_cmake.sh
     - cd build
     - make install
@@ -324,9 +410,13 @@ empty:
   variables:
      CC: 'clang-9'
      CXX: 'clang++-9'
+     myconfig: 'empty'
+     with_cuda: 'true'
+     with_cuda_compiler: 'clang'
+     with_static_analysis: 'true'
+     with_scafacos: 'false'
+     with_stokesian_dynamics: 'false'
   script:
-    - export myconfig=empty with_cuda=true with_cuda_compiler=clang with_static_analysis=true
-    - export with_scafacos=false with_stokesian_dynamics=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
