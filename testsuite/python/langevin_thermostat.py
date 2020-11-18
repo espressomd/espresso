@@ -40,39 +40,56 @@ class LangevinThermostat(ut.TestCase):
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
-    def test_01__rng(self):
+    def check_rng(self, per_particle_gamma=False):
         """Test for RNG consistency."""
+
+        kT = 1.1
+        gamma = 3.5
+
         def reset_particle():
             self.system.part.clear()
             p = system.part.add(pos=[0, 0, 0])
+            if espressomd.has_features("ROTATION"):
+                p.rotation = [1, 1, 1]
+            if per_particle_gamma:
+                assert espressomd.has_features("LANGEVIN_PER_PARTICLE")
+                p.temp = 2 * kT
+                if espressomd.has_features("PARTICLE_ANISOTROPY"):
+                    p.gamma = 3 * [gamma / 2]
+                else:
+                    p.gamma = gamma / 2
+                if espressomd.has_features("ROTATION"):
+                    p.gamma_rot = p.gamma * 1.5
             return p
 
         system = self.system
         system.time_step = 0.01
 
-        kT = 1.1
-        gamma = 3.5
-
-        # No seed should throw exception
-        with self.assertRaises(ValueError):
-            system.thermostat.set_langevin(kT=kT, gamma=gamma)
-
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
+        system.integrator.set_vv()
 
         # run(0) does not increase the philox counter and should give the same
         # force
         p = reset_particle()
         system.integrator.run(0, recalc_forces=True)
         force0 = np.copy(p.f)
+        if espressomd.has_features("ROTATION"):
+            torque0 = np.copy(p.torque_lab)
         system.integrator.run(0, recalc_forces=True)
         force1 = np.copy(p.f)
         np.testing.assert_almost_equal(force0, force1)
+        if espressomd.has_features("ROTATION"):
+            torque1 = np.copy(p.torque_lab)
+            np.testing.assert_almost_equal(torque0, torque1)
 
         # run(1) should give a different force
         p = reset_particle()
         system.integrator.run(1)
         force2 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force1, force2)))
+        if espressomd.has_features("ROTATION"):
+            torque2 = np.copy(p.torque_lab)
+            self.assertTrue(np.all(np.not_equal(torque1, torque2)))
 
         # Different seed should give a different force with same counter state
         # force2: langevin.rng_counter() = 1, langevin.rng_seed() = 41
@@ -80,10 +97,15 @@ class LangevinThermostat(ut.TestCase):
         p = reset_particle()
         system.integrator.run(0, recalc_forces=True)
         force2 = np.copy(p.f)
+        if espressomd.has_features("ROTATION"):
+            torque2 = np.copy(p.torque_lab)
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(0, recalc_forces=True)
         force3 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force2, force3)))
+        if espressomd.has_features("ROTATION"):
+            torque3 = np.copy(p.torque_lab)
+            self.assertTrue(np.all(np.not_equal(torque2, torque3)))
 
         # Same seed should not give the same force with different counter state
         p = reset_particle()
@@ -91,6 +113,9 @@ class LangevinThermostat(ut.TestCase):
         system.integrator.run(1)
         force4 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force3, force4)))
+        if espressomd.has_features("ROTATION"):
+            torque4 = np.copy(p.torque_lab)
+            self.assertTrue(np.all(np.not_equal(torque3, torque4)))
 
         # Seed offset should not give the same force with a lag
         # force4: langevin.rng_counter() = 2, langevin.rng_seed() = 42
@@ -102,6 +127,26 @@ class LangevinThermostat(ut.TestCase):
         system.integrator.run(0, recalc_forces=True)
         force5 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force4, force5)))
+        if espressomd.has_features("ROTATION"):
+            torque5 = np.copy(p.torque_lab)
+            self.assertTrue(np.all(np.not_equal(torque4, torque5)))
+
+    def test_01__rng(self):
+        """Test for RNG consistency."""
+        # No seed should throw exception
+        with self.assertRaises(ValueError):
+            self.system.thermostat.set_langevin(kT=1, gamma=2)
+        self.check_rng()
+
+    @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
+    def test_01__rng_per_particle(self):
+        """Test for RNG consistency."""
+        self.check_rng(True)
+
+    @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
+    def test_01__rng_per_particle(self):
+        """Test for RNG consistency."""
+        self.check_rng(True)
 
     def test_02__friction_trans(self):
         """Tests the translational friction-only part of the thermostat."""

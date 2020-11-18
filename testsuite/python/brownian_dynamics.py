@@ -40,32 +40,36 @@ class BrownianThermostat(ut.TestCase):
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
-    def test_01__rng(self):
+    def check_rng(self, per_particle_gamma=False):
         """Test for RNG consistency."""
+
+        kT = 1.1
+        gamma = 3.5
+
         def reset_particle():
             self.system.part.clear()
-            p = self.system.part.add(pos=[0, 0, 0])
+            p = system.part.add(pos=[0, 0, 0])
             if espressomd.has_features("ROTATION"):
                 p.rotation = [1, 1, 1]
-                # Make sure rinertia does not change diff coeff
-                if espressomd.has_features("ROTATIONAL_INERTIA"):
-                    p.rinertia = [0.4, 0.4, 0.4]
+            if per_particle_gamma:
+                assert espressomd.has_features("BROWNIAN_PER_PARTICLE")
+                p.temp = 2 * kT
+                if espressomd.has_features("PARTICLE_ANISOTROPY"):
+                    p.gamma = 3 * [gamma / 2]
+                else:
+                    p.gamma = gamma / 2
+                if espressomd.has_features("ROTATION"):
+                    p.gamma_rot = p.gamma * 1.5
             return p
 
         system = self.system
         system.time_step = 0.01
 
-        kT = 1.1
-        gamma = 3.5
-        pos2force = np.sqrt(2 * kT / gamma * system.time_step)
-        omega2torque = np.sqrt(2 * kT / gamma * system.time_step)
-
-        # No seed should throw exception
-        with self.assertRaises(ValueError):
-            system.thermostat.set_brownian(kT=kT, gamma=gamma)
-
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
         system.integrator.set_brownian_dynamics()
+
+        pos2force = np.sqrt(2 * kT / gamma * system.time_step)
+        omega2torque = np.sqrt(2 * kT / gamma * system.time_step)
 
         # run(0) does not increase the philox counter and should give no force
         p = reset_particle()
@@ -111,6 +115,18 @@ class BrownianThermostat(ut.TestCase):
         if espressomd.has_features("ROTATION"):
             torque4 = np.copy(p.omega_body) / omega2torque
             self.assertTrue(np.all(np.not_equal(torque3, torque4)))
+
+    def test_01__rng(self):
+        """Test for RNG consistency."""
+        # No seed should throw exception
+        with self.assertRaises(ValueError):
+            self.system.thermostat.set_brownian(kT=1, gamma=2)
+        self.check_rng()
+
+    @utx.skipIfMissingFeatures("BROWNIAN_PER_PARTICLE")
+    def test_01__rng_per_particle(self):
+        """Test for RNG consistency."""
+        self.check_rng(True)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):
