@@ -17,26 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""
-Testmodule for the observable accumulator.
-
-"""
 import unittest as ut
 
 import numpy as np
+import pickle
 
 import espressomd
 import espressomd.observables
 import espressomd.accumulators
 
-
 N_PART = 4
 
 
-class AccumulatorTest(ut.TestCase):
+class TimeSeriesTest(ut.TestCase):
 
     """
-    Test class for the observable accumulator.
+    Test class for the TimeSeries accumulator.
 
     """
     system = espressomd.System(box_l=[10.0] * 3)
@@ -46,34 +42,35 @@ class AccumulatorTest(ut.TestCase):
     def setUp(self):
         np.random.seed(seed=42)
 
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.auto_update_accumulators.clear()
+
     def test_accumulator(self):
         """Check that accumulator results are the same as the respective numpy result.
 
         """
         system = self.system
         system.part.add(pos=np.zeros((N_PART, 3)))
-        system.integrator.run(steps=0)
-        pos_obs = espressomd.observables.ParticlePositions(
-            ids=range(N_PART))
-        pos_obs_acc = espressomd.accumulators.MeanVarianceCalculator(
-            obs=pos_obs)
-        system.auto_update_accumulators.add(pos_obs_acc)
-        positions = np.copy(system.box_l) * \
-            np.random.random((10, N_PART, 3))
+        obs = espressomd.observables.ParticlePositions(ids=range(N_PART))
+        acc = espressomd.accumulators.TimeSeries(obs=obs)
+        system.auto_update_accumulators.add(acc)
+        positions = np.copy(system.box_l) * np.random.random((10, N_PART, 3))
+
         for pos in positions:
             system.part[:].pos = pos
-            system.integrator.run(1)
-        self.assertEqual(pos_obs, pos_obs_acc.get_params()['obs'])
-        np.testing.assert_allclose(
-            pos_obs_acc.mean(),
-            np.mean(positions, axis=0), atol=1e-4)
-        variance = np.var(positions, axis=0, ddof=1)
-        np.testing.assert_allclose(
-            pos_obs_acc.variance(),
-            variance, atol=1e-4)
-        np.testing.assert_allclose(
-            pos_obs_acc.std_error(),
-            np.sqrt(variance / len(positions)), atol=1e-4)
+            acc.update()
+
+        self.assertEqual(acc.get_params()['obs'], obs)
+
+        np.testing.assert_array_equal(acc.time_series(), positions)
+
+        # Check pickling
+        acc_unpickled = pickle.loads(pickle.dumps(acc))
+        np.testing.assert_array_equal(acc_unpickled.time_series(), positions)
+
+        acc.clear()
+        self.assertEqual(len(acc.time_series()), 0)
 
 
 if __name__ == "__main__":
