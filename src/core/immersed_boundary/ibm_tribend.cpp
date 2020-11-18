@@ -78,7 +78,7 @@ IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,
   auto const v1 = (n2 - sc * n1).normalize();
   auto const v2 = (n1 - sc * n2).normalize();
 
-  // Force on particles
+  // Force on particles: eq. (C.28-C.31)
   auto const force1 =
       Pre * (vector_product(get_mi_vector(p2.r.p, p3.r.p, box_geo), v1) / Ai +
              vector_product(get_mi_vector(p3.r.p, p4.r.p, box_geo), v2) / Aj);
@@ -92,7 +92,6 @@ IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,
   return std::make_tuple(force1, force2, force3, force4);
 }
 
-/** @details See @cite gompper96a and @cite kruger12a. */
 int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
                           const int ind3, const int ind4, const double kb,
                           const bool flat) {

@@ -119,13 +119,13 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   const double Dyx = 0.0;
   const double Dyy = l / l0 * sinPhi / sinPhi0;
 
-  // Tensor G: (C.12)
+  // Tensor G: eq. (C.12)
   const double Gxx = Utils::sqr(Dxx) + Utils::sqr(Dyx);
   const double Gxy = Dxx * Dxy + Dyx * Dyy;
   const double Gyx = Dxx * Dxy + Dyy * Dyx; // = Gxy because of symmetry
   const double Gyy = Utils::sqr(Dxy) + Utils::sqr(Dyy);
 
-  // Strain invariants, C.11 and C.12
+  // Strain invariants: eq. (C.11) and (C.12)
   const double i1 = (Gxx + Gyy) - 2;
   const double i2 = ((Gxx * Gyy) - (Gxy * Gyx)) - 1;
 
@@ -145,7 +145,7 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
 
   // ******** Achim's version *****************
 
-  // Derivatives of Is (C.15)
+  // Derivatives of Is: eq. (C.15)
   const double dI1dGxx = 1;
   const double dI1dGxy = 0;
   const double dI1dGyx = 0;
@@ -158,7 +158,7 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
                                // the yx term, whereas we have it.
   const double dI2dGyy = Gxx;
 
-  // Derivatives of G (C.16)
+  // Derivatives of G: eq. (C.16)
   const double dGxxdV1x = 2 * a1 * Dxx;
   const double dGxxdV1y = 0;
   const double dGxxdV2x = 2 * a2 * Dxx;

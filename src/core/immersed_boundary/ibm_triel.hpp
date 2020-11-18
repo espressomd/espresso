@@ -46,6 +46,7 @@ int IBM_Triel_SetParams(int bond_type, int ind1, int ind2, int ind3,
 int IBM_Triel_ResetParams(int bond_type, double k1, double l0);
 
 /** Calculate the forces.
+ *  The equations can be found in Appendix C of @cite kruger12a.
  *  @return the forces on @p p1, @p p2, @p p3
  */
 boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
