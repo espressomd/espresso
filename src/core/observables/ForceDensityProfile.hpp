@@ -20,6 +20,7 @@
 #define OBSERVABLES_FORCEDENSITYPROFILE_HPP
 
 #include "BoxGeometry.hpp"
+#include "Particle.hpp"
 #include "PidProfileObservable.hpp"
 #include "grid.hpp"
 
@@ -27,7 +28,6 @@
 
 #include <array>
 #include <cstddef>
-#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -36,16 +36,12 @@ class ForceDensityProfile : public PidProfileObservable {
 public:
   using PidProfileObservable::PidProfileObservable;
   std::vector<size_t> shape() const override {
-    return {n_x_bins, n_y_bins, n_z_bins, 3};
+    return {n_bins[0], n_bins[1], n_bins[2], 3};
   }
 
   std::vector<double>
   evaluate(ParticleReferenceRange particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    std::array<size_t, 3> n_bins{{n_x_bins, n_y_bins, n_z_bins}};
-    std::array<std::pair<double, double>, 3> limits{
-        {std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
-         std::make_pair(min_z, max_z)}};
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
     for (auto p : particles) {
       histogram.update(folded_position(p.get().r.p, box_geo), p.get().f.f);

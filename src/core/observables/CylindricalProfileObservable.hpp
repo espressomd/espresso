@@ -19,7 +19,7 @@
 #ifndef OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 
-#include "Observable.hpp"
+#include "ProfileObservable.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/make_lin_space.hpp>
@@ -33,44 +33,18 @@
 namespace Observables {
 
 /** Cylindrical profile observable */
-class CylindricalProfileObservable : virtual public Observable {
+class CylindricalProfileObservable : public ProfileObservable {
 public:
   CylindricalProfileObservable(Utils::Vector3d const &center,
-                               Utils::Vector3d const &axis, double min_r,
+                               Utils::Vector3d const &axis, int n_r_bins,
+                               int n_phi_bins, int n_z_bins, double min_r,
                                double max_r, double min_phi, double max_phi,
-                               double min_z, double max_z, int n_r_bins,
-                               int n_phi_bins, int n_z_bins)
-      : center(center), axis(axis), min_r(min_r), max_r(max_r),
-        min_phi(min_phi), max_phi(max_phi), min_z(min_z), max_z(max_z),
-        n_r_bins(static_cast<size_t>(n_r_bins)),
-        n_phi_bins(static_cast<size_t>(n_phi_bins)),
-        n_z_bins(static_cast<size_t>(n_z_bins)){};
+                               double min_z, double max_z)
+      : ProfileObservable(n_r_bins, n_phi_bins, n_z_bins, min_r, max_r, min_phi,
+                          max_phi, min_z, max_z),
+        center(center), axis(axis) {}
   Utils::Vector3d center;
   Utils::Vector3d axis;
-  // Range of the profile edges.
-  double min_r, max_r;
-  double min_phi, max_phi;
-  double min_z, max_z;
-  // Number of bins for each coordinate.
-  size_t n_r_bins, n_phi_bins, n_z_bins;
-
-  std::vector<size_t> shape() const override {
-    return {n_r_bins, n_phi_bins, n_z_bins};
-  }
-
-  /** Calculate the bin edges for each dimension */
-  std::array<std::vector<double>, 3> edges() {
-    std::array<std::vector<double>, 3> profile_edges = {
-        {std::vector<double>(n_r_bins + 1), std::vector<double>(n_phi_bins + 1),
-         std::vector<double>(n_z_bins + 1)}};
-    boost::copy(Utils::make_lin_space(min_r, max_r, n_r_bins + 1),
-                profile_edges[0].begin());
-    boost::copy(Utils::make_lin_space(min_phi, max_phi, n_phi_bins + 1),
-                profile_edges[1].begin());
-    boost::copy(Utils::make_lin_space(min_z, max_z, n_z_bins + 1),
-                profile_edges[2].begin());
-    return profile_edges;
-  }
 };
 
 } // Namespace Observables

@@ -23,7 +23,7 @@ import tests_common
 
 
 class ProfileObservablesTest(ut.TestCase):
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[10.0, 15.0, 20.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     system.part.add(id=0, pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
@@ -31,14 +31,14 @@ class ProfileObservablesTest(ut.TestCase):
     bin_volume = 5.0**3
     kwargs = {'ids': [0, 1],
               'n_x_bins': 2,
-              'n_y_bins': 2,
-              'n_z_bins': 2,
+              'n_y_bins': 3,
+              'n_z_bins': 4,
               'min_x': 0.0,
               'max_x': 10.0,
               'min_y': 0.0,
-              'max_y': 10.0,
+              'max_y': 15.0,
               'min_z': 0.0,
-              'max_z': 10.0}
+              'max_z': 20.0}
 
     def test_density_profile(self):
         density_profile = espressomd.observables.DensityProfile(**self.kwargs)
@@ -73,20 +73,22 @@ class ProfileObservablesTest(ut.TestCase):
         self.system.part[1].ext_force = [0.0, 0.0, 1.0]
         self.system.integrator.run(0)
         obs_data = density_profile.calculate()
-        self.assertEqual(obs_data[0, 0, 1, 2], 2.0 / self.bin_volume)
         np.testing.assert_array_equal(
             obs_data.shape, [self.kwargs['n_x_bins'], self.kwargs['n_y_bins'],
                              self.kwargs['n_z_bins'], 3])
+        self.assertEqual(obs_data[0, 0, 1, 2], 2.0 / self.bin_volume)
+        self.assertEqual(np.sum(np.abs(obs_data)), 2.0 / self.bin_volume)
 
     def test_flux_density_profile(self):
         density_profile = espressomd.observables.FluxDensityProfile(
             **self.kwargs)
         self.system.integrator.run(0)
         obs_data = density_profile.calculate()
-        self.assertEqual(obs_data[0, 0, 1, 2], 2.0 / self.bin_volume)
         np.testing.assert_array_equal(
             obs_data.shape, [self.kwargs['n_x_bins'], self.kwargs['n_y_bins'],
                              self.kwargs['n_z_bins'], 3])
+        self.assertEqual(obs_data[0, 0, 1, 2], 2.0 / self.bin_volume)
+        self.assertEqual(np.sum(np.abs(obs_data)), 2.0 / self.bin_volume)
 
     def test_pid_profile_interface(self):
         # test setters and getters
