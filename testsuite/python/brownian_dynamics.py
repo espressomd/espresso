@@ -20,12 +20,12 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
-from espressomd.accumulators import Correlator, TimeSeries
-from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities, ParticlePositions
-from tests_common import single_component_maxwell
+from espressomd.accumulators import Correlator
+from espressomd.observables import ParticlePositions
+from thermostats_common import ThermostatsCommon
 
 
-class BrownianDynamics(ut.TestCase):
+class ThermalizedBond(ut.TestCase, ThermostatsCommon):
 
     """Tests velocity distributions and diffusion for Brownian Dynamics"""
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -34,29 +34,14 @@ class BrownianDynamics(ut.TestCase):
     system.periodicity = [0, 0, 0]
     system.integrator.set_brownian_dynamics()
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         np.random.seed(42)
 
-    def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
-        """check the recorded particle distributions in velocity against a
-           histogram with n_bins bins. Drop velocities outside minmax. Check
-           individual histogram bins up to an accuracy of error_tol against the
-           analytical result for kT."""
-        for i in range(3):
-            hist = np.histogram(
-                vel[:, i], range=(-minmax, minmax), bins=n_bins, density=False)
-            data = hist[0] / float(vel.shape[0])
-            bins = hist[1]
-            for j in range(n_bins):
-                found = data[j]
-                expected = single_component_maxwell(bins[j], bins[j + 1], kT)
-                self.assertLessEqual(abs(found - expected), error_tol)
-
-    def test_00_verify_single_component_maxwell(self):
-        """Verifies the normalization of the analytical expression."""
-        self.assertLessEqual(
-            abs(single_component_maxwell(-10, 10, 4.) - 1.), 1E-4)
+    def tearDown(self):
+        self.system.time_step = 1e-12
+        self.system.cell_system.skin = 0.0
+        self.system.part.clear()
+        self.system.auto_update_accumulators.clear()
 
     def check_vel_dist_global_temp(self, recalc_forces, loops):
         """Test velocity distribution for global temperature parameters.
@@ -70,43 +55,18 @@ class BrownianDynamics(ut.TestCase):
         """
         N = 200
         system = self.system
-        system.part.clear()
         system.time_step = 1.6
-
-        # Place particles
-        system.part.add(pos=np.random.random((N, 3)))
-
-        # Enable rotation if compiled in
-        if espressomd.has_features("ROTATION"):
-            system.part[:].rotation = [1, 1, 1]
-
         kT = 1.1
         gamma = 3.5
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
-
-        # Warmup
-        system.integrator.run(20)
-
-        # Sampling
-        v_stored = np.zeros((N * loops, 3))
-        omega_stored = np.zeros((N * loops, 3))
-        for i in range(loops):
-            system.integrator.run(1, recalc_forces=recalc_forces)
-            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
-            if espressomd.has_features("ROTATION"):
-                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
-
         v_minmax = 5
         bins = 4
         error_tol = 0.01
-        self.check_velocity_distribution(
-            v_stored, v_minmax, bins, error_tol, kT)
-        if espressomd.has_features("ROTATION"):
-            self.check_velocity_distribution(
-                omega_stored, v_minmax, bins, error_tol, kT)
+        self.check_global(
+            N, kT, loops, v_minmax, bins, error_tol, recalc_forces)
 
     def test_vel_dist_global_temp(self):
-        """Test velocity distribution for global temperature."""
+        """Test velocity distribution for global Brownian parameters."""
         self.check_vel_dist_global_temp(False, loops=200)
 
     def test_vel_dist_global_temp_initial_forces(self):
@@ -116,64 +76,24 @@ class BrownianDynamics(ut.TestCase):
         self.check_vel_dist_global_temp(True, loops=170)
 
     @utx.skipIfMissingFeatures("BROWNIAN_PER_PARTICLE")
-    def test_05_brownian_per_particle(self):
-        """Test Brownian dynamics with particle specific kT and gamma. Covers all combinations of
-           particle specific gamma and temp set or not set.
+    def test_vel_dist_per_particle(self):
+        """Test Brownian dynamics with particle-specific kT and gamma. Covers
+           all combinations of particle-specific gamma and temp set or not set.
         """
         N = 400
         system = self.system
-        system.part.clear()
         system.time_step = 1.9
-        system.part.add(pos=np.random.random((N, 3)))
-        if espressomd.has_features("ROTATION"):
-            system.part[:].rotation = [1, 1, 1]
-
         kT = 0.9
         gamma = 3.2
         gamma2 = 4.3
         kT2 = 1.5
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
-        # Set different kT on 2nd half of particles
-        system.part[int(N / 2):].temp = kT2
-        # Set different gamma on half of the particles (overlap over both kTs)
-        if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            system.part[int(N / 4):int(3 * N / 4)].gamma = 3 * [gamma2]
-        else:
-            system.part[int(N / 4):int(3 * N / 4)].gamma = gamma2
-
-        system.integrator.run(50)
         loops = 200
-
-        v_kT = np.zeros((int(N / 2) * loops, 3))
-        v_kT2 = np.zeros((int(N / 2 * loops), 3))
-
-        if espressomd.has_features("ROTATION"):
-            omega_kT = np.zeros((int(N / 2) * loops, 3))
-            omega_kT2 = np.zeros((int(N / 2 * loops), 3))
-
-        for i in range(loops):
-            system.integrator.run(1)
-            v_kT[int(i * N / 2):int((i + 1) * N / 2),
-                 :] = system.part[:int(N / 2)].v
-            v_kT2[int(i * N / 2):int((i + 1) * N / 2),
-                  :] = system.part[int(N / 2):].v
-
-            if espressomd.has_features("ROTATION"):
-                omega_kT[int(i * N / 2):int((i + 1) * N / 2), :] = \
-                    system.part[:int(N / 2)].omega_body
-                omega_kT2[int(i * N / 2):int((i + 1) * N / 2), :] = \
-                    system.part[int(N / 2):].omega_body
         v_minmax = 5
         bins = 4
         error_tol = 0.012
-        self.check_velocity_distribution(v_kT, v_minmax, bins, error_tol, kT)
-        self.check_velocity_distribution(v_kT2, v_minmax, bins, error_tol, kT2)
-
-        if espressomd.has_features("ROTATION"):
-            self.check_velocity_distribution(
-                omega_kT, v_minmax, bins, error_tol, kT)
-            self.check_velocity_distribution(
-                omega_kT2, v_minmax, bins, error_tol, kT2)
+        self.check_per_particle(
+            N, kT, kT2, gamma2, loops, v_minmax, bins, error_tol)
 
     def setup_diff_mass_rinertia(self, p):
         if espressomd.has_features("MASS"):
@@ -192,7 +112,6 @@ class BrownianDynamics(ut.TestCase):
         dt = 0.5
 
         system = self.system
-        system.part.clear()
         p = system.part.add(pos=(0, 0, 0), id=0)
         system.time_step = dt
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
@@ -225,7 +144,6 @@ class BrownianDynamics(ut.TestCase):
     def test_07__virtual(self):
         system = self.system
         system.time_step = 0.01
-        system.part.clear()
 
         virtual = system.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
         physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
@@ -238,10 +156,7 @@ class BrownianDynamics(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(virtual.v), [1, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.v), [0, 0, 0])
 
-        system.part.clear()
-        virtual = system.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
-        physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
-
+        virtual.pos = physical.pos = [0, 0, 0]
         system.thermostat.set_brownian(
             kT=0, gamma=1, gamma_rotation=1., act_on_virtual=True, seed=41)
         system.integrator.run(1)
@@ -253,54 +168,14 @@ class BrownianDynamics(ut.TestCase):
         """Checks that the Brownian noise is uncorrelated"""
 
         system = self.system
-        system.part.clear()
         system.time_step = 0.01
         system.cell_system.skin = 0.1
-        system.part.add(id=(0, 1), pos=np.zeros((2, 3)))
-        vel_obs = ParticleVelocities(ids=system.part[:].id)
-        vel_series = TimeSeries(obs=vel_obs)
-        system.auto_update_accumulators.add(vel_series)
-        if espressomd.has_features("ROTATION"):
-            system.part[:].rotation = (1, 1, 1)
-            omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
-            omega_series = TimeSeries(obs=omega_obs)
-            system.auto_update_accumulators.add(omega_series)
-
         kT = 3.2
         system.thermostat.set_brownian(kT=kT, gamma=2.1, seed=17)
+        system.part.add(id=(0, 1), pos=np.zeros((2, 3)))
         steps = int(1e4)
-        system.integrator.run(steps)
-        system.auto_update_accumulators.clear()
-
-        # test translational noise correlation
-        vel = np.array(vel_series.time_series())
-        for ind in range(2):
-            for i in range(3):
-                for j in range(i, 3):
-                    corrcoef = np.dot(
-                        vel[:, ind, i], vel[:, ind, j]) / steps / kT
-                    if i == j:
-                        self.assertAlmostEqual(corrcoef, 1.0, delta=0.04)
-                    else:
-                        self.assertLessEqual(np.abs(corrcoef), 0.04)
-
-        # test rotational noise correlation
-        if espressomd.has_features("ROTATION"):
-            omega = np.array(omega_series.time_series())
-            for ind in range(2):
-                for i in range(3):
-                    for j in range(3):
-                        corrcoef = np.dot(
-                            omega[:, ind, i], omega[:, ind, j]) / steps / kT
-                        if i == j:
-                            self.assertAlmostEqual(corrcoef, 1.0, delta=0.04)
-                        else:
-                            self.assertLessEqual(np.abs(corrcoef), 0.04)
-                        # translational and angular velocities should be
-                        # independent
-                        corrcoef = np.dot(
-                            vel[:, ind, i], omega[:, ind, j]) / steps / kT
-                        self.assertLessEqual(np.abs(corrcoef), 0.04)
+        error_delta = 0.04
+        self.check_noise_correlation(kT, steps, error_delta)
 
 
 if __name__ == "__main__":

@@ -23,14 +23,13 @@ from itertools import product
 
 import espressomd
 from espressomd.observables import DPDStress
-from tests_common import single_component_maxwell
+from thermostats_common import ThermostatsCommon
 
 
 @utx.skipIfMissingFeatures("DPD")
-class DPDThermostat(ut.TestCase):
+class DPDThermostat(ut.TestCase, ThermostatsCommon):
 
-    """Tests the velocity distribution created by the dpd thermostat against
-       the single component Maxwell distribution."""
+    """Tests the velocity distribution created by the DPD thermostat."""
 
     s = espressomd.System(box_l=3 * [10.0])
     s.time_step = 0.01
@@ -43,26 +42,6 @@ class DPDThermostat(ut.TestCase):
         s = self.s
         s.part.clear()
         s.thermostat.turn_off()
-
-    def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
-        """check the recorded particle distributions in velocity against a
-           histogram with n_bins bins. Drop velocities outside minmax. Check
-           individual histogram bins up to an accuracy of error_tol against
-           the analytical result for kT."""
-        for i in range(3):
-            hist = np.histogram(
-                vel[:, i], range=(-minmax, minmax), bins=n_bins, density=False)
-            data = hist[0] / float(vel.shape[0])
-            bins = hist[1]
-            for j in range(n_bins):
-                found = data[j]
-                expected = single_component_maxwell(bins[j], bins[j + 1], kT)
-                self.assertAlmostEqual(found, expected, delta=error_tol)
-
-    def test_aa_verify_single_component_maxwell(self):
-        """Verifies the normalization of the analytical expression."""
-        self.assertAlmostEqual(
-            single_component_maxwell(-10, 10, 4.), 1., delta=1E-4)
 
     def check_total_zero(self):
         v_total = np.sum(self.s.part[:].v, axis=0)
@@ -83,15 +62,15 @@ class DPDThermostat(ut.TestCase):
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
         loops = 100
-        v_stored = np.zeros((N * loops, 3))
+        v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             s.integrator.run(10)
-            v_stored[i * N:(i + 1) * N, :] = s.part[:].v
+            v_stored[i] = s.part[:].v
         v_minmax = 5
         bins = 5
         error_tol = 0.01
         self.check_velocity_distribution(
-            v_stored, v_minmax, bins, error_tol, kT)
+            v_stored.reshape((-1, 3)), v_minmax, bins, error_tol, kT)
 
         if not with_langevin:
             self.check_total_zero()
@@ -124,15 +103,15 @@ class DPDThermostat(ut.TestCase):
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
         loops = 250
-        v_stored = np.zeros((N * loops, 3))
+        v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             s.integrator.run(10)
-            v_stored[i * N:(i + 1) * N, :] = s.part[:].v
+            v_stored[i] = s.part[:].v
         v_minmax = 5
         bins = 5
         error_tol = 0.01
         self.check_velocity_distribution(
-            v_stored, v_minmax, bins, error_tol, kT)
+            v_stored.reshape((-1, 3)), v_minmax, bins, error_tol, kT)
         self.check_total_zero()
 
     def test_disable(self):
@@ -171,15 +150,15 @@ class DPDThermostat(ut.TestCase):
         s.integrator.run(250)
 
         loops = 250
-        v_stored = np.zeros((N * loops, 3))
+        v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             s.integrator.run(10)
-            v_stored[i * N:(i + 1) * N, :] = s.part[:].v
+            v_stored[i] = s.part[:].v
         v_minmax = 5
         bins = 5
         error_tol = 0.012
         self.check_velocity_distribution(
-            v_stored, v_minmax, bins, error_tol, kT)
+            v_stored.reshape((-1, 3)), v_minmax, bins, error_tol, kT)
 
     def test_const_weight_function(self):
         s = self.s

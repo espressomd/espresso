@@ -340,12 +340,7 @@ if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
-set(BOOST_MINIMUM_VERSION "1.65.0")
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CUDA_FOUND
-   AND CUDA_VERSION VERSION_GREATER_EQUAL "9.0")
-  set(BOOST_MINIMUM_VERSION "1.66.0")
-endif()
+set(BOOST_MINIMUM_VERSION "1.66.0")
 
 # old Boost.MPI versions contain a use-after-free bug that seems to only cause
 # crashes on 32-bit architectures

@@ -341,13 +341,13 @@ class CheckpointTest(ut.TestCase):
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(
-            acc_mean_variance.get_mean(),
+            acc_mean_variance.mean(),
             np.array([[1.0, 1.5, 2.0], [1.0, 1.0, 2.0]]))
         np.testing.assert_array_equal(
-            acc_mean_variance.get_variance(),
+            acc_mean_variance.variance(),
             np.array([[0., 0.5, 2.], [0., 0., 0.]]))
         np.testing.assert_array_equal(
-            system.auto_update_accumulators[0].get_variance(),
+            system.auto_update_accumulators[0].variance(),
             np.array([[0., 0.5, 2.], [0., 0., 0.]]))
 
     def test_time_series(self):

@@ -27,6 +27,7 @@
 
 #include <array>
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -34,35 +35,36 @@ namespace Observables {
 /** Cartesian profile observable */
 class ProfileObservable : virtual public Observable {
 public:
-  ProfileObservable(double min_x, double max_x, double min_y, double max_y,
-                    double min_z, double max_z, int n_x_bins, int n_y_bins,
-                    int n_z_bins)
-      : min_x(min_x), max_x(max_x), min_y(min_y), max_y(max_y), min_z(min_z),
-        max_z(max_z), n_x_bins(static_cast<size_t>(n_x_bins)),
-        n_y_bins(static_cast<size_t>(n_y_bins)),
-        n_z_bins(static_cast<size_t>(n_z_bins)) {}
-  // Range of the profile edges.
-  double min_x, max_x;
-  double min_y, max_y;
-  double min_z, max_z;
-  // Number of bins for each coordinate.
-  size_t n_x_bins, n_y_bins, n_z_bins;
+  ProfileObservable(int n_x_bins, int n_y_bins, int n_z_bins, double min_x,
+                    double max_x, double min_y, double max_y, double min_z,
+                    double max_z)
+      : limits{{std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
+                std::make_pair(min_z, max_z)}},
+        n_bins{{static_cast<size_t>(n_x_bins), static_cast<size_t>(n_y_bins),
+                static_cast<size_t>(n_z_bins)}} {}
+  /** Range of the profile edges. */
+  std::array<std::pair<double, double>, 3> limits;
+  /** Number of bins for each coordinate. */
+  std::array<size_t, 3> n_bins;
 
   std::vector<size_t> shape() const override {
-    return {n_x_bins, n_y_bins, n_z_bins};
+    return {n_bins[0], n_bins[1], n_bins[2]};
   }
 
   /** Calculate the bin edges for each dimension */
   std::array<std::vector<double>, 3> edges() {
     std::array<std::vector<double>, 3> profile_edges = {
-        {std::vector<double>(n_x_bins + 1), std::vector<double>(n_y_bins + 1),
-         std::vector<double>(n_z_bins + 1)}};
-    boost::copy(Utils::make_lin_space(min_x, max_x, n_x_bins + 1),
-                profile_edges[0].begin());
-    boost::copy(Utils::make_lin_space(min_y, max_y, n_y_bins + 1),
-                profile_edges[1].begin());
-    boost::copy(Utils::make_lin_space(min_z, max_z, n_z_bins + 1),
-                profile_edges[2].begin());
+        {std::vector<double>(n_bins[0] + 1), std::vector<double>(n_bins[1] + 1),
+         std::vector<double>(n_bins[2] + 1)}};
+    boost::copy(
+        Utils::make_lin_space(limits[0].first, limits[0].second, n_bins[0] + 1),
+        profile_edges[0].begin());
+    boost::copy(
+        Utils::make_lin_space(limits[1].first, limits[1].second, n_bins[1] + 1),
+        profile_edges[1].begin());
+    boost::copy(
+        Utils::make_lin_space(limits[2].first, limits[2].second, n_bins[2] + 1),
+        profile_edges[2].begin());
     return profile_edges;
   }
 };

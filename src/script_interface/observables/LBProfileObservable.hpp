@@ -52,88 +52,88 @@ public:
     this->add_parameters(
         {{"n_x_bins",
           [this](const Variant &v) {
-            profile_observable()->n_x_bins =
+            profile_observable()->n_bins[0] =
                 static_cast<size_t>(get_value<int>(v));
           },
           [this]() {
-            return static_cast<int>(profile_observable()->n_x_bins);
+            return static_cast<int>(profile_observable()->n_bins[0]);
           }},
          {"n_y_bins",
           [this](const Variant &v) {
-            profile_observable()->n_y_bins =
+            profile_observable()->n_bins[1] =
                 static_cast<size_t>(get_value<int>(v));
           },
           [this]() {
-            return static_cast<int>(profile_observable()->n_y_bins);
+            return static_cast<int>(profile_observable()->n_bins[1]);
           }},
          {"n_z_bins",
           [this](const Variant &v) {
-            profile_observable()->n_z_bins =
+            profile_observable()->n_bins[2] =
                 static_cast<size_t>(get_value<int>(v));
           },
           [this]() {
-            return static_cast<int>(profile_observable()->n_z_bins);
+            return static_cast<int>(profile_observable()->n_bins[2]);
           }},
          {"min_x",
           [this](const Variant &v) {
-            profile_observable()->min_x = get_value<double>(v);
+            profile_observable()->limits[0].first = get_value<double>(v);
           },
-          [this]() { return profile_observable()->min_x; }},
+          [this]() { return profile_observable()->limits[0].first; }},
          {"min_y",
           [this](const Variant &v) {
-            profile_observable()->min_y = get_value<double>(v);
+            profile_observable()->limits[1].first = get_value<double>(v);
           },
-          [this]() { return profile_observable()->min_y; }},
+          [this]() { return profile_observable()->limits[1].first; }},
          {"min_z",
           [this](const Variant &v) {
-            profile_observable()->min_z = get_value<double>(v);
+            profile_observable()->limits[2].first = get_value<double>(v);
           },
-          [this]() { return profile_observable()->min_z; }},
+          [this]() { return profile_observable()->limits[2].first; }},
          {"max_x",
           [this](const Variant &v) {
-            profile_observable()->max_x = get_value<double>(v);
+            profile_observable()->limits[0].second = get_value<double>(v);
           },
-          [this]() { return profile_observable()->max_x; }},
+          [this]() { return profile_observable()->limits[0].second; }},
          {"max_y",
           [this](const Variant &v) {
-            profile_observable()->max_y = get_value<double>(v);
+            profile_observable()->limits[1].second = get_value<double>(v);
           },
-          [this]() { return profile_observable()->max_y; }},
+          [this]() { return profile_observable()->limits[1].second; }},
          {"max_z",
           [this](const Variant &v) {
-            profile_observable()->max_z = get_value<double>(v);
+            profile_observable()->limits[2].second = get_value<double>(v);
           },
-          [this]() { return profile_observable()->max_z; }},
+          [this]() { return profile_observable()->limits[2].second; }},
          {"sampling_delta_x",
           [this](const Variant &v) {
-            profile_observable()->sampling_delta_x = get_value<double>(v);
+            profile_observable()->sampling_delta[0] = get_value<double>(v);
           },
-          [this]() { return profile_observable()->sampling_delta_x; }},
+          [this]() { return profile_observable()->sampling_delta[0]; }},
          {"sampling_delta_y",
           [this](const Variant &v) {
-            profile_observable()->sampling_delta_y = get_value<double>(v);
+            profile_observable()->sampling_delta[1] = get_value<double>(v);
           },
-          [this]() { return profile_observable()->sampling_delta_y; }},
+          [this]() { return profile_observable()->sampling_delta[1]; }},
          {"sampling_delta_z",
           [this](const Variant &v) {
-            profile_observable()->sampling_delta_z = get_value<double>(v);
+            profile_observable()->sampling_delta[2] = get_value<double>(v);
           },
-          [this]() { return profile_observable()->sampling_delta_z; }},
+          [this]() { return profile_observable()->sampling_delta[2]; }},
          {"sampling_offset_x",
           [this](const Variant &v) {
-            profile_observable()->sampling_offset_x = get_value<double>(v);
+            profile_observable()->sampling_offset[0] = get_value<double>(v);
           },
-          [this]() { return profile_observable()->sampling_offset_x; }},
+          [this]() { return profile_observable()->sampling_offset[0]; }},
          {"sampling_offset_y",
           [this](const Variant &v) {
-            profile_observable()->sampling_offset_y = get_value<double>(v);
+            profile_observable()->sampling_offset[1] = get_value<double>(v);
           },
-          [this]() { return profile_observable()->sampling_offset_y; }},
+          [this]() { return profile_observable()->sampling_offset[1]; }},
          {"sampling_offset_z",
           [this](const Variant &v) {
-            profile_observable()->sampling_offset_z = get_value<double>(v);
+            profile_observable()->sampling_offset[2] = get_value<double>(v);
           },
-          [this]() { return profile_observable()->sampling_offset_z; }},
+          [this]() { return profile_observable()->sampling_offset[2]; }},
          {"allow_empty_bins",
           [this](const Variant &v) {
             profile_observable()->allow_empty_bins = get_value<bool>(v);
@@ -148,8 +148,8 @@ public:
                               double, double, double, bool>(
             params, "sampling_delta_x", "sampling_delta_y", "sampling_delta_z",
             "sampling_offset_x", "sampling_offset_y", "sampling_offset_z",
-            "n_x_bins", "n_y_bins", "n_z_bins", "min_x", "min_y", "min_z",
-            "max_x", "max_y", "max_z", "allow_empty_bins");
+            "n_x_bins", "n_y_bins", "n_z_bins", "min_x", "max_x", "min_y",
+            "max_y", "min_z", "max_z", "allow_empty_bins");
   }
 
   Variant do_call_method(std::string const &method,

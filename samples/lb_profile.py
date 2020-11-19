@@ -70,7 +70,7 @@ accumulator = espressomd.accumulators.MeanVarianceCalculator(obs=fluid_obs)
 system.auto_update_accumulators.add(accumulator)
 system.integrator.run(n_steps)
 
-lb_fluid_profile = accumulator.get_mean()
+lb_fluid_profile = accumulator.mean()
 
 
 def poiseuille_flow(r, R, ext_force_density):

@@ -47,7 +47,7 @@ class CylindricalLBObservableCommon:
     positions = []
 
     params = {
-        'ids': range(10),
+        'ids': list(range(10)),
         'center': [5.0, 5.0, 5.0],  # center of the histogram
         'axis': 'y',
         'n_r_bins': 10,  # number of bins in r

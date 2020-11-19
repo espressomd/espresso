@@ -22,6 +22,7 @@
 #include "fetch_particles.hpp"
 
 #include <functional>
+#include <vector>
 
 namespace Observables {
 std::vector<double> PidObservable::operator()() const {

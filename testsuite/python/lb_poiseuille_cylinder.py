@@ -160,11 +160,7 @@ class LBPoiseuilleCommon:
         self.prepare_obs()
         # gather some statistics for the observable accumulator
         self.system.integrator.run(5)
-        obs_result = np.array(
-            self.accumulator.get_mean()).reshape(OBS_PARAMS['n_r_bins'],
-                                                 OBS_PARAMS['n_phi_bins'],
-                                                 OBS_PARAMS['n_z_bins'],
-                                                 3)
+        obs_result = self.accumulator.mean()
         x = np.linspace(
             OBS_PARAMS['min_r'],
             OBS_PARAMS['max_r'],

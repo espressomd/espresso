@@ -19,7 +19,7 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
-from tests_common import single_component_maxwell
+from thermostats_common import ThermostatsCommon
 
 """
 Check the lattice-Boltzmann thermostat with respect to the particle velocity
@@ -43,7 +43,7 @@ LB_PARAMS = {'agrid': AGRID,
              'seed': 123}
 
 
-class LBThermostatCommon:
+class LBThermostatCommon(ThermostatsCommon):
 
     """Base class of the test that holds the test logic."""
     lbf = None
@@ -75,7 +75,7 @@ class LBThermostatCommon:
         self.system.integrator.run(100)
         N = len(self.system.part)
         loops = 500
-        v_particles = np.zeros((N * loops, 3))
+        v_particles = np.zeros((loops, N, 3))
         fluid_temps = []
 
         for i in range(loops):
@@ -83,7 +83,7 @@ class LBThermostatCommon:
             if i % 10 == 0:
                 fluid_temps.append(
                     np.average([n.density * n.velocity**2 for n in self.lbf.nodes()]) * node_volume)
-            v_particles[i * N:(i + 1) * N, :] = self.system.part[:].v
+            v_particles[i] = self.system.part[:].v
         fluid_temp = np.average(fluid_temps)
 
         np.testing.assert_allclose(np.average(v_particles), 0, atol=0.02)
@@ -92,15 +92,9 @@ class LBThermostatCommon:
 
         minmax = 3
         n_bins = 7
-        for i in range(3):
-            hist = np.histogram(v_particles[:, i], range=(-minmax, minmax),
-                                bins=n_bins, density=False)
-            data = hist[0] / float(v_particles.shape[0])
-            bins = hist[1]
-            expected = [single_component_maxwell(
-                bins[j], bins[j + 1], KT) for j in range(n_bins)]
-            # WALBERLA TODO: Restore tolerance to 0.015
-            np.testing.assert_allclose(data, expected, atol=0.018)
+        error_tol = 0.018  # WALBERLA TODO: Restore tolerance to 0.015
+        self.check_velocity_distribution(
+            v_particles.reshape((-1, 3)), minmax, n_bins, error_tol, KT)
 
         np.testing.assert_allclose(fluid_temp, KT, rtol=0.01)
 
