@@ -28,16 +28,20 @@
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <memory>
-#include <vector>
-
-#include "boost/mpi.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/LbWalberlaD3Q19FluctuatingMRT.hpp"
 #include "grid_based_algorithms/LbWalberlaD3Q19MRT.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
-#include "utils/Vector.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <boost/mpi.hpp>
+
+#include <cmath>
+#include <functional>
 #include <iostream>
+#include <memory>
+#include <vector>
 
 using Utils::hadamard_product;
 using Utils::Vector3d;
