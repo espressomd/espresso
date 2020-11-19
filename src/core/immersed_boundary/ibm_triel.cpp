@@ -143,8 +143,6 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
             iaparams.p.ibm_triel.k2 * i2 / 6.0;
   }
 
-  // ******** Achim's version *****************
-
   // Derivatives of Is: eq. (C.15)
   const double dI1dGxx = 1;
   const double dI1dGxy = 0;
@@ -208,34 +206,6 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   // Multiply by undeformed area
   f1_rot *= A0;
   f2_rot *= A0;
-
-  // ****************** Wolfgang's version ***********
-  /*
-   // Left here for checking, but should be identical to the version above
-   const double i11 = 1.0;
-   const double i12 = 1.0;
-   const double i21 = Gyy;
-   const double i22 = -Gyx;
-   const double i23 = i22;
-   const double i24 = Gxx;
-
-   //For sake of better readability shorten the call for the triangle's
-   constants: A0 = iaparams.p.stretching_force_ibm.Area0; a1 =
-   iaparams.p.stretching_force_ibm.a1; a2 =
-   iaparams.p.stretching_force_ibm.a2; b1 =
-   iaparams.p.stretching_force_ibm.b1; b2 =
-   iaparams.p.stretching_force_ibm.b2;
-
-   f1_rot[0] = A0*((-1)*e1*((i11*2*a1*dxx)+(i12*2*b1*dxy))+
-   (-1)*e2*((i21*2*a1*dxx)+(i22*(a1*dxy+b1*dxx))+(i23*(a1*dxy+b1*dxx))+(i24*2*b1*dxy)));
-   f1_rot[1] = A0*((-1)*e1*((i11*0.0)+(i12*2*b1*dyy))+
-   (-1)*e2*((i21*0.0)+(i22*a1*dyy)+(i23*a1*dyy)+(i24*2*b1*dyy)));
-
-   f2_rot[0] = A0*((-1)*e1*((i11*2*a2*dxx)+(i12*2*b2*dxy))+
-   (-1)*e2*((i21*2*a2*dxx)+(i22*(a2*dxy+b2*dxx))+(i23*(a2*dxy+b2*dxx))+(i24*2*b2*dxy)));
-   f2_rot[1] = A0*((-1)*e1*((i11*0.0)+(i12*2*b2*dyy))+
-   (-1)*e2*((i21*0.0)+(i22*a2*dyy)+(i23*a2*dyy)+(i24*2*b2*dyy)));
-   */
 
   // Rotate forces back into original position of triangle
   auto forces = RotateForces(f1_rot, f2_rot, vec1, vec2);
