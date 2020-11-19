@@ -101,58 +101,51 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
   // General parameters
   bonded_ia_params[bond_type].type = BONDED_IA_IBM_TRIBEND;
 
-  // Specific parameters
-  //  bonded_ia_params[bond_type].p.ibm_tribend.method = method;
+  // Compute theta0
+  double theta0;
+  if (flat) {
+    theta0 = 0;
+  } else {
+    // Get particles
+    auto const p1 = get_particle_data(ind1);
+    auto const p2 = get_particle_data(ind2);
+    auto const p3 = get_particle_data(ind3);
+    auto const p4 = get_particle_data(ind4);
 
-  // Distinguish bending methods
-  //  if ( method == TriangleNormals )
-  {
-    double theta0;
+    // Get vectors of triangles
+    auto const dx1 = get_mi_vector(p1.r.p, p3.r.p, box_geo);
+    auto const dx2 = get_mi_vector(p2.r.p, p3.r.p, box_geo);
+    auto const dx3 = get_mi_vector(p4.r.p, p3.r.p, box_geo);
 
-    if (!flat) {
-      // Compute theta0
-      auto p1 = get_particle_data(ind1);
-      auto p2 = get_particle_data(ind2);
-      auto p3 = get_particle_data(ind3);
-      auto p4 = get_particle_data(ind4);
+    // Get normals on triangle; pointing outwards by definition of indices
+    // sequence
+    auto const n1l = vector_product(dx1, dx2);
+    auto const n2l = -vector_product(dx1, dx3);
 
-      // Get vectors of triangles
-      auto const dx1 = get_mi_vector(p1.r.p, p3.r.p, box_geo);
-      auto const dx2 = get_mi_vector(p2.r.p, p3.r.p, box_geo);
-      auto const dx3 = get_mi_vector(p4.r.p, p3.r.p, box_geo);
+    auto const n1 = n1l / n1l.norm();
+    auto const n2 = n2l / n2l.norm();
 
-      // Get normals on triangle; pointing outwards by definition of indices
-      // sequence
-      auto const n1l = vector_product(dx1, dx2);
-      auto const n2l = -vector_product(dx1, dx3);
+    // calculate theta0 by taking the acos of the scalar n1*n2
+    auto sc = n1 * n2;
+    if (sc > 1.0)
+      sc = 1.0;
 
-      auto const n1 = n1l / n1l.norm();
-      auto const n2 = n2l / n2l.norm();
+    theta0 = acos(sc);
 
-      // calculate theta by taking the acos of the scalar n1*n2
-      auto sc = n1 * n2;
-      if (sc > 1.0)
-        sc = 1.0;
-
-      theta0 = acos(sc);
-
-      auto const desc = dx1 * vector_product(n1, n2);
-      if (desc < 0)
-        theta0 = 2.0 * Utils::pi() - theta0;
-
-    } else
-      theta0 = 0; // Flat
-
-    // Krüger always has three partners
-    bonded_ia_params[bond_type].num = 3;
-    bonded_ia_params[bond_type].p.ibm_tribend.theta0 = theta0;
-    // NOTE: This is the bare bending modulus used by the program.
-    // If triangle pairs appear only once, the total bending force should get a
-    // factor 2. For the numerical model, a factor sqrt(3) should be added, see
-    // @cite gompper96a and @cite kruger12a. This is an approximation,
-    // it holds strictly only for a sphere
-    bonded_ia_params[bond_type].p.ibm_tribend.kb = kb;
+    auto const desc = dx1 * vector_product(n1, n2);
+    if (desc < 0)
+      theta0 = 2.0 * Utils::pi() - theta0;
   }
+
+  bonded_ia_params[bond_type].p.ibm_tribend.theta0 = theta0;
+  // Krüger always has three partners
+  bonded_ia_params[bond_type].num = 3;
+  // NOTE: This is the bare bending modulus used by the program.
+  // If triangle pairs appear only once, the total bending force should get a
+  // factor 2. For the numerical model, a factor sqrt(3) should be added, see
+  // @cite gompper96a and @cite kruger12a. This is an approximation,
+  // it holds strictly only for a sphere
+  bonded_ia_params[bond_type].p.ibm_tribend.kb = kb;
 
   // Broadcast and return
   mpi_bcast_ia_params(bond_type, -1);
