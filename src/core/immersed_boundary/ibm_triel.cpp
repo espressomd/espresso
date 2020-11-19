@@ -119,13 +119,13 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   const double Dyx = 0.0;
   const double Dyy = l / l0 * sinPhi / sinPhi0;
 
-  // Tensor G: (C.12)
+  // Tensor G: eq. (C.12)
   const double Gxx = Utils::sqr(Dxx) + Utils::sqr(Dyx);
   const double Gxy = Dxx * Dxy + Dyx * Dyy;
   const double Gyx = Dxx * Dxy + Dyy * Dyx; // = Gxy because of symmetry
   const double Gyy = Utils::sqr(Dxy) + Utils::sqr(Dyy);
 
-  // Strain invariants, C.11 and C.12
+  // Strain invariants: eq. (C.11) and (C.12)
   const double i1 = (Gxx + Gyy) - 2;
   const double i2 = ((Gxx * Gyy) - (Gxy * Gyx)) - 1;
 
@@ -143,9 +143,7 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
             iaparams.p.ibm_triel.k2 * i2 / 6.0;
   }
 
-  // ******** Achim's version *****************
-
-  // Derivatives of Is (C.15)
+  // Derivatives of Is: eq. (C.15)
   const double dI1dGxx = 1;
   const double dI1dGxy = 0;
   const double dI1dGyx = 0;
@@ -158,7 +156,7 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
                                // the yx term, whereas we have it.
   const double dI2dGyy = Gxx;
 
-  // Derivatives of G (C.16)
+  // Derivatives of G: eq. (C.16)
   const double dGxxdV1x = 2 * a1 * Dxx;
   const double dGxxdV1y = 0;
   const double dGxxdV2x = 2 * a2 * Dxx;
@@ -209,86 +207,10 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   f1_rot *= A0;
   f2_rot *= A0;
 
-  // ****************** Wolfgang's version ***********
-  /*
-   // Left here for checking, but should be identical to the version above
-   const double i11 = 1.0;
-   const double i12 = 1.0;
-   const double i21 = Gyy;
-   const double i22 = -Gyx;
-   const double i23 = i22;
-   const double i24 = Gxx;
-
-   //For sake of better readability shorten the call for the triangle's
-   constants: A0 = iaparams.p.stretching_force_ibm.Area0; a1 =
-   iaparams.p.stretching_force_ibm.a1; a2 =
-   iaparams.p.stretching_force_ibm.a2; b1 =
-   iaparams.p.stretching_force_ibm.b1; b2 =
-   iaparams.p.stretching_force_ibm.b2;
-
-   f1_rot[0] = A0*((-1)*e1*((i11*2*a1*dxx)+(i12*2*b1*dxy))+
-   (-1)*e2*((i21*2*a1*dxx)+(i22*(a1*dxy+b1*dxx))+(i23*(a1*dxy+b1*dxx))+(i24*2*b1*dxy)));
-   f1_rot[1] = A0*((-1)*e1*((i11*0.0)+(i12*2*b1*dyy))+
-   (-1)*e2*((i21*0.0)+(i22*a1*dyy)+(i23*a1*dyy)+(i24*2*b1*dyy)));
-
-   f2_rot[0] = A0*((-1)*e1*((i11*2*a2*dxx)+(i12*2*b2*dxy))+
-   (-1)*e2*((i21*2*a2*dxx)+(i22*(a2*dxy+b2*dxx))+(i23*(a2*dxy+b2*dxx))+(i24*2*b2*dxy)));
-   f2_rot[1] = A0*((-1)*e1*((i11*0.0)+(i12*2*b2*dyy))+
-   (-1)*e2*((i21*0.0)+(i22*a2*dyy)+(i23*a2*dyy)+(i24*2*b2*dyy)));
-   */
-
   // Rotate forces back into original position of triangle
   auto forces = RotateForces(f1_rot, f2_rot, vec1, vec2);
 
   return forces;
-}
-
-int IBM_Triel_ResetParams(const int bond_type, const double k1,
-                          const double l0) {
-
-  // Check if bond exists and is of correct type
-  if (bond_type >= bonded_ia_params.size()) {
-    printf("bond does not exist while reading triel checkpoint\n");
-    return ES_ERROR;
-  }
-  if (bonded_ia_params[bond_type].type != BONDED_IA_IBM_TRIEL) {
-    printf("interaction type does not match while reading triel checkpoint!\n");
-    return ES_ERROR;
-  }
-
-  // Check if k1 is correct
-  if (fabs(bonded_ia_params[bond_type].p.ibm_triel.k1 - k1) > 1e-9) {
-    printf("k1 does not match while reading triel checkpoint!\n");
-    return ES_ERROR;
-  }
-
-  // Check if l0 is correct
-  if (fabs(bonded_ia_params[bond_type].p.ibm_triel.l0 - l0) > 1e-9) {
-    printf("l0 does not match while reading triel checkpoint!\n");
-    return ES_ERROR;
-  }
-
-  // Compute cache values a1, a2, b1, b2
-  const double area0 = bonded_ia_params[bond_type].p.ibm_triel.area0;
-  const double lp0 = bonded_ia_params[bond_type].p.ibm_triel.lp0;
-  const double sinPhi0 = bonded_ia_params[bond_type].p.ibm_triel.sinPhi0;
-  const double cosPhi0 = bonded_ia_params[bond_type].p.ibm_triel.cosPhi0;
-  const double area2 = 2.0 * area0;
-  const double a1 = -(l0 * sinPhi0) / area2;
-  const double a2 = -a1;
-  const double b1 = (l0 * cosPhi0 - lp0) / area2;
-  const double b2 = -(l0 * cosPhi0) / area2;
-
-  // Hand these values over to parameter structure
-  bonded_ia_params[bond_type].p.ibm_triel.a1 = a1;
-  bonded_ia_params[bond_type].p.ibm_triel.a2 = a2;
-  bonded_ia_params[bond_type].p.ibm_triel.b1 = b1;
-  bonded_ia_params[bond_type].p.ibm_triel.b2 = b2;
-
-  // Communicate this to whoever is interested
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
 }
 
 int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,

@@ -842,17 +842,18 @@ cdef class ParticleHandle:
                         self.particle_data, ext_t)
                     return array_locked([ext_t[0], ext_t[1], ext_t[2]])
 
-    IF LANGEVIN_PER_PARTICLE:
+    IF LANGEVIN_PER_PARTICLE or BROWNIAN_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
             property gamma:
                 """
-                The body-fixed frictional coefficient used in the Langevin thermostat.
+                The body-fixed frictional coefficient used in the Langevin
+                and Brownian thermostats.
 
                 gamma : :obj:`float` or (3,) array_like of :obj:`float`
 
                 .. note::
-                    This needs features ``LANGEVIN_PER_PARTICLE`` and
-                    ``PARTICLE_ANISOTROPY``.
+                    This needs features ``PARTICLE_ANISOTROPY`` and either
+                    ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
 
                 See Also
                 ----------
@@ -883,12 +884,13 @@ cdef class ParticleHandle:
         ELSE:
             property gamma:
                 """
-                The translational frictional coefficient used in the Langevin thermostat.
+                The translational frictional coefficient used in the Langevin
+                and Brownian thermostats.
 
                 gamma : :obj:`float`
 
                 .. note::
-                   This needs the feature ``LANGEVIN_PER_PARTICLE``.
+                   This needs the feature ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
 
                 See Also
                 ----------
@@ -910,13 +912,15 @@ cdef class ParticleHandle:
             IF PARTICLE_ANISOTROPY:
                 property gamma_rot:
                     """
-                    The particle translational frictional coefficient used in the Langevin thermostat.
+                    The particle translational frictional coefficient used in
+                    the Langevin and Brownian thermostats.
 
                     gamma_rot : :obj:`float` or (3,) array_like of :obj:`float`
 
                     .. note::
-                        This needs features ``LANGEVIN_PER_PARTICLE``,
-                        ``ROTATION`` and ``PARTICLE_ANISOTROPY``.
+                        This needs features ``ROTATION``, ``PARTICLE_ANISOTROPY``
+                        and either ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+
                     """
 
                     def __set__(self, _gamma_rot):
@@ -942,9 +946,14 @@ cdef class ParticleHandle:
             ELSE:
                 property gamma_rot:
                     """
-                    The particle rotational frictional coefficient used in the Langevin thermostat.
+                    The particle rotational frictional coefficient used in the
+                    Langevin and Brownian thermostats.
 
-                    gamma : :obj:`float`
+                    gamma_rot : :obj:`float`
+
+                    .. note::
+                        This needs features ``ROTATION`` and either
+                        ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
 
                     """
 
@@ -962,12 +971,13 @@ cdef class ParticleHandle:
 
         property temp:
             """
-            Particle's temperature in the Langevin thermostat.
+            Particle's temperature in the Langevin and Brownian thermostats.
 
             temp: :obj:`float`
 
             .. note::
-                This needs the feature ``LANGEVIN_PER_PARTICLE``.
+                This needs the feature ``LANGEVIN_PER_PARTICLE`` or
+                ``BROWNIAN_PER_PARTICLE``.
 
             """
 

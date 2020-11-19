@@ -32,38 +32,26 @@ class TestLB:
     """
     Basic tests of the lattice-Boltzmann implementation
 
-    * mass and momentum conservation
     * temperature
     * particle viscous coupling
     * application of external force densities
     * setting and retrieving lb node velocities
 
     """
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=3 * [6.0])
     np.random.seed(1)
-    params = {'int_steps': 15,
-              'int_times': 20,
-              'time_step': 0.01,
+    params = {'time_step': 0.01,
               'tau': 0.01,
               'agrid': 0.5,
-              'box_l': 6.0,
               'dens': 0.85,
               'viscosity': 3.0,
               'friction': 2.0,
               'temp': 1.5,
-              'gamma': 1.5,
-              'skin': 1.0,
-              'temp_confidence': 10}
+              'gamma': 1.5}
 
-    dof = 3.
-
-    system.box_l = [
-        params['box_l'],
-        params['box_l'],
-        params['box_l']]
     system.periodicity = [1, 1, 1]
     system.time_step = params['time_step']
-    system.cell_system.skin = params['skin']
+    system.cell_system.skin = 1.0
     lbf = None
     interpolation = False
 
@@ -71,103 +59,6 @@ class TestLB:
         self.system.actors.clear()
         self.system.part.clear()
         self.system.thermostat.turn_off()
-
-    def test_mass_momentum_thermostat(self):
-        self.system.part.clear()
-        self.system.actors.clear()
-
-        self.n_col_part = 100
-        self.system.part.add(pos=np.random.random(
-            (self.n_col_part, 3)) * self.params["box_l"])
-        if espressomd.has_features("MASS"):
-            self.system.part[:].mass = 0.1 + np.random.random(
-                len(self.system.part))
-
-        self.system.thermostat.turn_off()
-
-        self.lbf = self.lb_class(
-            kT=self.params['temp'],
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
-            agrid=self.params['agrid'],
-            tau=self.system.time_step,
-            ext_force_density=[0, 0, 0], seed=4)
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(
-            LB_fluid=self.lbf,
-            seed=3,
-            gamma=self.params['friction'])
-        # give particles a push
-        for p in self.system.part:
-            p.v = p.v + [0.1, 0.0, 0.0]
-
-        self.fluidmass = self.params['dens']
-        self.tot_mom = [0.0, 0.0, 0.0]
-        for p in self.system.part:
-            self.tot_mom += p.v * p.mass
-
-        self.system.integrator.run(100)
-
-        self.max_dmass = 0.0
-        self.max_dm = [0, 0, 0]
-        all_temp_particle = []
-        all_temp_fluid = []
-
-        # Integration
-        for _ in range(self.params['int_times']):
-            self.system.integrator.run(self.params['int_steps'])
-
-            # Summation vars
-            fluid_mass = 0.0
-            fluid_temp = 0.0
-
-            # Go over lb lattice
-            for lb_node in self.lbf.nodes():
-                dens = lb_node.density
-                fluid_mass += dens
-                fluid_temp += np.sum(lb_node.velocity**2) * dens
-
-            # Normalize
-            fluid_mass /= np.product(self.lbf.shape)
-            fluid_temp *= self.system.volume() / (
-                3. * np.product(self.lbf.shape)**2)
-
-            # check mass conversation
-            self.assertAlmostEqual(fluid_mass, self.params["dens"],
-                                   delta=1E-9)
-
-            # check momentum conservation
-            momentum = self.system.analysis.linear_momentum()
-            f_2_correction = np.sum(
-                self.system.part[:].f,
-                axis=0) * self.system.time_step
-
-            np.testing.assert_allclose(momentum + f_2_correction, self.tot_mom,
-                                       atol=1E-10)
-
-            temp_particle = np.average(
-                [np.average(p.mass * p.v**2) for p in self.system.part])
-
-            # Update lists
-            all_temp_particle.append(temp_particle)
-            all_temp_fluid.append(fluid_temp)
-
-        # import scipy.stats
-        # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
-        #   scale=np.std(all_temp_particle,ddof=1))[1] - self.params["temp"]
-        # temp_prec_fluid = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
-        #   scale=np.std(all_temp_fluid,ddof=1))[1] -self.params["temp"]
-        # WALBERLA TODO: Restore narrow tolerance
-        #temp_prec_particle = 0.06 * self.params["temp"]
-        #temp_prec_particle = 0.06 * self.params["temp"]
-
-        temp_prec_fluid = 0.1 * self.params["temp"]
-        temp_prec_particle = 0.2 * self.params["temp"]
-
-        self.assertAlmostEqual(
-            np.mean(all_temp_fluid), self.params["temp"], delta=temp_prec_fluid)
-        self.assertAlmostEqual(
-            np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
     def test_properties(self):
         self.lbf = self.lb_class(
@@ -205,7 +96,7 @@ class TestLB:
         system = self.system
         self.n_col_part = 1000
         system.part.add(pos=np.random.random(
-            (self.n_col_part, 3)) * self.params["box_l"], v=np.random.random((self.n_col_part, 3)))
+            (self.n_col_part, 3)) * self.system.box_l[0], v=np.random.random((self.n_col_part, 3)))
         system.thermostat.turn_off()
 
         self.lbf = self.lb_class(
@@ -298,15 +189,13 @@ class TestLB:
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
+        out_of_bounds = int(max(self.system.box_l) / self.params['agrid']) + 1
         with self.assertRaises(ValueError):
-            _ = self.lbf[
-                int(self.params['box_l'] / self.params['agrid']) + 1, 0, 0].velocity
+            _ = self.lbf[out_of_bounds, 0, 0].velocity
         with self.assertRaises(ValueError):
-            _ = self.lbf[
-                0, int(self.params['box_l'] / self.params['agrid']) + 1, 0].velocity
+            _ = self.lbf[0, out_of_bounds, 0].velocity
         with self.assertRaises(ValueError):
-            _ = self.lbf[
-                0, 0, int(self.params['box_l'] / self.params['agrid']) + 1].velocity
+            _ = self.lbf[0, 0, out_of_bounds].velocity
 
     def test_incompatible_agrid(self):
         """
@@ -399,8 +288,8 @@ class TestLB:
         self.system.part.clear()
         self.system.actors.clear()
 
-        self.system.part.add(pos=np.random.random(
-            (100, 3)) * self.params["box_l"])
+        self.system.part.add(
+            pos=np.random.random((100, 3)) * self.system.box_l)
         if espressomd.has_features("MASS"):
             self.system.part[:].mass = 0.1 + np.random.random(
                 len(self.system.part))

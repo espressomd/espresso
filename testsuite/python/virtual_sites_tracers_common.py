@@ -16,9 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import numpy as np
+
 import espressomd
 from espressomd import shapes, lbboundaries
-import numpy as np
+import espressomd.interactions
 try:
     from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
 except ImportError:
@@ -166,14 +168,15 @@ class VirtualSitesTracersCommon:
         return alpha
 
     def test_tribend(self):
-        self.system.actors.clear()
         # two triangles with bending interaction
         # move nodes, should relax back
 
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
-
         system.part.clear()
+        system.actors.clear()
+        system.thermostat.turn_off()
+        system.thermostat.set_langevin(kT=0, gamma=10, seed=1)
 
         # Add four particles
         system.part.add(id=0, pos=[5, 5, 5])
@@ -182,21 +185,19 @@ class VirtualSitesTracersCommon:
         system.part.add(id=3, pos=[5, 6, 5])
 
         # Add first triel, weak modulus
-        from espressomd.interactions import IBM_Triel
-        tri1 = IBM_Triel(
+        tri1 = espressomd.interactions.IBM_Triel(
             ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri1)
         system.part[0].add_bond((tri1, 1, 2))
 
-        # Add second triel
-        tri2 = IBM_Triel(
+        # Add second triel, strong modulus
+        tri2 = espressomd.interactions.IBM_Triel(
             ind1=0, ind2=2, ind3=3, elasticLaw="Skalak", k1=10, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri2)
         system.part[0].add_bond((tri2, 2, 3))
 
         # Add bending
-        from espressomd.interactions import IBM_Tribend
-        tribend = IBM_Tribend(
+        tribend = espressomd.interactions.IBM_Tribend(
             ind1=0, ind2=1, ind3=2, ind4=3, kb=1, refShape="Initial")
         system.bonded_inter.add(tribend)
         system.part[0].add_bond((tribend, 1, 2, 3))
@@ -205,19 +206,19 @@ class VirtualSitesTracersCommon:
         system.part[:].pos = system.part[:].pos + np.random.random((4, 3))
 
         # Perform integration
-        system.thermostat.turn_off()
-        system.thermostat.set_langevin(kT=0, gamma=10, seed=1)
         system.integrator.run(150)
         angle = self.compute_angle()
         self.assertLess(angle, 1E-3)
 
     def test_triel(self):
-        self.system.actors.clear()
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
-
         system.part.clear()
-        # Add particles: 0-2 are non-bonded, 3-5 are  bound
+        system.actors.clear()
+        system.thermostat.turn_off()
+        system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
+
+        # Add particles: 0-2 are not bonded, 3-5 are bonded
         non_bound = system.part.add(
             id=[0, 1, 2], pos=[[5, 5, 5], [5, 5, 6], [5, 6, 6]])
 
@@ -226,30 +227,26 @@ class VirtualSitesTracersCommon:
         system.part.add(id=5, pos=[2, 6, 6])
 
         # Add triel for 3-5
-        from espressomd.interactions import IBM_Triel
-        tri = IBM_Triel(
+        tri = espressomd.interactions.IBM_Triel(
             ind1=3, ind2=4, ind3=5, elasticLaw="Skalak", k1=15, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri)
         system.part[3].add_bond((tri, 4, 5))
-        system.thermostat.turn_off()
-        system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
 
         system.part[:].pos = system.part[:].pos + np.array((
             (0, 0, 0), (1, -.2, .3), (1, 1, 1),
             (0, 0, 0), (1, -.2, .3), (1, 1, 1)))
 
-        distorted_pos = non_bound.pos
+        distorted_pos = np.copy(non_bound.pos)
 
         system.integrator.run(110)
-        # get new shapes
         dist1bound = system.distance(system.part[3], system.part[4])
         dist2bound = system.distance(system.part[3], system.part[5])
 
-        # check bound particles. Distance should restore to initial config
+        # check bonded particles. Distance should restore to initial config
         self.assertAlmostEqual(dist1bound, 1, delta=0.02)
         self.assertAlmostEqual(dist2bound, np.sqrt(2), delta=0.01)
 
-        # chekc non-bound particles. Positions should still be distorted
+        # check not bonded particles. Positions should still be distorted
         np.testing.assert_allclose(np.copy(non_bound.pos), distorted_pos)
 
     def test_zz_without_lb(self):

@@ -129,11 +129,11 @@ Lees-Edwards boundary conditions
 
 Lees-Edwards boundary conditions are not available in the current version of |es|.
 
+
 .. _Immersed Boundary Method for soft elastic objects:
 
 Immersed Boundary Method for soft elastic objects
 -------------------------------------------------
-
 
 Please contact the Biofluid Simulation and Modeling Group at the
 University of Bayreuth if you plan to use this feature.
@@ -158,48 +158,12 @@ The immersed boundary method consists of two components, which can be used indep
 
   * :ref:`Inertialess lattice-Boltzmann tracers` implemented as virtual sites
 
-  * Interactions providing the elastic forces for the particles forming the surface. These are described below.
-
-
-To compute the elastic forces, three new bonded interactions are defined: :class:`espressomd.interactions.IBM_Triel`, :class:`espressomd.interactions.IBM_Tribend` and :class:`espressomd.interactions.IBM_VolCons`.
-
-:class:`espressomd.interactions.IBM_Triel` is used to compute elastic shear forces. To setup an interaction, use:
-
-::
-
-    tri1 = IBM_Triel(ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist=2.4)
-
-where ``ind1``, ``ind2`` and ``ind3`` represent the indices of the three marker points making up the triangle. The parameter ``maxDist``
-specifies the maximum stretch above which the bond is considered broken. The parameter ``elasticLaw`` can be either ``"NeoHookean"`` or ``"Skalak"``.
-The parameters ``k1`` and ``k2`` are the elastic moduli.
-
-:class:`espressomd.interactions.IBM_Tribend` computes out-of-plane bending forces. To setup an interaction, use:
-::
-
-    tribend = IBM_Tribend(ind1=0, ind2=1, ind3=2, ind4=3, kb=1, refShape="Initial")
-
-where ``ind1``, ``ind2``, ``ind3`` and ``ind4`` are four marker points corresponding to two neighboring triangles. The indices ``ind1`` and ``ind3`` contain the shared edge. Note that the marker points within a triangle must be labelled such that the normal vector :math:`\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})` points outward of the elastic object.
-The reference (zero energy) shape can be either ``"Flat"`` or the initial curvature ``"Initial"``.
-The bending modulus is ``kb``.
-
-:class:`espressomd.interactions.IBM_VolCons` is a volume-conservation force. Without this correction, the volume of the soft object tends to shrink over time due to numerical inaccuracies. Therefore, this implements an artificial force intended to keep the volume constant. If volume conservation is to be used for a given soft particle, the interaction must be added to every marker point belonging to that object.
-::
-
-    volCons = IBM_VolCons(softID=1, kappaV=kV)
-
-where ``softID`` identifies the soft particle and ``kv`` is a volumetric spring constant.
-Note that the :class:`espressomd.interactions.IBM_VolCons` ``bond`` does not need a bond partner. It is added to a particle as follows::
-
-    system.part[0].add_bond((Volcons,))
-
-The comma is needed to force Python to create a tuple containing a single item.
-
+  * Interactions providing the elastic forces for the particles forming the surface. These are described in :ref:`Immersed Boundary Method interactions`.
 
 For a more detailed description, see e.g. :cite:`guckenberger17a` or contact us.
 This feature probably does not work with advanced LB features such as electrokinetics.
 
 A sample script is provided in the :file:`/samples/immersed_boundary/` directory.
-
 
 
 .. _Object-in-fluid:
