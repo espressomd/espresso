@@ -19,7 +19,7 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
-from tests_common import single_component_maxwell
+from thermostats_common import ThermostatsCommon
 
 """
 Check the lattice-Boltzmann thermostat with respect to the particle velocity
@@ -41,7 +41,7 @@ LB_PARAMS = {'agrid': AGRID,
              'seed': 123}
 
 
-class LBThermostatCommon:
+class LBThermostatCommon(ThermostatsCommon):
 
     """Base class of the test that holds the test logic."""
     lbf = None
@@ -61,22 +61,15 @@ class LBThermostatCommon:
         self.system.integrator.run(20)
         N = len(self.system.part)
         loops = 250
-        v_stored = np.zeros((N * loops, 3))
+        v_stored = np.zeros((loops, N, 3))
         for i in range(loops):
             self.system.integrator.run(3)
-            v_stored[i * N:(i + 1) * N, :] = self.system.part[:].v
+            v_stored[i] = self.system.part[:].v
         minmax = 5
         n_bins = 7
         error_tol = 0.01
-        for i in range(3):
-            hist = np.histogram(v_stored[:, i], range=(-minmax, minmax),
-                                bins=n_bins, density=False)
-            data = hist[0] / float(v_stored.shape[0])
-            bins = hist[1]
-            for j in range(n_bins):
-                found = data[j]
-                expected = single_component_maxwell(bins[j], bins[j + 1], KT)
-                self.assertAlmostEqual(found, expected, delta=error_tol)
+        self.check_velocity_distribution(
+            v_stored.reshape((-1, 3)), minmax, n_bins, error_tol, KT)
 
 
 class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
