@@ -23,7 +23,6 @@
 #ifdef LB_WALBERLA
 
 #define BOOST_TEST_NO_MAIN
-#include <list> // fix missing import in boost::test v1.65.1 (test_case.hpp)
 
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/data/test_case.hpp>
