@@ -81,6 +81,7 @@ default:
      with_coverage: 'true'
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
+     check_skip_long: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -98,6 +99,7 @@ maxset:
      with_coverage: 'true'
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
+     check_skip_long: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -114,6 +116,7 @@ no_rotation:
      myconfig: 'no_rotation'
      with_coverage: 'true'
      with_scafacos: 'true'
+     check_skip_long: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -210,6 +213,7 @@ clang-sanitizer:
      with_cuda_compiler: 'clang'
      with_coverage: 'false'
      with_static_analysis: 'true'
+     check_skip_long: 'true'
      test_timeout: '900'
      with_asan: 'true'
      with_ubsan: 'true'
@@ -234,6 +238,7 @@ cuda11-maxset:
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'true'
+     check_skip_long: 'true'
      test_timeout: '900'
      srcdir: '${CI_PROJECT_DIR}'
      with_scafacos: 'true'
@@ -254,6 +259,7 @@ cuda10-maxset:
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
+     with_coverage_python: 'true'
      test_timeout: '900'
      srcdir: '${CI_PROJECT_DIR}'
      with_scafacos: 'true'
@@ -278,13 +284,13 @@ tutorials-samples-maxset:
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
+     with_coverage_python: 'true'
      with_scafacos: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
      make_check_samples: 'true'
      make_check_benchmarks: 'false'
-     with_coverage_python: 'true'
      test_timeout: '1200'
   script:
     - bash maintainer/CI/build_cmake.sh
