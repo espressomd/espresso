@@ -243,54 +243,6 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   return forces;
 }
 
-int IBM_Triel_ResetParams(const int bond_type, const double k1,
-                          const double l0) {
-
-  // Check if bond exists and is of correct type
-  if (bond_type >= bonded_ia_params.size()) {
-    printf("bond does not exist while reading triel checkpoint\n");
-    return ES_ERROR;
-  }
-  if (bonded_ia_params[bond_type].type != BONDED_IA_IBM_TRIEL) {
-    printf("interaction type does not match while reading triel checkpoint!\n");
-    return ES_ERROR;
-  }
-
-  // Check if k1 is correct
-  if (fabs(bonded_ia_params[bond_type].p.ibm_triel.k1 - k1) > 1e-9) {
-    printf("k1 does not match while reading triel checkpoint!\n");
-    return ES_ERROR;
-  }
-
-  // Check if l0 is correct
-  if (fabs(bonded_ia_params[bond_type].p.ibm_triel.l0 - l0) > 1e-9) {
-    printf("l0 does not match while reading triel checkpoint!\n");
-    return ES_ERROR;
-  }
-
-  // Compute cache values a1, a2, b1, b2
-  const double area0 = bonded_ia_params[bond_type].p.ibm_triel.area0;
-  const double lp0 = bonded_ia_params[bond_type].p.ibm_triel.lp0;
-  const double sinPhi0 = bonded_ia_params[bond_type].p.ibm_triel.sinPhi0;
-  const double cosPhi0 = bonded_ia_params[bond_type].p.ibm_triel.cosPhi0;
-  const double area2 = 2.0 * area0;
-  const double a1 = -(l0 * sinPhi0) / area2;
-  const double a2 = -a1;
-  const double b1 = (l0 * cosPhi0 - lp0) / area2;
-  const double b2 = -(l0 * cosPhi0) / area2;
-
-  // Hand these values over to parameter structure
-  bonded_ia_params[bond_type].p.ibm_triel.a1 = a1;
-  bonded_ia_params[bond_type].p.ibm_triel.a2 = a2;
-  bonded_ia_params[bond_type].p.ibm_triel.b1 = b1;
-  bonded_ia_params[bond_type].p.ibm_triel.b2 = b2;
-
-  // Communicate this to whoever is interested
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
-}
-
 int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
                         const int ind3, const double maxDist,
                         const tElasticLaw elasticLaw, const double k1,
