@@ -136,9 +136,7 @@ class TestLB:
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
         self.assertAlmostEqual(
-            self.lbf[0,
-                     0,
-                     0].density,
+            self.lbf[0, 0, 0].density,
             self.params['dens'],
             delta=1e-4)
 
@@ -412,7 +410,7 @@ class TestLBWalberla(TestLB, ut.TestCase):
         self.lb_class = espressomd.lb.LBFluidWalberla
 
     def test_stress_tensor(self):
-        print("stress tensor not implemented for walberla. skipping test.")
+        print("stress tensor not implemented for Walberla. skipping test.")
 
     def test_parameter_change_without_seed(self):
         print("Thermalization not implemented for Walberla. skipping test")
@@ -421,7 +419,7 @@ class TestLBWalberla(TestLB, ut.TestCase):
         print("Not supported by Walberla ")
 
     def test_properties(self):
-        print("LB Walberla ont thermliized.")
+        print("LB Walberla not thermalized.")
 
     def test_pressure_tensor_observable(self):
         print("Not supported by Walberla")

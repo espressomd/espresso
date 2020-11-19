@@ -354,7 +354,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
   // check that momentum doesn't drift when no force is applied again
   lb->set_external_force(Vector3d{});
   // The expected moment is just that applied during a single time step
-  // No f/2 correciotn, since no force was applied in last time step
+  // No f/2 correction, since no force was applied in last time step
   mom_exp =
       1 * f * grid_dimensions[0] * grid_dimensions[1] * grid_dimensions[2] +
       1 * f2;
