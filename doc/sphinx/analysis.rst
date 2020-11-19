@@ -739,8 +739,8 @@ In order to calculate the running mean and variance of an observable,
         obs=position_observable, delta_N=2)
     system.auto_update_accumulators.add(accumulator)
     system.integrator.run(10)
-    print(accumulator.get_mean())
-    print(accumulator.get_variance())
+    print(accumulator.mean())
+    print(accumulator.variance())
 
 In the example above the automatic update of the accumulator is used. However,
 it's also possible to manually update the accumulator by calling
