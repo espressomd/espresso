@@ -50,17 +50,17 @@ using Utils::Vector3i;
 using walberla::LbWalberlaD3Q19FluctuatingMRT;
 using walberla::LbWalberlaD3Q19MRT;
 
-double viscosity = 0.4;
-Vector3d box_dimensions = {6, 6, 9};
-double agrid = 0.5;
-Vector3i grid_dimensions{int(box_dimensions[0] / agrid),
-                         int(box_dimensions[1] / agrid),
-                         int(box_dimensions[2] / agrid)};
-double tau = 0.34;
-double density = 2.5;
+constexpr double viscosity = 0.4;
+constexpr Vector3d box_dimensions = {6, 6, 9};
+constexpr double agrid = 0.5;
+constexpr Vector3i grid_dimensions{int(box_dimensions[0] / agrid),
+                                   int(box_dimensions[1] / agrid),
+                                   int(box_dimensions[2] / agrid)};
+constexpr double tau = 0.34;
+constexpr double density = 2.5;
 Vector3i mpi_shape;
-unsigned int seed = 3;
-double kT = 0.0014;
+constexpr unsigned int seed = 3;
+constexpr double kT = 0.0014;
 
 namespace bdata = boost::unit_test::data;
 
