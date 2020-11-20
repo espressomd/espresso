@@ -5,10 +5,13 @@ on:
   pull_request:
 
 jobs:
-  tests:
+  github_mactest:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@main
+    - uses: actions/setup-python@v2
+      with:
+          python-version: '3.7'
     - run: |
        brew install boost boost-mpi fftw
        brew install hdf5-mpi
