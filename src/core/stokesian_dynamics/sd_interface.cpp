@@ -17,15 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "sd_interface.hpp"
+#include "config.hpp"
 
 #ifdef STOKESIAN_DYNAMICS
-#include "stokesian_dynamics/sd_cpu.hpp"
+#include "sd_interface.hpp"
 
-#include "thermostat.hpp"
+#include "stokesian_dynamics/sd_cpu.hpp"
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "errorhandling.hpp"
+#include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -109,38 +111,45 @@ void sd_update_locally(ParticleRange const &parts) {
   }
 }
 
-void set_sd_viscosity(double eta) {
+int set_sd_viscosity(double eta) {
   if (eta < 0.0) {
-    throw std::runtime_error("Viscosity has an invalid value: " +
-                             std::to_string(eta));
+    runtimeErrorMsg() << "Viscosity has an invalid value: " +
+                             std::to_string(eta);
+    return ES_ERROR;
   }
 
   sd_viscosity = eta;
+  return ES_OK;
 }
 
 double get_sd_viscosity() { return sd_viscosity; }
 
-void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
+int set_sd_radius_dict(std::unordered_map<int, double> const &x) {
   /* Check that radii are positive */
   for (auto const &kv : x) {
     if (kv.second < 0.) {
-      throw std::runtime_error(
-          "Particle radii need to be positive, radius for type " +
-          std::to_string(kv.first) + " is " + std::to_string(kv.second));
+      runtimeErrorMsg() << "Particle radius for type " +
+                               std::to_string(kv.first) +
+                               " has an invalid value: " +
+                               std::to_string(kv.second);
+      return ES_ERROR;
     }
   }
 
   radius_dict = x;
+  return ES_OK;
 }
 
 std::unordered_map<int, double> get_sd_radius_dict() { return radius_dict; }
 
-void set_sd_kT(double kT) {
+int set_sd_kT(double kT) {
   if (kT < 0.0) {
-    throw std::runtime_error("kT has an invalid value: " + std::to_string(kT));
+    runtimeErrorMsg() << "kT has an invalid value: " + std::to_string(kT);
+    return ES_ERROR;
   }
 
   sd_kT = kT;
+  return ES_OK;
 }
 
 double get_sd_kT() { return sd_kT; }
@@ -159,7 +168,7 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
                    [](auto const &p) { return SD_particle_data(p); });
   Utils::Mpi::gather_buffer(parts_buffer, comm, 0);
 
-  /** Buffer that holds local particle data, and all particles on the master
+  /* Buffer that holds local particle data, and all particles on the master
    * node used for sending particle data to master node. */
   if (comm.rank() == 0) {
     std::size_t n_part = parts_buffer.size();
