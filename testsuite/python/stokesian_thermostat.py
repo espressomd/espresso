@@ -59,12 +59,6 @@ class StokesianThermostat(ut.TestCase):
             system.thermostat.set_stokesian(kT=-1)
         with self.assertRaises(ValueError):
             system.thermostat.set_stokesian(kT=1, seed=-1)
-        with self.assertRaises(Exception):
-            self.system.integrator.set_stokesian_dynamics(
-                viscosity=viscosity, radii={0: -10})
-        with self.assertRaises(Exception):
-            self.system.integrator.set_stokesian_dynamics(
-                viscosity=-10, radii={0: radius})
 
         system.thermostat.set_stokesian(kT=kT, seed=41)
         self.system.integrator.set_stokesian_dynamics(
@@ -105,6 +99,29 @@ class StokesianThermostat(ut.TestCase):
         system.integrator.run(1)
         force4 = np.copy(p.pos) / pos2force
         self.assertTrue(np.all(np.not_equal(force3, force4)))
+
+    def test_integrator_exceptions(self):
+        # invalid parameters should throw exceptions
+        with self.assertRaises(Exception):
+            self.system.integrator.set_stokesian_dynamics(
+                viscosity=1.0, radii={0: -1})
+        with self.assertRaises(Exception):
+            self.system.integrator.set_stokesian_dynamics(
+                viscosity=-1, radii={0: 1.0})
+
+        # invalid PBC should throw exceptions
+        self.system.integrator.set_vv()
+        self.system.periodicity = [0, 0, 1]
+        with self.assertRaises(Exception):
+            self.system.integrator.set_stokesian_dynamics(
+                viscosity=1.0, radii={0: 1.0})
+
+        self.system.periodicity = [0, 0, 0]
+        self.system.integrator.set_stokesian_dynamics(
+            viscosity=1.0, radii={0: 1.0})
+
+        with self.assertRaises(Exception):
+            self.system.periodicity = [0, 1, 0]
 
 
 if __name__ == "__main__":
