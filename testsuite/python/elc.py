@@ -35,8 +35,8 @@ class ElcTest(ut.TestCase):
     def test_finite_potential_drop(self):
         s = self.system
 
-        p1 = s.part.add(pos=GAP + [0, 0, 1], q=+1)
-        p2 = s.part.add(pos=GAP + [0, 0, 9], q=-1)
+        p1 = s.part.add(pos=[0, 0, 1], q=+1)
+        p2 = s.part.add(pos=[0, 0, 9], q=-1)
 
         s.actors.add(
             electrostatics.P3M(
