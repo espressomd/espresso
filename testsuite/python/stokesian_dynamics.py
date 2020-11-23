@@ -29,30 +29,6 @@ s = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 
 @utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
-class StokesianDynamicsSetupTest(ut.TestCase):
-    system = s
-
-    def test_pbc_checks(self):
-        self.system.box_l = [10] * 3
-
-        self.system.time_step = 1.0
-        self.system.cell_system.skin = 0.4
-        self.system.integrator.set_nvt()
-
-        self.system.periodicity = [0, 0, 1]
-        with self.assertRaises(Exception):
-            self.system.integrator.set_stokesian_dynamics(
-                viscosity=1.0, radii={0: 1.0})
-
-        self.system.periodicity = [0, 0, 0]
-        self.system.integrator.set_stokesian_dynamics(
-            viscosity=1.0, radii={0: 1.0})
-
-        with self.assertRaises(Exception):
-            self.system.periodicity = [0, 1, 0]
-
-
-@utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
 class StokesianDynamicsTest(ut.TestCase):
     system = s
 
@@ -70,8 +46,7 @@ class StokesianDynamicsTest(ut.TestCase):
         self.system.constraints.clear()
         self.system.part.clear()
 
-    def falling_spheres(self, time_step, l_factor, t_factor,
-                        sd_method='fts', sd_short=False):
+    def falling_spheres(self, time_step, l_factor, t_factor, sd_method='fts'):
         self.system.time_step = time_step
         self.system.part.add(pos=[-5 * l_factor, 0, 0], rotation=[1, 1, 1])
         self.system.part.add(pos=[0 * l_factor, 0, 0], rotation=[1, 1, 1])
@@ -91,10 +66,7 @@ class StokesianDynamicsTest(ut.TestCase):
         self.system.auto_update_accumulators.add(acc)
         acc.update()
 
-        if sd_short:
-            y_min = -80
-            intsteps = 1300
-        elif sd_method == 'fts':
+        if sd_method == 'fts':
             y_min = -555
             intsteps = 8000
         else:

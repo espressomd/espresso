@@ -127,6 +127,18 @@ class NPTThermostat(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(virtual.v), [1, 0, 0])
         self.assertTrue(np.all(np.not_equal(np.copy(physical.v), [1, 0, 0])))
 
+    def test_integrator_exceptions(self):
+        # invalid parameters should throw exceptions
+        with self.assertRaises(Exception):
+            self.system.integrator.set_isotropic_npt(ext_pressure=-1, piston=1)
+        with self.assertRaises(Exception):
+            self.system.integrator.set_isotropic_npt(ext_pressure=1, piston=-1)
+        with self.assertRaises(Exception):
+            self.system.integrator.set_isotropic_npt(ext_pressure=1, piston=0)
+        with self.assertRaises(Exception):
+            self.system.integrator.set_isotropic_npt(ext_pressure=1, piston=1,
+                                                     direction=[0, 0, 0])
+
 
 if __name__ == "__main__":
     ut.main()

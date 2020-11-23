@@ -769,6 +769,9 @@ cdef class Thermostat:
                         raise ValueError("seed must be a positive integer")
                     stokesian_set_rng_seed(seed)
 
+            utils.handle_errors(
+                "Encountered error while setting SD thermostat")
+
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_SD)
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)

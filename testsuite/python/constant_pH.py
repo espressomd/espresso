@@ -48,8 +48,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = reaction_ensemble.ConstantpHEnsemble(
-        temperature=1.0,
-        exclusion_radius=1, seed=44)
+        temperature=1.0, exclusion_radius=1, seed=44)
 
     @classmethod
     def setUpClass(cls):
@@ -60,8 +59,10 @@ class ReactionEnsembleTest(ut.TestCase):
                                 cls.system.box_l, type=cls.type_H)
 
         cls.RE.add_reaction(
-            gamma=cls.Ka, reactant_types=[cls.type_HA],
-            reactant_coefficients=[1], product_types=[cls.type_A, cls.type_H],
+            gamma=cls.Ka,
+            reactant_types=[cls.type_HA],
+            reactant_coefficients=[1],
+            product_types=[cls.type_A, cls.type_H],
             product_coefficients=[1, 1],
             default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
         cls.RE.constant_pH = cls.pH
@@ -100,21 +101,20 @@ class ReactionEnsembleTest(ut.TestCase):
         pH = ReactionEnsembleTest.pH
         pKa = ReactionEnsembleTest.pKa
         target_alpha = ReactionEnsembleTest.ideal_alpha(pH)
-        rel_error_alpha = abs(
-            average_alpha - target_alpha) / target_alpha
+        rel_error_alpha = abs(average_alpha - target_alpha) / target_alpha
         # relative error
         self.assertLess(
             rel_error_alpha,
             0.015,
             msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
-            + "  pH: " + str(pH)
-            + "  pKa: " + str(pKa)
-            + "  average_NH: " + str(average_NH)
-            + "  average_NA: " + str(average_NA)
-            + "  average_NHA:" + str(average_NHA)
-            + "  average alpha: " + str(average_alpha)
-            + "  target_alpha: " + str(target_alpha)
-            + "  rel_error: " + str(rel_error_alpha)
+            + f"  pH: {pH:.2f}"
+            + f"  pKa: {pKa:.2f}"
+            + f"  average NH: {average_NH:.1f}"
+            + f"  average NA: {average_NA:.1f}"
+            + f"  average NHA: {average_NHA:.1f}"
+            + f"  average alpha: {average_alpha:.3f}"
+            + f"  target alpha: {target_alpha:.3f}"
+            + f"  rel_error: {rel_error_alpha * 100:.1f}%"
         )
 
 

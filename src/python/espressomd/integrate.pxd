@@ -44,10 +44,10 @@ IF NPT:
 
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:
-        void set_sd_viscosity(double eta)
+        int set_sd_viscosity(double eta)
         double get_sd_viscosity()
 
-        void set_sd_radius_dict(const unordered_map[int, double] & radius_dict)
+        int set_sd_radius_dict(const unordered_map[int, double] & radius_dict)
         unordered_map[int, double] get_sd_radius_dict()
 
         void set_sd_flags(int flg)

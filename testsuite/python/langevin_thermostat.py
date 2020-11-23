@@ -40,7 +40,7 @@ class LangevinThermostat(ut.TestCase):
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
-    def check_rng(self, per_particle_gamma=False):
+    def check_rng(self, per_particle_gamma=False, per_particle_temp=False):
         """Test for RNG consistency."""
 
         kT = 1.1
@@ -51,15 +51,17 @@ class LangevinThermostat(ut.TestCase):
             p = system.part.add(pos=[0, 0, 0])
             if espressomd.has_features("ROTATION"):
                 p.rotation = [1, 1, 1]
-            if per_particle_gamma:
+            if per_particle_gamma or per_particle_temp:
                 assert espressomd.has_features("LANGEVIN_PER_PARTICLE")
-                p.temp = 2 * kT
+            if per_particle_gamma:
                 if espressomd.has_features("PARTICLE_ANISOTROPY"):
                     p.gamma = 3 * [gamma / 2]
                 else:
                     p.gamma = gamma / 2
                 if espressomd.has_features("ROTATION"):
                     p.gamma_rot = p.gamma * 1.5
+            if per_particle_temp:
+                p.temp = 2 * kT
             return p
 
         system = self.system
@@ -141,12 +143,9 @@ class LangevinThermostat(ut.TestCase):
     @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
     def test_01__rng_per_particle(self):
         """Test for RNG consistency."""
-        self.check_rng(True)
-
-    @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
-    def test_01__rng_per_particle(self):
-        """Test for RNG consistency."""
-        self.check_rng(True)
+        self.check_rng(False, True)
+        self.check_rng(True, False)
+        self.check_rng(True, True)
 
     def test_02__friction_trans(self):
         """Tests the translational friction-only part of the thermostat."""
