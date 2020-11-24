@@ -102,13 +102,11 @@ public:
   // Global parameters
   virtual void set_viscosity(double viscosity) = 0;
   virtual double get_viscosity() const = 0;
-  virtual double get_tau() const = 0;
   virtual double get_kT() const = 0;
 
   // Grid, domain, halo
   virtual int n_ghost_layers() const = 0;
   virtual Utils::Vector3i get_grid_dimensions() const = 0;
-  virtual double get_grid_spacing() const = 0;
   virtual std::pair<Utils::Vector3d, Utils::Vector3d>
   get_local_domain() const = 0;
   virtual bool node_in_local_domain(const Utils::Vector3i &node) const = 0;

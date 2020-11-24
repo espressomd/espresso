@@ -110,8 +110,9 @@ BOOST_TEST_DONT_PRINT_LOG_VALUE(LbGeneratorVector::value_type)
 BOOST_DATA_TEST_CASE(basic_params, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(mpi_shape);
   BOOST_CHECK(lb->get_grid_dimensions() == grid_dimensions);
-  BOOST_CHECK(lb->get_grid_spacing() == agrid);
-  BOOST_CHECK(lb->get_tau() == tau);
+  auto lb_params = LbWalberlaParams(agrid, tau);
+  BOOST_CHECK(lb_params.get_agrid() == agrid);
+  BOOST_CHECK(lb_params.get_tau() == tau);
 
   BOOST_CHECK_CLOSE(lb->get_viscosity(), viscosity, 1E-11);
   double new_viscosity = 2.0;

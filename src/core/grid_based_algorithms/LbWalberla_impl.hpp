@@ -164,12 +164,7 @@ protected:
   std::map<std::string, std::shared_ptr<vtk::VTKOutput>> m_vtk_manual;
 
   // Member variables
-  // For unit conversions
-  double m_agrid;
-  double m_tau;
-
   double m_kT;
-
   Utils::Vector3i m_grid_dimensions;
   int m_n_ghost_layers;
 
@@ -241,8 +236,6 @@ public:
   LbWalberla(double viscosity, double agrid, double tau,
              const Utils::Vector3d &box_dimensions,
              const Utils::Vector3i &node_grid, int n_ghost_layers) {
-    m_agrid = agrid;
-    m_tau = tau;
     m_n_ghost_layers = n_ghost_layers;
     m_kT = 0;
 
@@ -662,7 +655,6 @@ public:
   //    return m_lattice_model->collisionModel().viscosity();
   //  };
 
-  double get_tau() const override { return m_tau; };
   double get_kT() const override { return m_kT; };
 
   // Grid, domain, halo
@@ -670,7 +662,6 @@ public:
   Utils::Vector3i get_grid_dimensions() const override {
     return m_grid_dimensions;
   }
-  double get_grid_spacing() const override { return m_agrid; };
   std::pair<Utils::Vector3d, Utils::Vector3d>
   get_local_domain() const override {
     // We only have one block per mpi rank

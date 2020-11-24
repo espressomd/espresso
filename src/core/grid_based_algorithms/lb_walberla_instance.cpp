@@ -19,6 +19,8 @@
 #include "config.hpp"
 
 #ifdef LB_WALBERLA
+#include "lb_walberla_instance.hpp"
+
 #include "LbWalberlaBase.hpp"
 #include "LbWalberlaD3Q19FluctuatingMRT.hpp"
 #include "LbWalberlaD3Q19MRT.hpp"
@@ -43,7 +45,8 @@ void walberla_mpi_init() {
 
 namespace {
 LbWalberlaBase *lb_walberla_instance = nullptr;
-}
+LbWalberlaParams *lb_walberla_params_instance = nullptr;
+} // namespace
 
 LbWalberlaBase *lb_walberla() {
   if (!lb_walberla_instance) {
@@ -51,6 +54,14 @@ LbWalberlaBase *lb_walberla() {
         "Attempted access to uninitialized LbWalberla instance.");
   }
   return lb_walberla_instance;
+}
+
+LbWalberlaParams *lb_walberla_params() {
+  if (!lb_walberla_params_instance) {
+    throw std::runtime_error(
+        "Attempted access to uninitialized LbWalberlaParams instance.");
+  }
+  return lb_walberla_params_instance;
 }
 
 void init_lb_walberla(double viscosity, double density, double agrid,
@@ -71,9 +82,11 @@ void init_lb_walberla(double viscosity, double density, double agrid,
                                                   tau, box_dimensions,
                                                   node_grid, 1, kT, seed});
     }
+    lb_walberla_params_instance = new LbWalberlaParams{agrid, tau};
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
     lb_walberla_instance = nullptr;
+    lb_walberla_params_instance = nullptr;
   }
 }
 REGISTER_CALLBACK(init_lb_walberla)

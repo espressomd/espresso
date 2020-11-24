@@ -24,11 +24,24 @@
 #ifdef LB_WALBERLA
 #include "LbWalberlaBase.hpp"
 
+struct LbWalberlaParams {
+  LbWalberlaParams(double agrid, double tau) : m_agrid(agrid), m_tau(tau) {}
+  double get_agrid() const { return m_agrid; };
+  double get_tau() const { return m_tau; };
+
+private:
+  double m_agrid;
+  double m_tau;
+};
+
 /** @brief Initialize Walberla's MPI manager */
 void walberla_mpi_init();
 
-/** @brief Access the per-MPI-node LbWalberla isntance */
+/** @brief Access the per-MPI-node LbWalberla instance */
 LbWalberlaBase *lb_walberla();
+
+/** @brief Access the Walberla parameters */
+LbWalberlaParams *lb_walberla_params();
 
 /** @brief Create the LbWalberla instance and sets the lattice switch to
  *  WALBERLA

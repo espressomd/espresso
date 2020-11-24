@@ -167,7 +167,7 @@ double lb_lbfluid_get_bulk_viscosity() {
 double lb_lbfluid_get_agrid() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    return lb_walberla()->get_grid_spacing();
+    return lb_walberla_params()->get_agrid();
 #endif
   }
   throw NoLBActive();
@@ -211,7 +211,7 @@ void check_tau_time_step_consistency(double tau, double time_s) {
 double lb_lbfluid_get_tau() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return lb_walberla()->get_tau();
+    return lb_walberla_params()->get_tau();
   }
 #endif
   throw NoLBActive();
