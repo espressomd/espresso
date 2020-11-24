@@ -341,7 +341,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
       dphi[j] = p.f.torque[j] * dt / gamma;
 #else
       dphi[j] = p.f.torque[j] * dt / gamma[j];
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
     }
   }
   dphi = mask(p.p.rotation, dphi);
@@ -383,7 +383,7 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
       omega[j] = p.f.torque[j] / gamma;
 #else
       omega[j] = p.f.torque[j] / gamma[j];
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
     }
   }
   return mask(p.p.rotation, omega);
@@ -451,7 +451,7 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
       if (sigma_pos[j] > 0.0) {
         dphi[j] = noise[j] * sigma_pos[j] * sqrt(dt);
       }
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
     }
   }
   dphi = mask(p.p.rotation, dphi);

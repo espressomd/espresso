@@ -35,17 +35,12 @@
 #include <cstdio>
 #include <utility>
 
-/** Volume conservation.
- *  Calculate volumes, volume force and add it to each virtual particle.
- *  This function is called from @ref integrate.
- */
+/** Calculate volumes, volume force and add it to each virtual particle. */
 void ImmersedBoundaries::volume_conservation(CellStructure &cs) {
   if (VolumeInitDone && !BoundariesFound) {
     return;
   }
-  // Calculate volumes
   calc_volumes(cs);
-
   calc_volume_force(cs);
 }
 

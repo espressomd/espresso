@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 import unittest as ut
+
 import numpy as np
 import pickle
 
@@ -26,6 +28,11 @@ import espressomd.accumulators
 
 
 class CorrelatorTest(ut.TestCase):
+
+    """
+    Test class for the Correlator accumulator.
+
+    """
     # Handle for espresso system
     system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 0.4
@@ -86,6 +93,7 @@ class CorrelatorTest(ut.TestCase):
         s.auto_update_accumulators.add(acc)
         s.integrator.run(1000)
 
+        # here don't call acc.finalize()
         corr = acc.result()
         self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
@@ -107,6 +115,7 @@ class CorrelatorTest(ut.TestCase):
         s.auto_update_accumulators.add(acc)
         s.integrator.run(1000)
 
+        acc.finalize()
         corr = acc.result()
         self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
@@ -129,6 +138,7 @@ class CorrelatorTest(ut.TestCase):
         s.auto_update_accumulators.add(acc)
         s.integrator.run(1000)
 
+        acc.finalize()
         corr = acc.result()
         self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
@@ -150,6 +160,7 @@ class CorrelatorTest(ut.TestCase):
         s.auto_update_accumulators.add(acc)
         s.integrator.run(1000)
 
+        acc.finalize()
         corr = acc.result()
         self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
@@ -172,6 +183,7 @@ class CorrelatorTest(ut.TestCase):
         s.auto_update_accumulators.add(acc)
         s.integrator.run(1000)
 
+        acc.finalize()
         corr = acc.result()
         self.check_pickling(acc)
         tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])

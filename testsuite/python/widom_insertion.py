@@ -97,14 +97,13 @@ class WidomInsertionTest(ut.TestCase):
         mu_ex = self.Widom.measure_excess_chemical_potential(0)
         deviation_mu_ex = abs(mu_ex[0] - self.target_mu_ex)
 
-        # error
         self.assertLess(
-            deviation_mu_ex - 1e-3,
-            0.0,
-            msg="\nExcess chemical potential for single LJ-particle computed via Widom insertion gives a wrong value.\n"
-            + "  average mu_ex: " + str(mu_ex[0])
-            + "   mu_ex_std_err: " + str(mu_ex[1])
-            + "  target_mu_ex: " + str(self.target_mu_ex)
+            deviation_mu_ex,
+            1e-3,
+            msg="\nExcess chemical potential for single LJ-particle computed via Widom insertion is wrong.\n"
+            + f"  average mu_ex: {mu_ex[0]:.4f}"
+            + f"   mu_ex_std_err: {mu_ex[1]:.5f}"
+            + f"  target_mu_ex: {self.target_mu_ex:.4f}"
         )
 
 

@@ -402,6 +402,88 @@ The energy and force tables must be sampled from :math:`0` to :math:`2\pi`.
 For details of the interpolation, see :ref:`Tabulated interaction`.
 
 
+.. _Immersed Boundary Method interactions:
+
+Immersed Boundary Method interactions
+-------------------------------------
+
+Elastic forces for the Immersed Boundary Method (IBM). With the IBM, soft
+particles are modelled as a triangulated surface. Each vertex has an
+associated particle, and neighboring particles have bonded interactions.
+When the surface is deformed by external forces, elastic forces restore
+the original geometry :cite:`kruger12a`.
+
+.. _IBM local forces:
+
+IBM local forces
+~~~~~~~~~~~~~~~~
+
+.. _IBM Shear:
+
+Shear
+^^^^^
+
+:class:`espressomd.interactions.IBM_Triel`
+
+Compute elastic shear forces. To setup an interaction, use::
+
+    tri1 = IBM_Triel(ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist=2.4)
+
+where ``ind1``, ``ind2`` and ``ind3`` represent the indices of the three
+marker points making up the triangle. The parameter ``maxDist`` specifies
+the maximum stretch above which the bond is considered broken. The parameter
+``elasticLaw`` can be either ``"NeoHookean"`` or ``"Skalak"``.
+The parameters ``k1`` and ``k2`` are the elastic moduli.
+
+.. _IBM Bending:
+
+Bending
+^^^^^^^
+
+:class:`espressomd.interactions.IBM_Tribend`
+
+Compute out-of-plane bending forces. To setup an interaction, use::
+
+    tribend = IBM_Tribend(ind1=0, ind2=1, ind3=2, ind4=3, kb=1, refShape="Initial")
+
+where ``ind1``, ``ind2``, ``ind3`` and ``ind4`` are four marker points
+corresponding to two neighboring triangles. The indices ``ind1`` and ``ind3``
+contain the shared edge. Note that the marker points within a triangle must
+be labelled such that the normal vector
+:math:`\vec{n} = (\vec{r}_\text{ind2} - \vec{r}_\text{ind1}) \times (\vec{r}_\text{ind3} - \vec{r}_\text{ind1})`
+points outward of the elastic object. The reference (zero energy) shape
+can be either ``"Flat"`` or the initial curvature ``"Initial"``.
+The bending modulus is ``kb``.
+
+.. _IBM global forces:
+
+IBM global forces
+~~~~~~~~~~~~~~~~~
+
+.. _IBM Volume conservation:
+
+Volume conservation
+^^^^^^^^^^^^^^^^^^^
+
+:class:`espressomd.interactions.IBM_VolCons`
+
+Compute the volume-conservation force. Without this correction, the volume
+of the soft object tends to shrink over time due to numerical inaccuracies.
+Therefore, this implements an artificial force intended to keep the volume
+constant. If volume conservation is to be used for a given soft particle,
+the interaction must be added to every marker point belonging to that object::
+
+    volCons = IBM_VolCons(softID=1, kappaV=kV)
+
+where ``softID`` identifies the soft particle and ``kappaV`` is a volumetric
+spring constant. Note that this ``volCons`` bond does not have a bond partner.
+It is added to a particle as follows::
+
+    system.part[0].add_bond((volCons,))
+
+The comma is needed to create a tuple containing a single item.
+
+
 .. _Object-in-fluid interactions:
 
 Object-in-fluid interactions
@@ -418,6 +500,8 @@ mechanics of elastic or rigid objects immersed in the LB fluid flow.
 Their mathematical formulations were inspired by
 :cite:`dupin07`. Details on how the bonds can be used for
 modeling objects are described in section :ref:`Object-in-fluid`.
+
+.. _OIF local forces:
 
 OIF local forces
 ~~~~~~~~~~~~~~~~
@@ -470,7 +554,7 @@ area of triangle 012 being 0.2 and relaxed area of triangle 123 being
 0.3.
 
 
-.. _Stretching:
+.. _OIF Stretching:
 
 Stretching
 ^^^^^^^^^^
@@ -502,7 +586,7 @@ if both constants are non-zero.
    :height: 4.00000cm
 
 
-.. _Bending:
+.. _OIF Bending:
 
 Bending
 ^^^^^^^
@@ -586,7 +670,7 @@ defined by a vector product :math:`01\times02` must point to the inside of
 the immersed object.
 
 
-.. _Global area conservation:
+.. _OIF Global area conservation:
 
 Global area conservation
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -600,7 +684,7 @@ where :math:`S^c` denotes the current surface of the immersed object, :math:`S^c
 the relaxed state, :math:`S_{ABC}` is the surface of the triangle, :math:`T` is the centroid of the triangle, and :math:`t_a, t_b, t_c` are the lengths of segments :math:`AT, BT, CT`, respectively.
 
 
-.. _Volume conservation:
+.. _OIF Volume conservation:
 
 Volume conservation
 ^^^^^^^^^^^^^^^^^^^
@@ -625,4 +709,3 @@ cross the cell. The force :math:`F_v(ABC)` is equally distributed to all three v
 
 .. figure:: figures/oif-volcons.png
    :height: 4.00000cm
-

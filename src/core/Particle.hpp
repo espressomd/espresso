@@ -144,7 +144,7 @@ struct ParticleProperties {
   static constexpr bool is_virtual = false;
 #endif /* VIRTUAL_SITES */
 
-#ifdef LANGEVIN_PER_PARTICLE
+#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
   double T = -1.;
 #ifndef PARTICLE_ANISOTROPY
   double gamma = -1.;
@@ -159,7 +159,7 @@ struct ParticleProperties {
   Utils::Vector3d gamma_rot = {-1., -1., -1.};
 #endif // ROTATIONAL_INERTIA
 #endif // ROTATION
-#endif // LANGEVIN_PER_PARTICLE
+#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space.
@@ -218,13 +218,13 @@ struct ParticleProperties {
 #endif
 #endif /* VIRTUAL_SITES */
 
-#ifdef LANGEVIN_PER_PARTICLE
+#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
     ar &T;
     ar &gamma;
 #ifdef ROTATION
     ar &gamma_rot;
 #endif
-#endif // LANGEVIN_PER_PARTICLE
+#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
     ar &ext_flag;
     ar &ext_force;
