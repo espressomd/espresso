@@ -790,51 +790,46 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index,
 }
 
 template <typename T>
-inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
-                                        const std::array<T, 19> &modes,
-                                        const LB_Parameters &lb_parameters) {
-  T density, momentum_density[3], stress_eq[6];
+inline std::array<T, 19>
+lb_relax_modes(const std::array<T, 19> &modes,
+               const Utils::Vector<T, 3> &force_density,
+               const LB_Parameters &parameters) {
+  using Utils::sqr;
+  using Utils::Vector;
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
    * equilibrium value */
-  density = modes[0] + lb_parameters.density;
-
-  momentum_density[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
-  momentum_density[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
-  momentum_density[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
-
-  using Utils::sqr;
-  auto const momentum_density2 = sqr(momentum_density[0]) +
-                                 sqr(momentum_density[1]) +
-                                 sqr(momentum_density[2]);
+  auto const density = modes[0] + parameters.density;
+  auto const momentum_density =
+      Vector<T, 3>{modes[1], modes[2], modes[3]} + T{0.5} * force_density;
+  auto const momentum_density2 = momentum_density.norm2();
 
   /* equilibrium part of the stress modes */
-  stress_eq[0] = momentum_density2 / density;
-  stress_eq[1] =
-      (sqr(momentum_density[0]) - sqr(momentum_density[1])) / density;
-  stress_eq[2] = (momentum_density2 - 3.0 * sqr(momentum_density[2])) / density;
-  stress_eq[3] = momentum_density[0] * momentum_density[1] / density;
-  stress_eq[4] = momentum_density[0] * momentum_density[2] / density;
-  stress_eq[5] = momentum_density[1] * momentum_density[2] / density;
+  auto const stress_eq =
+      Vector<T, 6>{momentum_density2,
+                   (sqr(momentum_density[0]) - sqr(momentum_density[1])),
+                   (momentum_density2 - 3.0 * sqr(momentum_density[2])),
+                   momentum_density[0] * momentum_density[1],
+                   momentum_density[0] * momentum_density[2],
+                   momentum_density[1] * momentum_density[2]} /
+      density;
 
-  return {
-      {modes[0], modes[1], modes[2], modes[3],
-       /* relax the stress modes */
-       stress_eq[0] + lb_parameters.gamma_bulk * (modes[4] - stress_eq[0]),
-       stress_eq[1] + lb_parameters.gamma_shear * (modes[5] - stress_eq[1]),
-       stress_eq[2] + lb_parameters.gamma_shear * (modes[6] - stress_eq[2]),
-       stress_eq[3] + lb_parameters.gamma_shear * (modes[7] - stress_eq[3]),
-       stress_eq[4] + lb_parameters.gamma_shear * (modes[8] - stress_eq[4]),
-       stress_eq[5] + lb_parameters.gamma_shear * (modes[9] - stress_eq[5]),
-       /* relax the ghost modes (project them out) */
-       /* ghost modes have no equilibrium part due to orthogonality */
-       lb_parameters.gamma_odd * modes[10], lb_parameters.gamma_odd * modes[11],
-       lb_parameters.gamma_odd * modes[12], lb_parameters.gamma_odd * modes[13],
-       lb_parameters.gamma_odd * modes[14], lb_parameters.gamma_odd * modes[15],
-       lb_parameters.gamma_even * modes[16],
-       lb_parameters.gamma_even * modes[17],
-       lb_parameters.gamma_even * modes[18]}};
+  return {{modes[0], modes[1], modes[2], modes[3],
+           /* relax the stress modes */
+           stress_eq[0] + parameters.gamma_bulk * (modes[4] - stress_eq[0]),
+           stress_eq[1] + parameters.gamma_shear * (modes[5] - stress_eq[1]),
+           stress_eq[2] + parameters.gamma_shear * (modes[6] - stress_eq[2]),
+           stress_eq[3] + parameters.gamma_shear * (modes[7] - stress_eq[3]),
+           stress_eq[4] + parameters.gamma_shear * (modes[8] - stress_eq[4]),
+           stress_eq[5] + parameters.gamma_shear * (modes[9] - stress_eq[5]),
+           /* relax the ghost modes (project them out) */
+           /* ghost modes have no equilibrium part due to orthogonality */
+           parameters.gamma_odd * modes[10], parameters.gamma_odd * modes[11],
+           parameters.gamma_odd * modes[12], parameters.gamma_odd * modes[13],
+           parameters.gamma_odd * modes[14], parameters.gamma_odd * modes[15],
+           parameters.gamma_even * modes[16], parameters.gamma_even * modes[17],
+           parameters.gamma_even * modes[18]}};
 }
 
 template <typename T>
@@ -982,7 +977,8 @@ inline void lb_collide_stream() {
           auto const modes = lb_calc_modes(index, lbfluid);
 
           /* deterministic collisions */
-          auto const relaxed_modes = lb_relax_modes(index, modes, lbpar);
+          auto const relaxed_modes =
+              lb_relax_modes(modes, lbfields[index].force_density, lbpar);
 
           /* fluctuating hydrodynamics */
           auto const thermalized_modes = lb_thermalize_modes(
