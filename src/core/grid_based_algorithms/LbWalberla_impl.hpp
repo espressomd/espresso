@@ -177,27 +177,6 @@ protected:
   /** VTK writers that are executed manually */
   std::map<std::string, std::shared_ptr<vtk::VTKOutput>> m_vtk_manual;
 
-  template <typename VectorField> class force_vector_adaptor_function {
-  public:
-    typedef VectorField basefield_t;
-    typedef typename basefield_t::const_base_iterator basefield_iterator;
-    typedef Vector3<real_t> value_type;
-
-    static const uint_t F_SIZE = 1u;
-
-    value_type operator()(const basefield_t &baseField, cell_idx_t x,
-                          cell_idx_t y, cell_idx_t z,
-                          cell_idx_t /*f*/ = 0) const {
-      return baseField.get(x, y, z);
-    }
-
-    value_type operator()(const basefield_iterator &it) const {
-      auto const *baseFieldPtr =
-          dynamic_cast<const basefield_t *>(it.getField());
-      return baseFieldPtr->get(it);
-    }
-  };
-
   // Member variables
   // For unit conversions
   double m_agrid;
