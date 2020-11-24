@@ -694,82 +694,42 @@ void lb_prepare_communication(HaloCommunicator &halo_comm,
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
 /*@{*/
+template <typename T>
+std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
+  auto normalized_modes = modes;
+  for (int i = 0; i < modes.size(); i++) {
+    normalized_modes[i] /= D3Q19::w_k[i];
+  }
+  return normalized_modes;
+}
+
+/**
+ * @brief Transform modes to populations.
+ */
+template <typename T>
+std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
+  auto ret = Utils::matrix_vector_product<T, 19, e_ki_transposed>(
+      normalize_modes(modes));
+  std::transform(ret.begin(), ret.end(), ::D3Q19::w.begin(), ret.begin(),
+                 std::multiplies<T>());
+  return ret;
+}
+
 Utils::Vector19d lb_get_population_from_density_momentum_density_stress(
     double density, Utils::Vector3d const &momentum_density,
     Utils::Vector6d const &stress) {
-  Utils::Vector19d population{};
-  auto const trace = stress[0] + stress[2] + stress[5];
+  std::array<double, 19> modes{density,
+                               momentum_density[0],
+                               momentum_density[1],
+                               momentum_density[2],
+                               stress[0],
+                               stress[1],
+                               stress[2],
+                               stress[3],
+                               stress[4],
+                               stress[5]};
 
-  /* update the q=0 sublattice */
-  population[0] = 1. / 3. * density - 1. / 2. * trace;
-
-  /* update the q=1 sublattice */
-  auto density_times_coeff = 1. / 18. * density;
-
-  population[1] = density_times_coeff + 1. / 6. * momentum_density[0] +
-                  1. / 4. * stress[0] - 1. / 12. * trace;
-  population[2] = density_times_coeff - 1. / 6. * momentum_density[0] +
-                  1. / 4. * stress[0] - 1. / 12. * trace;
-  population[3] = density_times_coeff + 1. / 6. * momentum_density[1] +
-                  1. / 4. * stress[2] - 1. / 12. * trace;
-  population[4] = density_times_coeff - 1. / 6. * momentum_density[1] +
-                  1. / 4. * stress[2] - 1. / 12. * trace;
-  population[5] = density_times_coeff + 1. / 6. * momentum_density[2] +
-                  1. / 4. * stress[5] - 1. / 12. * trace;
-  population[6] = density_times_coeff - 1. / 6. * momentum_density[2] +
-                  1. / 4. * stress[5] - 1. / 12. * trace;
-
-  /* update the q=2 sublattice */
-  density_times_coeff = 1. / 36. * density;
-
-  auto tmp1 = stress[0] + stress[2];
-  auto tmp2 = 2.0 * stress[1];
-
-  population[7] = density_times_coeff +
-                  1. / 12. * (momentum_density[0] + momentum_density[1]) +
-                  1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[8] = density_times_coeff -
-                  1. / 12. * (momentum_density[0] + momentum_density[1]) +
-                  1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[9] = density_times_coeff +
-                  1. / 12. * (momentum_density[0] - momentum_density[1]) +
-                  1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[10] = density_times_coeff -
-                   1. / 12. * (momentum_density[0] - momentum_density[1]) +
-                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-
-  tmp1 = stress[0] + stress[5];
-  tmp2 = 2.0 * stress[3];
-
-  population[11] = density_times_coeff +
-                   1. / 12. * (momentum_density[0] + momentum_density[2]) +
-                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[12] = density_times_coeff -
-                   1. / 12. * (momentum_density[0] + momentum_density[2]) +
-                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[13] = density_times_coeff +
-                   1. / 12. * (momentum_density[0] - momentum_density[2]) +
-                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[14] = density_times_coeff -
-                   1. / 12. * (momentum_density[0] - momentum_density[2]) +
-                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-
-  tmp1 = stress[2] + stress[5];
-  tmp2 = 2.0 * stress[4];
-
-  population[15] = density_times_coeff +
-                   1. / 12. * (momentum_density[1] + momentum_density[2]) +
-                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[16] = density_times_coeff -
-                   1. / 12. * (momentum_density[1] + momentum_density[2]) +
-                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[17] = density_times_coeff +
-                   1. / 12. * (momentum_density[1] - momentum_density[2]) +
-                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[18] = density_times_coeff -
-                   1. / 12. * (momentum_density[1] - momentum_density[2]) +
-                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  return population;
+  return Utils::Vector19d{lb_calc_n_from_m(modes)};
 }
 
 void lb_set_population_from_density_momentum_density_stress(
@@ -919,24 +879,6 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
            modes[6] + C[0] + C[2] - 2. * C[5], modes[7] + C[1], modes[8] + C[3],
            modes[9] + C[4], modes[10], modes[11], modes[12], modes[13],
            modes[14], modes[15], modes[16], modes[17], modes[18]}};
-}
-
-template <typename T>
-std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
-  auto normalized_modes = modes;
-  for (int i = 0; i < modes.size(); i++) {
-    normalized_modes[i] /= D3Q19::w_k[i];
-  }
-  return normalized_modes;
-}
-
-template <typename T>
-std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
-  auto ret = Utils::matrix_vector_product<T, 19, e_ki_transposed>(
-      normalize_modes(modes));
-  std::transform(ret.begin(), ret.end(), ::D3Q19::w.begin(), ret.begin(),
-                 std::multiplies<T>());
-  return ret;
 }
 
 template <typename T>
