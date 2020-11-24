@@ -793,10 +793,10 @@ lb_relax_modes(const std::array<T, 19> &modes,
 }
 
 template <typename T>
-inline std::array<T, 19>
-lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes,
-                    const LB_Parameters &lb_parameters,
-                    boost::optional<Utils::Counter<uint64_t>> rng_counter) {
+inline std::array<T, 19> lb_thermalize_modes(
+    Lattice::index_t index, const std::array<T, 19> &modes,
+    const LB_Parameters &lb_parameters,
+    boost::optional<Utils::Counter<uint64_t>> const &rng_counter) {
   if (lb_parameters.kT > 0.0) {
     using Utils::uniform;
     using rng_type = r123::Philox4x64;
@@ -841,35 +841,28 @@ lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes,
 }
 
 template <typename T>
-std::array<T, 19> lb_apply_forces(Lattice::index_t index,
-                                  const std::array<T, 19> &modes,
+std::array<T, 19> lb_apply_forces(const std::array<T, 19> &modes,
                                   const LB_Parameters &lb_parameters,
-                                  const std::vector<LB_FluidNode> &lb_fields) {
-  const auto &f = lb_fields[index].force_density;
-
+                                  Utils::Vector<T, 3> const &f) {
   auto const density = modes[0] + lb_parameters.density;
 
   /* hydrodynamic momentum density is redefined when external forces present */
-  auto const u = Utils::Vector3d{modes[1] + 0.5 * f[0], modes[2] + 0.5 * f[1],
-                                 modes[3] + 0.5 * f[2]} /
-                 density;
+  auto const u =
+      Utils::Vector3d{modes[1], modes[2], modes[3]} + T{0.5} * f / density;
 
-  double C[6];
-  C[0] = (1. + lb_parameters.gamma_shear) * u[0] * f[0] +
-         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-             (u * f);
-  C[2] = (1. + lb_parameters.gamma_shear) * u[1] * f[1] +
-         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-             (u * f);
-  C[5] = (1. + lb_parameters.gamma_shear) * u[2] * f[2] +
-         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-             (u * f);
-  C[1] =
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]);
-  C[3] =
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]);
-  C[4] =
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]);
+  auto const C = std::array<T, 6>{
+      (1. + lb_parameters.gamma_shear) * u[0] * f[0] +
+          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+              (u * f),
+      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]),
+      (1. + lb_parameters.gamma_shear) * u[1] * f[1] +
+          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+              (u * f),
+      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]),
+      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]),
+      (1. + lb_parameters.gamma_shear) * u[2] * f[2] +
+          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+              (u * f)};
 
   return {{modes[0],
            /* update momentum modes */
@@ -927,8 +920,8 @@ inline void lb_collide_stream() {
               index, relaxed_modes, lbpar, rng_counter_fluid);
 
           /* apply forces */
-          auto const modes_with_forces =
-              lb_apply_forces(index, thermalized_modes, lbpar, lbfields);
+          auto const modes_with_forces = lb_apply_forces(
+              thermalized_modes, lbpar, lbfields[index].force_density);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
           // Safeguard the node forces so that we can later use them for the IBM
