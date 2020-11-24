@@ -874,17 +874,31 @@ std::array<T, 19> lb_apply_forces(const std::array<T, 19> &modes,
            modes[14], modes[15], modes[16], modes[17], modes[18]}};
 }
 
-template <typename T>
-inline void lb_stream(LB_Fluid &lbfluid, Lattice::index_t index,
-                      const std::array<T, 19> &populations,
-                      const Lattice &lb_lattice) {
-  const std::array<int, 3> period = {
+/**
+ * @brief Relative index for the next node for each lattice velocity.
+ *
+ * @param lattice The lattice parameters.
+ * @param c Lattice velocities.
+ */
+auto lb_next_offsets(const Lattice &lb_lattice,
+                     std::array<std::array<double, 3>, 19> const &c) {
+  const std::array<int, 3> strides = {
       {1, lb_lattice.halo_grid[0],
        lb_lattice.halo_grid[0] * lb_lattice.halo_grid[1]}};
 
+  std::array<ptrdiff_t, 19> offsets;
+  boost::transform(c, offsets.begin(), [&strides](auto const &ci) {
+    return boost::inner_product(strides, ci, 0);
+  });
+
+  return offsets;
+}
+
+template <typename T>
+void lb_stream(LB_Fluid &lbfluid, const std::array<T, 19> &populations,
+               size_t index, std::array<ptrdiff_t, 19> const &offsets) {
   for (int i = 0; i < populations.size(); i++) {
-    auto const next = index + boost::inner_product(period, D3Q19::c[i], 0);
-    lbfluid[i][next] = populations[i];
+    lbfluid[i][index + offsets[i]] = populations[i];
   }
 }
 
@@ -897,6 +911,8 @@ inline void lb_collide_stream() {
     (*lbboundary).reset_force();
   }
 #endif // LB_BOUNDARIES
+
+  auto const next_offsets = lb_next_offsets(lblattice, D3Q19::c);
 
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
@@ -932,10 +948,9 @@ inline void lb_collide_stream() {
           /* reset the force density */
           lbfields[index].force_density = lbpar.ext_force_density;
 
-          auto const populations = lb_calc_n_from_m(modes_with_forces);
-
           /* transform back to populations and streaming */
-          lb_stream(lbfluid_post, index, populations, lblattice);
+          auto const populations = lb_calc_n_from_m(modes_with_forces);
+          lb_stream(lbfluid_post, populations, index, next_offsets);
         }
 
         ++index; /* next node */
