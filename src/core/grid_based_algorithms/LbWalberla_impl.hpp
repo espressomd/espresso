@@ -61,6 +61,7 @@
 
 #include "LbWalberlaBase.hpp"
 
+#include "walberla_utils.hpp"
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
 #include <utils/math/make_lin_space.hpp>
@@ -85,21 +86,6 @@ namespace walberla {
 // Flags marking fluid and boundaries
 const FlagUID Fluid_flag("fluid");
 const FlagUID UBB_flag("velocity bounce back");
-
-// Vector conversion helpers
-inline Utils::Vector3d to_vector3d(const Vector3<real_t> v) {
-  return Utils::Vector3d{double_c(v[0]), double_c(v[1]), double_c(v[2])};
-}
-inline Vector3<real_t> to_vector3(const Utils::Vector3d v) {
-  return Vector3<real_t>{real_c(v[0]), real_c(v[1]), real_c(v[2])};
-}
-inline Utils::Vector6d to_vector6d(const Matrix3<real_t> m) {
-  return Utils::Vector6d{double_c(m[0]), double_c(m[3]), double_c(m[4]),
-                         double_c(m[6]), double_c(m[7]), double_c(m[8])};
-}
-inline Utils::Vector3i to_vector3i(const std::array<int, 3> v) {
-  return Utils::Vector3i{v[0], v[1], v[2]};
-}
 
 /** Sweep that swaps force_to_be_applied and last_applied_force
 and resets force_to_be_applied to the global external force
@@ -222,54 +208,6 @@ protected:
   size_t stencil_size() const override {
     return static_cast<size_t>(LatticeModel::Stencil::Size);
   }
-
-  // Helpers to retrieve blocks and cells
-  struct BlockAndCell {
-    IBlock *block;
-    Cell cell;
-  };
-  template <typename PosVector>
-  IBlock *get_block_extended(const PosVector &pos) const {
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
-      if (b->getAABB()
-              .getExtended(real_c(m_n_ghost_layers))
-              .contains(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]))) {
-        return &(*b);
-      }
-    }
-    // Cell not in local blocks
-    return {};
-  }
-  boost::optional<BlockAndCell>
-  get_block_and_cell(const Utils::Vector3i &node,
-                     bool consider_ghost_layers) const {
-    // Get block and local cell
-    Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
-    auto block = m_blocks->getBlock(global_cell, 0);
-    // Return if we don't have the cell
-    if (consider_ghost_layers and !block) {
-      // Try to find a block which has the cell as ghost layer
-      block = get_block_extended(node);
-    }
-    if (!block)
-      return {boost::none};
-
-    // Transform coords to block local
-    Cell local_cell;
-    m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
-    return {{block, local_cell}};
-  }
-
-  IBlock *get_block(const Utils::Vector3d &pos,
-                    bool consider_ghost_layers) const {
-    // Get block
-    auto block =
-        m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
-    if (consider_ghost_layers and !block) {
-      block = get_block_extended(pos);
-    }
-    return block;
-  };
 
   // Boundary handling
   class LB_boundary_handling {
@@ -429,7 +367,7 @@ public:
     if (is_boundary)    // is info available locally
       if (*is_boundary) // is the node a boundary
         return get_node_velocity_at_boundary(node);
-    auto const bc = get_block_and_cell(node, consider_ghosts);
+    auto const bc = get_block_and_cell(node, consider_ghosts, m_blocks);
     if (!bc)
       return {};
     auto const &vel_adaptor =
@@ -438,7 +376,7 @@ public:
   };
   bool set_node_velocity(const Utils::Vector3i &node,
                          const Utils::Vector3d &v) override {
-    auto bc = get_block_and_cell(node, false);
+    auto bc = get_block_and_cell(node, false, m_blocks);
     if (!bc)
       return false;
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
@@ -482,7 +420,7 @@ public:
       return false;
     auto force_at_node = [this, force](const std::array<int, 3> node,
                                        double weight) {
-      auto const bc = get_block_and_cell(to_vector3i(node), true);
+      auto const bc = get_block_and_cell(to_vector3i(node), true, m_blocks);
       if (bc) {
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
@@ -496,7 +434,7 @@ public:
 
   boost::optional<Utils::Vector3d>
   get_node_force_to_be_applied(const Utils::Vector3i &node) const override {
-    auto const bc = get_block_and_cell(node, true);
+    auto const bc = get_block_and_cell(node, true, m_blocks);
     if (!bc)
       return {};
 
@@ -509,7 +447,7 @@ public:
 
   bool set_node_last_applied_force(Utils::Vector3i const &node,
                                    Utils::Vector3d const &force) override {
-    auto bc = get_block_and_cell(node, false);
+    auto bc = get_block_and_cell(node, false, m_blocks);
     if (!bc)
       return false;
 
@@ -525,7 +463,7 @@ public:
   boost::optional<Utils::Vector3d>
   get_node_last_applied_force(const Utils::Vector3i &node,
                               bool consider_ghosts = false) const override {
-    auto const bc = get_block_and_cell(node, consider_ghosts);
+    auto const bc = get_block_and_cell(node, consider_ghosts, m_blocks);
     if (!bc)
       return {};
 
@@ -540,7 +478,7 @@ public:
   // Population
   bool set_node_pop(const Utils::Vector3i &node,
                     std::vector<double> const &population) override {
-    auto bc = get_block_and_cell(node, false);
+    auto bc = get_block_and_cell(node, false, m_blocks);
     if (!bc)
       return false;
 
@@ -556,7 +494,7 @@ public:
 
   boost::optional<std::vector<double>>
   get_node_pop(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, false);
+    auto bc = get_block_and_cell(node, false, m_blocks);
     if (!bc)
       return {boost::none};
 
@@ -572,7 +510,7 @@ public:
 
   // Density
   bool set_node_density(const Utils::Vector3i &node, double density) override {
-    auto bc = get_block_and_cell(node, false);
+    auto bc = get_block_and_cell(node, false, m_blocks);
     if (!bc)
       return false;
 
@@ -588,7 +526,7 @@ public:
 
   boost::optional<double>
   get_node_density(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, false);
+    auto bc = get_block_and_cell(node, false, m_blocks);
     if (!bc)
       return {boost::none};
 
@@ -600,7 +538,7 @@ public:
   // Boundary related
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, true);
+    auto bc = get_block_and_cell(node, true, m_blocks);
     if (!bc)
       return {boost::none};
     const Boundaries *boundary_handling =
@@ -616,7 +554,7 @@ public:
   };
   bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                      const Utils::Vector3d &v) override {
-    auto bc = get_block_and_cell(node, true);
+    auto bc = get_block_and_cell(node, true, m_blocks);
     if (!bc)
       return false;
 
@@ -631,7 +569,7 @@ public:
   };
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, true); // including ghosts
+    auto bc = get_block_and_cell(node, true, m_blocks); // including ghosts
     if (!bc)
       return {boost::none};
     // Get boundary handling
@@ -651,7 +589,7 @@ public:
         ubb.getForce((*bc).cell.x(), (*bc).cell.y(), (*bc).cell.z()))};
   };
   bool remove_node_from_boundary(const Utils::Vector3i &node) override {
-    auto bc = get_block_and_cell(node, true);
+    auto bc = get_block_and_cell(node, true, m_blocks);
     if (!bc)
       return false;
     Boundaries *boundary_handling =
@@ -663,7 +601,7 @@ public:
   boost::optional<bool>
   get_node_is_boundary(const Utils::Vector3i &node,
                        bool consider_ghosts = false) const override {
-    auto bc = get_block_and_cell(node, consider_ghosts);
+    auto bc = get_block_and_cell(node, consider_ghosts, m_blocks);
     if (!bc)
       return {boost::none};
 
@@ -690,7 +628,7 @@ public:
   // Pressure tensor
   boost::optional<Utils::Vector6d>
   get_node_pressure_tensor(const Utils::Vector3i &node) const override {
-    auto bc = get_block_and_cell(node, false);
+    auto bc = get_block_and_cell(node, false, m_blocks);
     if (!bc)
       return {boost::none};
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
@@ -744,16 +682,16 @@ public:
 
   bool node_in_local_domain(const Utils::Vector3i &node) const override {
     // Note: Lattice constant =1, cell centers offset by .5
-    return get_block_and_cell(node, false) != boost::none;
+    return get_block_and_cell(node, false, m_blocks) != boost::none;
   };
   bool node_in_local_halo(const Utils::Vector3i &node) const override {
-    return get_block_and_cell(node, true) != boost::none;
+    return get_block_and_cell(node, true, m_blocks) != boost::none;
   };
   bool pos_in_local_domain(const Utils::Vector3d &pos) const override {
-    return get_block(pos, false) != nullptr;
+    return get_block(pos, false, m_blocks) != nullptr;
   };
   bool pos_in_local_halo(const Utils::Vector3d &pos) const override {
-    return get_block(pos, true) != nullptr;
+    return get_block(pos, true, m_blocks) != nullptr;
   };
 
   std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
