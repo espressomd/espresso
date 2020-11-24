@@ -23,13 +23,12 @@ from itertools import product
 
 import espressomd
 from espressomd.observables import DPDStress
-from thermostats_common import ThermostatsCommon
 
 
 @utx.skipIfMissingFeatures("DPD")
-class DPDThermostat(ut.TestCase, ThermostatsCommon):
+class DPDThermostat(ut.TestCase):
 
-    """Tests the velocity distribution created by the DPD thermostat."""
+    """Test DPD dynamics."""
 
     s = espressomd.System(box_l=3 * [10.0])
     s.time_step = 0.01
@@ -42,123 +41,73 @@ class DPDThermostat(ut.TestCase, ThermostatsCommon):
         s = self.s
         s.part.clear()
         s.thermostat.turn_off()
+        s.integrator.set_vv()
 
-    def check_total_zero(self):
-        v_total = np.sum(self.s.part[:].v, axis=0)
-        np.testing.assert_allclose(v_total, np.zeros(3), atol=1e-11)
+    def test_01__rng(self):
+        """Test for RNG consistency."""
+        def reset_particles():
+            self.s.part.clear()
+            p = self.s.part.add(pos=[0, 0, 0])
+            _ = self.s.part.add(pos=[0, 0, 1])
+            return p
 
-    def single(self, with_langevin=False):
-        """Test velocity distribution of a dpd fluid with a single type."""
-        N = 500
-        s = self.s
-        s.part.add(pos=s.box_l * np.random.random((N, 3)))
+        system = self.s
+
         kT = 2.3
         gamma = 1.5
-        if with_langevin:
-            s.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
-        s.thermostat.set_dpd(kT=kT, seed=42)
-        s.non_bonded_inter[0, 0].dpd.set_params(
-            weight_function=0, gamma=gamma, r_cut=1.5,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
-        s.integrator.run(100)
-        loops = 100
-        v_stored = np.zeros((loops, N, 3))
-        for i in range(loops):
-            s.integrator.run(10)
-            v_stored[i] = s.part[:].v
-        v_minmax = 5
-        bins = 5
-        error_tol = 0.01
-        self.check_velocity_distribution(
-            v_stored.reshape((-1, 3)), v_minmax, bins, error_tol, kT)
 
-        if not with_langevin:
-            self.check_total_zero()
+        # No seed should throw exception
+        with self.assertRaises(ValueError):
+            system.thermostat.set_dpd(kT=kT)
 
-    def test_single(self):
-        self.single()
-
-    def test_single_with_langevin(self):
-        self.single(True)
-
-    def test_binary(self):
-        """Test velocity distribution of binary dpd fluid"""
-        N = 200
-        s = self.s
-        s.part.add(pos=s.box_l * np.random.random((N // 2, 3)),
-                   type=N // 2 * [0])
-        s.part.add(pos=s.box_l * np.random.random((N // 2, 3)),
-                   type=N // 2 * [1])
-        kT = 2.3
-        gamma = 3.5
-        s.thermostat.set_dpd(kT=kT, seed=42)
-        s.non_bonded_inter[0, 0].dpd.set_params(
-            weight_function=0, gamma=gamma, r_cut=1.0,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.0)
-        s.non_bonded_inter[1, 1].dpd.set_params(
-            weight_function=0, gamma=gamma, r_cut=1.0,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.0)
-        s.non_bonded_inter[0, 1].dpd.set_params(
-            weight_function=0, gamma=gamma, r_cut=1.5,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
-        s.integrator.run(100)
-        loops = 250
-        v_stored = np.zeros((loops, N, 3))
-        for i in range(loops):
-            s.integrator.run(10)
-            v_stored[i] = s.part[:].v
-        v_minmax = 5
-        bins = 5
-        error_tol = 0.01
-        self.check_velocity_distribution(
-            v_stored.reshape((-1, 3)), v_minmax, bins, error_tol, kT)
-        self.check_total_zero()
-
-    def test_disable(self):
-        N = 200
-        s = self.s
-        s.time_step = 0.01
-        s.part.add(pos=s.box_l * np.random.random((N, 3)))
-        kT = 2.3
-        gamma = 1.5
-        s.thermostat.set_dpd(kT=kT, seed=42)
-        s.non_bonded_inter[0, 0].dpd.set_params(
+        system.thermostat.set_dpd(kT=kT, seed=41)
+        system.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
 
-        s.integrator.run(10)
+        # run(0) does not increase the philox counter and should give the same
+        # force
+        p = reset_particles()
+        system.integrator.run(0, recalc_forces=True)
+        force0 = np.copy(p.f)
+        system.integrator.run(0, recalc_forces=True)
+        force1 = np.copy(p.f)
+        np.testing.assert_almost_equal(force0, force1)
 
-        s.thermostat.turn_off()
+        # run(1) should give a different force
+        p = reset_particles()
+        system.integrator.run(1)
+        force2 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force1, force2)))
 
-        # Reset velocities
-        s.part[:].v = [1., 2., 3.]
+        # Different seed should give a different force with same counter state
+        # force2: dpd.rng_counter() = 1, dpd.rng_seed() = 41
+        # force3: dpd.rng_counter() = 1, dpd.rng_seed() = 42
+        p = reset_particles()
+        system.integrator.run(0, recalc_forces=True)
+        force2 = np.copy(p.f)
+        system.thermostat.set_dpd(kT=kT, seed=42)
+        system.integrator.run(0, recalc_forces=True)
+        force3 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force2, force3)))
 
-        s.integrator.run(10)
+        # Same seed should not give the same force with different counter state
+        p = reset_particles()
+        system.thermostat.set_dpd(kT=kT, seed=42)
+        system.integrator.run(1)
+        force4 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force3, force4)))
 
-        # Check that there was neither noise nor friction
-        for v in s.part[:].v:
-            for i in range(3):
-                self.assertEqual(v[i], float(i + 1))
-
-        # Turn back on
-        s.thermostat.set_dpd(kT=kT, seed=42)
-
-        # Reset velocities for faster convergence
-        s.part[:].v = [0., 0., 0.]
-
-        # Equilibrate
-        s.integrator.run(250)
-
-        loops = 250
-        v_stored = np.zeros((loops, N, 3))
-        for i in range(loops):
-            s.integrator.run(10)
-            v_stored[i] = s.part[:].v
-        v_minmax = 5
-        bins = 5
-        error_tol = 0.012
-        self.check_velocity_distribution(
-            v_stored.reshape((-1, 3)), v_minmax, bins, error_tol, kT)
+        # Seed offset should not give the same force with a lag
+        # force4: dpd.rng_counter() = 2, dpd.rng_seed() = 42
+        # force5: dpd.rng_counter() = 3, dpd.rng_seed() = 41
+        reset_particles()
+        system.thermostat.set_dpd(kT=kT, seed=41)
+        system.integrator.run(1)
+        p = reset_particles()
+        system.integrator.run(0, recalc_forces=True)
+        force5 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force4, force5)))
 
     def test_const_weight_function(self):
         s = self.s

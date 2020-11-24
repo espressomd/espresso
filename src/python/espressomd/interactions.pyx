@@ -2809,6 +2809,8 @@ class IBM_Triel(BondedInteraction):
     """
     IBM Triel bond.
 
+    See Figure C.1 in :cite:`kruger12a`.
+
     Parameters
     ----------
     ind1, ind2, ind3 : :obj:`int`
@@ -2867,6 +2869,8 @@ class IBM_Tribend(BondedInteraction):
     """
     IBM Tribend bond.
 
+    See Figure C.2 in :cite:`kruger12a`.
+
     Parameters
     ----------
     ind1, ind2, ind3, ind4 : :obj:`int`
@@ -2917,6 +2921,8 @@ class IBM_VolCons(BondedInteraction):
 
     """
     IBM volume conservation bond.
+
+    See Figure C.3 in :cite:`kruger12a`.
 
     Parameters
     ----------

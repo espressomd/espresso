@@ -24,7 +24,6 @@ import unittest as ut
 import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd import reaction_ensemble
-import numpy.testing as npt
 
 
 class ReactionEnsembleTest(ut.TestCase):
@@ -73,10 +72,12 @@ class ReactionEnsembleTest(ut.TestCase):
         default_charges={0: 0, 1: -1, 2: +1})
     system.setup_type_map([0, 1, 2, 3])
     # initialize wang_landau
+    file_input = "energy_boundaries.dat"
+    file_output = "WL_potential_out.dat"
     # generate preliminary_energy_run_results here, this should be done in a
     # separate simulation without energy reweighting using the update energy
     # functions
-    np.savetxt("energy_boundaries.dat", np.transpose([[0, 1], [0, 0], [9, 9]]),
+    np.savetxt(file_input, np.transpose([[0, 1], [0, 0], [9, 9]]),
                delimiter='\t', header="nbar   E_potmin   E_potmax")
 
     WLRE.add_collective_variable_degree_of_association(
@@ -84,52 +85,52 @@ class ReactionEnsembleTest(ut.TestCase):
     WLRE.set_wang_landau_parameters(
         final_wang_landau_parameter=0.8 * 1e-2,
         do_not_sample_reaction_partition_function=True,
-        full_path_to_output_filename="WL_potential_out.dat")
+        full_path_to_output_filename=file_output)
 
     def test_wang_landau_energy_recording(self):
         self.WLRE.update_maximum_and_minimum_energies_at_current_state()
         self.WLRE.write_out_preliminary_energy_run_results()
         nbars, E_mins, E_maxs = np.loadtxt(
             "preliminary_energy_run_results", unpack=True)
-        npt.assert_almost_equal(nbars, [0, 1])
-        npt.assert_almost_equal(E_mins, [27.0, -10])
-        npt.assert_almost_equal(E_maxs, [27.0, -10])
+        np.testing.assert_almost_equal(nbars, [0, 1])
+        np.testing.assert_almost_equal(E_mins, [27.0, -10])
+        np.testing.assert_almost_equal(E_maxs, [27.0, -10])
 
     def test_wang_landau_output(self):
         self.WLRE.add_collective_variable_potential_energy(
-            filename="energy_boundaries.dat", delta=0.05)
+            filename=self.file_input, delta=0.05)
+
+        # run MC until convergence
         while True:
             try:
                 self.WLRE.reaction()
                 for _ in range(2):
                     self.WLRE.displacement_mc_move_for_particles_of_type(3)
-            except reaction_ensemble.WangLandauHasConverged:  # only catch my exception
+            except reaction_ensemble.WangLandauHasConverged:
                 break
-        # test as soon as wang_landau has converged (throws exception then)
-        nbars, Epots, WL_potentials = np.loadtxt(
-            "WL_potential_out.dat", unpack=True)
+
+        nbars, Epots, WL_potentials = np.loadtxt(self.file_output, unpack=True)
         mask_nbar_0 = np.where(np.abs(nbars - 1.0) < 0.0001)
-        Epots = Epots[mask_nbar_0]
-        Epots = Epots[1:]
-        WL_potentials = WL_potentials[mask_nbar_0]
-        WL_potentials = WL_potentials[1:]
+        Epots = Epots[mask_nbar_0][1:]
+        WL_potentials = WL_potentials[mask_nbar_0][1:]
 
-        expected_canonical_potential_energy = np.sum(np.exp(WL_potentials) * Epots * np.exp(
-            -Epots / self.temperature)) / np.sum(np.exp(WL_potentials) * np.exp(-Epots / self.temperature))
+        def calc_from_partition_function(quantity):
+            probability = np.exp(WL_potentials - Epots / self.temperature)
+            return np.sum(quantity * probability) / np.sum(probability)
 
-        expected_canonical_squared_potential_energy = np.sum(np.exp(WL_potentials) * Epots**2 * np.exp(
-            -Epots / self.temperature)) / np.sum(np.exp(WL_potentials) * np.exp(-Epots / self.temperature))
-
-        expected_canonical_configurational_heat_capacity = expected_canonical_squared_potential_energy - \
-            expected_canonical_potential_energy**2
+        # calculate the canonical potential energy
+        pot_energy = calc_from_partition_function(Epots)
+        # calculate the canonical configurational heat capacity
+        pot_energy_sq = calc_from_partition_function(Epots**2)
+        heat_capacity = pot_energy_sq - pot_energy**2
 
         # for the calculation regarding the analytical results which are
         # compared here, see Master Thesis Jonas Landsgesell p. 72
         self.assertAlmostEqual(
-            expected_canonical_potential_energy - 1.5, 0.00, places=1,
+            pot_energy, 1.5, places=1,
             msg="difference to analytical expected canonical potential energy too big")
         self.assertAlmostEqual(
-            expected_canonical_configurational_heat_capacity - 1.5, 0.00, places=1,
+            heat_capacity, 1.5, places=1,
             msg="difference to analytical expected canonical configurational heat capacity too big")
 
     def _wang_landau_output_checkpoint(self, filename):
@@ -148,7 +149,7 @@ class ReactionEnsembleTest(ut.TestCase):
         self.WLRE.load_wang_landau_checkpoint()
         self.WLRE.write_wang_landau_checkpoint()
         new_checkpoint = np.loadtxt(filename)
-        npt.assert_almost_equal(new_checkpoint, modified_checkpoint)
+        np.testing.assert_almost_equal(new_checkpoint, modified_checkpoint)
 
     def test_wang_landau_output_checkpoint(self):
         filenames = ["checkpoint_wang_landau_potential_checkpoint",

@@ -19,7 +19,6 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-import numpy.testing as npt
 
 import espressomd
 from espressomd import electrostatics
@@ -137,7 +136,7 @@ class VirialPressureConsistency(ut.TestCase):
         # deviation should be below 5%
         abs_deviation_in_percent = 100 * abs(
             pressure_virial / pressure_via_volume_scaling.get_result() - 1.0)
-        npt.assert_array_less(abs_deviation_in_percent, 5.0)
+        np.testing.assert_array_less(abs_deviation_in_percent, 5.0)
 
 
 if __name__ == "__main__":

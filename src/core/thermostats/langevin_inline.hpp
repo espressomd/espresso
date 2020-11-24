@@ -69,7 +69,7 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
                              : p.m.v;
 #else
   auto const &velocity = p.m.v;
-#endif
+#endif // ENGINE
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check
   auto const aniso_flag = (pref_friction[0] != pref_friction[1]) ||

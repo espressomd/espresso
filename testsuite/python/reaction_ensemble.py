@@ -67,8 +67,8 @@ class ReactionEnsembleTest(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         for i in range(0, 2 * cls.N0, 2):
-            cls.system.part.add(id=i, pos=np.random.random(
-                3) * cls.system.box_l, type=cls.type_A)
+            cls.system.part.add(id=i, pos=np.random.random(3) *
+                                cls.system.box_l, type=cls.type_A)
             cls.system.part.add(id=i + 1, pos=np.random.random(3) *
                                 cls.system.box_l, type=cls.type_H)
 
@@ -78,7 +78,8 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_coefficients=cls.reactant_coefficients,
             product_types=cls.product_types,
             product_coefficients=cls.product_coefficients,
-            default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1}, check_for_electroneutrality=True)
+            default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1},
+            check_for_electroneutrality=True)
 
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
@@ -119,12 +120,12 @@ class ReactionEnsembleTest(ut.TestCase):
             rel_error_alpha,
             0.015,
             msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
-            + "  gamma: " + str(gamma)
-            + "  average_NH: " + str(average_NH)
-            + "  average_NA: " + str(average_NA)
-            + "  average_NHA:" + str(average_NHA)
-            + "  average alpha: " + str(average_alpha)
-            + "  target_alpha: " + str(target_alpha)
+            + f"  gamma: {gamma:.3e}"
+            + f"  average NH: {average_NH:.1f}"
+            + f"  average NA: {average_NA:.1f}"
+            + f"  average NHA: {average_NHA:.1f}"
+            + f"  average alpha: {average_alpha:.3f}"
+            + f"  target alpha: {target_alpha:.3f}"
         )
 
     def test_reaction_system(self):
@@ -194,7 +195,8 @@ class ReactionEnsembleTest(ut.TestCase):
             reactant_coefficients=[1],
             product_types=[2, 3, 4],
             product_coefficients=[1, 4, 3],
-            default_charges={5: 0, 2: 0, 3: 0, 4: 0}, check_for_electroneutrality=True)
+            default_charges={5: 0, 2: 0, 3: 0, 4: 0},
+            check_for_electroneutrality=True)
         nr_reactions_after_addition = len(RE.get_status()["reactions"])
         RE.delete_reaction(1)
         nr_reactions_after_deletion = len(RE.get_status()["reactions"])

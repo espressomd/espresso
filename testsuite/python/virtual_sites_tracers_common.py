@@ -16,9 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import espressomd
-from espressomd import lb, shapes, lbboundaries
 import numpy as np
+
+import espressomd
+from espressomd import shapes, lbboundaries
+import espressomd.interactions
 try:
     from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
 except ImportError:
@@ -36,6 +38,7 @@ class VirtualSitesTracersCommon:
     def reset_lb(self, ext_force_density=(0, 0, 0)):
         self.system.actors.clear()
         self.system.lbboundaries.clear()
+        self.system.thermostat.turn_off()
         self.lbf = self.LBClass(
             kT=0.0, agrid=1, dens=1, visc=1.8,
             tau=self.system.time_step, ext_force_density=ext_force_density)
@@ -71,6 +74,7 @@ class VirtualSitesTracersCommon:
         system = self.system
 
         system.virtual_sites = VirtualSitesInertialessTracers()
+        system.part.clear()
 
         # Establish steady state flow field
         system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=True)
@@ -80,7 +84,7 @@ class VirtualSitesTracersCommon:
         system.time = 0
 
         # Perform integration
-        for _ in range(3):
+        for _ in range(2):
             system.integrator.run(100)
             # compute expected position
             X = self.lbf.get_interpolated_velocity(
@@ -111,133 +115,86 @@ class VirtualSitesTracersCommon:
         return alpha
 
     def test_tribend(self):
-        self.system.actors.clear()
         # two triangles with bending interaction
         # move nodes, should relax back
 
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
-
         system.part.clear()
+        system.actors.clear()
+        system.thermostat.turn_off()
+        system.thermostat.set_langevin(kT=0, gamma=10, seed=1)
 
         # Add four particles
-        system.part.add(id=0, pos=[5, 5, 5], virtual=True)
-        system.part.add(id=1, pos=[5, 5, 6], virtual=True)
-        system.part.add(id=2, pos=[5, 6, 6], virtual=True)
-        system.part.add(id=3, pos=[5, 6, 5], virtual=True)
+        system.part.add(id=0, pos=[5, 5, 5])
+        system.part.add(id=1, pos=[5, 5, 6])
+        system.part.add(id=2, pos=[5, 6, 6])
+        system.part.add(id=3, pos=[5, 6, 5])
 
         # Add first triel, weak modulus
-        from espressomd.interactions import IBM_Triel
-        tri1 = IBM_Triel(
+        tri1 = espressomd.interactions.IBM_Triel(
             ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri1)
         system.part[0].add_bond((tri1, 1, 2))
 
-        # Add second triel
-        tri2 = IBM_Triel(
+        # Add second triel, strong modulus
+        tri2 = espressomd.interactions.IBM_Triel(
             ind1=0, ind2=2, ind3=3, elasticLaw="Skalak", k1=10, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri2)
         system.part[0].add_bond((tri2, 2, 3))
 
         # Add bending
-        from espressomd.interactions import IBM_Tribend
-        tribend = IBM_Tribend(
+        tribend = espressomd.interactions.IBM_Tribend(
             ind1=0, ind2=1, ind3=2, ind4=3, kb=1, refShape="Initial")
         system.bonded_inter.add(tribend)
         system.part[0].add_bond((tribend, 1, 2, 3))
 
         # twist
-        system.part[1].pos = [5.2, 5, 6]
-
-        self.reset_lb()
+        system.part[:].pos = system.part[:].pos + np.random.random((4, 3))
 
         # Perform integration
-        last_angle = self.compute_angle()
-        for _ in range(6):
-            system.integrator.run(430)
-            angle = self.compute_angle()
-            self.assertLess(angle, last_angle)
-            last_angle = angle
-        self.assertLess(angle, 0.03)
+        system.integrator.run(200)
+        angle = self.compute_angle()
+        self.assertLess(angle, 2E-2)
 
     def test_triel(self):
-        self.system.actors.clear()
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
-        system.virtual_sites = VirtualSitesInertialessTracers()
-
         system.part.clear()
-        # Add particles: 0-2 are non-bonded, 3-5 are weakly bonded, 6-8 are
-        # strongly bonded
-        system.part.add(id=0, pos=[5, 5, 5], virtual=True)
-        system.part.add(id=1, pos=[5, 5, 6], virtual=True)
-        system.part.add(id=2, pos=[5, 6, 6], virtual=True)
+        system.actors.clear()
+        system.thermostat.turn_off()
+        system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
 
-        system.part.add(id=3, pos=[2, 5, 5], virtual=True)
-        system.part.add(id=4, pos=[2, 5, 6], virtual=True)
-        system.part.add(id=5, pos=[2, 6, 6], virtual=True)
+        # Add particles: 0-2 are not bonded, 3-5 are bonded
+        non_bound = system.part.add(
+            id=[0, 1, 2], pos=[[5, 5, 5], [5, 5, 6], [5, 6, 6]])
 
-        system.part.add(id=6, pos=[4, 7, 7], virtual=True)
-        system.part.add(id=7, pos=[4, 7, 8], virtual=True)
-        system.part.add(id=8, pos=[4, 8, 8], virtual=True)
+        system.part.add(id=3, pos=[2, 5, 5])
+        system.part.add(id=4, pos=[2, 5, 6])
+        system.part.add(id=5, pos=[2, 6, 6])
 
-        # Add triel, weak modulus for 3-5
-        from espressomd.interactions import IBM_Triel
-        triWeak = IBM_Triel(
-            ind1=3, ind2=4, ind3=5, elasticLaw="Skalak", k1=5, k2=0, maxDist=2.4)
-        system.bonded_inter.add(triWeak)
-        system.part[3].add_bond((triWeak, 4, 5))
+        # Add triel for 3-5
+        tri = espressomd.interactions.IBM_Triel(
+            ind1=3, ind2=4, ind3=5, elasticLaw="Skalak", k1=15, k2=0, maxDist=2.4)
+        system.bonded_inter.add(tri)
+        system.part[3].add_bond((tri, 4, 5))
 
-        # Add triel, strong modulus for 6-8
-        triStrong = IBM_Triel(
-            ind1=6, ind2=7, ind3=8, elasticLaw="Skalak", k1=15, k2=0, maxDist=2.4)
-        system.bonded_inter.add(triStrong)
-        system.part[6].add_bond((triStrong, 7, 8))
+        system.part[:].pos = system.part[:].pos + np.array((
+            (0, 0, 0), (1, -.2, .3), (1, 1, 1),
+            (0, 0, 0), (1, -.2, .3), (1, 1, 1)))
 
-        self.reset_lb(ext_force_density=[0.1, 0, 0])
-        # Perform integration
-        system.integrator.run(4500)
+        distorted_pos = np.copy(non_bound.pos)
 
-        # For the cpu variant, check particle velocities
-        if isinstance(self.lbf, lb.LBFluid):  # as opposed to LBFluidGPU
-            for p in system.part:
-                np.testing.assert_allclose(
-                    np.copy(p.v), np.copy(
-                        self.lbf.get_interpolated_velocity(p.pos)),
-                    atol=2E-2)
-        # get new shapes
-        dist1non = np.linalg.norm(
-            np.array(system.part[1].pos - system.part[0].pos))
-        dist2non = np.linalg.norm(
-            np.array(system.part[2].pos - system.part[0].pos))
+        system.integrator.run(110)
+        dist1bound = system.distance(system.part[3], system.part[4])
+        dist2bound = system.distance(system.part[3], system.part[5])
 
-        dist1weak = np.linalg.norm(
-            np.array(system.part[3].pos - system.part[4].pos))
-        dist2weak = np.linalg.norm(
-            np.array(system.part[3].pos - system.part[5].pos))
+        # check bonded particles. Distance should restore to initial config
+        self.assertAlmostEqual(dist1bound, 1, delta=0.05)
+        self.assertAlmostEqual(dist2bound, np.sqrt(2), delta=0.05)
 
-        dist1strong = np.linalg.norm(
-            np.array(system.part[6].pos - system.part[7].pos))
-        dist2strong = np.linalg.norm(
-            np.array(system.part[6].pos - system.part[8].pos))
-
-        print("** Distances: non-bonded, weak, strong, expected")
-        print(str(dist1non) + "    " + str(dist1weak)
-              + "     " + str(dist1strong) + "    1")
-        print(str(dist2non) + "    " + str(dist2weak)
-              + "     " + str(dist2strong) + "    1.414")
-
-        # test:
-        # non-bonded should move apart by the flow (control group)
-        # weakly-bonded should stretch somewhat
-        # strongly-bonded should basically not stretch
-        self.assertGreater(dist1non, 1.5)
-        self.assertAlmostEqual(dist1weak, 1, delta=0.2)
-        self.assertAlmostEqual(dist1strong, 1, delta=0.04)
-
-        self.assertGreater(dist2non, 2)
-        self.assertAlmostEqual(dist2weak, np.sqrt(2), delta=0.3)
-        self.assertAlmostEqual(dist2strong, np.sqrt(2), delta=0.1)
+        # check not bonded particles. Positions should still be distorted
+        np.testing.assert_allclose(np.copy(non_bound.pos), distorted_pos)
 
     def test_zz_without_lb(self):
         """Check behaviour without lb. Ignore non-virtual particles, complain on

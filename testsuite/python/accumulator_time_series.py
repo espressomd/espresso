@@ -17,11 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""
-Testmodule for the time series accumulator.
-
-"""
 import unittest as ut
+
 import numpy as np
 import pickle
 
@@ -29,38 +26,48 @@ import espressomd
 import espressomd.observables
 import espressomd.accumulators
 
-N_PART = 100
+N_PART = 4
 
 
 class TimeSeriesTest(ut.TestCase):
 
-    def test_time_series(self):
+    """
+    Test class for the TimeSeries accumulator.
+
+    """
+    system = espressomd.System(box_l=[10.0] * 3)
+    system.cell_system.skin = 0.4
+    system.time_step = 0.01
+
+    def setUp(self):
+        np.random.seed(seed=42)
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.auto_update_accumulators.clear()
+
+    def test_accumulator(self):
         """Check that accumulator results are the same as the respective numpy result.
 
         """
-
-        system = espressomd.System(box_l=3 * [1.])
-        system.part.add(pos=np.random.random((N_PART, 3)))
-
-        obs = espressomd.observables.ParticlePositions(ids=system.part[:].id)
+        system = self.system
+        system.part.add(pos=np.zeros((N_PART, 3)))
+        obs = espressomd.observables.ParticlePositions(ids=range(N_PART))
         acc = espressomd.accumulators.TimeSeries(obs=obs)
+        system.auto_update_accumulators.add(acc)
+        positions = np.copy(system.box_l) * np.random.random((10, N_PART, 3))
 
-        positions = []
-        for _ in range(10):
-            pos = np.random.random((N_PART, 3))
-            positions.append(pos)
-
+        for pos in positions:
             system.part[:].pos = pos
             acc.update()
 
-        time_series = acc.time_series()
+        self.assertEqual(acc.get_params()['obs'], obs)
+
+        np.testing.assert_array_equal(acc.time_series(), positions)
 
         # Check pickling
         acc_unpickled = pickle.loads(pickle.dumps(acc))
-        np.testing.assert_array_equal(time_series, acc_unpickled.time_series())
-
-        for result, expected in zip(time_series, positions):
-            np.testing.assert_array_equal(result, expected)
+        np.testing.assert_array_equal(acc_unpickled.time_series(), positions)
 
         acc.clear()
         self.assertEqual(len(acc.time_series()), 0)

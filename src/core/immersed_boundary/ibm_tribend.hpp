@@ -31,11 +31,13 @@
 
 /** Set the IBM Tribend parameters.
  *  Also calculate and store the reference state.
+ *  See details in @cite gompper96a and @cite kruger12a.
  */
 int IBM_Tribend_SetParams(int bond_type, int ind1, int ind2, int ind3, int ind4,
                           double kb, bool flat);
 
 /** Calculate the forces
+ *  The equations can be found in Appendix C of @cite kruger12a.
  *  @return forces on @p p1, @p p2, @p p3, @p p4
  */
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>

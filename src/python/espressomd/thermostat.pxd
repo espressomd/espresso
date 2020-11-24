@@ -92,7 +92,7 @@ cdef extern from "thermostat.hpp":
 
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:
-        void set_sd_kT(double kT)
+        void set_sd_kT(double kT) except +
         double get_sd_kT()
 
 cdef extern from "npt.hpp":

@@ -17,15 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "sd_interface.hpp"
+#include "config.hpp"
 
 #ifdef STOKESIAN_DYNAMICS
-#include "stokesian_dynamics/sd_cpu.hpp"
+#include "sd_interface.hpp"
 
-#include "thermostat.hpp"
+#include "stokesian_dynamics/sd_cpu.hpp"
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -125,8 +126,8 @@ void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
   for (auto const &kv : x) {
     if (kv.second < 0.) {
       throw std::runtime_error(
-          "Particle radii need to be positive, radius for type " +
-          std::to_string(kv.first) + " is " + std::to_string(kv.second));
+          "Particle radius for type " + std::to_string(kv.first) +
+          " has an invalid value: " + std::to_string(kv.second));
     }
   }
 
@@ -159,7 +160,7 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
                    [](auto const &p) { return SD_particle_data(p); });
   Utils::Mpi::gather_buffer(parts_buffer, comm, 0);
 
-  /** Buffer that holds local particle data, and all particles on the master
+  /* Buffer that holds local particle data, and all particles on the master
    * node used for sending particle data to master node. */
   if (comm.rank() == 0) {
     std::size_t n_part = parts_buffer.size();
