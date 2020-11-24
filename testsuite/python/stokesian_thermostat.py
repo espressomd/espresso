@@ -55,7 +55,7 @@ class StokesianThermostat(ut.TestCase):
         viscosity = 2.4
 
         # invalid parameters should throw exceptions
-        with self.assertRaises(Exception):
+        with self.assertRaises(RuntimeError):
             system.thermostat.set_stokesian(kT=-1)
         with self.assertRaises(ValueError):
             system.thermostat.set_stokesian(kT=1, seed=-1)
@@ -102,10 +102,10 @@ class StokesianThermostat(ut.TestCase):
 
     def test_integrator_exceptions(self):
         # invalid parameters should throw exceptions
-        with self.assertRaises(Exception):
+        with self.assertRaises(RuntimeError):
             self.system.integrator.set_stokesian_dynamics(
                 viscosity=1.0, radii={0: -1})
-        with self.assertRaises(Exception):
+        with self.assertRaises(RuntimeError):
             self.system.integrator.set_stokesian_dynamics(
                 viscosity=-1, radii={0: 1.0})
 

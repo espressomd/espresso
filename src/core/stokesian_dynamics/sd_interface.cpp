@@ -26,7 +26,6 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "errorhandling.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
@@ -111,45 +110,38 @@ void sd_update_locally(ParticleRange const &parts) {
   }
 }
 
-int set_sd_viscosity(double eta) {
+void set_sd_viscosity(double eta) {
   if (eta < 0.0) {
-    runtimeErrorMsg() << "Viscosity has an invalid value: " +
-                             std::to_string(eta);
-    return ES_ERROR;
+    throw std::runtime_error("Viscosity has an invalid value: " +
+                             std::to_string(eta));
   }
 
   sd_viscosity = eta;
-  return ES_OK;
 }
 
 double get_sd_viscosity() { return sd_viscosity; }
 
-int set_sd_radius_dict(std::unordered_map<int, double> const &x) {
+void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
   /* Check that radii are positive */
   for (auto const &kv : x) {
     if (kv.second < 0.) {
-      runtimeErrorMsg() << "Particle radius for type " +
-                               std::to_string(kv.first) +
-                               " has an invalid value: " +
-                               std::to_string(kv.second);
-      return ES_ERROR;
+      throw std::runtime_error(
+          "Particle radius for type " + std::to_string(kv.first) +
+          " has an invalid value: " + std::to_string(kv.second));
     }
   }
 
   radius_dict = x;
-  return ES_OK;
 }
 
 std::unordered_map<int, double> get_sd_radius_dict() { return radius_dict; }
 
-int set_sd_kT(double kT) {
+void set_sd_kT(double kT) {
   if (kT < 0.0) {
-    runtimeErrorMsg() << "kT has an invalid value: " + std::to_string(kT);
-    return ES_ERROR;
+    throw std::runtime_error("kT has an invalid value: " + std::to_string(kT));
   }
 
   sd_kT = kT;
-  return ES_OK;
 }
 
 double get_sd_kT() { return sd_kT; }

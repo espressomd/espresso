@@ -40,10 +40,13 @@ import threading
 
 
 # workaround for https://github.com/enthought/mayavi/issues/3
-import vtk
-output = vtk.vtkFileOutputWindow()
-output.SetFileName("/dev/null")
-vtk.vtkOutputWindow().SetInstance(output)
+try:
+    import vtk
+    output = vtk.vtkFileOutputWindow()
+    output.SetFileName("/dev/null")
+    vtk.vtkOutputWindow().SetInstance(output)
+except ImportError:
+    print("Note: Log message suppression requires the `vtk` Python module to be present")
 
 cdef class mayaviLive:
     """
