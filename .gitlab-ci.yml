@@ -110,8 +110,16 @@ maxset:
 maxset-walberla:
   <<: *global_job_definition
   stage: build
+  variables:
+     with_cuda: 'false'
+     myconfig: 'maxset-walberla'
+     with_coverage: 'true'
+     with_walberla: 'true'
+     with_scafacos: 'false'
+     with_stokesian_dynamics: 'false'
+     check_skip_long: 'true'
+     check_procs: '4'
   script:
-    - export with_cuda=false myconfig=maxset-walberla with_walberla=true with_coverage=true  check_procs=4
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker

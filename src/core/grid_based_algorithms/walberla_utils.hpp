@@ -102,7 +102,7 @@ IBlock *get_block(const Utils::Vector3d &pos, bool consider_ghost_layers,
     block = get_block_extended(pos, blocks, n_ghost_layers);
   }
   return block;
-};
+}
 
 template <typename Function>
 void interpolate_bspline_at_pos(Utils::Vector3d pos, Function f) {
@@ -113,6 +113,6 @@ void interpolate_bspline_at_pos(Utils::Vector3d pos, Function f) {
 
 } // namespace walberla
 
-#endif
+#endif // LB_WALBERLA
 
 #endif
