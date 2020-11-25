@@ -2,23 +2,24 @@
 #include "MRTLatticeModel.h"
 
 namespace walberla {
-class LbWalberlaD3Q19MRT : public LbWalberla<lbm::MRT_LatticeModel> {
+class LbWalberlaD3Q19MRT : public LbWalberla<lbm::MRTLatticeModel> {
 public:
+  using LatticeModel = lbm::MRTLatticeModel;
+
   void construct_lattice_model(double viscosity) {
     const real_t omega = 2 / (6 * real_c(viscosity) + 1);
     const real_t magic_number = real_c(3.) / real_c(16.);
     const real_t omega_2 =
         (4 - 2 * omega) / (4 * magic_number * omega + 2 - omega);
-    m_lattice_model = std::make_shared<lbm::MRT_LatticeModel>(
-        lbm::MRT_LatticeModel(m_last_applied_force_field_id,
-                              omega,   // bulk
-                              omega,   // even
-                              omega_2, // odd
-                              omega)); // shear
+    m_lattice_model = std::make_shared<LatticeModel>(
+        LatticeModel(m_last_applied_force_field_id,
+                     omega,   // bulk
+                     omega,   // even
+                     omega_2, // odd
+                     omega)); // shear
   };
   void set_viscosity(double viscosity) override {
-    lbm::MRT_LatticeModel *lm =
-        dynamic_cast<lbm::MRT_LatticeModel *>(m_lattice_model.get());
+    LatticeModel *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
     const real_t omega = 2 / (6 * real_c(viscosity) + 1);
     const real_t magic_number = real_c(3.) / real_c(16.);
     const real_t omega_2 =
@@ -30,8 +31,7 @@ public:
     on_lattice_model_change();
   };
   double get_viscosity() const override {
-    lbm::MRT_LatticeModel *lm =
-        dynamic_cast<lbm::MRT_LatticeModel *>(m_lattice_model.get());
+    LatticeModel *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
     return (2 - lm->omega_shear_) / (6 * lm->omega_shear_);
   };
   LbWalberlaD3Q19MRT(double viscosity, double density, double agrid, double tau,
