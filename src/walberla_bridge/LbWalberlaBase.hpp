@@ -19,6 +19,14 @@
 #ifndef LB_WALBERLA_BASE_HPP
 #define LB_WALBERLA_BASE_HPP
 
+/**
+ * @file
+ * @ref LbWalberlaBase provides the public interface of the LB
+ * waLBerla bridge. It relies on type erasure to hide the waLBerla
+ * implementation details from the ESPResSo core. It is implemented
+ * by @ref walberla::LbWalberla.
+ */
+
 #include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>

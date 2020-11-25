@@ -19,6 +19,13 @@
 #ifndef LB_WALBERLA_H
 #define LB_WALBERLA_H
 
+/**
+ * @file
+ * @ref walberla::LbWalberla implements the interface of the LB waLBerla
+ * bridge. It is a templated class that is specialized by lattice
+ * models created by lbmpy (see <tt>maintainer/walberla_kernels</tt>).
+ */
+
 #include "blockforest/Initialization.h"
 #include "blockforest/StructuredBlockForest.h"
 #include "blockforest/communication/UniformBufferedScheme.h"
