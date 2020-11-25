@@ -62,11 +62,6 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
     auto res =
         lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid(), true);
-    //    if (!res) {
-    //      auto folded_pos = folded_position(pos, box_geo);
-    //      res = lb_walberla()->get_velocity_at_pos(
-    //          folded_pos / lb_lbfluid_get_agrid(), true);
-    //    }
 
     if (!res) {
       printf("%d: position: %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
