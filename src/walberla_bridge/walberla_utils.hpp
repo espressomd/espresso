@@ -19,9 +19,6 @@
 #ifndef WALBERLA_UTILS_H
 #define WALBERLA_UTILS_H
 
-#include "config.hpp"
-
-#ifdef LB_WALBERLA
 #include "blockforest/StructuredBlockForest.h"
 #include "field/GhostLayerField.h"
 
@@ -112,7 +109,5 @@ void interpolate_bspline_at_pos(Utils::Vector3d pos, Function f) {
 }
 
 } // namespace walberla
-
-#endif // LB_WALBERLA
 
 #endif

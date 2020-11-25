@@ -21,27 +21,18 @@
 #ifdef LB_WALBERLA
 #include "lb_walberla_instance.hpp"
 
-#include "LbWalberlaBase.hpp"
-#include "LbWalberlaD3Q19FluctuatingMRT.hpp"
-#include "LbWalberlaD3Q19MRT.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "lb_interface.hpp"
 
+#include <LbWalberlaBase.hpp>
+#include <lb_walberla_init.hpp>
+
 #include <utils/Vector.hpp>
 
 #include <memory>
-
-#include "core/mpi/Environment.h"
-
-void walberla_mpi_init() {
-  int argc = 0;
-  char **argv = nullptr;
-  static walberla::mpi::Environment m_env =
-      walberla::mpi::Environment(argc, argv);
-}
 
 namespace {
 LbWalberlaBase *lb_walberla_instance = nullptr;
@@ -71,17 +62,8 @@ void init_lb_walberla(double viscosity, double density, double agrid,
   // Exceptions need to be converted to runtime erros so they can be
   // handled from Python in a parallel simulation
   try {
-
-    if (kT == 0.) { // un-thermalized LB
-      lb_walberla_instance =
-          new walberla::LbWalberlaD3Q19MRT(walberla::LbWalberlaD3Q19MRT{
-              viscosity, density, agrid, tau, box_dimensions, node_grid, 1});
-    } else { // thermalized LB
-      lb_walberla_instance = new walberla::LbWalberlaD3Q19FluctuatingMRT(
-          walberla::LbWalberlaD3Q19FluctuatingMRT{viscosity, density, agrid,
-                                                  tau, box_dimensions,
-                                                  node_grid, 1, kT, seed});
-    }
+    lb_walberla_instance = new_lb_walberla(viscosity, density, agrid, tau,
+                                           box_dimensions, node_grid, kT, seed);
     lb_walberla_params_instance = new LbWalberlaParams{agrid, tau};
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();

@@ -19,6 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.hpp"
+
 #include "communication.hpp"
 
 #include "errorhandling.hpp"
@@ -26,6 +28,10 @@
 #include "grid.hpp"
 
 #include <utils/mpi/cart_comm.hpp>
+
+#ifdef LB_WALBERLA
+#include <lb_walberla_init.hpp>
+#endif
 
 #include <boost/mpi.hpp>
 
@@ -61,8 +67,6 @@ using Communication::mpiCallbacks;
 
 int this_node = -1;
 int n_nodes = -1;
-
-void walberla_mpi_init();
 
 #if defined(OPEN_MPI)
 namespace {

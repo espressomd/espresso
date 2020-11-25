@@ -7,8 +7,3 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/lb_particle_coupling.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/lb_walberla_interface.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/lb_walberla_instance.cpp)
-IF(${WALBERLA})           
-target_sources(EspressoCore PRIVATE
-          ${CMAKE_CURRENT_SOURCE_DIR}/FluctuatingMRTLatticeModel.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/MRTLatticeModel.cpp)
-endif()

@@ -22,7 +22,7 @@
 #include "config.hpp"
 
 #ifdef LB_WALBERLA
-#include "LbWalberlaBase.hpp"
+#include <LbWalberlaBase.hpp>
 
 struct LbWalberlaParams {
   LbWalberlaParams(double agrid, double tau) : m_agrid(agrid), m_tau(tau) {}
@@ -57,6 +57,6 @@ void mpi_init_lb_walberla(double viscosity, double density, double agrid,
 /** @brief Destruct the LbWalberla instance and set lattice switch to NONE */
 void mpi_destruct_lb_walberla();
 
-#endif
+#endif // LB_WALBERLA
 
 #endif

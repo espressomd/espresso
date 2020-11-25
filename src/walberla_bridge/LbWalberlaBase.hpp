@@ -19,9 +19,6 @@
 #ifndef LB_WALBERLA_BASE_HPP
 #define LB_WALBERLA_BASE_HPP
 
-#include "config.hpp"
-
-#ifdef LB_WALBERLA
 #include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
@@ -153,7 +150,5 @@ enum class OutputVTK : unsigned {
   velocity_vector = 1u << 1u,
   pressure_tensor = 1u << 2u,
 };
-
-#endif // LB_WALBERLA
 
 #endif // LB_WALBERLA_H

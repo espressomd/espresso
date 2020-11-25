@@ -39,6 +39,10 @@ if(SCAFACOS)
   add_subdirectory(scafacos)
 endif(SCAFACOS)
 
+if(WALBERLA)
+  add_subdirectory(walberla_bridge)
+endif(WALBERLA)
+
 if(WITH_SCRIPT_INTERFACE)
   add_subdirectory(script_interface)
 endif()

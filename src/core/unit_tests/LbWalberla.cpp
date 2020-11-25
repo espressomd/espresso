@@ -29,9 +29,11 @@
 #include <boost/test/unit_test.hpp>
 
 #include "grid.hpp"
-#include "grid_based_algorithms/LbWalberlaD3Q19FluctuatingMRT.hpp"
-#include "grid_based_algorithms/LbWalberlaD3Q19MRT.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
+
+#include <LbWalberlaD3Q19FluctuatingMRT.hpp>
+#include <LbWalberlaD3Q19MRT.hpp>
+#include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 

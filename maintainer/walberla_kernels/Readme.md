@@ -1,7 +1,7 @@
 # Generation of kernels for Walberla
 i
 The scripts in this directory will generate the .cpp/hpp kernels for use with 
-Walberla. The generated files need to be placed in src/core/grid_based_algorithms
+Walberla. The generated files need to be placed in `src/walberla_bridge`
 
 WARNING: The code generation sorts the arguments alphabetically by symbol name.
 If you rename something, you may have to adapt the order of arguments in calling code!

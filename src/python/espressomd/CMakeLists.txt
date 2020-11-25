@@ -123,6 +123,9 @@ foreach(cython_file ${cython_SRC})
     set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
     target_link_libraries(${target} PRIVATE EspressoConfig EspressoCore
                                             ScriptInterface)
+    if(WALBERLA)
+      target_link_libraries(${target} PRIVATE WalberlaBridge)
+    endif()
     target_link_libraries(${target} PRIVATE pyx_interface)
     target_include_directories(${target} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS}
                                                         ${NUMPY_INCLUDE_DIR})

@@ -19,9 +19,6 @@
 #ifndef LB_WALBERLA_H
 #define LB_WALBERLA_H
 
-#include "config.hpp"
-
-#ifdef LB_WALBERLA
 #include "blockforest/Initialization.h"
 #include "blockforest/StructuredBlockForest.h"
 #include "blockforest/communication/UniformBufferedScheme.h"
@@ -60,8 +57,8 @@
 #include "timeloop/SweepTimeloop.h"
 
 #include "LbWalberlaBase.hpp"
-
 #include "walberla_utils.hpp"
+
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
 #include <utils/math/make_lin_space.hpp>
@@ -813,6 +810,5 @@ public:
   ~LbWalberla() override = default;
 };
 } // namespace walberla
-#endif // LB_WALBERLA
 
 #endif // LB_WALBERLA_H

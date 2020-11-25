@@ -38,12 +38,12 @@ cdef class HydrodynamicInteraction(Actor):
     #
 
 IF LB_WALBERLA:
-    cdef extern from "grid_based_algorithms/LbWalberlaBase.hpp":
+    cdef extern from "grid_based_algorithms/lb_interface.hpp":
 
         cdef enum OutputVTK:
             pass
 
-    cdef extern from "grid_based_algorithms/LbWalberlaBase.hpp" namespace 'OutputVTK':
+    cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace 'OutputVTK':
 
         cdef OutputVTK output_vtk_density 'OutputVTK::density'
         cdef OutputVTK output_vtk_velocity_vector 'OutputVTK::velocity_vector'
