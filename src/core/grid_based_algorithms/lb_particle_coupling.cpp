@@ -142,8 +142,6 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
   v_drift += p.p.mu_E;
 #endif
 
-  //  printf("v_p %g %g %g v_d %g %g
-  //  %g\n",v_drift[0],v_drift[1],v_drift[2],p.m.v[0],p.m.v[1],p.m.v[2]);
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
   auto const force = -lb_lbcoupling_get_gamma() * (p.m.v - v_drift) + f_random;
 
@@ -256,15 +254,6 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         };
 
         auto couple_particle = [&](Particle &p) -> void {
-          // We only couple ghosts, if the physical particle is not on the node
-          //          if (p.l.ghost and
-          //              not
-          //              cell_structure.get_local_particle(p.p.identity)->l.ghost)
-          //            return;
-
-          //                            printf("%d: coupling at %g %g %g, ghost
-          //                            %d\n",this_node,
-          //                             p.r.p[0],p.r.p[1],p.r.p[2],p.l.ghost);
           if (p.p.is_virtual and !couple_virtual)
             return;
 
