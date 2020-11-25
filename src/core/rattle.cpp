@@ -42,7 +42,7 @@ int n_rigidbonds = 0;
 
 /** \name Private functions */
 /************************************************************/
-/*@{*/
+/**@{*/
 
 /** Positional Corrections are added to the current particle positions. Invoked
  * from \ref correct_pos_shake() */
@@ -69,7 +69,7 @@ static void apply_vel_corr(const ParticleRange &particles);
 static void revert_force(const ParticleRange &particles,
                          const ParticleRange &ghost_particles);
 
-/*@}*/
+/**@}*/
 
 /*Initialize old positions (particle positions at previous time step)
   of the particles*/

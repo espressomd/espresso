@@ -73,7 +73,7 @@ using Utils::strcat_alloc;
 p3m_data_struct p3m;
 
 /** \name Private Functions */
-/*@{*/
+/**@{*/
 
 /** Initialize the (inverse) mesh constant @ref P3MParameters::a "a"
  *  (@ref P3MParameters::ai "ai") and the cutoff for charge assignment
@@ -112,10 +112,10 @@ static void p3m_calc_influence_function_force();
  */
 static void p3m_calc_influence_function_energy();
 
-/*@}*/
+/**@}*/
 
 /** @name P3M tuning helper functions */
-/*@{*/
+/**@{*/
 
 /** Calculate the real space contribution to the rms error in the force (as
  *  described by Kolafa and Perram).
@@ -150,7 +150,7 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
                                    double alpha_L_i, double *alias1,
                                    double *alias2);
 
-/*@}*/
+/**@}*/
 
 p3m_data_struct::p3m_data_struct() {
   /* local_mesh is uninitialized */

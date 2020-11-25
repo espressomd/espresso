@@ -28,7 +28,7 @@
  *  The modes can be combined by or-ing together, but not all combinations are
  *  possible.
  */
-/*@{*/
+/**@{*/
 #define COLLISION_MODE_OFF 0
 /// Just create bond between centers of colliding particles
 #define COLLISION_MODE_BOND 2
@@ -42,7 +42,7 @@
 #define COLLISION_MODE_GLUE_TO_SURF 8
 /// Three particle binding mode
 #define COLLISION_MODE_BIND_THREE_PARTICLES 16
-/*@}*/
+/**@}*/
 
 class Collision_parameters {
 public:

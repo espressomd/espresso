@@ -790,7 +790,7 @@ public:
  * @name Callback macros
  * @anchor callback_macros
  */
-/*@{*/
+/**@{*/
 
 /**
  * @brief Register a static callback without return value.
@@ -869,6 +869,6 @@ public:
       register_master_rank_##cb(::Communication::Result::MasterRank{}, &(cb)); \
   }
 
-/*@}*/
+/**@}*/
 
 #endif

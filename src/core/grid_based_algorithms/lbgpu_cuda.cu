@@ -74,10 +74,10 @@ static LB_rho_v_gpu *device_rho_v = nullptr;
 static LB_rho_v_pi_gpu *print_rho_v_pi = nullptr;
 
 /** @name structs for velocity densities */
-/*@{*/
+/**@{*/
 static LB_nodes_gpu nodes_a;
 static LB_nodes_gpu nodes_b;
-/*@}*/
+/**@}*/
 
 /** boundary information */
 static LB_boundaries_gpu boundaries;
@@ -98,10 +98,10 @@ static float *lb_boundary_force = nullptr;
 #endif
 
 /** @name pointers for additional cuda check flag */
-/*@{*/
+/**@{*/
 static int *gpu_check = nullptr;
 static int *h_gpu_check = nullptr;
-/*@}*/
+/**@}*/
 
 /** @brief Direction of data transfer between @ref nodes_a and @ref nodes_b
  *  during integration in @ref lb_integrate_GPU
@@ -109,10 +109,10 @@ static int *h_gpu_check = nullptr;
 static bool intflag = true;
 LB_nodes_gpu *current_nodes = nullptr;
 /** @name defining size values for allocating global memory */
-/*@{*/
+/**@{*/
 static size_t size_of_rho_v;
 static size_t size_of_rho_v_pi;
-/*@}*/
+/**@}*/
 
 /** Parameters residing in constant memory */
 __device__ __constant__ LB_parameters_gpu para[1];
