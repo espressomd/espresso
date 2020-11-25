@@ -73,7 +73,12 @@ void init_lb_walberla(double viscosity, double density, double agrid,
 }
 REGISTER_CALLBACK(init_lb_walberla)
 
-void destruct_lb_walberla() { delete lb_walberla_instance; }
+void destruct_lb_walberla() {
+  delete lb_walberla_instance;
+  delete lb_walberla_params_instance;
+  lb_walberla_instance = nullptr;
+  lb_walberla_params_instance = nullptr;
+}
 REGISTER_CALLBACK(destruct_lb_walberla)
 
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
