@@ -1308,24 +1308,20 @@ void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
         auto const k = get_linear_index(x, y, z, lblattice.halo_grid);
 
         if (lb_fields[k].boundary) {
+          Utils::Vector3d boundary_force = {};
           for (int i = 0; i < 19; i++) {
-            auto const population_shift =
-                -lb_parameters.density * 2 * D3Q19::w[i] *
-                (Utils::Vector3d{D3Q19::c[i]} * lb_fields[k].slip_velocity) /
-                D3Q19::c_sound_sq<double>;
+            auto const ci = Utils::Vector3i{D3Q19::c[i]};
 
-            if (x - D3Q19::c[i][0] > 0 &&
-                x - D3Q19::c[i][0] < lblattice.grid[0] + 1 &&
-                y - D3Q19::c[i][1] > 0 &&
-                y - D3Q19::c[i][1] < lblattice.grid[1] + 1 &&
-                z - D3Q19::c[i][2] > 0 &&
-                z - D3Q19::c[i][2] < lblattice.grid[2] + 1) {
+            if (x - ci[0] > 0 && x - ci[0] < lblattice.grid[0] + 1 &&
+                y - ci[1] > 0 && y - ci[1] < lblattice.grid[1] + 1 &&
+                z - ci[2] > 0 && z - ci[2] < lblattice.grid[2] + 1) {
               if (!lb_fields[k - next[i]].boundary) {
-                for (int l = 0; l < 3; l++) {
-                  (*LBBoundaries::lbboundaries[lb_fields[k].boundary - 1])
-                      .force()[l] += // TODO
-                      (2 * lbfluid[i][k] + population_shift) * D3Q19::c[i][l];
-                }
+                auto const population_shift =
+                    -lb_parameters.density * 2 * D3Q19::w[i] *
+                    (ci * lb_fields[k].slip_velocity) /
+                    D3Q19::c_sound_sq<double>;
+
+                boundary_force += (2 * lbfluid[i][k] + population_shift) * ci;
                 lbfluid[reverse[i]][k - next[i]] =
                     lbfluid[i][k] + population_shift;
               } else {
@@ -1333,6 +1329,8 @@ void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
               }
             }
           }
+          LBBoundaries::lbboundaries[lb_fields[k].boundary - 1]->force() +=
+              boundary_force;
         }
       }
     }
