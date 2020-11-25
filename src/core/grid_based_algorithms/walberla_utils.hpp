@@ -75,7 +75,7 @@ IBlock *get_block_extended(const PosVector &pos, BlockForest const &blocks,
 template <typename BlockForest>
 boost::optional<BlockAndCell>
 get_block_and_cell(const Utils::Vector3i &node, bool consider_ghost_layers,
-                   BlockForest const &blocks, int n_ghost_layers = 1) {
+                   BlockForest const &blocks, int n_ghost_layers) {
   // Get block and local cell
   Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
   auto block = blocks->getBlock(global_cell, 0);
@@ -95,7 +95,7 @@ get_block_and_cell(const Utils::Vector3i &node, bool consider_ghost_layers,
 
 template <typename BlockForest>
 IBlock *get_block(const Utils::Vector3d &pos, bool consider_ghost_layers,
-                  BlockForest const &blocks, int n_ghost_layers = 1) {
+                  BlockForest const &blocks, int n_ghost_layers) {
   // Get block
   auto block = blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
   if (consider_ghost_layers and !block) {
