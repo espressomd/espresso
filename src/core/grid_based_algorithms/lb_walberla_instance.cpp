@@ -59,7 +59,7 @@ void init_lb_walberla(double viscosity, double density, double agrid,
                       double tau, const Utils::Vector3d &box_dimensions,
                       const Utils::Vector3i &node_grid, double kT,
                       unsigned int seed) {
-  // Exceptions need to be converted to runtime erros so they can be
+  // Exceptions need to be converted to runtime errors so they can be
   // handled from Python in a parallel simulation
   try {
     lb_walberla_instance = new_lb_walberla(viscosity, density, agrid, tau,
