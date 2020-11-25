@@ -750,10 +750,9 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index,
 }
 
 template <typename T>
-inline std::array<T, 19>
-lb_relax_modes(const std::array<T, 19> &modes,
-               const Utils::Vector<T, 3> &force_density,
-               const LB_Parameters &parameters) {
+std::array<T, 19> lb_relax_modes(const std::array<T, 19> &modes,
+                                 const Utils::Vector<T, 3> &force_density,
+                                 const LB_Parameters &parameters) {
   using Utils::sqr;
   using Utils::Vector;
 
@@ -793,7 +792,7 @@ lb_relax_modes(const std::array<T, 19> &modes,
 }
 
 template <typename T>
-inline std::array<T, 19> lb_thermalize_modes(
+std::array<T, 19> lb_thermalize_modes(
     Lattice::index_t index, const std::array<T, 19> &modes,
     const LB_Parameters &lb_parameters,
     boost::optional<Utils::Counter<uint64_t>> const &rng_counter) {
@@ -903,7 +902,7 @@ void lb_stream(LB_Fluid &lbfluid, const std::array<T, 19> &populations,
 }
 
 /* Collisions and streaming (push scheme) */
-inline void lb_collide_stream() {
+void lb_collide_stream() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
@@ -1343,9 +1342,8 @@ void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
  *  @param[in]  index  Local lattice site
  *  @retval The local fluid momentum.
  */
-inline Utils::Vector3d
-lb_calc_local_momentum_density(Lattice::index_t index,
-                               const LB_Fluid &lb_fluid) {
+Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index,
+                                               const LB_Fluid &lb_fluid) {
   return {{lb_fluid[1][index] - lb_fluid[2][index] + lb_fluid[7][index] -
                lb_fluid[8][index] + lb_fluid[9][index] - lb_fluid[10][index] +
                lb_fluid[11][index] - lb_fluid[12][index] + lb_fluid[13][index] -
