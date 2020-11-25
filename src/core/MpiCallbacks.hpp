@@ -22,6 +22,23 @@
 #ifndef COMMUNICATION_MPI_CALLBACKS
 #define COMMUNICATION_MPI_CALLBACKS
 
+/**
+ * @file
+ *
+ * @ref Communication::MpiCallbacks manages MPI communication using a
+ * visitor pattern. The program runs on the head node and is responsible
+ * for calling callback functions on the worker nodes when necessary,
+ * e.g. to broadcast global variables or run an algorithm in parallel.
+ *
+ * Callbacks are registered on the head node as function pointers via
+ * the @ref callback_macros "callback macros". The visitor pattern
+ * allows using arbitrary function signatures. For non-void returning
+ * callbacks, several return value policies are available: ignore return
+ * value, return only one value (this is achieved using a boost optional
+ * that is empty on all but one node), return the value of the head node,
+ * or return a reduced value (by specifying the reduction operation).
+ */
+
 #include <utils/NumeratedContainer.hpp>
 #include <utils/as_const.hpp>
 #include <utils/tuple.hpp>
@@ -771,6 +788,12 @@ public:
 } /* namespace Communication */
 
 /**
+ * @name Callback macros
+ * @anchor callback_macros
+ */
+/*@{*/
+
+/**
  * @brief Register a static callback without return value
  *
  * This registers a function as an mpi callback.
@@ -846,5 +869,7 @@ public:
   static ::Communication::RegisterCallback                                     \
       register_master_rank_##cb(::Communication::Result::MasterRank{}, &(cb)); \
   }
+
+/*@}*/
 
 #endif
