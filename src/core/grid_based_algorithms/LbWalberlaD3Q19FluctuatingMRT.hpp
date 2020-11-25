@@ -1,4 +1,4 @@
-#include "FluctuatingMRT_LatticeModel.h"
+#include "FluctuatingMRTLatticeModel.h"
 #include "LbWalberla_impl.hpp"
 
 namespace walberla {

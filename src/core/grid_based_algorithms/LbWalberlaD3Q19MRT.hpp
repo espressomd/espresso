@@ -1,5 +1,5 @@
 #include "LbWalberla_impl.hpp"
-#include "MRT_LatticeModel.h"
+#include "MRTLatticeModel.h"
 
 namespace walberla {
 class LbWalberlaD3Q19MRT : public LbWalberla<lbm::MRT_LatticeModel> {
