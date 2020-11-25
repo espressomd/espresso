@@ -17,7 +17,6 @@ One way is to use the copy in Espresso's build directory.
 
 ## Example:
 ```
-export PYTHONPATY=$HOME/pystencils:$HOME/lbmpy:$HOME/es/build-walberla/_deps/walberla-src/python/
+export PYTHONPATH=$HOME/pystencils:$HOME/lbmpy:$HOME/es/build-walberla/_deps/walberla-src/python/
 python3 generate_lb_kernels.py
 ```
-
