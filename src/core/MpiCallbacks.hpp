@@ -117,7 +117,7 @@ auto invoke(F f, boost::mpi::packed_iarchive &ia) {
                 "arguments for callbacks.");
 
   /* This is the local receive buffer for the parameters. We have to strip
-       away const so we can actually deserialize into it. */
+     away const so we can actually deserialize into it. */
   std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
   Utils::for_each([&ia](auto &e) { ia >> e; }, params);
 
@@ -355,7 +355,8 @@ public:
    * needed to call it. The handle has a type derived
    * from the signature of the callback, which makes
    * it possible to do static type checking on the
-   * arguments. */
+   * arguments.
+   */
   template <class... Args> class CallbackHandle {
   public:
     template <typename F, class = std::enable_if_t<std::is_same<
@@ -401,8 +402,7 @@ public:
     int id() const { return m_id; }
   };
 
-  /* Avoid accidental copy, leads to mpi deadlock
-     or split brain */
+  /* Avoid accidental copy, leads to mpi deadlock or split brain */
   MpiCallbacks(MpiCallbacks const &) = delete;
   MpiCallbacks &operator=(MpiCallbacks const &) = delete;
 
@@ -419,7 +419,7 @@ public:
   explicit MpiCallbacks(boost::mpi::communicator comm,
                         bool abort_on_exit = true)
       : m_abort_on_exit(abort_on_exit), m_comm(std::move(comm)) {
-    /** Add a dummy at id 0 for loop abort. */
+    /* Add a dummy at id 0 for loop abort. */
     m_callback_map.add(nullptr);
 
     for (auto &kv : static_callbacks()) {
@@ -487,7 +487,7 @@ public:
    *
    * Add a new callback to the system. This is a collective
    * function that must be run on all nodes.
-   * Tag is one of the tag types from @ref Communication::Result,
+   * @p tag is one of the tag types from @ref Communication::Result,
    * which indicates what to do with the return values.
    *
    * @param tag Tag type indicating return operation
@@ -525,7 +525,7 @@ private:
    * @brief call a callback.
    *
    * Call the callback id.
-   * The method can only be called on the master
+   * The method can only be called on the head node
    * and has the prerequisite that the other nodes are
    * in the MPI loop.
    *
@@ -533,7 +533,7 @@ private:
    * @param args Arguments for the callback.
    */
   template <class... Args> void call(int id, Args &&... args) const {
-    /* Can only be call from master */
+    /* Can only be call from head node */
     if (m_comm.rank() != 0) {
       throw std::logic_error("Callbacks can only be invoked on rank 0.");
     }
@@ -543,7 +543,7 @@ private:
       throw std::out_of_range("Callback does not exists.");
     }
 
-    /* Send request to slaves */
+    /* Send request to worker nodes */
     boost::mpi::packed_oarchive oa(m_comm);
     oa << id;
 
@@ -559,11 +559,11 @@ public:
    * @brief call a callback.
    *
    * Call a static callback by pointer.
-   * The method can only be called on the master
+   * The method can only be called on the head node
    * and has the prerequisite that the other nodes are
    * in the MPI loop. Also the function has to be previously
    * registered e.g. with the @ref REGISTER_CALLBACK macro.
-   * The callback is not called on the head node.
+   * The callback is **not** called on the head node.
    *
    * @param fp Pointer to the function to call.
    * @param args Arguments for the callback.
@@ -582,7 +582,7 @@ public:
    * @brief call a callback.
    *
    * Call a static callback by pointer.
-   * The method can only be called on the master
+   * The method can only be called on the head node
    * and has the prerequisite that the other nodes are
    * in the MPI loop. Also the function has to be previously
    * registered e.g. with the @ref REGISTER_CALLBACK macro.
@@ -708,7 +708,6 @@ public:
       int request;
       ia >> request;
 
-      /* id == 0 is loop_abort. */
       if (request == LOOP_ABORT) {
         break;
       }
@@ -731,12 +730,12 @@ public:
 
 private:
   /**
-   * @brief Id for the loop_abort. Has to be 0.
+   * @brief Id for the @ref abort_loop. Has to be 0.
    */
   enum { LOOP_ABORT = 0 };
 
   /**
-   * @brief If loop_abort should be called on destruction
+   * @brief If @ref abort_loop should be called on destruction
    *        on the head node.
    */
   bool m_abort_on_exit;
@@ -794,7 +793,7 @@ public:
 /*@{*/
 
 /**
- * @brief Register a static callback without return value
+ * @brief Register a static callback without return value.
  *
  * This registers a function as an mpi callback.
  * The macro should be used at global scope.
@@ -807,7 +806,7 @@ public:
   }
 
 /**
- * @brief Register a static callback whose return value is reduced
+ * @brief Register a static callback whose return value is reduced.
  *
  * This registers a function as an mpi callback with
  * reduction of the return values from the nodes.
@@ -824,7 +823,7 @@ public:
   }
 
 /**
- * @brief Register a static callback whose return value is to be ignored
+ * @brief Register a static callback whose return value is to be ignored.
  *
  * This registers a function as an mpi callback with
  * ignored return values.
@@ -839,7 +838,7 @@ public:
   }
 
 /**
- * @brief Register a static callback which returns a value on only one node
+ * @brief Register a static callback which returns a value on only one node.
  *
  * This registers a function as an mpi callback with
  * reduction of the return values from one node
@@ -856,7 +855,7 @@ public:
 
 /**
  * @brief Register a static callback whose return value is ignored except on
- * the head node
+ * the head node.
  *
  * This registers a function as an mpi callback with
  * reduction of the return values from the head node.
