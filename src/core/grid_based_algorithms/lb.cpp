@@ -876,19 +876,18 @@ std::array<T, 19> lb_apply_forces(const std::array<T, 19> &modes,
 /**
  * @brief Relative index for the next node for each lattice velocity.
  *
- * @param lattice The lattice parameters.
+ * @param lb_lattice The lattice parameters.
  * @param c Lattice velocities.
  */
 auto lb_next_offsets(const Lattice &lb_lattice,
-                     std::array<std::array<double, 3>, 19> const &c) {
-  const std::array<int, 3> strides = {
+                     std::array<Utils::Vector3i, 19> const &c) {
+  const Utils::Vector3<ptrdiff_t> strides = {
       {1, lb_lattice.halo_grid[0],
        lb_lattice.halo_grid[0] * lb_lattice.halo_grid[1]}};
 
   std::array<ptrdiff_t, 19> offsets;
-  boost::transform(c, offsets.begin(), [&strides](auto const &ci) {
-    return boost::inner_product(strides, ci, 0);
-  });
+  boost::transform(c, offsets.begin(),
+                   [&strides](auto const &ci) { return strides * ci; });
 
   return offsets;
 }
@@ -1309,7 +1308,7 @@ void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
         if (lb_fields[k].boundary) {
           Utils::Vector3d boundary_force = {};
           for (int i = 0; i < 19; i++) {
-            auto const ci = Utils::Vector3i{D3Q19::c[i]};
+            auto const ci = D3Q19::c[i];
 
             if (x - ci[0] > 0 && x - ci[0] < lblattice.grid[0] + 1 &&
                 y - ci[1] > 0 && y - ci[1] < lblattice.grid[1] + 1 &&
