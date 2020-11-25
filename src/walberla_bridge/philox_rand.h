@@ -1,3 +1,5 @@
+// source: cuRAND module, file curand_philox4x32_x.h
+
 #include <cstdint>
 
 #ifndef __CUDA_ARCH__
