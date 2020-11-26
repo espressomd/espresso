@@ -56,7 +56,7 @@
 /* Note that the first coefficient already includes the constant offsets */
 
 /** @name Chebyshev expansions based on SLATEC bk0(), bk0e() */
-/*@{*/
+/**@{*/
 /** Series for @c bk0.
  *  On the interval 0. to 4.00000d+00
  *  |             Label            |   Value  |
@@ -106,10 +106,10 @@ static double ak02_cs[14] = {
     0.00000000046111825,       -0.00000000003158592, 0.00000000000243501,
     -0.00000000000020743,      0.00000000000001925,  -0.00000000000000192,
     0.00000000000000020,       -0.00000000000000002};
-/*@}*/
+/**@}*/
 
 /** @name Chebyshev expansions based on SLATEC besi0() */
-/*@{*/
+/**@{*/
 /** Series for @c bi0.
  *  On the interval 0. to 9.00000d+00
  *  |             Label            |   Value  |
@@ -124,10 +124,10 @@ static double bi0_cs[12] = {
     .01304891466707290428,       .00043442709008164874,  .00000942265768600193,
     .00000014340062895106,       .00000000161384906966,  .00000000001396650044,
     .00000000000009579451,       .00000000000000053339,  .00000000000000000245};
-/*@}*/
+/**@}*/
 
 /** @name Chebyshev expansions based on SLATEC besk1(), besk1e() */
-/*@{*/
+/**@{*/
 /** Series for @c bk1.
  *  On the interval 0. to 4.00000d+00
  *  |             Label            |   Value  |
@@ -175,10 +175,10 @@ static double ak12_cs[14] = {
     -0.00000000055853361,      0.00000000003732996,  -0.00000000000282505,
     0.00000000000023720,       -0.00000000000002176, 0.00000000000000215,
     -0.00000000000000022,      0.00000000000000002};
-/*@}*/
+/**@}*/
 
 /** @name Chebyshev expansions based on SLATEC besi1(), besi1e() */
-/*@{*/
+/**@{*/
 /** Series for @c bi1.
  *  On the interval 0. to 9.00000d+00
  *  |             Label            |   Value  |
@@ -193,7 +193,7 @@ static double bi1_cs[11] = {
     0.001545394556300123,        0.000041888521098377, 0.000000764902676483,
     0.000000010042493924,        0.000000000099322077, 0.000000000000766380,
     0.000000000000004741,        0.000000000000000024};
-/*@}*/
+/**@}*/
 
 /** Coefficients for Maclaurin summation in hzeta(). Evaluated as inverse
  *  numbers, i.e. @f$ \displaystyle\frac{B_{2j}}{(2j)!} @f$.

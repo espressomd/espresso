@@ -77,11 +77,11 @@ extern nptiso_struct nptiso;
 /** @name NpT geometry bitmasks.
  *  Allowed values for @ref nptiso_struct::geometry.
  */
-/*@{*/
+/**@{*/
 #define NPTGEOM_XDIR 1
 #define NPTGEOM_YDIR 2
 #define NPTGEOM_ZDIR 4
-/*@}*/
+/**@}*/
 
 /** @brief Synchronizes NpT state such as instantaneous and average pressure
  */

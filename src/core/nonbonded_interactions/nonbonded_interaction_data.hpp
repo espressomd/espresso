@@ -264,10 +264,10 @@ struct IA_parameters {
 
 #ifdef DPD
   /** \name DPD as interaction */
-  /*@{*/
+  /**@{*/
   DPDParameters dpd_radial;
   DPDParameters dpd_trans;
-  /*@}*/
+  /**@}*/
 #endif
 
 #ifdef THOLE

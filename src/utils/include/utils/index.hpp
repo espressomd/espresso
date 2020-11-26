@@ -83,7 +83,7 @@ enum class MemoryOrder { COLUMN_MAJOR, ROW_MAJOR };
 /*************************************************************/
 /** \name Three dimensional grid operations                  */
 /*************************************************************/
-/*@{*/
+/**@{*/
 
 /** get the linear index from the position (@p a,@p b,@p c) in a 3D grid
  *  of dimensions @p adim.
@@ -137,7 +137,7 @@ template <class T> T upper_triangular(T i, T j, T n) {
   return (n * (n - 1)) / 2 - ((n - i) * (n - i - 1)) / 2 + j;
 }
 
-/*@}*/
+/**@}*/
 
 } // namespace Utils
 
