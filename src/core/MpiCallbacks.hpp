@@ -533,7 +533,6 @@ private:
    * @param args Arguments for the callback.
    */
   template <class... Args> void call(int id, Args &&... args) const {
-    /* Can only be call from head node */
     if (m_comm.rank() != 0) {
       throw std::logic_error("Callbacks can only be invoked on rank 0.");
     }
