@@ -94,17 +94,14 @@ const FlagUID UBB_flag("velocity bounce back");
 /** Sweep that swaps force_to_be_applied and last_applied_force
 and resets force_to_be_applied to the global external force
 */
-template <typename PdfField, typename ForceField, typename BoundaryHandling>
-class ResetForce {
+template <typename PdfField, typename ForceField> class ResetForce {
 public:
   ResetForce(const BlockDataID &pdf_field_id,
              const BlockDataID &last_applied_force_field_id,
-             const BlockDataID &force_to_be_applied_id,
-             const BlockDataID &boundary_handling_id)
+             const BlockDataID &force_to_be_applied_id)
       : m_pdf_field_id(pdf_field_id),
         m_last_applied_force_field_id(last_applied_force_field_id),
         m_force_to_be_applied_id(force_to_be_applied_id),
-        m_boundary_handling_id(boundary_handling_id),
         m_ext_force(Vector3<real_t>{0, 0, 0}){};
 
   void set_ext_force(const Utils::Vector3d &ext_force) {
@@ -119,8 +116,6 @@ public:
         block->template getData<ForceField>(m_last_applied_force_field_id);
     ForceField *force_to_be_applied =
         block->template getData<ForceField>(m_force_to_be_applied_id);
-    BoundaryHandling *boundary_handling =
-        block->template getData<BoundaryHandling>(m_boundary_handling_id);
 
     force_field->swapDataPointers(force_to_be_applied);
 
@@ -140,7 +135,6 @@ private:
   const BlockDataID m_pdf_field_id;
   const BlockDataID m_last_applied_force_field_id;
   const BlockDataID m_force_to_be_applied_id;
-  const BlockDataID m_boundary_handling_id;
   Vector3<real_t> m_ext_force;
 };
 
@@ -202,7 +196,7 @@ protected:
   std::shared_ptr<LatticeModel> m_lattice_model;
 
   // ResetForce sweep + external force handling
-  std::shared_ptr<ResetForce<PdfField, VectorField, Boundaries>> m_reset_force;
+  std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
   size_t stencil_size() const override {
     return static_cast<size_t>(LatticeModel::Stencil::Size);
@@ -310,10 +304,9 @@ public:
     m_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
             m_last_applied_force_field_id));
-    m_reset_force =
-        std::make_shared<ResetForce<PdfField, VectorField, Boundaries>>(
-            m_pdf_field_id, m_last_applied_force_field_id,
-            m_force_to_be_applied_id, m_boundary_handling_id);
+    m_reset_force = std::make_shared<ResetForce<PdfField, VectorField>>(
+        m_pdf_field_id, m_last_applied_force_field_id,
+        m_force_to_be_applied_id);
 
     //    m_time_loop->add() << timeloop::BeforeFunction(communication,
     //                                                   "communication")
