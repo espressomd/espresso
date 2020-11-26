@@ -250,8 +250,8 @@ class TestLB:
         for n in self.lbf.nodes():
             n.velocity = np.random.random(3) - .5
         # Test several particle positions
-        for pos in [0, 0, 0], self.system.box_l, self.system.box_l / \
-                2, self.system.box_l / 2 - self.params['agrid'] / 2:
+        for pos in ([0, 0, 0], self.system.box_l, self.system.box_l / 2,
+                    self.system.box_l / 2 - self.params['agrid'] / 2):
             p = self.system.part.add(pos=pos, v=[1, 2, 3])
 
             v_part = p.v 
