@@ -41,7 +41,7 @@ unit_test(NAME field_coupling_force_field SRC
           field_coupling_force_field_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME periodic_fold_test SRC periodic_fold_test.cpp)
 if(WALBERLA)
-  unit_test(NAME LbWalberla_test SRC LbWalberla.cpp DEPENDS EspressoCore
+  unit_test(NAME LBWalberla_test SRC LBWalberla.cpp DEPENDS EspressoCore
             WalberlaBridge Boost::mpi ${WALBERLA_LIBS})
   target_include_directories(LbWalberla_test PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                      ${walberla_BINARY_DIR}/src)

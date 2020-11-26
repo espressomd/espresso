@@ -31,8 +31,9 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 
-#include <LbWalberlaD3Q19FluctuatingMRT.hpp>
-#include <LbWalberlaD3Q19MRT.hpp>
+#include <LBWalberlaBase.hpp>
+#include <LBWalberlaD3Q19FluctuatingMRT.hpp>
+#include <LBWalberlaD3Q19MRT.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
@@ -49,8 +50,8 @@ using Utils::hadamard_product;
 using Utils::Vector3d;
 using Utils::Vector3i;
 
-using walberla::LbWalberlaD3Q19FluctuatingMRT;
-using walberla::LbWalberlaD3Q19MRT;
+using walberla::LBWalberlaD3Q19FluctuatingMRT;
+using walberla::LBWalberlaD3Q19MRT;
 
 constexpr double viscosity = 0.4;
 constexpr Vector3d box_dimensions = {6, 6, 9};
@@ -67,20 +68,20 @@ constexpr double kT = 0.0014;
 namespace bdata = boost::unit_test::data;
 
 using LbGeneratorVector =
-    std::vector<std::function<std::shared_ptr<LbWalberlaBase>(Vector3i)>>;
+    std::vector<std::function<std::shared_ptr<LBWalberlaBase>(Vector3i)>>;
 
 // Add all LBs with kT=0 to be tested, here
 LbGeneratorVector unthermalized_lbs() {
   LbGeneratorVector lbs;
   // Unthermalized D3Q19 MRT
   lbs.push_back([](Vector3i mpi_shape) {
-    return std::make_shared<LbWalberlaD3Q19MRT>(viscosity, density, agrid, tau,
+    return std::make_shared<LBWalberlaD3Q19MRT>(viscosity, density, agrid, tau,
                                                 box_dimensions, mpi_shape, 1);
   });
 
-  // Tthermalized D3Q19 MRT with kT set to 0
+  // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back([](Vector3i mpi_shape) {
-    return std::make_shared<LbWalberlaD3Q19FluctuatingMRT>(
+    return std::make_shared<LBWalberlaD3Q19FluctuatingMRT>(
         viscosity, density, agrid, tau, box_dimensions, mpi_shape, 1, 0.0,
         seed);
   });
@@ -91,9 +92,9 @@ LbGeneratorVector unthermalized_lbs() {
 LbGeneratorVector thermalized_lbs() {
   LbGeneratorVector lbs;
 
-  // Tthermalized D3Q19 MRT with kT set to 0
+  // Thermalized D3Q19 MRT with kT set to 0
   lbs.push_back([](Vector3i mpi_shape) {
-    return std::make_shared<LbWalberlaD3Q19FluctuatingMRT>(
+    return std::make_shared<LBWalberlaD3Q19FluctuatingMRT>(
         viscosity, density, agrid, tau, box_dimensions, mpi_shape, 1, kT, seed);
   });
   return lbs;
@@ -112,7 +113,7 @@ BOOST_TEST_DONT_PRINT_LOG_VALUE(LbGeneratorVector::value_type)
 BOOST_DATA_TEST_CASE(basic_params, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(mpi_shape);
   BOOST_CHECK(lb->get_grid_dimensions() == grid_dimensions);
-  auto lb_params = LbWalberlaParams(agrid, tau);
+  auto lb_params = LBWalberlaParams(agrid, tau);
   BOOST_CHECK(lb_params.get_agrid() == agrid);
   BOOST_CHECK(lb_params.get_tau() == tau);
 
