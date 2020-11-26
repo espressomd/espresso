@@ -43,7 +43,7 @@ unit_test(NAME periodic_fold_test SRC periodic_fold_test.cpp)
 if(WALBERLA)
   unit_test(NAME LBWalberla_test SRC LBWalberla.cpp DEPENDS EspressoCore
             WalberlaBridge Boost::mpi ${WALBERLA_LIBS})
-  target_include_directories(LbWalberla_test PRIVATE ${WALBERLA_INCLUDE_DIRS}
+  target_include_directories(LBWalberla_test PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                      ${walberla_BINARY_DIR}/src)
 endif(WALBERLA)
 unit_test(NAME grid_test SRC grid_test.cpp DEPENDS EspressoCore)
