@@ -28,7 +28,7 @@ namespace Utils {
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
 /*************************************************************/
-/*@{*/
+/**@{*/
 
 /**
  * @brief Ratio of diameter and circumference of a circle.
@@ -65,7 +65,7 @@ template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_2() {
   return 1.4142135623730950488016887242096981;
 }
 
-/*@}*/
+/**@}*/
 
 /// error code if no error occurred
 #define ES_OK 0

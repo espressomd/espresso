@@ -693,7 +693,7 @@ void lb_prepare_communication(HaloCommunicator &halo_comm,
 /***********************************************************************/
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
-/*@{*/
+/**@{*/
 template <typename T>
 std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
   auto normalized_modes = modes;
@@ -740,7 +740,7 @@ void lb_set_population_from_density_momentum_density_stress(
           density, momentum_density, stress);
   lb_set_population(index, population);
 }
-/*@}*/
+/**@}*/
 
 /** Calculation of hydrodynamic modes */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index,
@@ -997,7 +997,7 @@ void lattice_boltzmann_update() {
 /***********************************************************************/
 /** \name Coupling part */
 /***********************************************************************/
-/*@{*/
+/**@{*/
 
 static int compare_buffers(double *buf1, double *buf2, int size) {
   int ret;
@@ -1396,4 +1396,4 @@ void lb_collect_boundary_forces(double *result) {
 #endif
 }
 
-/*@}*/
+/**@}*/

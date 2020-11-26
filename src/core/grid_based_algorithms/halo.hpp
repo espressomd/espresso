@@ -37,7 +37,7 @@
 #include <vector>
 
 /** \name Types of halo communications */
-/*@{*/
+/**@{*/
 #define HALO_LOCL                                                              \
   0 /**< Tag for local exchange of halo regions on the same processor */
 #define HALO_SENDRECV                                                          \
@@ -45,13 +45,13 @@
 #define HALO_SEND 2 /**< Tag for halo send only */
 #define HALO_RECV 3 /**< Tag for halo receive only */
 #define HALO_OPEN 4 /**< Tag for halo open boundary */
-/*@}*/
+/**@}*/
 
 /** \name Tags for halo communications */
-/*@{*/
+/**@{*/
 #define REQ_HALO_SPREAD 501 /**< Tag for halo update */
 #define REQ_HALO_CHECK 599  /**< Tag for consistency check of halo regions */
-/*@}*/
+/**@}*/
 
 /** Layout of the lattice data.
  *  The description is similar to MPI datatypes but a bit more compact.

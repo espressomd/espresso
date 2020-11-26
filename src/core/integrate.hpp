@@ -28,13 +28,13 @@
  */
 
 /** \name Integrator switches */
-/*@{*/
+/**@{*/
 #define INTEG_METHOD_NPT_ISO 0
 #define INTEG_METHOD_NVT 1
 #define INTEG_METHOD_STEEPEST_DESCENT 2
 #define INTEG_METHOD_BD 3
 #define INTEG_METHOD_SD 7
-/*@}*/
+/**@}*/
 
 /** Switch determining which integrator to use. */
 extern int integ_switch;

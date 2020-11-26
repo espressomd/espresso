@@ -84,7 +84,7 @@ using Utils::strcat_alloc;
 dp3m_data_struct dp3m;
 
 /** \name Private Functions */
-/*@{*/
+/**@{*/
 
 /** Initialize for magnetic dipoles the (inverse) mesh constant @ref
  *  P3MParameters::a "a" (@ref P3MParameters::ai "ai") and the
@@ -116,7 +116,7 @@ static void dp3m_compute_constants_energy_dipolar();
 static double dp3m_k_space_error(double box_size, double prefac, int mesh,
                                  int cao, int n_c_part, double sum_q2,
                                  double alpha_L);
-/*@}*/
+/**@}*/
 
 /** Compute the dipolar surface terms */
 static double calc_surface_term(bool force_flag, bool energy_flag,
@@ -124,7 +124,7 @@ static double calc_surface_term(bool force_flag, bool energy_flag,
 
 /** \name P3M Tuning Functions */
 /************************************************************/
-/*@{*/
+/**@{*/
 
 double dp3m_real_space_error(double box_size, double prefac, double r_cut_iL,
                              int n_c_part, double sum_q2, double alpha_L);
@@ -139,7 +139,7 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
                         int n_c_part, double sum_q2, double x1, double x2,
                         double xacc, double tuned_accuracy);
 
-/*@}*/
+/**@}*/
 
 /** Correction of the dipolar p3m-energy. */
 double dp3m_average_dipolar_self_energy() {

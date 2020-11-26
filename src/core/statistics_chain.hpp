@@ -29,7 +29,7 @@
 
 /** \name Exported Functions */
 /************************************************************/
-/*@{*/
+/**@{*/
 
 /**
  * @brief Calculate the end-to-end-distance.
@@ -69,6 +69,6 @@ std::array<double, 4> calc_rg(int chain_start, int chain_n_chains,
  */
 std::array<double, 2> calc_rh(int chain_start, int chain_n_chains,
                               int chain_length);
-/*@}*/
+/**@}*/
 
 #endif
