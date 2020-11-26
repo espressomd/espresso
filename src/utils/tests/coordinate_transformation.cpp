@@ -29,6 +29,7 @@
 using Utils::Vector3d;
 
 BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_test) {
+  constexpr auto eps = 1e-14;
   Vector3d const cart_coord{{1.0, 3.3, 2.0}};
   auto const transformed_x = transform_coordinate_cartesian_to_cylinder(
       cart_coord, Vector3d{{1, 0, 0}});
@@ -51,13 +52,14 @@ BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_test) {
        std::atan2(cart_coord[1], cart_coord[0]), cart_coord[2]}};
 
   for (int i = 0; i < 3; ++i) {
-    BOOST_CHECK(transformed_x[i] == expected_x[i]);
-    BOOST_CHECK(transformed_y[i] == expected_y[i]);
-    BOOST_CHECK(transformed_z[i] == expected_z[i]);
+    BOOST_CHECK_SMALL(abs(transformed_x[i] - expected_x[i]), eps);
+    BOOST_CHECK_SMALL(abs(transformed_y[i] - expected_y[i]), eps);
+    BOOST_CHECK_SMALL(abs(transformed_z[i] - expected_z[i]), eps);
   }
 }
 
 BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_test) {
+  constexpr auto eps = 1e-14;
   Vector3d const cylinder_coord{{1.2, 3.123, 42.0}};
   auto const transformed_x = transform_coordinate_cylinder_to_cartesian(
       cylinder_coord, Vector3d{{1, 0, 0}});
@@ -80,8 +82,8 @@ BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_test) {
       {cylinder_coord[0] * std::cos(cylinder_coord[1]),
        cylinder_coord[0] * std::sin(cylinder_coord[1]), cylinder_coord[2]}};
   for (int i = 0; i < 3; ++i) {
-    BOOST_CHECK(transformed_x[i] == expected_x[i]);
-    BOOST_CHECK(transformed_y[i] == expected_y[i]);
-    BOOST_CHECK(transformed_z[i] == expected_z[i]);
+    BOOST_CHECK_SMALL(abs(transformed_x[i] - expected_x[i]), eps);
+    BOOST_CHECK_SMALL(abs(transformed_y[i] - expected_y[i]), eps);
+    BOOST_CHECK_SMALL(abs(transformed_z[i] - expected_z[i]), eps);
   }
 }
