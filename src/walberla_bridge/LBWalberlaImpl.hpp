@@ -21,7 +21,7 @@
 
 /**
  * @file
- * @ref walberla::LbWalberla implements the interface of the LB waLBerla
+ * @ref walberla::LBWalberla implements the interface of the LB waLBerla
  * bridge. It is a templated class that is specialized by lattice
  * models created by lbmpy (see <tt>maintainer/walberla_kernels</tt>).
  */
@@ -63,7 +63,7 @@
 
 #include "timeloop/SweepTimeloop.h"
 
-#include "LbWalberlaBase.hpp"
+#include "LBWalberlaBase.hpp"
 #include "walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
@@ -146,7 +146,7 @@ private:
 
 /** Class that runs and controls the LB on WaLBerla
  */
-template <typename LatticeModel> class LbWalberla : public LbWalberlaBase {
+template <typename LatticeModel> class LBWalberlaImpl : public LBWalberlaBase {
 protected:
   // Type definitions
   using VectorField = GhostLayerField<real_t, 3>;
@@ -237,9 +237,9 @@ protected:
   };
 
 public:
-  LbWalberla(double viscosity, double agrid, double tau,
-             const Utils::Vector3d &box_dimensions,
-             const Utils::Vector3i &node_grid, int n_ghost_layers) {
+  LBWalberlaImpl(double viscosity, double agrid, double tau,
+                 const Utils::Vector3d &box_dimensions,
+                 const Utils::Vector3i &node_grid, int n_ghost_layers) {
     m_n_ghost_layers = n_ghost_layers;
     m_kT = 0;
 
@@ -814,7 +814,7 @@ public:
     }
   }
 
-  ~LbWalberla() override = default;
+  ~LBWalberlaImpl() override = default;
 };
 } // namespace walberla
 

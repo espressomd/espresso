@@ -19,9 +19,9 @@
 
 #include "lb_walberla_init.hpp"
 
-#include "LbWalberlaBase.hpp"
-#include "LbWalberlaD3Q19FluctuatingMRT.hpp"
-#include "LbWalberlaD3Q19MRT.hpp"
+#include "LBWalberlaBase.hpp"
+#include "LBWalberlaD3Q19FluctuatingMRT.hpp"
+#include "LBWalberlaD3Q19MRT.hpp"
 
 #include "core/mpi/Environment.h"
 
@@ -32,20 +32,20 @@ void walberla_mpi_init() {
       walberla::mpi::Environment(argc, argv);
 }
 
-LbWalberlaBase *new_lb_walberla(double viscosity, double density, double agrid,
+LBWalberlaBase *new_lb_walberla(double viscosity, double density, double agrid,
                                 double tau,
                                 const Utils::Vector3d &box_dimensions,
                                 const Utils::Vector3i &node_grid, double kT,
                                 unsigned int seed) {
 
-  LbWalberlaBase *lb_walberla_instance;
+  LBWalberlaBase *lb_walberla_instance;
   if (kT == 0.) { // un-thermalized LB
     lb_walberla_instance =
-        new walberla::LbWalberlaD3Q19MRT(walberla::LbWalberlaD3Q19MRT{
+        new walberla::LBWalberlaD3Q19MRT(walberla::LBWalberlaD3Q19MRT{
             viscosity, density, agrid, tau, box_dimensions, node_grid, 1});
   } else { // thermalized LB
-    lb_walberla_instance = new walberla::LbWalberlaD3Q19FluctuatingMRT(
-        walberla::LbWalberlaD3Q19FluctuatingMRT{viscosity, density, agrid, tau,
+    lb_walberla_instance = new walberla::LBWalberlaD3Q19FluctuatingMRT(
+        walberla::LBWalberlaD3Q19FluctuatingMRT{viscosity, density, agrid, tau,
                                                 box_dimensions, node_grid, 1,
                                                 kT, seed});
   }

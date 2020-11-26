@@ -22,10 +22,10 @@
 #include "config.hpp"
 
 #ifdef LB_WALBERLA
-#include <LbWalberlaBase.hpp>
+#include <LBWalberlaBase.hpp>
 
-struct LbWalberlaParams {
-  LbWalberlaParams(double agrid, double tau) : m_agrid(agrid), m_tau(tau) {}
+struct LBWalberlaParams {
+  LBWalberlaParams(double agrid, double tau) : m_agrid(agrid), m_tau(tau) {}
   double get_agrid() const { return m_agrid; };
   double get_tau() const { return m_tau; };
 
@@ -37,13 +37,13 @@ private:
 /** @brief Initialize Walberla's MPI manager */
 void walberla_mpi_init();
 
-/** @brief Access the per-MPI-node LbWalberla instance */
-LbWalberlaBase *lb_walberla();
+/** @brief Access the per-MPI-node LBWalberla instance */
+LBWalberlaBase *lb_walberla();
 
 /** @brief Access the Walberla parameters */
-LbWalberlaParams *lb_walberla_params();
+LBWalberlaParams *lb_walberla_params();
 
-/** @brief Create the LbWalberla instance and sets the lattice switch to
+/** @brief Create the LBWalberla instance and sets the lattice switch to
  *  WALBERLA
  *
  *  @param viscosity Fluid viscosity
@@ -54,7 +54,7 @@ LbWalberlaParams *lb_walberla_params();
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau, double kT, unsigned int seed);
 
-/** @brief Destruct the LbWalberla instance and set lattice switch to NONE */
+/** @brief Destruct the LBWalberla instance and set lattice switch to NONE */
 void mpi_destruct_lb_walberla();
 
 #endif // LB_WALBERLA

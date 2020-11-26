@@ -19,13 +19,13 @@
 #ifndef LB_WALBERLA_INIT_HPP
 #define LB_WALBERLA_INIT_HPP
 
-#include "LbWalberlaBase.hpp"
+#include "LBWalberlaBase.hpp"
 
 #include <utils/Vector.hpp>
 
 void walberla_mpi_init();
 
-LbWalberlaBase *new_lb_walberla(double viscosity, double density, double agrid,
+LBWalberlaBase *new_lb_walberla(double viscosity, double density, double agrid,
                                 double tau,
                                 const Utils::Vector3d &box_dimensions,
                                 const Utils::Vector3i &node_grid, double kT,

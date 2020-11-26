@@ -1,9 +1,9 @@
-#include "LbWalberla_impl.hpp"
+#include "LBWalberlaImpl.hpp"
 #include "generated_kernels/FluctuatingMRTLatticeModel.h"
 
 namespace walberla {
-class LbWalberlaD3Q19FluctuatingMRT
-    : public LbWalberla<lbm::FluctuatingMRTLatticeModel> {
+class LBWalberlaD3Q19FluctuatingMRT
+    : public LBWalberlaImpl<lbm::FluctuatingMRTLatticeModel> {
 
   using LatticeModel = lbm::FluctuatingMRTLatticeModel;
 
@@ -37,14 +37,14 @@ public:
     LatticeModel *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
     return (2 - lm->omega_shear_) / (6 * lm->omega_shear_);
   };
-  LbWalberlaD3Q19FluctuatingMRT(double viscosity, double density, double agrid,
+  LBWalberlaD3Q19FluctuatingMRT(double viscosity, double density, double agrid,
                                 double tau,
                                 const Utils::Vector3d &box_dimensions,
                                 const Utils::Vector3i &node_grid,
                                 int n_ghost_layers, double kT,
                                 unsigned int seed)
-      : LbWalberla(viscosity, agrid, tau, box_dimensions, node_grid,
-                   n_ghost_layers) {
+      : LBWalberlaImpl(viscosity, agrid, tau, box_dimensions, node_grid,
+                       n_ghost_layers) {
     m_kT = kT;
     construct_lattice_model(viscosity, kT, seed);
     setup_with_valid_lattice_model(density);

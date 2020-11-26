@@ -27,7 +27,7 @@
 #include "integrate.hpp"
 #include "lb_interface.hpp"
 
-#include <LbWalberlaBase.hpp>
+#include <LBWalberlaBase.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
@@ -35,22 +35,22 @@
 #include <memory>
 
 namespace {
-LbWalberlaBase *lb_walberla_instance = nullptr;
-LbWalberlaParams *lb_walberla_params_instance = nullptr;
+LBWalberlaBase *lb_walberla_instance = nullptr;
+LBWalberlaParams *lb_walberla_params_instance = nullptr;
 } // namespace
 
-LbWalberlaBase *lb_walberla() {
+LBWalberlaBase *lb_walberla() {
   if (!lb_walberla_instance) {
     throw std::runtime_error(
-        "Attempted access to uninitialized LbWalberla instance.");
+        "Attempted access to uninitialized LBWalberla instance.");
   }
   return lb_walberla_instance;
 }
 
-LbWalberlaParams *lb_walberla_params() {
+LBWalberlaParams *lb_walberla_params() {
   if (!lb_walberla_params_instance) {
     throw std::runtime_error(
-        "Attempted access to uninitialized LbWalberlaParams instance.");
+        "Attempted access to uninitialized LBWalberlaParams instance.");
   }
   return lb_walberla_params_instance;
 }
@@ -64,7 +64,7 @@ void init_lb_walberla(double viscosity, double density, double agrid,
   try {
     lb_walberla_instance = new_lb_walberla(viscosity, density, agrid, tau,
                                            box_dimensions, node_grid, kT, seed);
-    lb_walberla_params_instance = new LbWalberlaParams{agrid, tau};
+    lb_walberla_params_instance = new LBWalberlaParams{agrid, tau};
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
     lb_walberla_instance = nullptr;

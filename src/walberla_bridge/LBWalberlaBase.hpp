@@ -21,10 +21,10 @@
 
 /**
  * @file
- * @ref LbWalberlaBase provides the public interface of the LB
+ * @ref LBWalberlaBase provides the public interface of the LB
  * waLBerla bridge. It relies on type erasure to hide the waLBerla
  * implementation details from the ESPResSo core. It is implemented
- * by @ref walberla::LbWalberla.
+ * by @ref walberla::LBWalberla.
  */
 
 #include <utils/Vector.hpp>
@@ -38,7 +38,7 @@
 
 /** Class that runs and controls the LB on WaLBerla
  */
-class LbWalberlaBase {
+class LBWalberlaBase {
 public:
   virtual void integrate() = 0;
 
@@ -149,7 +149,7 @@ public:
 
   virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
   node_indices_positions(bool include_ghosts) const = 0;
-  virtual ~LbWalberlaBase() = default;
+  virtual ~LBWalberlaBase() = default;
 };
 
 /** @brief LB statistics to write to VTK files */
