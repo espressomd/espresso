@@ -1,5 +1,5 @@
-#include "FluctuatingMRTLatticeModel.h"
 #include "LbWalberla_impl.hpp"
+#include "generated_kernels/FluctuatingMRTLatticeModel.h"
 
 namespace walberla {
 class LbWalberlaD3Q19FluctuatingMRT
