@@ -21,8 +21,8 @@
 
 /**
  * @file
- * @ref walberla::LBWalberlaImpl implements the interface of the LB waLBerla
- * bridge. It is a templated class that is specialized by lattice
+ * @ref walberla::LBWalberlaImpl implements the interface of the LB
+ * waLBerla bridge. It is a templated class that is specialized by lattice
  * models created by lbmpy (see <tt>maintainer/walberla_kernels</tt>).
  */
 

@@ -95,7 +95,7 @@
 
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
-/*@{*/
+/**@{*/
 
 /// send to a single node
 #define GHOST_SEND 0
@@ -114,7 +114,7 @@
 #define GHOST_PREFETCH 16
 /// additional flag for poststoring
 #define GHOST_PSTSTORE 32
-/*@}*/
+/**@}*/
 
 /** Transfer data classes, for \ref ghost_communicator */
 enum : unsigned {
@@ -134,7 +134,7 @@ enum : unsigned {
 
 /** \name Data Types */
 /************************************************************/
-/*@{*/
+/**@{*/
 
 struct GhostCommunication {
   /** Communication type. */
@@ -163,17 +163,17 @@ struct GhostCommunicator {
   std::vector<GhostCommunication> communications;
 };
 
-/*@}*/
+/**@}*/
 
 /** \name Exported Functions */
 /************************************************************/
-/*@{*/
+/**@{*/
 
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
 void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts);
 
-/*@}*/
+/**@}*/
 
 #endif

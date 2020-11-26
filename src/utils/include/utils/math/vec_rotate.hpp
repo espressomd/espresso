@@ -29,9 +29,15 @@ namespace Utils {
 /**
  * @brief Rotate a vector around an axis.
  *
+ * Rodrigues' rotation formula:
+ * @f$ \vec{v}_{\mathrm{rot}} =
+ *      (\cos{\alpha})\vec{v} +
+ *      (\sin{\alpha})\vec{k}\times\vec{v} +
+ *      (1 - \cos{\alpha})(\vec{k}\cdot\vec{v})\vec{k} @f$
+ *
  * @param axis The axis to rotate about
  * @param alpha Angle to rotate
- * @param vector Vector to act on
+ * @param vector %Vector to act on
  * @return Rotated vector
  */
 inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
@@ -39,16 +45,8 @@ inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
   auto const sina = std::sin(alpha);
   auto const cosa = std::cos(alpha);
   auto const a = Vector3d(axis).normalize();
-
-  return {(cosa + sqr(a[0]) * (1 - cosa)) * vector[0] +
-              (a[0] * a[1] * (1 - cosa) - a[2] * sina) * vector[1] +
-              (a[0] * a[2] * (1 - cosa) + a[1] * sina) * vector[2],
-          (a[0] * a[1] * (1 - cosa) + a[2] * sina) * vector[0] +
-              (cosa + sqr(a[1]) * (1 - cosa)) * vector[1] +
-              (a[1] * a[2] * (1 - cosa) - a[0] * sina) * vector[2],
-          (a[0] * a[2] * (1 - cosa) - a[1] * sina) * vector[0] +
-              (a[1] * a[2] * (1 - cosa) + a[0] * sina) * vector[1] +
-              (cosa + sqr(a[2]) * (1 - cosa)) * vector[2]};
+  auto const &v = vector;
+  return cosa * v + sina * vector_product(a, v) + (1. - cosa) * (a * v) * a;
 }
 
 /**

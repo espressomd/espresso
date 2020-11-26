@@ -36,7 +36,7 @@
 #include <cstdint>
 
 /** \name Thermostat switches */
-/*@{*/
+/**@{*/
 #define THERMO_OFF 0
 #define THERMO_LANGEVIN 1
 #define THERMO_DPD 2
@@ -44,7 +44,7 @@
 #define THERMO_LB 8
 #define THERMO_BROWNIAN 16
 #define THERMO_SD 32
-/*@}*/
+/**@}*/
 
 namespace Thermostat {
 #ifdef PARTICLE_ANISOTROPY
@@ -59,12 +59,12 @@ namespace {
  *  These functions return the sentinel value for the Langevin/Brownian
  *  parameters, indicating that they have not been set yet.
  */
-/*@{*/
+/**@{*/
 constexpr double sentinel(double) { return -1.0; }
 constexpr Utils::Vector3d sentinel(Utils::Vector3d) {
   return {-1.0, -1.0, -1.0};
 }
-/*@}*/
+/**@}*/
 } // namespace
 
 /************************************************
@@ -140,14 +140,14 @@ public:
     return sqrt((temp_coeff * kT / time_step) * gamma);
   }
   /** @name Parameters */
-  /*@{*/
+  /**@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
   GammaType gamma = sentinel(GammaType{});
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
   GammaType gamma_rotation = sentinel(GammaType{});
-  /*@}*/
+  /**@}*/
   /** @name Prefactors */
-  /*@{*/
+  /**@{*/
   /** Prefactor for the friction.
    *  Stores @f$ \gamma_{\text{trans}} @f$.
    */
@@ -160,7 +160,7 @@ public:
    *  Stores @f$ \sqrt{2 k_B T \gamma_{\text{rot}} / dt} / \sigma_\eta @f$.
    */
   GammaType pref_noise_rotation;
-  /*@}*/
+  /**@}*/
 };
 
 /** %Thermostat for Brownian dynamics.
@@ -217,14 +217,14 @@ public:
     return sqrt(temp_coeff * kT);
   }
   /** @name Parameters */
-  /*@{*/
+  /**@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
   GammaType gamma = sentinel(GammaType{});
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
   GammaType gamma_rotation = sentinel(GammaType{});
-  /*@}*/
+  /**@}*/
   /** @name Prefactors */
-  /*@{*/
+  /**@{*/
   /** Translational noise standard deviation.
    *  Stores @f$ \sqrt{2D_{\text{trans}}} @f$ with
    *  @f$ D_{\text{trans}} = k_B T/\gamma_{\text{trans}} @f$
@@ -245,7 +245,7 @@ public:
    *  Stores @f$ \sqrt{k_B T} @f$.
    */
   double sigma_vel_rotation = 0;
-  /*@}*/
+  /**@}*/
 };
 
 /** %Thermostat for isotropic NPT dynamics. */
@@ -279,15 +279,15 @@ public:
     return sqrt(temp_coeff * temperature * gamma * time_step);
   }
   /** @name Parameters */
-  /*@{*/
+  /**@{*/
   /** Friction coefficient of the particles @f$ \gamma^0 @f$ */
   double gamma0;
   /** Friction coefficient for the box @f$ \gamma^V @f$ */
   double gammav;
-  /*@}*/
+  /**@}*/
 #ifdef NPT
   /** @name Prefactors */
-  /*@{*/
+  /**@{*/
   /** %Particle velocity rescaling at half the time step.
    *  Stores @f$ \gamma^{0}\cdot\frac{dt}{2} @f$.
    */
@@ -304,7 +304,7 @@ public:
    *  Stores @f$ \sqrt{k_B T \gamma^{V} dt} / \sigma_\eta @f$.
    */
   double pref_noise_V;
-  /*@}*/
+  /**@}*/
 #endif
 };
 
