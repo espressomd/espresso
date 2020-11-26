@@ -1,6 +1,7 @@
 include(unit_test)
 
 unit_test(NAME abs_test SRC abs_test.cpp DEPENDS EspressoUtils)
+unit_test(NAME interval_test SRC interval_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Vector_test SRC Vector_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Factory_test SRC Factory_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp DEPENDS
