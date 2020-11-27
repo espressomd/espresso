@@ -289,7 +289,8 @@ Tutorials
 There are a number of tutorials that introduce the use of |es| for different
 physical systems. You can also find the tutorials and related scripts in the
 directory :file:`/doc/tutorials` or `online on GitHub <https://github.com/espressomd/espresso/blob/python/doc/tutorials/>`_.
-Currently, the following tutorials are available:
+
+The following tutorials are available:
 
 * :file:`lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid.
 * :file:`visualization`: Using the online visualizers of |es|.
@@ -308,6 +309,8 @@ Sample scripts
 
 Several scripts that can serve as usage examples can be found in the directory :file:`/samples`,
 or in the `git repository <https://github.com/espressomd/espresso/blob/python/samples/>`_.
+
+The following samples are available:
 
 .. include:: samples.rst
 
@@ -435,9 +438,7 @@ report so to the developers using the instructions in :ref:`Contributing`.
 +--------------------------------+------------------------+------------------+------------+
 | Quaternion Integrator          | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Stokesian Dynamics on CPU      | Single                 | None             | Yes        |
-+--------------------------------+------------------------+------------------+------------+
-| Stokesian Dynamics on GPU      | Experimental           | None             | No         |
+| Stokesian Dynamics             | Single                 | None             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 |                                **Interactions**                                         |
 +--------------------------------+------------------------+------------------+------------+

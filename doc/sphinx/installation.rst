@@ -767,10 +767,9 @@ targets are available:
 
 A number of options are available when calling ``make``. The most
 interesting option is probably ``-j num_jobs``, which can be used for
-parallel compilation on computers that have more than one CPU or core.
-*num_jobs* specifies the maximal number of jobs that will be run.
-Setting *num_jobs* to the number of available processors speeds up the
-compilation process significantly.
+parallel compilation. ``num_jobs`` specifies the maximal number of
+concurrent jobs that will be run. Setting ``num_jobs`` to the number
+of available processors speeds up the compilation process significantly.
 
 .. _Running es:
 
