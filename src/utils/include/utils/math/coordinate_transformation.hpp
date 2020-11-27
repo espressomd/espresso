@@ -65,7 +65,7 @@ inline Vector3d transform_coordinate_cartesian_to_cylinder(Vector3d const &pos,
   auto const rot = rotation_params(axis, z_axis);
   auto const pos_rotated = vec_rotate(std::get<1>(rot), std::get<0>(rot), pos);
   auto pos_cylinder = transform_coordinate_cartesian_to_cylinder(pos_rotated);
-  if (phi0) {
+  if (phi0 != 0.) {
     pos_cylinder[1] = interval(pos_cylinder[1] - phi0, -pi(), pi());
   }
   return pos_cylinder;

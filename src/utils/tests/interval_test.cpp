@@ -24,8 +24,6 @@
 
 #include <cmath>
 
-using Utils::Vector3d;
-
 BOOST_AUTO_TEST_CASE(interval_test) {
   constexpr auto eps = 1e-14;
   constexpr auto pi = Utils::pi<double>();
@@ -35,6 +33,6 @@ BOOST_AUTO_TEST_CASE(interval_test) {
     double const theta = i * pi / 6;
     double const wrapped = Utils::interval(theta, -pi, pi);
     double const ref_val = std::atan2(std::sin(theta), std::cos(theta));
-    BOOST_CHECK_SMALL(abs(fmod(wrapped - ref_val, 2 * pi)), eps);
+    BOOST_CHECK_SMALL(std::abs(std::fmod(wrapped - ref_val, 2 * pi)), eps);
   }
 }
