@@ -289,6 +289,7 @@ Tutorials
 There are a number of tutorials that introduce the use of |es| for different
 physical systems. You can also find the tutorials and related scripts in the
 directory :file:`/doc/tutorials` or `online on GitHub <https://github.com/espressomd/espresso/blob/python/doc/tutorials/>`_.
+They are executed with the ``ipypresso`` script.
 
 The following tutorials are available:
 
@@ -309,6 +310,7 @@ Sample scripts
 
 Several scripts that can serve as usage examples can be found in the directory :file:`/samples`,
 or in the `git repository <https://github.com/espressomd/espresso/blob/python/samples/>`_.
+They are executed with the ``pypresso`` script.
 
 The following samples are available:
 
