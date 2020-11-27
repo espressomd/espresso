@@ -929,6 +929,16 @@ use one tool at a time.
 | ``--cuda-memcheck`` | ``cuda-memcheck python <args>``              |
 +---------------------+----------------------------------------------+
 
+.. _Troubleshooting:
+
+Troubleshooting
+---------------
+
+If you encounter issues when building |es| or running it for the first time,
+please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`_
+on the wiki. If you still didn't find an answer, see :ref:`Community support`.
+
+____
 
 .. [1]
    http://espressomd.org
