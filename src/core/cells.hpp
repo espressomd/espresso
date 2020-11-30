@@ -88,6 +88,14 @@ void cells_update_ghosts(unsigned data_parts);
  */
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
+/**
+ * @brief Get pairs closer than @p distance if both their types are in @p types
+ *
+ * Pairs are sorted so that first.id < second.id
+ */
+std::vector<std::pair<int, int>>
+mpi_get_pairs_of_types(double distance, std::vector<int> const &types);
+
 /** Check if a particle resorting is required. */
 void check_resort_particles();
 
