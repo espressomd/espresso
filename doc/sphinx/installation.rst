@@ -767,10 +767,9 @@ targets are available:
 
 A number of options are available when calling ``make``. The most
 interesting option is probably ``-j num_jobs``, which can be used for
-parallel compilation on computers that have more than one CPU or core.
-*num_jobs* specifies the maximal number of jobs that will be run.
-Setting *num_jobs* to the number of available processors speeds up the
-compilation process significantly.
+parallel compilation. ``num_jobs`` specifies the maximal number of
+concurrent jobs that will be run. Setting ``num_jobs`` to the number
+of available processors speeds up the compilation process significantly.
 
 .. _Running es:
 
@@ -930,6 +929,16 @@ use one tool at a time.
 | ``--cuda-memcheck`` | ``cuda-memcheck python <args>``              |
 +---------------------+----------------------------------------------+
 
+.. _Troubleshooting:
+
+Troubleshooting
+---------------
+
+If you encounter issues when building |es| or running it for the first time,
+please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`_
+on the wiki. If you still didn't find an answer, see :ref:`Community support`.
+
+____
 
 .. [1]
    http://espressomd.org
