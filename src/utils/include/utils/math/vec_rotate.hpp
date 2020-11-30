@@ -23,7 +23,6 @@
 #include "utils/math/sqr.hpp"
 
 #include <cmath>
-#include <tuple>
 
 namespace Utils {
 /**
@@ -50,17 +49,10 @@ inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
 }
 
 /**
- * @brief Determine rotation angle and axis for rotating vec onto target_vec.
- * @param vec Vector to be rotated
- * @param target_vec Target vector
- * @return rotation angle and rotation axis
+ * @brief Determine the angle between two vectors.
  */
-inline std::tuple<double, Vector3d>
-rotation_params(Vector3d const &vec, Vector3d const &target_vec) {
-  auto const theta =
-      std::acos(vec * target_vec / (vec.norm() * target_vec.norm()));
-  auto const rotation_axis = Utils::vector_product(vec, target_vec).normalize();
-  return std::make_tuple(theta, rotation_axis);
+inline double angle_between(Vector3d const &v1, Vector3d const &v2) {
+  return std::acos(v1 * v2 / (v1.norm() * v2.norm()));
 }
 
 } // namespace Utils

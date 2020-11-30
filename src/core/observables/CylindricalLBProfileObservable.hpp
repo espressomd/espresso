@@ -47,15 +47,14 @@ public:
         limits[0], limits[1], limits[2], n_bins[0], n_bins[1], n_bins[2],
         sampling_density);
     for (auto &p : sampling_positions) {
-      double theta;
-      Utils::Vector3d rotation_axis;
       auto p_cart = Utils::transform_coordinate_cylinder_to_cartesian(
           p, Utils::Vector3d{{0.0, 0.0, 1.0}});
       // We have to rotate the coordinates since the utils function assumes
       // z-axis symmetry.
-      std::tie(theta, rotation_axis) =
-          Utils::rotation_params(Utils::Vector3d{{0.0, 0.0, 1.0}}, axis);
-      p_cart = Utils::vec_rotate(rotation_axis, theta, p_cart);
+      constexpr auto z_axis = Utils::Vector3d{{0.0, 0.0, 1.0}};
+      auto const theta = angle_between(z_axis, axis);
+      auto const rot_axis = Utils::vector_product(z_axis, axis).normalize();
+      p_cart = Utils::vec_rotate(rot_axis, theta, p_cart);
       p = p_cart + center;
     }
   }

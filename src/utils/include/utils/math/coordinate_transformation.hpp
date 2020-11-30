@@ -36,7 +36,6 @@
 #include "utils/math/vec_rotate.hpp"
 
 #include <cmath>
-#include <tuple>
 
 namespace Utils {
 
@@ -56,14 +55,16 @@ transform_coordinate_cartesian_to_cylinder(Vector3d const &pos) {
  * with change of basis.
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
- * @param phi0   Reference angle for @f$ \phi = 0 @f$
+ * @param phi0   Value for which @f$ \phi = 0 @f$, is obtained by the
+ *               overloaded function that takes an orientation vector.
  */
 inline Vector3d transform_coordinate_cartesian_to_cylinder(Vector3d const &pos,
                                                            Vector3d const &axis,
                                                            double phi0 = 0.) {
   static auto const z_axis = Vector3d{{0, 0, 1}};
-  auto const rot = rotation_params(axis, z_axis);
-  auto const pos_rotated = vec_rotate(std::get<1>(rot), std::get<0>(rot), pos);
+  auto const angle = angle_between(axis, z_axis);
+  auto const rotation_axis = Utils::vector_product(axis, z_axis).normalize();
+  auto const pos_rotated = vec_rotate(rotation_axis, angle, pos);
   auto pos_cylinder = transform_coordinate_cartesian_to_cylinder(pos_rotated);
   if (phi0 != 0.) {
     pos_cylinder[1] = interval(pos_cylinder[1] - phi0, -pi(), pi());
@@ -76,12 +77,14 @@ inline Vector3d transform_coordinate_cartesian_to_cylinder(Vector3d const &pos,
  * with change of basis.
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
- * @param phi0   Reference point at which @f$ \phi = 0 @f$
+ * @param orientation   Reference point (in untransformed coordinates) for
+ *                      which @f$ \phi = 0 @f$
  */
 inline Vector3d transform_coordinate_cartesian_to_cylinder(
-    Vector3d const &pos, Vector3d const &axis, Vector3d const &phi0) {
-  auto const phi = transform_coordinate_cartesian_to_cylinder(phi0, axis)[1];
-  return transform_coordinate_cartesian_to_cylinder(pos, axis, phi);
+    Vector3d const &pos, Vector3d const &axis, Vector3d const &orientation) {
+  auto const phi0 =
+      transform_coordinate_cartesian_to_cylinder(orientation, axis)[1];
+  return transform_coordinate_cartesian_to_cylinder(pos, axis, phi0);
 }
 
 /**
@@ -100,16 +103,18 @@ transform_coordinate_cylinder_to_cartesian(Vector3d const &pos) {
  * @brief Coordinate transformation from cylindrical to Cartesian coordinates.
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
- * @param phi0   Reference angle at which @f$ \phi = 0 @f$
+ * @param phi0   Value for which @f$ \phi = 0 @f$, is obtained by the
+ *               overloaded function that takes an orientation vector.
  */
 inline Vector3d transform_coordinate_cylinder_to_cartesian(Vector3d const &pos,
                                                            Vector3d const &axis,
                                                            double phi0 = 0.) {
   static auto const z_axis = Vector3d{{0, 0, 1}};
-  auto const rot = rotation_params(z_axis, axis);
+  auto const angle = angle_between(z_axis, axis);
+  auto const rotation_axis = Utils::vector_product(z_axis, axis).normalize();
   auto const pos_cyl = Vector3d{{pos[0], pos[1] + phi0, pos[2]}};
   auto const pos_cart = transform_coordinate_cylinder_to_cartesian(pos_cyl);
-  auto const pos_rot = vec_rotate(std::get<1>(rot), std::get<0>(rot), pos_cart);
+  auto const pos_rot = vec_rotate(rotation_axis, angle, pos_cart);
   return pos_rot;
 }
 
@@ -117,12 +122,14 @@ inline Vector3d transform_coordinate_cylinder_to_cartesian(Vector3d const &pos,
  * @brief Coordinate transformation from cylindrical to Cartesian coordinates.
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
- * @param phi0   Reference point at which @f$ \phi = 0 @f$
+ * @param orientation   Reference point (in untransformed coordinates) for
+ *                      which @f$ \phi = 0 @f$
  */
 inline Vector3d transform_coordinate_cylinder_to_cartesian(
-    Vector3d const &pos, Vector3d const &axis, Vector3d const &phi0) {
-  auto const phi = transform_coordinate_cartesian_to_cylinder(phi0, axis)[1];
-  return transform_coordinate_cylinder_to_cartesian(pos, axis, phi);
+    Vector3d const &pos, Vector3d const &axis, Vector3d const &orientation) {
+  auto const phi0 =
+      transform_coordinate_cartesian_to_cylinder(orientation, axis)[1];
+  return transform_coordinate_cylinder_to_cartesian(pos, axis, phi0);
 }
 
 /**
@@ -135,9 +142,10 @@ inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
                                                        Vector3d const &axis,
                                                        Vector3d const &pos) {
   static auto const z_axis = Vector3d{{0, 0, 1}};
-  auto const rot = rotation_params(axis, z_axis);
-  auto const rotated_pos = vec_rotate(std::get<1>(rot), std::get<0>(rot), pos);
-  auto const rotated_vec = vec_rotate(std::get<1>(rot), std::get<0>(rot), vec);
+  auto const angle = angle_between(axis, z_axis);
+  auto const rotation_axis = Utils::vector_product(axis, z_axis).normalize();
+  auto const rotated_pos = vec_rotate(rotation_axis, angle, pos);
+  auto const rotated_vec = vec_rotate(rotation_axis, angle, vec);
   // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
   auto const v_r =
       (rotated_pos[0] * rotated_vec[0] + rotated_pos[1] * rotated_vec[1]) /
