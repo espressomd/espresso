@@ -22,7 +22,7 @@ import espressomd.analyze
 
 
 class AnalyzeAcf(ut.TestCase):
-    np.random.seed = 42
+    np.random.seed(42)
 
     def test_acf(self):
         # the ACF of white noise is a Dirac function
