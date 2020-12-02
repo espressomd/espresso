@@ -40,7 +40,7 @@
 namespace Utils {
 
 /**
- * @brief Coordinate transformation from cylindrical to Cartesian coordinates.
+ * @brief Coordinate transformation from Cartesian to cylindrical coordinates.
  * @param pos    %Vector to transform
  */
 inline Vector3d
@@ -51,7 +51,7 @@ transform_coordinate_cartesian_to_cylinder(Vector3d const &pos) {
 }
 
 /**
- * @brief Coordinate transformation from cylindrical to Cartesian coordinates
+ * @brief Coordinate transformation from Cartesian to cylindrical coordinates
  * with change of basis.
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
@@ -73,7 +73,7 @@ inline Vector3d transform_coordinate_cartesian_to_cylinder(Vector3d const &pos,
 }
 
 /**
- * @brief Coordinate transformation from cylindrical to Cartesian coordinates
+ * @brief Coordinate transformation from Cartesian to cylindrical coordinates
  * with change of basis.
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
@@ -122,7 +122,7 @@ inline Vector3d transform_coordinate_cylinder_to_cartesian(Vector3d const &pos,
  * @brief Coordinate transformation from cylindrical to Cartesian coordinates.
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
- * @param orientation   Reference point (in untransformed coordinates) for
+ * @param orientation   Reference point (in Cartesian coordinates) for
  *                      which @f$ \phi = 0 @f$
  */
 inline Vector3d transform_coordinate_cylinder_to_cartesian(
@@ -133,7 +133,7 @@ inline Vector3d transform_coordinate_cylinder_to_cartesian(
 }
 
 /**
- * @brief Vector transformation from cylindrical to Cartesian coordinates.
+ * @brief Vector transformation from Cartesian to cylindrical coordinates.
  * @param vec    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
  * @param pos    Origin of the vector
