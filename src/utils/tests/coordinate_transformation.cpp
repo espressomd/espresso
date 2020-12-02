@@ -109,14 +109,11 @@ BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_with_axis_with_phi_test) {
     auto const v = vec_rotate(z, Utils::pi() / 3.0, y);
     auto const u_cyl = transform_coordinate_cartesian_to_cylinder(u, z, y);
     auto const v_cyl = transform_coordinate_cartesian_to_cylinder(v, z, y);
-    auto const z_cyl = transform_coordinate_cartesian_to_cylinder(z, z, y);
     auto const u_ref = Vector3d{{1.0, Utils::pi() * (1. / 3. - 1. / 2.), 0.0}};
     auto const v_ref = Vector3d{{1.0, Utils::pi() / 3.0, 0.0}};
-    auto const z_ref = Vector3d{{0.0, z_cyl[1], 1.0}};
     for (int i = 0; i < 3; ++i) {
       BOOST_CHECK_SMALL(abs(u_cyl[i] - u_ref[i]), eps);
       BOOST_CHECK_SMALL(abs(v_cyl[i] - v_ref[i]), eps);
-      BOOST_CHECK_SMALL(abs(z_cyl[i] - z_ref[i]), eps);
     }
   }
 }
@@ -201,14 +198,11 @@ BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_with_axis_with_phi_test) {
     auto const v = vec_rotate(z, Utils::pi() / 3.0, y);
     auto const u_cyl = transform_coordinate_cartesian_to_cylinder(u, z, y);
     auto const v_cyl = transform_coordinate_cartesian_to_cylinder(v, z, y);
-    auto const z_cyl = transform_coordinate_cartesian_to_cylinder(z, z, y);
     auto const u_cart = transform_coordinate_cylinder_to_cartesian(u_cyl, z, y);
     auto const v_cart = transform_coordinate_cylinder_to_cartesian(v_cyl, z, y);
-    auto const z_cart = transform_coordinate_cylinder_to_cartesian(z_cyl, z, y);
     for (int i = 0; i < 3; ++i) {
       BOOST_CHECK_SMALL(abs(u_cart[i] - u[i]), eps);
       BOOST_CHECK_SMALL(abs(v_cart[i] - v[i]), eps);
-      BOOST_CHECK_SMALL(abs(z_cart[i] - z[i]), eps);
     }
   }
 }
