@@ -240,6 +240,9 @@ public:
 public:
   int decomposition_type() const { return m_type; }
 
+  /** Maximal cutoff supported by current cell system. */
+  Utils::Vector3d max_cutoff() const;
+
   /** Maximal pair range supported by current cell system. */
   Utils::Vector3d max_range() const;
 

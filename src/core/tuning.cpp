@@ -105,7 +105,7 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
    * the maximal range that can be supported by the cell system, but
    * never larger than half the box size. */
   double const max_permissible_skin = std::min(
-      *boost::min_element(cell_structure.max_range()) - maximal_cutoff(),
+      *boost::min_element(cell_structure.max_cutoff()) - maximal_cutoff(),
       0.5 * *boost::max_element(box_geo.length()));
 
   if (adjust_max_skin and max_skin > max_permissible_skin)
