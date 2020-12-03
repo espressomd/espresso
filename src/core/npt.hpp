@@ -72,7 +72,10 @@ typedef struct {
    */
   int non_const_dim;
 } nptiso_struct;
+
+#ifdef NPT
 extern nptiso_struct nptiso;
+#endif
 
 /** @name NpT geometry bitmasks.
  *  Allowed values for @ref nptiso_struct::geometry.

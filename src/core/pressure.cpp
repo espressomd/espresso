@@ -53,6 +53,7 @@
 #include <cstddef>
 #include <utility>
 
+#ifdef NPT
 nptiso_struct nptiso = {0.0,
                         0.0,
                         0.0,
@@ -66,6 +67,7 @@ nptiso_struct nptiso = {0.0,
                         0,
                         false,
                         0};
+#endif
 
 /** Pressure tensor of the system */
 Observable_stat obs_pressure{9};

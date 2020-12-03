@@ -144,6 +144,7 @@ void integrate_set_bd();
 /** @brief Set the Stokesian Dynamics integrator. */
 void integrate_set_sd();
 
+#ifdef NPT
 /** @brief Set the velocity Verlet integrator modified for the NpT ensemble
  *  with isotropic rescaling.
  *
@@ -160,6 +161,7 @@ void integrate_set_sd();
 void integrate_set_npt_isotropic(double ext_pressure, double piston,
                                  bool xdir_rescale, bool ydir_rescale,
                                  bool zdir_rescale, bool cubic_box);
+#endif
 
 /** Send new \ref time_step and rescale the velocities accordingly. */
 void mpi_set_time_step(double time_step);

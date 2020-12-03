@@ -100,6 +100,7 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_RIGIDBONDS,
      {&n_rigidbonds, 1, "n_rigidbonds"}}, /* 19 from rattle.cpp */
     {FIELD_NODEGRID, {node_grid.data(), 3, "node_grid"}}, /* 20 from grid.cpp */
+#ifdef NPT
     {FIELD_NPTISO_G0,
      {&npt_iso.gamma0, 1, "npt_iso.gamma0"}}, /* 21 from thermostat.cpp */
     {FIELD_NPTISO_GV,
@@ -112,6 +113,7 @@ const std::unordered_map<int, Datafield> fields{
      {&nptiso.p_diff, 1, "npt_p_diff"}}, /* 26 from pressure.cpp */
     {FIELD_NPTISO_PISTON,
      {&nptiso.piston, 1, "npt_piston"}}, /* 27 from pressure.cpp */
+#endif
     {FIELD_PERIODIC,
      {reinterpret_cast<size_t *>(&box_geo.m_periodic), 1,
       "periodicity"}},                /* 28 from BoxGeometry.hpp */
