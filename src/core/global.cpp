@@ -105,14 +105,13 @@ const std::unordered_map<int, Datafield> fields{
      {&npt_iso.gamma0, 1, "npt_iso.gamma0"}}, /* 21 from thermostat.cpp */
     {FIELD_NPTISO_GV,
      {&npt_iso.gammav, 1, "npt_iso.gammav"}}, /* 22 from thermostat.cpp */
-    {FIELD_NPTISO_PEXT,
-     {&nptiso.p_ext, 1, "npt_p_ext"}}, /* 23 from pressure.cpp */
+    {FIELD_NPTISO_PEXT, {&nptiso.p_ext, 1, "npt_p_ext"}}, /* 23 from npt.cpp */
     {FIELD_NPTISO_PINST,
-     {&nptiso.p_inst, 1, "npt_p_inst"}}, /* 24 from pressure.cpp */
+     {&nptiso.p_inst, 1, "npt_p_inst"}}, /* 24 from npt.cpp */
     {FIELD_NPTISO_PDIFF,
-     {&nptiso.p_diff, 1, "npt_p_diff"}}, /* 26 from pressure.cpp */
+     {&nptiso.p_diff, 1, "npt_p_diff"}}, /* 26 from npt.cpp */
     {FIELD_NPTISO_PISTON,
-     {&nptiso.piston, 1, "npt_piston"}}, /* 27 from pressure.cpp */
+     {&nptiso.piston, 1, "npt_piston"}}, /* 27 from npt.cpp */
 #endif
     {FIELD_PERIODIC,
      {reinterpret_cast<size_t *>(&box_geo.m_periodic), 1,

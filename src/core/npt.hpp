@@ -25,6 +25,9 @@
 #ifndef NPT_H
 #define NPT_H
 
+#include "config.hpp"
+
+#ifdef NPT
 #include "BoxGeometry.hpp"
 
 #include <utils/Vector.hpp>
@@ -73,9 +76,22 @@ typedef struct {
   int non_const_dim;
 } nptiso_struct;
 
-#ifdef NPT
 extern nptiso_struct nptiso;
-#endif
+
+/** @brief NpT initializer.
+ *
+ *  @param ext_pressure  Reference pressure
+ *  @param piston        Piston mass
+ *  @param xdir_rescale  Enable box rescaling in the *x*-direction
+ *  @param ydir_rescale  Enable box rescaling in the *y*-direction
+ *  @param zdir_rescale  Enable box rescaling in the *z*-direction
+ *  @param cubic_box     Determines if the volume fluctuations should also
+ *                       apply to dimensions which are switched off by the
+ *                       above flags and which do not contribute to the
+ *                       pressure (3D) or tension (2D, 1D)
+ */
+void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
+                 bool ydir_rescale, bool zdir_rescale, bool cubic_box);
 
 /** @name NpT geometry bitmasks.
  *  Allowed values for @ref nptiso_struct::geometry.
@@ -95,7 +111,5 @@ void npt_reset_instantaneous_virials();
 void npt_add_virial_contribution(const Utils::Vector3d &force,
                                  const Utils::Vector3d &d);
 
-/** Broadcast nptiso geometry parameters to all nodes. */
-void mpi_bcast_nptiso_geom();
-
+#endif // NPT
 #endif

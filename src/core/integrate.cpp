@@ -38,8 +38,6 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
@@ -418,20 +416,9 @@ int mpi_integrate(int n_steps, int reuse_forces) {
 
 void integrate_set_steepest_descent(const double f_max, const double gamma,
                                     const double max_displacement) {
-  if (f_max < 0.0) {
-    throw std::runtime_error("The maximal force must be positive.");
-  }
-  if (gamma < 0.0) {
-    throw std::runtime_error("The dampening constant must be positive.");
-  }
-  if (max_displacement < 0.0) {
-    throw std::runtime_error("The maximal displacement must be positive.");
-  }
   steepest_descent_init(f_max, gamma, max_displacement);
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-  // broadcast integrator parameters to all nodes
-  mpi_bcast_steepest_descent();
 }
 
 void integrate_set_nvt() {
@@ -456,65 +443,10 @@ void integrate_set_sd() {
 void integrate_set_npt_isotropic(double ext_pressure, double piston,
                                  bool xdir_rescale, bool ydir_rescale,
                                  bool zdir_rescale, bool cubic_box) {
-  nptiso.cubic_box = cubic_box;
-  nptiso.p_ext = ext_pressure;
-  nptiso.piston = piston;
-
-  if (ext_pressure < 0.0) {
-    throw std::runtime_error("The external pressure must be positive.");
-  }
-  if (piston <= 0.0) {
-    throw std::runtime_error("The piston mass must be positive.");
-  }
-  /* set the NpT geometry */
-  nptiso.geometry = 0;
-  nptiso.dimension = 0;
-  nptiso.non_const_dim = -1;
-  if (xdir_rescale) {
-    nptiso.geometry |= NPTGEOM_XDIR;
-    nptiso.dimension += 1;
-    nptiso.non_const_dim = 0;
-  }
-  if (ydir_rescale) {
-    nptiso.geometry |= NPTGEOM_YDIR;
-    nptiso.dimension += 1;
-    nptiso.non_const_dim = 1;
-  }
-  if (zdir_rescale) {
-    nptiso.geometry |= NPTGEOM_ZDIR;
-    nptiso.dimension += 1;
-    nptiso.non_const_dim = 2;
-  }
-
-  /* Sanity Checks */
-#ifdef ELECTROSTATICS
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
-    throw std::runtime_error("If electrostatics is being used you must "
-                             "use the cubic box npt.");
-  }
-#endif
-
-#ifdef DIPOLES
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
-    throw std::runtime_error("If magnetostatics is being used you must "
-                             "use the cubic box npt.");
-  }
-#endif
-
-  if (nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
-    throw std::runtime_error(
-        "You must enable at least one of the x y z components "
-        "as fluctuating dimension(s) for box length motion!");
-  }
-
-  /* set integrator switch */
+  nptiso_init(ext_pressure, piston, xdir_rescale, ydir_rescale, zdir_rescale,
+              cubic_box);
   integ_switch = INTEG_METHOD_NPT_ISO;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-  mpi_bcast_parameter(FIELD_NPTISO_PISTON);
-  mpi_bcast_parameter(FIELD_NPTISO_PEXT);
-
-  /* broadcast NpT geometry information to all nodes */
-  mpi_bcast_nptiso_geom();
 }
 #endif
 

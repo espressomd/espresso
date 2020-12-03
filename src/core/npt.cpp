@@ -17,9 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "npt.hpp"
+
+#ifdef NPT
+
 #include "communication.hpp"
 #include "config.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
+#include "global.hpp"
 #include "integrate.hpp"
 
 #include <utils/Vector.hpp>
@@ -30,7 +36,20 @@
 #include <cmath>
 #include <stdexcept>
 
-#ifdef NPT
+nptiso_struct nptiso = {0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        {0.0, 0.0, 0.0},
+                        {0.0, 0.0, 0.0},
+                        0,
+                        {NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},
+                        0,
+                        false,
+                        0};
+
 void synchronize_npt_state() {
   boost::mpi::broadcast(comm_cart, nptiso.p_inst, 0);
   boost::mpi::broadcast(comm_cart, nptiso.p_diff, 0);
@@ -46,8 +65,67 @@ void mpi_bcast_nptiso_geom_worker(int, int) {
 
 REGISTER_CALLBACK(mpi_bcast_nptiso_geom_worker)
 
+/** Broadcast nptiso geometry parameters to all nodes. */
 void mpi_bcast_nptiso_geom() {
   mpi_call_all(mpi_bcast_nptiso_geom_worker, -1, 0);
+}
+
+void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
+                 bool ydir_rescale, bool zdir_rescale, bool cubic_box) {
+  nptiso.cubic_box = cubic_box;
+  nptiso.p_ext = ext_pressure;
+  nptiso.piston = piston;
+
+  if (ext_pressure < 0.0) {
+    throw std::runtime_error("The external pressure must be positive.");
+  }
+  if (piston <= 0.0) {
+    throw std::runtime_error("The piston mass must be positive.");
+  }
+  /* set the NpT geometry */
+  nptiso.geometry = 0;
+  nptiso.dimension = 0;
+  nptiso.non_const_dim = -1;
+  if (xdir_rescale) {
+    nptiso.geometry |= NPTGEOM_XDIR;
+    nptiso.dimension += 1;
+    nptiso.non_const_dim = 0;
+  }
+  if (ydir_rescale) {
+    nptiso.geometry |= NPTGEOM_YDIR;
+    nptiso.dimension += 1;
+    nptiso.non_const_dim = 1;
+  }
+  if (zdir_rescale) {
+    nptiso.geometry |= NPTGEOM_ZDIR;
+    nptiso.dimension += 1;
+    nptiso.non_const_dim = 2;
+  }
+
+  /* Sanity Checks */
+#ifdef ELECTROSTATICS
+  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
+    throw std::runtime_error("If electrostatics is being used you must "
+                             "use the cubic box npt.");
+  }
+#endif
+
+#ifdef DIPOLES
+  if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
+    throw std::runtime_error("If magnetostatics is being used you must "
+                             "use the cubic box npt.");
+  }
+#endif
+
+  if (nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
+    throw std::runtime_error(
+        "You must enable at least one of the x y z components "
+        "as fluctuating dimension(s) for box length motion!");
+  }
+
+  mpi_bcast_parameter(FIELD_NPTISO_PISTON);
+  mpi_bcast_parameter(FIELD_NPTISO_PEXT);
+  mpi_bcast_nptiso_geom();
 }
 
 void npt_ensemble_init(const BoxGeometry &box) {

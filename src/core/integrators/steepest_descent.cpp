@@ -103,19 +103,32 @@ bool steepest_descent_step(const ParticleRange &particles) {
   return sqrt(f_max_global) < params.f_max;
 }
 
-void steepest_descent_init(const double f_max, const double gamma,
-                           const double max_displacement) {
-  params.f_max = f_max;
-  params.gamma = gamma;
-  params.max_displacement = max_displacement;
-}
-
 void mpi_bcast_steepest_descent_worker(int, int) {
   boost::mpi::broadcast(comm_cart, params, 0);
 }
 
 REGISTER_CALLBACK(mpi_bcast_steepest_descent_worker)
 
+/** Broadcast steepest descent parameters */
 void mpi_bcast_steepest_descent() {
   mpi_call_all(mpi_bcast_steepest_descent_worker, -1, 0);
+}
+
+void steepest_descent_init(const double f_max, const double gamma,
+                           const double max_displacement) {
+  if (f_max < 0.0) {
+    throw std::runtime_error("The maximal force must be positive.");
+  }
+  if (gamma < 0.0) {
+    throw std::runtime_error("The dampening constant must be positive.");
+  }
+  if (max_displacement < 0.0) {
+    throw std::runtime_error("The maximal displacement must be positive.");
+  }
+
+  params.f_max = f_max;
+  params.gamma = gamma;
+  params.max_displacement = max_displacement;
+
+  mpi_bcast_steepest_descent();
 }
