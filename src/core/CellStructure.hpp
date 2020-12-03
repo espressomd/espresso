@@ -449,12 +449,11 @@ private:
       std::unique_ptr<ParticleDecomposition> &&decomposition) {
     clear_particle_index();
 
-    auto local_parts = local_particles();
-    std::vector<Particle> particles(local_parts.begin(), local_parts.end());
+    /* Swap in new cell system */
+    std::swap(m_decomposition, decomposition);
 
-    m_decomposition = std::move(decomposition);
-
-    for (auto &p : particles) {
+    /* Add particles to new system */
+    for (auto &p : Cells::particles(decomposition->local_cells())) {
       add_particle(std::move(p));
     }
   }
