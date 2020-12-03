@@ -138,6 +138,18 @@ class IntegratorSteepestDescent(ut.TestCase):
 
         np.testing.assert_allclose(f_old, np.copy(self.system.part[:].f))
 
+    def test_integrator_exceptions(self):
+        # invalid parameters should throw exceptions
+        with self.assertRaises(RuntimeError):
+            self.system.integrator.set_steepest_descent(
+                f_max=-1, gamma=1, max_displacement=1)
+        with self.assertRaises(RuntimeError):
+            self.system.integrator.set_steepest_descent(
+                f_max=0, gamma=-1, max_displacement=1)
+        with self.assertRaises(RuntimeError):
+            self.system.integrator.set_steepest_descent(
+                f_max=0, gamma=1, max_displacement=-1)
+
 
 if __name__ == "__main__":
     ut.main()
