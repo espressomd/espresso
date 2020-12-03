@@ -25,6 +25,7 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
 
@@ -56,18 +57,20 @@ void synchronize_npt_state() {
   boost::mpi::broadcast(comm_cart, nptiso.volume, 0);
 }
 
-void mpi_bcast_nptiso_geom_worker(int, int) {
+void mpi_bcast_nptiso_geom_barostat_worker() {
   boost::mpi::broadcast(comm_cart, nptiso.geometry, 0);
   boost::mpi::broadcast(comm_cart, nptiso.dimension, 0);
   boost::mpi::broadcast(comm_cart, nptiso.cubic_box, 0);
   boost::mpi::broadcast(comm_cart, nptiso.non_const_dim, 0);
+  boost::mpi::broadcast(comm_cart, nptiso.p_ext, 0);
+  boost::mpi::broadcast(comm_cart, nptiso.piston, 0);
 }
 
-REGISTER_CALLBACK(mpi_bcast_nptiso_geom_worker)
+REGISTER_CALLBACK(mpi_bcast_nptiso_geom_barostat_worker)
 
-/** Broadcast nptiso geometry parameters to all nodes. */
-void mpi_bcast_nptiso_geom() {
-  mpi_call_all(mpi_bcast_nptiso_geom_worker, -1, 0);
+/** Broadcast nptiso geometry and barostat parameters to all nodes. */
+void mpi_bcast_nptiso_geom_barostat() {
+  mpi_call_all(mpi_bcast_nptiso_geom_barostat_worker);
 }
 
 void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
@@ -123,9 +126,8 @@ void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
         "as fluctuating dimension(s) for box length motion!");
   }
 
-  mpi_bcast_parameter(FIELD_NPTISO_PISTON);
-  mpi_bcast_parameter(FIELD_NPTISO_PEXT);
-  mpi_bcast_nptiso_geom();
+  mpi_bcast_nptiso_geom_barostat();
+  on_parameter_change(FIELD_NPTISO_PISTON);
 }
 
 void npt_ensemble_init(const BoxGeometry &box) {

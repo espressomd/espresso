@@ -110,8 +110,6 @@ const std::unordered_map<int, Datafield> fields{
      {&nptiso.p_inst, 1, "npt_p_inst"}}, /* 24 from npt.cpp */
     {FIELD_NPTISO_PDIFF,
      {&nptiso.p_diff, 1, "npt_p_diff"}}, /* 26 from npt.cpp */
-    {FIELD_NPTISO_PISTON,
-     {&nptiso.piston, 1, "npt_piston"}}, /* 27 from npt.cpp */
 #endif
     {FIELD_PERIODIC,
      {reinterpret_cast<size_t *>(&box_geo.m_periodic), 1,

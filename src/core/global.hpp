@@ -57,7 +57,7 @@ enum Fields {
   FIELD_NPTISO_PINST,
   /** index of \ref nptiso_struct::p_diff */
   FIELD_NPTISO_PDIFF,
-  /** index of \ref nptiso_struct::piston */
+  /** index of \ref nptiso_struct::piston (only used for the events) */
   FIELD_NPTISO_PISTON,
   FIELD_PERIODIC,
   /** index of \ref #skin */

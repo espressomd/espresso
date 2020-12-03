@@ -24,7 +24,6 @@ cdef extern from "global.hpp":
     int FIELD_SKIN
     int FIELD_NODEGRID
     IF NPT:
-        int FIELD_NPTISO_PISTON
         int FIELD_NPTISO_PDIFF
     int FIELD_PERIODIC
     int FIELD_SIMTIME
