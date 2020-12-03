@@ -23,8 +23,6 @@ cdef extern from "global.hpp":
     int FIELD_BOXL
     int FIELD_SKIN
     int FIELD_NODEGRID
-    IF NPT:
-        int FIELD_NPTISO_PDIFF
     int FIELD_PERIODIC
     int FIELD_SIMTIME
     int FIELD_MIN_GLOBAL_CUT
