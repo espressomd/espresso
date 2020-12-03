@@ -121,7 +121,7 @@ struct Oif_global_forces_bond_parameters {
   /** Volume coefficient */
   double kv;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 };
 
 /** Parameters for OIF local forces
@@ -148,7 +148,7 @@ struct Oif_local_forces_bond_parameters {
   /** Viscous coefficient of the triangle vertices */
   double kvisc;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 };
 
 /** Parameters for harmonic bond Potential */
@@ -206,7 +206,7 @@ struct Bonded_coulomb_bond_parameters {
   /** %Coulomb prefactor */
   double prefactor;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 };
 
 /** Parameters for %Coulomb bond short-range Potential */
@@ -214,7 +214,7 @@ struct Bonded_coulomb_sr_bond_parameters {
   /** charge factor */
   double q1q2;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 };
 
 /** Parameters for three-body angular potential (harmonic). */
@@ -224,7 +224,7 @@ struct Angle_harmonic_bond_parameters {
   /** equilibrium angle (default is 180 degrees) */
   double phi0;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 };
 
 /** Parameters for three-body angular potential (cosine). */
@@ -238,7 +238,7 @@ struct Angle_cosine_bond_parameters {
   /** sine of @p phi0 (internal parameter) */
   double sin_phi0;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 };
 
 /** Parameters for three-body angular potential (cossquare). */
@@ -250,7 +250,7 @@ struct Angle_cossquare_bond_parameters {
   /** cosine of @p phi0 (internal parameter) */
   double cos_phi0;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 };
 
 /** Parameters for four-body angular potential (dihedral-angle potentials). */
@@ -259,7 +259,7 @@ struct Dihedral_bond_parameters {
   double bend;
   double phase;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 };
 
 /** Parameters for n-body tabulated potential (n=2,3,4). */
@@ -272,7 +272,7 @@ struct Tabulated_bond_parameters {
     case TAB_BOND_LENGTH:
       return assert(pot), pot->cutoff();
     default:
-      return -1.;
+      return 0.;
     };
   }
 };
@@ -339,7 +339,7 @@ struct IBM_VolCons_Parameters {
   /** Spring constant for volume force */
   double kappaV;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 };
 
 /** Parameters for IBM tribend */
@@ -350,7 +350,7 @@ struct IBM_Tribend_Parameters {
   /** Reference angle */
   double theta0;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 };
 
 struct VirtualBond_Parameters {

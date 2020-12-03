@@ -83,7 +83,7 @@ void energy_calc(const double time) {
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                    obs_energy);
       },
-      maximal_cutoff());
+      maximal_cutoff(), maximal_cutoff_bonded());
 
   calc_long_range_energies(cell_structure.local_particles());
 
