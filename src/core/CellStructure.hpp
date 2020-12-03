@@ -127,12 +127,11 @@ private:
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
   unsigned m_resort_particles = Cells::RESORT_NONE;
+  bool m_rebuild_verlet_list = true;
+  std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
 
 public:
   bool use_verlet_list = true;
-
-  bool m_rebuild_verlet_list = true;
-  std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
 
   /**
    * @brief Update local particle index.
@@ -519,7 +518,7 @@ private:
    * @param verlet_criterion Filter for verlet lists.
    */
   template <class PairKernel, class VerletCriterion>
-  void verlet_list_loop(PairKernel &&pair_kernel,
+  void verlet_list_loop(PairKernel pair_kernel,
                         const VerletCriterion &verlet_criterion) {
     /* In this case the verlet list update is attached to
      * the pair kernel, and the verlet list is rebuilt as
@@ -527,8 +526,7 @@ private:
     if (m_rebuild_verlet_list) {
       m_verlet_list.clear();
 
-      link_cell([&pair_kernel, &verlet_criterion,
-                 this](Particle &p1, Particle &p2, Distance const &d) {
+      link_cell([&](Particle &p1, Particle &p2, Distance const &d) {
         if (verlet_criterion(p1, p2, d)) {
           m_verlet_list.emplace_back(&p1, &p2);
           pair_kernel(p1, p2, d);
@@ -569,10 +567,10 @@ public:
    * @param verlet_criterion Filter for verlet lists.
    */
   template <class PairKernel, class VerletCriterion>
-  void non_bonded_loop(PairKernel &&pair_kernel,
+  void non_bonded_loop(PairKernel pair_kernel,
                        const VerletCriterion &verlet_criterion) {
     if (use_verlet_list) {
-      verlet_list_loop(std::forward<PairKernel>(pair_kernel), verlet_criterion);
+      verlet_list_loop(pair_kernel, verlet_criterion);
     } else {
       /* No verlet lists, just run the kernel with pairs from the cells. */
       link_cell(pair_kernel);
