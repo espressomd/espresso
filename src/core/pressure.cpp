@@ -104,7 +104,7 @@ void pressure_calc() {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
                                     obs_pressure);
       },
-      maximal_cutoff());
+      maximal_cutoff(), maximal_cutoff_bonded());
 
   calc_long_range_virials(cell_structure.local_particles());
 
