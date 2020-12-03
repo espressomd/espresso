@@ -84,7 +84,6 @@ enum Fields {
 /** Broadcast a global variable.
  *  @param i  the number from @ref anonymous_namespace{global.cpp}::fields
  *            "fields" specifying which Datafield to broadcast.
- *  @return nonzero on error
  */
 void mpi_bcast_parameter(int i);
 

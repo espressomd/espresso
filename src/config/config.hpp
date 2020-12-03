@@ -61,8 +61,8 @@
 #endif
 
 /** Whether to use the approximation of Abramowitz/Stegun @cite abramowitz65a
- *  AS_erfc_part() for \f$\exp(d^2) erfc(d)\f$, or the C function erfc
- *  in P3M and Ewald summation.
+ *  @ref AS_erfc_part() for \f$\exp(d^2) \mathrm{erfc}(d)\f$,
+ *  or the C function <tt>std::erfc()</tt> in P3M and Ewald summation.
  */
 #ifndef USE_ERFC_APPROXIMATION
 #define USE_ERFC_APPROXIMATION 1
