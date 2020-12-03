@@ -31,7 +31,7 @@ struct IBMVolCons {
   /** Spring constant for volume force */
   double kappaV;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 
   static constexpr int num = 0;
 

@@ -47,7 +47,7 @@ struct DihedralBond {
   double bend;
   double phase;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 
   static constexpr int num = 3;
 

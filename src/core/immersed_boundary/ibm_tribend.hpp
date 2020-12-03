@@ -36,7 +36,7 @@ struct IBMTribend {
   /** Reference angle */
   double theta0;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 
   // Krüger always has three partners
   static constexpr int num = 3;

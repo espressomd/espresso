@@ -44,7 +44,7 @@ struct BondedCoulombSR {
   /** charge factor */
   double q1q2;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 
   static constexpr int num = 1;
 

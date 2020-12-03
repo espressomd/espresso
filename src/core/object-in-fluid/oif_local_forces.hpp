@@ -61,7 +61,7 @@ struct OifLocalForcesBond {
   /** Viscous coefficient of the triangle vertices */
   double kvisc;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 
   static constexpr int num = 3;
 

@@ -41,7 +41,7 @@ struct AngleHarmonicBond {
   /** equilibrium angle (default is 180 degrees) */
   double phi0;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 
   static constexpr int num = 2;
 

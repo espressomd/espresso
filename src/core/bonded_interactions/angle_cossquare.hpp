@@ -42,7 +42,7 @@ struct AngleCossquareBond {
   /** cosine of @p phi0 (internal parameter) */
   double cos_phi0;
 
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 
   static constexpr int num = 2;
 

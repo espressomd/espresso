@@ -87,7 +87,7 @@ struct TabulatedDistanceBond : public TabulatedBond {
 
 /** Parameters for 3-body tabulated potential. */
 struct TabulatedAngleBond : public TabulatedBond {
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 
   static constexpr int num = 2;
 
@@ -103,7 +103,7 @@ struct TabulatedAngleBond : public TabulatedBond {
 
 /** Parameters for 4-body tabulated potential. */
 struct TabulatedDihedralBond : public TabulatedBond {
-  double cutoff() const { return -1.; }
+  double cutoff() const { return 0.; }
 
   static constexpr int num = 3;
 
