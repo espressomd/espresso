@@ -513,27 +513,18 @@ private:
     }
   }
 
-public:
-  /** Non-bonded pair loop with potential use
-   * of verlet lists.
-   * @param pair_kernel Kernel to apply
-   */
-  template <class PairKernel> void non_bonded_loop(PairKernel pair_kernel) {
-    link_cell(pair_kernel);
-  }
-
-  /** Non-bonded pair loop with potential use
-   * of verlet lists.
+  /** Non-bonded pair loop with verlet lists.
+   *
    * @param pair_kernel Kernel to apply
    * @param verlet_criterion Filter for verlet lists.
    */
   template <class PairKernel, class VerletCriterion>
-  void non_bonded_loop(PairKernel &&pair_kernel,
-                       const VerletCriterion &verlet_criterion) {
+  void verlet_list_loop(PairKernel &&pair_kernel,
+                        const VerletCriterion &verlet_criterion) {
     /* In this case the verlet list update is attached to
      * the pair kernel, and the verlet list is rebuilt as
      * we go. */
-    if (use_verlet_list && m_rebuild_verlet_list) {
+    if (m_rebuild_verlet_list) {
       m_verlet_list.clear();
 
       link_cell([&pair_kernel, &verlet_criterion,
@@ -545,7 +536,7 @@ public:
       });
 
       m_rebuild_verlet_list = false;
-    } else if (use_verlet_list && not m_rebuild_verlet_list) {
+    } else {
       auto const maybe_box = decomposition().minimum_image_distance();
       /* In this case the pair kernel is just run over the verlet list. */
       if (maybe_box) {
@@ -561,6 +552,27 @@ public:
                       distance_function(*pair.first, *pair.second));
         }
       }
+    }
+  }
+
+public:
+  /** Non-bonded pair loop.
+   * @param pair_kernel Kernel to apply
+   */
+  template <class PairKernel> void non_bonded_loop(PairKernel pair_kernel) {
+    link_cell(pair_kernel);
+  }
+
+  /** Non-bonded pair loop with potential use
+   * of verlet lists.
+   * @param pair_kernel Kernel to apply
+   * @param verlet_criterion Filter for verlet lists.
+   */
+  template <class PairKernel, class VerletCriterion>
+  void non_bonded_loop(PairKernel &&pair_kernel,
+                       const VerletCriterion &verlet_criterion) {
+    if (use_verlet_list) {
+      verlet_list_loop(std::forward<PairKernel>(pair_kernel), verlet_criterion);
     } else {
       /* No verlet lists, just run the kernel with pairs from the cells. */
       link_cell(pair_kernel);
