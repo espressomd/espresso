@@ -331,6 +331,7 @@ public:
     return assert(m_decomposition), *m_decomposition;
   }
 
+private:
   ParticleDecomposition &decomposition() {
     return assert(m_decomposition), *m_decomposition;
   }
