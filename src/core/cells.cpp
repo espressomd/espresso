@@ -42,6 +42,7 @@
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <algorithm>
+#include <boost/range/algorithm/min_element.hpp>
 #include <functional>
 #include <stdexcept>
 #include <vector>
@@ -112,18 +113,13 @@ REGISTER_CALLBACK(get_pairs_of_types_local)
 namespace detail {
 void search_distance_sanity_check(double const distance) {
   /** get_pairs_filtered() finds pairs via the non_bonded_loop. The maximum
-   *finding range is therefore limited by the cell size if domain decomposition
-   *is used
+   *finding range is therefore limited by the decomposition that is used
    **/
-  if (cell_structure.decomposition_type() == CELL_STRUCTURE_DOMDEC) {
-    auto cell_size = get_domain_decomposition()->cell_size;
-    auto min_cell_side_length =
-        *std::min_element(cell_size.begin(), cell_size.end());
-    if (distance > min_cell_side_length) {
-      runtimeErrorMsg() << "pair search distance " << distance
-                        << " bigger than smallest cell side length "
-                        << min_cell_side_length << ".\n";
-    }
+  auto range = *boost::min_element(cell_structure.max_range());
+  if (distance > range) {
+    runtimeErrorMsg() << "pair search distance " << distance
+                      << " bigger than the decomposition range " << range
+                      << ".\n";
   }
 }
 } // namespace detail
