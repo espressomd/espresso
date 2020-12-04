@@ -36,6 +36,7 @@ class IntegratorNPT(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.actors.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
@@ -113,6 +114,43 @@ class IntegratorNPT(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(system.part[:].pos),
             positions_start + np.array([[-1.2e-3, 0, 0], [1.2e-3, 0, 0]]))
+
+    def run_with_p3m(self, p3m):
+        system = self.system
+        np.random.seed(42)
+        system.box_l = [6] * 3
+        system.part.add(pos=np.random.uniform(0, system.box_l[0], (11, 3)),
+                        q=np.sign(np.arange(-5, 6)))
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1, sigma=1, cutoff=2**(1 / 6), shift=0.25)
+        system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
+        system.integrator.set_isotropic_npt(ext_pressure=0.001, piston=0.001)
+        system.integrator.run(100)
+        system.actors.add(p3m)
+        system.integrator.run(100)
+
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_p3m_exception(self):
+        # NpT is compatible with P3M CPU
+        import espressomd.electrostatics
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
+            alpha=5.35, tune=False)
+        try:
+            self.run_with_p3m(p3m)
+        except Exception as err:
+            self.fail(f'run_with_p3m() raised ValueError("{err}")')
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_p3mgpu_exception(self):
+        # NpT is not compatible with P3M GPU (no energies)
+        import espressomd.electrostatics
+        p3m = espressomd.electrostatics.P3MGPU(
+            prefactor=1.0, accuracy=1e-2, mesh=3 * [24], cao=2, r_cut=0.24,
+            alpha=8.26, tune=False)
+        with self.assertRaises(Exception):
+            self.run_with_p3m(p3m)
 
 
 if __name__ == "__main__":

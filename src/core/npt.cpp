@@ -166,6 +166,11 @@ void integrator_npt_sanity_checks() {
     if (nptiso.piston <= 0.0) {
       runtimeErrorMsg() << "npt on, but piston mass not set";
     }
+#if defined(ELECTROSTATICS) && defined(CUDA)
+    if (coulomb.method == COULOMB_P3M_GPU) {
+      runtimeErrorMsg() << "npt on, but virial cannot be calculated on P3M GPU";
+    }
+#endif
   }
 }
 
