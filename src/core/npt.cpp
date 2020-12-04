@@ -144,19 +144,19 @@ void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
 void npt_ensemble_init(const BoxGeometry &box) {
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     /* prepare NpT-integration */
-    nptiso.inv_piston = 1 / (1.0 * nptiso.piston);
+    nptiso.inv_piston = 1 / nptiso.piston;
     if (nptiso.dimension == 0) {
       throw std::runtime_error(
-          "%d: INTERNAL ERROR: npt integrator was called but "
-          "dimension not yet set. this should not happen. ");
+          "INTERNAL ERROR: npt integrator was called but "
+          "dimension not yet set. This should not happen.");
     }
 
     nptiso.volume = pow(box.length()[nptiso.non_const_dim], nptiso.dimension);
 
     if (recalc_forces) {
       nptiso.p_inst = 0.0;
-      nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
-      nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
+      nptiso.p_vir = Utils::Vector3d{};
+      nptiso.p_vel = Utils::Vector3d{};
     }
   }
 }
@@ -172,15 +172,19 @@ void integrator_npt_sanity_checks() {
 /** reset virial part of instantaneous pressure */
 void npt_reset_instantaneous_virials() {
   if (integ_switch == INTEG_METHOD_NPT_ISO)
-    nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
+    nptiso.p_vir = Utils::Vector3d{};
+}
+
+void npt_add_virial_contribution(double energy) {
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+    nptiso.p_vir[0] += energy;
+  }
 }
 
 void npt_add_virial_contribution(const Utils::Vector3d &force,
                                  const Utils::Vector3d &d) {
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    for (int j = 0; j < 3; j++) {
-      nptiso.p_vir[j] += force[j] * d[j];
-    }
+    nptiso.p_vir += hadamard_product(force, d);
   }
 }
 #endif // NPT

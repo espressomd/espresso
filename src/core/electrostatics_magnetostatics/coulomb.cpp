@@ -281,9 +281,10 @@ void calc_long_range_force(const ParticleRange &particles) {
   case COULOMB_P3M:
     p3m_charge_assign(particles);
 #ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += p3m_calc_kspace_forces(true, true, particles);
-    else
+    if (integ_switch == INTEG_METHOD_NPT_ISO) {
+      auto const energy = p3m_calc_kspace_forces(true, true, particles);
+      npt_add_virial_contribution(energy);
+    } else
 #endif
       p3m_calc_kspace_forces(true, false, particles);
     break;

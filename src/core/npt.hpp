@@ -108,6 +108,7 @@ void synchronize_npt_state();
 void npt_ensemble_init(const BoxGeometry &box);
 void integrator_npt_sanity_checks();
 void npt_reset_instantaneous_virials();
+void npt_add_virial_contribution(double energy);
 void npt_add_virial_contribution(const Utils::Vector3d &force,
                                  const Utils::Vector3d &d);
 
