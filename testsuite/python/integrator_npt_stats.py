@@ -49,7 +49,7 @@ class IntegratorNPT(ut.TestCase):
 
         system.part.add(pos=data[:, :3], v=data[:, 3:])
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=1, sigma=1, cutoff=2**(1 / 6), shift=0.25)
+            epsilon=1, sigma=1, cutoff=1.12246, shift=0.25)
 
         system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004, seed=42)
         system.integrator.set_isotropic_npt(ext_pressure=p_ext, piston=0.0001)
