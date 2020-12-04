@@ -38,7 +38,7 @@ class IntegratorSteepestDescent(ut.TestCase):
 
     lj_eps = 1.0
     lj_sig = 1.0
-    lj_cut = 1.12246
+    lj_cut = 2**(1 / 6)
 
     def setUp(self):
         self.system.box_l = 3 * [self.box_l]
@@ -149,6 +149,71 @@ class IntegratorSteepestDescent(ut.TestCase):
         with self.assertRaises(RuntimeError):
             self.system.integrator.set_steepest_descent(
                 f_max=0, gamma=1, max_displacement=-1)
+
+    def test_integrator_recovery(self):
+        # the system is still in a valid state after a failure
+        system = self.system
+        sd_params = {"f_max": 0, "gamma": 1, "max_displacement": 0.01}
+        positions_start = np.array([[0, 0, 0], [1., 0, 0]])
+        positions_ref = np.array([[-0.01, 0, 0], [1.01, 0, 0]])
+        system.part.add(pos=positions_start)
+        system.integrator.set_steepest_descent(**sd_params)
+
+        # get the positions after one step with the chosen parameters
+        system.integrator.run(1)
+        positions_ref = np.copy(system.part[:].pos)
+
+        # resetting the SD integrator with incorrect values doesn't leave the
+        # system in an undefined state (the old parameters aren't overwritten)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_steepest_descent(
+                f_max=-10, gamma=1, max_displacement=0.01)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_steepest_descent(
+                f_max=0, gamma=-1, max_displacement=0.01)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_steepest_descent(
+                f_max=0, gamma=1, max_displacement=-1)
+        # the core state is unchanged
+        system.part[:].pos = positions_start
+        system.integrator.run(1)
+        np.testing.assert_allclose(np.copy(system.part[:].pos), positions_ref)
+
+        # setting another integrator with incorrect values doesn't leave the
+        # system in an undefined state (the old integrator is still active)
+        if espressomd.has_features("NPT"):
+            with self.assertRaises(RuntimeError):
+                system.integrator.set_isotropic_npt(ext_pressure=1, piston=-1)
+            # the interface state is unchanged
+            self.assertIsInstance(system.integrator.get_state(),
+                                  espressomd.integrate.SteepestDescent)
+            params = system.integrator.get_state().get_params()
+            self.assertEqual(params["f_max"], sd_params["f_max"])
+            self.assertEqual(params["gamma"], sd_params["gamma"])
+            self.assertEqual(
+                params["max_displacement"],
+                sd_params["max_displacement"])
+            # the core state is unchanged
+            system.part[:].pos = positions_start
+            system.integrator.run(1)
+            np.testing.assert_allclose(
+                np.copy(system.part[:].pos), positions_ref)
+
+        # setting the SD integrator with incorrect values doesn't leave the
+        # system in an undefined state (the old integrator is still active)
+        system.integrator.set_vv()
+        system.part[:].pos = positions_start
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_steepest_descent(
+                f_max=0, gamma=1, max_displacement=-1)
+        # the interface state is unchanged
+        self.assertIsInstance(system.integrator.get_state(),
+                              espressomd.integrate.VelocityVerlet)
+        # the core state is unchanged
+        system.integrator.run(1)
+        np.testing.assert_allclose(
+            np.copy(system.part[:].pos),
+            positions_start + np.array([[-1.2e-3, 0, 0], [1.2e-3, 0, 0]]))
 
 
 if __name__ == "__main__":

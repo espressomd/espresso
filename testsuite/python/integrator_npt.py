@@ -18,7 +18,9 @@
 #
 import unittest as ut
 import unittest_decorators as utx
+import numpy as np
 import espressomd
+import espressomd.integrate
 
 
 @utx.skipIfMissingFeatures(["NPT", "LENNARD_JONES"])
@@ -51,6 +53,66 @@ class IntegratorNPT(ut.TestCase):
         with self.assertRaises(Exception):
             self.system.integrator.set_isotropic_npt(
                 ext_pressure=1, piston=1, direction=[1, 0])
+
+    def test_integrator_recovery(self):
+        # the system is still in a valid state after a failure
+        system = self.system
+        np.random.seed(42)
+        npt_params = {'ext_pressure': 0.001, 'piston': 0.001}
+        system.box_l = [6] * 3
+        system.part.add(pos=np.random.uniform(0, system.box_l[0], (11, 3)))
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1, sigma=1, cutoff=2**(1 / 6), shift=0.25)
+        system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
+        system.integrator.set_isotropic_npt(**npt_params)
+
+        # get the equilibrium box length for the chosen NpT parameters
+        system.integrator.run(2000)
+        box_l_ref = system.box_l[0]
+
+        # resetting the NpT integrator with incorrect values doesn't leave the
+        # system in an undefined state (the old parameters aren't overwritten)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_isotropic_npt(ext_pressure=-1, piston=100)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_isotropic_npt(ext_pressure=100, piston=-1)
+        # the core state is unchanged
+        system.integrator.run(500)
+        self.assertAlmostEqual(system.box_l[0], box_l_ref, delta=0.15)
+
+        # setting another integrator with incorrect values doesn't leave the
+        # system in an undefined state (the old integrator is still active)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_steepest_descent(
+                f_max=-10, gamma=0, max_displacement=0.1)
+        # the interface state is unchanged
+        self.assertIsInstance(system.integrator.get_state(),
+                              espressomd.integrate.VelocityVerletIsotropicNPT)
+        params = system.integrator.get_state().get_params()
+        self.assertEqual(params['ext_pressure'], npt_params['ext_pressure'])
+        self.assertEqual(params['piston'], npt_params['piston'])
+        # the core state is unchanged
+        system.integrator.run(500)
+        self.assertAlmostEqual(system.box_l[0], box_l_ref, delta=0.15)
+
+        # setting the NpT integrator with incorrect values doesn't leave the
+        # system in an undefined state (the old integrator is still active)
+        system.thermostat.turn_off()
+        system.integrator.set_vv()
+        system.part.clear()
+        system.box_l = [5] * 3
+        positions_start = np.array([[0, 0, 0], [1., 0, 0]])
+        system.part.add(pos=positions_start)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_isotropic_npt(ext_pressure=-1, piston=100)
+        # the interface state is unchanged
+        self.assertIsInstance(system.integrator.get_state(),
+                              espressomd.integrate.VelocityVerlet)
+        # the core state is unchanged
+        system.integrator.run(1)
+        np.testing.assert_allclose(
+            np.copy(system.part[:].pos),
+            positions_start + np.array([[-1.2e-3, 0, 0], [1.2e-3, 0, 0]]))
 
 
 if __name__ == "__main__":
