@@ -75,7 +75,6 @@
 #include "Particle.hpp"
 #include "errorhandling.hpp"
 #include "exclusions.hpp"
-#include "npt.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
 #include "thermostats/langevin_inline.hpp"
@@ -275,7 +274,7 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
   /* but nothing afterwards                                            */
   /*********************************************************************/
 #ifdef NPT
-  npt_add_virial_contribution(pf.f, d);
+  npt_add_virial_force_contribution(pf.f, d);
 #endif
 
   /***********************************************/
@@ -368,7 +367,7 @@ inline bool add_bonded_two_body_force(Bonded_ia_parameters const &iaparams,
       p2.f.f -= result.get();
 
 #ifdef NPT
-      npt_add_virial_contribution(result.get(), dx);
+      npt_add_virial_force_contribution(result.get(), dx);
 #endif
       return false;
     }

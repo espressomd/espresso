@@ -53,7 +53,6 @@
 
 #include <array>
 #include <cmath>
-#include <tuple>
 #include <vector>
 
 struct dp3m_data_struct : public p3m_data_struct_base {
@@ -175,14 +174,19 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
  */
 void dp3m_count_magnetic_particles();
 
+#ifdef NPT
+/** Update the NpT virial */
+void npt_add_virial_magnetic_contribution(double energy);
+#endif
+
 /** Calculate real space contribution of p3m dipolar pair forces and torques.
- *  If NPT is compiled in, it returns the energy, which is needed for NPT.
+ *  If NPT is compiled in, update the NpT virial.
  */
-inline std::tuple<double, ParticleForce>
+inline ParticleForce
 dp3m_pair_force(Particle const &p1, Particle const &p2,
                 Utils::Vector3d const &d, double dist2, double dist) {
   if ((p1.p.dipm == 0.) || (p2.p.dipm == 0.))
-    return std::make_tuple(0.0, ParticleForce{});
+    return {};
 
   if (dist < dp3m.params.r_cut && dist > 0) {
     auto const dip1 = p1.calc_dip();
@@ -231,13 +235,12 @@ dp3m_pair_force(Particle const &p1, Particle const &p2,
 #else
     auto const fac = dipole.prefactor * p1.p.dipm * p2.p.dipm;
 #endif
-    auto const _energy = fac * (mimj * B_r - mir * mjr * C_r);
-#else
-    auto const _energy = 0.0;
-#endif
-    return std::make_tuple(_energy, ParticleForce{force, torque});
+    auto const energy = fac * (mimj * B_r - mir * mjr * C_r);
+    npt_add_virial_magnetic_contribution(energy);
+#endif // NPT
+    return ParticleForce{force, torque};
   }
-  return std::make_tuple(0.0, ParticleForce{});
+  return {};
 }
 
 /** Calculate real space contribution of dipolar pair energy. */

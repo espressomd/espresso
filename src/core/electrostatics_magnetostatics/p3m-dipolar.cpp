@@ -52,6 +52,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "npt.hpp"
 #include "tuning.hpp"
 
 #include <utils/Vector.hpp>
@@ -1494,5 +1495,11 @@ void dp3m_compute_constants_energy_dipolar() {
   dp3m.energy_correction =
       -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * Utils::pi() / 3.);
 }
+
+#ifdef NPT
+void npt_add_virial_magnetic_contribution(double energy) {
+  npt_add_virial_contribution(energy);
+}
+#endif
 
 #endif /* DP3M */

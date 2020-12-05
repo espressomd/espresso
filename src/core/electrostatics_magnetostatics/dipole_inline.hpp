@@ -22,7 +22,6 @@
 #include "config.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "npt.hpp"
 
 namespace Dipole {
 // forces_inline
@@ -35,11 +34,7 @@ inline ParticleForce pair_force(Particle const &p1, Particle const &p2,
   case DIPOLAR_MDLC_P3M:
     // fall trough
   case DIPOLAR_P3M: {
-    double energy;
-    std::tie(energy, pf) = dp3m_pair_force(p1, p2, d, dist2, dist);
-#ifdef NPT
-    npt_add_virial_contribution(energy);
-#endif
+    pf = dp3m_pair_force(p1, p2, d, dist2, dist);
     break;
   }
 #endif /*ifdef DP3M */
