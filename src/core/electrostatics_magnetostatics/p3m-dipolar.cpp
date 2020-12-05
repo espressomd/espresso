@@ -477,7 +477,6 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
      * DIPOLAR TORQUES (k-space)
      ****************************/
     if (dp3m.sum_mu2 > 0) {
-#ifdef ROTATION
       /* fill in ks_mesh array for torque calculation */
       ind = 0;
       i = 0;
@@ -544,7 +543,6 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
             dipole_prefac * (2 * Utils::pi() / box_geo.length()[0]), d_rs,
             particles);
       }
-#endif /*ifdef ROTATION */
 
       /***************************
          DIPOLAR FORCES (k-space)
@@ -697,7 +695,7 @@ double calc_surface_term(bool force_flag, bool energy_flag,
   } else {
     en = 0;
   }
-#ifdef ROTATION
+
   if (force_flag) {
 
     std::vector<double> sumix(n_local_part);
@@ -718,7 +716,6 @@ double calc_surface_term(bool force_flag, bool energy_flag,
       ip++;
     }
   }
-#endif
 
   return en;
 }

@@ -219,14 +219,12 @@ dp3m_pair_force(Particle const &p1, Particle const &p2,
         dipole.prefactor *
         ((mimj * d + dip1 * mjr + dip2 * mir) * C_r - mir * mjr * D_r * d);
 
-#ifdef ROTATION
     // Calculate vector multiplications for vectors mi, mj, rij
     auto const mixmj = vector_product(dip1, dip2);
     auto const mixr = vector_product(dip1, d);
 
     // Calculate real-space torques
     auto const torque = dipole.prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
-#endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
     auto const fac = dipole.prefactor * p1.p.dipm * p2.p.dipm * exp_adist2;
