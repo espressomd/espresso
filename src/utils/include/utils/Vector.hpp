@@ -21,6 +21,7 @@
 #define VECTOR_HPP
 
 #include <boost/qvm/deduce_vec.hpp>
+#include <boost/qvm/map_mat_vec.hpp>
 #include <boost/qvm/mat_traits.hpp>
 #include <boost/qvm/quat_traits.hpp>
 #include <boost/qvm/vec_operations.hpp>
@@ -173,7 +174,6 @@ template <class T, size_t N> T trace(Matrix<T, N, N> const &m) {
   auto tr = T{};
   for (size_t i = 0; i < N; i++)
     tr += m[i][i];
-
   return tr;
 }
 
@@ -259,7 +259,7 @@ constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
 
 template <size_t N, typename T, typename U>
 auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return detail::binary_op(a, b, std::plus<>());
+  return boost::qvm::operator+(a, b);
 }
 
 template <size_t N, typename T>
