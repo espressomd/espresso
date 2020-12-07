@@ -269,7 +269,7 @@ Vector<T, N> &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
 
 template <size_t N, typename T, typename U>
 auto operator-(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return detail::binary_op(a, b, std::minus<>());
+  return boost::qvm::operator-(a, b);
 }
 
 template <size_t N, typename T> Vector<T, N> operator-(Vector<T, N> const &a) {
