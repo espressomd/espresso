@@ -27,7 +27,7 @@
  * - one function to transform from/to a cylindrical system with custom axis
  *   (extra @p axis argument, keep in mind the angle phi is under-defined)
  * - one function to transform from/to an oriented cylindrical system with
- *   custom axis (extra @p phi0 argument, the angle phi is well-defined)
+ *   custom axis (extra @p orientation argument, the angle phi is well-defined)
  */
 
 #include "utils/Vector.hpp"
@@ -41,6 +41,9 @@ namespace Utils {
 
 /**
  * @brief Coordinate transformation from Cartesian to cylindrical coordinates.
+ * The origins and z-axis of the coordinate systems co-incide.
+ * The @f$ \phi = 0 @f$ direction corresponds to the x-axis in the
+ * original coordinate system.
  * @param pos    %Vector to transform
  */
 inline Vector3d
@@ -52,11 +55,24 @@ transform_coordinate_cartesian_to_cylinder(Vector3d const &pos) {
 
 /**
  * @brief Coordinate transformation from Cartesian to cylindrical coordinates
- * with change of basis.
+ * with change of basis. The origins of the coordinate systems co-incide.
+ *
+ * If the parameter @p axis is not equal to <tt>[0, 0, 1]</tt>, the value
+ * of the angle @f$ \phi @f$ in cylindrical coordinates is under-defined.
+ * To fully define it, it is necessary to provide an orientation vector
+ * in Cartesian coordinates that will be used as the reference point
+ * (i.e. such that @f$ \phi = 0 @f$).
+ *
+ * If you don't need performance, you can call the overloaded function
+ * @ref transform_coordinate_cartesian_to_cylinder(Vector3d const &, <!--
+ * --> Vector3d const &, Vector3d const &) directly. Otherwise, call this
+ * function once on the orientation vector and cache its @f$ \phi @f$ angle;
+ * this angle can be later passed as argument @p phi0 for a 50-80% speed-up.
+ *
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
- * @param phi0   Value for which @f$ \phi = 0 @f$, is obtained by the
- *               overloaded function that takes an orientation vector.
+ * @param phi0   Angle offset to get @f$ \phi = 0 @f$ (obtained by calling
+ *               this function on the orientation vector instead of @p pos)
  */
 inline Vector3d transform_coordinate_cartesian_to_cylinder(Vector3d const &pos,
                                                            Vector3d const &axis,
@@ -74,7 +90,7 @@ inline Vector3d transform_coordinate_cartesian_to_cylinder(Vector3d const &pos,
 
 /**
  * @brief Coordinate transformation from Cartesian to cylindrical coordinates
- * with change of basis.
+ * with change of basis. The origins of the coordinate systems co-incide.
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
  * @param orientation   Reference point (in untransformed coordinates) for
@@ -89,6 +105,9 @@ inline Vector3d transform_coordinate_cartesian_to_cylinder(
 
 /**
  * @brief Coordinate transformation from cylindrical to Cartesian coordinates.
+ * The origins and z-axis of the coordinate systems co-incide.
+ * The @f$ \phi = 0 @f$ direction corresponds to the x-axis in the
+ * transformed coordinate system.
  * @param pos    %Vector to transform
  */
 inline Vector3d
@@ -100,11 +119,26 @@ transform_coordinate_cylinder_to_cartesian(Vector3d const &pos) {
 }
 
 /**
- * @brief Coordinate transformation from cylindrical to Cartesian coordinates.
+ * @brief Coordinate transformation from cylindrical to Cartesian coordinates
+ * with change of basis. The origins of the coordinate systems co-incide.
+ *
+ * If the parameter @p axis is not equal to <tt>[0, 0, 1]</tt>, the value
+ * of the angle @f$ \phi @f$ in cylindrical coordinates is under-defined.
+ * To fully define it, it is necessary to provide an orientation vector
+ * in Cartesian coordinates that will be used as the reference point
+ * (i.e. such that @f$ \phi = 0 @f$).
+ *
+ * If you don't need performance, you can call the overloaded function
+ * @ref transform_coordinate_cylinder_to_cartesian(Vector3d const &, <!--
+ * --> Vector3d const &, Vector3d const &) directly. Otherwise, call function
+ * @ref transform_coordinate_cartesian_to_cylinder(Vector3d const &, <!--
+ * --> Vector3d const &, double) once on the orientation vector and cache
+ * its @f$ \phi @f$ angle; this angle can be later passed as argument
+ * @p phi0 for an 80-100% speed-up.
+ *
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
- * @param phi0   Value for which @f$ \phi = 0 @f$, is obtained by the
- *               overloaded function that takes an orientation vector.
+ * @param phi0   Angle offset to get @f$ \phi = 0 @f$
  */
 inline Vector3d transform_coordinate_cylinder_to_cartesian(Vector3d const &pos,
                                                            Vector3d const &axis,
@@ -119,7 +153,8 @@ inline Vector3d transform_coordinate_cylinder_to_cartesian(Vector3d const &pos,
 }
 
 /**
- * @brief Coordinate transformation from cylindrical to Cartesian coordinates.
+ * @brief Coordinate transformation from cylindrical to Cartesian coordinates
+ * with change of basis. The origins of the coordinate systems co-incide.
  * @param pos    %Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
  * @param orientation   Reference point (in Cartesian coordinates) for
