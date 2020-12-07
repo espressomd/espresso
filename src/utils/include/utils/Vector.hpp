@@ -263,12 +263,14 @@ Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
 }
 
 /* Scalar multiplication */
-template <size_t N, typename T, class U>
+template <size_t N, typename T, class U,
+          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 auto operator*(U const &a, Vector<T, N> const &b) {
   return boost::qvm::operator*(b, a);
 }
 
-template <size_t N, typename T, class U>
+template <size_t N, typename T, class U,
+          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 auto operator*(Vector<T, N> const &b, U const &a) {
   return boost::qvm::operator*(b, a);
 }
