@@ -20,6 +20,12 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
+#include <boost/qvm/deduce_vec.hpp>
+#include <boost/qvm/mat_traits.hpp>
+#include <boost/qvm/quat_traits.hpp>
+#include <boost/qvm/vec_operations.hpp>
+#include <boost/qvm/vec_traits.hpp>
+
 #include "utils/Array.hpp"
 
 #include <algorithm>
@@ -118,8 +124,8 @@ public:
     return ret;
   }
 
-  T norm2() const { return (*this) * (*this); }
-  T norm() const { return std::sqrt(norm2()); }
+  T norm2() const { return boost::qvm::mag_sqr(*this); }
+  T norm() const { return boost::qvm::mag(*this); }
 
   /*
    * @brief Normalize the vector.
@@ -128,13 +134,8 @@ public:
    * if not zero, otherwise the vector is unchanged.
    */
 
-  Vector &normalize() {
-    auto const l = norm();
-    if (l > T(0)) {
-      for (int i = 0; i < N; i++)
-        this->operator[](i) /= l;
-    }
-
+  Vector<T, N> &normalize() {
+    boost::qvm::normalize(*this);
     return *this;
   }
 };
@@ -553,4 +554,92 @@ auto get(Vector<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
   return a[I];
 }
 } // namespace Utils
+
+namespace boost {
+namespace qvm {
+
+template <class T, std::size_t N> struct vec_traits<::Utils::Vector<T, N>> {
+
+  static constexpr std::size_t dim = N;
+  using scalar_type = typename ::Utils::Vector<T, N>::value_type;
+
+  template <std::size_t I>
+  static constexpr inline scalar_type &write_element(::Utils::Vector<T, N> &v) {
+    return v[I];
+  }
+
+  template <std::size_t I>
+  static constexpr inline scalar_type
+  read_element(::Utils::Vector<T, N> const &v) {
+    return v[I];
+  }
+
+  static inline scalar_type read_element_idx(std::size_t i,
+                                             ::Utils::Vector<T, N> const &v) {
+    return v[i];
+  }
+};
+
+template <class T> struct quat_traits<Utils::Vector<T, 4>> {
+
+  using scalar_type = typename Utils::Vector<T, 4>::value_type;
+
+  template <std::size_t I>
+  static constexpr inline scalar_type &write_element(Utils::Vector<T, 4> &q) {
+    return q[I];
+  }
+
+  template <std::size_t I>
+  static constexpr inline scalar_type
+  read_element(Utils::Vector<T, 4> const &q) {
+    return q[I];
+  }
+};
+
+template <class T, std::size_t N, std::size_t M>
+struct mat_traits<Utils::Matrix<T, N, M>> {
+
+  static std::size_t const rows = N;
+  static std::size_t const cols = M;
+  using scalar_type = typename Utils::Matrix<T, N, M>::value_type;
+
+  template <std::size_t R, std::size_t C>
+  static constexpr inline scalar_type
+  read_element(Utils::Matrix<T, N, M> const &m) {
+    return m[R][C];
+  }
+
+  template <int R, int C>
+  static constexpr inline scalar_type &
+  write_element(Utils::Matrix<T, N, M> &m) {
+    return m[R][C];
+  }
+
+  static inline scalar_type read_element_idx(std::size_t r, std::size_t c,
+                                             Utils::Matrix<T, N, M> const &m) {
+    return m[r][c];
+  }
+  static inline scalar_type &write_element_idx(std::size_t r, std::size_t c,
+                                               Utils::Matrix<T, N, M> &m) {
+    return m[r][c];
+  }
+};
+
+template <class T> struct deduce_vec<::Utils::Vector<T, 3>, 3> {
+  using type = typename ::Utils::Vector<T, 3>;
+};
+
+template <class T, class U>
+struct deduce_vec2<Utils::Vector<T, 3>, Utils::Vector<U, 3>, 3> {
+  using type = typename Utils::Vector<std::common_type_t<T, U>, 3>;
+};
+
+template <class T>
+struct deduce_vec2<Utils::Vector<T, 4>, Utils::Vector<T, 3>, 3> {
+  using type = typename Utils::Vector<T, 3>;
+};
+
+} // namespace qvm
+} // namespace boost
+
 #endif
