@@ -273,12 +273,7 @@ auto operator-(Vector<T, N> const &a, Vector<U, N> const &b) {
 }
 
 template <size_t N, typename T> Vector<T, N> operator-(Vector<T, N> const &a) {
-  Vector<T, N> ret;
-
-  std::transform(std::begin(a), std::end(a), std::begin(ret),
-                 [](T const &v) { return -v; });
-
-  return ret;
+  return boost::qvm::operator-(a);
 }
 
 template <size_t N, typename T>
