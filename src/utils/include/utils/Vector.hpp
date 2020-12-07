@@ -299,10 +299,7 @@ template <size_t N, typename T, class U,
           class = std::enable_if_t<not(detail::is_vector<T>::value or
                                        detail::is_vector<U>::value)>>
 auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
-  using std::declval;
-  using R = decltype(declval<T>() * declval<U>());
-
-  return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
+  return boost::qvm::dot(a, b);
 }
 
 /* Matrix x Vector */
