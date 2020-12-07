@@ -264,7 +264,7 @@ auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
 
 template <size_t N, typename T>
 Vector<T, N> &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
-  return detail::binary_op_assign(a, b, std::plus<T>());
+  return boost::qvm::operator+=(a, b);
 }
 
 template <size_t N, typename T, typename U>
