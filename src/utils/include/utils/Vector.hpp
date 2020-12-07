@@ -23,7 +23,6 @@
 #include <boost/qvm/deduce_vec.hpp>
 #include <boost/qvm/map_mat_vec.hpp>
 #include <boost/qvm/mat_traits.hpp>
-#include <boost/qvm/quat_traits.hpp>
 #include <boost/qvm/vec_operations.hpp>
 #include <boost/qvm/vec_traits.hpp>
 
@@ -531,22 +530,6 @@ template <class T, std::size_t N> struct vec_traits<::Utils::Vector<T, N>> {
   static inline scalar_type read_element_idx(std::size_t i,
                                              ::Utils::Vector<T, N> const &v) {
     return v[i];
-  }
-};
-
-template <class T> struct quat_traits<Utils::Vector<T, 4>> {
-
-  using scalar_type = typename Utils::Vector<T, 4>::value_type;
-
-  template <std::size_t I>
-  static constexpr inline scalar_type &write_element(Utils::Vector<T, 4> &q) {
-    return q[I];
-  }
-
-  template <std::size_t I>
-  static constexpr inline scalar_type
-  read_element(Utils::Vector<T, 4> const &q) {
-    return q[I];
   }
 };
 

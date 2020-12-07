@@ -22,6 +22,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "utils/math/quaternion.hpp"
+#include "utils/quaternion.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -107,4 +108,11 @@ BOOST_AUTO_TEST_CASE(convert_director_to_quaternion) {
       }
     }
   }
+}
+
+BOOST_AUTO_TEST_CASE(quat_type) {
+  Utils::Quaternion<double> test{1, 2, 3, 4};
+  BOOST_CHECK(test[0] == 1);
+  test.normalize();
+  BOOST_CHECK_LE(test.norm() - 1.0, std::numeric_limits<double>::epsilon());
 }
