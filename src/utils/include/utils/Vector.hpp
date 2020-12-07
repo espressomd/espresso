@@ -275,9 +275,7 @@ auto operator*(Vector<T, N> const &b, U const &a) {
 
 template <size_t N, typename T>
 Vector<T, N> &operator*=(Vector<T, N> &b, T const &a) {
-  std::transform(std::begin(b), std::end(b), std::begin(b),
-                 [a](T const &val) { return a * val; });
-  return b;
+  return boost::qvm::operator*=(b, a);
 }
 
 /* Scalar division */
