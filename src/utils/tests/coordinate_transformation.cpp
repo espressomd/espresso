@@ -25,6 +25,7 @@
 #include <utils/math/vec_rotate.hpp>
 
 #include <cmath>
+#include <random>
 
 using Utils::Vector3d;
 
@@ -114,6 +115,29 @@ BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_with_axis_with_phi_test) {
     for (int i = 0; i < 3; ++i) {
       BOOST_CHECK_SMALL(abs(u_cyl[i] - u_ref[i]), eps);
       BOOST_CHECK_SMALL(abs(v_cyl[i] - v_ref[i]), eps);
+    }
+  }
+  // check transformation of random vectors
+  {
+    std::subtract_with_carry_engine<unsigned, 24, 10, 24> rng(2);
+    auto const r_uniform = [&rng]() {
+      return static_cast<double>(rng() - rng.min()) / (rng.max() - rng.min());
+    };
+    for (int trial = 0; trial < 100; ++trial) {
+      Vector3d const v1{r_uniform(), r_uniform(), r_uniform()};
+      Vector3d const v2{r_uniform(), r_uniform(), r_uniform()};
+      auto const a = Utils::vector_product(v1, v2) / v1.norm() / v2.norm();
+      auto const v1_v1 = transform_coordinate_cartesian_to_cylinder(v1, a, v1);
+      auto const v2_v1 = transform_coordinate_cartesian_to_cylinder(v2, a, v1);
+      auto const v1_v2 = transform_coordinate_cartesian_to_cylinder(v1, a, v2);
+      Vector3d const v1_v1_ref{v1.norm(), 0.0, 0.0};
+      Vector3d const v2_v1_ref{v2.norm(), Utils::angle_between(v1, v2), 0.0};
+      Vector3d const v1_v2_ref{v1.norm(), -Utils::angle_between(v1, v2), 0.0};
+      for (int i = 0; i < 3; ++i) {
+        BOOST_CHECK_SMALL(abs(v1_v1[i] - v1_v1_ref[i]), eps);
+        BOOST_CHECK_SMALL(abs(v2_v1[i] - v2_v1_ref[i]), eps);
+        BOOST_CHECK_SMALL(abs(v1_v2[i] - v1_v2_ref[i]), eps);
+      }
     }
   }
 }
