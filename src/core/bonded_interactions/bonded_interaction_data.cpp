@@ -40,7 +40,7 @@ public:
 
 double maximal_cutoff_bonded() {
   auto const max_cut_bonded = boost::accumulate(
-      bonded_ia_params, -1.,
+      bonded_ia_params, BONDED_INACTIVE_CUTOFF,
       [](auto max_cut, Bonded_IA_Parameters const &bond) {
         return std::max(max_cut, boost::apply_visitor(BondCutoff(), bond));
       });

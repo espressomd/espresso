@@ -54,10 +54,15 @@
 #include <stdexcept>
 #include <vector>
 
+/* Special cutoff value for a disabled bond.
+ * Bonds that have this cutoff are not visited during bond evaluation.
+ */
+static constexpr double BONDED_INACTIVE_CUTOFF = -1.;
+
 /** Interaction type for unused bonded interaction slots */
 struct NoneBond {
   static constexpr int num = 0;
-  double cutoff() const { return -1.; }
+  double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
 
 private:
   friend boost::serialization::access;
@@ -68,7 +73,7 @@ private:
 /** Interaction type for virtual bonds */
 struct VirtualBond {
   static constexpr int num = 1;
-  double cutoff() const { return -1.; }
+  double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
 
 private:
   friend boost::serialization::access;
