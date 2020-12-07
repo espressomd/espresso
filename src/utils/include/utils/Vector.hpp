@@ -195,25 +195,6 @@ Vector<T, N * M> flatten(Matrix<T, N, M> const &m) {
 }
 
 namespace detail {
-template <size_t N, typename T, typename U, typename Op>
-auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
-  using std::declval;
-
-  using R = decltype(op(declval<T>(), declval<U>()));
-  Vector<R, N> ret;
-
-  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
-                 op);
-
-  return ret;
-}
-
-template <size_t N, typename T, typename Op>
-Vector<T, N> &binary_op_assign(Vector<T, N> &a, Vector<T, N> const &b, Op op) {
-  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
-  return a;
-}
-
 template <size_t N, typename T, typename Op>
 constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
   for (int i = 0; i < a.size(); i++) {
