@@ -286,9 +286,7 @@ Vector<T, N> operator/(Vector<T, N> const &a, T const &b) {
 
 template <size_t N, typename T>
 Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
-  std::transform(std::begin(a), std::end(a), std::begin(a),
-                 [b](T const &val) { return val / b; });
-  return a;
+  return boost::qvm::operator/=(a, b);
 }
 
 namespace detail {
