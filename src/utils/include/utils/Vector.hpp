@@ -265,13 +265,7 @@ Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
 /* Scalar multiplication */
 template <size_t N, typename T, class U>
 auto operator*(U const &a, Vector<T, N> const &b) {
-  using R = decltype(a * std::declval<T>());
-  Vector<R, N> ret;
-
-  std::transform(std::begin(b), std::end(b), std::begin(ret),
-                 [a](T const &val) { return a * val; });
-
-  return ret;
+  return boost::qvm::operator*(b, a);
 }
 
 template <size_t N, typename T, class U>
