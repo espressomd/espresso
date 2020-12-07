@@ -270,13 +270,7 @@ auto operator*(U const &a, Vector<T, N> const &b) {
 
 template <size_t N, typename T, class U>
 auto operator*(Vector<T, N> const &b, U const &a) {
-  using R = decltype(std::declval<T>() * a);
-  Vector<R, N> ret;
-
-  std::transform(std::begin(b), std::end(b), std::begin(ret),
-                 [a](T const &val) { return a * val; });
-
-  return ret;
+  return boost::qvm::operator*(b, a);
 }
 
 template <size_t N, typename T>
