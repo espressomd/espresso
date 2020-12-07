@@ -278,7 +278,7 @@ template <size_t N, typename T> Vector<T, N> operator-(Vector<T, N> const &a) {
 
 template <size_t N, typename T>
 Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
-  return detail::binary_op_assign(a, b, std::minus<T>());
+  return boost::qvm::operator-=(a, b);
 }
 
 /* Scalar multiplication */
