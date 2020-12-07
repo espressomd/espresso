@@ -31,7 +31,7 @@ std::vector<Bonded_ia_parameters> bonded_ia_params;
 auto cutoff(int type, Bond_parameters const &bp) {
   switch (type) {
   case BONDED_IA_NONE:
-    return -1.;
+    return BONDED_INACTIVE_CUTOFF;
   case BONDED_IA_FENE:
     return bp.fene.cutoff();
   case BONDED_IA_HARMONIC:
@@ -79,7 +79,7 @@ auto cutoff(int type, Bond_parameters const &bp) {
 
 double maximal_cutoff_bonded() {
   auto const max_cut_bonded =
-      boost::accumulate(bonded_ia_params, -1.,
+      boost::accumulate(bonded_ia_params, BONDED_INACTIVE_CUTOFF,
                         [](auto max_cut, Bonded_ia_parameters const &bond) {
                           return std::max(max_cut, cutoff(bond.type, bond.p));
                         });

@@ -90,6 +90,11 @@ enum TabulatedBondedInteraction {
   TAB_BOND_DIHEDRAL = 3 /**< Flag for @ref BONDED_IA_TABULATED_DIHEDRAL */
 };
 
+/* Special cutoff value for a disabled bond.
+ * Bonds that have this cutoff are not visited during bond evaluation.
+ */
+static constexpr double BONDED_INACTIVE_CUTOFF = -1.;
+
 /** Parameters for FENE bond Potential. */
 struct Fene_bond_parameters {
   /** spring constant */
@@ -354,7 +359,7 @@ struct IBM_Tribend_Parameters {
 };
 
 struct VirtualBond_Parameters {
-  double cutoff() const { return -1.; }
+  double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
 };
 
 /** Union in which to store the parameters of an individual bonded interaction
