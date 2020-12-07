@@ -281,11 +281,7 @@ Vector<T, N> &operator*=(Vector<T, N> &b, T const &a) {
 /* Scalar division */
 template <size_t N, typename T>
 Vector<T, N> operator/(Vector<T, N> const &a, T const &b) {
-  Vector<T, N> ret;
-
-  std::transform(std::begin(a), std::end(a), ret.begin(),
-                 [b](T const &val) { return val / b; });
-  return ret;
+  return boost::qvm::operator/(a, b);
 }
 
 template <size_t N, typename T>
