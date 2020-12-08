@@ -138,6 +138,8 @@ public:
     boost::qvm::normalize(*this);
     return *this;
   }
+
+  Vector<T, N> normalized() const { return boost::qvm::normalized(*this); }
 };
 
 template <class T> using Vector3 = Vector<T, 3>;

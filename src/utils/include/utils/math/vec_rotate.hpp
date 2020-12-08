@@ -42,11 +42,14 @@ namespace Utils {
  */
 inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
                            const Vector3d &vector) {
-  auto const sina = std::sin(alpha);
-  auto const cosa = std::cos(alpha);
-  auto const a = Vector3d(axis).normalize();
-  auto const &v = vector;
-  return cosa * v + sina * vector_product(a, v) + (1. - cosa) * (a * v) * a;
+  if (std::abs(alpha) > std::numeric_limits<double>::epsilon()) {
+    auto const sina = std::sin(alpha);
+    auto const cosa = std::cos(alpha);
+    auto const a = Vector3d(axis).normalize();
+    auto const &v = vector;
+    return cosa * v + sina * vector_product(a, v) + (1. - cosa) * (a * v) * a;
+  }
+  return vector;
 }
 
 /**
@@ -57,10 +60,14 @@ inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
  */
 inline std::tuple<double, Vector3d>
 rotation_params(Vector3d const &vec, Vector3d const &target_vec) {
-  auto const theta =
-      std::acos(vec * target_vec / (vec.norm() * target_vec.norm()));
-  auto const rotation_axis = Utils::vector_product(vec, target_vec).normalize();
-  return std::make_tuple(theta, rotation_axis);
+  if (vec.normalized() != target_vec.normalized()) {
+    auto const theta =
+        std::acos(vec * target_vec / (vec.norm() * target_vec.norm()));
+    auto const rotation_axis =
+        Utils::vector_product(vec, target_vec).normalize();
+    return std::make_tuple(theta, rotation_axis);
+  }
+  return std::make_tuple(0.0, Vector3d{});
 }
 
 } // namespace Utils

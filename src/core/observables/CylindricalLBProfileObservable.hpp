@@ -55,7 +55,8 @@ public:
       // z-axis symmetry.
       std::tie(theta, rotation_axis) =
           Utils::rotation_params(Utils::Vector3d{{0.0, 0.0, 1.0}}, axis);
-      p_cart = Utils::vec_rotate(rotation_axis, theta, p_cart);
+      if (theta > std::numeric_limits<double>::epsilon())
+        p_cart = Utils::vec_rotate(rotation_axis, theta, p_cart);
       p = p_cart + center;
     }
   }
