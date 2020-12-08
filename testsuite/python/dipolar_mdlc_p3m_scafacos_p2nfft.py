@@ -47,6 +47,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
+        if self.system.actors:
+            # workaround for DLC actor bug
+            self.system.actors.clear()
 
     def test_mdlc(self):
         s = self.system
@@ -93,9 +96,6 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         self.assertLessEqual(abs(err_e), tol_e, "Energy difference too large")
         self.assertLessEqual(abs(err_t), tol_t, "Torque difference too large")
         self.assertLessEqual(abs(err_f), tol_f, "Force difference too large")
-
-        del s.actors[0]
-        del s.actors[0]
 
     def test_p3m(self):
         s = self.system
