@@ -58,7 +58,7 @@ inline Utils::Vector3d central_force(double const q1q2,
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    Scafacos::add_pair_force(q1q2, d.data(), dist, f.data());
+    Scafacos::add_pair_force(q1q2, d, dist, f);
     break;
 #endif
   default:

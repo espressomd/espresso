@@ -28,13 +28,16 @@
 
 #include "config.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <list>
 #include <string>
 
 namespace Scafacos {
 #if defined(SCAFACOS)
 /** Near-field pair force */
-void add_pair_force(double q1q2, const double *d, double dist, double *force);
+void add_pair_force(double q1q2, Utils::Vector3d const &d, double dist,
+                    Utils::Vector3d &force);
 /** Near-field pair energy */
 double pair_energy(double q1q2, double dist);
 /** Long range part */

@@ -44,6 +44,7 @@
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/min_element.hpp>
+#include <boost/range/numeric.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -51,7 +52,6 @@
 #include <functional>
 #include <limits>
 #include <list>
-#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -63,14 +63,18 @@
 
 namespace Scafacos {
 
-/** Get available scafacos methods */
+/** Get available ScaFaCoS methods */
 std::list<std::string> available_methods() {
   return Scafacos::available_methods();
 }
 
-/** Encapsulation for the particle data needed by scafacos */
+/** Encapsulation for the particle data needed by ScaFaCoS */
 struct ScafacosData {
-  int update_particle_data();
+  /** @brief Collect particle data in continuous arrays as required
+   *  by ScaFaCoS.
+   */
+  void update_particle_data();
+  /** @brief Write forces back to particles. */
   void update_particle_forces() const;
   /** Inputs */
   std::vector<double> charges, positions, dipoles;
@@ -81,8 +85,7 @@ struct ScafacosData {
 static Scafacos *scafacos = nullptr;
 static ScafacosData particles;
 
-/** \brief Collect particle data in continuous arrays as required by fcs */
-int ScafacosData::update_particle_data() {
+void ScafacosData::update_particle_data() {
   positions.clear();
 
   if (!dipolar()) {
@@ -109,16 +112,13 @@ int ScafacosData::update_particle_data() {
 #endif
     }
   }
-
-  return static_cast<int>(positions.size() / 3);
 }
 
-/** \brief Write forces back to particles */
 void ScafacosData::update_particle_forces() const {
-  int it = 0;
   if (positions.empty())
     return;
 
+  int it = 0;
   for (auto &p : cell_structure.local_particles()) {
     if (!dipolar()) {
       p.f.f += coulomb.prefactor * p.p.q *
@@ -167,17 +167,15 @@ void ScafacosData::update_particle_forces() const {
   }
 }
 
-void add_pair_force(double q1q2, const double *d, double dist, double *force) {
+void add_pair_force(double q1q2, Utils::Vector3d const &d, double dist,
+                    Utils::Vector3d &force) {
   if (dist > get_r_cut())
     return;
 
   assert(scafacos);
-  const double field = scafacos->pair_force(dist);
-  const double fak = q1q2 * field / dist;
-
-  for (int i = 0; i < 3; i++) {
-    force[i] -= fak * d[i];
-  }
+  auto const field = scafacos->pair_force(dist);
+  auto const fak = q1q2 * field / dist;
+  force -= fak * d;
 }
 
 double pair_energy(double q1q2, double dist) {
@@ -200,8 +198,7 @@ void add_long_range_force() {
 #endif
     }
   } else
-    throw std::runtime_error(
-        "Scafacos internal error. Instance pointer is not valid.");
+    throw std::runtime_error("Scafacos not initialized");
 
   particles.update_particle_forces();
 }
@@ -213,17 +210,13 @@ double long_range_energy() {
       scafacos->run(particles.charges, particles.positions, particles.fields,
                     particles.potentials);
       return 0.5 * coulomb.prefactor *
-             std::inner_product(particles.charges.begin(),
-                                particles.charges.end(),
-                                particles.potentials.begin(), 0.0);
+             boost::inner_product(particles.charges, particles.potentials, 0.0);
     }
 #ifdef SCAFACOS_DIPOLES
     scafacos->run_dipolar(particles.dipoles, particles.positions,
                           particles.fields, particles.potentials);
     return -0.5 * dipole.prefactor *
-           std::inner_product(particles.dipoles.begin(),
-                              particles.dipoles.end(),
-                              particles.potentials.begin(), 0.0);
+           boost::inner_product(particles.dipoles, particles.potentials, 0.0);
 #endif
   }
 
@@ -241,8 +234,7 @@ REGISTER_CALLBACK(set_r_cut_and_tune_local)
 /** Determine runtime for a specific cutoff */
 double time_r_cut(double r_cut) {
   /* Set cutoff to time */
-  mpi_call(set_r_cut_and_tune_local, r_cut);
-  set_r_cut_and_tune_local(r_cut);
+  mpi_call_all(set_r_cut_and_tune_local, r_cut);
 
   return time_force_calc(10);
 }
@@ -301,10 +293,8 @@ void tune() {
 static void set_params_safe(const std::string &method,
                             const std::string &params, bool dipolar_ia,
                             int n_part) {
-  if (scafacos) {
-    delete scafacos;
-    scafacos = nullptr;
-  }
+  delete scafacos;
+  scafacos = nullptr;
 
   scafacos = new Scafacos(method, comm_cart, params);
 
@@ -376,10 +366,8 @@ void set_dipolar(bool d) {
 void free_handle() {
   if (this_node == 0)
     mpi_call(free_handle);
-  if (scafacos) {
-    delete scafacos;
-    scafacos = nullptr;
-  }
+  delete scafacos;
+  scafacos = nullptr;
 }
 
 REGISTER_CALLBACK(free_handle)
@@ -387,7 +375,7 @@ REGISTER_CALLBACK(free_handle)
 void update_system_params() {
   // If scafacos is not active, do nothing
   if (!scafacos) {
-    throw std::runtime_error("Scafacos object not there");
+    throw std::runtime_error("Scafacos not initialized");
   }
 
   int per[3] = {box_geo.periodic(0) != 0, box_geo.periodic(1) != 0,

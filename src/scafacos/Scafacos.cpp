@@ -162,15 +162,10 @@ void Scafacos::set_common_parameters(const double *box_l,
   boxa[0] = box_l[0];
   boxb[1] = box_l[1];
   boxc[2] = box_l[2];
-  // Does scafacos calculate the near field part
-  // For charges, if the method supports it, Es calculates near field
-  int sr = 0;
-  if (!dipolar() && has_near) {
-    sr = 0;
-  } else {
-    // Scafacos does near field calc
-    sr = 1;
-  }
+  // Does scafacos calculate the near field part?
+  // For charges, ESPResSo calculates near field if the method supports it.
+  // For dipoles, ScaFaCoS calculates near field.
+  int const sr = dipolar() || !has_near;
   handle_error(fcs_set_common(handle, sr, boxa, boxb, boxc, off, periodicity,
                               total_particles));
 #ifdef FCS_ENABLE_DIPOLES
