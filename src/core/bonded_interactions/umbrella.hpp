@@ -31,12 +31,11 @@
 
 #include "config.hpp"
 
-#ifdef UMBRELLA
-
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <boost/optional.hpp>
 
@@ -79,5 +78,4 @@ umbrella_pair_energy(Bonded_ia_parameters const &ia_params,
          Utils::sqr(distn - ia_params.p.umbrella.r);
 }
 
-#endif /* ifdef UMBRELLA */
 #endif
