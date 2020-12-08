@@ -147,7 +147,7 @@ using UpdatePropertyMessage = boost::variant
 using UpdatePositionMessage = boost::variant
         < UpdatePosition<Utils::Vector3d, &ParticlePosition::p>
 #ifdef ROTATION
-        , UpdatePosition<Utils::Vector4d, &ParticlePosition::quat>
+        , UpdatePosition<Utils::Quaternion<double>, &ParticlePosition::quat>
 #endif
         >;
 
@@ -750,7 +750,7 @@ void set_particle_dipm(int part, double dipm) {
 }
 
 void set_particle_dip(int part, double const *const dip) {
-  Utils::Vector4d quat;
+  Utils::Quaternion<double> quat;
   double dipm;
   std::tie(quat, dipm) =
       convert_dip_to_quat(Utils::Vector3d({dip[0], dip[1], dip[2]}));
@@ -769,7 +769,8 @@ void set_particle_virtual(int part, bool is_virtual) {
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat) {
+void set_particle_vs_quat(int part,
+                          Utils::Quaternion<double> const &vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
   vs_relative.quat = vs_relative_quat;
 
@@ -779,7 +780,7 @@ void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat) {
 }
 
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              Utils::Vector4d const &rel_ori) {
+                              Utils::Quaternion<double> const &rel_ori) {
   ParticleProperties::VirtualSitesRelativeParameters vs_relative;
   vs_relative.distance = vs_distance;
   vs_relative.to_particle_id = vs_relative_to;
@@ -837,9 +838,9 @@ void set_particle_mol_id(int part, int mid) {
 
 #ifdef ROTATION
 void set_particle_quat(int part, double *quat) {
-  mpi_update_particle<ParticlePosition, &Particle::r, Utils::Vector4d,
-                      &ParticlePosition::quat>(part,
-                                               Utils::Vector4d(quat, quat + 4));
+  mpi_update_particle<ParticlePosition, &Particle::r, Utils::Quaternion<double>,
+                      &ParticlePosition::quat>(
+      part, Utils::Quaternion<double>(quat, quat + 4));
 }
 
 void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab) {

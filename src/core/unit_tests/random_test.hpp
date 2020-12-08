@@ -23,6 +23,7 @@
 /* Helper functions to compute random numbers covariance in a single pass */
 
 #include <utils/Vector.hpp>
+#include <utils/quaternion.hpp>
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
@@ -40,7 +41,8 @@
 #include <vector>
 
 namespace Utils {
-using VariantVectorXd = boost::variant<double, Vector2d, Vector3d, Vector4d>;
+using VariantVectorXd =
+    boost::variant<double, Vector2d, Vector3d, Vector4d, Quaternion<double>>;
 } // namespace Utils
 
 using Utils::VariantVectorXd;
@@ -54,6 +56,7 @@ public:
   template <size_t N> size_t operator()(Vector<double, N> const &v) const {
     return v.size();
   }
+  size_t operator()(Utils::Quaternion<double> const &q) const { return 4; }
   size_t operator()(double v) const { return 1; }
 };
 
@@ -62,6 +65,9 @@ public:
   template <size_t N>
   double operator()(Vector<double, N> const &v, size_t i) const {
     return v[i];
+  }
+  double operator()(Utils::Quaternion<double> const &q, size_t i) const {
+    return q[i];
   }
   double operator()(double v, size_t i) const {
     assert(i == 0);

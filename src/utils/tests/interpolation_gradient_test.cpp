@@ -51,9 +51,9 @@ BOOST_AUTO_TEST_CASE(sum_of_weights) {
   auto summer = [&sum_const, &sum_lin, &grid_spacing](
                     const std::array<int, 3> &ind, const Utils::Vector3d &w) {
     sum_const += w;
-    sum_lin +=
-        {w[0] * ind[0] * grid_spacing[0], w[1] * ind[1] * grid_spacing[1],
-         w[2] * ind[2] * grid_spacing[2]};
+    sum_lin += Utils::Vector3d{w[0] * ind[0] * grid_spacing[0],
+                               w[1] * ind[1] * grid_spacing[1],
+                               w[2] * ind[2] * grid_spacing[2]};
   };
 
   bspline_3d_gradient<5>({.1, .2, .3}, summer, grid_spacing, {7., 8., 9.});

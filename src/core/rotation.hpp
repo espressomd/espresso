@@ -35,6 +35,7 @@
 #include <utils/mask.hpp>
 #include <utils/math/quaternion.hpp>
 #include <utils/math/rotation_matrix.hpp>
+#include <utils/quaternion.hpp>
 
 #include <cmath>
 #include <utility>
@@ -89,7 +90,7 @@ auto convert_body_to_space(const Particle &p, const Utils::Matrix<T, 3, 3> &A) {
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
-inline std::pair<Utils::Vector4d, double>
+inline std::pair<Utils::Quaternion<double>, double>
 convert_dip_to_quat(const Utils::Vector3d &dip) {
   auto quat = Utils::convert_director_to_quaternion(dip);
   return {quat, dip.norm()};
@@ -100,7 +101,7 @@ convert_dip_to_quat(const Utils::Vector3d &dip) {
 /** Rotate the particle p around the body-frame defined NORMALIZED axis
  *  @p aBodyFrame by amount @p phi.
  */
-inline Utils::Vector4d
+inline Utils::Quaternion<double>
 local_rotate_particle_body(Particle const &p,
                            const Utils::Vector3d &axis_body_frame,
                            const double phi) {
@@ -114,11 +115,11 @@ local_rotate_particle_body(Particle const &p,
   axis = mask(p.p.rotation, axis).normalize();
 
   auto const s = std::sin(phi / 2);
-  auto const q =
-      Utils::Vector4d{cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]}
-          .normalize();
+  auto const q = Utils::Quaternion<double>{cos(phi / 2), s * axis[0],
+                                           s * axis[1], s * axis[2]}
+                     .normalize();
 
-  return Utils::multiply_quaternions(p.r.quat, q);
+  return p.r.quat * q;
 }
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi

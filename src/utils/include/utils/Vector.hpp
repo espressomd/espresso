@@ -194,8 +194,8 @@ Vector<T, N * M> flatten(Matrix<T, N, M> const &m) {
 }
 
 namespace detail {
-template <size_t N, typename T, typename Op>
-constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
+template <size_t N, typename T, typename U, typename Op>
+constexpr bool all_of(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
   for (int i = 0; i < a.size(); i++) {
     /* Short circuit */
     if (!static_cast<bool>(op(a[i], b[i]))) {
@@ -207,33 +207,33 @@ constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
 }
 } // namespace detail
 
-template <size_t N, typename T>
-constexpr bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::less<T>());
+template <size_t N, typename T, typename U>
+constexpr bool operator<(Vector<T, N> const &a, Vector<U, N> const &b) {
+  return detail::all_of(a, b, std::less<std::common_type_t<T, U>>());
 }
 
-template <size_t N, typename T>
-constexpr bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::greater<T>());
+template <size_t N, typename T, typename U>
+constexpr bool operator>(Vector<T, N> const &a, Vector<U, N> const &b) {
+  return detail::all_of(a, b, std::greater<std::common_type_t<T, U>>());
 }
 
-template <size_t N, typename T>
-constexpr bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::less_equal<T>());
+template <size_t N, typename T, typename U>
+constexpr bool operator<=(Vector<T, N> const &a, Vector<U, N> const &b) {
+  return detail::all_of(a, b, std::less_equal<std::common_type_t<T, U>>());
 }
 
-template <size_t N, typename T>
-constexpr bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::greater_equal<T>());
+template <size_t N, typename T, typename U>
+constexpr bool operator>=(Vector<T, N> const &a, Vector<U, N> const &b) {
+  return detail::all_of(a, b, std::greater_equal<std::common_type_t<T, U>>());
 }
 
-template <size_t N, typename T>
-constexpr bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::equal_to<T>());
+template <size_t N, typename T, typename U>
+constexpr bool operator==(Vector<T, N> const &a, Vector<U, N> const &b) {
+  return detail::all_of(a, b, std::equal_to<std::common_type_t<T, U>>());
 }
 
-template <size_t N, typename T>
-constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
+template <size_t N, typename T, typename U>
+constexpr bool operator!=(Vector<T, N> const &a, Vector<U, N> const &b) {
   return not(a == b);
 }
 
@@ -242,8 +242,8 @@ auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
   return boost::qvm::operator+(a, b);
 }
 
-template <size_t N, typename T>
-Vector<T, N> &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
+template <size_t N, typename T, typename U>
+Vector<T, N> &operator+=(Vector<T, N> &a, Vector<U, N> const &b) {
   return boost::qvm::operator+=(a, b);
 }
 
@@ -529,6 +529,10 @@ template <class T, std::size_t N> struct vec_traits<::Utils::Vector<T, N>> {
 
   static inline scalar_type read_element_idx(std::size_t i,
                                              ::Utils::Vector<T, N> const &v) {
+    return v[i];
+  }
+  static inline scalar_type &write_element_idx(std::size_t i,
+                                               ::Utils::Vector<T, N> &v) {
     return v[i];
   }
 };

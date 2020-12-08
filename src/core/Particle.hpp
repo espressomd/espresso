@@ -25,6 +25,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
+#include <utils/quaternion.hpp>
 
 #include <boost/serialization/vector.hpp>
 
@@ -128,9 +129,10 @@ struct ParticleProperties {
     int to_particle_id = 0;
     double distance = 0;
     /** Relative position of the virtual site. */
-    Utils::Vector4d rel_orientation = {0., 0., 0., 0.};
+    Utils::Quaternion<double> rel_orientation =
+        Utils::Quaternion<double>::zero();
     /** Orientation of the virtual particle in the body fixed frame. */
-    Utils::Vector4d quat = {0., 0., 0., 0.};
+    Utils::Quaternion<double> quat = Utils::Quaternion<double>{0., 0., 0., 0.};
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &to_particle_id;
@@ -248,7 +250,7 @@ struct ParticlePosition {
 
 #ifdef ROTATION
   /** quaternion to define particle orientation */
-  Utils::Vector4d quat = {1., 0., 0., 0.};
+  Utils::Quaternion<double> quat = Utils::Quaternion<double>::identity();
   /** unit director calculated from the quaternion */
   Utils::Vector3d calc_director() const {
     return Utils::convert_quaternion_to_director(quat);

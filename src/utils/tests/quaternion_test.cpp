@@ -1,7 +1,6 @@
 /*
  * Copyright (C) 2019 The ESPResSo project
  *
- * This file is part of ESPResSo.
  *
  * ESPResSo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,7 +73,6 @@ BOOST_AUTO_TEST_CASE(convert_director_to_quaternion) {
   using Quat = Utils::Quaternion<double>;
   using Utils::convert_director_to_quaternion;
   using Utils::Vector3d;
-  using Utils::Vector4d;
   double const cos_pi_4 = std::sqrt(2.) / 2.;
   constexpr double eps = std::numeric_limits<double>::epsilon();
 #define CHECK_QUAT(input, ref)                                                 \
