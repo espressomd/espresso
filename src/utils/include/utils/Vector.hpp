@@ -20,12 +20,6 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
-#include <boost/qvm/deduce_vec.hpp>
-#include <boost/qvm/map_mat_vec.hpp>
-#include <boost/qvm/mat_traits.hpp>
-#include <boost/qvm/vec_operations.hpp>
-#include <boost/qvm/vec_traits.hpp>
-
 #include "utils/Array.hpp"
 
 #include <algorithm>
@@ -124,8 +118,8 @@ public:
     return ret;
   }
 
-  T norm2() const { return boost::qvm::mag_sqr(*this); }
-  T norm() const { return boost::qvm::mag(*this); }
+  T norm2() const { return (*this) * (*this); }
+  T norm() const { return std::sqrt(norm2()); }
 
   /*
    * @brief Normalize the vector.
@@ -134,12 +128,17 @@ public:
    * if not zero, otherwise the vector is unchanged.
    */
 
-  Vector<T, N> &normalize() {
-    boost::qvm::normalize(*this);
+  Vector &normalize() {
+    auto const l = norm();
+    if (l > T(0)) {
+      for (int i = 0; i < N; i++)
+        this->operator[](i) /= l;
+    }
+
     return *this;
   }
 
-  Vector<T, N> normalized() const { return boost::qvm::normalized(*this); }
+  Vector normalized() const { return (*this) / (*this).norm(); }
 };
 
 template <class T> using Vector3 = Vector<T, 3>;
@@ -175,6 +174,7 @@ template <class T, size_t N> T trace(Matrix<T, N, N> const &m) {
   auto tr = T{};
   for (size_t i = 0; i < N; i++)
     tr += m[i][i];
+
   return tr;
 }
 
@@ -197,7 +197,26 @@ Vector<T, N * M> flatten(Matrix<T, N, M> const &m) {
 
 namespace detail {
 template <size_t N, typename T, typename U, typename Op>
-constexpr bool all_of(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
+auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
+  using std::declval;
+
+  using R = decltype(op(declval<T>(), declval<U>()));
+  Vector<R, N> ret;
+
+  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
+                 op);
+
+  return ret;
+}
+
+template <size_t N, typename T, typename Op>
+Vector<T, N> &binary_op_assign(Vector<T, N> &a, Vector<T, N> const &b, Op op) {
+  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
+  return a;
+}
+
+template <size_t N, typename T, typename Op>
+constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
   for (int i = 0; i < a.size(); i++) {
     /* Short circuit */
     if (!static_cast<bool>(op(a[i], b[i]))) {
@@ -209,87 +228,110 @@ constexpr bool all_of(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
 }
 } // namespace detail
 
-template <size_t N, typename T, typename U>
-constexpr bool operator<(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return detail::all_of(a, b, std::less<std::common_type_t<T, U>>());
+template <size_t N, typename T>
+constexpr bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
+  return detail::all_of(a, b, std::less<T>());
 }
 
-template <size_t N, typename T, typename U>
-constexpr bool operator>(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return detail::all_of(a, b, std::greater<std::common_type_t<T, U>>());
+template <size_t N, typename T>
+constexpr bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
+  return detail::all_of(a, b, std::greater<T>());
 }
 
-template <size_t N, typename T, typename U>
-constexpr bool operator<=(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return detail::all_of(a, b, std::less_equal<std::common_type_t<T, U>>());
+template <size_t N, typename T>
+constexpr bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
+  return detail::all_of(a, b, std::less_equal<T>());
 }
 
-template <size_t N, typename T, typename U>
-constexpr bool operator>=(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return detail::all_of(a, b, std::greater_equal<std::common_type_t<T, U>>());
+template <size_t N, typename T>
+constexpr bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
+  return detail::all_of(a, b, std::greater_equal<T>());
 }
 
-template <size_t N, typename T, typename U>
-constexpr bool operator==(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return detail::all_of(a, b, std::equal_to<std::common_type_t<T, U>>());
+template <size_t N, typename T>
+constexpr bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
+  return detail::all_of(a, b, std::equal_to<T>());
 }
 
-template <size_t N, typename T, typename U>
-constexpr bool operator!=(Vector<T, N> const &a, Vector<U, N> const &b) {
+template <size_t N, typename T>
+constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return not(a == b);
 }
 
 template <size_t N, typename T, typename U>
 auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return boost::qvm::operator+(a, b);
+  return detail::binary_op(a, b, std::plus<>());
 }
 
-template <size_t N, typename T, typename U>
-Vector<T, N> &operator+=(Vector<T, N> &a, Vector<U, N> const &b) {
-  return boost::qvm::operator+=(a, b);
+template <size_t N, typename T>
+Vector<T, N> &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
+  return detail::binary_op_assign(a, b, std::plus<T>());
 }
 
 template <size_t N, typename T, typename U>
 auto operator-(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return boost::qvm::operator-(a, b);
+  return detail::binary_op(a, b, std::minus<>());
 }
 
 template <size_t N, typename T> Vector<T, N> operator-(Vector<T, N> const &a) {
-  return boost::qvm::operator-(a);
+  Vector<T, N> ret;
+
+  std::transform(std::begin(a), std::end(a), std::begin(ret),
+                 [](T const &v) { return -v; });
+
+  return ret;
 }
 
 template <size_t N, typename T>
 Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
-  return boost::qvm::operator-=(a, b);
+  return detail::binary_op_assign(a, b, std::minus<T>());
 }
 
 /* Scalar multiplication */
-template <size_t N, typename T, class U,
-          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
+template <size_t N, typename T, class U>
 auto operator*(U const &a, Vector<T, N> const &b) {
-  return boost::qvm::operator*(b, a);
+  using R = decltype(a * std::declval<T>());
+  Vector<R, N> ret;
+
+  std::transform(std::begin(b), std::end(b), std::begin(ret),
+                 [a](T const &val) { return a * val; });
+
+  return ret;
 }
 
-template <size_t N, typename T, class U,
-          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
+template <size_t N, typename T, class U>
 auto operator*(Vector<T, N> const &b, U const &a) {
-  return boost::qvm::operator*(b, a);
+  using R = decltype(std::declval<T>() * a);
+  Vector<R, N> ret;
+
+  std::transform(std::begin(b), std::end(b), std::begin(ret),
+                 [a](T const &val) { return a * val; });
+
+  return ret;
 }
 
 template <size_t N, typename T>
 Vector<T, N> &operator*=(Vector<T, N> &b, T const &a) {
-  return boost::qvm::operator*=(b, a);
+  std::transform(std::begin(b), std::end(b), std::begin(b),
+                 [a](T const &val) { return a * val; });
+  return b;
 }
 
 /* Scalar division */
 template <size_t N, typename T>
 Vector<T, N> operator/(Vector<T, N> const &a, T const &b) {
-  return boost::qvm::operator/(a, b);
+  Vector<T, N> ret;
+
+  std::transform(std::begin(a), std::end(a), ret.begin(),
+                 [b](T const &val) { return val / b; });
+  return ret;
 }
 
 template <size_t N, typename T>
 Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
-  return boost::qvm::operator/=(a, b);
+  std::transform(std::begin(a), std::end(a), std::begin(a),
+                 [b](T const &val) { return val / b; });
+  return a;
 }
 
 namespace detail {
@@ -302,7 +344,10 @@ template <size_t N, typename T, class U,
           class = std::enable_if_t<not(detail::is_vector<T>::value or
                                        detail::is_vector<U>::value)>>
 auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return boost::qvm::dot(a, b);
+  using std::declval;
+  using R = decltype(declval<T>() * declval<U>());
+
+  return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
 }
 
 /* Matrix x Vector */
@@ -396,7 +441,8 @@ template <size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
 
 template <class T>
 Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
-  return boost::qvm::cross(a, b);
+  return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+          a[0] * b[1] - a[1] * b[0]};
 }
 
 template <class T, class U, size_t N>
@@ -509,80 +555,4 @@ auto get(Vector<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
   return a[I];
 }
 } // namespace Utils
-
-namespace boost {
-namespace qvm {
-
-template <class T, std::size_t N> struct vec_traits<::Utils::Vector<T, N>> {
-
-  static constexpr std::size_t dim = N;
-  using scalar_type = typename ::Utils::Vector<T, N>::value_type;
-
-  template <std::size_t I>
-  static constexpr inline scalar_type &write_element(::Utils::Vector<T, N> &v) {
-    return v[I];
-  }
-
-  template <std::size_t I>
-  static constexpr inline scalar_type
-  read_element(::Utils::Vector<T, N> const &v) {
-    return v[I];
-  }
-
-  static inline scalar_type read_element_idx(std::size_t i,
-                                             ::Utils::Vector<T, N> const &v) {
-    return v[i];
-  }
-  static inline scalar_type &write_element_idx(std::size_t i,
-                                               ::Utils::Vector<T, N> &v) {
-    return v[i];
-  }
-};
-
-template <class T, std::size_t N, std::size_t M>
-struct mat_traits<Utils::Matrix<T, N, M>> {
-
-  static std::size_t const rows = N;
-  static std::size_t const cols = M;
-  using scalar_type = typename Utils::Matrix<T, N, M>::value_type;
-
-  template <std::size_t R, std::size_t C>
-  static constexpr inline scalar_type
-  read_element(Utils::Matrix<T, N, M> const &m) {
-    return m[R][C];
-  }
-
-  template <int R, int C>
-  static constexpr inline scalar_type &
-  write_element(Utils::Matrix<T, N, M> &m) {
-    return m[R][C];
-  }
-
-  static inline scalar_type read_element_idx(std::size_t r, std::size_t c,
-                                             Utils::Matrix<T, N, M> const &m) {
-    return m[r][c];
-  }
-  static inline scalar_type &write_element_idx(std::size_t r, std::size_t c,
-                                               Utils::Matrix<T, N, M> &m) {
-    return m[r][c];
-  }
-};
-
-template <class T> struct deduce_vec<::Utils::Vector<T, 3>, 3> {
-  using type = typename ::Utils::Vector<T, 3>;
-};
-
-template <class T, class U>
-struct deduce_vec2<Utils::Vector<T, 3>, Utils::Vector<U, 3>, 3> {
-  using type = typename Utils::Vector<std::common_type_t<T, U>, 3>;
-};
-
-template <class T>
-struct deduce_vec2<Utils::Vector<T, 4>, Utils::Vector<T, 3>, 3> {
-  using type = typename Utils::Vector<T, 3>;
-};
-
-} // namespace qvm
-} // namespace boost
-
 #endif

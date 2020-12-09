@@ -52,12 +52,14 @@ BOOST_AUTO_TEST_CASE(dist_function) {
     BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
 
     pos = {{R1, 0.0, L / 2.0}};
-    BOOST_CHECK_THROW(c.calculate_dist(pos, dist, vec),
-                      boost::qvm::zero_magnitude_error);
+    c.calculate_dist(pos, dist, vec);
+    BOOST_CHECK_SMALL(dist, eps);
+    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
 
     pos = {{3.0, 0.0, -L / 2.0}};
-    BOOST_CHECK_THROW(c.calculate_dist(pos, dist, vec),
-                      boost::qvm::zero_magnitude_error);
+    c.calculate_dist(pos, dist, vec);
+    BOOST_CHECK_SMALL(dist, eps);
+    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
 
     c.set_thickness(1.0);
     c.set_r2(R1);
