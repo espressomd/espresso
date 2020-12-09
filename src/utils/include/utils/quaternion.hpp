@@ -20,8 +20,10 @@
 #define SRC_UTILS_INCLUDE_UTILS_QUATERNION_HPP
 
 #include <boost/qvm/deduce_scalar.hpp>
+#include <boost/qvm/deduce_vec.hpp>
 #include <boost/qvm/quat_operations.hpp>
 #include <boost/qvm/quat_traits.hpp>
+#include <boost/qvm/quat_vec_operations.hpp>
 
 #include "utils/Vector.hpp"
 
@@ -148,6 +150,11 @@ template <class T> struct quat_traits<Utils::Quaternion<T>> {
 template <typename T>
 struct deduce_scalar<Utils::Quaternion<T>, Utils::Quaternion<T>> {
   using type = T;
+};
+
+template <typename T, typename U>
+struct deduce_vec2<Utils::Quaternion<T>, Utils::Vector<U, 3>, 3> {
+  using type = typename Utils::Vector<std::common_type_t<T, U>, 3>;
 };
 
 } // namespace qvm

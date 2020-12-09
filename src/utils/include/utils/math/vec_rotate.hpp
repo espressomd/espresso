@@ -21,6 +21,7 @@
 
 #include "utils/Vector.hpp"
 #include "utils/math/sqr.hpp"
+#include "utils/quaternion.hpp"
 
 #include <cmath>
 #include <tuple>
@@ -29,25 +30,16 @@ namespace Utils {
 /**
  * @brief Rotate a vector around an axis.
  *
- * Rodrigues' rotation formula:
- * @f$ \vec{v}_{\mathrm{rot}} =
- *      (\cos{\alpha})\vec{v} +
- *      (\sin{\alpha})\vec{k}\times\vec{v} +
- *      (1 - \cos{\alpha})(\vec{k}\cdot\vec{v})\vec{k} @f$
- *
  * @param axis The axis to rotate about
- * @param alpha Angle to rotate
+ * @param angle Angle to rotate
  * @param vector %Vector to act on
  * @return Rotated vector
  */
-inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
+inline Vector3d vec_rotate(const Vector3d &axis, double angle,
                            const Vector3d &vector) {
-  if (std::abs(alpha) > std::numeric_limits<double>::epsilon()) {
-    auto const sina = std::sin(alpha);
-    auto const cosa = std::cos(alpha);
-    auto const a = Vector3d(axis).normalize();
-    auto const &v = vector;
-    return cosa * v + sina * vector_product(a, v) + (1. - cosa) * (a * v) * a;
+  if (std::abs(angle) > std::numeric_limits<double>::epsilon()) {
+    Quaternion<double> q = boost::qvm::rot_quat(axis, angle);
+    return boost::qvm::operator*(q, vector);
   }
   return vector;
 }

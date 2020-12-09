@@ -20,6 +20,8 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
+#include <boost/qvm/vec_traits.hpp>
+
 #include "utils/Array.hpp"
 
 #include <algorithm>
@@ -555,4 +557,35 @@ auto get(Vector<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
   return a[I];
 }
 } // namespace Utils
+namespace boost {
+namespace qvm {
+
+template <class T, std::size_t N> struct vec_traits<::Utils::Vector<T, N>> {
+
+  static constexpr std::size_t dim = N;
+  using scalar_type = typename ::Utils::Vector<T, N>::value_type;
+
+  template <std::size_t I>
+  static constexpr inline scalar_type &write_element(::Utils::Vector<T, N> &v) {
+    return v[I];
+  }
+
+  template <std::size_t I>
+  static constexpr inline scalar_type
+  read_element(::Utils::Vector<T, N> const &v) {
+    return v[I];
+  }
+
+  static inline scalar_type read_element_idx(std::size_t i,
+                                             ::Utils::Vector<T, N> const &v) {
+    return v[i];
+  }
+  static inline scalar_type &write_element_idx(std::size_t i,
+                                               ::Utils::Vector<T, N> &v) {
+    return v[i];
+  }
+};
+
+} // namespace qvm
+} // namespace boost
 #endif
