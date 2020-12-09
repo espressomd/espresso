@@ -20,6 +20,7 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
+#include <boost/qvm/deduce_vec.hpp>
 #include <boost/qvm/vec_traits.hpp>
 
 #include "utils/Array.hpp"
@@ -290,7 +291,8 @@ Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
 }
 
 /* Scalar multiplication */
-template <size_t N, typename T, class U>
+template <size_t N, typename T, class U,
+          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 auto operator*(U const &a, Vector<T, N> const &b) {
   using R = decltype(a * std::declval<T>());
   Vector<R, N> ret;
@@ -301,7 +303,8 @@ auto operator*(U const &a, Vector<T, N> const &b) {
   return ret;
 }
 
-template <size_t N, typename T, class U>
+template <size_t N, typename T, class U,
+          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 auto operator*(Vector<T, N> const &b, U const &a) {
   using R = decltype(std::declval<T>() * a);
   Vector<R, N> ret;
@@ -563,7 +566,7 @@ namespace qvm {
 template <class T, std::size_t N> struct vec_traits<::Utils::Vector<T, N>> {
 
   static constexpr std::size_t dim = N;
-  using scalar_type = typename ::Utils::Vector<T, N>::value_type;
+  using scalar_type = T;
 
   template <std::size_t I>
   static constexpr inline scalar_type &write_element(::Utils::Vector<T, N> &v) {
@@ -584,6 +587,10 @@ template <class T, std::size_t N> struct vec_traits<::Utils::Vector<T, N>> {
                                                ::Utils::Vector<T, N> &v) {
     return v[i];
   }
+};
+
+template <typename T> struct deduce_vec<Utils::Vector<T, 3>, 3> {
+  using type = typename Utils::Vector<T, 3>;
 };
 
 } // namespace qvm

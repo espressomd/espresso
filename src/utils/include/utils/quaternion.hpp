@@ -19,6 +19,7 @@
 #ifndef SRC_UTILS_INCLUDE_UTILS_QUATERNION_HPP
 #define SRC_UTILS_INCLUDE_UTILS_QUATERNION_HPP
 
+#include <boost/qvm/deduce_quat.hpp>
 #include <boost/qvm/deduce_scalar.hpp>
 #include <boost/qvm/deduce_vec.hpp>
 #include <boost/qvm/quat_operations.hpp>
@@ -84,7 +85,7 @@ namespace qvm {
 
 template <class T> struct quat_traits<Utils::Quaternion<T>> {
   using quat_type = Utils::Quaternion<T>;
-  using scalar_type = typename quat_type::value_type;
+  using scalar_type = T;
 
   template <std::size_t I>
   static constexpr inline scalar_type &write_element(quat_type &q) {
@@ -95,6 +96,15 @@ template <class T> struct quat_traits<Utils::Quaternion<T>> {
   static constexpr inline scalar_type read_element(quat_type const &q) {
     return q[I];
   }
+
+  static inline scalar_type read_element_idx(std::size_t i,
+                                             quat_type const &v) {
+    return v[i];
+  }
+
+  static inline scalar_type &write_element_idx(std::size_t i, quat_type &v) {
+    return v[i];
+  }
 };
 
 template <typename T, typename U>
@@ -102,9 +112,23 @@ struct deduce_scalar<Utils::Quaternion<T>, Utils::Quaternion<U>> {
   using type = std::common_type_t<T, U>;
 };
 
+template <typename T, typename U, std::size_t N>
+struct deduce_scalar<Utils::Quaternion<T>, Utils::Vector<U, N>> {
+  using type = std::common_type_t<T, U>;
+};
+
 template <typename T, typename U>
 struct deduce_vec2<Utils::Quaternion<T>, Utils::Vector<U, 3>, 3> {
   using type = typename Utils::Vector<std::common_type_t<T, U>, 3>;
+};
+
+template <typename T> struct deduce_quat<Utils::Quaternion<T>> {
+  using type = typename Utils::Quaternion<T>;
+};
+
+template <typename T, typename U>
+struct deduce_quat2<Utils::Quaternion<T>, Utils::Quaternion<U>> {
+  using type = typename Utils::Quaternion<std::common_type_t<T, U>>;
 };
 
 } // namespace qvm

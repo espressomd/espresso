@@ -56,7 +56,7 @@ void convert_initial_torques(const ParticleRange &particles);
 // Frame conversion routines
 inline Utils::Vector3d
 convert_vector_body_to_space(const Particle &p, const Utils::Vector3d &vec) {
-  return boost::qvm::operator*(p.r.quat, vec);
+  return p.r.quat * vec;
 }
 
 inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,

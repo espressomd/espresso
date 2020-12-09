@@ -112,4 +112,52 @@ BOOST_AUTO_TEST_CASE(quat_type) {
   BOOST_CHECK(test[0] == 1);
   test.normalize();
   BOOST_CHECK_LE(test.norm() - 1.0, std::numeric_limits<double>::epsilon());
+  BOOST_CHECK((Utils::Quaternion<int>::identity() ==
+               Utils::Quaternion<int>{1, 0, 0, 0}));
+  BOOST_CHECK(
+      (Utils::Quaternion<int>::zero() == Utils::Quaternion<int>{0, 0, 0, 0}));
+}
+
+BOOST_AUTO_TEST_CASE(type_deduction) {
+  using Utils::Quaternion;
+  using Utils::Vector;
+  static_assert(
+      std::is_same<typename boost::qvm::deduce_scalar<Quaternion<double>,
+                                                      Quaternion<double>>::type,
+                   double>::value,
+      "");
+  static_assert(
+      std::is_same<typename boost::qvm::deduce_scalar<Quaternion<double>,
+                                                      Quaternion<int>>::type,
+                   double>::value,
+      "");
+  static_assert(
+      std::is_same<typename boost::qvm::deduce_scalar<Quaternion<double>,
+                                                      Vector<double, 3>>::type,
+                   double>::value,
+      "");
+  static_assert(
+      std::is_same<typename boost::qvm::deduce_vec2<Quaternion<double>,
+                                                    Vector<double, 3>, 3>::type,
+                   Vector<double, 3>>::value,
+      "");
+  static_assert(
+      std::is_same<typename boost::qvm::deduce_vec2<Quaternion<double>,
+                                                    Vector<int, 3>, 3>::type,
+                   Vector<double, 3>>::value,
+      "");
+  static_assert(
+      std::is_same<typename boost::qvm::deduce_quat<Quaternion<double>>::type,
+                   Quaternion<double>>::value,
+      "");
+  static_assert(
+      std::is_same<typename boost::qvm::deduce_quat2<Quaternion<double>,
+                                                     Quaternion<double>>::type,
+                   Quaternion<double>>::value,
+      "");
+  static_assert(
+      std::is_same<typename boost::qvm::deduce_quat2<Quaternion<double>,
+                                                     Quaternion<int>>::type,
+                   Quaternion<double>>::value,
+      "");
 }

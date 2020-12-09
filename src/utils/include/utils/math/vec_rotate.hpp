@@ -41,7 +41,7 @@ inline Vector3d vec_rotate(const Vector3d &axis, double angle,
                            const Vector3d &vector) {
   if (std::abs(angle) > std::numeric_limits<double>::epsilon()) {
     Quaternion<double> q = boost::qvm::rot_quat(axis, angle);
-    return boost::qvm::operator*(q, vector);
+    return q * vector;
   }
   return vector;
 }
