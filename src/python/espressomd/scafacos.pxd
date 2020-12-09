@@ -25,6 +25,6 @@ from libcpp.list cimport list
 IF SCAFACOS:
     cdef extern from "electrostatics_magnetostatics/scafacos.hpp" namespace "Scafacos":
         void set_parameters(string & method_name, string & params, bool dipolar) except+
-        string get_method_and_parameters()
+        string get_method_and_parameters(bool dipolar) except+
+        void free_handle(bool dipolar)
         list[string] available_methods_core "Scafacos::available_methods" ()
-        void free_handle()

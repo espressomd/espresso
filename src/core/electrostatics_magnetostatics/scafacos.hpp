@@ -35,6 +35,8 @@
 
 namespace Scafacos {
 #if defined(SCAFACOS)
+
+namespace Dipoles {
 /** Near-field pair force */
 void add_pair_force(double q1q2, Utils::Vector3d const &d, double dist,
                     Utils::Vector3d &force);
@@ -47,20 +49,34 @@ double long_range_energy();
 /** Get parameters */
 std::string get_method_and_parameters();
 /** Set parameters */
-void set_parameters(const std::string &method, const std::string &params,
-                    bool dipolar);
+void set_parameters(const std::string &method, const std::string &params);
 double get_r_cut();
 
-/** Is scafacos used for dipolar interactions */
-bool dipolar();
-
-/** Reinit scafacos number of particles, box shape and periodicity */
 void update_system_params();
+} // namespace Dipoles
+
+namespace Coulomb {
+/** Near-field pair force */
+void add_pair_force(double q1q2, Utils::Vector3d const &d, double dist,
+                    Utils::Vector3d &force);
+/** Near-field pair energy */
+double pair_energy(double q1q2, double dist);
+/** Long range part */
+void add_long_range_force();
+/** Calculate long range energy contribution */
+double long_range_energy();
+double get_r_cut();
+
+void update_system_params();
+} // namespace Coulomb
 
 #endif /* SCAFACOS */
 
 std::list<std::string> available_methods();
 
-void free_handle();
+std::string get_method_and_parameters(bool dipolar);
+void set_parameters(const std::string &method, const std::string &params,
+                    bool dipolar);
+void free_handle(bool dipolar);
 } // namespace Scafacos
 #endif

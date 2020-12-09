@@ -58,7 +58,7 @@ inline Utils::Vector3d central_force(double const q1q2,
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    Scafacos::add_pair_force(q1q2, d, dist, f);
+    Scafacos::Coulomb::add_pair_force(q1q2, d, dist, f);
     break;
 #endif
   default:
@@ -157,7 +157,7 @@ inline double pair_energy(Particle const &p1, Particle const &p2,
 #endif
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
-      return Scafacos::pair_energy(q1q2, dist);
+      return Scafacos::Coulomb::pair_energy(q1q2, dist);
 #endif
     case COULOMB_DH:
       return dh_coulomb_pair_energy(q1q2, dist);

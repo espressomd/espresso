@@ -14,6 +14,7 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/p3m-dipolar.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/p3m_gpu.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/scafacos.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ScafacosContext.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/fft.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/coulomb.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/dipole.cpp

@@ -345,7 +345,7 @@ IF DIPOLES == 1:
 
             def _deactivate_method(self):
                 dipole.method = DIPOLAR_NONE
-                scafacos.free_handle()
+                scafacos.free_handle(self.dipolar)
                 mpi_bcast_coulomb_params()
 
             def default_params(self):
