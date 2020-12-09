@@ -54,9 +54,6 @@ double get_r_cut();
 /** Is scafacos used for dipolar interactions */
 bool dipolar();
 
-/** Choose whether scafacos is used for dipolar interactions */
-void set_dipolar(bool d);
-
 /** Reinit scafacos number of particles, box shape and periodicity */
 void update_system_params();
 

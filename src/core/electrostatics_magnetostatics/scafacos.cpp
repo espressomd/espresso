@@ -69,8 +69,9 @@ std::list<std::string> available_methods() {
 }
 
 /** Encapsulation for the particle data needed by ScaFaCoS */
-struct ScafacosData {
-  virtual ~ScafacosData() {}
+struct ScafacosContext : Scafacos {
+  using Scafacos::Scafacos;
+  virtual ~ScafacosContext() {}
   /** @brief Collect particle data in continuous arrays as required
    *  by ScaFaCoS.
    */
@@ -86,13 +87,22 @@ protected:
   std::vector<double> fields, potentials;
 };
 
-struct ScafacosDataCoulomb : ScafacosData {
-  ScafacosDataCoulomb() {}
+struct ScafacosContextCoulomb : ScafacosContext {
+  using ScafacosContext::ScafacosContext;
   void update_particle_data() override;
   void update_particle_forces() const override;
-  double long_range_energy() override;
-  void add_long_range_force() override;
-  void tune() override;
+  double long_range_energy() override {
+    update_particle_data();
+    run(charges, positions, fields, potentials);
+    return 0.5 * coulomb.prefactor *
+           boost::inner_product(charges, potentials, 0.0);
+  }
+  void add_long_range_force() override {
+    update_particle_data();
+    run(charges, positions, fields, potentials);
+    update_particle_forces();
+  }
+  void tune() override { Scafacos::tune(charges, positions); }
 
 private:
   /** Inputs */
@@ -100,12 +110,21 @@ private:
 };
 
 #ifdef SCAFACOS_DIPOLES
-struct ScafacosDataDipoles : ScafacosData {
-  ScafacosDataDipoles() {}
+struct ScafacosContextDipoles : ScafacosContext {
+  using ScafacosContext::ScafacosContext;
   void update_particle_data() override;
   void update_particle_forces() const override;
-  double long_range_energy() override;
-  void add_long_range_force() override;
+  double long_range_energy() {
+    update_particle_data();
+    run_dipolar(dipoles, positions, fields, potentials);
+    return -0.5 * dipole.prefactor *
+           boost::inner_product(dipoles, potentials, 0.0);
+  }
+  void add_long_range_force() override {
+    update_particle_data();
+    run_dipolar(dipoles, positions, fields, potentials);
+    update_particle_forces();
+  }
   void tune() override {
     runtimeErrorMsg() << "Tuning unavailable for ScaFaCoS dipoles.";
   }
@@ -116,12 +135,9 @@ private:
 };
 #endif
 
-static Scafacos *scafacos = nullptr;
-static ScafacosData *scafacos_data = nullptr;
+static ScafacosContext *scafacos = nullptr;
 
-void ScafacosDataCoulomb::tune() { scafacos->tune(charges, positions); }
-
-void ScafacosDataCoulomb::update_particle_data() {
+void ScafacosContextCoulomb::update_particle_data() {
   positions.clear();
   charges.clear();
 
@@ -135,7 +151,7 @@ void ScafacosDataCoulomb::update_particle_data() {
 }
 
 #ifdef SCAFACOS_DIPOLES
-void ScafacosDataDipoles::update_particle_data() {
+void ScafacosContextDipoles::update_particle_data() {
   positions.clear();
   dipoles.clear();
 
@@ -152,7 +168,7 @@ void ScafacosDataDipoles::update_particle_data() {
 }
 #endif
 
-void ScafacosDataCoulomb::update_particle_forces() const {
+void ScafacosContextCoulomb::update_particle_forces() const {
   if (positions.empty())
     return;
 
@@ -168,7 +184,7 @@ void ScafacosDataCoulomb::update_particle_forces() const {
 }
 
 #ifdef SCAFACOS_DIPOLES
-void ScafacosDataDipoles::update_particle_forces() const {
+void ScafacosContextDipoles::update_particle_forces() const {
   if (positions.empty())
     return;
 
@@ -215,7 +231,6 @@ void add_pair_force(double q1q2, Utils::Vector3d const &d, double dist,
     return;
 
   assert(scafacos);
-  assert(scafacos_data);
   auto const field = scafacos->pair_force(dist);
   auto const fak = q1q2 * field / dist;
   force -= fak * d;
@@ -227,55 +242,25 @@ double pair_energy(double q1q2, double dist) {
   return 0.;
 }
 
-void ScafacosDataCoulomb::add_long_range_force() {
-  update_particle_data();
-  scafacos->run(charges, positions, fields, potentials);
-  update_particle_forces();
-}
-
-#ifdef SCAFACOS_DIPOLES
-void ScafacosDataDipoles::add_long_range_force() {
-  update_particle_data();
-  scafacos->run_dipolar(dipoles, positions, fields, potentials);
-  update_particle_forces();
-}
-#endif
-
 void add_long_range_force() {
   if (!scafacos) {
     throw std::runtime_error("Scafacos not initialized");
   }
-  scafacos_data->add_long_range_force();
+  scafacos->add_long_range_force();
 }
-
-double ScafacosDataCoulomb::long_range_energy() {
-  update_particle_data();
-  scafacos->run(charges, positions, fields, potentials);
-  return 0.5 * coulomb.prefactor *
-         boost::inner_product(charges, potentials, 0.0);
-}
-
-#ifdef SCAFACOS_DIPOLES
-double ScafacosDataDipoles::long_range_energy() {
-  update_particle_data();
-  scafacos->run_dipolar(dipoles, positions, fields, potentials);
-  return -0.5 * dipole.prefactor *
-         boost::inner_product(dipoles, potentials, 0.0);
-}
-#endif
 
 double long_range_energy() {
   if (scafacos) {
-    return scafacos_data->long_range_energy();
+    return scafacos->long_range_energy();
   }
   return 0.0;
 }
 
 void set_r_cut_and_tune_local(double r_cut) {
-  scafacos_data->update_particle_data();
+  scafacos->update_particle_data();
 
   scafacos->set_r_cut(r_cut);
-  scafacos_data->tune();
+  scafacos->tune();
 }
 
 REGISTER_CALLBACK(set_r_cut_and_tune_local)
@@ -321,7 +306,7 @@ void tune_r_cut() {
 }
 
 void tune() {
-  scafacos_data->update_particle_data();
+  scafacos->update_particle_data();
 
   /* Check whether we have to do a bisection for the short range cutoff */
   /* Check if there is a user supplied cutoff */
@@ -335,7 +320,7 @@ void tune() {
     }
   } else {
     // ESPResSo is not affected by a short range cutoff. Tune in parallel
-    scafacos_data->tune();
+    scafacos->tune();
   }
 }
 
@@ -343,28 +328,28 @@ static void set_params_safe(const std::string &method,
                             const std::string &params, bool dipolar_ia,
                             int n_part) {
   delete scafacos;
-  delete scafacos_data;
   scafacos = nullptr;
-  scafacos_data = nullptr;
-
-  scafacos = new Scafacos(method, comm_cart, params);
 
   int per[3] = {box_geo.periodic(0) != 0, box_geo.periodic(1) != 0,
                 box_geo.periodic(2) != 0};
 
-  scafacos->set_dipolar(dipolar_ia);
 #ifdef SCAFACOS_DIPOLES
   if (dipolar_ia) {
     dipole.method = DIPOLAR_SCAFACOS;
-    scafacos_data = new ScafacosDataDipoles();
+    scafacos = new ScafacosContextDipoles(method, comm_cart, params);
   }
 #endif
 #ifdef ELECTROSTATICS
   if (!dipolar_ia) {
     coulomb.method = COULOMB_SCAFACOS;
-    scafacos_data = new ScafacosDataCoulomb();
+    scafacos = new ScafacosContextCoulomb(method, comm_cart, params);
   }
 #endif
+  if (!scafacos) {
+    return;
+  }
+
+  scafacos->set_dipolar(dipolar_ia);
   scafacos->set_common_parameters(box_geo.length().data(), per, n_part);
 
   on_coulomb_change();
@@ -403,8 +388,6 @@ void set_parameters(const std::string &method, const std::string &params,
   mpi_call_all(set_params_safe, method, params, dipolar_ia, get_n_part());
   if (!scafacos)
     throw std::runtime_error("Scafacos not initialized");
-  if (!scafacos_data)
-    throw std::runtime_error("Scafacos data object not initialized");
 }
 
 bool dipolar() {
@@ -413,20 +396,11 @@ bool dipolar() {
   throw std::runtime_error("Scafacos not initialized");
 }
 
-void set_dipolar(bool d) {
-  if (scafacos) {
-    scafacos->set_dipolar(d);
-  } else
-    runtimeErrorMsg() << "Scafacos not initialized.";
-}
-
 void free_handle() {
   if (this_node == 0)
     mpi_call(free_handle);
   delete scafacos;
-  delete scafacos_data;
   scafacos = nullptr;
-  scafacos_data = nullptr;
 }
 
 REGISTER_CALLBACK(free_handle)
