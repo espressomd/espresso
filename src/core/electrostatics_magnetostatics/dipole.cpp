@@ -138,9 +138,9 @@ void on_boxl_change() {
     dp3m_scaleby_box_l();
     break;
 #endif
-#ifdef SCAFACOS
+#ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
-    Scafacos::Dipoles::update_system_params();
+    Scafacos::fcs_dipoles()->update_system_params();
     break;
 #endif
   default:
@@ -202,7 +202,7 @@ void calc_long_range_force(const ParticleRange &particles) {
 #endif
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
-    Scafacos::Dipoles::add_long_range_force();
+    Scafacos::fcs_dipoles()->add_long_range_force();
 #endif
   case DIPOLAR_NONE:
     break;
@@ -248,7 +248,7 @@ double calc_energy_long_range(const ParticleRange &particles) {
 #endif
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
-    energy = Scafacos::Dipoles::long_range_energy();
+    energy = Scafacos::fcs_dipoles()->long_range_energy();
     break;
 #endif
   case DIPOLAR_NONE:

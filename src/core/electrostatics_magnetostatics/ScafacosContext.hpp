@@ -20,8 +20,11 @@
  */
 #ifndef SRC_CORE_ELECTROSTATICS_MAGNETOSTATICS_SCAFACOSCONTEXT_HPP
 #define SRC_CORE_ELECTROSTATICS_MAGNETOSTATICS_SCAFACOSCONTEXT_HPP
-/** @file
- *  Provide a C-like interface for ScaFaCoS.
+/**
+ * @file
+ * @ref Scafacos::ScafacosContextBase implements the interface of the
+ * ScaFaCoS bridge. It is further derived for the coulombic and dipolar
+ * versions of ScaFaCoS.
  */
 
 #include "config.hpp"
@@ -29,6 +32,7 @@
 #if defined(SCAFACOS)
 
 #include "Scafacos.hpp"
+#include "electrostatics_magnetostatics/ScafacosContextBase.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -43,21 +47,13 @@
 namespace Scafacos {
 
 /** Encapsulation for the particle data needed by ScaFaCoS */
-struct ScafacosContext : Scafacos {
+struct ScafacosContext : ScafacosContextBase, Scafacos {
   using Scafacos::Scafacos;
-  virtual ~ScafacosContext() {}
-  /** @brief Collect particle data in continuous arrays as required
-   *  by ScaFaCoS.
-   */
-  virtual void update_particle_data() = 0;
-  /** @brief Write forces back to particles. */
-  virtual void update_particle_forces() const = 0;
-  virtual double long_range_energy() = 0;
-  virtual void add_long_range_force() = 0;
-  /** @brief Reinitialize number of particles, box shape and periodicity. */
-  void update_system_params();
+  using ScafacosContextBase::ScafacosContextBase;
+  ~ScafacosContext() override = default;
+  void update_system_params() override;
   void add_pair_force(double q1q2, Utils::Vector3d const &d, double dist,
-                      Utils::Vector3d &force) {
+                      Utils::Vector3d &force) override {
     if (dist > r_cut())
       return;
 
@@ -65,13 +61,14 @@ struct ScafacosContext : Scafacos {
     auto const fak = q1q2 * field / dist;
     force -= fak * d;
   }
-  double pair_energy(double q1q2, double dist) {
+  double pair_energy(double q1q2, double dist) override {
     if (dist > r_cut())
       return 0.;
 
     return q1q2 * Scafacos::pair_energy(dist);
   }
-  std::string get_method_and_parameters();
+  std::string get_method_and_parameters() override;
+  double get_r_cut() const override { return Scafacos::r_cut(); }
 
 protected:
   /** Outputs */

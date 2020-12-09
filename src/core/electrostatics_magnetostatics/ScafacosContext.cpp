@@ -175,16 +175,16 @@ double ScafacosContextDipoles::long_range_energy() {
 }
 #endif
 
-static void set_r_cut_and_tune_local(double r_cut) {
-  Coulomb::set_r_cut_and_tune_local(r_cut);
+static void set_r_cut_and_tune_local_worker(double r_cut) {
+  set_r_cut_and_tune_local(r_cut);
 }
 
-REGISTER_CALLBACK(set_r_cut_and_tune_local)
+REGISTER_CALLBACK(set_r_cut_and_tune_local_worker)
 
 /** Determine runtime for a specific cutoff */
 static double time_r_cut(double r_cut) {
   /* Set cutoff to time */
-  mpi_call_all(set_r_cut_and_tune_local, r_cut);
+  mpi_call_all(set_r_cut_and_tune_local_worker, r_cut);
 
   return time_force_calc(10);
 }

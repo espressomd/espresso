@@ -122,7 +122,7 @@ double cutoff(const Utils::Vector3d &box_l) {
     return rf_params.r_cut;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    return Scafacos::Coulomb::get_r_cut();
+    return Scafacos::fcs_coulomb()->get_r_cut();
 #endif
   default:
     return -1.0;
@@ -217,7 +217,7 @@ void on_boxl_change() {
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    Scafacos::Coulomb::update_system_params();
+    Scafacos::fcs_coulomb()->update_system_params();
     break;
 #endif
   default:
@@ -291,7 +291,7 @@ void calc_long_range_force(const ParticleRange &particles) {
 #endif
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    Scafacos::Coulomb::add_long_range_force();
+    Scafacos::fcs_coulomb()->add_long_range_force();
     break;
 #endif
   default:
@@ -349,7 +349,7 @@ double calc_energy_long_range(const ParticleRange &particles) {
 #endif
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    energy += Scafacos::Coulomb::long_range_energy();
+    energy += Scafacos::fcs_coulomb()->long_range_energy();
     break;
 #endif
   default:
