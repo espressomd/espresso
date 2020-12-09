@@ -68,6 +68,8 @@ double long_range_energy();
 double get_r_cut();
 
 void update_system_params();
+
+void set_r_cut_and_tune_local(double r_cut);
 } // namespace Coulomb
 
 #endif /* SCAFACOS */

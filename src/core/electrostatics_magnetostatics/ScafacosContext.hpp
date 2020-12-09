@@ -88,7 +88,8 @@ struct ScafacosContextCoulomb : ScafacosContext {
     run(charges, positions, fields, potentials);
     update_particle_forces();
   }
-  void tune() { Scafacos::tune(charges, positions); }
+  void tune();
+  void set_r_cut_and_tune_local(double r_cut);
 
 private:
   /** Inputs */
