@@ -113,12 +113,7 @@ local_rotate_particle_body(Particle const &p,
 
   // Convert rotation axis to body-fixed frame
   axis = mask(p.p.rotation, axis).normalize();
-
-  auto const s = std::sin(phi / 2);
-  auto const q = Utils::Quaternion<double>{cos(phi / 2), s * axis[0],
-                                           s * axis[1], s * axis[2]}
-                     .normalize();
-
+  Utils::Quaternion<double> q = boost::qvm::rot_quat(axis, phi);
   return p.r.quat * q;
 }
 
