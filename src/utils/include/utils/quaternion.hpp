@@ -59,73 +59,23 @@ public:
   static Quaternion<T> zero() { return boost::qvm::zero_quat<T>(); }
 };
 
-template <typename T> T dot(const Quaternion<T> &a, const Quaternion<T> &b) {
-  return boost::qvm::dot(a, b);
-}
-
-template <typename T>
-Quaternion<T> operator*(const Quaternion<T> &a, const Quaternion<T> &b) {
-  return boost::qvm::operator*(a, b);
-}
-
-template <typename T, typename U,
-          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
-Quaternion<T> operator*(const Quaternion<T> &a, const U &b) {
-  return boost::qvm::operator*(a, b);
-}
-
 template <typename T, typename U,
           std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 Quaternion<T> operator*(const U &b, const Quaternion<T> &a) {
   return boost::qvm::operator*(a, b);
 }
 
-template <typename T>
-Quaternion<T> operator/(const Quaternion<T> &a, const Quaternion<T> &b) {
-  return boost::qvm::operator/(a, b);
-}
+using boost::qvm::operator*;
+using boost::qvm::operator*=;
+using boost::qvm::operator==;
+using boost::qvm::dot;
+using boost::qvm::operator/;
+using boost::qvm::operator/=;
+using boost::qvm::operator+;
+using boost::qvm::operator+=;
+using boost::qvm::operator-;
+using boost::qvm::operator-=;
 
-template <typename T, typename U,
-          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
-Quaternion<T> operator/(const Quaternion<T> &a, const U &b) {
-  return boost::qvm::operator/(a, b);
-}
-
-template <typename T, typename U,
-          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
-Quaternion<T> operator/=(Quaternion<T> &a, const U &b) {
-  return boost::qvm::operator/=(a, b);
-}
-
-// template <typename T>
-// Quaternion<T> operator/=(Quaternion<T> &a, const Quaternion<T> &b) {
-//  return boost::qvm::operator/=(a, b);
-//}
-
-template <typename T>
-Quaternion<T> operator+(const Quaternion<T> &a, const Quaternion<T> &b) {
-  return boost::qvm::operator+(a, b);
-}
-
-template <typename T>
-Quaternion<T> operator+=(Quaternion<T> &a, const Quaternion<T> &b) {
-  return boost::qvm::operator+=(a, b);
-}
-
-template <typename T>
-Quaternion<T> operator-(const Quaternion<T> &a, const Quaternion<T> &b) {
-  return boost::qvm::operator-(a, b);
-}
-
-template <typename T>
-Quaternion<T> operator-=(Quaternion<T> &a, const Quaternion<T> &b) {
-  return boost::qvm::operator-=(a, b);
-}
-
-template <typename T>
-bool operator==(const Quaternion<T> &a, const Quaternion<T> &b) {
-  return boost::qvm::operator==(a, b);
-}
 } // namespace Utils
 
 namespace boost {
@@ -147,9 +97,9 @@ template <class T> struct quat_traits<Utils::Quaternion<T>> {
   }
 };
 
-template <typename T>
-struct deduce_scalar<Utils::Quaternion<T>, Utils::Quaternion<T>> {
-  using type = T;
+template <typename T, typename U>
+struct deduce_scalar<Utils::Quaternion<T>, Utils::Quaternion<U>> {
+  using type = std::common_type_t<T, U>;
 };
 
 template <typename T, typename U>
