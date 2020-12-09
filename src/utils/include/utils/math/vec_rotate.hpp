@@ -19,6 +19,8 @@
 #ifndef UTILS_VEC_ROTATE_HPP
 #define UTILS_VEC_ROTATE_HPP
 
+#include <boost/qvm/quat_vec_operations.hpp>
+
 #include "utils/Vector.hpp"
 #include "utils/math/sqr.hpp"
 #include "utils/quaternion.hpp"
