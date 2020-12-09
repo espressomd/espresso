@@ -242,10 +242,8 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
 #endif
     case BONDED_IA_TABULATED_DISTANCE:
       return tab_bond_energy(iaparams, dx);
-#ifdef UMBRELLA
     case BONDED_IA_UMBRELLA:
       return umbrella_pair_energy(iaparams, dx);
-#endif
     case BONDED_IA_VIRTUAL_BOND:
       return boost::optional<double>(0);
     default:

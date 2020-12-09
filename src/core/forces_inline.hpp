@@ -334,10 +334,8 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
 #endif
   case BONDED_IA_TABULATED_DISTANCE:
     return tab_bond_force(iaparams, dx);
-#ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
     return umbrella_pair_force(iaparams, dx);
-#endif
   case BONDED_IA_VIRTUAL_BOND:
   case BONDED_IA_RIGID_BOND:
     return Utils::Vector3d{};
