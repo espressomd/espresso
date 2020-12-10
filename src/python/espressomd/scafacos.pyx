@@ -62,25 +62,22 @@ IF SCAFACOS == 1:
             # which we convert to a dict
             p = to_str(get_method_and_parameters(self.dipolar)).split(" ")
             res = {}
-            res["method_name"] = p[0]
+            res["method_name"] = p.pop(0)
 
             method_params = {}
-            i = 1
-            while i < len(p):
-                pname = p[i]
-                i += 1
+            while p:
+                pname = p.pop(0)
 
                 # The first item after the parameter name is always a value
                 # But in the case of array-like properties, there can also
                 # follow several values. Therefore, we treat the next
                 # words as part of the value, if they begin with a digit
-                pvalues = [p[i]]
-                i += 1
-                if i >= len(p):
-                    break
-                while p[i][:1] in "-0123456789":
-                    pvalues.append(p[i])
-                    i += 1
+                pvalues = [p.pop(0)]
+                while p:
+                    if p[0][0] in "-0123456789":
+                        pvalues.append(p.pop(0))
+                    else:
+                        break
 
                 # If there is one value, cast away the list
                 if len(pvalues) == 1:
@@ -89,8 +86,6 @@ IF SCAFACOS == 1:
                     # Cast array elements to strings and join them by commas
                     # to achieve consistency with setting array-likes
                     # such as "pnfft_n":"128,128,128"
-                    for j in range(len(pvalues)):
-                        pvalues[j] = str(pvalues[j])
                     pvalues = ",".join(pvalues)
                 method_params[pname] = pvalues
 
