@@ -27,30 +27,41 @@
 #include <boost/qvm/quat_operations.hpp>
 #include <boost/qvm/quat_traits.hpp>
 #include <boost/qvm/quat_vec_operations.hpp>
+#include <boost/serialization/array.hpp>
+
+#include "utils/Array.hpp"
+#include "utils/Vector.hpp"
 
 namespace Utils {
 template <typename T> struct Quaternion {
-  T m_data[4];
+  using container = typename Utils::Array<T, 4>;
+  container m_data;
+  using pointer = typename container::pointer;
+  using const_pointer = typename container::const_pointer;
+  using value_type = typename container::value_type;
+  using reference = typename container::reference;
+
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     ar &m_data;
   }
-  Quaternion &normalize() {
-    boost::qvm::normalize(*this);
-    return *this;
-  }
-  T operator[](std::size_t i) const { return m_data[i]; }
-  T &operator[](std::size_t i) { return m_data[i]; }
 
-  T norm() const { return boost::qvm::mag(*this); }
-  T norm2() const { return boost::qvm::mag_sqr(*this); }
+  void normalize() { boost::qvm::normalize(*this); }
+
+  Quaternion<T> normalized() const { return boost::qvm::normalized(*this); }
+
+  value_type operator[](std::size_t i) const { return m_data[i]; }
+  reference operator[](std::size_t i) { return m_data[i]; }
+
+  value_type norm() const { return boost::qvm::mag(*this); }
+  value_type norm2() const { return boost::qvm::mag_sqr(*this); }
 
   static Quaternion<T> identity() { return boost::qvm::identity_quat<T>(); }
 
   static Quaternion<T> zero() { return boost::qvm::zero_quat<T>(); }
-  constexpr T *data() { return &m_data[0]; }
-  constexpr const T *data() const noexcept { return &m_data[0]; }
+  constexpr pointer data() { return m_data.data(); }
+  constexpr const_pointer data() const noexcept { return m_data.data(); }
 };
 
 template <typename T, typename U,

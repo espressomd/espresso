@@ -116,6 +116,11 @@ BOOST_AUTO_TEST_CASE(quat_type) {
                Utils::Quaternion<int>{1, 0, 0, 0}));
   BOOST_CHECK(
       (Utils::Quaternion<int>::zero() == Utils::Quaternion<int>{0, 0, 0, 0}));
+  BOOST_CHECK((Utils::Quaternion<double>{1, 0, 0, 0} ==
+               Utils::Quaternion<double>{2, 0, 0, 0}.normalized()));
+  BOOST_CHECK_SMALL(
+      (Utils::Quaternion<double>{2, 1, 3, 4}.normalized().norm() - 1.0),
+      std::numeric_limits<double>::epsilon());
 }
 
 BOOST_AUTO_TEST_CASE(type_deduction) {
