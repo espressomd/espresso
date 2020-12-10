@@ -19,7 +19,7 @@
 #ifndef ESPRESSO_ROTATION_MATRIX_HPP
 #define ESPRESSO_ROTATION_MATRIX_HPP
 
-#include "utils/Vector.hpp"
+#include "utils/quaternion.hpp"
 
 namespace Utils {
 
@@ -30,7 +30,7 @@ namespace Utils {
  *  @param q Quaternion
  *  @return Corresponding rotation matrix
  */
-template <class T> Matrix<T, 3, 3> rotation_matrix(Vector<T, 4> const &q) {
+template <class T> Matrix<T, 3, 3> rotation_matrix(Quaternion<T> const &q) {
   auto const q0q0 = q[0] * q[0];
   auto const q1q1 = q[1] * q[1];
   auto const q2q2 = q[2] * q[2];

@@ -634,7 +634,7 @@ cdef class ParticleHandle:
             def __set__(self, q):
                 check_type_or_throw_except(
                     q, 4, float, "vs_quat has to be an array-like of length 4")
-                cdef Vector4d _q
+                cdef Quaternion[double] _q
                 for i in range(4):
                     _q[i] = q[i]
                 set_particle_vs_quat(self._id, _q)
@@ -668,7 +668,7 @@ cdef class ParticleHandle:
                 _relto = x[0]
                 _dist = x[1]
                 q = x[2]
-                cdef Vector4d _q
+                cdef Quaternion[double] _q
                 for i in range(4):
                     _q[i] = q[i]
 

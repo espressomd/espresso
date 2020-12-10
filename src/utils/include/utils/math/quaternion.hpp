@@ -27,28 +27,18 @@
 
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
+#include "utils/quaternion.hpp"
 
 #include <cmath>
 #include <limits>
 
 namespace Utils {
 
-/** Multiply two quaternions */
-template <class T>
-Vector<T, 4> multiply_quaternions(Vector<T, 4> const &a,
-                                  Vector<T, 4> const &b) {
-  // Formula from http://www.j3d.org/matrix_faq/matrfaq_latest.html
-  return {a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
-          a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
-          a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3],
-          a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1]};
-}
-
 /** Convert quaternion to director
  *  @return A (non-normalized) director.
  */
 template <class T>
-Vector<T, 3> convert_quaternion_to_director(Vector<T, 4> const &quat) {
+Vector<T, 3> convert_quaternion_to_director(Quaternion<T> const &quat) {
   return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
           2 * (quat[2] * quat[3] - quat[0] * quat[1]),
           quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
@@ -61,7 +51,7 @@ Vector<T, 3> convert_quaternion_to_director(Vector<T, 4> const &quat) {
  *  if the director is the null vector.
  */
 template <class T>
-Vector<T, 4> convert_director_to_quaternion(Vector<T, 3> const &d) {
+Quaternion<T> convert_director_to_quaternion(Vector<T, 3> const &d) {
 
   auto const dm = d.norm();
 
