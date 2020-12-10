@@ -55,13 +55,27 @@ struct ScafacosContextBase {
   /** @brief Add long-range part of the forces to particles. */
   virtual void add_long_range_force() = 0;
   /** @brief Add near-field pair force. */
-  virtual void add_pair_force(double q1q2, Utils::Vector3d const &d,
-                              double dist, Utils::Vector3d &force) = 0;
+  inline void add_pair_force(double q1q2, Utils::Vector3d const &d, double dist,
+                             Utils::Vector3d &force) {
+    if (dist > get_r_cut())
+      return;
+
+    auto const field = get_pair_force(dist);
+    auto const fak = q1q2 * field / dist;
+    force -= fak * d;
+  }
   /** @brief Calculate near-field pair energy. */
-  virtual double pair_energy(double q1q2, double dist) = 0;
+  inline double pair_energy(double q1q2, double dist) {
+    if (dist > get_r_cut())
+      return 0.;
+
+    return q1q2 * get_pair_energy(dist);
+  }
   /** @brief Reinitialize number of particles, box shape and periodicity. */
   virtual void update_system_params() = 0;
   virtual double get_r_cut() const = 0;
+  virtual double get_pair_force(double dist) const = 0;
+  virtual double get_pair_energy(double dist) const = 0;
   virtual std::string get_method_and_parameters() = 0;
 };
 

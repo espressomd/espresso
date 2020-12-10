@@ -52,20 +52,11 @@ struct ScafacosContext : ScafacosContextBase, Scafacos {
   using ScafacosContextBase::ScafacosContextBase;
   ~ScafacosContext() override = default;
   void update_system_params() override;
-  void add_pair_force(double q1q2, Utils::Vector3d const &d, double dist,
-                      Utils::Vector3d &force) override {
-    if (dist > r_cut())
-      return;
-
-    auto const field = Scafacos::pair_force(dist);
-    auto const fak = q1q2 * field / dist;
-    force -= fak * d;
+  double get_pair_force(double dist) const override {
+    return Scafacos::pair_force(dist);
   }
-  double pair_energy(double q1q2, double dist) override {
-    if (dist > r_cut())
-      return 0.;
-
-    return q1q2 * Scafacos::pair_energy(dist);
+  double get_pair_energy(double dist) const override {
+    return Scafacos::pair_energy(dist);
   }
   std::string get_method_and_parameters() override;
   double get_r_cut() const override { return Scafacos::r_cut(); }
