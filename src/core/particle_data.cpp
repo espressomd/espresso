@@ -840,7 +840,7 @@ void set_particle_mol_id(int part, int mid) {
 void set_particle_quat(int part, double *quat) {
   mpi_update_particle<ParticlePosition, &Particle::r, Utils::Quaternion<double>,
                       &ParticlePosition::quat>(
-      part, Utils::Quaternion<double>(quat, quat + 4));
+      part, Utils::Quaternion<double>{quat[0], quat[1], quat[2], quat[3]});
 }
 
 void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab) {

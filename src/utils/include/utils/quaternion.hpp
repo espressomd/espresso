@@ -22,35 +22,26 @@
 #include <boost/qvm/deduce_quat.hpp>
 #include <boost/qvm/deduce_scalar.hpp>
 #include <boost/qvm/deduce_vec.hpp>
+#include <boost/qvm/quat.hpp>
+#include <boost/qvm/quat_access.hpp>
 #include <boost/qvm/quat_operations.hpp>
 #include <boost/qvm/quat_traits.hpp>
 #include <boost/qvm/quat_vec_operations.hpp>
 
-#include "utils/Vector.hpp"
-
 namespace Utils {
-template <typename T> class Quaternion : private Vector<T, 4> {
-  using base = Vector<T, 4>;
+template <typename T> struct Quaternion {
+  T m_data[4];
   friend class boost::serialization::access;
-
-public:
-  using base::base;
-  using base::operator[];
-  using base::begin;
-  using base::data;
-  using base::end;
-  using typename base::value_type;
-  Quaternion<T>() = default;
-  Quaternion<T>(Quaternion<T> const &) = default;
-  Quaternion<T> &operator=(Quaternion<T> const &) = default;
-  Quaternion<T>(std::initializer_list<T> values) {
-    std::copy(values.begin(), values.end(), begin());
-  };
-
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &m_data;
+  }
   Quaternion &normalize() {
     boost::qvm::normalize(*this);
     return *this;
   }
+  T operator[](std::size_t i) const { return m_data[i]; }
+  T &operator[](std::size_t i) { return m_data[i]; }
 
   T norm() const { return boost::qvm::mag(*this); }
   T norm2() const { return boost::qvm::mag_sqr(*this); }
@@ -58,6 +49,8 @@ public:
   static Quaternion<T> identity() { return boost::qvm::identity_quat<T>(); }
 
   static Quaternion<T> zero() { return boost::qvm::zero_quat<T>(); }
+  constexpr T *data() { return &m_data[0]; }
+  constexpr const T *data() const noexcept { return &m_data[0]; }
 };
 
 template <typename T, typename U,
@@ -89,21 +82,25 @@ template <class T> struct quat_traits<Utils::Quaternion<T>> {
 
   template <std::size_t I>
   static constexpr inline scalar_type &write_element(quat_type &q) {
+    static_assert(I < 4 and I >= 0, "Invalid index into quaternion.");
     return q[I];
   }
 
   template <std::size_t I>
   static constexpr inline scalar_type read_element(quat_type const &q) {
+    static_assert(I < 4 and I >= 0, "Invalid index into quaternion.");
     return q[I];
   }
 
   static inline scalar_type read_element_idx(std::size_t i,
-                                             quat_type const &v) {
-    return v[i];
+                                             quat_type const &q) {
+    assert(i < 4 and i >= 0);
+    return q[i];
   }
 
-  static inline scalar_type &write_element_idx(std::size_t i, quat_type &v) {
-    return v[i];
+  static inline scalar_type &write_element_idx(std::size_t i, quat_type &q) {
+    assert(i < 4 and i >= 0);
+    return q[i];
   }
 };
 
