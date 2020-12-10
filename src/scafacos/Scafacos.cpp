@@ -124,10 +124,11 @@ void Scafacos::run(std::vector<double> &charges, std::vector<double> &positions,
   fields.resize(3 * local_n_part);
   potentials.resize(local_n_part);
 
-  handle_error(fcs_tune(handle, local_n_part, &(positions[0]), &(charges[0])));
+  handle_error(
+      fcs_tune(handle, local_n_part, positions.data(), charges.data()));
 
-  handle_error(fcs_run(handle, local_n_part, &(positions[0]), &(charges[0]),
-                       &(fields[0]), &(potentials[0])));
+  handle_error(fcs_run(handle, local_n_part, positions.data(), charges.data(),
+                       fields.data(), potentials.data()));
 }
 
 #ifdef FCS_ENABLE_DIPOLES
@@ -142,8 +143,8 @@ void Scafacos::run_dipolar(std::vector<double> &dipoles,
   potentials.resize(3 * local_n_part);
 
   handle_error(fcs_set_dipole_particles(handle, static_cast<int>(local_n_part),
-                                        &(positions[0]), &(dipoles[0]),
-                                        &(fields[0]), &(potentials[0])));
+                                        positions.data(), dipoles.data(),
+                                        fields.data(), potentials.data()));
   handle_error(fcs_run(handle, 0, nullptr, nullptr, nullptr, nullptr));
 }
 #endif
@@ -151,7 +152,7 @@ void Scafacos::run_dipolar(std::vector<double> &dipoles,
 void Scafacos::tune(std::vector<double> &charges,
                     std::vector<double> &positions) {
   handle_error(
-      fcs_tune(handle, charges.size(), &(positions[0]), &(charges[0])));
+      fcs_tune(handle, charges.size(), positions.data(), charges.data()));
 }
 
 void Scafacos::set_common_parameters(const double *box_l,
