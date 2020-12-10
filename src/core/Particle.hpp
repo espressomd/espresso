@@ -132,7 +132,7 @@ struct ParticleProperties {
     Utils::Quaternion<double> rel_orientation =
         Utils::Quaternion<double>::zero();
     /** Orientation of the virtual particle in the body fixed frame. */
-    Utils::Quaternion<double> quat = Utils::Quaternion<double>{0., 0., 0., 0.};
+    Utils::Quaternion<double> quat = Utils::Quaternion<double>::zero();
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &to_particle_id;
