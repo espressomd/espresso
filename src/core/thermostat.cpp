@@ -70,7 +70,9 @@ using Thermostat::GammaType;
 
 LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};
+#ifdef NPT
 IsotropicNptThermostat npt_iso = {};
+#endif
 ThermalizedBondThermostat thermalized_bond = {};
 #ifdef DPD
 DPDThermostat dpd = {};
@@ -81,7 +83,9 @@ StokesianThermostat stokesian = {};
 
 REGISTER_THERMOSTAT_CALLBACKS(langevin)
 REGISTER_THERMOSTAT_CALLBACKS(brownian)
+#ifdef NPT
 REGISTER_THERMOSTAT_CALLBACKS(npt_iso)
+#endif
 REGISTER_THERMOSTAT_CALLBACKS(thermalized_bond)
 #ifdef DPD
 REGISTER_THERMOSTAT_CALLBACKS(dpd)

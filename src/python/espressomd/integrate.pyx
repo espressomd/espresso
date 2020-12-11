@@ -256,11 +256,9 @@ cdef class SteepestDescent(Integrator):
             self._params["max_displacement"], 1, float, "max_displacement must be a float")
 
     def _set_params_in_es_core(self):
-        if integrate_set_steepest_descent(self._params["f_max"],
-                                          self._params["gamma"],
-                                          self._params["max_displacement"]):
-            handle_errors(
-                "Encountered errors setting up the steepest descent integrator")
+        integrate_set_steepest_descent(self._params["f_max"],
+                                       self._params["gamma"],
+                                       self._params["max_displacement"])
 
     def run(self, steps=1, **kwargs):
         """
@@ -363,14 +361,12 @@ IF NPT:
                 self._params["cubic_box"], 1, int, "cubic_box must be a bool")
 
         def _set_params_in_es_core(self):
-            if integrate_set_npt_isotropic(self._params["ext_pressure"],
-                                           self._params["piston"],
-                                           self._params["direction"][0],
-                                           self._params["direction"][1],
-                                           self._params["direction"][2],
-                                           self._params["cubic_box"]):
-                handle_errors(
-                    "Encountered errors setting up the NPT integrator")
+            integrate_set_npt_isotropic(self._params["ext_pressure"],
+                                        self._params["piston"],
+                                        self._params["direction"][0],
+                                        self._params["direction"][1],
+                                        self._params["direction"][2],
+                                        self._params["cubic_box"])
 
 ELSE:
     cdef class VelocityVerletIsotropicNPT(Integrator):
@@ -487,9 +483,6 @@ IF STOKESIAN_DYNAMICS:
             if self._params["pair_mobility"]:
                 fl = fl | flags.PAIR_MOBILITY
             set_sd_flags(fl)
-
-            handle_errors(
-                "Encountered error while setting integration method to SD")
 
 ELSE:
     cdef class StokesianDynamics(Integrator):

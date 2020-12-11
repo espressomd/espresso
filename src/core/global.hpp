@@ -51,13 +51,7 @@ enum Fields {
   FIELD_NPTISO_G0,
   /** index of \ref IsotropicNptThermostat::gammav */
   FIELD_NPTISO_GV,
-  /** index of \ref nptiso_struct::p_ext */
-  FIELD_NPTISO_PEXT,
-  /** index of \ref nptiso_struct::p_inst */
-  FIELD_NPTISO_PINST,
-  /** index of \ref nptiso_struct::p_diff */
-  FIELD_NPTISO_PDIFF,
-  /** index of \ref nptiso_struct::piston */
+  /** index of \ref nptiso_struct::piston (only used for the events) */
   FIELD_NPTISO_PISTON,
   FIELD_PERIODIC,
   /** index of \ref #skin */
@@ -90,7 +84,6 @@ enum Fields {
 /** Broadcast a global variable.
  *  @param i  the number from @ref anonymous_namespace{global.cpp}::fields
  *            "fields" specifying which Datafield to broadcast.
- *  @return nonzero on error
  */
 void mpi_bcast_parameter(int i);
 

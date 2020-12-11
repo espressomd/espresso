@@ -20,57 +20,137 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
-import tests_common
+import espressomd.integrate
 
 
 @utx.skipIfMissingFeatures(["NPT", "LENNARD_JONES"])
 class IntegratorNPT(ut.TestCase):
 
-    """This compares pressure and compressibility of a LJ system against
-       expected values."""
-    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    p_ext = 2.0
+    """This tests the NpT integrator interface."""
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def setUp(self):
+        self.system.box_l = [5] * 3
+        self.system.time_step = 0.01
+        self.system.cell_system.skin = 0.25
 
-        box_l = 5.86326165
-        self.S.box_l = [box_l] * 3
-        self.S.time_step = 0.01
-        self.S.cell_system.skin = 0.25
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.actors.clear()
+        self.system.thermostat.turn_off()
+        self.system.integrator.set_vv()
 
-        data = np.genfromtxt(tests_common.abspath("data/npt_lj_system.data"))
+    def test_integrator_exceptions(self):
+        # invalid parameters should throw exceptions
+        with self.assertRaises(RuntimeError):
+            self.system.integrator.set_isotropic_npt(ext_pressure=-1, piston=1)
+        with self.assertRaises(RuntimeError):
+            self.system.integrator.set_isotropic_npt(ext_pressure=1, piston=0)
+        with self.assertRaises(RuntimeError):
+            self.system.integrator.set_isotropic_npt(ext_pressure=1, piston=-1)
+        with self.assertRaises(RuntimeError):
+            self.system.integrator.set_isotropic_npt(
+                ext_pressure=1, piston=1, direction=[0, 0, 0])
+        with self.assertRaises(Exception):
+            self.system.integrator.set_isotropic_npt(
+                ext_pressure=1, piston=1, direction=[1, 0])
 
-        # Input format: id pos f
-        for particle in data:
-            pos = particle[:3]
-            v = particle[3:]
-            self.S.part.add(pos=pos, v=v)
+    def test_integrator_recovery(self):
+        # the system is still in a valid state after a failure
+        system = self.system
+        np.random.seed(42)
+        npt_params = {'ext_pressure': 0.001, 'piston': 0.001}
+        system.box_l = [6] * 3
+        system.part.add(pos=np.random.uniform(0, system.box_l[0], (11, 3)))
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1, sigma=1, cutoff=2**(1 / 6), shift=0.25)
+        system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
+        system.integrator.set_isotropic_npt(**npt_params)
 
-        self.S.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=1, sigma=1, cutoff=1.12246, shift=0.25)
+        # get the equilibrium box length for the chosen NpT parameters
+        system.integrator.run(2000)
+        box_l_ref = system.box_l[0]
 
-        self.S.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004, seed=42)
-        self.S.integrator.set_isotropic_npt(
-            ext_pressure=self.p_ext, piston=0.0001)
+        # resetting the NpT integrator with incorrect values doesn't leave the
+        # system in an undefined state (the old parameters aren't overwritten)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_isotropic_npt(ext_pressure=-1, piston=100)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_isotropic_npt(ext_pressure=100, piston=-1)
+        # the core state is unchanged
+        system.integrator.run(500)
+        self.assertAlmostEqual(system.box_l[0], box_l_ref, delta=0.15)
 
-    def test_npt(self):
-        self.S.integrator.run(800)
-        avp = 0
-        n = 30000
-        skip_p = 8
-        ls = np.zeros(n)
-        for t in range(n):
-            self.S.integrator.run(2)
-            if t % skip_p == 0:
-                avp += self.S.analysis.pressure()['total']
-            ls[t] = self.S.box_l[0]
+        # setting another integrator with incorrect values doesn't leave the
+        # system in an undefined state (the old integrator is still active)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_steepest_descent(
+                f_max=-10, gamma=0, max_displacement=0.1)
+        # the interface state is unchanged
+        self.assertIsInstance(system.integrator.get_state(),
+                              espressomd.integrate.VelocityVerletIsotropicNPT)
+        params = system.integrator.get_state().get_params()
+        self.assertEqual(params['ext_pressure'], npt_params['ext_pressure'])
+        self.assertEqual(params['piston'], npt_params['piston'])
+        # the core state is unchanged
+        system.integrator.run(500)
+        self.assertAlmostEqual(system.box_l[0], box_l_ref, delta=0.15)
 
-        avp /= (n / skip_p)
-        Vs = np.array(ls)**3
-        compressibility = np.var(Vs) / np.average(Vs)
+        # setting the NpT integrator with incorrect values doesn't leave the
+        # system in an undefined state (the old integrator is still active)
+        system.thermostat.turn_off()
+        system.integrator.set_vv()
+        system.part.clear()
+        system.box_l = [5] * 3
+        positions_start = np.array([[0, 0, 0], [1., 0, 0]])
+        system.part.add(pos=positions_start)
+        with self.assertRaises(RuntimeError):
+            system.integrator.set_isotropic_npt(ext_pressure=-1, piston=100)
+        # the interface state is unchanged
+        self.assertIsInstance(system.integrator.get_state(),
+                              espressomd.integrate.VelocityVerlet)
+        # the core state is unchanged
+        system.integrator.run(1)
+        np.testing.assert_allclose(
+            np.copy(system.part[:].pos),
+            positions_start + np.array([[-1.2e-3, 0, 0], [1.2e-3, 0, 0]]))
 
-        self.assertAlmostEqual(avp, 2.0, delta=0.02)
-        self.assertAlmostEqual(compressibility, 0.32, delta=0.02)
+    def run_with_p3m(self, p3m):
+        system = self.system
+        np.random.seed(42)
+        system.box_l = [6] * 3
+        system.part.add(pos=np.random.uniform(0, system.box_l[0], (11, 3)),
+                        q=np.sign(np.arange(-5, 6)))
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1, sigma=1, cutoff=2**(1 / 6), shift=0.25)
+        system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
+        system.integrator.set_isotropic_npt(ext_pressure=0.001, piston=0.001)
+        system.integrator.run(100)
+        system.actors.add(p3m)
+        system.integrator.run(100)
+
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_p3m_exception(self):
+        # NpT is compatible with P3M CPU
+        import espressomd.electrostatics
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
+            alpha=5.35, tune=False)
+        try:
+            self.run_with_p3m(p3m)
+        except Exception as err:
+            self.fail(f'run_with_p3m() raised ValueError("{err}")')
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_p3mgpu_exception(self):
+        # NpT is not compatible with P3M GPU (no energies)
+        import espressomd.electrostatics
+        p3m = espressomd.electrostatics.P3MGPU(
+            prefactor=1.0, accuracy=1e-2, mesh=3 * [24], cao=2, r_cut=0.24,
+            alpha=8.26, tune=False)
+        with self.assertRaises(Exception):
+            self.run_with_p3m(p3m)
 
 
 if __name__ == "__main__":

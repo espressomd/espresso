@@ -17,9 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "npt.hpp"
+
+#ifdef NPT
+
 #include "communication.hpp"
 #include "config.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
+#include "global.hpp"
 #include "integrate.hpp"
 
 #include <utils/Vector.hpp>
@@ -30,42 +37,126 @@
 #include <cmath>
 #include <stdexcept>
 
-#ifdef NPT
+nptiso_struct nptiso = {0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        {0.0, 0.0, 0.0},
+                        {0.0, 0.0, 0.0},
+                        0,
+                        {NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},
+                        0,
+                        false,
+                        0};
+
 void synchronize_npt_state() {
   boost::mpi::broadcast(comm_cart, nptiso.p_inst, 0);
   boost::mpi::broadcast(comm_cart, nptiso.p_diff, 0);
   boost::mpi::broadcast(comm_cart, nptiso.volume, 0);
 }
 
-void mpi_bcast_nptiso_geom_worker(int, int) {
+void mpi_bcast_nptiso_geom_barostat_worker() {
   boost::mpi::broadcast(comm_cart, nptiso.geometry, 0);
   boost::mpi::broadcast(comm_cart, nptiso.dimension, 0);
   boost::mpi::broadcast(comm_cart, nptiso.cubic_box, 0);
   boost::mpi::broadcast(comm_cart, nptiso.non_const_dim, 0);
+  boost::mpi::broadcast(comm_cart, nptiso.p_ext, 0);
+  boost::mpi::broadcast(comm_cart, nptiso.piston, 0);
 }
 
-REGISTER_CALLBACK(mpi_bcast_nptiso_geom_worker)
+REGISTER_CALLBACK(mpi_bcast_nptiso_geom_barostat_worker)
 
-void mpi_bcast_nptiso_geom() {
-  mpi_call_all(mpi_bcast_nptiso_geom_worker, -1, 0);
+/** Broadcast nptiso geometry and barostat parameters to all nodes. */
+void mpi_bcast_nptiso_geom_barostat() {
+  mpi_call_all(mpi_bcast_nptiso_geom_barostat_worker);
+}
+
+void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
+                 bool ydir_rescale, bool zdir_rescale, bool cubic_box) {
+
+  if (ext_pressure < 0.0) {
+    throw std::runtime_error("The external pressure must be positive.");
+  }
+  if (piston <= 0.0) {
+    throw std::runtime_error("The piston mass must be positive.");
+  }
+
+  nptiso_struct new_nptiso = {piston,
+                              nptiso.inv_piston,
+                              nptiso.volume,
+                              ext_pressure,
+                              nptiso.p_inst,
+                              nptiso.p_diff,
+                              nptiso.p_vir,
+                              nptiso.p_vel,
+                              0,
+                              nptiso.nptgeom_dir,
+                              0,
+                              cubic_box,
+                              -1};
+
+  /* set the NpT geometry */
+  if (xdir_rescale) {
+    new_nptiso.geometry |= NPTGEOM_XDIR;
+    new_nptiso.dimension += 1;
+    new_nptiso.non_const_dim = 0;
+  }
+  if (ydir_rescale) {
+    new_nptiso.geometry |= NPTGEOM_YDIR;
+    new_nptiso.dimension += 1;
+    new_nptiso.non_const_dim = 1;
+  }
+  if (zdir_rescale) {
+    new_nptiso.geometry |= NPTGEOM_ZDIR;
+    new_nptiso.dimension += 1;
+    new_nptiso.non_const_dim = 2;
+  }
+
+  /* Sanity Checks */
+#ifdef ELECTROSTATICS
+  if (new_nptiso.dimension < 3 && !cubic_box && coulomb.prefactor > 0) {
+    throw std::runtime_error("If electrostatics is being used you must "
+                             "use the cubic box npt.");
+  }
+#endif
+
+#ifdef DIPOLES
+  if (new_nptiso.dimension < 3 && !cubic_box && dipole.prefactor > 0) {
+    throw std::runtime_error("If magnetostatics is being used you must "
+                             "use the cubic box npt.");
+  }
+#endif
+
+  if (new_nptiso.dimension == 0 || new_nptiso.non_const_dim == -1) {
+    throw std::runtime_error(
+        "You must enable at least one of the x y z components "
+        "as fluctuating dimension(s) for box length motion!");
+  }
+
+  nptiso = new_nptiso;
+
+  mpi_bcast_nptiso_geom_barostat();
+  on_parameter_change(FIELD_NPTISO_PISTON);
 }
 
 void npt_ensemble_init(const BoxGeometry &box) {
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     /* prepare NpT-integration */
-    nptiso.inv_piston = 1 / (1.0 * nptiso.piston);
+    nptiso.inv_piston = 1 / nptiso.piston;
     if (nptiso.dimension == 0) {
       throw std::runtime_error(
-          "%d: INTERNAL ERROR: npt integrator was called but "
-          "dimension not yet set. this should not happen. ");
+          "INTERNAL ERROR: npt integrator was called but "
+          "dimension not yet set. This should not happen.");
     }
 
     nptiso.volume = pow(box.length()[nptiso.non_const_dim], nptiso.dimension);
 
     if (recalc_forces) {
       nptiso.p_inst = 0.0;
-      nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
-      nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
+      nptiso.p_vir = Utils::Vector3d{};
+      nptiso.p_vel = Utils::Vector3d{};
     }
   }
 }
@@ -75,21 +166,30 @@ void integrator_npt_sanity_checks() {
     if (nptiso.piston <= 0.0) {
       runtimeErrorMsg() << "npt on, but piston mass not set";
     }
+#if defined(ELECTROSTATICS) && defined(CUDA)
+    if (coulomb.method == COULOMB_P3M_GPU) {
+      runtimeErrorMsg() << "npt on, but virial cannot be calculated on P3M GPU";
+    }
+#endif
   }
 }
 
 /** reset virial part of instantaneous pressure */
 void npt_reset_instantaneous_virials() {
   if (integ_switch == INTEG_METHOD_NPT_ISO)
-    nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
+    nptiso.p_vir = Utils::Vector3d{};
+}
+
+void npt_add_virial_contribution(double energy) {
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+    nptiso.p_vir[0] += energy;
+  }
 }
 
 void npt_add_virial_contribution(const Utils::Vector3d &force,
                                  const Utils::Vector3d &d) {
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    for (int j = 0; j < 3; j++) {
-      nptiso.p_vir[j] += force[j] * d[j];
-    }
+    nptiso.p_vir += hadamard_product(force, d);
   }
 }
 #endif // NPT

@@ -95,10 +95,11 @@ cdef extern from "stokesian_dynamics/sd_interface.hpp":
         void set_sd_kT(double kT) except +
         double get_sd_kT()
 
-cdef extern from "npt.hpp":
-    ctypedef struct nptiso_struct:
-        double p_ext
-        double p_inst
-        double p_diff
-        double piston
-    extern nptiso_struct nptiso
+IF NPT:
+    cdef extern from "npt.hpp":
+        ctypedef struct nptiso_struct:
+            double p_ext
+            double p_inst
+            double p_diff
+            double piston
+        extern nptiso_struct nptiso
