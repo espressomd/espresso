@@ -316,7 +316,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
  *  @param[in]     p              %Particle
  *  @param[in]     dt             Time interval
  */
-inline Utils::Vector4d
+inline Utils::Quaternion<double>
 bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
             double dt) {
   Thermostat::GammaType gamma;
@@ -395,8 +395,9 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
  *  @param[in]     p              %Particle
  *  @param[in]     dt             Time interval
  */
-inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
-                                          Particle const &p, double dt) {
+inline Utils::Quaternion<double>
+bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
+                   double dt) {
   // first, set defaults
   Thermostat::GammaType sigma_pos = brownian.sigma_pos_rotation;
 
