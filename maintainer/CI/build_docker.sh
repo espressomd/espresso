@@ -20,7 +20,6 @@ ENV_FILE=$(mktemp esXXXXXXX.env)
 
 cat > "${ENV_FILE}" <<EOF
 cmake_params=${cmake_params}
-with_fftw=${with_fftw}
 with_coverage=false
 with_cuda=true
 with_scafacos=true
@@ -28,7 +27,6 @@ hide_gpu=true
 CC=gcc-8
 CXX=g++-8
 check_procs=${check_procs}
-make_check=${make_check}
 build_type=RelWithAssert
 myconfig=maxset
 EOF
