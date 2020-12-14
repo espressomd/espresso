@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(dist_function) {
   constexpr double R1 = 2.0;
   constexpr double R2 = 3.0;
 
-  constexpr double eps = 100 * std::numeric_limits<double>::epsilon();
+  constexpr double eps = 10 * std::numeric_limits<double>::epsilon();
 
   {
     Shapes::HollowConicalFrustum c;
@@ -48,24 +48,24 @@ BOOST_AUTO_TEST_CASE(dist_function) {
     double dist;
 
     c.calculate_dist(pos, dist, vec);
-    BOOST_CHECK_CLOSE(dist, 2.0, eps);
-    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
+    BOOST_CHECK_SMALL(dist - 2.0, eps);
+    BOOST_CHECK_SMALL(dist - vec.norm(), eps);
 
     pos = {{R1, 0.0, L / 2.0}};
     c.calculate_dist(pos, dist, vec);
     BOOST_CHECK_SMALL(dist, eps);
-    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
+    BOOST_CHECK_SMALL(dist - vec.norm(), eps);
 
     pos = {{3.0, 0.0, -L / 2.0}};
     c.calculate_dist(pos, dist, vec);
     BOOST_CHECK_SMALL(dist, eps);
-    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
+    BOOST_CHECK_SMALL(dist - vec.norm(), eps);
 
     c.set_thickness(1.0);
     c.set_r2(R1);
     pos = {{R1 + 1.0, 0.0, L / 2.0}};
     c.calculate_dist(pos, dist, vec);
-    BOOST_CHECK_CLOSE(dist, .5, eps);
+    BOOST_CHECK_SMALL(dist - .5, eps);
   }
   {
     Shapes::HollowConicalFrustum c;
@@ -79,8 +79,8 @@ BOOST_AUTO_TEST_CASE(dist_function) {
     double dist;
 
     c.calculate_dist(pos, dist, vec);
-    BOOST_CHECK_CLOSE(dist, 2.0, eps);
-    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
+    BOOST_CHECK_SMALL(dist - 2.0, eps);
+    BOOST_CHECK_SMALL(dist - vec.norm(), eps);
 
     pos = {{L / 2.0, R1, 0.0}};
     c.calculate_dist(pos, dist, vec);
@@ -90,6 +90,6 @@ BOOST_AUTO_TEST_CASE(dist_function) {
     pos = {{-L / 2.0, R2, 0.0}};
     c.calculate_dist(pos, dist, vec);
     BOOST_CHECK_SMALL(dist, eps);
-    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
+    BOOST_CHECK_SMALL(dist - vec.norm(), eps);
   }
 }

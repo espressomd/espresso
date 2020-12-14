@@ -54,11 +54,12 @@
 #include <utils/math/sqr.hpp>
 #include <utils/strcat_alloc.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/collectives/reduce.hpp>
+#include <boost/mpi/communicator.hpp>
 #include <boost/optional.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 #include <boost/range/numeric.hpp>
-
-#include <mpi.h>
 
 #include <algorithm>
 #include <cassert>
@@ -560,8 +561,8 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
     node_k_space_energy *= coulomb.prefactor / (2 * box_geo.volume());
 
     double k_space_energy = 0.0;
-    MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0,
-               comm_cart);
+    boost::mpi::reduce(comm_cart, node_k_space_energy, k_space_energy,
+                       std::plus<>(), 0);
     if (this_node == 0) {
       /* self energy correction */
       k_space_energy -= coulomb.prefactor *
@@ -966,8 +967,7 @@ int p3m_adaptive_tune(char **log) {
   }
 
   /* preparation */
-  mpi_call(p3m_count_charged_particles);
-  p3m_count_charged_particles();
+  mpi_call_all(p3m_count_charged_particles);
 
   /* Print Status */
   sprintf(b, "P3M tune parameters: Accuracy goal = %.5e prefactor = %.5e\n",
@@ -1143,21 +1143,22 @@ int p3m_adaptive_tune(char **log) {
 }
 
 void p3m_count_charged_particles() {
-  double node_sums[3] = {0., 0., 0.};
-  double tot_sums[3] = {0., 0., 0.};
+  using boost::mpi::all_reduce;
+  int local_n = 0;
+  double local_q2 = 0.0;
+  double local_q = 0.0;
 
   for (auto const &p : cell_structure.local_particles()) {
     if (p.p.q != 0.0) {
-      node_sums[0] += 1.0;
-      node_sums[1] += Utils::sqr(p.p.q);
-      node_sums[2] += p.p.q;
+      local_n++;
+      local_q2 += Utils::sqr(p.p.q);
+      local_q += p.p.q;
     }
   }
 
-  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
-  p3m.sum_qpart = (int)(tot_sums[0] + 0.1);
-  p3m.sum_q2 = tot_sums[1];
-  p3m.square_sum_q = Utils::sqr(tot_sums[2]);
+  p3m.sum_qpart = all_reduce(comm_cart, local_n, std::plus<>());
+  p3m.sum_q2 = all_reduce(comm_cart, local_q2, std::plus<>());
+  p3m.square_sum_q = Utils::sqr(all_reduce(comm_cart, local_q, std::plus<>()));
 }
 
 REGISTER_CALLBACK(p3m_count_charged_particles)

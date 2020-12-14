@@ -53,7 +53,6 @@
 
 #include <array>
 #include <cmath>
-#include <tuple>
 #include <vector>
 
 struct dp3m_data_struct : public p3m_data_struct_base {
@@ -175,120 +174,121 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
  */
 void dp3m_count_magnetic_particles();
 
+#ifdef NPT
+/** Update the NpT virial */
+void npt_add_virial_magnetic_contribution(double energy);
+#endif
+
 /** Calculate real space contribution of p3m dipolar pair forces and torques.
- *  If NPT is compiled in, it returns the energy, which is needed for NPT.
+ *  If NPT is compiled in, update the NpT virial.
  */
-inline std::tuple<double, ParticleForce>
-dp3m_pair_force(Particle const &p1, Particle const &p2,
-                Utils::Vector3d const &d, double dist2, double dist) {
-  if ((p1.p.dipm == 0.) || (p2.p.dipm == 0.))
-    return std::make_tuple(0.0, ParticleForce{});
+inline ParticleForce dp3m_pair_force(Particle const &p1, Particle const &p2,
+                                     Utils::Vector3d const &d, double dist2,
+                                     double dist) {
+  if ((p1.p.dipm == 0.) || (p2.p.dipm == 0.) || dist >= dp3m.params.r_cut ||
+      dist <= 0.)
+    return {};
 
-  if (dist < dp3m.params.r_cut && dist > 0) {
-    auto const dip1 = p1.calc_dip();
-    auto const dip2 = p2.calc_dip();
-    auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
-    auto const adist = dp3m.params.alpha * dist;
+  auto const dip1 = p1.calc_dip();
+  auto const dip2 = p2.calc_dip();
+  auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
+  auto const adist = dp3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-    auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
+  auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
 #else
-    auto const erfc_part_ri = erfc(adist) / dist;
+  auto const erfc_part_ri = erfc(adist) / dist;
 #endif
 
-    // Calculate scalar multiplications for vectors mi, mj, rij
-    auto const mimj = dip1 * dip2;
+  // Calculate scalar multiplications for vectors mi, mj, rij
+  auto const mimj = dip1 * dip2;
 
-    auto const mir = dip1 * d;
-    auto const mjr = dip2 * d;
+  auto const mir = dip1 * d;
+  auto const mjr = dip2 * d;
 
-    auto const coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
-    auto const dist2i = 1 / dist2;
-    auto const exp_adist2 = exp(-adist * adist);
+  auto const coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
+  auto const dist2i = 1 / dist2;
+  auto const exp_adist2 = exp(-adist * adist);
 
-    double B_r, C_r, D_r;
-    if (dp3m.params.accuracy > 5e-06)
-      B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
-    else
-      B_r = (erfc(adist) / dist + coeff * exp_adist2) * dist2i;
+  double B_r, C_r, D_r;
+  if (dp3m.params.accuracy > 5e-06)
+    B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
+  else
+    B_r = (erfc(adist) / dist + coeff * exp_adist2) * dist2i;
 
-    C_r = (3 * B_r + 2 * alpsq * coeff * exp_adist2) * dist2i;
-    D_r = (5 * C_r + 4 * coeff * alpsq * alpsq * exp_adist2) * dist2i;
+  C_r = (3 * B_r + 2 * alpsq * coeff * exp_adist2) * dist2i;
+  D_r = (5 * C_r + 4 * coeff * alpsq * alpsq * exp_adist2) * dist2i;
 
-    // Calculate real-space forces
-    auto const force =
-        dipole.prefactor *
-        ((mimj * d + dip1 * mjr + dip2 * mir) * C_r - mir * mjr * D_r * d);
+  // Calculate real-space forces
+  auto const force =
+      dipole.prefactor *
+      ((mimj * d + dip1 * mjr + dip2 * mir) * C_r - mir * mjr * D_r * d);
 
-#ifdef ROTATION
-    // Calculate vector multiplications for vectors mi, mj, rij
-    auto const mixmj = vector_product(dip1, dip2);
-    auto const mixr = vector_product(dip1, d);
+  // Calculate vector multiplications for vectors mi, mj, rij
+  auto const mixmj = vector_product(dip1, dip2);
+  auto const mixr = vector_product(dip1, d);
 
-    // Calculate real-space torques
-    auto const torque = dipole.prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
-#endif
+  // Calculate real-space torques
+  auto const torque = dipole.prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
-    auto const fac = dipole.prefactor * p1.p.dipm * p2.p.dipm * exp_adist2;
+  auto const fac = dipole.prefactor * p1.p.dipm * p2.p.dipm * exp_adist2;
 #else
-    auto const fac = dipole.prefactor * p1.p.dipm * p2.p.dipm;
+  auto const fac = dipole.prefactor * p1.p.dipm * p2.p.dipm;
 #endif
-    auto const _energy = fac * (mimj * B_r - mir * mjr * C_r);
-#else
-    auto const _energy = 0.0;
-#endif
-    return std::make_tuple(_energy, ParticleForce{force, torque});
-  }
-  return std::make_tuple(0.0, ParticleForce{});
+  auto const energy = fac * (mimj * B_r - mir * mjr * C_r);
+  npt_add_virial_magnetic_contribution(energy);
+#endif // NPT
+  return ParticleForce{force, torque};
 }
 
 /** Calculate real space contribution of dipolar pair energy. */
 inline double dp3m_pair_energy(Particle const &p1, Particle const &p2,
                                Utils::Vector3d const &d, double dist2,
                                double dist) {
+  if ((p1.p.dipm == 0.) || (p2.p.dipm == 0.) || dist >= dp3m.params.r_cut ||
+      dist <= 0.)
+    return {};
+
   auto const dip1 = p1.calc_dip();
   auto const dip2 = p2.calc_dip();
 
-  if (dist < dp3m.params.r_cut && dist > 0) {
-    auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
-    auto const adist = dp3m.params.alpha * dist;
-    /*fac1 = dipole.prefactor;*/
+  auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
+  auto const adist = dp3m.params.alpha * dist;
+  /*fac1 = dipole.prefactor;*/
 
 #if USE_ERFC_APPROXIMATION
-    auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    /*  fac1 = dipole.prefactor * p1.p.dipm*p2.p.dipm; IT WAS WRONG */
-    /* *exp(-adist*adist); */
+  auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
+  /*  fac1 = dipole.prefactor * p1.p.dipm*p2.p.dipm; IT WAS WRONG */
+  /* *exp(-adist*adist); */
 #else
-    auto const erfc_part_ri = erfc(adist) / dist;
-    /* fac1 = dipole.prefactor * p1.p.dipm*p2.p.dipm;  IT WAS WRONG*/
+  auto const erfc_part_ri = erfc(adist) / dist;
+  /* fac1 = dipole.prefactor * p1.p.dipm*p2.p.dipm;  IT WAS WRONG*/
 #endif
 
-    // Calculate scalar multiplications for vectors mi, mj, rij
-    auto const mimj = dip1 * dip2;
-    auto const mir = dip1 * d;
-    auto const mjr = dip2 * d;
+  // Calculate scalar multiplications for vectors mi, mj, rij
+  auto const mimj = dip1 * dip2;
+  auto const mir = dip1 * d;
+  auto const mjr = dip2 * d;
 
-    auto const coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
-    auto const dist2i = 1 / dist2;
-    auto const exp_adist2 = exp(-adist * adist);
+  auto const coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
+  auto const dist2i = 1 / dist2;
+  auto const exp_adist2 = exp(-adist * adist);
 
-    double B_r;
-    if (dp3m.params.accuracy > 5e-06)
-      B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
-    else
-      B_r = (erfc(adist) / dist + coeff * exp_adist2) * dist2i;
+  double B_r;
+  if (dp3m.params.accuracy > 5e-06)
+    B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
+  else
+    B_r = (erfc(adist) / dist + coeff * exp_adist2) * dist2i;
 
-    auto const C_r = (3 * B_r + 2 * alpsq * coeff * exp_adist2) * dist2i;
+  auto const C_r = (3 * B_r + 2 * alpsq * coeff * exp_adist2) * dist2i;
 
-    /*
-      printf("(%4i %4i) pair energy = %f (B_r=%15.12f C_r=%15.12f)\n",
-      p1.p.identity,p2.p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
-    */
+  /*
+    printf("(%4i %4i) pair energy = %f (B_r=%15.12f C_r=%15.12f)\n",
+    p1.p.identity,p2.p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
+  */
 
-    /* old line return fac1 * ( mimj*B_r - mir*mjr * C_r );*/
-    return dipole.prefactor * (mimj * B_r - mir * mjr * C_r);
-  }
-  return 0.0;
+  /* old line return fac1 * ( mimj*B_r - mir*mjr * C_r );*/
+  return dipole.prefactor * (mimj * B_r - mir * mjr * C_r);
 }
 
 #endif /* DP3M */
