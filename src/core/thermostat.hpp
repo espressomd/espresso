@@ -248,6 +248,7 @@ public:
   /**@}*/
 };
 
+#ifdef NPT
 /** %Thermostat for isotropic NPT dynamics. */
 struct IsotropicNptThermostat : public BaseThermostat {
 private:
@@ -258,14 +259,12 @@ public:
    *  Needs to be called every time the parameters are changed.
    */
   void recalc_prefactors(double piston, double time_step) {
-#ifdef NPT
     assert(piston > 0.0);
     auto const half_time_step = time_step / 2.0;
     pref_rescale_0 = -gamma0 * half_time_step;
     pref_noise_0 = sigma(temperature, gamma0, time_step);
     pref_rescale_V = -gammav * half_time_step / piston;
     pref_noise_V = sigma(temperature, gammav, time_step);
-#endif
   }
   /** Calculate the noise prefactor.
    *  Evaluates the quantity @f$ \sqrt{2 k_B T \gamma dt / 2} / \sigma_\eta @f$
@@ -285,7 +284,6 @@ public:
   /** Friction coefficient for the box @f$ \gamma^V @f$ */
   double gammav;
   /**@}*/
-#ifdef NPT
   /** @name Prefactors */
   /**@{*/
   /** %Particle velocity rescaling at half the time step.
@@ -305,8 +303,8 @@ public:
    */
   double pref_noise_V;
   /**@}*/
-#endif
 };
+#endif
 
 /** %Thermostat for thermalized bonds. */
 struct ThermalizedBondThermostat : public BaseThermostat {};
@@ -338,7 +336,9 @@ struct StokesianThermostat : public BaseThermostat {
 
 NEW_THERMOSTAT(langevin)
 NEW_THERMOSTAT(brownian)
+#ifdef NPT
 NEW_THERMOSTAT(npt_iso)
+#endif
 NEW_THERMOSTAT(thermalized_bond)
 #ifdef DPD
 NEW_THERMOSTAT(dpd)
@@ -350,7 +350,9 @@ NEW_THERMOSTAT(stokesian)
 /* Exported thermostat globals */
 extern LangevinThermostat langevin;
 extern BrownianThermostat brownian;
+#ifdef NPT
 extern IsotropicNptThermostat npt_iso;
+#endif
 extern ThermalizedBondThermostat thermalized_bond;
 #ifdef DPD
 extern DPDThermostat dpd;

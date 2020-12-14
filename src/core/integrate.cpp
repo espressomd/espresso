@@ -38,8 +38,6 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
@@ -58,6 +56,8 @@
 #include <profiler/profiler.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
+
+#include <stdexcept>
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
@@ -414,26 +414,11 @@ int mpi_integrate(int n_steps, int reuse_forces) {
                   mpi_integrate_local, n_steps, reuse_forces);
 }
 
-int integrate_set_steepest_descent(const double f_max, const double gamma,
-                                   const double max_displacement) {
-  if (f_max < 0.0) {
-    runtimeErrorMsg() << "The maximal force must be positive.\n";
-    return ES_ERROR;
-  }
-  if (gamma < 0.0) {
-    runtimeErrorMsg() << "The dampening constant must be positive.\n";
-    return ES_ERROR;
-  }
-  if (max_displacement < 0.0) {
-    runtimeErrorMsg() << "The maximal displacement must be positive.\n";
-    return ES_ERROR;
-  }
+void integrate_set_steepest_descent(const double f_max, const double gamma,
+                                    const double max_displacement) {
   steepest_descent_init(f_max, gamma, max_displacement);
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-  // broadcast integrator parameters to all nodes
-  mpi_bcast_steepest_descent();
-  return ES_OK;
 }
 
 void integrate_set_nvt() {
@@ -446,84 +431,22 @@ void integrate_set_bd() {
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
 }
 
-int integrate_set_sd() {
+void integrate_set_sd() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2)) {
-    runtimeErrorMsg() << "Stokesian Dynamics requires periodicity 0 0 0\n";
-    return ES_ERROR;
+    throw std::runtime_error("Stokesian Dynamics requires periodicity 0 0 0");
   }
   integ_switch = INTEG_METHOD_SD;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-  return ES_OK;
 }
 
 #ifdef NPT
-int integrate_set_npt_isotropic(double ext_pressure, double piston,
-                                bool xdir_rescale, bool ydir_rescale,
-                                bool zdir_rescale, bool cubic_box) {
-  nptiso.cubic_box = cubic_box;
-  nptiso.p_ext = ext_pressure;
-  nptiso.piston = piston;
-
-  if (ext_pressure < 0.0) {
-    runtimeErrorMsg() << "The external pressure must be positive.\n";
-    return ES_ERROR;
-  }
-  if (piston <= 0.0) {
-    runtimeErrorMsg() << "The piston mass must be positive.\n";
-    return ES_ERROR;
-  }
-  /* set the NpT geometry */
-  nptiso.geometry = 0;
-  nptiso.dimension = 0;
-  nptiso.non_const_dim = -1;
-  if (xdir_rescale) {
-    nptiso.geometry |= NPTGEOM_XDIR;
-    nptiso.dimension += 1;
-    nptiso.non_const_dim = 0;
-  }
-  if (ydir_rescale) {
-    nptiso.geometry |= NPTGEOM_YDIR;
-    nptiso.dimension += 1;
-    nptiso.non_const_dim = 1;
-  }
-  if (zdir_rescale) {
-    nptiso.geometry |= NPTGEOM_ZDIR;
-    nptiso.dimension += 1;
-    nptiso.non_const_dim = 2;
-  }
-
-  /* Sanity Checks */
-#ifdef ELECTROSTATICS
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
-    runtimeErrorMsg() << "WARNING: If electrostatics is being used you must "
-                         "use the cubic box npt.";
-    return ES_ERROR;
-  }
-#endif
-
-#ifdef DIPOLES
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
-    runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
-                         "use the cubic box npt.";
-    return ES_ERROR;
-  }
-#endif
-
-  if (nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
-    runtimeErrorMsg() << "You must enable at least one of the x y z components "
-                         "as fluctuating dimension(s) for box length motion!";
-    return ES_ERROR;
-  }
-
-  /* set integrator switch */
+void integrate_set_npt_isotropic(double ext_pressure, double piston,
+                                 bool xdir_rescale, bool ydir_rescale,
+                                 bool zdir_rescale, bool cubic_box) {
+  nptiso_init(ext_pressure, piston, xdir_rescale, ydir_rescale, zdir_rescale,
+              cubic_box);
   integ_switch = INTEG_METHOD_NPT_ISO;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-  mpi_bcast_parameter(FIELD_NPTISO_PISTON);
-  mpi_bcast_parameter(FIELD_NPTISO_PEXT);
-
-  /* broadcast NpT geometry information to all nodes */
-  mpi_bcast_nptiso_geom();
-  return ES_OK;
 }
 #endif
 

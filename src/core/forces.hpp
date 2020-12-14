@@ -60,4 +60,10 @@ void force_calc(CellStructure &cell_structure, double time_step);
 /** Calculate long range forces (P3M, ...). */
 void calc_long_range_forces(const ParticleRange &particles);
 
+#ifdef NPT
+/** Update the NpT virial */
+void npt_add_virial_force_contribution(const Utils::Vector3d &force,
+                                       const Utils::Vector3d &d);
+#endif
+
 #endif

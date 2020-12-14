@@ -172,7 +172,8 @@ void calc_long_range_force(const ParticleRange &particles) {
     dp3m_dipole_assign(particles);
 #ifdef NPT
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      nptiso.p_vir[0] += dp3m_calc_kspace_forces(true, true, particles);
+      auto const energy = dp3m_calc_kspace_forces(true, true, particles);
+      npt_add_virial_contribution(energy);
       fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
     } else
 #endif
