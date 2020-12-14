@@ -638,7 +638,8 @@ class openGLLive():
                 self.hasParticleData = True
 
             # UPDATES
-            if (time.time() - self.last_update) > 1.0 / self.specs['update_fps']:
+            if (time.time() - self.last_update) > 1.0 / \
+                    self.specs['update_fps']:
                 # ES UPDATES WHEN SYSTEM HAS PROPAGATED. ALSO UPDATE ON PAUSE
                 # FOR PARTICLE INFO
                 self._update_particles()
