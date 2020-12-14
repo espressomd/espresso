@@ -25,7 +25,6 @@
 
 #include <cmath>
 #include <limits>
-#include <tuple>
 
 BOOST_AUTO_TEST_CASE(rotation) {
   using std::cos;
@@ -46,18 +45,6 @@ BOOST_AUTO_TEST_CASE(rotation) {
   auto const rel_diff = (expected - is).norm() / expected.norm();
 
   BOOST_CHECK(rel_diff < std::numeric_limits<double>::epsilon());
-}
-
-BOOST_AUTO_TEST_CASE(rotation_params) {
-  Utils::Vector3d v1 = {1.0, 0.0, 0.0};
-  Utils::Vector3d v2 = {1.0, 1.0, 0.0};
-
-  double angle;
-  Utils::Vector3d rotation_axis;
-  std::tie(angle, rotation_axis) = Utils::rotation_params(v1, v2);
-  BOOST_CHECK_CLOSE(angle, Utils::pi() / 4.0, 1e-7);
-  BOOST_CHECK_SMALL((rotation_axis * v1), 1e-7);
-  BOOST_CHECK_SMALL((rotation_axis * v2), 1e-7);
 }
 
 BOOST_AUTO_TEST_CASE(angle_between) {
