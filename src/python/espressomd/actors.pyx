@@ -231,8 +231,8 @@ class Actors:
 
     def clear(self):
         """Remove all actors."""
-        for a in self.active_actors:
-            self.remove(a)
+        while len(self.active_actors):
+            self.remove(self.active_actors[0])
 
     def __str__(self):
         return str(self.active_actors)

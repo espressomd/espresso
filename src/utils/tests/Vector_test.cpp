@@ -401,3 +401,11 @@ BOOST_AUTO_TEST_CASE(flatten_) {
 
   BOOST_CHECK(result == expected);
 }
+
+BOOST_AUTO_TEST_CASE(type_deduction) {
+  static_assert(
+      std::is_same<
+          typename boost::qvm::deduce_vec<Utils::Vector<double, 3>, 3>::type,
+          Utils::Vector<double, 3>>::value,
+      "");
+}

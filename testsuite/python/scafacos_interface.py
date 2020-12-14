@@ -37,9 +37,6 @@ class ScafacosInterface(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
-        if self.system.actors:
-            # workaround for ScaFaCoS actor bug
-            self.system.actors.clear()
 
     def test_available_methods(self):
         # all methods that are accessible from the ScaFaCoS bridge in ESPResSo
@@ -120,7 +117,6 @@ class ScafacosInterface(ut.TestCase):
         ref_torques = np.copy(system.part[:].torque_lab)
 
         system.actors.clear()
-        system.actors.clear()
 
         return (ref_E_coulomb, ref_E_dipoles, ref_forces, ref_torques)
 
@@ -158,9 +154,6 @@ class ScafacosInterface(ut.TestCase):
         ref_torques = np.copy(system.part[:].torque_lab)
 
         system.actors.clear()
-        if system.actors:
-            # workaround for ScaFaCoS actor bug
-            system.actors.clear()
 
         return (ref_E_coulomb, ref_E_dipoles, ref_forces, ref_torques)
 

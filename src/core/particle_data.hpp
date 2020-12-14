@@ -41,6 +41,7 @@
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
+#include <utils/quaternion.hpp>
 
 #include <cstddef>
 #include <memory>
@@ -235,9 +236,10 @@ void set_particle_dipm(int part, double dipm);
 void set_particle_virtual(int part, bool is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat);
+void set_particle_vs_quat(int part,
+                          Utils::Quaternion<double> const &vs_relative_quat);
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              Utils::Vector4d const &rel_ori);
+                              Utils::Quaternion<double> const &rel_ori);
 #endif
 
 #if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)

@@ -429,8 +429,6 @@ section :ref:`Isotropic non-bonded interactions`):
 
 -  ``HAT`` Enable the Hat potential.
 
--  ``UMBRELLA`` Enable the umbrella potential (experimental).
-
 Some of the short-range interactions have additional features:
 
 -  ``LJGEN_SOFTCORE`` This modifies the generic Lennard-Jones potential

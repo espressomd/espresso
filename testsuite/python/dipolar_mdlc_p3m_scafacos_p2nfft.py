@@ -45,9 +45,6 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
-        if self.system.actors:
-            # workaround for DLC actor bug
-            self.system.actors.clear()
 
     def vector_error(self, a, b):
         return np.sum(np.linalg.norm(a - b, axis=1)) / np.sqrt(a.shape[0])
