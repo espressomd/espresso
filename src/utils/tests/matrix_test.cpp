@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2018-2019 The ESPResSo project
  *
+ * This file is part of ESPResSo.
+ *
  * ESPResSo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -18,7 +20,7 @@
 #define BOOST_TEST_MODULE Utils::Mat test
 #define BOOST_TEST_DYN_LINK
 
-#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>

@@ -22,7 +22,6 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/vec_rotate.hpp>
-using Utils::vec_rotate;
 
 #include <cmath>
 #include <limits>
@@ -43,7 +42,7 @@ BOOST_AUTO_TEST_CASE(rotation) {
   auto const expected =
       cos(t) * v + sin(t) * vector_product(k, v) + (1. - cos(t)) * (k * v) * k;
 
-  auto const is = vec_rotate(k, t, v);
+  auto const is = Utils::vec_rotate(k, t, v);
   auto const rel_diff = (expected - is).norm() / expected.norm();
 
   BOOST_CHECK(rel_diff < std::numeric_limits<double>::epsilon());
