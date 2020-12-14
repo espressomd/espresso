@@ -60,3 +60,11 @@ BOOST_AUTO_TEST_CASE(rotation_params) {
   BOOST_CHECK_SMALL((rotation_axis * v1), 1e-7);
   BOOST_CHECK_SMALL((rotation_axis * v2), 1e-7);
 }
+
+BOOST_AUTO_TEST_CASE(angle_between) {
+  Utils::Vector3d const v1 = {1.0, 0.0, 0.0};
+  Utils::Vector3d const v2 = {1.0, 1.0, 0.0};
+
+  auto const angle = Utils::angle_between(v1, v2);
+  BOOST_CHECK_CLOSE(angle, Utils::pi() / 4.0, 1e-7);
+}

@@ -64,6 +64,13 @@ rotation_params(Vector3d const &vec, Vector3d const &target_vec) {
   return std::make_tuple(0.0, Vector3d{});
 }
 
+/**
+ * @brief Determine the angle between two vectors.
+ */
+inline double angle_between(Vector3d const &v1, Vector3d const &v2) {
+  return std::acos(v1 * v2 / std::sqrt(v1.norm2() * v2.norm2()));
+}
+
 } // namespace Utils
 
 #endif
