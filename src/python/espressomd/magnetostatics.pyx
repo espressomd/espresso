@@ -270,7 +270,6 @@ IF DIPOLES == 1:
             handle_errors("Could not activate magnetostatics method "
                           + self.__class__.__name__)
 
-    @requires_experimental_features("No test coverage")
     class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
 
         """
@@ -362,6 +361,8 @@ IF DIPOLES == 1:
 
             This is the GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu`
             but uses floating point precision.
+
+            Requires features ``DIPOLAR_DIRECT_SUM`` and ``CUDA``.
 
             Parameters
             ----------

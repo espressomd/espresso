@@ -44,13 +44,12 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
             dict(prefactor=1., epsilon=0., mesh_off=[0.5, 0.5, 0.5], r_cut=2.4,
                  cao=1, mesh=[8, 8, 8], alpha=12, accuracy=0.01, tune=False))
 
-    if espressomd.has_features(["DIPOLAR_DIRECT_SUM"]):
-        test_DdsCpu = generate_test_for_class(
-            system, magnetostatics.DipolarDirectSumCpu, dict(prefactor=3.4))
-        if espressomd.has_features("EXPERIMENTAL_FEATURES"):
-            test_DdsRCpu = generate_test_for_class(
-                system, magnetostatics.DipolarDirectSumWithReplicaCpu,
-                dict(prefactor=3.4, n_replica=2))
+    test_DdsCpu = generate_test_for_class(
+        system, magnetostatics.DipolarDirectSumCpu, dict(prefactor=3.4))
+
+    test_DdsRCpu = generate_test_for_class(
+        system, magnetostatics.DipolarDirectSumWithReplicaCpu,
+        dict(prefactor=3.4, n_replica=2))
 
     def ref_values(self, epsilon=np.inf):
         x = 1. / (1 + 2 * epsilon)
