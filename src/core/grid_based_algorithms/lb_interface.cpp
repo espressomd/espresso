@@ -44,6 +44,7 @@ using Utils::get_linear_index;
 #include <fstream>
 #include <limits>
 #include <stdexcept>
+#include <string>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 
@@ -563,28 +564,36 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
     throw std::runtime_error("Could not open file for writing.");
   }
 
-  std::vector<int> bb_low;
-  std::vector<int> bb_high;
+  Utils::Vector3i bb_low{0, 0, 0};
+  Utils::Vector3i bb_high{0, 0, 0};
+  if (lattice_switch == ActiveLB::GPU) {
+#ifdef CUDA
+    bb_high = {static_cast<int>(lbpar_gpu.dim_x) - 1,
+               static_cast<int>(lbpar_gpu.dim_y) - 1,
+               static_cast<int>(lbpar_gpu.dim_z) - 1};
+#endif //  CUDA
+  } else {
+    bb_high = {lblattice.global_grid[0] - 1, lblattice.global_grid[1] - 1,
+               lblattice.global_grid[2] - 1};
+  }
 
+  int it = 0;
   for (auto val1 = bb1.begin(), val2 = bb2.begin();
        val1 != bb1.end() && val2 != bb2.end(); ++val1, ++val2) {
     if (*val1 == -1 || *val2 == -1) {
-      bb_low = {0, 0, 0};
-      if (lattice_switch == ActiveLB::GPU) {
-#ifdef CUDA
-        bb_high = {static_cast<int>(lbpar_gpu.dim_x) - 1,
-                   static_cast<int>(lbpar_gpu.dim_y) - 1,
-                   static_cast<int>(lbpar_gpu.dim_z) - 1};
-#endif //  CUDA
-      } else {
-        bb_high = {lblattice.global_grid[0] - 1, lblattice.global_grid[1] - 1,
-                   lblattice.global_grid[2] - 1};
-      }
       break;
     }
-
-    bb_low.push_back(std::min(*val1, *val2));
-    bb_high.push_back(std::max(*val1, *val2));
+    auto const lower = std::min(*val1, *val2);
+    auto const upper = std::max(*val1, *val2);
+    if (lower < 0) {
+      throw std::runtime_error("Cannot access index " + std::to_string(lower));
+    }
+    if (upper >= bb_high[it]) {
+      throw std::runtime_error("Cannot access index " + std::to_string(upper));
+    }
+    bb_low[it] = lower;
+    bb_high[it] = upper;
+    it++;
   }
 
   Utils::Vector3i pos;
