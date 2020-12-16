@@ -303,7 +303,7 @@ General features
        :ref:`Magnetostatics / Dipolar interactions`
        :ref:`Electrostatics`
 
--  ``SCAFACOS_DIPOLES``
+-  ``SCAFACOS_DIPOLES`` This activates magnetostatics methods of ScaFaCoS.
 
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.

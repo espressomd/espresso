@@ -211,6 +211,4 @@ root mean square accuracy for the magnetic field.
 
 For details of the various methods and their parameters please refer to
 the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a
-shared library. ScaFaCoS can be used only once, either for Coulomb or for
-dipolar interactions.
-
+shared library.
