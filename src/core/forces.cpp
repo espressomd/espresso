@@ -42,6 +42,7 @@
 #include "integrate.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "npt.hpp"
 #include "short_range_loop.hpp"
 #include "virtual_sites.hpp"
 
@@ -192,3 +193,10 @@ void calc_long_range_forces(const ParticleRange &particles) {
   Dipole::calc_long_range_force(particles);
 #endif /*ifdef DIPOLES */
 }
+
+#ifdef NPT
+void npt_add_virial_force_contribution(const Utils::Vector3d &force,
+                                       const Utils::Vector3d &d) {
+  npt_add_virial_contribution(force, d);
+}
+#endif

@@ -20,6 +20,9 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
+#include <boost/qvm/deduce_vec.hpp>
+#include <boost/qvm/vec_traits.hpp>
+
 #include "utils/Array.hpp"
 
 #include <algorithm>
@@ -137,6 +140,8 @@ public:
 
     return *this;
   }
+
+  Vector normalized() const { return (*this) / (*this).norm(); }
 };
 
 template <class T> using Vector3 = Vector<T, 3>;
@@ -285,7 +290,8 @@ Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
 }
 
 /* Scalar multiplication */
-template <size_t N, typename T, class U>
+template <size_t N, typename T, class U,
+          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 auto operator*(U const &a, Vector<T, N> const &b) {
   using R = decltype(a * std::declval<T>());
   Vector<R, N> ret;
@@ -296,7 +302,8 @@ auto operator*(U const &a, Vector<T, N> const &b) {
   return ret;
 }
 
-template <size_t N, typename T, class U>
+template <size_t N, typename T, class U,
+          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 auto operator*(Vector<T, N> const &b, U const &a) {
   using R = decltype(std::declval<T>() * a);
   Vector<R, N> ret;
@@ -552,4 +559,39 @@ auto get(Vector<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
   return a[I];
 }
 } // namespace Utils
+namespace boost {
+namespace qvm {
+
+template <class T, std::size_t N> struct vec_traits<::Utils::Vector<T, N>> {
+
+  static constexpr std::size_t dim = N;
+  using scalar_type = T;
+
+  template <std::size_t I>
+  static constexpr inline scalar_type &write_element(::Utils::Vector<T, N> &v) {
+    return v[I];
+  }
+
+  template <std::size_t I>
+  static constexpr inline scalar_type
+  read_element(::Utils::Vector<T, N> const &v) {
+    return v[I];
+  }
+
+  static inline scalar_type read_element_idx(std::size_t i,
+                                             ::Utils::Vector<T, N> const &v) {
+    return v[i];
+  }
+  static inline scalar_type &write_element_idx(std::size_t i,
+                                               ::Utils::Vector<T, N> &v) {
+    return v[i];
+  }
+};
+
+template <typename T> struct deduce_vec<Utils::Vector<T, 3>, 3> {
+  using type = typename Utils::Vector<T, 3>;
+};
+
+} // namespace qvm
+} // namespace boost
 #endif

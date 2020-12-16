@@ -283,12 +283,12 @@ void on_parameter_change(int field) {
 #ifdef SCAFACOS
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_SCAFACOS) {
-      Scafacos::update_system_params();
+      Scafacos::fcs_coulomb()->update_system_params();
     }
 #endif
-#ifdef DIPOLES
+#ifdef SCAFACOS_DIPOLES
     if (dipole.method == DIPOLAR_SCAFACOS) {
-      Scafacos::update_system_params();
+      Scafacos::fcs_dipoles()->update_system_params();
     }
 #endif
 #endif

@@ -25,8 +25,6 @@
 
 #include "config.hpp"
 
-#ifdef UMBRELLA
-
 #include "umbrella.hpp"
 
 #include "interactions.hpp"
@@ -50,5 +48,3 @@ int umbrella_set_params(int bond_type, double k, int dir, double r) {
 
   return ES_OK;
 }
-
-#endif /* ifdef UMBRELLA */

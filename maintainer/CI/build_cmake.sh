@@ -76,7 +76,6 @@ set_default_value() {
 # handle environment variables
 set_default_value srcdir "$(pwd)"
 set_default_value cmake_params ""
-set_default_value with_fftw true
 set_default_value with_coverage false
 set_default_value with_coverage_python ${with_coverage}
 set_default_value with_ubsan false
@@ -138,12 +137,6 @@ if [ "${with_walberla}" = true ]; then
   cmake_params="$cmake_params -DWITH_WALBERLA=ON"
 fi
 
-if [ "${with_fftw}" = true ]; then
-    :
-else
-    cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON ${cmake_params}"
-fi
-
 if [ "${with_coverage}" = true ]; then
     cmake_params="-DWITH_COVERAGE=ON ${cmake_params}"
 fi
@@ -180,7 +173,7 @@ builddir="${srcdir}/build"
 
 outp srcdir builddir \
     make_check_unit_tests make_check_python make_check_tutorials make_check_samples make_check_benchmarks \
-    cmake_params with_fftw \
+    cmake_params \
     with_coverage with_coverage_python \
     with_ubsan with_asan \
     check_odd_only \
@@ -290,13 +283,11 @@ if [ "${run_checks}" = true ]; then
 else
     start "TEST"
 
-    if [ "${HIP_PLATFORM}" != "hcc" ]; then
-      check_proc_particle_test=${check_procs}
-      if [ "${check_proc_particle_test}" -gt 4 ]; then
-        check_proc_particle_test=4
-      fi
-      mpiexec -n ${check_proc_particle_test} ./pypresso "${srcdir}/testsuite/python/particle.py" || exit 1
+    check_proc_particle_test=${check_procs}
+    if [ "${check_proc_particle_test}" -gt 4 ]; then
+      check_proc_particle_test=4
     fi
+    mpiexec -n ${check_proc_particle_test} ./pypresso "${srcdir}/testsuite/python/particle.py" || exit 1
 
     end "TEST"
 fi

@@ -112,7 +112,7 @@ class StokesianThermostat(ut.TestCase):
         # invalid PBC should throw exceptions
         self.system.integrator.set_vv()
         self.system.periodicity = [0, 0, 1]
-        with self.assertRaises(Exception):
+        with self.assertRaises(RuntimeError):
             self.system.integrator.set_stokesian_dynamics(
                 viscosity=1.0, radii={0: 1.0})
 

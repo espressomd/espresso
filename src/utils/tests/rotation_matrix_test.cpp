@@ -25,6 +25,7 @@
 #include <utils/math/vec_rotate.hpp>
 
 #include <utils/Vector.hpp>
+#include <utils/quaternion.hpp>
 
 #include <cmath>
 #include <limits>
@@ -40,8 +41,9 @@ BOOST_AUTO_TEST_CASE(rotation_matrix_test) {
 
   auto const axis = Vector3d{1., 2., 3.}.normalize();
   auto const angle = 0.7;
-  auto const q = Vector4d{cos(angle / 2), sin(angle / 2) * axis[0],
-                          sin(angle / 2) * axis[1], sin(angle / 2) * axis[2]};
+  auto const q =
+      Quaternion<double>{cos(angle / 2), sin(angle / 2) * axis[0],
+                         sin(angle / 2) * axis[1], sin(angle / 2) * axis[2]};
 
   auto const v = Vector3d{3., 2., 1.};
   auto const expected = vec_rotate(axis, angle, v);

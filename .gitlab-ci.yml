@@ -243,7 +243,7 @@ clang-sanitizer:
   tags:
     - docker
     - linux
-    - cuda-kepler
+    - cuda
 
 cuda11-maxset:
   <<: *global_job_definition
@@ -290,7 +290,7 @@ cuda10-maxset:
   tags:
     - docker
     - linux
-    - cuda-kepler
+    - cuda
 
 tutorials-samples-maxset:
   <<: *global_job_definition
@@ -315,7 +315,7 @@ tutorials-samples-maxset:
   tags:
     - docker
     - linux
-    - cuda-kepler
+    - cuda
 
 tutorials-samples-default:
   <<: *global_job_definition
@@ -338,7 +338,7 @@ tutorials-samples-default:
   tags:
     - docker
     - linux
-    - cuda-kepler
+    - cuda
   only:
     - schedules
 
@@ -364,7 +364,7 @@ tutorials-samples-empty:
   tags:
     - docker
     - linux
-    - cuda-kepler
+    - cuda
   only:
     - schedules
 
@@ -425,7 +425,7 @@ installation:
   tags:
     - docker
     - linux
-    - cuda-kepler
+    - cuda
   when: manual
 
 empty:
@@ -445,7 +445,7 @@ empty:
   tags:
     - docker
     - linux
-    - cuda-kepler
+    - cuda
 
 # WALBERLA TODO
 #check_sphinx:
@@ -469,7 +469,7 @@ empty:
 #  tags:
 #    - docker
 #    - linux
-#    - cuda-kepler
+#    - cuda
 
 run_tutorials:
   <<: *global_job_definition
@@ -489,7 +489,7 @@ run_tutorials:
   tags:
     - docker
     - linux
-    - cuda-kepler
+    - cuda
   only:
     - schedules
 
@@ -540,7 +540,7 @@ check_with_odd_no_of_processors:
   tags:
     - docker
     - linux
-    - cuda-kepler
+    - cuda
 
 
 .deploy_base:

@@ -25,7 +25,7 @@ from libcpp.vector cimport vector  # import std::vector as vector
 cdef extern from "utils/Span.hpp" namespace "Utils":
     cppclass Span[T]:
         Span()
-        Span(T * , size_t)
+        Span(T *, size_t)
 
         T & operator[](size_t)
 
@@ -35,7 +35,7 @@ cdef extern from "utils/Span.hpp" namespace "Utils":
         T * data()
         size_t size()
 
-    Span[const T] make_const_span[T](T * , size_t)
+    Span[const T] make_const_span[T](T *, size_t)
 
 cdef np.ndarray create_nparray_from_double_array(double * x, int n)
 cdef np.ndarray create_nparray_from_double_span(Span[double] x)
@@ -74,7 +74,7 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
 
     cppclass Vector3d:
         Vector3d()
-        Vector3d(const Vector3d &)
+        Vector3d(const Vector3d & )
 
         double & operator[](int i)
         double * data()
@@ -92,6 +92,10 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         double * data()
         Vector9d operator * (double i)
         Vector9d operator / (double i)
+
+cdef extern from "utils/quaternion.hpp" namespace "Utils":
+    cppclass Quaternion[T]:
+        T & operator[](int i)
 
 cdef make_array_locked(Vector3d)
 cdef Vector3d make_Vector3d(a)

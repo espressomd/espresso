@@ -28,19 +28,19 @@ cdef extern from "config.hpp":
 cdef extern from "integrate.hpp" nogil:
     cdef int python_integrate(int n_steps, cbool recalc_forces, int reuse_forces)
     cdef int mpi_steepest_descent(int max_steps)
-    cdef void integrate_set_sd()
+    cdef void integrate_set_sd() except +
     cdef void integrate_set_nvt()
-    cdef int integrate_set_steepest_descent(const double f_max, const double gamma,
-                                            const double max_displacement)
+    cdef void integrate_set_steepest_descent(const double f_max, const double gamma,
+                                             const double max_displacement) except +
     cdef extern cbool skin_set
     cdef extern cbool set_py_interrupt
     cdef void integrate_set_bd()
 
 IF NPT:
     cdef extern from "integrate.hpp" nogil:
-        cdef int integrate_set_npt_isotropic(double ext_pressure, double piston,
-                                             cbool xdir_rescale, cbool ydir_rescale,
-                                             cbool zdir_rescale, cbool cubic_box)
+        cdef void integrate_set_npt_isotropic(double ext_pressure, double piston,
+                                              cbool xdir_rescale, cbool ydir_rescale,
+                                              cbool zdir_rescale, cbool cubic_box) except +
 
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:

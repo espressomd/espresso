@@ -54,8 +54,8 @@
  *                   Lagrange parameter lambda
  *  @param[out] Wd   Angular acceleration of the particle
  */
-static void define_Qdd(Particle const &p, Utils::Vector4d &Qd,
-                       Utils::Vector4d &Qdd, Utils::Vector3d &S,
+static void define_Qdd(Particle const &p, Utils::Quaternion<double> &Qd,
+                       Utils::Quaternion<double> &Qdd, Utils::Vector3d &S,
                        Utils::Vector3d &Wd) {
   /* calculate the first derivative of the quaternion */
   /* Eq. (4) @cite sonnenschein85a */
@@ -107,7 +107,7 @@ static void define_Qdd(Particle const &p, Utils::Vector4d &Qd,
       p.r.quat[3] * S1;
 
   S[0] = S1;
-  S[1] = Qd * Qdd;
+  S[1] = Utils::dot(Qd, Qdd);
   S[2] = Qdd.norm2();
 }
 
@@ -128,7 +128,7 @@ void propagate_omega_quat_particle(Particle &p) {
   if (p.p.rotation == ROTATION_FIXED)
     return;
 
-  Utils::Vector4d Qd{}, Qdd{};
+  Utils::Quaternion<double> Qd{}, Qdd{};
   Utils::Vector3d S{}, Wd{};
 
   // Clear rotational velocity for blocked rotation axes.

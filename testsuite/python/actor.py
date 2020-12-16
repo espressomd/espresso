@@ -23,10 +23,11 @@ Testmodule for the actor base class.
 """
 
 import unittest as ut
-from espressomd import actors
+import espressomd.actors
+import espressomd.highlander
 
 
-class TestActor(actors.Actor):
+class TestActor(espressomd.actors.Actor):
 
     def __init__(self, *args, **kwargs):
         self._core_args = None
@@ -106,6 +107,51 @@ class ActorTest(ut.TestCase):
         self.assertEqual(params["a"], True)
         self.assertEqual(params["b"], False)
         self.assertEqual(params["c"], True)
+
+
+class ActorsTest(ut.TestCase):
+
+    actors = espressomd.actors.Actors()
+
+    def tearDown(self):
+        self.actors.clear()
+
+    def test_clear(self):
+        # clearing the list of actors removes all of them
+        for actors_size in range(10):
+            for _ in range(actors_size):
+                actor = TestActor(a=False, c=False)
+                self.actors.add(actor)
+            self.assertEqual(len(self.actors), actors_size)
+            self.actors.clear()
+            self.assertEqual(len(self.actors), 0)
+
+    def test_deactivation(self):
+        actor = TestActor(a=False, c=False)
+        self.assertFalse(actor.is_active())
+        # adding an actor activates it
+        self.actors.add(actor)
+        self.assertTrue(actor.is_active())
+        # removing an actor deactivates it
+        self.actors.clear()
+        self.assertFalse(actor.is_active())
+        # re-adding an actor re-activates it
+        self.actors.add(actor)
+        self.assertTrue(actor.is_active())
+        # removing an actor deactivates it
+        del self.actors[0]
+        self.assertFalse(actor.is_active())
+
+    def test_unique(self):
+        # an actor can only be added once
+        actor = TestActor(a=False, c=False)
+        self.actors.add(actor)
+        with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
+            self.actors.add(actor)
+        # an actor can only be removed once
+        self.actors.remove(actor)
+        with self.assertRaises(Exception):
+            self.actors.remove(actor)
 
 
 if __name__ == "__main__":

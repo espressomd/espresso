@@ -22,9 +22,9 @@ from .globals cimport FIELD_BROWNIAN_GAMMA, FIELD_LANGEVIN_GAMMA, \
     FIELD_TEMPERATURE, FIELD_THERMO_SWITCH, FIELD_THERMO_VIRTUAL
 IF NPT:
     from .globals cimport FIELD_NPTISO_G0, FIELD_NPTISO_GV
+    from .thermostat cimport nptiso
 IF ROTATION:
     from .globals cimport FIELD_LANGEVIN_GAMMA_ROTATION, FIELD_BROWNIAN_GAMMA_ROTATION
-from .thermostat cimport nptiso
 from .globals cimport mpi_bcast_parameter
 from . cimport utils
 from .lb import HydrodynamicInteraction
@@ -127,9 +127,10 @@ cdef class Thermostat:
                     gamma=thmst["gamma"],
                     seed=thmst["rng_counter_fluid"])
             if thmst["type"] == "NPT_ISO":
-                self.set_npt(kT=thmst["kT"], gamma0=thmst["gamma0"],
-                             gammav=thmst["gammav"], seed=thmst["seed"])
-                npt_iso_set_rng_counter(thmst["counter"])
+                if NPT:
+                    self.set_npt(kT=thmst["kT"], gamma0=thmst["gamma0"],
+                                 gammav=thmst["gammav"], seed=thmst["seed"])
+                    npt_iso_set_rng_counter(thmst["counter"])
             if thmst["type"] == "DPD":
                 if DPD:
                     self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
@@ -212,15 +213,16 @@ cdef class Thermostat:
             lb_dict["rng_counter_fluid"] = lb_lbcoupling_get_rng_state()
             thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
-            npt_dict = {}
-            npt_dict["type"] = "NPT_ISO"
-            npt_dict["kT"] = temperature
-            npt_dict["seed"] = npt_iso.rng_seed()
-            npt_dict["counter"] = npt_iso.rng_counter()
-            npt_dict["gamma0"] = npt_iso.gamma0
-            npt_dict["gammav"] = npt_iso.gammav
-            npt_dict.update(nptiso)
-            thermo_list.append(npt_dict)
+            if NPT:
+                npt_dict = {}
+                npt_dict["type"] = "NPT_ISO"
+                npt_dict["kT"] = temperature
+                npt_dict["seed"] = npt_iso.rng_seed()
+                npt_dict["counter"] = npt_iso.rng_counter()
+                npt_dict["gamma0"] = npt_iso.gamma0
+                npt_dict["gammav"] = npt_iso.gammav
+                npt_dict.update(nptiso)
+                thermo_list.append(npt_dict)
         if thermo_switch & THERMO_DPD:
             IF DPD:
                 dpd_dict = {}

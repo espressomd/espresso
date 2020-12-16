@@ -19,8 +19,11 @@
 #ifndef UTILS_VEC_ROTATE_HPP
 #define UTILS_VEC_ROTATE_HPP
 
+#include <boost/qvm/quat_vec_operations.hpp>
+
 #include "utils/Vector.hpp"
 #include "utils/math/sqr.hpp"
+#include "utils/quaternion.hpp"
 
 #include <cmath>
 #include <tuple>
@@ -29,24 +32,18 @@ namespace Utils {
 /**
  * @brief Rotate a vector around an axis.
  *
- * Rodrigues' rotation formula:
- * @f$ \vec{v}_{\mathrm{rot}} =
- *      (\cos{\alpha})\vec{v} +
- *      (\sin{\alpha})\vec{k}\times\vec{v} +
- *      (1 - \cos{\alpha})(\vec{k}\cdot\vec{v})\vec{k} @f$
- *
  * @param axis The axis to rotate about
- * @param alpha Angle to rotate
+ * @param angle Angle to rotate
  * @param vector %Vector to act on
  * @return Rotated vector
  */
-inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
+inline Vector3d vec_rotate(const Vector3d &axis, double angle,
                            const Vector3d &vector) {
-  auto const sina = std::sin(alpha);
-  auto const cosa = std::cos(alpha);
-  auto const a = Vector3d(axis).normalize();
-  auto const &v = vector;
-  return cosa * v + sina * vector_product(a, v) + (1. - cosa) * (a * v) * a;
+  if (std::abs(angle) > std::numeric_limits<double>::epsilon()) {
+    Quaternion<double> q = boost::qvm::rot_quat(axis, angle);
+    return q * vector;
+  }
+  return vector;
 }
 
 /**
@@ -57,10 +54,14 @@ inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
  */
 inline std::tuple<double, Vector3d>
 rotation_params(Vector3d const &vec, Vector3d const &target_vec) {
-  auto const theta =
-      std::acos(vec * target_vec / (vec.norm() * target_vec.norm()));
-  auto const rotation_axis = Utils::vector_product(vec, target_vec).normalize();
-  return std::make_tuple(theta, rotation_axis);
+  if (vec.normalized() != target_vec.normalized()) {
+    auto const theta =
+        std::acos(vec * target_vec / (vec.norm() * target_vec.norm()));
+    auto const rotation_axis =
+        Utils::vector_product(vec, target_vec).normalize();
+    return std::make_tuple(theta, rotation_axis);
+  }
+  return std::make_tuple(0.0, Vector3d{});
 }
 
 } // namespace Utils

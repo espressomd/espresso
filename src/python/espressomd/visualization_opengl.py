@@ -426,11 +426,10 @@ class openGLLive():
         self.system = system
         self.system_info = {}
 
-        self.last_T = -1
         self.last_box_l = self.system.box_l
         self.fps_last = 0
         self.fps = 0
-        self.fps_count = 0
+        self.fps_count = 1
 
         self.glut_main_loop_started = False
         self.screenshot_initialized = False
@@ -447,10 +446,9 @@ class openGLLive():
         self.timers = []
         self.particles = {}
 
-        self.update_elapsed = 0
-        self.update_timer = 0
-        self.draw_elapsed = 0
-        self.draw_timer = 0
+        # times of last call of update(), redraw_on_idle()
+        self.last_update = time.time()
+        self.last_draw = time.time()
 
         self.trigger_set_particle_drag = False
         self.trigger_reset_particle_drag = False
@@ -594,17 +592,18 @@ class openGLLive():
 
         def main():
             while True:
-
                 self.update()
-
-                if self.paused:
-                    time.sleep(0.0001)  # sleep(0) is worse
-                else:
+                if not self.paused:
                     try:
                         self.system.integrator.run(integration_steps)
                     except Exception as e:
                         print(e)
                         os._exit(1)
+
+                # Necessary to regularly drop the Global Interpreter Lock (GIL)
+                # which prevents freezing of the visualizer under certain
+                # circumstances (see Issue #3764).
+                time.sleep(1e-12)
 
         t = Thread(target=main)
         t.daemon = True
@@ -639,24 +638,20 @@ class openGLLive():
                 self.hasParticleData = True
 
             # UPDATES
-            self.update_elapsed += (time.time() - self.update_timer)
-            if self.update_elapsed > 1.0 / self.specs['update_fps']:
-                self.update_elapsed = 0
-
+            if (time.time() - self.last_update) > 1.0 / \
+                    self.specs['update_fps']:
                 # ES UPDATES WHEN SYSTEM HAS PROPAGATED. ALSO UPDATE ON PAUSE
                 # FOR PARTICLE INFO
-                if self.paused or not self.last_T == self.system.time:
-                    self.last_T = self.system.time
-                    self._update_particles()
+                self._update_particles()
 
-                    # LB UPDATE
-                    if self.specs['LB_draw_velocity_plane']:
-                        self._update_lb_velocity_plane()
+                # LB UPDATE
+                if self.specs['LB_draw_velocity_plane']:
+                    self._update_lb_velocity_plane()
 
-                    # BOX_L CHANGED
-                    if not (self.last_box_l == self.system.box_l).all():
-                        self.last_box_l = np.copy(self.system.box_l)
-                        self._box_size_dependence()
+                # BOX_L CHANGED
+                if not (self.last_box_l == self.system.box_l).all():
+                    self.last_box_l = np.copy(self.system.box_l)
+                    self._box_size_dependence()
 
                 # KEYBOARD CALLBACKS MAY CHANGE ESPRESSO SYSTEM PROPERTIES,
                 # ONLY SAVE TO CHANGE HERE
@@ -664,7 +659,7 @@ class openGLLive():
                     c()
                 self.keyboard_manager.userCallbackStack = []
 
-            self.update_timer = time.time()
+                self.last_update = time.time()
 
             # DRAG PARTICLES
             if self.specs['drag_enabled']:
@@ -1400,11 +1395,9 @@ class openGLLive():
 
         def redraw_on_idle():
             # DON'T REPOST FASTER THAN 60 FPS
-            self.draw_elapsed += (time.time() - self.draw_timer)
-            if self.draw_elapsed > 1.0 / 60.0:
-                self.draw_elapsed = 0
+            if (time.time() - self.last_draw) > 1.0 / 60.0:
                 OpenGL.GLUT.glutPostRedisplay()
-            self.draw_timer = time.time()
+                self.last_draw = time.time()
             return
 
         def reshape_callback(w, h):
@@ -1426,6 +1419,19 @@ class openGLLive():
         OpenGL.GLUT.glutIdleFunc(redraw_on_idle)
 
     def _init_timers(self):
+        """
+        Starts infinite loops of timed function callbacks.
+
+        Using `OpenGL.GLUT.glutTimerFunc()` a timed function callback is
+        registered that after (at least) the specified time calls a
+        specific function, which re-registers a timed callback to itself
+        plus does some other stuff.
+        Per callback registered in `self.timers`, one such infinite
+        callback loop is started.
+        In addition, potential keyboard input is handled every (at least)
+        17 ms, corresponding to a rate of ~60 1/s.
+
+        """
 
         # TIMERS FOR register_callback
         def dummy_timer(index):
@@ -1435,10 +1441,8 @@ class openGLLive():
                 dummy_timer,
                 index)
 
-        index = 0
-        for t in self.timers:
-            OpenGL.GLUT.glutTimerFunc(t[0], dummy_timer, index)
-            index += 1
+        for index, timer in enumerate(self.timers):
+            OpenGL.GLUT.glutTimerFunc(timer[0], dummy_timer, index)
 
         # HANDLE INPUT WITH 60FPS
         # pylint: disable=unused-argument
@@ -1530,7 +1534,7 @@ class openGLLive():
         if self.drag_id != -1:
             self.trigger_reset_particle_drag = True
 
-    def _get_particle_info(self, pos):
+    def _get_particle_info(self, pos, pos_old):
         part_id, _ = self._get_particle_id(pos)
         if self.show_system_info:
             self.show_system_info = False
