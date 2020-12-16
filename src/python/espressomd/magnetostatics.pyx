@@ -49,7 +49,6 @@ IF DIPOLES == 1:
 
             """
             set_Dprefactor(self._params["prefactor"])
-            handle_errors("Could not set magnetostatic prefactor")
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
 

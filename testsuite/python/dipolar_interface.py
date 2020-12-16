@@ -59,6 +59,8 @@ class MagnetostaticsInterface(ut.TestCase):
         actor.set_params(prefactor=1)
         with self.assertRaises(ValueError):
             actor.set_params(prefactor=-1)
+        with self.assertRaises(ValueError):
+            actor.set_magnetostatics_prefactor()
 
 
 if __name__ == "__main__":
