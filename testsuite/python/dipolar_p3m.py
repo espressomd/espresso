@@ -57,10 +57,11 @@ class MagnetostaticsP3M(ut.TestCase):
                        'a': 3 * [self.system.box_l[0] / mesh]}
         return dp3m_params, dp3m_energy, dp3m_force, dp3m_torque1, dp3m_torque2
 
-    test_DP3M = tests_common.generate_test_for_class(
-        system, espressomd.magnetostatics.DipolarP3M,
-        dict(prefactor=1., epsilon=0., mesh_off=[0.5, 0.5, 0.5], r_cut=2.4,
-             cao=1, mesh=[8, 8, 8], alpha=12, accuracy=0.01, tune=False))
+    if espressomd.has_features("DP3M"):
+        test_DP3M = tests_common.generate_test_for_class(
+            system, espressomd.magnetostatics.DipolarP3M,
+            dict(prefactor=1., epsilon=0., mesh_off=[0.5, 0.5, 0.5], r_cut=2.4,
+                 cao=1, mesh=[8, 8, 8], alpha=12, accuracy=0.01, tune=False))
 
     def test_dp3m(self):
         self.system.time_step = 0.01

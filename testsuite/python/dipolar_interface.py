@@ -37,9 +37,10 @@ class MagnetostaticsInterface(ut.TestCase):
         self.system.part.clear()
         self.system.actors.clear()
 
-    test_dds_cpu = tests_common.generate_test_for_class(
-        system, espressomd.magnetostatics.DipolarDirectSumCpu,
-        dict(prefactor=3.4))
+    if espressomd.has_features("DIPOLES"):
+        test_dds_cpu = tests_common.generate_test_for_class(
+            system, espressomd.magnetostatics.DipolarDirectSumCpu,
+            dict(prefactor=3.4))
 
     if espressomd.has_features(
             "DIPOLAR_DIRECT_SUM") and espressomd.gpu_available():
@@ -47,9 +48,10 @@ class MagnetostaticsInterface(ut.TestCase):
             system, espressomd.magnetostatics.DipolarDirectSumGpu,
             dict(prefactor=3.4))
 
-    test_dds_replica = tests_common.generate_test_for_class(
-        system, espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu,
-        dict(prefactor=3.4, n_replica=2))
+    if espressomd.has_features("DIPOLES"):
+        test_dds_replica = tests_common.generate_test_for_class(
+            system, espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu,
+            dict(prefactor=3.4, n_replica=2))
 
     def test_exceptions(self):
         actor = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=-1)
