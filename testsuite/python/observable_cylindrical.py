@@ -193,11 +193,11 @@ class TestCylindricalObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
         self.assertEqual(np.prod(obs.shape()), len(np_hist.flatten()) * 3)
 
-    def test_hist_x(self):
-        self.params['axis'] = 'x'
-        self.velocity_profile_test()
-        self.flux_density_profile_test()
-        self.density_profile_test()
+#    def test_hist_x(self):
+#        self.params['axis'] = 'x'
+#        self.velocity_profile_test()
+#        self.flux_density_profile_test()
+#        self.density_profile_test()
 
     def test_hist_y(self):
         self.params['axis'] = 'y'

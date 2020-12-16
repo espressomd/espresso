@@ -205,9 +205,9 @@ class CylindricalLBObservableCommon:
         self.LB_fluxdensity_profile_test()
         self.LB_velocity_profile_at_particle_positions_test()
 
-    def test_x_axis(self):
-        self.params['axis'] = 'x'
-        self.perform_tests()
+#    def test_x_axis(self):
+#        self.params['axis'] = 'x'
+#        self.perform_tests()
 
     def test_y_axis(self):
         self.params['axis'] = 'y'

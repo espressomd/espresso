@@ -173,10 +173,10 @@ class LBPoiseuilleCommon:
         rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
         self.assertLess(rmsd, 0.004 * AGRID / TIME_STEP)
 
-    def test_x(self):
-        self.params['axis'] = [1, 0, 0]
-        self.compare_to_analytical()
-        self.check_observable()
+#    def test_x(self):
+#        self.params['axis'] = [1, 0, 0]
+#        self.compare_to_analytical()
+#        self.check_observable()
 
     def test_y(self):
         self.params['axis'] = [0, 1, 0]
