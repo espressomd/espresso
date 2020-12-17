@@ -44,7 +44,6 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
-#include <utils/strcat_alloc.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -52,8 +51,6 @@
 #include <limits>
 #include <tuple>
 #include <vector>
-
-using Utils::strcat_alloc;
 
 /** How many trial calculations in @ref mmm1d_tune */
 #define TEST_INTEGRATIONS 1000
@@ -339,10 +336,9 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
   return chpref * E;
 }
 
-int mmm1d_tune(char **log) {
+int mmm1d_tune(bool verbose) {
   if (MMM1D_sanity_checks())
     return ES_ERROR;
-  char buffer[32 + 2 * ES_DOUBLE_SPACE + ES_INTEGER_SPACE];
   double min_time = std::numeric_limits<double>::infinity();
   double min_rad = -1;
   auto const maxrad = box_geo.length()[2];
@@ -372,8 +368,9 @@ int mmm1d_tune(char **log) {
       if (int_time < 0)
         return ES_ERROR;
 
-      sprintf(buffer, "r= %f t= %f ms\n", switch_radius, int_time);
-      *log = strcat_alloc(*log, buffer);
+      if (verbose) {
+        std::printf("r= %f t= %f ms\n", switch_radius, int_time);
+      }
 
       if (int_time < min_time) {
         min_time = int_time;
@@ -385,13 +382,11 @@ int mmm1d_tune(char **log) {
     }
     switch_radius = min_rad;
     mmm1d_params.far_switch_radius_2 = Utils::sqr(switch_radius);
-  } else {
-    if (mmm1d_params.far_switch_radius_2 <=
-        Utils::sqr(bessel_radii[MAXIMAL_B_CUT - 1])) {
-      // this switching radius is too small for our Bessel series
-      *log = strcat_alloc(*log, "could not find reasonable bessel cutoff");
-      return ES_ERROR;
-    }
+  } else if (mmm1d_params.far_switch_radius_2 <=
+             Utils::sqr(bessel_radii[MAXIMAL_B_CUT - 1])) {
+    // this switching radius is too small for our Bessel series
+    runtimeErrorMsg() << "could not find reasonable bessel cutoff";
+    return ES_ERROR;
   }
 
   coulomb.method = COULOMB_MMM1D;

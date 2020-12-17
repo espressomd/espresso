@@ -524,11 +524,12 @@ IF ELECTROSTATICS:
                     "far_switch_radius": -1,
                     "bessel_cutoff": -1,
                     "tune": True,
-                    "check_neutrality": True}
+                    "check_neutrality": True,
+                    "verbose": True}
 
         def valid_keys(self):
             return ["prefactor", "maxPWerror", "far_switch_radius",
-                    "bessel_cutoff", "tune", "check_neutrality"]
+                    "bessel_cutoff", "tune", "check_neutrality", "verbose"]
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
@@ -550,9 +551,7 @@ IF ELECTROSTATICS:
 
         def _tune(self):
             cdef int resp
-            resp = pyMMM1D_tune()
-            if resp:
-                raise Exception("failed to tune mmm1d ")
+            pyMMM1D_tune(self._params["verbose"])
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):

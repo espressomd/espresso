@@ -183,24 +183,16 @@ IF ELECTROSTATICS:
 
         void MMM1D_set_params(double switch_rad, double maxPWerror)
         int MMM1D_init()
-        int MMM1D_sanity_checks()
-        int mmm1d_tune(char ** log)
+        int mmm1d_tune(bool verbose)
 
-    cdef inline pyMMM1D_tune():
-        cdef char * log = NULL
+    cdef inline pyMMM1D_tune(bool verbose):
         cdef int resp
         resp = MMM1D_init()
         if resp:
             handle_errors("pyMMM1D_tune")
-            return resp
-        resp = MMM1D_sanity_checks()
+        resp = mmm1d_tune(verbose)
         if resp:
             handle_errors("pyMMM1D_tune")
-            return resp
-        resp = mmm1d_tune(& log)
-        if resp:
-            print(to_str(log))
-        return resp
 
 IF ELECTROSTATICS and MMM1D_GPU:
 
