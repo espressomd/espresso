@@ -1,6 +1,5 @@
-configure_tutorial_target(
-  TARGET tutorial_polymers DEPENDS polymers_part1.ipynb
-  polymers_part2.ipynb)
+configure_tutorial_target(TARGET tutorial_polymers DEPENDS polymers_part1.ipynb
+                          polymers_part2.ipynb)
 
 nb_export(TARGET tutorial_polymers SUFFIX "1" FILE "polymers_part1.ipynb"
           HTML_RUN)
