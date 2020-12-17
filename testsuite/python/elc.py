@@ -72,7 +72,14 @@ class ElcTest(ut.TestCase):
         self.assertAlmostEqual(E_expected, p2.f[2] / p2.q)
 
         # Check if error is thrown when particles enter the ELC gap
+        # positive direction
         p1.pos = [BOX_L[0]/2, BOX_L[1]/2, BOX_L[2]-GAP[2]/2]
+        with self.assertRaises(Exception):
+            self.system.analysis.energy()
+        with self.assertRaises(Exception):
+            self.integrator.run(2)
+        # negative direction
+        p1.pos = [BOX_L[0]/2, BOX_L[1]/2, -GAP[2]/2]
         with self.assertRaises(Exception):
             self.system.analysis.energy()
         with self.assertRaises(Exception):
