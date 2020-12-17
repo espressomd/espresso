@@ -87,26 +87,6 @@ class dds(ut.TestCase):
 
         return (ref_e, ref_f, ref_t)
 
-    def dds_dlc_data(self, n_replica, gap):
-        system = self.system
-
-        system.periodicity = [1, 1, 1]
-        dds_cpu = espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu(
-            prefactor=1.2, n_replica=n_replica)
-        dlc = espressomd.magnetostatic_extensions.DLC(
-            maxPWerror=1E-2, gap_size=gap)
-        system.actors.add(dds_cpu)
-        system.actors.add(dlc)
-
-        system.integrator.run(steps=0, recalc_forces=True)
-        ref_e = system.analysis.energy()["dipolar"]
-        ref_f = np.copy(system.part[:].f)
-        ref_t = np.copy(system.part[:].torque_lab)
-
-        system.actors.clear()
-
-        return (ref_e, ref_f, ref_t)
-
     def fcs_data(self, replicas):
         system = self.system
 
@@ -166,40 +146,22 @@ class dds(ut.TestCase):
             if espressomd.has_features(
                     "DIPOLAR_DIRECT_SUM") and espressomd.gpu_available():
                 gpu_e, gpu_f, gpu_t = self.dds_gpu_data()
-                self.assertAlmostEqual(gpu_e, dds_e, delta=1e-5)
+                np.testing.assert_allclose(gpu_e, dds_e, atol=1e-5)
                 np.testing.assert_allclose(gpu_f, dds_f, atol=1e-4)
                 np.testing.assert_allclose(gpu_t, dds_t, atol=1e-4)
 
             # ESPResSo and ScaFaCoS should agree within double precision
             if espressomd.has_features("SCAFACOS_DIPOLES"):
                 fcs_e, fcs_f, fcs_t = self.fcs_data("0,0,0")
-                self.assertAlmostEqual(dds_e, fcs_e, delta=1e-12)
+                np.testing.assert_allclose(dds_e, fcs_e, rtol=1e-12)
                 np.testing.assert_allclose(dds_f, fcs_f, rtol=1e-11)
                 np.testing.assert_allclose(dds_t, fcs_t, rtol=1e-11)
 
             # with replica=0, should be identical to dawaanr
             dds_r0_e, dds_r0_f, dds_r0_t = self.dds_replica_data(0)
-            self.assertAlmostEqual(dds_r0_e, dds_e, delta=1e-12)
+            np.testing.assert_allclose(dds_r0_e, dds_e, rtol=1e-12)
             np.testing.assert_allclose(dds_r0_f, dds_f, rtol=1e-11)
             np.testing.assert_allclose(dds_r0_t, dds_t, rtol=1e-11)
-
-            # with replica, ESPResSo and ScaFaCoS should agree
-            if espressomd.has_features("SCAFACOS_DIPOLES"):
-                dds_r4_e, dds_r4_f, dds_r4_t = self.dds_replica_data(4)
-                fcs_r4_e, fcs_r4_f, fcs_r4_t = self.fcs_data("4,4,4")
-                self.assertAlmostEqual(dds_r4_e, fcs_r4_e, delta=1e-1)
-                np.testing.assert_allclose(dds_r4_f, fcs_r4_f, atol=1e-3)
-                np.testing.assert_allclose(dds_r4_t, fcs_r4_t, atol=2e-2)
-
-            # with DLC, ESPResSo and ScaFaCoS should agree
-            if espressomd.has_features("SCAFACOS_DIPOLES"):
-                system.box_l = [10., 10., 30.]
-                dds_r4_e, dds_r4_f, dds_r4_t = self.dds_dlc_data(6, 10.)
-                system.box_l = [10., 10., 20.]
-                fcs_r4_e, fcs_r4_f, fcs_r4_t = self.fcs_data("6,6,0")
-                np.testing.assert_allclose(dds_r4_e, fcs_r4_e, atol=0.6)
-                np.testing.assert_allclose(dds_r4_f, fcs_r4_f, atol=1e-3)
-                np.testing.assert_allclose(dds_r4_t, fcs_r4_t, atol=1e-1)
 
             system.part.clear()
 
