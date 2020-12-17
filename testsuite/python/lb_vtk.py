@@ -92,25 +92,25 @@ class TestLBWrite:
 
         # write VTK files
         with self.assertRaises(RuntimeError):
-            lbf.print_vtk_velocity('non_existent_folder/file')
+            lbf.write_vtk_velocity('non_existent_folder/file')
         with self.assertRaises(RuntimeError):
-            lbf.print_vtk_boundary('non_existent_folder/file')
-        lbf.print_vtk_boundary('vtk_out/boundary.vtk')
-        lbf.print_vtk_velocity('vtk_out/velocity.vtk')
+            lbf.write_vtk_boundary('non_existent_folder/file')
+        lbf.write_vtk_boundary('vtk_out/boundary.vtk')
+        lbf.write_vtk_velocity('vtk_out/velocity.vtk')
         with self.assertRaises(ValueError):
-            lbf.print_vtk_velocity('vtk_out/delme', 3 * [0], None)
+            lbf.write_vtk_velocity('vtk_out/delme', 3 * [0], None)
         with self.assertRaises(ValueError):
-            lbf.print_vtk_velocity('vtk_out/delme', None, 3 * [0])
+            lbf.write_vtk_velocity('vtk_out/delme', None, 3 * [0])
         with self.assertRaises(RuntimeError):
-            lbf.print_vtk_velocity('vtk_out/delme', [-2, 1, 1], 3 * [1])
+            lbf.write_vtk_velocity('vtk_out/delme', [-2, 1, 1], 3 * [1])
         with self.assertRaises(RuntimeError):
-            lbf.print_vtk_velocity('vtk_out/delme', 3 * [0], [1, 2, 16])
+            lbf.write_vtk_velocity('vtk_out/delme', 3 * [0], [1, 2, 16])
         with self.assertRaises(ValueError):
-            lbf.print_vtk_velocity('vtk_out/delme', [1, 1], 3 * [1])
+            lbf.write_vtk_velocity('vtk_out/delme', [1, 1], 3 * [1])
         with self.assertRaises(ValueError):
-            lbf.print_vtk_velocity('vtk_out/delme', 3 * [1], np.array([2, 3]))
+            lbf.write_vtk_velocity('vtk_out/delme', 3 * [1], np.array([2, 3]))
         bb1, bb2 = ([1, 2, 3], [13, 14, 15])
-        lbf.print_vtk_velocity('vtk_out/velocity_bb.vtk', bb1, bb2)
+        lbf.write_vtk_velocity('vtk_out/velocity_bb.vtk', bb1, bb2)
 
         # check VTK files exist
         for filepath in filepaths:
@@ -164,11 +164,11 @@ class TestLBWrite:
 
         # write data files
         with self.assertRaises(RuntimeError):
-            lbf.print_velocity('non_existent_folder/file')
+            lbf.write_velocity('non_existent_folder/file')
         with self.assertRaises(RuntimeError):
-            lbf.print_boundary('non_existent_folder/file')
-        lbf.print_boundary('vtk_out/boundary.dat')
-        lbf.print_velocity('vtk_out/velocity.dat')
+            lbf.write_boundary('non_existent_folder/file')
+        lbf.write_boundary('vtk_out/boundary.dat')
+        lbf.write_velocity('vtk_out/velocity.dat')
 
         # check data files exist
         for filepath in filepaths:

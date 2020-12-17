@@ -204,7 +204,7 @@ cdef class HydrodynamicInteraction(Actor):
         cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
         return make_array_locked(v)
 
-    def print_vtk_velocity(self, path, bb1=None, bb2=None):
+    def write_vtk_velocity(self, path, bb1=None, bb2=None):
         """Write the LB fluid velocity to a VTK file.
         If both ``bb1`` and ``bb2`` are specified, return a subset of the grid.
 
@@ -235,7 +235,7 @@ cdef class HydrodynamicInteraction(Actor):
             lb_lbfluid_print_vtk_velocity(
                 utils.to_char_pointer(path), bb1_vec, bb2_vec)
 
-    def print_vtk_boundary(self, path):
+    def write_vtk_boundary(self, path):
         """Write the LB boundaries to a VTK file.
 
         Parameters
@@ -246,7 +246,7 @@ cdef class HydrodynamicInteraction(Actor):
         """
         lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
 
-    def print_velocity(self, path):
+    def write_velocity(self, path):
         """Write the LB fluid velocity to a data file that can be loaded by
         numpy, with format "x y z vx vy vz".
 
@@ -258,7 +258,7 @@ cdef class HydrodynamicInteraction(Actor):
         """
         lb_lbfluid_print_velocity(utils.to_char_pointer(path))
 
-    def print_boundary(self, path):
+    def write_boundary(self, path):
         """Write the LB boundaries to a data file that can be loaded by numpy,
         with format "x y z u".
 
