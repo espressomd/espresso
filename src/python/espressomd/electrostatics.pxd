@@ -98,6 +98,7 @@ IF ELECTROSTATICS:
                     mesh = params["mesh"]
                 alpha = params["alpha"]
                 p3m_gpu_init(cao, mesh, alpha)
+                handle_errors("python_p3m_gpu_init")
 
         cdef inline python_p3m_set_mesh_offset(mesh_off):
             cdef double mesh_offset[3]
