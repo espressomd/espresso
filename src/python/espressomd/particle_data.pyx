@@ -692,11 +692,17 @@ cdef class ParticleHandle:
         # vs_auto_relate_to
         def vs_auto_relate_to(self, _relto):
             """
-            Setup this particle as virtual site relative to the particle with the given id.
+            Setup this particle as virtual site relative to the particle with the given ParticleHandle or id.
 
             """
-            check_type_or_throw_except(
-                _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int.")
+            # If _relto is of type ParticleHandle,resolve id of particle which to relate to
+            if not is_valid_type(_relto, int):
+                if not isinstance(_relto, ParticleHandle):
+                    raise ValueError(
+                        "Argument of vs_auto_relate_to has to be of type ParticleHandle or int."
+                    )
+                else:
+                    _relto = _relto.id
             vs_relate_to(self._id, _relto)
 
     IF DIPOLES:
