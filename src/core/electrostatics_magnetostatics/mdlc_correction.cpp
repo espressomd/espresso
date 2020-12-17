@@ -389,7 +389,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   // Check if particles aren't in the forbidden gap region
   // This loop is needed, because there is no other guaranteed
   // single pass over all particles in this function.
-  for (auto const p: particles) {
+  for (auto const p : particles) {
     check_gap_mdlc(p);
   }
 

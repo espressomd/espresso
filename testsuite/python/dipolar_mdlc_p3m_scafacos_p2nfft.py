@@ -89,7 +89,10 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
         # Check if error is thrown when particles enter the MDLC gap
         # positive direction
-        s.part[0].pos = [s.box_l[0] / 2, s.box_l[1] / 2, s.box_l[2] - gap_size / 2]
+        s.part[0].pos = [
+            s.box_l[0] / 2,
+            s.box_l[1] / 2,
+            s.box_l[2] - gap_size / 2]
         with self.assertRaises(Exception):
             self.system.analysis.energy()
         with self.assertRaises(Exception):
