@@ -65,6 +65,12 @@ public:
                get_value<Utils::Vector3d>(v);
          },
          [this]() { return cylindrical_profile_observable()->axis; }},
+        {"orientation",
+         [this](const Variant &v) {
+           cylindrical_profile_observable()->orientation =
+               get_value<Utils::Vector3d>(v);
+         },
+         [this]() { return cylindrical_profile_observable()->orientation; }},
         {"n_r_bins",
          [this](const Variant &v) {
            cylindrical_profile_observable()->n_bins[0] =
@@ -151,11 +157,11 @@ public:
   void do_construct(VariantMap const &params) override {
     m_observable =
         make_shared_from_args<CoreCylLBObs, Utils::Vector3d, Utils::Vector3d,
-                              int, int, int, double, double, double, double,
-                              double, double, double>(
-            params, "center", "axis", "n_r_bins", "n_phi_bins", "n_z_bins",
-            "min_r", "max_r", "min_phi", "max_phi", "min_z", "max_z",
-            "sampling_density");
+                              Utils::Vector3d, int, int, int, double, double,
+                              double, double, double, double, double>(
+            params, "center", "axis", "orientation", "n_r_bins", "n_phi_bins",
+            "n_z_bins", "min_r", "max_r", "min_phi", "max_phi", "min_z",
+            "max_z", "sampling_density");
   }
 
   Variant do_call_method(std::string const &method,

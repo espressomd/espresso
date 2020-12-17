@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import itertools
 import numpy as np
+import sys
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
@@ -67,6 +68,27 @@ class ProfileObservable(Observable):
             edges[i] = np.array(edge[:-1]) + (edge[1] - edge[0]) / 2
         shape = list(map(len, edges)) + [len(edges)]
         return np.array(list(itertools.product(*edges))).reshape(shape)
+
+
+class CylindricalProfileObservables(ProfileObservable):
+    """
+    Base Class for ProfileObservables that work with cylindrical coordinates
+    to inject default behaviour for the ``orientation`` parameter
+    """
+
+    def __init__(self, **kwargs):
+        if "oid" not in kwargs and "orientation" not in kwargs and kwargs["n_phi_bins"] == 1:
+            # if the phi angle is not important, choose an orientation that is
+            # not parallel to ``axis``
+            try_vectors = [[1., 0., 0.], [0., 0., 1.]]
+            axis = kwargs["axis"]
+            for vec in try_vectors:
+                proj = np.dot(vec, axis / np.linalg.norm(axis))
+                if np.arccos(proj) > sys.float_info.epsilon:
+                    vec -= proj * axis
+                    kwargs["orientation"] = vec / np.linalg.norm(vec)
+                    break
+        super().__init__(**kwargs)
 
 
 @script_interface_register
@@ -636,7 +658,7 @@ class DPDStress(Observable):
 
 
 @script_interface_register
-class CylindricalDensityProfile(ProfileObservable):
+class CylindricalDensityProfile(CylindricalProfileObservables):
 
     """Calculates the particle density in cylindrical coordinates.
 
@@ -648,6 +670,8 @@ class CylindricalDensityProfile(ProfileObservable):
         Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
         Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
+    orientation: (3,) array_like of :obj:`float`
+        The axis on which ``phi = 0``. Can be omitted if ``n_phi_bins == 1``.
     n_r_bins : :obj:`int`
         Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -657,13 +681,13 @@ class CylindricalDensityProfile(ProfileObservable):
     min_r : :obj:`float`
         Minimum ``r`` to consider.
     min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
     max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
@@ -676,7 +700,7 @@ class CylindricalDensityProfile(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalFluxDensityProfile(ProfileObservable):
+class CylindricalFluxDensityProfile(CylindricalProfileObservables):
 
     """Calculates the particle flux density in cylindrical coordinates.
 
@@ -688,6 +712,8 @@ class CylindricalFluxDensityProfile(ProfileObservable):
         Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
         Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
+    orientation: (3,) array_like of :obj:`float`
+        The axis on which ``phi = 0``. Can be omitted if ``n_phi_bins == 1``.
     n_r_bins : :obj:`int`
         Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -697,13 +723,13 @@ class CylindricalFluxDensityProfile(ProfileObservable):
     min_r : :obj:`float`
         Minimum ``r`` to consider.
     min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
     max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
@@ -718,7 +744,8 @@ class CylindricalFluxDensityProfile(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalLBFluxDensityProfileAtParticlePositions(ProfileObservable):
+class CylindricalLBFluxDensityProfileAtParticlePositions(
+        CylindricalProfileObservables):
 
     """Calculates the LB fluid flux density at the particle positions in
     cylindrical coordinates.
@@ -731,6 +758,8 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(ProfileObservable):
         Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
         Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
+    orientation: (3,) array_like of :obj:`float`
+        The axis on which ``phi = 0``. Can be omitted if ``n_phi_bins == 1``.
     n_r_bins : :obj:`int`
         Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -740,13 +769,13 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(ProfileObservable):
     min_r : :obj:`float`
         Minimum ``r`` to consider.
     min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
     max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
@@ -761,7 +790,8 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalLBVelocityProfileAtParticlePositions(ProfileObservable):
+class CylindricalLBVelocityProfileAtParticlePositions(
+        CylindricalProfileObservables):
 
     """Calculates the LB fluid velocity at the particle positions in
     cylindrical coordinates.
@@ -774,6 +804,8 @@ class CylindricalLBVelocityProfileAtParticlePositions(ProfileObservable):
         Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
         Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
+    orientation: (3,) array_like of :obj:`float`
+        The axis on which ``phi = 0``. Can be omitted if ``n_phi_bins == 1``.
     n_r_bins : :obj:`int`
         Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -783,13 +815,13 @@ class CylindricalLBVelocityProfileAtParticlePositions(ProfileObservable):
     min_r : :obj:`float`
         Minimum ``r`` to consider.
     min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
     max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
@@ -804,7 +836,7 @@ class CylindricalLBVelocityProfileAtParticlePositions(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalVelocityProfile(ProfileObservable):
+class CylindricalVelocityProfile(CylindricalProfileObservables):
 
     """Calculates the particle velocity profile in cylindrical coordinates.
 
@@ -816,6 +848,8 @@ class CylindricalVelocityProfile(ProfileObservable):
         Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
         Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
+    orientation: (3,) array_like of :obj:`float`
+        The axis on which ``phi = 0``. Can be omitted if ``n_phi_bins == 1``.
     n_r_bins : :obj:`int`
         Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -825,13 +859,13 @@ class CylindricalVelocityProfile(ProfileObservable):
     min_r : :obj:`float`
         Minimum ``r`` to consider.
     min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
     max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
@@ -846,7 +880,7 @@ class CylindricalVelocityProfile(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalLBVelocityProfile(ProfileObservable):
+class CylindricalLBVelocityProfile(CylindricalProfileObservables):
 
     """Calculates the LB fluid velocity profile in cylindrical coordinates.
 
@@ -860,6 +894,8 @@ class CylindricalLBVelocityProfile(ProfileObservable):
         Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
         Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
+    orientation: (3,) array_like of :obj:`float`
+        The axis on which ``phi = 0``. Can be omitted if ``n_phi_bins == 1``.
     n_r_bins : :obj:`int`
         Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -869,13 +905,13 @@ class CylindricalLBVelocityProfile(ProfileObservable):
     min_r : :obj:`float`
         Minimum ``r`` to consider.
     min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
     max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
     sampling_density : :obj:`float`

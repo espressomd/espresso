@@ -36,8 +36,8 @@ std::vector<double> CylindricalLBVelocityProfile::operator()() const {
     auto const velocity = lb_lbfluid_get_interpolated_velocity(p) *
                           lb_lbfluid_get_lattice_speed();
     auto const pos_shifted = p - center;
-    auto const pos_cyl =
-        Utils::transform_coordinate_cartesian_to_cylinder(pos_shifted, axis);
+    auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
+        pos_shifted, axis, orientation);
     histogram.update(pos_cyl, Utils::transform_vector_cartesian_to_cylinder(
                                   velocity, axis, pos_shifted));
   }

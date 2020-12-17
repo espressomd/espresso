@@ -44,10 +44,10 @@ public:
 
     for (auto p : particles) {
       auto const pos = folded_position(traits.position(p), box_geo) - center;
-      histogram.update(
-          Utils::transform_coordinate_cartesian_to_cylinder(pos, axis),
-          Utils::transform_vector_cartesian_to_cylinder(traits.velocity(p),
-                                                        axis, pos));
+      histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
+                           pos, axis, orientation),
+                       Utils::transform_vector_cartesian_to_cylinder(
+                           traits.velocity(p), axis, pos));
     }
 
     auto hist_tmp = histogram.get_histogram();

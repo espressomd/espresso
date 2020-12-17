@@ -36,15 +36,17 @@ namespace Observables {
 class CylindricalProfileObservable : public ProfileObservable {
 public:
   CylindricalProfileObservable(Utils::Vector3d const &center,
-                               Utils::Vector3d const &axis, int n_r_bins,
+                               Utils::Vector3d const &axis,
+                               Utils::Vector3d const &orientation, int n_r_bins,
                                int n_phi_bins, int n_z_bins, double min_r,
                                double max_r, double min_phi, double max_phi,
                                double min_z, double max_z)
       : ProfileObservable(n_r_bins, n_phi_bins, n_z_bins, min_r, max_r, min_phi,
                           max_phi, min_z, max_z),
-        center(center), axis(axis) {}
+        center(center), axis(axis), orientation(orientation) {}
   Utils::Vector3d center;
   Utils::Vector3d axis;
+  Utils::Vector3d orientation;
 };
 
 } // Namespace Observables
