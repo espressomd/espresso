@@ -147,6 +147,8 @@ AtomDecomposition::AtomDecomposition(const boost::mpi::communicator &comm,
   mark_cells();
 }
 
-Utils::Vector3d AtomDecomposition::max_range() const {
+Utils::Vector3d AtomDecomposition::max_cutoff() const {
   return Utils::Vector3d::broadcast(std::numeric_limits<double>::infinity());
 }
+
+Utils::Vector3d AtomDecomposition::max_range() const { return max_cutoff(); }
