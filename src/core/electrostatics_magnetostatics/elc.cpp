@@ -247,6 +247,16 @@ static void add_dipole_force(const ParticleRange &particles) {
   gblcblk[2] = 0; // sum q_i
 
   for (auto const &p : local_particles) {
+    /* check if charged particles are in valid region */
+    if ((p.p.q != 0) && ((p.r.p[2] > elc_params.h) || (p.r.p[2] < 0))) {
+      if (p.r.p[2] < 0)
+        runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
+                          << "region by " << (p.r.p[2]);
+      else
+        runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
+                          << "region by " << (p.r.p[2] - elc_params.h);
+    }
+
     gblcblk[0] += p.p.q * (p.r.p[2] - shift);
     gblcblk[1] += p.p.q * p.r.p[2];
     gblcblk[2] += p.p.q;
