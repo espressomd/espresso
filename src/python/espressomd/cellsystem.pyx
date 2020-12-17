@@ -23,10 +23,10 @@ from . cimport integrate
 from .globals cimport FIELD_SKIN, FIELD_NODEGRID
 from .globals cimport verlet_reuse, skin
 from .globals cimport mpi_bcast_parameter
+from libcpp.vector cimport vector
 from .cellsystem cimport cell_structure
-from .utils cimport handle_errors
-from .utils import is_valid_type
-from .utils cimport Vector3i
+from .utils cimport handle_errors, Vector3i, check_type_or_throw_except
+
 
 cdef class CellSystem:
     def set_domain_decomposition(self, use_verlet_lists=True):
@@ -109,8 +109,47 @@ cdef class CellSystem:
         self.skin = d['skin']
         self.node_grid = d['node_grid']
 
-    def get_pairs_(self, distance):
-        return mpi_get_pairs(distance)
+    def get_pairs(self, distance, types='all'):
+        """
+        Get pairs of particles closer than threshold value
+
+        Parameters
+        ----------
+        distance : :obj:`float`
+            Pairs of particles closer than ``distance`` are found.
+        types (optional) : list of :obj:`int` or ``'all'``
+            Restrict the pair search to the specified types. Defaults to ``'all'``, in which case all particles are considered.
+
+        Returns
+        -------
+        list of tuples of :obj:`int`
+            The particle pairs identified by their index
+
+        Raises
+        ------
+        Exception
+            If the pair search distance is greater than the cell size
+        """
+        pairs = None
+        if types == 'all':
+            pairs = mpi_get_pairs(distance)
+        else:
+            pairs = self._get_pairs_of_types(distance, types)
+        handle_errors("")
+        return pairs
+
+    def _get_pairs_of_types(self, distance, types):
+        """
+        This function needs to be separated from ``self.get_pairs()`` because ``cdef``
+        cannot be inside an ``else`` block
+        """
+
+        check_type_or_throw_except(
+            types, len(types), int, 'types must be a list of int')
+        cdef vector[int] types_c
+        for type in types:
+            types_c.push_back(type)
+        return mpi_get_pairs_of_types(distance, types_c)
 
     def resort(self, global_flag=True):
         """
