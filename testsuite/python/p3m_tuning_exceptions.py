@@ -70,7 +70,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'dipolar P3M tuning failed: ERROR: time_step not set'):
+        with self.assertRaisesRegex(Exception, 'python_dp3m_adaptive_tune: ERROR: time_step not set'):
             self.system.actors.add(solver)
 
     ##############################################
@@ -106,7 +106,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'dipolar P3M tuning failed: ERROR: no dipolar particles in the system'):
+        with self.assertRaisesRegex(Exception, 'python_dp3m_adaptive_tune: ERROR: no dipolar particles in the system'):
             self.system.actors.add(solver)
 
     #######################################
@@ -150,7 +150,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'dipolar P3M tuning failed: ERROR: dipolar P3M requires a cubic box'):
+        with self.assertRaisesRegex(Exception, 'python_dp3m_adaptive_tune: ERROR: dipolar P3M requires a cubic box'):
             self.system.actors.add(solver)
 
     ###########################################################
