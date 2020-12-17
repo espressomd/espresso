@@ -34,6 +34,7 @@
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
 
+#include <string>
 #include <utils/Cache.hpp>
 #include <utils/constants.hpp>
 #include <utils/keys.hpp>
@@ -1180,8 +1181,8 @@ void add_id_to_type_map(int part_id, int type) {
 
 int number_of_particles_with_type(int type) {
   if (particle_type_map.count(type) == 0)
-    throw std::runtime_error("The provided particle type does not exist in "
-                             "the particle_type_map");
+    throw std::runtime_error("The provided particle type " + std::to_string(type) +
+                             " is currently not tracked by the system.");
   return static_cast<int>(particle_type_map.at(type).size());
 }
 
