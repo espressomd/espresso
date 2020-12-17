@@ -223,16 +223,17 @@ void distribute(int size) {
   MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, comm_cart);
 }
 
-/** checks if a particle is in the forbidden gap region
+/** Checks if a particle is in the forbidden gap region
  */
 inline void check_gap(const Particle &p) {
-  if ((p.p.q != 0) && ((p.r.p[2] > elc_params.h) || (p.r.p[2] < 0))) {
+  if (p.p.q != 0) {
     if (p.r.p[2] < 0)
       runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
                         << "region by " << (p.r.p[2]);
-    else
+    else if (p.r.p[2] > elc_params.h) {
       runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
                         << "region by " << (p.r.p[2] - elc_params.h);
+    }
   }
 }
 
