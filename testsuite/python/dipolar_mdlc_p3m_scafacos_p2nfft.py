@@ -62,6 +62,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.box_l = 3 * [box_l]
         ref_E_path = abspath("data/mdlc_reference_data_energy.dat")
         ref_E = float(np.genfromtxt(ref_E_path))
+        gap_size = 2.0
 
         # Particles
         data = np.genfromtxt(
@@ -70,7 +71,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part[:].rotation = (1, 1, 1)
 
         p3m = magnetostatics.DipolarP3M(prefactor=1, mesh=32, accuracy=1E-4)
-        dlc = magnetostatic_extensions.DLC(maxPWerror=1E-5, gap_size=2.)
+        dlc = magnetostatic_extensions.DLC(maxPWerror=1E-5, gap_size=gap_size)
         s.actors.add(p3m)
         s.actors.add(dlc)
         s.integrator.run(0)
@@ -85,6 +86,23 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         self.assertLessEqual(abs(err_e), tol_e, "Energy difference too large")
         self.assertLessEqual(abs(err_t), tol_t, "Torque difference too large")
         self.assertLessEqual(abs(err_f), tol_f, "Force difference too large")
+
+        # Check if error is thrown when particles enter the MDLC gap
+        # positive direction
+        s.part[0].pos = [
+            s.box_l[0] / 2,
+            s.box_l[1] / 2,
+            s.box_l[2] - gap_size / 2]
+        with self.assertRaises(Exception):
+            self.system.analysis.energy()
+        with self.assertRaises(Exception):
+            self.integrator.run(2)
+        # negative direction
+        s.part[0].pos = [s.box_l[0] / 2, s.box_l[1] / 2, -gap_size / 2]
+        with self.assertRaises(Exception):
+            self.system.analysis.energy()
+        with self.assertRaises(Exception):
+            self.integrator.run(2)
 
     def test_p3m(self):
         s = self.system
