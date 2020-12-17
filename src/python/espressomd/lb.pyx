@@ -247,9 +247,27 @@ cdef class HydrodynamicInteraction(Actor):
         lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
 
     def print_velocity(self, path):
+        """Write the LB fluid velocity to a data file that can be loaded by
+        numpy, with format "x y z vx vy vz".
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Path to the output data file.
+
+        """
         lb_lbfluid_print_velocity(utils.to_char_pointer(path))
 
     def print_boundary(self, path):
+        """Write the LB boundaries to a data file that can be loaded by numpy,
+        with format "x y z u".
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Path to the output data file.
+
+        """
         lb_lbfluid_print_boundary(utils.to_char_pointer(path))
 
     def save_checkpoint(self, path, binary):

@@ -37,8 +37,7 @@ if espressomd.has_features('LB_BOUNDARIES'):
     import espressomd.shapes
 
 
-@skipIfMissingPythonPackage
-class TestVTK:
+class TestLBWrite:
     system = espressomd.System(box_l=3 * [16])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
@@ -46,6 +45,19 @@ class TestVTK:
     def tearDown(self):
         self.system.actors.clear()
         self.system.thermostat.turn_off()
+
+    def set_lbf(self):
+        # setup LB system
+        lbf = self.lb_class(
+            kT=1, agrid=1.0, dens=1.0, visc=1.0, tau=0.1, seed=42,
+            ext_force_density=[0, 0.03, 0])
+        self.system.actors.add(lbf)
+        if espressomd.has_features('LB_BOUNDARIES'):
+            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
+                shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5)))
+            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
+                shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5)))
+        return lbf
 
     def parse_vtk(self, filepath, name, shape):
         reader = vtk.vtkStructuredPointsReader()
@@ -59,36 +71,30 @@ class TestVTK:
 
         return VN.vtk_to_numpy(points.GetArray(name)).reshape(shape, order='F')
 
+    @skipIfMissingPythonPackage
     def test_vtk(self):
         '''
         Check VTK files.
         '''
 
-        # setup LB system
-        lbf = self.lb_class(
-            kT=0, agrid=1.0, dens=1.0, visc=1.0, tau=0.1,
-            ext_force_density=[0, 0.03, 0])
-        self.system.actors.add(lbf)
-        shape = [16, 16, 16]
-        if espressomd.has_features('LB_BOUNDARIES'):
-            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5)))
-            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5)))
-
         os.makedirs('vtk_out', exist_ok=True)
         filepaths = ['vtk_out/boundary.vtk', 'vtk_out/velocity.vtk',
-                     'vtk_out/velocity_bb.vtk', 'vtk_out/delme']
+                     'vtk_out/velocity_bb.vtk']
 
         # cleanup action
         for filepath in filepaths:
             if os.path.exists(filepath):
                 os.remove(filepath)
 
-        # write VTK files
+        shape = [16, 16, 16]
+        lbf = self.set_lbf()
         self.system.integrator.run(100)
+
+        # write VTK files
         with self.assertRaises(RuntimeError):
             lbf.print_vtk_velocity('non_existent_folder/file')
+        with self.assertRaises(RuntimeError):
+            lbf.print_vtk_boundary('non_existent_folder/file')
         lbf.print_vtk_boundary('vtk_out/boundary.vtk')
         lbf.print_vtk_velocity('vtk_out/velocity.vtk')
         with self.assertRaises(ValueError):
@@ -138,15 +144,78 @@ class TestVTK:
             'vtk_out/boundary.vtk', 'boundary', shape)
         np.testing.assert_equal(vtk_boundary, node_boundary.astype(int))
 
+    @skipIfMissingPythonPackage
+    def test_print(self):
+        '''
+        Check data files.
+        '''
 
-class TestVTKCPU(TestVTK, ut.TestCase):
+        os.makedirs('vtk_out', exist_ok=True)
+        filepaths = ['vtk_out/boundary.dat', 'vtk_out/velocity.dat']
+
+        # cleanup action
+        for filepath in filepaths:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+
+        shape = [16, 16, 16]
+        lbf = self.set_lbf()
+        self.system.integrator.run(100)
+
+        # write data files
+        with self.assertRaises(RuntimeError):
+            lbf.print_velocity('non_existent_folder/file')
+        with self.assertRaises(RuntimeError):
+            lbf.print_boundary('non_existent_folder/file')
+        lbf.print_boundary('vtk_out/boundary.dat')
+        lbf.print_velocity('vtk_out/velocity.dat')
+
+        # check data files exist
+        for filepath in filepaths:
+            self.assertTrue(
+                os.path.exists(filepath),
+                'data file "{}" not written to disk'.format(filepath))
+
+        # check data values match node values
+        node_velocity = np.zeros(shape + [3])
+        node_boundary = np.zeros(shape, dtype=int)
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                for k in range(shape[2]):
+                    node = lbf[i, j, k]
+                    node_velocity[i, j, k] = node.velocity
+                    node_boundary[i, j, k] = node.boundary
+
+        seq = np.arange(16)
+        ref_coord = np.array([np.tile(seq, 16 * 16),
+                              np.tile(np.repeat(seq, 16), 16),
+                              np.repeat(seq, 16 * 16)]).T
+
+        dat_velocity = np.loadtxt('vtk_out/velocity.dat')
+        dat_coord = (dat_velocity[:, 0:3] - 0.5).astype(int)
+        np.testing.assert_equal(dat_coord, ref_coord)
+        dat_vel = dat_velocity[:, 3:]
+        ref_vel = np.swapaxes(node_velocity, 0, 2).reshape((-1, 3))
+        np.testing.assert_allclose(dat_vel, ref_vel, atol=5e-7)
+
+        dat_boundary = np.loadtxt('vtk_out/boundary.dat')
+        dat_coord = (dat_boundary[:, 0:3] - 0.5).astype(int)
+        np.testing.assert_equal(dat_coord, ref_coord)
+        dat_bound = dat_boundary[:, 3].astype(int)
+        ref_bound = np.swapaxes(node_boundary, 0, 2).reshape(-1)
+        if isinstance(lbf, espressomd.lb.LBFluid):
+            ref_bound = (ref_bound != 0).astype(int)
+        np.testing.assert_equal(dat_bound, ref_bound)
+
+
+class TestLBWriteCPU(TestLBWrite, ut.TestCase):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluid
 
 
 @utx.skipIfMissingGPU()
-class TestVTKGPU(TestVTK, ut.TestCase):
+class TestLBWriteGPU(TestLBWrite, ut.TestCase):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidGPU
