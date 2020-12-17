@@ -42,7 +42,9 @@ Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method return
     tracer = system.part.add(pos=(0, 0, 0))
     print(tracer.pos)
 
-Note that the instance of :class:`espressomd.particle_data.ParticleHandle` returned by :meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the simulation, rather than offline copies. Changing their properties will affect the simulation.
+Note that the instance of :class:`espressomd.particle_data.ParticleHandle` returned by
+:meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the
+simulation, rather than offline copies. Changing their properties will affect the simulation.
 
 .. _Accessing particle properties:
 
@@ -216,19 +218,20 @@ The function :func:`espressomd.polymer.linear_polymer_positions()` returns a
 three-dimensional numpy array, namely a list of polymers containing the
 positions of monomers (x, y, z). A quick example of how to set up polymers::
 
-     import espressomd
-     from espressomd import polymer
+    import espressomd
+    from espressomd import polymer
 
-     system = espressomd.System([50, 50, 50])
-     polymers = polymer.linear_polymer_positions(n_polymers=10,
-                                                 beads_per_chain=25,
-                                                 bond_length=0.9, seed=23)
-     for p in polymers:
-         for i, m in enumerate(p):
-            id = len(system.part)
-            system.part.add(id=id, pos=m)
-            if i > 0:
-                system.part[id].add_bond((<BOND_TYPE>, id - 1))
+    system = espressomd.System([50, 50, 50])
+    polymers = polymer.linear_polymer_positions(n_polymers=10,
+                                                beads_per_chain=25,
+                                                bond_length=0.9, seed=23)
+    for polymer in polymers:
+        monomers = system.part.add(pos=polymer)
+        previous_part = None
+        for part in monomers:
+            if not previous_part is None:
+                part.add_bond((<BOND_TYPE>, previous_part))
+            previous_part = part
 
 If there are constraints present in your system which you want to be taken
 into account when creating the polymer positions, you can set the optional
@@ -485,7 +488,7 @@ Langevin swimmers
 
     system = espressomd.System(box_l=[1, 1, 1])
 
-    system.part.add(id=0, pos=[1, 0, 0], swimming={'f_swim': 0.03})
+    system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
 
 This enables the particle to be self-propelled in the direction determined by
 its quaternion. For setting the particle's quaternion see
@@ -512,7 +515,7 @@ Lattice-Boltzmann (LB) swimmers
 
     system = espressomd.System(box_l=[1, 1, 1])
 
-    system.part.add(id=1, pos=[2, 0, 0], rotation=[1, 1, 1], swimming={
+    system.part.add(pos=[2, 0, 0], rotation=[1, 1, 1], swimming={
         'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0})
 
 For an explanation of the parameters ``v_swim`` and ``f_swim`` see the previous
