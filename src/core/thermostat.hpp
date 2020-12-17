@@ -36,7 +36,7 @@
 #include <cstdint>
 
 /** \name Thermostat switches */
-/*@{*/
+/**@{*/
 #define THERMO_OFF 0
 #define THERMO_LANGEVIN 1
 #define THERMO_DPD 2
@@ -44,7 +44,7 @@
 #define THERMO_LB 8
 #define THERMO_BROWNIAN 16
 #define THERMO_SD 32
-/*@}*/
+/**@}*/
 
 namespace Thermostat {
 #ifdef PARTICLE_ANISOTROPY
@@ -59,12 +59,12 @@ namespace {
  *  These functions return the sentinel value for the Langevin/Brownian
  *  parameters, indicating that they have not been set yet.
  */
-/*@{*/
+/**@{*/
 constexpr double sentinel(double) { return -1.0; }
 constexpr Utils::Vector3d sentinel(Utils::Vector3d) {
   return {-1.0, -1.0, -1.0};
 }
-/*@}*/
+/**@}*/
 } // namespace
 
 /************************************************
@@ -140,14 +140,14 @@ public:
     return sqrt((temp_coeff * kT / time_step) * gamma);
   }
   /** @name Parameters */
-  /*@{*/
+  /**@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
   GammaType gamma = sentinel(GammaType{});
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
   GammaType gamma_rotation = sentinel(GammaType{});
-  /*@}*/
+  /**@}*/
   /** @name Prefactors */
-  /*@{*/
+  /**@{*/
   /** Prefactor for the friction.
    *  Stores @f$ \gamma_{\text{trans}} @f$.
    */
@@ -160,7 +160,7 @@ public:
    *  Stores @f$ \sqrt{2 k_B T \gamma_{\text{rot}} / dt} / \sigma_\eta @f$.
    */
   GammaType pref_noise_rotation;
-  /*@}*/
+  /**@}*/
 };
 
 /** %Thermostat for Brownian dynamics.
@@ -217,14 +217,14 @@ public:
     return sqrt(temp_coeff * kT);
   }
   /** @name Parameters */
-  /*@{*/
+  /**@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
   GammaType gamma = sentinel(GammaType{});
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
   GammaType gamma_rotation = sentinel(GammaType{});
-  /*@}*/
+  /**@}*/
   /** @name Prefactors */
-  /*@{*/
+  /**@{*/
   /** Translational noise standard deviation.
    *  Stores @f$ \sqrt{2D_{\text{trans}}} @f$ with
    *  @f$ D_{\text{trans}} = k_B T/\gamma_{\text{trans}} @f$
@@ -245,9 +245,10 @@ public:
    *  Stores @f$ \sqrt{k_B T} @f$.
    */
   double sigma_vel_rotation = 0;
-  /*@}*/
+  /**@}*/
 };
 
+#ifdef NPT
 /** %Thermostat for isotropic NPT dynamics. */
 struct IsotropicNptThermostat : public BaseThermostat {
 private:
@@ -258,14 +259,12 @@ public:
    *  Needs to be called every time the parameters are changed.
    */
   void recalc_prefactors(double piston, double time_step) {
-#ifdef NPT
     assert(piston > 0.0);
     auto const half_time_step = time_step / 2.0;
     pref_rescale_0 = -gamma0 * half_time_step;
     pref_noise_0 = sigma(temperature, gamma0, time_step);
     pref_rescale_V = -gammav * half_time_step / piston;
     pref_noise_V = sigma(temperature, gammav, time_step);
-#endif
   }
   /** Calculate the noise prefactor.
    *  Evaluates the quantity @f$ \sqrt{2 k_B T \gamma dt / 2} / \sigma_\eta @f$
@@ -279,15 +278,14 @@ public:
     return sqrt(temp_coeff * temperature * gamma * time_step);
   }
   /** @name Parameters */
-  /*@{*/
+  /**@{*/
   /** Friction coefficient of the particles @f$ \gamma^0 @f$ */
   double gamma0;
   /** Friction coefficient for the box @f$ \gamma^V @f$ */
   double gammav;
-  /*@}*/
-#ifdef NPT
+  /**@}*/
   /** @name Prefactors */
-  /*@{*/
+  /**@{*/
   /** %Particle velocity rescaling at half the time step.
    *  Stores @f$ \gamma^{0}\cdot\frac{dt}{2} @f$.
    */
@@ -304,9 +302,9 @@ public:
    *  Stores @f$ \sqrt{k_B T \gamma^{V} dt} / \sigma_\eta @f$.
    */
   double pref_noise_V;
-  /*@}*/
-#endif
+  /**@}*/
 };
+#endif
 
 /** %Thermostat for thermalized bonds. */
 struct ThermalizedBondThermostat : public BaseThermostat {};
@@ -338,7 +336,9 @@ struct StokesianThermostat : public BaseThermostat {
 
 NEW_THERMOSTAT(langevin)
 NEW_THERMOSTAT(brownian)
+#ifdef NPT
 NEW_THERMOSTAT(npt_iso)
+#endif
 NEW_THERMOSTAT(thermalized_bond)
 #ifdef DPD
 NEW_THERMOSTAT(dpd)
@@ -350,7 +350,9 @@ NEW_THERMOSTAT(stokesian)
 /* Exported thermostat globals */
 extern LangevinThermostat langevin;
 extern BrownianThermostat brownian;
+#ifdef NPT
 extern IsotropicNptThermostat npt_iso;
+#endif
 extern ThermalizedBondThermostat thermalized_bond;
 #ifdef DPD
 extern DPDThermostat dpd;

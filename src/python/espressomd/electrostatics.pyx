@@ -691,5 +691,5 @@ IF ELECTROSTATICS:
 
             def _deactivate_method(self):
                 super()._deactivate_method()
-                scafacos.free_handle()
+                scafacos.free_handle(self.dipolar)
                 mpi_bcast_coulomb_params()

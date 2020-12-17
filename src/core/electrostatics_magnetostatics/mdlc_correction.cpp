@@ -345,7 +345,6 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
       // SDC correction term is zero for the forces
       p.f.f += dipole.prefactor * dip_DLC_f[ip];
 
-#if defined(ROTATION) && defined(DP3M)
       auto const dip = p.calc_dip();
       auto const correc = 4. * Utils::pi() / volume;
       Utils::Vector3d d;
@@ -359,7 +358,6 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
              correc * mz * (-1.0 + 1. / (2.0 * dp3m.params.epsilon + 1.0))};
       }
       p.f.torque += dipole.prefactor * (dip_DLC_t[ip] + vector_product(dip, d));
-#endif
     }
     ip++;
   }
@@ -392,7 +390,6 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   auto const mz2 = mz * mz;
 
   if (this_node == 0) {
-#ifdef DP3M
     if (dipole.method == DIPOLAR_MDLC_P3M) {
       if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
         dip_DLC_energy += dipole.prefactor * 2 * Utils::pi() / volume * mz2;
@@ -401,9 +398,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
             dipole.prefactor * 2 * Utils::pi() / volume *
             (mz2 - mtot * mtot / (2.0 * dp3m.params.epsilon + 1.0));
       }
-    } else
-#endif
-    {
+    } else {
       dip_DLC_energy += dipole.prefactor * 2 * Utils::pi() / volume * mz2;
       fprintf(stderr, "You are not using the P3M method, therefore "
                       "dp3m.params.epsilon unknown, I assume metallic borders "

@@ -59,7 +59,7 @@ namespace Observables {
  *  Convenience macro functions to automatize the registration of observable
  *  interfaces via a factory.
  */
-/*@{*/
+/**@{*/
 
 /** Register a @ref ScriptInterface::Observables::ParamlessObservableInterface
  *  "ParamlessObservableInterface"
@@ -108,7 +108,7 @@ namespace Observables {
 #define REGISTER_LB_OBS(name)                                                  \
   om->register_new<LBProfileObservable<::Observables::name>>(                  \
       "Observables::" #name "");
-/*@}*/
+/**@}*/
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   // Manual registration:

@@ -54,7 +54,7 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
 #ifdef VIRTUAL_SITES_RELATIVE
 
 /** Calculate the rotation quaternion and distance between two particles */
-inline std::tuple<Utils::Vector4d, double>
+inline std::tuple<Utils::Quaternion<double>, double>
 calculate_vs_relate_to_params(Particle const &p_current,
                               Particle const &p_relate_to) {
   // get the distance between the particles
@@ -85,38 +85,38 @@ calculate_vs_relate_to_params(Particle const &p_current,
   //   = quat_(obtained from desired director)
   // Resolving this for the quat_(virtual particle)
 
-  Utils::Vector4d quat;
+  Utils::Quaternion<double> quat;
   // If the distance between real & virtual particle is 0 we just set the
   // relative orientation to {1 0 0 0}, as it is irrelevant but needs to be
   // a valid quaternion
   if (dist == 0) {
-    quat = {1, 0, 0, 0};
+    quat = Utils::Quaternion<double>::identity();
   } else {
     d.normalize();
 
     // Obtain quaternion from desired director
-    Utils::Vector4d quat_director = Utils::convert_director_to_quaternion(d);
+    Utils::Quaternion<double> quat_director =
+        Utils::convert_director_to_quaternion(d);
 
     // Define quaternion as described above
-    quat = {p_relate_to.r.quat * quat_director,
-            -quat_director[0] * p_relate_to.r.quat[1] +
-                quat_director[1] * p_relate_to.r.quat[0] +
-                quat_director[2] * p_relate_to.r.quat[3] -
-                quat_director[3] * p_relate_to.r.quat[2],
-            p_relate_to.r.quat[1] * quat_director[3] +
-                p_relate_to.r.quat[0] * quat_director[2] -
-                p_relate_to.r.quat[3] * quat_director[1] -
-                p_relate_to.r.quat[2] * quat_director[0],
-            quat_director[3] * p_relate_to.r.quat[0] -
-                p_relate_to.r.quat[3] * quat_director[0] +
-                p_relate_to.r.quat[2] * quat_director[1] -
-                p_relate_to.r.quat[1] * quat_director[2]};
-    auto const norm = p_relate_to.r.quat * p_relate_to.r.quat;
-    quat /= norm;
+    quat =
+        Utils::Quaternion<double>{Utils::dot(p_relate_to.r.quat, quat_director),
+                                  -quat_director[0] * p_relate_to.r.quat[1] +
+                                      quat_director[1] * p_relate_to.r.quat[0] +
+                                      quat_director[2] * p_relate_to.r.quat[3] -
+                                      quat_director[3] * p_relate_to.r.quat[2],
+                                  p_relate_to.r.quat[1] * quat_director[3] +
+                                      p_relate_to.r.quat[0] * quat_director[2] -
+                                      p_relate_to.r.quat[3] * quat_director[1] -
+                                      p_relate_to.r.quat[2] * quat_director[0],
+                                  quat_director[3] * p_relate_to.r.quat[0] -
+                                      p_relate_to.r.quat[3] * quat_director[0] +
+                                      p_relate_to.r.quat[2] * quat_director[1] -
+                                      p_relate_to.r.quat[1] * quat_director[2]};
+    quat /= p_relate_to.r.quat.norm2();
 
     // Verify result
-    Utils::Vector4d qtemp =
-        Utils::multiply_quaternions(p_relate_to.r.quat, quat);
+    Utils::Quaternion<double> qtemp = p_relate_to.r.quat * quat;
     for (int i = 0; i < 4; i++)
       if (fabs(qtemp[i] - quat_director[i]) > 1E-9)
         fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n", i,
@@ -140,7 +140,7 @@ void vs_relate_to(int part_num, int relate_to) {
   auto const &p_current = get_particle_data(part_num);
   auto const &p_relate_to = get_particle_data(relate_to);
 
-  Utils::Vector4d quat;
+  Utils::Quaternion<double> quat;
   double dist;
   std::tie(quat, dist) = calculate_vs_relate_to_params(p_current, p_relate_to);
 

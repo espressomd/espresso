@@ -22,6 +22,7 @@
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
 #include "utils/math/vec_rotate.hpp"
+#include "utils/quaternion.hpp"
 
 namespace Utils {
 
@@ -34,12 +35,16 @@ transform_coordinate_cartesian_to_cylinder(const Vector3d &pos,
   static auto const z_axis = Vector3d{{0, 0, 1}};
   double theta;
   Vector3d rotation_axis;
-  std::tie(theta, rotation_axis) = rotation_params(axis, z_axis);
-  auto const rotated_pos = vec_rotate(rotation_axis, theta, pos);
-  auto const r = std::sqrt(rotated_pos[0] * rotated_pos[0] +
-                           rotated_pos[1] * rotated_pos[1]);
-  auto const phi = std::atan2(rotated_pos[1], rotated_pos[0]);
-  return Vector3d{r, phi, rotated_pos[2]};
+  auto r = [](auto const &pos) {
+    return std::sqrt(pos[0] * pos[0] + pos[1] * pos[1]);
+  };
+  auto phi = [](auto const &pos) { return std::atan2(pos[1], pos[0]); };
+  if (axis != z_axis) {
+    std::tie(theta, rotation_axis) = rotation_params(axis, z_axis);
+    auto const rotated_pos = vec_rotate(rotation_axis, theta, pos);
+    return {r(rotated_pos), phi(rotated_pos), rotated_pos[2]};
+  }
+  return {r(pos), phi(pos), pos[2]};
 }
 
 /**
@@ -51,6 +56,8 @@ transform_coordinate_cylinder_to_cartesian(Vector3d const &pos,
   Vector3d const transformed{
       {pos[0] * std::cos(pos[1]), pos[0] * std::sin(pos[1]), pos[2]}};
   static auto const z_axis = Vector3d{{0, 0, 1}};
+  if (axis == z_axis)
+    return transformed;
   double theta;
   Vector3d rotation_axis;
   std::tie(theta, rotation_axis) = rotation_params(z_axis, axis);

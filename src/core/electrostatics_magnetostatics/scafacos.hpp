@@ -21,46 +21,41 @@
 
 /** \file
  * This file contains the c-type wrapper interface to the (oop-) scafacos
- * interface. */
+ * interface.
+ */
 
 #ifndef ES_CORE_ELECTROSTATICS_MAGNETOSTATICS_SCAFACOS_HPP
 #define ES_CORE_ELECTROSTATICS_MAGNETOSTATICS_SCAFACOS_HPP
 
 #include "config.hpp"
 
+#if defined(SCAFACOS)
+
+#include "electrostatics_magnetostatics/ScafacosContextBase.hpp"
+
+#include <utils/Vector.hpp>
+
 #include <list>
 #include <string>
 
 namespace Scafacos {
-#if defined(SCAFACOS)
-/** Near-field pair force */
-void add_pair_force(double q1q2, const double *d, double dist, double *force);
-/** Near-field pair energy */
-double pair_energy(double q1q2, double dist);
-/** Long range part */
-void add_long_range_force();
-/** Calculate long range energy contribution */
-double long_range_energy();
-/** Get parameters */
-std::string get_method_and_parameters();
-/** Set parameters */
+
+/** @brief Access the per-MPI-node ScaFaCoS Coulomb instance */
+ScafacosContextBase *fcs_coulomb();
+#ifdef SCAFACOS_DIPOLES
+/** @brief Access the per-MPI-node ScaFaCoS dipoles instance */
+ScafacosContextBase *fcs_dipoles();
+#endif
+
+std::string get_method_and_parameters(bool dipolar);
 void set_parameters(const std::string &method, const std::string &params,
                     bool dipolar);
-double get_r_cut();
+void free_handle(bool dipolar);
 
-/** Is scafacos used for dipolar interactions */
-bool dipolar();
-
-/** Choose whether scafacos is used for dipolar interactions */
-void set_dipolar(bool d);
-
-/** Reinit scafacos number of particles, box shape and periodicity */
-void update_system_params();
-
-#endif /* SCAFACOS */
+void set_r_cut_and_tune_local(double r_cut);
 
 std::list<std::string> available_methods();
 
-void free_handle();
 } // namespace Scafacos
+#endif // SCAFACOS
 #endif

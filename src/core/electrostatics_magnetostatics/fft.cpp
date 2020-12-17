@@ -52,12 +52,12 @@ using Utils::get_linear_index;
 using Utils::permute_ifield;
 
 /** @name MPI tags for FFT communication */
-/*@{*/
+/**@{*/
 /** Tag for communication in forw_grid_comm() */
 #define REQ_FFT_FORW 301
 /** Tag for communication in back_grid_comm() */
 #define REQ_FFT_BACK 302
-/*@}*/
+/**@}*/
 
 namespace {
 /** This ugly function does the bookkeeping: which nodes have to

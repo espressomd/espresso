@@ -72,3 +72,4 @@ unit_test(NAME all_gatherv_test SRC all_gatherv_test.cpp DEPENDS EspressoUtils
           Boost::mpi MPI::MPI_CXX)
 unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS EspressoUtils
           Boost::mpi MPI::MPI_CXX EspressoUtils NUM_PROC 3)
+unit_test(NAME matrix_test SRC matrix_test.cpp DEPENDS EspressoUtils NUM_PROC 1)

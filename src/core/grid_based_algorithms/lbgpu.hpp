@@ -148,7 +148,7 @@ typedef struct {
 /************************************************************/
 /** \name Exported Variables */
 /************************************************************/
-/*@{*/
+/**@{*/
 
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
@@ -158,12 +158,12 @@ extern LB_node_force_density_gpu node_f;
 extern bool ek_initialized;
 #endif
 
-/*@}*/
+/**@}*/
 
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
-/*@{*/
+/**@{*/
 
 void lb_GPU_sanity_checks();
 
@@ -236,7 +236,7 @@ uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
-/*@}*/
+/**@}*/
 extern OptionalCounter rng_counter_fluid_gpu;
 extern OptionalCounter rng_counter_coupling_gpu;
 #endif /*  CUDA */
