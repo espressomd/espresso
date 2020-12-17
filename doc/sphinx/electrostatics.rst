@@ -255,8 +255,8 @@ Usage notes:
     z-direction not to contain particles. The size in z-direction of this slab
     is controlled by the ``gap_size`` parameter. The user has to ensure that
     no particles enter this region by means of constraints or by fixing the
-    particles' z-coordinate. When there is no empty slab of the specified size,
-    the method will silently produce wrong results.
+    particles' z-coordinate. When particles enter the slab of the specified
+    size, an error will be thrown.
 
 *ELC* is an |es| actor and is used with::
 
@@ -386,6 +386,4 @@ for an accuracy of :math:`10^{-3}`::
 
 For details of the various methods and their parameters please refer to
 the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a
-shared library. ScaFaCoS can be used only once, either for Coulomb or for
-dipolar interactions.
-
+shared library.

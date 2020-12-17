@@ -179,6 +179,10 @@ ParticleRange CellStructure::ghost_particles() {
   return Cells::particles(decomposition().ghost_cells());
 }
 
+Utils::Vector3d CellStructure::max_cutoff() const {
+  return decomposition().max_cutoff();
+}
+
 Utils::Vector3d CellStructure::max_range() const {
   return decomposition().max_range();
 }
