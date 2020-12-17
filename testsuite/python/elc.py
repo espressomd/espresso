@@ -73,13 +73,13 @@ class ElcTest(ut.TestCase):
 
         # Check if error is thrown when particles enter the ELC gap
         # positive direction
-        p1.pos = [BOX_L[0]/2, BOX_L[1]/2, BOX_L[2]-GAP[2]/2]
+        p1.pos = [BOX_L[0] / 2, BOX_L[1] / 2, BOX_L[2] - GAP[2] / 2]
         with self.assertRaises(Exception):
             self.system.analysis.energy()
         with self.assertRaises(Exception):
             self.integrator.run(2)
         # negative direction
-        p1.pos = [BOX_L[0]/2, BOX_L[1]/2, -GAP[2]/2]
+        p1.pos = [BOX_L[0] / 2, BOX_L[1] / 2, -GAP[2] / 2]
         with self.assertRaises(Exception):
             self.system.analysis.energy()
         with self.assertRaises(Exception):
