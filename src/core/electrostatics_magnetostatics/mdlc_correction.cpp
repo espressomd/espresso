@@ -42,15 +42,15 @@
 
 DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
 
-/** Checks if a charged particle is in the forbidden gap region
+/** Checks if a magnetic particle is in the forbidden gap region
  */
 inline void check_gap_mdlc(const Particle &p) {
   if (p.p.dipm != 0) {
     if (p.r.p[2] < 0)
-      runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
+      runtimeErrorMsg() << "Particle " << p.p.identity << " entered MDLC gap "
                         << "region by " << (p.r.p[2]);
     else if (p.r.p[2] > dlc_params.h) {
-      runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
+      runtimeErrorMsg() << "Particle " << p.p.identity << " entered MDLC gap "
                         << "region by " << (p.r.p[2] - dlc_params.h);
     }
   }
@@ -389,7 +389,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   // Check if particles aren't in the forbidden gap region
   // This loop is needed, because there is no other guaranteed
   // single pass over all particles in this function.
-  for (auto const p : particles) {
+  for (auto const &p : particles) {
     check_gap_mdlc(p);
   }
 

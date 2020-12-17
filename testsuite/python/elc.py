@@ -85,5 +85,6 @@ class ElcTest(ut.TestCase):
         with self.assertRaises(Exception):
             self.integrator.run(2)
 
+
 if __name__ == "__main__":
     ut.main()

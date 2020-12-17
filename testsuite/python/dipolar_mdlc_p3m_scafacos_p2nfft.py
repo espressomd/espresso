@@ -62,7 +62,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.box_l = 3 * [box_l]
         ref_E_path = abspath("data/mdlc_reference_data_energy.dat")
         ref_E = float(np.genfromtxt(ref_E_path))
-        gap_size = 0.3 * s.box_l[2]
+        gap_size = 2.0
 
         # Particles
         data = np.genfromtxt(
