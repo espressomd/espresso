@@ -42,6 +42,20 @@
 
 DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
 
+/** Checks if a charged particle is in the forbidden gap region
+ */
+inline void check_gap_mdlc(const Particle &p) {
+  if (p.p.dipm != 0) {
+    if (p.r.p[2] < 0)
+      runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
+                        << "region by " << (p.r.p[2]);
+    else if (p.r.p[2] > dlc_params.h) {
+      runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
+                        << "region by " << (p.r.p[2] - dlc_params.h);
+    }
+  }
+}
+
 /** Calculate the maximal dipole moment in the system */
 double calc_mu_max() {
   auto const local_particles = cell_structure.local_particles();
@@ -341,6 +355,8 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
 
   int ip = 0;
   for (auto &p : particles) {
+    check_gap_mdlc(p);
+
     if ((p.p.dipm) != 0.0) {
       // SDC correction term is zero for the forces
       p.f.f += dipole.prefactor * dip_DLC_f[ip];
@@ -369,6 +385,13 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
 double add_mdlc_energy_corrections(const ParticleRange &particles) {
 
   auto const volume = box_geo.volume();
+
+  // Check if particles aren't in the forbidden gap region
+  // This loop is needed, because there is no other guaranteed
+  // single pass over all particles in this function.
+  for (auto const p: particles) {
+    check_gap_mdlc(p);
+  }
 
   //---- Compute the corrections ----------------------------------
 
