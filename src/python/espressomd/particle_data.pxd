@@ -130,9 +130,6 @@ cdef extern from "particle_data.hpp":
         void pointer_to_virtual(const particle * P, const bint * & res)
 
     IF LANGEVIN_PER_PARTICLE or BROWNIAN_PER_PARTICLE:
-        void set_particle_temperature(int part, double T)
-        void pointer_to_temperature(const particle * p, const double * & res)
-
         IF PARTICLE_ANISOTROPY:
             void set_particle_gamma(int part, Vector3d gamma)
         ELSE:

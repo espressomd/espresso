@@ -122,7 +122,6 @@ using UpdatePropertyMessage = boost::variant
 #endif
 #endif
 #if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-        , UpdateProperty<double, &Prop::T>
 #ifndef PARTICLE_ANISOTROPY
         , UpdateProperty<double, &Prop::gamma>
 #else
@@ -867,9 +866,6 @@ void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab) {
 #endif
 
 #if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-void set_particle_temperature(int part, double T) {
-  mpi_update_particle_property<double, &ParticleProperties::T>(part, T);
-}
 
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma(int part, double gamma) {
@@ -1264,9 +1260,6 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res) {
 }
 #endif // ROTATION
 
-void pointer_to_temperature(Particle const *p, double const *&res) {
-  res = &(p->p.T);
-}
 #endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
 
 #ifdef ENGINE

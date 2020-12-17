@@ -76,7 +76,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
         gamma_off = 0.0
 
     system.part.add(id=id_drude, pos=p_core.pos, type=type_drude,
-                    q=q_drude, mass=mass_drude, temp=0, gamma=gamma_off)
+                    q=q_drude, mass=mass_drude, gamma=gamma_off)
 
     if verbose:
         print(
@@ -88,7 +88,6 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     p_core.add_bond((harmonic_bond, id_drude))
     p_core.add_bond((thermalized_bond, id_drude))
 
-    p_core.temp = 0.0
     p_core.gamma = gamma_off
 
     if type_drude in drude_dict and not (

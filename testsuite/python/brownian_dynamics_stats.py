@@ -88,14 +88,12 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         kT = 0.9
         gamma = 3.2
         gamma2 = 4.3
-        kT2 = 1.5
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
         loops = 200
         v_minmax = 5
         bins = 4
         error_tol = 0.012
-        self.check_per_particle(
-            N, kT, kT2, gamma2, loops, v_minmax, bins, error_tol)
+        self.check_per_particle(N, kT, gamma2, loops, v_minmax, bins, error_tol)
 
     def setup_diff_mass_rinertia(self, p):
         if espressomd.has_features("MASS"):

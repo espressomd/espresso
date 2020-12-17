@@ -315,10 +315,10 @@ General features
       additional degrees of freedom, which for example means that the
       kinetic energy changes at constant temperature is twice as large.
 
--  ``LANGEVIN_PER_PARTICLE`` Allows to choose the Langevin temperature and friction coefficient
+-  ``LANGEVIN_PER_PARTICLE`` Allows to choose the Langevin friction coefficient
    per particle.
 
--  ``BROWNIAN_PER_PARTICLE`` Allows to choose the Brownian temperature and friction coefficient
+-  ``BROWNIAN_PER_PARTICLE`` Allows to choose the Brownian friction coefficient
    per particle.
 
 -  ``ROTATIONAL_INERTIA``

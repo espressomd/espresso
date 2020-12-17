@@ -1498,7 +1498,7 @@ charge) to a particle (Drude core) that mimics an electron cloud which can be
 elongated to create a dynamically inducible dipole. The energetic minimum of
 the Drude charge can be obtained self-consistently, which requires several
 iterations of the system's electrostatics and is usually considered
-computational expensive. However, with thermalized cold Drude oscillators, the
+computationally expensive. However, with thermalized cold Drude oscillators, the
 distance between Drude charge and core is coupled to a thermostat so that it
 fluctuates around the SCF solution. This thermostat is kept at a low
 temperature compared to the global temperature to minimize the heat flow into
@@ -1516,7 +1516,7 @@ In |es|, the basic ingredients to simulate such a system are split into three bo
 The system-wide thermostat has to be applied to the centre of mass and not to
 the core particle directly. Therefore, the particles have to be excluded from
 global thermostatting.  With ``LANGEVIN_PER_PARTICLE`` enabled, we set the
-temperature and friction coefficient of the Drude complex to zero, which allows
+friction coefficient of the Drude complex to zero, which allows
 to still use a global Langevin thermostat for non-polarizable particles.
 
 As the Drude charge should not alter the *charge* or *mass* of the Drude

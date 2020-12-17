@@ -147,7 +147,6 @@ struct ParticleProperties {
 #endif /* VIRTUAL_SITES */
 
 #if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-  double T = -1.;
 #ifndef PARTICLE_ANISOTROPY
   double gamma = -1.;
 #else
@@ -221,7 +220,6 @@ struct ParticleProperties {
 #endif /* VIRTUAL_SITES */
 
 #if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-    ar &T;
     ar &gamma;
 #ifdef ROTATION
     ar &gamma_rot;

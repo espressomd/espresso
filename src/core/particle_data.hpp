@@ -243,12 +243,6 @@ void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 #endif
 
 #if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-/** Call only on the master node: set particle temperature.
- *  @param part the particle.
- *  @param T its new temperature.
- */
-void set_particle_temperature(int part, double T);
-
 /** Call only on the master node: set particle frictional coefficient.
  *  @param part the particle.
  *  @param gamma its new frictional coefficient.
@@ -393,7 +387,6 @@ void pointer_to_fix(Particle const *p, const uint8_t *&res);
 
 #if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
 void pointer_to_gamma(Particle const *p, double const *&res);
-void pointer_to_temperature(Particle const *p, double const *&res);
 #ifdef ROTATION
 void pointer_to_gamma_rot(Particle const *p, double const *&res);
 #endif
