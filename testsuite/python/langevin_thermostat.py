@@ -52,7 +52,7 @@ class LangevinThermostat(ut.TestCase):
             if espressomd.has_features("ROTATION"):
                 p.rotation = [1, 1, 1]
             if per_particle_gamma:
-                assert espressomd.has_features("LANGEVIN_PER_PARTICLE")
+                assert espressomd.has_features("THERMOSTAT_PER_PARTICLE")
                 if espressomd.has_features("PARTICLE_ANISOTROPY"):
                     p.gamma = 3 * [gamma / 2]
                 else:
@@ -137,7 +137,7 @@ class LangevinThermostat(ut.TestCase):
             self.system.thermostat.set_langevin(kT=1, gamma=2)
         self.check_rng()
 
-    @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
+    @utx.skipIfMissingFeatures("THERMOSTAT_PER_PARTICLE")
     def test_01__rng_per_particle(self):
         """Test for RNG consistency."""
         self.check_rng(True)

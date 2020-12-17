@@ -32,7 +32,7 @@ import espressomd.shapes
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
 required_features = ["LENNARD_JONES", "WCA", "MASS",
-                     "EXTERNAL_FORCES", "LANGEVIN_PER_PARTICLE"]
+                     "EXTERNAL_FORCES", "THERMOSTAT_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
 print("""THE CHAMBER GAME

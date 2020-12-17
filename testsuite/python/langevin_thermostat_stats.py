@@ -76,7 +76,7 @@ class LangevinThermostat(ut.TestCase, ThermostatsCommon):
         """
         self.check_vel_dist_global_temp(True, loops=170)
 
-    @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
+    @utx.skipIfMissingFeatures("THERMOSTAT_PER_PARTICLE")
     def test_vel_dist_per_particle(self):
         """Test Langevin dynamics with particle-specific kT and gamma. Covers
            all combinations of particle-specific gamma and temp set or not set.
@@ -92,7 +92,8 @@ class LangevinThermostat(ut.TestCase, ThermostatsCommon):
         v_minmax = 5
         bins = 4
         error_tol = 0.016
-        self.check_per_particle(N, kT, gamma2, loops, v_minmax, bins, error_tol)
+        self.check_per_particle(
+            N, kT, gamma2, loops, v_minmax, bins, error_tol)
 
     def setup_diff_mass_rinertia(self, p):
         if espressomd.has_features("MASS"):
@@ -150,7 +151,7 @@ class LangevinThermostat(ut.TestCase, ThermostatsCommon):
         self.setup_diff_mass_rinertia(p_global)
 
         # particle specific gamma, kT, and both
-        if espressomd.has_features("LANGEVIN_PER_PARTICLE"):
+        if espressomd.has_features("THERMOSTAT_PER_PARTICLE"):
             p_gamma = system.part.add(pos=(0, 0, 0))
             self.setup_diff_mass_rinertia(p_gamma)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
@@ -185,7 +186,7 @@ class LangevinThermostat(ut.TestCase, ThermostatsCommon):
         corr_vel = {}
         corr_omega = {}
         all_particles = [p_global]
-        if espressomd.has_features("LANGEVIN_PER_PARTICLE"):
+        if espressomd.has_features("THERMOSTAT_PER_PARTICLE"):
             all_particles.append(p_gamma)
 
         # linear vel
@@ -217,7 +218,7 @@ class LangevinThermostat(ut.TestCase, ThermostatsCommon):
         gamma = np.ones(3) * gamma
         per_part_gamma = np.ones(3) * per_part_gamma
         self.verify_diffusion(p_global, corr_vel, kT, gamma)
-        if espressomd.has_features("LANGEVIN_PER_PARTICLE"):
+        if espressomd.has_features("THERMOSTAT_PER_PARTICLE"):
             self.verify_diffusion(p_gamma, corr_vel, kT, per_part_gamma)
 
         # Rotation
@@ -233,7 +234,7 @@ class LangevinThermostat(ut.TestCase, ThermostatsCommon):
                 eff_per_part_gamma_rot = per_part_gamma_rot_i * np.ones(3)
 
             self.verify_diffusion(p_global, corr_omega, kT, eff_gamma_rot)
-            if espressomd.has_features("LANGEVIN_PER_PARTICLE"):
+            if espressomd.has_features("THERMOSTAT_PER_PARTICLE"):
                 self.verify_diffusion(
                     p_gamma, corr_omega, kT, eff_per_part_gamma_rot)
 

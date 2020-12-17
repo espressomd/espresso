@@ -27,7 +27,7 @@ import argparse
 import espressomd
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "ROTATIONAL_INERTIA", "VIRTUAL_SITES_RELATIVE",
-                     "THOLE", "LANGEVIN_PER_PARTICLE"]
+                     "THOLE", "THERMOSTAT_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
 import espressomd.observables

@@ -34,7 +34,7 @@
 /** Langevin thermostat for particle translational velocities.
  *  Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).
  *  Collects the langevin parameters kT, gamma (different for
- *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
+ *  THERMOSTAT_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
  *  @param[in]     time_step      Time step
@@ -50,7 +50,7 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
   // Determine prefactors for the friction and the noise term
   Thermostat::GammaType pref_friction = langevin.pref_friction;
   Thermostat::GammaType pref_noise = langevin.pref_noise;
-#ifdef LANGEVIN_PER_PARTICLE
+#ifdef THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
   if (p.p.gamma >= Thermostat::GammaType{}) {
     auto const gamma =
@@ -58,7 +58,7 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
     pref_friction = -gamma;
     pref_noise = LangevinThermostat::sigma(temperature, time_step, gamma);
   }
-#endif // LANGEVIN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
   // Get effective velocity in the thermostatting
 #ifdef ENGINE
@@ -94,7 +94,7 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
 /** Langevin thermostat for particle angular velocities.
  *  Collects the particle velocity (different for PARTICLE_ANISOTROPY).
  *  Collects the langevin parameters kT, gamma_rot (different for
- *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
+ *  THERMOSTAT_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
  *  @param[in]     time_step      Time step
@@ -106,7 +106,7 @@ friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
   auto pref_friction = -langevin.gamma_rotation;
   auto pref_noise = langevin.pref_noise_rotation;
 
-#ifdef LANGEVIN_PER_PARTICLE
+#ifdef THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     auto const gamma = p.p.gamma_rot >= Thermostat::GammaType{}
@@ -115,7 +115,7 @@ friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
     pref_friction = -gamma;
     pref_noise = LangevinThermostat::sigma(temperature, time_step, gamma);
   }
-#endif // LANGEVIN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
   auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN_ROT>(
       langevin.rng_counter(), langevin.rng_seed(), p.p.identity);

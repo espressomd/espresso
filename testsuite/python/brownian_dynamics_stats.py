@@ -77,7 +77,7 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         """
         self.check_vel_dist_global_temp(True, loops=170)
 
-    @utx.skipIfMissingFeatures("BROWNIAN_PER_PARTICLE")
+    @utx.skipIfMissingFeatures("THERMOSTAT_PER_PARTICLE")
     def test_vel_dist_per_particle(self):
         """Test Brownian dynamics with particle-specific kT and gamma. Covers
            all combinations of particle-specific gamma and temp set or not set.
@@ -93,7 +93,8 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         v_minmax = 5
         bins = 4
         error_tol = 0.012
-        self.check_per_particle(N, kT, gamma2, loops, v_minmax, bins, error_tol)
+        self.check_per_particle(
+            N, kT, gamma2, loops, v_minmax, bins, error_tol)
 
     def setup_diff_mass_rinertia(self, p):
         if espressomd.has_features("MASS"):

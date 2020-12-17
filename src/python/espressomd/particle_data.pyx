@@ -842,7 +842,7 @@ cdef class ParticleHandle:
                         self.particle_data, ext_t)
                     return array_locked([ext_t[0], ext_t[1], ext_t[2]])
 
-    IF LANGEVIN_PER_PARTICLE or BROWNIAN_PER_PARTICLE:
+    IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
             property gamma:
                 """
@@ -852,8 +852,8 @@ cdef class ParticleHandle:
                 gamma : :obj:`float` or (3,) array_like of :obj:`float`
 
                 .. note::
-                    This needs features ``PARTICLE_ANISOTROPY`` and either
-                    ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                    This needs features ``PARTICLE_ANISOTROPY`` and
+                    ``THERMOSTAT_PER_PARTICLE``.
 
                 See Also
                 ----------
@@ -890,7 +890,7 @@ cdef class ParticleHandle:
                 gamma : :obj:`float`
 
                 .. note::
-                   This needs the feature ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                   This needs the feature ``THERMOSTAT_PER_PARTICLE``.
 
                 See Also
                 ----------
@@ -919,7 +919,7 @@ cdef class ParticleHandle:
 
                     .. note::
                         This needs features ``ROTATION``, ``PARTICLE_ANISOTROPY``
-                        and either ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                        and ``THERMOSTAT_PER_PARTICLE``.
 
                     """
 
@@ -952,8 +952,8 @@ cdef class ParticleHandle:
                     gamma_rot : :obj:`float`
 
                     .. note::
-                        This needs features ``ROTATION`` and either
-                        ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                        This needs features ``ROTATION`` and
+                        ``THERMOSTAT_PER_PARTICLE``.
 
                     """
 

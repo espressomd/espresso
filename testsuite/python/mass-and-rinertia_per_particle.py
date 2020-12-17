@@ -23,7 +23,7 @@ import math
 
 
 @utx.skipIfMissingFeatures(["MASS", "PARTICLE_ANISOTROPY",
-                            "ROTATIONAL_INERTIA", "LANGEVIN_PER_PARTICLE"])
+                            "ROTATIONAL_INERTIA", "THERMOSTAT_PER_PARTICLE"])
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system

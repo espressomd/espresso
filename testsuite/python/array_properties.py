@@ -192,9 +192,9 @@ class ArrayPropertyTest(ArrayCommon):
         self.assert_operator_usage_raises(lbf[0, 0, 0].pressure_tensor_neq)
         self.assert_operator_usage_raises(lbf[0, 0, 0].population)
 
-    @utx.skipIfMissingFeatures(["LANGEVIN_PER_PARTICLE",
+    @utx.skipIfMissingFeatures(["THERMOSTAT_PER_PARTICLE",
                                 "PARTICLE_ANISOTROPY"])
-    def test_langevinpp_aniso(self):
+    def test_thermostat_per_particle_aniso(self):
         self.assert_operator_usage_raises(self.system.part[0].gamma)
 
         check_array_writable(self.system.part[0].gamma)

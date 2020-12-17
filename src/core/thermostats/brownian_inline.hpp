@@ -44,7 +44,7 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
   // The friction tensor Z from the Eq. (14.31) of Schlick2010:
   Thermostat::GammaType gamma;
 
-#ifdef BROWNIAN_PER_PARTICLE
+#ifdef THERMOSTAT_PER_PARTICLE
   if (p.p.gamma >= Thermostat::GammaType{}) {
     gamma = p.p.gamma;
   } else
@@ -106,7 +106,7 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
   // The friction tensor Z from the eq. (14.31) of Schlick2010:
   Thermostat::GammaType gamma;
 
-#ifdef BROWNIAN_PER_PARTICLE
+#ifdef THERMOSTAT_PER_PARTICLE
   if (p.p.gamma >= Thermostat::GammaType{}) {
     gamma = p.p.gamma;
   } else
@@ -172,7 +172,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
     return {};
 
   Thermostat::GammaType sigma_pos = brownian.sigma_pos;
-#ifdef BROWNIAN_PER_PARTICLE
+#ifdef THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
   if (p.p.gamma >= Thermostat::GammaType{}) {
     if (temperature > 0.0) {
@@ -181,7 +181,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
       sigma_pos = Thermostat::GammaType{};
     }
   }
-#endif // BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
   // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared
   // magnitude defined in the second eq. (14.38), Schlick2010.
@@ -280,7 +280,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
             double dt) {
   Thermostat::GammaType gamma;
 
-#ifdef BROWNIAN_PER_PARTICLE
+#ifdef THERMOSTAT_PER_PARTICLE
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     gamma = p.p.gamma_rot;
   } else
@@ -322,7 +322,7 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
                 Particle const &p) {
   Thermostat::GammaType gamma;
 
-#ifdef BROWNIAN_PER_PARTICLE
+#ifdef THERMOSTAT_PER_PARTICLE
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     gamma = p.p.gamma_rot;
   } else
@@ -359,7 +359,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
                    double dt) {
 
   Thermostat::GammaType sigma_pos = brownian.sigma_pos_rotation;
-#ifdef BROWNIAN_PER_PARTICLE
+#ifdef THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     if (temperature > 0.) {
@@ -368,7 +368,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
       sigma_pos = {}; // just an indication of the infinity
     }
   }
-#endif // BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
   Utils::Vector3d dphi = {};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(
