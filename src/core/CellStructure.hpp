@@ -127,12 +127,11 @@ private:
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
   unsigned m_resort_particles = Cells::RESORT_NONE;
+  bool m_rebuild_verlet_list = true;
+  std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
 
 public:
   bool use_verlet_list = true;
-
-  bool m_rebuild_verlet_list = true;
-  std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
 
   /**
    * @brief Update local particle index.
@@ -240,6 +239,9 @@ public:
 public:
   int decomposition_type() const { return m_type; }
 
+  /** Maximal cutoff supported by current cell system. */
+  Utils::Vector3d max_cutoff() const;
+
   /** Maximal pair range supported by current cell system. */
   Utils::Vector3d max_range() const;
 
@@ -328,6 +330,7 @@ public:
     return assert(m_decomposition), *m_decomposition;
   }
 
+private:
   ParticleDecomposition &decomposition() {
     return assert(m_decomposition), *m_decomposition;
   }
@@ -445,12 +448,11 @@ private:
       std::unique_ptr<ParticleDecomposition> &&decomposition) {
     clear_particle_index();
 
-    auto local_parts = local_particles();
-    std::vector<Particle> particles(local_parts.begin(), local_parts.end());
+    /* Swap in new cell system */
+    std::swap(m_decomposition, decomposition);
 
-    m_decomposition = std::move(decomposition);
-
-    for (auto &p : particles) {
+    /* Add particles to new system */
+    for (auto &p : Cells::particles(decomposition->local_cells())) {
       add_particle(std::move(p));
     }
   }
@@ -510,31 +512,21 @@ private:
     }
   }
 
-public:
-  /** Non-bonded pair loop with potential use
-   * of verlet lists.
-   * @param pair_kernel Kernel to apply
-   */
-  template <class PairKernel> void non_bonded_loop(PairKernel pair_kernel) {
-    link_cell(pair_kernel);
-  }
-
-  /** Non-bonded pair loop with potential use
-   * of verlet lists.
+  /** Non-bonded pair loop with verlet lists.
+   *
    * @param pair_kernel Kernel to apply
    * @param verlet_criterion Filter for verlet lists.
    */
   template <class PairKernel, class VerletCriterion>
-  void non_bonded_loop(PairKernel &&pair_kernel,
-                       const VerletCriterion &verlet_criterion) {
+  void verlet_list_loop(PairKernel pair_kernel,
+                        const VerletCriterion &verlet_criterion) {
     /* In this case the verlet list update is attached to
      * the pair kernel, and the verlet list is rebuilt as
      * we go. */
-    if (use_verlet_list && m_rebuild_verlet_list) {
+    if (m_rebuild_verlet_list) {
       m_verlet_list.clear();
 
-      link_cell([&pair_kernel, &verlet_criterion,
-                 this](Particle &p1, Particle &p2, Distance const &d) {
+      link_cell([&](Particle &p1, Particle &p2, Distance const &d) {
         if (verlet_criterion(p1, p2, d)) {
           m_verlet_list.emplace_back(&p1, &p2);
           pair_kernel(p1, p2, d);
@@ -542,7 +534,7 @@ public:
       });
 
       m_rebuild_verlet_list = false;
-    } else if (use_verlet_list && not m_rebuild_verlet_list) {
+    } else {
       auto const maybe_box = decomposition().minimum_image_distance();
       /* In this case the pair kernel is just run over the verlet list. */
       if (maybe_box) {
@@ -558,6 +550,27 @@ public:
                       distance_function(*pair.first, *pair.second));
         }
       }
+    }
+  }
+
+public:
+  /** Non-bonded pair loop.
+   * @param pair_kernel Kernel to apply
+   */
+  template <class PairKernel> void non_bonded_loop(PairKernel pair_kernel) {
+    link_cell(pair_kernel);
+  }
+
+  /** Non-bonded pair loop with potential use
+   * of verlet lists.
+   * @param pair_kernel Kernel to apply
+   * @param verlet_criterion Filter for verlet lists.
+   */
+  template <class PairKernel, class VerletCriterion>
+  void non_bonded_loop(PairKernel pair_kernel,
+                       const VerletCriterion &verlet_criterion) {
+    if (use_verlet_list) {
+      verlet_list_loop(pair_kernel, verlet_criterion);
     } else {
       /* No verlet lists, just run the kernel with pairs from the cells. */
       link_cell(pair_kernel);

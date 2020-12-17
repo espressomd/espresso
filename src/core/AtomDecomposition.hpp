@@ -92,7 +92,9 @@ public:
     return id_to_cell(p.identity());
   }
 
+  Utils::Vector3d max_cutoff() const override;
   Utils::Vector3d max_range() const override;
+
   /* Return true if minimum image convention is
    * needed for distance calculation. */
   boost::optional<BoxGeometry> minimum_image_distance() const override {
