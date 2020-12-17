@@ -213,9 +213,9 @@ cdef class HydrodynamicInteraction(Actor):
         path : :obj:`str`
             Path to the output ASCII file.
         bb1 : (3,) array_like of :obj:`int`, optional
-            Lower corner of the bounding box.
+            Node indices of the lower corner of the bounding box.
         bb2 : (3,) array_like of :obj:`int`, optional
-            Upper corner of the bounding box.
+            Node indices of the upper corner of the bounding box.
 
         """
         cdef vector[int] bb1_vec

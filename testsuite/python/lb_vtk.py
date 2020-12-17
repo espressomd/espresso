@@ -109,7 +109,7 @@ class TestLBWrite:
             lbf.print_vtk_velocity('vtk_out/delme', [1, 1], 3 * [1])
         with self.assertRaises(ValueError):
             lbf.print_vtk_velocity('vtk_out/delme', 3 * [1], np.array([2, 3]))
-        bb1, bb2 = ([1, 2, 3], [12, 13, 14])
+        bb1, bb2 = ([1, 2, 3], [13, 14, 15])
         lbf.print_vtk_velocity('vtk_out/velocity_bb.vtk', bb1, bb2)
 
         # check VTK files exist
@@ -127,9 +127,9 @@ class TestLBWrite:
                     node = lbf[i, j, k]
                     node_velocity[i, j, k] = node.velocity
                     node_boundary[i, j, k] = node.boundary
-        node_velocity_bb = node_velocity[bb1[0]:bb2[0] + 1,
-                                         bb1[1]:bb2[1] + 1,
-                                         bb1[2]:bb2[2] + 1]
+        node_velocity_bb = node_velocity[bb1[0]:bb2[0],
+                                         bb1[1]:bb2[1],
+                                         bb1[2]:bb2[2]]
 
         vtk_velocity = self.parse_vtk('vtk_out/velocity.vtk', 'velocity',
                                       node_velocity.shape)
