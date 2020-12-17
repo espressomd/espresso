@@ -1181,7 +1181,8 @@ void add_id_to_type_map(int part_id, int type) {
 
 int number_of_particles_with_type(int type) {
   if (particle_type_map.count(type) == 0)
-    throw std::runtime_error("The provided particle type " + std::to_string(type) +
+    throw std::runtime_error("The provided particle type " +
+                             std::to_string(type) +
                              " is currently not tracked by the system.");
   return static_cast<int>(particle_type_map.at(type).size());
 }
