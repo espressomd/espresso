@@ -153,7 +153,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position(< Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
+            return make_array_locked(unfolded_position( < Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
 
     property pos_folded:
         """
@@ -695,7 +695,8 @@ cdef class ParticleHandle:
             Setup this particle as virtual site relative to the particle with the given ParticleHandle or id.
 
             """
-            # If _relto is of type ParticleHandle,resolve id of particle which to relate to
+            # If _relto is of type ParticleHandle,
+            # resolve id of particle which to relate to
             if not is_valid_type(_relto, int):
                 if not isinstance(_relto, ParticleHandle):
                     raise ValueError(
