@@ -654,7 +654,7 @@ cdef class ParticleHandle:
             is related and distance the distance between non-virtual and virtual particle.
             The relative orientation is specified as a quaternion of 4 floats.
 
-            vs_relative : tuple: (PID, distance, (q1,q2,q3,q4))
+            vs_relative : tuple (PID, distance, quaternion)
 
             .. note::
                This needs the feature ``VIRTUAL_SITES_RELATIVE``
@@ -662,23 +662,21 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, x):
-                if len(x) < 3:
+                if len(x) != 3:
                     raise ValueError(
-                        "vs_relative needs input like id,distance,(q1,q2,q3,q4).")
-                _relto = x[0]
-                _dist = x[1]
-                q = x[2]
-                cdef Quaternion[double] _q
+                        "vs_relative needs input in the form [id, distance, quaternion].")
+                rel_to, dist, quat = x
+                check_type_or_throw_except(
+                    rel_to, 1, int, "The particle id has to be given as an int.")
+                check_type_or_throw_except(
+                    dist, 1, float, "The distance has to be given as a float.")
+                check_type_or_throw_except(
+                    quat, 4, float, "The quaternion has to be given as a tuple of 4 floats.")
+                cdef Quaternion[double] q
                 for i in range(4):
-                    _q[i] = q[i]
+                    q[i] = quat[i]
 
-                if is_valid_type(_relto, int) and is_valid_type(
-                        _dist, float) and all(is_valid_type(fq, float) for fq in q):
-
-                    set_particle_vs_relative(self._id, _relto, _dist, _q)
-                else:
-                    raise ValueError(
-                        "vs_relative needs input like id<int>,distance<float>,(q1<float>,q2<float>,q3<float>,q4<float>).")
+                set_particle_vs_relative(self._id, rel_to, dist, q)
 
             def __get__(self):
                 self.update_particle_data()
@@ -690,21 +688,24 @@ cdef class ParticleHandle:
                 return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
 
         # vs_auto_relate_to
-        def vs_auto_relate_to(self, _relto):
+        def vs_auto_relate_to(self, rel_to):
             """
-            Setup this particle as virtual site relative to the particle with the given ParticleHandle or id.
+            Setup this particle as virtual site relative to the particle
+            in argument ``rel_to``.
+
+            Parameters
+            -----------
+            rel_to : :obj:`int` or :obj:`ParticleHandle`
+                Particle to relate to (either particle id or particle object).
 
             """
-            # If _relto is of type ParticleHandle,
+            # If rel_to is of type ParticleHandle,
             # resolve id of particle which to relate to
-            if not is_valid_type(_relto, int):
-                if not isinstance(_relto, ParticleHandle):
-                    raise ValueError(
-                        "Argument of vs_auto_relate_to has to be of type ParticleHandle or int."
-                    )
-                else:
-                    _relto = _relto.id
-            vs_relate_to(self._id, _relto)
+            if isinstance(rel_to, ParticleHandle):
+                rel_to = rel_to.id
+            check_type_or_throw_except(
+                rel_to, 1, int, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int.")
+            vs_relate_to(self._id, rel_to)
 
     IF DIPOLES:
         property dip:
