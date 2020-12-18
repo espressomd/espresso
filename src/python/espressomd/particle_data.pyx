@@ -56,6 +56,33 @@ cdef class ParticleHandle:
     cdef int update_particle_data(self) except -1:
         self.particle_data = &get_particle_data(self._id)
 
+    def to_dict(self):
+        """
+        Returns the particle's attributes as a dictionary.
+
+        It includes the content of ``particle_attributes``, minus a few exceptions:
+
+        - :attr:`~ParticleHandle.dip`, :attr:`~ParticleHandle.director`:
+          Setting only the director will overwrite the orientation of the
+          particle around the axis parallel to dipole moment/director.
+          Quaternions contain the full info.
+        - :attr:`~ParticleHandle.image_box`, :attr:`~ParticleHandle.node`
+
+        """
+
+        pickle_attr = copy(particle_attributes)
+        for i in ["director", "dip", "image_box", "node"]:
+            if i in pickle_attr:
+                pickle_attr.remove(i)
+        IF MASS == 0:
+            pickle_attr.remove("mass")
+        pdict = {}
+
+        for property_ in pickle_attr:
+            pdict[property_] = ParticleHandle(
+                self.id).__getattribute__(property_)
+        return pdict
+
     def __str__(self):
         res = collections.OrderedDict()
         # Id and pos first, then the rest
@@ -1676,6 +1703,37 @@ class ParticleSlice(_ParticleSliceImpl):
                 f"ParticleHandle does not have the attribute {name}.")
         super().__setattr__(name, value)
 
+    def to_dict(self):
+        """
+        Returns the particles attributes as a dictionary.
+
+        It can be used to save the particle data and recover it by using
+
+        >>> p = system.part.add(...)
+        >>> particle_dict = p.to_dict()
+        >>> system.part.add(particle_dict)
+
+        It includes the content of ``particle_attributes``, minus a few exceptions:
+
+        - :attr:`~ParticleHandle.dip`, :attr:`~ParticleHandle.director`:
+          Setting only the director will overwrite the orientation of the
+          particle around the axis parallel to dipole moment/director.
+          Quaternions contain the full info.
+        - :attr:`~ParticleHandle.image_box`, :attr:`~ParticleHandle.node`
+
+        """
+
+        odict = {}
+        key_list = [p.id for p in self]
+        for particle_number in key_list:
+            pdict = ParticleHandle(particle_number).to_dict()
+            for p_key, p_value in pdict.items():
+                if p_key in odict:
+                    odict[p_key].append(p_value)
+                else:
+                    odict[p_key] = [p_value]
+        return odict
+
 
 cdef class ParticleList:
     """
@@ -1712,21 +1770,11 @@ cdef class ParticleList:
 
         """
 
-        pickle_attr = copy(particle_attributes)
-        for i in ["director", "dip", "id", "image_box", "node"]:
-            if i in pickle_attr:
-                pickle_attr.remove(i)
-        IF MASS == 0:
-            pickle_attr.remove("mass")
         odict = {}
-        key_list = [p.id for p in self]
-        for particle_number in key_list:
-            pdict = {}
-
-            for property_ in pickle_attr:
-                pdict[property_] = ParticleHandle(
-                    particle_number).__getattribute__(property_)
-            odict[particle_number] = pdict
+        for p in self:
+            pdict = p.to_dict()
+            del pdict["id"]
+            odict[p.id] = pdict
         return odict
 
     def __setstate__(self, params):
