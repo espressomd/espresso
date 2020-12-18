@@ -413,7 +413,18 @@ cdef class ParticleHandle:
 
         property director:
             """
-            The particle director (z-axis in the body-fixed frame).
+            The particle director.
+
+            The ``director`` defines the the z-axis in the body-fixed frame.
+            If particle rotations happen, the director, i.e., the body-fixed
+            coordinate system co-rotates. Properties such as the angular
+            velocity :attr:`espressomd.particle_data.ParticleHandle.omega_body`
+            are evaluated in this body-fixed coordinate system.
+            When using particle dipoles, the dipole moment is co-aligned with
+            the particle director. Setting the director thus modifies the
+            dipole moment orientation (:attr:`espressomd.particle_data.ParticleHandle.dip`)
+            and vice verca.
+            See also :ref:`Rotational degrees of freedom and particle anisotropy`.
 
             director : (3,) array_like of :obj:`float`
 
