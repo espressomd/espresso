@@ -310,8 +310,6 @@ double lb_lbfluid_get_gamma_odd() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     return lbpar_gpu.gamma_odd;
-#else
-    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {

@@ -106,10 +106,11 @@ cdef class HydrodynamicInteraction(Actor):
             raise ValueError("tau has to be a positive double")
 
     def valid_keys(self):
-        return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
+        return {"agrid", "dens", "ext_force_density", "visc", "tau",
+                "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"}
 
     def required_keys(self):
-        return ["dens", "agrid", "visc", "tau"]
+        return {"dens", "agrid", "visc", "tau"}
 
     def default_params(self):
         return {"agrid": -1.0,
@@ -162,6 +163,10 @@ cdef class HydrodynamicInteraction(Actor):
         if not self._params["bulk_visc"] == default_params["bulk_visc"]:
             self._params['bulk_visc'] = self.bulk_viscosity
         self._params['ext_force_density'] = self.ext_force_density
+        if 'gamma_odd' in self._params:
+            self._params['gamma_odd'] = lb_lbfluid_get_gamma_odd()
+        if 'gamma_even' in self._params:
+            self._params['gamma_even'] = lb_lbfluid_get_gamma_even()
 
         return self._params
 
