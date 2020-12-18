@@ -28,7 +28,7 @@ import unittest_decorators as utx
 try:
     import MDAnalysis as mda
     from espressomd import MDA_ESP
-    skipIfMissingPythonPackage = utx._id
+    skipIfMissingPythonPackage = utx.no_skip
 except ImportError:
     skipIfMissingPythonPackage = ut.skip(
         "Python module MDAnalysis not available, skipping test!")
