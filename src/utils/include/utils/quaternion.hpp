@@ -31,6 +31,7 @@
 
 #include "utils/Array.hpp"
 #include "utils/Vector.hpp"
+#include "utils/matrix.hpp"
 
 namespace Utils {
 template <typename T> struct Quaternion {
@@ -68,6 +69,15 @@ template <typename T, typename U,
           std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 Quaternion<T> operator*(const U &b, const Quaternion<T> &a) {
   return boost::qvm::operator*(a, b);
+}
+
+template <typename T> Matrix<T, 3, 3> rotation_matrix(Quaternion<T> const &q) {
+  auto const normed_q = q.normalized();
+  auto const id_mat = Utils::identity_mat<double, 3, 3>();
+  auto const v1 = normed_q * id_mat.col<0>();
+  auto const v2 = normed_q * id_mat.col<1>();
+  auto const v3 = normed_q * id_mat.col<2>();
+  return {{v1[0], v2[0], v3[0]}, {v1[1], v2[1], v3[1]}, {v1[2], v2[2], v3[2]}};
 }
 
 using boost::qvm::operator*;

@@ -153,7 +153,7 @@ void propagate_omega_quat_particle(Particle &p) {
   /* and rescale quaternion, so it is exactly of unit length */
   auto const scale = p.r.quat.norm();
   if (scale == 0) {
-    p.r.quat[0] = 1;
+    p.r.quat = Utils::Quaternion<double>::identity();
   } else {
     p.r.quat /= scale;
   }

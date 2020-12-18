@@ -33,6 +33,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/math/tensor_product.hpp>
+#include <utils/matrix.hpp>
 
 namespace Coulomb {
 inline Utils::Vector3d central_force(double const q1q2,
@@ -109,10 +110,10 @@ pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
  * @param dist distance norm
  * @return Contribution to the pressure tensor.
  */
-inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const &p1,
-                                                       Particle const &p2,
-                                                       Utils::Vector3d const &d,
-                                                       double dist) {
+inline Utils::Matrix<double, 3, 3> pair_pressure(Particle const &p1,
+                                                 Particle const &p2,
+                                                 Utils::Vector3d const &d,
+                                                 double dist) {
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
