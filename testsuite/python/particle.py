@@ -377,6 +377,16 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaises(TypeError):
             system.part[[ids[0], 1.2]]
 
+    def test_to_dict(self):
+        self.system.part.clear()
+        p = self.system.part.add(
+            pos=np.random.uniform(size=(10, 3)) * self.system.box_l)
+        pp = str(p)
+        pdict = p.to_dict()
+        p.remove()
+        self.system.part.add(pdict)
+        self.assertEqual(str(self.system.part.select()), pp)
+
 
 if __name__ == "__main__":
     ut.main()
