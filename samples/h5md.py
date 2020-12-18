@@ -40,7 +40,7 @@ for polymer in positions:
     monomers = system.part.add(pos=polymer)
     previous_part = None
     for part in monomers:
-        if not previous_part is None:
+        if previous_part:
             part.add_bond((fene, previous_part))
         previous_part = part
 

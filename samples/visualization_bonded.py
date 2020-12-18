@@ -51,7 +51,7 @@ system.bonded_inter[0] = HarmonicBond(k=0.5, r_0=1.0)
 previous_part = None
 for i in range(n_part):
     part = system.part.add(pos=np.random.random(3) * system.box_l)
-    if not previous_part is None:
+    if previous_part:
         part.add_bond((system.bonded_inter[0], previous_part))
     previous_part = part
 

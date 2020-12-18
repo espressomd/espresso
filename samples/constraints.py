@@ -76,7 +76,7 @@ positions = polymer.linear_polymer_positions(n_polymers=1, beads_per_chain=50,
 polymer = system.part.add(pos=positions[0])
 previous_part = None
 for part in polymer:
-    if not previous_part is None:
+    if previous_part:
         part.add_bond((fene, previous_part))
     previous_part = part
 
