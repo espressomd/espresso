@@ -107,7 +107,7 @@ class dds(ut.TestCase):
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 1,
                "Skipping test: only runs for n_nodes == 1")
-    def test_00_gen_reference_data(self):
+    def gen_reference_data(self):
         system = self.system
 
         # add particles
