@@ -65,6 +65,9 @@ class TestLB:
             tau=self.system.time_step)
         self.system.actors.add(self.lbf)
         with self.assertRaises(ValueError):
+            self.lbf.tau = -0.1
+        self.assertAlmostEqual(self.lbf.tau, self.system.time_step, places=6)
+        with self.assertRaises(ValueError):
             self.lbf.density = -0.1
         self.lbf.density = 1.0
         with self.assertRaises(ValueError):
