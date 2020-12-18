@@ -30,6 +30,7 @@
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 
 /** Langevin thermostat for particle translational velocities.
  *  Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).
@@ -77,10 +78,11 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
 
   // In case of anisotropic particle: body-fixed reference frame. Otherwise:
   // lab-fixed reference frame.
+  const Utils::Matrix<double, 3, 3> fric_mat =
+      boost::qvm::diag_mat(pref_friction);
   auto const friction_op =
-      aniso_flag ? convert_body_to_space(p, diag_matrix(pref_friction))
-                 : diag_matrix(pref_friction);
-  auto const noise_op = diag_matrix(pref_noise);
+      aniso_flag ? convert_body_to_space(p, fric_mat) : fric_mat;
+  const Utils::Matrix<double, 3, 3> noise_op = boost::qvm::diag_mat(pref_noise);
 #else
   auto const &friction_op = pref_friction;
   auto const &noise_op = pref_noise;

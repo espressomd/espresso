@@ -37,7 +37,8 @@ cdef extern from "cells.hpp":
 
     const DomainDecomposition * get_domain_decomposition()
 
-    vector[pair[int, int]] mpi_get_pairs(double distance)
+    vector[pair[int, int]] mpi_get_pairs(double distance) except +
+    vector[pair[int, int]] mpi_get_pairs_of_types(double distance, vector[int] types) except +
     vector[int] mpi_resort_particles(int global_flag)
     void mpi_bcast_cell_structure(int cs)
     void mpi_set_use_verlet_lists(bool use_verlet_lists)

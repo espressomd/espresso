@@ -35,6 +35,7 @@
 #include "grid.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 
 #include <list>
 #include <stdexcept>
