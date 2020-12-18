@@ -28,6 +28,8 @@ import unittest as ut
 import unittest_decorators as utx
 from tests_common import abspath
 
+DIPOLAR_PREFACTOR = 1.1
+
 
 @utx.skipIfMissingFeatures(["DIPOLES", "FFTW"])
 class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
@@ -61,7 +63,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         box_l = np.cbrt(4 * n_particle * np.pi / (3 * rho)) * particle_radius
         s.box_l = 3 * [box_l]
         ref_E_path = abspath("data/mdlc_reference_data_energy.dat")
-        ref_E = float(np.genfromtxt(ref_E_path))
+        ref_E = float(np.genfromtxt(ref_E_path)) * DIPOLAR_PREFACTOR
 
         # Particles
         data = np.genfromtxt(
@@ -69,13 +71,16 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
         s.part[:].rotation = (1, 1, 1)
 
-        p3m = magnetostatics.DipolarP3M(prefactor=1, mesh=32, accuracy=1E-4)
+        p3m = magnetostatics.DipolarP3M(
+            prefactor=DIPOLAR_PREFACTOR, mesh=32, accuracy=1E-4)
         dlc = magnetostatic_extensions.DLC(maxPWerror=1E-5, gap_size=2.)
         s.actors.add(p3m)
         s.actors.add(dlc)
         s.integrator.run(0)
-        err_f = self.vector_error(s.part[:].f, data[:, 7:10])
-        err_t = self.vector_error(s.part[:].torque_lab, data[:, 10:13])
+        err_f = self.vector_error(
+            s.part[:].f, data[:, 7:10] * DIPOLAR_PREFACTOR)
+        err_t = self.vector_error(
+            s.part[:].torque_lab, data[:, 10:13] * DIPOLAR_PREFACTOR)
         err_e = s.analysis.energy()["dipolar"] - ref_E
 
         tol_f = 2E-3
@@ -104,14 +109,16 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part[:].rotation = (1, 1, 1)
 
         p3m = magnetostatics.DipolarP3M(
-            prefactor=1, mesh=32, accuracy=1E-6, epsilon="metallic")
+            prefactor=DIPOLAR_PREFACTOR, mesh=32, accuracy=1E-6, epsilon="metallic")
         s.actors.add(p3m)
         s.integrator.run(0)
         expected = np.genfromtxt(
             abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
-        err_f = self.vector_error(s.part[:].f, expected[:, 0:3])
-        err_t = self.vector_error(s.part[:].torque_lab, expected[:, 3:6])
-        ref_E = 5.570
+        err_f = self.vector_error(
+            s.part[:].f, expected[:, 0:3] * DIPOLAR_PREFACTOR)
+        err_t = self.vector_error(
+            s.part[:].torque_lab, expected[:, 3:6] * DIPOLAR_PREFACTOR)
+        ref_E = 5.570 * DIPOLAR_PREFACTOR
         err_e = s.analysis.energy()["dipolar"] - ref_E
 
         tol_f = 2E-3
@@ -141,7 +148,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part[:].rotation = (1, 1, 1)
 
         scafacos = magnetostatics.Scafacos(
-            prefactor=1,
+            prefactor=DIPOLAR_PREFACTOR,
             method_name="p2nfft",
             method_params={
                 "p2nfft_verbose_tuning": 0,
@@ -157,9 +164,11 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.integrator.run(0)
         expected = np.genfromtxt(
             abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
-        err_f = self.vector_error(s.part[:].f, expected[:, 0:3])
-        err_t = self.vector_error(s.part[:].torque_lab, expected[:, 3:6])
-        ref_E = 5.570
+        err_f = self.vector_error(
+            s.part[:].f, expected[:, 0:3] * DIPOLAR_PREFACTOR)
+        err_t = self.vector_error(
+            s.part[:].torque_lab, expected[:, 3:6] * DIPOLAR_PREFACTOR)
+        ref_E = 5.570 * DIPOLAR_PREFACTOR
         err_e = s.analysis.energy()["dipolar"] - ref_E
 
         tol_f = 2E-3
