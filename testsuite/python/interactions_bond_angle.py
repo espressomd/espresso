@@ -149,7 +149,6 @@ class InteractionsAngleBondTest(ut.TestCase):
         # Remove bonds
         p0.delete_bond((bond_instance, 1, 2))
         p0.delete_bond((self.harmonic_bond, 1))
-        p0.delete_bond((self.harmonic_bond, 2))
 
     def test_angle_harmonic(self):
         ah_bend = 1.

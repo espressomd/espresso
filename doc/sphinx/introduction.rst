@@ -189,9 +189,9 @@ Using the id in square brackets, the respective particle can be accessed from th
     >>> print(system.part[3])
     [1.0, 1.0, 2.0]
 
-Especially for larger simulation setups, explicit handling of numerical ids can quickly become confusing and
-is thus error-prone. We therefore highly recommend using :class:`~espressomd.particle_data.ParticleHandle`: instead
-wherever possible.
+For larger simulation setups, explicit handling of numerical ids can quickly
+become confusing and is thus error-prone. We therefore highly recommend using
+:class:`~espressomd.particle_data.ParticleHandle` instead wherever possible.
 
 :ref:`Properties of several particles<Interacting with groups of particles>`
 can be accessed by using Python slices: ::
@@ -246,7 +246,7 @@ by adding the instance to :attr:`~espressomd.system.System.bonded_inter`: ::
 
 Finally, the bond can be added to particles using the :meth:`~espressomd.particle_data.ParticleHandle.add_bond()`
 method of :class:`~espressomd.particle_data.ParticleHandle` with the instance of the bond class and the
-:class:`~espressomd.particle_data.ParticleHandle` the bond partner particle: ::
+instance of the partner particle: ::
 
     part1.add_bond((harmonic, part2))
 

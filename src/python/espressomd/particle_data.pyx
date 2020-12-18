@@ -1288,7 +1288,6 @@ cdef class ParticleHandle:
             and the last element is the ID of the partner particle to be bonded
             to.
 
-
         See Also
         --------
         delete_bond : Delete an unverified bond held by the ``Particle``.
@@ -1304,7 +1303,7 @@ cdef class ParticleHandle:
         delete_particle_bond(
             self._id, make_const_span[int](bond_info, len(bond)))
 
-    def check_bond_or_throw_exception(self, bond):
+    def normalize_and_check_bond_or_throw_exception(self, bond):
         """
         Checks the validity of the given bond:
 
@@ -1316,22 +1315,25 @@ cdef class ParticleHandle:
 
         Throws an exception if any of these are not met.
 
+        Normalize the bond, i.e. replace bond ids by bond objects and particle
+        objects by particle ids.
+
         """
         # Has it []-access
         if not hasattr(bond, "__getitem__"):
             raise ValueError(
                 "Bond needs to be a tuple or list containing bond type and partners.")
 
-        # Bond type or numerical bond id
-        if not isinstance(bond[0], BondedInteraction):
-            if is_valid_type(bond[0], int):
-                bond[0] = BondedInteractions()[bond[0]]
-            else:
-                raise Exception(
-                    "1st element of Bond has to be of type BondedInteraction or int.")
+        bond = list(bond)
 
-        # Check whether the bond has been added to the list of active bonded
-        # interactions
+        # Bond type or numerical bond id
+        if is_valid_type(bond[0], int):
+            bond[0] = BondedInteractions()[bond[0]]
+        elif not isinstance(bond[0], BondedInteraction):
+            raise Exception(
+                "1st element of Bond has to be of type BondedInteraction or int.")
+
+        # Check the bond is in the list of active bonded interactions
         if bond[0]._bond_id == -1:
             raise Exception(
                 "The bonded interaction has not yet been added to the list of active bonds in ESPResSo.")
@@ -1339,35 +1341,35 @@ cdef class ParticleHandle:
         # Validity of the numeric id
         if bond[0]._bond_id >= bonded_ia_params.size():
             raise ValueError(
-                "The bond type", bond[0]._bond_id, "does not exist.")
+                f"The bond type f{bond[0]._bond_id} does not exist.")
 
         bond_id = bond[0]._bond_id
         # Number of partners
         if bonded_ia_params[bond_id].num != len(bond) - 1:
-            raise ValueError("Bond of type", bond[0]._bond_id, "needs",
-                             bonded_ia_params[bond_id].num, "partners.")
+            raise ValueError(f"Bond {bond[0]} needs "
+                             f"{bonded_ia_params[bond_id].num} partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):
-            if not is_valid_type(bond[i], int):
-                if not isinstance(bond[i], ParticleHandle):
-                    raise ValueError(
-                        "Bond partners have to be of type integer or ParticleHandle.")
-                else:
-                    # Put the particle id instead of the particle handle
-                    bond[i] = bond[i].id
+            if isinstance(bond[i], ParticleHandle):
+                # Put the particle id instead of the particle handle
+                bond[i] = bond[i].id
+            elif not is_valid_type(bond[i], int):
+                raise ValueError(
+                    "Bond partners have to be of type integer or ParticleHandle.")
 
-    def add_bond(self, _bond):
+        return tuple(bond)
+
+    def add_bond(self, bond):
         """
         Add a single bond to the particle.
 
         Parameters
         ----------
-        _bond : :obj:`tuple`
-            tuple where the first element is either a bond ID of a bond type,
-            and the last element is the ID of the partner particle to be bonded
-            to.
-
+        bond : :obj:`tuple`
+            tuple where the first element is either a bond ID or a bond object,
+            and the next elements are particle ids or particle objects to be
+            bonded to.
 
         See Also
         --------
@@ -1375,84 +1377,80 @@ cdef class ParticleHandle:
 
         Examples
         --------
-        >>> import espressomd
-        >>> from espressomd.interactions import HarmonicBond
+        >>> import espressomd.interactions
         >>>
-        >>> system = espressomd.System()
+        >>> system = espressomd.System(box_l=3 * [10])
         >>>
         >>> # define a harmonic potential and add it to the system
-        >>> harm_bond = HarmonicBond(r_0=1, k=5)
+        >>> harm_bond = espressomd.interactions.HarmonicBond(r_0=1, k=5)
         >>> system.bonded_inter.add(harm_bond)
         >>>
         >>> # add two particles
-        >>> system.part.add(id=0, pos=(1, 0, 0))
-        >>> system.part.add(id=1, pos=(2, 0, 0))
+        >>> p1 = system.part.add(pos=(1, 0, 0))
+        >>> p2 = system.part.add(pos=(2, 0, 0))
         >>>
         >>> # bond them via the bond type
-        >>> system.part[0].add_bond((harm_bond,1))
+        >>> p1.add_bond((harm_bond, p2))
         >>> # or via the bond index (zero in this case since it is the first one added)
-        >>> system.part[0].add_bond((0,1))
+        >>> p1.add_bond((0, p2))
 
         """
 
-        if tuple(_bond) in self.bonds:
-            raise Exception(
-                f"Bond {tuple(_bond)} already exists on particle {self._id}.")
+        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+        if _bond in self.bonds:
+            raise RuntimeError(
+                f"Bond {_bond} already exists on particle {self._id}.")
+        self.add_verified_bond(_bond)
 
-        bond = list(_bond)  # As we will modify it
-        self.check_bond_or_throw_exception(bond)
-        self.add_verified_bond(bond)
-
-    def delete_bond(self, _bond):
+    def delete_bond(self, bond):
         """
         Delete a single bond from the particle.
 
         Parameters
         ----------
-        _bond :
-            bond to be deleted
+        bond : :obj:`tuple`
+            tuple where the first element is either a bond ID or a bond object,
+            and the next elements are particle ids or particle objects that are
+            bonded to.
 
         See Also
         --------
-        bonds :  Particle property, a list of all current bonds.
+        bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
 
         Examples
         --------
 
-        >>> import espressomd
-        >>> from espressomd.interactions import HarmonicBond
+        >>> import espressomd.interactions
         >>>
-        >>> system = espressomd.System()
-
-        define a harmonic potential and add it to the system
-
-        >>> harm_bond = HarmonicBond(r_0=1, k=5)
+        >>> system = espressomd.System(box_l=3 * [10])
+        >>>
+        >>> # define a harmonic potential and add it to the system
+        >>> harm_bond = espressomd.interactions.HarmonicBond(r_0=1, k=5)
         >>> system.bonded_inter.add(harm_bond)
-
-        add two bonded particles to particle 0
-
-        >>> system.part.add(id=0, pos=(1, 0, 0))
-        >>> system.part.add(id=1, pos=(2, 0, 0))
-        >>> system.part.add(id=2, pos=(1, 1, 0))
-        >>> system.part[0].add_bond((harm_bond,1))
-        >>> system.part[0].add_bond((harm_bond,2))
         >>>
-        >>> bonds = system.part[0].bonds
-        >>> print(bonds)
-        ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 1), (HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2))
-
-        delete the bond between particle 0 and particle 1
-
-        >>> system.part[0].delete_bond(bonds[0])
-        >>> print(system.part[0].bonds)
+        >>> # bond two particles to the first one
+        >>> p0 = system.part.add(pos=(1, 0, 0))
+        >>> p1 = system.part.add(pos=(2, 0, 0))
+        >>> p2 = system.part.add(pos=(1, 1, 0))
+        >>> p0.add_bond((harm_bond, p1))
+        >>> p0.add_bond((harm_bond, p2))
+        >>>
+        >>> print(p0.bonds)
+        ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 1),
+         (HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2))
+        >>> # delete the first bond
+        >>> p0.delete_bond(p0.bonds[0])
+        >>> print(p0.bonds)
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2),)
 
         """
 
-        bond = list(_bond)  # as we modify it
-        self.check_bond_or_throw_exception(bond)
-        self.delete_verified_bond(bond)
+        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+        if _bond not in self.bonds:
+            raise RuntimeError(
+                f"Bond {_bond} doesn't exist on particle {self._id}.")
+        self.delete_verified_bond(_bond)
 
     def delete_all_bonds(self):
         """
@@ -1461,7 +1459,7 @@ cdef class ParticleHandle:
         See Also
         ----------
         delete_bond : Delete an unverified bond held by the particle.
-        bonds : Particle property containing a list of all current bonds held by particle.
+        bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
 
