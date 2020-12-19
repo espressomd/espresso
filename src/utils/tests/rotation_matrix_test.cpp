@@ -21,10 +21,10 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <utils/math/rotation_matrix.hpp>
 #include <utils/math/vec_rotate.hpp>
 
 #include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 #include <utils/quaternion.hpp>
 
 #include <cmath>
@@ -44,10 +44,12 @@ BOOST_AUTO_TEST_CASE(rotation_matrix_test) {
   auto const q =
       Quaternion<double>{cos(angle / 2), sin(angle / 2) * axis[0],
                          sin(angle / 2) * axis[1], sin(angle / 2) * axis[2]};
+  auto const M = rotation_matrix(q);
 
   auto const v = Vector3d{3., 2., 1.};
   auto const expected = vec_rotate(axis, angle, v);
-  auto const result = rotation_matrix(q) * v;
+  auto const result = M * v;
+
   BOOST_CHECK_SMALL((expected - result).norm2(),
                     std::numeric_limits<double>::epsilon());
 }

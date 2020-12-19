@@ -58,7 +58,7 @@ class RandomPairTest(ut.TestCase):
 
     def pairs_n2(self, dist):
         # Go through list of all possible pairs for full periodicity
-        # and skip those that ar not within the desired distance
+        # and skip those that are not within the desired distance
         # for the current periodicity
 
         pairs = []
@@ -73,7 +73,7 @@ class RandomPairTest(ut.TestCase):
             self.assertEqual(e, 1)
 
     def check_pairs(self, n2_pairs):
-        cs_pairs = self.system.cell_system.get_pairs_(1.5)
+        cs_pairs = self.system.cell_system.get_pairs(1.5)
         self.check_duplicates(cs_pairs)
         self.assertGreater(len(cs_pairs), 0)
         self.assertEqual(n2_pairs ^ set(cs_pairs), set())
