@@ -411,20 +411,35 @@ cdef class ParticleHandle:
                 pointer_to_quat(self.particle_data, x)
                 return array_locked([x[0], x[1], x[2], x[3]])
 
-        # Director (z-axis in body fixed frame)
         property director:
             """
-            Director.
+            The particle director.
+
+            The ``director`` defines the the z-axis in the body-fixed frame.
+            If particle rotations happen, the director, i.e., the body-fixed
+            coordinate system co-rotates. Properties such as the angular
+            velocity :attr:`espressomd.particle_data.ParticleHandle.omega_body`
+            are evaluated in this body-fixed coordinate system.
+            When using particle dipoles, the dipole moment is co-aligned with
+            the particle director. Setting the director thus modifies the
+            dipole moment orientation (:attr:`espressomd.particle_data.ParticleHandle.dip`)
+            and vice verca.
+            See also :ref:`Rotational degrees of freedom and particle anisotropy`.
+
+            director : (3,) array_like of :obj:`float`
 
             .. note::
-               Setting the director is not implemented.
                This needs the feature ``ROTATION``.
 
             """
 
-            def __set__(self, _q):
-                raise AttributeError(
-                    "Setting the director is not implemented in the C++-core of ESPResSo.")
+            def __set__(self, _d):
+                cdef Vector3d myd
+                check_type_or_throw_except(
+                    _d, 3, float, "Particle director has to be 3 floats.")
+                for i in range(3):
+                    myd[i] = _d[i]
+                set_particle_director(self._id, myd)
 
             def __get__(self):
                 self.update_particle_data()
