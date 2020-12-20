@@ -68,12 +68,22 @@ class TestLB:
             tau=self.system.time_step)
         self.system.actors.add(self.lbf)
         with self.assertRaises(ValueError):
+            self.lbf.tau = -0.1
+        self.assertAlmostEqual(self.lbf.tau, self.system.time_step, places=6)
+        with self.assertRaises(ValueError):
+            self.lbf.density = -0.1
+        self.lbf.density = 1.0
+        with self.assertRaises(ValueError):
             self.lbf.viscosity = -0.1
+        self.lbf.density = 2.4
+        with self.assertRaises(ValueError):
+            self.lbf.density = -2.4
+        self.assertAlmostEqual(self.lbf.density, 2.4, places=6)
         self.lbf.seed = 56
         self.system.integrator.run(1)
         self.assertEqual(self.lbf.seed, 57)
         self.lbf.tau = 0.2
-        self.assertAlmostEqual(self.lbf.tau, 0.2)
+        self.assertAlmostEqual(self.lbf.tau, 0.2, places=6)
         self.lbf[0, 0, 0].velocity = [1, 2, 3]
         np.testing.assert_allclose(
             np.copy(self.lbf[0, 0, 0].velocity), [1, 2, 3], atol=1E-10)

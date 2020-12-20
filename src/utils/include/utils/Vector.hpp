@@ -159,44 +159,6 @@ using Vector3f = VectorXf<3>;
 template <size_t N> using VectorXi = Vector<int, N>;
 using Vector3i = VectorXi<3>;
 
-template <class T, size_t N, size_t M> using Matrix = Vector<Vector<T, M>, N>;
-
-/**
- * @brief Trace of a matrix.
- *
- * Returns the sum of the diagonal elements
- * of a square matrix.
- *
- * @tparam T Arithmetic type
- * @tparam N Matrix dimension
- * @param m Input matrix
- * @return Trace of matrix.
- */
-template <class T, size_t N> T trace(Matrix<T, N, N> const &m) {
-  auto tr = T{};
-  for (size_t i = 0; i < N; i++)
-    tr += m[i][i];
-
-  return tr;
-}
-
-/**
- * @brief Flatten a matrix to a linear vector.
- *
- * @param m Input Matrix
- * @return Flat vector with elements of the matrix.
- */
-template <class T, size_t N, size_t M>
-Vector<T, N * M> flatten(Matrix<T, N, M> const &m) {
-  Vector<T, N * M> ret;
-
-  for (size_t i = 0; i < N; i++)
-    for (size_t j = 0; j < M; j++)
-      ret[i * M + j] = m[j][i];
-
-  return ret;
-}
-
 namespace detail {
 template <size_t N, typename T, typename U, typename Op>
 auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
@@ -352,70 +314,6 @@ auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
   using R = decltype(declval<T>() * declval<U>());
 
   return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
-}
-
-/* Matrix x Vector */
-template <class T>
-Vector<T, 3> operator*(Matrix<T, 3, 3> const &A, Vector<T, 3> const &v) {
-  return {v[0] * A[0][0] + v[1] * A[0][1] + v[2] * A[0][2],
-          v[0] * A[1][0] + v[1] * A[1][1] + v[2] * A[1][2],
-          v[0] * A[2][0] + v[1] * A[2][1] + v[2] * A[2][2]};
-}
-
-/**
- * @brief Transpose matrix
- * @param m Input matrix
- * @return Transposed matrix
- */
-template <class T> Matrix<T, 3, 3> transpose(Matrix<T, 3, 3> const &m) {
-  return {
-      {m[0][0], m[1][0], m[2][0]},
-      {m[0][1], m[1][1], m[2][1]},
-      {m[0][2], m[1][2], m[2][2]},
-  };
-}
-
-/**
- * @brief Diagonal matrix with diagonal elements from vector.
- *
- * Diagonal matrix with vector entries as diagonal:
- *
- * \f[
- *     D_{ij} = \delta_{ij} v_i
- * \f]
- *
- * Only implemented for 3x3 matrices.
- *
- * @tparam T scalar type
- * @param v Vector with diagonal elements
- */
-template <class T> Matrix<T, 3, 3> diag_matrix(Vector<T, 3> const &v) {
-  return {{v[0], 0, 0}, {0, v[1], 0}, {0, 0, v[2]}};
-}
-
-/**
- * @brief Matrix product
- *
- * Matrix product C, where
- *
- * \f[
- *     C_{ij} = \sum_k A_{ik} B_{kj}
- * \f]
- *
- * Only implemented for 3x3 matrices.
- *
- * @tparam T scalar type
- * @param A Left-hand side
- * @param B Right-hand side
- * @return Matrix product
- */
-template <class T>
-Matrix<T, 3, 3> operator*(Matrix<T, 3, 3> const &A, Matrix<T, 3, 3> const &B) {
-  auto const Bt = transpose(B);
-
-  return {{A[0] * Bt[0], A[0] * Bt[1], A[0] * Bt[2]},
-          {A[1] * Bt[0], A[1] * Bt[1], A[1] * Bt[2]},
-          {A[2] * Bt[0], A[2] * Bt[1], A[2] * Bt[2]}};
 }
 
 template <size_t N, typename T, class U,

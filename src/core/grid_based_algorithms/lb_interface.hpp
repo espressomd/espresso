@@ -121,11 +121,6 @@ double lb_lbfluid_get_tau();
 double lb_lbfluid_get_agrid();
 
 /**
- * @brief Get the global LB relaxation parameter for even modes.
- */
-double lb_lbfluid_get_gamma_even();
-
-/**
  * @brief Get the global LB bulk viscosity.
  */
 double lb_lbfluid_get_bulk_viscosity();

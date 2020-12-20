@@ -460,6 +460,12 @@ cdef class System:
         :obj:`int`
             The number of particles which have the given type.
 
+        Raises
+        ------
+        RuntimeError
+            If the particle ``type`` is not currently tracked by the system. 
+            To select which particle types are tracked, call :meth:`setup_type_map`.
+
         """
         check_type_or_throw_except(type, 1, int, "type must be 1 int")
         number = number_of_particles_with_type(type)

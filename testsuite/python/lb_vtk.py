@@ -25,7 +25,7 @@ import numpy as np
 try:
     import vtk
     from vtk.util import numpy_support as VN
-    skipIfMissingPythonPackage = ut.case._id
+    skipIfMissingPythonPackage = utx.no_skip
 except ImportError:
     skipIfMissingPythonPackage = ut.skip(
         "Python module vtk not available, skipping test!")

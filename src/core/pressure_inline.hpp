@@ -77,7 +77,7 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
-        obs_pressure.coulomb[i * 3 + j] += p_coulomb[i][j];
+        obs_pressure.coulomb[i * 3 + j] += p_coulomb(i, j);
       }
     }
   }

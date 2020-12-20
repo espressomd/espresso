@@ -65,9 +65,9 @@ N0 = 50  # number of titratable units
 K_diss = 0.0088
 
 for i in range(N0):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=1)
+    system.part.add(pos=np.random.random(3) * system.box_l, type=1)
 for i in range(N0, 2 * N0):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=2)
+    system.part.add(pos=np.random.random(3) * system.box_l, type=2)
 
 RE = None
 if args.mode == "reaction_ensemble":
