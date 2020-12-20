@@ -72,10 +72,10 @@ system.cell_system.skin = 0.4
 N0 = 1  # number of titratable units
 K_diss = 0.0088
 
-system.part.add(id=0, pos=[0, 0, 0] * system.box_l, type=3)
-system.part.add(id=1, pos=[1.0, 1.0, 1.0] * system.box_l / 2.0, type=1)
-system.part.add(id=2, pos=np.random.random() * system.box_l, type=2)
-system.part.add(id=3, pos=np.random.random() * system.box_l, type=2)
+system.part.add(pos=[0, 0, 0] * system.box_l, type=3)
+system.part.add(pos=[1.0, 1.0, 1.0] * system.box_l / 2.0, type=1)
+system.part.add(pos=np.random.random() * system.box_l, type=2)
+system.part.add(pos=np.random.random() * system.box_l, type=2)
 
 # create a harmonic bond between the two reacting particles => the
 # potential energy is quadratic in the elongation of the bond and

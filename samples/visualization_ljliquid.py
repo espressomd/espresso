@@ -96,7 +96,7 @@ volume = box_l**3
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+    system.part.add(pos=np.random.random(3) * system.box_l)
 
 print("Simulate {} particles in a cubic box {} at density {}."
       .format(n_part, box_l, density).strip())
