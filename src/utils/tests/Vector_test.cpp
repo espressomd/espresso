@@ -242,25 +242,6 @@ BOOST_AUTO_TEST_CASE(vector_broadcast) {
   BOOST_CHECK_EQUAL(v[1], 1.4);
 }
 
-BOOST_AUTO_TEST_CASE(transpose_test) {
-  // clang-format off
-  auto const A = Utils::Matrix<Utils::VectorXi<2>, 3, 3>{
-      {{0,0}, {0, 1}, {0, 2}},
-      {{1,0}, {1, 1}, {1, 2}},
-      {{2,0}, {2, 1}, {2, 2}}
-  };
-
-  auto const expected = Utils::Matrix<Utils::VectorXi<2>, 3, 3>{
-      {{0, 0}, {1, 0}, {2, 0}},
-      {{0, 1}, {1, 1}, {2, 1}},
-      {{0, 2}, {1, 2}, {2, 2}}
-  };
-  // clang-format on
-
-  auto const result = transpose(A);
-  BOOST_CHECK(result == expected);
-}
-
 BOOST_AUTO_TEST_CASE(products) {
   /* Types */
   {
@@ -282,35 +263,6 @@ BOOST_AUTO_TEST_CASE(products) {
     auto const v3 = Utils::Vector3i{11, 12, 13};
     BOOST_CHECK_EQUAL(v1 * v2, boost::inner_product(v1, v2, 0.));
     BOOST_CHECK_EQUAL(v1 * v3, boost::inner_product(v1, v3, 0.));
-  }
-
-  /* Matrix-Vector */
-  {
-    auto const result =
-        (Utils::Matrix<int, 3, 3>{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}) *
-        Utils::Vector<int, 3>{3, 4, 5};
-    auto const expected = Utils::Vector<int, 3>{26, 62, 98};
-
-    BOOST_CHECK_EQUAL(result[0], expected[0]);
-    BOOST_CHECK_EQUAL(result[1], expected[1]);
-    BOOST_CHECK_EQUAL(result[2], expected[2]);
-  }
-
-  /* Matrix-Matrix */
-  {
-    auto const A = Utils::Matrix<double, 3, 3>{{1, 2, 3}, {3, 2, 1}, {2, 1, 3}};
-    auto const Ai = Utils::Matrix<double, 3, 3>{{-5. / 12, 1. / 4, 1. / 3},
-                                                {7. / 12, 1. / 4, -2. / 3},
-                                                {1. / 12, -1. / 4, 1. / 3}};
-
-    auto const result = A * Ai;
-    auto const expected =
-        Utils::Matrix<double, 3, 3>{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-
-    for (int i = 0; i < 3; i++)
-      for (int j = 0; j < 3; j++)
-        BOOST_CHECK_SMALL(result[i][j] - expected[i][j],
-                          std::numeric_limits<double>::epsilon());
   }
 }
 
@@ -375,31 +327,6 @@ BOOST_AUTO_TEST_CASE(hadamard_division_test) {
 
   auto res4 = Utils::hadamard_division(a, a);
   BOOST_CHECK_EQUAL(res4, 1);
-}
-
-BOOST_AUTO_TEST_CASE(diag_matrix) {
-  auto const v = Utils::Vector3d{1, 2, 3};
-  auto const result = Utils::diag_matrix(v);
-
-  for (int i = 0; i < 3; i++)
-    for (int j = 0; j < 3; j++)
-      BOOST_CHECK_EQUAL(result[i][j], (i == j) ? v[i] : 0);
-}
-
-BOOST_AUTO_TEST_CASE(trace_) {
-  auto const A = Utils::Matrix<int, 3, 3>{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
-  auto const result = trace(A);
-  auto const expected = A[0][0] + A[1][1] + A[2][2];
-
-  BOOST_CHECK_EQUAL(expected, result);
-}
-
-BOOST_AUTO_TEST_CASE(flatten_) {
-  auto const A = Utils::Matrix<int, 2, 2>{{1, 2}, {3, 4}};
-  auto const result = flatten(A);
-  auto const expected = Utils::Vector<int, 4>{1, 3, 2, 4};
-
-  BOOST_CHECK(result == expected);
 }
 
 BOOST_AUTO_TEST_CASE(type_deduction) {

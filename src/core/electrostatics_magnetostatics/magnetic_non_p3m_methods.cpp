@@ -147,6 +147,13 @@ int magnetic_dipolar_direct_sum_sanity_checks() {
 double
 magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
                                          ParticleRange const &particles) {
+
+  if (box_geo.periodic(0) and box_geo.periodic(1) and box_geo.periodic(2) and
+      Ncut_off_magnetic_dipolar_direct_sum == 0) {
+    throw std::runtime_error("Dipolar direct sum with replica does not support "
+                             "a periodic system with zero replica.");
+  };
+
   std::vector<double> x, y, z;
   std::vector<double> mx, my, mz;
   std::vector<double> fx, fy, fz;

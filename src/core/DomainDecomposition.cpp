@@ -262,13 +262,15 @@ void DomainDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
         *part_lists++ = &(cells.at(i).particles());
       }
 }
-Utils::Vector3d DomainDecomposition::max_range() const {
+Utils::Vector3d DomainDecomposition::max_cutoff() const {
   auto dir_max_range = [this](int i) {
     return std::min(0.5 * m_box.length()[i], m_local_box.length()[i]);
   };
 
   return {dir_max_range(0), dir_max_range(1), dir_max_range(2)};
 }
+
+Utils::Vector3d DomainDecomposition::max_range() const { return cell_size; }
 int DomainDecomposition::calc_processor_min_num_cells() const {
   /* the minimal number of cells can be lower if there are at least two nodes
      serving a direction,

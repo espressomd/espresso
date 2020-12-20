@@ -94,7 +94,7 @@ void pressure_calc() {
           for (int k = 0; k < 3; k++)
             for (int l = 0; l < 3; l++)
               obs_pressure.bonded_contribution(bond_id)[k * 3 + l] +=
-                  tensor[k][l];
+                  tensor(k, l);
 
           return false;
         }

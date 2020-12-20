@@ -38,7 +38,7 @@ IF DIPOLES == 1:
 
     cdef extern from "electrostatics_magnetostatics/dipole.hpp" namespace "Dipole":
 
-        int set_Dprefactor(double prefactor)
+        void set_Dprefactor(double prefactor) except+
 
     cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
         int dawaanr_set_params()

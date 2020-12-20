@@ -44,7 +44,7 @@
 
 namespace Utils {
 
-template <typename T, std::size_t Rows, std::size_t Cols> struct Mat {
+template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
   using container = Utils::Array<T, Cols * Rows>;
   using pointer = typename container::pointer;
   using const_pointer = typename container::const_pointer;
@@ -62,12 +62,12 @@ template <typename T, std::size_t Rows, std::size_t Cols> struct Mat {
     ar &m_data;
   }
 
-  Mat() = default;
-  Mat(std::initializer_list<T> init_list) {
+  Matrix() = default;
+  Matrix(std::initializer_list<T> init_list) {
     assert(init_list.size() == Rows * Cols);
     std::copy(init_list.begin(), init_list.end(), begin());
   }
-  Mat(std::initializer_list<std::initializer_list<T>> init_list) {
+  Matrix(std::initializer_list<std::initializer_list<T>> init_list) {
     assert(init_list.size() == Rows);
     Utils::flatten(init_list, begin());
   }
@@ -88,22 +88,32 @@ template <typename T, std::size_t Rows, std::size_t Cols> struct Mat {
   constexpr iterator end() noexcept { return m_data.end(); };
   constexpr const_iterator end() const noexcept { return m_data.end(); };
 
-  static Mat<T, Rows, Cols> identity() {
+  template <std::size_t R> Vector<T, Cols> row() const {
+    static_assert(R < Rows, "Invalid row index.");
+    return boost::qvm::row<R>(*this);
+  }
+
+  template <std::size_t C> Vector<T, Rows> col() const {
+    static_assert(C < Cols, "Invalid column index.");
+    return boost::qvm::col<C>(*this);
+  }
+
+  Vector<T, Cols> diagonal() const {
     static_assert(Rows == Cols,
-                  "Identity matrix only defined for square matrices.");
-    return boost::qvm::identity_mat<T, Rows>();
+                  "Diagonal can only be retrieved from square matrices.");
+    return boost::qvm::diag(*this);
   }
 
-  static Mat<T, Rows, Cols> diagonal(Utils::Vector<T, Rows> const &v) {
-    static_assert(Rows == Cols, "Diagonal matrix has to be a square matrix.");
-    return boost::qvm::diag_mat(v);
+  T trace() const {
+    auto const d = diagonal();
+    return std::accumulate(d.begin(), d.end(), T{}, std::plus<T>{});
   }
 
-  Mat<T, Cols, Rows> transposed() const {
+  Matrix<T, Cols, Rows> transposed() const {
     return boost::qvm::transposed(*this);
   }
 
-  Mat<T, Rows, Cols> inversed() const {
+  Matrix<T, Rows, Cols> inversed() const {
     static_assert(Rows == Cols,
                   "Inversion of a non-square matrix not implemented.");
     return boost::qvm::inverse(*this);
@@ -122,14 +132,32 @@ using boost::qvm::operator*;
 using boost::qvm::operator*=;
 using boost::qvm::operator==;
 
+template <typename T, std::size_t M, std::size_t N>
+Utils::Vector<T, M * N> flatten(Matrix<T, M, N> const &m) {
+  return Utils::Vector<T, M * N>(m.begin(), m.end());
+}
+
+template <typename T, std::size_t Rows, std::size_t Cols>
+Matrix<T, Rows, Cols> diagonal_mat(Utils::Vector<T, Rows> const &v) {
+  static_assert(Rows == Cols, "Diagonal matrix has to be a square matrix.");
+  return boost::qvm::diag_mat(v);
+}
+
+template <typename T, std::size_t Rows, std::size_t Cols>
+Matrix<T, Rows, Cols> identity_mat() {
+  static_assert(Rows == Cols,
+                "Identity matrix only defined for square matrices.");
+  return boost::qvm::identity_mat<T, Rows>();
+}
+
 } // namespace Utils
 
 namespace boost {
 namespace qvm {
 
 template <typename T, std::size_t Rows, std::size_t Cols>
-struct mat_traits<Utils::Mat<T, Rows, Cols>> {
-  using mat_type = typename Utils::Mat<T, Rows, Cols>;
+struct mat_traits<Utils::Matrix<T, Rows, Cols>> {
+  using mat_type = typename Utils::Matrix<T, Rows, Cols>;
   static int const rows = Rows;
   static int const cols = Cols;
   using scalar_type = T;
@@ -163,18 +191,28 @@ struct mat_traits<Utils::Mat<T, Rows, Cols>> {
 };
 
 template <typename T, typename U>
-struct deduce_vec2<Utils::Mat<T, 2, 2>, Utils::Vector<U, 2>, 2> {
+struct deduce_vec2<Utils::Matrix<T, 2, 2>, Utils::Vector<U, 2>, 2> {
   using type = Utils::Vector<std::common_type_t<T, U>, 2>;
 };
 
 template <typename T, typename U>
-struct deduce_vec2<Utils::Mat<T, 3, 3>, Utils::Vector<U, 3>, 3> {
+struct deduce_vec2<Utils::Matrix<T, 3, 3>, Utils::Vector<U, 3>, 3> {
   using type = Utils::Vector<std::common_type_t<T, U>, 3>;
 };
 
 template <typename T, typename U>
-struct deduce_vec2<Utils::Mat<T, 4, 4>, Utils::Vector<U, 4>, 4> {
+struct deduce_vec2<Utils::Matrix<T, 4, 4>, Utils::Vector<U, 4>, 4> {
   using type = Utils::Vector<std::common_type_t<T, U>, 4>;
+};
+
+template <typename T, typename U>
+struct deduce_vec2<Utils::Matrix<T, 2, 3>, Utils::Vector<U, 3>, 2> {
+  using type = Utils::Vector<std::common_type_t<T, U>, 2>;
+};
+
+template <typename T, typename U>
+struct deduce_mat2<Utils::Matrix<T, 3, 3>, Utils::Matrix<U, 3, 3>, 3, 3> {
+  using type = Utils::Matrix<std::common_type_t<T, U>, 3, 3>;
 };
 
 } // namespace qvm
