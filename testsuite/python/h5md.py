@@ -30,7 +30,7 @@ import espressomd.interactions
 import espressomd.io.writer
 try:
     import h5py  # h5py has to be imported *after* espressomd (MPI)
-    skipIfMissingPythonPackage = ut.case._id
+    skipIfMissingPythonPackage = utx.no_skip
 except ImportError:
     skipIfMissingPythonPackage = ut.skip(
         "Python module h5py not available, skipping test!")
