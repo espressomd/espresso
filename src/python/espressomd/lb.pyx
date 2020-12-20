@@ -27,7 +27,7 @@ from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
 from . import utils
-from .utils import array_locked, is_valid_type
+from .utils import array_locked, is_valid_type, check_type_or_throw_except
 from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
 from .globals cimport time_step
 
@@ -106,10 +106,11 @@ cdef class HydrodynamicInteraction(Actor):
             raise ValueError("tau has to be a positive double")
 
     def valid_keys(self):
-        return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
+        return {"agrid", "dens", "ext_force_density", "visc", "tau",
+                "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"}
 
     def required_keys(self):
-        return ["dens", "agrid", "visc", "tau"]
+        return {"dens", "agrid", "visc", "tau"}
 
     def default_params(self):
         return {"agrid": -1.0,
@@ -162,6 +163,10 @@ cdef class HydrodynamicInteraction(Actor):
         if not self._params["bulk_visc"] == default_params["bulk_visc"]:
             self._params['bulk_visc'] = self.bulk_viscosity
         self._params['ext_force_density'] = self.ext_force_density
+        if 'gamma_odd' in self._params:
+            self._params['gamma_odd'] = lb_lbfluid_get_gamma_odd()
+        if 'gamma_even' in self._params:
+            self._params['gamma_even'] = lb_lbfluid_get_gamma_even()
 
         return self._params
 
@@ -204,24 +209,70 @@ cdef class HydrodynamicInteraction(Actor):
         cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
         return make_array_locked(v)
 
-    def print_vtk_velocity(self, path, bb1=None, bb2=None):
+    def write_vtk_velocity(self, path, bb1=None, bb2=None):
+        """Write the LB fluid velocity to a VTK file.
+        If both ``bb1`` and ``bb2`` are specified, return a subset of the grid.
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Path to the output ASCII file.
+        bb1 : (3,) array_like of :obj:`int`, optional
+            Node indices of the lower corner of the bounding box.
+        bb2 : (3,) array_like of :obj:`int`, optional
+            Node indices of the upper corner of the bounding box.
+
+        """
         cdef vector[int] bb1_vec
         cdef vector[int] bb2_vec
-        if bb1 is None or bb2 is None:
+        if bb1 is None and bb2 is None:
             lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
+        elif bb1 is None or bb2 is None:
+            raise ValueError(
+                "Invalid parameter: must provide either both bb1 and bb2, or none of them")
         else:
+            check_type_or_throw_except(bb1, 3, int,
+                                       "bb1 has to be an integer list of length 3")
+            check_type_or_throw_except(bb2, 3, int,
+                                       "bb2 has to be an integer list of length 3")
             bb1_vec = bb1
             bb2_vec = bb2
             lb_lbfluid_print_vtk_velocity(
                 utils.to_char_pointer(path), bb1_vec, bb2_vec)
 
-    def print_vtk_boundary(self, path):
+    def write_vtk_boundary(self, path):
+        """Write the LB boundaries to a VTK file.
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Path to the output ASCII file.
+
+        """
         lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
 
-    def print_velocity(self, path):
+    def write_velocity(self, path):
+        """Write the LB fluid velocity to a data file that can be loaded by
+        numpy, with format "x y z vx vy vz".
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Path to the output data file.
+
+        """
         lb_lbfluid_print_velocity(utils.to_char_pointer(path))
 
-    def print_boundary(self, path):
+    def write_boundary(self, path):
+        """Write the LB boundaries to a data file that can be loaded by numpy,
+        with format "x y z u".
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Path to the output data file.
+
+        """
         lb_lbfluid_print_boundary(utils.to_char_pointer(path))
 
     def save_checkpoint(self, path, binary):

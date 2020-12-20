@@ -44,6 +44,7 @@ using Utils::get_linear_index;
 #include <fstream>
 #include <limits>
 #include <stdexcept>
+#include <string>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 
@@ -309,8 +310,6 @@ double lb_lbfluid_get_gamma_odd() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     return lbpar_gpu.gamma_odd;
-#else
-    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -563,28 +562,26 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
     throw std::runtime_error("Could not open file for writing.");
   }
 
-  std::vector<int> bb_low;
-  std::vector<int> bb_high;
+  auto bb_low = Utils::Vector3i{};
+  auto bb_high = lb_lbfluid_get_shape();
 
+  int it = 0;
   for (auto val1 = bb1.begin(), val2 = bb2.begin();
        val1 != bb1.end() && val2 != bb2.end(); ++val1, ++val2) {
     if (*val1 == -1 || *val2 == -1) {
-      bb_low = {0, 0, 0};
-      if (lattice_switch == ActiveLB::GPU) {
-#ifdef CUDA
-        bb_high = {static_cast<int>(lbpar_gpu.dim_x) - 1,
-                   static_cast<int>(lbpar_gpu.dim_y) - 1,
-                   static_cast<int>(lbpar_gpu.dim_z) - 1};
-#endif //  CUDA
-      } else {
-        bb_high = {lblattice.global_grid[0] - 1, lblattice.global_grid[1] - 1,
-                   lblattice.global_grid[2] - 1};
-      }
       break;
     }
-
-    bb_low.push_back(std::min(*val1, *val2));
-    bb_high.push_back(std::max(*val1, *val2));
+    auto const lower = std::min(*val1, *val2);
+    auto const upper = std::max(*val1, *val2);
+    if (lower < 0 or upper >= bb_high[it]) {
+      throw std::runtime_error(
+          "Tried to access index " + std::to_string(lower) + " and index " +
+          std::to_string(upper) + " on dimension " + std::to_string(it) +
+          " that has size " + std::to_string(bb_high[it]));
+    }
+    bb_low[it] = lower;
+    bb_high[it] = upper;
+    it++;
   }
 
   Utils::Vector3i pos;
@@ -598,16 +595,16 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
             "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
             "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
             "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
-            bb_high[0] - bb_low[0] + 1, bb_high[1] - bb_low[1] + 1,
-            bb_high[2] - bb_low[2] + 1, (bb_low[0] + 0.5) * lbpar_gpu.agrid,
+            bb_high[0] - bb_low[0], bb_high[1] - bb_low[1],
+            bb_high[2] - bb_low[2], (bb_low[0] + 0.5) * lbpar_gpu.agrid,
             (bb_low[1] + 0.5) * lbpar_gpu.agrid,
             (bb_low[2] + 0.5) * lbpar_gpu.agrid, lbpar_gpu.agrid,
             lbpar_gpu.agrid, lbpar_gpu.agrid,
-            (bb_high[0] - bb_low[0] + 1) * (bb_high[1] - bb_low[1] + 1) *
-                (bb_high[2] - bb_low[2] + 1));
-    for (pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
-      for (pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
-        for (pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++) {
+            (bb_high[0] - bb_low[0]) * (bb_high[1] - bb_low[1]) *
+                (bb_high[2] - bb_low[2]));
+    for (pos[2] = bb_low[2]; pos[2] < bb_high[2]; pos[2]++)
+      for (pos[1] = bb_low[1]; pos[1] < bb_high[1]; pos[1]++)
+        for (pos[0] = bb_low[0]; pos[0] < bb_high[0]; pos[0]++) {
           auto const j =
               static_cast<int>(lbpar_gpu.dim_y * lbpar_gpu.dim_x * pos[2] +
                                lbpar_gpu.dim_x * pos[1] + pos[0]);
@@ -622,17 +619,17 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
             "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
             "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
             "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
-            bb_high[0] - bb_low[0] + 1, bb_high[1] - bb_low[1] + 1,
-            bb_high[2] - bb_low[2] + 1, (bb_low[0] + 0.5) * lblattice.agrid,
+            bb_high[0] - bb_low[0], bb_high[1] - bb_low[1],
+            bb_high[2] - bb_low[2], (bb_low[0] + 0.5) * lblattice.agrid,
             (bb_low[1] + 0.5) * lblattice.agrid,
             (bb_low[2] + 0.5) * lblattice.agrid, lblattice.agrid,
             lblattice.agrid, lblattice.agrid,
-            (bb_high[0] - bb_low[0] + 1) * (bb_high[1] - bb_low[1] + 1) *
-                (bb_high[2] - bb_low[2] + 1));
+            (bb_high[0] - bb_low[0]) * (bb_high[1] - bb_low[1]) *
+                (bb_high[2] - bb_low[2]));
 
-    for (pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
-      for (pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
-        for (pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++) {
+    for (pos[2] = bb_low[2]; pos[2] < bb_high[2]; pos[2]++)
+      for (pos[1] = bb_low[1]; pos[1] < bb_high[1]; pos[1]++)
+        for (pos[0] = bb_low[0]; pos[0] < bb_high[0]; pos[0]++) {
           auto u = lb_lbnode_get_velocity(pos) * lb_lbfluid_get_lattice_speed();
           fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
         }

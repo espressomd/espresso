@@ -99,7 +99,7 @@ system.lbboundaries.add(hollow_cone)
 ##########################################################################
 
 # Output the geometry
-lbf.print_vtk_boundary("{}/boundary.vtk".format(outdir))
+lbf.write_vtk_boundary("{}/boundary.vtk".format(outdir))
 
 ##########################################################################
 ## Exercise 2 ##
