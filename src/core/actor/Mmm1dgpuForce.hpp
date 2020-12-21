@@ -77,7 +77,7 @@ private:
   float force_benchmark(SystemInterface &s);
 
   // some functions to move MPI dependencies out of the .cu file
-  void check_periodicity();
+  void sanity_checks();
 };
 
 #endif

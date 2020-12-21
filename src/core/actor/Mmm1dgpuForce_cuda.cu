@@ -150,7 +150,7 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s,
     std::cerr << "Mmm1dgpuForce needs access to charges on GPU!" << std::endl;
 
   // system sanity checks
-  check_periodicity();
+  sanity_checks();
 
   modpsi_init();
 }
