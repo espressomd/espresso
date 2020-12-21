@@ -18,7 +18,7 @@
 #
 
 include "myconfig.pxi"
-from .utils import is_valid_type, to_str
+from .utils import is_valid_type, to_str, handle_errors
 from .utils cimport handle_errors
 from libcpp cimport bool
 
@@ -185,18 +185,22 @@ IF ELECTROSTATICS:
 
         cdef extern MMM1D_struct mmm1d_params
 
-        int MMM1D_set_params(double switch_rad, double maxPWerror)
-        void MMM1D_init()
+        void MMM1D_set_params(double switch_rad, double maxPWerror)
+        int MMM1D_init()
         int MMM1D_sanity_checks()
         int mmm1d_tune(char ** log)
 
     cdef inline pyMMM1D_tune():
         cdef char * log = NULL
         cdef int resp
-        MMM1D_init()
-        if MMM1D_sanity_checks() == 1:
-            handle_errors(
-                "MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
+        resp = MMM1D_init()
+        if resp:
+            handle_errors("pyMMM1D_tune")
+            return resp
+        resp = MMM1D_sanity_checks()
+        if resp:
+            handle_errors("pyMMM1D_tune")
+            return resp
         resp = mmm1d_tune(& log)
         if resp:
             print(to_str(log))
@@ -207,9 +211,9 @@ IF ELECTROSTATICS and MMM1D_GPU:
     cdef extern from "actor/Mmm1dgpuForce.hpp":
         ctypedef float mmm1dgpu_real
         cdef cppclass Mmm1dgpuForce:
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius, int bessel_cutoff)
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius)
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror)
+            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius, int bessel_cutoff) except+
+            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius) except+
+            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror) except+
             void setup(SystemInterface & s)
             void tune(SystemInterface & s, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
             void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff, bool manual)

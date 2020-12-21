@@ -57,13 +57,13 @@ extern MMM1D_struct mmm1d_params;
  *      to the near formula. If -1, this parameter will be tuned automatically.
  *  @param maxPWerror @copydoc MMM1D_struct::maxPWerror
  */
-int MMM1D_set_params(double switch_rad, double maxPWerror);
+void MMM1D_set_params(double switch_rad, double maxPWerror);
 
 /// check that MMM1D can run with the current parameters
 int MMM1D_sanity_checks();
 
 /// initialize the MMM1D constants
-void MMM1D_init();
+int MMM1D_init();
 
 void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
                                   double r, Utils::Vector3d &force);

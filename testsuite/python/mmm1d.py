@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import numpy as np
+import itertools
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
@@ -43,6 +44,7 @@ class ElectrostaticInteractionsTests:
     allowed_error = 2e-5
 
     def setUp(self):
+        self.system.periodicity = [0, 0, 1]
         self.system.part.add(pos=self.p_pos, q=self.p_q)
         self.mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
         self.system.actors.add(self.mmm1d)
@@ -94,6 +96,20 @@ class ElectrostaticInteractionsTests:
         mmm1d = self.MMM1D(prefactor=prefactor, maxPWerror=1e-20)
         self.system.actors.add(mmm1d)
         self.test_with_analytical_result(prefactor=prefactor, accuracy=0.0017)
+
+    def test_exceptions(self):
+        self.system.actors.clear()
+        del self.mmm1d
+        # check periodicity exceptions
+        for periodicity in itertools.product(range(2), range(2), range(2)):
+            if periodicity == (0, 0, 1):
+                continue
+            self.system.periodicity = periodicity
+            with self.assertRaisesRegex(Exception, r"MMM1D requires periodicity \(0, 0, 1\)"):
+                mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-2)
+                self.system.actors.add(mmm1d)
+            self.system.periodicity = (0, 0, 1)
+            self.system.actors.clear()
 
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])

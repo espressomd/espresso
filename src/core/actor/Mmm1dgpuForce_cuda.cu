@@ -141,13 +141,13 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s,
       far_switch_radius(_far_switch_radius), bessel_cutoff(_bessel_cutoff) {
   // interface sanity checks
   if (!s.requestFGpu())
-    std::cerr << "Mmm1dgpuForce needs access to forces on GPU!" << std::endl;
+    throw std::runtime_error("Mmm1dgpuForce needs access to forces on GPU!");
 
   if (!s.requestRGpu())
-    std::cerr << "Mmm1dgpuForce needs access to positions on GPU!" << std::endl;
+    throw std::runtime_error("Mmm1dgpuForce needs access to positions on GPU!");
 
   if (!s.requestQGpu())
-    std::cerr << "Mmm1dgpuForce needs access to charges on GPU!" << std::endl;
+    throw std::runtime_error("Mmm1dgpuForce needs access to charges on GPU!");
 
   // system sanity checks
   sanity_checks();
@@ -573,10 +573,7 @@ __global__ void vectorReductionKernel(mmm1dgpu_real const *src,
 }
 
 void Mmm1dgpuForce::computeForces(SystemInterface &s) {
-  if (coulomb.method !=
-      COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody cares about our
-                         // calculations anymore
-  {
+  if (coulomb.method != COULOMB_MMM1D_GPU) {
     std::cerr << "MMM1D: coulomb.method has been changed, skipping calculation"
               << std::endl;
     return;
@@ -609,10 +606,7 @@ __global__ void scaleAndAddKernel(mmm1dgpu_real *dst, mmm1dgpu_real const *src,
 }
 
 void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
-  if (coulomb.method !=
-      COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody cares about our
-                         // calculations anymore
-  {
+  if (coulomb.method != COULOMB_MMM1D_GPU) {
     std::cerr << "MMM1D: coulomb.method has been changed, skipping calculation"
               << std::endl;
     return;
