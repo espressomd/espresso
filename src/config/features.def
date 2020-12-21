@@ -82,7 +82,6 @@ MORSE
 BUCKINGHAM
 SOFT_SPHERE
 HAT
-UMBRELLA                        requires EXPERIMENTAL_FEATURES
 GAY_BERNE                       implies ROTATION
 THOLE                           requires ELECTROSTATICS
 

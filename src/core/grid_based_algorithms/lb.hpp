@@ -115,10 +115,10 @@ struct LB_Parameters {
   bool is_TRT;
 
   /** \name Derived parameters */
-  /*@{*/
+  /**@{*/
   /** amplitudes of the fluctuations of the modes */
   Utils::Vector19d phi;
-  /*@}*/
+  /**@}*/
   /** Thermal energy */
   double kT;
 
@@ -178,7 +178,7 @@ extern std::vector<LB_FluidNode> lbfields;
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
-/*@{*/
+/**@{*/
 
 /** Update the lattice Boltzmann system for one time step.
  *  This function performs the collision step and the streaming step.
@@ -270,6 +270,6 @@ void lb_initialize_fields(std::vector<LB_FluidNode> &fields,
                           Lattice const &lb_lattice);
 void lb_on_param_change(LBParam param);
 
-/*@}*/
+/**@}*/
 
 #endif /* _LB_H */

@@ -46,7 +46,7 @@
  *  \ref this_node == 0. The use of the asynchronous mpi_* functions
  *  (e.g. mpi_bcast_parameter) on the master node is possible.
  */
-/*@{*/
+/**@{*/
 
 /** called once at the very beginning of the program start. */
 void on_program_start();
@@ -109,6 +109,6 @@ void on_lbboundary_change();
  */
 void update_dependent_particles();
 
-/*@}*/
+/**@}*/
 
 #endif

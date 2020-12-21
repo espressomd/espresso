@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Here we create something to handle particles
-from .utils cimport Vector4d, Vector3d, Vector3i, Span
+from .utils cimport Vector4d, Vector3d, Vector3i, Span, Quaternion
 from libcpp cimport bool
 from libcpp.vector cimport vector  # import std::vector as vector
 from libc cimport stdint
@@ -113,6 +113,7 @@ cdef extern from "particle_data.hpp":
     IF ROTATION:
         void set_particle_quat(int part, double quat[4])
         void pointer_to_quat(const particle * p, const double * & res)
+        void set_particle_director(int part, Vector3d director)
         void set_particle_omega_lab(int part, Vector3d omega)
         void set_particle_omega_body(int part, Vector3d omega)
         void set_particle_torque_lab(int part, Vector3d torque)
@@ -151,8 +152,8 @@ cdef extern from "particle_data.hpp":
     IF VIRTUAL_SITES_RELATIVE:
         void pointer_to_vs_relative(const particle * P, const int * & res1, const double * & res2, const double * & res3)
         void pointer_to_vs_quat(const particle * P, const double * & res)
-        void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, Vector4d rel_ori)
-        void set_particle_vs_quat(int part, Vector4d vs_quat)
+        void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, Quaternion[double] rel_ori)
+        void set_particle_vs_quat(int part, Quaternion[double] vs_quat)
 
     void pointer_to_q(const particle * P, const double * & res)
 

@@ -22,7 +22,7 @@ import unittest
 import espressomd
 
 
-def _id(x):
+def no_skip(x):
     return x
 
 
@@ -32,7 +32,7 @@ def skipIfMissingFeatures(*args):
         missing_features = espressomd.missing_features(*args)
         return unittest.skip("Skipping test: missing feature{} {}".format(
             's' if missing_features else '', ', '.join(missing_features)))
-    return _id
+    return no_skip
 
 
 def skipIfMissingModules(*args):
@@ -46,14 +46,14 @@ def skipIfMissingModules(*args):
     if missing_modules:
         return unittest.skip("Skipping test: missing python module{} {}".format(
             's' if missing_modules else '', ', '.join(missing_modules)))
-    return _id
+    return no_skip
 
 
 def skipIfMissingGPU():
     """Unittest skipIf decorator for missing GPU."""
     if not espressomd.gpu_available():
         return unittest.skip("Skipping test: no GPU available")
-    return _id
+    return no_skip
 
 
 def skipIfUnmetModuleVersionRequirement(module, version_requirement):
@@ -66,4 +66,4 @@ def skipIfUnmetModuleVersionRequirement(module, version_requirement):
             version_requirement).contains(_module.__version__):
         return unittest.skip(
             "Skipping test: version requirement not met for module {}".format(module))
-    return _id
+    return no_skip

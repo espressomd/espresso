@@ -70,7 +70,9 @@ def random_particles():
             # Don't create loops, i.e. exclude "i" itself
             p1 = randint_different_from(0, npart, i)
             p2 = randint_different_from(0, npart, i)
-            p.bonds.append((btype, p1, p2))
+            # Don't add the same bond twice
+            if (btype, p1, p2) not in p.bonds:
+                p.bonds.append((btype, p1, p2))
         parts.append(p)
     return parts
 

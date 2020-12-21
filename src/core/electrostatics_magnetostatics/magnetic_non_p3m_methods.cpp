@@ -73,14 +73,12 @@ double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
     p1.f.f += dipole.prefactor * ff;
     p2.f.f -= dipole.prefactor * ff;
 
-#ifdef ROTATION
     // Torques
     auto const aa = vector_product(dip1, dip2);
     auto const b1 = vector_product(dip1, dr);
     auto const b2 = vector_product(dip2, dr);
     p1.f.torque += dipole.prefactor * (-aa / r3 + b1 * cc);
     p2.f.torque += dipole.prefactor * (aa / r3 + b2 * dd);
-#endif
   }
 
   // Return energy
@@ -149,12 +147,17 @@ int magnetic_dipolar_direct_sum_sanity_checks() {
 double
 magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
                                          ParticleRange const &particles) {
+
+  if (box_geo.periodic(0) and box_geo.periodic(1) and box_geo.periodic(2) and
+      Ncut_off_magnetic_dipolar_direct_sum == 0) {
+    throw std::runtime_error("Dipolar direct sum with replica does not support "
+                             "a periodic system with zero replica.");
+  };
+
   std::vector<double> x, y, z;
   std::vector<double> mx, my, mz;
   std::vector<double> fx, fy, fz;
-#ifdef ROTATION
   std::vector<double> tx, ty, tz;
-#endif
   double u;
 
   if (n_nodes != 1) {
@@ -181,12 +184,9 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
     fx.resize(n_part);
     fy.resize(n_part);
     fz.resize(n_part);
-
-#ifdef ROTATION
     tx.resize(n_part);
     ty.resize(n_part);
     tz.resize(n_part);
-#endif
   }
 
   int dip_particles = 0;
@@ -208,12 +208,9 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
         fx[dip_particles] = 0;
         fy[dip_particles] = 0;
         fz[dip_particles] = 0;
-
-#ifdef ROTATION
         tx[dip_particles] = 0;
         ty[dip_particles] = 0;
         tz[dip_particles] = 0;
-#endif
       }
 
       dip_particles++;
@@ -279,7 +276,6 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
                     fy[i] += (a + b) * rny + c * my[i] + d * my[j];
                     fz[i] += (a + b) * rnz + c * mz[i] + d * mz[j];
 
-#ifdef ROTATION
                     // torque ............................
                     c = 3.0 / r5 * pe3;
                     auto const ax = my[i] * mz[j] - my[j] * mz[i];
@@ -293,7 +289,6 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
                     tx[i] += -ax / r3 + bx * c;
                     ty[i] += -ay / r3 + by * c;
                     tz[i] += -az / r3 + bz * c;
-#endif
                   } /* of force_flag  */
                 }
               } /* of nx*nx+ny*ny +nz*nz< NCUT*NCUT   and   !(i==j && nx==0 &&
@@ -317,11 +312,10 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
         p.f.f[1] += dipole.prefactor * fy[dip_particles2];
         p.f.f[2] += dipole.prefactor * fz[dip_particles2];
 
-#ifdef ROTATION
         p.f.torque[0] += dipole.prefactor * tx[dip_particles2];
         p.f.torque[1] += dipole.prefactor * ty[dip_particles2];
         p.f.torque[2] += dipole.prefactor * tz[dip_particles2];
-#endif
+
         dip_particles2++;
       }
     }

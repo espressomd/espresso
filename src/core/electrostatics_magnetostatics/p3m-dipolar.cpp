@@ -52,6 +52,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "npt.hpp"
 #include "tuning.hpp"
 
 #include <utils/Vector.hpp>
@@ -62,12 +63,15 @@
 #include <utils/math/sqr.hpp>
 #include <utils/strcat_alloc.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/collectives/reduce.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 
-#include <mpi.h>
-
 #include <algorithm>
+#include <array>
 #include <cstdio>
+#include <functional>
+#include <vector>
 
 using Utils::strcat_alloc;
 
@@ -84,7 +88,7 @@ using Utils::strcat_alloc;
 dp3m_data_struct dp3m;
 
 /** \name Private Functions */
-/*@{*/
+/**@{*/
 
 /** Initialize for magnetic dipoles the (inverse) mesh constant @ref
  *  P3MParameters::a "a" (@ref P3MParameters::ai "ai") and the
@@ -116,7 +120,7 @@ static void dp3m_compute_constants_energy_dipolar();
 static double dp3m_k_space_error(double box_size, double prefac, int mesh,
                                  int cao, int n_c_part, double sum_q2,
                                  double alpha_L);
-/*@}*/
+/**@}*/
 
 /** Compute the dipolar surface terms */
 static double calc_surface_term(bool force_flag, bool energy_flag,
@@ -124,7 +128,7 @@ static double calc_surface_term(bool force_flag, bool energy_flag,
 
 /** \name P3M Tuning Functions */
 /************************************************************/
-/*@{*/
+/**@{*/
 
 double dp3m_real_space_error(double box_size, double prefac, double r_cut_iL,
                              int n_c_part, double sum_q2, double alpha_L);
@@ -139,7 +143,7 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
                         int n_c_part, double sum_q2, double x1, double x2,
                         double xacc, double tuned_accuracy);
 
-/*@}*/
+/**@}*/
 
 /** Correction of the dipolar p3m-energy. */
 double dp3m_average_dipolar_self_energy() {
@@ -150,7 +154,7 @@ double dp3m_average_dipolar_self_energy() {
       dp3m.params, start, start + size, dp3m.g_energy);
 
   double phi = 0.0;
-  MPI_Reduce(&node_phi, &phi, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  boost::mpi::reduce(comm_cart, node_phi, phi, std::plus<>(), 0);
   phi /= 3. * box_geo.length()[0] * Utils::int_pow<3>(dp3m.params.mesh[0]);
   return phi * Utils::pi();
 }
@@ -388,8 +392,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                                const ParticleRange &particles) {
   int i, d, d_rs, ind, j[3];
   /* k-space energy */
-  double surface_term = 0.0;
-  double k_space_energy_dip = 0.0, node_k_space_energy_dip = 0.0;
+  double k_space_energy_dip = 0.0;
   double tmp0, tmp1;
 
   auto const dipole_prefac =
@@ -424,6 +427,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
        * |(\Fourier{\vect{mu}}(k)\cdot \vect{k})|^2 */
       ind = 0;
       i = 0;
+      double node_k_space_energy_dip = 0.0;
       for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0]; j[0]++) {
         for (j[1] = 0; j[1] < dp3m.fft.plan[3].new_mesh[1]; j[1]++) {
           for (j[2] = 0; j[2] < dp3m.fft.plan[3].new_mesh[2]; j[2]++) {
@@ -450,8 +454,8 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
       }
       node_k_space_energy_dip *=
           dipole_prefac * Utils::pi() / box_geo.length()[0];
-      MPI_Reduce(&node_k_space_energy_dip, &k_space_energy_dip, 1, MPI_DOUBLE,
-                 MPI_SUM, 0, comm_cart);
+      boost::mpi::reduce(comm_cart, node_k_space_energy_dip, k_space_energy_dip,
+                         std::plus<>(), 0);
 
       dp3m_compute_constants_energy_dipolar();
 
@@ -477,7 +481,6 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
      * DIPOLAR TORQUES (k-space)
      ****************************/
     if (dp3m.sum_mu2 > 0) {
-#ifdef ROTATION
       /* fill in ks_mesh array for torque calculation */
       ind = 0;
       i = 0;
@@ -544,7 +547,6 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
             dipole_prefac * (2 * Utils::pi() / box_geo.length()[0]), d_rs,
             particles);
       }
-#endif /*ifdef ROTATION */
 
       /***************************
          DIPOLAR FORCES (k-space)
@@ -638,7 +640,8 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
   }   /* if (force_flag) */
 
   if (dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    surface_term = calc_surface_term(force_flag, energy_flag, particles);
+    auto const surface_term =
+        calc_surface_term(force_flag, energy_flag, particles);
     if (this_node == 0)
       k_space_energy_dip += surface_term;
   }
@@ -652,9 +655,6 @@ double calc_surface_term(bool force_flag, bool energy_flag,
                          const ParticleRange &particles) {
   auto const pref = dipole.prefactor * 4 * Utils::pi() / box_geo.volume() /
                     (2 * dp3m.params.epsilon + 1);
-  double suma, a[3];
-  double en;
-
   auto const n_local_part = particles.size();
 
   // We put all the dipolar momenta in a the arrays mx,my,mz according to the
@@ -665,7 +665,7 @@ double calc_surface_term(bool force_flag, bool energy_flag,
 
   int ip = 0;
   for (auto const &p : particles) {
-    const Utils::Vector3d dip = p.calc_dip();
+    auto const dip = p.calc_dip();
     mx[ip] = dip[0];
     my[ip] = dip[1];
     mz[ip] = dip[2];
@@ -673,31 +673,25 @@ double calc_surface_term(bool force_flag, bool energy_flag,
   }
 
   // we will need the sum of all dipolar momenta vectors
-  a[0] = 0.0;
-  a[1] = 0.0;
-  a[2] = 0.0;
-
+  auto local_dip = Utils::Vector3d{};
   for (int i = 0; i < n_local_part; i++) {
-    a[0] += mx[i];
-    a[1] += my[i];
-    a[2] += mz[i];
+    local_dip[0] += mx[i];
+    local_dip[1] += my[i];
+    local_dip[2] += mz[i];
   }
+  auto const box_dip =
+      boost::mpi::all_reduce(comm_cart, local_dip, std::plus<>());
 
-  MPI_Allreduce(MPI_IN_PLACE, a, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
-
+  double energy = 0.0;
   if (energy_flag) {
-
-    suma = 0.0;
+    double sum_e = 0.0;
     for (int i = 0; i < n_local_part; i++) {
-      suma += mx[i] * a[0] + my[i] * a[1] + mz[i] * a[2];
+      sum_e += mx[i] * box_dip[0] + my[i] * box_dip[1] + mz[i] * box_dip[2];
     }
-    MPI_Allreduce(MPI_IN_PLACE, &suma, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
-    en = 0.5 * pref * suma;
-
-  } else {
-    en = 0;
+    energy =
+        0.5 * pref * boost::mpi::all_reduce(comm_cart, sum_e, std::plus<>());
   }
-#ifdef ROTATION
+
   if (force_flag) {
 
     std::vector<double> sumix(n_local_part);
@@ -705,9 +699,9 @@ double calc_surface_term(bool force_flag, bool energy_flag,
     std::vector<double> sumiz(n_local_part);
 
     for (int i = 0; i < n_local_part; i++) {
-      sumix[i] = my[i] * a[2] - mz[i] * a[1];
-      sumiy[i] = mz[i] * a[0] - mx[i] * a[2];
-      sumiz[i] = mx[i] * a[1] - my[i] * a[0];
+      sumix[i] = my[i] * box_dip[2] - mz[i] * box_dip[1];
+      sumiy[i] = mz[i] * box_dip[0] - mx[i] * box_dip[2];
+      sumiz[i] = mx[i] * box_dip[1] - my[i] * box_dip[0];
     }
 
     ip = 0;
@@ -718,9 +712,8 @@ double calc_surface_term(bool force_flag, bool energy_flag,
       ip++;
     }
   }
-#endif
 
-  return en;
+  return energy;
 }
 
 /*****************************************************************************/
@@ -1111,8 +1104,7 @@ int dp3m_adaptive_tune(char **logger) {
   char b[3 * ES_INTEGER_SPACE + 3 * ES_DOUBLE_SPACE + 128];
 
   /* preparation */
-  mpi_call(dp3m_count_magnetic_particles);
-  dp3m_count_magnetic_particles();
+  mpi_call_all(dp3m_count_magnetic_particles);
 
   /* Print Status */
   sprintf(b,
@@ -1231,19 +1223,19 @@ int dp3m_adaptive_tune(char **logger) {
 }
 
 void dp3m_count_magnetic_particles() {
-  double node_sums[2] = {0, 0};
-  double tot_sums[2] = {0, 0};
+  using boost::mpi::all_reduce;
+  int local_n = 0;
+  double local_mu2 = 0.0;
 
   for (auto const &p : cell_structure.local_particles()) {
     if (p.p.dipm != 0.0) {
-      node_sums[0] += p.calc_dip().norm2();
-      node_sums[1] += 1.0;
+      local_mu2 += p.calc_dip().norm2();
+      local_n++;
     }
   }
 
-  MPI_Allreduce(node_sums, tot_sums, 2, MPI_DOUBLE, MPI_SUM, comm_cart);
-  dp3m.sum_mu2 = tot_sums[0];
-  dp3m.sum_dip_part = (int)(tot_sums[1] + 0.1);
+  dp3m.sum_mu2 = all_reduce(comm_cart, local_mu2, std::plus<>());
+  dp3m.sum_dip_part = all_reduce(comm_cart, local_n, std::plus<>());
 }
 
 REGISTER_CALLBACK(dp3m_count_magnetic_particles)
@@ -1497,5 +1489,11 @@ void dp3m_compute_constants_energy_dipolar() {
   dp3m.energy_correction =
       -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * Utils::pi() / 3.);
 }
+
+#ifdef NPT
+void npt_add_virial_magnetic_contribution(double energy) {
+  npt_add_virial_contribution(energy);
+}
+#endif
 
 #endif /* DP3M */

@@ -49,7 +49,6 @@ IF DIPOLES == 1:
 
             """
             set_Dprefactor(self._params["prefactor"])
-            handle_errors("Could not set magnetostatic prefactor")
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
 
@@ -270,7 +269,6 @@ IF DIPOLES == 1:
             handle_errors("Could not activate magnetostatics method "
                           + self.__class__.__name__)
 
-    @requires_experimental_features("No test coverage")
     class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
 
         """
@@ -345,7 +343,7 @@ IF DIPOLES == 1:
 
             def _deactivate_method(self):
                 dipole.method = DIPOLAR_NONE
-                scafacos.free_handle()
+                scafacos.free_handle(self.dipolar)
                 mpi_bcast_coulomb_params()
 
             def default_params(self):
@@ -362,6 +360,8 @@ IF DIPOLES == 1:
 
             This is the GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu`
             but uses floating point precision.
+
+            Requires features ``DIPOLAR_DIRECT_SUM`` and ``CUDA``.
 
             Parameters
             ----------

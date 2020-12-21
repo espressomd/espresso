@@ -34,6 +34,7 @@
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
 
+#include <string>
 #include <utils/Cache.hpp>
 #include <utils/constants.hpp>
 #include <utils/keys.hpp>
@@ -147,7 +148,7 @@ using UpdatePropertyMessage = boost::variant
 using UpdatePositionMessage = boost::variant
         < UpdatePosition<Utils::Vector3d, &ParticlePosition::p>
 #ifdef ROTATION
-        , UpdatePosition<Utils::Vector4d, &ParticlePosition::quat>
+        , UpdatePosition<Utils::Quaternion<double>, &ParticlePosition::quat>
 #endif
         >;
 
@@ -732,13 +733,13 @@ void set_particle_rotational_inertia(int part, double *rinertia) {
 #else
 constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
+
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
   mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
                                                                        rot);
 }
-#endif
-#ifdef ROTATION
+
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
   mpi_send_update_message(part, UpdateOrientation{axis, angle});
 }
@@ -750,7 +751,7 @@ void set_particle_dipm(int part, double dipm) {
 }
 
 void set_particle_dip(int part, double const *const dip) {
-  Utils::Vector4d quat;
+  Utils::Quaternion<double> quat;
   double dipm;
   std::tie(quat, dipm) =
       convert_dip_to_quat(Utils::Vector3d({dip[0], dip[1], dip[2]}));
@@ -758,7 +759,6 @@ void set_particle_dip(int part, double const *const dip) {
   set_particle_dipm(part, dipm);
   set_particle_quat(part, quat.data());
 }
-
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -769,7 +769,8 @@ void set_particle_virtual(int part, bool is_virtual) {
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat) {
+void set_particle_vs_quat(int part,
+                          Utils::Quaternion<double> const &vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
   vs_relative.quat = vs_relative_quat;
 
@@ -779,7 +780,7 @@ void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat) {
 }
 
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              Utils::Vector4d const &rel_ori) {
+                              Utils::Quaternion<double> const &rel_ori) {
   ParticleProperties::VirtualSitesRelativeParameters vs_relative;
   vs_relative.distance = vs_distance;
   vs_relative.to_particle_id = vs_relative_to;
@@ -837,9 +838,15 @@ void set_particle_mol_id(int part, int mid) {
 
 #ifdef ROTATION
 void set_particle_quat(int part, double *quat) {
-  mpi_update_particle<ParticlePosition, &Particle::r, Utils::Vector4d,
-                      &ParticlePosition::quat>(part,
-                                               Utils::Vector4d(quat, quat + 4));
+  mpi_update_particle<ParticlePosition, &Particle::r, Utils::Quaternion<double>,
+                      &ParticlePosition::quat>(
+      part, Utils::Quaternion<double>{quat[0], quat[1], quat[2], quat[3]});
+}
+
+void set_particle_director(int part, const Utils::Vector3d &director) {
+  Utils::Quaternion<double> quat =
+      convert_director_to_quaternion(director.normalized());
+  set_particle_quat(part, quat.data());
 }
 
 void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab) {
@@ -1179,8 +1186,9 @@ void add_id_to_type_map(int part_id, int type) {
 
 int number_of_particles_with_type(int type) {
   if (particle_type_map.count(type) == 0)
-    throw std::runtime_error("The provided particle type does not exist in "
-                             "the particle_type_map");
+    throw std::runtime_error("The provided particle type " +
+                             std::to_string(type) +
+                             " is currently not tracked by the system.");
   return static_cast<int>(particle_type_map.at(type).size());
 }
 
@@ -1197,7 +1205,6 @@ void pointer_to_omega_body(Particle const *p, double const *&res) {
 void pointer_to_quat(Particle const *p, double const *&res) {
   res = p->r.quat.data();
 }
-
 #endif
 
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }

@@ -124,6 +124,14 @@ class VirtualSites(ut.TestCase):
         self.assertAlmostEqual(
             np.dot(self.system.part[0].director, self.system.part[1].director), 0.0)
 
+        # Check exceptions.
+        with self.assertRaisesRegex(ValueError, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int"):
+            self.system.part[1].vs_auto_relate_to('0')
+        try:
+            self.system.part[1].vs_auto_relate_to(self.system.part[0])
+        except BaseException:
+            self.fail('Failed to set a vs from a particle handle')
+
     def test_pos_vel_forces(self):
         system = self.system
         system.cell_system.skin = 0.3

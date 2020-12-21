@@ -77,9 +77,9 @@ using Utils::strcat_alloc;
 #endif
 
 /** @name inverse box dimensions and other constants */
-/*@{*/
+/**@{*/
 static double uz, L2, uz2, prefuz2, prefL3_i;
-/*@}*/
+/**@}*/
 
 MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
 /** From which distance a certain Bessel cutoff is valid. Can't be part of the

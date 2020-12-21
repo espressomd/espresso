@@ -41,6 +41,7 @@
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
+#include <utils/quaternion.hpp>
 
 #include <cstddef>
 #include <memory>
@@ -193,6 +194,13 @@ void set_particle_mol_id(int part, int mid);
  */
 void set_particle_quat(int part, double *quat);
 
+/** Call only on the master node: set particle orientation using director.
+ *  The particle director defines the z-axis in the body-fixed frame.
+ *  @param part the particle.
+ *  @param director its new director vector (will be normalized if necessary)
+ */
+void set_particle_director(int part, const Utils::Vector3d &director);
+
 /** Call only on the master node: set particle angular velocity from lab frame.
  *  @param part the particle.
  *  @param omega_lab its new angular velocity.
@@ -210,7 +218,6 @@ void set_particle_omega_body(int part, const Utils::Vector3d &omega);
  *  @param torque_lab its new torque.
  */
 void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab);
-
 #endif
 
 #ifdef DIPOLES
@@ -235,9 +242,10 @@ void set_particle_dipm(int part, double dipm);
 void set_particle_virtual(int part, bool is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat);
+void set_particle_vs_quat(int part,
+                          Utils::Quaternion<double> const &vs_relative_quat);
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              Utils::Vector4d const &rel_ori);
+                              Utils::Quaternion<double> const &rel_ori);
 #endif
 
 #if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
@@ -364,7 +372,6 @@ void pointer_to_omega_body(Particle const *p, double const *&res);
 inline Utils::Vector3d get_torque_body(const Particle &p) { return p.f.torque; }
 
 void pointer_to_quat(Particle const *p, double const *&res);
-
 #endif
 
 void pointer_to_q(Particle const *p, double const *&res);

@@ -32,6 +32,7 @@
 #include <utils/math/quaternion.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/math/tensor_product.hpp>
+#include <utils/quaternion.hpp>
 
 #include <stdexcept>
 
@@ -42,10 +43,10 @@ namespace {
  * @param vs_rel Parameters for the virtual site.
  * @return Orientation quaternion of the virtual site.
  */
-Utils::Vector4d
+Utils::Quaternion<double>
 orientation(Particle const *p_ref,
             const ParticleProperties::VirtualSitesRelativeParameters &vs_rel) {
-  return multiply_quaternions(p_ref->r.quat, vs_rel.quat);
+  return p_ref->r.quat * vs_rel.quat;
 }
 
 /**
@@ -62,10 +63,9 @@ Utils::Vector3d connection_vector(
   // This is obtained, by multiplying the quaternion representing the director
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
-  auto const director =
-      Utils::convert_quaternion_to_director(
-          Utils::multiply_quaternions(p_ref->r.quat, vs_rel.rel_orientation))
-          .normalize();
+  auto const director = Utils::convert_quaternion_to_director(
+                            p_ref->r.quat * vs_rel.rel_orientation)
+                            .normalize();
 
   return vs_rel.distance * director;
 }
@@ -144,7 +144,7 @@ auto constraint_stress(
   /* The constraint force is minus the force on the particle, make it force
    * free. The counter force is translated by the connection vector to the
    * real particle, hence the virial stress is */
-  return tensor_product(connection_vector(p_ref, vs_rel), -f);
+  return tensor_product(-f, connection_vector(p_ref, vs_rel));
 }
 } // namespace
 

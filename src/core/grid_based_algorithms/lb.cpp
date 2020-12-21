@@ -693,83 +693,43 @@ void lb_prepare_communication(HaloCommunicator &halo_comm,
 /***********************************************************************/
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
-/*@{*/
+/**@{*/
+template <typename T>
+std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
+  auto normalized_modes = modes;
+  for (int i = 0; i < modes.size(); i++) {
+    normalized_modes[i] /= D3Q19::w_k[i];
+  }
+  return normalized_modes;
+}
+
+/**
+ * @brief Transform modes to populations.
+ */
+template <typename T>
+std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
+  auto ret = Utils::matrix_vector_product<T, 19, e_ki_transposed>(
+      normalize_modes(modes));
+  std::transform(ret.begin(), ret.end(), ::D3Q19::w.begin(), ret.begin(),
+                 std::multiplies<T>());
+  return ret;
+}
+
 Utils::Vector19d lb_get_population_from_density_momentum_density_stress(
     double density, Utils::Vector3d const &momentum_density,
     Utils::Vector6d const &stress) {
-  Utils::Vector19d population{};
-  auto const trace = stress[0] + stress[2] + stress[5];
+  std::array<double, 19> modes{density,
+                               momentum_density[0],
+                               momentum_density[1],
+                               momentum_density[2],
+                               stress[0],
+                               stress[1],
+                               stress[2],
+                               stress[3],
+                               stress[4],
+                               stress[5]};
 
-  /* update the q=0 sublattice */
-  population[0] = 1. / 3. * density - 1. / 2. * trace;
-
-  /* update the q=1 sublattice */
-  auto density_times_coeff = 1. / 18. * density;
-
-  population[1] = density_times_coeff + 1. / 6. * momentum_density[0] +
-                  1. / 4. * stress[0] - 1. / 12. * trace;
-  population[2] = density_times_coeff - 1. / 6. * momentum_density[0] +
-                  1. / 4. * stress[0] - 1. / 12. * trace;
-  population[3] = density_times_coeff + 1. / 6. * momentum_density[1] +
-                  1. / 4. * stress[2] - 1. / 12. * trace;
-  population[4] = density_times_coeff - 1. / 6. * momentum_density[1] +
-                  1. / 4. * stress[2] - 1. / 12. * trace;
-  population[5] = density_times_coeff + 1. / 6. * momentum_density[2] +
-                  1. / 4. * stress[5] - 1. / 12. * trace;
-  population[6] = density_times_coeff - 1. / 6. * momentum_density[2] +
-                  1. / 4. * stress[5] - 1. / 12. * trace;
-
-  /* update the q=2 sublattice */
-  density_times_coeff = 1. / 36. * density;
-
-  auto tmp1 = stress[0] + stress[2];
-  auto tmp2 = 2.0 * stress[1];
-
-  population[7] = density_times_coeff +
-                  1. / 12. * (momentum_density[0] + momentum_density[1]) +
-                  1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[8] = density_times_coeff -
-                  1. / 12. * (momentum_density[0] + momentum_density[1]) +
-                  1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[9] = density_times_coeff +
-                  1. / 12. * (momentum_density[0] - momentum_density[1]) +
-                  1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[10] = density_times_coeff -
-                   1. / 12. * (momentum_density[0] - momentum_density[1]) +
-                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-
-  tmp1 = stress[0] + stress[5];
-  tmp2 = 2.0 * stress[3];
-
-  population[11] = density_times_coeff +
-                   1. / 12. * (momentum_density[0] + momentum_density[2]) +
-                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[12] = density_times_coeff -
-                   1. / 12. * (momentum_density[0] + momentum_density[2]) +
-                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[13] = density_times_coeff +
-                   1. / 12. * (momentum_density[0] - momentum_density[2]) +
-                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[14] = density_times_coeff -
-                   1. / 12. * (momentum_density[0] - momentum_density[2]) +
-                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-
-  tmp1 = stress[2] + stress[5];
-  tmp2 = 2.0 * stress[4];
-
-  population[15] = density_times_coeff +
-                   1. / 12. * (momentum_density[1] + momentum_density[2]) +
-                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[16] = density_times_coeff -
-                   1. / 12. * (momentum_density[1] + momentum_density[2]) +
-                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[17] = density_times_coeff +
-                   1. / 12. * (momentum_density[1] - momentum_density[2]) +
-                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[18] = density_times_coeff -
-                   1. / 12. * (momentum_density[1] - momentum_density[2]) +
-                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  return population;
+  return Utils::Vector19d{lb_calc_n_from_m(modes)};
 }
 
 void lb_set_population_from_density_momentum_density_stress(
@@ -780,7 +740,7 @@ void lb_set_population_from_density_momentum_density_stress(
           density, momentum_density, stress);
   lb_set_population(index, population);
 }
-/*@}*/
+/**@}*/
 
 /** Calculation of hydrodynamic modes */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index,
@@ -790,58 +750,52 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index,
 }
 
 template <typename T>
-inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
-                                        const std::array<T, 19> &modes,
-                                        const LB_Parameters &lb_parameters) {
-  T density, momentum_density[3], stress_eq[6];
+std::array<T, 19> lb_relax_modes(const std::array<T, 19> &modes,
+                                 const Utils::Vector<T, 3> &force_density,
+                                 const LB_Parameters &parameters) {
+  using Utils::sqr;
+  using Utils::Vector;
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
    * equilibrium value */
-  density = modes[0] + lb_parameters.density;
-
-  momentum_density[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
-  momentum_density[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
-  momentum_density[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
-
-  using Utils::sqr;
-  auto const momentum_density2 = sqr(momentum_density[0]) +
-                                 sqr(momentum_density[1]) +
-                                 sqr(momentum_density[2]);
+  auto const density = modes[0] + parameters.density;
+  auto const momentum_density =
+      Vector<T, 3>{modes[1], modes[2], modes[3]} + T{0.5} * force_density;
+  auto const momentum_density2 = momentum_density.norm2();
 
   /* equilibrium part of the stress modes */
-  stress_eq[0] = momentum_density2 / density;
-  stress_eq[1] =
-      (sqr(momentum_density[0]) - sqr(momentum_density[1])) / density;
-  stress_eq[2] = (momentum_density2 - 3.0 * sqr(momentum_density[2])) / density;
-  stress_eq[3] = momentum_density[0] * momentum_density[1] / density;
-  stress_eq[4] = momentum_density[0] * momentum_density[2] / density;
-  stress_eq[5] = momentum_density[1] * momentum_density[2] / density;
+  auto const stress_eq =
+      Vector<T, 6>{momentum_density2,
+                   (sqr(momentum_density[0]) - sqr(momentum_density[1])),
+                   (momentum_density2 - 3.0 * sqr(momentum_density[2])),
+                   momentum_density[0] * momentum_density[1],
+                   momentum_density[0] * momentum_density[2],
+                   momentum_density[1] * momentum_density[2]} /
+      density;
 
-  return {
-      {modes[0], modes[1], modes[2], modes[3],
-       /* relax the stress modes */
-       stress_eq[0] + lb_parameters.gamma_bulk * (modes[4] - stress_eq[0]),
-       stress_eq[1] + lb_parameters.gamma_shear * (modes[5] - stress_eq[1]),
-       stress_eq[2] + lb_parameters.gamma_shear * (modes[6] - stress_eq[2]),
-       stress_eq[3] + lb_parameters.gamma_shear * (modes[7] - stress_eq[3]),
-       stress_eq[4] + lb_parameters.gamma_shear * (modes[8] - stress_eq[4]),
-       stress_eq[5] + lb_parameters.gamma_shear * (modes[9] - stress_eq[5]),
-       /* relax the ghost modes (project them out) */
-       /* ghost modes have no equilibrium part due to orthogonality */
-       lb_parameters.gamma_odd * modes[10], lb_parameters.gamma_odd * modes[11],
-       lb_parameters.gamma_odd * modes[12], lb_parameters.gamma_odd * modes[13],
-       lb_parameters.gamma_odd * modes[14], lb_parameters.gamma_odd * modes[15],
-       lb_parameters.gamma_even * modes[16],
-       lb_parameters.gamma_even * modes[17],
-       lb_parameters.gamma_even * modes[18]}};
+  return {{modes[0], modes[1], modes[2], modes[3],
+           /* relax the stress modes */
+           stress_eq[0] + parameters.gamma_bulk * (modes[4] - stress_eq[0]),
+           stress_eq[1] + parameters.gamma_shear * (modes[5] - stress_eq[1]),
+           stress_eq[2] + parameters.gamma_shear * (modes[6] - stress_eq[2]),
+           stress_eq[3] + parameters.gamma_shear * (modes[7] - stress_eq[3]),
+           stress_eq[4] + parameters.gamma_shear * (modes[8] - stress_eq[4]),
+           stress_eq[5] + parameters.gamma_shear * (modes[9] - stress_eq[5]),
+           /* relax the ghost modes (project them out) */
+           /* ghost modes have no equilibrium part due to orthogonality */
+           parameters.gamma_odd * modes[10], parameters.gamma_odd * modes[11],
+           parameters.gamma_odd * modes[12], parameters.gamma_odd * modes[13],
+           parameters.gamma_odd * modes[14], parameters.gamma_odd * modes[15],
+           parameters.gamma_even * modes[16], parameters.gamma_even * modes[17],
+           parameters.gamma_even * modes[18]}};
 }
 
 template <typename T>
-inline std::array<T, 19>
-lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes,
-                    const LB_Parameters &lb_parameters,
-                    boost::optional<Utils::Counter<uint64_t>> rng_counter) {
+std::array<T, 19> lb_thermalize_modes(
+    Lattice::index_t index, const std::array<T, 19> &modes,
+    const LB_Parameters &lb_parameters,
+    boost::optional<Utils::Counter<uint64_t>> const &rng_counter) {
   if (lb_parameters.kT > 0.0) {
     using Utils::uniform;
     using rng_type = r123::Philox4x64;
@@ -886,35 +840,28 @@ lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes,
 }
 
 template <typename T>
-std::array<T, 19> lb_apply_forces(Lattice::index_t index,
-                                  const std::array<T, 19> &modes,
+std::array<T, 19> lb_apply_forces(const std::array<T, 19> &modes,
                                   const LB_Parameters &lb_parameters,
-                                  const std::vector<LB_FluidNode> &lb_fields) {
-  const auto &f = lb_fields[index].force_density;
-
+                                  Utils::Vector<T, 3> const &f) {
   auto const density = modes[0] + lb_parameters.density;
 
   /* hydrodynamic momentum density is redefined when external forces present */
-  auto const u = Utils::Vector3d{modes[1] + 0.5 * f[0], modes[2] + 0.5 * f[1],
-                                 modes[3] + 0.5 * f[2]} /
-                 density;
+  auto const u =
+      Utils::Vector3d{modes[1], modes[2], modes[3]} + T{0.5} * f / density;
 
-  double C[6];
-  C[0] = (1. + lb_parameters.gamma_shear) * u[0] * f[0] +
-         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-             (u * f);
-  C[2] = (1. + lb_parameters.gamma_shear) * u[1] * f[1] +
-         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-             (u * f);
-  C[5] = (1. + lb_parameters.gamma_shear) * u[2] * f[2] +
-         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
-             (u * f);
-  C[1] =
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]);
-  C[3] =
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]);
-  C[4] =
-      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]);
+  auto const C = std::array<T, 6>{
+      (1. + lb_parameters.gamma_shear) * u[0] * f[0] +
+          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+              (u * f),
+      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]),
+      (1. + lb_parameters.gamma_shear) * u[1] * f[1] +
+          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+              (u * f),
+      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]),
+      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]),
+      (1. + lb_parameters.gamma_shear) * u[2] * f[2] +
+          1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+              (u * f)};
 
   return {{modes[0],
            /* update momentum modes */
@@ -926,40 +873,35 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
            modes[14], modes[15], modes[16], modes[17], modes[18]}};
 }
 
-template <typename T>
-std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
-  auto normalized_modes = modes;
-  for (int i = 0; i < modes.size(); i++) {
-    normalized_modes[i] /= D3Q19::w_k[i];
-  }
-  return normalized_modes;
-}
-
-template <typename T>
-std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
-  auto ret = Utils::matrix_vector_product<T, 19, e_ki_transposed>(
-      normalize_modes(modes));
-  std::transform(ret.begin(), ret.end(), ::D3Q19::w.begin(), ret.begin(),
-                 std::multiplies<T>());
-  return ret;
-}
-
-template <typename T>
-inline void lb_stream(LB_Fluid &lbfluid, Lattice::index_t index,
-                      const std::array<T, 19> &populations,
-                      const Lattice &lb_lattice) {
-  const std::array<int, 3> period = {
+/**
+ * @brief Relative index for the next node for each lattice velocity.
+ *
+ * @param lb_lattice The lattice parameters.
+ * @param c Lattice velocities.
+ */
+auto lb_next_offsets(const Lattice &lb_lattice,
+                     std::array<Utils::Vector3i, 19> const &c) {
+  const Utils::Vector3<ptrdiff_t> strides = {
       {1, lb_lattice.halo_grid[0],
        lb_lattice.halo_grid[0] * lb_lattice.halo_grid[1]}};
 
+  std::array<ptrdiff_t, 19> offsets;
+  boost::transform(c, offsets.begin(),
+                   [&strides](auto const &ci) { return strides * ci; });
+
+  return offsets;
+}
+
+template <typename T>
+void lb_stream(LB_Fluid &lbfluid, const std::array<T, 19> &populations,
+               size_t index, std::array<ptrdiff_t, 19> const &offsets) {
   for (int i = 0; i < populations.size(); i++) {
-    auto const next = index + boost::inner_product(period, D3Q19::c[i], 0);
-    lbfluid[i][next] = populations[i];
+    lbfluid[i][index + offsets[i]] = populations[i];
   }
 }
 
 /* Collisions and streaming (push scheme) */
-inline void lb_collide_stream() {
+void lb_collide_stream() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
@@ -967,6 +909,8 @@ inline void lb_collide_stream() {
     (*lbboundary).reset_force();
   }
 #endif // LB_BOUNDARIES
+
+  auto const next_offsets = lb_next_offsets(lblattice, D3Q19::c);
 
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
@@ -982,15 +926,16 @@ inline void lb_collide_stream() {
           auto const modes = lb_calc_modes(index, lbfluid);
 
           /* deterministic collisions */
-          auto const relaxed_modes = lb_relax_modes(index, modes, lbpar);
+          auto const relaxed_modes =
+              lb_relax_modes(modes, lbfields[index].force_density, lbpar);
 
           /* fluctuating hydrodynamics */
           auto const thermalized_modes = lb_thermalize_modes(
               index, relaxed_modes, lbpar, rng_counter_fluid);
 
           /* apply forces */
-          auto const modes_with_forces =
-              lb_apply_forces(index, thermalized_modes, lbpar, lbfields);
+          auto const modes_with_forces = lb_apply_forces(
+              thermalized_modes, lbpar, lbfields[index].force_density);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
           // Safeguard the node forces so that we can later use them for the IBM
@@ -1001,10 +946,9 @@ inline void lb_collide_stream() {
           /* reset the force density */
           lbfields[index].force_density = lbpar.ext_force_density;
 
-          auto const populations = lb_calc_n_from_m(modes_with_forces);
-
           /* transform back to populations and streaming */
-          lb_stream(lbfluid_post, index, populations, lblattice);
+          auto const populations = lb_calc_n_from_m(modes_with_forces);
+          lb_stream(lbfluid_post, populations, index, next_offsets);
         }
 
         ++index; /* next node */
@@ -1053,7 +997,7 @@ void lattice_boltzmann_update() {
 /***********************************************************************/
 /** \name Coupling part */
 /***********************************************************************/
-/*@{*/
+/**@{*/
 
 static int compare_buffers(double *buf1, double *buf2, int size) {
   int ret;
@@ -1351,60 +1295,31 @@ Utils::Vector6d lb_calc_pressure_tensor(std::array<double, 19> const &modes,
 #ifdef LB_BOUNDARIES
 void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
                     const std::vector<LB_FluidNode> &lb_fields) {
-  int k, i, l;
-  int yperiod = lblattice.halo_grid[0];
-  int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
-  int next[19];
-  double population_shift;
-  next[0] = 0;                     // ( 0, 0, 0) =
-  next[1] = 1;                     // ( 1, 0, 0) +
-  next[2] = -1;                    // (-1, 0, 0)
-  next[3] = yperiod;               // ( 0, 1, 0) +
-  next[4] = -yperiod;              // ( 0,-1, 0)
-  next[5] = zperiod;               // ( 0, 0, 1) +
-  next[6] = -zperiod;              // ( 0, 0,-1)
-  next[7] = (1 + yperiod);         // ( 1, 1, 0) +
-  next[8] = -(1 + yperiod);        // (-1,-1, 0)
-  next[9] = (1 - yperiod);         // ( 1,-1, 0)
-  next[10] = -(1 - yperiod);       // (-1, 1, 0) +
-  next[11] = (1 + zperiod);        // ( 1, 0, 1) +
-  next[12] = -(1 + zperiod);       // (-1, 0,-1)
-  next[13] = (1 - zperiod);        // ( 1, 0,-1)
-  next[14] = -(1 - zperiod);       // (-1, 0, 1) +
-  next[15] = (yperiod + zperiod);  // ( 0, 1, 1) +
-  next[16] = -(yperiod + zperiod); // ( 0,-1,-1)
-  next[17] = (yperiod - zperiod);  // ( 0, 1,-1)
-  next[18] = -(yperiod - zperiod); // ( 0,-1, 1) +
-  int reverse[] = {0, 2,  1,  4,  3,  6,  5,  8,  7, 10,
-                   9, 12, 11, 14, 13, 16, 15, 18, 17};
+  auto const next = lb_next_offsets(lblattice, D3Q19::c);
+  static constexpr int reverse[] = {0, 2,  1,  4,  3,  6,  5,  8,  7, 10,
+                                    9, 12, 11, 14, 13, 16, 15, 18, 17};
 
   /* bottom-up sweep */
   for (int z = 0; z < lblattice.grid[2] + 2; z++) {
     for (int y = 0; y < lblattice.grid[1] + 2; y++) {
       for (int x = 0; x < lblattice.grid[0] + 2; x++) {
-        k = get_linear_index(x, y, z, lblattice.halo_grid);
+        auto const k = get_linear_index(x, y, z, lblattice.halo_grid);
 
         if (lb_fields[k].boundary) {
-          for (i = 0; i < 19; i++) {
-            population_shift = 0;
-            for (l = 0; l < 3; l++) {
-              population_shift -= lb_parameters.density * 2 * D3Q19::c[i][l] *
-                                  D3Q19::w[i] * lb_fields[k].slip_velocity[l] /
-                                  D3Q19::c_sound_sq<double>;
-            }
+          Utils::Vector3d boundary_force = {};
+          for (int i = 0; i < 19; i++) {
+            auto const ci = D3Q19::c[i];
 
-            if (x - D3Q19::c[i][0] > 0 &&
-                x - D3Q19::c[i][0] < lblattice.grid[0] + 1 &&
-                y - D3Q19::c[i][1] > 0 &&
-                y - D3Q19::c[i][1] < lblattice.grid[1] + 1 &&
-                z - D3Q19::c[i][2] > 0 &&
-                z - D3Q19::c[i][2] < lblattice.grid[2] + 1) {
+            if (x - ci[0] > 0 && x - ci[0] < lblattice.grid[0] + 1 &&
+                y - ci[1] > 0 && y - ci[1] < lblattice.grid[1] + 1 &&
+                z - ci[2] > 0 && z - ci[2] < lblattice.grid[2] + 1) {
               if (!lb_fields[k - next[i]].boundary) {
-                for (l = 0; l < 3; l++) {
-                  (*LBBoundaries::lbboundaries[lb_fields[k].boundary - 1])
-                      .force()[l] += // TODO
-                      (2 * lbfluid[i][k] + population_shift) * D3Q19::c[i][l];
-                }
+                auto const population_shift =
+                    -lb_parameters.density * 2 * D3Q19::w[i] *
+                    (ci * lb_fields[k].slip_velocity) /
+                    D3Q19::c_sound_sq<double>;
+
+                boundary_force += (2 * lbfluid[i][k] + population_shift) * ci;
                 lbfluid[reverse[i]][k - next[i]] =
                     lbfluid[i][k] + population_shift;
               } else {
@@ -1412,6 +1327,8 @@ void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
               }
             }
           }
+          LBBoundaries::lbboundaries[lb_fields[k].boundary - 1]->force() +=
+              boundary_force;
         }
       }
     }
@@ -1424,9 +1341,8 @@ void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
  *  @param[in]  index  Local lattice site
  *  @retval The local fluid momentum.
  */
-inline Utils::Vector3d
-lb_calc_local_momentum_density(Lattice::index_t index,
-                               const LB_Fluid &lb_fluid) {
+Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index,
+                                               const LB_Fluid &lb_fluid) {
   return {{lb_fluid[1][index] - lb_fluid[2][index] + lb_fluid[7][index] -
                lb_fluid[8][index] + lb_fluid[9][index] - lb_fluid[10][index] +
                lb_fluid[11][index] - lb_fluid[12][index] + lb_fluid[13][index] -
@@ -1480,4 +1396,4 @@ void lb_collect_boundary_forces(double *result) {
 #endif
 }
 
-/*@}*/
+/**@}*/

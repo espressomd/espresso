@@ -59,7 +59,8 @@ if 'LB.CPU' in modes:
 elif 'LB.GPU' in modes and espressomd.gpu_available():
     LB_implementation = espressomd.lb.LBFluidGPU
 if LB_implementation:
-    lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
+    lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01,
+                            gamma_odd=0.2, gamma_even=0.3)
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)

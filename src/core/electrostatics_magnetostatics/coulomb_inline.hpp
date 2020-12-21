@@ -33,6 +33,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/math/tensor_product.hpp>
+#include <utils/matrix.hpp>
 
 namespace Coulomb {
 inline Utils::Vector3d central_force(double const q1q2,
@@ -58,7 +59,7 @@ inline Utils::Vector3d central_force(double const q1q2,
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    Scafacos::add_pair_force(q1q2, d.data(), dist, f.data());
+    Scafacos::fcs_coulomb()->add_pair_force(q1q2, d, dist, f);
     break;
 #endif
   default:
@@ -109,10 +110,10 @@ pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
  * @param dist distance norm
  * @return Contribution to the pressure tensor.
  */
-inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const &p1,
-                                                       Particle const &p2,
-                                                       Utils::Vector3d const &d,
-                                                       double dist) {
+inline Utils::Matrix<double, 3, 3> pair_pressure(Particle const &p1,
+                                                 Particle const &p2,
+                                                 Utils::Vector3d const &d,
+                                                 double dist) {
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
@@ -157,7 +158,7 @@ inline double pair_energy(Particle const &p1, Particle const &p2,
 #endif
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
-      return Scafacos::pair_energy(q1q2, dist);
+      return Scafacos::fcs_coulomb()->pair_energy(q1q2, dist);
 #endif
     case COULOMB_DH:
       return dh_coulomb_pair_energy(q1q2, dist);

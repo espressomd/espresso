@@ -31,7 +31,21 @@ from tests_common import abspath
 @utx.skipIfMissingFeatures(["SCAFACOS_DIPOLES"])
 class Scafacos1d2d(ut.TestCase):
 
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.5
+    system.periodicity = [1, 1, 1]
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.actors.clear()
+        self.system.periodicity = [1, 1, 1]
+
+    def vector_error(self, a, b):
+        return np.sum(np.linalg.norm(a - b, axis=1)) / np.sqrt(a.shape[0])
+
     def test_scafacos(self):
+        s = self.system
         rho = 0.3
 
         # This is only for box size calculation. The actual particle number is
@@ -40,18 +54,10 @@ class Scafacos1d2d(ut.TestCase):
 
         particle_radius = 0.5
 
-        #################################################
-
-        box_l = pow(((4 * n_particle * np.pi) / (3 * rho)),
-                    1.0 / 3.0) * particle_radius
-        skin = 0.5
-
-        s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        # give Espresso some parameters
-        s.time_step = 0.01
-        s.cell_system.skin = skin
+        box_l = np.cbrt(4 * n_particle * np.pi / (3 * rho)) * particle_radius
         s.box_l = 3 * [box_l]
-        for dim in 2, 1:
+
+        for dim in (2, 1):
             print("Dimension", dim)
 
             # Read reference data
@@ -62,15 +68,14 @@ class Scafacos1d2d(ut.TestCase):
                 s.periodicity = [1, 0, 0]
                 file_prefix = "data/scafacos_dipoles_1d"
 
-            with open(abspath(file_prefix + "_reference_data_energy.dat")) as f:
-                ref_E = float(f.readline())
+            ref_E_path = abspath(file_prefix + "_reference_data_energy.dat")
+            ref_E = float(np.genfromtxt(ref_E_path))
 
             # Particles
             data = np.genfromtxt(abspath(
                 file_prefix + "_reference_data_forces_torques.dat"))
-            for p in data[:, :]:
-                s.part.add(
-                    id=int(p[0]), pos=p[1:4], dip=p[4:7], rotation=(1, 1, 1))
+            s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
+            s.part[:].rotation = (1, 1, 1)
 
             if dim == 2:
                 scafacos = magnetostatics.Scafacos(
@@ -92,42 +97,33 @@ class Scafacos1d2d(ut.TestCase):
                 s.box_l = np.array((1, 1, 1.3)) * box_l
 
             else:
-                if dim == 1:
-                    # 1d periodic in x
-                    scafacos = magnetostatics.Scafacos(
-                        prefactor=1,
-                        method_name="p2nfft",
-                        method_params={
-                            "p2nfft_verbose_tuning": 1,
-                            "pnfft_N": "32,128,128",
-                            "pnfft_direct": 0,
-                            "p2nfft_r_cut": 2.855,
-                            "p2nfft_alpha": "1.5",
-                            "p2nfft_intpol_order": "-1",
-                            "p2nfft_reg_kernel_name": "ewald",
-                            "p2nfft_p": "16",
-                            "p2nfft_ignore_tolerance": "1",
-                            "pnfft_window_name": "bspline",
-                            "pnfft_m": "8",
-                            "pnfft_diff_ik": "1",
-                            "p2nfft_epsB": "0.125"})
-                    s.box_l = np.array((1, 1, 1)) * box_l
-                    s.actors.add(scafacos)
-                else:
-                    raise Exception("This shouldn't happen.")
-            s.thermostat.turn_off()
+                # 1d periodic in x
+                scafacos = magnetostatics.Scafacos(
+                    prefactor=1,
+                    method_name="p2nfft",
+                    method_params={
+                        "p2nfft_verbose_tuning": 1,
+                        "pnfft_N": "32,128,128",
+                        "pnfft_direct": 0,
+                        "p2nfft_r_cut": 2.855,
+                        "p2nfft_alpha": "1.5",
+                        "p2nfft_intpol_order": "-1",
+                        "p2nfft_reg_kernel_name": "ewald",
+                        "p2nfft_p": "16",
+                        "p2nfft_ignore_tolerance": "1",
+                        "pnfft_window_name": "bspline",
+                        "pnfft_m": "8",
+                        "pnfft_diff_ik": "1",
+                        "p2nfft_epsB": "0.125"})
+                s.box_l = np.array((1, 1, 1)) * box_l
+                s.actors.add(scafacos)
             s.integrator.run(0)
 
             # Calculate errors
 
-            err_f = np.sum(np.linalg.norm(
-                s.part[:].f - data[:, 7:10], axis=1)) / np.sqrt(data.shape[0])
-            err_t = np.sum(np.linalg.norm(
-                s.part[:].torque_lab - data[:, 10:13], axis=1)) / np.sqrt(data.shape[0])
+            err_f = self.vector_error(s.part[:].f, data[:, 7:10])
+            err_t = self.vector_error(s.part[:].torque_lab, data[:, 10:13])
             err_e = s.analysis.energy()["dipolar"] - ref_E
-            print("Energy difference", err_e)
-            print("Force difference", err_f)
-            print("Torque difference", err_t)
 
             tol_f = 2E-3
             tol_t = 2E-3
@@ -141,7 +137,7 @@ class Scafacos1d2d(ut.TestCase):
                 abs(err_f), tol_f, "Force difference too large")
 
             s.part.clear()
-            del s.actors[0]
+            s.actors.clear()
 
 
 if __name__ == "__main__":

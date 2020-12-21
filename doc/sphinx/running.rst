@@ -300,9 +300,9 @@ The correct forces need to be re-calculated after running the integration::
     def convergence_criterion(forces):
         '''Function that decides when the gradient descent has converged'''
         return ...
-    p1 = system.part.add(id=0, pos=[0, 0, 0], type=1)
-    p2 = system.part.add(id=1, pos=[0, 0, 0.1], type=1)
-    p2.vs_auto_relate_to(p1.id)
+    p1 = system.part.add(pos=[0, 0, 0], type=1)
+    p2 = system.part.add(pos=[0, 0, 0.1], type=1)
+    p2.vs_auto_relate_to(p1)
     system.integrator.set_steepest_descent(f_max=800, gamma=1.0, max_displacement=0.01)
     while convergence_criterion(system.part[:].f):
         system.integrator.run(10)

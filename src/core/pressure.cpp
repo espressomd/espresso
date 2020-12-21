@@ -33,7 +33,6 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "npt.hpp"
 #include "pressure_inline.hpp"
 #include "reduce_observable_stat.hpp"
 #include "virtual_sites.hpp"
@@ -52,20 +51,6 @@
 #include <cmath>
 #include <cstddef>
 #include <utility>
-
-nptiso_struct nptiso = {0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        {0.0, 0.0, 0.0},
-                        {0.0, 0.0, 0.0},
-                        0,
-                        {NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},
-                        0,
-                        false,
-                        0};
 
 /** Pressure tensor of the system */
 Observable_stat obs_pressure{9};
@@ -109,7 +94,7 @@ void pressure_calc() {
           for (int k = 0; k < 3; k++)
             for (int l = 0; l < 3; l++)
               obs_pressure.bonded_contribution(bond_id)[k * 3 + l] +=
-                  tensor[k][l];
+                  tensor(k, l);
 
           return false;
         }

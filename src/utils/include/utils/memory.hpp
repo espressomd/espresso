@@ -29,7 +29,7 @@ namespace Utils {
 /*************************************************************/
 /** \name Dynamic memory allocation.                         */
 /*************************************************************/
-/*@{*/
+/**@{*/
 
 /* to enable us to make sure that freed pointers are invalidated, we normally
    try to use realloc.
@@ -68,8 +68,8 @@ inline void *malloc(size_t size) {
   }
   return p;
 }
-} // namespace Utils
 
-/*@}*/
+/**@}*/
+} // namespace Utils
 
 #endif

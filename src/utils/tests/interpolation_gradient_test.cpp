@@ -51,9 +51,9 @@ BOOST_AUTO_TEST_CASE(sum_of_weights) {
   auto summer = [&sum_const, &sum_lin, &grid_spacing](
                     const std::array<int, 3> &ind, const Utils::Vector3d &w) {
     sum_const += w;
-    sum_lin +=
-        {w[0] * ind[0] * grid_spacing[0], w[1] * ind[1] * grid_spacing[1],
-         w[2] * ind[2] * grid_spacing[2]};
+    sum_lin += Utils::Vector3d{w[0] * ind[0] * grid_spacing[0],
+                               w[1] * ind[1] * grid_spacing[1],
+                               w[2] * ind[2] * grid_spacing[2]};
   };
 
   bspline_3d_gradient<5>({.1, .2, .3}, summer, grid_spacing, {7., 8., 9.});
@@ -155,13 +155,15 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_vec_integration_test_odd) {
   auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
   auto const interpolated_value = bspline_3d_gradient_accumulate<order>(
       p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, Utils::Vector<Utils::Vector3d, 2>{});
+      grid_spacing, origin, Utils::Matrix<double, 2, 3>{});
 
   const Utils::Vector<Utils::Vector3d, 2> exact_value = {
       del_gaussian(p, x0[0], sigma[0]), del_gaussian(p, x0[1], sigma[1])};
 
-  BOOST_CHECK_SMALL((interpolated_value[0] - exact_value[0]).norm(), 1.e-2);
-  BOOST_CHECK_SMALL((interpolated_value[1] - exact_value[1]).norm(), 1.e-4);
+  BOOST_CHECK_SMALL((interpolated_value.row<0>() - exact_value[0]).norm(),
+                    1.e-2);
+  BOOST_CHECK_SMALL((interpolated_value.row<1>() - exact_value[1]).norm(),
+                    1.e-4);
 }
 
 BOOST_AUTO_TEST_CASE(interpolation_gradient_integration_test_even) {
