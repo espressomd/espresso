@@ -34,6 +34,7 @@
 
 #ifdef VIRTUAL_SITES
 #include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 
 /** @brief Base class for virtual sites implementations */
 class VirtualSites {

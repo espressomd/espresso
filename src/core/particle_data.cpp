@@ -733,13 +733,13 @@ void set_particle_rotational_inertia(int part, double *rinertia) {
 #else
 constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
+
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
   mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
                                                                        rot);
 }
-#endif
-#ifdef ROTATION
+
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
   mpi_send_update_message(part, UpdateOrientation{axis, angle});
 }
@@ -759,7 +759,6 @@ void set_particle_dip(int part, double const *const dip) {
   set_particle_dipm(part, dipm);
   set_particle_quat(part, quat.data());
 }
-
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -842,6 +841,12 @@ void set_particle_quat(int part, double *quat) {
   mpi_update_particle<ParticlePosition, &Particle::r, Utils::Quaternion<double>,
                       &ParticlePosition::quat>(
       part, Utils::Quaternion<double>{quat[0], quat[1], quat[2], quat[3]});
+}
+
+void set_particle_director(int part, const Utils::Vector3d &director) {
+  Utils::Quaternion<double> quat =
+      convert_director_to_quaternion(director.normalized());
+  set_particle_quat(part, quat.data());
 }
 
 void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab) {
@@ -1200,7 +1205,6 @@ void pointer_to_omega_body(Particle const *p, double const *&res) {
 void pointer_to_quat(Particle const *p, double const *&res) {
   res = p->r.quat.data();
 }
-
 #endif
 
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }

@@ -71,7 +71,8 @@ class CheckpointTest(ut.TestCase):
                         grid_3D[i, j, k] * np.arange(1, 20),
                         decimal=precision)
         state = lbf.get_params()
-        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
+        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01,
+                     'gamma_odd': 0.2, 'gamma_even': 0.3}
         for key in reference:
             self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
