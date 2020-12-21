@@ -17,15 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import numpy as np
-import sys
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
 import espressomd.electrostatics
-
-
-if not espressomd.has_features("ELECTROSTATICS"):
-    sys.exit()
 
 
 class ElectrostaticInteractionsTests:
@@ -39,21 +34,16 @@ class ElectrostaticInteractionsTests:
     system.cell_system.set_n_square()
     system.thermostat.set_langevin(kT=0, gamma=1, seed=8)
 
-    pid_target, pos_x_target, pos_y_target, pos_z_target, q_target, f_x_target, f_y_target, f_z_target = np.loadtxt(
-        tests_common.abspath("data/mmm1d_data.txt"), unpack=True)
-    vec_f_target = np.stack((f_x_target, f_y_target, f_z_target), axis=-1)
+    data = np.loadtxt(tests_common.abspath("data/mmm1d_data.txt"))
+    p_pos = data[:, 1:4]
+    p_q = data[:, 4]
+    forces_target = data[:, 5:8]
     energy_target = -7.156365298205383
-    num_particles = pid_target.shape[0]
 
-    allowed_error = 1e-4
+    allowed_error = 2e-5
 
     def setUp(self):
-        for i in range(self.num_particles):
-            self.system.part.add(
-                pos=[self.pos_x_target[i],
-                     self.pos_y_target[i],
-                     self.pos_z_target[i]],
-                q=self.q_target[i])
+        self.system.part.add(pos=self.p_pos, q=self.p_q)
         self.mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
         self.system.actors.add(self.mmm1d)
         self.system.integrator.run(steps=0)
@@ -63,18 +53,12 @@ class ElectrostaticInteractionsTests:
         self.system.actors.clear()
 
     def test_forces(self):
-        measured_f = self.system.part[:].f
-        for i in range(self.num_particles):
-            for comp in range(3):
-                self.assertAlmostEqual(
-                    measured_f[i, comp], self.vec_f_target[i, comp],
-                    delta=self.allowed_error,
-                    msg="Measured force deviates too much "
-                        "for particle {} in component {}".format(i, comp))
+        measured_f = np.copy(self.system.part[:].f)
+        np.testing.assert_allclose(measured_f, self.forces_target,
+                                   atol=self.allowed_error)
 
     def test_energy(self):
-        measured_el_energy = self.system.analysis.energy()["total"] \
-            - self.system.analysis.energy()["kinetic"]
+        measured_el_energy = self.system.analysis.energy()["coulomb"]
         self.assertAlmostEqual(
             measured_el_energy, self.energy_target, delta=self.allowed_error,
             msg="Measured energy deviates too much from stored result")
