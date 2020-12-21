@@ -21,7 +21,7 @@ import sys
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
-import espressomd
+import espressomd.electrostatics
 
 
 if not espressomd.has_features("ELECTROSTATICS"):
@@ -29,6 +29,8 @@ if not espressomd.has_features("ELECTROSTATICS"):
 
 
 class ElectrostaticInteractionsTests:
+    MMM1D = None
+
     # Handle to espresso system
     system = espressomd.System(box_l=[10.0] * 3)
     system.periodicity = [0, 0, 1]
@@ -110,14 +112,12 @@ class ElectrostaticInteractionsTests:
         self.test_with_analytical_result(prefactor=prefactor, accuracy=0.0017)
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])
-class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
-    from espressomd.electrostatics import MMM1DGPU as MMM1D
-
-
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class MMM1D_Test(ElectrostaticInteractionsTests, ut.TestCase):
-    from espressomd.electrostatics import MMM1D
+
+    def setUp(self):
+        self.MMM1D = espressomd.electrostatics.MMM1D
+        super().setUp()
 
 
 if __name__ == "__main__":
