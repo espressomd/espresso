@@ -486,8 +486,8 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
   if (tStop < 0)
     tStop = N * N;
 
-  const mmm1dgpu_real c_2pif = 2 * Utils::pi<mmm1dgpu_real>();
-  const mmm1dgpu_real c_gammaf = 2 * Utils::gamma<mmm1dgpu_real>();
+  auto const c_2pif = 2 * Utils::pi<mmm1dgpu_real>();
+  auto const c_gammaf = Utils::gamma<mmm1dgpu_real>();
 
   extern __shared__ mmm1dgpu_real partialsums[];
   if (!pairs) {
