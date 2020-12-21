@@ -112,7 +112,7 @@ class ElectrostaticInteractionsTests:
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])
 class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
-    from espressomd.electrostatics import MMM1D
+    from espressomd.electrostatics import MMM1DGPU as MMM1D
 
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
