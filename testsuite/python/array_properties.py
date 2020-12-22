@@ -175,7 +175,8 @@ class ArrayPropertyTest(ArrayCommon):
         self.assert_copy_is_writable(self.system.part[0].ext_force)
         self.assert_copy_is_writable(self.system.part[0].fix)
 
-    @utx.skipIfMissingFeatures(["ROTATION", "PARTICLE_ANISOTROPY"])
+    @utx.skipIfMissingFeatures(["ROTATION", "LANGEVIN_PER_PARTICLE",
+                                "PARTICLE_ANISOTROPY"])
     def test_rot_aniso(self):
         self.assert_operator_usage_raises(self.system.part[0].gamma_rot)
 

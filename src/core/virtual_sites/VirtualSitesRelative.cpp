@@ -144,7 +144,7 @@ auto constraint_stress(
   /* The constraint force is minus the force on the particle, make it force
    * free. The counter force is translated by the connection vector to the
    * real particle, hence the virial stress is */
-  return tensor_product(connection_vector(p_ref, vs_rel), -f);
+  return tensor_product(-f, connection_vector(p_ref, vs_rel));
 }
 } // namespace
 

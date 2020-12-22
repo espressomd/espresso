@@ -94,19 +94,18 @@ volume = box_l**3
 n_part = int(volume * density)
 
 for i in range(n_part):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+    part = system.part.add(pos=np.random.random(3) * system.box_l)
+    # Assign charges to particles
+    if i % 2 == 0:
+        part.q = -1.0
+    else:
+        part.q = 1.0
 
 print("Simulate {} particles in a cubic box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
-
-
-# Assign charges to particles
-for i in range(n_part // 2 - 1):
-    system.part[2 * i].q = -1.0
-    system.part[2 * i + 1].q = 1.0
 
 # P3M setup after charge assignment
 #############################################################

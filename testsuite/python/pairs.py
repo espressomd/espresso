@@ -79,7 +79,13 @@ class PairTest(ut.TestCase):
         epairs_by_type = self.expected_pairs_with_types(self.s.periodicity)
         self.assertSetEqual(set(pairs_by_type), set(epairs_by_type))
 
-    def check_exception(self):
+    def test_input_exceptions(self):
+        with self.assertRaises(ValueError):
+            self.s.cell_system.get_pairs(0.1, types=3)
+        # check no exception for list of length 1
+        self.s.cell_system.get_pairs(0.1, types=[3])
+
+    def check_range_exception(self):
         with self.assertRaises(Exception):
             self.s.cell_system.get_pairs(3.)
 
@@ -103,13 +109,13 @@ class PairTest(ut.TestCase):
         self.s.cell_system.set_domain_decomposition()
         self.s.periodicity = [1, 1, 1]
         self.run_and_check()
-        self.check_exception()
+        self.check_range_exception()
 
     def test_dd_partial_z(self):
         self.s.cell_system.set_domain_decomposition()
         self.s.periodicity = [1, 1, 0]
         self.run_and_check()
-        self.check_exception()
+        self.check_range_exception()
 
 
 if __name__ == "__main__":

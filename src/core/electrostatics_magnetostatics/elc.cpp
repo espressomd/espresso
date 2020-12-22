@@ -223,6 +223,20 @@ void distribute(int size) {
   MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, comm_cart);
 }
 
+/** Checks if a charged particle is in the forbidden gap region
+ */
+inline void check_gap_elc(const Particle &p) {
+  if (p.p.q != 0) {
+    if (p.r.p[2] < 0)
+      runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
+                        << "region by " << (p.r.p[2]);
+    else if (p.r.p[2] > elc_params.h) {
+      runtimeErrorMsg() << "Particle " << p.p.identity << " entered ELC gap "
+                        << "region by " << (p.r.p[2] - elc_params.h);
+    }
+  }
+}
+
 /*****************************************************************/
 /* dipole terms */
 /*****************************************************************/
@@ -247,6 +261,8 @@ static void add_dipole_force(const ParticleRange &particles) {
   gblcblk[2] = 0; // sum q_i
 
   for (auto const &p : local_particles) {
+    check_gap_elc(p);
+
     gblcblk[0] += p.p.q * (p.r.p[2] - shift);
     gblcblk[1] += p.p.q * p.r.p[2];
     gblcblk[2] += p.p.q;
@@ -311,6 +327,8 @@ static double dipole_energy(const ParticleRange &particles) {
   gblcblk[6] = 0; // sum q_i z_i           primary box
 
   for (auto &p : particles) {
+    check_gap_elc(p);
+
     gblcblk[0] += p.p.q;
     gblcblk[2] += p.p.q * (p.r.p[2] - shift);
     gblcblk[4] += p.p.q * (Utils::sqr(p.r.p[2] - shift));

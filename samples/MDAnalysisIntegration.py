@@ -34,7 +34,7 @@ system.time_step = 0.001
 system.cell_system.skin = 0.1
 
 for i in range(10):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l,
+    system.part.add(pos=np.random.random(3) * system.box_l,
                     v=np.random.random(3))
 
 for i in range(5, 10):

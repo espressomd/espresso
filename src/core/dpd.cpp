@@ -42,6 +42,7 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/math/tensor_product.hpp>
+#include <utils/matrix.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -152,7 +153,7 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
 static auto dpd_viscous_stress_local() {
   on_observable_calc();
 
-  Utils::Vector<Vector3d, 3> stress{};
+  Utils::Matrix<double, 3, 3> stress{};
   cell_structure.non_bonded_loop(
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
         auto const v21 = p1.m.v - p2.m.v;
@@ -196,9 +197,6 @@ Utils::Vector9d dpd_stress() {
                                dpd_viscous_stress_local);
   auto const volume = box_geo.volume();
 
-  return Utils::Vector9d{stress[0][0], stress[0][1], stress[0][2],
-                         stress[1][0], stress[1][1], stress[1][2],
-                         stress[2][0], stress[2][1], stress[2][2]} /
-         volume;
+  return Utils::flatten(stress) / volume;
 }
 #endif

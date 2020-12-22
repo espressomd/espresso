@@ -143,9 +143,16 @@ cdef class CellSystem:
         This function needs to be separated from ``self.get_pairs()`` because ``cdef``
         cannot be inside an ``else`` block
         """
+        if hasattr(types, "__getitem__"):
+            if len(types) == 1:
+                check_type_or_throw_except(
+                    types[0], 1, int, 'types must be a list of int')
+            else:
+                check_type_or_throw_except(
+                    types, len(types), int, 'types must be a list of int')
+        else:
+            raise ValueError('types must be iterable')
 
-        check_type_or_throw_except(
-            types, len(types), int, 'types must be a list of int')
         cdef vector[int] types_c
         for type in types:
             types_c.push_back(type)
