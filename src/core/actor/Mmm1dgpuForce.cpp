@@ -21,15 +21,19 @@
 #ifdef MMM1D_GPU
 
 #include "actor/Mmm1dgpuForce.hpp"
+#include "cells.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
 
 #include <stdexcept>
 
-void Mmm1dgpuForce::check_periodicity() {
+void Mmm1dgpuForce::sanity_checks() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
-    throw std::runtime_error("MMM1D requires periodicity (0,0,1)");
+    throw std::runtime_error("MMM1D requires periodicity (0, 0, 1)");
+  }
+  if (cell_structure.decomposition_type() != CELL_STRUCTURE_NSQUARE) {
+    throw std::runtime_error("MMM1D requires the N-square cellsystem");
   }
 }
 
