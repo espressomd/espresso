@@ -108,9 +108,8 @@ IF SCAFACOS == 1:
             param_string = ""
             for k in method_params:
                 param_string += k + " " + str(method_params[k]) + " "
-            # Remove trailing whitespace
-            param_string = param_string[0:-1]
-            param_string = param_string.replace(" ", ",")
+            # Format list as a single string
+            param_string = param_string.rstrip().replace(" ", ",")
 
             set_parameters(to_char_pointer(self._params["method_name"]),
                            to_char_pointer(param_string), self.dipolar)
