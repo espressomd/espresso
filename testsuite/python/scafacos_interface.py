@@ -62,6 +62,14 @@ class ScafacosInterface(ut.TestCase):
             system.actors.add(espressomd.electrostatics.Scafacos(
                 prefactor=-1, method_name="p3m", method_params={"p3m_cao": 7}))
         system.actors.clear()
+        with self.assertRaisesRegex(ValueError, "method 'impossible' is unknown or not compiled in ScaFaCoS"):
+            system.actors.add(espressomd.electrostatics.Scafacos(
+                prefactor=1, method_name="impossible", method_params={"p3m_cao": 7}))
+        system.actors.clear()
+        with self.assertRaisesRegex(ValueError, "ScaFaCoS methods require at least 1 parameter"):
+            system.actors.add(espressomd.electrostatics.Scafacos(
+                prefactor=1, method_name="p3m", method_params={}))
+        system.actors.clear()
 
     def test_actor_coulomb(self):
         system = self.system

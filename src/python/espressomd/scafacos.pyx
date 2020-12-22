@@ -54,7 +54,12 @@ IF SCAFACOS == 1:
             return {"method_name", "method_params", "prefactor"}
 
         def validate_params(self):
-            return True
+            if self._params["method_name"] not in available_methods():
+                raise ValueError(
+                    f"method '{self._params['method_name']}' is unknown or not compiled in ScaFaCoS")
+            if not self._params["method_params"]:
+                raise ValueError(
+                    "ScaFaCoS methods require at least 1 parameter")
 
         def _get_params_from_es_core(self):
             # Parameters are returned as strings
