@@ -61,7 +61,7 @@ IF ELECTROSTATICS:
 
     cdef extern from "electrostatics_magnetostatics/coulomb.hpp" namespace "Coulomb":
 
-        int set_prefactor(double prefactor)
+        int set_prefactor(double prefactor) except+
         void deactivate_method()
 
     IF P3M:

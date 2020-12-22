@@ -50,6 +50,19 @@ class ScafacosInterface(ut.TestCase):
         for method in available_methods:
             self.assertIn(method, scafacos_methods)
 
+    def test_actor_exceptions(self):
+        system = self.system
+
+        if espressomd.has_features('SCAFACOS_DIPOLES'):
+            with self.assertRaisesRegex(ValueError, "Dipolar prefactor has to be >= 0"):
+                system.actors.add(espressomd.magnetostatics.Scafacos(
+                    prefactor=-1, method_name="p3m", method_params={"p3m_cao": 7}))
+            system.actors.clear()
+        with self.assertRaisesRegex(ValueError, "Coulomb prefactor has to be >= 0"):
+            system.actors.add(espressomd.electrostatics.Scafacos(
+                prefactor=-1, method_name="p3m", method_params={"p3m_cao": 7}))
+        system.actors.clear()
+
     def test_actor_coulomb(self):
         system = self.system
 
