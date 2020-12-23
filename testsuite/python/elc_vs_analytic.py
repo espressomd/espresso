@@ -46,7 +46,9 @@ class ELC_vs_analytic(ut.TestCase):
 
     def test_elc(self):
         """
-        Testing ELC against the analytic solution for an infinite large simulation box with dielectric contrast on the bottom of the box, which can be calculated analytically with image charges.
+        Testing ELC against the analytic solution for an infinitely large
+        simulation box with dielectric contrast on the bottom of the box,
+        which can be calculated analytically with image charges.
         """
         self.system.part.add(id=1, pos=self.system.box_l / 2., q=self.q[0])
         self.system.part.add(id=2, pos=self.system.box_l / 2. + [0, 0, self.distance],
