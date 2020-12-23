@@ -15,7 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-echo "shell env: $SHELL ($BASH_VERSION)"
+echo "shell env: $SHELL ($BASH_VERSION) [$0]"
+if [[ 1 = 1 ]]; then echo 1; fi
 
 cd "$(git rev-parse --show-toplevel)"
 
