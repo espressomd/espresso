@@ -35,7 +35,7 @@ class ELC_vs_analytic(ut.TestCase):
     delta_mid_bot = 39. / 41.
     distance = 1.
 
-    number_samples = 25
+    number_samples = 6 if '@WITH_COVERAGE@' == 'ON' else 12
     minimum_distance_to_wall = 0.1
     zPos = np.linspace(
         minimum_distance_to_wall,
