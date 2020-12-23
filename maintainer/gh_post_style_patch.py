@@ -62,7 +62,7 @@ where the style does not make sense.\
 '''
 
 # If the working directory is not clean, post a new comment
-if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
+if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"])  != 0:
     patch = subprocess.check_output(['git', '--no-pager', 'diff'])
     if len(patch) <= SIZELIMIT:
         comment = 'Specifically, I suggest you make the following changes:'
