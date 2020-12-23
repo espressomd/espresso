@@ -307,6 +307,7 @@ void delete_particle_bond(int part, Utils::Span<const int> bond);
 void delete_particle_bonds(int part);
 
 /** Call only on the master node: Add bond to particle.
+ *  @param unknown
  *  @param part     identity of principal atom of the bond.
  *  @param bond     field containing the bond type number and the
  *  identity of all bond partners (secondary atoms of the bond).

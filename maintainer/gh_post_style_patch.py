@@ -37,8 +37,10 @@ comments.raise_for_status()
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and \
             TOKEN_ESPRESSO_CI in comment['body']:
+        print(f"deleting {comment['url']}")
         response = requests.delete(comment['url'], headers=HEADERS)
         response.raise_for_status()
+        print(f"status = {response.status_code}")
 
 MESSAGE = '''Your pull request does not meet our code formatting \
 rules. {header}, please do one of the following:
@@ -62,7 +64,7 @@ where the style does not make sense.\
 '''
 
 # If the working directory is not clean, post a new comment
-if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"])  != 0:
+if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
     patch = subprocess.check_output(['git', '--no-pager', 'diff'])
     if len(patch) <= SIZELIMIT:
         comment = 'Specifically, I suggest you make the following changes:'
