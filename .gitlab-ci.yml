@@ -33,7 +33,7 @@ variables:
 status_pending:
   <<: *notification_job_definition
   stage: prepare
-  script: bash maintainer/gh_post_status.sh pending
+  script: maintainer/gh_post_status.sh pending
 
 style:
   <<: *global_job_definition
@@ -42,7 +42,7 @@ style:
   before_script:
     - git submodule deinit .
   script:
-    - maintainer/CI/fix_style.sh
+    - sh maintainer/CI/fix_style.sh
   tags:
     - docker
     - linux
