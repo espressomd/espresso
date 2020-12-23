@@ -131,7 +131,7 @@ IF DP3M == 1:
         def valid_keys(self):
             return ["prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
                     "cao", "accuracy", "epsilon", "cao_cut", "a", "ai",
-                    "alpha", "r_cut", "cao3", "additional_mesh", "tune"]
+                    "alpha", "r_cut", "cao3", "additional_mesh", "tune", "verbose"]
 
         def required_keys(self):
             return ["accuracy", ]
@@ -143,7 +143,8 @@ IF DP3M == 1:
                     "mesh": -1,
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
-                    "tune": True}
+                    "tune": True,
+                    "verbose": True}
 
         def _get_params_from_es_core(self):
             params = {}
@@ -166,9 +167,7 @@ IF DP3M == 1:
             self.python_dp3m_set_tune_params(
                 self._params["r_cut"], self._params["mesh"],
                 self._params["cao"], -1., self._params["accuracy"])
-            resp, log = self.python_dp3m_adaptive_tune()
-            handle_errors("dipolar P3M tuning failed")
-            print(to_str(log))
+            python_dp3m_adaptive_tune(self._params["verbose"])
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
@@ -189,13 +188,6 @@ IF DP3M == 1:
             mesh_offset[2] = mesh_off[2]
             return dp3m_set_mesh_offset(
                 mesh_offset[0], mesh_offset[1], mesh_offset[2])
-
-        def python_dp3m_adaptive_tune(self):
-            cdef char * log = NULL
-            cdef int response
-            response = dp3m_adaptive_tune(& log)
-            handle_errors("dipolar P3M tuning failed")
-            return response, log
 
         def python_dp3m_set_params(self, p_r_cut, p_mesh, p_cao, p_alpha,
                                    p_accuracy):

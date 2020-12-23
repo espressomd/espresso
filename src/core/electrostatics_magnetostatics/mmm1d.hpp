@@ -76,11 +76,11 @@ double mmm1d_coulomb_pair_energy(double q1q2, Utils::Vector3d const &d,
  *  @ref MMM1D_struct::bessel_cutoff "Bessel cutoff". Call this only
  *  on the master node.
  *
- *  @param log contains information about the tuning (tried values and errors)
+ *  @param verbose output information about the tuning (tried values and errors)
  *  @retval ES_OK
  *  @retval ES_ERROR
  */
-int mmm1d_tune(char **log);
+int mmm1d_tune(bool verbose);
 
 #endif
 #endif

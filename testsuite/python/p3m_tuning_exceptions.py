@@ -49,7 +49,7 @@ class P3M_tuning_test(ut.TestCase):
         self.add_charged_particles()
 
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'p3m_adaptive_tune: ERROR: time_step not set'):
+        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: time_step not set'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("P3M")
@@ -59,7 +59,7 @@ class P3M_tuning_test(ut.TestCase):
         self.add_charged_particles()
 
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'p3m_adaptive_tune: ERROR: time_step not set'):
+        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: time_step not set'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("DP3M")
@@ -70,7 +70,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'dipolar P3M tuning failed: ERROR: time_step not set'):
+        with self.assertRaisesRegex(Exception, 'python_dp3m_adaptive_tune: ERROR: time_step not set'):
             self.system.actors.add(solver)
 
     ##############################################
@@ -85,7 +85,7 @@ class P3M_tuning_test(ut.TestCase):
         self.system.time_step = 0.01
 
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'p3m_adaptive_tune: ERROR: no charged particles in the system'):
+        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: no charged particles in the system'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("P3M")
@@ -95,7 +95,7 @@ class P3M_tuning_test(ut.TestCase):
         self.system.time_step = 0.01
 
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'p3m_adaptive_tune: ERROR: no charged particles in the system'):
+        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: no charged particles in the system'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("DP3M")
@@ -106,7 +106,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'dipolar P3M tuning failed: ERROR: no dipolar particles in the system'):
+        with self.assertRaisesRegex(Exception, 'python_dp3m_adaptive_tune: ERROR: no dipolar particles in the system'):
             self.system.actors.add(solver)
 
     #######################################
@@ -124,7 +124,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.electrostatics.P3MGPU(
             prefactor=2, accuracy=1e-2, epsilon=1)
-        with self.assertRaisesRegex(Exception, 'p3m_adaptive_tune: ERROR: non-metallic epsilon requires cubic box'):
+        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: non-metallic epsilon requires cubic box'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("P3M")
@@ -137,7 +137,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.electrostatics.P3M(
             prefactor=2, accuracy=1e-2, epsilon=1)
-        with self.assertRaisesRegex(Exception, 'p3m_adaptive_tune: ERROR: non-metallic epsilon requires cubic box'):
+        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: non-metallic epsilon requires cubic box'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("DP3M")
@@ -150,7 +150,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'dipolar P3M tuning failed: ERROR: dipolar P3M requires a cubic box'):
+        with self.assertRaisesRegex(Exception, 'python_dp3m_adaptive_tune: ERROR: dipolar P3M requires a cubic box'):
             self.system.actors.add(solver)
 
     ###########################################################
