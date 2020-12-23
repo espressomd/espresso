@@ -18,6 +18,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 from espressomd import electrostatics, electrostatic_extensions
+import sys
 
 import numpy as np
 
@@ -74,7 +75,7 @@ class ElcTest(ut.TestCase):
         # Check if error is thrown when particles enter the ELC gap
         # positive direction
         p1.pos = [BOX_L[0] / 2, BOX_L[1] / 2, BOX_L[2] - GAP[2] / 2]
-        with self.assertRaises(Exception):
+        with  self.assertRaises(Exception):
             self.system.analysis.energy()
         with self.assertRaises(Exception):
             self.integrator.run(2)
