@@ -19,7 +19,7 @@
 
 # Add copyright header to C++, CUDA, Doxygen, Python and shell files.
 
-cd "$(git rev-parse --show-toplevel)"
+cd "$(git rev-parse --show-toplevel)" || exit 1
 
 # Get files without headers
 all_files=$(maintainer/files_with_header.sh)

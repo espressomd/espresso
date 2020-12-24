@@ -108,7 +108,7 @@ if [ "${?}" = "0" ]; then
 fi
 
 if [ "${CI}" != "" ]; then
-    "${srcdir}/maintainer/gh_post_docs_warnings.py" sphinx ${n_warnings} doc_warnings.log || exit 1
+    "${srcdir}/maintainer/gh_post_docs_warnings.py" sphinx "${n_warnings}" doc_warnings.log || exit 1
 fi
 
 if [ "${n_warnings}" = "0" ]; then

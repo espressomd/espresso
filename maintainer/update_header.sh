@@ -30,7 +30,7 @@
 # To review the diff:
 # $> git diff --word-diff-regex=. -U0 | grep -Po 'Copyright.+' | sort | uniq
 
-cd "$(git rev-parse --show-toplevel)"
+cd "$(git rev-parse --show-toplevel)" || exit 1
 
 files=$(maintainer/files_with_header.sh)
 num_files=$(echo ${files} | wc -w)

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-[ "${#}" -eq 1 ] || exit -1
+[ "${#}" -eq 1 ] || exit 1
 
 GIT_COMMIT=$(git rev-parse HEAD)
 URL="https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/pipelines/${CI_PIPELINE_ID}"
