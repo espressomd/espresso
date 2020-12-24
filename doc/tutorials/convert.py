@@ -61,7 +61,7 @@ def add_cell_from_script(nb, filepath):
     if m and all(x.startswith('#') for x in m.group(0).strip().split('\n')):
         code = re.sub('^(#\n)+', '', code.replace(m.group(0), ''), re.M)
     # strip first component in relative paths
-    code = re.sub('(?<=[\'\"])\.\./', './', code)
+    code = re.sub(r'(?<=[\'\"])\.\./', './', code)
     # create new cells
     filename = os.path.relpath(os.path.realpath(filepath))
     if len(filename) > len(filepath):
