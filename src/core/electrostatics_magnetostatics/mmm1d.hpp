@@ -57,13 +57,13 @@ extern MMM1D_struct mmm1d_params;
  *      to the near formula. If -1, this parameter will be tuned automatically.
  *  @param maxPWerror @copydoc MMM1D_struct::maxPWerror
  */
-int MMM1D_set_params(double switch_rad, double maxPWerror);
+void MMM1D_set_params(double switch_rad, double maxPWerror);
 
 /// check that MMM1D can run with the current parameters
 int MMM1D_sanity_checks();
 
 /// initialize the MMM1D constants
-void MMM1D_init();
+int MMM1D_init();
 
 void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
                                   double r, Utils::Vector3d &force);
@@ -76,11 +76,11 @@ double mmm1d_coulomb_pair_energy(double q1q2, Utils::Vector3d const &d,
  *  @ref MMM1D_struct::bessel_cutoff "Bessel cutoff". Call this only
  *  on the master node.
  *
- *  @param log contains information about the tuning (tried values and errors)
+ *  @param verbose output information about the tuning (tried values and errors)
  *  @retval ES_OK
  *  @retval ES_ERROR
  */
-int mmm1d_tune(char **log);
+int mmm1d_tune(bool verbose);
 
 #endif
 #endif
