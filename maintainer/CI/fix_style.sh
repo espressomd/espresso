@@ -30,24 +30,28 @@ pre_commit_return_code="${?}"
 
 git diff-index --quiet HEAD --
 git_diff_return_code="${?}"
-if [ "${pre_commit_return_code}" = 1 ]; then
-    if [ "${git_diff_return_code}" = 1 ]; then
-        if [ "${CI}" != "" ]; then
-            git --no-pager diff > style.patch
-            maintainer/gh_post_style_patch.py || exit 1
-            echo "Failed style check. Download ${CI_JOB_URL}/artifacts/raw/style.patch to see which changes are necessary." >&2
-        else:
-            echo "Failed style check." >&2
-        fi
+
+pylint_errors=0
+if [ -f "pylint.log" ]; then
+    pylint_errors=$(grep -Pc '^[a-z]+/.+?.py:[0-9]+:[0-9]+: [CRWEF][0-9]+:' "pylint.log")
+fi
+
+if [ "${CI}" != "" ]; then
+    git --no-pager diff > style.patch
+    maintainer/gh_post_style_patch.py || exit 1
+    maintainer/gh_post_pylint.py "${pylint_errors}" pylint.log || exit 1
+    if [ "${git_diff_return_code}" != 0 ]; then
+        echo "Failed style check. Download ${CI_JOB_URL}/artifacts/raw/style.patch to see which changes are necessary." >&2
     fi
-    if [ -f "pylint.log" ]; then
-        if [ "${CI}" != "" ]; then
-            errors=$(grep -Pc '^[a-z]+/.+?.py:[0-9]+:[0-9]+: [CRWEF][0-9]+:' pylint.log)
-            maintainer/gh_post_pylint.py "${errors}" pylint.log || exit 1
-            echo "Failed pylint check: ${errors} errors" >&2
-        else
-            echo "Failed pylint check." >&2
-        fi
+    if [ "${pylint_errors}" != 0 ]; then
+        echo "Failed pylint check: ${pylint_errors} errors" >&2
+    fi
+else
+    if [ "${git_diff_return_code}" != 0 ]; then
+        echo "Failed style check." >&2
+    fi
+    if [ "${pylint_errors}" != 0 ]; then
+        echo "Failed pylint check." >&2
     fi
 fi
 
