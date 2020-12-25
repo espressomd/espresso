@@ -26,6 +26,7 @@
 #include <type_traits>
 
 namespace Utils {
+/** @brief Formula of the B-spline. */
 template <int order, typename T>
 DEVICE_QUALIFIER auto bspline(int i, T x)
     -> std::enable_if_t<(order > 0) && (order <= 7), T> {
@@ -165,6 +166,13 @@ DEVICE_QUALIFIER auto bspline(int i, T x)
   return T{};
 }
 
+/**
+ * @brief Calculate B-splines.
+ * @param i knot number, using 0-based indexing
+ * @param x position in the range (-0.5, 0.5)
+ * @param k order of the B-spline, using 1-based indexing, i.e. a
+ * B-spline of order @p k is a polynomial of degree <tt>k-1</tt>
+ */
 template <class T> auto bspline(int i, T x, int k) {
   switch (k) {
   case 1:
@@ -186,6 +194,7 @@ template <class T> auto bspline(int i, T x, int k) {
   return 0.0;
 }
 
+/** @brief Derivative of the B-spline. */
 template <int order, typename T = double> inline T bspline_d(int i, T x) {
   static_assert(order <= 7, "");
   DEVICE_ASSERT(i < order);
