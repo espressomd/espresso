@@ -18,7 +18,7 @@
 #define BOOST_TEST_MODULE Utils::Matrix test
 #define BOOST_TEST_DYN_LINK
 
-#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
