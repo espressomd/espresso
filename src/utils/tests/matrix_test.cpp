@@ -20,8 +20,14 @@
 
 #include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
+
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
+
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
+#include <sstream>
 
 BOOST_AUTO_TEST_CASE(matrix) {
   Utils::Matrix<int, 2, 2> mat2{{8, 2}, {3, 4}};
@@ -52,6 +58,23 @@ BOOST_AUTO_TEST_CASE(identity_matrix) {
   BOOST_CHECK((id_mat(1, 1) == 1));
   BOOST_CHECK((id_mat(0, 1) == 0));
   BOOST_CHECK((id_mat(1, 0) == 0));
+}
+
+BOOST_AUTO_TEST_CASE(matrix_serialization) {
+  Utils::Matrix<int, 2, 2> mat2{{8, 2}, {3, 4}};
+
+  std::stringstream stream;
+  boost::archive::text_oarchive out_ar(stream);
+  out_ar << mat2;
+
+  Utils::Matrix<int, 2, 2> mat2_deserialized;
+  boost::archive::text_iarchive in_ar(stream);
+  in_ar >> mat2_deserialized;
+
+  BOOST_CHECK((mat2_deserialized(0, 0) == 8));
+  BOOST_CHECK((mat2_deserialized(1, 0) == 3));
+  BOOST_CHECK((mat2_deserialized(0, 1) == 2));
+  BOOST_CHECK((mat2_deserialized(1, 1) == 4));
 }
 
 BOOST_AUTO_TEST_CASE(type_deduction) {
