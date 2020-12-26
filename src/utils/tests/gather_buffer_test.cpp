@@ -158,14 +158,14 @@ BOOST_AUTO_TEST_CASE(pointer_root) {
 
 BOOST_AUTO_TEST_CASE(vector) {
   mpi::communicator world;
-  check_pointer(world, 0);
+  check_vector(world, 0);
 }
 
 BOOST_AUTO_TEST_CASE(vector_root) {
   mpi::communicator world;
 
-  auto empty = (world.size() >= 3) ? world.size() - 2 : world.size() - 1;
-  check_pointer(world, empty);
+  auto root = (world.size() >= 3) ? world.size() - 2 : world.size() - 1;
+  check_vector(world, root);
 }
 
 BOOST_AUTO_TEST_CASE(vector_empty) {
