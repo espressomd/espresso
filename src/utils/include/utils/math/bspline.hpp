@@ -37,15 +37,14 @@ DEVICE_QUALIFIER auto bspline(int i, T x)
   switch (order) {
   case 1:
     return 1.0;
-  case 2: {
+  case 2:
     switch (i) {
     case 0:
       return 0.5 - x;
     case 1:
       return 0.5 + x;
     }
-  }
-  case 3: {
+  case 3:
     switch (i) {
     case 0:
       return 0.5 * sqr(0.5 - x);
@@ -54,8 +53,7 @@ DEVICE_QUALIFIER auto bspline(int i, T x)
     case 2:
       return 0.5 * sqr(0.5 + x);
     }
-
-  case 4: {
+  case 4:
     switch (i) {
     case 0:
       return (1.0 + x * (-6.0 + x * (12.0 - x * 8.0))) / 48.0;
@@ -66,8 +64,7 @@ DEVICE_QUALIFIER auto bspline(int i, T x)
     case 3:
       return (1.0 + x * (6.0 + x * (12.0 + x * 8.0))) / 48.0;
     }
-  }
-  case 5: {
+  case 5:
     switch (i) {
     case 0:
       return (1.0 + x * (-8.0 + x * (24.0 + x * (-32.0 + x * 16.0)))) / 384.0;
@@ -80,8 +77,7 @@ DEVICE_QUALIFIER auto bspline(int i, T x)
     case 4:
       return (1.0 + x * (8.0 + x * (24.0 + x * (32.0 + x * 16.0)))) / 384.0;
     }
-  }
-  case 6: {
+  case 6:
     switch (i) {
     case 0:
       return (1.0 +
@@ -112,8 +108,7 @@ DEVICE_QUALIFIER auto bspline(int i, T x)
               x * (10.0 + x * (40.0 + x * (80.0 + x * (80.0 + x * 32.0))))) /
              3840.0;
     }
-  }
-  case 7: {
+  case 7:
     switch (i) {
     case 0:
       return (1.0 +
@@ -158,8 +153,6 @@ DEVICE_QUALIFIER auto bspline(int i, T x)
                         x * (160.0 + x * (240.0 + x * (192.0 + x * 64.0)))))) /
              46080.0;
     }
-  }
-  }
   }
 
   DEVICE_THROW(std::runtime_error("Internal interpolation error."));
