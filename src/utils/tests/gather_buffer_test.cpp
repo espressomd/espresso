@@ -149,6 +149,12 @@ BOOST_AUTO_TEST_CASE(pointer) {
   check_pointer(world, 0);
 }
 
+BOOST_AUTO_TEST_CASE(pointer_overlap) {
+  mpi::communicator world;
+  if (world.size() >= 2)
+    check_pointer(world, 1);
+}
+
 BOOST_AUTO_TEST_CASE(pointer_root) {
   mpi::communicator world;
 
@@ -159,6 +165,12 @@ BOOST_AUTO_TEST_CASE(pointer_root) {
 BOOST_AUTO_TEST_CASE(vector) {
   mpi::communicator world;
   check_vector(world, 0);
+}
+
+BOOST_AUTO_TEST_CASE(vector_overlap) {
+  mpi::communicator world;
+  if (world.size() >= 2)
+    check_vector(world, 1);
 }
 
 BOOST_AUTO_TEST_CASE(vector_root) {

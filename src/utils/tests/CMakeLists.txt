@@ -60,7 +60,7 @@ unit_test(NAME pack_test SRC pack_test.cpp DEPENDS Boost::serialization
 unit_test(NAME u32_to_u64_test SRC u32_to_u64_test.cpp DEPENDS EspressoUtils
           NUM_PROC 1)
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp DEPENDS
-          EspressoUtils Boost::mpi MPI::MPI_CXX NUM_PROC 4)
+          EspressoUtils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME scatter_buffer_test SRC scatter_buffer_test.cpp DEPENDS
           EspressoUtils Boost::mpi MPI::MPI_CXX NUM_PROC 4)
 unit_test(NAME all_compare_test SRC all_compare_test.cpp DEPENDS EspressoUtils
