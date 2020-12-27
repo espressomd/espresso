@@ -102,9 +102,9 @@ n_part = int(volume * density)
 
 for i in range(n_part):
     if i < n_part / 2.0:
-        system.part.add(type=0, id=i, pos=np.random.random(3) * system.box_l)
+        system.part.add(type=0, pos=np.random.random(3) * system.box_l)
     else:
-        system.part.add(type=1, id=i, pos=np.random.random(3) * system.box_l)
+        system.part.add(type=1, pos=np.random.random(3) * system.box_l)
 
 
 print("Simulate {} particles in a cubic box of length {} at density {}."

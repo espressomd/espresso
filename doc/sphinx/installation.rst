@@ -305,6 +305,8 @@ General features
 
 -  ``SCAFACOS_DIPOLES`` This activates magnetostatics methods of ScaFaCoS.
 
+-  ``DIPOLAR_DIRECT_SUM`` This activates the GPU implementation of the dipolar direct sum.
+
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.
 

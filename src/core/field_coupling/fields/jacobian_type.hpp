@@ -20,6 +20,7 @@
 #define CORE_FIELD_COUPLING_GRADIENT_TYPE_HPP
 
 #include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 
 #include <cstddef>
 
@@ -27,7 +28,7 @@ namespace FieldCoupling {
 namespace Fields {
 namespace detail {
 template <class T, size_t codim> struct jacobian_type_impl {
-  using type = Utils::Vector<Utils::Vector<T, 3>, codim>;
+  using type = Utils::Matrix<double, codim, 3>;
 };
 
 template <class T> struct jacobian_type_impl<T, 1> {

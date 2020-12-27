@@ -162,7 +162,7 @@ manipulator = Manipulator(system)
 
 # places the particles
 for i in range(particle_number):
-    system.part.add(pos=np.random.rand(3) * box_l, type=0, id=i)
+    system.part.add(pos=np.random.rand(3) * box_l, type=0)
 
 # send the initial energy
 energy = system.analysis.energy()['total']

@@ -79,7 +79,7 @@ For example, ::
     >>> import espressomd
     >>> system = espressomd.System(box_l=[100, 100, 100])
     >>> for i in range(10):
-    ...     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
+    ...     system.part.add(pos=[1.0, 1.0, i**2], type=0)
     >>> system.analysis.min_dist()
     1.0
 
@@ -113,7 +113,7 @@ Two arrays are returned corresponding to the normalized distribution and the bin
 
     >>> system = espressomd.System(box_l=[10, 10, 10])
     >>> for i in range(5):
-    ...     system.part.add(id=i, pos=i * system.box_l, type=0)
+    ...     system.part.add(pos=i * system.box_l, type=0)
     >>> bins, count = system.analysis.distribution(type_list_a=[0], type_list_b=[0],
     ...                                            r_min=0.0, r_max=10.0, r_bins=10)
     >>>

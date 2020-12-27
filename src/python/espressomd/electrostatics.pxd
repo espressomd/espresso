@@ -18,7 +18,7 @@
 #
 
 include "myconfig.pxi"
-from .utils import is_valid_type, to_str
+from .utils import is_valid_type, to_str, handle_errors
 from .utils cimport handle_errors
 from libcpp cimport bool
 
@@ -61,7 +61,7 @@ IF ELECTROSTATICS:
 
     cdef extern from "electrostatics_magnetostatics/coulomb.hpp" namespace "Coulomb":
 
-        int set_prefactor(double prefactor)
+        int set_prefactor(double prefactor) except+
         void deactivate_method()
 
     IF P3M:
@@ -72,7 +72,7 @@ IF ELECTROSTATICS:
             void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha, double accuracy)
             int p3m_set_mesh_offset(double x, double y, double z)
             int p3m_set_eps(double eps)
-            int p3m_adaptive_tune(char ** log)
+            int p3m_adaptive_tune(bool verbose)
 
             ctypedef struct p3m_data_struct:
                 P3MParameters params
@@ -98,6 +98,7 @@ IF ELECTROSTATICS:
                     mesh = params["mesh"]
                 alpha = params["alpha"]
                 p3m_gpu_init(cao, mesh, alpha)
+                handle_errors("python_p3m_gpu_init")
 
         cdef inline python_p3m_set_mesh_offset(mesh_off):
             cdef double mesh_offset[3]
@@ -107,14 +108,10 @@ IF ELECTROSTATICS:
             return p3m_set_mesh_offset(
                 mesh_offset[0], mesh_offset[1], mesh_offset[2])
 
-        cdef inline python_p3m_adaptive_tune():
-            cdef char * log = NULL
-            cdef int response
-            response = p3m_adaptive_tune( & log)
-            handle_errors("Error in p3m_adaptive_tune")
-            if log.strip():
-                print(to_str(log))
-            return response
+        cdef inline python_p3m_adaptive_tune(bool verbose):
+            cdef int response = p3m_adaptive_tune(verbose)
+            if response:
+                handle_errors("python_p3m_adaptive_tune")
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
             cdef int mesh[3]
@@ -185,31 +182,27 @@ IF ELECTROSTATICS:
 
         cdef extern MMM1D_struct mmm1d_params
 
-        int MMM1D_set_params(double switch_rad, double maxPWerror)
-        void MMM1D_init()
-        int MMM1D_sanity_checks()
-        int mmm1d_tune(char ** log)
+        void MMM1D_set_params(double switch_rad, double maxPWerror)
+        int MMM1D_init()
+        int mmm1d_tune(bool verbose)
 
-    cdef inline pyMMM1D_tune():
-        cdef char * log = NULL
+    cdef inline pyMMM1D_tune(bool verbose):
         cdef int resp
-        MMM1D_init()
-        if MMM1D_sanity_checks() == 1:
-            handle_errors(
-                "MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
-        resp = mmm1d_tune(& log)
+        resp = MMM1D_init()
         if resp:
-            print(to_str(log))
-        return resp
+            handle_errors("pyMMM1D_tune")
+        resp = mmm1d_tune(verbose)
+        if resp:
+            handle_errors("pyMMM1D_tune")
 
 IF ELECTROSTATICS and MMM1D_GPU:
 
     cdef extern from "actor/Mmm1dgpuForce.hpp":
         ctypedef float mmm1dgpu_real
         cdef cppclass Mmm1dgpuForce:
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius, int bessel_cutoff)
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius)
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror)
+            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius, int bessel_cutoff) except+
+            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius) except+
+            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror) except+
             void setup(SystemInterface & s)
             void tune(SystemInterface & s, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
             void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff, bool manual)

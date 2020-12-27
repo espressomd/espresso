@@ -309,7 +309,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
     auto const dphi_u = dphi / dphi_m;
     return local_rotate_particle_body(p, dphi_u, dphi_m);
   }
-  return {};
+  return p.r.quat;
 }
 
 /** Set the terminal angular velocity driven by the conservative torques drag.
@@ -396,7 +396,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
     auto const dphi_u = dphi / dphi_m;
     return local_rotate_particle_body(p, dphi_u, dphi_m);
   }
-  return {};
+  return p.r.quat;
 }
 
 /** Determine the angular velocities: random walk part.

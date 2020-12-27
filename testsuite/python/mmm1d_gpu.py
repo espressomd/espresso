@@ -1,4 +1,5 @@
-# Copyright (C) 2010-2019 The ESPResSo project
+#
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,17 +15,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# Interface to the scafacos library. These are the methods shared between
-# dipolar and electrostatics methods
+#
+import unittest as ut
+import unittest_decorators as utx
+import mmm1d
+import espressomd.electrostatics
 
-include "myconfig.pxi"
 
-from libcpp.string cimport string
-from libcpp cimport bool
-from libcpp.list cimport list
-IF SCAFACOS:
-    cdef extern from "electrostatics_magnetostatics/scafacos.hpp" namespace "Scafacos":
-        void set_parameters(string & method_name, string & params, bool dipolar) except+
-        string get_method_and_parameters(bool dipolar) except+
-        void free_handle(bool dipolar)
-        list[string] available_methods_core "Scafacos::available_methods" ()
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])
+@utx.skipIfMissingGPU()
+class MMM1D_GPU_Test(mmm1d.ElectrostaticInteractionsTests, ut.TestCase):
+
+    def setUp(self):
+        self.MMM1D = espressomd.electrostatics.MMM1DGPU
+        super().setUp()
+
+
+if __name__ == "__main__":
+    ut.main()

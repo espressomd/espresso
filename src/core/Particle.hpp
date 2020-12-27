@@ -130,9 +130,9 @@ struct ParticleProperties {
     double distance = 0;
     /** Relative position of the virtual site. */
     Utils::Quaternion<double> rel_orientation =
-        Utils::Quaternion<double>::zero();
+        Utils::Quaternion<double>::identity();
     /** Orientation of the virtual particle in the body fixed frame. */
-    Utils::Quaternion<double> quat = Utils::Quaternion<double>::zero();
+    Utils::Quaternion<double> quat = Utils::Quaternion<double>::identity();
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &to_particle_id;

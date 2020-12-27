@@ -277,7 +277,7 @@ IF P3M == 1:
 
         def valid_keys(self):
             return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
-                    "prefactor", "tune", "check_neutrality"]
+                    "prefactor", "tune", "check_neutrality", "verbose"]
 
         def required_keys(self):
             return ["prefactor", "accuracy"]
@@ -291,7 +291,8 @@ IF P3M == 1:
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
                     "tune": True,
-                    "check_neutrality": True}
+                    "check_neutrality": True,
+                    "verbose": True}
 
         def _get_params_from_es_core(self):
             params = {}
@@ -331,8 +332,7 @@ IF P3M == 1:
                                        self._params["cao"],
                                        -1.0,
                                        self._params["accuracy"])
-            resp = python_p3m_adaptive_tune()
-            handle_errors("P3M tuning failed")
+            python_p3m_adaptive_tune(self._params["verbose"])
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
@@ -422,7 +422,7 @@ IF P3M == 1:
 
             def valid_keys(self):
                 return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
-                        "prefactor", "tune", "check_neutrality"]
+                        "prefactor", "tune", "check_neutrality", "verbose"]
 
             def required_keys(self):
                 return ["prefactor", "accuracy"]
@@ -436,7 +436,8 @@ IF P3M == 1:
                         "epsilon": 0.0,
                         "mesh_off": [-1, -1, -1],
                         "tune": True,
-                        "check_neutrality": True}
+                        "check_neutrality": True,
+                        "verbose": True}
 
             def _get_params_from_es_core(self):
                 params = {}
@@ -463,8 +464,7 @@ IF P3M == 1:
                                            self._params["cao"],
                                            -1.0,
                                            self._params["accuracy"])
-                resp = python_p3m_adaptive_tune()
-                handle_errors("P3MGPU tuning failed")
+                python_p3m_adaptive_tune(self._params["verbose"])
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
@@ -524,11 +524,12 @@ IF ELECTROSTATICS:
                     "far_switch_radius": -1,
                     "bessel_cutoff": -1,
                     "tune": True,
-                    "check_neutrality": True}
+                    "check_neutrality": True,
+                    "verbose": True}
 
         def valid_keys(self):
             return ["prefactor", "maxPWerror", "far_switch_radius",
-                    "bessel_cutoff", "tune", "check_neutrality"]
+                    "bessel_cutoff", "tune", "check_neutrality", "verbose"]
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
@@ -550,9 +551,7 @@ IF ELECTROSTATICS:
 
         def _tune(self):
             cdef int resp
-            resp = pyMMM1D_tune()
-            if resp:
-                raise Exception("failed to tune mmm1d ")
+            pyMMM1D_tune(self._params["verbose"])
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):

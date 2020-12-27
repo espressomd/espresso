@@ -45,6 +45,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <stdexcept>
 
 Dipole_parameters dipole = {
     0.0,
@@ -295,16 +296,14 @@ void bcast_params(const boost::mpi::communicator &comm) {
   }
 }
 
-int set_Dprefactor(double prefactor) {
+void set_Dprefactor(double prefactor) {
   if (prefactor < 0.0) {
-    runtimeErrorMsg() << "Dipolar prefactor has to be >= 0";
-    return ES_ERROR;
+    throw std::invalid_argument("Dipolar prefactor has to be >= 0");
   }
 
   dipole.prefactor = prefactor;
 
   mpi_bcast_coulomb_params();
-  return ES_OK;
 }
 
 void set_method_local(DipolarInteraction method) {

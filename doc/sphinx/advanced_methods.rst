@@ -1429,10 +1429,10 @@ Fields
 
 ::
 
-    ek.print_vtk_boundary(path)
-    ek.print_vtk_density(path)
-    ek.print_vtk_velocity(path)
-    ek.print_vtk_potential(path)
+    ek.write_vtk_boundary(path)
+    ek.write_vtk_density(path)
+    ek.write_vtk_velocity(path)
+    ek.write_vtk_potential(path)
 
 A property of the fluid field can be exported into a
 file in one go. Currently supported
@@ -1444,8 +1444,8 @@ visualization software such as ParaView [5]_ and Mayavi2 [6]_.
 
 ::
 
-    species.print_vtk_flux(path)
-    species.print_vtk_density(path)
+    species.write_vtk_flux(path)
+    species.write_vtk_density(path)
 
 These commands are similar to the above. They enable the
 export of diffusive species properties, namely: ``density`` and ``flux``, which specify the

@@ -48,11 +48,12 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=0, sigma=1, cutoff=2, shift="auto")
 system.bonded_inter[0] = HarmonicBond(k=0.5, r_0=1.0)
 
+previous_part = None
 for i in range(n_part):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
-
-for i in range(n_part - 1):
-    system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
+    part = system.part.add(pos=np.random.random(3) * system.box_l)
+    if previous_part:
+        part.add_bond((system.bonded_inter[0], previous_part))
+    previous_part = part
 
 # Select visualizer
 if args.visualizer == "mayavi":
