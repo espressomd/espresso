@@ -1,8 +1,5 @@
-if(NOT DEFINED TEST_NP)
-  include(ProcessorCount)
-  processorcount(NP)
-  math(EXPR TEST_NP "${NP}/2 + 1")
-endif()
+include(ProcessorCount)
+processorcount(NP)
 
 if(EXISTS ${MPIEXEC})
   # OpenMPI 3.0 and higher checks the number of processes against the number of

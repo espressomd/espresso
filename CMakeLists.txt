@@ -454,6 +454,7 @@ if(WITH_TESTS)
   set(CTEST_ARGS ""
       CACHE STRING
             "Extra arguments to give to ctest calls (separated by semicolons)")
+  set(TEST_NP "4" CACHE STRING "Maximal number of MPI ranks to use per test")
   if(WITH_PYTHON)
     add_subdirectory(testsuite)
   endif(WITH_PYTHON)
