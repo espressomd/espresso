@@ -306,29 +306,6 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 
 find_package(MPI 3.0 REQUIRED)
 
-# CMake < 3.9
-if(NOT TARGET MPI::MPI_CXX)
-  add_library(MPI::MPI_CXX IMPORTED INTERFACE)
-
-  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
-  foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
-    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS
-                                              ${_MPI_FLAG})
-  endforeach()
-
-  set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-                                            "${MPI_CXX_INCLUDE_PATH}")
-
-  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
-  foreach(_MPI_FLAG ${MPI_CXX_LINK_FLAGS})
-    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES
-                                              ${_MPI_FLAG})
-  endforeach()
-
-  set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES
-                                            ${MPI_CXX_LIBRARIES})
-endif()
-
 # ##############################################################################
 # Boost
 # ##############################################################################
