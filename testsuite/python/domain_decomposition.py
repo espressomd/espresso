@@ -23,13 +23,15 @@ import numpy as np
 
 class DomainDecomposition(ut.TestCase):
     system = espressomd.System(box_l=[50.0, 50.0, 50.0])
+    original_node_grid = tuple(system.cell_system.node_grid)
 
     def setUp(self):
         self.system.part.clear()
         self.system.cell_system.set_domain_decomposition(
             use_verlet_lists=False)
+        self.system.cell_system.node_grid = self.original_node_grid
 
-    def test_resort(self):
+    def check_resort(self):
         n_part = 2351
 
         # Add the particles on node 0, so that they have to be resorted
@@ -50,6 +52,16 @@ class DomainDecomposition(ut.TestCase):
         # This basically checks if part_node and local_particles
         # is still in a valid state after the particle exchange
         self.assertEqual(sum(self.system.part[:].type), n_part)
+
+    def test_resort(self):
+        self.check_resort()
+
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] != 4,
+               "Skipping test: only runs for n_nodes >= 4")
+    def test_resort_alternating(self):
+        # check particle resorting when the left and right cells are different
+        self.system.cell_system.node_grid = [4, 1, 1]
+        self.check_resort()
 
     def test_position_rounding(self):
         """This places a particle on the box boundary,
