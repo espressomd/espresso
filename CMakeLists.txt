@@ -451,12 +451,12 @@ endif()
 if(WITH_TESTS)
   enable_testing()
   add_custom_target(check)
-  if(WITH_PYTHON)
-    add_subdirectory(testsuite)
-  endif(WITH_PYTHON)
   set(CTEST_ARGS ""
       CACHE STRING
             "Extra arguments to give to ctest calls (separated by semicolons)")
+  if(WITH_PYTHON)
+    add_subdirectory(testsuite)
+  endif(WITH_PYTHON)
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)
