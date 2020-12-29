@@ -96,13 +96,13 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
  * @param type halo field layout description
  */
 void halo_dtset(char *dest, int value, Fieldtype type) {
-  int vblocks = type->vblocks;
-  int vstride = type->vstride;
-  int vskip = type->vskip;
-  int count = type->count;
-  int *lens = type->lengths;
-  int *disps = type->disps;
-  int extent = type->extent;
+  auto const vblocks = type->vblocks;
+  auto const vstride = type->vstride;
+  auto const vskip = type->vskip;
+  auto const count = type->count;
+  int const *const lens = type->lengths;
+  int const *const disps = type->disps;
+  auto const extent = type->extent;
 
   for (int i = 0; i < vblocks; i++) {
     for (int j = 0; j < vstride; j++) {
@@ -118,10 +118,10 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type);
 void halo_copy_vector(char *r_buffer, char *s_buffer, int count, Fieldtype type,
                       bool vflag) {
 
-  int vblocks = type->vblocks;
-  int vstride = type->vstride;
-  int vskip = type->vskip;
-  int extent = type->extent;
+  auto const vblocks = type->vblocks;
+  auto const vstride = type->vstride;
+  auto vskip = type->vskip;
+  auto const extent = type->extent;
 
   if (vflag) {
     vskip *= type->subtype->extent;
@@ -177,7 +177,7 @@ void prepare_halo_communication(HaloCommunicator *const hc,
   hc->num = num;
   hc->halo_info.resize(num);
 
-  int extent = fieldtype->extent;
+  auto const extent = fieldtype->extent;
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
 
