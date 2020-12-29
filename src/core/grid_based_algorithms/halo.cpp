@@ -90,14 +90,6 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
   }
 }
 
-void halo_free_fieldtype(Fieldtype *const ftype) {
-  if ((*ftype)->count > 0) {
-    free((*ftype)->lengths);
-    (*ftype)->lengths = nullptr;
-  }
-  free(*ftype);
-}
-
 /** Set halo region to a given value
  * @param[out] dest pointer to the halo buffer
  * @param value integer value to write into the halo buffer
