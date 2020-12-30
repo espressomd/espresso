@@ -112,9 +112,9 @@ REGISTER_CALLBACK(get_pairs_of_types_local)
 
 namespace detail {
 void search_distance_sanity_check(double const distance) {
-  /** get_pairs_filtered() finds pairs via the non_bonded_loop. The maximum
-   *finding range is therefore limited by the decomposition that is used
-   **/
+  /* get_pairs_filtered() finds pairs via the non_bonded_loop. The maximum
+   * finding range is therefore limited by the decomposition that is used.
+   */
   auto range = *boost::min_element(cell_structure.max_range());
   if (distance > range) {
     runtimeErrorMsg() << "pair search distance " << distance
