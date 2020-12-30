@@ -399,12 +399,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double * para_b
         double * para_c
 
-    #* Parameters for one-directional harmonic potential */
-    cdef struct Umbrella_bond_parameters:
-        double k
-        int    dir
-        double r
-
     #* Parameters for subt-LJ potential */
     cdef struct Subt_lj_bond_parameters:
         double k
@@ -574,6 +568,5 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_IBM_TRIEL,
         BONDED_IA_IBM_TRIBEND,
         BONDED_IA_IBM_VOLUME_CONSERVATION,
-        BONDED_IA_UMBRELLA,
         BONDED_IA_THERMALIZED_DIST
         BONDED_IA_QUARTIC

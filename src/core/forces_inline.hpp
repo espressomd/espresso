@@ -35,7 +35,6 @@
 #include "bonded_interactions/harmonic.hpp"
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
-#include "bonded_interactions/umbrella.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
@@ -333,8 +332,6 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
 #endif
   case BONDED_IA_TABULATED_DISTANCE:
     return tab_bond_force(iaparams, dx);
-  case BONDED_IA_UMBRELLA:
-    return umbrella_pair_force(iaparams, dx);
   case BONDED_IA_VIRTUAL_BOND:
   case BONDED_IA_RIGID_BOND:
     return Utils::Vector3d{};

@@ -68,8 +68,6 @@ auto cutoff(int type, Bond_parameters const &bp) {
     return bp.ibmVolConsParameters.cutoff();
   case BONDED_IA_IBM_TRIBEND:
     return bp.ibm_tribend.cutoff();
-  case BONDED_IA_UMBRELLA:
-    return bp.umbrella.cutoff();
   case BONDED_IA_THERMALIZED_DIST:
     return bp.thermalized_bond.cutoff();
   default:
