@@ -304,20 +304,6 @@ IF TABULATED:
                                  double min, double max,
                                  vector[double] energy,
                                  vector[double] force)
-IF ROTATION:
-    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
-        #* Parameters for the harmonic dumbbell bond potential */
-        cdef struct Harmonic_dumbbell_bond_parameters:
-            double k1
-            double k2
-            double r
-            double r_cut
-ELSE:
-    cdef struct Harmonic_dumbbell_bond_parameters:
-        double k1
-        double k2
-        double r
-        double r_cut
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     #* Parameters for n-body tabulated potential (n=2,3,4). */

@@ -178,20 +178,6 @@ struct Thermalized_bond_parameters {
   double cutoff() const { return r_cut; }
 };
 
-/** Parameters for harmonic dumbbell bond Potential */
-struct Harmonic_dumbbell_bond_parameters {
-  /** spring constant */
-  double k1;
-  /** rotation constant */
-  double k2;
-  /** equilibrium bond length */
-  double r;
-  /** cutoff bond length */
-  double r_cut;
-
-  double cutoff() const { return r_cut; }
-};
-
 /** Parameters for quartic bond Potential */
 struct Quartic_bond_parameters {
   double k0, k1;
