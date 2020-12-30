@@ -45,6 +45,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <stdexcept>
 
 Dipole_parameters dipole = {
     0.0,
