@@ -3,20 +3,35 @@
 Running the simulation
 ======================
 
+.. _Particle integration and propagation:
+
+Particle integration and propagation
+------------------------------------
+
+The main integration scheme of |es| is the velocity Verlet algorithm.
+A steepest descent algorithm is used to minimize the system.
+
+Additional integration schemes are available, which can be coupled to
+thermostats to enable Langevin dynamics, Brownian dynamics, Stokesian dynamics,
+dissipative particle dynamics, and simulations in the NpT ensemble.
+
+
+.. _Integrators:
+
+Integrators
+-----------
+
 To run the integrator call the method
-:meth:`espressomd.integrate.Integrator.run`::
+:meth:`system.integrate.run() <espressomd.integrate.Integrator.run>`::
 
     system.integrator.run(number_of_steps, recalc_forces=False, reuse_forces=False)
 
-where ``number_of_steps`` is the number of time steps the integrator
-should perform. The two main integration schemes of |es| are the velocity Verlet algorithm
-and an adaption of the velocity Verlet algorithm to simulate an NpT ensemble.
-A steepest descent implementation is also available.
+where ``number_of_steps`` is the number of time steps the integrator should perform.
 
 .. _Velocity Verlet Algorithm:
 
 Velocity Verlet algorithm
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`espressomd.integrate.IntegratorHandle.set_vv`
 
@@ -80,7 +95,7 @@ enforce force recalculation.
 .. _Isotropic NpT integrator:
 
 Isotropic NpT integrator
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`espressomd.integrate.IntegratorHandle.set_isotropic_npt`
 
@@ -188,7 +203,7 @@ Notes:
 .. _Rotational degrees of freedom and particle anisotropy:
 
 Rotational degrees of freedom and particle anisotropy
------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When the feature ``ROTATION`` is compiled in, particles not only have a position, but also an orientation that changes with an angular velocity. A torque on a particle leads to a change in angular velocity depending on the particles rotational inertia. The property :attr:`espressomd.particle_data.ParticleHandle.rinertia` has to be specified as the three eigenvalues of the particles rotational inertia tensor.
 
@@ -233,7 +248,7 @@ The following particle properties are related to rotation:
 .. _Steepest descent:
 
 Steepest descent
-----------------
+^^^^^^^^^^^^^^^^
 
 :meth:`espressomd.integrate.IntegratorHandle.set_steepest_descent`
 
@@ -265,7 +280,7 @@ Usage example::
     system.integrator.set_vv()  # to switch back to velocity Verlet
 
 Using a custom convergence criterion
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""""""""""""""
 
 The ``f_max`` parameter can be set to zero to prevent the integrator from
 halting when a specific force/torque is reached. The integration can then
@@ -313,7 +328,7 @@ The correct forces need to be re-calculated after running the integration::
 .. _Stokesian Dynamics:
 
 Stokesian Dynamics
-------------------
+^^^^^^^^^^^^^^^^^^
 
 .. note::
 
@@ -365,7 +380,7 @@ thermalize the system, the SD thermostat needs to be activated (see
 .. _Important_SD:
 
 Important
-~~~~~~~~~
+"""""""""
 
 The particles must be prevented from overlapping. It is mathematically allowed
 for the particles to overlap to a certain degree. However, once the distance
