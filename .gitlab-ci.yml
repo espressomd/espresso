@@ -33,7 +33,7 @@ variables:
 status_pending:
   <<: *notification_job_definition
   stage: prepare
-  script: bash maintainer/gh_post_status.sh pending
+  script: sh maintainer/gh_post_status.sh pending
 
 style:
   <<: *global_job_definition
@@ -42,7 +42,7 @@ style:
   before_script:
     - git submodule deinit .
   script:
-    - maintainer/CI/fix_style.sh
+    - sh maintainer/CI/fix_style.sh
   tags:
     - docker
     - linux
@@ -572,19 +572,19 @@ deploy_tutorials:
 status_success:
   <<: *notification_job_definition
   stage: result
-  script: bash maintainer/gh_post_status.sh success
+  script: sh maintainer/gh_post_status.sh success
   when: on_success
 
 status_failure:
   <<: *notification_job_definition
   stage: result
-  script: bash maintainer/gh_post_status.sh failure
+  script: sh maintainer/gh_post_status.sh failure
   when: on_failure
 
 notify_success:
   <<: *notification_job_definition
   stage: result
-  script: bash maintainer/gh_close_issue.sh
+  script: sh maintainer/gh_close_issue.sh
   when: on_success
   only:
     - python
@@ -592,7 +592,7 @@ notify_success:
 notify_failure:
   <<: *notification_job_definition
   stage: result
-  script: bash maintainer/gh_create_issue.sh
+  script: sh maintainer/gh_create_issue.sh
   when: on_failure
   only:
     - python
