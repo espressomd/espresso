@@ -145,7 +145,7 @@ range should be much smaller than the total system size, leaving out all
 interactions between non-adjacent cells can mean a tremendous speed-up.
 Moreover, since for constant interaction range, the number of particles
 in a cell depends only on the density. The number of interactions is
-therefore of the order N instead of order :math:`N^2` if one has to
+therefore of the order :math:`N` instead of order :math:`N^2` if one has to
 calculate all pair interactions.
 
 .. _N-squared:
@@ -154,7 +154,7 @@ N-squared
 ~~~~~~~~~
 
 Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_n_square`
-selects the very primitive nsquared cellsystem, which calculates
+selects the very primitive N-squared cellsystem, which calculates
 the interactions for all particle pairs. Therefore it loops over all
 particles, giving an unfavorable computation time scaling of
 :math:`N^2`. However, algorithms like MMM1D or the plain Coulomb
@@ -165,7 +165,7 @@ interactions. ::
 
     system.cell_system.set_n_square()
 
-In a multiple processor environment, the nsquared cellsystem uses a
+In a multiple processor environment, the N-squared cellsystem uses a
 simple particle balancing scheme to have a nearly equal number of
 particles per CPU, :math:`n` nodes have :math:`m` particles, and
 :math:`p-n` nodes have :math:`m+1` particles, such that
@@ -184,7 +184,7 @@ this node is twice as high. For 3 processors, the interactions are 0-0,
 1-1, 2-2, 0-1, 1-2, 0-2. Of these interactions, node 0 treats 0-0 and
 0-2, node 1 treats 1-1 and 0-1, and node 2 treats 2-2 and 1-2.
 
-Therefore it is highly recommended that you use nsquared only with an
+Therefore it is highly recommended that you use N-squared only with an
 odd number of nodes, if with multiple processors at all.
 
 .. _Thermostats:
@@ -251,7 +251,7 @@ at temperature :math:`T` and satisfies
 
 In the |es| implementation of the Langevin thermostat,
 the additional terms only enter in the force calculation.
-This reduces the accuracy of the Velocity Verlet integrator
+This reduces the accuracy of the velocity Verlet integrator
 by one order in :math:`dt` because forces are now velocity-dependent.
 
 The random process :math:`\eta(t)` is discretized by drawing an uncorrelated random number
@@ -344,8 +344,7 @@ The temperature is set via
 which takes ``kT`` and ``seed`` as arguments.
 
 The friction coefficients and cutoff are controlled via the
-:ref:`DPD interaction` on a per type-pair basis. For details
-see there.
+:ref:`DPD interaction` on a per type-pair basis.
 
 The friction (dissipative) and noise (random) term are coupled via the
 fluctuation-dissipation theorem. The friction term is a function of the
@@ -372,15 +371,15 @@ as a particle constraint, and setting a velocity and a type on it, see
 :ref:`DPD interaction` with the type can be defined, which acts as a
 boundary condition.
 
-.. _Isotropic NPT thermostat:
+.. _Isotropic NpT thermostat:
 
-Isotropic NPT thermostat
+Isotropic NpT thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-This feature allows to simulate an (on average) homogeneous and isotropic system in the NPT ensemble.
+This feature allows to simulate an (on average) homogeneous and isotropic system in the NpT ensemble.
 In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
-Activate the NPT thermostat with the command :py:meth:`~espressomd.thermostat.Thermostat.set_npt`
-and setup the integrator for the NPT ensemble with :py:meth:`~espressomd.integrate.IntegratorHandle.set_isotropic_npt`.
+Activate the NpT thermostat with the command :py:meth:`~espressomd.thermostat.Thermostat.set_npt`
+and setup the integrator for the NpT ensemble with :py:meth:`~espressomd.integrate.IntegratorHandle.set_isotropic_npt`.
 
 For example::
 
@@ -390,7 +389,7 @@ For example::
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=41)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
-For an explanation of the algorithm involved, see :ref:`Isotropic NPT integrator`.
+For an explanation of the algorithm involved, see :ref:`Isotropic NpT integrator`.
 
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
@@ -429,7 +428,7 @@ similar to the :ref:`Langevin thermostat`. The feature
 ``BROWNIAN_PER_PARTICLE`` is used to control the per-particle
 temperature and the friction coefficient setup. The major differences are
 its internal integrator implementation and other temporal constraints.
-The integrator is still a symplectic Velocity Verlet-like one.
+The integrator is still a symplectic velocity Verlet-like one.
 It is implemented via a viscous drag part and a random walk of both the position and
 velocity. Due to a nature of the Brownian Dynamics method, its time step :math:`\Delta t`
 should be large enough compared to the relaxation time

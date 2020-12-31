@@ -9,8 +9,8 @@ To run the integrator call the method
     system.integrator.run(number_of_steps, recalc_forces=False, reuse_forces=False)
 
 where ``number_of_steps`` is the number of time steps the integrator
-should perform. The two main integration schemes of |es| are the Velocity Verlet algorithm
-and an adaption of the Velocity Verlet algorithm to simulate an NpT ensemble.
+should perform. The two main integration schemes of |es| are the velocity Verlet algorithm
+and an adaption of the velocity Verlet algorithm to simulate an NpT ensemble.
 A steepest descent implementation is also available.
 
 .. _Velocity Verlet Algorithm:
@@ -47,7 +47,7 @@ For numerical integration, this equation is discretized to the following steps (
 
    .. math:: v(t+dt) = v(t+dt/2) + \frac{F(x(t+dt),t+dt)}{m} dt/2
 
-Note that this implementation of the Velocity Verlet algorithm reuses
+Note that this implementation of the velocity Verlet algorithm reuses
 forces in step 1. That is, they are computed once in step 3,
 but used twice, in step 4 and in step 1 of the next iteration. In the first time
 step after setting up, there are no forces present yet. Therefore, |es| has
@@ -77,9 +77,9 @@ would like to recompute the forces, despite the fact that they are
 already correctly calculated. To this aim, the option ``recalc_forces`` can be used to
 enforce force recalculation.
 
-.. _Isotropic NPT integrator:
+.. _Isotropic NpT integrator:
 
-Isotropic NPT integrator
+Isotropic NpT integrator
 ------------------------
 
 :meth:`espressomd.integrate.IntegratorHandle.set_isotropic_npt`

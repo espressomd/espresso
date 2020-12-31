@@ -448,7 +448,7 @@ report so to the developers using the instructions in :ref:`Contributing`.
 +--------------------------------+------------------------+------------------+------------+
 | Langevin Thermostat            | Core                   | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Isotropic NPT                  | Experimental           | None             | Yes        |
+| Isotropic NpT                  | Experimental           | None             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Quaternion Integrator          | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+

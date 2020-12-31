@@ -318,7 +318,7 @@ MMM1D is used with::
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
 MMM1D Coulomb method for systems with periodicity (0 0 1). Needs the
-nsquared cell system (see section :ref:`Cellsystems`). The first form sets parameters
+N-squared cell system (see section :ref:`Cellsystems`). The first form sets parameters
 manually. The switch radius determines at which xy-distance the force
 calculation switches from the near to the far formula. The Bessel cutoff
 does not need to be specified as it is automatically determined from the
@@ -336,7 +336,7 @@ MMM1D on GPU
 :class:`espressomd.electrostatics.MMM1DGPU`
 
 MMM1D is also available in a GPU implementation. Unlike its CPU
-counterpart, it does not need the nsquared cell system.
+counterpart, it does not need the N-squared cell system.
 
 ::
 
