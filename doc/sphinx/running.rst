@@ -15,6 +15,51 @@ Additional integration schemes are available, which can be coupled to
 thermostats to enable Langevin dynamics, Brownian dynamics, Stokesian dynamics,
 dissipative particle dynamics, and simulations in the NpT ensemble.
 
+.. _Rotational degrees of freedom and particle anisotropy:
+
+Rotational degrees of freedom and particle anisotropy
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When the feature ``ROTATION`` is compiled in, particles not only have a position, but also an orientation that changes with an angular velocity. A torque on a particle leads to a change in angular velocity depending on the particles rotational inertia. The property :attr:`espressomd.particle_data.ParticleHandle.rinertia` has to be specified as the three eigenvalues of the particles rotational inertia tensor.
+
+The rotational degrees of freedom are also integrated using a velocity Verlet scheme.
+The implementation is based on a quaternion representation of the particle orientation and described in :cite:`omelyan98` with quaternion components indexing made according to the formalism :math:`q = a + b\mathbf{i} + c\mathbf{j} + d\mathbf{k}` :cite:`allen2017`.
+
+When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
+
+Whether or not rotational degrees of freedom are propagated, is controlled on a per-particle and per-axis level, where the axes are the Cartesian axes of the particle in its body-fixed frame.
+It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
+In this way, just compiling in the ``ROTATION`` feature no longer changes the physics of the system.
+
+The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation enabled on the x axis::
+
+    import espressomd
+    system = espressomd.System(box_l=[1, 1, 1])
+    system.part.add(pos=(0, 0, 0), rotation=(1, 0, 0))
+
+Notes:
+
+* The orientation of a particle is stored as a quaternion in the :attr:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide.
+* The space-frame direction of the particle's z-axis in its body frame is accessible through the :attr:`espressomd.particle_data.ParticleHandle.director` property.
+* Any other vector can be converted from body to space fixed frame using the :meth:`espressomd.particle_data.ParticleHandle.convert_vector_body_to_space` method.
+* When ``DIPOLES`` are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
+* Changing the particles dipole moment and director will re-orient the particle such that its z-axis in space frame is aligned parallel to the given vector. No guarantees are made for the other two axes after setting the director or the dipole moment.
+
+
+The following particle properties are related to rotation:
+
+* :attr:`espressomd.particle_data.ParticleHandle.dip`
+* :attr:`espressomd.particle_data.ParticleHandle.director`
+* :attr:`espressomd.particle_data.ParticleHandle.ext_torque`
+* :attr:`espressomd.particle_data.ParticleHandle.gamma_rot`
+* :attr:`espressomd.particle_data.ParticleHandle.gamma_rot`
+* :attr:`espressomd.particle_data.ParticleHandle.omega_body`
+* :attr:`espressomd.particle_data.ParticleHandle.omega_lab`
+* :attr:`espressomd.particle_data.ParticleHandle.quat`
+* :attr:`espressomd.particle_data.ParticleHandle.rinertia`
+* :attr:`espressomd.particle_data.ParticleHandle.rotation`
+* :attr:`espressomd.particle_data.ParticleHandle.torque_lab`
+
 
 .. _Integrators:
 
@@ -200,51 +245,6 @@ Notes:
 * The particle forces :math:`F` include interactions as well as a friction (:math:`\gamma^0`) and noise term (:math:`\sqrt{k_B T \gamma^0 dt} \overline{\eta}`) analogous to the terms in the :ref:`Langevin thermostat`.
 * The particle forces are only calculated in step 5 and then reused in step 1 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
 
-.. _Rotational degrees of freedom and particle anisotropy:
-
-Rotational degrees of freedom and particle anisotropy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When the feature ``ROTATION`` is compiled in, particles not only have a position, but also an orientation that changes with an angular velocity. A torque on a particle leads to a change in angular velocity depending on the particles rotational inertia. The property :attr:`espressomd.particle_data.ParticleHandle.rinertia` has to be specified as the three eigenvalues of the particles rotational inertia tensor.
-
-The rotational degrees of freedom are also integrated using a velocity Verlet scheme.
-The implementation is based on a quaternion representation of the particle orientation and described in :cite:`omelyan98` with quaternion components indexing made according to the formalism :math:`q = a + b\mathbf{i} + c\mathbf{j} + d\mathbf{k}` :cite:`allen2017`.
-
-When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
-
-Whether or not rotational degrees of freedom are propagated, is controlled on a per-particle and per-axis level, where the axes are the Cartesian axes of the particle in its body-fixed frame.
-It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
-In this way, just compiling in the ``ROTATION`` feature no longer changes the physics of the system.
-
-The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation enabled on the x axis::
-
-    import espressomd
-    system = espressomd.System(box_l=[1, 1, 1])
-    system.part.add(pos=(0, 0, 0), rotation=(1, 0, 0))
-
-Notes:
-
-* The orientation of a particle is stored as a quaternion in the :attr:`espressomd.particle_data.ParticleHandle.quat` property. For a value of (1,0,0,0), the body and space frames coincide.
-* The space-frame direction of the particle's z-axis in its body frame is accessible through the :attr:`espressomd.particle_data.ParticleHandle.director` property.
-* Any other vector can be converted from body to space fixed frame using the :meth:`espressomd.particle_data.ParticleHandle.convert_vector_body_to_space` method.
-* When ``DIPOLES`` are compiled in, the particles dipole moment is always co-aligned with the z-axis in the body-fixed frame.
-* Changing the particles dipole moment and director will re-orient the particle such that its z-axis in space frame is aligned parallel to the given vector. No guarantees are made for the other two axes after setting the director or the dipole moment.
-
-
-The following particle properties are related to rotation:
-
-* :attr:`espressomd.particle_data.ParticleHandle.dip`
-* :attr:`espressomd.particle_data.ParticleHandle.director`
-* :attr:`espressomd.particle_data.ParticleHandle.ext_torque`
-* :attr:`espressomd.particle_data.ParticleHandle.gamma_rot`
-* :attr:`espressomd.particle_data.ParticleHandle.gamma_rot`
-* :attr:`espressomd.particle_data.ParticleHandle.omega_body`
-* :attr:`espressomd.particle_data.ParticleHandle.omega_lab`
-* :attr:`espressomd.particle_data.ParticleHandle.quat`
-* :attr:`espressomd.particle_data.ParticleHandle.rinertia`
-* :attr:`espressomd.particle_data.ParticleHandle.rotation`
-* :attr:`espressomd.particle_data.ParticleHandle.torque_lab`
-
 .. _Steepest descent:
 
 Steepest descent
@@ -323,7 +323,6 @@ The correct forces need to be re-calculated after running the integration::
         system.integrator.run(10)
         system.integrator.run(0, recalc_forces=True)  # re-calculate forces from virtual sites
     system.integrator.set_vv()
-
 
 .. _Stokesian Dynamics:
 

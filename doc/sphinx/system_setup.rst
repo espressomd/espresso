@@ -281,120 +281,6 @@ friction coefficient for every particle individually via the feature
 ``LANGEVIN_PER_PARTICLE``.  Consult the reference of the ``part`` command
 (chapter :ref:`Setting up particles`) for information on how to achieve this.
 
-.. _LB thermostat:
-
-Lattice-Boltzmann thermostat
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The :ref:`Lattice-Boltzmann` thermostat acts similar to the :ref:`Langevin thermostat` in that the governing equation for particles is
-
-.. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma (v_i(t)-u(x_i(t),t)) + \sqrt{2\gamma k_B T} \eta_i(t).
-
-where :math:`u(x,t)` is the fluid velocity at position :math:`x` and time :math:`t`.
-To preserve momentum, an equal and opposite friction force and random force act on the fluid.
-
-Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities
-by interpolating as described in :ref:`Interpolating velocities`.
-The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes.
-Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
-
-The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
-The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
-Temperature is set via the ``kT`` argument of the LB fluid.
-
-The magnitude of the frictional coupling can be adjusted by the
-parameter ``gamma``. To enable the LB thermostat, use::
-
-    import espressomd
-    import espressomd.lb
-    system = espressomd.System(box_l=[1, 1, 1])
-    lbf = espressomd.lb.LBFluid(agrid=1, dens=1, visc=1, tau=0.01)
-    system.actors.add(lbf)
-    system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
-
-No other thermostatting mechanism is necessary
-then. Please switch off any other thermostat before starting the LB
-thermostatting mechanism.
-
-The LBM implementation provides a fully thermalized LB fluid, all
-nonconserved modes, including the pressure tensor, fluctuate correctly
-according to the given temperature and the relaxation parameters. All
-fluctuations can be switched off by setting the temperature to 0.
-
-.. note:: Coupling between LB and MD only happens if the LB thermostat is set with a :math:`\gamma \ge 0.0`.
-
-
-.. _Dissipative Particle Dynamics (DPD):
-
-Dissipative Particle Dynamics (DPD)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The DPD thermostat adds friction and noise to the particle
-dynamics like the :ref:`Langevin thermostat`, but these
-are not applied to every particle individually but instead
-encoded in a dissipative interaction between particles :cite:`soddeman03a`.
-
-To realize a complete DPD fluid model in |es|, three parts are needed:
-the DPD thermostat, which controls the temperate, a dissipative interaction
-between the particles that make up the fluid, see :ref:`DPD interaction`,
-and a repulsive conservative force, see :ref:`Hat interaction`.
-
-The temperature is set via
-:py:meth:`espressomd.thermostat.Thermostat.set_dpd`
-which takes ``kT`` and ``seed`` as arguments.
-
-The friction coefficients and cutoff are controlled via the
-:ref:`DPD interaction` on a per type-pair basis.
-
-The friction (dissipative) and noise (random) term are coupled via the
-fluctuation-dissipation theorem. The friction term is a function of the
-relative velocity of particle pairs. The DPD thermostat is better for
-dynamics than the Langevin thermostat, since it mimics hydrodynamics in
-the system.
-
-As a conservative force any interaction potential can be used,
-see :ref:`Isotropic non-bonded interactions`. A common choice is
-a force ramp which is implemented as :ref:`Hat interaction`.
-
-A complete example of setting up a DPD fluid and running it
-to sample the equation of state can be found in :file:`/samples/dpd.py`.
-
-When using a Lennard-Jones interaction, :math:`{r_\mathrm{cut}} =
-2^{\frac{1}{6}} \sigma` is a good value to choose, so that the
-thermostat acts on the relative velocities between nearest neighbor
-particles. Larger cutoffs including next nearest neighbors or even more
-are unphysical.
-
-Boundary conditions for DPD can be introduced by adding the boundary
-as a particle constraint, and setting a velocity and a type on it, see
-:class:`espressomd.constraints.Constraint`. Then a
-:ref:`DPD interaction` with the type can be defined, which acts as a
-boundary condition.
-
-.. _Isotropic NpT thermostat:
-
-Isotropic NpT thermostat
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-This feature allows to simulate an (on average) homogeneous and isotropic system in the NpT ensemble.
-In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
-Activate the NpT thermostat with the command :py:meth:`~espressomd.thermostat.Thermostat.set_npt`
-and setup the integrator for the NpT ensemble with :py:meth:`~espressomd.integrate.IntegratorHandle.set_isotropic_npt`.
-
-For example::
-
-    import espressomd
-
-    system = espressomd.System(box_l=[1, 1, 1])
-    system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=41)
-    system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
-
-For an explanation of the algorithm involved, see :ref:`Isotropic NpT integrator`.
-
-Be aware that this feature is neither properly examined for all systems
-nor is it maintained regularly. If you use it and notice strange
-behavior, please contribute to solving the problem.
-
 .. _Brownian thermostat:
 
 Brownian thermostat
@@ -468,6 +354,119 @@ A rotational motion is implemented similarly.
 Note: the rotational Brownian dynamics implementation is compatible with particles which have
 the isotropic moment of inertia tensor only. Otherwise, the viscous terminal angular velocity
 is not defined, i.e. it has no constant direction over the time.
+
+.. _Isotropic NpT thermostat:
+
+Isotropic NpT thermostat
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This feature allows to simulate an (on average) homogeneous and isotropic system in the NpT ensemble.
+In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
+Activate the NpT thermostat with the command :py:meth:`~espressomd.thermostat.Thermostat.set_npt`
+and setup the integrator for the NpT ensemble with :py:meth:`~espressomd.integrate.IntegratorHandle.set_isotropic_npt`.
+
+For example::
+
+    import espressomd
+
+    system = espressomd.System(box_l=[1, 1, 1])
+    system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=41)
+    system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
+
+For an explanation of the algorithm involved, see :ref:`Isotropic NpT integrator`.
+
+Be aware that this feature is neither properly examined for all systems
+nor is it maintained regularly. If you use it and notice strange
+behavior, please contribute to solving the problem.
+
+.. _Dissipative Particle Dynamics (DPD):
+
+Dissipative Particle Dynamics (DPD)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The DPD thermostat adds friction and noise to the particle
+dynamics like the :ref:`Langevin thermostat`, but these
+are not applied to every particle individually but instead
+encoded in a dissipative interaction between particles :cite:`soddeman03a`.
+
+To realize a complete DPD fluid model in |es|, three parts are needed:
+the DPD thermostat, which controls the temperate, a dissipative interaction
+between the particles that make up the fluid, see :ref:`DPD interaction`,
+and a repulsive conservative force, see :ref:`Hat interaction`.
+
+The temperature is set via
+:py:meth:`espressomd.thermostat.Thermostat.set_dpd`
+which takes ``kT`` and ``seed`` as arguments.
+
+The friction coefficients and cutoff are controlled via the
+:ref:`DPD interaction` on a per type-pair basis.
+
+The friction (dissipative) and noise (random) term are coupled via the
+fluctuation-dissipation theorem. The friction term is a function of the
+relative velocity of particle pairs. The DPD thermostat is better for
+dynamics than the Langevin thermostat, since it mimics hydrodynamics in
+the system.
+
+As a conservative force any interaction potential can be used,
+see :ref:`Isotropic non-bonded interactions`. A common choice is
+a force ramp which is implemented as :ref:`Hat interaction`.
+
+A complete example of setting up a DPD fluid and running it
+to sample the equation of state can be found in :file:`/samples/dpd.py`.
+
+When using a Lennard-Jones interaction, :math:`{r_\mathrm{cut}} =
+2^{\frac{1}{6}} \sigma` is a good value to choose, so that the
+thermostat acts on the relative velocities between nearest neighbor
+particles. Larger cutoffs including next nearest neighbors or even more
+are unphysical.
+
+Boundary conditions for DPD can be introduced by adding the boundary
+as a particle constraint, and setting a velocity and a type on it, see
+:class:`espressomd.constraints.Constraint`. Then a
+:ref:`DPD interaction` with the type can be defined, which acts as a
+boundary condition.
+
+.. _LB thermostat:
+
+Lattice-Boltzmann thermostat
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`Lattice-Boltzmann` thermostat acts similar to the :ref:`Langevin thermostat` in that the governing equation for particles is
+
+.. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma (v_i(t)-u(x_i(t),t)) + \sqrt{2\gamma k_B T} \eta_i(t).
+
+where :math:`u(x,t)` is the fluid velocity at position :math:`x` and time :math:`t`.
+To preserve momentum, an equal and opposite friction force and random force act on the fluid.
+
+Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities
+by interpolating as described in :ref:`Interpolating velocities`.
+The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes.
+Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
+
+The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
+The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
+Temperature is set via the ``kT`` argument of the LB fluid.
+
+The magnitude of the frictional coupling can be adjusted by the
+parameter ``gamma``. To enable the LB thermostat, use::
+
+    import espressomd
+    import espressomd.lb
+    system = espressomd.System(box_l=[1, 1, 1])
+    lbf = espressomd.lb.LBFluid(agrid=1, dens=1, visc=1, tau=0.01)
+    system.actors.add(lbf)
+    system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
+
+No other thermostatting mechanism is necessary
+then. Please switch off any other thermostat before starting the LB
+thermostatting mechanism.
+
+The LBM implementation provides a fully thermalized LB fluid, all
+nonconserved modes, including the pressure tensor, fluctuate correctly
+according to the given temperature and the relaxation parameters. All
+fluctuations can be switched off by setting the temperature to 0.
+
+.. note:: Coupling between LB and MD only happens if the LB thermostat is set with a :math:`\gamma \ge 0.0`.
 
 .. _Stokesian thermostat:
 
