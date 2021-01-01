@@ -324,6 +324,14 @@ The correct forces need to be re-calculated after running the integration::
         system.integrator.run(0, recalc_forces=True)  # re-calculate forces from virtual sites
     system.integrator.set_vv()
 
+.. _Brownian Dynamics:
+
+Brownian Dynamics
+^^^^^^^^^^^^^^^^^
+
+Brownian Dynamics integrator :cite:`schlick2010`.
+See details in :ref:`Brownian thermostat`.
+
 .. _Stokesian Dynamics:
 
 Stokesian Dynamics
