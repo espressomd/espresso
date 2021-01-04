@@ -450,7 +450,7 @@ cdef class ParticleHandle:
             When using particle dipoles, the dipole moment is co-aligned with
             the particle director. Setting the director thus modifies the
             dipole moment orientation (:attr:`espressomd.particle_data.ParticleHandle.dip`)
-            and vice verca.
+            and vice versa.
             See also :ref:`Rotational degrees of freedom and particle anisotropy`.
 
             director : (3,) array_like of :obj:`float`

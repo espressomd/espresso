@@ -35,7 +35,7 @@ class ELC_vs_analytic(ut.TestCase):
     delta_mid_bot = 39. / 41.
     distance = 1.
 
-    number_samples = 25
+    number_samples = 6 if '@WITH_COVERAGE@' == 'ON' else 12
     minimum_distance_to_wall = 0.1
     zPos = np.linspace(
         minimum_distance_to_wall,
@@ -46,7 +46,9 @@ class ELC_vs_analytic(ut.TestCase):
 
     def test_elc(self):
         """
-        Testing ELC against the analytic solution for an infinite large simulation box with dielectric contrast on the bottom of the box, which can be calculated analytically with image charges.
+        Testing ELC against the analytic solution for an infinitely large
+        simulation box with dielectric contrast on the bottom of the box,
+        which can be calculated analytically with image charges.
         """
         self.system.part.add(id=1, pos=self.system.box_l / 2., q=self.q[0])
         self.system.part.add(id=2, pos=self.system.box_l / 2. + [0, 0, self.distance],
