@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(bspline_normalization, T, test_bspline_orders) {
 BOOST_AUTO_TEST_CASE_TEMPLATE(bspline_symmetry, T, test_bspline_orders) {
   // check that B-splines are symmetric
   constexpr auto order = T::value;
-  constexpr auto order_mid = (order % 2 == 0) ? order / 2 : (order - 1) / 2 + 1;
+  constexpr auto order_mid = (order % 2 == 0) ? order / 2 : (order + 1) / 2;
   constexpr auto tol = 1e-10;
   constexpr std::array<double, 3> x_values{-0.49999, 0.25, 0.1};
 
