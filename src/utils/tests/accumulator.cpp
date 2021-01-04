@@ -22,22 +22,44 @@
 
 #include "utils/Accumulator.hpp"
 
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
 #include <algorithm>
 #include <limits>
+#include <sstream>
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(accumulator) {
+  auto const test_data1 = std::vector<double>{{0.0, 1.0, 2.0, 3.0}};
+  auto const test_data2 = std::vector<double>{{1.5, 3.5, 3.5, 4.5}};
+  auto const test_mean = std::vector<double>{{0.75, 2.25, 2.75, 3.75}};
+  auto const test_var = std::vector<double>{{1.125, 3.125, 1.125, 1.125}};
+  auto const test_stderr = std::vector<double>{{0.75, 1.25, 0.75, 0.75}};
+
+  // check statistics
   auto acc = Utils::Accumulator(4);
-  auto test_data1 = std::vector<double>{{0.0, 1.0, 2.0, 3.0}};
-  auto test_data2 = std::vector<double>{{1.5, 3.5, 3.5, 4.5}};
   acc(test_data1);
   BOOST_CHECK(acc.mean() == test_data1);
   BOOST_CHECK(acc.variance() ==
               std::vector<double>(4, std::numeric_limits<double>::max()));
   acc(test_data2);
-  BOOST_CHECK((acc.mean() == std::vector<double>{{0.75, 2.25, 2.75, 3.75}}));
-  BOOST_CHECK(
-      (acc.variance() == std::vector<double>{{1.125, 3.125, 1.125, 1.125}}));
-  BOOST_CHECK(
-      (acc.std_error() == std::vector<double>{{0.75, 1.25, 0.75, 0.75}}));
+  BOOST_CHECK((acc.mean() == test_mean));
+  BOOST_CHECK((acc.variance() == test_var));
+  BOOST_CHECK((acc.std_error() == test_stderr));
+  BOOST_CHECK_THROW(acc(std::vector<double>{{1, 2, 3, 4, 5}}),
+                    std::runtime_error);
+
+  // check serialization
+  std::stringstream stream;
+  boost::archive::text_oarchive out_ar(stream);
+  out_ar << acc;
+
+  auto acc_deserialized = Utils::Accumulator(4);
+  boost::archive::text_iarchive in_ar(stream);
+  in_ar >> acc_deserialized;
+
+  BOOST_CHECK((acc_deserialized.mean() == test_mean));
+  BOOST_CHECK((acc_deserialized.variance() == test_var));
+  BOOST_CHECK((acc_deserialized.std_error() == test_stderr));
 }
