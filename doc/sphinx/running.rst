@@ -489,8 +489,8 @@ A separate rotational friction coefficient can be set by inputting
 ``gamma_rotate``. The two options allow one to switch the translational and rotational
 thermalization on or off separately, maintaining the frictional behavior. This
 can be useful, for instance, in high Péclet number active matter systems, where
-one only wants to thermalize only the rotational degrees of freedom and
-translational motion is affected by the self-propulsion.
+one wants to thermalize only the rotational degrees of freedom while
+translational degrees of freedom are affected by the self-propulsion.
 
 The keywords ``gamma`` and ``gamma_rotate`` can be specified as a scalar,
 or, with feature ``PARTICLE_ANISOTROPY`` compiled in, as the three eigenvalues
@@ -569,7 +569,7 @@ component:
 
 .. math:: \sigma_v^2 = \frac{kT}{m}
 
-Note that the velocity random walk is propagated from zero at each step.
+Note: the velocity random walk is propagated from zero at each step.
 
 A rotational motion is implemented similarly.
 Note: the rotational Brownian dynamics implementation is compatible with particles which have
