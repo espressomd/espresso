@@ -44,7 +44,6 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
-#include <utils/strcat_alloc.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -52,8 +51,6 @@
 #include <limits>
 #include <tuple>
 #include <vector>
-
-using Utils::strcat_alloc;
 
 /** How many trial calculations in @ref mmm1d_tune */
 #define TEST_INTEGRATIONS 1000
@@ -146,33 +143,30 @@ static void prepare_polygamma_series(double maxPWerror, double maxrad2) {
   } while (err > 0.1 * maxPWerror);
 }
 
-int MMM1D_set_params(double switch_rad, double maxPWerror) {
+void MMM1D_set_params(double switch_rad, double maxPWerror) {
   mmm1d_params.far_switch_radius_2 =
       (switch_rad > 0) ? Utils::sqr(switch_rad) : -1;
   mmm1d_params.maxPWerror = maxPWerror;
   coulomb.method = COULOMB_MMM1D;
 
   mpi_bcast_coulomb_params();
-
-  return 0;
 }
 
 int MMM1D_sanity_checks() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
-    runtimeErrorMsg() << "MMM1D requires periodicity 0 0 1";
-    return 1;
+    runtimeErrorMsg() << "MMM1D requires periodicity (0, 0, 1)";
+    return ES_ERROR;
   }
-
   if (cell_structure.decomposition_type() != CELL_STRUCTURE_NSQUARE) {
-    runtimeErrorMsg() << "MMM1D requires n-square cellsystem";
-    return 1;
+    runtimeErrorMsg() << "MMM1D requires the N-square cellsystem";
+    return ES_ERROR;
   }
-  return 0;
+  return ES_OK;
 }
 
-void MMM1D_init() {
+int MMM1D_init() {
   if (MMM1D_sanity_checks())
-    return;
+    return ES_ERROR;
 
   if (mmm1d_params.far_switch_radius_2 >= Utils::sqr(box_geo.length()[2]))
     mmm1d_params.far_switch_radius_2 = 0.8 * Utils::sqr(box_geo.length()[2]);
@@ -186,6 +180,7 @@ void MMM1D_init() {
   determine_bessel_radii(mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
   prepare_polygamma_series(mmm1d_params.maxPWerror,
                            mmm1d_params.far_switch_radius_2);
+  return ES_OK;
 }
 
 void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
@@ -341,10 +336,9 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
   return chpref * E;
 }
 
-int mmm1d_tune(char **log) {
+int mmm1d_tune(bool verbose) {
   if (MMM1D_sanity_checks())
     return ES_ERROR;
-  char buffer[32 + 2 * ES_DOUBLE_SPACE + ES_INTEGER_SPACE];
   double min_time = std::numeric_limits<double>::infinity();
   double min_rad = -1;
   auto const maxrad = box_geo.length()[2];
@@ -374,8 +368,9 @@ int mmm1d_tune(char **log) {
       if (int_time < 0)
         return ES_ERROR;
 
-      sprintf(buffer, "r= %f t= %f ms\n", switch_radius, int_time);
-      *log = strcat_alloc(*log, buffer);
+      if (verbose) {
+        std::printf("r= %f t= %f ms\n", switch_radius, int_time);
+      }
 
       if (int_time < min_time) {
         min_time = int_time;
@@ -387,13 +382,11 @@ int mmm1d_tune(char **log) {
     }
     switch_radius = min_rad;
     mmm1d_params.far_switch_radius_2 = Utils::sqr(switch_radius);
-  } else {
-    if (mmm1d_params.far_switch_radius_2 <=
-        Utils::sqr(bessel_radii[MAXIMAL_B_CUT - 1])) {
-      // this switching radius is too small for our Bessel series
-      *log = strcat_alloc(*log, "could not find reasonable bessel cutoff");
-      return ES_ERROR;
-    }
+  } else if (mmm1d_params.far_switch_radius_2 <=
+             Utils::sqr(bessel_radii[MAXIMAL_B_CUT - 1])) {
+    // this switching radius is too small for our Bessel series
+    runtimeErrorMsg() << "could not find reasonable bessel cutoff";
+    return ES_ERROR;
   }
 
   coulomb.method = COULOMB_MMM1D;

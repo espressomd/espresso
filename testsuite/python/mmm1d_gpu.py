@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-# Copyright (C) 2017,2019 The ESPResSo project
+#
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,14 +15,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+import unittest as ut
+import unittest_decorators as utx
+import mmm1d
+import espressomd.electrostatics
 
-[ "${#}" -eq 1 ] || exit 1
 
-GIT_COMMIT=$(git rev-parse HEAD)
-URL="https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/pipelines/${CI_PIPELINE_ID}"
-STATUS="${1}"
-curl "https://api.github.com/repos/espressomd/espresso/statuses/${GIT_COMMIT}" \
-     -H "Authorization: token ${GITHUB_TOKEN}" \
-     -H "Content-Type: application/json" \
-     -X POST \
-     -d "{\"state\": \"${STATUS}\", \"context\": \"ICP GitLab CI\", \"target_url\": \"${URL}\"}"
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])
+@utx.skipIfMissingGPU()
+class MMM1D_GPU_Test(mmm1d.ElectrostaticInteractionsTests, ut.TestCase):
+
+    def setUp(self):
+        self.MMM1D = espressomd.electrostatics.MMM1DGPU
+        super().setUp()
+
+
+if __name__ == "__main__":
+    ut.main()

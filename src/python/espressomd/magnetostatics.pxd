@@ -14,6 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from libcpp cimport bool
+from .utils cimport handle_errors
+
 include "myconfig.pxi"
 
 IF DIPOLES == 1:
@@ -63,10 +67,15 @@ IF DP3M == 1:
         void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha, double accuracy)
         int dp3m_set_mesh_offset(double x, double y, double z)
         int dp3m_set_eps(double eps)
-        int dp3m_adaptive_tune(char ** log)
+        int dp3m_adaptive_tune(bool verbose)
         int dp3m_deactivate()
 
         ctypedef struct dp3m_data_struct:
             P3MParameters params
 
         cdef extern dp3m_data_struct dp3m
+
+    cdef inline python_dp3m_adaptive_tune(bool verbose):
+        cdef int response = dp3m_adaptive_tune(verbose)
+        if response:
+            handle_errors("python_dp3m_adaptive_tune")

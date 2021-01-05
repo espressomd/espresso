@@ -49,6 +49,7 @@
 #include <cassert>
 #include <cstdio>
 #include <limits>
+#include <stdexcept>
 
 Coulomb_parameters coulomb;
 
@@ -433,16 +434,13 @@ void bcast_coulomb_params() {
   }
 }
 
-int set_prefactor(double prefactor) {
+void set_prefactor(double prefactor) {
   if (prefactor < 0.0) {
-    runtimeErrorMsg() << "Coulomb prefactor has to be >=0";
-    return ES_ERROR;
+    throw std::invalid_argument("Coulomb prefactor has to be >= 0");
   }
 
   coulomb.prefactor = prefactor;
   mpi_bcast_coulomb_params();
-
-  return ES_OK;
 }
 
 void deactivate_method() {

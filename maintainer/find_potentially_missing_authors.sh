@@ -21,7 +21,7 @@
 # based on git commits. The output has to be checked manually, because
 # users have committed under different spellings and abbreviations.
 
-cd "$(git rev-parse --show-toplevel)"
+cd "$(git rev-parse --show-toplevel)" || exit 1
 
 git shortlog -s |
   cut -f 2 |
