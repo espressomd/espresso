@@ -72,14 +72,6 @@ template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_2() {
 /// error code if an error occurred
 #define ES_ERROR 1
 
-/** space necessary for an (64-bit) integer with sprintf. */
-#define ES_INTEGER_SPACE 24
-/** space necessary for a double with sprintf. Precision
-    is 17 digits, plus sign, dot, e, sign of exponent and
-    3 digits exponent etc.
-*/
-#define ES_DOUBLE_SPACE 27
-
 } // namespace Utils
 
 #endif
