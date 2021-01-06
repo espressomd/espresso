@@ -22,6 +22,7 @@
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
 #include "utils/math/make_lin_space.hpp"
+#include "utils/math/sqr.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -56,7 +57,7 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
   // azimuthal angle per bin such that we fulfill the sampling density
   // requirement.
   auto const smallest_bin_volume =
-      pi() * pow(r_limits.first + delta_r, 2.0) * delta_phi / (2.0 * pi());
+      pi() * Utils::sqr(r_limits.first + delta_r) * delta_phi / (2.0 * pi());
   auto const min_n_samples = std::max(
       n_z_bins,
       static_cast<size_t>(std::round(smallest_bin_volume * sampling_density)));
