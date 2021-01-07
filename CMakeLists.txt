@@ -411,6 +411,9 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(cxx_interface
                          INTERFACE -Wno-gnu-zero-variadic-macro-arguments)
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0.0")
+    target_compile_options(cxx_interface INTERFACE -Wimplicit-float-conversion)
+  endif()
 endif()
 
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
