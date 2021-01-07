@@ -79,14 +79,3 @@ void thermalized_bond_init() {
     }
   }
 }
-
-void thermalized_bond_update_params(double pref_scale) {
-
-  for (auto &bonded_ia_param : bonded_ia_params) {
-    if (bonded_ia_param.type == BONDED_IA_THERMALIZED_DIST) {
-      Thermalized_bond_parameters &t = bonded_ia_param.p.thermalized_bond;
-      t.pref2_com *= pref_scale;
-      t.pref2_dist *= pref_scale;
-    }
-  }
-}
