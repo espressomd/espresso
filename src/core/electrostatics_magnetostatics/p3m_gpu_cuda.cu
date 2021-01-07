@@ -702,9 +702,9 @@ void p3m_gpu_add_farfield_force() {
   dim3 gridConv(p3m_gpu_data.mesh[0], p3m_gpu_data.mesh[1], 1);
   dim3 threadsConv(p3m_gpu_data.mesh[2] / 2 + 1, 1, 1);
 
-  REAL_TYPE prefactor =
-      coulomb.prefactor / // NOLINT(bugprone-narrowing-conversions)
-      (p3m_gpu_data.box[0] * p3m_gpu_data.box[1] * p3m_gpu_data.box[2] * 2.0);
+  auto prefactor =
+      REAL_TYPE(coulomb.prefactor / (p3m_gpu_data.box[0] * p3m_gpu_data.box[1] *
+                                     p3m_gpu_data.box[2] * 2.0));
 
   cuda_safe_mem(cudaMemset(p3m_gpu_data.charge_mesh, 0,
                            p3m_gpu_data.mesh_size * sizeof(REAL_TYPE)));

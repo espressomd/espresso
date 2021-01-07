@@ -65,9 +65,12 @@ public:
       for (size_t y = 0; y < n_samples_y; ++y) {
         for (size_t z = 0; z < n_samples_z; ++z) {
           sampling_positions.push_back(Utils::Vector3d{
-              {limits[0].first + sampling_offset[0] + x * sampling_delta[0],
-               limits[1].first + sampling_offset[1] + y * sampling_delta[1],
-               limits[2].first + sampling_offset[2] + z * sampling_delta[2]}});
+              {limits[0].first + sampling_offset[0] +
+                   static_cast<double>(x) * sampling_delta[0],
+               limits[1].first + sampling_offset[1] +
+                   static_cast<double>(y) * sampling_delta[1],
+               limits[2].first + sampling_offset[2] +
+                   static_cast<double>(z) * sampling_delta[2]}});
         }
       }
     }

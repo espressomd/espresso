@@ -513,7 +513,9 @@ std::vector<double> Correlator::get_correlation() {
   for (size_t i = 0; i < n_result; i++) {
     auto const index = m_dim_corr * i;
     for (size_t k = 0; k < m_dim_corr; k++) {
-      res[index + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
+      if (n_sweeps[i]) {
+        res[index + k] = result[i][k] / static_cast<double>(n_sweeps[i]);
+      }
     }
   }
   return res;

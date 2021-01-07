@@ -457,11 +457,11 @@ void InitCUDA_IBM(const int numParticles) {
 
     for (int n = 0; n < LBBoundaries::lbboundaries.size(); n++) {
       host_lb_boundary_velocity[3 * n + 0] =
-          LBBoundaries::lbboundaries[n]->velocity()[0];
+          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[0]);
       host_lb_boundary_velocity[3 * n + 1] =
-          LBBoundaries::lbboundaries[n]->velocity()[1];
+          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[1]);
       host_lb_boundary_velocity[3 * n + 2] =
-          LBBoundaries::lbboundaries[n]->velocity()[2];
+          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[2]);
     }
 
     host_lb_boundary_velocity[3 * LBBoundaries::lbboundaries.size() + 0] = 0.0f;

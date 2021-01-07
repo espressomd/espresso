@@ -114,7 +114,7 @@ Cluster::radius_of_gyration_subcluster(std::vector<int> &subcl_particle_ids) {
         get_mi_vector(com, get_particle_data(pid).r.p, box_geo).norm2();
   }
 
-  return sqrt(sum_sq_dist / subcl_particle_ids.size());
+  return sqrt(sum_sq_dist / static_cast<double>(subcl_particle_ids.size()));
 }
 
 template <typename T>
@@ -176,7 +176,7 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   double c0, c1, cov00, cov01, cov11, sumsq;
   gsl_fit_linear(&log_diameters.front(), 1, &log_pcounts.front(), 1, n, &c0,
                  &c1, &cov00, &cov01, &cov11, &sumsq);
-  double mean_sq_residual = sumsq / log_diameters.size();
+  double mean_sq_residual = sumsq / static_cast<double>(log_diameters.size());
   return {c1, mean_sq_residual};
 #else
   runtimeErrorMsg() << "GSL (gnu scientific library) is required for fractal "
