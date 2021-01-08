@@ -72,22 +72,3 @@ def hydrostatic_pressure(
     offset = ek[int(box_x / (2 * agrid)), int(box_y / (2 * agrid)),
                 int(box_z / (2 * agrid))].pressure[tensor_entry]
     return 0.0 + offset
-
-
-# variant from the nonlinear tests
-def hydrostatic_pressure_non_lin(
-        ek,
-        x,
-        xi,
-        bjerrum_length,
-        tensor_entry,
-        box_x,
-        box_y,
-        box_z,
-        agrid,
-        temperature):
-    offset = ek[int(box_x / (2 * agrid)), int(box_y / (2 * agrid)),
-                int(box_z / (2 * agrid))].pressure[tensor_entry]
-    return temperature * xi * xi * \
-        math.tan(xi * x) * math.tan(xi * x) / \
-        (2.0 * math.pi * bjerrum_length) + offset
