@@ -114,7 +114,7 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ] ; then
     bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
 fi
 
-cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params}"
+cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DCTEST_ARGS=-j${check_procs} ${cmake_params}"
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
 

@@ -306,29 +306,6 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 
 find_package(MPI 3.0 REQUIRED)
 
-# CMake < 3.9
-if(NOT TARGET MPI::MPI_CXX)
-  add_library(MPI::MPI_CXX IMPORTED INTERFACE)
-
-  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
-  foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
-    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS
-                                              ${_MPI_FLAG})
-  endforeach()
-
-  set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-                                            "${MPI_CXX_INCLUDE_PATH}")
-
-  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
-  foreach(_MPI_FLAG ${MPI_CXX_LINK_FLAGS})
-    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES
-                                              ${_MPI_FLAG})
-  endforeach()
-
-  set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES
-                                            ${MPI_CXX_LIBRARIES})
-endif()
-
 # ##############################################################################
 # Boost
 # ##############################################################################
@@ -473,16 +450,14 @@ endif()
 
 if(WITH_TESTS)
   enable_testing()
-  if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
-    set(WITH_UNIT_TESTS ON)
-  endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
-  if(WITH_PYTHON)
-    add_subdirectory(testsuite)
-  endif(WITH_PYTHON)
   set(CTEST_ARGS ""
       CACHE STRING
             "Extra arguments to give to ctest calls (separated by semicolons)")
+  set(TEST_NP "4" CACHE STRING "Maximal number of MPI ranks to use per test")
+  if(WITH_PYTHON)
+    add_subdirectory(testsuite)
+  endif(WITH_PYTHON)
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)
