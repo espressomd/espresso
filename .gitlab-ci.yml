@@ -100,6 +100,7 @@ maxset:
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
+     cmake_params: '-DTEST_NP=8'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
