@@ -34,9 +34,17 @@
 #include "grid.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
-double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
-                             Particle &p2, bool force_flag) {
+/**
+ * Calculate dipolar energy and optionally force between two particles.
+ * @param[in,out] p1          First particle
+ * @param[in]     dip1        Cached dipole moment of the first particle
+ * @param[in,out] p2          Second particle
+ * @param[in]     force_flag  If true, update the particle forces and torques
+ */
+static double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
+                                    Particle &p2, bool force_flag) {
 
   // Cache dipole moment
   auto const dip2 = p2.calc_dip();
@@ -103,13 +111,9 @@ double dawaanr_calculations(bool force_flag, bool energy_flag,
     return 0;
   }
 
-  // Variable to sum up the energy
-  double u = 0;
-
-  auto parts = particles;
-
-  // Iterate over all cells
-  for (auto it = parts.begin(), end = parts.end(); it != end; ++it) {
+  double energy = 0.0;
+  // Iterate over all particles
+  for (auto it = particles.begin(), end = particles.end(); it != end; ++it) {
     // If the particle has no dipole moment, ignore it
     if (it->p.dipm == 0.0)
       continue;
@@ -123,12 +127,11 @@ double dawaanr_calculations(bool force_flag, bool energy_flag,
       if (jt->p.dipm == 0.0)
         continue;
       // Calculate energy and/or force between the particles
-      u += calc_dipole_dipole_ia(*it, dip1, *jt, force_flag);
+      energy += calc_dipole_dipole_ia(*it, dip1, *jt, force_flag);
     }
   }
 
-  // Return energy
-  return u;
+  return energy;
 }
 
 /* =============================================================================
@@ -158,7 +161,6 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
   std::vector<double> mx, my, mz;
   std::vector<double> fx, fy, fz;
   std::vector<double> tx, ty, tz;
-  double u;
 
   if (n_nodes != 1) {
     fprintf(stderr, "error: magnetic Direct Sum is just for one cpu...\n");
@@ -217,21 +219,15 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
     }
   }
 
-  /*now we do the calculations */
+  /* energy calculation */
+  double energy = 0.;
 
   { /* beginning of the area of calculation */
-    int NCUT[3], NCUT2;
-
+    int NCUT[3];
     for (int i = 0; i < 3; i++) {
-      NCUT[i] = Ncut_off_magnetic_dipolar_direct_sum;
-      if (box_geo.periodic(i) == 0) {
-        NCUT[i] = 0;
-      }
+      NCUT[i] = box_geo.periodic(i) ? Ncut_off_magnetic_dipolar_direct_sum : 0;
     }
-    NCUT2 = Ncut_off_magnetic_dipolar_direct_sum *
-            Ncut_off_magnetic_dipolar_direct_sum;
-
-    u = 0;
+    auto const NCUT2 = Utils::sqr(Ncut_off_magnetic_dipolar_direct_sum);
 
     for (int i = 0; i < dip_particles; i++) {
       for (int j = 0; j < dip_particles; j++) {
@@ -261,7 +257,7 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
 
                   // Energy ............................
 
-                  u += pe1 / r3 - 3.0 * pe2 * pe3 / r5;
+                  energy += pe1 / r3 - 3.0 * pe2 * pe3 / r5;
 
                   if (force_flag) {
                     double a, b, c, d;
@@ -277,7 +273,6 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
                     fz[i] += (a + b) * rnz + c * mz[i] + d * mz[j];
 
                     // torque ............................
-                    c = 3.0 / r5 * pe3;
                     auto const ax = my[i] * mz[j] - my[j] * mz[i];
                     auto const ay = mx[j] * mz[i] - mx[i] * mz[j];
                     auto const az = mx[i] * my[j] - mx[j] * my[i];
@@ -303,25 +298,25 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
   /* set the forces, and torques of the particles within ESPResSo */
   if (force_flag) {
 
-    int dip_particles2 = 0;
+    dip_particles = 0;
 
     for (auto &p : particles) {
       if (p.p.dipm != 0.0) {
 
-        p.f.f[0] += dipole.prefactor * fx[dip_particles2];
-        p.f.f[1] += dipole.prefactor * fy[dip_particles2];
-        p.f.f[2] += dipole.prefactor * fz[dip_particles2];
+        p.f.f[0] += dipole.prefactor * fx[dip_particles];
+        p.f.f[1] += dipole.prefactor * fy[dip_particles];
+        p.f.f[2] += dipole.prefactor * fz[dip_particles];
 
-        p.f.torque[0] += dipole.prefactor * tx[dip_particles2];
-        p.f.torque[1] += dipole.prefactor * ty[dip_particles2];
-        p.f.torque[2] += dipole.prefactor * tz[dip_particles2];
+        p.f.torque[0] += dipole.prefactor * tx[dip_particles];
+        p.f.torque[1] += dipole.prefactor * ty[dip_particles];
+        p.f.torque[2] += dipole.prefactor * tz[dip_particles];
 
-        dip_particles2++;
+        dip_particles++;
       }
     }
-  } /*of if force_flag */
+  } /* of if force_flag */
 
-  return 0.5 * dipole.prefactor * u;
+  return 0.5 * dipole.prefactor * energy;
 }
 
 int dawaanr_set_params() {
