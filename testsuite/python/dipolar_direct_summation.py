@@ -21,8 +21,8 @@ import espressomd.magnetostatics
 import espressomd.magnetostatic_extensions
 import numpy as np
 import unittest as ut
-from tests_common import abspath
 import unittest_decorators as utx
+from tests_common import abspath
 OPEN_BOUNDARIES_REF_ENERGY = abspath("data/dipolar_open_boundaries_energy.npy")
 OPEN_BOUNDARIES_REF_ARRAYS = abspath("data/dipolar_open_boundaries_arrays.npy")
 
@@ -138,8 +138,7 @@ class dds(ut.TestCase):
         ref_e, ref_f, ref_t = self.dds_data()
         np.save(
             OPEN_BOUNDARIES_REF_ENERGY,
-            np.array(
-                [ref_e]),
+            np.array([ref_e]),
             allow_pickle=False)
         np.save(
             OPEN_BOUNDARIES_REF_ARRAYS,

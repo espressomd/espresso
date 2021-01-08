@@ -55,7 +55,7 @@ def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
 
 # function to calculate the hydrostatic pressure
 
-# Technically, the LB simulates a compressible fluid, whiches pressure
+# Technically, the LB simulates a compressible fluid, whose pressure
 # tensor contains an additional term on the diagonal, proportional to
 # the divergence of the velocity. We neglect this contribution, which
 # creates a small error in the direction normal to the wall, which
