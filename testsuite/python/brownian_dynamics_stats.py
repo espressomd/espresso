@@ -96,15 +96,6 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         self.check_per_particle(
             N, kT, gamma2, loops, v_minmax, bins, error_tol)
 
-    def setup_diff_mass_rinertia(self, p):
-        if espressomd.has_features("MASS"):
-            p.mass = 0.5
-        if espressomd.has_features("ROTATION"):
-            p.rotation = [1, 1, 1]
-            # Make sure rinertia does not change diff coeff
-            if espressomd.has_features("ROTATIONAL_INERTIA"):
-                p.rinertia = [0.4, 0.4, 0.4]
-
     def test_msd_global_temp(self):
         """Tests diffusion via MSD for global gamma and temperature"""
 
