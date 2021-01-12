@@ -18,6 +18,7 @@
 #
 include "myconfig.pxi"
 from . cimport cuda_init
+from . import utils
 
 cdef class CudaInitHandle:
     def __init__(self):
@@ -42,7 +43,7 @@ cdef class CudaInitHandle:
             return dev
 
         @device.setter
-        def device(self, int _dev):
+        def device(self, int dev):
             """
             Specify which device to use.
 
@@ -52,9 +53,8 @@ cdef class CudaInitHandle:
                 Set the device id of the graphics card to use.
 
             """
-            cuda_set_device(_dev)
+            cuda_set_device(dev)
 
-    IF CUDA == 1:
         @property
         def device_list(self):
             """
@@ -70,11 +70,11 @@ cdef class CudaInitHandle:
             devices = dict()
             for i in range(cuda_get_n_gpus()):
                 cuda_get_gpu_name(i, gpu_name_buffer)
-                devices[i] = gpu_name_buffer
+                devices[i] = utils.to_str(gpu_name_buffer)
             return devices
 
         @device_list.setter
-        def device_list(self, dict _dev_dict):
+        def device_list(self, dict dev_dict):
             raise Exception("cuda device list is read only")
 
 
