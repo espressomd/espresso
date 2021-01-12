@@ -90,34 +90,27 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
   }
 }
 
-void halo_free_fieldtype(Fieldtype *const ftype) {
-  if ((*ftype)->count > 0) {
-    free((*ftype)->lengths);
-    (*ftype)->lengths = nullptr;
-  }
-  free(*ftype);
-}
-
 /** Set halo region to a given value
  * @param[out] dest pointer to the halo buffer
  * @param value integer value to write into the halo buffer
  * @param type halo field layout description
  */
 void halo_dtset(char *dest, int value, Fieldtype type) {
-  int vblocks = type->vblocks;
-  int vstride = type->vstride;
-  int vskip = type->vskip;
-  int count = type->count;
-  int *lens = type->lengths;
-  int *disps = type->disps;
-  int extent = type->extent;
+  auto const vblocks = type->vblocks;
+  auto const vstride = type->vstride;
+  auto const vskip = type->vskip;
+  auto const count = type->count;
+  int const *const lens = type->lengths;
+  int const *const disps = type->disps;
+  auto const extent = type->extent;
+  auto const block_size = static_cast<long>(vskip) * static_cast<long>(extent);
 
   for (int i = 0; i < vblocks; i++) {
     for (int j = 0; j < vstride; j++) {
       for (int k = 0; k < count; k++)
         memset(dest + disps[k], value, lens[k]);
     }
-    dest += vskip * extent;
+    dest += block_size;
   }
 }
 
@@ -126,18 +119,18 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type);
 void halo_copy_vector(char *r_buffer, char *s_buffer, int count, Fieldtype type,
                       bool vflag) {
 
-  int vblocks = type->vblocks;
-  int vstride = type->vstride;
-  int vskip = type->vskip;
-  int extent = type->extent;
+  auto const vblocks = type->vblocks;
+  auto const vstride = type->vstride;
+  auto const extent = type->extent;
 
+  auto block_size = static_cast<long>(type->vskip);
   if (vflag) {
-    vskip *= type->subtype->extent;
+    block_size *= static_cast<long>(type->subtype->extent);
   }
 
   for (int i = 0; i < count; i++, s_buffer += extent, r_buffer += extent) {
     char *dest = r_buffer, *src = s_buffer;
-    for (int j = 0; j < vblocks; j++, dest += vskip, src += vskip) {
+    for (int j = 0; j < vblocks; j++, dest += block_size, src += block_size) {
       halo_dtcopy(dest, src, vstride, type->subtype);
     }
   }
@@ -185,7 +178,7 @@ void prepare_halo_communication(HaloCommunicator *const hc,
   hc->num = num;
   hc->halo_info.resize(num);
 
-  int extent = fieldtype->extent;
+  auto const extent = static_cast<long>(fieldtype->extent);
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
 
@@ -210,12 +203,12 @@ void prepare_halo_communication(HaloCommunicator *const hc,
 
       if (lr == 0) {
         /* send to left, recv from right */
-        hinfo->s_offset = extent * stride * 1;
-        hinfo->r_offset = extent * stride * (grid[dir] + 1);
+        hinfo->s_offset = extent * static_cast<long>(stride * 1);
+        hinfo->r_offset = extent * static_cast<long>(stride * (grid[dir] + 1));
       } else {
         /* send to right, recv from left */
-        hinfo->s_offset = extent * stride * grid[dir];
-        hinfo->r_offset = extent * stride * 0;
+        hinfo->s_offset = extent * static_cast<long>(stride * grid[dir]);
+        hinfo->r_offset = extent * static_cast<long>(stride * 0);
       }
 
       hinfo->source_node = node_neighbors[2 * dir + 1 - lr];

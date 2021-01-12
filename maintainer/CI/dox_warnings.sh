@@ -34,7 +34,7 @@ for supported_version in 1.8.11 1.8.13 1.8.17; do
 done
 if [ "${dox_version_supported}" = false ]; then
     echo "Doxygen version ${dox_version} not fully supported" >&2
-    if [ ! -z "${CI}" ]; then
+    if [ -n "${CI}" ]; then
         exit 1
     fi
     echo "Proceeding anyway"
@@ -89,7 +89,7 @@ rm -f dox_warnings_summary.log
 
 # print summary
 cat dox_warnings_summary.log
-n_warnings=$(cat dox_warnings_summary.log | wc -l)
+n_warnings=$(wc -l < dox_warnings_summary.log)
 
 if [ "${CI}" != "" ]; then
     "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen "${n_warnings}" dox_warnings_summary.log || exit 2
