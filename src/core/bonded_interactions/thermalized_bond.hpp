@@ -52,7 +52,6 @@ int thermalized_bond_set_params(int bond_type, double temp_com,
                                 double gamma_com, double temp_distance,
                                 double gamma_distance, double r_cut);
 
-void thermalized_bond_update_params(double pref_scale);
 void thermalized_bond_init();
 
 /** Separately thermalizes the com and distance of a particle pair.

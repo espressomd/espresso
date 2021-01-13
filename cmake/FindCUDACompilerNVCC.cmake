@@ -63,7 +63,6 @@ function(find_gpu_library)
   cmake_parse_arguments(LIBRARY "REQUIRED" "NAMES;VARNAME" "" ${ARGN})
   list(APPEND LIBRARY_PATHS
        ${CUDA_TOOLKIT_ROOT_DIR}/lib64 ${CUDA_TOOLKIT_ROOT_DIR}/lib
-       ${CUDA_TOOLKIT_ROOT_DIR}/compat
        /usr/local/nvidia/lib /usr/lib/x86_64-linux-gnu)
   if(LIBRARY_REQUIRED)
     find_library(${LIBRARY_VARNAME} NAMES ${LIBRARY_NAMES} PATHS ${LIBRARY_PATHS} NO_DEFAULT_PATH REQUIRED)

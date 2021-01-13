@@ -27,7 +27,6 @@
 
 #include <cassert>
 #include <cmath>
-#include <limits>
 #include <vector>
 
 /** Type codes of bonded interactions. */
@@ -76,8 +75,6 @@ enum BondedInteraction : int {
   BONDED_IA_IBM_VOLUME_CONSERVATION,
   /** Type of bonded interaction is bending force (immersed boundary). */
   BONDED_IA_IBM_TRIBEND,
-  /** Type of bonded interaction is umbrella. */
-  BONDED_IA_UMBRELLA,
   /** Type of bonded interaction is thermalized distance bond. */
   BONDED_IA_THERMALIZED_DIST,
 };
@@ -178,20 +175,6 @@ struct Thermalized_bond_parameters {
   double cutoff() const { return r_cut; }
 };
 
-/** Parameters for harmonic dumbbell bond Potential */
-struct Harmonic_dumbbell_bond_parameters {
-  /** spring constant */
-  double k1;
-  /** rotation constant */
-  double k2;
-  /** equilibrium bond length */
-  double r;
-  /** cutoff bond length */
-  double r_cut;
-
-  double cutoff() const { return r_cut; }
-};
-
 /** Parameters for quartic bond Potential */
 struct Quartic_bond_parameters {
   double k0, k1;
@@ -275,15 +258,6 @@ struct Tabulated_bond_parameters {
       return -1.;
     };
   }
-};
-
-/** Parameters for umbrella potential */
-struct Umbrella_bond_parameters {
-  double k;
-  int dir;
-  double r;
-
-  double cutoff() const { return std::numeric_limits<double>::infinity(); }
 };
 
 /** Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM */
@@ -372,7 +346,6 @@ union Bond_parameters {
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
   Tabulated_bond_parameters tab;
-  Umbrella_bond_parameters umbrella;
   Thermalized_bond_parameters thermalized_bond;
   Rigid_bond_parameters rigid_bond;
   IBM_Triel_Parameters ibm_triel;

@@ -32,6 +32,7 @@
 #include <utils/index.hpp>
 
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <limits>
 #include <stdexcept>
@@ -112,13 +113,14 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
     delta[dir] = 1.0 - delta[3 + dir];
   }
   node_index[0] = Utils::get_linear_index(ind, halo_grid);
-  node_index[1] = node_index[0] + 1;
-  node_index[2] = node_index[0] + halo_grid[0];
-  node_index[3] = node_index[0] + halo_grid[0] + 1;
-  node_index[4] = node_index[0] + halo_grid[0] * halo_grid[1];
-  node_index[5] = node_index[4] + 1;
-  node_index[6] = node_index[4] + halo_grid[0];
-  node_index[7] = node_index[4] + halo_grid[0] + 1;
+  node_index[1] = node_index[0] + 1u;
+  node_index[2] = node_index[0] + static_cast<std::size_t>(halo_grid[0]);
+  node_index[3] = node_index[0] + static_cast<std::size_t>(halo_grid[0]) + 1u;
+  node_index[4] = node_index[0] + static_cast<std::size_t>(halo_grid[0]) *
+                                      static_cast<std::size_t>(halo_grid[1]);
+  node_index[5] = node_index[4] + 1u;
+  node_index[6] = node_index[4] + static_cast<std::size_t>(halo_grid[0]);
+  node_index[7] = node_index[4] + static_cast<std::size_t>(halo_grid[0]) + 1u;
 }
 
 Utils::Vector3i Lattice::local_index(Utils::Vector3i const &global_index) const

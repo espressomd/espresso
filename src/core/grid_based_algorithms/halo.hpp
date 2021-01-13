@@ -83,9 +83,6 @@ typedef struct {
   int source_node; /**< index of processor which sends halo data */
   int dest_node;   /**< index of processor receiving halo data */
 
-  // void *send_buffer;      /**< pointer to data being sent */
-  // void *recv_buffer;      /**< pointer to data being received */
-
   unsigned long s_offset; /**< offset for send buffer */
   unsigned long r_offset; /**< offset for receive buffer */
 
@@ -116,11 +113,6 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip,
                               Fieldtype oldtype, Fieldtype *newtype);
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
                                Fieldtype oldtype, Fieldtype *newtype);
-
-/** Frees a fieldtype
- *  @param ftype pointer to the type to be freed
- */
-void halo_free_fieldtype(Fieldtype *ftype);
 
 /** Preparation of the halo parallelization scheme. Sets up the
  *  necessary data structures for \ref halo_communication
