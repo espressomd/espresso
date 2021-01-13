@@ -59,6 +59,7 @@
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
@@ -883,7 +884,8 @@ auto lb_next_offsets(const Lattice &lb_lattice,
                      std::array<Utils::Vector3i, 19> const &c) {
   const Utils::Vector3<ptrdiff_t> strides = {
       {1, lb_lattice.halo_grid[0],
-       lb_lattice.halo_grid[0] * lb_lattice.halo_grid[1]}};
+       static_cast<ptrdiff_t>(lb_lattice.halo_grid[0]) *
+           static_cast<ptrdiff_t>(lb_lattice.halo_grid[1])}};
 
   std::array<ptrdiff_t, 19> offsets;
   boost::transform(c, offsets.begin(),
