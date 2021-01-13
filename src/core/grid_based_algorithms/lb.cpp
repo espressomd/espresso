@@ -135,7 +135,7 @@ void lb_on_param_change(LBParam param) {
 }
 
 #ifdef ADDITIONAL_CHECKS
-static void lb_check_halo_regions(const LB_Fluid &lbfluid,
+static void lb_check_halo_regions(const LB_Fluid &lb_fluid,
                                   const Lattice &lb_lattice);
 #endif // ADDITIONAL_CHECKS
 
@@ -1010,11 +1010,12 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
   return ret;
 }
 
-/** Check consistency of the halo regions (ADDITIONAL_CHECKS)
- *  This function can be used as an additional check. It test whether the
- *  halo regions have been exchanged correctly.
+#ifdef ADDITIONAL_CHECKS
+/** Check consistency of the halo regions.
+ *  Test whether the halo regions have been exchanged correctly.
  */
-void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
+void lb_check_halo_regions(const LB_Fluid &lb_fluid,
+                           const Lattice &lb_lattice) {
   Lattice::index_t index;
   int i, x, y, z, s_node, r_node, count = D3Q19::n_vel;
   double *s_buffer, *r_buffer;
@@ -1030,7 +1031,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
       for (y = 0; y < lb_lattice.halo_grid[1]; ++y) {
         index = get_linear_index(0, y, z, lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
-          s_buffer[i] = lbfluid[i][index];
+          s_buffer[i] = lb_fluid[i][index];
 
         s_node = node_neighbors[1];
         r_node = node_neighbors[0];
@@ -1041,14 +1042,14 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
           index =
               get_linear_index(lb_lattice.grid[0], y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            s_buffer[i] = lbfluid[i][index];
+            s_buffer[i] = lb_fluid[i][index];
           compare_buffers(s_buffer, r_buffer,
                           count * static_cast<int>(sizeof(double)));
         } else {
           index =
               get_linear_index(lb_lattice.grid[0], y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            r_buffer[i] = lbfluid[i][index];
+            r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer,
                               count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=" << 0 << " at index=" << index
@@ -1059,7 +1060,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
         index = get_linear_index(lb_lattice.grid[0] + 1, y, z,
                                  lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
-          s_buffer[i] = lbfluid[i][index];
+          s_buffer[i] = lb_fluid[i][index];
 
         s_node = node_neighbors[0];
         r_node = node_neighbors[1];
@@ -1069,13 +1070,13 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
                        comm_cart, status);
           index = get_linear_index(1, y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            s_buffer[i] = lbfluid[i][index];
+            s_buffer[i] = lb_fluid[i][index];
           compare_buffers(s_buffer, r_buffer,
                           count * static_cast<int>(sizeof(double)));
         } else {
           index = get_linear_index(1, y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            r_buffer[i] = lbfluid[i][index];
+            r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer,
                               count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=0 at index=" << index
@@ -1091,7 +1092,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
       for (x = 0; x < lb_lattice.halo_grid[0]; ++x) {
         index = get_linear_index(x, 0, z, lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
-          s_buffer[i] = lbfluid[i][index];
+          s_buffer[i] = lb_fluid[i][index];
 
         s_node = node_neighbors[3];
         r_node = node_neighbors[2];
@@ -1102,14 +1103,14 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
           index =
               get_linear_index(x, lb_lattice.grid[1], z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            s_buffer[i] = lbfluid[i][index];
+            s_buffer[i] = lb_fluid[i][index];
           compare_buffers(s_buffer, r_buffer,
                           count * static_cast<int>(sizeof(double)));
         } else {
           index =
               get_linear_index(x, lb_lattice.grid[1], z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            r_buffer[i] = lbfluid[i][index];
+            r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer,
                               count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=1 at index=" << index
@@ -1121,7 +1122,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
         index = get_linear_index(x, lb_lattice.grid[1] + 1, z,
                                  lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
-          s_buffer[i] = lbfluid[i][index];
+          s_buffer[i] = lb_fluid[i][index];
 
         s_node = node_neighbors[2];
         r_node = node_neighbors[3];
@@ -1131,13 +1132,13 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
                        comm_cart, status);
           index = get_linear_index(x, 1, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            s_buffer[i] = lbfluid[i][index];
+            s_buffer[i] = lb_fluid[i][index];
           compare_buffers(s_buffer, r_buffer,
                           count * static_cast<int>(sizeof(double)));
         } else {
           index = get_linear_index(x, 1, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            r_buffer[i] = lbfluid[i][index];
+            r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer,
                               count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=1 at index=" << index
@@ -1153,7 +1154,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
       for (x = 0; x < lb_lattice.halo_grid[0]; ++x) {
         index = get_linear_index(x, y, 0, lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
-          s_buffer[i] = lbfluid[i][index];
+          s_buffer[i] = lb_fluid[i][index];
 
         s_node = node_neighbors[5];
         r_node = node_neighbors[4];
@@ -1164,14 +1165,14 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
           index =
               get_linear_index(x, y, lb_lattice.grid[2], lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            s_buffer[i] = lbfluid[i][index];
+            s_buffer[i] = lb_fluid[i][index];
           compare_buffers(s_buffer, r_buffer,
                           count * static_cast<int>(sizeof(double)));
         } else {
           index =
               get_linear_index(x, y, lb_lattice.grid[2], lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            r_buffer[i] = lbfluid[i][index];
+            r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer,
                               count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=2 at index=" << index
@@ -1186,7 +1187,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
         index = get_linear_index(x, y, lb_lattice.grid[2] + 1,
                                  lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
-          s_buffer[i] = lbfluid[i][index];
+          s_buffer[i] = lb_fluid[i][index];
 
         s_node = node_neighbors[4];
         r_node = node_neighbors[5];
@@ -1196,13 +1197,13 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
                        comm_cart, status);
           index = get_linear_index(x, y, 1, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            s_buffer[i] = lbfluid[i][index];
+            s_buffer[i] = lb_fluid[i][index];
           compare_buffers(s_buffer, r_buffer,
                           count * static_cast<int>(sizeof(double)));
         } else {
           index = get_linear_index(x, y, 1, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
-            r_buffer[i] = lbfluid[i][index];
+            r_buffer[i] = lb_fluid[i][index];
           if (compare_buffers(s_buffer, r_buffer,
                               count * static_cast<int>(sizeof(double)))) {
             std::cerr << "buffers differ in dir=2 at index=" << index
@@ -1216,6 +1217,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
   free(r_buffer);
   free(s_buffer);
 }
+#endif // ADDITIONAL_CHECKS
 
 double lb_calc_density(std::array<double, 19> const &modes,
                        const LB_Parameters &lb_parameters) {
@@ -1293,7 +1295,7 @@ Utils::Vector6d lb_calc_pressure_tensor(std::array<double, 19> const &modes,
 }
 
 #ifdef LB_BOUNDARIES
-void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
+void lb_bounce_back(LB_Fluid &lb_fluid, const LB_Parameters &lb_parameters,
                     const std::vector<LB_FluidNode> &lb_fields) {
   auto const next = lb_next_offsets(lblattice, D3Q19::c);
   static constexpr int reverse[] = {0, 2,  1,  4,  3,  6,  5,  8,  7, 10,
@@ -1319,11 +1321,11 @@ void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
                     (ci * lb_fields[k].slip_velocity) /
                     D3Q19::c_sound_sq<double>;
 
-                boundary_force += (2 * lbfluid[i][k] + population_shift) * ci;
-                lbfluid[reverse[i]][k - next[i]] =
-                    lbfluid[i][k] + population_shift;
+                boundary_force += (2 * lb_fluid[i][k] + population_shift) * ci;
+                lb_fluid[reverse[i]][k - next[i]] =
+                    lb_fluid[i][k] + population_shift;
               } else {
-                lbfluid[reverse[i]][k - next[i]] = lbfluid[i][k] = 0.0;
+                lb_fluid[reverse[i]][k - next[i]] = lb_fluid[i][k] = 0.0;
               }
             }
           }
@@ -1334,7 +1336,7 @@ void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
     }
   }
 }
-#endif
+#endif // LB_BOUNDARIES
 
 /** Calculate the local fluid momentum.
  *  The calculation is implemented explicitly for the special case of D3Q19.

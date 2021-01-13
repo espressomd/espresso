@@ -332,13 +332,14 @@ int integrate(int n_steps, int reuse_forces) {
   return integrated_steps;
 }
 
-int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
+int python_integrate(int n_steps, bool recalc_forces_par,
+                     bool reuse_forces_par) {
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
   int reuse_forces = reuse_forces_par;
 
-  if (recalc_forces) {
+  if (recalc_forces_par) {
     if (reuse_forces) {
       runtimeErrorMsg() << "cannot reuse old forces and recalculate forces";
     }
