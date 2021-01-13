@@ -43,18 +43,18 @@ namespace Utils {
  * sin().
  */
 template <typename T> DEVICE_QUALIFIER T sinc(T d) {
-  const constexpr T epsi = 0.1;
+  const constexpr T epsi = T(0.1);
 
   const auto PId = pi<T>() * d;
 
   if (::Utils::abs(d) > epsi)
     return sin(PId) / PId;
 
-  /** Coefficients of the Taylor expansion of sinc */
-  const constexpr T c2 = -0.1666666666667e-0;
-  const constexpr T c4 = 0.8333333333333e-2;
-  const constexpr T c6 = -0.1984126984127e-3;
-  const constexpr T c8 = 0.2755731922399e-5;
+  /* Coefficients of the Taylor expansion of sinc */
+  const constexpr T c2 = T(-0.1666666666667e-0);
+  const constexpr T c4 = T(0.8333333333333e-2);
+  const constexpr T c6 = T(-0.1984126984127e-3);
+  const constexpr T c8 = T(0.2755731922399e-5);
 
   const auto PId2 = PId * PId;
   return T(1) + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));
