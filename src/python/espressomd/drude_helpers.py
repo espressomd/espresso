@@ -206,7 +206,7 @@ def setup_and_add_drude_exclusion_bonds(system, verbose=False):
     # All Drude types need...
     for td in drude_type_list:
 
-        #...exclusions with core
+        # ...exclusions with core
         qd = drude_dict[td]["q"]  # Drude charge
         qc = drude_dict[td]["qc"]  # Core charge
         subtr_sr_bond = interactions.BondedCoulombSRBond(
@@ -254,9 +254,9 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types,
     for td in mol_drude_types:
         drude_dict[td]["subtr_sr_bonds_intramol"] = {}
 
-        #... sr exclusion bond with other partial core charges...
+        # ... sr exclusion bond with other partial core charges...
         for tc, qp in zip(mol_core_types, mol_core_partial_charges):
-            #...excluding the Drude core partner
+            # ...excluding the Drude core partner
             if drude_dict[td]["core_type"] != tc:
                 qd = drude_dict[td]["q"]  # Drude charge
                 subtr_sr_bond = interactions.BondedCoulombSRBond(

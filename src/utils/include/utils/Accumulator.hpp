@@ -20,6 +20,7 @@
 #define CORE_UTILS_ACCUMULATOR
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <algorithm>
 #include <cmath>

@@ -440,14 +440,14 @@ def protect_ipython_magics(code):
     formatted comment. This is necessary whenever the code must be parsed
     through ``ast``, because magic commands are not valid Python statements.
     """
-    return re.sub("^(%+)(?=[a-z])", "#_IPYTHON_MAGIC_\g<1>", code, flags=re.M)
+    return re.sub("^(%+)(?=[a-z])", r"#_IPYTHON_MAGIC_\g<1>", code, flags=re.M)
 
 
 def deprotect_ipython_magics(code):
     """
     Reverse the action of :func:`protect_ipython_magics`.
     """
-    return re.sub("^#_IPYTHON_MAGIC_(%+)(?=[a-z])", "\g<1>", code, flags=re.M)
+    return re.sub("^#_IPYTHON_MAGIC_(%+)(?=[a-z])", r"\g<1>", code, flags=re.M)
 
 
 class GetMatplotlibPyplot(ast.NodeVisitor):

@@ -18,27 +18,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import requests
-import subprocess
 
-if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
+if not os.environ.get('CI_COMMIT_REF_NAME', '').startswith('PR-'):
+    print("Not a pull request. Exiting now.")
     exit(0)
 
-PR = os.environ['CI_COMMIT_REF_NAME'][3:]
-URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
-      PR + '/comments'
-HEADERS = {'Authorization': 'token ' + os.environ['GITHUB_TOKEN']}
+import subprocess
+import gh_post
+
 SIZELIMIT = 10000
 TOKEN_ESPRESSO_CI = 'style.patch'
 
-# Delete all existing comments
-comments = requests.get(URL, headers=HEADERS)
-comments.raise_for_status()
-for comment in comments.json():
-    if comment['user']['login'] == 'espresso-ci' and \
-            TOKEN_ESPRESSO_CI in comment['body']:
-        response = requests.delete(comment['url'], headers=HEADERS)
-        response.raise_for_status()
+# Delete obsolete posts
+gh_post.delete_comments_by_token(TOKEN_ESPRESSO_CI)
 
 MESSAGE = '''Your pull request does not meet our code formatting \
 rules. {header}, please do one of the following:
@@ -72,10 +64,8 @@ if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
         comment += 'To apply these changes'
     else:
         comment = 'To fix this'
-    message = MESSAGE.format(header=comment, url=os.environ['CI_JOB_URL'])
+    comment = MESSAGE.format(header=comment, url=gh_post.CI_JOB_URL)
 
     if patch:
-        assert TOKEN_ESPRESSO_CI in message
-        response = requests.post(URL, headers=HEADERS,
-                                 json={'body': message})
-        response.raise_for_status()
+        assert TOKEN_ESPRESSO_CI in comment
+        gh_post.post_message(comment)

@@ -104,9 +104,9 @@ add_subdirectory(object-in-fluid)
 add_subdirectory(observables)
 add_subdirectory(virtual_sites)
 
-if(WITH_UNIT_TESTS)
+if(WITH_TESTS)
   add_subdirectory(unit_tests)
-endif(WITH_UNIT_TESTS)
+endif(WITH_TESTS)
 
 if(STOKESIAN_DYNAMICS)
   add_subdirectory(stokesian_dynamics)

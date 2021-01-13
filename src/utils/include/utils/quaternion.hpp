@@ -115,12 +115,12 @@ template <class T> struct quat_traits<Utils::Quaternion<T>> {
 
   static inline scalar_type read_element_idx(std::size_t i,
                                              quat_type const &q) {
-    assert(i < 4 and i >= 0);
+    assert(i < 4);
     return q[i];
   }
 
   static inline scalar_type &write_element_idx(std::size_t i, quat_type &q) {
-    assert(i < 4 and i >= 0);
+    assert(i < 4);
     return q[i];
   }
 };
