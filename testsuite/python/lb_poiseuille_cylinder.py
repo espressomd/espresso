@@ -89,6 +89,9 @@ class LBPoiseuilleCommon:
         accuracy.
 
         """
+        # disable periodicity except in the flow direction
+        self.system.periodicity = np.logical_not(self.params['axis'])
+
         local_lb_params = LB_PARAMS.copy()
         local_lb_params['ext_force_density'] = np.array(
             self.params['axis']) * EXT_FORCE

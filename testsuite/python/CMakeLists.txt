@@ -16,7 +16,7 @@ function(PYTHON_TEST)
     set(TEST_MAX_NUM_PROC ${TEST_NP})
   endif()
 
-  if("${TEST_MAX_NUM_PROC}" GREATER ${TEST_NP})
+  if(${TEST_MAX_NUM_PROC} GREATER ${TEST_NP})
     set(TEST_NUM_PROC ${TEST_NP})
   else()
     set(TEST_NUM_PROC ${TEST_MAX_NUM_PROC})
@@ -40,9 +40,9 @@ function(PYTHON_TEST)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
   endif()
 
-  if(${TEST_MAX_NUM_PROC} LESS 2)
+  if(${TEST_MAX_NUM_PROC} EQUAL 1)
     set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
-  elseif(${TEST_MAX_NUM_PROC} LESS 3)
+  elseif(${TEST_MAX_NUM_PROC} EQUAL 2)
     set_tests_properties(${TEST_NAME} PROPERTIES LABELS
                                                  "${TEST_LABELS};parallel")
   else()
@@ -250,23 +250,22 @@ add_custom_target(
 
 add_custom_target(
   check_python_parallel_odd
-  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L
-          parallel_odd ${CTEST_ARGS} --output-on-failure)
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -L parallel_odd
+          ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
 add_custom_target(
-  check_python_gpu
-  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L gpu
-          ${CTEST_ARGS} --output-on-failure)
+  check_python_gpu COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -L
+                           gpu ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_gpu pypresso python_test_data)
 
 add_custom_target(
   check_python_skip_long
-  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -LE
-          long ${CTEST_ARGS} --output-on-failure)
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -LE long
+          ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_skip_long pypresso python_test_data)
 
 add_custom_target(
   check_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                       -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)
+                       ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python pypresso python_test_data)
 add_dependencies(check check_python)

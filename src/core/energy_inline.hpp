@@ -37,7 +37,6 @@
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
 #include "bonded_interactions/quartic.hpp"
-#include "bonded_interactions/umbrella.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -242,8 +241,6 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
 #endif
     case BONDED_IA_TABULATED_DISTANCE:
       return tab_bond_energy(iaparams, dx);
-    case BONDED_IA_UMBRELLA:
-      return umbrella_pair_energy(iaparams, dx);
     case BONDED_IA_VIRTUAL_BOND:
       return boost::optional<double>(0);
     default:

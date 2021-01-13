@@ -12,6 +12,6 @@ target_include_directories(
 
 install(TARGETS EspressoShapes LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
-if(WITH_UNIT_TESTS)
+if(WITH_TESTS)
   add_subdirectory(unit_tests)
-endif(WITH_UNIT_TESTS)
+endif(WITH_TESTS)

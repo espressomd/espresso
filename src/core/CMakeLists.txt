@@ -99,9 +99,9 @@ add_subdirectory(object-in-fluid)
 add_subdirectory(observables)
 add_subdirectory(virtual_sites)
 
-if(WITH_UNIT_TESTS)
+if(WITH_TESTS)
   add_subdirectory(unit_tests)
-endif(WITH_UNIT_TESTS)
+endif(WITH_TESTS)
 
 if(WALBERLA)
   target_link_libraries(EspressoCore PRIVATE WalberlaBridge ${WALBERLA_LIBS})
