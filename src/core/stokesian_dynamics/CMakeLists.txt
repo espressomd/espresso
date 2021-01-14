@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+target_include_directories(EspressoCore SYSTEM
+                           PRIVATE ${stokesian_dynamics_SOURCE_DIR}/include)
 target_include_directories(
-  EspressoCore PRIVATE ${stokesian_dynamics_SOURCE_DIR}/include
-                       ${CMAKE_SOURCE_DIR}/src/core/stokesian_dynamics)
+  EspressoCore PRIVATE ${CMAKE_SOURCE_DIR}/src/core/stokesian_dynamics)
 
 target_sources(EspressoCore
                PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sd_interface.cpp)

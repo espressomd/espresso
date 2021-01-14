@@ -45,7 +45,7 @@ std::vector<double> LBVelocityProfile::operator()() const {
       throw std::runtime_error(error);
     }
     if (tot_count[ind] > 0) {
-      hist_tmp[ind] /= tot_count[ind];
+      hist_tmp[ind] /= static_cast<double>(tot_count[ind]);
     }
   }
   return hist_tmp;

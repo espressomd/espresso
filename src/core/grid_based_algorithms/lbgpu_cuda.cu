@@ -825,7 +825,8 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
 
 #define BOUNCEBACK()                                                           \
   shift = 2.0f / para->agrid * para->rho * 3.0f * weight * para->tau *         \
-          (v[0] * c[0] + v[1] * c[1] + v[2] * c[2]);                           \
+          (v[0] * static_cast<float>(c[0]) + v[1] * static_cast<float>(c[1]) + \
+           v[2] * static_cast<float>(c[2]));                                   \
   pop_to_bounce_back = n_curr.vd[population * para->number_of_nodes + index];  \
   to_index_x = (x + c[0] + para->dim_x) % para->dim_x;                         \
   to_index_y = (y + c[1] + para->dim_y) % para->dim_y;                         \
@@ -833,9 +834,12 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
   to_index = to_index_x + para->dim_x * to_index_y +                           \
              para->dim_x * para->dim_y * to_index_z;                           \
   if (n_curr.boundary[to_index] == 0) {                                        \
-    boundary_force[0] += (2.0f * pop_to_bounce_back + shift) * c[0];           \
-    boundary_force[1] += (2.0f * pop_to_bounce_back + shift) * c[1];           \
-    boundary_force[2] += (2.0f * pop_to_bounce_back + shift) * c[2];           \
+    boundary_force[0] +=                                                       \
+        (2.0f * pop_to_bounce_back + shift) * static_cast<float>(c[0]);        \
+    boundary_force[1] +=                                                       \
+        (2.0f * pop_to_bounce_back + shift) * static_cast<float>(c[1]);        \
+    boundary_force[2] +=                                                       \
+        (2.0f * pop_to_bounce_back + shift) * static_cast<float>(c[2]);        \
     n_curr.vd[inverse * para->number_of_nodes + to_index] =                    \
         pop_to_bounce_back + shift;                                            \
   }
@@ -844,7 +848,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 1;
     c[1] = 0;
     c[2] = 0;
-    weight = 1. / 18.;
+    weight = 1.f / 18.f;
     population = 2;
     inverse = 1;
     BOUNCEBACK();
@@ -852,7 +856,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = -1;
     c[1] = 0;
     c[2] = 0;
-    weight = 1. / 18.;
+    weight = 1.f / 18.f;
     population = 1;
     inverse = 2;
     BOUNCEBACK();
@@ -860,7 +864,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 0;
     c[1] = 1;
     c[2] = 0;
-    weight = 1. / 18.;
+    weight = 1.f / 18.f;
     population = 4;
     inverse = 3;
     BOUNCEBACK();
@@ -868,7 +872,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 0;
     c[1] = -1;
     c[2] = 0;
-    weight = 1. / 18.;
+    weight = 1.f / 18.f;
     population = 3;
     inverse = 4;
     BOUNCEBACK();
@@ -876,7 +880,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 0;
     c[1] = 0;
     c[2] = 1;
-    weight = 1. / 18.;
+    weight = 1.f / 18.f;
     population = 6;
     inverse = 5;
     BOUNCEBACK();
@@ -884,7 +888,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 0;
     c[1] = 0;
     c[2] = -1;
-    weight = 1. / 18.;
+    weight = 1.f / 18.f;
     population = 5;
     inverse = 6;
     BOUNCEBACK();
@@ -892,7 +896,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 1;
     c[1] = 1;
     c[2] = 0;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 8;
     inverse = 7;
     BOUNCEBACK();
@@ -900,7 +904,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = -1;
     c[1] = -1;
     c[2] = 0;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 7;
     inverse = 8;
     BOUNCEBACK();
@@ -908,7 +912,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 1;
     c[1] = -1;
     c[2] = 0;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 10;
     inverse = 9;
     BOUNCEBACK();
@@ -916,7 +920,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = -1;
     c[1] = 1;
     c[2] = 0;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 9;
     inverse = 10;
     BOUNCEBACK();
@@ -924,7 +928,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 1;
     c[1] = 0;
     c[2] = 1;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 12;
     inverse = 11;
     BOUNCEBACK();
@@ -932,7 +936,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = -1;
     c[1] = 0;
     c[2] = -1;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 11;
     inverse = 12;
     BOUNCEBACK();
@@ -940,7 +944,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 1;
     c[1] = 0;
     c[2] = -1;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 14;
     inverse = 13;
     BOUNCEBACK();
@@ -948,7 +952,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = -1;
     c[1] = 0;
     c[2] = 1;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 13;
     inverse = 14;
     BOUNCEBACK();
@@ -956,7 +960,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 0;
     c[1] = 1;
     c[2] = 1;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 16;
     inverse = 15;
     BOUNCEBACK();
@@ -964,7 +968,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 0;
     c[1] = -1;
     c[2] = -1;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 15;
     inverse = 16;
     BOUNCEBACK();
@@ -972,7 +976,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 0;
     c[1] = 1;
     c[2] = -1;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 18;
     inverse = 17;
     BOUNCEBACK();
@@ -980,7 +984,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     c[0] = 0;
     c[1] = -1;
     c[2] = 1;
-    weight = 1. / 36.;
+    weight = 1.f / 36.f;
     population = 17;
     inverse = 18;
     BOUNCEBACK();
@@ -1398,10 +1402,10 @@ velocity_interpolation(LB_nodes_gpu n_a, float const *particle_position,
     auto const dist = scaled_pos - static_cast<float>(center_node_index[i]);
     // distance to left node in agrid
     auto const dist_m1 =
-        scaled_pos - static_cast<float>(center_node_index[i] - 1.f);
+        scaled_pos - static_cast<float>(center_node_index[i] - 1);
     // distance to right node in agrid
     auto const dist_p1 =
-        scaled_pos - static_cast<float>(center_node_index[i] + 1.f);
+        scaled_pos - static_cast<float>(center_node_index[i] + 1);
     if (i == 0) {
       temp_delta[0].x = three_point_polynomial_larger_than_half(dist_m1);
       temp_delta[1].x = three_point_polynomial_smallerequal_than_half(dist);
@@ -1476,7 +1480,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float const *particle_position,
   for (int i = 0; i < 3; ++i) {
     auto const scaledpos = particle_position[i] / para->agrid - 0.5f;
     left_node_index[i] = static_cast<int>(floorf(scaledpos));
-    temp_delta[3 + i] = scaledpos - left_node_index[i];
+    temp_delta[3 + i] = scaledpos - static_cast<float>(left_node_index[i]);
     temp_delta[i] = 1.0f - temp_delta[3 + i];
   }
 
@@ -2600,13 +2604,14 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
       KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid_particles,
                  threads_per_block_particles, *current_nodes, device_particles,
                  gpu_get_particle_force_pointer(), node_f, device_rho_v,
-                 couple_virtual, rng_counter_coupling_gpu->value(), friction);
+                 couple_virtual, rng_counter_coupling_gpu->value(),
+                 static_cast<float>(friction));
     } else {
       // We use a dummy value for the RNG counter if no temperature is set.
       KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid_particles,
                  threads_per_block_particles, *current_nodes, device_particles,
                  gpu_get_particle_force_pointer(), node_f, device_rho_v,
-                 couple_virtual, 0, friction);
+                 couple_virtual, 0, static_cast<float>(friction));
     }
   }
 }

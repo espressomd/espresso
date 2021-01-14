@@ -75,12 +75,12 @@ calc_node_neighbors(const boost::mpi::communicator &comm) {
 
 LocalBox<double> regular_decomposition(const BoxGeometry &box,
                                        Utils::Vector3i const &node_pos,
-                                       Utils::Vector3i const &node_grid) {
+                                       Utils::Vector3i const &node_grid_par) {
   Utils::Vector3d local_length;
   Utils::Vector3d my_left;
 
   for (int i = 0; i < 3; i++) {
-    local_length[i] = box.length()[i] / node_grid[i];
+    local_length[i] = box.length()[i] / node_grid_par[i];
     my_left[i] = node_pos[i] * local_length[i];
   }
 
@@ -89,7 +89,7 @@ LocalBox<double> regular_decomposition(const BoxGeometry &box,
     /* left boundary ? */
     boundaries[2 * dir] = (node_pos[dir] == 0);
     /* right boundary ? */
-    boundaries[2 * dir + 1] = -(node_pos[dir] == node_grid[dir] - 1);
+    boundaries[2 * dir + 1] = -(node_pos[dir] == node_grid_par[dir] - 1);
   }
 
   return {my_left, local_length, boundaries};

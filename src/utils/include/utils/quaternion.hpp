@@ -103,13 +103,13 @@ template <class T> struct quat_traits<Utils::Quaternion<T>> {
 
   template <std::size_t I>
   static constexpr inline scalar_type &write_element(quat_type &q) {
-    static_assert(I < 4 and I >= 0, "Invalid index into quaternion.");
+    static_assert(I < 4, "Invalid index into quaternion.");
     return q[I];
   }
 
   template <std::size_t I>
   static constexpr inline scalar_type read_element(quat_type const &q) {
-    static_assert(I < 4 and I >= 0, "Invalid index into quaternion.");
+    static_assert(I < 4, "Invalid index into quaternion.");
     return q[I];
   }
 

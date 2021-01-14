@@ -34,6 +34,8 @@
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
 
+#include <utils/math/int_pow.hpp>
+#include <utils/math/sqr.hpp>
 #include <utils/memory.hpp>
 
 #include <thrust/device_ptr.h>
@@ -2374,17 +2376,17 @@ int ek_init() {
     // Convert the density (given in MD units) to LB units
     lbpar_gpu.rho = (ek_parameters.lb_density < 0.0
                          ? 1.0f
-                         : ek_parameters.lb_density * ek_parameters.agrid *
-                               ek_parameters.agrid * ek_parameters.agrid);
+                         : ek_parameters.lb_density *
+                               Utils::int_pow<3>(ek_parameters.agrid));
 
     lbpar_gpu.is_TRT = true;
 
     lb_reinit_parameters_gpu();
     lbpar_gpu.viscosity = ek_parameters.viscosity * lbpar_gpu.time_step /
-                          (ek_parameters.agrid * ek_parameters.agrid);
+                          Utils::sqr(ek_parameters.agrid);
     lbpar_gpu.bulk_viscosity = ek_parameters.bulk_viscosity *
                                lbpar_gpu.time_step /
-                               (ek_parameters.agrid * ek_parameters.agrid);
+                               Utils::sqr(ek_parameters.agrid);
     lb_reinit_parameters_gpu();
 
     lb_init_gpu();
@@ -2499,15 +2501,15 @@ int ek_init() {
     ek_initialized = true;
   } else {
     if (lbpar_gpu.agrid != ek_parameters.agrid ||
-        lbpar_gpu.viscosity !=
-            ek_parameters.viscosity * ek_parameters.time_step /
-                (ek_parameters.agrid * ek_parameters.agrid) ||
-        lbpar_gpu.bulk_viscosity !=
-            ek_parameters.bulk_viscosity * ek_parameters.time_step /
-                (ek_parameters.agrid * ek_parameters.agrid) ||
+        lbpar_gpu.viscosity != ek_parameters.viscosity *
+                                   ek_parameters.time_step /
+                                   Utils::sqr(ek_parameters.agrid) ||
+        lbpar_gpu.bulk_viscosity != ek_parameters.bulk_viscosity *
+                                        ek_parameters.time_step /
+                                        Utils::sqr(ek_parameters.agrid) ||
         lb_lbcoupling_get_gamma() != ek_parameters.friction ||
-        lbpar_gpu.rho != ek_parameters.lb_density * ek_parameters.agrid *
-                             ek_parameters.agrid * ek_parameters.agrid) {
+        lbpar_gpu.rho !=
+            ek_parameters.lb_density * Utils::int_pow<3>(ek_parameters.agrid)) {
       fprintf(stderr,
               "ERROR: The LB parameters on the GPU cannot be reinitialized.\n");
 
@@ -2735,9 +2737,7 @@ LOOKUP_TABLE default\n",
           ek_parameters.number_of_nodes, species);
 
   for (int i = 0; i < ek_parameters.number_of_nodes; i++) {
-    fprintf(fp, "%e\n",
-            densities[i] / (ek_parameters.agrid * ek_parameters.agrid *
-                            ek_parameters.agrid));
+    fprintf(fp, "%e\n", densities[i] / Utils::int_pow<3>(ek_parameters.agrid));
   }
 
   free(densities);
@@ -2761,7 +2761,7 @@ int ek_node_print_density(int species, int x, int y, int z, double *density) {
 
   *density = densities[z * ek_parameters.dim_y * ek_parameters.dim_x +
                        y * ek_parameters.dim_x + x] /
-             (ek_parameters.agrid * ek_parameters.agrid * ek_parameters.agrid);
+             Utils::int_pow<3>(ek_parameters.agrid);
 
   free(densities);
 
@@ -2811,167 +2811,164 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
   auto const i = rhoindex_cartesian2linear_host(coord[0], coord[1], coord[2]);
 
   flux_local_cartesian[0] =
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U00)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U00)];
 
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
 
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
 
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1],
-                                                coord[2], EK_LINK_D00 - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1],
+                                                 coord[2], EK_LINK_D00 - 13)];
 
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
-                                                coord[2], EK_LINK_DD0 - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
+                                                 coord[2], EK_LINK_DD0 - 13)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
-                                                coord[2], EK_LINK_DU0 - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
+                                                 coord[2], EK_LINK_DU0 - 13)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
 
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
   flux_local_cartesian[0] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
 
   flux_local_cartesian[1] =
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0U0)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0U0)];
 
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
   flux_local_cartesian[1] -=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
 
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
   flux_local_cartesian[1] -=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
   flux_local_cartesian[1] -=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
 
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(coord[0], coord[1] - 1,
-                                                coord[2], EK_LINK_0D0 - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(coord[0], coord[1] - 1,
+                                                 coord[2], EK_LINK_0D0 - 13)];
 
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
-                                                coord[2], EK_LINK_DD0 - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
+                                                 coord[2], EK_LINK_DD0 - 13)];
   flux_local_cartesian[1] -=
-      0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
-                                                coord[2], EK_LINK_DU0 - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
+                                                 coord[2], EK_LINK_DU0 - 13)];
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
 
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
   flux_local_cartesian[1] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
   flux_local_cartesian[1] -=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
   flux_local_cartesian[1] -=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
 
   flux_local_cartesian[2] =
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_00U)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_00U)];
 
   flux_local_cartesian[2] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
   flux_local_cartesian[2] -=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
   flux_local_cartesian[2] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
   flux_local_cartesian[2] -=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
 
   flux_local_cartesian[2] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
   flux_local_cartesian[2] -=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
   flux_local_cartesian[2] +=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
   flux_local_cartesian[2] -=
-      0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
+      0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
 
   flux_local_cartesian[2] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0], coord[1], coord[2] - 1, EK_LINK_00D - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0], coord[1], coord[2] - 1, EK_LINK_00D - 13)];
 
   flux_local_cartesian[2] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
   flux_local_cartesian[2] -=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
   flux_local_cartesian[2] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
   flux_local_cartesian[2] -=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
 
   flux_local_cartesian[2] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
   flux_local_cartesian[2] -=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
   flux_local_cartesian[2] +=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
   flux_local_cartesian[2] -=
-      0.5 * fluxes[jindex_cartesian2linear_host(
-                coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
+      0.5f * fluxes[jindex_cartesian2linear_host(
+                 coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
 
-  flux[0] =
-      flux_local_cartesian[0] /
-      (ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid);
-  flux[1] =
-      flux_local_cartesian[1] /
-      (ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid);
-  flux[2] =
-      flux_local_cartesian[2] /
-      (ek_parameters.time_step * ek_parameters.agrid * ek_parameters.agrid);
+  flux[0] = flux_local_cartesian[0] /
+            (ek_parameters.time_step * Utils::sqr(ek_parameters.agrid));
+  flux[1] = flux_local_cartesian[1] /
+            (ek_parameters.time_step * Utils::sqr(ek_parameters.agrid));
+  flux[2] = flux_local_cartesian[2] /
+            (ek_parameters.time_step * Utils::sqr(ek_parameters.agrid));
 
   free(fluxes);
 
@@ -2983,8 +2980,8 @@ int ek_node_set_density(int species, int x, int y, int z, double density) {
     auto index =
         static_cast<int>(z * ek_parameters.dim_y * ek_parameters.dim_x +
                          y * ek_parameters.dim_x + x);
-    ekfloat num_particles = density * ek_parameters.agrid *
-                            ek_parameters.agrid * ek_parameters.agrid;
+    ekfloat num_particles =
+        static_cast<ekfloat>(density) * Utils::int_pow<3>(ek_parameters.agrid);
 
     cuda_safe_mem(cudaMemcpy(
         &ek_parameters.rho[ek_parameters.species_index[species]][index],
@@ -3061,166 +3058,165 @@ LOOKUP_TABLE default\n",
     rhoindex_linear2cartesian_host(i, coord);
 
     flux_local_cartesian[0] =
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U00)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U00)];
 
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
 
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
 
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1],
-                                                  coord[2], EK_LINK_D00 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1],
+                                                   coord[2], EK_LINK_D00 - 13)];
 
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
-                                                  coord[2], EK_LINK_DD0 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
+                                                   coord[2], EK_LINK_DD0 - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
-                                                  coord[2], EK_LINK_DU0 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
+                                                   coord[2], EK_LINK_DU0 - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
 
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
 
     flux_local_cartesian[1] =
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0U0)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0U0)];
 
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
 
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
 
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0], coord[1] - 1,
-                                                  coord[2], EK_LINK_0D0 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0], coord[1] - 1,
+                                                   coord[2], EK_LINK_0D0 - 13)];
 
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
-                                                  coord[2], EK_LINK_DD0 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
+                                                   coord[2], EK_LINK_DD0 - 13)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
-                                                  coord[2], EK_LINK_DU0 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
+                                                   coord[2], EK_LINK_DU0 - 13)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
 
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
 
     flux_local_cartesian[2] =
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_00U)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_00U)];
 
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
 
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
 
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0], coord[1], coord[2] - 1, EK_LINK_00D - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0], coord[1], coord[2] - 1, EK_LINK_00D - 13)];
 
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
 
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
 
-    fprintf(
-        fp, "%e %e %e\n",
-        flux_local_cartesian[0] / (ek_parameters.time_step *
-                                   ek_parameters.agrid * ek_parameters.agrid),
-        flux_local_cartesian[1] / (ek_parameters.time_step *
-                                   ek_parameters.agrid * ek_parameters.agrid),
-        flux_local_cartesian[2] / (ek_parameters.time_step *
-                                   ek_parameters.agrid * ek_parameters.agrid));
+    fprintf(fp, "%e %e %e\n",
+            flux_local_cartesian[0] /
+                (ek_parameters.time_step * Utils::sqr(ek_parameters.agrid)),
+            flux_local_cartesian[1] /
+                (ek_parameters.time_step * Utils::sqr(ek_parameters.agrid)),
+            flux_local_cartesian[2] /
+                (ek_parameters.time_step * Utils::sqr(ek_parameters.agrid)));
   }
 
   free(fluxes);
@@ -3298,157 +3294,157 @@ LOOKUP_TABLE default\n",
     rhoindex_linear2cartesian_host(i, coord);
 
     flux_local_cartesian[0] =
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U00)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U00)];
 
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
 
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
 
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1],
-                                                  coord[2], EK_LINK_D00 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1],
+                                                   coord[2], EK_LINK_D00 - 13)];
 
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
-                                                  coord[2], EK_LINK_DD0 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
+                                                   coord[2], EK_LINK_DD0 - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
-                                                  coord[2], EK_LINK_DU0 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
+                                                   coord[2], EK_LINK_DU0 - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
 
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
     flux_local_cartesian[0] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
 
     flux_local_cartesian[1] =
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0U0)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0U0)];
 
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UU0)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UD0)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
 
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
 
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0], coord[1] - 1,
-                                                  coord[2], EK_LINK_0D0 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0], coord[1] - 1,
+                                                   coord[2], EK_LINK_0D0 - 13)];
 
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
-                                                  coord[2], EK_LINK_DD0 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] - 1,
+                                                   coord[2], EK_LINK_DD0 - 13)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
-                                                  coord[2], EK_LINK_DU0 - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(coord[0] - 1, coord[1] + 1,
+                                                   coord[2], EK_LINK_DU0 - 13)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
 
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
     flux_local_cartesian[1] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
     flux_local_cartesian[1] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
 
     flux_local_cartesian[2] =
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_00U)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_00U)];
 
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0U)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_U0D)];
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UU)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_0UD)];
 
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUU)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UUD)];
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDU)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
+        0.5f * fluxes[jindex_getByRhoLinear_host(i, EK_LINK_UDD)];
 
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0], coord[1], coord[2] - 1, EK_LINK_00D - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0], coord[1], coord[2] - 1, EK_LINK_00D - 13)];
 
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1], coord[2] - 1, EK_LINK_D0D - 13)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1], coord[2] + 1, EK_LINK_D0U - 13)];
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0], coord[1] - 1, coord[2] - 1, EK_LINK_0DD - 13)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0], coord[1] - 1, coord[2] + 1, EK_LINK_0DU - 13)];
 
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] - 1, EK_LINK_DDD - 13)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] - 1, coord[2] + 1, EK_LINK_DDU - 13)];
     flux_local_cartesian[2] +=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] - 1, EK_LINK_DUD - 13)];
     flux_local_cartesian[2] -=
-        0.5 * fluxes[jindex_cartesian2linear_host(
-                  coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
+        0.5f * fluxes[jindex_cartesian2linear_host(
+                   coord[0] - 1, coord[1] + 1, coord[2] + 1, EK_LINK_DUU - 13)];
 
     for (int j = 0; j < 13; j++) {
       flux_local_linksum += fluxes[jindex_getByRhoLinear_host(i, j)];
@@ -4063,10 +4059,10 @@ int ek_neutralize_system(int species) {
 
   if (ek_parameters.es_coupling) {
     ekfloat particle_charge = ek_get_particle_charge();
-    compensating_species_density -=
-        particle_charge / ek_parameters.valency[species_index] /
-        (ek_parameters.agrid * ek_parameters.agrid * ek_parameters.agrid) /
-        double(ek_parameters.number_of_nodes);
+    compensating_species_density -= particle_charge /
+                                    ek_parameters.valency[species_index] /
+                                    Utils::int_pow<3>(ek_parameters.agrid) /
+                                    ekfloat(ek_parameters.number_of_nodes);
   }
 
 #else
@@ -4075,9 +4071,9 @@ int ek_neutralize_system(int species) {
   compensating_species_density =
       ek_parameters.density[species_index] -
       (charge / ek_parameters.valency[species_index]) /
-          (ek_parameters.agrid * ek_parameters.agrid * ek_parameters.agrid *
-           double(ek_parameters.number_of_nodes -
-                  ek_parameters.number_of_boundary_nodes));
+          (Utils::int_pow<3>(ek_parameters.agrid) *
+           ekfloat(ek_parameters.number_of_nodes -
+                   ek_parameters.number_of_boundary_nodes));
 #endif // EK_BOUNDARIES
 
   if (compensating_species_density < 0.0f)
