@@ -64,6 +64,7 @@
 #include "timeloop/SweepTimeloop.h"
 
 #include "LBWalberlaBase.hpp"
+#include "ResetForce.hpp"
 #include "walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
@@ -90,53 +91,6 @@ namespace walberla {
 // Flags marking fluid and boundaries
 const FlagUID Fluid_flag("fluid");
 const FlagUID UBB_flag("velocity bounce back");
-
-/** Sweep that swaps force_to_be_applied and last_applied_force
-and resets force_to_be_applied to the global external force
-*/
-template <typename PdfField, typename ForceField> class ResetForce {
-public:
-  ResetForce(const BlockDataID &pdf_field_id,
-             const BlockDataID &last_applied_force_field_id,
-             const BlockDataID &force_to_be_applied_id)
-      : m_pdf_field_id(pdf_field_id),
-        m_last_applied_force_field_id(last_applied_force_field_id),
-        m_force_to_be_applied_id(force_to_be_applied_id),
-        m_ext_force(Vector3<real_t>{0, 0, 0}){};
-
-  void set_ext_force(const Utils::Vector3d &ext_force) {
-    m_ext_force = to_vector3(ext_force);
-  }
-
-  Utils::Vector3d get_ext_force() const { return to_vector3d(m_ext_force); };
-
-  void operator()(IBlock *block) {
-    PdfField *pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-    ForceField *force_field =
-        block->template getData<ForceField>(m_last_applied_force_field_id);
-    ForceField *force_to_be_applied =
-        block->template getData<ForceField>(m_force_to_be_applied_id);
-
-    force_field->swapDataPointers(force_to_be_applied);
-
-    WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(force_field, {
-      Cell cell(x, y, z);
-      for (int i : {0, 1, 2})
-        force_field->get(x, y, z, i) += m_ext_force[i];
-    });
-    WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(force_to_be_applied, {
-      Cell cell(x, y, z);
-      for (int i : {0, 1, 2})
-        force_to_be_applied->get(cell, i) = real_t{0};
-    });
-  }
-
-private:
-  const BlockDataID m_pdf_field_id;
-  const BlockDataID m_last_applied_force_field_id;
-  const BlockDataID m_force_to_be_applied_id;
-  Vector3<real_t> m_ext_force;
-};
 
 /** Class that runs and controls the LB on WaLBerla
  */
