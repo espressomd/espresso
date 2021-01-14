@@ -24,6 +24,8 @@
 
 #include <utils/constants.hpp>
 
+#include <cstring>
+
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
@@ -38,30 +40,32 @@ static const int computeCapabilityMinMinor = 0;
 
 const char *cuda_error;
 
-void cuda_init() { cudaStreamCreate(&stream[0]); }
+void cuda_init() {
+  cudaError_t error = cudaStreamCreate(&stream[0]);
+  if (error != cudaSuccess) {
+    throw cuda_runtime_error_impl(error);
+  }
+}
 
 /// get the number of CUDA devices.
 int cuda_get_n_gpus() {
   int deviceCount;
   cudaError_t error = cudaGetDeviceCount(&deviceCount);
   if (error != cudaSuccess) {
-    cuda_error = cudaGetErrorString(error);
-    return -1;
+    throw cuda_runtime_error_impl(error);
   }
   return deviceCount;
 }
 
-int cuda_check_gpu(int dev) {
+int cuda_check_gpu_compute_capability(int dev) {
   cudaDeviceProp deviceProp;
   cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
   if (error != cudaSuccess) {
-    cuda_error = cudaGetErrorString(error);
-    return ES_ERROR;
+    throw cuda_runtime_error_impl(error);
   }
   if (deviceProp.major < computeCapabilityMinMajor ||
       (deviceProp.major == computeCapabilityMinMajor &&
        deviceProp.minor < computeCapabilityMinMinor)) {
-    cuda_error = "compute capability insufficient";
     return ES_ERROR;
   }
   return ES_OK;
@@ -71,50 +75,47 @@ void cuda_get_gpu_name(int dev, char name[64]) {
   cudaDeviceProp deviceProp;
   cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
   if (error != cudaSuccess) {
-    cuda_error = cudaGetErrorString(error);
-    strncpy(name, "no GPU", 63);
-  } else {
-    strncpy(name, deviceProp.name, 63);
+    std::strncpy(name, "no GPU", 63);
+    throw cuda_runtime_error_impl(error);
   }
+  std::strncpy(name, deviceProp.name, 63);
   name[63] = 0;
 }
 
-int cuda_get_device_props(const int dev, EspressoGpuDevice &d) {
+void cuda_get_device_props(const int dev, EspressoGpuDevice &d) {
   cudaDeviceProp deviceProp;
   cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
   if (error != cudaSuccess) {
-    cuda_error = cudaGetErrorString(error);
-    return ES_ERROR;
+    throw cuda_runtime_error_impl(error);
   }
-  strncpy(d.name, deviceProp.name, 64);
+  std::strncpy(d.name, deviceProp.name, 64);
   d.id = dev;
   d.total_memory = deviceProp.totalGlobalMem;
   d.compute_capability_major = deviceProp.major;
   d.compute_capability_minor = deviceProp.minor;
   d.n_cores = deviceProp.multiProcessorCount;
-
-  return ES_OK;
 }
 
-int cuda_set_device(int dev) {
-  cudaSetDevice(dev);
-  cudaStreamDestroy(stream[0]);
-  cudaError_t error = cudaStreamCreate(&stream[0]);
-
+void cuda_set_device(int dev) {
+  cudaError_t error = cudaSetDevice(dev);
   if (error != cudaSuccess) {
-    cuda_error = cudaGetErrorString(error);
-    throw std::runtime_error(cuda_error);
+    throw cuda_runtime_error_impl(error);
   }
-
-  return ES_OK;
+  error = cudaStreamDestroy(stream[0]);
+  if (error != cudaSuccess) {
+    throw cuda_runtime_error_impl(error);
+  }
+  error = cudaStreamCreate(&stream[0]);
+  if (error != cudaSuccess) {
+    throw cuda_runtime_error_impl(error);
+  }
 }
 
 int cuda_get_device() {
   int dev;
   cudaError_t error = cudaGetDevice(&dev);
   if (error != cudaSuccess) {
-    cuda_error = cudaGetErrorString(error);
-    return -1;
+    throw cuda_runtime_error_impl(error);
   }
   return dev;
 }
@@ -126,23 +127,23 @@ int cuda_test_device_access() {
 
   err = cudaMalloc((void **)&d, sizeof(int));
   if (err != cudaSuccess) {
-    cuda_error = cudaGetErrorString(err);
-    return ES_ERROR;
+    throw cuda_runtime_error_impl(err);
   }
   err = cudaMemcpy(d, &h, sizeof(int), cudaMemcpyHostToDevice);
   if (err != cudaSuccess) {
-    cuda_error = cudaGetErrorString(err);
-    return ES_ERROR;
+    cudaFree(d);
+    throw cuda_runtime_error_impl(err);
   }
   h = 0;
   err = cudaMemcpy(&h, d, sizeof(int), cudaMemcpyDeviceToHost);
   cudaFree(d);
-
-  if ((h == 42) && (err == cudaSuccess)) {
-    return ES_OK;
+  if (err != cudaSuccess) {
+    throw cuda_runtime_error_impl(err);
   }
-  cuda_error = cudaGetErrorString(err);
-  return ES_ERROR;
+  if (h != 42) {
+    return ES_ERROR;
+  }
+  return ES_OK;
 }
 
 #endif /* defined(CUDA) */

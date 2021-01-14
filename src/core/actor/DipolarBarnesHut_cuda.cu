@@ -29,6 +29,7 @@
 
 #include "cuda_init.hpp"
 #include "cuda_utils.cuh"
+#include "errorhandling.hpp"
 
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>
@@ -1181,10 +1182,8 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 
   bh_data->nbodies = nbodies;
 
-  int devID = -1;
   EspressoGpuDevice dev;
-
-  devID = cuda_get_device();
+  auto const devID = cuda_get_device();
   cuda_get_device_props(devID, dev);
 
   bh_data->blocks = dev.n_cores;

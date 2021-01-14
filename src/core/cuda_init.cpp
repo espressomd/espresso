@@ -22,8 +22,10 @@
 #ifdef CUDA
 
 #include "cuda_init.hpp"
+#include "cuda_utils.hpp"
 
 #include "communication.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/constants.hpp>
 
@@ -54,7 +56,7 @@ struct CompareDevices {
  *  be more than one on one node.
  */
 std::vector<EspressoGpuDevice> cuda_gather_gpus() {
-  int n_gpus = cuda_get_n_gpus();
+  int n_gpus;
   char proc_name[MPI_MAX_PROCESSOR_NAME];
   int proc_name_len;
   /* List of local devices */
@@ -62,6 +64,12 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
   /* Global unique device list (only relevant on master) */
   std::vector<EspressoGpuDevice> g_devices;
   int *n_gpu_array = nullptr;
+  try {
+    n_gpus = cuda_get_n_gpus();
+  } catch (cuda_runtime_error const &err) {
+    runtimeErrorMsg() << "cuda_gather_gpus: " << err.what();
+    n_gpus = 0;
+  }
 
   MPI_Get_processor_name(proc_name, &proc_name_len);
 
@@ -70,15 +78,18 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
     proc_name[63] = '\0';
 
   for (int i = 0; i < n_gpus; ++i) {
-    /* Check if device has at least minimum compute capability */
-    if (cuda_check_gpu(i) == ES_OK) {
-      EspressoGpuDevice device;
-      if (cuda_get_device_props(i, device) == ES_OK) {
+    try {
+      /* Check if device has at least minimum compute capability */
+      if (cuda_check_gpu_compute_capability(i) == ES_OK) {
+        EspressoGpuDevice device;
+        cuda_get_device_props(i, device);
         strncpy(device.proc_name, proc_name, 64);
         device.proc_name[63] = '\0';
         device.node = this_node;
         devices.push_back(device);
       }
+    } catch (cuda_runtime_error const &err) {
+      // pass
     }
   }
 

@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 cdef extern from "cuda_init.hpp":
-    int cuda_set_device(int dev) except +
-    int cuda_get_device()
-    cdef int cuda_get_n_gpus()
-    void cuda_get_gpu_name(int dev, char name[64])
+    void cuda_set_device(int dev) except +
+    int cuda_get_device() except +
+    int cuda_get_n_gpus() except +
+    void cuda_get_gpu_name(int dev, char name[64]) except +

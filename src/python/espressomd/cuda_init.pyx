@@ -38,8 +38,6 @@ cdef class CudaInitHandle:
 
             """
             dev = cuda_get_device()
-            if dev == -1:
-                raise Exception("cuda device get error")
             return dev
 
         @device.setter
@@ -62,14 +60,17 @@ cdef class CudaInitHandle:
 
             Returns
             -------
-            :obj:`list` :
+            :obj:`dict` :
                 List of available CUDA devices.
 
             """
             cdef char gpu_name_buffer[4 + 64]
             devices = dict()
             for i in range(cuda_get_n_gpus()):
-                cuda_get_gpu_name(i, gpu_name_buffer)
+                try:
+                    cuda_get_gpu_name(i, gpu_name_buffer)
+                except RuntimeError:
+                    continue
                 devices[i] = utils.to_str(gpu_name_buffer)
             return devices
 

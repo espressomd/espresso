@@ -23,6 +23,24 @@
 #error Do not include CUDA headers in normal C++-code!!!
 #endif
 
+#include "cuda_utils.hpp"
+
+#include <cuda.h>
+
+#include <string>
+
+class cuda_runtime_error_impl : public cuda_runtime_error {
+public:
+  cuda_runtime_error_impl(cudaError_t error)
+      : cuda_runtime_error(error_message(error)) {}
+
+private:
+  std::string error_message(cudaError_t error) {
+    const char *cuda_error = cudaGetErrorString(error);
+    return std::string("CUDA error: ") + cuda_error;
+  }
+};
+
 /** cuda streams for parallel computing on cpu and gpu */
 extern cudaStream_t stream[1];
 

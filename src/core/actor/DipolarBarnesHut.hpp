@@ -27,6 +27,7 @@
 #include "DipolarBarnesHut_cuda.cuh"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 
@@ -53,7 +54,12 @@ public:
   };
 
   void computeForces(SystemInterface &s) override {
-    allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
+    try {
+      allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
+    } catch (cuda_runtime_error const &err) {
+      runtimeErrorMsg() << "DipolarBarnesHut: " << err.what();
+      return;
+    }
 
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
@@ -66,7 +72,12 @@ public:
     }
   };
   void computeEnergy(SystemInterface &s) override {
-    allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
+    try {
+      allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
+    } catch (cuda_runtime_error const &err) {
+      runtimeErrorMsg() << "DipolarBarnesHut: " << err.what();
+      return;
+    }
 
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);

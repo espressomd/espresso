@@ -34,6 +34,7 @@
 #include <cuda.h>
 
 #include <cstddef>
+#include <cstdio>
 
 extern int this_node;
 
@@ -134,25 +135,23 @@ void resize_buffers(size_t number_of_particles) {
  */
 void gpu_init_particle_comm() {
   if (this_node == 0 && global_part_vars_host.communication_enabled == 0) {
-    if (cuda_get_n_gpus() == -1) {
-      runtimeErrorMsg()
-          << "Unable to initialize CUDA as no sufficient GPU is available.";
-      errexit();
-    }
-    if (cuda_get_n_gpus() > 1) {
-      runtimeWarningMsg() << "More than one GPU detected, please note ESPResSo "
-                             "uses device 0 by default regardless of usage or "
-                             "capability. The GPU to be used can be modified "
-                             "by setting System.cuda_init_handle.device.";
-      if (cuda_check_gpu(0) != ES_OK) {
-        runtimeWarningMsg()
-            << "CUDA device 0 is not capable of running ESPResSo but is used "
-               "by default. ESPResSo has detected a CUDA capable card but it "
-               "is not the one used by ESPResSo by default. Please set the "
-               "GPU to use by setting System.cuda_init_handle.device. A list "
-               "of available GPUs is available through "
-               "System.cuda_init_handle.device_list.";
+    try {
+      if (cuda_get_n_gpus() == 0) {
+        fprintf(stderr, "ERROR: No GPU was found.\n");
+        errexit();
       }
+      auto const devID = cuda_get_device();
+      auto const compute_capability = cuda_check_gpu_compute_capability(devID);
+      auto const communication_test = cuda_test_device_access();
+      if (compute_capability != ES_OK or communication_test != ES_OK) {
+        fprintf(stderr,
+                "ERROR: CUDA device %i is not capable of running ESPResSo.\n",
+                devID);
+        errexit();
+      }
+    } catch (cuda_runtime_error const &err) {
+      fprintf(stderr, "ERROR: %s\n", err.what());
+      errexit();
     }
   }
   global_part_vars_host.communication_enabled = 1;
@@ -232,8 +231,8 @@ CUDA_energy copy_energy_from_GPU() {
 
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
   if (cudaSuccess != CU_err) {
-    fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
-    printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
+    fprintf(stderr, "CUDA Memory error at %s:%u.\n", file, line);
+    fprintf(stderr, "CUDA error: %s\n", cudaGetErrorString(CU_err));
     if (CU_err == cudaErrorInvalidValue)
       fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n",
               file, line);

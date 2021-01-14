@@ -53,22 +53,18 @@ void cuda_init();
 
 /** Get the number of CUDA devices.
  *
- *  @return the number of GPUs, or -1 if CUDA could not be
- *  initialized. The error message from CUDA can be found in \ref
- *  cuda_error.
+ *  @return the number of GPUs.
  */
 int cuda_get_n_gpus();
 
-/** Check that a given GPU is capable of what we need, that is, at
- *  least compute capability 1.1.
+/** Check that a given GPU has compute capability.
+ *  The minimal compute capability required by ESPResSo is
+ *  \ref computeCapabilityMinMajor.\ref computeCapabilityMinMinor.
  *
  *  @param dev CUDA device number
- *  @return \ref ES_OK if and only if the GPU with the given id is
- *          usable for CUDA computations. Only devices with compute
- *          capability of 1.1 or higher are ok, since atomic operations are
- *          required for CUDA-LB.
+ *  @return \ref ES_OK if the GPU meets the requirements, else \ref ES_ERROR.
  */
-int cuda_check_gpu(int dev);
+int cuda_check_gpu_compute_capability(int dev);
 
 /** Get the name of a CUDA device.
  *
@@ -80,21 +76,17 @@ void cuda_get_gpu_name(int dev, char name[64]);
 /** Choose a device for future CUDA computations.
  *
  *  @param dev the device to use
- *  @return \ref ES_OK on success, \ref ES_ERROR else. The error
- *  message from CUDA can be found in \ref cuda_error.
  */
-int cuda_set_device(int dev);
+void cuda_set_device(int dev);
 
 /** Get the current CUDA device.
  *
- *  @return the current device's number or -1 if an error occurred. The error
- *  message from CUDA can be found in \ref cuda_error.
+ *  @return the current device's number.
  */
 int cuda_get_device();
 
 /** Test if actual CUDA device works.
  *  @return \ref ES_OK on success, \ref ES_ERROR else.
- *  The error message from CUDA can be found in \ref cuda_error.
  */
 int cuda_test_device_access();
 
@@ -105,7 +97,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus();
 
 /** Get properties of a CUDA device
  */
-int cuda_get_device_props(int dev, EspressoGpuDevice &d);
+void cuda_get_device_props(int dev, EspressoGpuDevice &d);
 
 /** Current error message of CUDA. */
 extern const char *cuda_error;

@@ -32,6 +32,7 @@
 #include "config.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
@@ -54,6 +55,8 @@
 #endif
 
 #include <utils/mpi/all_compare.hpp>
+
+#include <cstdio>
 
 #include <mpi.h>
 
@@ -78,7 +81,12 @@ static int reinit_magnetostatics = false;
 void on_program_start() {
 #ifdef CUDA
   if (this_node == 0) {
-    cuda_init();
+    try {
+      cuda_init();
+    } catch (cuda_runtime_error const &err) {
+      fprintf(stderr, "CUDA initialization failed: %s\n", err.what());
+      errexit();
+    }
   }
 #endif
 
