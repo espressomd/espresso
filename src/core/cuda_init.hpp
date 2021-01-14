@@ -99,8 +99,5 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus();
  */
 void cuda_get_device_props(int dev, EspressoGpuDevice &d);
 
-/** Current error message of CUDA. */
-extern const char *cuda_error;
-
 #endif // ifdef CUDA
 #endif

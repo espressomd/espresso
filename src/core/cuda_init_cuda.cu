@@ -38,8 +38,6 @@ static const int computeCapabilityMinMajor = 3;
 static const int computeCapabilityMinMinor = 0;
 /**@}*/
 
-const char *cuda_error;
-
 void cuda_init() {
   cudaError_t error = cudaStreamCreate(&stream[0]);
   if (error != cudaSuccess) {

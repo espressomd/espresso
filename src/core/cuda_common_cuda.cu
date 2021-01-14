@@ -70,13 +70,10 @@ pinned_vector<float> particle_torques_host;
 /**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
-cudaError_t _err;
-cudaError_t CU_err;
-
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,
                         const char *function, const char *file,
                         unsigned int line) {
-  CU_err = cudaGetLastError();
+  cudaError_t CU_err = cudaGetLastError();
   if (CU_err != cudaSuccess) {
     fprintf(stderr,
             "%d: error \"%s\" calling %s with dim %d %d %d, grid %d %d "
