@@ -79,15 +79,11 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
 
   for (int i = 0; i < n_gpus; ++i) {
     try {
-      /* Check if device has at least minimum compute capability */
-      if (cuda_check_gpu_compute_capability(i) == ES_OK) {
-        EspressoGpuDevice device;
-        cuda_get_device_props(i, device);
-        strncpy(device.proc_name, proc_name, 64);
-        device.proc_name[63] = '\0';
-        device.node = this_node;
-        devices.push_back(device);
-      }
+      EspressoGpuDevice device = cuda_get_device_props(i);
+      strncpy(device.proc_name, proc_name, 64);
+      device.proc_name[63] = '\0';
+      device.node = this_node;
+      devices.push_back(device);
     } catch (cuda_runtime_error const &err) {
       // pass
     }

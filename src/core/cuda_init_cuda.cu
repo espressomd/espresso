@@ -80,18 +80,23 @@ void cuda_get_gpu_name(int dev, char name[64]) {
   name[63] = 0;
 }
 
-void cuda_get_device_props(const int dev, EspressoGpuDevice &d) {
+EspressoGpuDevice cuda_get_device_props(const int dev) {
   cudaDeviceProp deviceProp;
   cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
   if (error != cudaSuccess) {
     throw cuda_runtime_error_impl(error);
   }
-  std::strncpy(d.name, deviceProp.name, 64);
-  d.id = dev;
-  d.total_memory = deviceProp.totalGlobalMem;
-  d.compute_capability_major = deviceProp.major;
-  d.compute_capability_minor = deviceProp.minor;
-  d.n_cores = deviceProp.multiProcessorCount;
+  EspressoGpuDevice device{dev,
+                           "",
+                           "",
+                           -1,
+                           deviceProp.major,
+                           deviceProp.minor,
+                           deviceProp.totalGlobalMem,
+                           deviceProp.multiProcessorCount};
+  std::strncpy(device.name, deviceProp.name, 64);
+  device.name[63] = '\0';
+  return device;
 }
 
 void cuda_set_device(int dev) {

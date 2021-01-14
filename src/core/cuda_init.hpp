@@ -42,7 +42,7 @@ struct EspressoGpuDevice {
   /* Name */
   char name[64];
   /* Total Memory */
-  int total_memory;
+  size_t total_memory;
   /* Number of cores */
   int n_cores;
 };
@@ -97,7 +97,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus();
 
 /** Get properties of a CUDA device
  */
-void cuda_get_device_props(int dev, EspressoGpuDevice &d);
+EspressoGpuDevice cuda_get_device_props(int dev);
 
 #endif // ifdef CUDA
 #endif
