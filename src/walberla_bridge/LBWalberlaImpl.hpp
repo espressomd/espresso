@@ -100,13 +100,14 @@ protected:
   using VectorField = GhostLayerField<real_t, 3>;
   using FlagField = walberla::FlagField<walberla::uint8_t>;
   using PdfField = lbm::PdfField<LatticeModel>;
-
+  /** Velocity boundary condition */
   using UBB = lbm::UBB<LatticeModel, uint8_t, true, true>;
+
+  /** boundaryy handling */
   using Boundaries =
       BoundaryHandling<FlagField, typename LatticeModel::Stencil, UBB>;
 
   // Adaptors
-  using DensityAdaptor = typename lbm::Adaptor<LatticeModel>::Density;
   using VelocityAdaptor = typename lbm::Adaptor<LatticeModel>::VelocityVector;
 
   /** VTK writers that are executed automatically */
@@ -116,7 +117,6 @@ protected:
   std::map<std::string, std::shared_ptr<vtk::VTKOutput>> m_vtk_manual;
 
   // Member variables
-  double m_kT;
   Utils::Vector3i m_grid_dimensions;
   int m_n_ghost_layers;
 
@@ -129,18 +129,15 @@ protected:
 
   BlockDataID m_velocity_adaptor_id;
 
-  BlockDataID m_density_adaptor_id;
-
   BlockDataID m_boundary_handling_id;
 
   using Communicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
   std::shared_ptr<Communicator> m_communication;
 
-  // Block forest
+  /** Block forest */
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
 
-  // time loop
   std::shared_ptr<timeloop::SweepTimeloop> m_time_loop;
 
   // MPI
@@ -157,10 +154,10 @@ protected:
   }
 
   // Boundary handling
-  class LB_boundary_handling {
+  class LBBoundaryHandling {
   public:
-    LB_boundary_handling(const BlockDataID &flag_field_id,
-                         const BlockDataID &pdf_field_id)
+    LBBoundaryHandling(const BlockDataID &flag_field_id,
+                       const BlockDataID &pdf_field_id)
         : m_flag_field_id(flag_field_id), m_pdf_field_id(pdf_field_id) {}
 
     Boundaries *operator()(IBlock *const block) {
@@ -169,7 +166,6 @@ protected:
           block->template getData<FlagField>(m_flag_field_id);
       PdfField *pdf_field = block->template getData<PdfField>(m_pdf_field_id);
 
-      // const uint8_t fluid = flag_field->registerFlag(Fluid_flag);
       const auto fluid = flag_field->flagExists(Fluid_flag)
                              ? flag_field->getFlag(Fluid_flag)
                              : flag_field->registerFlag(Fluid_flag);
@@ -189,7 +185,6 @@ public:
                  const Utils::Vector3d &box_dimensions,
                  const Utils::Vector3i &node_grid, int n_ghost_layers) {
     m_n_ghost_layers = n_ghost_layers;
-    m_kT = 0;
 
     if (m_n_ghost_layers <= 0)
       throw std::runtime_error("At least one ghost layer must be used");
@@ -226,31 +221,30 @@ public:
         uint_c(node_grid[2]), // cpus per direction
         true, true, true);
 
+    // Init and register force fields
     m_last_applied_force_field_id = field::addToStorage<VectorField>(
         m_blocks, "force field", real_t{0}, field::fzyx, m_n_ghost_layers);
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
         m_blocks, "force field", real_t{0}, field::fzyx, m_n_ghost_layers);
+
+    // Init and register flag field (fluid/boundary)
+    m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
+        m_blocks, "flag field", m_n_ghost_layers);
   };
 
   void setup_with_valid_lattice_model(double density) {
+    // Init and register pdf field
     m_pdf_field_id = lbm::addPdfFieldToStorage(
         m_blocks, "pdf field", *(m_lattice_model.get()),
         to_vector3(Utils::Vector3d{}), real_t(density), m_n_ghost_layers);
 
-    m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
-        m_blocks, "flag field", m_n_ghost_layers);
-
+    // Register boundary handling
     m_boundary_handling_id = m_blocks->addBlockData<Boundaries>(
-        LB_boundary_handling(m_flag_field_id, m_pdf_field_id),
+        LBBoundaryHandling(m_flag_field_id, m_pdf_field_id),
         "boundary handling");
-
     clear_boundaries();
 
-    // 1 timestep each time the integrate function is called
-    m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
-        m_blocks->getBlockStorage(), 1);
-
-    // sets up the communication
+    // sets up the communication and reisters pdf field and force fiel to it
     m_communication = std::make_shared<Communicator>(m_blocks);
     m_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
@@ -258,12 +252,17 @@ public:
     m_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
             m_last_applied_force_field_id));
+
+    // Instace the sweep responsible for force double buffering and
+    // external forces
     m_reset_force = std::make_shared<ResetForce<PdfField, VectorField>>(
         m_pdf_field_id, m_last_applied_force_field_id,
         m_force_to_be_applied_id);
 
-    //    m_time_loop->add() << timeloop::BeforeFunction(communication,
-    //                                                   "communication")
+    // Add steps to the integration loop
+    m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
+        m_blocks->getBlockStorage(), 1);
+
     m_time_loop->add() << timeloop::Sweep(
         Boundaries::getBlockSweep(m_boundary_handling_id), "boundary handling");
     m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
@@ -274,19 +273,20 @@ public:
                        << timeloop::AfterFunction(*m_communication,
                                                   "communication");
 
+    // Register velocity access adapter (proxy)
     m_velocity_adaptor_id = field::addFieldAdaptor<VelocityAdaptor>(
         m_blocks, m_pdf_field_id, "velocity adaptor");
-
-    m_density_adaptor_id = field::addFieldAdaptor<DensityAdaptor>(
-        m_blocks, m_pdf_field_id, "density adaptor");
 
     // Synchronize ghost layers
     (*m_communication)();
   };
+
   std::shared_ptr<LatticeModel> get_lattice_model() { return m_lattice_model; };
 
   void integrate() override {
     m_time_loop->singleStep();
+
+    // Handle VTK writers
     for (auto it = m_vtk_auto.begin(); it != m_vtk_auto.end(); ++it) {
       if (it->second.second)
         vtk::writeFiles(it->second.first)();
@@ -299,7 +299,7 @@ public:
   void interpolate_bspline_at_pos(Utils::Vector3d pos, Function f) const {
     Utils::Interpolation::bspline_3d<2>(
         pos, f, Utils::Vector3d{1.0, 1.0, 1.0}, // grid spacing
-        Utils::Vector3d::broadcast(.5));        // offset
+        Utils::Vector3d::broadcast(.5));        // offset (cell center)
   }
 
   // Velocity
@@ -606,12 +606,7 @@ public:
     return m_reset_force->get_ext_force();
   };
 
-  // Global parameters
-  //  double get_viscosity() const override {
-  //    return m_lattice_model->collisionModel().viscosity();
-  //  };
-
-  double get_kT() const override { return m_kT; };
+  double get_kT() const override { return 0.; };
 
   // Grid, domain, halo
   int n_ghost_layers() const override { return m_n_ghost_layers; };

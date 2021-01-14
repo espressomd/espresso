@@ -55,6 +55,10 @@ public:
     lm->time_step_ += 1;
     on_lattice_model_change();
   };
+  double get_kT() const override { return m_kT; };
+
+private:
+  double m_kT;
 };
 
 } // namespace walberla

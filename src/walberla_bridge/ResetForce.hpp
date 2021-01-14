@@ -44,6 +44,8 @@
 
 #include "lbm/sweeps/CellwiseSweep.h"
 
+#include "walberla_utils.hpp"
+
 namespace walberla {
 
 /** Sweep that swaps force_to_be_applied and last_applied_force
