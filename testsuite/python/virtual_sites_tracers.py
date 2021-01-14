@@ -23,7 +23,8 @@ from espressomd import lb
 from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
-@utx.skipIfMissingFeatures(['VIRTUAL_SITES_INERTIALESS_TRACERS'])
+@utx.skipIfMissingFeatures(
+    ['VIRTUAL_SITES_INERTIALESS_TRACERS', 'LB_BOUNDARIES'])
 class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
 
     def setUp(self):
