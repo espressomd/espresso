@@ -54,7 +54,7 @@
 #include "BoxGeometry.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "global.hpp"
 

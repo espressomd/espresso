@@ -20,7 +20,7 @@
 #include <cuda.h>
 
 #include "cuda_init.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 
 #include <utils/constants.hpp>
 

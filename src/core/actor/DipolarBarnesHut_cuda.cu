@@ -28,7 +28,7 @@
 #include "DipolarBarnesHut_cuda.cuh"
 
 #include "cuda_init.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>

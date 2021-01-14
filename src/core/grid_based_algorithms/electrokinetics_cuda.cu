@@ -25,7 +25,7 @@
 #include "grid_based_algorithms/electrokinetics.hpp"
 
 #include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 #include "errorhandling.hpp"
 #include "fd-electrostatics.cuh"
 #include "grid_based_algorithms/lb_boundaries.hpp"

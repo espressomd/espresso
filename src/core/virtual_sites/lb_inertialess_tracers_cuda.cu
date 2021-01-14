@@ -31,7 +31,7 @@
 
 #include "Particle.hpp"
 #include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
