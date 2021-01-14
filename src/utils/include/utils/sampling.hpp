@@ -22,6 +22,7 @@
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
 #include "utils/math/make_lin_space.hpp"
+#include "utils/math/sqr.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -49,18 +50,21 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
                                    std::pair<double, double> const &z_limits,
                                    size_t n_r_bins, size_t n_phi_bins,
                                    size_t n_z_bins, double sampling_density) {
-  auto const delta_r = (r_limits.second - r_limits.first) / n_r_bins;
-  auto const delta_phi = (phi_limits.second - phi_limits.first) / n_phi_bins;
+  auto const delta_r =
+      (r_limits.second - r_limits.first) / static_cast<double>(n_r_bins);
+  auto const delta_phi =
+      (phi_limits.second - phi_limits.first) / static_cast<double>(n_phi_bins);
 
   // For the smallest bin we chose samples along the z-direction for a single
   // azimuthal angle per bin such that we fulfill the sampling density
   // requirement.
   auto const smallest_bin_volume =
-      pi() * pow(r_limits.first + delta_r, 2.0) * delta_phi / (2.0 * pi());
+      pi() * Utils::sqr(r_limits.first + delta_r) * delta_phi / (2.0 * pi());
   auto const min_n_samples = std::max(
       n_z_bins,
       static_cast<size_t>(std::round(smallest_bin_volume * sampling_density)));
-  auto const delta_z = (z_limits.second - z_limits.first) / min_n_samples;
+  auto const delta_z =
+      (z_limits.second - z_limits.first) / static_cast<double>(min_n_samples);
 
   auto const r_range =
       make_lin_space(r_limits.first + .5 * delta_r, r_limits.second, n_r_bins,

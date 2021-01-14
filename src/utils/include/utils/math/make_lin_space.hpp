@@ -47,8 +47,8 @@ auto make_lin_space(T start, T stop, size_t number, bool endpoint = true) {
   using boost::make_iterator_range;
   using boost::make_transform_iterator;
 
-  auto const dx = (stop - start) / (number - endpoint);
-  auto x = [dx, start](size_t i) { return start + i * dx; };
+  auto const dx = (stop - start) / T(number - endpoint);
+  auto x = [dx, start](size_t i) { return start + T(i) * dx; };
 
   return make_iterator_range(
       make_transform_iterator(make_counting_iterator(size_t(0)), x),
