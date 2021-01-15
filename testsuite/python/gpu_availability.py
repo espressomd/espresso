@@ -30,8 +30,27 @@ class GPUAvailability(ut.TestCase):
         if espressomd.has_features("CUDA"):
             self.assertEqual(self.system.cuda_init_handle.device_list != {},
                              espressomd.gpu_available())
+            self.assertEqual(
+                self.system.cuda_init_handle.device_list_properties != {},
+                espressomd.gpu_available())
         else:
             self.assertFalse(espressomd.gpu_available())
+
+    def test_exceptions(self):
+        error_msg = 'CUDA error: '
+        if espressomd.gpu_available():
+            n_gpus = len(self.system.cuda_init_handle.device_list)
+            with self.assertRaisesRegex(RuntimeError, error_msg):
+                self.system.cuda_init_handle.device = n_gpus + 1
+            with self.assertRaisesRegex(Exception, ' is read only'):
+                self.system.cuda_init_handle.device_list = {0: 1}
+            with self.assertRaisesRegex(Exception, ' is read only'):
+                self.system.cuda_init_handle.device_list_properties = {0: 1}
+        else:
+            with self.assertRaisesRegex(RuntimeError, error_msg):
+                self.system.cuda_init_handle.device
+            with self.assertRaisesRegex(RuntimeError, error_msg):
+                self.system.cuda_init_handle.device = 0
 
     @utx.skipIfMissingGPU()
     def test_devices(self):
