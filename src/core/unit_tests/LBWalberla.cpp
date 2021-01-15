@@ -28,9 +28,6 @@
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "grid.hpp"
-#include "grid_based_algorithms/lb_walberla_instance.hpp"
-
 #include <LBWalberlaBase.hpp>
 #include <LBWalberlaD3Q19FluctuatingMRT.hpp>
 #include <LBWalberlaD3Q19MRT.hpp>
@@ -113,9 +110,6 @@ BOOST_TEST_DONT_PRINT_LOG_VALUE(LbGeneratorVector::value_type)
 BOOST_DATA_TEST_CASE(basic_params, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(mpi_shape);
   BOOST_CHECK(lb->get_grid_dimensions() == grid_dimensions);
-  auto lb_params = LBWalberlaParams(agrid, tau);
-  BOOST_CHECK(lb_params.get_agrid() == agrid);
-  BOOST_CHECK(lb_params.get_tau() == tau);
 
   BOOST_CHECK_CLOSE(lb->get_viscosity(), viscosity, 1E-11);
   double new_viscosity = 2.0;
