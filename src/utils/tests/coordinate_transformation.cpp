@@ -83,3 +83,21 @@ BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_test) {
     BOOST_CHECK(transformed_z[i] == expected_z[i]);
   }
 }
+
+BOOST_AUTO_TEST_CASE(vector_cart_to_cyl_test) {
+  constexpr auto eps = 1e-13;
+  Vector3d const pos{{1.1, 2.2, 3.3}};
+  auto const axis = (Vector3d{{4.4, 5.5, 6.6}}).normalize();
+  Vector3d const vec{{7.7, 8.8, 9.9}};
+
+  auto const vec_cyl = transform_vector_cartesian_to_cylinder(vec, axis, pos);
+
+  // cylindrical basis vectors at pos
+  auto const e_z = axis;
+  auto const e_r = (pos - (pos * axis) * axis).normalize();
+  auto const e_phi = Utils::vector_product(e_z, e_r);
+
+  BOOST_CHECK_SMALL(vec_cyl[0] - vec * e_r, eps);
+  BOOST_CHECK_SMALL(vec_cyl[1] - vec * e_phi, eps);
+  BOOST_CHECK_SMALL(vec_cyl[2] - vec * e_z, eps);
+}
