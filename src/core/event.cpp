@@ -84,8 +84,7 @@ void on_program_start() {
     try {
       cuda_init();
     } catch (cuda_runtime_error const &err) {
-      fprintf(stderr, "CUDA initialization failed: %s\n", err.what());
-      errexit();
+      // pass
     }
   }
 #endif

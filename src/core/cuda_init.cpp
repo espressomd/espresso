@@ -65,7 +65,6 @@ static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
   try {
     n_devices = cuda_get_n_gpus();
   } catch (cuda_runtime_error const &err) {
-    runtimeErrorMsg() << "cuda_gather_gpus: " << err.what();
     n_devices = 0;
   }
 

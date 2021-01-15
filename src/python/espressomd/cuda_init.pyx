@@ -65,8 +65,13 @@ cdef class CudaInitHandle:
 
             """
             cdef char gpu_name_buffer[4 + 64]
+            n_gpus = 0
+            try:
+                n_gpus = cuda_get_n_gpus()
+            except RuntimeError:
+                pass
             devices = dict()
-            for i in range(cuda_get_n_gpus()):
+            for i in range(n_gpus):
                 try:
                     cuda_get_gpu_name(i, gpu_name_buffer)
                 except RuntimeError:
@@ -89,8 +94,12 @@ cdef class CudaInitHandle:
                 List of available CUDA devices with their properties.
 
             """
-            cdef vector[EspressoGpuDevice] devices = cuda_gather_gpus()
+            cdef vector[EspressoGpuDevice] devices
             cdef EspressoGpuDevice dev
+            try:
+                devices = cuda_gather_gpus()
+            except RuntimeError:
+                pass
             resources = dict()
             for i in range(devices.size()):
                 dev = devices[i]
@@ -114,7 +123,10 @@ cdef class CudaInitHandle:
 
 IF CUDA:
     def gpu_available():
-        return cuda_get_n_gpus() > 0
+        try:
+            return cuda_get_n_gpus() > 0
+        except RuntimeError:
+            return False
 ELSE:
     def gpu_available():
         return False
