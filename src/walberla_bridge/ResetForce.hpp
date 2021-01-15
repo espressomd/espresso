@@ -20,24 +20,13 @@
 #ifndef WALBERLA_BRIDGE_RESET_FORCE_HPP
 #define WALBERLA_BRIDGE_RESET_FORCE_HPP
 
-#include "blockforest/Initialization.h"
-#include "blockforest/StructuredBlockForest.h"
-#include "blockforest/communication/UniformBufferedScheme.h"
-#include "boundary/BoundaryHandling.h"
-#include "field/GhostLayerField.h"
-#include "field/adaptors/GhostLayerFieldAdaptor.h"
-#include "field/vtk/FlagFieldCellFilter.h"
-#include "field/vtk/VTKWriter.h"
-#include "lbm/lattice_model/CollisionModel.h"
-#include "lbm/lattice_model/D3Q19.h"
-#include "lbm/vtk/all.h"
-#include "timeloop/SweepTimeloop.h"
-
 #include "domain_decomposition/SharedSweep.h"
 
 #include "lbm/sweeps/CellwiseSweep.h"
 
 #include "walberla_utils.hpp"
+
+#include <utils/Vector.hpp>
 
 namespace walberla {
 
