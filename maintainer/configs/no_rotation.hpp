@@ -29,8 +29,7 @@
 // Geometry, equation of motion, thermostat/barostat
 #define MASS
 #define EXTERNAL_FORCES
-#define LANGEVIN_PER_PARTICLE
-#define BROWNIAN_PER_PARTICLE
+#define THERMOSTAT_PER_PARTICLE
 #define BOND_CONSTRAINT
 #define NPT
 #define DPD

@@ -32,7 +32,7 @@ import espressomd.shapes
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
 required_features = ["LENNARD_JONES", "WCA", "MASS",
-                     "EXTERNAL_FORCES", "LANGEVIN_PER_PARTICLE"]
+                     "EXTERNAL_FORCES", "THERMOSTAT_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
 print("""THE CHAMBER GAME
@@ -61,13 +61,11 @@ system = espressomd.System(box_l=box)
 # PARAMETERS
 
 # PHYSICS
-temperature_snake = 0.0
 gamma_snake_head = 1.0
 gamma_snake_bead = 15.0
 
-temperature_bubbles = 10000.0
-temp_l = temperature_bubbles
-temp_r = temperature_bubbles
+temp_l = 10000.0
+temp_r = temp_l
 temp_max = 1e5
 gamma_bubbles = 0.5
 
@@ -180,7 +178,6 @@ for i in range(snake_n):
             type=snake_head_type,
             fix=[False, False, True],
             mass=snake_head_mass,
-            temp=temperature_snake,
             gamma=gamma_snake_head)
     else:
         system.part.add(
@@ -192,7 +189,6 @@ for i in range(snake_n):
             type=snake_bead_type,
             fix=[False, False, True],
             mass=snake_bead_mass,
-            temp=temperature_snake,
             gamma=gamma_snake_bead)
 
 # NB INTER
@@ -262,7 +258,6 @@ while n < bubbles_n:
         type=bubble_type,
         fix=[False, False, True],
         mass=bubble_mass,
-        temp=temperature_bubbles,
         gamma=gamma_bubbles)
     testid = len(system.part) - 1
     n += 1
@@ -453,10 +448,8 @@ def main():
             Nl = len(pl)
             Nr = len(pr)
             for p in pl:
-                p.temp = temp_l
                 p.gamma = T_to_g(temp_l)
             for p in pr:
-                p.temp = temp_r
                 p.gamma = T_to_g(temp_r)
 
             w = visualizer.specs['window_size']

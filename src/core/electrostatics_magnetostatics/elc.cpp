@@ -164,7 +164,7 @@ static std::vector<SCCache> sc_cache(const ParticleRange &particles, int n_freq,
   std::vector<SCCache> ret(n_freq * n_part);
 
   for (size_t freq = 1; freq <= n_freq; freq++) {
-    double pref = c_2pi * u * freq;
+    auto const pref = c_2pi * u * static_cast<double>(freq);
 
     size_t o = (freq - 1) * n_part;
     for (auto const &part : particles) {

@@ -121,8 +121,7 @@ using UpdatePropertyMessage = boost::variant
                          &Prop::vs_relative>
 #endif
 #endif
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-        , UpdateProperty<double, &Prop::T>
+#ifdef THERMOSTAT_PER_PARTICLE
 #ifndef PARTICLE_ANISOTROPY
         , UpdateProperty<double, &Prop::gamma>
 #else
@@ -135,7 +134,7 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<Utils::Vector3d, &Prop::gamma_rot>
 #endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
         , UpdateProperty<uint8_t, &Prop::ext_flag>
         , UpdateProperty<Utils::Vector3d, &Prop::ext_force>
@@ -871,11 +870,7 @@ void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab) {
 }
 #endif
 
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-void set_particle_temperature(int part, double T) {
-  mpi_update_particle_property<double, &ParticleProperties::T>(part, T);
-}
-
+#ifdef THERMOSTAT_PER_PARTICLE
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma(int part, double gamma) {
   mpi_update_particle_property<double, &ParticleProperties::gamma>(part, gamma);
@@ -900,7 +895,7 @@ void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
 }
 #endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
@@ -1249,7 +1244,7 @@ void pointer_to_fix(Particle const *p, const uint8_t *&res) {
 }
 #endif
 
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
+#ifdef THERMOSTAT_PER_PARTICLE
 void pointer_to_gamma(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma);
@@ -1268,10 +1263,7 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res) {
 }
 #endif // ROTATION
 
-void pointer_to_temperature(Particle const *p, double const *&res) {
-  res = &(p->p.T);
-}
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,

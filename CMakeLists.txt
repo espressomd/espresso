@@ -282,7 +282,7 @@ if(STOKESIAN_DYNAMICS)
   FetchContent_Declare(
     stokesian_dynamics
     GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
-    GIT_TAG 860ceac208175)
+    GIT_TAG c14e57655e929)
   FetchContent_GetProperties(stokesian_dynamics)
   if(NOT stokesian_dynamics_POPULATED)
     FetchContent_Populate(stokesian_dynamics)
@@ -389,6 +389,9 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(cxx_interface
                          INTERFACE -Wno-gnu-zero-variadic-macro-arguments)
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0.0")
+    target_compile_options(cxx_interface INTERFACE -Wimplicit-float-conversion)
+  endif()
 endif()
 
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION

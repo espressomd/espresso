@@ -50,12 +50,12 @@ const int deviceCount = 1;
 #undef cudaSetDevice
 #define cudaSetDevice(d)
 
-__constant__ mmm1dgpu_real far_switch_radius_2[1] = {0.05 * 0.05};
+__constant__ mmm1dgpu_real far_switch_radius_2[1] = {0.05f * 0.05f};
 __constant__ mmm1dgpu_real boxz[1];
 __constant__ mmm1dgpu_real uz[1];
-__constant__ mmm1dgpu_real coulomb_prefactor[1] = {1.0};
+__constant__ mmm1dgpu_real coulomb_prefactor[1] = {1.0f};
 __constant__ int bessel_cutoff[1] = {5};
-__constant__ mmm1dgpu_real maxPWerror[1] = {1e-5};
+__constant__ mmm1dgpu_real maxPWerror[1] = {1e-5f};
 
 // order hardcoded. mmm1d_recalcTables() typically does order less than 30.
 // As the coefficients are stored in __constant__ memory, the array needs to be
@@ -161,12 +161,13 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
         "Error: Please set box length before initializing MMM1D!");
   }
   if (need_tune && s.npart_gpu() > 0) {
-    set_params(s.box()[2], coulomb.prefactor, maxPWerror, far_switch_radius,
-               bessel_cutoff);
+    set_params(static_cast<mmm1dgpu_real>(s.box()[2]),
+               static_cast<mmm1dgpu_real>(coulomb.prefactor), maxPWerror,
+               far_switch_radius, bessel_cutoff);
     tune(s, maxPWerror, far_switch_radius, bessel_cutoff);
   }
   if (s.box()[2] != host_boxz) {
-    set_params(s.box()[2], 0, -1, -1, -1);
+    set_params(static_cast<mmm1dgpu_real>(s.box()[2]), 0, -1, -1, -1);
   }
   if (s.npart_gpu() == host_npart) // unchanged
   {
@@ -287,8 +288,8 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
     mmm1dgpu_real bestrad = 0, besttime = INFINITY;
 
     // NOLINTNEXTLINE(clang-analyzer-security.FloatLoopCounter)
-    for (far_switch_radius = 0.05 * maxrad; far_switch_radius < maxrad;
-         far_switch_radius += 0.05 * maxrad) {
+    for (far_switch_radius = 0.05f * maxrad; far_switch_radius < maxrad;
+         far_switch_radius += 0.05f * maxrad) {
       set_params(0, 0, _maxPWerror, far_switch_radius, bessel_cutoff);
       tune(s, _maxPWerror, far_switch_radius, -2); // tune Bessel cutoff
       auto runtime = force_benchmark(s);
@@ -337,7 +338,7 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
         "switching radius must not be larger than box length");
   }
   mmm1dgpu_real _far_switch_radius_2 = _far_switch_radius * _far_switch_radius;
-  mmm1dgpu_real _uz = 1.0 / _boxz;
+  mmm1dgpu_real _uz = 1.0f / _boxz;
   for (int d = 0; d < deviceCount; d++) {
     // double colons are needed to access the constant memory variables because
     // they are file globals and we have identically named class variables
@@ -409,7 +410,7 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
     // if (*boxz <= 0.0) return; // in case we are not initialized yet
 
     while (fabs(z) > *boxz / 2) // make sure we take the shortest distance
-      z -= (z > 0 ? 1. : -1.) * *boxz;
+      z -= (z > 0 ? 1.f : -1.f) * *boxz;
 
     if (p1 == p2) // particle exerts no force on itself
     {
@@ -507,7 +508,7 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
     // if (*boxz <= 0.0) return; // in case we are not initialized yet
 
     while (fabs(z) > *boxz / 2) // make sure we take the shortest distance
-      z -= (z > 0 ? 1. : -1.) * *boxz;
+      z -= (z > 0 ? 1.f : -1.f) * *boxz;
 
     if (p1 == p2) // particle exerts no force on itself
     {

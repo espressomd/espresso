@@ -100,6 +100,51 @@ void check_vector(const mpi::communicator &comm, int root) {
   }
 }
 
+void check_vector_out_of_bounds(const mpi::communicator &comm) {
+  /* Check that moving data in the buffer on the root doesn't lead
+   * to an access out of bounds (using assertions from std::vector) */
+  const auto root = 1;
+  if (comm.rank() == 1) {
+    std::vector<int> buf = {2, 2};
+    gather_buffer(buf, comm, root);
+    BOOST_CHECK(buf.size() == 3);
+    BOOST_CHECK(buf[0] == 1);
+    BOOST_CHECK(buf[1] == 2);
+    BOOST_CHECK(buf[2] == 2);
+  } else if (comm.rank() == 0) {
+    std::vector<int> buf = {1};
+    gather_buffer(buf, comm, root);
+    BOOST_CHECK(buf.size() == 1);
+    BOOST_CHECK(buf[0] == 1);
+  } else {
+    std::vector<int> buf = {};
+    gather_buffer(buf, comm, root);
+    BOOST_CHECK(buf.empty());
+  }
+}
+
+void check_pointer_out_of_bounds(const mpi::communicator &comm) {
+  /* Check that moving data in the buffer on the root doesn't lead
+   * to an access out of bounds (using a sentinel value) */
+  const auto root = 1;
+  if (comm.rank() == 1) {
+    std::vector<int> buf = {2, 2, 0, -1};
+    gather_buffer(buf.data(), 2, comm, root);
+    BOOST_CHECK(buf.size() == 4);
+    BOOST_CHECK(buf[0] == 1);
+    BOOST_CHECK(buf[1] == 2);
+    BOOST_CHECK(buf[2] == 2);
+    BOOST_CHECK(buf[3] == -1);
+  } else if (comm.rank() == 0) {
+    std::vector<int> buf = {1};
+    gather_buffer(buf.data(), 1, comm, root);
+    BOOST_CHECK(buf[0] == 1);
+  } else {
+    std::vector<int> buf = {};
+    gather_buffer(buf.data(), 0, comm, root);
+  }
+}
+
 void check_vector_empty(const mpi::communicator &comm, int empty) {
   std::vector<int> buf((comm.rank() == empty) ? 0 : 11, comm.rank());
   gather_buffer(buf, comm);
@@ -149,6 +194,18 @@ BOOST_AUTO_TEST_CASE(pointer) {
   check_pointer(world, 0);
 }
 
+BOOST_AUTO_TEST_CASE(pointer_overlap) {
+  mpi::communicator world;
+  if (world.size() >= 2)
+    check_pointer(world, 1);
+}
+
+BOOST_AUTO_TEST_CASE(pointer_out_of_bounds) {
+  mpi::communicator world;
+  if (world.size() >= 2)
+    check_pointer_out_of_bounds(world);
+}
+
 BOOST_AUTO_TEST_CASE(pointer_root) {
   mpi::communicator world;
 
@@ -158,14 +215,26 @@ BOOST_AUTO_TEST_CASE(pointer_root) {
 
 BOOST_AUTO_TEST_CASE(vector) {
   mpi::communicator world;
-  check_pointer(world, 0);
+  check_vector(world, 0);
+}
+
+BOOST_AUTO_TEST_CASE(vector_overlap) {
+  mpi::communicator world;
+  if (world.size() >= 2)
+    check_vector(world, 1);
+}
+
+BOOST_AUTO_TEST_CASE(vector_out_of_bounds) {
+  mpi::communicator world;
+  if (world.size() >= 2)
+    check_vector_out_of_bounds(world);
 }
 
 BOOST_AUTO_TEST_CASE(vector_root) {
   mpi::communicator world;
 
-  auto empty = (world.size() >= 3) ? world.size() - 2 : world.size() - 1;
-  check_pointer(world, empty);
+  auto root = (world.size() >= 3) ? world.size() - 2 : world.size() - 1;
+  check_vector(world, root);
 }
 
 BOOST_AUTO_TEST_CASE(vector_empty) {

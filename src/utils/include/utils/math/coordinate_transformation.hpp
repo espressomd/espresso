@@ -77,15 +77,14 @@ inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
   std::tie(theta, rotation_axis) = rotation_params(axis, z_axis);
   auto const rotated_pos = vec_rotate(rotation_axis, theta, pos);
   auto const rotated_vec = vec_rotate(rotation_axis, theta, vec);
+  auto const r = std::sqrt(rotated_pos[0] * rotated_pos[0] +
+                           rotated_pos[1] * rotated_pos[1]);
   // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
   auto const v_r =
-      (rotated_pos[0] * rotated_vec[0] + rotated_pos[1] * rotated_vec[1]) /
-      std::sqrt(rotated_pos[0] * rotated_pos[0] +
-                rotated_pos[1] * rotated_pos[1]);
-  // v_phi = (x * v_y - y * v_x ) / (x^2 + y^2)
+      (rotated_pos[0] * rotated_vec[0] + rotated_pos[1] * rotated_vec[1]) / r;
+  // v_phi = (x * v_y - y * v_x ) / sqrt(x^2 + y^2)
   auto const v_phi =
-      (rotated_pos[0] * rotated_vec[1] - rotated_pos[1] * rotated_vec[0]) /
-      (rotated_pos[0] * rotated_pos[0] + rotated_pos[1] * rotated_pos[1]);
+      (rotated_pos[0] * rotated_vec[1] - rotated_pos[1] * rotated_vec[0]) / r;
   return Vector3d{v_r, v_phi, rotated_vec[2]};
 }
 

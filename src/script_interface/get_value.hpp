@@ -65,7 +65,7 @@ template <class To> struct conversion_visitor : boost::static_visitor<To> {
   template <class From>
   std::enable_if_t<allow_conversion<To, From>::value, To>
   operator()(const From &value) const {
-    return value;
+    return To(value);
   }
 
   template <class From>

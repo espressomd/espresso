@@ -892,7 +892,7 @@ cdef class ParticleHandle:
                         self.particle_data, ext_t)
                     return array_locked([ext_t[0], ext_t[1], ext_t[2]])
 
-    IF LANGEVIN_PER_PARTICLE or BROWNIAN_PER_PARTICLE:
+    IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
             property gamma:
                 """
@@ -902,8 +902,8 @@ cdef class ParticleHandle:
                 gamma : :obj:`float` or (3,) array_like of :obj:`float`
 
                 .. note::
-                    This needs features ``PARTICLE_ANISOTROPY`` and either
-                    ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                    This needs features ``PARTICLE_ANISOTROPY`` and
+                    ``THERMOSTAT_PER_PARTICLE``.
 
                 See Also
                 ----------
@@ -940,7 +940,7 @@ cdef class ParticleHandle:
                 gamma : :obj:`float`
 
                 .. note::
-                   This needs the feature ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                   This needs the feature ``THERMOSTAT_PER_PARTICLE``.
 
                 See Also
                 ----------
@@ -969,7 +969,7 @@ cdef class ParticleHandle:
 
                     .. note::
                         This needs features ``ROTATION``, ``PARTICLE_ANISOTROPY``
-                        and either ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                        and ``THERMOSTAT_PER_PARTICLE``.
 
                     """
 
@@ -1002,8 +1002,8 @@ cdef class ParticleHandle:
                     gamma_rot : :obj:`float`
 
                     .. note::
-                        This needs features ``ROTATION`` and either
-                        ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                        This needs features ``ROTATION`` and
+                        ``THERMOSTAT_PER_PARTICLE``.
 
                     """
 
@@ -1018,29 +1018,6 @@ cdef class ParticleHandle:
                         pointer_to_gamma_rot(
                             self.particle_data, gamma_rot)
                         return gamma_rot[0]
-
-        property temp:
-            """
-            Particle's temperature in the Langevin and Brownian thermostats.
-
-            temp: :obj:`float`
-
-            .. note::
-                This needs the feature ``LANGEVIN_PER_PARTICLE`` or
-                ``BROWNIAN_PER_PARTICLE``.
-
-            """
-
-            def __set__(self, _temp):
-                check_type_or_throw_except(
-                    _temp, 1, float, "temp has to be a float.")
-                set_particle_temperature(self._id, _temp)
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef const double * temp = NULL
-                pointer_to_temperature(self.particle_data, temp)
-                return temp[0]
 
     IF ROTATION:
         property rotation:

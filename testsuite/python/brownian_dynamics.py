@@ -40,7 +40,7 @@ class BrownianThermostat(ut.TestCase):
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
-    def check_rng(self, per_particle_gamma=False, per_particle_temp=False):
+    def check_rng(self, per_particle_gamma=False):
         """Test for RNG consistency."""
 
         kT = 1.1
@@ -51,17 +51,14 @@ class BrownianThermostat(ut.TestCase):
             p = system.part.add(pos=[0, 0, 0])
             if espressomd.has_features("ROTATION"):
                 p.rotation = [1, 1, 1]
-            if per_particle_gamma or per_particle_temp:
-                assert espressomd.has_features("BROWNIAN_PER_PARTICLE")
             if per_particle_gamma:
+                assert espressomd.has_features("THERMOSTAT_PER_PARTICLE")
                 if espressomd.has_features("PARTICLE_ANISOTROPY"):
                     p.gamma = 3 * [gamma / 2]
                 else:
                     p.gamma = gamma / 2
                 if espressomd.has_features("ROTATION"):
                     p.gamma_rot = p.gamma * 1.5
-            if per_particle_temp:
-                p.temp = 2 * kT
             return p
 
         system = self.system
@@ -125,12 +122,10 @@ class BrownianThermostat(ut.TestCase):
             self.system.thermostat.set_brownian(kT=1, gamma=2)
         self.check_rng()
 
-    @utx.skipIfMissingFeatures("BROWNIAN_PER_PARTICLE")
+    @utx.skipIfMissingFeatures("THERMOSTAT_PER_PARTICLE")
     def test_01__rng_per_particle(self):
         """Test for RNG consistency."""
-        self.check_rng(False, True)
-        self.check_rng(True, False)
-        self.check_rng(True, True)
+        self.check_rng(True)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):
