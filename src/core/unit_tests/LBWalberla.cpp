@@ -137,7 +137,7 @@ BOOST_DATA_TEST_CASE(kT_thermalized, bdata::make(thermalized_lbs()),
                      lb_generator) {
   auto lb = lb_generator(mpi_shape);
   BOOST_CHECK_EQUAL(lb->get_kT(), kT);
-};
+}
 
 BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
   Vector3d vel = {0.2, 3.8, 4.2};
