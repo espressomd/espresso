@@ -459,22 +459,21 @@ private:
 
 public:
   /**
-   * @brief Set the particle decomposition to
-   *        AtomDecomposition.
+   * @brief Set the particle decomposition to AtomDecomposition.
    *
-   *        @param comm Communicator to use.
-   *        @param box Box Geometry
+   * @param comm Communicator to use.
+   * @param box Box Geometry
    */
   void set_atom_decomposition(boost::mpi::communicator const &comm,
                               BoxGeometry const &box);
 
   /**
-   * @brief Set the particle decomposition to
-   *        DomainDecomposition.
+   * @brief Set the particle decomposition to DomainDecomposition.
    *
-   *        @param comm Cartesian communicator to use.
-   *        @param box Box Geometry
-   *        @param local_geo Geometry of the local box.
+   * @param comm Cartesian communicator to use.
+   * @param range Interaction range.
+   * @param box Box Geometry
+   * @param local_geo Geometry of the local box.
    */
   void set_domain_decomposition(boost::mpi::communicator const &comm,
                                 double range, BoxGeometry const &box,

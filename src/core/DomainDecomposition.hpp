@@ -66,12 +66,10 @@
  *
  */
 struct DomainDecomposition : public ParticleDecomposition {
-  /** Grind dimensions per node. */
+  /** Grid dimensions per node. */
   Utils::Vector3i cell_grid = {};
-  /** cell size. */
+  /** Cell size. */
   Utils::Vector3d cell_size = {};
-
-private:
   /** Offset in global grid */
   Utils::Vector3i cell_offset = {};
   /** linked cell grid with ghost frame. */
@@ -120,7 +118,7 @@ public:
   }
 
 private:
-  /** Fill local_cells list and ghost_cells list for use with domain
+  /** Fill @c m_local_cells list and @c m_ghost_cells list for use with domain
    *  decomposition.
    */
   void mark_cells();
@@ -128,8 +126,8 @@ private:
   /** Fill a communication cell pointer list. Fill the cell pointers of
    *  all cells which are inside a rectangular subgrid of the 3D cell
    *  grid starting from the
-   *  lower left corner lc up to the high top corner hc. The cell
-   *  pointer list part_lists must already be large enough.
+   *  lower left corner @p lc up to the high top corner @p hc. The cell
+   *  pointer list @p part_lists must already be large enough.
    *  \param part_lists  List of cell pointers to store the result.
    *  \param lc          lower left corner of the subgrid.
    *  \param hc          high up corner of the subgrid.
@@ -159,10 +157,10 @@ private:
   /**
    * @brief Split particle list by direction.
    *
-   * Moves all particles from src into left
-   * and right depending if they belong to
-   * the left or right side from local node
-   * in direction dir.
+   * Moves all particles from @p src into @p left
+   * or @p right depending on whether they belong
+   * to the left or right side of the local node
+   * in direction @p dir.
    *
    * @param src Particles to sort.
    * @param left Particles that should go to the left
@@ -185,36 +183,36 @@ private:
    *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
    *
    *  Calculates the cell grid, based on the local box size and the range.
-   *  If the number of cells is larger than max_num_cells,
-   *  it increases max_range until the number of cells is
-   *  smaller or equal max_num_cells. It sets:
-   *  cell_grid,
-   *  ghost_cell_grid,
-   *  cell_size, and
-   *  inv_cell_size.
+   *  If the number of cells is larger than @c max_num_cells,
+   *  it increases @c max_range until the number of cells is
+   *  smaller or equal to @c max_num_cells. It sets:
+   *  @c cell_grid,
+   *  @c ghost_cell_grid,
+   *  @c cell_size, and
+   *  @c inv_cell_size.
    *
-   *  @param range Required interacting range. All pairs closer
-   *         than this distance are found.
+   *  @param range interaction range. All pairs closer
+   *               than this distance are found.
    */
   void create_cell_grid(double range);
 
   /** Init cell interactions for cell system domain decomposition.
    *  Initializes the interacting neighbor cell list of a cell.
    *  This list of interacting neighbor cells is used by the Verlet
-   * algorithm.
+   *  algorithm.
    */
   void init_cell_interactions();
 
-  /** Create communicators for cell structure domain decomposition. (see \ref
-   *  GhostCommunicator)
+  /** Create communicators for cell structure domain decomposition (see \ref
+   *  GhostCommunicator).
    */
   GhostCommunicator prepare_comm();
 
   /** Maximal number of cells per node. In order to avoid memory
-   *  problems due to the cell grid one has to specify the maximal
+   *  problems due to the cell grid, one has to specify the maximal
    *  number of cells. If the number of cells is larger
-   *  than max_num_cells the cell grid is reduced.
-   *  max_num_cells has to be larger than 27, e.g. one inner cell.
+   *  than @c max_num_cells, the cell grid is reduced.
+   *  @c max_num_cells has to be larger than 27, e.g. one inner cell.
    */
   static constexpr int max_num_cells = 32768;
 };

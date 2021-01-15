@@ -45,7 +45,6 @@ void cuda_init() {
   }
 }
 
-/// get the number of CUDA devices.
 int cuda_get_n_gpus() {
   int deviceCount;
   cudaError_t error = cudaGetDeviceCount(&deviceCount);

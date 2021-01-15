@@ -67,7 +67,6 @@ CUDA_energy energy_host;
 
 pinned_vector<float> particle_torques_host;
 
-/**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,

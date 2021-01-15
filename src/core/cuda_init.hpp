@@ -30,20 +30,21 @@
  *  old datatypes, as it is intended for MPI communication.
  */
 struct EspressoGpuDevice {
-  /* Local CUDA device id */
+  /** Local CUDA device id */
   int id;
-  /* Name */
+  /** Local CUDA device name */
   char name[64];
-  /* Node identification */
+  /** Node identification */
   char proc_name[64];
-  /* MPI process identification */
+  /** MPI process identification */
   int node;
-  /* Compute capability */
+  /** Compute capability (major) */
   int compute_capability_major;
+  /** Compute capability (minor) */
   int compute_capability_minor;
-  /* Total Memory */
+  /** Total Memory */
   size_t total_memory;
-  /* Number of cores */
+  /** Number of cores */
   int n_cores;
 };
 
@@ -59,7 +60,7 @@ int cuda_get_n_gpus();
 
 /** Check that a given GPU has compute capability.
  *  The minimal compute capability required by ESPResSo is
- *  \ref computeCapabilityMinMajor.\ref computeCapabilityMinMinor.
+ *  \ref computeCapabilityMinMajor . \ref computeCapabilityMinMinor .
  *
  *  @param dev CUDA device number
  *  @return \ref ES_OK if the GPU meets the requirements, else \ref ES_ERROR.
@@ -68,8 +69,8 @@ int cuda_check_gpu_compute_capability(int dev);
 
 /** Get the name of a CUDA device.
  *
- *  @param dev the CUDA device number to ask the name for
- *  @param name a buffer to write the name to, at least 64 characters
+ *  @param[in]  dev the CUDA device number to ask the name for
+ *  @param[out] name a buffer to write the name to, at least 64 characters
  */
 void cuda_get_gpu_name(int dev, char name[64]);
 
@@ -90,12 +91,13 @@ int cuda_get_device();
  */
 int cuda_test_device_access();
 
-/** Gather unique list of CUDA devices on all nodes
- *  @return vector of device on master, empty vector on other nodes.
+/** Gather unique list of CUDA devices on all nodes.
+ *  @return vector of device properties.
  */
 std::vector<EspressoGpuDevice> cuda_gather_gpus();
 
 /** Get properties of a CUDA device
+ *  @param dev CUDA device number
  */
 EspressoGpuDevice cuda_get_device_props(int dev);
 

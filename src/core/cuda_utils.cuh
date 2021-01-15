@@ -41,7 +41,7 @@ private:
   }
 };
 
-/** cuda streams for parallel computing on cpu and gpu */
+/** CUDA streams for parallel computing on CPU and GPU */
 extern cudaStream_t stream[1];
 
 /** Error output for memory allocation and memory copy

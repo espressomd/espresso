@@ -36,13 +36,13 @@
 #include <iterator>
 #include <set>
 
-/** Helper class force device set.
+/** Helper class for device sets.
  */
 struct CompareDevices {
   bool operator()(const EspressoGpuDevice &a,
                   const EspressoGpuDevice &b) const {
     const int name_comp = strncmp(a.proc_name, b.proc_name, 63);
-    /* Both devs are from the same node, order by id */
+    /* if both devices are from the same node, order by id */
     if (name_comp == 0)
       return a.id < b.id;
 
@@ -51,9 +51,9 @@ struct CompareDevices {
 };
 
 /** Gather list of CUDA devices on all nodes on the master node.
- *  It relies on MPI_Get_processor_name() to get a unique identifier of
- *  the physical node, as opposed to the logical rank of which there can
- *  be more than one on one node.
+ *  It relies on <tt>MPI_Get_processor_name()</tt> to get a unique identifier
+ *  of the physical node, as opposed to the logical rank of which there can
+ *  be more than one per node.
  */
 static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
   /* List of local devices */
@@ -115,7 +115,7 @@ static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
   } else {
     /* Send number of devices to master */
     MPI_Gather(&n_gpus, 1, MPI_INT, nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    /* Send devices to maser */
+    /* Send devices to master */
     for (auto const &device : devices_local) {
       MPI_Send(&device, sizeof(EspressoGpuDevice), MPI_BYTE, 0, 0,
                MPI_COMM_WORLD);
