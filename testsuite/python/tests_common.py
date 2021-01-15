@@ -170,7 +170,7 @@ def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
     """
     return np.array([
         (pos[0] * vel[0] + pos[1] * vel[1]) / np.sqrt(pos[0]**2 + pos[1]**2),
-        (pos[0] * vel[1] - pos[1] * vel[0]) / (pos[0]**2 + pos[1]**2), vel[2]])
+        (pos[0] * vel[1] - pos[1] * vel[0]) / np.sqrt(pos[0]**2 + pos[1]**2), vel[2]])
 
 
 def rotation_matrix(axis, theta):
