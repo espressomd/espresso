@@ -103,7 +103,7 @@ protected:
   /** Velocity boundary condition */
   using UBB = lbm::UBB<LatticeModel, uint8_t, true, true>;
 
-  /** boundaryy handling */
+  /** Boundary handling */
   using Boundaries =
       BoundaryHandling<FlagField, typename LatticeModel::Stencil, UBB>;
 
@@ -244,7 +244,7 @@ public:
         "boundary handling");
     clear_boundaries();
 
-    // sets up the communication and reisters pdf field and force fiel to it
+    // sets up the communication and registers pdf field and force field to it
     m_communication = std::make_shared<Communicator>(m_blocks);
     m_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
@@ -253,7 +253,7 @@ public:
         std::make_shared<field::communication::PackInfo<VectorField>>(
             m_last_applied_force_field_id));
 
-    // Instace the sweep responsible for force double buffering and
+    // Instance the sweep responsible for force double buffering and
     // external forces
     m_reset_force = std::make_shared<ResetForce<PdfField, VectorField>>(
         m_pdf_field_id, m_last_applied_force_field_id,

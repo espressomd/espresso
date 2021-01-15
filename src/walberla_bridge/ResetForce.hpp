@@ -17,13 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file
- * @ref walberla::LBWalberlaImpl implements the interface of the LB
- * waLBerla bridge. It is a templated class that is specialized by lattice
- * models created by lbmpy (see <tt>maintainer/walberla_kernels</tt>).
- */
-
 #ifndef WALBERLA_BRIDGE_RESET_FORCE_HPP
 #define WALBERLA_BRIDGE_RESET_FORCE_HPP
 
@@ -48,9 +41,9 @@
 
 namespace walberla {
 
-/** Sweep that swaps force_to_be_applied and last_applied_force
-and resets force_to_be_applied to the global external force
-*/
+/** Sweep that swaps @c force_to_be_applied and @c last_applied_force
+ *  and resets @c force_to_be_applied to the global external force.
+ */
 template <typename PdfField, typename ForceField> class ResetForce {
 public:
   ResetForce(const BlockDataID &pdf_field_id,

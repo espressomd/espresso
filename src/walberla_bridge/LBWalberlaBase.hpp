@@ -88,8 +88,9 @@ public:
   virtual boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const = 0;
 
-  /** @brief Set a node as velocity boundary condition and assign boudnary
-   * veloity */
+  /** @brief Set a node as velocity boundary condition and assign boundary
+   *  velocity
+   */
   virtual bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
                                              const Utils::Vector3d &v) = 0;
   /** @brief Get (stored) force applied on node due to boundary condition */
