@@ -32,6 +32,8 @@
 struct EspressoGpuDevice {
   /* Local CUDA device id */
   int id;
+  /* Name */
+  char name[64];
   /* Node identification */
   char proc_name[64];
   /* MPI process identification */
@@ -39,8 +41,6 @@ struct EspressoGpuDevice {
   /* Compute capability */
   int compute_capability_major;
   int compute_capability_minor;
-  /* Name */
-  char name[64];
   /* Total Memory */
   size_t total_memory;
   /* Number of cores */

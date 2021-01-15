@@ -17,20 +17,45 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 
 
 class GPUAvailability(ut.TestCase):
 
     """Tests consistency of GPU availability reporting."""
+    system = espressomd.System(box_l=[1, 1, 1])
 
     def test(self):
         if espressomd.has_features("CUDA"):
-            system = espressomd.System(box_l=[1, 1, 1])
-            self.assertEqual(system.cuda_init_handle.device_list != {},
+            self.assertEqual(self.system.cuda_init_handle.device_list != {},
                              espressomd.gpu_available())
         else:
             self.assertFalse(espressomd.gpu_available())
+
+    @utx.skipIfMissingGPU()
+    def test_devices(self):
+        device_list = self.system.cuda_init_handle.device_list
+        device_list_p = self.system.cuda_init_handle.device_list_properties
+        self.assertEqual(len(device_list_p), 1)
+        device_list_p_head = list(device_list_p.values())[0]
+        dev_keys = {'name', 'compute_capability', 'cores', 'total_memory'}
+        # check both dicts agree
+        self.assertEqual(device_list.keys(), device_list_p_head.keys())
+        for dev_id in device_list:
+            self.assertEqual(device_list_p_head[dev_id].keys(), dev_keys)
+            self.assertEqual(
+                device_list_p_head[dev_id]['name'],
+                device_list[dev_id])
+        # check the currently active GPU
+        dev_id = self.system.cuda_init_handle.device
+        self.assertIn(dev_id, device_list_p_head)
+        device = device_list_p_head[dev_id]
+        self.assertGreater(device['cores'], 0)
+        self.assertGreater(device['total_memory'], 0)
+        self.assertGreaterEqual(device['compute_capability'][0], 3)
+        if device['compute_capability'][0] == 3:
+            self.assertGreaterEqual(device['compute_capability'][1], 0)
 
 
 if __name__ == "__main__":

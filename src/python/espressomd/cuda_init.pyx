@@ -78,6 +78,39 @@ cdef class CudaInitHandle:
         def device_list(self, dict dev_dict):
             raise Exception("cuda device list is read only")
 
+        @property
+        def device_list_properties(self):
+            """
+            List devices with their properties on each host machine.
+
+            Returns
+            -------
+            :obj:`dict` :
+                List of available CUDA devices with their properties.
+
+            """
+            cdef vector[EspressoGpuDevice] devices = cuda_gather_gpus()
+            cdef EspressoGpuDevice dev
+            resources = dict()
+            for i in range(devices.size()):
+                dev = devices[i]
+                hostname = utils.to_str(dev.proc_name)
+                if hostname not in resources:
+                    resources[hostname] = {}
+                resources[hostname][dev.id] = {
+                    'name': utils.to_str(dev.name),
+                    'compute_capability': (
+                        dev.compute_capability_major,
+                        dev.compute_capability_minor
+                    ),
+                    'cores': dev.n_cores,
+                    'total_memory': dev.total_memory,
+                }
+            return resources
+
+        @device_list_properties.setter
+        def device_list_properties(self, dict dev_dict):
+            raise Exception("cuda device list is read only")
 
 IF CUDA:
     def gpu_available():

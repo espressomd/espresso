@@ -55,7 +55,7 @@ struct CompareDevices {
  *  the physical node, as opposed to the logical rank of which there can
  *  be more than one on one node.
  */
-std::vector<EspressoGpuDevice> cuda_gather_gpus() {
+static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
   int n_gpus;
   char proc_name[MPI_MAX_PROCESSOR_NAME];
   int proc_name_len;
@@ -125,6 +125,13 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
     }
   }
   return g_devices;
+}
+
+REGISTER_CALLBACK_MASTER_RANK(mpi_cuda_gather_gpus_local)
+
+std::vector<EspressoGpuDevice> cuda_gather_gpus() {
+  return mpi_call(Communication::Result::master_rank,
+                  mpi_cuda_gather_gpus_local);
 }
 
 #endif /* CUDA */
