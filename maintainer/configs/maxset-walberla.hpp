@@ -29,8 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define BOND_CONSTRAINT
 #define COLLISION_DETECTION
-#define LANGEVIN_PER_PARTICLE
-#define BROWNIAN_PER_PARTICLE
+#define THERMOSTAT_PER_PARTICLE
 
 #define NPT
 
