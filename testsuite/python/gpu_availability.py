@@ -36,6 +36,7 @@ class GPUAvailability(ut.TestCase):
         else:
             self.assertFalse(espressomd.gpu_available())
 
+    @utx.skipIfMissingFeatures("CUDA")
     def test_exceptions(self):
         error_msg = 'CUDA error: '
         if espressomd.gpu_available():
