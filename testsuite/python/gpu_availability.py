@@ -54,8 +54,7 @@ class GPUAvailability(ut.TestCase):
         self.assertGreater(device['cores'], 0)
         self.assertGreater(device['total_memory'], 0)
         self.assertGreaterEqual(device['compute_capability'][0], 3)
-        if device['compute_capability'][0] == 3:
-            self.assertGreaterEqual(device['compute_capability'][1], 0)
+        self.assertGreaterEqual(device['compute_capability'][1], 0)
 
 
 if __name__ == "__main__":
