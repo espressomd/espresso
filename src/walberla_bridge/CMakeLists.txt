@@ -27,3 +27,7 @@ target_include_directories(
   PRIVATE ${WALBERLA_INCLUDE_DIRS} ${walberla_BINARY_DIR}/src)
 
 install(TARGETS WalberlaBridge LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+
+if(WITH_TESTS)
+  add_subdirectory(tests)
+endif(WITH_TESTS)
