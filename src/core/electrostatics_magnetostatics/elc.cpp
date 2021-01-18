@@ -113,13 +113,13 @@ static std::vector<SCCache> scycache;
  ****************************************/
 
 static void distribute(int size);
-/** \name p=0 per frequency code */
+/** \name q=0 per frequency code */
 /**@{*/
 static void setup_P(int p, double omega, const ParticleRange &particles);
 static void add_P_force(const ParticleRange &particles);
 static double P_energy(double omega, int n_part);
 /**@}*/
-/** \name q=0 per frequency code */
+/** \name p=0 per frequency code */
 /**@{*/
 static void setup_Q(int q, double omega, const ParticleRange &particles);
 static void add_Q_force(const ParticleRange &particles);
