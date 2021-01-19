@@ -92,6 +92,9 @@ ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
 #define PQECCM 7
 /**@}*/
 
+/** ELC axes (x and y directions)*/
+enum class PoQ : int { P, Q };
+
 /** temporary buffers for product decomposition */
 static std::vector<double> partblk;
 /** collected data from the other cells */
@@ -113,26 +116,17 @@ static std::vector<SCCache> scycache;
  ****************************************/
 
 static void distribute(int size);
-/** \name q=0 per frequency code */
-/**@{*/
 static void setup_P(int p, double omega, const ParticleRange &particles);
 static void add_P_force(const ParticleRange &particles);
 static double P_energy(double omega, int n_part);
-/**@}*/
-/** \name p=0 per frequency code */
-/**@{*/
 static void setup_Q(int q, double omega, const ParticleRange &particles);
 static void add_Q_force(const ParticleRange &particles);
 static double Q_energy(double omega, int n_part);
-/**@}*/
-/** \name p,q <> 0 per frequency code */
-/**@{*/
 static void setup_PQ(int p, int q, double omega,
                      const ParticleRange &particles);
 static void add_PQ_force(int p, int q, double omega,
                          const ParticleRange &particles);
 static double PQ_energy(double omega, int n_part);
-/**@}*/
 static void add_dipole_force(const ParticleRange &particles);
 static double dipole_energy(const ParticleRange &particles);
 static double z_energy(const ParticleRange &particles);
@@ -147,7 +141,7 @@ void ELC_setup_constants() {
 }
 
 /**
- * @brief Calculated cached sin/cos values for one direction.
+ * @brief Calculate cached sin/cos values for one direction.
  *
  * @tparam dir Index of the dimension to consider (e.g. 0 for x ...).
  *
@@ -157,8 +151,8 @@ void ELC_setup_constants() {
  * @return Calculated values.
  */
 template <size_t dir>
-static std::vector<SCCache> sc_cache(const ParticleRange &particles, int n_freq,
-                                     double u) {
+static std::vector<SCCache> calc_sc_cache(const ParticleRange &particles,
+                                          int n_freq, double u) {
   constexpr double c_2pi = 2 * Utils::pi();
   auto const n_part = particles.size();
   std::vector<SCCache> ret(n_freq * n_part);
@@ -178,8 +172,8 @@ static std::vector<SCCache> sc_cache(const ParticleRange &particles, int n_freq,
 
 static void prepare_sc_cache(const ParticleRange &particles, int n_freq_x,
                              double u_x, int n_freq_y, double u_y) {
-  scxcache = sc_cache<0>(particles, n_freq_x, u_x);
-  scycache = sc_cache<1>(particles, n_freq_y, u_y);
+  scxcache = calc_sc_cache<0>(particles, n_freq_x, u_x);
+  scycache = calc_sc_cache<1>(particles, n_freq_y, u_y);
 }
 
 /*****************************************************************/
@@ -536,6 +530,8 @@ static void add_z_force(const ParticleRange &particles) {
 /* PoQ exp sum */
 /*****************************************************************/
 
+/** \name q=0 or p=0 per frequency code */
+/**@{*/
 static void setup_P(int p, double omega, const ParticleRange &particles) {
   double const pref_di = coulomb.prefactor * 4 * Utils::pi() * ux * uy;
   double const pref = -pref_di / expm1(omega * box_geo.length()[2]);
@@ -807,12 +803,15 @@ static double Q_energy(double omega, int n_part) {
   }
   return eng;
 }
+/**@}*/
 
 /*****************************************************************/
 /* PQ particle blocks */
 /*****************************************************************/
 
-static void setup_PQ(int p, int q, double omega,
+/** \name p,q <> 0 per frequency code */
+/**@{*/
+static void setup_PQ(int index_p, int index_q, double omega,
                      const ParticleRange &particles) {
   double const pref_di = coulomb.prefactor * 8 * Utils::pi() * ux * uy;
   double const pref = -pref_di / expm1(omega * box_geo.length()[2]);
@@ -832,8 +831,8 @@ static void setup_PQ(int p, int q, double omega,
   clear_vec(gblcblk, size);
 
   int ic = 0;
-  auto const ox = static_cast<int>((p - 1) * particles.size());
-  auto const oy = static_cast<int>((q - 1) * particles.size());
+  auto const ox = static_cast<int>((index_p - 1) * particles.size());
+  auto const oy = static_cast<int>((index_q - 1) * particles.size());
   for (auto const &p : particles) {
     double e = exp(omega * p.r.p[2]);
 
@@ -941,11 +940,11 @@ static void setup_PQ(int p, int q, double omega,
   }
 }
 
-static void add_PQ_force(int p, int q, double omega,
+static void add_PQ_force(int index_p, int index_q, double omega,
                          const ParticleRange &particles) {
   constexpr double c_2pi = 2 * Utils::pi();
-  double const pref_x = c_2pi * ux * p / omega;
-  double const pref_y = c_2pi * uy * q / omega;
+  double const pref_x = c_2pi * ux * index_p / omega;
+  double const pref_y = c_2pi * uy * index_q / omega;
   int const size = 8;
 
   int ic = 0;
@@ -995,6 +994,7 @@ static double PQ_energy(double omega, int n_part) {
   }
   return eng;
 }
+/**@}*/
 
 /*****************************************************************/
 /* main loops */
