@@ -229,7 +229,7 @@ inline void check_gap_elc(const Particle &p) {
  */
 static void add_dipole_force(const ParticleRange &particles) {
   double const pref = coulomb.prefactor * 4 * Utils::pi() * ux * uy * uz;
-  int const size = 3;
+  constexpr int size = 3;
 
   auto local_particles = particles;
 
@@ -294,7 +294,7 @@ static void add_dipole_force(const ParticleRange &particles) {
  */
 static double dipole_energy(const ParticleRange &particles) {
   double const pref = coulomb.prefactor * 2 * Utils::pi() * ux * uy * uz;
-  int const size = 7;
+  constexpr int size = 7;
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
   double const shift = 0.5 * box_geo.length()[2];
@@ -337,32 +337,32 @@ static double dipole_energy(const ParticleRange &particles) {
   distribute(size);
 
   // Yeh + Berkowitz term @cite yeh99a
-  double eng = 2 * pref * (Utils::sqr(gblcblk[2]) + gblcblk[2] * gblcblk[3]);
+  double energy = 2 * pref * (Utils::sqr(gblcblk[2]) + gblcblk[2] * gblcblk[3]);
 
   if (!elc_params.neutralize) {
     // SUBTRACT the energy of the P3M homogeneous neutralizing background
-    eng += 2 * pref *
-           (-gblcblk[0] * gblcblk[4] -
-            (.25 - .5 / 3.) * Utils::sqr(gblcblk[0] * box_geo.length()[2]));
+    energy += 2 * pref *
+              (-gblcblk[0] * gblcblk[4] -
+               (.25 - .5 / 3.) * Utils::sqr(gblcblk[0] * box_geo.length()[2]));
   }
 
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot) {
       // zero potential difference contribution
-      eng += pref * height_inverse / uz * Utils::sqr(gblcblk[6]);
+      energy += pref * height_inverse / uz * Utils::sqr(gblcblk[6]);
       // external potential shift contribution
-      eng -= 2 * elc_params.pot_diff * height_inverse * gblcblk[6];
+      energy -= 2 * elc_params.pot_diff * height_inverse * gblcblk[6];
     }
 
     /* counter the P3M homogeneous background contribution to the
        boundaries. We never need that, since a homogeneous background
        spanning the artificial boundary layers is aphysical. */
-    eng += pref * (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
-                   (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] *
-                       Utils::sqr(box_geo.length()[2]));
+    energy += pref * (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
+                      (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] *
+                          Utils::sqr(box_geo.length()[2]));
   }
 
-  return this_node == 0 ? eng : 0;
+  return this_node == 0 ? energy : 0;
 }
 
 /*****************************************************************/
@@ -388,7 +388,7 @@ inline double image_sum_t(double q, double z) {
 /*****************************************************************/
 static double z_energy(const ParticleRange &particles) {
   double const pref = coulomb.prefactor * 2 * Utils::pi() * ux * uy;
-  int const size = 4;
+  constexpr int size = 4;
 
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
@@ -456,11 +456,11 @@ static double z_energy(const ParticleRange &particles) {
   }
   distribute(size);
 
-  double eng = 0;
+  double energy = 0;
   if (this_node == 0)
-    eng -= pref * (gblcblk[1] * gblcblk[2] - gblcblk[0] * gblcblk[3]);
+    energy -= gblcblk[1] * gblcblk[2] - gblcblk[0] * gblcblk[3];
 
-  return eng;
+  return pref * energy;
 }
 
 /*****************************************************************/
@@ -469,7 +469,7 @@ static void add_z_force(const ParticleRange &particles) {
 
   if (elc_params.dielectric_contrast_on) {
     auto local_particles = particles;
-    int const size = 1;
+    constexpr int size = 1;
     if (elc_params.const_pot) {
       clear_vec(gblcblk, size);
       /* just counter the 2 pi |z| contribution stemming from P3M */
@@ -525,7 +525,7 @@ template <PoQ axis>
 void setup_PoQ(int index, double omega, const ParticleRange &particles) {
   double const pref_di = coulomb.prefactor * 4 * Utils::pi() * ux * uy;
   double const pref = -pref_di / expm1(omega * box_geo.length()[2]);
-  int const size = 4;
+  constexpr int size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
 
@@ -629,7 +629,7 @@ void setup_PoQ(int index, double omega, const ParticleRange &particles) {
 
 template <PoQ axis> void add_PoQ_force(const ParticleRange &particles) {
   constexpr int i = static_cast<int>(axis);
-  int const size = 4;
+  constexpr int size = 4;
 
   int ic = 0;
   for (auto &p : particles) {
@@ -646,18 +646,17 @@ template <PoQ axis> void add_PoQ_force(const ParticleRange &particles) {
 }
 
 static double PoQ_energy(double omega, int n_part) {
-  int const size = 4;
-  double eng = 0;
-  double const pref = 1 / omega;
+  constexpr int size = 4;
 
+  double energy = 0;
   for (int ic = 0; ic < n_part; ic++) {
-    eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                   partblk[size * ic + POQESM] * gblcblk[POQESP] +
-                   partblk[size * ic + POQECP] * gblcblk[POQECM] +
-                   partblk[size * ic + POQESP] * gblcblk[POQESM]);
+    energy += partblk[size * ic + POQECM] * gblcblk[POQECP] +
+              partblk[size * ic + POQESM] * gblcblk[POQESP] +
+              partblk[size * ic + POQECP] * gblcblk[POQECM] +
+              partblk[size * ic + POQESP] * gblcblk[POQESM];
   }
 
-  return eng;
+  return energy / omega;
 }
 /**@}*/
 
@@ -671,7 +670,7 @@ static void setup_PQ(int index_p, int index_q, double omega,
                      const ParticleRange &particles) {
   double const pref_di = coulomb.prefactor * 8 * Utils::pi() * ux * uy;
   double const pref = -pref_di / expm1(omega * box_geo.length()[2]);
-  int const size = 8;
+  constexpr int size = 8;
   double lclimgebot[8], lclimgetop[8], lclimge[8];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
   if (elc_params.dielectric_contrast_on) {
@@ -801,7 +800,7 @@ static void add_PQ_force(int index_p, int index_q, double omega,
   constexpr double c_2pi = 2 * Utils::pi();
   double const pref_x = c_2pi * ux * index_p / omega;
   double const pref_y = c_2pi * uy * index_q / omega;
-  int const size = 8;
+  constexpr int size = 8;
 
   int ic = 0;
   for (auto &p : particles) {
@@ -834,21 +833,20 @@ static void add_PQ_force(int index_p, int index_q, double omega,
 }
 
 static double PQ_energy(double omega, int n_part) {
-  int const size = 8;
-  double eng = 0;
-  double const pref = 1 / omega;
+  constexpr int size = 8;
 
+  double energy = 0;
   for (int ic = 0; ic < n_part; ic++) {
-    eng += pref * (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
-                   partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
-                   partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
-                   partblk[size * ic + PQESSM] * gblcblk[PQESSP] +
-                   partblk[size * ic + PQECCP] * gblcblk[PQECCM] +
-                   partblk[size * ic + PQECSP] * gblcblk[PQECSM] +
-                   partblk[size * ic + PQESCP] * gblcblk[PQESCM] +
-                   partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
+    energy += partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
+              partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
+              partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
+              partblk[size * ic + PQESSM] * gblcblk[PQESSP] +
+              partblk[size * ic + PQECCP] * gblcblk[PQECCM] +
+              partblk[size * ic + PQECSP] * gblcblk[PQECSM] +
+              partblk[size * ic + PQESCP] * gblcblk[PQESCM] +
+              partblk[size * ic + PQESSP] * gblcblk[PQESSM];
   }
-  return eng;
+  return energy / omega;
 }
 /**@}*/
 
@@ -897,8 +895,8 @@ void ELC_add_force(const ParticleRange &particles) {
 
 double ELC_energy(const ParticleRange &particles) {
   constexpr double c_2pi = 2 * Utils::pi();
-  auto eng = dipole_energy(particles);
-  eng += z_energy(particles);
+  auto energy = dipole_energy(particles);
+  energy += z_energy(particles);
 
   auto const n_scxcache = int(ceil(elc_params.far_cut / ux) + 1);
   auto const n_scycache = int(ceil(elc_params.far_cut / uy) + 1);
@@ -912,13 +910,13 @@ double ELC_energy(const ParticleRange &particles) {
     auto const omega = c_2pi * ux * p;
     setup_PoQ<PoQ::P>(p, omega, particles);
     distribute(4);
-    eng += PoQ_energy(omega, n_localpart);
+    energy += PoQ_energy(omega, n_localpart);
   }
   for (int q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
     auto const omega = c_2pi * uy * q;
     setup_PoQ<PoQ::Q>(q, omega, particles);
     distribute(4);
-    eng += PoQ_energy(omega, n_localpart);
+    energy += PoQ_energy(omega, n_localpart);
   }
   for (int p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
     for (int q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
@@ -928,11 +926,11 @@ double ELC_energy(const ParticleRange &particles) {
       auto const omega = c_2pi * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
       setup_PQ(p, q, omega, particles);
       distribute(8);
-      eng += PQ_energy(omega, n_localpart);
+      energy += PQ_energy(omega, n_localpart);
     }
   }
   /* we count both i<->j and j<->i, so return just half of it */
-  return 0.5 * eng;
+  return 0.5 * energy;
 }
 
 int ELC_tune(double error) {
