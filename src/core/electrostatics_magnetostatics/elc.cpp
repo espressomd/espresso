@@ -116,9 +116,6 @@ static std::vector<SCCache> scycache;
  ****************************************/
 
 static void distribute(int size);
-static double P_energy(double omega, int n_part);
-static double Q_energy(double omega, int n_part);
-static double PQ_energy(double omega, int n_part);
 static void add_dipole_force(const ParticleRange &particles);
 static double dipole_energy(const ParticleRange &particles);
 static double z_energy(const ParticleRange &particles);
@@ -648,7 +645,7 @@ template <PoQ axis> void add_PoQ_force(const ParticleRange &particles) {
   }
 }
 
-static double P_energy(double omega, int n_part) {
+static double PoQ_energy(double omega, int n_part) {
   int const size = 4;
   double eng = 0;
   double const pref = 1 / omega;
@@ -660,20 +657,6 @@ static double P_energy(double omega, int n_part) {
                    partblk[size * ic + POQESP] * gblcblk[POQESM]);
   }
 
-  return eng;
-}
-
-static double Q_energy(double omega, int n_part) {
-  int const size = 4;
-  double eng = 0;
-  double const pref = 1 / omega;
-
-  for (int ic = 0; ic < n_part; ic++) {
-    eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                   partblk[size * ic + POQESM] * gblcblk[POQESP] +
-                   partblk[size * ic + POQECP] * gblcblk[POQECM] +
-                   partblk[size * ic + POQESP] * gblcblk[POQESM]);
-  }
   return eng;
 }
 /**@}*/
@@ -929,13 +912,13 @@ double ELC_energy(const ParticleRange &particles) {
     auto const omega = c_2pi * ux * p;
     setup_PoQ<PoQ::P>(p, omega, particles);
     distribute(4);
-    eng += P_energy(omega, n_localpart);
+    eng += PoQ_energy(omega, n_localpart);
   }
   for (int q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
     auto const omega = c_2pi * uy * q;
     setup_PoQ<PoQ::Q>(q, omega, particles);
     distribute(4);
-    eng += Q_energy(omega, n_localpart);
+    eng += PoQ_energy(omega, n_localpart);
   }
   for (int p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
     for (int q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
