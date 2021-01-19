@@ -116,12 +116,8 @@ static std::vector<SCCache> scycache;
  ****************************************/
 
 static void distribute(int size);
-static void add_P_force(const ParticleRange &particles);
 static double P_energy(double omega, int n_part);
-static void add_Q_force(const ParticleRange &particles);
 static double Q_energy(double omega, int n_part);
-static void add_PQ_force(int p, int q, double omega,
-                         const ParticleRange &particles);
 static double PQ_energy(double omega, int n_part);
 static void add_dipole_force(const ParticleRange &particles);
 static double dipole_energy(const ParticleRange &particles);
@@ -634,12 +630,13 @@ void setup_PoQ(int index, double omega, const ParticleRange &particles) {
   }
 }
 
-static void add_P_force(const ParticleRange &particles) {
+template <PoQ axis> void add_PoQ_force(const ParticleRange &particles) {
+  constexpr int i = static_cast<int>(axis);
   int const size = 4;
 
   int ic = 0;
   for (auto &p : particles) {
-    p.f.f[0] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
+    p.f.f[i] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
                 partblk[size * ic + POQECM] * gblcblk[POQESP] +
                 partblk[size * ic + POQESP] * gblcblk[POQECM] -
                 partblk[size * ic + POQECP] * gblcblk[POQESM];
@@ -664,23 +661,6 @@ static double P_energy(double omega, int n_part) {
   }
 
   return eng;
-}
-
-static void add_Q_force(const ParticleRange &particles) {
-  int const size = 4;
-
-  int ic = 0;
-  for (auto &p : particles) {
-    p.f.f[1] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
-                partblk[size * ic + POQECM] * gblcblk[POQESP] +
-                partblk[size * ic + POQESP] * gblcblk[POQECM] -
-                partblk[size * ic + POQECP] * gblcblk[POQESM];
-    p.f.f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                partblk[size * ic + POQESM] * gblcblk[POQESP] -
-                partblk[size * ic + POQECP] * gblcblk[POQECM] -
-                partblk[size * ic + POQESP] * gblcblk[POQESM];
-    ic++;
-  }
 }
 
 static double Q_energy(double omega, int n_part) {
@@ -909,14 +889,14 @@ void ELC_add_force(const ParticleRange &particles) {
     auto const omega = c_2pi * ux * p;
     setup_PoQ<PoQ::P>(p, omega, particles);
     distribute(4);
-    add_P_force(particles);
+    add_PoQ_force<PoQ::P>(particles);
   }
 
   for (int q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
     auto const omega = c_2pi * uy * q;
     setup_PoQ<PoQ::Q>(q, omega, particles);
     distribute(4);
-    add_Q_force(particles);
+    add_PoQ_force<PoQ::Q>(particles);
   }
 
   for (int p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
