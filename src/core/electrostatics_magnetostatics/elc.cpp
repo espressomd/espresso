@@ -45,6 +45,7 @@
 
 #include <mpi.h>
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -202,7 +203,7 @@ inline double *block(double *p, std::size_t index, std::size_t size) {
 }
 
 void distribute(std::size_t size) {
-  assert(size < 8);
+  assert(size <= 8);
   double send_buf[8];
   copy_vec(send_buf, gblcblk, size);
   MPI_Allreduce(send_buf, gblcblk, static_cast<int>(size), MPI_DOUBLE, MPI_SUM,
@@ -469,10 +470,10 @@ static double z_energy(const ParticleRange &particles) {
 /*****************************************************************/
 static void add_z_force(const ParticleRange &particles) {
   double const pref = coulomb.prefactor * 2 * Utils::pi() * ux * uy;
+  constexpr std::size_t size = 1;
 
   if (elc_params.dielectric_contrast_on) {
     auto local_particles = particles;
-    constexpr std::size_t size = 1;
     if (elc_params.const_pot) {
       clear_vec(gblcblk, size);
       /* just counter the 2 pi |z| contribution stemming from P3M */
