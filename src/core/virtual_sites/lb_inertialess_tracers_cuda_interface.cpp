@@ -39,29 +39,26 @@
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host = nullptr;
 IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_host = nullptr;
 
-namespace {
-void pack_particles(ParticleRange particles,
-                    IBM_CUDA_ParticleDataInput *buffer) {
-  int dummy[3] = {0, 0, 0};
+static void pack_particles(ParticleRange particles,
+                           IBM_CUDA_ParticleDataInput *buffer) {
 
   int i = 0;
   for (auto const &part : particles) {
-    Utils::Vector3d pos = folded_position(part.r.p, box_geo);
+    auto const pos = folded_position(part.r.p, box_geo);
 
-    buffer[i].pos[0] = (float)pos[0];
-    buffer[i].pos[1] = (float)pos[1];
-    buffer[i].pos[2] = (float)pos[2];
+    buffer[i].pos[0] = static_cast<float>(pos[0]);
+    buffer[i].pos[1] = static_cast<float>(pos[1]);
+    buffer[i].pos[2] = static_cast<float>(pos[2]);
 
-    buffer[i].f[0] = (float)part.f.f[0];
-    buffer[i].f[1] = (float)part.f.f[1];
-    buffer[i].f[2] = (float)part.f.f[2];
+    buffer[i].f[0] = static_cast<float>(part.f.f[0]);
+    buffer[i].f[1] = static_cast<float>(part.f.f[1]);
+    buffer[i].f[2] = static_cast<float>(part.f.f[2]);
 
     buffer[i].is_virtual = part.p.is_virtual;
 
     i++;
   }
 }
-} // namespace
 
 /** Gather particle positions on the master node in order to communicate them
  *  to GPU. We transfer all particles (real and virtual), but actually we would
@@ -86,19 +83,17 @@ void IBM_cuda_mpi_get_particles(ParticleRange particles) {
   }
 }
 
-namespace {
-void set_velocities(ParticleRange particles,
-                    IBM_CUDA_ParticleDataOutput *buffer) {
+static void set_velocities(ParticleRange particles,
+                           IBM_CUDA_ParticleDataOutput *buffer) {
   int i = 0;
   for (auto &part : particles) {
-    if (part.p.is_virtual)
+    if (part.p.is_virtual) {
       for (int j = 0; j < 3; j++)
-        part.m.v[j] = buffer[i].v[j];
-
+        part.m.v[j] = static_cast<double>(buffer[i].v[j]);
+    }
     i++;
   }
 }
-} // namespace
 
 /** Particle velocities have been communicated from GPU, now transmit to all
  *  nodes. Analogous to @ref cuda_mpi_send_forces.
