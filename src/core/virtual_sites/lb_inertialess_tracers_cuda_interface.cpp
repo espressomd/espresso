@@ -35,12 +35,14 @@
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
 
+#include <vector>
+
 // Variables for communication
-IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host = nullptr;
-IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_host = nullptr;
+std::vector<IBM_CUDA_ParticleDataInput> IBM_ParticleDataInput_host = {};
+std::vector<IBM_CUDA_ParticleDataOutput> IBM_ParticleDataOutput_host = {};
 
 static void pack_particles(ParticleRange particles,
-                           IBM_CUDA_ParticleDataInput *buffer) {
+                           std::vector<IBM_CUDA_ParticleDataInput> &buffer) {
 
   int i = 0;
   for (auto const &part : particles) {
@@ -72,19 +74,19 @@ void IBM_cuda_mpi_get_particles(ParticleRange particles) {
     static std::vector<IBM_CUDA_ParticleDataInput> buffer;
     buffer.resize(n_part);
     /* pack local parts into buffer */
-    pack_particles(particles, buffer.data());
+    pack_particles(particles, buffer);
 
-    Utils::Mpi::gather_buffer(buffer.data(), buffer.size(), comm_cart);
+    Utils::Mpi::gather_buffer(buffer, comm_cart);
   } else {
     /* Pack own particles */
     pack_particles(particles, IBM_ParticleDataInput_host);
 
-    Utils::Mpi::gather_buffer(IBM_ParticleDataInput_host, n_part, comm_cart);
+    Utils::Mpi::gather_buffer(IBM_ParticleDataInput_host, comm_cart);
   }
 }
 
 static void set_velocities(ParticleRange particles,
-                           IBM_CUDA_ParticleDataOutput *buffer) {
+                           std::vector<IBM_CUDA_ParticleDataOutput> &buffer) {
   int i = 0;
   for (auto &part : particles) {
     if (part.p.is_virtual) {
@@ -108,10 +110,11 @@ void IBM_cuda_mpi_send_velocities(ParticleRange particles) {
 
     Utils::Mpi::scatter_buffer(buffer.data(), n_part, comm_cart);
 
-    set_velocities(particles, buffer.data());
+    set_velocities(particles, buffer);
   } else {
     /* Scatter forces to slaves */
-    Utils::Mpi::scatter_buffer(IBM_ParticleDataOutput_host, n_part, comm_cart);
+    Utils::Mpi::scatter_buffer(IBM_ParticleDataOutput_host.data(), n_part,
+                               comm_cart);
 
     set_velocities(particles, IBM_ParticleDataOutput_host);
   }
