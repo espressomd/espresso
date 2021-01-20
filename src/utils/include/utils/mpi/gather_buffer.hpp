@@ -33,17 +33,6 @@
 
 namespace Utils {
 namespace Mpi {
-namespace detail {
-template <typename T>
-void relocate_data(T *buffer, std::vector<int> const &sizes,
-                   std::vector<int> const &displ, int root) {
-  if (sizes[root] && displ[root]) {
-    for (int i = sizes[root] - 1; i >= 0; --i) {
-      buffer[i + displ[root]] = buffer[i];
-    }
-  }
-}
-} // namespace detail
 
 /**
  * @brief Gather buffer with different size on each node.
@@ -77,7 +66,11 @@ int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
         detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
 
     /* Move the original data to its new location */
-    detail::relocate_data(buffer, sizes, displ, root);
+    if (sizes[root] && displ[root]) {
+      for (int i = sizes[root] - 1; i >= 0; --i) {
+        buffer[i + displ[root]] = buffer[i];
+      }
+    }
 
     /* Gather data */
     gatherv(comm, buffer, 0, buffer, sizes.data(), displ.data(), root);
@@ -125,7 +118,11 @@ void gather_buffer(std::vector<T, Allocator> &buffer,
     buffer.resize(tot_size);
 
     /* Move the original data to its new location */
-    detail::relocate_data(buffer.data(), sizes, displ, root);
+    if (sizes[root] && displ[root]) {
+      for (int i = sizes[root] - 1; i >= 0; --i) {
+        buffer[i + displ[root]] = buffer[i];
+      }
+    }
 
     /* Gather data */
     gatherv(comm, buffer.data(), buffer.size(), buffer.data(), sizes.data(),
