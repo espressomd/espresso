@@ -77,10 +77,7 @@ print("checkpoint.get_registered_objects() = {}".format(
     checkpoint.get_registered_objects()))
 
 
-# integrate system and finally save checkpoint
-print("\n### Integrate until user presses ctrl+c ###")
+# integrate system
 print("Integrating...")
 
-np.random.seed(seed=42)
-while True:
-    system.integrator.run(1000)
+system.integrator.run(1000)
