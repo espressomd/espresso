@@ -38,28 +38,17 @@ static const int computeCapabilityMinMajor = 3;
 static const int computeCapabilityMinMinor = 0;
 /**@}*/
 
-void cuda_init() {
-  cudaError_t error = cudaStreamCreate(&stream[0]);
-  if (error != cudaSuccess) {
-    throw cuda_runtime_error_impl(error);
-  }
-}
+void cuda_init() { CUDA_CHECK(cudaStreamCreate(&stream[0])) }
 
 int cuda_get_n_gpus() {
   int deviceCount;
-  cudaError_t error = cudaGetDeviceCount(&deviceCount);
-  if (error != cudaSuccess) {
-    throw cuda_runtime_error_impl(error);
-  }
+  CUDA_CHECK(cudaGetDeviceCount(&deviceCount))
   return deviceCount;
 }
 
 int cuda_check_gpu_compute_capability(int dev) {
   cudaDeviceProp deviceProp;
-  cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
-  if (error != cudaSuccess) {
-    throw cuda_runtime_error_impl(error);
-  }
+  CUDA_CHECK(cudaGetDeviceProperties(&deviceProp, dev))
   if (deviceProp.major < computeCapabilityMinMajor ||
       (deviceProp.major == computeCapabilityMinMajor &&
        deviceProp.minor < computeCapabilityMinMinor)) {
@@ -70,21 +59,14 @@ int cuda_check_gpu_compute_capability(int dev) {
 
 void cuda_get_gpu_name(int dev, char name[64]) {
   cudaDeviceProp deviceProp;
-  cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
-  if (error != cudaSuccess) {
-    std::strncpy(name, "no GPU", 63);
-    throw cuda_runtime_error_impl(error);
-  }
+  CUDA_CHECK(cudaGetDeviceProperties(&deviceProp, dev))
   std::strncpy(name, deviceProp.name, 63);
   name[63] = 0;
 }
 
 EspressoGpuDevice cuda_get_device_props(const int dev) {
   cudaDeviceProp deviceProp;
-  cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
-  if (error != cudaSuccess) {
-    throw cuda_runtime_error_impl(error);
-  }
+  CUDA_CHECK(cudaGetDeviceProperties(&deviceProp, dev))
   EspressoGpuDevice device{dev,
                            "",
                            "",
@@ -99,26 +81,14 @@ EspressoGpuDevice cuda_get_device_props(const int dev) {
 }
 
 void cuda_set_device(int dev) {
-  cudaError_t error = cudaSetDevice(dev);
-  if (error != cudaSuccess) {
-    throw cuda_runtime_error_impl(error);
-  }
-  error = cudaStreamDestroy(stream[0]);
-  if (error != cudaSuccess) {
-    throw cuda_runtime_error_impl(error);
-  }
-  error = cudaStreamCreate(&stream[0]);
-  if (error != cudaSuccess) {
-    throw cuda_runtime_error_impl(error);
-  }
+  CUDA_CHECK(cudaSetDevice(dev))
+  CUDA_CHECK(cudaStreamDestroy(stream[0]))
+  CUDA_CHECK(cudaStreamCreate(&stream[0]))
 }
 
 int cuda_get_device() {
   int dev;
-  cudaError_t error = cudaGetDevice(&dev);
-  if (error != cudaSuccess) {
-    throw cuda_runtime_error_impl(error);
-  }
+  CUDA_CHECK(cudaGetDevice(&dev))
   return dev;
 }
 

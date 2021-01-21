@@ -41,6 +41,15 @@ private:
   }
 };
 
+/** Convert CUDA error codes into runtime errors. */
+#define CUDA_CHECK(statement)                                                  \
+  {                                                                            \
+    cudaError_t const _cuda_error_code = (statement);                          \
+    if (_cuda_error_code != cudaSuccess) {                                     \
+      throw cuda_runtime_error_impl(_cuda_error_code);                         \
+    }                                                                          \
+  }
+
 /** CUDA streams for parallel computing on CPU and GPU */
 extern cudaStream_t stream[1];
 
