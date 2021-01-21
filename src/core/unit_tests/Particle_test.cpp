@@ -122,3 +122,51 @@ BOOST_AUTO_TEST_CASE(properties_serialization) {
     BOOST_CHECK_EQUAL(out.identity, prop.identity);
   }
 }
+
+void check_particle_force(ParticleForce const &out, ParticleForce const &ref) {
+  BOOST_CHECK_EQUAL(out.f[0], ref.f[0]);
+  BOOST_CHECK_EQUAL(out.f[1], ref.f[1]);
+  BOOST_CHECK_EQUAL(out.f[2], ref.f[2]);
+#ifdef ROTATION
+  BOOST_CHECK_EQUAL(out.torque[0], ref.torque[0]);
+  BOOST_CHECK_EQUAL(out.torque[1], ref.torque[1]);
+  BOOST_CHECK_EQUAL(out.torque[2], ref.torque[2]);
+#endif
+}
+
+namespace Utils {
+template <>
+struct is_statically_serializable<ParticleForce> : std::true_type {};
+} // namespace Utils
+
+BOOST_AUTO_TEST_CASE(force_serialization) {
+  auto const expected_size =
+      Utils::MemcpyOArchive::packing_size<ParticleForce>();
+
+  BOOST_CHECK_LE(expected_size, sizeof(ParticleForce));
+
+  std::vector<char> buf(expected_size);
+
+  auto pf = ParticleForce{{1, 2, 3}};
+#ifdef ROTATION
+  pf.torque = {4, 5, 6};
+#endif
+
+  {
+    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+
+    oa << pf;
+
+    BOOST_CHECK_EQUAL(oa.bytes_written(), expected_size);
+  }
+
+  {
+    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    ParticleForce out;
+
+    ia >> out;
+
+    BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
+    check_particle_force(out, pf);
+  }
+}
