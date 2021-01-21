@@ -30,7 +30,6 @@ required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import checkpointing
-import numpy as np
 
 checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
 checkpoint.load()

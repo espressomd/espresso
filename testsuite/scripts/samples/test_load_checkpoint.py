@@ -27,6 +27,11 @@ sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Sample(ut.TestCase):
     system = sample.system
 
+    def test_file_generation(self):
+        self.assertEqual(set(sample.checkpoint.get_registered_objects()),
+                         {'myvar', 'system', 'p3m'})
+        self.assertEqual(sample.myvar, "some script variable (updated value)")
+
 
 if __name__ == "__main__":
     ut.main()
