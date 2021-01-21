@@ -170,3 +170,24 @@ BOOST_AUTO_TEST_CASE(force_serialization) {
     check_particle_force(out, pf);
   }
 }
+
+BOOST_AUTO_TEST_CASE(force_constructors) {
+
+  auto pf = ParticleForce{{1, 2, 3}};
+#ifdef ROTATION
+  pf.torque = {4, 5, 6};
+#endif
+
+  // check copy constructor
+  {
+    ParticleForce out(pf);
+    check_particle_force(out, pf);
+  }
+
+  // check copy assignment operator
+  {
+    ParticleForce out; // avoid copy elision
+    out = pf;
+    check_particle_force(out, pf);
+  }
+}
