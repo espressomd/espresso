@@ -28,10 +28,10 @@ class GPUAvailability(ut.TestCase):
 
     def test(self):
         if espressomd.has_features("CUDA"):
-            self.assertEqual(self.system.cuda_init_handle.device_list != {},
+            self.assertEqual(self.system.cuda_init_handle.list_devices() != {},
                              espressomd.gpu_available())
             self.assertEqual(
-                self.system.cuda_init_handle.device_list_properties != {},
+                self.system.cuda_init_handle.list_device_properties() != {},
                 espressomd.gpu_available())
         else:
             self.assertFalse(espressomd.gpu_available())
@@ -40,13 +40,9 @@ class GPUAvailability(ut.TestCase):
     def test_exceptions(self):
         error_msg = 'CUDA error: '
         if espressomd.gpu_available():
-            n_gpus = len(self.system.cuda_init_handle.device_list)
+            n_gpus = len(self.system.cuda_init_handle.list_devices())
             with self.assertRaisesRegex(RuntimeError, error_msg):
                 self.system.cuda_init_handle.device = n_gpus + 1
-            with self.assertRaisesRegex(Exception, ' is read only'):
-                self.system.cuda_init_handle.device_list = {0: 1}
-            with self.assertRaisesRegex(Exception, ' is read only'):
-                self.system.cuda_init_handle.device_list_properties = {0: 1}
         else:
             with self.assertRaisesRegex(RuntimeError, error_msg):
                 self.system.cuda_init_handle.device
@@ -55,8 +51,8 @@ class GPUAvailability(ut.TestCase):
 
     @utx.skipIfMissingGPU()
     def test_devices(self):
-        device_list = self.system.cuda_init_handle.device_list
-        device_list_p = self.system.cuda_init_handle.device_list_properties
+        device_list = self.system.cuda_init_handle.list_devices()
+        device_list_p = self.system.cuda_init_handle.list_device_properties()
         self.assertEqual(len(device_list_p), 1)
         device_list_p_head = list(device_list_p.values())[0]
         dev_keys = {'name', 'compute_capability', 'cores', 'total_memory'}

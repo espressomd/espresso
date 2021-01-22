@@ -53,8 +53,7 @@ cdef class CudaInitHandle:
             """
             cuda_set_device(dev)
 
-        @property
-        def device_list(self):
+        def list_devices(self):
             """
             List devices.
 
@@ -79,12 +78,7 @@ cdef class CudaInitHandle:
                 devices[i] = utils.to_str(gpu_name_buffer)
             return devices
 
-        @device_list.setter
-        def device_list(self, dict dev_dict):
-            raise Exception("cuda device list is read only")
-
-        @property
-        def device_list_properties(self):
+        def list_device_properties(self):
             """
             List devices with their properties on each host machine.
 
@@ -116,10 +110,6 @@ cdef class CudaInitHandle:
                     'total_memory': dev.total_memory,
                 }
             return resources
-
-        @device_list_properties.setter
-        def device_list_properties(self, dict dev_dict):
-            raise Exception("cuda device list is read only")
 
 IF CUDA:
     def gpu_available():
