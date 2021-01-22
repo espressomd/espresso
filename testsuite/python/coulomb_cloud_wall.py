@@ -141,11 +141,7 @@ class CoulombCloudWall(ut.TestCase):
             espressomd.electrostatics.Scafacos(
                 prefactor=0.5,
                 method_name="p3m",
-                method_params={
-                    "p3m_r_cut": -1.5,
-                    "p3m_grid": 64,
-                    "p3m_cao": 7,
-                    "p3m_alpha": 2.70746}))
+                method_params={"p3m_grid": 64, "p3m_cao": 7}))
         self.S.integrator.run(0)
         # check the scafacos script interface
         self.assertEqual(self.S.actors[-1].get_params()['prefactor'], 0.5)
