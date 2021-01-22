@@ -63,9 +63,9 @@ class CollisionDetection(ut.TestCase):
             self.s.collision_detection.mode = "bind_centers"
 
         # Verify exception throwing for unknown collision modes
-        with self.assertRaises(Exception):
-            self.s.collision_detection.set_params(mode=0)
-            self.s.collision_detection.set_params(mode="blahblah")
+        for unknown_mode in (0, "unknown"):
+            with self.assertRaisesRegex(Exception, "Mode not handled"):
+                self.s.collision_detection.set_params(mode=unknown_mode)
 
         # That should work
         self.s.collision_detection.set_params(mode="off")
