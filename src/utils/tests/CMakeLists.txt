@@ -75,7 +75,7 @@ unit_test(NAME all_compare_test SRC all_compare_test.cpp DEPENDS EspressoUtils
 unit_test(NAME gatherv_test SRC gatherv_test.cpp DEPENDS EspressoUtils
           Boost::mpi MPI::MPI_CXX NUM_PROC 3)
 unit_test(NAME all_gatherv_test SRC all_gatherv_test.cpp DEPENDS EspressoUtils
-          Boost::mpi MPI::MPI_CXX)
+          Boost::mpi MPI::MPI_CXX EspressoUtils NUM_PROC 2)
 unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS EspressoUtils
           Boost::mpi MPI::MPI_CXX EspressoUtils NUM_PROC 3)
 unit_test(NAME matrix_test SRC matrix_test.cpp DEPENDS EspressoUtils
