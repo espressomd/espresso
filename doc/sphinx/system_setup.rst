@@ -231,15 +231,32 @@ For more information please check :class:`espressomd.cuda_init.CudaInitHandle`.
 List available CUDA devices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you want to list available CUDA devices
-you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g., ::
+If you want to list available CUDA devices, you should call
+:meth:`espressomd.cuda_init.CudaInitHandle.list_devices`::
 
-    system = espressomd.System(box_l=[1, 1, 1])
+    >>> import espressomd
+    >>> system = espressomd.System(box_l=[1, 1, 1])
+    >>> print(system.cuda_init_handle.list_devices())
+    {0: 'GeForce RTX 2080', 1: 'GeForce GT 730'}
 
-    print(system.cuda_init_handle.device_list)
-
-This attribute is read only and will return a dictionary containing
+This method returns a dictionary containing
 the device id as key and the device name as its value.
+
+To get more details on the CUDA devices for each MPI node, call
+:meth:`espressomd.cuda_init.CudaInitHandle.list_devices_properties`::
+
+    >>> import pprint
+    >>> import espressomd
+    >>> system = espressomd.System(box_l=[1, 1, 1])
+    >>> pprint.pprint(system.cuda_init_handle.list_devices_properties())
+    {'seraue': {0: {'name': 'GeForce RTX 2080',
+                    'compute_capability': (7, 5),
+                    'cores': 46,
+                    'total_memory': 8370061312},
+                1: {'name': 'GeForce GT 730',
+                    'compute_capability': (3, 5),
+                    'cores': 2,
+                    'total_memory': 1014104064}}}
 
 .. _Selection of CUDA device:
 
@@ -250,9 +267,9 @@ When you start ``pypresso`` your first GPU should be selected.
 If you wanted to use the second GPU, this can be done
 by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
 
-    system = espressomd.System(box_l=[1, 1, 1])
-
-    system.cuda_init_handle.device = 1
+    >>> import espressomd
+    >>> system = espressomd.System(box_l=[1, 1, 1])
+    >>> system.cuda_init_handle.device = 1
 
 Setting a device id outside the valid range or a device
 which does not meet the minimum requirements will raise
