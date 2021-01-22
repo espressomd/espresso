@@ -71,7 +71,6 @@ function(find_gpu_library)
   endif()
 endfunction(find_gpu_library)
 
-find_gpu_library(VARNAME CUDA_LIBRARY NAMES cuda REQUIRED)
 find_gpu_library(VARNAME CUDART_LIBRARY NAMES cudart REQUIRED)
 find_gpu_library(VARNAME CUDA_CUFFT_LIBRARIES NAMES cufft REQUIRED)
 
