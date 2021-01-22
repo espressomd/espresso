@@ -117,7 +117,7 @@ class CollisionDetection(ScriptInterfaceHelper):
 
         """
 
-        if not ("mode" in kwargs):
+        if "mode" not in kwargs:
             raise Exception(
                 "Collision mode must be specified via the mode keyword argument")
 

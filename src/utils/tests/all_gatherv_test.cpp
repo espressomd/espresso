@@ -23,7 +23,7 @@
 #include <boost/mpi.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "utils/mpi/all_gatherv.hpp"
+#include <utils/mpi/all_gatherv.hpp>
 using Utils::Mpi::all_gatherv;
 
 #include <string>
