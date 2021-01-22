@@ -124,13 +124,9 @@ BOOST_AUTO_TEST_CASE(properties_serialization) {
 }
 
 void check_particle_force(ParticleForce const &out, ParticleForce const &ref) {
-  BOOST_CHECK_EQUAL(out.f[0], ref.f[0]);
-  BOOST_CHECK_EQUAL(out.f[1], ref.f[1]);
-  BOOST_CHECK_EQUAL(out.f[2], ref.f[2]);
+  BOOST_TEST(out.f == ref.f, boost::test_tools::per_element());
 #ifdef ROTATION
-  BOOST_CHECK_EQUAL(out.torque[0], ref.torque[0]);
-  BOOST_CHECK_EQUAL(out.torque[1], ref.torque[1]);
-  BOOST_CHECK_EQUAL(out.torque[2], ref.torque[2]);
+  BOOST_TEST(out.torque == ref.torque, boost::test_tools::per_element());
 #endif
 }
 
