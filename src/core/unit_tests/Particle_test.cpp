@@ -122,3 +122,68 @@ BOOST_AUTO_TEST_CASE(properties_serialization) {
     BOOST_CHECK_EQUAL(out.identity, prop.identity);
   }
 }
+
+void check_particle_force(ParticleForce const &out, ParticleForce const &ref) {
+  BOOST_TEST(out.f == ref.f, boost::test_tools::per_element());
+#ifdef ROTATION
+  BOOST_TEST(out.torque == ref.torque, boost::test_tools::per_element());
+#endif
+}
+
+namespace Utils {
+template <>
+struct is_statically_serializable<ParticleForce> : std::true_type {};
+} // namespace Utils
+
+BOOST_AUTO_TEST_CASE(force_serialization) {
+  auto const expected_size =
+      Utils::MemcpyOArchive::packing_size<ParticleForce>();
+
+  BOOST_CHECK_LE(expected_size, sizeof(ParticleForce));
+
+  std::vector<char> buf(expected_size);
+
+  auto pf = ParticleForce{{1, 2, 3}};
+#ifdef ROTATION
+  pf.torque = {4, 5, 6};
+#endif
+
+  {
+    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+
+    oa << pf;
+
+    BOOST_CHECK_EQUAL(oa.bytes_written(), expected_size);
+  }
+
+  {
+    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    ParticleForce out;
+
+    ia >> out;
+
+    BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
+    check_particle_force(out, pf);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(force_constructors) {
+
+  auto pf = ParticleForce{{1, 2, 3}};
+#ifdef ROTATION
+  pf.torque = {4, 5, 6};
+#endif
+
+  // check copy constructor
+  {
+    ParticleForce out(pf);
+    check_particle_force(out, pf);
+  }
+
+  // check copy assignment operator
+  {
+    ParticleForce out; // avoid copy elision
+    out = pf;
+    check_particle_force(out, pf);
+  }
+}

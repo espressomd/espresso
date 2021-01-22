@@ -895,10 +895,10 @@ auto lb_next_offsets(const Lattice &lb_lattice,
 }
 
 template <typename T>
-void lb_stream(LB_Fluid &lbfluid, const std::array<T, 19> &populations,
+void lb_stream(LB_Fluid &lb_fluid, const std::array<T, 19> &populations,
                size_t index, std::array<ptrdiff_t, 19> const &offsets) {
   for (int i = 0; i < populations.size(); i++) {
-    lbfluid[i][index + offsets[i]] = populations[i];
+    lb_fluid[i][index + offsets[i]] = populations[i];
   }
 }
 
