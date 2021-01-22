@@ -78,7 +78,7 @@ cdef class CudaInitHandle:
                 devices[i] = utils.to_str(gpu_name_buffer)
             return devices
 
-        def list_device_properties(self):
+        def list_devices_properties(self):
             """
             List devices with their properties on each host machine.
 

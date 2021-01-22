@@ -31,7 +31,7 @@ class GPUAvailability(ut.TestCase):
             self.assertEqual(self.system.cuda_init_handle.list_devices() != {},
                              espressomd.gpu_available())
             self.assertEqual(
-                self.system.cuda_init_handle.list_device_properties() != {},
+                self.system.cuda_init_handle.list_devices_properties() != {},
                 espressomd.gpu_available())
         else:
             self.assertFalse(espressomd.gpu_available())
@@ -52,7 +52,7 @@ class GPUAvailability(ut.TestCase):
     @utx.skipIfMissingGPU()
     def test_devices(self):
         device_list = self.system.cuda_init_handle.list_devices()
-        device_list_p = self.system.cuda_init_handle.list_device_properties()
+        device_list_p = self.system.cuda_init_handle.list_devices_properties()
         self.assertEqual(len(device_list_p), 1)
         device_list_p_head = list(device_list_p.values())[0]
         dev_keys = {'name', 'compute_capability', 'cores', 'total_memory'}
