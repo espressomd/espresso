@@ -3271,7 +3271,7 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
-flux_%d\n\
+flux_fluc_%d\n\
 ASCII\n\
 \n\
 DATASET STRUCTURED_POINTS\n\
@@ -3280,7 +3280,7 @@ ORIGIN %f %f %f\n\
 SPACING %f %f %f\n\
 \n\
 POINT_DATA %u\n\
-SCALARS flux_%d float 3\n\
+SCALARS flux_fluc_%d float 4\n\
 LOOKUP_TABLE default\n",
           species, ek_parameters.dim_x, ek_parameters.dim_y,
           ek_parameters.dim_z, ek_parameters.agrid * 0.5f,
@@ -3507,7 +3507,7 @@ int ek_print_vtk_flux_link(int species, char *filename) {
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
-flux_%d\n\
+flux_link_%d\n\
 ASCII\n\
 \n\
 DATASET STRUCTURED_POINTS\n\
@@ -3516,7 +3516,7 @@ ORIGIN %f %f %f\n\
 SPACING %f %f %f\n\
 \n\
 POINT_DATA %u\n\
-SCALARS flux_%d float 3\n\
+SCALARS flux_link_%d float 13\n\
 LOOKUP_TABLE default\n",
           species, ek_parameters.dim_x, ek_parameters.dim_y,
           ek_parameters.dim_z, ek_parameters.agrid * 0.5f,
@@ -3527,7 +3527,7 @@ LOOKUP_TABLE default\n",
   for (int i = 0; i < ek_parameters.number_of_nodes; i++) {
     rhoindex_linear2cartesian_host(i, coord);
 
-    fprintf(fp, "%e %e %e %e %e %e %e %e %e %e %e %e %e \n",
+    fprintf(fp, "%e %e %e %e %e %e %e %e %e %e %e %e %e\n",
             fluxes[jindex_getByRhoLinear_host(i, 0)],
             fluxes[jindex_getByRhoLinear_host(i, 1)],
             fluxes[jindex_getByRhoLinear_host(i, 2)],
