@@ -50,7 +50,8 @@ class GPUAvailability(ut.TestCase):
                 self.system.cuda_init_handle.device = 0
 
     @utx.skipIfMissingGPU()
-    def test_devices(self):
+    def test_list_devices(self):
+        # check if GPU properties can be queried
         device_list = self.system.cuda_init_handle.list_devices()
         device_list_p = self.system.cuda_init_handle.list_devices_properties()
         self.assertEqual(len(device_list_p), 1)

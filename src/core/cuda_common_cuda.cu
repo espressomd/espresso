@@ -69,9 +69,9 @@ pinned_vector<float> particle_torques_host;
 
 cudaStream_t stream[1];
 
-void _cuda_check_errors(const dim3 &block, const dim3 &grid,
-                        const char *function, const char *file,
-                        unsigned int line) {
+void cuda_check_errors_exit(const dim3 &block, const dim3 &grid,
+                            const char *function, const char *file,
+                            unsigned int line) {
   cudaError_t CU_err = cudaGetLastError();
   if (CU_err != cudaSuccess) {
     fprintf(stderr,
@@ -225,8 +225,9 @@ CUDA_energy copy_energy_from_GPU() {
   return energy_host;
 }
 
-void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
-  if (cudaSuccess != CU_err) {
+void cuda_safe_mem_exit(cudaError_t CU_err, const char *file,
+                        unsigned int line) {
+  if (CU_err != cudaSuccess) {
     fprintf(stderr, "CUDA Memory error at %s:%u.\n", file, line);
     fprintf(stderr, "CUDA error: %s\n", cudaGetErrorString(CU_err));
     if (CU_err == cudaErrorInvalidValue)

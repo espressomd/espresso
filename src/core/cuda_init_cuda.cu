@@ -99,18 +99,18 @@ int cuda_test_device_access() {
 
   err = cudaMalloc((void **)&d, sizeof(int));
   if (err != cudaSuccess) {
-    throw cuda_runtime_error_impl(err);
+    throw cuda_runtime_error_cuda(err);
   }
   err = cudaMemcpy(d, &h, sizeof(int), cudaMemcpyHostToDevice);
   if (err != cudaSuccess) {
     cudaFree(d);
-    throw cuda_runtime_error_impl(err);
+    throw cuda_runtime_error_cuda(err);
   }
   h = 0;
   err = cudaMemcpy(&h, d, sizeof(int), cudaMemcpyDeviceToHost);
   cudaFree(d);
   if (err != cudaSuccess) {
-    throw cuda_runtime_error_impl(err);
+    throw cuda_runtime_error_cuda(err);
   }
   if (h != 42) {
     return ES_ERROR;

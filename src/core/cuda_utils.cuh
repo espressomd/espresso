@@ -29,9 +29,9 @@
 
 #include <string>
 
-class cuda_runtime_error_impl : public cuda_runtime_error {
+class cuda_runtime_error_cuda : public cuda_runtime_error {
 public:
-  cuda_runtime_error_impl(cudaError_t error)
+  cuda_runtime_error_cuda(cudaError_t error)
       : cuda_runtime_error(error_message(error)) {}
 
 private:
@@ -44,35 +44,39 @@ private:
 /** Convert CUDA error codes into runtime errors. */
 #define CUDA_CHECK(statement)                                                  \
   {                                                                            \
-    cudaError_t const _cuda_error_code = (statement);                          \
-    if (_cuda_error_code != cudaSuccess) {                                     \
-      throw cuda_runtime_error_impl(_cuda_error_code);                         \
+    cudaError_t const error_code = (statement);                                \
+    if (error_code != cudaSuccess) {                                           \
+      throw cuda_runtime_error_cuda(error_code);                               \
     }                                                                          \
   }
 
 /** CUDA streams for parallel computing on CPU and GPU */
 extern cudaStream_t stream[1];
 
-/** Error output for memory allocation and memory copy
- *  @param err   cuda error code
+/** In case of error during CUDA memory allocation and memory copy, print
+ *  the error message and exit.
+ *  @param CU_err cuda error code
  *  @param file  .cu file were the error took place
  *  @param line  line of the file were the error took place
  */
-void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line);
-
-void _cuda_check_errors(const dim3 &block, const dim3 &grid,
-                        const char *function, const char *file,
+void cuda_safe_mem_exit(cudaError_t CU_err, const char *file,
                         unsigned int line);
 
-#define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
+/** In case of error during a CUDA operation, print the error message and exit.
+ */
+void cuda_check_errors_exit(const dim3 &block, const dim3 &grid,
+                            const char *function, const char *file,
+                            unsigned int line);
+
+#define cuda_safe_mem(a) cuda_safe_mem_exit((a), __FILE__, __LINE__)
 
 #define KERNELCALL_shared(_function, _grid, _block, _stream, ...)              \
   _function<<<_grid, _block, _stream, stream[0]>>>(__VA_ARGS__);               \
-  _cuda_check_errors(_grid, _block, #_function, __FILE__, __LINE__);
+  cuda_check_errors_exit(_grid, _block, #_function, __FILE__, __LINE__);
 
 #define KERNELCALL_stream(_function, _grid, _block, _stream, ...)              \
   _function<<<_grid, _block, 0, _stream>>>(__VA_ARGS__);                       \
-  _cuda_check_errors(_grid, _block, #_function, __FILE__, __LINE__);
+  cuda_check_errors_exit(_grid, _block, #_function, __FILE__, __LINE__);
 
 #define KERNELCALL(_function, _grid, _block, ...)                              \
   KERNELCALL_shared(_function, _grid, _block, 0, ##__VA_ARGS__)
