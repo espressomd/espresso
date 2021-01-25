@@ -17,9 +17,19 @@
 
 import unittest as ut
 import unittest_decorators as utx
+import pathlib
+
 import sys
 import math
 import numpy as np
+try:
+    import vtk
+    from vtk.util import numpy_support as VN
+    skipIfMissingPythonPackage = utx.no_skip
+except ImportError:
+    skipIfMissingPythonPackage = ut.skip(
+        "Python module vtk not available, skipping test!")
+
 
 import espressomd
 import espressomd.electrokinetics
@@ -155,6 +165,18 @@ def bisection():
 class ek_eof_one_species(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     xi = bisection()
+
+    def parse_vtk(self, filepath, name, shape):
+        reader = vtk.vtkStructuredPointsReader()
+        reader.SetFileName(filepath)
+        reader.ReadAllVectorsOn()
+        reader.ReadAllScalarsOn()
+        reader.Update()
+
+        data = reader.GetOutput()
+        points = data.GetPointData()
+
+        return VN.vtk_to_numpy(points.GetArray(name)).reshape(shape, order='F')
 
     @classmethod
     def setUpClass(cls):
@@ -351,6 +373,83 @@ class ek_eof_one_species(ut.TestCase):
                         "Pressure accuracy yz component not achieved")
         self.assertLess(total_pressure_difference_xz, 1.0e-04,
                         "Pressure accuracy xz component not achieved")
+
+    @skipIfMissingPythonPackage
+    def test_vtk(self):
+        ek = self.ek
+        counterions = self.counterions
+        grid_dims = list(
+            map(int, np.round(self.system.box_l / params_base['agrid'])))
+
+        # write VTK files
+        vtk_root = f"vtk_out/ek_eof_{axis}"
+        pathlib.Path(vtk_root).mkdir(parents=True, exist_ok=True)
+        path_vtk_boundary = f"{vtk_root}/boundary.vtk"
+        path_vtk_velocity = f"{vtk_root}/velocity.vtk"
+        path_vtk_potential = f"{vtk_root}/potential.vtk"
+        path_vtk_lbdensity = f"{vtk_root}/density.vtk"
+        path_vtk_lbforce = f"{vtk_root}/lbforce.vtk"
+        path_vtk_density = f"{vtk_root}/lbdensity.vtk"
+        path_vtk_flux = f"{vtk_root}/flux.vtk"
+        path_vtk_flux_link = f"{vtk_root}/flux_link.vtk"
+        ek.write_vtk_boundary(path_vtk_boundary)
+        ek.write_vtk_velocity(path_vtk_velocity)
+        ek.write_vtk_potential(path_vtk_potential)
+        ek.write_vtk_density(path_vtk_lbdensity)
+        ek.write_vtk_lbforce(path_vtk_lbforce)
+        counterions.write_vtk_density(path_vtk_density)
+        counterions.write_vtk_flux(path_vtk_flux)
+        counterions.write_vtk_flux_link(path_vtk_flux_link)
+
+        # load VTK files to check they are correctly formatted
+        get_vtk = self.parse_vtk
+        vtk_boundary = get_vtk(path_vtk_boundary, "boundary", grid_dims)
+        vtk_velocity = get_vtk(path_vtk_velocity, "velocity", grid_dims + [3])
+        vtk_potential = get_vtk(path_vtk_potential, "potential", grid_dims)
+        vtk_lbdensity = get_vtk(path_vtk_lbdensity, "density_lb", grid_dims)
+        get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
+        vtk_density = get_vtk(path_vtk_density, "density_1", grid_dims)
+        vtk_flux = get_vtk(path_vtk_flux, "flux_1", grid_dims + [3])
+        get_vtk(path_vtk_flux_link, "flux_link_1", grid_dims + [13])
+
+        # check VTK files against the EK grid
+        species_density = np.zeros(grid_dims)
+        species_flux = np.zeros(grid_dims + [3])
+        ek_potential = np.zeros(grid_dims)
+        ek_velocity = np.zeros(grid_dims + [3])
+        for i in range(grid_dims[0]):
+            for j in range(grid_dims[1]):
+                for k in range(grid_dims[2]):
+                    index = np.array([i, j, k])
+                    species_density[i, j, k] = counterions[index].density
+                    species_flux[i, j, k] = counterions[index].flux
+                    ek_potential[i, j, k] = ek[index].potential
+                    ek_velocity[i, j, k] = ek[index].velocity
+
+        np.testing.assert_allclose(vtk_velocity, ek_velocity, atol=1e-6)
+        np.testing.assert_allclose(vtk_potential, ek_potential, atol=1e-6)
+        np.testing.assert_allclose(vtk_density, species_density, atol=1e-6)
+        np.testing.assert_allclose(vtk_flux, species_flux, atol=1e-6)
+
+        # check VTK files against the EK parameters
+        dens = params_base['density_water']
+        left_dist = int(params_base['padding'] / params_base['agrid'])
+        right_dist = int(-params_base['padding'] / params_base['agrid'])
+        thickness = int(params_base['thickness'] / params_base['agrid'])
+        i = np.roll([0, 0, right_dist], params['n_roll_index'])
+        j = np.roll([thickness, thickness, left_dist], params['n_roll_index'])
+        mask_left = np.zeros(grid_dims, dtype=bool)
+        mask_left[:j[0], :j[1], :j[2]] = True
+        mask_right = np.zeros(grid_dims, dtype=bool)
+        mask_right[i[0]:, i[1]:, i[2]:] = True
+        mask_outside = np.logical_or(mask_left, mask_right)
+        mask_inside = np.logical_not(mask_outside)
+        np.testing.assert_allclose(vtk_lbdensity[mask_inside], dens, atol=1e-4)
+        np.testing.assert_allclose(vtk_lbdensity[mask_outside], 0, atol=1e-6)
+        np.testing.assert_allclose(vtk_boundary[mask_left], 1, atol=1e-6)
+        np.testing.assert_allclose(vtk_boundary[mask_left], 1, atol=1e-6)
+        np.testing.assert_allclose(vtk_boundary[mask_right], 2, atol=1e-6)
+        np.testing.assert_allclose(vtk_boundary[mask_inside], 0, atol=1e-6)
 
 
 if __name__ == "__main__":
