@@ -366,7 +366,7 @@ IF ELECTROKINETICS:
             self.node[1] = key[1]
             self.node[2] = key[2]
             if not lb_lbnode_is_index_valid(self.node):
-                raise ValueError("LB node index out of bounds")
+                raise IndexError("LB node index out of bounds")
 
         property potential:
             def __get__(self):
@@ -544,7 +544,7 @@ IF ELECTROKINETICS:
             self.node[2] = key[2]
             self.id = id
             if not lb_lbnode_is_index_valid(self.node):
-                raise ValueError("LB node index out of bounds")
+                raise IndexError("LB node index out of bounds")
 
         property density:
             def __set__(self, value):
@@ -572,4 +572,4 @@ IF ELECTROKINETICS:
                         self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
                     raise Exception("Species has not been added to EK.")
 
-                return np.array(flux[0], flux[1], flux[2])
+                return np.array([flux[0], flux[1], flux[2]])
