@@ -392,6 +392,8 @@ class ek_eof_one_species(ut.TestCase):
         path_vtk_density = f"{vtk_root}/lbdensity.vtk"
         path_vtk_flux = f"{vtk_root}/flux.vtk"
         path_vtk_flux_link = f"{vtk_root}/flux_link.vtk"
+        if espressomd.has_features('EK_DEBUG'):
+            path_vtk_flux_fluc = f"{vtk_root}/flux_fluc.vtk"
         ek.write_vtk_boundary(path_vtk_boundary)
         ek.write_vtk_velocity(path_vtk_velocity)
         ek.write_vtk_potential(path_vtk_potential)
@@ -399,6 +401,8 @@ class ek_eof_one_species(ut.TestCase):
         ek.write_vtk_lbforce(path_vtk_lbforce)
         counterions.write_vtk_density(path_vtk_density)
         counterions.write_vtk_flux(path_vtk_flux)
+        if espressomd.has_features('EK_DEBUG'):
+            counterions.write_vtk_flux_fluc(path_vtk_flux_fluc)
         counterions.write_vtk_flux_link(path_vtk_flux_link)
 
         # load VTK files to check they are correctly formatted
@@ -410,6 +414,8 @@ class ek_eof_one_species(ut.TestCase):
         get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
         vtk_density = get_vtk(path_vtk_density, "density_1", grid_dims)
         vtk_flux = get_vtk(path_vtk_flux, "flux_1", grid_dims + [3])
+        if espressomd.has_features('EK_DEBUG'):
+            get_vtk(path_vtk_flux_fluc, "flux_fluc_1", grid_dims + [4])
         get_vtk(path_vtk_flux_link, "flux_link_1", grid_dims + [13])
 
         # check VTK files against the EK grid
