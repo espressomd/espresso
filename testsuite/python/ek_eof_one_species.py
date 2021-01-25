@@ -25,21 +25,22 @@ import espressomd
 import espressomd.electrokinetics
 import espressomd.shapes
 import ek_common
-from tests_common import DynamicDict
 
 ##########################################################################
 #                          Set up the System                             #
 ##########################################################################
-# Set the slit pore geometry the width is the non-periodic part of the geometry
-# the padding is used to ensure that there is no field inside outside the slit
+# Set the slit pore geometry. The width is the non-periodic part of the
+# geometry. The padding is used to ensure that there is no field outside
+# the slit.
 
-params_base = DynamicDict([
+params_base = dict([
     ('dt', 1.0 / 7),
     ('integration_length', 2300),
     ('agrid', 1. / 3),
     ('density_water', 26.15),
     ('friction', 1.9),
     ('width', 20.0),
+    ('thickness', 3.0),
     ('sigma', -0.04),
     ('padding', 6.0),
     ('force', 0.07),
@@ -47,8 +48,53 @@ params_base = DynamicDict([
     ('viscosity_kinematic', 1.7),
     ('bjerrum_length', 0.8),
     ('sigma', -0.04),
-    ('density_counterions', '-2.0 * sigma / width'),
-    ('valency', 1.0)])
+    ('valency', 1.0),
+])
+params_base['density_counterions'] = -2.0 * \
+    params_base['sigma'] / params_base['width']
+
+axis = "@TEST_SUFFIX@"
+params = {
+    "x": dict([
+        ('box_x', params_base['thickness']),
+        ('box_y', params_base['thickness']),
+        ('box_z', params_base['width'] + 2 * params_base['padding']),
+        ('ext_force_density', [params_base['force'], 0.0, 0.0]),
+        ('wall_normal_1', [0, 0, 1]),
+        ('wall_normal_2', [0, 0, -1]),
+        ('periodic_dirs', (0, 1)),
+        ('non_periodic_dir', 2),
+        ('n_roll_index', 0),
+        ('calculated_pressure_xy', 0.0),
+        ('calculated_pressure_yz', 0.0)
+    ]),
+    "y": dict([
+        ('box_x', params_base['width'] + 2 * params_base['padding']),
+        ('box_y', params_base['thickness']),
+        ('box_z', params_base['thickness']),
+        ('ext_force_density', [0.0, params_base['force'], 0.0]),
+        ('wall_normal_1', [1, 0, 0]),
+        ('wall_normal_2', [-1, 0, 0]),
+        ('periodic_dirs', (1, 2)),
+        ('non_periodic_dir', 0),
+        ('n_roll_index', 1),
+        ('calculated_pressure_xz', 0.0),
+        ('calculated_pressure_yz', 0.0)
+    ]),
+    "z": dict([
+        ('box_x', params_base['thickness']),
+        ('box_y', params_base['width'] + 2 * params_base['padding']),
+        ('box_z', params_base['thickness']),
+        ('ext_force_density', [0.0, 0.0, params_base['force']]),
+        ('wall_normal_1', [0, 1, 0]),
+        ('wall_normal_2', [0, -1, 0]),
+        ('periodic_dirs', (0, 2)),
+        ('non_periodic_dir', 1),
+        ('n_roll_index', 2),
+        ('calculated_pressure_xy', 0.0),
+        ('calculated_pressure_xz', 0.0)
+    ])
+}[axis]
 
 
 def bisection():
@@ -110,16 +156,16 @@ class ek_eof_one_species(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     xi = bisection()
 
-    def run_test(self, params):
-        system = self.system
+    @classmethod
+    def setUpClass(cls):
+        system = cls.system
         system.box_l = [params['box_x'], params['box_y'], params['box_z']]
         system.time_step = params_base['dt']
-        system.thermostat.turn_off()
         system.cell_system.skin = 0.1
         system.thermostat.turn_off()
 
         # Set up the (LB) electrokinetics fluid
-        ek = espressomd.electrokinetics.Electrokinetics(
+        ek = cls.ek = espressomd.electrokinetics.Electrokinetics(
             agrid=params_base['agrid'],
             lb_density=params_base['density_water'],
             viscosity=params_base['viscosity_kinematic'],
@@ -129,7 +175,7 @@ class ek_eof_one_species(ut.TestCase):
             params_base['temperature'],
             stencil="linkcentered")
 
-        counterions = espressomd.electrokinetics.Species(
+        counterions = cls.counterions = espressomd.electrokinetics.Species(
             density=params_base['density_counterions'],
             D=0.3,
             valency=params_base['valency'],
@@ -156,6 +202,7 @@ class ek_eof_one_species(ut.TestCase):
         # Integrate the system
         system.integrator.run(params_base['integration_length'])
 
+    def test(self):
         # compare the various quantities to the analytic results
         total_velocity_difference = 0.0
         total_density_difference = 0.0
@@ -166,6 +213,9 @@ class ek_eof_one_species(ut.TestCase):
         total_pressure_difference_yz = 0.0
         total_pressure_difference_xz = 0.0
 
+        system = self.system
+        ek = self.ek
+        counterions = self.counterions
         for i in range(
                 int(system.box_l[params['non_periodic_dir']] / params_base['agrid'])):
             if (i *
@@ -301,3 +351,7 @@ class ek_eof_one_species(ut.TestCase):
                         "Pressure accuracy yz component not achieved")
         self.assertLess(total_pressure_difference_xz, 1.0e-04,
                         "Pressure accuracy xz component not achieved")
+
+
+if __name__ == "__main__":
+    ut.main()
