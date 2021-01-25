@@ -2630,7 +2630,7 @@ LOOKUP_TABLE default\n",
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
 
   for (int i = 0; i < lbpar_gpu.number_of_nodes; i++) {
-    fprintf(fp, "%e %e %e ", host_values[i].v[0] * lattice_speed,
+    fprintf(fp, "%e %e %e\n", host_values[i].v[0] * lattice_speed,
             host_values[i].v[1] * lattice_speed,
             host_values[i].v[2] * lattice_speed);
   }
@@ -2693,7 +2693,7 @@ LOOKUP_TABLE default\n",
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
   auto const agrid = lb_lbfluid_get_agrid();
   for (int i = 0; i < lbpar_gpu.number_of_nodes; i++) {
-    fprintf(fp, "%e ", host_values[i].rho / agrid / agrid / agrid);
+    fprintf(fp, "%e\n", host_values[i].rho / agrid / agrid / agrid);
   }
 
   free(host_values);
