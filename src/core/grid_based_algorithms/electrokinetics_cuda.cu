@@ -156,6 +156,10 @@ EK_parameters ek_parameters = {
     nullptr,
     // lb_force_density_previous
     nullptr,
+#ifdef EK_DEBUG
+    // j_fluc
+    nullptr,
+#endif
     // rho
     {nullptr},
     // species_index
@@ -3245,7 +3249,7 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
   if (ek_parameters.species_index[species] != -1) {
     int threads_per_block = 64;
     int blocks_per_grid_y = 4;
-    int blocks_per_grid_x = (ek_parameters.number_of_nodes +
+    int blocks_per_grid_x = (static_cast<int>(ek_parameters.number_of_nodes) +
                              threads_per_block * blocks_per_grid_y - 1) /
                             (threads_per_block * blocks_per_grid_y);
     dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
