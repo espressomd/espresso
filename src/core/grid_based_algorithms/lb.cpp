@@ -45,7 +45,6 @@
 #include <utils/index.hpp>
 #include <utils/math/matrix_vector_product.hpp>
 #include <utils/math/sqr.hpp>
-#include <utils/memory.hpp>
 #include <utils/uniform.hpp>
 
 #include <Random123/philox.h>
@@ -1019,12 +1018,11 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
 void lb_check_halo_regions(const LB_Fluid &lb_fluid,
                            const Lattice &lb_lattice) {
   Lattice::index_t index;
-  int i, x, y, z, s_node, r_node, count = D3Q19::n_vel;
-  double *s_buffer, *r_buffer;
+  int i, x, y, z, s_node, r_node;
+  constexpr auto count = static_cast<int>(D3Q19::n_vel);
+  double s_buffer[count];
+  double r_buffer[count];
   MPI_Status status[2];
-
-  r_buffer = (double *)Utils::malloc(count * sizeof(double));
-  s_buffer = (double *)Utils::malloc(count * sizeof(double));
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
 
@@ -1215,9 +1213,6 @@ void lb_check_halo_regions(const LB_Fluid &lb_fluid,
       }
     }
   }
-
-  free(r_buffer);
-  free(s_buffer);
 }
 #endif // ADDITIONAL_CHECKS
 
