@@ -97,11 +97,8 @@ LB_node_force_density_gpu node_f = {
 static float *lb_boundary_force = nullptr;
 #endif
 
-/** @name pointers for additional cuda check flag */
-/**@{*/
-static int *gpu_check = nullptr;
-static int *h_gpu_check = nullptr;
-/**@}*/
+/** @brief Whether LB GPU was initialized */
+static int *device_gpu_lb_initialized = nullptr;
 
 /** @brief Direction of data transfer between @ref nodes_a and @ref nodes_b
  *  during integration in @ref lb_integrate_GPU
@@ -2428,13 +2425,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   /*write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
-  /*check flag if lb gpu init works*/
-  free_realloc_and_clear(gpu_check, sizeof(int));
-
-  if (h_gpu_check != nullptr)
-    free(h_gpu_check);
-
-  h_gpu_check = (int *)Utils::malloc(sizeof(int));
+  free_realloc_and_clear(device_gpu_lb_initialized, sizeof(int));
 
   /* values for the kernel call */
   int threads_per_block = 64;
@@ -2450,17 +2441,17 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
    * Node_Force array with zero */
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
   KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block, nodes_a,
-             device_rho_v, node_f, gpu_check);
+             device_rho_v, node_f, device_gpu_lb_initialized);
 
   intflag = true;
   current_nodes = &nodes_a;
-  h_gpu_check[0] = 0;
-  cuda_safe_mem(
-      cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
+  int host_gpu_lb_initialized = 0;
+  cuda_safe_mem(cudaMemcpy(&host_gpu_lb_initialized, device_gpu_lb_initialized,
+                           sizeof(int), cudaMemcpyDeviceToHost));
   cudaDeviceSynchronize();
 
-  if (!h_gpu_check[0]) {
-    fprintf(stderr, "initialization of lb gpu code failed! \n");
+  if (!host_gpu_lb_initialized) {
+    fprintf(stderr, "initialization of LB GPU code failed!\n");
     errexit();
   }
 }
@@ -2483,7 +2474,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
   /* calc of velocity densities from given parameters and initialize the
    * Node_Force array with zero */
   KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block, nodes_a,
-             device_rho_v, node_f, gpu_check);
+             device_rho_v, node_f, device_gpu_lb_initialized);
 }
 
 #ifdef LB_BOUNDARIES_GPU
