@@ -38,39 +38,39 @@
 #include <cstring>
 
 /** Primitive fieldtypes and their initializers */
-struct _Fieldtype fieldtype_double = {0, {}, {},    sizeof(double), 0,
-                                      0, 0,  false, nullptr};
+struct Fieldtype fieldtype_double = {0, {}, {},    sizeof(double), 0,
+                                     0, 0,  false, nullptr};
 
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
-                              Fieldtype oldtype, Fieldtype *const newtype) {
+                              Fieldtype *oldtype, Fieldtype **const newtype) {
   if (*newtype) {
     delete *newtype;
   }
-  *newtype = new _Fieldtype{oldtype->count,
-                            oldtype->disps,
-                            oldtype->lengths,
-                            oldtype->extent * ((vblocks - 1) * vskip + vstride),
-                            vblocks,
-                            vstride,
-                            vskip,
-                            true,
-                            oldtype};
+  *newtype = new Fieldtype{oldtype->count,
+                           oldtype->disps,
+                           oldtype->lengths,
+                           oldtype->extent * ((vblocks - 1) * vskip + vstride),
+                           vblocks,
+                           vstride,
+                           vskip,
+                           true,
+                           oldtype};
 }
 
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
-                               Fieldtype oldtype, Fieldtype *const newtype) {
+                               Fieldtype *oldtype, Fieldtype **const newtype) {
   if (*newtype) {
     delete *newtype;
   }
-  *newtype = new _Fieldtype{oldtype->count,
-                            oldtype->disps,
-                            oldtype->lengths,
-                            oldtype->extent * vstride + (vblocks - 1) * vskip,
-                            vblocks,
-                            vstride,
-                            vskip,
-                            false,
-                            oldtype};
+  *newtype = new Fieldtype{oldtype->count,
+                           oldtype->disps,
+                           oldtype->lengths,
+                           oldtype->extent * vstride + (vblocks - 1) * vskip,
+                           vblocks,
+                           vstride,
+                           vskip,
+                           false,
+                           oldtype};
 }
 
 /** Set halo region to a given value
@@ -78,7 +78,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
  * @param value integer value to write into the halo buffer
  * @param type halo field layout description
  */
-void halo_dtset(char *dest, int value, Fieldtype type) {
+void halo_dtset(char *dest, int value, Fieldtype *type) {
   auto const vblocks = type->vblocks;
   auto const vstride = type->vstride;
   auto const vskip = type->vskip;
@@ -96,10 +96,10 @@ void halo_dtset(char *dest, int value, Fieldtype type) {
   }
 }
 
-void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type);
+void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype *type);
 
-void halo_copy_vector(char *r_buffer, char *s_buffer, int count, Fieldtype type,
-                      bool vflag) {
+void halo_copy_vector(char *r_buffer, char *s_buffer, int count,
+                      Fieldtype *type, bool vflag) {
 
   auto const vblocks = type->vblocks;
   auto const vstride = type->vstride;
@@ -124,7 +124,7 @@ void halo_copy_vector(char *r_buffer, char *s_buffer, int count, Fieldtype type,
  * @param count    amount of data to copy
  * @param type     field layout type
  */
-void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
+void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype *type) {
 
   if (type->subtype) {
     halo_copy_vector(r_buffer, s_buffer, count, type, type->vflag);
@@ -146,7 +146,7 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
 
 void prepare_halo_communication(HaloCommunicator *const hc,
                                 Lattice const *const lattice,
-                                Fieldtype fieldtype, MPI_Datatype datatype,
+                                Fieldtype *fieldtype, MPI_Datatype datatype,
                                 const Utils::Vector3i &local_node_grid) {
 
   const auto grid = lattice->grid;
@@ -240,7 +240,7 @@ void release_halo_communication(HaloCommunicator *const hc) {
 
 void halo_communication(HaloCommunicator const *const hc, char *const base) {
 
-  Fieldtype fieldtype;
+  Fieldtype *fieldtype;
   MPI_Datatype datatype;
   MPI_Request request;
   MPI_Status status;
