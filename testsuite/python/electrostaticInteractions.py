@@ -27,14 +27,13 @@ import espressomd.electrostatics
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[20., 20., 20.])
 
     def setUp(self):
-        self.system.box_l = [20, 20, 20]
         self.system.time_step = 0.01
 
-        self.system.part.add(id=0, pos=(1.0, 2.0, 2.0), q=1)
-        self.system.part.add(id=1, pos=(3.0, 2.0, 2.0), q=-1)
+        self.system.part.add(id=0, pos=(9.0, 2.0, 2.0), q=1)
+        self.system.part.add(id=1, pos=(11.0, 2.0, 2.0), q=-1)
 
     def tearDown(self):
         self.system.part.clear()
@@ -79,50 +78,52 @@ class ElectrostaticInteractionsTests(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m(self):
         prefactor = 1.1
-        self.system.part[0].pos = [1.0, 2.0, 2.0]
-        self.system.part[1].pos = [3.0, 2.0, 2.0]
-        # results, reference values for energy and force only calculated for
-        # prefactor = 1
-        p3m_energy = -0.501062398379 * prefactor
-        p3m_force = 2.48921612e-01 * prefactor
-        p3m = espressomd.electrostatics.P3M(prefactor=prefactor,
-                                            accuracy=9.910945054074526e-08,
-                                            mesh=[22, 22, 22],
-                                            cao=7,
-                                            r_cut=8.906249999999998,
-                                            alpha=0.387611049779351,
-                                            tune=False)
-        self.system.actors.add(p3m)
-        self.assertAlmostEqual(self.system.analysis.energy()['coulomb'],
-                               p3m_energy, places=5)
-        # need to update forces
-        self.system.integrator.run(0)
-        np.testing.assert_allclose(np.copy(self.system.part[0].f),
-                                   [p3m_force, 0, 0], atol=1E-4)
-        np.testing.assert_allclose(np.copy(self.system.part[1].f),
-                                   [-p3m_force, 0, 0], atol=1E-5)
-
-    @utx.skipIfMissingFeatures(["P3M"])
-    def test_p3m_non_metallic(self):
-        prefactor = 1.1
         box_vol = self.system.volume()
-        self.system.part[0].pos = [1.0, 2.0, 2.0]
-        self.system.part[1].pos = [3.0, 2.0, 2.0]
-        for epsilon_power in range(-4, 5):
-            epsilon = 10**epsilon_power
-            p3m_energy = np.pi / box_vol * 16 / (1 + 2 * epsilon) - 0.501
-            p3m_energy *= prefactor
-            p3m = espressomd.electrostatics.P3M(prefactor=prefactor,
-                                                accuracy=9.910945054074526e-08,
-                                                mesh=[22, 22, 22],
-                                                cao=7,
-                                                epsilon=epsilon,
-                                                r_cut=8.906249999999998,
-                                                alpha=0.387611049779351,
-                                                tune=False)
+        p1, p2 = self.system.part[:]
+        dip = np.copy(p1.q * p1.pos + p2.q * p2.pos)
+        p3m_params = {'accuracy': 1e-7,
+                      'mesh': [22, 22, 22],
+                      'cao': 7,
+                      'r_cut': 8.906249999999998,
+                      'alpha': 0.387611049779351}
+
+        # reference values for energy and force calculated for prefactor = 1
+        ref_energy = -0.501062398379 * prefactor
+        ref_force1 = [0.248921612 * prefactor, 0, 0]
+        ref_force2 = [-ref_force1[0], 0, 0]
+
+        # check metallic case
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=prefactor, epsilon='metallic', tune=False, **p3m_params)
+        self.system.actors.add(p3m)
+        self.system.integrator.run(0, recalc_forces=True)
+        p3m_energy = self.system.analysis.energy()['coulomb']
+        tol = 1e-5
+        np.testing.assert_allclose(p3m_energy, ref_energy, atol=tol)
+        np.testing.assert_allclose(np.copy(p1.f), ref_force1, atol=tol)
+        np.testing.assert_allclose(np.copy(p2.f), ref_force2, atol=tol)
+
+        # keep current values as reference to check for P3M dipole correction
+        ref_energy_metallic = self.system.analysis.energy()['coulomb']
+        ref_forces_metallic = np.copy(self.system.part[:].f)
+        self.system.actors.remove(p3m)
+
+        # check non-metallic case
+        tol = 1e-10
+        for epsilon in np.power(10., np.arange(-4, 5)):
+            dipole_correction = 4 * np.pi / box_vol / (1 + 2 * epsilon)
+            energy_correction = dipole_correction * np.linalg.norm(dip)**2
+            forces_correction = np.outer([p1.q, p2.q], dipole_correction * dip)
+            ref_energy = ref_energy_metallic + prefactor * energy_correction
+            ref_forces = ref_forces_metallic - prefactor * forces_correction
+            p3m = espressomd.electrostatics.P3M(
+                prefactor=prefactor, epsilon=epsilon, tune=False, **p3m_params)
             self.system.actors.add(p3m)
-            self.assertAlmostEqual(self.system.analysis.energy()['coulomb'],
-                                   p3m_energy, places=3)
+            self.system.integrator.run(0, recalc_forces=True)
+            p3m_forces = np.array([p1.f, p2.f])
+            p3m_energy = self.system.analysis.energy()['coulomb']
+            np.testing.assert_allclose(p3m_energy, ref_energy, atol=tol)
+            np.testing.assert_allclose(p3m_forces, ref_forces, atol=tol)
             self.system.actors.remove(p3m)
 
     def test_dh(self):

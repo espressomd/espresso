@@ -310,8 +310,14 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('P3M.CPU' not in modes,
                "Skipping test due to missing combination.")
     def test_p3m(self):
-        self.assertTrue(any(isinstance(actor, espressomd.electrostatics.P3M)
-                            for actor in system.actors.active_actors))
+        actor = system.actors.active_actors[-1]
+        self.assertTrue(isinstance(actor, espressomd.electrostatics.P3M))
+        state = actor.get_params()
+        reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
+                     'cao': 1, 'alpha': 1.0, 'r_cut': 1.0}
+        for key in reference:
+            self.assertIn(key, state)
+            np.testing.assert_almost_equal(state[key], reference[key])
 
     @utx.skipIfMissingFeatures('COLLISION_DETECTION')
     def test_collision_detection(self):
