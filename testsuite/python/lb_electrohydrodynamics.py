@@ -40,9 +40,6 @@ class LBEHTest(ut.TestCase):
         self.s.time_step = self.params['time_step']
         self.s.cell_system.skin = self.params['skin']
 
-        for i in self.s.actors:
-            self.s.actors.remove(i)
-
         self.lbf = self.lb.LBFluid(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -55,6 +52,9 @@ class LBEHTest(ut.TestCase):
         self.s.thermostat.set_lb(
             LB_fluid=self.lbf,
             gamma=self.params['friction'])
+
+    def tearDown(self):
+        self.s.actors.clear()
 
     def test(self):
         s = self.s

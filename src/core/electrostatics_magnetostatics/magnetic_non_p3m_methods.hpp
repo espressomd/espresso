@@ -42,9 +42,6 @@
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 
-/** Calculate dipolar energy and/or force between two particles */
-double calc_dipole_dipole_ia(Particle &p1, Particle &p2, bool force_flag);
-
 /* =============================================================================
                   DAWAANR => DIPOLAR ALL WITH ALL AND NO REPLICA
    =============================================================================
