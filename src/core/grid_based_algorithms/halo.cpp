@@ -44,7 +44,9 @@ struct _Fieldtype fieldtype_double = {0, {}, {},    sizeof(double), 0,
 
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
                               Fieldtype oldtype, Fieldtype *const newtype) {
-
+  if (*newtype) {
+    free(*newtype);
+  }
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
 
   ntype->subtype = oldtype;
@@ -63,7 +65,9 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip,
 
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
                                Fieldtype oldtype, Fieldtype *const newtype) {
-
+  if (*newtype) {
+    free(*newtype);
+  }
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
 
   ntype->subtype = oldtype;
