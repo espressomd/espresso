@@ -34,7 +34,7 @@ class P3M_tuning_test(ut.TestCase):
         self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]], q=[-1, 1])
 
     def add_magnetic_particles(self):
-        self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]],
+        self.system.part.add(pos=[[0.01, 0.01, 0.01], [.5, .5, .5]],
                              rotation=2 * [(1, 1, 1)], dip=2 * [(1, 0, 0)])
 
     ##################################################

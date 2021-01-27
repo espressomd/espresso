@@ -390,7 +390,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
 
   // Storage only needed on master and allocated only once at the first time
   // step if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
-  if (IBM_ParticleDataInput_host == nullptr ||
+  if (IBM_ParticleDataInput_host.empty() ||
       numParticles != IBM_numParticlesCache)
     InitCUDA_IBM(numParticles);
 
@@ -402,7 +402,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
 
     // Copy data to device
     cuda_safe_mem(cudaMemcpy(IBM_ParticleDataInput_device,
-                             IBM_ParticleDataInput_host,
+                             IBM_ParticleDataInput_host.data(),
                              numParticles * sizeof(IBM_CUDA_ParticleDataInput),
                              cudaMemcpyHostToDevice));
 
@@ -428,23 +428,23 @@ void InitCUDA_IBM(const int numParticles) {
   {
 
     // Check if we have to delete
-    if (IBM_ParticleDataInput_host != nullptr) {
-      delete[] IBM_ParticleDataInput_host;
-      delete[] IBM_ParticleDataOutput_host;
+    if (!IBM_ParticleDataInput_host.empty()) {
+      IBM_ParticleDataInput_host.clear();
+      IBM_ParticleDataOutput_host.clear();
       cuda_safe_mem(cudaFree(IBM_ParticleDataInput_device));
       cuda_safe_mem(cudaFree(IBM_ParticleDataOutput_device));
       cuda_safe_mem(cudaFree(lb_boundary_velocity_IBM));
     }
 
     // Back and forth communication of positions and velocities
-    IBM_ParticleDataInput_host = new IBM_CUDA_ParticleDataInput[numParticles];
+    IBM_ParticleDataInput_host.resize(numParticles);
+    IBM_ParticleDataOutput_host.resize(numParticles);
     cuda_safe_mem(
         cudaMalloc((void **)&IBM_ParticleDataInput_device,
                    numParticles * sizeof(IBM_CUDA_ParticleDataInput)));
     cuda_safe_mem(
         cudaMalloc((void **)&IBM_ParticleDataOutput_device,
                    numParticles * sizeof(IBM_CUDA_ParticleDataOutput)));
-    IBM_ParticleDataOutput_host = new IBM_CUDA_ParticleDataOutput[numParticles];
 
     // Use LB parameters
     lb_get_para_pointer(&para_gpu);
@@ -457,11 +457,11 @@ void InitCUDA_IBM(const int numParticles) {
 
     for (int n = 0; n < LBBoundaries::lbboundaries.size(); n++) {
       host_lb_boundary_velocity[3 * n + 0] =
-          LBBoundaries::lbboundaries[n]->velocity()[0];
+          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[0]);
       host_lb_boundary_velocity[3 * n + 1] =
-          LBBoundaries::lbboundaries[n]->velocity()[1];
+          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[1]);
       host_lb_boundary_velocity[3 * n + 2] =
-          LBBoundaries::lbboundaries[n]->velocity()[2];
+          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[2]);
     }
 
     host_lb_boundary_velocity[3 * LBBoundaries::lbboundaries.size() + 0] = 0.0f;
@@ -512,7 +512,7 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
                para_gpu);
 
     // Copy velocities from device to host
-    cuda_safe_mem(cudaMemcpy(IBM_ParticleDataOutput_host,
+    cuda_safe_mem(cudaMemcpy(IBM_ParticleDataOutput_host.data(),
                              IBM_ParticleDataOutput_device,
                              numParticles * sizeof(IBM_CUDA_ParticleDataOutput),
                              cudaMemcpyDeviceToHost));

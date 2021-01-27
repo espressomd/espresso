@@ -108,9 +108,7 @@ class VirtualSitesTracersCommon:
         n1 = n1 / norm1
         n2 = n2 / norm2
 
-        cos_alpha = np.dot(n1, n2)
-        if cos_alpha > 1:
-            cos_alpha = 1
+        cos_alpha = min(1, np.dot(n1, n2))
         alpha = np.arccos(cos_alpha)
         return alpha
 

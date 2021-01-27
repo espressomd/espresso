@@ -304,20 +304,6 @@ IF TABULATED:
                                  double min, double max,
                                  vector[double] energy,
                                  vector[double] force)
-IF ROTATION:
-    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
-        # Parameters for the harmonic dumbbell bond potential
-        cdef struct Harmonic_dumbbell_bond_parameters:
-            double k1
-            double k2
-            double r
-            double r_cut
-ELSE:
-    cdef struct Harmonic_dumbbell_bond_parameters:
-        double k1
-        double k2
-        double r
-        double r_cut
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     # Parameters for n-body tabulated potential (n=2,3,4).
@@ -412,12 +398,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double * para_a
         double * para_b
         double * para_c
-
-    # Parameters for one-directional harmonic potential
-    cdef struct Umbrella_bond_parameters:
-        double k
-        int    dir
-        double r
 
     # Parameters for subt-LJ potential
     cdef struct Subt_lj_bond_parameters:
@@ -591,6 +571,5 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_IBM_TRIEL,
         BONDED_IA_IBM_TRIBEND,
         BONDED_IA_IBM_VOLUME_CONSERVATION,
-        BONDED_IA_UMBRELLA,
         BONDED_IA_THERMALIZED_DIST
         BONDED_IA_QUARTIC

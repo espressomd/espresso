@@ -25,7 +25,7 @@ from espressomd import drude_helpers
 
 
 @utx.skipIfMissingFeatures(["P3M", "ELECTROSTATICS", "THOLE",
-                            "LANGEVIN_PER_PARTICLE", "MASS"])
+                            "THERMOSTAT_PER_PARTICLE", "MASS"])
 class Drude(ut.TestCase):
 
     def test(self):

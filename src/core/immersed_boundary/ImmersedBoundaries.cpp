@@ -106,7 +106,7 @@ int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
   bonded_ia_params[bond_type].p.ibmVolConsParameters.volRef = 0;
   // NOTE: We cannot compute the reference volume here because not all
   // interactions are setup and thus we do not know which triangles belong to
-  // this softID Calculate it later in the init function
+  // this softID. Calculate it later in the init function
 
   // Communicate this to whoever is interested
   mpi_bcast_ia_params(bond_type, -1);

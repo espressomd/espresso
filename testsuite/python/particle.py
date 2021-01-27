@@ -135,7 +135,7 @@ class ParticleProperties(ut.TestCase):
                 sample_vector_normalized
             )
 
-        if espressomd.has_features(["LANGEVIN_PER_PARTICLE"]):
+        if espressomd.has_features(["THERMOSTAT_PER_PARTICLE"]):
             if espressomd.has_features(["PARTICLE_ANISOTROPY"]):
                 test_gamma = generateTestForVectorProperty(
                     "gamma", np.array([2., 9., 0.23]))

@@ -63,9 +63,9 @@ class CollisionDetection(ut.TestCase):
             self.s.collision_detection.mode = "bind_centers"
 
         # Verify exception throwing for unknown collision modes
-        with self.assertRaises(Exception):
-            self.s.collision_detection.set_params(mode=0)
-            self.s.collision_detection.set_params(mode="blahblah")
+        for unknown_mode in (0, "unknown"):
+            with self.assertRaisesRegex(Exception, "Mode not handled"):
+                self.s.collision_detection.set_params(mode=unknown_mode)
 
         # That should work
         self.s.collision_detection.set_params(mode="off")
@@ -496,7 +496,12 @@ class CollisionDetection(ut.TestCase):
 
         # Collision detection
         self.s.collision_detection.set_params(
-            mode="glue_to_surface", distance=0.11, distance_glued_particle_to_vs=0.02, bond_centers=self.H, bond_vs=self.H2, part_type_vs=self.part_type_vs, part_type_to_attach_vs_to=self.part_type_to_attach_vs_to, part_type_to_be_glued=self.part_type_to_be_glued, part_type_after_glueing=self.part_type_after_glueing)
+            mode="glue_to_surface", distance=0.11,
+            distance_glued_particle_to_vs=0.02, bond_centers=self.H,
+            bond_vs=self.H2, part_type_vs=self.part_type_vs,
+            part_type_to_attach_vs_to=self.part_type_to_attach_vs_to,
+            part_type_to_be_glued=self.part_type_to_be_glued,
+            part_type_after_glueing=self.part_type_after_glueing)
         self.get_state_set_state_consistency()
 
         # Integrate lj liquid
@@ -703,7 +708,7 @@ class CollisionDetection(ut.TestCase):
         expected_angle_bonds = sorted(expected_angle_bonds)
         self.assertEqual(expected_pairs, found_pairs)
 
-        if not expected_angle_bonds == found_angle_bonds:
+        if expected_angle_bonds != found_angle_bonds:
             # Verbose info
             print("expected:", expected_angle_bonds)
             missing = []

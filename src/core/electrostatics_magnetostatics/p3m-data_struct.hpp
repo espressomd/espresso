@@ -23,7 +23,7 @@
 
 #include "config.hpp"
 
-#ifdef P3M
+#if defined(P3M) || defined(DP3M)
 
 #include "p3m-common.hpp"
 

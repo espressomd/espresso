@@ -499,7 +499,7 @@ the anisotropic diffusion of anisotropic colloids (rods, etc.).
 
 Using the Langevin thermostat, it is possible to set a temperature and a
 friction coefficient for every particle individually via the feature
-``LANGEVIN_PER_PARTICLE``.  Consult the reference of the ``part`` command
+``THERMOSTAT_PER_PARTICLE``.  Consult the reference of the ``part`` command
 (chapter :ref:`Setting up particles`) for information on how to achieve this.
 
 .. _Brownian thermostat:
@@ -532,7 +532,7 @@ Best explained in an example::
 where ``gamma`` (hereinafter :math:`\gamma`) is a viscous friction coefficient.
 In terms of the Python interface and setup, the Brownian thermostat is very
 similar to the :ref:`Langevin thermostat`. The feature
-``BROWNIAN_PER_PARTICLE`` is used to control the per-particle
+``THERMOSTAT_PER_PARTICLE`` is used to control the per-particle
 temperature and the friction coefficient setup. The major differences are
 its internal integrator implementation and other temporal constraints.
 The integrator is still a symplectic velocity Verlet-like one.

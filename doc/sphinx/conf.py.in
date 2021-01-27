@@ -115,6 +115,9 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
+# sphinxcontrib.bibtex options
+bibtex_bibfiles = ['zrefs.bib']
+
 
 # -- Options for HTML output ----------------------------------------------
 

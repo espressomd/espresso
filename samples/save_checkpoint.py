@@ -43,7 +43,7 @@ if not checkpoint.checkpoint_signals:
 # test for user data
 myvar = "some script variable"
 checkpoint.register("myvar")
-myvar = "updated value"  # demo of how the register function works
+myvar = myvar + " (updated value)"  # demo of how the register function works
 
 # test for "system"
 box_l = 10.7437

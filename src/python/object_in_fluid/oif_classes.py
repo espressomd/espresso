@@ -1376,7 +1376,6 @@ class OifCell:
                 self.append_point_data_to_vtk(
                     file_name=vtk_file, data_name="total_f_metric",
                     data=elastic_forces_norms_list, first_append=first)
-                first = False
 
         # output raw data
         if raw_data_file is not None:

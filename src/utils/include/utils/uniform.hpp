@@ -37,7 +37,7 @@ constexpr inline double uniform(uint64_t in) {
   auto constexpr const max = std::numeric_limits<uint64_t>::max();
   auto constexpr const fac = 1. / (static_cast<double>(max) + 1.);
 
-  return fac * in + 0.5 * fac;
+  return fac * static_cast<double>(in) + 0.5 * fac;
 }
 
 } // namespace Utils
