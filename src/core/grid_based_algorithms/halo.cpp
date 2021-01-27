@@ -118,7 +118,7 @@ void halo_copy_vector(char *r_buffer, char *s_buffer, int count,
   }
 }
 
-/** Copy lattice data with layout described by fieldtype.
+/** Copy lattice data with layout described by @p type.
  * @param r_buffer data destination
  * @param s_buffer data source
  * @param count    amount of data to copy

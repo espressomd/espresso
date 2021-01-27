@@ -175,11 +175,11 @@ using LB_FluidData = boost::multi_array<double, 2>;
 static LB_FluidData lbfluid_a;
 static LB_FluidData lbfluid_b;
 
-/** Pointer to the velocity populations of the fluid.
- *  lbfluid contains pre-collision populations, lbfluid_post
- *  contains post-collision.
+/** Span of the velocity populations of the fluid (pre-collision populations).
  */
 LB_Fluid lbfluid;
+/** Span of the velocity populations of the fluid (post-collision populations).
+ */
 LB_Fluid lbfluid_post;
 
 std::vector<LB_FluidNode> lbfields;
@@ -742,7 +742,6 @@ void lb_set_population_from_density_momentum_density_stress(
 }
 /**@}*/
 
-/** Calculation of hydrodynamic modes */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index,
                                      const LB_Fluid &lb_fluid) {
   return Utils::matrix_vector_product<double, 19, e_ki>(
@@ -1337,7 +1336,8 @@ void lb_bounce_back(LB_Fluid &lb_fluid, const LB_Parameters &lb_parameters,
 
 /** Calculate the local fluid momentum.
  *  The calculation is implemented explicitly for the special case of D3Q19.
- *  @param[in]  index  Local lattice site
+ *  @param[in]  index     Local lattice site
+ *  @param[in]  lb_fluid  Populations of the fluid
  *  @retval The local fluid momentum.
  */
 Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index,
@@ -1356,9 +1356,11 @@ Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index,
                lb_fluid[18][index]}};
 }
 
-// Statistics in MD units.
 /** Calculate momentum of the LB fluid.
- * \param result Fluid momentum
+ *  @param[out] result         Fluid momentum in MD units
+ *  @param[in]  lb_parameters  LB parameters
+ *  @param[in]  lb_fields      Hydrodynamic fields of the fluid
+ *  @param[in]  lb_lattice     The underlying lattice
  */
 void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
                             const std::vector<LB_FluidNode> &lb_fields,

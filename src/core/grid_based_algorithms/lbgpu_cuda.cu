@@ -500,7 +500,7 @@ __device__ void relax_modes(Utils::Array<float, 19> &mode, unsigned int index,
   j[1] = Rho * u_tot[1];
   j[2] = Rho * u_tot[2];
 
-  /** equilibrium part of the stress modes (eq13 schiller) */
+  /* equilibrium part of the stress modes (eq13 schiller) */
 
   modes_from_pi_eq[0] = ((j[0] * j[0]) + (j[1] * j[1]) + (j[2] * j[2])) / Rho;
   modes_from_pi_eq[1] = ((j[0] * j[0]) - (j[1] * j[1])) / Rho;
@@ -511,7 +511,7 @@ __device__ void relax_modes(Utils::Array<float, 19> &mode, unsigned int index,
   modes_from_pi_eq[4] = j[0] * j[2] / Rho;
   modes_from_pi_eq[5] = j[1] * j[2] / Rho;
 
-  /** relax the stress modes (eq14 schiller) */
+  /* relax the stress modes (eq14 schiller) */
 
   mode[4] =
       modes_from_pi_eq[0] + para->gamma_bulk * (mode[4] - modes_from_pi_eq[0]);
@@ -1365,7 +1365,6 @@ __device__ __inline__ float three_point_polynomial_larger_than_half(float u) {
 
 /**
  * @brief Get velocity of at index.
- *
  */
 __device__ __inline__ float3 node_velocity(float rho_eq, LB_nodes_gpu n_a,
                                            int index) {
@@ -1728,9 +1727,9 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
   if (index < para->number_of_nodes) {
     Utils::Array<float, 19> mode;
 
-    /* default values for fields in lattice units */
     gpu_check[0] = 1;
 
+    /* default values for fields in lattice units */
     float Rho = para->rho;
     Utils::Array<float, 3> v{};
     Utils::Array<float, 6> pi = {{Rho * D3Q19::c_sound_sq<float>, 0.0f,
@@ -2573,7 +2572,7 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu) {
 
 /** Setup and call particle kernel from the host
  *  @tparam no_of_neighbours       The number of neighbours to consider for
- * interpolation
+ *                                 interpolation
  */
 template <std::size_t no_of_neighbours>
 void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
@@ -2972,8 +2971,8 @@ void lb_lbfluid_get_population(const Utils::Vector3i &xyz,
 
 /**
  * @brief Velocity interpolation functor
- * @tparam no_of_neighbours The number of neighbours to consider for
- * interpolation
+ * @tparam no_of_neighbours     The number of neighbours to consider for
+ *                              interpolation
  */
 template <std::size_t no_of_neighbours> struct interpolation {
   LB_nodes_gpu current_nodes_gpu;
