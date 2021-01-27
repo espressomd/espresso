@@ -39,8 +39,8 @@
 #include <cstring>
 
 /** Primitive fieldtypes and their initializers */
-struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,
-                                      0, 0,       false,   nullptr};
+struct _Fieldtype fieldtype_double = {0, {}, {},    sizeof(double), 0,
+                                      0, 0,  false, nullptr};
 
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
                               Fieldtype oldtype, Fieldtype *const newtype) {
@@ -56,14 +56,9 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip,
 
   ntype->extent = oldtype->extent * ((vblocks - 1) * vskip + vstride);
 
-  int count = ntype->count = oldtype->count;
-  ntype->lengths = (int *)Utils::malloc(count * 2 * sizeof(int));
-  ntype->disps = (int *)((char *)ntype->lengths + count * sizeof(int));
-
-  for (int i = 0; i < count; i++) {
-    ntype->disps[i] = oldtype->disps[i];
-    ntype->lengths[i] = oldtype->lengths[i];
-  }
+  ntype->count = oldtype->count;
+  ntype->lengths = oldtype->lengths;
+  ntype->disps = oldtype->disps;
 }
 
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
@@ -80,14 +75,9 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
 
   ntype->extent = oldtype->extent * vstride + (vblocks - 1) * vskip;
 
-  int const count = ntype->count = oldtype->count;
-  ntype->lengths = (int *)Utils::malloc(count * 2 * sizeof(int));
-  ntype->disps = (int *)((char *)ntype->lengths + count * sizeof(int));
-
-  for (int i = 0; i < count; i++) {
-    ntype->disps[i] = oldtype->disps[i];
-    ntype->lengths[i] = oldtype->lengths[i];
-  }
+  ntype->count = oldtype->count;
+  ntype->lengths = oldtype->lengths;
+  ntype->disps = oldtype->disps;
 }
 
 /** Set halo region to a given value
@@ -99,15 +89,14 @@ void halo_dtset(char *dest, int value, Fieldtype type) {
   auto const vblocks = type->vblocks;
   auto const vstride = type->vstride;
   auto const vskip = type->vskip;
-  auto const count = type->count;
-  int const *const lens = type->lengths;
-  int const *const disps = type->disps;
+  auto const &lens = type->lengths;
+  auto const &disps = type->disps;
   auto const extent = type->extent;
   auto const block_size = static_cast<long>(vskip) * static_cast<long>(extent);
 
   for (int i = 0; i < vblocks; i++) {
     for (int j = 0; j < vstride; j++) {
-      for (int k = 0; k < count; k++)
+      for (std::size_t k = 0; k < disps.size(); k++)
         memset(dest + disps[k], value, lens[k]);
     }
     dest += block_size;

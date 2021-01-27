@@ -60,13 +60,13 @@
  */
 typedef struct _Fieldtype *Fieldtype;
 struct _Fieldtype {
-  int count;    /**< number of subtypes in fieldtype */
-  int *disps;   /**< displacements of the subtypes */
-  int *lengths; /**< lengths of the subtypes */
-  int extent;   /**< extent of the complete fieldtype including gaps */
-  int vblocks;  /**< number of blocks in field vectors */
-  int vstride;  /**< size of strides in field vectors */
-  int vskip;    /**< displacement between strides in field vectors */
+  int count;                /**< number of subtypes in fieldtype */
+  std::vector<int> disps;   /**< displacements of the subtypes */
+  std::vector<int> lengths; /**< lengths of the subtypes */
+  int extent;  /**< extent of the complete fieldtype including gaps */
+  int vblocks; /**< number of blocks in field vectors */
+  int vstride; /**< size of strides in field vectors */
+  int vskip;   /**< displacement between strides in field vectors */
   bool vflag;
   Fieldtype subtype;
 };
