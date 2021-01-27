@@ -17,29 +17,40 @@
 
 import unittest as ut
 import unittest_decorators as utx
+import pathlib
+
 import sys
 import math
 import numpy as np
+try:
+    import vtk
+    from vtk.util import numpy_support as VN
+    skipIfMissingPythonPackage = utx.no_skip
+except ImportError:
+    skipIfMissingPythonPackage = ut.skip(
+        "Python module vtk not available, skipping test!")
+
 
 import espressomd
 import espressomd.electrokinetics
 import espressomd.shapes
 import ek_common
-from tests_common import DynamicDict
 
 ##########################################################################
 #                          Set up the System                             #
 ##########################################################################
-# Set the slit pore geometry the width is the non-periodic part of the geometry
-# the padding is used to ensure that there is no field inside outside the slit
+# Set the slit pore geometry. The width is the non-periodic part of the
+# geometry. The padding is used to ensure that there is no field outside
+# the slit.
 
-params_base = DynamicDict([
+params_base = dict([
     ('dt', 1.0 / 7),
     ('integration_length', 2300),
     ('agrid', 1. / 3),
     ('density_water', 26.15),
     ('friction', 1.9),
     ('width', 20.0),
+    ('thickness', 3.0),
     ('sigma', -0.04),
     ('padding', 6.0),
     ('force', 0.07),
@@ -47,8 +58,53 @@ params_base = DynamicDict([
     ('viscosity_kinematic', 1.7),
     ('bjerrum_length', 0.8),
     ('sigma', -0.04),
-    ('density_counterions', '-2.0 * sigma / width'),
-    ('valency', 1.0)])
+    ('valency', 1.0),
+])
+params_base['density_counterions'] = -2.0 * \
+    params_base['sigma'] / params_base['width']
+
+axis = "@TEST_SUFFIX@"
+params = {
+    "x": dict([
+        ('box_x', params_base['thickness']),
+        ('box_y', params_base['thickness']),
+        ('box_z', params_base['width'] + 2 * params_base['padding']),
+        ('ext_force_density', [params_base['force'], 0.0, 0.0]),
+        ('wall_normal_1', [0, 0, 1]),
+        ('wall_normal_2', [0, 0, -1]),
+        ('periodic_dirs', (0, 1)),
+        ('non_periodic_dir', 2),
+        ('n_roll_index', 0),
+        ('calculated_pressure_xy', 0.0),
+        ('calculated_pressure_yz', 0.0)
+    ]),
+    "y": dict([
+        ('box_x', params_base['width'] + 2 * params_base['padding']),
+        ('box_y', params_base['thickness']),
+        ('box_z', params_base['thickness']),
+        ('ext_force_density', [0.0, params_base['force'], 0.0]),
+        ('wall_normal_1', [1, 0, 0]),
+        ('wall_normal_2', [-1, 0, 0]),
+        ('periodic_dirs', (1, 2)),
+        ('non_periodic_dir', 0),
+        ('n_roll_index', 1),
+        ('calculated_pressure_xz', 0.0),
+        ('calculated_pressure_yz', 0.0)
+    ]),
+    "z": dict([
+        ('box_x', params_base['thickness']),
+        ('box_y', params_base['width'] + 2 * params_base['padding']),
+        ('box_z', params_base['thickness']),
+        ('ext_force_density', [0.0, 0.0, params_base['force']]),
+        ('wall_normal_1', [0, 1, 0]),
+        ('wall_normal_2', [0, -1, 0]),
+        ('periodic_dirs', (0, 2)),
+        ('non_periodic_dir', 1),
+        ('n_roll_index', 2),
+        ('calculated_pressure_xy', 0.0),
+        ('calculated_pressure_xz', 0.0)
+    ])
+}[axis]
 
 
 def bisection():
@@ -110,16 +166,28 @@ class ek_eof_one_species(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     xi = bisection()
 
-    def run_test(self, params):
-        system = self.system
+    def parse_vtk(self, filepath, name, shape):
+        reader = vtk.vtkStructuredPointsReader()
+        reader.SetFileName(filepath)
+        reader.ReadAllVectorsOn()
+        reader.ReadAllScalarsOn()
+        reader.Update()
+
+        data = reader.GetOutput()
+        points = data.GetPointData()
+
+        return VN.vtk_to_numpy(points.GetArray(name)).reshape(shape, order='F')
+
+    @classmethod
+    def setUpClass(cls):
+        system = cls.system
         system.box_l = [params['box_x'], params['box_y'], params['box_z']]
         system.time_step = params_base['dt']
-        system.thermostat.turn_off()
         system.cell_system.skin = 0.1
         system.thermostat.turn_off()
 
         # Set up the (LB) electrokinetics fluid
-        ek = espressomd.electrokinetics.Electrokinetics(
+        ek = cls.ek = espressomd.electrokinetics.Electrokinetics(
             agrid=params_base['agrid'],
             lb_density=params_base['density_water'],
             viscosity=params_base['viscosity_kinematic'],
@@ -129,7 +197,7 @@ class ek_eof_one_species(ut.TestCase):
             params_base['temperature'],
             stencil="linkcentered")
 
-        counterions = espressomd.electrokinetics.Species(
+        counterions = cls.counterions = espressomd.electrokinetics.Species(
             density=params_base['density_counterions'],
             D=0.3,
             valency=params_base['valency'],
@@ -156,6 +224,7 @@ class ek_eof_one_species(ut.TestCase):
         # Integrate the system
         system.integrator.run(params_base['integration_length'])
 
+    def test(self):
         # compare the various quantities to the analytic results
         total_velocity_difference = 0.0
         total_density_difference = 0.0
@@ -166,6 +235,9 @@ class ek_eof_one_species(ut.TestCase):
         total_pressure_difference_yz = 0.0
         total_pressure_difference_xz = 0.0
 
+        system = self.system
+        ek = self.ek
+        counterions = self.counterions
         for i in range(
                 int(system.box_l[params['non_periodic_dir']] / params_base['agrid'])):
             if (i *
@@ -301,3 +373,90 @@ class ek_eof_one_species(ut.TestCase):
                         "Pressure accuracy yz component not achieved")
         self.assertLess(total_pressure_difference_xz, 1.0e-04,
                         "Pressure accuracy xz component not achieved")
+
+    @skipIfMissingPythonPackage
+    def test_vtk(self):
+        ek = self.ek
+        counterions = self.counterions
+        grid_dims = list(
+            map(int, np.round(self.system.box_l / params_base['agrid'])))
+
+        # write VTK files
+        vtk_root = f"vtk_out/ek_eof_{axis}"
+        pathlib.Path(vtk_root).mkdir(parents=True, exist_ok=True)
+        path_vtk_boundary = f"{vtk_root}/boundary.vtk"
+        path_vtk_velocity = f"{vtk_root}/velocity.vtk"
+        path_vtk_potential = f"{vtk_root}/potential.vtk"
+        path_vtk_lbdensity = f"{vtk_root}/density.vtk"
+        path_vtk_lbforce = f"{vtk_root}/lbforce.vtk"
+        path_vtk_density = f"{vtk_root}/lbdensity.vtk"
+        path_vtk_flux = f"{vtk_root}/flux.vtk"
+        path_vtk_flux_link = f"{vtk_root}/flux_link.vtk"
+        if espressomd.has_features('EK_DEBUG'):
+            path_vtk_flux_fluc = f"{vtk_root}/flux_fluc.vtk"
+        ek.write_vtk_boundary(path_vtk_boundary)
+        ek.write_vtk_velocity(path_vtk_velocity)
+        ek.write_vtk_potential(path_vtk_potential)
+        ek.write_vtk_density(path_vtk_lbdensity)
+        ek.write_vtk_lbforce(path_vtk_lbforce)
+        counterions.write_vtk_density(path_vtk_density)
+        counterions.write_vtk_flux(path_vtk_flux)
+        if espressomd.has_features('EK_DEBUG'):
+            counterions.write_vtk_flux_fluc(path_vtk_flux_fluc)
+        counterions.write_vtk_flux_link(path_vtk_flux_link)
+
+        # load VTK files to check they are correctly formatted
+        get_vtk = self.parse_vtk
+        vtk_boundary = get_vtk(path_vtk_boundary, "boundary", grid_dims)
+        vtk_velocity = get_vtk(path_vtk_velocity, "velocity", grid_dims + [3])
+        vtk_potential = get_vtk(path_vtk_potential, "potential", grid_dims)
+        vtk_lbdensity = get_vtk(path_vtk_lbdensity, "density_lb", grid_dims)
+        get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
+        vtk_density = get_vtk(path_vtk_density, "density_1", grid_dims)
+        vtk_flux = get_vtk(path_vtk_flux, "flux_1", grid_dims + [3])
+        if espressomd.has_features('EK_DEBUG'):
+            get_vtk(path_vtk_flux_fluc, "flux_fluc_1", grid_dims + [4])
+        get_vtk(path_vtk_flux_link, "flux_link_1", grid_dims + [13])
+
+        # check VTK files against the EK grid
+        species_density = np.zeros(grid_dims)
+        species_flux = np.zeros(grid_dims + [3])
+        ek_potential = np.zeros(grid_dims)
+        ek_velocity = np.zeros(grid_dims + [3])
+        for i in range(grid_dims[0]):
+            for j in range(grid_dims[1]):
+                for k in range(grid_dims[2]):
+                    index = np.array([i, j, k])
+                    species_density[i, j, k] = counterions[index].density
+                    species_flux[i, j, k] = counterions[index].flux
+                    ek_potential[i, j, k] = ek[index].potential
+                    ek_velocity[i, j, k] = ek[index].velocity
+
+        np.testing.assert_allclose(vtk_velocity, ek_velocity, atol=1e-6)
+        np.testing.assert_allclose(vtk_potential, ek_potential, atol=1e-6)
+        np.testing.assert_allclose(vtk_density, species_density, atol=1e-6)
+        np.testing.assert_allclose(vtk_flux, species_flux, atol=1e-6)
+
+        # check VTK files against the EK parameters
+        dens = params_base['density_water']
+        left_dist = int(params_base['padding'] / params_base['agrid'])
+        right_dist = int(-params_base['padding'] / params_base['agrid'])
+        thickness = int(params_base['thickness'] / params_base['agrid'])
+        i = np.roll([0, 0, right_dist], params['n_roll_index'])
+        j = np.roll([thickness, thickness, left_dist], params['n_roll_index'])
+        mask_left = np.zeros(grid_dims, dtype=bool)
+        mask_left[:j[0], :j[1], :j[2]] = True
+        mask_right = np.zeros(grid_dims, dtype=bool)
+        mask_right[i[0]:, i[1]:, i[2]:] = True
+        mask_outside = np.logical_or(mask_left, mask_right)
+        mask_inside = np.logical_not(mask_outside)
+        np.testing.assert_allclose(vtk_lbdensity[mask_inside], dens, atol=1e-4)
+        np.testing.assert_allclose(vtk_lbdensity[mask_outside], 0, atol=1e-6)
+        np.testing.assert_allclose(vtk_boundary[mask_left], 1, atol=1e-6)
+        np.testing.assert_allclose(vtk_boundary[mask_left], 1, atol=1e-6)
+        np.testing.assert_allclose(vtk_boundary[mask_right], 2, atol=1e-6)
+        np.testing.assert_allclose(vtk_boundary[mask_inside], 0, atol=1e-6)
+
+
+if __name__ == "__main__":
+    ut.main()

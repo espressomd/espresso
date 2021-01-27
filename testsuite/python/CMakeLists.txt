@@ -125,9 +125,9 @@ python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 LABELS gpu long)
 python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long)
 python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species_x.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species_y.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species_z.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX x)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX y)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX z)
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)
@@ -248,10 +248,6 @@ add_custom_target(
           ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/thermostats_common.py
-    ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND
-    ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py
     ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(

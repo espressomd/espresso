@@ -28,53 +28,103 @@ IF ELECTROKINETICS and CUDA:
         DEF MAX_NUMBER_OF_SPECIES = 10
 
         # EK data struct
-        ctypedef struct EK_parameters:
-            float agrid
-            float time_step
-            float lb_density
-            unsigned int dim_x
-            unsigned int dim_y
-            unsigned int dim_z
-            unsigned int number_of_nodes
-            float viscosity
-            float bulk_viscosity
-            float gamma_odd
-            float gamma_even
-            float friction
-            float T
-            float prefactor
-            float lb_force_density[3]
-            unsigned int number_of_species
-            int reaction_species[3]
-            float rho_reactant_reservoir
-            float rho_product0_reservoir
-            float rho_product1_reservoir
-            float reaction_ct_rate
-            float reaction_fraction_0
-            float reaction_fraction_1
-            float mass_reactant
-            float mass_product0
-            float mass_product1
-            int stencil
-            int number_of_boundary_nodes
-            float fluctuation_amplitude
-            bool fluctuations
-            bool advection
-            bool fluidcoupling_ideal_contribution
-            float * charge_potential
-            ekfloat * j
-            float * lb_force_density_previous
-            ekfloat * rho[MAX_NUMBER_OF_SPECIES]
-            int species_index[MAX_NUMBER_OF_SPECIES]
-            float density[MAX_NUMBER_OF_SPECIES]
-            float D[MAX_NUMBER_OF_SPECIES]
-            float d[MAX_NUMBER_OF_SPECIES]
-            float valency[MAX_NUMBER_OF_SPECIES]
-            float ext_force_density[3][MAX_NUMBER_OF_SPECIES]
-            char * node_is_catalyst
-            bool es_coupling
-            float * charge_potential_buffer
-            float * electric_field
+        IF EK_DEBUG:
+            ctypedef struct EK_parameters:
+                float agrid
+                float time_step
+                float lb_density
+                unsigned int dim_x
+                unsigned int dim_y
+                unsigned int dim_z
+                unsigned int number_of_nodes
+                float viscosity
+                float bulk_viscosity
+                float gamma_odd
+                float gamma_even
+                float friction
+                float T
+                float prefactor
+                float lb_force_density[3]
+                unsigned int number_of_species
+                int reaction_species[3]
+                float rho_reactant_reservoir
+                float rho_product0_reservoir
+                float rho_product1_reservoir
+                float reaction_ct_rate
+                float reaction_fraction_0
+                float reaction_fraction_1
+                float mass_reactant
+                float mass_product0
+                float mass_product1
+                int stencil
+                int number_of_boundary_nodes
+                float fluctuation_amplitude
+                bool fluctuations
+                bool advection
+                bool fluidcoupling_ideal_contribution
+                float * charge_potential
+                ekfloat * j
+                float * lb_force_density_previous
+                ekfloat * j_fluc
+                ekfloat * rho[MAX_NUMBER_OF_SPECIES]
+                int species_index[MAX_NUMBER_OF_SPECIES]
+                float density[MAX_NUMBER_OF_SPECIES]
+                float D[MAX_NUMBER_OF_SPECIES]
+                float d[MAX_NUMBER_OF_SPECIES]
+                float valency[MAX_NUMBER_OF_SPECIES]
+                float ext_force_density[3][MAX_NUMBER_OF_SPECIES]
+                char * node_is_catalyst
+                bool es_coupling
+                float * charge_potential_buffer
+                float * electric_field
+        ELSE:
+            ctypedef struct EK_parameters:
+                float agrid
+                float time_step
+                float lb_density
+                unsigned int dim_x
+                unsigned int dim_y
+                unsigned int dim_z
+                unsigned int number_of_nodes
+                float viscosity
+                float bulk_viscosity
+                float gamma_odd
+                float gamma_even
+                float friction
+                float T
+                float prefactor
+                float lb_force_density[3]
+                unsigned int number_of_species
+                int reaction_species[3]
+                float rho_reactant_reservoir
+                float rho_product0_reservoir
+                float rho_product1_reservoir
+                float reaction_ct_rate
+                float reaction_fraction_0
+                float reaction_fraction_1
+                float mass_reactant
+                float mass_product0
+                float mass_product1
+                int stencil
+                int number_of_boundary_nodes
+                float fluctuation_amplitude
+                bool fluctuations
+                bool advection
+                bool fluidcoupling_ideal_contribution
+                float * charge_potential
+                ekfloat * j
+                float * lb_force_density_previous
+                ekfloat * rho[MAX_NUMBER_OF_SPECIES]
+                int species_index[MAX_NUMBER_OF_SPECIES]
+                float density[MAX_NUMBER_OF_SPECIES]
+                float D[MAX_NUMBER_OF_SPECIES]
+                float d[MAX_NUMBER_OF_SPECIES]
+                float valency[MAX_NUMBER_OF_SPECIES]
+                float ext_force_density[3][MAX_NUMBER_OF_SPECIES]
+                char * node_is_catalyst
+                bool es_coupling
+                float * charge_potential_buffer
+                float * electric_field
 
         cdef extern EK_parameters ek_parameters
 

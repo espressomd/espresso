@@ -638,13 +638,6 @@ def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
     return 4. * epsilon * (rr**-12 - rr**-6)
 
 
-class DynamicDict(dict):
-
-    def __getitem__(self, key):
-        value = super().__getitem__(key)
-        return eval(value, self) if isinstance(value, str) else value
-
-
 def count_fluid_nodes(lbf):
     """Counts the non-boundary nodes in the passed lb fluid instance."""
 

@@ -1001,6 +1001,7 @@ void lattice_boltzmann_update() {
 /***********************************************************************/
 /**@{*/
 
+#ifdef ADDITIONAL_CHECKS
 static int compare_buffers(double *buf1, double *buf2, int size) {
   int ret;
   if (memcmp(buf1, buf2, size) != 0) {
@@ -1012,7 +1013,6 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
   return ret;
 }
 
-#ifdef ADDITIONAL_CHECKS
 /** Check consistency of the halo regions.
  *  Test whether the halo regions have been exchanged correctly.
  */
