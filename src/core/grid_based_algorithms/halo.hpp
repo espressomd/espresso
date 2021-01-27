@@ -72,7 +72,6 @@ struct Fieldtype {
 
 /** Predefined fieldtypes */
 extern struct Fieldtype fieldtype_double;
-#define FIELDTYPE_DOUBLE (&fieldtype_double)
 
 /** Structure describing a Halo region */
 typedef struct {

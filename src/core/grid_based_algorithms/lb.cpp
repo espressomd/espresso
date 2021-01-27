@@ -652,7 +652,7 @@ void lb_prepare_communication(HaloCommunicator &halo_comm,
    * datatypes */
 
   /* prepare the communication for a single velocity */
-  prepare_halo_communication(&comm, &lb_lattice, FIELDTYPE_DOUBLE, MPI_DOUBLE,
+  prepare_halo_communication(&comm, &lb_lattice, &fieldtype_double, MPI_DOUBLE,
                              node_grid);
 
   halo_comm.num = comm.num;
