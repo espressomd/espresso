@@ -38,7 +38,6 @@
 
 #include <utils/Array.hpp>
 #include <utils/Counter.hpp>
-#include <utils/memory.hpp>
 
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
@@ -49,6 +48,7 @@
 #include <cuda.h>
 #include <curand_kernel.h>
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -2878,19 +2878,14 @@ void lb_integrate_GPU() {
 #endif
 }
 
-void lb_gpu_get_boundary_forces(double *forces) {
+void lb_gpu_get_boundary_forces(std::vector<double> &forces) {
 #ifdef LB_BOUNDARIES_GPU
-  auto *temp = (float *)Utils::malloc(3 * LBBoundaries::lbboundaries.size() *
-                                      sizeof(float));
-  cuda_safe_mem(
-      cudaMemcpy(temp, lb_boundary_force,
-                 3 * LBBoundaries::lbboundaries.size() * sizeof(float),
-                 cudaMemcpyDeviceToHost));
-
-  for (int i = 0; i < 3 * LBBoundaries::lbboundaries.size(); i++) {
-    forces[i] = -(double)temp[i];
-  }
-  free(temp);
+  std::vector<float> temp(3 * LBBoundaries::lbboundaries.size());
+  cuda_safe_mem(cudaMemcpy(temp.data(), lb_boundary_force,
+                           temp.size() * sizeof(float),
+                           cudaMemcpyDeviceToHost));
+  std::transform(temp.begin(), temp.end(), forces.begin(),
+                 [](float val) { return -static_cast<double>(val); });
 #endif
 }
 

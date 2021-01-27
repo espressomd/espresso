@@ -217,7 +217,7 @@ void lb_set_node_rho_GPU(int single_nodeindex, float host_rho);
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
-void lb_gpu_get_boundary_forces(double *forces);
+void lb_gpu_get_boundary_forces(std::vector<double> &forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd);
 void lb_load_checkpoint_GPU(float const *host_checkpoint_vd);
 
