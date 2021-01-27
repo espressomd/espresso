@@ -33,7 +33,6 @@
 #include "halo.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/memory.hpp>
 
 #include <cstdlib>
 #include <cstring>
@@ -45,43 +44,33 @@ struct _Fieldtype fieldtype_double = {0, {}, {},    sizeof(double), 0,
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
                               Fieldtype oldtype, Fieldtype *const newtype) {
   if (*newtype) {
-    free(*newtype);
+    delete *newtype;
   }
-  Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
-
-  ntype->subtype = oldtype;
-  ntype->vflag = true;
-
-  ntype->vblocks = vblocks;
-  ntype->vstride = vstride;
-  ntype->vskip = vskip;
-
-  ntype->extent = oldtype->extent * ((vblocks - 1) * vskip + vstride);
-
-  ntype->count = oldtype->count;
-  ntype->lengths = oldtype->lengths;
-  ntype->disps = oldtype->disps;
+  *newtype = new _Fieldtype{oldtype->count,
+                            oldtype->disps,
+                            oldtype->lengths,
+                            oldtype->extent * ((vblocks - 1) * vskip + vstride),
+                            vblocks,
+                            vstride,
+                            vskip,
+                            true,
+                            oldtype};
 }
 
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
                                Fieldtype oldtype, Fieldtype *const newtype) {
   if (*newtype) {
-    free(*newtype);
+    delete *newtype;
   }
-  Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
-
-  ntype->subtype = oldtype;
-  ntype->vflag = false;
-
-  ntype->vblocks = vblocks;
-  ntype->vstride = vstride;
-  ntype->vskip = vskip;
-
-  ntype->extent = oldtype->extent * vstride + (vblocks - 1) * vskip;
-
-  ntype->count = oldtype->count;
-  ntype->lengths = oldtype->lengths;
-  ntype->disps = oldtype->disps;
+  *newtype = new _Fieldtype{oldtype->count,
+                            oldtype->disps,
+                            oldtype->lengths,
+                            oldtype->extent * vstride + (vblocks - 1) * vskip,
+                            vblocks,
+                            vstride,
+                            vskip,
+                            false,
+                            oldtype};
 }
 
 /** Set halo region to a given value
