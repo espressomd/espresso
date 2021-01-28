@@ -36,49 +36,18 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 
-/** Primitive fieldtypes and their initializers */
-FieldType fieldtype_double = {0, {}, {},    sizeof(double), 0,
-                              0, 0,  false, nullptr};
-
-void halo_create_field_vector(int vblocks, int vstride, int vskip,
-                              FieldType *oldtype, FieldType **const newtype) {
-  if (*newtype) {
-    delete *newtype;
-  }
-  *newtype = new FieldType{oldtype->count,
-                           oldtype->disps,
-                           oldtype->lengths,
-                           oldtype->extent * ((vblocks - 1) * vskip + vstride),
-                           vblocks,
-                           vstride,
-                           vskip,
-                           true,
-                           oldtype};
-}
-
-void halo_create_field_hvector(int vblocks, int vstride, int vskip,
-                               FieldType *oldtype, FieldType **const newtype) {
-  if (*newtype) {
-    delete *newtype;
-  }
-  *newtype = new FieldType{oldtype->count,
-                           oldtype->disps,
-                           oldtype->lengths,
-                           oldtype->extent * vstride + (vblocks - 1) * vskip,
-                           vblocks,
-                           vstride,
-                           vskip,
-                           false,
-                           oldtype};
-}
+/** Predefined fieldtype for double-precision LB */
+static std::shared_ptr<FieldType> fieldtype_double =
+    std::make_shared<FieldType>(static_cast<int>(sizeof(double)));
 
 /** Set halo region to a given value
  * @param[out] dest pointer to the halo buffer
  * @param value integer value to write into the halo buffer
  * @param type halo field layout description
  */
-void halo_dtset(char *dest, int value, FieldType *type) {
+void halo_dtset(char *dest, int value, std::shared_ptr<FieldType> type) {
   auto const vblocks = type->vblocks;
   auto const vstride = type->vstride;
   auto const vskip = type->vskip;
@@ -96,10 +65,11 @@ void halo_dtset(char *dest, int value, FieldType *type) {
   }
 }
 
-void halo_dtcopy(char *r_buffer, char *s_buffer, int count, FieldType *type);
+void halo_dtcopy(char *r_buffer, char *s_buffer, int count,
+                 std::shared_ptr<FieldType> type);
 
 void halo_copy_vector(char *r_buffer, char *s_buffer, int count,
-                      FieldType *type, bool vflag) {
+                      std::shared_ptr<FieldType> type, bool vflag) {
 
   auto const vblocks = type->vblocks;
   auto const vstride = type->vstride;
@@ -124,7 +94,8 @@ void halo_copy_vector(char *r_buffer, char *s_buffer, int count,
  * @param count    amount of data to copy
  * @param type     field layout type
  */
-void halo_dtcopy(char *r_buffer, char *s_buffer, int count, FieldType *type) {
+void halo_dtcopy(char *r_buffer, char *s_buffer, int count,
+                 std::shared_ptr<FieldType> type) {
 
   if (type->subtype) {
     halo_copy_vector(r_buffer, s_buffer, count, type, type->vflag);
@@ -146,7 +117,7 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, FieldType *type) {
 
 void prepare_halo_communication(HaloCommunicator *const hc,
                                 Lattice const *const lattice,
-                                FieldType *fieldtype, MPI_Datatype datatype,
+                                MPI_Datatype datatype,
                                 const Utils::Vector3i &local_node_grid) {
 
   const auto grid = lattice->grid;
@@ -160,7 +131,7 @@ void prepare_halo_communication(HaloCommunicator *const hc,
   hc->num = num;
   hc->halo_info.resize(num);
 
-  auto const extent = static_cast<long>(fieldtype->extent);
+  auto const extent = static_cast<long>(fieldtype_double->extent);
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
 
@@ -196,8 +167,8 @@ void prepare_halo_communication(HaloCommunicator *const hc,
       hinfo->source_node = node_neighbors[2 * dir + 1 - lr];
       hinfo->dest_node = node_neighbors[2 * dir + lr];
 
-      halo_create_field_vector(nblocks, stride, skip, fieldtype,
-                               &hinfo->fieldtype);
+      hinfo->fieldtype = std::make_shared<FieldType>(nblocks, stride, skip,
+                                                     true, fieldtype_double);
 
       MPI_Type_vector(nblocks, stride, skip, datatype, &hinfo->datatype);
       MPI_Type_commit(&hinfo->datatype);
@@ -240,7 +211,7 @@ void release_halo_communication(HaloCommunicator *const hc) {
 
 void halo_communication(HaloCommunicator const *const hc, char *const base) {
 
-  FieldType *fieldtype;
+  std::shared_ptr<FieldType> fieldtype;
   MPI_Datatype datatype;
   MPI_Request request;
   MPI_Status status;

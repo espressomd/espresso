@@ -63,6 +63,7 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 
 using Utils::get_linear_index;
@@ -652,8 +653,7 @@ void lb_prepare_communication(HaloCommunicator &halo_comm,
    * datatypes */
 
   /* prepare the communication for a single velocity */
-  prepare_halo_communication(&comm, &lb_lattice, &fieldtype_double, MPI_DOUBLE,
-                             node_grid);
+  prepare_halo_communication(&comm, &lb_lattice, MPI_DOUBLE, node_grid);
 
   halo_comm.num = comm.num;
   halo_comm.halo_info.resize(comm.num);
@@ -681,10 +681,10 @@ void lb_prepare_communication(HaloCommunicator &halo_comm,
                             comm.halo_info[i].datatype, &hinfo->datatype);
     MPI_Type_commit(&hinfo->datatype);
 
-    halo_create_field_hvector(
+    hinfo->fieldtype = std::make_shared<FieldType>(
         D3Q19::n_vel, 1,
-        static_cast<int>(lb_lattice.halo_grid_volume * sizeof(double)),
-        comm.halo_info[i].fieldtype, &hinfo->fieldtype);
+        static_cast<int>(lb_lattice.halo_grid_volume * sizeof(double)), false,
+        comm.halo_info[i].fieldtype);
   }
 
   release_halo_communication(&comm);
