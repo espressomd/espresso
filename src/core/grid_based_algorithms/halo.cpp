@@ -38,15 +38,15 @@
 #include <cstring>
 
 /** Primitive fieldtypes and their initializers */
-struct Fieldtype fieldtype_double = {0, {}, {},    sizeof(double), 0,
-                                     0, 0,  false, nullptr};
+FieldType fieldtype_double = {0, {}, {},    sizeof(double), 0,
+                              0, 0,  false, nullptr};
 
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
-                              Fieldtype *oldtype, Fieldtype **const newtype) {
+                              FieldType *oldtype, FieldType **const newtype) {
   if (*newtype) {
     delete *newtype;
   }
-  *newtype = new Fieldtype{oldtype->count,
+  *newtype = new FieldType{oldtype->count,
                            oldtype->disps,
                            oldtype->lengths,
                            oldtype->extent * ((vblocks - 1) * vskip + vstride),
@@ -58,11 +58,11 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip,
 }
 
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
-                               Fieldtype *oldtype, Fieldtype **const newtype) {
+                               FieldType *oldtype, FieldType **const newtype) {
   if (*newtype) {
     delete *newtype;
   }
-  *newtype = new Fieldtype{oldtype->count,
+  *newtype = new FieldType{oldtype->count,
                            oldtype->disps,
                            oldtype->lengths,
                            oldtype->extent * vstride + (vblocks - 1) * vskip,
@@ -78,7 +78,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
  * @param value integer value to write into the halo buffer
  * @param type halo field layout description
  */
-void halo_dtset(char *dest, int value, Fieldtype *type) {
+void halo_dtset(char *dest, int value, FieldType *type) {
   auto const vblocks = type->vblocks;
   auto const vstride = type->vstride;
   auto const vskip = type->vskip;
@@ -96,10 +96,10 @@ void halo_dtset(char *dest, int value, Fieldtype *type) {
   }
 }
 
-void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype *type);
+void halo_dtcopy(char *r_buffer, char *s_buffer, int count, FieldType *type);
 
 void halo_copy_vector(char *r_buffer, char *s_buffer, int count,
-                      Fieldtype *type, bool vflag) {
+                      FieldType *type, bool vflag) {
 
   auto const vblocks = type->vblocks;
   auto const vstride = type->vstride;
@@ -124,7 +124,7 @@ void halo_copy_vector(char *r_buffer, char *s_buffer, int count,
  * @param count    amount of data to copy
  * @param type     field layout type
  */
-void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype *type) {
+void halo_dtcopy(char *r_buffer, char *s_buffer, int count, FieldType *type) {
 
   if (type->subtype) {
     halo_copy_vector(r_buffer, s_buffer, count, type, type->vflag);
@@ -146,7 +146,7 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype *type) {
 
 void prepare_halo_communication(HaloCommunicator *const hc,
                                 Lattice const *const lattice,
-                                Fieldtype *fieldtype, MPI_Datatype datatype,
+                                FieldType *fieldtype, MPI_Datatype datatype,
                                 const Utils::Vector3i &local_node_grid) {
 
   const auto grid = lattice->grid;
@@ -240,7 +240,7 @@ void release_halo_communication(HaloCommunicator *const hc) {
 
 void halo_communication(HaloCommunicator const *const hc, char *const base) {
 
-  Fieldtype *fieldtype;
+  FieldType *fieldtype;
   MPI_Datatype datatype;
   MPI_Request request;
   MPI_Status status;
