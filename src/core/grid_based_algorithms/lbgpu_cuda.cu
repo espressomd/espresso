@@ -58,13 +58,13 @@
 
 extern int this_node;
 
-/** device_rho_v: struct for hydrodynamic fields: this is for internal use
+/** struct for hydrodynamic fields: this is for internal use
  *  (i.e. stores values in LB units) and should not used for
  *  printing values
  */
 static LB_rho_v_gpu *device_rho_v = nullptr;
 
-/** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
+/** struct for hydrodynamic fields: this is the interface
  *  and stores values in MD units. It should not be used
  *  as an input for any LB calculations. TODO: in the future,
  *  one might want to have several structures for printing
@@ -98,7 +98,7 @@ static float *lb_boundary_force = nullptr;
 #endif
 
 /** @brief Whether LB GPU was initialized */
-static int *device_gpu_lb_initialized = nullptr;
+static bool *device_gpu_lb_initialized = nullptr;
 
 /** @brief Direction of data transfer between @ref nodes_a and @ref nodes_b
  *  during integration in @ref lb_integrate_GPU
@@ -1719,7 +1719,7 @@ calc_node_force(Utils::Array<float, no_of_neighbours> const &delta,
  */
 __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
                                      LB_node_force_density_gpu node_f,
-                                     int *gpu_check) {
+                                     bool *gpu_check) {
   /* TODO: this can handle only a uniform density, something similar, but local,
            has to be called every time the fields are set by the user ! */
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
@@ -1727,7 +1727,7 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
   if (index < para->number_of_nodes) {
     Utils::Array<float, 19> mode;
 
-    gpu_check[0] = 1;
+    gpu_check[0] = true;
 
     /* default values for fields in lattice units */
     float Rho = para->rho;
@@ -2424,7 +2424,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   /*write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
-  free_realloc_and_clear(device_gpu_lb_initialized, sizeof(int));
+  free_realloc_and_clear(device_gpu_lb_initialized, sizeof(bool));
 
   /* values for the kernel call */
   int threads_per_block = 64;
@@ -2444,9 +2444,9 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
 
   intflag = true;
   current_nodes = &nodes_a;
-  int host_gpu_lb_initialized = 0;
+  bool host_gpu_lb_initialized = false;
   cuda_safe_mem(cudaMemcpy(&host_gpu_lb_initialized, device_gpu_lb_initialized,
-                           sizeof(int), cudaMemcpyDeviceToHost));
+                           sizeof(bool), cudaMemcpyDeviceToHost));
   cudaDeviceSynchronize();
 
   if (!host_gpu_lb_initialized) {
