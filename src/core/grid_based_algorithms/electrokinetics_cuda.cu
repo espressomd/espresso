@@ -60,7 +60,6 @@
 
 extern ActiveLB lattice_switch;
 extern bool ek_initialized;
-EK_parameters *lb_ek_parameters_gpu;
 
 // Used to limit register use for the pressure calculation
 #define EK_LINK_U00_pressure 0
@@ -180,7 +179,6 @@ EK_parameters ek_parameters = {
 
 __device__ __constant__ EK_parameters ek_parameters_gpu[1];
 ekfloat *charge_gpu;
-EK_parameters *ek_parameters_gpu_pointer;
 LB_parameters_gpu *ek_lbparameters_gpu;
 CUDA_particle_data *particle_data_gpu;
 float *ek_lb_boundary_force;
@@ -2349,13 +2347,6 @@ int ek_init() {
   dim3 dim_grid;
 
   if (!ek_initialized) {
-    if (cudaGetSymbolAddress((void **)&ek_parameters_gpu_pointer,
-                             ek_parameters_gpu) != cudaSuccess) {
-      fprintf(stderr, "ERROR: Fetching constant memory pointer\n");
-
-      return 1;
-    }
-
     for (auto &val : ek_parameters.species_index) {
       val = -1;
     }
@@ -2440,7 +2431,6 @@ int ek_init() {
                                      sizeof(EK_parameters)));
 
     lb_get_para_pointer(&ek_lbparameters_gpu);
-    lb_set_ek_pointer(ek_parameters_gpu_pointer);
 
     cuda_safe_mem(
         cudaMalloc((void **)&ek_parameters.lb_force_density_previous,
@@ -2542,10 +2532,6 @@ int ek_init() {
     ek_integrate_electrostatics();
   }
   return 0;
-}
-
-void lb_set_ek_pointer(EK_parameters *pointeradress) {
-  lb_ek_parameters_gpu = pointeradress;
 }
 
 unsigned int ek_calculate_boundary_mass() {
