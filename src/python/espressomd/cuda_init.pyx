@@ -18,6 +18,7 @@
 #
 include "myconfig.pxi"
 from . cimport cuda_init
+from . import utils
 
 cdef class CudaInitHandle:
     def __init__(self):
@@ -37,12 +38,10 @@ cdef class CudaInitHandle:
 
             """
             dev = cuda_get_device()
-            if dev == -1:
-                raise Exception("cuda device get error")
             return dev
 
         @device.setter
-        def device(self, int _dev):
+        def device(self, int dev):
             """
             Specify which device to use.
 
@@ -52,35 +51,72 @@ cdef class CudaInitHandle:
                 Set the device id of the graphics card to use.
 
             """
-            cuda_set_device(_dev)
+            cuda_set_device(dev)
 
-    IF CUDA == 1:
-        @property
-        def device_list(self):
+        def list_devices(self):
             """
             List devices.
 
             Returns
             -------
-            :obj:`list` :
+            :obj:`dict` :
                 List of available CUDA devices.
 
             """
             cdef char gpu_name_buffer[4 + 64]
+            n_gpus = 0
+            try:
+                n_gpus = cuda_get_n_gpus()
+            except RuntimeError:
+                pass
             devices = dict()
-            for i in range(cuda_get_n_gpus()):
-                cuda_get_gpu_name(i, gpu_name_buffer)
-                devices[i] = gpu_name_buffer
+            for i in range(n_gpus):
+                try:
+                    cuda_get_gpu_name(i, gpu_name_buffer)
+                except RuntimeError:
+                    continue
+                devices[i] = utils.to_str(gpu_name_buffer)
             return devices
 
-        @device_list.setter
-        def device_list(self, dict _dev_dict):
-            raise Exception("cuda device list is read only")
+        def list_devices_properties(self):
+            """
+            List devices with their properties on each host machine.
 
+            Returns
+            -------
+            :obj:`dict` :
+                List of available CUDA devices with their properties.
+
+            """
+            cdef vector[EspressoGpuDevice] devices
+            cdef EspressoGpuDevice dev
+            try:
+                devices = cuda_gather_gpus()
+            except RuntimeError:
+                pass
+            resources = dict()
+            for i in range(devices.size()):
+                dev = devices[i]
+                hostname = utils.to_str(dev.proc_name)
+                if hostname not in resources:
+                    resources[hostname] = {}
+                resources[hostname][dev.id] = {
+                    'name': utils.to_str(dev.name),
+                    'compute_capability': (
+                        dev.compute_capability_major,
+                        dev.compute_capability_minor
+                    ),
+                    'cores': dev.n_cores,
+                    'total_memory': dev.total_memory,
+                }
+            return resources
 
 IF CUDA:
     def gpu_available():
-        return cuda_get_n_gpus() > 0
+        try:
+            return cuda_get_n_gpus() > 0
+        except RuntimeError:
+            return False
 ELSE:
     def gpu_available():
         return False

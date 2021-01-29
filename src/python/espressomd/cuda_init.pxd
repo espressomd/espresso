@@ -16,9 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+from libcpp.vector cimport vector
+
 cdef extern from "cuda_init.hpp":
-    int cuda_set_device(int dev) except +
-    int cuda_get_device()
-    cdef int cuda_get_n_gpus()
-    void cuda_get_gpu_name(int dev, char name[64])
-#    int getdevicelist(int* devl, char* devname)
+    cdef struct EspressoGpuDevice:
+        int id
+        char name[64]
+        char proc_name[64]
+        int node
+        int compute_capability_major
+        int compute_capability_minor
+        size_t total_memory
+        int n_cores
+
+    void cuda_set_device(int dev) except +
+    int cuda_get_device() except +
+    int cuda_get_n_gpus() except +
+    void cuda_get_gpu_name(int dev, char name[64]) except +
+    vector[EspressoGpuDevice] cuda_gather_gpus()

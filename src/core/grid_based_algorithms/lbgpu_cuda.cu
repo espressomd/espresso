@@ -33,7 +33,7 @@
 #include "grid_based_algorithms/lbgpu.hpp"
 
 #include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 #include "errorhandling.hpp"
 
 #include <utils/Array.hpp>
@@ -543,6 +543,7 @@ __device__ void relax_modes(Utils::Array<float, 19> &mode, unsigned int index,
 /** Thermalization of the modes with Gaussian random numbers
  *  @param[in] index     Node index / thread index
  *  @param[in,out] mode  Local register values mode
+ *  @param[in]  philox_counter   Philox counter
  */
 __device__ void thermalize_modes(Utils::Array<float, 19> &mode,
                                  unsigned int index, uint64_t philox_counter) {
@@ -1537,6 +1538,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float const *particle_position,
  *  @param[in]  d_v                Local device values
  *  @param[in]  flag_cs            Determine if we are at the centre (0,
  *                                 typical) or at the source (1, swimmer only)
+ *  @param[in]  philox_counter     Philox counter
  *  @param[in]  friction           Friction constant for the particle coupling
  *  @tparam no_of_neighbours       The number of neighbours to consider for
  *                                 interpolation
@@ -2111,7 +2113,9 @@ __global__ void set_rho(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
 /** Set the boundary flag for all boundary nodes
  *  @param[in]  boundary_node_list    Indices of the boundary nodes
  *  @param[in]  boundary_index_list   Flag for the corresponding boundary
+ *  @param[in]  boundary_velocities   Boundary velocities
  *  @param[in]  number_of_boundnodes  Number of boundary nodes
+ *  @param[in]  boundaries            Boundary information
  */
 __global__ void init_boundaries(int const *boundary_node_list,
                                 int const *boundary_index_list,
@@ -2149,6 +2153,7 @@ __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
  *  @param[out]    n_b     Local node residing in array b
  *  @param[in,out] d_v     Local device values
  *  @param[in,out] node_f  Local node force density
+ *  @param[in]     philox_counter  Philox counter
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
@@ -2198,9 +2203,11 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[in,out]  particle_force  Particle force
  *  @param[out] node_f              Local node force
  *  @param[in]  d_v                 Local device values
+ *  @param[in]  couple_virtual      If true, virtual particles are also coupled
  *  @param[in]  friction            Friction constant for the particle coupling
+ *  @param[in]  philox_counter      Philox counter
  *  @tparam     no_of_neighbours    The number of neighbours to consider for
- * interpolation
+ *                                  interpolation
  */
 template <std::size_t no_of_neighbours>
 __global__ void calc_fluid_particle_ia(

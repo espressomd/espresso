@@ -21,7 +21,7 @@
 
 #include "grid_based_algorithms/fd-electrostatics.cuh"
 
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 
 #include <cuda.h>
 #include <cufft.h>
