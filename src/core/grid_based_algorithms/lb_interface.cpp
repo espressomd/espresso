@@ -125,7 +125,7 @@ void lb_lbfluid_sanity_checks() {
 void lb_lbfluid_on_integration_start() {
   lb_lbfluid_sanity_checks();
   if (lattice_switch == ActiveLB::CPU) {
-    halo_communication(&update_halo_comm,
+    halo_communication(update_halo_comm,
                        reinterpret_cast<char *>(lbfluid[0].data()));
   }
 }
