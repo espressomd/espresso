@@ -34,7 +34,7 @@ class P3M_tuning_test(ut.TestCase):
         self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]], q=[-1, 1])
 
     def add_magnetic_particles(self):
-        self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]],
+        self.system.part.add(pos=[[0.01, 0.01, 0.01], [.5, .5, .5]],
                              rotation=2 * [(1, 1, 1)], dip=2 * [(1, 0, 0)])
 
     ##################################################
@@ -199,6 +199,47 @@ class P3M_tuning_test(ut.TestCase):
             self.system.actors.add(solver)
         except Exception as err:
             self.fail('tuning raised Exception("' + str(err) + '")')
+
+    @utx.skipIfMissingFeatures("P3M")
+    def test_09_no_errors_p3m_cpu_rescale_mesh(self):
+        import espressomd.electrostatics
+
+        self.system.box_l = [10., 15., 20.]
+        self.system.time_step = 0.01
+        self.add_charged_particles()
+
+        solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2,
+                                               epsilon='metallic',
+                                               mesh=[8, -1, -1])
+        try:
+            self.system.actors.add(solver)
+        except Exception as err:
+            self.fail('tuning raised Exception("' + str(err) + '")')
+        tuned_mesh = solver.get_params()['mesh']
+        self.assertEqual(tuned_mesh[0], 8)
+        self.assertEqual(tuned_mesh[1], 12)
+        self.assertEqual(tuned_mesh[2], 16)
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures("P3M")
+    def test_09_no_errors_p3m_gpu_rescale_mesh(self):
+        import espressomd.electrostatics
+
+        self.system.box_l = [10., 15., 20.]
+        self.system.time_step = 0.01
+        self.add_charged_particles()
+
+        solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-1,
+                                                  epsilon='metallic',
+                                                  mesh=[20, -1, -1])
+        try:
+            self.system.actors.add(solver)
+        except Exception as err:
+            self.fail('tuning raised Exception("' + str(err) + '")')
+        tuned_mesh = solver.get_params()['mesh']
+        self.assertEqual(tuned_mesh[0], 20)
+        self.assertEqual(tuned_mesh[1], 30)
+        self.assertEqual(tuned_mesh[2], 40)
 
 
 if __name__ == "__main__":

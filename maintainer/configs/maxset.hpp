@@ -47,6 +47,7 @@
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
+#define EK_DEBUG
 #define MMM1D_GPU
 #endif
 

@@ -34,9 +34,17 @@
 #include "grid.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
-double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
-                             Particle &p2, bool force_flag) {
+/**
+ * Calculate dipolar energy and optionally force between two particles.
+ * @param[in,out] p1          First particle
+ * @param[in]     dip1        Cached dipole moment of the first particle
+ * @param[in,out] p2          Second particle
+ * @param[in]     force_flag  If true, update the particle forces and torques
+ */
+static double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
+                                    Particle &p2, bool force_flag) {
 
   // Cache dipole moment
   auto const dip2 = p2.calc_dip();
@@ -103,13 +111,9 @@ double dawaanr_calculations(bool force_flag, bool energy_flag,
     return 0;
   }
 
-  // Variable to sum up the energy
-  double u = 0;
-
-  auto parts = particles;
-
-  // Iterate over all cells
-  for (auto it = parts.begin(), end = parts.end(); it != end; ++it) {
+  double energy = 0.0;
+  // Iterate over all particles
+  for (auto it = particles.begin(), end = particles.end(); it != end; ++it) {
     // If the particle has no dipole moment, ignore it
     if (it->p.dipm == 0.0)
       continue;
@@ -123,12 +127,11 @@ double dawaanr_calculations(bool force_flag, bool energy_flag,
       if (jt->p.dipm == 0.0)
         continue;
       // Calculate energy and/or force between the particles
-      u += calc_dipole_dipole_ia(*it, dip1, *jt, force_flag);
+      energy += calc_dipole_dipole_ia(*it, dip1, *jt, force_flag);
     }
   }
 
-  // Return energy
-  return u;
+  return energy;
 }
 
 /* =============================================================================
@@ -158,7 +161,6 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
   std::vector<double> mx, my, mz;
   std::vector<double> fx, fy, fz;
   std::vector<double> tx, ty, tz;
-  double u;
 
   if (n_nodes != 1) {
     fprintf(stderr, "error: magnetic Direct Sum is just for one cpu...\n");
@@ -217,111 +219,100 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
     }
   }
 
-  /*now we do the calculations */
+  /* energy calculation */
+  double energy = 0.;
 
-  { /* beginning of the area of calculation */
-    int NCUT[3], NCUT2;
+  int NCUT[3];
+  for (int i = 0; i < 3; i++) {
+    NCUT[i] = box_geo.periodic(i) ? Ncut_off_magnetic_dipolar_direct_sum : 0;
+  }
+  auto const NCUT2 = Utils::sqr(Ncut_off_magnetic_dipolar_direct_sum);
 
-    for (int i = 0; i < 3; i++) {
-      NCUT[i] = Ncut_off_magnetic_dipolar_direct_sum;
-      if (box_geo.periodic(i) == 0) {
-        NCUT[i] = 0;
-      }
-    }
-    NCUT2 = Ncut_off_magnetic_dipolar_direct_sum *
-            Ncut_off_magnetic_dipolar_direct_sum;
+  for (int i = 0; i < dip_particles; i++) {
+    for (int j = 0; j < dip_particles; j++) {
+      auto const pe1 = mx[i] * mx[j] + my[i] * my[j] + mz[i] * mz[j];
+      auto const rx = x[i] - x[j];
+      auto const ry = y[i] - y[j];
+      auto const rz = z[i] - z[j];
 
-    u = 0;
+      for (int nx = -NCUT[0]; nx <= NCUT[0]; nx++) {
+        auto const rnx = rx + nx * box_geo.length()[0];
+        auto const rnx2 = rnx * rnx;
+        for (int ny = -NCUT[1]; ny <= NCUT[1]; ny++) {
+          auto const rny = ry + ny * box_geo.length()[1];
+          auto const rny2 = rny * rny;
+          for (int nz = -NCUT[2]; nz <= NCUT[2]; nz++) {
+            if (!(i == j && nx == 0 && ny == 0 && nz == 0) and
+                (nx * nx + ny * ny + nz * nz <= NCUT2)) {
+              auto const rnz = rz + nz * box_geo.length()[2];
+              auto const r2 = rnx2 + rny2 + rnz * rnz;
+              auto const r = sqrt(r2);
+              auto const r3 = r2 * r;
+              auto const r5 = r3 * r2;
+              auto const r7 = r5 * r2;
 
-    for (int i = 0; i < dip_particles; i++) {
-      for (int j = 0; j < dip_particles; j++) {
-        auto const pe1 = mx[i] * mx[j] + my[i] * my[j] + mz[i] * mz[j];
-        auto const rx = x[i] - x[j];
-        auto const ry = y[i] - y[j];
-        auto const rz = z[i] - z[j];
+              auto const pe2 = mx[i] * rnx + my[i] * rny + mz[i] * rnz;
+              auto const pe3 = mx[j] * rnx + my[j] * rny + mz[j] * rnz;
 
-        for (int nx = -NCUT[0]; nx <= NCUT[0]; nx++) {
-          auto const rnx = rx + nx * box_geo.length()[0];
-          auto const rnx2 = rnx * rnx;
-          for (int ny = -NCUT[1]; ny <= NCUT[1]; ny++) {
-            auto const rny = ry + ny * box_geo.length()[1];
-            auto const rny2 = rny * rny;
-            for (int nz = -NCUT[2]; nz <= NCUT[2]; nz++) {
-              if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
-                if (nx * nx + ny * ny + nz * nz <= NCUT2) {
-                  auto const rnz = rz + nz * box_geo.length()[2];
-                  auto const r2 = rnx2 + rny2 + rnz * rnz;
-                  auto const r = sqrt(r2);
-                  auto const r3 = r2 * r;
-                  auto const r5 = r3 * r2;
-                  auto const r7 = r5 * r2;
+              // Energy ............................
 
-                  auto const pe2 = mx[i] * rnx + my[i] * rny + mz[i] * rnz;
-                  auto const pe3 = mx[j] * rnx + my[j] * rny + mz[j] * rnz;
+              energy += pe1 / r3 - 3.0 * pe2 * pe3 / r5;
 
-                  // Energy ............................
+              if (force_flag) {
+                double a, b, c, d;
+                // force ............................
+                a = mx[i] * mx[j] + my[i] * my[j] + mz[i] * mz[j];
+                a = 3.0 * a / r5;
+                b = -15.0 * pe2 * pe3 / r7;
+                c = 3.0 * pe3 / r5;
+                d = 3.0 * pe2 / r5;
 
-                  u += pe1 / r3 - 3.0 * pe2 * pe3 / r5;
+                fx[i] += (a + b) * rnx + c * mx[i] + d * mx[j];
+                fy[i] += (a + b) * rny + c * my[i] + d * my[j];
+                fz[i] += (a + b) * rnz + c * mz[i] + d * mz[j];
 
-                  if (force_flag) {
-                    double a, b, c, d;
-                    // force ............................
-                    a = mx[i] * mx[j] + my[i] * my[j] + mz[i] * mz[j];
-                    a = 3.0 * a / r5;
-                    b = -15.0 * pe2 * pe3 / r7;
-                    c = 3.0 * pe3 / r5;
-                    d = 3.0 * pe2 / r5;
+                // torque ............................
+                auto const ax = my[i] * mz[j] - my[j] * mz[i];
+                auto const ay = mx[j] * mz[i] - mx[i] * mz[j];
+                auto const az = mx[i] * my[j] - mx[j] * my[i];
 
-                    fx[i] += (a + b) * rnx + c * mx[i] + d * mx[j];
-                    fy[i] += (a + b) * rny + c * my[i] + d * my[j];
-                    fz[i] += (a + b) * rnz + c * mz[i] + d * mz[j];
+                auto const bx = my[i] * rnz - rny * mz[i];
+                auto const by = rnx * mz[i] - mx[i] * rnz;
+                auto const bz = mx[i] * rny - rnx * my[i];
 
-                    // torque ............................
-                    c = 3.0 / r5 * pe3;
-                    auto const ax = my[i] * mz[j] - my[j] * mz[i];
-                    auto const ay = mx[j] * mz[i] - mx[i] * mz[j];
-                    auto const az = mx[i] * my[j] - mx[j] * my[i];
-
-                    auto const bx = my[i] * rnz - rny * mz[i];
-                    auto const by = rnx * mz[i] - mx[i] * rnz;
-                    auto const bz = mx[i] * rny - rnx * my[i];
-
-                    tx[i] += -ax / r3 + bx * c;
-                    ty[i] += -ay / r3 + by * c;
-                    tz[i] += -az / r3 + bz * c;
-                  } /* of force_flag  */
-                }
-              } /* of nx*nx+ny*ny +nz*nz< NCUT*NCUT   and   !(i==j && nx==0 &&
-                   ny==0 && nz==0) */
-            }   /* of  for nz */
-          }     /* of  for ny  */
-        }       /* of  for nx  */
-      }
-    } /* of  j and i  */
-  }   /* end of the area of calculation */
+                tx[i] += -ax / r3 + bx * c;
+                ty[i] += -ay / r3 + by * c;
+                tz[i] += -az / r3 + bz * c;
+              } /* if force_flag  */
+            }   /* if distance criterion */
+          }     /* for nz */
+        }       /* for ny */
+      }         /* for nx */
+    }           /* for j */
+  }             /* for i */
 
   /* set the forces, and torques of the particles within ESPResSo */
   if (force_flag) {
 
-    int dip_particles2 = 0;
+    dip_particles = 0;
 
     for (auto &p : particles) {
       if (p.p.dipm != 0.0) {
 
-        p.f.f[0] += dipole.prefactor * fx[dip_particles2];
-        p.f.f[1] += dipole.prefactor * fy[dip_particles2];
-        p.f.f[2] += dipole.prefactor * fz[dip_particles2];
+        p.f.f[0] += dipole.prefactor * fx[dip_particles];
+        p.f.f[1] += dipole.prefactor * fy[dip_particles];
+        p.f.f[2] += dipole.prefactor * fz[dip_particles];
 
-        p.f.torque[0] += dipole.prefactor * tx[dip_particles2];
-        p.f.torque[1] += dipole.prefactor * ty[dip_particles2];
-        p.f.torque[2] += dipole.prefactor * tz[dip_particles2];
+        p.f.torque[0] += dipole.prefactor * tx[dip_particles];
+        p.f.torque[1] += dipole.prefactor * ty[dip_particles];
+        p.f.torque[2] += dipole.prefactor * tz[dip_particles];
 
-        dip_particles2++;
+        dip_particles++;
       }
     }
-  } /*of if force_flag */
+  } /* of if force_flag */
 
-  return 0.5 * dipole.prefactor * u;
+  return 0.5 * dipole.prefactor * energy;
 }
 
 int dawaanr_set_params() {

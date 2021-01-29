@@ -19,7 +19,7 @@
 
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 #include "errorhandling.hpp"
 
 #include <cuda.h>

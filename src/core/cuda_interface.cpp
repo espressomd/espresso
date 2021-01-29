@@ -96,7 +96,7 @@ void cuda_mpi_get_particles(
     /* pack local parts into buffer */
     pack_particles(particles, buffer.data());
 
-    Utils::Mpi::gather_buffer(buffer.data(), buffer.size(), comm_cart);
+    Utils::Mpi::gather_buffer(buffer, comm_cart);
   } else {
     particle_data_host.resize(n_part);
 

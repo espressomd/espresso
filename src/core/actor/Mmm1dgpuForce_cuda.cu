@@ -28,7 +28,7 @@
 #include "EspressoSystemInterface.hpp"
 #include "actor/Mmm1dgpuForce.hpp"
 #include "actor/specfunc_cuda.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/mmm-modpsi.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"

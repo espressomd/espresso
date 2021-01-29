@@ -32,6 +32,7 @@
 
 /** Calculate the minimal distance of two particles with types in set1 resp.
  *  set2.
+ *  @param partCfg particle collection.
  *  @param set1 types of particles
  *  @param set2 types of particles
  *  @return the minimal distance of two particles
@@ -68,6 +69,7 @@ double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid = -1);
  *  into @p r_bins bins which are either equidistant (@p log_flag==false) or
  *  logarithmically equidistant (@p log_flag==true). The result is stored
  *  in the @p array dist.
+ *  @param partCfg  particle collection.
  *  @param p1_types list with types of particles to find the distribution for.
  *  @param p2_types list with types of particles the others are distributed
  *                  around.
@@ -96,6 +98,7 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
  *  and sf[1]=1. For q=7, there are no possible wave vectors, so
  *  sf[2*(7-1)]=sf[2*(7-1)+1]=0.
  *
+ *  @param partCfg   particle collection
  *  @param p_types   list with types of particles to be analyzed
  *  @param order     the maximum wave vector length in 2PI/L
  */

@@ -44,6 +44,7 @@ enum MPIIOOutputFields : unsigned int {
  *
  * \param filename A null-terminated filename prefix.
  * \param fields Output specifier which fields to dump.
+ * \param particles range of particles to serialize.
  */
 void mpi_mpiio_common_write(const char *filename, unsigned fields,
                             const ParticleRange &particles);

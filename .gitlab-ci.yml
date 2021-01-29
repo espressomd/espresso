@@ -1,4 +1,4 @@
-image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:e583d4b2eb8eedd10068957f952bd67008475ee5
+image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:1c6cfb03f7cedf008cf0d288fe460303627fc217
 
 stages:
   - prepare
@@ -101,6 +101,7 @@ maxset:
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
+     cmake_params: '-DTEST_NP=8'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:

@@ -277,6 +277,7 @@ struct ParticlePosition {
 struct ParticleForce {
   ParticleForce() = default;
   ParticleForce(ParticleForce const &) = default;
+  ParticleForce &operator=(ParticleForce const &) = default;
   ParticleForce(const Utils::Vector3d &f) : f(f) {}
 #ifdef ROTATION
   ParticleForce(const Utils::Vector3d &f, const Utils::Vector3d &torque)

@@ -22,8 +22,10 @@
 #ifdef CUDA
 
 #include "cuda_init.hpp"
+#include "cuda_utils.hpp"
 
 #include "communication.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/constants.hpp>
 
@@ -34,13 +36,13 @@
 #include <iterator>
 #include <set>
 
-/** Helper class force device set.
+/** Helper class for device sets.
  */
 struct CompareDevices {
   bool operator()(const EspressoGpuDevice &a,
                   const EspressoGpuDevice &b) const {
     const int name_comp = strncmp(a.proc_name, b.proc_name, 63);
-    /* Both devs are from the same node, order by id */
+    /* if both devices are from the same node, order by id */
     if (name_comp == 0)
       return a.id < b.id;
 
@@ -49,49 +51,50 @@ struct CompareDevices {
 };
 
 /** Gather list of CUDA devices on all nodes on the master node.
- *  It relies on MPI_Get_processor_name() to get a unique identifier of
- *  the physical node, as opposed to the logical rank of which there can
- *  be more than one on one node.
+ *  It relies on <tt>MPI_Get_processor_name()</tt> to get a unique identifier
+ *  of the physical node, as opposed to the logical rank of which there can
+ *  be more than one per node.
  */
-std::vector<EspressoGpuDevice> cuda_gather_gpus() {
-  int n_gpus = cuda_get_n_gpus();
-  char proc_name[MPI_MAX_PROCESSOR_NAME];
-  int proc_name_len;
+static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
   /* List of local devices */
-  std::vector<EspressoGpuDevice> devices;
+  std::vector<EspressoGpuDevice> devices_local;
   /* Global unique device list (only relevant on master) */
-  std::vector<EspressoGpuDevice> g_devices;
-  int *n_gpu_array = nullptr;
+  std::vector<EspressoGpuDevice> devices_global;
 
+  int n_devices;
+  try {
+    n_devices = cuda_get_n_gpus();
+  } catch (cuda_runtime_error const &err) {
+    n_devices = 0;
+  }
+
+  int proc_name_len;
+  char proc_name[MPI_MAX_PROCESSOR_NAME];
   MPI_Get_processor_name(proc_name, &proc_name_len);
-
-  /* Truncate to 63 chars to fit struct. */
-  if (strlen(proc_name) > 63)
+  if (std::strlen(proc_name) > 63)
     proc_name[63] = '\0';
 
-  for (int i = 0; i < n_gpus; ++i) {
-    /* Check if device has at least minimum compute capability */
-    if (cuda_check_gpu(i) == ES_OK) {
-      EspressoGpuDevice device;
-      if (cuda_get_device_props(i, device) == ES_OK) {
-        strncpy(device.proc_name, proc_name, 64);
-        device.proc_name[63] = '\0';
-        device.node = this_node;
-        devices.push_back(device);
-      }
+  for (int i = 0; i < n_devices; ++i) {
+    try {
+      EspressoGpuDevice device = cuda_get_device_props(i);
+      std::strncpy(device.proc_name, proc_name, 64);
+      device.proc_name[63] = '\0';
+      device.node = this_node;
+      devices_local.push_back(device);
+    } catch (cuda_runtime_error const &err) {
+      // pass
     }
   }
 
-  /* Update n_gpus to number of usable devices */
-  n_gpus = devices.size();
+  int const n_gpus = static_cast<int>(devices_local.size());
 
   if (this_node == 0) {
     std::set<EspressoGpuDevice, CompareDevices> device_set;
-    n_gpu_array = new int[n_nodes];
+    int *n_gpu_array = new int[n_nodes];
     MPI_Gather(&n_gpus, 1, MPI_INT, n_gpu_array, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     /* insert local devices */
-    std::copy(devices.begin(), devices.end(),
+    std::copy(devices_local.begin(), devices_local.end(),
               std::inserter(device_set, device_set.begin()));
 
     EspressoGpuDevice device;
@@ -106,18 +109,25 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
     }
     /* Copy unique devices to result, if any */
     std::copy(device_set.begin(), device_set.end(),
-              std::inserter(g_devices, g_devices.begin()));
+              std::inserter(devices_global, devices_global.begin()));
     delete[] n_gpu_array;
   } else {
     /* Send number of devices to master */
-    MPI_Gather(&n_gpus, 1, MPI_INT, n_gpu_array, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    /* Send devices to maser */
-    for (auto &device : devices) {
+    MPI_Gather(&n_gpus, 1, MPI_INT, nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    /* Send devices to master */
+    for (auto const &device : devices_local) {
       MPI_Send(&device, sizeof(EspressoGpuDevice), MPI_BYTE, 0, 0,
                MPI_COMM_WORLD);
     }
   }
-  return g_devices;
+  return devices_global;
+}
+
+REGISTER_CALLBACK_MASTER_RANK(mpi_cuda_gather_gpus_local)
+
+std::vector<EspressoGpuDevice> cuda_gather_gpus() {
+  return mpi_call(Communication::Result::master_rank,
+                  mpi_cuda_gather_gpus_local);
 }
 
 #endif /* CUDA */

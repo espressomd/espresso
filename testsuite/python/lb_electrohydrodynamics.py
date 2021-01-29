@@ -18,14 +18,14 @@ import espressomd
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-import espressomd.lb as lb
+import espressomd.lb
 
 
 class LBEHTest(object):
     from espressomd import lb
     s = espressomd.System(box_l=[6.0, 6.0, 6.0])
 
-    def test(self):
+    def setUp(self):
         self.params = {'time_step': 0.01,
                        'tau': 0.02,
                        'agrid': 0.5,
@@ -39,7 +39,6 @@ class LBEHTest(object):
         self.s.periodicity = [1, 1, 1]
         self.s.time_step = self.params['time_step']
         self.s.cell_system.skin = self.params['skin']
-        self.s.actors.clear()
 
         self.lbf = self.LBClass(
             visc=self.params['viscosity'],
@@ -54,28 +53,28 @@ class LBEHTest(object):
             LB_fluid=self.lbf,
             gamma=self.params['friction'])
 
+    def tearDown(self):
+        self.s.actors.clear()
+
+    def test(self):
+        s = self.s
+
         self.s.part.add(pos=0.5 * self.s.box_l, mu_E=self.params['muE'])
 
         mu_E = np.array(self.params['muE'])
         # Terminal velocity is mu_E minus the momentum the fluid
         # got by accelerating the particle in the beginning.
-        v_term = (
-            1. - 1. / (np.prod(self.s.box_l) * self.params['dens'])) * mu_E
+        v_term = (1. - 1. / (s.volume() * self.params['dens'])) * mu_E
 
-        self.s.integrator.run(steps=500)
-        self.s.actors.clear()
+        s.integrator.run(steps=500)
 
-        np.testing.assert_allclose(
-            v_term,
-            np.copy(self.s.part[0].v),
-            atol=5e-5)
+        np.testing.assert_allclose(v_term, np.copy(s.part[0].v), atol=5e-5)
 
 
 @utx.skipIfMissingFeatures(["LB_WALBERLA", "LB_ELECTROHYDRODYNAMICS"])
 class LBEHWalberla(LBEHTest, ut.TestCase):
 
-    def setUp(self):
-        self.LBClass = lb.LBFluidWalberla
+    LBClass = espressomd.lb.LBFluidWalberla
 
 
 if __name__ == "__main__":
