@@ -74,7 +74,9 @@ class LBEHTest(object):
 @utx.skipIfMissingFeatures(["LB_WALBERLA", "LB_ELECTROHYDRODYNAMICS"])
 class LBEHWalberla(LBEHTest, ut.TestCase):
 
-    LBClass = espressomd.lb.LBFluidWalberla
+    def setUp(self):
+        self.LBClass = espressomd.lb.LBFluidWalberla
+        LBEHTest.setUp(self)
 
 
 if __name__ == "__main__":
