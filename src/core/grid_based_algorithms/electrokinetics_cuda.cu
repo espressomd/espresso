@@ -156,6 +156,10 @@ EK_parameters ek_parameters = {
     nullptr,
     // lb_force_density_previous
     nullptr,
+#ifdef EK_DEBUG
+    // j_fluc
+    nullptr,
+#endif
     // rho
     {nullptr},
     // species_index
@@ -2626,7 +2630,7 @@ LOOKUP_TABLE default\n",
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
 
   for (int i = 0; i < lbpar_gpu.number_of_nodes; i++) {
-    fprintf(fp, "%e %e %e ", host_values[i].v[0] * lattice_speed,
+    fprintf(fp, "%e %e %e\n", host_values[i].v[0] * lattice_speed,
             host_values[i].v[1] * lattice_speed,
             host_values[i].v[2] * lattice_speed);
   }
@@ -2689,7 +2693,7 @@ LOOKUP_TABLE default\n",
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
   auto const agrid = lb_lbfluid_get_agrid();
   for (int i = 0; i < lbpar_gpu.number_of_nodes; i++) {
-    fprintf(fp, "%e ", host_values[i].rho / agrid / agrid / agrid);
+    fprintf(fp, "%e\n", host_values[i].rho / agrid / agrid / agrid);
   }
 
   free(host_values);
@@ -3239,39 +3243,38 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
     return 1;
   }
 
-  ekfloat *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes *
-                                             13 * sizeof(ekfloat));
+  if (ek_parameters.species_index[species] == -1) {
+    return 1;
+  }
 
-  if (ek_parameters.species_index[species] != -1) {
-    int threads_per_block = 64;
-    int blocks_per_grid_y = 4;
-    int blocks_per_grid_x = (ek_parameters.number_of_nodes +
-                             threads_per_block * blocks_per_grid_y - 1) /
-                            (threads_per_block * blocks_per_grid_y);
-    dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  auto *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * 13 *
+                                          sizeof(ekfloat));
 
-    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
-    KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
-               ek_parameters.species_index[species], *current_nodes, node_f,
-               ek_lbparameters_gpu, ek_lb_device_values,
-               philox_counter.value());
-    reset_LB_force_densities_GPU(false);
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (static_cast<int>(ek_parameters.number_of_nodes) +
+                           threads_per_block * blocks_per_grid_y - 1) /
+                          (threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
+  KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
+  KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
+             ek_parameters.species_index[species], *current_nodes, node_f,
+             ek_lbparameters_gpu, ek_lb_device_values, philox_counter.value());
+  reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
-    KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-               ek_parameters.species_index[species], *current_nodes, node_f);
+  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
+             ek_parameters.species_index[species], *current_nodes, node_f);
 #endif
 
-    cuda_safe_mem(
-        cudaMemcpy(fluxes, ek_parameters.j_fluc,
-                   ek_parameters.number_of_nodes * 13 * sizeof(ekfloat),
-                   cudaMemcpyDeviceToHost));
-  } else
-    return 1;
+  cuda_safe_mem(cudaMemcpy(fluxes, ek_parameters.j_fluc,
+                           ek_parameters.number_of_nodes * 13 * sizeof(ekfloat),
+                           cudaMemcpyDeviceToHost));
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
-flux_%d\n\
+flux_fluc_%d\n\
 ASCII\n\
 \n\
 DATASET STRUCTURED_POINTS\n\
@@ -3280,7 +3283,7 @@ ORIGIN %f %f %f\n\
 SPACING %f %f %f\n\
 \n\
 POINT_DATA %u\n\
-SCALARS flux_%d float 3\n\
+SCALARS flux_fluc_%d float 4\n\
 LOOKUP_TABLE default\n",
           species, ek_parameters.dim_x, ek_parameters.dim_y,
           ek_parameters.dim_z, ek_parameters.agrid * 0.5f,
@@ -3507,7 +3510,7 @@ int ek_print_vtk_flux_link(int species, char *filename) {
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
-flux_%d\n\
+flux_link_%d\n\
 ASCII\n\
 \n\
 DATASET STRUCTURED_POINTS\n\
@@ -3516,7 +3519,7 @@ ORIGIN %f %f %f\n\
 SPACING %f %f %f\n\
 \n\
 POINT_DATA %u\n\
-SCALARS flux_%d float 3\n\
+SCALARS flux_link_%d float 13\n\
 LOOKUP_TABLE default\n",
           species, ek_parameters.dim_x, ek_parameters.dim_y,
           ek_parameters.dim_z, ek_parameters.agrid * 0.5f,
@@ -3527,7 +3530,7 @@ LOOKUP_TABLE default\n",
   for (int i = 0; i < ek_parameters.number_of_nodes; i++) {
     rhoindex_linear2cartesian_host(i, coord);
 
-    fprintf(fp, "%e %e %e %e %e %e %e %e %e %e %e %e %e \n",
+    fprintf(fp, "%e %e %e %e %e %e %e %e %e %e %e %e %e\n",
             fluxes[jindex_getByRhoLinear_host(i, 0)],
             fluxes[jindex_getByRhoLinear_host(i, 1)],
             fluxes[jindex_getByRhoLinear_host(i, 2)],

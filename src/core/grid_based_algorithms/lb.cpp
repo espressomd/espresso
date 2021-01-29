@@ -998,6 +998,7 @@ void lattice_boltzmann_update() {
 /** \name Coupling part */
 /***********************************************************************/
 /**@{*/
+#ifdef ADDITIONAL_CHECKS
 template <class T> int compare_buffers(T const &buff_a, T const &buff_b) {
   if (buff_a != buff_b) {
     runtimeErrorMsg() << "Halo buffers are not identical";
@@ -1006,7 +1007,6 @@ template <class T> int compare_buffers(T const &buff_a, T const &buff_b) {
   return ES_OK;
 }
 
-#ifdef ADDITIONAL_CHECKS
 /** Check consistency of the halo regions.
  *  Test whether the halo regions have been exchanged correctly.
  */
