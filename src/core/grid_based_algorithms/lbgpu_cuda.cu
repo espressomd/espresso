@@ -38,7 +38,6 @@
 
 #include <utils/Array.hpp>
 #include <utils/Counter.hpp>
-#include <utils/memory.hpp>
 
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
@@ -49,6 +48,7 @@
 #include <cuda.h>
 #include <curand_kernel.h>
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -58,13 +58,13 @@
 
 extern int this_node;
 
-/** device_rho_v: struct for hydrodynamic fields: this is for internal use
+/** struct for hydrodynamic fields: this is for internal use
  *  (i.e. stores values in LB units) and should not used for
  *  printing values
  */
 static LB_rho_v_gpu *device_rho_v = nullptr;
 
-/** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
+/** struct for hydrodynamic fields: this is the interface
  *  and stores values in MD units. It should not be used
  *  as an input for any LB calculations. TODO: in the future,
  *  one might want to have several structures for printing
@@ -97,11 +97,8 @@ LB_node_force_density_gpu node_f = {
 static float *lb_boundary_force = nullptr;
 #endif
 
-/** @name pointers for additional cuda check flag */
-/**@{*/
-static int *gpu_check = nullptr;
-static int *h_gpu_check = nullptr;
-/**@}*/
+/** @brief Whether LB GPU was initialized */
+static bool *device_gpu_lb_initialized = nullptr;
 
 /** @brief Direction of data transfer between @ref nodes_a and @ref nodes_b
  *  during integration in @ref lb_integrate_GPU
@@ -503,7 +500,7 @@ __device__ void relax_modes(Utils::Array<float, 19> &mode, unsigned int index,
   j[1] = Rho * u_tot[1];
   j[2] = Rho * u_tot[2];
 
-  /** equilibrium part of the stress modes (eq13 schiller) */
+  /* equilibrium part of the stress modes (eq13 schiller) */
 
   modes_from_pi_eq[0] = ((j[0] * j[0]) + (j[1] * j[1]) + (j[2] * j[2])) / Rho;
   modes_from_pi_eq[1] = ((j[0] * j[0]) - (j[1] * j[1])) / Rho;
@@ -514,7 +511,7 @@ __device__ void relax_modes(Utils::Array<float, 19> &mode, unsigned int index,
   modes_from_pi_eq[4] = j[0] * j[2] / Rho;
   modes_from_pi_eq[5] = j[1] * j[2] / Rho;
 
-  /** relax the stress modes (eq14 schiller) */
+  /* relax the stress modes (eq14 schiller) */
 
   mode[4] =
       modes_from_pi_eq[0] + para->gamma_bulk * (mode[4] - modes_from_pi_eq[0]);
@@ -1369,7 +1366,6 @@ __device__ __inline__ float three_point_polynomial_larger_than_half(float u) {
 
 /**
  * @brief Get velocity of at index.
- *
  */
 __device__ __inline__ float3 node_velocity(float rho_eq, LB_nodes_gpu n_a,
                                            int index) {
@@ -1725,7 +1721,7 @@ calc_node_force(Utils::Array<float, no_of_neighbours> const &delta,
  */
 __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
                                      LB_node_force_density_gpu node_f,
-                                     int *gpu_check) {
+                                     bool *gpu_check) {
   /* TODO: this can handle only a uniform density, something similar, but local,
            has to be called every time the fields are set by the user ! */
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
@@ -1733,9 +1729,9 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
   if (index < para->number_of_nodes) {
     Utils::Array<float, 19> mode;
 
-    /* default values for fields in lattice units */
-    gpu_check[0] = 1;
+    gpu_check[0] = true;
 
+    /* default values for fields in lattice units */
     float Rho = para->rho;
     Utils::Array<float, 3> v{};
     Utils::Array<float, 6> pi = {{Rho * D3Q19::c_sound_sq<float>, 0.0f,
@@ -2435,13 +2431,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   /*write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
-  /*check flag if lb gpu init works*/
-  free_realloc_and_clear(gpu_check, sizeof(int));
-
-  if (h_gpu_check != nullptr)
-    free(h_gpu_check);
-
-  h_gpu_check = (int *)Utils::malloc(sizeof(int));
+  free_realloc_and_clear(device_gpu_lb_initialized, sizeof(bool));
 
   /* values for the kernel call */
   int threads_per_block = 64;
@@ -2457,17 +2447,17 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
    * Node_Force array with zero */
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
   KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block, nodes_a,
-             device_rho_v, node_f, gpu_check);
+             device_rho_v, node_f, device_gpu_lb_initialized);
 
   intflag = true;
   current_nodes = &nodes_a;
-  h_gpu_check[0] = 0;
-  cuda_safe_mem(
-      cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
+  bool host_gpu_lb_initialized = false;
+  cuda_safe_mem(cudaMemcpy(&host_gpu_lb_initialized, device_gpu_lb_initialized,
+                           sizeof(bool), cudaMemcpyDeviceToHost));
   cudaDeviceSynchronize();
 
-  if (!h_gpu_check[0]) {
-    fprintf(stderr, "initialization of lb gpu code failed! \n");
+  if (!host_gpu_lb_initialized) {
+    fprintf(stderr, "initialization of LB GPU code failed!\n");
     errexit();
   }
 }
@@ -2490,7 +2480,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
   /* calc of velocity densities from given parameters and initialize the
    * Node_Force array with zero */
   KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block, nodes_a,
-             device_rho_v, node_f, gpu_check);
+             device_rho_v, node_f, device_gpu_lb_initialized);
 }
 
 #ifdef LB_BOUNDARIES_GPU
@@ -2589,7 +2579,7 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu) {
 
 /** Setup and call particle kernel from the host
  *  @tparam no_of_neighbours       The number of neighbours to consider for
- * interpolation
+ *                                 interpolation
  */
 template <std::size_t no_of_neighbours>
 void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
@@ -2894,19 +2884,14 @@ void lb_integrate_GPU() {
 #endif
 }
 
-void lb_gpu_get_boundary_forces(double *forces) {
+void lb_gpu_get_boundary_forces(std::vector<double> &forces) {
 #ifdef LB_BOUNDARIES_GPU
-  auto *temp = (float *)Utils::malloc(3 * LBBoundaries::lbboundaries.size() *
-                                      sizeof(float));
-  cuda_safe_mem(
-      cudaMemcpy(temp, lb_boundary_force,
-                 3 * LBBoundaries::lbboundaries.size() * sizeof(float),
-                 cudaMemcpyDeviceToHost));
-
-  for (int i = 0; i < 3 * LBBoundaries::lbboundaries.size(); i++) {
-    forces[i] = -(double)temp[i];
-  }
-  free(temp);
+  std::vector<float> temp(3 * LBBoundaries::lbboundaries.size());
+  cuda_safe_mem(cudaMemcpy(temp.data(), lb_boundary_force,
+                           temp.size() * sizeof(float),
+                           cudaMemcpyDeviceToHost));
+  std::transform(temp.begin(), temp.end(), forces.begin(),
+                 [](float val) { return -static_cast<double>(val); });
 #endif
 }
 
@@ -2993,8 +2978,8 @@ void lb_lbfluid_get_population(const Utils::Vector3i &xyz,
 
 /**
  * @brief Velocity interpolation functor
- * @tparam no_of_neighbours The number of neighbours to consider for
- * interpolation
+ * @tparam no_of_neighbours     The number of neighbours to consider for
+ *                              interpolation
  */
 template <std::size_t no_of_neighbours> struct interpolation {
   LB_nodes_gpu current_nodes_gpu;

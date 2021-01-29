@@ -125,9 +125,9 @@ python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 LABELS gpu long)
 python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long)
 python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species_x.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species_y.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species_z.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX x)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX y)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX z)
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)
@@ -143,7 +143,7 @@ python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE integrator_steepest_descent.py MAX_NUM_PROC 4)
 python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
 python_test(FILE dipolar_direct_summation.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE dipolar_p3m.py MAX_NUM_PROC 1)
+python_test(FILE dipolar_p3m.py MAX_NUM_PROC 2)
 python_test(FILE dipolar_interface.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE lb_stats.py MAX_NUM_PROC 2 LABELS gpu long)
@@ -222,6 +222,10 @@ python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
 python_test(FILE mdanalysis.py MAX_NUM_PROC 2)
+python_test(FILE p3m_fft.py MAX_NUM_PROC 6)
+if(${TEST_NP} GREATER_EQUAL 8)
+  python_test(FILE p3m_fft.py MAX_NUM_PROC 8 SUFFIX 8_cores)
+endif()
 python_test(FILE p3m_tuning_exceptions.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE integrator_exceptions.py MAX_NUM_PROC 1)
 python_test(FILE utils.py MAX_NUM_PROC 1)
@@ -244,10 +248,6 @@ add_custom_target(
           ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/thermostats_common.py
-    ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND
-    ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py
     ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(

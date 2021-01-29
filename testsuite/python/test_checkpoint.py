@@ -107,25 +107,14 @@ class CheckpointTest(ut.TestCase):
             self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-5)
         state_species = ek_species.get_params()
-        reference_species = {'density': 0.4, 'D': 0.02, 'valency': 0.3}
+        reference_species = {'density': 0.4, 'D': 0.02, 'valency': 0.3,
+                             'ext_force_density': [0.01, -0.08, 0.06]}
         for key in reference_species:
             self.assertIn(key, state_species)
-            self.assertAlmostEqual(
+            np.testing.assert_allclose(
                 reference_species[key],
                 state_species[key],
-                delta=1E-5)
-        self.assertAlmostEqual(
-            state_species['ext_force_density'][0],
-            0.01,
-            delta=1E-5)
-        self.assertAlmostEqual(
-            state_species['ext_force_density'][1],
-            -0.08,
-            delta=1E-5)
-        self.assertAlmostEqual(
-            state_species['ext_force_density'][2],
-            0.06,
-            delta=1E-5)
+                atol=1E-5)
 
     def test_variables(self):
         self.assertEqual(system.cell_system.skin, 0.1)
@@ -321,8 +310,14 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('P3M.CPU' not in modes,
                "Skipping test due to missing combination.")
     def test_p3m(self):
-        self.assertTrue(any(isinstance(actor, espressomd.electrostatics.P3M)
-                            for actor in system.actors.active_actors))
+        actor = system.actors.active_actors[-1]
+        self.assertTrue(isinstance(actor, espressomd.electrostatics.P3M))
+        state = actor.get_params()
+        reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
+                     'cao': 1, 'alpha': 1.0, 'r_cut': 1.0}
+        for key in reference:
+            self.assertIn(key, state)
+            np.testing.assert_almost_equal(state[key], reference[key])
 
     @utx.skipIfMissingFeatures('COLLISION_DETECTION')
     def test_collision_detection(self):

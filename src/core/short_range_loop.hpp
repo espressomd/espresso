@@ -31,7 +31,7 @@ namespace detail {
  *        any arguments.
  */
 struct True {
-  template <class... T> bool operator()(T...) const { return true; }
+  template <class... T> bool operator()(T &...) const { return true; }
 };
 } // namespace detail
 

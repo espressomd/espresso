@@ -24,6 +24,7 @@ import numpy as np
 class CellSystem(ut.TestCase):
     system = espressomd.System(box_l=[5.0, 5.0, 5.0])
     system.cell_system.skin = 0.0
+    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def test_cell_system(self):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
@@ -34,15 +35,15 @@ class CellSystem(ut.TestCase):
         self.assertEqual(
             [s['use_verlet_list'], s['type']], [1, "domain_decomposition"])
 
+    @ut.skipIf(n_nodes == 1, "Skipping test: only runs for n_nodes >= 2")
     def test_node_grid(self):
         self.system.cell_system.set_domain_decomposition()
-        n_nodes = self.system.cell_system.get_state()['n_nodes']
-        if n_nodes == 1:
-            return
-        self.system.cell_system.node_grid = [n_nodes, 1, 1]
-        s = self.system.cell_system.get_state()
-        np.testing.assert_array_equal(
-            s['node_grid'], [n_nodes, 1, 1])
+        for i in range(3):
+            node_grid_ref = [1, 1, 1]
+            node_grid_ref[i] = self.n_nodes
+            self.system.cell_system.node_grid = node_grid_ref
+            node_grid = self.system.cell_system.get_state()['node_grid']
+            np.testing.assert_array_equal(node_grid, node_grid_ref)
 
 
 if __name__ == "__main__":
