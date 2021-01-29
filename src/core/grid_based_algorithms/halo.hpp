@@ -118,20 +118,20 @@ public:
  *  @param datatype         MPI datatype for the lattice data
  *  @param local_node_grid  Number of nodes in each spatial dimension
  */
-void prepare_halo_communication(HaloCommunicator *hc, Lattice const *lattice,
+void prepare_halo_communication(HaloCommunicator &hc, const Lattice &lattice,
                                 MPI_Datatype datatype,
                                 const Utils::Vector3i &local_node_grid);
 
 /** Frees data structures associated with a halo communicator
  *  @param[in,out] hc  halo communicator to be released
  */
-void release_halo_communication(HaloCommunicator *hc);
+void release_halo_communication(HaloCommunicator &hc);
 
 /** Perform communication according to the parallelization scheme
  *  described by the halo communicator
  *  @param[in]  hc    halo communicator describing the parallelization scheme
  *  @param[in]  base  base plane of local node
  */
-void halo_communication(HaloCommunicator const *hc, char *base);
+void halo_communication(const HaloCommunicator &hc, char *constbase);
 
 #endif /* HALO_H */
