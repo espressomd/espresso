@@ -999,12 +999,11 @@ void lattice_boltzmann_update() {
 /***********************************************************************/
 /**@{*/
 template <class T> int compare_buffers(T const &buff_a, T const &buff_b) {
-  if (not(buff_a == buff_b)) {
+  if (buff_a != buff_b) {
     runtimeErrorMsg() << "Halo buffers are not identical";
-    return 1;
-  } else {
-    return 0;
+    return ES_ERROR;
   }
+  return ES_OK;
 }
 
 #ifdef ADDITIONAL_CHECKS
@@ -1014,10 +1013,10 @@ template <class T> int compare_buffers(T const &buff_a, T const &buff_b) {
 void lb_check_halo_regions(const LB_Fluid &lb_fluid,
                            const Lattice &lb_lattice) {
   Lattice::index_t index;
-  int i, x, y, z, s_node, r_node;
-  constexpr auto count = static_cast<int>(D3Q19::n_vel);
-  std::array<double, count> s_buffer;
-  std::array<double, count> r_buffer;
+  std::size_t i;
+  int x, y, z, s_node, r_node;
+  std::array<double, D3Q19::n_vel> s_buffer;
+  std::array<double, D3Q19::n_vel> r_buffer;
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
 

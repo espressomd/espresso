@@ -132,6 +132,6 @@ void release_halo_communication(HaloCommunicator &hc);
  *  @param[in]  hc    halo communicator describing the parallelization scheme
  *  @param[in]  base  base plane of local node
  */
-void halo_communication(const HaloCommunicator &hc, char *constbase);
+void halo_communication(const HaloCommunicator &hc, char *base);
 
 #endif /* HALO_H */
