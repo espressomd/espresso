@@ -2966,18 +2966,19 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 }
 
 int ek_node_set_density(int species, int x, int y, int z, double density) {
-  if (ek_parameters.species_index[species] != -1) {
-    auto index =
-        static_cast<int>(z * ek_parameters.dim_y * ek_parameters.dim_x +
-                         y * ek_parameters.dim_x + x);
-    ekfloat num_particles =
-        static_cast<ekfloat>(density) * Utils::int_pow<3>(ek_parameters.agrid);
 
-    cuda_safe_mem(cudaMemcpy(
-        &ek_parameters.rho[ek_parameters.species_index[species]][index],
-        &num_particles, sizeof(ekfloat), cudaMemcpyHostToDevice));
-  } else
+  if (ek_parameters.species_index[species] == -1) {
     return 1;
+  }
+
+  auto index = static_cast<int>(z * ek_parameters.dim_y * ek_parameters.dim_x +
+                                y * ek_parameters.dim_x + x);
+  ekfloat num_particles =
+      static_cast<ekfloat>(density) * Utils::int_pow<3>(ek_parameters.agrid);
+
+  cuda_safe_mem(cudaMemcpy(
+      &ek_parameters.rho[ek_parameters.species_index[species]][index],
+      &num_particles, sizeof(ekfloat), cudaMemcpyHostToDevice));
 
   return 0;
 }
@@ -3219,6 +3220,10 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
 #ifndef EK_DEBUG
   return 1;
 #else
+  if (ek_parameters.species_index[species] == -1) {
+    return 1;
+  }
+
   FILE *fp = fopen(filename, "w");
   ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
                                    // into cartesian coordinates for output
@@ -3226,10 +3231,6 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
   unsigned int coord[3];
 
   if (fp == nullptr) {
-    return 1;
-  }
-
-  if (ek_parameters.species_index[species] == -1) {
     return 1;
   }
 
