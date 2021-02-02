@@ -161,7 +161,7 @@ void lb_init_boundaries() {
       return;
     }
     ek_init_boundaries();
-    int number_of_boundnodes = 0;
+    unsigned number_of_boundnodes = 0;
     std::vector<int> host_boundary_node_list;
     std::vector<int> host_boundary_index_list;
     size_t size_of_index;

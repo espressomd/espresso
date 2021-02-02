@@ -2175,17 +2175,14 @@ __global__ void ek_clear_node_force(LB_node_force_density_gpu node_f) {
 }
 
 void ek_calculate_electrostatic_coupling() {
-  const int blocks_per_grid_y = 4;
-  const int threads_per_block = 64;
+  unsigned const threads_per_block = 64;
 
   if ((!ek_parameters.es_coupling) || (!ek_initialized))
     return;
 
   auto device_particles = gpu_get_particle_pointer();
-  auto blocks_per_grid_x = static_cast<int>(
-      (device_particles.size() + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y));
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  dim3 dim_grid =
+      calculate_dim_grid(device_particles.size(), 4, threads_per_block);
 
   KERNELCALL(ek_spread_particle_force, dim_grid, threads_per_block,
              device_particles.data(), device_particles.size(),
@@ -2194,13 +2191,9 @@ void ek_calculate_electrostatic_coupling() {
 
 void ek_integrate_electrostatics() {
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  auto blocks_per_grid_x =
-      static_cast<int>((ek_parameters.number_of_nodes +
-                        threads_per_block * blocks_per_grid_y - 1) /
-                       (threads_per_block * blocks_per_grid_y));
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  unsigned const threads_per_block = 64;
+  dim3 dim_grid =
+      calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
   KERNELCALL(ek_gather_species_charge_density, dim_grid, threads_per_block);
 
@@ -2220,10 +2213,8 @@ void ek_integrate_electrostatics() {
   if (not device_particles
               .empty()) // TODO make it an if number_of_charged_particles != 0
   {
-    blocks_per_grid_x = static_cast<int>(
-        (device_particles.size() + threads_per_block * blocks_per_grid_y - 1) /
-        (threads_per_block * blocks_per_grid_y));
-    dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+    dim_grid =
+        calculate_dim_grid(device_particles.size(), 4, threads_per_block);
 
     particle_data_gpu = device_particles.data();
 
@@ -2235,14 +2226,9 @@ void ek_integrate_electrostatics() {
 }
 
 void ek_integrate() {
-  /** values for the kernel call */
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  auto blocks_per_grid_x =
-      static_cast<int>((ek_parameters.number_of_nodes +
-                        threads_per_block * blocks_per_grid_y - 1) /
-                       (threads_per_block * blocks_per_grid_y));
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  unsigned const threads_per_block = 64;
+  dim3 dim_grid =
+      calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
   /* Clears the force on the nodes and must be called before fluxes are
      calculated, since in the reaction set up the previous-step LB force is
@@ -2283,13 +2269,9 @@ void ek_gather_wallcharge_species_density(ekfloat *wallcharge_species_density,
 }
 void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
                                         int wallcharge_species) {
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  auto blocks_per_grid_x =
-      static_cast<int>((ek_parameters.number_of_nodes +
-                        threads_per_block * blocks_per_grid_y - 1) /
-                       (threads_per_block * blocks_per_grid_y));
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  unsigned const threads_per_block = 64;
+  dim3 dim_grid =
+      calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
   KERNELCALL(ek_clear_boundary_densities, dim_grid, threads_per_block,
              *current_nodes);
@@ -2341,10 +2323,7 @@ int ek_init() {
     return 1;
   }
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x;
-  dim3 dim_grid;
+  unsigned const threads_per_block = 64;
 
   if (!ek_initialized) {
     for (auto &val : ek_parameters.species_index) {
@@ -2485,11 +2464,9 @@ int ek_init() {
                                      sizeof(EK_parameters)));
 
     // clear initial LB force and finish up
-    blocks_per_grid_x = static_cast<int>(
-        (ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x) +
-         threads_per_block * blocks_per_grid_y - 1) /
-        (threads_per_block * blocks_per_grid_y));
-    dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+    dim3 dim_grid = calculate_dim_grid(
+        ek_parameters.dim_z * ek_parameters.dim_y * ek_parameters.dim_x, 4,
+        threads_per_block);
     KERNELCALL(ek_clear_node_force, dim_grid, threads_per_block, node_f);
 
     ek_initialized = true;
@@ -2512,11 +2489,8 @@ int ek_init() {
     cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
                                      sizeof(EK_parameters)));
 
-    blocks_per_grid_x =
-        static_cast<int>((ek_parameters.number_of_nodes +
-                          threads_per_block * blocks_per_grid_y - 1) /
-                         (threads_per_block * blocks_per_grid_y));
-    dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+    dim3 dim_grid =
+        calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
     KERNELCALL(ek_init_species_density_homogeneous, dim_grid,
                threads_per_block);
@@ -2759,13 +2733,9 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 
   std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  auto blocks_per_grid_x =
-      static_cast<int>((ek_parameters.number_of_nodes +
-                        threads_per_block * blocks_per_grid_y - 1) /
-                       (threads_per_block * blocks_per_grid_y));
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  unsigned const threads_per_block = 64;
+  dim3 dim_grid =
+      calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
   KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
   KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
@@ -2984,13 +2954,9 @@ int ek_print_vtk_flux(int species, char *filename) {
 
   std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  auto blocks_per_grid_x =
-      static_cast<int>((ek_parameters.number_of_nodes +
-                        threads_per_block * blocks_per_grid_y - 1) /
-                       (threads_per_block * blocks_per_grid_y));
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  unsigned const threads_per_block = 64;
+  dim3 dim_grid =
+      calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
   KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
   KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
@@ -3216,12 +3182,9 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
 
   std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = (static_cast<int>(ek_parameters.number_of_nodes) +
-                           threads_per_block * blocks_per_grid_y - 1) /
-                          (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  unsigned const threads_per_block = 64;
+  dim3 dim_grid =
+      calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
   KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
   KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
@@ -3449,13 +3412,9 @@ int ek_print_vtk_flux_link(int species, char *filename) {
 
   std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  auto blocks_per_grid_x =
-      static_cast<int>((ek_parameters.number_of_nodes +
-                        threads_per_block * blocks_per_grid_y - 1) /
-                       (threads_per_block * blocks_per_grid_y));
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  unsigned const threads_per_block = 64;
+  dim3 dim_grid =
+      calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
   KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
   KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
@@ -3976,13 +3935,9 @@ ekfloat ek_get_particle_charge() {
 ekfloat ek_calculate_net_charge() {
   cuda_safe_mem(cudaMemset(charge_gpu, 0, sizeof(ekfloat)));
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  auto blocks_per_grid_x =
-      static_cast<int>((ek_parameters.number_of_nodes +
-                        threads_per_block * blocks_per_grid_y - 1) /
-                       (threads_per_block * blocks_per_grid_y));
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  unsigned const threads_per_block = 64;
+  dim3 dim_grid =
+      calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
   KERNELCALL(ek_calculate_system_charge, dim_grid, threads_per_block,
              charge_gpu);
@@ -4032,7 +3987,7 @@ int ek_neutralize_system(int species) {
       ek_parameters.density[species_index] -
       (charge / ek_parameters.valency[species_index]) /
           (Utils::int_pow<3>(ek_parameters.agrid) *
-           ekfloat(ek_parameters.number_of_nodes -
+           ekfloat(static_cast<int>(ek_parameters.number_of_nodes) -
                    ek_parameters.number_of_boundary_nodes));
 #endif // EK_BOUNDARIES
 
