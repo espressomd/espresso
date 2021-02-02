@@ -192,10 +192,11 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
 
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);
-void lb_print_node_GPU(int single_nodeindex,
+void lb_print_node_GPU(unsigned single_nodeindex,
                        LB_rho_v_pi_gpu *host_print_values);
 #ifdef LB_BOUNDARIES_GPU
-void lb_init_boundaries_GPU(int n_lb_boundaries, unsigned number_of_boundnodes,
+void lb_init_boundaries_GPU(std::size_t n_lb_boundaries,
+                            unsigned number_of_boundnodes,
                             int *host_boundary_node_list,
                             int *host_boundary_index_list,
                             float *lb_bounday_velocity);
@@ -208,11 +209,12 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);
-void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag);
+void lb_get_boundary_flag_GPU(unsigned int single_nodeindex,
+                              unsigned int *host_flag);
 void lb_get_boundary_flags_GPU(unsigned int *host_bound_array);
 
-void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity);
-void lb_set_node_rho_GPU(int single_nodeindex, float host_rho);
+void lb_set_node_velocity_GPU(unsigned single_nodeindex, float *host_velocity);
+void lb_set_node_rho_GPU(unsigned single_nodeindex, float host_rho);
 
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
