@@ -55,9 +55,6 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-/* TODO: get rid of this code duplication with lb-boundaries.h by solving the
-         cuda-mpi incompatibility */
-
 extern ActiveLB lattice_switch;
 extern bool ek_initialized;
 
@@ -72,7 +69,6 @@ extern bool ek_initialized;
 #ifdef EK_BOUNDARIES
 void LBBoundaries::lb_init_boundaries();
 #endif
-/* end of code duplication */
 
 #define PI_FLOAT 3.14159265358979323846f
 
@@ -2151,7 +2147,7 @@ __global__ void ek_calculate_system_charge(ekfloat *charge_gpu) {
 }
 
 // TODO delete ?? (it has the previous step setting now)
-// This is not compatible with external LB force_densitys!
+// This is not compatible with external LB force_densities!
 __global__ void ek_clear_node_force(LB_node_force_density_gpu node_f) {
 
   unsigned int index = ek_getThreadIndex();
@@ -2210,9 +2206,8 @@ void ek_integrate_electrostatics() {
   }
 
   auto device_particles = gpu_get_particle_pointer();
-  if (not device_particles
-              .empty()) // TODO make it an if number_of_charged_particles != 0
-  {
+  // TODO make it an if number_of_charged_particles != 0
+  if (not device_particles.empty()) {
     dim_grid =
         calculate_dim_grid(device_particles.size(), 4, threads_per_block);
 
@@ -2348,10 +2343,10 @@ int ek_init() {
     lb_lbcoupling_set_gamma(ek_parameters.friction);
 
     // Convert the density (given in MD units) to LB units
-    lbpar_gpu.rho = (ek_parameters.lb_density < 0.0
-                         ? 1.0f
-                         : ek_parameters.lb_density *
-                               Utils::int_pow<3>(ek_parameters.agrid));
+    lbpar_gpu.rho =
+        (ek_parameters.lb_density < 0.0)
+            ? 1.0f
+            : ek_parameters.lb_density * Utils::int_pow<3>(ek_parameters.agrid);
 
     lbpar_gpu.is_TRT = true;
 
@@ -2532,10 +2527,8 @@ void rhoindex_linear2cartesian_host(unsigned int index, unsigned int *coord) {
 
 unsigned int jindex_cartesian2linear_host(unsigned int x, unsigned int y,
                                           unsigned int z, unsigned int c) {
-
-  x = (x + ek_parameters.dim_x) %
-      ek_parameters
-          .dim_x; // this does not happen in the GPU version of this function
+  // this does not happen in the GPU version of this function
+  x = (x + ek_parameters.dim_x) % ek_parameters.dim_x;
   y = (y + ek_parameters.dim_y) % ek_parameters.dim_y;
   z = (z + ek_parameters.dim_z) % ek_parameters.dim_z;
 
@@ -2596,10 +2589,8 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
-int ek_node_print_velocity(
-    int x, int y, int z,
-    double *velocity) { // TODO only calculate single node velocity
-
+int ek_node_print_velocity(int x, int y, int z, double *velocity) {
+  // TODO: only calculate single node velocity
   std::vector<LB_rho_v_pi_gpu> host_values(lbpar_gpu.number_of_nodes);
   lb_get_values_GPU(host_values.data());
 

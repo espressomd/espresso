@@ -2425,7 +2425,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   nodes_a.boundary = nodes_b.boundary = boundaries.index;
   nodes_a.boundary_velocity = nodes_b.boundary_velocity = boundaries.velocity;
 
-  /*write parameters in const memory*/
+  /* write parameters in const memory */
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   free_realloc_and_clear(device_gpu_lb_initialized, sizeof(bool));
@@ -2436,7 +2436,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, boundaries);
 
-  /* calc of velocitydensities from given parameters and initialize the
+  /* calc of velocity densities from given parameters and initialize the
    * Node_Force array with zero */
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
   KERNELCALL(calc_n_from_rho_j_pi, dim_grid, threads_per_block, nodes_a,
