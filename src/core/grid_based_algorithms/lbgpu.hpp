@@ -157,6 +157,8 @@ extern std::vector<LB_rho_v_pi_gpu> host_values;
 extern LB_node_force_density_gpu node_f;
 extern bool ek_initialized;
 #endif
+extern OptionalCounter rng_counter_fluid_gpu;
+extern OptionalCounter rng_counter_coupling_gpu;
 
 /**@}*/
 
@@ -238,9 +240,16 @@ uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
+
+/** Calculate the node index from its coordinates */
+inline unsigned int calculate_node_index(LB_parameters_gpu const &lbpar,
+                                         Utils::Vector3i const &coord) {
+  return static_cast<unsigned>(coord[0]) +
+         static_cast<unsigned>(coord[1]) * lbpar.dim_x +
+         static_cast<unsigned>(coord[2]) * lbpar.dim_x * lbpar.dim_y;
+}
 /**@}*/
-extern OptionalCounter rng_counter_fluid_gpu;
-extern OptionalCounter rng_counter_coupling_gpu;
+
 #endif /*  CUDA */
 
-#endif /*  CUDA_H */
+#endif /*  LBGPU_HPP */

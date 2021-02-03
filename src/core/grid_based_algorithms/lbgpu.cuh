@@ -73,17 +73,5 @@ inline __device__ float4 random_wrapper_philox(unsigned int index,
   return rnd_floats;
 }
 
-/** Convenience function to calculate @c dim_grid. */
-inline dim3 calculate_dim_grid(unsigned const threads_x,
-                               unsigned const blocks_per_grid_y,
-                               unsigned const threads_per_block) {
-  assert(threads_x >= 1);
-  assert(blocks_per_grid_y >= 1);
-  assert(threads_per_block >= 1);
-  auto const threads_y = threads_per_block * blocks_per_grid_y;
-  auto const blocks_per_grid_x = (threads_x + threads_y - 1) / threads_y;
-  return make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-}
-
 #endif // CUDA
 #endif
