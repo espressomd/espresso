@@ -44,13 +44,14 @@
 extern int this_node;
 
 // ***** Other functions for internal use *****
-void InitCUDA_IBM(int numParticles);
+void InitCUDA_IBM(std::size_t numParticles);
 
 // ***** Our own global variables ********
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_device = nullptr;
 IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_device = nullptr;
-int IBM_numParticlesCache = -1; // To detect a change in particle number which
-                                // requires reallocation of memory
+bool IBM_initialized = false;
+std::size_t IBM_numParticlesCache = 0; // To detect a change in particle number
+                                       // which requires reallocation of memory
 
 // ****** These variables are defined in lbgpu_cuda.cu, but we also want them
 // here ****
@@ -361,14 +362,9 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
 /** Call a kernel to reset the forces on the LB nodes to the external force. */
 void IBM_ResetLBForces_GPU() {
   if (this_node == 0) {
-    // Setup for kernel call
-    int threads_per_block = 64;
-    int blocks_per_grid_y = 4;
-    auto blocks_per_grid_x =
-        static_cast<int>((lbpar_gpu.number_of_nodes +
-                          threads_per_block * blocks_per_grid_y - 1) /
-                         (threads_per_block * blocks_per_grid_y));
-    dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+    unsigned const threads_per_block = 64;
+    dim3 dim_grid =
+        calculate_dim_grid(lbpar_gpu.number_of_nodes, 4, threads_per_block);
 
     KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block, node_f,
                para_gpu);
@@ -386,11 +382,11 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
   // (2) Copy forces to the GPU
   // (3) interpolate on the LBM grid and spread forces
 
-  const int numParticles = gpu_get_particle_pointer().size();
+  auto const numParticles = gpu_get_particle_pointer().size();
 
   // Storage only needed on master and allocated only once at the first time
   // step if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
-  if (IBM_ParticleDataInput_host.empty() ||
+  if (IBM_ParticleDataInput_host.empty() || !IBM_initialized ||
       numParticles != IBM_numParticlesCache)
     InitCUDA_IBM(numParticles);
 
@@ -407,22 +403,15 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
                              cudaMemcpyHostToDevice));
 
     // Kernel call for spreading the forces on the LB grid
-    int threads_per_block_particles = 64;
-    int blocks_per_grid_particles_y = 4;
-    int blocks_per_grid_particles_x =
-        (numParticles +
-         threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-        (threads_per_block_particles * blocks_per_grid_particles_y);
-    dim3 dim_grid_particles =
-        make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-
-    KERNELCALL(ForcesIntoFluid_Kernel, dim_grid_particles,
-               threads_per_block_particles, IBM_ParticleDataInput_device,
-               numParticles, node_f, para_gpu);
+    unsigned const threads_per_block = 64;
+    dim3 dim_grid = calculate_dim_grid(static_cast<unsigned>(numParticles), 4,
+                                       threads_per_block);
+    KERNELCALL(ForcesIntoFluid_Kernel, dim_grid, threads_per_block,
+               IBM_ParticleDataInput_device, numParticles, node_f, para_gpu);
   }
 }
 
-void InitCUDA_IBM(const int numParticles) {
+void InitCUDA_IBM(std::size_t const numParticles) {
 
   if (this_node == 0) // GPU only on master
   {
@@ -480,6 +469,7 @@ void InitCUDA_IBM(const int numParticles) {
 #endif
 
     IBM_numParticlesCache = numParticles;
+    IBM_initialized = true;
   }
 }
 
@@ -492,22 +482,16 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
   // (2) transfer velocities back to CPU
   // (3) spread velocities to local cells via MPI
 
-  const int numParticles = gpu_get_particle_pointer().size();
+  auto const numParticles = gpu_get_particle_pointer().size();
 
   // **** GPU stuff only on master ****
   if (this_node == 0 && numParticles > 0) {
     // Kernel call
-    int threads_per_block_particles = 64;
-    int blocks_per_grid_particles_y = 4;
-    int blocks_per_grid_particles_x =
-        (numParticles +
-         threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-        (threads_per_block_particles * blocks_per_grid_particles_y);
-    dim3 dim_grid_particles =
-        make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-    KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid_particles,
-               threads_per_block_particles, *current_nodes,
-               IBM_ParticleDataInput_device, numParticles,
+    unsigned const threads_per_block = 64;
+    dim3 dim_grid = calculate_dim_grid(static_cast<unsigned>(numParticles), 4,
+                                       threads_per_block);
+    KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid, threads_per_block,
+               *current_nodes, IBM_ParticleDataInput_device, numParticles,
                IBM_ParticleDataOutput_device, node_f, lb_boundary_velocity_IBM,
                para_gpu);
 

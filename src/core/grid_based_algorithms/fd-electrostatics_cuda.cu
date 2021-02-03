@@ -20,6 +20,7 @@
 // TODO: throw exceptions upon errors initialization
 
 #include "grid_based_algorithms/fd-electrostatics.cuh"
+#include "grid_based_algorithms/lbgpu.cuh"
 
 #include "cuda_utils.cuh"
 
@@ -102,13 +103,11 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
   cuda_safe_mem(
       cudaMemcpyToSymbol(fde_parameters_gpu, &parameters, sizeof(Parameters)));
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
-      (parameters.dim_z * parameters.dim_y * (parameters.dim_x / 2 + 1) +
-       threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  unsigned const threads_per_block = 64;
+  dim3 dim_grid = calculate_dim_grid(
+      static_cast<unsigned>(parameters.dim_z * parameters.dim_y *
+                            (parameters.dim_x / 2 + 1)),
+      4, threads_per_block);
   KERNELCALL_stream(createGreensfcn, dim_grid, threads_per_block, stream);
 
   /* create 3D FFT plans */
@@ -193,13 +192,11 @@ void FdElectrostatics::calculatePotential(cufftComplex *charge_potential) {
     fprintf(stderr, "ERROR: Unable to execute FFT plan\n");
   }
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
-      (parameters.dim_z * parameters.dim_y * (parameters.dim_x / 2 + 1) +
-       threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  unsigned const threads_per_block = 64;
+  dim3 dim_grid = calculate_dim_grid(
+      static_cast<unsigned>(parameters.dim_z * parameters.dim_y *
+                            (parameters.dim_x / 2 + 1)),
+      4, threads_per_block);
 
   KERNELCALL(multiplyGreensfcn, dim_grid, threads_per_block, charge_potential);
 
