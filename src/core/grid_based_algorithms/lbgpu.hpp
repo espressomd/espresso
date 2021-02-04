@@ -246,7 +246,8 @@ inline unsigned int calculate_node_index(LB_parameters_gpu const &lbpar,
                                          Utils::Vector3i const &coord) {
   return static_cast<unsigned>(Utils::get_linear_index(
       coord, Utils::Vector3i{static_cast<int>(lbpar.dim_x),
-                             static_cast<int>(lbpar.dim_y), 0}));
+                             static_cast<int>(lbpar.dim_y),
+                             static_cast<int>(lbpar.dim_z)}));
 }
 /**@}*/
 
