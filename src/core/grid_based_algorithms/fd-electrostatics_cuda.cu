@@ -38,6 +38,11 @@
 
 static constexpr unsigned int threads_per_block = 64;
 
+__device__ cufftReal fde_getNode(int x, int y, int z);
+__device__ cufftReal fde_getNode(int i);
+__device__ void fde_setNode(int x, int y, int z, cufftReal value);
+__device__ void fde_setNode(int i, cufftReal value);
+
 __global__ void createGreensfcn();
 __global__ void multiplyGreensfcn(cufftComplex *charge_potential);
 

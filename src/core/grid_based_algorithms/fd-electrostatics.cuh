@@ -65,9 +65,4 @@ private:
   bool initialized;
 };
 
-__device__ cufftReal fde_getNode(int x, int y, int z);
-__device__ cufftReal fde_getNode(int i);
-__device__ void fde_setNode(int x, int y, int z, cufftReal value);
-__device__ void fde_setNode(int i, cufftReal value);
-
 #endif
