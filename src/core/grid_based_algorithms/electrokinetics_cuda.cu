@@ -70,6 +70,8 @@ extern bool ek_initialized;
 void LBBoundaries::lb_init_boundaries();
 #endif
 
+static constexpr unsigned int threads_per_block = 64;
+
 EK_parameters ek_parameters = {
     // agrid
     -1.0,
@@ -2151,7 +2153,6 @@ __global__ void ek_clear_node_force(LB_node_force_density_gpu node_f) {
 }
 
 void ek_calculate_electrostatic_coupling() {
-  unsigned const threads_per_block = 64;
 
   if ((!ek_parameters.es_coupling) || (!ek_initialized))
     return;
@@ -2167,7 +2168,6 @@ void ek_calculate_electrostatic_coupling() {
 
 void ek_integrate_electrostatics() {
 
-  unsigned const threads_per_block = 64;
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
@@ -2201,7 +2201,6 @@ void ek_integrate_electrostatics() {
 }
 
 void ek_integrate() {
-  unsigned const threads_per_block = 64;
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
@@ -2244,7 +2243,6 @@ void ek_gather_wallcharge_species_density(ekfloat *wallcharge_species_density,
 }
 void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
                                         int wallcharge_species) {
-  unsigned const threads_per_block = 64;
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
@@ -2297,8 +2295,6 @@ int ek_init() {
 
     return 1;
   }
-
-  unsigned const threads_per_block = 64;
 
   if (!ek_initialized) {
     for (auto &val : ek_parameters.species_index) {
@@ -2706,7 +2702,6 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 
   std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
 
-  unsigned const threads_per_block = 64;
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
@@ -2930,7 +2925,6 @@ int ek_print_vtk_flux(int species, char *filename) {
 
   std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
 
-  unsigned const threads_per_block = 64;
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
@@ -3160,7 +3154,6 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
 
   std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
 
-  unsigned const threads_per_block = 64;
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
@@ -3391,7 +3384,6 @@ int ek_print_vtk_flux_link(int species, char *filename) {
 
   std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
 
-  unsigned const threads_per_block = 64;
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 
@@ -3913,7 +3905,6 @@ ekfloat ek_get_particle_charge() {
 ekfloat ek_calculate_net_charge() {
   cuda_safe_mem(cudaMemset(charge_gpu, 0, sizeof(ekfloat)));
 
-  unsigned const threads_per_block = 64;
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
 

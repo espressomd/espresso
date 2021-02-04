@@ -36,6 +36,8 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
+static constexpr unsigned int threads_per_block = 64;
+
 __global__ void createGreensfcn();
 __global__ void multiplyGreensfcn(cufftComplex *charge_potential);
 
@@ -104,7 +106,6 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
   cuda_safe_mem(
       cudaMemcpyToSymbol(fde_parameters_gpu, &parameters, sizeof(Parameters)));
 
-  unsigned const threads_per_block = 64;
   dim3 dim_grid = calculate_dim_grid(
       static_cast<unsigned>(parameters.dim_z * parameters.dim_y *
                             (parameters.dim_x / 2 + 1)),
@@ -194,7 +195,6 @@ void FdElectrostatics::calculatePotential(cufftComplex *charge_potential) {
     fprintf(stderr, "ERROR: Unable to execute FFT plan\n");
   }
 
-  unsigned const threads_per_block = 64;
   dim3 dim_grid = calculate_dim_grid(
       static_cast<unsigned>(parameters.dim_z * parameters.dim_y *
                             (parameters.dim_x / 2 + 1)),

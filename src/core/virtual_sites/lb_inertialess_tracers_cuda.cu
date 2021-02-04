@@ -64,6 +64,8 @@ extern LB_nodes_gpu *current_nodes;
 LB_parameters_gpu *para_gpu = nullptr;
 float *lb_boundary_velocity_IBM = nullptr;
 
+static constexpr unsigned int threads_per_block = 64;
+
 /** @copybrief calc_m_from_n
  *
  *  This is a re-implementation of @ref calc_m_from_n. It does exactly the
@@ -362,7 +364,6 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
 /** Call a kernel to reset the forces on the LB nodes to the external force. */
 void IBM_ResetLBForces_GPU() {
   if (this_node == 0) {
-    unsigned const threads_per_block = 64;
     dim3 dim_grid =
         calculate_dim_grid(lbpar_gpu.number_of_nodes, 4, threads_per_block);
 
@@ -403,7 +404,6 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
                              cudaMemcpyHostToDevice));
 
     // Kernel call for spreading the forces on the LB grid
-    unsigned const threads_per_block = 64;
     dim3 dim_grid = calculate_dim_grid(static_cast<unsigned>(numParticles), 4,
                                        threads_per_block);
     KERNELCALL(ForcesIntoFluid_Kernel, dim_grid, threads_per_block,
@@ -487,7 +487,6 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
   // **** GPU stuff only on master ****
   if (this_node == 0 && numParticles > 0) {
     // Kernel call
-    unsigned const threads_per_block = 64;
     dim3 dim_grid = calculate_dim_grid(static_cast<unsigned>(numParticles), 4,
                                        threads_per_block);
     KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid, threads_per_block,
