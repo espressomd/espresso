@@ -2362,22 +2362,22 @@ __global__ void lb_get_boundary_flag(unsigned int single_nodeindex,
 /* Host functions to setup and call kernels*/
 /**********************************************************************/
 
-void lb_get_para_pointer(LB_parameters_gpu **pointeradress) {
-  auto const error = cudaGetSymbolAddress((void **)pointeradress, para);
+void lb_get_para_pointer(LB_parameters_gpu **pointer_address) {
+  auto const error = cudaGetSymbolAddress((void **)pointer_address, para);
   if (error != cudaSuccess) {
     fprintf(stderr, "CUDA error: %s\n", cudaGetErrorString(error));
     errexit();
   }
 }
 
-void lb_get_boundary_force_pointer(float **pointeradress) {
+void lb_get_boundary_force_pointer(float **pointer_address) {
 #ifdef LB_BOUNDARIES_GPU
-  *pointeradress = lb_boundary_force;
+  *pointer_address = lb_boundary_force;
 #endif
 }
 
-void lb_get_device_values_pointer(LB_rho_v_gpu **pointeradress) {
-  *pointeradress = device_rho_v;
+void lb_get_device_values_pointer(LB_rho_v_gpu **pointer_address) {
+  *pointer_address = device_rho_v;
 }
 
 /** Initialization for the lb gpu fluid called from host
