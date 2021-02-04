@@ -70,8 +70,6 @@ extern bool ek_initialized;
 void LBBoundaries::lb_init_boundaries();
 #endif
 
-#define PI_FLOAT 3.14159265358979323846f
-
 EK_parameters ek_parameters = {
     // agrid
     -1.0,

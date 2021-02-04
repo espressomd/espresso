@@ -23,6 +23,8 @@
 
 #include "cuda_utils.cuh"
 
+#include <utils/constants.hpp>
+
 #include <cuda.h>
 #include <cufft.h>
 
@@ -149,14 +151,15 @@ __global__ void createGreensfcn() {
       // setting 0th Fourier mode to 0 enforces charge neutrality
       fde_parameters_gpu->greensfcn[index] = 0.0f;
     } else {
+      constexpr cufftReal two_pi = 2.0f * Utils::pi<cufftReal>();
       fde_parameters_gpu->greensfcn[index] =
-          -4.0f * PI_FLOAT * fde_parameters_gpu->prefactor *
+          -2.0f * two_pi * fde_parameters_gpu->prefactor *
           fde_parameters_gpu->agrid * fde_parameters_gpu->agrid * 0.5f /
-          (cos(2.0f * PI_FLOAT * static_cast<cufftReal>(coord[0]) /
+          (cos(two_pi * static_cast<cufftReal>(coord[0]) /
                static_cast<cufftReal>(fde_parameters_gpu->dim_x)) +
-           cos(2.0f * PI_FLOAT * static_cast<cufftReal>(coord[1]) /
+           cos(two_pi * static_cast<cufftReal>(coord[1]) /
                static_cast<cufftReal>(fde_parameters_gpu->dim_y)) +
-           cos(2.0f * PI_FLOAT * static_cast<cufftReal>(coord[2]) /
+           cos(two_pi * static_cast<cufftReal>(coord[2]) /
                static_cast<cufftReal>(fde_parameters_gpu->dim_z)) -
            3.0f) /
           static_cast<cufftReal>(fde_parameters_gpu->dim_x *
