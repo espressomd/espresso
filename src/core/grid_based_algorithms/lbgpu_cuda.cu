@@ -2371,10 +2371,6 @@ void lb_get_para_pointer(LB_parameters_gpu **pointeradress) {
   }
 }
 
-void lb_get_lbpar_pointer(LB_parameters_gpu **pointeradress) {
-  *pointeradress = &lbpar_gpu;
-}
-
 void lb_get_boundary_force_pointer(float **pointeradress) {
 #ifdef LB_BOUNDARIES_GPU
   *pointeradress = lb_boundary_force;
