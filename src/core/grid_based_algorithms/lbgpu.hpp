@@ -48,7 +48,6 @@ typedef double lbForceFloat;
 typedef float lbForceFloat;
 #endif
 
-/**-------------------------------------------------------------------------*/
 /** Parameters for the lattice Boltzmann system for GPU. */
 struct LB_parameters_gpu {
   /** number density (LB units) */
@@ -130,8 +129,8 @@ typedef struct {
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual
-  // particles' position However, LBM wants to reset them immediately after the
-  // LBM update This variable keeps a backup
+  // particles' position. However, LBM wants to reset them immediately
+  // after the LBM update. This variable keeps a backup
   lbForceFloat *force_density_buf;
 #endif
 

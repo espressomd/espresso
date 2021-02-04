@@ -59,7 +59,7 @@
 extern int this_node;
 
 /** struct for hydrodynamic fields: this is for internal use
- *  (i.e. stores values in LB units) and should not used for
+ *  (i.e. stores values in LB units) and should not be used for
  *  printing values
  */
 static LB_rho_v_gpu *device_rho_v = nullptr;
@@ -113,10 +113,6 @@ static size_t size_of_rho_v_pi;
 
 /** Parameters residing in constant memory */
 __device__ __constant__ LB_parameters_gpu para[1];
-
-/*********************************************************/
-/** \name device functions called by kernel functions */
-/*********************************************************/
 
 static constexpr float sqrt12 = 3.4641016151377544f;
 static constexpr unsigned int threads_per_block = 64;
