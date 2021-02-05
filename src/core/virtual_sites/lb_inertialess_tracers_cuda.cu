@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// *******
 // This is an internal file of the IMMERSED BOUNDARY implementation
 // It should not be included by any main ESPResSo routines
 // Functions to be exported for ESPResSo are in ibm_main.hpp
@@ -40,28 +39,30 @@
 
 #include <cstddef>
 
-// To avoid include of communication.hpp in cuda file
+// To avoid including communication.hpp
 extern int this_node;
 
-// ***** Other functions for internal use *****
-void InitCUDA_IBM(int numParticles);
+// Other functions for internal use
+void InitCUDA_IBM(std::size_t numParticles);
 
-// ***** Our own global variables ********
+// Our own global variables
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_device = nullptr;
 IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_device = nullptr;
-int IBM_numParticlesCache = -1; // To detect a change in particle number which
-                                // requires reallocation of memory
+bool IBM_initialized = false;
+std::size_t IBM_numParticlesCache = 0; // To detect a change in particle number
+                                       // which requires reallocation of memory
 
-// ****** These variables are defined in lbgpu_cuda.cu, but we also want them
-// here ****
+// These variables are defined in lbgpu_cuda.cu, but we also want them here
 extern LB_node_force_density_gpu node_f;
 extern LB_nodes_gpu *current_nodes;
 
-// ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them
+// These variables are static in lbgpu_cuda.cu, so we need to duplicate them
 // here. They are initialized in ForcesIntoFluid. The pointers are on the host,
 // but point into device memory.
 LB_parameters_gpu *para_gpu = nullptr;
 float *lb_boundary_velocity_IBM = nullptr;
+
+static constexpr unsigned int threads_per_block = 64;
 
 /** @copybrief calc_m_from_n
  *
@@ -233,8 +234,8 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
                     particles_input[particleIndex].pos[2]};
     float v[3] = {0};
 
-    // ***** This part is copied from get_interpolated_velocity
-    // ***** + we add the force + we consider boundaries
+    // This part is copied from get_interpolated_velocity
+    // + we add the force + we consider boundaries
 
     float temp_delta[6];
     float delta[8];
@@ -361,14 +362,8 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
 /** Call a kernel to reset the forces on the LB nodes to the external force. */
 void IBM_ResetLBForces_GPU() {
   if (this_node == 0) {
-    // Setup for kernel call
-    int threads_per_block = 64;
-    int blocks_per_grid_y = 4;
-    auto blocks_per_grid_x =
-        static_cast<int>((lbpar_gpu.number_of_nodes +
-                          threads_per_block * blocks_per_grid_y - 1) /
-                         (threads_per_block * blocks_per_grid_y));
-    dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+    dim3 dim_grid =
+        calculate_dim_grid(lbpar_gpu.number_of_nodes, 4, threads_per_block);
 
     KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block, node_f,
                para_gpu);
@@ -386,18 +381,17 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
   // (2) Copy forces to the GPU
   // (3) interpolate on the LBM grid and spread forces
 
-  const int numParticles = gpu_get_particle_pointer().size();
+  auto const numParticles = gpu_get_particle_pointer().size();
 
-  // Storage only needed on master and allocated only once at the first time
-  // step if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
-  if (IBM_ParticleDataInput_host.empty() ||
+  // Storage only needed on head node
+  if (IBM_ParticleDataInput_host.empty() || !IBM_initialized ||
       numParticles != IBM_numParticlesCache)
     InitCUDA_IBM(numParticles);
 
   // We gather particle positions and forces from all nodes
   IBM_cuda_mpi_get_particles(particles);
 
-  // ***** GPU stuff only on master *****
+  // GPU only on head node
   if (this_node == 0 && numParticles > 0) {
 
     // Copy data to device
@@ -407,25 +401,17 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
                              cudaMemcpyHostToDevice));
 
     // Kernel call for spreading the forces on the LB grid
-    int threads_per_block_particles = 64;
-    int blocks_per_grid_particles_y = 4;
-    int blocks_per_grid_particles_x =
-        (numParticles +
-         threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-        (threads_per_block_particles * blocks_per_grid_particles_y);
-    dim3 dim_grid_particles =
-        make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-
-    KERNELCALL(ForcesIntoFluid_Kernel, dim_grid_particles,
-               threads_per_block_particles, IBM_ParticleDataInput_device,
-               numParticles, node_f, para_gpu);
+    dim3 dim_grid = calculate_dim_grid(static_cast<unsigned>(numParticles), 4,
+                                       threads_per_block);
+    KERNELCALL(ForcesIntoFluid_Kernel, dim_grid, threads_per_block,
+               IBM_ParticleDataInput_device, numParticles, node_f, para_gpu);
   }
 }
 
-void InitCUDA_IBM(const int numParticles) {
+void InitCUDA_IBM(std::size_t const numParticles) {
 
-  if (this_node == 0) // GPU only on master
-  {
+  // GPU only on head node
+  if (this_node == 0) {
 
     // Check if we have to delete
     if (!IBM_ParticleDataInput_host.empty()) {
@@ -480,6 +466,7 @@ void InitCUDA_IBM(const int numParticles) {
 #endif
 
     IBM_numParticlesCache = numParticles;
+    IBM_initialized = true;
   }
 }
 
@@ -492,22 +479,15 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
   // (2) transfer velocities back to CPU
   // (3) spread velocities to local cells via MPI
 
-  const int numParticles = gpu_get_particle_pointer().size();
+  auto const numParticles = gpu_get_particle_pointer().size();
 
-  // **** GPU stuff only on master ****
+  // GPU only on head node
   if (this_node == 0 && numParticles > 0) {
     // Kernel call
-    int threads_per_block_particles = 64;
-    int blocks_per_grid_particles_y = 4;
-    int blocks_per_grid_particles_x =
-        (numParticles +
-         threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-        (threads_per_block_particles * blocks_per_grid_particles_y);
-    dim3 dim_grid_particles =
-        make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-    KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid_particles,
-               threads_per_block_particles, *current_nodes,
-               IBM_ParticleDataInput_device, numParticles,
+    dim3 dim_grid = calculate_dim_grid(static_cast<unsigned>(numParticles), 4,
+                                       threads_per_block);
+    KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid, threads_per_block,
+               *current_nodes, IBM_ParticleDataInput_device, numParticles,
                IBM_ParticleDataOutput_device, node_f, lb_boundary_velocity_IBM,
                para_gpu);
 
@@ -518,8 +498,7 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
                              cudaMemcpyDeviceToHost));
   }
 
-  // ***** Back to all nodes ****
-  // Spread using MPI
+  // Scatter to all nodes
   IBM_cuda_mpi_send_velocities(particles);
 }
 

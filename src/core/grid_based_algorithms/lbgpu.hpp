@@ -31,6 +31,7 @@
 #include "OptionalCounter.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -48,7 +49,6 @@ typedef double lbForceFloat;
 typedef float lbForceFloat;
 #endif
 
-/**-------------------------------------------------------------------------*/
 /** Parameters for the lattice Boltzmann system for GPU. */
 struct LB_parameters_gpu {
   /** number density (LB units) */
@@ -130,8 +130,8 @@ typedef struct {
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual
-  // particles' position However, LBM wants to reset them immediately after the
-  // LBM update This variable keeps a backup
+  // particles' position. However, LBM wants to reset them immediately
+  // after the LBM update. This variable keeps a backup
   lbForceFloat *force_density_buf;
 #endif
 
@@ -157,6 +157,8 @@ extern std::vector<LB_rho_v_pi_gpu> host_values;
 extern LB_node_force_density_gpu node_f;
 extern bool ek_initialized;
 #endif
+extern OptionalCounter rng_counter_fluid_gpu;
+extern OptionalCounter rng_counter_coupling_gpu;
 
 /**@}*/
 
@@ -167,9 +169,9 @@ extern bool ek_initialized;
 
 void lb_GPU_sanity_checks();
 
-void lb_get_device_values_pointer(LB_rho_v_gpu **pointeradress);
-void lb_get_boundary_force_pointer(float **pointeradress);
-void lb_get_para_pointer(LB_parameters_gpu **pointeradress);
+void lb_get_device_values_pointer(LB_rho_v_gpu **pointer_address);
+void lb_get_boundary_force_pointer(float **pointer_address);
+void lb_get_para_pointer(LB_parameters_gpu **pointer_address);
 void lattice_boltzmann_update_gpu();
 
 /** Perform a full initialization of the lattice Boltzmann system.
@@ -192,10 +194,11 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
 
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);
-void lb_print_node_GPU(int single_nodeindex,
+void lb_print_node_GPU(unsigned single_nodeindex,
                        LB_rho_v_pi_gpu *host_print_values);
 #ifdef LB_BOUNDARIES_GPU
-void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes,
+void lb_init_boundaries_GPU(std::size_t n_lb_boundaries,
+                            unsigned number_of_boundnodes,
                             int *host_boundary_node_list,
                             int *host_boundary_index_list,
                             float *lb_bounday_velocity);
@@ -208,11 +211,12 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);
-void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag);
+void lb_get_boundary_flag_GPU(unsigned int single_nodeindex,
+                              unsigned int *host_flag);
 void lb_get_boundary_flags_GPU(unsigned int *host_bound_array);
 
-void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity);
-void lb_set_node_rho_GPU(int single_nodeindex, float host_rho);
+void lb_set_node_velocity_GPU(unsigned single_nodeindex, float *host_velocity);
+void lb_set_node_rho_GPU(unsigned single_nodeindex, float host_rho);
 
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
@@ -236,9 +240,17 @@ uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
+
+/** Calculate the node index from its coordinates */
+inline unsigned int calculate_node_index(LB_parameters_gpu const &lbpar,
+                                         Utils::Vector3i const &coord) {
+  return static_cast<unsigned>(Utils::get_linear_index(
+      coord, Utils::Vector3i{static_cast<int>(lbpar.dim_x),
+                             static_cast<int>(lbpar.dim_y),
+                             static_cast<int>(lbpar.dim_z)}));
+}
 /**@}*/
-extern OptionalCounter rng_counter_fluid_gpu;
-extern OptionalCounter rng_counter_coupling_gpu;
+
 #endif /*  CUDA */
 
-#endif /*  CUDA_H */
+#endif /*  LBGPU_HPP */
