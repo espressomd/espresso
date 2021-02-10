@@ -131,6 +131,7 @@ ubuntu:wo-dependencies:
   variables:
      myconfig: 'maxset'
      with_cuda: 'false'
+     with_hdf5: 'false'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
   script:
