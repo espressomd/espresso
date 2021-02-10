@@ -41,26 +41,21 @@ BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_test) {
 BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_with_axis_test) {
   constexpr auto eps = 1e-14;
   Vector3d const cart_coord{{-1.0, 3.3, 2.0}};
-  auto const transformed_y = transform_coordinate_cartesian_to_cylinder(
-      cart_coord, Vector3d{{0, 1, 0}});
+  // check case where the cylinder axis is the original z axis
   auto const transformed_z = transform_coordinate_cartesian_to_cylinder(
       cart_coord, Vector3d{{0, 0, 1}});
-  // For x as the symmetry axis we rotate the cartesian coordinates around the
-  // y-axis by -pi/2.
-  auto const expected_x = transform_coordinate_cartesian_to_cylinder(
-      vec_rotate(Vector3d{{0.0, 1.0, 0.0}}, -Utils::pi() / 2.0, cart_coord),
-      Vector3d{{0, 0, 1}});
+  auto const expected_z = Vector3d{
+      {std::sqrt(cart_coord[0] * cart_coord[0] + cart_coord[1] * cart_coord[1]),
+          std::atan2(cart_coord[1], cart_coord[0]), cart_coord[2]}};
   // For y as the symmetry axis we rotate the cartesian coordinates around the
   // x-axis by pi/2.
+  auto const transformed_y = transform_coordinate_cartesian_to_cylinder(
+      cart_coord, Vector3d{{0, 1, 0}});
   auto const expected_y = transform_coordinate_cartesian_to_cylinder(
       vec_rotate(Vector3d{{1.0, 0.0, 0.0}}, Utils::pi() / 2.0, cart_coord),
       Vector3d{{0, 0, 1}});
-  auto const expected_z = Vector3d{
-      {std::sqrt(cart_coord[0] * cart_coord[0] + cart_coord[1] * cart_coord[1]),
-       std::atan2(cart_coord[1], cart_coord[0]), cart_coord[2]}};
-
+  
   for (int i = 0; i < 3; ++i) {
-    BOOST_CHECK_SMALL(transformed_x[i] - expected_x[i], eps);
     BOOST_CHECK_SMALL(transformed_y[i] - expected_y[i], eps);
     BOOST_CHECK_SMALL(transformed_z[i] - expected_z[i], eps);
   }
