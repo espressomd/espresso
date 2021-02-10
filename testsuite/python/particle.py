@@ -120,7 +120,22 @@ class ParticleProperties(ut.TestCase):
         test_quat = generateTestForVectorProperty(
             "quat", np.array([0.5, 0.5, 0.5, 0.5]))
 
-        if espressomd.has_features(["LANGEVIN_PER_PARTICLE"]):
+        def test_director(self):
+            """
+            Test `director`. When set, it should get normalized.
+
+            """
+            sample_vector = np.array([0.5, -0.4, 1.3])
+            sample_vector_normalized = sample_vector / \
+                np.linalg.norm(sample_vector)
+
+            setattr(self.system.part[self.pid], "director", sample_vector)
+            np.testing.assert_allclose(
+                np.array(getattr(self.system.part[self.pid], "director")),
+                sample_vector_normalized
+            )
+
+        if espressomd.has_features(["THERMOSTAT_PER_PARTICLE"]):
             if espressomd.has_features(["PARTICLE_ANISOTROPY"]):
                 test_gamma = generateTestForVectorProperty(
                     "gamma", np.array([2., 9., 0.23]))
@@ -147,8 +162,6 @@ class ParticleProperties(ut.TestCase):
             else:
                 test_gamma_rot = generateTestForScalarProperty(
                     "gamma_rot", 14.23)
-    # test_director=generateTestForVectorProperty("director",
-    # np.array([0.5,0.4,0.3]))
 
     if espressomd.has_features(["ELECTROSTATICS"]):
         test_charge = generateTestForScalarProperty("q", -19.7)
@@ -183,6 +196,15 @@ class ParticleProperties(ut.TestCase):
             np.testing.assert_allclose(
                 res[2], np.array((0.5, -0.5, -0.5, -0.5)),
                 err_msg="vs_relative: " + res.__str__(), atol=self.tol)
+            # check exceptions
+            with self.assertRaisesRegex(ValueError, "needs input in the form"):
+                self.system.part[1].vs_relative = (0, 5.0)
+            with self.assertRaisesRegex(ValueError, "particle id has to be given as an int"):
+                self.system.part[1].vs_relative = ('0', 5.0, (1, 0, 0, 0))
+            with self.assertRaisesRegex(ValueError, "distance has to be given as a float"):
+                self.system.part[1].vs_relative = (0, '5', (1, 0, 0, 0))
+            with self.assertRaisesRegex(ValueError, "quaternion has to be given as a tuple of 4 floats"):
+                self.system.part[1].vs_relative = (0, 5.0, (1, 0, 0))
 
     @utx.skipIfMissingFeatures("DIPOLES")
     def test_contradicting_properties_dip_dipm(self):
@@ -283,6 +305,31 @@ class ParticleProperties(ut.TestCase):
         self.assertFalse(self.system.part.exists(self.pid))
         self.assertEqual(len(p2.bonds), 0)
 
+    def test_bonds(self):
+        """Tests bond addition and removal."""
+
+        p1 = self.system.part[self.pid]
+        p2 = self.system.part.add(pos=p1.pos)
+        inactive_bond = FeneBond(k=1, d_r_max=2)
+        p2.add_bond([self.f1, p1])
+        with self.assertRaisesRegex(RuntimeError, "already exists on particle"):
+            p2.add_bond([self.f1, p1.id])
+        with self.assertRaisesRegex(RuntimeError, "already exists on particle"):
+            p2.add_bond((self.f1, p1))
+        with self.assertRaisesRegex(Exception, "1st element of Bond has to be of type BondedInteraction or int"):
+            p2.add_bond(('self.f1', p1))
+        with self.assertRaisesRegex(ValueError, "Bond partners have to be of type integer or ParticleHandle"):
+            p2.add_bond((self.f1, '1'))
+        with self.assertRaisesRegex(ValueError, r"Bond FeneBond\(.+?\) needs 1 partner"):
+            p2.add_bond((self.f1, p1, p2))
+        with self.assertRaisesRegex(Exception, "The bonded interaction has not yet been added to the list of active bonds in ESPResSo"):
+            p2.add_bond((inactive_bond, p1))
+        p2.delete_bond([self.f1, p1])
+        with self.assertRaisesRegex(RuntimeError, "doesn't exist on particle"):
+            p2.delete_bond([self.f1, p1])
+        with self.assertRaisesRegex(ValueError, "Bond partners have to be of type integer or ParticleHandle"):
+            p2.delete_bond((self.f1, 'p1'))
+
     def test_zz_remove_all(self):
         for id in self.system.part[:].id:
             self.system.part[id].remove()
@@ -376,6 +423,16 @@ class ParticleProperties(ut.TestCase):
         # Check that wrong types are not accepted
         with self.assertRaises(TypeError):
             system.part[[ids[0], 1.2]]
+
+    def test_to_dict(self):
+        self.system.part.clear()
+        p = self.system.part.add(
+            pos=np.random.uniform(size=(10, 3)) * self.system.box_l)
+        pp = str(p)
+        pdict = p.to_dict()
+        p.remove()
+        self.system.part.add(pdict)
+        self.assertEqual(str(self.system.part.select()), pp)
 
 
 if __name__ == "__main__":

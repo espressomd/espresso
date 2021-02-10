@@ -1429,10 +1429,10 @@ Fields
 
 ::
 
-    ek.print_vtk_boundary(path)
-    ek.print_vtk_density(path)
-    ek.print_vtk_velocity(path)
-    ek.print_vtk_potential(path)
+    ek.write_vtk_boundary(path)
+    ek.write_vtk_density(path)
+    ek.write_vtk_velocity(path)
+    ek.write_vtk_potential(path)
 
 A property of the fluid field can be exported into a
 file in one go. Currently supported
@@ -1444,8 +1444,8 @@ visualization software such as ParaView [5]_ and Mayavi2 [6]_.
 
 ::
 
-    species.print_vtk_flux(path)
-    species.print_vtk_density(path)
+    species.write_vtk_flux(path)
+    species.write_vtk_density(path)
 
 These commands are similar to the above. They enable the
 export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
@@ -1486,7 +1486,7 @@ Particle polarizability with thermalized cold Drude oscillators
 
 .. note::
 
-    Requires features ``THOLE``, ``P3M``, ``LANGEVIN_PER_PARTICLE``.
+    Requires features ``THOLE``, ``P3M``, ``THERMOSTAT_PER_PARTICLE``.
 
 .. note::
 
@@ -1498,7 +1498,7 @@ charge) to a particle (Drude core) that mimics an electron cloud which can be
 elongated to create a dynamically inducible dipole. The energetic minimum of
 the Drude charge can be obtained self-consistently, which requires several
 iterations of the system's electrostatics and is usually considered
-computational expensive. However, with thermalized cold Drude oscillators, the
+computationally expensive. However, with thermalized cold Drude oscillators, the
 distance between Drude charge and core is coupled to a thermostat so that it
 fluctuates around the SCF solution. This thermostat is kept at a low
 temperature compared to the global temperature to minimize the heat flow into
@@ -1515,8 +1515,8 @@ In |es|, the basic ingredients to simulate such a system are split into three bo
 
 The system-wide thermostat has to be applied to the centre of mass and not to
 the core particle directly. Therefore, the particles have to be excluded from
-global thermostatting.  With ``LANGEVIN_PER_PARTICLE`` enabled, we set the
-temperature and friction coefficient of the Drude complex to zero, which allows
+global thermostatting.  With ``THERMOSTAT_PER_PARTICLE`` enabled, we set the
+friction coefficient of the Drude complex to zero, which allows
 to still use a global Langevin thermostat for non-polarizable particles.
 
 As the Drude charge should not alter the *charge* or *mass* of the Drude
@@ -1894,7 +1894,7 @@ The call of ``add_reaction`` define the insertion :math:`\mathrm{\emptyset \to t
 Multiple reactions for the insertions of different types can be added to the same ``WidomInsertion`` instance.
 Measuring the excess chemical potential using the insertion method is done via calling ``widom.measure_excess_chemical_potential(0)``.
 If another particle insertion is defined, then the excess chemical potential for this insertion can be measured by calling ``widom.measure_excess_chemical_potential(1)``.
-Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NPT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
+Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NpT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
 
 The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles like e.g.:
 

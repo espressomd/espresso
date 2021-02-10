@@ -61,7 +61,6 @@
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
-#include <utils/strcat_alloc.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
@@ -72,8 +71,6 @@
 #include <cstdio>
 #include <functional>
 #include <vector>
-
-using Utils::strcat_alloc;
 
 /************************************************
  * DEFINES
@@ -831,7 +828,6 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
  *
  *  The @p _r_cut_iL is determined via a simple bisection.
  *
- *  @param[out] log             log output
  *  @param[in]  mesh            @copybrief P3MParameters::mesh
  *  @param[in]  cao             @copybrief P3MParameters::cao
  *  @param[in]  r_cut_iL_min    lower bound for @p _r_cut_iL
@@ -839,18 +835,18 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
  *  @param[out] _r_cut_iL       @copybrief P3MParameters::r_cut_iL
  *  @param[out] _alpha_L        @copybrief P3MParameters::alpha_L
  *  @param[out] _accuracy       @copybrief P3MParameters::accuracy
+ *  @param[in]  verbose         printf output
  *
  *  @returns The integration time in case of success, otherwise
  *           -@ref P3M_TUNE_FAIL, -@ref P3M_TUNE_ACCURACY_TOO_LARGE,
  *           -@ref P3M_TUNE_CAO_TOO_LARGE, -@ref P3M_TUNE_ELCTEST, or
  *           -@ref P3M_TUNE_CUTOFF_TOO_LARGE
  */
-static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
+static double dp3m_mc_time(int mesh, int cao, double r_cut_iL_min,
                            double r_cut_iL_max, double *_r_cut_iL,
-                           double *_alpha_L, double *_accuracy) {
+                           double *_alpha_L, double *_accuracy, bool verbose) {
   double r_cut_iL;
   double rs_err, ks_err;
-  char b[3 * ES_INTEGER_SPACE + 3 * ES_DOUBLE_SPACE + 128];
 
   /* initial checks. */
   auto const mesh_size = box_geo.length()[0] / static_cast<double>(mesh);
@@ -861,8 +857,9 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
 
   if (cao >= mesh || k_cut >= std::min(min_box_l, min_local_box_l) - skin) {
     /* print result */
-    sprintf(b, "%-4d %-3d  cao too large for this mesh\n", mesh, cao);
-    *log = strcat_alloc(*log, b);
+    if (verbose) {
+      std::printf("%-4d %-3d  cao too large for this mesh\n", mesh, cao);
+    }
     return -P3M_TUNE_CAO_TOO_LARGE;
   }
 
@@ -876,9 +873,11 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
     return *_accuracy;
   if (*_accuracy > dp3m.params.accuracy) {
     /* print result */
-    sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e accuracy not achieved\n",
-            mesh, cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
-    *log = strcat_alloc(*log, b);
+    if (verbose) {
+      std::printf("%-4d %-3d %.5e %.5e %.5e %.3e %.3e accuracy not achieved\n",
+                  mesh, cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err,
+                  ks_err);
+    }
     return -P3M_TUNE_ACCURACY_TOO_LARGE;
   }
 
@@ -910,7 +909,9 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
 
   double const int_time = dp3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -P3M_TUNE_FAIL) {
-    *log = strcat_alloc(*log, "tuning failed, test integration not possible\n");
+    if (verbose) {
+      std::printf("tuning failed, test integration not possible\n");
+    }
     return int_time;
   }
 
@@ -921,9 +922,10 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
   }
 
   /* print result */
-  sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8.0f\n", mesh, cao, r_cut_iL,
-          *_alpha_L, *_accuracy, rs_err, ks_err, int_time);
-  *log = strcat_alloc(*log, b);
+  if (verbose) {
+    std::printf("%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8.0f\n", mesh, cao,
+                r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err, int_time);
+  }
   return int_time;
 }
 
@@ -932,7 +934,6 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
  *  @p _cao should contain an initial guess, which is then adapted by stepping
  *  up and down.
  *
- *  @param[out]     log             log output
  *  @param[in]      mesh            @copybrief P3MParameters::mesh
  *  @param[in]      cao_min         lower bound for @p _cao
  *  @param[in]      cao_max         upper bound for @p _cao
@@ -943,13 +944,14 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
  *  @param[out]     _r_cut_iL       @copybrief P3MParameters::r_cut_iL
  *  @param[out]     _alpha_L        @copybrief P3MParameters::alpha_L
  *  @param[out]     _accuracy       @copybrief P3MParameters::accuracy
+ *  @param[in]      verbose         printf output
  *
  *  @returns The integration time in case of success, otherwise
  *           -@ref P3M_TUNE_FAIL or -@ref P3M_TUNE_CAO_TOO_LARGE */
-static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
-                          int *_cao, double r_cut_iL_min, double r_cut_iL_max,
+static double dp3m_m_time(int mesh, int cao_min, int cao_max, int *_cao,
+                          double r_cut_iL_min, double r_cut_iL_max,
                           double *_r_cut_iL, double *_alpha_L,
-                          double *_accuracy) {
+                          double *_accuracy, bool verbose) {
   double best_time = -1, tmp_r_cut_iL = -1., tmp_alpha_L = 0.0,
          tmp_accuracy = 0.0;
   /* in which direction improvement is possible. Initially, we don't know it
@@ -963,8 +965,9 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
      to increase cao to increase the obtainable precision of the far formula. */
   double tmp_time;
   do {
-    tmp_time = dp3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
-                            &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+    tmp_time =
+        dp3m_mc_time(mesh, cao, r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
+                     &tmp_alpha_L, &tmp_accuracy, verbose);
     /* bail out if the force evaluation is not working */
     if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
       return tmp_time;
@@ -1002,8 +1005,8 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     double dir_times[3];
     for (final_dir = -1; final_dir <= 1; final_dir += 2) {
       dir_times[final_dir + 1] = tmp_time =
-          dp3m_mc_time(log, mesh, cao + final_dir, r_cut_iL_min, r_cut_iL_max,
-                       &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+          dp3m_mc_time(mesh, cao + final_dir, r_cut_iL_min, r_cut_iL_max,
+                       &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy, verbose);
       /* bail out on errors, as usual */
       if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
         return tmp_time;
@@ -1053,8 +1056,9 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
 
   /* move cao into the optimisation direction until we do not gain anymore. */
   for (; cao >= cao_min && cao <= cao_max; cao += final_dir) {
-    tmp_time = dp3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
-                            &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+    tmp_time =
+        dp3m_mc_time(mesh, cao, r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
+                     &tmp_alpha_L, &tmp_accuracy, verbose);
     /* bail out on errors, as usual */
     if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
       return tmp_time;
@@ -1076,7 +1080,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
   return best_time;
 }
 
-int dp3m_adaptive_tune(char **logger) {
+int dp3m_adaptive_tune(bool verbose) {
   /** Tuning of dipolar P3M. The algorithm basically determines the mesh, cao
    *  and then the real space cutoff, in this nested order.
    *
@@ -1101,24 +1105,22 @@ int dp3m_adaptive_tune(char **logger) {
   double alpha_L = -1, tmp_alpha_L = 0.0;
   double accuracy = -1, tmp_accuracy = 0.0;
   double time_best = 1e20, tmp_time;
-  char b[3 * ES_INTEGER_SPACE + 3 * ES_DOUBLE_SPACE + 128];
 
   /* preparation */
   mpi_call_all(dp3m_count_magnetic_particles);
 
-  /* Print Status */
-  sprintf(b,
-          "Dipolar P3M tune parameters: Accuracy goal = %.5e prefactor "
-          "= %.5e\n",
-          dp3m.params.accuracy, dipole.prefactor);
-  *logger = strcat_alloc(*logger, b);
-  sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
-          box_geo.length()[0], dp3m.sum_dip_part, dp3m.sum_mu2);
-  *logger = strcat_alloc(*logger, b);
-
   if (dp3m.sum_dip_part == 0) {
     runtimeErrorMsg() << "no dipolar particles in the system";
     return ES_ERROR;
+  }
+
+  /* Print Status */
+  if (verbose) {
+    std::printf("Dipolar P3M tune parameters: Accuracy goal = %.5e prefactor "
+                "= %.5e\n"
+                "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
+                dp3m.params.accuracy, dipole.prefactor, box_geo.length()[0],
+                dp3m.sum_dip_part, dp3m.sum_mu2);
   }
 
   /* parameter ranges */
@@ -1137,8 +1139,9 @@ int dp3m_adaptive_tune(char **logger) {
   } else {
     tmp_mesh = mesh_max = dp3m.params.mesh[0];
 
-    sprintf(b, "fixed mesh %d\n", dp3m.params.mesh[0]);
-    *logger = strcat_alloc(*logger, b);
+    if (verbose) {
+      std::printf("fixed mesh %d\n", dp3m.params.mesh[0]);
+    }
   }
 
   if (dp3m.params.r_cut_iL == 0.0) {
@@ -1152,8 +1155,9 @@ int dp3m_adaptive_tune(char **logger) {
   } else {
     r_cut_iL_min = r_cut_iL_max = dp3m.params.r_cut_iL;
 
-    sprintf(b, "fixed r_cut_iL %f\n", dp3m.params.r_cut_iL);
-    *logger = strcat_alloc(*logger, b);
+    if (verbose) {
+      std::printf("fixed r_cut_iL %f\n", dp3m.params.r_cut_iL);
+    }
   }
 
   if (dp3m.params.cao == 0) {
@@ -1163,18 +1167,22 @@ int dp3m_adaptive_tune(char **logger) {
   } else {
     cao_min = cao_max = cao = dp3m.params.cao;
 
-    sprintf(b, "fixed cao %d\n", dp3m.params.cao);
-    *logger = strcat_alloc(*logger, b);
+    if (verbose) {
+      std::printf("fixed cao %d\n", dp3m.params.cao);
+    }
   }
-  *logger = strcat_alloc(*logger, "Dmesh cao Dr_cut_iL   Dalpha_L     Derr     "
-                                  "    Drs_err    Dks_err    time [ms]\n");
+
+  if (verbose) {
+    std::printf("Dmesh cao Dr_cut_iL   Dalpha_L     Derr     "
+                "    Drs_err    Dks_err    time [ms]\n");
+  }
 
   /* mesh loop */
   for (; tmp_mesh <= mesh_max; tmp_mesh += 2) {
     tmp_cao = cao;
-    tmp_time =
-        dp3m_m_time(logger, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
-                    r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+    tmp_time = dp3m_m_time(tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
+                           r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L,
+                           &tmp_accuracy, verbose);
     /* some error occurred during the tuning force evaluation */
     if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
       return ES_ERROR;
@@ -1214,11 +1222,12 @@ int dp3m_adaptive_tune(char **logger) {
   /* broadcast tuned p3m parameters */
   mpi_bcast_coulomb_params();
   /* Tell the user about the outcome */
-  sprintf(b,
-          "\nresulting parameters: mesh: %d, cao: %d, r_cut_iL: %.4e,"
-          "\n                      alpha_L: %.4e, accuracy: %.4e, time: %.0f\n",
-          mesh, cao, r_cut_iL, alpha_L, accuracy, time_best);
-  *logger = strcat_alloc(*logger, b);
+  if (verbose) {
+    std::printf(
+        "\nresulting parameters: mesh: %d, cao: %d, r_cut_iL: %.4e,"
+        "\n                      alpha_L: %.4e, accuracy: %.4e, time: %.0f\n",
+        mesh, cao, r_cut_iL, alpha_L, accuracy, time_best);
+  }
   return ES_OK;
 }
 

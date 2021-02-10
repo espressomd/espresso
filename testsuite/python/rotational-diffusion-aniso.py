@@ -43,10 +43,8 @@ class RotDiffAniso(ut.TestCase):
     def setUp(self):
         self.system.time = 0.0
         self.system.part.clear()
-        if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.system.thermostat.turn_off()
-            # the default integrator is supposed implicitly
-            self.system.integrator.set_nvt()
+        self.system.thermostat.turn_off()
+        self.system.integrator.set_nvt()
 
     def add_particles_setup(self, n):
         """
@@ -371,19 +369,17 @@ class RotDiffAniso(ut.TestCase):
         # Actual integration and validation run
         self.check_rot_diffusion(n)
 
-    if "BROWNIAN_DYNAMICS" in espressomd.features():
-        # Brownian Dynamics / Isotropic
-        def test_case_10(self):
-            n = 800
-            self.system.thermostat.turn_off()
-            self.rot_diffusion_param_setup()
-            self.set_isotropic_param()
-            self.add_particles_setup(n)
-            self.system.thermostat.set_brownian(
-                kT=self.kT, gamma=self.gamma_global, seed=42)
-            self.system.integrator.set_brownian_dynamics()
-            # Actual integration and validation run
-            self.check_rot_diffusion(n)
+    # Brownian Dynamics / Isotropic
+    def test_case_10(self):
+        n = 800
+        self.rot_diffusion_param_setup()
+        self.set_isotropic_param()
+        self.add_particles_setup(n)
+        self.system.thermostat.set_brownian(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
+        self.system.integrator.set_brownian_dynamics()
+        # Actual integration and validation run
+        self.check_rot_diffusion(n)
 
 
 if __name__ == '__main__':

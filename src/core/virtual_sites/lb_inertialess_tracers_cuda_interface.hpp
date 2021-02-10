@@ -31,6 +31,8 @@
 
 #include "ParticleRange.hpp"
 
+#include <vector>
+
 // *********** Communication functions ********
 // Implemented in real C++, but called from the ibm_cuda.cu
 void IBM_cuda_mpi_send_velocities(ParticleRange particles);
@@ -50,8 +52,8 @@ typedef struct {
 } IBM_CUDA_ParticleDataOutput;
 
 // ******** global variables for CUDA and MPI communication ******
-extern IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host;
-extern IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_host;
+extern std::vector<IBM_CUDA_ParticleDataInput> IBM_ParticleDataInput_host;
+extern std::vector<IBM_CUDA_ParticleDataOutput> IBM_ParticleDataOutput_host;
 
 #endif
 

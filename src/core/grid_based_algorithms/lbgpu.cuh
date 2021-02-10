@@ -32,7 +32,6 @@
 
 #include <utils/Array.hpp>
 
-#ifdef CUDA
 /** Velocity densities for the lattice Boltzmann system. */
 struct LB_nodes_gpu {
   /** velocity density of the node */
@@ -73,7 +72,6 @@ inline __device__ float4 random_wrapper_philox(unsigned int index,
                  (CURAND_2POW32_INV / 2.0f);
   return rnd_floats;
 }
-#endif //  CUDA
 
 #endif // CUDA
 #endif

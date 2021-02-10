@@ -45,6 +45,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <stdexcept>
 
 Dipole_parameters dipole = {
     0.0,
@@ -138,9 +139,9 @@ void on_boxl_change() {
     dp3m_scaleby_box_l();
     break;
 #endif
-#ifdef SCAFACOS
+#ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
-    Scafacos::update_system_params();
+    Scafacos::fcs_dipoles()->update_system_params();
     break;
 #endif
   default:
@@ -202,8 +203,7 @@ void calc_long_range_force(const ParticleRange &particles) {
 #endif
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
-    assert(Scafacos::dipolar());
-    Scafacos::add_long_range_force();
+    Scafacos::fcs_dipoles()->add_long_range_force();
 #endif
   case DIPOLAR_NONE:
     break;
@@ -249,8 +249,8 @@ double calc_energy_long_range(const ParticleRange &particles) {
 #endif
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
-    assert(Scafacos::dipolar());
-    energy = Scafacos::long_range_energy();
+    energy = Scafacos::fcs_dipoles()->long_range_energy();
+    break;
 #endif
   case DIPOLAR_NONE:
     break;
@@ -296,16 +296,14 @@ void bcast_params(const boost::mpi::communicator &comm) {
   }
 }
 
-int set_Dprefactor(double prefactor) {
+void set_Dprefactor(double prefactor) {
   if (prefactor < 0.0) {
-    runtimeErrorMsg() << "Dipolar prefactor has to be >= 0";
-    return ES_ERROR;
+    throw std::invalid_argument("Dipolar prefactor has to be >= 0");
   }
 
   dipole.prefactor = prefactor;
 
   mpi_bcast_coulomb_params();
-  return ES_OK;
 }
 
 void set_method_local(DipolarInteraction method) {

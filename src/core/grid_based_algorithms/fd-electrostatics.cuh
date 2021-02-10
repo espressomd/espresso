@@ -21,8 +21,6 @@
 
 #include <cufft.h>
 
-#define PI_FLOAT 3.14159265358979323846f
-
 class FdElectrostatics {
 public:
   struct InputParameters {
@@ -66,13 +64,5 @@ private:
   cufftHandle plan_ifft;
   bool initialized;
 };
-
-// extern __device__ __constant__ FdElectrostatics::Parameters
-// fde_parameters_gpu;
-
-__device__ cufftReal fde_getNode(int x, int y, int z);
-__device__ cufftReal fde_getNode(int i);
-__device__ void fde_setNode(int x, int y, int z, cufftReal value);
-__device__ void fde_setNode(int i, cufftReal value);
 
 #endif

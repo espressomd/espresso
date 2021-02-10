@@ -37,11 +37,12 @@ positions = polymer.linear_polymer_positions(n_polymers=5,
                                              bond_length=1.0,
                                              seed=1234)
 for polymer in positions:
-    for i, pos in enumerate(polymer):
-        id = len(system.part)
-        system.part.add(id=id, pos=pos)
-        if i > 0:
-            system.part[id].add_bond((fene, id - 1))
+    monomers = system.part.add(pos=polymer)
+    previous_part = None
+    for part in monomers:
+        if previous_part:
+            part.add_bond((fene, previous_part))
+        previous_part = part
 
 h5_units = h5md.UnitSystem(time='ps', mass='u', length='nm', charge='e')
 h5_file = h5md.H5md(file_path="sample.h5", unit_system=h5_units)

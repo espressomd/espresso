@@ -20,6 +20,7 @@
 #define CORE_UTILS_ACCUMULATOR
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -81,7 +82,8 @@ inline void Accumulator::operator()(const std::vector<double> &data) {
                    [this](AccumulatorData<double> &a,
                           double d) -> AccumulatorData<double> {
                      auto const old_mean = a.mean;
-                     auto const new_mean = old_mean + (d - old_mean) / m_n;
+                     auto const new_mean =
+                         old_mean + (d - old_mean) / static_cast<double>(m_n);
                      auto const new_m = a.m + (d - old_mean) * (d - new_mean);
                      return {new_mean, new_m};
                    });
@@ -117,8 +119,9 @@ inline std::vector<double> Accumulator::variance() const {
 inline std::vector<double> Accumulator::std_error() const {
   auto const var = variance();
   std::vector<double> err(var.size());
-  std::transform(var.begin(), var.end(), err.begin(),
-                 [this](double d) { return std::sqrt(d / m_n); });
+  std::transform(var.begin(), var.end(), err.begin(), [this](double d) {
+    return std::sqrt(d / static_cast<double>(m_n));
+  });
   return err;
 }
 

@@ -21,7 +21,9 @@
 
 #include "grid_based_algorithms/fd-electrostatics.cuh"
 
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
+
+#include <utils/constants.hpp>
 
 #include <cuda.h>
 #include <cufft.h>
@@ -33,6 +35,13 @@
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
+
+static constexpr unsigned int threads_per_block = 64;
+
+__device__ cufftReal fde_getNode(int x, int y, int z);
+__device__ cufftReal fde_getNode(int i);
+__device__ void fde_setNode(int x, int y, int z, cufftReal value);
+__device__ void fde_setNode(int i, cufftReal value);
 
 __global__ void createGreensfcn();
 __global__ void multiplyGreensfcn(cufftComplex *charge_potential);
@@ -102,13 +111,10 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
   cuda_safe_mem(
       cudaMemcpyToSymbol(fde_parameters_gpu, &parameters, sizeof(Parameters)));
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
-      (parameters.dim_z * parameters.dim_y * (parameters.dim_x / 2 + 1) +
-       threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  dim3 dim_grid = calculate_dim_grid(
+      static_cast<unsigned>(parameters.dim_z * parameters.dim_y *
+                            (parameters.dim_x / 2 + 1)),
+      4, threads_per_block);
   KERNELCALL_stream(createGreensfcn, dim_grid, threads_per_block, stream);
 
   /* create 3D FFT plans */
@@ -151,14 +157,15 @@ __global__ void createGreensfcn() {
       // setting 0th Fourier mode to 0 enforces charge neutrality
       fde_parameters_gpu->greensfcn[index] = 0.0f;
     } else {
+      constexpr cufftReal two_pi = 2.0f * Utils::pi<cufftReal>();
       fde_parameters_gpu->greensfcn[index] =
-          -4.0f * PI_FLOAT * fde_parameters_gpu->prefactor *
+          -2.0f * two_pi * fde_parameters_gpu->prefactor *
           fde_parameters_gpu->agrid * fde_parameters_gpu->agrid * 0.5f /
-          (cos(2.0f * PI_FLOAT * static_cast<cufftReal>(coord[0]) /
+          (cos(two_pi * static_cast<cufftReal>(coord[0]) /
                static_cast<cufftReal>(fde_parameters_gpu->dim_x)) +
-           cos(2.0f * PI_FLOAT * static_cast<cufftReal>(coord[1]) /
+           cos(two_pi * static_cast<cufftReal>(coord[1]) /
                static_cast<cufftReal>(fde_parameters_gpu->dim_y)) +
-           cos(2.0f * PI_FLOAT * static_cast<cufftReal>(coord[2]) /
+           cos(two_pi * static_cast<cufftReal>(coord[2]) /
                static_cast<cufftReal>(fde_parameters_gpu->dim_z)) -
            3.0f) /
           static_cast<cufftReal>(fde_parameters_gpu->dim_x *
@@ -193,13 +200,10 @@ void FdElectrostatics::calculatePotential(cufftComplex *charge_potential) {
     fprintf(stderr, "ERROR: Unable to execute FFT plan\n");
   }
 
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
-      (parameters.dim_z * parameters.dim_y * (parameters.dim_x / 2 + 1) +
-       threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  dim3 dim_grid = calculate_dim_grid(
+      static_cast<unsigned>(parameters.dim_z * parameters.dim_y *
+                            (parameters.dim_x / 2 + 1)),
+      4, threads_per_block);
 
   KERNELCALL(multiplyGreensfcn, dim_grid, threads_per_block, charge_potential);
 

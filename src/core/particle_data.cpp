@@ -34,6 +34,7 @@
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
 
+#include <string>
 #include <utils/Cache.hpp>
 #include <utils/constants.hpp>
 #include <utils/keys.hpp>
@@ -120,8 +121,7 @@ using UpdatePropertyMessage = boost::variant
                          &Prop::vs_relative>
 #endif
 #endif
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-        , UpdateProperty<double, &Prop::T>
+#ifdef THERMOSTAT_PER_PARTICLE
 #ifndef PARTICLE_ANISOTROPY
         , UpdateProperty<double, &Prop::gamma>
 #else
@@ -134,7 +134,7 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<Utils::Vector3d, &Prop::gamma_rot>
 #endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
         , UpdateProperty<uint8_t, &Prop::ext_flag>
         , UpdateProperty<Utils::Vector3d, &Prop::ext_force>
@@ -732,13 +732,13 @@ void set_particle_rotational_inertia(int part, double *rinertia) {
 #else
 constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
+
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
   mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
                                                                        rot);
 }
-#endif
-#ifdef ROTATION
+
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
   mpi_send_update_message(part, UpdateOrientation{axis, angle});
 }
@@ -758,7 +758,6 @@ void set_particle_dip(int part, double const *const dip) {
   set_particle_dipm(part, dipm);
   set_particle_quat(part, quat.data());
 }
-
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -843,6 +842,12 @@ void set_particle_quat(int part, double *quat) {
       part, Utils::Quaternion<double>{quat[0], quat[1], quat[2], quat[3]});
 }
 
+void set_particle_director(int part, const Utils::Vector3d &director) {
+  Utils::Quaternion<double> quat =
+      convert_director_to_quaternion(director.normalized());
+  set_particle_quat(part, quat.data());
+}
+
 void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab) {
   auto const &particle = get_particle_data(part);
 
@@ -865,11 +870,7 @@ void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab) {
 }
 #endif
 
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-void set_particle_temperature(int part, double T) {
-  mpi_update_particle_property<double, &ParticleProperties::T>(part, T);
-}
-
+#ifdef THERMOSTAT_PER_PARTICLE
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma(int part, double gamma) {
   mpi_update_particle_property<double, &ParticleProperties::gamma>(part, gamma);
@@ -894,7 +895,7 @@ void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
 }
 #endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
@@ -1180,8 +1181,9 @@ void add_id_to_type_map(int part_id, int type) {
 
 int number_of_particles_with_type(int type) {
   if (particle_type_map.count(type) == 0)
-    throw std::runtime_error("The provided particle type does not exist in "
-                             "the particle_type_map");
+    throw std::runtime_error("The provided particle type " +
+                             std::to_string(type) +
+                             " is currently not tracked by the system.");
   return static_cast<int>(particle_type_map.at(type).size());
 }
 
@@ -1198,7 +1200,6 @@ void pointer_to_omega_body(Particle const *p, double const *&res) {
 void pointer_to_quat(Particle const *p, double const *&res) {
   res = p->r.quat.data();
 }
-
 #endif
 
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
@@ -1243,7 +1244,7 @@ void pointer_to_fix(Particle const *p, const uint8_t *&res) {
 }
 #endif
 
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
+#ifdef THERMOSTAT_PER_PARTICLE
 void pointer_to_gamma(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma);
@@ -1262,10 +1263,7 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res) {
 }
 #endif // ROTATION
 
-void pointer_to_temperature(Particle const *p, double const *&res) {
-  res = &(p->p.T);
-}
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,

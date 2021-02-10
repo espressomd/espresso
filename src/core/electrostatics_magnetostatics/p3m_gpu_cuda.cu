@@ -54,7 +54,7 @@
 #include "BoxGeometry.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "global.hpp"
 
@@ -404,7 +404,7 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
   default:
     break;
   }
-  _cuda_check_errors(block, grid, "assign_charge", __FILE__, __LINE__);
+  cuda_check_errors_exit(block, grid, "assign_charge", __FILE__, __LINE__);
 }
 
 template <int cao, bool shared>
@@ -549,7 +549,7 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
   default:
     break;
   }
-  _cuda_check_errors(block, grid, "assign_forces", __FILE__, __LINE__);
+  cuda_check_errors_exit(block, grid, "assign_forces", __FILE__, __LINE__);
 }
 
 /* Init the internal data structures of the P3M GPU.
@@ -702,9 +702,9 @@ void p3m_gpu_add_farfield_force() {
   dim3 gridConv(p3m_gpu_data.mesh[0], p3m_gpu_data.mesh[1], 1);
   dim3 threadsConv(p3m_gpu_data.mesh[2] / 2 + 1, 1, 1);
 
-  REAL_TYPE prefactor =
-      coulomb.prefactor / // NOLINT(bugprone-narrowing-conversions)
-      (p3m_gpu_data.box[0] * p3m_gpu_data.box[1] * p3m_gpu_data.box[2] * 2.0);
+  auto prefactor =
+      REAL_TYPE(coulomb.prefactor / (p3m_gpu_data.box[0] * p3m_gpu_data.box[1] *
+                                     p3m_gpu_data.box[2] * 2.0));
 
   cuda_safe_mem(cudaMemset(p3m_gpu_data.charge_mesh, 0,
                            p3m_gpu_data.mesh_size * sizeof(REAL_TYPE)));

@@ -303,7 +303,9 @@ General features
        :ref:`Magnetostatics / Dipolar interactions`
        :ref:`Electrostatics`
 
--  ``SCAFACOS_DIPOLES``
+-  ``SCAFACOS_DIPOLES`` This activates magnetostatics methods of ScaFaCoS.
+
+-  ``DIPOLAR_DIRECT_SUM`` This activates the GPU implementation of the dipolar direct sum.
 
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.
@@ -315,11 +317,8 @@ General features
       additional degrees of freedom, which for example means that the
       kinetic energy changes at constant temperature is twice as large.
 
--  ``LANGEVIN_PER_PARTICLE`` Allows to choose the Langevin temperature and friction coefficient
-   per particle.
-
--  ``BROWNIAN_PER_PARTICLE`` Allows to choose the Brownian temperature and friction coefficient
-   per particle.
+-  ``THERMOSTAT_PER_PARTICLE`` Allows setting a per-particle friction
+   coefficient for the Langevin and Brownian thermostats.
 
 -  ``ROTATIONAL_INERTIA``
 
@@ -353,9 +352,9 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
--  ``NPT`` Enables an on-the-fly NPT integration scheme.
+-  ``NPT`` Enables an on-the-fly NpT integration scheme.
 
-   .. seealso:: :ref:`Isotropic NPT thermostat`
+   .. seealso:: :ref:`Isotropic NpT thermostat`
 
 -  ``ENGINE``
 

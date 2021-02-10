@@ -92,12 +92,13 @@ class TestCylindricalObservable(ut.TestCase):
                  b * np.sin(i * 2.0 * np.pi / (len(self.params['ids']) + 1)),
                  i * (self.params['max_z'] - self.params['min_z']) /
                  (len(self.params['ids']) + 1) - self.params['center'][2]])
-            v_y = (position[0] * np.sqrt(position[0]**2 + position[1]**2) *
-                   self.v_phi + position[1] * self.v_r) / np.sqrt(
-                       position[0]**2 + position[1]**2)
-            v_x = (self.v_r * np.sqrt(position[0]**2 + position[1]**2)
-                   - position[1] * v_y) / position[0]
-            velocity = np.array([v_x, v_y, self.v_z])
+
+            e_z = np.array([0, 0, 1])
+            e_r = position - (position * e_z) * e_z
+            e_r /= np.linalg.norm(e_r)
+            e_phi = np.cross(e_z, e_r)
+            velocity = e_r * self.v_r + e_phi * self.v_phi + e_z * self.v_z 
+
             velocity = self.swap_axis(velocity, self.params['axis'])
             position = self.swap_axis(position, self.params['axis'])
             position += np.array(self.params['center'])

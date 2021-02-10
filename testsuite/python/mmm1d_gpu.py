@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-# Copyright (C) 2016-2019 The ESPResSo project
+#
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,23 +15,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+import unittest as ut
+import unittest_decorators as utx
+import mmm1d
+import espressomd.electrostatics
 
-ENV_FILE=$(mktemp esXXXXXXX.env)
 
-cat > "${ENV_FILE}" <<EOF
-cmake_params=${cmake_params}
-with_fftw=${with_fftw}
-with_coverage=false
-with_cuda=true
-with_scafacos=true
-hide_gpu=true
-CC=gcc-8
-CXX=g++-8
-check_procs=${check_procs}
-make_check=${make_check}
-build_type=RelWithAssert
-myconfig=maxset
-EOF
-image="espressomd/docker-ubuntu-20.04:e583d4b2eb8eedd10068957f952bd67008475ee5"
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])
+@utx.skipIfMissingGPU()
+class MMM1D_GPU_Test(mmm1d.ElectrostaticInteractionsTests, ut.TestCase):
 
-docker run -u espresso --env-file "${ENV_FILE}" -v "${PWD}:/travis" -it "${image}" /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1
+    def setUp(self):
+        self.MMM1D = espressomd.electrostatics.MMM1DGPU
+        super().setUp()
+
+
+if __name__ == "__main__":
+    ut.main()

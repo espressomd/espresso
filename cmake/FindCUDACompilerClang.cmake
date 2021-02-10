@@ -60,9 +60,9 @@ set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -O2 -g -DN
 set(CUDA_NVCC_FLAGS_COVERAGE "${CUDA_NVCC_FLAGS_COVERAGE} -O3 -g")
 set(CUDA_NVCC_FLAGS_RELWITHASSERT "${CUDA_NVCC_FLAGS_RELWITHASSERT} -O3 -g")
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
-set(gpu_interface_flags "${CUDA_NVCC_FLAGS} ${CUDA_NVCC_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} --cuda-gpu-arch=sm_30")
-if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 3.8.9)
-  set(gpu_interface_flags "${gpu_interface_flags} --cuda-gpu-arch=sm_52")
+set(gpu_interface_flags "${CUDA_NVCC_FLAGS} ${CUDA_NVCC_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} --cuda-gpu-arch=sm_52")
+if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 11)
+  set(gpu_interface_flags "${gpu_interface_flags} --cuda-gpu-arch=sm_30")
 endif()
 
 function(find_gpu_library)
@@ -77,7 +77,6 @@ function(find_gpu_library)
   endif()
 endfunction(find_gpu_library)
 
-find_gpu_library(VARNAME CUDA_LIBRARY NAMES cuda REQUIRED)
 find_gpu_library(VARNAME CUDART_LIBRARY NAMES cudart REQUIRED)
 find_gpu_library(VARNAME CUFFT_LIBRARY NAMES cufft REQUIRED)
 

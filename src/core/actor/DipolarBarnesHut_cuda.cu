@@ -28,7 +28,8 @@
 #include "DipolarBarnesHut_cuda.cuh"
 
 #include "cuda_init.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
+#include "errorhandling.hpp"
 
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>
@@ -1181,11 +1182,8 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 
   bh_data->nbodies = nbodies;
 
-  int devID = -1;
-  EspressoGpuDevice dev;
-
-  devID = cuda_get_device();
-  cuda_get_device_props(devID, dev);
+  auto const devID = cuda_get_device();
+  EspressoGpuDevice const dev = cuda_get_device_props(devID);
 
   bh_data->blocks = dev.n_cores;
   // Each node corresponds to a split of the cubic box in 3D space to equal

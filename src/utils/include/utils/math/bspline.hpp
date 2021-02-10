@@ -26,145 +26,163 @@
 #include <type_traits>
 
 namespace Utils {
+/** @brief Formula of the B-spline. */
 template <int order, typename T>
 DEVICE_QUALIFIER auto bspline(int i, T x)
     -> std::enable_if_t<(order > 0) && (order <= 7), T> {
   DEVICE_ASSERT(i < order);
-  DEVICE_ASSERT(x >= -0.5);
-  DEVICE_ASSERT(x <= 0.5);
+  DEVICE_ASSERT(x >= T(-0.5));
+  DEVICE_ASSERT(x <= T(0.5));
 
   switch (order) {
   case 1:
-    return 1.0;
-  case 2: {
+    return T(1.);
+  case 2:
     switch (i) {
     case 0:
-      return 0.5 - x;
+      return T(0.5) - x;
     case 1:
-      return 0.5 + x;
+      return T(0.5) + x;
     }
-  }
-  case 3: {
+  case 3:
     switch (i) {
     case 0:
-      return 0.5 * sqr(0.5 - x);
+      return T(0.5) * sqr(T(0.5) - x);
     case 1:
-      return 0.75 - sqr(x);
+      return T(0.75) - sqr(x);
     case 2:
-      return 0.5 * sqr(0.5 + x);
+      return T(0.5) * sqr(T(0.5) + x);
     }
-
-  case 4: {
+  case 4:
     switch (i) {
     case 0:
-      return (1.0 + x * (-6.0 + x * (12.0 - x * 8.0))) / 48.0;
+      return (T(1.) + x * (T(-6.) + x * (T(12.) - x * T(8.)))) / T(48.);
     case 1:
-      return (23.0 + x * (-30.0 + x * (-12.0 + x * 24.0))) / 48.0;
+      return (T(23.) + x * (T(-30.) + x * (T(-12.) + x * T(24.)))) / T(48.);
     case 2:
-      return (23.0 + x * (30.0 + x * (-12.0 - x * 24.0))) / 48.0;
+      return (T(23.) + x * (T(30.) + x * (T(-12.) - x * T(24.)))) / T(48.);
     case 3:
-      return (1.0 + x * (6.0 + x * (12.0 + x * 8.0))) / 48.0;
+      return (T(1.) + x * (T(6.) + x * (T(12.) + x * T(8.)))) / T(48.);
     }
-  }
-  case 5: {
+  case 5:
     switch (i) {
     case 0:
-      return (1.0 + x * (-8.0 + x * (24.0 + x * (-32.0 + x * 16.0)))) / 384.0;
+      return (T(1.) +
+              x * (T(-8.) + x * (T(24.) + x * (T(-32.) + x * T(16.))))) /
+             T(384.);
     case 1:
-      return (19.0 + x * (-44.0 + x * (24.0 + x * (16.0 - x * 16.0)))) / 96.0;
+      return (T(19.) +
+              x * (T(-44.) + x * (T(24.) + x * (T(16.) - x * T(16.))))) /
+             T(96.);
     case 2:
-      return (115.0 + x * x * (-120.0 + x * x * 48.0)) / 192.0;
+      return (T(115.) + x * x * (T(-120.) + x * x * T(48.))) / T(192.);
     case 3:
-      return (19.0 + x * (44.0 + x * (24.0 + x * (-16.0 - x * 16.0)))) / 96.0;
+      return (T(19.) +
+              x * (T(44.) + x * (T(24.) + x * (T(-16.) - x * T(16.))))) /
+             T(96.);
     case 4:
-      return (1.0 + x * (8.0 + x * (24.0 + x * (32.0 + x * 16.0)))) / 384.0;
+      return (T(1.) + x * (T(8.) + x * (T(24.) + x * (T(32.) + x * T(16.))))) /
+             T(384.);
     }
-  }
-  case 6: {
+  case 6:
     switch (i) {
     case 0:
-      return (1.0 +
-              x * (-10.0 + x * (40.0 + x * (-80.0 + x * (80.0 - x * 32.0))))) /
-             3840.0;
+      return (T(1.) +
+              x * (T(-10.) +
+                   x * (T(40.) + x * (T(-80.) + x * (T(80.) - x * T(32.)))))) /
+             T(3840.);
     case 1:
-      return (237.0 +
-              x * (-750.0 +
-                   x * (840.0 + x * (-240.0 + x * (-240.0 + x * 160.0))))) /
-             3840.0;
+      return (T(237.) +
+              x * (T(-750.) +
+                   x * (T(840.) +
+                        x * (T(-240.) + x * (T(-240.) + x * T(160.)))))) /
+             T(3840.);
     case 2:
-      return (841.0 +
-              x * (-770.0 +
-                   x * (-440.0 + x * (560.0 + x * (80.0 - x * 160.0))))) /
-             1920.0;
+      return (T(841.) +
+              x * (T(-770.) +
+                   x * (T(-440.) +
+                        x * (T(560.) + x * (T(80.) - x * T(160.)))))) /
+             T(1920.);
     case 3:
-      return (841.0 +
-              x * (+770.0 +
-                   x * (-440.0 + x * (-560.0 + x * (80.0 + x * 160.0))))) /
-             1920.0;
+      return (T(841.) +
+              x * (+T(770.) +
+                   x * (T(-440.) +
+                        x * (T(-560.) + x * (T(80.) + x * T(160.)))))) /
+             T(1920.);
     case 4:
-      return (237.0 +
-              x * (750.0 +
-                   x * (840.0 + x * (240.0 + x * (-240.0 - x * 160.0))))) /
-             3840.0;
+      return (T(237.) +
+              x * (T(750.) +
+                   x * (T(840.) +
+                        x * (T(240.) + x * (T(-240.) - x * T(160.)))))) /
+             T(3840.);
     case 5:
-      return (1.0 +
-              x * (10.0 + x * (40.0 + x * (80.0 + x * (80.0 + x * 32.0))))) /
-             3840.0;
+      return (T(1.) +
+              x * (T(10.) +
+                   x * (T(40.) + x * (T(80.) + x * (T(80.) + x * T(32.)))))) /
+             T(3840.);
     }
-  }
-  case 7: {
+  case 7:
     switch (i) {
     case 0:
-      return (1.0 +
-              x * (-12.0 +
-                   x * (60.0 + x * (-160.0 +
-                                    x * (240.0 + x * (-192.0 + x * 64.0)))))) /
-             46080.0;
+      return (T(1.) +
+              x * (T(-12.) +
+                   x * (T(60.) +
+                        x * (T(-160.) +
+                             x * (T(240.) + x * (T(-192.) + x * T(64.))))))) /
+             T(46080.);
     case 1:
-      return (361.0 + x * (-1416.0 +
-                           x * (2220.0 +
-                                x * (-1600.0 +
-                                     x * (240.0 + x * (384.0 - x * 192.0)))))) /
-             23040.0;
+      return (T(361.) +
+              x * (T(-1416.) +
+                   x * (T(2220.) +
+                        x * (T(-1600.) +
+                             x * (T(240.) + x * (T(384.) - x * T(192.))))))) /
+             T(23040.);
     case 2:
-      return (10543.0 +
-              x * (-17340.0 +
-                   x * (4740.0 +
-                        x * (6880.0 +
-                             x * (-4080.0 + x * (-960.0 + x * 960.0)))))) /
-             46080.0;
+      return (T(10543.) +
+              x * (T(-17340.) +
+                   x * (T(4740.) +
+                        x * (T(6880.) + x * (T(-4080.) +
+                                             x * (T(-960.) + x * T(960.))))))) /
+             T(46080.);
     case 3:
-      return (5887.0 + x * x * (-4620.0 + x * x * (1680.0 - x * x * 320.0))) /
-             11520.0;
+      return (T(5887.) +
+              x * x * (T(-4620.) + x * x * (T(1680.) - x * x * T(320.)))) /
+             T(11520.);
     case 4:
-      return (10543.0 +
-              x * (17340.0 +
-                   x * (4740.0 +
-                        x * (-6880.0 +
-                             x * (-4080.0 + x * (960.0 + x * 960.0)))))) /
-             46080.0;
+      return (T(10543.) +
+              x * (T(17340.) +
+                   x * (T(4740.) +
+                        x * (T(-6880.) +
+                             x * (T(-4080.) + x * (T(960.) + x * T(960.))))))) /
+             T(46080.);
     case 5:
-      return (361.0 +
-              x * (1416.0 +
-                   x * (2220.0 +
-                        x * (1600.0 +
-                             x * (240.0 + x * (-384.0 - x * 192.0)))))) /
-             23040.0;
+      return (T(361.) +
+              x * (T(1416.) +
+                   x * (T(2220.) +
+                        x * (T(1600.) +
+                             x * (T(240.) + x * (T(-384.) - x * T(192.))))))) /
+             T(23040.);
     case 6:
-      return (1.0 +
-              x * (12.0 +
-                   x * (60.0 +
-                        x * (160.0 + x * (240.0 + x * (192.0 + x * 64.0)))))) /
-             46080.0;
+      return (T(1.) +
+              x * (T(12.) +
+                   x * (T(60.) +
+                        x * (T(160.) +
+                             x * (T(240.) + x * (T(192.) + x * T(64.))))))) /
+             T(46080.);
     }
-  }
-  }
   }
 
   DEVICE_THROW(std::runtime_error("Internal interpolation error."));
   return T{};
 }
 
+/**
+ * @brief Calculate B-splines.
+ * @param i knot number, using 0-based indexing
+ * @param x position in the range (-0.5, 0.5)
+ * @param k order of the B-spline, using 1-based indexing, i.e. a
+ * B-spline of order @p k is a polynomial of degree <tt>k-1</tt>
+ */
 template <class T> auto bspline(int i, T x, int k) {
   switch (k) {
   case 1:
@@ -183,14 +201,15 @@ template <class T> auto bspline(int i, T x, int k) {
     return bspline<7>(i, x);
   }
 
-  return 0.0;
+  return T(0.);
 }
 
+/** @brief Derivative of the B-spline. */
 template <int order, typename T = double> inline T bspline_d(int i, T x) {
   static_assert(order <= 7, "");
   DEVICE_ASSERT(i < order);
-  DEVICE_ASSERT(x >= -0.5);
-  DEVICE_ASSERT(x <= 0.5);
+  DEVICE_ASSERT(x >= T(-0.5));
+  DEVICE_ASSERT(x <= T(0.5));
 
   switch (order - 1) {
   case 0:
@@ -198,92 +217,104 @@ template <int order, typename T = double> inline T bspline_d(int i, T x) {
   case 1:
     switch (i) {
     case 0:
-      return -1.0;
+      return T(-1.);
     case 1:
-      return 1.0;
+      return T(1.);
     }
   case 2:
     switch (i) {
     case 0:
-      return x - 0.5;
+      return x - T(0.5);
     case 1:
-      return -2.0 * x;
+      return T(-2.) * x;
     case 2:
-      return x + 0.5;
+      return x + T(0.5);
     }
   case 3:
     switch (i) {
     case 0:
-      return (-1.0 + x * (4.0 + x * (-4.0))) / 8.0;
+      return (T(-1.) + x * (T(4.) + x * T(-4.))) / T(8.);
     case 1:
-      return (-5.0 + x * (-4.0 + x * (12.0))) / 8.0;
+      return (T(-5.) + x * (T(-4.) + x * T(12.))) / T(8.);
     case 2:
-      return (5.0 + x * (-4.0 + x * (-12.0))) / 8.0;
+      return (T(5.) + x * (T(-4.) + x * T(-12.))) / T(8.);
     case 3:
-      return (1.0 + x * (4.0 + x * (4.0))) / 8.0;
+      return (T(1.) + x * (T(4.) + x * T(4.))) / T(8.);
     }
   case 4:
     switch (i) {
     case 0:
-      return (-1.0 + x * (6.0 + x * (-12.0 + x * (8.0)))) / 48.0;
+      return (T(-1.) + x * (T(6.) + x * (T(-12.) + x * T(8.)))) / T(48.);
     case 1:
-      return (-11.0 + x * (12.0 + x * (12.0 + x * (-16.0)))) / 24.0;
+      return (T(-11.) + x * (T(12.) + x * (T(12.) + x * T(-16.)))) / T(24.);
     case 2:
-      return (x * (-5.0 + x * x * 4.0)) / 4.0;
+      return (x * (T(-5.) + x * x * T(4.))) / T(4.);
     case 3:
-      return (11.0 + x * (12.0 + x * (-12.0 + x * (-16.0)))) / 24.0;
+      return (T(11.) + x * (T(12.) + x * (T(-12.) + x * T(-16.)))) / T(24.);
     case 4:
-      return (1.0 + x * (6.0 + x * (12.0 + x * (8.0)))) / 48.0;
+      return (T(1.) + x * (T(6.) + x * (T(12.) + x * T(8.)))) / T(48.);
     }
   case 5:
     switch (i) {
     case 0:
-      return (-1.0 + x * (8.0 + x * (-24.0 + x * (32.0 + x * (-16))))) / 384.0;
+      return (T(-1.) +
+              x * (T(8.) + x * (T(-24.) + x * (T(32.) + x * T(-16.))))) /
+             T(384.);
     case 1:
-      return (-75.0 + x * (168.0 + x * (-72.0 + x * (-96.0 + x * (80.0))))) /
-             384.0;
+      return (T(-75.) +
+              x * (T(168.) + x * (T(-72.) + x * (T(-96.) + x * (T(80.)))))) /
+             T(384.);
     case 2:
-      return (-77.0 + x * (-88.0 + x * (168.0 + x * (32.0 + x * (-80.0))))) /
-             192.0;
+      return (T(-77.) +
+              x * (T(-88.) + x * (T(168.) + x * (T(32.) + x * T(-80.))))) /
+             T(192.);
     case 3:
-      return (77.0 + x * (-88.0 + x * (-168.0 + x * (32.0 + x * (80.0))))) /
-             192.0;
+      return (T(77.) +
+              x * (T(-88.) + x * (T(-168.) + x * (T(32.) + x * T(80.))))) /
+             T(192.);
     case 4:
-      return (75.0 + x * (168.0 + x * (72.0 + x * (-96.0 + x * (-80))))) /
-             384.0;
+      return (T(75.) +
+              x * (T(168.) + x * (T(72.) + x * (T(-96.) + x * T(-80.))))) /
+             T(384.);
     case 5:
-      return (1.0 + x * (8.0 + x * (24.0 + x * (32.0 + x * (16.0))))) / 384.0;
+      return (T(1.) + x * (T(8.) + x * (T(24.) + x * (T(32.) + x * T(16.))))) /
+             T(384.);
     }
   case 6:
     switch (i) {
     case 0:
-      return (-1.0 +
-              x * (10.0 + x * (-40.0 + x * (80.0 + x * (-80.0 + x * 32.0))))) /
-             3840.0;
+      return (T(-1.) +
+              x * (T(10.) +
+                   x * (T(-40.) + x * (T(80.) + x * (T(-80.) + x * T(32.)))))) /
+             T(3840.);
     case 1:
-      return (-59.0 +
-              x * (185.0 + x * (-200.0 + x * (40.0 + x * (80.0 - x * 48.0))))) /
-             960.0;
+      return (T(-59.) +
+              x * (T(185.) +
+                   x * (T(-200.) + x * (T(40.) + x * (T(80.) - x * T(48.)))))) /
+             T(960.);
     case 2:
-      return (-289.0 +
-              x * (158.0 +
-                   x * (344.0 + x * (-272.0 + x * (-80.0 + x * 96.0))))) /
-             768.0;
+      return (T(-289.) +
+              x * (T(158.) +
+                   x * (T(344.) +
+                        x * (T(-272.) + x * (T(-80.) + x * T(96.)))))) /
+             T(768.);
     case 3:
-      return (x * (-77.0 + x * x * (56.0 - x * x * 16.0))) / 96.0;
+      return (x * (T(-77.) + x * x * (T(56.) - x * x * T(16.)))) / T(96.);
     case 4:
-      return (289.0 +
-              x * (158.0 +
-                   x * (-344.0 + x * (-272.0 + x * (80.0 + x * 96.0))))) /
-             768.0;
+      return (T(289.) + x * (T(158.) + x * (T(-344.) +
+                                            x * (T(-272.) +
+                                                 x * (T(80.) + x * T(96.)))))) /
+             T(768.);
     case 5:
-      return (59.0 +
-              x * (185.0 + x * (200.0 + x * (40.0 + x * (-80.0 - x * 48.0))))) /
-             960.0;
+      return (T(59.) +
+              x * (T(185.) +
+                   x * (T(200.) + x * (T(40.) + x * (T(-80.) - x * T(48.)))))) /
+             T(960.);
     case 6:
-      return (1.0 +
-              x * (10.0 + x * (40.0 + x * (80.0 + x * (80.0 + x * 32.0))))) /
-             3840.0;
+      return (T(1.) +
+              x * (T(10.) +
+                   x * (T(40.) + x * (T(80.) + x * (T(80.) + x * T(32.)))))) /
+             T(3840.);
     }
   }
 

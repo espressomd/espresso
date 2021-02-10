@@ -165,6 +165,11 @@ double lb_lbfluid_get_tau();
 double lb_lbfluid_get_agrid();
 
 /**
+ * @brief Get the global LB relaxation parameter for odd modes.
+ */
+double lb_lbfluid_get_gamma_odd();
+
+/**
  * @brief Get the global LB relaxation parameter for even modes.
  */
 double lb_lbfluid_get_gamma_even();

@@ -27,7 +27,7 @@ import argparse
 import espressomd
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "ROTATIONAL_INERTIA", "VIRTUAL_SITES_RELATIVE",
-                     "THOLE", "LANGEVIN_PER_PARTICLE"]
+                     "THOLE", "THERMOSTAT_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
 import espressomd.observables
@@ -215,7 +215,7 @@ for i in range(n_ionpairs):
     system.part.add(
         id=rid, type=types["BMIM_COM"], pos=pos_com,
         mass=masses["BMIM_COM"], rinertia=[646.284, 585.158, 61.126],
-        temp=0, gamma=0, rotation=[1, 1, 1])
+        gamma=0, rotation=[1, 1, 1])
     cation_com_ids.append(rid)
     com_id = rid
     rid += 1

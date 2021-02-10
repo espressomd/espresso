@@ -20,20 +20,15 @@
 #define UTILS_MATH_TENSOR_PRODUCT_HPP
 
 #include "utils/Vector.hpp"
+#include "utils/matrix.hpp"
 
 #include <algorithm>
 #include <cstddef>
 
 namespace Utils {
 template <typename T, size_t N, size_t M>
-Vector<Vector<T, M>, N> tensor_product(const Vector<T, N> &x,
-                                       const Vector<T, M> &y) {
-  Vector<Vector<T, M>, N> ret;
-
-  std::transform(x.begin(), x.end(), ret.begin(),
-                 [&y](const T &x_i) { return x_i * y; });
-
-  return ret;
+Matrix<T, N, M> tensor_product(const Vector<T, N> &x, const Vector<T, M> &y) {
+  return boost::qvm::col_mat(x) * boost::qvm::row_mat(y);
 }
 
 /*

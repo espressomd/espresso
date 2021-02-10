@@ -47,11 +47,13 @@ positions = polymer.linear_polymer_positions(n_polymers=1,
                                              beads_per_chain=50,
                                              bond_length=1.0,
                                              seed=3210)
-for i, pos in enumerate(positions[0]):
-    id = len(system.part)
-    system.part.add(id=id, pos=pos)
-    if i > 0:
-        system.part[id].add_bond((fene, id - 1))
+previous_part = None
+for pos in positions[0]:
+    part = system.part.add(pos=pos)
+    if previous_part:
+        part.add_bond((fene, previous_part))
+    previous_part = part
+
 vtf.writevsf(system, outfile)
 
 

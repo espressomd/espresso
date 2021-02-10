@@ -25,8 +25,10 @@
  *  Implementation of cells.hpp.
  */
 #include "cells.hpp"
+
 #include "Particle.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -40,6 +42,7 @@
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <algorithm>
+#include <boost/range/algorithm/min_element.hpp>
 #include <functional>
 #include <stdexcept>
 #include <vector>
@@ -48,23 +51,24 @@
 CellStructure cell_structure;
 
 /**
- * @brief Get pairs closer than distance from the cells.
+ * @brief Get pairs of particles that are closer than a distance and fulfill a
+ * filter criterion.
  *
- * This is mostly for testing purposes and uses link_cell
- * to get pairs out of the cellsystem by a simple distance
- * criterion.
+ * It uses link_cell to get pairs out of the cellsystem
+ * by a simple distance criterion and
  *
  * Pairs are sorted so that first.id < second.id
  */
-std::vector<std::pair<int, int>> get_pairs(double distance) {
+template <class Filter>
+std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
+                                                    Filter filter) {
   std::vector<std::pair<int, int>> ret;
+  on_observable_calc();
   auto const cutoff2 = distance * distance;
-
-  cells_update_ghosts(Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES);
-
-  auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
-                                      Distance const &d) {
-    if (d.dist2 < cutoff2)
+  auto pair_kernel = [&ret, &cutoff2, &filter](Particle const &p1,
+                                               Particle const &p2,
+                                               Distance const &d) {
+    if (d.dist2 < cutoff2 and filter(p1) and filter(p2))
       ret.emplace_back(p1.p.identity, p2.p.identity);
   };
 
@@ -79,29 +83,61 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   return ret;
 }
 
-void mpi_get_pairs_local(int, int) {
-  on_observable_calc();
+std::vector<std::pair<int, int>> get_pairs(double const distance) {
+  return get_pairs_filtered(distance, [](Particle const &p) { return true; });
+}
 
-  double distance;
-  boost::mpi::broadcast(comm_cart, distance, 0);
+std::vector<std::pair<int, int>>
+get_pairs_of_types(double const distance, std::vector<int> const &types) {
+  return get_pairs_filtered(distance, [types](Particle const &p) {
+    return std::any_of(types.begin(), types.end(),
+                       [p](int const type) { return p.p.type == type; });
+  });
+}
 
+void get_pairs_local(double const distance) {
   auto local_pairs = get_pairs(distance);
-
   Utils::Mpi::gather_buffer(local_pairs, comm_cart);
 }
 
-REGISTER_CALLBACK(mpi_get_pairs_local)
+REGISTER_CALLBACK(get_pairs_local)
 
-std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
-  mpi_call(mpi_get_pairs_local, 0, 0);
-  on_observable_calc();
+void get_pairs_of_types_local(double const distance,
+                              std::vector<int> const &types) {
+  auto local_pairs = get_pairs_of_types(distance, types);
+  Utils::Mpi::gather_buffer(local_pairs, comm_cart);
+}
 
-  boost::mpi::broadcast(comm_cart, distance, 0);
+REGISTER_CALLBACK(get_pairs_of_types_local)
 
+namespace detail {
+void search_distance_sanity_check(double const distance) {
+  /* get_pairs_filtered() finds pairs via the non_bonded_loop. The maximum
+   * finding range is therefore limited by the decomposition that is used.
+   */
+  auto range = *boost::min_element(cell_structure.max_range());
+  if (distance > range) {
+    runtimeErrorMsg() << "pair search distance " << distance
+                      << " bigger than the decomposition range " << range
+                      << ".\n";
+  }
+}
+} // namespace detail
+
+std::vector<std::pair<int, int>> mpi_get_pairs(double const distance) {
+  detail::search_distance_sanity_check(distance);
+  mpi_call(get_pairs_local, distance);
   auto pairs = get_pairs(distance);
-
   Utils::Mpi::gather_buffer(pairs, comm_cart);
+  return pairs;
+}
 
+std::vector<std::pair<int, int>>
+mpi_get_pairs_of_types(double const distance, std::vector<int> const &types) {
+  detail::search_distance_sanity_check(distance);
+  mpi_call(get_pairs_of_types_local, distance, types);
+  auto pairs = get_pairs_of_types(distance, types);
+  Utils::Mpi::gather_buffer(pairs, comm_cart);
   return pairs;
 }
 

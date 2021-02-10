@@ -16,7 +16,7 @@ function(PYTHON_TEST)
     set(TEST_MAX_NUM_PROC ${TEST_NP})
   endif()
 
-  if("${TEST_MAX_NUM_PROC}" GREATER ${TEST_NP})
+  if(${TEST_MAX_NUM_PROC} GREATER ${TEST_NP})
     set(TEST_NUM_PROC ${TEST_NP})
   else()
     set(TEST_NUM_PROC ${TEST_MAX_NUM_PROC})
@@ -40,9 +40,9 @@ function(PYTHON_TEST)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
   endif()
 
-  if(${TEST_MAX_NUM_PROC} LESS 2)
+  if(${TEST_MAX_NUM_PROC} EQUAL 1)
     set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
-  elseif(${TEST_MAX_NUM_PROC} LESS 3)
+  elseif(${TEST_MAX_NUM_PROC} EQUAL 2)
     set_tests_properties(${TEST_NAME} PROPERTIES LABELS
                                                  "${TEST_LABELS};parallel")
   else()
@@ -95,7 +95,6 @@ python_test(FILE engine_langevin.py MAX_NUM_PROC 4)
 python_test(FILE engine_lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE experimental_decorator.py)
 python_test(FILE icc.py MAX_NUM_PROC 4)
-python_test(FILE magnetostaticInteractions.py MAX_NUM_PROC 1)
 python_test(FILE mass-and-rinertia_per_particle.py MAX_NUM_PROC 2 LABELS long)
 python_test(FILE integrate.py MAX_NUM_PROC 4)
 python_test(FILE interactions_bond_angle.py MAX_NUM_PROC 4)
@@ -109,6 +108,7 @@ python_test(FILE p3m_gpu.py MAX_NUM_PROC 4 LABELS gpu)
 python_test(FILE particle.py MAX_NUM_PROC 4)
 python_test(FILE pressure.py MAX_NUM_PROC 4)
 python_test(FILE scafacos_dipoles_1d_2d.py MAX_NUM_PROC 4)
+python_test(FILE scafacos_interface.py MAX_NUM_PROC 2)
 python_test(FILE tabulated.py MAX_NUM_PROC 2)
 python_test(FILE particle_slice.py MAX_NUM_PROC 4)
 python_test(FILE rigid_bond.py MAX_NUM_PROC 4)
@@ -125,9 +125,9 @@ python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 LABELS gpu long)
 python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long)
 python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species_x.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species_y.py MAX_NUM_PROC 1 LABELS gpu)
-python_test(FILE ek_eof_one_species_z.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX x)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX y)
+python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX z)
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)
@@ -142,8 +142,12 @@ python_test(FILE integrator_npt.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE integrator_steepest_descent.py MAX_NUM_PROC 4)
 python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
+python_test(FILE dipolar_direct_summation.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE dipolar_p3m.py MAX_NUM_PROC 2)
+python_test(FILE dipolar_interface.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE lb_stats.py MAX_NUM_PROC 2 LABELS gpu long)
+python_test(FILE lb_vtk.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE force_cap.py MAX_NUM_PROC 2)
 python_test(FILE dpd.py MAX_NUM_PROC 4)
 python_test(FILE dpd_stats.py MAX_NUM_PROC 4 LABELS long)
@@ -203,12 +207,13 @@ python_test(FILE sigint.py DEPENDENCIES sigint_child.py MAX_NUM_PROC 1)
 python_test(FILE lb_density.py MAX_NUM_PROC 1)
 python_test(FILE observable_chain.py MAX_NUM_PROC 4)
 python_test(FILE mpiio.py MAX_NUM_PROC 4)
-python_test(FILE gpu_availability.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE gpu_availability.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE features.py MAX_NUM_PROC 1)
 python_test(FILE galilei.py MAX_NUM_PROC 32)
 python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)
-python_test(FILE mmm1d.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE mmm1d.py MAX_NUM_PROC 2)
+python_test(FILE mmm1d_gpu.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE stokesian_dynamics.py MAX_NUM_PROC 2 LABELS long)
 python_test(FILE stokesian_thermostat.py MAX_NUM_PROC 2)
 python_test(FILE elc.py MAX_NUM_PROC 2)
@@ -217,6 +222,10 @@ python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
 python_test(FILE mdanalysis.py MAX_NUM_PROC 2)
+python_test(FILE p3m_fft.py MAX_NUM_PROC 6)
+if(${TEST_NP} GREATER_EQUAL 8)
+  python_test(FILE p3m_fft.py MAX_NUM_PROC 8 SUFFIX 8_cores)
+endif()
 python_test(FILE p3m_tuning_exceptions.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE integrator_exceptions.py MAX_NUM_PROC 1)
 python_test(FILE utils.py MAX_NUM_PROC 1)
@@ -239,31 +248,26 @@ add_custom_target(
           ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND
     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/thermostats_common.py
-    ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND
-    ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py
     ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(
   check_python_parallel_odd
-  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L
-          parallel_odd ${CTEST_ARGS} --output-on-failure)
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -L parallel_odd
+          ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
 add_custom_target(
-  check_python_gpu
-  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L gpu
-          ${CTEST_ARGS} --output-on-failure)
+  check_python_gpu COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -L
+                           gpu ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_gpu pypresso python_test_data)
 
 add_custom_target(
   check_python_skip_long
-  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -LE
-          long ${CTEST_ARGS} --output-on-failure)
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -LE long
+          ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_skip_long pypresso python_test_data)
 
 add_custom_target(
   check_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                       -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)
+                       ${CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python pypresso python_test_data)
 add_dependencies(check check_python)

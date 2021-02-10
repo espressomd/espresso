@@ -113,6 +113,7 @@ cdef extern from "particle_data.hpp":
     IF ROTATION:
         void set_particle_quat(int part, double quat[4])
         void pointer_to_quat(const particle * p, const double * & res)
+        void set_particle_director(int part, Vector3d director)
         void set_particle_omega_lab(int part, Vector3d omega)
         void set_particle_omega_body(int part, Vector3d omega)
         void set_particle_torque_lab(int part, Vector3d torque)
@@ -129,10 +130,7 @@ cdef extern from "particle_data.hpp":
         void set_particle_virtual(int part, int isVirtual)
         void pointer_to_virtual(const particle * P, const bint * & res)
 
-    IF LANGEVIN_PER_PARTICLE or BROWNIAN_PER_PARTICLE:
-        void set_particle_temperature(int part, double T)
-        void pointer_to_temperature(const particle * p, const double * & res)
-
+    IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
             void set_particle_gamma(int part, Vector3d gamma)
         ELSE:

@@ -31,6 +31,7 @@
 
 #include "utils/Array.hpp"
 #include "utils/Vector.hpp"
+#include "utils/matrix.hpp"
 
 namespace Utils {
 template <typename T> struct Quaternion {
@@ -70,6 +71,15 @@ Quaternion<T> operator*(const U &b, const Quaternion<T> &a) {
   return boost::qvm::operator*(a, b);
 }
 
+template <typename T> Matrix<T, 3, 3> rotation_matrix(Quaternion<T> const &q) {
+  auto const normed_q = q.normalized();
+  auto const id_mat = Utils::identity_mat<double, 3, 3>();
+  auto const v1 = normed_q * id_mat.col<0>();
+  auto const v2 = normed_q * id_mat.col<1>();
+  auto const v3 = normed_q * id_mat.col<2>();
+  return {{v1[0], v2[0], v3[0]}, {v1[1], v2[1], v3[1]}, {v1[2], v2[2], v3[2]}};
+}
+
 using boost::qvm::operator*;
 using boost::qvm::operator*=;
 using boost::qvm::operator==;
@@ -93,24 +103,24 @@ template <class T> struct quat_traits<Utils::Quaternion<T>> {
 
   template <std::size_t I>
   static constexpr inline scalar_type &write_element(quat_type &q) {
-    static_assert(I < 4 and I >= 0, "Invalid index into quaternion.");
+    static_assert(I < 4, "Invalid index into quaternion.");
     return q[I];
   }
 
   template <std::size_t I>
   static constexpr inline scalar_type read_element(quat_type const &q) {
-    static_assert(I < 4 and I >= 0, "Invalid index into quaternion.");
+    static_assert(I < 4, "Invalid index into quaternion.");
     return q[I];
   }
 
   static inline scalar_type read_element_idx(std::size_t i,
                                              quat_type const &q) {
-    assert(i < 4 and i >= 0);
+    assert(i < 4);
     return q[i];
   }
 
   static inline scalar_type &write_element_idx(std::size_t i, quat_type &q) {
-    assert(i < 4 and i >= 0);
+    assert(i < 4);
     return q[i];
   }
 };

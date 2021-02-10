@@ -142,7 +142,6 @@ void ek_integrate();
 void ek_integrate_electrostatics();
 void ek_print_parameters();
 void ek_print_lbpar();
-void lb_set_ek_pointer(EK_parameters *pointeradress);
 unsigned int ek_calculate_boundary_mass();
 int ek_print_vtk_density(int species, char *filename);
 int ek_print_vtk_flux(int species, char *filename);

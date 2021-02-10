@@ -167,7 +167,7 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
 
   for (auto &p : particles) {
 #ifdef ROTATION
-    propagate_omega_quat_particle(p);
+    propagate_omega_quat_particle(p, time_step);
 #endif
 
     // Don't propagate translational degrees of freedom of vs
@@ -198,7 +198,7 @@ void velocity_verlet_npt_step_1(const ParticleRange &particles) {
 void velocity_verlet_npt_step_2(const ParticleRange &particles) {
   velocity_verlet_npt_propagate_vel_final(particles);
 #ifdef ROTATION
-  convert_torques_propagate_omega(particles);
+  convert_torques_propagate_omega(particles, time_step);
 #endif
   velocity_verlet_npt_finalize_p_inst();
 }

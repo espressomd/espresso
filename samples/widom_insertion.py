@@ -61,9 +61,9 @@ temperature = 1.0
 # type 2 = H+
 
 for i in range(N0):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=1, q=-1)
+    system.part.add(pos=np.random.random(3) * system.box_l, type=1, q=-1)
 for i in range(N0, 2 * N0):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=2, q=1)
+    system.part.add(pos=np.random.random(3) * system.box_l, type=2, q=1)
 
 wca_eps = 1.0
 wca_sig = 1.0

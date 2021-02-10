@@ -27,29 +27,6 @@
 namespace FieldCoupling {
 namespace Fields {
 
-namespace detail {
-
-template <typename T, size_t codim> struct matrix_vector_impl {
-  Utils::Vector<T, codim>
-  operator()(const Utils::Vector<Utils::Vector<T, 3>, codim> &A,
-             Utils::Vector<T, 3> const &v) const {
-    Utils::Vector<T, codim> ret;
-
-    for (int i = 0; i < codim; i++)
-      ret[i] = A[i] * v;
-
-    return ret;
-  }
-};
-
-template <typename T> struct matrix_vector_impl<T, 1> {
-  T operator()(const Utils::Vector<T, 3> &A,
-               Utils::Vector<T, 3> const &v) const {
-    return A * v;
-  }
-};
-} // namespace detail
-
 /**
  * @brief Affine transform of a vector field.
  *
@@ -72,7 +49,7 @@ public:
   value_type &b() { return m_b; }
 
   value_type operator()(const Utils::Vector3d &pos, double = {}) const {
-    return detail::matrix_vector_impl<T, codim>{}(m_A, pos) + m_b;
+    return m_A * pos + m_b;
   }
 
   jacobian_type jacobian(const Utils::Vector3d &, double = {}) const {

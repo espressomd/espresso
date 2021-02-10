@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2019 The ESPResSo project
+ * Copyright (C) 2021 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,35 +19,17 @@
 #ifndef _CUDA_UTILS_HPP
 #define _CUDA_UTILS_HPP
 
-#if !defined(__CUDACC__)
-#error Do not include CUDA headers in normal C++-code!!!
-#endif
+#include "config.hpp"
 
-/** cuda streams for parallel computing on cpu and gpu */
-extern cudaStream_t stream[1];
+#ifdef CUDA
 
-/** Error output for memory allocation and memory copy
- *  @param err   cuda error code
- *  @param file  .cu file were the error took place
- *  @param line  line of the file were the error took place
- */
-void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line);
+#include <stdexcept>
+#include <string>
 
-void _cuda_check_errors(const dim3 &block, const dim3 &grid,
-                        const char *function, const char *file,
-                        unsigned int line);
+class cuda_runtime_error : public std::runtime_error {
+public:
+  cuda_runtime_error(std::string const &msg) : std::runtime_error(msg) {}
+};
 
-#define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
-
-#define KERNELCALL_shared(_function, _grid, _block, _stream, ...)              \
-  _function<<<_grid, _block, _stream, stream[0]>>>(__VA_ARGS__);               \
-  _cuda_check_errors(_grid, _block, #_function, __FILE__, __LINE__);
-
-#define KERNELCALL_stream(_function, _grid, _block, _stream, ...)              \
-  _function<<<_grid, _block, 0, _stream>>>(__VA_ARGS__);                       \
-  _cuda_check_errors(_grid, _block, #_function, __FILE__, __LINE__);
-
-#define KERNELCALL(_function, _grid, _block, ...)                              \
-  KERNELCALL_shared(_function, _grid, _block, 0, ##__VA_ARGS__)
-
+#endif // CUDA
 #endif

@@ -259,7 +259,7 @@ IF ELECTROKINETICS:
             self._params.update(self._get_params_from_es_core())
             return self._params
 
-        def print_vtk_boundary(self, path):
+        def write_vtk_boundary(self, path):
             """
             Writes the boundary information into a vtk-file.
 
@@ -271,7 +271,7 @@ IF ELECTROKINETICS:
             """
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
 
-        def print_vtk_velocity(self, path):
+        def write_vtk_velocity(self, path):
             """
             Writes the lattice-Boltzmann velocity information into a vtk-file.
 
@@ -283,7 +283,7 @@ IF ELECTROKINETICS:
             """
             ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
 
-        def print_vtk_density(self, path):
+        def write_vtk_density(self, path):
             """
             Writes the LB density information into a vtk-file.
 
@@ -295,7 +295,7 @@ IF ELECTROKINETICS:
             """
             ek_lb_print_vtk_density(utils.to_char_pointer(path))
 
-        def print_vtk_potential(self, path):
+        def write_vtk_potential(self, path):
             """
             Writes the electrostatic potential into a vtk-file.
 
@@ -307,7 +307,7 @@ IF ELECTROKINETICS:
             """
             ek_print_vtk_potential(utils.to_char_pointer(path))
 
-        def print_vtk_lbforce(self, path):
+        def write_vtk_lbforce(self, path):
             """
             Writes the LB force information into a vtk-file.
 
@@ -319,7 +319,7 @@ IF ELECTROKINETICS:
             """
             ek_print_vtk_lbforce_density(utils.to_char_pointer(path))
 
-        def print_vtk_particle_potential(self, path):
+        def write_vtk_particle_potential(self, path):
             """
             Writes the electrostatic particle potential into a vtk-file.
 
@@ -366,7 +366,7 @@ IF ELECTROKINETICS:
             self.node[1] = key[1]
             self.node[2] = key[2]
             if not lb_lbnode_is_index_valid(self.node):
-                raise ValueError("LB node index out of bounds")
+                raise IndexError("LB node index out of bounds")
 
         property potential:
             def __get__(self):
@@ -504,7 +504,7 @@ IF ELECTROKINETICS:
             self._params.update(self._get_params_from_es_core())
             return self._params
 
-        def print_vtk_density(self, path):
+        def write_vtk_density(self, path):
             """
             Writes the species density into a vtk-file.
 
@@ -516,7 +516,7 @@ IF ELECTROKINETICS:
             """
             ek_print_vtk_density(self.id, utils.to_char_pointer(path))
 
-        def print_vtk_flux(self, path):
+        def write_vtk_flux(self, path):
             """
             Writes the species flux into a vtk-file.
 
@@ -528,10 +528,10 @@ IF ELECTROKINETICS:
             """
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
 
-        def print_vtk_flux_fluc(self, path):
+        def write_vtk_flux_fluc(self, path):
             ek_print_vtk_flux_fluc(self.id, utils.to_char_pointer(path))
 
-        def print_vtk_flux_link(self, path):
+        def write_vtk_flux_link(self, path):
             ek_print_vtk_flux_link(self.id, utils.to_char_pointer(path))
 
     cdef class SpecieRoutines:
@@ -544,7 +544,7 @@ IF ELECTROKINETICS:
             self.node[2] = key[2]
             self.id = id
             if not lb_lbnode_is_index_valid(self.node):
-                raise ValueError("LB node index out of bounds")
+                raise IndexError("LB node index out of bounds")
 
         property density:
             def __set__(self, value):
@@ -572,4 +572,4 @@ IF ELECTROKINETICS:
                         self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
                     raise Exception("Species has not been added to EK.")
 
-                return np.array(flux[0], flux[1], flux[2])
+                return np.array([flux[0], flux[1], flux[2]])

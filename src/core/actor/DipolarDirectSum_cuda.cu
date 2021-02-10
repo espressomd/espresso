@@ -21,7 +21,7 @@
 
 #ifdef DIPOLAR_DIRECT_SUM
 
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>
@@ -42,7 +42,7 @@ __device__ inline void get_mi_vector_dds(dds_float res[3], dds_float const a[3],
   for (int i = 0; i < 3; i++) {
     res[i] = a[i] - b[i];
     if (periodic[i])
-      res[i] -= floor(res[i] / box_l[i] + 0.5) * box_l[i];
+      res[i] -= floor(res[i] / box_l[i] + 0.5f) * box_l[i];
   }
 }
 

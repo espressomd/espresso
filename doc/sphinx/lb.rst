@@ -218,10 +218,10 @@ Output for visualization
 
 |es| implements a number of commands to output fluid field data of the whole fluid into a file at once. ::
 
-    lb.print_vtk_velocity(path)
-    lb.print_vtk_boundary(path)
-    lb.print_velocity(path)
-    lb.print_boundary(path)
+    lb.write_vtk_velocity(path)
+    lb.write_vtk_boundary(path)
+    lb.write_velocity(path)
+    lb.write_boundary(path)
 
 Currently supported fluid properties are the velocity, and boundary flag in ASCII VTK as well as Gnuplot compatible ASCII output.
 
@@ -233,7 +233,7 @@ The variant
 
 ::
 
-   lb.print_vtk_velocity(path, bb1, bb2)
+   lb.write_vtk_velocity(path, bb1, bb2)
 
 allows you to only output part of the flow field by specifying an axis aligned
 bounding box through the coordinates ``bb1`` and ``bb1`` (lists of three ints) of two of its corners. This
@@ -242,7 +242,7 @@ example, executing
 
 ::
 
-    lb.print_vtk_velocity(path, [0, 0, 5], [10, 10, 5])
+    lb.write_vtk_velocity(path, [0, 0, 5], [10, 10, 5])
 
 will output the cross-section of the velocity field in a plane
 perpendicular to the :math:`z`-axis at :math:`z = 5` (assuming the box

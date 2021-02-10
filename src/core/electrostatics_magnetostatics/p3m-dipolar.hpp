@@ -157,11 +157,11 @@ void dp3m_deactivate();
  *  The function is based on routines of the program HE_Q.cpp for charges
  *  written by M. Deserno.
  *
- *  @param[out]  log  log output
+ *  @param verbose printf output
  *  @retval ES_OK
  *  @retval ES_ERROR
  */
-int dp3m_adaptive_tune(char **log);
+int dp3m_adaptive_tune(bool verbose);
 
 /** Compute the k-space part of forces and energies for the magnetic
  *  dipole-dipole interaction

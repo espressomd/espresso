@@ -19,20 +19,18 @@ import unittest as ut
 import importlib_wrapper
 
 
-def shorten_loop(code):
-    breakpoint = "while True:"
-    assert breakpoint in code
-    code = code.replace(breakpoint, "for _ in range(6):", 1)
-    return code
-
-
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/load_checkpoint.py", substitutions=shorten_loop)
+    "@SAMPLES_DIR@/load_checkpoint.py")
 
 
 @skipIfMissingFeatures
 class Sample(ut.TestCase):
     system = sample.system
+
+    def test_file_generation(self):
+        self.assertEqual(set(sample.checkpoint.get_registered_objects()),
+                         {'myvar', 'system', 'p3m'})
+        self.assertEqual(sample.myvar, "some script variable (updated value)")
 
 
 if __name__ == "__main__":

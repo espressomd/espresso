@@ -43,7 +43,7 @@ if not checkpoint.checkpoint_signals:
 # test for user data
 myvar = "some script variable"
 checkpoint.register("myvar")
-myvar = "updated value"  # demo of how the register function works
+myvar = myvar + " (updated value)"  # demo of how the register function works
 
 # test for "system"
 box_l = 10.7437
@@ -69,7 +69,7 @@ system.force_cap = wca_cap
 # test for "system.part"
 n_part = 10
 for i in range(n_part):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+    system.part.add(pos=np.random.random(3) * system.box_l)
 
 # test for "p3m"
 for i in range(n_part // 2 - 1):

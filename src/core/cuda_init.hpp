@@ -30,20 +30,21 @@
  *  old datatypes, as it is intended for MPI communication.
  */
 struct EspressoGpuDevice {
-  /* Local CUDA device id */
+  /** Local CUDA device id */
   int id;
-  /* Node identification */
-  char proc_name[64];
-  /* MPI process identification */
-  int node;
-  /* Compute capability */
-  int compute_capability_major;
-  int compute_capability_minor;
-  /* Name */
+  /** Local CUDA device name */
   char name[64];
-  /* Total Memory */
-  int total_memory;
-  /* Number of cores */
+  /** Node identification */
+  char proc_name[64];
+  /** MPI process identification */
+  int node;
+  /** Compute capability (major) */
+  int compute_capability_major;
+  /** Compute capability (minor) */
+  int compute_capability_minor;
+  /** Total Memory */
+  size_t total_memory;
+  /** Number of cores */
   int n_cores;
 };
 
@@ -53,62 +54,52 @@ void cuda_init();
 
 /** Get the number of CUDA devices.
  *
- *  @return the number of GPUs, or -1 if CUDA could not be
- *  initialized. The error message from CUDA can be found in \ref
- *  cuda_error.
+ *  @return the number of GPUs.
  */
 int cuda_get_n_gpus();
 
-/** Check that a given GPU is capable of what we need, that is, at
- *  least compute capability 1.1.
+/** Check that a given GPU has compute capability.
+ *  The minimal compute capability required by ESPResSo is
+ *  \ref computeCapabilityMinMajor . \ref computeCapabilityMinMinor .
  *
  *  @param dev CUDA device number
- *  @return \ref ES_OK if and only if the GPU with the given id is
- *          usable for CUDA computations. Only devices with compute
- *          capability of 1.1 or higher are ok, since atomic operations are
- *          required for CUDA-LB.
+ *  @return \ref ES_OK if the GPU meets the requirements, else \ref ES_ERROR.
  */
-int cuda_check_gpu(int dev);
+int cuda_check_gpu_compute_capability(int dev);
 
 /** Get the name of a CUDA device.
  *
- *  @param dev the CUDA device number to ask the name for
- *  @param name a buffer to write the name to, at least 64 characters
+ *  @param[in]  dev the CUDA device number to ask the name for
+ *  @param[out] name a buffer to write the name to, at least 64 characters
  */
 void cuda_get_gpu_name(int dev, char name[64]);
 
 /** Choose a device for future CUDA computations.
  *
  *  @param dev the device to use
- *  @return \ref ES_OK on success, \ref ES_ERROR else. The error
- *  message from CUDA can be found in \ref cuda_error.
  */
-int cuda_set_device(int dev);
+void cuda_set_device(int dev);
 
 /** Get the current CUDA device.
  *
- *  @return the current device's number or -1 if an error occurred. The error
- *  message from CUDA can be found in \ref cuda_error.
+ *  @return the current device's number.
  */
 int cuda_get_device();
 
 /** Test if actual CUDA device works.
  *  @return \ref ES_OK on success, \ref ES_ERROR else.
- *  The error message from CUDA can be found in \ref cuda_error.
  */
 int cuda_test_device_access();
 
-/** Gather unique list of CUDA devices on all nodes
- *  @return vector of device on master, empty vector on other nodes.
+/** Gather unique list of CUDA devices on all nodes.
+ *  @return vector of device properties.
  */
 std::vector<EspressoGpuDevice> cuda_gather_gpus();
 
 /** Get properties of a CUDA device
+ *  @param dev CUDA device number
  */
-int cuda_get_device_props(int dev, EspressoGpuDevice &d);
-
-/** Current error message of CUDA. */
-extern const char *cuda_error;
+EspressoGpuDevice cuda_get_device_props(int dev);
 
 #endif // ifdef CUDA
 #endif

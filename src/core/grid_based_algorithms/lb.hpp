@@ -144,10 +144,7 @@ void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
                      const LB_Parameters &lb_parameters);
 
 void lb_reinit_parameters(LB_Parameters &lb_parameters);
-/** Pointer to the velocity populations of the fluid.
- *  lbfluid contains pre-collision populations, lbfluid_post
- *  contains post-collision populations
- */
+
 using LB_Fluid = std::array<Utils::Span<double>, 19>;
 extern LB_Fluid lbfluid;
 
@@ -172,7 +169,7 @@ template <std::size_t I> auto get(const LB_Fluid_Ref &lb_fluid) {
 
 } // namespace Utils
 
-/** Pointer to the hydrodynamic fields of the fluid */
+/** Hydrodynamic fields of the fluid */
 extern std::vector<LB_FluidNode> lbfields;
 
 /************************************************************/
@@ -213,7 +210,8 @@ Utils::Vector6d lb_calc_pressure_tensor(std::array<double, 19> const &modes,
 
 /** Calculation of hydrodynamic modes.
  *
- *  @param index number of the node to calculate the modes for
+ *  @param[in]  index     Number of the node to calculate the modes for
+ *  @param[in]  lb_fluid  Populations of the fluid
  *  @retval Array containing the modes.
  */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index,

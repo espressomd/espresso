@@ -161,7 +161,7 @@ void lb_init_boundaries() {
       return;
     }
     ek_init_boundaries();
-    int number_of_boundnodes = 0;
+    unsigned number_of_boundnodes = 0;
     std::vector<int> host_boundary_node_list;
     std::vector<int> host_boundary_index_list;
     size_t size_of_index;
@@ -277,7 +277,7 @@ Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
   std::vector<double> forces(3 * lbboundaries.size());
   if (lattice_switch == ActiveLB::GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(CUDA)
-    lb_gpu_get_boundary_forces(forces.data());
+    lb_gpu_get_boundary_forces(forces);
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)

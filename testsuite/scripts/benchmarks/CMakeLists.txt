@@ -26,6 +26,6 @@ benchmark_test(FILE test_p3m.py)
 
 add_custom_target(
   check_benchmarks COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                           -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)
+                           ${CTEST_ARGS} --output-on-failure)
 
 add_dependencies(check_benchmarks pypresso local_benchmarks)

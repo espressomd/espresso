@@ -418,8 +418,6 @@ void Correlator::update() {
       }
     }
   }
-
-  m_last_update = sim_time;
 }
 
 int Correlator::finalize() {
@@ -513,7 +511,9 @@ std::vector<double> Correlator::get_correlation() {
   for (size_t i = 0; i < n_result; i++) {
     auto const index = m_dim_corr * i;
     for (size_t k = 0; k < m_dim_corr; k++) {
-      res[index + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
+      if (n_sweeps[i]) {
+        res[index + k] = result[i][k] / static_cast<double>(n_sweeps[i]);
+      }
     }
   }
   return res;
@@ -541,7 +541,6 @@ std::string Correlator::get_internal_state() const {
   oa << A_accumulated_average;
   oa << B_accumulated_average;
   oa << n_data;
-  oa << m_last_update;
 
   return ss.str();
 }
@@ -563,7 +562,6 @@ void Correlator::set_internal_state(std::string const &state) {
   ia >> A_accumulated_average;
   ia >> B_accumulated_average;
   ia >> n_data;
-  ia >> m_last_update;
 }
 
 } // namespace Accumulators

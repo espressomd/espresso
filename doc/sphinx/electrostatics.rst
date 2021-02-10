@@ -255,8 +255,8 @@ Usage notes:
     z-direction not to contain particles. The size in z-direction of this slab
     is controlled by the ``gap_size`` parameter. The user has to ensure that
     no particles enter this region by means of constraints or by fixing the
-    particles' z-coordinate. When there is no empty slab of the specified size,
-    the method will silently produce wrong results.
+    particles' z-coordinate. When particles enter the slab of the specified
+    size, an error will be thrown.
 
 *ELC* is an |es| actor and is used with::
 
@@ -318,7 +318,7 @@ MMM1D is used with::
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
 MMM1D Coulomb method for systems with periodicity (0 0 1). Needs the
-nsquared cell system (see section :ref:`Cellsystems`). The first form sets parameters
+N-squared cell system (see section :ref:`Cellsystems`). The first form sets parameters
 manually. The switch radius determines at which xy-distance the force
 calculation switches from the near to the far formula. The Bessel cutoff
 does not need to be specified as it is automatically determined from the
@@ -336,7 +336,7 @@ MMM1D on GPU
 :class:`espressomd.electrostatics.MMM1DGPU`
 
 MMM1D is also available in a GPU implementation. Unlike its CPU
-counterpart, it does not need the nsquared cell system.
+counterpart, it does not need the N-squared cell system.
 
 ::
 
@@ -386,6 +386,4 @@ for an accuracy of :math:`10^{-3}`::
 
 For details of the various methods and their parameters please refer to
 the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a
-shared library. ScaFaCoS can be used only once, either for Coulomb or for
-dipolar interactions.
-
+shared library.

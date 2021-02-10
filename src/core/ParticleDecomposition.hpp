@@ -115,7 +115,13 @@ public:
   /**
    * @brief Maximum supported cutoff.
    */
+  virtual Utils::Vector3d max_cutoff() const = 0;
+
+  /**
+   * @brief Range in which calculations are performed.
+   */
   virtual Utils::Vector3d max_range() const = 0;
+
   /**
    * @brief Return the box geometry needed for distance calculation
    *        if minimum image convention should be used needed for
