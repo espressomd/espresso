@@ -418,8 +418,6 @@ void Correlator::update() {
       }
     }
   }
-
-  m_last_update = sim_time;
 }
 
 int Correlator::finalize() {
@@ -543,7 +541,6 @@ std::string Correlator::get_internal_state() const {
   oa << A_accumulated_average;
   oa << B_accumulated_average;
   oa << n_data;
-  oa << m_last_update;
 
   return ss.str();
 }
@@ -565,7 +562,6 @@ void Correlator::set_internal_state(std::string const &state) {
   ia >> A_accumulated_average;
   ia >> B_accumulated_average;
   ia >> n_data;
-  ia >> m_last_update;
 }
 
 } // namespace Accumulators

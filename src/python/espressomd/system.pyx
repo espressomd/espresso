@@ -43,8 +43,8 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .globals import Globals
-from .globals cimport FIELD_SIMTIME, FIELD_MAX_OIF_OBJECTS
-from .globals cimport integ_switch, max_oif_objects, sim_time
+from .globals cimport FIELD_MAX_OIF_OBJECTS
+from .globals cimport integ_switch, max_oif_objects
 from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded, mpi_bcast_parameter
 from .utils cimport handle_errors, check_type_or_throw_except
 from .utils import is_valid_type
@@ -240,13 +240,10 @@ cdef class System:
         def __set__(self, double _time):
             if _time < 0:
                 raise ValueError("Simulation time must be >= 0")
-            global sim_time
-            sim_time = _time
-            mpi_bcast_parameter(FIELD_SIMTIME)
+            self.globals.time = _time
 
         def __get__(self):
-            global sim_time
-            return sim_time
+            return self.globals.time
 
     property time_step:
         """

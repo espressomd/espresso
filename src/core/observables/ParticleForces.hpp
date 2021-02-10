@@ -21,7 +21,6 @@
 
 #include "Particle.hpp"
 #include "PidObservable.hpp"
-#include "integrate.hpp"
 #include <cstddef>
 #include <vector>
 

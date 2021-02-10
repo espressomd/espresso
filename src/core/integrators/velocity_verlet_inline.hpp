@@ -40,7 +40,7 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
   auto const skin2 = Utils::sqr(0.5 * skin);
   for (auto &p : particles) {
 #ifdef ROTATION
-    propagate_omega_quat_particle(p);
+    propagate_omega_quat_particle(p, time_step);
 #endif
 
     // Don't propagate translational degrees of freedom of vs
@@ -91,7 +91,7 @@ inline void velocity_verlet_step_1(const ParticleRange &particles) {
 inline void velocity_verlet_step_2(const ParticleRange &particles) {
   velocity_verlet_propagate_vel_final(particles);
 #ifdef ROTATION
-  convert_torques_propagate_omega(particles);
+  convert_torques_propagate_omega(particles, time_step);
 #endif
 }
 

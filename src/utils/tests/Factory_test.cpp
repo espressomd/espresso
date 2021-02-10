@@ -45,7 +45,7 @@ struct OtherDerivedTestClass : public TestClass {
 };
 
 /* Check registration of construction functions */
-BOOST_AUTO_TEST_CASE(regiser_class) {
+BOOST_AUTO_TEST_CASE(register_class) {
   Utils::Factory<TestClass> factory;
 
   factory.register_new<OtherDerivedTestClass>("other_derived_class");
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(make) {
   BOOST_CHECK(dynamic_cast<DerivedTestClass *>(o.get()) != nullptr);
 }
 
-BOOST_AUTO_TEST_CASE(stable_name_) {
+BOOST_AUTO_TEST_CASE(type_name) {
   const std::string derived_class_name = "derived_test_class";
 
   Utils::Factory<TestClass> factory;
