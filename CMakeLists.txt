@@ -306,9 +306,9 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 
 find_package(MPI 3.0 REQUIRED)
 
-# ##############################################################################
+#
 # Boost
-# ##############################################################################
+#
 
 list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
 
@@ -418,6 +418,10 @@ endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
 
+#
+# Sanitizers
+#
+
 if(WITH_ASAN AND WITH_MSAN)
   message(
     FATAL_ERROR
@@ -443,13 +447,17 @@ endif()
 target_link_libraries(cxx_interface INTERFACE coverage_interface)
 
 #
-# Testing
-# ##############################################################################
+# Static analysis
+#
 
 if(WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
   set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
 endif()
+
+#
+# Testing
+#
 
 if(WITH_TESTS)
   enable_testing()
@@ -475,6 +483,7 @@ endif(WITH_BENCHMARKS)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(libs)
+
 #
 # Feature summary
 #
