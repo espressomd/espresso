@@ -36,7 +36,6 @@
 #include "utils/matrix.hpp"
 #include "utils/quaternion.hpp"
 
-#include <cassert>
 #include <cmath>
 
 namespace Utils {
@@ -50,7 +49,7 @@ inline Vector3d basis_change(Vector3d const &b1, Vector3d const &b2,
   auto const e_x = b1.normalized();
   auto const e_y = b2.normalized();
   auto const e_z = b3.normalized();
-  auto const M = Matrix<double, 3, 3>{
+  Mat<double, 3, 3> const M = Mat<double, 3, 3>{
       {e_x[0], e_x[1], e_x[2]},
       {e_y[0], e_y[1], e_y[2]},
       {e_z[0], e_z[1], e_z[2]}}.transposed();
@@ -91,9 +90,7 @@ transform_coordinate_cartesian_to_cylinder(Vector3d const &pos) {
  */
 inline Vector3d transform_coordinate_cartesian_to_cylinder(
     Vector3d const &pos, Vector3d const &axis,
-    Vector3d const &orientation) {
-  // check that axis and orientation are orthogonal
-  assert(std::abs(axis*orientation)<5*std::numeric_limits<double>::epsilon());
+    Vector3d const &orientation = {{1, 0, 0}}) {
   auto const rotation_axis = vector_product(axis, orientation);
   auto const pos_t = basis_change(orientation, rotation_axis, axis, pos);
   return transform_coordinate_cartesian_to_cylinder(pos_t);
@@ -131,9 +128,7 @@ transform_coordinate_cylinder_to_cartesian(Vector3d const &pos) {
  */
 inline Vector3d transform_coordinate_cylinder_to_cartesian(
     Vector3d const &pos, Vector3d const &axis,
-    Vector3d const &orientation) {
-  // check that axis and orientation are orthogonal
-  assert(std::abs(axis*orientation)<5*std::numeric_limits<double>::epsilon());
+    Vector3d const &orientation = {{1, 0, 0}}) {
   auto const rotation_axis = vector_product(axis, orientation);
   auto const pos_t = transform_coordinate_cylinder_to_cartesian(pos);
   return basis_change(orientation, rotation_axis, axis, pos_t, true);
@@ -149,11 +144,20 @@ inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
                                                        Vector3d const &axis,
                                                        Vector3d const &pos) {
   static auto const z_axis = Vector3d{{0, 0, 1}};
+<<<<<<< HEAD
   auto const angle = angle_between(axis, z_axis);
   auto const rotation_axis = Utils::vector_product(axis, z_axis).normalize();
   auto const rotated_pos = vec_rotate(rotation_axis, angle, pos);
   auto const rotated_vec = vec_rotate(rotation_axis, angle, vec);
-  auto const r = std::sqrt(rotated_pos[0]*rotated_pos[0]+rotated_pos[1]*rotated_pos[1]);
+=======
+  double theta;
+  Vector3d rotation_axis;
+  std::tie(theta, rotation_axis) = rotation_params(axis, z_axis);
+  auto const rotated_pos = vec_rotate(rotation_axis, theta, pos);
+  auto const rotated_vec = vec_rotate(rotation_axis, theta, vec);
+  auto const r = std::sqrt(rotated_pos[0] * rotated_pos[0] +
+                           rotated_pos[1] * rotated_pos[1]);
+>>>>>>> python
   // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
   auto const v_r =
       (rotated_pos[0] * rotated_vec[0] + rotated_pos[1] * rotated_vec[1]) / r;
