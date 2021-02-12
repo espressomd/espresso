@@ -108,8 +108,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
   return interpolated_u;
 }
 
-double
-lb_lbinterpolation_get_interpolated_density(const Utils::Vector3d &pos) {
+double lb_lbinterpolation_get_interpolated_density(const Utils::Vector3d &pos) {
   double interpolated_dens;
 
   /* Calculate fluid density at the position.

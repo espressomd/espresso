@@ -22,6 +22,7 @@ import espressomd.observables
 import espressomd.lb
 import tests_common
 
+
 class CylindricalLBObservableCommon:
 
     """
@@ -29,21 +30,21 @@ class CylindricalLBObservableCommon:
 
     """
     lbf = None
-    system = espressomd.System(box_l=3*[15])
+    system = espressomd.System(box_l=3 * [15])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     positions = []
 
     lb_params = {'agrid': 1.,
-                'dens': 1.2,
-                'visc': 2.7,
-                'tau': 0.1,
-                }
+                 'dens': 1.2,
+                 'visc': 2.7,
+                 'tau': 0.1,
+                 }
     params = {
-        'ids': list(range(9)),
-        'center': 3*[7],
-        'axis': [1,0,0],
-        'orientation' : [0,0,1],
+        'ids': None,
+        'center': 3 * [7],
+        'axis': [1, 0, 0],
+        'orientation': [0, 0, 1],
         'n_r_bins': 4, 
         'n_phi_bins': 3, 
         'n_z_bins': 5,  
@@ -54,46 +55,47 @@ class CylindricalLBObservableCommon:
         'max_phi': np.pi,
         'max_z': 6.0,
     }
-    
+
     v_r = 0.02
     v_phi = 0.04
     v_z = 0.03
-    
+
     def calc_vel_at_pos(self, positions):
         """
         In cylinde coordinates, all velocities are the same. In cartesian they depend on the position. The cartesian velocities are calculated here.
         """
-        
+
         vels = [] 
         for pos in positions:
-            e_r,e_phi,e_z = tests_common.get_cylindrical_basis_vectors(pos)
+            e_r, e_phi, e_z = tests_common.get_cylindrical_basis_vectors(pos)
             velocity = self.v_r * e_r + self.v_phi * e_phi + self.v_z * e_z
             vels.append(velocity)
         return vels
-    
+
     def align_with_observable_frame(self, vec):
         """
         Rotate vectors from the original box frame to the frame of the observables.
         """
-        
+
         # align original z to observable z
-        vec = tests_common.rodrigues_rot(vec, [0,1,0], np.pi/2.)
+        vec = tests_common.rodrigues_rot(vec, [0, 1, 0], np.pi / 2.)
         # original x now points along [0,0,-1]
 
         # align original x to observable orientation
-        vec = tests_common.rodrigues_rot(vec,[1,0,0],np.pi)
+        vec = tests_common.rodrigues_rot(vec, [1, 0, 0], np.pi)
         return vec
-    
+
     def setup_system_get_np_hist(self):
         """
         Pick positions and velocities in the original box frame and calculate the np histogram. Then rotate and move the positions and velocities to the frame of the observables. 
         After calculating the core observables, the result should be the same as the np histogram obtained from the original box frame.
         """
-        
-        nodes = np.array(np.meshgrid([1,2], [1,2], [1,1,1,1,2])).T.reshape(-1,3)
-        positions = nodes+3*[0.5]
+
+        nodes = np.array(np.meshgrid([1, 2], [1, 2], [
+                         1, 1, 1, 1, 2])).T.reshape(-1, 3)
+        positions = nodes + 3 * [0.5]
         velocities = self.calc_vel_at_pos(positions)
-        
+
         # get the histogram from numpy
         pos_cyl = []
         for pos in positions:
@@ -101,10 +103,11 @@ class CylindricalLBObservableCommon:
                 tests_common.transform_pos_from_cartesian_to_polar_coordinates(pos))
         np_hist, np_edges = tests_common.get_histogram(
             np.array(pos_cyl), self.params, 'cylindrical')
-        
-        # the particles only determine the evaluation points, not the values of the observables
+
+        # the particles only determine the evaluation points, not the values of
+        # the observables
         np_hist[np.nonzero(np_hist)] = 1
-        
+
         # now align the positions and velocities with the frame of reference
         # used in the observables
         pos_aligned = []
@@ -114,41 +117,50 @@ class CylindricalLBObservableCommon:
                 self.align_with_observable_frame(pos) +
                 self.params['center'])
             vel_aligned.append(self.align_with_observable_frame(vel))
-        node_aligned= np.array(np.rint( np.array(pos_aligned)-3*[0.5]) , dtype = int)   
-        self.system.part.add(pos=pos_aligned, v = vel_aligned)
-        
-        for node,vel in zip(node_aligned, vel_aligned):
-            self.lbf[node].velocity=vel
-        
+        node_aligned = np.array(
+            np.rint(
+                np.array(pos_aligned) -
+                3 *
+                [0.5]),
+            dtype=int)   
+        self.system.part.add(pos=pos_aligned, v=vel_aligned)
+        self.params['ids'] = self.system.part[:].id
+
+        for node, vel in zip(node_aligned, vel_aligned):
+            self.lbf[node].velocity = vel
+
         return np_hist, np_edges
-    
-    def check_edges(self,observable, np_edges):
+
+    def check_edges(self, observable, np_edges):
         core_edges = observable.call_method("edges")
         for core_edge, np_edge in zip(core_edges, np_edges):
             np.testing.assert_array_almost_equal(core_edge, np_edge)
-        
+
     def test_cylindrical_lb_vel_profile_obs(self):
         """
         Check that the result from the observable (in its own frame) matches the np result from the box frame
         """
-        
+
         np_hist_binary, np_edges = self.setup_system_get_np_hist()
-        vel_obs =  espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions(**self.params)
+        vel_obs = espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions(
+            **self.params)
         core_hist_v = vel_obs.calculate()
         core_hist_v_r = core_hist_v[:, :, :, 0]
         core_hist_v_phi = core_hist_v[:, :, :, 1]
         core_hist_v_z = core_hist_v[:, :, :, 2]
-        np.testing.assert_array_almost_equal(np_hist_binary * self.v_r, core_hist_v_r)
-        np.testing.assert_array_almost_equal(np_hist_binary * self.v_phi, core_hist_v_phi)        
-        np.testing.assert_array_almost_equal(np_hist_binary * self.v_z, core_hist_v_z)
+        np.testing.assert_array_almost_equal(
+            np_hist_binary * self.v_r, core_hist_v_r)
+        np.testing.assert_array_almost_equal(
+            np_hist_binary * self.v_phi, core_hist_v_phi)        
+        np.testing.assert_array_almost_equal(
+            np_hist_binary * self.v_z, core_hist_v_z)
         self.check_edges(vel_obs, np_edges)
-
 
     def test_cylindrical_lb_profile_interface(self):
         """
         Test setters and getters of the script interface
         """
-        
+
         params = self.params.copy()
         params['n_r_bins'] = 4
         params['n_phi_bins'] = 6
@@ -228,19 +240,31 @@ class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
         Only for CPU because density interpolation is not implemented for GPU LB.
         """
         np_hist_binary, np_edges = self.setup_system_get_np_hist()
-       
+
         flux_obs = espressomd.observables.CylindricalLBFluxDensityProfileAtParticlePositions(
             **self.params)
         core_hist_fl = flux_obs.calculate()
         core_hist_fl_r = core_hist_fl[:, :, :, 0]
         core_hist_fl_phi = core_hist_fl[:, :, :, 1]
         core_hist_fl_z = core_hist_fl[:, :, :, 2]
-        core_edges_fl = flux_obs.call_method("edges")
 
-        np.testing.assert_array_almost_equal(np_hist_binary*self.lb_params['dens'] * self.v_r, core_hist_fl_r)
-        np.testing.assert_array_almost_equal(np_hist_binary * self.lb_params['dens'] * self.v_phi, core_hist_fl_phi)
-        np.testing.assert_array_almost_equal(np_hist_binary * self.lb_params['dens'] * self.v_z, core_hist_fl_z)
+        np.testing.assert_array_almost_equal(
+            np_hist_binary *
+            self.lb_params['dens'] *
+            self.v_r,
+            core_hist_fl_r)
+        np.testing.assert_array_almost_equal(
+            np_hist_binary *
+            self.lb_params['dens'] *
+            self.v_phi,
+            core_hist_fl_phi)
+        np.testing.assert_array_almost_equal(
+            np_hist_binary *
+            self.lb_params['dens'] *
+            self.v_z,
+            core_hist_fl_z)
         self.check_edges(flux_obs, np_edges)
+
 
 @utx.skipIfMissingGPU()
 class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):

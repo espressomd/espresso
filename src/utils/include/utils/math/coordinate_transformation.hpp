@@ -53,7 +53,8 @@ inline Vector3d basis_change(Vector3d const &b1, Vector3d const &b2,
   auto const M = Matrix<double, 3, 3>{
       {e_x[0], e_x[1], e_x[2]},
       {e_y[0], e_y[1], e_y[2]},
-      {e_z[0], e_z[1], e_z[2]}}.transposed();
+      {e_z[0], e_z[1],
+       e_z[2]}}.transposed();
   if (reverse) {
     return M * v;
   }
@@ -90,10 +91,10 @@ transform_coordinate_cartesian_to_cylinder(Vector3d const &pos) {
  *                      which @f$ \phi = 0 @f$
  */
 inline Vector3d transform_coordinate_cartesian_to_cylinder(
-    Vector3d const &pos, Vector3d const &axis,
-    Vector3d const &orientation) {
+    Vector3d const &pos, Vector3d const &axis, Vector3d const &orientation) {
   // check that axis and orientation are orthogonal
-  assert(std::abs(axis*orientation)<5*std::numeric_limits<double>::epsilon());
+  assert(std::abs(axis * orientation) <
+         5 * std::numeric_limits<double>::epsilon());
   auto const rotation_axis = vector_product(axis, orientation);
   auto const pos_t = basis_change(orientation, rotation_axis, axis, pos);
   return transform_coordinate_cartesian_to_cylinder(pos_t);
@@ -130,10 +131,10 @@ transform_coordinate_cylinder_to_cartesian(Vector3d const &pos) {
  *                      which @f$ \phi = 0 @f$
  */
 inline Vector3d transform_coordinate_cylinder_to_cartesian(
-    Vector3d const &pos, Vector3d const &axis,
-    Vector3d const &orientation) {
+    Vector3d const &pos, Vector3d const &axis, Vector3d const &orientation) {
   // check that axis and orientation are orthogonal
-  assert(std::abs(axis*orientation)<5*std::numeric_limits<double>::epsilon());
+  assert(std::abs(axis * orientation) <
+         5 * std::numeric_limits<double>::epsilon());
   auto const rotation_axis = vector_product(axis, orientation);
   auto const pos_t = transform_coordinate_cylinder_to_cartesian(pos);
   return basis_change(orientation, rotation_axis, axis, pos_t, true);
@@ -153,7 +154,8 @@ inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
   auto const rotation_axis = Utils::vector_product(axis, z_axis).normalize();
   auto const rotated_pos = vec_rotate(rotation_axis, angle, pos);
   auto const rotated_vec = vec_rotate(rotation_axis, angle, vec);
-  auto const r = std::sqrt(rotated_pos[0]*rotated_pos[0]+rotated_pos[1]*rotated_pos[1]);
+  auto const r = std::sqrt(rotated_pos[0] * rotated_pos[0] +
+                           rotated_pos[1] * rotated_pos[1]);
   // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
   auto const v_r =
       (rotated_pos[0] * rotated_vec[0] + rotated_pos[1] * rotated_vec[1]) / r;

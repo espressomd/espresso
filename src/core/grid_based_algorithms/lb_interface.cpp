@@ -1278,7 +1278,8 @@ double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos) {
   auto const folded_pos = folded_position(pos, box_geo);
   auto const interpolation_order = lb_lbinterpolation_get_interpolation_order();
   if (lattice_switch == ActiveLB::GPU) {
-    throw std::runtime_error("Density interpolation is not implemented for the GPU LB.");
+    throw std::runtime_error(
+        "Density interpolation is not implemented for the GPU LB.");
   }
   if (lattice_switch == ActiveLB::CPU) {
     switch (interpolation_order) {

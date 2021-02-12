@@ -42,18 +42,20 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
     auto const pos = folded_position(traits.position(p), box_geo);
     auto const v = lb_lbfluid_get_interpolated_velocity(pos) *
                    lb_lbfluid_get_lattice_speed();
-    auto const flux_dens = lb_lbfluid_get_interpolated_density(pos)*v;
+    auto const flux_dens = lb_lbfluid_get_interpolated_density(pos) * v;
 
-    histogram.update(
-        Utils::transform_coordinate_cartesian_to_cylinder(pos - center, axis,
-                                                          orientation),
-        Utils::transform_vector_cartesian_to_cylinder(flux_dens, axis, pos - center));
+    histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
+                         pos - center, axis, orientation),
+                     Utils::transform_vector_cartesian_to_cylinder(
+                         flux_dens, axis, pos - center));
   }
 
   // normalize by number of hits per bin
   auto hist_tmp = histogram.get_histogram();
   auto tot_count = histogram.get_tot_count();
-  std::transform(hist_tmp.begin(),hist_tmp.end(),tot_count.begin(),hist_tmp.begin(),[](auto hi, auto ci){return ci>0 ? hi/ci : 0.;});
+  std::transform(hist_tmp.begin(), hist_tmp.end(), tot_count.begin(),
+                 hist_tmp.begin(),
+                 [](auto hi, auto ci) { return ci > 0 ? hi / ci : 0.; });
   return hist_tmp;
 }
 } // namespace Observables

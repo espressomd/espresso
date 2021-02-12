@@ -84,7 +84,7 @@ class CylindricalProfileObservables(ProfileObservable):
             axis = np.asarray(kwargs["axis"])
             for vec in try_vectors:
                 proj = np.dot(vec, axis / np.linalg.norm(axis))
-                if np.arccos(proj) > 10*sys.float_info.epsilon:
+                if np.arccos(proj) > 10 * sys.float_info.epsilon:
                     vec -= proj * axis
                     kwargs["orientation"] = vec / np.linalg.norm(vec)
                     break

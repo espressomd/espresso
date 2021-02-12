@@ -270,7 +270,6 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
  * @param pos Position at which the density is to be calculated.
  * @retval interpolated fluid density.
  */
-double
-lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
+double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
 
 #endif

@@ -49,7 +49,9 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
   // normalize by number of hits per bin
   auto hist_tmp = histogram.get_histogram();
   auto tot_count = histogram.get_tot_count();
-  std::transform(hist_tmp.begin(),hist_tmp.end(),tot_count.begin(),hist_tmp.begin(),[](auto hi, auto ci){return ci>0 ? hi/ci : 0.;});
+  std::transform(hist_tmp.begin(), hist_tmp.end(), tot_count.begin(),
+                 hist_tmp.begin(),
+                 [](auto hi, auto ci) { return ci > 0 ? hi / ci : 0.; });
   return hist_tmp;
 }
 

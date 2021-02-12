@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_with_axis_and_orientation_test) {
   // tilted orthogonal basis
   auto const y = (Vector3d{{0, 1, -1}}).normalize();
   auto const z = (Vector3d{{1, 1, 1}}).normalize();
-  auto const x = Utils::vector_product(y,z);
+  auto const x = Utils::vector_product(y, z);
 
   // check transformation with orientation (phi is random for r=0)
   {
@@ -156,26 +156,24 @@ BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_test) {
 BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_with_axis_and_orientation_test) {
   constexpr auto eps = 2e-14;
   Vector3d const cylinder_coord{{1.2, 3.123, 42.0}};
-  auto const e_x = Vector3d{{1.,0.,0.}};
-  auto const e_y = Vector3d{{0.,1.,0.}};
-  auto const e_z = Vector3d{{0.,0.,1.}};
+  auto const e_x = Vector3d{{1., 0., 0.}};
+  auto const e_y = Vector3d{{0., 1., 0.}};
+  auto const e_z = Vector3d{{0., 0., 1.}};
 
-  auto const transformed_x = transform_coordinate_cylinder_to_cartesian(
-      cylinder_coord, e_x, -e_z );
-  auto const transformed_y = transform_coordinate_cylinder_to_cartesian(
-      cylinder_coord, e_y, e_x );
-  auto const transformed_z = transform_coordinate_cylinder_to_cartesian(
-      cylinder_coord, e_z, e_x);
+  auto const transformed_x =
+      transform_coordinate_cylinder_to_cartesian(cylinder_coord, e_x, -e_z);
+  auto const transformed_y =
+      transform_coordinate_cylinder_to_cartesian(cylinder_coord, e_y, e_x);
+  auto const transformed_z =
+      transform_coordinate_cylinder_to_cartesian(cylinder_coord, e_z, e_x);
   // We transform from cylinder zu cartesian and have to rotate back. See test
   // cartesian_to_cylinder_test.
-  auto const expected_x =
-      vec_rotate(e_y, Utils::pi() / 2.0,
-                 transform_coordinate_cylinder_to_cartesian(
-                     cylinder_coord, e_z, e_x));
-  auto const expected_y =
-      vec_rotate(e_x, -Utils::pi() / 2.0,
-                 transform_coordinate_cylinder_to_cartesian(
-                     cylinder_coord, e_z, e_x));
+  auto const expected_x = vec_rotate(
+      e_y, Utils::pi() / 2.0,
+      transform_coordinate_cylinder_to_cartesian(cylinder_coord, e_z, e_x));
+  auto const expected_y = vec_rotate(
+      e_x, -Utils::pi() / 2.0,
+      transform_coordinate_cylinder_to_cartesian(cylinder_coord, e_z, e_x));
   // x = r * cos(phi); y = r * sin(phi); z = z
   auto const expected_z = Vector3d{
       {cylinder_coord[0] * std::cos(cylinder_coord[1]),
@@ -192,7 +190,7 @@ BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_with_axis_with_phi_2_test) {
   // tilted orthogonal basis
   auto const y = (Vector3d{{0, 1, -1}}).normalize();
   auto const z = (Vector3d{{1, 1, 1}}).normalize();
-  auto const x = Utils::vector_product(y,z);
+  auto const x = Utils::vector_product(y, z);
 
   // check transformation with orientation
   {

@@ -32,7 +32,7 @@ class TestCylindricalObservable(ut.TestCase):
     system.cell_system.skin = 0.4
 
     params = {
-        'ids': list(range(100)),
+        'ids': None,
         'center': 3 * [7.5],
         'axis': [np.sqrt(2), np.sqrt(2), 0],
         'orientation': [0, 0, 1],
@@ -54,13 +54,14 @@ class TestCylindricalObservable(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
 
-    def calc_ellipsis_pos_vel(self, n_part, z_min, z_max, semi_x=1., semi_y=1.):
+    def calc_ellipsis_pos_vel(
+            self, n_part, z_min, z_max, semi_x=1., semi_y=1.):
         """
         Calculate positions on an elliptical corkscrew line. Calculate cartesian velocities that lead to a constant velocity in cylindrical coordinates
         """
-        
+
         zs = np.linspace(z_min, z_max, num=n_part)
-        angles = np.linspace(-0.99*np.pi, 0.999 * np.pi, num=n_part)
+        angles = np.linspace(-0.99 * np.pi, 0.999 * np.pi, num=n_part)
 
         positions = []
         velocities = []
@@ -70,26 +71,27 @@ class TestCylindricalObservable(ut.TestCase):
                 [semi_x * np.cos(angle),
                  semi_y * np.sin(angle),
                  z])
-            
-            e_r,e_phi,e_z = tests_common.get_cylindrical_basis_vectors(position)
+
+            e_r, e_phi, e_z = tests_common.get_cylindrical_basis_vectors(
+                position)
             velocity = self.v_r * e_r + self.v_phi * e_phi + self.v_z * e_z
 
             positions.append(position)
             velocities.append(velocity)
 
         return np.array(positions), np.array(velocities)
-    
+
     def align_with_observable_frame(self, vec):
         """
         Rotate vectors from the original box frame to the frame of the observables.
         """
-        
+
         # align original z to observable z
-        vec = tests_common.rodrigues_rot(vec,[1,-1,0],-np.pi/2.)
+        vec = tests_common.rodrigues_rot(vec, [1, -1, 0], -np.pi / 2.)
         # original x now points along [sqrt(3),-sqrt(3),-sqrt(3)]
 
         # align original x to observable orientation
-        vec =tests_common.rodrigues_rot(vec,[1,1,0],-3./4.*np.pi)
+        vec = tests_common.rodrigues_rot(vec, [1, 1, 0], -3. / 4. * np.pi)
         return vec
 
     def setup_system_get_np_hist(self):
@@ -97,9 +99,12 @@ class TestCylindricalObservable(ut.TestCase):
         Pick positions and velocities in the original box frame and calculate the np histogram. Then rotate and move the positions and velocities to the frame of the observables. 
         After calculating the core observables, the result should be the same as the np histogram obtained from the original box frame.
         """
-        
-        positions, velocities = self.calc_ellipsis_pos_vel(len(
-            self.params['ids']), 0.99 * self.params['min_z'], 0.9 * self.params['max_z'], semi_x= 0.9 * self.params['max_r'], semi_y= 0.2 * self.params['max_r'])
+
+        positions, velocities = self.calc_ellipsis_pos_vel(100, 0.99 *
+                                                           self.params['min_z'], 0.9 *
+                                                           self.params['max_z'], semi_x=0.9 *
+                                                           self.params['max_r'], semi_y=0.2 *
+                                                           self.params['max_r'])
 
         # first, get the numpy histogram of the cylinder coordinates
         pos_cyl = []
@@ -108,7 +113,8 @@ class TestCylindricalObservable(ut.TestCase):
                 tests_common.transform_pos_from_cartesian_to_polar_coordinates(pos))
         np_hist, np_edges = tests_common.get_histogram(
             np.array(pos_cyl), self.params, 'cylindrical')
-        np_dens = tests_common.normalize_cylindrical_hist(np_hist.copy(), self.params)
+        np_dens = tests_common.normalize_cylindrical_hist(
+            np_hist.copy(), self.params)
 
         # now align the positions and velocities with the frame of reference
         # used in the observables
@@ -120,14 +126,15 @@ class TestCylindricalObservable(ut.TestCase):
                 self.params['center'])
             vel_aligned.append(self.align_with_observable_frame(vel))
         self.system.part.add(pos=pos_aligned, v=vel_aligned)
-               
+        self.params['ids'] = self.system.part[:].id
+
         return np_dens, np_edges
-    
-    def check_edges(self,observable, np_edges):
+
+    def check_edges(self, observable, np_edges):
         core_edges = observable.call_method("edges")
         for core_edge, np_edge in zip(core_edges, np_edges):
             np.testing.assert_array_almost_equal(core_edge, np_edge)
-    
+
     def test_density_profile(self):
         """
         Check that the result from the observable (in its own frame) matches the np result from the box frame
@@ -138,7 +145,7 @@ class TestCylindricalObservable(ut.TestCase):
             **self.params)
         core_hist = cyl_dens_prof.calculate()
         np.testing.assert_array_almost_equal(np_dens, core_hist)
-        self.check_edges(cyl_dens_prof,np_edges)
+        self.check_edges(cyl_dens_prof, np_edges)
 
     def test_vel_profile(self):
         """
@@ -159,7 +166,7 @@ class TestCylindricalObservable(ut.TestCase):
             np_hist_binary * self.v_phi, core_hist_v_phi)        
         np.testing.assert_array_almost_equal(
             np_hist_binary * self.v_z, core_hist_v_z)
-        self.check_edges(cyl_vel_prof,np_edges)
+        self.check_edges(cyl_vel_prof, np_edges)
 
     def test_flux_density_profile(self):
         """
@@ -176,7 +183,7 @@ class TestCylindricalObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(
             np_dens * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_dens * self.v_z, core_hist_v_z)
-        self.check_edges(cyl_flux_dens,np_edges)
+        self.check_edges(cyl_flux_dens, np_edges)
 
     def test_cylindrical_pid_profile_interface(self):
         """

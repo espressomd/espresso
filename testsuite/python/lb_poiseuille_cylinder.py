@@ -82,7 +82,7 @@ class LBPoiseuilleCommon:
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
     params = {'axis': [0, 0, 1],
-              'orientation' : [1,0,0]}
+              'orientation': [1, 0, 0]}
 
     def prepare(self):
         """
