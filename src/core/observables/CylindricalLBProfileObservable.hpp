@@ -48,8 +48,7 @@ public:
         limits[0], limits[1], limits[2], n_bins[0], n_bins[1], n_bins[2],
         sampling_density);
     for (auto &p : sampling_positions) {
-      auto p_cart = Utils::transform_coordinate_cylinder_to_cartesian(
-          p, Utils::Vector3d{{0.0, 0.0, 1.0}});
+      auto p_cart = Utils::transform_coordinate_cylinder_to_cartesian(p);
       // We have to rotate the coordinates since the utils function assumes
       // z-axis symmetry.
       constexpr Utils::Vector3d z_axis{{0.0, 0.0, 1.0}};
