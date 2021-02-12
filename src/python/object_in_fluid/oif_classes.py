@@ -1092,7 +1092,7 @@ class OifCell:
             i = 0
             for line in nodes_coord:  # extracts coordinates from the string line
                 line = line.split()
-                new_position = np.array(line).astype(np.float) + center
+                new_position = np.array(line).astype(float) + center
                 self.mesh.points[i].set_pos(new_position)
                 i += 1
 
