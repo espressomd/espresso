@@ -1273,3 +1273,36 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
   }
   throw NoLBActive();
 }
+
+double
+lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos) {
+  auto const folded_pos = folded_position(pos, box_geo);
+  auto const interpolation_order = lb_lbinterpolation_get_interpolation_order();
+  if (lattice_switch == ActiveLB::GPU) {
+#ifdef CUDA
+    double interpolated_dens;
+    switch (interpolation_order) {
+    case (InterpolationOrder::linear):
+      lb_get_interpolated_density_gpu<8>(folded_pos.data(),
+                                          interpolated_dens, 1);
+      break;
+    case (InterpolationOrder::quadratic):
+      lb_get_interpolated_density_gpu<27>(folded_pos.data(),
+                                           interpolated_dens, 1);
+      break;
+    }
+    return interpolated_dens;
+#endif
+  }
+  if (lattice_switch == ActiveLB::CPU) {
+    switch (interpolation_order) {
+    case (InterpolationOrder::quadratic):
+      throw std::runtime_error("The non-linear interpolation scheme is not "
+                               "implemented for the CPU LB.");
+    case (InterpolationOrder::linear):
+      return mpi_call(::Communication::Result::one_rank,
+                      mpi_lb_get_interpolated_density, folded_pos);
+    }
+  }
+  throw NoLBActive();
+}

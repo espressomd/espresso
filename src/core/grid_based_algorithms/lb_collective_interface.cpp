@@ -81,6 +81,15 @@ mpi_lb_get_interpolated_velocity(Utils::Vector3d const &pos) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_interpolated_velocity)
 
+boost::optional<double>
+mpi_lb_get_interpolated_density(Utils::Vector3d const &pos) {
+  return detail::lb_calc_for_pos(pos, [&](auto pos) {
+    return lb_lbinterpolation_get_interpolated_density(pos);
+  });
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_interpolated_density)
+
 auto mpi_lb_get_density(Utils::Vector3i const &index) {
   return detail::lb_calc_fluid_kernel(
       index, [&](auto const &modes, auto const &force_density) {

@@ -82,6 +82,16 @@ Utils::Vector3d node_u(Lattice::index_t index) {
   return Utils::Vector3d{modes[1], modes[2], modes[3]} / local_density;
 }
 
+double node_dens(Lattice::index_t index) {
+#ifdef LB_BOUNDARIES
+  if (lbfields[index].boundary) {
+    return lbpar.density;
+  }
+#endif // LB_BOUNDARIES
+  auto const modes = lb_calc_modes(index, lbfluid);
+  return lbpar.density + modes[0];
+}
+
 } // namespace
 
 const Utils::Vector3d
@@ -96,6 +106,20 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
                         });
 
   return interpolated_u;
+}
+
+double
+lb_lbinterpolation_get_interpolated_density(const Utils::Vector3d &pos) {
+  double interpolated_dens;
+
+  /* Calculate fluid density at the position.
+     This is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
+  lattice_interpolation(lblattice, pos,
+                        [&interpolated_dens](Lattice::index_t index, double w) {
+                          interpolated_dens += w * node_dens(index);
+                        });
+
+  return interpolated_dens;
 }
 
 void lb_lbinterpolation_add_force_density(
