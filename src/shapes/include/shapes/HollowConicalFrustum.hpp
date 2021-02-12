@@ -47,16 +47,23 @@ class HollowConicalFrustum : public Shape {
 public:
   HollowConicalFrustum()
       : m_r1(0.0), m_r2(0.0), m_length(0.0), m_thickness(0.0),
-        m_direction(1), m_center{Utils::Vector3d{}}, m_axis{Utils::Vector3d{
-                                                         0, 0, 1}} {}
+        m_direction(1), m_center{Utils::Vector3d{}},
+        m_axis{Utils::Vector3d{0, 0, 1}}, m_orientation{Utils::Vector3d {1.,0.,0.}} {}
 
-  void set_r1(double radius) { m_r1 = radius; }
-  void set_r2(double radius) { m_r2 = radius; }
-  void set_length(double length) { m_length = length; }
-  void set_thickness(double thickness) { m_thickness = thickness; }
-  void set_direction(int dir) { m_direction = dir; }
-  void set_axis(Utils::Vector3d const &axis) { m_axis = axis; }
-
+  void set_r1(double const radius) { m_r1 = radius; }
+  void set_r2(double const radius) { m_r2 = radius; }
+  void set_length(double const length) { m_length = length; }
+  void set_thickness(double const thickness) { m_thickness = thickness; }
+  void set_direction(int const dir) { m_direction = dir; }
+  void set_axis(Utils::Vector3d const &axis) {
+    m_axis = axis;
+    // Even though the HCF is cylinder-symmetric, it needs a well defined phi=0 orientation for the coordinate transformation.
+    // If the default orientation is too parallel to axis, choose again
+    if ((m_orientation - (m_orientation*m_axis)*m_axis).norm() < 0.01) {
+    m_orientation = Utils::Vector3d{{0.,1.,0.}};
+    std::printf("changing orientation");
+    }
+  }
   void set_center(Utils::Vector3d const &center) { m_center = center; }
 
   /// Get radius 1 perpendicular to axis.
@@ -92,6 +99,7 @@ private:
   int m_direction;
   Utils::Vector3d m_center;
   Utils::Vector3d m_axis;
+  Utils::Vector3d m_orientation;
 };
 } // namespace Shapes
 

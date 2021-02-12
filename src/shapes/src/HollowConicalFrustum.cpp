@@ -34,11 +34,8 @@ void HollowConicalFrustum::calculate_dist(const Utils::Vector3d &pos,
   // transform given position to cylindrical coordinates in the reference frame
   // of the cone
   auto const v = pos - m_center;
-  auto orientation = Utils::Vector3d{{1, 0, 0}};
-  if (m_axis[1] == 0. and m_axis[2] == 0.)
-    orientation = Utils::vector_product(v, m_axis);
   auto const pos_cyl =
-      Utils::transform_coordinate_cartesian_to_cylinder(v, m_axis, orientation);
+      Utils::transform_coordinate_cartesian_to_cylinder(v, m_axis, m_orientation);
   // clang-format off
   /*
    * the following implementation is based on:
@@ -65,7 +62,7 @@ void HollowConicalFrustum::calculate_dist(const Utils::Vector3d &pos,
   // Transform back to cartesian coordinates.
   auto const pos_intersection =
       Utils::transform_coordinate_cylinder_to_cartesian(
-          {r_intersection, pos_cyl[1], z_intersection}, m_axis) +
+          {r_intersection, pos_cyl[1], z_intersection}, m_axis, m_orientation) +
       m_center;
 
   auto const u = (pos - pos_intersection).normalize();
