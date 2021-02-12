@@ -80,11 +80,11 @@ class CylindricalProfileObservables(ProfileObservable):
         if "oid" not in kwargs and "orientation" not in kwargs and kwargs["n_phi_bins"] == 1:
             # if the phi angle is not important, choose an orientation that is
             # not parallel to ``axis``
-            try_vectors = [[1., 0., 0.], [0., 0., 1.]]
-            axis = kwargs["axis"]
+            try_vectors = [np.array([1., 0., 0.]), np.array([0., 0., 1.])]
+            axis = np.asarray(kwargs["axis"])
             for vec in try_vectors:
                 proj = np.dot(vec, axis / np.linalg.norm(axis))
-                if np.arccos(proj) > sys.float_info.epsilon:
+                if np.arccos(proj) > 10*sys.float_info.epsilon:
                     vec -= proj * axis
                     kwargs["orientation"] = vec / np.linalg.norm(vec)
                     break

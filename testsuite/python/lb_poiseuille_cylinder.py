@@ -81,7 +81,8 @@ class LBPoiseuilleCommon:
     system = espressomd.System(box_l=[BOX_L] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
-    params = {'axis': [0, 0, 1]}
+    params = {'axis': [0, 0, 1],
+              'orientation' : [1,0,0]}
 
     def prepare(self):
         """
@@ -152,6 +153,7 @@ class LBPoiseuilleCommon:
         local_obs_params = OBS_PARAMS.copy()
         local_obs_params['center'] = obs_center
         local_obs_params['axis'] = self.params['axis']
+        local_obs_params['orientation'] = self.params['orientation']
         obs = espressomd.observables.CylindricalLBVelocityProfile(
             **local_obs_params)
         self.accumulator = espressomd.accumulators.MeanVarianceCalculator(
@@ -178,16 +180,19 @@ class LBPoiseuilleCommon:
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]
+        self.params['orientation'] = [0, 0, -1]
         self.compare_to_analytical()
         self.check_observable()
 
     def test_y(self):
         self.params['axis'] = [0, 1, 0]
+        self.params['orientation'] = [1, 0, 0]
         self.compare_to_analytical()
         self.check_observable()
 
     def test_z(self):
         self.params['axis'] = [0, 0, 1]
+        self.params['orientation'] = [1, 0, 0]
         self.compare_to_analytical()
         self.check_observable()
 

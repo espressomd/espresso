@@ -132,9 +132,8 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
 def abspath(path):
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
 
-
 def transform_pos_from_cartesian_to_polar_coordinates(pos):
-    """Transform the given cartesian coordinates to polar coordinates.
+    """Transform the given cartesian coordinates to cylindrical coordinates.
 
     Parameters
     ----------
@@ -166,11 +165,23 @@ def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
         (pos[0] * vel[0] + pos[1] * vel[1]) / np.sqrt(pos[0]**2 + pos[1]**2),
         (pos[0] * vel[1] - pos[1] * vel[0]) / np.sqrt(pos[0]**2 + pos[1]**2), vel[2]])
 
+def get_cylindrical_basis_vectors(pos):
+    phi = transform_pos_from_cartesian_to_polar_coordinates(pos)[1]
+    e_r = np.array([np.cos(phi), np.sin(phi),0.])
+    e_phi = np.array([-np.sin(phi), np.cos(phi),0.])
+    e_z = np.array([0.,0.,1.])
+    return e_r, e_phi, e_z
 
 def convert_vec_body_to_space(system, part, vec):
     A = rotation_matrix_quat(system, part)
     return np.dot(A.transpose(), vec)
 
+def rodrigues_rot(vec, axis, angle):
+    """
+    https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula#Statement
+    """
+    axis/=np.linalg.norm(axis)
+    return np.cos(angle)*vec + np.sin(angle)*np.cross(axis,vec)+(1-np.cos(angle))*np.dot(axis,vec)*axis
 
 def rotation_matrix(axis, theta):
     """
@@ -224,57 +235,41 @@ def rotation_matrix_quat(system, part):
 
     return A
 
-
-def get_cylindrical_bin_volume(
-        n_r_bins,
-        n_phi_bins,
-        n_z_bins,
-        min_r,
-        max_r,
-        min_phi,
-        max_phi,
-        min_z,
-        max_z):
+def normalize_cylindrical_hist(histogram, cyl_obs_params):
     """
-    Return the bin volumes for a cylindrical histogram.
-
+    normalize a histogram in cylindrical coordinates. Helper to test the output
+    of cylindrical histogram observables
+    
     Parameters
     ----------
-    n_r_bins : :obj:`float`
-        Number of bins in ``r`` direction.
-    n_phi_bins : :obj:`float`
-        Number of bins in ``phi`` direction.
-    n_z_bins : :obj:`float`
-        Number of bins in ``z`` direction.
-    min_r : :obj:`float`
-        Minimum considered value in ``r`` direction.
-    max_r : :obj:`float`
-        Maximum considered value in ``r`` direction.
-    min_phi : :obj:`float`
-        Minimum considered value in ``phi`` direction.
-    max_phi : :obj:`float`
-        Maximum considered value in ``phi`` direction.
-    min_z : :obj:`float`
-        Minimum considered value in ``z`` direction.
-    max_z : :obj:`float`
-        Maximum considered value in ``z`` direction.
-
-    Returns
-    -------
-    array_like
-        Bin volumes.
-
+    histogram : (N,3) array_like of :obj:`float`
+        The histogram that needs to be normalized
+    cyl_obs_params : :obj:`dict`
+        A dictionary containing the common parameters of the cylindrical histogram observables.
+        Needs to contain the information about number and range of bins.
     """
+    
+    n_r_bins = cyl_obs_params['n_r_bins']
+    n_phi_bins =cyl_obs_params['n_phi_bins']
+    n_z_bins    =cyl_obs_params['n_z_bins']
+    min_r    =cyl_obs_params['min_r']
+    max_r    =cyl_obs_params['max_r']
+    min_phi   =cyl_obs_params['min_phi']
+    max_phi    =cyl_obs_params['max_phi']
+    min_z    =cyl_obs_params['min_z']
+    max_z    =cyl_obs_params['max_z']
+    
     bin_volume = np.zeros(n_r_bins)
     r_bin_size = (max_r - min_r) / n_r_bins
     phi_bin_size = (max_phi - min_phi) / n_phi_bins
     z_bin_size = (max_z - min_z) / n_z_bins
     for i in range(n_r_bins):
-        bin_volume[i] = np.pi * ((min_r + r_bin_size * (i + 1))**2.0 -
+        bin_volume = np.pi * ((min_r + r_bin_size * (i + 1))**2.0 -
                                  (min_r + r_bin_size * i)**2.0) * \
             phi_bin_size / (2.0 * np.pi) * z_bin_size
-    return bin_volume
+        histogram[i, :, :] /= bin_volume
 
+    return histogram
 
 def get_histogram(pos, obs_params, coord_system, **kwargs):
     """
@@ -636,6 +631,13 @@ def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
     rr = np.linalg.norm((np.linalg.norm(r_ij) - sigma + sigma_0) / sigma_0)
 
     return 4. * epsilon * (rr**-12 - rr**-6)
+
+
+class DynamicDict(dict):
+
+    def __getitem__(self, key):
+        value = super().__getitem__(key)
+        return eval(value, self) if isinstance(value, str) else value
 
 
 def count_fluid_nodes(lbf):
