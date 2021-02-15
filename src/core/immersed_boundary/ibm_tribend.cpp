@@ -28,6 +28,7 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <tuple>
 
@@ -55,9 +56,7 @@ IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,
   n2 /= Aj;
 
   // Get the prefactor for the force term
-  auto sc = n1 * n2;
-  if (sc > 1.0)
-    sc = 1.0;
+  auto const sc = std::min(1.0, n1 * n2);
 
   // Get theta as angle between normals
   auto theta = acos(sc);
@@ -126,9 +125,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
     auto const n2 = n2l / n2l.norm();
 
     // calculate theta0 by taking the acos of the scalar n1*n2
-    auto sc = n1 * n2;
-    if (sc > 1.0)
-      sc = 1.0;
+    auto const sc = std::min(1.0, n1 * n2);
 
     theta0 = acos(sc);
 
