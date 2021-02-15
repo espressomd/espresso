@@ -277,7 +277,8 @@ IF P3M == 1:
 
         def valid_keys(self):
             return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
-                    "prefactor", "tune", "check_neutrality", "verbose"]
+                    "prefactor", "tune", "check_neutrality", "verbose",
+                    "mesh_off"]
 
         def required_keys(self):
             return ["prefactor", "accuracy"]
@@ -422,7 +423,8 @@ IF P3M == 1:
 
             def valid_keys(self):
                 return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
-                        "prefactor", "tune", "check_neutrality", "verbose"]
+                        "prefactor", "tune", "check_neutrality", "verbose",
+                        "mesh_off"]
 
             def required_keys(self):
                 return ["prefactor", "accuracy"]
