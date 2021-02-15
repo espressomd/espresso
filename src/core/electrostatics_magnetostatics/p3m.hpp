@@ -61,9 +61,9 @@ struct p3m_data_struct : public p3m_data_struct_base {
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
-  /** real space mesh (local) for CA/FFT.*/
+  /** real space mesh (local) for CA/FFT. */
   fft_vector<double> rs_mesh;
-  /** mesh (local) for the electric field.*/
+  /** mesh (local) for the electric field. */
   std::array<fft_vector<double>, 3> E_mesh;
 
   /** number of charged particles (only on master node). */
