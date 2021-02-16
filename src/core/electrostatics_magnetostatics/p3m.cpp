@@ -205,7 +205,7 @@ void p3m_init() {
   p3m_count_charged_particles();
 }
 
-void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
+void p3m_set_tune_params(double r_cut, const int mesh[3], int cao,
                          double accuracy) {
   if (r_cut >= 0) {
     p3m.params.r_cut = r_cut;
@@ -223,11 +223,6 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
 
   if (cao >= 0)
     p3m.params.cao = cao;
-
-  if (alpha >= 0) {
-    p3m.params.alpha = alpha;
-    p3m.params.alpha_L = alpha * box_geo.length()[0];
-  }
 
   if (accuracy >= 0)
     p3m.params.accuracy = accuracy;

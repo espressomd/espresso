@@ -64,7 +64,7 @@ IF DP3M == 1:
 
     cdef extern from "electrostatics_magnetostatics/p3m-dipolar.hpp":
         int dp3m_set_params(double r_cut, int mesh, int cao, double alpha, double accuracy)
-        void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha, double accuracy)
+        void dp3m_set_tune_params(double r_cut, int mesh, int cao, double accuracy)
         int dp3m_set_mesh_offset(double x, double y, double z)
         int dp3m_set_eps(double eps)
         int dp3m_adaptive_tune(bool verbose)

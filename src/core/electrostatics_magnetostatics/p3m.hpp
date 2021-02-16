@@ -197,10 +197,9 @@ inline void p3m_add_pair_force(double q1q2, Utils::Vector3d const &d,
  *  @param[in]  r_cut        @copybrief P3MParameters::r_cut
  *  @param[in]  mesh         @copybrief P3MParameters::mesh
  *  @param[in]  cao          @copybrief P3MParameters::cao
- *  @param[in]  alpha        @copybrief P3MParameters::alpha
  *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
  */
-void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
+void p3m_set_tune_params(double r_cut, const int mesh[3], int cao,
                          double accuracy);
 
 /** Set custom parameters

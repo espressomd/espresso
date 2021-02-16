@@ -166,7 +166,7 @@ IF DP3M == 1:
             dp3m_set_eps(self._params["epsilon"])
             self.python_dp3m_set_tune_params(
                 self._params["r_cut"], self._params["mesh"],
-                self._params["cao"], -1., self._params["accuracy"])
+                self._params["cao"], self._params["accuracy"])
             python_dp3m_adaptive_tune(self._params["verbose"])
             self._params.update(self._get_params_from_es_core())
 
@@ -206,22 +206,20 @@ IF DP3M == 1:
                 mesh = p_mesh
             dp3m_set_params(r_cut, mesh, cao, alpha, accuracy)
 
-        def python_dp3m_set_tune_params(self, p_r_cut, p_mesh, p_cao, p_alpha,
+        def python_dp3m_set_tune_params(self, p_r_cut, p_mesh, p_cao,
                                         p_accuracy):
             cdef int mesh
             cdef double r_cut
             cdef int cao
-            cdef double alpha
             cdef double accuracy
             r_cut = p_r_cut
             cao = p_cao
-            alpha = p_alpha
             accuracy = p_accuracy
             if hasattr(p_mesh, "__getitem__"):
                 mesh = p_mesh[0]
             else:
                 mesh = p_mesh
-            dp3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy)
+            dp3m_set_tune_params(r_cut, mesh, cao, accuracy)
 
 IF DIPOLES == 1:
     cdef class DipolarDirectSumCpu(MagnetostaticInteraction):

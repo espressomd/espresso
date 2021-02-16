@@ -225,8 +225,7 @@ void dp3m_init() {
  * functions related to the parsing & tuning of the dipolar parameters
  ******************/
 
-void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
-                          double accuracy) {
+void dp3m_set_tune_params(double r_cut, int mesh, int cao, double accuracy) {
   if (r_cut >= 0) {
     dp3m.params.r_cut = r_cut;
     dp3m.params.r_cut_iL = r_cut / box_geo.length()[0];
@@ -237,11 +236,6 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
 
   if (cao >= 0)
     dp3m.params.cao = cao;
-
-  if (alpha >= 0) {
-    dp3m.params.alpha = alpha;
-    dp3m.params.alpha_L = alpha * box_geo.length()[0];
-  }
 
   if (accuracy >= 0)
     dp3m.params.accuracy = accuracy;

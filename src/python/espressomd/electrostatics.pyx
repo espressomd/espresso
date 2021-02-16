@@ -331,7 +331,6 @@ IF P3M == 1:
             python_p3m_set_tune_params(self._params["r_cut"],
                                        self._params["mesh"],
                                        self._params["cao"],
-                                       -1.0,
                                        self._params["accuracy"])
             python_p3m_adaptive_tune(self._params["verbose"])
             self._params.update(self._get_params_from_es_core())
@@ -464,7 +463,6 @@ IF P3M == 1:
                 python_p3m_set_tune_params(self._params["r_cut"],
                                            self._params["mesh"],
                                            self._params["cao"],
-                                           -1.0,
                                            self._params["accuracy"])
                 python_p3m_adaptive_tune(self._params["verbose"])
                 self._params.update(self._get_params_from_es_core())

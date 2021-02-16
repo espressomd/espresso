@@ -69,7 +69,7 @@ IF ELECTROSTATICS:
 
         cdef extern from "electrostatics_magnetostatics/p3m.hpp":
             int p3m_set_params(double r_cut, int * mesh, int cao, double alpha, double accuracy)
-            void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha, double accuracy)
+            void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double accuracy)
             int p3m_set_mesh_offset(double x, double y, double z)
             int p3m_set_eps(double eps)
             int p3m_adaptive_tune(bool verbose)
@@ -132,15 +132,13 @@ IF ELECTROSTATICS:
 
             return p3m_set_params(r_cut, mesh, cao, alpha, accuracy)
 
-        cdef inline python_p3m_set_tune_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
+        cdef inline python_p3m_set_tune_params(p_r_cut, p_mesh, p_cao, p_accuracy):
             cdef int mesh[3]
             cdef double r_cut
             cdef int cao
-            cdef double alpha
             cdef double accuracy
             r_cut = p_r_cut
             cao = p_cao
-            alpha = p_alpha
             accuracy = p_accuracy
 
             if is_valid_type(p_mesh, int):
@@ -150,7 +148,7 @@ IF ELECTROSTATICS:
             else:
                 mesh = p_mesh
 
-            p3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy)
+            p3m_set_tune_params(r_cut, mesh, cao, accuracy)
 
     cdef extern from "electrostatics_magnetostatics/debye_hueckel.hpp":
         ctypedef struct Debye_hueckel_params:
