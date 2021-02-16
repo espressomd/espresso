@@ -209,23 +209,22 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao,
  *  @param[in]  cao          @copybrief P3MParameters::cao
  *  @param[in]  alpha        @copybrief P3MParameters::alpha
  *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
- *  @return Custom error code
  */
-int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
-                   double accuracy);
+void p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
+                    double accuracy);
 
 /** Set mesh offset
  *
  *  @param[in]  x , y , z  Components of @ref P3MParameters::mesh_off
  *                         "mesh_off"
  */
-int p3m_set_mesh_offset(double x, double y, double z);
+void p3m_set_mesh_offset(double x, double y, double z);
 
 /** Set @ref P3MParameters::epsilon "epsilon" parameter
  *
  *  @param[in]  eps          @copybrief P3MParameters::epsilon
  */
-int p3m_set_eps(double eps);
+void p3m_set_eps(double eps);
 
 /** Calculate real space contribution of Coulomb pair energy. */
 inline double p3m_pair_energy(double chgfac, double dist) {

@@ -49,7 +49,7 @@ class P3M_tuning_test(ut.TestCase):
         self.add_charged_particles()
 
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: time_step not set'):
+        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: time_step not set'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("P3M")
@@ -59,7 +59,7 @@ class P3M_tuning_test(ut.TestCase):
         self.add_charged_particles()
 
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: time_step not set'):
+        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: time_step not set'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("DP3M")
@@ -70,7 +70,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'python_dp3m_adaptive_tune: ERROR: time_step not set'):
+        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: time_step not set'):
             self.system.actors.add(solver)
 
     ##############################################
@@ -85,7 +85,7 @@ class P3M_tuning_test(ut.TestCase):
         self.system.time_step = 0.01
 
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: no charged particles in the system'):
+        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: no charged particles in the system'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("P3M")
@@ -95,7 +95,7 @@ class P3M_tuning_test(ut.TestCase):
         self.system.time_step = 0.01
 
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: no charged particles in the system'):
+        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: no charged particles in the system'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("DP3M")
@@ -106,7 +106,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'python_dp3m_adaptive_tune: ERROR: no dipolar particles in the system'):
+        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: no dipolar particles in the system'):
             self.system.actors.add(solver)
 
     #######################################
@@ -124,7 +124,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.electrostatics.P3MGPU(
             prefactor=2, accuracy=1e-2, epsilon=1)
-        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: non-metallic epsilon requires cubic box'):
+        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: non-metallic epsilon requires cubic box'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("P3M")
@@ -137,7 +137,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.electrostatics.P3M(
             prefactor=2, accuracy=1e-2, epsilon=1)
-        with self.assertRaisesRegex(Exception, 'python_p3m_adaptive_tune: ERROR: non-metallic epsilon requires cubic box'):
+        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: non-metallic epsilon requires cubic box'):
             self.system.actors.add(solver)
 
     @utx.skipIfMissingFeatures("DP3M")
@@ -150,8 +150,67 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'python_dp3m_adaptive_tune: ERROR: dipolar P3M requires a cubic box'):
+        with self.assertRaisesRegex(Exception, 'P3M: tuning failed: ERROR: dipolar P3M requires a cubic box'):
             self.system.actors.add(solver)
+
+    ##########################################
+    # block of tests with invalid parameters #
+    ##########################################
+
+    def check_invalid_params(self, solver_class, **custom_params):
+        valid_params = {
+            'prefactor': 2, 'accuracy': .01, 'tune': False, 'cao': 1,
+            'r_cut': 3.73e-01, 'alpha': 3.81e+00, 'mesh': (8, 8, 8),
+            'mesh_off': [-1, -1, -1]}
+        valid_params.update(custom_params)
+
+        invalid_params = [
+            ('cao', 0, 'P3M: invalid cao'),
+            ('cao', 8, 'P3M: invalid cao'),
+            ('r_cut', -2.0, 'P3M: invalid r_cut'),
+            ('alpha', -2.0, 'P3M: invalid alpha'),
+            ('accuracy', -2.0, 'P3M: invalid accuracy'),
+            ('mesh', (-1, -1, -1), 'P3M: invalid mesh size'),
+            ('mesh', (0, 0, 0), 'P3M: cao larger than mesh size'),
+            ('mesh_off', (-2, 1, 1), 'P3M: invalid mesh offset'),
+        ]
+
+        for key, invalid_value, err_msg in invalid_params:
+            params = valid_params.copy()
+            params[key] = invalid_value
+            solver = solver_class(**params)
+            with self.assertRaisesRegex(RuntimeError, err_msg):
+                self.system.actors.add(solver)
+            self.system.actors.clear()
+
+    @utx.skipIfMissingFeatures("P3M")
+    def test_04_invalid_params_p3m_cpu(self):
+        import espressomd.electrostatics
+
+        self.system.time_step = 0.01
+        self.add_charged_particles()
+
+        self.check_invalid_params(espressomd.electrostatics.P3M)
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures("P3M")
+    def test_04_invalid_params_p3m_gpu(self):
+        import espressomd.electrostatics
+
+        self.system.time_step = 0.01
+        self.add_charged_particles()
+
+        self.check_invalid_params(espressomd.electrostatics.P3MGPU,
+                                  mesh=3 * [28], alpha=0.3548, r_cut=4.4434)
+
+    @utx.skipIfMissingFeatures("DP3M")
+    def test_04_invalid_params_dp3m_cpu(self):
+        import espressomd.magnetostatics
+
+        self.system.time_step = 0.01
+        self.add_magnetic_particles()
+
+        self.check_invalid_params(espressomd.magnetostatics.DipolarP3M)
 
     ###########################################################
     # block of tests where tuning should not throw exceptions #
@@ -179,12 +238,20 @@ class P3M_tuning_test(ut.TestCase):
         self.system.time_step = 0.01
         self.add_charged_particles()
 
-        solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2,
-                                               epsilon='metallic')
-        try:
-            self.system.actors.add(solver)
-        except Exception as err:
-            self.fail('tuning raised Exception("' + str(err) + '")')
+        solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=0.1)
+        valid_params = {
+            'mesh_off': solver.default_params()['mesh_off'],  # sentinel
+            'cao': 2, 'r_cut': 3.18, 'mesh': 8}
+
+        # tuning with cao or r_cut or mesh constrained, or without constraints
+        for key, value in valid_params.items():
+            solver = espressomd.electrostatics.P3M(
+                prefactor=2, accuracy=1e-2, epsilon=0.0, **{key: value})
+            try:
+                self.system.actors.add(solver)
+            except Exception as err:
+                self.fail('tuning raised Exception("' + str(err) + '")')
+            self.system.actors.clear()
 
     @utx.skipIfMissingFeatures("DP3M")
     def test_09_no_errors_dp3m_cpu(self):
@@ -194,11 +261,20 @@ class P3M_tuning_test(ut.TestCase):
         self.add_magnetic_particles()
 
         solver = espressomd.magnetostatics.DipolarP3M(
-            prefactor=2, accuracy=1e-2)
-        try:
-            self.system.actors.add(solver)
-        except Exception as err:
-            self.fail('tuning raised Exception("' + str(err) + '")')
+            prefactor=2, accuracy=0.1)
+        valid_params = {
+            'mesh_off': solver.default_params()['mesh_off'],  # sentinel
+            'cao': 1, 'r_cut': 3.28125, 'mesh': 5}
+
+        # tuning with cao or r_cut or mesh constrained, or without constraints
+        for key, value in valid_params.items():
+            solver = espressomd.magnetostatics.DipolarP3M(
+                prefactor=2, accuracy=1e-2, **{key: value})
+            try:
+                self.system.actors.add(solver)
+            except Exception as err:
+                self.fail('tuning raised Exception("' + str(err) + '")')
+            self.system.actors.clear()
 
     @utx.skipIfMissingFeatures("P3M")
     def test_09_no_errors_p3m_cpu_rescale_mesh(self):

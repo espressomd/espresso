@@ -93,14 +93,14 @@ extern dp3m_data_struct dp3m;
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double accuracy);
 
 /** @copydoc p3m_set_params */
-int dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
-                    double accuracy);
+void dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
+                     double accuracy);
 
 /** @copydoc p3m_set_mesh_offset */
-int dp3m_set_mesh_offset(double x, double y, double z);
+void dp3m_set_mesh_offset(double x, double y, double z);
 
 /** @copydoc p3m_set_eps */
-int dp3m_set_eps(double eps);
+void dp3m_set_eps(double eps);
 
 /** Initialize all structures, parameters and arrays needed for the
  *  P3M algorithm for dipole-dipole interactions.
