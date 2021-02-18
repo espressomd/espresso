@@ -23,6 +23,8 @@
 #include "Shape.hpp"
 #include <utils/Vector.hpp>
 
+#include <list>
+
 namespace Shapes {
 
 /**
@@ -59,10 +61,17 @@ public:
   void set_axis(Utils::Vector3d const &axis) {
     m_axis = axis;
     // Even though the HCF is cylinder-symmetric, it needs a well defined phi=0
-    // orientation for the coordinate transformation. If the default orientation
-    // is too parallel to axis, choose again
-    if ((m_orientation - (m_orientation * m_axis) * m_axis).norm() < 0.01) {
-      m_orientation = Utils::Vector3d{{0., 1., 0.}};
+    // orientation for the coordinate transformation.
+    // We need to try two different vectors in case one is parallel to axis.
+    std::list<Utils::Vector3d> try_vectors = {Utils::Vector3d{{1., 0., 0.}},
+                                              Utils::Vector3d{{0., 1., 0.}}};
+    for (auto vec : try_vectors) {
+      auto orth_component = vec - (vec * axis) * axis;
+      auto norm = orth_component.norm();
+      if (norm > 0.01) {
+        m_orientation = orth_component / norm;
+        break;
+      }
     }
   }
   void set_center(Utils::Vector3d const &center) { m_center = center; }

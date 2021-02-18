@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import itertools
 import numpy as np
-import sys
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
@@ -83,10 +82,10 @@ class CylindricalProfileObservables(ProfileObservable):
             try_vectors = [np.array([1., 0., 0.]), np.array([0., 0., 1.])]
             axis = np.asarray(kwargs["axis"])
             for vec in try_vectors:
-                proj = np.dot(vec, axis / np.linalg.norm(axis))
-                if np.arccos(proj) > 10 * sys.float_info.epsilon:
-                    vec -= proj * axis
-                    kwargs["orientation"] = vec / np.linalg.norm(vec)
+                orthogonal_component = vec - np.dot(vec, axis) * axis
+                norm = np.linalg.norm(orthogonal_component)
+                if norm > 0.01:
+                    kwargs["orientation"] = orthogonal_component / norm
                     break
         super().__init__(**kwargs)
 
