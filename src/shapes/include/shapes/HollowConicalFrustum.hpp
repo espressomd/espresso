@@ -63,7 +63,6 @@ public:
     // is too parallel to axis, choose again
     if ((m_orientation - (m_orientation * m_axis) * m_axis).norm() < 0.01) {
       m_orientation = Utils::Vector3d{{0., 1., 0.}};
-      std::printf("changing orientation");
     }
   }
   void set_center(Utils::Vector3d const &center) { m_center = center; }
