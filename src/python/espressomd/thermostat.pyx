@@ -632,7 +632,7 @@ cdef class Thermostat:
             lb_lbcoupling_set_rng_state(0)
 
         global thermo_switch
-        thermo_switch = (thermo_switch or THERMO_LB)
+        thermo_switch = (thermo_switch | THERMO_LB)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
 
         global thermo_virtual
