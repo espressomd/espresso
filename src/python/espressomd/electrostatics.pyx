@@ -192,6 +192,15 @@ IF ELECTROSTATICS:
 
 
 IF P3M == 1:
+    cdef _check_and_copy_mesh_size(int mesh[3], pmesh):
+        if is_valid_type(pmesh, int):
+            pmesh = 3 * [pmesh]
+        else:
+            check_type_or_throw_except(
+                pmesh, 3, int, "mesh size must be 3 ints")
+        for i in range(3):
+            mesh[i] = pmesh[i]
+
     cdef class P3M(ElectrostaticInteraction):
         """
         P3M electrostatics solver.
@@ -289,14 +298,7 @@ IF P3M == 1:
 
         def _set_params_in_es_core(self):
             cdef int mesh[3]
-            if is_valid_type(self._params["mesh"], int):
-                for i in range(3):
-                    mesh[i] = self._params["mesh"]
-            else:
-                check_type_or_throw_except(
-                    self._params["mesh"], 3, int, "mesh size must be 3 ints")
-                for i in range(3):
-                    mesh[i] = self._params["mesh"][i]
+            _check_and_copy_mesh_size(mesh, self._params["mesh"])
 
             set_prefactor(self._params["prefactor"])
             # Sets p3m parameters
@@ -322,14 +324,7 @@ IF P3M == 1:
 
         def _tune(self):
             cdef int mesh[3]
-            if is_valid_type(self._params["mesh"], int):
-                for i in range(3):
-                    mesh[i] = self._params["mesh"]
-            else:
-                check_type_or_throw_except(
-                    self._params["mesh"], 3, int, "mesh size must be 3 ints")
-                for i in range(3):
-                    mesh[i] = self._params["mesh"][i]
+            _check_and_copy_mesh_size(mesh, self._params["mesh"])
 
             set_prefactor(self._params["prefactor"])
             p3m_set_eps(self._params["epsilon"])
@@ -452,14 +447,7 @@ IF P3M == 1:
 
             def _tune(self):
                 cdef int mesh[3]
-                if is_valid_type(self._params["mesh"], int):
-                    for i in range(3):
-                        mesh[i] = self._params["mesh"]
-                else:
-                    check_type_or_throw_except(
-                        self._params["mesh"], 3, int, "mesh size must be 3 ints")
-                    for i in range(3):
-                        mesh[i] = self._params["mesh"][i]
+                _check_and_copy_mesh_size(mesh, self._params["mesh"])
 
                 set_prefactor(self._params["prefactor"])
                 p3m_set_eps(self._params["epsilon"])
@@ -482,14 +470,7 @@ IF P3M == 1:
 
             def _set_params_in_es_core(self):
                 cdef int mesh[3]
-                if is_valid_type(self._params["mesh"], int):
-                    for i in range(3):
-                        mesh[i] = self._params["mesh"]
-                else:
-                    check_type_or_throw_except(
-                        self._params["mesh"], 3, int, "mesh size must be 3 ints")
-                    for i in range(3):
-                        mesh[i] = self._params["mesh"][i]
+                _check_and_copy_mesh_size(mesh, self._params["mesh"])
 
                 set_prefactor(self._params["prefactor"])
                 p3m_set_params(self._params["r_cut"], mesh, self._params["cao"],
