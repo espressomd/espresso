@@ -274,7 +274,7 @@ def is_valid_type(value, t):
     if value is None:
         return False
     if t == int:
-        return isinstance(value, (int, np.integer, np.long))
+        return isinstance(value, (int, np.integer))
     elif t == float:
         if hasattr(np, 'float128'):
             return isinstance(

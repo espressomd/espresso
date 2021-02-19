@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CMAKE_FORMAT_VER=0.6.9
+CMAKE_FORMAT_VER=0.6.11
 python3 -m cmake_format 2>&1 > /dev/null
 if [ "$?" = "0" ]; then
     CMAKE_FORMAT="python3 -m cmake_format"
