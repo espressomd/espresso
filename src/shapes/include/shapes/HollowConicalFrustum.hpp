@@ -22,6 +22,7 @@
 
 #include "Shape.hpp"
 #include <utils/Vector.hpp>
+#include <utils/math/orthonormal_vec.hpp>
 
 #include <list>
 
@@ -50,7 +51,7 @@ public:
   HollowConicalFrustum()
       : m_r1(0.0), m_r2(0.0), m_length(0.0), m_thickness(0.0),
         m_direction(1), m_center{Utils::Vector3d{}}, m_axis{Utils::Vector3d{
-                                                         0, 0, 1}},
+                                                         0., 0., 1.}},
         m_orientation{Utils::Vector3d{1., 0., 0.}} {}
 
   void set_r1(double const radius) { m_r1 = radius; }
@@ -62,17 +63,7 @@ public:
     m_axis = axis;
     // Even though the HCF is cylinder-symmetric, it needs a well defined phi=0
     // orientation for the coordinate transformation.
-    // We need to try two different vectors in case one is parallel to axis.
-    std::list<Utils::Vector3d> try_vectors = {Utils::Vector3d{{1., 0., 0.}},
-                                              Utils::Vector3d{{0., 1., 0.}}};
-    for (auto vec : try_vectors) {
-      auto orth_component = vec - (vec * axis) * axis;
-      auto norm = orth_component.norm();
-      if (norm > 0.01) {
-        m_orientation = orth_component / norm;
-        break;
-      }
-    }
+    m_orientation = Utils::calc_orthonormal_vector(axis);
   }
   void set_center(Utils::Vector3d const &center) { m_center = center; }
 
