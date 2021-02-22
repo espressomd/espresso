@@ -340,6 +340,7 @@ IF P3M == 1:
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
+            handle_errors("P3M: initialization failed")
 
     IF CUDA:
         cdef class P3MGPU(ElectrostaticInteraction):
@@ -484,7 +485,7 @@ IF P3M == 1:
                 p3m_set_mesh_offset(self._params["mesh_off"][0],
                                     self._params["mesh_off"][1],
                                     self._params["mesh_off"][2])
-                handle_errors("p3m gpu init")
+                handle_errors("P3M: initialization failed")
 
 IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
