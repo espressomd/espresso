@@ -442,9 +442,8 @@ if(WITH_BENCHMARKS)
   add_subdirectory(maintainer/benchmarks)
 endif(WITH_BENCHMARKS)
 
-
-# Walberla 
-if (WITH_WALBERLA)
+# Walberla
+if(WITH_WALBERLA)
   include(FetchContent)
   FetchContent_Declare(
     walberla
@@ -470,7 +469,7 @@ if (WITH_WALBERLA)
   endif()
 endif(WITH_WALBERLA)
 
-#######################################################################
+#
 #
 # Subdirectories
 #
