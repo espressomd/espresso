@@ -58,8 +58,7 @@ if(CUDA)
       CudaHostAllocator.cu
       electrostatics_magnetostatics/p3m_gpu_cuda.cu
       electrostatics_magnetostatics/p3m_gpu_error_cuda.cu
-      EspressoSystemInterface_cuda.cu
-      grid_based_algorithms/fd-electrostatics_cuda.cu)
+      EspressoSystemInterface_cuda.cu)
 
   add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
 else(CUDA)

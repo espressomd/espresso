@@ -27,7 +27,6 @@
 
 #include <cuda.h>
 
-#include <cassert>
 #include <string>
 
 class cuda_runtime_error_cuda : public cuda_runtime_error {
@@ -70,18 +69,6 @@ void cuda_check_errors_exit(const dim3 &block, const dim3 &grid,
                             unsigned int line);
 
 #define cuda_safe_mem(a) cuda_safe_mem_exit((a), __FILE__, __LINE__)
-
-/** Calculate @c dim_grid for CUDA kernel calls. */
-inline dim3 calculate_dim_grid(unsigned const threads_x,
-                               unsigned const blocks_per_grid_y,
-                               unsigned const threads_per_block) {
-  assert(threads_x >= 1);
-  assert(blocks_per_grid_y >= 1);
-  assert(threads_per_block >= 1);
-  auto const threads_y = threads_per_block * blocks_per_grid_y;
-  auto const blocks_per_grid_x = (threads_x + threads_y - 1) / threads_y;
-  return make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-}
 
 #define KERNELCALL_shared(_function, _grid, _block, _stream, ...)              \
   _function<<<_grid, _block, _stream, stream[0]>>>(__VA_ARGS__);               \
