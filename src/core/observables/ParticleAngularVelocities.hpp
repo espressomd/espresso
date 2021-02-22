@@ -20,7 +20,6 @@
 #define OBSERVABLES_PARTICLEANGULARVELOCITIES_HPP
 
 #include "PidObservable.hpp"
-#include "integrate.hpp"
 #include "rotation.hpp"
 
 #include <utils/Span.hpp>

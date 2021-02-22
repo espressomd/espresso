@@ -23,7 +23,6 @@ COLLISION_DETECTION
 NPT
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY             implies ROTATION
-STOKESIAN_DYNAMICS              requires BLAS and LAPACK
 STOKESIAN_DYNAMICS              implies ROTATION
 
 /* Rotation */
@@ -104,6 +103,4 @@ FFTW external
 H5MD external
 SCAFACOS external
 GSL external
-BLAS external
-LAPACK external
 STOKESIAN_DYNAMICS external

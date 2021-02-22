@@ -1,4 +1,4 @@
-image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:1c6cfb03f7cedf008cf0d288fe460303627fc217
+image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:063f945eb434f6900402fd412f28a4486288c82b
 
 stages:
   - prepare
@@ -150,6 +150,7 @@ ubuntu:wo-dependencies:
   variables:
      myconfig: 'maxset'
      with_cuda: 'false'
+     with_hdf5: 'false'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
   script:

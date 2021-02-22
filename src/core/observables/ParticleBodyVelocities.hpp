@@ -20,7 +20,6 @@
 #define OBSERVABLES_PARTICLEBODYVELOCITIES_HPP
 
 #include "PidObservable.hpp"
-#include "integrate.hpp"
 
 #include "rotation.hpp"
 

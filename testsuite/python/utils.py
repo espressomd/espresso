@@ -56,7 +56,7 @@ class espresso_utils(ut.TestCase):
         self.assertTrue(utils.is_valid_type(
             np.array([12], dtype=int)[0], int))
         self.assertTrue(utils.is_valid_type(
-            np.array([12], dtype=np.long)[0], int))
+            np.array([12], dtype=int)[0], int))
         self.assertTrue(utils.is_valid_type(
             np.array([1.], dtype=float)[0], float))
         self.assertTrue(utils.is_valid_type(

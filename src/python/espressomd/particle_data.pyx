@@ -1577,7 +1577,7 @@ cdef class _ParticleSliceImpl:
         id_list = id_list[slice_]
 
         # Generate a mask which will remove ids of non-existing particles
-        mask = np.empty(len(id_list), dtype=np.bool)
+        mask = np.empty(len(id_list), dtype=type(True))
         mask[:] = True
         for i, id in enumerate(id_list):
             if not particle_exists(id):
@@ -1921,7 +1921,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         if is_valid_type(idx, int):
             return particle_exists(idx)
         if isinstance(idx, (slice, tuple, list, np.ndarray)):
-            tf_array = np.zeros(len(idx), dtype=np.bool)
+            tf_array = np.zeros(len(idx), dtype=type(True))
             for i in range(len(idx)):
                 tf_array[i] = particle_exists(idx[i])
             return tf_array

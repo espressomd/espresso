@@ -96,6 +96,7 @@ set_default_value with_cuda false
 set_default_value with_cuda_compiler "nvcc"
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
+set_default_value with_hdf5 true
 set_default_value with_scafacos false
 set_default_value with_walberla false
 set_default_value with_stokesian_dynamics false
@@ -122,11 +123,19 @@ cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
 if [ "${with_ccache}" = true ]; then
     cmake_params="${cmake_params} -DWITH_CCACHE=ON"
 fi
+
+if [ "${with_hdf5}" = true ]; then
+    cmake_params="${cmake_params} -DWITH_HDF5=ON"
+else
+    cmake_params="${cmake_params} -DWITH_HDF5=OFF"
+fi
+
 if [ "${with_scafacos}" = true ]; then
     cmake_params="${cmake_params} -DWITH_SCAFACOS=ON"
 else
     cmake_params="${cmake_params} -DWITH_SCAFACOS=OFF"
 fi
+
 if [ "${with_stokesian_dynamics}" = true ]; then
     cmake_params="${cmake_params} -DWITH_STOKESIAN_DYNAMICS=ON"
 else
