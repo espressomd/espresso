@@ -21,8 +21,7 @@ from .actors cimport Actor
 from libcpp.string cimport string  # import std::string
 from . cimport electrostatics
 from . cimport magnetostatics
-from .utils import to_char_pointer, to_str
-from .utils cimport handle_errors
+from .utils import to_char_pointer, to_str, handle_errors
 
 
 include "myconfig.pxi"

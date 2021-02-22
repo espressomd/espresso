@@ -22,7 +22,8 @@ include "myconfig.pxi"
 from . cimport actors
 from . import actors
 import numpy as np
-from .utils cimport handle_errors, check_type_or_throw_except, check_range_or_except
+from .utils import handle_errors
+from .utils cimport check_type_or_throw_except, check_range_or_except
 
 IF ELECTROSTATICS and P3M:
     from espressomd.electrostatics import check_neutrality

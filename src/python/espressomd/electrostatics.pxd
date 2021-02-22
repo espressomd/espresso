@@ -18,8 +18,7 @@
 #
 
 include "myconfig.pxi"
-from .utils import is_valid_type, to_str, handle_errors
-from .utils cimport handle_errors
+from .utils import is_valid_type, to_str
 from libcpp cimport bool
 
 cdef extern from "SystemInterface.hpp":
