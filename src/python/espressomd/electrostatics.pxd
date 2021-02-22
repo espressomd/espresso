@@ -84,22 +84,6 @@ IF ELECTROSTATICS:
             cdef extern from "electrostatics_magnetostatics/p3m_gpu.hpp":
                 void p3m_gpu_init(int cao, int * mesh, double alpha) except +
 
-            cdef inline python_p3m_gpu_init(params):
-                cdef int cao
-                cdef int mesh[3]
-                cdef double alpha
-                cao = params["cao"]
-                # Mesh can be specified as single int, but here, an array is
-                # needed
-                if not hasattr(params["mesh"], "__getitem__"):
-                    for i in range(3):
-                        mesh[i] = params["mesh"]
-                else:
-                    mesh = params["mesh"]
-                alpha = params["alpha"]
-                p3m_gpu_init(cao, mesh, alpha)
-                handle_errors("python_p3m_gpu_init")
-
     cdef extern from "electrostatics_magnetostatics/debye_hueckel.hpp":
         ctypedef struct Debye_hueckel_params:
             double r_cut
@@ -133,15 +117,6 @@ IF ELECTROSTATICS:
         void MMM1D_set_params(double switch_rad, double maxPWerror)
         int MMM1D_init()
         int mmm1d_tune(bool verbose)
-
-    cdef inline pyMMM1D_tune(bool verbose):
-        cdef int resp
-        resp = MMM1D_init()
-        if resp:
-            handle_errors("pyMMM1D_tune")
-        resp = mmm1d_tune(verbose)
-        if resp:
-            handle_errors("pyMMM1D_tune")
 
 IF ELECTROSTATICS and MMM1D_GPU:
 

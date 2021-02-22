@@ -460,12 +460,17 @@ IF P3M == 1:
                 self._params.update(self._get_params_from_es_core())
 
             def _activate_method(self):
+                cdef int mesh[3]
+                _check_and_copy_mesh_size(mesh, self._params["mesh"])
+
                 check_neutrality(self._params)
-                python_p3m_gpu_init(self._params)
+                p3m_gpu_init(self._params["cao"], mesh, self._params["alpha"])
+                handle_errors("P3M: tuning failed")
                 coulomb.method = COULOMB_P3M_GPU
                 if self._params["tune"]:
                     self._tune()
-                python_p3m_gpu_init(self._params)
+                p3m_gpu_init(self._params["cao"], mesh, self._params["alpha"])
+                handle_errors("P3M: tuning failed")
                 self._set_params_in_es_core()
 
             def _set_params_in_es_core(self):
@@ -544,8 +549,12 @@ IF ELECTROSTATICS:
                 self._params["far_switch_radius"], self._params["maxPWerror"])
 
         def _tune(self):
-            cdef int resp
-            pyMMM1D_tune(self._params["verbose"])
+            resp = MMM1D_init()
+            if resp:
+                handle_errors("MMM1D: initialization failed")
+            resp = mmm1d_tune(self._params["verbose"])
+            if resp:
+                handle_errors("MMM1D: tuning failed")
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
