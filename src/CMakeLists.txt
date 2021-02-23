@@ -29,6 +29,7 @@ if(WITH_TESTS)
 endif(WITH_TESTS)
 
 add_subdirectory(utils)
+add_subdirectory(interactions)
 add_subdirectory(shapes)
 add_subdirectory(core)
 add_subdirectory(config)
