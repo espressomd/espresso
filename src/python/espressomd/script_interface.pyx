@@ -195,6 +195,8 @@ cdef Variant python_object_to_variant(value):
     if isinstance(value, PScriptInterface):
         oref = value.get_sip()
         return make_variant(oref.sip)
+    elif isinstance(value, dict):
+        raise TypeError("No conversion from type dict to Variant")
     elif hasattr(value, '__iter__') and not(type(value) == str):
         for e in value:
             vec.push_back(python_object_to_variant(e))
@@ -208,7 +210,8 @@ cdef Variant python_object_to_variant(value):
     elif np.issubdtype(np.dtype(type(value)), np.floating):
         return make_variant[double](value)
     else:
-        raise TypeError("Unknown type for conversion to Variant")
+        raise TypeError(
+            f"No conversion from type {type(value).__name__} to Variant")
 
 cdef variant_to_python_object(const Variant & value) except +:
     """Convert C++ Variant objects to Python objects."""
