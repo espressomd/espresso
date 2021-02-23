@@ -256,6 +256,21 @@ template <typename T>
 void set_from_args(T &dst, VariantMap const &vals, const char *name) {
   dst = get_value<T>(vals, name);
 }
+
+/**
+ * @brief Convert a list of 2-tuples to an unordered map.
+ * Typically used for python dict objects, which have to be passed as
+ * lists of tuples using <tt>list(argument.items())</tt>.
+ */
+template <typename K, typename T>
+std::unordered_map<K, T> get_map(const std::vector<Variant> &vv) {
+  std::unordered_map<K, T> ret{};
+  for (auto const &kv : vv) {
+    auto const kv_vec = get_value<std::vector<Variant>>(kv);
+    ret.insert({get_value<K>(kv_vec.at(0)), get_value<T>(kv_vec.at(1))});
+  }
+  return ret;
+}
 } /* namespace ScriptInterface */
 
 #endif

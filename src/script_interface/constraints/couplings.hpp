@@ -27,8 +27,7 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
-#include <utils/serialization/pack.hpp>
-#include <utils/serialization/unordered_map.hpp>
+#include <unordered_map>
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -78,10 +77,17 @@ template <> struct coupling_parameters_impl<Scaled> {
             {"particle_scales",
              [this_](const Variant &v) {
                this_().particle_scales() =
-                   Utils::unpack<std::unordered_map<int, double>>(
-                       boost::get<std::string>(v));
+                   get_map<int, double>(get_value<std::vector<Variant>>(v));
              },
-             [this_]() { return Utils::pack(this_().particle_scales()); }}};
+             [this_]() {
+               std::vector<Variant> ret{};
+               auto const map = this_().particle_scales();
+               for (auto const &kv : map) {
+                 auto const kv_vec = std::vector<Variant>{kv.first, kv.second};
+                 ret.push_back(kv_vec);
+               }
+               return ret;
+             }}};
   }
 };
 
@@ -96,12 +102,10 @@ template <> inline Viscous make_coupling<Viscous>(const VariantMap &params) {
 }
 
 template <> inline Scaled make_coupling<Scaled>(const VariantMap &params) {
-  auto scales = params.count("particle_scale")
-                    ? Utils::unpack<std::unordered_map<int, double>>(
-                          get_value<std::string>(params, "particle_scale"))
-                    : std::unordered_map<int, double>{};
-
-  return Scaled{scales, get_value<double>(params, "default_scale")};
+  auto particle_scales =
+      get_value_or<std::vector<Variant>>(params, "particle_scales", {});
+  return Scaled{get_map<int, double>(particle_scales),
+                get_value<double>(params, "default_scale")};
 }
 } // namespace detail
 } // namespace Constraints

@@ -345,7 +345,8 @@ class ForceField(_Interpolated):
     particle_scales : array_like of (:obj:`int`, :obj:`float`)
         A list of tuples of ids and scaling factors. For
         particles in the list the interaction is scaled with
-        their individual scaling factor before it is applied.
+        their individual scaling factor. Other particles are
+        scaled with the default scaling factor.
 
     """
 
@@ -376,7 +377,8 @@ class PotentialField(_Interpolated):
     particle_scales : array_like (:obj:`int`, :obj:`float`)
         A list of tuples of ids and scaling factors. For
         particles in the list the interaction is scaled with
-        their individual scaling factor before it is applied.
+        their individual scaling factor. Other particles are
+        scaled with the default scaling factor.
 
     """
 
