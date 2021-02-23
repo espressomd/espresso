@@ -18,8 +18,8 @@
 #
 from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
 include "myconfig.pxi"
-from .utils cimport handle_errors, check_type_or_throw_except
-from .utils import to_char_pointer
+from .utils cimport check_type_or_throw_except
+from .utils import to_char_pointer, handle_errors
 from . cimport integrate
 
 cdef class IntegratorHandle:

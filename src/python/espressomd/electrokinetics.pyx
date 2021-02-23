@@ -26,7 +26,7 @@ from . import utils
 import tempfile
 import shutil
 from .utils import is_valid_type
-from .utils cimport Vector3i, Vector6d, handle_errors
+from .utils cimport Vector3i, Vector6d
 import numpy as np
 
 IF ELECTROKINETICS:

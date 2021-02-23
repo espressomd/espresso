@@ -22,7 +22,8 @@ include "myconfig.pxi"
 from . cimport actors
 from . import actors
 import numpy as np
-from .utils cimport handle_errors, check_type_or_throw_except, check_range_or_except
+from .utils import handle_errors
+from .utils cimport check_type_or_throw_except, check_range_or_except
 
 IF ELECTROSTATICS and P3M:
     from espressomd.electrostatics import check_neutrality
@@ -123,8 +124,7 @@ IF ELECTROSTATICS and P3M:
 
         def _set_params_in_es_core(self):
             if coulomb.method == COULOMB_P3M_GPU:
-                raise Exception(
-                    "ELC tuning failed, ELC is not set up to work with the GPU P3M")
+                raise Exception("ELC is not set up to work with the GPU P3M")
 
             if self._params["const_pot"]:
                 self._params["delta_mid_top"] = -1
@@ -139,8 +139,7 @@ IF ELECTROSTATICS and P3M:
                 self._params["delta_mid_bot"],
                 self._params["const_pot"],
                     self._params["pot_diff"]):
-                handle_errors(
-                    "ELC tuning failed, ELC is not set up to work with the GPU P3M")
+                handle_errors("ELC tuning failed")
 
         def _activate_method(self):
             check_neutrality(self._params)

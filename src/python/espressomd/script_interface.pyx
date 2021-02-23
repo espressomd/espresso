@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
-from .utils import to_char_pointer, to_str
-from .utils cimport Vector3d, make_array_locked, handle_errors
+from .utils import to_char_pointer, to_str, handle_errors
+from .utils cimport Vector3d, make_array_locked
 
 from libcpp.memory cimport make_shared
 

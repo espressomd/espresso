@@ -61,9 +61,9 @@ struct p3m_data_struct : public p3m_data_struct_base {
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
-  /** real space mesh (local) for CA/FFT.*/
+  /** real space mesh (local) for CA/FFT. */
   fft_vector<double> rs_mesh;
-  /** mesh (local) for the electric field.*/
+  /** mesh (local) for the electric field. */
   std::array<fft_vector<double>, 3> E_mesh;
 
   /** number of charged particles (only on master node). */
@@ -197,10 +197,9 @@ inline void p3m_add_pair_force(double q1q2, Utils::Vector3d const &d,
  *  @param[in]  r_cut        @copybrief P3MParameters::r_cut
  *  @param[in]  mesh         @copybrief P3MParameters::mesh
  *  @param[in]  cao          @copybrief P3MParameters::cao
- *  @param[in]  alpha        @copybrief P3MParameters::alpha
  *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
  */
-void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
+void p3m_set_tune_params(double r_cut, const int mesh[3], int cao,
                          double accuracy);
 
 /** Set custom parameters
@@ -210,23 +209,22 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
  *  @param[in]  cao          @copybrief P3MParameters::cao
  *  @param[in]  alpha        @copybrief P3MParameters::alpha
  *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
- *  @return Custom error code
  */
-int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
-                   double accuracy);
+void p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
+                    double accuracy);
 
 /** Set mesh offset
  *
  *  @param[in]  x , y , z  Components of @ref P3MParameters::mesh_off
  *                         "mesh_off"
  */
-int p3m_set_mesh_offset(double x, double y, double z);
+void p3m_set_mesh_offset(double x, double y, double z);
 
 /** Set @ref P3MParameters::epsilon "epsilon" parameter
  *
  *  @param[in]  eps          @copybrief P3MParameters::epsilon
  */
-int p3m_set_eps(double eps);
+void p3m_set_eps(double eps);
 
 /** Calculate real space contribution of Coulomb pair energy. */
 inline double p3m_pair_energy(double chgfac, double dist) {
