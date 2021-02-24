@@ -16,8 +16,8 @@ template <class T> struct LennardJones {
            (Utils::int_pow<12>(sigma / r) - Utils::int_pow<6>(sigma / r));
   }
 
-  Utils::Vector<value_type, 3> force(value_type r,
-                                     Utils::Vector<value_type, 3> const &r12) {
+  Utils::Vector<value_type, 3>
+  force(value_type r, Utils::Vector<value_type, 3> const &r12) const {
     return r12 *
            (24. * epsilon * Utils::int_pow<6>(sigma) *
             (Utils::int_pow<6>(r) - 2. * Utils::int_pow<6>(sigma))) /
