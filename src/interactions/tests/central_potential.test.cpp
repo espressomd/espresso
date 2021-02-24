@@ -19,6 +19,6 @@ BOOST_AUTO_TEST_CASE(central_potential_test) {
       cutoff, offset, shift, lin);
   BOOST_CHECK_SMALL(cp_lin.energy(1.0) - shift - 1.0, tol);
   Utils::Vector3d r12{1, 0, 0};
-  BOOST_CHECK(cp_lin.force(0.0, r12) == Utils::Vector3d{});
+  BOOST_CHECK(cp_lin.force(0.0, r12) == Utils::Vector3d::broadcast(0.0));
   BOOST_CHECK(cp_lin.force(1.0, r12) == r12 * 3.5);
 }
