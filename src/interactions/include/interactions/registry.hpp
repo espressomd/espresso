@@ -1,6 +1,10 @@
 #ifndef SRC_INTERACTIONS_INCLUDE_INTERACTIONS_REGISTRY_HPP
 #define SRC_INTERACTIONS_INCLUDE_INTERACTIONS_REGISTRY_HPP
 
+#include "interactions/central_potential.hpp"
+#include "interactions/lennard_jones.hpp"
+#include "interactions/linear.hpp"
+
 namespace Interactions {
 
 template <class T>
