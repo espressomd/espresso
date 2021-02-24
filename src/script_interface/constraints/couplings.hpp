@@ -58,7 +58,7 @@ template <> struct coupling_parameters_impl<Viscous> {
   static std::vector<AutoParameter> params(const This &this_) {
     return {{
         "gamma",
-        [this_](const Variant &v) { this_().gamma() = get_value<double>(v); },
+        AutoParameter::read_only,
         [this_]() { return this_().gamma(); },
     }};
   }
@@ -69,17 +69,10 @@ template <> struct coupling_parameters_impl<Scaled> {
   static std::vector<AutoParameter> params(const This &this_) {
     return {{
                 "default_scale",
-                [this_](const Variant &v) {
-                  this_().default_scale() = get_value<double>(v);
-                },
+                AutoParameter::read_only,
                 [this_]() { return this_().default_scale(); },
             },
-            {"particle_scales",
-             [this_](const Variant &v) {
-               this_().particle_scales() =
-                   get_map<int, double>(get_value<std::vector<Variant>>(v));
-             },
-             [this_]() {
+            {"particle_scales", AutoParameter::read_only, [this_]() {
                std::vector<Variant> ret{};
                auto const map = this_().particle_scales();
                for (auto const &kv : map) {
