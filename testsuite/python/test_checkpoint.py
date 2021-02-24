@@ -367,6 +367,7 @@ class CheckpointTest(ut.TestCase):
         self.assertIsInstance(c[5], constraints.PotentialField)
         self.assertEqual(c[5].field.shape, (14, 16, 18, 1))
         self.assertAlmostEqual(c[5].default_scale, 1.6, delta=1E-10)
+        np.testing.assert_allclose(c[5].particle_scales, [[5, 6]], atol=1e-10)
         np.testing.assert_allclose(np.copy(c[5].origin), [-0.5, -0.5, -0.5])
         np.testing.assert_allclose(np.copy(c[5].grid_spacing), np.ones(3))
         ref_pot = constraints.PotentialField(
