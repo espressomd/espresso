@@ -205,6 +205,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # change ellipsoid parameters instead of creating a new constraint
         e.a = 1.
         e.b = 1.
+        self.assertAlmostEqual(e.a, 1.)
+        self.assertAlmostEqual(e.b, 1.)
 
         radii = np.linspace(1., 6.5, 7)
 
