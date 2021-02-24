@@ -33,6 +33,8 @@ template <class Inter> struct CentralPotential {
     return within_inter_range(r) ? m_inter.force(r - m_offset, r12)
                                  : Utils::Vector<value_type, 3>{};
   }
+
+  value_type cutoff() const { return m_cutoff; }
 };
 
 } // namespace Interactions
