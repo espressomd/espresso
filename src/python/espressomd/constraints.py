@@ -342,9 +342,9 @@ class ForceField(_Interpolated):
         Spacing of the grid points.
     default_scale : :obj:`float`
         Scaling factor for particles that have no individual scaling factor.
-    particle_scales : array_like of (:obj:`int`, :obj:`float`)
-        A list of tuples of ids and scaling factors. For
-        particles in the list the interaction is scaled with
+    particle_scales : :obj:`dict`(:obj:`int`, :obj:`float`)
+        A dictionary mapping particle ids to scaling factors.
+        For these particles, the interaction is scaled with
         their individual scaling factor. Other particles are
         scaled with the default scaling factor.
 
@@ -374,9 +374,9 @@ class PotentialField(_Interpolated):
         Spacing of the grid points.
     default_scale : :obj:`float`
         Scaling factor for particles that have no individual scaling factor.
-    particle_scales : array_like (:obj:`int`, :obj:`float`)
-        A list of tuples of ids and scaling factors. For
-        particles in the list the interaction is scaled with
+    particle_scales : :obj:`dict`(:obj:`int`, :obj:`float`)
+        A dictionary mapping particle ids to scaling factors.
+        For these particles, the interaction is scaled with
         their individual scaling factor. Other particles are
         scaled with the default scaling factor.
 

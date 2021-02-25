@@ -154,14 +154,14 @@ class FieldTest(ut.TestCase):
             box, h, self.potential)
 
         F = constraints.PotentialField(field=field_data, grid_spacing=h,
-                                       particle_scales=[[1, 0.0]],
+                                       particle_scales={1: 0.0},
                                        default_scale=scaling)
 
         p = self.system.part.add(pos=[0, 0, 0])
         self.system.part.add(pos=[1, 0, 0])
         self.system.constraints.add(F)
         self.assertAlmostEqual(F.default_scale, scaling, delta=1e-9)
-        self.assertEqual(F.particle_scales, [[1, 0.0]])
+        self.assertEqual(F.particle_scales, {1: 0.0})
         with self.assertRaisesRegex(RuntimeError, 'Parameter default_scale is read-only'):
             F.default_scale = 2.0
         with self.assertRaisesRegex(RuntimeError, 'Parameter particle_scales is read-only'):
@@ -214,13 +214,13 @@ class FieldTest(ut.TestCase):
         field_data = constraints.ForceField.field_from_fn(box, h, self.force)
 
         F = constraints.ForceField(field=field_data, grid_spacing=h,
-                                   particle_scales=[(1, 0.0)],
+                                   particle_scales={1: 0.0},
                                    default_scale=scaling)
 
         p = self.system.part.add(pos=[0, 0, 0])
         self.system.constraints.add(F)
         self.assertAlmostEqual(F.default_scale, scaling, delta=1e-9)
-        self.assertEqual(F.particle_scales, [[1, 0.0]])
+        self.assertEqual(F.particle_scales, {1: 0.0})
         with self.assertRaisesRegex(RuntimeError, 'Parameter default_scale is read-only'):
             F.default_scale = 2.0
         with self.assertRaisesRegex(RuntimeError, 'Parameter particle_scales is read-only'):
