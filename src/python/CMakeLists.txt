@@ -2,6 +2,17 @@
 set(PYTHON_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 set(PYTHON_FRONTEND ${PYTHON_EXECUTABLE})
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  execute_process(
+    COMMAND "${PYTHON_FRONTEND}" "-c"
+            "import sysconfig; print(sysconfig.get_config_var('exec_prefix'))"
+    OUTPUT_VARIABLE DARWIN_EXEC_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+  set(PYTHON_FRONTEND_TMP
+      "${DARWIN_EXEC_PREFIX}/Resources/Python.app/Contents/MacOS/Python")
+  if(EXISTS ${PYTHON_FRONTEND_TMP})
+    set(PYTHON_FRONTEND ${PYTHON_FRONTEND_TMP})
+  endif()
+endif()
 configure_file(pypresso.cmakein ${CMAKE_BINARY_DIR}/pypresso @ONLY)
 
 if(IPYTHON_EXECUTABLE)

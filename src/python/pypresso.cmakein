@@ -16,6 +16,7 @@ export PYTHONPATH
 
 if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@WITH_ASAN@" = "ON" ]; then
   asan_lib=$("@CMAKE_CXX_COMPILER@" /dev/null -### -o /dev/null -fsanitize=address 2>&1 | grep -o '[" ][^" ]*libclang_rt.asan[^" ]*[^s][" ]' | sed 's/[" ]//g' | sed 's/\.a$/.so/g')
+  export DYLD_INSERT_LIBRARIES="$asan_lib"
   for lib in $asan_lib; do
       test -f $lib && LD_PRELOAD="$lib $LD_PRELOAD"
   done
