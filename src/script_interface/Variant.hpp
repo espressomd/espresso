@@ -28,6 +28,7 @@
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -52,7 +53,8 @@ constexpr const None none{};
 using Variant = boost::make_recursive_variant<
     None, bool, int, size_t, double, std::string, std::vector<int>,
     std::vector<double>, ObjectRef, std::vector<boost::recursive_variant_>,
-    Utils::Vector2d, Utils::Vector3d, Utils::Vector4d>::type;
+    Utils::Vector2d, Utils::Vector3d, Utils::Vector4d,
+    std::unordered_map<int, boost::recursive_variant_>>::type;
 
 using VariantMap = std::unordered_map<std::string, Variant>;
 
