@@ -7,6 +7,10 @@ on:
 jobs:
   github_mactest:
     runs-on: macos-latest
+    env:
+        # This is a workaround for the unfortunate interaction of MacOS and OpenMPI 4
+        # See https://github.com/open-mpi/ompi/issues/6518
+        OMPI_MCA_btl: "self,tcp"
     steps:
     - uses: actions/checkout@main
     - uses: actions/setup-python@v2
