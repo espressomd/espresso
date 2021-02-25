@@ -93,7 +93,7 @@ struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
     return v;
   }
 
-  /* We try do unpack variant vectors and check if they
+  /* We try to unpack variant vectors and check if they
    * are convertible element by element. */
   auto operator()(std::vector<Variant> const &vv) const {
     if (N != vv.size()) {

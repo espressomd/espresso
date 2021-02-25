@@ -19,6 +19,15 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_COUPLINGS_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_COUPLINGS_HPP
 
+/**
+ * @file
+ * @brief ScriptInterface implementations for the
+ *        various couplings provided.
+ *
+ * These are separated from the Constraints because
+ * they can be reused together with the couplings themselves.
+ */
+
 #include "core/field_coupling/couplings/Charge.hpp"
 #include "core/field_coupling/couplings/Direct.hpp"
 #include "core/field_coupling/couplings/Mass.hpp"
@@ -33,14 +42,6 @@ namespace ScriptInterface {
 namespace Constraints {
 namespace detail {
 using namespace ::FieldCoupling::Coupling;
-
-/**
- * @brief ScriptInterface implementations for the
- *        various couplings provided.
- *
- * These are separated from the Constraints because
- * they can be reused together with the couplings themselves.
- */
 
 /**
  * Default version for parameterless couplings.
