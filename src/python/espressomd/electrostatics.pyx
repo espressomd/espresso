@@ -200,7 +200,7 @@ IF P3M == 1:
         for i in range(3):
             mesh[i] = pmesh[i]
 
-    cdef class P3MBase(ElectrostaticInteraction):
+    cdef class _P3MBase(ElectrostaticInteraction):
         def valid_keys(self):
             return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
                     "prefactor", "tune", "check_neutrality", "verbose",
@@ -296,7 +296,7 @@ IF P3M == 1:
                 check_type_or_throw_except(self._params["mesh_off"], 3, float,
                                            "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
 
-    cdef class P3M(P3MBase):
+    cdef class P3M(_P3MBase):
         """
         P3M electrostatics solver.
 
@@ -340,7 +340,7 @@ IF P3M == 1:
             handle_errors("P3M: initialization failed")
 
     IF CUDA:
-        cdef class P3MGPU(P3MBase):
+        cdef class P3MGPU(_P3MBase):
             """
             P3M electrostatics solver with GPU support.
 
