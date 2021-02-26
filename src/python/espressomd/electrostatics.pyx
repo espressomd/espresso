@@ -191,16 +191,17 @@ IF ELECTROSTATICS:
 
 
 IF P3M == 1:
-    cdef _check_and_copy_mesh_size(int mesh[3], pmesh):
-        if is_valid_type(pmesh, int):
-            pmesh = 3 * [pmesh]
-        else:
-            check_type_or_throw_except(
-                pmesh, 3, int, "mesh size must be 3 ints")
-        for i in range(3):
-            mesh[i] = pmesh[i]
-
     cdef class _P3MBase(ElectrostaticInteraction):
+
+        cdef _check_and_copy_mesh_size(self, int mesh[3], pmesh):
+            if is_valid_type(pmesh, int):
+                pmesh = 3 * [pmesh]
+            else:
+                check_type_or_throw_except(
+                    pmesh, 3, int, "mesh size must be 3 ints")
+            for i in range(3):
+                mesh[i] = pmesh[i]
+
         def valid_keys(self):
             return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
                     "prefactor", "tune", "check_neutrality", "verbose",
@@ -230,7 +231,7 @@ IF P3M == 1:
 
         def _tune(self):
             cdef int mesh[3]
-            _check_and_copy_mesh_size(mesh, self._params["mesh"])
+            self._check_and_copy_mesh_size(mesh, self._params["mesh"])
 
             set_prefactor(self._params["prefactor"])
             p3m_set_eps(self._params["epsilon"])
@@ -252,7 +253,7 @@ IF P3M == 1:
 
         def _set_params_in_es_core(self):
             cdef int mesh[3]
-            _check_and_copy_mesh_size(mesh, self._params["mesh"])
+            self._check_and_copy_mesh_size(mesh, self._params["mesh"])
 
             set_prefactor(self._params["prefactor"])
             # Sets p3m parameters
@@ -378,7 +379,7 @@ IF P3M == 1:
 
             def _activate_method(self):
                 cdef int mesh[3]
-                _check_and_copy_mesh_size(mesh, self._params["mesh"])
+                self._check_and_copy_mesh_size(mesh, self._params["mesh"])
 
                 check_neutrality(self._params)
                 p3m_gpu_init(self._params["cao"], mesh, self._params["alpha"])
