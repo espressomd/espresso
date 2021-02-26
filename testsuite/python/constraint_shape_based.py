@@ -107,6 +107,50 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.assertLess(shape.calc_distance(
             position=[0.0, R1 - (0.5 + sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
 
+    def test_simplepore(self):
+        """
+        Test implementation of simplepore shape.
+
+        """
+        RADIUS = 12.5
+        LENGTH = 15.0
+        CENTER = 3 * [self.box_l / 2]
+        AXIS = [1, 0, 0]
+        SRADIUS = 2
+
+        shape = espressomd.shapes.SimplePore(
+            center=CENTER, axis=AXIS, length=LENGTH, radius=RADIUS,
+            smoothing_radius=SRADIUS)
+
+        # check distances inside cylinder
+        for x in np.linspace(self.box_l / 2 - LENGTH / 2 + SRADIUS,
+                             self.box_l / 2 + LENGTH / 2 - SRADIUS, 10):
+            for y in np.linspace(0, RADIUS, 5):
+                dist = shape.calc_distance(
+                    position=[x, self.box_l / 2 + y, self.box_l / 2])
+                self.assertAlmostEqual(dist[0], RADIUS - y)
+
+        # check distances near the walls
+        for y in np.linspace(0, self.box_l / 2 - RADIUS - SRADIUS, 6):
+            for z in np.linspace(0, self.box_l / 2 - RADIUS - SRADIUS, 6):
+                for x in np.linspace(0, self.box_l / 2 - LENGTH / 2, 6):
+                    dist_to_x = (self.box_l / 2 - LENGTH / 2 - x)
+                    dist = shape.calc_distance(
+                        position=[x, y, self.box_l - z])
+                    np.testing.assert_almost_equal(
+                        np.copy(dist[1]), [-dist_to_x, 0, 0])
+                    dist = shape.calc_distance(
+                        position=[self.box_l - x, self.box_l - y, z])
+                    np.testing.assert_almost_equal(
+                        np.copy(dist[1]), [dist_to_x, 0, 0])
+
+        # check getters
+        self.assertAlmostEqual(shape.radius, RADIUS)
+        self.assertAlmostEqual(shape.length, LENGTH)
+        self.assertAlmostEqual(shape.smoothing_radius, SRADIUS)
+        np.testing.assert_almost_equal(np.copy(shape.axis), AXIS)
+        np.testing.assert_almost_equal(np.copy(shape.center), CENTER)
+
     def test_sphere(self):
         """Checks geometry of an inverted sphere
 
@@ -333,6 +377,18 @@ class ShapeBasedConstraintTest(ut.TestCase):
                             dist = -distance
 
                     self.assertAlmostEqual(shape_dist, dist)
+
+        # check getters
+        self.assertAlmostEqual(cylinder_shape_finite.radius, rad)
+        self.assertAlmostEqual(cylinder_shape_finite.length, length)
+        np.testing.assert_almost_equal(
+            np.copy(cylinder_shape_finite.axis), [0, 0, 1])
+        np.testing.assert_almost_equal(
+            np.copy(cylinder_shape_finite.center), 3 * [rad])
+        self.assertFalse(cylinder_shape_finite.open)
+        cylinder_shape_finite.open = True
+        self.assertTrue(cylinder_shape_finite.open)
+
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
@@ -433,6 +489,14 @@ class ShapeBasedConstraintTest(ut.TestCase):
                     system.integrator.run(recalc_forces=True, steps=0)
                     energy = system.analysis.energy()
                     self.assertAlmostEqual(energy["total"], 10. - r)
+
+        # check getters
+        self.assertAlmostEqual(spherocylinder_shape.radius, 10.)
+        self.assertAlmostEqual(spherocylinder_shape.length, 6.0)
+        np.testing.assert_almost_equal(
+            np.copy(spherocylinder_shape.axis), [0, 1, 0])
+        np.testing.assert_almost_equal(
+            np.copy(spherocylinder_shape.center), 3 * [self.box_l / 2.0])
 
         # Reset
         system.non_bonded_inter[0, 1].generic_lennard_jones.set_params(
@@ -867,6 +931,13 @@ class ShapeBasedConstraintTest(ut.TestCase):
                     shape_dist, _ = torus_shape.calc_distance(
                         position=phi_rot_point.tolist())
                     self.assertAlmostEqual(shape_dist, distance)
+
+        # check getters
+        self.assertAlmostEqual(torus_shape.radius, radius)
+        self.assertAlmostEqual(torus_shape.tube_radius, tube_radius)
+        np.testing.assert_almost_equal(np.copy(torus_shape.normal), [0, 0, 1])
+        np.testing.assert_almost_equal(
+            np.copy(torus_shape.center), 3 * [self.box_l / 2.0])
 
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
