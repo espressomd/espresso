@@ -1931,6 +1931,7 @@ class Cylinder(Shape):
         self.axis = np.array(self.shape.get_parameter('axis'))
         self.length = self.shape.get_parameter('length')
         self.radius = self.shape.get_parameter('radius')
+        self.open = self.shape.get_parameter('open')
         self.cap_center_1 = self.center - self.axis / \
             np.linalg.norm(self.axis) * 0.5 * self.length
         self.cap_center_2 = self.center + self.axis / \
@@ -1939,7 +1940,7 @@ class Cylinder(Shape):
     def draw(self):
         draw_cylinder(self.cap_center_1, self.cap_center_2,
                       self.radius, self.color, self.material,
-                      self.quality, draw_caps=True)
+                      self.quality, draw_caps=not self.open)
 
 
 class Ellipsoid(Shape):
