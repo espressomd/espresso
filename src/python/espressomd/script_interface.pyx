@@ -184,6 +184,7 @@ cdef Variant python_object_to_variant(value):
     """Convert Python objects to C++ Variant objects."""
 
     cdef vector[Variant] vec
+    cdef unordered_map[int, Variant] vmap
     cdef PObjectRef oref
 
     if value is None:
@@ -195,6 +196,13 @@ cdef Variant python_object_to_variant(value):
     if isinstance(value, PScriptInterface):
         oref = value.get_sip()
         return make_variant(oref.sip)
+    elif isinstance(value, dict):
+        for k, v in value.items():
+            if not isinstance(k, int):
+                raise TypeError(
+                    f"No conversion from type dict_item([({type(k).__name__}, {type(v).__name__})]) to Variant[std::unordered_map<int, Variant>]")
+            vmap[k] = python_object_to_variant(v)
+        return make_variant[unordered_map[int, Variant]](vmap)
     elif hasattr(value, '__iter__') and not(type(value) == str):
         for e in value:
             vec.push_back(python_object_to_variant(e))
@@ -208,12 +216,14 @@ cdef Variant python_object_to_variant(value):
     elif np.issubdtype(np.dtype(type(value)), np.floating):
         return make_variant[double](value)
     else:
-        raise TypeError("Unknown type for conversion to Variant")
+        raise TypeError(
+            f"No conversion from type {type(value).__name__} to Variant")
 
 cdef variant_to_python_object(const Variant & value) except +:
     """Convert C++ Variant objects to Python objects."""
 
     cdef vector[Variant] vec
+    cdef unordered_map[int, Variant] vmap
     cdef shared_ptr[ObjectHandle] ptr
     if is_none(value):
         return None
@@ -261,6 +271,14 @@ cdef variant_to_python_object(const Variant & value) except +:
 
         for i in vec:
             res.append(variant_to_python_object(i))
+
+        return res
+    if is_type[unordered_map[int, Variant]](value):
+        vmap = get_value[unordered_map[int, Variant]](value)
+        res = {}
+
+        for kv in vmap:
+            res[kv.first] = variant_to_python_object(kv.second)
 
         return res
 

@@ -138,7 +138,8 @@ pot_field_data = constraints.ElectricPotential.field_from_fn(
     system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
 checkpoint.register("pot_field_data")
 system.constraints.add(constraints.PotentialField(
-    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6))
+    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
+    particle_scales={5: 6.0}))
 vec_field_data = constraints.ForceField.field_from_fn(
     system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
 checkpoint.register("vec_field_data")
