@@ -408,10 +408,8 @@ IF P3M == 1:
             Base P3M actor.
         gap_size : :obj:`float`, required
             The gap size gives the height :math:`h` of the empty region between
-            the system box and the neighboring artificial images. |es| does not
-            make sure that the gap is actually empty, this is the user's
-            responsibility. The method will run even if the condition is not
-            fulfilled, however, the error bound will not be reached. Therefore
+            the system box and the neighboring artificial images. |es| checks
+            the gap is empty and will throw an error if it isn't. Therefore
             you should really make sure that the gap region is empty (e.g.
             with wall constraints).
         maxPWerror : :obj:`float`, required
@@ -467,15 +465,19 @@ IF P3M == 1:
             self._params["p3m_actor"].validate_params()
             # ELC
             check_type_or_throw_except(
-                self._params["maxPWerror"], 1, float, "")
+                self._params["maxPWerror"], 1, float,
+                "maxPWerror has to be a float")
             check_range_or_except(
                 self._params, "maxPWerror", 0, False, "inf", True)
-            check_type_or_throw_except(self._params["gap_size"], 1, float, "")
+            check_type_or_throw_except(self._params["gap_size"], 1, float,
+                                       "gap_size has to be a float")
             check_range_or_except(
                 self._params, "gap_size", 0, False, "inf", True)
-            check_type_or_throw_except(self._params["far_cut"], 1, float, "")
+            check_type_or_throw_except(self._params["far_cut"], 1, float,
+                                       "far_cut has to be a float")
             check_type_or_throw_except(
-                self._params["neutralize"], 1, type(True), "")
+                self._params["neutralize"], 1, type(True),
+                "neutralize has to be a bool")
 
         def valid_keys(self):
             return ["p3m_actor", "maxPWerror", "gap_size", "far_cut",
