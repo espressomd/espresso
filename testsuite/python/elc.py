@@ -16,8 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import unittest_decorators as utx
-import espressomd
-from espressomd import electrostatics, electrostatic_extensions
+import espressomd.electrostatics
 
 import numpy as np
 
@@ -38,24 +37,23 @@ class ElcTest(ut.TestCase):
         p1 = system.part.add(pos=[0, 0, 1], q=+1)
         p2 = system.part.add(pos=[0, 0, 9], q=-1)
 
-        system.actors.add(
-            electrostatics.P3M(
-                # zero is not allowed
-                prefactor=1e-100,
-                mesh=32,
-                cao=5,
-                accuracy=1e-3,
-            ))
-
-        system.actors.add(
-            electrostatic_extensions.ELC(
-                gap_size=GAP[2],
-                maxPWerror=1e-3,
-                delta_mid_top=-1,
-                delta_mid_bot=-1,
-                const_pot=1,
-                pot_diff=POTENTIAL_DIFFERENCE,
-            ))
+        p3m = espressomd.electrostatics.P3M(
+            # zero is not allowed
+            prefactor=1e-100,
+            mesh=32,
+            cao=5,
+            accuracy=1e-3,
+        )
+        elc = espressomd.electrostatics.ELC(
+            p3m_actor=p3m,
+            gap_size=GAP[2],
+            maxPWerror=1e-3,
+            delta_mid_top=-1,
+            delta_mid_bot=-1,
+            const_pot=1,
+            pot_diff=POTENTIAL_DIFFERENCE,
+        )
+        system.actors.add(elc)
 
         # Calculated energy
         U_elc = system.analysis.energy()['coulomb']
@@ -76,13 +74,13 @@ class ElcTest(ut.TestCase):
         p1.pos = [BOX_L[0] / 2, BOX_L[1] / 2, BOX_L[2] - GAP[2] / 2]
         with self.assertRaises(Exception):
             self.system.analysis.energy()
-        with self.assertRaises(Exception, msg='entered ELC gap region'):
+        with self.assertRaisesRegex(Exception, 'entered ELC gap region'):
             self.system.integrator.run(2)
         # negative direction
         p1.pos = [BOX_L[0] / 2, BOX_L[1] / 2, -GAP[2] / 2]
         with self.assertRaises(Exception):
             self.system.analysis.energy()
-        with self.assertRaises(Exception, msg='entered ELC gap region'):
+        with self.assertRaisesRegex(Exception, 'entered ELC gap region'):
             self.system.integrator.run(2)
 
 

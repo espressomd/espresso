@@ -234,7 +234,7 @@ using it.
 Electrostatic Layer Correction (ELC)
 ------------------------------------
 
-:class:`espressomd.electrostatic_extensions.ELC`
+:class:`espressomd.electrostatics.ELC`
 
 *ELC* is an extension of the P3M electrostatics solver for explicit 2D periodic
 systems. It can account for different dielectric jumps on both sides of the
@@ -260,8 +260,9 @@ Usage notes:
 
 *ELC* is an |es| actor and is used with::
 
-    import espressomd.electrostatic_extensions
-    elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3)
+    import espressomd.electrostatics
+    p3m = espressomd.electrostatics.P3M(prefactor=1, accuracy=1e-4)
+    elc = espressomd.electrostatics.ELC(p3m_actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.actors.add(elc)
 
 *ELC* can also be used to simulate 2D periodic systems with image charges,
@@ -273,8 +274,8 @@ simulation region (*middle*) to *bottom* (at :math:`z=0`) and from *middle* to
 are :math:`\Delta_t=\frac{\varepsilon_m-\varepsilon_t}{\varepsilon_m+\varepsilon_t}`
 and :math:`\Delta_b=\frac{\varepsilon_m-\varepsilon_b}{\varepsilon_m+\varepsilon_b}`::
 
-    elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3,
-                                       delta_mid_top=0.9, delta_mid_bot=0.1)
+    elc = espressomd.electrostatics.ELC(p3m_actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3,
+                                        delta_mid_top=0.9, delta_mid_bot=0.1)
 
 The fully metallic case :math:`\Delta_t=\Delta_b=-1` would lead to divergence
 of the forces/energies in *ELC* and is therefore only possible with the
@@ -283,8 +284,8 @@ of the forces/energies in *ELC* and is therefore only possible with the
 Toggle ``const_pot`` on to maintain a constant electric potential difference
 ``pot_diff`` between the xy-planes at :math:`z=0` and :math:`z = L_z - h`::
 
-    elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3,
-                                       const_pot=True, delta_mid_bot=100.0)
+    elc = espressomd.electrostatics.ELC(p3m_actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3,
+                                        const_pot=True, delta_mid_bot=100.0)
 
 This is done by countering the total dipole moment of the system with the
 electric field :math:`E_{\textrm{induced}}` and superposing a homogeneous

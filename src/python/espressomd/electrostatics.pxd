@@ -83,6 +83,24 @@ IF ELECTROSTATICS:
             cdef extern from "electrostatics_magnetostatics/p3m_gpu.hpp":
                 void p3m_gpu_init(int cao, int * mesh, double alpha) except +
 
+        cdef extern from "electrostatics_magnetostatics/elc.hpp":
+            ctypedef struct ELC_struct:
+                double maxPWerror
+                double gap_size
+                double far_cut
+                bool neutralize
+                double delta_mid_top
+                double delta_mid_bot
+                bool const_pot
+                double pot_diff
+
+            int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
+                               bool neutralize, double delta_mid_top,
+                               double delta_mid_bot, bool const_pot, double pot_diff)
+
+            # links intern C-struct with python object
+            ELC_struct elc_params
+
     cdef extern from "electrostatics_magnetostatics/debye_hueckel.hpp":
         ctypedef struct Debye_hueckel_params:
             double r_cut
