@@ -30,25 +30,26 @@
 
 #include <limits>
 
-bool check_distance_function(const Shapes::Shape &s) {
+bool dist_is_always_inf(const Shapes::Shape &s) {
   constexpr auto infinity = std::numeric_limits<double>::infinity();
-  for (int i = 0; i < 10; i++) {
-    for (int j = 0; j < 10; j++) {
-      for (int k = 0; k < 10; k++) {
-        Utils::Vector3d pos = {i * 0.5, j * 0.5, k * 0.5};
-        Utils::Vector3d dist{};
-        double d;
 
-        s.calculate_dist(pos, d, dist);
-        if (d != infinity) {
-          return false;
-        }
+  Utils::Vector3d const positions[2] = {
+      {0.0, 1.0, 2.0},
+      {-10.0, 0.1, 5.0},
+  };
 
-        for (auto xyz : dist) {
-          if (xyz != infinity) {
-            return false;
-          }
-        }
+  for (auto const &pos : positions) {
+    Utils::Vector3d dist{};
+    double d;
+
+    s.calculate_dist(pos, d, dist);
+    if (d != infinity) {
+      return false;
+    }
+
+    for (auto xyz : dist) {
+      if (xyz != infinity) {
+        return false;
       }
     }
   }
@@ -59,5 +60,5 @@ bool check_distance_function(const Shapes::Shape &s) {
 BOOST_AUTO_TEST_CASE(dist_function) {
   Shapes::NoWhere nw;
 
-  BOOST_CHECK(check_distance_function(nw));
+  BOOST_CHECK(dist_is_always_inf(nw));
 }
