@@ -1081,15 +1081,6 @@ void ELC_init() {
       runtimeErrorMsg() << "ELC auto-retuning failed";
     }
   }
-  if (elc_params.dielectric_contrast_on) {
-    p3m.params.additional_mesh[0] = 0;
-    p3m.params.additional_mesh[1] = 0;
-    p3m.params.additional_mesh[2] = elc_params.space_layer;
-  } else {
-    p3m.params.additional_mesh[0] = 0;
-    p3m.params.additional_mesh[1] = 0;
-    p3m.params.additional_mesh[2] = 0;
-  }
 }
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut,

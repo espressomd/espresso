@@ -200,7 +200,7 @@ void dp3m_init() {
    * and the cutoff for charge assignment dp3m.params.cao_cut */
   dp3m_init_a_ai_cao_cut();
 
-  p3m_calc_local_ca_mesh(dp3m.local_mesh, dp3m.params, local_geo, skin);
+  p3m_calc_local_ca_mesh(dp3m.local_mesh, dp3m.params, local_geo, skin, 0.0);
 
   dp3m.sm.resize(comm_cart, dp3m.local_mesh);
 

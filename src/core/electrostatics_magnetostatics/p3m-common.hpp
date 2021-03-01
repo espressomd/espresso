@@ -147,14 +147,11 @@ typedef struct {
   /** number of points unto which a single charge is interpolated, i.e.
    *  p3m.cao^3 */
   int cao3 = 0;
-  /** additional points around the charge assignment mesh, for method like
-   *  dielectric ELC creating virtual charges. */
-  double additional_mesh[3] = {};
 
   template <typename Archive> void serialize(Archive &ar, long int) {
     ar &tuning &alpha_L &r_cut_iL &mesh;
     ar &mesh_off &cao &accuracy &epsilon &cao_cut;
-    ar &a &ai &alpha &r_cut &cao3 &additional_mesh;
+    ar &a &ai &alpha &r_cut &cao3;
   }
 
 } P3MParameters;
@@ -186,7 +183,8 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
  */
 void p3m_calc_local_ca_mesh(p3m_local_mesh &local_mesh,
                             const P3MParameters &params,
-                            const LocalBox<double> &local_geo, double skin);
+                            const LocalBox<double> &local_geo, double skin,
+                            double space_layer);
 
 /** Calculate the spatial position of the left down mesh
  *  point of the local mesh, to be stored in
