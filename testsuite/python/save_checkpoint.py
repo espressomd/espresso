@@ -92,8 +92,16 @@ if 'EK.GPU' in modes and espressomd.gpu_available(
     ek.add_species(ek_species)
     system.actors.add(ek)
 
-p1 = system.part.add(pos=[1.0] * 3, q=1, dip=(1.3, 2.1, -6))
-p2 = system.part.add(pos=[1.0, 1.0, 2.0], q=-1, dip=(7.3, 6.1, -4))
+p1 = system.part.add(pos=[1.0] * 3)
+p2 = system.part.add(pos=[1.0, 1.0, 2.0])
+
+if espressomd.has_features('ELECTROSTATICS'):
+    p1.q = 1
+    p2.q = -1
+
+if espressomd.has_features('DIPOLES'):
+    p1.dip = (1.3, 2.1, -6)
+    p2.dip = (7.3, 6.1, -4)
 
 if espressomd.has_features('EXCLUSIONS'):
     system.part.add(pos=[2.0] * 3, exclusions=[0, 1])
