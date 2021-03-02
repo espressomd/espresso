@@ -40,23 +40,6 @@ int n_rigidbonds = 0;
 
 #include <cmath>
 
-/** \name Private functions */
-/************************************************************/
-/**@{*/
-
-static void app_pos_correction(const ParticleRange &particles);
-
-static void transfer_force_init_vel(const ParticleRange &particles,
-                                    const ParticleRange &ghost_particles);
-
-static void compute_vel_corr_vec(int *repeat_, CellStructure &cs);
-
-static void apply_vel_corr(const ParticleRange &particles);
-static void revert_force(const ParticleRange &particles,
-                         const ParticleRange &ghost_particles);
-
-/**@}*/
-
 void save_old_pos(const ParticleRange &particles,
                   const ParticleRange &ghost_particles) {
   auto save_pos = [](Particle &p) {
