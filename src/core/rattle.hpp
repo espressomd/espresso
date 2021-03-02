@@ -35,8 +35,9 @@ extern int n_rigidbonds;
 
 #ifdef BOND_CONSTRAINT
 
-/** Transfers the current particle positions from r.p[3] to r.p_pold[3]
-    of the \ref Particle structure. Invoked from \ref correct_pos_shake() */
+/** Transfer the current particle positions from @ref ParticlePosition::p
+ *  "Particle::r::p" to @ref ParticlePosition::p_old "Particle::r::p_old"
+ */
 void save_old_pos(const ParticleRange &particles,
                   const ParticleRange &ghost_particles);
 
