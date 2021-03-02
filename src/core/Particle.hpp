@@ -47,9 +47,9 @@ enum : uint8_t {
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
  *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-#else
+#else // EXTERNAL_FORCES
 #define COORD_FIXED(coord) (0)
-#endif
+#endif // EXTERNAL_FORCES
 
 struct ParticleParametersSwimming {
   bool swimming = false;
@@ -82,7 +82,7 @@ struct ParticleProperties {
   double mass = 1.0;
 #else
   constexpr static double mass{1.0};
-#endif /* MASS */
+#endif
 
   /** rotational inertia */
 #ifdef ROTATIONAL_INERTIA
@@ -141,10 +141,10 @@ struct ParticleProperties {
       ar &quat;
     }
   } vs_relative;
-#endif
-#else  /* VIRTUAL_SITES */
+#endif // VIRTUAL_SITES_RELATIVE
+#else  // VIRTUAL_SITES
   static constexpr bool is_virtual = false;
-#endif /* VIRTUAL_SITES */
+#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
 #ifndef PARTICLE_ANISOTROPY
@@ -158,7 +158,7 @@ struct ParticleProperties {
   double gamma_rot = -1.;
 #else
   Utils::Vector3d gamma_rot = {-1., -1., -1.};
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
 #endif // THERMOSTAT_PER_PARTICLE
 
@@ -179,10 +179,10 @@ struct ParticleProperties {
   /** External torque, apply if \ref ParticleProperties::ext_flag == 16. */
   Utils::Vector3d ext_torque = {0, 0, 0};
 #endif
-#else
+#else  // EXTERNAL_FORCES
   static constexpr const uint8_t ext_flag =
       0; // no external forces and fixed coordinates
-#endif
+#endif // EXTERNAL_FORCES
 
 #ifdef ENGINE
   ParticleParametersSwimming swim;
@@ -194,7 +194,7 @@ struct ParticleProperties {
     ar &type;
 #ifdef MASS
     ar &mass;
-#endif /* MASS */
+#endif
 #ifdef ROTATIONAL_INERTIA
     ar &rinertia;
 #endif
@@ -217,7 +217,7 @@ struct ParticleProperties {
 #ifdef VIRTUAL_SITES_RELATIVE
     ar &vs_relative;
 #endif
-#endif /* VIRTUAL_SITES */
+#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
     ar &gamma;
@@ -231,7 +231,7 @@ struct ParticleProperties {
 #ifdef ROTATION
     ar &ext_torque;
 #endif
-#endif
+#endif // EXTERNAL_FORCES
 
 #ifdef ENGINE
     ar &swim;
