@@ -29,6 +29,7 @@
 #include "h5md/initialize.hpp"
 #endif
 #include "ComFixed.hpp"
+#include "CylTrafoParams.hpp"
 #include "accumulators/initialize.hpp"
 #include "collision_detection/initialize.hpp"
 #include "lbboundaries/initialize.hpp"
@@ -53,6 +54,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   CollisionDetection::initialize(f);
 
   f->register_new<ComFixed>("ComFixed");
+  f->register_new<CylTrafoParams>("CylTrafoParams");
 }
 
 } /* namespace ScriptInterface */

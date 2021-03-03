@@ -19,6 +19,10 @@
 #ifndef ESPRESSO_CYLINDER_TRANSFORMATION_PARAMETERS_HPP
 #define ESPRESSO_CYLINDER_TRANSFORMATION_PARAMETERS_HPP
 
+#include <stdexcept>
+
+#include <utils/math/abs.hpp>
+
 namespace Utils {
 
 class CylTrafoParams {
@@ -34,17 +38,21 @@ public:
   Utils::Vector3d get_axis() const {return m_axis;}
   Utils::Vector3d get_orientation() const {return m_orientation;}
 
+  void set_center(Vector3d const &center) {m_center = center;}
+  void set_axis(Vector3d const &center) {throw std::runtime_error("CylTrafoParams: Axis can only be set at construction.");}
+  void set_orientation(Vector3d const &center) {throw std::runtime_error("CylTrafoParams: Orientation can only be set at construction.");}
+
 private:
   void check_valid(){
     auto const eps = std::numeric_limits<double>::epsilon();
     if (Utils::abs(m_center * m_axis) > eps){
-      throw std::runtime_error("cylinder transformation: axis and orientation must be orthogonal");
+      throw std::runtime_error("CylTrafoParams: Axis and orientation must be orthogonal.");
     }
     if (Utils::abs(m_axis.norm() -1) > eps){
-      throw std::runtime_error("cylinder transformation: axis must be normalized");
+      throw std::runtime_error("CylTrafoParams: Axis must be normalized.");
     }
     if (Utils::abs(m_orientation.norm() -1) > eps){
-      throw std::runtime_error("cylinder transformation: orientation must be normalized");
+      throw std::runtime_error("CylTrafoParams: orientation must be normalized.");
     }
   }
 
