@@ -68,6 +68,7 @@ class ProfileObservable(Observable):
         shape = list(map(len, edges)) + [len(edges)]
         return np.array(list(itertools.product(*edges))).reshape(shape)
 
+
 @script_interface_register
 class ComPosition(Observable):
 

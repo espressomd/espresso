@@ -41,13 +41,13 @@ class CylindricalLBObservableCommon:
                  'visc': 2.7,
                  'tau': 0.1,
                  }
-    cyl_trafo_params = espressomd.math.CylTrafoParams(center = 3*[7],
-                                                        axis = [1,0,0],
-                                                        orientation = [0,0,1])
-    
+    cyl_trafo_params = espressomd.math.CylTrafoParams(center=3 * [7],
+                                                      axis=[1, 0, 0],
+                                                      orientation=[0, 0, 1])
+
     params = {
         'ids': None,
-        'cyl_trafo_params' : cyl_trafo_params,
+        'cyl_trafo_params': cyl_trafo_params,
         'n_r_bins': 4, 
         'n_phi_bins': 3, 
         'n_z_bins': 5,  
@@ -212,12 +212,12 @@ class CylindricalLBObservableCommon:
         obs_bin_edges = observable.bin_edges()
         np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
         # check center, axis, orientation
-        ctp = espressomd.math.CylTrafoParams(center = [1,2,3],
-                                             axis = [0,1,0],
-                                             orientation = [0,0,1])
+        ctp = espressomd.math.CylTrafoParams(center=[1, 2, 3],
+                                             axis=[0, 1, 0],
+                                             orientation=[0, 0, 1])
         observable.cyl_trafo_params = ctp
-        
-        for attr_name in ['center','axis', 'orientation']:
+
+        for attr_name in ['center', 'axis', 'orientation']:
             np.testing.assert_array_almost_equal(np.copy(ctp.__getattr__(attr_name)),
                                                  np.copy(observable.cyl_trafo_params.__getattr__(attr_name)))
 

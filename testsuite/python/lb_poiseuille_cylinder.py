@@ -152,9 +152,9 @@ class LBPoiseuilleCommon:
         else:
             obs_center = [BOX_L / 2.0, BOX_L / 2.0, 0.0]
         local_obs_params = OBS_PARAMS.copy()
-        ctp = espressomd.math.CylTrafoParams(center = obs_center,
-                                          axis = self.params['axis'],
-                                          orientation = self.params['orientation'])
+        ctp = espressomd.math.CylTrafoParams(center=obs_center,
+                                             axis=self.params['axis'],
+                                             orientation=self.params['orientation'])
         local_obs_params['cyl_obs_params'] = ctp
         obs = espressomd.observables.CylindricalLBVelocityProfile(
             **local_obs_params)

@@ -37,9 +37,11 @@ std::vector<double> CylindricalLBVelocityProfile::operator()() const {
                           lb_lbfluid_get_lattice_speed();
     auto const pos_shifted = p - cyl_trafo_params->get_center();
     auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
-        pos_shifted, cyl_trafo_params->get_axis(), cyl_trafo_params->get_orientation());
-    histogram.update(pos_cyl, Utils::transform_vector_cartesian_to_cylinder(
-                                  velocity, cyl_trafo_params->get_axis(), pos_shifted));
+        pos_shifted, cyl_trafo_params->get_axis(),
+        cyl_trafo_params->get_orientation());
+    histogram.update(pos_cyl,
+                     Utils::transform_vector_cartesian_to_cylinder(
+                         velocity, cyl_trafo_params->get_axis(), pos_shifted));
   }
   auto hist_data = histogram.get_histogram();
   auto const tot_count = histogram.get_tot_count();

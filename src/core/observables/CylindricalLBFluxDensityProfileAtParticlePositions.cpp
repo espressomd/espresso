@@ -45,9 +45,12 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
     auto const flux_dens = lb_lbfluid_get_interpolated_density(pos) * v;
 
     histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
-                         pos - cyl_trafo_params->get_center(), cyl_trafo_params->get_axis(), cyl_trafo_params->get_orientation()),
+                         pos - cyl_trafo_params->get_center(),
+                         cyl_trafo_params->get_axis(),
+                         cyl_trafo_params->get_orientation()),
                      Utils::transform_vector_cartesian_to_cylinder(
-                         flux_dens, cyl_trafo_params->get_axis(), pos - cyl_trafo_params->get_center()));
+                         flux_dens, cyl_trafo_params->get_axis(),
+                         pos - cyl_trafo_params->get_center()));
   }
 
   // normalize by number of hits per bin

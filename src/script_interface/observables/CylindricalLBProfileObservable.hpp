@@ -140,20 +140,23 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
+    if (params.count("cyl_trafo_params")) {
       set_from_args(m_cyl_trafo_params, params, "cyl_trafo_params");
-      m_observable = std::make_shared<CoreCylLBObs>(
-          m_cyl_trafo_params->cyl_trafo_params(),
-          get_value_or<int>(params, "n_r_bins", 1),
-          get_value_or<int>(params, "n_phi_bins", 1),
-          get_value_or<int>(params, "n_z_bins", 1),
-          get_value_or<double>(params, "min_r", 0.),
-          get_value<double>(params, "max_r"),
-          get_value_or<double>(params, "min_phi", -Utils::pi()),
-          get_value_or<double>(params, "max_phi", Utils::pi()),
-          get_value<double>(params, "min_z"),
-          get_value<double>(params, "max_z"),
-          get_value<double>(params, "sampling_density"));
+    } else {
+      m_cyl_trafo_params = std::make_shared<CylTrafoParams>();
     }
+    m_observable = std::make_shared<CoreCylLBObs>(
+        m_cyl_trafo_params->cyl_trafo_params(),
+        get_value_or<int>(params, "n_r_bins", 1),
+        get_value_or<int>(params, "n_phi_bins", 1),
+        get_value_or<int>(params, "n_z_bins", 1),
+        get_value_or<double>(params, "min_r", 0.),
+        get_value<double>(params, "max_r"),
+        get_value_or<double>(params, "min_phi", -Utils::pi()),
+        get_value_or<double>(params, "max_phi", Utils::pi()),
+        get_value<double>(params, "min_z"), get_value<double>(params, "max_z"),
+        get_value<double>(params, "sampling_density"));
+  }
 
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
