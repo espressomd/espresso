@@ -22,6 +22,7 @@ jobs:
         with:
           asan: false
           ubsan: false
+          check_skip_long: false
 
   sanitizer_check:
     runs-on: macos-latest
@@ -38,6 +39,7 @@ jobs:
         with:
           asan: true
           ubsan: true
+          check_skip_long: true
       - name: Setting job link variable
         run: |
           echo "job_link=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> $GITHUB_ENV

@@ -9,6 +9,10 @@ inputs:
     description: 'Whether to build with undefined behavior sanitizer'
     required: true
     default: 'false'
+  check_skip_long:  # id of input
+    description: 'Whether to skip long python tests'
+    required: true
+    default: 'false'
 runs:
   using: "composite"
   steps:
@@ -18,7 +22,7 @@ runs:
        pip3 install numpy cython h5py scipy
       shell: bash
     - run: |
-        export myconfig=maxset with_cuda=false test_timeout=600 with_asan=${{ inputs.asan }} with_ubsan=${{ inputs.ubsan }}
+        export myconfig=maxset with_cuda=false test_timeout=600 with_asan=${{ inputs.asan }} with_ubsan=${{ inputs.ubsan }} check_skip_long=${{ inputs.check_skip_long }}
         bash maintainer/CI/build_cmake.sh
       shell: bash
       # This is a workaround for the unfortunate interaction of MacOS and OpenMPI 4
