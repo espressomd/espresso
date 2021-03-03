@@ -27,11 +27,14 @@
 #include "Observable.hpp"
 #include "core/observables/CylindricalPidProfileObservable.hpp"
 
-#include <boost/range/algorithm.hpp>
+#include <utils/constants.hpp>
+#include <script_interface/CylTrafoParams.hpp>
 
+#include <boost/range/algorithm.hpp>
 #include <cstddef>
 #include <iterator>
 #include <memory>
+
 #include <type_traits>
 #include <vector>
 
@@ -58,26 +61,7 @@ public:
                get_value<std::vector<int>>(v);
          },
          [this]() { return cylindrical_pid_profile_observable()->ids(); }},
-        {"center",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->center =
-               get_value<::Utils::Vector3d>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->center; }},
-        {"axis",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->axis =
-               get_value<Utils::Vector3d>(v);
-         },
-         [this]() { return cylindrical_pid_profile_observable()->axis; }},
-        {"orientation",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->orientation =
-               get_value<Utils::Vector3d>(v);
-         },
-         [this]() {
-           return cylindrical_pid_profile_observable()->orientation;
-         }},
+        {"cyl_trafo_params", m_cyl_trafo_params},
         {"n_r_bins",
          [this](const Variant &v) {
            cylindrical_pid_profile_observable()->n_bins[0] =
@@ -157,13 +141,19 @@ public:
   };
 
   void do_construct(VariantMap const &params) override {
-    m_observable =
-        make_shared_from_args<CoreObs, std::vector<int>, Utils::Vector3d,
-                              Utils::Vector3d, Utils::Vector3d, int, int, int,
-                              double, double, double, double, double, double>(
-            params, "ids", "center", "axis", "orientation", "n_r_bins",
-            "n_phi_bins", "n_z_bins", "min_r", "max_r", "min_phi", "max_phi",
-            "min_z", "max_z");
+    set_from_args(m_cyl_trafo_params, params, "cyl_trafo_params");
+    m_observable = std::make_shared<CoreObs>(
+        get_value<std::vector<int>>(params, "ids"),
+        m_cyl_trafo_params->cyl_trafo_params(),
+        get_value_or<int>(params,"n_r_bins", 1),
+        get_value_or<int>(params, "n_phi_bins", 1),
+        get_value_or<int>(params, "n_z_bins", 1),
+        get_value_or<double>(params, "min_r", 0.),
+        get_value<double>(params,"max_r"),
+        get_value_or<double>(params, "min_phi", -Utils::pi()),
+        get_value_or<double>(params, "max_phi", Utils::pi()),
+        get_value<double>(params, "min_z"),
+        get_value<double>(params, "max_z"));
   }
 
   Variant do_call_method(std::string const &method,
@@ -188,6 +178,7 @@ public:
 
 private:
   std::shared_ptr<CoreObs> m_observable;
+  std::shared_ptr<CylTrafoParams> m_cyl_trafo_params;
 };
 
 } /* namespace Observables */

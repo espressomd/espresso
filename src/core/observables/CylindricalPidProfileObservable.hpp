@@ -28,7 +28,7 @@ class CylindricalPidProfileObservable : public PidObservable,
                                         public CylindricalProfileObservable {
 public:
   CylindricalPidProfileObservable(std::vector<int> const &ids,
-                                  Utils::CylTrafoParams const &cyl_trafo_params,
+                                  std::shared_ptr<Utils::CylTrafoParams> cyl_trafo_params,
                                   int n_r_bins, int n_phi_bins, int n_z_bins,
                                   double min_r, double max_r, double min_phi,
                                   double max_phi, double min_z, double max_z)

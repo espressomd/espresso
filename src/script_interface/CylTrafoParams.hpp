@@ -44,9 +44,17 @@ public:
                         [this]() { return m_cyl_trafo_params->get_orientation(); }
                     } });
   }
-
+  std::shared_ptr<::Utils::CylTrafoParams> cyl_trafo_params(){
+    return m_cyl_trafo_params;
+  }
+  void do_construct(VariantMap const &params) override {
+    m_cyl_trafo_params = std::make_shared<Utils::CylTrafoParams>(
+        get_value_or<Utils::Vector3d>(params, "center", Utils::Vector3d{{0,0,0}}),
+        get_value_or<Utils::Vector3d>(params, "axis", Utils::Vector3d{{0,0,1}}),
+        get_value_or<Utils::Vector3d>(params, "orientation", Utils::Vector3d{{1,0,0}}));
+  }
 private:
-  std::shared_ptr<::Utils::CylTrafoParams> m_cyl_trafo_params;
+  std::shared_ptr<Utils::CylTrafoParams> m_cyl_trafo_params;
 };
 } // namespace ScriptInterface
 #endif

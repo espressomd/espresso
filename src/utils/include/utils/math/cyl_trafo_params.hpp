@@ -20,6 +20,7 @@
 #define ESPRESSO_CYLINDER_TRANSFORMATION_PARAMETERS_HPP
 
 #include <stdexcept>
+#include <string>
 
 #include <utils/math/abs.hpp>
 
@@ -44,15 +45,15 @@ public:
 
 private:
   void check_valid(){
-    auto const eps = std::numeric_limits<double>::epsilon();
-    if (Utils::abs(m_center * m_axis) > eps){
-      throw std::runtime_error("CylTrafoParams: Axis and orientation must be orthogonal.");
+    auto const eps = 10*std::numeric_limits<double>::epsilon();
+    if (Utils::abs(m_orientation * m_axis) > eps){
+      throw std::runtime_error("CylTrafoParams: Axis and orientation must be orthogonal. Scalar product is " + std::to_string(m_orientation*m_axis));
     }
     if (Utils::abs(m_axis.norm() -1) > eps){
-      throw std::runtime_error("CylTrafoParams: Axis must be normalized.");
+      throw std::runtime_error("CylTrafoParams: Axis must be normalized. Norm is " + std::to_string(m_axis.norm()));
     }
     if (Utils::abs(m_orientation.norm() -1) > eps){
-      throw std::runtime_error("CylTrafoParams: orientation must be normalized.");
+      throw std::runtime_error("CylTrafoParams: orientation must be normalized. Norm is " + std::to_string(m_orientation.norm()));
     }
   }
 
