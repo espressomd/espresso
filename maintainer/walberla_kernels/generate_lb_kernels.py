@@ -27,7 +27,7 @@ from lbmpy_walberla import generate_lattice_model
 
 with CodeGeneration() as ctx:
     kT = sp.symbols("kT")
-    force_field = ps.fields("force(3): [3D]", layout='zyxf')
+    force_field = ps.fields("force(3): [3D]", layout='fzyx')
 
     def rr_getter(moment_group):
         """Map groups of LB moments to relaxation rate symbols 
@@ -66,10 +66,17 @@ with CodeGeneration() as ctx:
         method,
         optimization={'cse_global': True}
     )
+    cpu_vectorize_info = {
+        "assume_inner_stride_one": True,
+        "assume_aligned": True,
+        "nontemporal": True,
+        "instruction_set": "avx"}
     generate_lattice_model(
         ctx,
         'MRTLatticeModel',
-        collision_rule_unthermalized)
+        collision_rule_unthermalized,
+        cpu_vectorize_info=cpu_vectorize_info,
+        field_layout="fzyx")
 
     # generate thermalized LB
     collision_rule_thermalized = create_lb_collision_rule(
@@ -77,10 +84,13 @@ with CodeGeneration() as ctx:
         fluctuating={
             'temperature': kT,
             'block_offsets': 'walberla',
+            'rng_node': ps.rng.PhiloxTwoDoubles,
         },
         optimization={'cse_global': True}
     )
     generate_lattice_model(
         ctx,
         'FluctuatingMRTLatticeModel',
-        collision_rule_thermalized)
+        collision_rule_thermalized,
+        cpu_vectorize_info=cpu_vectorize_info,
+        field_layout="fzyx")
