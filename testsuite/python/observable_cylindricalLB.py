@@ -18,6 +18,7 @@ import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.math
 import espressomd.observables
 import espressomd.lb
 import tests_common
@@ -40,11 +41,13 @@ class CylindricalLBObservableCommon:
                  'visc': 2.7,
                  'tau': 0.1,
                  }
+    cyl_trafo_params = espressomd.math.CylTrafoParams(center = 3*[7],
+                                                        axis = [1,0,0],
+                                                        orientation = [0,0,1])
+    
     params = {
         'ids': None,
-        'center': 3 * [7],
-        'axis': [1, 0, 0],
-        'orientation': [0, 0, 1],
+        'cyl_trafo_params' : cyl_trafo_params,
         'n_r_bins': 4, 
         'n_phi_bins': 3, 
         'n_z_bins': 5,  
@@ -115,7 +118,7 @@ class CylindricalLBObservableCommon:
         for pos, vel in zip(positions, velocities):
             pos_aligned.append(
                 self.align_with_observable_frame(pos) +
-                self.params['center'])
+                self.cyl_trafo_params.center)
             vel_aligned.append(self.align_with_observable_frame(vel))
         node_aligned = np.array(
             np.rint(
@@ -208,19 +211,15 @@ class CylindricalLBObservableCommon:
         self.assertEqual(observable.max_z, 9)
         obs_bin_edges = observable.bin_edges()
         np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
-        # check center
-        np.testing.assert_array_equal(
-            np.copy(observable.center), params['center'])
-        observable.center = [3, 2, 1]
-        np.testing.assert_array_equal(np.copy(observable.center), [3, 2, 1])
-        # check axis
-        np.testing.assert_array_equal(np.copy(observable.axis), params['axis'])
-        observable.axis = [6, 5, 4]
-        np.testing.assert_array_equal(np.copy(observable.axis), [6, 5, 4])
-        # check sampling_density
-        self.assertEqual(observable.sampling_density, 2)
-        observable.sampling_density = 3
-        self.assertEqual(observable.sampling_density, 3)
+        # check center, axis, orientation
+        ctp = espressomd.math.CylTrafoParams(center = [1,2,3],
+                                             axis = [0,1,0],
+                                             orientation = [0,0,1])
+        observable.cyl_trafo_params = ctp
+        
+        for attr_name in ['center','axis', 'orientation']:
+            np.testing.assert_array_almost_equal(np.copy(ctp.__getattr__(attr_name)),
+                                                 np.copy(observable.cyl_trafo_params.__getattr__(attr_name)))
 
 
 class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):

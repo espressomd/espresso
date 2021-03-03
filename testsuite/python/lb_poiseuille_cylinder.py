@@ -18,6 +18,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 
+import espressomd.math
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.observables
@@ -151,9 +152,10 @@ class LBPoiseuilleCommon:
         else:
             obs_center = [BOX_L / 2.0, BOX_L / 2.0, 0.0]
         local_obs_params = OBS_PARAMS.copy()
-        local_obs_params['center'] = obs_center
-        local_obs_params['axis'] = self.params['axis']
-        local_obs_params['orientation'] = self.params['orientation']
+        ctp = espressomd.math.CylTrafoParams(center = obs_center,
+                                          axis = self.params['axis'],
+                                          orientation = self.params['orientation'])
+        local_obs_params['cyl_obs_params'] = ctp
         obs = espressomd.observables.CylindricalLBVelocityProfile(
             **local_obs_params)
         self.accumulator = espressomd.accumulators.MeanVarianceCalculator(
