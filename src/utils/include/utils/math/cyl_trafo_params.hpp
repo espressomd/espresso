@@ -27,7 +27,7 @@ namespace Utils {
 
 class CylTrafoParams {
 public:
-  CylTrafoParams(Utils::Vector3d const &center = Utils::Vector3d{{0,0,0}},
+  explicit CylTrafoParams(Utils::Vector3d const &center = Utils::Vector3d{{0,0,0}},
                  Utils::Vector3d const &axis = Utils::Vector3d{{0,0,1}},
                  Utils::Vector3d const &orientation = Utils::Vector3d{{1,0,0}})
       : m_center(center), m_axis(axis), m_orientation(orientation){
@@ -39,8 +39,8 @@ public:
   Utils::Vector3d get_orientation() const {return m_orientation;}
 
   void set_center(Vector3d const &center) {m_center = center;}
-  void set_axis(Vector3d const &center) {throw std::runtime_error("CylTrafoParams: Axis can only be set at construction.");}
-  void set_orientation(Vector3d const &center) {throw std::runtime_error("CylTrafoParams: Orientation can only be set at construction.");}
+  static void set_axis(Vector3d const &center) {throw std::runtime_error("CylTrafoParams: Axis can only be set at construction.");}
+  static void set_orientation(Vector3d const &center) {throw std::runtime_error("CylTrafoParams: Orientation can only be set at construction.");}
 
 private:
   void check_valid(){

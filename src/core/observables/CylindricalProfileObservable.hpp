@@ -22,12 +22,15 @@
 #include "ProfileObservable.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/abs.hpp>
+#include <utils/math/cyl_trafo_params.hpp>
 #include <utils/math/make_lin_space.hpp>
 
 #include <boost/range/algorithm.hpp>
 
 #include <array>
 #include <cstddef>
+#include <limits>
 #include <vector>
 
 namespace Observables {
@@ -35,18 +38,14 @@ namespace Observables {
 /** Cylindrical profile observable */
 class CylindricalProfileObservable : public ProfileObservable {
 public:
-  CylindricalProfileObservable(Utils::Vector3d const &center,
-                               Utils::Vector3d const &axis,
-                               Utils::Vector3d const &orientation, int n_r_bins,
+  CylindricalProfileObservable(Utils::CylTrafoParams const &cyl_trafo_params, int n_r_bins,
                                int n_phi_bins, int n_z_bins, double min_r,
                                double max_r, double min_phi, double max_phi,
                                double min_z, double max_z)
       : ProfileObservable(n_r_bins, n_phi_bins, n_z_bins, min_r, max_r, min_phi,
                           max_phi, min_z, max_z),
-        center(center), axis(axis), orientation(orientation) {}
-  Utils::Vector3d center;
-  Utils::Vector3d axis;
-  Utils::Vector3d orientation;
+        cyl_trafo_params(cyl_trafo_params) {}
+  Utils::CylTrafoParams cyl_trafo_params;
 };
 
 } // Namespace Observables

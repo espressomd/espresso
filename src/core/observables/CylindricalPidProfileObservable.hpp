@@ -28,14 +28,12 @@ class CylindricalPidProfileObservable : public PidObservable,
                                         public CylindricalProfileObservable {
 public:
   CylindricalPidProfileObservable(std::vector<int> const &ids,
-                                  Utils::Vector3d const &center,
-                                  Utils::Vector3d const &axis,
-                                  Utils::Vector3d const &orientation,
+                                  Utils::CylTrafoParams const &cyl_trafo_params,
                                   int n_r_bins, int n_phi_bins, int n_z_bins,
                                   double min_r, double max_r, double min_phi,
                                   double max_phi, double min_z, double max_z)
       : PidObservable(ids),
-        CylindricalProfileObservable(center, axis, orientation, n_r_bins,
+        CylindricalProfileObservable(cyl_trafo_params, n_r_bins,
                                      n_phi_bins, n_z_bins, min_r, max_r,
                                      min_phi, max_phi, min_z, max_z) {}
 };

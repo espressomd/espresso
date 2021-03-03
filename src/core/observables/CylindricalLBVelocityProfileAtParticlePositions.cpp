@@ -41,9 +41,9 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
                    lb_lbfluid_get_lattice_speed();
 
     histogram.update(
-        Utils::transform_coordinate_cartesian_to_cylinder(pos - center, axis,
-                                                          orientation),
-        Utils::transform_vector_cartesian_to_cylinder(v, axis, pos - center));
+        Utils::transform_coordinate_cartesian_to_cylinder(pos - cyl_trafo_params.get_center(), cyl_trafo_params.get_axis(),
+                                                          cyl_trafo_params.get_orientation()),
+        Utils::transform_vector_cartesian_to_cylinder(v, cyl_trafo_params.get_axis(), pos - cyl_trafo_params.get_center()));
   }
 
   // normalize by number of hits per bin
