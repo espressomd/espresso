@@ -57,8 +57,8 @@ public:
     } else if (name == "clear") {
       for (auto &s : m_shapes) {
         m_core_shape->remove(s->shape());
-        m_shapes.clear();
       }
+      m_shapes.clear();
     } else if (name == "size") {
       return static_cast<int>(m_shapes.size());
     } else if (name == "empty") {
