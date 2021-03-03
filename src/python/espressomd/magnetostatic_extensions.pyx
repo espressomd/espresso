@@ -44,7 +44,7 @@ IF DIPOLES and DP3M:
         gap_size : :obj:`float`
             The gap size gives the height :math:`h` of the empty region between
             the system box and the neighboring artificial images. |es| checks
-            the gap is empty and will throw an error if it isn't. Therefore
+            that the gap is empty and will throw an error if it isn't. Therefore
             you should really make sure that the gap region is empty (e.g.
             with wall constraints).
         maxPWerror : :obj:`float`
