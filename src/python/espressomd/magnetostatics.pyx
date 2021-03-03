@@ -120,7 +120,7 @@ IF DP3M == 1:
         def valid_keys(self):
             return ["prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
                     "cao", "accuracy", "epsilon", "cao_cut", "a", "ai",
-                    "alpha", "r_cut", "cao3", "additional_mesh", "tune", "verbose"]
+                    "alpha", "r_cut", "cao3", "tune", "verbose"]
 
         def required_keys(self):
             return ["accuracy", ]

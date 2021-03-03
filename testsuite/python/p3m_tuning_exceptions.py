@@ -160,7 +160,7 @@ class P3M_tuning_test(ut.TestCase):
     def check_invalid_params(self, solver_class, **custom_params):
         valid_params = {
             'prefactor': 2, 'accuracy': .01, 'tune': False, 'cao': 1,
-            'r_cut': 3.73e-01, 'alpha': 3.81e+00, 'mesh': (8, 8, 8),
+            'r_cut': 0.373, 'alpha': 3.81, 'mesh': (8, 8, 8),
             'mesh_off': [-1, -1, -1]}
         valid_params.update(custom_params)
 
@@ -211,6 +211,46 @@ class P3M_tuning_test(ut.TestCase):
         self.add_magnetic_particles()
 
         self.check_invalid_params(espressomd.magnetostatics.DipolarP3M)
+
+    @utx.skipIfMissingFeatures("P3M")
+    def test_04_invalid_params_p3m_elc_cpu(self):
+        import espressomd.electrostatics
+
+        self.system.time_step = 0.01
+        self.add_charged_particles()
+
+        solver_p3m = espressomd.electrostatics.P3M(
+            prefactor=2, accuracy=0.01, tune=False, cao=1,
+            r_cut=0.373, alpha=3.81, mesh=(8, 8, 8))
+        solver_elc = espressomd.electrostatics.ELC(
+            p3m_actor=solver_p3m, gap_size=1.2 * self.system.box_l[2],
+            maxPWerror=0.01)
+        with self.assertRaisesRegex(Exception, "gap size too large"):
+            self.system.actors.add(solver_elc)
+
+        self.system.actors.clear()
+        solver_dh = espressomd.electrostatics.DH(
+            prefactor=1.2, kappa=0.8, r_cut=2.0)
+        solver_elc = espressomd.electrostatics.ELC(
+            p3m_actor=solver_dh, gap_size=1, maxPWerror=0.01)
+        with self.assertRaisesRegex(ValueError, "p3m_actor has to be a P3M solver"):
+            self.system.actors.add(solver_elc)
+
+    @utx.skipIfMissingGPU()
+    @utx.skipIfMissingFeatures("P3M")
+    def test_04_invalid_params_p3m_elc_gpu(self):
+        import espressomd.electrostatics
+
+        self.system.time_step = 0.01
+        self.add_charged_particles()
+
+        solver_p3m = espressomd.electrostatics.P3MGPU(
+            prefactor=2, accuracy=0.01, tune=False, cao=1,
+            r_cut=4.4434, alpha=0.3548, mesh=(28, 28, 28))
+        solver_elc = espressomd.electrostatics.ELC(
+            p3m_actor=solver_p3m, gap_size=1, maxPWerror=0.01)
+        with self.assertRaisesRegex(ValueError, "ELC is not set up to work with the GPU P3M"):
+            self.system.actors.add(solver_elc)
 
     ###########################################################
     # block of tests where tuning should not throw exceptions #

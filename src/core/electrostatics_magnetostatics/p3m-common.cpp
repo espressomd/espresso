@@ -115,14 +115,17 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
 
 void p3m_calc_local_ca_mesh(p3m_local_mesh &local_mesh,
                             const P3MParameters &params,
-                            const LocalBox<double> &local_geo, double skin) {
+                            const LocalBox<double> &local_geo, double skin,
+                            double space_layer) {
   int i;
   int ind[3];
   /* total skin size */
   double full_skin[3];
 
   for (i = 0; i < 3; i++)
-    full_skin[i] = params.cao_cut[i] + skin + params.additional_mesh[i];
+    full_skin[i] = params.cao_cut[i] + skin;
+
+  full_skin[2] += space_layer;
 
   /* inner left down grid point (global index) */
   for (i = 0; i < 3; i++)

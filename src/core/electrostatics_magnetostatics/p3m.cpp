@@ -185,7 +185,13 @@ void p3m_init() {
     return;
   }
 
-  p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
+  double elc_layer = 0.0;
+  if (coulomb.method == COULOMB_ELC_P3M) {
+    elc_layer = elc_params.space_layer;
+  }
+
+  p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin,
+                         elc_layer);
 
   p3m.sm.resize(comm_cart, p3m.local_mesh);
 
