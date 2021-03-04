@@ -49,14 +49,12 @@ public:
       // We have to rotate the coordinates since the utils function assumes
       // z-axis symmetry.
       constexpr Utils::Vector3d z_axis{{0.0, 0.0, 1.0}};
-      auto const theta =
-          Utils::angle_between(z_axis, cyl_trafo_params->get_axis());
+      auto const theta = Utils::angle_between(z_axis, cyl_trafo_params->axis());
       auto const rot_axis =
-          Utils::vector_product(z_axis, cyl_trafo_params->get_axis())
-              .normalize();
+          Utils::vector_product(z_axis, cyl_trafo_params->axis()).normalize();
       if (theta > std::numeric_limits<double>::epsilon())
         p_cart = Utils::vec_rotate(rot_axis, theta, p_cart);
-      p = p_cart + cyl_trafo_params->get_center();
+      p = p_cart + cyl_trafo_params->center();
     }
   }
   std::vector<Utils::Vector3d> sampling_positions;

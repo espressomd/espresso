@@ -28,31 +28,20 @@ namespace Utils {
 
 class CylTrafoParams {
 public:
-  explicit CylTrafoParams(
-      Utils::Vector3d const &center = Utils::Vector3d{{0, 0, 0}},
-      Utils::Vector3d const &axis = Utils::Vector3d{{0, 0, 1}},
-      Utils::Vector3d const &orientation = Utils::Vector3d{{1, 0, 0}})
+  CylTrafoParams() = default;
+  CylTrafoParams(Utils::Vector3d const &center, Utils::Vector3d const &axis,
+                 Utils::Vector3d const &orientation)
       : m_center(center), m_axis(axis), m_orientation(orientation) {
-    check_valid();
+    validate();
   }
 
-  Utils::Vector3d get_center() const { return m_center; }
-  Utils::Vector3d get_axis() const { return m_axis; }
-  Utils::Vector3d get_orientation() const { return m_orientation; }
-
-  void set_center(Vector3d const &center) { m_center = center; }
-  static void set_axis(Vector3d const &center) {
-    throw std::runtime_error(
-        "CylTrafoParams: Axis can only be set at construction.");
-  }
-  static void set_orientation(Vector3d const &center) {
-    throw std::runtime_error(
-        "CylTrafoParams: Orientation can only be set at construction.");
-  }
+  Utils::Vector3d center() const { return m_center; }
+  Utils::Vector3d axis() const { return m_axis; }
+  Utils::Vector3d orientation() const { return m_orientation; }
 
 private:
-  void check_valid() {
-    auto const eps = 10 * std::numeric_limits<double>::epsilon();
+  void validate() const {
+    auto constexpr eps = 10 * std::numeric_limits<double>::epsilon();
     if (Utils::abs(m_orientation * m_axis) > eps) {
       throw std::runtime_error("CylTrafoParams: Axis and orientation must be "
                                "orthogonal. Scalar product is " +
@@ -70,9 +59,9 @@ private:
     }
   }
 
-  Utils::Vector3d m_center;
-  Utils::Vector3d m_axis;
-  Utils::Vector3d m_orientation;
+  const Utils::Vector3d m_center{};
+  const Utils::Vector3d m_axis{0, 0, 1};
+  const Utils::Vector3d m_orientation{1, 0, 0};
 };
 
 } // namespace Utils

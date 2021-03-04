@@ -32,12 +32,11 @@ class CylTrafoParams : public AutoParameters<CylTrafoParams> {
 public:
   CylTrafoParams() {
     add_parameters({{"center", AutoParameter::read_only,
-                     [this]() { return m_cyl_trafo_params->get_center(); }},
+                     [this]() { return m_cyl_trafo_params->center(); }},
                     {"axis", AutoParameter::read_only,
-                     [this]() { return m_cyl_trafo_params->get_axis(); }},
-                    {"orientation", AutoParameter::read_only, [this]() {
-                       return m_cyl_trafo_params->get_orientation();
-                     }}});
+                     [this]() { return m_cyl_trafo_params->axis(); }},
+                    {"orientation", AutoParameter::read_only,
+                     [this]() { return m_cyl_trafo_params->orientation(); }}});
   }
   std::shared_ptr<::Utils::CylTrafoParams> cyl_trafo_params() {
     return m_cyl_trafo_params;

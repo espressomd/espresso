@@ -40,21 +40,21 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
     auto const v = lb_lbfluid_get_interpolated_velocity(pos) *
                    lb_lbfluid_get_lattice_speed();
 
-    histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
-                         pos - cyl_trafo_params->get_center(),
-                         cyl_trafo_params->get_axis(),
-                         cyl_trafo_params->get_orientation()),
-                     Utils::transform_vector_cartesian_to_cylinder(
-                         v, cyl_trafo_params->get_axis(),
-                         pos - cyl_trafo_params->get_center()));
+    histogram.update(
+        Utils::transform_coordinate_cartesian_to_cylinder(
+            pos - cyl_trafo_params->center(), cyl_trafo_params->axis(),
+            cyl_trafo_params->orientation()),
+        Utils::transform_vector_cartesian_to_cylinder(
+            v, cyl_trafo_params->axis(), pos - cyl_trafo_params->center()));
   }
 
   // normalize by number of hits per bin
   auto hist_tmp = histogram.get_histogram();
   auto tot_count = histogram.get_tot_count();
   std::transform(hist_tmp.begin(), hist_tmp.end(), tot_count.begin(),
-                 hist_tmp.begin(),
-                 [](auto hi, auto ci) { return ci > 0 ? hi / ci : 0.; });
+                 hist_tmp.begin(), [](auto hi, auto ci) {
+                   return ci > 0 ? hi / static_cast<double>(ci) : 0.;
+                 });
   return hist_tmp;
 }
 
