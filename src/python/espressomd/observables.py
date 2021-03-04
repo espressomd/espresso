@@ -17,6 +17,7 @@
 import itertools
 import numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register
+from .math import CylTrafoParams
 
 
 @script_interface_register
@@ -67,6 +68,18 @@ class ProfileObservable(Observable):
             edges[i] = np.array(edge[:-1]) + (edge[1] - edge[0]) / 2
         shape = list(map(len, edges)) + [len(edges)]
         return np.array(list(itertools.product(*edges))).reshape(shape)
+
+
+class CylindricalProfileObservable(ProfileObservable):
+    """
+    Base class for observables that work with cylinder coordinates
+    """
+
+    def __init__(self, **kwargs):
+        if "oid" not in kwargs and "cyl_trafo_params" not in kwargs:
+            # If the user does not provide cyl_trafo_params, use the default
+            kwargs["cyl_trafo_params"] = CylTrafoParams()
+        super().__init__(**kwargs)
 
 
 @script_interface_register
@@ -636,7 +649,7 @@ class DPDStress(Observable):
 
 
 @script_interface_register
-class CylindricalDensityProfile(ProfileObservable):
+class CylindricalDensityProfile(CylindricalProfileObservable):
 
     """Calculates the particle density in cylindrical coordinates.
 
@@ -678,7 +691,7 @@ class CylindricalDensityProfile(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalFluxDensityProfile(ProfileObservable):
+class CylindricalFluxDensityProfile(CylindricalProfileObservable):
 
     """Calculates the particle flux density in cylindrical coordinates.
 
@@ -722,7 +735,8 @@ class CylindricalFluxDensityProfile(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalLBFluxDensityProfileAtParticlePositions(ProfileObservable):
+class CylindricalLBFluxDensityProfileAtParticlePositions(
+        CylindricalProfileObservable):
 
     """Calculates the LB fluid flux density at the particle positions in
     cylindrical coordinates.
@@ -768,7 +782,7 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(ProfileObservable):
 
 @script_interface_register
 class CylindricalLBVelocityProfileAtParticlePositions(
-        ProfileObservable):
+        CylindricalProfileObservable):
 
     """Calculates the LB fluid velocity at the particle positions in
     cylindrical coordinates.
@@ -813,7 +827,7 @@ class CylindricalLBVelocityProfileAtParticlePositions(
 
 
 @script_interface_register
-class CylindricalVelocityProfile(ProfileObservable):
+class CylindricalVelocityProfile(CylindricalProfileObservable):
 
     """Calculates the particle velocity profile in cylindrical coordinates.
 
@@ -857,7 +871,7 @@ class CylindricalVelocityProfile(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalLBVelocityProfile(ProfileObservable):
+class CylindricalLBVelocityProfile(CylindricalProfileObservable):
 
     """Calculates the LB fluid velocity profile in cylindrical coordinates.
 

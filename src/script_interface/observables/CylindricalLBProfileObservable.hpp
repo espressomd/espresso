@@ -55,7 +55,7 @@ public:
   using Base::Base;
   CylindricalLBProfileObservable() {
     this->add_parameters({
-        {"cyl_trafo_params", Utils::as_const(m_cyl_trafo_params)},
+        {"cyl_trafo_params", m_cyl_trafo_params},
         {"n_r_bins",
          [this](const Variant &v) {
            cylindrical_profile_observable()->n_bins[0] =
