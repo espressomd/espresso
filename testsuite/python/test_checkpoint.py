@@ -379,7 +379,7 @@ class CheckpointTest(ut.TestCase):
                          'p3m_cao': '7',
                          'p3m_r_cut': '1.0',
                          'p3m_grid': '64',
-                         'p3m_alpha': '2.7'}}
+                         'p3m_alpha': '2.084652'}}
         for key in reference:
             self.assertEqual(state[key], reference[key], msg=f'for {key}')
 
