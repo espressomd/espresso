@@ -53,6 +53,12 @@ with CodeGeneration() as ctx:
         else:
             return sp.Symbol("omega_odd")
 
+    cpu_vectorize_info = {
+        "assume_inner_stride_one": True,
+        "assume_aligned": True,
+        "nontemporal": True,
+        "instruction_set": "avx"}
+
     method = create_mrt_orthogonal(
         stencil=get_stencil('D3Q19'),
         compressible=True,
@@ -66,14 +72,15 @@ with CodeGeneration() as ctx:
         method,
         optimization={'cse_global': True}
     )
-    cpu_vectorize_info = {
-        "assume_inner_stride_one": True,
-        "assume_aligned": True,
-        "nontemporal": True,
-        "instruction_set": "avx"}
     generate_lattice_model(
         ctx,
         'MRTLatticeModel',
+        collision_rule_unthermalized,
+        field_layout="fzyx")
+
+    generate_lattice_model(
+        ctx,
+        'MRTLatticeModelAvx',
         collision_rule_unthermalized,
         cpu_vectorize_info=cpu_vectorize_info,
         field_layout="fzyx")
@@ -91,6 +98,11 @@ with CodeGeneration() as ctx:
     generate_lattice_model(
         ctx,
         'FluctuatingMRTLatticeModel',
+        collision_rule_thermalized,
+        field_layout="fzyx")
+    generate_lattice_model(
+        ctx,
+        'FluctuatingMRTLatticeModelAvx',
         collision_rule_thermalized,
         cpu_vectorize_info=cpu_vectorize_info,
         field_layout="fzyx")

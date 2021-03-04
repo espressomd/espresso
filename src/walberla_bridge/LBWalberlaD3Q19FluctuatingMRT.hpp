@@ -1,11 +1,17 @@
 #include "LBWalberlaImpl.hpp"
-#include "generated_kernels/FluctuatingMRTLatticeModel.h"
+
+#ifdef __AVX__
+#include "generated_kernels/FluctuatingMRTLatticeModelAvx.h"
+#define LatticeModelName lbm::FluctuatingMRTLatticeModelAvx
+#else
+#include "generated_kernels/FluctuatingMRTLatticeModeli.h"
+#define LatticeModelName lbm::FluctuatingMRTLatticeModel
+#endif
 
 namespace walberla {
-class LBWalberlaD3Q19FluctuatingMRT
-    : public LBWalberlaImpl<lbm::FluctuatingMRTLatticeModel> {
+class LBWalberlaD3Q19FluctuatingMRT : public LBWalberlaImpl<LatticeModelName> {
 
-  using LatticeModel = lbm::FluctuatingMRTLatticeModel;
+  using LatticeModel = LatticeModelName;
 
 public:
   void construct_lattice_model(double viscosity, double kT, unsigned int seed) {
@@ -62,3 +68,4 @@ private:
 };
 
 } // namespace walberla
+#undef LatticeModelName

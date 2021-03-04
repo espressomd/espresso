@@ -1,11 +1,17 @@
 #include "LBWalberlaImpl.hpp"
+#ifdef __AVX2__
+#include "generated_kernels/MRTLatticeModelAvx.h"
+#define LatticeModelName lbm::MRTLatticeModelAvx
+#else
 #include "generated_kernels/MRTLatticeModel.h"
+#define LatticeModelName lbm::MRTLatticeModel
+#endif
 
 namespace walberla {
-class LBWalberlaD3Q19MRT : public LBWalberlaImpl<lbm::MRTLatticeModel> {
-public:
-  using LatticeModel = lbm::MRTLatticeModel;
+class LBWalberlaD3Q19MRT : public LBWalberlaImpl<LatticeModelName> {
+  using LatticeModel = LatticeModelName;
 
+public:
   void construct_lattice_model(double viscosity) {
     const real_t omega = 2 / (6 * real_c(viscosity) + 1);
     const real_t magic_number = real_c(3.) / real_c(16.);
@@ -45,3 +51,5 @@ public:
 };
 
 } // namespace walberla
+
+#undef LatticeModelName
