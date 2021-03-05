@@ -19,6 +19,8 @@
 #ifndef OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
 
+#include <utility>
+
 #include "CylindricalProfileObservable.hpp"
 #include "PidObservable.hpp"
 
@@ -33,9 +35,9 @@ public:
       int n_phi_bins, int n_z_bins, double min_r, double max_r, double min_phi,
       double max_phi, double min_z, double max_z)
       : PidObservable(ids),
-        CylindricalProfileObservable(cyl_trafo_params, n_r_bins, n_phi_bins,
-                                     n_z_bins, min_r, max_r, min_phi, max_phi,
-                                     min_z, max_z) {}
+        CylindricalProfileObservable(std::move(cyl_trafo_params), n_r_bins,
+                                     n_phi_bins, n_z_bins, min_r, max_r,
+                                     min_phi, max_phi, min_z, max_z) {}
 };
 
 } // Namespace Observables

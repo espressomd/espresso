@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -45,7 +46,7 @@ public:
       double max_phi, double min_z, double max_z)
       : ProfileObservable(n_r_bins, n_phi_bins, n_z_bins, min_r, max_r, min_phi,
                           max_phi, min_z, max_z),
-        cyl_trafo_params(cyl_trafo_params) {}
+        cyl_trafo_params(std::move(cyl_trafo_params)) {}
 
   std::shared_ptr<Utils::CylTrafoParams> cyl_trafo_params;
 };

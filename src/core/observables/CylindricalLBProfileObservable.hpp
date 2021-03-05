@@ -21,6 +21,7 @@
 
 #include "CylindricalProfileObservable.hpp"
 
+#include <utility>
 #include <utils/Vector.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 #include <utils/math/vec_rotate.hpp>
@@ -34,9 +35,9 @@ public:
       std::shared_ptr<Utils::CylTrafoParams> cyl_trafo_params, int n_r_bins,
       int n_phi_bins, int n_z_bins, double min_r, double max_r, double min_phi,
       double max_phi, double min_z, double max_z, double sampling_density)
-      : CylindricalProfileObservable(cyl_trafo_params, n_r_bins, n_phi_bins,
-                                     n_z_bins, min_r, max_r, min_phi, max_phi,
-                                     min_z, max_z),
+      : CylindricalProfileObservable(std::move(cyl_trafo_params), n_r_bins,
+                                     n_phi_bins, n_z_bins, min_r, max_r,
+                                     min_phi, max_phi, min_z, max_z),
         sampling_density(sampling_density) {
     calculate_sampling_positions();
   }
