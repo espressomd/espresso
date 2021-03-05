@@ -149,74 +149,75 @@ IF ELECTROSTATICS and P3M:
 
         def _get_params_from_es_core(self):
             params = {}
-            params["n_icc"] = iccp3m_cfg.n_ic
+            params["n_icc"] = icc_cfg.n_ic
 
             # Fill Lists
             normals = []
             areas = []
             sigmas = []
             epsilons = []
-            for i in range(iccp3m_cfg.n_ic):
-                normals.append([iccp3m_cfg.normals[i][0], iccp3m_cfg.normals[
-                               i][1], iccp3m_cfg.normals[i][2]])
-                areas.append(iccp3m_cfg.areas[i])
-                epsilons.append(iccp3m_cfg.ein[i])
-                sigmas.append(iccp3m_cfg.sigma[i])
+            for i in range(icc_cfg.n_ic):
+                normals.append([icc_cfg.normals[i][0], icc_cfg.normals[
+                               i][1], icc_cfg.normals[i][2]])
+                areas.append(icc_cfg.areas[i])
+                epsilons.append(icc_cfg.ein[i])
+                sigmas.append(icc_cfg.sigma[i])
 
             params["normals"] = normals
             params["areas"] = areas
             params["epsilons"] = epsilons
             params["sigmas"] = sigmas
 
-            params["ext_field"] = [iccp3m_cfg.ext_field[0],
-                                   iccp3m_cfg.ext_field[1], iccp3m_cfg.ext_field[2]]
-            params["first_id"] = iccp3m_cfg.first_id
-            params["max_iterations"] = iccp3m_cfg.num_iteration
-            params["convergence"] = iccp3m_cfg.convergence
-            params["relaxation"] = iccp3m_cfg.relax
-            params["eps_out"] = iccp3m_cfg.eout
+            params["ext_field"] = [icc_cfg.ext_field[0],
+                                   icc_cfg.ext_field[1],
+                                   icc_cfg.ext_field[2]]
+            params["first_id"] = icc_cfg.first_id
+            params["max_iterations"] = icc_cfg.num_iteration
+            params["convergence"] = icc_cfg.convergence
+            params["relaxation"] = icc_cfg.relax
+            params["eps_out"] = icc_cfg.eout
 
             return params
 
         def _set_params_in_es_core(self):
             # First set number of icc particles
-            iccp3m_cfg.n_ic = self._params["n_icc"]
+            icc_cfg.n_ic = self._params["n_icc"]
             # Allocate ICC lists
-            iccp3m_alloc_lists()
+            icc_alloc_lists()
 
             # Fill Lists
-            for i in range(iccp3m_cfg.n_ic):
-                iccp3m_cfg.normals[i][0] = self._params["normals"][i][0]
-                iccp3m_cfg.normals[i][1] = self._params["normals"][i][1]
-                iccp3m_cfg.normals[i][2] = self._params["normals"][i][2]
+            for i in range(icc_cfg.n_ic):
+                icc_cfg.normals[i][0] = self._params["normals"][i][0]
+                icc_cfg.normals[i][1] = self._params["normals"][i][1]
+                icc_cfg.normals[i][2] = self._params["normals"][i][2]
 
-                iccp3m_cfg.areas[i] = self._params["areas"][i]
-                iccp3m_cfg.ein[i] = self._params["epsilons"][i]
-                iccp3m_cfg.sigma[i] = self._params["sigmas"][i]
+                icc_cfg.areas[i] = self._params["areas"][i]
+                icc_cfg.ein[i] = self._params["epsilons"][i]
+                icc_cfg.sigma[i] = self._params["sigmas"][i]
 
-            iccp3m_cfg.ext_field[0] = self._params["ext_field"][0]
-            iccp3m_cfg.ext_field[1] = self._params["ext_field"][1]
-            iccp3m_cfg.ext_field[2] = self._params["ext_field"][2]
-            iccp3m_cfg.first_id = self._params["first_id"]
-            iccp3m_cfg.num_iteration = self._params["max_iterations"]
-            iccp3m_cfg.convergence = self._params["convergence"]
-            iccp3m_cfg.relax = self._params["relaxation"]
-            iccp3m_cfg.eout = self._params["eps_out"]
+            icc_cfg.ext_field[0] = self._params["ext_field"][0]
+            icc_cfg.ext_field[1] = self._params["ext_field"][1]
+            icc_cfg.ext_field[2] = self._params["ext_field"][2]
+            icc_cfg.first_id = self._params["first_id"]
+            icc_cfg.num_iteration = self._params["max_iterations"]
+            icc_cfg.convergence = self._params["convergence"]
+            icc_cfg.relax = self._params["relaxation"]
+            icc_cfg.eout = self._params["eps_out"]
 
             # Broadcasts vars
-            mpi_iccp3m_init()
+            mpi_icc_init()
 
         def _activate_method(self):
             check_neutrality(self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
-            iccp3m_cfg.n_ic = 0
+            icc_cfg.n_ic = 0
             # Allocate ICC lists
-            iccp3m_alloc_lists()
+            icc_alloc_lists()
 
             # Broadcasts vars
-            mpi_iccp3m_init()
+            mpi_icc_init()
 
         def last_iterations(self):
             """
@@ -229,4 +230,4 @@ IF ELECTROSTATICS and P3M:
                 Number of iterations
 
             """
-            return iccp3m_cfg.citeration
+            return icc_cfg.citeration

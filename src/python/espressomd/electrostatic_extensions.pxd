@@ -25,7 +25,7 @@ from .utils cimport Vector3d
 IF ELECTROSTATICS and P3M:
 
     cdef extern from "electrostatics_magnetostatics/icc.hpp":
-        ctypedef struct iccp3m_struct:
+        ctypedef struct icc_struct:
             int n_ic
             int num_iteration
             double eout
@@ -40,7 +40,7 @@ IF ELECTROSTATICS and P3M:
             int first_id
 
         # links intern C-struct with python object
-        iccp3m_struct iccp3m_cfg
+        icc_struct icc_cfg
 
-        void iccp3m_alloc_lists()
-        int mpi_iccp3m_init()
+        void icc_alloc_lists()
+        int mpi_icc_init()
