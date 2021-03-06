@@ -317,13 +317,12 @@ class TestLB:
             seed=3,
             gamma=self.params['friction'])
 
-        for _ in range(200):
+        for _ in range(20):
             system.integrator.run(1)
             particle_force = np.sum(system.part[:].f, axis=0)
             fluid_force = np.sum(
                 np.array([n.last_applied_force for n in self.lbf.nodes()]), axis=0)
             np.testing.assert_allclose(particle_force, -fluid_force)
-            print(np.amax(particle_force))
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ext_force_density(self):
