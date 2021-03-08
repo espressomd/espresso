@@ -17,7 +17,7 @@
 import itertools
 import numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .math import CylTrafoParams
+from .math import CylindricalTransformationParameters
 
 
 @script_interface_register
@@ -75,10 +75,10 @@ class CylindricalProfileObservable(ProfileObservable):
     Base class for observables that work with cylinder coordinates
     """
 
-    def __init__(self, **kwargs):
-        if "oid" not in kwargs and "cyl_trafo_params" not in kwargs:
-            # If the user does not provide cyl_trafo_params, use the default
-            kwargs["cyl_trafo_params"] = CylTrafoParams()
+    def __init__(
+            self, trafo_params=CylindricalTransformationParameters(), **kwargs):
+        # Provide default transformation parameters if not user-provided
+        kwargs['trafo_params'] = trafo_params
         super().__init__(**kwargs)
 
 

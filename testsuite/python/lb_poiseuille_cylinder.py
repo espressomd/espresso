@@ -152,10 +152,10 @@ class LBPoiseuilleCommon:
         else:
             obs_center = [BOX_L / 2.0, BOX_L / 2.0, 0.0]
         local_obs_params = OBS_PARAMS.copy()
-        ctp = espressomd.math.CylTrafoParams(center=obs_center,
-                                             axis=self.params['axis'],
-                                             orientation=self.params['orientation'])
-        local_obs_params['cyl_trafo_params'] = ctp
+        ctp = espressomd.math.CylindricalTransformationParameters(center=obs_center,
+                                                                  axis=self.params['axis'],
+                                                                  orientation=self.params['orientation'])
+        local_obs_params['trafo_params'] = ctp
         obs = espressomd.observables.CylindricalLBVelocityProfile(
             **local_obs_params)
         self.accumulator = espressomd.accumulators.MeanVarianceCalculator(

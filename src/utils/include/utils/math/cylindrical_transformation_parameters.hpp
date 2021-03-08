@@ -26,11 +26,12 @@
 
 namespace Utils {
 
-class CylTrafoParams {
+class CylindricalTransformationParameters {
 public:
-  CylTrafoParams() = default;
-  CylTrafoParams(Utils::Vector3d const &center, Utils::Vector3d const &axis,
-                 Utils::Vector3d const &orientation)
+  CylindricalTransformationParameters() = default;
+  CylindricalTransformationParameters(Utils::Vector3d const &center,
+                                      Utils::Vector3d const &axis,
+                                      Utils::Vector3d const &orientation)
       : m_center(center), m_axis(axis), m_orientation(orientation) {
     validate();
   }
@@ -43,19 +44,20 @@ private:
   void validate() const {
     auto constexpr eps = 10 * std::numeric_limits<double>::epsilon();
     if (Utils::abs(m_orientation * m_axis) > eps) {
-      throw std::runtime_error("CylTrafoParams: Axis and orientation must be "
-                               "orthogonal. Scalar product is " +
-                               std::to_string(m_orientation * m_axis));
+      throw std::runtime_error(
+          "CylindricalTransformationParameters: Axis and orientation must be "
+          "orthogonal. Scalar product is " +
+          std::to_string(m_orientation * m_axis));
     }
     if (Utils::abs(m_axis.norm() - 1) > eps) {
-      throw std::runtime_error(
-          "CylTrafoParams: Axis must be normalized. Norm is " +
-          std::to_string(m_axis.norm()));
+      throw std::runtime_error("CylindricalTransformationParameters: Axis must "
+                               "be normalized. Norm is " +
+                               std::to_string(m_axis.norm()));
     }
     if (Utils::abs(m_orientation.norm() - 1) > eps) {
-      throw std::runtime_error(
-          "CylTrafoParams: orientation must be normalized. Norm is " +
-          std::to_string(m_orientation.norm()));
+      throw std::runtime_error("CylindricalTransformationParameters: "
+                               "orientation must be normalized. Norm is " +
+                               std::to_string(m_orientation.norm()));
     }
   }
 

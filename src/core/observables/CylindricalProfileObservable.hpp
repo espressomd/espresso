@@ -23,7 +23,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/math/abs.hpp>
-#include <utils/math/cyl_trafo_params.hpp>
+#include <utils/math/cylindrical_transformation_parameters.hpp>
 #include <utils/math/make_lin_space.hpp>
 
 #include <boost/range/algorithm.hpp>
@@ -41,14 +41,14 @@ namespace Observables {
 class CylindricalProfileObservable : public ProfileObservable {
 public:
   CylindricalProfileObservable(
-      std::shared_ptr<Utils::CylTrafoParams> cyl_trafo_params, int n_r_bins,
-      int n_phi_bins, int n_z_bins, double min_r, double max_r, double min_phi,
-      double max_phi, double min_z, double max_z)
+      std::shared_ptr<Utils::CylindricalTransformationParameters> trafo_params,
+      int n_r_bins, int n_phi_bins, int n_z_bins, double min_r, double max_r,
+      double min_phi, double max_phi, double min_z, double max_z)
       : ProfileObservable(n_r_bins, n_phi_bins, n_z_bins, min_r, max_r, min_phi,
                           max_phi, min_z, max_z),
-        cyl_trafo_params(std::move(cyl_trafo_params)) {}
+        trafo_params(std::move(trafo_params)) {}
 
-  std::shared_ptr<Utils::CylTrafoParams> cyl_trafo_params;
+  std::shared_ptr<Utils::CylindricalTransformationParameters> trafo_params;
 };
 
 } // Namespace Observables

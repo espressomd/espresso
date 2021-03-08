@@ -24,35 +24,38 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
-#include "utils/math/cyl_trafo_params.hpp"
+#include "utils/math/cylindrical_transformation_parameters.hpp"
 
 namespace ScriptInterface {
 
-class CylTrafoParams : public AutoParameters<CylTrafoParams> {
+class CylindricalTransformationParameters
+    : public AutoParameters<CylindricalTransformationParameters> {
 public:
-  CylTrafoParams() {
+  CylindricalTransformationParameters() {
     add_parameters({{"center", AutoParameter::read_only,
-                     [this]() { return m_cyl_trafo_params->center(); }},
+                     [this]() { return m_trafo_params->center(); }},
                     {"axis", AutoParameter::read_only,
-                     [this]() { return m_cyl_trafo_params->axis(); }},
+                     [this]() { return m_trafo_params->axis(); }},
                     {"orientation", AutoParameter::read_only,
-                     [this]() { return m_cyl_trafo_params->orientation(); }}});
+                     [this]() { return m_trafo_params->orientation(); }}});
   }
-  std::shared_ptr<::Utils::CylTrafoParams> cyl_trafo_params() {
-    return m_cyl_trafo_params;
+  std::shared_ptr<::Utils::CylindricalTransformationParameters>
+  cyl_trafo_params() {
+    return m_trafo_params;
   }
   void do_construct(VariantMap const &params) override {
-    m_cyl_trafo_params = std::make_shared<Utils::CylTrafoParams>(
-        get_value_or<Utils::Vector3d>(params, "center",
-                                      Utils::Vector3d{{0, 0, 0}}),
-        get_value_or<Utils::Vector3d>(params, "axis",
-                                      Utils::Vector3d{{0, 0, 1}}),
-        get_value_or<Utils::Vector3d>(params, "orientation",
-                                      Utils::Vector3d{{1, 0, 0}}));
+    m_trafo_params =
+        std::make_shared<Utils::CylindricalTransformationParameters>(
+            get_value_or<Utils::Vector3d>(params, "center",
+                                          Utils::Vector3d{{0, 0, 0}}),
+            get_value_or<Utils::Vector3d>(params, "axis",
+                                          Utils::Vector3d{{0, 0, 1}}),
+            get_value_or<Utils::Vector3d>(params, "orientation",
+                                          Utils::Vector3d{{1, 0, 0}}));
   }
 
 private:
-  std::shared_ptr<Utils::CylTrafoParams> m_cyl_trafo_params;
+  std::shared_ptr<Utils::CylindricalTransformationParameters> m_trafo_params;
 };
 } // namespace ScriptInterface
 #endif
