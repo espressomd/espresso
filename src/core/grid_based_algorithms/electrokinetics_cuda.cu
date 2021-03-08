@@ -290,7 +290,8 @@ __device__ void ek_displacement(float *dx, LB_nodes_gpu n,
   float mode[19];
 
   for (unsigned i = 0; i < 19; i++) {
-    mode[i] = n.vd[i * ek_lbparameters_gpu->number_of_nodes + node_index];
+    mode[i] =
+        n.populations[i * ek_lbparameters_gpu->number_of_nodes + node_index];
   }
 
   rho += mode[0] + mode[1] + mode[2] + mode[3] + mode[4] + mode[5] + mode[6] +

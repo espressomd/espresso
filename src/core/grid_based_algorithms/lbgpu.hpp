@@ -110,22 +110,21 @@ struct LB_rho_v_gpu {
   float rho;
   /** velocity of the node */
 
-  float v[3];
+  Utils::Array<float, 3> v;
 };
 /* this structure is almost duplicated for memory efficiency. When the stress
    tensor element are needed at every timestep, this features should be
    explicitly switched on */
-typedef struct {
+struct LB_rho_v_pi_gpu {
   /** density of the node */
   float rho;
   /** velocity of the node */
-  float v[3];
+  Utils::Array<float, 3> v;
   /** pressure tensor */
-  float pi[6];
-} LB_rho_v_pi_gpu;
+  Utils::Array<float, 6> pi;
+};
 
-typedef struct {
-
+struct LB_node_force_density_gpu {
   lbForceFloat *force_density;
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
@@ -134,16 +133,7 @@ typedef struct {
   // after the LBM update. This variable keeps a backup
   lbForceFloat *force_density_buf;
 #endif
-
-} LB_node_force_density_gpu;
-
-typedef struct {
-
-  float force_density[3];
-
-  unsigned int index;
-
-} LB_extern_nodeforcedensity_gpu;
+};
 
 /************************************************************/
 /** \name Exported Variables */
@@ -190,7 +180,7 @@ void lb_reinit_fluid_gpu();
 /** Reset the forces on the fluid nodes */
 void reset_LB_force_densities_GPU(bool buffer = true);
 
-void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
+void lb_init_GPU(const LB_parameters_gpu &lbpar_gpu);
 void lb_integrate_GPU();
 
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);

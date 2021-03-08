@@ -207,7 +207,7 @@ void lb_init_gpu() {
   /* set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 
-  lb_init_GPU(&lbpar_gpu);
+  lb_init_GPU(lbpar_gpu);
 
   gpu_init_particle_comm();
   cuda_bcast_global_part_params();
