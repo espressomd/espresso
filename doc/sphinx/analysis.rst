@@ -411,10 +411,22 @@ or bin edges for the axes. Example::
                        density_profile.min_y, density_profile.max_y])
     plt.show()
 
+Observables based on cylindrical coordinates are also available.
+They require special parameters if the cylindrical coordinate system is non-standard, e.g. if you want the origin of the cylindrical coordinates to be at a special location of the box or if you want to make use of symmetries along an axis that is not parallel to the z-axis.
+For this purpose, use :class:`espressomd.math.CylindricalTransformationParameters` to create a consistent set of the parameters needed. Example::
+
+    import espressomd.math
+    
+    # shifted and rotated cylindrical coordinates
+    cyl_trafo_params = espressomd.math(center=[5.0, 5.0, 0.0], 
+                                       axis=[0, 1, 0],
+                                       orientation=[0, 0, 1])
+
     # histogram in cylindrical coordinates
     density_profile = espressomd.observables.CylindricalDensityProfile(
-        ids=[0, 1], center=[5.0, 5.0, 0.0], axis=[0, 0, 1],
-        n_r_bins=8, min_r=0.0, max_r=4.0,
+        ids=[0, 1],
+        trafo_params = cyl_trafo_params,
+        n_r_bins=8, min_r=1.0, max_r=4.0,
         n_phi_bins=16, min_phi=-np.pi, max_phi=np.pi,
         n_z_bins=4, min_z=4.0, max_z=8.0)
     obs_data = density_profile.calculate()
