@@ -920,7 +920,7 @@ class RDF(Observable):
     _so_name = "Observables::RDF"
 
     def __init__(self, **kwargs):
-        if "oid" not in kwargs and "ids2" not in kwargs:
+        if "ids2" not in kwargs:
             kwargs["ids2"] = []
         super().__init__(**kwargs)
 
