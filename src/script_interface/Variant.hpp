@@ -49,6 +49,12 @@ constexpr const None none{};
 
 /**
  * @brief Possible types for parameters.
+ *
+ * The visitors and packing functions need to be adapted accordingly when
+ * extending this variant with new types. For the exact details, see commit
+ * <a href="https://github.com/espressomd/espresso/commit/b48ab62">b48ab62</a>.
+ * The number of types is limited by macro @c BOOST_MPL_LIMIT_LIST_SIZE
+ * (defaults to 20).
  */
 using Variant = boost::make_recursive_variant<
     None, bool, int, size_t, double, std::string, std::vector<int>,
