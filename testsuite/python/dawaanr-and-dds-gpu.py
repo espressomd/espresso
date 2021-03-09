@@ -23,6 +23,7 @@ import espressomd
 import espressomd.interactions
 import espressomd.magnetostatics
 import espressomd.analyze
+import espressomd.galilei
 
 
 @utx.skipIfMissingGPU()
@@ -30,11 +31,6 @@ import espressomd.analyze
 class DDSGPUTest(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
-    def stopAll(self):
-        for i in range(len(self.es.part)):
-            self.es.part[i].v = np.array([0.0, 0.0, 0.0])
-            self.es.part[i].omega_body = np.array([0.0, 0.0, 0.0])
 
     @ut.skipIf(es.cell_system.get_state()["n_nodes"] > 1,
                "Skipping test: only runs for n_nodes == 1")
@@ -60,7 +56,8 @@ class DDSGPUTest(ut.TestCase):
             self.es.integrator.set_steepest_descent(
                 f_max=0.0, gamma=0.1, max_displacement=0.1)
             self.es.integrator.run(500)
-            self.stopAll()
+            g = espressomd.galilei.GalileiTransform()
+            g.kill_particle_motion(rotation=True)
             self.es.integrator.set_vv()
 
             self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
