@@ -41,6 +41,7 @@ jobs:
           ubsan: true
           check_skip_long: true
       - name: Setting job link variable
+        if: ${{ failure() }}
         run: |
           echo "job_link=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> $GITHUB_ENV
       - uses: alialaa/issue-action@v1
