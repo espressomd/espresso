@@ -61,7 +61,7 @@ public:
                get_value<std::vector<int>>(v);
          },
          [this]() { return cylindrical_pid_profile_observable()->ids(); }},
-        {"transform_params", m_cyl_trafo_params},
+        {"transform_params", m_transform_params},
         {"n_r_bins",
          [this](const Variant &v) {
            cylindrical_pid_profile_observable()->n_bins[0] =
@@ -141,12 +141,12 @@ public:
   };
 
   void do_construct(VariantMap const &params) override {
-    set_from_args(m_cyl_trafo_params, params, "transform_params");
+    set_from_args(m_transform_params, params, "transform_params");
 
-    if (m_cyl_trafo_params)
+    if (m_transform_params)
       m_observable = std::make_shared<CoreObs>(
           get_value<std::vector<int>>(params, "ids"),
-          m_cyl_trafo_params->cyl_trafo_params(),
+          m_transform_params->cyl_transform_params(),
           get_value_or<int>(params, "n_r_bins", 1),
           get_value_or<int>(params, "n_phi_bins", 1),
           get_value_or<int>(params, "n_z_bins", 1),
@@ -180,7 +180,7 @@ public:
 
 private:
   std::shared_ptr<CoreObs> m_observable;
-  std::shared_ptr<CylindricalTransformationParameters> m_cyl_trafo_params;
+  std::shared_ptr<CylindricalTransformationParameters> m_transform_params;
 };
 
 } /* namespace Observables */

@@ -42,10 +42,10 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
 
     histogram.update(
         Utils::transform_coordinate_cartesian_to_cylinder(
-            pos - trafo_params->center(), trafo_params->axis(),
-            trafo_params->orientation()),
+            pos - transform_params->center(), transform_params->axis(),
+            transform_params->orientation()),
         Utils::transform_vector_cartesian_to_cylinder(
-            v, trafo_params->axis(), pos - trafo_params->center()));
+            v, transform_params->axis(), pos - transform_params->center()));
   }
 
   // normalize by number of hits per bin

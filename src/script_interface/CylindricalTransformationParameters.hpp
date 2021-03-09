@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CYL_TRAFO_PARAMS_HPP
-#define SCRIPT_INTERFACE_CYL_TRAFO_PARAMS_HPP
+#ifndef SCRIPT_INTERFACE_CYL_TRANSFORM_PARAMS_HPP
+#define SCRIPT_INTERFACE_CYL_TRANSFORM_PARAMS_HPP
 
 #include "script_interface/ScriptInterface.hpp"
 
@@ -33,18 +33,18 @@ class CylindricalTransformationParameters
 public:
   CylindricalTransformationParameters() {
     add_parameters({{"center", AutoParameter::read_only,
-                     [this]() { return m_trafo_params->center(); }},
+                     [this]() { return m_transform_params->center(); }},
                     {"axis", AutoParameter::read_only,
-                     [this]() { return m_trafo_params->axis(); }},
+                     [this]() { return m_transform_params->axis(); }},
                     {"orientation", AutoParameter::read_only,
-                     [this]() { return m_trafo_params->orientation(); }}});
+                     [this]() { return m_transform_params->orientation(); }}});
   }
   std::shared_ptr<::Utils::CylindricalTransformationParameters>
-  cyl_trafo_params() {
-    return m_trafo_params;
+  cyl_transform_params() {
+    return m_transform_params;
   }
   void do_construct(VariantMap const &params) override {
-    m_trafo_params =
+    m_transform_params =
         std::make_shared<Utils::CylindricalTransformationParameters>(
             get_value_or<Utils::Vector3d>(params, "center",
                                           Utils::Vector3d{{0, 0, 0}}),
@@ -55,7 +55,8 @@ public:
   }
 
 private:
-  std::shared_ptr<Utils::CylindricalTransformationParameters> m_trafo_params;
+  std::shared_ptr<Utils::CylindricalTransformationParameters>
+      m_transform_params;
 };
 } // namespace ScriptInterface
 #endif

@@ -41,14 +41,15 @@ namespace Observables {
 class CylindricalProfileObservable : public ProfileObservable {
 public:
   CylindricalProfileObservable(
-      std::shared_ptr<Utils::CylindricalTransformationParameters> trafo_params,
+      std::shared_ptr<Utils::CylindricalTransformationParameters>
+          transform_params,
       int n_r_bins, int n_phi_bins, int n_z_bins, double min_r, double max_r,
       double min_phi, double max_phi, double min_z, double max_z)
       : ProfileObservable(n_r_bins, n_phi_bins, n_z_bins, min_r, max_r, min_phi,
                           max_phi, min_z, max_z),
-        trafo_params(std::move(trafo_params)) {}
+        transform_params(std::move(transform_params)) {}
 
-  std::shared_ptr<Utils::CylindricalTransformationParameters> trafo_params;
+  std::shared_ptr<Utils::CylindricalTransformationParameters> transform_params;
 };
 
 } // Namespace Observables
