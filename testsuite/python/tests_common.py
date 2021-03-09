@@ -650,3 +650,14 @@ def count_fluid_nodes(lbf):
             fluid_nodes += 1
 
     return fluid_nodes
+
+
+def random_dipoles(n_particles):
+    """Generate random dipoles by sampling Euler angles uniformly at random."""
+    cos_theta = 2 * np.random.random(n_particles) - 1
+    sin_theta = np.sin(np.arcsin(cos_theta))
+    phi = 2 * np.pi * np.random.random(n_particles)
+    dip = np.array([sin_theta * np.cos(phi),
+                    sin_theta * np.sin(phi),
+                    cos_theta]).T
+    return dip

@@ -22,7 +22,7 @@ import espressomd.magnetostatic_extensions
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
-from tests_common import abspath
+from tests_common import abspath, random_dipoles
 OPEN_BOUNDARIES_REF_ENERGY = abspath("data/dipolar_open_boundaries_energy.npy")
 OPEN_BOUNDARIES_REF_ARRAYS = abspath("data/dipolar_open_boundaries_arrays.npy")
 
@@ -114,12 +114,7 @@ class dds(ut.TestCase):
         N = 20
         dipole_modulus = 1.3
         part_pos = np.random.random((N, 3)) * system.box_l
-        costheta = 2 * np.random.random(N) - 1
-        sintheta = np.sin(np.arcsin(costheta))
-        phi = 2 * np.pi * np.random.random(N)
-        part_dip = np.array([sintheta * np.cos(phi) * dipole_modulus,
-                             sintheta * np.sin(phi) * dipole_modulus,
-                             costheta * dipole_modulus]).T
+        part_dip = dipole_modulus * random_dipoles(N)
         particles = system.part.add(pos=part_pos, dip=part_dip,
                                     rotation=N * [(1, 1, 1)])
 
