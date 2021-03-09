@@ -27,7 +27,8 @@
 
 class ImmersedBoundaries {
 public:
-  ImmersedBoundaries() : MaxNumIBM(1000), VolumeInitDone(false) {
+  ImmersedBoundaries()
+      : MaxNumIBM(1000), VolumeInitDone(false), BoundariesFound(false) {
     VolumesCurrent.resize(MaxNumIBM);
   }
   void init_volume_conservation(CellStructure &cs);
@@ -40,8 +41,8 @@ private:
 
   const int MaxNumIBM;
   std::vector<double> VolumesCurrent;
-  bool VolumeInitDone = false;
-  bool BoundariesFound = false;
+  bool VolumeInitDone;
+  bool BoundariesFound;
 };
 
 #endif
