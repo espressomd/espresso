@@ -55,7 +55,7 @@ public:
   using Base::Base;
   CylindricalLBProfileObservable() {
     this->add_parameters({
-        {"trafo_params", m_cyl_trafo_params},
+        {"transform_params", m_cyl_trafo_params},
         {"n_r_bins",
          [this](const Variant &v) {
            cylindrical_profile_observable()->n_bins[0] =
@@ -140,7 +140,7 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    set_from_args(m_cyl_trafo_params, params, "trafo_params");
+    set_from_args(m_cyl_trafo_params, params, "transform_params");
 
     if (m_cyl_trafo_params)
       m_observable = std::make_shared<CoreCylLBObs>(

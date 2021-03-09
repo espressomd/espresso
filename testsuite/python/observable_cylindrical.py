@@ -32,12 +32,12 @@ class TestCylindricalObservable(ut.TestCase):
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
-    cyl_trafo_params = espressomd.math.CylindricalTransformationParameters(
+    cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
         center=3 * [7.5], axis=[1 / np.sqrt(2), 1 / np.sqrt(2), 0], orientation=[0, 0, 1])
 
     params = {
         'ids': None,
-        'trafo_params': cyl_trafo_params,
+        'transform_params': cyl_transform_params,
         'n_r_bins': 4,  
         'n_phi_bins': 3,
         'n_z_bins': 4,  
@@ -59,7 +59,9 @@ class TestCylindricalObservable(ut.TestCase):
     def calc_ellipsis_pos_vel(
             self, n_part, z_min, z_max, semi_x=1., semi_y=1.):
         """
-        Calculate positions on an elliptical corkscrew line. Calculate cartesian velocities that lead to a constant velocity in cylindrical coordinates
+        Calculate positions on an elliptical corkscrew line. 
+        Calculate cartesian velocities that lead to a 
+        constant velocity in cylindrical coordinates
         """
 
         zs = np.linspace(z_min, z_max, num=n_part)
@@ -98,8 +100,12 @@ class TestCylindricalObservable(ut.TestCase):
 
     def setup_system_get_np_hist(self):
         """
-        Pick positions and velocities in the original box frame and calculate the np histogram. Then rotate and move the positions and velocities to the frame of the observables. 
-        After calculating the core observables, the result should be the same as the np histogram obtained from the original box frame.
+        Pick positions and velocities in the original box frame
+        and calculate the np histogram. 
+        Then rotate and move the positions and velocities 
+        to the frame of the observables. 
+        After calculating the core observables, the result should be 
+        the same as the np histogram obtained from the original box frame.
         """
 
         positions, velocities = self.calc_ellipsis_pos_vel(100, 0.99 *
@@ -125,7 +131,7 @@ class TestCylindricalObservable(ut.TestCase):
         for pos, vel in zip(positions, velocities):
             pos_aligned.append(
                 self.align_with_observable_frame(pos) +
-                self.cyl_trafo_params.center)
+                self.cyl_transform_params.center)
             vel_aligned.append(self.align_with_observable_frame(vel))
         self.system.part.add(pos=pos_aligned, v=vel_aligned)
         self.params['ids'] = self.system.part[:].id
@@ -139,7 +145,8 @@ class TestCylindricalObservable(ut.TestCase):
 
     def test_density_profile(self):
         """
-        Check that the result from the observable (in its own frame) matches the np result from the box frame
+        Check that the result from the observable (in its own frame) 
+        matches the np result from the box frame
         """
         np_dens, np_edges = self.setup_system_get_np_hist()
 
@@ -151,7 +158,8 @@ class TestCylindricalObservable(ut.TestCase):
 
     def test_vel_profile(self):
         """
-        Check that the result from the observable (in its own frame) matches the np result from the box frame
+        Check that the result from the observable (in its own frame) 
+        matches the np result from the box frame
         """
         np_dens, np_edges = self.setup_system_get_np_hist()
         cyl_vel_prof = espressomd.observables.CylindricalVelocityProfile(
@@ -172,7 +180,8 @@ class TestCylindricalObservable(ut.TestCase):
 
     def test_flux_density_profile(self):
         """
-        Check that the result from the observable (in its own frame) matches the np result from the box frame
+        Check that the result from the observable (in its own frame) 
+        matches the np result from the box frame
         """
         np_dens, np_edges = self.setup_system_get_np_hist()
         cyl_flux_dens = espressomd.observables.CylindricalFluxDensityProfile(
@@ -243,15 +252,13 @@ class TestCylindricalObservable(ut.TestCase):
         obs_bin_edges = observable.bin_edges()
         np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
         # check center, axis, orientation
-        ctp = espressomd.math.CylindricalTransformationParameters(center=[1, 2, 3],
-                                                                  axis=[
-                                                                      0, 1, 0],
-                                                                  orientation=[0, 0, 1])
-        observable.trafo_params = ctp
+        ctp = espressomd.math.CylindricalTransformationParameters(
+            center=[1, 2, 3], axis=[0, 1, 0], orientation=[0, 0, 1])
+        observable.transform_params = ctp
 
         for attr_name in ['center', 'axis', 'orientation']:
             np.testing.assert_array_almost_equal(np.copy(ctp.__getattr__(attr_name)),
-                                                 np.copy(observable.trafo_params.__getattr__(attr_name)))
+                                                 np.copy(observable.transform_params.__getattr__(attr_name)))
 
 
 if __name__ == "__main__":

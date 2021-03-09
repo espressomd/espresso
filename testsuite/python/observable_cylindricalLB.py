@@ -41,14 +41,12 @@ class CylindricalLBObservableCommon:
                  'visc': 2.7,
                  'tau': 0.1,
                  }
-    cyl_trafo_params = espressomd.math.CylindricalTransformationParameters(center=3 * [7],
-                                                                           axis=[
-                                                                               1, 0, 0],
-                                                                           orientation=[0, 0, 1])
+    cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
+        center=3 * [7], axis=[1, 0, 0], orientation=[0, 0, 1])
 
     params = {
         'ids': None,
-        'trafo_params': cyl_trafo_params,
+        'transform_params': cyl_transform_params,
         'n_r_bins': 4, 
         'n_phi_bins': 3, 
         'n_z_bins': 5,  
@@ -66,7 +64,9 @@ class CylindricalLBObservableCommon:
 
     def calc_vel_at_pos(self, positions):
         """
-        In cylinde coordinates, all velocities are the same. In cartesian they depend on the position. The cartesian velocities are calculated here.
+        In cylindrical coordinates, all velocities are the same. 
+        In cartesian they depend on the position. 
+        The cartesian velocities are calculated here.
         """
 
         vels = [] 
@@ -78,7 +78,8 @@ class CylindricalLBObservableCommon:
 
     def align_with_observable_frame(self, vec):
         """
-        Rotate vectors from the original box frame to the frame of the observables.
+        Rotate vectors from the original box frame to 
+        the frame of the observables.
         """
 
         # align original z to observable z
@@ -91,8 +92,11 @@ class CylindricalLBObservableCommon:
 
     def setup_system_get_np_hist(self):
         """
-        Pick positions and velocities in the original box frame and calculate the np histogram. Then rotate and move the positions and velocities to the frame of the observables. 
-        After calculating the core observables, the result should be the same as the np histogram obtained from the original box frame.
+        Pick positions and velocities in the original box frame and 
+        calculate the np histogram. Then rotate and move the positions 
+        and velocities to the frame of the observables. 
+        After calculating the core observables, the result should be 
+        the same as the np histogram obtained from the original box frame.
         """
 
         nodes = np.array(np.meshgrid([1, 2], [1, 2], [
@@ -119,7 +123,7 @@ class CylindricalLBObservableCommon:
         for pos, vel in zip(positions, velocities):
             pos_aligned.append(
                 self.align_with_observable_frame(pos) +
-                self.cyl_trafo_params.center)
+                self.cyl_transform_params.center)
             vel_aligned.append(self.align_with_observable_frame(vel))
         node_aligned = np.array(
             np.rint(
@@ -142,7 +146,8 @@ class CylindricalLBObservableCommon:
 
     def test_cylindrical_lb_vel_profile_obs(self):
         """
-        Check that the result from the observable (in its own frame) matches the np result from the box frame
+        Check that the result from the observable (in its own frame)
+        matches the np result from the box frame
         """
 
         np_hist_binary, np_edges = self.setup_system_get_np_hist()
@@ -213,15 +218,13 @@ class CylindricalLBObservableCommon:
         obs_bin_edges = observable.bin_edges()
         np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
         # check center, axis, orientation
-        ctp = espressomd.math.CylindricalTransformationParameters(center=[1, 2, 3],
-                                                                  axis=[
-                                                                      0, 1, 0],
-                                                                  orientation=[0, 0, 1])
-        observable.trafo_params = ctp
+        ctp = espressomd.math.CylindricalTransformationParameters(
+            center=[1, 2, 3], axis=[0, 1, 0], orientation=[0, 0, 1])
+        observable.transform_params = ctp
 
         for attr_name in ['center', 'axis', 'orientation']:
             np.testing.assert_array_almost_equal(np.copy(ctp.__getattr__(attr_name)),
-                                                 np.copy(observable.trafo_params.__getattr__(attr_name)))
+                                                 np.copy(observable.transform_params.__getattr__(attr_name)))
 
 
 class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
@@ -237,7 +240,8 @@ class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
 
     def test_cylindrical_lb_flux_density_obs(self):
         """
-        Check that the result from the observable (in its own frame) matches the np result from the box frame.
+        Check that the result from the observable (in its own frame) 
+        matches the np result from the box frame.
         Only for CPU because density interpolation is not implemented for GPU LB.
         """
         np_hist_binary, np_edges = self.setup_system_get_np_hist()

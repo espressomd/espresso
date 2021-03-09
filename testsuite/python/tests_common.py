@@ -185,8 +185,8 @@ def rodrigues_rot(vec, axis, angle):
     https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula#Statement
     """
     axis /= np.linalg.norm(axis)
-    return np.cos(angle) * vec + np.sin(angle) * np.cross(axis,
-                                                          vec) + (1 - np.cos(angle)) * np.dot(axis, vec) * axis
+    return np.cos(angle) * vec + np.sin(angle) * np.cross(axis, vec) + \
+        (1 - np.cos(angle)) * np.dot(axis, vec) * axis
 
 
 def rotation_matrix(axis, theta):

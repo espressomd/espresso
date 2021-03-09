@@ -76,9 +76,9 @@ class CylindricalProfileObservable(ProfileObservable):
     """
 
     def __init__(
-            self, trafo_params=CylindricalTransformationParameters(), **kwargs):
+            self, transform_params=CylindricalTransformationParameters(), **kwargs):
         # Provide default transformation parameters if not user-provided
-        kwargs['trafo_params'] = trafo_params
+        kwargs['transform_params'] = transform_params
         super().__init__(**kwargs)
 
 
@@ -657,7 +657,7 @@ class CylindricalDensityProfile(CylindricalProfileObservable):
     ----------
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
-    trafo_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
     n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
@@ -695,7 +695,7 @@ class CylindricalFluxDensityProfile(CylindricalProfileObservable):
     ----------
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
-    trafo_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
     n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
@@ -737,7 +737,7 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(
     ----------
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
-    trafo_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
     n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
@@ -779,7 +779,7 @@ class CylindricalLBVelocityProfileAtParticlePositions(
     ----------
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
-    trafo_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
     n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
@@ -819,7 +819,7 @@ class CylindricalVelocityProfile(CylindricalProfileObservable):
     ----------
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
-    trafo_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
     n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
@@ -861,7 +861,7 @@ class CylindricalLBVelocityProfile(CylindricalProfileObservable):
 
     Parameters
     ----------
-    trafo_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
         Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
     n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
