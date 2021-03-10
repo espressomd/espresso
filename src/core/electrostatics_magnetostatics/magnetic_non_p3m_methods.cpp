@@ -66,7 +66,7 @@ static double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
   auto const pe4 = 3.0 / r5;
 
   // Energy
-  auto const u = dipole.prefactor * (pe1 / r3 - pe4 * pe2 * pe3);
+  auto const energy = dipole.prefactor * (pe1 / r3 - pe4 * pe2 * pe3);
 
   // Forces, if requested
   if (force_flag) {
@@ -89,8 +89,7 @@ static double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
     p2.f.torque += dipole.prefactor * (aa / r3 + b2 * dd);
   }
 
-  // Return energy
-  return u;
+  return energy;
 }
 
 /* =============================================================================
@@ -241,11 +240,11 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
               auto const pe3 = mx[j] * rnx + my[j] * rny + mz[j] * rnz;
               auto const pe4 = 3.0 / r5;
 
-              // Energy ............................
+              // Energy
               energy += pe1 / r3 - pe4 * pe2 * pe3;
 
               if (force_flag) {
-                // force ............................
+                // Forces
                 auto const a = pe4 * pe1;
                 auto const b = -15.0 * pe2 * pe3 / r7;
                 auto const c = pe4 * pe3;
@@ -255,7 +254,7 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
                 fy[i] += (a + b) * rny + c * my[i] + d * my[j];
                 fz[i] += (a + b) * rnz + c * mz[i] + d * mz[j];
 
-                // torque ............................
+                // Torques
                 auto const ax = my[i] * mz[j] - my[j] * mz[i];
                 auto const ay = mx[j] * mz[i] - mx[i] * mz[j];
                 auto const az = mx[i] * my[j] - mx[j] * my[i];
@@ -275,7 +274,7 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
     }           /* for j */
   }             /* for i */
 
-  /* set the forces, and torques of the particles within ESPResSo */
+  /* update particle forces and torques */
   if (force_flag) {
 
     dip_particles = 0;
@@ -294,7 +293,7 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
         dip_particles++;
       }
     }
-  } /* of if force_flag */
+  } /* if force_flag */
 
   return 0.5 * dipole.prefactor * energy;
 }

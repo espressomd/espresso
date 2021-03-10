@@ -35,7 +35,7 @@ class dds(ut.TestCase):
 
     system.time_step = 0.01
     system.cell_system.skin = 0.1
-    system.periodicity = 0, 0, 0
+    system.periodicity = [False, False, False]
 
     def tearDown(self):
         self.system.part.clear()
