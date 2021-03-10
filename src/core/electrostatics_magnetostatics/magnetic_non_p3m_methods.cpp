@@ -101,15 +101,8 @@ static double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
 double dawaanr_calculations(bool force_flag, bool energy_flag,
                             const ParticleRange &particles) {
 
-  if (n_nodes != 1) {
-    fprintf(stderr, "error: DAWAANR is just for one cpu...\n");
-    errexit();
-  }
-  if (!(force_flag) && !(energy_flag)) {
-    fprintf(stderr, "I don't know why you call dawaanr_calculations() "
-                    "with all flags zero.\n");
-    return 0;
-  }
+  assert(n_nodes == 1);
+  assert(force_flag || energy_flag);
 
   double energy = 0.0;
   // Iterate over all particles
@@ -151,6 +144,9 @@ double
 magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
                                          ParticleRange const &particles) {
 
+  assert(n_nodes == 1);
+  assert(force_flag || energy_flag);
+
   if (box_geo.periodic(0) and box_geo.periodic(1) and box_geo.periodic(2) and
       Ncut_off_magnetic_dipolar_direct_sum == 0) {
     throw std::runtime_error("Dipolar direct sum with replica does not support "
@@ -161,16 +157,6 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
   std::vector<double> mx, my, mz;
   std::vector<double> fx, fy, fz;
   std::vector<double> tx, ty, tz;
-
-  if (n_nodes != 1) {
-    fprintf(stderr, "error: magnetic Direct Sum is just for one cpu...\n");
-    errexit();
-  }
-  if (!(force_flag) && !(energy_flag)) {
-    fprintf(stderr, "I don't know why you call magnetic_dipolar_direct_sum_"
-                    "calculations() with all flags zero\n");
-    return 0;
-  }
 
   auto const n_part = particles.size();
 
