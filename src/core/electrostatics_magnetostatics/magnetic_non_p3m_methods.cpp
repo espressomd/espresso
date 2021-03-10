@@ -239,19 +239,17 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
 
               auto const pe2 = mx[i] * rnx + my[i] * rny + mz[i] * rnz;
               auto const pe3 = mx[j] * rnx + my[j] * rny + mz[j] * rnz;
+              auto const pe4 = 3.0 / r5;
 
               // Energy ............................
-
-              energy += pe1 / r3 - 3.0 * pe2 * pe3 / r5;
+              energy += pe1 / r3 - pe4 * pe2 * pe3;
 
               if (force_flag) {
-                double a, b, c, d;
                 // force ............................
-                a = mx[i] * mx[j] + my[i] * my[j] + mz[i] * mz[j];
-                a = 3.0 * a / r5;
-                b = -15.0 * pe2 * pe3 / r7;
-                c = 3.0 * pe3 / r5;
-                d = 3.0 * pe2 / r5;
+                auto const a = pe4 * pe1;
+                auto const b = -15.0 * pe2 * pe3 / r7;
+                auto const c = pe4 * pe3;
+                auto const d = pe4 * pe2;
 
                 fx[i] += (a + b) * rnx + c * mx[i] + d * mx[j];
                 fy[i] += (a + b) * rny + c * my[i] + d * my[j];
