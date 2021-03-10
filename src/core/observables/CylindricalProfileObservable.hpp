@@ -22,12 +22,17 @@
 #include "ProfileObservable.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/abs.hpp>
+#include <utils/math/cylindrical_transformation_parameters.hpp>
 #include <utils/math/make_lin_space.hpp>
 
 #include <boost/range/algorithm.hpp>
 
 #include <array>
 #include <cstddef>
+#include <limits>
+#include <memory>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -35,16 +40,16 @@ namespace Observables {
 /** Cylindrical profile observable */
 class CylindricalProfileObservable : public ProfileObservable {
 public:
-  CylindricalProfileObservable(Utils::Vector3d const &center,
-                               Utils::Vector3d const &axis, int n_r_bins,
-                               int n_phi_bins, int n_z_bins, double min_r,
-                               double max_r, double min_phi, double max_phi,
-                               double min_z, double max_z)
+  CylindricalProfileObservable(
+      std::shared_ptr<Utils::CylindricalTransformationParameters>
+          transform_params,
+      int n_r_bins, int n_phi_bins, int n_z_bins, double min_r, double max_r,
+      double min_phi, double max_phi, double min_z, double max_z)
       : ProfileObservable(n_r_bins, n_phi_bins, n_z_bins, min_r, max_r, min_phi,
                           max_phi, min_z, max_z),
-        center(center), axis(axis) {}
-  Utils::Vector3d center;
-  Utils::Vector3d axis;
+        transform_params(std::move(transform_params)) {}
+
+  std::shared_ptr<Utils::CylindricalTransformationParameters> transform_params;
 };
 
 } // Namespace Observables

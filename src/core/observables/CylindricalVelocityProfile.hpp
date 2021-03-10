@@ -43,11 +43,13 @@ public:
     Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
 
     for (auto p : particles) {
-      auto const pos = folded_position(traits.position(p), box_geo) - center;
+      auto const pos = folded_position(traits.position(p), box_geo) -
+                       transform_params->center();
       histogram.update(
-          Utils::transform_coordinate_cartesian_to_cylinder(pos, axis),
-          Utils::transform_vector_cartesian_to_cylinder(traits.velocity(p),
-                                                        axis, pos));
+          Utils::transform_coordinate_cartesian_to_cylinder(
+              pos, transform_params->axis(), transform_params->orientation()),
+          Utils::transform_vector_cartesian_to_cylinder(
+              traits.velocity(p), transform_params->axis(), pos));
     }
 
     auto hist_tmp = histogram.get_histogram();
