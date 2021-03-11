@@ -24,8 +24,8 @@ from .globals cimport sim_time
 from .globals cimport timing_samples
 from .globals cimport forcecap_set
 from .globals cimport forcecap_get
-from .utils import array_locked
-from .utils cimport Vector3d, make_array_locked, handle_errors
+from .utils import array_locked, handle_errors
+from .utils cimport Vector3d, make_array_locked
 
 cdef class Globals:
     property box_l:

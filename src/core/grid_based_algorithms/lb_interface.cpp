@@ -660,11 +660,31 @@ void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
       throw std::runtime_error("The non-linear interpolation scheme is not "
                                "implemented for the CPU LB.");
     case (InterpolationOrder::linear):
-      ::Communication::mpiCallbacks().call_all(Walberla::add_force_at_pos,
-                                               folded_pos, f);
+      ::Communication::mpiCallbacks().call_all(
+          Walberla::add_force_at_pos, folded_pos / lb_lbfluid_get_agrid(), f);
     }
 #endif
   } else {
     throw NoLBActive();
   }
+}
+
+double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    auto const folded_pos = folded_position(pos, box_geo);
+    auto const interpolation_order =
+        lb_lbinterpolation_get_interpolation_order();
+    switch (interpolation_order) {
+    case (InterpolationOrder::quadratic):
+      throw std::runtime_error("The non-linear interpolation scheme is not "
+                               "implemented for the CPU LB.");
+    case (InterpolationOrder::linear):
+      return mpi_call(::Communication::Result::one_rank,
+                      Walberla::get_interpolated_density_at_pos,
+                      folded_pos / lb_lbfluid_get_agrid());
+    }
+#endif
+  }
+  throw NoLBActive();
 }

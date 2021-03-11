@@ -241,9 +241,6 @@ class TestLB:
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):
-        self.system.thermostat.turn_off()
-        self.system.part.clear()
-        self.system.actors.clear()
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -293,16 +290,11 @@ class TestLB:
     def test_thermalization_force_balance(self):
         system = self.system
 
-        self.system.part.clear()
-        self.system.actors.clear()
-
         self.system.part.add(
             pos=np.random.random((1000, 3)) * self.system.box_l)
         if espressomd.has_features("MASS"):
             self.system.part[:].mass = 0.1 + np.random.random(
                 len(self.system.part))
-
-        self.system.thermostat.turn_off()
 
         self.lbf = self.lb_class(
             kT=self.params['temp'],
@@ -323,6 +315,38 @@ class TestLB:
             fluid_force = np.sum(
                 np.array([n.last_applied_force for n in self.lbf.nodes()]), axis=0)
             np.testing.assert_allclose(particle_force, -fluid_force)
+
+    def test_force_interpolation(self):
+        system = self.system
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            ext_force_density=[0, 0, 0])
+
+        self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            seed=3,
+            gamma=self.params['friction'])
+        lattice_speed = self.lbf.agrid / self.lbf.tau
+
+        position = np.array([1., 2., 3.])
+        position_lb_units = position / self.lbf.agrid
+        force = np.array([4., -5., 6.])
+        force_lb_units = force / lattice_speed * system.time_step
+        self.lbf.add_force_at_pos(position, force_lb_units)
+
+        system.integrator.run(1)
+        fluid_forces = []
+        for n in self.lbf.nodes():
+            if np.sum(np.abs(n.last_applied_force)):
+                fluid_forces.append(n.last_applied_force)
+                distance = np.linalg.norm(n.index - position_lb_units)
+                self.assertLess(distance, 2.)
+        fluid_force = np.sum(fluid_forces, axis=0)
+        np.testing.assert_allclose(fluid_force, force)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ext_force_density(self):

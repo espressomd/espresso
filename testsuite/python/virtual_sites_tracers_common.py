@@ -204,9 +204,9 @@ class VirtualSitesTracersCommon:
         system.part[:].pos = system.part[:].pos + np.random.random((4, 3))
 
         # Perform integration
-        system.integrator.run(150)
+        system.integrator.run(200)
         angle = self.compute_angle()
-        self.assertLess(angle, 1E-3)
+        self.assertLess(angle, 1.5E-3)
 
     def test_triel(self):
         system = self.system

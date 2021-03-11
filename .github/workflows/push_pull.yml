@@ -1,0 +1,52 @@
+name: run tests on mac
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  regular_check:
+    runs-on: macos-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Setup Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Check without sanitizer
+        uses: ./.github/actions/build_and_check
+        with:
+          asan: false
+          ubsan: false
+          check_skip_long: false
+
+  sanitizer_check:
+    runs-on: macos-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Setup Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Check with sanitizer
+        uses: ./.github/actions/build_and_check
+        with:
+          asan: true
+          ubsan: true
+          check_skip_long: true
+      - name: Setting job link variable
+        if: ${{ failure() }}
+        run: |
+          echo "job_link=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> $GITHUB_ENV
+      - uses: alialaa/issue-action@v1
+        if: ${{ failure() }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: Scheduled CI job has failed
+          body: ${{ env.job_link }}

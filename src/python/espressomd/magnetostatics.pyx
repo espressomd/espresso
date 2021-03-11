@@ -23,7 +23,7 @@ IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
 
-from .utils cimport handle_errors
+from .utils import handle_errors
 from .utils import is_valid_type, check_type_or_throw_except, to_str
 
 IF DIPOLES == 1:
@@ -96,10 +96,6 @@ IF DP3M == 1:
             super().validate_params()
             default_params = self.default_params()
 
-            if not (self._params["r_cut"] >= 0
-                    or self._params["r_cut"] == default_params["r_cut"]):
-                raise ValueError("P3M r_cut has to be >=0")
-
             if is_valid_type(self._params["mesh"], int):
                 pass
             else:
@@ -109,13 +105,6 @@ IF DP3M == 1:
                    (self._params["mesh"][0] != self._params["mesh"][2]):
                     raise ValueError(
                         "DipolarP3M requires a cubic box")
-
-            if not (self._params["cao"] >= -1 and self._params["cao"] <= 7):
-                raise ValueError(
-                    "P3M cao has to be an integer between -1 and 7")
-
-            if not (self._params["accuracy"] > 0):
-                raise ValueError("P3M accuracy has to be positive")
 
             if self._params["epsilon"] == "metallic":
                 self._params["epsilon"] = 0.0
@@ -131,7 +120,7 @@ IF DP3M == 1:
         def valid_keys(self):
             return ["prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
                     "cao", "accuracy", "epsilon", "cao_cut", "a", "ai",
-                    "alpha", "r_cut", "cao3", "additional_mesh", "tune", "verbose"]
+                    "alpha", "r_cut", "cao3", "tune", "verbose"]
 
         def required_keys(self):
             return ["accuracy", ]
@@ -154,20 +143,32 @@ IF DP3M == 1:
             return params
 
         def _set_params_in_es_core(self):
+            if hasattr(self._params["mesh"], "__getitem__"):
+                mesh = self._params["mesh"][0]
+            else:
+                mesh = self._params["mesh"]
+
             self.set_magnetostatics_prefactor()
             dp3m_set_eps(self._params["epsilon"])
-            self.python_dp3m_set_mesh_offset(self._params["mesh_off"])
-            self.python_dp3m_set_params(
-                self._params["r_cut"], self._params["mesh"],
-                self._params["cao"], self._params["alpha"], self._params["accuracy"])
+            dp3m_set_mesh_offset(self._params["mesh_off"][0],
+                                 self._params["mesh_off"][1],
+                                 self._params["mesh_off"][2])
+            dp3m_set_params(self._params["r_cut"], mesh, self._params["cao"],
+                            self._params["alpha"], self._params["accuracy"])
 
         def _tune(self):
+            if hasattr(self._params["mesh"], "__getitem__"):
+                mesh = self._params["mesh"][0]
+            else:
+                mesh = self._params["mesh"]
+
             self.set_magnetostatics_prefactor()
             dp3m_set_eps(self._params["epsilon"])
-            self.python_dp3m_set_tune_params(
-                self._params["r_cut"], self._params["mesh"],
-                self._params["cao"], -1., self._params["accuracy"])
-            python_dp3m_adaptive_tune(self._params["verbose"])
+            dp3m_set_tune_params(self._params["r_cut"], mesh,
+                                 self._params["cao"], self._params["accuracy"])
+            tuning_error = dp3m_adaptive_tune(self._params["verbose"])
+            if tuning_error:
+                handle_errors("DipolarP3M: tuning failed")
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
@@ -180,48 +181,6 @@ IF DP3M == 1:
         def _deactivate_method(self):
             dp3m_deactivate()
             super()._deactivate_method()
-
-        def python_dp3m_set_mesh_offset(self, mesh_off):
-            cdef double mesh_offset[3]
-            mesh_offset[0] = mesh_off[0]
-            mesh_offset[1] = mesh_off[1]
-            mesh_offset[2] = mesh_off[2]
-            return dp3m_set_mesh_offset(
-                mesh_offset[0], mesh_offset[1], mesh_offset[2])
-
-        def python_dp3m_set_params(self, p_r_cut, p_mesh, p_cao, p_alpha,
-                                   p_accuracy):
-            cdef int mesh
-            cdef double r_cut
-            cdef int cao
-            cdef double alpha
-            cdef double accuracy
-            r_cut = p_r_cut
-            cao = p_cao
-            alpha = p_alpha
-            accuracy = p_accuracy
-            if hasattr(p_mesh, "__getitem__"):
-                mesh = p_mesh[0]
-            else:
-                mesh = p_mesh
-            dp3m_set_params(r_cut, mesh, cao, alpha, accuracy)
-
-        def python_dp3m_set_tune_params(self, p_r_cut, p_mesh, p_cao, p_alpha,
-                                        p_accuracy):
-            cdef int mesh
-            cdef double r_cut
-            cdef int cao
-            cdef double alpha
-            cdef double accuracy
-            r_cut = p_r_cut
-            cao = p_cao
-            alpha = p_alpha
-            accuracy = p_accuracy
-            if hasattr(p_mesh, "__getitem__"):
-                mesh = p_mesh[0]
-            else:
-                mesh = p_mesh
-            dp3m_set_tune_params(r_cut, mesh, cao, alpha, accuracy)
 
 IF DIPOLES == 1:
     cdef class DipolarDirectSumCpu(MagnetostaticInteraction):

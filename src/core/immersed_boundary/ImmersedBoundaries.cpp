@@ -131,6 +131,9 @@ static const IBM_VolCons_Parameters *vol_cons_parameters(Particle const &p1) {
  */
 void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
 
+  if (!BoundariesFound)
+    return;
+
   // Partial volumes for each soft particle, to be summed up
   std::vector<double> tempVol(MaxNumIBM);
 
@@ -186,6 +189,9 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
 
 /** Calculate and add the volume force to each node */
 void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
+  if (!BoundariesFound)
+    return;
+
   cs.bond_loop(
       [this](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = bonded_ia_params[bond_id];

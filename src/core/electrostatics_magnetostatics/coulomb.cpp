@@ -182,8 +182,13 @@ void on_coulomb_change() {
 #ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
-    if (this_node == 0)
-      p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
+    if (this_node == 0) {
+      try {
+        p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
+      } catch (std::runtime_error const &err) {
+        runtimeErrorMsg() << err.what();
+      }
+    }
     break;
 #endif
   case COULOMB_ELC_P3M:

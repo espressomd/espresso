@@ -25,7 +25,8 @@ from .globals cimport verlet_reuse, skin
 from .globals cimport mpi_bcast_parameter
 from libcpp.vector cimport vector
 from .cellsystem cimport cell_structure
-from .utils cimport handle_errors, Vector3i, check_type_or_throw_except
+from .utils import handle_errors
+from .utils cimport Vector3i, check_type_or_throw_except
 
 
 cdef class CellSystem:

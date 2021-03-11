@@ -4,7 +4,7 @@
 #include "generated_kernels/FluctuatingMRTLatticeModelAvx.h"
 #define LatticeModelName lbm::FluctuatingMRTLatticeModelAvx
 #else
-#include "generated_kernels/FluctuatingMRTLatticeModeli.h"
+#include "generated_kernels/FluctuatingMRTLatticeModel.h"
 #define LatticeModelName lbm::FluctuatingMRTLatticeModel
 #endif
 

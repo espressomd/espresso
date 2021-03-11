@@ -1,0 +1,31 @@
+name: 'Build and check'
+description: 'Build espresso and run checks'
+inputs:
+  asan:  # id of input
+    description: 'Whether to build with address sanitizer'
+    required: true
+    default: 'false'
+  ubsan:
+    description: 'Whether to build with undefined behavior sanitizer'
+    required: true
+    default: 'false'
+  check_skip_long:  # id of input
+    description: 'Whether to skip long python tests'
+    required: true
+    default: 'false'
+runs:
+  using: "composite"
+  steps:
+    - run: |
+       brew install boost boost-mpi fftw
+       brew install hdf5-mpi
+       pip3 install numpy cython h5py scipy
+      shell: bash
+    - run: |
+        export myconfig=maxset with_cuda=false test_timeout=600 with_asan=${{ inputs.asan }} with_ubsan=${{ inputs.ubsan }} check_skip_long=${{ inputs.check_skip_long }}
+        bash maintainer/CI/build_cmake.sh
+      shell: bash
+      # This is a workaround for the unfortunate interaction of MacOS and OpenMPI 4
+      # See https://github.com/open-mpi/ompi/issues/6518
+      env:
+        OMPI_MCA_btl: "self,tcp"

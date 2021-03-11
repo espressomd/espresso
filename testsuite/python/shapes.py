@@ -27,8 +27,21 @@ class ShapeTests(ut.TestCase):
         union = espressomd.shapes.Union()
         wall1 = espressomd.shapes.Wall(normal=[0, 0, 1], dist=0)
         wall2 = espressomd.shapes.Wall(normal=[0, 0, -1], dist=-10)
+        self.assertTrue(union.call_method('empty'))
         union.add([wall1, wall2])
+        self.assertFalse(union.call_method('empty'))
         self.assertEqual(union.size(), 2)
+
+        # check object retrieval
+        pwall1, pwall2 = union.call_method('get_elements')
+        self.assertIsInstance(pwall1, espressomd.shapes.Wall)
+        self.assertIsInstance(pwall2, espressomd.shapes.Wall)
+        np.testing.assert_almost_equal(
+            np.copy(pwall1.normal), np.copy(wall1.normal))
+        np.testing.assert_almost_equal(
+            np.copy(pwall2.normal), np.copy(wall2.normal))
+        np.testing.assert_almost_equal(pwall1.dist, wall1.dist)
+        np.testing.assert_almost_equal(pwall2.dist, wall2.dist)
 
         self.assertAlmostEqual(union.calc_distance(
             position=[1, 2, 4.5])[0], 4.5)
@@ -41,6 +54,7 @@ class ShapeTests(ut.TestCase):
         with self.assertRaises(ValueError):
             union.calc_distance(position=[1, 2, 11.5])
         union.clear()
+        self.assertTrue(union.call_method('empty'))
         self.assertEqual(union.size(), 0)
         self.assertEqual(union.calc_distance(position=[1, 2, 6.5])[0], np.inf)
 

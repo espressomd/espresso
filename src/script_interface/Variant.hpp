@@ -25,9 +25,21 @@
 
 #include <boost/variant.hpp>
 
+/* This <boost/serialization/library_version_type.hpp> include guards against
+ * an issue in boost::serialization from boost 1.74.0 that leads to compiler
+ * error "'library_version_type' is not a member of 'boost::serialization'"
+ * when including <boost/serialization/unordered_map.hpp>. More details
+ * in ticket https://github.com/boostorg/serialization/issues/219
+ */
+#include <boost/serialization/version.hpp>
+#if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 == 74
+#include <boost/serialization/library_version_type.hpp>
+#endif
+
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -48,11 +60,18 @@ constexpr const None none{};
 
 /**
  * @brief Possible types for parameters.
+ *
+ * The visitors and packing functions need to be adapted accordingly when
+ * extending this variant with new types. For the exact details, see commit
+ * <a href="https://github.com/espressomd/espresso/commit/b48ab62">b48ab62</a>.
+ * The number of types is limited by macro @c BOOST_MPL_LIMIT_LIST_SIZE
+ * (defaults to 20).
  */
 using Variant = boost::make_recursive_variant<
     None, bool, int, size_t, double, std::string, std::vector<int>,
     std::vector<double>, ObjectRef, std::vector<boost::recursive_variant_>,
-    Utils::Vector2d, Utils::Vector3d, Utils::Vector4d>::type;
+    Utils::Vector2d, Utils::Vector3d, Utils::Vector4d,
+    std::unordered_map<int, boost::recursive_variant_>>::type;
 
 using VariantMap = std::unordered_map<std::string, Variant>;
 

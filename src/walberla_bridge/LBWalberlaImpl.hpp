@@ -296,13 +296,6 @@ public:
 
   void ghost_communication() override { (*m_communication)(); }
 
-  template <typename Function>
-  void interpolate_bspline_at_pos(Utils::Vector3d pos, Function f) const {
-    Utils::Interpolation::bspline_3d<2>(
-        pos, f, Utils::Vector3d{1.0, 1.0, 1.0}, // grid spacing
-        Utils::Vector3d::broadcast(.5));        // offset (cell center)
-  }
-
   // Velocity
   boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i &node,
@@ -357,6 +350,32 @@ public:
           }
         });
     return {v};
+  };
+
+  boost::optional<double> get_interpolated_density_at_pos(
+      const Utils::Vector3d &pos,
+      bool consider_points_in_halo = false) const override {
+    if (!consider_points_in_halo and !pos_in_local_domain(pos))
+      return {};
+    if (consider_points_in_halo and !pos_in_local_halo(pos))
+      return {};
+    double dens = 0.0;
+    interpolate_bspline_at_pos(
+        pos, [this, &dens, pos](const std::array<int, 3> node, double weight) {
+          // Nodes with zero weight might not be accessible, because they can be
+          // outside ghost layers
+          if (weight != 0) {
+            auto res =
+                get_node_density(Utils::Vector3i{{node[0], node[1], node[2]}});
+            if (!res) {
+              printf("Pos: %g %g %g, Node %d %d %d, weight %g\n", pos[0],
+                     pos[1], pos[2], node[0], node[1], node[2], weight);
+              throw std::runtime_error("Access to LB density field failed.");
+            }
+            dens += *res * weight;
+          }
+        });
+    return {dens};
   };
 
   // Local force

@@ -20,27 +20,9 @@
 include "myconfig.pxi"
 from .electrostatics cimport *
 from libcpp.vector cimport vector
-from libcpp cimport bool
 from .utils cimport Vector3d
 
 IF ELECTROSTATICS and P3M:
-
-    cdef extern from "electrostatics_magnetostatics/elc.hpp":
-        ctypedef struct ELC_struct:
-            double maxPWerror
-            double gap_size
-            double far_cut
-            bool neutralize
-            double delta_mid_top,
-            double delta_mid_bot,
-            bool const_pot,
-            double pot_diff
-
-        int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                           bool neutralize, double delta_mid_top, double delta_mid_bot, bool const_pot, double pot_diff)
-
-        # links intern C-struct with python object
-        ELC_struct elc_params
 
     cdef extern from "electrostatics_magnetostatics/icc.hpp":
         ctypedef struct iccp3m_struct:

@@ -89,6 +89,14 @@ class FieldTest(ut.TestCase):
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
                                self.system.analysis.energy()['external_fields'])
 
+        np.testing.assert_allclose(
+            electric_field.call_method("_eval_field", x=[0, 0, 0]), phi0)
+        np.testing.assert_allclose(
+            electric_field.call_method("_eval_field", x=[3, 2, 1]),
+            np.dot(-E, [3, 2, 1]) + phi0)
+        np.testing.assert_allclose(
+            electric_field.call_method("_eval_jacobian", x=[3, 2, 1]), -E)
+
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_electric_plane_wave(self):
         E0 = np.array([1., -2., 3.])
@@ -146,10 +154,18 @@ class FieldTest(ut.TestCase):
             box, h, self.potential)
 
         F = constraints.PotentialField(field=field_data, grid_spacing=h,
+                                       particle_scales={1: 0.0},
                                        default_scale=scaling)
 
         p = self.system.part.add(pos=[0, 0, 0])
+        self.system.part.add(pos=[1, 0, 0])
         self.system.constraints.add(F)
+        self.assertAlmostEqual(F.default_scale, scaling, delta=1e-9)
+        self.assertEqual(F.particle_scales, {1: 0.0})
+        with self.assertRaisesRegex(RuntimeError, 'Parameter default_scale is read-only'):
+            F.default_scale = 2.0
+        with self.assertRaisesRegex(RuntimeError, 'Parameter particle_scales is read-only'):
+            F.particle_scales = {0: 0.0}
 
         for i in product(*map(range, 3 * [10])):
             x = (h * i)
@@ -198,10 +214,17 @@ class FieldTest(ut.TestCase):
         field_data = constraints.ForceField.field_from_fn(box, h, self.force)
 
         F = constraints.ForceField(field=field_data, grid_spacing=h,
+                                   particle_scales={1: 0.0},
                                    default_scale=scaling)
 
         p = self.system.part.add(pos=[0, 0, 0])
         self.system.constraints.add(F)
+        self.assertAlmostEqual(F.default_scale, scaling, delta=1e-9)
+        self.assertEqual(F.particle_scales, {1: 0.0})
+        with self.assertRaisesRegex(RuntimeError, 'Parameter default_scale is read-only'):
+            F.default_scale = 2.0
+        with self.assertRaisesRegex(RuntimeError, 'Parameter particle_scales is read-only'):
+            F.particle_scales = {0: 0.0}
 
         for i in product(*map(range, 3 * [10])):
             x = (h * i)
@@ -226,6 +249,8 @@ class FieldTest(ut.TestCase):
 
         p = self.system.part.add(pos=[0, 0, 0], v=[1, 2, 3])
         self.system.constraints.add(F)
+        with self.assertRaisesRegex(RuntimeError, 'Parameter gamma is read-only'):
+            F.gamma = 2.0
 
         for i in product(*map(range, 3 * [10])):
             x = (h * i)

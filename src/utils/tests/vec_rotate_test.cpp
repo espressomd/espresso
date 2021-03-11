@@ -22,11 +22,9 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/vec_rotate.hpp>
-using Utils::vec_rotate;
 
 #include <cmath>
 #include <limits>
-#include <tuple>
 
 BOOST_AUTO_TEST_CASE(rotation) {
   using std::cos;
@@ -43,20 +41,16 @@ BOOST_AUTO_TEST_CASE(rotation) {
   auto const expected =
       cos(t) * v + sin(t) * vector_product(k, v) + (1. - cos(t)) * (k * v) * k;
 
-  auto const is = vec_rotate(k, t, v);
+  auto const is = Utils::vec_rotate(k, t, v);
   auto const rel_diff = (expected - is).norm() / expected.norm();
 
   BOOST_CHECK(rel_diff < std::numeric_limits<double>::epsilon());
 }
 
-BOOST_AUTO_TEST_CASE(rotation_params) {
-  Utils::Vector3d v1 = {1.0, 0.0, 0.0};
-  Utils::Vector3d v2 = {1.0, 1.0, 0.0};
+BOOST_AUTO_TEST_CASE(angle_between) {
+  Utils::Vector3d const v1 = {1.0, 0.0, 0.0};
+  Utils::Vector3d const v2 = {1.0, 1.0, 0.0};
 
-  double angle;
-  Utils::Vector3d rotation_axis;
-  std::tie(angle, rotation_axis) = Utils::rotation_params(v1, v2);
+  auto const angle = Utils::angle_between(v1, v2);
   BOOST_CHECK_CLOSE(angle, Utils::pi() / 4.0, 1e-7);
-  BOOST_CHECK_SMALL((rotation_axis * v1), 1e-7);
-  BOOST_CHECK_SMALL((rotation_axis * v2), 1e-7);
 }

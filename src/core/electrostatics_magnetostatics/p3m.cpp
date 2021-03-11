@@ -66,6 +66,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <functional>
+#include <stdexcept>
 
 using Utils::sinc;
 
@@ -184,7 +185,13 @@ void p3m_init() {
     return;
   }
 
-  p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
+  double elc_layer = 0.0;
+  if (coulomb.method == COULOMB_ELC_P3M) {
+    elc_layer = elc_params.space_layer;
+  }
+
+  p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin,
+                         elc_layer);
 
   p3m.sm.resize(comm_cart, p3m.local_mesh);
 
@@ -205,7 +212,7 @@ void p3m_init() {
   p3m_count_charged_particles();
 }
 
-void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
+void p3m_set_tune_params(double r_cut, const int mesh[3], int cao,
                          double accuracy) {
   if (r_cut >= 0) {
     p3m.params.r_cut = r_cut;
@@ -224,29 +231,33 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
   if (cao >= 0)
     p3m.params.cao = cao;
 
-  if (alpha >= 0) {
-    p3m.params.alpha = alpha;
-    p3m.params.alpha_L = alpha * box_geo.length()[0];
-  }
-
   if (accuracy >= 0)
     p3m.params.accuracy = accuracy;
 }
 
-int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
-                   double accuracy) {
+void p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
+                    double accuracy) {
+  if (r_cut < 0)
+    throw std::runtime_error("P3M: invalid r_cut");
+
+  if (mesh[0] < 0 || mesh[1] < 0 || mesh[2] < 0)
+    throw std::runtime_error("P3M: invalid mesh size");
+
+  if (cao < 1 || cao > 7)
+    throw std::runtime_error("P3M: invalid cao");
+
+  if (cao > mesh[0] || cao > mesh[1] || cao > mesh[2])
+    throw std::runtime_error("P3M: cao larger than mesh size");
+
+  if (alpha <= 0.0 && alpha != -1.0)
+    throw std::runtime_error("P3M: invalid alpha");
+
+  if (accuracy <= 0.0 && accuracy != -1.0)
+    throw std::runtime_error("P3M: invalid accuracy");
+
   if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M &&
       coulomb.method != COULOMB_P3M_GPU)
     coulomb.method = COULOMB_P3M;
-
-  if (r_cut < 0)
-    return -1;
-
-  if ((mesh[0] < 0) || (mesh[1] < 0) || (mesh[2] < 0))
-    return -2;
-
-  if (cao < 1 || cao > 7 || cao > mesh[0] || cao > mesh[1] || cao > mesh[2])
-    return -3;
 
   p3m.params.r_cut = r_cut;
   p3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
@@ -254,42 +265,31 @@ int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
   p3m.params.mesh[1] = mesh[1];
   p3m.params.mesh[0] = mesh[0];
   p3m.params.cao = cao;
-
-  if (alpha > 0) {
-    p3m.params.alpha = alpha;
-    p3m.params.alpha_L = alpha * box_geo.length()[0];
-  } else if (alpha != -1.0)
-    return -4;
-
-  if (accuracy >= 0)
-    p3m.params.accuracy = accuracy;
-  else if (accuracy != -1.0)
-    return -5;
+  p3m.params.alpha = alpha;
+  p3m.params.alpha_L = alpha * box_geo.length()[0];
+  p3m.params.accuracy = accuracy;
 
   mpi_bcast_coulomb_params();
-
-  return 0;
 }
 
-int p3m_set_mesh_offset(double x, double y, double z) {
+void p3m_set_mesh_offset(double x, double y, double z) {
+  if (x == -1.0 && y == -1.0 && z == -1.0)
+    return;
+
   if (x < 0.0 || x > 1.0 || y < 0.0 || y > 1.0 || z < 0.0 || z > 1.0)
-    return ES_ERROR;
+    throw std::runtime_error("P3M: invalid mesh offset");
 
   p3m.params.mesh_off[0] = x;
   p3m.params.mesh_off[1] = y;
   p3m.params.mesh_off[2] = z;
 
   mpi_bcast_coulomb_params();
-
-  return ES_OK;
 }
 
-int p3m_set_eps(double eps) {
+void p3m_set_eps(double eps) {
   p3m.params.epsilon = eps;
 
   mpi_bcast_coulomb_params();
-
-  return ES_OK;
 }
 
 namespace {

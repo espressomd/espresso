@@ -23,6 +23,8 @@ import os
 
 import espressomd
 import espressomd.checkpointing
+import espressomd.electrostatics
+import espressomd.magnetostatics
 import espressomd.virtual_sites
 import espressomd.integrate
 import espressomd.lb
@@ -47,6 +49,16 @@ class CheckpointTest(ut.TestCase):
                 '.', '__'),
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         cls.checkpoint.load(0)
+        cls.ref_box_l = np.array([6.0, 7.0, 8.0])
+        if 'DP3M' in modes:
+            cls.ref_box_l = np.array([8.0, 8.0, 8.0])
+
+    def get_active_actor_of_type(self, actor_type):
+        for actor in system.actors.active_actors:
+            if isinstance(actor, actor_type):
+                return actor
+        self.fail(
+            f"system doesn't have an actor of type {actor_type.__name__}")
 
     @ut.skipIf(not LB, "Skipping test due to missing mode.")
     def test_LB(self):
@@ -91,9 +103,10 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures('LB_WALBERLA')
     @ut.skipIf('LB.WALBERLA' not in modes, 'waLBerla LBM not in modes')
     def test_VTK(self):
+        vtk_suffix = '@TEST_COMBINATION@_@TEST_BINARY@'
         for vtk_registry in (system._vtk_registry,
                              espressomd.lb._vtk_registry):
-            key = 'vtk_out/auto_@TEST_BINARY@'
+            key = f'vtk_out/auto_{vtk_suffix}'
             self.assertIn(key, vtk_registry.map)
             obj = vtk_registry.map[key]
             self.assertIsInstance(obj, espressomd.lb.VTKOutputAutomatic)
@@ -105,7 +118,7 @@ class CheckpointTest(ut.TestCase):
             self.assertIn(
                 "writes to '{}' every 1 LB step (disabled)>".format(key),
                 repr(obj))
-            key = 'vtk_out/manual_@TEST_BINARY@'
+            key = f'vtk_out/manual_{vtk_suffix}'
             self.assertIn(key, vtk_registry.map)
             obj = vtk_registry.map[key]
             self.assertIsInstance(obj, espressomd.lb.VTKOutputManual)
@@ -167,6 +180,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(system.cell_system.skin, 0.1)
         self.assertEqual(system.time_step, 0.01)
         self.assertEqual(system.min_global_cut, 2.0)
+        np.testing.assert_allclose(np.copy(system.box_l), self.ref_box_l)
 
     def test_part(self):
         np.testing.assert_allclose(
@@ -354,18 +368,91 @@ class CheckpointTest(ut.TestCase):
             system.auto_update_accumulators[2].result(),
             expected)
 
+    @utx.skipIfMissingFeatures('DP3M')
+    @ut.skipIf('DP3M.CPU' not in modes,
+               "Skipping test due to missing combination.")
+    def test_dp3m(self):
+        actor = self.get_active_actor_of_type(
+            espressomd.magnetostatics.DipolarP3M)
+        state = actor.get_params()
+        reference = {'prefactor': 1.0, 'accuracy': 0.01, 'mesh': 3 * [8],
+                     'cao': 1, 'alpha': 12.0, 'r_cut': 2.4, 'tune': False,
+                     'mesh_off': [0.5, 0.5, 0.5], 'epsilon': 2.0}
+        for key in reference:
+            self.assertIn(key, state)
+            np.testing.assert_almost_equal(state[key], reference[key],
+                                           err_msg=f'for parameter {key}')
+
     @utx.skipIfMissingFeatures('P3M')
     @ut.skipIf('P3M.CPU' not in modes,
                "Skipping test due to missing combination.")
     def test_p3m(self):
-        actor = system.actors.active_actors[0]
-        self.assertTrue(isinstance(actor, espressomd.electrostatics.P3M))
+        actor = self.get_active_actor_of_type(espressomd.electrostatics.P3M)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
-                     'cao': 1, 'alpha': 1.0, 'r_cut': 1.0}
+                     'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False}
         for key in reference:
             self.assertIn(key, state)
-            np.testing.assert_almost_equal(state[key], reference[key])
+            np.testing.assert_almost_equal(state[key], reference[key],
+                                           err_msg=f'for parameter {key}')
+
+    @utx.skipIfMissingFeatures('P3M')
+    @ut.skipIf('P3M.ELC' not in modes,
+               "Skipping test due to missing combination.")
+    def test_elc(self):
+        actor = self.get_active_actor_of_type(espressomd.electrostatics.ELC)
+        elc_state = actor.get_params()
+        p3m_state = elc_state['p3m_actor'].get_params()
+        p3m_reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
+                         'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False}
+        elc_reference = {'gap_size': 2.0, 'maxPWerror': 0.1,
+                         'delta_mid_top': 0.9, 'delta_mid_bot': 0.1}
+        for key in elc_reference:
+            self.assertIn(key, elc_state)
+            np.testing.assert_almost_equal(elc_state[key], elc_reference[key],
+                                           err_msg=f'for parameter {key}')
+        for key in p3m_reference:
+            self.assertIn(key, p3m_state)
+            np.testing.assert_almost_equal(p3m_state[key], p3m_reference[key],
+                                           err_msg=f'for parameter {key}')
+
+    @utx.skipIfMissingFeatures('SCAFACOS')
+    @ut.skipIf('SCAFACOS' not in modes,
+               "Skipping test due to missing combination.")
+    def test_scafacos(self):
+        actor = self.get_active_actor_of_type(
+            espressomd.electrostatics.Scafacos)
+        state = actor.get_params()
+        reference = {'prefactor': 0.5, 'method_name': 'p3m',
+                     'method_params': {
+                         'p3m_cao': '7',
+                         'p3m_r_cut': '1.0',
+                         'p3m_grid': '64',
+                         'p3m_alpha': '2.084652'}}
+        for key in reference:
+            self.assertEqual(state[key], reference[key], msg=f'for {key}')
+
+    @utx.skipIfMissingFeatures('SCAFACOS_DIPOLES')
+    @ut.skipIf('SCAFACOS' not in modes,
+               "Skipping test due to missing combination.")
+    def test_scafacos_dipoles(self):
+        actor = self.get_active_actor_of_type(
+            espressomd.magnetostatics.Scafacos)
+        state = actor.get_params()
+        reference = {'prefactor': 1.2, 'method_name': 'p2nfft',
+                     'method_params': {
+                         "p2nfft_verbose_tuning": "0",
+                         "pnfft_N": "32,32,32",
+                         "pnfft_n": "32,32,32",
+                         "pnfft_window_name": "bspline",
+                         "pnfft_m": "4",
+                         "p2nfft_ignore_tolerance": "1",
+                         "pnfft_diff_ik": "0",
+                         "p2nfft_r_cut": "11",
+                         "p2nfft_alpha": "0.37"}}
+        for key in reference:
+            self.assertIn(key, state)
+            self.assertEqual(state[key], reference[key], msg=f'for {key}')
 
     @utx.skipIfMissingFeatures('COLLISION_DETECTION')
     def test_collision_detection(self):
@@ -393,6 +480,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(len(system.constraints),
                          8 - int(not espressomd.has_features("ELECTROSTATICS")))
         c = system.constraints
+        ref_shape = self.ref_box_l.astype(int) + 2
 
         self.assertIsInstance(c[0].shape, Sphere)
         self.assertAlmostEqual(c[0].shape.radius, 0.1, delta=1E-10)
@@ -413,8 +501,9 @@ class CheckpointTest(ut.TestCase):
         self.assertAlmostEqual(c[4].gamma, 2.3, delta=1E-10)
 
         self.assertIsInstance(c[5], constraints.PotentialField)
-        self.assertEqual(c[5].field.shape, (8, 9, 10, 1))
+        self.assertEqual(c[5].field.shape, tuple(list(ref_shape) + [1]))
         self.assertAlmostEqual(c[5].default_scale, 1.6, delta=1E-10)
+        self.assertAlmostEqual(c[5].particle_scales[5], 6.0, delta=1E-10)
         np.testing.assert_allclose(np.copy(c[5].origin), [-0.5, -0.5, -0.5])
         np.testing.assert_allclose(np.copy(c[5].grid_spacing), np.ones(3))
         ref_pot = constraints.PotentialField(
@@ -423,7 +512,7 @@ class CheckpointTest(ut.TestCase):
                                    atol=1e-10)
 
         self.assertIsInstance(c[6], constraints.ForceField)
-        self.assertEqual(c[6].field.shape, (8, 9, 10, 3))
+        self.assertEqual(c[6].field.shape, tuple(list(ref_shape) + [3]))
         self.assertAlmostEqual(c[6].default_scale, 1.4, delta=1E-10)
         np.testing.assert_allclose(np.copy(c[6].origin), [-0.5, -0.5, -0.5])
         np.testing.assert_allclose(np.copy(c[6].grid_spacing), np.ones(3))
