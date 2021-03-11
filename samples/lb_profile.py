@@ -32,6 +32,7 @@ import espressomd.observables
 import espressomd.shapes
 import espressomd.lbboundaries
 import espressomd.accumulators
+import espressomd.math
 
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])
 system.time_step = 0.01
@@ -42,16 +43,14 @@ lb_fluid = espressomd.lb.LBFluidWalberla(
     agrid=1.0, dens=1.0, visc=1.0, tau=0.01, ext_force_density=[0, 0, 0.15], kT=0.0)
 system.actors.add(lb_fluid)
 system.thermostat.set_lb(LB_fluid=lb_fluid, seed=23)
-fluid_obs = espressomd.observables.CylindricalLBVelocityProfile(
+ctp = espressomd.math.CylindricalTransformationParameters(
     center=[5.0, 5.0, 0.0],
     axis=[0, 0, 1],
+    orientation=[1, 0, 0])
+fluid_obs = espressomd.observables.CylindricalLBVelocityProfile(
+    transform_params=ctp,
     n_r_bins=100,
-    n_phi_bins=1,
-    n_z_bins=1,
-    min_r=0.0,
     max_r=4.0,
-    min_phi=-np.pi,
-    max_phi=np.pi,
     min_z=0.0,
     max_z=10.0,
     sampling_density=0.1)

@@ -971,8 +971,10 @@ int ELC_tune(double error) {
     lz = elc_params.h + elc_params.space_layer;
   }
 
-  if (h < 0)
+  if (h < 0) {
+    runtimeErrorMsg() << "gap size too large";
     return ES_ERROR;
+  }
 
   elc_params.far_cut = min_inv_boxl;
 
@@ -991,8 +993,10 @@ int ELC_tune(double error) {
 
     elc_params.far_cut += min_inv_boxl;
   } while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
-  if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
+  if (elc_params.far_cut >= MAXIMAL_FAR_CUT) {
+    runtimeErrorMsg() << "maxPWerror too small";
     return ES_ERROR;
+  }
   elc_params.far_cut -= min_inv_boxl;
   elc_params.far_cut2 = Utils::sqr(elc_params.far_cut);
 
@@ -1074,17 +1078,8 @@ void ELC_init() {
 
   if (elc_params.far_calculated && (elc_params.dielectric_contrast_on)) {
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
-      runtimeErrorMsg() << "ELC auto-retuning failed, gap size too small";
+      runtimeErrorMsg() << "ELC auto-retuning failed";
     }
-  }
-  if (elc_params.dielectric_contrast_on) {
-    p3m.params.additional_mesh[0] = 0;
-    p3m.params.additional_mesh[1] = 0;
-    p3m.params.additional_mesh[2] = elc_params.space_layer;
-  } else {
-    p3m.params.additional_mesh[0] = 0;
-    p3m.params.additional_mesh[1] = 0;
-    p3m.params.additional_mesh[2] = 0;
   }
 }
 
@@ -1130,7 +1125,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
   ELC_setup_constants();
 
-  Coulomb::elc_sanity_check();
+  int error_code = Coulomb::elc_sanity_check();
 
   p3m.params.epsilon = P3M_EPSILON_METALLIC;
   coulomb.method = COULOMB_ELC_P3M;
@@ -1142,12 +1137,12 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
   } else {
     elc_params.far_calculated = true;
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
-      runtimeErrorMsg() << "ELC tuning failed, gap size too small";
+      error_code = ES_ERROR;
     }
   }
   mpi_bcast_coulomb_params();
 
-  return ES_OK;
+  return error_code;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

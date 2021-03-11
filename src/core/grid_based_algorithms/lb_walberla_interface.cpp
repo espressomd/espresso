@@ -153,6 +153,13 @@ boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos) {
 
 REGISTER_CALLBACK_ONE_RANK(get_velocity_at_pos)
 
+boost::optional<double> get_interpolated_density_at_pos(Utils::Vector3d pos) {
+  auto res = lb_walberla()->get_interpolated_density_at_pos(pos);
+  return res;
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_interpolated_density_at_pos)
+
 void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f) {
   lb_walberla()->add_force_at_pos(pos, f);
 }

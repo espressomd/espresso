@@ -56,6 +56,7 @@ void do_ghost_communication();
 Utils::Vector3d get_momentum();
 
 boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos);
+boost::optional<double> get_interpolated_density_at_pos(Utils::Vector3d pos);
 
 void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f);
 

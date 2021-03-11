@@ -57,6 +57,9 @@ public:
   virtual boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &position,
                       bool consider_points_in_halo = false) const = 0;
+  virtual boost::optional<double> get_interpolated_density_at_pos(
+      const Utils::Vector3d &position,
+      bool consider_points_in_halo = false) const = 0;
 
   virtual bool add_force_at_pos(const Utils::Vector3d &position,
                                 const Utils::Vector3d &force) = 0;

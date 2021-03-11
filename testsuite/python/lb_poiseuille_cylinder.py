@@ -18,6 +18,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 
+import espressomd.math
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.observables
@@ -81,7 +82,8 @@ class LBPoiseuilleCommon:
     system = espressomd.System(box_l=[BOX_L] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
-    params = {'axis': [0, 0, 1]}
+    params = {'axis': [0, 0, 1],
+              'orientation': [1, 0, 0]}
 
     def prepare(self):
         """
@@ -151,8 +153,10 @@ class LBPoiseuilleCommon:
         else:
             obs_center = [BOX_L / 2.0, BOX_L / 2.0, 0.0]
         local_obs_params = OBS_PARAMS.copy()
-        local_obs_params['center'] = obs_center
-        local_obs_params['axis'] = self.params['axis']
+        ctp = espressomd.math.CylindricalTransformationParameters(center=obs_center,
+                                                                  axis=self.params['axis'],
+                                                                  orientation=self.params['orientation'])
+        local_obs_params['transform_params'] = ctp
         obs = espressomd.observables.CylindricalLBVelocityProfile(
             **local_obs_params)
         self.accumulator = espressomd.accumulators.MeanVarianceCalculator(
@@ -180,16 +184,19 @@ class LBPoiseuilleCommon:
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]
+        self.params['orientation'] = [0, 0, -1]
         self.compare_to_analytical()
         self.check_observable()
 
     def test_y(self):
         self.params['axis'] = [0, 1, 0]
+        self.params['orientation'] = [1, 0, 0]
         self.compare_to_analytical()
         self.check_observable()
 
     def test_z(self):
         self.params['axis'] = [0, 0, 1]
+        self.params['orientation'] = [1, 0, 0]
         self.compare_to_analytical()
         self.check_observable()
 

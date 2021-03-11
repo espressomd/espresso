@@ -79,6 +79,7 @@ class ScafacosInterface(ut.TestCase):
             method_name="p3m",
             method_params={
                 "p3m_r_cut": 1.0,
+                "p3m_alpha": 2.799269,
                 "p3m_grid": 32,
                 "p3m_cao": 7}))
         actor = system.actors[0]
@@ -86,7 +87,8 @@ class ScafacosInterface(ut.TestCase):
         self.assertEqual(params["prefactor"], 0.5)
         self.assertEqual(params["method_name"], "p3m")
         self.assertEqual(params["method_params"],
-                         {'p3m_cao': '7', 'p3m_r_cut': '1.0', 'p3m_grid': '32'})
+                         {'p3m_cao': '7', 'p3m_r_cut': '1.0',
+                          'p3m_grid': '32', 'p3m_alpha': '2.799269'})
 
     @utx.skipIfMissingFeatures(["SCAFACOS_DIPOLES"])
     def test_actor_dipoles(self):
@@ -149,6 +151,7 @@ class ScafacosInterface(ut.TestCase):
             method_name="p3m",
             method_params={
                 "p3m_r_cut": 1.0,
+                "p3m_alpha": 2.799269,
                 "p3m_grid": 32,
                 "p3m_cao": 7})
         system.actors.add(scafacos_coulomb)

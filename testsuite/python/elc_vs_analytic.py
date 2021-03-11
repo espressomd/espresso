@@ -19,7 +19,6 @@ import unittest_decorators as utx
 import espressomd
 import numpy as np
 import espressomd.electrostatics
-from espressomd import electrostatic_extensions
 
 
 @utx.skipIfMissingFeatures(["P3M"])
@@ -62,12 +61,11 @@ class ELC_vs_analytic(ut.TestCase):
                                             accuracy=self.accuracy,
                                             mesh=[58, 58, 70],
                                             cao=4)
-        self.system.actors.add(p3m)
-
-        elc = electrostatic_extensions.ELC(gap_size=self.elc_gap,
-                                           maxPWerror=self.accuracy,
-                                           delta_mid_bot=self.delta_mid_bot,
-                                           delta_mid_top=self.delta_mid_top)
+        elc = espressomd.electrostatics.ELC(p3m_actor=p3m,
+                                            gap_size=self.elc_gap,
+                                            maxPWerror=self.accuracy,
+                                            delta_mid_bot=self.delta_mid_bot,
+                                            delta_mid_top=self.delta_mid_top)
         self.system.actors.add(elc)
 
         elc_results = self.scan()

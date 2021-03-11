@@ -70,6 +70,7 @@
 #include <array>
 #include <cstdio>
 #include <functional>
+#include <stdexcept>
 #include <vector>
 
 /************************************************
@@ -199,7 +200,7 @@ void dp3m_init() {
    * and the cutoff for charge assignment dp3m.params.cao_cut */
   dp3m_init_a_ai_cao_cut();
 
-  p3m_calc_local_ca_mesh(dp3m.local_mesh, dp3m.params, local_geo, skin);
+  p3m_calc_local_ca_mesh(dp3m.local_mesh, dp3m.params, local_geo, skin, 0.0);
 
   dp3m.sm.resize(comm_cart, dp3m.local_mesh);
 
@@ -225,8 +226,7 @@ void dp3m_init() {
  * functions related to the parsing & tuning of the dipolar parameters
  ******************/
 
-void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
-                          double accuracy) {
+void dp3m_set_tune_params(double r_cut, int mesh, int cao, double accuracy) {
   if (r_cut >= 0) {
     dp3m.params.r_cut = r_cut;
     dp3m.params.r_cut_iL = r_cut / box_geo.length()[0];
@@ -238,75 +238,68 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
   if (cao >= 0)
     dp3m.params.cao = cao;
 
-  if (alpha >= 0) {
-    dp3m.params.alpha = alpha;
-    dp3m.params.alpha_L = alpha * box_geo.length()[0];
-  }
-
   if (accuracy >= 0)
     dp3m.params.accuracy = accuracy;
 }
 
 /*****************************************************************************/
 
-int dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
-                    double accuracy) {
-  if (dipole.method != DIPOLAR_P3M && dipole.method != DIPOLAR_MDLC_P3M)
-    Dipole::set_method_local(DIPOLAR_P3M);
-
+void dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
+                     double accuracy) {
   if (r_cut < 0)
-    return -1;
+    throw std::runtime_error("DipolarP3M: invalid r_cut");
 
   if (mesh < 0)
-    return -2;
+    throw std::runtime_error("DipolarP3M: invalid mesh size");
 
-  if (cao < 1 || cao > 7 || cao > mesh)
-    return -3;
+  if (cao < 1 || cao > 7)
+    throw std::runtime_error("DipolarP3M: invalid cao");
+
+  if (cao > mesh)
+    throw std::runtime_error("DipolarP3M: cao larger than mesh size");
+
+  if (alpha <= 0.0 && alpha != -1.0)
+    throw std::runtime_error("DipolarP3M: invalid alpha");
+
+  if (accuracy <= 0.0 && accuracy != -1.0)
+    throw std::runtime_error("DipolarP3M: invalid accuracy");
+
+  if (dipole.method != DIPOLAR_P3M && dipole.method != DIPOLAR_MDLC_P3M)
+    Dipole::set_method_local(DIPOLAR_P3M);
 
   dp3m.params.r_cut = r_cut;
   dp3m.params.r_cut_iL = r_cut / box_geo.length()[0];
   dp3m.params.mesh[2] = dp3m.params.mesh[1] = dp3m.params.mesh[0] = mesh;
   dp3m.params.cao = cao;
-
-  if (alpha > 0) {
-    dp3m.params.alpha = alpha;
-    dp3m.params.alpha_L = alpha * box_geo.length()[0];
-  } else if (alpha != -1.0)
-    return -4;
-
-  if (accuracy >= 0)
-    dp3m.params.accuracy = accuracy;
-  else if (accuracy != -1.0)
-    return -5;
+  dp3m.params.alpha = alpha;
+  dp3m.params.alpha_L = alpha * box_geo.length()[0];
+  dp3m.params.accuracy = accuracy;
 
   mpi_bcast_coulomb_params();
-
-  return 0;
 }
 
-int dp3m_set_mesh_offset(double x, double y, double z) {
+void dp3m_set_mesh_offset(double x, double y, double z) {
+  if (x == -1.0 && y == -1.0 && z == -1.0)
+    return;
+
   if (x < 0.0 || x > 1.0 || y < 0.0 || y > 1.0 || z < 0.0 || z > 1.0)
-    return ES_ERROR;
+    throw std::runtime_error("DipolarP3M: invalid mesh offset");
 
   dp3m.params.mesh_off[0] = x;
   dp3m.params.mesh_off[1] = y;
   dp3m.params.mesh_off[2] = z;
 
   mpi_bcast_coulomb_params();
-
-  return ES_OK;
 }
 
 /** We left the handling of the epsilon, due to portability reasons in
  *  the future for the electrical dipoles, or if people want to do
  *  electrical dipoles alone using the magnetic code. Currently unused.
  */
-int dp3m_set_eps(double eps) {
+void dp3m_set_eps(double eps) {
   dp3m.params.epsilon = eps;
 
   mpi_bcast_coulomb_params();
-
-  return ES_OK;
 }
 
 namespace {

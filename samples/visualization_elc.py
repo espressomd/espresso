@@ -27,7 +27,6 @@ import numpy as np
 import espressomd
 import espressomd.shapes
 from espressomd import electrostatics
-from espressomd import electrostatic_extensions
 from espressomd import visualization
 
 required_features = ["P3M", "WCA"]
@@ -75,11 +74,8 @@ print("After Minimization: E_total=", energy['total'])
 system.thermostat.set_langevin(kT=0.1, gamma=1.0, seed=42)
 
 p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
-
-system.actors.add(p3m)
-
-elc = electrostatic_extensions.ELC(maxPWerror=1.0, gap_size=elc_gap,
-                                   const_pot=True, pot_diff=potential_diff)
+elc = electrostatics.ELC(p3m_actor=p3m, maxPWerror=1.0, gap_size=elc_gap,
+                         const_pot=True, pot_diff=potential_diff)
 system.actors.add(elc)
 
 visualizer.run(1)

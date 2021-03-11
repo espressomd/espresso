@@ -39,23 +39,36 @@ enum : uint8_t {
 };
 
 #ifdef EXTERNAL_FORCES
-/**
- *  \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
+/** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
  *  @c coord.
  */
 #define COORD_FIXED(coord) (2u << (coord))
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
- *  the coordinates is fixed. */
+ *  the coordinates is fixed.
+ */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-#else
+#else // EXTERNAL_FORCES
 #define COORD_FIXED(coord) (0)
-#endif
+#endif // EXTERNAL_FORCES
 
+/** Properties of a self-propelled particle. */
 struct ParticleParametersSwimming {
+  /** Is the particle a swimmer. */
   bool swimming = false;
+  /** Constant velocity to relax to. */
   double f_swim = 0.;
+  /** Imposed constant force. */
   double v_swim = 0.;
+  /** Flag for the swimming mode in a LB fluid.
+   *  Values:
+   *  - -1: pusher
+   *  - +1: puller
+   *  - 0: no swimming
+   */
   int push_pull = 0;
+  /** Distance of the source of propulsion from the particle
+   *  center in a LB fluid.
+   */
   double dipole_length = 0.;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
@@ -82,7 +95,7 @@ struct ParticleProperties {
   double mass = 1.0;
 #else
   constexpr static double mass{1.0};
-#endif /* MASS */
+#endif
 
   /** rotational inertia */
 #ifdef ROTATIONAL_INERTIA
@@ -141,48 +154,46 @@ struct ParticleProperties {
       ar &quat;
     }
   } vs_relative;
-#endif
-#else  /* VIRTUAL_SITES */
+#endif // VIRTUAL_SITES_RELATIVE
+#else  // VIRTUAL_SITES
   static constexpr bool is_virtual = false;
-#endif /* VIRTUAL_SITES */
+#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
+/** Friction coefficient for translation */
 #ifndef PARTICLE_ANISOTROPY
   double gamma = -1.;
 #else
   Utils::Vector3d gamma = {-1., -1., -1.};
 #endif // PARTICLE_ANISOTROPY
-/** Friction coefficient gamma for rotation */
 #ifdef ROTATION
+/** Friction coefficient for rotation */
 #ifndef PARTICLE_ANISOTROPY
   double gamma_rot = -1.;
 #else
   Utils::Vector3d gamma_rot = {-1., -1., -1.};
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
 #endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
-  /** flag whether to fix a particle in space.
-      Values:
-      <ul> <li> 0 no external influence
-           <li> 1 apply external force \ref ParticleProperties::ext_force
-           <li> 2,3,4 fix particle coordinate 0,1,2
-           <li> 5 apply external torque \ref ParticleProperties::ext_torque
-      </ul>
-  */
+  /** Flag for fixed particle coordinates.
+   *  Values:
+   *  - 0: no fixed coordinates
+   *  - 2: fix translation along the x axis
+   *  - 4: fix translation along the y axis
+   *  - 8: fix translation along the z axis
+   */
   uint8_t ext_flag = 0;
-  /** External force, apply if \ref ParticleProperties::ext_flag == 1. */
+  /** External force. */
   Utils::Vector3d ext_force = {0, 0, 0};
-
 #ifdef ROTATION
-  /** External torque, apply if \ref ParticleProperties::ext_flag == 16. */
+  /** External torque. */
   Utils::Vector3d ext_torque = {0, 0, 0};
 #endif
-#else
-  static constexpr const uint8_t ext_flag =
-      0; // no external forces and fixed coordinates
-#endif
+#else  // EXTERNAL_FORCES
+  static constexpr const uint8_t ext_flag = 0; // no fixed coordinates
+#endif // EXTERNAL_FORCES
 
 #ifdef ENGINE
   ParticleParametersSwimming swim;
@@ -194,7 +205,7 @@ struct ParticleProperties {
     ar &type;
 #ifdef MASS
     ar &mass;
-#endif /* MASS */
+#endif
 #ifdef ROTATIONAL_INERTIA
     ar &rinertia;
 #endif
@@ -217,7 +228,7 @@ struct ParticleProperties {
 #ifdef VIRTUAL_SITES_RELATIVE
     ar &vs_relative;
 #endif
-#endif /* VIRTUAL_SITES */
+#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
     ar &gamma;
@@ -231,7 +242,7 @@ struct ParticleProperties {
 #ifdef ROTATION
     ar &ext_torque;
 #endif
-#endif
+#endif // EXTERNAL_FORCES
 
 #ifdef ENGINE
     ar &swim;
@@ -256,7 +267,7 @@ struct ParticlePosition {
 #endif
 
 #ifdef BOND_CONSTRAINT
-  /** particle position at the previous time step */
+  /** particle position at the previous time step (RATTLE algorithm) */
   Utils::Vector3d p_old = {0., 0., 0.};
 #endif
 
@@ -301,7 +312,7 @@ struct ParticleForce {
   Utils::Vector3d f = {0., 0., 0.};
 
 #ifdef ROTATION
-  /** torque */
+  /** torque. */
   Utils::Vector3d torque = {0., 0., 0.};
 #endif
 
@@ -314,15 +325,17 @@ struct ParticleForce {
 };
 
 /** Momentum information on a particle. Information not contained in
-    communication of ghost particles so far, but a communication would
-    be necessary for velocity dependent potentials. */
+ *  communication of ghost particles so far, but a communication would
+ *  be necessary for velocity-dependent potentials.
+ */
 struct ParticleMomentum {
   /** velocity. */
   Utils::Vector3d v = {0., 0., 0.};
 
 #ifdef ROTATION
-  /** angular velocity
-      ALWAYS IN PARTICLE FIXED, I.E., CO-ROTATING COORDINATE SYSTEM */
+  /** angular velocity.
+   *  ALWAYS IN PARTICLE FIXED, I.E., CO-ROTATING COORDINATE SYSTEM.
+   */
   Utils::Vector3d omega = {0., 0., 0.};
 #endif
 
@@ -335,10 +348,10 @@ struct ParticleMomentum {
 };
 
 /** Information on a particle that is needed only on the
- *  node the particle belongs to
+ *  node the particle belongs to.
  */
 struct ParticleLocal {
-  /** check whether a particle is a ghost or not */
+  /** is particle a ghost particle. */
   bool ghost = false;
   /** position in the last time step before last Verlet list update. */
   Utils::Vector3d p_old = {0, 0, 0};
@@ -388,10 +401,9 @@ public:
 
 private:
 #ifdef EXCLUSIONS
-  /** list of particles, with which this particle has no nonbonded
+  /** list of particles, with which this particle has no non-bonded
    *  interactions
    */
-
   std::vector<int> el;
 #endif
 

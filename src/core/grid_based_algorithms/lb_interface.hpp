@@ -231,4 +231,11 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
 void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
                                  const Utils::Vector3d &f);
 
+/**
+ * @brief Calculates the interpolated fluid density on the master process.
+ * @param pos Position at which the density is to be calculated.
+ * @retval interpolated fluid density.
+ */
+double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
+
 #endif

@@ -20,9 +20,11 @@ import importlib_wrapper
 import os
 import numpy as np
 
+np.random.seed(40)
+
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/active_matter/solutions/rectification_simulation.py",
-    cmd_arguments=[6.0], PROD_STEPS=100, PROD_LENGTH=150)
+    cmd_arguments=[6.0], PROD_STEPS=100, PROD_LENGTH=100)
 
 
 @skipIfMissingFeatures

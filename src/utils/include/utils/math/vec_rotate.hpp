@@ -47,21 +47,10 @@ inline Vector3d vec_rotate(const Vector3d &axis, double angle,
 }
 
 /**
- * @brief Determine rotation angle and axis for rotating vec onto target_vec.
- * @param vec Vector to be rotated
- * @param target_vec Target vector
- * @return rotation angle and rotation axis
+ * @brief Determine the angle between two vectors.
  */
-inline std::tuple<double, Vector3d>
-rotation_params(Vector3d const &vec, Vector3d const &target_vec) {
-  if (vec.normalized() != target_vec.normalized()) {
-    auto const theta =
-        std::acos(vec * target_vec / (vec.norm() * target_vec.norm()));
-    auto const rotation_axis =
-        Utils::vector_product(vec, target_vec).normalize();
-    return std::make_tuple(theta, rotation_axis);
-  }
-  return std::make_tuple(0.0, Vector3d{});
+inline double angle_between(Vector3d const &v1, Vector3d const &v2) {
+  return std::acos(v1 * v2 / std::sqrt(v1.norm2() * v2.norm2()));
 }
 
 } // namespace Utils
