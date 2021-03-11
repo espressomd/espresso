@@ -120,7 +120,7 @@ void ReactionAlgorithm::add_reaction(
  * Checks whether all necessary variables for the reaction ensemble have been
  * set.
  */
-void ReactionAlgorithm::check_reaction_ensemble() {
+void ReactionAlgorithm::check_reaction_ensemble() const {
   if (reactions.empty()) {
     throw std::runtime_error("Reaction system not initialized");
   }
@@ -192,7 +192,7 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
 /**
  * Checks whether all particles exist for the provided reaction.
  */
-bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) {
+bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) const {
   bool enough_particles = true;
   for (int i = 0; i < reactions[reaction_id].reactant_types.size(); i++) {
     int current_number =
@@ -222,7 +222,7 @@ void ReactionAlgorithm::append_particle_property_of_random_particle(
  *Performs a trial reaction move
  */
 void ReactionAlgorithm::make_reaction_attempt(
-    SingleReaction &current_reaction,
+    SingleReaction const &current_reaction,
     std::vector<StoredParticleProperty> &changed_particles_properties,
     std::vector<int> &p_ids_created_particles,
     std::vector<StoredParticleProperty> &hidden_particles_properties) {
@@ -296,7 +296,7 @@ void ReactionAlgorithm::make_reaction_attempt(
  * when a reaction attempt is rejected.
  */
 void ReactionAlgorithm::restore_properties(
-    std::vector<StoredParticleProperty> &property_list,
+    std::vector<StoredParticleProperty> const &property_list,
     const int number_of_saved_properties) {
   // this function restores all properties of all particles provided in the
   // property list, the format of the property list is (p_id,charge,type)
@@ -318,10 +318,10 @@ void ReactionAlgorithm::restore_properties(
  * ensemble
  */
 double ReactionEnsemble::calculate_acceptance_probability(
-    SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-    std::map<int, int> &old_particle_numbers, int dummy_old_state_index,
+    SingleReaction const &current_reaction, double E_pot_old, double E_pot_new,
+    std::map<int, int> const &old_particle_numbers, int dummy_old_state_index,
     int dummy_new_state_index,
-    bool dummy_only_make_configuration_changing_move) {
+    bool dummy_only_make_configuration_changing_move) const {
   const double factorial_expr =
       calculate_factorial_expression(current_reaction, old_particle_numbers);
 
@@ -818,10 +818,10 @@ void WangLandauReactionEnsemble::add_new_CV_potential_energy(
  * Returns the flattened index of the multidimensional Wang-Landau histogram
  */
 int WangLandauReactionEnsemble::get_flattened_index_wang_landau(
-    std::vector<double> &current_state,
-    std::vector<double> &collective_variables_minimum_values,
-    std::vector<double> &collective_variables_maximum_values,
-    std::vector<double> &delta_collective_variables_values,
+    std::vector<double> const &current_state,
+    std::vector<double> const &collective_variables_minimum_values,
+    std::vector<double> const &collective_variables_maximum_values,
+    std::vector<double> const &delta_collective_variables_values,
     int nr_collective_variables) {
   int index = -10; // negative number is not allowed as index and therefore
                    // indicates error
@@ -917,7 +917,7 @@ int WangLandauReactionEnsemble::
  * grid which starts at 0
  */
 double WangLandauReactionEnsemble::get_minimum_CV_value_on_delta_CV_spaced_grid(
-    double min_CV_value, double delta_CV) {
+    double min_CV_value, double delta_CV) const {
   // assume grid has it s origin at 0
   double minimum_CV_value_on_delta_CV_spaced_grid =
       floor(min_CV_value / delta_CV) * delta_CV;
@@ -950,7 +950,7 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
 /**
  * Initializes the Wang-Landau histogram.
  */
-int WangLandauReactionEnsemble::get_num_needed_bins() {
+int WangLandauReactionEnsemble::get_num_needed_bins() const {
   int needed_bins = 1;
   for (const auto &current_collective_variable : collective_variables) {
     needed_bins = needed_bins * (int((current_collective_variable->CV_maximum -
@@ -1044,9 +1044,9 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
  *  Modify Boltzmann factor according to Wang-Landau algorithm in @cite yan02b.
  */
 double WangLandauReactionEnsemble::calculate_acceptance_probability(
-    SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-    std::map<int, int> &old_particle_numbers, int old_state_index,
-    int new_state_index, bool only_make_configuration_changing_move) {
+    SingleReaction const &current_reaction, double E_pot_old, double E_pot_new,
+    std::map<int, int> const &old_particle_numbers, int old_state_index,
+    int new_state_index, bool only_make_configuration_changing_move) const {
   double beta = 1.0 / temperature;
   double bf;
   if (do_not_sample_reaction_partition_function ||
@@ -1156,7 +1156,7 @@ void WangLandauReactionEnsemble::update_wang_landau_potential_and_histogram(
 /**
  *Determines whether we can reduce the Wang-Landau parameter
  */
-bool WangLandauReactionEnsemble::can_refine_wang_landau_one_over_t() {
+bool WangLandauReactionEnsemble::can_refine_wang_landau_one_over_t() const {
   double minimum_required_value =
       0.80 * average_list_of_allowed_entries(
                  histogram); // This is an additional constraint to sample
@@ -1214,7 +1214,7 @@ void WangLandauReactionEnsemble::refine_wang_landau_parameter_one_over_t() {
  *Determine whether the desired number of refinements was achieved.
  */
 bool WangLandauReactionEnsemble::
-    achieved_desired_number_of_refinements_one_over_t() {
+    achieved_desired_number_of_refinements_one_over_t() const {
   if (wang_landau_parameter < final_wang_landau_parameter) {
     printf("Achieved desired number of refinements\n");
     return true;
@@ -1539,10 +1539,10 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
  * method.
  */
 double ConstantpHEnsemble::calculate_acceptance_probability(
-    SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-    std::map<int, int> &dummy_old_particle_numbers, int dummy_old_state_index,
-    int dummy_new_state_index,
-    bool dummy_only_make_configuration_changing_move) {
+    SingleReaction const &current_reaction, double E_pot_old, double E_pot_new,
+    std::map<int, int> const &dummy_old_particle_numbers,
+    int dummy_old_state_index, int dummy_new_state_index,
+    bool dummy_only_make_configuration_changing_move) const {
   auto const beta = 1.0 / temperature;
   auto const pKa = -current_reaction.nu_bar * log10(current_reaction.gamma);
   auto const ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar / beta *
@@ -1603,13 +1603,13 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
  * See @cite smith94c.
  */
 double
-calculate_factorial_expression(SingleReaction &current_reaction,
-                               std::map<int, int> &old_particle_numbers) {
+calculate_factorial_expression(SingleReaction const &current_reaction,
+                               std::map<int, int> const &old_particle_numbers) {
   double factorial_expr = 1.0;
   // factorial contribution of reactants
   for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
     int nu_i = -1 * current_reaction.reactant_coefficients[i];
-    int N_i0 = old_particle_numbers[current_reaction.reactant_types[i]];
+    int N_i0 = old_particle_numbers.at(current_reaction.reactant_types[i]);
     factorial_expr *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
         N_i0, nu_i); // zeta = 1 (see @cite smith94c)
                      // since we only perform one reaction
@@ -1618,7 +1618,7 @@ calculate_factorial_expression(SingleReaction &current_reaction,
   // factorial contribution of products
   for (int i = 0; i < current_reaction.product_types.size(); i++) {
     int nu_i = current_reaction.product_coefficients[i];
-    int N_i0 = old_particle_numbers[current_reaction.product_types[i]];
+    int N_i0 = old_particle_numbers.at(current_reaction.product_types[i]);
     factorial_expr *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
         N_i0, nu_i); // zeta = 1 (see @cite smith94c)
                      // since we only perform one reaction

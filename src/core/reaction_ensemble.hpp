@@ -71,10 +71,10 @@ struct SingleReaction {
   Utils::Accumulator accumulator_exponentials = Utils::Accumulator(1);
   int tried_moves = 0;
   int accepted_moves = 0;
-  double get_acceptance_rate() {
+  double get_acceptance_rate() const {
     return static_cast<double>(accepted_moves) /
            static_cast<double>(tried_moves);
-  };
+  }
 };
 
 struct StoredParticleProperty {
@@ -87,9 +87,9 @@ struct CollectiveVariable {
   double CV_minimum = {};
   double CV_maximum = {};
   double delta_CV = {};
-  virtual double determine_current_state() = 0; // use pure virtual, otherwise
-                                                // this will be used in vector
-                                                // of collective variables
+  // use pure virtual, otherwise this will be used in vector of collective
+  // variables
+  virtual double determine_current_state() const = 0;
   virtual ~CollectiveVariable() = default;
 };
 
@@ -97,7 +97,7 @@ class WangLandauReactionEnsemble;
 
 struct EnergyCollectiveVariable : public CollectiveVariable {
   std::string energy_boundaries_filename;
-  double determine_current_state() override {
+  double determine_current_state() const override {
     return calculate_current_potential_energy_of_system();
   }
   void
@@ -107,7 +107,7 @@ struct EnergyCollectiveVariable : public CollectiveVariable {
 struct DegreeOfAssociationCollectiveVariable : public CollectiveVariable {
   std::vector<int> corresponding_acid_types;
   int associated_type;
-  double determine_current_state() override {
+  double determine_current_state() const override {
     return calculate_degree_of_association();
   }
 
@@ -117,7 +117,7 @@ private:
    * is needed since you may use multiple degrees of association as collective
    * variable for the Wang-Landau algorithm.
    */
-  double calculate_degree_of_association() {
+  double calculate_degree_of_association() const {
     int total_number_of_corresponding_acid = 0;
     for (int corresponding_acid_type : corresponding_acid_types) {
       int num_of_current_type =
@@ -170,14 +170,14 @@ public:
 
   int m_accepted_configurational_MC_moves = 0;
   int m_tried_configurational_MC_moves = 0;
-  double get_acceptance_rate_configurational_moves() {
+  double get_acceptance_rate_configurational_moves() const {
     return static_cast<double>(m_accepted_configurational_MC_moves) /
            static_cast<double>(m_tried_configurational_MC_moves);
   }
 
   void set_cuboid_reaction_ensemble_volume();
   virtual int do_reaction(int reaction_steps);
-  void check_reaction_ensemble();
+  void check_reaction_ensemble() const;
 
   int delete_particle(int p_id);
   void add_reaction(double gamma, const std::vector<int> &_reactant_types,
@@ -206,15 +206,16 @@ protected:
   virtual void on_mc_rejection_directly_after_entry(int &old_state_index){};
   virtual void on_mc_accept(int &new_state_index){};
   virtual void on_mc_reject(int &old_state_index){};
-  virtual int on_mc_use_WL_get_new_state() { return -10; };
+  virtual int on_mc_use_WL_get_new_state() { return -10; }
 
   void make_reaction_attempt(
-      SingleReaction &current_reaction,
+      SingleReaction const &current_reaction,
       std::vector<StoredParticleProperty> &changed_particles_properties,
       std::vector<int> &p_ids_created_particles,
       std::vector<StoredParticleProperty> &hidden_particles_properties);
-  void restore_properties(std::vector<StoredParticleProperty> &property_list,
-                          int number_of_saved_properties);
+  void
+  restore_properties(std::vector<StoredParticleProperty> const &property_list,
+                     int number_of_saved_properties);
 
   /**
    * @brief draws a random integer from the uniform distribution in the range
@@ -226,7 +227,7 @@ protected:
     std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
     return uniform_int_dist(m_generator);
   }
-  bool all_reactant_particles_exist(int reaction_id);
+  bool all_reactant_particles_exist(int reaction_id) const;
 
 private:
   std::mt19937 m_generator;
@@ -243,11 +244,12 @@ private:
       int type, std::vector<StoredParticleProperty> &list_of_particles);
 
   virtual double calculate_acceptance_probability(
-      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::map<int, int> &old_particle_numbers, int old_state_index,
-      int new_state_index, bool only_make_configuration_changing_move) {
+      SingleReaction const &current_reaction, double E_pot_old,
+      double E_pot_new, std::map<int, int> const &old_particle_numbers,
+      int old_state_index, int new_state_index,
+      bool only_make_configuration_changing_move) const {
     return -10;
-  };
+  }
 
   void add_types_to_index(std::vector<int> &type_list);
   Utils::Vector3d get_random_position_in_box();
@@ -270,10 +272,10 @@ public:
 
 private:
   double calculate_acceptance_probability(
-      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::map<int, int> &old_particle_numbers, int dummy_old_state_index,
-      int dummy_new_state_index,
-      bool dummy_only_make_configuration_changing_move) override;
+      SingleReaction const &current_reaction, double E_pot_old,
+      double E_pot_new, std::map<int, int> const &old_particle_numbers,
+      int dummy_old_state_index, int dummy_new_state_index,
+      bool dummy_only_make_configuration_changing_move) const override;
 };
 
 /** Wang-Landau reaction ensemble method */
@@ -323,9 +325,10 @@ private:
   void on_attempted_reaction(int &new_state_index) override;
   void on_end_reaction(int &accepted_state) override;
   double calculate_acceptance_probability(
-      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::map<int, int> &old_particle_numbers, int old_state_index,
-      int new_state_index, bool only_make_configuration_changing_move) override;
+      SingleReaction const &current_reaction, double E_pot_old,
+      double E_pot_new, std::map<int, int> const &old_particle_numbers,
+      int old_state_index, int new_state_index,
+      bool only_make_configuration_changing_move) const override;
   void on_mc_rejection_directly_after_entry(int &old_state_index) override;
   void on_mc_accept(int &new_state_index) override;
   void on_mc_reject(int &old_state_index) override;
@@ -351,30 +354,30 @@ private:
       int collective_variable_index_energy_observable); // needed for energy
 
   int get_flattened_index_wang_landau(
-      std::vector<double> &current_state,
-      std::vector<double> &collective_variables_minimum_values,
-      std::vector<double> &collective_variables_maximum_values,
-      std::vector<double> &delta_collective_variables_values,
+      std::vector<double> const &current_state,
+      std::vector<double> const &collective_variables_minimum_values,
+      std::vector<double> const &collective_variables_maximum_values,
+      std::vector<double> const &delta_collective_variables_values,
       int nr_collective_variables); // collective variable
   int get_flattened_index_wang_landau_of_current_state();
 
   void update_wang_landau_potential_and_histogram(
       int index_of_state_after_acceptance_or_rejection);
   int m_WL_tries = 0;
-  bool can_refine_wang_landau_one_over_t();
+  bool can_refine_wang_landau_one_over_t() const;
   bool m_system_is_in_1_over_t_regime = false;
-  bool achieved_desired_number_of_refinements_one_over_t();
+  bool achieved_desired_number_of_refinements_one_over_t() const;
   void refine_wang_landau_parameter_one_over_t();
 
   int initialize_wang_landau(); // has to be called (at least) after the last
                                 // collective variable is added
   double calculate_delta_degree_of_association(
       DegreeOfAssociationCollectiveVariable &current_collective_variable);
-  int get_num_needed_bins();
+  int get_num_needed_bins() const;
   void invalidate_bins();
   void reset_histogram();
   double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value,
-                                                      double delta_CV);
+                                                      double delta_CV) const;
 };
 
 /**
@@ -398,10 +401,10 @@ public:
 
 private:
   double calculate_acceptance_probability(
-      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::map<int, int> &dummy_old_particle_numbers, int dummy_old_state_index,
-      int dummy_new_state_index,
-      bool dummy_only_make_configuration_changing_move) override;
+      SingleReaction const &current_reaction, double E_pot_old,
+      double E_pot_new, std::map<int, int> const &dummy_old_particle_numbers,
+      int dummy_old_state_index, int dummy_new_state_index,
+      bool dummy_only_make_configuration_changing_move) const override;
   int get_random_valid_p_id();
 };
 
@@ -416,8 +419,9 @@ public:
 // utility functions //
 ///////////////////////
 
-double calculate_factorial_expression(SingleReaction &current_reaction,
-                                      std::map<int, int> &old_particle_numbers);
+double
+calculate_factorial_expression(SingleReaction const &current_reaction,
+                               std::map<int, int> const &old_particle_numbers);
 
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
 
