@@ -78,6 +78,7 @@ option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
 option(WITH_WALBERLA "Build with WALBERLA Lattice-Boltzmann support" OFF)
+option(WALBERLA_USE_AVX "Build WALBERLA Lattice-Boltzmann with AVX vectorization" OFF)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()

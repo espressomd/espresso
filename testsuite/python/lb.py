@@ -291,7 +291,7 @@ class TestLB:
         system = self.system
 
         self.system.part.add(
-            pos=np.random.random((100, 3)) * self.system.box_l)
+            pos=np.random.random((1000, 3)) * self.system.box_l)
         if espressomd.has_features("MASS"):
             self.system.part[:].mass = 0.1 + np.random.random(
                 len(self.system.part))

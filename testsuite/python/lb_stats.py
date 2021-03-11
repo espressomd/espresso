@@ -40,7 +40,7 @@ class TestLB:
 
     system.periodicity = [1, 1, 1]
     system.time_step = 0.01
-    system.cell_system.skin = 1.0
+    system.cell_system.skin = 0
     lbf = None
     dof = 3.
 
@@ -124,6 +124,8 @@ class TestLB:
             # Update lists
             all_temp_particle.append(temp_particle)
             all_temp_fluid.append(fluid_temp)
+
+        print(all_temp_particle)
 
         # import scipy.stats
         # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"],

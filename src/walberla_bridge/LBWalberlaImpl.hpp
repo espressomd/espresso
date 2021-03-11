@@ -236,7 +236,8 @@ public:
     // Init and register pdf field
     m_pdf_field_id = lbm::addPdfFieldToStorage(
         m_blocks, "pdf field", *(m_lattice_model.get()),
-        to_vector3(Utils::Vector3d{}), real_t(density), m_n_ghost_layers);
+        to_vector3(Utils::Vector3d{}), real_t(density), m_n_ghost_layers,
+        field::fzyx);
 
     // Register boundary handling
     m_boundary_handling_id = m_blocks->addBlockData<Boundaries>(
