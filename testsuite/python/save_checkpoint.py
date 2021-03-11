@@ -253,7 +253,7 @@ if espressomd.has_features('SCAFACOS') and 'SCAFACOS' in modes:
             "p3m_r_cut": 1.0,
             "p3m_grid": 64,
             "p3m_cao": 7,
-            "p3m_alpha": 2.084652}))
+            "p3m_alpha": '2.320667'}))
 
 if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes:
     system.actors.add(espressomd.magnetostatics.Scafacos(
