@@ -298,7 +298,7 @@ cdef class HydrodynamicInteraction(Actor):
         pos : (3,) array_like of :obj:`float`
               The position at which the force will be added.
         force : (3,) array_like of :obj:`float`
-              The force vector which will be dirtibuted at the position.
+              The force vector which will be distributed at the position.
 
         """
         cdef Vector3d p
