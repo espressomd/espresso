@@ -102,16 +102,8 @@ void ReactionAlgorithm::add_reaction(
     const std::vector<int> &_reactant_coefficients,
     const std::vector<int> &_product_types,
     const std::vector<int> &_product_coefficients) {
-  SingleReaction new_reaction;
-
-  new_reaction.gamma = gamma;
-  new_reaction.reactant_types = _reactant_types;
-  new_reaction.reactant_coefficients = _reactant_coefficients;
-  new_reaction.product_types = _product_types;
-  new_reaction.product_coefficients = _product_coefficients;
-
-  new_reaction.nu_bar = calculate_nu_bar(new_reaction.reactant_coefficients,
-                                         new_reaction.product_coefficients);
+  SingleReaction new_reaction(gamma, _reactant_types, _reactant_coefficients,
+                              _product_types, _product_coefficients);
 
   // make ESPResSo count the particle numbers which take part in the reactions
   for (int reactant_type : new_reaction.reactant_types)
@@ -491,23 +483,6 @@ void ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
                        number_of_saved_properties);
   }
   on_end_reaction(accepted_state);
-}
-
-/**
- * Calculates the change in particle numbers for the given reaction
- */
-int ReactionAlgorithm::calculate_nu_bar(
-    std::vector<int> &reactant_coefficients,
-    std::vector<int> &product_coefficients) {
-  // should only be used at when defining a new reaction
-  int nu_bar = 0;
-  for (int reactant_coefficient : reactant_coefficients) {
-    nu_bar -= reactant_coefficient;
-  }
-  for (int product_coefficient : product_coefficients) {
-    nu_bar += product_coefficient;
-  }
-  return nu_bar;
 }
 
 /**

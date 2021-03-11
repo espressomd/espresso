@@ -27,8 +27,10 @@
 #include <utils/Vector.hpp>
 
 #include <algorithm>
+#include <iterator>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -38,6 +40,26 @@
 namespace ReactionEnsemble {
 
 struct SingleReaction {
+  SingleReaction() = default;
+  SingleReaction(double gamma, std::vector<int> const &reactant_types,
+                 std::vector<int> const &reactant_coefficients,
+                 std::vector<int> const &product_types,
+                 std::vector<int> const &product_coefficients) {
+    std::copy(reactant_types.begin(), reactant_types.end(),
+              std::back_inserter(this->reactant_types));
+    std::copy(reactant_coefficients.begin(), reactant_coefficients.end(),
+              std::back_inserter(this->reactant_coefficients));
+    std::copy(product_types.begin(), product_types.end(),
+              std::back_inserter(this->product_types));
+    std::copy(product_coefficients.begin(), product_coefficients.end(),
+              std::back_inserter(this->product_coefficients));
+    this->gamma = gamma;
+    nu_bar = std::accumulate(product_coefficients.begin(),
+                             product_coefficients.end(), 0) -
+             std::accumulate(reactant_coefficients.begin(),
+                             reactant_coefficients.end(), 0);
+  }
+
   // strict input to the algorithm
   std::vector<int> reactant_types;
   std::vector<int> reactant_coefficients;
@@ -45,7 +67,7 @@ struct SingleReaction {
   std::vector<int> product_coefficients;
   double gamma = {};
   // calculated values that are stored for performance reasons
-  int nu_bar = {};
+  int nu_bar = {}; ///< change in particle numbers for the reaction
   Utils::Accumulator accumulator_exponentials = Utils::Accumulator(1);
   int tried_moves = 0;
   int accepted_moves = 0;
@@ -213,10 +235,6 @@ private:
 
   std::map<int, int> save_old_particle_numbers(int reaction_id);
 
-  int calculate_nu_bar(
-      std::vector<int> &reactant_coefficients,
-      std::vector<int> &product_coefficients); // should only be used when
-                                               // defining a new reaction
   void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
   void hide_particle(int p_id, int previous_type);
