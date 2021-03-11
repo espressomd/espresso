@@ -241,9 +241,6 @@ class TestLB:
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):
-        self.system.thermostat.turn_off()
-        self.system.part.clear()
-        self.system.actors.clear()
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -293,16 +290,11 @@ class TestLB:
     def test_thermalization_force_balance(self):
         system = self.system
 
-        self.system.part.clear()
-        self.system.actors.clear()
-
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l)
         if espressomd.has_features("MASS"):
             self.system.part[:].mass = 0.1 + np.random.random(
                 len(self.system.part))
-
-        self.system.thermostat.turn_off()
 
         self.lbf = self.lb_class(
             kT=self.params['temp'],
