@@ -135,6 +135,20 @@ BOOST_AUTO_TEST_CASE(SingleReaction_test) {
       BOOST_CHECK_CLOSE(reaction.get_acceptance_rate(), ref_rate, tol);
     }
   }
+
+  // check factorial expression
+  constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      for (int k = 0; k < 3; ++k) {
+        // i adduct #0, j product #1, k product #2
+        auto const p_numbers = std::map<int, int>{{0, i}, {1, j}, {2, k}};
+        auto const val = calculate_factorial_expression(reaction, p_numbers);
+        auto const ref = g(i, -1) * g(j, 3) * g(k, 4);
+        BOOST_CHECK_CLOSE(val, ref, 5 * tol);
+      }
+    }
+  }
 }
 
 BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {

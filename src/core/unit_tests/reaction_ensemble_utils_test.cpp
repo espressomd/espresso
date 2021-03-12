@@ -25,6 +25,7 @@
 
 #include "reaction_ensemble.hpp"
 
+#include <cmath>
 #include <limits>
 #include <stdexcept>
 #include <vector>
@@ -59,14 +60,15 @@ BOOST_AUTO_TEST_CASE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i_test) {
   using namespace ReactionEnsemble;
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
 
-  BOOST_CHECK_CLOSE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(2, 0), 1.0,
-                    tol);
-  BOOST_CHECK_CLOSE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(2, 0), 1.0,
-                    tol);
-  BOOST_CHECK_CLOSE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(1, 2),
-                    1.0 / 6.0, tol);
-  BOOST_CHECK_CLOSE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(1, -2),
-                    0.0, tol);
-  BOOST_CHECK_CLOSE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(2, -2),
-                    2.0, tol);
+  auto const reaction_ensemble_combinations = [](int N, int nu) {
+    return (N + nu < 0) ? 0. : std::tgamma(N + 1) / std::tgamma(N + nu + 1);
+  };
+
+  for (int N0 = 0; N0 < 6; ++N0) {
+    for (int nu = -4; nu <= 4; ++nu) {
+      auto const val = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N0, nu);
+      auto const ref = reaction_ensemble_combinations(N0, nu);
+      BOOST_CHECK_CLOSE(val, ref, 5 * tol);
+    }
+  }
 }
