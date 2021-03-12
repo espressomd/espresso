@@ -30,8 +30,11 @@
 #include "communication.hpp"
 #include "particle_data.hpp"
 
+#include <utils/math/sqr.hpp>
+
 #include <boost/mpi.hpp>
 
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -153,10 +156,15 @@ BOOST_AUTO_TEST_CASE(SingleReaction_test) {
 
 BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   using namespace ReactionEnsemble;
+  class ReactionAlgorithmTest : public ReactionAlgorithm {
+  public:
+    using ReactionAlgorithm::calculate_acceptance_probability;
+    using ReactionAlgorithm::ReactionAlgorithm;
+  };
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
 
   // check acceptance rate
-  ReactionAlgorithm r_algo(42);
+  ReactionAlgorithmTest r_algo(42);
   for (int tried_moves = 1; tried_moves < 5; ++tried_moves) {
     for (int accepted_moves = 0; accepted_moves < 5; ++accepted_moves) {
       r_algo.m_tried_configurational_MC_moves = tried_moves;
@@ -188,6 +196,14 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     BOOST_TEST(reaction.product_coefficients == ref.product_coefficients,
                boost::test_tools::per_element());
     BOOST_CHECK_EQUAL(reaction.gamma, ref.gamma);
+  }
+
+  // check acceptance probability
+  {
+    SingleReaction const reaction(2., {0}, {1}, {1, 2}, {3, 4});
+    double probability = r_algo.calculate_acceptance_probability(
+        reaction, -1., -1., {{1, 2}}, -1, -1, false);
+    BOOST_CHECK_EQUAL(probability, -10.);
   }
 
   // exception if temperature is negative
@@ -223,6 +239,130 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // exception if deleting a non-existent particle
   BOOST_CHECK_THROW(r_algo.delete_particle(5), std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
+  class ReactionEnsembleTest : public ReactionEnsemble::ReactionEnsemble {
+  public:
+    using ReactionEnsemble::ReactionEnsemble::calculate_acceptance_probability;
+    using ReactionEnsemble::ReactionEnsemble::ReactionEnsemble;
+  };
+  using namespace ReactionEnsemble;
+  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+
+  ReactionEnsembleTest r_algo(42);
+  r_algo.volume = 10.;
+  r_algo.temperature = 20.;
+
+  // exception if no reaction was added
+  BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
+
+  // check acceptance probability
+  constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
+  SingleReaction const reaction(2., {0}, {1}, {1, 2}, {3, 4});
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      for (int k = 0; k < 3; ++k) {
+        // i adduct #0, j product #1, k product #2
+        auto const p_numbers = std::map<int, int>{{0, i}, {1, j}, {2, k}};
+        auto const energy = static_cast<double>(i + 1);
+        auto const f_expr = calculate_factorial_expression(reaction, p_numbers);
+        auto const ref = 2e6 * f_expr * std::exp(energy / 20.);
+        auto const val = r_algo.calculate_acceptance_probability(
+            reaction, energy, 0., p_numbers, -1, -1, false);
+        BOOST_CHECK_CLOSE(val, ref, 5 * tol);
+      }
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(WangLandauReactionEnsemble_test) {
+  using namespace ReactionEnsemble;
+  class WangLandauReactionEnsembleTest : public WangLandauReactionEnsemble {
+  public:
+    using WangLandauReactionEnsemble::calculate_acceptance_probability;
+    using WangLandauReactionEnsemble::WangLandauReactionEnsemble;
+  };
+  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+
+  WangLandauReactionEnsembleTest r_algo(42);
+  r_algo.volume = 10.;
+  r_algo.temperature = 20.;
+
+  // exception if no reaction was added
+  BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
+
+  // check acceptance probability
+  constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
+  SingleReaction const reaction(2., {0}, {1}, {1, 2}, {3, 4});
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      for (int k = 0; k < 3; ++k) {
+        // i adduct #0, j product #1, k product #2
+        auto const p_numbers = std::map<int, int>{{0, i}, {1, j}, {2, k}};
+        auto const energy = static_cast<double>(i + 1);
+        auto const f_expr = calculate_factorial_expression(reaction, p_numbers);
+        auto const prefactor = 2e6 * f_expr;
+        auto const boltzmann = std::exp(energy / 20.);
+        double val;
+        r_algo.do_energy_reweighting = false;
+        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
+                                                      p_numbers, -1, -1, false);
+        BOOST_CHECK_CLOSE(val, prefactor * boltzmann, 5 * tol);
+        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
+                                                      p_numbers, -1, -1, true);
+        BOOST_CHECK_CLOSE(val, boltzmann, 5 * tol);
+        r_algo.do_energy_reweighting = true;
+        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
+                                                      p_numbers, -1, -1, false);
+        BOOST_CHECK_CLOSE(val, prefactor, 5 * tol);
+        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
+                                                      p_numbers, -1, -1, true);
+        BOOST_CHECK_CLOSE(val, 1., 5 * tol);
+        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
+                                                      p_numbers, -1, 0, true);
+        BOOST_CHECK_CLOSE(val, 10., 5 * tol);
+        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
+                                                      p_numbers, 0, -1, true);
+        BOOST_CHECK_CLOSE(val, -10., 5 * tol);
+      }
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
+  using namespace ReactionEnsemble;
+  class ConstantpHEnsembleTest : public ConstantpHEnsemble {
+  public:
+    using ConstantpHEnsemble::calculate_acceptance_probability;
+    using ConstantpHEnsemble::ConstantpHEnsemble;
+  };
+  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+
+  ConstantpHEnsembleTest r_algo(42);
+  r_algo.temperature = 20.;
+  r_algo.m_constant_pH = 1.;
+
+  // exception if no reaction was added
+  BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
+
+  // check acceptance probability
+  constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
+  SingleReaction const reaction(2., {0}, {1}, {1, 2}, {1, 1});
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      for (int k = 0; k < 3; ++k) {
+        // i adduct #0, j product #1, k product #2
+        auto const p_numbers = std::map<int, int>{{0, i}, {1, j}, {2, k}};
+        auto const energy = static_cast<double>(i + 1);
+        auto const ref =
+            std::exp(energy / 20. + std::log(10.) * (1. + std::log10(2.)));
+        auto const val = r_algo.calculate_acceptance_probability(
+            reaction, energy, 0., p_numbers, -1, -1, false);
+        BOOST_CHECK_CLOSE(val, ref, 5 * tol);
+      }
+    }
+  }
 }
 
 BOOST_AUTO_TEST_CASE(WidomInsertion_test) {
