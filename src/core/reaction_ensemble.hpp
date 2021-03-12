@@ -229,6 +229,15 @@ protected:
   }
   bool all_reactant_particles_exist(int reaction_id) const;
 
+protected:
+  virtual double calculate_acceptance_probability(
+      SingleReaction const &current_reaction, double E_pot_old,
+      double E_pot_new, std::map<int, int> const &old_particle_numbers,
+      int old_state_index, int new_state_index,
+      bool only_make_configuration_changing_move) const {
+    return -10;
+  }
+
 private:
   std::mt19937 m_generator;
   std::normal_distribution<double> m_normal_distribution;
@@ -242,14 +251,6 @@ private:
 
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);
-
-  virtual double calculate_acceptance_probability(
-      SingleReaction const &current_reaction, double E_pot_old,
-      double E_pot_new, std::map<int, int> const &old_particle_numbers,
-      int old_state_index, int new_state_index,
-      bool only_make_configuration_changing_move) const {
-    return -10;
-  }
 
   void add_types_to_index(std::vector<int> &type_list);
   Utils::Vector3d get_random_position_in_box();
@@ -270,7 +271,7 @@ class ReactionEnsemble : public ReactionAlgorithm {
 public:
   ReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
 
-private:
+protected:
   double calculate_acceptance_probability(
       SingleReaction const &current_reaction, double E_pot_old,
       double E_pot_new, std::map<int, int> const &old_particle_numbers,
@@ -318,17 +319,19 @@ public:
   void write_wang_landau_results_to_file(
       const std::string &full_path_to_output_filename);
 
+protected:
+  double calculate_acceptance_probability(
+      SingleReaction const &current_reaction, double E_pot_old,
+      double E_pot_new, std::map<int, int> const &old_particle_numbers,
+      int old_state_index, int new_state_index,
+      bool only_make_configuration_changing_move) const override;
+
 private:
   void on_reaction_entry(int &old_state_index) override;
   void
   on_reaction_rejection_directly_after_entry(int &old_state_index) override;
   void on_attempted_reaction(int &new_state_index) override;
   void on_end_reaction(int &accepted_state) override;
-  double calculate_acceptance_probability(
-      SingleReaction const &current_reaction, double E_pot_old,
-      double E_pot_new, std::map<int, int> const &old_particle_numbers,
-      int old_state_index, int new_state_index,
-      bool only_make_configuration_changing_move) const override;
   void on_mc_rejection_directly_after_entry(int &old_state_index) override;
   void on_mc_accept(int &new_state_index) override;
   void on_mc_reject(int &old_state_index) override;
@@ -399,12 +402,14 @@ public:
   double m_constant_pH = -10;
   int do_reaction(int reaction_steps) override;
 
-private:
+protected:
   double calculate_acceptance_probability(
       SingleReaction const &current_reaction, double E_pot_old,
       double E_pot_new, std::map<int, int> const &dummy_old_particle_numbers,
       int dummy_old_state_index, int dummy_new_state_index,
       bool dummy_only_make_configuration_changing_move) const override;
+
+private:
   int get_random_valid_p_id();
 };
 
