@@ -29,8 +29,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <LBWalberlaBase.hpp>
-#include <LBWalberlaD3Q19FluctuatingMRT.hpp>
-#include <LBWalberlaD3Q19MRT.hpp>
 #include <lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
@@ -43,80 +41,29 @@
 #include <memory>
 #include <vector>
 
+#include "tests_common.hpp"
+
 using Utils::hadamard_product;
 using Utils::Vector3d;
 using Utils::Vector3i;
 
-using walberla::LBWalberlaD3Q19FluctuatingMRT;
-using walberla::LBWalberlaD3Q19MRT;
-
-constexpr double viscosity = 0.4;
-constexpr Vector3d box_dimensions = {6, 6, 9};
-constexpr double agrid = 0.5;
-constexpr Vector3i grid_dimensions{int(box_dimensions[0] / agrid),
-                                   int(box_dimensions[1] / agrid),
-                                   int(box_dimensions[2] / agrid)};
-constexpr double tau = 0.34;
-constexpr double density = 2.5;
-Vector3i mpi_shape;
-constexpr unsigned int seed = 3;
-constexpr double kT = 0.0014;
-
 namespace bdata = boost::unit_test::data;
 
-using LbGeneratorVector =
-    std::vector<std::function<std::shared_ptr<LBWalberlaBase>(Vector3i)>>;
-
-// Add all LBs with kT=0 to be tested, here
-LbGeneratorVector unthermalized_lbs() {
-  LbGeneratorVector lbs;
-  // Unthermalized D3Q19 MRT
-  lbs.push_back([](Vector3i mpi_shape) {
-    return std::make_shared<LBWalberlaD3Q19MRT>(viscosity, density, agrid, tau,
-                                                box_dimensions, mpi_shape, 1);
-  });
-
-  // Thermalized D3Q19 MRT with kT set to 0
-  lbs.push_back([](Vector3i mpi_shape) {
-    return std::make_shared<LBWalberlaD3Q19FluctuatingMRT>(
-        viscosity, density, agrid, tau, box_dimensions, mpi_shape, 1, 0.0,
-        seed);
-  });
-  return lbs;
-}
-
-// Add all LBs with thermalization to be tested, here
-LbGeneratorVector thermalized_lbs() {
-  LbGeneratorVector lbs;
-
-  // Thermalized D3Q19 MRT with kT set to 0
-  lbs.push_back([](Vector3i mpi_shape) {
-    return std::make_shared<LBWalberlaD3Q19FluctuatingMRT>(
-        viscosity, density, agrid, tau, box_dimensions, mpi_shape, 1, kT, seed);
-  });
-  return lbs;
-}
-
-LbGeneratorVector all_lbs() {
-  auto lbs = unthermalized_lbs();
-  auto thermalized = thermalized_lbs();
-  lbs.insert(lbs.end(), thermalized.begin(), thermalized.end());
-  return lbs;
-}
+LBTestParameters params; // populated in main()
+Vector3i mpi_shape;      // populated in main
 
 // Disable printing of type which does not support it
-BOOST_TEST_DONT_PRINT_LOG_VALUE(LbGeneratorVector::value_type)
 
 BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape);
-  BOOST_CHECK(lb->get_grid_dimensions() == grid_dimensions);
+  auto lb = lb_generator(mpi_shape, params);
+  BOOST_CHECK(lb->get_grid_dimensions() == params.grid_dimensions);
 
   auto local_domain = lb->get_local_domain();
   auto my_size = local_domain.second - local_domain.first;
   for (int i : {0, 1, 2}) {
     BOOST_CHECK(my_size[i] > 0);
     BOOST_CHECK(local_domain.first[i] >= 0);
-    BOOST_CHECK(local_domain.second[i] < grid_dimensions[i]);
+    BOOST_CHECK(local_domain.second[i] <= params.grid_dimensions[i]);
   }
 
   Vector3d total_size;
@@ -128,45 +75,14 @@ BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_lbs()), lb_generator) {
 }
 
 BOOST_DATA_TEST_CASE(set_viscosity, bdata::make(all_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape);
+  auto lb = lb_generator(mpi_shape, params);
   double new_viscosity = 2.0;
   lb->set_viscosity(new_viscosity);
   BOOST_CHECK_CLOSE(lb->get_viscosity(), new_viscosity, 1E-11);
 }
 
-std::vector<Vector3i> all_nodes_incl_ghosts(int n_ghost_layers) {
-  std::vector<Vector3i> res;
-  for (int x = -n_ghost_layers; x < grid_dimensions[0] + n_ghost_layers; x++) {
-    for (int y = -n_ghost_layers; y < grid_dimensions[1] + n_ghost_layers;
-         y++) {
-      for (int z = -n_ghost_layers; z < grid_dimensions[2] + n_ghost_layers;
-           z++) {
-        res.push_back(Vector3i{x, y, z});
-      }
-    }
-  }
-  return res;
-}
-
-std::vector<Vector3i>
-local_nodes_incl_ghosts(std::pair<Vector3d, Vector3d> local_domain,
-                        int n_ghost_layers) {
-  std::vector<Vector3i> res;
-  auto const left = local_domain.first;
-  auto const right = local_domain.second;
-  for (int x = left[0] - n_ghost_layers; x < right[0] + n_ghost_layers; x++) {
-    for (int y = left[1] - n_ghost_layers; y < right[1] + n_ghost_layers; y++) {
-      for (int z = left[2] - n_ghost_layers; z < right[2] + n_ghost_layers;
-           z++) {
-        res.push_back(Vector3i{x, y, z});
-      }
-    }
-  }
-  return res;
-}
-
 BOOST_DATA_TEST_CASE(initial_state, bdata::make(all_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape);
+  auto lb = lb_generator(mpi_shape, params);
   for (auto &node :
        local_nodes_incl_ghosts(lb->get_local_domain(), lb->n_ghost_layers())) {
     bool consider_ghosts = !lb->node_in_local_domain(node);
@@ -174,30 +90,30 @@ BOOST_DATA_TEST_CASE(initial_state, bdata::make(all_lbs()), lb_generator) {
     if (lb->node_in_local_domain(node)) {
       BOOST_CHECK((*lb->get_node_force_to_be_applied(node)) == Vector3d{});
       BOOST_CHECK((*lb->get_node_last_applied_force(node)) == Vector3d{});
-      BOOST_CHECK_CLOSE((*lb->get_node_density(node)), density, 1E-10);
+      BOOST_CHECK_CLOSE((*lb->get_node_density(node)), params.density, 1E-10);
     }
     // Todo: add initial pressure tensor check
   }
 
   BOOST_CHECK(lb->get_momentum() == Vector3d{});
-  BOOST_CHECK_CLOSE(lb->get_viscosity(), viscosity, 1E-11);
+  BOOST_CHECK_CLOSE(lb->get_viscosity(), params.viscosity, 1E-11);
 }
 
 BOOST_DATA_TEST_CASE(kT_unthermalized, bdata::make(unthermalized_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape);
+  auto lb = lb_generator(mpi_shape, params);
   BOOST_CHECK_EQUAL(lb->get_kT(), 0.0);
 }
 
 BOOST_DATA_TEST_CASE(kT_thermalized, bdata::make(thermalized_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape);
-  BOOST_CHECK_EQUAL(lb->get_kT(), kT);
+  auto lb = lb_generator(mpi_shape, params);
+  BOOST_CHECK_EQUAL(lb->get_kT(), params.kT);
 }
 
 BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
   Vector3d vel = {0.2, 3.8, 4.2};
-  auto lb = lb_generator(mpi_shape);
+  auto lb = lb_generator(mpi_shape, params);
   for (Vector3i node :
 
        std::vector<Vector3i>{
@@ -232,13 +148,14 @@ BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
 }
 
 BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape);
+  auto lb = lb_generator(mpi_shape, params);
   int n_ghost_layers = 1;
 
   auto my_left = lb->get_local_domain().first;
   auto my_right = lb->get_local_domain().second;
 
-  for (auto const &n : all_nodes_incl_ghosts(n_ghost_layers)) {
+  for (auto const &n :
+       all_nodes_incl_ghosts(params.grid_dimensions, lb->n_ghost_layers())) {
     const Vector3d pos =
         Vector3d{{double(n[0] + .5), double(n[1] + .5), double(n[2] + .5)}};
     int is_local = 0;
@@ -276,8 +193,9 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 
     // If the cell is in the global physical domain
     // check that only one mpi rank said the node was local
-    if (n[0] >= 0 and n[1] >= 0 and n[2] >= 0 and n[0] < grid_dimensions[0] and
-        n[1] < grid_dimensions[1] and n[2] < grid_dimensions[2]) {
+    if (n[0] >= 0 and n[1] >= 0 and n[2] >= 0 and
+        n[0] < params.grid_dimensions[0] and
+        n[1] < params.grid_dimensions[1] and n[2] < params.grid_dimensions[2]) {
       MPI_Allreduce(MPI_IN_PLACE, &is_local, 1, MPI_INT, MPI_SUM,
                     MPI_COMM_WORLD);
       BOOST_CHECK(is_local == 1);
@@ -287,7 +205,7 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 
 BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape);
+  auto lb = lb_generator(mpi_shape, params);
 
   // Values
   auto n_pos = [](Vector3i node) {
@@ -298,9 +216,9 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
   auto fold = [&](Vector3i n) {
     for (int i = 0; i < 3; i++) {
       if (n[i] < 0)
-        n[i] += grid_dimensions[i];
-      else if (n[i] >= grid_dimensions[i])
-        n[i] -= grid_dimensions[i];
+        n[i] += params.grid_dimensions[i];
+      else if (n[i] >= params.grid_dimensions[i])
+        n[i] -= params.grid_dimensions[i];
     }
     return n;
   };
@@ -311,7 +229,8 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
 
   // Assign velocities
   int n_ghost_layers = 1;
-  for (auto const &node : all_nodes_incl_ghosts(n_ghost_layers)) {
+  for (auto const &node :
+       all_nodes_incl_ghosts(params.grid_dimensions, lb->n_ghost_layers())) {
     if (lb->node_in_local_domain(node)) {
       BOOST_CHECK(lb->set_node_velocity(node, n_vel(node)));
     } else {
@@ -323,16 +242,18 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
   lb->ghost_communication();
 
   // check velocities
-  for (auto const &node : all_nodes_incl_ghosts(n_ghost_layers)) {
+  for (auto const &node :
+       all_nodes_incl_ghosts(params.grid_dimensions, lb->n_ghost_layers())) {
     double eps = 1E-8;
 
     if (lb->node_in_local_halo(node)) {
-      auto res = lb->get_node_velocity(node);
+      bool consider_ghosts = !lb->node_in_local_domain(node);
+      auto res = lb->get_node_velocity(node, consider_ghosts);
       BOOST_CHECK(res);                               // value available
       BOOST_CHECK((*res - n_vel(node)).norm() < eps); // correct value?
       // Check that the interpolated velocity at the node pos equals the node
       // vel
-      res = lb->get_velocity_at_pos(n_pos(node), true);
+      res = lb->get_velocity_at_pos(n_pos(node), consider_ghosts);
       BOOST_CHECK(res);                                    // locally available
       BOOST_CHECK_SMALL((*res - n_vel(node)).norm(), eps); // value correct?
     } else {
@@ -344,7 +265,7 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
 }
 
 BOOST_DATA_TEST_CASE(total_momentum, bdata::make(all_lbs()), lb_generator) {
-  auto lb = lb_generator(mpi_shape);
+  auto lb = lb_generator(mpi_shape, params);
   Vector3i n1{1, 2, 3};
   Vector3i n2{9, 2, 10};
   auto v1 = Vector3d{1.5, 2.5, -2.2};
@@ -357,7 +278,7 @@ BOOST_DATA_TEST_CASE(total_momentum, bdata::make(all_lbs()), lb_generator) {
   };
 
   auto mom = lb->get_momentum();
-  auto mom_exp = density * (v1 + v2);
+  auto mom_exp = params.density * (v1 + v2);
   MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                 MPI_COMM_WORLD);
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
@@ -365,12 +286,12 @@ BOOST_DATA_TEST_CASE(total_momentum, bdata::make(all_lbs()), lb_generator) {
 
 BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape);
+  auto lb = lb_generator(mpi_shape, params);
 
   // todo: check a less symmetrical situation, wher the force is applied not in
   // the middle between the ndoes
 
-  for (Vector3i n : all_nodes_incl_ghosts(1)) {
+  for (Vector3i n : all_nodes_incl_ghosts(params.grid_dimensions, 1)) {
     if (lb->node_in_local_halo(n)) {
       Vector3d pos{double(n[0]), double(n[1]),
                    double(n[2])}; // Mid point between nodes
@@ -394,15 +315,15 @@ BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
 
 BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape);
+  auto lb = lb_generator(mpi_shape, params);
 
   // Forces added go to force_to_be_applied. After integration, they should be
   // in last_applied_force, where they are used for velocity calculation
 
   Vector3i origin{};
-  Vector3i middle{
-      {grid_dimensions[0] / 2, grid_dimensions[1] / 2, grid_dimensions[2] / 2}};
-  Vector3i right = grid_dimensions - Vector3i{{1, 1, 1}};
+  Vector3i middle{{params.grid_dimensions[0] / 2, params.grid_dimensions[1] / 2,
+                   params.grid_dimensions[2] / 2}};
+  Vector3i right = params.grid_dimensions - Vector3i{{1, 1, 1}};
 
   Vector3d f{{1, -2, 3.1}};
 
@@ -415,8 +336,8 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
     }
     lb->integrate();
     // Check nodes incl some of the ghosts
-    for (auto cn : {n, n + grid_dimensions, n - grid_dimensions,
-                    n + Vector3i{{grid_dimensions[0], 0, 0}}}) {
+    for (auto cn : {n, n + params.grid_dimensions, n - params.grid_dimensions,
+                    n + Vector3i{{params.grid_dimensions[0], 0, 0}}}) {
       if (lb->node_in_local_halo(cn)) {
         BOOST_CHECK_SMALL(
             (*(lb->get_node_last_applied_force(cn, true)) - f).norm(), 1E-10);
@@ -425,8 +346,8 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
       }
     }
     lb->integrate();
-    for (auto cn : {n, n + grid_dimensions, n - grid_dimensions,
-                    n + Vector3i{{grid_dimensions[0], 0, 0}}}) {
+    for (auto cn : {n, n + params.grid_dimensions, n - params.grid_dimensions,
+                    n + Vector3i{{params.grid_dimensions[0], 0, 0}}}) {
       if (lb->node_in_local_halo(cn)) {
         BOOST_CHECK_SMALL((*(lb->get_node_last_applied_force(cn, true))).norm(),
                           1E-10);
@@ -444,6 +365,14 @@ int main(int argc, char **argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   MPI_Dims_create(n_nodes, 3, mpi_shape.data());
 
+  params.agrid = 0.5;
+  params.tau = 0.03;
+  params.viscosity = 0.003;
+  params.kT = 1.3E-4;
+  params.density = 1.4;
+  params.grid_dimensions = Vector3i{12, 12, 18};
+  params.box_dimensions = Vector3d{6, 6, 9};
+
   walberla_mpi_init();
   auto res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
   MPI_Finalize();
@@ -452,7 +381,7 @@ int main(int argc, char **argv) {
 
 BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
                      lb_generator) {
-  auto lb = lb_generator(mpi_shape);
+  auto lb = lb_generator(mpi_shape, params);
 
   // Warmup
   for (int i = 0; i < 100; i++)
@@ -513,9 +442,9 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
   BOOST_CHECK_SMALL(std::abs(sum_v[2] / steps), tol_v * 100);
 
   const double tol_kT = 5; // this is in percent ...
-  BOOST_CHECK_CLOSE(sum_v_square[0] / steps, kT, tol_kT);
-  BOOST_CHECK_CLOSE(sum_v_square[1] / steps, kT, tol_kT);
-  BOOST_CHECK_CLOSE(sum_v_square[2] / steps, kT, tol_kT);
+  BOOST_CHECK_CLOSE(sum_v_square[0] / steps, params.kT, tol_kT);
+  BOOST_CHECK_CLOSE(sum_v_square[1] / steps, params.kT, tol_kT);
+  BOOST_CHECK_CLOSE(sum_v_square[2] / steps, params.kT, tol_kT);
 }
 #else // ifdef LB_WALBERLA
 int main(int argc, char **argv) {}
