@@ -21,3 +21,13 @@ unit_test(NAME LBWalberlaImpl_unit_tests SRC LBWalberlaImpl_unit_tests.cpp DEPEN
           EspressoUtils Boost::mpi ${WALBERLA_LIBS})
 target_include_directories(LBWalberlaImpl_unit_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
+
+unit_test(NAME LBWalberlaImpl_statistical_tests SRC LBWalberlaImpl_statistical_tests.cpp DEPENDS WalberlaBridge
+          EspressoUtils Boost::mpi ${WALBERLA_LIBS})
+target_include_directories(LBWalberlaImpl_statistical_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
+                                                   ${walberla_BINARY_DIR}/src)
+
+unit_test(NAME LBWalberlaImpl_flow_tests SRC LBWalberlaImpl_flow_tests.cpp DEPENDS WalberlaBridge
+          EspressoUtils Boost::mpi ${WALBERLA_LIBS})
+target_include_directories(LBWalberlaImpl_flow_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
+                                                   ${walberla_BINARY_DIR}/src)
