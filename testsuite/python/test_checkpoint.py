@@ -24,6 +24,7 @@ import espressomd
 import espressomd.checkpointing
 import espressomd.electrostatics
 import espressomd.magnetostatics
+import espressomd.scafacos
 import espressomd.virtual_sites
 import espressomd.integrate
 from espressomd.shapes import Sphere, Wall
@@ -367,9 +368,10 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_almost_equal(p3m_state[key], p3m_reference[key],
                                            err_msg=f'for parameter {key}')
 
-    @utx.skipIfMissingFeatures('SCAFACOS')
-    @ut.skipIf('SCAFACOS' not in modes,
-               "Skipping test due to missing combination.")
+    @ut.skipIf(not espressomd.has_features('SCAFACOS') or
+               'SCAFACOS' not in modes or
+               'p3m' not in espressomd.scafacos.available_methods(),
+               "Skipping test due to missing combination or p3m method.")
     def test_scafacos(self):
         actor = self.get_active_actor_of_type(
             espressomd.electrostatics.Scafacos)
@@ -383,9 +385,10 @@ class CheckpointTest(ut.TestCase):
         for key in reference:
             self.assertEqual(state[key], reference[key], msg=f'for {key}')
 
-    @utx.skipIfMissingFeatures('SCAFACOS_DIPOLES')
-    @ut.skipIf('SCAFACOS' not in modes,
-               "Skipping test due to missing combination.")
+    @ut.skipIf(not espressomd.has_features('SCAFACOS_DIPOLES') or
+               'SCAFACOS' not in modes or
+               'p2nfft' not in espressomd.scafacos.available_methods(),
+               "Skipping test due to missing combination or p2nfft method.")
     def test_scafacos_dipoles(self):
         actor = self.get_active_actor_of_type(
             espressomd.magnetostatics.Scafacos)

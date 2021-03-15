@@ -181,7 +181,11 @@ class ScafacosInterface(ut.TestCase):
 
         return (ref_E_coulomb, ref_E_dipoles, ref_forces, ref_torques)
 
-    @utx.skipIfMissingFeatures(["SCAFACOS_DIPOLES", "LENNARD_JONES"])
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    @ut.skipIf(not espressomd.has_features('SCAFACOS_DIPOLES') or
+               not {'p2nfft', 'p3m'}.issubset(
+                   espressomd.scafacos.available_methods()),
+               'Skipping test: missing p2nfft or ewald method')
     def test_electrostatics_plus_magnetostatics(self):
         # check that two instances of ScaFaCoS can be used
         system = self.system
