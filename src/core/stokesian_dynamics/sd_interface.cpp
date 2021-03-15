@@ -119,8 +119,6 @@ void set_sd_viscosity(double eta) {
   sd_viscosity = eta;
 }
 
-double get_sd_viscosity() { return sd_viscosity; }
-
 void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
   /* Check that radii are positive */
   for (auto const &kv : x) {
@@ -134,8 +132,6 @@ void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
   radius_dict = x;
 }
 
-std::unordered_map<int, double> get_sd_radius_dict() { return radius_dict; }
-
 void set_sd_kT(double kT) {
   if (kT < 0.0) {
     throw std::runtime_error("kT has an invalid value: " + std::to_string(kT));
@@ -147,8 +143,6 @@ void set_sd_kT(double kT) {
 double get_sd_kT() { return sd_kT; }
 
 void set_sd_flags(int flg) { sd_flags = flg; }
-
-int get_sd_flags() { return sd_flags; }
 
 void propagate_vel_pos_sd(const ParticleRange &particles,
                           const boost::mpi::communicator &comm,

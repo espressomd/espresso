@@ -321,9 +321,6 @@ const std::vector<BondView> &get_particle_bonds(int part);
  *          exclusion set)
  */
 int change_exclusion(int part, int part2, int _delete);
-
-/** remove all exclusions. */
-void remove_all_exclusions();
 #endif
 
 /** Remove particle with a given identity. Also removes all bonds to the

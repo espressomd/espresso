@@ -66,7 +66,7 @@ static double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
   auto const pe4 = 3.0 / r5;
 
   // Energy
-  auto const u = dipole.prefactor * (pe1 / r3 - pe4 * pe2 * pe3);
+  auto const energy = dipole.prefactor * (pe1 / r3 - pe4 * pe2 * pe3);
 
   // Forces, if requested
   if (force_flag) {
@@ -89,8 +89,7 @@ static double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
     p2.f.torque += dipole.prefactor * (aa / r3 + b2 * dd);
   }
 
-  // Return energy
-  return u;
+  return energy;
 }
 
 /* =============================================================================
@@ -101,15 +100,8 @@ static double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
 double dawaanr_calculations(bool force_flag, bool energy_flag,
                             const ParticleRange &particles) {
 
-  if (n_nodes != 1) {
-    fprintf(stderr, "error: DAWAANR is just for one cpu...\n");
-    errexit();
-  }
-  if (!(force_flag) && !(energy_flag)) {
-    fprintf(stderr, "I don't know why you call dawaanr_calculations() "
-                    "with all flags zero.\n");
-    return 0;
-  }
+  assert(n_nodes == 1);
+  assert(force_flag || energy_flag);
 
   double energy = 0.0;
   // Iterate over all particles
@@ -151,6 +143,9 @@ double
 magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
                                          ParticleRange const &particles) {
 
+  assert(n_nodes == 1);
+  assert(force_flag || energy_flag);
+
   if (box_geo.periodic(0) and box_geo.periodic(1) and box_geo.periodic(2) and
       Ncut_off_magnetic_dipolar_direct_sum == 0) {
     throw std::runtime_error("Dipolar direct sum with replica does not support "
@@ -161,16 +156,6 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
   std::vector<double> mx, my, mz;
   std::vector<double> fx, fy, fz;
   std::vector<double> tx, ty, tz;
-
-  if (n_nodes != 1) {
-    fprintf(stderr, "error: magnetic Direct Sum is just for one cpu...\n");
-    errexit();
-  }
-  if (!(force_flag) && !(energy_flag)) {
-    fprintf(stderr, "I don't know why you call magnetic_dipolar_direct_sum_"
-                    "calculations() with all flags zero\n");
-    return 0;
-  }
 
   auto const n_part = particles.size();
 
@@ -253,25 +238,23 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
 
               auto const pe2 = mx[i] * rnx + my[i] * rny + mz[i] * rnz;
               auto const pe3 = mx[j] * rnx + my[j] * rny + mz[j] * rnz;
+              auto const pe4 = 3.0 / r5;
 
-              // Energy ............................
-
-              energy += pe1 / r3 - 3.0 * pe2 * pe3 / r5;
+              // Energy
+              energy += pe1 / r3 - pe4 * pe2 * pe3;
 
               if (force_flag) {
-                double a, b, c, d;
-                // force ............................
-                a = mx[i] * mx[j] + my[i] * my[j] + mz[i] * mz[j];
-                a = 3.0 * a / r5;
-                b = -15.0 * pe2 * pe3 / r7;
-                c = 3.0 * pe3 / r5;
-                d = 3.0 * pe2 / r5;
+                // Forces
+                auto const a = pe4 * pe1;
+                auto const b = -15.0 * pe2 * pe3 / r7;
+                auto const c = pe4 * pe3;
+                auto const d = pe4 * pe2;
 
                 fx[i] += (a + b) * rnx + c * mx[i] + d * mx[j];
                 fy[i] += (a + b) * rny + c * my[i] + d * my[j];
                 fz[i] += (a + b) * rnz + c * mz[i] + d * mz[j];
 
-                // torque ............................
+                // Torques
                 auto const ax = my[i] * mz[j] - my[j] * mz[i];
                 auto const ay = mx[j] * mz[i] - mx[i] * mz[j];
                 auto const az = mx[i] * my[j] - mx[j] * my[i];
@@ -291,7 +274,7 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
     }           /* for j */
   }             /* for i */
 
-  /* set the forces, and torques of the particles within ESPResSo */
+  /* update particle forces and torques */
   if (force_flag) {
 
     dip_particles = 0;
@@ -310,7 +293,7 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
         dip_particles++;
       }
     }
-  } /* of if force_flag */
+  } /* if force_flag */
 
   return 0.5 * dipole.prefactor * energy;
 }
