@@ -339,14 +339,17 @@ class TestLB:
         self.lbf.add_force_at_pos(position, force_lb_units)
 
         system.integrator.run(1)
-        fluid_forces = []
+
+        # the force should be split equally across the 8 nearest vertices
+        n_couplings = 0
         for n in self.lbf.nodes():
             if np.sum(np.abs(n.last_applied_force)):
-                fluid_forces.append(n.last_applied_force)
+                fluid_force = np.copy(n.last_applied_force)
+                np.testing.assert_allclose(fluid_force, force / 8.)
                 distance = np.linalg.norm(n.index - position_lb_units)
-                self.assertLess(distance, 2.)
-        fluid_force = np.sum(fluid_forces, axis=0)
-        np.testing.assert_allclose(fluid_force, force)
+                self.assertLessEqual(int(np.round(distance**2)), 3)
+                n_couplings += 1
+        self.assertEqual(n_couplings, 8)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ext_force_density(self):
