@@ -81,7 +81,7 @@ inline void add_non_bonded_pair_force_icc(Particle &p1, Particle &p2,
 }
 void icc_iteration(const ParticleRange &particles,
                    const ParticleRange &ghost_particles) {
-  if (icc_cfg.n_ic == 0)
+  if (icc_cfg.n_icc == 0)
     return;
 
   Coulomb::icc_sanity_check();
@@ -101,7 +101,7 @@ void icc_iteration(const ParticleRange &particles,
     double diff = 0;
 
     for (auto &p : particles) {
-      if (p.p.identity < icc_cfg.n_ic + icc_cfg.first_id &&
+      if (p.p.identity < icc_cfg.n_icc + icc_cfg.first_id &&
           p.p.identity >= icc_cfg.first_id) {
         auto const id = p.p.identity - icc_cfg.first_id;
         /* the dielectric-related prefactor: */
@@ -215,12 +215,12 @@ int mpi_icc_init() {
   return check_runtime_errors(comm_cart);
 }
 
-void icc_set_params(int n_ic, double convergence, double relaxation,
+void icc_set_params(int n_icc, double convergence, double relaxation,
                     Utils::Vector3d &ext_field, int max_iterations,
                     int first_id, double eps_out, std::vector<double> &areas,
                     std::vector<double> &e_in, std::vector<double> &sigma,
                     std::vector<Utils::Vector3d> &normals) {
-  if (n_ic < 0)
+  if (n_icc < 0)
     throw std::runtime_error("ICC: invalid number of particles. " +
                              std::to_string(n_icc));
   if (convergence <= 0)
@@ -238,16 +238,16 @@ void icc_set_params(int n_ic, double convergence, double relaxation,
   if (eps_out <= 0)
     throw std::runtime_error("ICC: invalid eps_out. " +
                              std::to_string(eps_out));
-  if (areas.size() != n_ic)
+  if (areas.size() != n_icc)
     throw std::runtime_error("ICC: invalid areas vector.");
-  if (e_in.size() != n_ic)
+  if (e_in.size() != n_icc)
     throw std::runtime_error("ICC: invalid e_in vector.");
-  if (sigma.size() != n_ic)
+  if (sigma.size() != n_icc)
     throw std::runtime_error("ICC: invalid sigma vector.");
-  if (normals.size() != n_ic)
+  if (normals.size() != n_icc)
     throw std::runtime_error("ICC: invalid normals vector.");
 
-  icc_cfg.n_ic = n_ic;
+  icc_cfg.n_icc = n_icc;
   icc_cfg.convergence = convergence;
   icc_cfg.relax = relaxation;
   icc_cfg.ext_field = ext_field;
@@ -264,7 +264,7 @@ void icc_set_params(int n_ic, double convergence, double relaxation,
 }
 
 void icc_deactivate() {
-  icc_cfg.n_ic = 0;
+  icc_cfg.n_icc = 0;
   icc_cfg.areas.resize(0);
   icc_cfg.ein.resize(0);
   icc_cfg.normals.resize(0);

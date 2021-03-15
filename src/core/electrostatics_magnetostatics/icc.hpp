@@ -57,7 +57,7 @@
 /** ICC data structure */
 struct icc_struct {
   /** First id of ICC particle */
-  int n_ic;
+  int n_icc;
   /** maximum number of iterations */
   int num_iteration = 30;
   /** bulk dielectric constant */
@@ -83,7 +83,7 @@ struct icc_struct {
 
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &n_ic;
+    ar &n_icc;
     ar &num_iteration;
     ar &first_id;
     ar &convergence;

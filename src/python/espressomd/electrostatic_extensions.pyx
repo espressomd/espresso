@@ -62,15 +62,16 @@ IF ELECTROSTATICS and P3M:
         sigmas : (``n_icc``, ) array_like :obj:`float`, optional
             Additional surface charge density in the absence of any charge
             induction.
-        epsilons : (``n_icc``, ) array_like :obj:`float`, optional
+        epsilons : (``n_icc``, ) array_like :obj:`float`
             Dielectric constant associated to the areas.
 
         """
 
         def validate_params(self):
-            default_params = self.default_params()
-
             check_type_or_throw_except(self._params["n_icc"], 1, int, "")
+
+            check_type_or_throw_except(
+                self._params["first_id"], 1, int, "")
 
             check_type_or_throw_except(
                 self._params["convergence"], 1, float, "")
@@ -85,14 +86,11 @@ IF ELECTROSTATICS and P3M:
                 self._params["max_iterations"], 1, int, "")
 
             check_type_or_throw_except(
-                self._params["first_id"], 1, int, "")
-
-            check_type_or_throw_except(
                 self._params["eps_out"], 1, float, "")
 
             n_icc = self._params["n_icc"]
+            assert n_icc >= 0, "ICC: invalid number of particles"
 
-            # Required list input
             self._params["normals"] = np.array(self._params["normals"])
             if self._params["normals"].size != n_icc * 3:
                 raise ValueError(
@@ -103,18 +101,14 @@ IF ELECTROSTATICS and P3M:
             check_type_or_throw_except(
                 self._params["areas"], n_icc, float, "Error in area list.")
 
-            # Not Required
             if "sigmas" in self._params.keys():
                 check_type_or_throw_except(
                     self._params["sigmas"], n_icc, float, "Error in sigma list.")
             else:
                 self._params["sigmas"] = np.zeros(n_icc)
 
-            if "epsilons" in self._params.keys():
-                check_type_or_throw_except(
-                    self._params["epsilons"], n_icc, float, "Error in epsilon list.")
-            else:
-                self._params["epsilons"] = np.zeros(n_icc)
+            check_type_or_throw_except(
+                self._params["epsilons"], n_icc, float, "Error in epsilon list.")
 
         def valid_keys(self):
             return ["n_icc", "convergence", "relaxation", "ext_field",
@@ -122,25 +116,20 @@ IF ELECTROSTATICS and P3M:
                     "areas", "sigmas", "epsilons", "check_neutrality"]
 
         def required_keys(self):
-            return ["n_icc", "normals", "areas"]
+            return ["n_icc", "normals", "areas", "epsilons"]
 
         def default_params(self):
-            return {"n_icc": 0,
-                    "convergence": 1e-3,
+            return {"convergence": 1e-3,
                     "relaxation": 0.7,
                     "ext_field": [0, 0, 0],
                     "max_iterations": 100,
                     "first_id": 0,
-                    "esp_out": 1,
-                    "normals": [],
-                    "areas": [],
-                    "sigmas": [],
-                    "epsilons": [],
+                    "eps_out": 1,
                     "check_neutrality": True}
 
         def _get_params_from_es_core(self):
             params = {}
-            params["n_icc"] = icc_cfg.n_ic
+            params["n_icc"] = icc_cfg.n_icc
             params["first_id"] = icc_cfg.first_id
             params["max_iterations"] = icc_cfg.num_iteration
             params["convergence"] = icc_cfg.convergence
