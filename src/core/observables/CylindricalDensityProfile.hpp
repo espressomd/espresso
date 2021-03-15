@@ -41,7 +41,9 @@ public:
 
     for (auto p : particles) {
       histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
-          folded_position(traits.position(p), box_geo) - center, axis));
+          folded_position(traits.position(p), box_geo) -
+              transform_params->center(),
+          transform_params->axis(), transform_params->orientation()));
     }
 
     histogram.normalize();

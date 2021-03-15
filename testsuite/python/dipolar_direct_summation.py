@@ -19,10 +19,11 @@
 import espressomd
 import espressomd.magnetostatics
 import espressomd.magnetostatic_extensions
+import os
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
-from tests_common import abspath
+from tests_common import abspath, random_dipoles
 OPEN_BOUNDARIES_REF_ENERGY = abspath("data/dipolar_open_boundaries_energy.npy")
 OPEN_BOUNDARIES_REF_ARRAYS = abspath("data/dipolar_open_boundaries_arrays.npy")
 
@@ -34,7 +35,7 @@ class dds(ut.TestCase):
 
     system.time_step = 0.01
     system.cell_system.skin = 0.1
-    system.periodicity = 0, 0, 0
+    system.periodicity = [False, False, False]
 
     def tearDown(self):
         self.system.part.clear()
@@ -107,19 +108,27 @@ class dds(ut.TestCase):
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 1,
                "Skipping test: only runs for n_nodes == 1")
-    def gen_reference_data(self):
+    def test_gen_reference_data(self):
+        filepaths = ('dipolar_direct_summation_energy.npy',
+                     'dipolar_direct_summation_arrays.npy')
+        for filepath in filepaths:
+            if os.path.isfile(filepath):
+                os.remove(filepath)
+
+        self.gen_reference_data(filepaths[0], filepaths[1])
+        for filepath in filepaths:
+            self.assertTrue(os.path.isfile(filepath))
+
+    def gen_reference_data(self, filepath_energy=OPEN_BOUNDARIES_REF_ENERGY,
+                           filepath_arrays=OPEN_BOUNDARIES_REF_ARRAYS):
         system = self.system
+        np.random.seed(42)
 
         # add particles
         N = 20
         dipole_modulus = 1.3
         part_pos = np.random.random((N, 3)) * system.box_l
-        costheta = 2 * np.random.random(N) - 1
-        sintheta = np.sin(np.arcsin(costheta))
-        phi = 2 * np.pi * np.random.random(N)
-        part_dip = np.array([sintheta * np.cos(phi) * dipole_modulus,
-                             sintheta * np.sin(phi) * dipole_modulus,
-                             costheta * dipole_modulus]).T
+        part_dip = dipole_modulus * random_dipoles(N)
         particles = system.part.add(pos=part_pos, dip=part_dip,
                                     rotation=N * [(1, 1, 1)])
 
@@ -137,11 +146,11 @@ class dds(ut.TestCase):
         # compute forces and energies for dawaanr
         ref_e, ref_f, ref_t = self.dds_data()
         np.save(
-            OPEN_BOUNDARIES_REF_ENERGY,
+            filepath_energy,
             np.array([ref_e]),
             allow_pickle=False)
         np.save(
-            OPEN_BOUNDARIES_REF_ARRAYS,
+            filepath_arrays,
             np.hstack(
                 (particles.pos_folded,
                  particles.dip,

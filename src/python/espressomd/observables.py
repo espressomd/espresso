@@ -17,6 +17,7 @@
 import itertools
 import numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register
+from .math import CylindricalTransformationParameters
 
 
 @script_interface_register
@@ -67,6 +68,18 @@ class ProfileObservable(Observable):
             edges[i] = np.array(edge[:-1]) + (edge[1] - edge[0]) / 2
         shape = list(map(len, edges)) + [len(edges)]
         return np.array(list(itertools.product(*edges))).reshape(shape)
+
+
+class CylindricalProfileObservable(ProfileObservable):
+    """
+    Base class for observables that work with cylinder coordinates
+    """
+
+    def __init__(
+            self, transform_params=CylindricalTransformationParameters(), **kwargs):
+        # Provide default transformation parameters if not user-provided
+        kwargs['transform_params'] = transform_params
+        super().__init__(**kwargs)
 
 
 @script_interface_register
@@ -636,7 +649,7 @@ class DPDStress(Observable):
 
 
 @script_interface_register
-class CylindricalDensityProfile(ProfileObservable):
+class CylindricalDensityProfile(CylindricalProfileObservable):
 
     """Calculates the particle density in cylindrical coordinates.
 
@@ -644,26 +657,24 @@ class CylindricalDensityProfile(ProfileObservable):
     ----------
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
-    center : (3,) array_like of :obj:`float`
-        Position of the center of the cylindrical coordinate system for the histogram.
-    axis : (3,) array_like of :obj:`float`
-        Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
-    n_r_bins : :obj:`int`
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+        Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
+    n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
-    n_phi_bins : :obj:`int`
+    n_phi_bins : :obj:`int`, default = 1
         Number of bins for the azimuthal direction.
-    n_z_bins : :obj:`int`
+    n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
-    min_r : :obj:`float`
+    min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+    min_phi : :obj:`float`, default = -pi
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+    max_phi : :obj:`float`, default = pi
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
@@ -676,7 +687,7 @@ class CylindricalDensityProfile(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalFluxDensityProfile(ProfileObservable):
+class CylindricalFluxDensityProfile(CylindricalProfileObservable):
 
     """Calculates the particle flux density in cylindrical coordinates.
 
@@ -684,26 +695,24 @@ class CylindricalFluxDensityProfile(ProfileObservable):
     ----------
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
-    center : (3,) array_like of :obj:`float`
-        Position of the center of the cylindrical coordinate system for the histogram.
-    axis : (3,) array_like of :obj:`float`
-        Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
-    n_r_bins : :obj:`int`
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+        Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
+    n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
-    n_phi_bins : :obj:`int`
+    n_phi_bins : :obj:`int`, default = 1
         Number of bins for the azimuthal direction.
-    n_z_bins : :obj:`int`
+    n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
-    min_r : :obj:`float`
+    min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+    min_phi : :obj:`float`, default = -pi
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+    max_phi : :obj:`float`, default = pi
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
@@ -718,7 +727,8 @@ class CylindricalFluxDensityProfile(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalLBFluxDensityProfileAtParticlePositions(ProfileObservable):
+class CylindricalLBFluxDensityProfileAtParticlePositions(
+        CylindricalProfileObservable):
 
     """Calculates the LB fluid flux density at the particle positions in
     cylindrical coordinates.
@@ -727,26 +737,24 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(ProfileObservable):
     ----------
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
-    center : (3,) array_like of :obj:`float`
-        Position of the center of the cylindrical coordinate system for the histogram.
-    axis : (3,) array_like of :obj:`float`
-        Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
-    n_r_bins : :obj:`int`
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+        Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
+    n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
-    n_phi_bins : :obj:`int`
+    n_phi_bins : :obj:`int`, default = 1
         Number of bins for the azimuthal direction.
-    n_z_bins : :obj:`int`
+    n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
-    min_r : :obj:`float`
+    min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+    min_phi : :obj:`float`, default = -pi
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+    max_phi : :obj:`float`, default = pi
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
@@ -761,7 +769,8 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalLBVelocityProfileAtParticlePositions(ProfileObservable):
+class CylindricalLBVelocityProfileAtParticlePositions(
+        CylindricalProfileObservable):
 
     """Calculates the LB fluid velocity at the particle positions in
     cylindrical coordinates.
@@ -770,26 +779,24 @@ class CylindricalLBVelocityProfileAtParticlePositions(ProfileObservable):
     ----------
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
-    center : (3,) array_like of :obj:`float`
-        Position of the center of the cylindrical coordinate system for the histogram.
-    axis : (3,) array_like of :obj:`float`
-        Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
-    n_r_bins : :obj:`int`
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+        Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
+    n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
-    n_phi_bins : :obj:`int`
+    n_phi_bins : :obj:`int`, default = 1
         Number of bins for the azimuthal direction.
-    n_z_bins : :obj:`int`
+    n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
-    min_r : :obj:`float`
+    min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+    min_phi : :obj:`float`, default = -pi
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+    max_phi : :obj:`float`, default = pi
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
@@ -804,7 +811,7 @@ class CylindricalLBVelocityProfileAtParticlePositions(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalVelocityProfile(ProfileObservable):
+class CylindricalVelocityProfile(CylindricalProfileObservable):
 
     """Calculates the particle velocity profile in cylindrical coordinates.
 
@@ -812,26 +819,24 @@ class CylindricalVelocityProfile(ProfileObservable):
     ----------
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
-    center : (3,) array_like of :obj:`float`
-        Position of the center of the cylindrical coordinate system for the histogram.
-    axis : (3,) array_like of :obj:`float`
-        Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
-    n_r_bins : :obj:`int`
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+        Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
+    n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
-    n_phi_bins : :obj:`int`
+    n_phi_bins : :obj:`int`, default = 1
         Number of bins for the azimuthal direction.
-    n_z_bins : :obj:`int`
+    n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
-    min_r : :obj:`float`
+    min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+    min_phi : :obj:`float`, default = -pi
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+    max_phi : :obj:`float`, default = pi
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
@@ -846,7 +851,7 @@ class CylindricalVelocityProfile(ProfileObservable):
 
 
 @script_interface_register
-class CylindricalLBVelocityProfile(ProfileObservable):
+class CylindricalLBVelocityProfile(CylindricalProfileObservable):
 
     """Calculates the LB fluid velocity profile in cylindrical coordinates.
 
@@ -856,26 +861,24 @@ class CylindricalLBVelocityProfile(ProfileObservable):
 
     Parameters
     ----------
-    center : (3,) array_like of :obj:`float`
-        Position of the center of the cylindrical coordinate system for the histogram.
-    axis : (3,) array_like of :obj:`float`
-        Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
-    n_r_bins : :obj:`int`
+    transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, optional
+        Parameters of the cylinder transformation. Defaults to the default of :class:`espressomd.math.CylindricalTransformationParameters`
+    n_r_bins : :obj:`int`, default = 1
         Number of bins in radial direction.
-    n_phi_bins : :obj:`int`
+    n_phi_bins : :obj:`int`, default = 1
         Number of bins for the azimuthal direction.
-    n_z_bins : :obj:`int`
+    n_z_bins : :obj:`int`, default = 1
         Number of bins in ``z`` direction.
-    min_r : :obj:`float`
+    min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`
-        Minimum ``phi`` to consider.
+    min_phi : :obj:`float`, default = -pi
+        Minimum ``phi`` to consider. Must be in [-pi,pi).
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`
-        Maximum ``phi`` to consider.
+    max_phi : :obj:`float`, default = pi
+        Maximum ``phi`` to consider. Must be in (-pi,pi].
     max_z : :obj:`float`
         Maximum ``z`` to consider.
     sampling_density : :obj:`float`
@@ -920,7 +923,7 @@ class RDF(Observable):
     _so_name = "Observables::RDF"
 
     def __init__(self, **kwargs):
-        if "oid" not in kwargs and "ids2" not in kwargs:
+        if "ids2" not in kwargs:
             kwargs["ids2"] = []
         super().__init__(**kwargs)
 

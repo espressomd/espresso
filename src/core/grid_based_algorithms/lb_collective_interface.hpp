@@ -27,6 +27,8 @@
 /* collective getter functions */
 boost::optional<Utils::Vector3d>
 mpi_lb_get_interpolated_velocity(Utils::Vector3d const &pos);
+boost::optional<double>
+mpi_lb_get_interpolated_density(Utils::Vector3d const &pos);
 boost::optional<double> mpi_lb_get_density(Utils::Vector3i const &index);
 boost::optional<Utils::Vector19d>
 mpi_lb_get_populations(Utils::Vector3i const &index);

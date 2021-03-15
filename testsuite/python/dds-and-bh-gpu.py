@@ -23,11 +23,7 @@ import espressomd
 import espressomd.magnetostatics
 import espressomd.analyze
 import espressomd.cuda_init
-
-
-def stopAll(system):
-    system.part[:].v = np.zeros(3)
-    system.part[:].omega_body = np.zeros(3)
+import espressomd.galilei
 
 
 @utx.skipIfMissingGPU()
@@ -70,7 +66,8 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
             self.system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
-            stopAll(self.system)
+            g = espressomd.galilei.GalileiTransform()
+            g.kill_particle_motion(rotation=True)
             self.system.integrator.set_vv()
 
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
