@@ -30,8 +30,8 @@ class MagnetostaticsInterface(ut.TestCase):
 
     def setUp(self):
         self.system.box_l = [10., 10., 10.]
-        self.system.part.add(id=0, pos=(0.1, 0.1, 0.1), dip=(1.3, 2.1, -6))
-        self.system.part.add(id=1, pos=(0, 0, 0), dip=(7.3, 6.1, -4))
+        self.system.part.add(pos=(0.0, 0.0, 0.0), dip=(1.3, 2.1, -6))
+        self.system.part.add(pos=(0.1, 0.1, 0.1), dip=(7.3, 6.1, -4))
 
     def tearDown(self):
         self.system.part.clear()
