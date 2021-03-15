@@ -35,7 +35,7 @@
 /** Velocity densities for the lattice Boltzmann system. */
 struct LB_nodes_gpu {
   /** velocity density of the node */
-  float *vd = nullptr;
+  float *populations = nullptr;
   unsigned int *boundary = nullptr;
   Utils::Array<float, 3> *boundary_velocity = nullptr;
 };
