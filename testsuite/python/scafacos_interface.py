@@ -148,12 +148,12 @@ class ScafacosInterface(ut.TestCase):
 
         scafacos_coulomb = espressomd.electrostatics.Scafacos(
             prefactor=0.5,
-            method_name="p3m",
+            method_name="ewald",
             method_params={
-                "p3m_r_cut": 1.0,
-                "p3m_alpha": 2.799269,
-                "p3m_grid": 32,
-                "p3m_cao": 7})
+                "ewald_r_cut": 1.0,
+                "ewald_alpha": 3.861352,
+                "ewald_kmax": 23,
+                "ewald_maxkmax": 100})
         system.actors.add(scafacos_coulomb)
 
         scafacos_dipoles = espressomd.magnetostatics.Scafacos(
@@ -183,7 +183,7 @@ class ScafacosInterface(ut.TestCase):
 
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     @ut.skipIf(not espressomd.has_features('SCAFACOS_DIPOLES') or
-               not {'p2nfft', 'p3m'}.issubset(
+               not {'p2nfft', 'ewald'}.issubset(
                    espressomd.scafacos.available_methods()),
                'Skipping test: missing p2nfft or ewald method')
     def test_electrostatics_plus_magnetostatics(self):
@@ -213,7 +213,7 @@ class ScafacosInterface(ut.TestCase):
 
         self.assertAlmostEqual(fcs_E_coulomb, p3m_E_coulomb, delta=1e-4)
         self.assertAlmostEqual(fcs_E_dipoles, p3m_E_dipoles, delta=1e-4)
-        np.testing.assert_allclose(fcs_forces, p3m_forces, rtol=1e-3)
+        np.testing.assert_allclose(fcs_forces, p3m_forces, rtol=1e-2)
         np.testing.assert_allclose(fcs_torques, p3m_torques, rtol=1e-3)
 
 
