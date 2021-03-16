@@ -50,6 +50,9 @@ class ScafacosInterface(ut.TestCase):
         for method in available_methods:
             self.assertIn(method, scafacos_methods)
 
+    @ut.skipIf(not espressomd.has_features('SCAFACOS') or
+               'p3m' not in espressomd.scafacos.available_methods(),
+               'Skipping test: missing ScaFaCoS p3m method')
     def test_actor_exceptions(self):
         system = self.system
 
@@ -71,6 +74,9 @@ class ScafacosInterface(ut.TestCase):
                 prefactor=1, method_name="p3m", method_params={}))
         system.actors.clear()
 
+    @ut.skipIf(not espressomd.has_features('SCAFACOS') or
+               'p3m' not in espressomd.scafacos.available_methods(),
+               'Skipping test: missing ScaFaCoS p3m method')
     def test_actor_coulomb(self):
         system = self.system
 
@@ -90,7 +96,9 @@ class ScafacosInterface(ut.TestCase):
                          {'p3m_cao': '7', 'p3m_r_cut': '1.0',
                           'p3m_grid': '32', 'p3m_alpha': '2.799269'})
 
-    @utx.skipIfMissingFeatures(["SCAFACOS_DIPOLES"])
+    @ut.skipIf(not espressomd.has_features('SCAFACOS_DIPOLES') or
+               'p2nfft' not in espressomd.scafacos.available_methods(),
+               'Skipping test: missing ScaFaCoS p2nfft method')
     def test_actor_dipoles(self):
         system = self.system
 
@@ -191,7 +199,7 @@ class ScafacosInterface(ut.TestCase):
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     @ut.skipIf(not espressomd.has_features('SCAFACOS_DIPOLES') or
                'p2nfft' not in espressomd.scafacos.available_methods(),
-               'Skipping test: missing p2nfft or ewald method')
+               'Skipping test: missing SCAFACOS_DIPOLES or p2nfft method')
     def test_electrostatics_plus_magnetostatics(self):
         # check that two instances of ScaFaCoS can be used
         system = self.system
