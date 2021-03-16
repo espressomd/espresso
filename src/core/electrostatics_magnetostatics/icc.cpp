@@ -86,11 +86,6 @@ void icc_iteration(const ParticleRange &particles,
 
   Coulomb::icc_sanity_check();
 
-  if (icc_cfg.eout <= 0) {
-    runtimeErrorMsg()
-        << "ICC: nonpositive dielectric constant is not allowed.";
-  }
-
   auto const pref = 1.0 / (coulomb.prefactor * 2 * Utils::pi());
   icc_cfg.citeration = 0;
 
