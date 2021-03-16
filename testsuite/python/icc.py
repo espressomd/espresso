@@ -17,98 +17,162 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import numpy as np
 
 
-@utx.skipIfMissingFeatures(["P3M", "EXTERNAL_FORCES"])
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "EXTERNAL_FORCES"])
 class test_icc(ut.TestCase):
+    system = espressomd.System(box_l=[10, 10, 10])
 
-    def runTest(self):
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.part.clear()
+
+    def add_icc_particles(self, side_num_particles,
+                          initial_charge, z_position):
+        number = side_num_particles**2
+        areas = self.system.box_l[0] * \
+            self.system.box_l[1] / number * np.ones(number)
+        normals = np.zeros((number, 3))
+        normals[:, 2] = 1
+
+        x_position = np.linspace(
+            0,
+            self.system.box_l[0],
+            side_num_particles,
+            endpoint=False)
+        y_position = np.linspace(
+            0,
+            self.system.box_l[1],
+            side_num_particles,
+            endpoint=False)
+        x_pos, y_pos = np.meshgrid(x_position, y_position)
+
+        positions = np.stack((x_pos, y_pos, np.full_like(
+            x_pos, z_position)), axis=-1).reshape(-1, 3)
+
+        charges = np.full(number, initial_charge)
+        fix = [(True, True, True)] * number
+
+        return self.system.part.add(
+            pos=positions, q=charges, fix=fix), normals, areas
+
+    def common_setup(self, kwargs, error):
+        from espressomd.electrostatic_extensions import ICC
+
+        self.tearDown()
+        part_slice, normals, areas = self.add_icc_particles(2, 0.01, 0)
+
+        params = {"n_icc": len(part_slice),
+                  "normals": normals,
+                  "areas": areas,
+                  "epsilons": np.ones_like(areas),
+                  "first_id": part_slice.id[0],
+                  "check_neutrality": False}
+
+        params.update(kwargs)
+
+        icc = ICC(**params)
+        with self.assertRaisesRegex(Exception, error):
+            self.system.actors.add(icc)
+
+    def test_params(self):
+        params = [({"n_icc": -1}, 'ICC: invalid number of particles'),
+                  ({"first_id": -1}, 'ICC: invalid first_id'),
+                  ({"max_iterations": -1}, 'ICC: invalid max_iterations'),
+                  ({"convergence": -1}, 'ICC: invalid convergence value'),
+                  ({"relaxation": -1}, 'ICC: invalid relaxation value'),
+                  ({"relaxation": 2.1}, 'ICC: invalid relaxation value'),
+                  ({"eps_out": -1}, 'ICC: invalid eps_out'),
+                  ({"ext_field": 0}, 'A single value was given but 3 were expected'), ]
+
+        for kwargs, error in params:
+            self.common_setup(kwargs, error)
+
+    def test_core_params(self):
+        from espressomd.electrostatic_extensions import ICC
+
+        self.tearDown()
+        part_slice, normals, areas = self.add_icc_particles(5, 0.01, 0)
+
+        params = {"n_icc": len(part_slice),
+                  "normals": normals,
+                  "areas": areas,
+                  "epsilons": np.ones_like(areas),
+                  "first_id": part_slice.id[0],
+                  "check_neutrality": False}
+
+        icc = ICC(**params)
+        self.system.actors.add(icc)
+
+        icc_params = icc.get_params()
+        for key, value in params.items():
+            np.testing.assert_allclose(value, np.copy(icc_params[key]))
+
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_dipole_system(self):
         from espressomd.electrostatics import P3M
         from espressomd.electrostatic_extensions import ICC
 
-        S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        # Parameters
-        box_l = 20.0
-        nicc = 10
-        q_test = 10.0
-        q_dist = 5.0
+        BOX_L = 20.
+        BOX_SPACE = 5.
 
-        # System
-        S.box_l = [box_l, box_l, box_l + 5.0]
-        S.cell_system.skin = 0.4
-        S.time_step = 0.01
+        self.tearDown()
+        self.system.box_l = [BOX_L, BOX_L, BOX_L + BOX_SPACE]
+        self.system.cell_system.skin = 0.4
+        self.system.time_step = 0.01
 
-        # ICC particles
-        nicc_per_electrode = nicc * nicc
-        nicc_tot = 2 * nicc_per_electrode
-        iccArea = box_l * box_l / nicc_per_electrode
+        N_ICC_SIDE_LENGTH = 10
+        DIPOLE_DISTANCE = 5.0
+        DIPOLE_CHARGE = 10.0
 
-        iccNormals = []
-        iccAreas = []
-        iccSigmas = []
-        iccEpsilons = []
+        part_slice_lower, normals_lower, areas_lower = self.add_icc_particles(
+            N_ICC_SIDE_LENGTH, -0.0001, 0.)
+        part_slice_upper, normals_upper, areas_upper = self.add_icc_particles(
+            N_ICC_SIDE_LENGTH, 0.0001, BOX_L)
 
-        l = box_l / nicc
-        for xi in range(nicc):
-            for yi in range(nicc):
-                S.part.add(pos=[l * xi, l * yi, 0], q=-0.0001, fix=[1, 1, 1])
-                iccNormals.append([0, 0, 1])
+        assert (part_slice_upper.id[-1] - part_slice_lower.id[0] +
+                1) == 2 * N_ICC_SIDE_LENGTH**2, "ICC particles not continuous"
 
-        for xi in range(nicc):
-            for yi in range(nicc):
-                S.part.add(pos=[l * xi, l * yi, box_l],
-                           q=0.0001, fix=[1, 1, 1])
-                iccNormals.append([0, 0, -1])
+        normals = np.vstack((normals_lower, -normals_upper))
+        areas = np.hstack((areas_lower, areas_upper))
+        epsilons = np.full_like(areas, 1e8)
+        sigmas = np.zeros_like(areas)
 
-        iccAreas.extend([iccArea] * nicc_tot)
-        iccSigmas.extend([0] * nicc_tot)
-        iccEpsilons.extend([10000000] * nicc_tot)
+        icc = ICC(n_icc=2 * N_ICC_SIDE_LENGTH**2,
+                  normals=normals,
+                  areas=areas,
+                  epsilons=epsilons,
+                  sigmas=sigmas,
+                  convergence=1e-6,
+                  max_iterations=100,
+                  first_id=part_slice_lower.id[0],
+                  eps_out=1.,
+                  relaxation=0.75,
+                  ext_field=[0, 0, 0])
 
-        # Test Dipole
-        b2 = box_l * 0.5
-        S.part.add(pos=[b2, b2, b2 - q_dist / 2], q=q_test, fix=[1, 1, 1])
-        S.part.add(pos=[b2, b2, b2 + q_dist / 2], q=-q_test, fix=[1, 1, 1])
+        # Dipole in the center of the simulation box
+        BOX_L_HALF = BOX_L / 2
 
-        # Actors
+        self.system.part.add(pos=[BOX_L_HALF, BOX_L_HALF, BOX_L_HALF - DIPOLE_DISTANCE / 2],
+                             q=DIPOLE_CHARGE, fix=[True, True, True])
+        self.system.part.add(pos=[BOX_L_HALF, BOX_L_HALF, BOX_L_HALF + DIPOLE_DISTANCE / 2],
+                             q=-DIPOLE_CHARGE, fix=[True, True, True])
+
         p3m = P3M(prefactor=1, mesh=32, cao=7, accuracy=1e-5)
-        icc = ICC(
-            n_icc=nicc_tot,
-            convergence=1e-6,
-            relaxation=0.75,
-            ext_field=[0, 0, 0],
-            max_iterations=100,
-            first_id=0,
-            eps_out=1,
-            normals=iccNormals,
-            areas=iccAreas,
-            sigmas=iccSigmas,
-            epsilons=iccEpsilons)
 
-        S.actors.add(p3m)
-        S.actors.add(icc)
+        self.system.actors.add(p3m)
+        self.system.actors.add(icc)
 
-        # Run
-        S.integrator.run(0)
+        self.system.integrator.run(0)
 
-        # Analyze
-        QL = sum(S.part[:nicc_per_electrode].q)
-        QR = sum(S.part[nicc_per_electrode:nicc_tot].q)
+        charge_lower = sum(part_slice_lower.q)
+        charge_upper = sum(part_slice_upper.q)
 
-        testcharge_dipole = q_test * q_dist
-        induced_dipole = 0.5 * (abs(QL) + abs(QR)) * box_l
+        testcharge_dipole = DIPOLE_CHARGE * DIPOLE_DISTANCE
+        induced_dipole = 0.5 * (abs(charge_lower) + abs(charge_upper)) * BOX_L
 
-        # Result
         self.assertAlmostEqual(1, induced_dipole / testcharge_dipole, places=4)
-
-        # Test applying changes
-        enegry_pre_change = S.analysis.energy()['total']
-        pressure_pre_change = S.analysis.pressure()['total']
-        icc.set_params(sigmas=[2.0] * nicc_tot)
-        icc.set_params(epsilons=[20.0] * nicc_tot)
-        enegry_post_change = S.analysis.energy()['total']
-        pressure_post_change = S.analysis.pressure()['total']
-        self.assertNotAlmostEqual(enegry_pre_change, enegry_post_change)
-        self.assertNotAlmostEqual(pressure_pre_change, pressure_post_change)
 
 
 if __name__ == "__main__":
