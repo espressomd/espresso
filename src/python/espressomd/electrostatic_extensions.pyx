@@ -22,8 +22,9 @@ include "myconfig.pxi"
 from . cimport actors
 from . import actors
 import numpy as np
-from .utils import handle_errors
-from .utils cimport check_type_or_throw_except, check_range_or_except
+from .utils import handle_errors, array_locked
+from .utils cimport check_type_or_throw_except, check_range_or_except, Vector3d, make_Vector3d, make_array_locked, make_array_locked_vector
+from libcpp.vector cimport vector
 
 IF ELECTROSTATICS and P3M:
     from espressomd.electrostatics import check_neutrality
@@ -70,31 +71,21 @@ IF ELECTROSTATICS and P3M:
             default_params = self.default_params()
 
             check_type_or_throw_except(self._params["n_icc"], 1, int, "")
-            check_range_or_except(
-                self._params, "n_icc", 1, True, "inf", True)
 
             check_type_or_throw_except(
                 self._params["convergence"], 1, float, "")
-            check_range_or_except(
-                self._params, "convergence", 0, False, "inf", True)
 
             check_type_or_throw_except(
                 self._params["relaxation"], 1, float, "")
-            check_range_or_except(
-                self._params, "relaxation", 0, False, "inf", True)
 
             check_type_or_throw_except(
                 self._params["ext_field"], 3, float, "")
 
             check_type_or_throw_except(
                 self._params["max_iterations"], 1, int, "")
-            check_range_or_except(
-                self._params, "max_iterations", 0, False, "inf", True)
 
             check_type_or_throw_except(
                 self._params["first_id"], 1, int, "")
-            check_range_or_except(
-                self._params, "first_id", 0, True, "inf", True)
 
             check_type_or_throw_except(
                 self._params["eps_out"], 1, float, "")
@@ -150,74 +141,54 @@ IF ELECTROSTATICS and P3M:
         def _get_params_from_es_core(self):
             params = {}
             params["n_icc"] = icc_cfg.n_ic
-
-            # Fill Lists
-            normals = []
-            areas = []
-            sigmas = []
-            epsilons = []
-            for i in range(icc_cfg.n_ic):
-                normals.append([icc_cfg.normals[i][0], icc_cfg.normals[
-                               i][1], icc_cfg.normals[i][2]])
-                areas.append(icc_cfg.areas[i])
-                epsilons.append(icc_cfg.ein[i])
-                sigmas.append(icc_cfg.sigma[i])
-
-            params["normals"] = normals
-            params["areas"] = areas
-            params["epsilons"] = epsilons
-            params["sigmas"] = sigmas
-
-            params["ext_field"] = [icc_cfg.ext_field[0],
-                                   icc_cfg.ext_field[1],
-                                   icc_cfg.ext_field[2]]
             params["first_id"] = icc_cfg.first_id
             params["max_iterations"] = icc_cfg.num_iteration
             params["convergence"] = icc_cfg.convergence
             params["relaxation"] = icc_cfg.relax
             params["eps_out"] = icc_cfg.eout
+            params["normals"] = make_array_locked_vector(icc_cfg.normals)
+            params["areas"] = array_locked(icc_cfg.areas)
+            params["epsilons"] = array_locked(icc_cfg.ein)
+            params["sigmas"] = array_locked(icc_cfg.sigma)
+            params["ext_field"] = make_array_locked(icc_cfg.ext_field)
 
             return params
 
         def _set_params_in_es_core(self):
-            # First set number of icc particles
-            icc_cfg.n_ic = self._params["n_icc"]
-            # Allocate ICC lists
-            icc_alloc_lists()
+            cdef Vector3d ext_field = make_Vector3d(self._params["ext_field"])
+            cdef vector[double] areas, e_in, sigma
+            cdef vector[Vector3d] normals
+            areas.resize(self._params["n_icc"])
+            e_in.resize(self._params["n_icc"])
+            sigma.resize(self._params["n_icc"])
+            normals.resize(self._params["n_icc"])
 
-            # Fill Lists
-            for i in range(icc_cfg.n_ic):
-                icc_cfg.normals[i][0] = self._params["normals"][i][0]
-                icc_cfg.normals[i][1] = self._params["normals"][i][1]
-                icc_cfg.normals[i][2] = self._params["normals"][i][2]
+            for i in range(self._params["n_icc"]):
+                areas[i] = self._params["areas"][i]
+                e_in[i] = self._params["epsilons"][i]
+                sigma[i] = self._params["sigmas"][i]
 
-                icc_cfg.areas[i] = self._params["areas"][i]
-                icc_cfg.ein[i] = self._params["epsilons"][i]
-                icc_cfg.sigma[i] = self._params["sigmas"][i]
+                for j in range(3):
+                    normals[i][j] = self._params["normals"][i][j]
 
-            icc_cfg.ext_field[0] = self._params["ext_field"][0]
-            icc_cfg.ext_field[1] = self._params["ext_field"][1]
-            icc_cfg.ext_field[2] = self._params["ext_field"][2]
-            icc_cfg.first_id = self._params["first_id"]
-            icc_cfg.num_iteration = self._params["max_iterations"]
-            icc_cfg.convergence = self._params["convergence"]
-            icc_cfg.relax = self._params["relaxation"]
-            icc_cfg.eout = self._params["eps_out"]
-
-            # Broadcasts vars
-            mpi_icc_init()
+            icc_set_params(self._params["n_icc"],
+                           self._params["convergence"],
+                           self._params["relaxation"],
+                           ext_field,
+                           self._params["max_iterations"],
+                           self._params["first_id"],
+                           self._params["eps_out"],
+                           areas,
+                           e_in,
+                           sigma,
+                           normals)
 
         def _activate_method(self):
             check_neutrality(self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
-            icc_cfg.n_ic = 0
-            # Allocate ICC lists
-            icc_alloc_lists()
-
-            # Broadcasts vars
-            mpi_icc_init()
+            icc_deactivate()
 
         def last_iterations(self):
             """

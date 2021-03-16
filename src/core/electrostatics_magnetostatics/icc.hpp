@@ -107,14 +107,22 @@ extern icc_struct icc_cfg;
 void icc_iteration(const ParticleRange &particles,
                    const ParticleRange &ghost_particles);
 
-/** The allocation of ICC lists for python interface
- */
-void icc_alloc_lists();
-
 /** Perform ICC initialization.
  *  @return non-zero value on error
  */
 int mpi_icc_init();
+
+/** Set ICC parameters
+ */
+void icc_set_params(int n_ic, double convergence, double relaxation,
+                    Utils::Vector3d &ext_field, int max_iterations,
+                    int first_id, double eps_out, std::vector<double> &areas,
+                    std::vector<double> &e_in, std::vector<double> &sigma,
+                    std::vector<Utils::Vector3d> &normals);
+
+/** clear ICC vector allocations
+ */
+void icc_deactivate();
 
 #endif /* ELECTROSTATICS */
 #endif /* CORE_ICC_HPP */

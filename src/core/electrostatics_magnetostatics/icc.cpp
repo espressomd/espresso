@@ -79,16 +79,6 @@ inline void add_non_bonded_pair_force_icc(Particle &p1, Particle &p2,
   p2.f.f += std::get<2>(forces);
 #endif
 }
-
-void icc_alloc_lists() {
-  auto const n_ic = icc_cfg.n_ic;
-
-  icc_cfg.areas.resize(n_ic);
-  icc_cfg.ein.resize(n_ic);
-  icc_cfg.normals.resize(n_ic);
-  icc_cfg.sigma.resize(n_ic);
-}
-
 void icc_iteration(const ParticleRange &particles,
                    const ParticleRange &ghost_particles) {
   if (icc_cfg.n_ic == 0)
@@ -230,4 +220,61 @@ int mpi_icc_init() {
   return check_runtime_errors(comm_cart);
 }
 
+void icc_set_params(int n_ic, double convergence, double relaxation,
+                    Utils::Vector3d &ext_field, int max_iterations,
+                    int first_id, double eps_out, std::vector<double> &areas,
+                    std::vector<double> &e_in, std::vector<double> &sigma,
+                    std::vector<Utils::Vector3d> &normals) {
+  if (n_ic < 0)
+    throw std::runtime_error("ICC: invalid number of particles. " +
+                             std::to_string(n_icc));
+  if (convergence <= 0)
+    throw std::runtime_error("ICC: invalid convergence value. " +
+                             std::to_string(convergence));
+  if (relaxation < 0 or relaxation > 2)
+    throw std::runtime_error("ICC: invalid relaxation value. " +
+                             std::to_string(relaxation));
+  if (max_iterations <= 0)
+    throw std::runtime_error("ICC: invalid max_iterations. " +
+                             std::to_string(max_iterations));
+  if (first_id < 0)
+    throw std::runtime_error("ICC: invalid first_id. " +
+                             std::to_string(first_id));
+  if (eps_out <= 0)
+    throw std::runtime_error("ICC: invalid eps_out. " +
+                             std::to_string(eps_out));
+  if (areas.size() != n_ic)
+    throw std::runtime_error("ICC: invalid areas vector.");
+  if (e_in.size() != n_ic)
+    throw std::runtime_error("ICC: invalid e_in vector.");
+  if (sigma.size() != n_ic)
+    throw std::runtime_error("ICC: invalid sigma vector.");
+  if (normals.size() != n_ic)
+    throw std::runtime_error("ICC: invalid normals vector.");
+
+  icc_cfg.n_ic = n_ic;
+  icc_cfg.convergence = convergence;
+  icc_cfg.relax = relaxation;
+  icc_cfg.ext_field = ext_field;
+  icc_cfg.num_iteration = max_iterations;
+  icc_cfg.first_id = first_id;
+  icc_cfg.eout = eps_out;
+
+  icc_cfg.areas = std::move(areas);
+  icc_cfg.ein = std::move(e_in);
+  icc_cfg.sigma = std::move(sigma);
+  icc_cfg.normals = std::move(normals);
+
+  mpi_icc_init();
+}
+
+void icc_deactivate() {
+  icc_cfg.n_ic = 0;
+  icc_cfg.areas.resize(0);
+  icc_cfg.ein.resize(0);
+  icc_cfg.normals.resize(0);
+  icc_cfg.sigma.resize(0);
+
+  mpi_icc_init();
+}
 #endif

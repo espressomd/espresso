@@ -40,7 +40,14 @@ IF ELECTROSTATICS and P3M:
             int first_id
 
         # links intern C-struct with python object
-        icc_struct icc_cfg
+        cdef extern icc_struct icc_cfg
 
-        void icc_alloc_lists()
-        int mpi_icc_init()
+        void icc_set_params(int n_ic, double convergence, double relaxation,
+                            Vector3d & ext_field, int max_iterations,
+                            int first_id, double eps_out,
+                            vector[double] & areas,
+                            vector[double] & e_in,
+                            vector[double] & sigma,
+                            vector[Vector3d] & normals) except +
+
+        void icc_deactivate()
