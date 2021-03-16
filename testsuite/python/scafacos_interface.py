@@ -130,6 +130,7 @@ class ScafacosInterface(ut.TestCase):
             accuracy=1e-5,
             cao=7,
             mesh=48,
+            r_cut=1.88672,
             epsilon="metallic")
         system.actors.add(dp3m)
 
@@ -148,12 +149,18 @@ class ScafacosInterface(ut.TestCase):
 
         scafacos_coulomb = espressomd.electrostatics.Scafacos(
             prefactor=0.5,
-            method_name="ewald",
+            method_name="p2nfft",
             method_params={
-                "ewald_r_cut": 1.0,
-                "ewald_alpha": 3.861352,
-                "ewald_kmax": 23,
-                "ewald_maxkmax": 100})
+                "p2nfft_verbose_tuning": 0,
+                "pnfft_N": "32,32,32",
+                "pnfft_n": "32,32,32",
+                "tolerance_field": "5e-4",
+                "pnfft_window_name": "bspline",
+                "pnfft_m": "4",
+                "p2nfft_ignore_tolerance": "1",
+                "pnfft_diff_ik": "0",
+                "p2nfft_r_cut": "1.0",
+                "p2nfft_alpha": "2.92"})
         system.actors.add(scafacos_coulomb)
 
         scafacos_dipoles = espressomd.magnetostatics.Scafacos(
@@ -183,8 +190,7 @@ class ScafacosInterface(ut.TestCase):
 
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     @ut.skipIf(not espressomd.has_features('SCAFACOS_DIPOLES') or
-               not {'p2nfft', 'ewald'}.issubset(
-                   espressomd.scafacos.available_methods()),
+               'p2nfft' not in espressomd.scafacos.available_methods(),
                'Skipping test: missing p2nfft or ewald method')
     def test_electrostatics_plus_magnetostatics(self):
         # check that two instances of ScaFaCoS can be used
