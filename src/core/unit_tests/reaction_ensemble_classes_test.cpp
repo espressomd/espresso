@@ -67,6 +67,8 @@ private:
   std::vector<int> particle_cache;
 };
 
+// Check the mechanism that tracks particles of a certain type and the
+// function that selects a random particle in the pool of tracked particles.
 BOOST_FIXTURE_TEST_CASE(particle_type_map_test, ParticleFactory) {
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
 
@@ -93,6 +95,10 @@ BOOST_FIXTURE_TEST_CASE(particle_type_map_test, ParticleFactory) {
   BOOST_CHECK_EQUAL(get_random_p_id(type, 0), pid);
 }
 
+// Check the collective variable that tracks the degree of dissociation
+// of a polybasic acid. The state measures the concentration of the base
+// (i.e. fully deprotonated species) divided by the concentration of the
+// base and all of its the conjugated acids.
 BOOST_FIXTURE_TEST_CASE(DegreeOfAssociationCollectiveVariable_test,
                         ParticleFactory) {
   using namespace ReactionEnsemble;
@@ -128,12 +134,19 @@ BOOST_FIXTURE_TEST_CASE(DegreeOfAssociationCollectiveVariable_test,
   BOOST_CHECK_CLOSE(doa_cv.determine_current_state(), 0.25, tol);
 }
 
+// Check a simple chemical reaction, the Monte Carlo acceptance rate
+// and the configurational move probability for a given system state.
 BOOST_AUTO_TEST_CASE(SingleReaction_test) {
   using namespace ReactionEnsemble;
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
 
-  // check derived parameter
-  SingleReaction reaction(2., {0}, {1}, {1, 2}, {3, 4});
+  // create a reaction A -> 3 B + 4 C
+  int const type_A = 0;
+  int const type_B = 1;
+  int const type_C = 2;
+  SingleReaction reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
+
+  // check derived parameter nu_bar
   BOOST_CHECK_EQUAL(reaction.nu_bar, 6);
 
   // check acceptance rate
@@ -152,8 +165,9 @@ BOOST_AUTO_TEST_CASE(SingleReaction_test) {
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 3; ++k) {
-        // i adduct #0, j product #1, k product #2
-        auto const p_numbers = std::map<int, int>{{0, i}, {1, j}, {2, k}};
+        // system contains i x A, j x B, and k x C
+        auto const p_numbers =
+            std::map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
         auto const val = calculate_factorial_expression(reaction, p_numbers);
         auto const ref = g(i, -1) * g(j, 3) * g(k, 4);
         BOOST_CHECK_CLOSE(val, ref, 5 * tol);
@@ -162,6 +176,7 @@ BOOST_AUTO_TEST_CASE(SingleReaction_test) {
   }
 }
 
+// Check the base class for all Monte Carlo algorithms.
 BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   using namespace ReactionEnsemble;
   class ReactionAlgorithmTest : public ReactionAlgorithm {
@@ -189,11 +204,15 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // check reaction addition
   {
-    SingleReaction const ref(2., {0}, {1}, {1, 2}, {3, 4});
+    // create a reaction A -> 3 B + 4 C
+    int const type_A = 0;
+    int const type_B = 1;
+    int const type_C = 2;
+    SingleReaction const ref(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
     r_algo.add_reaction(ref.gamma, ref.reactant_types,
                         ref.reactant_coefficients, ref.product_types,
                         ref.product_coefficients);
-    BOOST_CHECK_EQUAL(r_algo.reactions.size(), 1ul);
+    BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 1ul);
     auto const &reaction = r_algo.reactions[0];
     BOOST_TEST(reaction.reactant_types == ref.reactant_types,
                boost::test_tools::per_element());
@@ -235,20 +254,22 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // check reaction removal
   {
-    r_algo.add_reaction(5, {1}, {1}, {2}, {1});
-    BOOST_CHECK_EQUAL(r_algo.reactions.size(), 2ul);
-    BOOST_CHECK_EQUAL(r_algo.reactions[1].gamma, 5);
+    r_algo.add_reaction(5., {1}, {1}, {2}, {1});
+    BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 2ul);
+    BOOST_CHECK_EQUAL(r_algo.reactions[1].gamma, 5.);
     r_algo.delete_reaction(1);
-    BOOST_CHECK_EQUAL(r_algo.reactions.size(), 1ul);
-    BOOST_CHECK_EQUAL(r_algo.reactions[0].gamma, 2);
+    BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 1ul);
+    BOOST_CHECK_EQUAL(r_algo.reactions[0].gamma, 2.);
     r_algo.delete_reaction(0);
-    BOOST_CHECK_EQUAL(r_algo.reactions.size(), 0ul);
+    BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 0ul);
   }
 
   // exception if deleting a non-existent particle
   BOOST_CHECK_THROW(r_algo.delete_particle(5), std::runtime_error);
 }
 
+// Check the Monte Carlo algorithm where moves depend on the system
+// configuration and energy.
 BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
   class ReactionEnsembleTest : public ReactionEnsemble::ReactionEnsemble {
   public:
@@ -265,25 +286,33 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
   // exception if no reaction was added
   BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
 
+  // create a reaction A -> 3 B + 4 C
+  int const type_A = 0;
+  int const type_B = 1;
+  int const type_C = 2;
+  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
+
   // check acceptance probability
   constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
-  SingleReaction const reaction(2., {0}, {1}, {1, 2}, {3, 4});
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 3; ++k) {
-        // i adduct #0, j product #1, k product #2
-        auto const p_numbers = std::map<int, int>{{0, i}, {1, j}, {2, k}};
+        // system contains i x A, j x B, and k x C
+        auto const p_numbers =
+            std::map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
         auto const energy = static_cast<double>(i + 1);
         auto const f_expr = calculate_factorial_expression(reaction, p_numbers);
-        auto const ref = 2e6 * f_expr * std::exp(energy / 20.);
-        auto const val = r_algo.calculate_acceptance_probability(
+        auto const acceptance_ref = 2e6 * f_expr * std::exp(energy / 20.);
+        auto const acceptance = r_algo.calculate_acceptance_probability(
             reaction, energy, 0., p_numbers, -1, -1, false);
-        BOOST_CHECK_CLOSE(val, ref, 5 * tol);
+        BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);
       }
     }
   }
 }
 
+// Check the Monte Carlo algorithm where moves depend on the system
+// configuration and/or energy.
 BOOST_AUTO_TEST_CASE(WangLandauReactionEnsemble_test) {
   using namespace ReactionEnsemble;
   class WangLandauReactionEnsembleTest : public WangLandauReactionEnsemble {
@@ -300,39 +329,45 @@ BOOST_AUTO_TEST_CASE(WangLandauReactionEnsemble_test) {
   // exception if no reaction was added
   BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
 
+  // create a reaction A -> 3 B + 4 C
+  int const type_A = 0;
+  int const type_B = 1;
+  int const type_C = 2;
+  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
+
   // check acceptance probability
   constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
-  SingleReaction const reaction(2., {0}, {1}, {1, 2}, {3, 4});
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 3; ++k) {
-        // i adduct #0, j product #1, k product #2
-        auto const p_numbers = std::map<int, int>{{0, i}, {1, j}, {2, k}};
+        // system contains i x A, j x B, and k x C
+        auto const p_numbers =
+            std::map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
         auto const energy = static_cast<double>(i + 1);
         auto const f_expr = calculate_factorial_expression(reaction, p_numbers);
         auto const prefactor = 2e6 * f_expr;
         auto const boltzmann = std::exp(energy / 20.);
-        double val;
+        double acceptance;
         r_algo.do_energy_reweighting = false;
-        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
-                                                      p_numbers, -1, -1, false);
-        BOOST_CHECK_CLOSE(val, prefactor * boltzmann, 5 * tol);
-        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
-                                                      p_numbers, -1, -1, true);
-        BOOST_CHECK_CLOSE(val, boltzmann, 5 * tol);
+        acceptance = r_algo.calculate_acceptance_probability(
+            reaction, energy, 0., p_numbers, -1, -1, false);
+        BOOST_CHECK_CLOSE(acceptance, prefactor * boltzmann, 5 * tol);
+        acceptance = r_algo.calculate_acceptance_probability(
+            reaction, energy, 0., p_numbers, -1, -1, true);
+        BOOST_CHECK_CLOSE(acceptance, boltzmann, 5 * tol);
         r_algo.do_energy_reweighting = true;
-        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
-                                                      p_numbers, -1, -1, false);
-        BOOST_CHECK_CLOSE(val, prefactor, 5 * tol);
-        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
-                                                      p_numbers, -1, -1, true);
-        BOOST_CHECK_CLOSE(val, 1., 5 * tol);
-        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
-                                                      p_numbers, -1, 0, true);
-        BOOST_CHECK_CLOSE(val, 10., 5 * tol);
-        val = r_algo.calculate_acceptance_probability(reaction, energy, 0.,
-                                                      p_numbers, 0, -1, true);
-        BOOST_CHECK_CLOSE(val, -10., 5 * tol);
+        acceptance = r_algo.calculate_acceptance_probability(
+            reaction, energy, 0., p_numbers, -1, -1, false);
+        BOOST_CHECK_CLOSE(acceptance, prefactor, 5 * tol);
+        acceptance = r_algo.calculate_acceptance_probability(
+            reaction, energy, 0., p_numbers, -1, -1, true);
+        BOOST_CHECK_CLOSE(acceptance, 1., 5 * tol);
+        acceptance = r_algo.calculate_acceptance_probability(
+            reaction, energy, 0., p_numbers, -1, 0, true);
+        BOOST_CHECK_CLOSE(acceptance, 10., 5 * tol);
+        acceptance = r_algo.calculate_acceptance_probability(
+            reaction, energy, 0., p_numbers, 0, -1, true);
+        BOOST_CHECK_CLOSE(acceptance, -10., 5 * tol);
       }
     }
   }
@@ -401,6 +436,8 @@ BOOST_AUTO_TEST_CASE(WangLandauReactionEnsemble_test) {
   }
 }
 
+// Check the Monte Carlo algorithm where moves depend on the system
+// configuration, energy and pH.
 BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
   using namespace ReactionEnsemble;
   class ConstantpHEnsembleTest : public ConstantpHEnsemble {
@@ -417,20 +454,26 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
   // exception if no reaction was added
   BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
 
+  // create a reaction A -> B + C
+  int const type_A = 0;
+  int const type_B = 1;
+  int const type_C = 2;
+  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {1, 1});
+
   // check acceptance probability
   constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
-  SingleReaction const reaction(2., {0}, {1}, {1, 2}, {1, 1});
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 3; ++k) {
-        // i adduct #0, j product #1, k product #2
-        auto const p_numbers = std::map<int, int>{{0, i}, {1, j}, {2, k}};
+        // system contains i x A, j x B, and k x C
+        auto const p_numbers =
+            std::map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
         auto const energy = static_cast<double>(i + 1);
-        auto const ref =
+        auto const acceptance_ref =
             std::exp(energy / 20. + std::log(10.) * (1. + std::log10(2.)));
-        auto const val = r_algo.calculate_acceptance_probability(
+        auto const acceptance = r_algo.calculate_acceptance_probability(
             reaction, energy, 0., p_numbers, -1, -1, false);
-        BOOST_CHECK_CLOSE(val, ref, 5 * tol);
+        BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);
       }
     }
   }
@@ -443,9 +486,14 @@ BOOST_AUTO_TEST_CASE(WidomInsertion_test) {
   // check acceptance rate
   WidomInsertion r_algo(42);
 
-  SingleReaction const ref(2., {0}, {1}, {1, 2}, {3, 4});
-  r_algo.add_reaction(ref.gamma, ref.reactant_types, ref.reactant_coefficients,
-                      ref.product_types, ref.product_coefficients);
+  // create a reaction A -> 3 B + 4 C
+  int const type_A = 0;
+  int const type_B = 1;
+  int const type_C = 2;
+  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
+  r_algo.add_reaction(reaction.gamma, reaction.reactant_types,
+                      reaction.reactant_coefficients, reaction.product_types,
+                      reaction.product_coefficients);
 
   // exception if not enough particles
   BOOST_CHECK_THROW(r_algo.measure_excess_chemical_potential(0),
