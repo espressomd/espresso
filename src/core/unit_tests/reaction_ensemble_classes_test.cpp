@@ -33,11 +33,19 @@
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/range/adaptor/sliced.hpp>
+#include <boost/range/adaptor/strided.hpp>
+#include <boost/range/algorithm_ext/push_back.hpp>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <fstream>
+#include <iostream>
 #include <limits>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 /** Fixture to create particles during a test and remove them at the end. */
@@ -327,6 +335,69 @@ BOOST_AUTO_TEST_CASE(WangLandauReactionEnsemble_test) {
         BOOST_CHECK_CLOSE(val, -10., 5 * tol);
       }
     }
+  }
+
+  // check collective variables
+  {
+    using namespace boost::adaptors;
+    // setup input
+    auto const delta_CV = 0.5;
+    auto const filename_input = std::string("wl_input.dat");
+    auto const filename_output = std::string("wl_output.dat");
+    std::ofstream wl_file;
+    wl_file.open(filename_input);
+    wl_file << "# header 1.0  0.5\n";
+    wl_file << "0  1.0  4.0\n";
+    wl_file << "1\t2.0\t5.0\n";
+    wl_file.close();
+    r_algo.do_energy_reweighting = false;
+    // add collective variable
+    r_algo.add_new_CV_potential_energy(filename_input, delta_CV);
+    BOOST_REQUIRE_EQUAL(r_algo.collective_variables.size(), 1ul);
+    BOOST_REQUIRE_EQUAL(r_algo.min_boundaries_energies.size(), 2ul);
+    BOOST_REQUIRE_EQUAL(r_algo.max_boundaries_energies.size(), 2ul);
+    BOOST_CHECK_EQUAL(r_algo.do_energy_reweighting, true);
+    BOOST_CHECK_EQUAL(r_algo.collective_variables[0]->delta_CV, delta_CV);
+    BOOST_CHECK_EQUAL(r_algo.collective_variables[0]->CV_minimum, 1.);
+    BOOST_CHECK_EQUAL(r_algo.collective_variables[0]->CV_maximum, 5.);
+    BOOST_CHECK_CLOSE(r_algo.min_boundaries_energies[0], 1., tol);
+    BOOST_CHECK_CLOSE(r_algo.min_boundaries_energies[1], 2., tol);
+    BOOST_CHECK_CLOSE(r_algo.max_boundaries_energies[0], 4., tol);
+    BOOST_CHECK_CLOSE(r_algo.max_boundaries_energies[1], 5., tol);
+    // check Wang-Landau histogram
+    {
+      r_algo.write_wang_landau_results_to_file(filename_output);
+      std::ifstream outfile;
+      outfile.open(filename_output);
+      BOOST_TEST_REQUIRE(!outfile.fail(), "output file not generated");
+      std::istream_iterator<double> start(outfile), end;
+      std::vector<double> flat_array(start, end);
+      outfile.close();
+      BOOST_REQUIRE_EQUAL(flat_array.size(), 14ul);
+      std::vector<double> bin_edges;
+      std::vector<double> histogram;
+      boost::range::push_back(bin_edges, flat_array | strided(2));
+      boost::range::push_back(
+          histogram, flat_array | sliced(1, flat_array.size()) | strided(2));
+      std::vector<double> bin_edges_ref(7u, 0.);
+      std::vector<double> histogram_ref(7u, 0.);
+      std::generate(bin_edges_ref.begin(), bin_edges_ref.end(),
+                    [n = .5]() mutable { return n += .5; });
+      BOOST_TEST(bin_edges == bin_edges_ref, boost::test_tools::per_element());
+      BOOST_TEST(histogram == histogram_ref, boost::test_tools::per_element());
+    }
+    // add collective variable (with different energies in WL object)
+    r_algo.min_boundaries_energies.emplace_back(-1.);
+    r_algo.max_boundaries_energies.emplace_back(10.);
+    r_algo.add_new_CV_potential_energy(filename_input, delta_CV);
+    BOOST_REQUIRE_EQUAL(r_algo.collective_variables.size(), 2ul);
+    BOOST_REQUIRE_EQUAL(r_algo.min_boundaries_energies.size(), 5ul);
+    BOOST_REQUIRE_EQUAL(r_algo.max_boundaries_energies.size(), 5ul);
+    BOOST_CHECK_EQUAL(r_algo.collective_variables[1]->CV_minimum, -1.);
+    BOOST_CHECK_EQUAL(r_algo.collective_variables[1]->CV_maximum, 10.);
+    // exception if file doesn't exist
+    BOOST_CHECK_THROW(r_algo.add_new_CV_potential_energy("unknown", 0.),
+                      std::runtime_error);
   }
 }
 
