@@ -104,9 +104,17 @@ struct EnergyCollectiveVariable : public CollectiveVariable {
   load_CV_boundaries(WangLandauReactionEnsemble &m_current_wang_landau_system);
 };
 
+/** Measure the degree of association of a chemical species.
+ *  As an example, consider a polybasic acid A which can be protonated
+ *  into species AH and AH2. The degree of association of species A is
+ *  equal to n(A) / (n(A) + n(AH) + n(AH2)).
+ */
 struct DegreeOfAssociationCollectiveVariable : public CollectiveVariable {
+  /** List of all conjugated species */
   std::vector<int> corresponding_acid_types;
+  /** Reference species from which the degree of association is measured */
   int associated_type;
+  /** Calculate the degree of association of the reference species */
   double determine_current_state() const override {
     return calculate_degree_of_association();
   }
@@ -297,16 +305,13 @@ public:
   std::vector<double> min_boundaries_energies;
   std::vector<double> max_boundaries_energies;
 
-  std::vector<double>
-      minimum_energies_at_flat_index; // only present in energy preparation run
-  std::vector<double>
-      maximum_energies_at_flat_index; // only present in energy preparation run
+  // only present in energy preparation run
+  std::vector<double> minimum_energies_at_flat_index;
+  // only present in energy preparation run
+  std::vector<double> maximum_energies_at_flat_index;
 
-  int update_maximum_and_minimum_energies_at_current_state(); // use for
-                                                              // preliminary
-                                                              // energy
-                                                              // reweighting
-                                                              // runs
+  // use for preliminary energy reweighting runs
+  int update_maximum_and_minimum_energies_at_current_state();
   int do_reaction(int reaction_steps) override;
   void write_out_preliminary_energy_run_results(const std::string &filename);
 
@@ -336,13 +341,15 @@ private:
   int on_mc_use_WL_get_new_state() override;
 
   std::vector<int> histogram;
-  std::vector<double> wang_landau_potential; // equals the logarithm to basis e
-                                             // of the degeneracy of the states
+
+  // logarithm to basis e of the degeneracy of the states
+  std::vector<double> wang_landau_potential;
 
   std::vector<int> nr_subindices_of_collective_variable;
-  double wang_landau_parameter = 1.0; // equals the logarithm to basis e of the
-  // modification factor of the degeneracy of
+
+  // logarithm to basis e of the modification factor of the degeneracy of
   // states when the state is visited
+  double wang_landau_parameter = 1.0;
 
   int int_fill_value = -10;
   double double_fill_value = -10.0;
@@ -370,8 +377,11 @@ private:
   bool achieved_desired_number_of_refinements_one_over_t() const;
   void refine_wang_landau_parameter_one_over_t();
 
-  int initialize_wang_landau(); // has to be called (at least) after the last
-                                // collective variable is added
+  /**
+   * Initialize the current Wang-Landau system.
+   * Has to be called (at least) after the last collective variable is added.
+   */
+  int initialize_wang_landau();
   double calculate_delta_degree_of_association(
       DegreeOfAssociationCollectiveVariable &current_collective_variable);
   int get_num_needed_bins() const;

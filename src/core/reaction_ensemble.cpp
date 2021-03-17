@@ -56,17 +56,17 @@ void EnergyCollectiveVariable::load_CV_boundaries(
   m_current_wang_landau_system.do_energy_reweighting = true;
   // load energy boundaries from file
   std::ifstream infile;
-
-  infile.open(
-      energy_boundaries_filename); // file containing numbers in 3 columns
+  infile.open(energy_boundaries_filename);
   if (infile.fail())
     throw std::runtime_error("ERROR: energy boundaries file for the specific "
                              "system could not be read.\n");
 
   // Note that you cannot change the other collective variables in the
   // pre-production run and the production run
-  // Note: the number of collective variables is unknown, therefore we cannot
-  // read in the file in an easier way
+
+  // The data is formatted as space-separated floaing point values
+  // (the first line is a header). The min and max energies are stored in
+  // the last two columns. The first N columns are the collective variables.
   std::string line = "";
   std::getline(infile, line); // dummy read to throw away header
   while (std::getline(infile, line)) {
@@ -363,10 +363,9 @@ void WangLandauReactionEnsemble::on_reaction_entry(int &old_state_index) {
 
 void WangLandauReactionEnsemble::on_reaction_rejection_directly_after_entry(
     int &old_state_index) {
-  update_wang_landau_potential_and_histogram(
-      old_state_index); // increase the Wang-Landau potential and histogram at
-                        // the current nbar (this case covers the cases nbar=0
-                        // or nbar=1)
+  // increase the Wang-Landau potential and histogram at the current nbar
+  // (this case covers the cases nbar=0 or nbar=1)
+  update_wang_landau_potential_and_histogram(old_state_index);
 }
 
 void WangLandauReactionEnsemble::on_attempted_reaction(int &new_state_index) {
@@ -609,8 +608,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   }
   Utils::Vector3d pos_vec;
 
-  // create random velocity vector according to Maxwell Boltzmann distribution
-  // for components
+  // create random velocity vector according to Maxwell-Boltzmann distribution
   double vel[3];
   // we use mass=1 for all particles, think about adapting this
   vel[0] = std::sqrt(temperature) * m_normal_distribution(m_generator);
@@ -664,7 +662,7 @@ int WangLandauReactionEnsemble::on_mc_use_WL_get_new_state() {
 }
 
 /**
- * Performs a global mc move for a particle of the provided type.
+ * Performs a global MC move for a particle of the provided type.
  */
 bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     int type, int particle_number_of_type_to_be_changed, bool use_wang_landau) {
@@ -950,18 +948,15 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
   return delta;
 }
 
-/**
- * Initializes the Wang-Landau histogram.
- */
 int WangLandauReactionEnsemble::get_num_needed_bins() const {
   int needed_bins = 1;
+  // add 1 for degrees of association-related part of histogram (think of only
+  // one acid particle)
   for (const auto &current_collective_variable : collective_variables) {
     needed_bins = needed_bins * (int((current_collective_variable->CV_maximum -
                                       current_collective_variable->CV_minimum) /
                                      current_collective_variable->delta_CV) +
-                                 1); // plus 1 needed for degrees of association
-                                     // related part of histogram (think of only
-                                     // one acid particle)
+                                 1);
   }
   return needed_bins;
 }
@@ -1010,29 +1005,23 @@ void WangLandauReactionEnsemble::invalidate_bins() {
       static_cast<int>(wang_landau_potential.size()) - empty_bins_in_memory;
 }
 
-/**
- * Initializes the current Wang-Landau system.
- */
 int WangLandauReactionEnsemble::initialize_wang_landau() {
 
   nr_subindices_of_collective_variable.resize(collective_variables.size(), 0);
   auto const new_CV_i = collective_variables.size() - 1;
+  // add 1 for collective variables which are of type degree of association
   nr_subindices_of_collective_variable[new_CV_i] =
       int((collective_variables[new_CV_i]->CV_maximum -
            collective_variables[new_CV_i]->CV_minimum) /
           collective_variables[new_CV_i]->delta_CV) +
-      1; //+1 for collective variables which are of type degree of association
+      1;
 
-  // construct (possibly higher dimensional) histogram over gamma (the room
-  // which should be equally sampled when the Wang-Landau algorithm has
-  // converged)
+  // construct (possibly higher dimensional) histogram and potential over
+  // gamma (the space which should be equally sampled when the Wang-Landau
+  // algorithm has converged)
   int needed_bins = get_num_needed_bins();
-  histogram.resize(needed_bins, 0); // initialize new values with 0
-
-  // construct (possibly higher dimensional) wang_landau potential over gamma
-  // (the room which should be equally sampled when the Wang-Landau algorithm
-  // has converged)
-  wang_landau_potential.resize(needed_bins, 0); // initialize new values with 0
+  histogram.resize(needed_bins, 0);
+  wang_landau_potential.resize(needed_bins, 0);
 
   used_bins = needed_bins; // initialize for 1/t wang_landau algorithm
 
@@ -1593,14 +1582,12 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
       exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
   current_reaction.accumulator_exponentials(exponential);
 
+  // calculate mean excess chemical potential and standard error of the mean
   std::pair<double, double> result = std::make_pair(
       -temperature * log(current_reaction.accumulator_exponentials.mean()[0]),
       std::abs(-temperature /
                current_reaction.accumulator_exponentials.mean()[0] *
-               current_reaction.accumulator_exponentials
-                   .std_error()[0])); // excess chemical potential; error
-                                      // excess chemical potential,
-                                      // determined via error propagation
+               current_reaction.accumulator_exponentials.std_error()[0]));
   return result;
 }
 
