@@ -23,6 +23,7 @@
 #include "energy.hpp"
 #include "grid.hpp"
 #include "partCfg_global.hpp"
+#include "particle_data.hpp"
 #include "statistics.hpp"
 
 #include <utils/Vector.hpp>
@@ -30,12 +31,18 @@
 #include <utils/contains.hpp>
 #include <utils/index.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iterator>
 #include <limits>
+#include <map>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace ReactionEnsemble {
