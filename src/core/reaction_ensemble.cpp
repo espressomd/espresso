@@ -95,7 +95,7 @@ void EnergyCollectiveVariable::load_CV_boundaries(
  */
 int ReactionAlgorithm::do_reaction(int reaction_steps) {
   for (int i = 0; i < reaction_steps; i++) {
-    int reaction_id = i_random(reactions.size());
+    int reaction_id = i_random(static_cast<int>(reactions.size()));
     generic_oneway_reaction(reaction_id);
   }
   return 0;
@@ -274,8 +274,8 @@ void ReactionAlgorithm::make_reaction_attempt(
     }
   }
   // create or hide particles of types with noncorresponding replacement types
-  for (int i = std::min(current_reaction.product_types.size(),
-                        current_reaction.reactant_types.size());
+  for (auto i = std::min(current_reaction.product_types.size(),
+                         current_reaction.reactant_types.size());
        i < std::max(current_reaction.product_types.size(),
                     current_reaction.reactant_types.size());
        i++) {
@@ -462,13 +462,11 @@ void ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     std::vector<int> to_be_deleted_hidden_types(
         len_hidden_particles_properties);
     for (int i = 0; i < len_hidden_particles_properties; i++) {
-      auto p_id = static_cast<int>(hidden_particles_properties[i].p_id);
+      auto p_id = hidden_particles_properties[i].p_id;
       to_be_deleted_hidden_ids[i] = p_id;
       to_be_deleted_hidden_types[i] = hidden_particles_properties[i].type;
-      set_particle_type(p_id,
-                        hidden_particles_properties[i]
-                            .type); // change back type otherwise the
-      // bookkeeping algorithm is not working
+      // change back type otherwise the bookkeeping algorithm is not working
+      set_particle_type(p_id, hidden_particles_properties[i].type);
     }
 
     for (int i = 0; i < len_hidden_particles_properties; i++) {
@@ -830,15 +828,10 @@ int WangLandauReactionEnsemble::get_flattened_index_wang_landau(
     std::vector<double> const &collective_variables_maximum_values,
     std::vector<double> const &delta_collective_variables_values,
     int nr_collective_variables) {
-  int index = -10; // negative number is not allowed as index and therefore
-                   // indicates error
-  std::vector<int> individual_indices(nr_collective_variables); // pre result
-  // individual_indices.resize(nr_collective_variables,-1); //initialize
-  // individual_indices to -1
 
-  // check for the current state to be an allowed state in the [range
-  // collective_variables_minimum_values:collective_variables_maximum_values],
-  // else return a negative index
+  // check for the current state to be an allowed state in the range
+  // [collective_variables_minimum_values:collective_variables_maximum_values],
+  // else return a negative index (to indicate error)
   for (int CV_i = 0; CV_i < nr_collective_variables; CV_i++) {
     if (current_state[CV_i] >
             collective_variables_maximum_values[CV_i] +
@@ -850,26 +843,28 @@ int WangLandauReactionEnsemble::get_flattened_index_wang_landau(
     }
   }
 
+  std::vector<int> individual_indices(nr_collective_variables);
   for (int CV_i = 0; CV_i < nr_collective_variables; CV_i++) {
-    if (CV_i == collective_variables.size() - 1 &&
-        do_energy_reweighting) // for energy collective variable (simple
-                               // truncating conversion desired)
-      individual_indices[CV_i] = static_cast<int>(
-          (current_state[CV_i] - collective_variables_minimum_values[CV_i]) /
-          delta_collective_variables_values[CV_i]);
-    else // for degree of association collective variables (rounding conversion
-         // desired)
-      individual_indices[CV_i] = std::lround(
-          (current_state[CV_i] - collective_variables_minimum_values[CV_i]) /
-          delta_collective_variables_values[CV_i]);
-    if (individual_indices[CV_i] < 0 or
-        individual_indices[CV_i] >=
-            nr_subindices_of_collective_variable[CV_i]) { // sanity check
+    auto const value =
+        (current_state[CV_i] - collective_variables_minimum_values[CV_i]) /
+        delta_collective_variables_values[CV_i];
+    int rounded_value;
+    if (CV_i == collective_variables.size() - 1 && do_energy_reweighting) {
+      // for energy collective variable (simple truncating conversion desired)
+      rounded_value = static_cast<int>(value);
+    } else {
+      // for degree of association collective variables (rounding conversion)
+      rounded_value = static_cast<int>(std::floor(value));
+    }
+    if (rounded_value < 0 or
+        rounded_value >= nr_subindices_of_collective_variable[CV_i]) {
       return -10;
     }
+    individual_indices[CV_i] = rounded_value;
   }
   // get flattened index from individual_indices
-  index = 0; // this is already part of the algorithm to find the correct index
+  int index = 0;
+  // this is already part of the algorithm to find the correct index
   for (int CV_i = 0; CV_i < nr_collective_variables; CV_i++) {
     int factor = 1;
     for (int j = CV_i + 1; j < nr_collective_variables; j++) {
@@ -886,7 +881,8 @@ int WangLandauReactionEnsemble::get_flattened_index_wang_landau(
  */
 int WangLandauReactionEnsemble::
     get_flattened_index_wang_landau_of_current_state() {
-  int nr_collective_variables = collective_variables.size();
+  auto const nr_collective_variables =
+      static_cast<int>(collective_variables.size());
   // get current state
   std::vector<double> current_state(nr_collective_variables);
   for (int CV_i = 0; CV_i < nr_collective_variables; CV_i++)
@@ -976,28 +972,28 @@ void WangLandauReactionEnsemble::invalidate_bins() {
   // prohibit them
 
   int empty_bins_in_memory = 0;
-  for (int flattened_index = 0; flattened_index < wang_landau_potential.size();
-       flattened_index++) {
-    std::vector<int> unraveled_index(
+  for (std::size_t flattened_index = 0;
+       flattened_index < wang_landau_potential.size(); flattened_index++) {
+    std::vector<std::size_t> unraveled_index(
         nr_subindices_of_collective_variable.size());
     Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
                          nr_subindices_of_collective_variable.end(),
                          unraveled_index.begin(), flattened_index);
     // use unraveled index
     int EnergyCollectiveVariable_index = 0;
-    if (collective_variables.size() > 1)
+    if (collective_variables.size() > 1) {
+      // assume the energy collective variable to be the last added
+      // collective variable
       EnergyCollectiveVariable_index =
-          static_cast<int>(collective_variables.size()) -
-          1; // assume the energy collective
-             // variable to be the last added
-             // collective variable
+          static_cast<int>(collective_variables.size()) - 1;
+    }
     double current_energy =
-        unraveled_index[EnergyCollectiveVariable_index] *
+        static_cast<double>(unraveled_index[EnergyCollectiveVariable_index]) *
             collective_variables[EnergyCollectiveVariable_index]->delta_CV +
         collective_variables[EnergyCollectiveVariable_index]->CV_minimum;
     int flat_index_without_energy_CV =
         get_flattened_index_wang_landau_without_energy_collective_variable(
-            flattened_index, EnergyCollectiveVariable_index);
+            static_cast<int>(flattened_index), EnergyCollectiveVariable_index);
     std::shared_ptr<CollectiveVariable> energy_CV =
         collective_variables[EnergyCollectiveVariable_index];
     if (current_energy >
@@ -1118,7 +1114,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
 int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
   m_WL_tries += reaction_steps;
   for (int step = 0; step < reaction_steps; step++) {
-    int reaction_id = i_random(reactions.size());
+    int reaction_id = i_random(static_cast<int>(reactions.size()));
     generic_oneway_reaction(reaction_id);
     if (can_refine_wang_landau_one_over_t() && m_WL_tries % 10000 == 0) {
       // check for convergence
@@ -1202,8 +1198,8 @@ void WangLandauReactionEnsemble::reset_histogram() {
  *Refine the Wang-Landau parameter using the 1/t rule.
  */
 void WangLandauReactionEnsemble::refine_wang_landau_parameter_one_over_t() {
-  double monte_carlo_time =
-      static_cast<double>(monte_carlo_trial_moves) / used_bins;
+  double monte_carlo_time = static_cast<double>(monte_carlo_trial_moves) /
+                            static_cast<double>(used_bins);
   if (wang_landau_parameter / 2.0 <= 1.0 / monte_carlo_time ||
       m_system_is_in_1_over_t_regime) {
     wang_landau_parameter = 1.0 / monte_carlo_time;
@@ -1240,27 +1236,28 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
   if (pFile == nullptr) {
     throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
   }
-  for (int flattened_index = 0; flattened_index < wang_landau_potential.size();
-       flattened_index++) {
+  for (std::size_t flattened_index = 0;
+       flattened_index < wang_landau_potential.size(); flattened_index++) {
     // unravel index
     if (std::abs(wang_landau_potential[flattened_index] - double_fill_value) >
-        1) { // only output data if they are not equal to
-             // double_fill_value. This if ensures
-             // that for the energy observable not allowed energies (energies
-             // in the interval [global_E_min, global_E_max]) in the
-             // multidimensional Wang-Landau potential are printed out, since
-             // the range [E_min(nbar), E_max(nbar)] for each nbar may be a
-             // different one
-      std::vector<int> unraveled_index(
+        1) {
+      // only output data if they are not equal to double_fill_value.
+      // This ensures that for the energy observable not allowed energies
+      // (energies in the interval [global_E_min, global_E_max]) in the
+      // multidimensional Wang-Landau potential are printed out, since
+      // the range [E_min(nbar), E_max(nbar)] for each nbar may be a
+      // different one
+      std::vector<std::size_t> unraveled_index(
           nr_subindices_of_collective_variable.size());
       Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
                            nr_subindices_of_collective_variable.end(),
                            unraveled_index.begin(), flattened_index);
       // use unraveled index
-      for (int i = 0; i < collective_variables.size(); i++) {
-        fprintf(pFile, "%f ",
-                unraveled_index[i] * collective_variables[i]->delta_CV +
-                    collective_variables[i]->CV_minimum);
+      for (std::size_t i = 0; i < collective_variables.size(); i++) {
+        auto const value = static_cast<double>(unraveled_index[i]) *
+                               collective_variables[i]->delta_CV +
+                           collective_variables[i]->CV_minimum;
+        fprintf(pFile, "%f ", value);
       }
       fprintf(pFile, "%f \n", wang_landau_potential[flattened_index]);
     }
@@ -1314,19 +1311,20 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
   }
   fprintf(pFile, "#nbar E_min E_max\n");
 
-  for (int flattened_index = 0; flattened_index < wang_landau_potential.size();
-       flattened_index++) {
+  for (std::size_t flattened_index = 0;
+       flattened_index < wang_landau_potential.size(); flattened_index++) {
     // unravel index
-    std::vector<int> unraveled_index(
+    std::vector<std::size_t> unraveled_index(
         nr_subindices_of_collective_variable.size());
     Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
                          nr_subindices_of_collective_variable.end(),
                          unraveled_index.begin(), flattened_index);
     // use unraveled index
-    for (int i = 0; i < collective_variables.size(); i++) {
-      fprintf(pFile, "%f ",
-              unraveled_index[i] * collective_variables[i]->delta_CV +
-                  collective_variables[i]->CV_minimum);
+    for (std::size_t i = 0; i < collective_variables.size(); i++) {
+      auto const value = static_cast<double>(unraveled_index[i]) *
+                             collective_variables[i]->delta_CV +
+                         collective_variables[i]->CV_minimum;
+      fprintf(pFile, "%f ", value);
     }
     fprintf(pFile, "%f %f \n", minimum_energies_at_flat_index[flattened_index],
             maximum_energies_at_flat_index[flattened_index]);
@@ -1343,18 +1341,20 @@ int WangLandauReactionEnsemble::
     get_flattened_index_wang_landau_without_energy_collective_variable(
         int flattened_index_with_EnergyCollectiveVariable,
         int CV_index_energy_observable) {
-  std::vector<int> unraveled_index(nr_subindices_of_collective_variable.size());
-  Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
-                       nr_subindices_of_collective_variable.end(),
-                       unraveled_index.begin(),
-                       flattened_index_with_EnergyCollectiveVariable);
-  // use unraveled index
-  const int nr_collective_variables =
-      static_cast<int>(collective_variables.size()) -
-      1; // forget the last collective variable (the energy collective variable)
+  std::vector<std::size_t> unraveled_index(
+      nr_subindices_of_collective_variable.size());
+  Utils::unravel_index(
+      nr_subindices_of_collective_variable.begin(),
+      nr_subindices_of_collective_variable.end(), unraveled_index.begin(),
+      static_cast<std::size_t>(flattened_index_with_EnergyCollectiveVariable));
+  // use unraveled index, but skip last collective variable
+  // (the energy collective variable)
+  auto const nr_collective_variables =
+      static_cast<int>(collective_variables.size()) - 1;
   std::vector<double> current_state(nr_collective_variables);
   for (int i = 0; i < nr_collective_variables; i++) {
-    current_state[i] = unraveled_index[i] * collective_variables[i]->delta_CV +
+    current_state[i] = static_cast<double>(unraveled_index[i]) *
+                           collective_variables[i]->delta_CV +
                        collective_variables[i]->CV_minimum;
   }
 
@@ -1534,8 +1534,9 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
       }
     }
     // randomly select a reaction to be performed
-    int reaction_id = list_of_reaction_ids_with_given_reactant_type[i_random(
-        list_of_reaction_ids_with_given_reactant_type.size())];
+    int reaction_id =
+        list_of_reaction_ids_with_given_reactant_type[i_random(static_cast<int>(
+            list_of_reaction_ids_with_given_reactant_type.size()))];
     generic_oneway_reaction(reaction_id);
   }
   return 0;

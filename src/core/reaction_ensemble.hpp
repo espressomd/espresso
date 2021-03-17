@@ -132,8 +132,7 @@ private:
     int num_of_associated_acid = number_of_particles_with_type(associated_type);
     double degree_of_association =
         static_cast<double>(num_of_associated_acid) /
-        total_number_of_corresponding_acid; // cast to double because otherwise
-                                            // any fractional part is lost
+        static_cast<double>(total_number_of_corresponding_acid);
     return degree_of_association;
   }
 };
@@ -451,7 +450,8 @@ double average_list_of_allowed_entries(const std::vector<T> &rng) {
     }
   }
   if (counter_allowed_entries) {
-    return static_cast<double>(result) / counter_allowed_entries;
+    return static_cast<double>(result) /
+           static_cast<double>(counter_allowed_entries);
   }
   return 0.0;
 }
