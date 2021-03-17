@@ -75,7 +75,7 @@ void calc_long_range_force(const ParticleRange &particles);
 
 double calc_energy_long_range(const ParticleRange &particles);
 
-int iccp3m_sanity_check();
+int icc_sanity_check();
 
 int elc_sanity_check();
 
