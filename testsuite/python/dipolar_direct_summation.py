@@ -198,7 +198,9 @@ class dds(ut.TestCase):
             force_tol=1E-4,
             torque_tol=1E-4)
 
-    @utx.skipIfMissingFeatures("SCAFACOS_DIPOLES")
+    @ut.skipIf(not espressomd.has_features("SCAFACOS_DIPOLES") or
+               "direct" not in espressomd.scafacos.available_methods(),
+               "Skipping test: missing SCAFACOS_DIPOLES or 'direct' method")
     def test_dds_scafacos(self):
         self.check_open_bc(
             self.fcs_data,

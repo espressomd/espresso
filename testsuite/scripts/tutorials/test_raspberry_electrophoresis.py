@@ -18,29 +18,29 @@
 import unittest as ut
 import importlib_wrapper
 import numpy as np
+np.random.seed(42)
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/raspberry_electrophoresis/raspberry_electrophoresis.py",
-    gpu=True, box_l=20., E=0.25, num_iterations=200, num_steps_per_iteration=250)
+    gpu=True, box_l=20., num_iterations=20, num_steps_per_iteration=20)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
+    '''Check the raspberry travels a longer distance on the x-axis'''
     system = tutorial.system
 
     def test_trajectory_sample(self):
         trajectory = np.loadtxt('posVsTime_sample.dat')[:, 1:4]
-        # the raspberry should have traveled mostly on the x-axis
-        dist = np.abs(trajectory[-1, :] - trajectory[0, :])
-        self.assertGreater(dist[0], dist[1])
-        self.assertGreater(dist[0], dist[2])
+        x, y, z = np.abs(trajectory[-1, :] - trajectory[0, :])
+        self.assertGreater(x, y)
+        self.assertGreater(x, z)
 
     def test_trajectory_simulated(self):
         trajectory = np.loadtxt('posVsTime.dat')[:, 1:4]
-        # the raspberry should have traveled mostly on the x-axis,
-        # but due to insufficient sampling, it's not always the case
-        dist = np.abs(trajectory[-1, :] - trajectory[0, :])
-        self.assertGreater(dist[0], np.min(dist[1:]))
+        x, y, z = np.abs(trajectory[-1, :] - trajectory[0, :])
+        self.assertGreater(x, y)
+        self.assertGreater(x, z)
 
 
 if __name__ == "__main__":
