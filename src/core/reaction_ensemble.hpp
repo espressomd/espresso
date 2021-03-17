@@ -252,7 +252,6 @@ private:
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);
 
-  void add_types_to_index(std::vector<int> &type_list);
   Utils::Vector3d get_random_position_in_box();
 };
 
