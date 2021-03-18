@@ -22,18 +22,17 @@ import numpy as np
 import unittest as ut
 
 import espressomd
-from espressomd.interactions import HarmonicBond
-from espressomd import reaction_ensemble
+import espressomd.interactions
+import espressomd.reaction_ensemble
 
 
-class ReactionEnsembleTest(ut.TestCase):
+class WangLandauReactionEnsembleTest(ut.TestCase):
 
-    """Test the core implementation of the wang_landau reaction ensemble.
+    """Test the core implementation of the Wang-Landau reaction ensemble.
 
-    Create a harmonic bond between the two reacting particles. Therefore the
-    potential energy is quadratic in the elongation of the bond and
-    therefore the density of states is known as the one of the harmonic
-    oscillator
+    Create a harmonic bond between the two reacting particles. Therefore
+    the potential energy is quadratic in the elongation of the bond and
+    the density of states is known as the one of the harmonic oscillator.
     """
 
     # System parameters
@@ -53,18 +52,17 @@ class ReactionEnsembleTest(ut.TestCase):
     # Setup System
     #
 
-    N0 = 1  # number of titratable units
     K_diss = 0.0088
 
-    system.part.add(id=0, pos=[0, 0, 0] * system.box_l, type=3)
-    system.part.add(id=1, pos=[1.0, 1.0, 1.0] * system.box_l / 2.0, type=1)
-    system.part.add(id=2, pos=np.random.random() * system.box_l, type=2)
-    system.part.add(id=3, pos=np.random.random() * system.box_l, type=2)
+    system.part.add(id=0, type=3, pos=[0, 0, 0] * system.box_l)
+    system.part.add(id=1, type=1, pos=[1.0, 1.0, 1.0] * system.box_l / 2.0)
+    system.part.add(id=2, type=2, pos=np.random.random() * system.box_l)
+    system.part.add(id=3, type=2, pos=np.random.random() * system.box_l)
 
-    h = HarmonicBond(r_0=0, k=1)
+    h = espressomd.interactions.HarmonicBond(r_0=0, k=1)
     system.bonded_inter[0] = h
     system.part[0].add_bond((h, 1))
-    WLRE = reaction_ensemble.WangLandauReactionEnsemble(
+    WLRE = espressomd.reaction_ensemble.WangLandauReactionEnsemble(
         temperature=temperature, exclusion_radius=0, seed=86)
     WLRE.add_reaction(
         gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
@@ -106,7 +104,7 @@ class ReactionEnsembleTest(ut.TestCase):
                 self.WLRE.reaction()
                 for _ in range(2):
                     self.WLRE.displacement_mc_move_for_particles_of_type(3)
-            except reaction_ensemble.WangLandauHasConverged:
+            except espressomd.reaction_ensemble.WangLandauHasConverged:
                 break
 
         nbars, Epots, WL_potentials = np.loadtxt(self.file_output, unpack=True)

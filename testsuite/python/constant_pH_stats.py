@@ -17,17 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Testmodule for the Reaction Ensemble.
-"""
 import unittest as ut
 import numpy as np
 import espressomd
-from espressomd import reaction_ensemble
+import espressomd.reaction_ensemble
 
 
 class ReactionEnsembleTest(ut.TestCase):
 
-    """Test the core implementation of the reaction ensemble."""
+    """Test the core implementation of the constant pH reaction ensemble."""
 
     N0 = 40
     c0 = 0.00028
@@ -35,7 +33,6 @@ class ReactionEnsembleTest(ut.TestCase):
     type_A = 1
     type_H = 5
     temperature = 1.0
-    # avoid extreme regions in the titration curve e.g. via the choice
     # choose target alpha not too far from 0.5 to get good statistics in a
     # small number of steps
     pKa_minus_pH = -0.2
@@ -47,7 +44,7 @@ class ReactionEnsembleTest(ut.TestCase):
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     system.time_step = 0.01
-    RE = reaction_ensemble.ConstantpHEnsemble(
+    RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
         temperature=1.0, exclusion_radius=1, seed=44)
 
     @classmethod
