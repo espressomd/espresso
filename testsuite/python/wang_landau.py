@@ -28,12 +28,7 @@ import espressomd.reaction_ensemble
 
 class WangLandauReactionEnsembleTest(ut.TestCase):
 
-    """Test the core implementation of the Wang-Landau reaction ensemble.
-
-    Create a harmonic bond between the two reacting particles. Therefore
-    the potential energy is quadratic in the elongation of the bond and
-    the density of states is known as the one of the harmonic oscillator.
-    """
+    """Test the interface of the Wang-Landau reaction ensemble."""
 
     # System parameters
     #
@@ -70,8 +65,8 @@ class WangLandauReactionEnsembleTest(ut.TestCase):
         default_charges={0: 0, 1: -1, 2: +1})
     system.setup_type_map([0, 1, 2, 3])
     # initialize wang_landau
-    file_input = "energy_boundaries_stats.dat"
-    file_output = "WL_potential_out_stats.dat"
+    file_input = "energy_boundaries.dat"
+    file_output = "WL_potential_out.dat"
     # generate preliminary_energy_run_results here, this should be done in a
     # separate simulation without energy reweighting using the update energy
     # functions
@@ -85,12 +80,39 @@ class WangLandauReactionEnsembleTest(ut.TestCase):
         do_not_sample_reaction_partition_function=True,
         full_path_to_output_filename=file_output)
 
-    def test_potential_and_heat_capacity(self):
+    def test_01_energy_recording(self):
+        self.WLRE.update_maximum_and_minimum_energies_at_current_state()
+        self.WLRE.write_out_preliminary_energy_run_results()
+        nbars, E_mins, E_maxs = np.loadtxt(
+            "preliminary_energy_run_results", unpack=True)
+        np.testing.assert_almost_equal(nbars, [0, 1])
+        np.testing.assert_almost_equal(E_mins, [27.0, -10])
+        np.testing.assert_almost_equal(E_maxs, [27.0, -10])
+
+    def check_checkpoint(self, filename):
+        # write first checkpoint
+        self.WLRE.write_wang_landau_checkpoint()
+        old_checkpoint = np.loadtxt(filename)
+
+        # modify old_checkpoint in memory and in file (this destroys the
+        # information contained in the checkpoint, but allows for testing of
+        # the functions)
+        modified_checkpoint = old_checkpoint
+        modified_checkpoint[0] = 1
+        np.savetxt(filename, modified_checkpoint)
+
+        # check whether changes are carried out correctly
+        self.WLRE.load_wang_landau_checkpoint()
+        self.WLRE.write_wang_landau_checkpoint()
+        new_checkpoint = np.loadtxt(filename)
+        np.testing.assert_almost_equal(new_checkpoint, modified_checkpoint)
+
+    def test_02_checkpointing(self):
         self.WLRE.add_collective_variable_potential_energy(
             filename=self.file_input, delta=0.05)
 
-        # run MC until convergence
-        while True:
+        # run MC for long enough to sample a non-trivial histogram
+        for _ in range(1000):
             try:
                 self.WLRE.reaction()
                 for _ in range(2):
@@ -98,29 +120,10 @@ class WangLandauReactionEnsembleTest(ut.TestCase):
             except espressomd.reaction_ensemble.WangLandauHasConverged:
                 break
 
-        nbars, Epots, WL_potentials = np.loadtxt(self.file_output, unpack=True)
-        mask_nbar_0 = np.where(np.abs(nbars - 1.0) < 0.0001)
-        Epots = Epots[mask_nbar_0][1:]
-        WL_potentials = WL_potentials[mask_nbar_0][1:]
-
-        def calc_from_partition_function(quantity):
-            probability = np.exp(WL_potentials - Epots / self.temperature)
-            return np.sum(quantity * probability) / np.sum(probability)
-
-        # calculate the canonical potential energy
-        pot_energy = calc_from_partition_function(Epots)
-        # calculate the canonical configurational heat capacity
-        pot_energy_sq = calc_from_partition_function(Epots**2)
-        heat_capacity = pot_energy_sq - pot_energy**2
-
-        # for the calculation regarding the analytical results which are
-        # compared here, see Master Thesis Jonas Landsgesell p. 72
-        self.assertAlmostEqual(
-            pot_energy, 1.5, places=1,
-            msg="difference to analytical expected canonical potential energy too big")
-        self.assertAlmostEqual(
-            heat_capacity, 1.5, places=1,
-            msg="difference to analytical expected canonical configurational heat capacity too big")
+        filenames = ["checkpoint_wang_landau_potential_checkpoint",
+                     "checkpoint_wang_landau_histogram_checkpoint"]
+        for filename in filenames:
+            self.check_checkpoint(filename)
 
 
 if __name__ == "__main__":
