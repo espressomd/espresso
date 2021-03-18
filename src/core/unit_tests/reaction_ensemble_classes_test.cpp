@@ -421,15 +421,6 @@ BOOST_AUTO_TEST_CASE(WangLandauReactionEnsemble_test) {
       BOOST_TEST(bin_edges == bin_edges_ref, boost::test_tools::per_element());
       BOOST_TEST(histogram == histogram_ref, boost::test_tools::per_element());
     }
-    // add collective variable (with different energies in WL object)
-    r_algo.min_boundaries_energies.emplace_back(-1.);
-    r_algo.max_boundaries_energies.emplace_back(10.);
-    r_algo.add_new_CV_potential_energy(filename_input, delta_CV);
-    BOOST_REQUIRE_EQUAL(r_algo.collective_variables.size(), 2ul);
-    BOOST_REQUIRE_EQUAL(r_algo.min_boundaries_energies.size(), 5ul);
-    BOOST_REQUIRE_EQUAL(r_algo.max_boundaries_energies.size(), 5ul);
-    BOOST_CHECK_EQUAL(r_algo.collective_variables[1]->CV_minimum, -1.);
-    BOOST_CHECK_EQUAL(r_algo.collective_variables[1]->CV_maximum, 10.);
     // exception if file doesn't exist
     BOOST_CHECK_THROW(r_algo.add_new_CV_potential_energy("unknown", 0.),
                       std::runtime_error);
