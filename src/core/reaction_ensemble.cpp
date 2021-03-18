@@ -31,6 +31,8 @@
 #include <utils/contains.hpp>
 #include <utils/index.hpp>
 
+#include <boost/range/algorithm.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -51,9 +53,9 @@ namespace ReactionEnsemble {
  *  variables under min_boundaries_energies, max_boundaries_energies
  */
 void EnergyCollectiveVariable::load_CV_boundaries(
-    WangLandauReactionEnsemble &m_current_wang_landau_system) {
+    WangLandauReactionEnsemble &wl_system) {
 
-  m_current_wang_landau_system.do_energy_reweighting = true;
+  wl_system.do_energy_reweighting = true;
   // load energy boundaries from file
   std::ifstream infile;
   infile.open(energy_boundaries_filename);
@@ -76,18 +78,14 @@ void EnergyCollectiveVariable::load_CV_boundaries(
     while (iss >> value) {
       values.push_back(value);
     }
-    m_current_wang_landau_system.min_boundaries_energies.push_back(
-        values[values.size() - 2]);
-    m_current_wang_landau_system.max_boundaries_energies.push_back(
-        values[values.size() - 1]);
+    assert(values.size() >= 2);
+    auto it = values.end();
+    wl_system.max_boundaries_energies.push_back(*(--it));
+    wl_system.min_boundaries_energies.push_back(*(--it));
   }
 
-  CV_minimum = *(std::min_element(
-      m_current_wang_landau_system.min_boundaries_energies.begin(),
-      m_current_wang_landau_system.min_boundaries_energies.end()));
-  CV_maximum = *(std::max_element(
-      m_current_wang_landau_system.max_boundaries_energies.begin(),
-      m_current_wang_landau_system.max_boundaries_energies.end()));
+  CV_minimum = *boost::range::min_element(wl_system.min_boundaries_energies);
+  CV_maximum = *boost::range::max_element(wl_system.max_boundaries_energies);
 }
 
 /**
@@ -105,12 +103,12 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
  * Adds a reaction to the reaction system
  */
 void ReactionAlgorithm::add_reaction(
-    double gamma, const std::vector<int> &_reactant_types,
-    const std::vector<int> &_reactant_coefficients,
-    const std::vector<int> &_product_types,
-    const std::vector<int> &_product_coefficients) {
-  SingleReaction new_reaction(gamma, _reactant_types, _reactant_coefficients,
-                              _product_types, _product_coefficients);
+    double gamma, const std::vector<int> &reactant_types,
+    const std::vector<int> &reactant_coefficients,
+    const std::vector<int> &product_types,
+    const std::vector<int> &product_coefficients) {
+  SingleReaction new_reaction(gamma, reactant_types, reactant_coefficients,
+                              product_types, product_coefficients);
 
   // make ESPResSo count the particle numbers which take part in the reactions
   for (int reactant_type : new_reaction.reactant_types)
@@ -810,10 +808,8 @@ void WangLandauReactionEnsemble::add_new_CV_potential_energy(
       std::make_shared<EnergyCollectiveVariable>();
   new_collective_variable->energy_boundaries_filename = filename;
   new_collective_variable->delta_CV = delta_CV;
-  collective_variables.push_back(new_collective_variable);
   new_collective_variable->load_CV_boundaries(*this);
-  collective_variables[collective_variables.size() - 1] =
-      new_collective_variable;
+  collective_variables.emplace_back(new_collective_variable);
   initialize_wang_landau();
 }
 
@@ -948,15 +944,13 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
   return delta;
 }
 
-int WangLandauReactionEnsemble::get_num_needed_bins() const {
-  int needed_bins = 1;
+long WangLandauReactionEnsemble::get_num_needed_bins() const {
+  long needed_bins = 1;
   // add 1 for degrees of association-related part of histogram (think of only
   // one acid particle)
-  for (const auto &current_collective_variable : collective_variables) {
-    needed_bins = needed_bins * (int((current_collective_variable->CV_maximum -
-                                      current_collective_variable->CV_minimum) /
-                                     current_collective_variable->delta_CV) +
-                                 1);
+  for (const auto &cv : collective_variables) {
+    needed_bins *=
+        static_cast<long>((cv->CV_maximum - cv->CV_minimum) / cv->delta_CV) + 1;
   }
   return needed_bins;
 }
@@ -966,7 +960,7 @@ void WangLandauReactionEnsemble::invalidate_bins() {
   // allowed at the given degree of association, because the energy boundaries
   // prohibit them
 
-  int empty_bins_in_memory = 0;
+  long empty_bins_in_memory = 0;
   for (std::size_t flattened_index = 0;
        flattened_index < wang_landau_potential.size(); flattened_index++) {
     std::vector<std::size_t> unraveled_index(
@@ -997,29 +991,26 @@ void WangLandauReactionEnsemble::invalidate_bins() {
                              energy_CV->delta_CV) {
       histogram[flattened_index] = int_fill_value;
       wang_landau_potential[flattened_index] = double_fill_value;
-      empty_bins_in_memory += 1;
+      empty_bins_in_memory++;
     }
   }
 
   used_bins =
-      static_cast<int>(wang_landau_potential.size()) - empty_bins_in_memory;
+      static_cast<long>(wang_landau_potential.size()) - empty_bins_in_memory;
 }
 
 int WangLandauReactionEnsemble::initialize_wang_landau() {
 
   nr_subindices_of_collective_variable.resize(collective_variables.size(), 0);
-  auto const new_CV_i = collective_variables.size() - 1;
+  auto const &cv = collective_variables.back();
   // add 1 for collective variables which are of type degree of association
-  nr_subindices_of_collective_variable[new_CV_i] =
-      int((collective_variables[new_CV_i]->CV_maximum -
-           collective_variables[new_CV_i]->CV_minimum) /
-          collective_variables[new_CV_i]->delta_CV) +
-      1;
+  nr_subindices_of_collective_variable.back() =
+      static_cast<int>((cv->CV_maximum - cv->CV_minimum) / cv->delta_CV) + 1;
 
   // construct (possibly higher dimensional) histogram and potential over
   // gamma (the space which should be equally sampled when the Wang-Landau
   // algorithm has converged)
-  int needed_bins = get_num_needed_bins();
+  auto const needed_bins = get_num_needed_bins();
   histogram.resize(needed_bins, 0);
   wang_landau_potential.resize(needed_bins, 0);
 
@@ -1039,12 +1030,12 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
     SingleReaction const &current_reaction, double E_pot_old, double E_pot_new,
     std::map<int, int> const &old_particle_numbers, int old_state_index,
     int new_state_index, bool only_make_configuration_changing_move) const {
+
   double beta = 1.0 / temperature;
-  double bf;
-  if (do_not_sample_reaction_partition_function ||
-      only_make_configuration_changing_move) {
-    bf = 1.0;
-  } else {
+  double bf = 1.0;
+
+  if (!(do_not_sample_reaction_partition_function ||
+        only_make_configuration_changing_move)) {
     auto const factorial_expr =
         calculate_factorial_expression(current_reaction, old_particle_numbers);
     bf = std::pow(volume, current_reaction.nu_bar) * current_reaction.gamma *
@@ -1053,9 +1044,8 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
 
   if (!do_energy_reweighting) {
     bf *= exp(-beta * (E_pot_new - E_pot_old));
-  } else {
-    // pass
   }
+
   // Check whether the proposed state lies in the reaction coordinate space
   // gamma and add the Wang-Landau modification factor, this is a bit nasty
   // due to the energy collective variable case (memory layout of storage

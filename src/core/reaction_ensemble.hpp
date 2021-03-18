@@ -45,14 +45,10 @@ struct SingleReaction {
                  std::vector<int> const &reactant_coefficients,
                  std::vector<int> const &product_types,
                  std::vector<int> const &product_coefficients) {
-    std::copy(reactant_types.begin(), reactant_types.end(),
-              std::back_inserter(this->reactant_types));
-    std::copy(reactant_coefficients.begin(), reactant_coefficients.end(),
-              std::back_inserter(this->reactant_coefficients));
-    std::copy(product_types.begin(), product_types.end(),
-              std::back_inserter(this->product_types));
-    std::copy(product_coefficients.begin(), product_coefficients.end(),
-              std::back_inserter(this->product_coefficients));
+    this->reactant_types = reactant_types;
+    this->reactant_coefficients = reactant_coefficients;
+    this->product_types = product_types;
+    this->product_coefficients = product_coefficients;
     this->gamma = gamma;
     nu_bar = std::accumulate(product_coefficients.begin(),
                              product_coefficients.end(), 0) -
@@ -100,8 +96,7 @@ struct EnergyCollectiveVariable : public CollectiveVariable {
   double determine_current_state() const override {
     return calculate_current_potential_energy_of_system();
   }
-  void
-  load_CV_boundaries(WangLandauReactionEnsemble &m_current_wang_landau_system);
+  void load_CV_boundaries(WangLandauReactionEnsemble &wl_system);
 };
 
 /** Measure the degree of association of a chemical species.
@@ -187,10 +182,10 @@ public:
   void check_reaction_ensemble() const;
 
   int delete_particle(int p_id);
-  void add_reaction(double gamma, const std::vector<int> &_reactant_types,
-                    const std::vector<int> &_reactant_coefficients,
-                    const std::vector<int> &_product_types,
-                    const std::vector<int> &_product_coefficients);
+  void add_reaction(double gamma, const std::vector<int> &reactant_types,
+                    const std::vector<int> &reactant_coefficients,
+                    const std::vector<int> &product_types,
+                    const std::vector<int> &product_coefficients);
   void delete_reaction(int reaction_id) {
     reactions.erase(reactions.begin() + reaction_id);
   }
@@ -354,7 +349,7 @@ private:
   int int_fill_value = -10;
   double double_fill_value = -10.0;
 
-  int used_bins = -10;             // for 1/t algorithm
+  long used_bins = -10;            // for 1/t algorithm
   int monte_carlo_trial_moves = 0; // for 1/t algorithm
 
   int get_flattened_index_wang_landau_without_energy_collective_variable(
@@ -384,7 +379,7 @@ private:
   int initialize_wang_landau();
   double calculate_delta_degree_of_association(
       DegreeOfAssociationCollectiveVariable &current_collective_variable);
-  int get_num_needed_bins() const;
+  long get_num_needed_bins() const;
   void invalidate_bins();
   void reset_histogram();
   double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value,
