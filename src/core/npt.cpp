@@ -73,6 +73,28 @@ void mpi_bcast_nptiso_geom_barostat() {
   mpi_call_all(mpi_bcast_nptiso_geom_barostat_worker);
 }
 
+void integrator_npt_coulomb_dipole_sanity_checks(nptiso_struct const &params) {
+#ifdef ELECTROSTATICS
+  if (params.dimension < 3 && !params.cubic_box && coulomb.prefactor > 0) {
+    throw std::runtime_error("If electrostatics is being used you must "
+                             "use the cubic box NpT.");
+  }
+#endif
+
+#ifdef DIPOLES
+  if (params.dimension < 3 && !params.cubic_box && dipole.prefactor > 0) {
+    throw std::runtime_error("If magnetostatics is being used you must "
+                             "use the cubic box NpT.");
+  }
+#endif
+
+#if defined(ELECTROSTATICS) && defined(CUDA)
+  if (coulomb.method == COULOMB_P3M_GPU) {
+    throw std::runtime_error("NpT virial cannot be calculated on P3M GPU");
+  }
+#endif
+}
+
 void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
                  bool ydir_rescale, bool zdir_rescale, bool cubic_box) {
 
@@ -114,26 +136,13 @@ void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
     new_nptiso.non_const_dim = 2;
   }
 
-  /* Sanity Checks */
-#ifdef ELECTROSTATICS
-  if (new_nptiso.dimension < 3 && !cubic_box && coulomb.prefactor > 0) {
-    throw std::runtime_error("If electrostatics is being used you must "
-                             "use the cubic box npt.");
-  }
-#endif
-
-#ifdef DIPOLES
-  if (new_nptiso.dimension < 3 && !cubic_box && dipole.prefactor > 0) {
-    throw std::runtime_error("If magnetostatics is being used you must "
-                             "use the cubic box npt.");
-  }
-#endif
-
   if (new_nptiso.dimension == 0 || new_nptiso.non_const_dim == -1) {
     throw std::runtime_error(
         "You must enable at least one of the x y z components "
         "as fluctuating dimension(s) for box length motion!");
   }
+
+  integrator_npt_coulomb_dipole_sanity_checks(new_nptiso);
 
   nptiso = new_nptiso;
 
@@ -156,11 +165,11 @@ void npt_ensemble_init(const BoxGeometry &box) {
 
 void integrator_npt_sanity_checks() {
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-#if defined(ELECTROSTATICS) && defined(CUDA)
-    if (coulomb.method == COULOMB_P3M_GPU) {
-      runtimeErrorMsg() << "npt on, but virial cannot be calculated on P3M GPU";
+    try {
+      integrator_npt_coulomb_dipole_sanity_checks(nptiso);
+    } catch (std::runtime_error const &err) {
+      runtimeErrorMsg() << err.what();
     }
-#endif
   }
 }
 
