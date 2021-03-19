@@ -2,12 +2,12 @@
 
 # get Clang version
 string(REGEX
-        REPLACE "^([1-9]+)\\.[0-9]+.*$"
+        REPLACE "^([0-9]+)\\.[0-9]+.*$"
         "\\1"
         CLANG_MAJOR_VERSION
         "${CMAKE_CXX_COMPILER_VERSION}")
 string(REGEX
-       REPLACE "^[1-9]+\\.([0-9]+).*$"
+       REPLACE "^[0-9]+\\.([0-9]+).*$"
                "\\1"
                CLANG_MINOR_VERSION
                "${CMAKE_CXX_COMPILER_VERSION}")
