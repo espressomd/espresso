@@ -131,7 +131,7 @@ public:
    */
   Variant call_method(const std::string &name, const VariantMap &params);
 
-private:
+protected:
   /**
    * @brief Local implementation of @c do_call_method.
    *

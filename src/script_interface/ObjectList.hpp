@@ -40,8 +40,9 @@ namespace ScriptInterface {
  */
 template <
     typename ManagedType,
+    class BaseType = ObjectHandle,
     class = std::enable_if_t<std::is_base_of<ObjectHandle, ManagedType>::value>>
-class ObjectList : public ObjectHandle {
+class ObjectList : public BaseType {
 public:
   virtual void add_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
   virtual void remove_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
@@ -92,7 +93,7 @@ public:
       return m_elements.empty();
     }
 
-    return none;
+    return BaseType::do_call_method(method, parameters);
   }
 
 private:
@@ -110,7 +111,7 @@ private:
 
     for (auto const &packed_object : object_states) {
       auto o = std::dynamic_pointer_cast<ManagedType>(
-          deserialize(packed_object, *context()));
+          BaseType::deserialize(packed_object, *BaseType::context()));
       m_elements.emplace_back(std::move(o));
     }
   }
