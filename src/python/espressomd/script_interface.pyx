@@ -360,6 +360,7 @@ class ScriptObjectRegistry(ScriptInterfaceHelper):
     def __len__(self):
         return self.call_method("size")
 
+
 # Map from script object names to their corresponding python classes
 _python_class_by_so_name = {}
 
@@ -382,7 +383,7 @@ def script_interface_register(c):
 cdef void init(MpiCallbacks & cb):
     cdef Factory[ObjectHandle] f
 
-    initialize( & f)
+    initialize(& f)
 
     global _om
     _om = make_shared[ContextManager](cb, f)

@@ -39,8 +39,7 @@ namespace ScriptInterface {
  *         derived from ObjectHandle
  */
 template <
-    typename ManagedType,
-    class BaseType = ObjectHandle,
+    typename ManagedType, class BaseType = ObjectHandle,
     class = std::enable_if_t<std::is_base_of<ObjectHandle, ManagedType>::value>>
 class ObjectList : public BaseType {
 public:
