@@ -145,14 +145,7 @@ void npt_ensemble_init(const BoxGeometry &box) {
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     /* prepare NpT-integration */
     nptiso.inv_piston = 1 / nptiso.piston;
-    if (nptiso.dimension == 0) {
-      throw std::runtime_error(
-          "INTERNAL ERROR: npt integrator was called but "
-          "dimension not yet set. This should not happen.");
-    }
-
     nptiso.volume = pow(box.length()[nptiso.non_const_dim], nptiso.dimension);
-
     if (recalc_forces) {
       nptiso.p_inst = 0.0;
       nptiso.p_vir = Utils::Vector3d{};
@@ -163,9 +156,6 @@ void npt_ensemble_init(const BoxGeometry &box) {
 
 void integrator_npt_sanity_checks() {
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    if (nptiso.piston <= 0.0) {
-      runtimeErrorMsg() << "npt on, but piston mass not set";
-    }
 #if defined(ELECTROSTATICS) && defined(CUDA)
     if (coulomb.method == COULOMB_P3M_GPU) {
       runtimeErrorMsg() << "npt on, but virial cannot be calculated on P3M GPU";
