@@ -25,6 +25,8 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/get_value.hpp"
 
+#include <utils/serialization/pack.hpp>
+
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -94,6 +96,25 @@ public:
   }
 
 private:
+  std::string get_internal_state() const override {
+    std::vector<std::string> object_states(m_elements.size());
+
+    boost::transform(m_elements, object_states.begin(),
+                     [](auto const &e) { return e->serialize(); });
+
+    return Utils::pack(object_states);
+  }
+
+  void set_internal_state(std::string const &state) override {
+    auto const object_states = Utils::unpack<std::vector<std::string>>(state);
+
+    for (auto const &packed_object : object_states) {
+      auto o = std::dynamic_pointer_cast<ManagedType>(
+          deserialize(packed_object, *context()));
+      m_elements.emplace_back(std::move(o));
+    }
+  }
+
   std::vector<std::shared_ptr<ManagedType>> m_elements;
 };
 } // Namespace ScriptInterface
