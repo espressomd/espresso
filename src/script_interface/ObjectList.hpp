@@ -42,9 +42,33 @@ template <
     typename ManagedType, class BaseType = ObjectHandle,
     class = std::enable_if_t<std::is_base_of<ObjectHandle, ManagedType>::value>>
 class ObjectList : public BaseType {
-public:
+private:
   virtual void add_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
   virtual void remove_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
+
+public:
+  void add(std::shared_ptr<ManagedType> const &element) {
+    add_in_core(element);
+    m_elements.push_back(element);
+  }
+
+  void remove(std::shared_ptr<ManagedType> const &element) {
+    remove_in_core(element);
+    m_elements.erase(std::remove(m_elements.begin(), m_elements.end(), element),
+                     m_elements.end());
+  }
+
+  auto const &elements() const { return m_elements; }
+
+  void clear() {
+    for (auto const &e : m_elements) {
+      remove_in_core(e);
+    }
+
+    m_elements.clear();
+  }
+
+protected:
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
 
@@ -52,18 +76,14 @@ public:
       auto obj_ptr =
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
-      add_in_core(obj_ptr);
-      m_elements.push_back(obj_ptr);
+      add(obj_ptr);
     }
 
     if (method == "remove") {
       auto obj_ptr =
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
-      remove_in_core(obj_ptr);
-      m_elements.erase(
-          std::remove(m_elements.begin(), m_elements.end(), obj_ptr),
-          m_elements.end());
+      remove(obj_ptr);
     }
 
     if (method == "get_elements") {
@@ -77,11 +97,7 @@ public:
     }
 
     if (method == "clear") {
-      for (auto const &e : m_elements) {
-        remove_in_core(e);
-      }
-
-      m_elements.clear();
+      clear();
     }
 
     if (method == "size") {
@@ -111,7 +127,7 @@ private:
     for (auto const &packed_object : object_states) {
       auto o = std::dynamic_pointer_cast<ManagedType>(
           BaseType::deserialize(packed_object, *BaseType::context()));
-      m_elements.emplace_back(std::move(o));
+      add(std::move(o));
     }
   }
 
