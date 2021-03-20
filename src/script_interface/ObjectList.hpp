@@ -47,19 +47,35 @@ private:
   virtual void remove_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
 
 public:
+  /**
+   * @brief Add an element to the list.
+   *
+   * @param element The element to add.
+   */
   void add(std::shared_ptr<ManagedType> const &element) {
     add_in_core(element);
     m_elements.push_back(element);
   }
 
+  /**
+   * @brief Removes all occurences of an element from the list.
+   *
+   * @param element The element to add.
+   */
   void remove(std::shared_ptr<ManagedType> const &element) {
     remove_in_core(element);
     m_elements.erase(std::remove(m_elements.begin(), m_elements.end(), element),
                      m_elements.end());
   }
 
+  /**
+   * @brief List elements.
+   */
   auto const &elements() const { return m_elements; }
 
+  /**
+   * @brief Clear the list.
+   */
   void clear() {
     for (auto const &e : m_elements) {
       remove_in_core(e);
