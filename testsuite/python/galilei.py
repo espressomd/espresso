@@ -35,6 +35,10 @@ class Galilei(ut.TestCase):
                              f=np.random.random((N_PART, 3)))
         if espressomd.has_features("MASS"):
             self.system.part[:].mass = 42. * np.random.random((N_PART,))
+        if espressomd.has_features("ROTATION"):
+            self.system.part[:].omega_lab = -2. - np.random.random((N_PART, 3))
+            self.system.part[:].torque_lab = - \
+                2. - np.random.random((N_PART, 3))
 
     def tearDown(self):
         self.system.part.clear()
@@ -45,11 +49,29 @@ class Galilei(ut.TestCase):
 
         np.testing.assert_array_equal(np.copy(self.system.part[:].v), 0)
 
+        if espressomd.has_features("ROTATION"):
+            np.testing.assert_array_less(
+                np.copy(self.system.part[:].omega_lab), 0)
+
+            g.kill_particle_motion(rotation=True)
+
+            np.testing.assert_array_equal(
+                np.copy(self.system.part[:].omega_lab), 0)
+
     def test_kill_particle_forces(self):
         g = GalileiTransform()
         g.kill_particle_forces()
 
         np.testing.assert_array_equal(np.copy(self.system.part[:].f), 0)
+
+        if espressomd.has_features("ROTATION"):
+            np.testing.assert_array_less(
+                np.copy(self.system.part[:].torque_lab), 0)
+
+            g.kill_particle_forces(torque=True)
+
+            np.testing.assert_array_equal(
+                np.copy(self.system.part[:].torque_lab), 0)
 
     def test_cms(self):
         parts = self.system.part[:]
