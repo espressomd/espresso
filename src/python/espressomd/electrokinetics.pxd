@@ -44,7 +44,7 @@ IF ELECTROKINETICS and CUDA:
                 float friction
                 float T
                 float prefactor
-                float lb_force_density[3]
+                float lb_ext_force_density[3]
                 unsigned int number_of_species
                 int reaction_species[3]
                 float rho_reactant_reservoir
@@ -93,7 +93,7 @@ IF ELECTROKINETICS and CUDA:
                 float friction
                 float T
                 float prefactor
-                float lb_force_density[3]
+                float lb_ext_force_density[3]
                 unsigned int number_of_species
                 int reaction_species[3]
                 float rho_reactant_reservoir
@@ -145,6 +145,7 @@ IF ELECTROKINETICS and CUDA:
         int ek_set_lb_density(float lb_density)
         int ek_set_viscosity(float viscosity)
         int ek_set_friction(float friction)
+        int ek_set_lb_ext_force_density(float lb_ext_force_dens_x, float lb_ext_force_dens_y, float lb_ext_force_dens_z)
         int ek_set_T(float T)
         int ek_set_prefactor(float prefactor)
         int ek_set_bulk_viscosity(float bulk_viscosity)
