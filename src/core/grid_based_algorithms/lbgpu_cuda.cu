@@ -145,7 +145,7 @@ template <typename T> __device__ T xyz_to_index(T x, T y, T z) {
  *  @param[in]  index   Node index / thread index
  *  @param[out] mode    Local register values mode
  */
-__device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
+__device__ void calc_m_from_n(Utils::Array<float, 19> const &populations,
                               Utils::Array<float, 19> &mode) {
   /**
    * The following convention and equations from @cite duenweg09a are used:
@@ -243,7 +243,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
    *                2, 4/9, 4/3 )\f]
    */
   for (int i = 0; i < 19; ++i) {
-    mode[i] = calc_mode_x_from_n(n_a.populations[index], i);
+    mode[i] = calc_mode_x_from_n(populations, i);
   }
 }
 
@@ -1562,7 +1562,7 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
         rho_times_coeff - 1.0f / 12.0f * (local_j[1] - local_j[2]) +
         1.0f / 8.0f * (tmp1 - tmp2) - 1.0f / 24.0f * trace;
 
-    calc_m_from_n(n_a, index, mode);
+    calc_m_from_n(n_a.populations[index], mode);
     update_rho_v(mode, index, node_f, d_v);
   }
 }
@@ -1617,7 +1617,7 @@ __global__ void set_u_from_rho_v_pi(LB_nodes_gpu n_a, unsigned single_nodeindex,
 
     // Calculate the modes for this node
 
-    calc_m_from_n(n_a, single_nodeindex, mode_for_pi);
+    calc_m_from_n(n_a.populations[single_nodeindex], mode_for_pi);
 
     // Reset the d_v
 
@@ -1731,7 +1731,7 @@ __global__ void set_u_from_rho_v_pi(LB_nodes_gpu n_a, unsigned single_nodeindex,
 
     // Calculate the modes for this node
 
-    calc_m_from_n(n_a, single_nodeindex, mode_for_pi);
+    calc_m_from_n(n_a.populations[single_nodeindex], mode_for_pi);
 
     // Update the density and velocity field for this mode
 
@@ -1870,7 +1870,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
   Utils::Array<float, 19> mode;
 
   if (index < para->number_of_nodes) {
-    calc_m_from_n(n_a, index, mode);
+    calc_m_from_n(n_a.populations[index], mode);
     relax_modes(mode, index, node_f, d_v);
     thermalize_modes(mode, index, philox_counter);
     apply_forces(index, mode, node_f, d_v);
@@ -1894,7 +1894,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
   Utils::Array<float, 19> mode;
 
   if (index < para->number_of_nodes) {
-    calc_m_from_n(n_a, index, mode);
+    calc_m_from_n(n_a.populations[index], mode);
     relax_modes(mode, index, node_f, d_v);
     apply_forces(index, mode, node_f, d_v);
     normalize_modes(mode);
@@ -1982,7 +1982,7 @@ get_mesoscopic_values_in_LB_units(LB_nodes_gpu n_a, LB_rho_v_pi_gpu *p_v,
 
   if (index < para->number_of_nodes) {
     Utils::Array<float, 19> mode;
-    calc_m_from_n(n_a, index, mode);
+    calc_m_from_n(n_a.populations[index], mode);
     calc_values_in_LB_units(n_a, mode, p_v, d_v, node_f, index, index);
   }
 }
@@ -2016,7 +2016,7 @@ __global__ void lb_print_node(unsigned int single_nodeindex,
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index == 0) {
-    calc_m_from_n(n_a, single_nodeindex, mode);
+    calc_m_from_n(n_a.populations[single_nodeindex], mode);
 
     /* the following actually copies rho and v from d_v, and calculates pi */
     calc_values_in_LB_units(n_a, mode, d_p_v, d_v, node_f, single_nodeindex, 0);
@@ -2646,12 +2646,13 @@ template <std::size_t no_of_neighbours> struct interpolation {
                                   delta);
   }
 };
+
 // struct Stress {
 //  LB_nodes_gpu current_nodes_gpu;
 //  Stress(LB_nodes_gpu nodes) : current_nodes_gpu(nodes){};
 //  __device__ Utils::Array<float, 6> operator()(Utils::Array<float, 19> const
 //  &populations) {
-//    stress_from_stress_modes(stress_modes(d_v_single,
+//    stress_from_stress_modes(stress_modes(current_nodes_gpu,
 //    calc_m_from_n(current_nodes_gpu,));
 //  }
 //};
