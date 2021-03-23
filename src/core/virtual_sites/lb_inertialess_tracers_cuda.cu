@@ -64,48 +64,6 @@ float *lb_boundary_velocity_IBM = nullptr;
 
 static constexpr unsigned int threads_per_block = 64;
 
-/** @copybrief calc_m_from_n
- *
- *  This is a re-implementation of @ref calc_m_from_n. It does exactly the
- *  same, but calculates only the first four modes.
- */
-__device__ void Calc_m_from_n_IBM(const LB_nodes_gpu n_a,
-                                  const unsigned int index, float *mode,
-                                  const LB_parameters_gpu *const paraP) {
-  const LB_parameters_gpu &para = *paraP;
-  // mass mode
-  mode[0] = n_a.populations[index][0] + n_a.populations[index][1] +
-            n_a.populations[index][2] + n_a.populations[index][3] +
-            n_a.populations[index][4] + n_a.populations[index][5] +
-            n_a.populations[index][6] + n_a.populations[index][7] +
-            n_a.populations[index][8] + n_a.populations[index][9] +
-            n_a.populations[index][10] + n_a.populations[index][11] +
-            n_a.populations[index][12] + n_a.populations[index][13] +
-            n_a.populations[index][14] + n_a.populations[index][15] +
-            n_a.populations[index][16] + n_a.populations[index][17] +
-            n_a.populations[index][18];
-
-  // momentum modes
-
-  mode[1] = (n_a.populations[index][1] - n_a.populations[index][2]) +
-            (n_a.populations[index][7] - n_a.populations[index][8]) +
-            (n_a.populations[index][9] - n_a.populations[index][10]) +
-            (n_a.populations[index][11] - n_a.populations[index][12]) +
-            (n_a.populations[index][13] - n_a.populations[index][14]);
-
-  mode[2] = (n_a.populations[index][3] - n_a.populations[index][4]) +
-            (n_a.populations[index][7] - n_a.populations[index][8]) -
-            (n_a.populations[index][9] - n_a.populations[index][10]) +
-            (n_a.populations[index][15] - n_a.populations[index][16]) +
-            (n_a.populations[index][17] - n_a.populations[index][18]);
-
-  mode[3] = (n_a.populations[index][5] - n_a.populations[index][6]) +
-            (n_a.populations[index][11] - n_a.populations[index][12]) -
-            (n_a.populations[index][13] - n_a.populations[index][14]) +
-            (n_a.populations[index][15] - n_a.populations[index][16]) -
-            (n_a.populations[index][17] - n_a.populations[index][18]);
-}
-
 __global__ void
 ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
                        size_t number_of_particles,
@@ -217,7 +175,7 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
     float delta[8];
     int my_left[3];
     unsigned int node_index[8];
-    float mode[4];
+    Utils::Array<float, 4> mode;
 #pragma unroll
     for (int i = 0; i < 3; ++i) {
       const float scaledpos = pos[i] / para.agrid - 0.5f;
@@ -280,7 +238,7 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
       } else
 #endif
       {
-        Calc_m_from_n_IBM(n_curr, node_index[i], mode, paraP);
+        calc_mass_and_momentum_mode(mode, n_curr, node_index[i]);
         local_rho = para.rho + mode[0];
 
         // Add the +f/2 contribution!!

@@ -140,137 +140,6 @@ template <typename T> __device__ T xyz_to_index(T x, T y, T z) {
          static_cast<T>(para->dim_x) * (y + static_cast<T>(para->dim_y) * z);
 }
 
-__device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
-                                               unsigned int index, int x) {
-  switch (x) {
-  case 0:
-    return n_a.populations[index][0] + n_a.populations[index][1] +
-           n_a.populations[index][2] + n_a.populations[index][3] +
-           n_a.populations[index][4] + n_a.populations[index][5] +
-           n_a.populations[index][6] + n_a.populations[index][7] +
-           n_a.populations[index][8] + n_a.populations[index][9] +
-           n_a.populations[index][10] + n_a.populations[index][11] +
-           n_a.populations[index][12] + n_a.populations[index][13] +
-           n_a.populations[index][14] + n_a.populations[index][15] +
-           n_a.populations[index][16] + n_a.populations[index][17] +
-           n_a.populations[index][18];
-  case 1:
-    return (n_a.populations[index][1] - n_a.populations[index][2]) +
-           (n_a.populations[index][7] - n_a.populations[index][8]) +
-           (n_a.populations[index][9] - n_a.populations[index][10]) +
-           (n_a.populations[index][11] - n_a.populations[index][12]) +
-           (n_a.populations[index][13] - n_a.populations[index][14]);
-  case 2:
-    return (n_a.populations[index][3] - n_a.populations[index][4]) +
-           (n_a.populations[index][7] - n_a.populations[index][8]) -
-           (n_a.populations[index][9] - n_a.populations[index][10]) +
-           (n_a.populations[index][15] - n_a.populations[index][16]) +
-           (n_a.populations[index][17] - n_a.populations[index][18]);
-  case 3:
-    return (n_a.populations[index][5] - n_a.populations[index][6]) +
-           (n_a.populations[index][11] - n_a.populations[index][12]) -
-           (n_a.populations[index][13] - n_a.populations[index][14]) +
-           (n_a.populations[index][15] - n_a.populations[index][16]) -
-           (n_a.populations[index][17] - n_a.populations[index][18]);
-  case 4:
-    return -n_a.populations[index][0] + n_a.populations[index][7] +
-           n_a.populations[index][8] + n_a.populations[index][9] +
-           n_a.populations[index][10] + n_a.populations[index][11] +
-           n_a.populations[index][12] + n_a.populations[index][13] +
-           n_a.populations[index][14] + n_a.populations[index][15] +
-           n_a.populations[index][16] + n_a.populations[index][17] +
-           n_a.populations[index][18];
-  case 5:
-    return (n_a.populations[index][1] + n_a.populations[index][2]) -
-           (n_a.populations[index][3] + n_a.populations[index][4]) +
-           (n_a.populations[index][11] + n_a.populations[index][12]) +
-           (n_a.populations[index][13] + n_a.populations[index][14]) -
-           (n_a.populations[index][15] + n_a.populations[index][16]) -
-           (n_a.populations[index][17] + n_a.populations[index][18]);
-  case 6:
-    return (n_a.populations[index][1] + n_a.populations[index][2]) +
-           (n_a.populations[index][3] + n_a.populations[index][4]) -
-           (n_a.populations[index][11] + n_a.populations[index][12]) -
-           (n_a.populations[index][13] + n_a.populations[index][14]) -
-           (n_a.populations[index][15] + n_a.populations[index][16]) -
-           (n_a.populations[index][17] + n_a.populations[index][18]) -
-           2.0f * ((n_a.populations[index][5] + n_a.populations[index][6]) -
-                   (n_a.populations[index][7] + n_a.populations[index][8]) -
-                   (n_a.populations[index][9] + n_a.populations[index][10]));
-  case 7:
-    return (n_a.populations[index][7] + n_a.populations[index][8]) -
-           (n_a.populations[index][9] + n_a.populations[index][10]);
-  case 8:
-    return (n_a.populations[index][11] + n_a.populations[index][12]) -
-           (n_a.populations[index][13] + n_a.populations[index][14]);
-  case 9:
-    return (n_a.populations[index][15] + n_a.populations[index][16]) -
-           (n_a.populations[index][17] + n_a.populations[index][18]);
-  case 10:
-    return -2.0f * (n_a.populations[index][1] - n_a.populations[index][2]) +
-           (n_a.populations[index][7] - n_a.populations[index][8]) +
-           (n_a.populations[index][9] - n_a.populations[index][10]) +
-           (n_a.populations[index][11] - n_a.populations[index][12]) +
-           (n_a.populations[index][13] - n_a.populations[index][14]);
-  case 11:
-    return -2.0f * (n_a.populations[index][3] - n_a.populations[index][4]) +
-           (n_a.populations[index][7] - n_a.populations[index][8]) -
-           (n_a.populations[index][9] - n_a.populations[index][10]) +
-           (n_a.populations[index][15] - n_a.populations[index][16]) +
-           (n_a.populations[index][17] - n_a.populations[index][18]);
-  case 12:
-    return -2.0f * (n_a.populations[index][5] - n_a.populations[index][6]) +
-           (n_a.populations[index][11] - n_a.populations[index][12]) -
-           (n_a.populations[index][13] - n_a.populations[index][14]) +
-           (n_a.populations[index][15] - n_a.populations[index][16]) -
-           (n_a.populations[index][17] - n_a.populations[index][18]);
-  case 13:
-    return (n_a.populations[index][7] - n_a.populations[index][8]) +
-           (n_a.populations[index][9] - n_a.populations[index][10]) -
-           (n_a.populations[index][11] - n_a.populations[index][12]) -
-           (n_a.populations[index][13] - n_a.populations[index][14]);
-  case 14:
-    return (n_a.populations[index][7] - n_a.populations[index][8]) -
-           (n_a.populations[index][9] - n_a.populations[index][10]) -
-           (n_a.populations[index][15] - n_a.populations[index][16]) -
-           (n_a.populations[index][17] - n_a.populations[index][18]);
-  case 15:
-    return (n_a.populations[index][11] - n_a.populations[index][12]) -
-           (n_a.populations[index][13] - n_a.populations[index][14]) -
-           (n_a.populations[index][15] - n_a.populations[index][16]) +
-           (n_a.populations[index][17] - n_a.populations[index][18]);
-  case 16:
-    return n_a.populations[index][0] + n_a.populations[index][7] +
-           n_a.populations[index][8] + n_a.populations[index][9] +
-           n_a.populations[index][10] + n_a.populations[index][11] +
-           n_a.populations[index][12] + n_a.populations[index][13] +
-           n_a.populations[index][14] + n_a.populations[index][15] +
-           n_a.populations[index][16] + n_a.populations[index][17] +
-           n_a.populations[index][18] -
-           2.0f * ((n_a.populations[index][1] + n_a.populations[index][2]) +
-                   (n_a.populations[index][3] + n_a.populations[index][4]) +
-                   (n_a.populations[index][5] + n_a.populations[index][6]));
-  case 17:
-    return -(n_a.populations[index][1] + n_a.populations[index][2]) +
-           (n_a.populations[index][3] + n_a.populations[index][4]) +
-           (n_a.populations[index][11] + n_a.populations[index][12]) +
-           (n_a.populations[index][13] + n_a.populations[index][14]) -
-           (n_a.populations[index][15] + n_a.populations[index][16]) -
-           (n_a.populations[index][17] + n_a.populations[index][18]);
-  case 18:
-    return -(n_a.populations[index][1] + n_a.populations[index][2]) -
-           (n_a.populations[index][3] + n_a.populations[index][4]) -
-           (n_a.populations[index][11] + n_a.populations[index][12]) -
-           (n_a.populations[index][13] + n_a.populations[index][14]) -
-           (n_a.populations[index][15] + n_a.populations[index][16]) -
-           (n_a.populations[index][17] + n_a.populations[index][18]) +
-           2.0f * ((n_a.populations[index][5] + n_a.populations[index][6]) +
-                   (n_a.populations[index][7] + n_a.populations[index][8]) +
-                   (n_a.populations[index][9] + n_a.populations[index][10]));
-  }
-  return 0.0;
-}
-
 /** Calculate modes from the velocity densities (space-transform).
  *  @param[in]  n_a     Local node residing in array a
  *  @param[in]  index   Node index / thread index
@@ -1179,24 +1048,6 @@ __device__ void calc_values_from_m(Utils::Array<float, 19> const &mode_single,
   pi_out = stress_from_stress_modes(stress_modes(d_v_single, mode_single));
 }
 
-/**
- *  @param[in]  node_index        Node index around (8) particle
- *  @param[out] mode              Local register values mode
- *  @param[in]  n_a               Local node residing in array a
- */
-__device__ void calc_mode(Utils::Array<float, 4> &mode, LB_nodes_gpu n_a,
-                          unsigned int node_index) {
-  /* mass mode */
-  mode[0] = calc_mode_x_from_n(n_a, node_index, 0);
-
-  /* momentum modes */
-  mode[1] = calc_mode_x_from_n(n_a, node_index, 1);
-
-  mode[2] = calc_mode_x_from_n(n_a, node_index, 2);
-
-  mode[3] = calc_mode_x_from_n(n_a, node_index, 3);
-}
-
 /** Calculate temperature of the fluid kernel
  *  @param[out] cpu_jsquared  Result
  *  @param[in]  n_a           Local node residing in array a
@@ -1211,7 +1062,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
 
   if (index < para->number_of_nodes) {
     if (!n_a.boundary[index]) {
-      calc_mode(mode, n_a, index);
+      calc_mass_and_momentum_mode(mode, n_a, index);
       jsquared = mode[1] * mode[1] + mode[2] * mode[2] + mode[3] * mode[3];
       atomicAdd(cpu_jsquared, jsquared);
       atomicAdd(number_of_non_boundary_nodes, 1);
@@ -1899,7 +1750,7 @@ __global__ void calc_mass(LB_nodes_gpu n_a, float *sum) {
 
   if (index < para->number_of_nodes) {
     Utils::Array<float, 4> mode;
-    calc_mode(mode, n_a, index);
+    calc_mass_and_momentum_mode(mode, n_a, index);
     float Rho = mode[0] + para->rho;
     atomicAdd(&(sum[0]), Rho);
   }
@@ -2181,7 +2032,7 @@ __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
     float j[3] = {0.0f, 0.0f, 0.0f};
     Utils::Array<float, 4> mode{};
 
-    calc_mode(mode, n_a, index);
+    calc_mass_and_momentum_mode(mode, n_a, index);
 
     j[0] += mode[1] +
             0.5f * node_f.force_density[0 * para->number_of_nodes + index];
@@ -2560,9 +2411,10 @@ void lb_load_checkpoint_GPU(float const *const host_checkpoint_vd) {
   current_nodes = &nodes_a;
   intflag = true;
 
-  cuda_safe_mem(cudaMemcpy(current_nodes->populations, host_checkpoint_vd,
-                           lbpar_gpu.number_of_nodes * 19 * sizeof(float),
-                           cudaMemcpyHostToDevice));
+  cuda_safe_mem(
+      cudaMemcpy(current_nodes->populations, host_checkpoint_vd,
+                 lbpar_gpu.number_of_nodes * sizeof(Utils::Array<float, 19>),
+                 cudaMemcpyHostToDevice));
 }
 
 /** Setup and call kernel to get the boundary flag of a single node
