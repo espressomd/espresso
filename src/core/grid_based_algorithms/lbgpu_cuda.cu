@@ -253,26 +253,14 @@ __device__ void reset_LB_force_densities(unsigned int index,
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
   // Store backup of the node forces
   if (buffer) {
-    node_f.force_density_buf[0 * para->number_of_nodes + index] =
-        node_f.force_density[0 * para->number_of_nodes + index];
-    node_f.force_density_buf[1 * para->number_of_nodes + index] =
-        node_f.force_density[1 * para->number_of_nodes + index];
-    node_f.force_density_buf[2 * para->number_of_nodes + index] =
-        node_f.force_density[2 * para->number_of_nodes + index];
+    node_f.force_density_buf[index] = node_f.force_density[index];
   }
 #endif
 
   if (para->external_force_density) {
-    node_f.force_density[0 * para->number_of_nodes + index] =
-        para->ext_force_density[0];
-    node_f.force_density[1 * para->number_of_nodes + index] =
-        para->ext_force_density[1];
-    node_f.force_density[2 * para->number_of_nodes + index] =
-        para->ext_force_density[2];
+    node_f.force_density[index] = para->ext_force_density;
   } else {
-    node_f.force_density[0 * para->number_of_nodes + index] = 0.0f;
-    node_f.force_density[1 * para->number_of_nodes + index] = 0.0f;
-    node_f.force_density[2 * para->number_of_nodes + index] = 0.0f;
+    node_f.force_density[index] = {};
   }
 }
 
@@ -305,7 +293,7 @@ __device__ void update_rho_v(Utils::Array<float, 19> const &modes,
                              LB_node_force_density_gpu const &node_f,
                              LB_rho_v_gpu *d_v) {
   float Rho_tot = 0.0f;
-  float u_tot[3] = {0.0f, 0.0f, 0.0f};
+  Utils::Array<float, 3> u_tot = {};
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
@@ -322,9 +310,9 @@ __device__ void update_rho_v(Utils::Array<float, 19> const &modes,
    *  Chapman-Enskog expansion in @cite ladd01a.
    */
 
-  u_tot[0] += 0.5f * node_f.force_density[0 * para->number_of_nodes + index];
-  u_tot[1] += 0.5f * node_f.force_density[1 * para->number_of_nodes + index];
-  u_tot[2] += 0.5f * node_f.force_density[2 * para->number_of_nodes + index];
+  u_tot[0] += 0.5f * node_f.force_density[index][0];
+  u_tot[1] += 0.5f * node_f.force_density[index][1];
+  u_tot[2] += 0.5f * node_f.force_density[index][2];
 
   u_tot[0] /= Rho_tot;
   u_tot[1] /= Rho_tot;
@@ -869,43 +857,40 @@ __device__ void apply_forces(unsigned int index, Utils::Array<float, 19> &mode,
   u[1] = d_v[index].v[1];
   u[2] = d_v[index].v[2];
 
-  C[0] += (1.0f + para->gamma_shear) * u[0] *
-              node_f.force_density[0 * para->number_of_nodes + index] +
+  C[0] += (1.0f + para->gamma_shear) * u[0] * node_f.force_density[index][0] +
           1.0f / 3.0f * (para->gamma_bulk - para->gamma_shear) *
-              (u[0] * node_f.force_density[0 * para->number_of_nodes + index] +
-               u[1] * node_f.force_density[1 * para->number_of_nodes + index] +
-               u[2] * node_f.force_density[2 * para->number_of_nodes + index]);
+              (u[0] * node_f.force_density[index][0] +
+               u[1] * node_f.force_density[index][1] +
+               u[2] * node_f.force_density[index][2]);
 
-  C[2] += (1.0f + para->gamma_shear) * u[1] *
-              node_f.force_density[1 * para->number_of_nodes + index] +
+  C[2] += (1.0f + para->gamma_shear) * u[1] * node_f.force_density[index][1] +
           1.0f / 3.0f * (para->gamma_bulk - para->gamma_shear) *
-              (u[0] * node_f.force_density[0 * para->number_of_nodes + index] +
-               u[1] * node_f.force_density[1 * para->number_of_nodes + index] +
-               u[2] * node_f.force_density[2 * para->number_of_nodes + index]);
+              (u[0] * node_f.force_density[index][0] +
+               u[1] * node_f.force_density[index][1] +
+               u[2] * node_f.force_density[index][2]);
 
-  C[5] += (1.0f + para->gamma_shear) * u[2] *
-              node_f.force_density[2 * para->number_of_nodes + index] +
+  C[5] += (1.0f + para->gamma_shear) * u[2] * node_f.force_density[index][2] +
           1.0f / 3.0f * (para->gamma_bulk - para->gamma_shear) *
-              (u[0] * node_f.force_density[0 * para->number_of_nodes + index] +
-               u[1] * node_f.force_density[1 * para->number_of_nodes + index] +
-               u[2] * node_f.force_density[2 * para->number_of_nodes + index]);
+              (u[0] * node_f.force_density[index][0] +
+               u[1] * node_f.force_density[index][1] +
+               u[2] * node_f.force_density[index][2]);
 
   C[1] += 1.0f / 2.0f * (1.0f + para->gamma_shear) *
-          (u[0] * node_f.force_density[1 * para->number_of_nodes + index] +
-           u[1] * node_f.force_density[0 * para->number_of_nodes + index]);
+          (u[0] * node_f.force_density[index][1] +
+           u[1] * node_f.force_density[index][0]);
 
   C[3] += 1.0f / 2.0f * (1.0f + para->gamma_shear) *
-          (u[0] * node_f.force_density[2 * para->number_of_nodes + index] +
-           u[2] * node_f.force_density[0 * para->number_of_nodes + index]);
+          (u[0] * node_f.force_density[index][2] +
+           u[2] * node_f.force_density[index][0]);
 
   C[4] += 1.0f / 2.0f * (1.0f + para->gamma_shear) *
-          (u[1] * node_f.force_density[2 * para->number_of_nodes + index] +
-           u[2] * node_f.force_density[1 * para->number_of_nodes + index]);
+          (u[1] * node_f.force_density[index][2] +
+           u[2] * node_f.force_density[index][1]);
 
   /* update momentum modes */
-  mode[1] += node_f.force_density[0 * para->number_of_nodes + index];
-  mode[2] += node_f.force_density[1 * para->number_of_nodes + index];
-  mode[3] += node_f.force_density[2 * para->number_of_nodes + index];
+  mode[1] += node_f.force_density[index][0];
+  mode[2] += node_f.force_density[index][1];
+  mode[3] += node_f.force_density[index][2];
 
   /* update stress modes */
   mode[4] += C[0] + C[2] + C[5];
@@ -1421,9 +1406,8 @@ calc_node_force(Utils::Array<float, no_of_neighbours> const &delta,
                 LB_node_force_density_gpu node_f) {
   for (std::size_t node = 0; node < no_of_neighbours; ++node) {
     for (unsigned i = 0; i < 3; ++i) {
-      atomicAdd(
-          &(node_f.force_density[i * para->number_of_nodes + node_index[node]]),
-          delta[node] * delta_j[i]);
+      atomicAdd(&(node_f.force_density[node_index[node]][i]),
+                delta[node] * delta_j[i]);
     }
   }
 }
@@ -1574,12 +1558,9 @@ __global__ void set_force_density(unsigned single_nodeindex,
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index == 0) {
-    node_f.force_density[0 * para->number_of_nodes + single_nodeindex] =
-        force_density[0];
-    node_f.force_density[1 * para->number_of_nodes + single_nodeindex] =
-        force_density[1];
-    node_f.force_density[2 * para->number_of_nodes + single_nodeindex] =
-        force_density[2];
+    node_f.force_density[single_nodeindex][0] = force_density[0];
+    node_f.force_density[single_nodeindex][1] = force_density[1];
+    node_f.force_density[single_nodeindex][2] = force_density[2];
   }
 }
 
@@ -1765,12 +1746,9 @@ __global__ void reinit_node_force(LB_node_force_density_gpu node_f) {
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index < para->number_of_nodes) {
-    node_f.force_density[0 * para->number_of_nodes + index] =
-        para->ext_force_density[0];
-    node_f.force_density[1 * para->number_of_nodes + index] =
-        para->ext_force_density[1];
-    node_f.force_density[2 * para->number_of_nodes + index] =
-        para->ext_force_density[2];
+    node_f.force_density[index][0] = para->ext_force_density[0];
+    node_f.force_density[index][1] = para->ext_force_density[1];
+    node_f.force_density[index][2] = para->ext_force_density[2];
   }
 }
 
@@ -2034,12 +2012,9 @@ __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
 
     calc_mass_and_momentum_mode(mode, n_a, index);
 
-    j[0] += mode[1] +
-            0.5f * node_f.force_density[0 * para->number_of_nodes + index];
-    j[1] += mode[2] +
-            0.5f * node_f.force_density[1 * para->number_of_nodes + index];
-    j[2] += mode[3] +
-            0.5f * node_f.force_density[2 * para->number_of_nodes + index];
+    j[0] += mode[1] + 0.5f * node_f.force_density[index][0];
+    j[1] += mode[2] + 0.5f * node_f.force_density[index][1];
+    j[2] += mode[3] + 0.5f * node_f.force_density[index][2];
 
 #ifdef LB_BOUNDARIES_GPU
     if (n_a.boundary[index])
@@ -2649,11 +2624,14 @@ template <std::size_t no_of_neighbours> struct interpolation {
 
 // struct Stress {
 //  LB_nodes_gpu current_nodes_gpu;
-//  Stress(LB_nodes_gpu nodes) : current_nodes_gpu(nodes){};
+//  LB_rho_v_gpu *d_v_gpu;
+//  Stress(LB_nodes_gpu nodes, LB_rho_v_gpu *rho_v) : current_nodes_gpu(nodes),
+//  d_v_gpu(rho_v){};
 //  __device__ Utils::Array<float, 6> operator()(Utils::Array<float, 19> const
 //  &populations) {
-//    stress_from_stress_modes(stress_modes(current_nodes_gpu,
-//    calc_m_from_n(current_nodes_gpu,));
+//    Utils::Array<float, 19> modes;
+//    calc_m_from_n(populations, modes);
+//    stress_from_stress_modes(stress_modes(d_v_gpu, modes));
 //  }
 //};
 

@@ -133,15 +133,12 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
 
     for (int i = 0; i < 8; ++i) {
       // Atomic add is essential because this runs in parallel!
-      atomicAdd(
-          &(node_f.force_density[0 * para.number_of_nodes + node_index[i]]),
-          (particleForce[0] * delta[i]));
-      atomicAdd(
-          &(node_f.force_density[1 * para.number_of_nodes + node_index[i]]),
-          (particleForce[1] * delta[i]));
-      atomicAdd(
-          &(node_f.force_density[2 * para.number_of_nodes + node_index[i]]),
-          (particleForce[2] * delta[i]));
+      atomicAdd(&(node_f.force_density[node_index[i]][0]),
+                (particleForce[0] * delta[i]));
+      atomicAdd(&(node_f.force_density[node_index[i]][1]),
+                (particleForce[1] * delta[i]));
+      atomicAdd(&(node_f.force_density[node_index[i]][2]),
+                (particleForce[2] * delta[i]));
     }
   }
 }
@@ -242,18 +239,9 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
         local_rho = para.rho + mode[0];
 
         // Add the +f/2 contribution!!
-        local_j[0] =
-            mode[1] +
-            node_f.force_density_buf[0 * para.number_of_nodes + node_index[i]] /
-                2.f;
-        local_j[1] =
-            mode[2] +
-            node_f.force_density_buf[1 * para.number_of_nodes + node_index[i]] /
-                2.f;
-        local_j[2] =
-            mode[3] +
-            node_f.force_density_buf[2 * para.number_of_nodes + node_index[i]] /
-                2.f;
+        local_j[0] = mode[1] + node_f.force_density_buf[node_index[i]][0] / 2.f;
+        local_j[1] = mode[2] + node_f.force_density_buf[node_index[i]][1] / 2.f;
+        local_j[2] = mode[3] + node_f.force_density_buf[node_index[i]][2] / 2.f;
       }
 
       // Interpolate velocity
@@ -279,16 +267,11 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
   if (index < para.number_of_nodes) {
     const float force_factor = powf(para.agrid, 2) * para.tau * para.tau;
     if (para.external_force_density) {
-      node_f.force_density[0 * para.number_of_nodes + index] =
-          para.ext_force_density[0] * force_factor;
-      node_f.force_density[1 * para.number_of_nodes + index] =
-          para.ext_force_density[1] * force_factor;
-      node_f.force_density[2 * para.number_of_nodes + index] =
-          para.ext_force_density[2] * force_factor;
+      node_f.force_density[index][0] = para.ext_force_density[0] * force_factor;
+      node_f.force_density[index][1] = para.ext_force_density[1] * force_factor;
+      node_f.force_density[index][2] = para.ext_force_density[2] * force_factor;
     } else {
-      node_f.force_density[0 * para.number_of_nodes + index] = 0.0f;
-      node_f.force_density[1 * para.number_of_nodes + index] = 0.0f;
-      node_f.force_density[2 * para.number_of_nodes + index] = 0.0f;
+      node_f.force_density[index] = {};
     }
   }
 }
