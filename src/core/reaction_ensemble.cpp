@@ -59,8 +59,8 @@ void EnergyCollectiveVariable::load_CV_boundaries(
   // load energy boundaries from file
   std::ifstream infile;
   infile.open(energy_boundaries_filename);
-  if (infile.fail())
-    throw std::runtime_error("ERROR: energy boundaries file for the specific "
+  if (!infile.is_open())
+    throw std::runtime_error("energy boundaries file for the specific "
                              "system could not be read.\n");
 
   // Note that you cannot change the other collective variables in the
@@ -1204,17 +1204,7 @@ bool WangLandauReactionEnsemble::
   return false;
 }
 
-/**
- *Writes the Wang-Landau potential to file.
- */
-void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
-    const std::string &full_path_to_output_filename) {
-
-  FILE *pFile;
-  pFile = fopen(full_path_to_output_filename.c_str(), "w");
-  if (pFile == nullptr) {
-    throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
-  }
+void WangLandauReactionEnsemble::format_wang_landau_results(std::ostream &out) {
   for (std::size_t flattened_index = 0;
        flattened_index < wang_landau_potential.size(); flattened_index++) {
     // unravel index
@@ -1236,13 +1226,28 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
         auto const value = static_cast<double>(unraveled_index[i]) *
                                collective_variables[i]->delta_CV +
                            collective_variables[i]->CV_minimum;
-        fprintf(pFile, "%f ", value);
+        out << value << " ";
       }
-      fprintf(pFile, "%f \n", wang_landau_potential[flattened_index]);
+      out << wang_landau_potential[flattened_index] << " \n";
     }
   }
-  fflush(pFile);
-  fclose(pFile);
+  out.flush();
+}
+
+/**
+ *Writes the Wang-Landau potential to file.
+ */
+void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
+    const std::string &full_path_to_output_filename) {
+  std::ofstream outfile;
+
+  outfile.open(full_path_to_output_filename);
+  if (!outfile.is_open()) {
+    throw std::runtime_error("Wang-Landau file could not be opened\n");
+  }
+
+  format_wang_landau_results(outfile);
+  outfile.close();
 }
 
 /**

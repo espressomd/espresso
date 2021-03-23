@@ -42,8 +42,10 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <limits>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -318,6 +320,7 @@ BOOST_AUTO_TEST_CASE(WangLandauReactionEnsemble_test) {
   class WangLandauReactionEnsembleTest : public WangLandauReactionEnsemble {
   public:
     using WangLandauReactionEnsemble::calculate_acceptance_probability;
+    using WangLandauReactionEnsemble::format_wang_landau_results;
     using WangLandauReactionEnsemble::WangLandauReactionEnsemble;
   };
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
@@ -378,7 +381,6 @@ BOOST_AUTO_TEST_CASE(WangLandauReactionEnsemble_test) {
     // setup input
     auto const delta_CV = 0.5;
     auto const filename_input = std::string("wl_input.dat");
-    auto const filename_output = std::string("wl_output.dat");
     std::ofstream wl_file;
     wl_file.open(filename_input);
     wl_file << "# header 1.0  0.5\n";
@@ -401,13 +403,10 @@ BOOST_AUTO_TEST_CASE(WangLandauReactionEnsemble_test) {
     BOOST_CHECK_CLOSE(r_algo.max_boundaries_energies[1], 5., tol);
     // check Wang-Landau histogram
     {
-      r_algo.write_wang_landau_results_to_file(filename_output);
-      std::ifstream outfile;
-      outfile.open(filename_output);
-      BOOST_TEST_REQUIRE(!outfile.fail(), "output file not generated");
+      std::basic_stringstream<char> outfile;
+      r_algo.format_wang_landau_results(outfile);
       std::istream_iterator<double> start(outfile), end;
       std::vector<double> flat_array(start, end);
-      outfile.close();
       BOOST_REQUIRE_EQUAL(flat_array.size(), 14ul);
       std::vector<double> bin_edges;
       std::vector<double> histogram;

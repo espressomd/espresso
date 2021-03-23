@@ -323,6 +323,7 @@ protected:
       double E_pot_new, std::map<int, int> const &old_particle_numbers,
       int old_state_index, int new_state_index,
       bool only_make_configuration_changing_move) const override;
+  void format_wang_landau_results(std::ostream &out);
 
 private:
   void on_reaction_entry(int &old_state_index) override;
