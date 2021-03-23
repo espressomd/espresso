@@ -20,22 +20,19 @@
 #include "immersed_boundary/ibm_tribend.hpp"
 
 #include "BoxGeometry.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
-#include "interactions.hpp"
 #include "particle_data.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <tuple>
 
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,
-                      Particle const &p3, Particle const &p4,
-                      Bonded_ia_parameters const &iaparams) {
+IBM_Tribend_Parameters::calc_forces(Particle const &p1, Particle const &p2,
+                                    Particle const &p3,
+                                    Particle const &p4) const {
 
   // Get vectors making up the two triangles
   auto const dx1 = get_mi_vector(p1.r.p, p3.r.p, box_geo);
@@ -67,9 +64,9 @@ IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,
   if (desc < 0)
     theta *= -1;
 
-  auto const DTh = theta - iaparams.p.ibm_tribend.theta0;
+  auto const DTh = theta - theta0;
 
-  auto Pre = iaparams.p.ibm_tribend.kb * DTh;
+  auto Pre = kb * DTh;
   // Correct version with linearized sin
   if (theta < 0)
     Pre *= -1;
@@ -91,17 +88,12 @@ IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,
   return std::make_tuple(force1, force2, force3, force4);
 }
 
-int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
-                          const int ind3, const int ind4, const double kb,
-                          const bool flat) {
-  // Create bond
-  make_bond_type_exist(bond_type);
-
-  // General parameters
-  bonded_ia_params[bond_type].type = BONDED_IA_IBM_TRIBEND;
+IBM_Tribend_Parameters::IBM_Tribend_Parameters(const int ind1, const int ind2,
+                                               const int ind3, const int ind4,
+                                               const double kb,
+                                               const bool flat) {
 
   // Compute theta0
-  double theta0;
   if (flat) {
     theta0 = 0;
   } else {
@@ -134,17 +126,10 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
       theta0 = 2.0 * Utils::pi() - theta0;
   }
 
-  bonded_ia_params[bond_type].p.ibm_tribend.theta0 = theta0;
-  // Krüger always has three partners
-  bonded_ia_params[bond_type].num = 3;
   // NOTE: This is the bare bending modulus used by the program.
   // If triangle pairs appear only once, the total bending force should get a
   // factor 2. For the numerical model, a factor sqrt(3) should be added, see
   // @cite gompper96a and @cite kruger12a. This is an approximation,
   // it holds strictly only for a sphere
-  bonded_ia_params[bond_type].p.ibm_tribend.kb = kb;
-
-  // Broadcast and return
-  mpi_bcast_ia_params(bond_type, -1);
-  return ES_OK;
+  this->kb = kb;
 }

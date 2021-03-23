@@ -27,9 +27,8 @@
  *  For more information see \ref rattle.cpp.
  */
 
-/** Number of rigid bonds. */
-extern int n_rigidbonds;
-
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/rigid_bond.hpp"
 #include "cells.hpp"
 #include "config.hpp"
 
@@ -48,9 +47,6 @@ void correct_pos_shake(CellStructure &cs);
 
 /** Correction of current velocities using RATTLE algorithm. */
 void correct_vel_shake(CellStructure &cs);
-
-/** Set the parameter for a rigid, aka RATTLE, bond. */
-int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol);
 
 #endif
 #endif

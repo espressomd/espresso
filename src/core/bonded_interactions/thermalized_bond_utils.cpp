@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2021 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -18,17 +18,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *
- *  Implementation of \ref angle_cossquare.hpp
- */
-#include "angle_cossquare.hpp"
 
-#include <cmath>
+#include "thermalized_bond_utils.hpp"
+#include "integrate.hpp"
+#include "thermalized_bond.hpp"
 
-Angle_cossquare_bond_parameters::Angle_cossquare_bond_parameters(double bend,
-                                                                 double phi0) {
-  this->bend = bend;
-  this->phi0 = phi0;
-  this->cos_phi0 = cos(phi0);
+#include "bonded_interactions/bonded_interaction_data.hpp"
+
+#include <boost/variant.hpp>
+
+void thermalized_bond_init() {
+  for (auto &bonded_ia_param : bonded_ia_params) {
+    if (auto *t = boost::get<Thermalized_bond_parameters>(&bonded_ia_param)) {
+      t->pref1_com = t->gamma_com;
+      t->pref2_com = sqrt(24.0 * t->gamma_com / time_step * t->temp_com);
+      t->pref1_dist = t->gamma_distance;
+      t->pref2_dist =
+          sqrt(24.0 * t->gamma_distance / time_step * t->temp_distance);
+    }
+  }
 }

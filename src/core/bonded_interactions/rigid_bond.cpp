@@ -20,15 +20,22 @@
  */
 /** \file
  *
- *  Implementation of \ref angle_cossquare.hpp
+ *  Implementation of \ref rigid_bond.hpp
  */
-#include "angle_cossquare.hpp"
 
-#include <cmath>
+#include "rigid_bond.hpp"
+#include "global.hpp"
 
-Angle_cossquare_bond_parameters::Angle_cossquare_bond_parameters(double bend,
-                                                                 double phi0) {
-  this->bend = bend;
-  this->phi0 = phi0;
-  this->cos_phi0 = cos(phi0);
+#include <utils/Vector.hpp>
+
+int n_rigidbonds = 0;
+
+Rigid_bond_parameters::Rigid_bond_parameters(double d, double p_tol,
+                                             double v_tol) {
+  this->d2 = d * d;
+  this->p_tol = 2.0 * p_tol;
+  this->v_tol = v_tol;
+
+  n_rigidbonds += 1;
+  mpi_bcast_parameter(FIELD_RIGIDBONDS);
 }

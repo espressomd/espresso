@@ -21,13 +21,10 @@
 
 #include "rattle.hpp"
 
-int n_rigidbonds = 0;
-
 #ifdef BOND_CONSTRAINT
 
 #include "CellStructure.hpp"
 #include "Particle.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"
@@ -82,17 +79,16 @@ static void init_correction_vector(const ParticleRange &local_particles,
  * @param p2 Second particle.
  * @return True if there was a correction.
  */
-static bool add_pos_corr_vec(Bonded_ia_parameters const &ia_params,
+static bool add_pos_corr_vec(Rigid_bond_parameters const &ia_params,
                              Particle &p1, Particle &p2) {
   auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
   auto const r_ij2 = r_ij.norm2();
 
-  if (fabs(1.0 - r_ij2 / ia_params.p.rigid_bond.d2) >
-      ia_params.p.rigid_bond.p_tol) {
+  if (fabs(1.0 - r_ij2 / ia_params.d2) > ia_params.p_tol) {
     auto const r_ij_t = get_mi_vector(p1.r.p_old, p2.r.p_old, box_geo);
     auto const r_ij_dot = r_ij_t * r_ij;
-    auto const G = 0.50 * (ia_params.p.rigid_bond.d2 - r_ij2) / r_ij_dot /
-                   (p1.p.mass + p2.p.mass);
+    auto const G =
+        0.50 * (ia_params.d2 - r_ij2) / r_ij_dot / (p1.p.mass + p2.p.mass);
 
     auto const pos_corr = G * r_ij_t;
     p1.f.f += pos_corr * p2.p.mass;
@@ -110,8 +106,8 @@ static void compute_pos_corr_vec(int *repeat_, CellStructure &cs) {
       [repeat_](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = bonded_ia_params[bond_id];
 
-        if (iaparams.type == BONDED_IA_RIGID_BOND) {
-          auto const corrected = add_pos_corr_vec(iaparams, p1, *partners[0]);
+        if (auto const *bond = boost::get<Rigid_bond_parameters>(&iaparams)) {
+          auto const corrected = add_pos_corr_vec(*bond, p1, *partners[0]);
           if (corrected)
             *repeat_ += 1;
         }
@@ -194,14 +190,14 @@ static void transfer_force_init_vel(const ParticleRange &particles,
  * @param p2 Second particle.
  * @return True if there was a correction.
  */
-static bool add_vel_corr_vec(Bonded_ia_parameters const &ia_params,
+static bool add_vel_corr_vec(Rigid_bond_parameters const &ia_params,
                              Particle &p1, Particle &p2) {
   auto const v_ij = p1.m.v - p2.m.v;
   auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
 
   auto const v_proj = v_ij * r_ij;
-  if (std::abs(v_proj) > ia_params.p.rigid_bond.v_tol) {
-    auto const K = v_proj / ia_params.p.rigid_bond.d2 / (p1.p.mass + p2.p.mass);
+  if (std::abs(v_proj) > ia_params.v_tol) {
+    auto const K = v_proj / ia_params.d2 / (p1.p.mass + p2.p.mass);
 
     auto const vel_corr = K * r_ij;
 
@@ -220,8 +216,8 @@ static void compute_vel_corr_vec(int *repeat_, CellStructure &cs) {
       [repeat_](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = bonded_ia_params[bond_id];
 
-        if (iaparams.type == BONDED_IA_RIGID_BOND) {
-          auto const corrected = add_vel_corr_vec(iaparams, p1, *partners[0]);
+        if (auto const *bond = boost::get<Rigid_bond_parameters>(&iaparams)) {
+          auto const corrected = add_vel_corr_vec(*bond, p1, *partners[0]);
           if (corrected)
             *repeat_ += 1;
         }
@@ -289,27 +285,6 @@ void correct_vel_shake(CellStructure &cs) {
     errexit();
   }
   revert_force(particles, ghost_particles);
-}
-
-/*****************************************************************************
- *   setting parameters
- *****************************************************************************/
-int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol) {
-  if (bond_type < 0)
-    return ES_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.rigid_bond.d2 = d * d;
-  bonded_ia_params[bond_type].p.rigid_bond.p_tol = 2.0 * p_tol;
-  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol;
-  bonded_ia_params[bond_type].type = BONDED_IA_RIGID_BOND;
-  bonded_ia_params[bond_type].num = 1;
-  n_rigidbonds += 1;
-  mpi_bcast_ia_params(bond_type, -1);
-  mpi_bcast_parameter(FIELD_RIGIDBONDS);
-
-  return ES_OK;
 }
 
 #endif

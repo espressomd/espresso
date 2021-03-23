@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2021 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -18,17 +18,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#ifndef THERMALIZED_BOND_UTILS_H
+#define THERMALIZED_BOND_UTILS_H
 /** \file
+ *  Initialization routine for all thermalized bonds.
  *
- *  Implementation of \ref angle_cossquare.hpp
+ *  Implementation in \ref thermalized_bond_utils.cpp.
  */
-#include "angle_cossquare.hpp"
+void thermalized_bond_init();
 
-#include <cmath>
-
-Angle_cossquare_bond_parameters::Angle_cossquare_bond_parameters(double bend,
-                                                                 double phi0) {
-  this->bend = bend;
-  this->phi0 = phi0;
-  this->cos_phi0 = cos(phi0);
-}
+#endif
