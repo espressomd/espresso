@@ -44,7 +44,9 @@
 #include <thrust/device_vector.h>
 #include <thrust/functional.h>
 #include <thrust/host_vector.h>
+#include <thrust/iterator/zip_iterator.h>
 #include <thrust/transform_reduce.h>
+#include <thrust/tuple.h>
 
 #include <cuda.h>
 #include <curand_kernel.h>
@@ -2622,18 +2624,41 @@ template <std::size_t no_of_neighbours> struct interpolation {
   }
 };
 
-// struct Stress {
-//  LB_nodes_gpu current_nodes_gpu;
-//  LB_rho_v_gpu *d_v_gpu;
-//  Stress(LB_nodes_gpu nodes, LB_rho_v_gpu *rho_v) : current_nodes_gpu(nodes),
-//  d_v_gpu(rho_v){};
-//  __device__ Utils::Array<float, 6> operator()(Utils::Array<float, 19> const
-//  &populations) {
-//    Utils::Array<float, 19> modes;
-//    calc_m_from_n(populations, modes);
-//    stress_from_stress_modes(stress_modes(d_v_gpu, modes));
-//  }
-//};
+namespace thrust {
+template <> struct plus<Utils::Array<float, 6>> {
+  __device__ Utils::Array<float, 6>
+  operator()(Utils::Array<float, 6> const &a, Utils::Array<float, 6> const &b) {
+    return {a[0] + b[0], a[1] + b[1], a[2] + b[2],
+            a[3] + b[3], a[4] + b[4], a[5] + b[5]};
+  }
+};
+} // namespace thrust
+
+struct Stress {
+  __device__ Utils::Array<float, 6>
+  operator()(thrust::tuple<Utils::Array<float, 19>, LB_rho_v_gpu> t) {
+    Utils::Array<float, 19> modes;
+    calc_m_from_n(thrust::get<0>(t), modes);
+    return stress_from_stress_modes(stress_modes(thrust::get<1>(t), modes));
+  }
+};
+
+Utils::Array<float, 6> total_stress_tensor() {
+  auto pop_begin = thrust::device_pointer_cast(current_nodes->populations);
+  auto rho_v_begin = thrust::device_pointer_cast(device_rho_v);
+  auto begin =
+      thrust::make_zip_iterator(thrust::make_tuple(pop_begin, rho_v_begin));
+
+  auto pop_end =
+      thrust::device_pointer_cast(pop_begin + lbpar_gpu.number_of_nodes);
+  auto rho_v_end =
+      thrust::device_pointer_cast(rho_v_begin + lbpar_gpu.number_of_nodes);
+  auto end = thrust::make_zip_iterator(thrust::make_tuple(pop_end, rho_v_end));
+
+  return thrust::transform_reduce(begin, end, Stress(),
+                                  Utils::Array<float, 6>{},
+                                  thrust::plus<Utils::Array<float, 6>>());
+};
 
 template <std::size_t no_of_neighbours>
 void lb_get_interpolated_velocity_gpu(double const *positions,

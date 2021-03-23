@@ -103,15 +103,6 @@ struct LB_parameters_gpu {
   float kT;
 };
 
-/** Conserved quantities for the lattice Boltzmann system. */
-struct LB_rho_v_gpu {
-
-  /** density of the node */
-  float rho;
-  /** velocity of the node */
-
-  Utils::Array<float, 3> v;
-};
 /* this structure is almost duplicated for memory efficiency. When the stress
    tensor element are needed at every timestep, this features should be
    explicitly switched on */
@@ -156,7 +147,15 @@ extern OptionalCounter rng_counter_coupling_gpu;
 /** \name Exported Functions */
 /************************************************************/
 /**@{*/
+/** Conserved quantities for the lattice Boltzmann system. */
+struct LB_rho_v_gpu {
 
+  /** density of the node */
+  float rho;
+  /** velocity of the node */
+
+  Utils::Array<float, 3> v;
+};
 void lb_GPU_sanity_checks();
 
 void lb_get_device_values_pointer(LB_rho_v_gpu **pointer_address);
