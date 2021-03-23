@@ -155,6 +155,31 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         np.testing.assert_allclose(u_dh_core, u_dh, atol=1e-7)
         np.testing.assert_allclose(f_dh_core, -f_dh, atol=1e-2)
 
+    def test_dh_pure_coulomb(self):
+        dh_params = dict(prefactor=1.2, kappa=0.0, r_cut=2.0)
+        dh = espressomd.electrostatics.DH(
+            prefactor=dh_params['prefactor'],
+            kappa=dh_params['kappa'],
+            r_cut=dh_params['r_cut'])
+
+        self.system.actors.add(dh)
+        dr = 0.001
+        r = np.arange(.5, 1.01 * dh_params['r_cut'], dr)
+        u_dh = self.calc_dh_potential(r, dh_params)
+        f_dh = u_dh / r
+
+        u_dh_core = np.zeros_like(r)
+        f_dh_core = np.zeros_like(r)
+
+        for i, ri in enumerate(r):
+            self.system.part[1].pos = self.system.part[0].pos + [ri, 0, 0]
+            self.system.integrator.run(0)
+            u_dh_core[i] = self.system.analysis.energy()['coulomb']
+            f_dh_core[i] = self.system.part[0].f[0]
+
+        np.testing.assert_allclose(u_dh_core, u_dh, atol=1e-7)
+        np.testing.assert_allclose(f_dh_core, -f_dh, atol=1e-7)
+
     def test_rf(self):
         """Tests the ReactionField coulomb interaction by comparing the
            potential and force against the analytic values"""
