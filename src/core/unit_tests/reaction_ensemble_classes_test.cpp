@@ -204,32 +204,32 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   // exception if no reaction was added
   BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
 
+  // create a reaction A -> 3 B + 4 C
+  int const type_A = 0;
+  int const type_B = 1;
+  int const type_C = 2;
+  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
+
   // check reaction addition
   {
-    // create a reaction A -> 3 B + 4 C
-    int const type_A = 0;
-    int const type_B = 1;
-    int const type_C = 2;
-    SingleReaction const ref(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
-    r_algo.add_reaction(ref.gamma, ref.reactant_types,
-                        ref.reactant_coefficients, ref.product_types,
-                        ref.product_coefficients);
+    r_algo.add_reaction(reaction.gamma, reaction.reactant_types,
+                        reaction.reactant_coefficients, reaction.product_types,
+                        reaction.product_coefficients);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 1ul);
-    auto const &reaction = r_algo.reactions[0];
-    BOOST_TEST(reaction.reactant_types == ref.reactant_types,
+    auto const &value = r_algo.reactions[0];
+    BOOST_TEST(value.reactant_types == reaction.reactant_types,
                boost::test_tools::per_element());
-    BOOST_TEST(reaction.reactant_coefficients == ref.reactant_coefficients,
+    BOOST_TEST(value.reactant_coefficients == reaction.reactant_coefficients,
                boost::test_tools::per_element());
-    BOOST_TEST(reaction.product_types == ref.product_types,
+    BOOST_TEST(value.product_types == reaction.product_types,
                boost::test_tools::per_element());
-    BOOST_TEST(reaction.product_coefficients == ref.product_coefficients,
+    BOOST_TEST(value.product_coefficients == reaction.product_coefficients,
                boost::test_tools::per_element());
-    BOOST_CHECK_EQUAL(reaction.gamma, ref.gamma);
+    BOOST_CHECK_EQUAL(value.gamma, reaction.gamma);
   }
 
   // check acceptance probability
   {
-    SingleReaction const reaction(2., {0}, {1}, {1, 2}, {3, 4});
     double probability = r_algo.calculate_acceptance_probability(
         reaction, -1., -1., {{1, 2}}, -1, -1, false);
     BOOST_CHECK_EQUAL(probability, -10.);
@@ -256,12 +256,16 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // check reaction removal
   {
-    r_algo.add_reaction(5., {1}, {1}, {2}, {1});
+    SingleReaction const new_reaction(5., {type_B}, {1}, {type_C}, {1});
+    r_algo.add_reaction(new_reaction.gamma, new_reaction.reactant_types,
+                        new_reaction.reactant_coefficients,
+                        new_reaction.product_types,
+                        new_reaction.product_coefficients);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 2ul);
-    BOOST_CHECK_EQUAL(r_algo.reactions[1].gamma, 5.);
+    BOOST_CHECK_EQUAL(r_algo.reactions[1].gamma, new_reaction.gamma);
     r_algo.delete_reaction(1);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 1ul);
-    BOOST_CHECK_EQUAL(r_algo.reactions[0].gamma, 2.);
+    BOOST_CHECK_EQUAL(r_algo.reactions[0].gamma, reaction.gamma);
     r_algo.delete_reaction(0);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 0ul);
   }
