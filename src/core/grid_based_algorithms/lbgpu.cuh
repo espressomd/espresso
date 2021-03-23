@@ -35,10 +35,39 @@
 /** Velocity densities for the lattice Boltzmann system. */
 struct LB_nodes_gpu {
   /** velocity density of the node */
-  float *populations = nullptr;
+  Utils::Array<float, 19> *populations = nullptr;
   unsigned int *boundary = nullptr;
   Utils::Array<float, 3> *boundary_velocity = nullptr;
 };
+
+template <typename T> class NodeIterator {
+public:
+  using value_type = T;
+  using pointer = T *;
+  using reference = T &;
+
+  __device__ NodeIterator(pointer ptr) : m_ptr(ptr) {}
+  __device__ reference operator*() const { return *m_ptr; }
+  __device__ pointer operator->() { return m_ptr; }
+  __device__ NodeIterator &operator++() {
+    m_ptr++;
+    return *this;
+  }
+
+  friend __device__ bool operator==(const NodeIterator &a,
+                                    const NodeIterator &b) {
+    return a.m_ptr == b.m_ptr;
+  };
+  friend __device__ bool operator!=(const NodeIterator &a,
+                                    const NodeIterator &b) {
+    return a.m_ptr != b.m_ptr;
+  };
+
+private:
+  pointer m_ptr;
+};
+
+using PopulationIterator = NodeIterator<Utils::Array<float, 19>>;
 
 struct LB_boundaries_gpu {
   /** For each fluid node this array contains either
