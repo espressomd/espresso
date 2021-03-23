@@ -39,14 +39,14 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.system.part.clear()
         self.system.actors.clear()
 
-    def calc_dh_potential(self, r, df_params):
+    def calc_dh_potential(self, r, dh_params):
         kT = 1.0
         q1, q2 = self.system.part[:].q
         u = np.zeros_like(r)
         # r<r_cut
-        i = np.where(r < df_params['r_cut'])[0]
-        u[i] = df_params['prefactor'] * kT * q1 * \
-            q2 * np.exp(-df_params['kappa'] * r[i]) / r[i]
+        i = np.where(r < dh_params['r_cut'])[0]
+        u[i] = dh_params['prefactor'] * kT * q1 * \
+            q2 * np.exp(-dh_params['kappa'] * r[i]) / r[i]
         return u
 
     def calc_rf_potential(self, r, rf_params):
