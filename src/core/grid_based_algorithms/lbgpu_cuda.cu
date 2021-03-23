@@ -243,7 +243,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
    *                2, 4/9, 4/3 )\f]
    */
   for (int i = 0; i < 19; ++i) {
-    mode[i] = calc_mode_x_from_n(n_a, index, i);
+    mode[i] = calc_mode_x_from_n(n_a.populations[index], i);
   }
 }
 
@@ -1104,10 +1104,10 @@ __device__ __inline__ float3 node_velocity(float rho_eq, LB_nodes_gpu n_a,
                        inv_lattice_speed * u[2]);
   }
 
-  auto const rho = rho_eq + calc_mode_x_from_n(n_a, index, 0);
-  return make_float3(calc_mode_x_from_n(n_a, index, 1) / rho,
-                     calc_mode_x_from_n(n_a, index, 2) / rho,
-                     calc_mode_x_from_n(n_a, index, 3) / rho);
+  auto const rho = rho_eq + calc_mode_x_from_n(n_a.populations[index], 0);
+  return make_float3(calc_mode_x_from_n(n_a.populations[index], 1) / rho,
+                     calc_mode_x_from_n(n_a.populations[index], 2) / rho,
+                     calc_mode_x_from_n(n_a.populations[index], 3) / rho);
 }
 
 __device__ __inline__ float3
@@ -2646,6 +2646,15 @@ template <std::size_t no_of_neighbours> struct interpolation {
                                   delta);
   }
 };
+// struct Stress {
+//  LB_nodes_gpu current_nodes_gpu;
+//  Stress(LB_nodes_gpu nodes) : current_nodes_gpu(nodes){};
+//  __device__ Utils::Array<float, 6> operator()(Utils::Array<float, 19> const
+//  &populations) {
+//    stress_from_stress_modes(stress_modes(d_v_single,
+//    calc_m_from_n(current_nodes_gpu,));
+//  }
+//};
 
 template <std::size_t no_of_neighbours>
 void lb_get_interpolated_velocity_gpu(double const *positions,

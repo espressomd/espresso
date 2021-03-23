@@ -69,133 +69,123 @@ private:
 
 using PopulationIterator = NodeIterator<Utils::Array<float, 19>>;
 
-__device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
-                                               unsigned int index, int x) {
+__device__ __inline__ float
+calc_mode_x_from_n(Utils::Array<float, 19> const &populations, int x) {
   switch (x) {
   case 0:
-    return n_a.populations[index][0] + n_a.populations[index][1] +
-           n_a.populations[index][2] + n_a.populations[index][3] +
-           n_a.populations[index][4] + n_a.populations[index][5] +
-           n_a.populations[index][6] + n_a.populations[index][7] +
-           n_a.populations[index][8] + n_a.populations[index][9] +
-           n_a.populations[index][10] + n_a.populations[index][11] +
-           n_a.populations[index][12] + n_a.populations[index][13] +
-           n_a.populations[index][14] + n_a.populations[index][15] +
-           n_a.populations[index][16] + n_a.populations[index][17] +
-           n_a.populations[index][18];
+    return populations[0] + populations[1] + populations[2] + populations[3] +
+           populations[4] + populations[5] + populations[6] + populations[7] +
+           populations[8] + populations[9] + populations[10] + populations[11] +
+           populations[12] + populations[13] + populations[14] +
+           populations[15] + populations[16] + populations[17] +
+           populations[18];
   case 1:
-    return (n_a.populations[index][1] - n_a.populations[index][2]) +
-           (n_a.populations[index][7] - n_a.populations[index][8]) +
-           (n_a.populations[index][9] - n_a.populations[index][10]) +
-           (n_a.populations[index][11] - n_a.populations[index][12]) +
-           (n_a.populations[index][13] - n_a.populations[index][14]);
+    return (populations[1] - populations[2]) +
+           (populations[7] - populations[8]) +
+           (populations[9] - populations[10]) +
+           (populations[11] - populations[12]) +
+           (populations[13] - populations[14]);
   case 2:
-    return (n_a.populations[index][3] - n_a.populations[index][4]) +
-           (n_a.populations[index][7] - n_a.populations[index][8]) -
-           (n_a.populations[index][9] - n_a.populations[index][10]) +
-           (n_a.populations[index][15] - n_a.populations[index][16]) +
-           (n_a.populations[index][17] - n_a.populations[index][18]);
+    return (populations[3] - populations[4]) +
+           (populations[7] - populations[8]) -
+           (populations[9] - populations[10]) +
+           (populations[15] - populations[16]) +
+           (populations[17] - populations[18]);
   case 3:
-    return (n_a.populations[index][5] - n_a.populations[index][6]) +
-           (n_a.populations[index][11] - n_a.populations[index][12]) -
-           (n_a.populations[index][13] - n_a.populations[index][14]) +
-           (n_a.populations[index][15] - n_a.populations[index][16]) -
-           (n_a.populations[index][17] - n_a.populations[index][18]);
+    return (populations[5] - populations[6]) +
+           (populations[11] - populations[12]) -
+           (populations[13] - populations[14]) +
+           (populations[15] - populations[16]) -
+           (populations[17] - populations[18]);
   case 4:
-    return -n_a.populations[index][0] + n_a.populations[index][7] +
-           n_a.populations[index][8] + n_a.populations[index][9] +
-           n_a.populations[index][10] + n_a.populations[index][11] +
-           n_a.populations[index][12] + n_a.populations[index][13] +
-           n_a.populations[index][14] + n_a.populations[index][15] +
-           n_a.populations[index][16] + n_a.populations[index][17] +
-           n_a.populations[index][18];
+    return -populations[0] + populations[7] + populations[8] + populations[9] +
+           populations[10] + populations[11] + populations[12] +
+           populations[13] + populations[14] + populations[15] +
+           populations[16] + populations[17] + populations[18];
   case 5:
-    return (n_a.populations[index][1] + n_a.populations[index][2]) -
-           (n_a.populations[index][3] + n_a.populations[index][4]) +
-           (n_a.populations[index][11] + n_a.populations[index][12]) +
-           (n_a.populations[index][13] + n_a.populations[index][14]) -
-           (n_a.populations[index][15] + n_a.populations[index][16]) -
-           (n_a.populations[index][17] + n_a.populations[index][18]);
+    return (populations[1] + populations[2]) -
+           (populations[3] + populations[4]) +
+           (populations[11] + populations[12]) +
+           (populations[13] + populations[14]) -
+           (populations[15] + populations[16]) -
+           (populations[17] + populations[18]);
   case 6:
-    return (n_a.populations[index][1] + n_a.populations[index][2]) +
-           (n_a.populations[index][3] + n_a.populations[index][4]) -
-           (n_a.populations[index][11] + n_a.populations[index][12]) -
-           (n_a.populations[index][13] + n_a.populations[index][14]) -
-           (n_a.populations[index][15] + n_a.populations[index][16]) -
-           (n_a.populations[index][17] + n_a.populations[index][18]) -
-           2.0f * ((n_a.populations[index][5] + n_a.populations[index][6]) -
-                   (n_a.populations[index][7] + n_a.populations[index][8]) -
-                   (n_a.populations[index][9] + n_a.populations[index][10]));
+    return (populations[1] + populations[2]) +
+           (populations[3] + populations[4]) -
+           (populations[11] + populations[12]) -
+           (populations[13] + populations[14]) -
+           (populations[15] + populations[16]) -
+           (populations[17] + populations[18]) -
+           2.0f * ((populations[5] + populations[6]) -
+                   (populations[7] + populations[8]) -
+                   (populations[9] + populations[10]));
   case 7:
-    return (n_a.populations[index][7] + n_a.populations[index][8]) -
-           (n_a.populations[index][9] + n_a.populations[index][10]);
+    return (populations[7] + populations[8]) -
+           (populations[9] + populations[10]);
   case 8:
-    return (n_a.populations[index][11] + n_a.populations[index][12]) -
-           (n_a.populations[index][13] + n_a.populations[index][14]);
+    return (populations[11] + populations[12]) -
+           (populations[13] + populations[14]);
   case 9:
-    return (n_a.populations[index][15] + n_a.populations[index][16]) -
-           (n_a.populations[index][17] + n_a.populations[index][18]);
+    return (populations[15] + populations[16]) -
+           (populations[17] + populations[18]);
   case 10:
-    return -2.0f * (n_a.populations[index][1] - n_a.populations[index][2]) +
-           (n_a.populations[index][7] - n_a.populations[index][8]) +
-           (n_a.populations[index][9] - n_a.populations[index][10]) +
-           (n_a.populations[index][11] - n_a.populations[index][12]) +
-           (n_a.populations[index][13] - n_a.populations[index][14]);
+    return -2.0f * (populations[1] - populations[2]) +
+           (populations[7] - populations[8]) +
+           (populations[9] - populations[10]) +
+           (populations[11] - populations[12]) +
+           (populations[13] - populations[14]);
   case 11:
-    return -2.0f * (n_a.populations[index][3] - n_a.populations[index][4]) +
-           (n_a.populations[index][7] - n_a.populations[index][8]) -
-           (n_a.populations[index][9] - n_a.populations[index][10]) +
-           (n_a.populations[index][15] - n_a.populations[index][16]) +
-           (n_a.populations[index][17] - n_a.populations[index][18]);
+    return -2.0f * (populations[3] - populations[4]) +
+           (populations[7] - populations[8]) -
+           (populations[9] - populations[10]) +
+           (populations[15] - populations[16]) +
+           (populations[17] - populations[18]);
   case 12:
-    return -2.0f * (n_a.populations[index][5] - n_a.populations[index][6]) +
-           (n_a.populations[index][11] - n_a.populations[index][12]) -
-           (n_a.populations[index][13] - n_a.populations[index][14]) +
-           (n_a.populations[index][15] - n_a.populations[index][16]) -
-           (n_a.populations[index][17] - n_a.populations[index][18]);
+    return -2.0f * (populations[5] - populations[6]) +
+           (populations[11] - populations[12]) -
+           (populations[13] - populations[14]) +
+           (populations[15] - populations[16]) -
+           (populations[17] - populations[18]);
   case 13:
-    return (n_a.populations[index][7] - n_a.populations[index][8]) +
-           (n_a.populations[index][9] - n_a.populations[index][10]) -
-           (n_a.populations[index][11] - n_a.populations[index][12]) -
-           (n_a.populations[index][13] - n_a.populations[index][14]);
+    return (populations[7] - populations[8]) +
+           (populations[9] - populations[10]) -
+           (populations[11] - populations[12]) -
+           (populations[13] - populations[14]);
   case 14:
-    return (n_a.populations[index][7] - n_a.populations[index][8]) -
-           (n_a.populations[index][9] - n_a.populations[index][10]) -
-           (n_a.populations[index][15] - n_a.populations[index][16]) -
-           (n_a.populations[index][17] - n_a.populations[index][18]);
+    return (populations[7] - populations[8]) -
+           (populations[9] - populations[10]) -
+           (populations[15] - populations[16]) -
+           (populations[17] - populations[18]);
   case 15:
-    return (n_a.populations[index][11] - n_a.populations[index][12]) -
-           (n_a.populations[index][13] - n_a.populations[index][14]) -
-           (n_a.populations[index][15] - n_a.populations[index][16]) +
-           (n_a.populations[index][17] - n_a.populations[index][18]);
+    return (populations[11] - populations[12]) -
+           (populations[13] - populations[14]) -
+           (populations[15] - populations[16]) +
+           (populations[17] - populations[18]);
   case 16:
-    return n_a.populations[index][0] + n_a.populations[index][7] +
-           n_a.populations[index][8] + n_a.populations[index][9] +
-           n_a.populations[index][10] + n_a.populations[index][11] +
-           n_a.populations[index][12] + n_a.populations[index][13] +
-           n_a.populations[index][14] + n_a.populations[index][15] +
-           n_a.populations[index][16] + n_a.populations[index][17] +
-           n_a.populations[index][18] -
-           2.0f * ((n_a.populations[index][1] + n_a.populations[index][2]) +
-                   (n_a.populations[index][3] + n_a.populations[index][4]) +
-                   (n_a.populations[index][5] + n_a.populations[index][6]));
+    return populations[0] + populations[7] + populations[8] + populations[9] +
+           populations[10] + populations[11] + populations[12] +
+           populations[13] + populations[14] + populations[15] +
+           populations[16] + populations[17] + populations[18] -
+           2.0f * ((populations[1] + populations[2]) +
+                   (populations[3] + populations[4]) +
+                   (populations[5] + populations[6]));
   case 17:
-    return -(n_a.populations[index][1] + n_a.populations[index][2]) +
-           (n_a.populations[index][3] + n_a.populations[index][4]) +
-           (n_a.populations[index][11] + n_a.populations[index][12]) +
-           (n_a.populations[index][13] + n_a.populations[index][14]) -
-           (n_a.populations[index][15] + n_a.populations[index][16]) -
-           (n_a.populations[index][17] + n_a.populations[index][18]);
+    return -(populations[1] + populations[2]) +
+           (populations[3] + populations[4]) +
+           (populations[11] + populations[12]) +
+           (populations[13] + populations[14]) -
+           (populations[15] + populations[16]) -
+           (populations[17] + populations[18]);
   case 18:
-    return -(n_a.populations[index][1] + n_a.populations[index][2]) -
-           (n_a.populations[index][3] + n_a.populations[index][4]) -
-           (n_a.populations[index][11] + n_a.populations[index][12]) -
-           (n_a.populations[index][13] + n_a.populations[index][14]) -
-           (n_a.populations[index][15] + n_a.populations[index][16]) -
-           (n_a.populations[index][17] + n_a.populations[index][18]) +
-           2.0f * ((n_a.populations[index][5] + n_a.populations[index][6]) +
-                   (n_a.populations[index][7] + n_a.populations[index][8]) +
-                   (n_a.populations[index][9] + n_a.populations[index][10]));
+    return -(populations[1] + populations[2]) -
+           (populations[3] + populations[4]) -
+           (populations[11] + populations[12]) -
+           (populations[13] + populations[14]) -
+           (populations[15] + populations[16]) -
+           (populations[17] + populations[18]) +
+           2.0f * ((populations[5] + populations[6]) +
+                   (populations[7] + populations[8]) +
+                   (populations[9] + populations[10]));
   }
   return 0.0;
 }
@@ -209,14 +199,14 @@ __device__ __inline__ void
 calc_mass_and_momentum_mode(Utils::Array<float, 4> &mode, LB_nodes_gpu n_a,
                             unsigned int node_index) {
   /* mass mode */
-  mode[0] = calc_mode_x_from_n(n_a, node_index, 0);
+  mode[0] = calc_mode_x_from_n(n_a.populations[node_index], 0);
 
   /* momentum modes */
-  mode[1] = calc_mode_x_from_n(n_a, node_index, 1);
+  mode[1] = calc_mode_x_from_n(n_a.populations[node_index], 1);
 
-  mode[2] = calc_mode_x_from_n(n_a, node_index, 2);
+  mode[2] = calc_mode_x_from_n(n_a.populations[node_index], 2);
 
-  mode[3] = calc_mode_x_from_n(n_a, node_index, 3);
+  mode[3] = calc_mode_x_from_n(n_a.populations[node_index], 3);
 }
 
 struct LB_boundaries_gpu {
