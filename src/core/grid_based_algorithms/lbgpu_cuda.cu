@@ -142,10 +142,9 @@ template <typename T> __device__ T xyz_to_index(T x, T y, T z) {
          static_cast<T>(para->dim_x) * (y + static_cast<T>(para->dim_y) * z);
 }
 
-/** Calculate modes from the velocity densities (space-transform).
- *  @param[in]  n_a     Local node residing in array a
- *  @param[in]  index   Node index / thread index
- *  @param[out] mode    Local register values mode
+/** Calculate modes from the populations (space-transform).
+ *  @param[in]  populations    Populations of one node.
+ *  @param[out] mode    Modes corresponding to given @p populations.
  */
 __device__ void calc_m_from_n(Utils::Array<float, 19> const &populations,
                               Utils::Array<float, 19> &mode) {
