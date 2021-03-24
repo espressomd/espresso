@@ -44,6 +44,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -954,17 +955,6 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
   return delta;
 }
 
-long WangLandauReactionEnsemble::get_num_needed_bins() const {
-  long needed_bins = 1;
-  // add 1 for degrees of association-related part of histogram (think of only
-  // one acid particle)
-  for (const auto &cv : collective_variables) {
-    needed_bins *=
-        static_cast<long>((cv->CV_maximum - cv->CV_minimum) / cv->delta_CV) + 1;
-  }
-  return needed_bins;
-}
-
 void WangLandauReactionEnsemble::invalidate_bins() {
   // make values in histogram and Wang-Landau potential negative if they are not
   // allowed at the given degree of association, because the energy boundaries
@@ -1020,7 +1010,16 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
   // construct (possibly higher dimensional) histogram and potential over
   // gamma (the space which should be equally sampled when the Wang-Landau
   // algorithm has converged)
-  auto const needed_bins = get_num_needed_bins();
+  // add 1 for degrees of association-related part of histogram (think of only
+  // one acid particle)
+  auto const needed_bins = std::accumulate(
+      collective_variables.begin(), collective_variables.end(), 1l,
+      [](long acc, std::shared_ptr<CollectiveVariable> const &cv) {
+        return acc * (static_cast<long>((cv->CV_maximum - cv->CV_minimum) /
+                                        cv->delta_CV) +
+                      1l);
+      });
+  assert(needed_bins >= 0);
   histogram.resize(needed_bins, 0);
   wang_landau_potential.resize(needed_bins, 0);
 

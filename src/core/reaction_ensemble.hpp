@@ -382,7 +382,6 @@ private:
   int initialize_wang_landau();
   double calculate_delta_degree_of_association(
       DegreeOfAssociationCollectiveVariable &current_collective_variable);
-  long get_num_needed_bins() const;
   void invalidate_bins();
   void reset_histogram();
   double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value,
