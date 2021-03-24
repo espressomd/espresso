@@ -72,10 +72,10 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         void add_new_CV_degree_of_association(int associated_type, double CV_minimum, double CV_maximum, vector[int] corresponding_acid_types)
         void add_new_CV_potential_energy(string filename, double delta_CV)
         int update_maximum_and_minimum_energies_at_current_state()
-        void write_out_preliminary_energy_run_results(string filename)
-        int write_wang_landau_checkpoint(string identifier)
-        int load_wang_landau_checkpoint(string identifier)
-        void write_wang_landau_results_to_file(string full_path_to_output_filename)
+        void write_out_preliminary_energy_run_results(string filename) except +
+        void write_wang_landau_checkpoint(string identifier) except +
+        void load_wang_landau_checkpoint(string identifier) except +
+        void write_wang_landau_results_to_file(string filename) except +
 
     cdef cppclass CConstantpHEnsemble "ReactionEnsemble::ConstantpHEnsemble"(CReactionAlgorithm):
         CConstantpHEnsemble(int seed)

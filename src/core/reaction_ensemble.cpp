@@ -38,10 +38,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <istream>
 #include <iterator>
 #include <limits>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -1231,19 +1233,18 @@ void WangLandauReactionEnsemble::format_wang_landau_results(std::ostream &out) {
       out << wang_landau_potential[flattened_index] << " \n";
     }
   }
-  out.flush();
 }
 
 /**
  *Writes the Wang-Landau potential to file.
  */
 void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
-    const std::string &full_path_to_output_filename) {
+    const std::string &filename) {
   std::ofstream outfile;
 
-  outfile.open(full_path_to_output_filename);
+  outfile.open(filename);
   if (!outfile.is_open()) {
-    throw std::runtime_error("Wang-Landau file could not be opened\n");
+    throw std::runtime_error("Cannot write to " + filename);
   }
 
   format_wang_landau_results(outfile);
@@ -1287,14 +1288,14 @@ int WangLandauReactionEnsemble::
  *preliminary energy reweighting run.
  */
 void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
-    const std::string &full_path_to_output_filename) {
-  FILE *pFile;
-  pFile = fopen(full_path_to_output_filename.c_str(), "w");
-  if (pFile == nullptr) {
-    throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
-  }
-  fprintf(pFile, "#nbar E_min E_max\n");
+    const std::string &filename) {
 
+  std::ofstream outfile;
+  outfile.open(filename);
+  if (!outfile.is_open()) {
+    throw std::runtime_error("Cannot write to " + filename);
+  }
+  outfile << "#nbar E_min E_max\n";
   for (std::size_t flattened_index = 0;
        flattened_index < wang_landau_potential.size(); flattened_index++) {
     // unravel index
@@ -1308,13 +1309,12 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
       auto const value = static_cast<double>(unraveled_index[i]) *
                              collective_variables[i]->delta_CV +
                          collective_variables[i]->CV_minimum;
-      fprintf(pFile, "%f ", value);
+      outfile << value << " ";
     }
-    fprintf(pFile, "%f %f \n", minimum_energies_at_flat_index[flattened_index],
-            maximum_energies_at_flat_index[flattened_index]);
+    outfile << minimum_energies_at_flat_index[flattened_index] << " "
+            << maximum_energies_at_flat_index[flattened_index] << " \n";
   }
-  fflush(pFile);
-  fclose(pFile);
+  outfile.close();
 }
 
 /**
@@ -1376,43 +1376,56 @@ int WangLandauReactionEnsemble::
  * Additionally you should store the positions of the particles.
  * Not storing them introduces small, small statistical errors.
  */
-int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
+void WangLandauReactionEnsemble::write_wang_landau_checkpoint(
     const std::string &identifier) {
+  std::string filename;
   std::ofstream outfile;
 
   // write current Wang-Landau parameters (wang_landau_parameter,
   // monte_carlo_trial_moves, flat_index_of_current_state)
-  outfile.open(std::string("checkpoint_wang_landau_parameters_") + identifier);
+  filename = std::string("checkpoint_wang_landau_parameters_") + identifier;
+  outfile.open(filename);
+  if (!outfile.is_open()) {
+    throw std::runtime_error("Cannot write to " + filename);
+  }
   outfile << wang_landau_parameter << " " << monte_carlo_trial_moves << " "
           << get_flattened_index_wang_landau_of_current_state() << "\n";
   outfile.close();
 
   // write histogram
-  outfile.open(std::string("checkpoint_wang_landau_histogram_") + identifier);
+  filename = std::string("checkpoint_wang_landau_histogram_") + identifier;
+  outfile.open(filename);
+  if (!outfile.is_open()) {
+    throw std::runtime_error("Cannot write to " + filename);
+  }
   for (int i = 0; i < wang_landau_potential.size(); i++) {
     outfile << histogram[i] << "\n";
   }
   outfile.close();
   // write Wang-Landau potential
-  outfile.open(std::string("checkpoint_wang_landau_potential_") + identifier);
+  filename = std::string("checkpoint_wang_landau_potential_") + identifier;
+  outfile.open(filename);
+  if (!outfile.is_open()) {
+    throw std::runtime_error("Cannot write to " + filename);
+  }
   for (double i : wang_landau_potential) {
     outfile << i << "\n";
   }
   outfile.close();
-  return 0;
 }
 
 /**
  *Loads the Wang-Landau checkpoint
  */
-int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
+void WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     const std::string &identifier) {
+  std::string filename;
   std::ifstream infile;
 
   // restore Wang-Landau parameters
-  infile.open(std::string("checkpoint_wang_landau_parameters_") + identifier);
+  filename = std::string("checkpoint_wang_landau_parameters_") + identifier;
+  infile.open(filename);
   if (infile.is_open()) {
-
     double wang_landau_parameter_entry;
     int wang_landau_monte_carlo_trial_moves_entry;
     int flat_index_of_state_at_checkpointing;
@@ -1426,13 +1439,12 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     }
     infile.close();
   } else {
-    throw std::runtime_error("Exception opening" +
-                             std::string("checkpoint_wang_landau_parameters_") +
-                             identifier);
+    throw std::runtime_error("Cannot read " + filename);
   }
 
   // restore histogram
-  infile.open(std::string("checkpoint_wang_landau_histogram_") + identifier);
+  filename = std::string("checkpoint_wang_landau_histogram_") + identifier;
+  infile.open(filename);
   if (infile.is_open()) {
     int hist_entry;
     int line = 0;
@@ -1442,13 +1454,12 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     }
     infile.close();
   } else {
-    throw std::runtime_error("Exception opening/ reading " +
-                             std::string("checkpoint_wang_landau_histogram_") +
-                             identifier);
+    throw std::runtime_error("Cannot read " + filename);
   }
 
   // restore Wang-Landau potential
-  infile.open(std::string("checkpoint_wang_landau_potential_") + identifier);
+  filename = std::string("checkpoint_wang_landau_potential_") + identifier;
+  infile.open(filename);
   if (infile.is_open()) {
     double wang_landau_potential_entry;
     int line = 0;
@@ -1458,16 +1469,12 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
     }
     infile.close();
   } else {
-    throw std::runtime_error("Exception opening " +
-                             std::string("checkpoint_wang_landau_potential_") +
-                             identifier);
+    throw std::runtime_error("Cannot read " + filename);
   }
 
   // possible task: restore state in which the system was when the checkpoint
   // was written. However as long as checkpointing and restoring the system form
   // the checkpoint is rare this should not matter statistically.
-
-  return 0;
 }
 
 int ConstantpHEnsemble::get_random_valid_p_id() {

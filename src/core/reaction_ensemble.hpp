@@ -27,10 +27,12 @@
 #include <utils/Vector.hpp>
 
 #include <algorithm>
+#include <istream>
 #include <iterator>
 #include <map>
 #include <memory>
 #include <numeric>
+#include <ostream>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -312,10 +314,9 @@ public:
 
   // checkpointing, only designed to reassign values of a previous simulation to
   // a new simulation with the same initialization process
-  int load_wang_landau_checkpoint(const std::string &identifier);
-  int write_wang_landau_checkpoint(const std::string &identifier);
-  void write_wang_landau_results_to_file(
-      const std::string &full_path_to_output_filename);
+  void load_wang_landau_checkpoint(const std::string &identifier);
+  void write_wang_landau_checkpoint(const std::string &identifier);
+  void write_wang_landau_results_to_file(const std::string &filename);
 
 protected:
   double calculate_acceptance_probability(
