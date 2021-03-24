@@ -109,7 +109,6 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NA /= num_samples
         average_NHA /= num_samples
         average_alpha = average_NA / float(N0)
-        print(average_alpha)
         # Note: with 40 particles, alpha=0.5 and 1000*10 reactions, standard
         # deviation of average alpha is about 0.003 (determined from 40
         # repeated simulations).  We set the desired accuracy to 5*std = 0.015
@@ -176,7 +175,6 @@ class ReactionEnsembleTest(ut.TestCase):
         RE_status = RE.get_status()
         forward_reaction = RE_status["reactions"][0]
         backward_reaction = RE_status["reactions"][1]
-        print(forward_reaction)
         self.assertEqual(
             new_reaction_constant,
             forward_reaction["gamma"],
