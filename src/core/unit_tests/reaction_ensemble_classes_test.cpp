@@ -470,27 +470,6 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(WidomInsertion_test) {
-  using namespace ReactionEnsemble;
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
-
-  // check acceptance rate
-  WidomInsertion r_algo(42);
-
-  // create a reaction A -> 3 B + 4 C
-  int const type_A = 0;
-  int const type_B = 1;
-  int const type_C = 2;
-  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
-  r_algo.add_reaction(reaction.gamma, reaction.reactant_types,
-                      reaction.reactant_coefficients, reaction.product_types,
-                      reaction.product_coefficients);
-
-  // exception if not enough particles
-  BOOST_CHECK_THROW(r_algo.measure_excess_chemical_potential(0),
-                    std::runtime_error);
-}
-
 int main(int argc, char **argv) {
   auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
   Communication::init(mpi_env);
