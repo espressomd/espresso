@@ -34,6 +34,7 @@
 #include <boost/range/algorithm.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -51,19 +52,13 @@
 
 namespace ReactionEnsemble {
 
-/** Save minimum and maximum energies as a function of the other collective
- *  variables under min_boundaries_energies, max_boundaries_energies
+/** Load minimum and maximum energies as a function of the other collective
+ *  variables.
  */
 void EnergyCollectiveVariable::load_CV_boundaries(
-    WangLandauReactionEnsemble &wl_system) {
+    WangLandauReactionEnsemble &wl_system, std::istream &infile) {
 
   wl_system.do_energy_reweighting = true;
-  // load energy boundaries from file
-  std::ifstream infile;
-  infile.open(energy_boundaries_filename);
-  if (!infile.is_open())
-    throw std::runtime_error("energy boundaries file for the specific "
-                             "system could not be read.\n");
 
   // Note that you cannot change the other collective variables in the
   // pre-production run and the production run
@@ -81,9 +76,8 @@ void EnergyCollectiveVariable::load_CV_boundaries(
       values.push_back(value);
     }
     assert(values.size() >= 2);
-    auto it = values.end();
-    wl_system.max_boundaries_energies.push_back(*(--it));
-    wl_system.min_boundaries_energies.push_back(*(--it));
+    wl_system.max_boundaries_energies.emplace_back(values.back());
+    wl_system.min_boundaries_energies.emplace_back(values[values.size() - 2]);
   }
 
   CV_minimum = *boost::range::min_element(wl_system.min_boundaries_energies);
@@ -805,14 +799,28 @@ void WangLandauReactionEnsemble::add_new_CV_degree_of_association(
  * Wang-Landau sampling
  */
 void WangLandauReactionEnsemble::add_new_CV_potential_energy(
-    const std::string &filename, double delta_CV) {
+    std::istream &infile, double delta_CV) {
   std::shared_ptr<EnergyCollectiveVariable> new_collective_variable =
       std::make_shared<EnergyCollectiveVariable>();
-  new_collective_variable->energy_boundaries_filename = filename;
   new_collective_variable->delta_CV = delta_CV;
-  new_collective_variable->load_CV_boundaries(*this);
+  new_collective_variable->load_CV_boundaries(*this, infile);
   collective_variables.emplace_back(new_collective_variable);
   initialize_wang_landau();
+}
+
+/**
+ * Adds a new collective variable (CV) of the type potential energy to the
+ * Wang-Landau sampling
+ */
+void WangLandauReactionEnsemble::add_new_CV_potential_energy(
+    const std::string &filename, double delta_CV) {
+  std::ifstream infile;
+  infile.open(filename);
+  if (!infile.is_open()) {
+    throw std::runtime_error("Cannot read " + filename);
+  }
+  add_new_CV_potential_energy(infile, delta_CV);
+  infile.close();
 }
 
 /**

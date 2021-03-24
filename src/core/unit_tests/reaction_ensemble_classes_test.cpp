@@ -40,8 +40,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <fstream>
-#include <iostream>
+#include <istream>
 #include <iterator>
 #include <limits>
 #include <memory>
@@ -384,16 +383,14 @@ BOOST_AUTO_TEST_CASE(WangLandauReactionEnsemble_test) {
     using namespace boost::adaptors;
     // setup input
     auto const delta_CV = 0.5;
-    auto const filename_input = std::string("wl_input.dat");
-    std::ofstream wl_file;
-    wl_file.open(filename_input);
+    std::basic_stringstream<char> wl_file;
     wl_file << "# header 1.0  0.5\n";
     wl_file << "0  1.0  4.0\n";
     wl_file << "1\t2.0\t5.0\n";
-    wl_file.close();
+    wl_file.flush();
     r_algo.do_energy_reweighting = false;
     // add collective variable
-    r_algo.add_new_CV_potential_energy(filename_input, delta_CV);
+    r_algo.add_new_CV_potential_energy(wl_file, delta_CV);
     BOOST_REQUIRE_EQUAL(r_algo.collective_variables.size(), 1ul);
     BOOST_REQUIRE_EQUAL(r_algo.min_boundaries_energies.size(), 2ul);
     BOOST_REQUIRE_EQUAL(r_algo.max_boundaries_energies.size(), 2ul);

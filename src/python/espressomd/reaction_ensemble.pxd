@@ -70,7 +70,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         vector[double] maximum_energies_at_flat_index
         bool do_not_sample_reaction_partition_function
         void add_new_CV_degree_of_association(int associated_type, double CV_minimum, double CV_maximum, vector[int] corresponding_acid_types)
-        void add_new_CV_potential_energy(string filename, double delta_CV)
+        void add_new_CV_potential_energy(string filename, double delta_CV) except +
         int update_maximum_and_minimum_energies_at_current_state()
         void write_out_preliminary_energy_run_results(string filename) except +
         void write_wang_landau_checkpoint(string identifier) except +

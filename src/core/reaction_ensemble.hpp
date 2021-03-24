@@ -94,11 +94,11 @@ struct CollectiveVariable {
 class WangLandauReactionEnsemble;
 
 struct EnergyCollectiveVariable : public CollectiveVariable {
-  std::string energy_boundaries_filename;
   double determine_current_state() const override {
     return calculate_current_potential_energy_of_system();
   }
-  void load_CV_boundaries(WangLandauReactionEnsemble &wl_system);
+  void load_CV_boundaries(WangLandauReactionEnsemble &wl_system,
+                          std::istream &infile);
 };
 
 /** Measure the degree of association of a chemical species.
@@ -295,6 +295,7 @@ public:
       const std::vector<int> &_corresponding_acid_types);
   void add_new_CV_potential_energy(const std::string &filename,
                                    double delta_CV);
+  void add_new_CV_potential_energy(std::istream &infile, double delta_CV);
   std::vector<std::shared_ptr<CollectiveVariable>> collective_variables;
 
   std::string output_filename = "";
