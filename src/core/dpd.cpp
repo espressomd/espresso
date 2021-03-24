@@ -92,17 +92,6 @@ void dpd_init() {
   }
 }
 
-void dpd_update_params(double pref_scale) {
-  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
-    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
-      IA_parameters &ia_params = *get_ia_param(type_a, type_b);
-
-      ia_params.dpd_radial.pref *= pref_scale;
-      ia_params.dpd_trans.pref *= pref_scale;
-    }
-  }
-}
-
 static double weight(int type, double r_cut, double k, double r) {
   if (type == 0) {
     return 1.;

@@ -172,7 +172,6 @@ cdef extern from "particle_data.hpp":
 
     IF EXCLUSIONS:
         int change_exclusion(int part, int part2, int _delete)
-        void remove_all_exclusions()
 
     IF ENGINE:
         void set_particle_swimming(int part, particle_parameters_swimming swim)

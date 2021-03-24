@@ -42,18 +42,12 @@ IF NPT:
                                               cbool xdir_rescale, cbool ydir_rescale,
                                               cbool zdir_rescale, cbool cubic_box) except +
 
-cdef extern from "stokesian_dynamics/sd_interface.hpp":
-    IF STOKESIAN_DYNAMICS:
-        void set_sd_viscosity(double eta) except +
-        double get_sd_viscosity()
-
-        void set_sd_radius_dict(const unordered_map[int, double] & radius_dict) except +
-        unordered_map[int, double] get_sd_radius_dict()
-
-        void set_sd_flags(int flg)
-        int get_sd_flags()
-
 IF STOKESIAN_DYNAMICS:
+    cdef extern from "stokesian_dynamics/sd_interface.hpp":
+        void set_sd_viscosity(double eta) except +
+        void set_sd_radius_dict(const unordered_map[int, double] & radius_dict) except +
+        void set_sd_flags(int flg)
+
     cpdef enum flags:
         NONE = 0,
         SELF_MOBILITY = 1 << 0,

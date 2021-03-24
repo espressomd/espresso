@@ -38,9 +38,9 @@ class TestCylindricalObservable(ut.TestCase):
     params = {
         'ids': None,
         'transform_params': cyl_transform_params,
-        'n_r_bins': 4,  
+        'n_r_bins': 4,
         'n_phi_bins': 3,
-        'n_z_bins': 4,  
+        'n_z_bins': 4,
         'min_r': 0.0,
         'min_phi': -np.pi,
         'min_z': -5.0,
@@ -59,8 +59,8 @@ class TestCylindricalObservable(ut.TestCase):
     def calc_ellipsis_pos_vel(
             self, n_part, z_min, z_max, semi_x=1., semi_y=1.):
         """
-        Calculate positions on an elliptical corkscrew line. 
-        Calculate cartesian velocities that lead to a 
+        Calculate positions on an elliptical corkscrew line.
+        Calculate cartesian velocities that lead to a
         constant velocity in cylindrical coordinates
         """
 
@@ -101,10 +101,10 @@ class TestCylindricalObservable(ut.TestCase):
     def setup_system_get_np_hist(self):
         """
         Pick positions and velocities in the original box frame
-        and calculate the np histogram. 
-        Then rotate and move the positions and velocities 
-        to the frame of the observables. 
-        After calculating the core observables, the result should be 
+        and calculate the np histogram.
+        Then rotate and move the positions and velocities
+        to the frame of the observables.
+        After calculating the core observables, the result should be
         the same as the np histogram obtained from the original box frame.
         """
 
@@ -145,7 +145,7 @@ class TestCylindricalObservable(ut.TestCase):
 
     def test_density_profile(self):
         """
-        Check that the result from the observable (in its own frame) 
+        Check that the result from the observable (in its own frame)
         matches the np result from the box frame
         """
         np_dens, np_edges = self.setup_system_get_np_hist()
@@ -158,7 +158,7 @@ class TestCylindricalObservable(ut.TestCase):
 
     def test_vel_profile(self):
         """
-        Check that the result from the observable (in its own frame) 
+        Check that the result from the observable (in its own frame)
         matches the np result from the box frame
         """
         np_dens, np_edges = self.setup_system_get_np_hist()
@@ -173,14 +173,14 @@ class TestCylindricalObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(
             np_hist_binary * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(
-            np_hist_binary * self.v_phi, core_hist_v_phi)        
+            np_hist_binary * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(
             np_hist_binary * self.v_z, core_hist_v_z)
         self.check_edges(cyl_vel_prof, np_edges)
 
     def test_flux_density_profile(self):
         """
-        Check that the result from the observable (in its own frame) 
+        Check that the result from the observable (in its own frame)
         matches the np result from the box frame
         """
         np_dens, np_edges = self.setup_system_get_np_hist()

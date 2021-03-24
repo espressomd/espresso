@@ -253,26 +253,6 @@ __device__ unsigned int rhoindex_cartesian2linear_padded(unsigned int x,
          y * ek_parameters_gpu->dim_x_padded + x;
 }
 
-__device__ void jindex_linear2cartesian(unsigned int index, unsigned int *coord,
-                                        unsigned int *c) {
-
-  coord[0] = index % ek_parameters_gpu->dim_x;
-  index /= ek_parameters_gpu->dim_x;
-  coord[1] = index % ek_parameters_gpu->dim_y;
-  index /= ek_parameters_gpu->dim_y;
-  coord[2] = index % ek_parameters_gpu->dim_z;
-  *c = index / ek_parameters_gpu->dim_z;
-}
-
-__device__ unsigned int jindex_cartesian2linear(unsigned int x, unsigned int y,
-                                                unsigned int z,
-                                                unsigned int c) {
-
-  return c * ek_parameters_gpu->number_of_nodes +
-         z * ek_parameters_gpu->dim_y * ek_parameters_gpu->dim_x +
-         y * ek_parameters_gpu->dim_x + x;
-}
-
 // TODO fluxindex fastest running might improve caching
 __device__ unsigned int jindex_getByRhoLinear(unsigned int rho_index,
                                               unsigned int c) {
@@ -290,7 +270,8 @@ __device__ void ek_displacement(float *dx, LB_nodes_gpu n,
   float mode[19];
 
   for (unsigned i = 0; i < 19; i++) {
-    mode[i] = n.vd[i * ek_lbparameters_gpu->number_of_nodes + node_index];
+    mode[i] =
+        n.populations[i * ek_lbparameters_gpu->number_of_nodes + node_index];
   }
 
   rho += mode[0] + mode[1] + mode[2] + mode[3] + mode[4] + mode[5] + mode[6] +
@@ -2503,7 +2484,6 @@ void rhoindex_linear2cartesian_host(unsigned int index, unsigned int *coord) {
 
 unsigned int jindex_cartesian2linear_host(unsigned int x, unsigned int y,
                                           unsigned int z, unsigned int c) {
-  // this does not happen in the GPU version of this function
   x = (x + ek_parameters.dim_x) % ek_parameters.dim_x;
   y = (y + ek_parameters.dim_y) % ek_parameters.dim_y;
   z = (z + ek_parameters.dim_z) % ek_parameters.dim_z;

@@ -360,21 +360,6 @@ class ScriptObjectRegistry(ScriptInterfaceHelper):
     def __len__(self):
         return self.call_method("size")
 
-    def __reduce__(self):
-        res = []
-        for item in self.__iter__():
-            res.append(item)
-
-        return (_unpickle_script_object_registry,
-                (self._so_name, self.get_params(), res))
-
-
-def _unpickle_script_object_registry(so_name, params, items):
-    so = _python_class_by_so_name[so_name](**params)
-    for item in items:
-        so.add(item)
-    return so
-
 
 # Map from script object names to their corresponding python classes
 _python_class_by_so_name = {}
@@ -398,7 +383,7 @@ def script_interface_register(c):
 cdef void init(MpiCallbacks & cb):
     cdef Factory[ObjectHandle] f
 
-    initialize( & f)
+    initialize(& f)
 
     global _om
     _om = make_shared[ContextManager](cb, f)

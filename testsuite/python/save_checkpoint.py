@@ -244,7 +244,8 @@ if espressomd.has_features('DP3M') and 'DP3M' in modes:
         tune=False)
     system.actors.add(dp3m)
 
-if espressomd.has_features('SCAFACOS') and 'SCAFACOS' in modes:
+if espressomd.has_features('SCAFACOS') and 'SCAFACOS' in modes \
+        and 'p3m' in espressomd.scafacos.available_methods():
     system.actors.add(espressomd.electrostatics.Scafacos(
         prefactor=0.5,
         method_name="p3m",
@@ -254,7 +255,8 @@ if espressomd.has_features('SCAFACOS') and 'SCAFACOS' in modes:
             "p3m_cao": 7,
             "p3m_alpha": 2.084652}))
 
-if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes:
+if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
+        and 'p2nfft' in espressomd.scafacos.available_methods():
     system.actors.add(espressomd.magnetostatics.Scafacos(
         prefactor=1.2,
         method_name='p2nfft',

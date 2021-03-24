@@ -47,9 +47,9 @@ class CylindricalLBObservableCommon:
     params = {
         'ids': None,
         'transform_params': cyl_transform_params,
-        'n_r_bins': 4, 
-        'n_phi_bins': 3, 
-        'n_z_bins': 5,  
+        'n_r_bins': 4,
+        'n_phi_bins': 3,
+        'n_z_bins': 5,
         'min_r': 0.0,
         'min_phi': -np.pi,
         'min_z': -6.0,
@@ -64,12 +64,12 @@ class CylindricalLBObservableCommon:
 
     def calc_vel_at_pos(self, positions):
         """
-        In cylindrical coordinates, all velocities are the same. 
-        In cartesian they depend on the position. 
+        In cylindrical coordinates, all velocities are the same.
+        In cartesian they depend on the position.
         The cartesian velocities are calculated here.
         """
 
-        vels = [] 
+        vels = []
         for pos in positions:
             e_r, e_phi, e_z = tests_common.get_cylindrical_basis_vectors(pos)
             velocity = self.v_r * e_r + self.v_phi * e_phi + self.v_z * e_z
@@ -78,7 +78,7 @@ class CylindricalLBObservableCommon:
 
     def align_with_observable_frame(self, vec):
         """
-        Rotate vectors from the original box frame to 
+        Rotate vectors from the original box frame to
         the frame of the observables.
         """
 
@@ -92,10 +92,10 @@ class CylindricalLBObservableCommon:
 
     def setup_system_get_np_hist(self):
         """
-        Pick positions and velocities in the original box frame and 
-        calculate the np histogram. Then rotate and move the positions 
-        and velocities to the frame of the observables. 
-        After calculating the core observables, the result should be 
+        Pick positions and velocities in the original box frame and
+        calculate the np histogram. Then rotate and move the positions
+        and velocities to the frame of the observables.
+        After calculating the core observables, the result should be
         the same as the np histogram obtained from the original box frame.
         """
 
@@ -130,7 +130,7 @@ class CylindricalLBObservableCommon:
                 np.array(pos_aligned) -
                 3 *
                 [0.5]),
-            dtype=int)   
+            dtype=int)
         self.system.part.add(pos=pos_aligned, v=vel_aligned)
         self.params['ids'] = self.system.part[:].id
 
@@ -160,7 +160,7 @@ class CylindricalLBObservableCommon:
         np.testing.assert_array_almost_equal(
             np_hist_binary * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(
-            np_hist_binary * self.v_phi, core_hist_v_phi)        
+            np_hist_binary * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(
             np_hist_binary * self.v_z, core_hist_v_z)
         self.check_edges(vel_obs, np_edges)
@@ -240,7 +240,7 @@ class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
 
     def test_cylindrical_lb_flux_density_obs(self):
         """
-        Check that the result from the observable (in its own frame) 
+        Check that the result from the observable (in its own frame)
         matches the np result from the box frame.
         Only for CPU because density interpolation is not implemented for GPU LB.
         """

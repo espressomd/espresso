@@ -74,60 +74,60 @@ __device__ void Calc_m_from_n_IBM(const LB_nodes_gpu n_a,
                                   const LB_parameters_gpu *const paraP) {
   const LB_parameters_gpu &para = *paraP;
   // mass mode
-  mode[0] = n_a.vd[0 * para.number_of_nodes + index] +
-            n_a.vd[1 * para.number_of_nodes + index] +
-            n_a.vd[2 * para.number_of_nodes + index] +
-            n_a.vd[3 * para.number_of_nodes + index] +
-            n_a.vd[4 * para.number_of_nodes + index] +
-            n_a.vd[5 * para.number_of_nodes + index] +
-            n_a.vd[6 * para.number_of_nodes + index] +
-            n_a.vd[7 * para.number_of_nodes + index] +
-            n_a.vd[8 * para.number_of_nodes + index] +
-            n_a.vd[9 * para.number_of_nodes + index] +
-            n_a.vd[10 * para.number_of_nodes + index] +
-            n_a.vd[11 * para.number_of_nodes + index] +
-            n_a.vd[12 * para.number_of_nodes + index] +
-            n_a.vd[13 * para.number_of_nodes + index] +
-            n_a.vd[14 * para.number_of_nodes + index] +
-            n_a.vd[15 * para.number_of_nodes + index] +
-            n_a.vd[16 * para.number_of_nodes + index] +
-            n_a.vd[17 * para.number_of_nodes + index] +
-            n_a.vd[18 * para.number_of_nodes + index];
+  mode[0] = n_a.populations[0 * para.number_of_nodes + index] +
+            n_a.populations[1 * para.number_of_nodes + index] +
+            n_a.populations[2 * para.number_of_nodes + index] +
+            n_a.populations[3 * para.number_of_nodes + index] +
+            n_a.populations[4 * para.number_of_nodes + index] +
+            n_a.populations[5 * para.number_of_nodes + index] +
+            n_a.populations[6 * para.number_of_nodes + index] +
+            n_a.populations[7 * para.number_of_nodes + index] +
+            n_a.populations[8 * para.number_of_nodes + index] +
+            n_a.populations[9 * para.number_of_nodes + index] +
+            n_a.populations[10 * para.number_of_nodes + index] +
+            n_a.populations[11 * para.number_of_nodes + index] +
+            n_a.populations[12 * para.number_of_nodes + index] +
+            n_a.populations[13 * para.number_of_nodes + index] +
+            n_a.populations[14 * para.number_of_nodes + index] +
+            n_a.populations[15 * para.number_of_nodes + index] +
+            n_a.populations[16 * para.number_of_nodes + index] +
+            n_a.populations[17 * para.number_of_nodes + index] +
+            n_a.populations[18 * para.number_of_nodes + index];
 
   // momentum modes
 
-  mode[1] = (n_a.vd[1 * para.number_of_nodes + index] -
-             n_a.vd[2 * para.number_of_nodes + index]) +
-            (n_a.vd[7 * para.number_of_nodes + index] -
-             n_a.vd[8 * para.number_of_nodes + index]) +
-            (n_a.vd[9 * para.number_of_nodes + index] -
-             n_a.vd[10 * para.number_of_nodes + index]) +
-            (n_a.vd[11 * para.number_of_nodes + index] -
-             n_a.vd[12 * para.number_of_nodes + index]) +
-            (n_a.vd[13 * para.number_of_nodes + index] -
-             n_a.vd[14 * para.number_of_nodes + index]);
+  mode[1] = (n_a.populations[1 * para.number_of_nodes + index] -
+             n_a.populations[2 * para.number_of_nodes + index]) +
+            (n_a.populations[7 * para.number_of_nodes + index] -
+             n_a.populations[8 * para.number_of_nodes + index]) +
+            (n_a.populations[9 * para.number_of_nodes + index] -
+             n_a.populations[10 * para.number_of_nodes + index]) +
+            (n_a.populations[11 * para.number_of_nodes + index] -
+             n_a.populations[12 * para.number_of_nodes + index]) +
+            (n_a.populations[13 * para.number_of_nodes + index] -
+             n_a.populations[14 * para.number_of_nodes + index]);
 
-  mode[2] = (n_a.vd[3 * para.number_of_nodes + index] -
-             n_a.vd[4 * para.number_of_nodes + index]) +
-            (n_a.vd[7 * para.number_of_nodes + index] -
-             n_a.vd[8 * para.number_of_nodes + index]) -
-            (n_a.vd[9 * para.number_of_nodes + index] -
-             n_a.vd[10 * para.number_of_nodes + index]) +
-            (n_a.vd[15 * para.number_of_nodes + index] -
-             n_a.vd[16 * para.number_of_nodes + index]) +
-            (n_a.vd[17 * para.number_of_nodes + index] -
-             n_a.vd[18 * para.number_of_nodes + index]);
+  mode[2] = (n_a.populations[3 * para.number_of_nodes + index] -
+             n_a.populations[4 * para.number_of_nodes + index]) +
+            (n_a.populations[7 * para.number_of_nodes + index] -
+             n_a.populations[8 * para.number_of_nodes + index]) -
+            (n_a.populations[9 * para.number_of_nodes + index] -
+             n_a.populations[10 * para.number_of_nodes + index]) +
+            (n_a.populations[15 * para.number_of_nodes + index] -
+             n_a.populations[16 * para.number_of_nodes + index]) +
+            (n_a.populations[17 * para.number_of_nodes + index] -
+             n_a.populations[18 * para.number_of_nodes + index]);
 
-  mode[3] = (n_a.vd[5 * para.number_of_nodes + index] -
-             n_a.vd[6 * para.number_of_nodes + index]) +
-            (n_a.vd[11 * para.number_of_nodes + index] -
-             n_a.vd[12 * para.number_of_nodes + index]) -
-            (n_a.vd[13 * para.number_of_nodes + index] -
-             n_a.vd[14 * para.number_of_nodes + index]) +
-            (n_a.vd[15 * para.number_of_nodes + index] -
-             n_a.vd[16 * para.number_of_nodes + index]) -
-            (n_a.vd[17 * para.number_of_nodes + index] -
-             n_a.vd[18 * para.number_of_nodes + index]);
+  mode[3] = (n_a.populations[5 * para.number_of_nodes + index] -
+             n_a.populations[6 * para.number_of_nodes + index]) +
+            (n_a.populations[11 * para.number_of_nodes + index] -
+             n_a.populations[12 * para.number_of_nodes + index]) -
+            (n_a.populations[13 * para.number_of_nodes + index] -
+             n_a.populations[14 * para.number_of_nodes + index]) +
+            (n_a.populations[15 * para.number_of_nodes + index] -
+             n_a.populations[16 * para.number_of_nodes + index]) -
+            (n_a.populations[17 * para.number_of_nodes + index] -
+             n_a.populations[18 * para.number_of_nodes + index]);
 }
 
 __global__ void

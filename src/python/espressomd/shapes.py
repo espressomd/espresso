@@ -271,7 +271,7 @@ class Union(Shape, ScriptObjectRegistry):
 
         def _add(self, shape):
             if isinstance(shape, Shape):
-                self.call_method("add", shape=shape)
+                self.call_method("add", object=shape)
             else:
                 raise ValueError("Only shapes can be added.")
 
@@ -294,7 +294,7 @@ class Union(Shape, ScriptObjectRegistry):
 
         def _remove(self, shape):
             if isinstance(shape, Shape):
-                self.call_method("remove", shape=shape)
+                self.call_method("remove", object=shape)
             else:
                 raise ValueError("Only shapes can be removed.")
         if isinstance(shape, collections.abc.Iterable):
