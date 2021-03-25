@@ -2623,19 +2623,20 @@ template <std::size_t no_of_neighbours> struct interpolation {
   }
 };
 
-namespace thrust {
-template <> struct plus<Utils::Array<float, 6>> {
+struct Plus : public thrust::binary_function<Utils::Array<float, 6>,
+                                             Utils::Array<float, 6>,
+                                             Utils::Array<float, 6>> {
+
   __device__ Utils::Array<float, 6>
   operator()(Utils::Array<float, 6> const &a, Utils::Array<float, 6> const &b) {
     return {a[0] + b[0], a[1] + b[1], a[2] + b[2],
             a[3] + b[3], a[4] + b[4], a[5] + b[5]};
   }
 };
-} // namespace thrust
 
 struct Stress {
-  __device__ Utils::Array<float, 6>
-  operator()(thrust::tuple<Utils::Array<float, 19>, LB_rho_v_gpu> t) {
+  template <typename T>
+  __device__ Utils::Array<float, 6> operator()(T const &t) const {
     Utils::Array<float, 19> modes;
     calc_m_from_n(thrust::get<0>(t), modes);
     return stress_from_stress_modes(stress_modes(thrust::get<1>(t), modes));
@@ -2655,8 +2656,7 @@ Utils::Array<float, 6> stress_tensor_GPU() {
   auto end = thrust::make_zip_iterator(thrust::make_tuple(pop_end, rho_v_end));
 
   return thrust::transform_reduce(begin, end, Stress(),
-                                  Utils::Array<float, 6>{},
-                                  thrust::plus<Utils::Array<float, 6>>());
+                                  Utils::Array<float, 6>{}, Plus());
 };
 
 template <std::size_t no_of_neighbours>
