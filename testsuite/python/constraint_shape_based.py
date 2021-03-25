@@ -152,7 +152,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         probe_pos = CENTER + [5-LENGTH/2.,-sys.float_info.epsilon,sys.float_info.epsilon]
         d_vec_expected = 5/2 * np.array([1,1,0]) 
         dist = shape.calc_distance(position = probe_pos)
-        #self.assertAlmostEqual(dist[0],np.linalg.norm(d_vec_expected))
+        self.assertAlmostEqual(dist[0],np.linalg.norm(d_vec_expected))
         np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
                                                     
 
