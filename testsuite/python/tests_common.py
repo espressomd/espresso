@@ -628,9 +628,6 @@ def count_fluid_nodes(lbf):
     return fluid_nodes
 
 
-<< << << < HEAD
-
-
 def fold_index(idx, shape):
     """Fold index into the range 0<x<shape"""
 
@@ -664,9 +661,6 @@ def get_lb_nodes_around_pos(pos, lbf):
     return res
 
 
-== == == =
-
-
 def random_dipoles(n_particles):
     """Generate random dipoles by sampling Euler angles uniformly at random."""
     cos_theta = 2 * np.random.random(n_particles) - 1
@@ -676,6 +670,3 @@ def random_dipoles(n_particles):
                     sin_theta * np.sin(phi),
                     cos_theta]).T
     return dip
-
-
->>>>>> > b6fa1a96eba80543880c1b3b46d4b38cf1cbf818

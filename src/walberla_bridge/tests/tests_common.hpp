@@ -115,10 +115,13 @@ std::vector<Utils::Vector3i> local_nodes_incl_ghosts(
   std::vector<Utils::Vector3i> res;
   auto const left = local_domain.first;
   auto const right = local_domain.second;
-  for (int x = left[0] - n_ghost_layers; x < right[0] + n_ghost_layers; x++) {
-    for (int y = left[1] - n_ghost_layers; y < right[1] + n_ghost_layers; y++) {
-      for (int z = left[2] - n_ghost_layers; z < right[2] + n_ghost_layers;
-           z++) {
+
+  for (int x = static_cast<int>(left[0]) - n_ghost_layers;
+       x < static_cast<int>(right[0]) + n_ghost_layers; x++) {
+    for (int y = static_cast<int>(left[1]) - n_ghost_layers;
+         y < static_cast<int>(right[1]) + n_ghost_layers; y++) {
+      for (int z = static_cast<int>(left[2]) - n_ghost_layers;
+           z < static_cast<int>(right[2]) + n_ghost_layers; z++) {
         res.push_back(Utils::Vector3i{x, y, z});
       }
     }
