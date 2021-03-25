@@ -23,7 +23,7 @@
 #include <utils/Vector.hpp>
 
 /** Parameters for IBM volume conservation bond */
-struct IBM_VolCons_Parameters {
+struct IBMVolCons {
   /** ID of the large soft particle to which this node belongs */
   int softID;
   /** Reference volume */
@@ -35,8 +35,8 @@ struct IBM_VolCons_Parameters {
 
   static constexpr int num = 0;
 
-  IBM_VolCons_Parameters() = default;
-  IBM_VolCons_Parameters(int softID, double kappaV);
+  IBMVolCons() = default;
+  IBMVolCons(int softID, double kappaV);
 
 private:
   friend boost::serialization::access;

@@ -33,7 +33,7 @@
  *  @param p           particle to check for the bond
  *  @param p_partner   possible bond partner
  *  @tparam BondType   Bond type to check for. Must be of one of the types in
- *                     @ref Bonded_ia_parameters.
+ *                     @ref Bonded_IA_Parameters.
  */
 template <typename BondType>
 inline bool pair_bond_enum_exists_on(Particle const &p,
@@ -50,7 +50,7 @@ inline bool pair_bond_enum_exists_on(Particle const &p,
  *  @param p1     particle on which the bond may be stored
  *  @param p2     particle on which the bond may be stored
  *  @tparam BondType Bond type to check for. Must be of one of the types in
- *                @ref Bonded_ia_parameters.
+ *                @ref Bonded_IA_Parameters.
  */
 template <typename BondType>
 inline bool pair_bond_enum_exists_between(Particle const &p1,
@@ -69,7 +69,7 @@ inline bool pair_bond_enum_exists_between(Particle const &p1,
  *  @param bond_id  ID of the bond to be set. If the bond ID doesn't exist yet,
  *                  it will be created.
  *  @param iaparams Bond to be set.
- *  @tparam BondType One of the types in @ref Bonded_ia_parameters.
+ *  @tparam BondType One of the types in @ref Bonded_IA_Parameters.
  */
 template <typename BondType>
 void set_bonded_ia_params(int bond_id, BondType const &iaparams) {

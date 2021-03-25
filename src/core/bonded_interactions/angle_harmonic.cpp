@@ -24,8 +24,7 @@
  */
 #include "angle_harmonic.hpp"
 
-Angle_harmonic_bond_parameters::Angle_harmonic_bond_parameters(double bend,
-                                                               double phi0) {
+AngleHarmonicBond::AngleHarmonicBond(double bend, double phi0) {
   this->bend = bend;
   this->phi0 = phi0;
 }

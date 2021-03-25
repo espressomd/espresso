@@ -27,7 +27,7 @@
 
 #include <utils/math/sqr.hpp>
 
-Fene_bond_parameters::Fene_bond_parameters(double k, double drmax, double r0) {
+FeneBond::FeneBond(double k, double drmax, double r0) {
   this->k = k;
   this->drmax = drmax;
   this->r0 = r0;

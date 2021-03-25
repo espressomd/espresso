@@ -307,63 +307,63 @@ IF TABULATED:
                                  vector[double] force)
 
     cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
-        cdef cppclass Tabulated_bond_parameters:
-            Tabulated_bond_parameters()
-            Tabulated_bond_parameters(double min, double max,
-                                      const vector[double] & energy,
-                                      const vector[double] & force) except +
+        cdef cppclass CoreTabulatedBond "TabulatedBond":
+            CoreTabulatedBond()
+            CoreTabulatedBond(double min, double max,
+                              const vector[double] & energy,
+                              const vector[double] & force) except +
             shared_ptr[TabulatedPotential] pot
 
-        cdef cppclass Tabulated_distance_bond_parameters(Tabulated_bond_parameters):
-            Tabulated_distance_bond_parameters()
-            Tabulated_distance_bond_parameters(double min, double max,
-                                               const vector[double] & energy,
-                                               const vector[double] & force) except +
+        cdef cppclass CoreTabulatedDistanceBond "TabulatedDistanceBond"(CoreTabulatedBond):
+            CoreTabulatedDistanceBond()
+            CoreTabulatedDistanceBond(double min, double max,
+                                      const vector[double] & energy,
+                                      const vector[double] & force) except +
 
-        cdef cppclass Tabulated_angle_bond_parameters(Tabulated_bond_parameters):
-            Tabulated_angle_bond_parameters()
-            Tabulated_angle_bond_parameters(double min, double max,
-                                            const vector[double] & energy,
-                                            const vector[double] & force) except +
+        cdef cppclass CoreTabulatedAngleBond "TabulatedAngleBond"(CoreTabulatedBond):
+            CoreTabulatedAngleBond()
+            CoreTabulatedAngleBond(double min, double max,
+                                   const vector[double] & energy,
+                                   const vector[double] & force) except +
 
-        cdef cppclass Tabulated_dihedral_bond_parameters(Tabulated_bond_parameters):
-            Tabulated_dihedral_bond_parameters()
-            Tabulated_dihedral_bond_parameters(double min, double max,
-                                               const vector[double] & energy,
-                                               const vector[double] & force) except +
+        cdef cppclass CoreTabulatedDihedralBond "TabulatedDihedralBond"(CoreTabulatedBond):
+            CoreTabulatedDihedralBond()
+            CoreTabulatedDihedralBond(double min, double max,
+                                      const vector[double] & energy,
+                                      const vector[double] & force) except +
 
 IF ELECTROSTATICS:
     cdef extern from "bonded_interactions/bonded_coulomb.hpp":
-        cdef cppclass Bonded_coulomb_bond_parameters:
-            Bonded_coulomb_bond_parameters()
-            Bonded_coulomb_bond_parameters(double prefactor)
+        cdef cppclass CoreBondedCoulomb "BondedCoulomb":
+            CoreBondedCoulomb()
+            CoreBondedCoulomb(double prefactor)
             double prefactor
 
     cdef extern from "bonded_interactions/bonded_coulomb_sr.hpp":
-        cdef cppclass Bonded_coulomb_sr_bond_parameters:
-            Bonded_coulomb_sr_bond_parameters()
-            Bonded_coulomb_sr_bond_parameters(double q1q2)
+        cdef cppclass CoreBondedCoulombSR "BondedCoulombSR":
+            CoreBondedCoulombSR()
+            CoreBondedCoulombSR(double q1q2)
             double q1q2
 
 ELSE:
-    cdef struct Bonded_coulomb_bond_parameters:
+    cdef struct CoreBondedCoulomb:
         double prefactor
 
-    cdef struct Bonded_coulomb_sr_bond_parameters:
+    cdef struct CoreBondedCoulombSR:
         double q1q2
 
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
-    cdef struct None_bond_parameters:
+    cdef struct CoreNoneBond "NoneBond":
         pass
 
-    cdef struct VirtualBond_Parameters:
+    cdef struct CoreVirtualBond "VirtualBond":
         pass
 
     # Parameters for FENE bond
-    cdef cppclass Fene_bond_parameters:
-        Fene_bond_parameters()
-        Fene_bond_parameters(double k, double drmax, double r0)
+    cdef cppclass CoreFeneBond "FeneBond":
+        CoreFeneBond()
+        CoreFeneBond(double k, double drmax, double r0)
         double k
         double drmax
         double r0
@@ -371,22 +371,22 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double drmax2i
 
     # Parameters for oif_global_forces
-    cdef cppclass Oif_global_forces_bond_parameters:
-        Oif_global_forces_bond_parameters()
-        Oif_global_forces_bond_parameters(double A0_g, double ka_g,
-                                          double V0, double kv)
+    cdef cppclass CoreOifGlobalForcesBond "OifGlobalForcesBond":
+        CoreOifGlobalForcesBond()
+        CoreOifGlobalForcesBond(double A0_g, double ka_g,
+                                double V0, double kv)
         double A0_g
         double ka_g
         double V0
         double kv
 
     # Parameters for oif_local_forces
-    cdef cppclass Oif_local_forces_bond_parameters:
-        Oif_local_forces_bond_parameters()
-        Oif_local_forces_bond_parameters(double r0, double ks,
-                                         double kslin, double phi0, double kb,
-                                         double A01, double A02, double kal,
-                                         double kvisc)
+    cdef cppclass CoreOifLocalForcesBond "OifLocalForcesBond":
+        CoreOifLocalForcesBond()
+        CoreOifLocalForcesBond(double r0, double ks,
+                               double kslin, double phi0, double kb,
+                               double A01, double A02, double kal,
+                               double kvisc)
         double r0
         double ks
         double kslin
@@ -398,19 +398,19 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double kvisc
 
     # Parameters for harmonic bond Potential
-    cdef cppclass Harmonic_bond_parameters:
-        Harmonic_bond_parameters()
-        Harmonic_bond_parameters(double k, double r, double r_cut)
+    cdef cppclass CoreHarmonicBond "HarmonicBond":
+        CoreHarmonicBond()
+        CoreHarmonicBond(double k, double r, double r_cut)
         double k
         double r
         double r_cut
 
     # Parameters for thermalized  bond
-    cdef cppclass Thermalized_bond_parameters:
-        Thermalized_bond_parameters()
-        Thermalized_bond_parameters(double temp_com,
-                                    double gamma_com, double temp_distance,
-                                    double gamma_distance, double r_cut)
+    cdef cppclass CoreThermalizedBond "ThermalizedBond":
+        CoreThermalizedBond()
+        CoreThermalizedBond(double temp_com,
+                            double gamma_com, double temp_distance,
+                            double gamma_distance, double r_cut)
         double temp_com
         double gamma_com
         double temp_distance
@@ -418,41 +418,41 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double r_cut
 
     # Parameters for three body angular potential (bond_angle_harmonic).
-    cdef cppclass Angle_harmonic_bond_parameters:
-        Angle_harmonic_bond_parameters()
-        Angle_harmonic_bond_parameters(double bend, double phi0)
+    cdef cppclass CoreAngleHarmonicBond "AngleHarmonicBond":
+        CoreAngleHarmonicBond()
+        CoreAngleHarmonicBond(double bend, double phi0)
         double bend
         double phi0
 
     # Parameters for three body angular potential (bond_angle_cosine).
-    cdef cppclass Angle_cosine_bond_parameters:
-        Angle_cosine_bond_parameters()
-        Angle_cosine_bond_parameters(double bend, double phi0)
+    cdef cppclass CoreAngleCosineBond "AngleCosineBond":
+        CoreAngleCosineBond()
+        CoreAngleCosineBond(double bend, double phi0)
         double bend
         double phi0
         double cos_phi0
         double sin_phi0
 
     # Parameters for three body angular potential (bond_angle_cossquare).
-    cdef cppclass Angle_cossquare_bond_parameters:
-        Angle_cossquare_bond_parameters()
-        Angle_cossquare_bond_parameters(double bend, double phi0)
+    cdef cppclass CoreAngleCossquareBond "AngleCossquareBond":
+        CoreAngleCossquareBond()
+        CoreAngleCossquareBond(double bend, double phi0)
         double bend
         double phi0
         double cos_phi0
 
     # Parameters for four body angular potential (dihedral-angle potentials).
-    cdef cppclass Dihedral_bond_parameters:
-        Dihedral_bond_parameters()
-        Dihedral_bond_parameters(int mult, double bend, double phase)
+    cdef cppclass CoreDihedralBond "DihedralBond":
+        CoreDihedralBond()
+        CoreDihedralBond(int mult, double bend, double phase)
         double mult
         double bend
         double phase
 
     # Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM
-    cdef cppclass Rigid_bond_parameters:
-        Rigid_bond_parameters()
-        Rigid_bond_parameters(double d, double p_tol, double v_tol)
+    cdef cppclass CoreRigidBond "RigidBond":
+        CoreRigidBond()
+        CoreRigidBond(double d, double p_tol, double v_tol)
         # Length of rigid bond/Constrained Bond
         # double d
         # Square of the length of Constrained Bond
@@ -468,11 +468,11 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef cppclass tElasticLaw:
         pass
 
-    cdef cppclass IBM_Triel_Parameters:
-        IBM_Triel_Parameters()
-        IBM_Triel_Parameters(int ind1, int ind2, int ind3,
-                             double maxDist, tElasticLaw elasticLaw, double k1,
-                             double k2)
+    cdef cppclass CoreIBMTriel "IBMTriel":
+        CoreIBMTriel()
+        CoreIBMTriel(int ind1, int ind2, int ind3,
+                     double maxDist, tElasticLaw elasticLaw, double k1,
+                     double k2)
         double l0
         double lp0
         double sinPhi0
@@ -488,25 +488,25 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double k2
 
     # Parameters for IBM Tribend
-    cdef cppclass IBM_Tribend_Parameters:
-        IBM_Tribend_Parameters()
-        IBM_Tribend_Parameters(int ind1, int ind2, int ind3, int ind4,
-                               double kb, cbool flat)
+    cdef cppclass CoreIBMTribend "IBMTribend":
+        CoreIBMTribend()
+        CoreIBMTribend(int ind1, int ind2, int ind3, int ind4,
+                       double kb, cbool flat)
         double kb
         double theta0
 
     # Parameters for IBM VolCons
-    cdef cppclass IBM_VolCons_Parameters:
-        IBM_VolCons_Parameters()
-        IBM_VolCons_Parameters(int softID, double kappaV)
+    cdef cppclass CoreIBMVolCons "IBMVolCons":
+        CoreIBMVolCons()
+        CoreIBMVolCons(int softID, double kappaV)
         int softID
         double kappaV
         double volRef
 
     # Parameters for Quartic
-    cdef cppclass Quartic_bond_parameters:
-        Quartic_bond_parameters()
-        Quartic_bond_parameters(double k0, double k1, double r, double r_cut)
+    cdef cppclass CoreQuarticBond "QuarticBond":
+        CoreQuarticBond()
+        CoreQuarticBond(double k0, double k1, double r, double r_cut)
         double k0, k1
         double r
         double r_cut

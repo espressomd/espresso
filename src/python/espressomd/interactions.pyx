@@ -1907,14 +1907,14 @@ class FeneBond(BondedInteraction):
         self._params = {"r_0": 0.}
 
     def _get_params_from_es_core(self):
-        cdef Fene_bond_parameters p_fene = bonded_ia_params_at[Fene_bond_parameters](self._bond_id)
+        cdef CoreFeneBond p_fene = bonded_ia_params_at[CoreFeneBond](self._bond_id)
         return {"k": p_fene.k, "d_r_max": p_fene.drmax, "r_0": p_fene.r0}
 
     def _set_params_in_es_core(self):
         set_bonded_ia_params(
-            self._bond_id, Fene_bond_parameters(self._params["k"],
-                                                self._params["d_r_max"],
-                                                self._params["r_0"]))
+            self._bond_id, CoreFeneBond(self._params["k"],
+                                        self._params["d_r_max"],
+                                        self._params["r_0"]))
 
 
 class HarmonicBond(BondedInteraction):
@@ -1964,15 +1964,15 @@ class HarmonicBond(BondedInteraction):
         self._params = {"r_cut": 0.}
 
     def _get_params_from_es_core(self):
-        cdef Harmonic_bond_parameters p_harmonic = bonded_ia_params_at[Harmonic_bond_parameters](self._bond_id)
+        cdef CoreHarmonicBond p_harmonic = bonded_ia_params_at[CoreHarmonicBond](self._bond_id)
         return {"k": p_harmonic.k, "r_0": p_harmonic.r,
                 "r_cut": p_harmonic.r_cut}
 
     def _set_params_in_es_core(self):
         set_bonded_ia_params(
-            self._bond_id, Harmonic_bond_parameters(self._params["k"],
-                                                    self._params["r_0"],
-                                                    self._params["r_cut"]))
+            self._bond_id, CoreHarmonicBond(self._params["k"],
+                                            self._params["r_0"],
+                                            self._params["r_cut"]))
 
 
 if ELECTROSTATICS:
@@ -2008,12 +2008,12 @@ if ELECTROSTATICS:
             self._params = {}
 
         def _get_params_from_es_core(self):
-            return {"prefactor": bonded_ia_params_at[Bonded_coulomb_bond_parameters](
+            return {"prefactor": bonded_ia_params_at[CoreBondedCoulomb](
                 self._bond_id).prefactor}
 
         def _set_params_in_es_core(self):
             set_bonded_ia_params(
-                self._bond_id, Bonded_coulomb_bond_parameters(self._params["prefactor"]))
+                self._bond_id, CoreBondedCoulomb(self._params["prefactor"]))
 
 if ELECTROSTATICS:
 
@@ -2052,12 +2052,12 @@ if ELECTROSTATICS:
 
         def _get_params_from_es_core(self):
             return \
-                {"q1q2": bonded_ia_params_at[Bonded_coulomb_sr_bond_parameters](
+                {"q1q2": bonded_ia_params_at[CoreBondedCoulombSR](
                     self._bond_id).q1q2}
 
         def _set_params_in_es_core(self):
             set_bonded_ia_params(
-                self._bond_id, Bonded_coulomb_sr_bond_parameters(self._params["q1q2"]))
+                self._bond_id, CoreBondedCoulombSR(self._params["q1q2"]))
 
 
 class ThermalizedBond(BondedInteraction):
@@ -2120,8 +2120,8 @@ class ThermalizedBond(BondedInteraction):
         self._params = {"r_cut": 0., "seed": None}
 
     def _get_params_from_es_core(self):
-        cdef Thermalized_bond_parameters p_thermalized \
-            = bonded_ia_params_at[Thermalized_bond_parameters](self._bond_id)
+        cdef CoreThermalizedBond p_thermalized \
+            = bonded_ia_params_at[CoreThermalizedBond](self._bond_id)
         return \
             {"temp_com": p_thermalized.temp_com,
              "gamma_com": p_thermalized.gamma_com,
@@ -2143,9 +2143,9 @@ class ThermalizedBond(BondedInteraction):
             thermalized_bond_set_rng_seed(self.params["seed"])
 
         set_bonded_ia_params(
-            self._bond_id, Thermalized_bond_parameters(self._params["temp_com"],
-                                                       self._params["gamma_com"], self._params["temp_distance"],
-                                                       self._params["gamma_distance"], self._params["r_cut"]))
+            self._bond_id, CoreThermalizedBond(self._params["temp_com"],
+                                               self._params["gamma_com"], self._params["temp_distance"],
+                                               self._params["gamma_distance"], self._params["r_cut"]))
 
 
 IF THOLE:
@@ -2257,14 +2257,14 @@ IF BOND_CONSTRAINT == 1:
                             "vtol": 0.001}
 
         def _get_params_from_es_core(self):
-            cdef Rigid_bond_parameters p_rigid = bonded_ia_params_at[Rigid_bond_parameters](self._bond_id)
+            cdef CoreRigidBond p_rigid = bonded_ia_params_at[CoreRigidBond](self._bond_id)
             return {"r": p_rigid.d2**0.5,
                     "ptol": p_rigid.p_tol, "vtol": p_rigid.v_tol}
 
         def _set_params_in_es_core(self):
             set_bonded_ia_params(
-                self._bond_id, Rigid_bond_parameters(self._params["r"], self._params["ptol"],
-                                                     self._params["vtol"]))
+                self._bond_id, CoreRigidBond(self._params["r"], self._params["ptol"],
+                                             self._params["vtol"]))
 ELSE:
     class RigidBond(BondedInteractionNotDefined):
         name = "RIGID"
@@ -2314,14 +2314,14 @@ class Dihedral(BondedInteraction):
         self._params = {}
 
     def _get_params_from_es_core(self):
-        cdef Dihedral_bond_parameters p_dihedral = bonded_ia_params_at[Dihedral_bond_parameters](self._bond_id)
+        cdef CoreDihedralBond p_dihedral = bonded_ia_params_at[CoreDihedralBond](self._bond_id)
         return {"mult": p_dihedral.mult,
                 "bend": p_dihedral.bend, "phase": p_dihedral.phase}
 
     def _set_params_in_es_core(self):
         set_bonded_ia_params(
-            self._bond_id, Dihedral_bond_parameters(self._params["mult"],
-                                                    self._params["bend"], self._params["phase"]))
+            self._bond_id, CoreDihedralBond(self._params["mult"],
+                                            self._params["bend"], self._params["phase"]))
 
 
 IF TABULATED:
@@ -2413,7 +2413,7 @@ IF TABULATED:
             pass
 
         def _get_params_from_es_core(self):
-            cdef Tabulated_distance_bond_parameters p = bonded_ia_params_at[Tabulated_distance_bond_parameters](self._bond_id)
+            cdef CoreTabulatedDistanceBond p = bonded_ia_params_at[CoreTabulatedDistanceBond](self._bond_id)
             return {"min": dereference(p.pot).minval,
                     "max": dereference(p.pot).maxval,
                     "energy": dereference(p.pot).energy_tab,
@@ -2422,7 +2422,7 @@ IF TABULATED:
 
         def _set_params_in_es_core(self):
             set_bonded_ia_params(
-                self._bond_id, Tabulated_distance_bond_parameters(
+                self._bond_id, CoreTabulatedDistanceBond(
                     self._params["min"],
                     self._params["max"],
                     self._params["energy"],
@@ -2471,7 +2471,7 @@ IF TABULATED:
                                  f"within the range [0, pi], got {phi}")
 
         def _get_params_from_es_core(self):
-            cdef Tabulated_angle_bond_parameters p = bonded_ia_params_at[Tabulated_angle_bond_parameters](self._bond_id)
+            cdef CoreTabulatedAngleBond p = bonded_ia_params_at[CoreTabulatedAngleBond](self._bond_id)
             return {"min": dereference(p.pot).minval,
                     "max": dereference(p.pot).maxval,
                     "energy": dereference(p.pot).energy_tab,
@@ -2480,7 +2480,7 @@ IF TABULATED:
 
         def _set_params_in_es_core(self):
             set_bonded_ia_params(
-                self._bond_id, Tabulated_angle_bond_parameters(
+                self._bond_id, CoreTabulatedAngleBond(
                     self._params["min"],
                     self._params["max"],
                     self._params["energy"],
@@ -2529,7 +2529,7 @@ IF TABULATED:
                                  f"within the range [0, 2*pi], got {phi}")
 
         def _get_params_from_es_core(self):
-            cdef Tabulated_dihedral_bond_parameters p = bonded_ia_params_at[Tabulated_dihedral_bond_parameters](self._bond_id)
+            cdef CoreTabulatedDihedralBond p = bonded_ia_params_at[CoreTabulatedDihedralBond](self._bond_id)
             return {"min": dereference(p.pot).minval,
                     "max": dereference(p.pot).maxval,
                     "energy": dereference(p.pot).energy_tab,
@@ -2538,7 +2538,7 @@ IF TABULATED:
 
         def _set_params_in_es_core(self):
             set_bonded_ia_params(
-                self._bond_id, Tabulated_dihedral_bond_parameters(
+                self._bond_id, CoreTabulatedDihedralBond(
                     self._params["min"],
                     self._params["max"],
                     self._params["energy"],
@@ -2666,7 +2666,7 @@ class Virtual(BondedInteraction):
         return {}
 
     def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, VirtualBond_Parameters())
+        set_bonded_ia_params(self._bond_id, CoreVirtualBond())
 
 
 class AngleHarmonic(BondedInteraction):
@@ -2711,14 +2711,14 @@ class AngleHarmonic(BondedInteraction):
         self._params = {}
 
     def _get_params_from_es_core(self):
-        cdef Angle_harmonic_bond_parameters p_angle_harmonic \
-            = bonded_ia_params_at[Angle_harmonic_bond_parameters](self._bond_id)
+        cdef CoreAngleHarmonicBond p_angle_harmonic \
+            = bonded_ia_params_at[CoreAngleHarmonicBond](self._bond_id)
         return \
             {"bend": p_angle_harmonic.bend,
              "phi0": p_angle_harmonic.phi0}
 
     def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, Angle_harmonic_bond_parameters(
+        set_bonded_ia_params(self._bond_id, CoreAngleHarmonicBond(
             self._params["bend"], self._params["phi0"]))
 
 
@@ -2764,14 +2764,14 @@ class AngleCosine(BondedInteraction):
         self._params = {}
 
     def _get_params_from_es_core(self):
-        cdef Angle_cosine_bond_parameters p_cosine_harmonic \
-            = bonded_ia_params_at[Angle_cosine_bond_parameters](self._bond_id)
+        cdef CoreAngleCosineBond p_cosine_harmonic \
+            = bonded_ia_params_at[CoreAngleCosineBond](self._bond_id)
         return \
             {"bend": p_cosine_harmonic.bend,
              "phi0": p_cosine_harmonic.phi0}
 
     def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, Angle_cosine_bond_parameters(
+        set_bonded_ia_params(self._bond_id, CoreAngleCosineBond(
             self._params["bend"], self._params["phi0"]))
 
 
@@ -2817,13 +2817,13 @@ class AngleCossquare(BondedInteraction):
         self._params = {}
 
     def _get_params_from_es_core(self):
-        cdef Angle_cossquare_bond_parameters p_cossquare_harmonic \
-            = bonded_ia_params_at[Angle_cossquare_bond_parameters](self._bond_id)
+        cdef CoreAngleCossquareBond p_cossquare_harmonic \
+            = bonded_ia_params_at[CoreAngleCossquareBond](self._bond_id)
         return {"bend": p_cossquare_harmonic.bend,
                 "phi0": p_cossquare_harmonic.phi0}
 
     def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, Angle_cossquare_bond_parameters(
+        set_bonded_ia_params(self._bond_id, CoreAngleCossquareBond(
             self._params["bend"], self._params["phi0"]))
 
 
@@ -2869,8 +2869,8 @@ class IBM_Triel(BondedInteraction):
         self._params = {"k2": 0}
 
     def _get_params_from_es_core(self):
-        cdef IBM_Triel_Parameters p_ibm_triel \
-            = bonded_ia_params_at[IBM_Triel_Parameters](self._bond_id)
+        cdef CoreIBMTriel p_ibm_triel \
+            = bonded_ia_params_at[CoreIBMTriel](self._bond_id)
         return \
             {"maxDist": p_ibm_triel.maxDist,
              "k1": p_ibm_triel.k1,
@@ -2883,7 +2883,7 @@ class IBM_Triel(BondedInteraction):
             el = NeoHookean
         if self._params["elasticLaw"] == "Skalak":
             el = Skalak
-        set_bonded_ia_params(self._bond_id, IBM_Triel_Parameters(
+        set_bonded_ia_params(self._bond_id, CoreIBMTriel(
             self._params["ind1"], self._params["ind2"],
             self._params["ind3"], self._params["maxDist"], el,
             self._params["k1"], self._params["k2"]))
@@ -2927,8 +2927,8 @@ class IBM_Tribend(BondedInteraction):
         self._params = {"refShape": "Flat"}
 
     def _get_params_from_es_core(self):
-        cdef IBM_Tribend_Parameters p_ibm_tribend \
-            = bonded_ia_params_at[IBM_Tribend_Parameters](self._bond_id)
+        cdef CoreIBMTribend p_ibm_tribend \
+            = bonded_ia_params_at[CoreIBMTribend](self._bond_id)
         return {"kb": p_ibm_tribend.kb, "theta0": p_ibm_tribend.theta0}
 
     def _set_params_in_es_core(self):
@@ -2936,7 +2936,7 @@ class IBM_Tribend(BondedInteraction):
             flat = True
         if self._params["refShape"] == "Initial":
             flat = False
-        set_bonded_ia_params(self._bond_id, IBM_Tribend_Parameters(
+        set_bonded_ia_params(self._bond_id, CoreIBMTribend(
             self._params["ind1"],
             self._params["ind2"], self._params["ind3"],
             self._params["ind4"], self._params["kb"], flat))
@@ -2979,13 +2979,13 @@ class IBM_VolCons(BondedInteraction):
         self._params = {}
 
     def _get_params_from_es_core(self):
-        cdef IBM_VolCons_Parameters p_ibm_volconst \
-            = bonded_ia_params_at[IBM_VolCons_Parameters](self._bond_id)
+        cdef CoreIBMVolCons p_ibm_volconst \
+            = bonded_ia_params_at[CoreIBMVolCons](self._bond_id)
         return {"softID": p_ibm_volconst.softID,
                 "kappaV": p_ibm_volconst.kappaV}
 
     def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, IBM_VolCons_Parameters(
+        set_bonded_ia_params(self._bond_id, CoreIBMVolCons(
             self._params["softID"], self._params["kappaV"]))
 
 
@@ -3038,8 +3038,8 @@ class OifGlobalForces(BondedInteraction):
         self._params = {}
 
     def _get_params_from_es_core(self):
-        cdef Oif_global_forces_bond_parameters p_oif_global_forces \
-            = bonded_ia_params_at[Oif_global_forces_bond_parameters](self._bond_id)
+        cdef CoreOifGlobalForcesBond p_oif_global_forces \
+            = bonded_ia_params_at[CoreOifGlobalForcesBond](self._bond_id)
         return \
             {"A0_g": p_oif_global_forces.A0_g,
              "ka_g": p_oif_global_forces.ka_g,
@@ -3047,7 +3047,7 @@ class OifGlobalForces(BondedInteraction):
              "kv": p_oif_global_forces.kv}
 
     def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, Oif_global_forces_bond_parameters(
+        set_bonded_ia_params(self._bond_id, CoreOifGlobalForcesBond(
             self._params["A0_g"], self._params["ka_g"], self._params["V0"], self._params["kv"]))
 
 
@@ -3111,8 +3111,8 @@ class OifLocalForces(BondedInteraction):
         self._params = {}
 
     def _get_params_from_es_core(self):
-        cdef Oif_local_forces_bond_parameters p_oif_local_forces \
-            = bonded_ia_params_at[Oif_local_forces_bond_parameters](self._bond_id)
+        cdef CoreOifLocalForcesBond p_oif_local_forces \
+            = bonded_ia_params_at[CoreOifLocalForcesBond](self._bond_id)
         return \
             {"r0": p_oif_local_forces.r0,
              "ks": p_oif_local_forces.ks,
@@ -3125,7 +3125,7 @@ class OifLocalForces(BondedInteraction):
              "kvisc": p_oif_local_forces.kvisc}
 
     def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, Oif_local_forces_bond_parameters(
+        set_bonded_ia_params(self._bond_id, CoreOifLocalForcesBond(
             self._params["r0"], self._params["ks"],
             self._params["kslin"], self._params["phi0"], self._params["kb"],
             self._params["A01"], self._params["A02"], self._params["kal"],
@@ -3180,8 +3180,8 @@ class QuarticBond(BondedInteraction):
         self._params = {}
 
     def _get_params_from_es_core(self):
-        cdef Quartic_bond_parameters p_quartic \
-            = bonded_ia_params_at[Quartic_bond_parameters](self._bond_id)
+        cdef CoreQuarticBond p_quartic \
+            = bonded_ia_params_at[CoreQuarticBond](self._bond_id)
         return \
             {"k0": p_quartic.k0,
              "k1": p_quartic.k1,
@@ -3189,7 +3189,7 @@ class QuarticBond(BondedInteraction):
              "r_cut": p_quartic.r_cut}
 
     def _set_params_in_es_core(self):
-        set_bonded_ia_params(self._bond_id, Quartic_bond_parameters(
+        set_bonded_ia_params(self._bond_id, CoreQuarticBond(
             self._params["k0"], self._params["k1"], self._params["r"], self._params["r_cut"]))
 
 

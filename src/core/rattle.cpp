@@ -79,8 +79,8 @@ static void init_correction_vector(const ParticleRange &local_particles,
  * @param p2 Second particle.
  * @return True if there was a correction.
  */
-static bool add_pos_corr_vec(Rigid_bond_parameters const &ia_params,
-                             Particle &p1, Particle &p2) {
+static bool add_pos_corr_vec(RigidBond const &ia_params, Particle &p1,
+                             Particle &p2) {
   auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
   auto const r_ij2 = r_ij.norm2();
 
@@ -106,7 +106,7 @@ static void compute_pos_corr_vec(int *repeat_, CellStructure &cs) {
       [repeat_](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = bonded_ia_params[bond_id];
 
-        if (auto const *bond = boost::get<Rigid_bond_parameters>(&iaparams)) {
+        if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
           auto const corrected = add_pos_corr_vec(*bond, p1, *partners[0]);
           if (corrected)
             *repeat_ += 1;
@@ -190,8 +190,8 @@ static void transfer_force_init_vel(const ParticleRange &particles,
  * @param p2 Second particle.
  * @return True if there was a correction.
  */
-static bool add_vel_corr_vec(Rigid_bond_parameters const &ia_params,
-                             Particle &p1, Particle &p2) {
+static bool add_vel_corr_vec(RigidBond const &ia_params, Particle &p1,
+                             Particle &p2) {
   auto const v_ij = p1.m.v - p2.m.v;
   auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
 
@@ -216,7 +216,7 @@ static void compute_vel_corr_vec(int *repeat_, CellStructure &cs) {
       [repeat_](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = bonded_ia_params[bond_id];
 
-        if (auto const *bond = boost::get<Rigid_bond_parameters>(&iaparams)) {
+        if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
           auto const corrected = add_vel_corr_vec(*bond, p1, *partners[0]);
           if (corrected)
             *repeat_ += 1;

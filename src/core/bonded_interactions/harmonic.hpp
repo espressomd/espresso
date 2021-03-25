@@ -34,7 +34,7 @@
 #include <boost/optional.hpp>
 
 /** Parameters for harmonic bond Potential */
-struct Harmonic_bond_parameters {
+struct HarmonicBond {
   /** spring constant */
   double k;
   /** equilibrium bond length */
@@ -46,8 +46,8 @@ struct Harmonic_bond_parameters {
 
   static constexpr int num = 1;
 
-  Harmonic_bond_parameters() = default;
-  Harmonic_bond_parameters(double k, double r, double r_cut);
+  HarmonicBond() = default;
+  HarmonicBond(double k, double r, double r_cut);
 
   boost::optional<Utils::Vector3d> pair_force(Utils::Vector3d const &dx) const;
   boost::optional<double> pair_energy(Utils::Vector3d const &dx) const;
@@ -66,7 +66,7 @@ private:
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-Harmonic_bond_parameters::pair_force(Utils::Vector3d const &dx) const {
+HarmonicBond::pair_force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if ((r_cut > 0.0) && (dist > r_cut)) {
@@ -87,7 +87,7 @@ Harmonic_bond_parameters::pair_force(Utils::Vector3d const &dx) const {
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-Harmonic_bond_parameters::pair_energy(Utils::Vector3d const &dx) const {
+HarmonicBond::pair_energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if ((r_cut > 0.0) && (dist > r_cut)) {

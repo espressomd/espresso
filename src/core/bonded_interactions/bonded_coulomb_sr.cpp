@@ -26,9 +26,6 @@
 
 #ifdef ELECTROSTATICS
 
-Bonded_coulomb_sr_bond_parameters::Bonded_coulomb_sr_bond_parameters(
-    double q1q2) {
-  this->q1q2 = q1q2;
-}
+BondedCoulombSR::BondedCoulombSR(double q1q2) { this->q1q2 = q1q2; }
 
 #endif

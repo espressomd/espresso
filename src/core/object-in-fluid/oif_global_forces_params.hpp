@@ -26,7 +26,7 @@
  *  Characterize the distribution of the force of the global mesh deformation
  *  onto individual vertices of the mesh.
  */
-struct Oif_global_forces_bond_parameters {
+struct OifGlobalForcesBond {
   /** Relaxed area of the mesh */
   double A0_g;
   /** Area coefficient */
@@ -40,9 +40,8 @@ struct Oif_global_forces_bond_parameters {
 
   static constexpr int num = 2;
 
-  Oif_global_forces_bond_parameters() = default;
-  Oif_global_forces_bond_parameters(double A0_g, double ka_g, double V0,
-                                    double kv) {
+  OifGlobalForcesBond() = default;
+  OifGlobalForcesBond(double A0_g, double ka_g, double V0, double kv) {
     this->ka_g = ka_g;
     this->A0_g = A0_g;
     this->V0 = V0;

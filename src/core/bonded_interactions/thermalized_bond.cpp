@@ -31,11 +31,9 @@
 
 int n_thermalized_bonds = 0;
 
-Thermalized_bond_parameters::Thermalized_bond_parameters(double temp_com,
-                                                         double gamma_com,
-                                                         double temp_distance,
-                                                         double gamma_distance,
-                                                         double r_cut) {
+ThermalizedBond::ThermalizedBond(double temp_com, double gamma_com,
+                                 double temp_distance, double gamma_distance,
+                                 double r_cut) {
   this->temp_com = temp_com;
   this->gamma_com = gamma_com;
   this->temp_distance = temp_distance;

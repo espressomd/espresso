@@ -36,7 +36,7 @@
 #include <cmath>
 
 /** Parameters for %Coulomb bond Potential */
-struct Bonded_coulomb_bond_parameters {
+struct BondedCoulomb {
   /** %Coulomb prefactor */
   double prefactor;
 
@@ -44,8 +44,8 @@ struct Bonded_coulomb_bond_parameters {
 
   static constexpr int num = 1;
 
-  Bonded_coulomb_bond_parameters() = default;
-  Bonded_coulomb_bond_parameters(double prefactor);
+  BondedCoulomb() = default;
+  BondedCoulomb(double prefactor);
 
   boost::optional<Utils::Vector3d> pair_force(double q1q2,
                                               Utils::Vector3d const &dx) const;
@@ -65,8 +65,7 @@ private:
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-Bonded_coulomb_bond_parameters::pair_force(double const q1q2,
-                                           Utils::Vector3d const &dx) const {
+BondedCoulomb::pair_force(double const q1q2, Utils::Vector3d const &dx) const {
 #ifdef ELECTROSTATICS
   auto const dist2 = dx.norm2();
   auto const dist3 = dist2 * std::sqrt(dist2);
@@ -82,8 +81,7 @@ Bonded_coulomb_bond_parameters::pair_force(double const q1q2,
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-Bonded_coulomb_bond_parameters::pair_energy(double const q1q2,
-                                            Utils::Vector3d const &dx) const {
+BondedCoulomb::pair_energy(double const q1q2, Utils::Vector3d const &dx) const {
 #ifdef ELECTROSTATICS
   auto const dist = dx.norm();
   return prefactor * q1q2 / dist;

@@ -34,7 +34,7 @@
 #include <tuple>
 
 /** Parameters for three-body angular potential (cossquare). */
-struct Angle_cossquare_bond_parameters {
+struct AngleCossquareBond {
   /** bending constant */
   double bend;
   /** equilibrium angle (default is 180 degrees) */
@@ -46,8 +46,8 @@ struct Angle_cossquare_bond_parameters {
 
   static constexpr int num = 2;
 
-  Angle_cossquare_bond_parameters() = default;
-  Angle_cossquare_bond_parameters(double bend, double phi0);
+  AngleCossquareBond() = default;
+  AngleCossquareBond(double bend, double phi0);
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
@@ -73,9 +73,9 @@ private:
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-Angle_cossquare_bond_parameters::angle_force(
-    Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-    Utils::Vector3d const &r_right) const {
+AngleCossquareBond::angle_force(Utils::Vector3d const &r_mid,
+                                Utils::Vector3d const &r_left,
+                                Utils::Vector3d const &r_right) const {
 
   auto forceFactor = [this](double const cos_phi) {
     return bend * (cos_phi - cos_phi0);
@@ -89,9 +89,10 @@ Angle_cossquare_bond_parameters::angle_force(
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  */
-inline double Angle_cossquare_bond_parameters::angle_energy(
-    Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-    Utils::Vector3d const &r_right) const {
+inline double
+AngleCossquareBond::angle_energy(Utils::Vector3d const &r_mid,
+                                 Utils::Vector3d const &r_left,
+                                 Utils::Vector3d const &r_right) const {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   return 0.5 * bend * Utils::sqr(cos_phi - cos_phi0);

@@ -26,9 +26,6 @@
 
 #ifdef ELECTROSTATICS
 
-Bonded_coulomb_bond_parameters::Bonded_coulomb_bond_parameters(
-    double prefactor) {
-  this->prefactor = prefactor;
-}
+BondedCoulomb::BondedCoulomb(double prefactor) { this->prefactor = prefactor; }
 
 #endif

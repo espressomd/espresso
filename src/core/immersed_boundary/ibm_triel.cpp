@@ -75,8 +75,8 @@ RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 } // namespace
 
 boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-IBM_Triel_Parameters::calc_forces(Particle const &p1, Particle const &p2,
-                                  Particle const &p3) const {
+IBMTriel::calc_forces(Particle const &p1, Particle const &p2,
+                      Particle const &p3) const {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
@@ -197,10 +197,9 @@ IBM_Triel_Parameters::calc_forces(Particle const &p1, Particle const &p2,
   return forces;
 }
 
-IBM_Triel_Parameters::IBM_Triel_Parameters(const int ind1, const int ind2,
-                                           const int ind3, const double maxDist,
-                                           const tElasticLaw elasticLaw,
-                                           const double k1, const double k2) {
+IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,
+                   const double maxDist, const tElasticLaw elasticLaw,
+                   const double k1, const double k2) {
 
   // Get data (especially location) of three particles
   auto part1 = get_particle_data(ind1);

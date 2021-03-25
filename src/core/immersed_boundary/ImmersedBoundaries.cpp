@@ -53,8 +53,7 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
   if (not BoundariesFound) {
     BoundariesFound = boost::algorithm::any_of(
         bonded_ia_params, [](auto const &bonded_ia_param) {
-          return (boost::get<IBM_VolCons_Parameters>(&bonded_ia_param) !=
-                  nullptr);
+          return (boost::get<IBMVolCons>(&bonded_ia_param) != nullptr);
         });
   }
 
@@ -65,7 +64,7 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
     // Loop through all bonded interactions and check if we need to set the
     // reference volume
     for (auto &bonded_ia_param : bonded_ia_params) {
-      if (auto *v = boost::get<IBM_VolCons_Parameters>(&bonded_ia_param)) {
+      if (auto *v = boost::get<IBMVolCons>(&bonded_ia_param)) {
         // This check is important because InitVolumeConservation may be called
         // accidentally during the integration. Then we must not reset the
         // reference
@@ -80,15 +79,14 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
   }
 }
 
-static const IBM_VolCons_Parameters *vol_cons_parameters(Particle const &p1) {
+static const IBMVolCons *vol_cons_parameters(Particle const &p1) {
   auto it = boost::find_if(p1.bonds(), [](auto const &bond) {
-    return boost::get<IBM_VolCons_Parameters>(
-               &bonded_ia_params[bond.bond_id()]) != nullptr;
+    return boost::get<IBMVolCons>(&bonded_ia_params[bond.bond_id()]) != nullptr;
   });
 
-  return (it != p1.bonds().end()) ? boost::get<IBM_VolCons_Parameters>(
-                                        &bonded_ia_params[it->bond_id()])
-                                  : nullptr;
+  return (it != p1.bonds().end())
+             ? boost::get<IBMVolCons>(&bonded_ia_params[it->bond_id()])
+             : nullptr;
 }
 
 /** Calculate partial volumes on all compute nodes and call MPI to sum up.
@@ -108,8 +106,8 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
         auto const &iaparams = bonded_ia_params[bond_id];
         auto vol_cons_params = vol_cons_parameters(p1);
 
-        if (vol_cons_params && (boost::get<IBM_Triel_Parameters>(
-                                    &bonded_ia_params[bond_id]) != nullptr)) {
+        if (vol_cons_params &&
+            (boost::get<IBMTriel>(&bonded_ia_params[bond_id]) != nullptr)) {
           // Our particle is the leading particle of a triel
           // Get second and third particle of the triangle
           Particle &p2 = *partners[0];
@@ -160,14 +158,12 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
 
   cs.bond_loop(
       [this](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
-        if (boost::get<IBM_Triel_Parameters>(&bonded_ia_params[bond_id]) !=
-            nullptr) {
-          // Check if particle has a IBM_Triel bonded interaction and a
-          // IBM_VolCons bonded interaction. Basically this loops over all
+        if (boost::get<IBMTriel>(&bonded_ia_params[bond_id]) != nullptr) {
+          // Check if particle has an IBM Triel bonded interaction and an
+          // IBM VolCons bonded interaction. Basically this loops over all
           // triangles, not all particles. First round to check for volume
           // conservation.
-          const IBM_VolCons_Parameters *ibmVolConsParameters =
-              vol_cons_parameters(p1);
+          const IBMVolCons *ibmVolConsParameters = vol_cons_parameters(p1);
           if (not ibmVolConsParameters)
             return false;
 

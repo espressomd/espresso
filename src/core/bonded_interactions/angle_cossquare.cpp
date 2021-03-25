@@ -26,8 +26,7 @@
 
 #include <cmath>
 
-Angle_cossquare_bond_parameters::Angle_cossquare_bond_parameters(double bend,
-                                                                 double phi0) {
+AngleCossquareBond::AngleCossquareBond(double bend, double phi0) {
   this->bend = bend;
   this->phi0 = phi0;
   this->cos_phi0 = cos(phi0);

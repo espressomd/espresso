@@ -35,7 +35,7 @@
 extern int n_rigidbonds;
 
 /** Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM */
-struct Rigid_bond_parameters {
+struct RigidBond {
   /** Square of the length of Constrained Bond */
   double d2;
   /** Positional Tolerance/Accuracy value for termination of RATTLE/SHAKE
@@ -51,8 +51,8 @@ struct Rigid_bond_parameters {
 
   static constexpr int num = 1;
 
-  Rigid_bond_parameters() = default;
-  Rigid_bond_parameters(double d, double p_tol, double v_tol);
+  RigidBond() = default;
+  RigidBond(double d, double p_tol, double v_tol);
 
 private:
   friend boost::serialization::access;

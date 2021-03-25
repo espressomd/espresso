@@ -24,8 +24,7 @@
  */
 #include "harmonic.hpp"
 
-Harmonic_bond_parameters::Harmonic_bond_parameters(double k, double r,
-                                                   double r_cut) {
+HarmonicBond::HarmonicBond(double k, double r, double r_cut) {
   this->k = k;
   this->r = r;
   this->r_cut = r_cut;

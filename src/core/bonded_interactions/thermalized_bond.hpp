@@ -43,7 +43,7 @@ extern int n_thermalized_bonds;
 #include <tuple>
 
 /** Parameters for Thermalized bond */
-struct Thermalized_bond_parameters {
+struct ThermalizedBond {
   double temp_com;
   double gamma_com;
   double temp_distance;
@@ -58,10 +58,9 @@ struct Thermalized_bond_parameters {
 
   static constexpr int num = 1;
 
-  Thermalized_bond_parameters() = default;
-  Thermalized_bond_parameters(double temp_com, double gamma_com,
-                              double temp_distance, double gamma_distance,
-                              double r_cut);
+  ThermalizedBond() = default;
+  ThermalizedBond(double temp_com, double gamma_com, double temp_distance,
+                  double gamma_distance, double r_cut);
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
   forces(Particle const &p1, Particle const &p2,
          Utils::Vector3d const &dx) const;
@@ -89,8 +88,8 @@ private:
  *  @return the forces on @p p1 and @p p2
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
-Thermalized_bond_parameters::forces(Particle const &p1, Particle const &p2,
-                                    Utils::Vector3d const &dx) const {
+ThermalizedBond::forces(Particle const &p1, Particle const &p2,
+                        Utils::Vector3d const &dx) const {
   // Bond broke?
   if (r_cut > 0.0 && dx.norm() > r_cut) {
     return {};

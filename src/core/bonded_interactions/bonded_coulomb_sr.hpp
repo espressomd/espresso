@@ -40,7 +40,7 @@
 #include <cmath>
 
 /** Parameters for %Coulomb bond short-range Potential */
-struct Bonded_coulomb_sr_bond_parameters {
+struct BondedCoulombSR {
   /** charge factor */
   double q1q2;
 
@@ -48,8 +48,8 @@ struct Bonded_coulomb_sr_bond_parameters {
 
   static constexpr int num = 1;
 
-  Bonded_coulomb_sr_bond_parameters() = default;
-  Bonded_coulomb_sr_bond_parameters(double q1q2);
+  BondedCoulombSR() = default;
+  BondedCoulombSR(double q1q2);
 
   boost::optional<Utils::Vector3d> pair_force(Utils::Vector3d const &dx) const;
   boost::optional<double> pair_energy(Particle const &p1, Particle const &p2,
@@ -67,7 +67,7 @@ private:
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-Bonded_coulomb_sr_bond_parameters::pair_force(Utils::Vector3d const &dx) const {
+BondedCoulombSR::pair_force(Utils::Vector3d const &dx) const {
 #ifdef ELECTROSTATICS
   auto const dist = dx.norm();
   return Coulomb::central_force(q1q2, dx, dist);
@@ -81,8 +81,9 @@ Bonded_coulomb_sr_bond_parameters::pair_force(Utils::Vector3d const &dx) const {
  *  @param[in]  p2        Second particle.
  *  @param[in]  dx        %Distance between the particles.
  */
-inline boost::optional<double> Bonded_coulomb_sr_bond_parameters::pair_energy(
-    Particle const &p1, Particle const &p2, Utils::Vector3d const &dx) const {
+inline boost::optional<double>
+BondedCoulombSR::pair_energy(Particle const &p1, Particle const &p2,
+                             Utils::Vector3d const &dx) const {
 #ifdef ELECTROSTATICS
   auto const dist2 = dx.norm2();
   auto const dist = sqrt(dist2);

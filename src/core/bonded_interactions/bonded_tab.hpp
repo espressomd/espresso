@@ -46,10 +46,10 @@
 #include <vector>
 
 /** Base class for n-body tabulated potential (n=2,3,4). */
-struct Tabulated_bond_parameters {
+struct TabulatedBond {
   std::shared_ptr<TabulatedPotential> pot;
 
-  Tabulated_bond_parameters() = default;
+  TabulatedBond() = default;
 
   /** Set the parameters of a bonded tabulated potential.
    *  ia_params and force/energy tables are communicated to each node.
@@ -59,9 +59,8 @@ struct Tabulated_bond_parameters {
    *  @param energy       @copybrief TabulatedPotential::energy_tab
    *  @param force        @copybrief TabulatedPotential::force_tab
    */
-  Tabulated_bond_parameters(double min, double max,
-                            std::vector<double> const &energy,
-                            std::vector<double> const &force);
+  TabulatedBond(double min, double max, std::vector<double> const &energy,
+                std::vector<double> const &force);
 
 private:
   friend boost::serialization::access;
@@ -72,30 +71,29 @@ private:
 };
 
 /** Parameters for 2-body tabulated potential. */
-struct Tabulated_distance_bond_parameters : public Tabulated_bond_parameters {
+struct TabulatedDistanceBond : public TabulatedBond {
   double cutoff() const { return assert(pot), pot->cutoff(); }
 
   static constexpr int num = 1;
 
-  Tabulated_distance_bond_parameters() = default;
-  Tabulated_distance_bond_parameters(double min, double max,
-                                     std::vector<double> const &energy,
-                                     std::vector<double> const &force);
+  TabulatedDistanceBond() = default;
+  TabulatedDistanceBond(double min, double max,
+                        std::vector<double> const &energy,
+                        std::vector<double> const &force);
 
   boost::optional<Utils::Vector3d> pair_force(Utils::Vector3d const &dx) const;
   boost::optional<double> pair_energy(Utils::Vector3d const &dx) const;
 };
 
 /** Parameters for 3-body tabulated potential. */
-struct Tabulated_angle_bond_parameters : public Tabulated_bond_parameters {
+struct TabulatedAngleBond : public TabulatedBond {
   double cutoff() const { return -1.; }
 
   static constexpr int num = 2;
 
-  Tabulated_angle_bond_parameters() = default;
-  Tabulated_angle_bond_parameters(double min, double max,
-                                  std::vector<double> const &energy,
-                                  std::vector<double> const &force);
+  TabulatedAngleBond() = default;
+  TabulatedAngleBond(double min, double max, std::vector<double> const &energy,
+                     std::vector<double> const &force);
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
               Utils::Vector3d const &r_right) const;
@@ -105,15 +103,15 @@ struct Tabulated_angle_bond_parameters : public Tabulated_bond_parameters {
 };
 
 /** Parameters for 4-body tabulated potential. */
-struct Tabulated_dihedral_bond_parameters : public Tabulated_bond_parameters {
+struct TabulatedDihedralBond : public TabulatedBond {
   double cutoff() const { return -1.; }
 
   static constexpr int num = 3;
 
-  Tabulated_dihedral_bond_parameters() = default;
-  Tabulated_dihedral_bond_parameters(double min, double max,
-                                     std::vector<double> const &energy,
-                                     std::vector<double> const &force);
+  TabulatedDihedralBond() = default;
+  TabulatedDihedralBond(double min, double max,
+                        std::vector<double> const &energy,
+                        std::vector<double> const &force);
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                              Utils::Vector3d>>
   dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
@@ -133,8 +131,7 @@ struct Tabulated_dihedral_bond_parameters : public Tabulated_bond_parameters {
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-Tabulated_distance_bond_parameters::pair_force(
-    Utils::Vector3d const &dx) const {
+TabulatedDistanceBond::pair_force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if (dist < pot->cutoff()) {
@@ -152,8 +149,8 @@ Tabulated_distance_bond_parameters::pair_force(
  *
  *  @param[in]  dx        %Distance between the particles.
  */
-inline boost::optional<double> Tabulated_distance_bond_parameters::pair_energy(
-    Utils::Vector3d const &dx) const {
+inline boost::optional<double>
+TabulatedDistanceBond::pair_energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if (dist < pot->cutoff()) {
@@ -169,9 +166,9 @@ inline boost::optional<double> Tabulated_distance_bond_parameters::pair_energy(
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-Tabulated_angle_bond_parameters::angle_force(
-    Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-    Utils::Vector3d const &r_right) const {
+TabulatedAngleBond::angle_force(Utils::Vector3d const &r_mid,
+                                Utils::Vector3d const &r_left,
+                                Utils::Vector3d const &r_right) const {
 
   auto forceFactor = [this](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -196,9 +193,10 @@ Tabulated_angle_bond_parameters::angle_force(
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  */
-inline double Tabulated_angle_bond_parameters::angle_energy(
-    Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-    Utils::Vector3d const &r_right) const {
+inline double
+TabulatedAngleBond::angle_energy(Utils::Vector3d const &r_mid,
+                                 Utils::Vector3d const &r_left,
+                                 Utils::Vector3d const &r_right) const {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   /* calculate phi */
@@ -221,9 +219,10 @@ inline double Tabulated_angle_bond_parameters::angle_energy(
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                   Utils::Vector3d, Utils::Vector3d>>
-Tabulated_dihedral_bond_parameters::dihedral_force(
-    Utils::Vector3d const &r1, Utils::Vector3d const &r2,
-    Utils::Vector3d const &r3, Utils::Vector3d const &r4) const {
+TabulatedDihedralBond::dihedral_force(Utils::Vector3d const &r1,
+                                      Utils::Vector3d const &r2,
+                                      Utils::Vector3d const &r3,
+                                      Utils::Vector3d const &r4) const {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -266,8 +265,7 @@ Tabulated_dihedral_bond_parameters::dihedral_force(
  *  @param[in]  r3        Position of the third particle.
  *  @param[in]  r4        Position of the fourth particle.
  */
-inline boost::optional<double>
-Tabulated_dihedral_bond_parameters::dihedral_energy(
+inline boost::optional<double> TabulatedDihedralBond::dihedral_energy(
     Utils::Vector3d const &r1, Utils::Vector3d const &r2,
     Utils::Vector3d const &r3, Utils::Vector3d const &r4) const {
   /* vectors for dihedral calculations. */

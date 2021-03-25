@@ -27,9 +27,9 @@
 #include <cassert>
 #include <vector>
 
-Tabulated_bond_parameters::Tabulated_bond_parameters(
-    double min, double max, std::vector<double> const &energy,
-    std::vector<double> const &force) {
+TabulatedBond::TabulatedBond(double min, double max,
+                             std::vector<double> const &energy,
+                             std::vector<double> const &force) {
   assert(max >= min);
   assert((max == min) || force.size() > 1);
   assert(force.size() == energy.size());
@@ -46,28 +46,28 @@ Tabulated_bond_parameters::Tabulated_bond_parameters(
   tab_pot->energy_tab = energy;
 }
 
-Tabulated_distance_bond_parameters::Tabulated_distance_bond_parameters(
-    double min, double max, std::vector<double> const &energy,
-    std::vector<double> const &force)
-    : Tabulated_bond_parameters(min, max, energy, force) {
+TabulatedDistanceBond::TabulatedDistanceBond(double min, double max,
+                                             std::vector<double> const &energy,
+                                             std::vector<double> const &force)
+    : TabulatedBond(min, max, energy, force) {
   /* set table limits */
   this->pot->minval = min;
   this->pot->maxval = max;
 }
 
-Tabulated_angle_bond_parameters::Tabulated_angle_bond_parameters(
-    double min, double max, std::vector<double> const &energy,
-    std::vector<double> const &force)
-    : Tabulated_bond_parameters(min, max, energy, force) {
+TabulatedAngleBond::TabulatedAngleBond(double min, double max,
+                                       std::vector<double> const &energy,
+                                       std::vector<double> const &force)
+    : TabulatedBond(min, max, energy, force) {
   /* set table limits */
   this->pot->minval = 0.0;
   this->pot->maxval = Utils::pi() + ROUND_ERROR_PREC;
 }
 
-Tabulated_dihedral_bond_parameters::Tabulated_dihedral_bond_parameters(
-    double min, double max, std::vector<double> const &energy,
-    std::vector<double> const &force)
-    : Tabulated_bond_parameters(min, max, energy, force) {
+TabulatedDihedralBond::TabulatedDihedralBond(double min, double max,
+                                             std::vector<double> const &energy,
+                                             std::vector<double> const &force)
+    : TabulatedBond(min, max, energy, force) {
   /* set table limits */
   this->pot->minval = 0.0;
   this->pot->maxval = 2.0 * Utils::pi() + ROUND_ERROR_PREC;

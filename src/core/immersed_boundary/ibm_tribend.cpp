@@ -30,9 +30,8 @@
 #include <tuple>
 
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-IBM_Tribend_Parameters::calc_forces(Particle const &p1, Particle const &p2,
-                                    Particle const &p3,
-                                    Particle const &p4) const {
+IBMTribend::calc_forces(Particle const &p1, Particle const &p2,
+                        Particle const &p3, Particle const &p4) const {
 
   // Get vectors making up the two triangles
   auto const dx1 = get_mi_vector(p1.r.p, p3.r.p, box_geo);
@@ -88,10 +87,8 @@ IBM_Tribend_Parameters::calc_forces(Particle const &p1, Particle const &p2,
   return std::make_tuple(force1, force2, force3, force4);
 }
 
-IBM_Tribend_Parameters::IBM_Tribend_Parameters(const int ind1, const int ind2,
-                                               const int ind3, const int ind4,
-                                               const double kb,
-                                               const bool flat) {
+IBMTribend::IBMTribend(const int ind1, const int ind2, const int ind3,
+                       const int ind4, const double kb, const bool flat) {
 
   // Compute theta0
   if (flat) {

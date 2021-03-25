@@ -35,7 +35,7 @@
 #include <cmath>
 
 /** Parameters for FENE bond Potential. */
-struct Fene_bond_parameters {
+struct FeneBond {
   /** spring constant */
   double k;
   /** maximal bond stretching */
@@ -51,8 +51,8 @@ struct Fene_bond_parameters {
 
   static constexpr int num = 1;
 
-  Fene_bond_parameters() = default;
-  Fene_bond_parameters(double k, double drmax, double r0);
+  FeneBond() = default;
+  FeneBond(double k, double drmax, double r0);
 
   boost::optional<Utils::Vector3d> pair_force(Utils::Vector3d const &dx) const;
   boost::optional<double> pair_energy(Utils::Vector3d const &dx) const;
@@ -73,7 +73,7 @@ private:
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-Fene_bond_parameters::pair_force(Utils::Vector3d const &dx) const {
+FeneBond::pair_force(Utils::Vector3d const &dx) const {
   auto const len = dx.norm();
   auto const dr = len - r0;
 
@@ -95,7 +95,7 @@ Fene_bond_parameters::pair_force(Utils::Vector3d const &dx) const {
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-Fene_bond_parameters::pair_energy(Utils::Vector3d const &dx) const {
+FeneBond::pair_energy(Utils::Vector3d const &dx) const {
   /* compute bond stretching (r-r0) */
   double const dr = dx.norm() - r0;
 

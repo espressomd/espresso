@@ -94,7 +94,7 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 }
 
 boost::optional<Utils::Matrix<double, 3, 3>>
-calc_bonded_virial_pressure_tensor(Bonded_ia_parameters const &iaparams,
+calc_bonded_virial_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                    Particle const &p1, Particle const &p2) {
   auto const dx = get_mi_vector(p1.r.p, p2.r.p, box_geo);
   auto const result = calc_bond_pair_force(p1, p2, iaparams, dx);
@@ -108,15 +108,15 @@ calc_bonded_virial_pressure_tensor(Bonded_ia_parameters const &iaparams,
 }
 
 boost::optional<Utils::Matrix<double, 3, 3>>
-calc_bonded_three_body_pressure_tensor(Bonded_ia_parameters const &iaparams,
+calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                        Particle const &p1, Particle const &p2,
                                        Particle const &p3) {
-  if ((boost::get<Angle_harmonic_bond_parameters>(&iaparams) != nullptr) ||
-      (boost::get<Angle_cosine_bond_parameters>(&iaparams) != nullptr) ||
+  if ((boost::get<AngleHarmonicBond>(&iaparams) != nullptr) ||
+      (boost::get<AngleCosineBond>(&iaparams) != nullptr) ||
 #ifdef TABULATED
-      (boost::get<Tabulated_angle_bond_parameters>(&iaparams) != nullptr) ||
+      (boost::get<TabulatedAngleBond>(&iaparams) != nullptr) ||
 #endif
-      (boost::get<Angle_cossquare_bond_parameters>(&iaparams) != nullptr)) {
+      (boost::get<AngleCossquareBond>(&iaparams) != nullptr)) {
     auto const dx21 = -get_mi_vector(p1.r.p, p2.r.p, box_geo);
     auto const dx31 = get_mi_vector(p3.r.p, p1.r.p, box_geo);
 
@@ -138,7 +138,7 @@ calc_bonded_three_body_pressure_tensor(Bonded_ia_parameters const &iaparams,
 }
 
 inline boost::optional<Utils::Matrix<double, 3, 3>>
-calc_bonded_pressure_tensor(Bonded_ia_parameters const &iaparams, Particle &p1,
+calc_bonded_pressure_tensor(Bonded_IA_Parameters const &iaparams, Particle &p1,
                             Utils::Span<Particle *> partners) {
   switch (number_of_partners(iaparams)) {
   case 1:

@@ -41,7 +41,7 @@
  *
  *  Characterize the deformation of two triangles sharing an edge.
  */
-struct Oif_local_forces_bond_parameters {
+struct OifLocalForcesBond {
   /** Equilibrium bond length of triangle edges */
   double r0;
   /** Non-linear stretching coefficient of triangle edges */
@@ -65,10 +65,9 @@ struct Oif_local_forces_bond_parameters {
 
   static constexpr int num = 3;
 
-  Oif_local_forces_bond_parameters() = default;
-  Oif_local_forces_bond_parameters(double r0, double ks, double kslin,
-                                   double phi0, double kb, double A01,
-                                   double A02, double kal, double kvisc) {
+  OifLocalForcesBond() = default;
+  OifLocalForcesBond(double r0, double ks, double kslin, double phi0, double kb,
+                     double A01, double A02, double kal, double kvisc) {
     this->phi0 = phi0;
     this->kb = kb;
     this->r0 = r0;
@@ -116,10 +115,8 @@ inline double KS(double lambda) {
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                   Utils::Vector3d>
-Oif_local_forces_bond_parameters::calc_forces(Particle const &p2,
-                                              Particle const &p1,
-                                              Particle const &p3,
-                                              Particle const &p4) const {
+OifLocalForcesBond::calc_forces(Particle const &p2, Particle const &p1,
+                                Particle const &p3, Particle const &p4) const {
 
   // first-fold-then-the-same approach
   auto const fp2 = unfolded_position(p2.r.p, p2.l.i, box_geo.length());

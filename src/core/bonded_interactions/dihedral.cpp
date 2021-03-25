@@ -24,8 +24,7 @@
  */
 #include "dihedral.hpp"
 
-Dihedral_bond_parameters::Dihedral_bond_parameters(int mult, double bend,
-                                                   double phase) {
+DihedralBond::DihedralBond(int mult, double bend, double phase) {
   this->mult = mult;
   this->bend = bend;
   this->phase = phase;

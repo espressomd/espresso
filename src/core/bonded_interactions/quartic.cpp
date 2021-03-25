@@ -24,8 +24,7 @@
  */
 #include "quartic.hpp"
 
-Quartic_bond_parameters::Quartic_bond_parameters(double k0, double k1, double r,
-                                                 double r_cut) {
+QuarticBond::QuarticBond(double k0, double k1, double r, double r_cut) {
   this->k0 = k0;
   this->k1 = k1;
   this->r = r;

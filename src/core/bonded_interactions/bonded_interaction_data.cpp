@@ -28,7 +28,7 @@
 #include <cstddef>
 #include <vector>
 
-std::vector<Bonded_ia_parameters> bonded_ia_params;
+std::vector<Bonded_IA_Parameters> bonded_ia_params;
 
 /** Visitor to get the bond cutoff from the bond parameter variant */
 class BondCutoff : public boost::static_visitor<double> {
@@ -41,15 +41,15 @@ public:
 double maximal_cutoff_bonded() {
   auto const max_cut_bonded = boost::accumulate(
       bonded_ia_params, -1.,
-      [](auto max_cut, Bonded_ia_parameters const &bond) {
+      [](auto max_cut, Bonded_IA_Parameters const &bond) {
         return std::max(max_cut, boost::apply_visitor(BondCutoff(), bond));
       });
 
   /* Check if there are dihedrals */
   auto const any_dihedrals = std::any_of(
       bonded_ia_params.begin(), bonded_ia_params.end(), [](auto const &bond) {
-        return (boost::get<Dihedral_bond_parameters>(&bond) ||
-                boost::get<Tabulated_dihedral_bond_parameters>(&bond));
+        return (boost::get<DihedralBond>(&bond) ||
+                boost::get<TabulatedDihedralBond>(&bond));
       });
 
   /* dihedrals: the central particle is indirectly connected to the fourth
@@ -64,5 +64,5 @@ void make_bond_type_exist(int type) {
     return;
   }
   /* else allocate new memory */
-  bonded_ia_params.resize(ns, None_bond_parameters());
+  bonded_ia_params.resize(ns, NoneBond());
 }

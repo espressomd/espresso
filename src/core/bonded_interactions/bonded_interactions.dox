@@ -86,12 +86,12 @@
  *    from @ref energy_inline.hpp .
  *  * An explicit default contructor, for example
  *    @code{.cpp}
- *    Fene_bond_parameters() = default;
+ *    FeneBond() = default;
  *    @endcode
  *  * A custom constructor which is used to set all parameters and to do
  *    preparatory calculations if necessary, for example
  *    @code{.cpp}
- *    Fene_bond_parameters(double k, double drmax, double r0);
+ *    FeneBond(double k, double drmax, double r0);
  *    @endcode
  *    All values the bond needs to function properly should be passed as
  *    arguments to this constructor.
@@ -126,9 +126,9 @@
  *
  *  * In bonded_interaction_data.cpp:
  *    - Include the header file containing the new bond type.
- *    - Add the new bond type to @ref Bonded_ia_parameters at the end of the
+ *    - Add the new bond type to @ref Bonded_IA_Parameters at the end of the
  *      types list.
- *    - If by doing this, the length of the list in Bonded_ia_parameters passes
+ *    - If by doing this, the length of the list in Bonded_IA_Parameters passes
  *      over a multiple of 10, you may have to update ESPResSo's top level
  *      CMakeLists.txt:
  *      @code
@@ -146,7 +146,7 @@
  *      example
  *      @code{.cpp}
  *      // ...
- *      else if (auto const *iap = boost::get<Quartic_bond_parameters>(&iaparams)) {
+ *      else if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
  *        return iap->pair_force(dx);
  *      }
  *      // ...
@@ -159,7 +159,7 @@
  *      example
  *      @code{.cpp}
  *      // ...
- *      else if (auto const *iap = boost::get<Quartic_bond_parameters>(&iaparams)) {
+ *      else if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
  *        return iap->pair_energy(dx);
  *      }
  *      // ...
@@ -180,14 +180,14 @@
  *  pure Python.
  *
  *  * In file <tt>src/python/espressomd/interactions.pxd</tt>:
- *    - Import the parameter data structure from the C++ header file for the new
- *      interaction. For the FENE bond, this looks like:
+ *    - Import the parameter data structure from the C++ header file for the
+ *      new interaction with an alias. For the FENE bond, this looks like:
  *      @code{.py}
  *      cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
  *          # Parameters for FENE bond
- *          cdef cppclass Fene_bond_parameters:
- *              Fene_bond_parameters()
- *              Fene_bond_parameters(double k, double drmax, double r0)
+ *          cdef cppclass CoreFeneBond "FeneBond":
+ *              CoreFeneBond()
+ *              CoreFeneBond(double k, double drmax, double r0)
  *              double k
  *              double drmax
  *              double r0
@@ -197,7 +197,7 @@
  *  * In file <tt>src/python/espressomd/interactions.pyx</tt>:
  *    - Add the bonded interaction to \c enum_bonded_interaction.
  *      The order of the enum values must match the order of types in
- *      @ref Bonded_ia_parameters exactly:
+ *      @ref Bonded_IA_Parameters exactly:
  *      @code{.py}
  *      cdef enum enum_bonded_interaction:
  *          BONDED_IA_NONE = 0,

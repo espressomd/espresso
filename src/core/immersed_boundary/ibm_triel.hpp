@@ -32,7 +32,7 @@
 enum class tElasticLaw { NeoHookean, Skalak };
 
 /** Parameters for IBM elastic triangle (triel) */
-struct IBM_Triel_Parameters {
+struct IBMTriel {
   // These values encode the reference state
   double l0;
   double lp0;
@@ -58,13 +58,13 @@ struct IBM_Triel_Parameters {
 
   static constexpr int num = 2;
 
-  IBM_Triel_Parameters() = default;
+  IBMTriel() = default;
 
   /** Set the IBM Triel parameters.
    *  Also calculate and store the reference state.
    */
-  IBM_Triel_Parameters(int ind1, int ind2, int ind3, double maxDist,
-                       tElasticLaw elasticLaw, double k1, double k2);
+  IBMTriel(int ind1, int ind2, int ind3, double maxDist, tElasticLaw elasticLaw,
+           double k1, double k2);
 
   /** Calculate the forces.
    *  The equations can be found in Appendix C of @cite kruger12a.

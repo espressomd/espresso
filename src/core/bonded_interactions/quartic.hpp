@@ -33,7 +33,7 @@
 #include <boost/optional.hpp>
 
 /** Parameters for quartic bond Potential */
-struct Quartic_bond_parameters {
+struct QuarticBond {
   double k0, k1;
   double r;
   double r_cut;
@@ -42,8 +42,8 @@ struct Quartic_bond_parameters {
 
   static constexpr int num = 1;
 
-  Quartic_bond_parameters() = default;
-  Quartic_bond_parameters(double k0, double k1, double r, double r_cut);
+  QuarticBond() = default;
+  QuarticBond(double k0, double k1, double r, double r_cut);
 
   boost::optional<Utils::Vector3d> pair_force(Utils::Vector3d const &dx) const;
   boost::optional<double> pair_energy(Utils::Vector3d const &dx) const;
@@ -63,7 +63,7 @@ private:
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-Quartic_bond_parameters::pair_force(Utils::Vector3d const &dx) const {
+QuarticBond::pair_force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if ((r_cut > 0.0) && (dist > r_cut)) {
@@ -79,7 +79,7 @@ Quartic_bond_parameters::pair_force(Utils::Vector3d const &dx) const {
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-Quartic_bond_parameters::pair_energy(Utils::Vector3d const &dx) const {
+QuarticBond::pair_energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if ((r_cut > 0.0) && (dist > r_cut)) {

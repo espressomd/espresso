@@ -23,7 +23,7 @@ from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 from .interactions cimport bonded_ia_params_is_type
 from .interactions cimport bonded_ia_params_size
-from .interactions cimport None_bond_parameters
+from .interactions cimport CoreNoneBond
 import numpy as np
 cimport numpy as np
 import scipy.signal
@@ -162,7 +162,7 @@ cdef _Observable_stat_to_dict(Observable_stat obs, cbool calc_sp):
     # Bonded
     total_bonded = set_initial()
     for i in range(bonded_ia_params_size()):
-        if not bonded_ia_params_is_type[None_bond_parameters](i):
+        if not bonded_ia_params_is_type[CoreNoneBond](i):
             val = get_obs_contrib(obs.bonded_contribution(i), size, calc_sp)
             p["bonded", i] = val
             total_bonded += val

@@ -42,7 +42,7 @@
 #include <tuple>
 
 /** Parameters for four-body angular potential (dihedral-angle potentials). */
-struct Dihedral_bond_parameters {
+struct DihedralBond {
   double mult;
   double bend;
   double phase;
@@ -51,8 +51,8 @@ struct Dihedral_bond_parameters {
 
   static constexpr int num = 3;
 
-  Dihedral_bond_parameters() = default;
-  Dihedral_bond_parameters(int mult, double bend, double phase);
+  DihedralBond() = default;
+  DihedralBond(int mult, double bend, double phase);
 
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                              Utils::Vector3d>>
@@ -143,10 +143,10 @@ calc_dihedral_angle(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                   Utils::Vector3d, Utils::Vector3d>>
-Dihedral_bond_parameters::dihedral_force(Utils::Vector3d const &r1,
-                                         Utils::Vector3d const &r2,
-                                         Utils::Vector3d const &r3,
-                                         Utils::Vector3d const &r4) const {
+DihedralBond::dihedral_force(Utils::Vector3d const &r1,
+                             Utils::Vector3d const &r2,
+                             Utils::Vector3d const &r3,
+                             Utils::Vector3d const &r4) const {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -201,7 +201,7 @@ Dihedral_bond_parameters::dihedral_force(Utils::Vector3d const &r1,
  *  @param[in]  r3        Position of the third particle.
  *  @param[in]  r4        Position of the fourth particle.
  */
-inline boost::optional<double> Dihedral_bond_parameters::dihedral_energy(
+inline boost::optional<double> DihedralBond::dihedral_energy(
     Utils::Vector3d const &r1, Utils::Vector3d const &r2,
     Utils::Vector3d const &r3, Utils::Vector3d const &r4) const {
   /* vectors for dihedral calculations. */

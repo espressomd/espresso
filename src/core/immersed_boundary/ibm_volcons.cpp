@@ -21,8 +21,7 @@
 #include "errorhandling.hpp"
 
 /** Set parameters of volume conservation */
-IBM_VolCons_Parameters::IBM_VolCons_Parameters(const int softID,
-                                               const double kappaV) {
+IBMVolCons::IBMVolCons(const int softID, const double kappaV) {
   // Specific stuff
   if (softID > IBM_MAX_NUM) {
     runtimeErrorMsg() << "Error: softID (" << softID

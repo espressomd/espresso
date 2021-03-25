@@ -29,7 +29,7 @@
 #include <tuple>
 
 /** Parameters for IBM tribend */
-struct IBM_Tribend_Parameters {
+struct IBMTribend {
   /** Interaction data */
   double kb;
 
@@ -41,14 +41,13 @@ struct IBM_Tribend_Parameters {
   // Krüger always has three partners
   static constexpr int num = 3;
 
-  IBM_Tribend_Parameters() = default;
+  IBMTribend() = default;
 
   /** Set the IBM Tribend parameters.
    *  Also calculate and store the reference state.
    *  See details in @cite gompper96a and @cite kruger12a.
    */
-  IBM_Tribend_Parameters(int ind1, int ind2, int ind3, int ind4, double kb,
-                         bool flat);
+  IBMTribend(int ind1, int ind2, int ind3, int ind4, double kb, bool flat);
 
   /** Calculate the forces
    *  The equations can be found in Appendix C of @cite kruger12a.

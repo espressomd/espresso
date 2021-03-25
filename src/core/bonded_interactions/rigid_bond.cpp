@@ -30,8 +30,7 @@
 
 int n_rigidbonds = 0;
 
-Rigid_bond_parameters::Rigid_bond_parameters(double d, double p_tol,
-                                             double v_tol) {
+RigidBond::RigidBond(double d, double p_tol, double v_tol) {
   this->d2 = d * d;
   this->p_tol = 2.0 * p_tol;
   this->v_tol = v_tol;

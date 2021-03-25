@@ -52,8 +52,8 @@ void calc_oif_global(Utils::Vector2d &area_volume, int molType,
         if (p1.p.mol_id != molType)
           return false;
 
-        if (boost::get<Oif_global_forces_bond_parameters>(
-                &bonded_ia_params[bond_id]) != nullptr) {
+        if (boost::get<OifGlobalForcesBond>(&bonded_ia_params[bond_id]) !=
+            nullptr) {
           // remaining neighbors fetched
           auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
           auto const p22 = p11 + get_mi_vector(partners[0]->r.p, p11, box_geo);
@@ -90,8 +90,8 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
     if (p1.p.mol_id != molType)
       return false;
 
-    if (auto const *iaparams = boost::get<Oif_global_forces_bond_parameters>(
-            &bonded_ia_params[bond_id])) {
+    if (auto const *iaparams =
+            boost::get<OifGlobalForcesBond>(&bonded_ia_params[bond_id])) {
       auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
       auto const p22 = p11 + get_mi_vector(partners[0]->r.p, p11, box_geo);
       auto const p33 = p11 + get_mi_vector(partners[1]->r.p, p11, box_geo);

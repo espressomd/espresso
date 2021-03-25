@@ -55,7 +55,7 @@
 #include <vector>
 
 /** Interaction type for unused bonded interaction slots */
-struct None_bond_parameters {
+struct NoneBond {
   static constexpr int num = 0;
   double cutoff() const { return -1.; }
 
@@ -66,7 +66,7 @@ private:
 };
 
 /** Interaction type for virtual bonds */
-struct VirtualBond_Parameters {
+struct VirtualBond {
   static constexpr int num = 1;
   double cutoff() const { return -1.; }
 
@@ -87,20 +87,16 @@ public:
 /** Variant in which to store the parameters of an individual bonded
  *  interaction
  */
-using Bonded_ia_parameters = boost::variant<
-    None_bond_parameters, Fene_bond_parameters, Harmonic_bond_parameters,
-    Quartic_bond_parameters, Bonded_coulomb_bond_parameters,
-    Bonded_coulomb_sr_bond_parameters, Angle_harmonic_bond_parameters,
-    Angle_cosine_bond_parameters, Angle_cossquare_bond_parameters,
-    Dihedral_bond_parameters, Tabulated_distance_bond_parameters,
-    Tabulated_angle_bond_parameters, Tabulated_dihedral_bond_parameters,
-    Thermalized_bond_parameters, Rigid_bond_parameters, IBM_Triel_Parameters,
-    IBM_VolCons_Parameters, IBM_Tribend_Parameters,
-    Oif_global_forces_bond_parameters, Oif_local_forces_bond_parameters,
-    VirtualBond_Parameters>;
+using Bonded_IA_Parameters =
+    boost::variant<NoneBond, FeneBond, HarmonicBond, QuarticBond, BondedCoulomb,
+                   BondedCoulombSR, AngleHarmonicBond, AngleCosineBond,
+                   AngleCossquareBond, DihedralBond, TabulatedDistanceBond,
+                   TabulatedAngleBond, TabulatedDihedralBond, ThermalizedBond,
+                   RigidBond, IBMTriel, IBMVolCons, IBMTribend,
+                   OifGlobalForcesBond, OifLocalForcesBond, VirtualBond>;
 
 /** Field containing the parameters of the bonded ia types */
-extern std::vector<Bonded_ia_parameters> bonded_ia_params;
+extern std::vector<Bonded_IA_Parameters> bonded_ia_params;
 
 /** Makes sure that \ref bonded_ia_params is large enough to cover the
  *  parameters for the bonded interaction type.
@@ -124,7 +120,7 @@ void make_bond_type_exist(int type);
 double maximal_cutoff_bonded();
 
 /** Return the number of bonded partners for the specified bond */
-inline int number_of_partners(Bonded_ia_parameters const &iaparams) {
+inline int number_of_partners(Bonded_IA_Parameters const &iaparams) {
   return boost::apply_visitor(BondNumPartners(), iaparams);
 }
 

@@ -26,8 +26,7 @@
 
 #include <cmath>
 
-Angle_cosine_bond_parameters::Angle_cosine_bond_parameters(double bend,
-                                                           double phi0) {
+AngleCosineBond::AngleCosineBond(double bend, double phi0) {
 
   this->bend = bend;
   this->phi0 = phi0;
