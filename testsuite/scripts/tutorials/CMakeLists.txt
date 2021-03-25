@@ -27,7 +27,7 @@ add_custom_target(
 
 # WALBERLA TODO: re-enable tutorial tests for lb
 tutorial_test(FILE test_lennard_jones.py)
-tutorial_test(FILE test_charged_system-1.py)
+tutorial_test(FILE test_charged_system.py)
 tutorial_test(FILE test_lattice_boltzmann_part2.py)
 tutorial_test(FILE test_lattice_boltzmann_part3.py SUFFIX rouse)
 #tutorial_test(FILE test_lattice_boltzmann_part3.py SUFFIX zimm LABELS "gpu")

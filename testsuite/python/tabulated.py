@@ -76,6 +76,7 @@ class TabulatedTest(ut.TestCase):
         self.s.non_bonded_inter[0, 0].tabulated.set_params(
             min=-1, max=-1, energy=[], force=[])
 
+    @utx.skipIfMissingFeatures("TABULATED")
     def test_bonded(self):
         from espressomd.interactions import TabulatedDistance
 

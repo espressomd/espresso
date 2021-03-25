@@ -42,8 +42,21 @@
 #include <boost/qvm/mat_access.hpp>
 #include <boost/qvm/mat_traits.hpp>
 
+/**
+ * @file matrix.hpp
+ *
+ * @brief This file contains a matrix implementation and the trait types needed
+ * for the boost qvm interoperability.
+ */
+
 namespace Utils {
 
+/**
+ * @brief Matrix representation with static size.
+ * @tparam T The data type.
+ * @tparam Rows Number of rows.
+ * @tparam Cols Number of columns.
+ */
 template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
   using container = Utils::Array<T, Cols * Rows>;
   using pointer = typename container::pointer;
@@ -71,54 +84,119 @@ template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
     assert(init_list.size() == Rows);
     Utils::flatten(init_list, begin());
   }
+
+  /**
+   * @brief Element access (const).
+   * @param row The row used for access.
+   * @param col The column used for access.
+   * @return The matrix element at row @p row and column @p col.
+   */
   constexpr value_type operator()(std::size_t row, std::size_t col) const {
     assert(row < Rows);
     assert(col < Cols);
     return m_data[Cols * row + col];
   }
+  /**
+   * @brief Element access (non const).
+   * @param row The row used for access.
+   * @param col The column used for access.
+   * @return The matrix element at row @p row and column @p col.
+   */
   constexpr reference operator()(std::size_t row, std::size_t col) {
     assert(row < Rows);
     assert(col < Cols);
     return m_data[Cols * row + col];
   }
-  constexpr pointer data() { return m_data.data(); }
-  constexpr const_pointer data() const noexcept { return m_data.data(); }
-  constexpr iterator begin() noexcept { return m_data.begin(); };
-  constexpr const_iterator begin() const noexcept { return m_data.begin(); };
-  constexpr iterator end() noexcept { return m_data.end(); };
-  constexpr const_iterator end() const noexcept { return m_data.end(); };
 
+  /**
+   * @brief Access to the underlying data pointer (non const).
+   * @return Pointer to first element of the data.
+   */
+  constexpr pointer data() { return m_data.data(); }
+  /**
+   * @brief Access to the underlying data pointer (non const).
+   * @return Pointer to first element of the data.
+   */
+  constexpr const_pointer data() const noexcept { return m_data.data(); }
+  /**
+   * @brief Iterator access (non const).
+   * @return Returns an iterator to the first element of the matrix.
+   */
+  constexpr iterator begin() noexcept { return m_data.begin(); };
+  /**
+   * @brief Iterator access (const).
+   * @return Returns an iterator to the first element of the matrix.
+   */
+  constexpr const_iterator begin() const noexcept { return m_data.begin(); };
+  /**
+   * @brief Iterator access (non const).
+   * @return Returns an iterator to the element following the last element of
+   * the matrix.
+   */
+  constexpr iterator end() noexcept { return m_data.end(); };
+  /**
+   * @brief Iterator access (non const).
+   * @return Returns an iterator to the element following the last element of
+   * the matrix.
+   */
+  constexpr const_iterator end() const noexcept { return m_data.end(); };
+  /**
+   * @brief Retrieve an entire matrix row.
+   * @tparam R The row index.
+   * @return A vector containing the elements of row @p R.
+   */
   template <std::size_t R> Vector<T, Cols> row() const {
     static_assert(R < Rows, "Invalid row index.");
     return boost::qvm::row<R>(*this);
   }
-
+  /**
+   * @brief Retrieve an entire matrix column.
+   * @tparam C The column index.
+   * @return A vector containing the elements of column @p C.
+   */
   template <std::size_t C> Vector<T, Rows> col() const {
     static_assert(C < Cols, "Invalid column index.");
     return boost::qvm::col<C>(*this);
   }
-
+  /**
+   * @brief Retrieve the diagonal.
+   * @return Vector containing the diagonal elements of the matrix.
+   */
   Vector<T, Cols> diagonal() const {
     static_assert(Rows == Cols,
                   "Diagonal can only be retrieved from square matrices.");
     return boost::qvm::diag(*this);
   }
-
+  /**
+   * @brief Retrieve the trace.
+   * @return Vector containing the sum of diagonal matrix elements.
+   */
   T trace() const {
     auto const d = diagonal();
     return std::accumulate(d.begin(), d.end(), T{}, std::plus<T>{});
   }
 
+  /**
+   * @brief Retrieve a transposed copy of the matrix.
+   * @return Transposed matrix.
+   */
   Matrix<T, Cols, Rows> transposed() const {
     return boost::qvm::transposed(*this);
   }
 
+  /**
+   * @brief Retrieve an inversed copy of the matrix.
+   * @return Inversed matrix.
+   */
   Matrix<T, Rows, Cols> inversed() const {
     static_assert(Rows == Cols,
                   "Inversion of a non-square matrix not implemented.");
     return boost::qvm::inverse(*this);
   }
-
+  /**
+   * @brief Retrieve the shape of the matrix.
+   * @return Pair containing number of rows and number of columns of the matrix.
+   */
   constexpr std::pair<std::size_t, std::size_t> shape() const noexcept {
     return {Rows, Cols};
   }

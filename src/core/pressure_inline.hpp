@@ -43,6 +43,7 @@
 #include <utils/math/tensor_product.hpp>
 
 #include <boost/optional.hpp>
+#include <boost/variant.hpp>
 
 #include <string>
 #include <tuple>
@@ -93,7 +94,7 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 }
 
 boost::optional<Utils::Matrix<double, 3, 3>>
-calc_bonded_virial_pressure_tensor(Bonded_ia_parameters const &iaparams,
+calc_bonded_virial_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                    Particle const &p1, Particle const &p2) {
   auto const dx = get_mi_vector(p1.r.p, p2.r.p, box_geo);
   auto const result = calc_bond_pair_force(p1, p2, iaparams, dx);
@@ -107,14 +108,15 @@ calc_bonded_virial_pressure_tensor(Bonded_ia_parameters const &iaparams,
 }
 
 boost::optional<Utils::Matrix<double, 3, 3>>
-calc_bonded_three_body_pressure_tensor(Bonded_ia_parameters const &iaparams,
+calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                        Particle const &p1, Particle const &p2,
                                        Particle const &p3) {
-  switch (iaparams.type) {
-  case BONDED_IA_ANGLE_HARMONIC:
-  case BONDED_IA_ANGLE_COSINE:
-  case BONDED_IA_ANGLE_COSSQUARE:
-  case BONDED_IA_TABULATED_ANGLE: {
+  if ((boost::get<AngleHarmonicBond>(&iaparams) != nullptr) ||
+      (boost::get<AngleCosineBond>(&iaparams) != nullptr) ||
+#ifdef TABULATED
+      (boost::get<TabulatedAngleBond>(&iaparams) != nullptr) ||
+#endif
+      (boost::get<AngleCossquareBond>(&iaparams) != nullptr)) {
     auto const dx21 = -get_mi_vector(p1.r.p, p2.r.p, box_geo);
     auto const dx31 = get_mi_vector(p3.r.p, p1.r.p, box_geo);
 
@@ -125,19 +127,20 @@ calc_bonded_three_body_pressure_tensor(Bonded_ia_parameters const &iaparams,
 
       return tensor_product(force2, dx21) + tensor_product(force3, dx31);
     }
-  }
-  default:
+  } else {
     runtimeWarningMsg() << "Unsupported bond type " +
-                               std::to_string(iaparams.type) +
+                               std::to_string(iaparams.which()) +
                                " in pressure calculation.";
     return Utils::Matrix<double, 3, 3>{};
   }
+
+  return {};
 }
 
 inline boost::optional<Utils::Matrix<double, 3, 3>>
-calc_bonded_pressure_tensor(Bonded_ia_parameters const &iaparams, Particle &p1,
+calc_bonded_pressure_tensor(Bonded_IA_Parameters const &iaparams, Particle &p1,
                             Utils::Span<Particle *> partners) {
-  switch (iaparams.num) {
+  switch (number_of_partners(iaparams)) {
   case 1:
     return calc_bonded_virial_pressure_tensor(iaparams, p1, *partners[0]);
   case 2:
@@ -145,7 +148,7 @@ calc_bonded_pressure_tensor(Bonded_ia_parameters const &iaparams, Particle &p1,
                                                   *partners[1]);
   default:
     runtimeWarningMsg() << "Unsupported bond type " +
-                               std::to_string(iaparams.type) +
+                               std::to_string(iaparams.which()) +
                                " in pressure calculation.";
     return Utils::Matrix<double, 3, 3>{};
   }

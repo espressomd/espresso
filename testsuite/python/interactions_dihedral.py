@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -165,6 +166,7 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_almost_equal(f2_sim_copy, f2_ref)
 
     # Test Tabulated Dihedral Angle
+    @utx.skipIfMissingFeatures(["TABULATED"])
     def test_tabulated_dihedral(self):
         N = 111
         d_phi = 2 * np.pi / N
