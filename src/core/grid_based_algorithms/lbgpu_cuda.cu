@@ -2642,7 +2642,7 @@ struct Stress {
   }
 };
 
-Utils::Array<float, 6> total_stress_tensor() {
+Utils::Array<float, 6> stress_tensor_GPU() {
   auto pop_begin = thrust::device_pointer_cast(current_nodes->populations);
   auto rho_v_begin = thrust::device_pointer_cast(device_rho_v);
   auto begin =

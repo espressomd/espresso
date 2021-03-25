@@ -224,7 +224,7 @@ void linear_velocity_interpolation(double const *positions, double *velocities,
                                    int length);
 void quadratic_velocity_interpolation(double const *positions,
                                       double *velocities, int length);
-
+Utils::Array<float, 6> stress_tensor_GPU();
 uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
