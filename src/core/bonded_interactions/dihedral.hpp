@@ -56,12 +56,13 @@ struct DihedralBond {
 
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                              Utils::Vector3d>>
-  dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
-                 Utils::Vector3d const &r3, Utils::Vector3d const &r4) const;
+  forces(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+         Utils::Vector3d const &r3, Utils::Vector3d const &r4) const;
 
-  inline boost::optional<double>
-  dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
-                  Utils::Vector3d const &r3, Utils::Vector3d const &r4) const;
+  inline boost::optional<double> energy(Utils::Vector3d const &r1,
+                                        Utils::Vector3d const &r2,
+                                        Utils::Vector3d const &r3,
+                                        Utils::Vector3d const &r4) const;
 
 private:
   friend boost::serialization::access;
@@ -143,10 +144,9 @@ calc_dihedral_angle(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                   Utils::Vector3d, Utils::Vector3d>>
-DihedralBond::dihedral_force(Utils::Vector3d const &r1,
-                             Utils::Vector3d const &r2,
-                             Utils::Vector3d const &r3,
-                             Utils::Vector3d const &r4) const {
+DihedralBond::forces(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+                     Utils::Vector3d const &r3,
+                     Utils::Vector3d const &r4) const {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -201,9 +201,10 @@ DihedralBond::dihedral_force(Utils::Vector3d const &r1,
  *  @param[in]  r3        Position of the third particle.
  *  @param[in]  r4        Position of the fourth particle.
  */
-inline boost::optional<double> DihedralBond::dihedral_energy(
-    Utils::Vector3d const &r1, Utils::Vector3d const &r2,
-    Utils::Vector3d const &r3, Utils::Vector3d const &r4) const {
+inline boost::optional<double>
+DihedralBond::energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+                     Utils::Vector3d const &r3,
+                     Utils::Vector3d const &r4) const {
   /* vectors for dihedral calculations. */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;

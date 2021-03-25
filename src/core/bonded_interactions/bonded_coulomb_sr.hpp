@@ -51,9 +51,9 @@ struct BondedCoulombSR {
   BondedCoulombSR() = default;
   BondedCoulombSR(double q1q2);
 
-  boost::optional<Utils::Vector3d> pair_force(Utils::Vector3d const &dx) const;
-  boost::optional<double> pair_energy(Particle const &p1, Particle const &p2,
-                                      Utils::Vector3d const &dx) const;
+  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  boost::optional<double> energy(Particle const &p1, Particle const &p2,
+                                 Utils::Vector3d const &dx) const;
 
 private:
   friend boost::serialization::access;
@@ -67,7 +67,7 @@ private:
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-BondedCoulombSR::pair_force(Utils::Vector3d const &dx) const {
+BondedCoulombSR::force(Utils::Vector3d const &dx) const {
 #ifdef ELECTROSTATICS
   auto const dist = dx.norm();
   return Coulomb::central_force(q1q2, dx, dist);
@@ -82,8 +82,8 @@ BondedCoulombSR::pair_force(Utils::Vector3d const &dx) const {
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-BondedCoulombSR::pair_energy(Particle const &p1, Particle const &p2,
-                             Utils::Vector3d const &dx) const {
+BondedCoulombSR::energy(Particle const &p1, Particle const &p2,
+                        Utils::Vector3d const &dx) const {
 #ifdef ELECTROSTATICS
   auto const dist2 = dx.norm2();
   auto const dist = sqrt(dist2);

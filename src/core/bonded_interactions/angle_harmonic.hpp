@@ -49,11 +49,10 @@ struct AngleHarmonicBond {
   AngleHarmonicBond(double bend, double phi0);
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-              Utils::Vector3d const &r_right) const;
-  double angle_energy(Utils::Vector3d const &r_mid,
-                      Utils::Vector3d const &r_left,
-                      Utils::Vector3d const &r_right) const;
+  forces(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+         Utils::Vector3d const &r_right) const;
+  double energy(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+                Utils::Vector3d const &r_right) const;
 
 private:
   friend boost::serialization::access;
@@ -71,9 +70,9 @@ private:
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-AngleHarmonicBond::angle_force(Utils::Vector3d const &r_mid,
-                               Utils::Vector3d const &r_left,
-                               Utils::Vector3d const &r_right) const {
+AngleHarmonicBond::forces(Utils::Vector3d const &r_mid,
+                          Utils::Vector3d const &r_left,
+                          Utils::Vector3d const &r_right) const {
 
   auto forceFactor = [this](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -89,10 +88,9 @@ AngleHarmonicBond::angle_force(Utils::Vector3d const &r_mid,
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  */
-inline double
-AngleHarmonicBond::angle_energy(Utils::Vector3d const &r_mid,
-                                Utils::Vector3d const &r_left,
-                                Utils::Vector3d const &r_right) const {
+inline double AngleHarmonicBond::energy(Utils::Vector3d const &r_mid,
+                                        Utils::Vector3d const &r_left,
+                                        Utils::Vector3d const &r_right) const {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   auto const phi = acos(cos_phi);

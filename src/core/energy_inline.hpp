@@ -213,20 +213,20 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
   if (n_partners == 1) {
     auto const dx = get_mi_vector(p1.r.p, p2->r.p, box_geo);
     if (auto const *iap = boost::get<FeneBond>(&iaparams)) {
-      return iap->pair_energy(dx);
+      return iap->energy(dx);
     }
     if (auto const *iap = boost::get<HarmonicBond>(&iaparams)) {
-      return iap->pair_energy(dx);
+      return iap->energy(dx);
     }
     if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
-      return iap->pair_energy(dx);
+      return iap->energy(dx);
     }
 #ifdef ELECTROSTATICS
     if (auto const *iap = boost::get<BondedCoulomb>(&iaparams)) {
-      return iap->pair_energy(p1.p.q * p2->p.q, dx);
+      return iap->energy(p1.p.q * p2->p.q, dx);
     }
     if (auto const *iap = boost::get<BondedCoulombSR>(&iaparams)) {
-      return iap->pair_energy(p1, *p2, dx);
+      return iap->energy(p1, *p2, dx);
     }
 #endif
 #ifdef BOND_CONSTRAINT
@@ -236,7 +236,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
 #endif
 #ifdef TABULATED
     if (auto const *iap = boost::get<TabulatedDistanceBond>(&iaparams)) {
-      return iap->pair_energy(dx);
+      return iap->energy(dx);
     }
 #endif
     if (auto const *iap = boost::get<VirtualBond>(&iaparams)) {
@@ -246,25 +246,25 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
   } // 1 partner
   if (n_partners == 2) {
     if (auto const *iap = boost::get<AngleHarmonicBond>(&iaparams)) {
-      return iap->angle_energy(p1.r.p, p2->r.p, p3->r.p);
+      return iap->energy(p1.r.p, p2->r.p, p3->r.p);
     }
     if (auto const *iap = boost::get<AngleCosineBond>(&iaparams)) {
-      return iap->angle_energy(p1.r.p, p2->r.p, p3->r.p);
+      return iap->energy(p1.r.p, p2->r.p, p3->r.p);
     }
     if (auto const *iap = boost::get<AngleCossquareBond>(&iaparams)) {
-      return iap->angle_energy(p1.r.p, p2->r.p, p3->r.p);
+      return iap->energy(p1.r.p, p2->r.p, p3->r.p);
     }
     if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
-      return iap->angle_energy(p1.r.p, p2->r.p, p3->r.p);
+      return iap->energy(p1.r.p, p2->r.p, p3->r.p);
     }
     throw BondUnknownTypeError();
   } // 2 partners
   if (n_partners == 3) {
     if (auto const *iap = boost::get<DihedralBond>(&iaparams)) {
-      return iap->dihedral_energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p);
+      return iap->energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p);
     }
     if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
-      return iap->dihedral_energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p);
+      return iap->energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p);
     }
     throw BondUnknownTypeError();
   } // 3 partners

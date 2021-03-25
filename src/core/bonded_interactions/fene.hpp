@@ -54,8 +54,8 @@ struct FeneBond {
   FeneBond() = default;
   FeneBond(double k, double drmax, double r0);
 
-  boost::optional<Utils::Vector3d> pair_force(Utils::Vector3d const &dx) const;
-  boost::optional<double> pair_energy(Utils::Vector3d const &dx) const;
+  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  boost::optional<double> energy(Utils::Vector3d const &dx) const;
 
 private:
   friend boost::serialization::access;
@@ -73,7 +73,7 @@ private:
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-FeneBond::pair_force(Utils::Vector3d const &dx) const {
+FeneBond::force(Utils::Vector3d const &dx) const {
   auto const len = dx.norm();
   auto const dr = len - r0;
 
@@ -95,7 +95,7 @@ FeneBond::pair_force(Utils::Vector3d const &dx) const {
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-FeneBond::pair_energy(Utils::Vector3d const &dx) const {
+FeneBond::energy(Utils::Vector3d const &dx) const {
   /* compute bond stretching (r-r0) */
   double const dr = dx.norm() - r0;
 

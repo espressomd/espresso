@@ -49,8 +49,8 @@ struct HarmonicBond {
   HarmonicBond() = default;
   HarmonicBond(double k, double r, double r_cut);
 
-  boost::optional<Utils::Vector3d> pair_force(Utils::Vector3d const &dx) const;
-  boost::optional<double> pair_energy(Utils::Vector3d const &dx) const;
+  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  boost::optional<double> energy(Utils::Vector3d const &dx) const;
 
 private:
   friend boost::serialization::access;
@@ -66,7 +66,7 @@ private:
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-HarmonicBond::pair_force(Utils::Vector3d const &dx) const {
+HarmonicBond::force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if ((r_cut > 0.0) && (dist > r_cut)) {
@@ -87,7 +87,7 @@ HarmonicBond::pair_force(Utils::Vector3d const &dx) const {
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-HarmonicBond::pair_energy(Utils::Vector3d const &dx) const {
+HarmonicBond::energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if ((r_cut > 0.0) && (dist > r_cut)) {

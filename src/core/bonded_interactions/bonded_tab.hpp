@@ -81,8 +81,8 @@ struct TabulatedDistanceBond : public TabulatedBond {
                         std::vector<double> const &energy,
                         std::vector<double> const &force);
 
-  boost::optional<Utils::Vector3d> pair_force(Utils::Vector3d const &dx) const;
-  boost::optional<double> pair_energy(Utils::Vector3d const &dx) const;
+  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  boost::optional<double> energy(Utils::Vector3d const &dx) const;
 };
 
 /** Parameters for 3-body tabulated potential. */
@@ -95,11 +95,10 @@ struct TabulatedAngleBond : public TabulatedBond {
   TabulatedAngleBond(double min, double max, std::vector<double> const &energy,
                      std::vector<double> const &force);
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-              Utils::Vector3d const &r_right) const;
-  double angle_energy(Utils::Vector3d const &r_mid,
-                      Utils::Vector3d const &r_left,
-                      Utils::Vector3d const &r_right) const;
+  forces(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+         Utils::Vector3d const &r_right) const;
+  double energy(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+                Utils::Vector3d const &r_right) const;
 };
 
 /** Parameters for 4-body tabulated potential. */
@@ -114,12 +113,12 @@ struct TabulatedDihedralBond : public TabulatedBond {
                         std::vector<double> const &force);
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                              Utils::Vector3d>>
-  dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
-                 Utils::Vector3d const &r3, Utils::Vector3d const &r4) const;
-  boost::optional<double> dihedral_energy(Utils::Vector3d const &r1,
-                                          Utils::Vector3d const &r2,
-                                          Utils::Vector3d const &r3,
-                                          Utils::Vector3d const &r4) const;
+  forces(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+         Utils::Vector3d const &r3, Utils::Vector3d const &r4) const;
+  boost::optional<double> energy(Utils::Vector3d const &r1,
+                                 Utils::Vector3d const &r2,
+                                 Utils::Vector3d const &r3,
+                                 Utils::Vector3d const &r4) const;
 };
 
 /** Compute a tabulated bond length force.
@@ -131,7 +130,7 @@ struct TabulatedDihedralBond : public TabulatedBond {
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-TabulatedDistanceBond::pair_force(Utils::Vector3d const &dx) const {
+TabulatedDistanceBond::force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if (dist < pot->cutoff()) {
@@ -150,7 +149,7 @@ TabulatedDistanceBond::pair_force(Utils::Vector3d const &dx) const {
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-TabulatedDistanceBond::pair_energy(Utils::Vector3d const &dx) const {
+TabulatedDistanceBond::energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if (dist < pot->cutoff()) {
@@ -166,9 +165,9 @@ TabulatedDistanceBond::pair_energy(Utils::Vector3d const &dx) const {
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-TabulatedAngleBond::angle_force(Utils::Vector3d const &r_mid,
-                                Utils::Vector3d const &r_left,
-                                Utils::Vector3d const &r_right) const {
+TabulatedAngleBond::forces(Utils::Vector3d const &r_mid,
+                           Utils::Vector3d const &r_left,
+                           Utils::Vector3d const &r_right) const {
 
   auto forceFactor = [this](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -193,10 +192,9 @@ TabulatedAngleBond::angle_force(Utils::Vector3d const &r_mid,
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  */
-inline double
-TabulatedAngleBond::angle_energy(Utils::Vector3d const &r_mid,
-                                 Utils::Vector3d const &r_left,
-                                 Utils::Vector3d const &r_right) const {
+inline double TabulatedAngleBond::energy(Utils::Vector3d const &r_mid,
+                                         Utils::Vector3d const &r_left,
+                                         Utils::Vector3d const &r_right) const {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   /* calculate phi */
@@ -219,10 +217,10 @@ TabulatedAngleBond::angle_energy(Utils::Vector3d const &r_mid,
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                   Utils::Vector3d, Utils::Vector3d>>
-TabulatedDihedralBond::dihedral_force(Utils::Vector3d const &r1,
-                                      Utils::Vector3d const &r2,
-                                      Utils::Vector3d const &r3,
-                                      Utils::Vector3d const &r4) const {
+TabulatedDihedralBond::forces(Utils::Vector3d const &r1,
+                              Utils::Vector3d const &r2,
+                              Utils::Vector3d const &r3,
+                              Utils::Vector3d const &r4) const {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -265,7 +263,7 @@ TabulatedDihedralBond::dihedral_force(Utils::Vector3d const &r1,
  *  @param[in]  r3        Position of the third particle.
  *  @param[in]  r4        Position of the fourth particle.
  */
-inline boost::optional<double> TabulatedDihedralBond::dihedral_energy(
+inline boost::optional<double> TabulatedDihedralBond::energy(
     Utils::Vector3d const &r1, Utils::Vector3d const &r2,
     Utils::Vector3d const &r3, Utils::Vector3d const &r4) const {
   /* vectors for dihedral calculations. */

@@ -45,8 +45,8 @@ struct QuarticBond {
   QuarticBond() = default;
   QuarticBond(double k0, double k1, double r, double r_cut);
 
-  boost::optional<Utils::Vector3d> pair_force(Utils::Vector3d const &dx) const;
-  boost::optional<double> pair_energy(Utils::Vector3d const &dx) const;
+  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  boost::optional<double> energy(Utils::Vector3d const &dx) const;
 
 private:
   friend boost::serialization::access;
@@ -63,7 +63,7 @@ private:
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-QuarticBond::pair_force(Utils::Vector3d const &dx) const {
+QuarticBond::force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if ((r_cut > 0.0) && (dist > r_cut)) {
@@ -79,7 +79,7 @@ QuarticBond::pair_force(Utils::Vector3d const &dx) const {
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-QuarticBond::pair_energy(Utils::Vector3d const &dx) const {
+QuarticBond::energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
   if ((r_cut > 0.0) && (dist > r_cut)) {
