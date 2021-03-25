@@ -365,6 +365,26 @@ struct ParticleLocal {
   }
 };
 
+#ifdef BOND_CONSTRAINT
+struct ParticleRattle {
+  /** position/velocity correction */
+  Utils::Vector3d correction = {0, 0, 0};
+
+  friend ParticleRattle operator+(ParticleRattle const &lhs,
+                                  ParticleRattle const &rhs) {
+    return {lhs.correction + rhs.correction};
+  }
+
+  ParticleRattle &operator+=(ParticleRattle const &rhs) {
+    return *this = *this + rhs;
+  }
+
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar &correction;
+  }
+};
+#endif
+
 /** Struct holding all information for one particle. */
 struct Particle { // NOLINT(bugprone-exception-escape)
   int &identity() { return p.identity; }
@@ -391,6 +411,10 @@ struct Particle { // NOLINT(bugprone-exception-escape)
   ParticleForce f;
   ///
   ParticleLocal l;
+#ifdef BOND_CONSTRAINT
+  ///
+  ParticleRattle rattle;
+#endif
 
 private:
   BondList bl;
