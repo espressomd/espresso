@@ -79,14 +79,9 @@ class BHGPUTest(ut.TestCase):
             self.system.actors.add(dds_cpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
-            dawaanr_f = []
-            dawaanr_t = []
-
-            for i in range(n):
-                dawaanr_f.append(self.system.part[i].f)
-                dawaanr_t.append(self.system.part[i].torque_lab)
-            dawaanr_e = espressomd.analyze.Analysis(
-                self.system).energy()["total"]
+            dawaanr_f = np.copy(self.system.part[:].f)
+            dawaanr_t = np.copy(self.system.part[:].torque_lab)
+            dawaanr_e = self.system.analysis.energy()["total"]
 
             del dds_cpu
             self.system.actors.clear()
@@ -100,11 +95,9 @@ class BHGPUTest(ut.TestCase):
             bhgpu_f = []
             bhgpu_t = []
 
-            for i in range(n):
-                bhgpu_f.append(self.system.part[i].f)
-                bhgpu_t.append(self.system.part[i].torque_lab)
-            bhgpu_e = espressomd.analyze.Analysis(
-                self.system).energy()["total"]
+            bhgpu_f = np.copy(self.system.part[:].f)
+            bhgpu_t = np.copy(self.system.part[:].torque_lab)
+            bhgpu_e = self.system.analysis.energy()["total"]
 
             # compare
             for i in range(n):

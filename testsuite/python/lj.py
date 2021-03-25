@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-import numpy
+import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 from tests_common import abspath
@@ -26,7 +26,8 @@ from tests_common import abspath
 @utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class LennardJonesTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    data = numpy.loadtxt(abspath('data/lj_system.dat'))
+    pos, forces = np.loadtxt(
+        abspath('data/lj_system.dat'))[:, 1:].reshape((-1, 2, 3)).swapaxes(0, 1)
 
     def setUp(self):
         self.system.part.clear()
@@ -42,18 +43,15 @@ class LennardJonesTest(ut.TestCase):
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
 
-        for i in range(self.data.shape[0]):
-            self.system.part.add(
-                id=int(self.data[i][0]), pos=self.data[i][1:4])
+        self.system.part.add(pos=self.pos)
 
     def check(self):
         rms = 0.0
         max_df = 0.0
 
-        for i in range(self.data.shape[0]):
-            f = self.system.part[i].f
+        for p, ref_force in zip(self.system.part, self.forces):
             for j in range(3):
-                df2 = (self.data[i][4 + j] - f[j])**2
+                df2 = (ref_force[j] - p.f[j])**2
                 rms += df2
                 max_df = max(max_df, (df2)**0.5)
 

@@ -27,7 +27,7 @@ class ParticleProperties(ut.TestCase):
     system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 
     # Particle id to work on
-    pid = 17
+    system.part.add(id=17, pos=(0, 0, 0))
 
     def bondsMatch(self, inType, outBond, inParams, outParams, msg_long):
         """Check, if the bond type set and gotten back as well as the bond
@@ -73,10 +73,6 @@ class ParticleProperties(ut.TestCase):
         self.assertSetEqual(default_keys, valid_keys - required_keys,
                             "{}.set_default_params() should have keys: {}, got: {}".format(
                                 classname, valid_keys - required_keys, default_keys))
-
-    def setUp(self):
-        if not self.system.part.exists(self.pid):
-            self.system.part.add(id=self.pid, pos=(0, 0, 0))
 
     def generateTestForBondParams(_bondId, _bondClass, _params):
         """Generates test cases for checking bond parameters set and gotten

@@ -50,13 +50,13 @@ class CoulombMixedPeriodicity(ut.TestCase):
 
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f
-        for particle in data:
-            id = particle[0]
-            pos = particle[1:4]
-            q = particle[4]
-            f = particle[5:]
-            self.S.part.add(id=int(id), pos=pos, q=q)
-            self.forces[id] = f
+        for row in data:
+            pid = int(row[0])
+            pos = row[1:4]
+            q = row[4]
+            f = row[5:]
+            self.S.part.add(id=pid, pos=pos, q=q)
+            self.forces[pid] = f
 
     def tearDown(self):
         self.S.part.clear()

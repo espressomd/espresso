@@ -31,6 +31,9 @@ class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
     def setUp(self):
         self.LBClass = lb.LBFluidGPU
 
+    def tearDown(self):
+        VirtualSitesTracersCommon.tearDown(self)
+
 
 if __name__ == "__main__":
     ut.main()

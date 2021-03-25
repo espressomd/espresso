@@ -106,15 +106,15 @@ class PressureLJ(ut.TestCase):
         system.periodicity = [1, 1, 1]
 
         # particles and bond
-        system.part.add(id=0, pos=[9.9, 9.75, 9.9], type=0, mol_id=0)
-        system.part.add(id=1, pos=[9.9, 10.25, 9.9], type=0, mol_id=0)
-        system.part.add(id=2, pos=[0.1, 9.7, 0.1], type=1, mol_id=1)
-        system.part.add(id=3, pos=[0.1, 10.3, 0.1], type=2, mol_id=2)
+        p0 = system.part.add(pos=[9.9, 9.75, 9.9], type=0, mol_id=0)
+        p1 = system.part.add(pos=[9.9, 10.25, 9.9], type=0, mol_id=0)
+        p2 = system.part.add(pos=[0.1, 9.7, 0.1], type=1, mol_id=1)
+        p3 = system.part.add(pos=[0.1, 10.3, 0.1], type=2, mol_id=2)
 
         harmonic = HarmonicBond(k=1e4, r_0=0)
         system.bonded_inter.add(harmonic)
-        system.part[0].add_bond((harmonic, 1))
-        system.part[2].add_bond((harmonic, 3))
+        p0.add_bond((harmonic, p1))
+        p2.add_bond((harmonic, p3))
 
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
@@ -123,10 +123,10 @@ class PressureLJ(ut.TestCase):
 
         system.integrator.run(steps=0)
 
-        system.part[0].v = [10.0, 20.0, 30.0]
-        system.part[1].v = [-15, -25, -35]
-        system.part[2].v = [27.0, 23.0, 17.0]
-        system.part[3].v = [13.0, 11.0, 19.0]
+        p0.v = [10.0, 20.0, 30.0]
+        p1.v = [-15., -25., -35.]
+        p2.v = [27.0, 23.0, 17.0]
+        p3.v = [13.0, 11.0, 19.0]
 
         pos = system.part[:].pos
         vel = system.part[:].v
@@ -280,10 +280,10 @@ class PressureFENE(ut.TestCase):
         system.periodicity = [1, 1, 1]
 
         # particles and bond
-        system.part.add(
-            id=0, pos=[9.9, 9.75, 9.9], type=0, mol_id=0, fix=[1, 1, 1])
-        system.part.add(
-            id=1, pos=[9.9, 10.25, 9.9], type=0, mol_id=0, fix=[1, 1, 1])
+        p0 = system.part.add(
+            pos=[9.9, 9.75, 9.9], type=0, mol_id=0, fix=[1, 1, 1])
+        p1 = system.part.add(
+            pos=[9.9, 10.25, 9.9], type=0, mol_id=0, fix=[1, 1, 1])
 
         k = 1e4
         d_r_max = 1.5
@@ -291,7 +291,7 @@ class PressureFENE(ut.TestCase):
 
         fene = FeneBond(k=k, d_r_max=d_r_max, r_0=r_0)
         system.bonded_inter.add(fene)
-        system.part[0].add_bond((fene, 1))
+        p0.add_bond((fene, p1))
         system.integrator.run(steps=0)
 
         sim_pressure_tensor = system.analysis.pressure_tensor()
@@ -304,7 +304,7 @@ class PressureFENE(ut.TestCase):
             total_bonded_pressure_tensor += sim_pressure_tensor['bonded', i]
 
         anal_pressure_tensor_fene = self.get_anal_pressure_tensor_fene(
-            system.part[0].pos, system.part[1].pos, k, d_r_max, r_0)
+            p0.pos, p1.pos, k, d_r_max, r_0)
         np.testing.assert_allclose(
             sim_pressure_tensor_bonded, anal_pressure_tensor_fene, atol=tol,
             err_msg='bonded pressure tensor does not match analytical result')

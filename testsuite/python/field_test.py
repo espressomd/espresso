@@ -63,9 +63,9 @@ class FieldTest(ut.TestCase):
 
         # Virtual sites don't feel gravity
         if espressomd.has_features("VIRTUAL_SITES"):
-            self.system.part[0].virtual = True
+            p.virtual = True
             self.system.integrator.run(0)
-            np.testing.assert_allclose(np.copy(self.system.part[0].f), 0)
+            np.testing.assert_allclose(np.copy(p.f), 0)
 
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_linear_electric_potential(self):
