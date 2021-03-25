@@ -129,4 +129,13 @@ std::vector<Utils::Vector3i> local_nodes_incl_ghosts(
   return res;
 }
 
+std::vector<Utils::Vector3i> corner_nodes(Utils::Vector3i n) {
+  std::vector<Utils::Vector3i> res;
+  for (int i : {0, n[0] - 1})
+    for (int j : {0, n[1] - 1})
+      for (int k : {0, n[2] - 1})
+        res.emplace_back(Utils::Vector3i{i, j, k});
+  return res;
+}
+
 #endif

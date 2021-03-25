@@ -65,13 +65,6 @@ BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_lbs()), lb_generator) {
     BOOST_CHECK(local_domain.first[i] >= 0);
     BOOST_CHECK(local_domain.second[i] <= params.grid_dimensions[i]);
   }
-
-  Vector3d total_size;
-  MPI_Allreduce(my_size.data(), total_size.data(), 3, MPI_DOUBLE, MPI_SUM,
-                MPI_COMM_WORLD);
-  for (int i : {0, 1, 2}) {
-    BOOST_CHECK(total_size[i] == lb->get_grid_dimensions()[i]);
-  }
 }
 
 BOOST_DATA_TEST_CASE(set_viscosity, bdata::make(all_lbs()), lb_generator) {
@@ -358,6 +351,50 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
   }
 }
 
+BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
+  auto lb = lb_generator(mpi_shape, params);
+
+  // Add forces in all box corners. If domain boundaries are treated correclty
+  // each corner node should get 1/8 of the force.
+
+  auto const l = params.box_dimensions;
+  const Vector3d f{0.1, .02, -0.3};
+  for (double x : {0., l[0]})
+    for (double y : {0., l[1]})
+      for (double z : {0., l[2]}) {
+        const Vector3d pos{x, y, z};
+        bool res = lb->add_force_at_pos(pos, f);
+      }
+
+  // check forces to be applied
+  // Each corner node should have 1/8 of the force
+  const double tol = 1E-10;
+  int count = 0;
+  for (auto c : corner_nodes(params.grid_dimensions)) {
+    auto res = lb->get_node_force_to_be_applied(c);
+    if (res) {
+      BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), tol);
+      count += 1;
+    }
+  };
+  MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  BOOST_CHECK_EQUAL(count, 8);
+
+  lb->integrate();
+
+  // check applied forces from last integration step
+  count = 0;
+  for (auto c : corner_nodes(params.grid_dimensions)) {
+    auto res = lb->get_node_last_applied_force(c);
+    if (res) {
+      BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), tol);
+      count += 1;
+    }
+  };
+  MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  BOOST_CHECK_EQUAL(count, 8);
+}
+
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
   int n_nodes;
@@ -365,13 +402,13 @@ int main(int argc, char **argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   MPI_Dims_create(n_nodes, 3, mpi_shape.data());
 
-  params.agrid = 0.5;
+  params.agrid = 1.0;
   params.tau = 0.03;
   params.viscosity = 0.003;
   params.kT = 1.3E-4;
   params.density = 1.4;
   params.grid_dimensions = Vector3i{12, 12, 18};
-  params.box_dimensions = Vector3d{6, 6, 9};
+  params.box_dimensions = Vector3d{12, 12, 18};
 
   walberla_mpi_init();
   auto res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
