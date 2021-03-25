@@ -2638,12 +2638,15 @@ struct Stress {
   template <typename T>
   __device__ Utils::Array<float, 6> operator()(T const &t) const {
     Utils::Array<float, 19> modes;
-    calc_m_from_n(thrust::get<0>(t), modes);
+    calc_m_from_n(thrust::get<0>(t), modes); // NOLINT
     return stress_from_stress_modes(stress_modes(thrust::get<1>(t), modes));
   }
 };
 
 Utils::Array<float, 6> stress_tensor_GPU() {
+  if (not current_nodes->populations or not device_rho_v)
+    throw std::runtime_error("LB not initialized");
+
   auto pop_begin = thrust::device_pointer_cast(current_nodes->populations);
   auto rho_v_begin = thrust::device_pointer_cast(device_rho_v);
   auto begin =
