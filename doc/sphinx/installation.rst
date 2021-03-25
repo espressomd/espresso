@@ -88,7 +88,8 @@ are required:
 
     sudo apt install python3-matplotlib python3-scipy python3-pint ipython3 jupyter-notebook
     pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' \
-                        'sphinx>=1.6.7,!=2.1.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5'
+                        'sphinx>=1.6.7,!=2.1.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5' \
+                        'MDAnalysis>=1.0.0'
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
