@@ -55,7 +55,12 @@ public:
           [this](Variant const &v) {
             m_hollow_conical_frustum->set_direction(get_value<int>(v));
           },
-          [this]() { return m_hollow_conical_frustum->direction(); }}});
+          [this]() { return m_hollow_conical_frustum->direction(); }},
+        {"central_angle",
+            [this](Variant const &v) {
+              m_hollow_conical_frustum->set_central_angle(get_value<double>(v));
+            },
+            [this]() { return m_hollow_conical_frustum->central_angle(); }}});
   }
 
   void do_construct(VariantMap const &params) override {
@@ -66,8 +71,9 @@ public:
           get_value<double>(params,"r1"),
           get_value<double>(params,"r2"),
               get_value<double>(params,"length"),
-          get_value<double>(params,"thickness"),
+          get_value_or<double>(params,"thickness",0.),
                           get_value_or<int>(params,"direction",1),
+                              get_value_or<double>(params, "central_angle",0.),
                               m_cyl_transform_params->cyl_transform_params()
 
       );

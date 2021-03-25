@@ -50,31 +50,30 @@ namespace Shapes {
  */
 class HollowConicalFrustum : public Shape {
 public:
-  HollowConicalFrustum(double const r1, double const r2, double const length, double const thickness, int const direction, std::shared_ptr<Utils::CylindricalTransformationParameters> cyl_transform_params)
+  HollowConicalFrustum(double const r1, double const r2, double const length, double const thickness, int const direction, double const central_angle, std::shared_ptr<Utils::CylindricalTransformationParameters> cyl_transform_params)
       : m_r1(r1), m_r2(r2), m_length(length), m_thickness(thickness),
-        m_direction(direction), m_cyl_transform_params(std::move(cyl_transform_params)) {}
+        m_direction(direction), m_central_angle(central_angle), m_cyl_transform_params(std::move(cyl_transform_params)) {}
 
   void set_r1(double const radius) { m_r1 = radius; }
   void set_r2(double const radius) { m_r2 = radius; }
   void set_length(double const length) { m_length = length; }
   void set_thickness(double const thickness) { m_thickness = thickness; }
   void set_direction(int const dir) { m_direction = dir; }
-  void set_cyl_transform_params(std::shared_ptr<Utils::CylindricalTransformationParameters> ctp) {
-    m_cyl_transform_params = std::move(ctp);
-  }
+  void set_central_angle(double const central_angle) {m_central_angle = central_angle; }
 
   /// Get radius 1 perpendicular to axis.
   double radius1() const { return m_r1; }
   /// Get radius 2 perpendicular to axis.
   double radius2() const { return m_r2; }
-  /// Get length of the frustum (modulo thickness).
+  /// Get length of the frustum (without thickness).
   double length() const { return m_length; }
   /// Get thickness of the frustum.
   double thickness() const { return m_thickness; }
   /// Get direction
   int direction() const {return m_direction;}
-  /// Get cylindrical transformation parameters
-  std::shared_ptr<Utils::CylindricalTransformationParameters> cyl_transform_params() const {return m_cyl_transform_params;}
+  /// Get central angle
+  double central_angle() const {return m_central_angle; }
+
 
   /**
    * @brief Calculate the distance vector and its norm between a given position
@@ -92,7 +91,9 @@ private:
   double m_length;
   double m_thickness;
   int m_direction;
+  double m_central_angle;
   std::shared_ptr<Utils::CylindricalTransformationParameters> m_cyl_transform_params;
+
 };
 } // namespace Shapes
 
