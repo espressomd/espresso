@@ -150,7 +150,7 @@ class TestLB:
         np.testing.assert_allclose(
             pressure_tensor,
             obs_pressure_tensor,
-            atol=1E-10)
+            atol=1E-7)
         np.testing.assert_allclose(
             np.copy(self.lbf.pressure_tensor),
             obs_pressure_tensor,
