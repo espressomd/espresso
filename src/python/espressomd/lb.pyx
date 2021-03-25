@@ -84,7 +84,7 @@ cdef class HydrodynamicInteraction(Actor):
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)):
             if len(key) == 3:
-                if any(isinstance(typ,slice) for typ in key):
+                if any(isinstance(typ, slice) for typ in key):
                     return LBSlice(key)
                 else:
                     return LBFluidRoutines(np.array(key))
@@ -93,6 +93,7 @@ cdef class HydrodynamicInteraction(Actor):
                 "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
     # validate the given parameters on actor initialization
     ####################################################
+
     def validate_params(self):
         default_params = self.default_params()
 
@@ -449,9 +450,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines:
@@ -553,14 +554,13 @@ cdef class LBSlice:
     cdef np.ndarray x_indices
     cdef np.ndarray y_indices
     cdef np.ndarray z_indices
-    
-    
-    #cdef Vector3i shape
-    
+
+    # cdef Vector3i shape
+
     def __init__(self, key):
         shape = lb_lbfluid_get_shape()
-        self.x_indices,self.y_indices,self.z_indices = self.get_indices(key, shape[0], shape[1], shape[2])
-        
+        self.x_indices, self.y_indices, self.z_indices = self.get_indices(
+            key, shape[0], shape[1], shape[2])
 
     def get_indices(self, key, shape_x, shape_y, shape_z):
         _x_indices = np.atleast_1d(np.arange(shape_x)[key[0]])
@@ -568,58 +568,79 @@ cdef class LBSlice:
         _z_indices = np.atleast_1d(np.arange(shape_z)[key[2]])
         return _x_indices, _y_indices, _z_indices
 
-    def get_values(self, _x_indices ,_y_indices ,_z_indices, prop_name, shape_res):
-        res = np.zeros((_x_indices.size, _y_indices.size, _z_indices.size, *shape_res))
+    def get_values(self, _x_indices, _y_indices,
+                   _z_indices, prop_name, shape_res):
+        res = np.zeros(
+            (_x_indices.size,
+             _y_indices.size,
+             _z_indices.size,
+             *shape_res))
         for i, x in enumerate(_x_indices):
             for j, y in enumerate(_y_indices):
                 for k, z in enumerate(_z_indices):
-                    res[i,j,k] = getattr(LBFluidRoutines(np.array([x,y,z])),prop_name)
+                    res[i, j, k] = getattr(LBFluidRoutines(
+                        np.array([x, y, z])), prop_name)
         return res
 
-    def set_values(self, _x_indices ,_y_indices ,_z_indices, prop_name, value):
+    def set_values(self, _x_indices, _y_indices, _z_indices, prop_name, value):
         for i, x in enumerate(_x_indices):
             for j, y in enumerate(_y_indices):
                 for k, z in enumerate(_z_indices):
-                        setattr(LBFluidRoutines(np.array([x,y,z])),prop_name,value[i,j,k])
-        
+                    setattr(LBFluidRoutines(
+                        np.array([x, y, z])), prop_name, value[i, j, k])
 
     property density:
         def __get__(self):
             prop_name = "density"
             shape_res = (1,)
-            return np.squeeze(self.get_values(self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res),axis=3)
+            return np.squeeze(self.get_values(
+                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res), axis=3)
 
         def __set__(self, value):
             prop_name = "density"
-            self.set_values(self.x_indices ,self.y_indices ,self.z_indices, prop_name, value)
+            self.set_values(
+                self.x_indices,
+                self.y_indices,
+                self.z_indices,
+                prop_name,
+                value)
 
     property index:
         def __get__(self):
             prop_name = "index"
             shape_res = (3,)
-            return self.get_values(self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+            return self.get_values(
+                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
     property velocity:
         def __get__(self):
             prop_name = "velocity"
             shape_res = (3,)
-            return self.get_values(self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+            return self.get_values(
+                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
         def __set__(self, value):
             prop_name = "velocity"
-            if value.shape == (len(self.x_indices),len(self.y_indices),len(self.z_indices),3):
-                self.set_values(self.x_indices ,self.y_indices ,self.z_indices, prop_name, value)
+            if value.shape == (len(self.x_indices), len(
+                    self.y_indices), len(self.z_indices), 3):
+                self.set_values(
+                    self.x_indices,
+                    self.y_indices,
+                    self.z_indices,
+                    prop_name,
+                    value)
             else:
                 raise ValueError(
-                    "Input-dimensions of velocity array",value.shape, "does not match slice dimensions",
-                        (len(self.x_indices),len(self.y_indices),len(self.z_indices),3),".")
+                    "Input-dimensions of velocity array", value.shape, "does not match slice dimensions",
+                    (len(self.x_indices), len(self.y_indices), len(self.z_indices), 3), ".")
 
     property pressure_tensor:
         def __get__(self):
             prop_name = "pressure_tensor"
-            shape_res = (3,3)
-            
-            return self.get_values(self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+            shape_res = (3, 3)
+
+            return self.get_values(
+                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -627,9 +648,10 @@ cdef class LBSlice:
     property pressure_tensor_neq:
         def __get__(self):
             prop_name = "pressure_tensor_neq"
-            shape_res = (3,3)
-            
-            return self.get_values(self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+            shape_res = (3, 3)
+
+            return self.get_values(
+                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
         def __set__(self, value):
             raise NotImplementedError
@@ -640,22 +662,30 @@ cdef class LBSlice:
             shape_res = (19,)
             cdef Vector19d double_return
             double_return = lb_lbnode_get_pop(self.node)
-            return self.get_values(self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+            return self.get_values(
+                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
         def __set__(self, value):
             prop_name = "population"
-            if value.shape == (len(self.x_indices),len(self.y_indices),len(self.z_indices),19):
-                self.set_values(self.x_indices ,self.y_indices ,self.z_indices, prop_name, value)
+            if value.shape == (len(self.x_indices), len(
+                    self.y_indices), len(self.z_indices), 19):
+                self.set_values(
+                    self.x_indices,
+                    self.y_indices,
+                    self.z_indices,
+                    prop_name,
+                    value)
             else:
                 raise ValueError(
-                    "Input-dimensions of population array",value.shape, "does not match slice dimensions",
-                        (len(self.x_indices),len(self.y_indices),len(self.z_indices),19),".")
+                    "Input-dimensions of population array", value.shape, "does not match slice dimensions",
+                    (len(self.x_indices), len(self.y_indices), len(self.z_indices), 19), ".")
 
     property boundary:
         def __get__(self):
             shape_res = (1,)
             prop_name = "boundary"
-            return self.get_values(self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+            return self.get_values(
+                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
         def __set__(self, value):
             raise NotImplementedError
