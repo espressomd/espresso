@@ -123,19 +123,37 @@ class ShapeBasedConstraintTest(ut.TestCase):
         np.testing.assert_array_almost_equal(dist[1], [-dist[0],0,0])
         
         # check rotated coordinates, central angle with straight frustum
-        CENTER = np.array(3*[5])
-        CENTRAL_ANGLE = np.pi/2.
+        CENTER = np.array(3*[0])
+        CENTRAL_ANGLE = np.pi/2
         ctp = espressomd.math.CylindricalTransformationParameters(center = CENTER, axis = [1.,0.,0.], orientation = [0.,0.,1.])
         shape = espressomd.shapes.HollowConicalFrustum(cyl_transform_params = ctp, r1=R1, r2=R1, thickness = 0., length=LENGTH, central_angle = CENTRAL_ANGLE)
-        probe_pos = CENTER + [0, 0.1, 10]
-        closest_on_surface = CENTER + [0 , R1 *np.sin(CENTRAL_ANGLE/2.), R1 *np.cos(CENTRAL_ANGLE/2.)]
+        
+        #point within length
+        probe_pos = CENTER + [0,sys.float_info.epsilon, 1.234]
+        closest_on_surface = CENTER + [0, R1 *np.sin(CENTRAL_ANGLE/2.), R1 *np.cos(CENTRAL_ANGLE/2.) ]
+        dist = shape.calc_distance(position = probe_pos)
+        d_vec_expected = probe_pos-closest_on_surface
+        self.assertAlmostEqual(dist[0],np.linalg.norm(d_vec_expected))
+        np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
+        
+        # point outside of length
+        probe_pos = CENTER + [LENGTH,sys.float_info.epsilon, 1.234]
+        closest_on_surface = CENTER + [LENGTH/2., R1 *np.sin(CENTRAL_ANGLE/2.), R1 *np.cos(CENTRAL_ANGLE/2.) ]
         dist = shape.calc_distance(position = probe_pos)
         d_vec_expected = probe_pos-closest_on_surface
         self.assertAlmostEqual(dist[0],np.linalg.norm(d_vec_expected))
         np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
         
         # check central angle with funnel-type frustum
-        
+        shape.r1 = LENGTH
+        shape.r2 = 0
+        shape.central_angle = np.pi
+        # with this setup, the edges coincide with the xy angle bisectors
+        probe_pos = CENTER + [5-LENGTH/2.,-sys.float_info.epsilon,sys.float_info.epsilon]
+        d_vec_expected = 5/2 * np.array([1,1,0]) 
+        dist = shape.calc_distance(position = probe_pos)
+        #self.assertAlmostEqual(dist[0],np.linalg.norm(d_vec_expected))
+        np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
                                                     
 
     def test_simplepore(self):
