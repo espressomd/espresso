@@ -33,7 +33,19 @@
 #include "utils/Vector.hpp"
 #include "utils/matrix.hpp"
 
+/**
+ * @file quaternion.hpp
+ *
+ * @brief This file contains a matrix implementation and the trait types needed
+ * for the boost qvm interoperability.
+ */
+
 namespace Utils {
+
+/**
+ * Quaternion representation.
+ * @tparam T Element data type.
+ */
 template <typename T> struct Quaternion {
   using container = typename Utils::Array<T, 4>;
   container m_data;
@@ -47,30 +59,86 @@ template <typename T> struct Quaternion {
   void serialize(Archive &ar, const unsigned int version) {
     ar &m_data;
   }
-
+  /**
+   * @brief Normalize the quaternion in place.
+   */
   void normalize() { boost::qvm::normalize(*this); }
 
+  /**
+   * @brief Retrieve a normalized copy of the quaternion.
+   * @return Normalized quaternion.
+   */
   Quaternion<T> normalized() const { return boost::qvm::normalized(*this); }
 
+  /**
+   * @brief Element access (const).
+   * @param i Element index.
+   * @return Value of element @p i.
+   */
   value_type operator[](std::size_t i) const { return m_data[i]; }
+  /**
+   * @brief Element access (non const).
+   * @param i Element index.
+   * @return Value of element @p i.
+   */
   reference operator[](std::size_t i) { return m_data[i]; }
 
+  /**
+   * @brief Retrieve the norm of the quaternion.
+   * @return The norm.
+   */
   value_type norm() const { return boost::qvm::mag(*this); }
+  /**
+   * @brief Retrieve the square of the norm of the quaternion.
+   * @return The squared norm.
+   */
   value_type norm2() const { return boost::qvm::mag_sqr(*this); }
 
+  /**
+   * @brief Construct an identity quaternion.
+   * @return Identity quaternion.
+   */
   static Quaternion<T> identity() { return boost::qvm::identity_quat<T>(); }
 
+  /**
+   * @brief Construct a zero quaternion.
+   * @return Quaternion with all elements set to zero.
+   */
   static Quaternion<T> zero() { return boost::qvm::zero_quat<T>(); }
+
+  /**
+   * @brief Access to the underlying data (non const).
+   * @return Pointer to the first data member.
+   */
   constexpr pointer data() { return m_data.data(); }
+
+  /**
+   * @brief Access to the underlying data (const).
+   * @return Pointer to the first data member.
+   */
   constexpr const_pointer data() const noexcept { return m_data.data(); }
 };
 
+/**
+ * @brief Product quaternion and arithmetic type.
+ * @tparam T Data type of quaternion @p a.
+ * @tparam U Type of multiplier @p b.
+ * @param b Quaternion.
+ * @param a Multiplier.
+ * @return Multiplied quaternion.
+ */
 template <typename T, typename U,
           std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
 Quaternion<T> operator*(const U &b, const Quaternion<T> &a) {
   return boost::qvm::operator*(a, b);
 }
 
+/**
+ * @brief Convert quaternion to rotation matrix.
+ * @tparam T Data type of quaternion.
+ * @param q Quaternion.
+ * @return Rotation matrix.
+ */
 template <typename T> Matrix<T, 3, 3> rotation_matrix(Quaternion<T> const &q) {
   auto const normed_q = q.normalized();
   auto const id_mat = Utils::identity_mat<double, 3, 3>();
