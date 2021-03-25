@@ -20,17 +20,17 @@
 #ifndef ESPRESSO_HOLLOW_CONICAL_FRUSTUM_HPP
 #define ESPRESSO_HOLLOW_CONICAL_FRUSTUM_HPP
 #include "Shape.hpp"
-#include <shapes/HollowConicalFrustum.hpp>
 #include <script_interface/CylindricalTransformationParameters.hpp>
+#include <shapes/HollowConicalFrustum.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {
 
 class HollowConicalFrustum : public Shape {
 public:
-  HollowConicalFrustum(){
-    add_parameters({
-        {"cyl_transform_params", m_cyl_transform_params},
+  HollowConicalFrustum() {
+    add_parameters(
+        {{"cyl_transform_params", m_cyl_transform_params},
          {"r1",
           [this](Variant const &v) {
             m_hollow_conical_frustum->set_r1(get_value<double>(v));
@@ -56,28 +56,27 @@ public:
             m_hollow_conical_frustum->set_direction(get_value<int>(v));
           },
           [this]() { return m_hollow_conical_frustum->direction(); }},
-        {"central_angle",
-            [this](Variant const &v) {
-              m_hollow_conical_frustum->set_central_angle(get_value<double>(v));
-            },
-            [this]() { return m_hollow_conical_frustum->central_angle(); }}});
+         {"central_angle",
+          [this](Variant const &v) {
+            m_hollow_conical_frustum->set_central_angle(get_value<double>(v));
+          },
+          [this]() { return m_hollow_conical_frustum->central_angle(); }}});
   }
 
   void do_construct(VariantMap const &params) override {
     set_from_args(m_cyl_transform_params, params, "cyl_transform_params");
 
     if (m_cyl_transform_params)
-      m_hollow_conical_frustum = std::make_shared<::Shapes::HollowConicalFrustum>(
-          get_value<double>(params,"r1"),
-          get_value<double>(params,"r2"),
-              get_value<double>(params,"length"),
-          get_value_or<double>(params,"thickness",0.),
-                          get_value_or<int>(params,"direction",1),
-                              get_value_or<double>(params, "central_angle",0.),
-                              m_cyl_transform_params->cyl_transform_params()
+      m_hollow_conical_frustum =
+          std::make_shared<::Shapes::HollowConicalFrustum>(
+              get_value<double>(params, "r1"), get_value<double>(params, "r2"),
+              get_value<double>(params, "length"),
+              get_value_or<double>(params, "thickness", 0.),
+              get_value_or<int>(params, "direction", 1),
+              get_value_or<double>(params, "central_angle", 0.),
+              m_cyl_transform_params->cyl_transform_params()
 
-      );
-
+          );
   }
 
   std::shared_ptr<::Shapes::Shape> shape() const override {

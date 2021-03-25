@@ -18,31 +18,37 @@ import numpy as np
 import unittest as ut
 import espressomd.math
 
+
 class TestMath(ut.TestCase):
-    
-    def check_orthonormality(self,vec1, vec2):
-        self.assertAlmostEqual(np.linalg.norm(vec1),1.)
-        self.assertAlmostEqual(np.linalg.norm(vec2),1.)
+
+    def check_orthonormality(self, vec1, vec2):
+        self.assertAlmostEqual(np.linalg.norm(vec1), 1.)
+        self.assertAlmostEqual(np.linalg.norm(vec2), 1.)
         self.assertAlmostEqual(np.dot(vec1, vec2), 0)
-                            
+
     def test_cylindrical_transformation_parameters(self):
-        
         """ Test for the varous constructors of CylindricalTransformationParameters """
-        
+
         ctp_default = espressomd.math.CylindricalTransformationParameters()
         self.check_orthonormality(ctp_default.axis, ctp_default.orientation)
-        
+
         axis = np.array([-17, 0.1, np.pi])
         axis /= np.linalg.norm(axis)
-        ctp_auto_orientation = espressomd.math.CylindricalTransformationParameters(center = 3*[42], axis = axis)
-        self.check_orthonormality(ctp_auto_orientation.axis, ctp_auto_orientation.orientation)
-        
-        ctp_full = espressomd.math.CylindricalTransformationParameters(center = 3*[42], axis = [0,1,0], orientation = [1,0,0])
+        ctp_auto_orientation = espressomd.math.CylindricalTransformationParameters(
+            center=3 * [42], axis=axis)
+        self.check_orthonormality(
+            ctp_auto_orientation.axis,
+            ctp_auto_orientation.orientation)
+
+        ctp_full = espressomd.math.CylindricalTransformationParameters(
+            center=3 * [42], axis=[0, 1, 0], orientation=[1, 0, 0])
         self.check_orthonormality(ctp_full.axis, ctp_full.orientation)
-        
+
         with self.assertRaises(Exception):
-            ctp_only_center = espressomd.math.CylindricalTransformationParameters(center = 3*[42])
+            ctp_only_center = espressomd.math.CylindricalTransformationParameters(
+                center=3 * [42])
+            ctp_only_center.axis = 3 * [3]
+
 
 if __name__ == "__main__":
     ut.main()
-    

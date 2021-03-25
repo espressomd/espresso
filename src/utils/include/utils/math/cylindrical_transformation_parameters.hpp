@@ -46,11 +46,13 @@ public:
     validate();
   }
   /**
- * @brief if you only provide center and axis, an orientation will be generated automatically such that it is orthogonal to axis
- */
+   * @brief if you only provide center and axis, an orientation will be
+   * generated automatically such that it is orthogonal to axis
+   */
   CylindricalTransformationParameters(Utils::Vector3d const &center,
-        Utils::Vector3d const &axis)
-    : m_center(center), m_axis(axis), m_orientation(Utils::calc_orthonormal_vector(axis)) {}
+                                      Utils::Vector3d const &axis)
+      : m_center(center), m_axis(axis),
+        m_orientation(Utils::calc_orthonormal_vector(axis)) {}
 
   Utils::Vector3d center() const { return m_center; }
   Utils::Vector3d axis() const { return m_axis; }

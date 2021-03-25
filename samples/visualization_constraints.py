@@ -97,10 +97,11 @@ elif args.shape == "Slitpore":
         particle_type=0, penetrable=True)
 
 elif args.shape == "HollowConicalFrustum":
-    ctp = espressomd.math.CylindricalTransformationParameters(axis=1/np.sqrt(2)*np.array([0.0,1.0 , 1.0]), center=[25, 25, 25], orientation = [1,0,0])
+    ctp = espressomd.math.CylindricalTransformationParameters(
+        axis=1 / np.sqrt(2) * np.array([0.0, 1.0, 1.0]), center=[25, 25, 25], orientation=[1, 0, 0])
     system.constraints.add(shape=espressomd.shapes.HollowConicalFrustum(
         r1=12, r2=8, length=15.0, thickness=3,
-        cyl_transform_params = ctp, direction=1, central_angle = np.pi/2),
+        cyl_transform_params=ctp, direction=1, central_angle=np.pi / 2),
         particle_type=0, penetrable=True)
 
 elif args.shape == "Torus":

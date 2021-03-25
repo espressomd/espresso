@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(dist_function) {
 
   {
     auto ctp = std::make_shared<Utils::CylindricalTransformationParameters>();
-    Shapes::HollowConicalFrustum c(R1,R2, L, 0.,1,ctp);
+    Shapes::HollowConicalFrustum c(R1, R2, L, 0., 1, ctp);
 
     auto pos = Utils::Vector3d{0.0, 0.0, L / 2.0};
     Utils::Vector3d vec;
@@ -66,8 +66,9 @@ BOOST_AUTO_TEST_CASE(dist_function) {
     BOOST_CHECK_SMALL(dist - .5, eps);
   }
   {
-    auto ctp = std::make_shared<Utils::CylindricalTransformationParameters>(Utils::Vector3d{{0.,0.,0.}}, Utils::Vector3d{{1.,0.,0.}});
-    Shapes::HollowConicalFrustum c(R1,R2, L, 0.,1,ctp);
+    auto ctp = std::make_shared<Utils::CylindricalTransformationParameters>(
+        Utils::Vector3d{{0., 0., 0.}}, Utils::Vector3d{{1., 0., 0.}});
+    Shapes::HollowConicalFrustum c(R1, R2, L, 0., 1, ctp);
 
     auto pos = Utils::Vector3d{L / 2.0, 0.0, 0.0};
     Utils::Vector3d vec;

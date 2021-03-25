@@ -47,22 +47,27 @@ public:
   }
   void do_construct(VariantMap const &params) override {
     auto n_params = params.size();
-    switch(n_params){
-    case 0: m_transform_params =
-                std::make_shared<Utils::CylindricalTransformationParameters>();
+    switch (n_params) {
+    case 0:
+      m_transform_params =
+          std::make_shared<Utils::CylindricalTransformationParameters>();
       break;
-    case 2: m_transform_params =
-                std::make_shared<Utils::CylindricalTransformationParameters>(
-                    get_value<Utils::Vector3d>(params, "center"),
-                    get_value<Utils::Vector3d>(params, "axis"));
+    case 2:
+      m_transform_params =
+          std::make_shared<Utils::CylindricalTransformationParameters>(
+              get_value<Utils::Vector3d>(params, "center"),
+              get_value<Utils::Vector3d>(params, "axis"));
       break;
-    case 3:     m_transform_params =
-                    std::make_shared<Utils::CylindricalTransformationParameters>(
-                        get_value<Utils::Vector3d>(params, "center"),
-                        get_value<Utils::Vector3d>(params, "axis"),
-                        get_value<Utils::Vector3d>(params, "orientation"));
+    case 3:
+      m_transform_params =
+          std::make_shared<Utils::CylindricalTransformationParameters>(
+              get_value<Utils::Vector3d>(params, "center"),
+              get_value<Utils::Vector3d>(params, "axis"),
+              get_value<Utils::Vector3d>(params, "orientation"));
       break;
-    default: throw std::runtime_error("Provide either no arguments, center and axis, or center and axis and orientation");
+    default:
+      throw std::runtime_error("Provide either no arguments, center and axis, "
+                               "or center and axis and orientation");
     }
   }
 

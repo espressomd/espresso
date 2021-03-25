@@ -1986,8 +1986,6 @@ class HollowConicalFrustum(Shape):
         self.length = self.shape.get_parameter('length')
         self.thickness = self.shape.get_parameter('thickness')
         self.central_angle = self.shape.get_parameter('central_angle')
-        
-        
 
     def draw(self):
         """
@@ -1995,7 +1993,7 @@ class HollowConicalFrustum(Shape):
         Use rasterization of base class, otherwise.
 
         """
-        if bool(OpenGL.GLE.gleSpiral) and self.central_angle==0.:
+        if bool(OpenGL.GLE.gleSpiral) and self.central_angle == 0.:
             self._draw_using_gle()
         else:
             super().draw()
