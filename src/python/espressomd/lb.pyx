@@ -26,12 +26,11 @@ from libc cimport stdint
 from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
-from copy import deepcopy
 from . import utils
-from .utils import array_locked, is_valid_type
-from .utils cimport make_array_locked, numeric_limits
-cimport globals
-import sys
+from .utils import array_locked, is_valid_type, check_type_or_throw_except
+from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
+from .globals cimport time_step
+
 
 def _construct(cls, params):
     obj = cls(**params)
@@ -45,6 +44,36 @@ def assert_agrid_tau_set(obj):
 
 
 cdef class HydrodynamicInteraction(Actor):
+    """
+    Base class for LB implementations.
+
+    Parameters
+    ----------
+    agrid : :obj:`float`
+        Lattice constant. The box size in every direction must be an integer
+        multiple of ``agrid``.
+    tau : :obj:`float`
+        LB time step. The MD time step must be an integer multiple of ``tau``.
+    dens : :obj:`float`
+        Fluid density.
+    visc : :obj:`float`
+        Fluid kinematic viscosity.
+    bulk_visc : :obj:`float`, optional
+        Fluid bulk viscosity.
+    gamma_odd : :obj:`int`, optional
+        Relaxation parameter :math:`\\gamma_{\\textrm{odd}}` for kinetic modes.
+    gamma_even : :obj:`int`, optional
+        Relaxation parameter :math:`\\gamma_{\\textrm{even}}` for kinetic modes.
+    ext_force_density : (3,) array_like of :obj:`float`, optional
+        Force density applied on the fluid.
+    kT : :obj:`float`, optional
+        Thermal energy of the simulated heat bath (for thermalized fluids).
+        Set it to 0 for an unthermalized fluid.
+    seed : :obj:`int`, optional
+        Initial counter value (or seed) of the philox RNG.
+        Required for a thermalized fluid. Must be positive.
+    """
+
     def _lb_init(self):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
@@ -61,8 +90,7 @@ cdef class HydrodynamicInteraction(Actor):
                     return LBFluidRoutines(np.array(key))
         else:
             raise Exception(
-                "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," % key)
-
+                "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
     # validate the given parameters on actor initialization
     ####################################################
     def validate_params(self):
@@ -83,10 +111,11 @@ cdef class HydrodynamicInteraction(Actor):
             raise ValueError("tau has to be a positive double")
 
     def valid_keys(self):
-        return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
+        return {"agrid", "dens", "ext_force_density", "visc", "tau",
+                "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"}
 
     def required_keys(self):
-        return ["dens", "agrid", "visc", "tau"]
+        return {"dens", "agrid", "visc", "tau"}
 
     def default_params(self):
         return {"agrid": -1.0,
@@ -139,6 +168,10 @@ cdef class HydrodynamicInteraction(Actor):
         if not self._params["bulk_visc"] == default_params["bulk_visc"]:
             self._params['bulk_visc'] = self.bulk_viscosity
         self._params['ext_force_density'] = self.ext_force_density
+        if 'gamma_odd' in self._params:
+            self._params['gamma_odd'] = lb_lbfluid_get_gamma_odd()
+        if 'gamma_even' in self._params:
+            self._params['gamma_even'] = lb_lbfluid_get_gamma_even()
 
         return self._params
 
@@ -147,13 +180,15 @@ cdef class HydrodynamicInteraction(Actor):
 
         Parameters
         ----------
-        interpolation_order : :obj:`str`
-            ``"linear"`` for linear interpolation, ``"quadratic"`` for quadratic interpolation.
+        interpolation_order : :obj:`str`, \{"linear", "quadratic"\}
+            ``"linear"`` for trilinear interpolation, ``"quadratic"`` for
+            quadratic interpolation. For the CPU implementation of LB, only
+            ``"linear"`` is available.
 
         """
-        if (interpolation_order == "linear"):
+        if interpolation_order == "linear":
             lb_lbinterpolation_set_interpolation_order(linear)
-        elif (interpolation_order == "quadratic"):
+        elif interpolation_order == "quadratic":
             lb_lbinterpolation_set_interpolation_order(quadratic)
         else:
             raise ValueError("Invalid parameter")
@@ -164,7 +199,7 @@ cdef class HydrodynamicInteraction(Actor):
         Parameters
         ----------
         pos : (3,) array_like of :obj:`float`
-              The position at which velocity is requested.
+            The position at which velocity is requested.
 
         Returns
         -------
@@ -179,24 +214,70 @@ cdef class HydrodynamicInteraction(Actor):
         cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
         return make_array_locked(v)
 
-    def print_vtk_velocity(self, path, bb1=None, bb2=None):
+    def write_vtk_velocity(self, path, bb1=None, bb2=None):
+        """Write the LB fluid velocity to a VTK file.
+        If both ``bb1`` and ``bb2`` are specified, return a subset of the grid.
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Path to the output ASCII file.
+        bb1 : (3,) array_like of :obj:`int`, optional
+            Node indices of the lower corner of the bounding box.
+        bb2 : (3,) array_like of :obj:`int`, optional
+            Node indices of the upper corner of the bounding box.
+
+        """
         cdef vector[int] bb1_vec
         cdef vector[int] bb2_vec
-        if bb1 is None or bb2 is None:
+        if bb1 is None and bb2 is None:
             lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
+        elif bb1 is None or bb2 is None:
+            raise ValueError(
+                "Invalid parameter: must provide either both bb1 and bb2, or none of them")
         else:
+            check_type_or_throw_except(bb1, 3, int,
+                                       "bb1 has to be an integer list of length 3")
+            check_type_or_throw_except(bb2, 3, int,
+                                       "bb2 has to be an integer list of length 3")
             bb1_vec = bb1
             bb2_vec = bb2
             lb_lbfluid_print_vtk_velocity(
                 utils.to_char_pointer(path), bb1_vec, bb2_vec)
 
-    def print_vtk_boundary(self, path):
+    def write_vtk_boundary(self, path):
+        """Write the LB boundaries to a VTK file.
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Path to the output ASCII file.
+
+        """
         lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
 
-    def print_velocity(self, path):
+    def write_velocity(self, path):
+        """Write the LB fluid velocity to a data file that can be loaded by
+        numpy, with format "x y z vx vy vz".
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Path to the output data file.
+
+        """
         lb_lbfluid_print_velocity(utils.to_char_pointer(path))
 
-    def print_boundary(self, path):
+    def write_boundary(self, path):
+        """Write the LB boundaries to a data file that can be loaded by numpy,
+        with format "x y z u".
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Path to the output data file.
+
+        """
         lb_lbfluid_print_boundary(utils.to_char_pointer(path))
 
     def save_checkpoint(self, path, binary):
@@ -235,12 +316,12 @@ cdef class HydrodynamicInteraction(Actor):
             cdef stdint.uint64_t _seed = seed
             lb_lbfluid_set_rng_state(seed)
 
-    property stress:
+    property pressure_tensor:
         def __get__(self):
-            cdef Vector6d stress = python_lbfluid_get_stress(self.agrid, self.tau)
-            return array_locked(np.array([[stress[0], stress[1], stress[3]],
-                                          [stress[1], stress[2], stress[4]],
-                                          [stress[3], stress[4], stress[5]]]))
+            cdef Vector6d tensor = python_lbfluid_get_pressure_tensor(self.agrid, self.tau)
+            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
+                                          [tensor[1], tensor[2], tensor[4]],
+                                          [tensor[3], tensor[4], tensor[5]]]))
 
         def __set__(self, value):
             raise NotImplementedError
@@ -291,8 +372,8 @@ cdef class HydrodynamicInteraction(Actor):
 
         def __set__(self, tau):
             lb_lbfluid_set_tau(tau)
-            if globals.time_step > 0.0:
-                check_tau_time_step_consistency(tau, globals.time_step)
+            if time_step > 0.0:
+                check_tau_time_step_consistency(tau, time_step)
 
     property agrid:
         def __get__(self):
@@ -313,6 +394,7 @@ cdef class HydrodynamicInteraction(Actor):
 cdef class LBFluid(HydrodynamicInteraction):
     """
     Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
+    See :class:`HydrodynamicInteraction` for the list of parameters.
 
     """
 
@@ -328,6 +410,7 @@ IF CUDA:
     cdef class LBFluidGPU(HydrodynamicInteraction):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
+        See :class:`HydrodynamicInteraction` for the list of parameters.
 
         """
 
@@ -393,14 +476,13 @@ cdef class LBFluidRoutines:
 
         def __set__(self, value):
             cdef Vector3d c_velocity
-            if all(is_valid_type(v, float) for v in value) and len(value) == 3:
-                c_velocity[0] = value[0]
-                c_velocity[1] = value[1]
-                c_velocity[2] = value[2]
-                python_lbnode_set_velocity(self.node, c_velocity)
-            else:
-                raise ValueError(
-                    "Velocity has to be of shape 3 and type float.")
+            utils.check_type_or_throw_except(
+                value, 3, float, "velocity has to be 3 floats")
+            c_velocity[0] = value[0]
+            c_velocity[1] = value[1]
+            c_velocity[2] = value[2]
+            python_lbnode_set_velocity(self.node, c_velocity)
+
     property density:
         def __get__(self):
             return python_lbnode_get_density(self.node)
@@ -408,22 +490,22 @@ cdef class LBFluidRoutines:
         def __set__(self, value):
             python_lbnode_set_density(self.node, value)
 
-    property stress:
+    property pressure_tensor:
         def __get__(self):
-            cdef Vector6d stress = python_lbnode_get_stress(self.node)
-            return array_locked(np.array([[stress[0], stress[1], stress[3]],
-                                          [stress[1], stress[2], stress[4]],
-                                          [stress[3], stress[4], stress[5]]]))
+            cdef Vector6d tensor = python_lbnode_get_pressure_tensor(self.node)
+            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
+                                          [tensor[1], tensor[2], tensor[4]],
+                                          [tensor[3], tensor[4], tensor[5]]]))
 
         def __set__(self, value):
             raise NotImplementedError
 
-    property stress_neq:
+    property pressure_tensor_neq:
         def __get__(self):
-            cdef Vector6d stress = python_lbnode_get_stress_neq(self.node)
-            return array_locked(np.array([[stress[0], stress[1], stress[3]],
-                                          [stress[1], stress[2], stress[4]],
-                                          [stress[3], stress[4], stress[5]]]))
+            cdef Vector6d tensor = python_lbnode_get_pressure_tensor_neq(self.node)
+            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
+                                          [tensor[1], tensor[2], tensor[4]],
+                                          [tensor[3], tensor[4], tensor[5]]]))
 
         def __set__(self, value):
             raise NotImplementedError
@@ -532,21 +614,21 @@ cdef class LBSlice:
                     "Input-dimensions of velocity array",value.shape, "does not match slice dimensions",
                         (len(self.x_indices),len(self.y_indices),len(self.z_indices),3),".")
 
-    property stress:
+    property pressure_tensor:
         def __get__(self):
-            prop_name = "stress"
+            prop_name = "pressure_tensor"
             shape_res = (3,3)
-            cdef Vector6d stress = python_lbnode_get_stress(self.node)
+            
             return self.get_values(self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
         def __set__(self, value):
             raise NotImplementedError
 
-    property stress_neq:
+    property pressure_tensor_neq:
         def __get__(self):
-            prop_name = "stress_neq"
+            prop_name = "pressure_tensor_neq"
             shape_res = (3,3)
-            cdef Vector6d stress = python_lbnode_get_stress_neq(self.node)
+            
             return self.get_values(self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
         def __set__(self, value):
@@ -577,12 +659,3 @@ cdef class LBSlice:
 
         def __set__(self, value):
             raise NotImplementedError
-
-    
-                    
-
-    
-        
-
-    
-        
