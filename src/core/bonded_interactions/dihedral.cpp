@@ -24,24 +24,8 @@
  */
 #include "dihedral.hpp"
 
-#include "bonded_interaction_data.hpp"
-#include "interactions.hpp"
-
-#include <utils/constants.hpp>
-
-int dihedral_set_params(int bond_type, int mult, double bend, double phase) {
-  if (bond_type < 0)
-    return ES_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].type = BONDED_IA_DIHEDRAL;
-  bonded_ia_params[bond_type].num = 3;
-  bonded_ia_params[bond_type].p.dihedral.mult = mult;
-  bonded_ia_params[bond_type].p.dihedral.bend = bend;
-  bonded_ia_params[bond_type].p.dihedral.phase = phase;
-
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
+DihedralBond::DihedralBond(int mult, double bend, double phase) {
+  this->mult = mult;
+  this->bend = bend;
+  this->phase = phase;
 }

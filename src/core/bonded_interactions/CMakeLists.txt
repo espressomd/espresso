@@ -11,4 +11,6 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/fene.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/harmonic.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/quartic.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/thermalized_bond.cpp)
+          ${CMAKE_CURRENT_SOURCE_DIR}/rigid_bond.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/thermalized_bond.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/thermalized_bond_utils.cpp)
