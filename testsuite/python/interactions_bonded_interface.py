@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+import unittest_decorators as utx
 from tests_common import assert_params_match
 
 import espressomd
@@ -131,17 +132,24 @@ class ParticleProperties(ut.TestCase):
     test_angle_cossquare = generateTestForBondParams(
         0, espressomd.interactions.AngleCossquare, {"bend": 5.2, "phi0": 0.})
 
-    test_tabulated_bond = generateTestForBondParams(
-        0, espressomd.interactions.TabulatedDistance, {"min": 1.,
-                                                       "max": 2.,
-                                                       "energy": [1., 2., 3.],
-                                                       "force": [3., 4., 5.]})
-    test_tabulated = generateTestForBondParams(
-        0, espressomd.interactions.TabulatedAngle, {"energy": [1., 2., 3.],
-                                                    "force": [3., 4., 5.]})
-    test_tabulated = generateTestForBondParams(
-        0, espressomd.interactions.TabulatedDihedral, {"energy": [1., 2., 3.],
-                                                       "force": [3., 4., 5.]})
+    @utx.skipIfMissingFeatures(["TABULATED"])
+    def test_tabulated_bond(self):
+        params = {"min": 1., "max": 2., "energy": [1., 2., 3.],
+                  "force": [3., 4., 5.]}
+        ParticleProperties.generateTestForBondParams(
+            0, espressomd.interactions.TabulatedDistance, params)(self)
+
+    @utx.skipIfMissingFeatures(["TABULATED"])
+    def test_tabulated_angle(self):
+        params = {"energy": [1., 2., 3.], "force": [3., 4., 5.]}
+        ParticleProperties.generateTestForBondParams(
+            0, espressomd.interactions.TabulatedAngle, params)(self)
+
+    @utx.skipIfMissingFeatures(["TABULATED"])
+    def test_tabulated_dihedral(self):
+        params = {"energy": [1., 2., 3.], "force": [3., 4., 5.]}
+        ParticleProperties.generateTestForBondParams(
+            0, espressomd.interactions.TabulatedDihedral, params)(self)
 
 
 if __name__ == "__main__":

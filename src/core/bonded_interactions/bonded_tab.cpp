@@ -21,66 +21,54 @@
 #include "bonded_interactions/bonded_tab.hpp"
 
 #include "errorhandling.hpp"
-#include "interactions.hpp"
 
 #include <utils/constants.hpp>
 
 #include <cassert>
 #include <vector>
 
-int tabulated_bonded_set_params(int bond_type,
-                                TabulatedBondedInteraction tab_type, double min,
-                                double max, std::vector<double> const &energy,
-                                std::vector<double> const &force) {
-  if (bond_type < 0)
-    return ES_ERROR;
-
+TabulatedBond::TabulatedBond(double min, double max,
+                             std::vector<double> const &energy,
+                             std::vector<double> const &force) {
   assert(max >= min);
   assert((max == min) || force.size() > 1);
   assert(force.size() == energy.size());
 
-  make_bond_type_exist(bond_type);
+  auto tab_pot = this->pot = std::make_shared<TabulatedPotential>();
 
-  /* set types */
-  if (bonded_ia_params[bond_type].type == BONDED_IA_TABULATED_DISTANCE or
-      bonded_ia_params[bond_type].type == BONDED_IA_TABULATED_ANGLE or
-      bonded_ia_params[bond_type].type == BONDED_IA_TABULATED_DIHEDRAL) {
-    delete bonded_ia_params[bond_type].p.tab.pot;
-  }
-  auto tab_pot = bonded_ia_params[bond_type].p.tab.pot = new TabulatedPotential;
-  bonded_ia_params[bond_type].p.tab.type = tab_type;
-
-  /* set number of interaction partners */
-  switch (tab_type) {
-  case TAB_BOND_LENGTH:
-    tab_pot->minval = min;
-    tab_pot->maxval = max;
-    bonded_ia_params[bond_type].num = 1;
-    bonded_ia_params[bond_type].type = BONDED_IA_TABULATED_DISTANCE;
-    break;
-  case TAB_BOND_ANGLE:
-    tab_pot->minval = 0.0;
-    tab_pot->maxval = Utils::pi() + ROUND_ERROR_PREC;
-    bonded_ia_params[bond_type].num = 2;
-    bonded_ia_params[bond_type].type = BONDED_IA_TABULATED_ANGLE;
-    break;
-  case TAB_BOND_DIHEDRAL:
-    tab_pot->minval = 0.0;
-    tab_pot->maxval = 2.0 * Utils::pi() + ROUND_ERROR_PREC;
-    bonded_ia_params[bond_type].num = 3;
-    bonded_ia_params[bond_type].type = BONDED_IA_TABULATED_DIHEDRAL;
-    break;
-  default:
-    runtimeErrorMsg() << "Unsupported tabulated bond type.";
-    return ES_ERROR;
-  }
+  /* set table limits */
+  tab_pot->minval = min;
+  tab_pot->maxval = max;
 
   tab_pot->invstepsize = static_cast<double>(force.size() - 1) / (max - min);
 
   tab_pot->force_tab = force;
   tab_pot->energy_tab = energy;
+}
 
-  mpi_bcast_ia_params(bond_type, -1);
+TabulatedDistanceBond::TabulatedDistanceBond(double min, double max,
+                                             std::vector<double> const &energy,
+                                             std::vector<double> const &force)
+    : TabulatedBond(min, max, energy, force) {
+  /* set table limits */
+  this->pot->minval = min;
+  this->pot->maxval = max;
+}
 
-  return ES_OK;
+TabulatedAngleBond::TabulatedAngleBond(double min, double max,
+                                       std::vector<double> const &energy,
+                                       std::vector<double> const &force)
+    : TabulatedBond(min, max, energy, force) {
+  /* set table limits */
+  this->pot->minval = 0.0;
+  this->pot->maxval = Utils::pi() + ROUND_ERROR_PREC;
+}
+
+TabulatedDihedralBond::TabulatedDihedralBond(double min, double max,
+                                             std::vector<double> const &energy,
+                                             std::vector<double> const &force)
+    : TabulatedBond(min, max, energy, force) {
+  /* set table limits */
+  this->pot->minval = 0.0;
+  this->pot->maxval = 2.0 * Utils::pi() + ROUND_ERROR_PREC;
 }
