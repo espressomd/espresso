@@ -21,6 +21,7 @@ import numpy as np
 import math
 
 import espressomd
+import espressomd.math
 import espressomd.interactions
 import espressomd.shapes
 import tests_common
@@ -56,37 +57,35 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         def z(y, r1, r2, l): return l / (r1 - r2) * \
             y + l / 2. - l * r1 / (r1 - r2)
-
-        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
-            0, 0, 1], r1=R1, r2=R2, thickness=0.0, length=LENGTH)
+        
+        ctp = espressomd.math.CylindricalTransformationParameters()
+        shape = espressomd.shapes.HollowConicalFrustum(cyl_transform_params = ctp, r1=R1, r2=R2, thickness=0.0, length=LENGTH)
+        
         y_vals = np.linspace(R1, R2, 100)
         for y in y_vals:
             dist = shape.calc_distance(position=[0.0, y, z(y, R1, R2, LENGTH)])
             self.assertAlmostEqual(dist[0], 0.0)
 
-        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
-            0, 0, 1], r1=R1, r2=R2, thickness=D, length=LENGTH, direction=-1)
+        shape = espressomd.shapes.HollowConicalFrustum(cyl_transform_params = ctp, r1=R1, r2=R2, thickness=D, length=LENGTH, direction=-1)
         for y in y_vals:
             dist = shape.calc_distance(position=[0.0, y, z(y, R1, R2, LENGTH)])
             self.assertAlmostEqual(dist[0], 0.5 * D)
 
-        np.testing.assert_almost_equal(np.copy(shape.center), [0.0, 0.0, 0.0])
-        np.testing.assert_almost_equal(np.copy(shape.axis), [0, 0, 1])
+        np.testing.assert_almost_equal(np.copy(shape.cyl_transform_params.center), [0.0, 0.0, 0.0])
+        np.testing.assert_almost_equal(np.copy(shape.cyl_transform_params.axis), [0, 0, 1])
         self.assertEqual(shape.r1, R1)
         self.assertEqual(shape.r2, R2)
         self.assertEqual(shape.thickness, D)
         self.assertEqual(shape.length, LENGTH)
         self.assertEqual(shape.direction, -1)
 
-        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
-            0, 0, 1], r1=R1, r2=R2, thickness=D, length=LENGTH)
+        shape = espressomd.shapes.HollowConicalFrustum(cyl_transform_params = ctp, r1=R1, r2=R2, thickness=D, length=LENGTH)
         for y in y_vals:
             dist = shape.calc_distance(position=[0.0, y, z(y, R1, R2, LENGTH)])
             self.assertAlmostEqual(dist[0], -0.5 * D)
 
         # check sign of dist
-        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
-            0, 0, 1], r1=R1, r2=R1, thickness=D, length=LENGTH)
+        shape = espressomd.shapes.HollowConicalFrustum(cyl_transform_params = ctp, r1=R1, r2=R1, thickness=D, length=LENGTH)
         self.assertLess(shape.calc_distance(
             position=[0.0, R1, 0.25 * LENGTH])[0], 0.0)
         self.assertLess(shape.calc_distance(
@@ -96,8 +95,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.assertGreater(shape.calc_distance(
             position=[0.0, R1 - (0.5 + sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
 
-        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
-            0, 0, 1], r1=R1, r2=R1, thickness=D, length=LENGTH, direction=-1)
+        shape = espressomd.shapes.HollowConicalFrustum(cyl_transform_params = ctp, r1=R1, r2=R1, thickness=D, length=LENGTH, direction=-1)
         self.assertGreater(shape.calc_distance(
             position=[0.0, R1, 0.25 * LENGTH])[0], 0.0)
         self.assertGreater(shape.calc_distance(

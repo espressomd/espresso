@@ -67,7 +67,7 @@ public:
           get_value<double>(params,"r2"),
               get_value<double>(params,"length"),
           get_value<double>(params,"thickness"),
-                          get_value<int>(params,"direction"),
+                          get_value_or<int>(params,"direction",1),
                               m_cyl_transform_params->cyl_transform_params()
 
       );

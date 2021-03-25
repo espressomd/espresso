@@ -50,9 +50,9 @@ namespace Shapes {
  */
 class HollowConicalFrustum : public Shape {
 public:
-  HollowConicalFrustum(double const r1, double const r2, double const length, double const thickness, int const direction, std::shared_ptr<Utils::CylindricalTransformationParameters> ctp)
+  HollowConicalFrustum(double const r1, double const r2, double const length, double const thickness, int const direction, std::shared_ptr<Utils::CylindricalTransformationParameters> cyl_transform_params)
       : m_r1(r1), m_r2(r2), m_length(length), m_thickness(thickness),
-        m_direction(direction), m_cyl_transform_params(std::move(ctp)) {}
+        m_direction(direction), m_cyl_transform_params(std::move(cyl_transform_params)) {}
 
   void set_r1(double const radius) { m_r1 = radius; }
   void set_r2(double const radius) { m_r2 = radius; }
