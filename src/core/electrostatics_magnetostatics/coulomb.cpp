@@ -157,8 +157,8 @@ void deactivate() {
 }
 
 void update_dependent_particles() {
-  iccp3m_iteration(cell_structure.local_particles(),
-                   cell_structure.ghost_particles());
+  icc_iteration(cell_structure.local_particles(),
+                cell_structure.ghost_particles());
 }
 
 void on_observable_calc() {
@@ -358,23 +358,23 @@ double calc_energy_long_range(const ParticleRange &particles) {
   return energy;
 }
 
-int iccp3m_sanity_check() {
+int icc_sanity_check() {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M: {
     if (elc_params.dielectric_contrast_on) {
-      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
+      runtimeErrorMsg() << "ICC conflicts with ELC dielectric contrast";
       return 1;
     }
     break;
   }
 #endif
   case COULOMB_DH: {
-    runtimeErrorMsg() << "ICCP3M does not work with Debye-Hueckel.";
+    runtimeErrorMsg() << "ICC does not work with Debye-Hueckel.";
     return 1;
   }
   case COULOMB_RF: {
-    runtimeErrorMsg() << "ICCP3M does not work with COULOMB_RF.";
+    runtimeErrorMsg() << "ICC does not work with COULOMB_RF.";
     return 1;
   }
   default:
@@ -383,7 +383,7 @@ int iccp3m_sanity_check() {
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    runtimeErrorMsg() << "ICCP3M does not work in the NPT ensemble";
+    runtimeErrorMsg() << "ICC does not work in the NPT ensemble";
     return 1;
   }
 #endif

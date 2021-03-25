@@ -98,6 +98,7 @@ cdef extern from "utils/quaternion.hpp" namespace "Utils":
         T & operator[](int i)
 
 cdef make_array_locked(Vector3d)
+cdef make_array_locked_vector(vector[Vector3d] v)
 cdef Vector3d make_Vector3d(a)
 
 cdef extern from "utils/Factory.hpp" namespace "Utils":

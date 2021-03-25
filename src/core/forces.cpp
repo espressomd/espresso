@@ -95,7 +95,7 @@ void force_calc(CellStructure &cell_structure, double time_step) {
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
-  iccp3m_iteration(particles, cell_structure.ghost_particles());
+  icc_iteration(particles, cell_structure.ghost_particles());
 #endif
   init_forces(particles, time_step);
 

@@ -50,10 +50,10 @@
 #include <cstdlib>
 #include <tuple>
 
-iccp3m_struct iccp3m_cfg;
+icc_struct icc_cfg;
 
-void init_forces_iccp3m(const ParticleRange &particles,
-                        const ParticleRange &ghosts_particles);
+void init_forces_icc(const ParticleRange &particles,
+                     const ParticleRange &ghosts_particles);
 
 /** Calculate the electrostatic forces between source charges (= real charges)
  *  and wall charges. For each electrostatic method, the proper functions
@@ -61,15 +61,15 @@ void init_forces_iccp3m(const ParticleRange &particles,
  *  directly, short-range parts need helper functions according to the particle
  *  data organisation. This is a modified version of \ref force_calc.
  */
-void force_calc_iccp3m(const ParticleRange &particles,
-                       const ParticleRange &ghost_particles);
+void force_calc_icc(const ParticleRange &particles,
+                    const ParticleRange &ghost_particles);
 
 /** Variant of @ref add_non_bonded_pair_force where only %Coulomb
  *  contributions are calculated
  */
-inline void add_non_bonded_pair_force_iccp3m(Particle &p1, Particle &p2,
-                                             Utils::Vector3d const &d,
-                                             double dist, double dist2) {
+inline void add_non_bonded_pair_force_icc(Particle &p1, Particle &p2,
+                                          Utils::Vector3d const &d, double dist,
+                                          double dist2) {
   auto forces = Coulomb::pair_force(p1, p2, d, dist);
 
   p1.f.f += std::get<0>(forces);
@@ -79,90 +79,74 @@ inline void add_non_bonded_pair_force_iccp3m(Particle &p1, Particle &p2,
   p2.f.f += std::get<2>(forces);
 #endif
 }
+void icc_iteration(const ParticleRange &particles,
+                   const ParticleRange &ghost_particles) {
+  if (icc_cfg.n_icc == 0)
+    return;
 
-void iccp3m_alloc_lists() {
-  auto const n_ic = iccp3m_cfg.n_ic;
-
-  iccp3m_cfg.areas.resize(n_ic);
-  iccp3m_cfg.ein.resize(n_ic);
-  iccp3m_cfg.normals.resize(n_ic);
-  iccp3m_cfg.sigma.resize(n_ic);
-}
-
-int iccp3m_iteration(const ParticleRange &particles,
-                     const ParticleRange &ghost_particles) {
-  if (iccp3m_cfg.n_ic == 0)
-    return 0;
-
-  Coulomb::iccp3m_sanity_check();
-
-  if (iccp3m_cfg.eout <= 0) {
-    runtimeErrorMsg()
-        << "ICCP3M: nonpositive dielectric constant is not allowed.";
-  }
+  Coulomb::icc_sanity_check();
 
   auto const pref = 1.0 / (coulomb.prefactor * 2 * Utils::pi());
-  iccp3m_cfg.citeration = 0;
+  icc_cfg.citeration = 0;
 
-  double globalmax = 1e100;
+  double globalmax = 0.;
 
-  for (int j = 0; j < iccp3m_cfg.num_iteration; j++) {
-    double hmax = 0.;
+  for (int j = 0; j < icc_cfg.num_iteration; j++) {
+    double charge_density_max = 0.;
 
-    force_calc_iccp3m(particles, ghost_particles); /* Calculate electrostatic
+    force_calc_icc(particles, ghost_particles); /* Calculate electrostatic
                             forces (SR+LR) excluding source source interaction*/
     cell_structure.ghosts_reduce_forces();
 
     double diff = 0;
 
     for (auto &p : particles) {
-      if (p.p.identity < iccp3m_cfg.n_ic + iccp3m_cfg.first_id &&
-          p.p.identity >= iccp3m_cfg.first_id) {
-        auto const id = p.p.identity - iccp3m_cfg.first_id;
+      if (p.p.identity < icc_cfg.n_icc + icc_cfg.first_id &&
+          p.p.identity >= icc_cfg.first_id) {
+        auto const id = p.p.identity - icc_cfg.first_id;
         /* the dielectric-related prefactor: */
-        auto const del_eps = (iccp3m_cfg.ein[id] - iccp3m_cfg.eout) /
-                             (iccp3m_cfg.ein[id] + iccp3m_cfg.eout);
+        auto const del_eps =
+            (icc_cfg.ein[id] - icc_cfg.eout) / (icc_cfg.ein[id] + icc_cfg.eout);
         /* calculate the electric field at the certain position */
-        auto const E = p.f.f / p.p.q + iccp3m_cfg.ext_field;
+        auto const local_e_field = p.f.f / p.p.q + icc_cfg.ext_field;
 
-        if (E[0] == 0 && E[1] == 0 && E[2] == 0) {
+        if (local_e_field.norm2() == 0) {
           runtimeErrorMsg()
-              << "ICCP3M found zero electric field on a charge. This must "
+              << "ICC found zero electric field on a charge. This must "
                  "never happen";
         }
 
-        /* recalculate the old charge density */
-        auto const hold = p.p.q / iccp3m_cfg.areas[id];
-        /* determine if it is higher than the previously highest charge
-         * density */
-        hmax = std::max(hmax, std::abs(hold));
+        auto const charge_density_old = p.p.q / icc_cfg.areas[id];
 
-        auto const f1 = del_eps * pref * (E * iccp3m_cfg.normals[id]);
-        auto const f2 = (not iccp3m_cfg.sigma.empty())
-                            ? (2 * iccp3m_cfg.eout) /
-                                  (iccp3m_cfg.eout + iccp3m_cfg.ein[id]) *
-                                  (iccp3m_cfg.sigma[id])
-                            : 0.;
+        charge_density_max =
+            std::max(charge_density_max, std::abs(charge_density_old));
+
+        auto const charge_density_update =
+            del_eps * pref * (local_e_field * icc_cfg.normals[id]) +
+            2 * icc_cfg.eout / (icc_cfg.eout + icc_cfg.ein[id]) *
+                icc_cfg.sigma[id];
         /* relative variation: never use an estimator which can be negative
          * here */
-        auto const hnew =
-            (1. - iccp3m_cfg.relax) * hold + (iccp3m_cfg.relax) * (f1 + f2);
+        auto const charge_density_new =
+            (1. - icc_cfg.relax) * charge_density_old +
+            (icc_cfg.relax) * charge_density_update;
 
         /* Take the largest error to check for convergence */
         auto const relative_difference =
-            std::abs(1 * (hnew - hold) / (hmax + std::abs(hnew + hold)));
+            std::abs((charge_density_new - charge_density_old) /
+                     (charge_density_max +
+                      std::abs(charge_density_new + charge_density_old)));
 
         diff = std::max(diff, relative_difference);
 
-        p.p.q = hnew * iccp3m_cfg.areas[id];
+        p.p.q = charge_density_new * icc_cfg.areas[id];
 
         /* check if the charge now is more than 1e6, to determine if ICC still
-         * leads to reasonable results */
-        /* this is kind of an arbitrary measure but does a good job spotting
-         * divergence! */
+         * leads to reasonable results. This is kind of an arbitrary measure
+         * but does a good job spotting divergence! */
         if (std::abs(p.p.q) > 1e6) {
           runtimeErrorMsg()
-              << "too big charge assignment in iccp3m! q >1e6 , assigned "
+              << "too big charge assignment in icc! q >1e6 , assigned "
                  "charge= "
               << p.p.q;
 
@@ -174,62 +158,118 @@ int iccp3m_iteration(const ParticleRange &particles,
     /* Update charges on ghosts. */
     cell_structure.ghosts_update(Cells::DATA_PART_PROPERTIES);
 
-    iccp3m_cfg.citeration++;
+    icc_cfg.citeration++;
 
-    MPI_Allreduce(&diff, &globalmax, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
+    boost::mpi::all_reduce(comm_cart, diff, globalmax,
+                           boost::mpi::maximum<double>());
 
-    if (globalmax < iccp3m_cfg.convergence)
+    if (globalmax < icc_cfg.convergence)
       break;
   } /* iteration */
 
-  if (globalmax > iccp3m_cfg.convergence) {
+  if (globalmax > icc_cfg.convergence) {
     runtimeErrorMsg()
         << "ICC failed to converge in the given number of maximal steps.";
   }
 
   on_particle_charge_change();
-
-  return iccp3m_cfg.citeration;
 }
 
-void force_calc_iccp3m(const ParticleRange &particles,
-                       const ParticleRange &ghost_particles) {
-  init_forces_iccp3m(particles, ghost_particles);
+void force_calc_icc(const ParticleRange &particles,
+                    const ParticleRange &ghost_particles) {
+  init_forces_icc(particles, ghost_particles);
 
-  cell_structure.non_bonded_loop([](Particle &p1, Particle &p2,
-                                    Distance const &d) {
-    /* calc non-bonded interactions */
-    add_non_bonded_pair_force_iccp3m(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
-  });
+  cell_structure.non_bonded_loop(
+      [](Particle &p1, Particle &p2, Distance const &d) {
+        /* calc non-bonded interactions */
+        add_non_bonded_pair_force_icc(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
+      });
 
   Coulomb::calc_long_range_force(particles);
 }
 
-void init_forces_iccp3m(const ParticleRange &particles,
-                        const ParticleRange &ghosts_particles) {
+void init_forces_icc(const ParticleRange &particles,
+                     const ParticleRange &ghosts_particles) {
   for (auto &p : particles) {
-    p.f = ParticleForce{};
+    p.f.f = {};
   }
 
   for (auto &p : ghosts_particles) {
-    p.f = ParticleForce{};
+    p.f.f = {};
   }
 }
 
-void mpi_iccp3m_init_local(const iccp3m_struct &iccp3m_cfg_) {
-  iccp3m_cfg = iccp3m_cfg_;
+void mpi_icc_init_local(const icc_struct &icc_cfg_) {
+  icc_cfg = icc_cfg_;
 
   on_particle_charge_change();
   check_runtime_errors(comm_cart);
 }
 
-REGISTER_CALLBACK(mpi_iccp3m_init_local)
+REGISTER_CALLBACK(mpi_icc_init_local)
 
-int mpi_iccp3m_init() {
-  mpi_call(mpi_iccp3m_init_local, iccp3m_cfg);
+int mpi_icc_init() {
+  mpi_call(mpi_icc_init_local, icc_cfg);
 
   on_particle_charge_change();
   return check_runtime_errors(comm_cart);
 }
 
+void icc_set_params(int n_icc, double convergence, double relaxation,
+                    Utils::Vector3d &ext_field, int max_iterations,
+                    int first_id, double eps_out, std::vector<double> &areas,
+                    std::vector<double> &e_in, std::vector<double> &sigma,
+                    std::vector<Utils::Vector3d> &normals) {
+  if (n_icc < 0)
+    throw std::runtime_error("ICC: invalid number of particles. " +
+                             std::to_string(n_icc));
+  if (convergence <= 0)
+    throw std::runtime_error("ICC: invalid convergence value. " +
+                             std::to_string(convergence));
+  if (relaxation < 0 or relaxation > 2)
+    throw std::runtime_error("ICC: invalid relaxation value. " +
+                             std::to_string(relaxation));
+  if (max_iterations <= 0)
+    throw std::runtime_error("ICC: invalid max_iterations. " +
+                             std::to_string(max_iterations));
+  if (first_id < 0)
+    throw std::runtime_error("ICC: invalid first_id. " +
+                             std::to_string(first_id));
+  if (eps_out <= 0)
+    throw std::runtime_error("ICC: invalid eps_out. " +
+                             std::to_string(eps_out));
+  if (areas.size() != n_icc)
+    throw std::runtime_error("ICC: invalid areas vector.");
+  if (e_in.size() != n_icc)
+    throw std::runtime_error("ICC: invalid e_in vector.");
+  if (sigma.size() != n_icc)
+    throw std::runtime_error("ICC: invalid sigma vector.");
+  if (normals.size() != n_icc)
+    throw std::runtime_error("ICC: invalid normals vector.");
+
+  icc_cfg.n_icc = n_icc;
+  icc_cfg.convergence = convergence;
+  icc_cfg.relax = relaxation;
+  icc_cfg.ext_field = ext_field;
+  icc_cfg.num_iteration = max_iterations;
+  icc_cfg.first_id = first_id;
+  icc_cfg.eout = eps_out;
+
+  icc_cfg.areas = std::move(areas);
+  icc_cfg.ein = std::move(e_in);
+  icc_cfg.sigma = std::move(sigma);
+  icc_cfg.normals = std::move(normals);
+
+  mpi_icc_init();
+}
+
+void icc_deactivate() {
+  icc_cfg.n_icc = 0;
+  icc_cfg.areas.resize(0);
+  icc_cfg.ein.resize(0);
+  icc_cfg.normals.resize(0);
+  icc_cfg.sigma.resize(0);
+
+  mpi_icc_init();
+}
 #endif

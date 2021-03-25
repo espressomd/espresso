@@ -21,6 +21,7 @@ import espressomd
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
+import tests_common
 
 P3M_PARAMS = [
     {'cao': 7, 'r_cut': 3.103065490722656, 'alpha': 1.228153768561588, 'mesh': 48},
@@ -78,15 +79,9 @@ class FFT_test(ut.TestCase):
         np.random.seed(seed=42)
         num_part = 200
         positions = np.random.random((num_part, 3))
-        costheta = 2 * np.random.random(num_part) - 1
-        sintheta = np.sin(np.arcsin(costheta))
-        phi = 2 * np.pi * np.random.random(num_part)
-        part_dip = np.array([sintheta * np.cos(phi),
-                             sintheta * np.sin(phi),
-                             costheta]).T
+        dipoles = tests_common.random_dipoles(num_part)
         self.system.part.add(pos=positions * self.system.box_l,
-                             dip=part_dip,
-                             rotation=num_part * [(1, 1, 1)])
+                             dip=dipoles, rotation=num_part * [(1, 1, 1)])
         self.minimize()
 
     @ut.skipIf(n_nodes not in FFT_PLANS, f"no FFT plan for {n_nodes} threads")

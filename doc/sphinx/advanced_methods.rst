@@ -1662,9 +1662,7 @@ In practice, this constant is often used with the dimension of :math:`(c^{\ominu
 A simulation in
 the reaction ensemble consists of two types of moves: the *reaction move*
 and the *configuration move*. The configuration move changes the configuration
-of the system. It is not performed by the Reaction Ensemble module, and can be
-performed by a suitable molecular dynamics or a Monte Carlo scheme. The
-``reactant_ensemble`` command takes care only of the reaction moves.
+of the system.
 In the *forward* reaction, the appropriate number of reactants (given by
 :math:`\nu_i`) is removed from the system, and the concomitant number of
 products is inserted into the system. In the *backward* reaction,

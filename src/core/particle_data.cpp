@@ -1021,14 +1021,6 @@ void mpi_rescale_particles(int dir, double scale) {
  *  @param _delete if true, delete the exclusion instead of add
  */
 void local_change_exclusion(int part1, int part2, int _delete) {
-  if (part1 == -1 && part2 == -1) {
-    for (auto &p : cell_structure.local_particles()) {
-      p.exclusions().clear();
-    }
-
-    return;
-  }
-
   /* part1, if here */
   auto part = cell_structure.get_local_particle(part1);
   if (part) {
@@ -1087,8 +1079,6 @@ int change_exclusion(int part1, int part2, int _delete) {
   }
   return ES_ERROR;
 }
-
-void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 
 void auto_exclusions(int distance) {
   /* partners is a list containing the currently found excluded particles for

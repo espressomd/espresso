@@ -35,16 +35,13 @@
 #include <unordered_map>
 
 void set_sd_viscosity(double eta);
-double get_sd_viscosity();
 
 void set_sd_radius_dict(std::unordered_map<int, double> const &x);
-std::unordered_map<int, double> get_sd_radius_dict();
 
 void set_sd_kT(double kT);
 double get_sd_kT();
 
 void set_sd_flags(int flg);
-int get_sd_flags();
 
 /** Takes the forces and torques on all particles and computes their
  *  velocities. Acts globally on particles on all nodes; i.e. particle data

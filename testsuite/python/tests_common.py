@@ -189,30 +189,6 @@ def rodrigues_rot(vec, axis, angle):
         (1 - np.cos(angle)) * np.dot(axis, vec) * axis
 
 
-def rotation_matrix(axis, theta):
-    """
-    Return the rotation matrix associated with counterclockwise rotation about
-    the given axis by theta radians.
-
-    Parameters
-    ----------
-    axis : array_like :obj:`float`
-        Axis to rotate around.
-    theta : :obj:`float`
-        Rotation angle.
-
-    """
-    axis = np.asarray(axis)
-    axis = axis / np.sqrt(np.dot(axis, axis))
-    a = np.cos(theta / 2.0)
-    b, c, d = -axis * np.sin(theta / 2.0)
-    aa, bb, cc, dd = a * a, b * b, c * c, d * d
-    bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-    return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
-                     [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-                     [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
-
-
 def rotation_matrix_quat(system, part):
     """
     Return the rotation matrix associated with quaternion.
@@ -652,6 +628,9 @@ def count_fluid_nodes(lbf):
     return fluid_nodes
 
 
+<< << << < HEAD
+
+
 def fold_index(idx, shape):
     """Fold index into the range 0<x<shape"""
 
@@ -683,3 +662,20 @@ def get_lb_nodes_around_pos(pos, lbf):
                 res.append(lbf[fold_index(lower_left_index +
                                           np.array((i, j, k), dtype=int), lbf.shape)])
     return res
+
+
+== == == =
+
+
+def random_dipoles(n_particles):
+    """Generate random dipoles by sampling Euler angles uniformly at random."""
+    cos_theta = 2 * np.random.random(n_particles) - 1
+    sin_theta = np.sin(np.arcsin(cos_theta))
+    phi = 2 * np.pi * np.random.random(n_particles)
+    dip = np.array([sin_theta * np.cos(phi),
+                    sin_theta * np.sin(phi),
+                    cos_theta]).T
+    return dip
+
+
+>>>>>> > b6fa1a96eba80543880c1b3b46d4b38cf1cbf818
