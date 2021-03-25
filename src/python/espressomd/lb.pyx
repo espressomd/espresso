@@ -86,7 +86,7 @@ cdef class HydrodynamicInteraction(Actor):
             if len(key) == 3:
                 if any(isinstance(typ,slice) for typ in key):
                     return LBSlice(key)
-                if len(key) == 3:
+                else:
                     return LBFluidRoutines(np.array(key))
         else:
             raise Exception(
