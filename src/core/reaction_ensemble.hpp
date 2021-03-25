@@ -27,8 +27,12 @@
 #include <utils/Vector.hpp>
 
 #include <algorithm>
+#include <istream>
+#include <iterator>
 #include <map>
 #include <memory>
+#include <numeric>
+#include <ostream>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -38,6 +42,22 @@
 namespace ReactionEnsemble {
 
 struct SingleReaction {
+  SingleReaction() = default;
+  SingleReaction(double gamma, std::vector<int> const &reactant_types,
+                 std::vector<int> const &reactant_coefficients,
+                 std::vector<int> const &product_types,
+                 std::vector<int> const &product_coefficients) {
+    this->reactant_types = reactant_types;
+    this->reactant_coefficients = reactant_coefficients;
+    this->product_types = product_types;
+    this->product_coefficients = product_coefficients;
+    this->gamma = gamma;
+    nu_bar = std::accumulate(product_coefficients.begin(),
+                             product_coefficients.end(), 0) -
+             std::accumulate(reactant_coefficients.begin(),
+                             reactant_coefficients.end(), 0);
+  }
+
   // strict input to the algorithm
   std::vector<int> reactant_types;
   std::vector<int> reactant_coefficients;
@@ -45,14 +65,14 @@ struct SingleReaction {
   std::vector<int> product_coefficients;
   double gamma = {};
   // calculated values that are stored for performance reasons
-  int nu_bar = {};
+  int nu_bar = {}; ///< change in particle numbers for the reaction
   Utils::Accumulator accumulator_exponentials = Utils::Accumulator(1);
   int tried_moves = 0;
   int accepted_moves = 0;
-  double get_acceptance_rate() {
+  double get_acceptance_rate() const {
     return static_cast<double>(accepted_moves) /
            static_cast<double>(tried_moves);
-  };
+  }
 };
 
 struct StoredParticleProperty {
@@ -65,27 +85,34 @@ struct CollectiveVariable {
   double CV_minimum = {};
   double CV_maximum = {};
   double delta_CV = {};
-  virtual double determine_current_state() = 0; // use pure virtual, otherwise
-                                                // this will be used in vector
-                                                // of collective variables
+  // use pure virtual, otherwise this will be used in vector of collective
+  // variables
+  virtual double determine_current_state() const = 0;
   virtual ~CollectiveVariable() = default;
 };
 
 class WangLandauReactionEnsemble;
 
 struct EnergyCollectiveVariable : public CollectiveVariable {
-  std::string energy_boundaries_filename;
-  double determine_current_state() override {
+  double determine_current_state() const override {
     return calculate_current_potential_energy_of_system();
   }
-  void
-  load_CV_boundaries(WangLandauReactionEnsemble &m_current_wang_landau_system);
+  void load_CV_boundaries(WangLandauReactionEnsemble &wl_system,
+                          std::istream &infile);
 };
 
+/** Measure the degree of association of a chemical species.
+ *  As an example, consider a polybasic acid A which can be protonated
+ *  into species AH and AH2. The degree of association of species A is
+ *  equal to n(A) / (n(A) + n(AH) + n(AH2)).
+ */
 struct DegreeOfAssociationCollectiveVariable : public CollectiveVariable {
+  /** List of all conjugated species */
   std::vector<int> corresponding_acid_types;
+  /** Reference species from which the degree of association is measured */
   int associated_type;
-  double determine_current_state() override {
+  /** Calculate the degree of association of the reference species */
+  double determine_current_state() const override {
     return calculate_degree_of_association();
   }
 
@@ -95,7 +122,7 @@ private:
    * is needed since you may use multiple degrees of association as collective
    * variable for the Wang-Landau algorithm.
    */
-  double calculate_degree_of_association() {
+  double calculate_degree_of_association() const {
     int total_number_of_corresponding_acid = 0;
     for (int corresponding_acid_type : corresponding_acid_types) {
       int num_of_current_type =
@@ -110,8 +137,7 @@ private:
     int num_of_associated_acid = number_of_particles_with_type(associated_type);
     double degree_of_association =
         static_cast<double>(num_of_associated_acid) /
-        total_number_of_corresponding_acid; // cast to double because otherwise
-                                            // any fractional part is lost
+        static_cast<double>(total_number_of_corresponding_acid);
     return degree_of_association;
   }
 };
@@ -148,20 +174,20 @@ public:
 
   int m_accepted_configurational_MC_moves = 0;
   int m_tried_configurational_MC_moves = 0;
-  double get_acceptance_rate_configurational_moves() {
+  double get_acceptance_rate_configurational_moves() const {
     return static_cast<double>(m_accepted_configurational_MC_moves) /
            static_cast<double>(m_tried_configurational_MC_moves);
   }
 
   void set_cuboid_reaction_ensemble_volume();
   virtual int do_reaction(int reaction_steps);
-  void check_reaction_ensemble();
+  void check_reaction_ensemble() const;
 
   int delete_particle(int p_id);
-  void add_reaction(double gamma, const std::vector<int> &_reactant_types,
-                    const std::vector<int> &_reactant_coefficients,
-                    const std::vector<int> &_product_types,
-                    const std::vector<int> &_product_coefficients);
+  void add_reaction(double gamma, const std::vector<int> &reactant_types,
+                    const std::vector<int> &reactant_coefficients,
+                    const std::vector<int> &product_types,
+                    const std::vector<int> &product_coefficients);
   void delete_reaction(int reaction_id) {
     reactions.erase(reactions.begin() + reaction_id);
   }
@@ -184,15 +210,16 @@ protected:
   virtual void on_mc_rejection_directly_after_entry(int &old_state_index){};
   virtual void on_mc_accept(int &new_state_index){};
   virtual void on_mc_reject(int &old_state_index){};
-  virtual int on_mc_use_WL_get_new_state() { return -10; };
+  virtual int on_mc_use_WL_get_new_state() { return -10; }
 
   void make_reaction_attempt(
-      SingleReaction &current_reaction,
+      SingleReaction const &current_reaction,
       std::vector<StoredParticleProperty> &changed_particles_properties,
       std::vector<int> &p_ids_created_particles,
       std::vector<StoredParticleProperty> &hidden_particles_properties);
-  void restore_properties(std::vector<StoredParticleProperty> &property_list,
-                          int number_of_saved_properties);
+  void
+  restore_properties(std::vector<StoredParticleProperty> const &property_list,
+                     int number_of_saved_properties);
 
   /**
    * @brief draws a random integer from the uniform distribution in the range
@@ -204,7 +231,16 @@ protected:
     std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
     return uniform_int_dist(m_generator);
   }
-  bool all_reactant_particles_exist(int reaction_id);
+  bool all_reactant_particles_exist(int reaction_id) const;
+
+protected:
+  virtual double calculate_acceptance_probability(
+      SingleReaction const &current_reaction, double E_pot_old,
+      double E_pot_new, std::map<int, int> const &old_particle_numbers,
+      int old_state_index, int new_state_index,
+      bool only_make_configuration_changing_move) const {
+    return -10;
+  }
 
 private:
   std::mt19937 m_generator;
@@ -213,10 +249,6 @@ private:
 
   std::map<int, int> save_old_particle_numbers(int reaction_id);
 
-  int calculate_nu_bar(
-      std::vector<int> &reactant_coefficients,
-      std::vector<int> &product_coefficients); // should only be used when
-                                               // defining a new reaction
   void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
   void hide_particle(int p_id, int previous_type);
@@ -224,14 +256,6 @@ private:
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);
 
-  virtual double calculate_acceptance_probability(
-      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::map<int, int> &old_particle_numbers, int old_state_index,
-      int new_state_index, bool only_make_configuration_changing_move) {
-    return -10;
-  };
-
-  void add_types_to_index(std::vector<int> &type_list);
   Utils::Vector3d get_random_position_in_box();
 };
 
@@ -250,12 +274,12 @@ class ReactionEnsemble : public ReactionAlgorithm {
 public:
   ReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
 
-private:
+protected:
   double calculate_acceptance_probability(
-      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::map<int, int> &old_particle_numbers, int dummy_old_state_index,
-      int dummy_new_state_index,
-      bool dummy_only_make_configuration_changing_move) override;
+      SingleReaction const &current_reaction, double E_pot_old,
+      double E_pot_new, std::map<int, int> const &old_particle_numbers,
+      int dummy_old_state_index, int dummy_new_state_index,
+      bool dummy_only_make_configuration_changing_move) const override;
 };
 
 /** Wang-Landau reaction ensemble method */
@@ -271,6 +295,7 @@ public:
       const std::vector<int> &_corresponding_acid_types);
   void add_new_CV_potential_energy(const std::string &filename,
                                    double delta_CV);
+  void add_new_CV_potential_energy(std::istream &infile, double delta_CV);
   std::vector<std::shared_ptr<CollectiveVariable>> collective_variables;
 
   std::string output_filename = "";
@@ -278,25 +303,29 @@ public:
   std::vector<double> min_boundaries_energies;
   std::vector<double> max_boundaries_energies;
 
-  std::vector<double>
-      minimum_energies_at_flat_index; // only present in energy preparation run
-  std::vector<double>
-      maximum_energies_at_flat_index; // only present in energy preparation run
+  // only present in energy preparation run
+  std::vector<double> minimum_energies_at_flat_index;
+  // only present in energy preparation run
+  std::vector<double> maximum_energies_at_flat_index;
 
-  int update_maximum_and_minimum_energies_at_current_state(); // use for
-                                                              // preliminary
-                                                              // energy
-                                                              // reweighting
-                                                              // runs
+  // use for preliminary energy reweighting runs
+  int update_maximum_and_minimum_energies_at_current_state();
   int do_reaction(int reaction_steps) override;
   void write_out_preliminary_energy_run_results(const std::string &filename);
 
   // checkpointing, only designed to reassign values of a previous simulation to
   // a new simulation with the same initialization process
-  int load_wang_landau_checkpoint(const std::string &identifier);
-  int write_wang_landau_checkpoint(const std::string &identifier);
-  void write_wang_landau_results_to_file(
-      const std::string &full_path_to_output_filename);
+  void load_wang_landau_checkpoint(const std::string &identifier);
+  void write_wang_landau_checkpoint(const std::string &identifier);
+  void write_wang_landau_results_to_file(const std::string &filename);
+
+protected:
+  double calculate_acceptance_probability(
+      SingleReaction const &current_reaction, double E_pot_old,
+      double E_pot_new, std::map<int, int> const &old_particle_numbers,
+      int old_state_index, int new_state_index,
+      bool only_make_configuration_changing_move) const override;
+  void format_wang_landau_results(std::ostream &out);
 
 private:
   void on_reaction_entry(int &old_state_index) override;
@@ -304,28 +333,26 @@ private:
   on_reaction_rejection_directly_after_entry(int &old_state_index) override;
   void on_attempted_reaction(int &new_state_index) override;
   void on_end_reaction(int &accepted_state) override;
-  double calculate_acceptance_probability(
-      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::map<int, int> &old_particle_numbers, int old_state_index,
-      int new_state_index, bool only_make_configuration_changing_move) override;
   void on_mc_rejection_directly_after_entry(int &old_state_index) override;
   void on_mc_accept(int &new_state_index) override;
   void on_mc_reject(int &old_state_index) override;
   int on_mc_use_WL_get_new_state() override;
 
   std::vector<int> histogram;
-  std::vector<double> wang_landau_potential; // equals the logarithm to basis e
-                                             // of the degeneracy of the states
+
+  // logarithm to basis e of the degeneracy of the states
+  std::vector<double> wang_landau_potential;
 
   std::vector<int> nr_subindices_of_collective_variable;
-  double wang_landau_parameter = 1.0; // equals the logarithm to basis e of the
-  // modification factor of the degeneracy of
+
+  // logarithm to basis e of the modification factor of the degeneracy of
   // states when the state is visited
+  double wang_landau_parameter = 1.0;
 
   int int_fill_value = -10;
   double double_fill_value = -10.0;
 
-  int used_bins = -10;             // for 1/t algorithm
+  long used_bins = -10;            // for 1/t algorithm
   int monte_carlo_trial_moves = 0; // for 1/t algorithm
 
   int get_flattened_index_wang_landau_without_energy_collective_variable(
@@ -333,30 +360,32 @@ private:
       int collective_variable_index_energy_observable); // needed for energy
 
   int get_flattened_index_wang_landau(
-      std::vector<double> &current_state,
-      std::vector<double> &collective_variables_minimum_values,
-      std::vector<double> &collective_variables_maximum_values,
-      std::vector<double> &delta_collective_variables_values,
+      std::vector<double> const &current_state,
+      std::vector<double> const &collective_variables_minimum_values,
+      std::vector<double> const &collective_variables_maximum_values,
+      std::vector<double> const &delta_collective_variables_values,
       int nr_collective_variables); // collective variable
   int get_flattened_index_wang_landau_of_current_state();
 
   void update_wang_landau_potential_and_histogram(
       int index_of_state_after_acceptance_or_rejection);
   int m_WL_tries = 0;
-  bool can_refine_wang_landau_one_over_t();
+  bool can_refine_wang_landau_one_over_t() const;
   bool m_system_is_in_1_over_t_regime = false;
-  bool achieved_desired_number_of_refinements_one_over_t();
+  bool achieved_desired_number_of_refinements_one_over_t() const;
   void refine_wang_landau_parameter_one_over_t();
 
-  int initialize_wang_landau(); // has to be called (at least) after the last
-                                // collective variable is added
+  /**
+   * Initialize the current Wang-Landau system.
+   * Has to be called (at least) after the last collective variable is added.
+   */
+  int initialize_wang_landau();
   double calculate_delta_degree_of_association(
       DegreeOfAssociationCollectiveVariable &current_collective_variable);
-  int get_num_needed_bins();
   void invalidate_bins();
   void reset_histogram();
   double get_minimum_CV_value_on_delta_CV_spaced_grid(double min_CV_value,
-                                                      double delta_CV);
+                                                      double delta_CV) const;
 };
 
 /**
@@ -378,12 +407,14 @@ public:
   double m_constant_pH = -10;
   int do_reaction(int reaction_steps) override;
 
-private:
+protected:
   double calculate_acceptance_probability(
-      SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
-      std::map<int, int> &dummy_old_particle_numbers, int dummy_old_state_index,
-      int dummy_new_state_index,
-      bool dummy_only_make_configuration_changing_move) override;
+      SingleReaction const &current_reaction, double E_pot_old,
+      double E_pot_new, std::map<int, int> const &dummy_old_particle_numbers,
+      int dummy_old_state_index, int dummy_new_state_index,
+      bool dummy_only_make_configuration_changing_move) const override;
+
+private:
   int get_random_valid_p_id();
 };
 
@@ -398,8 +429,9 @@ public:
 // utility functions //
 ///////////////////////
 
-double calculate_factorial_expression(SingleReaction &current_reaction,
-                                      std::map<int, int> &old_particle_numbers);
+double
+calculate_factorial_expression(SingleReaction const &current_reaction,
+                               std::map<int, int> const &old_particle_numbers);
 
 double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i);
 
@@ -425,7 +457,8 @@ double average_list_of_allowed_entries(const std::vector<T> &rng) {
     }
   }
   if (counter_allowed_entries) {
-    return static_cast<double>(result) / counter_allowed_entries;
+    return static_cast<double>(result) /
+           static_cast<double>(counter_allowed_entries);
   }
   return 0.0;
 }
