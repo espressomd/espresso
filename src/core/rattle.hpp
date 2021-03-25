@@ -35,7 +35,8 @@
 #ifdef BOND_CONSTRAINT
 
 /** Transfer the current particle positions from @ref ParticlePosition::p
- *  "Particle::r::p" to @ref ParticlePosition::p_old "Particle::r::p_old"
+ *  "Particle::r::p" to @ref ParticlePosition::p_last_timestep
+ *  "Particle::r::p_last_timestep"
  */
 void save_old_pos(const ParticleRange &particles,
                   const ParticleRange &ghost_particles);

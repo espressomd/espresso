@@ -41,7 +41,7 @@ void save_old_pos(const ParticleRange &particles,
                   const ParticleRange &ghost_particles) {
   auto save_pos = [](Particle &p) {
     for (int j = 0; j < 3; j++)
-      p.r.p_old[j] = p.r.p[j];
+      p.r.p_last_timestep[j] = p.r.p[j];
   };
 
   for (auto &p : particles)
@@ -85,7 +85,8 @@ static bool add_pos_corr_vec(RigidBond const &ia_params, Particle &p1,
   auto const r_ij2 = r_ij.norm2();
 
   if (fabs(1.0 - r_ij2 / ia_params.d2) > ia_params.p_tol) {
-    auto const r_ij_t = get_mi_vector(p1.r.p_old, p2.r.p_old, box_geo);
+    auto const r_ij_t =
+        get_mi_vector(p1.r.p_last_timestep, p2.r.p_last_timestep, box_geo);
     auto const r_ij_dot = r_ij_t * r_ij;
     auto const G =
         0.50 * (ia_params.d2 - r_ij2) / r_ij_dot / (p1.p.mass + p2.p.mass);
@@ -160,14 +161,15 @@ void correct_pos_shake(CellStructure &cs) {
 }
 
 /** Transfer the current forces from @ref ParticleForce::f "Particle::f::f"
- *  to @ref ParticlePosition::p_old "Particle::r::p_old" and reset the
- *  velocity correction vectors at @ref ParticleForce::f "Particle::f::f".
+ *  to @ref ParticlePosition::p_last_timestep "Particle::r::p_last_timestep" and
+ *  reset the velocity correction vectors at @ref ParticleForce::f
+ *  "Particle::f::f".
  */
 static void transfer_force_init_vel(const ParticleRange &particles,
                                     const ParticleRange &ghost_particles) {
   auto copy_reset = [](Particle &p) {
     for (int j = 0; j < 3; j++) {
-      p.r.p_old[j] = p.f.f[j];
+      p.r.p_last_timestep[j] = p.f.f[j];
       p.f.f[j] = 0.0;
     }
   };
@@ -236,12 +238,12 @@ static void apply_vel_corr(const ParticleRange &particles) {
   }
 }
 
-/** Put back the forces from r.p_old to f.f */
+/** Put back the forces from r.p_last_timestep to f.f */
 static void revert_force(const ParticleRange &particles,
                          const ParticleRange &ghost_particles) {
   auto revert = [](Particle &p) {
     for (int j = 0; j < 3; j++)
-      p.f.f[j] = p.r.p_old[j];
+      p.f.f[j] = p.r.p_last_timestep[j];
   };
 
   for (auto &p : particles)
@@ -254,9 +256,9 @@ static void revert_force(const ParticleRange &particles,
 void correct_vel_shake(CellStructure &cs) {
   cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
 
-  /* transfer the current forces to r.p_old of the particle structure so that
-   * velocity corrections can be stored temporarily at the f.f member of the
-   * particle structure */
+  /* transfer the current forces to r.p_last_timestep of the particle structure
+   * so that velocity corrections can be stored temporarily at the f.f member of
+   * the particle structure */
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
 

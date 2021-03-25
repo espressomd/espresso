@@ -268,7 +268,7 @@ struct ParticlePosition {
 
 #ifdef BOND_CONSTRAINT
   /** particle position at the previous time step (RATTLE algorithm) */
-  Utils::Vector3d p_old = {0., 0., 0.};
+  Utils::Vector3d p_last_timestep = {0., 0., 0.};
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
@@ -277,7 +277,7 @@ struct ParticlePosition {
     ar &quat;
 #endif
 #ifdef BOND_CONSTRAINT
-    ar &p_old;
+    ar &p_last_timestep;
 #endif
   }
 };
