@@ -32,16 +32,14 @@ class AnalyzeDistributions(ut.TestCase):
         # start with a small box
         cls.system.box_l = np.array([box_l, box_l, box_l])
         cls.system.cell_system.set_n_square(use_verlet_lists=False)
-        for p in range(cls.num_part):
-            cls.system.part.add(
-                id=p,
-                pos=np.random.random() * cls.system.box_l)
+        cls.system.part.add(
+            pos=np.outer(np.random.random(cls.num_part), cls.system.box_l))
 
     def calc_min_distribution(self, bins):
         dist = []
-        for i in range(self.num_part):
-            dist.append(np.min([self.system.distance(
-                self.system.part[i], p.pos) for p in self.system.part if p.id != i]))
+        for p1 in self.system.part:
+            dist.append(min(self.system.distance(p1, p2.pos)
+                            for p2 in self.system.part if p1.id != p2.id))
         hist = np.histogram(dist, bins=bins, density=False)[0]
         return hist / (float(np.sum(hist)))
 

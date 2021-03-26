@@ -41,8 +41,8 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.cell_system.skin = 0.4
         self.system.time_step = .2
 
-        self.system.part.add(id=0, pos=self.start_pos, type=0)
-        self.system.part.add(id=1, pos=self.start_pos, type=0)
+        self.system.part.add(pos=self.start_pos, type=0)
+        self.system.part.add(pos=self.start_pos, type=0)
 
     def tearDown(self):
         self.system.part.clear()
@@ -82,8 +82,9 @@ class InteractionsBondedTest(ut.TestCase):
         coulomb_k = 1
         q1 = 1
         q2 = -1
-        self.system.part[0].q = q1
-        self.system.part[1].q = q2
+        p1, p2 = self.system.part[:]
+        p1.q = q1
+        p2.q = q2
         self.run_test(
             espressomd.interactions.BondedCoulomb(prefactor=coulomb_k),
             lambda r: tests_common.coulomb_force(r, coulomb_k, q1, q2),
@@ -96,8 +97,9 @@ class InteractionsBondedTest(ut.TestCase):
         # interactions
         q1 = 1.2
         q2 = -q1
-        self.system.part[0].q = q1
-        self.system.part[1].q = q2
+        p1, p2 = self.system.part[:]
+        p1.q = q1
+        p2.q = q2
         r_cut = 2
 
         sr_solver = espressomd.electrostatics.DH(
@@ -140,13 +142,13 @@ class InteractionsBondedTest(ut.TestCase):
     def run_test(self, bond_instance, force_func, energy_func, min_dist,
                  cutoff, test_breakage=False):
         self.system.bonded_inter.add(bond_instance)
-        self.system.part[0].bonds = ((bond_instance, 1),)
+        p1, p2 = self.system.part[:]
+        p1.bonds = ((bond_instance, p2),)
 
         # n+1 steps from min_dist to cut, then we remove the cut, because that
         # may break the bond due to rounding errors
         for dist in np.linspace(min_dist, cutoff, self.steps + 1)[:-1]:
-            self.system.part[1].pos = self.system.part[
-                0].pos + self.axis * dist
+            p2.pos = p1.pos + self.axis * dist
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -154,8 +156,8 @@ class InteractionsBondedTest(ut.TestCase):
             E_ref = energy_func(dist)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p1.f)
+            f1_sim = np.copy(p2.f)
             f1_ref = self.axis * force_func(dist)
 
             # Check that energies match, ...
@@ -182,8 +184,7 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_allclose(
                 p_tensor_sim, p_tensor_expected, atol=1E-12)
         if test_breakage:
-            self.system.part[1].pos = self.system.part[0].pos \
-                + self.axis * cutoff * (1.01)
+            p2.pos = p1.pos + self.axis * cutoff * 1.01
             with self.assertRaisesRegex(Exception, "Encountered errors during integrate"):
                 self.system.integrator.run(recalc_forces=True, steps=0)
 

@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-import numpy
+import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 from tests_common import abspath
@@ -26,7 +26,9 @@ from tests_common import abspath
 @utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class LennardJonesTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    data = numpy.loadtxt(abspath('data/lj_system.dat'))
+    data = np.loadtxt(abspath('data/lj_system.dat'))
+    pos = data[:, 1:4]
+    forces = data[:, 4:7]
 
     def setUp(self):
         self.system.part.clear()
@@ -42,25 +44,13 @@ class LennardJonesTest(ut.TestCase):
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
 
-        for i in range(self.data.shape[0]):
-            self.system.part.add(
-                id=int(self.data[i][0]), pos=self.data[i][1:4])
+        self.system.part.add(pos=self.pos)
 
     def check(self):
-        rms = 0.0
-        max_df = 0.0
-
-        for i in range(self.data.shape[0]):
-            f = self.system.part[i].f
-            for j in range(3):
-                df2 = (self.data[i][4 + j] - f[j])**2
-                rms += df2
-                max_df = max(max_df, (df2)**0.5)
-
-        rms = rms**0.5
-
-        self.assertLess(rms, 1e-5)
-        self.assertLess(max_df, 1e-5)
+        f_diff = np.linalg.norm(self.system.part[:].f - self.forces, axis=1)
+        max_deviation = np.max(np.abs(self.system.part[:].f - self.forces))
+        self.assertLess(np.mean(f_diff), 1e-7)
+        self.assertLess(max_deviation, 1e-5)
 
     def test_dd(self):
         self.system.cell_system.set_domain_decomposition(

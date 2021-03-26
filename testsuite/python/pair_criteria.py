@@ -33,10 +33,8 @@ class PairCriteria(ut.TestCase):
     es.bonded_inter.add(f1)
     f2 = FeneBond(k=1, d_r_max=0.05)
     es.bonded_inter.add(f2)
-    es.part.add(id=0, pos=(0, 0, 0))
-    es.part.add(id=1, pos=(0.91, 0, 0))
-    p1 = es.part[0]
-    p2 = es.part[1]
+    p1 = es.part.add(pos=(0, 0, 0))
+    p2 = es.part.add(pos=(0.91, 0, 0))
     epsilon = 1E-8
 
     def test_distance_crit_periodic(self):
@@ -91,10 +89,11 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(not ec.decide(self.p1.id, self.p2.id))
 
     def test_bond_crit(self):
-        bc = pair_criteria.BondCriterion(bond_type=0)
+        bt = 0
+        bc = pair_criteria.BondCriterion(bond_type=bt)
         # Interface
         self.assertEqual(list(bc.get_params().keys()), ["bond_type", ])
-        self.assertEqual(bc.get_params()["bond_type"], 0)
+        self.assertEqual(bc.get_params()["bond_type"], bt)
 
         # Decisions
         # No bond yet. Should return false
@@ -102,13 +101,13 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(not bc.decide(self.p1.id, self.p2.id))
 
         # Add bond. Then the criterion should match
-        self.es.part[0].bonds = ((0, 1),)
+        self.es.part[self.p1.id].bonds = ((bt, self.p2.id),)
         self.assertTrue(bc.decide(self.p1, self.p2))
         self.assertTrue(bc.decide(self.p1.id, self.p2.id))
 
         # Place bond on the 2nd particle. The criterion should still match
-        self.es.part[0].bonds = ()
-        self.es.part[1].bonds = ((0, 0),)
+        self.es.part[self.p1.id].bonds = ()
+        self.es.part[self.p2.id].bonds = ((bt, self.p1.id),)
         self.assertTrue(bc.decide(self.p1, self.p2))
         self.assertTrue(bc.decide(self.p1.id, self.p2.id))
 

@@ -82,9 +82,9 @@ class CorrelatorTest(ut.TestCase):
     def test_square_distance_componentwise(self):
         s = self.system
         v = np.array([1, 2, 3])
-        s.part.add(id=0, pos=(0, 0, 0), v=v)
+        p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticlePositions(ids=(0,))
+        obs = espressomd.observables.ParticlePositions(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="square_distance_componentwise")
@@ -105,9 +105,9 @@ class CorrelatorTest(ut.TestCase):
     def test_tensor_product(self):
         s = self.system
         v = np.array([1, 2, 3])
-        s.part.add(id=0, pos=(0, 0, 0), v=v)
+        p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=12, tau_max=2, delta_N=1,
             corr_operation="tensor_product")
@@ -128,9 +128,9 @@ class CorrelatorTest(ut.TestCase):
     def test_componentwise_product(self):
         s = self.system
         v = np.array([1, 2, 3])
-        s.part.add(id=0, pos=(0, 0, 0), v=v)
+        p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="componentwise_product")
@@ -150,9 +150,9 @@ class CorrelatorTest(ut.TestCase):
     def test_scalar_product(self):
         s = self.system
         v = np.array([1, 2, 3])
-        s.part.add(id=0, pos=(0, 0, 0), v=v)
+        p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="scalar_product")
@@ -172,10 +172,10 @@ class CorrelatorTest(ut.TestCase):
     def test_fcs(self):
         s = self.system
         v = np.array([1, 2, 3])
-        s.part.add(id=0, pos=(0, 0, 0), v=v)
+        p = s.part.add(pos=(0, 0, 0), v=v)
 
         w = np.array([3, 2, 1])
-        obs = espressomd.observables.ParticlePositions(ids=(0,))
+        obs = espressomd.observables.ParticlePositions(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=9.9 * self.system.time_step,
             delta_N=1, corr_operation="fcs_acf", args=w)
@@ -202,7 +202,7 @@ class CorrelatorTest(ut.TestCase):
 
     def test_correlator_interface(self):
         # test setters and getters
-        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        obs = espressomd.observables.ParticleVelocities(ids=(123,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=12.0, delta_N=1,
             corr_operation="scalar_product")

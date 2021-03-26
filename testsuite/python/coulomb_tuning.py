@@ -39,27 +39,20 @@ class CoulombCloudWallTune(ut.TestCase):
         self.system.time_step = 0.01
         self.system.cell_system.skin = 0.4
 
-        #  Clear actors that might be left from prev tests
+        data = np.load(tests_common.abspath("data/coulomb_tuning_system.npz"))
+        self.forces = data['forces']
+        self.system.part.add(pos=data['pos'], q=data['charges'])
+
+    def tearDown(self):
         self.system.actors.clear()
         self.system.part.clear()
-        data = np.load(tests_common.abspath("data/coulomb_tuning_system.npz"))
-        self.forces = []
-        # Add particles to system and store reference forces in hash
-        # Input format: id pos q f
-        for id in range(len(data['pos'])):
-            pos = data['pos'][id]
-            q = data['charges'][id]
-            self.forces.append(data['forces'][id])
-            self.system.part.add(id=id, pos=pos, q=q)
 
     def compare(self, method_name):
         # Compare forces now in the system to stored ones
-        force_abs_diff = 0.
-        for p in self.system.part:
-            force_abs_diff += np.linalg.norm(p.f - self.forces[p.id])
-        force_abs_diff /= len(self.system.part)
+        difference = np.linalg.norm(
+            self.system.part[:].f - self.forces, axis=1)
         self.assertLessEqual(
-            force_abs_diff, self.tolerance,
+            np.mean(difference), self.tolerance,
             "Absolute force difference too large for method " + method_name)
 
     # Tests for individual methods

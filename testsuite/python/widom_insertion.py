@@ -75,8 +75,7 @@ class WidomInsertionTest(ut.TestCase):
         temperature=TEMPERATURE, seed=1)
 
     def setUp(self):
-        self.system.part.add(id=0, pos=0.5 * self.system.box_l,
-                             type=self.TYPE_HA)
+        self.system.part.add(pos=0.5 * self.system.box_l, type=self.TYPE_HA)
 
         self.system.non_bonded_inter[self.TYPE_HA, self.TYPE_HA].lennard_jones.set_params(
             epsilon=self.LJ_EPS, sigma=self.LJ_SIG, cutoff=self.LJ_CUT,
