@@ -24,7 +24,7 @@ Testmodule for MPI-IO.
 import espressomd
 import espressomd.io
 from espressomd.interactions import AngleHarmonic
-import numpy
+import numpy as np
 import unittest as ut
 import random
 import os
@@ -61,8 +61,8 @@ def random_particles():
         p = Namespace()
         p.id = i
         p.type = random.randint(0, 100)
-        p.pos = numpy.random.rand(3)
-        p.v = numpy.random.rand(3)
+        p.pos = np.random.rand(3)
+        p.v = np.random.rand(3)
         p.bonds = []
         # Up to 20 bonds; otherwise this test will take ages
         for _ in range(random.randint(0, 20)):
@@ -114,15 +114,15 @@ class MPIIOTest(ut.TestCase):
         for p, q in zip(self.s.part, self.test_particles):
             self.assertEqual(p.id, q.id)
             self.assertEqual(p.type, q.type)
-            numpy.testing.assert_array_equal(numpy.copy(p.pos), q.pos)
-            numpy.testing.assert_array_equal(numpy.copy(p.v), q.v)
+            np.testing.assert_array_equal(np.copy(p.pos), q.pos)
+            np.testing.assert_array_equal(np.copy(p.v), q.v)
             self.assertEqual(len(p.bonds), len(q.bonds))
             # Check all bonds
             for bp, bq in zip(p.bonds, q.bonds):
                 # Bond type - "bend" stores the index of the bond
                 self.assertEqual(bp[0].params["bend"], bq[0])
                 # Bond partners
-                numpy.testing.assert_array_equal(bp[1:], bq[1:])
+                np.testing.assert_array_equal(bp[1:], bq[1:])
 
     def test_mpiio(self):
         espressomd.io.mpiio.mpiio.write(

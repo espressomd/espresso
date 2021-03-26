@@ -105,8 +105,9 @@ class TestLB:
         """
         system = self.system
         self.n_col_part = 1000
-        system.part.add(pos=np.random.random(
-            (self.n_col_part, 3)) * self.system.box_l[0], v=np.random.random((self.n_col_part, 3)))
+        system.part.add(
+            pos=np.random.random((self.n_col_part, 3)) * self.system.box_l[0],
+            v=np.random.random((self.n_col_part, 3)))
         system.thermostat.turn_off()
 
         self.lbf = self.lb_class(
@@ -388,7 +389,7 @@ class TestLB:
         where particles don't move.
 
         """
-        self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
+        p = self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
         base_params = {}
         base_params.update(
             ext_force_density=[2.3, 1.2, 0.1],
@@ -409,7 +410,7 @@ class TestLB:
             int(round(sim_time / self.system.time_step)))
         probe_pos = np.array(self.system.box_l) / 2.
         v1 = np.copy(lbf.get_interpolated_velocity(probe_pos))
-        f1 = np.copy(self.system.part[0].f)
+        f1 = np.copy(p.f)
         self.system.actors.clear()
         # get fresh LBfluid and change time steps
         with self.assertRaises(ValueError):
@@ -436,7 +437,7 @@ class TestLB:
         self.system.integrator.run(
             int(round(sim_time / self.system.time_step)))
         v2 = np.copy(lbf.get_interpolated_velocity(probe_pos))
-        f2 = np.copy(self.system.part[0].f)
+        f2 = np.copy(p.f)
         np.testing.assert_allclose(v1, v2, rtol=1e-2)
         np.testing.assert_allclose(f1, f2, rtol=1e-2)
 

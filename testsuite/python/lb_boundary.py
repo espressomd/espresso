@@ -20,7 +20,7 @@ import espressomd
 import espressomd.lb
 import espressomd.shapes
 import espressomd.lbboundaries
-from itertools import product
+import itertools
 import numpy as np
 
 
@@ -81,22 +81,22 @@ class LBBoundariesBase:
     def check_boundary_flags(self, boundary1, boundary2):
         rng = range(20)
 
-        for i in product(range(0, 5), rng, rng):
+        for i in itertools.product(range(0, 5), rng, rng):
             self.assertTrue(self.lbf[i].is_boundary)
             np.testing.assert_allclose(
                 np.copy(self.lbf[i].velocity), np.copy(boundary1.velocity))
 
-        for i in product(range(5, 15), rng, rng):
+        for i in itertools.product(range(5, 15), rng, rng):
             self.assertFalse(self.lbf[i].is_boundary)
 
-        for i in product(range(15, 20), rng, rng):
+        for i in itertools.product(range(15, 20), rng, rng):
             self.assertTrue(self.lbf[i].is_boundary)
             np.testing.assert_allclose(
                 np.copy(self.lbf[i].velocity), np.copy(boundary2.velocity))
 
         self.system.lbboundaries.clear()
         # WALBERLA TODO
-#        for i in product(rng, rng, rng):
+#        for i in itertools.product(rng, rng, rng):
 #            self.assertFalse(self.lbf[i].is_boundary)
 
     def test_boundary_flags(self):

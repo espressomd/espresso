@@ -20,6 +20,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
+import itertools
 
 
 @utx.skipIfMissingFeatures("ROTATION")
@@ -28,51 +29,49 @@ class Rotation(ut.TestCase):
     s.cell_system.skin = 0
     s.time_step = 0.01
 
+    def tearDown(self):
+        self.s.part.clear()
+
     def test_langevin(self):
         """Applies langevin thermostat and checks that correct axes get
            thermalized"""
         s = self.s
         s.thermostat.set_langevin(gamma=1, kT=1, seed=42)
-        for x in (0, 1):
-            for y in (0, 1):
-                for z in (0, 1):
-                    s.part.clear()
-                    s.part.add(id=0, pos=(0, 0, 0), rotation=(x, y, z),
-                               quat=(1, 0, 0, 0), omega_body=(0, 0, 0),
-                               torque_lab=(0, 0, 0))
-                    s.integrator.run(500)
-                    self.validate(x, 0)
-                    self.validate(y, 1)
-                    self.validate(z, 2)
+        for rot_x, rot_y, rot_z in itertools.product((False, True), repeat=3):
+            p = s.part.add(pos=(0, 0, 0), rotation=(rot_x, rot_y, rot_z),
+                           quat=(1, 0, 0, 0), omega_body=(0, 0, 0),
+                           torque_lab=(0, 0, 0))
+            s.integrator.run(500)
+            self.validate(p, rot_x, 0)
+            self.validate(p, rot_y, 1)
+            self.validate(p, rot_z, 2)
+            s.part.clear()
 
-    def validate(self, rotate, coord):
+    def validate(self, p, rotate, coord):
         if rotate:
-            # self.assertNotEqual(self.s.part[0].torque_body[coord],0)
-            self.assertNotEqual(self.s.part[0].omega_body[coord], 0)
+            self.assertNotEqual(p.torque_lab[coord], 0)
+            self.assertNotEqual(p.omega_body[coord], 0)
         else:
-            # self.assertEqual(self.s.part[0].torque_body[coord],0)
-            self.assertEqual(self.s.part[0].omega_body[coord], 0)
+            # self.assertEqual(p.torque_lab[coord], 0)
+            self.assertEqual(p.omega_body[coord], 0)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_axes_changes(self):
         """Verifies that rotation axes in body and space frame stay the same
            and other axes don't"""
         s = self.s
-        s.part.clear()
-        s.part.add(id=0, pos=(0.9, 0.9, 0.9), ext_torque=(1, 1, 1))
+        p = s.part.add(pos=(0.9, 0.9, 0.9), ext_torque=(1, 1, 1))
         s.thermostat.turn_off()
-        for dir in (0, 1, 2):
+        for direction in (0, 1, 2):
             # Reset orientation
-            s.part[0].quat = [1, 0, 0, 0]
+            p.quat = [1, 0, 0, 0]
 
             # Enable rotation in a single direction
             rot = [0, 0, 0]
-            rot[dir] = 1
-            s.part[0].rotation = rot
+            rot[direction] = 1
+            p.rotation = rot
 
-            s.integrator.run(30)
-
-            s.integrator.run(100)
+            s.integrator.run(130)
 
             # Check other axes:
             for axis in [1, 0, 0], [0, 1, 0], [0, 0, 1]:
@@ -80,15 +79,14 @@ class Rotation(ut.TestCase):
                     # The axis for which rotation is on should coincide in body
                     # and space frame
                     self.assertAlmostEqual(
-                        np.dot(rot, s.part[0].convert_vector_body_to_space(rot)), 1, places=8)
+                        np.dot(rot, p.convert_vector_body_to_space(rot)), 1, places=8)
                 else:
                     # For non-rotation axis, body and space frame should differ
                     self.assertLess(
-                        np.dot(axis, s.part[0].convert_vector_body_to_space(axis)), 0.95)
+                        np.dot(axis, p.convert_vector_body_to_space(axis)), 0.95)
 
     def test_frame_conversion_and_rotation(self):
         s = self.s
-        s.part.clear()
         p = s.part.add(pos=np.random.random(3), rotation=(1, 1, 1))
 
         # Space and body frame co-incide?

@@ -30,6 +30,9 @@ class VirtualSitesTracersWalberla(ut.TestCase, VirtualSitesTracersCommon):
     def setUp(self):
         self.LBClass = lb.LBFluidWalberla
 
+    def tearDown(self):
+        VirtualSitesTracersCommon.tearDown(self)
+
 
 if __name__ == "__main__":
     ut.main()
