@@ -26,8 +26,8 @@ import espressomd
 class ParticleProperties(ut.TestCase):
     system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 
-    # Particle id to work on
-    system.part.add(id=17, pos=(0, 0, 0))
+    # Particle to work on
+    system.part.add(pos=(0, 0, 0))
 
     def bondsMatch(self, inType, outBond, inParams, outParams, msg_long):
         """Check, if the bond type set and gotten back as well as the bond

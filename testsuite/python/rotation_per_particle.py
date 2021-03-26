@@ -20,6 +20,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
+import itertools
 
 
 @utx.skipIfMissingFeatures("ROTATION")
@@ -36,17 +37,15 @@ class Rotation(ut.TestCase):
            thermalized"""
         s = self.s
         s.thermostat.set_langevin(gamma=1, kT=1, seed=42)
-        for x in (False, True):
-            for y in (False, True):
-                for z in (False, True):
-                    s.part.clear()
-                    p = s.part.add(pos=(0, 0, 0), rotation=(x, y, z),
-                                   quat=(1, 0, 0, 0), omega_body=(0, 0, 0),
-                                   torque_lab=(0, 0, 0))
-                    s.integrator.run(500)
-                    self.validate(p, x, 0)
-                    self.validate(p, y, 1)
-                    self.validate(p, z, 2)
+        for rot_x, rot_y, rot_z in itertools.product((False, True), repeat=3):
+            p = s.part.add(pos=(0, 0, 0), rotation=(rot_x, rot_y, rot_z),
+                           quat=(1, 0, 0, 0), omega_body=(0, 0, 0),
+                           torque_lab=(0, 0, 0))
+            s.integrator.run(500)
+            self.validate(p, rot_x, 0)
+            self.validate(p, rot_y, 1)
+            self.validate(p, rot_z, 2)
+            s.part.clear()
 
     def validate(self, p, rotate, coord):
         if rotate:
@@ -72,9 +71,7 @@ class Rotation(ut.TestCase):
             rot[direction] = 1
             p.rotation = rot
 
-            s.integrator.run(30)
-
-            s.integrator.run(100)
+            s.integrator.run(130)
 
             # Check other axes:
             for axis in [1, 0, 0], [0, 1, 0], [0, 0, 1]:

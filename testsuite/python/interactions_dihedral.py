@@ -92,10 +92,7 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
 
-        self.system.part.add(pos=self.start_pos, type=0)
-        self.system.part.add(pos=self.start_pos, type=0)
-        self.system.part.add(pos=self.start_pos, type=0)
-        self.system.part.add(pos=self.start_pos, type=0)
+        self.system.part.add(pos=4 * [self.start_pos], type=4 * [0])
 
     def tearDown(self):
         self.system.part.clear()

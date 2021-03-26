@@ -14,11 +14,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from itertools import product
 
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import itertools
 
 import espressomd
 from espressomd import constraints
@@ -167,7 +167,7 @@ class FieldTest(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'Parameter particle_scales is read-only'):
             F.particle_scales = {0: 0.0}
 
-        for i in product(*map(range, 3 * [10])):
+        for i in itertools.product(*map(range, 3 * [10])):
             x = (h * i)
             f_val = F.call_method("_eval_field", x=x)
             np.testing.assert_allclose(f_val, self.potential(x), rtol=1e-3)
@@ -194,7 +194,7 @@ class FieldTest(ut.TestCase):
 
         self.system.constraints.add(F)
 
-        for i in product(*map(range, 3 * [10])):
+        for i in itertools.product(*map(range, 3 * [10])):
             x = (h * i)
             f_val = F.call_method("_eval_field", x=x)
             np.testing.assert_allclose(f_val, self.potential(x), rtol=1e-3)
@@ -226,7 +226,7 @@ class FieldTest(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'Parameter particle_scales is read-only'):
             F.particle_scales = {0: 0.0}
 
-        for i in product(*map(range, 3 * [10])):
+        for i in itertools.product(*map(range, 3 * [10])):
             x = (h * i)
             f_val = np.array(F.call_method("_eval_field", x=x))
             np.testing.assert_allclose(f_val, self.force(x))
@@ -252,7 +252,7 @@ class FieldTest(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'Parameter gamma is read-only'):
             F.gamma = 2.0
 
-        for i in product(*map(range, 3 * [10])):
+        for i in itertools.product(*map(range, 3 * [10])):
             x = (h * i)
             f_val = np.array(F.call_method("_eval_field", x=x))
             np.testing.assert_allclose(f_val, self.force(x))

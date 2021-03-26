@@ -33,9 +33,8 @@ class PairCriteria(ut.TestCase):
     es.bonded_inter.add(f1)
     f2 = FeneBond(k=1, d_r_max=0.05)
     es.bonded_inter.add(f2)
-    es.part.add(pos=(0, 0, 0))
-    es.part.add(pos=(0.91, 0, 0))
-    p1, p2 = es.part[:]
+    p1 = es.part.add(pos=(0, 0, 0))
+    p2 = es.part.add(pos=(0.91, 0, 0))
     epsilon = 1E-8
 
     def test_distance_crit_periodic(self):

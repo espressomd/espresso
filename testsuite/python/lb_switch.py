@@ -19,7 +19,7 @@ import unittest_decorators as utx
 import numpy as np
 import espressomd
 import espressomd.lb
-from itertools import product
+import itertools
 
 
 @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
@@ -67,7 +67,7 @@ class LBSwitchActor(ut.TestCase):
         system.actors.add(lb_fluid_2)
         system.thermostat.set_lb(LB_fluid=lb_fluid_2, gamma=friction_2)
 
-        for pid in product(range(5), range(5), range(5)):
+        for pid in itertools.product(range(5), repeat=3):
             np.testing.assert_allclose(
                 np.copy(lb_fluid_2[pid].velocity), np.zeros((3,)))
 

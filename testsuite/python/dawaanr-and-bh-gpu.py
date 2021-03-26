@@ -92,9 +92,6 @@ class BHGPUTest(ut.TestCase):
             self.system.actors.add(bh_gpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
-            bhgpu_f = []
-            bhgpu_t = []
-
             bhgpu_f = np.copy(self.system.part[:].f)
             bhgpu_t = np.copy(self.system.part[:].torque_lab)
             bhgpu_e = self.system.analysis.energy()["total"]

@@ -68,7 +68,7 @@ class ElectrostaticInteractionsTests:
     def test_with_analytical_result(self, prefactor=1.0, accuracy=1e-4):
         self.system.part.clear()
         p = self.system.part.add(pos=[0, 0, 0], q=1)
-        _ = self.system.part.add(pos=[0, 0, 1], q=1)
+        self.system.part.add(pos=[0, 0, 1], q=1)
 
         self.system.integrator.run(steps=0)
         f_measured = p.f

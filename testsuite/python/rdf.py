@@ -107,12 +107,9 @@ class RdfTest(ut.TestCase):
     def test_rdf_interface(self):
         # test setters and getters
         s = self.s
-        s.part.add(pos=[0, 0, 0], type=0)
-        s.part.add(pos=[0, 0, 0], type=1)
-        s.part.add(pos=[0, 0, 0], type=0)
-        s.part.add(pos=[0, 0, 0], type=1)
-        pids1 = [s.part[:].id[0]]
-        pids2 = [s.part[:].id[1]]
+        s.part.add(pos=4 * [(0, 0, 0)], type=[0, 1, 0, 1])
+        pids1 = s.part[:].id[0::2]
+        pids2 = s.part[:].id[1::2]
         observable = espressomd.observables.RDF(ids1=pids1, ids2=pids2,
                                                 min_r=1, max_r=2, n_r_bins=3)
         # check pids

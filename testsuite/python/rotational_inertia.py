@@ -54,11 +54,10 @@ class RotationalInertia(ut.TestCase):
 
         tol = 4E-3
         # Anisotropic inertial moment. Stable axes correspond to J[1] and J[2].
-        # The unstable axis corresponds to J[0]. These values relation is J[1]
-        # < J[0] < J[2].
-        J = np.array([5, 0.5, 18.5])
+        # The unstable axis corresponds to J[0]. These values relation is
+        # J[1] < J[0] < J[2].
+        p.rinertia = [5, 0.5, 18.5]
 
-        p.rinertia = J[:]
         # Validation of J[1] stability
         # ----------------------------
         self.system.time_step = 0.0006
