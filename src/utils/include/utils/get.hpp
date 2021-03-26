@@ -23,7 +23,8 @@
 #include <tuple>
 
 namespace Utils {
-template <std::size_t I, typename T> auto get(const T &v) {
+template <std::size_t I, typename T>
+const std::tuple_element_t<I, T> &get(const T &v) {
   return std::get<I>(v);
 }
 
