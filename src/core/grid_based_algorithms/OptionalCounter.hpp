@@ -53,6 +53,7 @@ public:
   bool operator!() const noexcept { return !m_initialized; }
   Utils::Counter<uint64_t> &operator*() { return m_counter; }
   Utils::Counter<uint64_t> *operator->() { return &m_counter; }
+  const Utils::Counter<uint64_t> *operator->() const { return &m_counter; }
 };
 
 #endif

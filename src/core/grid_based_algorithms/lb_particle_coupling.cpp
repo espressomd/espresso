@@ -221,6 +221,38 @@ void add_swimmer_force(Particle &p) {
 }
 #endif
 
+Utils::Vector3d f_random(double noise_amplitude, int part_id,
+                         const OptionalCounter &rng_counter) {
+  if (noise_amplitude > 0.0) {
+    return Random::noise_uniform<RNGSalt::PARTICLES>(rng_counter->value(), 0,
+                                                     part_id);
+  }
+  return {};
+};
+
+void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude) {
+
+  /* Particles within one agrid of the outermost lattice point
+   * of the lb domain can contribute forces to the local lb due to
+   * interpolation on neighboring LB nodes. If the particle
+   * IS in the local domain, we also add the opposing
+   * force to the particle. */
+  if (in_local_halo(p.r.p)) {
+    auto const force = lb_viscous_coupling(
+        p,
+        noise_amplitude * f_random(noise_amplitude, p.identity(),
+                                   lb_particle_coupling.rng_counter_coupling));
+    if (in_local_domain(p.r.p, local_geo)) {
+      /* Particle is in our LB volume, so this node
+       * is responsible to adding its force */
+      p.f.f += force;
+    }
+  }
+
+#ifdef ENGINE
+  add_swimmer_force(p);
+#endif
+}
 void lb_lbcoupling_calc_particle_lattice_ia(
     bool couple_virtual, const ParticleRange &particles,
     const ParticleRange &more_particles) {
@@ -245,44 +277,13 @@ void lb_lbcoupling_calc_particle_lattice_ia(
                                   time_step)
                       : 0.0;
 
-        auto f_random = [noise_amplitude](int id) -> Utils::Vector3d {
-          if (noise_amplitude > 0.0) {
-            return Random::noise_uniform<RNGSalt::PARTICLES>(
-                lb_particle_coupling.rng_counter_coupling->value(), 0, id);
-          }
-          return {};
-        };
-
-        auto couple_particle = [&](Particle &p) -> void {
-          if (p.p.is_virtual and !couple_virtual)
-            return;
-
-          /* Particle is in our LB volume, so this node
-           * is responsible to adding its force */
-          if (in_local_domain(p.r.p, local_geo)) {
-            auto const force = lb_viscous_coupling(
-                p, noise_amplitude * f_random(p.identity()));
-            /* add force to the particle */
-            p.f.f += force;
-            /* Particle is not in our domain, but adds to the force
-             * density in our domain, only calculate contribution to
-             * the LB force density. */
-          } else if (in_local_halo(p.r.p)) {
-            lb_viscous_coupling(p, noise_amplitude * f_random(p.identity()));
-          }
-
-#ifdef ENGINE
-          add_swimmer_force(p);
-#endif
-        };
-
         /* Couple particles ranges */
         for (auto &p : particles) {
-          couple_particle(p);
+          couple_particle(p, couple_virtual, noise_amplitude);
         }
 
         for (auto &p : more_particles) {
-          couple_particle(p);
+          couple_particle(p, couple_virtual, noise_amplitude);
         }
 
         break;
