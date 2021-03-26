@@ -181,26 +181,15 @@ protected:
   };
 
 public:
-  LBWalberlaImpl(double viscosity, double agrid, double tau,
-                 const Utils::Vector3d &box_dimensions,
+  LBWalberlaImpl(double viscosity, const Utils::Vector3i &grid_dimensions,
                  const Utils::Vector3i &node_grid, int n_ghost_layers) {
+    m_grid_dimensions = grid_dimensions;
     m_n_ghost_layers = n_ghost_layers;
 
     if (m_n_ghost_layers <= 0)
       throw std::runtime_error("At least one ghost layer must be used");
-
-    for (int i = 0; i < 3; i++) {
-      if (fabs(round(box_dimensions[i] / agrid) * agrid - box_dimensions[i]) /
-              box_dimensions[i] >
-          std::numeric_limits<double>::epsilon()) {
-        throw std::runtime_error(
-            "Box length not commensurate with agrid in direction " +
-            std::to_string(i));
-      }
-      m_grid_dimensions[i] = int(std::round(box_dimensions[i] / agrid));
+    for (int i : {0, 1, 2}) {
       if (m_grid_dimensions[i] % node_grid[i] != 0) {
-        printf("Grid dimension: %d, node grid %d\n", m_grid_dimensions[i],
-               node_grid[i]);
         throw std::runtime_error(
             "LB grid dimensions and mpi node grid are not compatible.");
       }

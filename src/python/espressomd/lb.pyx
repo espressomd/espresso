@@ -30,6 +30,7 @@ from . import utils
 from .utils import array_locked, is_valid_type, to_char_pointer
 from .utils cimport Vector3i, Vector3d, Vector6d, make_array_locked, create_nparray_from_double_array
 from .globals cimport time_step
+from .grid cimport box_geo
 
 
 IF LB_WALBERLA:
@@ -418,6 +419,7 @@ IF LB_WALBERLA:
                 self._params['tau']**2 / self._params['agrid']**2 
             mpi_init_lb_walberla(
                 lb_visc, lb_dens, self._params["agrid"], self._params["tau"],
+                box_geo.length(),
                 lb_kT, self._params['seed'])
             utils.handle_errors("LB fluid activation")
             self.ext_force_density = self._params["ext_force_density"]

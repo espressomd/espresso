@@ -402,8 +402,6 @@ int main(int argc, char **argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   MPI_Dims_create(n_nodes, 3, mpi_shape.data());
 
-  params.agrid = 1.0;
-  params.tau = 0.03;
   params.viscosity = 0.003;
   params.kT = 1.3E-4;
   params.density = 1.4;

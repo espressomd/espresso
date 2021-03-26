@@ -247,6 +247,7 @@ class TestLB:
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
+        print("box_l", self.system.box_l)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
