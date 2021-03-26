@@ -57,15 +57,12 @@ inline void add_dh_coulomb_pair_force(double const q1q2,
                                       double const dist,
                                       Utils::Vector3d &force) {
   if (dist < dh_params.r_cut) {
-    double fac;
+    // pure Coulomb case
+    auto fac = q1q2 / (dist * dist * dist);
     if (dh_params.kappa > 0.0) {
-      /* Debye-Hueckel case: */
-      double kappa_dist = dh_params.kappa * dist;
-      fac =
-          q1q2 * (exp(-kappa_dist) / (dist * dist * dist)) * (1.0 + kappa_dist);
-    } else {
-      /* pure Coulomb case: */
-      fac = q1q2 / (dist * dist * dist);
+      // Debye-Hueckel case
+      auto const kappa_dist = dh_params.kappa * dist;
+      fac *= exp(-kappa_dist) * (1.0 + kappa_dist);
     }
     force += fac * d;
   }
