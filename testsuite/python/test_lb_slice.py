@@ -21,6 +21,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 
+
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 class TestLBSliceTest(ut.TestCase):
 
@@ -42,8 +43,8 @@ class TestLBSliceTest(ut.TestCase):
 
         "velocity on test slice [:-1, :-1, -1]"
         input_vel = np.random.rand(9, 9, 9, 3)
-        lb_fluid[:-1,:-1,:-1].velocity = input_vel
-        output_vel = lb_fluid[:-1,:-1,:-1].velocity
+        lb_fluid[:-1, :-1, :-1].velocity = input_vel
+        output_vel = lb_fluid[:-1, :-1, :-1].velocity
         np.testing.assert_array_almost_equal(input_vel, output_vel)
 
         "density on test slice [1:-1:2, 5, 3:6:2]"
@@ -54,17 +55,19 @@ class TestLBSliceTest(ut.TestCase):
 
         "population on test slice [:, :, :]"
         input_pop = np.random.rand(10, 10, 10, 19)
-        lb_fluid[:,:,:].population = input_pop
+        lb_fluid[:, :, :].population = input_pop
         output_pop = lb_fluid[:, :, :].population
         np.testing.assert_array_almost_equal(input_pop, output_pop)
 
         "pressure tensor on test slice [3, 6, 2:5], should be of shape (1, 1, 3, 3, 3)"
         output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor.shape
         should_pressure_shape = (1, 1, 3, 3, 3)
-        np.testing.assert_array_almost_equal(output_pressure_shape, should_pressure_shape)
+        np.testing.assert_array_almost_equal(
+            output_pressure_shape, should_pressure_shape)
 
         "pressure tensor neq on test slice [3, 6, 2:10], should be of shape (2, 1, 8, 3, 3)"
-        output_pressure_neq_shape = lb_fluid[3:5, 6:7, 2:10].pressure_tensor_neq.shape
+        output_pressure_neq_shape = lb_fluid[3:5,
+                                             6:7, 2:10].pressure_tensor_neq.shape
         should_pressure_neq_shape = (2, 1, 8, 3, 3)
         np.testing.assert_array_almost_equal(
             output_pressure_neq_shape, should_pressure_neq_shape)
@@ -81,8 +84,6 @@ class TestLBSliceTest(ut.TestCase):
         np.testing.assert_array_almost_equal(
             output_boundary_shape, should_boundary_shape)
 
-
-        
 
 if __name__ == "__main__":
     ut.main()
