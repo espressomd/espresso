@@ -235,6 +235,9 @@ Utils::Vector3d f_random(double noise_amplitude, int part_id,
 void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
                      const OptionalCounter &rng_counter) {
 
+  if (p.p.is_virtual and not couple_virtual)
+    return;
+
   /* Particles within one agrid of the outermost lattice point
    * of the lb domain can contribute forces to the local lb due to
    * interpolation on neighboring LB nodes. If the particle
