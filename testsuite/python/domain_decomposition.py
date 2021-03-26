@@ -26,21 +26,22 @@ class DomainDecomposition(ut.TestCase):
     original_node_grid = tuple(system.cell_system.node_grid)
 
     def setUp(self):
-        self.system.part.clear()
         self.system.cell_system.set_domain_decomposition(
             use_verlet_lists=False)
         self.system.cell_system.node_grid = self.original_node_grid
+
+    def tearDown(self):
+        self.system.part.clear()
 
     def check_resort(self):
         n_part = 2351
 
         # Add the particles on node 0, so that they have to be resorted
-        for i in range(n_part):
-            self.system.part.add(id=i, pos=[0, 0, 0], type=1)
+        self.system.part.add(pos=n_part * [(0, 0, 0)], type=n_part * [1])
 
         # And now change their positions
-        for i in range(n_part):
-            self.system.part[i].pos = self.system.box_l * np.random.random(3)
+        self.system.part[:].pos = self.system.box_l * \
+            np.random.random((n_part, 3))
 
         # Distribute the particles on the nodes
         part_dist = self.system.cell_system.resort()

@@ -38,10 +38,13 @@ class VirtualSitesTracersCommon:
     system.time_step = 0.08
     system.cell_system.skin = 0.1
 
-    def reset_lb(self, ext_force_density=(0, 0, 0)):
+    def tearDown(self):
+        self.system.part.clear()
         self.system.actors.clear()
-        self.system.lbboundaries.clear()
         self.system.thermostat.turn_off()
+
+    def reset_lb(self, ext_force_density=(0, 0, 0)):
+        self.system.lbboundaries.clear()
         self.lbf = self.LBClass(
             kT=0.0, agrid=1, dens=1, visc=1.8,
             tau=self.system.time_step, ext_force_density=ext_force_density)
@@ -127,31 +130,22 @@ class VirtualSitesTracersCommon:
         system = self.system
 
         system.virtual_sites = VirtualSitesInertialessTracers()
-        system.part.clear()
 
         # Establish steady state flow field
-        system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=True)
+        p = system.part.add(pos=(0, 5.5, 5.5), virtual=True)
         system.integrator.run(400)
 
-        system.part[0].pos = (0, 5.5, 5.5)
+        p.pos = (0, 5.5, 5.5)
         system.time = 0
 
         # Perform integration
         for _ in range(2):
             system.integrator.run(100)
             # compute expected position
-            X = self.lbf.get_interpolated_velocity(
-                system.part[0].pos)[0] * system.time
-            self.assertAlmostEqual(
-                system.part[0].pos[0] / X - 1, 0, delta=0.001)
+            dist = self.lbf.get_interpolated_velocity(p.pos)[0] * system.time
+            self.assertAlmostEqual(p.pos[0] / dist, 1, delta=0.001)
 
-    def compute_angle(self):
-        system = self.system
-        pos0 = system.part[0].pos
-        pos1 = system.part[1].pos
-        pos2 = system.part[2].pos
-        pos3 = system.part[3].pos
-
+    def compute_dihedral_angle(self, pos0, pos1, pos2, pos3):
         # first normal vector
         n1 = np.cross((pos1 - pos0), (pos2 - pos0))
         n2 = np.cross((pos2 - pos0), (pos3 - pos0))
@@ -171,64 +165,58 @@ class VirtualSitesTracersCommon:
 
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
-        system.part.clear()
-        system.actors.clear()
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(kT=0, gamma=10, seed=1)
 
         # Add four particles
-        system.part.add(id=0, pos=[5, 5, 5])
-        system.part.add(id=1, pos=[5, 5, 6])
-        system.part.add(id=2, pos=[5, 6, 6])
-        system.part.add(id=3, pos=[5, 6, 5])
+        p0 = system.part.add(pos=[5, 5, 5])
+        p1 = system.part.add(pos=[5, 5, 6])
+        p2 = system.part.add(pos=[5, 6, 6])
+        p3 = system.part.add(pos=[5, 6, 5])
 
         # Add first triel, weak modulus
         tri1 = espressomd.interactions.IBM_Triel(
-            ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist=2.4)
+            ind1=p0.id, ind2=p1.id, ind3=p2.id, elasticLaw="Skalak", k1=0.1, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri1)
-        system.part[0].add_bond((tri1, 1, 2))
+        p0.add_bond((tri1, p1, p2))
 
         # Add second triel, strong modulus
         tri2 = espressomd.interactions.IBM_Triel(
-            ind1=0, ind2=2, ind3=3, elasticLaw="Skalak", k1=10, k2=0, maxDist=2.4)
+            ind1=p0.id, ind2=p2.id, ind3=p3.id, elasticLaw="Skalak", k1=10, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri2)
-        system.part[0].add_bond((tri2, 2, 3))
+        p0.add_bond((tri2, p2, p3))
 
         # Add bending
         tribend = espressomd.interactions.IBM_Tribend(
-            ind1=0, ind2=1, ind3=2, ind4=3, kb=1, refShape="Initial")
+            ind1=p0.id, ind2=p1.id, ind3=p2.id, ind4=p3.id, kb=1, refShape="Initial")
         system.bonded_inter.add(tribend)
-        system.part[0].add_bond((tribend, 1, 2, 3))
+        p0.add_bond((tribend, p1, p2, p3))
 
         # twist
         system.part[:].pos = system.part[:].pos + np.random.random((4, 3))
 
         # Perform integration
         system.integrator.run(200)
-        angle = self.compute_angle()
+        angle = self.compute_dihedral_angle(p0.pos, p1.pos, p2.pos, p3.pos)
         self.assertLess(angle, 1.5E-3)
 
     def test_triel(self):
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
-        system.part.clear()
-        system.actors.clear()
-        system.thermostat.turn_off()
         system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
 
         # Add particles: 0-2 are not bonded, 3-5 are bonded
-        non_bound = system.part.add(
-            id=[0, 1, 2], pos=[[5, 5, 5], [5, 5, 6], [5, 6, 6]])
+        non_bound = system.part.add(pos=[[5, 5, 5], [5, 5, 6], [5, 6, 6]])
 
-        system.part.add(id=3, pos=[2, 5, 5])
-        system.part.add(id=4, pos=[2, 5, 6])
-        system.part.add(id=5, pos=[2, 6, 6])
+        p3 = system.part.add(pos=[2, 5, 5])
+        p4 = system.part.add(pos=[2, 5, 6])
+        p5 = system.part.add(pos=[2, 6, 6])
 
         # Add triel for 3-5
         tri = espressomd.interactions.IBM_Triel(
-            ind1=3, ind2=4, ind3=5, elasticLaw="Skalak", k1=15, k2=0, maxDist=2.4)
+            ind1=p3.id, ind2=p4.id, ind3=p5.id, elasticLaw="Skalak", k1=15,
+            k2=0, maxDist=2.4)
         system.bonded_inter.add(tri)
-        system.part[3].add_bond((tri, 4, 5))
+        p3.add_bond((tri, p4, p5))
 
         system.part[:].pos = system.part[:].pos + np.array((
             (0, 0, 0), (1, -.2, .3), (1, 1, 1),
@@ -237,8 +225,8 @@ class VirtualSitesTracersCommon:
         distorted_pos = np.copy(non_bound.pos)
 
         system.integrator.run(110)
-        dist1bound = system.distance(system.part[3], system.part[4])
-        dist2bound = system.distance(system.part[3], system.part[5])
+        dist1bound = system.distance(p3, p4)
+        dist2bound = system.distance(p3, p5)
 
         # check bonded particles. Distance should restore to initial config
         self.assertAlmostEqual(dist1bound, 1, delta=0.02)
