@@ -39,8 +39,8 @@ class sfTest(ut.TestCase):
             self.s.part.add(type=self.part_ty, pos=(i, j, k))
 
     def peaks(self):
-        a, b, c = [0, 2*np.pi], [0, np.pi], [0, np.pi/2]
-        self.diags = [np.sqrt(a**2+b**2+c**2)
+        a, b, c = [0, 2 * np.pi], [0, np.pi], [0, np.pi / 2]
+        self.diags = [np.sqrt(a**2 + b**2 + c**2)
                       for (a, b, c) in product(a, b, c)]
         self.diags.remove(0)
 
@@ -56,7 +56,7 @@ class sfTest(ut.TestCase):
         self.peaks()
         self.scatter_lattice()
         self.assertTrue([np.any(np.isclose(element, self.sf_data, rtol=1e-02))
-                        for element in self.diags])
+                         for element in self.diags])
 
 
 if __name__ == "__main__":
