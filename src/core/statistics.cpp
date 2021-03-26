@@ -267,9 +267,7 @@ std::vector<double> calc_structurefactor(PartCfg &partCfg,
                                          std::vector<int> const &p_types,
                                          int order) {
   auto const order2 = order * order;
-  std::vector<double> ff;
-  ff.resize(2 * order2);
-  ff[2 * order2] = 0;
+  std::vector<double> ff(2 * order2 + 1);
   auto const twoPI_L = 2 * Utils::pi() / box_geo.length()[0];
 
   if (order < 1) {
