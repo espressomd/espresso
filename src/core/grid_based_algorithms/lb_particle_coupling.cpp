@@ -228,7 +228,7 @@ Utils::Vector3d f_random(double noise_amplitude, int part_id,
                                                      part_id);
   }
   return {};
-};
+}
 
 void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude) {
 
