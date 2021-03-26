@@ -113,41 +113,43 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
   auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
   lb_lbinterpolation_add_force_density(pos, delta_j);
 }
+/** @brief Calculate particle drift velocity offset due to ENGINE and
+ * ELECTRO?H??YDRODYNAMICS */
+Utils::Vector3d drift_vel_offset(const Particle &p) {
+  Utils::Vector3d vel_offset{};
+#ifdef ENGINE
+  if (p.p.swim.swimming) {
+    vel_offset += p.p.swim.v_swim * p.r.calc_director();
+  }
+#endif
 
-/** Coupling of a single particle to viscous fluid with Stokesian friction.
+#ifdef LB_ELECTROHYDRODYNAMICS
+  vel_offset += p.p.mu_E;
+#endif
+  return vel_offset;
+}
+
+/** calculate drag force on a single particle
  *
  *  Section II.C. @cite ahlrichs99a
  *
  *  @param[in] p             The coupled particle.
- *  @param[in]     f_random  Additional force to be included.
+ *  @param vel_offset        Velocity offset to be added to interpolated LB
+ * velocity before calculating the force
  *
- *  @return The viscous coupling force plus f_random.
+ *  @return The viscous coupling force
  */
-Utils::Vector3d lb_viscous_coupling(Particle const &p,
-                                    Utils::Vector3d const &f_random) {
+Utils::Vector3d lb_drag_force(Particle const &p,
+                              const Utils::Vector3d &vel_offset) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const interpolated_u =
       lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
       lb_lbfluid_get_lattice_speed();
 
-  Utils::Vector3d v_drift = interpolated_u;
-#ifdef ENGINE
-  if (p.p.swim.swimming) {
-    v_drift += p.p.swim.v_swim * p.r.calc_director();
-  }
-#endif
-
-#ifdef LB_ELECTROHYDRODYNAMICS
-  v_drift += p.p.mu_E;
-#endif
-
+  Utils::Vector3d v_drift = interpolated_u + vel_offset;
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
-  auto const force = -lb_lbcoupling_get_gamma() * (p.m.v - v_drift) + f_random;
-
-  add_md_force(p.r.p, force);
-
-  return force;
+  return -lb_lbcoupling_get_gamma() * (p.m.v - v_drift);
 }
 
 using Utils::Vector;
@@ -230,7 +232,8 @@ Utils::Vector3d f_random(double noise_amplitude, int part_id,
   return {};
 };
 
-void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude) {
+void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
+                     const OptionalCounter &rng_counter) {
 
   /* Particles within one agrid of the outermost lattice point
    * of the lb domain can contribute forces to the local lb due to
@@ -238,21 +241,19 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude) {
    * IS in the local domain, we also add the opposing
    * force to the particle. */
   if (in_local_halo(p.r.p)) {
-    auto const force = lb_viscous_coupling(
-        p,
-        noise_amplitude * f_random(noise_amplitude, p.identity(),
-                                   lb_particle_coupling.rng_counter_coupling));
+    auto const drag_force = lb_drag_force(p, drift_vel_offset(p));
+    auto const random_force =
+        noise_amplitude * f_random(noise_amplitude, p.identity(), rng_counter);
+    auto const coupling_force = drag_force + random_force;
+    add_md_force(p.r.p, coupling_force);
     if (in_local_domain(p.r.p, local_geo)) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
-      p.f.f += force;
+      p.f.f += coupling_force;
     }
   }
-
-#ifdef ENGINE
-  add_swimmer_force(p);
-#endif
 }
+
 void lb_lbcoupling_calc_particle_lattice_ia(
     bool couple_virtual, const ParticleRange &particles,
     const ParticleRange &more_particles) {
@@ -279,11 +280,19 @@ void lb_lbcoupling_calc_particle_lattice_ia(
 
         /* Couple particles ranges */
         for (auto &p : particles) {
-          couple_particle(p, couple_virtual, noise_amplitude);
+          couple_particle(p, couple_virtual, noise_amplitude,
+                          lb_particle_coupling.rng_counter_coupling);
+#ifdef ENGINE
+          add_swimmer_force(p);
+#endif
         }
 
         for (auto &p : more_particles) {
-          couple_particle(p, couple_virtual, noise_amplitude);
+          couple_particle(p, couple_virtual, noise_amplitude,
+                          lb_particle_coupling.rng_counter_coupling);
+#ifdef ENGINE
+          add_swimmer_force(p);
+#endif
         }
 
         break;
