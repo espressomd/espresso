@@ -26,8 +26,9 @@ from tests_common import abspath
 @utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class LennardJonesTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    pos, forces = np.loadtxt(
-        abspath('data/lj_system.dat'))[:, 1:].reshape((-1, 2, 3)).swapaxes(0, 1)
+    data = np.loadtxt(abspath('data/lj_system.dat'))
+    pos = data[:, 1:4]
+    forces = data[:, 4:7]
 
     def setUp(self):
         self.system.part.clear()
@@ -46,19 +47,10 @@ class LennardJonesTest(ut.TestCase):
         self.system.part.add(pos=self.pos)
 
     def check(self):
-        rms = 0.0
-        max_df = 0.0
-
-        for p, ref_force in zip(self.system.part, self.forces):
-            for j in range(3):
-                df2 = (ref_force[j] - p.f[j])**2
-                rms += df2
-                max_df = max(max_df, (df2)**0.5)
-
-        rms = rms**0.5
-
-        self.assertLess(rms, 1e-5)
-        self.assertLess(max_df, 1e-5)
+        f_diff = np.linalg.norm(self.system.part[:].f - self.forces, axis=1)
+        max_deviation = np.max(np.abs(self.system.part[:].f - self.forces))
+        self.assertLess(np.mean(f_diff), 1e-7)
+        self.assertLess(max_deviation, 1e-5)
 
     def test_dd(self):
         self.system.cell_system.set_domain_decomposition(

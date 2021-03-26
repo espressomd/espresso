@@ -30,12 +30,11 @@ class CoulombMixedPeriodicity(ut.TestCase):
     """Test mixed periodicity electrostatics"""
 
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    buf_node_grid = S.cell_system.node_grid
-    S.thermostat.turn_off()
-    forces = {}
+    data = np.genfromtxt(tests_common.abspath(
+        "data/coulomb_mixed_periodicity_system.data"))
+
     tolerance_force = 5E-4
     tolerance_energy = 1.8E-3
-    generate_data = False
 
     # Reference energy from MMM2D
     reference_energy = 216.640984711
@@ -45,18 +44,10 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.S.time_step = 0.01
         self.S.cell_system.skin = 0.
 
-        data = np.genfromtxt(tests_common.abspath(
-            "data/coulomb_mixed_periodicity_system.data"))
-
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f
-        for row in data:
-            pid = int(row[0])
-            pos = row[1:4]
-            q = row[4]
-            f = row[5:]
-            self.S.part.add(id=pid, pos=pos, q=q)
-            self.forces[pid] = f
+        self.S.part.add(pos=self.data[:, 1:4], q=self.data[:, 4])
+        self.forces = self.data[:, 5:8]
 
     def tearDown(self):
         self.S.part.clear()
@@ -66,10 +57,10 @@ class CoulombMixedPeriodicity(ut.TestCase):
         # Compare forces and energy now in the system to stored ones
 
         # Force
-        rms_force_diff = 0.
-        for p in self.S.part:
-            rms_force_diff += np.sum((p.f - self.forces[p.id])**2)
-        rms_force_diff = np.sqrt(rms_force_diff / len(self.S.part))
+        force_diff = np.linalg.norm(self.S.part[:].f - self.forces, axis=1)
+        self.assertLessEqual(
+            np.mean(force_diff), self.tolerance_force,
+            "Absolute force difference too large for method " + method_name)
 
         # Energy
         if energy:
@@ -77,9 +68,6 @@ class CoulombMixedPeriodicity(ut.TestCase):
                 self.S.analysis.energy()["total"],
                 self.reference_energy, delta=self.tolerance_energy,
                 msg="Absolute energy difference too large for " + method_name)
-        self.assertLessEqual(
-            rms_force_diff, self.tolerance_force,
-            "Absolute force difference too large for method " + method_name)
 
     # Tests for individual methods
 
