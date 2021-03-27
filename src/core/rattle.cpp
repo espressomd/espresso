@@ -32,15 +32,25 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/algorithm.hpp>
 
-void save_old_pos(const ParticleRange &particles,
-                  const ParticleRange &ghost_particles) {
+/**
+ * @brief copy current position
+ *
+ * @param particles particle range
+ * @param ghost_particles ghost particle range
+ */
+void save_old_position(const ParticleRange &particles,
+                       const ParticleRange &ghost_particles) {
   auto save_pos = [](Particle &p) { p.r.p_last_timestep = p.r.p; };
 
   boost::for_each(particles, save_pos);
   boost::for_each(ghost_particles, save_pos);
 }
 
-/** Initialize the velocity correction vectors.
+/**
+ * @brief reset correction vectors to zero
+ *
+ * @param particles particle range
+ * @param ghost_particles ghost particle range
  */
 static void init_correction_vector(const ParticleRange &particles,
                                    const ParticleRange &ghost_particles) {
@@ -51,15 +61,15 @@ static void init_correction_vector(const ParticleRange &particles,
 }
 
 /**
- * @brief Add the position correction to particles.
+ * @brief Calculate the positional correction for the particles.
  *
  * @param ia_params Parameters
  * @param p1 First particle.
  * @param p2 Second particle.
  * @return True if there was a correction.
  */
-static bool add_pos_corr_vec(RigidBond const &ia_params, Particle &p1,
-                             Particle &p2) {
+static bool calculate_positional_correction(RigidBond const &ia_params,
+                                            Particle &p1, Particle &p2) {
   auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
   auto const r_ij2 = r_ij.norm2();
 
@@ -87,7 +97,7 @@ static void compute_pos_corr_vec(int *repeat_, CellStructure &cs) {
         auto const &iaparams = bonded_ia_params[bond_id];
 
         if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
-          auto const corrected = add_pos_corr_vec(*bond, p1, *partners[0]);
+          auto const corrected = calculate_positional_correction(*bond, p1, *partners[0]);
           if (corrected)
             *repeat_ += 1;
         }
@@ -109,12 +119,7 @@ static void apply_positional_correction(const ParticleRange &particles) {
   });
 }
 
-/**
- * @brief Apply positional correction shake algorithm
- *
- * @param cs cell structure
- */
-void correct_pos_shake(CellStructure &cs) {
+void correct_position_shake(CellStructure &cs) {
   cells_update_ghosts(Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES);
 
   auto particles = cs.local_particles();
@@ -146,7 +151,7 @@ void correct_pos_shake(CellStructure &cs) {
 }
 
 /**
- * @brief Add the velocity correction to particles.
+ * @brief Calculate the velocity correction for the particles.
  *
  * The position correction is accumulated in the forces
  * of the particles so that it can be reduced over the ghosts.
@@ -156,8 +161,8 @@ void correct_pos_shake(CellStructure &cs) {
  * @param p2 Second particle.
  * @return True if there was a correction.
  */
-static bool add_vel_corr_vec(RigidBond const &ia_params, Particle &p1,
-                             Particle &p2) {
+static bool calculate_velocity_correction(RigidBond const &ia_params,
+                                          Particle &p1, Particle &p2) {
   auto const v_ij = p1.m.v - p2.m.v;
   auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
 
@@ -183,7 +188,7 @@ static void compute_vel_corr_vec(int *repeat_, CellStructure &cs) {
         auto const &iaparams = bonded_ia_params[bond_id];
 
         if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
-          auto const corrected = add_vel_corr_vec(*bond, p1, *partners[0]);
+          auto const corrected = calculate_velocity_correction(*bond, p1, *partners[0]);
           if (corrected)
             *repeat_ += 1;
         }
@@ -193,24 +198,16 @@ static void compute_vel_corr_vec(int *repeat_, CellStructure &cs) {
       });
 }
 
-
 /**
  * @brief Apply velocity corrections
  *
  * @param particles particle range
  */
 static void apply_velocity_correction(const ParticleRange &particles) {
-  boost::for_each(particles, [](Particle &p) {
-    p.m.v += p.rattle.correction;
-  });
+  boost::for_each(particles, [](Particle &p) { p.m.v += p.rattle.correction; });
 }
 
-/**
- * @brief Apply velocity correction shake algorithm
- *
- * @param cs cell structure
- */
-void correct_vel_shake(CellStructure &cs) {
+void correct_velocity_shake(CellStructure &cs) {
   cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
 
   auto particles = cs.local_particles();
