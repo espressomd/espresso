@@ -27,35 +27,24 @@
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
-#include "interactions.hpp"
-
-#include <utils/constants.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/algorithm.hpp>
 
-#include <cmath>
-
 void save_old_pos(const ParticleRange &particles,
                   const ParticleRange &ghost_particles) {
-  auto save_pos = [](Particle &p) {
-    p.r.p_last_timestep = p.r.p;
-  };
+  auto save_pos = [](Particle &p) { p.r.p_last_timestep = p.r.p; };
 
   boost::for_each(particles, save_pos);
   boost::for_each(ghost_particles, save_pos);
 }
 
-/** Initialize the velocity correction vectors. The correction vectors are
- *  stored in @ref ParticleForce::f "Particle::f::f".
+/** Initialize the velocity correction vectors.
  */
 static void init_correction_vector(const ParticleRange &particles,
                                    const ParticleRange &ghost_particles) {
-  auto reset_force = [](Particle &p) {
-    p.rattle.correction.fill(0);
-  };
+  auto reset_force = [](Particle &p) { p.rattle.correction.fill(0); };
 
   boost::for_each(particles, reset_force);
   boost::for_each(ghost_particles, reset_force);
@@ -74,7 +63,7 @@ static bool add_pos_corr_vec(RigidBond const &ia_params, Particle &p1,
   auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
   auto const r_ij2 = r_ij.norm2();
 
-  if (fabs(1.0 - r_ij2 / ia_params.d2) > ia_params.p_tol) {
+  if (std::abs(1.0 - r_ij2 / ia_params.d2) > ia_params.p_tol) {
     auto const r_ij_t =
         get_mi_vector(p1.r.p_last_timestep, p2.r.p_last_timestep, box_geo);
     auto const r_ij_dot = r_ij_t * r_ij;
@@ -108,14 +97,23 @@ static void compute_pos_corr_vec(int *repeat_, CellStructure &cs) {
       });
 }
 
-/** Apply position corrections */
-static void app_pos_correction(const ParticleRange &particles) {
-  for (auto &p : particles) {
-      p.r.p += p.rattle.correction;
-      p.m.v += p.rattle.correction;
-  }
+/**
+ * @brief Apply positional corrections
+ *
+ * @param particles particle range
+ */
+static void apply_positional_correction(const ParticleRange &particles) {
+  boost::for_each(particles, [](Particle &p) {
+    p.r.p += p.rattle.correction;
+    p.m.v += p.rattle.correction;
+  });
 }
 
+/**
+ * @brief Apply positional correction shake algorithm
+ *
+ * @param cs cell structure
+ */
 void correct_pos_shake(CellStructure &cs) {
   cells_update_ghosts(Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES);
 
@@ -131,8 +129,7 @@ void correct_pos_shake(CellStructure &cs) {
     compute_pos_corr_vec(&repeat_, cs);
     cell_structure.ghosts_reduce_rattle_correction();
 
-    app_pos_correction(particles);
-    /* Ghost Positions Update */
+    apply_positional_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
 
     repeat = boost::mpi::all_reduce(comm_cart, (repeat_ > 0),
@@ -196,19 +193,26 @@ static void compute_vel_corr_vec(int *repeat_, CellStructure &cs) {
       });
 }
 
-/** Apply velocity corrections */
-static void apply_vel_corr(const ParticleRange &particles) {
-  for (auto &p : particles) {
+
+/**
+ * @brief Apply velocity corrections
+ *
+ * @param particles particle range
+ */
+static void apply_velocity_correction(const ParticleRange &particles) {
+  boost::for_each(particles, [](Particle &p) {
     p.m.v += p.rattle.correction;
-  }
+  });
 }
 
+/**
+ * @brief Apply velocity correction shake algorithm
+ *
+ * @param cs cell structure
+ */
 void correct_vel_shake(CellStructure &cs) {
   cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
 
-  /* transfer the current forces to r.p_last_timestep of the particle structure
-   * so that velocity corrections can be stored temporarily at the f.f member of
-   * the particle structure */
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
 
@@ -220,7 +224,7 @@ void correct_vel_shake(CellStructure &cs) {
     compute_vel_corr_vec(&repeat_, cs);
     cell_structure.ghosts_reduce_rattle_correction();
 
-    apply_vel_corr(particles);
+    apply_velocity_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_MOMENTUM);
 
     repeat = boost::mpi::all_reduce(comm_cart, (repeat_ > 0),
@@ -229,11 +233,8 @@ void correct_vel_shake(CellStructure &cs) {
   }
 
   if (cnt >= SHAKE_MAX_ITERATIONS) {
-    fprintf(stderr,
-            "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
-            "iterations !!\n",
-            this_node, cnt);
-    errexit();
+    runtimeErrorMsg() << "VEL RATTLE failed to converge after " << cnt
+                      << " iterations";
   }
 }
 
