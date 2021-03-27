@@ -136,19 +136,22 @@ void correct_position_shake(CellStructure &cs) {
   auto ghost_particles = cs.ghost_particles();
 
   int cnt = 0;
-  bool repeat = true;
 
-  while (repeat && cnt < SHAKE_MAX_ITERATIONS) {
+  while (cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(particles, ghost_particles);
     bool const repeat_ =
         compute_correction_vector(cs, calculate_positional_correction);
+    bool const repeat =
+        boost::mpi::all_reduce(comm_cart, repeat_, std::logical_or<bool>());
+
+    // no correction is necessary, skip communication and bail out
+    if (!repeat)
+      break;
+
     cell_structure.ghosts_reduce_rattle_correction();
 
     apply_positional_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
-
-    repeat =
-        boost::mpi::all_reduce(comm_cart, repeat_, std::logical_or<bool>());
 
     cnt++;
   } // while(repeat) loop
@@ -206,19 +209,23 @@ void correct_velocity_shake(CellStructure &cs) {
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
 
-  bool repeat = true;
   int cnt = 0;
-  while (repeat && cnt < SHAKE_MAX_ITERATIONS) {
+  while (cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(particles, ghost_particles);
     bool const repeat_ =
         compute_correction_vector(cs, calculate_velocity_correction);
+    bool const repeat =
+        boost::mpi::all_reduce(comm_cart, repeat_, std::logical_or<bool>());
+
+    // no correction is necessary, skip communication and bail out
+    if (!repeat)
+      break;
+
     cell_structure.ghosts_reduce_rattle_correction();
 
     apply_velocity_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_MOMENTUM);
 
-    repeat =
-        boost::mpi::all_reduce(comm_cart, repeat_, std::logical_or<bool>());
     cnt++;
   }
 
