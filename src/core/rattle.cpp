@@ -135,9 +135,8 @@ void correct_position_shake(CellStructure &cs) {
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
 
-  int cnt = 0;
-
-  while (cnt < SHAKE_MAX_ITERATIONS) {
+  int cnt;
+  for (cnt = 0; cnt < SHAKE_MAX_ITERATIONS; ++cnt) {
     init_correction_vector(particles, ghost_particles);
     bool const repeat_ =
         compute_correction_vector(cs, calculate_positional_correction);
@@ -152,9 +151,7 @@ void correct_position_shake(CellStructure &cs) {
 
     apply_positional_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
-
-    cnt++;
-  } // while(repeat) loop
+  }
   if (cnt >= SHAKE_MAX_ITERATIONS) {
     runtimeErrorMsg() << "RATTLE failed to converge after " << cnt
                       << " iterations";
@@ -209,8 +206,8 @@ void correct_velocity_shake(CellStructure &cs) {
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
 
-  int cnt = 0;
-  while (cnt < SHAKE_MAX_ITERATIONS) {
+  int cnt;
+  for (cnt = 0; cnt < SHAKE_MAX_ITERATIONS; ++cnt) {
     init_correction_vector(particles, ghost_particles);
     bool const repeat_ =
         compute_correction_vector(cs, calculate_velocity_correction);
@@ -225,8 +222,6 @@ void correct_velocity_shake(CellStructure &cs) {
 
     apply_velocity_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_MOMENTUM);
-
-    cnt++;
   }
 
   if (cnt >= SHAKE_MAX_ITERATIONS) {
