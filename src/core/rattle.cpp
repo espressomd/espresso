@@ -90,21 +90,31 @@ static bool calculate_positional_correction(RigidBond const &ia_params,
   return false;
 }
 
-/** Compute position corrections */
-static void compute_pos_corr_vec(int *repeat_, CellStructure &cs) {
-  cs.bond_loop(
-      [repeat_](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
-        auto const &iaparams = bonded_ia_params[bond_id];
+/**
+ * @brief Compute the correction vectors using given kernel.
+ *
+ * @param cs cell structure
+ * @param kernel kernel function
+ * @return True if correction is necessary
+ */
+template <typename Kernel>
+static bool compute_correction_vector(CellStructure &cs, Kernel kernel) {
+  bool correction = false;
+  cs.bond_loop([&correction, &kernel](Particle &p1, int bond_id,
+                                      Utils::Span<Particle *> partners) {
+    auto const &iaparams = bonded_ia_params[bond_id];
 
-        if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
-          auto const corrected = calculate_positional_correction(*bond, p1, *partners[0]);
-          if (corrected)
-            *repeat_ += 1;
-        }
+    if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
+      auto const corrected = kernel(*bond, p1, *partners[0]);
+      if (corrected)
+        correction = true;
+    }
 
-        /* Rigid bonds cannot break */
-        return false;
-      });
+    /* Rigid bonds cannot break */
+    return false;
+  });
+
+  return correction;
 }
 
 /**
@@ -130,15 +140,15 @@ void correct_position_shake(CellStructure &cs) {
 
   while (repeat && cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(particles, ghost_particles);
-    int repeat_ = 0;
-    compute_pos_corr_vec(&repeat_, cs);
+    bool const repeat_ =
+        compute_correction_vector(cs, calculate_positional_correction);
     cell_structure.ghosts_reduce_rattle_correction();
 
     apply_positional_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
 
-    repeat = boost::mpi::all_reduce(comm_cart, (repeat_ > 0),
-                                    std::logical_or<bool>());
+    repeat =
+        boost::mpi::all_reduce(comm_cart, repeat_, std::logical_or<bool>());
 
     cnt++;
   } // while(repeat) loop
@@ -181,23 +191,6 @@ static bool calculate_velocity_correction(RigidBond const &ia_params,
   return false;
 }
 
-/** Compute velocity correction vectors */
-static void compute_vel_corr_vec(int *repeat_, CellStructure &cs) {
-  cs.bond_loop(
-      [repeat_](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
-        auto const &iaparams = bonded_ia_params[bond_id];
-
-        if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
-          auto const corrected = calculate_velocity_correction(*bond, p1, *partners[0]);
-          if (corrected)
-            *repeat_ += 1;
-        }
-
-        /* Rigid bonds cannot break */
-        return false;
-      });
-}
-
 /**
  * @brief Apply velocity corrections
  *
@@ -217,15 +210,15 @@ void correct_velocity_shake(CellStructure &cs) {
   int cnt = 0;
   while (repeat && cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(particles, ghost_particles);
-    int repeat_ = 0;
-    compute_vel_corr_vec(&repeat_, cs);
+    bool const repeat_ =
+        compute_correction_vector(cs, calculate_velocity_correction);
     cell_structure.ghosts_reduce_rattle_correction();
 
     apply_velocity_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_MOMENTUM);
 
-    repeat = boost::mpi::all_reduce(comm_cart, (repeat_ > 0),
-                                    std::logical_or<bool>());
+    repeat =
+        boost::mpi::all_reduce(comm_cart, repeat_, std::logical_or<bool>());
     cnt++;
   }
 
