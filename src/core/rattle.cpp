@@ -34,45 +34,35 @@
 #include <utils/constants.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/range/algorithm.hpp>
 
 #include <cmath>
 
 void save_old_pos(const ParticleRange &particles,
                   const ParticleRange &ghost_particles) {
   auto save_pos = [](Particle &p) {
-    for (int j = 0; j < 3; j++)
-      p.r.p_last_timestep[j] = p.r.p[j];
+    p.r.p_last_timestep = p.r.p;
   };
 
-  for (auto &p : particles)
-    save_pos(p);
-
-  for (auto &p : ghost_particles)
-    save_pos(p);
+  boost::for_each(particles, save_pos);
+  boost::for_each(ghost_particles, save_pos);
 }
 
 /** Initialize the velocity correction vectors. The correction vectors are
  *  stored in @ref ParticleForce::f "Particle::f::f".
  */
-static void init_correction_vector(const ParticleRange &local_particles,
+static void init_correction_vector(const ParticleRange &particles,
                                    const ParticleRange &ghost_particles) {
   auto reset_force = [](Particle &p) {
-    for (int j = 0; j < 3; j++)
-      p.f.f[j] = 0.0;
+    p.rattle.correction.fill(0);
   };
 
-  for (auto &p : local_particles)
-    reset_force(p);
-
-  for (auto &p : ghost_particles)
-    reset_force(p);
+  boost::for_each(particles, reset_force);
+  boost::for_each(ghost_particles, reset_force);
 }
 
 /**
  * @brief Add the position correction to particles.
- *
- * The position correction is accumulated in the forces
- * of the particles so that it can be reduced over the ghosts.
  *
  * @param ia_params Parameters
  * @param p1 First particle.
@@ -92,8 +82,8 @@ static bool add_pos_corr_vec(RigidBond const &ia_params, Particle &p1,
         0.50 * (ia_params.d2 - r_ij2) / r_ij_dot / (p1.p.mass + p2.p.mass);
 
     auto const pos_corr = G * r_ij_t;
-    p1.f.f += pos_corr * p2.p.mass;
-    p2.f.f -= pos_corr * p1.p.mass;
+    p1.rattle.correction += pos_corr * p2.p.mass;
+    p2.rattle.correction -= pos_corr * p1.p.mass;
 
     return true;
   }
@@ -121,10 +111,8 @@ static void compute_pos_corr_vec(int *repeat_, CellStructure &cs) {
 /** Apply position corrections */
 static void app_pos_correction(const ParticleRange &particles) {
   for (auto &p : particles) {
-    for (int j = 0; j < 3; j++) {
-      p.r.p[j] += p.f.f[j];
-      p.m.v[j] += p.f.f[j];
-    }
+      p.r.p += p.rattle.correction;
+      p.m.v += p.rattle.correction;
   }
 }
 
@@ -141,7 +129,7 @@ void correct_pos_shake(CellStructure &cs) {
     init_correction_vector(particles, ghost_particles);
     int repeat_ = 0;
     compute_pos_corr_vec(&repeat_, cs);
-    cell_structure.ghosts_reduce_forces();
+    cell_structure.ghosts_reduce_rattle_correction();
 
     app_pos_correction(particles);
     /* Ghost Positions Update */
@@ -158,27 +146,6 @@ void correct_pos_shake(CellStructure &cs) {
   }
 
   check_resort_particles();
-}
-
-/** Transfer the current forces from @ref ParticleForce::f "Particle::f::f"
- *  to @ref ParticlePosition::p_last_timestep "Particle::r::p_last_timestep" and
- *  reset the velocity correction vectors at @ref ParticleForce::f
- *  "Particle::f::f".
- */
-static void transfer_force_init_vel(const ParticleRange &particles,
-                                    const ParticleRange &ghost_particles) {
-  auto copy_reset = [](Particle &p) {
-    for (int j = 0; j < 3; j++) {
-      p.r.p_last_timestep[j] = p.f.f[j];
-      p.f.f[j] = 0.0;
-    }
-  };
-
-  for (auto &p : particles)
-    copy_reset(p);
-
-  for (auto &p : ghost_particles)
-    copy_reset(p);
 }
 
 /**
@@ -203,8 +170,8 @@ static bool add_vel_corr_vec(RigidBond const &ia_params, Particle &p1,
 
     auto const vel_corr = K * r_ij;
 
-    p1.f.f -= vel_corr * p2.p.mass;
-    p2.f.f += vel_corr * p1.p.mass;
+    p1.rattle.correction -= vel_corr * p2.p.mass;
+    p2.rattle.correction += vel_corr * p1.p.mass;
 
     return true;
   }
@@ -232,25 +199,8 @@ static void compute_vel_corr_vec(int *repeat_, CellStructure &cs) {
 /** Apply velocity corrections */
 static void apply_vel_corr(const ParticleRange &particles) {
   for (auto &p : particles) {
-    for (int j = 0; j < 3; j++) {
-      p.m.v[j] += p.f.f[j];
-    }
+    p.m.v += p.rattle.correction;
   }
-}
-
-/** Put back the forces from r.p_last_timestep to f.f */
-static void revert_force(const ParticleRange &particles,
-                         const ParticleRange &ghost_particles) {
-  auto revert = [](Particle &p) {
-    for (int j = 0; j < 3; j++)
-      p.f.f[j] = p.r.p_last_timestep[j];
-  };
-
-  for (auto &p : particles)
-    revert(p);
-
-  for (auto &p : ghost_particles)
-    revert(p);
 }
 
 void correct_vel_shake(CellStructure &cs) {
@@ -262,15 +212,14 @@ void correct_vel_shake(CellStructure &cs) {
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
 
-  transfer_force_init_vel(particles, ghost_particles);
-
   bool repeat = true;
   int cnt = 0;
   while (repeat && cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(particles, ghost_particles);
     int repeat_ = 0;
     compute_vel_corr_vec(&repeat_, cs);
-    cell_structure.ghosts_reduce_forces();
+    cell_structure.ghosts_reduce_rattle_correction();
+
     apply_vel_corr(particles);
     cs.ghosts_update(Cells::DATA_PART_MOMENTUM);
 
@@ -286,7 +235,6 @@ void correct_vel_shake(CellStructure &cs) {
             this_node, cnt);
     errexit();
   }
-  revert_force(particles, ghost_particles);
 }
 
 #endif
