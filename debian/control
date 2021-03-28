@@ -1,0 +1,36 @@
+Source: espresso
+Section: science
+Priority: optional
+Maintainer: Espresso Maintainers <espressomd-devel@nongnu.org>
+Build-Depends:
+ cmake,
+ cython3,
+ debhelper-compat (=13),
+ fftw3-dev,
+ libboost-all-dev,
+ libgsl-dev,
+ libhdf5-dev,
+ libhdf5-openmpi-dev,
+ openmpi-common,
+Rules-Requires-Root: no
+Standards-Version: 4.5.0
+Vcs-Browser: https://github.com/espressomd/espresso
+Vcs-Git: https://github.com/espressomd/espresso.git
+Homepage: https://espressomd.org
+
+Package: espresso
+Architecture: any
+Depends:
+ python3,
+ python3-h5py,
+ python3-numpy,
+ python3-opengl,
+ python3-scipy,
+ python3-vtk7,
+ ${misc:Depends},
+Description: Molecular dynamics simulation package
+ ESPResSo is a highly versatile software package for performing
+ and analyzing scientific Molecular Dynamics many-particle
+ simulations of coarse-grained atomistic or bead-spring models
+ as they are used in soft matter research in physics, chemistry
+ and molecular biology.
