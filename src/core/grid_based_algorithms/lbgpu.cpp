@@ -35,6 +35,8 @@
 #include "integrate.hpp"
 #include "lb-d3q19.hpp"
 
+#include <utils/math/sqr.hpp>
+
 #include <cmath>
 #include <vector>
 
@@ -161,38 +163,13 @@ void lb_reinit_parameters_gpu() {
 
     /* Eq. (51) @cite dunweg07a.*/
     /* Note that the modes are not normalized as in the paper here! */
-    lbpar_gpu.mu = lbpar_gpu.kT * lbpar_gpu.tau * lbpar_gpu.tau /
-                   D3Q19::c_sound_sq<float> /
-                   (lbpar_gpu.agrid * lbpar_gpu.agrid);
+    lbpar_gpu.mu = lbpar_gpu.kT * Utils::sqr(lbpar_gpu.tau) /
+                   D3Q19::c_sound_sq<float> / Utils::sqr(lbpar_gpu.agrid);
   }
 
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
-    lbpar_gpu.dim_x =
-        static_cast<unsigned int>(round(box_geo.length()[0] / lbpar_gpu.agrid));
-    lbpar_gpu.dim_y =
-        static_cast<unsigned int>(round(box_geo.length()[1] / lbpar_gpu.agrid));
-    lbpar_gpu.dim_z =
-        static_cast<unsigned int>(round(box_geo.length()[2] / lbpar_gpu.agrid));
-
-    unsigned int tmp[3];
-    tmp[0] = lbpar_gpu.dim_x;
-    tmp[1] = lbpar_gpu.dim_y;
-    tmp[2] = lbpar_gpu.dim_z;
-
-    /* sanity checks */
-    for (int dir = 0; dir < 3; dir++) {
-      /* check if box_l is compatible with lattice spacing */
-      if (fabs(box_geo.length()[dir] -
-               static_cast<float>(tmp[dir]) * lbpar_gpu.agrid) > 1.0e-3) {
-        runtimeErrorMsg() << "Lattice spacing lbpar_gpu.agrid= "
-                          << lbpar_gpu.agrid << " is incompatible with box_l["
-                          << dir << "]=" << box_geo.length()[dir];
-      }
-    }
-
-    lbpar_gpu.number_of_nodes =
-        lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+    lb_set_agrid_gpu(lbpar_gpu.agrid);
     lbpar_gpu.tau = static_cast<float>(time_step);
   }
 #endif
@@ -247,7 +224,7 @@ void lb_set_agrid_gpu(double agrid) {
   for (int dir = 0; dir < 3; dir++) {
     /* check if box_l is compatible with lattice spacing */
     auto const box_l = static_cast<float>(box_geo.length()[dir]);
-    auto const tolerance = 5.f * std::nextafter(box_l, box_l + 1.f) - box_l;
+    auto const tolerance = 5.f * (std::nextafter(box_l, box_l + 1.f) - box_l);
     auto const difference = fabs(box_l - static_cast<float>(tmp[dir] * agrid));
     if (difference > tolerance) {
       runtimeErrorMsg() << "Lattice spacing agrid= " << agrid
