@@ -96,22 +96,13 @@ struct LB_parameters_gpu {
 
   int external_force_density;
 
-  float ext_force_density[3];
+  Utils::Array<float, 3> ext_force_density;
 
   unsigned int reinit;
   // Thermal energy
   float kT;
 };
 
-/** Conserved quantities for the lattice Boltzmann system. */
-struct LB_rho_v_gpu {
-
-  /** density of the node */
-  float rho;
-  /** velocity of the node */
-
-  Utils::Array<float, 3> v;
-};
 /* this structure is almost duplicated for memory efficiency. When the stress
    tensor element are needed at every timestep, this features should be
    explicitly switched on */
@@ -125,13 +116,13 @@ struct LB_rho_v_pi_gpu {
 };
 
 struct LB_node_force_density_gpu {
-  lbForceFloat *force_density;
+  Utils::Array<float, 3> *force_density;
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual
   // particles' position. However, LBM wants to reset them immediately
   // after the LBM update. This variable keeps a backup
-  lbForceFloat *force_density_buf;
+  Utils::Array<float, 3> *force_density_buf;
 #endif
 };
 
@@ -156,7 +147,15 @@ extern OptionalCounter rng_counter_coupling_gpu;
 /** \name Exported Functions */
 /************************************************************/
 /**@{*/
+/** Conserved quantities for the lattice Boltzmann system. */
+struct LB_rho_v_gpu {
 
+  /** density of the node */
+  float rho;
+  /** velocity of the node */
+
+  Utils::Array<float, 3> v;
+};
 void lb_GPU_sanity_checks();
 
 void lb_get_device_values_pointer(LB_rho_v_gpu **pointer_address);
@@ -225,7 +224,7 @@ void linear_velocity_interpolation(double const *positions, double *velocities,
                                    int length);
 void quadratic_velocity_interpolation(double const *positions,
                                       double *velocities, int length);
-
+Utils::Array<float, 6> stress_tensor_GPU();
 uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();

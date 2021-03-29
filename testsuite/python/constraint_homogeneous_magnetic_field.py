@@ -70,13 +70,13 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
         self.assertEqual(self.S.analysis.energy()["dipolar"], 0.0)
 
         # check dipolar energy when adding dipole moments
-        self.S.part.add(id=0, pos=[0, 0, 0], dip=dip_mom0, rotation=(1, 1, 1))
+        p0 = self.S.part.add(pos=[0, 0, 0], dip=dip_mom0, rotation=(1, 1, 1))
         self.assertEqual(self.S.analysis.energy()["dipolar"],
                          -1.0 * np.dot(H_field, dip_mom0))
-        self.S.part.add(id=1, pos=[1, 1, 1], dip=dip_mom1, rotation=(1, 1, 1))
+        p1 = self.S.part.add(pos=[1, 1, 1], dip=dip_mom1, rotation=(1, 1, 1))
         self.assertEqual(self.S.analysis.energy()["dipolar"],
-                         (-1.0 * np.dot(H_field, dip_mom0)
-                          - 1.0 * np.dot(H_field, dip_mom1)))
+                         -(np.dot(H_field, dip_mom0) +
+                           np.dot(H_field, dip_mom1)))
 
         if espressomd.has_features(["ROTATION"]):
             # check that running the integrator leads to expected torques
@@ -85,11 +85,11 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
             torque_expected1 = np.cross(dip_mom1, H_field)
             for i in range(3):
                 self.assertAlmostEqual(
-                    self.S.part[0].torque_lab[i],
+                    p0.torque_lab[i],
                     torque_expected0[i],
                     places=10)
                 self.assertAlmostEqual(
-                    self.S.part[1].torque_lab[i],
+                    p1.torque_lab[i],
                     torque_expected1[i],
                     places=10)
 

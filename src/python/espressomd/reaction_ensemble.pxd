@@ -41,7 +41,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int check_reaction_ensemble() except +
         double get_acceptance_rate_configurational_moves()
         int delete_particle(int p_id)
-        void add_reaction(double gamma, vector[int] _reactant_types, vector[int] _reactant_coefficients, vector[int] _product_types, vector[int] _product_coefficients) except +
+        void add_reaction(double gamma, vector[int] reactant_types, vector[int] reactant_coefficients, vector[int] product_types, vector[int] product_coefficients) except +
         void delete_reaction(int reaction_id)
 
         vector[SingleReaction] reactions
@@ -70,12 +70,12 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         vector[double] maximum_energies_at_flat_index
         bool do_not_sample_reaction_partition_function
         void add_new_CV_degree_of_association(int associated_type, double CV_minimum, double CV_maximum, vector[int] corresponding_acid_types)
-        void add_new_CV_potential_energy(string filename, double delta_CV)
+        void add_new_CV_potential_energy(string filename, double delta_CV) except +
         int update_maximum_and_minimum_energies_at_current_state()
-        void write_out_preliminary_energy_run_results(string filename)
-        int write_wang_landau_checkpoint(string identifier)
-        int load_wang_landau_checkpoint(string identifier)
-        void write_wang_landau_results_to_file(string full_path_to_output_filename)
+        void write_out_preliminary_energy_run_results(string filename) except +
+        void write_wang_landau_checkpoint(string identifier) except +
+        void load_wang_landau_checkpoint(string identifier) except +
+        void write_wang_landau_results_to_file(string filename) except +
 
     cdef cppclass CConstantpHEnsemble "ReactionEnsemble::ConstantpHEnsemble"(CReactionAlgorithm):
         CConstantpHEnsemble(int seed)

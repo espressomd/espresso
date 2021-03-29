@@ -49,8 +49,8 @@ class ELC_vs_analytic(ut.TestCase):
         simulation box with dielectric contrast on the bottom of the box,
         which can be calculated analytically with image charges.
         """
-        self.system.part.add(id=1, pos=self.system.box_l / 2., q=self.q[0])
-        self.system.part.add(id=2, pos=self.system.box_l / 2. + [0, 0, self.distance],
+        self.system.part.add(pos=self.system.box_l / 2., q=self.q[0])
+        self.system.part.add(pos=self.system.box_l / 2. + [0, 0, self.distance],
                              q=-self.q[0])
 
         self.system.box_l = [self.box_l, self.box_l, self.box_l + self.elc_gap]
@@ -83,17 +83,18 @@ class ELC_vs_analytic(ut.TestCase):
             elc_results, analytic_results, rtol=0, atol=self.check_accuracy)
 
     def scan(self):
+        p1, p2 = self.system.part[:]
         result_array = np.empty((len(self.q), len(self.zPos), 2))
         for chargeIndex, charge in enumerate(self.q):
-            self.system.part[1].q = charge
-            self.system.part[2].q = -charge
+            p1.q = charge
+            p2.q = -charge
             for i, z in enumerate(self.zPos):
-                pos = self.system.part[1].pos
-                self.system.part[1].pos = [pos[0], pos[1], z]
-                self.system.part[2].pos = [pos[0], pos[1], z + self.distance]
+                pos = np.copy(p1.pos)
+                p1.pos = [pos[0], pos[1], z]
+                p2.pos = [pos[0], pos[1], z + self.distance]
 
                 self.system.integrator.run(0)
-                result_array[chargeIndex, i, 0] = self.system.part[1].f[2]
+                result_array[chargeIndex, i, 0] = p1.f[2]
                 result_array[chargeIndex, i, 1] = self.system.analysis.energy()[
                     "total"]
         return result_array

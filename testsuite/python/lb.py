@@ -125,8 +125,9 @@ class TestLB:
         """
         system = self.system
         self.n_col_part = 1000
-        system.part.add(pos=np.random.random(
-            (self.n_col_part, 3)) * self.system.box_l[0], v=np.random.random((self.n_col_part, 3)))
+        system.part.add(
+            pos=np.random.random((self.n_col_part, 3)) * self.system.box_l[0],
+            v=np.random.random((self.n_col_part, 3)))
         system.thermostat.turn_off()
 
         self.lbf = self.lb_class(
@@ -150,7 +151,7 @@ class TestLB:
         np.testing.assert_allclose(
             pressure_tensor,
             obs_pressure_tensor,
-            atol=1E-10)
+            atol=1E-7)
         np.testing.assert_allclose(
             np.copy(self.lbf.pressure_tensor),
             obs_pressure_tensor,
@@ -272,15 +273,14 @@ class TestLB:
             LB_fluid=self.lbf,
             seed=3,
             gamma=self.params['friction'])
-        self.system.part.add(
+        p = self.system.part.add(
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
         if self.interpolation:
-            v_fluid = self.lbf.get_interpolated_velocity(
-                self.system.part[0].pos)
+            v_fluid = self.lbf.get_interpolated_velocity(p.pos)
         self.system.integrator.run(1)
         np.testing.assert_allclose(
-            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
+            np.copy(p.f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ext_force_density(self):
@@ -310,7 +310,7 @@ class TestLB:
         where particles don't move.
 
         """
-        self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
+        p = self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
         ext_force_density = [2.3, 1.2, 0.1]
         lbf = self.lb_class(
             visc=self.params['viscosity'],
@@ -326,7 +326,7 @@ class TestLB:
             int(round(sim_time / self.system.time_step)))
         probe_pos = np.array(self.system.box_l) / 2.
         v1 = np.copy(lbf.get_interpolated_velocity(probe_pos))
-        f1 = np.copy(self.system.part[0].f)
+        f1 = np.copy(p.f)
         self.system.actors.clear()
         # get fresh LBfluid and change time steps
         lbf = self.lb_class(
@@ -352,7 +352,7 @@ class TestLB:
             int(round(sim_time / self.system.time_step)))
         self.system.time_step = self.params['time_step']
         v2 = np.copy(lbf.get_interpolated_velocity(probe_pos))
-        f2 = np.copy(self.system.part[0].f)
+        f2 = np.copy(p.f)
         np.testing.assert_allclose(v1, v2, rtol=1e-5)
         np.testing.assert_allclose(f1, f2, rtol=1e-5)
 

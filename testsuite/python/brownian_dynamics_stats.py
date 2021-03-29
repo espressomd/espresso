@@ -104,7 +104,7 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         dt = 0.5
 
         system = self.system
-        p = system.part.add(pos=(0, 0, 0), id=0)
+        p = system.part.add(pos=(0, 0, 0))
         system.time_step = dt
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
         system.cell_system.skin = 0.4
@@ -140,7 +140,7 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         system.cell_system.skin = 0.1
         kT = 3.2
         system.thermostat.set_brownian(kT=kT, gamma=2.1, seed=17)
-        system.part.add(id=(0, 1), pos=np.zeros((2, 3)))
+        system.part.add(pos=np.zeros((2, 3)))
         steps = int(1e4)
         error_delta = 0.04
         self.check_noise_correlation(kT, steps, error_delta)

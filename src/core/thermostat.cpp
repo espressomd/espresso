@@ -25,6 +25,7 @@
 #include "config.hpp"
 
 #include "bonded_interactions/thermalized_bond.hpp"
+#include "bonded_interactions/thermalized_bond_utils.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "integrate.hpp"

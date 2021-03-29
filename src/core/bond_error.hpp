@@ -37,11 +37,7 @@ struct BondResolutionError : std::exception {};
  * Exception indicating that a bond type
  * was unknown.
  */
-struct BondUnknownTypeError : std::exception {
-  explicit BondUnknownTypeError(int type) : type(type) {}
-
-  int type;
-};
+struct BondUnknownTypeError : std::exception {};
 
 /**
  * Exception indicating that a bond with an

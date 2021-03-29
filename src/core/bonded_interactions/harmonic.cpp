@@ -23,25 +23,9 @@
  *  Implementation of \ref harmonic.hpp
  */
 #include "harmonic.hpp"
-#include "bonded_interaction_data.hpp"
-#include "interactions.hpp"
 
-#include <utils/constants.hpp>
-
-int harmonic_set_params(int bond_type, double k, double r, double r_cut) {
-  if (bond_type < 0)
-    return ES_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.harmonic.k = k;
-  bonded_ia_params[bond_type].p.harmonic.r = r;
-  bonded_ia_params[bond_type].p.harmonic.r_cut = r_cut;
-  bonded_ia_params[bond_type].type = BONDED_IA_HARMONIC;
-  bonded_ia_params[bond_type].num = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
+HarmonicBond::HarmonicBond(double k, double r, double r_cut) {
+  this->k = k;
+  this->r = r;
+  this->r_cut = r_cut;
 }
