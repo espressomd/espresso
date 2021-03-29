@@ -1073,15 +1073,8 @@ lb_lbnode_get_pressure_tensor_neq(const Utils::Vector3i &ind) {
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    Utils::Vector6d tensor{};
-    // Copy observable data from gpu
-    host_values.resize(lbpar_gpu.number_of_nodes);
-    lb_get_values_GPU(host_values.data());
-    std::for_each(host_values.begin(), host_values.end(),
-                  [&tensor](LB_rho_v_pi_gpu &v) {
-                    for (int i = 0; i < 6; i++)
-                      tensor[i] += static_cast<double>(v.pi[i]);
-                  });
+    auto const stress_tmp = stress_tensor_GPU();
+    Utils::Vector6d tensor(stress_tmp.begin(), stress_tmp.end());
 
     // Normalize
     tensor /= static_cast<double>(lbpar_gpu.number_of_nodes);
