@@ -32,8 +32,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
     def setUp(self):
         self.system.time_step = 0.01
 
-        self.system.part.add(id=0, pos=(9.0, 2.0, 2.0), q=1)
-        self.system.part.add(id=1, pos=(11.0, 2.0, 2.0), q=-1)
+        self.system.part.add(pos=(9.0, 2.0, 2.0), q=1)
+        self.system.part.add(pos=(11.0, 2.0, 2.0), q=-1)
 
     def tearDown(self):
         self.system.part.clear()
@@ -41,8 +41,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
     def calc_dh_potential(self, r, df_params):
         kT = 1.0
-        q1 = self.system.part[0].q
-        q2 = self.system.part[1].q
+        q1, q2 = self.system.part[:].q
         u = np.zeros_like(r)
         # r<r_cut
         i = np.where(r < df_params['r_cut'])[0]
@@ -55,8 +54,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         kT = 1.0
 
-        q1 = self.system.part[0].q
-        q2 = self.system.part[1].q
+        q1, q2 = self.system.part[:].q
         epsilon1 = rf_params['epsilon1']
         epsilon2 = rf_params['epsilon2']
         kappa = rf_params['kappa']
@@ -146,12 +144,13 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         u_dh_core = np.zeros_like(r)
         f_dh_core = np.zeros_like(r)
-        # need to update forces
+
+        p1, p2 = self.system.part[:]
         for i, ri in enumerate(r):
-            self.system.part[1].pos = self.system.part[0].pos + [ri, 0, 0]
+            p2.pos = p1.pos + [ri, 0, 0]
             self.system.integrator.run(0)
             u_dh_core[i] = self.system.analysis.energy()['coulomb']
-            f_dh_core[i] = self.system.part[0].f[0]
+            f_dh_core[i] = p1.f[0]
 
         np.testing.assert_allclose(u_dh_core, u_dh, atol=1e-7)
         np.testing.assert_allclose(f_dh_core, -f_dh, atol=1e-2)
@@ -188,11 +187,12 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         u_rf_core = np.zeros_like(r)
         f_rf_core = np.zeros_like(r)
 
+        p1, p2 = self.system.part[:]
         for i, ri in enumerate(r):
-            self.system.part[1].pos = self.system.part[0].pos + [ri, 0, 0]
+            p2.pos = p1.pos + [ri, 0, 0]
             self.system.integrator.run(0)
             u_rf_core[i] = self.system.analysis.energy()['coulomb']
-            f_rf_core[i] = self.system.part[0].f[0]
+            f_rf_core[i] = p1.f[0]
 
         np.testing.assert_allclose(u_rf_core, u_rf, atol=1e-7)
         np.testing.assert_allclose(f_rf_core, -f_rf, atol=1e-2)

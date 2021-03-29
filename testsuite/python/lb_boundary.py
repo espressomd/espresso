@@ -20,7 +20,7 @@ import espressomd
 import espressomd.lb
 import espressomd.shapes
 import espressomd.lbboundaries
-from itertools import product
+import itertools
 
 
 class LBBoundariesBase:
@@ -79,17 +79,17 @@ class LBBoundariesBase:
     def check_boundary_flags(self, boundarynumbers):
         rng = range(20)
 
-        for i in product(range(0, 5), rng, rng):
+        for i in itertools.product(range(0, 5), rng, rng):
             self.assertEqual(self.lbf[i].boundary, boundarynumbers[0])
 
-        for i in product(range(5, 15), rng, rng):
+        for i in itertools.product(range(5, 15), rng, rng):
             self.assertEqual(self.lbf[i].boundary, boundarynumbers[1])
 
-        for i in product(range(15, 20), rng, rng):
+        for i in itertools.product(range(15, 20), rng, rng):
             self.assertEqual(self.lbf[i].boundary, boundarynumbers[2])
 
         self.system.lbboundaries.clear()
-        for i in product(rng, rng, rng):
+        for i in itertools.product(rng, rng, rng):
             self.assertEqual(self.lbf[i].boundary, 0)
 
     def test_boundary_flags(self):
