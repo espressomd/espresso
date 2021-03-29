@@ -246,13 +246,14 @@ void lb_set_agrid_gpu(double agrid) {
   /* sanity checks */
   for (int dir = 0; dir < 3; dir++) {
     /* check if box_l is compatible with lattice spacing */
-    if (fabs(box_geo.length()[dir] - static_cast<float>(tmp[dir]) * agrid) >
-        ROUND_ERROR_PREC) {
-      runtimeErrorMsg() << "Lattice spacing p_agrid= " << agrid
+    auto const box_l = static_cast<float>(box_geo.length()[dir]);
+    auto const tolerance = 5.f * std::nextafter(box_l, box_l + 1.f) - box_l;
+    auto const difference = fabs(box_l - static_cast<float>(tmp[dir] * agrid));
+    if (difference > tolerance) {
+      runtimeErrorMsg() << "Lattice spacing agrid= " << agrid
                         << " is incompatible with box_l[" << dir
                         << "]=" << box_geo.length()[dir]
-                        << ", factor=" << tmp[dir] << " err= "
-                        << fabs(box_geo.length()[dir] - tmp[dir] * agrid);
+                        << ", n_nodes=" << tmp[dir] << " err= " << difference;
     }
   }
   lbpar_gpu.number_of_nodes =
