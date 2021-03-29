@@ -44,6 +44,7 @@ unit_test(NAME grid_test SRC grid_test.cpp DEPENDS EspressoCore)
 unit_test(NAME BoxGeometry_test SRC BoxGeometry_test.cpp DEPENDS EspressoCore)
 unit_test(NAME LocalBox_test SRC LocalBox_test.cpp DEPENDS EspressoCore)
 unit_test(NAME thermostats_test SRC thermostats_test.cpp DEPENDS EspressoCore)
+unit_test(NAME lb_particle_coupling_test SRC lb_particle_coupling_test.cpp DEPENDS EspressoCore WalberlaBridge)
 unit_test(NAME random_test SRC random_test.cpp DEPENDS EspressoUtils Random123)
 unit_test(NAME BondList_test SRC BondList_test.cpp DEPENDS EspressoCore)
 unit_test(NAME reaction_ensemble_utils_test SRC

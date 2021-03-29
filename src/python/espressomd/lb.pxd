@@ -99,6 +99,7 @@ cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     void lb_lbcoupling_set_gamma(double) except +
     double lb_lbcoupling_get_gamma() except +
     bool lb_lbcoupling_is_seed_required() except +
+    void mpi_bcast_lb_particle_coupling()
 
 cdef extern from "grid_based_algorithms/lb_interpolation.hpp":
     cdef cppclass InterpolationOrder:

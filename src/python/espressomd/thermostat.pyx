@@ -33,6 +33,7 @@ from .lb cimport lb_lbcoupling_get_gamma
 from .lb cimport lb_lbcoupling_set_rng_state
 from .lb cimport lb_lbcoupling_get_rng_state
 from .lb cimport lb_lbcoupling_is_seed_required
+from .lb cimport mpi_bcast_lb_particle_coupling
 from .lb cimport lb_lbfluid_get_kT
 
 
@@ -286,6 +287,7 @@ cdef class Thermostat:
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         lb_lbcoupling_set_gamma(0.0)
+        mpi_bcast_lb_particle_coupling()
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
@@ -628,8 +630,10 @@ cdef class Thermostat:
                 if seed < 0:
                     raise ValueError("seed must be a positive integer")
                 lb_lbcoupling_set_rng_state(seed)
+                mpi_bcast_lb_particle_coupling()
         else:
             lb_lbcoupling_set_rng_state(0)
+            mpi_bcast_lb_particle_coupling()
 
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LB)
@@ -639,6 +643,7 @@ cdef class Thermostat:
         thermo_virtual = act_on_virtual
         mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
         lb_lbcoupling_set_gamma(gamma)
+        mpi_bcast_lb_particle_coupling()
         return True
 
     IF NPT:

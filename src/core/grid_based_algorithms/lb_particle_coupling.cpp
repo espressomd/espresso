@@ -71,7 +71,6 @@ void lb_lbcoupling_deactivate() {
 
 void lb_lbcoupling_set_gamma(double gamma) {
   lb_particle_coupling.gamma = gamma;
-  mpi_bcast_lb_particle_coupling();
 }
 
 double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
@@ -90,16 +89,16 @@ uint64_t lb_coupling_get_rng_state_cpu() {
 uint64_t lb_lbcoupling_get_rng_state() {
   if (lattice_switch == ActiveLB::WALBERLA) {
     return lb_coupling_get_rng_state_cpu();
-  }
-  return {};
+  } else
+    throw std::runtime_error("No LB active");
 }
 
 void lb_lbcoupling_set_rng_state(uint64_t counter) {
   if (lattice_switch == ActiveLB::WALBERLA) {
     lb_particle_coupling.rng_counter_coupling =
         Utils::Counter<uint64_t>(counter);
-    mpi_bcast_lb_particle_coupling();
-  }
+  } else
+    throw std::runtime_error("No lb active");
 }
 
 /**
@@ -115,7 +114,7 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
 }
 /** @brief Calculate particle drift velocity offset due to ENGINE and
  * ELECTRO?H??YDRODYNAMICS */
-Utils::Vector3d drift_vel_offset(const Particle &p) {
+Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p) {
   Utils::Vector3d vel_offset{};
 #ifdef ENGINE
   if (p.p.swim.swimming) {
@@ -223,9 +222,9 @@ void add_swimmer_force(Particle &p) {
 }
 #endif
 
-Utils::Vector3d f_random(double noise_amplitude, int part_id,
-                         const OptionalCounter &rng_counter) {
-  if (noise_amplitude > 0.0) {
+Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
+                                           const OptionalCounter &rng_counter) {
+  if (enabled) {
     return Random::noise_uniform<RNGSalt::PARTICLES>(rng_counter->value(), 0,
                                                      part_id);
   }
@@ -244,9 +243,11 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
    * IS in the local domain, we also add the opposing
    * force to the particle. */
   if (in_local_halo(p.r.p)) {
-    auto const drag_force = lb_drag_force(p, drift_vel_offset(p));
+    auto const drag_force =
+        lb_drag_force(p, lb_particle_coupling_drift_vel_offset(p));
     auto const random_force =
-        noise_amplitude * f_random(noise_amplitude, p.identity(), rng_counter);
+        noise_amplitude * lb_particle_coupling_noise(noise_amplitude > 0.0,
+                                                     p.identity(), rng_counter);
     auto const coupling_force = drag_force + random_force;
     add_md_force(p.r.p, coupling_force);
     if (in_local_domain(p.r.p, local_geo)) {

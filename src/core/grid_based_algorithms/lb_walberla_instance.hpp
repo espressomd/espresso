@@ -43,6 +43,11 @@ LBWalberlaBase *lb_walberla();
 /** @brief Access the Walberla parameters */
 LBWalberlaParams *lb_walberla_params();
 
+void init_lb_walberla(double viscosity, double density, double agrid,
+                      double tau, const Utils::Vector3i &grid_dimensions,
+                      const Utils::Vector3i &node_grid, double kT,
+                      unsigned int seed);
+
 /** @brief Create the LBWalberla instance and sets the lattice switch to
  *  WALBERLA
  *

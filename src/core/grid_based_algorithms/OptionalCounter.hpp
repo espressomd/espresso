@@ -22,6 +22,7 @@
 #include <utils/Counter.hpp>
 
 #include <cstdint>
+#include <stdexcept>
 #include <utility>
 
 /** Re-implementation of a boost::optional for a RNG counter.
@@ -51,9 +52,21 @@ public:
   bool is_initialized() noexcept { return m_initialized; }
   explicit operator bool() const noexcept { return m_initialized; }
   bool operator!() const noexcept { return !m_initialized; }
-  Utils::Counter<uint64_t> &operator*() { return m_counter; }
-  Utils::Counter<uint64_t> *operator->() { return &m_counter; }
-  const Utils::Counter<uint64_t> *operator->() const { return &m_counter; }
+  Utils::Counter<uint64_t> &operator*() {
+    if (!m_initialized)
+      throw std::runtime_error("Access to not-initialized counter");
+    return m_counter;
+  }
+  Utils::Counter<uint64_t> *operator->() {
+    if (!m_initialized)
+      throw std::runtime_error("Access to not-initialized counter");
+    return &m_counter;
+  }
+  const Utils::Counter<uint64_t> *operator->() const {
+    if (!m_initialized)
+      throw std::runtime_error("Access to not-initialized counter");
+    return &m_counter;
+  }
 };
 
 #endif

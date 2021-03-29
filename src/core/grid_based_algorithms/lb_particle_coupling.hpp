@@ -75,6 +75,13 @@ bool in_local_halo(Utils::Vector3d const &pos);
  */
 void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force);
 
+Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
+                                           const OptionalCounter &rng_counter);
+
+Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p);
+
+void mpi_bcast_lb_particle_coupling();
+
 struct LB_Particle_Coupling {
   OptionalCounter rng_counter_coupling;
   /*
