@@ -239,7 +239,7 @@ int integrate(int n_steps, int reuse_forces) {
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
-      save_old_pos(particles, cell_structure.ghost_particles());
+      save_old_position(particles, cell_structure.ghost_particles());
 #endif
 
     bool early_exit = integrator_step_1(particles);
@@ -253,7 +253,7 @@ int integrate(int n_steps, int reuse_forces) {
     /* Correct those particle positions that participate in a rigid/constrained
      * bond */
     if (n_rigidbonds) {
-      correct_pos_shake(cell_structure);
+      correct_position_shake(cell_structure);
     }
 #endif
 
@@ -278,7 +278,7 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
     if (n_rigidbonds) {
-      correct_vel_shake(cell_structure);
+      correct_velocity_shake(cell_structure);
     }
 #endif
 

@@ -187,3 +187,58 @@ BOOST_AUTO_TEST_CASE(force_constructors) {
     check_particle_force(out, pf);
   }
 }
+
+#ifdef BOND_CONSTRAINT
+
+void check_particle_rattle(ParticleRattle const &out,
+                           ParticleRattle const &ref) {
+  BOOST_TEST(out.correction == ref.correction,
+             boost::test_tools::per_element());
+}
+
+BOOST_AUTO_TEST_CASE(rattle_serialization) {
+  auto const expected_size =
+      Utils::MemcpyOArchive::packing_size<ParticleRattle>();
+
+  BOOST_CHECK_LE(expected_size, sizeof(ParticleRattle));
+
+  std::vector<char> buf(expected_size);
+
+  auto pr = ParticleRattle{{1, 2, 3}};
+
+  {
+    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+
+    oa << pr;
+
+    BOOST_CHECK_EQUAL(oa.bytes_written(), expected_size);
+  }
+
+  {
+    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    ParticleRattle out;
+
+    ia >> out;
+
+    BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
+    check_particle_rattle(out, pr);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(rattle_constructors) {
+  auto pr = ParticleRattle{{1, 2, 3}};
+
+  // check copy constructor
+  {
+    ParticleRattle out(pr);
+    check_particle_rattle(out, pr);
+  }
+
+  // check copy assignment operator
+  {
+    ParticleRattle out; // avoid copy elision
+    out = pr;
+    check_particle_rattle(out, pr);
+  }
+}
+#endif

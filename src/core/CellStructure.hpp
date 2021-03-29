@@ -66,7 +66,10 @@ enum DataPart : unsigned {
   DATA_PART_POSITION = 2u,   /**< Particle::r */
   DATA_PART_MOMENTUM = 8u,   /**< Particle::m */
   DATA_PART_FORCE = 16u,     /**< Particle::f */
-  DATA_PART_BONDS = 32u      /**< Particle::bonds */
+#ifdef BOND_CONSTRAINT
+  DATA_PART_RATTLE = 32u, /**< Particle::rattle */
+#endif
+  DATA_PART_BONDS = 64u /**< Particle::bonds */
 };
 } // namespace Cells
 
@@ -369,6 +372,12 @@ public:
    * @brief Add forces from ghost particles to real particles.
    */
   void ghosts_reduce_forces();
+#ifdef BOND_CONSTRAINT
+  /**
+   * @brief Add rattle corrections from ghost particles to real particles.
+   */
+  void ghosts_reduce_rattle_correction();
+#endif
 
 private:
   /**

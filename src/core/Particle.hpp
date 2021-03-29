@@ -268,7 +268,7 @@ struct ParticlePosition {
 
 #ifdef BOND_CONSTRAINT
   /** particle position at the previous time step (RATTLE algorithm) */
-  Utils::Vector3d p_old = {0., 0., 0.};
+  Utils::Vector3d p_last_timestep = {0., 0., 0.};
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
@@ -277,7 +277,7 @@ struct ParticlePosition {
     ar &quat;
 #endif
 #ifdef BOND_CONSTRAINT
-    ar &p_old;
+    ar &p_last_timestep;
 #endif
   }
 };
@@ -365,6 +365,26 @@ struct ParticleLocal {
   }
 };
 
+#ifdef BOND_CONSTRAINT
+struct ParticleRattle {
+  /** position/velocity correction */
+  Utils::Vector3d correction = {0, 0, 0};
+
+  friend ParticleRattle operator+(ParticleRattle const &lhs,
+                                  ParticleRattle const &rhs) {
+    return {lhs.correction + rhs.correction};
+  }
+
+  ParticleRattle &operator+=(ParticleRattle const &rhs) {
+    return *this = *this + rhs;
+  }
+
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar &correction;
+  }
+};
+#endif
+
 /** Struct holding all information for one particle. */
 struct Particle { // NOLINT(bugprone-exception-escape)
   int &identity() { return p.identity; }
@@ -391,6 +411,10 @@ struct Particle { // NOLINT(bugprone-exception-escape)
   ParticleForce f;
   ///
   ParticleLocal l;
+#ifdef BOND_CONSTRAINT
+  ///
+  ParticleRattle rattle;
+#endif
 
 private:
   BondList bl;
