@@ -56,6 +56,7 @@ class TestLB:
         self.system.actors.clear()
         self.system.part.clear()
         self.system.thermostat.turn_off()
+        self.system.box_l = 3 * [6.0]
 
     def test_properties(self):
         self.lbf = self.lb_class(
@@ -167,10 +168,8 @@ class TestLB:
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
 
-        self.assertEqual(self.lbf.shape,
-                         (int(self.system.box_l[0] / self.params["agrid"]),
-                          int(self.system.box_l[1] / self.params["agrid"]),
-                          int(self.system.box_l[2] / self.params["agrid"])))
+        shape_ref = np.copy(self.system.box_l) / self.params['agrid']
+        np.testing.assert_array_equal(self.lbf.shape, shape_ref.astype(int))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid
@@ -221,6 +220,12 @@ class TestLB:
             _ = self.lbf[0, out_of_bounds, 0].velocity
         with self.assertRaises(ValueError):
             _ = self.lbf[0, 0, out_of_bounds].velocity
+        # resize system
+        self.system.box_l = self.system.box_l + 1.
+        shape_ref = np.copy(self.system.box_l) / self.params['agrid']
+        np.testing.assert_array_equal(self.lbf.shape, shape_ref.astype(int))
+        np.testing.assert_array_equal(
+            np.copy(self.lbf[out_of_bounds, 0, 0].velocity), 0.)
 
     def test_incompatible_agrid(self):
         """
