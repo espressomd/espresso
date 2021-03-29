@@ -167,9 +167,10 @@ void lb_reinit_parameters_gpu() {
                    D3Q19::c_sound_sq<float> / Utils::sqr(lbpar_gpu.agrid);
   }
 
+  lb_set_agrid_gpu(lbpar_gpu.agrid);
+
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
-    lb_set_agrid_gpu(lbpar_gpu.agrid);
     lbpar_gpu.tau = static_cast<float>(time_step);
   }
 #endif
