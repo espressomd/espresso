@@ -3478,12 +3478,11 @@ int ek_print_vtk_lbforce_density(char *filename) {
     return 1;
   }
 
-  std::vector<lbForceFloat> lbforce_density(ek_parameters.number_of_nodes * 3);
+  std::vector<float> lbforce_density(ek_parameters.number_of_nodes * 3);
 
-  cuda_safe_mem(
-      cudaMemcpy(lbforce_density.data(), node_f.force_density_buf,
-                 ek_parameters.number_of_nodes * 3 * sizeof(lbForceFloat),
-                 cudaMemcpyDeviceToHost));
+  cuda_safe_mem(cudaMemcpy(lbforce_density.data(), node_f.force_density_buf,
+                           ek_parameters.number_of_nodes * 3 * sizeof(float),
+                           cudaMemcpyDeviceToHost));
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
