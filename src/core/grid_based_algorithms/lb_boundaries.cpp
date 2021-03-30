@@ -75,7 +75,7 @@ void ek_init_boundaries() {
 #if defined(CUDA) && defined(EK_BOUNDARIES)
   int number_of_boundnodes = 0;
 
-  std::vector<ekfloat> host_wallcharge_species_density;
+  std::vector<float> host_wallcharge_species_density;
   float node_wallcharge = 0.0f;
   int wallcharge_species = -1, charged_boundaries = 0;
   bool node_charged = false;
