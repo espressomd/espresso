@@ -1811,12 +1811,12 @@ ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
     lowernode[2] = static_cast<unsigned>(floorf(gridpos));
     cellpos[2] = gridpos - static_cast<float>(lowernode[2]);
 
-    lowernode[0] = (lowernode[0] + ek_lbparameters_gpu->dim_x) %
-                   ek_lbparameters_gpu->dim_x;
-    lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim_y) %
-                   ek_lbparameters_gpu->dim_y;
-    lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim_z) %
-                   ek_lbparameters_gpu->dim_z;
+    lowernode[0] = (lowernode[0] + ek_lbparameters_gpu->dim[0]) %
+                   ek_lbparameters_gpu->dim[0];
+    lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim[1]) %
+                   ek_lbparameters_gpu->dim[1];
+    lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim[2]) %
+                   ek_lbparameters_gpu->dim[2];
 
     atomicAdd(&((cufftReal *)ek_parameters_gpu
                     ->charge_potential)[rhoindex_cartesian2linear_padded(
@@ -1898,12 +1898,12 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
     lowernode[2] = static_cast<unsigned>(floorf(gridpos));
     cellpos[2] = gridpos - static_cast<float>(lowernode[2]);
 
-    lowernode[0] = (lowernode[0] + ek_lbparameters_gpu->dim_x) %
-                   ek_lbparameters_gpu->dim_x;
-    lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim_y) %
-                   ek_lbparameters_gpu->dim_y;
-    lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim_z) %
-                   ek_lbparameters_gpu->dim_z;
+    lowernode[0] = (lowernode[0] + ek_lbparameters_gpu->dim[0]) %
+                   ek_lbparameters_gpu->dim[0];
+    lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim[1]) %
+                   ek_lbparameters_gpu->dim[1];
+    lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim[2]) %
+                   ek_lbparameters_gpu->dim[2];
 
     float efield[3] = {0., 0., 0.};
     for (unsigned int dim = 0; dim < 3; ++dim) {
@@ -1921,7 +1921,7 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
               ->electric_field[3 * rhoindex_cartesian2linear(
                                        lowernode[0], lowernode[1],
                                        (lowernode[2] + 1) %
-                                           ek_lbparameters_gpu->dim_z) +
+                                           ek_lbparameters_gpu->dim[2]) +
                                dim] *
           (1 - cellpos[0]) * (1 - cellpos[1]) * cellpos[2];
 
@@ -1931,7 +1931,7 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
               ->electric_field[3 * rhoindex_cartesian2linear(
                                        lowernode[0],
                                        (lowernode[1] + 1) %
-                                           ek_lbparameters_gpu->dim_y,
+                                           ek_lbparameters_gpu->dim[1],
                                        lowernode[2]) +
                                dim] *
           (1 - cellpos[0]) * cellpos[1] * (1 - cellpos[2]);
@@ -1941,8 +1941,8 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
           ek_parameters_gpu->electric_field
               [3 * rhoindex_cartesian2linear(
                        lowernode[0],
-                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim_y,
-                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim_z) +
+                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim[1],
+                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim[2]) +
                dim] *
           (1 - cellpos[0]) * cellpos[1] * cellpos[2];
 
@@ -1951,7 +1951,7 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
           ek_parameters_gpu
               ->electric_field[3 * rhoindex_cartesian2linear(
                                        (lowernode[0] + 1) %
-                                           ek_lbparameters_gpu->dim_x,
+                                           ek_lbparameters_gpu->dim[0],
                                        lowernode[1], lowernode[2]) +
                                dim] *
           cellpos[0] * (1 - cellpos[1]) * (1 - cellpos[2]);
@@ -1960,9 +1960,9 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
       efield[dim] +=
           ek_parameters_gpu->electric_field
               [3 * rhoindex_cartesian2linear(
-                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
+                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim[0],
                        lowernode[1],
-                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim_z) +
+                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim[2]) +
                dim] *
           cellpos[0] * (1 - cellpos[1]) * cellpos[2];
 
@@ -1970,8 +1970,8 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
       efield[dim] +=
           ek_parameters_gpu->electric_field
               [3 * rhoindex_cartesian2linear(
-                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
-                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim_y,
+                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim[0],
+                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim[1],
                        lowernode[2]) +
                dim] *
           cellpos[0] * cellpos[1] * (1 - cellpos[2]);
@@ -1980,9 +1980,9 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
       efield[dim] +=
           ek_parameters_gpu->electric_field
               [3 * rhoindex_cartesian2linear(
-                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
-                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim_y,
-                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim_z) +
+                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim[0],
+                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim[1],
+                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim[2]) +
                dim] *
           cellpos[0] * cellpos[1] * cellpos[2];
     }
@@ -2279,10 +2279,10 @@ int ek_init() {
       lbpar_gpu.ext_force_density[2] = 0;
     }
 
-    ek_parameters.dim_x = lbpar_gpu.dim_x;
+    ek_parameters.dim_x = lbpar_gpu.dim[0];
     ek_parameters.dim_x_padded = (ek_parameters.dim_x / 2 + 1) * 2;
-    ek_parameters.dim_y = lbpar_gpu.dim_y;
-    ek_parameters.dim_z = lbpar_gpu.dim_z;
+    ek_parameters.dim_y = lbpar_gpu.dim[1];
+    ek_parameters.dim_z = lbpar_gpu.dim[2];
     ek_parameters.time_step = lbpar_gpu.time_step;
     ek_parameters.number_of_nodes =
         ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
@@ -2467,7 +2467,7 @@ SPACING %f %f %f\n\
 \nPOINT_DATA %u\n\
 SCALARS velocity float 3\n\
 LOOKUP_TABLE default\n",
-          lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
+          lbpar_gpu.dim[0], lbpar_gpu.dim[1], lbpar_gpu.dim[2],
           lbpar_gpu.agrid * 0.5f, lbpar_gpu.agrid * 0.5f,
           lbpar_gpu.agrid * 0.5f, lbpar_gpu.agrid, lbpar_gpu.agrid,
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
@@ -2524,7 +2524,7 @@ SPACING %f %f %f\n\
 POINT_DATA %u\n\
 SCALARS density_lb float 1\n\
 LOOKUP_TABLE default\n",
-          lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
+          lbpar_gpu.dim[0], lbpar_gpu.dim[1], lbpar_gpu.dim[2],
           lbpar_gpu.agrid * 0.5f, lbpar_gpu.agrid * 0.5f,
           lbpar_gpu.agrid * 0.5f, lbpar_gpu.agrid, lbpar_gpu.agrid,
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
@@ -3653,9 +3653,9 @@ void ek_print_lbpar() {
   printf("    float tau = %f;\n", lbpar_gpu.tau);
   printf("    float time_step = %f;\n", lbpar_gpu.time_step);
   printf("    float bulk_viscosity = %f;\n", lbpar_gpu.bulk_viscosity);
-  printf("    unsigned int dim_x = %d;\n", lbpar_gpu.dim_x);
-  printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim_y);
-  printf("    unsigned int dim_z = %d;\n", lbpar_gpu.dim_z);
+  printf("    unsigned int dim_x = %d;\n", lbpar_gpu.dim[0]);
+  printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim[1]);
+  printf("    unsigned int dim_z = %d;\n", lbpar_gpu.dim[2]);
   printf("    unsigned int number_of_nodes = %d;\n", lbpar_gpu.number_of_nodes);
   printf("    int calc_val = %d;\n", lbpar_gpu.calc_val);
   printf("    int external_force_density = %d;\n",
