@@ -45,12 +45,11 @@ extern Debye_hueckel_params dh_params;
 
 int dh_set_params(double kappa, double r_cut);
 
-/** Computes the Debye-Hueckel pair force and adds this
- *  force to the particle forces.
- *  @param q1q2      Product of the charges on p1 and p2.
- *  @param d         Vector pointing from p1 to p2.
- *  @param dist      Distance between p1 and p2.
- *  @param force     returns the force on particle 1.
+/** Compute the Debye-Hueckel pair force.
+ *  @param[in]  q1q2      Product of the charges on p1 and p2.
+ *  @param[in]  d         Vector pointing from p1 to p2.
+ *  @param[in]  dist      Distance between p1 and p2.
+ *  @param[out] force     Calculated force on p1.
  */
 inline void add_dh_coulomb_pair_force(double const q1q2,
                                       Utils::Vector3d const &d,
@@ -68,6 +67,10 @@ inline void add_dh_coulomb_pair_force(double const q1q2,
   }
 }
 
+/** Compute the Debye-Hueckel pair energy.
+ *  @param q1q2      Product of the charges on p1 and p2.
+ *  @param dist      Distance between p1 and p2.
+ */
 inline double dh_coulomb_pair_energy(double const q1q2, double const dist) {
   if (dist < dh_params.r_cut) {
     if (dh_params.kappa > 0.0)
