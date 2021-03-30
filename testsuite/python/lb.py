@@ -235,7 +235,7 @@ class TestLB:
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
-            agrid=self.params['agrid'] + 1e-5,
+            agrid=self.params['agrid'] + 1e-6,
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
         print("\nTesting LB error messages:", file=sys.stderr)

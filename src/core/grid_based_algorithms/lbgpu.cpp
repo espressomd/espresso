@@ -38,6 +38,7 @@
 #include <utils/math/sqr.hpp>
 
 #include <cmath>
+#include <limits>
 #include <vector>
 
 LB_parameters_gpu lbpar_gpu = {
@@ -222,10 +223,11 @@ void lb_set_agrid_gpu(double agrid) {
       Utils::Vector<unsigned int, 3>(lbpar_gpu.dim) * agrid);
   Utils::Vector<float, 3> box_lf(box_geo.length());
 
-  auto const difference_vec = box_lf - box_from_dim;
-  auto const commensurable =
-      std::all_of(difference_vec.begin(), difference_vec.end(), [](auto d) {
-        return std::abs(d) < 50 * std::numeric_limits<float>::epsilon();
+  auto const rel_difference_vec =
+      Utils::hadamard_division(box_lf - box_from_dim, box_lf);
+  auto const commensurable = std::all_of(
+      rel_difference_vec.begin(), rel_difference_vec.end(), [](auto d) {
+        return std::abs(d) < std::numeric_limits<float>::epsilon();
       });
   if (not commensurable) {
     runtimeErrorMsg() << "Lattice spacing agrid= " << agrid
