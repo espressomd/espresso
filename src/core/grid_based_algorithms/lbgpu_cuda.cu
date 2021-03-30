@@ -126,10 +126,10 @@ OptionalCounter rng_counter_fluid_gpu;
  *  @param[in]  index   Node index / thread index
  */
 template <typename T> __device__ uint3 index_to_xyz(T index) {
-  auto const x = index % para->dim_x;
-  index /= para->dim_x;
-  auto const y = index % para->dim_y;
-  index /= para->dim_y;
+  auto const x = index % para->dim[0];
+  index /= para->dim[0];
+  auto const y = index % para->dim[1];
+  index /= para->dim[1];
   auto const z = index;
   return {x, y, z};
 }
@@ -139,7 +139,7 @@ template <typename T> __device__ uint3 index_to_xyz(T index) {
  */
 template <typename T> __device__ T xyz_to_index(T x, T y, T z) {
   return x +
-         static_cast<T>(para->dim_x) * (y + static_cast<T>(para->dim_y) * z);
+         static_cast<T>(para->dim[0]) * (y + static_cast<T>(para->dim[1]) * z);
 }
 
 /** Calculate modes from the populations (space-transform).
@@ -503,127 +503,127 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b,
   unsigned int y = xyz.y;
   unsigned int z = xyz.z;
 
-  n_b.populations[x + para->dim_x * y + para->dim_x * para->dim_y * z][0] =
+  n_b.populations[x + para->dim[0] * y + para->dim[0] * para->dim[1] * z][0] =
       1.0f / 3.0f * (mode[0] - mode[4] + mode[16]);
 
-  n_b.populations[(x + 1) % para->dim_x + para->dim_x * y +
-                  para->dim_x * para->dim_y * z][1] =
+  n_b.populations[(x + 1) % para->dim[0] + para->dim[0] * y +
+                  para->dim[0] * para->dim[1] * z][1] =
       1.0f / 18.0f *
       (mode[0] + mode[1] + mode[5] + mode[6] - mode[17] - mode[18] -
        2.0f * (mode[10] + mode[16]));
 
-  n_b.populations[(para->dim_x + x - 1) % para->dim_x + para->dim_x * y +
-                  para->dim_x * para->dim_y * z][2] =
+  n_b.populations[(para->dim[0] + x - 1) % para->dim[0] + para->dim[0] * y +
+                  para->dim[0] * para->dim[1] * z][2] =
       1.0f / 18.0f *
       (mode[0] - mode[1] + mode[5] + mode[6] - mode[17] - mode[18] +
        2.0f * (mode[10] - mode[16]));
 
-  n_b.populations[x + para->dim_x * ((y + 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * z][3] =
+  n_b.populations[x + para->dim[0] * ((y + 1) % para->dim[1]) +
+                  para->dim[0] * para->dim[1] * z][3] =
       1.0f / 18.0f *
       (mode[0] + mode[2] - mode[5] + mode[6] + mode[17] - mode[18] -
        2.0f * (mode[11] + mode[16]));
 
-  n_b.populations[x + para->dim_x * ((para->dim_y + y - 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * z][4] =
+  n_b.populations[x + para->dim[0] * ((para->dim[1] + y - 1) % para->dim[1]) +
+                  para->dim[0] * para->dim[1] * z][4] =
       1.0f / 18.0f *
       (mode[0] - mode[2] - mode[5] + mode[6] + mode[17] - mode[18] +
        2.0f * (mode[11] - mode[16]));
 
-  n_b.populations[x + para->dim_x * y +
-                  para->dim_x * para->dim_y * ((z + 1) % para->dim_z)][5] =
+  n_b.populations[x + para->dim[0] * y +
+                  para->dim[0] * para->dim[1] * ((z + 1) % para->dim[2])][5] =
       1.0f / 18.0f *
       (mode[0] + mode[3] - 2.0f * (mode[6] + mode[12] + mode[16] - mode[18]));
 
-  n_b.populations[x + para->dim_x * y +
-                  para->dim_x * para->dim_y *
-                      ((para->dim_z + z - 1) % para->dim_z)][6] =
+  n_b.populations[x + para->dim[0] * y +
+                  para->dim[0] * para->dim[1] *
+                      ((para->dim[2] + z - 1) % para->dim[2])][6] =
       1.0f / 18.0f *
       (mode[0] - mode[3] - 2.0f * (mode[6] - mode[12] + mode[16] - mode[18]));
 
-  n_b.populations[(x + 1) % para->dim_x +
-                  para->dim_x * ((y + 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * z][7] =
+  n_b.populations[(x + 1) % para->dim[0] +
+                  para->dim[0] * ((y + 1) % para->dim[1]) +
+                  para->dim[0] * para->dim[1] * z][7] =
       1.0f / 36.0f *
       (mode[0] + mode[1] + mode[2] + mode[4] + 2.0f * mode[6] + mode[7] +
        mode[10] + mode[11] + mode[13] + mode[14] + mode[16] + 2.0f * mode[18]);
 
-  n_b.populations[(para->dim_x + x - 1) % para->dim_x +
-                  para->dim_x * ((para->dim_y + y - 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * z][8] =
+  n_b.populations[(para->dim[0] + x - 1) % para->dim[0] +
+                  para->dim[0] * ((para->dim[1] + y - 1) % para->dim[1]) +
+                  para->dim[0] * para->dim[1] * z][8] =
       1.0f / 36.0f *
       (mode[0] - mode[1] - mode[2] + mode[4] + 2.0f * mode[6] + mode[7] -
        mode[10] - mode[11] - mode[13] - mode[14] + mode[16] + 2.0f * mode[18]);
 
-  n_b.populations[(x + 1) % para->dim_x +
-                  para->dim_x * ((para->dim_y + y - 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * z][9] =
+  n_b.populations[(x + 1) % para->dim[0] +
+                  para->dim[0] * ((para->dim[1] + y - 1) % para->dim[1]) +
+                  para->dim[0] * para->dim[1] * z][9] =
       1.0f / 36.0f *
       (mode[0] + mode[1] - mode[2] + mode[4] + 2.0f * mode[6] - mode[7] +
        mode[10] - mode[11] + mode[13] - mode[14] + mode[16] + 2.0f * mode[18]);
 
-  n_b.populations[(para->dim_x + x - 1) % para->dim_x +
-                  para->dim_x * ((y + 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * z][10] =
+  n_b.populations[(para->dim[0] + x - 1) % para->dim[0] +
+                  para->dim[0] * ((y + 1) % para->dim[1]) +
+                  para->dim[0] * para->dim[1] * z][10] =
       1.0f / 36.0f *
       (mode[0] - mode[1] + mode[2] + mode[4] + 2.0f * mode[6] - mode[7] -
        mode[10] + mode[11] - mode[13] + mode[14] + mode[16] + 2.0f * mode[18]);
 
-  n_b.populations[(x + 1) % para->dim_x + para->dim_x * y +
-                  para->dim_x * para->dim_y * ((z + 1) % para->dim_z)][11] =
+  n_b.populations[(x + 1) % para->dim[0] + para->dim[0] * y +
+                  para->dim[0] * para->dim[1] * ((z + 1) % para->dim[2])][11] =
       1.0f / 36.0f *
       (mode[0] + mode[1] + mode[3] + mode[4] + mode[5] - mode[6] + mode[8] +
        mode[10] + mode[12] - mode[13] + mode[15] + mode[16] + mode[17] -
        mode[18]);
 
-  n_b.populations[(para->dim_x + x - 1) % para->dim_x + para->dim_x * y +
-                  para->dim_x * para->dim_y *
-                      ((para->dim_z + z - 1) % para->dim_z)][12] =
+  n_b.populations[(para->dim[0] + x - 1) % para->dim[0] + para->dim[0] * y +
+                  para->dim[0] * para->dim[1] *
+                      ((para->dim[2] + z - 1) % para->dim[2])][12] =
       1.0f / 36.0f *
       (mode[0] - mode[1] - mode[3] + mode[4] + mode[5] - mode[6] + mode[8] -
        mode[10] - mode[12] + mode[13] - mode[15] + mode[16] + mode[17] -
        mode[18]);
 
-  n_b.populations[(x + 1) % para->dim_x + para->dim_x * y +
-                  para->dim_x * para->dim_y *
-                      ((para->dim_z + z - 1) % para->dim_z)][13] =
+  n_b.populations[(x + 1) % para->dim[0] + para->dim[0] * y +
+                  para->dim[0] * para->dim[1] *
+                      ((para->dim[2] + z - 1) % para->dim[2])][13] =
       1.0f / 36.0f *
       (mode[0] + mode[1] - mode[3] + mode[4] + mode[5] - mode[6] - mode[8] +
        mode[10] - mode[12] - mode[13] - mode[15] + mode[16] + mode[17] -
        mode[18]);
 
-  n_b.populations[(para->dim_x + x - 1) % para->dim_x + para->dim_x * y +
-                  para->dim_x * para->dim_y * ((z + 1) % para->dim_z)][14] =
+  n_b.populations[(para->dim[0] + x - 1) % para->dim[0] + para->dim[0] * y +
+                  para->dim[0] * para->dim[1] * ((z + 1) % para->dim[2])][14] =
       1.0f / 36.0f *
       (mode[0] - mode[1] + mode[3] + mode[4] + mode[5] - mode[6] - mode[8] -
        mode[10] + mode[12] + mode[13] + mode[15] + mode[16] + mode[17] -
        mode[18]);
 
-  n_b.populations[x + para->dim_x * ((y + 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * ((z + 1) % para->dim_z)][15] =
+  n_b.populations[x + para->dim[0] * ((y + 1) % para->dim[1]) +
+                  para->dim[0] * para->dim[1] * ((z + 1) % para->dim[2])][15] =
       1.0f / 36.0f *
       (mode[0] + mode[2] + mode[3] + mode[4] - mode[5] - mode[6] + mode[9] +
        mode[11] + mode[12] - mode[14] - mode[15] + mode[16] - mode[17] -
        mode[18]);
 
-  n_b.populations[x + para->dim_x * ((para->dim_y + y - 1) % para->dim_y) +
-                  para->dim_x * para->dim_y *
-                      ((para->dim_z + z - 1) % para->dim_z)][16] =
+  n_b.populations[x + para->dim[0] * ((para->dim[1] + y - 1) % para->dim[1]) +
+                  para->dim[0] * para->dim[1] *
+                      ((para->dim[2] + z - 1) % para->dim[2])][16] =
       1.0f / 36.0f *
       (mode[0] - mode[2] - mode[3] + mode[4] - mode[5] - mode[6] + mode[9] -
        mode[11] - mode[12] + mode[14] + mode[15] + mode[16] - mode[17] -
        mode[18]);
 
-  n_b.populations[x + para->dim_x * ((y + 1) % para->dim_y) +
-                  para->dim_x * para->dim_y *
-                      ((para->dim_z + z - 1) % para->dim_z)][17] =
+  n_b.populations[x + para->dim[0] * ((y + 1) % para->dim[1]) +
+                  para->dim[0] * para->dim[1] *
+                      ((para->dim[2] + z - 1) % para->dim[2])][17] =
       1.0f / 36.0f *
       (mode[0] + mode[2] - mode[3] + mode[4] - mode[5] - mode[6] - mode[9] +
        mode[11] - mode[12] - mode[14] + mode[15] + mode[16] - mode[17] -
        mode[18]);
 
-  n_b.populations[x + para->dim_x * ((para->dim_y + y - 1) % para->dim_y) +
-                  para->dim_x * para->dim_y * ((z + 1) % para->dim_z)][18] =
+  n_b.populations[x + para->dim[0] * ((para->dim[1] + y - 1) % para->dim[1]) +
+                  para->dim[0] * para->dim[1] * ((z + 1) % para->dim[2])][18] =
       1.0f / 36.0f *
       (mode[0] - mode[2] + mode[3] + mode[4] - mode[5] - mode[6] - mode[9] -
        mode[11] + mode[12] + mode[14] - mode[15] + mode[16] - mode[17] -
@@ -673,11 +673,14 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
           (v[0] * static_cast<float>(c[0]) + v[1] * static_cast<float>(c[1]) + \
            v[2] * static_cast<float>(c[2]));                                   \
   pop_to_bounce_back = n_curr.populations[index][population];                  \
-  to_index_x = (x + static_cast<unsigned>(c[0]) + para->dim_x) % para->dim_x;  \
-  to_index_y = (y + static_cast<unsigned>(c[1]) + para->dim_y) % para->dim_y;  \
-  to_index_z = (z + static_cast<unsigned>(c[2]) + para->dim_z) % para->dim_z;  \
-  to_index = to_index_x + para->dim_x * to_index_y +                           \
-             para->dim_x * para->dim_y * to_index_z;                           \
+  to_index_x =                                                                 \
+      (x + static_cast<unsigned>(c[0]) + para->dim[0]) % para->dim[0];         \
+  to_index_y =                                                                 \
+      (y + static_cast<unsigned>(c[1]) + para->dim[1]) % para->dim[1];         \
+  to_index_z =                                                                 \
+      (z + static_cast<unsigned>(c[2]) + para->dim[2]) % para->dim[2];         \
+  to_index = to_index_x + para->dim[0] * to_index_y +                          \
+             para->dim[0] * para->dim[1] * to_index_z;                         \
   if (n_curr.boundary[to_index] == 0) {                                        \
     boundary_force[0] +=                                                       \
         (2.0f * pop_to_bounce_back + shift) * static_cast<float>(c[0]);        \
@@ -1149,11 +1152,11 @@ velocity_interpolation(LB_nodes_gpu n_a, float const *particle_position,
 #pragma unroll 1
       for (int k = 0; k < 3; ++k) {
         auto const x = fold_if_necessary(center_node_index[0] - 1 + i,
-                                         static_cast<int>(para->dim_x));
+                                         static_cast<int>(para->dim[0]));
         auto const y = fold_if_necessary(center_node_index[1] - 1 + j,
-                                         static_cast<int>(para->dim_y));
+                                         static_cast<int>(para->dim[1]));
         auto const z = fold_if_necessary(center_node_index[2] - 1 + k,
-                                         static_cast<int>(para->dim_z));
+                                         static_cast<int>(para->dim[2]));
         delta[cnt] = temp_delta[i].x * temp_delta[j].y * temp_delta[k].z;
         auto const index = static_cast<unsigned>(xyz_to_index(x, y, z));
         node_indices[cnt] = index;
@@ -1204,18 +1207,18 @@ velocity_interpolation(LB_nodes_gpu n_a, float const *particle_position,
 
   // modulo for negative numbers is strange at best, shift to make sure we are
   // positive
-  int const x = (left_node_index[0] + static_cast<int>(para->dim_x)) %
-                static_cast<int>(para->dim_x);
-  int const y = (left_node_index[1] + static_cast<int>(para->dim_y)) %
-                static_cast<int>(para->dim_y);
-  int const z = (left_node_index[2] + static_cast<int>(para->dim_z)) %
-                static_cast<int>(para->dim_z);
+  int const x = (left_node_index[0] + static_cast<int>(para->dim[0])) %
+                static_cast<int>(para->dim[0]);
+  int const y = (left_node_index[1] + static_cast<int>(para->dim[1])) %
+                static_cast<int>(para->dim[1]);
+  int const z = (left_node_index[2] + static_cast<int>(para->dim[2])) %
+                static_cast<int>(para->dim[2]);
   auto fold_if_necessary = [](int ind, int dim) {
     return ind >= dim ? ind % dim : ind;
   };
-  auto const xp1 = fold_if_necessary(x + 1, static_cast<int>(para->dim_x));
-  auto const yp1 = fold_if_necessary(y + 1, static_cast<int>(para->dim_y));
-  auto const zp1 = fold_if_necessary(z + 1, static_cast<int>(para->dim_z));
+  auto const xp1 = fold_if_necessary(x + 1, static_cast<int>(para->dim[0]));
+  auto const yp1 = fold_if_necessary(y + 1, static_cast<int>(para->dim[1]));
+  auto const zp1 = fold_if_necessary(z + 1, static_cast<int>(para->dim[2]));
   node_index[0] = static_cast<unsigned>(xyz_to_index(x, y, z));
   node_index[1] = static_cast<unsigned>(xyz_to_index(xp1, y, z));
   node_index[2] = static_cast<unsigned>(xyz_to_index(x, yp1, z));

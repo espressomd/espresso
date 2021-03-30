@@ -110,26 +110,28 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
 
     // modulo for negative numbers is strange at best, shift to make sure we are
     // positive
-    auto const x = static_cast<unsigned int>(my_left[0] + para.dim_x);
-    auto const y = static_cast<unsigned int>(my_left[1] + para.dim_y);
-    auto const z = static_cast<unsigned int>(my_left[2] + para.dim_z);
+    auto const x = static_cast<unsigned int>(my_left[0] + para.dim[0]);
+    auto const y = static_cast<unsigned int>(my_left[1] + para.dim[1]);
+    auto const z = static_cast<unsigned int>(my_left[2] + para.dim[2]);
 
-    node_index[0] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[1] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[2] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[3] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[4] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[5] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[6] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[7] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
+    node_index[0] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[1] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[2] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[3] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[4] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[5] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[6] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[7] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
 
     for (int i = 0; i < 8; ++i) {
       // Atomic add is essential because this runs in parallel!
@@ -192,26 +194,28 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
 
     // modulo for negative numbers is strange at best, shift to make sure we are
     // positive
-    auto const x = static_cast<unsigned int>(my_left[0] + para.dim_x);
-    auto const y = static_cast<unsigned int>(my_left[1] + para.dim_y);
-    auto const z = static_cast<unsigned int>(my_left[2] + para.dim_z);
+    auto const x = static_cast<unsigned int>(my_left[0] + para.dim[0]);
+    auto const y = static_cast<unsigned int>(my_left[1] + para.dim[1]);
+    auto const z = static_cast<unsigned int>(my_left[2] + para.dim[2]);
 
-    node_index[0] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[1] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[2] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[3] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[4] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[5] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[6] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[7] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
+    node_index[0] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[1] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[2] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[3] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[4] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[5] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[6] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[7] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
 
     for (int i = 0; i < 8; ++i) {
       double local_rho;

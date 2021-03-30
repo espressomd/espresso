@@ -83,9 +83,7 @@ struct LB_parameters_gpu {
   /** MD timestep */
   float time_step;
 
-  unsigned int dim_x;
-  unsigned int dim_y;
-  unsigned int dim_z;
+  Utils::Array<unsigned int, 3> dim;
 
   unsigned int number_of_nodes;
 #ifdef LB_BOUNDARIES_GPU
@@ -233,10 +231,8 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter);
 /** Calculate the node index from its coordinates */
 inline unsigned int calculate_node_index(LB_parameters_gpu const &lbpar,
                                          Utils::Vector3i const &coord) {
-  return static_cast<unsigned>(Utils::get_linear_index(
-      coord, Utils::Vector3i{static_cast<int>(lbpar.dim_x),
-                             static_cast<int>(lbpar.dim_y),
-                             static_cast<int>(lbpar.dim_z)}));
+  return static_cast<unsigned>(
+      Utils::get_linear_index(coord, Utils::Vector3i(lbpar_gpu.dim)));
 }
 /**@}*/
 

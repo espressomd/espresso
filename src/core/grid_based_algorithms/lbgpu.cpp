@@ -211,16 +211,14 @@ void lb_GPU_sanity_checks() {
 void lb_set_agrid_gpu(double agrid) {
   lbpar_gpu.agrid = static_cast<float>(agrid);
 
-  lbpar_gpu.dim_x =
+  lbpar_gpu.dim[0] =
       static_cast<unsigned int>(round(box_geo.length()[0] / agrid));
-  lbpar_gpu.dim_y =
+  lbpar_gpu.dim[1] =
       static_cast<unsigned int>(round(box_geo.length()[1] / agrid));
-  lbpar_gpu.dim_z =
+  lbpar_gpu.dim[2] =
       static_cast<unsigned int>(round(box_geo.length()[2] / agrid));
-  unsigned int tmp[3];
-  tmp[0] = lbpar_gpu.dim_x;
-  tmp[1] = lbpar_gpu.dim_y;
-  tmp[2] = lbpar_gpu.dim_z;
+  Utils::Vector<unsigned int, 3> tmp(lbpar_gpu.dim);
+
   /* sanity checks */
   for (int dir = 0; dir < 3; dir++) {
     /* check if box_l is compatible with lattice spacing */
@@ -235,7 +233,8 @@ void lb_set_agrid_gpu(double agrid) {
     }
   }
   lbpar_gpu.number_of_nodes =
-      lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+      std::accumulate(lbpar_gpu.dim.begin(), lbpar_gpu.dim.end(), 1u,
+                      std::multiplies<unsigned int>());
 }
 
 #endif /*  CUDA */
