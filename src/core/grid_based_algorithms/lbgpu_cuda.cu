@@ -108,11 +108,6 @@ static bool *device_gpu_lb_initialized = nullptr;
  */
 static bool intflag = true;
 LB_nodes_gpu *current_nodes = nullptr;
-/** @name defining size values for allocating global memory */
-/**@{*/
-static size_t size_of_rho_v;
-static size_t size_of_rho_v_pi;
-/**@}*/
 
 /** Parameters residing in constant memory */
 __device__ __constant__ LB_parameters_gpu para[1];
@@ -2080,15 +2075,14 @@ void lb_init_GPU(const LB_parameters_gpu &lbpar_gpu) {
     cudaMemset(var, 0, size);                                                  \
   }
 
-  size_of_rho_v = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_gpu);
-  size_of_rho_v_pi = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
-
   /* Allocate structs in device memory*/
-  free_realloc_and_clear(device_rho_v, size_of_rho_v);
+  free_realloc_and_clear(device_rho_v,
+                         lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_gpu));
 
   /* TODO: this is almost a copy of device_rho_v; think about eliminating
    * it, and maybe pi can be added to device_rho_v in this case */
-  free_realloc_and_clear(print_rho_v_pi, size_of_rho_v_pi);
+  free_realloc_and_clear(print_rho_v_pi,
+                         lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu));
   free_realloc_and_clear(nodes_a.populations,
                          lbpar_gpu.number_of_nodes *
                              sizeof(Utils::Array<float, 19>));
@@ -2096,10 +2090,12 @@ void lb_init_GPU(const LB_parameters_gpu &lbpar_gpu) {
                          lbpar_gpu.number_of_nodes *
                              sizeof(Utils::Array<float, 19>));
   free_realloc_and_clear(node_f.force_density,
-                         lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
+                         lbpar_gpu.number_of_nodes *
+                             sizeof(Utils::Array<float, 3>));
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
   free_realloc_and_clear(node_f.force_density_buf,
-                         lbpar_gpu.number_of_nodes * 3 * sizeof(lbForceFloat));
+                         lbpar_gpu.number_of_nodes *
+                             sizeof(Utils::Array<float, 3>));
 #endif
   free_realloc_and_clear(boundaries.index,
                          lbpar_gpu.number_of_nodes * sizeof(unsigned int));
@@ -2279,7 +2275,8 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values) {
 
   KERNELCALL(get_mesoscopic_values_in_LB_units, dim_grid, threads_per_block,
              *current_nodes, print_rho_v_pi, device_rho_v, node_f);
-  cuda_safe_mem(cudaMemcpy(host_values, print_rho_v_pi, size_of_rho_v_pi,
+  cuda_safe_mem(cudaMemcpy(host_values, print_rho_v_pi,
+                           lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu),
                            cudaMemcpyDeviceToHost));
 }
 

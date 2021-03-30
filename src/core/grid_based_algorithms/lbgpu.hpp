@@ -43,12 +43,6 @@
  * thus making the code more efficient. */
 #define LBQ 19
 
-#if defined(LB_DOUBLE_PREC) || defined(EK_DOUBLE_PREC)
-typedef double lbForceFloat;
-#else
-typedef float lbForceFloat;
-#endif
-
 /** Parameters for the lattice Boltzmann system for GPU. */
 struct LB_parameters_gpu {
   /** number density (LB units) */
