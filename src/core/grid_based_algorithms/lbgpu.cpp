@@ -217,20 +217,21 @@ void lb_set_agrid_gpu(double agrid) {
       static_cast<unsigned int>(round(box_geo.length()[1] / agrid));
   lbpar_gpu.dim[2] =
       static_cast<unsigned int>(round(box_geo.length()[2] / agrid));
-  Utils::Vector<unsigned int, 3> tmp(lbpar_gpu.dim);
 
-  /* sanity checks */
-  for (int dir = 0; dir < 3; dir++) {
-    /* check if box_l is compatible with lattice spacing */
-    auto const box_l = static_cast<float>(box_geo.length()[dir]);
-    auto const tolerance = 5.f * (std::nextafter(box_l, box_l + 1.f) - box_l);
-    auto const difference = fabs(box_l - static_cast<float>(tmp[dir] * agrid));
-    if (difference > tolerance) {
-      runtimeErrorMsg() << "Lattice spacing agrid= " << agrid
-                        << " is incompatible with box_l[" << dir
-                        << "]=" << box_geo.length()[dir]
-                        << ", n_nodes=" << tmp[dir] << " err= " << difference;
-    }
+  Utils::Vector<float, 3> box_from_dim(
+      Utils::Vector<unsigned int, 3>(lbpar_gpu.dim) * agrid);
+  Utils::Vector<float, 3> box_lf(box_geo.length());
+
+  auto const difference_vec = box_lf - box_from_dim;
+  auto const commensurable =
+      std::all_of(difference_vec.begin(), difference_vec.end(), [](auto d) {
+        return std::abs(d) < 50 * std::numeric_limits<float>::epsilon();
+      });
+  if (not commensurable) {
+    runtimeErrorMsg() << "Lattice spacing agrid= " << agrid
+                      << " is incompatible with one of the box dimensions: "
+                      << box_geo.length()[0] << " " << box_geo.length()[1]
+                      << " " << box_geo.length()[2];
   }
   lbpar_gpu.number_of_nodes =
       std::accumulate(lbpar_gpu.dim.begin(), lbpar_gpu.dim.end(), 1u,
