@@ -33,9 +33,6 @@
 
 #include <memory>
 
-// This needs to be done in the .cu file too
-typedef float dds_float;
-
 class DipolarBarnesHut : public Actor {
 public:
   DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq) {
