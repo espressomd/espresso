@@ -84,8 +84,12 @@ REGISTER_CALLBACK(destruct_lb_walberla)
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau, Utils::Vector3d box_size, double kT,
                           unsigned int seed) {
+  const Utils::Vector3i grid_dimensions{
+      static_cast<int>(std::round(box_size[0] / agrid)),
+      static_cast<int>(std::round(box_size[1] / agrid)),
+      static_cast<int>(std::round(box_size[2] / agrid))};
   for (int i : {0, 1, 2}) {
-    if (fabs(round(box_size[i] / agrid) * agrid - box_size[i]) / box_size[i] >
+    if (fabs(grid_dimensions[i] * agrid - box_size[i]) / box_size[i] >
         std::numeric_limits<double>::epsilon()) {
       throw std::runtime_error(
           "Box length not commensurate with agrid in direction " +
@@ -93,10 +97,6 @@ void mpi_init_lb_walberla(double viscosity, double density, double agrid,
           " agrid" + std::to_string(agrid));
     }
   }
-  const Utils::Vector3i grid_dimensions{
-      static_cast<int>(std::round(box_size[0] / agrid)),
-      static_cast<int>(std::round(box_size[1] / agrid)),
-      static_cast<int>(std::round(box_size[2] / agrid))};
   Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity, density,
                                          agrid, tau, grid_dimensions, node_grid,
                                          kT, seed);
