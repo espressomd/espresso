@@ -28,7 +28,7 @@ public:
                      1, seed));
   };
   void set_viscosity(double viscosity) override {
-    LatticeModel *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
+    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
     const real_t omega = 2 / (6 * real_c(viscosity) + 1);
     const real_t magic_number = real_c(3.) / real_c(16.);
     const real_t omega_2 =
@@ -40,7 +40,7 @@ public:
     on_lattice_model_change();
   };
   double get_viscosity() const override {
-    LatticeModel *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
+    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
     return (2 - lm->omega_shear_) / (6 * lm->omega_shear_);
   };
   LBWalberlaD3Q19FluctuatingMRT(double viscosity, double density,
@@ -55,7 +55,7 @@ public:
   };
   void integrate() override {
     m_time_loop->singleStep();
-    LatticeModel *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
+    auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());
     lm->time_step_ += 1;
     on_lattice_model_change();
   };

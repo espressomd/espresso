@@ -50,10 +50,10 @@ public:
   Utils::Vector3d get_ext_force() const { return to_vector3d(m_ext_force); };
 
   void operator()(IBlock *block) {
-    PdfField *pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-    ForceField *force_field =
+    auto *pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+    auto *force_field =
         block->template getData<ForceField>(m_last_applied_force_field_id);
-    ForceField *force_to_be_applied =
+    auto *force_to_be_applied =
         block->template getData<ForceField>(m_force_to_be_applied_id);
 
     force_field->swapDataPointers(force_to_be_applied);

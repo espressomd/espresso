@@ -162,9 +162,8 @@ protected:
 
     Boundaries *operator()(IBlock *const block) {
 
-      FlagField *flag_field =
-          block->template getData<FlagField>(m_flag_field_id);
-      PdfField *pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+      auto *flag_field = block->template getData<FlagField>(m_flag_field_id);
+      auto *pdf_field = block->template getData<PdfField>(m_pdf_field_id);
 
       const auto fluid = flag_field->flagExists(Fluid_flag)
                              ? flag_field->getFlag(Fluid_flag)
@@ -517,7 +516,7 @@ public:
     const typename UBB::Velocity velocity(real_c(v[0]), real_c(v[1]),
                                           real_c(v[2]));
 
-    Boundaries *boundary_handling =
+    auto *boundary_handling =
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1],
                                      bc->cell[2], velocity);
@@ -549,7 +548,7 @@ public:
     auto bc = get_block_and_cell(node, true, m_blocks, n_ghost_layers());
     if (!bc)
       return false;
-    Boundaries *boundary_handling =
+    auto *boundary_handling =
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     boundary_handling->removeBoundary((*bc).cell[0], (*bc).cell[1],
                                       (*bc).cell[2]);
@@ -563,7 +562,7 @@ public:
     if (!bc)
       return {boost::none};
 
-    Boundaries *boundary_handling =
+    auto *boundary_handling =
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
     return {boundary_handling->isBoundary((*bc).cell)};
   };
@@ -573,7 +572,7 @@ public:
             m_blocks->begin()->getAABB().getExtended(real_c(n_ghost_layers())));
     for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
 
-      Boundaries *boundary_handling =
+      auto *boundary_handling =
           block->template getData<Boundaries>(m_boundary_handling_id);
 
       CellInterval domain_bb(domain_bb_in_global_cell_coordinates);
