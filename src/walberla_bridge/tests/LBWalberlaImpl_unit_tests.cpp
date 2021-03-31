@@ -281,8 +281,8 @@ BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
                      lb_generator) {
   auto lb = lb_generator(mpi_shape, params);
 
-  // todo: check a less symmetrical situation, wher the force is applied not in
-  // the middle between the ndoes
+  // todo: check a less symmetrical situation, where the force is applied not
+  // in the middle between the nodes
 
   for (Vector3i n : all_nodes_incl_ghosts(params.grid_dimensions, 1)) {
     if (lb->node_in_local_halo(n)) {

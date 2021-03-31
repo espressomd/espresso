@@ -94,7 +94,7 @@ void mpi_init_lb_walberla(double viscosity, double density, double agrid,
       throw std::runtime_error(
           "Box length not commensurate with agrid in direction " +
           std::to_string(i) + " length " + std::to_string(box_size[i]) +
-          " agrid" + std::to_string(agrid));
+          " agrid " + std::to_string(agrid));
     }
   }
   Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity, density,
