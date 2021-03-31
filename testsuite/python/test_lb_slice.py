@@ -78,9 +78,9 @@ class TestLBSliceTest(ut.TestCase):
         np.testing.assert_array_almost_equal(
             output_index_shape, should_index_shape)
 
-        "boundary on test slice [1:, 1:, 1:], should be of shape (9, 9, 9, 1)"
+        "boundary on test slice [1:, 1:, 1:], should be of shape (9, 9, 9)"
         output_boundary_shape = lb_fluid[1:, 1:, 1:].boundary.shape
-        should_boundary_shape = (9, 9, 9, 1)
+        should_boundary_shape = (9, 9, 9)
         np.testing.assert_array_almost_equal(
             output_boundary_shape, should_boundary_shape)
 
