@@ -20,6 +20,7 @@ include "myconfig.pxi"
 import os
 import cython
 import itertools
+import functools
 import numpy as np
 cimport numpy as np
 from libc cimport stdint
@@ -575,7 +576,7 @@ class LBSlice:
                 for k, z in enumerate(z_indices):
                     res[i, j, k] = getattr(LBFluidRoutines(
                         np.array([x, y, z])), prop_name)
-        return res
+        return array_locked(res)
 
     def set_values(self, x_indices, y_indices, z_indices, prop_name, value):
         for i, x in enumerate(x_indices):
@@ -584,74 +585,84 @@ class LBSlice:
                     setattr(LBFluidRoutines(
                         np.array([x, y, z])), prop_name, value[i, j, k])
 
-    @property
-    def density(self):
-        return np.squeeze(self.get_values(
-            self.x_indices, self.y_indices, self.z_indices, "density", (1,)), axis=3)
 
-    @density.setter
-    def density(self, value):
-        self.set_values(self.x_indices, self.y_indices, self.z_indices,
-                        "density", value)
+def _add_lb_slice_properties():
+    """
+    Automatically add all of LBFluidRoutines's properties to LBSlice.
 
-    @property
-    def index(self):
-        return self.get_values(
-            self.x_indices, self.y_indices, self.z_indices, "index", (3,))
+    """
 
-    @property
-    def velocity(self):
-        return self.get_values(
-            self.x_indices, self.y_indices, self.z_indices, "velocity", (3,))
+    attribute_shapes = {"density": (1,),
+                        "index": (3,),
+                        "velocity": (3,),
+                        "pressure_tensor": (3, 3),
+                        "pressure_tensor_neq": (3, 3),
+                        "population": (19,),
+                        "boundary": (1,)}
 
-    @velocity.setter
-    def velocity(self, value):
-        s = (len(self.x_indices), len(self.y_indices), len(self.z_indices), 3)
-        if value.shape == s:
-            self.set_values(self.x_indices, self.y_indices, self.z_indices,
-                            "velocity", value)
-        else:
+    def seta(lb_slice, value, attribute):
+        """
+        Setter function that sets attribute on every member of lb_slice.
+        If values contains only one element, all members are set to it.
+
+        """
+
+        indices = [lb_slice.x_indices, lb_slice.y_indices, lb_slice.z_indices]
+        N = [len(x) for x in indices]
+
+        if N[0] * N[1] * N[2] == 0:
+            raise AttributeError("Cannot set properties of an empty LBSlice")
+
+        value = np.copy(value)
+        value_shape = np.shape(value)
+        attribute_shape = attribute_shapes[attribute]
+        target_shape = (*N, *attribute_shape)
+        target_shape_squeeze = target_shape
+        if target_shape[-1] == 1:
+            target_shape_squeeze = target_shape[:-1]
+
+        # broadcast if only one element was provided
+        if attribute_shape == (1,) and value_shape == (
+        ) or value_shape == attribute_shape:
+            value = np.ones(target_shape) * value
+
+        if value.shape != target_shape and value.shape != target_shape_squeeze:
             raise ValueError(
-                f"Input-dimensions of velocity array {value.shape} does not match slice dimensions {s}.")
+                f"Input-dimensions of {attribute} array {value_shape} does not match slice dimensions {target_shape_squeeze}.")
 
-    @property
-    def pressure_tensor(self):
-        return self.get_values(
-            self.x_indices, self.y_indices, self.z_indices, "pressure_tensor", (3, 3))
+        lb_slice.set_values(*indices, attribute, np.array(value))
 
-    @pressure_tensor.setter
-    def pressure_tensor(self, value):
-        raise NotImplementedError
+    def geta(lb_slice, attribute):
+        """
+        Getter function that copies attribute from every member of
+        lb_slice into an array (if possible).
 
-    @property
-    def pressure_tensor_neq(self):
-        return self.get_values(
-            self.x_indices, self.y_indices, self.z_indices, "pressure_tensor_neq", (3, 3))
+        """
 
-    @pressure_tensor_neq.setter
-    def pressure_tensor_neq(self, value):
-        raise NotImplementedError
+        indices = [lb_slice.x_indices, lb_slice.y_indices, lb_slice.z_indices]
+        N = [len(x) for x in indices]
 
-    @property
-    def population(self):
-        return self.get_values(
-            self.x_indices, self.y_indices, self.z_indices, "population", (19,))
+        if N[0] * N[1] * N[2] == 0:
+            return np.empty(0, dtype=type(None))
 
-    @population.setter
-    def population(self, value):
-        s = (len(self.x_indices), len(self.y_indices), len(self.z_indices), 19)
-        if value.shape == s:
-            self.set_values(self.x_indices, self.y_indices, self.z_indices,
-                            "population", value)
-        else:
-            raise ValueError(
-                f"Input-dimensions of population array {value.shape} does not match slice dimensions {s}.")
+        target_shape = attribute_shapes[attribute]
+        values = lb_slice.get_values(*indices, attribute, target_shape)
 
-    @property
-    def boundary(self):
-        return np.squeeze(self.get_values(
-            self.x_indices, self.y_indices, self.z_indices, "boundary", (1,)), axis=3)
+        if attribute in ("density", "boundary"):
+            values = np.squeeze(values, axis=3)
 
-    @boundary.setter
-    def boundary(self, value):
-        raise NotImplementedError
+        return values
+
+    for attribute_name in dir(LBFluidRoutines):
+        if attribute_name in dir(LBSlice) or not isinstance(
+                getattr(LBFluidRoutines, attribute_name), type(LBFluidRoutines.density)):
+            continue
+
+        # synthesize a new property
+        new_property = property(functools.partial(geta, attribute=attribute_name), functools.partial(
+            seta, attribute=attribute_name), doc=getattr(LBFluidRoutines, attribute_name).__doc__ or f'{attribute_name} for a slice')
+        # attach the property to LBSlice
+        setattr(LBSlice, attribute_name, new_property)
+
+
+_add_lb_slice_properties()
