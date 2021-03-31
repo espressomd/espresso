@@ -88,8 +88,8 @@ uint64_t lb_coupling_get_rng_state_cpu() {
 uint64_t lb_lbcoupling_get_rng_state() {
   if (lattice_switch == ActiveLB::WALBERLA) {
     return lb_coupling_get_rng_state_cpu();
-  } else
-    throw std::runtime_error("No LB active");
+  }
+  throw std::runtime_error("No LB active");
 }
 
 void lb_lbcoupling_set_rng_state(uint64_t counter) {
