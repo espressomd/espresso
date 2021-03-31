@@ -138,28 +138,27 @@ IF ELECTROSTATICS:
 IF ELECTROSTATICS and MMM1D_GPU:
 
     cdef extern from "actor/Mmm1dgpuForce.hpp":
-        ctypedef float mmm1dgpu_real
         cdef cppclass Mmm1dgpuForce:
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius, int bessel_cutoff) except+
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius) except+
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror) except+
+            Mmm1dgpuForce(SystemInterface & s, float coulomb_prefactor, float maxPWerror, float far_switch_radius, int bessel_cutoff) except+
+            Mmm1dgpuForce(SystemInterface & s, float coulomb_prefactor, float maxPWerror, float far_switch_radius) except+
+            Mmm1dgpuForce(SystemInterface & s, float coulomb_prefactor, float maxPWerror) except+
             void setup(SystemInterface & s)
-            void tune(SystemInterface & s, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
-            void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff, bool manual)
-            void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
+            void tune(SystemInterface & s, float _maxPWerror, float _far_switch_radius, int _bessel_cutoff)
+            void set_params(float _boxz, float _coulomb_prefactor, float _maxPWerror, float _far_switch_radius, int _bessel_cutoff, bool manual)
+            void set_params(float _boxz, float _coulomb_prefactor, float _maxPWerror, float _far_switch_radius, int _bessel_cutoff)
 
             unsigned int numThreads
             unsigned int numBlocks(SystemInterface & s)
 
-            mmm1dgpu_real host_boxz
+            float host_boxz
             int host_npart
             bool need_tune
 
             int pairs
-            mmm1dgpu_real * dev_forcePairs
-            mmm1dgpu_real * dev_energyBlocks
+            float * dev_forcePairs
+            float * dev_energyBlocks
 
-            mmm1dgpu_real coulomb_prefactor, maxPWerror, far_switch_radius
+            float coulomb_prefactor, maxPWerror, far_switch_radius
             int bessel_cutoff
 
             float force_benchmark(SystemInterface & s)

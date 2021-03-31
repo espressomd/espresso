@@ -62,7 +62,6 @@ ELECTROKINETICS                 requires CUDA
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_BOUNDARIES_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   requires CUDA
 EK_DEBUG                        requires ELECTROKINETICS
-EK_DOUBLE_PREC                  requires ELECTROKINETICS
 
 /* Interaction features */
 TABULATED

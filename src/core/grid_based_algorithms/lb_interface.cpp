@@ -254,7 +254,6 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
     }
 
     double laf[3];
-    Utils::Vector3i ind;
     auto const gridsize = lb_walberla()->get_grid_dimensions();
     auto const pop_size = lb_walberla()->stencil_size();
     std::vector<double> pop(pop_size);
@@ -271,9 +270,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
         for (int k = 0; k < gridsize[2]; k++) {
-          ind[0] = i;
-          ind[1] = j;
-          ind[2] = k;
+          Utils::Vector3i const ind{{i, j, k}};
           auto const pop = lb_lbnode_get_pop(ind);
           auto const laf = lb_lbnode_get_last_applied_force(ind);
           if (!binary) {
@@ -313,7 +310,6 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     auto const pop_size = lb_walberla()->stencil_size();
     size_t saved_pop_size;
     Utils::Vector3d laf;
-    Utils::Vector3i ind;
     auto const gridsize = lb_walberla()->get_grid_dimensions();
     int saved_gridsize[3];
     if (!binary) {
@@ -359,9 +355,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
         for (int k = 0; k < gridsize[2]; k++) {
-          ind[0] = i;
-          ind[1] = j;
-          ind[2] = k;
+          Utils::Vector3i const ind{{i, j, k}};
           if (!binary) {
             for (size_t f = 0; f < saved_pop_size; ++f) {
               res = fscanf(cpfile, "%lf ", &pop[f]);

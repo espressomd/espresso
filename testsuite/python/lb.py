@@ -151,10 +151,8 @@ class TestLB:
             self.params['dens'],
             delta=1e-4)
 
-        self.assertEqual(self.lbf.shape,
-                         (int(self.system.box_l[0] / self.params["agrid"]),
-                          int(self.system.box_l[1] / self.params["agrid"]),
-                          int(self.system.box_l[2] / self.params["agrid"])))
+        shape_ref = np.copy(self.system.box_l) / self.params['agrid']
+        np.testing.assert_array_equal(self.lbf.shape, shape_ref.astype(int))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid
@@ -214,7 +212,7 @@ class TestLB:
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
-            agrid=self.params['agrid'] + 1e-5,
+            agrid=self.params['agrid'] + 1e-6,
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
         print("\nTesting LB error messages:", file=sys.stderr)
