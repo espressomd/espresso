@@ -23,7 +23,7 @@ import numpy as np
 
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
-class TestLBSliceTest(ut.TestCase):
+class LBSliceTest(ut.TestCase):
 
     """This simple test first writes random numbers and then reads them 
     to same slices of LB nodes and compares if the results are the same, 
@@ -34,7 +34,7 @@ class TestLBSliceTest(ut.TestCase):
     system.time_step = .01
     system.cell_system.skin = 0.1
 
-    def test_LBSlice(self):
+    def test_slicing(self):
         system = self.system
 
         lb_fluid = espressomd.lb.LBFluid(
