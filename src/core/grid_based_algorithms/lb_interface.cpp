@@ -142,20 +142,6 @@ void lb_lbfluid_reinit_parameters() {
   }
 }
 
-/** (Re-)initialize the fluid according to the value of density. */
-
-void lb_lbfluid_reinit_fluid() {
-  if (lattice_switch == ActiveLB::GPU) {
-#ifdef CUDA
-    lb_reinit_fluid_gpu();
-#endif
-  } else if (lattice_switch == ActiveLB::CPU) {
-    lb_reinit_fluid(lbfields, lblattice, lbpar);
-  } else {
-    throw NoLBActive();
-  }
-}
-
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
  */
@@ -200,7 +186,7 @@ void lb_lbfluid_set_density(double density) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     lbpar_gpu.rho = static_cast<float>(density);
-    lb_lbfluid_reinit_fluid();
+    lb_reinit_fluid_gpu();
     lb_lbfluid_reinit_parameters();
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {

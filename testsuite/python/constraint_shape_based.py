@@ -476,17 +476,31 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         # check hemispherical caps (multiple distances from surface)
         N = 10
-        radii = np.linspace(1., 10., 10)
+        radii = np.linspace(1., 12., 12)
         p = system.part.add(pos=[0., 0., 0.], type=0)
         for i in range(6):
             for j in range(N):
                 theta = 2. * i / float(N) * np.pi
                 v = j / float(N - 1) * 2. - 1
-                for r in radii:
-                    p.pos = self.pos_on_surface(theta, v, r, r, r) + [0, 3, 0]
+                for end, r in enumerate(radii):
+                    pos = self.pos_on_surface(theta, v, r, r, r) + [0, 3, 0]
+                    if end % 2 == 0:
+                        # flip to the other end of the cylinder
+                        pos[1] = self.box_l - pos[1]
+                    p.pos = pos
                     system.integrator.run(recalc_forces=True, steps=0)
                     energy = system.analysis.energy()
-                    self.assertAlmostEqual(energy["total"], 10. - r)
+                    self.assertAlmostEqual(energy["total"], np.abs(10. - r))
+
+        # check cylinder
+        for i in range(N):
+            theta = 2. * i / float(N) * np.pi
+            for r in radii:
+                pos = r * np.array([np.cos(theta), 0, np.sin(theta)])
+                system.part[0].pos = pos + self.box_l / 2.0
+                system.integrator.run(recalc_forces=True, steps=0)
+                energy = system.analysis.energy()
+                self.assertAlmostEqual(energy["total"], np.abs(10. - r))
 
         # check getters
         self.assertAlmostEqual(spherocylinder_shape.radius, 10.)
