@@ -50,9 +50,6 @@ void lb_lbfluid_on_integration_start();
  */
 void lb_lbfluid_init();
 
-/** (Re-)initialize the fluid. */
-void lb_lbfluid_reinit_fluid();
-
 /** (Re-)initialize the derived parameters for the lattice Boltzmann system.
  *  The current state of the fluid is unchanged.
  */
