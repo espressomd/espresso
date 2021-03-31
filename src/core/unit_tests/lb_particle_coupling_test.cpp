@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for thermostats. */
+/* Unit tests for LB particle coupling. */
 
-#define BOOST_TEST_MODULE Thermostats test
+#define BOOST_TEST_MODULE LB particle coupling test
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_NO_MAIN
 #include <boost/test/data/monomorphic.hpp>
@@ -131,13 +131,15 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
     BOOST_CHECK_SMALL((observed - expected).norm(), tol);
   }
 }
+
+// todo: test remaining functionality from lb_particle_coupling.hpp
 #endif
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
   int n_nodes;
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-  MPI_Dims_create(n_nodes, 3, node_grid.data()); // espersso global
+  MPI_Dims_create(n_nodes, 3, node_grid.data()); // espresso global
 
   walberla_mpi_init();
   auto res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
