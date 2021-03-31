@@ -549,10 +549,8 @@ cdef class LBFluidRoutines:
         def __set__(self, value):
             raise NotImplementedError
 
-cdef class LBSlice:
-    cdef np.ndarray x_indices
-    cdef np.ndarray y_indices
-    cdef np.ndarray z_indices
+
+class LBSlice:
 
     def __init__(self, key):
         shape = lb_lbfluid_get_shape()
@@ -586,99 +584,88 @@ cdef class LBSlice:
                     setattr(LBFluidRoutines(
                         np.array([x, y, z])), prop_name, value[i, j, k])
 
-    property density:
-        def __get__(self):
-            prop_name = "density"
-            shape_res = (1,)
-            return np.squeeze(self.get_values(
-                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res), axis=3)
+    @property
+    def density(self):
+        return np.squeeze(self.get_values(
+            self.x_indices, self.y_indices, self.z_indices, "density", (1,)), axis=3)
 
-        def __set__(self, value):
-            prop_name = "density"
+    @density.setter
+    def density(self, value):
+        self.set_values(
+            self.x_indices,
+            self.y_indices,
+            self.z_indices,
+            "density",
+            value)
+
+    @property
+    def index(self):
+        return self.get_values(
+            self.x_indices, self.y_indices, self.z_indices, "index", (3,))
+
+    @property
+    def velocity(self):
+        return self.get_values(
+            self.x_indices, self.y_indices, self.z_indices, "velocity", (3,))
+
+    @velocity.setter
+    def velocity(self, value):
+        if value.shape == (len(self.x_indices), len(
+                self.y_indices), len(self.z_indices), 3):
             self.set_values(
                 self.x_indices,
                 self.y_indices,
                 self.z_indices,
-                prop_name,
+                "velocity",
                 value)
+        else:
+            raise ValueError(
+                "Input-dimensions of velocity array", value.shape, "does not match slice dimensions",
+                (len(self.x_indices), len(self.y_indices), len(self.z_indices), 3), ".")
 
-    property index:
-        def __get__(self):
-            prop_name = "index"
-            shape_res = (3,)
-            return self.get_values(
-                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+    @property
+    def pressure_tensor(self):
+        return self.get_values(
+            self.x_indices, self.y_indices, self.z_indices, "pressure_tensor", (3, 3))
 
-    property velocity:
-        def __get__(self):
-            prop_name = "velocity"
-            shape_res = (3,)
-            return self.get_values(
-                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+    @pressure_tensor.setter
+    def pressure_tensor(self, value):
+        raise NotImplementedError
 
-        def __set__(self, value):
-            prop_name = "velocity"
-            if value.shape == (len(self.x_indices), len(
-                    self.y_indices), len(self.z_indices), 3):
-                self.set_values(
-                    self.x_indices,
-                    self.y_indices,
-                    self.z_indices,
-                    prop_name,
-                    value)
-            else:
-                raise ValueError(
-                    "Input-dimensions of velocity array", value.shape, "does not match slice dimensions",
-                    (len(self.x_indices), len(self.y_indices), len(self.z_indices), 3), ".")
+    @property
+    def pressure_tensor_neq(self):
+        return self.get_values(
+            self.x_indices, self.y_indices, self.z_indices, "pressure_tensor_neq", (3, 3))
 
-    property pressure_tensor:
-        def __get__(self):
-            prop_name = "pressure_tensor"
-            shape_res = (3, 3)
-            return self.get_values(
-                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+    @pressure_tensor_neq.setter
+    def pressure_tensor_neq(self, value):
+        raise NotImplementedError
 
-        def __set__(self, value):
-            raise NotImplementedError
+    @property
+    def population(self):
+        return self.get_values(
+            self.x_indices, self.y_indices, self.z_indices, "population", (19,))
 
-    property pressure_tensor_neq:
-        def __get__(self):
-            prop_name = "pressure_tensor_neq"
-            shape_res = (3, 3)
-            return self.get_values(
-                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+    @population.setter
+    def population(self, value):
+        if value.shape == (len(self.x_indices), len(
+                self.y_indices), len(self.z_indices), 19):
+            self.set_values(
+                self.x_indices,
+                self.y_indices,
+                self.z_indices,
+                "population",
+                value)
+        else:
+            raise ValueError(
+                "Input-dimensions of population array", value.shape, "does not match slice dimensions",
+                (len(self.x_indices), len(self.y_indices), len(self.z_indices), 19), ".")
 
-        def __set__(self, value):
-            raise NotImplementedError
+    @property
+    def boundary(self):
+        return np.squeeze(self.get_values(
+            self.x_indices, self.y_indices, self.z_indices, "boundary", (1,)), axis=3)
 
-    property population:
-        def __get__(self):
-            prop_name = "population"
-            shape_res = (19,)
-            return self.get_values(
-                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
-
-        def __set__(self, value):
-            prop_name = "population"
-            if value.shape == (len(self.x_indices), len(
-                    self.y_indices), len(self.z_indices), 19):
-                self.set_values(
-                    self.x_indices,
-                    self.y_indices,
-                    self.z_indices,
-                    prop_name,
-                    value)
-            else:
-                raise ValueError(
-                    "Input-dimensions of population array", value.shape, "does not match slice dimensions",
-                    (len(self.x_indices), len(self.y_indices), len(self.z_indices), 19), ".")
-
-    property boundary:
-        def __get__(self):
-            shape_res = (1,)
-            prop_name = "boundary"
-            return np.squeeze(self.get_values(
-                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res), axis=3)
-
-        def __set__(self, value):
-            raise NotImplementedError
+    @boundary.setter
+    def boundary(self, value):
+        raise NotImplementedError
