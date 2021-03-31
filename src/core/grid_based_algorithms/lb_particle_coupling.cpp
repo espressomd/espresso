@@ -62,8 +62,7 @@ void lb_lbcoupling_deactivate() {
     runtimeWarningMsg()
         << "Recalculating forces, so the LB coupling forces are not "
            "included in the particle force the first time step. This "
-           "only matters if it happens frequently during "
-           "sampling.";
+           "only matters if it happens frequently during sampling.";
   }
 
   lb_particle_coupling.couple_to_md = false;
@@ -98,7 +97,7 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
     lb_particle_coupling.rng_counter_coupling =
         Utils::Counter<uint64_t>(counter);
   } else
-    throw std::runtime_error("No lb active");
+    throw std::runtime_error("No LB active");
 }
 
 /**
@@ -113,7 +112,7 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
   lb_lbinterpolation_add_force_density(pos, delta_j);
 }
 /** @brief Calculate particle drift velocity offset due to ENGINE and
- * ELECTRO?H??YDRODYNAMICS */
+ *  ELECTROHYDRODYNAMICS */
 Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p) {
   Utils::Vector3d vel_offset{};
 #ifdef ENGINE
