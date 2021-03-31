@@ -558,29 +558,29 @@ class LBSlice:
             key, shape[0], shape[1], shape[2])
 
     def get_indices(self, key, shape_x, shape_y, shape_z):
-        _x_indices = np.atleast_1d(np.arange(shape_x)[key[0]])
-        _y_indices = np.atleast_1d(np.arange(shape_y)[key[1]])
-        _z_indices = np.atleast_1d(np.arange(shape_z)[key[2]])
-        return _x_indices, _y_indices, _z_indices
+        x_indices = np.atleast_1d(np.arange(shape_x)[key[0]])
+        y_indices = np.atleast_1d(np.arange(shape_y)[key[1]])
+        z_indices = np.atleast_1d(np.arange(shape_z)[key[2]])
+        return x_indices, y_indices, z_indices
 
-    def get_values(self, _x_indices, _y_indices,
-                   _z_indices, prop_name, shape_res):
+    def get_values(self, x_indices, y_indices,
+                   z_indices, prop_name, shape_res):
         res = np.zeros(
-            (_x_indices.size,
-             _y_indices.size,
-             _z_indices.size,
+            (x_indices.size,
+             y_indices.size,
+             z_indices.size,
              *shape_res))
-        for i, x in enumerate(_x_indices):
-            for j, y in enumerate(_y_indices):
-                for k, z in enumerate(_z_indices):
+        for i, x in enumerate(x_indices):
+            for j, y in enumerate(y_indices):
+                for k, z in enumerate(z_indices):
                     res[i, j, k] = getattr(LBFluidRoutines(
                         np.array([x, y, z])), prop_name)
         return res
 
-    def set_values(self, _x_indices, _y_indices, _z_indices, prop_name, value):
-        for i, x in enumerate(_x_indices):
-            for j, y in enumerate(_y_indices):
-                for k, z in enumerate(_z_indices):
+    def set_values(self, x_indices, y_indices, z_indices, prop_name, value):
+        for i, x in enumerate(x_indices):
+            for j, y in enumerate(y_indices):
+                for k, z in enumerate(z_indices):
                     setattr(LBFluidRoutines(
                         np.array([x, y, z])), prop_name, value[i, j, k])
 
@@ -591,12 +591,8 @@ class LBSlice:
 
     @density.setter
     def density(self, value):
-        self.set_values(
-            self.x_indices,
-            self.y_indices,
-            self.z_indices,
-            "density",
-            value)
+        self.set_values(self.x_indices, self.y_indices, self.z_indices,
+                        "density", value)
 
     @property
     def index(self):
@@ -610,18 +606,13 @@ class LBSlice:
 
     @velocity.setter
     def velocity(self, value):
-        if value.shape == (len(self.x_indices), len(
-                self.y_indices), len(self.z_indices), 3):
-            self.set_values(
-                self.x_indices,
-                self.y_indices,
-                self.z_indices,
-                "velocity",
-                value)
+        s = (len(self.x_indices), len(self.y_indices), len(self.z_indices), 3)
+        if value.shape == s:
+            self.set_values(self.x_indices, self.y_indices, self.z_indices,
+                            "velocity", value)
         else:
             raise ValueError(
-                "Input-dimensions of velocity array", value.shape, "does not match slice dimensions",
-                (len(self.x_indices), len(self.y_indices), len(self.z_indices), 3), ".")
+                f"Input-dimensions of velocity array {value.shape} does not match slice dimensions {s}.")
 
     @property
     def pressure_tensor(self):
@@ -648,18 +639,13 @@ class LBSlice:
 
     @population.setter
     def population(self, value):
-        if value.shape == (len(self.x_indices), len(
-                self.y_indices), len(self.z_indices), 19):
-            self.set_values(
-                self.x_indices,
-                self.y_indices,
-                self.z_indices,
-                "population",
-                value)
+        s = (len(self.x_indices), len(self.y_indices), len(self.z_indices), 19)
+        if value.shape == s:
+            self.set_values(self.x_indices, self.y_indices, self.z_indices,
+                            "population", value)
         else:
             raise ValueError(
-                "Input-dimensions of population array", value.shape, "does not match slice dimensions",
-                (len(self.x_indices), len(self.y_indices), len(self.z_indices), 19), ".")
+                f"Input-dimensions of population array {value.shape} does not match slice dimensions {s}.")
 
     @property
     def boundary(self):
