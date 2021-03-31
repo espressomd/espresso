@@ -31,13 +31,18 @@ namespace bdata = boost::unit_test::data;
 
 #ifdef LB_WALBERLA
 
+#include <lb_walberla_init.hpp>
+
 #include "Particle.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "random.hpp"
+
 #include <utils/Vector.hpp>
+
+#include <mpi.h>
 
 #include <limits>
 #include <vector>
@@ -133,7 +138,6 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 }
 
 // todo: test remaining functionality from lb_particle_coupling.hpp
-#endif
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
@@ -146,3 +150,7 @@ int main(int argc, char **argv) {
   MPI_Finalize();
   return res;
 }
+
+#else // ifdef LB_WALBERLA
+int main(int argc, char **argv) {}
+#endif

@@ -33,7 +33,7 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/mpi.hpp>
+#include <mpi.h>
 
 #include <cmath>
 #include <functional>
