@@ -550,12 +550,9 @@ cdef class LBFluidRoutines:
             raise NotImplementedError
 
 cdef class LBSlice:
-    cdef Vector3i node 
     cdef np.ndarray x_indices
     cdef np.ndarray y_indices
     cdef np.ndarray z_indices
-
-    # cdef Vector3i shape
 
     def __init__(self, key):
         shape = lb_lbfluid_get_shape()
@@ -638,7 +635,6 @@ cdef class LBSlice:
         def __get__(self):
             prop_name = "pressure_tensor"
             shape_res = (3, 3)
-
             return self.get_values(
                 self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
@@ -649,7 +645,6 @@ cdef class LBSlice:
         def __get__(self):
             prop_name = "pressure_tensor_neq"
             shape_res = (3, 3)
-
             return self.get_values(
                 self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
@@ -660,8 +655,6 @@ cdef class LBSlice:
         def __get__(self):
             prop_name = "population"
             shape_res = (19,)
-            cdef Vector19d double_return
-            double_return = lb_lbnode_get_pop(self.node)
             return self.get_values(
                 self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
 
@@ -684,8 +677,8 @@ cdef class LBSlice:
         def __get__(self):
             shape_res = (1,)
             prop_name = "boundary"
-            return self.get_values(
-                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res)
+            return np.squeeze(self.get_values(
+                self.x_indices, self.y_indices, self.z_indices, prop_name, shape_res), axis=3)
 
         def __set__(self, value):
             raise NotImplementedError
