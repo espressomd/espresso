@@ -39,8 +39,8 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.cell_system.skin = 0.
         self.system.time_step = .1
 
-        self.system.part.add(id=0, pos=self.start_pos, type=0)
-        self.system.part.add(id=1, pos=self.start_pos, type=0)
+        self.system.part.add(pos=self.start_pos, type=0)
+        self.system.part.add(pos=self.start_pos, type=0)
 
     def tearDown(self):
         self.system.non_bonded_inter.reset()
@@ -84,16 +84,17 @@ class InteractionsNonBondedTest(ut.TestCase):
             cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
             e2=lj_e2, shift=lj_shift)
 
+        p0, p1 = self.system.part[:]
         for i in range(231):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.lj_generic_force(
                 espressomd, r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
                 cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
@@ -125,16 +126,17 @@ class InteractionsNonBondedTest(ut.TestCase):
             r=np.arange(1, 232) * self.step_width, eps=wca_eps, sig=wca_sig,
             cutoff=wca_cutoff, shift=4. * wca_shift)
 
+        p0, p1 = self.system.part[:]
         for i in range(231):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.lj_generic_force(
                 espressomd, r=(i + 1) * self.step_width, eps=wca_eps,
                 sig=wca_sig, cutoff=wca_cutoff)
@@ -168,8 +170,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift,
             delta=lj_delta, lam=lj_lam)
 
+        p0, p1 = self.system.part[:]
         for i in range(231):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -180,8 +183,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.lj_generic_force(
                 espressomd, r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
                 cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
@@ -209,8 +212,9 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift=lj_shift)
 
+        p0, p1 = self.system.part[:]
         for i in range(113):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -220,8 +224,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 shift=lj_shift)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * \
                 tests_common.lj_force(espressomd, r=(i + 1) * self.step_width,
                                       eps=lj_eps, sig=lj_sig, cutoff=lj_cut)
@@ -248,8 +252,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=ljcos_eps, sigma=ljcos_sig, cutoff=ljcos_cut,
             offset=ljcos_offset)
 
+        p0, p1 = self.system.part[:]
         for i in range(175):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -259,8 +264,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 cutoff=ljcos_cut, offset=ljcos_offset)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.lj_cos_force(
                 espressomd, (i + 1) * self.step_width, eps=ljcos_eps,
                 sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset)
@@ -288,8 +293,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=ljcos2_eps, sigma=ljcos2_sig, offset=ljcos2_offset,
             width=ljcos2_width)
 
+        p0, p1 = self.system.part[:]
         for i in range(267):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -299,8 +305,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 offset=ljcos2_offset, width=ljcos2_width)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.lj_cos2_force(
                 espressomd, r=(i + 1) * self.step_width, eps=ljcos2_eps,
                 sig=ljcos2_sig, offset=ljcos2_offset, width=ljcos2_width)
@@ -330,8 +336,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n,
             k0=sst_k0)
 
+        p0, p1 = self.system.part[:]
         for i in range(126):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -341,8 +348,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.smooth_step_force(
                 r=(i + 1) * self.step_width, eps=sst_eps, sig=sst_sig,
                 cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
@@ -371,8 +378,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig,
             cutoff=bmhtf_cut)
 
+        p0, p1 = self.system.part[:]
         for i in range(126):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -382,8 +390,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.bmhtf_force(
                 r=(i + 1) * self.step_width, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c,
                 d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
@@ -409,8 +417,9 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].morse.set_params(
             eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin)
 
+        p0, p1 = self.system.part[:]
         for i in range(126):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -420,8 +429,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 cutoff=m_cut, rmin=m_rmin)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.morse_force(
                 r=(i + 1) * self.step_width, eps=m_eps, alpha=m_alpha,
                 cutoff=m_cut, rmin=m_rmin)
@@ -451,8 +460,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut,
             shift=b_shift)
 
+        p0, p1 = self.system.part[:]
         for i in range(226):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -462,8 +472,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 discont=b_disc, cutoff=b_cut, shift=b_shift)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.buckingham_force(
                 r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d,
                 discont=b_disc, cutoff=b_cut, shift=b_shift)
@@ -489,10 +499,11 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].soft_sphere.set_params(
             a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off)
 
+        p0, p1 = self.system.part[:]
         for i in range(12):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
         for i in range(113):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -502,8 +513,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 offset=ss_off)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.soft_sphere_force(
                 r=(i + 13) * self.step_width, a=ss_a, n=ss_n, cutoff=ss_cut,
                 offset=ss_off)
@@ -527,8 +538,9 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].hertzian.set_params(
             eps=h_eps, sig=h_sig)
 
+        p0, p1 = self.system.part[:]
         for i in range(244):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -537,8 +549,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 r=(i + 1) * self.step_width, eps=h_eps, sig=h_sig)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.hertzian_force(
                 r=(i + 1) * self.step_width, eps=h_eps, sig=h_sig)
 
@@ -562,8 +574,9 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].gaussian.set_params(
             eps=g_eps, sig=g_sig, cutoff=g_cut)
 
+        p0, p1 = self.system.part[:]
         for i in range(125):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
@@ -572,8 +585,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 r=(i + 1) * self.step_width, eps=g_eps, sig=g_sig, cutoff=g_cut)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * tests_common.gaussian_force(
                 r=(i + 1) * self.step_width, eps=g_eps, sig=g_sig, cutoff=g_cut)
 
@@ -621,9 +634,9 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             self.system.part.clear()
             self.system.part.add(
-                id=0, pos=(1, 2, 3), rotation=(1, 1, 1), type=0)
+                pos=(1, 2, 3), rotation=(1, 1, 1), type=0)
             self.system.part.add(
-                id=1, pos=(2.2, 2.1, 2.9), rotation=(1, 1, 1), type=0)
+                pos=(2.2, 2.1, 2.9), rotation=(1, 1, 1), type=0)
 
             self.system.non_bonded_inter[0, 0].gay_berne.set_params(
                 sig=sigma_0, cut=cut, eps=epsilon_0, k1=k_1, k2=k_2, mu=mu,
@@ -675,8 +688,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         setup_system(gb_params)
 
-        p1 = self.system.part[0]
-        p2 = self.system.part[1]
+        p1, p2 = self.system.part[:]
 
         delta = 1.0e-6
 
