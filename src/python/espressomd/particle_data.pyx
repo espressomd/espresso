@@ -2115,7 +2115,7 @@ def _add_particle_slice_properties():
 
     """
 
-    def seta(particle_slice, values, attribute):
+    def set_attribute(particle_slice, values, attribute):
         """
         Setter function that sets attribute on every member of particle_slice.
         If values contains only one element, all members are set to it. If it
@@ -2193,7 +2193,7 @@ def _add_particle_slice_properties():
 
                 return
 
-    def geta(particle_slice, attribute):
+    def get_attribute(particle_slice, attribute):
         """
         Getter function that copies attribute from every member of
         particle_slice into an array (if possible).
@@ -2231,8 +2231,10 @@ def _add_particle_slice_properties():
             continue
 
         # synthesize a new property
-        new_property = property(functools.partial(geta, attribute=attribute_name), functools.partial(
-            seta, attribute=attribute_name), doc=getattr(ParticleHandle, attribute_name).__doc__)
+        new_property = property(
+            functools.partial(get_attribute, attribute=attribute_name),
+            functools.partial(set_attribute, attribute=attribute_name),
+            doc=getattr(ParticleHandle, attribute_name).__doc__)
         # attach the property to ParticleSlice
         setattr(ParticleSlice, attribute_name, new_property)
 
