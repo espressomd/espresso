@@ -564,8 +564,9 @@ class LBSlice:
         z_indices = np.atleast_1d(np.arange(shape_z)[key[2]])
         return x_indices, y_indices, z_indices
 
-    def get_values(self, x_indices, y_indices,
-                   z_indices, prop_name, shape_res):
+    def get_values(self, x_indices, y_indices, z_indices, prop_name):
+        shape_res = np.shape(
+            getattr(LBFluidRoutines(np.array([0, 0, 0])), prop_name))
         res = np.zeros(
             (x_indices.size,
              y_indices.size,
@@ -576,6 +577,8 @@ class LBSlice:
                 for k, z in enumerate(z_indices):
                     res[i, j, k] = getattr(LBFluidRoutines(
                         np.array([x, y, z])), prop_name)
+        if shape_res == (1,):
+            res = np.squeeze(res, axis=-1)
         return array_locked(res)
 
     def set_values(self, x_indices, y_indices, z_indices, prop_name, value):
@@ -592,14 +595,6 @@ def _add_lb_slice_properties():
 
     """
 
-    attribute_shapes = {"density": (1,),
-                        "index": (3,),
-                        "velocity": (3,),
-                        "pressure_tensor": (3, 3),
-                        "pressure_tensor_neq": (3, 3),
-                        "population": (19,),
-                        "boundary": (1,)}
-
     def seta(lb_slice, value, attribute):
         """
         Setter function that sets attribute on every member of lb_slice.
@@ -614,23 +609,19 @@ def _add_lb_slice_properties():
             raise AttributeError("Cannot set properties of an empty LBSlice")
 
         value = np.copy(value)
-        value_shape = np.shape(value)
-        attribute_shape = attribute_shapes[attribute]
+        attribute_shape = lb_slice.get_values(
+            *np.zeros((3, 1), dtype=int), attribute).shape[3:]
         target_shape = (*N, *attribute_shape)
-        target_shape_squeeze = target_shape
-        if target_shape[-1] == 1:
-            target_shape_squeeze = target_shape[:-1]
 
         # broadcast if only one element was provided
-        if attribute_shape == (1,) and value_shape == (
-        ) or value_shape == attribute_shape:
+        if value.shape == attribute_shape:
             value = np.ones(target_shape) * value
 
-        if value.shape != target_shape and value.shape != target_shape_squeeze:
+        if value.shape != target_shape:
             raise ValueError(
-                f"Input-dimensions of {attribute} array {value_shape} does not match slice dimensions {target_shape_squeeze}.")
+                f"Input-dimensions of {attribute} array {value.shape} does not match slice dimensions {target_shape}.")
 
-        lb_slice.set_values(*indices, attribute, np.array(value))
+        lb_slice.set_values(*indices, attribute, value)
 
     def geta(lb_slice, attribute):
         """
@@ -645,13 +636,7 @@ def _add_lb_slice_properties():
         if N[0] * N[1] * N[2] == 0:
             return np.empty(0, dtype=type(None))
 
-        target_shape = attribute_shapes[attribute]
-        values = lb_slice.get_values(*indices, attribute, target_shape)
-
-        if attribute in ("density", "boundary"):
-            values = np.squeeze(values, axis=3)
-
-        return values
+        return lb_slice.get_values(*indices, attribute)
 
     for attribute_name in dir(LBFluidRoutines):
         if attribute_name in dir(LBSlice) or not isinstance(

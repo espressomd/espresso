@@ -63,14 +63,6 @@ class LBSliceTest(ut.TestCase):
         output_dens = lb_fluid[1:-1:2, 5, 3:6:2].density
         np.testing.assert_array_almost_equal(input_dens, np.copy(output_dens))
 
-        # density on test slice [1:-1:2, 5, 3:6:2] with an extra dimension of
-        # length 1 (allowed for scalar properties)
-        input_dens = np.random.rand(4, 1, 2, 1)
-        lb_fluid[1:-1:2, 5, 3:6:2].density = input_dens
-        output_dens = lb_fluid[1:-1:2, 5, 3:6:2].density
-        np.testing.assert_array_almost_equal(
-            np.squeeze(input_dens, axis=3), np.copy(output_dens))
-
         # density broadcast
         lb_fluid[:, :, 0].density = 1.2
         np.testing.assert_array_almost_equal(
