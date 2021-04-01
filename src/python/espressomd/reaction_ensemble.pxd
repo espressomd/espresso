@@ -22,7 +22,7 @@ from libcpp.pair cimport pair
 from libcpp.string cimport string
 from libcpp.map cimport map
 
-cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
+cdef extern from "reaction_methods/SingleReaction.hpp" namespace "ReactionMethods":
 
     ctypedef struct SingleReaction:
         vector[int] reactant_types
@@ -33,7 +33,9 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         int nu_bar
         double get_acceptance_rate()
 
-    cdef cppclass CReactionAlgorithm "ReactionEnsemble::ReactionAlgorithm":
+cdef extern from "reaction_methods/ReactionAlgorithm.hpp" namespace "ReactionMethods":
+
+    cdef cppclass CReactionAlgorithm "ReactionMethods::ReactionAlgorithm":
         int CReactionAlgorithm(int seed)
         int do_reaction(int reaction_steps) except +
         bool do_global_mc_move_for_particles_of_type(int type, int particle_number_of_type, bool use_wang_landau)
@@ -58,10 +60,14 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         double slab_end_z
         int non_interacting_type
 
-    cdef cppclass CReactionEnsemble "ReactionEnsemble::ReactionEnsemble"(CReactionAlgorithm):
+cdef extern from "reaction_methods/ReactionEnsemble.hpp" namespace "ReactionMethods":
+
+    cdef cppclass CReactionEnsemble "ReactionMethods::ReactionEnsemble"(CReactionAlgorithm):
         CReactionEnsemble(int seed)
 
-    cdef cppclass CWangLandauReactionEnsemble "ReactionEnsemble::WangLandauReactionEnsemble"(CReactionAlgorithm):
+cdef extern from "reaction_methods/WangLandauReactionEnsemble.hpp" namespace "ReactionMethods":
+
+    cdef cppclass CWangLandauReactionEnsemble "ReactionMethods::WangLandauReactionEnsemble"(CReactionAlgorithm):
         CWangLandauReactionEnsemble(int seed)
         double wang_landau_parameter
         double final_wang_landau_parameter
@@ -77,10 +83,14 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         void load_wang_landau_checkpoint(string identifier) except +
         void write_wang_landau_results_to_file(string filename) except +
 
-    cdef cppclass CConstantpHEnsemble "ReactionEnsemble::ConstantpHEnsemble"(CReactionAlgorithm):
+cdef extern from "reaction_methods/ConstantpHEnsemble.hpp" namespace "ReactionMethods":
+
+    cdef cppclass CConstantpHEnsemble "ReactionMethods::ConstantpHEnsemble"(CReactionAlgorithm):
         CConstantpHEnsemble(int seed)
         double m_constant_pH
 
-    cdef cppclass CWidomInsertion "ReactionEnsemble::WidomInsertion"(CReactionAlgorithm):
+cdef extern from "reaction_methods/WidomInsertion.hpp" namespace "ReactionMethods":
+
+    cdef cppclass CWidomInsertion "ReactionMethods::WidomInsertion"(CReactionAlgorithm):
         CWidomInsertion(int seed)
         pair[double, double] measure_excess_chemical_potential(int reaction_id) except +
