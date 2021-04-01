@@ -83,10 +83,12 @@ cdef class HydrodynamicInteraction(Actor):
         return _construct, (self.__class__, self._params), None
 
     def __getitem__(self, key):
+        cdef Vector3i shape
         if isinstance(key, (tuple, list, np.ndarray)):
             if len(key) == 3:
                 if any(isinstance(typ, slice) for typ in key):
-                    return LBSlice(key)
+                    shape = lb_lbfluid_get_shape()
+                    return LBSlice(key, (shape[0], shape[1], shape[2]))
                 else:
                     return LBFluidRoutines(np.array(key))
         else:
@@ -553,8 +555,7 @@ cdef class LBFluidRoutines:
 
 class LBSlice:
 
-    def __init__(self, key):
-        shape = lb_lbfluid_get_shape()
+    def __init__(self, key, shape):
         self.x_indices, self.y_indices, self.z_indices = self.get_indices(
             key, shape[0], shape[1], shape[2])
 
