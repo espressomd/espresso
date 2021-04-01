@@ -16,9 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd.lb
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 
+@utx.skipIfMissingFeatures("LB_WALBERLA")
 class LBSliceTest(ut.TestCase):
 
     """This simple test first writes random numbers and then reads them 
