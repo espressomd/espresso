@@ -596,7 +596,7 @@ def _add_lb_slice_properties():
 
     """
 
-    def seta(lb_slice, value, attribute):
+    def set_attribute(lb_slice, value, attribute):
         """
         Setter function that sets attribute on every member of lb_slice.
         If values contains only one element, all members are set to it.
@@ -624,7 +624,7 @@ def _add_lb_slice_properties():
 
         lb_slice.set_values(*indices, attribute, value)
 
-    def geta(lb_slice, attribute):
+    def get_attribute(lb_slice, attribute):
         """
         Getter function that copies attribute from every member of
         lb_slice into an array (if possible).
@@ -645,8 +645,10 @@ def _add_lb_slice_properties():
             continue
 
         # synthesize a new property
-        new_property = property(functools.partial(geta, attribute=attribute_name), functools.partial(
-            seta, attribute=attribute_name), doc=getattr(LBFluidRoutines, attribute_name).__doc__ or f'{attribute_name} for a slice')
+        new_property = property(
+            functools.partial(get_attribute, attribute=attribute_name),
+            functools.partial(set_attribute, attribute=attribute_name),
+            doc=getattr(LBFluidRoutines, attribute_name).__doc__ or f'{attribute_name} for a slice')
         # attach the property to LBSlice
         setattr(LBSlice, attribute_name, new_property)
 
