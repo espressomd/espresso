@@ -26,7 +26,9 @@
 BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
 
   Particle p;
+#ifdef MASS
   p.p.mass = 2.;
+#endif
   p.m.v = {3., 4., 5.};
 
   auto const expected = 0.5 * p.p.mass * p.m.v.norm2();
@@ -36,7 +38,9 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
 #ifdef VIRTUAL_SITES
   {
     Particle p;
+#ifdef MASS
     p.p.mass = 2.;
+#endif
     p.p.is_virtual = true;
     p.m.v = {3., 4., 5.};
 
@@ -64,7 +68,9 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
 
 BOOST_AUTO_TEST_CASE(kinetic_energy_) {
   Particle p;
+#ifdef MASS
   p.p.mass = 2.;
+#endif
   p.m.v = {3., 4., 5.};
 
 #ifdef ROTATION
