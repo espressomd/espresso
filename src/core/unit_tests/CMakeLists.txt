@@ -51,3 +51,4 @@ unit_test(NAME reaction_ensemble_utils_test SRC
 unit_test(NAME reaction_ensemble_classes_test SRC
           reaction_ensemble_classes_test.cpp DEPENDS EspressoCore Boost::mpi
           MPI::MPI_CXX)
+unit_test(NAME energy_test SRC energy_test.cpp DEPENDS EspressoCore)
