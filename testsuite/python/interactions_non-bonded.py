@@ -74,78 +74,43 @@ class InteractionsNonBondedTest(ut.TestCase):
         lj_e1 = 10.32
         lj_e2 = 5.81
         lj_shift = -0.13
+        lj_nsteps = 231
 
-        self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off,
-            b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
-
-        E_ref = tests_common.lj_generic_potential(
-            r=np.arange(1, 232) * self.step_width, eps=lj_eps, sig=lj_sig,
-            cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
-            e2=lj_e2, shift=lj_shift)
-
-        for i in range(231):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.lj_generic_force(
-                espressomd, r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
-                cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
-                e2=lj_e2)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref[i])
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(
-            epsilon=0.)
+        self.run_test("generic_lennard_jones",
+                      {"epsilon": lj_eps,
+                       "sigma": lj_sig,
+                       "cutoff": lj_cut,
+                       "offset": lj_off,
+                       "b1": lj_b1,
+                       "b2": lj_b2,
+                       "e1": lj_e1,
+                       "e2": lj_e2,
+                       "shift": lj_shift},
+                      lambda r: tests_common.lj_generic_force(espressomd,
+                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2),
+                      lambda r: tests_common.lj_generic_potential(
+                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2,
+                          shift=lj_shift),
+                      lj_nsteps)
 
     # Test WCA Potential
     @utx.skipIfMissingFeatures("WCA")
     def test_wca(self):
+
         wca_eps = 2.12
         wca_sig = 1.37
         wca_cutoff = wca_sig * 2.**(1. / 6.)
-
         wca_shift = -((wca_sig / wca_cutoff)**12 - (wca_sig / wca_cutoff)**6)
+        wca_nsteps = 231
 
-        self.system.non_bonded_inter[0, 0].wca.set_params(epsilon=wca_eps,
-                                                          sigma=wca_sig)
-
-        E_ref = tests_common.lj_generic_potential(
-            r=np.arange(1, 232) * self.step_width, eps=wca_eps, sig=wca_sig,
-            cutoff=wca_cutoff, shift=4. * wca_shift)
-
-        for i in range(231):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.lj_generic_force(
-                espressomd, r=(i + 1) * self.step_width, eps=wca_eps,
-                sig=wca_sig, cutoff=wca_cutoff)
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref[i])
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[0, 0].wca.set_params(epsilon=0., sigma=1.)
+        self.run_test("wca",
+                      {"epsilon": wca_eps,
+                       "sigma": wca_sig},
+                      lambda r: tests_common.lj_generic_force(espressomd,
+                          r, eps=wca_eps, sig=wca_sig, cutoff=wca_cutoff),
+                      lambda r: tests_common.lj_generic_potential(
+                          r, eps=wca_eps, sig=wca_sig, cutoff=wca_cutoff, shift=4. * wca_shift),
+                      wca_nsteps)
 
     # Test Generic Lennard-Jones Softcore Potential
     @utx.skipIfMissingFeatures("LJGEN_SOFTCORE")
@@ -162,40 +127,26 @@ class InteractionsNonBondedTest(ut.TestCase):
         lj_shift = 0.13
         lj_delta = 0.1
         lj_lam = 0.34
+        lj_nsteps = 231
 
-        self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off,
-            b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift,
-            delta=lj_delta, lam=lj_lam)
-
-        for i in range(231):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.lj_generic_potential(
-                r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
-                cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
-                e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.lj_generic_force(
-                espressomd, r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
-                cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
-                e2=lj_e2, delta=lj_delta, lam=lj_lam)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(
-            epsilon=0.)
+        self.run_test("generic_lennard_jones",
+                      {"epsilon": lj_eps,
+                       "sigma": lj_sig,
+                       "cutoff": lj_cut,
+                       "offset": lj_off,
+                       "b1": lj_b1,
+                       "b2": lj_b2,
+                       "e1": lj_e1,
+                       "e2": lj_e2,
+                       "shift": lj_shift,
+                       "delta": lj_delta,
+                       "lam": lj_lam},
+                      lambda r: tests_common.lj_generic_force(espressomd,
+                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, delta=lj_delta, lam=lj_lam),
+                      lambda r: tests_common.lj_generic_potential(
+                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2,
+                          shift=lj_shift, delta=lj_delta, lam=lj_lam),
+                      lj_nsteps)
 
     # Test Lennard-Jones Potential
     @utx.skipIfMissingFeatures("LENNARD_JONES")
@@ -205,35 +156,19 @@ class InteractionsNonBondedTest(ut.TestCase):
         lj_sig = 1.03
         lj_cut = 1.123
         lj_shift = 0.92
+        lj_nsteps = 113
 
-        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift=lj_shift)
-
-        for i in range(113):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.lj_potential(
-                (i + 1) * self.step_width, lj_eps, lj_sig, lj_cut,
-                shift=lj_shift)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * \
-                tests_common.lj_force(espressomd, r=(i + 1) * self.step_width,
-                                      eps=lj_eps, sig=lj_sig, cutoff=lj_cut)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=0.)
+        self.run_test("lennard_jones",
+                      {"epsilon": lj_eps,
+                       "sigma": lj_sig,
+                       "cutoff": lj_cut,
+                       "shift": lj_shift},
+                      lambda r: tests_common.lj_force(espressomd,
+                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut),
+                      lambda r: tests_common.lj_potential(
+                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut,
+                          shift=lj_shift),
+                      lj_nsteps)
 
     # Test Lennard-Jones Cosine Potential
     @utx.skipIfMissingFeatures("LJCOS")
@@ -243,37 +178,18 @@ class InteractionsNonBondedTest(ut.TestCase):
         ljcos_sig = 0.73
         ljcos_cut = 1.523
         ljcos_offset = 0.223
+        ljcos_nsteps = 175
 
-        self.system.non_bonded_inter[0, 0].lennard_jones_cos.set_params(
-            epsilon=ljcos_eps, sigma=ljcos_sig, cutoff=ljcos_cut,
-            offset=ljcos_offset)
-
-        for i in range(175):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.lj_cos_potential(
-                (i + 1) * self.step_width, eps=ljcos_eps, sig=ljcos_sig,
-                cutoff=ljcos_cut, offset=ljcos_offset)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.lj_cos_force(
-                espressomd, (i + 1) * self.step_width, eps=ljcos_eps,
-                sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[
-            0, 0].lennard_jones_cos.set_params(epsilon=0.)
+        self.run_test("lennard_jones_cos",
+                      {"epsilon": ljcos_eps,
+                       "sigma": ljcos_sig,
+                       "cutoff": ljcos_cut,
+                       "offset": ljcos_offset},
+                      lambda r: tests_common.lj_cos_force(espressomd,
+                          r, eps=ljcos_eps, sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset),
+                      lambda r: tests_common.lj_cos_potential(
+                          r, eps=ljcos_eps, sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset),
+                      ljcos_nsteps)
 
     # Test Lennard-Jones Cosine^2 Potential
     @utx.skipIfMissingFeatures("LJCOS2")
@@ -283,37 +199,18 @@ class InteractionsNonBondedTest(ut.TestCase):
         ljcos2_sig = 0.73
         ljcos2_width = 1.523
         ljcos2_offset = 0.321
+        ljcos2_nsteps = 267
 
-        self.system.non_bonded_inter[0, 0].lennard_jones_cos2.set_params(
-            epsilon=ljcos2_eps, sigma=ljcos2_sig, offset=ljcos2_offset,
-            width=ljcos2_width)
-
-        for i in range(267):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.lj_cos2_potential(
-                (i + 1) * self.step_width, eps=ljcos2_eps, sig=ljcos2_sig,
-                offset=ljcos2_offset, width=ljcos2_width)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.lj_cos2_force(
-                espressomd, r=(i + 1) * self.step_width, eps=ljcos2_eps,
-                sig=ljcos2_sig, offset=ljcos2_offset, width=ljcos2_width)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[
-            0, 0].lennard_jones_cos2.set_params(epsilon=0.)
+        self.run_test("lennard_jones_cos2",
+                      {"epsilon": ljcos2_eps,
+                       "sigma": ljcos2_sig,
+                       "width": ljcos2_width,
+                       "offset": ljcos2_offset},
+                      lambda r: tests_common.lj_cos2_force(espressomd,
+                          r, eps=ljcos2_eps, sig=ljcos2_sig, width=ljcos2_width, offset=ljcos2_offset),
+                      lambda r: tests_common.lj_cos2_potential(
+                          r, eps=ljcos2_eps, sig=ljcos2_sig, width=ljcos2_width, offset=ljcos2_offset),
+                      ljcos2_nsteps)
 
     # Test Smooth-step Potential
     @utx.skipIfMissingFeatures("SMOOTH_STEP")
@@ -325,36 +222,20 @@ class InteractionsNonBondedTest(ut.TestCase):
         sst_d = 2.52
         sst_n = 11
         sst_k0 = 2.13
+        sst_nsteps = 126
 
-        self.system.non_bonded_inter[0, 0].smooth_step.set_params(
-            eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n,
-            k0=sst_k0)
-
-        for i in range(126):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.smooth_step_potential(
-                r=(i + 1) * self.step_width, eps=sst_eps, sig=sst_sig,
-                cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.smooth_step_force(
-                r=(i + 1) * self.step_width, eps=sst_eps, sig=sst_sig,
-                cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[0, 0].smooth_step.set_params(d=0., eps=0.)
+        self.run_test("smooth_step",
+                      {"eps": sst_eps,
+                       "sig": sst_sig,
+                       "cutoff": sst_cut,
+                       "d": sst_d,
+                       "n": sst_n,
+                       "k0": sst_k0},
+                      lambda r: tests_common.smooth_step_force(
+                          r, eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0),
+                      lambda r: tests_common.smooth_step_potential(
+                          r, eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0),
+                      sst_nsteps)
 
     # Test BMHTF Potential
     @utx.skipIfMissingFeatures("BMHTF_NACL")
@@ -366,36 +247,20 @@ class InteractionsNonBondedTest(ut.TestCase):
         bmhtf_d = 3.33
         bmhtf_sig = 0.123
         bmhtf_cut = 1.253
+        bmhtf_nsteps = 126
 
-        self.system.non_bonded_inter[0, 0].bmhtf.set_params(
-            a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig,
-            cutoff=bmhtf_cut)
-
-        for i in range(126):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.bmhtf_potential(
-                r=(i + 1) * self.step_width, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c,
-                d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.bmhtf_force(
-                r=(i + 1) * self.step_width, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c,
-                d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[0, 0].bmhtf.set_params(a=0., c=0., d=0.)
+        self.run_test("bmhtf",
+                      {"a": bmhtf_a,
+                       "b": bmhtf_b,
+                       "c": bmhtf_c,
+                       "d": bmhtf_d,
+                       "sig": bmhtf_sig,
+                       "cutoff": bmhtf_cut},
+                      lambda r: tests_common.bmhtf_force(
+                          r, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut),
+                      lambda r: tests_common.bmhtf_potential(
+                          r, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut),
+                      bmhtf_nsteps)
 
     # Test Morse Potential
     @utx.skipIfMissingFeatures("MORSE")
@@ -405,35 +270,18 @@ class InteractionsNonBondedTest(ut.TestCase):
         m_alpha = 3.03
         m_cut = 1.253
         m_rmin = 0.123
+        m_nsteps = 126
 
-        self.system.non_bonded_inter[0, 0].morse.set_params(
-            eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin)
-
-        for i in range(126):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.morse_potential(
-                r=(i + 1) * self.step_width, eps=m_eps, alpha=m_alpha,
-                cutoff=m_cut, rmin=m_rmin)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.morse_force(
-                r=(i + 1) * self.step_width, eps=m_eps, alpha=m_alpha,
-                cutoff=m_cut, rmin=m_rmin)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[0, 0].morse.set_params(eps=0.)
+        self.run_test("morse",
+                      {"eps": m_eps,
+                       "alpha": m_alpha,
+                       "rmin": m_rmin,
+                       "cutoff": m_cut},
+                      lambda r: tests_common.morse_force(
+                          r, eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin),
+                      lambda r: tests_common.morse_potential(
+                          r, eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin),
+                      m_nsteps)
 
     # Test Buckingham Potential
     @utx.skipIfMissingFeatures("BUCKINGHAM")
@@ -446,76 +294,43 @@ class InteractionsNonBondedTest(ut.TestCase):
         b_disc = 1.03
         b_cut = 2.253
         b_shift = 0.133
+        b_nsteps = 226
 
-        self.system.non_bonded_inter[0, 0].buckingham.set_params(
-            a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut,
-            shift=b_shift)
-
-        for i in range(226):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.buckingham_potential(
-                r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d,
-                discont=b_disc, cutoff=b_cut, shift=b_shift)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.buckingham_force(
-                r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d,
-                discont=b_disc, cutoff=b_cut, shift=b_shift)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[
-            0, 0].buckingham.set_params(a=0., c=0., d=0., shift=0.)
+        self.run_test("buckingham",
+                      {"a": b_a,
+                       "b": b_b,
+                       "c": b_c,
+                       "d": b_d,
+                       "discont": b_disc,
+                       "cutoff": b_cut,
+                       "shift": b_shift},
+                      lambda r: tests_common.buckingham_force(
+                          r, a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift),
+                      lambda r: tests_common.buckingham_potential(
+                          r, a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift),
+                      b_nsteps)
 
     # Test Soft-sphere Potential
     @utx.skipIfMissingFeatures("SOFT_SPHERE")
     def test_soft_sphere(self):
+
         ss_a = 1.92
         ss_n = 3.03
         ss_cut = 1.123
         ss_off = 0.123
+        ss_nsteps = 113
+        ss_n_initial_steps = 12
 
-        self.system.non_bonded_inter[0, 0].soft_sphere.set_params(
-            a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off)
-
-        for i in range(12):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-        for i in range(113):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.soft_sphere_potential(
-                r=(i + 13) * self.step_width, a=ss_a, n=ss_n, cutoff=ss_cut,
-                offset=ss_off)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.soft_sphere_force(
-                r=(i + 13) * self.step_width, a=ss_a, n=ss_n, cutoff=ss_cut,
-                offset=ss_off)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[0, 0].soft_sphere.set_params(a=0.)
+        self.run_test("soft_sphere",
+                      {"a": ss_a,
+                       "n": ss_n,
+                       "cutoff": ss_cut,
+                       "offset": ss_off},
+                      lambda r: tests_common.soft_sphere_force(
+                          r, a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off),
+                      lambda r: tests_common.soft_sphere_potential(
+                          r, a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off),
+                      ss_nsteps, ss_n_initial_steps)
 
     # Test Hertzian Potential
     @utx.skipIfMissingFeatures("HERTZIAN")
@@ -523,33 +338,16 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         h_eps = 6.92
         h_sig = 2.432
+        h_nsteps = 244
 
-        self.system.non_bonded_inter[0, 0].hertzian.set_params(
-            eps=h_eps, sig=h_sig)
-
-        for i in range(244):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.hertzian_potential(
-                r=(i + 1) * self.step_width, eps=h_eps, sig=h_sig)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.hertzian_force(
-                r=(i + 1) * self.step_width, eps=h_eps, sig=h_sig)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[0, 0].hertzian.set_params(eps=0.)
+        self.run_test("hertzian",
+                      {"eps": h_eps,
+                       "sig": h_sig},
+                      lambda r: tests_common.hertzian_force(
+                          r, eps=h_eps, sig=h_sig),
+                      lambda r: tests_common.hertzian_potential(
+                          r, eps=h_eps, sig=h_sig),
+                      h_nsteps)
 
     # Test Gaussian Potential
     @utx.skipIfMissingFeatures("GAUSSIAN")
@@ -558,33 +356,17 @@ class InteractionsNonBondedTest(ut.TestCase):
         g_eps = 6.92
         g_sig = 4.03
         g_cut = 1.243
+        g_nsteps = 125
 
-        self.system.non_bonded_inter[0, 0].gaussian.set_params(
-            eps=g_eps, sig=g_sig, cutoff=g_cut)
-
-        for i in range(125):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.gaussian_potential(
-                r=(i + 1) * self.step_width, eps=g_eps, sig=g_sig, cutoff=g_cut)
-
-            # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
-            f1_ref = self.axis * tests_common.gaussian_force(
-                r=(i + 1) * self.step_width, eps=g_eps, sig=g_sig, cutoff=g_cut)
-
-            # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
-            np.testing.assert_array_equal(f0_sim, -f1_sim)
-            # and has correct value.
-            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
-
-        self.system.non_bonded_inter[0, 0].gaussian.set_params(eps=0.)
+        self.run_test("gaussian",
+                      {"eps": g_eps,
+                       "sig": g_sig,
+                       "cutoff": g_cut},
+                      lambda r: tests_common.gaussian_force(
+                          r, eps=g_eps, sig=g_sig, cutoff=g_cut),
+                      lambda r: tests_common.gaussian_potential(
+                          r, eps=g_eps, sig=g_sig, cutoff=g_cut),
+                      g_nsteps)
 
     # Test the Gay-Berne potential and the resulting force and torque
     @utx.skipIfMissingFeatures("GAY_BERNE")
@@ -729,6 +511,36 @@ class InteractionsNonBondedTest(ut.TestCase):
             sig=sigma_0, cut=0, eps=0, k1=k_1, k2=k_2, mu=mu, nu=nu)
         self.system.integrator.run(0)
         self.assertEqual(self.system.analysis.energy()["non_bonded"], 0.0)
+
+    def run_test(self, name, parameters, force_func,
+                 energy_func, n_steps, n_initial_steps=0):
+
+        getattr(self.system.non_bonded_inter[0, 0], name).set_params(
+            **parameters)
+
+        for i in range(n_initial_steps):
+            self.system.part[1].pos = self.system.part[1].pos + self.step
+
+        for i in range(n_steps):
+            self.system.part[1].pos = self.system.part[1].pos + self.step
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["non_bonded"]
+            E_ref = energy_func((i + n_initial_steps + 1) * self.step_width)
+
+            # Calculate forces
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
+            f1_ref = self.axis * \
+                force_func((i + n_initial_steps + 1) * self.step_width)
+
+            # Check that energies match ...
+            self.assertFractionAlmostEqual(E_sim, E_ref)
+            # force equals minus the counter-force ...
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
+            # and has correct value.
+            self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
 
 if __name__ == '__main__':
