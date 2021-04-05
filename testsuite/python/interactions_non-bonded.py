@@ -517,26 +517,29 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         getattr(self.system.non_bonded_inter[0, 0], name).set_params(
             **parameters)
+        p0, p1 = self.system.part[:]
+
+        E_ref = [energy_func(i * self.step_width)
+                 for i in np.arange(n_steps) + n_initial_steps + 1]
 
         for i in range(n_initial_steps):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
 
         for i in range(n_steps):
-            self.system.part[1].pos = self.system.part[1].pos + self.step
+            p1.pos = p1.pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = energy_func((i + n_initial_steps + 1) * self.step_width)
 
             # Calculate forces
-            f0_sim = np.copy(self.system.part[0].f)
-            f1_sim = np.copy(self.system.part[1].f)
+            f0_sim = np.copy(p0.f)
+            f1_sim = np.copy(p1.f)
             f1_ref = self.axis * \
                 force_func((i + n_initial_steps + 1) * self.step_width)
 
             # Check that energies match ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
+            self.assertFractionAlmostEqual(E_sim, E_ref[i])
             # force equals minus the counter-force ...
             np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
