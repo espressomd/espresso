@@ -31,46 +31,43 @@ class RotationalInertia(ut.TestCase):
     L_0_lab = np.zeros((3))
     L_lab = np.zeros((3))
 
+    def tearDown(self):
+        self.system.part.clear()
+
     # Angular momentum
-    def L_body(self, part):
-        return self.system.part[part].omega_body[:] * \
-            self.system.part[part].rinertia[:]
+    def L_body(self, p):
+        return p.omega_body[:] * p.rinertia[:]
 
     # Set the angular momentum
-    def set_L_0(self, part):
-        L_0_body = self.L_body(part)
-        self.L_0_lab = tests_common.convert_vec_body_to_space(
-            self.system, part, L_0_body)
+    def set_L_0(self, p):
+        L_0_body = self.L_body(p)
+        self.L_0_lab = tests_common.convert_vec_body_to_space(p, L_0_body)
 
-    def set_L(self, part):
-        L_body = self.L_body(part)
-        self.L_lab = tests_common.convert_vec_body_to_space(
-            self.system, part, L_body)
+    def set_L(self, p):
+        L_body = self.L_body(p)
+        self.L_lab = tests_common.convert_vec_body_to_space(p, L_body)
 
     def test_stability(self):
-        self.system.part.clear()
-        self.system.part.add(
-            pos=np.array([0.0, 0.0, 0.0]), id=0, rotation=(1, 1, 1))
+        p = self.system.part.add(pos=[0.0, 0.0, 0.0], rotation=(1, 1, 1))
 
         # Inertial motion around the stable and unstable axes
 
         tol = 4E-3
         # Anisotropic inertial moment. Stable axes correspond to J[1] and J[2].
-        # The unstable axis corresponds to J[0]. These values relation is J[1]
-        # < J[0] < J[2].
-        J = np.array([5, 0.5, 18.5])
+        # The unstable axis corresponds to J[0]. These values relation is
+        # J[1] < J[0] < J[2].
+        p.rinertia = [5, 0.5, 18.5]
 
-        self.system.part[0].rinertia = J[:]
         # Validation of J[1] stability
         # ----------------------------
         self.system.time_step = 0.0006
         # Stable omega component should be larger than other components.
         stable_omega = 57.65
-        self.system.part[0].omega_body = np.array([0.15, stable_omega, -0.043])
-        self.set_L_0(0)
+        p.omega_body = np.array([0.15, stable_omega, -0.043])
+        self.set_L_0(p)
 
         for i in range(100):
-            self.set_L(0)
+            self.set_L(p)
             for k in range(3):
                 self.assertAlmostEqual(
                     self.L_lab[k], self.L_0_lab[k], delta=tol,
@@ -79,10 +76,10 @@ class RotationalInertia(ut.TestCase):
                         '{1}, expected {2}, got {3}'.format(
                         i, k, self.L_0_lab[k], self.L_lab[k]))
             self.assertAlmostEqual(
-                self.system.part[0].omega_body[1], stable_omega, delta=tol,
+                p.omega_body[1], stable_omega, delta=tol,
                 msg='Inertial motion around stable axis J1: Deviation in omega '
                     'is too large. Step {0}, coordinate 1, expected {1}, got {2}'
-                    .format(i, stable_omega, self.system.part[0].omega_body[1]))
+                    .format(i, stable_omega, p.omega_body[1]))
             self.system.integrator.run(10)
 
         # Validation of J[2] stability
@@ -90,12 +87,11 @@ class RotationalInertia(ut.TestCase):
         self.system.time_step = 0.01
         # Stable omega component should be larger than other components.
         stable_omega = 3.2
-        self.system.part[0].omega_body = np.array(
-            [0.011, -0.043, stable_omega])
-        self.set_L_0(0)
+        p.omega_body = np.array([0.011, -0.043, stable_omega])
+        self.set_L_0(p)
 
         for i in range(100):
-            self.set_L(0)
+            self.set_L(p)
             for k in range(3):
                 self.assertAlmostEqual(
                     self.L_lab[k], self.L_0_lab[k], delta=tol,
@@ -104,10 +100,10 @@ class RotationalInertia(ut.TestCase):
                         '{1}, expected {2}, got {3}'.format(
                         i, k, self.L_0_lab[k], self.L_lab[k]))
             self.assertAlmostEqual(
-                self.system.part[0].omega_body[2], stable_omega, delta=tol,
+                p.omega_body[2], stable_omega, delta=tol,
                 msg='Inertial motion around stable axis J2: Deviation in omega '
                     'is too large. Step {0}, coordinate 2, expected {1}, got {2}'
-                    .format(i, stable_omega, self.system.part[0].omega_body[2]))
+                    .format(i, stable_omega, p.omega_body[2]))
             self.system.integrator.run(10)
 
         # Validation of J[0]
@@ -115,12 +111,11 @@ class RotationalInertia(ut.TestCase):
         self.system.time_step = 0.001
         # Unstable omega component should be larger than other components.
         unstable_omega = 5.76
-        self.system.part[0].omega_body = np.array(
-            [unstable_omega, -0.043, 0.15])
-        self.set_L_0(0)
+        p.omega_body = np.array([unstable_omega, -0.043, 0.15])
+        self.set_L_0(p)
 
         for i in range(100):
-            self.set_L(0)
+            self.set_L(p)
             for k in range(3):
                 self.assertAlmostEqual(
                     self.L_lab[k], self.L_0_lab[k], delta=tol,
@@ -138,8 +133,6 @@ class RotationalInertia(ut.TestCase):
 
     def test_energy_and_momentum_conservation(self):
         system = self.system
-        system.part.clear()
-        system.thermostat.turn_off()
         p = system.part.add(pos=(0, 0, 0), rinertia=(1.1, 1.3, 1.5),
                             rotation=(1, 1, 1), omega_body=(2, 1, 4))
         E0 = self.energy(p)

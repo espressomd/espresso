@@ -32,13 +32,13 @@ class LangevinThermostat(ut.TestCase):
 
     def setUp(self):
         np.random.seed(42)
-
-    def tearDown(self):
         self.system.time_step = 1e-12
         self.system.cell_system.skin = 0.0
+        self.system.integrator.set_vv()
+
+    def tearDown(self):
         self.system.part.clear()
         self.system.thermostat.turn_off()
-        self.system.integrator.set_vv()
 
     def check_rng(self, per_particle_gamma=False):
         """Test for RNG consistency."""
@@ -152,9 +152,9 @@ class LangevinThermostat(ut.TestCase):
         v0 = np.array((5., 5., 5.))
 
         system.time_step = 0.0005
-        system.part.add(pos=(0, 0, 0), v=v0)
+        p = system.part.add(pos=(0, 0, 0), v=v0)
         if espressomd.has_features("MASS"):
-            system.part[0].mass = 3
+            p.mass = 3
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
             system.thermostat.set_langevin(kT=0, gamma=gamma_t_a, seed=41)
         else:
@@ -165,15 +165,13 @@ class LangevinThermostat(ut.TestCase):
             system.integrator.run(10)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 np.testing.assert_allclose(
-                    np.copy(system.part[0].v),
-                    v0 * np.exp(-gamma_t_a /
-                                system.part[0].mass * system.time),
+                    np.copy(p.v),
+                    v0 * np.exp(-gamma_t_a / p.mass * system.time),
                     atol=4E-4)
             else:
                 np.testing.assert_allclose(
-                    np.copy(system.part[0].v),
-                    v0 * np.exp(-gamma_t_i /
-                                system.part[0].mass * system.time),
+                    np.copy(p.v),
+                    v0 * np.exp(-gamma_t_i / p.mass * system.time),
                     atol=45E-4)
 
     @utx.skipIfMissingFeatures("ROTATION")
@@ -189,9 +187,9 @@ class LangevinThermostat(ut.TestCase):
         o0 = np.array((5., 5., 5.))
 
         system.time_step = 0.0001
-        system.part.add(pos=(0, 0, 0), omega_body=o0, rotation=(1, 1, 1))
+        p = system.part.add(pos=(0, 0, 0), omega_body=o0, rotation=(1, 1, 1))
         if espressomd.has_features("ROTATIONAL_INERTIA"):
-            system.part[0].rinertia = [2, 2, 2]
+            p.rinertia = [2, 2, 2]
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
             system.thermostat.set_langevin(
                 kT=0, gamma=gamma_t_a, gamma_rotation=gamma_r_a, seed=41)
@@ -201,18 +199,18 @@ class LangevinThermostat(ut.TestCase):
 
         system.time = 0
         if espressomd.has_features("ROTATIONAL_INERTIA"):
-            rinertia = np.copy(system.part[0].rinertia)
+            rinertia = np.copy(p.rinertia)
         else:
             rinertia = np.array((1, 1, 1))
         for _ in range(100):
             system.integrator.run(10)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 np.testing.assert_allclose(
-                    np.copy(system.part[0].omega_body),
+                    np.copy(p.omega_body),
                     o0 * np.exp(-gamma_r_a / rinertia * system.time), atol=5E-4)
             else:
                 np.testing.assert_allclose(
-                    np.copy(system.part[0].omega_body),
+                    np.copy(p.omega_body),
                     o0 * np.exp(-gamma_r_i / rinertia * system.time), atol=5E-4)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")

@@ -45,42 +45,44 @@ class AnalyzeEnergy(ut.TestCase):
         cls.system.bonded_inter.add(cls.harmonic)
 
     def setUp(self):
+        self.system.part.add(pos=[1, 2, 2], type=0)
+        self.system.part.add(pos=[5, 2, 2], type=0)
+
+    def tearDown(self):
         self.system.part.clear()
-        self.system.part.add(id=0, pos=[1, 2, 2], type=0)
-        self.system.part.add(id=1, pos=[5, 2, 2], type=0)
 
     def test_kinetic(self):
-        self.system.part[0].pos = [1, 2, 2]
-        self.system.part[1].pos = [5, 2, 2]
-        self.system.part[0].v = [3, 4, 5]
-        self.system.part[1].v = [0, 0, 0]
+        p0, p1 = self.system.part[:]
+        p0.pos = [1, 2, 2]
+        p1.pos = [5, 2, 2]
         # single moving particle
+        p0.v = [3, 4, 5]
+        p1.v = [0, 0, 0]
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 25., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 25., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
         # two moving particles
-        self.system.part[1].v = [3, 4, 5]
+        p1.v = [3, 4, 5]
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
-        self.system.part[0].v = [0, 0, 0]
-        self.system.part[1].v = [0, 0, 0]
 
     def test_non_bonded(self):
-        self.system.part[0].pos = [1, 2, 2]
-        self.system.part[1].pos = [2, 2, 2]
+        p0, p1 = self.system.part[:]
+        p0.pos = [1, 2, 2]
+        p1.pos = [2, 2, 2]
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 1., delta=1e-5)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
         # add another pair of particles
-        self.system.part.add(id=2, pos=[3, 2, 2], type=1)
-        self.system.part.add(id=3, pos=[4, 2, 2], type=1)
+        self.system.part.add(pos=[3, 2, 2], type=1)
+        self.system.part.add(pos=[4, 2, 2], type=1)
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
@@ -90,31 +92,28 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded", 0, 0]
                                + energy["non_bonded", 0, 1]
                                + energy["non_bonded", 1, 1], energy["total"], delta=1e-7)
-        self.system.part[2].remove()
-        self.system.part[3].remove()
 
     def test_bonded(self):
-        self.system.part[0].pos = [1, 2, 2]
-        self.system.part[1].pos = [3, 2, 2]
-        self.system.part[0].v = [0, 0, 0]
-        self.system.part[1].v = [0, 0, 0]
+        p0, p1 = self.system.part[:]
+        p0.pos = [1, 2, 2]
+        p1.pos = [3, 2, 2]
         # single bond
-        self.system.part[0].add_bond((self.harmonic, 1))
+        p0.add_bond((self.harmonic, p1))
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 6, delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 6, delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
         # two bonds
-        self.system.part[1].add_bond((self.harmonic, 0))
+        p1.add_bond((self.harmonic, p0))
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 12, delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 12, delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
         # bonds deleted
-        self.system.part[0].delete_all_bonds()
-        self.system.part[1].delete_all_bonds()
+        p0.delete_all_bonds()
+        p1.delete_all_bonds()
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
@@ -122,46 +121,45 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
 
     def test_all(self):
-        self.system.part[0].pos = [1, 2, 2]
-        self.system.part[1].pos = [2, 2, 2]
-        self.system.part[0].v = [3, 4, 5]
-        self.system.part[1].v = [3, 4, 5]
+        p0, p1 = self.system.part[:]
+        p0.pos = [1, 2, 2]
+        p1.pos = [2, 2, 2]
+        p0.v = [3, 4, 5]
+        p1.v = [3, 4, 5]
         # single bond
-        self.system.part[0].add_bond((self.harmonic, 1))
+        p0.add_bond((self.harmonic, p1))
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 50. + 3. / 2. + 1., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 3. / 2., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
         # two bonds
-        self.system.part[1].add_bond((self.harmonic, 0))
+        p1.add_bond((self.harmonic, p0))
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 50. + 3 + 1., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
         # add another pair of particles
-        self.system.part.add(id=2, pos=[1, 5, 5], type=1)
-        self.system.part.add(id=3, pos=[2, 5, 5], type=1)
+        self.system.part.add(pos=[1, 5, 5], type=1)
+        self.system.part.add(pos=[2, 5, 5], type=1)
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(
             energy["total"], 50. + 3 + (1. + 1.), delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1. + 1., delta=1e-7)
-        self.system.part[2].remove()
-        self.system.part[3].remove()
-        self.system.part[0].delete_all_bonds()
 
     @utx.skipIfMissingFeatures(["ELECTROSTATICS", "P3M"])
     def test_electrostatics(self):
 
         from espressomd import electrostatics
 
-        self.system.part[0].pos = [1, 2, 2]
-        self.system.part[1].pos = [3, 2, 2]
-        self.system.part[0].q = 1
-        self.system.part[1].q = -1
+        p0, p1 = self.system.part[:]
+        p0.pos = [1, 2, 2]
+        p1.pos = [3, 2, 2]
+        p0.q = 1
+        p1.q = -1
         p3m = electrostatics.P3M(prefactor=1.0,
                                  accuracy=9.910945054074526e-08,
                                  mesh=[22, 22, 22],
@@ -180,10 +178,6 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0, delta=1e-7)
         self.assertAlmostEqual(energy["coulomb"], u_p3m, delta=1e-5)
-        self.system.part[0].q = 0
-        self.system.part[1].q = 0
-        self.system.part[0].pos = [1, 2, 2]
-        self.system.part[1].pos = [5, 2, 2]
 
 
 if __name__ == "__main__":

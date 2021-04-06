@@ -22,18 +22,17 @@ import numpy as np
 import unittest as ut
 
 import espressomd
-from espressomd.interactions import HarmonicBond
-from espressomd import reaction_ensemble
+import espressomd.interactions
+import espressomd.reaction_ensemble
 
 
-class ReactionEnsembleTest(ut.TestCase):
+class WangLandauReactionEnsembleTest(ut.TestCase):
 
-    """Test the core implementation of the wang_landau reaction ensemble.
+    """Test the core implementation of the Wang-Landau reaction ensemble.
 
-    Create a harmonic bond between the two reacting particles. Therefore the
-    potential energy is quadratic in the elongation of the bond and
-    therefore the density of states is known as the one of the harmonic
-    oscillator
+    Create a harmonic bond between the two reacting particles. Therefore
+    the potential energy is quadratic in the elongation of the bond and
+    the density of states is known as the one of the harmonic oscillator.
     """
 
     # System parameters
@@ -53,18 +52,18 @@ class ReactionEnsembleTest(ut.TestCase):
     # Setup System
     #
 
-    N0 = 1  # number of titratable units
     K_diss = 0.0088
 
-    system.part.add(id=0, pos=[0, 0, 0] * system.box_l, type=3)
-    system.part.add(id=1, pos=[1.0, 1.0, 1.0] * system.box_l / 2.0, type=1)
-    system.part.add(id=2, pos=np.random.random() * system.box_l, type=2)
-    system.part.add(id=3, pos=np.random.random() * system.box_l, type=2)
+    p1 = system.part.add(type=3, pos=[0, 0, 0])
+    p2 = system.part.add(type=1, pos=system.box_l / 2.0)
+    system.part.add(type=2, pos=np.random.random() * system.box_l)
+    system.part.add(type=2, pos=np.random.random() * system.box_l)
 
-    h = HarmonicBond(r_0=0, k=1)
-    system.bonded_inter[0] = h
-    system.part[0].add_bond((h, 1))
-    WLRE = reaction_ensemble.WangLandauReactionEnsemble(
+    harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0, k=1)
+    system.bonded_inter[0] = harmonic_bond
+    p1.add_bond((harmonic_bond, p2))
+
+    WLRE = espressomd.reaction_ensemble.WangLandauReactionEnsemble(
         temperature=temperature, exclusion_radius=0, seed=86)
     WLRE.add_reaction(
         gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
@@ -72,8 +71,8 @@ class ReactionEnsembleTest(ut.TestCase):
         default_charges={0: 0, 1: -1, 2: +1})
     system.setup_type_map([0, 1, 2, 3])
     # initialize wang_landau
-    file_input = "energy_boundaries.dat"
-    file_output = "WL_potential_out.dat"
+    file_input = "energy_boundaries_stats.dat"
+    file_output = "WL_potential_out_stats.dat"
     # generate preliminary_energy_run_results here, this should be done in a
     # separate simulation without energy reweighting using the update energy
     # functions
@@ -87,16 +86,7 @@ class ReactionEnsembleTest(ut.TestCase):
         do_not_sample_reaction_partition_function=True,
         full_path_to_output_filename=file_output)
 
-    def test_wang_landau_energy_recording(self):
-        self.WLRE.update_maximum_and_minimum_energies_at_current_state()
-        self.WLRE.write_out_preliminary_energy_run_results()
-        nbars, E_mins, E_maxs = np.loadtxt(
-            "preliminary_energy_run_results", unpack=True)
-        np.testing.assert_almost_equal(nbars, [0, 1])
-        np.testing.assert_almost_equal(E_mins, [27.0, -10])
-        np.testing.assert_almost_equal(E_maxs, [27.0, -10])
-
-    def test_wang_landau_output(self):
+    def test_potential_and_heat_capacity(self):
         self.WLRE.add_collective_variable_potential_energy(
             filename=self.file_input, delta=0.05)
 
@@ -106,7 +96,7 @@ class ReactionEnsembleTest(ut.TestCase):
                 self.WLRE.reaction()
                 for _ in range(2):
                     self.WLRE.displacement_mc_move_for_particles_of_type(3)
-            except reaction_ensemble.WangLandauHasConverged:
+            except espressomd.reaction_ensemble.WangLandauHasConverged:
                 break
 
         nbars, Epots, WL_potentials = np.loadtxt(self.file_output, unpack=True)
@@ -132,30 +122,6 @@ class ReactionEnsembleTest(ut.TestCase):
         self.assertAlmostEqual(
             heat_capacity, 1.5, places=1,
             msg="difference to analytical expected canonical configurational heat capacity too big")
-
-    def _wang_landau_output_checkpoint(self, filename):
-        # write first checkpoint
-        self.WLRE.write_wang_landau_checkpoint()
-        old_checkpoint = np.loadtxt(filename)
-
-        # modify old_checkpoint in memory and in file (this destroys the
-        # information contained in the checkpoint, but allows for testing of
-        # the functions)
-        modified_checkpoint = old_checkpoint
-        modified_checkpoint[0] = 1
-        np.savetxt(filename, modified_checkpoint)
-
-        # check whether changes are carried out correctly
-        self.WLRE.load_wang_landau_checkpoint()
-        self.WLRE.write_wang_landau_checkpoint()
-        new_checkpoint = np.loadtxt(filename)
-        np.testing.assert_almost_equal(new_checkpoint, modified_checkpoint)
-
-    def test_wang_landau_output_checkpoint(self):
-        filenames = ["checkpoint_wang_landau_potential_checkpoint",
-                     "checkpoint_wang_landau_histogram_checkpoint"]
-        for filename in filenames:
-            self._wang_landau_output_checkpoint(filename)
 
 
 if __name__ == "__main__":

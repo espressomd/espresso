@@ -26,58 +26,69 @@
  *  Implementation in \ref quartic.cpp.
  */
 
-#include "bonded_interaction_data.hpp"
-
 #include <utils/Vector.hpp>
+#include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/optional.hpp>
 
-/** Set the parameters for the quartic potential
- *
- *  @retval ES_OK on success
- *  @retval ES_ERROR on error
- */
-int quartic_set_params(int bond_type, double k0, double k1, double r,
-                       double r_cut);
+/** Parameters for quartic bond Potential */
+struct QuarticBond {
+  double k0, k1;
+  double r;
+  double r_cut;
+
+  double cutoff() const { return r_cut; }
+
+  static constexpr int num = 1;
+
+  QuarticBond() = default;
+  QuarticBond(double k0, double k1, double r, double r_cut);
+
+  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  boost::optional<double> energy(Utils::Vector3d const &dx) const;
+
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, long int /* version */) {
+    ar &k0;
+    ar &k1;
+    ar &r;
+    ar &r_cut;
+  }
+};
 
 /** Compute the quartic bond force.
- *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-quartic_pair_force(Bonded_ia_parameters const &iaparams,
-                   Utils::Vector3d const &dx) {
+QuarticBond::force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
-  if ((iaparams.p.quartic.r_cut > 0.0) && (dist > iaparams.p.quartic.r_cut)) {
+  if ((r_cut > 0.0) && (dist > r_cut)) {
     return {};
   }
 
-  auto const dr = dist - iaparams.p.quartic.r;
-  auto const fac =
-      (iaparams.p.quartic.k0 * dr + iaparams.p.quartic.k1 * dr * dr * dr) /
-      dist;
+  auto const dr = dist - r;
+  auto const fac = (k0 * dr + k1 * Utils::int_pow<3>(dr)) / dist;
   return -fac * dx;
 }
 
 /** Compute the quartic bond energy.
- *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-quartic_pair_energy(Bonded_ia_parameters const &iaparams,
-                    Utils::Vector3d const &dx) {
+QuarticBond::energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
-  if ((iaparams.p.quartic.r_cut > 0.0) && (dist > iaparams.p.quartic.r_cut)) {
+  if ((r_cut > 0.0) && (dist > r_cut)) {
     return {};
   }
 
-  double dr2 = Utils::sqr(dist - iaparams.p.quartic.r);
+  double dr2 = Utils::sqr(dist - r);
 
-  return 0.5 * iaparams.p.quartic.k0 * dr2 +
-         0.25 * iaparams.p.quartic.k1 * Utils::sqr(dr2);
+  return 0.5 * k0 * dr2 + 0.25 * k1 * Utils::sqr(dr2);
 }
 
 #endif

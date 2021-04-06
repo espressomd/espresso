@@ -31,8 +31,8 @@ class MagnetostaticsP3M(ut.TestCase):
 
     def setUp(self):
         self.system.box_l = [10., 10., 10.]
-        self.system.part.add(id=0, pos=[4.0, 2.0, 2.0], dip=(1.3, 2.1, -6))
-        self.system.part.add(id=1, pos=[6.0, 2.0, 2.0], dip=(7.3, 6.1, -4))
+        self.system.part.add(pos=[4.0, 2.0, 2.0], dip=(1.3, 2.1, -6.0))
+        self.system.part.add(pos=[6.0, 2.0, 2.0], dip=(7.3, 6.1, -4.0))
 
     def tearDown(self):
         self.system.part.clear()

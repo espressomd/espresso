@@ -32,9 +32,9 @@ class CoulombCloudWall(ut.TestCase):
     """This compares p3m, p3m_gpu electrostatic forces and energy against
     stored data."""
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    np.random.seed(seed=42)
+    data = np.genfromtxt(
+        abspath("data/coulomb_cloud_wall_duplicated_system.data"))
 
-    forces = {}
     tolerance = 1E-3
 
     # Reference energy from p3m in the tcl test case
@@ -45,18 +45,10 @@ class CoulombCloudWall(ut.TestCase):
         self.S.time_step = 0.01
         self.S.cell_system.skin = 0.4
 
-        data = np.genfromtxt(
-            abspath("data/coulomb_cloud_wall_duplicated_system.data"))
-
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f
-        for particle in data:
-            id = particle[0]
-            pos = particle[1:4]
-            q = particle[4]
-            f = particle[5:]
-            self.S.part.add(id=int(id), pos=pos, q=q)
-            self.forces[id] = f
+        self.S.part.add(pos=self.data[:, 1:4], q=self.data[:, 4])
+        self.forces = self.data[:, 5:8]
 
     def tearDown(self):
         self.S.part.clear()
@@ -66,10 +58,10 @@ class CoulombCloudWall(ut.TestCase):
         # Compare forces and energy now in the system to stored ones
 
         # Force
-        force_abs_diff = 0.
-        for p in self.S.part:
-            force_abs_diff += np.linalg.norm(p.f - self.forces[p.id])
-        force_abs_diff /= len(self.S.part)
+        force_diff = np.linalg.norm(self.S.part[:].f - self.forces, axis=1)
+        self.assertLess(
+            np.mean(force_diff), self.tolerance,
+            msg="Absolute force difference too large for method " + method_name)
 
         # Energy
         if energy:
@@ -77,9 +69,6 @@ class CoulombCloudWall(ut.TestCase):
                 self.S.analysis.energy()["total"], self.reference_energy,
                 delta=self.tolerance,
                 msg="Absolute energy difference too large for " + method_name)
-        self.assertLess(
-            force_abs_diff, self.tolerance,
-            msg="Absolute force difference too large for method " + method_name)
 
     # Tests for individual methods
 

@@ -24,33 +24,14 @@
  */
 
 #include "fene.hpp"
-#include "interactions.hpp"
 
-#include "bonded_interaction_data.hpp"
-
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
-int fene_set_params(int bond_type, double k, double drmax, double r0) {
-  if (bond_type < 0)
-    return ES_ERROR;
+FeneBond::FeneBond(double k, double drmax, double r0) {
+  this->k = k;
+  this->drmax = drmax;
+  this->r0 = r0;
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.fene.k = k;
-  bonded_ia_params[bond_type].p.fene.drmax = drmax;
-  bonded_ia_params[bond_type].p.fene.r0 = r0;
-
-  bonded_ia_params[bond_type].p.fene.drmax2 =
-      Utils::sqr(bonded_ia_params[bond_type].p.fene.drmax);
-  bonded_ia_params[bond_type].p.fene.drmax2i =
-      1.0 / bonded_ia_params[bond_type].p.fene.drmax2;
-
-  bonded_ia_params[bond_type].type = BONDED_IA_FENE;
-  bonded_ia_params[bond_type].num = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
+  this->drmax2 = Utils::sqr(this->drmax);
+  this->drmax2i = 1.0 / this->drmax2;
 }

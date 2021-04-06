@@ -26,7 +26,6 @@
  *  Implementation in \ref harmonic.cpp.
  */
 
-#include "bonded_interaction_data.hpp"
 #include "config.hpp"
 
 #include <utils/Vector.hpp>
@@ -34,28 +33,48 @@
 
 #include <boost/optional.hpp>
 
-/** Set the parameters for the harmonic potential
- *
- *  @retval ES_OK on success
- *  @retval ES_ERROR on error
- */
-int harmonic_set_params(int bond_type, double k, double r, double r_cut);
+/** Parameters for harmonic bond Potential */
+struct HarmonicBond {
+  /** spring constant */
+  double k;
+  /** equilibrium bond length */
+  double r;
+  /** cutoff length */
+  double r_cut;
+
+  double cutoff() const { return r_cut; }
+
+  static constexpr int num = 1;
+
+  HarmonicBond() = default;
+  HarmonicBond(double k, double r, double r_cut);
+
+  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  boost::optional<double> energy(Utils::Vector3d const &dx) const;
+
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, long int /* version */) {
+    ar &k;
+    ar &r;
+    ar &r_cut;
+  }
+};
 
 /** Compute the harmonic bond force.
- *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-harmonic_pair_force(Bonded_ia_parameters const &iaparams,
-                    Utils::Vector3d const &dx) {
+HarmonicBond::force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
-  if ((iaparams.p.harmonic.r_cut > 0.0) && (dist > iaparams.p.harmonic.r_cut)) {
+  if ((r_cut > 0.0) && (dist > r_cut)) {
     return {};
   }
 
-  auto const dr = dist - iaparams.p.harmonic.r;
-  auto fac = -iaparams.p.harmonic.k * dr;
+  auto const dr = dist - r;
+  auto fac = -k * dr;
   if (dist > ROUND_ERROR_PREC) { /* Regular case */
     fac /= dist;
   } else {
@@ -65,19 +84,17 @@ harmonic_pair_force(Bonded_ia_parameters const &iaparams,
 }
 
 /** Compute the harmonic bond energy.
- *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-harmonic_pair_energy(Bonded_ia_parameters const &iaparams,
-                     Utils::Vector3d const &dx) {
+HarmonicBond::energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
-  if ((iaparams.p.harmonic.r_cut > 0.0) && (dist > iaparams.p.harmonic.r_cut)) {
+  if ((r_cut > 0.0) && (dist > r_cut)) {
     return {};
   }
 
-  return 0.5 * iaparams.p.harmonic.k * Utils::sqr(dist - iaparams.p.harmonic.r);
+  return 0.5 * k * Utils::sqr(dist - r);
 }
 
 #endif
