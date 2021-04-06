@@ -107,9 +107,7 @@ BOOST_DATA_TEST_CASE(kT_thermalized, bdata::make(thermalized_lbs()),
 BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
   Vector3d vel = {0.2, 3.8, 4.2};
   auto lb = lb_generator(mpi_shape, params);
-  for (Vector3i node :
-
-       std::vector<Vector3i>{
+  for (auto const &node : std::vector<Vector3i>{
            {-lb->n_ghost_layers(), 0, 0}, {0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
     if (lb->node_in_local_halo(node)) {
       BOOST_CHECK(lb->set_node_velocity_at_boundary(node, vel));
@@ -142,15 +140,14 @@ BOOST_DATA_TEST_CASE(boundary, bdata::make(all_lbs()), lb_generator) {
 
 BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(mpi_shape, params);
-  int n_ghost_layers = 1;
+  auto const n_ghost_layers = lb->n_ghost_layers();
 
   auto my_left = lb->get_local_domain().first;
   auto my_right = lb->get_local_domain().second;
 
   for (auto const &n :
-       all_nodes_incl_ghosts(params.grid_dimensions, lb->n_ghost_layers())) {
-    const Vector3d pos =
-        Vector3d{{double(n[0] + .5), double(n[1] + .5), double(n[2] + .5)}};
+       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
+    const Vector3d pos = n + Vector3d::broadcast(.5);
     int is_local = 0;
     // Nodes in local domain
     if ((n[0] >= my_left[0] and n[1] >= my_left[1] and n[2] >= my_left[2]) and
@@ -199,12 +196,10 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
                      lb_generator) {
   auto lb = lb_generator(mpi_shape, params);
+  auto const n_ghost_layers = lb->n_ghost_layers();
 
   // Values
-  auto n_pos = [](Vector3i node) {
-    return Vector3d{
-        {double(node[0] + .5), double(node[1] + .5), double(node[2] + .5)}};
-  };
+  auto n_pos = [](Vector3i node) { return node + Vector3d::broadcast(.5); };
 
   auto fold = [&](Vector3i n) {
     for (int i = 0; i < 3; i++) {
@@ -221,9 +216,8 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
   };
 
   // Assign velocities
-  int n_ghost_layers = 1;
   for (auto const &node :
-       all_nodes_incl_ghosts(params.grid_dimensions, lb->n_ghost_layers())) {
+       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
     if (lb->node_in_local_domain(node)) {
       BOOST_CHECK(lb->set_node_velocity(node, n_vel(node)));
     } else {
@@ -236,7 +230,7 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
 
   // check velocities
   for (auto const &node :
-       all_nodes_incl_ghosts(params.grid_dimensions, lb->n_ghost_layers())) {
+       all_nodes_incl_ghosts(params.grid_dimensions, n_ghost_layers)) {
     double eps = 1E-8;
 
     if (lb->node_in_local_halo(node)) {
@@ -286,8 +280,7 @@ BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
 
   for (Vector3i n : all_nodes_incl_ghosts(params.grid_dimensions, 1)) {
     if (lb->node_in_local_halo(n)) {
-      Vector3d pos{double(n[0]), double(n[1]),
-                   double(n[2])}; // Mid point between nodes
+      Vector3d pos = 1. * n; // Mid point between nodes
       Vector3d f = {1, 2, -3.5};
       lb->add_force_at_pos(pos, f);
       // Check neighboring nodes for force to be applied
@@ -314,8 +307,7 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
   // in last_applied_force, where they are used for velocity calculation
 
   Vector3i origin{};
-  Vector3i middle{{params.grid_dimensions[0] / 2, params.grid_dimensions[1] / 2,
-                   params.grid_dimensions[2] / 2}};
+  Vector3i middle = params.grid_dimensions / 2;
   Vector3i right = params.grid_dimensions - Vector3i{{1, 1, 1}};
 
   Vector3d f{{1, -2, 3.1}};
