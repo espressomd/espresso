@@ -634,10 +634,12 @@ class Analysis:
         check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
-        sf = analyze.calc_structurefactor(
-            analyze.partCfg(), sf_types, sf_order)
+        cdef vector[double] wavevectors
+        cdef vector[double] intensities
+        analyze.calc_structurefactor(
+            analyze.partCfg(), sf_types, sf_order, wavevectors, intensities)
 
-        return np.transpose(analyze.modify_stucturefactor(sf_order, sf))
+        return np.vstack([wavevectors, intensities])
 
     #
     # distribution

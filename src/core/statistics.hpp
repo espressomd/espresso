@@ -98,16 +98,15 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
  *  and sf[1]=1. For q=7, there are no possible wave vectors, so
  *  sf[2*(7-1)]=sf[2*(7-1)+1]=0.
  *
- *  @param partCfg   particle collection
- *  @param p_types   list with types of particles to be analyzed
- *  @param order     the maximum wave vector length in 2PI/L
+ *  @param[in]  partCfg   particle collection
+ *  @param[in]  p_types   list with types of particles to be analyzed
+ *  @param[in]  order     the maximum wave vector length in units of 2PI/L
+ *  @param[out] wavevectors  the scattering vectors q
+ *  @param[out] intensities  the structure factor S(q)
  */
-std::vector<double> calc_structurefactor(PartCfg &partCfg,
-                                         std::vector<int> const &p_types,
-                                         int order);
-
-std::vector<std::vector<double>>
-modify_stucturefactor(int order, std::vector<double> const &sf);
+void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
+                          int order, std::vector<double> &wavevectors,
+                          std::vector<double> &intensities);
 
 /** Calculate the center of mass of a special type of the current configuration.
  *  \param part_type  type of the particle
