@@ -18,7 +18,7 @@
 include(unit_test)
 
 unit_test(NAME LBWalberlaImpl_unit_tests SRC LBWalberlaImpl_unit_tests.cpp DEPENDS WalberlaBridge
-          EspressoUtils Boost::mpi ${WALBERLA_LIBS})
+          EspressoUtils Boost::mpi ${WALBERLA_LIBS} NUM_PROC 2)
 target_include_directories(LBWalberlaImpl_unit_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
 
