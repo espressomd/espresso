@@ -22,6 +22,11 @@ unit_test(NAME LBWalberlaImpl_unit_tests SRC LBWalberlaImpl_unit_tests.cpp DEPEN
 target_include_directories(LBWalberlaImpl_unit_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
 
+unit_test(NAME LBWalberlaImpl_bspline_tests SRC LBWalberlaImpl_bspline_tests.cpp DEPENDS WalberlaBridge
+          EspressoUtils Boost::mpi ${WALBERLA_LIBS} NUM_PROC 2)
+target_include_directories(LBWalberlaImpl_bspline_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
+                                                   ${walberla_BINARY_DIR}/src)
+
 unit_test(NAME LBWalberlaImpl_statistical_tests SRC LBWalberlaImpl_statistical_tests.cpp DEPENDS WalberlaBridge
           EspressoUtils Boost::mpi ${WALBERLA_LIBS})
 target_include_directories(LBWalberlaImpl_statistical_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
