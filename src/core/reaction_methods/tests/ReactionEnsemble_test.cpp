@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
   r_algo.temperature = 20.;
 
   // exception if no reaction was added
-  BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
+  BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
 
   // create a reaction A -> 3 B + 4 C
   int const type_A = 0;

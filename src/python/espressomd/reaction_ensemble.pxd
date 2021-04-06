@@ -40,7 +40,7 @@ cdef extern from "reaction_methods/ReactionAlgorithm.hpp" namespace "ReactionMet
         int do_reaction(int reaction_steps) except +
         bool do_global_mc_move_for_particles_of_type(int type, int particle_number_of_type, bool use_wang_landau)
         void set_cuboid_reaction_ensemble_volume()
-        int check_reaction_ensemble() except +
+        int check_reaction_method() except +
         double get_acceptance_rate_configurational_moves()
         int delete_particle(int p_id)
         void add_reaction(double gamma, vector[int] reactant_types, vector[int] reactant_coefficients, vector[int] product_types, vector[int] product_coefficients) except +

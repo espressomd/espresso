@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   }
 
   // exception if no reaction was added
-  BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
+  BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
 
   // create a reaction A -> 3 B + 4 C
   int const type_A = 0;
@@ -93,23 +93,23 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   }
 
   // exception if temperature is negative
-  BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
+  BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
 
   // set temperature
   r_algo.temperature = 10;
 
 #ifdef ELECTROSTATICS
   // exception if reactant types have no charge information
-  BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
+  BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
   r_algo.charges_of_types[0] = 1;
   // exception if product types have no charge information
-  BOOST_CHECK_THROW(r_algo.check_reaction_ensemble(), std::runtime_error);
+  BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
   r_algo.charges_of_types[1] = 1;
   r_algo.charges_of_types[2] = 0;
 #endif
 
   // sanity checks should now pass
-  r_algo.check_reaction_ensemble();
+  r_algo.check_reaction_method();
 
   // check reaction removal
   {

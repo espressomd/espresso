@@ -79,7 +79,7 @@ void ReactionAlgorithm::add_reaction(
  * Checks whether all necessary variables for the reaction ensemble have been
  * set.
  */
-void ReactionAlgorithm::check_reaction_ensemble() const {
+void ReactionAlgorithm::check_reaction_method() const {
   if (reactions.empty()) {
     throw std::runtime_error("Reaction system not initialized");
   }

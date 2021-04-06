@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef REACTION_ENSEMBLE_SINGLE_REACTION_HPP
-#define REACTION_ENSEMBLE_SINGLE_REACTION_HPP
+#ifndef REACTION_METHODS_SINGLE_REACTION_HPP
+#define REACTION_METHODS_SINGLE_REACTION_HPP
 
 #include <utils/Accumulator.hpp>
 

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef REACTION_ENSEMBLE_REACTION_ALGORITHM_HPP
-#define REACTION_ENSEMBLE_REACTION_ALGORITHM_HPP
+#ifndef REACTION_METHODS_REACTION_ALGORITHM_HPP
+#define REACTION_METHODS_REACTION_ALGORITHM_HPP
 
 #include "config.hpp"
 
@@ -78,7 +78,7 @@ public:
 
   void set_cuboid_reaction_ensemble_volume();
   virtual int do_reaction(int reaction_steps);
-  void check_reaction_ensemble() const;
+  void check_reaction_method() const;
 
   int delete_particle(int p_id);
   void add_reaction(double gamma, const std::vector<int> &reactant_types,

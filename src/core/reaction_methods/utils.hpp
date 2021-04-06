@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef REACTION_ENSEMBLE_UTILS_HPP
-#define REACTION_ENSEMBLE_UTILS_HPP
+#ifndef REACTION_METHODS_UTILS_HPP
+#define REACTION_METHODS_UTILS_HPP
 
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
