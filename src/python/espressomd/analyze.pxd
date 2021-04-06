@@ -61,8 +61,8 @@ cdef extern from "Observable_stat.hpp":
         size_t chunk_size()
 
 cdef extern from "statistics.hpp":
-    cdef vector[double] calc_structurefactor(PartCfg & , const vector[int] & p_types, int order)
-    cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
+    cdef vector[double] calc_structurefactor(PartCfg & , const vector[int] & p_types, int order) except +
+    cdef vector[vector[double]] modify_stucturefactor(int order, const vector[double] & sf)
     cdef double mindist(PartCfg & , const vector[int] & set1, const vector[int] & set2)
     cdef vector[int] nbhood(PartCfg & , const Vector3d & pos, double r_catch, const Vector3i & planedims)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)

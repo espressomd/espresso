@@ -162,6 +162,10 @@ class StructureFactorTest(ut.TestCase):
             self.assertAlmostEqual(peaks[idx], main_peak)
             self.assertAlmostEqual(intensities[idx], len(self.system.part))
 
+    def test_exceptions(self):
+        with self.assertRaisesRegex(ValueError, 'order has to be a strictly positive number'):
+            self.system.analysis.structure_factor(sf_types=[0], sf_order=0)
+
 
 if __name__ == "__main__":
     ut.main()

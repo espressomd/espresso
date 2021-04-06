@@ -106,8 +106,8 @@ std::vector<double> calc_structurefactor(PartCfg &partCfg,
                                          std::vector<int> const &p_types,
                                          int order);
 
-std::vector<std::vector<double>> modify_stucturefactor(int order,
-                                                       double const *sf);
+std::vector<std::vector<double>>
+modify_stucturefactor(int order, std::vector<double> const &sf);
 
 /** Calculate the center of mass of a special type of the current configuration.
  *  \param part_type  type of the particle
