@@ -28,102 +28,89 @@ void HollowConicalFrustum::calculate_dist(const Utils::Vector3d &pos,
                                           double &dist,
                                           Utils::Vector3d &vec) const {
 
-  // Use the rotational symmetry of the cone: Transformation of pos to the
-  // cylindrical coordinates in the frame of the cone.
-  auto const v = pos - m_cyl_transform_params->center();
-  auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
-      v, m_cyl_transform_params->axis(), m_cyl_transform_params->orientation());
+  /* Transform pos to the frame of the frustum (origin = center, z = axis, x =
+   * orientation, y = cross(z,x) ). Get the angle relative to orientation to
+   * determine whether pos is in the gap defined by m_central_angle or not.
+   */
+  auto const hcf_frame_y_axis = Utils::vector_product(
+      m_cyl_transform_params->axis(), m_cyl_transform_params->orientation());
+  auto const pos_hcf_frame = Utils::basis_change(
+      m_cyl_transform_params->orientation(), hcf_frame_y_axis,
+      m_cyl_transform_params->axis(), pos - m_cyl_transform_params->center());
+  auto const pos_phi =
+      Utils::transform_coordinate_cartesian_to_cylinder(pos_hcf_frame)[1];
+
+  /* The closest point of the frustum to pos will be determined by projection
+   * onto a line. Which line, depends on where pos is relative to the frustum
+   * gap. If pos is not within the gap region of central_angle, the closest
+   * point will be in the plane defined by axis and pos_cyl, as shown in the
+   * figure below:
+   *
+   *     r1
+   * * ----->X r1_endpoint
+   * ^ a      \
+   * | x       \
+   * | i        \
+   * | s         \                       *pos_hcf_frame
+   * X center     \
+   * |             \
+   * |              X pos_closest (to be determined)
+   * |               \
+   * |       r2       \
+   * ----------------->X r2_endpoint
+   *
+   * In this case, the line is the intersection between the frustum and the
+   * plane of interest. The endpoints of the line are determined by the radii of
+   * the frustum, its length and the phi-coordinate of the plane.
+   *
+   * If pos is in the gap region, the projection must be made onto the closest
+   * edge (imagine pos is out-of-plane in the figure). In this case, for the
+   * endpoints we do not use the phi-coordinate of pos_cyl, but instead the
+   * phi-coordinate of the closer gap edge.
+   */
+
+  auto endpoint_angle = pos_phi;
+  if (Utils::abs(pos_phi) < m_central_angle / 2.) {
+    // Cannot use Utils::sgn because of pos_phi==0 corner case
+    endpoint_angle =
+        pos_phi > 0. ? m_central_angle / 2. : -m_central_angle / 2.;
+  }
+
+  auto const r1_endpoint = Utils::transform_coordinate_cylinder_to_cartesian(
+      Utils::Vector3d{{m_r1, endpoint_angle, m_length / 2.}});
+  auto const r2_endpoint = Utils::transform_coordinate_cylinder_to_cartesian(
+      Utils::Vector3d{{m_r2, endpoint_angle, -m_length / 2.}});
+  auto const line_director = (r2_endpoint - r1_endpoint).normalized();
 
   auto project_on_line = [](auto const vec, auto const line_start,
                             auto const line_director) {
     return line_start + line_director * ((vec - line_start) * line_director);
   };
 
-  // The point on the frustum closest to pos will be determined, dist and vec
-  // follow trivially.
-  Utils::Vector3d pos_closest;
+  auto pos_closest_hcf_frame =
+      project_on_line(pos_hcf_frame, r1_endpoint, line_director);
 
-  if (Utils::abs(pos_cyl[1]) >= m_central_angle / 2.) {
-    /* First case: pos is not in the gap region defined by central_angle.
-     * Here, the problem reduces to 2D, because pos_closest lies in the plane
-     * defined by axis and pos as shown in the figure below:
-     *
-     *     r1
-     * * ----->X r1_endpoint
-     * ^ a      \
-     * | x       \
-     * | i        \
-     * | s         \                       *pos
-     * X center     \
-     * |             \
-     * |              X pos_closest_2d (to be determined)
-     * |               \
-     * |       r2       \
-     * ----------------->X r2_endpoint
-     *
-     * pos_closest_2d is the projection of pos on the line defined by
-     * r1_endpoint and r2_endpoint. The real pos_closest is then calculated
-     * using the phi-coordinate of pos_cyl and transformation back to the box
-     * frame.
-     */
-    auto const pos_2d = Utils::Vector2d{{pos_cyl[0], pos_cyl[2]}};
-    auto const r1_endpoint = Utils::Vector2d{{m_r1, m_length / 2.}};
-    auto const r2_endpoint = Utils::Vector2d{{m_r2, -m_length / 2.}};
-    auto const line_director = (r2_endpoint - r1_endpoint).normalized();
-    auto pos_closest_2d = project_on_line(pos_2d, r1_endpoint, line_director);
-
-    // If the projection is outside of the frustum, pos_closest_2d is one of the
-    // endpoints
-    if (Utils::abs(pos_closest_2d[1]) > m_length / 2.) {
-      pos_closest_2d = pos_closest_2d[1] > 0 ? r1_endpoint : r2_endpoint;
-    }
-
-    pos_closest = Utils::transform_coordinate_cylinder_to_cartesian(
-                      {pos_closest_2d[0], pos_cyl[1], pos_closest_2d[1]},
-                      m_cyl_transform_params->axis(),
-                      m_cyl_transform_params->orientation()) +
-                  m_cyl_transform_params->center();
-
-  } else {
-    /* If pos is in the gap region, we cannot go to 2d or cylindrical
-     * coordinates, because the central-angle-gap breaks rotational symmetry.
-     * Instead, we parametrise the closer edge of the frustum cutout by its
-     * endpoints in 3D cartesian coordinates, but still in the reference frame
-     * of the HCF. The projection onto this edge to find pos_closest is then the
-     * same procedure as in the previous case.
-     */
-
-    // Cannot use Utils::sgn because of pos_cyl[1]==0 corner case
-    auto const endpoint_angle =
-        pos_cyl[1] >= 0 ? m_central_angle / 2. : -m_central_angle / 2.;
-    auto const r1_endpoint = Utils::transform_coordinate_cylinder_to_cartesian(
-        Utils::Vector3d{{m_r1, endpoint_angle, m_length / 2.}});
-    auto const r2_endpoint = Utils::transform_coordinate_cylinder_to_cartesian(
-        Utils::Vector3d{{m_r2, endpoint_angle, -m_length / 2.}});
-    auto const line_director = (r2_endpoint - r1_endpoint).normalized();
-    auto const pos_hcf_frame =
-        Utils::transform_coordinate_cylinder_to_cartesian(pos_cyl);
-    auto pos_closest_hcf_frame =
-        project_on_line(pos_hcf_frame, r1_endpoint, line_director);
-
-    if (Utils::abs(pos_closest_hcf_frame[2]) > m_length / 2.) {
-      pos_closest_hcf_frame =
-          pos_closest_hcf_frame[2] > 0. ? r1_endpoint : r2_endpoint;
-    }
-
-    // Now we transform pos_closest_hcf_frame back to the box frame.
-    auto const hcf_frame_y_axis = Utils::vector_product(
-        m_cyl_transform_params->axis(), m_cyl_transform_params->orientation());
-    pos_closest =
-        Utils::basis_change(m_cyl_transform_params->orientation(),
-                            hcf_frame_y_axis, m_cyl_transform_params->axis(),
-                            pos_closest_hcf_frame, true) +
-        m_cyl_transform_params->center();
+  /* It can be that the projection onto the (infinite) line is outside the
+   * frustum. In that case, the closest point is actually one of the endpoints.
+   */
+  if (Utils::abs(pos_closest_hcf_frame[2]) > m_length / 2.) {
+    pos_closest_hcf_frame =
+        pos_closest_hcf_frame[2] > 0. ? r1_endpoint : r2_endpoint;
   }
 
-  auto const u = (pos - pos_closest).normalize();
-  auto const d = (pos - pos_closest).norm() - 0.5 * m_thickness;
+  // calculate distance and distance vector respecting thickness and direction
+  auto const u = (pos_hcf_frame - pos_closest_hcf_frame).normalize();
+  auto const d =
+      (pos_hcf_frame - pos_closest_hcf_frame).norm() - 0.5 * m_thickness;
+
+  // dist does not depend on reference frame, it can be calculated in the hcf
+  // frame.
   dist = d * m_direction;
-  vec = d * u;
+
+  // vec must be rotated back to the original frame
+  auto const vec_hcf_frame = d * u;
+  vec = Utils::basis_change(m_cyl_transform_params->orientation(),
+                            hcf_frame_y_axis, m_cyl_transform_params->axis(),
+                            vec_hcf_frame, true);
 }
 } // namespace Shapes
