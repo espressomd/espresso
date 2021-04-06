@@ -147,7 +147,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         np.testing.assert_array_almost_equal(dist[1], [-dist[0], 0, 0])
 
         # check rotated coordinates, central angle with straight frustum
-        CENTER = np.array(3 * [0])
+        CENTER = np.array(3 * [5])
         CENTRAL_ANGLE = np.pi / 2
         ctp = espressomd.math.CylindricalTransformationParameters(
             center=CENTER, axis=[1., 0., 0.], orientation=[0., 0., 1.])
@@ -160,7 +160,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             central_angle=CENTRAL_ANGLE)
 
         # point within length
-        probe_pos = CENTER + [0, sys.float_info.epsilon, 1.234]
+        probe_pos = CENTER + [0, 10 * sys.float_info.epsilon, 1.234]
         closest_on_surface = CENTER + [0,
                                        R1 * np.sin(CENTRAL_ANGLE / 2.),
                                        R1 * np.cos(CENTRAL_ANGLE / 2.)]
@@ -170,7 +170,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
 
         # point outside of length
-        probe_pos = CENTER + [LENGTH, sys.float_info.epsilon, 1.234]
+        probe_pos = CENTER + [LENGTH, 10 * sys.float_info.epsilon, 1.234]
         closest_on_surface = CENTER + [LENGTH / 2.,
                                        R1 * np.sin(CENTRAL_ANGLE / 2.),
                                        R1 * np.cos(CENTRAL_ANGLE / 2.)]
@@ -180,13 +180,28 @@ class ShapeBasedConstraintTest(ut.TestCase):
         np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
 
         # check central angle with funnel-type frustum
-        shape.r1 = LENGTH
-        shape.r2 = 0
-        shape.central_angle = np.pi
+        ctp = espressomd.math.CylindricalTransformationParameters(
+            center=[LENGTH / 2., 0, 0], axis=[1., 0., 0.], orientation=[0., 0., 1.])
+        shape = espressomd.shapes.HollowConicalFrustum(
+            cyl_transform_params=ctp,
+            r1=LENGTH,
+            r2=0,
+            thickness=0.,
+            length=LENGTH,
+            central_angle=np.pi)      
         # with this setup, the edges coincide with the xy angle bisectors
-        probe_pos = CENTER + [5 - LENGTH / 2., -
-                              sys.float_info.epsilon, sys.float_info.epsilon]
-        d_vec_expected = 5 / 2 * np.array([1, 1, 0]) 
+
+        # point inside LENGTH
+        probe_pos = [LENGTH / 2., LENGTH / 2., 5]
+        d_vec_expected = np.array([0, 0, 5]) 
+        dist = shape.calc_distance(position=probe_pos)
+        self.assertAlmostEqual(dist[0], np.linalg.norm(d_vec_expected))
+        np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
+
+        # point outside LENGTH
+        probe_pos = [2 * LENGTH, 5 * LENGTH, 5]
+        frustum_end = np.array([LENGTH, LENGTH, 0])
+        d_vec_expected = probe_pos - frustum_end
         dist = shape.calc_distance(position=probe_pos)
         self.assertAlmostEqual(dist[0], np.linalg.norm(d_vec_expected))
         np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
