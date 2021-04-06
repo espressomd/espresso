@@ -26,7 +26,7 @@ cdef extern from "config.hpp":
     pass
 
 cdef extern from "integrate.hpp" nogil:
-    cdef int python_integrate(int n_steps, cbool recalc_forces, int reuse_forces)
+    cdef int python_integrate(int n_steps, cbool recalc_forces, int reuse_forces) except +
     cdef int mpi_steepest_descent(int max_steps)
     cdef void integrate_set_sd() except +
     cdef void integrate_set_nvt()
@@ -55,6 +55,8 @@ IF STOKESIAN_DYNAMICS:
         LUBRICATION = 1 << 2,
         FTS = 1 << 3
 
-cdef inline int _integrate(int nSteps, cbool recalc_forces, int reuse_forces):
+cdef inline object _integrate(int nSteps, cbool recalc_forces, int reuse_forces) except +:
+    cdef int result
     with nogil:
-        return python_integrate(nSteps, recalc_forces, reuse_forces)
+        result = python_integrate(nSteps, recalc_forces, reuse_forces)
+    return result

@@ -287,6 +287,71 @@ class TestLB:
             np.testing.assert_allclose(
                 np.sum(applied_forces, axis=0), [0, 0, 0])
 
+    def test_viscous_coupling_pairs(self):
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            ext_force_density=[0, 0, 0])
+        print("box_l", self.system.box_l)
+        self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            seed=3,
+            gamma=self.params['friction'])
+
+        # Random velocities
+        for n in self.lbf.nodes():
+            n.velocity = np.random.random(3) - .5
+        # Test several particle positions
+        agrid = self.params['agrid']
+        offset = -0.99 * np.array((agrid, agrid, agrid))
+        for pos in ([agrid / 2, agrid / 2, agrid / 2], self.system.box_l, self.system.box_l / 2,
+                    self.system.box_l / 2 - self.params['agrid'] / 2):
+            p1 = self.system.part.add(pos=pos, v=[1, 2, 3])
+            p2 = self.system.part.add(pos=pos + offset, v=[-2, 1, 0.3])
+
+            v_part1 = p1.v 
+            v_part2 = p2.v
+            # In the first time step after a system change, LB coupling forces
+            # are ignored. Hence, the coupling position is shifted 
+            coupling_pos1 = p1.pos + self.system.time_step * p1.v
+            coupling_pos2 = p2.pos + self.system.time_step * p2.v
+
+            print(p1.pos, p2.pos)
+            v_fluid1 = self.lbf.get_interpolated_velocity(coupling_pos1)
+            v_fluid2 = self.lbf.get_interpolated_velocity(coupling_pos2)
+            # Nodes to which forces will be interpolated
+            lb_nodes1 = get_lb_nodes_around_pos(
+                coupling_pos1, self.lbf)
+            lb_nodes2 = get_lb_nodes_around_pos(
+                coupling_pos2, self.lbf)
+
+            all_coupling_nodes = [self.lbf[index] for index in set(
+                [n.index for n in (lb_nodes1 + lb_nodes2)])]
+            self.system.integrator.run(1)
+            # Check friction force
+            np.testing.assert_allclose(
+                np.copy(p1.f), -self.params['friction'] * (v_part1 - v_fluid1), atol=1E-10)
+            np.testing.assert_allclose(
+                np.copy(p2.f), -self.params['friction'] * (v_part2 - v_fluid2), atol=1E-10)
+
+            # check particle/fluid force balance
+            applied_forces = np.array(
+                [n.last_applied_force for n in all_coupling_nodes])
+            print(sorted([n.index for n in all_coupling_nodes]))
+            np.testing.assert_allclose(
+                np.sum(applied_forces, axis=0), -np.copy(p1.f) - np.copy(p2.f), atol=1E-10)
+
+            # Check that last_applied_force gets cleared
+            self.system.part.clear()
+            self.system.integrator.run(1)
+            applied_forces = np.array(
+                [n.last_applied_force for n in all_coupling_nodes])
+            np.testing.assert_allclose(
+                np.sum(applied_forces, axis=0), [0, 0, 0])
+
     def test_thermalization_force_balance(self):
         system = self.system
 

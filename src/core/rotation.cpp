@@ -143,7 +143,11 @@ void propagate_omega_quat_particle(Particle &p, double time_step) {
       1 - time_step_squared *
               (S[0] +
                time_step * (S[1] + time_step_half / 2. * (S[2] - S[0] * S[0])));
-  assert(square >= 0.);
+  if (square < 0.) {
+    throw std::runtime_error(
+        "Stability limit exceeded in rotational integrator. A particle was "
+        "rotated too far in a single time step.");
+  }
   auto const lambda = 1 - S[0] * 0.5 * time_step_squared - sqrt(square);
 
   p.m.omega += time_step_half * Wd;
