@@ -51,6 +51,8 @@
 #include <utility>
 #include <vector>
 
+
+
 namespace ReactionEnsemble {
 
 /** Load minimum and maximum energies as a function of the other collective
@@ -1497,6 +1499,14 @@ int ConstantpHEnsemble::get_random_valid_p_id() {
  */
 int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
+  bool reaction_possible=false;
+
+  for (int reaction_id = 0; reaction_id < reactions.size(); reaction_id++) {
+	if (all_reactant_particles_exist(reaction_id)){reaction_possible=true;}	
+	}
+
+  if(reaction_possible==false){return 1;}
+
   for (int i = 0; i < reaction_steps; ++i) {
     // get a list of reactions where a randomly selected particle type occurs in
     // the reactant list. the selection probability of the particle types has to
@@ -1517,6 +1527,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
       // construct list of reactions with the above reactant type
       for (int reaction_i = 0; reaction_i < reactions.size(); reaction_i++) {
+
         SingleReaction &current_reaction = reactions[reaction_i];
         for (int reactant_i = 0; reactant_i < 1;
              reactant_i++) { // reactant_i < 1 since it is assumed in this place
@@ -1531,6 +1542,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
         }
       }
     }
+
     // randomly select a reaction to be performed
     int reaction_id =
         list_of_reaction_ids_with_given_reactant_type[i_random(static_cast<int>(
