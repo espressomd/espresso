@@ -66,4 +66,25 @@ calculate_factorial_expression(SingleReaction const &current_reaction,
   return factorial_expr;
 }
 
+double calculate_factorial_expression_cpH(
+    SingleReaction const &current_reaction,
+    std::map<int, int> const &old_particle_numbers) {
+  double factorial_expr = 1.0;
+  // factorial contribution of reactants
+  for (int i = 0; i < 1; i++) {
+    int nu_i = -1 * current_reaction.reactant_coefficients[i];
+    int N_i0 = old_particle_numbers.at(current_reaction.reactant_types[i]);
+    factorial_expr *=
+        factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
+  }
+  // factorial contribution of products
+  for (int i = 0; i < 1; i++) {
+    int nu_i = current_reaction.product_coefficients[i];
+    int N_i0 = old_particle_numbers.at(current_reaction.product_types[i]);
+    factorial_expr *=
+        factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
+  }
+  return factorial_expr;
+}
+
 } // namespace ReactionMethods

@@ -39,6 +39,16 @@ calculate_factorial_expression(SingleReaction const &current_reaction,
                                std::map<int, int> const &old_particle_numbers);
 
 /**
+ * Calculates the factorial expression which occurs in the constant pH method
+ * with symmetric proposal probability.
+ *
+ * See https://arxiv.org/abs/1702.04911 equation 15
+ */
+double calculate_factorial_expression_cpH(
+    SingleReaction const &current_reaction,
+    std::map<int, int> const &old_particle_numbers);
+
+/**
  * Calculates the factorial expression which occurs in the reaction ensemble
  * acceptance probability
  */
