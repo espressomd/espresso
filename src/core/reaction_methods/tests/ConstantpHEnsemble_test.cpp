@@ -64,7 +64,6 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
   SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {1, 1});
 
   // check acceptance probability
-  constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 3; ++k) {
@@ -72,8 +71,11 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
         auto const p_numbers =
             std::map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
         auto const energy = static_cast<double>(i + 1);
+        // acceptance = exp(- E / T + nu_bar * log(10) * (pH - nu_bar * pKa))
         auto const acceptance_ref =
-            std::exp(energy / 20. + std::log(10.) * (1. + std::log10(2.)));
+            std::exp(energy / r_algo.temperature +
+                     std::log(10.) *
+                         (r_algo.m_constant_pH + std::log10(reaction.gamma)));
         auto const acceptance = r_algo.calculate_acceptance_probability(
             reaction, energy, 0., p_numbers, -1, -1, false);
         BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);

@@ -73,7 +73,10 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
             std::map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
         auto const energy = static_cast<double>(i + 1);
         auto const f_expr = calculate_factorial_expression(reaction, p_numbers);
-        auto const acceptance_ref = 2e6 * f_expr * std::exp(energy / 20.);
+        // acceptance = V^{nu_bar} * gamma * f_expr * exp(- E / T)
+        auto const acceptance_ref = std::pow(r_algo.volume, reaction.nu_bar) *
+                                    reaction.gamma * f_expr *
+                                    std::exp(energy / r_algo.temperature);
         auto const acceptance = r_algo.calculate_acceptance_probability(
             reaction, energy, 0., p_numbers, -1, -1, false);
         BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);

@@ -120,7 +120,7 @@ void ReactionAlgorithm::check_reaction_method() const {
 
 /**
  * Automatically sets the volume which is used by the reaction ensemble to the
- * volume of a cuboid box
+ * volume of a cuboid box, if not already initialized with another value.
  */
 void ReactionAlgorithm::set_cuboid_reaction_ensemble_volume() {
   if (volume < 0)

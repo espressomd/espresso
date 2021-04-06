@@ -90,7 +90,7 @@ inline double find_minimum_non_negative_value(std::vector<double> const &rng) {
                                      return a < b;
                                    });
   if (it == rng.end() or *it < 0) {
-    return rng[rng.size() - 1];
+    return rng.back();
   }
   return *it;
 }
