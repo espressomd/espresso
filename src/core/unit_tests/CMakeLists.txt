@@ -50,8 +50,3 @@ if(WALBERLA)
 endif()
 unit_test(NAME random_test SRC random_test.cpp DEPENDS EspressoUtils Random123)
 unit_test(NAME BondList_test SRC BondList_test.cpp DEPENDS EspressoCore)
-unit_test(NAME reaction_ensemble_utils_test SRC
-          reaction_ensemble_utils_test.cpp DEPENDS EspressoCore)
-unit_test(NAME reaction_ensemble_classes_test SRC
-          reaction_ensemble_classes_test.cpp DEPENDS EspressoCore Boost::mpi
-          MPI::MPI_CXX)
