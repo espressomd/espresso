@@ -1497,18 +1497,12 @@ int ConstantpHEnsemble::get_random_valid_p_id() {
  */
 int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
-  bool reaction_possible = false;
 
   for (int reaction_id = 0; reaction_id < reactions.size(); reaction_id++) {
-    if (all_reactant_particles_exist(reaction_id)) {
-      reaction_possible = true;
+    if (all_reactant_particles_exist(reaction_id) == false){return 1;
     }
   }
-
-  if (reaction_possible == false) {
-    return 1;
-  }
-
+      
   for (int i = 0; i < reaction_steps; ++i) {
     // get a list of reactions where a randomly selected particle type occurs in
     // the reactant list. the selection probability of the particle types has to
