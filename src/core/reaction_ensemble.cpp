@@ -1497,12 +1497,19 @@ int ConstantpHEnsemble::get_random_valid_p_id() {
  */
 int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
+
+  bool reaction_impossible = true;
+
   for (int reaction_id = 0; reaction_id < reactions.size(); reaction_id++) {
-    if (all_reactant_particles_exist(reaction_id) == false) {
-      throw std::runtime_error("There is not enough reactants nor products to "
-                               "perform the reaction in either direction");
-      ;
+    if (all_reactant_particles_exist(reaction_id)) {
+      reaction_impossible = false;
     }
+  }
+
+  if (reaction_impossible){
+   
+   throw std::runtime_error("There is not enough reactants nor products to perform the reaction in either direction");
+
   }
 
   for (int i = 0; i < reaction_steps; ++i) {
