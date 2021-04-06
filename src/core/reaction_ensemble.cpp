@@ -1499,7 +1499,8 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
 
   for (int reaction_id = 0; reaction_id < reactions.size(); reaction_id++) {
-    if (all_reactant_particles_exist(reaction_id) == false){return 1;
+    if (all_reactant_particles_exist(reaction_id) == false){ 
+      throw std::runtime_error("There is not enough reactants nor products to perform the reaction in either direction");  ;
     }
   }
       
