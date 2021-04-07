@@ -23,7 +23,8 @@ import numpy as np
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
-from .interactions cimport bonded_ia_params
+from .interactions cimport bonded_ia_params_size
+from .interactions cimport bonded_ia_params_num_partners
 from copy import copy
 from .globals cimport max_seen_particle_type, n_rigidbonds
 import collections
@@ -1358,15 +1359,15 @@ cdef class ParticleHandle:
                 "The bonded interaction has not yet been added to the list of active bonds in ESPResSo.")
 
         # Validity of the numeric id
-        if bond[0]._bond_id >= bonded_ia_params.size():
+        if bond[0]._bond_id >= bonded_ia_params_size():
             raise ValueError(
                 f"The bond type f{bond[0]._bond_id} does not exist.")
 
         bond_id = bond[0]._bond_id
         # Number of partners
-        if bonded_ia_params[bond_id].num != len(bond) - 1:
+        if bonded_ia_params_num_partners(bond_id) != len(bond) - 1:
             raise ValueError(f"Bond {bond[0]} needs "
-                             f"{bonded_ia_params[bond_id].num} partners.")
+                             f"{bonded_ia_params_num_partners(bond_id)} partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):
@@ -2114,7 +2115,7 @@ def _add_particle_slice_properties():
 
     """
 
-    def seta(particle_slice, values, attribute):
+    def set_attribute(particle_slice, values, attribute):
         """
         Setter function that sets attribute on every member of particle_slice.
         If values contains only one element, all members are set to it. If it
@@ -2192,7 +2193,7 @@ def _add_particle_slice_properties():
 
                 return
 
-    def geta(particle_slice, attribute):
+    def get_attribute(particle_slice, attribute):
         """
         Getter function that copies attribute from every member of
         particle_slice into an array (if possible).
@@ -2230,8 +2231,10 @@ def _add_particle_slice_properties():
             continue
 
         # synthesize a new property
-        new_property = property(functools.partial(geta, attribute=attribute_name), functools.partial(
-            seta, attribute=attribute_name), doc=getattr(ParticleHandle, attribute_name).__doc__)
+        new_property = property(
+            functools.partial(get_attribute, attribute=attribute_name),
+            functools.partial(set_attribute, attribute=attribute_name),
+            doc=getattr(ParticleHandle, attribute_name).__doc__)
         # attach the property to ParticleSlice
         setattr(ParticleSlice, attribute_name, new_property)
 

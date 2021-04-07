@@ -19,7 +19,7 @@
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
-from itertools import product
+import itertools
 
 import espressomd
 from espressomd.observables import DPDStress
@@ -118,37 +118,35 @@ class DPDThermostat(ut.TestCase):
             weight_function=0, gamma=gamma, r_cut=1.2,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.4)
 
-        s.part.add(id=0, pos=[5, 5, 5], type=0, v=[0, 0, 0])
+        p0 = s.part.add(pos=[5, 5, 5], type=0, v=[0, 0, 0])
         v = np.array([.5, .8, .3])
-        s.part.add(id=1, pos=[3, 5, 5], type=0, v=v)
+        p1 = s.part.add(pos=[3, 5, 5], type=0, v=v)
 
         s.integrator.run(0)
 
         # Outside of both cutoffs, forces should be 0
         for f in s.part[:].f:
-            np.testing.assert_array_equal(f, [0., 0., 0.])
+            np.testing.assert_array_equal(np.copy(f), [0., 0., 0.])
 
         # Only trans
-        s.part[1].pos = [5. - 1.3, 5, 5]
+        p1.pos = [5. - 1.3, 5, 5]
 
         s.integrator.run(0)
 
         # Only trans, so x component should be zero
-        self.assertLess(abs(s.part[0].f[0]), 1e-16)
+        self.assertLess(abs(p0.f[0]), 1e-16)
         np.testing.assert_allclose(
-            np.copy(s.part[0].f[1:2]), gamma * v[1:2], rtol=0, atol=1e-11)
-        np.testing.assert_array_equal(
-            np.copy(s.part[0].f), -np.copy(s.part[1].f))
+            np.copy(p0.f[1:2]), gamma * v[1:2], rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
 
         # Trans and parallel
-        s.part[1].pos = [5. - 1.1, 5, 5]
+        p1.pos = [5. - 1.1, 5, 5]
 
         s.integrator.run(0)
 
         np.testing.assert_allclose(
-            np.copy(s.part[0].f), gamma * v, rtol=0, atol=1e-11)
-        np.testing.assert_array_equal(
-            np.copy(s.part[0].f), -np.copy(s.part[1].f))
+            np.copy(p0.f), gamma * v, rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
 
     def test_linear_weight_function(self):
         s = self.s
@@ -162,50 +160,47 @@ class DPDThermostat(ut.TestCase):
         def calc_omega(dist, r_cut):
             return 1. - dist / r_cut
 
-        s.part.add(id=0, pos=[5, 5, 5], type=0, v=[0, 0, 0])
+        p0 = s.part.add(pos=[5, 5, 5], type=0, v=[0, 0, 0])
         v = np.array([.5, .8, .3])
-        s.part.add(id=1, pos=[3, 5, 5], type=0, v=v)
+        p1 = s.part.add(pos=[3, 5, 5], type=0, v=v)
 
         s.integrator.run(0)
 
         # Outside of both cutoffs, forces should be 0
         for f in s.part[:].f:
-            np.testing.assert_array_equal(f, [0., 0., 0.])
+            np.testing.assert_array_equal(np.copy(f), [0., 0., 0.])
 
         # Only trans
-        s.part[1].pos = [5. - 1.3, 5, 5]
+        p1.pos = [5. - 1.3, 5, 5]
 
         s.integrator.run(0)
 
         # Only trans, so x component should be zero
-        self.assertLess(abs(s.part[0].f[0]), 1e-16)
+        self.assertLess(abs(p0.f[0]), 1e-16)
         omega = calc_omega(1.3, 1.4)**2
         np.testing.assert_allclose(
-            np.copy(s.part[0].f[1:2]), omega * gamma * v[1:2], rtol=0, atol=1e-11)
-        np.testing.assert_array_equal(
-            np.copy(s.part[0].f), -np.copy(s.part[1].f))
+            np.copy(p0.f[1:2]), omega * gamma * v[1:2], rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
 
         # Trans and parallel
-        s.part[1].pos = [5. - 1.1, 5, 5]
+        p1.pos = [5. - 1.1, 5, 5]
 
         s.integrator.run(0)
 
         omega = np.array([calc_omega(1.1, x)**2 for x in [1.2, 1.4, 1.4]])
         np.testing.assert_allclose(
-            np.copy(s.part[0].f), omega * gamma * v, rtol=0, atol=1e-11)
-        np.testing.assert_array_equal(
-            np.copy(s.part[0].f), -np.copy(s.part[1].f))
+            np.copy(p0.f), omega * gamma * v, rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
 
         # Trans and parallel 2nd point
-        s.part[1].pos = [5. - 0.5, 5, 5]
+        p1.pos = [5. - 0.5, 5, 5]
 
         s.integrator.run(0)
 
         omega = np.array([calc_omega(0.5, x)**2 for x in [1.2, 1.4, 1.4]])
         np.testing.assert_allclose(
-            np.copy(s.part[0].f), omega * gamma * v, rtol=0, atol=1e-11)
-        np.testing.assert_array_equal(
-            np.copy(s.part[0].f), -np.copy(s.part[1].f))
+            np.copy(p0.f), omega * gamma * v, rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
 
     def test_parabolic_weight_function(self):
         s = self.s
@@ -221,34 +216,34 @@ class DPDThermostat(ut.TestCase):
         def calc_omega(dist, r_cut):
             return (1. - (dist / r_cut) ** kappa)
 
-        s.part.add(id=0, pos=[5, 5, 5], type=0, v=[0, 0, 0])
+        p0 = s.part.add(pos=[5, 5, 5], type=0, v=[0, 0, 0])
         v = np.array([.5, 0., 0.])
-        s.part.add(id=1, pos=[3, 5, 5], type=0, v=v)
+        p1 = s.part.add(pos=[3, 5, 5], type=0, v=v)
 
         # Outside of both cutoffs, forces should be 0
         for f in s.part[:].f:
-            np.testing.assert_array_equal(f, [0., 0., 0.])
+            np.testing.assert_array_equal(np.copy(f), [0., 0., 0.])
 
         # Place the particle at different positions to test the parabolic
         # weight function
         for dist in np.arange(0.1, 1.2, 50):
 
-            s.part[1].pos = [5. + dist, 5., 5.]
+            p1.pos = [5. + dist, 5., 5.]
             s.integrator.run(0)
             omega = calc_omega(dist, r_cut)**2
 
             # The particle is moved along the x-direction. Hence, we are
             # testing the x element.
             np.testing.assert_allclose(
-                np.copy(s.part[0].f), omega * gamma * v, rtol=0, atol=1e-11)
-            np.testing.assert_array_equal(
-                np.copy(s.part[0].f), -np.copy(s.part[1].f))
+                np.copy(p0.f), omega * gamma * v, rtol=0, atol=1e-11)
+            np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
 
     def test_ghosts_have_v(self):
         s = self.s
 
         r_cut = 1.5
         dx = 0.25 * r_cut
+        ind_combinations = list(itertools.product([0, 1], [0, 1], [0, 1]))
 
         def f(i):
             if i == 0:
@@ -256,7 +251,7 @@ class DPDThermostat(ut.TestCase):
             return 10. - dx
 
         # Put a particle in every corner
-        for ind in product([0, 1], [0, 1], [0, 1]):
+        for ind in ind_combinations:
             pos = [f(x) for x in ind]
             v = ind
             s.part.add(pos=pos, v=v)
@@ -269,15 +264,13 @@ class DPDThermostat(ut.TestCase):
 
         s.integrator.run(0)
 
-        id = 0
-        for ind in product([0, 1], [0, 1], [0, 1]):
+        for p, ind in zip(s.part, ind_combinations):
             for i in ind:
                 if ind[i] == 0:
                     sgn = 1
                 else:
                     sgn = -1
-                self.assertAlmostEqual(sgn * 4.0, s.part[id].f[i])
-            id += 1
+                self.assertAlmostEqual(sgn * 4.0, p.f[i])
 
     def test_constraint(self):
         import espressomd.shapes
@@ -296,9 +289,7 @@ class DPDThermostat(ut.TestCase):
 
         s.integrator.run(0)
 
-        self.assertAlmostEqual(p.f[0], 1.)
-        self.assertAlmostEqual(p.f[1], 2.)
-        self.assertAlmostEqual(p.f[2], 3.)
+        np.testing.assert_array_almost_equal(np.copy(p.f), [1., 2., 3.])
 
         for c in s.constraints:
             s.constraints.remove(c)
@@ -352,7 +343,6 @@ class DPDThermostat(ut.TestCase):
         r_cut = 1.0
 
         s = self.s
-        s.part.clear()
 
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=1, gamma=gamma, r_cut=r_cut,
@@ -395,9 +385,8 @@ class DPDThermostat(ut.TestCase):
 
         s = self.s
         s.thermostat.set_dpd(kT=1.3, seed=42)
-        s.part.clear()
-        s.part.add(pos=((0, 0, 0), (0.1, 0.1, 0.1),
-                        (0.1, 0, 0)), mass=(1, 2, 3))
+        s.part.add(pos=((0, 0, 0), (0.1, 0.1, 0.1), (0.1, 0, 0)),
+                   mass=(1, 2, 3))
 
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=1, gamma=gamma, r_cut=r_cut,

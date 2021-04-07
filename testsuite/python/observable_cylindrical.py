@@ -204,15 +204,14 @@ class TestCylindricalObservable(ut.TestCase):
         params['n_r_bins'] = 4
         params['n_phi_bins'] = 6
         params['n_z_bins'] = 8
-        params['ids'] = [0, 1]
-        self.system.part.add(id=0, pos=[0, 0, 0], type=0)
-        self.system.part.add(id=1, pos=[0, 0, 0], type=1)
+        self.system.part.add(pos=[0, 0, 0], type=0)
+        self.system.part.add(pos=[0, 0, 0], type=1)
+        params['ids'] = self.system.part[:].id
         observable = espressomd.observables.CylindricalDensityProfile(**params)
         # check pids
-        self.assertEqual(observable.ids, params['ids'])
-        new_pids = [params['ids'][0]]
-        observable.ids = new_pids
-        self.assertEqual(observable.ids, new_pids)
+        np.testing.assert_array_equal(np.copy(observable.ids), params['ids'])
+        with self.assertRaises(RuntimeError):
+            observable.ids = [observable.ids[0]]
         # check bins
         self.assertEqual(observable.n_r_bins, params['n_r_bins'])
         self.assertEqual(observable.n_phi_bins, params['n_phi_bins'])

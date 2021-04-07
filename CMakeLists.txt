@@ -381,6 +381,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4
   target_compile_options(cxx_interface INTERFACE -ffloat-store)
 endif()
 
+# enable boost::variant with more than 20 types
+target_compile_options(
+  cxx_interface INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+                          -DBOOST_MPL_LIMIT_LIST_SIZE=30)
+
 set(CMAKE_MACOSX_RPATH TRUE)
 
 #

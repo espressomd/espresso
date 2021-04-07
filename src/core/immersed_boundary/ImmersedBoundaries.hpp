@@ -27,19 +27,16 @@
 
 class ImmersedBoundaries {
 public:
-  ImmersedBoundaries()
-      : MaxNumIBM(1000), VolumeInitDone(false), BoundariesFound(false) {
-    VolumesCurrent.resize(MaxNumIBM);
+  ImmersedBoundaries() : VolumeInitDone(false), BoundariesFound(false) {
+    VolumesCurrent.resize(IBM_MAX_NUM);
   }
   void init_volume_conservation(CellStructure &cs);
   void volume_conservation(CellStructure &cs);
-  int volume_conservation_set_params(int bond_type, int softID, double kappaV);
 
 private:
   void calc_volumes(CellStructure &cs);
   void calc_volume_force(CellStructure &cs);
 
-  const int MaxNumIBM;
   std::vector<double> VolumesCurrent;
   bool VolumeInitDone;
   bool BoundariesFound;

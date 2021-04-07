@@ -25,6 +25,7 @@
 #include "config.hpp"
 
 #include "bonded_interactions/thermalized_bond.hpp"
+#include "bonded_interactions/thermalized_bond_utils.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "integrate.hpp"
@@ -110,11 +111,7 @@ void thermo_init() {
 #endif
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO) {
-    if (nptiso.piston == 0.0) {
-      thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
-    } else {
-      npt_iso.recalc_prefactors(nptiso.piston, time_step);
-    }
+    npt_iso.recalc_prefactors(nptiso.piston, time_step);
   }
 #endif
   if (thermo_switch & THERMO_BROWNIAN)

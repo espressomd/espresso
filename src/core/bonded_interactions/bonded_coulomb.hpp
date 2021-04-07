@@ -29,51 +29,64 @@
 
 #include "config.hpp"
 
-#ifdef ELECTROSTATICS
-
-#include "bonded_interaction_data.hpp"
-
 #include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
 
 #include <cmath>
 
-/** Set the parameters for the bonded Coulomb potential
- *
- *  @retval ES_OK on success
- *  @retval ES_ERROR on error
- */
-int bonded_coulomb_set_params(int bond_type, double prefactor);
+/** Parameters for %Coulomb bond Potential */
+struct BondedCoulomb {
+  /** %Coulomb prefactor */
+  double prefactor;
+
+  double cutoff() const { return 0.; }
+
+  static constexpr int num = 1;
+
+  BondedCoulomb() = default;
+  BondedCoulomb(double prefactor);
+
+  boost::optional<Utils::Vector3d> force(double q1q2,
+                                         Utils::Vector3d const &dx) const;
+  boost::optional<double> energy(double q1q2, Utils::Vector3d const &dx) const;
+
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, long int /* version */) {
+    ar &prefactor;
+  }
+};
 
 /** Compute the bonded Coulomb pair force.
  *  @param[in]  q1q2      Product of the particle charges.
- *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-bonded_coulomb_pair_force(double const q1q2,
-                          Bonded_ia_parameters const &iaparams,
-                          Utils::Vector3d const &dx) {
+BondedCoulomb::force(double const q1q2, Utils::Vector3d const &dx) const {
+#ifdef ELECTROSTATICS
   auto const dist2 = dx.norm2();
   auto const dist3 = dist2 * std::sqrt(dist2);
-  auto const fac = iaparams.p.bonded_coulomb.prefactor * q1q2 / dist3;
+  auto const fac = prefactor * q1q2 / dist3;
   return fac * dx;
+#else
+  return Utils::Vector3d{};
+#endif
 }
 
 /** Compute the bonded Coulomb pair energy.
  *  @param[in]  q1q2      Product of the particle charges.
- *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-bonded_coulomb_pair_energy(double const q1q2,
-                           Bonded_ia_parameters const &iaparams,
-                           Utils::Vector3d const &dx) {
+BondedCoulomb::energy(double const q1q2, Utils::Vector3d const &dx) const {
+#ifdef ELECTROSTATICS
   auto const dist = dx.norm();
-  return iaparams.p.bonded_coulomb.prefactor * q1q2 / dist;
-}
-
+  return prefactor * q1q2 / dist;
+#else
+  return .0;
 #endif
+}
 
 #endif

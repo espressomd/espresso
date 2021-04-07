@@ -32,22 +32,21 @@ class ElectrostaticInteractionsTests(ut.TestCase):
     def setUp(self):
         self.system.time_step = 0.01
 
-        self.system.part.add(id=0, pos=(9.0, 2.0, 2.0), q=1)
-        self.system.part.add(id=1, pos=(11.0, 2.0, 2.0), q=-1)
+        self.system.part.add(pos=(9.0, 2.0, 2.0), q=1)
+        self.system.part.add(pos=(11.0, 2.0, 2.0), q=-1)
 
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
 
-    def calc_dh_potential(self, r, df_params):
+    def calc_dh_potential(self, r, dh_params):
         kT = 1.0
-        q1 = self.system.part[0].q
-        q2 = self.system.part[1].q
+        q1, q2 = self.system.part[:].q
         u = np.zeros_like(r)
         # r<r_cut
-        i = np.where(r < df_params['r_cut'])[0]
-        u[i] = df_params['prefactor'] * kT * q1 * \
-            q2 * np.exp(-df_params['kappa'] * r[i]) / r[i]
+        i = np.where(r < dh_params['r_cut'])[0]
+        u[i] = dh_params['prefactor'] * kT * q1 * \
+            q2 * np.exp(-dh_params['kappa'] * r[i]) / r[i]
         return u
 
     def calc_rf_potential(self, r, rf_params):
@@ -55,8 +54,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         kT = 1.0
 
-        q1 = self.system.part[0].q
-        q2 = self.system.part[1].q
+        q1, q2 = self.system.part[:].q
         epsilon1 = rf_params['epsilon1']
         epsilon2 = rf_params['epsilon2']
         kappa = rf_params['kappa']
@@ -146,7 +144,33 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         u_dh_core = np.zeros_like(r)
         f_dh_core = np.zeros_like(r)
-        # need to update forces
+
+        p1, p2 = self.system.part[:]
+        for i, ri in enumerate(r):
+            p2.pos = p1.pos + [ri, 0, 0]
+            self.system.integrator.run(0)
+            u_dh_core[i] = self.system.analysis.energy()['coulomb']
+            f_dh_core[i] = p1.f[0]
+
+        np.testing.assert_allclose(u_dh_core, u_dh, atol=1e-7)
+        np.testing.assert_allclose(f_dh_core, -f_dh, atol=1e-2)
+
+    def test_dh_pure_coulomb(self):
+        dh_params = dict(prefactor=1.2, kappa=0.0, r_cut=2.0)
+        dh = espressomd.electrostatics.DH(
+            prefactor=dh_params['prefactor'],
+            kappa=dh_params['kappa'],
+            r_cut=dh_params['r_cut'])
+
+        self.system.actors.add(dh)
+        dr = 0.001
+        r = np.arange(.5, 1.01 * dh_params['r_cut'], dr)
+        u_dh = self.calc_dh_potential(r, dh_params)
+        f_dh = u_dh / r
+
+        u_dh_core = np.zeros_like(r)
+        f_dh_core = np.zeros_like(r)
+
         for i, ri in enumerate(r):
             self.system.part[1].pos = self.system.part[0].pos + [ri, 0, 0]
             self.system.integrator.run(0)
@@ -154,7 +178,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             f_dh_core[i] = self.system.part[0].f[0]
 
         np.testing.assert_allclose(u_dh_core, u_dh, atol=1e-7)
-        np.testing.assert_allclose(f_dh_core, -f_dh, atol=1e-2)
+        np.testing.assert_allclose(f_dh_core, -f_dh, atol=1e-7)
 
     def test_rf(self):
         """Tests the ReactionField coulomb interaction by comparing the
@@ -188,11 +212,12 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         u_rf_core = np.zeros_like(r)
         f_rf_core = np.zeros_like(r)
 
+        p1, p2 = self.system.part[:]
         for i, ri in enumerate(r):
-            self.system.part[1].pos = self.system.part[0].pos + [ri, 0, 0]
+            p2.pos = p1.pos + [ri, 0, 0]
             self.system.integrator.run(0)
             u_rf_core[i] = self.system.analysis.energy()['coulomb']
-            f_rf_core[i] = self.system.part[0].f[0]
+            f_rf_core[i] = p1.f[0]
 
         np.testing.assert_allclose(u_rf_core, u_rf, atol=1e-7)
         np.testing.assert_allclose(f_rf_core, -f_rf, atol=1e-2)

@@ -22,8 +22,7 @@ from libcpp.vector cimport vector
 from .particle_data import ParticleHandle
 from .particle_data cimport *
 from .interactions import NonBondedInteractions
-from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
-from .interactions cimport IA_parameters, get_ia_param, bonded_ia_params
+from .interactions cimport IA_parameters, get_ia_param
 from .grid cimport get_mi_vector, box_geo
 from .utils cimport make_array_locked
 
