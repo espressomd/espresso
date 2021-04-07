@@ -56,13 +56,12 @@ class IntegratorSteepestDescent(ut.TestCase):
         self.system.integrator.set_vv()
 
     def test_relaxation_integrator(self):
-        for i in range(self.n_part):
-            p = self.system.part.add(
-                id=i, pos=np.random.random(3) * self.system.box_l)
-            if self.test_rotation:
-                p.dip = np.random.random(3)
-                p.dipm = 1
-                p.rotation = (1, 1, 1)
+        self.system.part.add(
+            pos=np.random.random((self.n_part, 3)) * self.system.box_l)
+        if self.test_rotation:
+            self.system.part[:].dip = np.random.random((self.n_part, 3))
+            self.system.part[:].dipm = 1
+            self.system.part[:].rotation = (1, 1, 1)
 
         self.assertNotAlmostEqual(
             self.system.analysis.energy()["total"], 0, places=10)
@@ -79,7 +78,7 @@ class IntegratorSteepestDescent(ut.TestCase):
         np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.)
         if self.test_rotation:
             np.testing.assert_allclose(np.copy(self.system.part[:].dip),
-                                       np.hstack((-np.ones((self.n_part, 1)), np.zeros((self.n_part, 1)), np.zeros((self.n_part, 1)))), atol=1E-9)
+                                       self.n_part * [(-1, 0, 0)], atol=1E-9)
 
     def test_integration(self):
         max_disp = 0.05

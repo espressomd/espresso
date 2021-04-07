@@ -55,11 +55,7 @@ public:
   using Base::Base;
   CylindricalPidProfileObservable() {
     this->add_parameters({
-        {"ids",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->ids() =
-               get_value<std::vector<int>>(v);
-         },
+        {"ids", AutoParameter::read_only,
          [this]() { return cylindrical_pid_profile_observable()->ids(); }},
         {"transform_params", m_transform_params},
         {"n_r_bins",

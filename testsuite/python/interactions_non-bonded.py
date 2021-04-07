@@ -39,8 +39,8 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.cell_system.skin = 0.
         self.system.time_step = .1
 
-        self.system.part.add(id=0, pos=self.start_pos, type=0)
-        self.system.part.add(id=1, pos=self.start_pos, type=0)
+        self.system.part.add(pos=self.start_pos, type=0)
+        self.system.part.add(pos=self.start_pos, type=0)
 
     def tearDown(self):
         self.system.non_bonded_inter.reset()
@@ -296,9 +296,9 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             self.system.part.clear()
             self.system.part.add(
-                id=0, pos=(1, 2, 3), rotation=(1, 1, 1), type=0)
+                pos=(1, 2, 3), rotation=(1, 1, 1), type=0)
             self.system.part.add(
-                id=1, pos=(2.2, 2.1, 2.9), rotation=(1, 1, 1), type=0)
+                pos=(2.2, 2.1, 2.9), rotation=(1, 1, 1), type=0)
 
             self.system.non_bonded_inter[0, 0].gay_berne.set_params(
                 sig=sigma_0, cut=cut, eps=epsilon_0, k1=k_1, k2=k_2, mu=mu,
@@ -350,8 +350,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         setup_system(gb_params)
 
-        p1 = self.system.part[0]
-        p2 = self.system.part[1]
+        p1, p2 = self.system.part[:]
 
         delta = 1.0e-6
 

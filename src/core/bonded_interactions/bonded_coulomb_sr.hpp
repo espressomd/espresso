@@ -30,10 +30,7 @@
 
 #include "config.hpp"
 
-#ifdef ELECTROSTATICS
-
 #include "Particle.hpp"
-#include "bonded_interaction_data.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 
 #include <utils/Vector.hpp>
@@ -42,40 +39,58 @@
 
 #include <cmath>
 
-/** Set the parameters for the short-range bonded Coulomb potential
- *
- *  @retval ES_OK on success
- *  @retval ES_ERROR on error
- */
-int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
+/** Parameters for %Coulomb bond short-range Potential */
+struct BondedCoulombSR {
+  /** charge factor */
+  double q1q2;
+
+  double cutoff() const { return 0.; }
+
+  static constexpr int num = 1;
+
+  BondedCoulombSR() = default;
+  BondedCoulombSR(double q1q2);
+
+  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  boost::optional<double> energy(Particle const &p1, Particle const &p2,
+                                 Utils::Vector3d const &dx) const;
+
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, long int /* version */) {
+    ar &q1q2;
+  }
+};
 
 /** Compute the short-range bonded Coulomb pair force.
- *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-bonded_coulomb_sr_pair_force(Bonded_ia_parameters const &iaparams,
-                             Utils::Vector3d const &dx) {
+BondedCoulombSR::force(Utils::Vector3d const &dx) const {
+#ifdef ELECTROSTATICS
   auto const dist = dx.norm();
-  return Coulomb::central_force(iaparams.p.bonded_coulomb_sr.q1q2, dx, dist);
+  return Coulomb::central_force(q1q2, dx, dist);
+#else
+  return Utils::Vector3d{};
+#endif
 }
 
 /** Compute the short-range bonded Coulomb pair energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
- *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-bonded_coulomb_sr_pair_energy(Particle const &p1, Particle const &p2,
-                              Bonded_ia_parameters const &iaparams,
-                              Utils::Vector3d const &dx) {
+BondedCoulombSR::energy(Particle const &p1, Particle const &p2,
+                        Utils::Vector3d const &dx) const {
+#ifdef ELECTROSTATICS
   auto const dist2 = dx.norm2();
   auto const dist = sqrt(dist2);
-  return Coulomb::pair_energy(p1, p2, iaparams.p.bonded_coulomb_sr.q1q2, dx,
-                              dist, dist2);
-}
-
+  return Coulomb::pair_energy(p1, p2, q1q2, dx, dist, dist2);
+#else
+  return .0;
 #endif
+}
 
 #endif

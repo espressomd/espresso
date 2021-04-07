@@ -59,7 +59,7 @@ class LBEHTest(ut.TestCase):
     def test(self):
         s = self.s
 
-        s.part.add(pos=0.5 * s.box_l, mu_E=self.params['muE'])
+        p = s.part.add(pos=0.5 * s.box_l, mu_E=self.params['muE'])
 
         mu_E = np.array(self.params['muE'])
         # Terminal velocity is mu_E minus the momentum the fluid
@@ -68,7 +68,7 @@ class LBEHTest(ut.TestCase):
 
         s.integrator.run(steps=500)
 
-        np.testing.assert_allclose(v_term, np.copy(s.part[0].v), atol=1e-5)
+        np.testing.assert_allclose(v_term, np.copy(p.v), atol=1e-5)
 
 
 if __name__ == "__main__":

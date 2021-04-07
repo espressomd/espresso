@@ -85,15 +85,18 @@ private:
 
 static size_t calc_transmit_size(unsigned data_parts) {
   size_t size = {};
-  if (data_parts & GHOSTTRANS_PROPRTS) {
+  if (data_parts & GHOSTTRANS_PROPRTS)
     size += Utils::MemcpyOArchive::packing_size<ParticleProperties>();
-  }
   if (data_parts & GHOSTTRANS_POSITION)
     size += Utils::MemcpyOArchive::packing_size<ParticlePosition>();
   if (data_parts & GHOSTTRANS_MOMENTUM)
     size += Utils::MemcpyOArchive::packing_size<ParticleMomentum>();
   if (data_parts & GHOSTTRANS_FORCE)
     size += Utils::MemcpyOArchive::packing_size<ParticleForce>();
+#ifdef BOND_CONSTRAINT
+  if (data_parts & GHOSTTRANS_RATTLE)
+    size += Utils::MemcpyOArchive::packing_size<ParticleRattle>();
+#endif
 
   return size;
 }
@@ -147,6 +150,11 @@ static void prepare_send_buffer(CommBuf &send_buffer,
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver << part.f;
         }
+#ifdef BOND_CONSTRAINT
+        if (data_parts & GHOSTTRANS_RATTLE) {
+          archiver << part.rattle;
+        }
+#endif
         if (data_parts & GHOSTTRANS_BONDS) {
           bond_archiver << part.bonds();
         }
@@ -203,6 +211,11 @@ static void put_recv_buffer(CommBuf &recv_buffer,
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver >> part.f;
         }
+#ifdef BOND_CONSTRAINT
+        if (data_parts & GHOSTTRANS_RATTLE) {
+          archiver >> part.rattle;
+        }
+#endif
       }
     }
     if (data_parts & GHOSTTRANS_BONDS) {
@@ -223,6 +236,22 @@ static void put_recv_buffer(CommBuf &recv_buffer,
 
   recv_buffer.bonds().clear();
 }
+
+#ifdef BOND_CONSTRAINT
+static void
+add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
+                                       const GhostCommunication &ghost_comm) {
+  /* put back data */
+  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  for (auto &part_list : ghost_comm.part_lists) {
+    for (Particle &part : *part_list) {
+      ParticleRattle pr;
+      archiver >> pr;
+      part.rattle += pr;
+    }
+  }
+}
+#endif
 
 static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
                                         const GhostCommunication &ghost_comm) {
@@ -272,6 +301,10 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
         }
         if (data_parts & GHOSTTRANS_FORCE)
           part2.f += part1.f;
+#ifdef BOND_CONSTRAINT
+        if (data_parts & GHOSTTRANS_RATTLE)
+          part2.rattle += part1.rattle;
+#endif
       }
     }
   }
@@ -396,6 +429,10 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
          * where the addition is integrated into the communication. */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
           add_forces_from_recv_buffer(recv_buffer, ghost_comm);
+#ifdef BOND_CONSTRAINT
+        else if (data_parts == GHOSTTRANS_RATTLE && comm_type != GHOST_RDCE)
+          add_rattle_correction_from_recv_buffer(recv_buffer, ghost_comm);
+#endif
         else
           put_recv_buffer(recv_buffer, ghost_comm, data_parts);
       }
@@ -415,6 +452,11 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
         /* as above */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
           add_forces_from_recv_buffer(recv_buffer, *poststore_ghost_comm);
+#ifdef BOND_CONSTRAINT
+        else if (data_parts == GHOSTTRANS_RATTLE && comm_type != GHOST_RDCE)
+          add_rattle_correction_from_recv_buffer(recv_buffer,
+                                                 *poststore_ghost_comm);
+#endif
         else
           put_recv_buffer(recv_buffer, *poststore_ghost_comm, data_parts);
       }

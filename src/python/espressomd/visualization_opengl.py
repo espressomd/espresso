@@ -1977,12 +1977,15 @@ class HollowConicalFrustum(Shape):
                  quality, box_l, rasterize_resolution, rasterize_pointsize):
         super().__init__(shape, particle_type, color, material,
                          quality, box_l, rasterize_resolution, rasterize_pointsize)
-        self.center = np.array(self.shape.get_parameter('center'))
-        self.radius_1 = np.array(self.shape.get_parameter('r1'))
-        self.radius_2 = np.array(self.shape.get_parameter('r2'))
-        self.length = np.array(self.shape.get_parameter('length'))
-        self.thickness = np.array(self.shape.get_parameter('thickness'))
-        self.axis = np.array(self.shape.get_parameter('axis'))
+        ctp = self.shape.get_parameter('cyl_transform_params')
+        self.center = np.array(ctp.center)
+        self.axis = np.array(ctp.axis)
+        self.orientation = np.array(ctp.orientation)
+        self.radius_1 = self.shape.get_parameter('r1')
+        self.radius_2 = self.shape.get_parameter('r2')
+        self.length = self.shape.get_parameter('length')
+        self.thickness = self.shape.get_parameter('thickness')
+        self.central_angle = self.shape.get_parameter('central_angle')
 
     def draw(self):
         """
@@ -1990,7 +1993,7 @@ class HollowConicalFrustum(Shape):
         Use rasterization of base class, otherwise.
 
         """
-        if bool(OpenGL.GLE.gleSpiral):
+        if bool(OpenGL.GLE.gleSpiral) and self.central_angle == 0.:
             self._draw_using_gle()
         else:
             super().draw()

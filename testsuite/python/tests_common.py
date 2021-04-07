@@ -86,8 +86,8 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
 
     # Initialize dict with expected forces
     f_expected = {}
-    for id in system.part[:].id:
-        f_expected[id] = np.zeros(3)
+    for pid in system.part[:].id:
+        f_expected[pid] = np.zeros(3)
 
     # Cache some stuff to speed up pair loop
     dist_vec = system.distance_vec
@@ -98,8 +98,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
     all_types = np.unique(system.part[:].type)
     for i in all_types:
         for j in all_types:
-            lj_params[i, j] = non_bonded_inter[
-                int(i), int(j)].lennard_jones.get_params()
+            lj_params[i, j] = non_bonded_inter[i, j].lennard_jones.get_params()
 
     # Go over all pairs of particles
     for pair in system.part.pairs():
@@ -116,17 +115,14 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
         f = lj_force_vector(v_d, d, lj_params[p0.type, p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
+
     # Check actual forces against expected
-    for id in system.part[:].id:
-        if id in ids_to_skip:
+    for p in system.part:
+        if p.id in ids_to_skip:
             continue
-        if np.linalg.norm(system.part[id].f - f_expected[id]) >= tolerance:
-            raise Exception("LJ force verification failed on particle " +
-                            str(id) +
-                            ". Got " +
-                            str(system.part[id].f) +
-                            ", expected " +
-                            str(f_expected[id]))
+        if np.linalg.norm(p.f - f_expected[p.id]) >= tolerance:
+            raise Exception(f"LJ force verification failed on particle "
+                            f"{p.id}. Got {p.f}, expected {f_expected[p.id]}")
 
 
 def abspath(path):
@@ -175,8 +171,8 @@ def get_cylindrical_basis_vectors(pos):
     return e_r, e_phi, e_z
 
 
-def convert_vec_body_to_space(system, part, vec):
-    A = rotation_matrix_quat(system, part)
+def convert_vec_body_to_space(p, vec):
+    A = rotation_matrix_quat(p)
     return np.dot(A.transpose(), vec)
 
 
@@ -189,18 +185,18 @@ def rodrigues_rot(vec, axis, angle):
         (1 - np.cos(angle)) * np.dot(axis, vec) * axis
 
 
-def rotation_matrix_quat(system, part):
+def rotation_matrix_quat(p):
     """
     Return the rotation matrix associated with quaternion.
 
     Parameters
     ----------
-    part : :obj:`int`
-        Particle index.
+    p : :obj:`ParticleHandle`
+        Particle.
 
     """
     A = np.zeros((3, 3))
-    quat = system.part[part].quat
+    quat = p.quat
     qq = np.power(quat, 2)
 
     A[0, 0] = qq[0] + qq[1] - qq[2] - qq[3]

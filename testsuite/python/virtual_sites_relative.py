@@ -33,6 +33,9 @@ class VirtualSites(ut.TestCase):
 
     np.random.seed(42)
 
+    def tearDown(self):
+        self.system.part.clear()
+
     def multiply_quaternions(self, a, b):
         return np.array(
             (a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
@@ -81,31 +84,28 @@ class VirtualSites(ut.TestCase):
         self.assertIsInstance(self.system.virtual_sites, VirtualSitesRelative)
 
     def test_vs_quat(self):
-        self.system.part.clear()
         # First check that quaternion of virtual particle is unchanged if
         # have_quaterion is false.
         self.system.virtual_sites = VirtualSitesRelative(have_quaternion=False)
         self.assertFalse(self.system.virtual_sites.have_quaternion)
-        self.system.part.add(id=0, pos=[1, 1, 1], rotation=[1, 1, 1],
-                             omega_lab=[1, 1, 1])
-        self.system.part.add(id=1, pos=[1, 1, 1], rotation=[1, 1, 1])
-        self.system.part[1].vs_auto_relate_to(0)
-        np.testing.assert_array_equal(
-            np.copy(self.system.part[1].quat), [1, 0, 0, 0])
+        p1 = self.system.part.add(pos=[1, 1, 1], rotation=[1, 1, 1],
+                                  omega_lab=[1, 1, 1])
+        p2 = self.system.part.add(pos=[1, 1, 1], rotation=[1, 1, 1])
+        p2.vs_auto_relate_to(p1)
+        np.testing.assert_array_equal(np.copy(p2.quat), [1, 0, 0, 0])
         self.system.integrator.run(1)
-        np.testing.assert_array_equal(
-            np.copy(self.system.part[1].quat), [1, 0, 0, 0])
+        np.testing.assert_array_equal(np.copy(p2.quat), [1, 0, 0, 0])
         # Now check that quaternion of the virtual particle gets updated.
         self.system.virtual_sites = VirtualSitesRelative(have_quaternion=True)
         self.system.integrator.run(1)
-        self.assertRaises(AssertionError, np.testing.assert_array_equal, np.copy(
-            self.system.part[1].quat), [1, 0, 0, 0])
+        self.assertRaises(AssertionError, np.testing.assert_array_equal,
+                          np.copy(p2.quat), [1, 0, 0, 0])
 
         # co-aligned case
-        self.system.part[1].vs_quat = (1, 0, 0, 0)
+        p2.vs_quat = (1, 0, 0, 0)
         self.system.integrator.run(1)
         np.testing.assert_allclose(
-            np.copy(self.system.part[1].director), np.copy(self.system.part[0].director), atol=1E-12)
+            np.copy(p2.director), np.copy(p1.director), atol=1E-12)
 
         # Construct a quaternion with perpendicular orientation.
         p0 = np.cos(np.pi / 4.0)
@@ -114,21 +114,20 @@ class VirtualSites(ut.TestCase):
         q = np.array([0, 0, 0])
         r0 = p0 * q0
         r = -np.dot(q, p) + np.cross(q, p) + p0 * q + q0 * p
-        self.system.part[1].vs_quat = [r0, r[0], r[1], r[2]]
+        p2.vs_quat = [r0, r[0], r[1], r[2]]
         self.system.integrator.run(1)
         # Check for orthogonality.
         self.assertAlmostEqual(
-            np.dot(self.system.part[0].director, self.system.part[1].director), 0.0, delta=1E-12)
+            np.dot(p1.director, p2.director), 0.0, delta=1E-12)
         # Check if still true after integration.
         self.system.integrator.run(1)
-        self.assertAlmostEqual(
-            np.dot(self.system.part[0].director, self.system.part[1].director), 0.0)
+        self.assertAlmostEqual(np.dot(p1.director, p2.director), 0.0)
 
         # Check exceptions.
         with self.assertRaisesRegex(ValueError, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int"):
-            self.system.part[1].vs_auto_relate_to('0')
+            p2.vs_auto_relate_to('0')
         try:
-            self.system.part[1].vs_auto_relate_to(self.system.part[0])
+            p2.vs_auto_relate_to(p1)
         except BaseException:
             self.fail('Failed to set a vs from a particle handle')
 
@@ -137,9 +136,7 @@ class VirtualSites(ut.TestCase):
         system.cell_system.skin = 0.3
         system.virtual_sites = VirtualSitesRelative()
         system.box_l = [10, 10, 10]
-        system.part.clear()
         system.time_step = 0.004
-        system.part.clear()
         system.thermostat.turn_off()
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=0, sigma=0, cutoff=0, shift=0)
@@ -149,41 +146,40 @@ class VirtualSites(ut.TestCase):
         self.assertEqual(system.min_global_cut, 0.23)
 
         # Place central particle + 3 vs
-        system.part.add(rotation=(1, 1, 1), pos=(0.5, 0.5, 0.5), id=1,
-                        quat=(1, 0, 0, 0), omega_lab=(1, 2, 3))
+        p1 = system.part.add(rotation=(1, 1, 1), pos=(0.5, 0.5, 0.5), id=1,
+                             quat=(1, 0, 0, 0), omega_lab=(1, 2, 3))
         pos2 = (0.5, 0.4, 0.5)
         pos3 = (0.3, 0.5, 0.4)
         pos4 = (0.5, 0.5, 0.5)
-        cur_id = 2
-        for pos in pos2, pos3, pos4:
-            system.part.add(rotation=(1, 1, 1), pos=pos, id=cur_id)
-            system.part[cur_id].vs_auto_relate_to(1)
+        for pos in (pos2, pos3, pos4):
+            p = system.part.add(rotation=(1, 1, 1), pos=pos)
+            p.vs_auto_relate_to(p1)
             # Was the particle made virtual
-            self.assertTrue(system.part[cur_id].virtual)
+            self.assertTrue(p.virtual)
             # Are vs relative to id and
-            vs_r = system.part[cur_id].vs_relative
+            vs_r = p.vs_relative
             # id
-            self.assertEqual(vs_r[0], 1)
+            self.assertEqual(vs_r[0], p1.id)
             # distance
-            self.assertAlmostEqual(vs_r[1], system.distance(
-                system.part[1], system.part[cur_id]), places=6)
-            cur_id += 1
+            self.assertAlmostEqual(vs_r[1], system.distance(p1, p), places=6)
 
         # Move central particle and check vs placement
-        system.part[1].pos = (0.22, 0.22, 0.22)
+        p1.pos = (0.22, 0.22, 0.22)
         # Linear and rotational velocity on central particle
-        system.part[1].v = (0.45, 0.14, 0.447)
-        system.part[1].omega_lab = (0.45, 0.14, 0.447)
+        p1.v = (0.45, 0.14, 0.447)
+        p1.omega_lab = (0.45, 0.14, 0.447)
         system.integrator.run(0, recalc_forces=True)
-        for i in [2, 3, 4]:
-            self.verify_vs(system.part[i])
+        for p in system.part:
+            if p.id != p1.id:
+                self.verify_vs(p)
 
         # Check if still true, when non-virtual particle has rotated and a
         # linear motion
-        system.part[1].omega_lab = [-5, 3, 8.4]
+        p1.omega_lab = [-5., 3., 8.4]
         system.integrator.run(10)
-        for i in [2, 3, 4]:
-            self.verify_vs(system.part[i])
+        for p in system.part:
+            if p.id != p1.id:
+                self.verify_vs(p)
 
         if espressomd.has_features("EXTERNAL_FORCES"):
             # Test transfer of forces accumulating on virtual sites
@@ -191,24 +187,24 @@ class VirtualSites(ut.TestCase):
             f2 = np.array((3, 4, 5))
             f3 = np.array((-4, 5, 6))
             # Add forces to vs
-            system.part[2].ext_force = f2
-            system.part[3].ext_force = f3
+            p2 = system.part[2]
+            p3 = system.part[3]
+            p2.ext_force = f2
+            p3.ext_force = f3
             system.integrator.run(0)
             # get force/torques on non-vs
-            f = system.part[1].f
-            t = system.part[1].torque_lab
+            f = p1.f
+            t = p1.torque_lab
 
             # Expected force = sum of the forces on the vs
-            self.assertLess(np.linalg.norm(f - f2 - f3), 1E-6)
+            self.assertAlmostEqual(np.linalg.norm(f - f2 - f3), 0., delta=1E-6)
 
             # Expected torque
             # Radial components of forces on a rigid body add to the torque
-            t_exp = np.cross(system.distance_vec(
-                system.part[1], system.part[2]), f2)
-            t_exp += np.cross(system.distance_vec(
-                system.part[1], system.part[3]), f3)
+            t_exp = np.cross(system.distance_vec(p1, p2), f2)
+            t_exp += np.cross(system.distance_vec(p1, p3), f3)
             # Check
-            self.assertLessEqual(np.linalg.norm(t_exp - t), 1E-6)
+            self.assertAlmostEqual(np.linalg.norm(t_exp - t), 0., delta=1E-6)
 
     def run_test_lj(self):
         """This fills the system with vs-based dumbells, adds a lj potential,
@@ -230,7 +226,7 @@ class VirtualSites(ut.TestCase):
         l = (n / 6. * np.pi * sigma**3 / phi)**(1. / 3.)
 
         # Setup
-        system.box_l = l, l, l
+        system.box_l = [l, l, l]
         system.min_global_cut = 0.501
         system.part.clear()
 
@@ -328,12 +324,11 @@ class VirtualSites(ut.TestCase):
 
         # vs relative contrib
         system.virtual_sites = VirtualSitesRelative()
-        system.part.clear()
-        system.part.add(pos=(0, 0, 0), id=0)
-        p = system.part.add(pos=(0.1, 0.1, 0.1), id=1, ext_force=(1, 2, 3))
-        p.vs_auto_relate_to(0)
-        p = system.part.add(pos=(0.1, 0, 0), id=2, ext_force=(-1, 0, 0))
-        p.vs_auto_relate_to(0)
+        p0 = system.part.add(pos=(0, 0, 0), id=0)
+        p1 = system.part.add(pos=(0.1, 0.1, 0.1), id=1, ext_force=(1, 2, 3))
+        p1.vs_auto_relate_to(p0)
+        p2 = system.part.add(pos=(0.1, 0, 0), id=2, ext_force=(-1, 0, 0))
+        p2.vs_auto_relate_to(p0)
         system.integrator.run(0, recalc_forces=True)
         sim_pressure = system.analysis.pressure()
         sim_pressure_tensor = system.analysis.pressure_tensor()
@@ -346,9 +341,8 @@ class VirtualSites(ut.TestCase):
 
         # expected pressure_tensor
         s_expected = 1. / system.volume() * (
-            np.outer(system.part[1].ext_force, system.distance_vec(
-                system.part[1], system.part[0]))
-            + np.outer(system.part[2].ext_force, system.distance_vec(system.part[2], system.part[0])))
+            np.outer(p1.ext_force, system.distance_vec(p1, p0))
+            + np.outer(p2.ext_force, system.distance_vec(p2, p0)))
         np.testing.assert_allclose(
             pressure_tensor_total, s_expected, atol=1E-5)
         np.testing.assert_allclose(pressure_tensor_vs, s_expected, atol=1E-5)

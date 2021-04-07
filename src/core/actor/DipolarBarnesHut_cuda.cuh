@@ -25,8 +25,6 @@
 
 #ifdef DIPOLAR_BARNES_HUT
 
-typedef float dds_float;
-
 typedef struct {
   /// CUDA blocks
   int blocks;
@@ -117,10 +115,10 @@ void summarizeBH(int blocks);
 void sortBH(int blocks);
 
 /// Barnes-Hut force calculation.
-int forceBH(BHData *bh_data, dds_float k, float *f, float *torque);
+int forceBH(BHData *bh_data, float k, float *f, float *torque);
 
 /// Barnes-Hut energy calculation.
-int energyBH(BHData *bh_data, dds_float k, float *E);
+int energyBH(BHData *bh_data, float k, float *E);
 
 #endif // DIPOLAR_BARNES_HUT
 #endif /* DIPOLARBARNESHUT_CUH_ */

@@ -20,11 +20,6 @@ from libcpp cimport bool
 IF ELECTROKINETICS and CUDA:
     cdef extern from "grid_based_algorithms/electrokinetics.hpp":
 
-        IF EK_DOUBLE_PREC:
-            ctypedef double ekfloat
-        ELSE:
-            ctypedef float ekfloat
-
         DEF MAX_NUMBER_OF_SPECIES = 10
 
         # EK data struct
@@ -63,10 +58,10 @@ IF ELECTROKINETICS and CUDA:
                 bool advection
                 bool fluidcoupling_ideal_contribution
                 float * charge_potential
-                ekfloat * j
+                float * j
                 float * lb_force_density_previous
-                ekfloat * j_fluc
-                ekfloat * rho[MAX_NUMBER_OF_SPECIES]
+                float * j_fluc
+                float * rho[MAX_NUMBER_OF_SPECIES]
                 int species_index[MAX_NUMBER_OF_SPECIES]
                 float density[MAX_NUMBER_OF_SPECIES]
                 float D[MAX_NUMBER_OF_SPECIES]
@@ -112,9 +107,9 @@ IF ELECTROKINETICS and CUDA:
                 bool advection
                 bool fluidcoupling_ideal_contribution
                 float * charge_potential
-                ekfloat * j
+                float * j
                 float * lb_force_density_previous
-                ekfloat * rho[MAX_NUMBER_OF_SPECIES]
+                float * rho[MAX_NUMBER_OF_SPECIES]
                 int species_index[MAX_NUMBER_OF_SPECIES]
                 float density[MAX_NUMBER_OF_SPECIES]
                 float D[MAX_NUMBER_OF_SPECIES]
@@ -164,7 +159,7 @@ IF ELECTROKINETICS and CUDA:
         int ek_node_print_flux(int species, int x, int y, int z, double * flux)
         int ek_node_print_potential(int x, int y, int z, double * potential)
         int ek_node_set_density(int species, int x, int y, int z, double density)
-        ekfloat ek_calculate_net_charge()
+        float ek_calculate_net_charge()
         int ek_neutralize_system(int species)
         int ek_save_checkpoint(char * filename, char * lb_filename)
         int ek_load_checkpoint(char * filename)

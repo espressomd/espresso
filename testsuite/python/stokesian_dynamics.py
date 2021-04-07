@@ -121,14 +121,13 @@ class StokesianDiffusionTest(ut.TestCase):
         self.system.time_step = 1.0
         self.system.cell_system.skin = 0.4
 
-        self.system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
-
     def tearDown(self):
         self.system.constraints.clear()
         self.system.part.clear()
         self.system.thermostat.set_stokesian(kT=0)
 
     def test(self):
+        p = self.system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
         self.system.integrator.set_stokesian_dynamics(
             viscosity=self.eta, radii={0: self.R})
         self.system.thermostat.set_stokesian(kT=self.kT, seed=42)
@@ -137,12 +136,12 @@ class StokesianDiffusionTest(ut.TestCase):
         pos = np.empty([intsteps + 1, 3])
         orientation = np.empty((intsteps + 1, 3))
 
-        pos[0, :] = self.system.part[0].pos
-        orientation[0, :] = self.system.part[0].director
+        pos[0, :] = p.pos
+        orientation[0, :] = p.director
         for i in range(intsteps):
             self.system.integrator.run(1)
-            pos[i + 1, :] = self.system.part[0].pos
-            orientation[i + 1, :] = self.system.part[0].director
+            pos[i + 1, :] = p.pos
+            orientation[i + 1, :] = p.director
 
         # translational diffusion coefficient
         D_expected = self.kT / (6 * np.pi * self.eta * self.R)
