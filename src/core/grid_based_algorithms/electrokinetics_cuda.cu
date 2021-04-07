@@ -2256,15 +2256,9 @@ int ek_init() {
         ek_parameters.lb_ext_force_density[0] != 0 ||
         ek_parameters.lb_ext_force_density[1] != 0 ||
         ek_parameters.lb_ext_force_density[2] != 0;
-    auto force_dens_conversion_factor = lbpar_gpu.agrid * lbpar_gpu.agrid *
-                                        lbpar_gpu.time_step *
-                                        lbpar_gpu.time_step;
-    lbpar_gpu.ext_force_density[0] =
-        ek_parameters.lb_ext_force_density[0] * force_dens_conversion_factor;
-    lbpar_gpu.ext_force_density[1] =
-        ek_parameters.lb_ext_force_density[1] * force_dens_conversion_factor;
-    lbpar_gpu.ext_force_density[2] =
-        ek_parameters.lb_ext_force_density[2] * force_dens_conversion_factor;
+    lbpar_gpu.ext_force_density =
+        Utils::Vector3f(ek_parameters.lb_ext_force_density) *
+        Utils::sqr(lbpar_gpu.agrid * lbpar_gpu.time_step);
 
     lb_reinit_parameters_gpu();
     lb_init_gpu();

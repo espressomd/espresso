@@ -95,7 +95,7 @@ class LBPoiseuilleCommon:
         self.system.lbboundaries.add(wall1)
         self.system.lbboundaries.add(wall2)
 
-        mid_indices = [int(l / AGRID / 2) for l in self.system.box_l]
+        mid_indices = (self.system.box_l / AGRID / 2).astype(int)
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
         while diff > 0.005:
