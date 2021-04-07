@@ -29,7 +29,7 @@ espressomd.assert_features(["LB_WALBERLA", "LB_BOUNDARIES"])
 from espressomd import lb
 from espressomd.lbboundaries import LBBoundary
 import espressomd.shapes
-
+import espressomd.math
 
 # Setup constants
 
@@ -86,9 +86,12 @@ ANGLE = np.pi / 4.0
 ORAD = (DIAMETER - IRAD) / np.sin(ANGLE)
 SHIFT = 0.25 * ORAD * np.cos(ANGLE)
 
+ctp = espressomd.math.CylindricalTransformationParameters(
+    axis=[-1, 0, 0], center=[BOX_L[0] / 2.0 - 1.3 * SHIFT, BOX_L[1] / 2.0, BOX_L[2] / 2.0])
+
 hollow_cone = LBBoundary(shape=espressomd.shapes.HollowConicalFrustum(
-    center=[BOX_L[0] / 2.0 - 1.3 * SHIFT, BOX_L[1] / 2.0, BOX_L[2] / 2.0],
-    axis=[-1, 0, 0], r1=ORAD, r2=IRAD, thickness=2.0, length=18,
+    cyl_transform_params=ctp,
+    r1=ORAD, r2=IRAD, thickness=2.0, length=18,
     direction=1))
 system.lbboundaries.add(hollow_cone)
 
