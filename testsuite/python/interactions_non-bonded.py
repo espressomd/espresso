@@ -65,33 +65,20 @@ class InteractionsNonBondedTest(ut.TestCase):
     @utx.skipIfMissingFeatures("LENNARD_JONES_GENERIC")
     def test_lj_generic(self):
 
-        lj_eps = 2.12
-        lj_sig = 1.37
-        lj_cut = 2.122
-        lj_off = 0.185
-        lj_b1 = 4.22
-        lj_b2 = 3.63
-        lj_e1 = 10.32
-        lj_e2 = 5.81
-        lj_shift = -0.13
-        lj_nsteps = 231
-
         self.run_test("generic_lennard_jones",
-                      {"epsilon": lj_eps,
-                       "sigma": lj_sig,
-                       "cutoff": lj_cut,
-                       "offset": lj_off,
-                       "b1": lj_b1,
-                       "b2": lj_b2,
-                       "e1": lj_e1,
-                       "e2": lj_e2,
-                       "shift": lj_shift},
-                      lambda r: tests_common.lj_generic_force(espressomd,
-                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2),
-                      lambda r: tests_common.lj_generic_potential(
-                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2,
-                          shift=lj_shift),
-                      lj_nsteps)
+                      {"epsilon": 2.12,
+                       "sigma": 1.37,
+                       "cutoff": 2.122,
+                       "offset": 0.185,
+                       "b1": 4.22,
+                       "b2": 3.63,
+                       "e1": 10.32,
+                       "e2": 5.81,
+                       "shift": -0.13},
+                      tests_common.lj_generic_force,
+                      tests_common.lj_generic_potential,
+                      231,
+                      force_kernel_needs_espressomd=True)
 
     # Test WCA Potential
     @utx.skipIfMissingFeatures("WCA")
@@ -101,272 +88,178 @@ class InteractionsNonBondedTest(ut.TestCase):
         wca_sig = 1.37
         wca_cutoff = wca_sig * 2.**(1. / 6.)
         wca_shift = -((wca_sig / wca_cutoff)**12 - (wca_sig / wca_cutoff)**6)
-        wca_nsteps = 231
 
         self.run_test("wca",
                       {"epsilon": wca_eps,
                        "sigma": wca_sig},
-                      lambda r: tests_common.lj_generic_force(espressomd,
-                          r, eps=wca_eps, sig=wca_sig, cutoff=wca_cutoff),
-                      lambda r: tests_common.lj_generic_potential(
-                          r, eps=wca_eps, sig=wca_sig, cutoff=wca_cutoff, shift=4. * wca_shift),
-                      wca_nsteps)
+                      lambda espressomd, r, epsilon, sigma: tests_common.lj_generic_force(
+                          espressomd, r, epsilon=epsilon, sigma=sigma, cutoff=wca_cutoff),
+                      lambda r, epsilon, sigma: tests_common.lj_generic_potential(
+                          r, epsilon=epsilon, sigma=sigma, cutoff=wca_cutoff, shift=4. * wca_shift),
+                      231,
+                      force_kernel_needs_espressomd=True)
 
     # Test Generic Lennard-Jones Softcore Potential
     @utx.skipIfMissingFeatures("LJGEN_SOFTCORE")
     def test_lj_generic_softcore(self):
 
-        lj_eps = 2.12
-        lj_sig = 1.37
-        lj_cut = 2.125
-        lj_off = 0.182
-        lj_b1 = 6.22
-        lj_b2 = 3.63
-        lj_e1 = 13.32
-        lj_e2 = 3.74
-        lj_shift = 0.13
-        lj_delta = 0.1
-        lj_lam = 0.34
-        lj_nsteps = 231
-
         self.run_test("generic_lennard_jones",
-                      {"epsilon": lj_eps,
-                       "sigma": lj_sig,
-                       "cutoff": lj_cut,
-                       "offset": lj_off,
-                       "b1": lj_b1,
-                       "b2": lj_b2,
-                       "e1": lj_e1,
-                       "e2": lj_e2,
-                       "shift": lj_shift,
-                       "delta": lj_delta,
-                       "lam": lj_lam},
-                      lambda r: tests_common.lj_generic_force(espressomd,
-                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, delta=lj_delta, lam=lj_lam),
-                      lambda r: tests_common.lj_generic_potential(
-                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2,
-                          shift=lj_shift, delta=lj_delta, lam=lj_lam),
-                      lj_nsteps)
+                      {"epsilon": 2.12,
+                       "sigma": 1.37,
+                       "cutoff": 2.125,
+                       "offset": 0.182,
+                       "b1": 6.22,
+                       "b2": 3.63,
+                       "e1": 13.32,
+                       "e2": 3.74,
+                       "shift": 0.13,
+                       "delta": 0.1,
+                       "lam": 0.34},
+                      tests_common.lj_generic_force,
+                      tests_common.lj_generic_potential,
+                      231,
+                      force_kernel_needs_espressomd=True)
 
     # Test Lennard-Jones Potential
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_lj(self):
 
-        lj_eps = 1.92
-        lj_sig = 1.03
-        lj_cut = 1.123
-        lj_shift = 0.92
-        lj_nsteps = 113
-
         self.run_test("lennard_jones",
-                      {"epsilon": lj_eps,
-                       "sigma": lj_sig,
-                       "cutoff": lj_cut,
-                       "shift": lj_shift},
-                      lambda r: tests_common.lj_force(espressomd,
-                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut),
-                      lambda r: tests_common.lj_potential(
-                          r, eps=lj_eps, sig=lj_sig, cutoff=lj_cut,
-                          shift=lj_shift),
-                      lj_nsteps)
+                      {"epsilon": 1.92,
+                       "sigma": 1.03,
+                       "cutoff": 1.123,
+                       "shift": 0.92},
+                      tests_common.lj_force,
+                      tests_common.lj_potential,
+                      113,
+                      force_kernel_needs_espressomd=True)
 
     # Test Lennard-Jones Cosine Potential
     @utx.skipIfMissingFeatures("LJCOS")
     def test_lj_cos(self):
 
-        ljcos_eps = 3.32
-        ljcos_sig = 0.73
-        ljcos_cut = 1.523
-        ljcos_offset = 0.223
-        ljcos_nsteps = 175
-
         self.run_test("lennard_jones_cos",
-                      {"epsilon": ljcos_eps,
-                       "sigma": ljcos_sig,
-                       "cutoff": ljcos_cut,
-                       "offset": ljcos_offset},
-                      lambda r: tests_common.lj_cos_force(espressomd,
-                          r, eps=ljcos_eps, sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset),
-                      lambda r: tests_common.lj_cos_potential(
-                          r, eps=ljcos_eps, sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset),
-                      ljcos_nsteps)
+                      {"epsilon": 3.32,
+                       "sigma": 0.73,
+                       "cutoff": 1.523,
+                       "offset": 0.223},
+                      tests_common.lj_cos_force,
+                      tests_common.lj_cos_potential,
+                      175,
+                      force_kernel_needs_espressomd=True)
 
     # Test Lennard-Jones Cosine^2 Potential
     @utx.skipIfMissingFeatures("LJCOS2")
     def test_lj_cos2(self):
 
-        ljcos2_eps = 0.31
-        ljcos2_sig = 0.73
-        ljcos2_width = 1.523
-        ljcos2_offset = 0.321
-        ljcos2_nsteps = 267
-
         self.run_test("lennard_jones_cos2",
-                      {"epsilon": ljcos2_eps,
-                       "sigma": ljcos2_sig,
-                       "width": ljcos2_width,
-                       "offset": ljcos2_offset},
-                      lambda r: tests_common.lj_cos2_force(espressomd,
-                          r, eps=ljcos2_eps, sig=ljcos2_sig, width=ljcos2_width, offset=ljcos2_offset),
-                      lambda r: tests_common.lj_cos2_potential(
-                          r, eps=ljcos2_eps, sig=ljcos2_sig, width=ljcos2_width, offset=ljcos2_offset),
-                      ljcos2_nsteps)
+                      {"epsilon": 0.31,
+                       "sigma": 0.73,
+                       "width": 1.523,
+                       "offset": 0.321},
+                      tests_common.lj_cos2_force,
+                      tests_common.lj_cos2_potential,
+                      267,
+                      force_kernel_needs_espressomd=True)
 
     # Test Smooth-step Potential
     @utx.skipIfMissingFeatures("SMOOTH_STEP")
     def test_smooth_step(self):
 
-        sst_eps = 4.92
-        sst_sig = 3.03
-        sst_cut = 1.253
-        sst_d = 2.52
-        sst_n = 11
-        sst_k0 = 2.13
-        sst_nsteps = 126
-
         self.run_test("smooth_step",
-                      {"eps": sst_eps,
-                       "sig": sst_sig,
-                       "cutoff": sst_cut,
-                       "d": sst_d,
-                       "n": sst_n,
-                       "k0": sst_k0},
-                      lambda r: tests_common.smooth_step_force(
-                          r, eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0),
-                      lambda r: tests_common.smooth_step_potential(
-                          r, eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0),
-                      sst_nsteps)
+                      {"eps": 4.92,
+                       "sig": 3.03,
+                       "cutoff": 1.253,
+                       "d": 2.52,
+                       "n": 11,
+                       "k0": 2.13},
+                      tests_common.smooth_step_force,
+                      tests_common.smooth_step_potential,
+                      126)
 
     # Test BMHTF Potential
     @utx.skipIfMissingFeatures("BMHTF_NACL")
     def test_bmhtf(self):
 
-        bmhtf_a = 3.92
-        bmhtf_b = 2.43
-        bmhtf_c = 1.23
-        bmhtf_d = 3.33
-        bmhtf_sig = 0.123
-        bmhtf_cut = 1.253
-        bmhtf_nsteps = 126
+        params = {"a": 3.92,
+                  "b": 2.43,
+                  "c": 1.23,
+                  "d": 3.33,
+                  "sig": 0.123,
+                  "cutoff": 1.253}
 
         self.run_test("bmhtf",
-                      {"a": bmhtf_a,
-                       "b": bmhtf_b,
-                       "c": bmhtf_c,
-                       "d": bmhtf_d,
-                       "sig": bmhtf_sig,
-                       "cutoff": bmhtf_cut},
-                      lambda r: tests_common.bmhtf_force(
-                          r, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut),
-                      lambda r: tests_common.bmhtf_potential(
-                          r, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut),
-                      bmhtf_nsteps)
+                      params,
+                      tests_common.bmhtf_force,
+                      tests_common.bmhtf_potential,
+                      126)
 
     # Test Morse Potential
     @utx.skipIfMissingFeatures("MORSE")
     def test_morse(self):
 
-        m_eps = 1.92
-        m_alpha = 3.03
-        m_cut = 1.253
-        m_rmin = 0.123
-        m_nsteps = 126
-
         self.run_test("morse",
-                      {"eps": m_eps,
-                       "alpha": m_alpha,
-                       "rmin": m_rmin,
-                       "cutoff": m_cut},
-                      lambda r: tests_common.morse_force(
-                          r, eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin),
-                      lambda r: tests_common.morse_potential(
-                          r, eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin),
-                      m_nsteps)
+                      {"eps": 1.92,
+                       "alpha": 3.03,
+                       "rmin": 0.123,
+                       "cutoff": 1.253},
+                      tests_common.morse_force,
+                      tests_common.morse_potential,
+                      126)
 
     # Test Buckingham Potential
     @utx.skipIfMissingFeatures("BUCKINGHAM")
     def test_buckingham(self):
 
-        b_a = 3.71
-        b_b = 2.92
-        b_c = 5.32
-        b_d = 4.11
-        b_disc = 1.03
-        b_cut = 2.253
-        b_shift = 0.133
-        b_nsteps = 226
-
         self.run_test("buckingham",
-                      {"a": b_a,
-                       "b": b_b,
-                       "c": b_c,
-                       "d": b_d,
-                       "discont": b_disc,
-                       "cutoff": b_cut,
-                       "shift": b_shift},
-                      lambda r: tests_common.buckingham_force(
-                          r, a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift),
-                      lambda r: tests_common.buckingham_potential(
-                          r, a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift),
-                      b_nsteps)
+                      {"a": 3.71,
+                       "b": 2.92,
+                       "c": 5.32,
+                       "d": 4.11,
+                       "discont": 1.03,
+                       "cutoff": 2.253,
+                       "shift": 0.133},
+                      tests_common.buckingham_force,
+                      tests_common.buckingham_potential,
+                      226,
+                      force_kernel_remove_shift=False)
 
     # Test Soft-sphere Potential
     @utx.skipIfMissingFeatures("SOFT_SPHERE")
     def test_soft_sphere(self):
 
-        ss_a = 1.92
-        ss_n = 3.03
-        ss_cut = 1.123
-        ss_off = 0.123
-        ss_nsteps = 113
-        ss_n_initial_steps = 12
-
         self.run_test("soft_sphere",
-                      {"a": ss_a,
-                       "n": ss_n,
-                       "cutoff": ss_cut,
-                       "offset": ss_off},
-                      lambda r: tests_common.soft_sphere_force(
-                          r, a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off),
-                      lambda r: tests_common.soft_sphere_potential(
-                          r, a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off),
-                      ss_nsteps, ss_n_initial_steps)
+                      {"a": 1.92,
+                       "n": 3.03,
+                       "cutoff": 1.123,
+                       "offset": 0.123},
+                      tests_common.soft_sphere_force,
+                      tests_common.soft_sphere_potential,
+                      113,
+                      n_initial_steps=12)
 
     # Test Hertzian Potential
     @utx.skipIfMissingFeatures("HERTZIAN")
     def test_hertzian(self):
 
-        h_eps = 6.92
-        h_sig = 2.432
-        h_nsteps = 244
-
         self.run_test("hertzian",
-                      {"eps": h_eps,
-                       "sig": h_sig},
-                      lambda r: tests_common.hertzian_force(
-                          r, eps=h_eps, sig=h_sig),
-                      lambda r: tests_common.hertzian_potential(
-                          r, eps=h_eps, sig=h_sig),
-                      h_nsteps)
+                      {"eps": 6.92,
+                       "sig": 2.432},
+                      tests_common.hertzian_force,
+                      tests_common.hertzian_potential,
+                      244)
 
     # Test Gaussian Potential
     @utx.skipIfMissingFeatures("GAUSSIAN")
     def test_gaussian(self):
 
-        g_eps = 6.92
-        g_sig = 4.03
-        g_cut = 1.243
-        g_nsteps = 125
-
         self.run_test("gaussian",
-                      {"eps": g_eps,
-                       "sig": g_sig,
-                       "cutoff": g_cut},
-                      lambda r: tests_common.gaussian_force(
-                          r, eps=g_eps, sig=g_sig, cutoff=g_cut),
-                      lambda r: tests_common.gaussian_potential(
-                          r, eps=g_eps, sig=g_sig, cutoff=g_cut),
-                      g_nsteps)
+                      {"eps": 6.92,
+                       "sig": 4.03,
+                       "cutoff": 1.243},
+                      tests_common.gaussian_force,
+                      tests_common.gaussian_potential,
+                      125)
 
     # Test the Gay-Berne potential and the resulting force and torque
     @utx.skipIfMissingFeatures("GAY_BERNE")
@@ -512,34 +405,43 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.integrator.run(0)
         self.assertEqual(self.system.analysis.energy()["non_bonded"], 0.0)
 
-    def run_test(self, name, parameters, force_func,
-                 energy_func, n_steps, n_initial_steps=0):
+    def run_test(self, name, parameters, force_kernel,
+                 energy_kernel, n_steps, n_initial_steps=0,
+                 force_kernel_needs_espressomd=False,
+                 force_kernel_remove_shift=True):
 
         getattr(self.system.non_bonded_inter[0, 0], name).set_params(
             **parameters)
         p0, p1 = self.system.part[:]
+        p1.pos = p1.pos + self.step * n_initial_steps
 
-        E_ref = [energy_func(i * self.step_width)
-                 for i in np.arange(n_steps) + n_initial_steps + 1]
+        force_parameters = parameters.copy()
+        if "shift" in force_parameters and force_kernel_remove_shift:
+            del force_parameters["shift"]
+        if force_kernel_needs_espressomd:
+            def force_func(r): return force_kernel(
+                espressomd, r, **force_parameters)
+        else:
+            def force_func(r): return force_kernel(r, **force_parameters)
 
-        for i in range(n_initial_steps):
+        def energy_func(r): return energy_kernel(r, **parameters)
+
+        for _ in range(n_steps):
             p1.pos = p1.pos + self.step
-
-        for i in range(n_steps):
-            p1.pos = p1.pos + self.step
+            d = np.linalg.norm(p1.pos - p0.pos)
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
+            E_ref = energy_func(d)
 
             # Calculate forces
             f0_sim = np.copy(p0.f)
             f1_sim = np.copy(p1.f)
-            f1_ref = self.axis * \
-                force_func((i + n_initial_steps + 1) * self.step_width)
+            f1_ref = self.axis * force_func(d)
 
             # Check that energies match ...
-            self.assertFractionAlmostEqual(E_sim, E_ref[i])
+            self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force ...
             np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
