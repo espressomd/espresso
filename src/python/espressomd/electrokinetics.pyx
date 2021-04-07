@@ -66,7 +66,7 @@ IF ELECTROKINETICS:
             """
 
             return ["agrid", "lb_density", "viscosity", "friction",
-                    "bulk_viscosity", "gamma_even", "gamma_odd", "T",
+                    "bulk_viscosity", "gamma_even", "gamma_odd", "T", "ext_force_density",
                     "prefactor", "stencil", "advection", "fluid_coupling",
                     "fluctuations", "fluctuation_amplitude", "es_coupling",
                     "species"]
@@ -90,6 +90,7 @@ IF ELECTROKINETICS:
                     "bulk_viscosity": -1,
                     "gamma_odd": 0.0,
                     "gamma_even": 0.0,
+                    "ext_force_density": [0., 0., 0.],
                     "friction": 0.0,
                     "T": -1,
                     "prefactor": -1,
@@ -120,6 +121,7 @@ IF ELECTROKINETICS:
                     "bulk_viscosity": ek_parameters.bulk_viscosity,
                     "gamma_odd": ek_parameters.gamma_odd,
                     "gamma_even": ek_parameters.gamma_even,
+                    "ext_force_density": ek_parameters.lb_ext_force_density,
                     "friction": ek_parameters.friction,
                     "T": ek_parameters.T,
                     "prefactor": ek_parameters.prefactor,
@@ -146,6 +148,9 @@ IF ELECTROKINETICS:
             ek_set_lb_density(self._params["lb_density"])
             ek_set_viscosity(self._params["viscosity"])
             ek_set_friction(self._params["friction"])
+            ek_set_lb_ext_force_density(self._params["ext_force_density"][0],
+                                        self._params["ext_force_density"][1],
+                                        self._params["ext_force_density"][2])
             ek_set_T(self._params["T"])
             ek_set_prefactor(self._params["prefactor"])
             ek_set_bulk_viscosity(self._params["bulk_viscosity"])

@@ -104,9 +104,8 @@ class ProfileObservablesTest(ut.TestCase):
         observable = espressomd.observables.DensityProfile(**params)
         # check pids
         np.testing.assert_array_equal(np.copy(observable.ids), params['ids'])
-        new_pids = [params['ids'][0]]
-        observable.ids = new_pids
-        np.testing.assert_array_equal(np.copy(observable.ids), new_pids)
+        with self.assertRaises(RuntimeError):
+            observable.ids = [observable.ids[0]]
         # check bins
         self.assertEqual(observable.n_x_bins, params['n_x_bins'])
         self.assertEqual(observable.n_y_bins, params['n_y_bins'])
