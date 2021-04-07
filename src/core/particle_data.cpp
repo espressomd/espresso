@@ -1143,6 +1143,7 @@ void init_type_map(int type) {
     throw std::runtime_error("Types may not be negative");
 
   auto &map_for_type = particle_type_map[type];
+  map_for_type.clear();
   for (auto const &p : partCfg()) {
     if (p.p.type == type)
       map_for_type.insert(p.p.identity);
