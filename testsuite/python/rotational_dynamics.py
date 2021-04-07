@@ -102,16 +102,6 @@ class Integrate(ut.TestCase):
                 tol = 1e-6 + 1.1e-8 * j  # envelope of the periodic drift
                 np.testing.assert_allclose(p.quat[1 + i], ref_quat, atol=tol)
 
-    def test_integrator_stability(self):
-        self.system.time_step = 0.01
-        self.system.cell_system.skin = 0
-        self.system.part.add(
-            pos=[
-                0, 0, 0], ext_torque=[
-                1000, 2000, 3000], rotation=(
-                1, 1, 1))
-        self.system.integrator.run(10)
-
 
 if __name__ == "__main__":
     ut.main()
