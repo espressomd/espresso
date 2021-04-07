@@ -48,11 +48,7 @@ public:
       std::is_base_of<::Observables::PidObservable, CorePidObs>::value, "");
 
   PidObservable() {
-    this->add_parameters({{"ids",
-                           [this](Variant const &v) {
-                             m_observable->ids() =
-                                 get_value<std::vector<int>>(v);
-                           },
+    this->add_parameters({{"ids", AutoParameter::read_only,
                            [this]() { return m_observable->ids(); }}});
   }
 

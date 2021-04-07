@@ -50,10 +50,7 @@ public:
   using Base::Base;
   PidProfileObservable() {
     this->add_parameters(
-        {{"ids",
-          [this](const Variant &v) {
-            pid_profile_observable()->ids() = get_value<std::vector<int>>(v);
-          },
+        {{"ids", AutoParameter::read_only,
           [this]() { return pid_profile_observable()->ids(); }},
          {"n_x_bins",
           [this](const Variant &v) {
