@@ -231,16 +231,21 @@ class HollowConicalFrustum(Shape, ScriptInterfaceHelper):
 
     Attributes
     ----------
+    cyl_transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, 
+        Parameters of the spacial orientation of the frustum. Contained must be parameters for ``center`` and ``axis``. ``orientation`` has no effect, unless ``central_angle != 0``
     r1: :obj:`float`
         Radius r1.
     r2: :obj:`float`
         Radius r2.
     length: :obj:`float`
         Length of the conical frustum along ``axis``.
-    axis: (3,) array_like of :obj:`float`
-        Symmetry axis.
-    center: (3,) array_like of :obj:`float`
-        Position of the center.
+    thickness: float
+        The thickness of the frustum. Also determines the rounding radius of the edges
+    direction: :obj:`int`, optional
+        Surface orientation, for +1 the normal points
+        out of the mantel, for -1 it points inside of the shape. Defaults to 1
+    cantral_angle: :obj:`float`, optional
+        A ``central_angle`` creates an opening in the frustum along the side, centered symmetrically around the ``direction`` of ``cyl_transform_params``. Must be between ``0`` and ``2 pi``. Defaults to 0.
 
 
     .. image:: figures/conical_frustum.png

@@ -21,6 +21,7 @@ import numpy as np
 import math
 
 import espressomd
+import espressomd.math
 import espressomd.interactions
 import espressomd.shapes
 import tests_common
@@ -54,39 +55,60 @@ class ShapeBasedConstraintTest(ut.TestCase):
         LENGTH = 15.0
         D = 2.4
 
+        # test attributes
+        ctp = espressomd.math.CylindricalTransformationParameters(
+            center=3 * [5], axis=[1., 0., 0.])
+        shape = espressomd.shapes.HollowConicalFrustum(
+            cyl_transform_params=ctp,
+            r1=R1,
+            r2=R2,
+            thickness=D,
+            direction=-1,
+            length=LENGTH,
+            central_angle=np.pi)
+
+        np.testing.assert_almost_equal(
+            np.copy(shape.cyl_transform_params.center), 3 * [5])
+        self.assertAlmostEqual(shape.r1, R1)
+        self.assertAlmostEqual(shape.r2, R2)
+        self.assertAlmostEqual(shape.thickness, D)
+        self.assertAlmostEqual(shape.length, LENGTH)
+        self.assertEqual(shape.direction, -1)
+        self.assertAlmostEqual(shape.central_angle, np.pi)
+
+        # test points on and inside of the shape
+        ctp = espressomd.math.CylindricalTransformationParameters()
+        shape = espressomd.shapes.HollowConicalFrustum(
+            cyl_transform_params=ctp, r1=R1, r2=R2, thickness=0.0, length=LENGTH)
+
         def z(y, r1, r2, l): return l / (r1 - r2) * \
             y + l / 2. - l * r1 / (r1 - r2)
 
-        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
-            0, 0, 1], r1=R1, r2=R2, thickness=0.0, length=LENGTH)
         y_vals = np.linspace(R1, R2, 100)
         for y in y_vals:
             dist = shape.calc_distance(position=[0.0, y, z(y, R1, R2, LENGTH)])
             self.assertAlmostEqual(dist[0], 0.0)
 
-        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
-            0, 0, 1], r1=R1, r2=R2, thickness=D, length=LENGTH, direction=-1)
+        shape = espressomd.shapes.HollowConicalFrustum(
+            cyl_transform_params=ctp,
+            r1=R1,
+            r2=R2,
+            thickness=D,
+            length=LENGTH,
+            direction=-1)
         for y in y_vals:
             dist = shape.calc_distance(position=[0.0, y, z(y, R1, R2, LENGTH)])
             self.assertAlmostEqual(dist[0], 0.5 * D)
 
-        np.testing.assert_almost_equal(np.copy(shape.center), [0.0, 0.0, 0.0])
-        np.testing.assert_almost_equal(np.copy(shape.axis), [0, 0, 1])
-        self.assertEqual(shape.r1, R1)
-        self.assertEqual(shape.r2, R2)
-        self.assertEqual(shape.thickness, D)
-        self.assertEqual(shape.length, LENGTH)
-        self.assertEqual(shape.direction, -1)
-
-        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
-            0, 0, 1], r1=R1, r2=R2, thickness=D, length=LENGTH)
+        shape = espressomd.shapes.HollowConicalFrustum(
+            cyl_transform_params=ctp, r1=R1, r2=R2, thickness=D, length=LENGTH)
         for y in y_vals:
             dist = shape.calc_distance(position=[0.0, y, z(y, R1, R2, LENGTH)])
-            self.assertAlmostEqual(dist[0], -0.5 * D)
+            self.assertAlmostEqual(dist[0], -0.5 * D)  
 
         # check sign of dist
-        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
-            0, 0, 1], r1=R1, r2=R1, thickness=D, length=LENGTH)
+        shape = espressomd.shapes.HollowConicalFrustum(
+            cyl_transform_params=ctp, r1=R1, r2=R1, thickness=D, length=LENGTH)
         self.assertLess(shape.calc_distance(
             position=[0.0, R1, 0.25 * LENGTH])[0], 0.0)
         self.assertLess(shape.calc_distance(
@@ -96,8 +118,13 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.assertGreater(shape.calc_distance(
             position=[0.0, R1 - (0.5 + sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
 
-        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
-            0, 0, 1], r1=R1, r2=R1, thickness=D, length=LENGTH, direction=-1)
+        shape = espressomd.shapes.HollowConicalFrustum(
+            cyl_transform_params=ctp,
+            r1=R1,
+            r2=R1,
+            thickness=D,
+            length=LENGTH,
+            direction=-1)
         self.assertGreater(shape.calc_distance(
             position=[0.0, R1, 0.25 * LENGTH])[0], 0.0)
         self.assertGreater(shape.calc_distance(
@@ -106,6 +133,78 @@ class ShapeBasedConstraintTest(ut.TestCase):
             position=[0.0, R1 + (0.5 + sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
         self.assertLess(shape.calc_distance(
             position=[0.0, R1 - (0.5 + sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
+
+        # test points outside of the shape
+        shape = espressomd.shapes.HollowConicalFrustum(
+            cyl_transform_params=ctp, r1=R1, r2=R2, thickness=D, length=LENGTH, direction=1)
+
+        dist = shape.calc_distance(position=[R1, 0, LENGTH / 2. + 5])
+        self.assertAlmostEqual(dist[0], 5 - D / 2.)
+        np.testing.assert_array_almost_equal(dist[1], [0, 0, dist[0]])
+
+        dist = shape.calc_distance(position=[0.1, 0, LENGTH / 2.])
+        self.assertAlmostEqual(dist[0], R1 - D / 2. - 0.1)
+        np.testing.assert_array_almost_equal(dist[1], [-dist[0], 0, 0])
+
+        # check rotated coordinates, central angle with straight frustum
+        CENTER = np.array(3 * [5])
+        CENTRAL_ANGLE = np.pi / 2
+        ctp = espressomd.math.CylindricalTransformationParameters(
+            center=CENTER, axis=[1., 0., 0.], orientation=[0., 0., 1.])
+        shape = espressomd.shapes.HollowConicalFrustum(
+            cyl_transform_params=ctp,
+            r1=R1,
+            r2=R1,
+            thickness=0.,
+            length=LENGTH,
+            central_angle=CENTRAL_ANGLE)
+
+        # point within length
+        probe_pos = CENTER + [0, 10 * sys.float_info.epsilon, 1.234]
+        closest_on_surface = CENTER + [0,
+                                       R1 * np.sin(CENTRAL_ANGLE / 2.),
+                                       R1 * np.cos(CENTRAL_ANGLE / 2.)]
+        dist = shape.calc_distance(position=probe_pos)
+        d_vec_expected = probe_pos - closest_on_surface
+        self.assertAlmostEqual(dist[0], np.linalg.norm(d_vec_expected))
+        np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
+
+        # point outside of length
+        probe_pos = CENTER + [LENGTH, 10 * sys.float_info.epsilon, 1.234]
+        closest_on_surface = CENTER + [LENGTH / 2.,
+                                       R1 * np.sin(CENTRAL_ANGLE / 2.),
+                                       R1 * np.cos(CENTRAL_ANGLE / 2.)]
+        dist = shape.calc_distance(position=probe_pos)
+        d_vec_expected = probe_pos - closest_on_surface
+        self.assertAlmostEqual(dist[0], np.linalg.norm(d_vec_expected))
+        np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
+
+        # check central angle with funnel-type frustum
+        ctp = espressomd.math.CylindricalTransformationParameters(
+            center=[LENGTH / 2., 0, 0], axis=[1., 0., 0.], orientation=[0., 0., 1.])
+        shape = espressomd.shapes.HollowConicalFrustum(
+            cyl_transform_params=ctp,
+            r1=LENGTH,
+            r2=0,
+            thickness=0.,
+            length=LENGTH,
+            central_angle=np.pi)      
+        # with this setup, the edges coincide with the xy angle bisectors
+
+        # point inside LENGTH
+        probe_pos = [LENGTH / 2., LENGTH / 2., 5]
+        d_vec_expected = np.array([0, 0, 5]) 
+        dist = shape.calc_distance(position=probe_pos)
+        self.assertAlmostEqual(dist[0], np.linalg.norm(d_vec_expected))
+        np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
+
+        # point outside LENGTH
+        probe_pos = [2 * LENGTH, 5 * LENGTH, 5]
+        frustum_end = np.array([LENGTH, LENGTH, 0])
+        d_vec_expected = probe_pos - frustum_end
+        dist = shape.calc_distance(position=probe_pos)
+        self.assertAlmostEqual(dist[0], np.linalg.norm(d_vec_expected))
+        np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
 
     def test_simplepore(self):
         """
