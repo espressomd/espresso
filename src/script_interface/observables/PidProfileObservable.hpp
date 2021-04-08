@@ -50,65 +50,32 @@ public:
   using Base::Base;
   PidProfileObservable() {
     this->add_parameters(
-        {{"ids",
-          [this](const Variant &v) {
-            pid_profile_observable()->ids() = get_value<std::vector<int>>(v);
-          },
+        {{"ids", AutoParameter::read_only,
           [this]() { return pid_profile_observable()->ids(); }},
-         {"n_x_bins",
-          [this](const Variant &v) {
-            pid_profile_observable()->n_bins[0] =
-                static_cast<size_t>(get_value<int>(v));
-          },
+         {"n_x_bins", AutoParameter::read_only,
           [this]() {
-            return static_cast<int>(pid_profile_observable()->n_bins[0]);
+            return static_cast<int>(pid_profile_observable()->n_bins()[0]);
           }},
-         {"n_y_bins",
-          [this](const Variant &v) {
-            pid_profile_observable()->n_bins[1] =
-                static_cast<size_t>(get_value<int>(v));
-          },
+         {"n_y_bins", AutoParameter::read_only,
           [this]() {
-            return static_cast<int>(pid_profile_observable()->n_bins[1]);
+            return static_cast<int>(pid_profile_observable()->n_bins()[1]);
           }},
-         {"n_z_bins",
-          [this](const Variant &v) {
-            pid_profile_observable()->n_bins[2] =
-                static_cast<size_t>(get_value<int>(v));
-          },
+         {"n_z_bins", AutoParameter::read_only,
           [this]() {
-            return static_cast<int>(pid_profile_observable()->n_bins[2]);
+            return static_cast<int>(pid_profile_observable()->n_bins()[2]);
           }},
-         {"min_x",
-          [this](const Variant &v) {
-            pid_profile_observable()->limits[0].first = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->limits[0].first; }},
-         {"min_y",
-          [this](const Variant &v) {
-            pid_profile_observable()->limits[1].first = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->limits[1].first; }},
-         {"min_z",
-          [this](const Variant &v) {
-            pid_profile_observable()->limits[2].first = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->limits[2].first; }},
-         {"max_x",
-          [this](const Variant &v) {
-            pid_profile_observable()->limits[0].second = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->limits[0].second; }},
-         {"max_y",
-          [this](const Variant &v) {
-            pid_profile_observable()->limits[1].second = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->limits[1].second; }},
-         {"max_z",
-          [this](const Variant &v) {
-            pid_profile_observable()->limits[2].second = get_value<double>(v);
-          },
-          [this]() { return pid_profile_observable()->limits[2].second; }}});
+         {"min_x", AutoParameter::read_only,
+          [this]() { return pid_profile_observable()->limits()[0].first; }},
+         {"min_y", AutoParameter::read_only,
+          [this]() { return pid_profile_observable()->limits()[1].first; }},
+         {"min_z", AutoParameter::read_only,
+          [this]() { return pid_profile_observable()->limits()[2].first; }},
+         {"max_x", AutoParameter::read_only,
+          [this]() { return pid_profile_observable()->limits()[0].second; }},
+         {"max_y", AutoParameter::read_only,
+          [this]() { return pid_profile_observable()->limits()[1].second; }},
+         {"max_z", AutoParameter::read_only,
+          [this]() { return pid_profile_observable()->limits()[2].second; }}});
   }
 
   void do_construct(VariantMap const &params) override {

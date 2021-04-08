@@ -103,7 +103,7 @@ EK_parameters ek_parameters = {
     -1.0,
     // prefactor
     -1.0,
-    // lb_force_density
+    // lb_ext_force_density
     {0.0, 0.0, 0.0},
     // number_of_species
     0,
@@ -2241,49 +2241,33 @@ int ek_init() {
     lbpar_gpu.rho =
         (ek_parameters.lb_density < 0.0)
             ? 1.0f
-            : ek_parameters.lb_density * Utils::int_pow<3>(ek_parameters.agrid);
+            : ek_parameters.lb_density * Utils::int_pow<3>(lbpar_gpu.agrid);
 
     lbpar_gpu.is_TRT = true;
 
     lb_reinit_parameters_gpu();
     lbpar_gpu.viscosity = ek_parameters.viscosity * lbpar_gpu.time_step /
-                          Utils::sqr(ek_parameters.agrid);
+                          Utils::sqr(lbpar_gpu.agrid);
     lbpar_gpu.bulk_viscosity = ek_parameters.bulk_viscosity *
                                lbpar_gpu.time_step /
-                               Utils::sqr(ek_parameters.agrid);
-    lb_reinit_parameters_gpu();
+                               Utils::sqr(lbpar_gpu.agrid);
 
+    lbpar_gpu.external_force_density =
+        ek_parameters.lb_ext_force_density[0] != 0 ||
+        ek_parameters.lb_ext_force_density[1] != 0 ||
+        ek_parameters.lb_ext_force_density[2] != 0;
+    lbpar_gpu.ext_force_density =
+        Utils::Vector3f(ek_parameters.lb_ext_force_density) *
+        Utils::sqr(lbpar_gpu.agrid * lbpar_gpu.time_step);
+
+    lb_reinit_parameters_gpu();
     lb_init_gpu();
 
-    if (ek_parameters.lb_force_density[0] != 0 ||
-        ek_parameters.lb_force_density[1] != 0 ||
-        ek_parameters.lb_force_density[2] != 0) {
-      lbpar_gpu.external_force_density = 1;
-      lbpar_gpu.ext_force_density[0] =
-          ek_parameters.lb_force_density[0] * ek_parameters.agrid *
-          ek_parameters.agrid * ek_parameters.time_step *
-          ek_parameters.time_step;
-      lbpar_gpu.ext_force_density[1] =
-          ek_parameters.lb_force_density[1] * ek_parameters.agrid *
-          ek_parameters.agrid * ek_parameters.time_step *
-          ek_parameters.time_step;
-      lbpar_gpu.ext_force_density[2] =
-          ek_parameters.lb_force_density[2] * ek_parameters.agrid *
-          ek_parameters.agrid * ek_parameters.time_step *
-          ek_parameters.time_step;
-      lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
-    } else {
-      lbpar_gpu.external_force_density = 0;
-      lbpar_gpu.ext_force_density[0] = 0;
-      lbpar_gpu.ext_force_density[1] = 0;
-      lbpar_gpu.ext_force_density[2] = 0;
-    }
-
+    ek_parameters.time_step = lbpar_gpu.time_step;
     ek_parameters.dim_x = lbpar_gpu.dim[0];
     ek_parameters.dim_x_padded = (ek_parameters.dim_x / 2 + 1) * 2;
     ek_parameters.dim_y = lbpar_gpu.dim[1];
     ek_parameters.dim_z = lbpar_gpu.dim[2];
-    ek_parameters.time_step = lbpar_gpu.time_step;
     ek_parameters.number_of_nodes =
         ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
 
@@ -3535,9 +3519,10 @@ void ek_print_parameters() {
   printf("  float friction = %f;\n", ek_parameters.friction);
   printf("  float T = %f;\n", ek_parameters.T);
   printf("  float prefactor = %f;\n", ek_parameters.prefactor);
-  printf("  float lb_force_density[] = {%f, %f, %f};\n",
-         ek_parameters.lb_force_density[0], ek_parameters.lb_force_density[1],
-         ek_parameters.lb_force_density[2]);
+  printf("  float lb_ext_force_density[] = {%f, %f, %f};\n",
+         ek_parameters.lb_ext_force_density[0],
+         ek_parameters.lb_ext_force_density[1],
+         ek_parameters.lb_ext_force_density[2]);
   printf("  unsigned int number_of_species = %d;\n",
          ek_parameters.number_of_species);
   printf("  int reaction_species[] = {%d, %d, %d};\n",
@@ -3694,6 +3679,15 @@ int ek_set_electrostatics_coupling(bool electrostatics_coupling) {
 int ek_set_viscosity(float viscosity) {
 
   ek_parameters.viscosity = viscosity;
+  return 0;
+}
+
+int ek_set_lb_ext_force_density(float lb_ext_force_dens_x,
+                                float lb_ext_force_dens_y,
+                                float lb_ext_force_dens_z) {
+  ek_parameters.lb_ext_force_density[0] = lb_ext_force_dens_x;
+  ek_parameters.lb_ext_force_density[1] = lb_ext_force_dens_y;
+  ek_parameters.lb_ext_force_density[2] = lb_ext_force_dens_z;
   return 0;
 }
 

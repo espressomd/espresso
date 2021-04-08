@@ -44,9 +44,10 @@ public:
     calculate_sampling_positions();
   }
   void calculate_sampling_positions() {
+    auto const lim = limits();
+    auto const b = n_bins();
     sampling_positions = Utils::get_cylindrical_sampling_positions(
-        limits[0], limits[1], limits[2], n_bins[0], n_bins[1], n_bins[2],
-        sampling_density);
+        lim[0], lim[1], lim[2], b[0], b[1], b[2], sampling_density);
     for (auto &p : sampling_positions) {
       auto p_cart = Utils::transform_coordinate_cylinder_to_cartesian(p);
       // We have to rotate the coordinates since the utils function assumes

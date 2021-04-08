@@ -32,5 +32,10 @@ class CylindricalTransformationParameters(ScriptInterfaceHelper):
         Orientation vector of the ``z``-axis of the cylindrical coordinate system.
     orientation: (3,) array_like of :obj:`float`, default = [1, 0, 0]
         The axis on which ``phi = 0``.
+
+    Notes
+    -----
+    If you provide no arguments, the defaults above are set.
+    If you provide only a ``center`` and an ``axis``, an ``orientation`` will be automatically generated that is orthogonal to ``axis``.
     """
     _so_name = "CylindricalTransformationParameters"

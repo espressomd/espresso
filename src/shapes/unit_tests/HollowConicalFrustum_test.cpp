@@ -26,6 +26,7 @@
 #include <shapes/HollowConicalFrustum.hpp>
 
 #include <utils/Vector.hpp>
+#include <utils/math/cylindrical_transformation_parameters.hpp>
 
 #include <limits>
 
@@ -37,11 +38,8 @@ BOOST_AUTO_TEST_CASE(dist_function) {
   constexpr double eps = 10 * std::numeric_limits<double>::epsilon();
 
   {
-    Shapes::HollowConicalFrustum c;
-    c.set_r1(R1);
-    c.set_r2(R2);
-    c.set_length(L);
-    c.set_axis(Utils::Vector3d{0, 0, 1});
+    auto ctp = std::make_shared<Utils::CylindricalTransformationParameters>();
+    Shapes::HollowConicalFrustum c(R1, R2, L, 0., 1, 0., ctp);
 
     auto pos = Utils::Vector3d{0.0, 0.0, L / 2.0};
     Utils::Vector3d vec;
@@ -68,11 +66,9 @@ BOOST_AUTO_TEST_CASE(dist_function) {
     BOOST_CHECK_SMALL(dist - .5, eps);
   }
   {
-    Shapes::HollowConicalFrustum c;
-    c.set_r1(R1);
-    c.set_r2(R2);
-    c.set_length(L);
-    c.set_axis(Utils::Vector3d{1, 0, 0});
+    auto ctp = std::make_shared<Utils::CylindricalTransformationParameters>(
+        Utils::Vector3d{{0., 0., 0.}}, Utils::Vector3d{{1., 0., 0.}});
+    Shapes::HollowConicalFrustum c(R1, R2, L, 0., 1, 0., ctp);
 
     auto pos = Utils::Vector3d{L / 2.0, 0.0, 0.0};
     Utils::Vector3d vec;
