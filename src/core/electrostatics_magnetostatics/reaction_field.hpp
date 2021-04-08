@@ -35,7 +35,7 @@
 #include <utils/math/int_pow.hpp>
 
 /** Structure to hold Reaction Field Parameters. */
-typedef struct {
+struct Reaction_field_params {
   /** ionic strength. */
   double kappa;
   /** epsilon1 (continuum dielectric constant inside). */
@@ -46,7 +46,7 @@ typedef struct {
   double r_cut;
   /** B important prefactor. */
   double B;
-} Reaction_field_params;
+};
 
 /** Structure containing the Reaction Field parameters. */
 extern Reaction_field_params rf_params;

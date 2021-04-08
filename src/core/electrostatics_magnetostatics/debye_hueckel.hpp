@@ -33,12 +33,12 @@
 #include <cmath>
 
 /** Structure to hold Debye-Hueckel parameters. */
-typedef struct {
+struct Debye_hueckel_params {
   /** Cutoff for Debye-Hueckel interaction. */
   double r_cut;
   /** Debye kappa (inverse Debye length) . */
   double kappa;
-} Debye_hueckel_params;
+};
 
 /** Debye-Hueckel parameters. */
 extern Debye_hueckel_params dh_params;
