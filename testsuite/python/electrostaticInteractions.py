@@ -235,6 +235,15 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         np.testing.assert_allclose(u_rf_core, u_rf, atol=1e-7)
         np.testing.assert_allclose(f_rf_core, -f_rf, atol=1e-2)
 
+    def test_rf_exceptions(self):
+        params = dict(kappa=1.0, epsilon1=1.0, epsilon2=2.0, r_cut=1.0)
+        for key in params:
+            invalid_params = {**params, 'prefactor': 1.0, key: -1.0}
+            rf = espressomd.electrostatics.ReactionField(**invalid_params)
+            with self.assertRaisesRegex(ValueError, f'{key} should be a non-negative number'):
+                self.system.actors.add(rf)
+            self.system.actors.clear()
+
 
 if __name__ == "__main__":
     ut.main()

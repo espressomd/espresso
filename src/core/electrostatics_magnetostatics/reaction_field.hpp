@@ -50,7 +50,8 @@ typedef struct {
 /** Structure containing the Reaction Field parameters. */
 extern Reaction_field_params rf_params;
 
-int rf_set_params(double kappa, double epsilon1, double epsilon2, double r_cut);
+void rf_set_params(double kappa, double epsilon1, double epsilon2,
+                   double r_cut);
 
 inline void add_rf_coulomb_pair_force_no_cutoff(double const q1q2,
                                                 Utils::Vector3d const &d,

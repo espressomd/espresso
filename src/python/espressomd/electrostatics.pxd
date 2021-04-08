@@ -119,8 +119,8 @@ IF ELECTROSTATICS:
 
         cdef extern Reaction_field_params rf_params
 
-        int rf_set_params(double kappa, double epsilon1, double epsilon2,
-                          double r_cut)
+        void rf_set_params(double kappa, double epsilon1, double epsilon2,
+                           double r_cut) except +
 
 IF ELECTROSTATICS:
     cdef extern from "electrostatics_magnetostatics/mmm1d.hpp":

@@ -29,8 +29,17 @@
 
 Reaction_field_params rf_params{};
 
-int rf_set_params(double kappa, double epsilon1, double epsilon2,
-                  double r_cut) {
+void rf_set_params(double kappa, double epsilon1, double epsilon2,
+                   double r_cut) {
+  if (kappa < 0.0)
+    throw std::domain_error("kappa should be a non-negative number");
+  if (epsilon1 < 0.0)
+    throw std::domain_error("epsilon1 should be a non-negative number");
+  if (epsilon2 < 0.0)
+    throw std::domain_error("epsilon2 should be a non-negative number");
+  if (r_cut < 0.0)
+    throw std::domain_error("r_cut should be a non-negative number");
+
   rf_params.kappa = kappa;
   rf_params.epsilon1 = epsilon1;
   rf_params.epsilon2 = epsilon2;
@@ -39,17 +48,7 @@ int rf_set_params(double kappa, double epsilon1, double epsilon2,
                  epsilon2 * kappa * kappa * r_cut * r_cut) /
                 ((epsilon1 + 2 * epsilon2) * (1 + kappa * r_cut) +
                  epsilon2 * kappa * kappa * r_cut * r_cut);
-  if (rf_params.epsilon1 < 0.0)
-    return -1;
-
-  if (rf_params.epsilon2 < 0.0)
-    return -1;
-
-  if (rf_params.r_cut < 0.0)
-    return -2;
 
   mpi_bcast_coulomb_params();
-
-  return 1;
 }
 #endif
