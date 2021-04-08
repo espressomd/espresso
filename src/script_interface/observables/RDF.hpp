@@ -42,30 +42,15 @@ class RDF : public AutoParameters<RDF, Observable> {
 public:
   RDF() {
     this->add_parameters(
-        {{"ids1",
-          [this](const Variant &v) {
-            rdf_observable()->ids1() = get_value<std::vector<int>>(v);
-          },
+        {{"ids1", AutoParameter::read_only,
           [this]() { return rdf_observable()->ids1(); }},
-         {"ids2",
-          [this](const Variant &v) {
-            rdf_observable()->ids2() = get_value<std::vector<int>>(v);
-          },
+         {"ids2", AutoParameter::read_only,
           [this]() { return rdf_observable()->ids2(); }},
-         {"n_r_bins",
-          [this](const Variant &v) {
-            rdf_observable()->n_r_bins = static_cast<size_t>(get_value<int>(v));
-          },
+         {"n_r_bins", AutoParameter::read_only,
           [this]() { return static_cast<int>(rdf_observable()->n_r_bins); }},
-         {"min_r",
-          [this](const Variant &v) {
-            rdf_observable()->min_r = get_value<double>(v);
-          },
+         {"min_r", AutoParameter::read_only,
           [this]() { return rdf_observable()->min_r; }},
-         {"max_r",
-          [this](const Variant &v) {
-            rdf_observable()->max_r = get_value<double>(v);
-          },
+         {"max_r", AutoParameter::read_only,
           [this]() { return rdf_observable()->max_r; }}});
   }
 

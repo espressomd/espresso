@@ -36,13 +36,14 @@ class ForceDensityProfile : public PidProfileObservable {
 public:
   using PidProfileObservable::PidProfileObservable;
   std::vector<size_t> shape() const override {
-    return {n_bins[0], n_bins[1], n_bins[2], 3};
+    auto const b = n_bins();
+    return {b[0], b[1], b[2], 3};
   }
 
   std::vector<double>
   evaluate(ParticleReferenceRange particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
+    Utils::Histogram<double, 3> histogram(n_bins(), 3, limits());
     for (auto p : particles) {
       histogram.update(folded_position(p.get().r.p, box_geo), p.get().f.f);
     }

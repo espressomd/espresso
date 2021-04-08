@@ -40,7 +40,7 @@ public:
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
+    Utils::CylindricalHistogram<double, 3> histogram(n_bins(), 3, limits());
 
     for (auto p : particles) {
       auto const pos = folded_position(traits.position(p), box_geo) -
@@ -62,7 +62,8 @@ public:
     return hist_tmp;
   }
   std::vector<size_t> shape() const override {
-    return {n_bins[0], n_bins[1], n_bins[2], 3};
+    auto const b = n_bins();
+    return {b[0], b[1], b[2], 3};
   }
 };
 

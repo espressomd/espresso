@@ -112,9 +112,8 @@ class ProfileObservablesTest(ut.TestCase):
         self.assertEqual(observable.n_z_bins, params['n_z_bins'])
         obs_data = observable.calculate()
         np.testing.assert_array_equal(obs_data.shape, [4, 6, 8])
-        observable.n_x_bins = 1
-        observable.n_y_bins = 2
-        observable.n_z_bins = 3
+        observable = espressomd.observables.DensityProfile(
+            **{**params, 'n_x_bins': 1, 'n_y_bins': 2, 'n_z_bins': 3})
         self.assertEqual(observable.n_x_bins, 1)
         self.assertEqual(observable.n_y_bins, 2)
         self.assertEqual(observable.n_z_bins, 3)
@@ -124,21 +123,20 @@ class ProfileObservablesTest(ut.TestCase):
         self.assertEqual(observable.min_x, params['min_x'])
         self.assertEqual(observable.min_y, params['min_y'])
         self.assertEqual(observable.min_z, params['min_z'])
-        observable.min_x = 4
-        observable.min_y = 5
-        observable.min_z = 6
-        self.assertEqual(observable.min_x, 4)
-        self.assertEqual(observable.min_y, 5)
-        self.assertEqual(observable.min_z, 6)
+        observable = espressomd.observables.DensityProfile(
+            **{**params, 'min_x': 0.5, 'min_y': 2, 'min_z': 1.12})
+        self.assertEqual(observable.min_x, 0.5)
+        self.assertEqual(observable.min_y, 2)
+        self.assertEqual(observable.min_z, 1.12)
         obs_bin_edges = observable.bin_edges()
-        np.testing.assert_array_equal(obs_bin_edges[0, 0, 0], [4, 5, 6])
+        np.testing.assert_array_almost_equal(
+            obs_bin_edges[0, 0, 0], [0.5, 2.0, 1.12])
         # check edges upper corner
         self.assertEqual(observable.max_x, params['max_x'])
         self.assertEqual(observable.max_y, params['max_y'])
         self.assertEqual(observable.max_z, params['max_z'])
-        observable.max_x = 7
-        observable.max_y = 8
-        observable.max_z = 9
+        observable = espressomd.observables.DensityProfile(
+            **{**params, 'max_x': 7, 'max_y': 8, 'max_z': 9})
         self.assertEqual(observable.max_x, 7)
         self.assertEqual(observable.max_y, 8)
         self.assertEqual(observable.max_z, 9)
