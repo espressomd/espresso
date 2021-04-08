@@ -23,6 +23,7 @@
 
 #include <utils/Vector.hpp>
 
+/** @brief Initialize Walberla's MPI manager */
 void walberla_mpi_init();
 
 LBWalberlaBase *new_lb_walberla(double viscosity, double density,

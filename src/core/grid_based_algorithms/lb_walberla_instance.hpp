@@ -23,6 +23,7 @@
 
 #ifdef LB_WALBERLA
 #include <LBWalberlaBase.hpp>
+#include <lb_walberla_init.hpp>
 
 struct LBWalberlaParams {
   LBWalberlaParams(double agrid, double tau) : m_agrid(agrid), m_tau(tau) {}
@@ -33,9 +34,6 @@ private:
   double m_agrid;
   double m_tau;
 };
-
-/** @brief Initialize Walberla's MPI manager */
-void walberla_mpi_init();
 
 /** @brief Access the per-MPI-node LBWalberla instance */
 LBWalberlaBase *lb_walberla();
