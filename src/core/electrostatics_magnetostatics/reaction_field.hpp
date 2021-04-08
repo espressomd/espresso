@@ -32,6 +32,7 @@
 #ifdef ELECTROSTATICS
 
 #include <utils/Vector.hpp>
+#include <utils/math/int_pow.hpp>
 
 /** Structure to hold Reaction Field Parameters. */
 typedef struct {
@@ -53,17 +54,6 @@ extern Reaction_field_params rf_params;
 void rf_set_params(double kappa, double epsilon1, double epsilon2,
                    double r_cut);
 
-inline void add_rf_coulomb_pair_force_no_cutoff(double const q1q2,
-                                                Utils::Vector3d const &d,
-                                                double const dist,
-                                                Utils::Vector3d &force) {
-  double fac;
-  fac = 1.0 / (dist * dist * dist) +
-        rf_params.B / (rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
-  fac *= q1q2;
-  force += fac * d;
-}
-
 /** Compute the Reaction Field pair force.
  *  @param q1q2      Product of the charges on p1 and p2.
  *  @param d         Vector pointing from p1 to p2.
@@ -75,7 +65,10 @@ inline void add_rf_coulomb_pair_force(double const q1q2,
                                       double const dist,
                                       Utils::Vector3d &force) {
   if (dist < rf_params.r_cut) {
-    add_rf_coulomb_pair_force_no_cutoff(q1q2, d, dist, force);
+    auto fac = 1.0 / Utils::int_pow<3>(dist) +
+               rf_params.B / Utils::int_pow<3>(rf_params.r_cut);
+    fac *= q1q2;
+    force += fac * d;
   }
 }
 
@@ -83,21 +76,13 @@ inline void add_rf_coulomb_pair_force(double const q1q2,
  *  @param q1q2      Product of the charges on p1 and p2.
  *  @param dist      Distance between p1 and p2.
  */
-inline double rf_coulomb_pair_energy_no_cutoff(double const q1q2,
-                                               double const dist) {
-  double fac;
-  fac = 1.0 / dist -
-        (rf_params.B * dist * dist) /
-            (2 * rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
-  // cut off part
-  fac -= (1 - rf_params.B / 2) / rf_params.r_cut;
-  fac *= q1q2;
-  return fac;
-}
-
 inline double rf_coulomb_pair_energy(double const q1q2, double const dist) {
   if (dist < rf_params.r_cut) {
-    return rf_coulomb_pair_energy_no_cutoff(q1q2, dist);
+    auto fac = 1.0 / dist - (rf_params.B * dist * dist) /
+                                (2 * Utils::int_pow<3>(rf_params.r_cut));
+    fac -= (1 - rf_params.B / 2) / rf_params.r_cut;
+    fac *= q1q2;
+    return fac;
   }
   return 0.0;
 }
