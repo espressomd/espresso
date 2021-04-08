@@ -75,6 +75,7 @@ BOOST_AUTO_TEST_CASE(de_activate) {
 
 BOOST_AUTO_TEST_CASE(rng_initial_state) {
   lattice_switch = ActiveLB::WALBERLA;
+  BOOST_CHECK(lb_lbcoupling_is_seed_required());
   BOOST_CHECK_THROW(lb_lbcoupling_get_rng_state(), std::runtime_error);
 }
 
@@ -82,6 +83,7 @@ BOOST_AUTO_TEST_CASE(rng) {
   lattice_switch = ActiveLB::WALBERLA;
   lb_lbcoupling_set_rng_state(17);
   BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 17);
+  BOOST_CHECK(not lb_lbcoupling_is_seed_required());
   auto step1_random1 = lb_particle_coupling_noise(
       true, 1, lb_particle_coupling.rng_counter_coupling);
   auto step1_random2 = lb_particle_coupling_noise(
@@ -102,6 +104,10 @@ BOOST_AUTO_TEST_CASE(rng) {
       true, 4, lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK(step1_random1 != step2_random1);
   BOOST_CHECK(step1_random1 != step2_random2);
+
+  auto step3_norandom = lb_particle_coupling_noise(
+      false, 4, lb_particle_coupling.rng_counter_coupling);
+  BOOST_CHECK(step3_norandom == Utils::Vector3d{});
 }
 
 BOOST_AUTO_TEST_CASE(drift_vel_offset) {
