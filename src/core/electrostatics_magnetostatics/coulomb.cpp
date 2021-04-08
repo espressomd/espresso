@@ -447,7 +447,7 @@ void bcast_coulomb_params() {
 
 void set_prefactor(double prefactor) {
   if (prefactor < 0.0) {
-    throw std::invalid_argument("Coulomb prefactor has to be >= 0");
+    throw std::domain_error("Coulomb prefactor has to be >= 0");
   }
 
   coulomb.prefactor = prefactor;

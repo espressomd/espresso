@@ -28,21 +28,21 @@
 #ifdef ELECTROSTATICS
 #include "electrostatics_magnetostatics/common.hpp"
 
+#include <stdexcept>
+
 Debye_hueckel_params dh_params{};
 
-int dh_set_params(double kappa, double r_cut) {
-  if (dh_params.kappa < 0.0)
-    return -1;
+void dh_set_params(double kappa, double r_cut) {
+  if (kappa < 0.0)
+    throw std::domain_error("kappa should be a non-negative number");
 
-  if (dh_params.r_cut < 0.0)
-    return -2;
+  if (r_cut < 0.0)
+    throw std::domain_error("r_cut should be a non-negative number");
 
   dh_params.kappa = kappa;
   dh_params.r_cut = r_cut;
 
   mpi_bcast_coulomb_params();
-
-  return 1;
 }
 
 #endif

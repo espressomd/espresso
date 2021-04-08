@@ -43,7 +43,7 @@ typedef struct {
 /** Debye-Hueckel parameters. */
 extern Debye_hueckel_params dh_params;
 
-int dh_set_params(double kappa, double r_cut);
+void dh_set_params(double kappa, double r_cut);
 
 /** Compute the Debye-Hueckel pair force.
  *  @param[in]  q1q2      Product of the charges on p1 and p2.

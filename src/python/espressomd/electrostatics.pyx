@@ -94,12 +94,7 @@ IF ELECTROSTATICS:
         """
 
         def validate_params(self):
-            if self._params["prefactor"] <= 0:
-                raise ValueError("prefactor should be a positive float")
-            if self._params["kappa"] < 0:
-                raise ValueError("kappa should be a non-negative double")
-            if self._params["r_cut"] < 0:
-                raise ValueError("r_cut should be a non-negative double")
+            pass
 
         def valid_keys(self):
             return ["prefactor", "kappa", "r_cut", "check_neutrality"]

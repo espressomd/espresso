@@ -60,7 +60,7 @@ IF ELECTROSTATICS:
 
     cdef extern from "electrostatics_magnetostatics/coulomb.hpp" namespace "Coulomb":
 
-        int set_prefactor(double prefactor) except+
+        int set_prefactor(double prefactor) except +
         void deactivate_method()
 
     IF P3M:
@@ -108,7 +108,7 @@ IF ELECTROSTATICS:
 
         cdef extern Debye_hueckel_params dh_params
 
-        int dh_set_params(double kappa, double r_cut)
+        void dh_set_params(double kappa, double r_cut) except +
 
     cdef extern from "electrostatics_magnetostatics/reaction_field.hpp":
         ctypedef struct Reaction_field_params:
