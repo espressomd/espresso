@@ -42,7 +42,7 @@ public:
                      [this]() { return m_transform_params->orientation(); }}});
   }
   std::shared_ptr<::Utils::CylindricalTransformationParameters>
-  cyl_transform_params() {
+  cyl_transform_params() const {
     return m_transform_params;
   }
   void do_construct(VariantMap const &params) override {

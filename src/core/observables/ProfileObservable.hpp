@@ -34,6 +34,12 @@ namespace Observables {
 
 /** Cartesian profile observable */
 class ProfileObservable : virtual public Observable {
+protected:
+  /** Range of the profile edges. */
+  const std::array<std::pair<double, double>, 3> limits;
+  /** Number of bins for each coordinate. */
+  const std::array<size_t, 3> n_bins;
+
 public:
   ProfileObservable(int n_x_bins, int n_y_bins, int n_z_bins, double min_x,
                     double max_x, double min_y, double max_y, double min_z,
@@ -41,18 +47,24 @@ public:
       : limits{{std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
                 std::make_pair(min_z, max_z)}},
         n_bins{{static_cast<size_t>(n_x_bins), static_cast<size_t>(n_y_bins),
-                static_cast<size_t>(n_z_bins)}} {}
-  /** Range of the profile edges. */
-  std::array<std::pair<double, double>, 3> limits;
-  /** Number of bins for each coordinate. */
-  std::array<size_t, 3> n_bins;
+                static_cast<size_t>(n_z_bins)}} {
+    if (max_x <= min_x)
+      throw std::runtime_error("max_x has to be > min_x");
+    if (max_y <= min_y)
+      throw std::runtime_error("max_y has to be > min_y");
+    if (max_z <= min_z)
+      throw std::runtime_error("max_z has to be > min_z");
+  }
 
   std::vector<size_t> shape() const override {
     return {n_bins[0], n_bins[1], n_bins[2]};
   }
 
+  auto get_n_bins() const { return n_bins; }
+
+  auto get_limits() const { return limits; }
   /** Calculate the bin edges for each dimension */
-  std::array<std::vector<double>, 3> edges() {
+  std::array<std::vector<double>, 3> edges() const {
     std::array<std::vector<double>, 3> profile_edges = {
         {std::vector<double>(n_bins[0] + 1), std::vector<double>(n_bins[1] + 1),
          std::vector<double>(n_bins[2] + 1)}};
@@ -67,7 +79,7 @@ public:
         profile_edges[2].begin());
     return profile_edges;
   }
-};
+}; // namespace Observables
 
 } // Namespace Observables
 #endif

@@ -58,80 +58,44 @@ public:
         {"ids", AutoParameter::read_only,
          [this]() { return cylindrical_pid_profile_observable()->ids(); }},
         {"transform_params", m_transform_params},
-        {"n_r_bins",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->n_bins[0] =
-               static_cast<size_t>(get_value<int>(v));
-         },
+        {"n_r_bins", AutoParameter::read_only,
          [this]() {
            return static_cast<int>(
-               cylindrical_pid_profile_observable()->n_bins[0]);
+               cylindrical_pid_profile_observable()->get_n_bins()[0]);
          }},
-        {"n_phi_bins",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->n_bins[1] =
-               static_cast<size_t>(get_value<int>(v));
-         },
+        {"n_phi_bins", AutoParameter::read_only,
          [this]() {
            return static_cast<int>(
-               cylindrical_pid_profile_observable()->n_bins[1]);
+               cylindrical_pid_profile_observable()->get_n_bins()[1]);
          }},
-        {"n_z_bins",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->n_bins[2] =
-               static_cast<size_t>(get_value<int>(v));
-         },
+        {"n_z_bins", AutoParameter::read_only,
          [this]() {
            return static_cast<int>(
-               cylindrical_pid_profile_observable()->n_bins[2]);
+               cylindrical_pid_profile_observable()->get_n_bins()[2]);
          }},
-        {"min_r",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->limits[0].first =
-               get_value<double>(v);
-         },
+        {"min_r", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->limits[0].first;
+           return cylindrical_pid_profile_observable()->get_limits()[0].first;
          }},
-        {"min_phi",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->limits[1].first =
-               get_value<double>(v);
-         },
+        {"min_phi", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->limits[1].first;
+           return cylindrical_pid_profile_observable()->get_limits()[1].first;
          }},
-        {"min_z",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->limits[2].first =
-               get_value<double>(v);
-         },
+        {"min_z", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->limits[2].first;
+           return cylindrical_pid_profile_observable()->get_limits()[2].first;
          }},
-        {"max_r",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->limits[0].second =
-               get_value<double>(v);
-         },
+        {"max_r", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->limits[0].second;
+           return cylindrical_pid_profile_observable()->get_limits()[0].second;
          }},
-        {"max_phi",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->limits[1].second =
-               get_value<double>(v);
-         },
+        {"max_phi", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->limits[1].second;
+           return cylindrical_pid_profile_observable()->get_limits()[1].second;
          }},
-        {"max_z",
-         [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->limits[2].second =
-               get_value<double>(v);
-         },
+        {"max_z", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->limits[2].second;
+           return cylindrical_pid_profile_observable()->get_limits()[2].second;
          }},
     });
   };
