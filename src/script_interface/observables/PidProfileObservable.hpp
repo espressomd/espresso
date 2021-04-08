@@ -54,33 +54,28 @@ public:
           [this]() { return pid_profile_observable()->ids(); }},
          {"n_x_bins", AutoParameter::read_only,
           [this]() {
-            return static_cast<int>(pid_profile_observable()->get_n_bins()[0]);
+            return static_cast<int>(pid_profile_observable()->n_bins()[0]);
           }},
          {"n_y_bins", AutoParameter::read_only,
           [this]() {
-            return static_cast<int>(pid_profile_observable()->get_n_bins()[1]);
+            return static_cast<int>(pid_profile_observable()->n_bins()[1]);
           }},
          {"n_z_bins", AutoParameter::read_only,
           [this]() {
-            return static_cast<int>(pid_profile_observable()->get_n_bins()[2]);
+            return static_cast<int>(pid_profile_observable()->n_bins()[2]);
           }},
          {"min_x", AutoParameter::read_only,
-          [this]() { return pid_profile_observable()->get_limits()[0].first; }},
+          [this]() { return pid_profile_observable()->limits()[0].first; }},
          {"min_y", AutoParameter::read_only,
-          [this]() { return pid_profile_observable()->get_limits()[1].first; }},
+          [this]() { return pid_profile_observable()->limits()[1].first; }},
          {"min_z", AutoParameter::read_only,
-          [this]() { return pid_profile_observable()->get_limits()[2].first; }},
+          [this]() { return pid_profile_observable()->limits()[2].first; }},
          {"max_x", AutoParameter::read_only,
-          [this]() {
-            return pid_profile_observable()->get_limits()[0].second;
-          }},
+          [this]() { return pid_profile_observable()->limits()[0].second; }},
          {"max_y", AutoParameter::read_only,
-          [this]() {
-            return pid_profile_observable()->get_limits()[1].second;
-          }},
-         {"max_z", AutoParameter::read_only, [this]() {
-            return pid_profile_observable()->get_limits()[2].second;
-          }}});
+          [this]() { return pid_profile_observable()->limits()[1].second; }},
+         {"max_z", AutoParameter::read_only,
+          [this]() { return pid_profile_observable()->limits()[2].second; }}});
   }
 
   void do_construct(VariantMap const &params) override {

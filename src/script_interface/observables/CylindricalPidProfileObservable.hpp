@@ -61,41 +61,41 @@ public:
         {"n_r_bins", AutoParameter::read_only,
          [this]() {
            return static_cast<int>(
-               cylindrical_pid_profile_observable()->get_n_bins()[0]);
+               cylindrical_pid_profile_observable()->n_bins()[0]);
          }},
         {"n_phi_bins", AutoParameter::read_only,
          [this]() {
            return static_cast<int>(
-               cylindrical_pid_profile_observable()->get_n_bins()[1]);
+               cylindrical_pid_profile_observable()->n_bins()[1]);
          }},
         {"n_z_bins", AutoParameter::read_only,
          [this]() {
            return static_cast<int>(
-               cylindrical_pid_profile_observable()->get_n_bins()[2]);
+               cylindrical_pid_profile_observable()->n_bins()[2]);
          }},
         {"min_r", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->get_limits()[0].first;
+           return cylindrical_pid_profile_observable()->limits()[0].first;
          }},
         {"min_phi", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->get_limits()[1].first;
+           return cylindrical_pid_profile_observable()->limits()[1].first;
          }},
         {"min_z", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->get_limits()[2].first;
+           return cylindrical_pid_profile_observable()->limits()[2].first;
          }},
         {"max_r", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->get_limits()[0].second;
+           return cylindrical_pid_profile_observable()->limits()[0].second;
          }},
         {"max_phi", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->get_limits()[1].second;
+           return cylindrical_pid_profile_observable()->limits()[1].second;
          }},
         {"max_z", AutoParameter::read_only,
          [this]() {
-           return cylindrical_pid_profile_observable()->get_limits()[2].second;
+           return cylindrical_pid_profile_observable()->limits()[2].second;
          }},
     });
   };
