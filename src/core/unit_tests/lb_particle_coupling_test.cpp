@@ -34,6 +34,7 @@ namespace bdata = boost::unit_test::data;
 #include <lb_walberla_init.hpp>
 
 #include "Particle.hpp"
+#include "communication.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
@@ -42,7 +43,7 @@ namespace bdata = boost::unit_test::data;
 
 #include <utils/Vector.hpp>
 
-#include <mpi.h>
+#include <boost/mpi.hpp>
 
 #include <limits>
 #include <vector>
@@ -146,15 +147,11 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 // todo: test remaining functionality from lb_particle_coupling.hpp
 
 int main(int argc, char **argv) {
-  MPI_Init(&argc, &argv);
-  int n_nodes;
-  MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-  MPI_Dims_create(n_nodes, 3, node_grid.data()); // espresso global
-
+  auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
+  Communication::init(mpi_env);
   walberla_mpi_init();
-  auto res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-  MPI_Finalize();
-  return res;
+
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
 
 #else // ifdef LB_WALBERLA
