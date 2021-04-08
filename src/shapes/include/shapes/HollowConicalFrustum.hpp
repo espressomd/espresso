@@ -21,10 +21,12 @@
 #define SHAPES_CONICAL_FRUSTUM_HPP
 
 #include "Shape.hpp"
+#include "utils/math/cylindrical_transformation_parameters.hpp"
 #include <utils/Vector.hpp>
-#include <utils/math/orthonormal_vec.hpp>
 
 #include <list>
+#include <memory>
+#include <utility>
 
 namespace Shapes {
 
@@ -48,40 +50,37 @@ namespace Shapes {
  */
 class HollowConicalFrustum : public Shape {
 public:
-  HollowConicalFrustum()
-      : m_r1(0.0), m_r2(0.0), m_length(0.0), m_thickness(0.0),
-        m_direction(1), m_center{Utils::Vector3d{}}, m_axis{Utils::Vector3d{
-                                                         0., 0., 1.}},
-        m_orientation{Utils::Vector3d{1., 0., 0.}} {}
+  HollowConicalFrustum(
+      double const r1, double const r2, double const length,
+      double const thickness, int const direction, double const central_angle,
+      std::shared_ptr<Utils::CylindricalTransformationParameters>
+          cyl_transform_params)
+      : m_r1(r1), m_r2(r2), m_length(length), m_thickness(thickness),
+        m_direction(direction), m_central_angle(central_angle),
+        m_cyl_transform_params(std::move(cyl_transform_params)) {}
 
   void set_r1(double const radius) { m_r1 = radius; }
   void set_r2(double const radius) { m_r2 = radius; }
   void set_length(double const length) { m_length = length; }
   void set_thickness(double const thickness) { m_thickness = thickness; }
   void set_direction(int const dir) { m_direction = dir; }
-  void set_axis(Utils::Vector3d const &axis) {
-    m_axis = axis;
-    // Even though the HCF is cylinder-symmetric, it needs a well defined phi=0
-    // orientation for the coordinate transformation.
-    m_orientation = Utils::calc_orthonormal_vector(axis);
+  void set_central_angle(double const central_angle) {
+    m_central_angle = central_angle;
   }
-  void set_center(Utils::Vector3d const &center) { m_center = center; }
 
   /// Get radius 1 perpendicular to axis.
   double radius1() const { return m_r1; }
   /// Get radius 2 perpendicular to axis.
   double radius2() const { return m_r2; }
-  /// Get length of the frustum (modulo thickness).
+  /// Get length of the frustum (without thickness).
   double length() const { return m_length; }
   /// Get thickness of the frustum.
   double thickness() const { return m_thickness; }
-  /// Get the direction of the shape. If -1, distance is positive within the
-  /// enclosed volume of the frustum.
+  /// Get direction
   int direction() const { return m_direction; }
-  /// Get center of symmetry.
-  Utils::Vector3d const &center() const { return m_center; }
-  /// Get symmetry axis.
-  Utils::Vector3d const &axis() const { return m_axis; }
+  /// Get central angle
+  double central_angle() const { return m_central_angle; }
+
   /**
    * @brief Calculate the distance vector and its norm between a given position
    * and the cone.
@@ -98,9 +97,9 @@ private:
   double m_length;
   double m_thickness;
   int m_direction;
-  Utils::Vector3d m_center;
-  Utils::Vector3d m_axis;
-  Utils::Vector3d m_orientation;
+  double m_central_angle;
+  std::shared_ptr<Utils::CylindricalTransformationParameters>
+      m_cyl_transform_params;
 };
 } // namespace Shapes
 

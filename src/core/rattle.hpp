@@ -35,18 +35,26 @@
 #ifdef BOND_CONSTRAINT
 
 /** Transfer the current particle positions from @ref ParticlePosition::p
- *  "Particle::r::p" to @ref ParticlePosition::p_old "Particle::r::p_old"
+ *  "Particle::r::p" to @ref ParticlePosition::p_last_timestep
+ *  "Particle::r::p_last_timestep"
  */
-void save_old_pos(const ParticleRange &particles,
-                  const ParticleRange &ghost_particles);
+void save_old_position(const ParticleRange &particles,
+                       const ParticleRange &ghost_particles);
 
-/** Propagate velocity and position while using SHAKE algorithm for bond
- *  constraint.
+/**
+ * @brief Propagate velocity and position while using SHAKE algorithm for bond
+ * constraint.
+ *
+ * @param cs cell structure
  */
-void correct_pos_shake(CellStructure &cs);
+void correct_position_shake(CellStructure &cs);
 
-/** Correction of current velocities using RATTLE algorithm. */
-void correct_vel_shake(CellStructure &cs);
+/**
+ * @brief Correction of current velocities using RATTLE algorithm.
+ *
+ * @param cs cell structure
+ */
+void correct_velocity_shake(CellStructure &cs);
 
 #endif
 #endif

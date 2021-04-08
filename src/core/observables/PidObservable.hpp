@@ -60,8 +60,6 @@ class PidObservable : virtual public Observable {
 public:
   explicit PidObservable(std::vector<int> ids) : m_ids(std::move(ids)) {}
   std::vector<double> operator()() const final;
-
-  std::vector<int> &ids() { return m_ids; }
   std::vector<int> const &ids() const { return m_ids; }
 };
 

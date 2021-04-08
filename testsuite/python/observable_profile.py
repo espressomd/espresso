@@ -26,10 +26,10 @@ class ProfileObservablesTest(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 15.0, 20.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
-    system.part.add(id=0, pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
-    system.part.add(id=1, pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
+    system.part.add(pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
+    system.part.add(pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
     bin_volume = 5.0**3
-    kwargs = {'ids': [0, 1],
+    kwargs = {'ids': list(system.part[:].id),
               'n_x_bins': 2,
               'n_y_bins': 3,
               'n_z_bins': 4,
@@ -69,8 +69,7 @@ class ProfileObservablesTest(ut.TestCase):
     def test_force_density_profile(self):
         density_profile = espressomd.observables.ForceDensityProfile(
             **self.kwargs)
-        self.system.part[0].ext_force = [0.0, 0.0, 1.0]
-        self.system.part[1].ext_force = [0.0, 0.0, 1.0]
+        self.system.part[:].ext_force = [0.0, 0.0, 1.0]
         self.system.integrator.run(0)
         obs_data = density_profile.calculate()
         np.testing.assert_array_equal(
@@ -92,7 +91,7 @@ class ProfileObservablesTest(ut.TestCase):
 
     def test_pid_profile_interface(self):
         # test setters and getters
-        params = {'ids': [0, 1],
+        params = {'ids': list(self.system.part[:].id),
                   'n_x_bins': 4,
                   'n_y_bins': 6,
                   'n_z_bins': 8,
@@ -104,10 +103,9 @@ class ProfileObservablesTest(ut.TestCase):
                   'max_z': 5.0}
         observable = espressomd.observables.DensityProfile(**params)
         # check pids
-        self.assertEqual(observable.ids, params['ids'])
-        new_pids = [params['ids'][0]]
-        observable.ids = new_pids
-        self.assertEqual(observable.ids, new_pids)
+        np.testing.assert_array_equal(np.copy(observable.ids), params['ids'])
+        with self.assertRaises(RuntimeError):
+            observable.ids = [observable.ids[0]]
         # check bins
         self.assertEqual(observable.n_x_bins, params['n_x_bins'])
         self.assertEqual(observable.n_y_bins, params['n_y_bins'])

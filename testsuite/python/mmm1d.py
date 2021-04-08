@@ -67,11 +67,11 @@ class ElectrostaticInteractionsTests:
 
     def test_with_analytical_result(self, prefactor=1.0, accuracy=1e-4):
         self.system.part.clear()
-        self.system.part.add(pos=[0, 0, 0], q=1)
+        p = self.system.part.add(pos=[0, 0, 0], q=1)
         self.system.part.add(pos=[0, 0, 1], q=1)
 
         self.system.integrator.run(steps=0)
-        f_measured = self.system.part[0].f
+        f_measured = p.f
         energy_measured = self.system.analysis.energy()["total"]
         target_energy_config = 1.00242505606 * prefactor
         target_force_z_config = -0.99510759 * prefactor

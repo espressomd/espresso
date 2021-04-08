@@ -32,15 +32,12 @@
 
 #include <memory>
 
-// This needs to be done in the .cu file too!!!!!
-typedef float dds_float;
-
-void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos,
-                                            float *dip, dds_float box_l[3],
+void DipolarDirectSum_kernel_wrapper_energy(float k, int n, float *pos,
+                                            float *dip, float box_l[3],
                                             int periodic[3], float *E);
-void DipolarDirectSum_kernel_wrapper_force(dds_float k, int n, float *pos,
+void DipolarDirectSum_kernel_wrapper_force(float k, int n, float *pos,
                                            float *dip, float *f, float *torque,
-                                           dds_float box_l[3], int periodic[3]);
+                                           float box_l[3], int periodic[3]);
 
 class DipolarDirectSum : public Actor {
 public:
@@ -58,10 +55,10 @@ public:
       runtimeErrorMsg() << "DipolarDirectSum needs access to dipoles on GPU!";
   };
   void computeForces(SystemInterface &s) override {
-    dds_float box[3];
+    float box[3];
     int per[3];
     for (int i = 0; i < 3; i++) {
-      box[i] = static_cast<dds_float>(s.box()[i]);
+      box[i] = static_cast<float>(s.box()[i]);
       per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_force(
@@ -69,10 +66,10 @@ public:
         s.fGpuBegin(), s.torqueGpuBegin(), box, per);
   };
   void computeEnergy(SystemInterface &s) override {
-    dds_float box[3];
+    float box[3];
     int per[3];
     for (int i = 0; i < 3; i++) {
-      box[i] = static_cast<dds_float>(s.box()[i]);
+      box[i] = static_cast<float>(s.box()[i]);
       per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_energy(

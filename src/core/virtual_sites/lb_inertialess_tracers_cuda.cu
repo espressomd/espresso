@@ -64,72 +64,6 @@ float *lb_boundary_velocity_IBM = nullptr;
 
 static constexpr unsigned int threads_per_block = 64;
 
-/** @copybrief calc_m_from_n
- *
- *  This is a re-implementation of @ref calc_m_from_n. It does exactly the
- *  same, but calculates only the first four modes.
- */
-__device__ void Calc_m_from_n_IBM(const LB_nodes_gpu n_a,
-                                  const unsigned int index, float *mode,
-                                  const LB_parameters_gpu *const paraP) {
-  const LB_parameters_gpu &para = *paraP;
-  // mass mode
-  mode[0] = n_a.populations[0 * para.number_of_nodes + index] +
-            n_a.populations[1 * para.number_of_nodes + index] +
-            n_a.populations[2 * para.number_of_nodes + index] +
-            n_a.populations[3 * para.number_of_nodes + index] +
-            n_a.populations[4 * para.number_of_nodes + index] +
-            n_a.populations[5 * para.number_of_nodes + index] +
-            n_a.populations[6 * para.number_of_nodes + index] +
-            n_a.populations[7 * para.number_of_nodes + index] +
-            n_a.populations[8 * para.number_of_nodes + index] +
-            n_a.populations[9 * para.number_of_nodes + index] +
-            n_a.populations[10 * para.number_of_nodes + index] +
-            n_a.populations[11 * para.number_of_nodes + index] +
-            n_a.populations[12 * para.number_of_nodes + index] +
-            n_a.populations[13 * para.number_of_nodes + index] +
-            n_a.populations[14 * para.number_of_nodes + index] +
-            n_a.populations[15 * para.number_of_nodes + index] +
-            n_a.populations[16 * para.number_of_nodes + index] +
-            n_a.populations[17 * para.number_of_nodes + index] +
-            n_a.populations[18 * para.number_of_nodes + index];
-
-  // momentum modes
-
-  mode[1] = (n_a.populations[1 * para.number_of_nodes + index] -
-             n_a.populations[2 * para.number_of_nodes + index]) +
-            (n_a.populations[7 * para.number_of_nodes + index] -
-             n_a.populations[8 * para.number_of_nodes + index]) +
-            (n_a.populations[9 * para.number_of_nodes + index] -
-             n_a.populations[10 * para.number_of_nodes + index]) +
-            (n_a.populations[11 * para.number_of_nodes + index] -
-             n_a.populations[12 * para.number_of_nodes + index]) +
-            (n_a.populations[13 * para.number_of_nodes + index] -
-             n_a.populations[14 * para.number_of_nodes + index]);
-
-  mode[2] = (n_a.populations[3 * para.number_of_nodes + index] -
-             n_a.populations[4 * para.number_of_nodes + index]) +
-            (n_a.populations[7 * para.number_of_nodes + index] -
-             n_a.populations[8 * para.number_of_nodes + index]) -
-            (n_a.populations[9 * para.number_of_nodes + index] -
-             n_a.populations[10 * para.number_of_nodes + index]) +
-            (n_a.populations[15 * para.number_of_nodes + index] -
-             n_a.populations[16 * para.number_of_nodes + index]) +
-            (n_a.populations[17 * para.number_of_nodes + index] -
-             n_a.populations[18 * para.number_of_nodes + index]);
-
-  mode[3] = (n_a.populations[5 * para.number_of_nodes + index] -
-             n_a.populations[6 * para.number_of_nodes + index]) +
-            (n_a.populations[11 * para.number_of_nodes + index] -
-             n_a.populations[12 * para.number_of_nodes + index]) -
-            (n_a.populations[13 * para.number_of_nodes + index] -
-             n_a.populations[14 * para.number_of_nodes + index]) +
-            (n_a.populations[15 * para.number_of_nodes + index] -
-             n_a.populations[16 * para.number_of_nodes + index]) -
-            (n_a.populations[17 * para.number_of_nodes + index] -
-             n_a.populations[18 * para.number_of_nodes + index]);
-}
-
 __global__ void
 ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
                        size_t number_of_particles,
@@ -176,38 +110,37 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
 
     // modulo for negative numbers is strange at best, shift to make sure we are
     // positive
-    auto const x = static_cast<unsigned int>(my_left[0] + para.dim_x);
-    auto const y = static_cast<unsigned int>(my_left[1] + para.dim_y);
-    auto const z = static_cast<unsigned int>(my_left[2] + para.dim_z);
+    auto const x = static_cast<unsigned int>(my_left[0] + para.dim[0]);
+    auto const y = static_cast<unsigned int>(my_left[1] + para.dim[1]);
+    auto const z = static_cast<unsigned int>(my_left[2] + para.dim[2]);
 
-    node_index[0] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[1] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[2] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[3] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[4] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[5] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[6] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[7] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
+    node_index[0] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[1] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[2] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[3] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[4] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[5] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[6] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[7] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
 
     for (int i = 0; i < 8; ++i) {
       // Atomic add is essential because this runs in parallel!
-      atomicAdd(
-          &(node_f.force_density[0 * para.number_of_nodes + node_index[i]]),
-          (particleForce[0] * delta[i]));
-      atomicAdd(
-          &(node_f.force_density[1 * para.number_of_nodes + node_index[i]]),
-          (particleForce[1] * delta[i]));
-      atomicAdd(
-          &(node_f.force_density[2 * para.number_of_nodes + node_index[i]]),
-          (particleForce[2] * delta[i]));
+      atomicAdd(&(node_f.force_density[node_index[i]][0]),
+                (particleForce[0] * delta[i]));
+      atomicAdd(&(node_f.force_density[node_index[i]][1]),
+                (particleForce[1] * delta[i]));
+      atomicAdd(&(node_f.force_density[node_index[i]][2]),
+                (particleForce[2] * delta[i]));
     }
   }
 }
@@ -241,7 +174,7 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
     float delta[8];
     int my_left[3];
     unsigned int node_index[8];
-    float mode[4];
+    Utils::Array<float, 4> mode;
 #pragma unroll
     for (int i = 0; i < 3; ++i) {
       const float scaledpos = pos[i] / para.agrid - 0.5f;
@@ -261,26 +194,28 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
 
     // modulo for negative numbers is strange at best, shift to make sure we are
     // positive
-    auto const x = static_cast<unsigned int>(my_left[0] + para.dim_x);
-    auto const y = static_cast<unsigned int>(my_left[1] + para.dim_y);
-    auto const z = static_cast<unsigned int>(my_left[2] + para.dim_z);
+    auto const x = static_cast<unsigned int>(my_left[0] + para.dim[0]);
+    auto const y = static_cast<unsigned int>(my_left[1] + para.dim[1]);
+    auto const z = static_cast<unsigned int>(my_left[2] + para.dim[2]);
 
-    node_index[0] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[1] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[2] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[3] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[4] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[5] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[6] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[7] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
+    node_index[0] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[1] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[2] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[3] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[4] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[5] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[6] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[7] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
 
     for (int i = 0; i < 8; ++i) {
       double local_rho;
@@ -304,22 +239,13 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
       } else
 #endif
       {
-        Calc_m_from_n_IBM(n_curr, node_index[i], mode, paraP);
+        calc_mass_and_momentum_mode(mode, n_curr, node_index[i]);
         local_rho = para.rho + mode[0];
 
         // Add the +f/2 contribution!!
-        local_j[0] =
-            mode[1] +
-            node_f.force_density_buf[0 * para.number_of_nodes + node_index[i]] /
-                2.f;
-        local_j[1] =
-            mode[2] +
-            node_f.force_density_buf[1 * para.number_of_nodes + node_index[i]] /
-                2.f;
-        local_j[2] =
-            mode[3] +
-            node_f.force_density_buf[2 * para.number_of_nodes + node_index[i]] /
-                2.f;
+        local_j[0] = mode[1] + node_f.force_density_buf[node_index[i]][0] / 2.f;
+        local_j[1] = mode[2] + node_f.force_density_buf[node_index[i]][1] / 2.f;
+        local_j[2] = mode[3] + node_f.force_density_buf[node_index[i]][2] / 2.f;
       }
 
       // Interpolate velocity
@@ -345,16 +271,11 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
   if (index < para.number_of_nodes) {
     const float force_factor = powf(para.agrid, 2) * para.tau * para.tau;
     if (para.external_force_density) {
-      node_f.force_density[0 * para.number_of_nodes + index] =
-          para.ext_force_density[0] * force_factor;
-      node_f.force_density[1 * para.number_of_nodes + index] =
-          para.ext_force_density[1] * force_factor;
-      node_f.force_density[2 * para.number_of_nodes + index] =
-          para.ext_force_density[2] * force_factor;
+      node_f.force_density[index][0] = para.ext_force_density[0] * force_factor;
+      node_f.force_density[index][1] = para.ext_force_density[1] * force_factor;
+      node_f.force_density[index][2] = para.ext_force_density[2] * force_factor;
     } else {
-      node_f.force_density[0 * para.number_of_nodes + index] = 0.0f;
-      node_f.force_density[1 * para.number_of_nodes + index] = 0.0f;
-      node_f.force_density[2 * para.number_of_nodes + index] = 0.0f;
+      node_f.force_density[index] = {};
     }
   }
 }

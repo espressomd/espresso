@@ -26,25 +26,22 @@
 #include "Actor.hpp"
 #include "SystemInterface.hpp"
 
-typedef float mmm1dgpu_real;
-
 class Mmm1dgpuForce : public Actor {
 public:
   // constructor
-  Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor,
-                mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius = -1,
-                int bessel_cutoff = -1);
+  Mmm1dgpuForce(SystemInterface &s, float coulomb_prefactor, float maxPWerror,
+                float far_switch_radius = -1, int bessel_cutoff = -1);
   ~Mmm1dgpuForce() override;
   // interface methods
   void computeForces(SystemInterface &s) override;
   void computeEnergy(SystemInterface &s) override;
   // configuration methods
   void setup(SystemInterface &s);
-  void tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
-            mmm1dgpu_real _far_switch_radius, int _bessel_cutoff);
-  void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor,
-                  mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius,
-                  int _bessel_cutoff, bool manual = false);
+  void tune(SystemInterface &s, float _maxPWerror, float _far_switch_radius,
+            int _bessel_cutoff);
+  void set_params(float _boxz, float _coulomb_prefactor, float _maxPWerror,
+                  float _far_switch_radius, int _bessel_cutoff,
+                  bool manual = false);
   void activate();
   void deactivate();
 
@@ -55,7 +52,7 @@ private:
 
   // the box length currently set on the GPU
   // Needed to make sure it hasn't been modified after inter coulomb was used.
-  mmm1dgpu_real host_boxz;
+  float host_boxz;
   // the number of particles we had during the last run. Needed to check if we
   // have to realloc dev_forcePairs
   int host_npart;
@@ -66,10 +63,10 @@ private:
   // pairs==2: return forces using a global memory reduction
   int pairs;
   // variables for forces and energies calculated pre-reduction
-  mmm1dgpu_real *dev_forcePairs, *dev_energyBlocks;
+  float *dev_forcePairs, *dev_energyBlocks;
 
   // MMM1D parameters
-  mmm1dgpu_real coulomb_prefactor, maxPWerror, far_switch_radius;
+  float coulomb_prefactor, maxPWerror, far_switch_radius;
   int bessel_cutoff;
 
   // run a single force calculation and return the time it takes using

@@ -26,8 +26,9 @@
 
 #include <cassert>
 #include <cstddef>
+#include <iterator>
+#include <ostream>
 #include <stdexcept>
-
 namespace Utils {
 
 namespace detail {
@@ -151,6 +152,16 @@ private:
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int /* version */) {
     ar &m_storage;
+  }
+
+  friend std::ostream &operator<<(std::ostream &out, Array const &a) {
+    if (not a.empty())
+      out << a[0];
+
+    for (auto it = std::next(a.begin()); it != a.end(); ++it)
+      out << ", " << *it;
+
+    return out;
   }
 };
 

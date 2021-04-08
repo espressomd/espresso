@@ -190,13 +190,25 @@ Appending three indices to the ``lb`` object returns an object that represents t
 
 All of these properties can be read and used in further calculations. Only the property ``population`` can be modified. The indices ``x,y,z`` are integers and enumerate the LB nodes in the three directions, starts with 0. To modify ``boundary``, refer to :ref:`Setting up boundary conditions`.
 
-Examples::
+Example::
 
     print(lb[0, 0, 0].velocity)
-
     lb[0, 0, 0].density = 1.2
 
-The first line prints the fluid velocity at node 0 0 0 to the screen. The second line sets this fluid node's density to the value ``1.2``.
+The first line prints the fluid velocity at node (0 0 0) to the screen.
+The second line sets this fluid node's density to the value ``1.2``.
+
+The nodes can be read and modified using slices. Example::
+
+    print(lb[0:4:2, 0:2, 0].velocity)
+    lb[0:4:2, 0:2, 0].density = [[[1.1], [1.2]], [[1.3], [1.4]]]
+
+The first line prints an array of shape (2, 2, 1, 3) with the velocities
+of nodes (0 0 0), (0 1 0), (2 0 0), (2 1 0). The second line updates
+these nodes with densities ranging from 1.1 to 1.4. You can set either
+a value that matches the length of the slice (which sets each node
+individually), or a single value that will be copied to every node
+(e.g. a scalar for density, or an array of length 3 for the velociy).
 
 .. _Removing total fluid momentum:
 

@@ -86,8 +86,8 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
 
     # Initialize dict with expected forces
     f_expected = {}
-    for id in system.part[:].id:
-        f_expected[id] = np.zeros(3)
+    for pid in system.part[:].id:
+        f_expected[pid] = np.zeros(3)
 
     # Cache some stuff to speed up pair loop
     dist_vec = system.distance_vec
@@ -98,8 +98,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
     all_types = np.unique(system.part[:].type)
     for i in all_types:
         for j in all_types:
-            lj_params[i, j] = non_bonded_inter[
-                int(i), int(j)].lennard_jones.get_params()
+            lj_params[i, j] = non_bonded_inter[i, j].lennard_jones.get_params()
 
     # Go over all pairs of particles
     for pair in system.part.pairs():
@@ -116,17 +115,14 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
         f = lj_force_vector(v_d, d, lj_params[p0.type, p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
+
     # Check actual forces against expected
-    for id in system.part[:].id:
-        if id in ids_to_skip:
+    for p in system.part:
+        if p.id in ids_to_skip:
             continue
-        if np.linalg.norm(system.part[id].f - f_expected[id]) >= tolerance:
-            raise Exception("LJ force verification failed on particle " +
-                            str(id) +
-                            ". Got " +
-                            str(system.part[id].f) +
-                            ", expected " +
-                            str(f_expected[id]))
+        if np.linalg.norm(p.f - f_expected[p.id]) >= tolerance:
+            raise Exception(f"LJ force verification failed on particle "
+                            f"{p.id}. Got {p.f}, expected {f_expected[p.id]}")
 
 
 def abspath(path):
@@ -175,8 +171,8 @@ def get_cylindrical_basis_vectors(pos):
     return e_r, e_phi, e_z
 
 
-def convert_vec_body_to_space(system, part, vec):
-    A = rotation_matrix_quat(system, part)
+def convert_vec_body_to_space(p, vec):
+    A = rotation_matrix_quat(p)
     return np.dot(A.transpose(), vec)
 
 
@@ -189,18 +185,18 @@ def rodrigues_rot(vec, axis, angle):
         (1 - np.cos(angle)) * np.dot(axis, vec) * axis
 
 
-def rotation_matrix_quat(system, part):
+def rotation_matrix_quat(p):
     """
     Return the rotation matrix associated with quaternion.
 
     Parameters
     ----------
-    part : :obj:`int`
-        Particle index.
+    p : :obj:`ParticleHandle`
+        Particle.
 
     """
     A = np.zeros((3, 3))
-    quat = system.part[part].quat
+    quat = p.quat
     qq = np.power(quat, 2)
 
     A[0, 0] = qq[0] + qq[1] - qq[2] - qq[3]
@@ -352,29 +348,29 @@ def quartic_potential(k0, k1, r, r_cut, scalar_r):
 # Generic Lennard-Jones
 
 
-def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12.,
-                         e2=6., b1=4., b2=4., delta=0., lam=1.):
+def lj_generic_potential(r, epsilon, sigma, cutoff, offset=0., shift=0.,
+                         e1=12., e2=6., b1=4., b2=4., delta=0., lam=1.):
     r = np.array(r)
     V = np.zeros_like(r)
     cutoffMask = (r <= cutoff + offset)
     # LJGEN_SOFTCORE transformations
     rroff = np.sqrt(
-        np.power(r[cutoffMask] - offset, 2) + (1 - lam) * delta * sig**2)
-    V[cutoffMask] = eps * lam * \
-        (b1 * np.power(sig / rroff, e1) -
-         b2 * np.power(sig / rroff, e2) + shift)
+        np.power(r[cutoffMask] - offset, 2) + (1 - lam) * delta * sigma**2)
+    V[cutoffMask] = epsilon * lam * \
+        (b1 * np.power(sigma / rroff, e1) -
+         b2 * np.power(sigma / rroff, e2) + shift)
     return V
 
 
-def lj_generic_force(espressomd, r, eps, sig, cutoff, offset=0., e1=12, e2=6,
-                     b1=4., b2=4., delta=0., lam=1., generic=True):
+def lj_generic_force(espressomd, r, epsilon, sigma, cutoff, offset=0., e1=12,
+                     e2=6, b1=4., b2=4., delta=0., lam=1., generic=True):
     f = 1.
     if r >= offset + cutoff:
         f = 0.
     else:
-        h = (r - offset)**2 + delta * (1. - lam) * sig**2
-        f = (r - offset) * eps * lam * (
-            b1 * e1 * np.power(sig / np.sqrt(h), e1) - b2 * e2 * np.power(sig / np.sqrt(h), e2)) / h
+        h = (r - offset)**2 + delta * (1. - lam) * sigma**2
+        f = (r - offset) * epsilon * lam * (
+            b1 * e1 * np.power(sigma / np.sqrt(h), e1) - b2 * e2 * np.power(sigma / np.sqrt(h), e2)) / h
         if (not espressomd.has_features("LJGEN_SOFTCORE")) and generic:
             f *= np.sign(r - offset)
     return f
@@ -382,76 +378,76 @@ def lj_generic_force(espressomd, r, eps, sig, cutoff, offset=0., e1=12, e2=6,
 # Lennard-Jones
 
 
-def lj_potential(r, eps, sig, cutoff, shift, offset=0.):
+def lj_potential(r, epsilon, sigma, cutoff, shift, offset=0.):
     V = lj_generic_potential(
-        r, eps, sig, cutoff, offset=offset, shift=shift * 4.)
+        r, epsilon, sigma, cutoff, offset=offset, shift=shift * 4.)
     return V
 
 
-def lj_force(espressomd, r, eps, sig, cutoff, offset=0.):
+def lj_force(espressomd, r, epsilon, sigma, cutoff, offset=0.):
     f = lj_generic_force(
-        espressomd, r, eps, sig, cutoff, offset=offset, generic=False)
+        espressomd, r, epsilon, sigma, cutoff, offset=offset, generic=False)
     return f
 
 # Lennard-Jones Cosine
 
 
-def lj_cos_potential(r, eps, sig, cutoff, offset):
+def lj_cos_potential(r, epsilon, sigma, cutoff, offset):
     V = 0.
-    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_min = offset + np.power(2., 1. / 6.) * sigma
     r_cut = cutoff + offset
     if r < r_min:
-        V = lj_potential(r, eps=eps, sig=sig,
+        V = lj_potential(r, epsilon=epsilon, sigma=sigma,
                          cutoff=cutoff, offset=offset, shift=0.)
     elif r < r_cut:
         alpha = np.pi / \
             (np.power(r_cut - offset, 2) - np.power(r_min - offset, 2))
         beta = np.pi - np.power(r_min - offset, 2) * alpha
-        V = 0.5 * eps * \
+        V = 0.5 * epsilon * \
             (np.cos(alpha * np.power(r - offset, 2) + beta) - 1.)
     return V
 
 
-def lj_cos_force(espressomd, r, eps, sig, cutoff, offset):
+def lj_cos_force(espressomd, r, epsilon, sigma, cutoff, offset):
     f = 0.
-    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_min = offset + np.power(2., 1. / 6.) * sigma
     r_cut = cutoff + offset
     if r < r_min:
-        f = lj_force(espressomd, r, eps=eps, sig=sig,
+        f = lj_force(espressomd, r, epsilon=epsilon, sigma=sigma,
                      cutoff=cutoff, offset=offset)
     elif r < r_cut:
         alpha = np.pi / \
             (np.power(r_cut - offset, 2) - np.power(r_min - offset, 2))
         beta = np.pi - np.power(r_min - offset, 2) * alpha
-        f = (r - offset) * alpha * eps * \
+        f = (r - offset) * alpha * epsilon * \
             np.sin(alpha * np.power(r - offset, 2) + beta)
     return f
 
 # Lennard-Jones Cosine^2
 
 
-def lj_cos2_potential(r, eps, sig, offset, width):
+def lj_cos2_potential(r, epsilon, sigma, offset, width):
     V = 0.
-    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_min = offset + np.power(2., 1. / 6.) * sigma
     r_cut = r_min + width
     if r < r_min:
-        V = lj_potential(r, eps=eps, sig=sig,
+        V = lj_potential(r, epsilon=epsilon, sigma=sigma,
                          offset=offset, cutoff=r_cut, shift=0.)
     elif r < r_cut:
-        V = -eps * np.power(np.cos(np.pi /
-                                   (2. * width) * (r - r_min)), 2)
+        V = -epsilon * np.power(np.cos(np.pi /
+                                       (2. * width) * (r - r_min)), 2)
     return V
 
 
-def lj_cos2_force(espressomd, r, eps, sig, offset, width):
+def lj_cos2_force(espressomd, r, epsilon, sigma, offset, width):
     f = 0.
-    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_min = offset + np.power(2., 1. / 6.) * sigma
     r_cut = r_min + width
     if r < r_min:
-        f = lj_force(espressomd, r, eps=eps,
-                     sig=sig, cutoff=r_cut, offset=offset)
+        f = lj_force(espressomd, r, epsilon=epsilon,
+                     sigma=sigma, cutoff=r_cut, offset=offset)
     elif r < r_cut:
-        f = - np.pi * eps * \
+        f = - np.pi * epsilon * \
             np.sin(np.pi * (r - r_min) / width) / (2. * width)
     return f
 

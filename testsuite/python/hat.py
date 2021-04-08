@@ -42,8 +42,8 @@ class HatTest(ut.TestCase):
         s.time_step = 0.01
         s.cell_system.skin = 0.4
 
-        s.part.add(id=0, pos=0.5 * s.box_l, type=0)
-        s.part.add(id=1, pos=0.5 * s.box_l, type=0)
+        p0 = s.part.add(pos=0.5 * s.box_l, type=0)
+        p1 = s.part.add(pos=0.5 * s.box_l, type=0)
 
         F_max = 3.145
         cutoff = 1.3
@@ -55,10 +55,10 @@ class HatTest(ut.TestCase):
 
         for i in range(100):
             r = r0 - i * dx
-            s.part[1].pos = [r, 0.5 * s.box_l[1], 0.5 * s.box_l[2]]
+            p1.pos = [r, 0.5 * s.box_l[1], 0.5 * s.box_l[2]]
             s.integrator.run(0)
             self.assertAlmostEqual(
-                self.force(F_max, cutoff, i * dx), s.part[0].f[0], places=7)
+                self.force(F_max, cutoff, i * dx), p0.f[0], places=7)
             self.assertAlmostEqual(
                 self.pot(F_max, cutoff, i * dx), s.analysis.energy()['total'], places=7)
 

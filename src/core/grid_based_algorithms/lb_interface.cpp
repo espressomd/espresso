@@ -142,20 +142,6 @@ void lb_lbfluid_reinit_parameters() {
   }
 }
 
-/** (Re-)initialize the fluid according to the value of density. */
-
-void lb_lbfluid_reinit_fluid() {
-  if (lattice_switch == ActiveLB::GPU) {
-#ifdef CUDA
-    lb_reinit_fluid_gpu();
-#endif
-  } else if (lattice_switch == ActiveLB::CPU) {
-    lb_reinit_fluid(lbfields, lblattice, lbpar);
-  } else {
-    throw NoLBActive();
-  }
-}
-
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
  */
@@ -200,7 +186,7 @@ void lb_lbfluid_set_density(double density) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     lbpar_gpu.rho = static_cast<float>(density);
-    lb_lbfluid_reinit_fluid();
+    lb_reinit_fluid_gpu();
     lb_lbfluid_reinit_parameters();
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
@@ -520,7 +506,7 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
             "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\n"
             "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\n"
             "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
-            lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
+            lbpar_gpu.dim[0], lbpar_gpu.dim[1], lbpar_gpu.dim[2],
             lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5,
             lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
             lbpar_gpu.number_of_nodes);
@@ -606,8 +592,8 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
       for (pos[1] = bb_low[1]; pos[1] < bb_high[1]; pos[1]++)
         for (pos[0] = bb_low[0]; pos[0] < bb_high[0]; pos[0]++) {
           auto const j =
-              static_cast<int>(lbpar_gpu.dim_y * lbpar_gpu.dim_x * pos[2] +
-                               lbpar_gpu.dim_x * pos[1] + pos[0]);
+              static_cast<int>(lbpar_gpu.dim[0] * lbpar_gpu.dim[0] * pos[2] +
+                               lbpar_gpu.dim[0] * pos[1] + pos[0]);
           fprintf(fp, "%f %f %f\n", host_values[j].v[0] * lattice_speed,
                   host_values[j].v[1] * lattice_speed,
                   host_values[j].v[2] * lattice_speed);
@@ -651,10 +637,10 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
 
     Utils::Vector3i xyz;
     for (int j = 0; j < static_cast<int>(lbpar_gpu.number_of_nodes); ++j) {
-      xyz[0] = j % lbpar_gpu.dim_x;
-      auto k = j / lbpar_gpu.dim_x;
-      xyz[1] = k % lbpar_gpu.dim_y;
-      k /= lbpar_gpu.dim_y;
+      xyz[0] = j % lbpar_gpu.dim[0];
+      auto k = j / lbpar_gpu.dim[0];
+      xyz[1] = k % lbpar_gpu.dim[1];
+      k /= lbpar_gpu.dim[1];
       xyz[2] = k;
       fprintf(fp, "%f %f %f %u\n", (xyz[0] + 0.5) * lbpar_gpu.agrid,
               (xyz[1] + 0.5) * lbpar_gpu.agrid,
@@ -695,10 +681,10 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     Utils::Vector3i xyz;
     int j;
     for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
-      xyz[0] = j % lbpar_gpu.dim_x;
-      auto k = j / lbpar_gpu.dim_x;
-      xyz[1] = k % lbpar_gpu.dim_y;
-      k /= lbpar_gpu.dim_y;
+      xyz[0] = j % lbpar_gpu.dim[0];
+      auto k = j / lbpar_gpu.dim[0];
+      xyz[1] = k % lbpar_gpu.dim[1];
+      k /= lbpar_gpu.dim[1];
       xyz[2] = k;
       fprintf(fp, "%f %f %f %f %f %f\n", (xyz[0] + 0.5) * agrid,
               (xyz[1] + 0.5) * agrid, (xyz[2] + 0.5) * agrid,
@@ -734,21 +720,21 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
       std::fstream cpfile(filename, std::ios::out);
       cpfile << std::fixed;
       cpfile.precision(8);
-      cpfile << lbpar_gpu.dim_x << " ";
-      cpfile << lbpar_gpu.dim_y << " ";
-      cpfile << lbpar_gpu.dim_z << "\n";
+      cpfile << lbpar_gpu.dim[0] << " ";
+      cpfile << lbpar_gpu.dim[1] << " ";
+      cpfile << lbpar_gpu.dim[2] << "\n";
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         cpfile << host_checkpoint_vd[n] << "\n";
       }
       cpfile.close();
     } else {
       std::fstream cpfile(filename, std::ios::out | std::ios::binary);
-      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim_x),
-                   sizeof(lbpar_gpu.dim_x));
-      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim_y),
-                   sizeof(lbpar_gpu.dim_y));
-      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim_z),
-                   sizeof(lbpar_gpu.dim_z));
+      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim[0]),
+                   sizeof(lbpar_gpu.dim[0]));
+      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim[1]),
+                   sizeof(lbpar_gpu.dim[1]));
+      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim[2]),
+                   sizeof(lbpar_gpu.dim[2]));
       cpfile.write(reinterpret_cast<char *>(host_checkpoint_vd.data()),
                    19 * sizeof(float) * lbpar_gpu.number_of_nodes);
       cpfile.close();
@@ -818,18 +804,18 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
           throw std::runtime_error(err_msg + "incorrectly formatted data.");
         }
       }
-      if (saved_gridsize[0] != lbpar_gpu.dim_x ||
-          saved_gridsize[1] != lbpar_gpu.dim_y ||
-          saved_gridsize[2] != lbpar_gpu.dim_z) {
+      if (saved_gridsize[0] != lbpar_gpu.dim[0] ||
+          saved_gridsize[1] != lbpar_gpu.dim[1] ||
+          saved_gridsize[2] != lbpar_gpu.dim[2]) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
                                  std::to_string(saved_gridsize[0]) + ' ' +
                                  std::to_string(saved_gridsize[1]) + ' ' +
                                  std::to_string(saved_gridsize[2]) +
                                  "], expected [" +
-                                 std::to_string(lbpar_gpu.dim_x) + ' ' +
-                                 std::to_string(lbpar_gpu.dim_y) + ' ' +
-                                 std::to_string(lbpar_gpu.dim_z) + "].");
+                                 std::to_string(lbpar_gpu.dim[0]) + ' ' +
+                                 std::to_string(lbpar_gpu.dim[1]) + ' ' +
+                                 std::to_string(lbpar_gpu.dim[2]) + "].");
       }
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         res = fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
@@ -848,18 +834,18 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
-      if (saved_gridsize[0] != lbpar_gpu.dim_x ||
-          saved_gridsize[1] != lbpar_gpu.dim_y ||
-          saved_gridsize[2] != lbpar_gpu.dim_z) {
+      if (saved_gridsize[0] != lbpar_gpu.dim[0] ||
+          saved_gridsize[1] != lbpar_gpu.dim[1] ||
+          saved_gridsize[2] != lbpar_gpu.dim[2]) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
                                  std::to_string(saved_gridsize[0]) + ' ' +
                                  std::to_string(saved_gridsize[1]) + ' ' +
                                  std::to_string(saved_gridsize[2]) +
                                  "], expected [" +
-                                 std::to_string(lbpar_gpu.dim_x) + ' ' +
-                                 std::to_string(lbpar_gpu.dim_y) + ' ' +
-                                 std::to_string(lbpar_gpu.dim_z) + "].");
+                                 std::to_string(lbpar_gpu.dim[0]) + ' ' +
+                                 std::to_string(lbpar_gpu.dim[1]) + ' ' +
+                                 std::to_string(lbpar_gpu.dim[2]) + "].");
       }
       if (fread(host_checkpoint_vd.data(), sizeof(float),
                 19 * int(lbpar_gpu.number_of_nodes),
@@ -981,9 +967,9 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
 Utils::Vector3i lb_lbfluid_get_shape() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    return {static_cast<int>(lbpar_gpu.dim_x),
-            static_cast<int>(lbpar_gpu.dim_y),
-            static_cast<int>(lbpar_gpu.dim_z)};
+    return {static_cast<int>(lbpar_gpu.dim[0]),
+            static_cast<int>(lbpar_gpu.dim[1]),
+            static_cast<int>(lbpar_gpu.dim[2])};
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -1073,15 +1059,8 @@ lb_lbnode_get_pressure_tensor_neq(const Utils::Vector3i &ind) {
 const Utils::Vector6d lb_lbfluid_get_pressure_tensor() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    Utils::Vector6d tensor{};
-    // Copy observable data from gpu
-    host_values.resize(lbpar_gpu.number_of_nodes);
-    lb_get_values_GPU(host_values.data());
-    std::for_each(host_values.begin(), host_values.end(),
-                  [&tensor](LB_rho_v_pi_gpu &v) {
-                    for (int i = 0; i < 6; i++)
-                      tensor[i] += static_cast<double>(v.pi[i]);
-                  });
+    auto const stress_tmp = stress_tensor_GPU();
+    Utils::Vector6d tensor(stress_tmp.begin(), stress_tmp.end());
 
     // Normalize
     tensor /= static_cast<double>(lbpar_gpu.number_of_nodes);
