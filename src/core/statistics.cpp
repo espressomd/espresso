@@ -39,8 +39,10 @@
 #include <utils/contains.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cassert>
 #include <cstdlib>
 #include <limits>
+#include <stdexcept>
 
 /****************************************************************************************
  *                                 basic observables calculation
@@ -263,84 +265,64 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
     dist[i] /= (double)cnt;
 }
 
-std::vector<double> calc_structurefactor(PartCfg &partCfg,
-                                         std::vector<int> const &p_types,
-                                         int order) {
-  auto const order2 = order * order;
-  std::vector<double> ff;
-  ff.resize(2 * order2);
-  ff[2 * order2] = 0;
+void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
+                          int order, std::vector<double> &wavevectors,
+                          std::vector<double> &intensities) {
+
+  if (order < 1)
+    throw std::domain_error("order has to be a strictly positive number");
+
+  auto const order_sq = order * order;
+  std::vector<double> ff(2 * order_sq + 1);
   auto const twoPI_L = 2 * Utils::pi() / box_geo.length()[0];
 
-  if (order < 1) {
-    fprintf(stderr,
-            "WARNING: parameter \"order\" has to be a whole positive number");
-    fflush(nullptr);
-    errexit();
-  } else {
-    for (int qi = 0; qi < 2 * order2; qi++) {
-      ff[qi] = 0.0;
-    }
-    for (int i = 0; i <= order; i++) {
-      for (int j = -order; j <= order; j++) {
-        for (int k = -order; k <= order; k++) {
-          auto const n = i * i + j * j + k * k;
-          if ((n <= order2) && (n >= 1)) {
-            double C_sum = 0.0, S_sum = 0.0;
-            for (auto const &p : partCfg) {
-              for (int t : p_types) {
-                if (p.p.type == t) {
-                  auto const qr =
-                      twoPI_L * (Utils::Vector3i{{i, j, k}} * p.r.p);
-                  C_sum += cos(qr);
-                  S_sum += sin(qr);
-                }
+  for (int i = 0; i <= order; i++) {
+    for (int j = -order; j <= order; j++) {
+      for (int k = -order; k <= order; k++) {
+        auto const n = i * i + j * j + k * k;
+        if ((n <= order_sq) && (n >= 1)) {
+          double C_sum = 0.0, S_sum = 0.0;
+          for (auto const &p : partCfg) {
+            for (int t : p_types) {
+              if (p.p.type == t) {
+                auto const qr = twoPI_L * (Utils::Vector3i{{i, j, k}} * p.r.p);
+                C_sum += cos(qr);
+                S_sum += sin(qr);
               }
             }
-            ff[2 * n - 2] += C_sum * C_sum + S_sum * S_sum;
-            ff[2 * n - 1]++;
           }
+          ff[2 * n - 2] += C_sum * C_sum + S_sum * S_sum;
+          ff[2 * n - 1]++;
         }
       }
     }
-    int n = 0;
-    for (auto const &p : partCfg) {
-      for (int t : p_types) {
-        if (p.p.type == t)
-          n++;
-      }
-    }
-    for (int qi = 0; qi < order2; qi++)
-      if (ff[2 * qi + 1] != 0)
-        ff[2 * qi] /= n * ff[2 * qi + 1];
   }
-  return ff;
-}
 
-std::vector<std::vector<double>> modify_stucturefactor(int order,
-                                                       double const *sf) {
+  long n_particles = 0l;
+  for (auto const &p : partCfg) {
+    for (int t : p_types) {
+      if (p.p.type == t)
+        n_particles++;
+    }
+  }
+
   int length = 0;
-
-  for (int i = 0; i < order * order; i++) {
-    if (sf[2 * i + 1] > 0) {
+  for (int qi = 0; qi < order_sq; qi++) {
+    if (ff[2 * qi + 1] != 0) {
+      ff[2 * qi] /= static_cast<double>(n_particles) * ff[2 * qi + 1];
       length++;
     }
   }
 
-  auto const qfak = 2.0 * Utils::pi() / box_geo.length()[0];
-  std::vector<double> intern;
-  intern.assign(2, 0.0);
-  std::vector<std::vector<double>> structure_factor;
-  structure_factor.assign(length, intern);
+  wavevectors.resize(length);
+  intensities.resize(length);
 
   int cnt = 0;
-  for (int i = 0; i < order * order; i++) {
-    if (sf[2 * i + 1] > 0) {
-      structure_factor[cnt][0] = qfak * sqrt(i + 1);
-      structure_factor[cnt][1] = sf[2 * i];
+  for (int i = 0; i < order_sq; i++) {
+    if (ff[2 * i + 1] != 0) {
+      wavevectors[cnt] = twoPI_L * sqrt(i + 1);
+      intensities[cnt] = ff[2 * i];
       cnt++;
     }
   }
-
-  return structure_factor;
 }
