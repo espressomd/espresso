@@ -275,26 +275,31 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
   throw BondInvalidSizeError(n_partners);
 }
 
-/** Calculate kinetic energies for one particle.
- *  @param[in] p1   particle for which to calculate energies
+/** Calculate kinetic energies from translation for one particle.
+ *  @param p   particle for which to calculate energies
  */
-inline double calc_kinetic_energy(Particle const &p1) {
-  if (p1.p.is_virtual)
-    return 0.0;
+inline double translational_kinetic_energy(Particle const &p) {
+  return p.p.is_virtual ? 0. : 0.5 * p.p.mass * p.m.v.norm2();
+}
 
-  /* kinetic energy */
-  auto res = 0.5 * p1.p.mass * p1.m.v.norm2();
-
-  // Note that rotational degrees of virtual sites are integrated
-  // and therefore can contribute to kinetic energy
+/** Calculate kinetic energies from rotation for one particle.
+ *  @param p   particle for which to calculate energies
+ */
+inline double rotational_kinetic_energy(Particle const &p) {
 #ifdef ROTATION
-  if (p1.p.rotation) {
-    /* the rotational part is added to the total kinetic energy;
-     * Here we use the rotational inertia */
-    res += 0.5 * (hadamard_product(p1.m.omega, p1.m.omega) * p1.p.rinertia);
-  }
+  return p.p.rotation
+             ? 0.5 * (hadamard_product(p.m.omega, p.m.omega) * p.p.rinertia)
+             : 0.0;
+#else
+  return 0.0;
 #endif
-  return res;
+}
+
+/** Calculate kinetic energies for one particle.
+ *  @param p   particle for which to calculate energies
+ */
+inline double calc_kinetic_energy(Particle const &p) {
+  return translational_kinetic_energy(p) + rotational_kinetic_energy(p);
 }
 
 #endif // ENERGY_INLINE_HPP
