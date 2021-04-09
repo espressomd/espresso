@@ -89,7 +89,7 @@ IF ELECTROSTATICS:
         kappa : :obj:`float`
             Inverse Debye screening length.
         r_cut : :obj:`float`
-            Cut off radius for this interaction.
+            Cutoff radius for this interaction.
 
         """
 
@@ -124,7 +124,8 @@ IF ELECTROSTATICS:
 
     cdef class ReactionField(ElectrostaticInteraction):
         """
-        Electrostatics solver based on the Reaction-Field framework.
+        Electrostatics solver based on the Reaction Field framework.
+        See :ref:`Reaction Field method` for more details.
 
         Parameters
         ----------
@@ -137,7 +138,7 @@ IF ELECTROSTATICS:
         epsilon2 : :obj:`float`
             exterior dielectric constant
         r_cut : :obj:`float`
-            Cut off radius for this interaction.
+            Cutoff radius for this interaction.
 
         """
 

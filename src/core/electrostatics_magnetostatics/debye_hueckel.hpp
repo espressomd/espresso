@@ -21,7 +21,7 @@
 #ifndef DEBYE_HUECKEL_H
 #define DEBYE_HUECKEL_H
 /** \file
- *  Routines to calculate the Debye-Hueckel energy and force
+ *  Routines to calculate the Debye-Hückel energy and force
  *  for a particle pair.
  */
 #include "config.hpp"
@@ -32,15 +32,15 @@
 
 #include <cmath>
 
-/** Structure to hold Debye-Hueckel parameters. */
+/** Debye-Hückel parameters. */
 struct Debye_hueckel_params {
-  /** Cutoff for Debye-Hueckel interaction. */
+  /** Interaction cutoff. */
   double r_cut;
-  /** Debye kappa (inverse Debye length) . */
+  /** Ionic strength. */
   double kappa;
 };
 
-/** Debye-Hueckel parameters. */
+/** Global state of the Debye-Hückel method. */
 extern Debye_hueckel_params dh_params;
 
 void dh_set_params(double kappa, double r_cut);
