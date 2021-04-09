@@ -33,7 +33,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # C++ standard
 enable_language(CXX)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -454,7 +454,7 @@ if(WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
-    GIT_TAG        64a4d68
+    GIT_TAG        b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
     PATCH_COMMAND  patch -p0 --ignore-whitespace -i
                    ${PROJECT_SOURCE_DIR}/cmake/waLBerlaFunctions.patch
   )
