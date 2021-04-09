@@ -89,17 +89,12 @@ IF ELECTROSTATICS:
         kappa : :obj:`float`
             Inverse Debye screening length.
         r_cut : :obj:`float`
-            Cut off radius for this interaction.
+            Cutoff radius for this interaction.
 
         """
 
         def validate_params(self):
-            if self._params["prefactor"] <= 0:
-                raise ValueError("prefactor should be a positive float")
-            if self._params["kappa"] < 0:
-                raise ValueError("kappa should be a non-negative double")
-            if self._params["r_cut"] < 0:
-                raise ValueError("r_cut should be a non-negative double")
+            pass
 
         def valid_keys(self):
             return ["prefactor", "kappa", "r_cut", "check_neutrality"]
@@ -129,7 +124,8 @@ IF ELECTROSTATICS:
 
     cdef class ReactionField(ElectrostaticInteraction):
         """
-        Electrostatics solver based on the Reaction-Field framework.
+        Electrostatics solver based on the Reaction Field framework.
+        See :ref:`Reaction Field method` for more details.
 
         Parameters
         ----------
@@ -142,21 +138,12 @@ IF ELECTROSTATICS:
         epsilon2 : :obj:`float`
             exterior dielectric constant
         r_cut : :obj:`float`
-            Cut off radius for this interaction.
+            Cutoff radius for this interaction.
 
         """
 
         def validate_params(self):
-            if self._params["prefactor"] <= 0:
-                raise ValueError("prefactor should be a positive float")
-            if self._params["kappa"] < 0:
-                raise ValueError("kappa should be a non-negative double")
-            if self._params["epsilon1"] < 0:
-                raise ValueError("epsilon1 should be a non-negative double")
-            if self._params["epsilon2"] < 0:
-                raise ValueError("epsilon2 should be a non-negative double")
-            if self._params["r_cut"] < 0:
-                raise ValueError("r_cut should be a non-negative double")
+            pass
 
         def valid_keys(self):
             return ["prefactor", "kappa", "epsilon1", "epsilon2", "r_cut",

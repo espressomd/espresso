@@ -138,7 +138,8 @@ The Debye-Hückel electrostatic potential is defined by
 
   .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 \exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 
-where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`.
+where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor` and
+:math:`\kappa` is the ionic strength.
 The Debye-Hückel potential is an approximate method for calculating
 electrostatic interactions, but technically it is treated as other
 short-ranged non-bonding potentials. For :math:`r > r_{\textrm{cut}}` it is
@@ -146,6 +147,29 @@ set to zero which introduces a step in energy. Therefore, it introduces
 fluctuations in energy.
 
 For :math:`\kappa = 0`, this corresponds to the plain Coulomb potential.
+
+.. _Reaction Field method:
+
+Reaction Field method
+---------------------
+
+:class:`espressomd.electrostatics.ReactionField`
+
+The Reaction Field electrostatic potential is defined by
+
+  .. math:: U^{C-RF} = C \cdot q_1 q_2 \left[\frac{1}{r} - \frac{B r^2}{2r_{\mathrm{cut}}^3} -\frac{1 - B/2}{r_{\mathrm{cut}}}\right] \quad \mathrm{for}\quad r<r_{\mathrm{cut}}
+
+where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor` and :math:`B`
+is defined as:
+
+  .. math:: B = \frac{2(\varepsilon_1 - \varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) - \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}{(\varepsilon_1 + 2\varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) + \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}
+
+with :math:`\kappa` the ionic strength, :math:`\varepsilon_1` the dielectric
+constant inside the cavity and :math:`\varepsilon_2` the dielectric constant
+outside the cavity :cite:`tironi95a`.
+
+The term in :math:`1 - B/2` is a correction to make the
+potential continuous at :math:`r = r_{\mathrm{cut}}`.
 
 
 .. _Dielectric interfaces with the ICC algorithm:
