@@ -220,6 +220,47 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 }
 #endif
 
+BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
+  lattice_switch = ActiveLB::WALBERLA;
+  lb_lbcoupling_set_rng_state(17);
+  auto const first_lb_node = lb_walberla()->get_local_domain().first;
+  auto const gamma = 0.2;
+  auto const noise =
+      (kT > 0.) ? std::sqrt(24. * gamma * kT / params.time_step) : 0.0;
+  auto &rng = lb_particle_coupling.rng_counter_coupling;
+  setup_lb(kT); // in LB units.
+  Particle p{};
+  Utils::Vector3d expected = noise * Random::noise_uniform<RNGSalt::PARTICLES>(
+                                         rng->value(), 0, p.identity());
+#ifdef ENGINE
+  p.p.swim.swimming = true;
+  p.p.swim.v_swim = 2;
+  expected += gamma * 2 * p.r.calc_director();
+#endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+  p.p.mu_E = Utils::Vector3d{-2, 1.5, 1};
+  expected += gamma * p.p.mu_E;
+#endif
+  p.r.p = first_lb_node + Utils::Vector3d::broadcast(0.5);
+  lb_lbcoupling_set_gamma(gamma);
+
+  void couple_particle(Particle & p, bool couple_virtual,
+                       double noise_amplitude,
+                       const OptionalCounter &rng_counter);
+  // coupling
+  {
+    couple_particle(p, false, noise, rng);
+    BOOST_CHECK_SMALL((p.f.f - expected).norm(), tol);
+
+    auto const interpolated = lb_lbfluid_get_force_to_be_applied(p.r.p);
+    BOOST_CHECK_SMALL((interpolated - params.force_md_to_lb(expected)).norm(),
+                      tol);
+  }
+
+  // remove force of the particle from the fluid
+  { add_md_force(p.r.p, -expected); }
+}
+
 // todo: test remaining functionality from lb_particle_coupling.hpp
 
 int main(int argc, char **argv) {
