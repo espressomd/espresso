@@ -38,12 +38,15 @@ class StructureFactorTest(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
 
-    def order(self, wavevectors, a):
+    def peak_orders(self, wavevectors):
         """
         Square and rescale wavevectors to recover the corresponding
-        SF order, which is an integer between 0 and ``self.sf_order``.
+        SF order, which is an integer between 1 and ``self.sf_order**2``.
         """
-        return (wavevectors * a / (2 * np.pi))**2
+        peak_orders = (wavevectors * self.system.box_l[0] / (2 * np.pi))**2
+        peak_orders_int = np.around(peak_orders).astype(int)
+        np.testing.assert_array_almost_equal(peak_orders, peak_orders_int)
+        return peak_orders_int
 
     def generate_peaks(self, a, b, c, conditions):
         '''
@@ -69,7 +72,7 @@ class StructureFactorTest(ut.TestCase):
                        for (h, k, l) in itertools.product(*hkl_ranges)
                        if conditions(h, k, l) and (h + k + l != 0) and
                        (h**2 + k**2 + l**2) <= self.sf_order**2]
-        return np.unique(reflections)
+        return self.peak_orders(np.unique(reflections))
 
     def test_tetragonal(self):
         """Check tetragonal lattice."""
@@ -86,9 +89,8 @@ class StructureFactorTest(ut.TestCase):
         intensities = np.around(intensities, 8)
         # no reflection conditions on (h,k,l)
         peaks_ref = self.generate_peaks(a, b, c, lambda h, k, l: True)
-        peaks = wavevectors[np.nonzero(intensities)]
-        np.testing.assert_array_almost_equal(
-            self.order(peaks, a), self.order(peaks_ref[:len(peaks)], a))
+        peaks = self.peak_orders(wavevectors[np.nonzero(intensities)])
+        np.testing.assert_array_equal(peaks, peaks_ref[:len(peaks)])
 
     def test_sc(self):
         """Check simple cubic lattice."""
@@ -102,10 +104,9 @@ class StructureFactorTest(ut.TestCase):
         np.testing.assert_array_equal(
             intensities[np.nonzero(intensities)], len(self.system.part))
         # no reflection conditions on (h,k,l)
-        peaks = wavevectors[np.nonzero(intensities)]
+        peaks = self.peak_orders(wavevectors[np.nonzero(intensities)])
         peaks_ref = self.generate_peaks(l0, l0, l0, lambda h, k, l: True)
-        np.testing.assert_array_almost_equal(
-            self.order(peaks, l0), self.order(peaks_ref[:len(peaks)], l0))
+        np.testing.assert_array_equal(peaks, peaks_ref[:len(peaks)])
 
     def test_bcc(self):
         """Check body-centered cubic lattice."""
@@ -124,9 +125,8 @@ class StructureFactorTest(ut.TestCase):
         # (h+k+l) even => F = 2f, otherwise F = 0
         peaks_ref = self.generate_peaks(
             l0, l0, l0, lambda h, k, l: (h + k + l) % 2 == 0)
-        peaks = wavevectors[np.nonzero(intensities)]
-        np.testing.assert_array_almost_equal(
-            self.order(peaks, l0), self.order(peaks_ref[:len(peaks)], l0))
+        peaks = self.peak_orders(wavevectors[np.nonzero(intensities)])
+        np.testing.assert_array_equal(peaks, peaks_ref[:len(peaks)])
 
     def test_fcc(self):
         """Check face-centered cubic lattice."""
@@ -149,9 +149,8 @@ class StructureFactorTest(ut.TestCase):
             l0, l0, l0, lambda h, k, l:
             h % 2 == 0 and k % 2 == 0 and l % 2 == 0 or
             h % 2 == 1 and k % 2 == 1 and l % 2 == 1)
-        peaks = wavevectors[np.nonzero(intensities)]
-        np.testing.assert_array_almost_equal(
-            self.order(peaks, l0), self.order(peaks_ref[:len(peaks)], l0))
+        peaks = self.peak_orders(wavevectors[np.nonzero(intensities)])
+        np.testing.assert_array_equal(peaks, peaks_ref[:len(peaks)])
 
     def test_cco(self):
         """Check c-centered orthorhombic lattice."""
@@ -168,9 +167,8 @@ class StructureFactorTest(ut.TestCase):
         # (h+k) even => F = 2f, otherwise F = 0
         peaks_ref = self.generate_peaks(
             l0, l0, l0, lambda h, k, l: (h + k) % 2 == 0)
-        peaks = wavevectors[np.nonzero(intensities)]
-        np.testing.assert_array_almost_equal(
-            self.order(peaks, l0), self.order(peaks_ref[:len(peaks)], l0))
+        peaks = self.peak_orders(wavevectors[np.nonzero(intensities)])
+        np.testing.assert_array_equal(peaks, peaks_ref[:len(peaks)])
 
     def test_exceptions(self):
         with self.assertRaisesRegex(ValueError, 'order has to be a strictly positive number'):
