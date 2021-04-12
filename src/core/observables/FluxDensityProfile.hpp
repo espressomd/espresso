@@ -35,13 +35,14 @@ class FluxDensityProfile : public PidProfileObservable {
 public:
   using PidProfileObservable::PidProfileObservable;
   std::vector<size_t> shape() const override {
-    return {n_bins[0], n_bins[1], n_bins[2], 3};
+    auto const b = n_bins();
+    return {b[0], b[1], b[2], 3};
   }
 
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
+    Utils::Histogram<double, 3> histogram(n_bins(), 3, limits());
 
     for (auto p : particles) {
       auto const ppos = folded_position(traits.position(p), box_geo);

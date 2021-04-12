@@ -86,9 +86,7 @@ class LBPoiseuilleCommon:
         self.system.lbboundaries.add(wall1)
         self.system.lbboundaries.add(wall2)
 
-        mid_indices = [int((self.system.box_l[0] / AGRID) / 2),
-                       int((self.system.box_l[1] / AGRID) / 2),
-                       int((self.system.box_l[2] / AGRID) / 2)]
+        mid_indices = (self.system.box_l / AGRID / 2).astype(int)
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
         while diff > 0.005:
@@ -114,9 +112,7 @@ class LBPoiseuilleCommon:
             velocities[x, 0] = (x + 0.5) * AGRID
 
         v_measured = velocities[1:-1, 1]
-        v_expected = poiseuille_flow(velocities[1:-1,
-                                                0] - 0.5 * self.system.box_l[
-                                                    0],
+        v_expected = poiseuille_flow(velocities[1:-1, 0] - 0.5 * self.system.box_l[0],
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
                                      VISC * DENS)

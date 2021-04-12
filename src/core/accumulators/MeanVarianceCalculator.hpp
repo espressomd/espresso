@@ -34,7 +34,7 @@ class MeanVarianceCalculator : public AccumulatorBase {
 public:
   // The accumulator struct has to be initialized with the correct vector size,
   // therefore the order of init is important.
-  MeanVarianceCalculator(std::shared_ptr<Observables::Observable> const &obs,
+  MeanVarianceCalculator(std::shared_ptr<Observables::Observable> obs,
                          int delta_N)
       : AccumulatorBase(delta_N), m_obs(obs), m_acc(obs->n_values()) {}
 

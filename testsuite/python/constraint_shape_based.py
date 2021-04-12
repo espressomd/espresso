@@ -408,8 +408,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.0,
                 offset=0.,
-                eps=1.0,
-                sig=1.0,
+                epsilon=1.0,
+                sigma=1.0,
                 r=1.02),
             places=10)  # minus for Newton's third law
 
@@ -427,8 +427,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.0,
                 offset=0.,
-                eps=1.0,
-                sig=1.0,
+                epsilon=1.0,
+                sigma=1.0,
                 r=dist_part2))
 
         # Test the geometry of a cylinder with top and bottom
@@ -531,8 +531,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.0,
                 offset=0.,
-                eps=1.0,
-                sig=1.0,
+                epsilon=1.0,
+                sigma=1.0,
                 r=1.02),
             places=10)  # minus for Newton's third law
 
@@ -547,7 +547,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.assertAlmostEqual(outer_cylinder_constraint.total_normal_force(),
                                2 * tests_common.lj_force(
                                    espressomd, cutoff=2.0, offset=0.,
-                                   eps=1.0, sig=1.0, r=dist_part2))
+                                   epsilon=1.0, sigma=1.0, r=dist_part2))
 
         # Reset
         system.part.clear()
@@ -653,8 +653,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.0,
                 offset=0.,
-                eps=1.0,
-                sig=1.0,
+                epsilon=1.0,
+                sigma=1.0,
                 r=1.21),
             places=10)
         self.assertAlmostEqual(
@@ -663,8 +663,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.0,
                 offset=0.,
-                eps=1.5,
-                sig=1.0,
+                epsilon=1.5,
+                sigma=1.0,
                 r=0.83),
             places=10)
 
@@ -675,8 +675,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.0,
                 offset=0.,
-                eps=1.0,
-                sig=1.0,
+                epsilon=1.0,
+                sigma=1.0,
                 r=1.21),
             places=10)  # minus for Newton's third law
         self.assertAlmostEqual(
@@ -685,8 +685,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.0,
                 offset=0.,
-                eps=1.5,
-                sig=1.0,
+                epsilon=1.5,
+                sigma=1.0,
                 r=0.83),
             places=10)
 
@@ -697,8 +697,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.0,
                 offset=0.,
-                eps=1.5,
-                sig=1.0,
+                epsilon=1.5,
+                sigma=1.0,
                 r=0.83),
             places=10)
 
@@ -814,8 +814,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.,
                 offset=0.,
-                eps=1.,
-                sig=1.,
+                epsilon=1.,
+                sigma=1.,
                 r=1.),
             places=10)
         self.assertAlmostEqual(
@@ -824,8 +824,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.,
                 offset=0.,
-                eps=1.,
-                sig=1.,
+                epsilon=1.,
+                sigma=1.,
                 r=1.),
             places=10)
 
@@ -914,8 +914,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.,
                 offset=0.,
-                eps=1.,
-                sig=1.,
+                epsilon=1.,
+                sigma=1.,
                 r=1.),
             places=10)
 
@@ -929,8 +929,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.,
                 offset=0.,
-                eps=1.,
-                sig=1.,
+                epsilon=1.,
+                sigma=1.,
                 r=1.2247448714),
             places=10)
 
@@ -980,8 +980,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 espressomd,
                 cutoff=2.0,
                 offset=0.,
-                eps=1.0,
-                sig=1.0,
+                epsilon=1.0,
+                sigma=1.0,
                 r=torus_constraint.min_dist()),
             places=10)
 
@@ -993,7 +993,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         self.assertAlmostEqual(torus_wall.total_force()[1], 0.0)
         self.assertAlmostEqual(torus_wall.total_normal_force(), 2 * tests_common.lj_force(
-            espressomd, cutoff=2.0, offset=0., eps=1.0, sig=1.0,
+            espressomd, cutoff=2.0, offset=0., epsilon=1.0, sigma=1.0,
             r=radius - tube_radius - part_offset))
 
         # Test the geometry of the shape directly
