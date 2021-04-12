@@ -114,15 +114,16 @@ BOOST_AUTO_TEST_CASE(rng) {
 BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   Particle p{};
   BOOST_CHECK_EQUAL(lb_particle_coupling_drift_vel_offset(p).norm(), 0);
+  Utils::Vector3d expected{};
 #ifdef ENGINE
   p.p.swim.swimming = true;
   p.p.swim.v_swim = 2;
+  expected += 2 * p.r.calc_director();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
   p.p.mu_E = Utils::Vector3d{-2, 1.5, 1};
+  expected += p.p.mu_E;
 #endif
-  Utils::Vector3d expected =
-      Utils::Vector3d{-2, 1.5, 1} + 2 * p.r.calc_director();
   BOOST_CHECK_SMALL(
       (lb_particle_coupling_drift_vel_offset(p) - expected).norm(), tol);
 }
