@@ -102,19 +102,20 @@ fl = -1
 harm = espressomd.interactions.HarmonicBond(k=400.0, r_0=diam, r_cut=5.0)
 system.bonded_inter.add(harm)
 
+prev_part = None
 for i in range(n_pbody):
     posx = i * diam
-    system.part.add(pos=[posx, posy, posz], type=2, mass=mass)
-    pid = len(system.part) - 1
-    if i > 0:
-        system.part[pid].bonds = (harm, pid - 1)
+    new_part = system.part.add(pos=[posx, posy, posz], type=2, mass=mass)
+    if prev_part:
+        new_part.bonds = (harm, prev_part)
     if i % 3 == 0:
         fl *= -1
-        system.part[pid].ext_force = [0, fl * 40 * mass, 0]
+        new_part.ext_force = [0, fl * 40 * mass, 0]
     if i >= n_pbody - 3:
-        system.part[pid].ext_force = [50.0 * mass, 0, 0]
+        new_part.ext_force = [50.0 * mass, 0, 0]
     elif i == 0:
-        system.part[pid].ext_force = [-20 * mass, 0, 0]
+        new_part.ext_force = [-20 * mass, 0, 0]
+    prev_part = new_part
 
 
 # steam
@@ -125,21 +126,22 @@ n_steam = 6
 l_steam = 12
 rad = (cup_top_circ - 12.5) / (2.0 * np.pi)
 alpha = 2.0 * np.pi / int(n_steam)
+prev_part = None
 for i in range(n_steam):
     for j in range(l_steam):
         posx = box_l / 2.0 + rad * math.sin(i * alpha + j * 0.6)
         posz = box_l / 2.0 + rad * math.cos(i * alpha + j * 0.6)
         posy = yoff + 2 + j * 0.1 * rad
-        system.part.add(pos=[posx, posy, posz], type=3)
-        pid = len(system.part) - 1
+        new_part = system.part.add(pos=[posx, posy, posz], type=3)
 
         if j == 0:
-            system.part[pid].fix = [True, True, True]
+            new_part.fix = [True, True, True]
         else:
-            system.part[pid].bonds = (fene, pid - 1)
+            new_part.bonds = (fene, prev_part)
 
         if j == l_steam - 1:
-            system.part[pid].ext_force = [0, 7.0, 0]
+            new_part.ext_force = [0, 7.0, 0]
+        prev_part = new_part
 
 
 # stand

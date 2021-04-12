@@ -253,18 +253,17 @@ while n < bubbles_n:
     # box[2]*0.5]
     bpos = [np.random.random() * (pore_xl - snake_head_sigma * 4) +
             snake_head_sigma * 2, np.random.random() * box[1], box[2] * 0.5]
-    system.part.add(
+    new_part = system.part.add(
         pos=bpos,
         type=bubble_type,
         fix=[False, False, True],
         mass=bubble_mass,
         gamma=gamma_bubbles)
-    testid = len(system.part) - 1
     n += 1
 
-    if np.min([system.distance(system.part[testid], p.pos)
-               for p in system.part if p.id != testid]) < bubble_sigma * 0.5:
-        system.part[testid].remove()
+    if np.min([system.distance(new_part, p.pos)
+               for p in system.part if p.id != new_part.id]) < bubble_sigma * 0.5:
+        new_part.remove()
         n -= 1
 
 p_bubbles = np.where(system.part[:].type == bubble_type)[0]
@@ -341,7 +340,7 @@ def move_leftright_reset():
 def set_particle_force():
     global F_act_j, F_act_k
     F_control_tot = np.append(np.clip(F_act_k + F_act_j, -1, 1), 0)
-    system.part[0].ext_force = move_force * F_control_tot
+    p_head.ext_force = move_force * F_control_tot
 
 
 def restart():
@@ -425,12 +424,12 @@ def main():
 
         # CAMERA TRACKING
         zoom_a = (z_eq - zoom) * 0.2 - zoom_v * 0.8 + v_f * \
-            0.005 * np.linalg.norm(system.part[0].v)
+            0.005 * np.linalg.norm(p_head.v)
         zoom_v += zoom_a * zoom_dt
         zoom += zoom_v * zoom_dt + zoom_a * zoom_dt * zoom_dt
-        camPos = np.copy(system.part[0].pos) - box * 0.5
+        camPos = np.copy(p_head.pos) - box * 0.5
         camPos[2] = box[2] * zoom
-        camTarget = system.part[0].pos - box * 0.5
+        camTarget = p_head.pos - box * 0.5
         t = camPos - camTarget
         r = np.linalg.norm(t)
         visualizer.camera.state_pos = camPos

@@ -112,7 +112,8 @@ int_n_times = 300
 int_steps = 1000
 for t in range(int_n_times):
     system.integrator.run(int_steps)
-    # print the position to see if it stays within imposed constraints
-    print("({:.2f}, {:.2f}, {:.2f})".format(*system.part[0].pos))
-    for i in range(num_part):
-        assert wall_offset < system.part[i].pos[2] < box_l - wall_offset
+    for i, p in enumerate(system.part):
+        if i == 0:
+            # print the position to see if it stays within imposed constraints
+            print("({:.2f}, {:.2f}, {:.2f})".format(*p.pos))
+        assert wall_offset < p.pos[2] < box_l - wall_offset
