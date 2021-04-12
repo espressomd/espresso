@@ -94,6 +94,7 @@ set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
 set_default_value with_cuda false
 set_default_value with_cuda_compiler "nvcc"
+set_default_value with_cxx_standard 14
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_hdf5 true
@@ -170,6 +171,10 @@ if [ "${with_cuda}" = true ]; then
     cmake_params="-DWITH_CUDA=ON -DWITH_CUDA_COMPILER=${with_cuda_compiler} ${cmake_params}"
 else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
+fi
+
+if [ "${with_cxx_standard}" = true ]; then
+    cmake_params="-DCMAKE_CXX_STANDARD=${with_cxx_standard} ${cmake_params}"
 fi
 
 command -v nvidia-smi && nvidia-smi || true

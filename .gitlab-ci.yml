@@ -77,6 +77,7 @@ default:
      CC: 'gcc-9'
      CXX: 'g++-9'
      with_cuda: 'false'
+     with_cxx_standard: '17'
      myconfig: 'default'
      with_coverage: 'true'
      with_scafacos: 'true'
@@ -113,6 +114,7 @@ maxset-walberla:
   stage: build
   variables:
      with_cuda: 'false'
+     with_cxx_standard: '17'
      myconfig: 'maxset-walberla'
      with_coverage: 'true'
      with_walberla: 'true'
@@ -301,7 +303,8 @@ tutorials-samples-maxset:
      CC: 'gcc-8'
      CXX: 'g++-8'
      myconfig: 'maxset-walberla'
-     with_cuda: 'true'
+     with_cuda: 'false'
+     with_cxx_standard: '17'
      with_coverage: 'false'
      with_coverage_python: 'true'
      with_scafacos: 'true'
