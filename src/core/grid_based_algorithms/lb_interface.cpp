@@ -642,6 +642,26 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
   throw NoLBActive();
 }
 
+const Utils::Vector3d
+lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+    auto const agrid = lb_lbfluid_get_agrid();
+    auto const ind = Utils::Vector3i{static_cast<int>(pos[0] / agrid),
+                                     static_cast<int>(pos[1] / agrid),
+                                     static_cast<int>(pos[2] / agrid)};
+    auto const res = lb_walberla()->get_node_force_to_be_applied(ind);
+    if (!res) {
+      printf("%d: position: %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
+      throw std::runtime_error(
+          "Force to be applied could not be obtained from Walberla");
+    }
+    return *res;
+#endif
+  }
+  throw NoLBActive();
+}
+
 void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
                                  const Utils::Vector3d &f) {
   if (lattice_switch == ActiveLB::WALBERLA) {
