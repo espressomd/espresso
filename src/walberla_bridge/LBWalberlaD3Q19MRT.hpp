@@ -19,9 +19,9 @@ public:
         (4 - 2 * omega) / (4 * magic_number * omega + 2 - omega);
     m_lattice_model = std::make_shared<LatticeModel>(
         LatticeModel(m_last_applied_force_field_id,
-                     omega,   // bulk
-                     omega,   // even
-                     omega_2, // odd
+                     1,       // bulk
+                     1,       // even
+                     1,       // odd
                      omega)); // shear
   };
   void set_viscosity(double viscosity) override {
@@ -31,9 +31,9 @@ public:
     const real_t omega_2 =
         (4 - 2 * omega) / (4 * magic_number * omega + 2 - omega);
     lm->omega_shear_ = omega;
-    lm->omega_odd_ = omega_2;
-    lm->omega_even_ = omega;
-    lm->omega_bulk_ = omega;
+    lm->omega_odd_ = 1;
+    lm->omega_even_ = 1;
+    lm->omega_bulk_ = 1;
     on_lattice_model_change();
   };
   double get_viscosity() const override {
