@@ -117,7 +117,7 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ] ; then
     bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
 fi
 
-cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DCTEST_ARGS=-j${check_procs} ${cmake_params}"
+cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DCTEST_ARGS=-j${check_procs} -DCMAKE_CXX_STANDARD=${with_cxx_standard} ${cmake_params}"
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
 
@@ -171,10 +171,6 @@ if [ "${with_cuda}" = true ]; then
     cmake_params="-DWITH_CUDA=ON -DWITH_CUDA_COMPILER=${with_cuda_compiler} ${cmake_params}"
 else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
-fi
-
-if [ "${with_cxx_standard}" = true ]; then
-    cmake_params="-DCMAKE_CXX_STANDARD=${with_cxx_standard} ${cmake_params}"
 fi
 
 command -v nvidia-smi && nvidia-smi || true
