@@ -39,6 +39,7 @@ namespace bdata = boost::unit_test::data;
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
+#include "integrate.hpp"
 #include "random.hpp"
 
 #include <utils/Vector.hpp>
@@ -169,7 +170,9 @@ int main(int argc, char **argv) {
   auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
   Communication::init(mpi_env);
   walberla_mpi_init();
+  rescale_boxl(3, params.box_dimensions[0]);
   mpi_set_time_step(params.time_step);
+  setup_lb(0.);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
