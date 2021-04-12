@@ -52,15 +52,33 @@ namespace bdata = boost::unit_test::data;
 // and by 6 to account for error accumulation
 constexpr auto tol = 6 * 100 * std::numeric_limits<double>::epsilon();
 
+struct LBTestParameters {
+  unsigned int seed;
+  double kT;
+  double viscosity;
+  double density;
+  double tau;
+  double time_step;
+  double agrid;
+  Utils::Vector3d box_dimensions;
+  Utils::Vector3i grid_dimensions;
+};
+
+LBTestParameters params{23u,
+                        0.,
+                        1e-3,
+                        0.5,
+                        0.01,
+                        0.01,
+                        1.,
+                        Utils::Vector3d::broadcast(8.),
+                        Utils::Vector3i::broadcast(8)};
+
 void setup_lb(double kT) {
-  init_lb_walberla(1E-3,                           // viscosity
-                   0.5,                            // density
-                   1,                              // agrid
-                   0.01,                           // tau
-                   Utils::Vector3i::broadcast(12), // grid
-                   node_grid,
-                   kT,  // kT
-                   23); // seed
+  params.kT = kT;
+  mpi_init_lb_walberla(params.viscosity, params.density, params.agrid,
+                       params.tau, params.box_dimensions, params.kT,
+                       params.seed);
 }
 
 BOOST_AUTO_TEST_CASE(activate) {
@@ -151,6 +169,7 @@ int main(int argc, char **argv) {
   auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
   Communication::init(mpi_env);
   walberla_mpi_init();
+  mpi_set_time_step(params.time_step);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
