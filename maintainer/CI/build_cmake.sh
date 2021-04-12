@@ -231,7 +231,7 @@ end "BUILD"
 # can't do this on CUDA though because nvcc creates a host function that just
 # calls exit() for each device function, and can't do this with coverage
 # because gcov 9.0 adds code that calls exit()
-if [[ "${with_coverage}" == false && ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) ]]; then
+if [[ "${with_coverage}" == false && ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) && "${with_cxx_standard}" == "14" ]]; then
     if nm -o -C $(find . -name '*.so') | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
         exit 1
