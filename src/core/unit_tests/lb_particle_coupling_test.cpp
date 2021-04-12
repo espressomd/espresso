@@ -63,6 +63,9 @@ struct LBTestParameters {
   double agrid;
   Utils::Vector3d box_dimensions;
   Utils::Vector3i grid_dimensions;
+  Utils::Vector3d force_md_to_lb(Utils::Vector3d const &md_force) {
+    return (-this->time_step * this->tau / this->agrid) * md_force;
+  }
 };
 
 LBTestParameters params{23u,
@@ -163,6 +166,59 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
     BOOST_CHECK_SMALL((observed - expected).norm(), tol);
   }
 }
+
+#ifdef ENGINE
+BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
+  lattice_switch = ActiveLB::WALBERLA;
+  auto const first_lb_node = lb_walberla()->get_local_domain().first;
+  setup_lb(kT); // in LB units.
+  Particle p{};
+  p.p.swim.swimming = true;
+  p.p.swim.f_swim = 2.;
+  p.p.swim.dipole_length = 3.;
+  p.p.swim.push_pull = 1;
+  p.r.p = first_lb_node + Utils::Vector3d::broadcast(0.5);
+
+  auto const coupling_pos =
+      p.r.p + Utils::Vector3d{0., 0., p.p.swim.dipole_length / params.agrid};
+  void add_swimmer_force(Particle & p);
+
+  // swimmer coupling
+  {
+    add_swimmer_force(p);
+    auto const interpolated = lb_lbfluid_get_force_to_be_applied(coupling_pos);
+    auto const expected =
+        params.force_md_to_lb(Utils::Vector3d{0., 0., p.p.swim.f_swim});
+
+    // interpolation happened on the expected LB cell
+    BOOST_CHECK_SMALL((interpolated - expected).norm(), tol);
+
+    // all other LB cells have no force
+    for (int i = 0; i < params.grid_dimensions[0]; ++i) {
+      for (int j = 0; j < params.grid_dimensions[1]; ++j) {
+        for (int k = 0; k < params.grid_dimensions[2]; ++k) {
+          auto const pos = Utils::Vector3d{
+              0.5 + static_cast<double>(i) * params.agrid,
+              0.5 + static_cast<double>(j) * params.agrid,
+              0.5 + static_cast<double>(k) * params.agrid,
+          };
+          if ((pos - coupling_pos).norm() < 1e-6)
+            continue;
+          auto const interpolated = lb_lbfluid_get_force_to_be_applied(pos);
+          BOOST_CHECK_SMALL(interpolated.norm(), tol);
+        }
+      }
+    }
+  }
+
+  // remove force of the particle from the fluid
+  {
+    add_md_force(coupling_pos, -Utils::Vector3d{0., 0., p.p.swim.f_swim});
+    auto const reset = lb_lbfluid_get_force_to_be_applied(coupling_pos);
+    BOOST_REQUIRE_SMALL(reset.norm(), tol);
+  }
+}
+#endif
 
 // todo: test remaining functionality from lb_particle_coupling.hpp
 
