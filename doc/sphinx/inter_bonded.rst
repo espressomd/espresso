@@ -9,7 +9,7 @@ a member of :class:`espressomd.system.System`. Generally, one may use
 the following syntax to activate and assign a bonded interaction::
 
     system.bonded_inter.add(bond)
-    part_1.add_bond((bond, part_2...))
+    part_1.add_bond((bond, part_2, ...))
 
 In general, one instantiates an interaction object ``bond`` and subsequently passes it
 to :meth:`espressomd.interactions.BondedInteractions.add`. This will enable the
@@ -24,7 +24,7 @@ One could for example create FENE bonds (more information about the FENE bond
 is provided in subsection :ref:`FENE bond`) between them using::
 
     fene = FeneBond(k=1, d_r_max=1)
-    system.bonded_inter.add(fene) 12,42,43
+    system.bonded_inter.add(fene)
     p5.add_bond((fene, p6), (fene, p1))
     p1.add_bond((fene, p6))
 

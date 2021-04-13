@@ -42,7 +42,7 @@ simulation, rather than offline copies. Changing their properties will affect th
 It is also possible to add several particles at once::
 
     import numpy as np
-    new_parts = system.part.add(pos=np.random.random((10, 3) * box_length))
+    new_parts = system.part.add(pos=np.random.random((10, 3)) * box_length)
 
 If several particles are added at once, an instance of
 :class:`espressomd.particle_data.ParticleSlice` is returned.
@@ -301,7 +301,7 @@ Setting up diamond polymer networks
 
 :func:`espressomd.polymer.setup_diamond_polymer()` creates a diamond-structured
 polymer network with 8 tetra-functional nodes
-connected by :math:`2\times8` polymer chains of length ``MPC`` with the system box as
+connected by :math:`2 \times 8` polymer chains of length ``MPC`` with the system box as
 the unit cell. The box therefore has to be cubic.
 The diamond command creates ``16*MPC+8`` many particles
 which are connected via the provided bond type (the term plus 8 stems from adding 8 nodes which are connecting the chains).
