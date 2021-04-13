@@ -94,6 +94,7 @@ set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
 set_default_value with_cuda false
 set_default_value with_cuda_compiler "nvcc"
+set_default_value with_cxx_standard 14
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_hdf5 true
@@ -115,9 +116,9 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ] ; then
     bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
 fi
 
-cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DCTEST_ARGS=-j${check_procs} ${cmake_params}"
+cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DCMAKE_CXX_STANDARD=${with_cxx_standard} -DWARNINGS_ARE_ERRORS=ON ${cmake_params}"
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
-cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
+cmake_params="${cmake_params} -DCTEST_ARGS=-j${check_procs} -DTEST_TIMEOUT=${test_timeout}"
 
 if [ "${with_ccache}" = true ]; then
     cmake_params="${cmake_params} -DWITH_CCACHE=ON"
@@ -221,10 +222,11 @@ make -k -j${build_procs} || make -k -j1 || exit ${?}
 
 end "BUILD"
 
-# check for exit function, which should never be called from shared library
-# can't do this on CUDA though because nvcc creates a host function that just
-# calls exit() for each device function, and can't do this with coverage
-# because gcov 9.0 adds code that calls exit()
+# Check for exit() function, which should never be called from a shared
+# library. See details in https://github.com/espressomd/espresso/issues/2249
+# Can't do this check on CUDA though because nvcc creates a host function
+# that just calls exit() for each device function, and can't do this with
+# coverage because gcov 9.0 adds code that calls exit().
 if [[ "${with_coverage}" == false && ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) ]]; then
     if nm -o -C $(find . -name '*.so') | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
