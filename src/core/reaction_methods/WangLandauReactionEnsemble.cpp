@@ -80,7 +80,7 @@ void EnergyCollectiveVariable::load_CV_boundaries(
   // Note that you cannot change the other collective variables in the
   // pre-production run and the production run
 
-  // The data is formatted as space-separated floaing point values
+  // The data is formatted as space-separated floating point values
   // (the first line is a header). The min and max energies are stored in
   // the last two columns. The first N columns are the collective variables.
   std::string line = "";
