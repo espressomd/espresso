@@ -105,7 +105,9 @@ to retrieve a particle slice:
 - By slicing :py:attr:`espressomd.system.System.part`
 
     The :class:`~espressomd.particle_data.ParticleList` supports slicing
-    similarly to lists and NumPy arrays.
+    similarly to lists and NumPy arrays, however with the distinction that
+    particle slices can have gaps.
+
     Using a colon returns a slice containing all particles::
 
         print(system.part[:])
@@ -114,7 +116,11 @@ to retrieve a particle slice:
 
         system.part[0:10]
 
-    Note that, like in other cases in Python, the lower bound is inclusive and the upper bound is non-inclusive.
+    Note that, like in other cases in Python, the lower bound is inclusive and
+    the upper bound is non-inclusive. The length of the slice does not have to
+    be 10, it can be for example 2 if there are only 2 particles in the system
+    with an id between 0 and 9.
+
     It is also possible to get a slice containing particles of specific ids::
 
         system.part[[1, 4, 3]]
