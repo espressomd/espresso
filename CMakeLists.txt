@@ -450,6 +450,10 @@ endif(WITH_BENCHMARKS)
 
 # Walberla
 if(WITH_WALBERLA)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CUDA_STANDARD 14)
+  set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
+  set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
   include(FetchContent)
   FetchContent_Declare(
     walberla
