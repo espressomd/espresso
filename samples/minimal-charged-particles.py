@@ -71,9 +71,8 @@ volume = box_l**3
 n_part = 2 * int(0.5 * volume * density)  # enforce even number of particles
 
 # add particles with alternating charge
-for i in range(n_part):
-    system.part.add(pos=np.random.random(3) * system.box_l, q=(-1.0)**i)
-
+system.part.add(pos=np.random.random((n_part, 3)) * system.box_l,
+                q=np.resize((1, -1), n_part))
 
 # Warmup
 #############################################################

@@ -68,8 +68,8 @@ system.force_cap = wca_cap
 
 # test for "system.part"
 n_part = 10
-for i in range(n_part):
-    system.part.add(pos=np.random.random(3) * system.box_l, q=(-1.0)**i)
+system.part.add(pos=np.random.random((n_part, 3)) * system.box_l,
+                q=np.resize((1, -1), n_part))
 
 p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 system.actors.add(p3m)

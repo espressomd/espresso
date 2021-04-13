@@ -78,8 +78,10 @@ system.bonded_inter.add(angle_harmonic_bond)
 
 # create monomer beads and bonds
 ##########################################################################
-init_polymer_pos = espressomd.polymer.linear_polymer_positions(n_polymers=1, beads_per_chain=N_MONOMERS, bond_length=2.0,
-                                                               seed=2, bond_angle=np.pi, min_distance=1.8, start_positions=np.array([system.box_l / 2.0]))
+init_polymer_pos = espressomd.polymer.linear_polymer_positions(
+    n_polymers=1, beads_per_chain=N_MONOMERS, bond_length=2.0, seed=2,
+    bond_angle=np.pi, min_distance=1.8,
+    start_positions=np.array([system.box_l / 2.0]))
 
 monomers = system.part.add(pos=init_polymer_pos[0], q=-np.ones(N_MONOMERS))
 
@@ -104,8 +106,8 @@ system.part.add(pos=np.random.random((N_MONOMERS, 3)) * system.box_l,
 # create excess ions
 ###############################################################
 system.part.add(pos=np.random.random((N_IONS, 3)) * system.box_l,
-                q=np.hstack((np.ones(N_IONS // 2), -np.ones(N_IONS // 2))),
-                type=np.array(np.hstack((np.ones(N_IONS // 2), 2 * np.ones(N_IONS // 2))), dtype=int))
+                q=np.resize((1, -1), N_IONS),
+                type=np.resize((1, 2), N_IONS))
 
 logging.info("particle types: {}\n".format(system.part[:].type))
 logging.info("total charge: {}".format(np.sum(system.part[:].q)))
