@@ -9,32 +9,39 @@ a member of :class:`espressomd.system.System`. Generally, one may use
 the following syntax to activate and assign a bonded interaction::
 
     system.bonded_inter.add(bond)
-    system.part[pid1].add_bond((bond, pid2...))
+    p1.add_bond((bond, p2, ...))
 
 In general, one instantiates an interaction object ``bond`` and subsequently passes it
 to :meth:`espressomd.interactions.BondedInteractions.add`. This will enable the
-bonded interaction and allows the user to assign bonds between particle ids *pidX*.
+bonded interaction and allows the user to assign bonds between particles ``p1``
+and ``p2``.
 Bonded interactions are identified by either their *bondid* or their appropriate object.
 
 Defining a bond between two particles always involves three steps:
 defining the interaction, adding it to the system and applying it to the particles.
-To illustrate this, assume that three particles with ids 42, 43 and 12 already exist.
-One could for example create FENE bonds (more information about the FENE bond
+To illustrate this, assume that two particles ``p1`` and ``p2`` already exist.
+One could for example create a FENE bond (more information about the FENE bond
 is provided in subsection :ref:`FENE bond`) between them using::
 
     fene = FeneBond(k=1, d_r_max=1)
     system.bonded_inter.add(fene)
-    system.part[42].add_bond((fene, 43), (fene, 12))
-    system.part[12].add_bond((fene, 43))
+    p1.add_bond((fene, p2))
 
-This will set up a FENE bond between particles 42 and 43, 42 and 12, and 12 and 43.
 Note that the ``fene`` object specifies the type of bond and its parameters,
-the specific bonds are stored within the particles. You can find more
+while the information of the bond between ``p1`` and its bonded partners
+is stored on ``p1``. This means that to remove a bond, one has to remember
+on which particle the bond was added. You can find more
 information regarding particle properties in :ref:`Setting up particles`.
 
-To delete the FENE bond between particles 12 and 43::
+To delete the FENE bond between particles ``p1`` and ``p2``::
 
-    system.part[12].delete_bond((fene, 43))
+    p1.delete_bond((fene, p2))
+
+Note that alternatively to particle handles, the particle's ids can be
+used to setup bonded interactions. For example, to create a bond between the
+particles with the ids 12 and 43::
+
+    system.part[12].add_bond((fene, 43))
 
 .. _Distance-dependent bonds:
 
@@ -117,9 +124,9 @@ A pairwise Coulomb interaction can be instantiated via
 
     bonded_coulomb = espressomd.interactions.BondedCoulomb(prefactor=1.0)
     system.bonded_inter.add(bonded_coulomb)
-    system.part[0].add_bond((bonded_coulomb, 1))
+    p1.add_bond((bonded_coulomb, p2))
 
-This creates a bond with a Coulomb pair potential between particles ``0`` and ``1``.
+This creates a bond with a Coulomb pair potential between particles ``p1`` and ``p2``.
 It is given by
 
 .. math:: V(r) = \alpha \frac{q_1 q_2}{r},
@@ -204,7 +211,7 @@ A tabulated bond length can be instantiated via
     tab_dist = TabulatedDistance(min=<min>, max=<max>,
                                  energy=<energy>, force=<force>)
     system.bonded_inter.add(tab_dist)
-    system.part[0].add_bond((tab_dist, 1))
+    p1.add_bond((tab_dist, p2))
 
 This creates a bond type identifier with a tabulated potential. The force acts
 in the direction of the connecting vector between the particles. The bond breaks
@@ -250,9 +257,9 @@ is defined between three particles and depends on the angle :math:`\phi`
 between the vectors from the central particle to the two other particles.
 
 Similar to other bonded interactions, these are defined for every particle triplet and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`), in this case the central one.
-For example, for the schematic with particles ``id=0``, ``1`` (central particle) and ``2`` the bond was defined using ::
+For example, for the schematic with particles ``p0``, ``p1`` (central particle) and ``p2`` the bond was defined using ::
 
-    >>> system.part[1].add_bond((bond_angle, 0, 2))
+    >>> p1.add_bond((bond_angle, p0, p2))
 
 The parameter ``bond_angle`` is an instance of one of four possible bond-angle
 classes, described below.
@@ -274,7 +281,7 @@ Example::
 
     >>> angle_harmonic = AngleHarmonic(bend=1.0, phi0=2 * np.pi / 3)
     >>> system.bonded_inter.add(angle_harmonic)
-    >>> system.part[1].add_bond((angle_harmonic, 0, 2))
+    >>> p1.add_bond((angle_harmonic, p0, p2))
 
 
 Cosine angle potential
@@ -297,7 +304,7 @@ Example::
 
     >>> angle_cosine = AngleCosine(bend=1.0, phi0=2 * np.pi / 3)
     >>> system.bonded_inter.add(angle_cosine)
-    >>> system.part[1].add_bond((angle_cosine, 0, 2))
+    >>> p1.add_bond((angle_cosine, p0, p2))
 
 
 Harmonic cosine potential
@@ -320,7 +327,7 @@ Example::
 
     >>> angle_cossquare = AngleCossquare(bend=1.0, phi0=2 * np.pi / 3)
     >>> system.bonded_inter.add(angle_cossquare)
-    >>> system.part[1].add_bond((angle_cossquare, 0, 2))
+    >>> p1.add_bond((angle_cossquare, p0, p2))
 
 
 Tabulated angle potential
@@ -334,7 +341,7 @@ A tabulated bond angle can be instantiated via
     angle_tab = TabulatedAngle(energy=10 * (theta - 2 * np.pi / 3)**2,
                                force=10 * (theta - 2 * np.pi / 3) / 2)
     system.bonded_inter.add(angle_tab)
-    system.part[1].add_bond((angle_tab, 0, 2))
+    p1.add_bond((angle_tab, p0, p2))
 
 The energy and force tables must be sampled from :math:`0` to :math:`\pi`,
 where :math:`\pi` corresponds to a flat angle. The forces are scaled with the
@@ -358,7 +365,7 @@ Dihedral interactions are available through the :class:`espressomd.interactions.
     from espressomd.interactions import Dihedral
     dihedral = Dihedral(bend=<K>, mult=<n>, phase=<phi_0>)
     system.bonded_inter.add(dihedral)
-    system.part[1].add_bond((dihedral, 0, 2, 3))
+    p2.add_bond((dihedral, p1, p3, p4))
 
 This creates a bond type identifier with a dihedral potential, a
 four-body-potential. In the following, let the particle for which the
@@ -396,7 +403,7 @@ A tabulated dihedral interaction can be instantiated via
     from espressomd.interactions import TabulatedDihedral
     dihedral_tab = TabulatedDihedral(energy=<energy>, force=<force>)
     system.bonded_inter.add(dihedral_tab)
-    system.part[1].add_bond((dihedral_tab, 0, 2, 3))
+    p2.add_bond((dihedral_tab, p1, p3, p4))
 
 The energy and force tables must be sampled from :math:`0` to :math:`2\pi`.
 For details of the interpolation, see :ref:`Tabulated interaction`.

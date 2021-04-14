@@ -33,14 +33,14 @@ dt = 0.05
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 np.random.seed(seed=42)
 
-p = system.part.add(pos=(0, 0, 0), id=0)
+p = system.part.add(pos=(0, 0, 0))
 system.time_step = dt
 system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
 system.cell_system.skin = 0.4
 system.integrator.run(1000)
 
-pos_obs = ParticlePositions(ids=(0,))
-vel_obs = ParticleVelocities(ids=(0,))
+pos_obs = ParticlePositions(ids=(p.id,))
+vel_obs = ParticleVelocities(ids=(p.id,))
 
 c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
                    corr_operation="square_distance_componentwise",
