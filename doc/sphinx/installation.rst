@@ -384,8 +384,6 @@ Fluid dynamics and fluid structure interaction
 
 -  ``EK_DEBUG``
 
--  ``EK_DOUBLE_PREC``
-
 
 .. _Interaction features:
 

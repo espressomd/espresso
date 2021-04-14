@@ -45,6 +45,8 @@ unit_test(NAME make_lin_space_test SRC make_lin_space_test.cpp DEPENDS
 unit_test(NAME sampling_test SRC sampling_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME coordinate_transformation_test SRC coordinate_transformation.cpp
           DEPENDS EspressoUtils)
+unit_test(NAME cylindrical_transformation_test SRC
+          cylindrical_transformation.cpp DEPENDS EspressoUtils)
 unit_test(NAME rotation_matrix_test SRC rotation_matrix_test.cpp DEPENDS
           EspressoUtils)
 unit_test(NAME quaternion_test SRC quaternion_test.cpp DEPENDS EspressoUtils)

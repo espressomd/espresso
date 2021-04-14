@@ -61,4 +61,4 @@ doc/dg/background_errors.unsorted
 .ycm_extra_conf.py
 .ipynb_checkpoints
 
-build*/
+/*build*/

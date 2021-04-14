@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+import unittest_decorators as utx
 from tests_common import assert_params_match
 
 import espressomd
@@ -25,8 +26,8 @@ import espressomd
 class ParticleProperties(ut.TestCase):
     system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 
-    # Particle id to work on
-    pid = 17
+    # Particle to work on
+    system.part.add(pos=(0, 0, 0))
 
     def bondsMatch(self, inType, outBond, inParams, outParams, msg_long):
         """Check, if the bond type set and gotten back as well as the bond
@@ -72,10 +73,6 @@ class ParticleProperties(ut.TestCase):
         self.assertSetEqual(default_keys, valid_keys - required_keys,
                             "{}.set_default_params() should have keys: {}, got: {}".format(
                                 classname, valid_keys - required_keys, default_keys))
-
-    def setUp(self):
-        if not self.system.part.exists(self.pid):
-            self.system.part.add(id=self.pid, pos=(0, 0, 0))
 
     def generateTestForBondParams(_bondId, _bondClass, _params):
         """Generates test cases for checking bond parameters set and gotten
@@ -131,17 +128,24 @@ class ParticleProperties(ut.TestCase):
     test_angle_cossquare = generateTestForBondParams(
         0, espressomd.interactions.AngleCossquare, {"bend": 5.2, "phi0": 0.})
 
-    test_tabulated_bond = generateTestForBondParams(
-        0, espressomd.interactions.TabulatedDistance, {"min": 1.,
-                                                       "max": 2.,
-                                                       "energy": [1., 2., 3.],
-                                                       "force": [3., 4., 5.]})
-    test_tabulated = generateTestForBondParams(
-        0, espressomd.interactions.TabulatedAngle, {"energy": [1., 2., 3.],
-                                                    "force": [3., 4., 5.]})
-    test_tabulated = generateTestForBondParams(
-        0, espressomd.interactions.TabulatedDihedral, {"energy": [1., 2., 3.],
-                                                       "force": [3., 4., 5.]})
+    @utx.skipIfMissingFeatures(["TABULATED"])
+    def test_tabulated_bond(self):
+        params = {"min": 1., "max": 2., "energy": [1., 2., 3.],
+                  "force": [3., 4., 5.]}
+        ParticleProperties.generateTestForBondParams(
+            0, espressomd.interactions.TabulatedDistance, params)(self)
+
+    @utx.skipIfMissingFeatures(["TABULATED"])
+    def test_tabulated_angle(self):
+        params = {"energy": [1., 2., 3.], "force": [3., 4., 5.]}
+        ParticleProperties.generateTestForBondParams(
+            0, espressomd.interactions.TabulatedAngle, params)(self)
+
+    @utx.skipIfMissingFeatures(["TABULATED"])
+    def test_tabulated_dihedral(self):
+        params = {"energy": [1., 2., 3.], "force": [3., 4., 5.]}
+        ParticleProperties.generateTestForBondParams(
+            0, espressomd.interactions.TabulatedDihedral, params)(self)
 
 
 if __name__ == "__main__":

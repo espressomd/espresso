@@ -39,21 +39,23 @@ class TabulatedTest(ut.TestCase):
             self.force[i] = 5 + i * 2.3 * self.dx
             self.energy[i] = 5 - i * 2.3 * self.dx
 
+        self.s.part.add(type=0, pos=[5., 5., 5.0])
+        self.s.part.add(type=0, pos=[5., 5., 5.5])
+
+    def tearDown(self):
         self.s.part.clear()
-        self.s.part.add(id=0, type=0, pos=[5., 5., 5.0])
-        self.s.part.add(id=1, type=0, pos=[5., 5., 5.5])
 
     def check(self):
+        p0, p1 = self.s.part[:]
         # Below cutoff
         np.testing.assert_allclose(np.copy(self.s.part[:].f), 0.0)
 
         for z in np.linspace(0, self.max_ - self.min_, 200, endpoint=False):
-            self.s.part[1].pos = [5., 5., 6. + z]
+            p1.pos = [5., 5., 6. + z]
             self.s.integrator.run(0)
             np.testing.assert_allclose(
-                np.copy(self.s.part[0].f), [0., 0., -(5. + z * 2.3)])
-            np.testing.assert_allclose(
-                np.copy(self.s.part[0].f), -np.copy(self.s.part[1].f))
+                np.copy(p0.f), [0., 0., -(5. + z * 2.3)])
+            np.testing.assert_allclose(np.copy(p0.f), -np.copy(p1.f))
             self.assertAlmostEqual(
                 self.s.analysis.energy()['total'], 5. - z * 2.3)
 
@@ -76,6 +78,7 @@ class TabulatedTest(ut.TestCase):
         self.s.non_bonded_inter[0, 0].tabulated.set_params(
             min=-1, max=-1, energy=[], force=[])
 
+    @utx.skipIfMissingFeatures("TABULATED")
     def test_bonded(self):
         from espressomd.interactions import TabulatedDistance
 
@@ -88,11 +91,9 @@ class TabulatedTest(ut.TestCase):
         self.assertAlmostEqual(self.min_, tb.params['min'])
         self.assertAlmostEqual(self.max_, tb.params['max'])
 
-        self.s.part[0].add_bond((tb, 1))
-
+        p0, p1 = self.s.part[:]
+        p0.add_bond((tb, p1))
         self.check()
-
-        self.s.part[0].delete_bond((tb, 1))
 
 
 if __name__ == "__main__":

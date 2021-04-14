@@ -58,7 +58,7 @@ public:
   }
 
   /**
-   * @brief Removes all occurences of an element from the list.
+   * @brief Removes all occurrences of an element from the list.
    *
    * @param element The element to add.
    */

@@ -103,7 +103,7 @@ EK_parameters ek_parameters = {
     -1.0,
     // prefactor
     -1.0,
-    // lb_force_density
+    // lb_ext_force_density
     {0.0, 0.0, 0.0},
     // number_of_species
     0,
@@ -174,7 +174,7 @@ EK_parameters ek_parameters = {
 };
 
 __device__ __constant__ EK_parameters ek_parameters_gpu[1];
-ekfloat *charge_gpu;
+float *charge_gpu;
 LB_parameters_gpu *ek_lbparameters_gpu;
 CUDA_particle_data *particle_data_gpu;
 float *ek_lb_boundary_force;
@@ -270,8 +270,7 @@ __device__ void ek_displacement(float *dx, LB_nodes_gpu n,
   float mode[19];
 
   for (unsigned i = 0; i < 19; i++) {
-    mode[i] =
-        n.populations[i * ek_lbparameters_gpu->number_of_nodes + node_index];
+    mode[i] = n.populations[node_index][i];
   }
 
   rho += mode[0] + mode[1] + mode[2] + mode[3] + mode[4] + mode[5] + mode[6] +
@@ -310,7 +309,7 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
     unsigned int const *neighborindex, unsigned int const *neighborindex_padded,
     unsigned int species_index, LB_node_force_density_gpu node_f,
     LB_nodes_gpu lb_node) {
-  ekfloat flux, force;
+  float flux, force;
 
   float agrid_inv = 1.0f / ek_parameters_gpu->agrid;
   float sqrt2agrid_inv = 1.0f / (sqrtf(2.0f) * ek_parameters_gpu->agrid);
@@ -340,8 +339,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
   flux *= ek_parameters_gpu->d[species_index] * agrid_inv;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_U00]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_U00]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_U00)],
             flux * ek_parameters_gpu->time_step);
@@ -350,8 +349,9 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
     force = flux * ek_parameters_gpu->T * ek_parameters_gpu->agrid * D_inv;
     force *= force_conv;
 
-    atomicAdd(&node_f.force_density[index], force * 0.5f);
-    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U00]], force * 0.5f);
+    atomicAdd(&node_f.force_density[index][0], force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U00]][0],
+              force * 0.5f);
   } else {
     force = -1.0f * ek_parameters_gpu->valency[species_index] *
             (((cufftReal *)ek_parameters_gpu
@@ -361,7 +361,7 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
     force *= force_conv;
 
-    atomicAdd(&node_f.force_density[index],
+    atomicAdd(&node_f.force_density[index][0],
               ek_parameters_gpu->rho[species_index][index] *
                   (force * 0.5f +
                    ek_parameters_gpu->ext_force_density[0][species_index] *
@@ -388,8 +388,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
   flux *= ek_parameters_gpu->d[species_index] * agrid_inv;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_0U0]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_0U0]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_0U0)],
             flux * ek_parameters_gpu->time_step);
@@ -398,10 +398,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
     force = flux * ek_parameters_gpu->T * ek_parameters_gpu->agrid * D_inv;
     force *= force_conv;
 
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
-              force * 0.5f);
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                                    neighborindex[EK_LINK_0U0]],
+    atomicAdd(&node_f.force_density[index][1], force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_0U0]][1],
               force * 0.5f);
   } else {
     force = -1.0f * ek_parameters_gpu->valency[species_index] *
@@ -412,15 +410,14 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
     force *= force_conv;
 
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
+    atomicAdd(&node_f.force_density[index][1],
               ek_parameters_gpu->rho[species_index][index] *
                   (force * 0.5f +
                    ek_parameters_gpu->ext_force_density[1][species_index] *
                        force_conv));
 
     atomicAdd(
-        &node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                              neighborindex[EK_LINK_0U0]],
+        &node_f.force_density[neighborindex[EK_LINK_0U0]][1],
         ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_0U0]] *
             force * 0.5f);
   }
@@ -445,8 +442,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
   flux *= ek_parameters_gpu->d[species_index] * agrid_inv;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_00U]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_00U]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_00U)],
             flux * ek_parameters_gpu->time_step);
@@ -455,11 +452,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
     force = flux * ek_parameters_gpu->T * ek_parameters_gpu->agrid * D_inv;
     force *= force_conv;
 
-    atomicAdd(
-        &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-        force * 0.5f);
-    atomicAdd(&node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                                    neighborindex[EK_LINK_00U]],
+    atomicAdd(&node_f.force_density[index][2], force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_00U]][2],
               force * 0.5f);
   } else {
     force = -1.0f * ek_parameters_gpu->valency[species_index] *
@@ -470,16 +464,14 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
     force *= force_conv;
 
-    atomicAdd(
-        &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-        ek_parameters_gpu->rho[species_index][index] *
-            (force * 0.5f +
-             ek_parameters_gpu->ext_force_density[2][species_index] *
-                 force_conv));
+    atomicAdd(&node_f.force_density[index][2],
+              ek_parameters_gpu->rho[species_index][index] *
+                  (force * 0.5f +
+                   ek_parameters_gpu->ext_force_density[2][species_index] *
+                       force_conv));
 
     atomicAdd(
-        &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                              neighborindex[EK_LINK_00U]],
+        &node_f.force_density[neighborindex[EK_LINK_00U]][2],
         ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_00U]] *
             force * 0.5f);
   }
@@ -506,8 +498,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
   flux *= ek_parameters_gpu->d[species_index] * agrid_inv;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_UU0]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_UU0]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_UU0)],
             flux * ek_parameters_gpu->time_step);
@@ -516,12 +508,11 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
     force = flux * ek_parameters_gpu->T * ek_parameters_gpu->agrid * D_inv;
     force *= force_conv;
 
-    atomicAdd(&node_f.force_density[index], force * 0.5f);
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
+    atomicAdd(&node_f.force_density[index][0], force * 0.5f);
+    atomicAdd(&node_f.force_density[index][1], force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UU0]][0],
               force * 0.5f);
-    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UU0]], force * 0.5f);
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                                    neighborindex[EK_LINK_UU0]],
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UU0]][1],
               force * 0.5f);
   }
 
@@ -546,8 +537,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
   flux *= ek_parameters_gpu->d[species_index] * agrid_inv;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_UD0]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_UD0]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_UD0)],
             flux * ek_parameters_gpu->time_step);
@@ -556,12 +547,11 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
     force = flux * ek_parameters_gpu->T * ek_parameters_gpu->agrid * D_inv;
     force *= force_conv;
 
-    atomicAdd(&node_f.force_density[index], force * 0.5f);
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
-              -force * 0.5f);
-    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UD0]], force * 0.5f);
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                                    neighborindex[EK_LINK_UD0]],
+    atomicAdd(&node_f.force_density[index][0], force * 0.5f);
+    atomicAdd(&node_f.force_density[index][1], -force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UD0]][0],
+              force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UD0]][1],
               -force * 0.5f);
   }
 
@@ -587,8 +577,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
   flux *= ek_parameters_gpu->d[species_index] * agrid_inv;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_U0U]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_U0U]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_U0U)],
             flux * ek_parameters_gpu->time_step);
@@ -597,13 +587,11 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
     force = flux * ek_parameters_gpu->T * ek_parameters_gpu->agrid * D_inv;
     force *= force_conv;
 
-    atomicAdd(&node_f.force_density[index], force * 0.5f);
-    atomicAdd(
-        &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-        force * 0.5f);
-    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0U]], force * 0.5f);
-    atomicAdd(&node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                                    neighborindex[EK_LINK_U0U]],
+    atomicAdd(&node_f.force_density[index][0], force * 0.5f);
+    atomicAdd(&node_f.force_density[index][2], force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0U]][0],
+              force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0U]][2],
               force * 0.5f);
   }
 
@@ -628,8 +616,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
   flux *= ek_parameters_gpu->d[species_index] * agrid_inv;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_U0D]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_U0D]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_U0D)],
             flux * ek_parameters_gpu->time_step);
@@ -638,13 +626,11 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
     force = flux * ek_parameters_gpu->T * ek_parameters_gpu->agrid * D_inv;
     force *= force_conv;
 
-    atomicAdd(&node_f.force_density[index], force * 0.5f);
-    atomicAdd(
-        &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-        -force * 0.5f);
-    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0D]], force * 0.5f);
-    atomicAdd(&node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                                    neighborindex[EK_LINK_U0D]],
+    atomicAdd(&node_f.force_density[index][0], force * 0.5f);
+    atomicAdd(&node_f.force_density[index][2], -force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0D]][0],
+              force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0D]][2],
               -force * 0.5f);
   }
 
@@ -670,8 +656,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
   flux *= ek_parameters_gpu->d[species_index] * agrid_inv;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_0UU]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_0UU]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_0UU)],
             flux * ek_parameters_gpu->time_step);
@@ -680,16 +666,11 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
     force = flux * ek_parameters_gpu->T * ek_parameters_gpu->agrid * D_inv;
     force *= force_conv;
 
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
+    atomicAdd(&node_f.force_density[index][1], force * 0.5f);
+    atomicAdd(&node_f.force_density[index][2], force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_0UU]][1],
               force * 0.5f);
-    atomicAdd(
-        &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-        force * 0.5f);
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                                    neighborindex[EK_LINK_0UU]],
-              force * 0.5f);
-    atomicAdd(&node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                                    neighborindex[EK_LINK_0UU]],
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_0UU]][2],
               force * 0.5f);
   }
 
@@ -714,8 +695,8 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
   flux *= ek_parameters_gpu->d[species_index] * agrid_inv;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_0UD]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_0UD]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_0UD)],
             flux * ek_parameters_gpu->time_step);
@@ -724,16 +705,11 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
     force = flux * ek_parameters_gpu->T * ek_parameters_gpu->agrid * D_inv;
     force *= force_conv;
 
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
+    atomicAdd(&node_f.force_density[index][1], force * 0.5f);
+    atomicAdd(&node_f.force_density[index][2], -force * 0.5f);
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_0UD]][1],
               force * 0.5f);
-    atomicAdd(
-        &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-        -force * 0.5f);
-    atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                                    neighborindex[EK_LINK_0UD]],
-              force * 0.5f);
-    atomicAdd(&node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                                    neighborindex[EK_LINK_0UD]],
+    atomicAdd(&node_f.force_density[neighborindex[EK_LINK_0UD]][2],
               -force * 0.5f);
   }
 }
@@ -743,7 +719,7 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
     unsigned int const *neighborindex, unsigned int const *neighborindex_padded,
     unsigned int species_index, LB_node_force_density_gpu node_f,
     LB_nodes_gpu lb_node) {
-  ekfloat flux, force;
+  float flux, force;
 
   // face in x
   flux = (ek_parameters_gpu->rho[species_index][index] -
@@ -760,16 +736,16 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
 
   flux +=
       force *
-      (static_cast<ekfloat>(force >= 0.0f) *
+      (static_cast<float>(force >= 0.0f) *
            ek_parameters_gpu->rho[species_index][index] +
-       static_cast<ekfloat>(force < 0.0f) *
+       static_cast<float>(force < 0.0f) *
            ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_U00]]) /
       ek_parameters_gpu->T;
 
   flux *= ek_parameters_gpu->d[species_index] / ek_parameters_gpu->agrid;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_U00]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_U00]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_U00)],
             flux * ek_parameters_gpu->time_step);
@@ -780,8 +756,8 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
   force *= powf(ek_parameters_gpu->agrid, -1) * ek_parameters_gpu->time_step *
            ek_parameters_gpu->time_step;
 
-  atomicAdd(&node_f.force_density[index], force / 2.0f);
-  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U00]], force / 2.0f);
+  atomicAdd(&node_f.force_density[index][0], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U00]][0], force / 2.0f);
 
   // face in y
   flux = (ek_parameters_gpu->rho[species_index][index] -
@@ -798,16 +774,16 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
 
   flux +=
       force *
-      (static_cast<ekfloat>(force >= 0.0f) *
+      (static_cast<float>(force >= 0.0f) *
            ek_parameters_gpu->rho[species_index][index] +
-       static_cast<ekfloat>(force < 0.0f) *
+       static_cast<float>(force < 0.0f) *
            ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_0U0]]) /
       ek_parameters_gpu->T;
 
   flux *= ek_parameters_gpu->d[species_index] / ek_parameters_gpu->agrid;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_0U0]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_0U0]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_0U0)],
             flux * ek_parameters_gpu->time_step);
@@ -818,11 +794,8 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
   force *= powf(ek_parameters_gpu->agrid, -1) * ek_parameters_gpu->time_step *
            ek_parameters_gpu->time_step;
 
-  atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
-            force / 2.0f);
-  atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                                  neighborindex[EK_LINK_0U0]],
-            force / 2.0f);
+  atomicAdd(&node_f.force_density[index][1], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_0U0]][1], force / 2.0f);
 
   // face in z
   flux = (ek_parameters_gpu->rho[species_index][index] -
@@ -839,16 +812,16 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
 
   flux +=
       force *
-      (static_cast<ekfloat>(force >= 0.0f) *
+      (static_cast<float>(force >= 0.0f) *
            ek_parameters_gpu->rho[species_index][index] +
-       static_cast<ekfloat>(force < 0.0f) *
+       static_cast<float>(force < 0.0f) *
            ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_00U]]) /
       ek_parameters_gpu->T;
 
   flux *= ek_parameters_gpu->d[species_index] / ek_parameters_gpu->agrid;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_00U]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_00U]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_00U)],
             flux * ek_parameters_gpu->time_step);
@@ -859,12 +832,8 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
   force *= powf(ek_parameters_gpu->agrid, -1) * ek_parameters_gpu->time_step *
            ek_parameters_gpu->time_step;
 
-  atomicAdd(
-      &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-      force / 2.0f);
-  atomicAdd(&node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                                  neighborindex[EK_LINK_00U]],
-            force / 2.0f);
+  atomicAdd(&node_f.force_density[index][2], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_00U]][2], force / 2.0f);
 
   // edge in z
   flux = (ek_parameters_gpu->rho[species_index][index] -
@@ -883,16 +852,16 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
 
   flux +=
       force *
-      (static_cast<ekfloat>(force >= 0.0f) *
+      (static_cast<float>(force >= 0.0f) *
            ek_parameters_gpu->rho[species_index][index] +
-       static_cast<ekfloat>(force < 0.0f) *
+       static_cast<float>(force < 0.0f) *
            ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_UU0]]) /
       ek_parameters_gpu->T;
 
   flux *= ek_parameters_gpu->d[species_index] / ek_parameters_gpu->agrid;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_UU0]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_UU0]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_UU0)],
             flux * ek_parameters_gpu->time_step);
@@ -903,13 +872,10 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
   force *= powf(ek_parameters_gpu->agrid, -1) * ek_parameters_gpu->time_step *
            ek_parameters_gpu->time_step;
 
-  atomicAdd(&node_f.force_density[index], force / 2.0f);
-  atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
-            force / 2.0f);
-  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UU0]], force / 2.0f);
-  atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                                  neighborindex[EK_LINK_UU0]],
-            force / 2.0f);
+  atomicAdd(&node_f.force_density[index][0], force / 2.0f);
+  atomicAdd(&node_f.force_density[index][1], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UU0]][0], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UU0]][1], force / 2.0f);
 
   flux = (ek_parameters_gpu->rho[species_index][index] -
           ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_UD0]]) /
@@ -927,16 +893,16 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
 
   flux +=
       force *
-      (static_cast<ekfloat>(force >= 0.0f) *
+      (static_cast<float>(force >= 0.0f) *
            ek_parameters_gpu->rho[species_index][index] +
-       static_cast<ekfloat>(force < 0.0f) *
+       static_cast<float>(force < 0.0f) *
            ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_UD0]]) /
       ek_parameters_gpu->T;
 
   flux *= ek_parameters_gpu->d[species_index] / ek_parameters_gpu->agrid;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_UD0]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_UD0]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_UD0)],
             flux * ek_parameters_gpu->time_step);
@@ -947,12 +913,10 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
   force *= powf(ek_parameters_gpu->agrid, -1) * ek_parameters_gpu->time_step *
            ek_parameters_gpu->time_step;
 
-  atomicAdd(&node_f.force_density[index], force / 2.0f);
-  atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
-            -force / 2.0f);
-  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UD0]], force / 2.0f);
-  atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                                  neighborindex[EK_LINK_UD0]],
+  atomicAdd(&node_f.force_density[index][0], force / 2.0f);
+  atomicAdd(&node_f.force_density[index][1], -force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UD0]][0], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_UD0]][1],
             -force / 2.0f);
 
   // edge in y
@@ -972,16 +936,16 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
 
   flux +=
       force *
-      (static_cast<ekfloat>(force >= 0.0f) *
+      (static_cast<float>(force >= 0.0f) *
            ek_parameters_gpu->rho[species_index][index] +
-       static_cast<ekfloat>(force < 0.0f) *
+       static_cast<float>(force < 0.0f) *
            ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_U0U]]) /
       ek_parameters_gpu->T;
 
   flux *= ek_parameters_gpu->d[species_index] / ek_parameters_gpu->agrid;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_U0U]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_U0U]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_U0U)],
             flux * ek_parameters_gpu->time_step);
@@ -992,14 +956,10 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
   force *= powf(ek_parameters_gpu->agrid, -1) * ek_parameters_gpu->time_step *
            ek_parameters_gpu->time_step;
 
-  atomicAdd(&node_f.force_density[index], force / 2.0f);
-  atomicAdd(
-      &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-      force / 2.0f);
-  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0U]], force / 2.0f);
-  atomicAdd(&node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                                  neighborindex[EK_LINK_U0U]],
-            force / 2.0f);
+  atomicAdd(&node_f.force_density[index][0], force / 2.0f);
+  atomicAdd(&node_f.force_density[index][2], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0U]][0], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0U]][2], force / 2.0f);
 
   flux = (ek_parameters_gpu->rho[species_index][index] -
           ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_U0D]]) /
@@ -1017,16 +977,16 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
 
   flux +=
       force *
-      (static_cast<ekfloat>(force >= 0.0f) *
+      (static_cast<float>(force >= 0.0f) *
            ek_parameters_gpu->rho[species_index][index] +
-       static_cast<ekfloat>(force < 0.0f) *
+       static_cast<float>(force < 0.0f) *
            ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_U0D]]) /
       ek_parameters_gpu->T;
 
   flux *= ek_parameters_gpu->d[species_index] / ek_parameters_gpu->agrid;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_U0D]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_U0D]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_U0D)],
             flux * ek_parameters_gpu->time_step);
@@ -1037,13 +997,10 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
   force *= powf(ek_parameters_gpu->agrid, -1) * ek_parameters_gpu->time_step *
            ek_parameters_gpu->time_step;
 
-  atomicAdd(&node_f.force_density[index], force / 2.0f);
-  atomicAdd(
-      &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-      -force / 2.0f);
-  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0D]], force / 2.0f);
-  atomicAdd(&node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                                  neighborindex[EK_LINK_U0D]],
+  atomicAdd(&node_f.force_density[index][0], force / 2.0f);
+  atomicAdd(&node_f.force_density[index][2], -force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0D]][0], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_U0D]][2],
             -force / 2.0f);
 
   // edge in x
@@ -1063,16 +1020,16 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
 
   flux +=
       force *
-      (static_cast<ekfloat>(force >= 0.0f) *
+      (static_cast<float>(force >= 0.0f) *
            ek_parameters_gpu->rho[species_index][index] +
-       static_cast<ekfloat>(force < 0.0f) *
+       static_cast<float>(force < 0.0f) *
            ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_0UU]]) /
       ek_parameters_gpu->T;
 
   flux *= ek_parameters_gpu->d[species_index] / ek_parameters_gpu->agrid;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_0UU]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_0UU]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_0UU)],
             flux * ek_parameters_gpu->time_step);
@@ -1083,17 +1040,10 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
   force *= powf(ek_parameters_gpu->agrid, -1) * ek_parameters_gpu->time_step *
            ek_parameters_gpu->time_step;
 
-  atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
-            force / 2.0f);
-  atomicAdd(
-      &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-      force / 2.0f);
-  atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                                  neighborindex[EK_LINK_0UU]],
-            force / 2.0f);
-  atomicAdd(&node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                                  neighborindex[EK_LINK_0UU]],
-            force / 2.0f);
+  atomicAdd(&node_f.force_density[index][1], force / 2.0f);
+  atomicAdd(&node_f.force_density[index][2], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_0UU]][1], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_0UU]][2], force / 2.0f);
 
   flux = (ek_parameters_gpu->rho[species_index][index] -
           ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_0UD]]) /
@@ -1111,16 +1061,16 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
 
   flux +=
       force *
-      (static_cast<ekfloat>(force >= 0.0f) *
+      (static_cast<float>(force >= 0.0f) *
            ek_parameters_gpu->rho[species_index][index] +
-       static_cast<ekfloat>(force < 0.0f) *
+       static_cast<float>(force < 0.0f) *
            ek_parameters_gpu->rho[species_index][neighborindex[EK_LINK_0UD]]) /
       ek_parameters_gpu->T;
 
   flux *= ek_parameters_gpu->d[species_index] / ek_parameters_gpu->agrid;
 
-  flux *= static_cast<ekfloat>(!(lb_node.boundary[index] ||
-                                 lb_node.boundary[neighborindex[EK_LINK_0UD]]));
+  flux *= static_cast<float>(!(lb_node.boundary[index] ||
+                               lb_node.boundary[neighborindex[EK_LINK_0UD]]));
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(index, EK_LINK_0UD)],
             flux * ek_parameters_gpu->time_step);
@@ -1131,16 +1081,10 @@ __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
   force *= powf(ek_parameters_gpu->agrid, -1) * ek_parameters_gpu->time_step *
            ek_parameters_gpu->time_step;
 
-  atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes + index],
-            force / 2.0f);
-  atomicAdd(
-      &node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index],
-      -force / 2.0f);
-  atomicAdd(&node_f.force_density[ek_parameters_gpu->number_of_nodes +
-                                  neighborindex[EK_LINK_0UD]],
-            force / 2.0f);
-  atomicAdd(&node_f.force_density[2 * ek_parameters_gpu->number_of_nodes +
-                                  neighborindex[EK_LINK_0UD]],
+  atomicAdd(&node_f.force_density[index][1], force / 2.0f);
+  atomicAdd(&node_f.force_density[index][2], -force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_0UD]][1], force / 2.0f);
+  atomicAdd(&node_f.force_density[neighborindex[EK_LINK_0UD]][2],
             -force / 2.0f);
 }
 
@@ -1183,10 +1127,10 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
       (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(node, EK_LINK_U00)],
-            (2 * static_cast<ekfloat>(di[0]) - 1) *
+            (2 * static_cast<float>(di[0]) - 1) *
                 ek_parameters_gpu->rho[species_index][index] * dx[0] *
                 (1.0f - dx[1]) * (1.0f - dx[2]) *
-                static_cast<ekfloat>(not_boundary));
+                static_cast<float>(not_boundary));
 
   // face in y
   node = rhoindex_cartesian2linear(
@@ -1205,9 +1149,9 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
       (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(node, EK_LINK_0U0)],
-            (2 * static_cast<ekfloat>(di[1]) - 1) *
+            (2 * static_cast<float>(di[1]) - 1) *
                 ek_parameters_gpu->rho[species_index][index] * (1.0f - dx[0]) *
-                dx[1] * (1.0f - dx[2]) * static_cast<ekfloat>(not_boundary));
+                dx[1] * (1.0f - dx[2]) * static_cast<float>(not_boundary));
 
   // face in z
   node = rhoindex_cartesian2linear(
@@ -1225,9 +1169,9 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
       (lb_node.boundary[index] || lb_node.boundary[target_node_index]) == 0;
 
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(node, EK_LINK_00U)],
-            (2 * static_cast<ekfloat>(di[2]) - 1) *
+            (2 * static_cast<float>(di[2]) - 1) *
                 ek_parameters_gpu->rho[species_index][index] * (1.0f - dx[0]) *
-                (1.0f - dx[1]) * dx[2] * static_cast<ekfloat>(not_boundary));
+                (1.0f - dx[1]) * dx[2] * static_cast<float>(not_boundary));
 
   // edge in x
   node = rhoindex_cartesian2linear(
@@ -1250,9 +1194,9 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
   atomicAdd(
       &ek_parameters_gpu
            ->j[jindex_getByRhoLinear(node, EK_LINK_0UU + (di[1] + di[2] == 1))],
-      (2 * static_cast<ekfloat>(di[1]) - 1) *
+      (2 * static_cast<float>(di[1]) - 1) *
           ek_parameters_gpu->rho[species_index][index] * (1.0f - dx[0]) *
-          dx[1] * dx[2] * static_cast<ekfloat>(not_boundary));
+          dx[1] * dx[2] * static_cast<float>(not_boundary));
 
   // edge in y
   node = rhoindex_cartesian2linear(
@@ -1275,9 +1219,9 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
   atomicAdd(
       &ek_parameters_gpu
            ->j[jindex_getByRhoLinear(node, EK_LINK_U0U + (di[0] + di[2] == 1))],
-      (2 * static_cast<ekfloat>(di[0]) - 1) *
+      (2 * static_cast<float>(di[0]) - 1) *
           ek_parameters_gpu->rho[species_index][index] * dx[0] *
-          (1.0f - dx[1]) * dx[2] * static_cast<ekfloat>(not_boundary));
+          (1.0f - dx[1]) * dx[2] * static_cast<float>(not_boundary));
 
   // edge in z
   node = rhoindex_cartesian2linear(
@@ -1300,9 +1244,9 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
   atomicAdd(
       &ek_parameters_gpu
            ->j[jindex_getByRhoLinear(node, EK_LINK_UU0 + (di[0] + di[1] == 1))],
-      (2 * static_cast<ekfloat>(di[0]) - 1) *
+      (2 * static_cast<float>(di[0]) - 1) *
           ek_parameters_gpu->rho[species_index][index] * dx[0] * dx[1] *
-          (1.0f - dx[2]) * static_cast<ekfloat>(not_boundary));
+          (1.0f - dx[2]) * static_cast<float>(not_boundary));
 
   // corner
   node = rhoindex_cartesian2linear(
@@ -1327,9 +1271,9 @@ ek_add_advection_to_flux(unsigned int index, unsigned int *neighborindex,
   atomicAdd(&ek_parameters_gpu->j[jindex_getByRhoLinear(
                 node, (1 - di[0]) * (EK_LINK_UUU + 2 * di[1] + di[2]) +
                           di[0] * (EK_LINK_UDD - 2 * di[1] - di[2]))],
-            (2 * static_cast<ekfloat>(di[0]) - 1) *
+            (2 * static_cast<float>(di[0]) - 1) *
                 ek_parameters_gpu->rho[species_index][index] * dx[0] * dx[1] *
-                dx[2] * static_cast<ekfloat>(not_boundary));
+                dx[2] * static_cast<float>(not_boundary));
 }
 
 __device__ float4 ek_random_wrapper_philox(unsigned int index,
@@ -1867,12 +1811,12 @@ ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
     lowernode[2] = static_cast<unsigned>(floorf(gridpos));
     cellpos[2] = gridpos - static_cast<float>(lowernode[2]);
 
-    lowernode[0] = (lowernode[0] + ek_lbparameters_gpu->dim_x) %
-                   ek_lbparameters_gpu->dim_x;
-    lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim_y) %
-                   ek_lbparameters_gpu->dim_y;
-    lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim_z) %
-                   ek_lbparameters_gpu->dim_z;
+    lowernode[0] = (lowernode[0] + ek_lbparameters_gpu->dim[0]) %
+                   ek_lbparameters_gpu->dim[0];
+    lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim[1]) %
+                   ek_lbparameters_gpu->dim[1];
+    lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim[2]) %
+                   ek_lbparameters_gpu->dim[2];
 
     atomicAdd(&((cufftReal *)ek_parameters_gpu
                     ->charge_potential)[rhoindex_cartesian2linear_padded(
@@ -1954,12 +1898,12 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
     lowernode[2] = static_cast<unsigned>(floorf(gridpos));
     cellpos[2] = gridpos - static_cast<float>(lowernode[2]);
 
-    lowernode[0] = (lowernode[0] + ek_lbparameters_gpu->dim_x) %
-                   ek_lbparameters_gpu->dim_x;
-    lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim_y) %
-                   ek_lbparameters_gpu->dim_y;
-    lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim_z) %
-                   ek_lbparameters_gpu->dim_z;
+    lowernode[0] = (lowernode[0] + ek_lbparameters_gpu->dim[0]) %
+                   ek_lbparameters_gpu->dim[0];
+    lowernode[1] = (lowernode[1] + ek_lbparameters_gpu->dim[1]) %
+                   ek_lbparameters_gpu->dim[1];
+    lowernode[2] = (lowernode[2] + ek_lbparameters_gpu->dim[2]) %
+                   ek_lbparameters_gpu->dim[2];
 
     float efield[3] = {0., 0., 0.};
     for (unsigned int dim = 0; dim < 3; ++dim) {
@@ -1977,7 +1921,7 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
               ->electric_field[3 * rhoindex_cartesian2linear(
                                        lowernode[0], lowernode[1],
                                        (lowernode[2] + 1) %
-                                           ek_lbparameters_gpu->dim_z) +
+                                           ek_lbparameters_gpu->dim[2]) +
                                dim] *
           (1 - cellpos[0]) * (1 - cellpos[1]) * cellpos[2];
 
@@ -1987,7 +1931,7 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
               ->electric_field[3 * rhoindex_cartesian2linear(
                                        lowernode[0],
                                        (lowernode[1] + 1) %
-                                           ek_lbparameters_gpu->dim_y,
+                                           ek_lbparameters_gpu->dim[1],
                                        lowernode[2]) +
                                dim] *
           (1 - cellpos[0]) * cellpos[1] * (1 - cellpos[2]);
@@ -1997,8 +1941,8 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
           ek_parameters_gpu->electric_field
               [3 * rhoindex_cartesian2linear(
                        lowernode[0],
-                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim_y,
-                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim_z) +
+                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim[1],
+                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim[2]) +
                dim] *
           (1 - cellpos[0]) * cellpos[1] * cellpos[2];
 
@@ -2007,7 +1951,7 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
           ek_parameters_gpu
               ->electric_field[3 * rhoindex_cartesian2linear(
                                        (lowernode[0] + 1) %
-                                           ek_lbparameters_gpu->dim_x,
+                                           ek_lbparameters_gpu->dim[0],
                                        lowernode[1], lowernode[2]) +
                                dim] *
           cellpos[0] * (1 - cellpos[1]) * (1 - cellpos[2]);
@@ -2016,9 +1960,9 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
       efield[dim] +=
           ek_parameters_gpu->electric_field
               [3 * rhoindex_cartesian2linear(
-                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
+                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim[0],
                        lowernode[1],
-                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim_z) +
+                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim[2]) +
                dim] *
           cellpos[0] * (1 - cellpos[1]) * cellpos[2];
 
@@ -2026,8 +1970,8 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
       efield[dim] +=
           ek_parameters_gpu->electric_field
               [3 * rhoindex_cartesian2linear(
-                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
-                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim_y,
+                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim[0],
+                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim[1],
                        lowernode[2]) +
                dim] *
           cellpos[0] * cellpos[1] * (1 - cellpos[2]);
@@ -2036,9 +1980,9 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
       efield[dim] +=
           ek_parameters_gpu->electric_field
               [3 * rhoindex_cartesian2linear(
-                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim_x,
-                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim_y,
-                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim_z) +
+                       (lowernode[0] + 1) % ek_lbparameters_gpu->dim[0],
+                       (lowernode[1] + 1) % ek_lbparameters_gpu->dim[1],
+                       (lowernode[2] + 1) % ek_lbparameters_gpu->dim[2]) +
                dim] *
           cellpos[0] * cellpos[1] * cellpos[2];
     }
@@ -2097,7 +2041,7 @@ __global__ void ek_clear_boundary_densities(LB_nodes_gpu lbnode) {
   }
 }
 
-__global__ void ek_calculate_system_charge(ekfloat *charge_gpu) {
+__global__ void ek_calculate_system_charge(float *charge_gpu) {
 
   unsigned int index = ek_getThreadIndex();
 
@@ -2117,19 +2061,15 @@ __global__ void ek_clear_node_force(LB_node_force_density_gpu node_f) {
 
   if (index < ek_parameters_gpu->number_of_nodes) {
     ek_parameters_gpu->lb_force_density_previous[index] =
-        node_f.force_density[index];
+        node_f.force_density[index][0];
     ek_parameters_gpu
         ->lb_force_density_previous[ek_parameters_gpu->number_of_nodes +
-                                    index] =
-        node_f.force_density[ek_parameters_gpu->number_of_nodes + index];
+                                    index] = node_f.force_density[index][1];
     ek_parameters_gpu
         ->lb_force_density_previous[2 * ek_parameters_gpu->number_of_nodes +
-                                    index] =
-        node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index];
+                                    index] = node_f.force_density[index][2];
 
-    node_f.force_density[index] = 0.0f;
-    node_f.force_density[ek_parameters_gpu->number_of_nodes + index] = 0.0f;
-    node_f.force_density[2 * ek_parameters_gpu->number_of_nodes + index] = 0.0f;
+    node_f.force_density[index] = {};
   }
 }
 
@@ -2213,16 +2153,15 @@ void ek_integrate() {
 }
 
 #ifdef EK_BOUNDARIES
-void ek_gather_wallcharge_species_density(ekfloat *wallcharge_species_density,
+void ek_gather_wallcharge_species_density(float *wallcharge_species_density,
                                           int wallcharge_species) {
   if (wallcharge_species != -1) {
-    cuda_safe_mem(cudaMemcpy(wallcharge_species_density,
-                             ek_parameters.rho[wallcharge_species],
-                             ek_parameters.number_of_nodes * sizeof(ekfloat),
-                             cudaMemcpyDeviceToHost));
+    cuda_safe_mem(cudaMemcpy(
+        wallcharge_species_density, ek_parameters.rho[wallcharge_species],
+        ek_parameters.number_of_nodes * sizeof(float), cudaMemcpyDeviceToHost));
   }
 }
-void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
+void ek_init_species_density_wallcharge(float *wallcharge_species_density,
                                         int wallcharge_species) {
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
@@ -2231,10 +2170,9 @@ void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
              *current_nodes);
 
   if (wallcharge_species != -1) {
-    cuda_safe_mem(cudaMemcpy(ek_parameters.rho[wallcharge_species],
-                             wallcharge_species_density,
-                             ek_parameters.number_of_nodes * sizeof(ekfloat),
-                             cudaMemcpyHostToDevice));
+    cuda_safe_mem(cudaMemcpy(
+        ek_parameters.rho[wallcharge_species], wallcharge_species_density,
+        ek_parameters.number_of_nodes * sizeof(float), cudaMemcpyHostToDevice));
   }
 }
 #endif
@@ -2251,7 +2189,7 @@ void ek_init_species(int species) {
 
     cuda_safe_mem(cudaMalloc(
         (void **)&ek_parameters.rho[ek_parameters.species_index[species]],
-        ek_parameters.number_of_nodes * sizeof(ekfloat)));
+        ek_parameters.number_of_nodes * sizeof(float)));
 
     ek_parameters.density[ek_parameters.species_index[species]] = 0.0;
     ek_parameters.D[ek_parameters.species_index[species]] = 0.0;
@@ -2303,59 +2241,43 @@ int ek_init() {
     lbpar_gpu.rho =
         (ek_parameters.lb_density < 0.0)
             ? 1.0f
-            : ek_parameters.lb_density * Utils::int_pow<3>(ek_parameters.agrid);
+            : ek_parameters.lb_density * Utils::int_pow<3>(lbpar_gpu.agrid);
 
     lbpar_gpu.is_TRT = true;
 
     lb_reinit_parameters_gpu();
     lbpar_gpu.viscosity = ek_parameters.viscosity * lbpar_gpu.time_step /
-                          Utils::sqr(ek_parameters.agrid);
+                          Utils::sqr(lbpar_gpu.agrid);
     lbpar_gpu.bulk_viscosity = ek_parameters.bulk_viscosity *
                                lbpar_gpu.time_step /
-                               Utils::sqr(ek_parameters.agrid);
-    lb_reinit_parameters_gpu();
+                               Utils::sqr(lbpar_gpu.agrid);
 
+    lbpar_gpu.external_force_density =
+        ek_parameters.lb_ext_force_density[0] != 0 ||
+        ek_parameters.lb_ext_force_density[1] != 0 ||
+        ek_parameters.lb_ext_force_density[2] != 0;
+    lbpar_gpu.ext_force_density =
+        Utils::Vector3f(ek_parameters.lb_ext_force_density) *
+        Utils::sqr(lbpar_gpu.agrid * lbpar_gpu.time_step);
+
+    lb_reinit_parameters_gpu();
     lb_init_gpu();
 
-    if (ek_parameters.lb_force_density[0] != 0 ||
-        ek_parameters.lb_force_density[1] != 0 ||
-        ek_parameters.lb_force_density[2] != 0) {
-      lbpar_gpu.external_force_density = 1;
-      lbpar_gpu.ext_force_density[0] =
-          ek_parameters.lb_force_density[0] * ek_parameters.agrid *
-          ek_parameters.agrid * ek_parameters.time_step *
-          ek_parameters.time_step;
-      lbpar_gpu.ext_force_density[1] =
-          ek_parameters.lb_force_density[1] * ek_parameters.agrid *
-          ek_parameters.agrid * ek_parameters.time_step *
-          ek_parameters.time_step;
-      lbpar_gpu.ext_force_density[2] =
-          ek_parameters.lb_force_density[2] * ek_parameters.agrid *
-          ek_parameters.agrid * ek_parameters.time_step *
-          ek_parameters.time_step;
-      lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
-    } else {
-      lbpar_gpu.external_force_density = 0;
-      lbpar_gpu.ext_force_density[0] = 0;
-      lbpar_gpu.ext_force_density[1] = 0;
-      lbpar_gpu.ext_force_density[2] = 0;
-    }
-
-    ek_parameters.dim_x = lbpar_gpu.dim_x;
-    ek_parameters.dim_x_padded = (ek_parameters.dim_x / 2 + 1) * 2;
-    ek_parameters.dim_y = lbpar_gpu.dim_y;
-    ek_parameters.dim_z = lbpar_gpu.dim_z;
     ek_parameters.time_step = lbpar_gpu.time_step;
+    ek_parameters.dim_x = lbpar_gpu.dim[0];
+    ek_parameters.dim_x_padded = (ek_parameters.dim_x / 2 + 1) * 2;
+    ek_parameters.dim_y = lbpar_gpu.dim[1];
+    ek_parameters.dim_z = lbpar_gpu.dim[2];
     ek_parameters.number_of_nodes =
         ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
 
     cuda_safe_mem(
         cudaMalloc((void **)&ek_parameters.j,
-                   ek_parameters.number_of_nodes * 13 * sizeof(ekfloat)));
+                   ek_parameters.number_of_nodes * 13 * sizeof(float)));
 #ifdef EK_DEBUG
     cuda_safe_mem(
         cudaMalloc((void **)&ek_parameters.j_fluc,
-                   ek_parameters.number_of_nodes * 13 * sizeof(ekfloat)));
+                   ek_parameters.number_of_nodes * 13 * sizeof(float)));
 #endif
 
     cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
@@ -2377,7 +2299,7 @@ int ek_init() {
                      ek_parameters.number_of_nodes * 3 * sizeof(float)));
     }
 
-    cuda_safe_mem(cudaMalloc((void **)&charge_gpu, sizeof(ekfloat)));
+    cuda_safe_mem(cudaMalloc((void **)&charge_gpu, sizeof(float)));
 
     lb_get_device_values_pointer(&ek_lb_device_values);
 
@@ -2529,7 +2451,7 @@ SPACING %f %f %f\n\
 \nPOINT_DATA %u\n\
 SCALARS velocity float 3\n\
 LOOKUP_TABLE default\n",
-          lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
+          lbpar_gpu.dim[0], lbpar_gpu.dim[1], lbpar_gpu.dim[2],
           lbpar_gpu.agrid * 0.5f, lbpar_gpu.agrid * 0.5f,
           lbpar_gpu.agrid * 0.5f, lbpar_gpu.agrid, lbpar_gpu.agrid,
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
@@ -2541,23 +2463,6 @@ LOOKUP_TABLE default\n",
   }
 
   fclose(fp);
-
-  return 0;
-}
-
-int ek_node_print_velocity(int x, int y, int z, double *velocity) {
-  // TODO: only calculate single node velocity
-  std::vector<LB_rho_v_pi_gpu> host_values(lbpar_gpu.number_of_nodes);
-  lb_get_values_GPU(host_values.data());
-
-  auto const index =
-      static_cast<unsigned>(z) * ek_parameters.dim_y * ek_parameters.dim_x +
-      static_cast<unsigned>(y) * ek_parameters.dim_x + static_cast<unsigned>(x);
-  auto const lattice_speed = lbpar_gpu.agrid / lbpar_gpu.tau;
-
-  velocity[0] = host_values[index].v[0] * lattice_speed;
-  velocity[1] = host_values[index].v[1] * lattice_speed;
-  velocity[2] = host_values[index].v[2] * lattice_speed;
 
   return 0;
 }
@@ -2586,7 +2491,7 @@ SPACING %f %f %f\n\
 POINT_DATA %u\n\
 SCALARS density_lb float 1\n\
 LOOKUP_TABLE default\n",
-          lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
+          lbpar_gpu.dim[0], lbpar_gpu.dim[1], lbpar_gpu.dim[2],
           lbpar_gpu.agrid * 0.5f, lbpar_gpu.agrid * 0.5f,
           lbpar_gpu.agrid * 0.5f, lbpar_gpu.agrid, lbpar_gpu.agrid,
           lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
@@ -2612,11 +2517,11 @@ int ek_print_vtk_density(int species, char *filename) {
     return 1;
   }
 
-  std::vector<ekfloat> densities(ek_parameters.number_of_nodes);
+  std::vector<float> densities(ek_parameters.number_of_nodes);
 
   cuda_safe_mem(cudaMemcpy(
       densities.data(), ek_parameters.rho[ek_parameters.species_index[species]],
-      densities.size() * sizeof(ekfloat), cudaMemcpyDeviceToHost));
+      densities.size() * sizeof(float), cudaMemcpyDeviceToHost));
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
@@ -2646,17 +2551,17 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
-int ek_node_print_density(int species, int x, int y, int z, double *density) {
+int ek_node_get_density(int species, int x, int y, int z, double *density) {
 
   if (ek_parameters.species_index[species] == -1) {
     return 1;
   }
 
-  std::vector<ekfloat> densities(ek_parameters.number_of_nodes);
+  std::vector<float> densities(ek_parameters.number_of_nodes);
 
   cuda_safe_mem(cudaMemcpy(
       densities.data(), ek_parameters.rho[ek_parameters.species_index[species]],
-      densities.size() * sizeof(ekfloat), cudaMemcpyDeviceToHost));
+      densities.size() * sizeof(float), cudaMemcpyDeviceToHost));
 
   auto const index =
       static_cast<unsigned>(z) * ek_parameters.dim_y * ek_parameters.dim_x +
@@ -2666,21 +2571,21 @@ int ek_node_print_density(int species, int x, int y, int z, double *density) {
   return 0;
 }
 
-int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
+int ek_node_get_flux(int species, int x, int y, int z, double *flux) {
 
   if (ek_parameters.species_index[species] == -1) {
     return 1;
   }
 
-  ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
-                                   // into Cartesian coordinates for output
+  float flux_local_cartesian[3]; // temporary variable for converting fluxes
+                                 // into Cartesian coordinates for output
   unsigned int coord[3];
 
   coord[0] = static_cast<unsigned>(x);
   coord[1] = static_cast<unsigned>(y);
   coord[2] = static_cast<unsigned>(z);
 
-  std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
+  std::vector<float> fluxes(ek_parameters.number_of_nodes * 13);
 
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
@@ -2699,7 +2604,7 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 #endif
 
   cuda_safe_mem(cudaMemcpy(fluxes.data(), ek_parameters.j,
-                           fluxes.size() * sizeof(ekfloat),
+                           fluxes.size() * sizeof(float),
                            cudaMemcpyDeviceToHost));
 
   auto const i = rhoindex_cartesian2linear_host(coord[0], coord[1], coord[2]);
@@ -2876,12 +2781,12 @@ int ek_node_set_density(int species, int x, int y, int z, double density) {
   auto const index =
       static_cast<unsigned>(z) * ek_parameters.dim_y * ek_parameters.dim_x +
       static_cast<unsigned>(y) * ek_parameters.dim_x + static_cast<unsigned>(x);
-  ekfloat num_particles =
-      static_cast<ekfloat>(density) * Utils::int_pow<3>(ek_parameters.agrid);
+  float num_particles =
+      static_cast<float>(density) * Utils::int_pow<3>(ek_parameters.agrid);
 
   cuda_safe_mem(cudaMemcpy(
       &ek_parameters.rho[ek_parameters.species_index[species]][index],
-      &num_particles, sizeof(ekfloat), cudaMemcpyHostToDevice));
+      &num_particles, sizeof(float), cudaMemcpyHostToDevice));
 
   return 0;
 }
@@ -2898,12 +2803,12 @@ int ek_print_vtk_flux(int species, char *filename) {
     return 1;
   }
 
-  ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
-                                   // into Cartesian coordinates for output
+  float flux_local_cartesian[3]; // temporary variable for converting fluxes
+                                 // into Cartesian coordinates for output
 
   unsigned int coord[3];
 
-  std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
+  std::vector<float> fluxes(ek_parameters.number_of_nodes * 13);
 
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
@@ -2922,7 +2827,7 @@ int ek_print_vtk_flux(int species, char *filename) {
 #endif
 
   cuda_safe_mem(cudaMemcpy(fluxes.data(), ek_parameters.j,
-                           fluxes.size() * sizeof(ekfloat),
+                           fluxes.size() * sizeof(float),
                            cudaMemcpyDeviceToHost));
 
   fprintf(fp, "\
@@ -3123,8 +3028,8 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
   }
 
   FILE *fp = fopen(filename, "w");
-  ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
-                                   // into cartesian coordinates for output
+  float flux_local_cartesian[3]; // temporary variable for converting fluxes
+                                 // into cartesian coordinates for output
 
   unsigned int coord[3];
 
@@ -3132,7 +3037,7 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
     return 1;
   }
 
-  std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
+  std::vector<float> fluxes(ek_parameters.number_of_nodes * 13);
 
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
@@ -3150,7 +3055,7 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
 #endif
 
   cuda_safe_mem(cudaMemcpy(fluxes.data(), ek_parameters.j_fluc,
-                           fluxes.size() * sizeof(ekfloat),
+                           fluxes.size() * sizeof(float),
                            cudaMemcpyDeviceToHost));
 
   fprintf(fp, "\
@@ -3362,7 +3267,7 @@ int ek_print_vtk_flux_link(int species, char *filename) {
 
   unsigned int coord[3];
 
-  std::vector<ekfloat> fluxes(ek_parameters.number_of_nodes * 13);
+  std::vector<float> fluxes(ek_parameters.number_of_nodes * 13);
 
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
@@ -3381,7 +3286,7 @@ int ek_print_vtk_flux_link(int species, char *filename) {
 #endif
 
   cuda_safe_mem(cudaMemcpy(fluxes.data(), ek_parameters.j,
-                           fluxes.size() * sizeof(ekfloat),
+                           fluxes.size() * sizeof(float),
                            cudaMemcpyDeviceToHost));
 
   fprintf(fp, "\
@@ -3427,7 +3332,7 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
-int ek_node_print_potential(int x, int y, int z, double *potential) {
+int ek_node_get_potential(int x, int y, int z, double *potential) {
   auto const index = static_cast<unsigned>(z) * ek_parameters.dim_y *
                          ek_parameters.dim_x_padded +
                      static_cast<unsigned>(y) * ek_parameters.dim_x_padded +
@@ -3540,12 +3445,11 @@ int ek_print_vtk_lbforce_density(char *filename) {
     return 1;
   }
 
-  std::vector<lbForceFloat> lbforce_density(ek_parameters.number_of_nodes * 3);
+  std::vector<float> lbforce_density(ek_parameters.number_of_nodes * 3);
 
-  cuda_safe_mem(
-      cudaMemcpy(lbforce_density.data(), node_f.force_density_buf,
-                 ek_parameters.number_of_nodes * 3 * sizeof(lbForceFloat),
-                 cudaMemcpyDeviceToHost));
+  cuda_safe_mem(cudaMemcpy(lbforce_density.data(), node_f.force_density_buf,
+                           ek_parameters.number_of_nodes * 3 * sizeof(float),
+                           cudaMemcpyDeviceToHost));
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
@@ -3598,9 +3502,10 @@ void ek_print_parameters() {
   printf("  float friction = %f;\n", ek_parameters.friction);
   printf("  float T = %f;\n", ek_parameters.T);
   printf("  float prefactor = %f;\n", ek_parameters.prefactor);
-  printf("  float lb_force_density[] = {%f, %f, %f};\n",
-         ek_parameters.lb_force_density[0], ek_parameters.lb_force_density[1],
-         ek_parameters.lb_force_density[2]);
+  printf("  float lb_ext_force_density[] = {%f, %f, %f};\n",
+         ek_parameters.lb_ext_force_density[0],
+         ek_parameters.lb_ext_force_density[1],
+         ek_parameters.lb_ext_force_density[2]);
   printf("  unsigned int number_of_species = %d;\n",
          ek_parameters.number_of_species);
   printf("  int reaction_species[] = {%d, %d, %d};\n",
@@ -3716,9 +3621,9 @@ void ek_print_lbpar() {
   printf("    float tau = %f;\n", lbpar_gpu.tau);
   printf("    float time_step = %f;\n", lbpar_gpu.time_step);
   printf("    float bulk_viscosity = %f;\n", lbpar_gpu.bulk_viscosity);
-  printf("    unsigned int dim_x = %d;\n", lbpar_gpu.dim_x);
-  printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim_y);
-  printf("    unsigned int dim_z = %d;\n", lbpar_gpu.dim_z);
+  printf("    unsigned int dim_x = %d;\n", lbpar_gpu.dim[0]);
+  printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim[1]);
+  printf("    unsigned int dim_z = %d;\n", lbpar_gpu.dim[2]);
   printf("    unsigned int number_of_nodes = %d;\n", lbpar_gpu.number_of_nodes);
   printf("    int calc_val = %d;\n", lbpar_gpu.calc_val);
   printf("    int external_force_density = %d;\n",
@@ -3757,6 +3662,15 @@ int ek_set_electrostatics_coupling(bool electrostatics_coupling) {
 int ek_set_viscosity(float viscosity) {
 
   ek_parameters.viscosity = viscosity;
+  return 0;
+}
+
+int ek_set_lb_ext_force_density(float lb_ext_force_dens_x,
+                                float lb_ext_force_dens_y,
+                                float lb_ext_force_dens_z) {
+  ek_parameters.lb_ext_force_density[0] = lb_ext_force_dens_x;
+  ek_parameters.lb_ext_force_density[1] = lb_ext_force_dens_y;
+  ek_parameters.lb_ext_force_density[2] = lb_ext_force_dens_z;
   return 0;
 }
 
@@ -3868,22 +3782,22 @@ int ek_set_ext_force_density(int species, float ext_force_density_x,
 }
 
 struct ek_charge_of_particle {
-  __host__ __device__ ekfloat operator()(CUDA_particle_data particle) {
+  __host__ __device__ float operator()(CUDA_particle_data particle) {
     return particle.q;
   };
 };
 
-ekfloat ek_get_particle_charge() {
+float ek_get_particle_charge() {
   auto device_particles = gpu_get_particle_pointer();
-  ekfloat particle_charge = thrust::transform_reduce(
+  float particle_charge = thrust::transform_reduce(
       thrust::device_ptr<CUDA_particle_data>(device_particles.begin()),
       thrust::device_ptr<CUDA_particle_data>(device_particles.end()),
-      ek_charge_of_particle(), 0.0f, thrust::plus<ekfloat>());
+      ek_charge_of_particle(), 0.0f, thrust::plus<float>());
   return particle_charge;
 }
 
-ekfloat ek_calculate_net_charge() {
-  cuda_safe_mem(cudaMemset(charge_gpu, 0, sizeof(ekfloat)));
+float ek_calculate_net_charge() {
+  cuda_safe_mem(cudaMemset(charge_gpu, 0, sizeof(float)));
 
   dim3 dim_grid =
       calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
@@ -3891,9 +3805,9 @@ ekfloat ek_calculate_net_charge() {
   KERNELCALL(ek_calculate_system_charge, dim_grid, threads_per_block,
              charge_gpu);
 
-  ekfloat charge;
+  float charge;
   cuda_safe_mem(
-      cudaMemcpy(&charge, charge_gpu, sizeof(ekfloat), cudaMemcpyDeviceToHost));
+      cudaMemcpy(&charge, charge_gpu, sizeof(float), cudaMemcpyDeviceToHost));
 
   if (ek_parameters.es_coupling)
     charge += ek_get_particle_charge();
@@ -3910,7 +3824,7 @@ int ek_neutralize_system(int species) {
   if (ek_parameters.valency[species_index] == 0.0f)
     return 2;
 
-  ekfloat compensating_species_density = 0.0f;
+  float compensating_species_density = 0.0f;
 
 #ifndef EK_BOUNDARIES
   for (unsigned i = 0; i < ek_parameters.number_of_species; i++)
@@ -3922,22 +3836,22 @@ int ek_neutralize_system(int species) {
       compensating_species_density / ek_parameters.valency[species_index];
 
   if (ek_parameters.es_coupling) {
-    ekfloat particle_charge = ek_get_particle_charge();
+    float particle_charge = ek_get_particle_charge();
     compensating_species_density -= particle_charge /
                                     ek_parameters.valency[species_index] /
                                     Utils::int_pow<3>(ek_parameters.agrid) /
-                                    ekfloat(ek_parameters.number_of_nodes);
+                                    float(ek_parameters.number_of_nodes);
   }
 
 #else
-  ekfloat charge = ek_calculate_net_charge();
+  float charge = ek_calculate_net_charge();
 
   compensating_species_density =
       ek_parameters.density[species_index] -
       (charge / ek_parameters.valency[species_index]) /
           (Utils::int_pow<3>(ek_parameters.agrid) *
-           ekfloat(static_cast<int>(ek_parameters.number_of_nodes) -
-                   ek_parameters.number_of_boundary_nodes));
+           float(static_cast<int>(ek_parameters.number_of_nodes) -
+                 ek_parameters.number_of_boundary_nodes));
 #endif // EK_BOUNDARIES
 
   if (compensating_species_density < 0.0f)
@@ -3950,13 +3864,13 @@ int ek_neutralize_system(int species) {
 
 int ek_save_checkpoint(char *filename, char *lb_filename) {
   std::ofstream fout(filename, std::ofstream::binary);
-  std::vector<ekfloat> densities(ek_parameters.number_of_nodes);
+  std::vector<float> densities(ek_parameters.number_of_nodes);
   auto const nchars =
-      static_cast<std::streamsize>(densities.size() * sizeof(ekfloat));
+      static_cast<std::streamsize>(densities.size() * sizeof(float));
 
   for (unsigned i = 0; i < ek_parameters.number_of_species; i++) {
     cuda_safe_mem(cudaMemcpy(densities.data(), ek_parameters.rho[i],
-                             densities.size() * sizeof(ekfloat),
+                             densities.size() * sizeof(float),
                              cudaMemcpyDeviceToHost));
 
     if (!fout.write(reinterpret_cast<char *>(densities.data()), nchars)) {
@@ -3975,9 +3889,9 @@ int ek_load_checkpoint(char *filename) {
   std::string fname(filename);
   std::ifstream fin((const char *)(fname + ".ek").c_str(),
                     std::ifstream::binary);
-  std::vector<ekfloat> densities(ek_parameters.number_of_nodes);
+  std::vector<float> densities(ek_parameters.number_of_nodes);
   auto const nchars =
-      static_cast<std::streamsize>(densities.size() * sizeof(ekfloat));
+      static_cast<std::streamsize>(densities.size() * sizeof(float));
 
   for (unsigned i = 0; i < ek_parameters.number_of_species; i++) {
     if (!fin.read(reinterpret_cast<char *>(densities.data()), nchars)) {
@@ -3986,7 +3900,7 @@ int ek_load_checkpoint(char *filename) {
     }
 
     cuda_safe_mem(cudaMemcpy(ek_parameters.rho[i], densities.data(),
-                             densities.size() * sizeof(ekfloat),
+                             densities.size() * sizeof(float),
                              cudaMemcpyHostToDevice));
   }
 

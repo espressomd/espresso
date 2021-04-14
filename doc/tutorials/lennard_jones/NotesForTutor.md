@@ -1,4 +1,4 @@
-# Hints for Tutors: Tutorial 01 - Lennard Jones
+# Hints for Tutors: Tutorial 01 - Lennard-Jones
 
 ## Learning objectives (physics)
 

@@ -20,11 +20,6 @@ from libcpp cimport bool
 IF ELECTROKINETICS and CUDA:
     cdef extern from "grid_based_algorithms/electrokinetics.hpp":
 
-        IF EK_DOUBLE_PREC:
-            ctypedef double ekfloat
-        ELSE:
-            ctypedef float ekfloat
-
         DEF MAX_NUMBER_OF_SPECIES = 10
 
         # EK data struct
@@ -44,7 +39,7 @@ IF ELECTROKINETICS and CUDA:
                 float friction
                 float T
                 float prefactor
-                float lb_force_density[3]
+                float lb_ext_force_density[3]
                 unsigned int number_of_species
                 int reaction_species[3]
                 float rho_reactant_reservoir
@@ -63,10 +58,10 @@ IF ELECTROKINETICS and CUDA:
                 bool advection
                 bool fluidcoupling_ideal_contribution
                 float * charge_potential
-                ekfloat * j
+                float * j
                 float * lb_force_density_previous
-                ekfloat * j_fluc
-                ekfloat * rho[MAX_NUMBER_OF_SPECIES]
+                float * j_fluc
+                float * rho[MAX_NUMBER_OF_SPECIES]
                 int species_index[MAX_NUMBER_OF_SPECIES]
                 float density[MAX_NUMBER_OF_SPECIES]
                 float D[MAX_NUMBER_OF_SPECIES]
@@ -93,7 +88,7 @@ IF ELECTROKINETICS and CUDA:
                 float friction
                 float T
                 float prefactor
-                float lb_force_density[3]
+                float lb_ext_force_density[3]
                 unsigned int number_of_species
                 int reaction_species[3]
                 float rho_reactant_reservoir
@@ -112,9 +107,9 @@ IF ELECTROKINETICS and CUDA:
                 bool advection
                 bool fluidcoupling_ideal_contribution
                 float * charge_potential
-                ekfloat * j
+                float * j
                 float * lb_force_density_previous
-                ekfloat * rho[MAX_NUMBER_OF_SPECIES]
+                float * rho[MAX_NUMBER_OF_SPECIES]
                 int species_index[MAX_NUMBER_OF_SPECIES]
                 float density[MAX_NUMBER_OF_SPECIES]
                 float D[MAX_NUMBER_OF_SPECIES]
@@ -145,6 +140,7 @@ IF ELECTROKINETICS and CUDA:
         int ek_set_lb_density(float lb_density)
         int ek_set_viscosity(float viscosity)
         int ek_set_friction(float friction)
+        int ek_set_lb_ext_force_density(float lb_ext_force_dens_x, float lb_ext_force_dens_y, float lb_ext_force_dens_z)
         int ek_set_T(float T)
         int ek_set_prefactor(float prefactor)
         int ek_set_bulk_viscosity(float bulk_viscosity)
@@ -159,12 +155,11 @@ IF ELECTROKINETICS and CUDA:
         int ek_set_fluctuations(bool fluctuations)
         int ek_set_fluctuation_amplitude(float fluctuation_amplitude)
         int ek_set_fluidcoupling(bool ideal_contribution)
-        int ek_node_print_velocity(int x, int y, int z, double * velocity)
-        int ek_node_print_density(int species, int x, int y, int z, double * density)
-        int ek_node_print_flux(int species, int x, int y, int z, double * flux)
-        int ek_node_print_potential(int x, int y, int z, double * potential)
+        int ek_node_get_density(int species, int x, int y, int z, double * density)
+        int ek_node_get_flux(int species, int x, int y, int z, double * flux)
+        int ek_node_get_potential(int x, int y, int z, double * potential)
         int ek_node_set_density(int species, int x, int y, int z, double density)
-        ekfloat ek_calculate_net_charge()
+        float ek_calculate_net_charge()
         int ek_neutralize_system(int species)
         int ek_save_checkpoint(char * filename, char * lb_filename)
         int ek_load_checkpoint(char * filename)

@@ -21,6 +21,7 @@ import unittest_decorators as utx
 import espressomd
 import numpy as np
 from espressomd.interactions import RigidBond
+import itertools
 
 
 @utx.skipIfMissingFeatures("BOND_CONSTRAINT")
@@ -34,20 +35,28 @@ class RigidBondTest(ut.TestCase):
         s.cell_system.skin = 0.4
         s.time_step = 0.01
         s.thermostat.set_langevin(kT=1, gamma=1, seed=42)
-        r = RigidBond(r=1.2, ptol=1E-3, vtol=target_acc)
-        s.bonded_inter.add(r)
+        rigid_bond = RigidBond(r=1.2, ptol=1E-3, vtol=target_acc)
+        s.bonded_inter.add(rigid_bond)
 
+        # create polymer
+        last_p = None
         for i in range(5):
-            s.part.add(id=i, pos=(i * 1.2, 0, 0))
-            if i > 0:
-                s.part[i].bonds = ((r, i - 1),)
+            p = s.part.add(pos=(i * 1.2, 0, 0))
+            if last_p is not None:
+                p.add_bond((rigid_bond, last_p))
+            last_p = p
+
         s.integrator.run(5000)
-        for i in range(1, 5):
-            d = s.distance(s.part[i], s.part[i - 1])
-            v_d = s.distance_vec(s.part[i], s.part[i - 1])
+
+        # check every bond
+        p1_iter, p2_iter = itertools.tee(s.part)
+        next(p2_iter, None)  # advance second iterator by 1 step
+        for p1, p2 in zip(p1_iter, p2_iter):
+            d = s.distance(p2, p1)
+            v_d = s.distance_vec(p2, p1)
             self.assertAlmostEqual(d, 1.2, delta=tol)
             # Velocity projection on distance vector
-            vel_proj = np.dot(s.part[i].v - s.part[i - 1].v, v_d) / d
+            vel_proj = np.dot(p2.v - p1.v, v_d) / d
             self.assertLess(vel_proj, tol)
 
 

@@ -139,15 +139,10 @@ void deactivate() {
     break;
 #endif
   case COULOMB_DH:
-    dh_params.r_cut = 0.0;
-    dh_params.kappa = 0.0;
+    dh_params = {};
     break;
   case COULOMB_RF:
-    rf_params.kappa = 0.0;
-    rf_params.epsilon1 = 0.0;
-    rf_params.epsilon2 = 0.0;
-    rf_params.r_cut = 0.0;
-    rf_params.B = 0.0;
+    rf_params = {};
     break;
   case COULOMB_MMM1D:
     mmm1d_params.maxPWerror = 1e40;
@@ -447,7 +442,7 @@ void bcast_coulomb_params() {
 
 void set_prefactor(double prefactor) {
   if (prefactor < 0.0) {
-    throw std::invalid_argument("Coulomb prefactor has to be >= 0");
+    throw std::domain_error("Coulomb prefactor has to be >= 0");
   }
 
   coulomb.prefactor = prefactor;

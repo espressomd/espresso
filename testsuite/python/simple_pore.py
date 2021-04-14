@@ -68,7 +68,7 @@ class SimplePoreConstraint(ut.TestCase):
 
         for i in range(200):
             rpos = [i * (box_x / 200.), 0.5 * box_yz, 0.5 * box_yz]
-            s.part.add(id=i, pos=rpos, type=1, v=[1., 1., 1.])
+            s.part.add(pos=rpos, type=1, v=[1., 1., 1.])
 
         start_energy = s.analysis.energy()['total']
         s.integrator.run(1000)

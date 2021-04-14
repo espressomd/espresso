@@ -53,7 +53,7 @@ inline Utils::Vector3d thole_pair_force(Particle const &p1, Particle const &p2,
   auto const thole_s = ia_params.thole.scaling_coeff;
 
   if (thole_s != 0 && thole_q1q2 != 0 &&
-      !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
+      !(pair_bond_enum_exists_between<ThermalizedBond>(p1, p2))) {
     // Calc damping function (see @cite thole81a)
     // S(r) = 1.0 - (1.0 + thole_s*r/2.0) * exp(-thole_s*r);
     // Calc F = - d/dr ( S(r)*q1q2/r) =
@@ -76,7 +76,7 @@ inline double thole_pair_energy(Particle const &p1, Particle const &p2,
 
   if (thole_s != 0 && thole_q1q2 != 0 &&
       dist < Coulomb::cutoff(box_geo.length()) &&
-      !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
+      !(pair_bond_enum_exists_between<ThermalizedBond>(p1, p2))) {
     auto const sd = thole_s * dist;
     auto const S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);
     // Subtract p3m shortrange energy and add thole energy

@@ -20,25 +20,27 @@
 #define _BONDED_INTERACTION_UTILS_HPP
 
 #include "bonded_interaction_data.hpp"
+#include "interactions.hpp"
 
 #include "BondList.hpp"
 #include "Particle.hpp"
 
 #include <boost/algorithm/cxx11/any_of.hpp>
+#include <boost/variant.hpp>
 
 /** @brief Checks both particles for a specific bond, even on ghost particles.
  *
  *  @param p           particle to check for the bond
  *  @param p_partner   possible bond partner
- *  @param bond_type   enum bond type
+ *  @tparam BondType   Bond type to check for. Must be of one of the types in
+ *                     @ref Bonded_IA_Parameters.
  */
+template <typename BondType>
 inline bool pair_bond_enum_exists_on(Particle const &p,
-                                     Particle const &p_partner,
-                                     BondedInteraction bond_type) {
+                                     Particle const &p_partner) {
   return boost::algorithm::any_of(
-      p.bonds(),
-      [bond_type, partner_id = p_partner.identity()](BondView const &bond) {
-        return (bonded_ia_params[bond.bond_id()].type == bond_type) and
+      p.bonds(), [partner_id = p_partner.identity()](BondView const &bond) {
+        return (boost::get<BondType>(&bonded_ia_params[bond.bond_id()])) and
                (bond.partner_ids()[0] == partner_id);
       });
 }
@@ -47,19 +49,35 @@ inline bool pair_bond_enum_exists_on(Particle const &p,
  *
  *  @param p1     particle on which the bond may be stored
  *  @param p2     particle on which the bond may be stored
- *  @param bond   numerical bond type
+ *  @tparam BondType Bond type to check for. Must be of one of the types in
+ *                @ref Bonded_IA_Parameters.
  */
+template <typename BondType>
 inline bool pair_bond_enum_exists_between(Particle const &p1,
-                                          Particle const &p2,
-                                          BondedInteraction bond) {
+                                          Particle const &p2) {
   if (&p1 == &p2)
     return false;
 
   // Check if particles have bonds and search for the bond of interest.
   // Could be saved on both sides (and both could have other bonds), so
   // we need to check both.
-  return pair_bond_enum_exists_on(p1, p2, bond) or
-         pair_bond_enum_exists_on(p2, p1, bond);
+  return pair_bond_enum_exists_on<BondType>(p1, p2) or
+         pair_bond_enum_exists_on<BondType>(p2, p1);
+}
+
+/** Sets bond parameters.
+ *  @param bond_id  ID of the bond to be set. If the bond ID doesn't exist yet,
+ *                  it will be created.
+ *  @param iaparams Bond to be set.
+ *  @tparam BondType One of the types in @ref Bonded_IA_Parameters.
+ */
+template <typename BondType>
+void set_bonded_ia_params(int bond_id, BondType const &iaparams) {
+  make_bond_type_exist(bond_id);
+  bonded_ia_params[bond_id] = iaparams;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_id, -1);
 }
 
 #endif

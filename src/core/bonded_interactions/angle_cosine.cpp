@@ -24,28 +24,12 @@
  */
 #include "angle_cosine.hpp"
 
-#include "bonded_interaction_data.hpp"
-#include "interactions.hpp"
-
-#include <utils/constants.hpp>
-
 #include <cmath>
 
-int angle_cosine_set_params(int bond_type, double bend, double phi0) {
-  if (bond_type < 0)
-    return ES_ERROR;
+AngleCosineBond::AngleCosineBond(double bend, double phi0) {
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.angle_cosine.bend = bend;
-  bonded_ia_params[bond_type].p.angle_cosine.phi0 = phi0;
-  bonded_ia_params[bond_type].p.angle_cosine.cos_phi0 = cos(phi0);
-  bonded_ia_params[bond_type].p.angle_cosine.sin_phi0 = sin(phi0);
-  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE_COSINE;
-  bonded_ia_params[bond_type].num = 2;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
+  this->bend = bend;
+  this->phi0 = phi0;
+  this->cos_phi0 = cos(phi0);
+  this->sin_phi0 = sin(phi0);
 }

@@ -66,11 +66,9 @@ class ReactionEnsembleTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        for i in range(0, 2 * cls.N0, 2):
-            cls.system.part.add(id=i, pos=np.random.random(3) *
-                                cls.system.box_l, type=cls.type_A)
-            cls.system.part.add(id=i + 1, pos=np.random.random(3) *
-                                cls.system.box_l, type=cls.type_H)
+        cls.system.part.add(
+            pos=np.random.random((2 * cls.N0, 3)) * cls.system.box_l,
+            type=cls.N0 * [cls.type_A, cls.type_H])
 
         cls.RE.add_reaction(
             gamma=cls.gamma,

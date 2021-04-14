@@ -78,16 +78,16 @@ class ek_charged_plate(ut.TestCase):
                 negative_ions[30, i, j].density = 1.0 / agrid
 
         # Setup MD particle and integrate
-        system.part.add(id=0, pos=[0, 0, 0], q=-1.0, type=0)
+        p = system.part.add(pos=[0, 0, 0], q=-1.0, type=0)
         force_difference = 0.0
 
         for i in range(7, 14):
-            system.part[0].pos = [i, 0, 0]
+            p.pos = [i, 0, 0]
             system.integrator.run(0)
 
             # Check Force
             expected_force = -2 * math.pi * bjerrum_length
-            particle_force = system.part[0].f
+            particle_force = p.f
             if abs(expected_force - particle_force[0]) > force_difference:
                 force_difference = abs(expected_force - particle_force[0])
 
@@ -113,12 +113,12 @@ class ek_charged_plate(ut.TestCase):
         force_difference = 0.0
 
         for i in range(7, 14):
-            system.part[0].pos = [0, i, 0]
+            p.pos = [0, i, 0]
             system.integrator.run(0)
 
             # Check Force
             expected_force = -2 * math.pi * bjerrum_length
-            particle_force = system.part[0].f
+            particle_force = p.f
             if abs(expected_force - particle_force[1]) > force_difference:
                 force_difference = abs(expected_force - particle_force[1])
 
@@ -144,12 +144,12 @@ class ek_charged_plate(ut.TestCase):
         force_difference = 0.0
 
         for i in range(7, 14):
-            system.part[0].pos = [0, 0, i]
+            p.pos = [0, 0, i]
             system.integrator.run(0)
 
             # Check Force
             expected_force = -2 * math.pi * bjerrum_length
-            particle_force = system.part[0].f
+            particle_force = p.f
             if abs(expected_force - particle_force[2]) > force_difference:
                 force_difference = abs(expected_force - particle_force[2])
 

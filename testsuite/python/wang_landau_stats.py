@@ -54,14 +54,15 @@ class WangLandauReactionEnsembleTest(ut.TestCase):
 
     K_diss = 0.0088
 
-    system.part.add(id=0, type=3, pos=[0, 0, 0] * system.box_l)
-    system.part.add(id=1, type=1, pos=[1.0, 1.0, 1.0] * system.box_l / 2.0)
-    system.part.add(id=2, type=2, pos=np.random.random() * system.box_l)
-    system.part.add(id=3, type=2, pos=np.random.random() * system.box_l)
+    p1 = system.part.add(type=3, pos=[0, 0, 0])
+    p2 = system.part.add(type=1, pos=system.box_l / 2.0)
+    system.part.add(type=2, pos=np.random.random() * system.box_l)
+    system.part.add(type=2, pos=np.random.random() * system.box_l)
 
-    h = espressomd.interactions.HarmonicBond(r_0=0, k=1)
-    system.bonded_inter[0] = h
-    system.part[0].add_bond((h, 1))
+    harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0, k=1)
+    system.bonded_inter[0] = harmonic_bond
+    p1.add_bond((harmonic_bond, p2))
+
     WLRE = espressomd.reaction_ensemble.WangLandauReactionEnsemble(
         temperature=temperature, exclusion_radius=0, seed=86)
     WLRE.add_reaction(

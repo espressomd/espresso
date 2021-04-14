@@ -100,4 +100,9 @@
 #define MAX_OBJECTS_IN_FLUID 10000
 #endif
 
+/** Maximal number of soft particles per immersed boundary */
+#ifndef IBM_MAX_NUM
+#define IBM_MAX_NUM 1000
+#endif
+
 #endif

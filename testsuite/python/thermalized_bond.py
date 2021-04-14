@@ -66,8 +66,8 @@ class ThermalizedBond(ut.TestCase, ThermostatsCommon):
             gamma_distance=g_dist, r_cut=2.0, seed=55)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
-        for i in range(0, N, 2):
-            self.system.part[i].add_bond((thermalized_dist_bond, i + 1))
+        for p1, p2 in zip(self.system.part[::2], self.system.part[1::2]):
+            p1.add_bond((thermalized_dist_bond, p2))
 
         # Warmup
         self.system.integrator.run(50)
@@ -114,8 +114,8 @@ class ThermalizedBond(ut.TestCase, ThermostatsCommon):
             gamma_distance=g_dist, r_cut=9, seed=51)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
-        for i in range(0, N, 2):
-            self.system.part[i].add_bond((thermalized_dist_bond, i + 1))
+        for p1, p2 in zip(self.system.part[::2], self.system.part[1::2]):
+            p1.add_bond((thermalized_dist_bond, p2))
 
         # Warmup
         self.system.integrator.run(50)
