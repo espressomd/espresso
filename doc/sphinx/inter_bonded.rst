@@ -9,34 +9,33 @@ a member of :class:`espressomd.system.System`. Generally, one may use
 the following syntax to activate and assign a bonded interaction::
 
     system.bonded_inter.add(bond)
-    part_1.add_bond((bond, part_2, ...))
+    p1.add_bond((bond, p2, ...))
 
 In general, one instantiates an interaction object ``bond`` and subsequently passes it
 to :meth:`espressomd.interactions.BondedInteractions.add`. This will enable the
-bonded interaction and allows the user to assign bonds between particles ``part_1``
-and ``part_2``.
+bonded interaction and allows the user to assign bonds between particles ``p1``
+and ``p2``.
 Bonded interactions are identified by either their *bondid* or their appropriate object.
 
 Defining a bond between two particles always involves three steps:
 defining the interaction, adding it to the system and applying it to the particles.
-To illustrate this, assume that three particles ``p1``, ``p5`` and ``p6`` already exist.
-One could for example create FENE bonds (more information about the FENE bond
+To illustrate this, assume that two particles ``p1`` and ``p2`` already exist.
+One could for example create a FENE bond (more information about the FENE bond
 is provided in subsection :ref:`FENE bond`) between them using::
 
     fene = FeneBond(k=1, d_r_max=1)
     system.bonded_inter.add(fene)
-    p5.add_bond((fene, p6), (fene, p1))
-    p1.add_bond((fene, p6))
+    p1.add_bond((fene, p2))
 
-This will set up a FENE bond between particles ``p5`` and ``p6``, ``p5`` and
-``p1``, and ``p1`` and ``p6``.
 Note that the ``fene`` object specifies the type of bond and its parameters,
-the specific bonds are stored within the particles. You can find more
+while the information of the bond between ``p1`` and its bonded partners
+is stored on ``p1``. This means that to remove a bond, one has to remember
+on which particle the bond was added. You can find more
 information regarding particle properties in :ref:`Setting up particles`.
 
-To delete the FENE bond between particles ``p1`` and ``p6``::
+To delete the FENE bond between particles ``p1`` and ``p2``::
 
-    p1.delete_bond((fene, p6))
+    p1.delete_bond((fene, p2))
 
 Note that alternatively to particle handles, the particle's ids can be
 used to setup bonded interactions. For example, to create a bond between the
