@@ -276,7 +276,7 @@ class ek_eof_one_species(ut.TestCase):
                     velocity_difference
 
                 # diagonal pressure tensor
-                measured_pressure_xx = ek[index].pressure[(0, 0)]
+                measured_pressure_xx = ek[index].pressure_tensor[(0, 0)]
                 calculated_pressure_xx = ek_common.hydrostatic_pressure(
                     ek,
                     (0, 0),
@@ -284,7 +284,7 @@ class ek_eof_one_species(ut.TestCase):
                     system.box_l[params['periodic_dirs'][1]],
                     params['box_z'],
                     params_base['agrid'])
-                measured_pressure_yy = ek[index].pressure[(1, 1)]
+                measured_pressure_yy = ek[index].pressure_tensor[(1, 1)]
                 calculated_pressure_yy = ek_common.hydrostatic_pressure(
                     ek,
                     (1, 1),
@@ -292,7 +292,7 @@ class ek_eof_one_species(ut.TestCase):
                     system.box_l[params['periodic_dirs'][1]],
                     params['box_z'],
                     params_base['agrid'])
-                measured_pressure_zz = ek[index].pressure[(2, 2)]
+                measured_pressure_zz = ek[index].pressure_tensor[(2, 2)]
                 calculated_pressure_zz = ek_common.hydrostatic_pressure(
                     ek,
                     (2, 2),
@@ -318,7 +318,7 @@ class ek_eof_one_species(ut.TestCase):
                 calculated_pressure_offdiagonal = ek_common.pressure_tensor_offdiagonal(
                     position, self.xi, params_base['bjerrum_length'], params_base['force'])
                 # xy component pressure tensor
-                measured_pressure_xy = ek[index].pressure[(0, 1)]
+                measured_pressure_xy = ek[index].pressure_tensor[(0, 1)]
                 calculated_pressure_xy = 0.0
                 if 'calculated_pressure_xy' not in params:
                     calculated_pressure_xy = calculated_pressure_offdiagonal
@@ -328,7 +328,7 @@ class ek_eof_one_species(ut.TestCase):
                     pressure_difference_xy
 
                 # yz component pressure tensor
-                measured_pressure_yz = ek[index].pressure[(1, 2)]
+                measured_pressure_yz = ek[index].pressure_tensor[(1, 2)]
                 calculated_pressure_yz = 0.0
                 if 'calculated_pressure_yz' not in params:
                     calculated_pressure_yz = calculated_pressure_offdiagonal
@@ -338,7 +338,7 @@ class ek_eof_one_species(ut.TestCase):
                     pressure_difference_yz
 
                 # xz component pressure tensor
-                measured_pressure_xz = ek[index].pressure[(0, 2)]
+                measured_pressure_xz = ek[index].pressure_tensor[(0, 2)]
                 calculated_pressure_xz = 0.0
                 if 'calculated_pressure_xz' not in params:
                     calculated_pressure_xz = calculated_pressure_offdiagonal
