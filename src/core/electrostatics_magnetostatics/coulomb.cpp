@@ -93,7 +93,7 @@ void sanity_checks(int &state) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
     try {
-      ELC_sanity_checks();
+      ELC_sanity_checks(elc_params);
     } catch (std::runtime_error const &err) {
       runtimeErrorMsg() << err.what();
       state = 0;

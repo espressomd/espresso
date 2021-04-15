@@ -39,7 +39,7 @@
 #include <utils/Vector.hpp>
 
 /** @brief Parameters for the ELC method */
-typedef struct {
+struct ELC_struct {
   /** Maximal allowed pairwise error for the potential and force.
    *  Used at least by the near formula, since this does the error control at
    *  runtime.
@@ -91,8 +91,7 @@ typedef struct {
   double space_box;
   /** Up to where particles can be found. */
   double h;
-
-} ELC_struct;
+};
 extern ELC_struct elc_params;
 
 /** Set parameters for ELC.
@@ -124,7 +123,7 @@ void ELC_add_force(const ParticleRange &particles);
 double ELC_energy(const ParticleRange &particles);
 
 /// check the ELC parameters
-void ELC_sanity_checks();
+void ELC_sanity_checks(ELC_struct const &params);
 
 /// initialize the ELC constants
 void ELC_init();

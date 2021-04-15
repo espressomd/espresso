@@ -1007,23 +1007,23 @@ int ELC_tune(double error) {
  * COMMON PARTS
  ****************************************/
 
-void ELC_sanity_checks() {
+void ELC_sanity_checks(ELC_struct const &params) {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("ELC requires periodicity 1 1 1");
   }
   /* The product of the two dielectric contrasts should be < 1 for ELC to
      work. This is not the case for two parallel boundaries, which can only
      be treated by the constant potential code */
-  if (elc_params.dielectric_contrast_on &&
-      (fabs(1.0 - elc_params.delta_mid_top * elc_params.delta_mid_bot) <
+  if (params.dielectric_contrast_on &&
+      (fabs(1.0 - params.delta_mid_top * params.delta_mid_bot) <
        ROUND_ERROR_PREC) &&
-      !elc_params.const_pot) {
+      !params.const_pot) {
     throw std::runtime_error("ELC with two parallel metallic boundaries "
                              "requires the const_pot option");
   }
 
   // ELC with non-neutral systems and no fully metallic boundaries does not work
-  if (elc_params.dielectric_contrast_on && !elc_params.const_pot &&
+  if (params.dielectric_contrast_on && !params.const_pot &&
       p3m.square_sum_q > ROUND_ERROR_PREC) {
     throw std::runtime_error("ELC does not work for non-neutral systems and "
                              "non-metallic dielectric contrast.");
@@ -1031,7 +1031,7 @@ void ELC_sanity_checks() {
 
   // Disable this line to make ELC work again with non-neutral systems and
   // metallic boundaries
-  if (elc_params.dielectric_contrast_on && elc_params.const_pot &&
+  if (params.dielectric_contrast_on && params.const_pot &&
       p3m.square_sum_q > ROUND_ERROR_PREC) {
     throw std::runtime_error("ELC does not currently support non-neutral "
                              "systems with a dielectric contrast.");
@@ -1082,52 +1082,48 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
                    bool const_pot, double pot_diff) {
   assert(coulomb.method == COULOMB_ELC_P3M or coulomb.method == COULOMB_P3M);
 
-  elc_params.maxPWerror = maxPWerror;
-  elc_params.gap_size = gap_size;
-  elc_params.h = box_geo.length()[2] - gap_size;
-
+  ELC_struct new_elc_params;
   if (delta_top != 0.0 || delta_bot != 0.0) {
-    elc_params.dielectric_contrast_on = true;
+    // setup with dielectric contrast (neutralize is automatic)
 
-    elc_params.delta_mid_top = delta_top;
-    elc_params.delta_mid_bot = delta_bot;
-
-    // neutralize is automatic with dielectric contrast
-    elc_params.neutralize = false;
     // initial setup of parameters, may change later when P3M is finally tuned
     // set the space_layer to be 1/3 of the gap size, so that box = layer
-    elc_params.space_layer = (1. / 3.) * gap_size;
-    // set the space_box
-    elc_params.space_box = gap_size - 2 * elc_params.space_layer;
-    // reset minimal_dist for tuning
-    elc_params.minimal_dist =
-        std::min(elc_params.space_box, elc_params.space_layer);
+    auto const space_layer = gap_size / 3.;
+    auto const space_box = gap_size - 2. * space_layer;
 
-    // Constant potential parameter setup
-    elc_params.const_pot = const_pot;
-    if (const_pot) {
-      elc_params.pot_diff = pot_diff;
-    }
+    new_elc_params = ELC_struct{maxPWerror,
+                                far_cut,
+                                0.,
+                                gap_size,
+                                false,
+                                false,
+                                true,
+                                delta_top,
+                                delta_bot,
+                                const_pot,
+                                (const_pot) ? pot_diff : 0.,
+                                std::min(space_box, space_layer),
+                                space_layer,
+                                space_box,
+                                box_geo.length()[2] - gap_size};
   } else {
     // setup without dielectric contrast
-    elc_params.dielectric_contrast_on = false;
-    elc_params.const_pot = false;
-    elc_params.delta_mid_top = 0;
-    elc_params.delta_mid_bot = 0;
-    elc_params.neutralize = neutralize;
-    elc_params.space_layer = 0;
-    elc_params.space_box = elc_params.minimal_dist = gap_size;
+    new_elc_params = ELC_struct{
+        maxPWerror, far_cut,  0., gap_size, false,
+        neutralize, false,    0., 0.,       false,
+        0.,         gap_size, 0., gap_size, box_geo.length()[2] - gap_size};
   }
 
-  ELC_setup_constants();
-  ELC_sanity_checks();
+  ELC_sanity_checks(new_elc_params);
 
+  // set new parameters
+  elc_params = new_elc_params;
   p3m.params.epsilon = P3M_EPSILON_METALLIC;
   coulomb.method = COULOMB_ELC_P3M;
+  ELC_setup_constants();
 
   int error_code = ES_OK;
-  elc_params.far_cut = far_cut;
-  if (far_cut != -1) {
+  if (far_cut != -1.) {
     elc_params.far_cut2 = Utils::sqr(far_cut);
     elc_params.far_calculated = false;
   } else {
