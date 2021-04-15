@@ -77,8 +77,6 @@ double calc_energy_long_range(const ParticleRange &particles);
 
 int icc_sanity_check();
 
-int elc_sanity_check();
-
 void bcast_coulomb_params();
 
 /** @brief Set the electrostatics prefactor */

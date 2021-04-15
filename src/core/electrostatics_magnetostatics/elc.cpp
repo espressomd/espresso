@@ -1007,10 +1007,9 @@ int ELC_tune(double error) {
  * COMMON PARTS
  ****************************************/
 
-int ELC_sanity_checks() {
+void ELC_sanity_checks() {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    runtimeErrorMsg() << "ELC requires periodicity 1 1 1";
-    return ES_ERROR;
+    throw std::runtime_error("ELC requires periodicity 1 1 1");
   }
   /* The product of the two dielectric contrasts should be < 1 for ELC to
      work. This is not the case for two parallel boundaries, which can only
@@ -1019,29 +1018,24 @@ int ELC_sanity_checks() {
       (fabs(1.0 - elc_params.delta_mid_top * elc_params.delta_mid_bot) <
        ROUND_ERROR_PREC) &&
       !elc_params.const_pot) {
-    runtimeErrorMsg() << "ELC with two parallel metallic boundaries requires "
-                         "the const_pot option";
-    return ES_ERROR;
+    throw std::runtime_error("ELC with two parallel metallic boundaries "
+                             "requires the const_pot option");
   }
 
   // ELC with non-neutral systems and no fully metallic boundaries does not work
   if (elc_params.dielectric_contrast_on && !elc_params.const_pot &&
       p3m.square_sum_q > ROUND_ERROR_PREC) {
-    runtimeErrorMsg() << "ELC does not work for non-neutral systems and "
-                         "non-metallic dielectric contrast.";
-    return ES_ERROR;
+    throw std::runtime_error("ELC does not work for non-neutral systems and "
+                             "non-metallic dielectric contrast.");
   }
 
   // Disable this line to make ELC work again with non-neutral systems and
   // metallic boundaries
   if (elc_params.dielectric_contrast_on && elc_params.const_pot &&
       p3m.square_sum_q > ROUND_ERROR_PREC) {
-    runtimeErrorMsg() << "ELC does not currently support non-neutral "
-                         "systems with a dielectric contrast.";
-    return ES_ERROR;
+    throw std::runtime_error("ELC does not currently support non-neutral "
+                             "systems with a dielectric contrast.");
   }
-
-  return ES_OK;
 }
 
 void ELC_init() {
@@ -1086,6 +1080,8 @@ void ELC_init() {
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
                    bool neutralize, double delta_top, double delta_bot,
                    bool const_pot, double pot_diff) {
+  assert(coulomb.method == COULOMB_ELC_P3M or coulomb.method == COULOMB_P3M);
+
   elc_params.maxPWerror = maxPWerror;
   elc_params.gap_size = gap_size;
   elc_params.h = box_geo.length()[2] - gap_size;
@@ -1124,12 +1120,12 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
   }
 
   ELC_setup_constants();
-
-  int error_code = Coulomb::elc_sanity_check();
+  ELC_sanity_checks();
 
   p3m.params.epsilon = P3M_EPSILON_METALLIC;
   coulomb.method = COULOMB_ELC_P3M;
 
+  int error_code = ES_OK;
   elc_params.far_cut = far_cut;
   if (far_cut != -1) {
     elc_params.far_cut2 = Utils::sqr(far_cut);

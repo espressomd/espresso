@@ -124,9 +124,7 @@ void ELC_add_force(const ParticleRange &particles);
 double ELC_energy(const ParticleRange &particles);
 
 /// check the ELC parameters
-/// @retval ES_OK
-/// @retval ES_ERROR
-int ELC_sanity_checks();
+void ELC_sanity_checks();
 
 /// initialize the ELC constants
 void ELC_init();
