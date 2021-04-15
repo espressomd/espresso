@@ -1108,8 +1108,8 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
         std::min(elc_params.space_box, elc_params.space_layer);
 
     // Constant potential parameter setup
+    elc_params.const_pot = const_pot;
     if (const_pot) {
-      elc_params.const_pot = true;
       elc_params.pot_diff = pot_diff;
     }
   } else {
