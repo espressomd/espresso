@@ -1062,6 +1062,16 @@ void ELC_set_params(double maxPWerror, double gap_size, double far_cut,
                     bool neutralize, double delta_top, double delta_bot,
                     bool const_pot, double pot_diff) {
   assert(coulomb.method == COULOMB_ELC_P3M or coulomb.method == COULOMB_P3M);
+  auto const h = box_geo.length()[2] - gap_size;
+  if (maxPWerror <= 0.) {
+    throw std::domain_error("maxPWerror must be > 0");
+  }
+  if (gap_size <= 0.) {
+    throw std::domain_error("gap_size must be > 0");
+  }
+  if (h < 0.) {
+    throw std::domain_error("gap size too large");
+  }
 
   ELC_struct new_elc_params;
   if (delta_top != 0.0 || delta_bot != 0.0) {
@@ -1086,13 +1096,13 @@ void ELC_set_params(double maxPWerror, double gap_size, double far_cut,
                                 std::min(space_box, space_layer),
                                 space_layer,
                                 space_box,
-                                box_geo.length()[2] - gap_size};
+                                h};
   } else {
     // setup without dielectric contrast
-    new_elc_params = ELC_struct{
-        maxPWerror, far_cut,  0., gap_size, far_cut == -1.,
-        neutralize, false,    0., 0.,       false,
-        0.,         gap_size, 0., gap_size, box_geo.length()[2] - gap_size};
+    new_elc_params =
+        ELC_struct{maxPWerror, far_cut,  0., gap_size, far_cut == -1.,
+                   neutralize, false,    0., 0.,       false,
+                   0.,         gap_size, 0., gap_size, h};
   }
 
   ELC_sanity_checks(new_elc_params);

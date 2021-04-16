@@ -223,25 +223,35 @@ class P3M_tuning_test(ut.TestCase):
             prefactor=2, accuracy=0.01, tune=False, cao=1,
             r_cut=0.373, alpha=3.81, mesh=(8, 8, 8), check_neutrality=False)
         solver_elc = espressomd.electrostatics.ELC(
-            p3m_actor=solver_p3m, gap_size=1.2 * self.system.box_l[2],
-            maxPWerror=0.01)
-        with self.assertRaisesRegex(Exception, "gap size too large"):
+            p3m_actor=solver_p3m, gap_size=100, maxPWerror=0.01)
+        with self.assertRaisesRegex(ValueError, "gap size too large"):
+            self.system.actors.add(solver_elc)
+
+        self.system.actors.clear()
+        solver_elc = espressomd.electrostatics.ELC(
+            p3m_actor=solver_p3m, gap_size=-1, maxPWerror=0.01)
+        with self.assertRaisesRegex(ValueError, "gap_size must be > 0"):
+            self.system.actors.add(solver_elc)
+
+        self.system.actors.clear()
+        solver_elc = espressomd.electrostatics.ELC(
+            p3m_actor=solver_p3m, gap_size=1, maxPWerror=0)
+        with self.assertRaisesRegex(ValueError, "maxPWerror must be > 0"):
             self.system.actors.add(solver_elc)
 
         self.system.part[0].q = -2
 
         self.system.actors.clear()
         solver_elc = espressomd.electrostatics.ELC(
-            p3m_actor=solver_p3m, gap_size=1.2 * self.system.box_l[2],
+            p3m_actor=solver_p3m, gap_size=1,
             maxPWerror=0.01, const_pot=True, pot_diff=3, check_neutrality=False)
         with self.assertRaisesRegex(RuntimeError, "ELC does not currently support non-neutral systems with a dielectric contrast"):
             self.system.actors.add(solver_elc)
 
         self.system.actors.clear()
         solver_elc = espressomd.electrostatics.ELC(
-            p3m_actor=solver_p3m, gap_size=1.2 * self.system.box_l[2],
-            maxPWerror=0.01, const_pot=False, check_neutrality=False,
-            delta_mid_top=0.5, delta_mid_bot=0.5)
+            p3m_actor=solver_p3m, gap_size=1, maxPWerror=0.01, const_pot=False,
+            check_neutrality=False, delta_mid_top=0.5, delta_mid_bot=0.5)
         with self.assertRaisesRegex(RuntimeError, "ELC does not work for non-neutral systems and non-metallic dielectric contrast"):
             self.system.actors.add(solver_elc)
 
@@ -249,9 +259,8 @@ class P3M_tuning_test(ut.TestCase):
 
         self.system.actors.clear()
         solver_elc = espressomd.electrostatics.ELC(
-            p3m_actor=solver_p3m, gap_size=1.2 * self.system.box_l[2],
-            maxPWerror=0.01, const_pot=False, check_neutrality=False,
-            delta_mid_top=-1, delta_mid_bot=-1)
+            p3m_actor=solver_p3m, gap_size=1, maxPWerror=0.01, const_pot=False,
+            check_neutrality=False, delta_mid_top=-1, delta_mid_bot=-1)
         with self.assertRaisesRegex(RuntimeError, "ELC with two parallel metallic boundaries requires the const_pot option"):
             self.system.actors.add(solver_elc)
 
