@@ -500,7 +500,7 @@ IF P3M == 1:
                 self._params["delta_mid_top"] = -1
                 self._params["delta_mid_bot"] = -1
 
-            if ELC_set_params(
+            ELC_set_params(
                 self._params["maxPWerror"],
                 self._params["gap_size"],
                 self._params["far_cut"],
@@ -508,8 +508,7 @@ IF P3M == 1:
                 self._params["delta_mid_top"],
                 self._params["delta_mid_bot"],
                 self._params["const_pot"],
-                    self._params["pot_diff"]):
-                handle_errors("ELC tuning failed")
+                self._params["pot_diff"])
 
         def tune(self, **tune_params_subset):
             self._params["p3m_actor"].tune(**tune_params_subset)

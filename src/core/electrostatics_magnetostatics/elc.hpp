@@ -110,11 +110,10 @@ extern ELC_struct elc_params;
  *  @param delta_mid_bot @copybrief ELC_struct::delta_mid_bot
  *  @param const_pot     @copybrief ELC_struct::const_pot
  *  @param pot_diff      @copybrief ELC_struct::pot_diff
- *  @retval ES_OK
  */
-int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                   bool neutralize, double delta_mid_top, double delta_mid_bot,
-                   bool const_pot, double pot_diff);
+void ELC_set_params(double maxPWerror, double min_dist, double far_cut,
+                    bool neutralize, double delta_mid_top, double delta_mid_bot,
+                    bool const_pot, double pot_diff);
 
 /// the force calculation
 void ELC_add_force(const ParticleRange &particles);
@@ -152,6 +151,6 @@ void ELC_P3M_modify_p3m_sums_image(const ParticleRange &particles);
 /// assign the additional, virtual charges, used only in energy.cpp
 void ELC_P3M_restore_p3m_sums(const ParticleRange &particles);
 
-#endif
+#endif // P3M
 
 #endif
