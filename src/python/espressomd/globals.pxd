@@ -24,7 +24,6 @@ cdef extern from "grid.hpp":
     void mpi_set_box_length(Vector3d length) except +
 
 cdef extern from "global.hpp":
-    int FIELD_BOXL
     int FIELD_SKIN
     int FIELD_NODEGRID
     int FIELD_PERIODIC

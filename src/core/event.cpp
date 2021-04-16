@@ -277,9 +277,6 @@ void on_temperature_change() { lb_lbfluid_reinit_parameters(); }
 
 void on_parameter_change(int field) {
   switch (field) {
-  case FIELD_BOXL:
-    on_boxl_change();
-    break;
   case FIELD_PERIODIC:
 #ifdef SCAFACOS
 #ifdef ELECTROSTATICS

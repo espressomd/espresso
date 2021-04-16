@@ -87,7 +87,6 @@ struct Datafield {
  *  Please declare where the variables come from.
  */
 const std::unordered_map<int, Datafield> fields{
-    {FIELD_BOXL, {box_geo.m_length.data(), 3, "box_l"}}, /* 0  from grid.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA,
      {&langevin.gamma, 1, "langevin.gamma"}}, /* 5  from thermostat.cpp */
