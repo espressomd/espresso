@@ -122,12 +122,10 @@ void rescale_boxl(int dir, double d_new) {
   if (dir < 3) {
     auto box_l = box_geo.length();
     box_l[dir] = d_new;
-    box_geo.set_length(box_l);
+    mpi_set_box_length(box_l);
   } else {
-    box_geo.set_length({d_new, d_new, d_new});
+    mpi_set_box_length({d_new, d_new, d_new});
   }
-
-  mpi_bcast_parameter(FIELD_BOXL);
 
   if (scale > 1.) {
     mpi_rescale_particles(dir, scale);
