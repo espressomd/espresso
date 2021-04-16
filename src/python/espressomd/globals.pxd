@@ -18,6 +18,10 @@
 #
 include "myconfig.pxi"
 from libcpp cimport bool
+from .utils cimport Vector3d
+
+cdef extern from "grid.hpp":
+    void mpi_set_box_length(Vector3d length) except +
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
