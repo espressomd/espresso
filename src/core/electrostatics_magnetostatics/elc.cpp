@@ -50,28 +50,13 @@
 #include <cstddef>
 #include <vector>
 
-/****************************************
- * LOCAL DEFINES
- ****************************************/
-
-/** Largest reasonable cutoff for far formula */
-#define MAXIMAL_FAR_CUT 50
-
-/****************************************
- * LOCAL VARIABLES
- ****************************************/
-
-/** \name Inverse box dimensions and derived constants */
+/** \name Inverse box dimensions */
 /**@{*/
-static double ux, uy, uz, height_inverse;
+static double ux, uy, uz;
 /**@}*/
 
 ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
                          1,     false, 0, 0, 0,    0,    0.0};
-
-/****************************************
- * LOCAL ARRAYS
- ****************************************/
 
 /** \name Product decomposition data organization
  *  For the cell blocks it is assumed that the lower blocks part is in the
@@ -126,8 +111,6 @@ void ELC_setup_constants() {
   ux = 1 / box_geo.length()[0];
   uy = 1 / box_geo.length()[1];
   uz = 1 / box_geo.length()[2];
-
-  height_inverse = 1 / elc_params.h;
 }
 
 /**
@@ -268,7 +251,7 @@ static void add_dipole_force(const ParticleRange &particles) {
   }
 
   gblcblk[0] *= pref;
-  gblcblk[1] *= pref * height_inverse / uz;
+  gblcblk[1] *= pref / elc_params.h / uz;
   gblcblk[2] *= pref;
 
   distribute(size);
@@ -279,7 +262,7 @@ static void add_dipole_force(const ParticleRange &particles) {
   // Const. potential contribution
   if (elc_params.const_pot) {
     coulomb.field_induced = gblcblk[1];
-    coulomb.field_applied = elc_params.pot_diff * height_inverse;
+    coulomb.field_applied = elc_params.pot_diff / elc_params.h;
     field_tot -= coulomb.field_applied + coulomb.field_induced;
   }
 
@@ -353,9 +336,9 @@ static double dipole_energy(const ParticleRange &particles) {
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot) {
       // zero potential difference contribution
-      energy += pref * height_inverse / uz * Utils::sqr(gblcblk[6]);
+      energy += pref / elc_params.h / uz * Utils::sqr(gblcblk[6]);
       // external potential shift contribution
-      energy -= 2 * elc_params.pot_diff * height_inverse * gblcblk[6];
+      energy -= 2 * elc_params.pot_diff / elc_params.h * gblcblk[6];
     }
 
     /* counter the P3M homogeneous background contribution to the
@@ -962,6 +945,8 @@ double ELC_energy(const ParticleRange &particles) {
 }
 
 int ELC_tune(double error) {
+  // Largest reasonable cutoff for far formula
+  constexpr auto maximal_far_cut = 50.;
   double const h = elc_params.h;
   double lz = box_geo.length()[2];
   double const min_inv_boxl = std::min(ux, uy);
@@ -992,8 +977,8 @@ int ELC_tune(double error) {
            num2 * (sum + 1 / (lz + h)) / (lz + h));
 
     elc_params.far_cut += min_inv_boxl;
-  } while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
-  if (elc_params.far_cut >= MAXIMAL_FAR_CUT) {
+  } while (err > error && elc_params.far_cut < maximal_far_cut);
+  if (elc_params.far_cut >= maximal_far_cut) {
     runtimeErrorMsg() << "maxPWerror too small";
     return ES_ERROR;
   }
