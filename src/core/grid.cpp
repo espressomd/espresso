@@ -27,7 +27,7 @@
 #include "grid.hpp"
 
 #include "communication.hpp"
-#include "global.hpp"
+#include "event.hpp"
 #include "particle_data.hpp"
 
 #include <utils/Vector.hpp>
@@ -132,4 +132,20 @@ void rescale_boxl(int dir, double d_new) {
   if (scale > 1.) {
     mpi_rescale_particles(dir, scale);
   }
+}
+
+void mpi_set_box_length_local(const Utils::Vector3d &length) {
+  box_geo.set_length(length);
+  on_boxl_change();
+}
+
+REGISTER_CALLBACK(mpi_set_box_length_local)
+
+void mpi_set_box_length(const Utils::Vector3d &length) {
+  if (boost::algorithm::any_of(length,
+                               [](double value) { return value <= 0; })) {
+    throw std::domain_error("Box length must be >0");
+  }
+
+  mpi_call_all(mpi_set_box_length_local, length);
 }
