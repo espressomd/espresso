@@ -94,9 +94,9 @@ IF ELECTROSTATICS:
                 bool const_pot
                 double pot_diff
 
-            int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                               bool neutralize, double delta_mid_top,
-                               double delta_mid_bot, bool const_pot, double pot_diff)
+            void ELC_set_params(double maxPWerror, double min_dist, double far_cut,
+                                bool neutralize, double delta_mid_top,
+                                double delta_mid_bot, bool const_pot, double pot_diff) except +
 
             # links intern C-struct with python object
             ELC_struct elc_params
