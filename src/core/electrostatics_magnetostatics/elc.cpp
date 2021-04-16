@@ -1020,6 +1020,7 @@ void ELC_sanity_checks(ELC_struct const &params) {
 void ELC_init() {
 
   ELC_setup_constants();
+  elc_params.h = box_geo.length()[2] - elc_params.gap_size;
 
   if (elc_params.dielectric_contrast_on) {
     // recalculate the space layer size
