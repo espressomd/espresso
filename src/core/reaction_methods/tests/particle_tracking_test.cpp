@@ -25,7 +25,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "ParticleFactory.hpp"
+#include "unit_tests/ParticleFactory.hpp"
 
 #include "communication.hpp"
 #include "particle_data.hpp"
@@ -54,7 +54,7 @@ BOOST_FIXTURE_TEST_CASE(particle_type_map_test, ParticleFactory) {
   // check particle counting
   init_type_map(type);
   BOOST_CHECK_EQUAL(number_of_particles_with_type(type), 0);
-  create_particle(pid, type);
+  create_particle({}, pid, type);
   BOOST_CHECK_EQUAL(number_of_particles_with_type(type), 1);
 
   // exception for random index that exceeds the number of particles

@@ -28,13 +28,21 @@
 /** Fixture to create particles during a test and remove them at the end. */
 struct ParticleFactory {
   ParticleFactory() = default;
+
   ~ParticleFactory() {
     for (auto pid : particle_cache) {
       remove_particle(pid);
     }
   }
-  void create_particle(int pid, int type) {
-    Utils::Vector3d const pos{0., 0., 0.};
+
+  void create_particle(Utils::Vector3d const &pos, int pid = -1,
+                       int type = -1) {
+    if (pid < 0) {
+      pid = get_maximal_particle_id() + 1;
+    }
+    if (type < 0) {
+      type = 0;
+    }
     place_particle(pid, pos);
     set_particle_type(pid, type);
     particle_cache.emplace_back(pid);
