@@ -21,6 +21,8 @@
 
 #include "particle_data.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <vector>
 
 /** Fixture to create particles during a test and remove them at the end. */
@@ -32,7 +34,7 @@ struct ParticleFactory {
     }
   }
   void create_particle(int pid, int type) {
-    double pos[3] = {0., 0., 0.};
+    Utils::Vector3d const pos{0., 0., 0.};
     place_particle(pid, pos);
     set_particle_type(pid, type);
     particle_cache.emplace_back(pid);

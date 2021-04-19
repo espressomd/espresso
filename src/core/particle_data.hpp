@@ -108,13 +108,13 @@ size_t fetch_cache_max_size();
  *  @retval ES_PART_CREATED if created
  *  @retval ES_PART_ERROR if id is illegal
  */
-int place_particle(int part, const double *p);
+int place_particle(int part, Utils::Vector3d const &p);
 
 /** Call only on the master node: set particle velocity.
  *  @param part the particle.
  *  @param v its new velocity.
  */
-void set_particle_v(int part, double *v);
+void set_particle_v(int part, Utils::Vector3d const &v);
 
 #ifdef ENGINE
 /** Call only on the master node: set particle velocity.
@@ -141,7 +141,7 @@ void set_particle_mass(int part, double mass);
  *  @param part the particle.
  *  @param rinertia its new inertia.
  */
-void set_particle_rotational_inertia(int part, double *rinertia);
+void set_particle_rotational_inertia(int part, Utils::Vector3d const &rinertia);
 #endif
 
 /** Call only on the master node: Specifies whether a particle's rotational
@@ -172,7 +172,7 @@ void set_particle_q(int part, double q);
  *  @param mu_E its new mobility.
  */
 void set_particle_mu_E(int part, Utils::Vector3d const &mu_E);
-void get_particle_mu_E(int part, Utils::Vector3d &mu_E);
+Utils::Vector3d get_particle_mu_E(int part);
 #endif
 
 /** Call only on the master node: set particle type.
@@ -225,7 +225,7 @@ void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab);
  *  @param part the particle.
  *  @param dip its new dipole orientation.
  */
-void set_particle_dip(int part, double const *dip);
+void set_particle_dip(int part, Utils::Vector3d const &dip);
 
 /** Call only on the master node: set particle dipole moment (absolute value).
  *  @param part the particle.
@@ -256,13 +256,13 @@ void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma(int part, double gamma);
 #else
-void set_particle_gamma(int part, Utils::Vector3d gamma);
+void set_particle_gamma(int part, Utils::Vector3d const &gamma);
 #endif
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma_rot(int part, double gamma);
 #else
-void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot);
+void set_particle_gamma_rot(int part, Utils::Vector3d const &gamma_rot);
 #endif
 #endif
 #endif // THERMOSTAT_PER_PARTICLE
