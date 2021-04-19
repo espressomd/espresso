@@ -56,6 +56,16 @@ namespace utf = boost::unit_test;
 #include <unordered_map>
 #include <vector>
 
+/* Guard against a bug in Boost versions < 1.68 where fixtures used to skip
+ * test are not propagated correctly to the testsuite, causing skipped tests
+ * to trigger a failure of the complete testsuite without any error message.
+ * More details in ticket https://svn.boost.org/trac10/ticket/12095
+ */
+#include <boost/serialization/version.hpp>
+#if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 < 68
+int main(int argc, char **argv) {}
+#else
+
 namespace espresso {
 // ESPResSo system instance
 std::unique_ptr<EspressoSystemStandAlone> system;
@@ -317,3 +327,4 @@ int main(int argc, char **argv) {
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
+#endif // Boost version >= 1.68
