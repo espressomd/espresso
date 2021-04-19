@@ -1271,16 +1271,13 @@ cdef class ParticleHandle:
             raise Exception("Could not remove particle.")
         del self
 
-    # Bond related methods
-    # Does not work properly with 3 or more partner bonds!
-
     def add_verified_bond(self, bond):
         """
         Add a bond, the validity of which has already been verified.
 
         See Also
         --------
-        add_bond : Delete an unverified bond held by the ``Particle``.
+        add_bond : Add an unverified bond to the ``Particle``.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
