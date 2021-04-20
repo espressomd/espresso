@@ -321,7 +321,6 @@ tutorials-samples-maxset:
   tags:
     - docker
     - linux
-    - cuda
 
 tutorials-samples-default:
   <<: *global_job_definition
