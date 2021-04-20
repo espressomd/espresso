@@ -1,4 +1,5 @@
 #!/bin/bash
-apt build-dep -y .
-dpkg-buildpackage -uc -us
+apt build-dep -y . &&
+dpkg-buildpackage -uc -us &&
+ls ~/*.deb
 
