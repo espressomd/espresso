@@ -54,12 +54,6 @@ inline double soft_pair_force_factor(IA_parameters const &ia_params,
   return 0.0;
 }
 
-/** Calculate soft-sphere force */
-inline Utils::Vector3d soft_pair_force(IA_parameters const &ia_params,
-                                       Utils::Vector3d const &d, double dist) {
-  return d * soft_pair_force_factor(ia_params, dist);
-}
-
 /** Calculate soft-sphere energy */
 inline double soft_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < (ia_params.soft_sphere.cut + ia_params.soft_sphere.offset)) {

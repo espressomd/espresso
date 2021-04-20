@@ -46,12 +46,6 @@ inline double hat_pair_force_factor(IA_parameters const &ia_params,
   return 0.0;
 }
 
-/** Calculate hat force */
-inline Utils::Vector3d hat_pair_force(IA_parameters const &ia_params,
-                                      Utils::Vector3d const &d, double dist) {
-  return d * hat_pair_force_factor(ia_params, dist);
-}
-
 /** Calculate hat energy */
 inline double hat_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < ia_params.hat.r) {
