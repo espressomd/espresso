@@ -1,0 +1,8 @@
+name: 'Debian Package'
+description: 'Build Debian package'
+runs:
+  using: "docker"
+  image: "docker://ubuntu:focal"
+  entrypoint: entrypoint.sh
+
+
