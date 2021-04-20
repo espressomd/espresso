@@ -5,7 +5,7 @@ Maintainer: Espresso Maintainers <espressomd-devel@nongnu.org>
 Build-Depends:
  cmake,
  cython3,
- debhelper-compat,
+ debhelper-compat (=12),
  fftw3-dev,
  libboost-all-dev,
  libgsl-dev,
