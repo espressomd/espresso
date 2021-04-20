@@ -237,25 +237,27 @@ void on_lbboundary_change() {
 #endif
 }
 
-void on_boxl_change() {
+void on_boxl_change(bool skip_method_adaption) {
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
    * therefore recalculate them. */
   cells_re_init(cell_structure.decomposition_type());
 
-  /* Now give methods a chance to react to the change in box length */
+  if (not skip_method_adaption) {
+    /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
-  Coulomb::on_boxl_change();
+    Coulomb::on_boxl_change();
 #endif
 
 #ifdef DIPOLES
-  Dipole::on_boxl_change();
+    Dipole::on_boxl_change();
 #endif
 
-  lb_lbfluid_init();
+    lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
-  LBBoundaries::lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
 #endif
+  }
 }
 
 void on_cell_structure_change() {
