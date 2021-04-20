@@ -50,28 +50,13 @@
 #include <cstddef>
 #include <vector>
 
-/****************************************
- * LOCAL DEFINES
- ****************************************/
-
-/** Largest reasonable cutoff for far formula */
-#define MAXIMAL_FAR_CUT 50
-
-/****************************************
- * LOCAL VARIABLES
- ****************************************/
-
-/** \name Inverse box dimensions and derived constants */
+/** \name Inverse box dimensions */
 /**@{*/
-static double ux, uy, uz, height_inverse;
+static double ux, uy, uz;
 /**@}*/
 
 ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
                          1,     false, 0, 0, 0,    0,    0.0};
-
-/****************************************
- * LOCAL ARRAYS
- ****************************************/
 
 /** \name Product decomposition data organization
  *  For the cell blocks it is assumed that the lower blocks part is in the
@@ -126,8 +111,6 @@ void ELC_setup_constants() {
   ux = 1 / box_geo.length()[0];
   uy = 1 / box_geo.length()[1];
   uz = 1 / box_geo.length()[2];
-
-  height_inverse = 1 / elc_params.h;
 }
 
 /**
@@ -268,7 +251,7 @@ static void add_dipole_force(const ParticleRange &particles) {
   }
 
   gblcblk[0] *= pref;
-  gblcblk[1] *= pref * height_inverse / uz;
+  gblcblk[1] *= pref / elc_params.h / uz;
   gblcblk[2] *= pref;
 
   distribute(size);
@@ -279,7 +262,7 @@ static void add_dipole_force(const ParticleRange &particles) {
   // Const. potential contribution
   if (elc_params.const_pot) {
     coulomb.field_induced = gblcblk[1];
-    coulomb.field_applied = elc_params.pot_diff * height_inverse;
+    coulomb.field_applied = elc_params.pot_diff / elc_params.h;
     field_tot -= coulomb.field_applied + coulomb.field_induced;
   }
 
@@ -353,9 +336,9 @@ static double dipole_energy(const ParticleRange &particles) {
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot) {
       // zero potential difference contribution
-      energy += pref * height_inverse / uz * Utils::sqr(gblcblk[6]);
+      energy += pref / elc_params.h / uz * Utils::sqr(gblcblk[6]);
       // external potential shift contribution
-      energy -= 2 * elc_params.pot_diff * height_inverse * gblcblk[6];
+      energy -= 2 * elc_params.pot_diff / elc_params.h * gblcblk[6];
     }
 
     /* counter the P3M homogeneous background contribution to the
@@ -961,26 +944,26 @@ double ELC_energy(const ParticleRange &particles) {
   return 0.5 * energy;
 }
 
-int ELC_tune(double error) {
-  double const h = elc_params.h;
+double ELC_tune_far_cut(ELC_struct const &params) {
+  // Largest reasonable cutoff for far formula
+  constexpr auto maximal_far_cut = 50.;
+  double const h = params.h;
   double lz = box_geo.length()[2];
   double const min_inv_boxl = std::min(ux, uy);
 
-  if (elc_params.dielectric_contrast_on) {
+  if (params.dielectric_contrast_on) {
     // adjust lz according to dielectric layer method
-    lz = elc_params.h + elc_params.space_layer;
+    lz = params.h + params.space_layer;
   }
 
-  if (h < 0) {
-    runtimeErrorMsg() << "gap size too large";
-    return ES_ERROR;
+  if (h < 0.) {
+    throw std::runtime_error("gap size too large");
   }
 
-  elc_params.far_cut = min_inv_boxl;
-
+  auto far_cut = min_inv_boxl;
   double err;
   do {
-    const auto prefactor = 2 * Utils::pi() * elc_params.far_cut;
+    const auto prefactor = 2 * Utils::pi() * far_cut;
 
     const auto sum = prefactor + 2 * (ux + uy);
     const auto den = -expm1(-prefactor * lz);
@@ -991,74 +974,63 @@ int ELC_tune(double error) {
           (num1 * (sum + 1 / (lz - h)) / (lz - h) +
            num2 * (sum + 1 / (lz + h)) / (lz + h));
 
-    elc_params.far_cut += min_inv_boxl;
-  } while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
-  if (elc_params.far_cut >= MAXIMAL_FAR_CUT) {
-    runtimeErrorMsg() << "maxPWerror too small";
-    return ES_ERROR;
+    far_cut += min_inv_boxl;
+  } while (err > params.maxPWerror && far_cut < maximal_far_cut);
+  if (far_cut >= maximal_far_cut) {
+    throw std::runtime_error("ELC tuning failed: maxPWerror too small");
   }
-  elc_params.far_cut -= min_inv_boxl;
-  elc_params.far_cut2 = Utils::sqr(elc_params.far_cut);
-
-  return ES_OK;
+  return far_cut - min_inv_boxl;
 }
 
 /****************************************
  * COMMON PARTS
  ****************************************/
 
-int ELC_sanity_checks() {
+void ELC_sanity_checks(ELC_struct const &params) {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    runtimeErrorMsg() << "ELC requires periodicity 1 1 1";
-    return ES_ERROR;
+    throw std::runtime_error("ELC requires periodicity 1 1 1");
   }
   /* The product of the two dielectric contrasts should be < 1 for ELC to
      work. This is not the case for two parallel boundaries, which can only
      be treated by the constant potential code */
-  if (elc_params.dielectric_contrast_on &&
-      (fabs(1.0 - elc_params.delta_mid_top * elc_params.delta_mid_bot) <
+  if (params.dielectric_contrast_on &&
+      (fabs(1.0 - params.delta_mid_top * params.delta_mid_bot) <
        ROUND_ERROR_PREC) &&
-      !elc_params.const_pot) {
-    runtimeErrorMsg() << "ELC with two parallel metallic boundaries requires "
-                         "the const_pot option";
-    return ES_ERROR;
+      !params.const_pot) {
+    throw std::runtime_error("ELC with two parallel metallic boundaries "
+                             "requires the const_pot option");
   }
 
   // ELC with non-neutral systems and no fully metallic boundaries does not work
-  if (elc_params.dielectric_contrast_on && !elc_params.const_pot &&
+  if (params.dielectric_contrast_on && !params.const_pot &&
       p3m.square_sum_q > ROUND_ERROR_PREC) {
-    runtimeErrorMsg() << "ELC does not work for non-neutral systems and "
-                         "non-metallic dielectric contrast.";
-    return ES_ERROR;
+    throw std::runtime_error("ELC does not work for non-neutral systems and "
+                             "non-metallic dielectric contrast.");
   }
 
   // Disable this line to make ELC work again with non-neutral systems and
   // metallic boundaries
-  if (elc_params.dielectric_contrast_on && elc_params.const_pot &&
+  if (params.dielectric_contrast_on && params.const_pot &&
       p3m.square_sum_q > ROUND_ERROR_PREC) {
-    runtimeErrorMsg() << "ELC does not currently support non-neutral "
-                         "systems with a dielectric contrast.";
-    return ES_ERROR;
+    throw std::runtime_error("ELC does not currently support non-neutral "
+                             "systems with a dielectric contrast.");
   }
-
-  return ES_OK;
 }
 
 void ELC_init() {
 
   ELC_setup_constants();
+  elc_params.h = box_geo.length()[2] - elc_params.gap_size;
 
   if (elc_params.dielectric_contrast_on) {
     // recalculate the space layer size
     // set the space_layer to be 1/3 of the gap size, so that box = layer
     elc_params.space_layer = (1. / 3.) * elc_params.gap_size;
     // but make sure we leave enough space to not have to bother with
-    // overlapping
-    // realspace P3M
+    // overlapping realspace P3M
     double maxsl = elc_params.gap_size - p3m.params.r_cut;
     // and make sure the space layer is not bigger than half the actual
-    // simulation box,
-    // to avoid overlaps
+    // simulation box, to avoid overlaps
     if (maxsl > .5 * elc_params.h)
       maxsl = .5 * elc_params.h;
     if (elc_params.space_layer > maxsl) {
@@ -1076,73 +1048,77 @@ void ELC_init() {
         std::min(elc_params.space_box, elc_params.space_layer);
   }
 
-  if (elc_params.far_calculated && (elc_params.dielectric_contrast_on)) {
-    if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
-      runtimeErrorMsg() << "ELC auto-retuning failed";
+  if (elc_params.far_calculated && elc_params.dielectric_contrast_on) {
+    try {
+      elc_params.far_cut = ELC_tune_far_cut(elc_params);
+      elc_params.far_cut2 = Utils::sqr(elc_params.far_cut);
+    } catch (std::runtime_error const &err) {
+      runtimeErrorMsg() << err.what() << " (during auto-retuning)";
     }
   }
 }
 
-int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
-                   bool neutralize, double delta_top, double delta_bot,
-                   bool const_pot, double pot_diff) {
-  elc_params.maxPWerror = maxPWerror;
-  elc_params.gap_size = gap_size;
-  elc_params.h = box_geo.length()[2] - gap_size;
-
-  if (delta_top != 0.0 || delta_bot != 0.0) {
-    elc_params.dielectric_contrast_on = true;
-
-    elc_params.delta_mid_top = delta_top;
-    elc_params.delta_mid_bot = delta_bot;
-
-    // neutralize is automatic with dielectric contrast
-    elc_params.neutralize = false;
-    // initial setup of parameters, may change later when P3M is finally tuned
-    // set the space_layer to be 1/3 of the gap size, so that box = layer
-    elc_params.space_layer = (1. / 3.) * gap_size;
-    // set the space_box
-    elc_params.space_box = gap_size - 2 * elc_params.space_layer;
-    // reset minimal_dist for tuning
-    elc_params.minimal_dist =
-        std::min(elc_params.space_box, elc_params.space_layer);
-
-    // Constant potential parameter setup
-    if (const_pot) {
-      elc_params.const_pot = true;
-      elc_params.pot_diff = pot_diff;
-    }
-  } else {
-    // setup without dielectric contrast
-    elc_params.dielectric_contrast_on = false;
-    elc_params.const_pot = false;
-    elc_params.delta_mid_top = 0;
-    elc_params.delta_mid_bot = 0;
-    elc_params.neutralize = neutralize;
-    elc_params.space_layer = 0;
-    elc_params.space_box = elc_params.minimal_dist = gap_size;
+void ELC_set_params(double maxPWerror, double gap_size, double far_cut,
+                    bool neutralize, double delta_top, double delta_bot,
+                    bool const_pot, double pot_diff) {
+  assert(coulomb.method == COULOMB_ELC_P3M or coulomb.method == COULOMB_P3M);
+  auto const h = box_geo.length()[2] - gap_size;
+  if (maxPWerror <= 0.) {
+    throw std::domain_error("maxPWerror must be > 0");
+  }
+  if (gap_size <= 0.) {
+    throw std::domain_error("gap_size must be > 0");
+  }
+  if (h < 0.) {
+    throw std::domain_error("gap size too large");
   }
 
+  ELC_struct new_elc_params;
+  if (delta_top != 0.0 || delta_bot != 0.0) {
+    // setup with dielectric contrast (neutralize is automatic)
+
+    // initial setup of parameters, may change later when P3M is finally tuned
+    // set the space_layer to be 1/3 of the gap size, so that box = layer
+    auto const space_layer = gap_size / 3.;
+    auto const space_box = gap_size - 2. * space_layer;
+
+    new_elc_params = ELC_struct{maxPWerror,
+                                far_cut,
+                                0.,
+                                gap_size,
+                                far_cut == -1.,
+                                false,
+                                true,
+                                delta_top,
+                                delta_bot,
+                                const_pot,
+                                (const_pot) ? pot_diff : 0.,
+                                std::min(space_box, space_layer),
+                                space_layer,
+                                space_box,
+                                h};
+  } else {
+    // setup without dielectric contrast
+    new_elc_params =
+        ELC_struct{maxPWerror, far_cut,  0., gap_size, far_cut == -1.,
+                   neutralize, false,    0., 0.,       false,
+                   0.,         gap_size, 0., gap_size, h};
+  }
+
+  ELC_sanity_checks(new_elc_params);
+
   ELC_setup_constants();
+  if (new_elc_params.far_calculated) {
+    new_elc_params.far_cut = ELC_tune_far_cut(new_elc_params);
+  }
+  new_elc_params.far_cut2 = Utils::sqr(new_elc_params.far_cut);
 
-  int error_code = Coulomb::elc_sanity_check();
-
+  // set new parameters
+  elc_params = new_elc_params;
   p3m.params.epsilon = P3M_EPSILON_METALLIC;
   coulomb.method = COULOMB_ELC_P3M;
 
-  elc_params.far_cut = far_cut;
-  if (far_cut != -1) {
-    elc_params.far_cut2 = Utils::sqr(far_cut);
-    elc_params.far_calculated = false;
-  } else {
-    elc_params.far_calculated = true;
-    if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
-      error_code = ES_ERROR;
-    }
-  }
   mpi_bcast_coulomb_params();
-
-  return error_code;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

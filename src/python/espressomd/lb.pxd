@@ -32,6 +32,9 @@ from .utils cimport Vector19d
 cdef class HydrodynamicInteraction(Actor):
     pass
 
+cdef class LBFluidRoutines:
+    cdef Vector3i node
+
     ##############################################
     #
     # extern functions and structs

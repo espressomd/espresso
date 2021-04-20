@@ -16,30 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef REACTION_ENSEMBLE_TESTS_PARTICLE_FACTORY_HPP
-#define REACTION_ENSEMBLE_TESTS_PARTICLE_FACTORY_HPP
 
-#include "particle_data.hpp"
+#include <utils/Vector.hpp>
 
-#include <vector>
-
-/** Fixture to create particles during a test and remove them at the end. */
-struct ParticleFactory {
-  ParticleFactory() = default;
-  ~ParticleFactory() {
-    for (auto pid : particle_cache) {
-      remove_particle(pid);
-    }
-  }
-  void create_particle(int pid, int type) {
-    double pos[3] = {0., 0., 0.};
-    place_particle(pid, pos);
-    set_particle_type(pid, type);
-    particle_cache.emplace_back(pid);
-  }
+/** Manager for a stand-alone ESPResSo system.
+ *  The system is default-initialized, MPI-ready and has no script interface.
+ */
+class EspressoSystemStandAlone {
+public:
+  EspressoSystemStandAlone(int argc, char **argv);
+  void set_box_l(Utils::Vector3d const &box_l) const;
+  void set_time_step(double time_step) const;
+  void set_skin(double new_skin) const;
 
 private:
-  std::vector<int> particle_cache;
+  bool head_node;
 };
-
-#endif

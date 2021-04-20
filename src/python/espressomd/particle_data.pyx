@@ -169,14 +169,14 @@ cdef class ParticleHandle:
         """
 
         def __set__(self, _pos):
-            cdef double mypos[3]
+            cdef Vector3d pos
             if np.isnan(_pos).any() or np.isinf(_pos).any():
                 raise ValueError("invalid particle position")
             check_type_or_throw_except(
                 _pos, 3, float, "Position must be 3 floats")
             for i in range(3):
-                mypos[i] = _pos[i]
-            if place_particle(self._id, mypos) == -1:
+                pos[i] = _pos[i]
+            if place_particle(self._id, pos) == -1:
                 raise Exception("particle could not be set")
 
         def __get__(self):
@@ -253,12 +253,12 @@ cdef class ParticleHandle:
         """
 
         def __set__(self, _v):
-            cdef double myv[3]
+            cdef Vector3d v
             check_type_or_throw_except(
                 _v, 3, float, "Velocity has to be floats")
             for i in range(3):
-                myv[i] = _v[i]
-            set_particle_v(self._id, myv)
+                v[i] = _v[i]
+            set_particle_v(self._id, v)
 
         def __get__(self):
             self.update_particle_data()
@@ -473,7 +473,6 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 return make_array_locked(self.particle_data.r.calc_director())
 
-        # ROTATIONAL_INERTIA
         property omega_body:
             """
             The particle angular velocity in body frame.
@@ -556,7 +555,7 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _rinertia):
-                cdef double rinertia[3]
+                cdef Vector3d rinertia
                 check_type_or_throw_except(
                     _rinertia, 3, float, "Rotation_inertia has to be 3 floats.")
                 for i in range(3):
@@ -621,7 +620,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 cdef Vector3d _mu_E
-                get_particle_mu_E(self._id, _mu_E)
+                _mu_E = get_particle_mu_E(self._id)
                 return make_array_locked(_mu_E)
 
     property virtual:
@@ -762,13 +761,13 @@ cdef class ParticleHandle:
 
             """
 
-            def __set__(self, _q):
-                cdef double myq[3]
+            def __set__(self, _dip):
+                cdef Vector3d dip
                 check_type_or_throw_except(
-                    _q, 3, float, "Dipole moment vector has to be 3 floats.")
+                    _dip, 3, float, "Dipole moment vector has to be 3 floats.")
                 for i in range(3):
-                    myq[i] = _q[i]
-                set_particle_dip(self._id, myq)
+                    dip[i] = _dip[i]
+                set_particle_dip(self._id, dip)
 
             def __get__(self):
                 self.update_particle_data()
@@ -1271,16 +1270,13 @@ cdef class ParticleHandle:
             raise Exception("Could not remove particle.")
         del self
 
-    # Bond related methods
-    # Does not work properly with 3 or more partner bonds!
-
     def add_verified_bond(self, bond):
         """
         Add a bond, the validity of which has already been verified.
 
         See Also
         --------
-        add_bond : Delete an unverified bond held by the ``Particle``.
+        add_bond : Add an unverified bond to the ``Particle``.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
@@ -1870,7 +1866,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
         # done here. the code is from the pos:property of ParticleHandle
-        cdef double mypos[3]
+        cdef Vector3d mypos
         check_type_or_throw_except(
             P["pos"], 3, float, "Position must be 3 floats.")
         for i in range(3):

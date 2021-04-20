@@ -25,7 +25,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "ParticleFactory.hpp"
+#include "unit_tests/ParticleFactory.hpp"
 
 #include "reaction_methods/WangLandauReactionEnsemble.hpp"
 #include "reaction_methods/utils.hpp"
@@ -73,16 +73,16 @@ BOOST_FIXTURE_TEST_CASE(DegreeOfAssociationCollectiveVariable_test,
   BOOST_CHECK_THROW(doa_cv.determine_current_state(), std::runtime_error);
 
   // add base
-  create_particle(0, type_A);
+  create_particle({}, 0, type_A);
   BOOST_CHECK_CLOSE(doa_cv.determine_current_state(), 1.0, tol);
 
   // add acid
-  create_particle(1, type_AH);
+  create_particle({}, 1, type_AH);
   BOOST_CHECK_CLOSE(doa_cv.determine_current_state(), 0.5, tol);
 
   // add acid
-  create_particle(2, type_AH);
-  create_particle(3, type_AH2);
+  create_particle({}, 2, type_AH);
+  create_particle({}, 3, type_AH2);
   BOOST_CHECK_CLOSE(doa_cv.determine_current_state(), 0.25, tol);
 }
 
