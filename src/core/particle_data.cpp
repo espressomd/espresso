@@ -686,22 +686,20 @@ void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
   on_particle_change();
 }
 
-int place_particle(int p_id, const double *pos) {
-  Utils::Vector3d p{pos[0], pos[1], pos[2]};
-
+int place_particle(int p_id, Utils::Vector3d const &pos) {
   if (particle_exists(p_id)) {
-    mpi_place_particle(get_particle_node(p_id), p_id, p);
+    mpi_place_particle(get_particle_node(p_id), p_id, pos);
 
     return ES_PART_OK;
   }
-  particle_node[p_id] = mpi_place_new_particle(p_id, p);
+  particle_node[p_id] = mpi_place_new_particle(p_id, pos);
 
   return ES_PART_CREATED;
 }
 
-void set_particle_v(int part, double *v) {
+void set_particle_v(int part, Utils::Vector3d const &v) {
   mpi_update_particle<ParticleMomentum, &Particle::m, Utils::Vector3d,
-                      &ParticleMomentum::v>(part, Utils::Vector3d(v, v + 3));
+                      &ParticleMomentum::v>(part, v);
 }
 
 #ifdef ENGINE
@@ -711,9 +709,9 @@ void set_particle_swimming(int part, ParticleParametersSwimming swim) {
 }
 #endif
 
-void set_particle_f(int part, const Utils::Vector3d &F) {
+void set_particle_f(int part, const Utils::Vector3d &f) {
   mpi_update_particle<ParticleForce, &Particle::f, Utils::Vector3d,
-                      &ParticleForce::f>(part, F);
+                      &ParticleForce::f>(part, f);
 }
 
 #if defined(MASS)
@@ -725,9 +723,10 @@ const constexpr double ParticleProperties::mass;
 #endif
 
 #ifdef ROTATIONAL_INERTIA
-void set_particle_rotational_inertia(int part, double *rinertia) {
+void set_particle_rotational_inertia(int part,
+                                     Utils::Vector3d const &rinertia) {
   mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::rinertia>(
-      part, Utils::Vector3d(rinertia, rinertia + 3));
+      part, rinertia);
 }
 #else
 constexpr Utils::Vector3d ParticleProperties::rinertia;
@@ -749,11 +748,10 @@ void set_particle_dipm(int part, double dipm) {
   mpi_update_particle_property<double, &ParticleProperties::dipm>(part, dipm);
 }
 
-void set_particle_dip(int part, double const *const dip) {
+void set_particle_dip(int part, Utils::Vector3d const &dip) {
   Utils::Quaternion<double> quat;
   double dipm;
-  std::tie(quat, dipm) =
-      convert_dip_to_quat(Utils::Vector3d({dip[0], dip[1], dip[2]}));
+  std::tie(quat, dipm) = convert_dip_to_quat(dip);
 
   set_particle_dipm(part, dipm);
   set_particle_quat(part, quat.data());
@@ -807,9 +805,9 @@ void set_particle_mu_E(int part, Utils::Vector3d const &mu_E) {
       part, mu_E);
 }
 
-void get_particle_mu_E(int part, Utils::Vector3d &mu_E) {
+Utils::Vector3d get_particle_mu_E(int part) {
   auto const &p = get_particle_data(part);
-  mu_E = p.p.mu_E;
+  return p.p.mu_E;
 }
 #endif
 
@@ -836,7 +834,7 @@ void set_particle_mol_id(int part, int mid) {
 }
 
 #ifdef ROTATION
-void set_particle_quat(int part, double *quat) {
+void set_particle_quat(int part, double *const quat) {
   mpi_update_particle<ParticlePosition, &Particle::r, Utils::Quaternion<double>,
                       &ParticlePosition::quat>(
       part, Utils::Quaternion<double>{quat[0], quat[1], quat[2], quat[3]});
@@ -876,7 +874,7 @@ void set_particle_gamma(int part, double gamma) {
   mpi_update_particle_property<double, &ParticleProperties::gamma>(part, gamma);
 }
 #else
-void set_particle_gamma(int part, Utils::Vector3d gamma) {
+void set_particle_gamma(int part, Utils::Vector3d const &gamma) {
   mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::gamma>(
       part, gamma);
 }
@@ -889,7 +887,7 @@ void set_particle_gamma_rot(int part, double gamma_rot) {
       part, gamma_rot);
 }
 #else
-void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
+void set_particle_gamma_rot(int part, Utils::Vector3d const &gamma_rot) {
   mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::gamma_rot>(
       part, gamma_rot);
 }

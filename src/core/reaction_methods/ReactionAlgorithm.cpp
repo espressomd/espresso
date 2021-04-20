@@ -496,10 +496,9 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   } else {
     p_id = get_maximal_particle_id() + 1;
   }
-  Utils::Vector3d pos_vec;
 
   // create random velocity vector according to Maxwell-Boltzmann distribution
-  double vel[3];
+  Utils::Vector3d vel;
   // we use mass=1 for all particles, think about adapting this
   vel[0] = std::sqrt(temperature) * m_normal_distribution(m_generator);
   vel[1] = std::sqrt(temperature) * m_normal_distribution(m_generator);
@@ -508,8 +507,8 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   double charge = charges_of_types[desired_type];
 #endif
 
-  pos_vec = get_random_position_in_box();
-  place_particle(p_id, pos_vec.data());
+  auto const pos_vec = get_random_position_in_box();
+  place_particle(p_id, pos_vec);
   // set type
   set_particle_type(p_id, desired_type);
 #ifdef ELECTROSTATICS
@@ -554,8 +553,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
-  std::vector<double> particle_positions(3 *
-                                         particle_number_of_type_to_be_changed);
+  std::vector<Utils::Vector3d> particle_positions(
+      particle_number_of_type_to_be_changed);
   std::vector<int> p_id_s_changed_particles;
 
   // heuristic to find a particle that hasn't been touched already
@@ -571,9 +570,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
     auto part = get_particle_data(p_id);
 
-    particle_positions[3 * i] = part.r.p[0];
-    particle_positions[3 * i + 1] = part.r.p[1];
-    particle_positions[3 * i + 2] = part.r.p[2];
+    particle_positions[i] = part.r.p;
     p_id_s_changed_particles.push_back(p_id);
   }
 
@@ -584,12 +581,12 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     auto const new_pos = get_random_position_in_box();
     auto const &p = get_particle_data(p_id);
     auto const prefactor = std::sqrt(temperature / p.p.mass);
-    double vel[3];
+    Utils::Vector3d vel;
     vel[0] = prefactor * m_normal_distribution(m_generator);
     vel[1] = prefactor * m_normal_distribution(m_generator);
     vel[2] = prefactor * m_normal_distribution(m_generator);
     set_particle_v(p_id, vel);
-    place_particle(p_id, new_pos.data());
+    place_particle(p_id, new_pos);
     auto const d_min = distto(partCfg(), new_pos, p_id);
     if (d_min < exclusion_radius)
       particle_inside_exclusion_radius_touched = true;
@@ -621,8 +618,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   // // correct for enhanced proposal of small radii by using the
   // // Metropolis-Hastings algorithm for asymmetric proposal densities
   // double old_radius =
-  //     std::sqrt(std::pow(particle_positions[0]-cyl_x,2) +
-  //               std::pow(particle_positions[1]-cyl_y,2));
+  //     std::sqrt(std::pow(particle_positions[0][0]-cyl_x,2) +
+  //               std::pow(particle_positions[0][1]-cyl_y,2));
   // double new_radius =
   //     std::sqrt(std::pow(new_pos[0]-cyl_x,2)+std::pow(new_pos[1]-cyl_y,2));
   // bf = std::min(1.0,
@@ -644,7 +641,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   }
   // create particles again at the positions they were
   for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
-    place_particle(p_id_s_changed_particles[i], &particle_positions[3 * i]);
+    place_particle(p_id_s_changed_particles[i], particle_positions[i]);
   return false;
 }
 
