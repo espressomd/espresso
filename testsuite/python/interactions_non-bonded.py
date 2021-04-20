@@ -24,21 +24,17 @@ import tests_common
 
 
 class InteractionsNonBondedTest(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    box_l = 10.
+    system = espressomd.System(box_l=3 * [10.])
+    system.cell_system.skin = 0.
+    system.time_step = .1
 
-    start_pos = np.random.rand(3) * box_l
+    start_pos = np.random.rand(3) * system.box_l
     axis = np.random.rand(3)
     axis /= np.linalg.norm(axis)
     step = axis * 0.01
     step_width = np.linalg.norm(step)
 
     def setUp(self):
-
-        self.system.box_l = [self.box_l] * 3
-        self.system.cell_system.skin = 0.
-        self.system.time_step = .1
-
         self.system.part.add(pos=self.start_pos, type=0)
         self.system.part.add(pos=self.start_pos, type=0)
 
@@ -410,7 +406,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         getattr(self.system.non_bonded_inter[0, 0], name).set_params(
             **parameters)
         p0, p1 = self.system.part[:]
-        p1.pos = p1.pos + self.step * n_initial_steps
+        p1.pos = p0.pos + self.step * n_initial_steps
 
         force_parameters = parameters.copy()
         if "shift" in force_parameters and force_kernel_remove_shift:
