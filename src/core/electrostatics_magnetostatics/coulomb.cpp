@@ -91,8 +91,13 @@ void sanity_checks(int &state) {
     break;
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    if (ELC_sanity_checks())
-      state = 0; // fall through
+    try {
+      ELC_sanity_checks(elc_params);
+    } catch (std::runtime_error const &err) {
+      runtimeErrorMsg() << err.what();
+      state = 0;
+    }
+    // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     if (p3m_sanity_checks())
@@ -384,24 +389,6 @@ int icc_sanity_check() {
 #endif
 
   return 0;
-}
-
-int elc_sanity_check() {
-#ifdef P3M
-  switch (coulomb.method) {
-  case COULOMB_P3M_GPU: {
-    runtimeErrorMsg()
-        << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
-    return ES_ERROR;
-  }
-  case COULOMB_ELC_P3M:
-  case COULOMB_P3M:
-    return ES_OK;
-  default:
-    break;
-  }
-#endif
-  return ES_ERROR;
 }
 
 void bcast_coulomb_params() {

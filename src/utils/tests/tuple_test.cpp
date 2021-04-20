@@ -32,7 +32,7 @@
 #include <type_traits>
 #include <utility>
 
-BOOST_AUTO_TEST_CASE(for_each) {
+BOOST_AUTO_TEST_CASE(for_each_) {
   using Utils::for_each;
 
   /* l-value reference tuple */
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(for_each) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(apply_test) {
+BOOST_AUTO_TEST_CASE(apply_) {
   /* constexpr */
   {
     static_assert(Utils::apply(std::plus<>(), std::array<int, 2>{3, 8}) == 11,

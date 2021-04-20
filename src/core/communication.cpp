@@ -149,13 +149,13 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
 }
 } // namespace Communication
 
-std::shared_ptr<boost::mpi::environment> mpi_init() {
+std::shared_ptr<boost::mpi::environment> mpi_init(int argc, char **argv) {
 #ifdef OPEN_MPI
   openmpi_fix_vader();
   openmpi_global_namespace();
 #endif
 
-  return std::make_shared<boost::mpi::environment>();
+  return std::make_shared<boost::mpi::environment>(argc, argv);
 }
 
 void mpi_loop() {

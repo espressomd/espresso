@@ -454,12 +454,8 @@ IF P3M == 1:
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float,
                 "maxPWerror has to be a float")
-            check_range_or_except(
-                self._params, "maxPWerror", 0, False, "inf", True)
             check_type_or_throw_except(self._params["gap_size"], 1, float,
                                        "gap_size has to be a float")
-            check_range_or_except(
-                self._params, "gap_size", 0, False, "inf", True)
             check_type_or_throw_except(self._params["far_cut"], 1, float,
                                        "far_cut has to be a float")
             check_type_or_throw_except(
@@ -500,7 +496,7 @@ IF P3M == 1:
                 self._params["delta_mid_top"] = -1
                 self._params["delta_mid_bot"] = -1
 
-            if ELC_set_params(
+            ELC_set_params(
                 self._params["maxPWerror"],
                 self._params["gap_size"],
                 self._params["far_cut"],
@@ -508,8 +504,7 @@ IF P3M == 1:
                 self._params["delta_mid_top"],
                 self._params["delta_mid_bot"],
                 self._params["const_pot"],
-                    self._params["pot_diff"]):
-                handle_errors("ELC tuning failed")
+                self._params["pot_diff"])
 
         def tune(self, **tune_params_subset):
             self._params["p3m_actor"].tune(**tune_params_subset)

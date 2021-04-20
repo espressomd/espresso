@@ -82,7 +82,7 @@
  *    This function returns the bond energy. The same information as given for
  *    the force calculation above applies here. This function will be called
  *    from @ref energy_inline.hpp .
- *  * An explicit default contructor, for example
+ *  * An explicit default constructor, for example
  *    @code{.cpp}
  *    FeneBond() = default;
  *    @endcode

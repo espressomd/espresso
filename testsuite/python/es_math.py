@@ -27,7 +27,7 @@ class TestMath(ut.TestCase):
         self.assertAlmostEqual(np.dot(vec1, vec2), 0)
 
     def test_cylindrical_transformation_parameters(self):
-        """ Test for the varous constructors of CylindricalTransformationParameters """
+        """ Test for the various constructors of CylindricalTransformationParameters """
 
         ctp_default = espressomd.math.CylindricalTransformationParameters()
         self.check_orthonormality(ctp_default.axis, ctp_default.orientation)

@@ -491,7 +491,6 @@ IF LB_WALBERLA:
 
 
 cdef class LBFluidRoutines:
-    cdef Vector3i node
 
     def __init__(self, key):
         utils.check_type_or_throw_except(

@@ -69,7 +69,7 @@ class Billiards:
 
     def update_cueball_force(self):
         direction = np.array([math.sin(self.angle), 0, math.cos(self.angle)])
-        system.part[0].ext_force = self.impulse * direction
+        cue_ball.ext_force = self.impulse * direction
 
     def decreaseAngle(self):
         if self.stopped:
@@ -94,9 +94,9 @@ class Billiards:
     def fire(self):
         if self.stopped:
             self.stopped = False
-            system.part[0].v = system.part[0].v + system.part[0].ext_force
-            system.part[0].fix = [False, True, False]
-            system.part[0].ext_force = [0, 0, 0]
+            cue_ball.v = cue_ball.v + cue_ball.ext_force
+            cue_ball.fix = [False, True, False]
+            cue_ball.ext_force = [0, 0, 0]
 
 
 pool = Billiards()
@@ -113,118 +113,118 @@ visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('5', KeyboardFireEvent.Pressed, pool.fire))
 
 
-def main():
+system.time_step = 0.00008
+system.cell_system.skin = 0.4
 
-    system.time_step = 0.00008
-    system.cell_system.skin = 0.4
+table_h = 0.5
+ball_diam = 0.0572
+ball_mass = 0.17
+hole_dist = 0.02
+hole_rad = 0.08
+hole_score_rad = hole_rad + ball_diam / 2
+hole_pos = [[hole_dist, table_h, hole_dist],
+            [hole_dist, table_h, table_dim[1] - hole_dist],
+            [table_dim[0] - hole_dist, table_h, hole_dist],
+            [table_dim[0] - hole_dist, table_h, table_dim[1] - hole_dist],
+            [table_dim[0] * 0.5, table_h, table_dim[1] - hole_dist],
+            [table_dim[0] * 0.5, table_h, hole_dist]]
+types = {'cue_ball': 0, 'striped_ball': 1, 'solid_ball': 2,
+         'black_ball': 3, 'table': 4, 'wall': 5, 'hole': 6}
 
-    table_h = 0.5
-    ball_diam = 0.0572
-    ball_mass = 0.17
-    hole_dist = 0.02
-    hole_rad = 0.08
-    hole_score_rad = hole_rad + ball_diam / 2
-    hole_pos = [[hole_dist, table_h, hole_dist],
-                [hole_dist, table_h, table_dim[1] - hole_dist],
-                [table_dim[0] - hole_dist, table_h, hole_dist],
-                [table_dim[0] - hole_dist, table_h, table_dim[1] - hole_dist],
-                [table_dim[0] * 0.5, table_h, table_dim[1] - hole_dist],
-                [table_dim[0] * 0.5, table_h, hole_dist]]
-    types = {'cue_ball': 0, 'striped_ball': 1, 'solid_ball': 2,
-             'black_ball': 3, 'table': 4, 'wall': 5, 'hole': 6}
-
+system.constraints.add(
+    shape=espressomd.shapes.Wall(dist=table_h, normal=[0.0, 1.0, 0.0]),
+    particle_type=types['table'],
+    penetrable=True)
+system.constraints.add(
+    shape=espressomd.shapes.Wall(dist=0.01, normal=[1.0, 0.0, 0.0]),
+    particle_type=types['wall'],
+    penetrable=True)
+system.constraints.add(
+    shape=espressomd.shapes.Wall(
+        dist=-(table_dim[0] - 0.01),
+        normal=[-1.0, 0.0, 0.0]),
+    particle_type=types['wall'],
+    penetrable=True)
+system.constraints.add(
+    shape=espressomd.shapes.Wall(
+        dist=0.01,
+        normal=[0.0, 0.0, 1.0]),
+    particle_type=types['wall'],
+    penetrable=True)
+system.constraints.add(
+    shape=espressomd.shapes.Wall(
+        dist=-(table_dim[1] - 0.01),
+        normal=[0.0, 0.0, -1.0]),
+    particle_type=types['wall'],
+    penetrable=True)
+for h in hole_pos:
     system.constraints.add(
-        shape=espressomd.shapes.Wall(dist=table_h, normal=[0.0, 1.0, 0.0]),
-        particle_type=types['table'],
+        shape=espressomd.shapes.Cylinder(
+            center=(np.array(h)
+                    - np.array([0, table_h * 0.5, 0])).tolist(),
+            axis=[0, 1, 0],
+            radius=hole_rad,
+            length=1.02 * table_h,
+            direction=1),
+        particle_type=types['hole'],
         penetrable=True)
-    system.constraints.add(
-        shape=espressomd.shapes.Wall(dist=0.01, normal=[1.0, 0.0, 0.0]),
-        particle_type=types['wall'],
-        penetrable=True)
-    system.constraints.add(
-        shape=espressomd.shapes.Wall(
-            dist=-(table_dim[0] - 0.01),
-            normal=[-1.0, 0.0, 0.0]),
-        particle_type=types['wall'],
-        penetrable=True)
-    system.constraints.add(
-        shape=espressomd.shapes.Wall(
-            dist=0.01,
-            normal=[0.0, 0.0, 1.0]),
-        particle_type=types['wall'],
-        penetrable=True)
-    system.constraints.add(
-        shape=espressomd.shapes.Wall(
-            dist=-(table_dim[1] - 0.01),
-            normal=[0.0, 0.0, -1.0]),
-        particle_type=types['wall'],
-        penetrable=True)
-    for h in hole_pos:
-        system.constraints.add(
-            shape=espressomd.shapes.Cylinder(
-                center=(np.array(h)
-                        - np.array([0, table_h * 0.5, 0])).tolist(),
-                axis=[0, 1, 0],
-                radius=hole_rad,
-                length=1.02 * table_h,
-                direction=1),
-            particle_type=types['hole'],
-            penetrable=True)
 
-    # WCA
-    for t1 in range(4):
-        for t2 in range(6):
-            system.non_bonded_inter[t1, t2].wca.set_params(
-                epsilon=1.0, sigma=ball_diam)
+# WCA
+for t1 in range(4):
+    for t2 in range(6):
+        system.non_bonded_inter[t1, t2].wca.set_params(
+            epsilon=1.0, sigma=ball_diam)
 
-    ball_y = table_h + ball_diam * 1.5
+ball_y = table_h + ball_diam * 1.5
 
-    # PARTICLES
-    ball_start_pos = [table_dim[0] * 0.25, ball_y, table_dim[1] * 0.5]
-    system.part.add(id=0, pos=ball_start_pos,
-                    type=types['cue_ball'], mass=ball_mass)
-    spawnpos = []
-    spawnpos.append(ball_start_pos)
-    ball = system.part[0]
+# PARTICLES
+ball_start_pos = [table_dim[0] * 0.25, ball_y, table_dim[1] * 0.5]
+cue_ball = system.part.add(pos=ball_start_pos,
+                           type=types['cue_ball'], mass=ball_mass)
+spawnpos = {cue_ball.id: ball_start_pos}
 
-    d = 1.15 * ball_diam
-    a1 = np.array([d * math.sqrt(3) / 2.0, 0, -0.5 * d])
-    a2 = np.array([d * math.sqrt(3) / 2.0, 0, 0.5 * d])
-    sp = [system.box_l[0] * 0.7, ball_y,
-          system.box_l[2] * 0.5 + ball_diam * 0.5]
-    pid = 1
-    order = [
-        types['solid_ball'],
-        types['striped_ball'],
-        types['solid_ball'],
-        types['solid_ball'],
-        types['black_ball'],
-        types['striped_ball'],
-        types['striped_ball'],
-        types['solid_ball'],
-        types['striped_ball'],
-        types['solid_ball'],
-        types['solid_ball'],
-        types['striped_ball'],
-        types['striped_ball'],
-        types['solid_ball'],
-        types['striped_ball']]
+d = 1.15 * ball_diam
+a1 = np.array([d * math.sqrt(3) / 2.0, 0, -0.5 * d])
+a2 = np.array([d * math.sqrt(3) / 2.0, 0, 0.5 * d])
+sp = [system.box_l[0] * 0.7, ball_y,
+      system.box_l[2] * 0.5 + ball_diam * 0.5]
+order = [
+    types['solid_ball'],
+    types['striped_ball'],
+    types['solid_ball'],
+    types['solid_ball'],
+    types['black_ball'],
+    types['striped_ball'],
+    types['striped_ball'],
+    types['solid_ball'],
+    types['striped_ball'],
+    types['solid_ball'],
+    types['solid_ball'],
+    types['striped_ball'],
+    types['striped_ball'],
+    types['solid_ball'],
+    types['striped_ball']]
 
-    for i in range(5):
-        for j in range(i + 1):
-            N = i + 1
-            t = order[pid - 1]
-            pos = sp + a1 * (N - j) + a2 * j
-            system.part.add(id=pid, pos=pos, mass=ball_mass,
+n = 0
+for i in range(5):
+    for j in range(i + 1):
+        t = order[n]
+        pos = sp + a1 * (i + 1 - j) + a2 * j
+        p = system.part.add(pos=pos, mass=ball_mass,
                             type=t, fix=[False, True, False])
-            spawnpos.append(pos)
-            pid += 1
+        spawnpos[p.id] = pos
+        if t == types["black_ball"]:
+            black_ball = p
+        n += 1
 
-    pool.update_cueball_force()
-    ball.fix = [True, True, True]
-    system.thermostat.set_langevin(kT=0, gamma=0.8, seed=42)
+pool.update_cueball_force()
+cue_ball.fix = [True, True, True]
+system.thermostat.set_langevin(kT=0, gamma=0.8, seed=42)
 
-    cleared_balls = [0, 0]
+cleared_balls = [0, 0]
+
+
+def main():
     while True:
         system.integrator.run(1)
 
@@ -237,15 +237,15 @@ def main():
                 d = ((p.pos_folded[0] - h[0])**2
                      + (p.pos_folded[2] - h[2])**2)**0.5
                 if d < hole_score_rad:
-                    if p.id == 0:
+                    if p.id == cue_ball.id:
                         p.pos = ball_start_pos
                         p.v = [0, 0, 0]
-                    elif p.id == 5:
+                    elif p.id == black_ball.id:
                         for p2 in system.part:
                             p2.pos = spawnpos[p2.id]
                             p2.v = [0, 0, 0]
                             p2.fix = [False, True, False]
-                        ball.fix = [True, True, True]
+                        cue_ball.fix = [True, True, True]
                         pool.update_cueball_force()
                         pool.stopped = True
                     else:
@@ -261,7 +261,7 @@ def main():
 
         if not pool.stopped and vsum < 0.3:
             pool.stopped = True
-            ball.fix = [True, True, True]
+            cue_ball.fix = [True, True, True]
             for p in system.part:
                 p.v = [0, 0, 0]
             pool.update_cueball_force()

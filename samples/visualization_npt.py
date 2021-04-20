@@ -44,11 +44,10 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 system.bonded_inter[0] = HarmonicBond(k=5.0, r_0=1.0)
 
 n_part = 200
-for i in range(n_part):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
-
 for i in range(0, n_part - 1, 2):
-    system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
+    part1 = system.part.add(pos=np.random.random(3) * system.box_l)
+    part2 = system.part.add(pos=np.random.random(3) * system.box_l)
+    part1.add_bond((system.bonded_inter[0], part2.id))
 
 print("E before minimization:", system.analysis.energy()["total"])
 system.integrator.set_steepest_descent(f_max=0.0, gamma=30.0,

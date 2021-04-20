@@ -31,11 +31,14 @@ from .utils cimport Vector6d
 cdef class HydrodynamicInteraction(Actor):
     pass
 
-    #
+cdef class LBFluidRoutines:
+    cdef Vector3i node
+
+    ##############################################
     #
     # extern functions and structs
     #
-    #
+    ##############################################
 
 IF LB_WALBERLA:
     cdef extern from "grid_based_algorithms/lb_interface.hpp":

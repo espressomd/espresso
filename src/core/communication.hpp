@@ -82,7 +82,8 @@ MpiCallbacks &mpiCallbacks();
  **************************************************/
 
 /** Initialize MPI. */
-std::shared_ptr<boost::mpi::environment> mpi_init();
+std::shared_ptr<boost::mpi::environment> mpi_init(int argc = 0,
+                                                  char **argv = nullptr);
 
 /** @brief Call a slave function.
  *  @tparam Args   Slave function argument types

@@ -70,5 +70,5 @@ def hydrostatic_pressure(
         box_z,
         agrid):
     offset = ek[int(box_x / (2 * agrid)), int(box_y / (2 * agrid)),
-                int(box_z / (2 * agrid))].pressure[tensor_entry]
+                int(box_z / (2 * agrid))].pressure_tensor[tensor_entry]
     return 0.0 + offset

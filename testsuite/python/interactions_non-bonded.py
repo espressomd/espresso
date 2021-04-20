@@ -75,9 +75,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "e1": 10.32,
                        "e2": 5.81,
                        "shift": -0.13},
-                      tests_common.lj_generic_force,
-                      tests_common.lj_generic_potential,
-                      231,
+                      force_kernel=tests_common.lj_generic_force,
+                      energy_kernel=tests_common.lj_generic_potential,
+                      n_steps=231,
                       force_kernel_needs_espressomd=True)
 
     # Test WCA Potential
@@ -92,11 +92,11 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.run_test("wca",
                       {"epsilon": wca_eps,
                        "sigma": wca_sig},
-                      lambda espressomd, r, epsilon, sigma: tests_common.lj_generic_force(
+                      force_kernel=lambda espressomd, r, epsilon, sigma: tests_common.lj_generic_force(
                           espressomd, r, epsilon=epsilon, sigma=sigma, cutoff=wca_cutoff),
-                      lambda r, epsilon, sigma: tests_common.lj_generic_potential(
+                      energy_kernel=lambda r, epsilon, sigma: tests_common.lj_generic_potential(
                           r, epsilon=epsilon, sigma=sigma, cutoff=wca_cutoff, shift=4. * wca_shift),
-                      231,
+                      n_steps=231,
                       force_kernel_needs_espressomd=True)
 
     # Test Generic Lennard-Jones Softcore Potential
@@ -115,9 +115,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "shift": 0.13,
                        "delta": 0.1,
                        "lam": 0.34},
-                      tests_common.lj_generic_force,
-                      tests_common.lj_generic_potential,
-                      231,
+                      force_kernel=tests_common.lj_generic_force,
+                      energy_kernel=tests_common.lj_generic_potential,
+                      n_steps=231,
                       force_kernel_needs_espressomd=True)
 
     # Test Lennard-Jones Potential
@@ -129,9 +129,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "sigma": 1.03,
                        "cutoff": 1.123,
                        "shift": 0.92},
-                      tests_common.lj_force,
-                      tests_common.lj_potential,
-                      113,
+                      force_kernel=tests_common.lj_force,
+                      energy_kernel=tests_common.lj_potential,
+                      n_steps=113,
                       force_kernel_needs_espressomd=True)
 
     # Test Lennard-Jones Cosine Potential
@@ -143,9 +143,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "sigma": 0.73,
                        "cutoff": 1.523,
                        "offset": 0.223},
-                      tests_common.lj_cos_force,
-                      tests_common.lj_cos_potential,
-                      175,
+                      force_kernel=tests_common.lj_cos_force,
+                      energy_kernel=tests_common.lj_cos_potential,
+                      n_steps=175,
                       force_kernel_needs_espressomd=True)
 
     # Test Lennard-Jones Cosine^2 Potential
@@ -157,9 +157,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "sigma": 0.73,
                        "width": 1.523,
                        "offset": 0.321},
-                      tests_common.lj_cos2_force,
-                      tests_common.lj_cos2_potential,
-                      267,
+                      force_kernel=tests_common.lj_cos2_force,
+                      energy_kernel=tests_common.lj_cos2_potential,
+                      n_steps=267,
                       force_kernel_needs_espressomd=True)
 
     # Test Smooth-step Potential
@@ -173,26 +173,24 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "d": 2.52,
                        "n": 11,
                        "k0": 2.13},
-                      tests_common.smooth_step_force,
-                      tests_common.smooth_step_potential,
-                      126)
+                      force_kernel=tests_common.smooth_step_force,
+                      energy_kernel=tests_common.smooth_step_potential,
+                      n_steps=126)
 
     # Test BMHTF Potential
     @utx.skipIfMissingFeatures("BMHTF_NACL")
     def test_bmhtf(self):
 
-        params = {"a": 3.92,
-                  "b": 2.43,
-                  "c": 1.23,
-                  "d": 3.33,
-                  "sig": 0.123,
-                  "cutoff": 1.253}
-
         self.run_test("bmhtf",
-                      params,
-                      tests_common.bmhtf_force,
-                      tests_common.bmhtf_potential,
-                      126)
+                      {"a": 3.92,
+                       "b": 2.43,
+                       "c": 1.23,
+                       "d": 3.33,
+                       "sig": 0.123,
+                       "cutoff": 1.253},
+                      force_kernel=tests_common.bmhtf_force,
+                      energy_kernel=tests_common.bmhtf_potential,
+                      n_steps=126)
 
     # Test Morse Potential
     @utx.skipIfMissingFeatures("MORSE")
@@ -203,9 +201,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "alpha": 3.03,
                        "rmin": 0.123,
                        "cutoff": 1.253},
-                      tests_common.morse_force,
-                      tests_common.morse_potential,
-                      126)
+                      force_kernel=tests_common.morse_force,
+                      energy_kernel=tests_common.morse_potential,
+                      n_steps=126)
 
     # Test Buckingham Potential
     @utx.skipIfMissingFeatures("BUCKINGHAM")
@@ -219,9 +217,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "discont": 1.03,
                        "cutoff": 2.253,
                        "shift": 0.133},
-                      tests_common.buckingham_force,
-                      tests_common.buckingham_potential,
-                      226,
+                      force_kernel=tests_common.buckingham_force,
+                      energy_kernel=tests_common.buckingham_potential,
+                      n_steps=226,
                       force_kernel_remove_shift=False)
 
     # Test Soft-sphere Potential
@@ -233,9 +231,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                        "n": 3.03,
                        "cutoff": 1.123,
                        "offset": 0.123},
-                      tests_common.soft_sphere_force,
-                      tests_common.soft_sphere_potential,
-                      113,
+                      force_kernel=tests_common.soft_sphere_force,
+                      energy_kernel=tests_common.soft_sphere_potential,
+                      n_steps=113,
                       n_initial_steps=12)
 
     # Test Hertzian Potential
@@ -245,9 +243,9 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.run_test("hertzian",
                       {"eps": 6.92,
                        "sig": 2.432},
-                      tests_common.hertzian_force,
-                      tests_common.hertzian_potential,
-                      244)
+                      force_kernel=tests_common.hertzian_force,
+                      energy_kernel=tests_common.hertzian_potential,
+                      n_steps=244)
 
     # Test Gaussian Potential
     @utx.skipIfMissingFeatures("GAUSSIAN")
@@ -257,9 +255,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                       {"eps": 6.92,
                        "sig": 4.03,
                        "cutoff": 1.243},
-                      tests_common.gaussian_force,
-                      tests_common.gaussian_potential,
-                      125)
+                      force_kernel=tests_common.gaussian_force,
+                      energy_kernel=tests_common.gaussian_potential,
+                      n_steps=125)
 
     # Test the Gay-Berne potential and the resulting force and torque
     @utx.skipIfMissingFeatures("GAY_BERNE")
@@ -418,12 +416,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         if "shift" in force_parameters and force_kernel_remove_shift:
             del force_parameters["shift"]
         if force_kernel_needs_espressomd:
-            def force_func(r): return force_kernel(
-                espressomd, r, **force_parameters)
-        else:
-            def force_func(r): return force_kernel(r, **force_parameters)
-
-        def energy_func(r): return energy_kernel(r, **parameters)
+            force_parameters["espressomd"] = espressomd
 
         for _ in range(n_steps):
             p1.pos = p1.pos + self.step
@@ -432,12 +425,12 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = energy_func(d)
+            E_ref = energy_kernel(r=d, **parameters)
 
             # Calculate forces
             f0_sim = np.copy(p0.f)
             f1_sim = np.copy(p1.f)
-            f1_ref = self.axis * force_func(d)
+            f1_ref = self.axis * force_kernel(r=d, **force_parameters)
 
             # Check that energies match ...
             self.assertFractionAlmostEqual(E_sim, E_ref)

@@ -42,7 +42,7 @@ system = espressomd.System(box_l=[box_l] * 3)
 system.time_step = 0.01
 system.cell_system.skin = 0.1
 
-system.part.add(pos=[box_l / 2.0] * 3, fix=[True, True, True])
+particle = system.part.add(pos=[box_l / 2.0] * 3, fix=[True, True, True])
 
 lbf = espressomd.lb.LBFluidWalberla(agrid=1, dens=1, visc=1, tau=0.01,
                                     ext_force_density=[0, 0, -1.0 / (box_l**3)])
@@ -52,7 +52,7 @@ print(lbf.get_params())
 
 f_list = np.zeros((10, 3))
 for i in range(10):
-    f_list[i] = system.part[0].f
+    f_list[i] = particle.f
     system.integrator.run(steps=10)
     print(i)
 

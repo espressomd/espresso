@@ -4,7 +4,7 @@ stages:
   - prepare
   - build
   - additional_checks
-  - deploy
+#  - deploy
   - result
 
 .global_job_template: &global_job_definition
@@ -97,6 +97,7 @@ maxset:
      CC: 'gcc-9'
      CXX: 'g++-9'
      with_cuda: 'false'
+     with_cxx_standard: '17'
      myconfig: 'maxset'
      with_coverage: 'true'
      with_scafacos: 'true'
@@ -548,25 +549,24 @@ check_with_odd_no_of_processors:
     - cuda
 
 
-.deploy_base:
-  <<: *global_job_definition
-  stage: deploy
-  only:
-    - python
-  before_script:
-    - 'which ssh-agent && eval $(ssh-agent -s) || exit 1'
-    - ssh-add <(echo "$SSH_PRIVATE_KEY")
-    - mkdir -p ${HOME}/.ssh && chmod 700 ${HOME}/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ${HOME}/.ssh/espresso_rsa && chmod 600 ${HOME}/.ssh/espresso_rsa
-    - echo "$SSH_PUBLIC_KEY" > ${HOME}/.ssh/espresso_rsa.pub && chmod 600 ${HOME}/.ssh/espresso_rsa.pub
-    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-  interruptible: false
-  tags:
-    - docker
-    - linux
-    - icp
+#.deploy_base:
+#  <<: *global_job_definition
+#  stage: deploy
+#  only:
+#    - python
+#  before_script:
+#    - 'which ssh-agent && eval $(ssh-agent -s) || exit 1'
+#    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+#    - mkdir -p ${HOME}/.ssh && chmod 700 ${HOME}/.ssh
+#    - echo "$SSH_PRIVATE_KEY" > ${HOME}/.ssh/espresso_rsa && chmod 600 ${HOME}/.ssh/espresso_rsa
+#    - echo "$SSH_PUBLIC_KEY" > ${HOME}/.ssh/espresso_rsa.pub && chmod 600 ${HOME}/.ssh/espresso_rsa.pub
+#    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+#  interruptible: false
+#  tags:
+#    - docker
+#    - linux
+#    - icp
 
-# WALBERLA TODO
 #deploy_sphinx_documentation:
 #  extends: .deploy_base
 #  dependencies:
@@ -574,28 +574,27 @@ check_with_odd_no_of_processors:
 #  script:
 #    - cd ${CI_PROJECT_DIR}/build/doc/sphinx/html &&
 #      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
-#
 
-deploy_doxygen_documentation:
-  extends: .deploy_base
-  dependencies:
-    - run_doxygen
-  script:
-    - cd ${CI_PROJECT_DIR}/build/doc/doxygen/html &&
-      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
+#deploy_doxygen_documentation:
+#  extends: .deploy_base
+#  dependencies:
+#    - run_doxygen
+#  script:
+#    - cd ${CI_PROJECT_DIR}/build/doc/doxygen/html &&
+#      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
 
-deploy_tutorials:
-  extends: .deploy_base
-  dependencies:
-    - run_tutorials
-  script:
-    - cd ${CI_PROJECT_DIR}/build/doc/tutorials
-    - ${CI_PROJECT_DIR}/maintainer/CI/deploy_tutorials.py
-    - mkdir www &&
-      rsync -a --files-from=deploy_list.txt ./ www &&
-      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" www/ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/tutorials_html
-  only:
-    - schedules
+#deploy_tutorials:
+#  extends: .deploy_base
+#  dependencies:
+#    - run_tutorials
+#  script:
+#    - cd ${CI_PROJECT_DIR}/build/doc/tutorials
+#    - ${CI_PROJECT_DIR}/maintainer/CI/deploy_tutorials.py
+#    - mkdir www &&
+#      rsync -a --files-from=deploy_list.txt ./ www &&
+#      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" www/ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/tutorials_html
+#  only:
+#    - schedules
 
 status_success:
   <<: *notification_job_definition
