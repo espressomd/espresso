@@ -55,3 +55,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: Scheduled CI job has failed
           body: ${{ env.job_link }}
+  
+  debian_package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Build package
+        uses: ./.github/actions/debian_package
+
