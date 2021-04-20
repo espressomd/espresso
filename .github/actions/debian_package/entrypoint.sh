@@ -1,4 +1,4 @@
 #!/bin/bash
-apt build-dep .
+apt build-dep -y .
 dpkg-build-package -uc -us
 
