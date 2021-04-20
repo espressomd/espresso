@@ -44,9 +44,8 @@ int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
   data->ljcos.offset = offset;
 
   /* Calculate dependent parameters */
-  auto const driwu2 = 1.25992104989487316476721060728;
-  auto const facsq = driwu2 * Utils::sqr(sig);
-  data->ljcos.rmin = sqrt(driwu2) * sig;
+  auto const facsq = Utils::cbrt_2() * Utils::sqr(sig);
+  data->ljcos.rmin = sqrt(Utils::cbrt_2()) * sig;
   data->ljcos.alfa = Utils::pi() / (Utils::sqr(data->ljcos.cut) - facsq);
   data->ljcos.beta =
       Utils::pi() * (1. - (1. / (Utils::sqr(data->ljcos.cut) / facsq - 1.)));
