@@ -19,6 +19,7 @@ Build-Depends:
  libhdf5-openmpi-dev,
  libhdf5-openmpi-dev,
  liblapack-dev,
+ python3-dev,
  libpython3-dev,
  openmpi-common,
  python3,
