@@ -97,9 +97,8 @@ void mpi_init_lb_walberla(double viscosity, double density, double agrid,
           " agrid " + std::to_string(agrid));
     }
   }
-  Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity, density,
-                                         agrid, tau, grid_dimensions, node_grid,
-                                         kT, seed);
+  mpi_call_all(init_lb_walberla, viscosity, density, agrid, tau,
+               grid_dimensions, node_grid, kT, seed);
   if (lb_walberla_instance) {
     lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
     lb_lbfluid_sanity_checks();
