@@ -45,6 +45,7 @@ int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
 inline double buck_force_r(double A, double B, double C, double D, double r) {
   return (A * B * exp(-B * r) - 6.0 * C / pow(r, 7) - 4.0 * D / pow(r, 5));
 }
+
 /**Potential Energy due to a Buckingham potential between two particles at
  * interatomic separation r greater than or equal to discont*/
 inline double buck_energy_r(double A, double B, double C, double D,
