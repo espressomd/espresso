@@ -26,6 +26,7 @@
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
 namespace bdata = boost::unit_test::data;
+namespace utf = boost::unit_test;
 
 #include "config.hpp"
 
@@ -33,6 +34,7 @@ namespace bdata = boost::unit_test::data;
 
 #include <lb_walberla_init.hpp>
 
+#include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -48,6 +50,31 @@ namespace bdata = boost::unit_test::data;
 
 #include <limits>
 #include <vector>
+
+/* Guard against a bug in Boost versions < 1.68 where fixtures used to skip
+ * test are not propagated correctly to the testsuite, causing skipped tests
+ * to trigger a failure of the complete testsuite without any error message.
+ * More details in ticket https://svn.boost.org/trac10/ticket/12095
+ */
+#include <boost/serialization/version.hpp>
+#if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 < 68
+int main(int argc, char **argv) {}
+#else
+
+namespace espresso {
+// ESPResSo system instance
+std::unique_ptr<EspressoSystemStandAlone> system;
+} // namespace espresso
+
+/** Decorator to run a unit test only on the head node. */
+struct if_head_node {
+  boost::test_tools::assertion_result operator()(utf::test_unit_id) {
+    return world.rank() == 0;
+  }
+
+private:
+  boost::mpi::communicator world;
+};
 
 // multiply by 100 because BOOST_CHECK_CLOSE takes a percentage tolerance,
 // and by 6 to account for error accumulation
@@ -85,23 +112,28 @@ void setup_lb(double kT) {
                        params.seed);
 }
 
+BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(activate) {
   lb_lbcoupling_deactivate();
   lb_lbcoupling_activate();
   BOOST_CHECK(lb_particle_coupling.couple_to_md);
 }
+
+BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(de_activate) {
   lb_lbcoupling_activate();
   lb_lbcoupling_deactivate();
   BOOST_CHECK(not lb_particle_coupling.couple_to_md);
 }
 
+BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(rng_initial_state) {
   lattice_switch = ActiveLB::WALBERLA;
   BOOST_CHECK(lb_lbcoupling_is_seed_required());
   BOOST_CHECK_THROW(lb_lbcoupling_get_rng_state(), std::runtime_error);
 }
 
+BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(rng) {
   lattice_switch = ActiveLB::WALBERLA;
   lb_lbcoupling_set_rng_state(17);
@@ -133,6 +165,7 @@ BOOST_AUTO_TEST_CASE(rng) {
   BOOST_CHECK(step3_norandom == Utils::Vector3d{});
 }
 
+BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   Particle p{};
   BOOST_CHECK_EQUAL(lb_particle_coupling_drift_vel_offset(p).norm(), 0);
@@ -151,6 +184,7 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
 }
 const std::vector<double> kTs{0, 1E-4};
 
+BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
   setup_lb(kT); // in LB units.
   Particle p{};
@@ -168,6 +202,7 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 }
 
 #ifdef ENGINE
+BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   lattice_switch = ActiveLB::WALBERLA;
   auto const first_lb_node = lb_walberla()->get_local_domain().first;
@@ -185,13 +220,18 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 
   // swimmer coupling
   {
-    add_swimmer_force(p);
-    auto const interpolated = lb_lbfluid_get_force_to_be_applied(coupling_pos);
-    auto const expected =
-        params.force_md_to_lb(Utils::Vector3d{0., 0., p.p.swim.f_swim});
+    if (in_local_halo(p.r.p)) {
+      add_swimmer_force(p);
+    }
+    if (in_local_halo(coupling_pos)) {
+      auto const interpolated =
+          lb_lbfluid_get_force_to_be_applied(coupling_pos);
+      auto const expected =
+          params.force_md_to_lb(Utils::Vector3d{0., 0., p.p.swim.f_swim});
 
-    // interpolation happened on the expected LB cell
-    BOOST_CHECK_SMALL((interpolated - expected).norm(), tol);
+      // interpolation happened on the expected LB cell
+      BOOST_CHECK_SMALL((interpolated - expected).norm(), tol);
+    }
 
     // all other LB cells have no force
     for (int i = 0; i < params.grid_dimensions[0]; ++i) {
@@ -204,8 +244,10 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
           };
           if ((pos - coupling_pos).norm() < 1e-6)
             continue;
-          auto const interpolated = lb_lbfluid_get_force_to_be_applied(pos);
-          BOOST_CHECK_SMALL(interpolated.norm(), tol);
+          if (in_local_halo(pos)) {
+            auto const interpolated = lb_lbfluid_get_force_to_be_applied(pos);
+            BOOST_CHECK_SMALL(interpolated.norm(), tol);
+          }
         }
       }
     }
@@ -213,13 +255,16 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 
   // remove force of the particle from the fluid
   {
-    add_md_force(coupling_pos, -Utils::Vector3d{0., 0., p.p.swim.f_swim});
-    auto const reset = lb_lbfluid_get_force_to_be_applied(coupling_pos);
-    BOOST_REQUIRE_SMALL(reset.norm(), tol);
+    if (in_local_halo(coupling_pos)) {
+      add_md_force(coupling_pos, -Utils::Vector3d{0., 0., p.p.swim.f_swim});
+      auto const reset = lb_lbfluid_get_force_to_be_applied(coupling_pos);
+      BOOST_REQUIRE_SMALL(reset.norm(), tol);
+    }
   }
 }
 #endif
 
+BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   lattice_switch = ActiveLB::WALBERLA;
   lb_lbcoupling_set_rng_state(17);
@@ -249,30 +294,39 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
                        const OptionalCounter &rng_counter);
   // coupling
   {
-    couple_particle(p, false, noise, rng);
-    BOOST_CHECK_SMALL((p.f.f - expected).norm(), tol);
+    if (in_local_halo(p.r.p)) {
+      couple_particle(p, false, noise, rng);
+      BOOST_CHECK_SMALL((p.f.f - expected).norm(), tol);
 
-    auto const interpolated = lb_lbfluid_get_force_to_be_applied(p.r.p);
-    BOOST_CHECK_SMALL((interpolated - params.force_md_to_lb(expected)).norm(),
-                      tol);
+      auto const interpolated = lb_lbfluid_get_force_to_be_applied(p.r.p);
+      BOOST_CHECK_SMALL((interpolated - params.force_md_to_lb(expected)).norm(),
+                        tol);
+    }
   }
 
   // remove force of the particle from the fluid
-  { add_md_force(p.r.p, -expected); }
+  {
+    if (in_local_halo(p.r.p)) {
+      add_md_force(p.r.p, -expected);
+    }
+  }
 }
 
 // todo: test remaining functionality from lb_particle_coupling.hpp
 
 int main(int argc, char **argv) {
-  auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
-  Communication::init(mpi_env);
-  walberla_mpi_init();
-  rescale_boxl(3, params.box_dimensions[0]);
-  mpi_set_time_step(params.time_step);
-  setup_lb(0.);
+  espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
+  espresso::system->set_box_l(params.box_dimensions);
+  espresso::system->set_time_step(params.time_step);
+  boost::mpi::communicator world;
+  if (world.rank() == 0) {
+    setup_lb(0.);
+  }
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
+
+#endif // Boost version >= 1.68
 
 #else // ifdef LB_WALBERLA
 int main(int argc, char **argv) {}
