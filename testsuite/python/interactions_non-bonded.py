@@ -435,6 +435,14 @@ class InteractionsNonBondedTest(ut.TestCase):
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
+        # forces and energies are zero beyond the interaction cutoff
+        p1.pos = p0.pos + self.system.box_l / 2
+        self.system.integrator.run(recalc_forces=True, steps=0)
+        E_sim = self.system.analysis.energy()["non_bonded"]
+        np.testing.assert_array_equal(E_sim, 0.)
+        np.testing.assert_array_equal(np.copy(p0.f), 0.)
+        np.testing.assert_array_equal(np.copy(p1.f), 0.)
+
 
 if __name__ == '__main__':
     ut.main()
