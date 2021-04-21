@@ -25,8 +25,7 @@ Build-Depends:
  python3,
  python3-h5py,
  python3-numpy,
- python3-scipy,
- python3-vtk7,
+ python3-scipy
 Rules-Requires-Root: no
 Standards-Version: 4.5.0
 Vcs-Browser: https://github.com/espressomd/espresso
@@ -42,6 +41,16 @@ Depends:
  python3-opengl,
  python3-scipy,
  python3-vtk7,
+ libboost-filesystem1.71.0,
+ libboost-mpi1.71.0,
+ libboost-serialization1.71.0,
+ libfftw3-3,
+ libgsl23,
+ libhdf5-openmpi-103,
+ libopenblas0-pthread,  
+ openmpi-bin,
+ libopenmpi3,
+ libstdc++6,
  ${misc:Depends},
 Description: Molecular dynamics simulation package
  ESPResSo is a highly versatile software package for performing

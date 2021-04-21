@@ -1,8 +1,0 @@
-name: 'Debian Package'
-description: 'Build Debian package'
-runs:
-  using: "docker"
-  image: "Dockerfile"
-  entrypoint: "/entrypoint.sh"
-
-

@@ -1,0 +1,23 @@
+name: Build packages
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  ubuntupackage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Build package
+        id: build
+        uses: ./.github/actions/build_ubuntu_package
+      - name: Test package
+        uses: ./.github/actions/test_ubuntu_package
+        with:
+          package_file: ${{steps.build.outputs.package_file }}
+          
+
