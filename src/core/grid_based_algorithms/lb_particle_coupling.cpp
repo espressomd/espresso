@@ -43,15 +43,14 @@
 
 LB_Particle_Coupling lb_particle_coupling;
 
-void mpi_bcast_lb_particle_coupling_slave() {
+void mpi_bcast_lb_particle_coupling_local() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
-REGISTER_CALLBACK(mpi_bcast_lb_particle_coupling_slave)
+REGISTER_CALLBACK(mpi_bcast_lb_particle_coupling_local)
 
 void mpi_bcast_lb_particle_coupling() {
-  mpi_call(mpi_bcast_lb_particle_coupling_slave);
-  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
+  mpi_call_all(mpi_bcast_lb_particle_coupling_local);
 }
 
 void lb_lbcoupling_activate() { lb_particle_coupling.couple_to_md = true; }
