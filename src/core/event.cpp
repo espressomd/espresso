@@ -277,35 +277,44 @@ void on_cell_structure_change() {
 
 void on_temperature_change() { lb_lbfluid_reinit_parameters(); }
 
-void on_parameter_change(int field) {
-  switch (field) {
-  case FIELD_PERIODIC:
+void on_periodicity_change() {
 #ifdef SCAFACOS
 #ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_SCAFACOS) {
-      Scafacos::fcs_coulomb()->update_system_params();
-    }
+  if (coulomb.method == COULOMB_SCAFACOS) {
+    Scafacos::fcs_coulomb()->update_system_params();
+  }
 #endif
 #ifdef SCAFACOS_DIPOLES
-    if (dipole.method == DIPOLAR_SCAFACOS) {
-      Scafacos::fcs_dipoles()->update_system_params();
-    }
+  if (dipole.method == DIPOLAR_SCAFACOS) {
+    Scafacos::fcs_dipoles()->update_system_params();
+  }
 #endif
 #endif
 #ifdef STOKESIAN_DYNAMICS
-    if (integ_switch == INTEG_METHOD_SD) {
-      if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2))
-        runtimeErrorMsg() << "Illegal box periodicity for Stokesian Dynamics: "
-                          << box_geo.periodic(0) << " " << box_geo.periodic(1)
-                          << " " << box_geo.periodic(2) << "\n"
-                          << "  Required: 0 0 0\n";
-    }
-#endif
-  case FIELD_MIN_GLOBAL_CUT:
-  case FIELD_SKIN: {
-    cells_re_init(cell_structure.decomposition_type());
+  if (integ_switch == INTEG_METHOD_SD) {
+    if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2))
+      runtimeErrorMsg() << "Illegal box periodicity for Stokesian Dynamics: "
+                        << box_geo.periodic(0) << " " << box_geo.periodic(1)
+                        << " " << box_geo.periodic(2) << "\n"
+                        << "  Required: 0 0 0\n";
   }
-    on_coulomb_change();
+#endif
+  on_skin_change();
+}
+
+void on_skin_change() {
+  cells_re_init(cell_structure.decomposition_type());
+  on_coulomb_change();
+}
+
+void on_parameter_change(int field) {
+  switch (field) {
+  case FIELD_PERIODIC:
+    on_periodicity_change();
+    break;
+  case FIELD_MIN_GLOBAL_CUT:
+  case FIELD_SKIN:
+    on_skin_change();
     break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();

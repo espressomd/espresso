@@ -95,6 +95,15 @@ void on_cell_structure_change();
 /** called every time the temperature changes. This one is potentially slow. */
 void on_temperature_change();
 
+/** @brief Called when the periodicity changes. Internally calls @ref
+ * on_skin_change.
+ */
+void on_periodicity_change();
+
+/** @brief Called when the skin is changed.
+ */
+void on_skin_change();
+
 /** called every time other parameters (timestep,...) are changed. Note that
  *  this does not happen automatically. The callback procedure of the changed
  *  variable is responsible for that.
