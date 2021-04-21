@@ -40,20 +40,6 @@
 int soft_sphere_set_params(int part_type_a, int part_type_b, double a, double n,
                            double cut, double offset);
 
-/** Resultant force due to a soft-sphere potential between two
- *  particles at interatomic separation r
- */
-inline double soft_force_r(double a, double n, double r) {
-  return (a * n / pow(r, n + 1));
-}
-
-/** Potential energy due to a soft-sphere potential between two
- *  particles at interatomic separation r
- */
-inline double soft_energy_r(double a, double n, double r) {
-  return (a / pow(r, n));
-}
-
 /** Calculate soft-sphere force factor */
 inline double soft_pair_force_factor(IA_parameters const &ia_params,
                                      double dist) {
@@ -61,18 +47,11 @@ inline double soft_pair_force_factor(IA_parameters const &ia_params,
     /* normal case: resulting force/energy smaller than zero. */
     auto const r_off = dist - ia_params.soft_sphere.offset;
     if (r_off > 0.0) {
-      return soft_force_r(ia_params.soft_sphere.a, ia_params.soft_sphere.n,
-                          r_off) /
-             dist;
+      auto const n = ia_params.soft_sphere.n;
+      return ia_params.soft_sphere.a * n / std::pow(r_off, n + 1) / dist;
     }
   }
   return 0.0;
-}
-
-/** Calculate soft-sphere force */
-inline Utils::Vector3d soft_pair_force(IA_parameters const &ia_params,
-                                       Utils::Vector3d const &d, double dist) {
-  return d * soft_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate soft-sphere energy */
@@ -80,8 +59,7 @@ inline double soft_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < (ia_params.soft_sphere.cut + ia_params.soft_sphere.offset)) {
     auto const r_off = dist - ia_params.soft_sphere.offset;
     /* normal case: resulting force/energy smaller than zero. */
-    return soft_energy_r(ia_params.soft_sphere.a, ia_params.soft_sphere.n,
-                         r_off);
+    return ia_params.soft_sphere.a / std::pow(r_off, ia_params.soft_sphere.n);
   }
   return 0.0;
 }

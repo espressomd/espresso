@@ -51,13 +51,6 @@ inline double gaussian_pair_force_factor(IA_parameters const &ia_params,
   return 0.0;
 }
 
-/** Calculate Gaussian force */
-inline Utils::Vector3d gaussian_pair_force(IA_parameters const &ia_params,
-                                           Utils::Vector3d const &d,
-                                           double dist) {
-  return d * gaussian_pair_force_factor(ia_params, dist);
-}
-
 /** Calculate Gaussian energy */
 inline double gaussian_pair_energy(IA_parameters const &ia_params,
                                    double dist) {

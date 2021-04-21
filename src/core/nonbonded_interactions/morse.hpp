@@ -53,12 +53,6 @@ inline double morse_pair_force_factor(IA_parameters const &ia_params,
   return 0.0;
 }
 
-/** Calculate Morse force */
-inline Utils::Vector3d morse_pair_force(IA_parameters const &ia_params,
-                                        Utils::Vector3d const &d, double dist) {
-  return d * morse_pair_force_factor(ia_params, dist);
-}
-
 /** Calculate Morse energy */
 inline double morse_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < ia_params.morse.cut) {

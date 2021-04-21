@@ -65,6 +65,13 @@ template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_2() {
   return T(1.4142135623730950488016887242096981L);
 }
 
+/**
+ * @brief Cube root of 2.
+ */
+template <class T = double> DEVICE_QUALIFIER constexpr T cbrt_2() {
+  return T(1.25992104989487316476721060727822835057025L);
+}
+
 /**@}*/
 
 /// error code if no error occurred
