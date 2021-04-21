@@ -115,14 +115,18 @@ void setup_lb(double kT) {
 BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(activate) {
   lb_lbcoupling_deactivate();
+  mpi_bcast_lb_particle_coupling();
   lb_lbcoupling_activate();
+  mpi_bcast_lb_particle_coupling();
   BOOST_CHECK(lb_particle_coupling.couple_to_md);
 }
 
 BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_AUTO_TEST_CASE(de_activate) {
   lb_lbcoupling_activate();
+  mpi_bcast_lb_particle_coupling();
   lb_lbcoupling_deactivate();
+  mpi_bcast_lb_particle_coupling();
   BOOST_CHECK(not lb_particle_coupling.couple_to_md);
 }
 
