@@ -36,6 +36,11 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cmath>
+#include <cstdio>
+#include <stdexcept>
+#include <vector>
+
 /**
  * Calculate dipolar energy and optionally force between two particles.
  * @param[in,out] p1          First particle
@@ -298,26 +303,22 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
   return 0.5 * dipole.prefactor * energy;
 }
 
-int dawaanr_set_params() {
+void dawaanr_set_params() {
   if (n_nodes > 1) {
-    runtimeErrorMsg() << "MPI parallelization not supported by "
-                      << "DipolarDirectSumCpu.";
-    return ES_ERROR;
+    throw std::runtime_error(
+        "MPI parallelization not supported by DipolarDirectSumCpu.");
   }
   if (dipole.method != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA) {
     Dipole::set_method_local(DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA);
   }
   // also necessary on 1 CPU, does more than just broadcasting
   mpi_bcast_coulomb_params();
-
-  return ES_OK;
 }
 
-int mdds_set_params(int n_cut) {
+void mdds_set_params(int n_cut) {
   if (n_nodes > 1) {
-    runtimeErrorMsg() << "MPI parallelization not supported by "
-                      << "DipolarDirectSumWithReplicaCpu.";
-    return ES_ERROR;
+    throw std::runtime_error(
+        "MPI parallelization not supported by DipolarDirectSumWithReplicaCpu.");
   }
 
   Ncut_off_magnetic_dipolar_direct_sum = n_cut;
@@ -333,7 +334,6 @@ int mdds_set_params(int n_cut) {
 
   // also necessary on 1 CPU, does more than just broadcasting
   mpi_bcast_coulomb_params();
-  return ES_OK;
 }
 
 #endif

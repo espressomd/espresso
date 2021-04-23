@@ -40,12 +40,11 @@ IF DIPOLES == 1:
         cdef extern Dipole_parameters dipole
 
     cdef extern from "electrostatics_magnetostatics/dipole.hpp" namespace "Dipole":
-
-        void set_Dprefactor(double prefactor) except+
+        void set_Dprefactor(double prefactor) except +
 
     cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
-        int dawaanr_set_params()
-        int mdds_set_params(int n_cut)
+        void dawaanr_set_params() except +
+        void mdds_set_params(int n_cut) except +
         int Ncut_off_magnetic_dipolar_direct_sum
 
     IF(CUDA == 1) and (ROTATION == 1):

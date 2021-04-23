@@ -217,8 +217,6 @@ IF DIPOLES == 1:
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
             dawaanr_set_params()
-            handle_errors("Could not activate magnetostatics method "
-                          + self.__class__.__name__)
 
     class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
 
@@ -258,8 +256,6 @@ IF DIPOLES == 1:
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
             mdds_set_params(self._params["n_replica"])
-            handle_errors("Could not activate magnetostatics method "
-                          + self.__class__.__name__)
 
     IF SCAFACOS_DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):

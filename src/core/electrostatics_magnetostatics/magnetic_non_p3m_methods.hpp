@@ -53,10 +53,8 @@
 double dawaanr_calculations(bool force_flag, bool energy_flag,
                             ParticleRange const &particles);
 
-/** Switch on DAWAANR magnetostatics.
- *  @return ES_ERROR, if not on a single CPU
- */
-int dawaanr_set_params();
+/** Switch on DAWAANR magnetostatics. */
+void dawaanr_set_params();
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS
@@ -75,9 +73,8 @@ double magnetic_dipolar_direct_sum_calculations(bool force_flag,
 
 /** Switch on direct sum magnetostatics.
  *  @param n_cut cut off for the explicit summation
- *  @return ES_ERROR, if not on a single CPU
  */
-int mdds_set_params(int n_cut);
+void mdds_set_params(int n_cut);
 
 extern int Ncut_off_magnetic_dipolar_direct_sum;
 
