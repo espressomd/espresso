@@ -37,39 +37,20 @@
 
 int hat_set_params(int part_type_a, int part_type_b, double Fmax, double r);
 
-/** Resultant force due to a hat potential between two
- *  particles at interatomic separation dist.
- */
-inline double hat_force_r(double Fmax, double r, double dist) {
-  return dist < r ? Fmax * (1 - dist / r) : 0.0;
-}
-
-/** Potential energy due to a hat potential between two
- *  particles at interatomic separation dist.
- */
-inline double hat_energy_r(double Fmax, double r, double dist) {
-  return dist < r ? Fmax * (dist - r) * ((dist + r) / (2.0 * r) - 1.0) : 0.0;
-}
-
 /** Calculate hat force factor */
 inline double hat_pair_force_factor(IA_parameters const &ia_params,
                                     double dist) {
   if (dist > 0. && dist < ia_params.hat.r) {
-    return hat_force_r(ia_params.hat.Fmax, ia_params.hat.r, dist) / dist;
+    return ia_params.hat.Fmax * (1.0 - dist / ia_params.hat.r) / dist;
   }
   return 0.0;
-}
-
-/** Calculate hat force */
-inline Utils::Vector3d hat_pair_force(IA_parameters const &ia_params,
-                                      Utils::Vector3d const &d, double dist) {
-  return d * hat_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate hat energy */
 inline double hat_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < ia_params.hat.r) {
-    return hat_energy_r(ia_params.hat.Fmax, ia_params.hat.r, dist);
+    auto const r = ia_params.hat.r;
+    return ia_params.hat.Fmax * (dist - r) * ((dist + r) / (2.0 * r) - 1.0);
   }
   return 0.0;
 }

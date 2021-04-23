@@ -67,13 +67,6 @@ inline double ljcos2_pair_force_factor(IA_parameters const &ia_params,
   return 0.0;
 }
 
-/** Calculate Lennard-Jones cosine squared force */
-inline Utils::Vector3d ljcos2_pair_force(IA_parameters const &ia_params,
-                                         Utils::Vector3d const &d,
-                                         double dist) {
-  return d * ljcos2_pair_force_factor(ia_params, dist);
-}
-
 /** Calculate Lennard-Jones cosine squared energy */
 inline double ljcos2_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < (ia_params.ljcos2.cut + ia_params.ljcos2.offset)) {
