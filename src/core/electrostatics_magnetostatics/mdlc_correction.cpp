@@ -456,8 +456,10 @@ int mdlc_tune(double error) {
   auto const lz = box_geo.length()[2];
   auto const a = lx * ly;
   auto const h = dlc_params.h;
-  if (h < 0)
+  if (h < 0) {
+    runtimeErrorMsg() << "gap size too large";
     return ES_ERROR;
+  }
 
   if (h > lz) {
     fprintf(stderr,
@@ -527,13 +529,14 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
     return ES_ERROR;
   }
 
+  int error_code = ES_OK;
   dlc_params.far_cut = far_cut;
   if (far_cut != -1) {
     dlc_params.far_calculated = 0;
   } else {
     dlc_params.far_calculated = 1;
     if (mdlc_tune(dlc_params.maxPWerror) == ES_ERROR) {
-      runtimeErrorMsg() << "mdlc tuning failed, gap size too small";
+      error_code = ES_ERROR;
     }
   }
   mpi_bcast_coulomb_params();

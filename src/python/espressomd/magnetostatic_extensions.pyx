@@ -92,9 +92,7 @@ IF DIPOLES and DP3M:
         def _set_params_in_es_core(self):
             if mdlc_set_params(
                     self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"]):
-                raise ValueError(
-                    "Choose a 3d magnetostatics method prior to DLC")
-            handle_errors("mdlc tuning failed, gap size too small")
+                handle_errors("MDLC tuning failed")
 
         def _activate_method(self):
             self._set_params_in_es_core()
