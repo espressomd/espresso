@@ -62,6 +62,7 @@ static FUNC_PREFIX void kernel_streamCollide(
     uint32_t block_offset_1, uint32_t block_offset_2, double kT,
     double omega_bulk, double omega_even, double omega_odd, double omega_shear,
     uint32_t seed, uint32_t time_step) {
+
   const double xi_25 = -omega_bulk;
   const double xi_36 = -omega_shear;
   const double xi_37 = xi_36 + 2.0;
@@ -1755,6 +1756,7 @@ static FUNC_PREFIX void kernel_streamCollide(
       }
     }
   }
+  _mm_mfence();
 }
 } // namespace internal_kernel_streamCollide
 namespace internal_kernel_collide {
@@ -1768,6 +1770,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                uint32_t block_offset_1, uint32_t block_offset_2, double kT,
                double omega_bulk, double omega_even, double omega_odd,
                double omega_shear, uint32_t seed, uint32_t time_step) {
+
   const double xi_25 = -omega_bulk;
   const double xi_36 = -omega_shear;
   const double xi_37 = xi_36 + 2.0;
@@ -1786,120 +1789,120 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
   const double xi_120 = rr_0 * 0.166666666666667;
   const double xi_186 = rr_0 * 0.0833333333333333;
   for (int64_t ctr_2 = 0; ctr_2 < _size_force_2; ctr_2 += 1) {
-    double *RESTRICT _data_pdfs_20_34 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_312 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_35 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3;
-    double *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
-    double *RESTRICT _data_pdfs_20_310 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
-    double *RESTRICT _data_force_20_31 =
-        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
-    double *RESTRICT _data_pdfs_20_33 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_37 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_311 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_34 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_32 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
     double *RESTRICT _data_force_20_32 =
         _data_force + _stride_force_2 * ctr_2 + 2 * _stride_force_3;
     double *RESTRICT _data_pdfs_20_30 = _data_pdfs + _stride_pdfs_2 * ctr_2;
-    double *RESTRICT _data_pdfs_20_39 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_32 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_36 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_317 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_315 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_38 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_316 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_318 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_314 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
-    double *RESTRICT _data_pdfs_20_31 =
-        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
     double *RESTRICT _data_pdfs_20_313 =
         _data_pdfs + _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_33 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_314 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3;
+    double *RESTRICT _data_force_20_30 = _data_force + _stride_force_2 * ctr_2;
+    double *RESTRICT _data_pdfs_20_318 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_315 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3;
+    double *RESTRICT _data_force_20_31 =
+        _data_force + _stride_force_2 * ctr_2 + _stride_force_3;
+    double *RESTRICT _data_pdfs_20_37 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_312 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_317 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_310 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_31 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_311 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_316 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_36 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3;
+    double *RESTRICT _data_pdfs_20_39 =
+        _data_pdfs + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3;
     for (int64_t ctr_1 = 0; ctr_1 < _size_force_1; ctr_1 += 1) {
-      double *RESTRICT _data_pdfs_20_34_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
-      double *RESTRICT _data_pdfs_20_312_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
       double *RESTRICT _data_pdfs_20_35_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_35;
-      double *RESTRICT _data_force_20_30_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_30;
-      double *RESTRICT _data_pdfs_20_310_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_310;
-      double *RESTRICT _data_force_20_31_10 =
-          _stride_force_1 * ctr_1 + _data_force_20_31;
-      double *RESTRICT _data_pdfs_20_33_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
-      double *RESTRICT _data_pdfs_20_37_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
-      double *RESTRICT _data_pdfs_20_311_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
+      double *RESTRICT _data_pdfs_20_34_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_34;
+      double *RESTRICT _data_pdfs_20_32_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
       double *RESTRICT _data_force_20_32_10 =
           _stride_force_1 * ctr_1 + _data_force_20_32;
       double *RESTRICT _data_pdfs_20_30_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_30;
-      double *RESTRICT _data_pdfs_20_39_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_39;
-      double *RESTRICT _data_pdfs_20_32_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_32;
-      double *RESTRICT _data_pdfs_20_36_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
-      double *RESTRICT _data_pdfs_20_317_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_317;
-      double *RESTRICT _data_pdfs_20_315_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
       double *RESTRICT _data_pdfs_20_38_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_38;
-      double *RESTRICT _data_pdfs_20_316_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
-      double *RESTRICT _data_pdfs_20_318_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_318;
-      double *RESTRICT _data_pdfs_20_314_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
-      double *RESTRICT _data_pdfs_20_31_10 =
-          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
       double *RESTRICT _data_pdfs_20_313_10 =
           _stride_pdfs_1 * ctr_1 + _data_pdfs_20_313;
+      double *RESTRICT _data_pdfs_20_33_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_33;
+      double *RESTRICT _data_pdfs_20_314_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_314;
+      double *RESTRICT _data_force_20_30_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_30;
+      double *RESTRICT _data_pdfs_20_318_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_318;
+      double *RESTRICT _data_pdfs_20_315_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_315;
+      double *RESTRICT _data_force_20_31_10 =
+          _stride_force_1 * ctr_1 + _data_force_20_31;
+      double *RESTRICT _data_pdfs_20_37_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_37;
+      double *RESTRICT _data_pdfs_20_312_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_312;
+      double *RESTRICT _data_pdfs_20_317_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_317;
+      double *RESTRICT _data_pdfs_20_310_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_310;
+      double *RESTRICT _data_pdfs_20_31_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_31;
+      double *RESTRICT _data_pdfs_20_311_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_311;
+      double *RESTRICT _data_pdfs_20_316_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_316;
+      double *RESTRICT _data_pdfs_20_36_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_36;
+      double *RESTRICT _data_pdfs_20_39_10 =
+          _stride_pdfs_1 * ctr_1 + _data_pdfs_20_39;
       for (int64_t ctr_0 = 0;
            ctr_0 < ((_size_force_0) % (4) == 0
                         ? _size_force_0
                         : ((int64_t)((_size_force_0) / (4)) + 1) * (4));
            ctr_0 += 4) {
-        const __m256d xi_248 = _mm256_load_pd(&_data_pdfs_20_34_10[ctr_0]);
-        const __m256d xi_249 = _mm256_load_pd(&_data_pdfs_20_312_10[ctr_0]);
-        const __m256d xi_250 = _mm256_load_pd(&_data_pdfs_20_35_10[ctr_0]);
-        const __m256d xi_251 = _mm256_load_pd(&_data_force_20_30_10[ctr_0]);
-        const __m256d xi_252 = _mm256_load_pd(&_data_pdfs_20_310_10[ctr_0]);
-        const __m256d xi_253 = _mm256_load_pd(&_data_force_20_31_10[ctr_0]);
-        const __m256d xi_254 = _mm256_load_pd(&_data_pdfs_20_33_10[ctr_0]);
-        const __m256d xi_255 = _mm256_load_pd(&_data_pdfs_20_37_10[ctr_0]);
-        const __m256d xi_256 = _mm256_load_pd(&_data_pdfs_20_311_10[ctr_0]);
-        const __m256d xi_257 = _mm256_load_pd(&_data_force_20_32_10[ctr_0]);
-        const __m256d xi_258 = _mm256_load_pd(&_data_pdfs_20_30_10[ctr_0]);
-        const __m256d xi_259 = _mm256_load_pd(&_data_pdfs_20_39_10[ctr_0]);
-        const __m256d xi_260 = _mm256_load_pd(&_data_pdfs_20_32_10[ctr_0]);
-        const __m256d xi_261 = _mm256_load_pd(&_data_pdfs_20_36_10[ctr_0]);
-        const __m256d xi_262 = _mm256_load_pd(&_data_pdfs_20_317_10[ctr_0]);
-        const __m256d xi_263 = _mm256_load_pd(&_data_pdfs_20_315_10[ctr_0]);
-        const __m256d xi_264 = _mm256_load_pd(&_data_pdfs_20_38_10[ctr_0]);
-        const __m256d xi_265 = _mm256_load_pd(&_data_pdfs_20_316_10[ctr_0]);
-        const __m256d xi_266 = _mm256_load_pd(&_data_pdfs_20_318_10[ctr_0]);
-        const __m256d xi_267 = _mm256_load_pd(&_data_pdfs_20_314_10[ctr_0]);
-        const __m256d xi_268 = _mm256_load_pd(&_data_pdfs_20_31_10[ctr_0]);
-        const __m256d xi_269 = _mm256_load_pd(&_data_pdfs_20_313_10[ctr_0]);
+        const __m256d xi_248 = _mm256_load_pd(&_data_pdfs_20_35_10[ctr_0]);
+        const __m256d xi_249 = _mm256_load_pd(&_data_pdfs_20_34_10[ctr_0]);
+        const __m256d xi_250 = _mm256_load_pd(&_data_pdfs_20_32_10[ctr_0]);
+        const __m256d xi_251 = _mm256_load_pd(&_data_force_20_32_10[ctr_0]);
+        const __m256d xi_252 = _mm256_load_pd(&_data_pdfs_20_30_10[ctr_0]);
+        const __m256d xi_253 = _mm256_load_pd(&_data_pdfs_20_38_10[ctr_0]);
+        const __m256d xi_254 = _mm256_load_pd(&_data_pdfs_20_313_10[ctr_0]);
+        const __m256d xi_255 = _mm256_load_pd(&_data_pdfs_20_33_10[ctr_0]);
+        const __m256d xi_256 = _mm256_load_pd(&_data_pdfs_20_314_10[ctr_0]);
+        const __m256d xi_257 = _mm256_load_pd(&_data_force_20_30_10[ctr_0]);
+        const __m256d xi_258 = _mm256_load_pd(&_data_pdfs_20_318_10[ctr_0]);
+        const __m256d xi_259 = _mm256_load_pd(&_data_pdfs_20_315_10[ctr_0]);
+        const __m256d xi_260 = _mm256_load_pd(&_data_force_20_31_10[ctr_0]);
+        const __m256d xi_261 = _mm256_load_pd(&_data_pdfs_20_37_10[ctr_0]);
+        const __m256d xi_262 = _mm256_load_pd(&_data_pdfs_20_312_10[ctr_0]);
+        const __m256d xi_263 = _mm256_load_pd(&_data_pdfs_20_317_10[ctr_0]);
+        const __m256d xi_264 = _mm256_load_pd(&_data_pdfs_20_310_10[ctr_0]);
+        const __m256d xi_265 = _mm256_load_pd(&_data_pdfs_20_31_10[ctr_0]);
+        const __m256d xi_266 = _mm256_load_pd(&_data_pdfs_20_311_10[ctr_0]);
+        const __m256d xi_267 = _mm256_load_pd(&_data_pdfs_20_316_10[ctr_0]);
+        const __m256d xi_268 = _mm256_load_pd(&_data_pdfs_20_36_10[ctr_0]);
+        const __m256d xi_269 = _mm256_load_pd(&_data_pdfs_20_39_10[ctr_0]);
 
         __m256d random_7_0;
         __m256d random_7_1;
@@ -2021,70 +2024,70 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                        block_offset_1 + ctr_1, block_offset_2 + ctr_2, 0, seed,
                        random_0_0, random_0_1);
 
-        const __m256d xi_0 = _mm256_add_pd(xi_266, xi_267);
-        const __m256d xi_1 = _mm256_add_pd(xi_0, xi_248);
+        const __m256d xi_0 = _mm256_add_pd(xi_256, xi_258);
+        const __m256d xi_1 = _mm256_add_pd(xi_0, xi_249);
         const __m256d xi_2 =
-            _mm256_add_pd(_mm256_add_pd(xi_256, xi_263), xi_268);
-        const __m256d xi_3 = _mm256_add_pd(xi_249, xi_250);
-        const __m256d xi_4 = _mm256_add_pd(xi_254, xi_259);
-        const __m256d xi_5 = _mm256_add_pd(xi_260, xi_265);
-        const __m256d xi_6 = _mm256_add_pd(xi_261, xi_262);
+            _mm256_add_pd(_mm256_add_pd(xi_259, xi_265), xi_266);
+        const __m256d xi_3 = _mm256_add_pd(xi_248, xi_262);
+        const __m256d xi_4 = _mm256_add_pd(xi_255, xi_269);
+        const __m256d xi_5 = _mm256_add_pd(xi_250, xi_267);
+        const __m256d xi_6 = _mm256_add_pd(xi_263, xi_268);
         const __m256d xi_8 =
-            _mm256_mul_pd(xi_259, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
-        const __m256d xi_9 = _mm256_add_pd(
-            _mm256_mul_pd(xi_255, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)), xi_8);
-        const __m256d xi_10 =
-            _mm256_mul_pd(xi_262, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
-        const __m256d xi_11 =
             _mm256_mul_pd(xi_269, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
-        const __m256d xi_12 =
+        const __m256d xi_9 = _mm256_add_pd(
+            _mm256_mul_pd(xi_261, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)), xi_8);
+        const __m256d xi_10 =
+            _mm256_mul_pd(xi_263, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+        const __m256d xi_11 =
             _mm256_mul_pd(xi_254, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+        const __m256d xi_12 =
+            _mm256_mul_pd(xi_255, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_13 = _mm256_add_pd(_mm256_add_pd(xi_10, xi_11), xi_12);
         const __m256d xi_14 =
-            _mm256_mul_pd(xi_260, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_250, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_15 =
-            _mm256_mul_pd(xi_252, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_264, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_16 = _mm256_add_pd(xi_14, xi_15);
         const __m256d xi_17 =
-            _mm256_mul_pd(xi_265, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_267, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_18 =
-            _mm256_mul_pd(xi_249, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_262, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_19 = _mm256_add_pd(xi_17, xi_18);
         const __m256d xi_20 =
-            _mm256_mul_pd(xi_266, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_258, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_21 = _mm256_add_pd(xi_10, xi_20);
         const __m256d xi_22 =
-            _mm256_mul_pd(xi_263, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_259, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_23 =
-            _mm256_mul_pd(xi_261, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_268, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_24 = _mm256_add_pd(
-            _mm256_add_pd(_mm256_add_pd(xi_17, xi_22), xi_23), xi_256);
+            _mm256_add_pd(_mm256_add_pd(xi_17, xi_22), xi_23), xi_266);
         const __m256d xi_42 = _mm256_mul_pd(
-            xi_253, _mm256_set_pd(0.166666666666667, 0.166666666666667,
+            xi_260, _mm256_set_pd(0.166666666666667, 0.166666666666667,
                                   0.166666666666667, 0.166666666666667));
         const __m256d xi_50 = _mm256_mul_pd(
-            xi_251, _mm256_set_pd(0.166666666666667, 0.166666666666667,
-                                  0.166666666666667, 0.166666666666667));
-        const __m256d xi_54 = _mm256_mul_pd(
             xi_257, _mm256_set_pd(0.166666666666667, 0.166666666666667,
                                   0.166666666666667, 0.166666666666667));
+        const __m256d xi_54 = _mm256_mul_pd(
+            xi_251, _mm256_set_pd(0.166666666666667, 0.166666666666667,
+                                  0.166666666666667, 0.166666666666667));
         const __m256d xi_57 =
-            _mm256_mul_pd(xi_253, _mm256_set_pd(0.5, 0.5, 0.5, 0.5));
+            _mm256_mul_pd(xi_260, _mm256_set_pd(0.5, 0.5, 0.5, 0.5));
         const __m256d xi_61 = _mm256_mul_pd(
-            xi_251, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
-                                  0.0833333333333333, 0.0833333333333333));
-        const __m256d xi_65 = _mm256_mul_pd(
-            xi_253, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
-                                  0.0833333333333333, 0.0833333333333333));
-        const __m256d xi_75 = _mm256_mul_pd(
             xi_257, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
                                   0.0833333333333333, 0.0833333333333333));
+        const __m256d xi_65 = _mm256_mul_pd(
+            xi_260, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
+                                  0.0833333333333333, 0.0833333333333333));
+        const __m256d xi_75 = _mm256_mul_pd(
+            xi_251, _mm256_set_pd(0.0833333333333333, 0.0833333333333333,
+                                  0.0833333333333333, 0.0833333333333333));
         const __m256d xi_93 =
-            _mm256_mul_pd(xi_258, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_252, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_94 = _mm256_add_pd(
             _mm256_add_pd(
-                _mm256_mul_pd(xi_250, _mm256_set_pd(3.0, 3.0, 3.0, 3.0)),
-                _mm256_mul_pd(xi_261, _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
+                _mm256_mul_pd(xi_248, _mm256_set_pd(3.0, 3.0, 3.0, 3.0)),
+                _mm256_mul_pd(xi_268, _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
             xi_93);
         const __m256d xi_95 = _mm256_mul_pd(
             _mm256_add_pd(
@@ -2094,31 +2097,33 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                             _mm256_add_pd(
                                 _mm256_add_pd(
                                     _mm256_mul_pd(
-                                        xi_249,
-                                        _mm256_set_pd(-3.0, -3.0, -3.0, -3.0)),
+                                        xi_250,
+                                        _mm256_set_pd(3.0, 3.0, 3.0, 3.0)),
                                     _mm256_mul_pd(
-                                        xi_256,
+                                        xi_259,
                                         _mm256_set_pd(-3.0, -3.0, -3.0, -3.0))),
                                 _mm256_mul_pd(
-                                    xi_260, _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
-                            _mm256_mul_pd(
-                                xi_263, _mm256_set_pd(-3.0, -3.0, -3.0, -3.0))),
-                        _mm256_mul_pd(xi_265,
+                                    xi_262,
+                                    _mm256_set_pd(-3.0, -3.0, -3.0, -3.0))),
+                            _mm256_mul_pd(xi_265,
+                                          _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
+                        _mm256_mul_pd(xi_266,
                                       _mm256_set_pd(-3.0, -3.0, -3.0, -3.0))),
-                    _mm256_mul_pd(xi_268, _mm256_set_pd(3.0, 3.0, 3.0, 3.0))),
+                    _mm256_mul_pd(xi_267,
+                                  _mm256_set_pd(-3.0, -3.0, -3.0, -3.0))),
                 xi_94),
             _mm256_set_pd(omega_even, omega_even, omega_even, omega_even));
         const __m256d xi_96 = _mm256_add_pd(
             _mm256_add_pd(
                 _mm256_add_pd(
-                    _mm256_mul_pd(xi_249, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)),
-                    _mm256_mul_pd(xi_256, _mm256_set_pd(2.0, 2.0, 2.0, 2.0))),
-                _mm256_mul_pd(xi_263, _mm256_set_pd(2.0, 2.0, 2.0, 2.0))),
-            _mm256_mul_pd(xi_265, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)));
+                    _mm256_mul_pd(xi_259, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)),
+                    _mm256_mul_pd(xi_262, _mm256_set_pd(2.0, 2.0, 2.0, 2.0))),
+                _mm256_mul_pd(xi_266, _mm256_set_pd(2.0, 2.0, 2.0, 2.0))),
+            _mm256_mul_pd(xi_267, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)));
         const __m256d xi_97 = _mm256_add_pd(
             _mm256_add_pd(
-                _mm256_mul_pd(xi_248, _mm256_set_pd(5.0, 5.0, 5.0, 5.0)),
-                _mm256_mul_pd(xi_254, _mm256_set_pd(5.0, 5.0, 5.0, 5.0))),
+                _mm256_mul_pd(xi_249, _mm256_set_pd(5.0, 5.0, 5.0, 5.0)),
+                _mm256_mul_pd(xi_255, _mm256_set_pd(5.0, 5.0, 5.0, 5.0))),
             xi_96);
         const __m256d xi_98 = _mm256_mul_pd(
             _mm256_add_pd(
@@ -2129,40 +2134,40 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                                 _mm256_add_pd(
                                     _mm256_add_pd(
                                         _mm256_mul_pd(
-                                            xi_260, _mm256_set_pd(-2.0, -2.0,
+                                            xi_250, _mm256_set_pd(-2.0, -2.0,
                                                                   -2.0, -2.0)),
                                         _mm256_mul_pd(
-                                            xi_262, _mm256_set_pd(-5.0, -5.0,
+                                            xi_254, _mm256_set_pd(-5.0, -5.0,
                                                                   -5.0, -5.0))),
                                     _mm256_mul_pd(
-                                        xi_266,
+                                        xi_256,
                                         _mm256_set_pd(-5.0, -5.0, -5.0, -5.0))),
                                 _mm256_mul_pd(
-                                    xi_267,
+                                    xi_258,
                                     _mm256_set_pd(-5.0, -5.0, -5.0, -5.0))),
                             _mm256_mul_pd(
-                                xi_268, _mm256_set_pd(-2.0, -2.0, -2.0, -2.0))),
-                        _mm256_mul_pd(xi_269,
-                                      _mm256_set_pd(-5.0, -5.0, -5.0, -5.0))),
+                                xi_263, _mm256_set_pd(-5.0, -5.0, -5.0, -5.0))),
+                        _mm256_mul_pd(xi_265,
+                                      _mm256_set_pd(-2.0, -2.0, -2.0, -2.0))),
                     xi_94),
                 xi_97),
             _mm256_set_pd(omega_even, omega_even, omega_even, omega_even));
         const __m256d xi_101 =
-            _mm256_mul_pd(xi_256, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_266, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_102 = _mm256_add_pd(xi_101, xi_18);
         const __m256d xi_103 =
-            _mm256_mul_pd(xi_264, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_253, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_106 =
-            _mm256_mul_pd(xi_267, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
+            _mm256_mul_pd(xi_256, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_107 = _mm256_add_pd(
             _mm256_add_pd(_mm256_add_pd(xi_106, xi_11), xi_15), xi_21);
         const __m256d xi_109 =
-            _mm256_mul_pd(xi_269, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
+            _mm256_mul_pd(xi_254, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
         const __m256d xi_110 =
-            _mm256_mul_pd(xi_267, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
+            _mm256_mul_pd(xi_256, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
         const __m256d xi_111 = _mm256_add_pd(
-            _mm256_mul_pd(xi_262, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)),
-            _mm256_mul_pd(xi_266, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)));
+            _mm256_mul_pd(xi_258, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)),
+            _mm256_mul_pd(xi_263, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)));
         const __m256d xi_112 = _mm256_mul_pd(
             _mm256_add_pd(
                 _mm256_add_pd(
@@ -2177,64 +2182,63 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                                                     _mm256_add_pd(
                                                         _mm256_add_pd(
                                                             _mm256_mul_pd(
-                                                                xi_250,
+                                                                xi_248,
                                                                 _mm256_set_pd(
                                                                     -4.0, -4.0,
                                                                     -4.0,
                                                                     -4.0)),
                                                             _mm256_mul_pd(
-                                                                xi_252,
+                                                                xi_250,
                                                                 _mm256_set_pd(
-                                                                    -7.0, -7.0,
-                                                                    -7.0,
-                                                                    -7.0))),
+                                                                    5.0, 5.0,
+                                                                    5.0, 5.0))),
                                                         _mm256_mul_pd(
-                                                            xi_255,
+                                                            xi_253,
                                                             _mm256_set_pd(
                                                                 -7.0, -7.0,
                                                                 -7.0, -7.0))),
                                                     _mm256_mul_pd(
-                                                        xi_259,
+                                                        xi_261,
                                                         _mm256_set_pd(
                                                             -7.0, -7.0, -7.0,
                                                             -7.0))),
                                                 _mm256_mul_pd(
-                                                    xi_260,
-                                                    _mm256_set_pd(5.0, 5.0, 5.0,
-                                                                  5.0))),
-                                            _mm256_mul_pd(
-                                                xi_261,
-                                                _mm256_set_pd(-4.0, -4.0, -4.0,
-                                                              -4.0))),
-                                        _mm256_mul_pd(
-                                            xi_264, _mm256_set_pd(-7.0, -7.0,
+                                                    xi_264,
+                                                    _mm256_set_pd(-7.0, -7.0,
                                                                   -7.0, -7.0))),
+                                            _mm256_mul_pd(
+                                                xi_265,
+                                                _mm256_set_pd(5.0, 5.0, 5.0,
+                                                              5.0))),
+                                        _mm256_mul_pd(
+                                            xi_268, _mm256_set_pd(-4.0, -4.0,
+                                                                  -4.0, -4.0))),
                                     _mm256_mul_pd(
-                                        xi_268,
-                                        _mm256_set_pd(5.0, 5.0, 5.0, 5.0))),
+                                        xi_269,
+                                        _mm256_set_pd(-7.0, -7.0, -7.0, -7.0))),
                                 xi_109),
                             xi_110),
                         xi_111),
                     xi_93),
                 xi_97),
             _mm256_set_pd(omega_even, omega_even, omega_even, omega_even));
-        const __m256d xi_113 = _mm256_add_pd(xi_101, xi_249);
+        const __m256d xi_113 = _mm256_add_pd(xi_101, xi_262);
         const __m256d xi_114 = _mm256_add_pd(
             _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(xi_113, xi_14), xi_22),
                           xi_265),
-            xi_268);
+            xi_267);
         const __m256d xi_116 = _mm256_mul_pd(
             xi_114, _mm256_set_pd(xi_115, xi_115, xi_115, xi_115));
-        const __m256d xi_118 = _mm256_add_pd(xi_103, xi_252);
+        const __m256d xi_118 = _mm256_add_pd(xi_103, xi_264);
         const __m256d xi_122 =
             _mm256_add_pd(random_5_1, _mm256_set_pd(-0.5, -0.5, -0.5, -0.5));
         const __m256d xi_127 =
-            _mm256_mul_pd(xi_255, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
+            _mm256_mul_pd(xi_261, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
         const __m256d xi_128 =
-            _mm256_mul_pd(xi_252, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
+            _mm256_mul_pd(xi_264, _mm256_set_pd(2.0, 2.0, 2.0, 2.0));
         const __m256d xi_129 = _mm256_add_pd(
-            _mm256_mul_pd(xi_259, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)),
-            _mm256_mul_pd(xi_264, _mm256_set_pd(-2.0, -2.0, -2.0, -2.0)));
+            _mm256_mul_pd(xi_253, _mm256_set_pd(-2.0, -2.0, -2.0, -2.0)),
+            _mm256_mul_pd(xi_269, _mm256_set_pd(2.0, 2.0, 2.0, 2.0)));
         const __m256d xi_130 = _mm256_add_pd(
             _mm256_add_pd(
                 _mm256_add_pd(
@@ -2253,12 +2257,12 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
             _mm256_add_pd(random_3_0, _mm256_set_pd(-0.5, -0.5, -0.5, -0.5));
         const __m256d xi_138 =
             _mm256_add_pd(random_0_1, _mm256_set_pd(-0.5, -0.5, -0.5, -0.5));
-        const __m256d xi_142 = _mm256_add_pd(xi_262, xi_269);
-        const __m256d xi_156 = _mm256_add_pd(xi_106, xi_269);
+        const __m256d xi_142 = _mm256_add_pd(xi_254, xi_263);
+        const __m256d xi_156 = _mm256_add_pd(xi_106, xi_254);
         const __m256d xi_157 = _mm256_add_pd(
             _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(xi_12, xi_156), xi_20),
-                          xi_248),
-            xi_262);
+                          xi_249),
+            xi_263);
         const __m256d xi_158 = _mm256_mul_pd(
             xi_157, _mm256_set_pd(xi_115, xi_115, xi_115, xi_115));
         const __m256d xi_159 =
@@ -2277,9 +2281,9 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
             xi_161, _mm256_set_pd(xi_131, xi_131, xi_131, xi_131));
         const __m256d xi_163 =
             _mm256_add_pd(random_4_0, _mm256_set_pd(-0.5, -0.5, -0.5, -0.5));
-        const __m256d xi_168 = _mm256_add_pd(xi_263, xi_265);
+        const __m256d xi_168 = _mm256_add_pd(xi_259, xi_267);
         const __m256d xi_169 = _mm256_add_pd(
-            _mm256_add_pd(_mm256_add_pd(xi_102, xi_168), xi_23), xi_250);
+            _mm256_add_pd(_mm256_add_pd(xi_102, xi_168), xi_23), xi_248);
         const __m256d xi_170 = _mm256_mul_pd(
             xi_169, _mm256_set_pd(xi_115, xi_115, xi_115, xi_115));
         const __m256d xi_173 =
@@ -2323,16 +2327,16 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
         const __m256d xi_239 = _mm256_mul_pd(
             xi_161, _mm256_set_pd(xi_211, xi_211, xi_211, xi_211));
         const __m256d vel0Term =
-            _mm256_add_pd(_mm256_add_pd(xi_1, xi_252), xi_264);
-        const __m256d vel1Term = _mm256_add_pd(xi_2, xi_255);
-        const __m256d vel2Term = _mm256_add_pd(xi_269, xi_3);
+            _mm256_add_pd(_mm256_add_pd(xi_1, xi_253), xi_264);
+        const __m256d vel1Term = _mm256_add_pd(xi_2, xi_261);
+        const __m256d vel2Term = _mm256_add_pd(xi_254, xi_3);
         const __m256d rho = _mm256_add_pd(
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(
                         _mm256_add_pd(_mm256_add_pd(vel0Term, vel1Term),
                                       vel2Term),
-                        xi_258),
+                        xi_252),
                     xi_4),
                 xi_5),
             xi_6);
@@ -2477,7 +2481,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
         const __m256d xi_241 = _mm256_mul_pd(xi_163, xi_215);
         const __m256d u_0 = _mm256_mul_pd(
             xi_7, _mm256_add_pd(_mm256_add_pd(vel0Term, xi_13), xi_9));
-        const __m256d xi_26 = _mm256_mul_pd(u_0, xi_251);
+        const __m256d xi_26 = _mm256_mul_pd(u_0, xi_257);
         const __m256d xi_27 = _mm256_mul_pd(
             xi_26, _mm256_set_pd(0.333333333333333, 0.333333333333333,
                                  0.333333333333333, 0.333333333333333));
@@ -2493,7 +2497,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                                       _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
                         xi_142),
                     xi_153),
-                xi_255),
+                xi_261),
             xi_4);
         const __m256d xi_155 = _mm256_mul_pd(
             xi_154, _mm256_set_pd(xi_120, xi_120, xi_120, xi_120));
@@ -2503,9 +2507,9 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
             xi_7, _mm256_add_pd(
                       _mm256_add_pd(
                           _mm256_add_pd(_mm256_add_pd(vel1Term, xi_16), xi_19),
-                          xi_264),
+                          xi_253),
                       xi_8));
-        const __m256d xi_28 = _mm256_mul_pd(u_1, xi_253);
+        const __m256d xi_28 = _mm256_mul_pd(u_1, xi_260);
         const __m256d xi_29 = _mm256_mul_pd(
             xi_28, _mm256_set_pd(0.333333333333333, 0.333333333333333,
                                  0.333333333333333, 0.333333333333333));
@@ -2515,7 +2519,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
             _mm256_mul_pd(u_1, _mm256_set_pd(0.5, 0.5, 0.5, 0.5));
         const __m256d xi_59 =
             _mm256_mul_pd(_mm256_add_pd(_mm256_mul_pd(u_0, xi_57),
-                                        _mm256_mul_pd(xi_251, xi_56)),
+                                        _mm256_mul_pd(xi_257, xi_56)),
                           _mm256_set_pd(xi_58, xi_58, xi_58, xi_58));
         const __m256d xi_60 =
             _mm256_mul_pd(xi_59, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
@@ -2532,8 +2536,8 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                                                                   -1.0, -1.0)),
                             xi_117),
                         xi_118),
-                    xi_249),
-                xi_259),
+                    xi_262),
+                xi_269),
             xi_5);
         const __m256d xi_121 = _mm256_mul_pd(
             xi_119, _mm256_set_pd(xi_120, xi_120, xi_120, xi_120));
@@ -2542,7 +2546,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
         const __m256d xi_197 = _mm256_mul_pd(
             _mm256_add_pd(
                 _mm256_add_pd(_mm256_add_pd(_mm256_mul_pd(u_0, xi_117), xi_118),
-                              xi_255),
+                              xi_261),
                 xi_8),
             _mm256_set_pd(xi_196, xi_196, xi_196, xi_196));
         const __m256d xi_198 = _mm256_add_pd(
@@ -2552,8 +2556,8 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
         const __m256d u_2 = _mm256_mul_pd(
             xi_7,
             _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(vel2Term, xi_21), xi_24),
-                          xi_267));
-        const __m256d xi_30 = _mm256_mul_pd(u_2, xi_257);
+                          xi_256));
+        const __m256d xi_30 = _mm256_mul_pd(u_2, xi_251);
         const __m256d xi_31 = _mm256_mul_pd(
             xi_30, _mm256_set_pd(0.333333333333333, 0.333333333333333,
                                  0.333333333333333, 0.333333333333333));
@@ -2626,7 +2630,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
         const __m256d xi_72 = _mm256_add_pd(xi_64, xi_71);
         const __m256d xi_73 =
             _mm256_mul_pd(_mm256_add_pd(_mm256_mul_pd(u_2, xi_57),
-                                        _mm256_mul_pd(xi_257, xi_56)),
+                                        _mm256_mul_pd(xi_251, xi_56)),
                           _mm256_set_pd(xi_58, xi_58, xi_58, xi_58));
         const __m256d xi_74 = _mm256_mul_pd(
             _mm256_mul_pd(xi_41, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
@@ -2636,9 +2640,9 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
         const __m256d xi_78 =
             _mm256_mul_pd(xi_73, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0));
         const __m256d xi_79 = _mm256_mul_pd(
-            _mm256_add_pd(_mm256_mul_pd(_mm256_mul_pd(u_0, xi_257),
+            _mm256_add_pd(_mm256_mul_pd(_mm256_mul_pd(u_0, xi_251),
                                         _mm256_set_pd(0.5, 0.5, 0.5, 0.5)),
-                          _mm256_mul_pd(_mm256_mul_pd(u_2, xi_251),
+                          _mm256_mul_pd(_mm256_mul_pd(u_2, xi_257),
                                         _mm256_set_pd(0.5, 0.5, 0.5, 0.5))),
             _mm256_set_pd(xi_58, xi_58, xi_58, xi_58));
         const __m256d xi_80 =
@@ -2663,14 +2667,14 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                                 xi_107),
                             xi_17),
                         xi_22),
-                    xi_258),
+                    xi_252),
                 xi_99),
             _mm256_set_pd(omega_bulk, omega_bulk, omega_bulk, omega_bulk));
         const __m256d xi_143 = _mm256_add_pd(
             _mm256_add_pd(
                 _mm256_mul_pd(xi_100, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
-                xi_250),
-            xi_261);
+                xi_248),
+            xi_268);
         const __m256d xi_144 = _mm256_mul_pd(
             _mm256_add_pd(
                 _mm256_add_pd(
@@ -2678,7 +2682,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                         _mm256_add_pd(
                             _mm256_add_pd(
                                 _mm256_mul_pd(
-                                    xi_268,
+                                    xi_265,
                                     _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
                                 xi_0),
                             xi_105),
@@ -2705,12 +2709,12 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                                                             -1.0, -1.0, -1.0,
                                                             -1.0)),
                                                     _mm256_mul_pd(
-                                                        xi_248,
+                                                        xi_249,
                                                         _mm256_set_pd(
                                                             -2.0, -2.0, -2.0,
                                                             -2.0))),
                                                 _mm256_mul_pd(
-                                                    xi_254,
+                                                    xi_255,
                                                     _mm256_set_pd(-2.0, -2.0,
                                                                   -2.0, -2.0))),
                                             _mm256_mul_pd(
@@ -2720,8 +2724,8 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                                         xi_103),
                                     xi_107),
                                 xi_143),
-                            xi_260),
-                        xi_268),
+                            xi_250),
+                        xi_265),
                     xi_9),
                 xi_96),
             _mm256_set_pd(omega_shear, omega_shear, omega_shear, omega_shear));
@@ -2793,7 +2797,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                             xi_101),
                         xi_106),
                     xi_168),
-                xi_266),
+                xi_258),
             xi_6);
         const __m256d xi_172 = _mm256_mul_pd(
             xi_171, _mm256_set_pd(xi_120, xi_120, xi_120, xi_120));
@@ -2871,7 +2875,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
             _mm256_add_pd(
                 _mm256_add_pd(_mm256_add_pd(_mm256_mul_pd(u_2, xi_117), xi_113),
                               xi_17),
-                xi_263),
+                xi_259),
             _mm256_set_pd(xi_196, xi_196, xi_196, xi_196));
         const __m256d xi_210 = _mm256_add_pd(
             _mm256_add_pd(
@@ -2950,7 +2954,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
             _mm256_add_pd(
                 _mm256_add_pd(_mm256_add_pd(_mm256_mul_pd(u_2, xi_153), xi_10),
                               xi_156),
-                xi_266),
+                xi_258),
             _mm256_set_pd(xi_196, xi_196, xi_196, xi_196));
         const __m256d xi_237 = _mm256_add_pd(
             _mm256_mul_pd(xi_235, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)),
@@ -3095,7 +3099,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                                                     0.0428571428571429,
                                                     0.0428571428571429))),
                     forceTerm_0),
-                xi_258));
+                xi_252));
         _mm256_stream_pd(
             &_data_pdfs_20_31_10[ctr_0],
             _mm256_add_pd(
@@ -3114,7 +3118,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                             xi_121),
                         xi_137),
                     xi_151),
-                xi_268));
+                xi_265));
         _mm256_stream_pd(
             &_data_pdfs_20_32_10[ctr_0],
             _mm256_add_pd(
@@ -3131,7 +3135,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                             xi_126),
                         xi_151),
                     xi_152),
-                xi_260));
+                xi_250));
         _mm256_stream_pd(
             &_data_pdfs_20_33_10[ctr_0],
             _mm256_add_pd(
@@ -3148,7 +3152,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                             xi_160),
                         xi_165),
                     xi_166),
-                xi_254));
+                xi_255));
         _mm256_stream_pd(
             &_data_pdfs_20_34_10[ctr_0],
             _mm256_add_pd(
@@ -3167,7 +3171,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                             xi_155),
                         xi_166),
                     xi_167),
-                xi_248));
+                xi_249));
         _mm256_stream_pd(
             &_data_pdfs_20_35_10[ctr_0],
             _mm256_add_pd(
@@ -3186,7 +3190,7 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                             xi_172),
                         xi_179),
                     xi_180),
-                xi_250));
+                xi_248));
         _mm256_stream_pd(
             &_data_pdfs_20_36_10[ctr_0],
             _mm256_add_pd(
@@ -3203,94 +3207,95 @@ kernel_collide(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
                             xi_174),
                         xi_180),
                     xi_181),
-                xi_261));
+                xi_268));
         _mm256_stream_pd(
             &_data_pdfs_20_37_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_7, xi_190), xi_194),
                     xi_198),
-                xi_255));
+                xi_261));
         _mm256_stream_pd(
             &_data_pdfs_20_38_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_8, xi_190), xi_199),
                     xi_201),
-                xi_264));
+                xi_253));
         _mm256_stream_pd(
             &_data_pdfs_20_39_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_9, xi_194), xi_199),
                     xi_203),
-                xi_259));
+                xi_269));
         _mm256_stream_pd(
             &_data_pdfs_20_310_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_10, xi_198), xi_201),
                     xi_203),
-                xi_252));
+                xi_264));
         _mm256_stream_pd(
             &_data_pdfs_20_311_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_11, xi_210), xi_222),
                     xi_227),
-                xi_256));
+                xi_266));
         _mm256_stream_pd(
             &_data_pdfs_20_312_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_12, xi_222), xi_228),
                     xi_229),
-                xi_249));
+                xi_262));
         _mm256_stream_pd(
             &_data_pdfs_20_313_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_13, xi_234), xi_237),
                     xi_242),
-                xi_269));
+                xi_254));
         _mm256_stream_pd(
             &_data_pdfs_20_314_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_14, xi_234), xi_243),
                     xi_244),
-                xi_267));
+                xi_256));
         _mm256_stream_pd(
             &_data_pdfs_20_315_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_15, xi_227), xi_229),
                     xi_246),
-                xi_263));
+                xi_259));
         _mm256_stream_pd(
             &_data_pdfs_20_316_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_16, xi_210), xi_228),
                     xi_246),
-                xi_265));
+                xi_267));
         _mm256_stream_pd(
             &_data_pdfs_20_317_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_17, xi_242), xi_243),
                     xi_247),
-                xi_262));
+                xi_263));
         _mm256_stream_pd(
             &_data_pdfs_20_318_10[ctr_0],
             _mm256_add_pd(
                 _mm256_add_pd(
                     _mm256_add_pd(_mm256_add_pd(forceTerm_18, xi_237), xi_244),
                     xi_247),
-                xi_266));
+                xi_258));
       }
     }
   }
+  _mm_mfence();
 }
 } // namespace internal_kernel_collide
 namespace internal_kernel_stream {
@@ -3302,6 +3307,7 @@ kernel_stream(double *RESTRICT const _data_pdfs,
               int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_1,
               int64_t const _stride_pdfs_tmp_2,
               int64_t const _stride_pdfs_tmp_3) {
+
   for (int64_t ctr_2 = 1; ctr_2 < _size_pdfs_2 - 1; ctr_2 += 1) {
     double *RESTRICT _data_pdfs_tmp_20_30 =
         _data_pdfs_tmp + _stride_pdfs_tmp_2 * ctr_2;
@@ -3502,6 +3508,7 @@ kernel_stream(double *RESTRICT const _data_pdfs,
       }
     }
   }
+  _mm_mfence();
 }
 } // namespace internal_kernel_stream
 
@@ -3539,17 +3546,17 @@ void FluctuatingMRTLatticeModelAvx::Sweep::streamCollide(
                  ->latticeModel();
   WALBERLA_ASSERT_EQUAL(*(lm.blockId_), block->getId());
 
+  auto &force = lm.force_;
   auto &block_offset_2 = lm.block_offset_2_;
   auto &omega_shear = lm.omega_shear_;
+  auto &block_offset_0 = lm.block_offset_0_;
+  auto &seed = lm.seed_;
   auto &omega_odd = lm.omega_odd_;
   auto &block_offset_1 = lm.block_offset_1_;
-  auto &block_offset_0 = lm.block_offset_0_;
   auto &time_step = lm.time_step_;
-  auto &force = lm.force_;
-  auto &omega_even = lm.omega_even_;
   auto &omega_bulk = lm.omega_bulk_;
-  auto &seed = lm.seed_;
   auto &kT = lm.kT_;
+  auto &omega_even = lm.omega_even_;
   WALBERLA_ASSERT_GREATER_EQUAL(-cell_idx_c(numberOfGhostLayersToInclude) - 1,
                                 -int_c(force->nrOfGhostLayers()));
   double *RESTRICT const _data_force =
@@ -3622,17 +3629,17 @@ void FluctuatingMRTLatticeModelAvx::Sweep::collide(
                  ->latticeModel();
   WALBERLA_ASSERT_EQUAL(*(lm.blockId_), block->getId());
 
+  auto &force = lm.force_;
   auto &block_offset_2 = lm.block_offset_2_;
   auto &omega_shear = lm.omega_shear_;
+  auto &block_offset_0 = lm.block_offset_0_;
+  auto &seed = lm.seed_;
   auto &omega_odd = lm.omega_odd_;
   auto &block_offset_1 = lm.block_offset_1_;
-  auto &block_offset_0 = lm.block_offset_0_;
   auto &time_step = lm.time_step_;
-  auto &force = lm.force_;
-  auto &omega_even = lm.omega_even_;
   auto &omega_bulk = lm.omega_bulk_;
-  auto &seed = lm.seed_;
   auto &kT = lm.kT_;
+  auto &omega_even = lm.omega_even_;
   WALBERLA_ASSERT_GREATER_EQUAL(-cell_idx_c(numberOfGhostLayersToInclude),
                                 -int_c(force->nrOfGhostLayers()));
   double *RESTRICT const _data_force =
