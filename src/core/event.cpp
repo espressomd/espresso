@@ -309,9 +309,6 @@ void on_skin_change() {
 
 void on_parameter_change(int field) {
   switch (field) {
-  case FIELD_PERIODIC:
-    on_periodicity_change();
-    break;
   case FIELD_MIN_GLOBAL_CUT:
   case FIELD_SKIN:
     on_skin_change();

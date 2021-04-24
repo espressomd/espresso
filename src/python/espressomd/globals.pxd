@@ -27,7 +27,6 @@ cdef extern from "grid.hpp":
 cdef extern from "global.hpp":
     int FIELD_SKIN
     int FIELD_NODEGRID
-    int FIELD_PERIODIC
     int FIELD_SIMTIME
     int FIELD_MIN_GLOBAL_CUT
     int FIELD_THERMO_SWITCH

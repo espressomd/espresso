@@ -105,9 +105,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_NPTISO_GV,
      {&npt_iso.gammav, 1, "npt_iso.gammav"}}, /* 22 from thermostat.cpp */
 #endif
-    {FIELD_PERIODIC,
-     {reinterpret_cast<size_t *>(&box_geo.m_periodic), 1,
-      "periodicity"}},                /* 28 from BoxGeometry.hpp */
     {FIELD_SKIN, {&skin, 1, "skin"}}, /* 29 from integrate.cpp */
     {FIELD_TEMPERATURE,
      {&temperature, 1, "temperature"}}, /* 30 from thermostat.cpp */

@@ -52,7 +52,6 @@ enum Fields {
   FIELD_NPTISO_GV,
   /** index of \ref nptiso_struct::piston (only used for the events) */
   FIELD_NPTISO_PISTON,
-  FIELD_PERIODIC,
   /** index of \ref #skin */
   FIELD_SKIN,
   /** index of \ref #temperature */
