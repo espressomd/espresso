@@ -39,6 +39,24 @@ class BoxGeometry(ut.TestCase):
         with self.assertRaisesRegex(Exception, 'Box length must be of length 3'):
             self.system.box_l = self.box_l[:2]
 
+    def test_periodicity(self):
+        import itertools
+        for periodicity in itertools.product((True, False), repeat=3):
+            self.system.periodicity = periodicity
+
+            np.testing.assert_equal(np.copy(self.system.periodicity),
+                                    periodicity)
+
+        default_periodicity = (True, True, True)
+        self.system.periodicity = default_periodicity
+
+        with self.assertRaisesRegex(Exception, 'periodicity must be of length 3'):
+            self.system.periodicity = (True, True)
+
+        # the periodicity should not be updated
+        np.testing.assert_equal(np.copy(self.system.periodicity),
+                                default_periodicity)
+
 
 if __name__ == "__main__":
     ut.main()
