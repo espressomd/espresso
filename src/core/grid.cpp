@@ -147,3 +147,17 @@ void mpi_set_box_length(const Utils::Vector3d &length) {
 
   mpi_call_all(mpi_set_box_length_local, length);
 }
+
+void mpi_set_periodicity_local(bool x, bool y, bool z) {
+  box_geo.set_periodic(0, x);
+  box_geo.set_periodic(1, y);
+  box_geo.set_periodic(2, z);
+
+  on_periodicity_change();
+}
+
+REGISTER_CALLBACK(mpi_set_periodicity_local)
+
+void mpi_set_periodicity(bool x, bool y, bool z) {
+  mpi_call_all(mpi_set_periodicity_local, x, y, z);
+}

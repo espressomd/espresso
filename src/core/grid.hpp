@@ -117,4 +117,11 @@ LocalBox<double> regular_decomposition(const BoxGeometry &box,
  *  @param length new box length
  */
 void mpi_set_box_length(const Utils::Vector3d &length);
+
+/** @brief Set and broadcast the periodicity.
+ *  @param x periodicity in x direction
+ *  @param y periodicity in y direction
+ *  @param z periodicity in z direction
+ */
+void mpi_set_periodicity(bool x, bool y, bool z);
 #endif
