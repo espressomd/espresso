@@ -28,12 +28,13 @@
 #include <cmath>
 
 class BoxGeometry {
-public:
+private:
   /** Flags for all three dimensions whether pbc are applied (default). */
   std::bitset<3> m_periodic = 0b111;
   /** Side lengths of the box */
   Utils::Vector3d m_length = {1, 1, 1};
 
+public:
   /**
    * @brief Set periodicity for direction
    *
