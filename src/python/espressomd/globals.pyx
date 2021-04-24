@@ -57,14 +57,11 @@ cdef class Globals:
 
     property periodicity:
         def __set__(self, _periodic):
-            for i in range(3):
-                box_geo.set_periodic(i, _periodic[i])
-
-            mpi_bcast_parameter(FIELD_PERIODIC)
+            mpi_set_periodicity(_periodic[0], _periodic[1], _periodic[2])
             handle_errors("Error while assigning system periodicity")
 
         def __get__(self):
-            periodicity = np.zeros(3)
+            periodicity = np.empty(3, dtype=np.bool)
 
             for i in range(3):
                 periodicity[i] = box_geo.periodic(i)

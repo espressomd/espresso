@@ -22,6 +22,7 @@ from .utils cimport Vector3d
 
 cdef extern from "grid.hpp":
     void mpi_set_box_length(Vector3d length) except +
+    void mpi_set_periodicity(bool x, bool y, bool z)
 
 cdef extern from "global.hpp":
     int FIELD_SKIN
