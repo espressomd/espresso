@@ -23,6 +23,10 @@
 
 #include "script_interface/get_value.hpp"
 
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+
 BOOST_AUTO_TEST_CASE(default_case) {
   using ScriptInterface::get_value;
   using ScriptInterface::Variant;
@@ -95,4 +99,17 @@ BOOST_AUTO_TEST_CASE(get_value_from_map) {
   BOOST_CHECK(3.1 == get_value<double>(map, "e"));
   BOOST_CHECK(13 == get_value_or(map, "a", -1));
   BOOST_CHECK(-1 == get_value_or(map, "nope", -1));
+}
+
+BOOST_AUTO_TEST_CASE(get_map_value) {
+  using ScriptInterface::get_map;
+  using ScriptInterface::Variant;
+
+  std::unordered_map<int, Variant> const map_variant{{1, 1.5}, {2, 2.5}};
+  std::unordered_map<int, double> const map = get_map<int, double>(map_variant);
+  BOOST_CHECK_EQUAL(map.at(1), 1.5);
+  BOOST_CHECK_EQUAL(map.at(2), 2.5);
+
+  std::unordered_map<int, Variant> const mixed{{1, 1}, {2, std::string("2")}};
+  BOOST_CHECK_THROW((get_map<int, double>(mixed)), std::exception);
 }
