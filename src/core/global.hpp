@@ -38,7 +38,6 @@ void check_global_consistency();
  *  for use with @ref mpi_bcast_parameter.
  */
 enum Fields {
-  FIELD_BOXL = 0,
   /** index of \ref LangevinThermostat::gamma */
   FIELD_LANGEVIN_GAMMA,
   /** index of \ref integ_switch */
@@ -53,7 +52,6 @@ enum Fields {
   FIELD_NPTISO_GV,
   /** index of \ref nptiso_struct::piston (only used for the events) */
   FIELD_NPTISO_PISTON,
-  FIELD_PERIODIC,
   /** index of \ref #skin */
   FIELD_SKIN,
   /** index of \ref #temperature */

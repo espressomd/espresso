@@ -78,11 +78,14 @@ void on_short_range_ia_change();
 /** called every time a constraint is changed. */
 void on_constraint_change();
 
-/** called every time the box length has changed. This routine
- *  is relatively fast, and changing the box length every time step
- *  as for example necessary for NpT is more or less ok.
+/**
+ * @brief Called when the box length has changed. This routine is relatively
+ * fast, and changing the box length every time step as for example necessary
+ * for NpT is more or less ok.
+ *
+ * @param skip_method_adaption skip the long-range methods adaptions
  */
-void on_boxl_change();
+void on_boxl_change(bool skip_method_adaption = false);
 
 /** called every time a major change to the cell structure has happened,
  *  like the skin or grid have changed. This one is potentially slow.
@@ -91,6 +94,15 @@ void on_cell_structure_change();
 
 /** called every time the temperature changes. This one is potentially slow. */
 void on_temperature_change();
+
+/** @brief Called when the periodicity changes. Internally calls @ref
+ * on_skin_change.
+ */
+void on_periodicity_change();
+
+/** @brief Called when the skin is changed.
+ */
+void on_skin_change();
 
 /** called every time other parameters (timestep,...) are changed. Note that
  *  this does not happen automatically. The callback procedure of the changed
