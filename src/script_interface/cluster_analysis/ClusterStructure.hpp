@@ -78,17 +78,14 @@ public:
     }
     if (method == "clear") {
       m_cluster_structure.clear();
-      return true;
     }
     if (method == "run_for_all_pairs") {
       m_cluster_structure.run_for_all_pairs();
-      return true;
     }
     if (method == "run_for_bonded_particles") {
       m_cluster_structure.run_for_bonded_particles();
-      return true;
     }
-    return true;
+    return {};
   }
 
 private:

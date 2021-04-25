@@ -67,6 +67,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             length=LENGTH,
             central_angle=np.pi)
 
+        # check getters
         np.testing.assert_almost_equal(
             np.copy(shape.cyl_transform_params.center), 3 * [5])
         self.assertAlmostEqual(shape.r1, R1)
@@ -205,6 +206,20 @@ class ShapeBasedConstraintTest(ut.TestCase):
         dist = shape.calc_distance(position=probe_pos)
         self.assertAlmostEqual(dist[0], np.linalg.norm(d_vec_expected))
         np.testing.assert_array_almost_equal(d_vec_expected, np.copy(dist[1]))
+
+        # check setters
+        shape.r1 = R1 - 1
+        shape.r2 = R2 + 1
+        shape.thickness = D - 0.1
+        shape.length = LENGTH - 1
+        shape.central_angle = np.pi / 2
+        shape.direction = 1
+        self.assertAlmostEqual(shape.r1, R1 - 1)
+        self.assertAlmostEqual(shape.r2, R2 + 1)
+        self.assertAlmostEqual(shape.thickness, D - 0.1)
+        self.assertAlmostEqual(shape.length, LENGTH - 1)
+        self.assertAlmostEqual(shape.central_angle, np.pi / 2)
+        self.assertEqual(shape.direction, 1)
 
     def test_simplepore(self):
         """
