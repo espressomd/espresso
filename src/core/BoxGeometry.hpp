@@ -33,6 +33,10 @@ private:
   std::bitset<3> m_periodic = 0b111;
   /** Side lengths of the box */
   Utils::Vector3d m_length = {1, 1, 1};
+  /** Inverse side lengths of the box */
+  Utils::Vector3d m_length_inv = {1, 1, 1};
+  /** Half side lengths of the box */
+  Utils::Vector3d m_length_half = {0.5, 0.5, 0.5};
 
 public:
   /**
@@ -61,10 +65,26 @@ public:
   Utils::Vector3d const &length() const { return m_length; }
 
   /**
+   * @brief Inverse box length
+   * @return Return vector of inverse side-lengths of the box.
+   */
+  Utils::Vector3d const &length_inv() const { return m_length_inv; }
+
+  /**
+   * @brief Half box length
+   * @return Return vector of half side-lengths of the box.
+   */
+  Utils::Vector3d const &length_half() const { return m_length_half; }
+
+  /**
    * @brief Set box side lengths.
    * @param box_l Length that should be set.
    */
-  void set_length(Utils::Vector3d const &box_l) { m_length = box_l; }
+  void set_length(Utils::Vector3d const &box_l) {
+    m_length = box_l;
+    m_length_inv = {1. / box_l[0], 1. / box_l[1], 1. / box_l[2]};
+    m_length_half = 0.5 * box_l;
+  }
 
   /**
    * @brief Box volume
