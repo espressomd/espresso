@@ -32,14 +32,14 @@ Using the tutorials
 -------------------
 
 For using the tutorials, you need ESPResSo running. For installation
-instructions, please see: http://espressomd.org/html/doc/installation.html
+instructions, please see: https://espressomd.github.io/doc/installation.html
 
 Tutorials are available as Jupyter notebooks, i.e. they consist of a ``.ipynb``
 file which contains both the source code and the corresponding explanations.
 They can be viewed, changed and run interactively.
 
 All tutorials can be viewed with their solutions at
-http://espressomd.org/wordpress/documentation
+https://espressomd.github.io/tutorials.html
 
 Running the tutorials interactively
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -83,5 +83,5 @@ the `ipypresso` script from the directory into which espresso was compiled:
 
 This will launch a web browser in which the notebooks for the tutorials can be
 viewed and run. For more details, please see the user guide section on `running
-ESPResSo <http://espressomd.org/html/doc/installation.html#running-es>`_, which
+ESPResSo <https://espressomd.github.io/doc/installation.html#running-es>`_, which
 walks you through the Jupyter interface.

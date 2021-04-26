@@ -50,7 +50,7 @@ contributors from all over the world.
 
 ## Documentation
 
-The [user guide](http://espressomd.org/html/doc/index.html) will
+The [user guide](https://espressomd.github.io/doc/index.html) will
 walk you through the basic usage of ESPResSo. Advanced simulation
 methods are extensively documented, with examples and links to the
 relevant literature. Additional resources can be found on the
@@ -60,7 +60,7 @@ as tutorials and doxygen documentation.
 ## Installation
 
 Detailed installation instructions for Ubuntu and macOS can be found in the
-documentation, section [Installation](http://espressomd.org/html/doc/installation.html).
+documentation, section [Installation](https://espressomd.github.io/doc/installation.html).
 
 For most users, we recommend downloading the latest release version of ESPResSo. You
 can find it in the [release page](https://github.com/espressomd/espresso/releases),
@@ -84,7 +84,7 @@ acknowledge this usage by mentioning the software with its version number and
 A number of algorithms in ESPResSo are fairly advanced and unique to ESPResSo.
 The authors of these contributions kindly ask you to cite the relevant
 publications, as indicated in the documentation. For detailed instructions, see
-[How to cite ESPResSo](http://espressomd.org/html/doc/introduction.html#how-to-cite-espresso).
+[How to cite ESPResSo](https://espressomd.github.io/doc/introduction.html#how-to-cite-espresso).
 
 ## License
 

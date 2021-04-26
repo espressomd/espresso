@@ -29,12 +29,12 @@ class Test(ut.TestCase):
     cell_md_src = '''
 ignored: http://espressomd.org/wordpress/documentation/
 ignored: http://espressomd.org/wordpress/unknown_folder/
-valid:   http://espressomd.org/html/doc/index.html
-valid:   http://espressomd.org/html/doc/index.html#python-module-documentation
-valid:   http://espressomd.org/html/doc/index.html?highlight=highlander#python-module-documentation
-valid:   http://espressomd.org/html/doc/index.html?highlight=highlander
-invalid: http://espressomd.org/html/doc/index.html#unknown_anchor
-invalid: http://espressomd.org/html/doc/unknown_file.html
+valid:   https://espressomd.github.io/doc/index.html
+valid:   https://espressomd.github.io/doc/index.html#python-module-documentation
+valid:   https://espressomd.github.io/doc/index.html?highlight=highlander#python-module-documentation
+valid:   https://espressomd.github.io/doc/index.html?highlight=highlander
+invalid: https://espressomd.github.io/doc/index.html#unknown_anchor
+invalid: https://espressomd.github.io/doc/unknown_file.html
 invalid: [footnote 1](#unknown-footnote-1)
 '''
 
@@ -43,8 +43,8 @@ invalid: [footnote 1](#unknown-footnote-1)
         cell_md = nbformat.v4.new_markdown_cell(source=self.cell_md_src)
         nb['cells'].append(cell_md)
         ref_issues = [
-            'http://espressomd.org/html/doc/index.html has no anchor "unknown_anchor"',
-            'http://espressomd.org/html/doc/unknown_file.html does not exist',
+            'https://espressomd.github.io/doc/index.html has no anchor "unknown_anchor"',
+            'https://espressomd.github.io/doc/unknown_file.html does not exist',
             'notebook has no anchor "unknown-footnote-1"'
         ]
         issues = module.detect_invalid_urls(nb, '@CMAKE_BINARY_DIR@')
