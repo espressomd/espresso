@@ -78,7 +78,7 @@ struct DLC_struct {
 extern DLC_struct dlc_params;
 
 int mdlc_set_params(double maxPWerror, double gap_size, double far_cut);
-int mdlc_sanity_checks();
+void mdlc_sanity_checks();
 void add_mdlc_force_corrections(const ParticleRange &particles);
 double add_mdlc_energy_corrections(const ParticleRange &particles);
 #endif // DP3M

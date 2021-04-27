@@ -27,7 +27,7 @@ IF DIPOLES and DP3M:
             double gap_size
             double far_cut
 
-        int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
+        int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) except +
 
         # links intern C-struct with python object
         cdef extern dlc_struct dlc_params

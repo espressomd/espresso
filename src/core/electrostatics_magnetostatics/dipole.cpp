@@ -68,15 +68,25 @@ void nonbonded_sanity_check(int &state) {
 #ifdef DP3M
   switch (dipole.method) {
   case DIPOLAR_MDLC_P3M:
-    if (mdlc_sanity_checks())
-      state = 0; // fall through
+    try {
+      mdlc_sanity_checks();
+    } catch (std::runtime_error const &err) {
+      runtimeErrorMsg() << err.what();
+      state = 0;
+    }
+    // fall through
   case DIPOLAR_P3M:
     if (dp3m_sanity_checks(node_grid))
       state = 0;
     break;
   case DIPOLAR_MDLC_DS:
-    if (mdlc_sanity_checks())
-      state = 0; // fall through
+    try {
+      mdlc_sanity_checks();
+    } catch (std::runtime_error const &err) {
+      runtimeErrorMsg() << err.what();
+      state = 0;
+    }
+    // fall through
   case DIPOLAR_DS:
     if (magnetic_dipolar_direct_sum_sanity_checks())
       state = 0;

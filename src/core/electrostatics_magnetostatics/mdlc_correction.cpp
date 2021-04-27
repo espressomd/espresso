@@ -504,18 +504,15 @@ int mdlc_tune(double error) {
   return ES_OK;
 }
 
-int mdlc_sanity_checks() {
+void mdlc_sanity_checks() {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    runtimeErrorMsg() << "mdlc requires periodicity 1 1 1";
-    return 1;
+    throw std::runtime_error("MDLC requires periodicity 1 1 1");
   }
 
   // It will be desirable to have a  checking function that check that the
   // slab
   // geometry is such that
   // the short direction is along the z component.
-
-  return 0;
 }
 
 int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
