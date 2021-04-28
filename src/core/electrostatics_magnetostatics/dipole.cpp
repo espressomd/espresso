@@ -272,23 +272,6 @@ double calc_energy_long_range(const ParticleRange &particles) {
   return energy;
 }
 
-void set_mdlc_method() {
-  switch (dipole.method) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  case DIPOLAR_P3M:
-    set_method_local(DIPOLAR_MDLC_P3M);
-    break;
-#endif
-  case DIPOLAR_MDLC_DS:
-  case DIPOLAR_DS:
-    set_method_local(DIPOLAR_MDLC_DS);
-    break;
-  default:
-    throw std::runtime_error("unknown method");
-  }
-}
-
 void bcast_params(const boost::mpi::communicator &comm) {
   namespace mpi = boost::mpi;
 

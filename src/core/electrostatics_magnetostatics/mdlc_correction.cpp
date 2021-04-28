@@ -493,10 +493,33 @@ void mdlc_sanity_checks() {
 
 void mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
   auto const h = box_geo.length()[2] - gap_size;
+  if (maxPWerror <= 0.) {
+    throw std::domain_error("maxPWerror must be > 0");
+  }
+  if (gap_size <= 0.) {
+    throw std::domain_error("gap_size must be > 0");
+  }
   if (h < 0.) {
     throw std::domain_error("gap size too large");
   }
   mdlc_sanity_checks();
+
+  DipolarInteraction new_method;
+  switch (dipole.method) {
+#ifdef DP3M
+  case DIPOLAR_MDLC_P3M:
+  case DIPOLAR_P3M:
+    new_method = DIPOLAR_MDLC_P3M;
+    break;
+#endif
+  case DIPOLAR_MDLC_DS:
+  case DIPOLAR_DS:
+    new_method = DIPOLAR_MDLC_DS;
+    break;
+  default:
+    throw std::runtime_error(
+        "MDLC cannot extend the currently active magnetostatics solver.");
+  }
 
   DLC_struct new_dlc_params{maxPWerror, far_cut, gap_size, far_cut == -1., h};
 
@@ -506,7 +529,7 @@ void mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
 
   dlc_params = new_dlc_params;
 
-  Dipole::set_mdlc_method();
+  Dipole::set_method_local(new_method);
   mpi_bcast_coulomb_params();
 }
 

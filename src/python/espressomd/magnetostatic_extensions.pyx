@@ -62,13 +62,9 @@ IF DIPOLES and DP3M:
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float,
                 "maxPWerror has to be a float")
-            check_range_or_except(
-                self._params, "maxPWerror", 0, False, "inf", True)
             check_type_or_throw_except(
                 self._params["gap_size"], 1, float,
                 "gap_size has to be a float")
-            check_range_or_except(
-                self._params, "gap_size", 0, False, "inf", True)
             check_type_or_throw_except(
                 self._params["far_cut"], 1, float,
                 "far_cut has to be a float")
