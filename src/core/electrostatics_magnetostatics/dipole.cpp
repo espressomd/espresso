@@ -88,8 +88,12 @@ void nonbonded_sanity_check(int &state) {
     }
     // fall through
   case DIPOLAR_DS:
-    if (magnetic_dipolar_direct_sum_sanity_checks())
+    try {
+      mdds_sanity_checks(mdds_n_replica);
+    } catch (std::runtime_error const &err) {
+      runtimeErrorMsg() << err.what();
       state = 0;
+    }
     break;
   default:
     break;

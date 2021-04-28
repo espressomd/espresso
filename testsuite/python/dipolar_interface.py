@@ -74,6 +74,16 @@ class MagnetostaticsInterface(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'MDLC cannot extend the currently active magnetostatics solver'):
             self.system.actors.add(actor_mdlc)
         self.system.actors.clear()
+        actor = espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu(
+            prefactor=1, n_replica=-2)
+        with self.assertRaisesRegex(RuntimeError, 'requires n_replica >= 0'):
+            self.system.actors.add(actor)
+        self.system.actors.clear()
+        actor = espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu(
+            prefactor=1, n_replica=0)
+        with self.assertRaisesRegex(RuntimeError, 'with replica does not support a periodic system with zero replica'):
+            self.system.actors.add(actor)
+        self.system.actors.clear()
         self.system.periodicity = [True, True, False]
         actor = espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu(
             prefactor=1, n_replica=1)

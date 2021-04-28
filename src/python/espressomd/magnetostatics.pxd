@@ -44,8 +44,8 @@ IF DIPOLES == 1:
 
     cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
         void dawaanr_set_params() except +
-        void mdds_set_params(int n_cut) except +
-        int Ncut_off_magnetic_dipolar_direct_sum
+        void mdds_set_params(int n_replica) except +
+        int mdds_n_replica
 
     IF(CUDA == 1) and (ROTATION == 1):
         cdef extern from "actor/DipolarDirectSum.hpp":

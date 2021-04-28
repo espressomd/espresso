@@ -246,8 +246,7 @@ IF DIPOLES == 1:
             return ("prefactor", "n_replica")
 
         def _get_params_from_es_core(self):
-            return {"prefactor": dipole.prefactor,
-                    "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
+            return {"prefactor": dipole.prefactor, "n_replica": mdds_n_replica}
 
         def _activate_method(self):
             self._set_params_in_es_core()

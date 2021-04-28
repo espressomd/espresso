@@ -136,12 +136,14 @@ double dawaanr_calculations(bool force_flag, bool energy_flag,
    =============================================================================
 */
 
-int Ncut_off_magnetic_dipolar_direct_sum = 0;
+int mdds_n_replica = 0;
 
-int magnetic_dipolar_direct_sum_sanity_checks() {
-  /* left for the future, at this moment nothing to do */
-
-  return 0;
+void mdds_sanity_checks(int n_replica) {
+  if (box_geo.periodic(0) and box_geo.periodic(1) and box_geo.periodic(2) and
+      n_replica == 0) {
+    throw std::runtime_error("Dipolar direct sum with replica does not "
+                             "support a periodic system with zero replica.");
+  }
 }
 
 double
@@ -150,12 +152,6 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
 
   assert(n_nodes == 1);
   assert(force_flag || energy_flag);
-
-  if (box_geo.periodic(0) and box_geo.periodic(1) and box_geo.periodic(2) and
-      Ncut_off_magnetic_dipolar_direct_sum == 0) {
-    throw std::runtime_error("Dipolar direct sum with replica does not support "
-                             "a periodic system with zero replica.");
-  };
 
   std::vector<double> x, y, z;
   std::vector<double> mx, my, mz;
@@ -214,9 +210,9 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
 
   int NCUT[3];
   for (int i = 0; i < 3; i++) {
-    NCUT[i] = box_geo.periodic(i) ? Ncut_off_magnetic_dipolar_direct_sum : 0;
+    NCUT[i] = box_geo.periodic(i) ? mdds_n_replica : 0;
   }
-  auto const NCUT2 = Utils::sqr(Ncut_off_magnetic_dipolar_direct_sum);
+  auto const NCUT2 = Utils::sqr(mdds_n_replica);
 
   for (int i = 0; i < dip_particles; i++) {
     for (int j = 0; j < dip_particles; j++) {
@@ -315,18 +311,18 @@ void dawaanr_set_params() {
   mpi_bcast_coulomb_params();
 }
 
-void mdds_set_params(int n_cut) {
+void mdds_set_params(int n_replica) {
   if (n_nodes > 1) {
     throw std::runtime_error(
         "MPI parallelization not supported by DipolarDirectSumWithReplicaCpu.");
   }
-
-  Ncut_off_magnetic_dipolar_direct_sum = n_cut;
-
-  if (Ncut_off_magnetic_dipolar_direct_sum == 0) {
+  mdds_sanity_checks(n_replica);
+  if (n_replica == 0) {
     fprintf(stderr, "Careful: the number of extra replicas to take into "
                     "account during the direct sum calculation is zero\n");
   }
+
+  mdds_n_replica = n_replica;
 
   if (dipole.method != DIPOLAR_DS && dipole.method != DIPOLAR_MDLC_DS) {
     Dipole::set_method_local(DIPOLAR_DS);
