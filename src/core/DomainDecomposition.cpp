@@ -97,14 +97,13 @@ void DomainDecomposition::move_left_or_right(ParticleList &src,
                                              ParticleList &right,
                                              int dir) const {
   for (auto it = src.begin(); it != src.end();) {
-    if ((get_mi_coord(it->r.p[dir], m_local_box.my_left()[dir],
-                      m_box.length()[dir], m_box.periodic(dir)) < 0.0) and
+    if ((m_box.get_mi_coord(it->r.p[dir], m_local_box.my_left()[dir], dir) <
+         0.0) and
         (m_box.periodic(dir) || (m_local_box.boundary()[2 * dir] == 0))) {
       left.insert(std::move(*it));
       it = src.erase(it);
-    } else if ((get_mi_coord(it->r.p[dir], m_local_box.my_right()[dir],
-                             m_box.length()[dir],
-                             m_box.periodic(dir)) >= 0.0) and
+    } else if ((m_box.get_mi_coord(it->r.p[dir], m_local_box.my_right()[dir],
+                                   dir) >= 0.0) and
                (m_box.periodic(dir) ||
                 (m_local_box.boundary()[2 * dir + 1] == 0))) {
       right.insert(std::move(*it));

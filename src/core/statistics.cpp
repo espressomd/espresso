@@ -69,8 +69,8 @@ double mindist(PartCfg &partCfg, const std::vector<int> &set1,
        * versa. */
       if (((in_set & 1u) && (set2.empty() || contains(set2, it->p.type))) ||
           ((in_set & 2u) && (set1.empty() || contains(set1, it->p.type))))
-        mindist2 = std::min(mindist2,
-                            get_mi_vector(jt->r.p, it->r.p, box_geo).norm2());
+        mindist2 =
+            std::min(mindist2, box_geo.get_mi_vector(jt->r.p, it->r.p).norm2());
   }
 
   return std::sqrt(mindist2);
@@ -171,7 +171,7 @@ std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
 
   for (auto const &p : partCfg) {
     if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      d = get_mi_vector(pt, p.r.p, box_geo);
+      d = box_geo.get_mi_vector(pt, p.r.p);
     } else {
       /* Calculate the in plane distance */
       for (int j = 0; j < 3; j++) {
@@ -192,7 +192,7 @@ double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
 
   for (auto const &part : partCfg) {
     if (pid != part.p.identity) {
-      auto const d = get_mi_vector({pos[0], pos[1], pos[2]}, part.r.p, box_geo);
+      auto const d = box_geo.get_mi_vector({pos[0], pos[1], pos[2]}, part.r.p);
       mindist = std::min(mindist, d.norm2());
     }
   }
@@ -229,7 +229,7 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
             for (int t2 : p2_types) {
               if (p2.p.type == t2) {
                 auto const act_dist2 =
-                    get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
+                    box_geo.get_mi_vector(p1.r.p, p2.r.p).norm2();
                 if (act_dist2 < min_dist2) {
                   min_dist2 = act_dist2;
                 }
