@@ -222,7 +222,7 @@ static void add_dipole_force(const ParticleRange &particles) {
 
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
-  double const shift = 0.5 * box_geo.length()[2];
+  double const shift = box_geo.length_half()[2];
 
   // collect moments
 
@@ -284,7 +284,7 @@ static double dipole_energy(const ParticleRange &particles) {
   constexpr std::size_t size = 7;
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
-  double const shift = 0.5 * box_geo.length()[2];
+  double const shift = box_geo.length_half()[2];
 
   // collect moments
 
@@ -355,7 +355,7 @@ static double dipole_energy(const ParticleRange &particles) {
 /*****************************************************************/
 
 inline double image_sum_b(double q, double z) {
-  double const shift = 0.5 * box_geo.length()[2];
+  double const shift = box_geo.length_half()[2];
   double const fac = elc_params.delta_mid_top * elc_params.delta_mid_bot;
   double const image_sum =
       (q / (1.0 - fac) * (z - 2.0 * fac * box_geo.length()[2] / (1.0 - fac))) -
@@ -364,7 +364,7 @@ inline double image_sum_b(double q, double z) {
 }
 
 inline double image_sum_t(double q, double z) {
-  double const shift = 0.5 * box_geo.length()[2];
+  double const shift = box_geo.length_half()[2];
   double const fac = elc_params.delta_mid_top * elc_params.delta_mid_bot;
   double const image_sum =
       (q / (1.0 - fac) * (z + 2.0 * fac * box_geo.length()[2] / (1.0 - fac))) -
@@ -379,7 +379,7 @@ static double z_energy(const ParticleRange &particles) {
 
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
-  double const shift = 0.5 * box_geo.length()[2];
+  double const shift = box_geo.length_half()[2];
 
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot) {

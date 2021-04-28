@@ -126,8 +126,8 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
   double s1z, s2z, s3z, s4z;
   double ss;
 
-  auto const facux = 2.0 * Utils::pi() / box_geo.length()[0];
-  auto const facuy = 2.0 * Utils::pi() / box_geo.length()[1];
+  auto const facux = 2.0 * Utils::pi() * box_geo.length_inv()[0];
+  auto const facuy = 2.0 * Utils::pi() * box_geo.length_inv()[1];
   double energy = 0.0;
 
   for (int ix = -kcut; ix <= +kcut; ix++) {
@@ -243,7 +243,8 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
 
   // Multiply by the factors we have left during the loops
 
-  auto const piarea = Utils::pi() / (box_geo.length()[0] * box_geo.length()[1]);
+  auto const piarea =
+      Utils::pi() * box_geo.length_inv()[0] * box_geo.length_inv()[1];
 
   for (int j = 0; j < n_local_particles; j++) {
     fs[j] *= piarea;
@@ -259,8 +260,8 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
  *  %Algorithm implemented accordingly to @cite brodka04a.
  */
 double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
-  auto const facux = 2.0 * Utils::pi() / box_geo.length()[0];
-  auto const facuy = 2.0 * Utils::pi() / box_geo.length()[1];
+  auto const facux = 2.0 * Utils::pi() * box_geo.length_inv()[0];
+  auto const facuy = 2.0 * Utils::pi() * box_geo.length_inv()[1];
 
   double energy = 0.0;
   for (int ix = -kcut; ix <= +kcut; ix++) {
@@ -314,7 +315,8 @@ double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
 
   // Multiply by the factors we have left during the loops
 
-  auto const piarea = Utils::pi() / (box_geo.length()[0] * box_geo.length()[1]);
+  auto const piarea =
+      Utils::pi() * box_geo.length_inv()[0] * box_geo.length_inv()[1];
   energy *= (-piarea);
   return (this_node == 0) ? energy : 0.0;
 }

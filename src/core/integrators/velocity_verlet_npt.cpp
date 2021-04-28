@@ -115,7 +115,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
 
     L_new = pow(nptiso.volume, 1.0 / nptiso.dimension);
 
-    scal[1] = L_new / box_geo.length()[nptiso.non_const_dim];
+    scal[1] = L_new * box_geo.length_inv()[nptiso.non_const_dim];
     scal[0] = 1 / scal[1];
   }
   MPI_Bcast(scal, 3, MPI_DOUBLE, 0, comm_cart);
