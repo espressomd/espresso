@@ -272,20 +272,20 @@ double calc_energy_long_range(const ParticleRange &particles) {
   return energy;
 }
 
-int set_mesh() {
+void set_mdlc_method() {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
   case DIPOLAR_P3M:
     set_method_local(DIPOLAR_MDLC_P3M);
-    return 0;
+    break;
 #endif
   case DIPOLAR_MDLC_DS:
   case DIPOLAR_DS:
     set_method_local(DIPOLAR_MDLC_DS);
-    return 0;
+    break;
   default:
-    return 1;
+    throw std::runtime_error("unknown method");
   }
 }
 

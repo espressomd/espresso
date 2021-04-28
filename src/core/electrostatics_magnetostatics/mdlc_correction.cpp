@@ -40,7 +40,7 @@
 #include <boost/mpi.hpp>
 #include <boost/mpi/operations.hpp>
 
-DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
+DLC_struct dlc_params = {1e100, 0., 0., false, 0.};
 
 /** Checks if a magnetic particle is in the forbidden gap region
  */
@@ -444,7 +444,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
  *  2. You must also tune the other 3D method to the same accuracy, otherwise
  *     it makes no sense to have an accurate result for DLC-dipolar.
  */
-int mdlc_tune(double error) {
+double mdlc_tune_far_cut(DLC_struct const &params) {
   /* we take the maximum dipole in the system, to be sure that the errors
    * in the other case will be equal or less than for this one */
   auto const mu_max = mpi_call(Communication::Result::master_rank, calc_mu_max);
@@ -454,54 +454,30 @@ int mdlc_tune(double error) {
   auto const lx = box_geo.length()[0];
   auto const ly = box_geo.length()[1];
   auto const lz = box_geo.length()[2];
-  auto const a = lx * ly;
-  auto const h = dlc_params.h;
-  if (h < 0) {
-    runtimeErrorMsg() << "gap size too large";
-    return ES_ERROR;
+  auto const h = params.h;
+
+  if (std::abs(lx - ly) > 0.001) {
+    throw std::runtime_error("MDLC tuning: box size in x direction is "
+                             "different from y direction. The tuning "
+                             "formula requires both to be equal.");
   }
 
-  if (h > lz) {
-    fprintf(stderr,
-            "tune DLC dipolar: Slab is larger than the box size !!! \n");
-    errexit();
-  }
-
-  if (fabs(box_geo.length()[0] - box_geo.length()[1]) > 0.001) {
-    fprintf(stderr, "tune DLC dipolar: box size in x direction is different "
-                    "from y direction !!! \n");
-    fprintf(stderr, "The tuning formula requires both to be equal. \n");
-    errexit();
-  }
-
-  bool flag = false;
-  int kc;
-  int const limitkc = 200;
-  for (kc = 1; kc < limitkc; kc++) {
+  constexpr int limitkc = 200;
+  for (int kc = 1; kc < limitkc; kc++) {
     auto const gc = kc * 2.0 * Utils::pi() / lx;
-    auto const fa0 = sqrt(9.0 * exp(+2. * gc * h) * g1_DLC_dip(gc, lz - h) +
-                          22.0 * g1_DLC_dip(gc, lz) +
-                          9.0 * exp(-2.0 * gc * h) * g1_DLC_dip(gc, lz + h));
-    auto const fa1 = 0.5 * sqrt(Utils::pi() / (2.0 * a)) * fa0;
+    auto const fa0 = sqrt(9.0 * exp(+2.0 * gc * h) * g1_DLC_dip(gc, lz - h) +
+                          9.0 * exp(-2.0 * gc * h) * g1_DLC_dip(gc, lz + h) +
+                          22.0 * g1_DLC_dip(gc, lz));
+    auto const fa1 = 0.5 * sqrt(Utils::pi() / (2.0 * lx * ly)) * fa0;
     auto const fa2 = g2_DLC_dip(gc, lz);
     auto const de = n * mu_max_sq / (4.0 * (exp(gc * lz) - 1.0)) * (fa1 + fa2);
-    if (de < error) {
-      flag = true;
-      break;
+    if (de < params.maxPWerror) {
+      return static_cast<double>(kc);
     }
   }
 
-  if (!flag) {
-    fprintf(stderr, "tune DLC dipolar: Sorry, unable to find a proper cut-off "
-                    "for such system and accuracy.\n");
-    fprintf(stderr, "Try modifying the variable limitkc in the c-code: "
-                    "mdlc_correction.cpp  ... \n");
-    return ES_ERROR;
-  }
-
-  dlc_params.far_cut = kc;
-
-  return ES_OK;
+  throw std::runtime_error("MDLC tuning failed: unable to find a proper "
+                           "cut-off for the given accuracy.");
 }
 
 void mdlc_sanity_checks() {
@@ -515,30 +491,23 @@ void mdlc_sanity_checks() {
   // the short direction is along the z component.
 }
 
-int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
+void mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
+  auto const h = box_geo.length()[2] - gap_size;
+  if (h < 0.) {
+    throw std::domain_error("gap size too large");
+  }
+  mdlc_sanity_checks();
 
-  dlc_params.maxPWerror = maxPWerror;
-  dlc_params.gap_size = gap_size;
-  dlc_params.h = box_geo.length()[2] - gap_size;
+  DLC_struct new_dlc_params{maxPWerror, far_cut, gap_size, far_cut == -1., h};
 
-  if (Dipole::set_mesh()) {
-    // if Dipole::set_mesh fails
-    return ES_ERROR;
+  if (new_dlc_params.far_calculated) {
+    new_dlc_params.far_cut = mdlc_tune_far_cut(new_dlc_params);
   }
 
-  int error_code = ES_OK;
-  dlc_params.far_cut = far_cut;
-  if (far_cut != -1) {
-    dlc_params.far_calculated = 0;
-  } else {
-    dlc_params.far_calculated = 1;
-    if (mdlc_tune(dlc_params.maxPWerror) == ES_ERROR) {
-      error_code = ES_ERROR;
-    }
-  }
+  dlc_params = new_dlc_params;
+
+  Dipole::set_mdlc_method();
   mpi_bcast_coulomb_params();
-
-  return ES_OK;
 }
 
 #endif // DP3M

@@ -90,9 +90,9 @@ IF DIPOLES and DP3M:
             return params
 
         def _set_params_in_es_core(self):
-            if mdlc_set_params(
-                    self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"]):
-                handle_errors("MDLC tuning failed")
+            mdlc_set_params(self._params["maxPWerror"],
+                            self._params["gap_size"],
+                            self._params["far_cut"])
 
         def _activate_method(self):
             self._set_params_in_es_core()

@@ -82,7 +82,7 @@ void calc_long_range_force(const ParticleRange &particles);
 
 double calc_energy_long_range(const ParticleRange &particles);
 
-int set_mesh();
+void set_mdlc_method();
 void bcast_params(const boost::mpi::communicator &comm);
 
 /** @brief Set the dipolar prefactor */
