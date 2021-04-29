@@ -316,6 +316,9 @@ void mdds_set_params(int n_replica) {
     throw std::runtime_error(
         "MPI parallelization not supported by DipolarDirectSumWithReplicaCpu.");
   }
+  if (n_replica < 0) {
+    throw std::runtime_error("Dipolar direct sum requires n_replica >= 0.");
+  }
   mdds_sanity_checks(n_replica);
   if (n_replica == 0) {
     fprintf(stderr, "Careful: the number of extra replicas to take into "
