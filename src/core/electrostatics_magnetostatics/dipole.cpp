@@ -66,37 +66,27 @@ void calc_pressure_long_range() {
 
 void nonbonded_sanity_check(int &state) {
 #ifdef DP3M
-  switch (dipole.method) {
-  case DIPOLAR_MDLC_P3M:
-    try {
+  try {
+    switch (dipole.method) {
+    case DIPOLAR_MDLC_P3M:
       mdlc_sanity_checks();
-    } catch (std::runtime_error const &err) {
-      runtimeErrorMsg() << err.what();
-      state = 0;
-    }
-    // fall through
-  case DIPOLAR_P3M:
-    if (dp3m_sanity_checks(node_grid))
-      state = 0;
-    break;
-  case DIPOLAR_MDLC_DS:
-    try {
+      // fall through
+    case DIPOLAR_P3M:
+      if (dp3m_sanity_checks(node_grid))
+        state = 0;
+      break;
+    case DIPOLAR_MDLC_DS:
       mdlc_sanity_checks();
-    } catch (std::runtime_error const &err) {
-      runtimeErrorMsg() << err.what();
-      state = 0;
-    }
-    // fall through
-  case DIPOLAR_DS:
-    try {
+      // fall through
+    case DIPOLAR_DS:
       mdds_sanity_checks(mdds_n_replica);
-    } catch (std::runtime_error const &err) {
-      runtimeErrorMsg() << err.what();
-      state = 0;
+      break;
+    default:
+      break;
     }
-    break;
-  default:
-    break;
+  } catch (std::runtime_error const &err) {
+    runtimeErrorMsg() << err.what();
+    state = 0;
   }
 #endif
 }

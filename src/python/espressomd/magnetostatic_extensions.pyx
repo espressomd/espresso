@@ -76,9 +76,7 @@ IF DIPOLES and DP3M:
             return ["maxPWerror", "gap_size"]
 
         def default_params(self):
-            return {"maxPWerror": -1,
-                    "gap_size": -1,
-                    "far_cut": -1}
+            return {"far_cut": -1}
 
         def _get_params_from_es_core(self):
             params = {}

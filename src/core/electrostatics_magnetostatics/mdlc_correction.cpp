@@ -36,17 +36,27 @@
 #include "particle_data.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <functional>
+#include <numeric>
+#include <stdexcept>
+#include <vector>
 
 DLC_struct dlc_params = {1e100, 0., 0., false, 0.};
 
 /** Checks if a magnetic particle is in the forbidden gap region
  */
 inline void check_gap_mdlc(const Particle &p) {
-  if (p.p.dipm != 0) {
-    if (p.r.p[2] < 0)
+  if (p.p.dipm != 0.0) {
+    if (p.r.p[2] < 0.0)
       runtimeErrorMsg() << "Particle " << p.p.identity << " entered MDLC gap "
                         << "region by " << (p.r.p[2]);
     else if (p.r.p[2] > dlc_params.h) {
@@ -85,31 +95,17 @@ inline double g2_DLC_dip(double g, double x) {
   return a;
 }
 
-/** Compute Mx, My, Mz and Mtotal */
-double slab_dip_count_mu(double *mt, double *mx, double *my,
-                         const ParticleRange &particles) {
-  Utils::Vector3d node_sums{};
-  Utils::Vector3d tot_sums{};
+/** Compute the box magnetic dipole. */
+inline Utils::Vector3d calc_slab_dipole(const ParticleRange &particles) {
 
+  Utils::Vector3d local_dip{};
   for (auto const &p : particles) {
     if (p.p.dipm != 0.0) {
-      node_sums += p.calc_dip();
+      local_dip += p.calc_dip();
     }
   }
 
-  MPI_Allreduce(node_sums.data(), tot_sums.data(), 3, MPI_DOUBLE, MPI_SUM,
-                comm_cart);
-
-  auto const M = tot_sums.norm();
-  auto const Mz = tot_sums[2];
-  auto const Mx = tot_sums[0];
-  auto const My = tot_sums[1];
-
-  *mt = M;
-  *mx = Mx;
-  *my = My;
-
-  return Mz;
+  return boost::mpi::all_reduce(comm_cart, local_dip, std::plus<>());
 }
 
 /** Compute the dipolar DLC corrections for forces and torques.
@@ -328,6 +324,7 @@ double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
  */
 void add_mdlc_force_corrections(const ParticleRange &particles) {
   auto const volume = box_geo.volume();
+  auto const correc = 4. * Utils::pi() / volume;
 
   // --- Create arrays that should contain the corrections to
   //     the forces and torques, and set them to zero.
@@ -347,8 +344,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   // This correction is often called SDC = Shape Dependent Correction.
   // See @cite brodka04a.
 
-  double mx = 0.0, my = 0.0, mtot = 0.0;
-  auto const mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
+  auto const box_dip = calc_slab_dipole(particles);
 
   // --- Transfer the computed corrections to the Forces, Energy and torques
   //     of the particles
@@ -357,21 +353,17 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   for (auto &p : particles) {
     check_gap_mdlc(p);
 
-    if ((p.p.dipm) != 0.0) {
+    if (p.p.dipm != 0.0) {
       // SDC correction term is zero for the forces
       p.f.f += dipole.prefactor * dip_DLC_f[ip];
 
       auto const dip = p.calc_dip();
-      auto const correc = 4. * Utils::pi() / volume;
-      Utils::Vector3d d;
-      // in the Next lines: the second term (correc*...) is the SDC
-      // correction for the torques
-      if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
-        d = {0.0, 0.0, -correc * mz};
-      } else {
+      // SDC correction for the torques
+      Utils::Vector3d d = {0.0, 0.0, -correc * box_dip[2]};
+      if (dipole.method == DIPOLAR_MDLC_P3M and
+          dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
         auto const correps = correc / (2.0 * dp3m.params.epsilon + 1.0);
-        d = {correps * mx, correps * my,
-             correc * mz * (-1.0 + 1. / (2.0 * dp3m.params.epsilon + 1.0))};
+        d += correps * box_dip;
       }
       p.f.torque += dipole.prefactor * (dip_DLC_t[ip] + vector_product(dip, d));
     }
@@ -385,6 +377,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
 double add_mdlc_energy_corrections(const ParticleRange &particles) {
 
   auto const volume = box_geo.volume();
+  auto const prefactor = dipole.prefactor * 2. * Utils::pi() / volume;
 
   // Check if particles aren't in the forbidden gap region
   // This loop is needed, because there is no other guaranteed
@@ -396,10 +389,9 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
+  auto const k_cut = static_cast<int>(std::round(dlc_params.far_cut));
   double dip_DLC_energy =
-      dipole.prefactor *
-      get_DLC_energy_dipolar(static_cast<int>(std::round(dlc_params.far_cut)),
-                             particles);
+      dipole.prefactor * get_DLC_energy_dipolar(k_cut, particles);
 
   // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a 3D PBC method which uses spherical
@@ -408,23 +400,15 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   // This correction is often called SDC = Shape Dependent Correction.
   // See @cite brodka04a.
 
-  double mx = 0.0, my = 0.0, mtot = 0.0;
-  auto const mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
-  auto const mz2 = mz * mz;
+  auto const box_dip = calc_slab_dipole(particles);
 
   if (this_node == 0) {
-    if (dipole.method == DIPOLAR_MDLC_P3M) {
-      if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
-        dip_DLC_energy += dipole.prefactor * 2 * Utils::pi() / volume * mz2;
-      } else {
-        dip_DLC_energy +=
-            dipole.prefactor * 2 * Utils::pi() / volume *
-            (mz2 - mtot * mtot / (2.0 * dp3m.params.epsilon + 1.0));
-      }
-    } else {
-      dip_DLC_energy += dipole.prefactor * 2 * Utils::pi() / volume * mz2;
+    dip_DLC_energy += prefactor * Utils::sqr(box_dip[2]);
+    if (dipole.method == DIPOLAR_MDLC_P3M and
+        dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
+      auto const correps = 1.0 / (2.0 * dp3m.params.epsilon + 1.0);
+      dip_DLC_energy -= prefactor * box_dip.norm2() * correps;
     }
-
     return dip_DLC_energy;
   }
   return 0.0;
