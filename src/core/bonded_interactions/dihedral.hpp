@@ -101,9 +101,9 @@ calc_dihedral_angle(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                     Utils::Vector3d &a, Utils::Vector3d &b, Utils::Vector3d &c,
                     Utils::Vector3d &aXb, double *l_aXb, Utils::Vector3d &bXc,
                     double *l_bXc, double *cosphi, double *phi) {
-  a = get_mi_vector(r2, r1, box_geo);
-  b = get_mi_vector(r3, r2, box_geo);
-  c = get_mi_vector(r4, r3, box_geo);
+  a = box_geo.get_mi_vector(r2, r1);
+  b = box_geo.get_mi_vector(r3, r2);
+  c = box_geo.get_mi_vector(r4, r3);
 
   /* calculate vector product a X b and b X c */
   aXb = vector_product(a, b);

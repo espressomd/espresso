@@ -1186,15 +1186,15 @@ Utils::Vector3d ELC_P3M_dielectric_layers_force_contribution(
 
   if (pos1[2] < elc_params.space_layer) {
     auto const q = elc_params.delta_mid_bot * q1q2;
-    auto const d = get_mi_vector(pos2, {pos1[0], pos1[1], -pos1[2]}, box_geo);
+    auto const d = box_geo.get_mi_vector(pos2, {pos1[0], pos1[1], -pos1[2]});
 
     p3m_add_pair_force(q, d, d.norm(), force);
   }
 
   if (pos1[2] > (elc_params.h - elc_params.space_layer)) {
     auto const q = elc_params.delta_mid_top * q1q2;
-    auto const d = get_mi_vector(
-        pos2, {pos1[0], pos1[1], 2 * elc_params.h - pos1[2]}, box_geo);
+    auto const d = box_geo.get_mi_vector(
+        pos2, {pos1[0], pos1[1], 2 * elc_params.h - pos1[2]});
 
     p3m_add_pair_force(q, d, d.norm(), force);
   }
@@ -1212,15 +1212,16 @@ double ELC_P3M_dielectric_layers_energy_contribution(
     auto const q = elc_params.delta_mid_bot * q1q2;
 
     eng += p3m_pair_energy(
-        q, get_mi_vector(pos2, {pos1[0], pos1[1], -pos1[2]}, box_geo).norm());
+        q, box_geo.get_mi_vector(pos2, {pos1[0], pos1[1], -pos1[2]}).norm());
   }
 
   if (pos1[2] > (elc_params.h - elc_params.space_layer)) {
     auto const q = elc_params.delta_mid_top * q1q2;
     eng += p3m_pair_energy(
-        q, get_mi_vector(pos2, {pos1[0], pos1[1], 2 * elc_params.h - pos1[2]},
-                         box_geo)
-               .norm());
+        q,
+        box_geo
+            .get_mi_vector(pos2, {pos1[0], pos1[1], 2 * elc_params.h - pos1[2]})
+            .norm());
   }
 
   return eng;

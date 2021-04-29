@@ -337,7 +337,7 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
 
 inline bool add_bonded_two_body_force(Bonded_IA_Parameters const &iaparams,
                                       Particle &p1, Particle &p2) {
-  auto const dx = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  auto const dx = box_geo.get_mi_vector(p1.r.p, p2.r.p);
 
   if (auto const *iap = boost::get<ThermalizedBond>(&iaparams)) {
     auto result = iap->forces(p1, p2, dx);

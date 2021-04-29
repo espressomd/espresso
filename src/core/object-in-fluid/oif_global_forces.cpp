@@ -56,8 +56,8 @@ void calc_oif_global(Utils::Vector2d &area_volume, int molType,
             nullptr) {
           // remaining neighbors fetched
           auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
-          auto const p22 = p11 + get_mi_vector(partners[0]->r.p, p11, box_geo);
-          auto const p33 = p11 + get_mi_vector(partners[1]->r.p, p11, box_geo);
+          auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
+          auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);
 
           // unfolded positions correct
           auto const VOL_A = area_triangle(p11, p22, p33);
@@ -93,8 +93,8 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
     if (auto const *iaparams =
             boost::get<OifGlobalForcesBond>(&bonded_ia_params[bond_id])) {
       auto const p11 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
-      auto const p22 = p11 + get_mi_vector(partners[0]->r.p, p11, box_geo);
-      auto const p33 = p11 + get_mi_vector(partners[1]->r.p, p11, box_geo);
+      auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->r.p, p11);
+      auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->r.p, p11);
 
       // unfolded positions correct
       // starting code from volume force

@@ -50,7 +50,7 @@ static double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
   auto const dip2 = p2.calc_dip();
 
   // Distance between particles
-  auto const dr = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  auto const dr = box_geo.get_mi_vector(p1.r.p, p2.r.p);
 
   // Powers of distance
   auto const r2 = dr.norm2();

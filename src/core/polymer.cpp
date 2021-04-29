@@ -111,7 +111,7 @@ is_valid_position(Utils::Vector3d const &pos,
 
     for (auto const &p : positions) {
       for (auto const &m : p) {
-        if (get_mi_vector(pos, m, box_geo).norm() < min_distance) {
+        if (box_geo.get_mi_vector(pos, m).norm() < min_distance) {
           return false;
         }
       }
