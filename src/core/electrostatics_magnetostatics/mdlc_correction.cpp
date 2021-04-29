@@ -423,9 +423,6 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
       }
     } else {
       dip_DLC_energy += dipole.prefactor * 2 * Utils::pi() / volume * mz2;
-      fprintf(stderr, "You are not using the P3M method, therefore "
-                      "dp3m.params.epsilon unknown, I assume metallic borders "
-                      "\n");
     }
 
     return dip_DLC_energy;
@@ -510,6 +507,8 @@ void mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
   case DIPOLAR_MDLC_DS:
   case DIPOLAR_DS:
     new_method = DIPOLAR_MDLC_DS;
+    fprintf(stderr, "You are not using the P3M method, therefore dp3m.params."
+                    "epsilon unknown, I will assume metallic borders.\n");
     break;
   default:
     throw std::runtime_error(
