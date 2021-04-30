@@ -23,7 +23,7 @@
 
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
-#ifdef DP3M
+#ifdef DIPOLES
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -360,11 +360,13 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
       auto const dip = p.calc_dip();
       // SDC correction for the torques
       Utils::Vector3d d = {0.0, 0.0, -correc * box_dip[2]};
+#ifdef DP3M
       if (dipole.method == DIPOLAR_MDLC_P3M and
           dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
         auto const correps = correc / (2.0 * dp3m.params.epsilon + 1.0);
         d += correps * box_dip;
       }
+#endif
       p.f.torque += dipole.prefactor * (dip_DLC_t[ip] + vector_product(dip, d));
     }
     ip++;
@@ -404,11 +406,13 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
 
   if (this_node == 0) {
     dip_DLC_energy += prefactor * Utils::sqr(box_dip[2]);
+#ifdef DP3M
     if (dipole.method == DIPOLAR_MDLC_P3M and
         dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
       auto const correps = 1.0 / (2.0 * dp3m.params.epsilon + 1.0);
       dip_DLC_energy -= prefactor * box_dip.norm2() * correps;
     }
+#endif
     return dip_DLC_energy;
   }
   return 0.0;
@@ -511,4 +515,4 @@ void mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
   mpi_bcast_coulomb_params();
 }
 
-#endif // DP3M
+#endif // DIPOLES

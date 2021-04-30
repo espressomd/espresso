@@ -23,7 +23,7 @@ from .actors import Actor
 from .utils import handle_errors
 from .utils cimport check_range_or_except, check_type_or_throw_except
 
-IF DIPOLES and DP3M:
+IF DIPOLES:
     class MagnetostaticExtension(Actor):
 
         pass

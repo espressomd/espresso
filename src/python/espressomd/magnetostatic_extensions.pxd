@@ -19,7 +19,7 @@
 
 include "myconfig.pxi"
 
-IF DIPOLES and DP3M:
+IF DIPOLES:
 
     cdef extern from "electrostatics_magnetostatics/mdlc_correction.hpp":
         ctypedef struct dlc_struct "DLC_struct":
