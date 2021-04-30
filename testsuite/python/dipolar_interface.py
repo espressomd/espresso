@@ -22,6 +22,7 @@ import unittest_decorators as utx
 import tests_common
 
 import espressomd.magnetostatics
+import espressomd.magnetostatic_extensions
 
 
 @utx.skipIfMissingFeatures(["DIPOLES"])
@@ -30,6 +31,7 @@ class MagnetostaticsInterface(ut.TestCase):
 
     def setUp(self):
         self.system.box_l = [10., 10., 10.]
+        self.system.periodicity = [True, True, True]
         self.system.part.add(pos=(0.0, 0.0, 0.0), dip=(1.3, 2.1, -6))
         self.system.part.add(pos=(0.1, 0.1, 0.1), dip=(7.3, 6.1, -4))
 
@@ -63,6 +65,40 @@ class MagnetostaticsInterface(ut.TestCase):
             actor.set_params(prefactor=-1)
         with self.assertRaises(ValueError):
             actor.set_magnetostatics_prefactor()
+        self.system.actors.clear()
+        actor_dawaanr = espressomd.magnetostatics.DipolarDirectSumCpu(
+            prefactor=1)
+        actor_mdlc = espressomd.magnetostatic_extensions.DLC(
+            gap_size=2, maxPWerror=1e-5)
+        self.system.actors.add(actor_dawaanr)
+        with self.assertRaisesRegex(RuntimeError, 'MDLC cannot extend the currently active magnetostatics solver'):
+            self.system.actors.add(actor_mdlc)
+        self.system.actors.clear()
+        actor = espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu(
+            prefactor=1, n_replica=-2)
+        with self.assertRaisesRegex(RuntimeError, 'requires n_replica >= 0'):
+            self.system.actors.add(actor)
+        self.system.actors.clear()
+        actor = espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu(
+            prefactor=1, n_replica=0)
+        with self.assertRaisesRegex(RuntimeError, 'with replica does not support a periodic system with zero replica'):
+            self.system.actors.add(actor)
+        self.system.actors.clear()
+        self.system.periodicity = [True, True, False]
+        actor = espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu(
+            prefactor=1, n_replica=1)
+        solver_mdlc = espressomd.magnetostatic_extensions.DLC(
+            gap_size=1, maxPWerror=1e-5)
+        self.system.actors.add(actor)
+        with self.assertRaisesRegex(RuntimeError, "MDLC requires periodicity 1 1 1"):
+            self.system.actors.add(solver_mdlc)
+        self.system.actors.remove(solver_mdlc)
+        self.system.periodicity = [True, True, True]
+        self.system.box_l = [10., 10. + 2e-3, 10.]
+        with self.assertRaisesRegex(RuntimeError, "box size in x direction is different from y direction"):
+            self.system.actors.add(solver_mdlc)
+        self.system.actors.clear()
+        self.system.box_l = [10., 10., 10.]
 
 
 if __name__ == "__main__":

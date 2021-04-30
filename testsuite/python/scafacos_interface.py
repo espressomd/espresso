@@ -196,7 +196,7 @@ class ScafacosInterface(ut.TestCase):
 
         return (ref_E_coulomb, ref_E_dipoles, ref_forces, ref_torques)
 
-    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES", "P3M"])
     @ut.skipIf(not espressomd.has_features('SCAFACOS_DIPOLES') or
                'p2nfft' not in espressomd.scafacos.available_methods(),
                'Skipping test: missing SCAFACOS_DIPOLES or p2nfft method')

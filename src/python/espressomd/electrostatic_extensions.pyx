@@ -26,7 +26,7 @@ from .utils import handle_errors, array_locked
 from .utils cimport check_type_or_throw_except, check_range_or_except, Vector3d, make_Vector3d, make_array_locked, make_array_locked_vector
 from libcpp.vector cimport vector
 
-IF ELECTROSTATICS and P3M:
+IF ELECTROSTATICS:
     from espressomd.electrostatics import check_neutrality
 
     cdef class ElectrostaticExtensions(actors.Actor):
