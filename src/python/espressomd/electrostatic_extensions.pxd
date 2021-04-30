@@ -18,11 +18,10 @@
 #
 
 include "myconfig.pxi"
-from .electrostatics cimport *
 from libcpp.vector cimport vector
 from .utils cimport Vector3d
 
-IF ELECTROSTATICS and P3M:
+IF ELECTROSTATICS:
 
     cdef extern from "electrostatics_magnetostatics/icc.hpp":
         ctypedef struct icc_struct:
