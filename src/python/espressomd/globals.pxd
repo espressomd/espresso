@@ -57,6 +57,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern double min_global_cut
     double maximal_cutoff_bonded()
     double maximal_cutoff_nonbonded()
+    void mpi_set_min_global_cut(double min_global_cut)
 
 cdef extern from "rattle.hpp":
     extern int n_rigidbonds

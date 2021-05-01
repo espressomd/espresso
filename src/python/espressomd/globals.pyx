@@ -47,9 +47,7 @@ cdef class Globals:
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
-            global min_global_cut
-            min_global_cut = _min_global_cut
-            mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
+            mpi_set_min_global_cut(_min_global_cut)
 
         def __get__(self):
             global min_global_cut
