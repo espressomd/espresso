@@ -175,4 +175,9 @@ void increment_sim_time(double amount);
 /** Send new \ref time_step and rescale the velocities accordingly. */
 void mpi_set_time_step(double time_step);
 
+/** @brief Set and broadcast the skin
+ *  @param skin skin value
+ */
+void mpi_set_skin(double skin);
+
 #endif

@@ -377,9 +377,9 @@ int python_integrate(int n_steps, bool recalc_forces_par,
     }
     /* maximal skin that can be used without resorting is the maximal
      * range of the cell system minus what is needed for interactions. */
-    skin = std::min(0.4 * max_cut,
+    auto const new_skin = std::min(0.4 * max_cut,
                     *boost::min_element(cell_structure.max_cutoff()) - max_cut);
-    mpi_bcast_parameter(FIELD_SKIN);
+    mpi_set_skin(new_skin);
   }
 
   using Accumulators::auto_update;
@@ -491,4 +491,15 @@ void mpi_set_time_step(double time_s) {
   if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
     check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
   mpi_call_all(mpi_set_time_step_local, time_s);
+}
+
+void mpi_set_skin_local(double skin) {
+  ::skin = skin;
+  on_skin_change();
+}
+
+REGISTER_CALLBACK(mpi_set_skin_local)
+
+void mpi_set_skin(double skin) {
+  mpi_call_all(mpi_set_skin_local, skin);
 }

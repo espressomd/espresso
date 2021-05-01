@@ -66,6 +66,5 @@ void EspressoSystemStandAlone::set_time_step(double time_step) const {
 void EspressoSystemStandAlone::set_skin(double new_skin) const {
   if (!head_node)
     return;
-  skin = new_skin;
-  mpi_bcast_parameter(FIELD_SKIN);
+  mpi_set_skin(new_skin);
 }

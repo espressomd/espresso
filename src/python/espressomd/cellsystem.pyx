@@ -20,9 +20,9 @@ import numpy as np
 from libcpp.cast cimport dynamic_cast
 from .grid cimport node_grid
 from . cimport integrate
-from .globals cimport FIELD_SKIN, FIELD_NODEGRID
+from .globals cimport FIELD_NODEGRID
 from .globals cimport verlet_reuse, skin
-from .globals cimport mpi_bcast_parameter
+from .globals cimport mpi_bcast_parameter, mpi_set_skin
 from libcpp.vector cimport vector
 from .cellsystem cimport cell_structure
 from .utils import handle_errors
@@ -209,9 +209,7 @@ cdef class CellSystem:
         def __set__(self, double _skin):
             if _skin < 0:
                 raise ValueError("Skin must be >= 0")
-            global skin
-            skin = _skin
-            mpi_bcast_parameter(FIELD_SKIN)
+            mpi_set_skin(_skin)
             integrate.skin_set = True
 
         def __get__(self):
