@@ -311,9 +311,6 @@ void on_skin_change() {
 
 void on_parameter_change(int field) {
   switch (field) {
-  case FIELD_SKIN:
-    on_skin_change();
-    break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();
     cells_re_init(cell_structure.decomposition_type());

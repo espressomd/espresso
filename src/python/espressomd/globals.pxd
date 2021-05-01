@@ -25,7 +25,6 @@ cdef extern from "grid.hpp":
     void mpi_set_periodicity(bool x, bool y, bool z)
 
 cdef extern from "global.hpp":
-    int FIELD_SKIN
     int FIELD_NODEGRID
     int FIELD_SIMTIME
     int FIELD_THERMO_SWITCH
