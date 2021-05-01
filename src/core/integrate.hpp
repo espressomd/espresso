@@ -180,4 +180,9 @@ void mpi_set_time_step(double time_step);
  */
 void mpi_set_skin(double skin);
 
+/** @brief Set and broadcast the time
+ *  @param time time
+ */
+void mpi_set_time(double time);
+
 #endif

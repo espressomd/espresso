@@ -68,9 +68,7 @@ cdef class Globals:
 
     property time:
         def __set__(self, double _time):
-            global sim_time
-            sim_time = _time
-            mpi_bcast_parameter(FIELD_SIMTIME)
+            mpi_set_time(_time)
 
         def __get__(self):
             global sim_time

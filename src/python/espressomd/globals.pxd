@@ -50,6 +50,7 @@ cdef extern from "integrate.hpp":
     extern double skin
     void mpi_set_time_step(double time_step) except +
     void mpi_set_skin(double skin)
+    void mpi_set_time(double time)
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern int max_seen_particle_type

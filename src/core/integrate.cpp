@@ -377,8 +377,9 @@ int python_integrate(int n_steps, bool recalc_forces_par,
     }
     /* maximal skin that can be used without resorting is the maximal
      * range of the cell system minus what is needed for interactions. */
-    auto const new_skin = std::min(0.4 * max_cut,
-                    *boost::min_element(cell_structure.max_cutoff()) - max_cut);
+    auto const new_skin =
+        std::min(0.4 * max_cut,
+                 *boost::min_element(cell_structure.max_cutoff()) - max_cut);
     mpi_set_skin(new_skin);
   }
 
@@ -500,6 +501,13 @@ void mpi_set_skin_local(double skin) {
 
 REGISTER_CALLBACK(mpi_set_skin_local)
 
-void mpi_set_skin(double skin) {
-  mpi_call_all(mpi_set_skin_local, skin);
+void mpi_set_skin(double skin) { mpi_call_all(mpi_set_skin_local, skin); }
+
+void mpi_set_time_local(double time) {
+  sim_time = time;
+  on_simtime_change();
 }
+
+REGISTER_CALLBACK(mpi_set_time_local)
+
+void mpi_set_time(double time) { mpi_call_all(mpi_set_time_local, time); }
