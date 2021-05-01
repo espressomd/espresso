@@ -28,7 +28,6 @@ cdef extern from "global.hpp":
     int FIELD_SKIN
     int FIELD_NODEGRID
     int FIELD_SIMTIME
-    int FIELD_MIN_GLOBAL_CUT
     int FIELD_THERMO_SWITCH
     int FIELD_THERMO_VIRTUAL
     int FIELD_TEMPERATURE

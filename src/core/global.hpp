@@ -64,8 +64,6 @@ enum Fields {
   FIELD_TIMESTEP,
   /** index of \ref lattice_switch */
   FIELD_LATTICE_SWITCH,
-  /** index of \ref min_global_cut */
-  FIELD_MIN_GLOBAL_CUT,
   /** index of \ref LangevinThermostat::gamma_rotation */
   FIELD_LANGEVIN_GAMMA_ROTATION,
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method

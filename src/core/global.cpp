@@ -115,8 +115,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_LATTICE_SWITCH,
      {reinterpret_cast<std::underlying_type_t<ActiveLB> *>(&lattice_switch), 1,
       "lattice_switch"}}, /* 37 from lattice.cpp */
-    {FIELD_MIN_GLOBAL_CUT,
-     {&min_global_cut, 1, "min_global_cut"}}, /* 43 from interaction_data.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
      {&langevin.gamma_rotation, 1,
