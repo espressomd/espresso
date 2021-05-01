@@ -110,7 +110,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_THERMO_SWITCH,
      {&thermo_switch, 1, "thermo_switch"}},         /* 31 from thermostat.cpp */
     {FIELD_SIMTIME, {&sim_time, 1, "time"}},        /* 32 from integrate.cpp */
-    {FIELD_TIMESTEP, {&time_step, 1, "time_step"}}, /* 33 from integrate.cpp */
     {FIELD_LATTICE_SWITCH,
      {reinterpret_cast<std::underlying_type_t<ActiveLB> *>(&lattice_switch), 1,
       "lattice_switch"}}, /* 37 from lattice.cpp */

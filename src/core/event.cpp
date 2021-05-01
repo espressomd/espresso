@@ -328,9 +328,6 @@ void on_parameter_change(int field) {
     on_temperature_change();
     reinit_thermo = true;
     break;
-  case FIELD_TIMESTEP:
-    on_thermostat_param_change();
-    break;
   case FIELD_LANGEVIN_GAMMA:
   case FIELD_LANGEVIN_GAMMA_ROTATION:
   case FIELD_NPTISO_G0:
