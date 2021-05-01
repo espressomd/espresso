@@ -318,6 +318,10 @@ void on_timestep_change() {
   on_thermostat_param_change();
 }
 
+void on_simtime_change() {
+  recalc_forces = true;
+}
+
 void on_parameter_change(int field) {
   switch (field) {
   case FIELD_NODEGRID:
@@ -345,7 +349,7 @@ void on_parameter_change(int field) {
   case FIELD_RIGIDBONDS:
     break;
   case FIELD_SIMTIME:
-    recalc_forces = true;
+    on_simtime_change();
     break;
   }
 }

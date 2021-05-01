@@ -113,6 +113,10 @@ void on_thermostat_param_change();
  */
 void on_timestep_change();
 
+/** @brief Called when the simulation time changed.
+ */
+void on_simtime_change();
+
 /** called every time other parameters (timestep,...) are changed. Note that
  *  this does not happen automatically. The callback procedure of the changed
  *  variable is responsible for that.
