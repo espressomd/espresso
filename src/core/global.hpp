@@ -56,8 +56,6 @@ enum Fields {
   FIELD_TEMPERATURE,
   /** index of \ref thermo_switch */
   FIELD_THERMO_SWITCH,
-  /** index of \ref sim_time */
-  FIELD_SIMTIME,
   /** index of \ref lattice_switch */
   FIELD_LATTICE_SWITCH,
   /** index of \ref LangevinThermostat::gamma_rotation */

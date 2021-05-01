@@ -309,18 +309,14 @@ void on_skin_change() {
   on_coulomb_change();
 }
 
-void on_thermostat_param_change() {
-  reinit_thermo = true;
-}
+void on_thermostat_param_change() { reinit_thermo = true; }
 
 void on_timestep_change() {
   lb_lbfluid_reinit_parameters();
   on_thermostat_param_change();
 }
 
-void on_simtime_change() {
-  recalc_forces = true;
-}
+void on_simtime_change() { recalc_forces = true; }
 
 void on_parameter_change(int field) {
   switch (field) {
@@ -347,9 +343,6 @@ void on_parameter_change(int field) {
   case FIELD_THERMO_SWITCH:
   case FIELD_LATTICE_SWITCH:
   case FIELD_RIGIDBONDS:
-    break;
-  case FIELD_SIMTIME:
-    on_simtime_change();
     break;
   }
 }

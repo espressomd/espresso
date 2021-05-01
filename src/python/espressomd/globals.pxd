@@ -26,7 +26,6 @@ cdef extern from "grid.hpp":
 
 cdef extern from "global.hpp":
     int FIELD_NODEGRID
-    int FIELD_SIMTIME
     int FIELD_THERMO_SWITCH
     int FIELD_THERMO_VIRTUAL
     int FIELD_TEMPERATURE
