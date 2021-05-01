@@ -480,7 +480,7 @@ void increment_sim_time(double amount) { sim_time += amount; }
 
 void mpi_set_time_step_local(double dt) {
   time_step = dt;
-  on_parameter_change(FIELD_TIMESTEP);
+  on_timestep_change();
 }
 
 REGISTER_CALLBACK(mpi_set_time_step_local)

@@ -104,6 +104,15 @@ void on_periodicity_change();
  */
 void on_skin_change();
 
+/** @brief Called when parameters of thermostats are changed.
+ */
+void on_thermostat_param_change();
+
+/** @brief Called when the timestep changed. Internally calls @ref
+ * on_thermostat_param_change.
+ */
+void on_timestep_change();
+
 /** called every time other parameters (timestep,...) are changed. Note that
  *  this does not happen automatically. The callback procedure of the changed
  *  variable is responsible for that.

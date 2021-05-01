@@ -309,6 +309,15 @@ void on_skin_change() {
   on_coulomb_change();
 }
 
+void on_thermostat_param_change() {
+  reinit_thermo = true;
+}
+
+void on_timestep_change() {
+  lb_lbfluid_reinit_parameters();
+  on_thermostat_param_change();
+}
+
 void on_parameter_change(int field) {
   switch (field) {
   case FIELD_NODEGRID:
@@ -320,14 +329,15 @@ void on_parameter_change(int field) {
     reinit_thermo = true;
     break;
   case FIELD_TIMESTEP:
-    lb_lbfluid_reinit_parameters();
+    on_thermostat_param_change();
+    break;
   case FIELD_LANGEVIN_GAMMA:
   case FIELD_LANGEVIN_GAMMA_ROTATION:
   case FIELD_NPTISO_G0:
   case FIELD_NPTISO_GV:
   case FIELD_NPTISO_PISTON:
   case FIELD_THERMALIZEDBONDS:
-    reinit_thermo = true;
+    on_thermostat_param_change();
     break;
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
