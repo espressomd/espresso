@@ -176,8 +176,8 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   Utils::Vector3d expected{};
 #ifdef ENGINE
   p.p.swim.swimming = true;
-  p.p.swim.v_swim = 2;
-  expected += 2 * p.r.calc_director();
+  p.p.swim.v_swim = 2.;
+  expected += p.p.swim.v_swim * p.r.calc_director();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
   p.p.mu_E = Utils::Vector3d{-2, 1.5, 1};
@@ -283,8 +283,9 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
                                          rng->value(), 0, p.identity());
 #ifdef ENGINE
   p.p.swim.swimming = true;
-  p.p.swim.v_swim = 2;
-  expected += gamma * 2 * p.r.calc_director();
+  p.p.swim.v_swim = 2.;
+  p.p.swim.push_pull = 1;
+  expected += gamma * p.p.swim.v_swim * p.r.calc_director();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
   p.p.mu_E = Utils::Vector3d{-2, 1.5, 1};
