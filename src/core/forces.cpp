@@ -27,6 +27,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
+#include "cells.hpp"
 #include "collision.hpp"
 #include "comfixed_global.hpp"
 #include "communication.hpp"

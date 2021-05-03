@@ -205,7 +205,7 @@ bool in_local_halo(Vector3d const &pos) {
 }
 
 #ifdef ENGINE
-void add_swimmer_force(Particle &p) {
+void add_swimmer_force(Particle const &p) {
   if (p.p.swim.swimming) {
     // calculate source position
     const double direction =

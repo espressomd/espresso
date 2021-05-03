@@ -220,7 +220,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 
   auto const coupling_pos =
       p.r.p + Utils::Vector3d{0., 0., p.p.swim.dipole_length / params.agrid};
-  void add_swimmer_force(Particle & p);
+  void add_swimmer_force(Particle const &p);
 
   // swimmer coupling
   {
