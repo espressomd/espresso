@@ -145,6 +145,7 @@ python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
 python_test(FILE dipolar_direct_summation.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE dipolar_p3m.py MAX_NUM_PROC 2)
 python_test(FILE dipolar_interface.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE dipolar_mpi_exceptions.py MAX_NUM_PROC 2)
 python_test(FILE lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE lb_walberla.py MAX_NUM_PROC 2)
 python_test(FILE lb_stats.py MAX_NUM_PROC 2 LABELS gpu long)
@@ -232,6 +233,7 @@ python_test(FILE p3m_tuning_exceptions.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE integrator_exceptions.py MAX_NUM_PROC 1)
 python_test(FILE utils.py MAX_NUM_PROC 1)
 python_test(FILE npt_thermostat.py MAX_NUM_PROC 4)
+python_test(FILE box_geometry.py MAX_NUM_PROC 1)
 
 add_custom_target(
   python_test_data

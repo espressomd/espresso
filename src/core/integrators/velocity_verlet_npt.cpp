@@ -27,6 +27,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
@@ -142,23 +143,23 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
 
   /* Apply new volume to the box-length, communicate it, and account for
    * necessary adjustments to the cell geometry */
+  Utils::Vector3d new_box;
+
   if (this_node == 0) {
-    Utils::Vector3d new_box = box_geo.length();
+    new_box = box_geo.length();
 
     for (int i = 0; i < 3; i++) {
       if (nptiso.geometry & nptiso.nptgeom_dir[i] || nptiso.cubic_box) {
         new_box[i] = L_new;
       }
     }
-
-    box_geo.set_length(new_box);
   }
 
-  MPI_Bcast(box_geo.m_length.data(), 3, MPI_DOUBLE, 0, comm_cart);
+  boost::mpi::broadcast(comm_cart, new_box, 0);
 
-  /* fast box length update */
-  grid_changed_box_l(box_geo);
-  cells_re_init(cell_structure.decomposition_type());
+  box_geo.set_length(new_box);
+  // fast box length update
+  on_boxl_change(true);
 }
 
 void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {

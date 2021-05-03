@@ -268,7 +268,7 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
                                             const Particle &p2,
                                             Utils::Vector3d &pos) {
   double c;
-  auto const vec21 = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  auto const vec21 = box_geo.get_mi_vector(p1.r.p, p2.r.p);
   const double dist_betw_part = vec21.norm();
 
   // Find out, which is the particle to be glued.
@@ -294,7 +294,7 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
                                             const Particle *const p2,
                                             Utils::Vector3d &pos1,
                                             Utils::Vector3d &pos2) {
-  auto const vec21 = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+  auto const vec21 = box_geo.get_mi_vector(p1->r.p, p2->r.p);
   pos1 = p1->r.p - vec21 * collision_params.vs_placement;
   pos2 = p1->r.p - vec21 * (1. - collision_params.vs_placement);
 }
@@ -305,10 +305,10 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
                                    Particle const &p2) {
   // If p1 and p2 are not closer or equal to the cutoff distance, skip
   // p1:
-  if (get_mi_vector(p.r.p, p1.r.p, box_geo).norm() > collision_params.distance)
+  if (box_geo.get_mi_vector(p.r.p, p1.r.p).norm() > collision_params.distance)
     return;
   // p2:
-  if (get_mi_vector(p.r.p, p2.r.p, box_geo).norm() > collision_params.distance)
+  if (box_geo.get_mi_vector(p.r.p, p2.r.p).norm() > collision_params.distance)
     return;
 
   // Check, if there already is a three-particle bond centered on p
@@ -341,9 +341,9 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
   // First, find the angle between the particle p, p1 and p2
 
   /* vector from p to p1 */
-  auto const vec1 = get_mi_vector(p.r.p, p1.r.p, box_geo).normalize();
+  auto const vec1 = box_geo.get_mi_vector(p.r.p, p1.r.p).normalize();
   /* vector from p to p2 */
-  auto const vec2 = get_mi_vector(p.r.p, p2.r.p, box_geo).normalize();
+  auto const vec2 = box_geo.get_mi_vector(p.r.p, p2.r.p).normalize();
 
   auto const cosine =
       boost::algorithm::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);

@@ -58,7 +58,7 @@ inline std::tuple<Utils::Quaternion<double>, double>
 calculate_vs_relate_to_params(Particle const &p_current,
                               Particle const &p_relate_to) {
   // get the distance between the particles
-  Utils::Vector3d d = get_mi_vector(p_current.r.p, p_relate_to.r.p, box_geo);
+  Utils::Vector3d d = box_geo.get_mi_vector(p_current.r.p, p_relate_to.r.p);
 
   // Check if the distance between virtual and non-virtual particles is larger
   // than minimum global cutoff. If so, warn user.

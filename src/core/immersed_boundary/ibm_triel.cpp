@@ -81,11 +81,11 @@ IBMTriel::calc_forces(Particle const &p1, Particle const &p2,
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
   // get_mi_vector is an ESPResSo function which considers PBC
-  auto const vec2 = get_mi_vector(p3.r.p, p1.r.p, box_geo);
+  auto const vec2 = box_geo.get_mi_vector(p3.r.p, p1.r.p);
   auto const l = vec2.norm();
 
   // lp = length between 1 and 2
-  auto const vec1 = get_mi_vector(p2.r.p, p1.r.p, box_geo);
+  auto const vec1 = box_geo.get_mi_vector(p2.r.p, p1.r.p);
   auto const lp = vec1.norm();
 
   // Check for sanity
@@ -208,10 +208,10 @@ IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,
 
   // Calculate equilibrium lengths and angle; Note the sequence of the points!
   // l0 = length between 1 and 3
-  auto const temp_l0 = get_mi_vector(part3.r.p, part1.r.p, box_geo);
+  auto const temp_l0 = box_geo.get_mi_vector(part3.r.p, part1.r.p);
   l0 = temp_l0.norm();
   // lp0 = length between 1 and 2
-  auto const temp_lp0 = get_mi_vector(part2.r.p, part1.r.p, box_geo);
+  auto const temp_lp0 = box_geo.get_mi_vector(part2.r.p, part1.r.p);
   lp0 = temp_lp0.norm();
 
   // cospo / sinpo angle functions between these vectors; calculated directly

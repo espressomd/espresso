@@ -211,7 +211,7 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
   auto p4 = (n_partners > 2) ? partners[2] : nullptr;
 
   if (n_partners == 1) {
-    auto const dx = get_mi_vector(p1.r.p, p2->r.p, box_geo);
+    auto const dx = box_geo.get_mi_vector(p1.r.p, p2->r.p);
     if (auto const *iap = boost::get<FeneBond>(&iaparams)) {
       return iap->energy(dx);
     }

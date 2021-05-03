@@ -27,7 +27,7 @@
 #include "grid.hpp"
 
 #include "communication.hpp"
-#include "global.hpp"
+#include "event.hpp"
 #include "particle_data.hpp"
 
 #include <utils/Vector.hpp>
@@ -122,14 +122,42 @@ void rescale_boxl(int dir, double d_new) {
   if (dir < 3) {
     auto box_l = box_geo.length();
     box_l[dir] = d_new;
-    box_geo.set_length(box_l);
+    mpi_set_box_length(box_l);
   } else {
-    box_geo.set_length({d_new, d_new, d_new});
+    mpi_set_box_length({d_new, d_new, d_new});
   }
-
-  mpi_bcast_parameter(FIELD_BOXL);
 
   if (scale > 1.) {
     mpi_rescale_particles(dir, scale);
   }
+}
+
+void mpi_set_box_length_local(const Utils::Vector3d &length) {
+  box_geo.set_length(length);
+  on_boxl_change();
+}
+
+REGISTER_CALLBACK(mpi_set_box_length_local)
+
+void mpi_set_box_length(const Utils::Vector3d &length) {
+  if (boost::algorithm::any_of(length,
+                               [](double value) { return value <= 0; })) {
+    throw std::domain_error("Box length must be >0");
+  }
+
+  mpi_call_all(mpi_set_box_length_local, length);
+}
+
+void mpi_set_periodicity_local(bool x, bool y, bool z) {
+  box_geo.set_periodic(0, x);
+  box_geo.set_periodic(1, y);
+  box_geo.set_periodic(2, z);
+
+  on_periodicity_change();
+}
+
+REGISTER_CALLBACK(mpi_set_periodicity_local)
+
+void mpi_set_periodicity(bool x, bool y, bool z) {
+  mpi_call_all(mpi_set_periodicity_local, x, y, z);
 }

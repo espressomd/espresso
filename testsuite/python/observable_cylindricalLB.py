@@ -214,6 +214,13 @@ class CylindricalLBObservableCommon:
         self.assertEqual(observable.max_z, 9)
         obs_bin_edges = observable.bin_edges()
         np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
+        # check sampling_density
+        self.assertEqual(
+            observable.sampling_density,
+            params['sampling_density'])
+        observable = espressomd.observables.CylindricalLBVelocityProfile(
+            **{**params, 'sampling_density': 3})
+        self.assertEqual(observable.sampling_density, 3)
         # check center, axis, orientation
         ctp = espressomd.math.CylindricalTransformationParameters(
             center=[1, 2, 3], axis=[0, 1, 0], orientation=[0, 0, 1])

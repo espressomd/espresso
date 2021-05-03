@@ -54,8 +54,7 @@ EspressoSystemStandAlone::EspressoSystemStandAlone(int argc, char **argv) {
 void EspressoSystemStandAlone::set_box_l(Utils::Vector3d const &box_l) const {
   if (!head_node)
     return;
-  box_geo.set_length(box_l);
-  mpi_bcast_parameter(FIELD_BOXL);
+  mpi_set_box_length(box_l);
 }
 
 void EspressoSystemStandAlone::set_time_step(double time_step) const {

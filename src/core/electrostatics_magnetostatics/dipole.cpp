@@ -66,23 +66,27 @@ void calc_pressure_long_range() {
 
 void nonbonded_sanity_check(int &state) {
 #ifdef DP3M
-  switch (dipole.method) {
-  case DIPOLAR_MDLC_P3M:
-    if (mdlc_sanity_checks())
-      state = 0; // fall through
-  case DIPOLAR_P3M:
-    if (dp3m_sanity_checks(node_grid))
-      state = 0;
-    break;
-  case DIPOLAR_MDLC_DS:
-    if (mdlc_sanity_checks())
-      state = 0; // fall through
-  case DIPOLAR_DS:
-    if (magnetic_dipolar_direct_sum_sanity_checks())
-      state = 0;
-    break;
-  default:
-    break;
+  try {
+    switch (dipole.method) {
+    case DIPOLAR_MDLC_P3M:
+      mdlc_sanity_checks();
+      // fall through
+    case DIPOLAR_P3M:
+      if (dp3m_sanity_checks(node_grid))
+        state = 0;
+      break;
+    case DIPOLAR_MDLC_DS:
+      mdlc_sanity_checks();
+      // fall through
+    case DIPOLAR_DS:
+      mdds_sanity_checks(mdds_n_replica);
+      break;
+    default:
+      break;
+    }
+  } catch (std::runtime_error const &err) {
+    runtimeErrorMsg() << err.what();
+    state = 0;
   }
 #endif
 }
@@ -260,23 +264,6 @@ double calc_energy_long_range(const ParticleRange &particles) {
     break;
   }
   return energy;
-}
-
-int set_mesh() {
-  switch (dipole.method) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  case DIPOLAR_P3M:
-    set_method_local(DIPOLAR_MDLC_P3M);
-    return 0;
-#endif
-  case DIPOLAR_MDLC_DS:
-  case DIPOLAR_DS:
-    set_method_local(DIPOLAR_MDLC_DS);
-    return 0;
-  default:
-    return 1;
-  }
 }
 
 void bcast_params(const boost::mpi::communicator &comm) {

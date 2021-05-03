@@ -46,17 +46,12 @@ int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
   data->buckingham.discont = discont;
   data->buckingham.shift = shift;
 
-  /* Replace the Buckingham potential for interatomic dist. less
+  /* Replace the Buckingham potential for interatomic distance less
      than or equal to discontinuity by a straight line (F1+F2*r) */
-  double F1;
-  double F2;
 
-  F1 = buck_energy_r(A, B, C, D, shift, discont) +
-       discont * buck_force_r(A, B, C, D, discont);
-  F2 = -buck_force_r(A, B, C, D, discont);
-
-  data->buckingham.F1 = F1;
-  data->buckingham.F2 = F2;
+  auto const F = buck_force_r(A, B, C, D, discont);
+  data->buckingham.F1 = buck_energy_r(A, B, C, D, shift, discont) + discont * F;
+  data->buckingham.F2 = -F;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

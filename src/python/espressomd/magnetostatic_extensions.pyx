@@ -23,7 +23,7 @@ from .actors import Actor
 from .utils import handle_errors
 from .utils cimport check_range_or_except, check_type_or_throw_except
 
-IF DIPOLES and DP3M:
+IF DIPOLES:
     class MagnetostaticExtension(Actor):
 
         pass
@@ -62,13 +62,9 @@ IF DIPOLES and DP3M:
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float,
                 "maxPWerror has to be a float")
-            check_range_or_except(
-                self._params, "maxPWerror", 0, False, "inf", True)
             check_type_or_throw_except(
                 self._params["gap_size"], 1, float,
                 "gap_size has to be a float")
-            check_range_or_except(
-                self._params, "gap_size", 0, False, "inf", True)
             check_type_or_throw_except(
                 self._params["far_cut"], 1, float,
                 "far_cut has to be a float")
@@ -80,9 +76,7 @@ IF DIPOLES and DP3M:
             return ["maxPWerror", "gap_size"]
 
         def default_params(self):
-            return {"maxPWerror": -1,
-                    "gap_size": -1,
-                    "far_cut": -1}
+            return {"far_cut": -1}
 
         def _get_params_from_es_core(self):
             params = {}
@@ -90,11 +84,9 @@ IF DIPOLES and DP3M:
             return params
 
         def _set_params_in_es_core(self):
-            if mdlc_set_params(
-                    self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"]):
-                raise ValueError(
-                    "Choose a 3d magnetostatics method prior to DLC")
-            handle_errors("mdlc tuning failed, gap size too small")
+            mdlc_set_params(self._params["maxPWerror"],
+                            self._params["gap_size"],
+                            self._params["far_cut"])
 
         def _activate_method(self):
             self._set_params_in_es_core()
