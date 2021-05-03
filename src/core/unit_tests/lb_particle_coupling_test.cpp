@@ -34,21 +34,32 @@ namespace utf = boost::unit_test;
 
 #include <lb_walberla_init.hpp>
 
+#include "ParticleFactory.hpp"
+
 #include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
+#include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <boost/mpi.hpp>
 
+#include <cmath>
 #include <limits>
+#include <memory>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 /* Guard against a bug in Boost versions < 1.68 where fixtures used to skip
@@ -88,6 +99,7 @@ struct LBTestParameters {
   double tau;
   double time_step;
   double agrid;
+  double skin;
   Utils::Vector3d box_dimensions;
   Utils::Vector3i grid_dimensions;
   Utils::Vector3d force_md_to_lb(Utils::Vector3d const &md_force) {
@@ -102,6 +114,7 @@ LBTestParameters params{23u,
                         0.01,
                         0.01,
                         1.,
+                        0.5,
                         Utils::Vector3d::broadcast(8.),
                         Utils::Vector3i::broadcast(8)};
 
@@ -317,12 +330,109 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   }
 }
 
-// todo: test remaining functionality from lb_particle_coupling.hpp
+void cells_update_ghosts_local() { cells_update_ghosts(global_ghost_flags()); }
+REGISTER_CALLBACK(cells_update_ghosts_local)
+
+BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
+BOOST_DATA_TEST_CASE_F(ParticleFactory, coupling_particle_lattice_ia,
+                       bdata::make(kTs), kT) {
+  lattice_switch = ActiveLB::WALBERLA;
+  lb_lbcoupling_set_rng_state(17);
+  auto const first_lb_node = lb_walberla()->get_local_domain().first;
+  auto const gamma = 0.2;
+  auto const noise = std::sqrt(24. * gamma * kT / params.time_step *
+                               Utils::sqr(params.agrid / params.tau));
+  auto &rng = lb_particle_coupling.rng_counter_coupling;
+  setup_lb(kT); // in LB units.
+
+  auto const pid = 0;
+  auto const skin = params.skin;
+  auto const &box_l = params.box_dimensions;
+  create_particle({box_l[0] / 2. - skin * 2., skin * 2., skin * 2.});
+
+  // sanity checks
+  BOOST_REQUIRE_EQUAL(get_particle_node(pid), 0);
+  BOOST_REQUIRE_EQUAL(ErrorHandling::mpi_gather_runtime_errors().size(), 0);
+
+  auto const &p = get_particle_data(pid);
+  auto expected =
+      noise * Random::noise_uniform<RNGSalt::PARTICLES>(rng->value(), 0, pid);
+#ifdef ENGINE
+  set_particle_swimming(pid, ParticleParametersSwimming{true, 0., 2., 1, 3.});
+  expected += gamma * p.p.swim.v_swim * p.r.calc_director();
+#endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+  set_particle_mu_E(pid, {-2., 1.5, 1.});
+  expected += gamma * p.p.mu_E;
+#endif
+  place_particle(pid, first_lb_node + Utils::Vector3d::broadcast(0.5));
+  lb_lbcoupling_set_gamma(gamma);
+
+  for (bool with_ghosts : {false, true}) {
+    {
+      if (with_ghosts) {
+        mpi_call_all(cells_update_ghosts_local);
+      }
+      auto const particles = cell_structure.local_particles();
+      auto const ghost_particles = cell_structure.ghost_particles();
+      BOOST_REQUIRE_GE(particles.size(), 1);
+      BOOST_REQUIRE_GE(ghost_particles.size(), with_ghosts);
+    }
+
+    // check without LB coupling
+    {
+      lb_lbcoupling_deactivate();
+      mpi_bcast_lb_particle_coupling();
+      auto const particles = cell_structure.local_particles();
+      auto const ghost_particles = cell_structure.ghost_particles();
+      lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
+                                             ghost_particles);
+      auto const &p = get_particle_data(pid);
+      BOOST_CHECK_EQUAL(p.f.f.norm(), 0.);
+    }
+
+    // check with LB coupling
+    {
+      lb_lbcoupling_activate();
+      mpi_bcast_lb_particle_coupling();
+      auto const particles = cell_structure.local_particles();
+      auto const ghost_particles = cell_structure.ghost_particles();
+      // get original LB force
+      auto const lb_before = lb_lbfluid_get_force_to_be_applied(p.r.p);
+      // couple particle to LB
+      lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
+                                             ghost_particles);
+      // check particle force
+      auto const &p = get_particle_data(pid);
+      BOOST_CHECK_SMALL((p.f.f - expected).norm(), tol);
+      // check LB force
+      auto const lb_after = lb_lbfluid_get_force_to_be_applied(p.r.p);
+      auto const lb_expected = params.force_md_to_lb(expected) + lb_before;
+      BOOST_CHECK_SMALL((lb_after - lb_expected).norm(), tol);
+      // remove force of the particle from the fluid
+      set_particle_f(pid, {});
+      add_md_force(p.r.p, -expected);
+    }
+  }
+
+  // clean-up and sanity checks
+  {
+    auto const error_message_ref = std::string(
+      "Recalculating forces, so the LB coupling forces are not included in "
+      "the particle force the first time step. This only matters if it "
+      "happens frequently during sampling.");
+    auto const error_messages = ErrorHandling::mpi_gather_runtime_errors();
+    for (auto const & error_message : error_messages) {
+      BOOST_CHECK_EQUAL(error_message.what(), error_message_ref);
+    }
+  }
+}
 
 int main(int argc, char **argv) {
   espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
   espresso::system->set_box_l(params.box_dimensions);
   espresso::system->set_time_step(params.time_step);
+  espresso::system->set_skin(params.skin);
   boost::mpi::communicator world;
   if (world.rank() == 0) {
     setup_lb(0.);
