@@ -418,11 +418,11 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, coupling_particle_lattice_ia,
   // clean-up and sanity checks
   {
     auto const error_message_ref = std::string(
-      "Recalculating forces, so the LB coupling forces are not included in "
-      "the particle force the first time step. This only matters if it "
-      "happens frequently during sampling.");
+        "Recalculating forces, so the LB coupling forces are not included in "
+        "the particle force the first time step. This only matters if it "
+        "happens frequently during sampling.");
     auto const error_messages = ErrorHandling::mpi_gather_runtime_errors();
-    for (auto const & error_message : error_messages) {
+    for (auto const &error_message : error_messages) {
       BOOST_CHECK_EQUAL(error_message.what(), error_message_ref);
     }
   }
