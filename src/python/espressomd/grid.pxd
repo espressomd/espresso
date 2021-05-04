@@ -26,9 +26,9 @@ cdef extern from "grid.hpp":
         bool periodic(unsigned coord)
         const Vector3d & length()
         void set_length(Vector3d)
+        Vector3d get_mi_vector(Vector3d, Vector3d)
 
     BoxGeometry box_geo
 
-    Vector3d get_mi_vector(Vector3d, Vector3d, const BoxGeometry & )
     Vector3d folded_position(Vector3d, const BoxGeometry &)
     Vector3d unfolded_position(Vector3d, Vector3i, const Vector3d & )

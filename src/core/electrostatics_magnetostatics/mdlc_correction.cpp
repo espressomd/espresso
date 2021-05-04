@@ -23,7 +23,7 @@
 
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
-#ifdef DP3M
+#ifdef DIPOLES
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -36,17 +36,27 @@
 #include "particle_data.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
 
-DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <functional>
+#include <numeric>
+#include <stdexcept>
+#include <vector>
+
+DLC_struct dlc_params = {1e100, 0., 0., false, 0.};
 
 /** Checks if a magnetic particle is in the forbidden gap region
  */
 inline void check_gap_mdlc(const Particle &p) {
-  if (p.p.dipm != 0) {
-    if (p.r.p[2] < 0)
+  if (p.p.dipm != 0.0) {
+    if (p.r.p[2] < 0.0)
       runtimeErrorMsg() << "Particle " << p.p.identity << " entered MDLC gap "
                         << "region by " << (p.r.p[2]);
     else if (p.r.p[2] > dlc_params.h) {
@@ -85,31 +95,17 @@ inline double g2_DLC_dip(double g, double x) {
   return a;
 }
 
-/** Compute Mx, My, Mz and Mtotal */
-double slab_dip_count_mu(double *mt, double *mx, double *my,
-                         const ParticleRange &particles) {
-  Utils::Vector3d node_sums{};
-  Utils::Vector3d tot_sums{};
+/** Compute the box magnetic dipole. */
+inline Utils::Vector3d calc_slab_dipole(const ParticleRange &particles) {
 
+  Utils::Vector3d local_dip{};
   for (auto const &p : particles) {
     if (p.p.dipm != 0.0) {
-      node_sums += p.calc_dip();
+      local_dip += p.calc_dip();
     }
   }
 
-  MPI_Allreduce(node_sums.data(), tot_sums.data(), 3, MPI_DOUBLE, MPI_SUM,
-                comm_cart);
-
-  auto const M = tot_sums.norm();
-  auto const Mz = tot_sums[2];
-  auto const Mx = tot_sums[0];
-  auto const My = tot_sums[1];
-
-  *mt = M;
-  *mx = Mx;
-  *my = My;
-
-  return Mz;
+  return boost::mpi::all_reduce(comm_cart, local_dip, std::plus<>());
 }
 
 /** Compute the dipolar DLC corrections for forces and torques.
@@ -328,6 +324,7 @@ double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
  */
 void add_mdlc_force_corrections(const ParticleRange &particles) {
   auto const volume = box_geo.volume();
+  auto const correc = 4. * Utils::pi() / volume;
 
   // --- Create arrays that should contain the corrections to
   //     the forces and torques, and set them to zero.
@@ -347,8 +344,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   // This correction is often called SDC = Shape Dependent Correction.
   // See @cite brodka04a.
 
-  double mx = 0.0, my = 0.0, mtot = 0.0;
-  auto const mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
+  auto const box_dip = calc_slab_dipole(particles);
 
   // --- Transfer the computed corrections to the Forces, Energy and torques
   //     of the particles
@@ -357,22 +353,20 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   for (auto &p : particles) {
     check_gap_mdlc(p);
 
-    if ((p.p.dipm) != 0.0) {
+    if (p.p.dipm != 0.0) {
       // SDC correction term is zero for the forces
       p.f.f += dipole.prefactor * dip_DLC_f[ip];
 
       auto const dip = p.calc_dip();
-      auto const correc = 4. * Utils::pi() / volume;
-      Utils::Vector3d d;
-      // in the Next lines: the second term (correc*...) is the SDC
-      // correction for the torques
-      if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
-        d = {0.0, 0.0, -correc * mz};
-      } else {
+      // SDC correction for the torques
+      Utils::Vector3d d = {0.0, 0.0, -correc * box_dip[2]};
+#ifdef DP3M
+      if (dipole.method == DIPOLAR_MDLC_P3M and
+          dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
         auto const correps = correc / (2.0 * dp3m.params.epsilon + 1.0);
-        d = {correps * mx, correps * my,
-             correc * mz * (-1.0 + 1. / (2.0 * dp3m.params.epsilon + 1.0))};
+        d += correps * box_dip;
       }
+#endif
       p.f.torque += dipole.prefactor * (dip_DLC_t[ip] + vector_product(dip, d));
     }
     ip++;
@@ -385,6 +379,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
 double add_mdlc_energy_corrections(const ParticleRange &particles) {
 
   auto const volume = box_geo.volume();
+  auto const prefactor = dipole.prefactor * 2. * Utils::pi() / volume;
 
   // Check if particles aren't in the forbidden gap region
   // This loop is needed, because there is no other guaranteed
@@ -396,10 +391,9 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
+  auto const k_cut = static_cast<int>(std::round(dlc_params.far_cut));
   double dip_DLC_energy =
-      dipole.prefactor *
-      get_DLC_energy_dipolar(static_cast<int>(std::round(dlc_params.far_cut)),
-                             particles);
+      dipole.prefactor * get_DLC_energy_dipolar(k_cut, particles);
 
   // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a 3D PBC method which uses spherical
@@ -408,26 +402,17 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   // This correction is often called SDC = Shape Dependent Correction.
   // See @cite brodka04a.
 
-  double mx = 0.0, my = 0.0, mtot = 0.0;
-  auto const mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
-  auto const mz2 = mz * mz;
+  auto const box_dip = calc_slab_dipole(particles);
 
   if (this_node == 0) {
-    if (dipole.method == DIPOLAR_MDLC_P3M) {
-      if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
-        dip_DLC_energy += dipole.prefactor * 2 * Utils::pi() / volume * mz2;
-      } else {
-        dip_DLC_energy +=
-            dipole.prefactor * 2 * Utils::pi() / volume *
-            (mz2 - mtot * mtot / (2.0 * dp3m.params.epsilon + 1.0));
-      }
-    } else {
-      dip_DLC_energy += dipole.prefactor * 2 * Utils::pi() / volume * mz2;
-      fprintf(stderr, "You are not using the P3M method, therefore "
-                      "dp3m.params.epsilon unknown, I assume metallic borders "
-                      "\n");
+    dip_DLC_energy += prefactor * Utils::sqr(box_dip[2]);
+#ifdef DP3M
+    if (dipole.method == DIPOLAR_MDLC_P3M and
+        dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
+      auto const correps = 1.0 / (2.0 * dp3m.params.epsilon + 1.0);
+      dip_DLC_energy -= prefactor * box_dip.norm2() * correps;
     }
-
+#endif
     return dip_DLC_energy;
   }
   return 0.0;
@@ -444,7 +429,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
  *  2. You must also tune the other 3D method to the same accuracy, otherwise
  *     it makes no sense to have an accurate result for DLC-dipolar.
  */
-int mdlc_tune(double error) {
+double mdlc_tune_far_cut(DLC_struct const &params) {
   /* we take the maximum dipole in the system, to be sure that the errors
    * in the other case will be equal or less than for this one */
   auto const mu_max = mpi_call(Communication::Result::master_rank, calc_mu_max);
@@ -454,91 +439,80 @@ int mdlc_tune(double error) {
   auto const lx = box_geo.length()[0];
   auto const ly = box_geo.length()[1];
   auto const lz = box_geo.length()[2];
-  auto const a = lx * ly;
-  auto const h = dlc_params.h;
-  if (h < 0)
-    return ES_ERROR;
+  auto const h = params.h;
 
-  if (h > lz) {
-    fprintf(stderr,
-            "tune DLC dipolar: Slab is larger than the box size !!! \n");
-    errexit();
+  if (std::abs(lx - ly) > 0.001) {
+    throw std::runtime_error("MDLC tuning: box size in x direction is "
+                             "different from y direction. The tuning "
+                             "formula requires both to be equal.");
   }
 
-  if (fabs(box_geo.length()[0] - box_geo.length()[1]) > 0.001) {
-    fprintf(stderr, "tune DLC dipolar: box size in x direction is different "
-                    "from y direction !!! \n");
-    fprintf(stderr, "The tuning formula requires both to be equal. \n");
-    errexit();
-  }
-
-  bool flag = false;
-  int kc;
-  int const limitkc = 200;
-  for (kc = 1; kc < limitkc; kc++) {
+  constexpr int limitkc = 200;
+  for (int kc = 1; kc < limitkc; kc++) {
     auto const gc = kc * 2.0 * Utils::pi() / lx;
-    auto const fa0 = sqrt(9.0 * exp(+2. * gc * h) * g1_DLC_dip(gc, lz - h) +
-                          22.0 * g1_DLC_dip(gc, lz) +
-                          9.0 * exp(-2.0 * gc * h) * g1_DLC_dip(gc, lz + h));
-    auto const fa1 = 0.5 * sqrt(Utils::pi() / (2.0 * a)) * fa0;
+    auto const fa0 = sqrt(9.0 * exp(+2.0 * gc * h) * g1_DLC_dip(gc, lz - h) +
+                          9.0 * exp(-2.0 * gc * h) * g1_DLC_dip(gc, lz + h) +
+                          22.0 * g1_DLC_dip(gc, lz));
+    auto const fa1 = 0.5 * sqrt(Utils::pi() / (2.0 * lx * ly)) * fa0;
     auto const fa2 = g2_DLC_dip(gc, lz);
     auto const de = n * mu_max_sq / (4.0 * (exp(gc * lz) - 1.0)) * (fa1 + fa2);
-    if (de < error) {
-      flag = true;
-      break;
+    if (de < params.maxPWerror) {
+      return static_cast<double>(kc);
     }
   }
 
-  if (!flag) {
-    fprintf(stderr, "tune DLC dipolar: Sorry, unable to find a proper cut-off "
-                    "for such system and accuracy.\n");
-    fprintf(stderr, "Try modifying the variable limitkc in the c-code: "
-                    "mdlc_correction.cpp  ... \n");
-    return ES_ERROR;
-  }
-
-  dlc_params.far_cut = kc;
-
-  return ES_OK;
+  throw std::runtime_error("MDLC tuning failed: unable to find a proper "
+                           "cut-off for the given accuracy.");
 }
 
-int mdlc_sanity_checks() {
+void mdlc_sanity_checks() {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    runtimeErrorMsg() << "mdlc requires periodicity 1 1 1";
-    return 1;
+    throw std::runtime_error("MDLC requires periodicity 1 1 1");
   }
-
-  // It will be desirable to have a  checking function that check that the
-  // slab
-  // geometry is such that
-  // the short direction is along the z component.
-
-  return 0;
 }
 
-int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
+void mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
+  auto const h = box_geo.length()[2] - gap_size;
+  if (maxPWerror <= 0.) {
+    throw std::domain_error("maxPWerror must be > 0");
+  }
+  if (gap_size <= 0.) {
+    throw std::domain_error("gap_size must be > 0");
+  }
+  if (h < 0.) {
+    throw std::domain_error("gap size too large");
+  }
+  mdlc_sanity_checks();
 
-  dlc_params.maxPWerror = maxPWerror;
-  dlc_params.gap_size = gap_size;
-  dlc_params.h = box_geo.length()[2] - gap_size;
-
-  if (Dipole::set_mesh()) {
-    // if Dipole::set_mesh fails
-    return ES_ERROR;
+  DipolarInteraction new_method;
+  switch (dipole.method) {
+#ifdef DP3M
+  case DIPOLAR_MDLC_P3M:
+  case DIPOLAR_P3M:
+    new_method = DIPOLAR_MDLC_P3M;
+    break;
+#endif
+  case DIPOLAR_MDLC_DS:
+  case DIPOLAR_DS:
+    new_method = DIPOLAR_MDLC_DS;
+    fprintf(stderr, "You are not using the P3M method, therefore dp3m.params."
+                    "epsilon unknown, I will assume metallic borders.\n");
+    break;
+  default:
+    throw std::runtime_error(
+        "MDLC cannot extend the currently active magnetostatics solver.");
   }
 
-  dlc_params.far_cut = far_cut;
-  if (far_cut != -1) {
-    dlc_params.far_calculated = 0;
-  } else {
-    dlc_params.far_calculated = 1;
-    if (mdlc_tune(dlc_params.maxPWerror) == ES_ERROR) {
-      runtimeErrorMsg() << "mdlc tuning failed, gap size too small";
-    }
+  DLC_struct new_dlc_params{maxPWerror, far_cut, gap_size, far_cut == -1., h};
+
+  if (new_dlc_params.far_calculated) {
+    new_dlc_params.far_cut = mdlc_tune_far_cut(new_dlc_params);
   }
+
+  dlc_params = new_dlc_params;
+
+  Dipole::set_method_local(new_method);
   mpi_bcast_coulomb_params();
-
-  return ES_OK;
 }
 
-#endif // DP3M
+#endif // DIPOLES

@@ -45,8 +45,8 @@ public:
     std::vector<double> res(n_values());
 
     for (size_t i = 0, end = n_values(); i < end; i++) {
-      auto const v = get_mi_vector(traits.position(particles[i]),
-                                   traits.position(particles[i + 1]), box_geo);
+      auto const v = box_geo.get_mi_vector(traits.position(particles[i]),
+                                           traits.position(particles[i + 1]));
       res[i] = v.norm();
     }
     return res;

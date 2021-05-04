@@ -57,15 +57,21 @@ BOOST_AUTO_TEST_CASE(length_test) {
     auto const box = BoxGeometry{};
 
     BOOST_CHECK(Utils::Vector3d::broadcast(1.) == box.length());
+    BOOST_CHECK(Utils::Vector3d::broadcast(1.) == box.length_inv());
+    BOOST_CHECK(Utils::Vector3d::broadcast(0.5) == box.length_half());
   }
 
   /* setter */
   {
     auto box = BoxGeometry{};
     auto const box_l = Utils::Vector3d{1., 2., 3.};
+    auto const box_l_inv =
+        Utils::Vector3d{1. / box_l[0], 1. / box_l[1], 1. / box_l[2]};
 
     box.set_length(box_l);
 
     BOOST_CHECK(box.length() == box_l);
+    BOOST_CHECK(box.length_inv() == box_l_inv);
+    BOOST_CHECK(box.length_half() == 0.5 * box_l);
   }
 }

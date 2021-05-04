@@ -70,12 +70,12 @@ static void init_correction_vector(const ParticleRange &particles,
  */
 static bool calculate_positional_correction(RigidBond const &ia_params,
                                             Particle &p1, Particle &p2) {
-  auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  auto const r_ij = box_geo.get_mi_vector(p1.r.p, p2.r.p);
   auto const r_ij2 = r_ij.norm2();
 
   if (std::abs(1.0 - r_ij2 / ia_params.d2) > ia_params.p_tol) {
     auto const r_ij_t =
-        get_mi_vector(p1.r.p_last_timestep, p2.r.p_last_timestep, box_geo);
+        box_geo.get_mi_vector(p1.r.p_last_timestep, p2.r.p_last_timestep);
     auto const r_ij_dot = r_ij_t * r_ij;
     auto const G =
         0.50 * (ia_params.d2 - r_ij2) / r_ij_dot / (p1.p.mass + p2.p.mass);
@@ -174,7 +174,7 @@ void correct_position_shake(CellStructure &cs) {
 static bool calculate_velocity_correction(RigidBond const &ia_params,
                                           Particle &p1, Particle &p2) {
   auto const v_ij = p1.m.v - p2.m.v;
-  auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  auto const r_ij = box_geo.get_mi_vector(p1.r.p, p2.r.p);
 
   auto const v_proj = v_ij * r_ij;
   if (std::abs(v_proj) > ia_params.v_tol) {
