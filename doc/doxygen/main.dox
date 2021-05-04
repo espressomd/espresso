@@ -28,7 +28,7 @@ ESPResSo.
 
 If you just have obtained a release of ESPResSo, and you are looking for
 documentation on how to use the software, you might first want to have a look
-at the User's Guide, which is available at <http://espressomd.org/html/doc/>.
+at the User's Guide, which is available at <https://espressomd.github.io/doc/index.html>.
 
 If you want to start developing code for ESPResSo, you might first
 want to have a look at the Developer's Guide on the GitHub wiki at
