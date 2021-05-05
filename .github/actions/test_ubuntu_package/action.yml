@@ -1,0 +1,13 @@
+name: 'Test Ubuntu Package'
+description: 'Test Ubuntu package'
+inputs:
+  package_file:
+    description: Name of package file to install and test
+    required: true    
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  entrypoint: "/entrypoint.sh"
+  args:
+    - ${{ inputs.package_file }}
+
