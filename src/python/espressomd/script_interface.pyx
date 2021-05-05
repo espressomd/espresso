@@ -51,7 +51,8 @@ cdef class PScriptInterface:
     \*\*kwargs
         Parameters for the core class constructor (method 2).
     policy : :obj:`str`, \{'GLOBAL', 'LOCAL'\}
-        Creation policy.
+        Creation policy. The managed object exists either on all MPI nodes
+        with 'GLOBAL' (default), or only on the head node with 'LOCAL'.
 
     Attributes
     ----------
