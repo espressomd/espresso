@@ -7,7 +7,6 @@ on:
 jobs:
   deploy_docs:
     runs-on: ubuntu-20.04
-    if: github.event_name == 'schedule_deploy'
     environment: deploy_documentation
     steps:
       - name: Install pandoc
