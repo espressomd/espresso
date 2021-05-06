@@ -147,7 +147,6 @@ class SwimmerTest():
         f_swim = 0.11
         dip_length = 2 * self.LB_params['agrid']
 
-        # TODO switch for failure
         sw0_pos = np.array([3.8, 1.1, 1.1])
         sw1_pos = np.array([1.8, 4.1, 4.1])
         sw0 = self.system.part.add(pos=sw0_pos, quat=np.sqrt([.5, 0, .5, 0]),
@@ -171,8 +170,6 @@ class SwimmerTest():
             sw_source_nodes = get_lb_nodes_around_pos(sw_source_pos, self.lbf)
             sw_source_forces = np.array(
                 [n.last_applied_force for n in sw_source_nodes])
-            # TODO
-            #sw0_source_forces /= 8.
             np.testing.assert_allclose(
                 np.sum(sw_source_forces, axis=0), -f_swim * np.array(sw.director), atol=1E-10)
 

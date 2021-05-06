@@ -87,12 +87,11 @@ class LBThermostatCommon(ThermostatsCommon):
         fluid_temp = np.average(fluid_temps)
 
         np.testing.assert_allclose(np.average(v_particles), 0, atol=0.02)
-        # WALBERLA TODO: Lower tolerance 
-        np.testing.assert_allclose(np.var(v_particles), KT, rtol=0.05)
+        np.testing.assert_allclose(np.var(v_particles), KT, rtol=0.02)
 
         minmax = 3
         n_bins = 7
-        error_tol = 0.018  # WALBERLA TODO: Restore tolerance to 0.015
+        error_tol = 0.015  
         self.check_velocity_distribution(
             v_particles.reshape((-1, 3)), minmax, n_bins, error_tol, KT)
 
