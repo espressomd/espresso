@@ -37,7 +37,3 @@ unit_test(NAME LBWalberlaImpl_flow_tests SRC LBWalberlaImpl_flow_tests.cpp DEPEN
 target_include_directories(LBWalberlaImpl_flow_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
 
-unit_test(NAME single_force SRC single_force.cpp DEPENDS WalberlaBridge
-          EspressoUtils Boost::mpi ${WALBERLA_LIBS})
-target_include_directories(single_force PRIVATE ${WALBERLA_INCLUDE_DIRS}
-                                                   ${walberla_BINARY_DIR}/src)
