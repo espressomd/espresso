@@ -19,16 +19,23 @@
 
 import sympy as sp
 import pystencils as ps
+from pystencils.field import Field
 from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal, force_model_from_string
 from lbmpy.moments import is_bulk_moment, is_shear_moment, get_order
 from lbmpy.stencils import get_stencil
 from pystencils_walberla import CodeGeneration
-from lbmpy_walberla import generate_lattice_model
+
+from lbmpy_walberla import generate_lattice_model, generate_boundary, generate_lb_pack_info
+
+from lbmpy.boundaries import UBB
+from lbmpy_walberla.additional_data_handler import UBBAdditionalDataHandler
+from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 with CodeGeneration() as ctx:
     kT = sp.symbols("kT")
     force_field = ps.fields("force(3): [3D]", layout='fzyx')
 
+    # Relaxation rate mapping
     def rr_getter(moment_group):
         """Map groups of LB moments to relaxation rate symbols 
         (omega_shear/bulk/odd/even) or 0 for conserved modes.
@@ -59,6 +66,7 @@ with CodeGeneration() as ctx:
         "nontemporal": True,
         "instruction_set": "avx"}
 
+    # LB Method definition
     method = create_mrt_orthogonal(
         stencil=get_stencil('D3Q19'),
         compressible=True,
@@ -67,6 +75,7 @@ with CodeGeneration() as ctx:
         force_model=force_model_from_string(
             'schiller', force_field.center_vector)
     )
+
     # generate unthermalized LB
     collision_rule_unthermalized = create_lb_collision_rule(
         method,
@@ -82,7 +91,7 @@ with CodeGeneration() as ctx:
         ctx,
         'MRTLatticeModelAvx',
         collision_rule_unthermalized,
-        cpu_vectorize_info=cpu_vectorize_info,
+        #        cpu_vectorize_info=cpu_vectorize_info,
         field_layout="fzyx")
 
     # generate thermalized LB
@@ -104,5 +113,25 @@ with CodeGeneration() as ctx:
         ctx,
         'FluctuatingMRTLatticeModelAvx',
         collision_rule_thermalized,
-        cpu_vectorize_info=cpu_vectorize_info,
-        field_layout="fzyx")
+        #        cpu_vectorize_info=cpu_vectorize_info,
+        field_layout="fzyx", accessor=StreamPushTwoFieldsAccessor())
+
+    # Boundary conditions
+    ubb_dynamic = UBB(lambda *args: None, dim=3)
+    ubb_data_handler = UBBAdditionalDataHandler(method.stencil, ubb_dynamic)
+
+    generate_boundary(ctx, 'Dynamic_UBB', ubb_dynamic, method,
+                      additional_data_handler=ubb_data_handler, streaming_pattern="push")
+
+    # communication
+    pdfs = Field.create_generic('pdfs', 3, index_shape=(
+        len(method.stencil),), layout='fzyx')
+    generate_lb_pack_info(
+        ctx,
+        'PushPackInfo',
+        method.stencil,
+        pdfs,
+        streaming_pattern='push')
+
+    # Info header containing correct template definitions for stencil and field
+    #ctx.write_file("InfoHeader.h", info_header)

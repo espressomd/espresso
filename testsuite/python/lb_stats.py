@@ -125,8 +125,6 @@ class TestLB:
             all_temp_particle.append(temp_particle)
             all_temp_fluid.append(fluid_temp)
 
-        print(all_temp_particle)
-
         # import scipy.stats
         # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
         #   scale=np.std(all_temp_particle,ddof=1))[1] - self.params["temp"]
@@ -136,8 +134,8 @@ class TestLB:
         #temp_prec_particle = 0.06 * self.params["temp"]
         #temp_prec_particle = 0.06 * self.params["temp"]
 
-        temp_prec_fluid = 0.1 * self.params["temp"]
-        temp_prec_particle = 0.2 * self.params["temp"]
+        temp_prec_fluid = 0.05 * self.params["temp"]
+        temp_prec_particle = 0.05 * self.params["temp"]
 
         self.assertAlmostEqual(
             np.mean(all_temp_fluid), self.params["temp"], delta=temp_prec_fluid)

@@ -252,13 +252,18 @@ public:
     m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
         m_blocks->getBlockStorage(), 1);
 
-    m_time_loop->add() << timeloop::Sweep(
-        Boundaries::getBlockSweep(m_boundary_handling_id), "boundary handling");
     m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                           "Reset force fields");
     m_time_loop->add() << timeloop::Sweep(
-                              typename LatticeModel::Sweep(m_pdf_field_id),
-                              "LB stream & collide")
+                              typename LatticeModel::Sweep(m_pdf_field_id, 0),
+                              "LB collide")
+                       << timeloop::AfterFunction(*m_communication,
+                                                  "communication");
+    m_time_loop->add() << timeloop::Sweep(
+        Boundaries::getBlockSweep(m_boundary_handling_id), "boundary handling");
+    m_time_loop->add() << timeloop::Sweep(
+                              typename LatticeModel::Sweep(m_pdf_field_id, 1),
+                              "LB stream")
                        << timeloop::AfterFunction(*m_communication,
                                                   "communication");
 

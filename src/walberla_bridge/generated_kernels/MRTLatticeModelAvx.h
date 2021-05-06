@@ -229,7 +229,7 @@ public:
         
     using namespace stencil;
     switch( direction ) {
-        case C: return rho*-0.5*(u[0]*u[0]) + rho*-0.5*(u[1]*u[1]) + rho*-0.5*(u[2]*u[2]) + rho*0.333333333333333;
+        case C: return rho*((double)(-0.5))*(u[0]*u[0]) + rho*((double)(-0.5))*(u[1]*u[1]) + rho*((double)(-0.5))*(u[2]*u[2]) + rho*0.333333333333333;
         case N: return rho*-0.0833333333333333*(u[0]*u[0]) + rho*-0.0833333333333333*(u[2]*u[2]) + rho*0.0555555555555556 + rho*0.166666666666667*(u[1]*u[1]);
         case S: return rho*-0.0833333333333333*(u[0]*u[0]) + rho*-0.0833333333333333*(u[2]*u[2]) + rho*0.0555555555555556 + rho*0.166666666666667*(u[1]*u[1]);
         case W: return rho*-0.0833333333333333*(u[1]*u[1]) + rho*-0.0833333333333333*(u[2]*u[2]) + rho*0.0555555555555556 + rho*0.166666666666667*(u[0]*u[0]);
@@ -262,7 +262,7 @@ public:
         
     using namespace stencil;
     switch( direction ) {
-        case C: return 0;
+        case C: return rho*-0.5*(u[0]*u[0]) + rho*-0.5*(u[1]*u[1]) + rho*-0.5*(u[2]*u[2]) - rho*((double)(-0.5))*(u[0]*u[0]) - rho*((double)(-0.5))*(u[1]*u[1]) - rho*((double)(-0.5))*(u[2]*u[2]);
         case N: return rho*0.166666666666667*u[1];
         case S: return rho*-0.166666666666667*u[1];
         case W: return rho*-0.166666666666667*u[0];
@@ -315,7 +315,7 @@ struct AdaptVelocityToForce<MRTLatticeModelAvx, void>
       auto y = it.y();
       auto z = it.z();
       
-      return velocity - Vector3<real_t>((0.5)*lm.force_->get(x,y,z,0)/rho,(0.5)*lm.force_->get(x,y,z,1)/rho,(0.5)*lm.force_->get(x,y,z,2)/rho  );
+      return velocity - Vector3<real_t>(lm.force_->get(x,y,z,0)*0.5/rho,lm.force_->get(x,y,z,1)*0.5/rho,lm.force_->get(x,y,z,2)*0.5/rho  );
       
    }
 
@@ -324,7 +324,7 @@ struct AdaptVelocityToForce<MRTLatticeModelAvx, void>
    {
       
 
-      return velocity - Vector3<real_t>((0.5)*lm.force_->get(x,y,z,0)/rho,(0.5)*lm.force_->get(x,y,z,1)/rho,(0.5)*lm.force_->get(x,y,z,2)/rho  );
+      return velocity - Vector3<real_t>(lm.force_->get(x,y,z,0)*0.5/rho,lm.force_->get(x,y,z,1)*0.5/rho,lm.force_->get(x,y,z,2)*0.5/rho  );
       
    }
 };
