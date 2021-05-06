@@ -93,6 +93,7 @@ protected:
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
       add(obj_ptr);
+      return none;
     }
 
     if (method == "remove") {
@@ -100,6 +101,7 @@ protected:
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
       remove(obj_ptr);
+      return none;
     }
 
     if (method == "get_elements") {
@@ -114,6 +116,7 @@ protected:
 
     if (method == "clear") {
       clear();
+      return none;
     }
 
     if (method == "size") {
