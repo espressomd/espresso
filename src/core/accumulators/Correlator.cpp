@@ -206,15 +206,11 @@ void Correlator::initialize() {
 
   dim_B = B_obs->n_values();
 
-  if (dim_A < 1) {
-    throw std::runtime_error("dimension of A was not >1");
+  if (dim_A == 0) {
+    throw std::runtime_error("dimension of A was not >= 1");
   }
 
   // choose the correlation operation
-  if (corr_operation_name.empty()) {
-    throw std::runtime_error(
-        "no proper function for correlation operation given");
-  }
   if (corr_operation_name == "componentwise_product") {
     m_dim_corr = dim_A;
     m_shape = A_obs->shape();
@@ -254,8 +250,8 @@ void Correlator::initialize() {
     corr_operation = &scalar_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else {
-    throw std::runtime_error(
-        "no proper function for correlation operation given");
+    throw std::runtime_error("correlation operation '" + corr_operation_name +
+                             "' not implemented");
   }
 
   // Choose the compression function
