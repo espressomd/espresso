@@ -246,6 +246,72 @@ class CorrelatorTest(ut.TestCase):
                 self.check_pickling(acc_lin)
                 self.check_pickling(acc_def)
 
+    def test_correlator_exceptions(self):
+        self.system.part.add(pos=2 * [(0, 0, 0)])
+        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+
+        def create_accumulator(obs1=obs, **kwargs):
+            valid_kwargs = {'obs1': obs1, 'tau_lin': 10, 'tau_max': 10.,
+                            'delta_N': 1, 'corr_operation': "scalar_product"}
+            valid_kwargs.update(kwargs)
+            return espressomd.accumulators.Correlator(**valid_kwargs)
+
+        # check finalize method
+        acc = create_accumulator()
+        acc.finalize()
+        with self.assertRaisesRegex(RuntimeError, r"Correlator::finalize\(\) can only be called once"):
+            acc.finalize()
+        with self.assertRaisesRegex(RuntimeError, r"No data can be added after finalize\(\) was called."):
+            acc.update()
+
+        # check general arguments and input data
+        with self.assertRaisesRegex(RuntimeError, "tau_lin must be >= 2"):
+            create_accumulator(tau_lin=0)
+        with self.assertRaisesRegex(RuntimeError, "tau_lin must be divisible by 2"):
+            create_accumulator(tau_lin=3)
+        with self.assertRaisesRegex(RuntimeError, "tau_max must be >= delta_t"):
+            create_accumulator(delta_N=2 * int(10. / self.system.time_step))
+        with self.assertRaisesRegex(RuntimeError, "correlation operation 'unknown' not implemented"):
+            create_accumulator(corr_operation="unknown")
+        with self.assertRaisesRegex(RuntimeError, "no proper function for compression of first observable given"):
+            create_accumulator(compress1="unknown")
+        with self.assertRaisesRegex(RuntimeError, "no proper function for compression of second observable given"):
+            create_accumulator(compress2="unknown")
+        with self.assertRaisesRegex(RuntimeError, "dimension of A was not >= 1"):
+            create_accumulator(
+                obs1=espressomd.observables.ParticleVelocities(ids=()))
+
+        # check FCS-specific arguments and input data
+        with self.assertRaisesRegex(RuntimeError, "missing parameter for fcs_acf: w_x w_y w_z"):
+            create_accumulator(corr_operation="fcs_acf", args=[1, 1, 0])
+        with self.assertRaisesRegex(RuntimeError, "dimA must be divisible by 3 for fcs_acf"):
+            create_accumulator(corr_operation="fcs_acf", args=[1, 1, 1],
+                               obs1=espressomd.observables.Energy())
+        with self.assertRaisesRegex(RuntimeError, "the last dimension of dimA must be 3 for fcs_acf"):
+            obs_dens = espressomd.observables.DensityProfile(
+                ids=(0,), n_x_bins=3, n_y_bins=3, n_z_bins=1, min_x=0.,
+                min_y=0., min_z=0., max_x=1., max_y=1., max_z=1.)
+            create_accumulator(corr_operation="fcs_acf", args=[1, 1, 1],
+                               obs1=obs_dens)
+
+        # check correlation errors
+        obs2 = espressomd.observables.ParticleVelocities(ids=(0, 1))
+        with self.assertRaisesRegex(RuntimeError, "Error in scalar product: The vector sizes do not match"):
+            acc = create_accumulator(obs2=obs2)
+            acc.update()
+        with self.assertRaisesRegex(RuntimeError, "Error in componentwise product: The vector sizes do not match"):
+            acc = create_accumulator(
+                obs2=obs2, corr_operation="componentwise_product")
+            acc.update()
+        with self.assertRaisesRegex(RuntimeError, "Error in square distance componentwise: The vector sizes do not match"):
+            acc = create_accumulator(
+                obs2=obs2, corr_operation="square_distance_componentwise")
+            acc.update()
+        with self.assertRaisesRegex(RuntimeError, "Error in fcs_acf: The vector sizes do not match"):
+            acc = create_accumulator(
+                obs2=obs2, corr_operation="fcs_acf", args=[1, 1, 1])
+            acc.update()
+
 
 if __name__ == "__main__":
     ut.main()
