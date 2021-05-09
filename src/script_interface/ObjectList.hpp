@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_REGISTRY_HPP
-#define SCRIPT_INTERFACE_REGISTRY_HPP
+#ifndef SCRIPT_INTERFACE_OBJECT_LIST_HPP
+#define SCRIPT_INTERFACE_OBJECT_LIST_HPP
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/get_value.hpp"
@@ -60,7 +60,7 @@ public:
   /**
    * @brief Removes all occurrences of an element from the list.
    *
-   * @param element The element to add.
+   * @param element The element to remove.
    */
   void remove(std::shared_ptr<ManagedType> const &element) {
     remove_in_core(element);
@@ -93,6 +93,7 @@ protected:
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
       add(obj_ptr);
+      return none;
     }
 
     if (method == "remove") {
@@ -100,6 +101,7 @@ protected:
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
       remove(obj_ptr);
+      return none;
     }
 
     if (method == "get_elements") {
@@ -114,6 +116,7 @@ protected:
 
     if (method == "clear") {
       clear();
+      return none;
     }
 
     if (method == "size") {
