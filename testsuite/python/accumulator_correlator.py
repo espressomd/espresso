@@ -200,6 +200,43 @@ class CorrelatorTest(ut.TestCase):
         acc.args = w_squared
         np.testing.assert_array_almost_equal(np.copy(acc.args), w_squared)
 
+    def test_correlator_compression(self):
+        p = self.system.part.add(pos=(0, 0, 0))
+        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        v1 = 3.
+        v2 = 5.
+        compressed_ref = {
+            "discard1": v2**2, "linear": ((v1 + v2) / 2.)**2,
+            "discard2": v1**2, "uncompressed": ((v1**2 + v2**2) / 2., v1 * v2)}
+        for tau_lin in [8, 10, 12]:
+            # set up accumulators
+            accumulators = {}
+            for compression in ("linear", "discard1", "discard2"):
+                acc = espressomd.accumulators.Correlator(
+                    obs1=obs, tau_lin=tau_lin, tau_max=2, delta_N=1,
+                    compress1=compression, compress2=compression,
+                    corr_operation="scalar_product")
+                accumulators[compression] = acc
+                self.system.auto_update_accumulators.add(acc)
+            # record oscillating data with frequency of 1/time_step
+            for i in range(1000):
+                p.v = (v1 if (i % 2 == 0) else v2, 0, 0)
+                self.system.integrator.run(1)
+            # check compression algorithms: the first tau_lin values
+            # are always uncompressed, the rest is compressed; the
+            # oscillation frequency is such that 'discard*' methods
+            # yield the corresponding constant 'v*' while 'linear'
+            # yields the average of 'v1' and 'v2'
+            uncompressed = np.repeat(
+                [compressed_ref["uncompressed"]], tau_lin, axis=0).flatten()
+            for compression in ("linear", "discard1", "discard2"):
+                accumulators[compression].finalize()
+                corr = accumulators[compression].result().flatten()
+                corr_ref = np.repeat(compressed_ref[compression], corr.shape)
+                corr_ref[:tau_lin + 1] = uncompressed[:tau_lin + 1]
+                np.testing.assert_array_equal(corr, corr_ref)
+            self.system.auto_update_accumulators.clear()
+
     def test_correlator_interface(self):
         # test setters and getters
         obs = espressomd.observables.ParticleVelocities(ids=(123,))
