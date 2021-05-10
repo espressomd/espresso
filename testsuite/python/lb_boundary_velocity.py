@@ -19,6 +19,7 @@ import espressomd.lbboundaries
 import espressomd.shapes
 import unittest as ut
 import unittest_decorators as utx
+import numpy as np
 
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES", "LB_WALBERLA"])
@@ -38,7 +39,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         system = self.system
 
         lb_fluid = espressomd.lb.LBFluidWalberla(
-            agrid=2.0, dens=.5, visc=3.0, tau=0.5)
+            agrid=2.0, dens=.5, visc=5.0, tau=0.5)
         system.actors.add(lb_fluid)
 
         v_boundary = [0.03, 0.02, 0.01]
@@ -51,9 +52,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         system.integrator.run(2000)
 
         v_fluid = lb_fluid[3, 0, 0].velocity
-        self.assertAlmostEqual(v_fluid[0], v_boundary[0], places=3)
-        self.assertAlmostEqual(v_fluid[1], v_boundary[1], places=3)
-        self.assertAlmostEqual(v_fluid[2], v_boundary[2], places=3)
+        np.testing.assert_allclose(v_fluid, v_boundary, atol=1E-5)
 
 
 if __name__ == "__main__":
