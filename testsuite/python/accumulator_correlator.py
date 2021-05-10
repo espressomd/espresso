@@ -308,15 +308,18 @@ class CorrelatorTest(ut.TestCase):
             create_accumulator(tau_lin=3)
         with self.assertRaisesRegex(RuntimeError, "tau_max must be >= delta_t"):
             create_accumulator(delta_N=2 * int(10. / self.system.time_step))
-        with self.assertRaisesRegex(RuntimeError, "correlation operation 'unknown' not implemented"):
+        with self.assertRaisesRegex(ValueError, "correlation operation 'unknown' not implemented"):
             create_accumulator(corr_operation="unknown")
-        with self.assertRaisesRegex(RuntimeError, "no proper function for compression of first observable given"):
-            create_accumulator(compress1="unknown")
-        with self.assertRaisesRegex(RuntimeError, "no proper function for compression of second observable given"):
-            create_accumulator(compress2="unknown")
-        with self.assertRaisesRegex(RuntimeError, "dimension of A was not >= 1"):
+        with self.assertRaisesRegex(ValueError, "unknown compression method 'unknown1' for first observable"):
+            create_accumulator(compress1="unknown1")
+        with self.assertRaisesRegex(ValueError, "unknown compression method 'unknown2' for second observable"):
+            create_accumulator(compress2="unknown2")
+        with self.assertRaisesRegex(RuntimeError, "dimension of first observable has to be >= 1"):
             create_accumulator(
                 obs1=espressomd.observables.ParticleVelocities(ids=()))
+        with self.assertRaisesRegex(RuntimeError, "dimension of second observable has to be >= 1"):
+            create_accumulator(
+                obs2=espressomd.observables.ParticleVelocities(ids=()))
 
         # check FCS-specific arguments and input data
         with self.assertRaisesRegex(RuntimeError, "missing parameter for fcs_acf: w_x w_y w_z"):
