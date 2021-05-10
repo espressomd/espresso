@@ -1,3 +1,4 @@
+
 # Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -39,6 +40,8 @@ VISC = 2.7
 DENS = 1.7
 TIME_STEP = 0.05
 BOX_L = 8.0
+# Location of the LB wall. This was box_l/2 -1 for Espresso's LB
+EFFECTIVE_RADIUS = BOX_L / 2 - 1.03
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
@@ -138,10 +141,10 @@ class LBPoiseuilleCommon:
         v_measured = velocities[1:-1]
         v_expected = poiseuille_flow(
             positions[1:-1] - 0.5 * BOX_L,
-            BOX_L / 2.0 - 1.0,
+            EFFECTIVE_RADIUS,
             EXT_FORCE,
             VISC * DENS)
-        f_half_correction = 0.5 * self.system.time_step * EXT_FORCE
+        f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
         np.testing.assert_allclose(
             v_measured[1:-1] - f_half_correction, v_expected[1:-1], atol=0.0032)
 
@@ -174,11 +177,11 @@ class LBPoiseuilleCommon:
             OBS_PARAMS['n_r_bins'])
         v_expected = poiseuille_flow(
             x,
-            BOX_L / 2.0 - 1.0,
+            EFFECTIVE_RADIUS,
             EXT_FORCE,
             VISC * DENS)
         v_measured = obs_result[:, 0, 0, 2]
-        f_half_correction = 0.5 * self.system.time_step * EXT_FORCE
+        f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
         np.testing.assert_allclose(
             v_measured[1:-1] - f_half_correction, v_expected[1:-1], atol=0.0037)
 
