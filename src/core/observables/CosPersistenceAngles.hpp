@@ -26,6 +26,7 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -65,7 +66,10 @@ public:
 
     return angles;
   }
-  std::vector<size_t> shape() const override { return {ids().size() - 2}; }
+  std::vector<size_t> shape() const override {
+    assert(ids().size() >= 2);
+    return {ids().size() - 2};
+  }
 };
 
 } // Namespace Observables

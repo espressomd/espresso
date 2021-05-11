@@ -26,6 +26,7 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -67,7 +68,10 @@ public:
     }
     return res;
   }
-  std::vector<size_t> shape() const override { return {ids().size() - 3}; }
+  std::vector<size_t> shape() const override {
+    assert(ids().size() >= 3);
+    return {ids().size() - 3};
+  }
 };
 
 } // Namespace Observables
