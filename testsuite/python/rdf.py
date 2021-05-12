@@ -142,6 +142,8 @@ class RdfTest(ut.TestCase):
         # check exceptions
         with self.assertRaises(RuntimeError):
             espressomd.observables.RDF(**{**params, 'min_r': 100.})
+        with self.assertRaises(ValueError):
+            espressomd.observables.RDF(**{**params, 'n_r_bins': 0})
 
 
 if __name__ == "__main__":

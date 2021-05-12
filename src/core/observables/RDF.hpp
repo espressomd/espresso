@@ -58,6 +58,8 @@ public:
         max_r(max_r), n_r_bins(n_r_bins) {
     if (max_r <= min_r)
       throw std::runtime_error("max_r has to be > min_r");
+    if (n_r_bins <= 0)
+      throw std::domain_error("n_r_bins has to be >= 1");
   }
   std::vector<double> operator()() const final;
 

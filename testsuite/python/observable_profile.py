@@ -149,6 +149,9 @@ class ProfileObservablesTest(ut.TestCase):
             with self.assertRaises(RuntimeError):
                 espressomd.observables.DensityProfile(
                     **{**params, f'min_{axis}': 100.})
+            with self.assertRaises(ValueError):
+                espressomd.observables.DensityProfile(
+                    **{**params, f'n_{axis}_bins': 0})
 
 
 if __name__ == '__main__':
