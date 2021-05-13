@@ -7,6 +7,7 @@ on:
 jobs:
   deploy_docs:
     runs-on: ubuntu-20.04
+    if: github.repository == 'espressomd/espresso'
     environment: deploy_documentation
     steps:
       - name: Install pandoc
