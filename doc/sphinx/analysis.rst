@@ -674,7 +674,7 @@ Ref. :cite:`ramirez10a`.
 
 The choice of the compression function also influences the statistical
 accuracy and can even lead to systematic errors. The default compression
-function is which discards the second for the compressed values and
+function discards the second value and
 pushes the first one to the higher level. This is robust and can be
 applied universally to any combination of observables and correlation
 operation. On the other hand, it reduces the statistical accuracy as the
