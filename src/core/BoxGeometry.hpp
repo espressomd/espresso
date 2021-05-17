@@ -27,13 +27,57 @@
 #include <cassert>
 #include <cmath>
 
+namespace detail {
+/**
+ * @brief Get the minimum-image distance between two coordinates.
+ * @param a               Coordinate of the terminal point.
+ * @param b               Coordinate of the initial point.
+ * @param box_length      Box length.
+ * @param box_length_inv  Inverse box length
+ * @param box_length_half Half box length
+ * @param periodic        Box periodicity.
+ * @return Shortest distance from @p b to @p a across periodic images,
+ *         i.e. <tt>a - b</tt>. Can be negative.
+ */
+template <typename T>
+T get_mi_coord(T a, T b, T box_length, T box_length_inv, T box_length_half,
+               bool periodic) {
+  auto const dx = a - b;
+
+  if (periodic && (std::abs(dx) > box_length_half)) {
+    return dx - std::round(dx * box_length_inv) * box_length;
+  }
+
+  return dx;
+}
+
+/**
+ * @brief Get the minimum-image distance between two coordinates.
+ * @param a           Coordinate of the terminal point.
+ * @param b           Coordinate of the initial point.
+ * @param box_length  Box length.
+ * @param periodic    Box periodicity.
+ * @return Shortest distance from @p b to @p a across periodic images,
+ *         i.e. <tt>a - b</tt>. Can be negative.
+ */
+template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
+  return get_mi_coord(a, b, box_length, 1. / box_length, 0.5 * box_length,
+                      periodic);
+}
+} // namespace detail
+
 class BoxGeometry {
-public:
+private:
   /** Flags for all three dimensions whether pbc are applied (default). */
   std::bitset<3> m_periodic = 0b111;
   /** Side lengths of the box */
   Utils::Vector3d m_length = {1, 1, 1};
+  /** Inverse side lengths of the box */
+  Utils::Vector3d m_length_inv = {1, 1, 1};
+  /** Half side lengths of the box */
+  Utils::Vector3d m_length_half = {0.5, 0.5, 0.5};
 
+public:
   /**
    * @brief Set periodicity for direction
    *
@@ -60,56 +104,65 @@ public:
   Utils::Vector3d const &length() const { return m_length; }
 
   /**
+   * @brief Inverse box length
+   * @return Return vector of inverse side-lengths of the box.
+   */
+  Utils::Vector3d const &length_inv() const { return m_length_inv; }
+
+  /**
+   * @brief Half box length
+   * @return Return vector of half side-lengths of the box.
+   */
+  Utils::Vector3d const &length_half() const { return m_length_half; }
+
+  /**
    * @brief Set box side lengths.
    * @param box_l Length that should be set.
    */
-  void set_length(Utils::Vector3d const &box_l) { m_length = box_l; }
+  void set_length(Utils::Vector3d const &box_l) {
+    m_length = box_l;
+    m_length_inv = {1. / box_l[0], 1. / box_l[1], 1. / box_l[2]};
+    m_length_half = 0.5 * box_l;
+  }
 
   /**
    * @brief Box volume
    * @return Return the volume of the box.
    */
   double volume() const { return m_length[0] * m_length[1] * m_length[2]; }
-};
 
-/**
- * @brief Get the minimum-image distance between two coordinates.
- * @param a           Coordinate of the terminal point.
- * @param b           Coordinate of the initial point.
- * @param box_length  Box length.
- * @param periodic    Box periodicity.
- * @return Shortest distance from @p b to @p a across periodic images,
- *         i.e. <tt>a - b</tt>. Can be negative.
- */
-template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
-  auto const dx = a - b;
+  /**
+   * @brief Get the minimum-image distance between two coordinates.
+   * @param a     Coordinate of the terminal point.
+   * @param b     Coordinate of the initial point.
+   * @param coord Direction
+   * @return Shortest distance from @p b to @p a across periodic images,
+   *         i.e. <tt>a - b</tt>. Can be negative.
+   */
+  template <typename T> T inline get_mi_coord(T a, T b, unsigned coord) const {
+    assert(coord <= 2);
 
-  if (periodic && (std::fabs(dx) > (0.5 * box_length))) {
-    return dx - std::round(dx * (1. / box_length)) * box_length;
+    return detail::get_mi_coord(a, b, m_length[coord], m_length_inv[coord],
+                                m_length_half[coord], m_periodic[coord]);
   }
 
-  return dx;
-}
-
-/**
- * @brief Get the minimum-image vector between two coordinates.
- *
- * @tparam T Floating point type.
- *
- * @param a     Coordinate of the terminal point.
- * @param b     Coordinate of the initial point.
- * @param box   Box parameters (side lengths, periodicity).
- * @return Vector from @p b to @p a that minimizes the distance across
- *         periodic images, i.e. <tt>a - b</tt>.
- */
-template <typename T>
-Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
-                                  const Utils::Vector<T, 3> &b,
-                                  const BoxGeometry &box) {
-  return {get_mi_coord(a[0], b[0], box.length()[0], box.periodic(0)),
-          get_mi_coord(a[1], b[1], box.length()[1], box.periodic(1)),
-          get_mi_coord(a[2], b[2], box.length()[2], box.periodic(2))};
-}
+  /**
+   * @brief Get the minimum-image vector between two coordinates.
+   *
+   * @tparam T Floating point type.
+   *
+   * @param a     Coordinate of the terminal point.
+   * @param b     Coordinate of the initial point.
+   * @return Vector from @p b to @p a that minimizes the distance across
+   *         periodic images, i.e. <tt>a - b</tt>.
+   */
+  template <typename T>
+  Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
+                                    const Utils::Vector<T, 3> &b) const {
+    return {get_mi_coord(a[0], b[0], 0), get_mi_coord(a[1], b[1], 1),
+            get_mi_coord(a[2], b[2], 2)};
+  }
+};
 
 /** @brief Fold a coordinate to primary simulation box.
  *  @param pos        coordinate to fold

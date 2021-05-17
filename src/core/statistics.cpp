@@ -39,8 +39,10 @@
 #include <utils/contains.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cassert>
 #include <cstdlib>
 #include <limits>
+#include <stdexcept>
 
 /****************************************************************************************
  *                                 basic observables calculation
@@ -67,8 +69,8 @@ double mindist(PartCfg &partCfg, const std::vector<int> &set1,
        * versa. */
       if (((in_set & 1u) && (set2.empty() || contains(set2, it->p.type))) ||
           ((in_set & 2u) && (set1.empty() || contains(set1, it->p.type))))
-        mindist2 = std::min(mindist2,
-                            get_mi_vector(jt->r.p, it->r.p, box_geo).norm2());
+        mindist2 =
+            std::min(mindist2, box_geo.get_mi_vector(jt->r.p, it->r.p).norm2());
   }
 
   return std::sqrt(mindist2);
@@ -169,7 +171,7 @@ std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
 
   for (auto const &p : partCfg) {
     if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      d = get_mi_vector(pt, p.r.p, box_geo);
+      d = box_geo.get_mi_vector(pt, p.r.p);
     } else {
       /* Calculate the in plane distance */
       for (int j = 0; j < 3; j++) {
@@ -190,7 +192,7 @@ double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
 
   for (auto const &part : partCfg) {
     if (pid != part.p.identity) {
-      auto const d = get_mi_vector({pos[0], pos[1], pos[2]}, part.r.p, box_geo);
+      auto const d = box_geo.get_mi_vector({pos[0], pos[1], pos[2]}, part.r.p);
       mindist = std::min(mindist, d.norm2());
     }
   }
@@ -227,7 +229,7 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
             for (int t2 : p2_types) {
               if (p2.p.type == t2) {
                 auto const act_dist2 =
-                    get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
+                    box_geo.get_mi_vector(p1.r.p, p2.r.p).norm2();
                 if (act_dist2 < min_dist2) {
                   min_dist2 = act_dist2;
                 }
@@ -263,84 +265,64 @@ void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
     dist[i] /= (double)cnt;
 }
 
-std::vector<double> calc_structurefactor(PartCfg &partCfg,
-                                         std::vector<int> const &p_types,
-                                         int order) {
-  auto const order2 = order * order;
-  std::vector<double> ff;
-  ff.resize(2 * order2);
-  ff[2 * order2] = 0;
+void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
+                          int order, std::vector<double> &wavevectors,
+                          std::vector<double> &intensities) {
+
+  if (order < 1)
+    throw std::domain_error("order has to be a strictly positive number");
+
+  auto const order_sq = order * order;
+  std::vector<double> ff(2 * order_sq + 1);
   auto const twoPI_L = 2 * Utils::pi() / box_geo.length()[0];
 
-  if (order < 1) {
-    fprintf(stderr,
-            "WARNING: parameter \"order\" has to be a whole positive number");
-    fflush(nullptr);
-    errexit();
-  } else {
-    for (int qi = 0; qi < 2 * order2; qi++) {
-      ff[qi] = 0.0;
-    }
-    for (int i = 0; i <= order; i++) {
-      for (int j = -order; j <= order; j++) {
-        for (int k = -order; k <= order; k++) {
-          auto const n = i * i + j * j + k * k;
-          if ((n <= order2) && (n >= 1)) {
-            double C_sum = 0.0, S_sum = 0.0;
-            for (auto const &p : partCfg) {
-              for (int t : p_types) {
-                if (p.p.type == t) {
-                  auto const qr =
-                      twoPI_L * (Utils::Vector3i{{i, j, k}} * p.r.p);
-                  C_sum += cos(qr);
-                  S_sum += sin(qr);
-                }
+  for (int i = 0; i <= order; i++) {
+    for (int j = -order; j <= order; j++) {
+      for (int k = -order; k <= order; k++) {
+        auto const n = i * i + j * j + k * k;
+        if ((n <= order_sq) && (n >= 1)) {
+          double C_sum = 0.0, S_sum = 0.0;
+          for (auto const &p : partCfg) {
+            for (int t : p_types) {
+              if (p.p.type == t) {
+                auto const qr = twoPI_L * (Utils::Vector3i{{i, j, k}} * p.r.p);
+                C_sum += cos(qr);
+                S_sum += sin(qr);
               }
             }
-            ff[2 * n - 2] += C_sum * C_sum + S_sum * S_sum;
-            ff[2 * n - 1]++;
           }
+          ff[2 * n - 2] += C_sum * C_sum + S_sum * S_sum;
+          ff[2 * n - 1]++;
         }
       }
     }
-    int n = 0;
-    for (auto const &p : partCfg) {
-      for (int t : p_types) {
-        if (p.p.type == t)
-          n++;
-      }
-    }
-    for (int qi = 0; qi < order2; qi++)
-      if (ff[2 * qi + 1] != 0)
-        ff[2 * qi] /= n * ff[2 * qi + 1];
   }
-  return ff;
-}
 
-std::vector<std::vector<double>> modify_stucturefactor(int order,
-                                                       double const *sf) {
+  long n_particles = 0l;
+  for (auto const &p : partCfg) {
+    for (int t : p_types) {
+      if (p.p.type == t)
+        n_particles++;
+    }
+  }
+
   int length = 0;
-
-  for (int i = 0; i < order * order; i++) {
-    if (sf[2 * i + 1] > 0) {
+  for (int qi = 0; qi < order_sq; qi++) {
+    if (ff[2 * qi + 1] != 0) {
+      ff[2 * qi] /= static_cast<double>(n_particles) * ff[2 * qi + 1];
       length++;
     }
   }
 
-  auto const qfak = 2.0 * Utils::pi() / box_geo.length()[0];
-  std::vector<double> intern;
-  intern.assign(2, 0.0);
-  std::vector<std::vector<double>> structure_factor;
-  structure_factor.assign(length, intern);
+  wavevectors.resize(length);
+  intensities.resize(length);
 
   int cnt = 0;
-  for (int i = 0; i < order * order; i++) {
-    if (sf[2 * i + 1] > 0) {
-      structure_factor[cnt][0] = qfak * sqrt(i + 1);
-      structure_factor[cnt][1] = sf[2 * i];
+  for (int i = 0; i < order_sq; i++) {
+    if (ff[2 * i + 1] != 0) {
+      wavevectors[cnt] = twoPI_L * sqrt(i + 1);
+      intensities[cnt] = ff[2 * i];
       cnt++;
     }
   }
-
-  return structure_factor;
 }

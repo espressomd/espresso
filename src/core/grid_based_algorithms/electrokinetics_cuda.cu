@@ -2467,23 +2467,6 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
-int ek_node_print_velocity(int x, int y, int z, double *velocity) {
-  // TODO: only calculate single node velocity
-  std::vector<LB_rho_v_pi_gpu> host_values(lbpar_gpu.number_of_nodes);
-  lb_get_values_GPU(host_values.data());
-
-  auto const index =
-      static_cast<unsigned>(z) * ek_parameters.dim_y * ek_parameters.dim_x +
-      static_cast<unsigned>(y) * ek_parameters.dim_x + static_cast<unsigned>(x);
-  auto const lattice_speed = lbpar_gpu.agrid / lbpar_gpu.tau;
-
-  velocity[0] = host_values[index].v[0] * lattice_speed;
-  velocity[1] = host_values[index].v[1] * lattice_speed;
-  velocity[2] = host_values[index].v[2] * lattice_speed;
-
-  return 0;
-}
-
 int ek_lb_print_vtk_density(char *filename) {
 
   FILE *fp = fopen(filename, "w");
@@ -2568,7 +2551,7 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
-int ek_node_print_density(int species, int x, int y, int z, double *density) {
+int ek_node_get_density(int species, int x, int y, int z, double *density) {
 
   if (ek_parameters.species_index[species] == -1) {
     return 1;
@@ -2588,7 +2571,7 @@ int ek_node_print_density(int species, int x, int y, int z, double *density) {
   return 0;
 }
 
-int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
+int ek_node_get_flux(int species, int x, int y, int z, double *flux) {
 
   if (ek_parameters.species_index[species] == -1) {
     return 1;
@@ -3349,7 +3332,7 @@ LOOKUP_TABLE default\n",
   return 0;
 }
 
-int ek_node_print_potential(int x, int y, int z, double *potential) {
+int ek_node_get_potential(int x, int y, int z, double *potential) {
   auto const index = static_cast<unsigned>(z) * ek_parameters.dim_y *
                          ek_parameters.dim_x_padded +
                      static_cast<unsigned>(y) * ek_parameters.dim_x_padded +

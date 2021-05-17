@@ -271,7 +271,7 @@ private:
   using compression_function = std::vector<double> (*)(
       std::vector<double> const &A1, std::vector<double> const &A2);
 
-  // compressing functions
+  // compression functions
   compression_function compressA;
   compression_function compressB;
 };

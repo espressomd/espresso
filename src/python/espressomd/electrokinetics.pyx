@@ -17,8 +17,8 @@
 include "myconfig.pxi"
 IF CUDA:
     from .lb cimport HydrodynamicInteraction
+    from .lb cimport LBFluidRoutines
     from .lb cimport lb_lbfluid_print_vtk_boundary
-    from .lb cimport python_lbnode_get_pressure_tensor
     from .lb cimport lb_lbnode_is_index_valid
     from .lb cimport lb_lbfluid_set_lattice_switch
     from .lb cimport GPU
@@ -26,7 +26,7 @@ from . import utils
 import tempfile
 import shutil
 from .utils import is_valid_type
-from .utils cimport Vector3i, Vector6d
+from .utils cimport Vector3i
 import numpy as np
 
 IF ELECTROKINETICS:
@@ -363,45 +363,16 @@ IF ELECTROKINETICS:
         def add_boundary(self, shape):
             raise Exception("This method is not implemented yet.")
 
-    cdef class ElectrokineticsRoutines:
-        cdef Vector3i node
-
-        def __init__(self, key):
-            self.node[0] = key[0]
-            self.node[1] = key[1]
-            self.node[2] = key[2]
-            if not lb_lbnode_is_index_valid(self.node):
-                raise IndexError("LB node index out of bounds")
+    cdef class ElectrokineticsRoutines(LBFluidRoutines):
 
         property potential:
             def __get__(self):
                 cdef double potential
-                ek_node_print_potential(self.node[0], self.node[1], self.node[2], & potential)
+                ek_node_get_potential(self.node[0], self.node[1], self.node[2], & potential)
                 return potential
 
             def __set__(self, value):
                 raise Exception("Potential can not be set.")
-
-        property velocity:
-            def __get__(self):
-                cdef double velocity[3]
-                ek_node_print_velocity(
-                    self.node[0], self.node[1], self.node[2], velocity)
-                return [velocity[0], velocity[1], velocity[2]]
-
-            def __set__(self, value):
-                raise Exception("Not implemented.")
-
-        property pressure:
-            def __get__(self):
-                cdef Vector6d pressure
-                pressure = python_lbnode_get_pressure_tensor(self.node)
-                return np.array([[pressure[0], pressure[1], pressure[3]],
-                                 [pressure[1], pressure[2], pressure[4]],
-                                 [pressure[3], pressure[4], pressure[5]]])
-
-            def __set__(self, value):
-                raise Exception("Not implemented.")
 
     class Species:
 
@@ -563,7 +534,7 @@ IF ELECTROKINETICS:
 
             def __get__(self):
                 cdef double density
-                if ek_node_print_density(self.id, self.node[0], self.node[1], self.node[2], & density) != 0:
+                if ek_node_get_density(self.id, self.node[0], self.node[1], self.node[2], & density) != 0:
                     raise Exception("Species has not been added to EK.")
                 return density
 
@@ -573,7 +544,7 @@ IF ELECTROKINETICS:
 
             def __get__(self):
                 cdef double flux[3]
-                if ek_node_print_flux(
+                if ek_node_get_flux(
                         self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
                     raise Exception("Species has not been added to EK.")
 

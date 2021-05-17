@@ -128,7 +128,8 @@ class ObservableProfileLBCommon:
         obs = espressomd.observables.LBVelocityProfile(**params)
         # check flag
         self.assertFalse(obs.allow_empty_bins)
-        obs.allow_empty_bins = True
+        obs = espressomd.observables.LBVelocityProfile(
+            **{**params, 'allow_empty_bins': True})
         self.assertTrue(obs.allow_empty_bins)
         # check bins
         self.assertEqual(obs.n_x_bins, 4)
@@ -136,18 +137,16 @@ class ObservableProfileLBCommon:
         self.assertEqual(obs.n_z_bins, 8)
         obs_data = obs.calculate()
         np.testing.assert_array_equal(obs_data.shape, [4, 6, 8, 3])
-        obs.n_x_bins = 1
-        obs.n_y_bins = 2
-        obs.n_z_bins = 3
+        obs = espressomd.observables.LBVelocityProfile(
+            **{**params, 'n_x_bins': 1, 'n_y_bins': 2, 'n_z_bins': 3})
         obs_data = obs.calculate()
         np.testing.assert_array_equal(obs_data.shape, [1, 2, 3, 3])
         # check edges lower corner
         self.assertEqual(obs.min_x, params['min_x'])
         self.assertEqual(obs.min_y, params['min_y'])
         self.assertEqual(obs.min_z, params['min_z'])
-        obs.min_x = 4
-        obs.min_y = 5
-        obs.min_z = 6
+        obs = espressomd.observables.LBVelocityProfile(
+            **{**params, 'min_x': 4, 'min_y': 5, 'min_z': 6})
         self.assertEqual(obs.min_x, 4)
         self.assertEqual(obs.min_y, 5)
         self.assertEqual(obs.min_z, 6)
@@ -157,9 +156,8 @@ class ObservableProfileLBCommon:
         self.assertEqual(obs.max_x, params['max_x'])
         self.assertEqual(obs.max_y, params['max_y'])
         self.assertEqual(obs.max_z, params['max_z'])
-        obs.max_x = 7
-        obs.max_y = 8
-        obs.max_z = 9
+        obs = espressomd.observables.LBVelocityProfile(
+            **{**params, 'max_x': 7, 'max_y': 8, 'max_z': 9})
         self.assertEqual(obs.max_x, 7)
         self.assertEqual(obs.max_y, 8)
         self.assertEqual(obs.max_z, 9)
@@ -169,9 +167,8 @@ class ObservableProfileLBCommon:
         self.assertEqual(obs.sampling_delta_x, params['sampling_delta_x'])
         self.assertEqual(obs.sampling_delta_y, params['sampling_delta_y'])
         self.assertEqual(obs.sampling_delta_z, params['sampling_delta_z'])
-        obs.sampling_delta_x = 10
-        obs.sampling_delta_y = 11
-        obs.sampling_delta_z = 12
+        obs = espressomd.observables.LBVelocityProfile(
+            **{**params, 'sampling_delta_x': 10, 'sampling_delta_y': 11, 'sampling_delta_z': 12})
         self.assertEqual(obs.sampling_delta_x, 10)
         self.assertEqual(obs.sampling_delta_y, 11)
         self.assertEqual(obs.sampling_delta_z, 12)
@@ -179,9 +176,8 @@ class ObservableProfileLBCommon:
         self.assertEqual(obs.sampling_offset_x, params['sampling_offset_x'])
         self.assertEqual(obs.sampling_offset_y, params['sampling_offset_y'])
         self.assertEqual(obs.sampling_offset_z, params['sampling_offset_z'])
-        obs.sampling_offset_x = 13
-        obs.sampling_offset_y = 14
-        obs.sampling_offset_z = 15
+        obs = espressomd.observables.LBVelocityProfile(
+            **{**params, 'sampling_offset_x': 13, 'sampling_offset_y': 14, 'sampling_offset_z': 15})
         self.assertEqual(obs.sampling_offset_x, 13)
         self.assertEqual(obs.sampling_offset_y, 14)
         self.assertEqual(obs.sampling_offset_z, 15)

@@ -78,17 +78,24 @@ system.bonded_inter.add(angle_harmonic_bond)
 
 # create monomer beads and bonds
 ##########################################################################
-init_polymer_pos = espressomd.polymer.linear_polymer_positions(n_polymers=1, beads_per_chain=N_MONOMERS, bond_length=2.0,
-                                                               seed=2, bond_angle=np.pi, min_distance=1.8, start_positions=np.array([system.box_l / 2.0]))
+init_polymer_pos = espressomd.polymer.linear_polymer_positions(
+    n_polymers=1, beads_per_chain=N_MONOMERS, bond_length=2.0, seed=2,
+    bond_angle=np.pi, min_distance=1.8,
+    start_positions=np.array([system.box_l / 2.0]))
 
-system.part.add(pos=init_polymer_pos[0], q=-np.ones(N_MONOMERS))
+monomers = system.part.add(pos=init_polymer_pos[0], q=-np.ones(N_MONOMERS))
 
-for i in range(1, N_MONOMERS):
-    system.part[i].add_bond((harmonic_bond, i - 1))
-
-for i in range(1, N_MONOMERS - 1):
-    system.part[i].add_bond((angle_harmonic_bond, i - 1, i + 1))
-
+prev_1 = None
+prev_2 = None
+for part in monomers:
+    if prev_1:
+        # add harmonic bond between two neighbors
+        part.add_bond((harmonic_bond, prev_1))
+        if prev_2:
+            # add angle bond between three successive particles
+            prev_1.add_bond((angle_harmonic_bond, prev_2, part))
+    prev_2 = prev_1
+    prev_1 = part
 
 # create counter-ions
 ###################################################################
@@ -99,8 +106,8 @@ system.part.add(pos=np.random.random((N_MONOMERS, 3)) * system.box_l,
 # create excess ions
 ###############################################################
 system.part.add(pos=np.random.random((N_IONS, 3)) * system.box_l,
-                q=np.hstack((np.ones(N_IONS // 2), -np.ones(N_IONS // 2))),
-                type=np.array(np.hstack((np.ones(N_IONS // 2), 2 * np.ones(N_IONS // 2))), dtype=int))
+                q=np.resize((1, -1), N_IONS),
+                type=np.resize((1, 2), N_IONS))
 
 logging.info("particle types: {}\n".format(system.part[:].type))
 logging.info("total charge: {}".format(np.sum(system.part[:].q)))
@@ -140,13 +147,13 @@ system.integrator.run(500)
 # observables for core analysis
 #############################################################
 obs_persistence_angles = espressomd.observables.CosPersistenceAngles(
-    ids=system.part[:N_MONOMERS].id)
+    ids=monomers.id)
 acc_persistence_angles = espressomd.accumulators.MeanVarianceCalculator(
     obs=obs_persistence_angles, delta_N=1)
 system.auto_update_accumulators.add(acc_persistence_angles)
 
 obs_bond_length = espressomd.observables.ParticleDistances(
-    ids=system.part[:N_MONOMERS].id)
+    ids=monomers.id)
 acc_bond_length = espressomd.accumulators.MeanVarianceCalculator(
     obs=obs_bond_length, delta_N=1)
 system.auto_update_accumulators.add(acc_bond_length)

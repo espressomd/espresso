@@ -43,6 +43,7 @@ set(EspressoCore_SRC
     PartCfg.cpp
     AtomDecomposition.cpp
     reduce_observable_stat.cpp
+    EspressoSystemStandAlone.cpp
     DomainDecomposition.cpp)
 
 if(CUDA)

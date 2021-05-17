@@ -33,8 +33,7 @@ std::vector<double>
 CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
     Utils::Span<std::reference_wrapper<const Particle>> particles,
     const ParticleObservables::traits<Particle> &traits) const {
-
-  Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), 3, limits());
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
 

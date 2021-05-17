@@ -22,7 +22,7 @@
 #define REACTION_FIELD_H
 /** \file
  *  Routines to calculate the Reaction Field energy or/and force
- *  for a particle pair @cite neumann85b.
+ *  for a particle pair @cite neumann85b, @cite tironi95a.
  *
  *  Implementation in \ref reaction_field.cpp
  */
@@ -32,49 +32,45 @@
 #ifdef ELECTROSTATICS
 
 #include <utils/Vector.hpp>
+#include <utils/math/int_pow.hpp>
 
-/** Structure to hold Reaction Field Parameters. */
-typedef struct {
-  /** ionic strength. */
+/** Reaction Field parameters. */
+struct Reaction_field_params {
+  /** Ionic strength. */
   double kappa;
-  /** epsilon1 (continuum dielectric constant inside). */
+  /** Continuum dielectric constant inside the cavity. */
   double epsilon1;
-  /** epsilon2 (continuum dielectric constant outside). */
+  /** Continuum dielectric constant outside the cavity. */
   double epsilon2;
-  /** Cutoff for Reaction Field interaction. */
+  /** Interaction cutoff. */
   double r_cut;
-  /** B important prefactor. */
+  /** Interaction prefactor. Corresponds to the quantity
+   *  @f$ 1 + B_1 @f$ from eq. 22 in @cite tironi95a.
+   */
   double B;
-} Reaction_field_params;
+};
 
-/** Structure containing the Reaction Field parameters. */
+/** Global state of the Reaction Field method. */
 extern Reaction_field_params rf_params;
 
-int rf_set_params(double kappa, double epsilon1, double epsilon2, double r_cut);
-
-inline void add_rf_coulomb_pair_force_no_cutoff(double const q1q2,
-                                                Utils::Vector3d const &d,
-                                                double const dist,
-                                                Utils::Vector3d &force) {
-  double fac;
-  fac = 1.0 / (dist * dist * dist) +
-        rf_params.B / (rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
-  fac *= q1q2;
-  force += fac * d;
-}
+void rf_set_params(double kappa, double epsilon1, double epsilon2,
+                   double r_cut);
 
 /** Compute the Reaction Field pair force.
- *  @param q1q2      Product of the charges on p1 and p2.
- *  @param d         Vector pointing from p1 to p2.
- *  @param dist      Distance between p1 and p2.
- *  @param force     returns the force on particle 1.
+ *  @param[in]  q1q2      Product of the charges on p1 and p2.
+ *  @param[in]  d         Vector pointing from p1 to p2.
+ *  @param[in]  dist      Distance between p1 and p2.
+ *  @param[out] force     Calculated force on p1.
  */
 inline void add_rf_coulomb_pair_force(double const q1q2,
                                       Utils::Vector3d const &d,
                                       double const dist,
                                       Utils::Vector3d &force) {
   if (dist < rf_params.r_cut) {
-    add_rf_coulomb_pair_force_no_cutoff(q1q2, d, dist, force);
+    auto fac = 1.0 / Utils::int_pow<3>(dist) +
+               rf_params.B / Utils::int_pow<3>(rf_params.r_cut);
+    fac *= q1q2;
+    force += fac * d;
   }
 }
 
@@ -82,21 +78,14 @@ inline void add_rf_coulomb_pair_force(double const q1q2,
  *  @param q1q2      Product of the charges on p1 and p2.
  *  @param dist      Distance between p1 and p2.
  */
-inline double rf_coulomb_pair_energy_no_cutoff(double const q1q2,
-                                               double const dist) {
-  double fac;
-  fac = 1.0 / dist -
-        (rf_params.B * dist * dist) /
-            (2 * rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
-  // cut off part
-  fac -= (1 - rf_params.B / 2) / rf_params.r_cut;
-  fac *= q1q2;
-  return fac;
-}
-
 inline double rf_coulomb_pair_energy(double const q1q2, double const dist) {
   if (dist < rf_params.r_cut) {
-    return rf_coulomb_pair_energy_no_cutoff(q1q2, dist);
+    auto fac = 1.0 / dist - (rf_params.B * dist * dist) /
+                                (2 * Utils::int_pow<3>(rf_params.r_cut));
+    // remove discontinuity at dist = r_cut
+    fac -= (1 - rf_params.B / 2) / rf_params.r_cut;
+    fac *= q1q2;
+    return fac;
   }
   return 0.0;
 }

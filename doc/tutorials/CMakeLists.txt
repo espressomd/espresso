@@ -109,5 +109,5 @@ add_subdirectory(visualization)
 add_subdirectory(ferrofluid)
 add_subdirectory(constant_pH)
 
-configure_file(Readme.rst ${CMAKE_CURRENT_BINARY_DIR}/Readme.rst COPYONLY)
-configure_file(convert.py ${CMAKE_CURRENT_BINARY_DIR}/convert.py)
+configure_file(Readme.md ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(convert.py ${CMAKE_CURRENT_BINARY_DIR})

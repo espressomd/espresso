@@ -59,7 +59,7 @@ RDF::evaluate(Utils::Span<const Particle *const> particles1,
   long int cnt = 0;
   auto op = [=, &cnt, &res](const Particle *const p1,
                             const Particle *const p2) {
-    auto const dist = get_mi_vector(p1->r.p, p2->r.p, box_geo).norm();
+    auto const dist = box_geo.get_mi_vector(p1->r.p, p2->r.p).norm();
     if (dist > min_r && dist < max_r) {
       auto const ind =
           static_cast<int>(std::floor((dist - min_r) * inv_bin_width));

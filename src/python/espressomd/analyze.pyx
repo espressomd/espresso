@@ -629,15 +629,17 @@ class Analysis:
 
         """
 
-        if (sf_types is None) or (not hasattr(sf_types, '__iter__')):
+        if sf_types is None or not hasattr(sf_types, '__iter__'):
             raise ValueError("sf_types has to be a list!")
         check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
-        sf = analyze.calc_structurefactor(
-            analyze.partCfg(), sf_types, sf_order)
+        cdef vector[double] wavevectors
+        cdef vector[double] intensities
+        analyze.calc_structurefactor(
+            analyze.partCfg(), sf_types, sf_order, wavevectors, intensities)
 
-        return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
+        return np.vstack([wavevectors, intensities])
 
     #
     # distribution

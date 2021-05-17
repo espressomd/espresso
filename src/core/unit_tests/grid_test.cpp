@@ -32,6 +32,8 @@
 template <class T> auto const epsilon = std::numeric_limits<T>::epsilon();
 
 BOOST_AUTO_TEST_CASE(get_mi_coord_test) {
+  using detail::get_mi_coord;
+
   auto const box_l = 3.1415;
 
   /* Non-periodic */
@@ -112,6 +114,7 @@ BOOST_AUTO_TEST_CASE(get_mi_coord_test) {
 }
 
 BOOST_AUTO_TEST_CASE(get_mi_vector_test) {
+  using detail::get_mi_coord;
   using Utils::Vector3d;
 
   Vector3d box_l = {1., 2., 3.};
@@ -122,7 +125,7 @@ BOOST_AUTO_TEST_CASE(get_mi_vector_test) {
   auto const a = Vector3d{1.1, 12.2, -13.4};
   auto const b = Vector3d{-0.9, 8.8, 21.1};
 
-  auto const result = get_mi_vector(a, b, box);
+  auto const result = box.get_mi_vector(a, b);
 
   for (int i = 0; i < 3; i++) {
     auto const expected = get_mi_coord(a[i], b[i], box_l[i], box.periodic(i));

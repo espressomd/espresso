@@ -89,17 +89,12 @@ IF ELECTROSTATICS:
         kappa : :obj:`float`
             Inverse Debye screening length.
         r_cut : :obj:`float`
-            Cut off radius for this interaction.
+            Cutoff radius for this interaction.
 
         """
 
         def validate_params(self):
-            if self._params["prefactor"] <= 0:
-                raise ValueError("prefactor should be a positive float")
-            if self._params["kappa"] < 0:
-                raise ValueError("kappa should be a non-negative double")
-            if self._params["r_cut"] < 0:
-                raise ValueError("r_cut should be a non-negative double")
+            pass
 
         def valid_keys(self):
             return ["prefactor", "kappa", "r_cut", "check_neutrality"]
@@ -129,7 +124,8 @@ IF ELECTROSTATICS:
 
     cdef class ReactionField(ElectrostaticInteraction):
         """
-        Electrostatics solver based on the Reaction-Field framework.
+        Electrostatics solver based on the Reaction Field framework.
+        See :ref:`Reaction Field method` for more details.
 
         Parameters
         ----------
@@ -142,21 +138,12 @@ IF ELECTROSTATICS:
         epsilon2 : :obj:`float`
             exterior dielectric constant
         r_cut : :obj:`float`
-            Cut off radius for this interaction.
+            Cutoff radius for this interaction.
 
         """
 
         def validate_params(self):
-            if self._params["prefactor"] <= 0:
-                raise ValueError("prefactor should be a positive float")
-            if self._params["kappa"] < 0:
-                raise ValueError("kappa should be a non-negative double")
-            if self._params["epsilon1"] < 0:
-                raise ValueError("epsilon1 should be a non-negative double")
-            if self._params["epsilon2"] < 0:
-                raise ValueError("epsilon2 should be a non-negative double")
-            if self._params["r_cut"] < 0:
-                raise ValueError("r_cut should be a non-negative double")
+            pass
 
         def valid_keys(self):
             return ["prefactor", "kappa", "epsilon1", "epsilon2", "r_cut",
@@ -467,12 +454,8 @@ IF P3M == 1:
             check_type_or_throw_except(
                 self._params["maxPWerror"], 1, float,
                 "maxPWerror has to be a float")
-            check_range_or_except(
-                self._params, "maxPWerror", 0, False, "inf", True)
             check_type_or_throw_except(self._params["gap_size"], 1, float,
                                        "gap_size has to be a float")
-            check_range_or_except(
-                self._params, "gap_size", 0, False, "inf", True)
             check_type_or_throw_except(self._params["far_cut"], 1, float,
                                        "far_cut has to be a float")
             check_type_or_throw_except(
@@ -513,7 +496,7 @@ IF P3M == 1:
                 self._params["delta_mid_top"] = -1
                 self._params["delta_mid_bot"] = -1
 
-            if ELC_set_params(
+            ELC_set_params(
                 self._params["maxPWerror"],
                 self._params["gap_size"],
                 self._params["far_cut"],
@@ -521,8 +504,7 @@ IF P3M == 1:
                 self._params["delta_mid_top"],
                 self._params["delta_mid_bot"],
                 self._params["const_pot"],
-                    self._params["pot_diff"]):
-                handle_errors("ELC tuning failed")
+                self._params["pot_diff"])
 
         def tune(self, **tune_params_subset):
             self._params["p3m_actor"].tune(**tune_params_subset)

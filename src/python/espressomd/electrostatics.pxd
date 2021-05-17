@@ -60,7 +60,7 @@ IF ELECTROSTATICS:
 
     cdef extern from "electrostatics_magnetostatics/coulomb.hpp" namespace "Coulomb":
 
-        int set_prefactor(double prefactor) except+
+        int set_prefactor(double prefactor) except +
         void deactivate_method()
 
     IF P3M:
@@ -94,9 +94,9 @@ IF ELECTROSTATICS:
                 bool const_pot
                 double pot_diff
 
-            int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                               bool neutralize, double delta_mid_top,
-                               double delta_mid_bot, bool const_pot, double pot_diff)
+            void ELC_set_params(double maxPWerror, double min_dist, double far_cut,
+                                bool neutralize, double delta_mid_top,
+                                double delta_mid_bot, bool const_pot, double pot_diff) except +
 
             # links intern C-struct with python object
             ELC_struct elc_params
@@ -108,7 +108,7 @@ IF ELECTROSTATICS:
 
         cdef extern Debye_hueckel_params dh_params
 
-        int dh_set_params(double kappa, double r_cut)
+        void dh_set_params(double kappa, double r_cut) except +
 
     cdef extern from "electrostatics_magnetostatics/reaction_field.hpp":
         ctypedef struct Reaction_field_params:
@@ -119,8 +119,8 @@ IF ELECTROSTATICS:
 
         cdef extern Reaction_field_params rf_params
 
-        int rf_set_params(double kappa, double epsilon1, double epsilon2,
-                          double r_cut)
+        void rf_set_params(double kappa, double epsilon1, double epsilon2,
+                           double r_cut) except +
 
 IF ELECTROSTATICS:
     cdef extern from "electrostatics_magnetostatics/mmm1d.hpp":

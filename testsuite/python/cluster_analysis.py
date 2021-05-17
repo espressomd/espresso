@@ -145,6 +145,9 @@ class ClusterAnalysis(ut.TestCase):
             rg = np.sqrt(rg)
             self.assertAlmostEqual(c.radius_of_gyration(), rg, delta=1E-6)
 
+            # Unknown method should return None
+            self.assertIsNone(c.call_method("unknown"))
+
             # Fractal dimension calc require gsl
             if not espressomd.has_features("GSL"):
                 print("Skipping fractal dimension tests due to missing GSL dependency")
@@ -184,6 +187,9 @@ class ClusterAnalysis(ut.TestCase):
         self.assertEqual(self.cs.cid_for_particle(
             self.es.part[0]), self.cs.cluster_ids()[0])
         self.assertEqual(self.cs.cid_for_particle(1), self.cs.cluster_ids()[0])
+
+        # Unknown method should return None
+        self.assertIsNone(self.cs.call_method("unknown"))
 
 
 if __name__ == "__main__":

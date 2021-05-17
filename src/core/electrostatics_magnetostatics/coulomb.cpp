@@ -92,8 +92,13 @@ void sanity_checks(int &state) {
     break;
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    if (ELC_sanity_checks())
-      state = 0; // fall through
+    try {
+      ELC_sanity_checks(elc_params);
+    } catch (std::runtime_error const &err) {
+      runtimeErrorMsg() << err.what();
+      state = 0;
+    }
+    // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     if (p3m_sanity_checks())
@@ -139,15 +144,10 @@ void deactivate() {
     break;
 #endif
   case COULOMB_DH:
-    dh_params.r_cut = 0.0;
-    dh_params.kappa = 0.0;
+    dh_params = {};
     break;
   case COULOMB_RF:
-    rf_params.kappa = 0.0;
-    rf_params.epsilon1 = 0.0;
-    rf_params.epsilon2 = 0.0;
-    rf_params.r_cut = 0.0;
-    rf_params.B = 0.0;
+    rf_params = {};
     break;
   case COULOMB_MMM1D:
     mmm1d_params.maxPWerror = 1e40;
@@ -397,24 +397,6 @@ int icc_sanity_check() {
   return 0;
 }
 
-int elc_sanity_check() {
-#ifdef P3M
-  switch (coulomb.method) {
-  case COULOMB_P3M_GPU: {
-    runtimeErrorMsg()
-        << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
-    return ES_ERROR;
-  }
-  case COULOMB_ELC_P3M:
-  case COULOMB_P3M:
-    return ES_OK;
-  default:
-    break;
-  }
-#endif
-  return ES_ERROR;
-}
-
 void bcast_coulomb_params() {
   switch (coulomb.method) {
   case COULOMB_NONE:
@@ -447,7 +429,7 @@ void bcast_coulomb_params() {
 
 void set_prefactor(double prefactor) {
   if (prefactor < 0.0) {
-    throw std::invalid_argument("Coulomb prefactor has to be >= 0");
+    throw std::domain_error("Coulomb prefactor has to be >= 0");
   }
 
   coulomb.prefactor = prefactor;

@@ -112,7 +112,7 @@ class ShapeBasedConstraint(Constraint):
 
     See Also
     ----------
-    espressomd.shapes : shape module that define mathematical surfaces
+    espressomd.shapes : shape module that defines mathematical surfaces
 
     Examples
     ----------

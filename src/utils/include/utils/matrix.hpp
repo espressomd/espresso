@@ -185,8 +185,8 @@ template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
   }
 
   /**
-   * @brief Retrieve an inversed copy of the matrix.
-   * @return Inversed matrix.
+   * @brief Retrieve an inverted copy of the matrix.
+   * @return Inverted matrix.
    */
   Matrix<T, Rows, Cols> inversed() const {
     static_assert(Rows == Cols,

@@ -24,7 +24,9 @@ unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp DEPENDS
           Boost::serialization)
 unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp
           DEPENDS EspressoCore Boost::mpi MPI::MPI_CXX)
-
+unit_test(NAME EspressoSystemStandAlone_test SRC
+          EspressoSystemStandAlone_test.cpp DEPENDS EspressoCore Boost::mpi
+          MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp DEPENDS
           EspressoUtils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp DEPENDS
@@ -46,3 +48,4 @@ unit_test(NAME LocalBox_test SRC LocalBox_test.cpp DEPENDS EspressoCore)
 unit_test(NAME thermostats_test SRC thermostats_test.cpp DEPENDS EspressoCore)
 unit_test(NAME random_test SRC random_test.cpp DEPENDS EspressoUtils Random123)
 unit_test(NAME BondList_test SRC BondList_test.cpp DEPENDS EspressoCore)
+unit_test(NAME energy_test SRC energy_test.cpp DEPENDS EspressoCore)

@@ -459,7 +459,6 @@ IF CUDA:
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines:
-    cdef Vector3i node
 
     def __init__(self, key):
         utils.check_type_or_throw_except(
