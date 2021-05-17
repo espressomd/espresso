@@ -25,6 +25,7 @@
 #include <utils/Vector.hpp>
 
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <stdexcept>
@@ -45,6 +46,18 @@ public:
         sampling_offset{sampling_offset_x, sampling_offset_y,
                         sampling_offset_z},
         allow_empty_bins(allow_empty_bins) {
+    if (sampling_delta[0] <= 0.)
+      throw std::domain_error("sampling_delta_x has to be > 0");
+    if (sampling_delta[1] <= 0.)
+      throw std::domain_error("sampling_delta_y has to be > 0");
+    if (sampling_delta[2] <= 0.)
+      throw std::domain_error("sampling_delta_z has to be > 0");
+    if (sampling_offset[0] < 0.)
+      throw std::domain_error("sampling_offset_x has to be >= 0");
+    if (sampling_offset[1] < 0.)
+      throw std::domain_error("sampling_offset_y has to be >= 0");
+    if (sampling_offset[2] < 0.)
+      throw std::domain_error("sampling_offset_z has to be >= 0");
     calculate_sampling_positions();
   }
   std::array<double, 3> sampling_delta;
@@ -54,9 +67,10 @@ public:
   void calculate_sampling_positions() {
     auto const lim = limits();
     sampling_positions.clear();
-    if (sampling_delta[0] == 0 or sampling_delta[1] == 0 or
-        sampling_delta[2] == 0)
-      throw std::runtime_error("Parameter delta_x/y/z must not be zero!");
+    assert(sampling_delta[0] > 0. and sampling_delta[1] > 0. and
+           sampling_delta[2] > 0.);
+    assert(sampling_offset[0] >= 0. and sampling_offset[1] >= 0. and
+           sampling_offset[2] >= 0.);
     const auto n_samples_x = static_cast<size_t>(
         std::rint((lim[0].second - lim[0].first) / sampling_delta[0]));
     const auto n_samples_y = static_cast<size_t>(
