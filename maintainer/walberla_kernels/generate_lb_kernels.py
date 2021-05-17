@@ -29,7 +29,7 @@ from lbmpy_walberla import generate_lattice_model, generate_boundary, generate_l
 
 from lbmpy.boundaries import UBB
 from lbmpy_walberla.additional_data_handler import UBBAdditionalDataHandler
-from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
+# for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
 
 with CodeGeneration() as ctx:
     kT = sp.symbols("kT")
@@ -91,7 +91,7 @@ with CodeGeneration() as ctx:
         ctx,
         'MRTLatticeModelAvx',
         collision_rule_unthermalized,
-        #        cpu_vectorize_info=cpu_vectorize_info,
+        cpu_vectorize_info=cpu_vectorize_info,
         field_layout="fzyx")
 
     # generate thermalized LB
@@ -113,8 +113,8 @@ with CodeGeneration() as ctx:
         ctx,
         'FluctuatingMRTLatticeModelAvx',
         collision_rule_thermalized,
-        #        cpu_vectorize_info=cpu_vectorize_info,
-        field_layout="fzyx", accessor=StreamPushTwoFieldsAccessor())
+        cpu_vectorize_info=cpu_vectorize_info,
+        field_layout="fzyx")
 
     # Boundary conditions
     ubb_dynamic = UBB(lambda *args: None, dim=3)

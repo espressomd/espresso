@@ -248,22 +248,38 @@ public:
         m_pdf_field_id, m_last_applied_force_field_id,
         m_force_to_be_applied_id);
 
+    // Prepare LB sweeps
+    // Note: For now combined collide-stream sweeps cannot be used,
+    // because the collide-push variant is not supported by lbmpy.
+    // The following functors are individual in-place collide and stream steps
+    // derived from the lbmpy-provide combined sweep class.
+    auto stream = [this](IBlock *const block,
+                         const uint_t numberOfGhostLayersToInclude =
+                             uint_t(0)) {
+      auto combined_sweep =
+          (typename LatticeModel::Sweep)(this->m_pdf_field_id);
+      combined_sweep.stream(block, numberOfGhostLayersToInclude);
+    };
+    auto collide = [this](IBlock *const block,
+                          const uint_t numberOfGhostLayersToInclude =
+                              uint_t(0)) {
+      auto combined_sweep =
+          (typename LatticeModel::Sweep)(this->m_pdf_field_id);
+      combined_sweep.collide(block, numberOfGhostLayersToInclude);
+    };
+
     // Add steps to the integration loop
     m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
         m_blocks->getBlockStorage(), 1);
 
     m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                           "Reset force fields");
-    m_time_loop->add() << timeloop::Sweep(
-                              typename LatticeModel::Sweep(m_pdf_field_id, 0),
-                              "LB collide")
+    m_time_loop->add() << timeloop::Sweep(collide, "LB collide")
                        << timeloop::AfterFunction(*m_communication,
                                                   "communication");
     m_time_loop->add() << timeloop::Sweep(
         Boundaries::getBlockSweep(m_boundary_handling_id), "boundary handling");
-    m_time_loop->add() << timeloop::Sweep(
-                              typename LatticeModel::Sweep(m_pdf_field_id, 1),
-                              "LB stream")
+    m_time_loop->add() << timeloop::Sweep(stream, "LB stream")
                        << timeloop::AfterFunction(*m_communication,
                                                   "communication");
 

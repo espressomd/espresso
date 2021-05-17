@@ -42,12 +42,12 @@ namespace lbm {
 #pragma diag_suppress = declared_but_not_referenced
 #endif
 
-namespace internal_boundary_Dynamic_UBB {
-static FUNC_PREFIX void
-boundary_Dynamic_UBB(uint8_t *RESTRICT const _data_indexVector,
-                     double *RESTRICT _data_pdfs, int64_t const _stride_pdfs_0,
-                     int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
-                     int64_t const _stride_pdfs_3, int64_t indexVectorSize) {
+namespace internal_dynamic_ubb_boundary_Dynamic_UBB {
+static FUNC_PREFIX void dynamic_ubb_boundary_Dynamic_UBB(
+    uint8_t *RESTRICT const _data_indexVector, double *RESTRICT _data_pdfs,
+    int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1,
+    int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3,
+    int64_t indexVectorSize) {
 
   const int32_t f_in_inv_dir_idx[] = {0, 2,  1,  4,  3,  6,  5,  10, 9, 8,
                                       7, 16, 15, 18, 17, 12, 11, 14, 13};
@@ -138,7 +138,7 @@ boundary_Dynamic_UBB(uint8_t *RESTRICT const _data_indexVector,
                    _stride_pdfs_3 * dir];
   }
 }
-} // namespace internal_boundary_Dynamic_UBB
+} // namespace internal_dynamic_ubb_boundary_Dynamic_UBB
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -148,7 +148,7 @@ boundary_Dynamic_UBB(uint8_t *RESTRICT const _data_indexVector,
 #pragma pop
 #endif
 
-void Dynamic_UBB::run(IBlock *block, IndexVectors::Type type) {
+void Dynamic_UBB::run_impl(IBlock *block, IndexVectors::Type type) {
   auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
   int64_t indexVectorSize = int64_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
@@ -166,16 +166,16 @@ void Dynamic_UBB::run(IBlock *block, IndexVectors::Type type) {
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_boundary_Dynamic_UBB::boundary_Dynamic_UBB(
+  internal_dynamic_ubb_boundary_Dynamic_UBB::dynamic_ubb_boundary_Dynamic_UBB(
       _data_indexVector, _data_pdfs, _stride_pdfs_0, _stride_pdfs_1,
       _stride_pdfs_2, _stride_pdfs_3, indexVectorSize);
 }
 
-void Dynamic_UBB::operator()(IBlock *block) { run(block, IndexVectors::ALL); }
+void Dynamic_UBB::run(IBlock *block) { run_impl(block, IndexVectors::ALL); }
 
-void Dynamic_UBB::inner(IBlock *block) { run(block, IndexVectors::INNER); }
+void Dynamic_UBB::inner(IBlock *block) { run_impl(block, IndexVectors::INNER); }
 
-void Dynamic_UBB::outer(IBlock *block) { run(block, IndexVectors::OUTER); }
+void Dynamic_UBB::outer(IBlock *block) { run_impl(block, IndexVectors::OUTER); }
 
 } // namespace lbm
 } // namespace walberla

@@ -106,7 +106,7 @@ public:
     class Sweep
     {
     public:
-        Sweep( BlockDataID _pdfsID, int _mode ) : pdfsID(_pdfsID), mode(_mode) {};
+        Sweep( BlockDataID _pdfsID ) : pdfsID(_pdfsID) {};
 
         //void stream       ( IBlock * const block, const uint_t numberOfGhostLayersToInclude = uint_t(0) );
         void collide      ( IBlock * const block, const uint_t numberOfGhostLayersToInclude = uint_t(0) );
@@ -115,14 +115,12 @@ public:
 
         void operator() ( IBlock * const block, const uint_t numberOfGhostLayersToInclude = uint_t(0) )
         {
-            if (mode==1) stream( block, numberOfGhostLayersToInclude );
-            if (mode==0) collide( block, numberOfGhostLayersToInclude );
+            streamCollide( block, numberOfGhostLayersToInclude );
         }
 
     private:
         BlockDataID forceID;
         BlockDataID pdfsID;
-        int mode;
 
         private: std::set< field::GhostLayerField<double, 19> *, field::SwapableCompare< field::GhostLayerField<double, 19> * > > cache_pdfs_;
     };

@@ -29,6 +29,8 @@
 #include <set>
 #include <vector>
 
+
+
 #ifdef __GNUC__
 #define RESTRICT __restrict__
 #elif _MSC_VER
@@ -89,8 +91,6 @@ public:
         
     };
 
-    
-
     Dynamic_UBB( const shared_ptr<StructuredBlockForest> & blocks,
                    BlockDataID pdfsID_, std::function<Vector3<real_t>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& velocityCallback )
         :elementInitaliser(velocityCallback), pdfsID(pdfsID_)
@@ -99,13 +99,37 @@ public:
         indexVectorID = blocks->addStructuredBlockData< IndexVectors >( createIdxVector, "IndexField_Dynamic_UBB");
     };
 
-    
+    void run (IBlock * block);
 
-    void operator() ( IBlock * block );
-    void inner( IBlock * block );
-    void outer( IBlock * block );
+    void operator() (IBlock * block)
+    {
+        run(block);
+    }
 
-    
+    void inner (IBlock * block);
+
+    void outer (IBlock * block);
+
+    std::function<void (IBlock *)> getSweep()
+    {
+        return [this]
+               (IBlock * b)
+               { this->run(b); };
+    }
+
+    std::function<void (IBlock *)> getInnerSweep()
+    {
+        return [this]
+               (IBlock * b)
+               { this->inner(b); };
+    }
+
+    std::function<void (IBlock *)> getOuterSweep()
+    {
+        return [this]
+               (IBlock * b)
+               { this->outer(b); };
+    }
 
     template<typename FlagField_T>
     void fillFromFlagField( const shared_ptr<StructuredBlockForest> & blocks, ConstBlockDataID flagFieldID,
@@ -416,9 +440,7 @@ public:
     }
 
 private:
-    
-    void run( IBlock * block, IndexVectors::Type type);
-    
+    void run_impl(IBlock * block, IndexVectors::Type type);
 
     BlockDataID indexVectorID;
     std::function<Vector3<real_t>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> elementInitaliser; 
