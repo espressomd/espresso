@@ -96,8 +96,8 @@ with CodeGeneration() as ctx:
         method,
         fluctuating={
             'temperature': kT,
-            'block_offsets': 'walberla',
-            'rng_node': ps.rng.PhiloxTwoDoubles,
+            'block_offsets': 'walberla'
+            #            'rng_node': ps.rng.PhiloxTwoDoubles,
         },
         optimization={'cse_global': True}
     )
