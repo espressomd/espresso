@@ -61,9 +61,6 @@ with CodeGeneration() as ctx:
             return sp.Symbol("omega_odd")
 
     cpu_vectorize_info = {
-        "assume_inner_stride_one": True,
-        "assume_aligned": True,
-        "nontemporal": True,
         "instruction_set": "avx"}
 
     # LB Method definition
@@ -113,7 +110,7 @@ with CodeGeneration() as ctx:
         ctx,
         'FluctuatingMRTLatticeModelAvx',
         collision_rule_thermalized,
-        cpu_vectorize_info=cpu_vectorize_info,
+        #        cpu_vectorize_info=cpu_vectorize_info,
         field_layout="fzyx")
 
     # Boundary conditions
