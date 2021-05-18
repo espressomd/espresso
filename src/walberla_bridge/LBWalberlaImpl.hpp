@@ -253,19 +253,19 @@ public:
     // because the collide-push variant is not supported by lbmpy.
     // The following functors are individual in-place collide and stream steps
     // derived from the lbmpy-provide combined sweep class.
-    auto stream = [this](IBlock *const block,
-                         const uint_t numberOfGhostLayersToInclude =
-                             uint_t(0)) {
-      auto combined_sweep =
-          (typename LatticeModel::Sweep)(this->m_pdf_field_id);
-      combined_sweep.stream(block, numberOfGhostLayersToInclude);
+    auto combined_sweep_stream =
+        std::make_shared<typename LatticeModel::Sweep>(m_pdf_field_id);
+    auto stream = [combined_sweep_stream](
+                      IBlock *const block,
+                      const uint_t numberOfGhostLayersToInclude = uint_t(0)) {
+      combined_sweep_stream->stream(block, numberOfGhostLayersToInclude);
     };
-    auto collide = [this](IBlock *const block,
-                          const uint_t numberOfGhostLayersToInclude =
-                              uint_t(0)) {
-      auto combined_sweep =
-          (typename LatticeModel::Sweep)(this->m_pdf_field_id);
-      combined_sweep.collide(block, numberOfGhostLayersToInclude);
+    auto combined_sweep_collide =
+        std::make_shared<typename LatticeModel::Sweep>(m_pdf_field_id);
+    auto collide = [combined_sweep_collide](
+                       IBlock *const block,
+                       const uint_t numberOfGhostLayersToInclude = uint_t(0)) {
+      combined_sweep_collide->collide(block, numberOfGhostLayersToInclude);
     };
 
     // Add steps to the integration loop
