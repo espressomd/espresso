@@ -75,7 +75,7 @@
 
 /** @name inverse box dimensions and other constants */
 /**@{*/
-static double uz, L2, uz2, prefuz2, prefL3_i;
+static double uz2, prefuz2, prefL3_i;
 /**@}*/
 
 MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
@@ -85,8 +85,9 @@ static std::vector<double> bessel_radii;
 
 static double far_error(int P, double minrad) {
   // this uses an upper bound to all force components and the potential
-  auto const rhores = 2 * Utils::pi() * uz * minrad;
-  auto const pref = 4 * uz * std::max(1.0, 2 * Utils::pi() * uz);
+  auto const rhores = 2 * Utils::pi() * box_geo.length_inv()[2] * minrad;
+  auto const pref = 4 * box_geo.length_inv()[2] *
+                    std::max(1.0, 2 * Utils::pi() * box_geo.length_inv()[2]);
 
   return pref * K1(rhores * P) * exp(rhores) / rhores * (P - 1 + 1 / rhores);
 }
@@ -171,11 +172,9 @@ int MMM1D_init() {
   if (mmm1d_params.far_switch_radius_2 >= Utils::sqr(box_geo.length()[2]))
     mmm1d_params.far_switch_radius_2 = 0.8 * Utils::sqr(box_geo.length()[2]);
 
-  uz = 1 / box_geo.length()[2];
-  L2 = box_geo.length()[2] * box_geo.length()[2];
-  uz2 = uz * uz;
+  uz2 = Utils::sqr(box_geo.length_inv()[2]);
   prefuz2 = coulomb.prefactor * uz2;
-  prefL3_i = prefuz2 * uz;
+  prefL3_i = prefuz2 * box_geo.length_inv()[2];
 
   determine_bessel_radii(mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
   prepare_polygamma_series(mmm1d_params.maxPWerror,
@@ -189,7 +188,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
   auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
-  auto const z_d = d[2] * uz;
+  auto const z_d = d[2] * box_geo.length_inv()[2];
   Utils::Vector3d F;
 
   if (rxy2 <= mmm1d_params.far_switch_radius_2) {
@@ -245,7 +244,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
   } else {
     /* far range formula */
     auto const rxy = sqrt(rxy2);
-    auto const rxy_d = rxy * uz;
+    auto const rxy_d = rxy * box_geo.length_inv()[2];
     double sr = 0, sz = 0;
 
     for (int bp = 1; bp < MAXIMAL_B_CUT; bp++) {
@@ -266,7 +265,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
     sr *= uz2 * 4 * c_2pi;
     sz *= uz2 * 4 * c_2pi;
 
-    auto const pref = sr / rxy + 2 * uz / rxy2;
+    auto const pref = sr / rxy + 2 * box_geo.length_inv()[2] / rxy2;
 
     F = {pref * d[0], pref * d[1], sz};
   }
@@ -283,7 +282,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
   auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
-  auto const z_d = d[2] * uz;
+  auto const z_d = d[2] * box_geo.length_inv()[2];
   double E;
 
   if (rxy2 <= mmm1d_params.far_switch_radius_2) {
@@ -301,7 +300,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
 
       r2n *= rxy2_d;
     }
-    E *= uz;
+    E *= box_geo.length_inv()[2];
 
     /* real space parts */
 
@@ -319,7 +318,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
   } else {
     /* far range formula */
     auto const rxy = sqrt(rxy2);
-    auto const rxy_d = rxy * uz;
+    auto const rxy_d = rxy * box_geo.length_inv()[2];
     /* The first Bessel term will compensate a little bit the
        log term, so add them close together */
     E = -0.25 * log(rxy2_d) + 0.5 * (Utils::ln_2() - Utils::gamma());
@@ -330,7 +329,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
       auto const fq = c_2pi * bp;
       E += K0(fq * rxy_d) * cos(fq * z_d);
     }
-    E *= 4 * uz;
+    E *= 4 * box_geo.length_inv()[2];
   }
 
   return chpref * E;

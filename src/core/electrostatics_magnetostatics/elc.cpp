@@ -50,11 +50,6 @@
 #include <cstddef>
 #include <vector>
 
-/** \name Inverse box dimensions */
-/**@{*/
-static double ux, uy, uz;
-/**@}*/
-
 ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
                          1,     false, 0, 0, 0,    0,    0.0};
 
@@ -106,12 +101,6 @@ static void add_dipole_force(const ParticleRange &particles);
 static double dipole_energy(const ParticleRange &particles);
 static double z_energy(const ParticleRange &particles);
 static void add_z_force(const ParticleRange &particles);
-
-void ELC_setup_constants() {
-  ux = 1 / box_geo.length()[0];
-  uy = 1 / box_geo.length()[1];
-  uz = 1 / box_geo.length()[2];
-}
 
 /**
  * @brief Calculate cached sin/cos values for one direction.
@@ -215,14 +204,16 @@ inline void check_gap_elc(const Particle &p) {
  *  See @cite yeh99a.
  */
 static void add_dipole_force(const ParticleRange &particles) {
-  double const pref = coulomb.prefactor * 4 * Utils::pi() * ux * uy * uz;
+  double const pref = coulomb.prefactor * 4 * Utils::pi() *
+                      box_geo.length_inv()[0] * box_geo.length_inv()[1] *
+                      box_geo.length_inv()[2];
   constexpr std::size_t size = 3;
 
   auto local_particles = particles;
 
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
-  double const shift = 0.5 * box_geo.length()[2];
+  double const shift = box_geo.length_half()[2];
 
   // collect moments
 
@@ -251,7 +242,7 @@ static void add_dipole_force(const ParticleRange &particles) {
   }
 
   gblcblk[0] *= pref;
-  gblcblk[1] *= pref / elc_params.h / uz;
+  gblcblk[1] *= pref / elc_params.h * box_geo.length()[2];
   gblcblk[2] *= pref;
 
   distribute(size);
@@ -280,11 +271,13 @@ static void add_dipole_force(const ParticleRange &particles) {
  *  See @cite yeh99a.
  */
 static double dipole_energy(const ParticleRange &particles) {
-  double const pref = coulomb.prefactor * 2 * Utils::pi() * ux * uy * uz;
+  double const pref = coulomb.prefactor * 2 * Utils::pi() *
+                      box_geo.length_inv()[0] * box_geo.length_inv()[1] *
+                      box_geo.length_inv()[2];
   constexpr std::size_t size = 7;
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
-  double const shift = 0.5 * box_geo.length()[2];
+  double const shift = box_geo.length_half()[2];
 
   // collect moments
 
@@ -336,7 +329,8 @@ static double dipole_energy(const ParticleRange &particles) {
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot) {
       // zero potential difference contribution
-      energy += pref / elc_params.h / uz * Utils::sqr(gblcblk[6]);
+      energy +=
+          pref / elc_params.h * box_geo.length()[2] * Utils::sqr(gblcblk[6]);
       // external potential shift contribution
       energy -= 2 * elc_params.pot_diff / elc_params.h * gblcblk[6];
     }
@@ -355,7 +349,7 @@ static double dipole_energy(const ParticleRange &particles) {
 /*****************************************************************/
 
 inline double image_sum_b(double q, double z) {
-  double const shift = 0.5 * box_geo.length()[2];
+  double const shift = box_geo.length_half()[2];
   double const fac = elc_params.delta_mid_top * elc_params.delta_mid_bot;
   double const image_sum =
       (q / (1.0 - fac) * (z - 2.0 * fac * box_geo.length()[2] / (1.0 - fac))) -
@@ -364,7 +358,7 @@ inline double image_sum_b(double q, double z) {
 }
 
 inline double image_sum_t(double q, double z) {
-  double const shift = 0.5 * box_geo.length()[2];
+  double const shift = box_geo.length_half()[2];
   double const fac = elc_params.delta_mid_top * elc_params.delta_mid_bot;
   double const image_sum =
       (q / (1.0 - fac) * (z + 2.0 * fac * box_geo.length()[2] / (1.0 - fac))) -
@@ -374,12 +368,13 @@ inline double image_sum_t(double q, double z) {
 
 /*****************************************************************/
 static double z_energy(const ParticleRange &particles) {
-  double const pref = coulomb.prefactor * 2 * Utils::pi() * ux * uy;
+  double const pref = coulomb.prefactor * 2 * Utils::pi() *
+                      box_geo.length_inv()[0] * box_geo.length_inv()[1];
   constexpr std::size_t size = 4;
 
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
-  double const shift = 0.5 * box_geo.length()[2];
+  double const shift = box_geo.length_half()[2];
 
   if (elc_params.dielectric_contrast_on) {
     if (elc_params.const_pot) {
@@ -452,7 +447,8 @@ static double z_energy(const ParticleRange &particles) {
 
 /*****************************************************************/
 static void add_z_force(const ParticleRange &particles) {
-  double const pref = coulomb.prefactor * 2 * Utils::pi() * ux * uy;
+  double const pref = coulomb.prefactor * 2 * Utils::pi() *
+                      box_geo.length_inv()[0] * box_geo.length_inv()[1];
   constexpr std::size_t size = 1;
 
   if (elc_params.dielectric_contrast_on) {
@@ -512,7 +508,8 @@ template <PoQ axis>
 void setup_PoQ(std::size_t index, double omega,
                const ParticleRange &particles) {
   assert(index >= 1);
-  double const pref_di = coulomb.prefactor * 4 * Utils::pi() * ux * uy;
+  double const pref_di = coulomb.prefactor * 4 * Utils::pi() *
+                         box_geo.length_inv()[0] * box_geo.length_inv()[1];
   double const pref = -pref_di / expm1(omega * box_geo.length()[2]);
   constexpr std::size_t size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
@@ -659,7 +656,8 @@ static void setup_PQ(std::size_t index_p, std::size_t index_q, double omega,
                      const ParticleRange &particles) {
   assert(index_p >= 1);
   assert(index_q >= 1);
-  double const pref_di = coulomb.prefactor * 8 * Utils::pi() * ux * uy;
+  double const pref_di = coulomb.prefactor * 8 * Utils::pi() *
+                         box_geo.length_inv()[0] * box_geo.length_inv()[1];
   double const pref = -pref_di / expm1(omega * box_geo.length()[2]);
   constexpr std::size_t size = 8;
   double lclimgebot[8], lclimgetop[8], lclimge[8];
@@ -789,8 +787,10 @@ static void setup_PQ(std::size_t index_p, std::size_t index_q, double omega,
 static void add_PQ_force(std::size_t index_p, std::size_t index_q, double omega,
                          const ParticleRange &particles) {
   constexpr double c_2pi = 2 * Utils::pi();
-  double const pref_x = c_2pi * ux * static_cast<double>(index_p) / omega;
-  double const pref_y = c_2pi * uy * static_cast<double>(index_q) / omega;
+  double const pref_x =
+      c_2pi * box_geo.length_inv()[0] * static_cast<double>(index_p) / omega;
+  double const pref_y =
+      c_2pi * box_geo.length_inv()[1] * static_cast<double>(index_q) / omega;
   constexpr std::size_t size = 8;
 
   std::size_t ic = 0;
@@ -847,45 +847,54 @@ static double PQ_energy(double omega, std::size_t n_part) {
 
 void ELC_add_force(const ParticleRange &particles) {
   constexpr double c_2pi = 2 * Utils::pi();
-  auto const n_scxcache = std::size_t(ceil(elc_params.far_cut / ux) + 1);
-  auto const n_scycache = std::size_t(ceil(elc_params.far_cut / uy) + 1);
+  auto const n_scxcache =
+      std::size_t(ceil(elc_params.far_cut * box_geo.length()[0]) + 1);
+  auto const n_scycache =
+      std::size_t(ceil(elc_params.far_cut * box_geo.length()[1]) + 1);
 
-  prepare_sc_cache(particles, n_scxcache, ux, n_scycache, uy);
+  prepare_sc_cache(particles, n_scxcache, box_geo.length_inv()[0], n_scycache,
+                   box_geo.length_inv()[1]);
   partblk.resize(particles.size() * 8);
 
   add_dipole_force(particles);
   add_z_force(particles);
 
   /* the second condition is just for the case of numerical accident */
-  for (std::size_t p = 1;
-       ux * static_cast<double>(p - 1) < elc_params.far_cut && p <= n_scxcache;
+  for (std::size_t p = 1; box_geo.length_inv()[0] * static_cast<double>(p - 1) <
+                              elc_params.far_cut &&
+                          p <= n_scxcache;
        p++) {
-    auto const omega = c_2pi * ux * static_cast<double>(p);
+    auto const omega = c_2pi * box_geo.length_inv()[0] * static_cast<double>(p);
     setup_PoQ<PoQ::P>(p, omega, particles);
     distribute(4);
     add_PoQ_force<PoQ::P>(particles);
   }
 
-  for (std::size_t q = 1;
-       uy * static_cast<double>(q - 1) < elc_params.far_cut && q <= n_scycache;
+  for (std::size_t q = 1; box_geo.length_inv()[1] * static_cast<double>(q - 1) <
+                              elc_params.far_cut &&
+                          q <= n_scycache;
        q++) {
-    auto const omega = c_2pi * uy * static_cast<double>(q);
+    auto const omega = c_2pi * box_geo.length_inv()[1] * static_cast<double>(q);
     setup_PoQ<PoQ::Q>(q, omega, particles);
     distribute(4);
     add_PoQ_force<PoQ::Q>(particles);
   }
 
-  for (std::size_t p = 1;
-       ux * static_cast<double>(p - 1) < elc_params.far_cut && p <= n_scxcache;
+  for (std::size_t p = 1; box_geo.length_inv()[0] * static_cast<double>(p - 1) <
+                              elc_params.far_cut &&
+                          p <= n_scxcache;
        p++) {
     for (std::size_t q = 1;
-         Utils::sqr(ux * static_cast<double>(p - 1)) +
-                 Utils::sqr(uy * static_cast<double>(q - 1)) <
+         Utils::sqr(box_geo.length_inv()[0] * static_cast<double>(p - 1)) +
+                 Utils::sqr(box_geo.length_inv()[1] *
+                            static_cast<double>(q - 1)) <
              elc_params.far_cut2 &&
          q <= n_scycache;
          q++) {
-      auto const omega = c_2pi * sqrt(Utils::sqr(ux * static_cast<double>(p)) +
-                                      Utils::sqr(uy * static_cast<double>(q)));
+      auto const omega =
+          c_2pi *
+          sqrt(Utils::sqr(box_geo.length_inv()[0] * static_cast<double>(p)) +
+               Utils::sqr(box_geo.length_inv()[1] * static_cast<double>(q)));
       setup_PQ(p, q, omega, particles);
       distribute(8);
       add_PQ_force(p, q, omega, particles);
@@ -898,43 +907,52 @@ double ELC_energy(const ParticleRange &particles) {
   auto energy = dipole_energy(particles);
   energy += z_energy(particles);
 
-  auto const n_scxcache = std::size_t(ceil(elc_params.far_cut / ux) + 1);
-  auto const n_scycache = std::size_t(ceil(elc_params.far_cut / uy) + 1);
-  prepare_sc_cache(particles, n_scxcache, ux, n_scycache, uy);
+  auto const n_scxcache =
+      std::size_t(ceil(elc_params.far_cut * box_geo.length()[0]) + 1);
+  auto const n_scycache =
+      std::size_t(ceil(elc_params.far_cut * box_geo.length()[1]) + 1);
+  prepare_sc_cache(particles, n_scxcache, box_geo.length_inv()[0], n_scycache,
+                   box_geo.length_inv()[1]);
 
   auto const n_localpart = particles.size();
   partblk.resize(n_localpart * 8);
 
   /* the second condition is just for the case of numerical accident */
-  for (std::size_t p = 1;
-       ux * static_cast<double>(p - 1) < elc_params.far_cut && p <= n_scxcache;
+  for (std::size_t p = 1; box_geo.length_inv()[0] * static_cast<double>(p - 1) <
+                              elc_params.far_cut &&
+                          p <= n_scxcache;
        p++) {
-    auto const omega = c_2pi * ux * static_cast<double>(p);
+    auto const omega = c_2pi * box_geo.length_inv()[0] * static_cast<double>(p);
     setup_PoQ<PoQ::P>(p, omega, particles);
     distribute(4);
     energy += PoQ_energy(omega, n_localpart);
   }
 
-  for (std::size_t q = 1;
-       uy * static_cast<double>(q - 1) < elc_params.far_cut && q <= n_scycache;
+  for (std::size_t q = 1; box_geo.length_inv()[1] * static_cast<double>(q - 1) <
+                              elc_params.far_cut &&
+                          q <= n_scycache;
        q++) {
-    auto const omega = c_2pi * uy * static_cast<double>(q);
+    auto const omega = c_2pi * box_geo.length_inv()[1] * static_cast<double>(q);
     setup_PoQ<PoQ::Q>(q, omega, particles);
     distribute(4);
     energy += PoQ_energy(omega, n_localpart);
   }
 
-  for (std::size_t p = 1;
-       ux * static_cast<double>(p - 1) < elc_params.far_cut && p <= n_scxcache;
+  for (std::size_t p = 1; box_geo.length_inv()[0] * static_cast<double>(p - 1) <
+                              elc_params.far_cut &&
+                          p <= n_scxcache;
        p++) {
     for (std::size_t q = 1;
-         Utils::sqr(ux * static_cast<double>(p - 1)) +
-                 Utils::sqr(uy * static_cast<double>(q - 1)) <
+         Utils::sqr(box_geo.length_inv()[0] * static_cast<double>(p - 1)) +
+                 Utils::sqr(box_geo.length_inv()[1] *
+                            static_cast<double>(q - 1)) <
              elc_params.far_cut2 &&
          q <= n_scycache;
          q++) {
-      auto const omega = c_2pi * sqrt(Utils::sqr(ux * static_cast<double>(p)) +
-                                      Utils::sqr(uy * static_cast<double>(q)));
+      auto const omega =
+          c_2pi *
+          sqrt(Utils::sqr(box_geo.length_inv()[0] * static_cast<double>(p)) +
+               Utils::sqr(box_geo.length_inv()[1] * static_cast<double>(q)));
       setup_PQ(p, q, omega, particles);
       distribute(8);
       energy += PQ_energy(omega, n_localpart);
@@ -949,7 +967,8 @@ double ELC_tune_far_cut(ELC_struct const &params) {
   constexpr auto maximal_far_cut = 50.;
   double const h = params.h;
   double lz = box_geo.length()[2];
-  double const min_inv_boxl = std::min(ux, uy);
+  double const min_inv_boxl =
+      std::min(box_geo.length_inv()[0], box_geo.length_inv()[1]);
 
   if (params.dielectric_contrast_on) {
     // adjust lz according to dielectric layer method
@@ -965,7 +984,8 @@ double ELC_tune_far_cut(ELC_struct const &params) {
   do {
     const auto prefactor = 2 * Utils::pi() * far_cut;
 
-    const auto sum = prefactor + 2 * (ux + uy);
+    const auto sum =
+        prefactor + 2 * (box_geo.length_inv()[0] + box_geo.length_inv()[1]);
     const auto den = -expm1(-prefactor * lz);
     const auto num1 = exp(prefactor * (h - lz));
     const auto num2 = exp(-prefactor * (h + lz));
@@ -1018,8 +1038,6 @@ void ELC_sanity_checks(ELC_struct const &params) {
 }
 
 void ELC_init() {
-
-  ELC_setup_constants();
   elc_params.h = box_geo.length()[2] - elc_params.gap_size;
 
   if (elc_params.dielectric_contrast_on) {
@@ -1107,7 +1125,6 @@ void ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
   ELC_sanity_checks(new_elc_params);
 
-  ELC_setup_constants();
   if (new_elc_params.far_calculated) {
     new_elc_params.far_cut = ELC_tune_far_cut(new_elc_params);
   }

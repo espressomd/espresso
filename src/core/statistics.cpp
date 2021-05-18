@@ -274,7 +274,7 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
 
   auto const order_sq = order * order;
   std::vector<double> ff(2 * order_sq + 1);
-  auto const twoPI_L = 2 * Utils::pi() / box_geo.length()[0];
+  auto const twoPI_L = 2 * Utils::pi() * box_geo.length_inv()[0];
 
   for (int i = 0; i <= order; i++) {
     for (int j = -order; j <= order; j++) {
