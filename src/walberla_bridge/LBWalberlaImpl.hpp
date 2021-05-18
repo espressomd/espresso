@@ -131,9 +131,13 @@ protected:
 
   BlockDataID m_boundary_handling_id;
 
-  using Communicator = blockforest::communication::UniformBufferedScheme<
+  using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
-  std::shared_ptr<Communicator> m_communication;
+  std::shared_ptr<FullCommunicator> m_full_communication;
+  using PDFStreamingCommunicator =
+      blockforest::communication::UniformBufferedScheme<
+          typename stencil::D3Q19>;
+  std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communication;
 
   /** Block forest */
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
@@ -234,11 +238,19 @@ public:
     clear_boundaries();
 
     // sets up the communication and registers pdf field and force field to it
-    m_communication = std::make_shared<Communicator>(m_blocks);
-    m_communication->addPackInfo(
+    m_pdf_streaming_communication =
+        std::make_shared<PDFStreamingCommunicator>(m_blocks);
+    m_pdf_streaming_communication->addPackInfo(
+        std::make_shared<lbm::PdfFieldPackInfo<LatticeModel>>(m_pdf_field_id));
+    //    m_pdf_streaming_communication->addPackInfo(
+    //        std::make_shared<field::communication::PackInfo<VectorField>>(
+    //            m_last_applied_force_field_id));
+
+    m_full_communication = std::make_shared<FullCommunicator>(m_blocks);
+    m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
             m_pdf_field_id));
-    m_communication->addPackInfo(
+    m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<VectorField>>(
             m_last_applied_force_field_id));
 
@@ -275,12 +287,12 @@ public:
     m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                           "Reset force fields");
     m_time_loop->add() << timeloop::Sweep(collide, "LB collide")
-                       << timeloop::AfterFunction(*m_communication,
-                                                  "communication");
+                       << timeloop::AfterFunction(
+                              *m_pdf_streaming_communication, "communication");
     m_time_loop->add() << timeloop::Sweep(
         Boundaries::getBlockSweep(m_boundary_handling_id), "boundary handling");
     m_time_loop->add() << timeloop::Sweep(stream, "LB stream")
-                       << timeloop::AfterFunction(*m_communication,
+                       << timeloop::AfterFunction(*m_full_communication,
                                                   "communication");
 
     // Register velocity access adapter (proxy)
@@ -288,7 +300,7 @@ public:
         m_blocks, m_pdf_field_id, "velocity adaptor");
 
     // Synchronize ghost layers
-    (*m_communication)();
+    (*m_full_communication)();
   };
 
   std::shared_ptr<LatticeModel> get_lattice_model() { return m_lattice_model; };
@@ -303,7 +315,7 @@ public:
     }
   };
 
-  void ghost_communication() override { (*m_communication)(); }
+  void ghost_communication() override { (*m_full_communication)(); }
 
   // Velocity
   boost::optional<Utils::Vector3d>
