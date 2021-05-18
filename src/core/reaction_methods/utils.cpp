@@ -71,16 +71,16 @@ double calculate_factorial_expression_cpH(
     std::map<int, int> const &old_particle_numbers) {
   double factorial_expr = 1.0;
   // factorial contribution of reactants
-  for (int i = 0; i < 1; i++) {
-    int nu_i = -1 * current_reaction.reactant_coefficients[i];
-    int N_i0 = old_particle_numbers.at(current_reaction.reactant_types[i]);
+  {
+    int nu_i = -1 * current_reaction.reactant_coefficients[0];
+    int N_i0 = old_particle_numbers.at(current_reaction.reactant_types[0]);
     factorial_expr *=
         factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
   }
   // factorial contribution of products
-  for (int i = 0; i < 1; i++) {
-    int nu_i = current_reaction.product_coefficients[i];
-    int N_i0 = old_particle_numbers.at(current_reaction.product_types[i]);
+  {
+    int nu_i = current_reaction.product_coefficients[0];
+    int N_i0 = old_particle_numbers.at(current_reaction.product_types[0]);
     factorial_expr *=
         factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
   }

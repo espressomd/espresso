@@ -42,7 +42,7 @@ calculate_factorial_expression(SingleReaction const &current_reaction,
  * Calculates the factorial expression which occurs in the constant pH method
  * with symmetric proposal probability.
  *
- * See https://arxiv.org/abs/1702.04911 equation 15
+ * See @cite landsgesell17b
  */
 double calculate_factorial_expression_cpH(
     SingleReaction const &current_reaction,
