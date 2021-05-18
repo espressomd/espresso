@@ -71,11 +71,14 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
         auto const p_numbers =
             std::map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
         auto const energy = static_cast<double>(i + 1);
-        // acceptance = exp(- E / T + nu_bar * log(10) * (pH - nu_bar * pKa))
+        auto const f_expr =
+            calculate_factorial_expression_cpH(reaction, p_numbers);
+        // acceptance = f_expr * exp(- E / T + nu_bar * log(10) * (pH - nu_bar *
+        // pKa))
         auto const acceptance_ref =
-            std::exp(energy / r_algo.temperature +
-                     std::log(10.) *
-                         (r_algo.m_constant_pH + std::log10(reaction.gamma)));
+            f_expr * std::exp(energy / r_algo.temperature +
+                              std::log(10.) * (r_algo.m_constant_pH +
+                                               std::log10(reaction.gamma)));
         auto const acceptance = r_algo.calculate_acceptance_probability(
             reaction, energy, 0., p_numbers, -1, -1, false);
         BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);
