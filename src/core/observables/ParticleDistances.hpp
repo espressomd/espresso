@@ -28,6 +28,8 @@
 
 #include <cassert>
 #include <cstddef>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -39,6 +41,11 @@ namespace Observables {
 class ParticleDistances : public PidObservable {
 public:
   using PidObservable::PidObservable;
+  explicit ParticleDistances(std::vector<int> ids)
+      : PidObservable(std::move(ids)) {
+    if (this->ids().size() < 2)
+      throw std::runtime_error("At least 2 particles are required");
+  }
 
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
