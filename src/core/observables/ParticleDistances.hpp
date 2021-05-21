@@ -60,7 +60,7 @@ public:
     return res;
   }
   std::vector<size_t> shape() const override {
-    assert(ids().size() >= 1);
+    assert(!ids().empty());
     return {ids().size() - 1};
   }
 };
