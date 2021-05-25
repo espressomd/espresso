@@ -139,6 +139,11 @@ class RdfTest(ut.TestCase):
         # check bin centers
         obs_bin_centers = observable.bin_centers()
         np.testing.assert_array_almost_equal(obs_bin_centers, [1.25, 1.75])
+        # check exceptions
+        with self.assertRaises(RuntimeError):
+            espressomd.observables.RDF(**{**params, 'min_r': 100.})
+        with self.assertRaises(ValueError):
+            espressomd.observables.RDF(**{**params, 'n_r_bins': 0})
 
 
 if __name__ == "__main__":
