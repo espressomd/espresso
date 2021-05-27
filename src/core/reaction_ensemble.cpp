@@ -194,7 +194,7 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
 /**
  * Checks whether all particles exist for the provided reaction.
  */
-bool ReactionAlgorithm::all_reactant_particles_exist(SingleReaction &current_reaction) const {
+bool ReactionAlgorithm::all_reactant_particles_exist(SingleReaction const &current_reaction) const {
   bool enough_particles = true;
   for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
     int current_number =
@@ -343,7 +343,7 @@ double ReactionEnsemble::calculate_acceptance_probability(
 }
 
 std::map<int, int>
-ReactionAlgorithm::save_old_particle_numbers(SingleReaction &current_reaction) {
+ReactionAlgorithm::save_old_particle_numbers(SingleReaction const &current_reaction) {
   std::map<int, int> old_particle_numbers;
   // reactants
   for (int type : current_reaction.reactant_types) {
@@ -392,8 +392,7 @@ void WangLandauReactionEnsemble::on_end_reaction(int &accepted_state) {
  * randomly in the box. Matching particles simply change the types. If there
  * are more reactants than products, old reactant particles are deleted.
  */
-void ReactionAlgorithm::generic_oneway_reaction(SingleReaction &current_reaction) {
-
+void ReactionAlgorithm::generic_oneway_reaction(SingleReaction  &current_reaction) {
 
   current_reaction.tried_moves += 1;
   particle_inside_exclusion_radius_touched = false;
@@ -1191,7 +1190,7 @@ void WangLandauReactionEnsemble::reset_histogram() {
 /**
  *Refine the Wang-Landau parameter using the 1/t rule.
  */
-void WangLandauReactionEnsemble::refine_wang_landau_parametecdr_one_over_t() {
+void WangLandauReactionEnsemble::refine_wang_landau_parameter_one_over_t() {
   double monte_carlo_time = static_cast<double>(monte_carlo_trial_moves) /
                             static_cast<double>(used_bins);
   if (wang_landau_parameter / 2.0 <= 1.0 / monte_carlo_time ||
@@ -1566,11 +1565,14 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
 
 std::pair<double, double>
 WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
-  if (!all_reactant_particles_exist(reactions[reaction_id]))
+  
+  SingleReaction &current_reaction = reactions[reaction_id];
+  
+  if (!all_reactant_particles_exist(current_reaction))
     throw std::runtime_error("Trying to remove some non-existing particles "
                              "from the system via the inverse Widom scheme.");
 
-  SingleReaction &current_reaction = reactions[reaction_id];
+  
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
   // make reaction attempt

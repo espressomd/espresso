@@ -200,7 +200,7 @@ public:
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
-  void generic_oneway_reaction(SingleReaction &current_reaction);
+  void generic_oneway_reaction(SingleReaction  &current_reaction);
   virtual void on_reaction_entry(int &old_state_index) {}
   virtual void
   on_reaction_rejection_directly_after_entry(int &old_state_index) {}
@@ -228,7 +228,7 @@ protected:
     std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
     return uniform_int_dist(m_generator);
   }
-  bool all_reactant_particles_exist(SingleReaction &current_reaction) const;
+  bool all_reactant_particles_exist(SingleReaction const &current_reaction) const;
 
 protected:
   virtual double calculate_acceptance_probability(
@@ -244,7 +244,7 @@ private:
   std::normal_distribution<double> m_normal_distribution;
   std::uniform_real_distribution<double> m_uniform_real_distribution;
 
-  std::map<int, int> save_old_particle_numbers(SingleReaction &current_reaction);
+  std::map<int, int> save_old_particle_numbers(SingleReaction const &current_reaction);
 
   void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
@@ -371,7 +371,6 @@ private:
   bool m_system_is_in_1_over_t_regime = false;
   bool achieved_desired_number_of_refinements_one_over_t() const;
   void refine_wang_landau_parameter_one_over_t();
-  void refine_wang_landau_parametecdr_one_over_t();
 
   /**
    * Initialize the current Wang-Landau system.
