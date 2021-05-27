@@ -38,8 +38,6 @@ void check_global_consistency();
  *  for use with @ref mpi_bcast_parameter.
  */
 enum Fields {
-  /** index of \ref n_rigidbonds */
-  FIELD_RIGIDBONDS,
   /** index of \ref nptiso_struct::piston (only used for the events) */
   FIELD_NPTISO_PISTON,
   /** index of \ref lattice_switch */

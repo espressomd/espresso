@@ -332,7 +332,6 @@ void on_parameter_change(int field) {
     on_thermostat_param_change();
     break;
   case FIELD_LATTICE_SWITCH:
-  case FIELD_RIGIDBONDS:
     break;
   }
 }

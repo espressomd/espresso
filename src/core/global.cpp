@@ -87,8 +87,6 @@ struct Datafield {
  *  Please declare where the variables come from.
  */
 const std::unordered_map<int, Datafield> fields{
-    {FIELD_RIGIDBONDS,
-     {&n_rigidbonds, 1, "n_rigidbonds"}}, /* 19 from rigid_bond.cpp */
     {FIELD_LATTICE_SWITCH,
      {reinterpret_cast<std::underlying_type_t<ActiveLB> *>(&lattice_switch), 1,
       "lattice_switch"}}, /* 37 from lattice.cpp */
