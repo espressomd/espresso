@@ -385,4 +385,6 @@ void mpi_set_thermo_virtual(bool thermo_virtual);
 
 void mpi_set_temperature(double temperature);
 
+void mpi_set_thermo_switch(int thermo_switch);
+
 #endif

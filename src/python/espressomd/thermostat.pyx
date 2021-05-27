@@ -265,9 +265,7 @@ cdef class Thermostat:
             ELSE:
                 mpi_set_brownian_gamma_rot(0.)
 
-        global thermo_switch
-        thermo_switch = THERMO_OFF
-        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+        mpi_set_thermo_switch(THERMO_OFF)
         lb_lbcoupling_set_gamma(0.0)
         return True
 
@@ -390,8 +388,7 @@ cdef class Thermostat:
                     gamma_rotation = gamma
 
         global thermo_switch
-        thermo_switch = (thermo_switch | THERMO_LANGEVIN)
-        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+        mpi_set_thermo_switch(thermo_switch | THERMO_LANGEVIN)
         IF PARTICLE_ANISOTROPY:
             mpi_set_langevin_gamma(gamma_vec)
         ELSE:
@@ -524,8 +521,7 @@ cdef class Thermostat:
                     gamma_rotation = gamma
 
         global thermo_switch
-        thermo_switch = (thermo_switch | THERMO_BROWNIAN)
-        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+        mpi_set_thermo_switch(thermo_switch | THERMO_BROWNIAN)
 
         IF PARTICLE_ANISOTROPY:
             mpi_set_brownian_gamma(gamma_vec)
@@ -585,8 +581,7 @@ cdef class Thermostat:
             lb_lbcoupling_set_rng_state(0)
 
         global thermo_switch
-        thermo_switch = (thermo_switch | THERMO_LB)
-        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+        mpi_set_thermo_switch(thermo_switch | THERMO_LB)
 
         mpi_set_thermo_virtual(act_on_virtual)
         lb_lbcoupling_set_gamma(gamma)
@@ -633,11 +628,10 @@ cdef class Thermostat:
 
             mpi_set_temperature(kT)
             global thermo_switch
-            thermo_switch = (thermo_switch | THERMO_NPT_ISO)
+            mpi_set_thermo_switch(thermo_switch | THERMO_NPT_ISO)
             global npt_iso
             npt_iso.gamma0 = gamma0
             npt_iso.gammav = gammav
-            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_NPTISO_G0)
             mpi_bcast_parameter(FIELD_NPTISO_GV)
 
@@ -677,9 +671,7 @@ cdef class Thermostat:
 
             mpi_set_temperature(kT)
             global thermo_switch
-            thermo_switch = (thermo_switch | THERMO_DPD)
-
-            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+            mpi_set_thermo_switch(thermo_switch | THERMO_DPD)
 
     IF STOKESIAN_DYNAMICS:
         @AssertThermostatType(THERMO_SD)
@@ -719,5 +711,4 @@ cdef class Thermostat:
                     stokesian_set_rng_seed(seed)
 
             global thermo_switch
-            thermo_switch = (thermo_switch | THERMO_SD)
-            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+            mpi_set_thermo_switch(thermo_switch | THERMO_SD)

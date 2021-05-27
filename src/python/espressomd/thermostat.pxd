@@ -105,6 +105,7 @@ cdef extern from "thermostat.hpp":
 
     void mpi_set_thermo_virtual(cbool thermo_virtual)
     void mpi_set_temperature(double temperature)
+    void mpi_set_thermo_switch(int thermo_switch)
 
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:

@@ -242,3 +242,13 @@ REGISTER_CALLBACK(mpi_set_temperature_local)
 void mpi_set_temperature(double temperature) {
   mpi_call_all(mpi_set_temperature_local, temperature);
 }
+
+void mpi_set_thermo_switch_local(int thermo_switch) {
+  ::thermo_switch = thermo_switch;
+}
+
+REGISTER_CALLBACK(mpi_set_thermo_switch_local)
+
+void mpi_set_thermo_switch(int thermo_switch) {
+  mpi_call_all(mpi_set_thermo_switch_local, thermo_switch);
+}
