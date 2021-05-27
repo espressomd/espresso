@@ -134,7 +134,7 @@ void force_calc(CellStructure &cell_structure, double time_step) {
       VerletCriterion{skin, interaction_range(), coulomb_cutoff, dipole_cutoff,
                       collision_detection_cutoff()});
 
-  Constraints::constraints.add_forces(particles, sim_time);
+  Constraints::constraints.add_forces(particles, get_sim_time());
 
   if (max_oif_objects) {
     // There are two global quantities that need to be evaluated:

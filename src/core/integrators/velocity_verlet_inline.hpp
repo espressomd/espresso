@@ -85,7 +85,7 @@ velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
 
 inline void velocity_verlet_step_1(const ParticleRange &particles) {
   velocity_verlet_propagate_vel_pos(particles);
-  sim_time += time_step;
+  increment_sim_time(time_step);
 }
 
 inline void velocity_verlet_step_2(const ParticleRange &particles) {

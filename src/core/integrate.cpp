@@ -457,6 +457,10 @@ double interaction_range() {
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
 
+double get_sim_time() { return sim_time; }
+
+void increment_sim_time(double amount) { sim_time += amount; }
+
 void mpi_set_time_step_local(double dt) {
   time_step = dt;
   on_parameter_change(FIELD_TIMESTEP);

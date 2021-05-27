@@ -56,7 +56,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
     p.m.omega += bd_random_walk_vel_rot(brownian, p);
 #endif // ROTATION
   }
-  sim_time += time_step;
+  increment_sim_time(time_step);
 }
 
 #endif // INTEGRATORS_BROWNIAN_INLINE_HPP

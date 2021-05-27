@@ -60,7 +60,7 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
 
 inline void stokesian_dynamics_step_1(const ParticleRange &particles) {
   stokesian_dynamics_propagate_vel_pos(particles);
-  sim_time += time_step;
+  increment_sim_time(time_step);
 }
 
 inline void stokesian_dynamics_step_2(const ParticleRange &particles) {}
