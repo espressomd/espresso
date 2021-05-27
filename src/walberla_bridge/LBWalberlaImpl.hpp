@@ -652,7 +652,7 @@ public:
   uint64_t get_rng_state() const override {
     throw std::runtime_error("The LB does not use a random number generator");
   };
-  void set_rng_state(uint64_t counter) {
+  void set_rng_state(uint64_t counter) override {
     throw std::runtime_error("The LB does not use a random number generator");
   };
 
