@@ -42,7 +42,6 @@ enum Fields {
   FIELD_NPTISO_PISTON,
   /** index of \ref lattice_switch */
   FIELD_LATTICE_SWITCH,
-  FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
 };
 
 /** Broadcast a global variable.

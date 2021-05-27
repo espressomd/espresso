@@ -26,8 +26,6 @@ cdef extern from "grid.hpp":
     void mpi_set_node_grid(const Vector3i & node_grid)
 
 cdef extern from "global.hpp":
-    int FIELD_MAX_OIF_OBJECTS
-
     void mpi_bcast_parameter(int p)
 
 cdef extern from "integrate.hpp":
