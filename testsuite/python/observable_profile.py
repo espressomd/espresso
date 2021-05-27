@@ -143,6 +143,16 @@ class ProfileObservablesTest(ut.TestCase):
         obs_bin_edges = observable.bin_edges()
         np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
 
+    def test_exceptions(self):
+        params = self.kwargs.copy()
+        for axis in 'xyz':
+            with self.assertRaises(RuntimeError):
+                espressomd.observables.DensityProfile(
+                    **{**params, f'min_{axis}': 100.})
+            with self.assertRaises(ValueError):
+                espressomd.observables.DensityProfile(
+                    **{**params, f'n_{axis}_bins': 0})
+
 
 if __name__ == '__main__':
     ut.main()

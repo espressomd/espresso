@@ -26,6 +26,7 @@
 #include <utils/Span.hpp>
 
 #include <cstddef>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -54,7 +55,12 @@ public:
   explicit RDF(std::vector<int> ids1, std::vector<int> ids2, int n_r_bins,
                double min_r, double max_r)
       : m_ids1(std::move(ids1)), m_ids2(std::move(ids2)), min_r(min_r),
-        max_r(max_r), n_r_bins(n_r_bins) {}
+        max_r(max_r), n_r_bins(n_r_bins) {
+    if (max_r <= min_r)
+      throw std::runtime_error("max_r has to be > min_r");
+    if (n_r_bins <= 0)
+      throw std::domain_error("n_r_bins has to be >= 1");
+  }
   std::vector<double> operator()() const final;
 
   std::vector<int> &ids1() { return m_ids1; }

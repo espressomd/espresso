@@ -27,6 +27,7 @@
 
 #include <array>
 #include <cstddef>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -54,6 +55,12 @@ public:
       throw std::runtime_error("max_y has to be > min_y");
     if (max_z <= min_z)
       throw std::runtime_error("max_z has to be > min_z");
+    if (n_x_bins <= 0)
+      throw std::domain_error("n_x_bins has to be >= 1");
+    if (n_y_bins <= 0)
+      throw std::domain_error("n_y_bins has to be >= 1");
+    if (n_z_bins <= 0)
+      throw std::domain_error("n_z_bins has to be >= 1");
   }
 
   std::vector<size_t> shape() const override {

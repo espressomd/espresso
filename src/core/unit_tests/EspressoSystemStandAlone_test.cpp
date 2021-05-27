@@ -302,7 +302,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
 
     // check integrated trajectory; the time step is chosen
     // small enough so that particles don't travel too far
+#ifndef NDEBUG
     auto const pos_com = Utils::Vector3d{box_center, box_center, 1.0};
+#endif
     auto const pids = std::vector<int>{pid1, pid2, pid3};
     for (int i = 0; i < 10; ++i) {
       std::unordered_map<int, Utils::Vector3d> expected;

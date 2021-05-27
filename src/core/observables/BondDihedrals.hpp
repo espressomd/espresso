@@ -26,8 +26,11 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -44,6 +47,10 @@ namespace Observables {
 class BondDihedrals : public PidObservable {
 public:
   using PidObservable::PidObservable;
+  explicit BondDihedrals(std::vector<int> ids) : PidObservable(std::move(ids)) {
+    if (this->ids().size() < 4)
+      throw std::runtime_error("At least 4 particles are required");
+  }
 
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
@@ -67,7 +74,10 @@ public:
     }
     return res;
   }
-  std::vector<size_t> shape() const override { return {ids().size() - 3}; }
+  std::vector<size_t> shape() const override {
+    assert(ids().size() >= 3);
+    return {ids().size() - 3};
+  }
 };
 
 } // Namespace Observables

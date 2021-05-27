@@ -89,6 +89,11 @@ class ObservableTests(ut.TestCase):
                 res_obs_chain, distances, decimal=9,
                 err_msg="Data did not agree for observable ParticleDistances")
 
+        # check exceptions
+        for i in range(2):
+            with self.assertRaises(RuntimeError):
+                espressomd.observables.ParticleDistances(ids=np.arange(i))
+
     def test_BondAngles(self):
         """
         Check BondAngles, for a particle triple and for a chain.
@@ -126,6 +131,11 @@ class ObservableTests(ut.TestCase):
             np.testing.assert_array_almost_equal(
                 res_obs_chain, angles, decimal=9,
                 err_msg="Data did not agree for observable BondAngles")
+
+        # check exceptions
+        for i in range(3):
+            with self.assertRaises(RuntimeError):
+                espressomd.observables.BondAngles(ids=np.arange(i))
 
     def test_BondDihedrals(self):
         """
@@ -201,6 +211,11 @@ class ObservableTests(ut.TestCase):
                         res_obs_chain, [dih1, dih2], decimal=9,
                         err_msg="Data did not agree for observable BondDihedrals")
 
+        # check exceptions
+        for i in range(4):
+            with self.assertRaises(RuntimeError):
+                espressomd.observables.BondDihedrals(ids=np.arange(i))
+
     def test_CosPersistenceAngles(self):
         # First test: compare with python implementation
         self.system.part.clear()
@@ -221,6 +236,11 @@ class ObservableTests(ut.TestCase):
             ids=self.system.part[:].id)
         expected = np.arange(1, 9) * delta_phi
         np.testing.assert_allclose(obs.calculate(), np.cos(expected))
+
+        # check exceptions
+        for i in range(3):
+            with self.assertRaises(RuntimeError):
+                espressomd.observables.CosPersistenceAngles(ids=np.arange(i))
 
 
 if __name__ == "__main__":

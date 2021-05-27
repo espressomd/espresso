@@ -25,8 +25,11 @@
 
 #include <utils/Vector.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -38,6 +41,10 @@ namespace Observables {
 class BondAngles : public PidObservable {
 public:
   using PidObservable::PidObservable;
+  explicit BondAngles(std::vector<int> ids) : PidObservable(std::move(ids)) {
+    if (this->ids().size() < 3)
+      throw std::runtime_error("At least 3 particles are required");
+  }
 
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
@@ -67,7 +74,10 @@ public:
     }
     return res;
   }
-  std::vector<size_t> shape() const override { return {ids().size() - 2}; }
+  std::vector<size_t> shape() const override {
+    assert(ids().size() >= 2);
+    return {ids().size() - 2};
+  }
 };
 
 } // Namespace Observables
