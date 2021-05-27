@@ -44,10 +44,6 @@ enum Fields {
   FIELD_RIGIDBONDS,
   /** index of \ref node_grid */
   FIELD_NODEGRID,
-  /** index of \ref IsotropicNptThermostat::gamma0 */
-  FIELD_NPTISO_G0,
-  /** index of \ref IsotropicNptThermostat::gammav */
-  FIELD_NPTISO_GV,
   /** index of \ref nptiso_struct::piston (only used for the events) */
   FIELD_NPTISO_PISTON,
   /** index of \ref lattice_switch */

@@ -26,9 +26,6 @@ cdef extern from "grid.hpp":
 
 cdef extern from "global.hpp":
     int FIELD_NODEGRID
-    IF NPT:
-        int FIELD_NPTISO_G0
-        int FIELD_NPTISO_GV
     int FIELD_MAX_OIF_OBJECTS
 
     void mpi_bcast_parameter(int p)

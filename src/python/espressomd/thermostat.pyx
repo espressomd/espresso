@@ -19,7 +19,6 @@
 from functools import wraps
 include "myconfig.pxi"
 IF NPT:
-    from .globals cimport FIELD_NPTISO_G0, FIELD_NPTISO_GV
     from .thermostat cimport nptiso
 from .globals cimport mpi_bcast_parameter
 from . cimport utils

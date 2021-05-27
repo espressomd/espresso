@@ -324,8 +324,6 @@ void on_parameter_change(int field) {
     grid_changed_n_nodes();
     cells_re_init(cell_structure.decomposition_type());
     break;
-  case FIELD_NPTISO_G0:
-  case FIELD_NPTISO_GV:
   case FIELD_NPTISO_PISTON:
   case FIELD_THERMALIZEDBONDS:
     on_thermostat_param_change();
