@@ -65,8 +65,6 @@ enum Fields {
   FIELD_THERMALIZEDBONDS,
   FIELD_FORCE_CAP,
   FIELD_THERMO_VIRTUAL,
-  /** index of \ref BrownianThermostat::gamma_rotation */
-  FIELD_BROWNIAN_GAMMA_ROTATION,
 };
 
 /** Broadcast a global variable.

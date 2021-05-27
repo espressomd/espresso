@@ -24,7 +24,7 @@ IF NPT:
     from .globals cimport FIELD_NPTISO_G0, FIELD_NPTISO_GV
     from .thermostat cimport nptiso
 IF ROTATION:
-    from .globals cimport FIELD_LANGEVIN_GAMMA_ROTATION, FIELD_BROWNIAN_GAMMA_ROTATION
+    from .globals cimport FIELD_LANGEVIN_GAMMA_ROTATION
 from .globals cimport mpi_bcast_parameter
 from . cimport utils
 from .lb import HydrodynamicInteraction

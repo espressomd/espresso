@@ -32,7 +32,6 @@ cdef extern from "global.hpp":
     int FIELD_LANGEVIN_GAMMA
     IF ROTATION:
         int FIELD_LANGEVIN_GAMMA_ROTATION
-        int FIELD_BROWNIAN_GAMMA_ROTATION
     IF NPT:
         int FIELD_NPTISO_G0
         int FIELD_NPTISO_GV
