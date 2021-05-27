@@ -87,13 +87,6 @@ struct Datafield {
  *  Please declare where the variables come from.
  */
 const std::unordered_map<int, Datafield> fields{
-#ifndef PARTICLE_ANISOTROPY
-    {FIELD_LANGEVIN_GAMMA,
-     {&langevin.gamma, 1, "langevin.gamma"}}, /* 5  from thermostat.cpp */
-#else
-    {FIELD_LANGEVIN_GAMMA,
-     {langevin.gamma.data(), 3, "langevin.gamma"}}, /* 5  from thermostat.cpp */
-#endif // PARTICLE_ANISOTROPY
     {FIELD_INTEG_SWITCH,
      {&integ_switch, 1, "integ_switch"}}, /* 7  from integrate.cpp */
     {FIELD_RIGIDBONDS,
@@ -112,15 +105,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_LATTICE_SWITCH,
      {reinterpret_cast<std::underlying_type_t<ActiveLB> *>(&lattice_switch), 1,
       "lattice_switch"}}, /* 37 from lattice.cpp */
-#ifndef PARTICLE_ANISOTROPY
-    {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {&langevin.gamma_rotation, 1,
-      "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
-#else
-    {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {langevin.gamma_rotation.data(), 3,
-      "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
-#endif
     {FIELD_MAX_OIF_OBJECTS, {&max_oif_objects, 1, "max_oif_objects"}},
     {FIELD_THERMALIZEDBONDS,
      {&n_thermalized_bonds, 1,

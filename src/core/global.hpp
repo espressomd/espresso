@@ -38,8 +38,6 @@ void check_global_consistency();
  *  for use with @ref mpi_bcast_parameter.
  */
 enum Fields {
-  /** index of \ref LangevinThermostat::gamma */
-  FIELD_LANGEVIN_GAMMA,
   /** index of \ref integ_switch */
   FIELD_INTEG_SWITCH,
   /** index of \ref n_rigidbonds */
@@ -58,8 +56,6 @@ enum Fields {
   FIELD_THERMO_SWITCH,
   /** index of \ref lattice_switch */
   FIELD_LATTICE_SWITCH,
-  /** index of \ref LangevinThermostat::gamma_rotation */
-  FIELD_LANGEVIN_GAMMA_ROTATION,
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
   /** index of \ref n_thermalized_bonds */
   FIELD_THERMALIZEDBONDS,

@@ -18,13 +18,11 @@
 #
 from functools import wraps
 include "myconfig.pxi"
-from .globals cimport FIELD_LANGEVIN_GAMMA, FIELD_TEMPERATURE, \
-    FIELD_THERMO_SWITCH, FIELD_THERMO_VIRTUAL
+from .globals cimport FIELD_TEMPERATURE, FIELD_THERMO_SWITCH, \
+    FIELD_THERMO_VIRTUAL
 IF NPT:
     from .globals cimport FIELD_NPTISO_G0, FIELD_NPTISO_GV
     from .thermostat cimport nptiso
-IF ROTATION:
-    from .globals cimport FIELD_LANGEVIN_GAMMA_ROTATION
 from .globals cimport mpi_bcast_parameter
 from . cimport utils
 from .lb import HydrodynamicInteraction
@@ -396,7 +394,7 @@ cdef class Thermostat:
                 if gamma_rotation is None:
                     # rotational gamma is translational gamma
                     gamma_rotation = gamma
-        
+
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LANGEVIN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
