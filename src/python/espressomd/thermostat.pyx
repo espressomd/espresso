@@ -18,7 +18,7 @@
 #
 from functools import wraps
 include "myconfig.pxi"
-from .globals cimport FIELD_TEMPERATURE, FIELD_THERMO_SWITCH
+from .globals cimport FIELD_THERMO_SWITCH
 IF NPT:
     from .globals cimport FIELD_NPTISO_G0, FIELD_NPTISO_GV
     from .thermostat cimport nptiso
@@ -660,7 +660,7 @@ cdef class Thermostat:
             """
             if kT is None:
                 raise ValueError("kT has to be given as keyword args")
-            if not isinstance(kT, float) or is None:
+            if not isinstance(kT, float) or kT is None:
                 raise ValueError("temperature must be a positive number")
 
             # Seed is required if the RNG is not initialized

@@ -50,8 +50,6 @@ enum Fields {
   FIELD_NPTISO_GV,
   /** index of \ref nptiso_struct::piston (only used for the events) */
   FIELD_NPTISO_PISTON,
-  /** index of \ref #temperature */
-  FIELD_TEMPERATURE,
   /** index of \ref thermo_switch */
   FIELD_THERMO_SWITCH,
   /** index of \ref lattice_switch */
