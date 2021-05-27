@@ -25,7 +25,6 @@
 
 #include "rigid_bond.hpp"
 #include "communication.hpp"
-#include "global.hpp"
 
 #include <utils/Vector.hpp>
 

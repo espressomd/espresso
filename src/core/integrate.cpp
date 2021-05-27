@@ -41,7 +41,6 @@
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"

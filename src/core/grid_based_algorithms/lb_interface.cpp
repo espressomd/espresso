@@ -23,7 +23,6 @@
 #include "config.hpp"
 #include "electrokinetics.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
 #include "lb-d3q19.hpp"

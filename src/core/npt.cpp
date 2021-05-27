@@ -26,7 +26,6 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "global.hpp"
 #include "integrate.hpp"
 
 #include <utils/Vector.hpp>

@@ -21,7 +21,6 @@
 
 #include "EspressoSystemStandAlone.hpp"
 #include "communication.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "virtual_sites.hpp"

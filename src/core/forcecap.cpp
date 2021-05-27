@@ -29,7 +29,6 @@
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "event.hpp"
-#include "global.hpp"
 
 #include <utils/Vector.hpp>
 
