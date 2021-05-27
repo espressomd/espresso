@@ -24,6 +24,8 @@
  */
 
 #include "thermalized_bond.hpp"
+
+#include "event.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
 
@@ -47,4 +49,5 @@ ThermalizedBond::ThermalizedBond(double temp_com, double gamma_com,
 
   n_thermalized_bonds += 1;
   mpi_bcast_parameter(FIELD_THERMALIZEDBONDS);
+  on_parameter_change(FIELD_THERMALIZEDBONDS);
 }

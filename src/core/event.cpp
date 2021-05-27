@@ -328,6 +328,7 @@ void on_parameter_change(int field) {
   case FIELD_NPTISO_G0:
   case FIELD_NPTISO_GV:
   case FIELD_NPTISO_PISTON:
+  case FIELD_THERMALIZEDBONDS:
     reinit_thermo = true;
     break;
   case FIELD_FORCE_CAP:
@@ -337,7 +338,6 @@ void on_parameter_change(int field) {
   case FIELD_THERMO_SWITCH:
   case FIELD_LATTICE_SWITCH:
   case FIELD_RIGIDBONDS:
-  case FIELD_THERMALIZEDBONDS:
     break;
   case FIELD_SIMTIME:
     recalc_forces = true;
