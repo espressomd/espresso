@@ -82,16 +82,6 @@ struct Datafield {
   const char *name;
 };
 
-/** This array contains the description of all global variables.
- *
- *  Please declare where the variables come from.
- */
-const std::unordered_map<int, Datafield> fields{
-    {FIELD_LATTICE_SWITCH,
-     {reinterpret_cast<std::underlying_type_t<ActiveLB> *>(&lattice_switch), 1,
-      "lattice_switch"}}, /* 37 from lattice.cpp */
-};
-
 std::size_t hash_value(Datafield const &field) {
   using boost::hash_range;
 
