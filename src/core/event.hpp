@@ -117,6 +117,10 @@ void on_timestep_change();
  */
 void on_simtime_change();
 
+/** @brief Called when the force cap changed.
+ */
+void on_forcecap_change();
+
 /** called every time other parameters (timestep,...) are changed. Note that
  *  this does not happen automatically. The callback procedure of the changed
  *  variable is responsible for that.

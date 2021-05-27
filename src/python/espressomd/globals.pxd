@@ -58,4 +58,4 @@ cdef extern from "object-in-fluid/oif_global_forces.hpp":
 
 cdef extern from "forcecap.hpp":
     double forcecap_get()
-    void forcecap_set(double forcecap)
+    void mpi_set_forcecap(double forcecap)

@@ -318,6 +318,8 @@ void on_timestep_change() {
 
 void on_simtime_change() { recalc_forces = true; }
 
+void on_forcecap_change() { recalc_forces = true; }
+
 void on_parameter_change(int field) {
   switch (field) {
   case FIELD_NODEGRID:
@@ -330,7 +332,7 @@ void on_parameter_change(int field) {
     break;
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
-    recalc_forces = true;
+    on_forcecap_change();
     break;
   case FIELD_LATTICE_SWITCH:
   case FIELD_RIGIDBONDS:

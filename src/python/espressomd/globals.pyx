@@ -22,7 +22,7 @@ from .globals cimport mpi_set_time_step
 from .globals cimport min_global_cut
 from .globals cimport sim_time
 from .globals cimport timing_samples
-from .globals cimport forcecap_set
+from .globals cimport mpi_set_forcecap
 from .globals cimport forcecap_get
 from .utils import array_locked, handle_errors
 from .utils cimport Vector3d, make_array_locked, make_Vector3d
@@ -88,7 +88,7 @@ cdef class Globals:
 
     property force_cap:
         def __set__(self, cap):
-            forcecap_set(cap)
+            mpi_set_forcecap(cap)
 
         def __get__(self):
             return forcecap_get()
