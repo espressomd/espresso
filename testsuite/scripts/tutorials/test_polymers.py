@@ -25,7 +25,7 @@ elif '@TEST_SUFFIX@' == 'zimm':
     params = {'LOOPS': 2000, 'POLYMER_MODEL': 'Zimm', 'gpu': True}
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/polymers/polymers_part2.py",
+    "@TUTORIALS_DIR@/polymers/polymers.py",
     script_suffix="@TEST_SUFFIX@", **params)
 
 

@@ -1,16 +1,8 @@
-# Part 1: Brownian motion and polymer theory
+# Polymer theory and Brownian motion of a polymer in a fluid
 
 ## Physical learning goals
 
 * Getting a short introduction to the Flory theory of polymers
-* Learning the basics of Brownian motion
-* Modeling the Brownian motion of a spherical object
-* Calculating the diffusion coefficient of a spherical object
-
-# Part 2: Brownian motion of a polymer in a fluid
-
-## Physical learning goals
-
 * Modeling the Brownian motion of a polymer
 * Learning about the hydrodynamic radius, radius of gyration, end-to-end distance
 * Reproducing theoretical results of the Flory theory of polymers

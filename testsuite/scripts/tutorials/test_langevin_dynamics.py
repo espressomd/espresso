@@ -21,7 +21,7 @@ import numpy as np
 import scipy.optimize
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/polymers/polymers_part1.py")
+    "@TUTORIALS_DIR@/langevin_dynamics/langevin_dynamics.py")
 
 
 @skipIfMissingFeatures

@@ -17,8 +17,10 @@ Intermediate tutorials
 ~~~~~~~~~~~~~~~~~~~~~~
 
 * ``charged_system``: Modelling of ion condensation around a charged rod
+* ``langevin_dynamics``: Modelling of Brownian motion and measuring diffusion coefficients
 * ``ferrofluid``: Modelling a monolayer ferrofluid system
 * ``lattice_boltzmann``: Simulations including hydrodynamic interactions using the lattice-Boltzmann method
+* ``polymers``: Modelling polymers with hydrodynamic interactions
 * ``raspberry_electrophoresis``: Extended objects in a lattice-Boltzmann fluid, raspberry particles
 
 Advanced tutorials

@@ -27,9 +27,9 @@ add_custom_target(
 
 tutorial_test(FILE test_lennard_jones.py)
 tutorial_test(FILE test_charged_system-1.py)
-tutorial_test(FILE test_polymers_part1.py)
-tutorial_test(FILE test_polymers_part2.py SUFFIX rouse)
-tutorial_test(FILE test_polymers_part2.py SUFFIX zimm LABELS "gpu")
+tutorial_test(FILE test_langevin_dynamics.py)
+tutorial_test(FILE test_polymers.py SUFFIX rouse)
+tutorial_test(FILE test_polymers.py SUFFIX zimm LABELS "gpu")
 tutorial_test(FILE test_lattice_boltzmann_poiseuille_flow.py LABELS "gpu")
 tutorial_test(FILE test_raspberry_electrophoresis.py LABELS "gpu")
 tutorial_test(FILE test_active_matter__flow_field.py LABELS "gpu")
