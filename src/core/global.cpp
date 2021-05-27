@@ -87,8 +87,6 @@ struct Datafield {
  *  Please declare where the variables come from.
  */
 const std::unordered_map<int, Datafield> fields{
-    {FIELD_INTEG_SWITCH,
-     {&integ_switch, 1, "integ_switch"}}, /* 7  from integrate.cpp */
     {FIELD_RIGIDBONDS,
      {&n_rigidbonds, 1, "n_rigidbonds"}}, /* 19 from rigid_bond.cpp */
     {FIELD_NODEGRID, {node_grid.data(), 3, "node_grid"}}, /* 20 from grid.cpp */

@@ -38,8 +38,6 @@ void check_global_consistency();
  *  for use with @ref mpi_bcast_parameter.
  */
 enum Fields {
-  /** index of \ref integ_switch */
-  FIELD_INTEG_SWITCH,
   /** index of \ref n_rigidbonds */
   FIELD_RIGIDBONDS,
   /** index of \ref node_grid */
