@@ -24,6 +24,7 @@
  */
 
 #include "rigid_bond.hpp"
+#include "communication.hpp"
 #include "global.hpp"
 
 #include <utils/Vector.hpp>
@@ -35,6 +36,15 @@ RigidBond::RigidBond(double d, double p_tol, double v_tol) {
   this->p_tol = 2.0 * p_tol;
   this->v_tol = v_tol;
 
-  n_rigidbonds += 1;
-  mpi_bcast_parameter(FIELD_RIGIDBONDS);
+  mpi_set_n_rigidbonds(n_rigidbonds + 1);
+}
+
+void mpi_set_n_rigidbonds_local(int n_rigidbonds) {
+  ::n_rigidbonds = n_rigidbonds;
+}
+
+REGISTER_CALLBACK(mpi_set_n_rigidbonds_local)
+
+void mpi_set_n_rigidbonds(int n_rigidbonds) {
+  mpi_call_all(mpi_set_n_rigidbonds_local, n_rigidbonds);
 }
