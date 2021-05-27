@@ -142,16 +142,21 @@ void lb_lbfluid_on_integration_start() { lb_lbfluid_sanity_checks(); }
 void lb_lbfluid_invalidate_particle_allocation() {}
 
 uint64_t lb_lbfluid_get_rng_state() {
+#ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     return Walberla::get_rng_state();
   }
+#endif
   throw NoLBActive();
 }
 
 void lb_lbfluid_set_rng_state(uint64_t counter) {
+#ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     Walberla::set_rng_state(counter);
-  } else {
+  } else
+#endif
+  {
     throw NoLBActive();
   }
 }
