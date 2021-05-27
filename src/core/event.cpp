@@ -330,10 +330,6 @@ void on_parameter_change(int field) {
   case FIELD_THERMALIZEDBONDS:
     on_thermostat_param_change();
     break;
-  case FIELD_FORCE_CAP:
-    /* If the force cap changed, forces are invalid */
-    on_forcecap_change();
-    break;
   case FIELD_LATTICE_SWITCH:
   case FIELD_RIGIDBONDS:
     break;

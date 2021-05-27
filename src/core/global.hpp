@@ -49,7 +49,6 @@ enum Fields {
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
   /** index of \ref n_thermalized_bonds */
   FIELD_THERMALIZEDBONDS,
-  FIELD_FORCE_CAP,
 };
 
 /** Broadcast a global variable.
