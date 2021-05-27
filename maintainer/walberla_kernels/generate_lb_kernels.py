@@ -61,7 +61,10 @@ with CodeGeneration() as ctx:
             return sp.Symbol("omega_odd")
 
     cpu_vectorize_info = {
-        "instruction_set": "avx"}
+        "instruction_set": "avx",
+        "assume_inner_stride_one": True,
+        "assume_aligned": True,
+        "assume_sufficient_line_padding": True}
 
     # LB Method definition
     method = create_mrt_orthogonal(
@@ -96,8 +99,8 @@ with CodeGeneration() as ctx:
         method,
         fluctuating={
             'temperature': kT,
-            'block_offsets': 'walberla'
-            #            'rng_node': ps.rng.PhiloxTwoDoubles,
+            'block_offsets': 'walberla',
+            'rng_node': ps.rng.PhiloxTwoDoubles
         },
         optimization={'cse_global': True}
     )
@@ -110,7 +113,7 @@ with CodeGeneration() as ctx:
         ctx,
         'FluctuatingMRTLatticeModelAvx',
         collision_rule_thermalized,
-        #        cpu_vectorize_info=cpu_vectorize_info,
+        cpu_vectorize_info=cpu_vectorize_info,
         field_layout="fzyx")
 
     # Boundary conditions
