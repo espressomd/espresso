@@ -200,7 +200,7 @@ public:
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
-  void generic_oneway_reaction(SingleReaction  &current_reaction);
+  void generic_oneway_reaction(SingleReaction &current_reaction);
   virtual void on_reaction_entry(int &old_state_index) {}
   virtual void
   on_reaction_rejection_directly_after_entry(int &old_state_index) {}
@@ -212,8 +212,7 @@ protected:
   virtual void on_mc_reject(int &old_state_index){};
   virtual int on_mc_use_WL_get_new_state() { return -10; }
 
-  auto make_reaction_attempt(
-      SingleReaction const &current_reaction);
+  auto make_reaction_attempt(SingleReaction const &current_reaction);
   void
   restore_properties(std::vector<StoredParticleProperty> const &property_list,
                      int number_of_saved_properties);
@@ -228,7 +227,8 @@ protected:
     std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
     return uniform_int_dist(m_generator);
   }
-  bool all_reactant_particles_exist(SingleReaction const &current_reaction) const;
+  bool
+  all_reactant_particles_exist(SingleReaction const &current_reaction) const;
 
 protected:
   virtual double calculate_acceptance_probability(
@@ -244,7 +244,8 @@ private:
   std::normal_distribution<double> m_normal_distribution;
   std::uniform_real_distribution<double> m_uniform_real_distribution;
 
-  std::map<int, int> save_old_particle_numbers(SingleReaction const &current_reaction);
+  std::map<int, int>
+  save_old_particle_numbers(SingleReaction const &current_reaction);
 
   void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);

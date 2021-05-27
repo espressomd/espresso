@@ -54,7 +54,7 @@
 namespace ReactionEnsemble {
 
 /** Load minimum and maximum energies as a function of the other collective
- *  variables. 
+ *  variables.
  */
 void EnergyCollectiveVariable::load_CV_boundaries(
     WangLandauReactionEnsemble &wl_system, std::istream &infile) {
@@ -194,7 +194,8 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
 /**
  * Checks whether all particles exist for the provided reaction.
  */
-bool ReactionAlgorithm::all_reactant_particles_exist(SingleReaction const &current_reaction) const {
+bool ReactionAlgorithm::all_reactant_particles_exist(
+    SingleReaction const &current_reaction) const {
   bool enough_particles = true;
   for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
     int current_number =
@@ -229,7 +230,7 @@ auto ReactionAlgorithm::make_reaction_attempt(
   std::vector<StoredParticleProperty> changed_particles_properties;
   std::vector<int> p_ids_created_particles;
   std::vector<StoredParticleProperty> hidden_particles_properties;
-  
+
   // create or hide particles of types with corresponding types in reaction
   for (int i = 0; i < std::min(current_reaction.product_types.size(),
                                current_reaction.reactant_types.size());
@@ -295,11 +296,13 @@ auto ReactionAlgorithm::make_reaction_attempt(
   }
 
   struct particle_data {
-    std::vector<StoredParticleProperty> changed_particles_properties; 
-    std::vector<int> p_ids_created_particles; 
-    std::vector<StoredParticleProperty> hidden_particles_properties;};
+    std::vector<StoredParticleProperty> changed_particles_properties;
+    std::vector<int> p_ids_created_particles;
+    std::vector<StoredParticleProperty> hidden_particles_properties;
+  };
 
-  return  particle_data{changed_particles_properties, p_ids_created_particles, hidden_particles_properties};
+  return particle_data{changed_particles_properties, p_ids_created_particles,
+                       hidden_particles_properties};
 }
 
 /**
@@ -342,8 +345,8 @@ double ReactionEnsemble::calculate_acceptance_probability(
          factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
 }
 
-std::map<int, int>
-ReactionAlgorithm::save_old_particle_numbers(SingleReaction const &current_reaction) {
+std::map<int, int> ReactionAlgorithm::save_old_particle_numbers(
+    SingleReaction const &current_reaction) {
   std::map<int, int> old_particle_numbers;
   // reactants
   for (int type : current_reaction.reactant_types) {
@@ -392,7 +395,8 @@ void WangLandauReactionEnsemble::on_end_reaction(int &accepted_state) {
  * randomly in the box. Matching particles simply change the types. If there
  * are more reactants than products, old reactant particles are deleted.
  */
-void ReactionAlgorithm::generic_oneway_reaction(SingleReaction  &current_reaction) {
+void ReactionAlgorithm::generic_oneway_reaction(
+    SingleReaction &current_reaction) {
 
   current_reaction.tried_moves += 1;
   particle_inside_exclusion_radius_touched = false;
@@ -427,8 +431,8 @@ void ReactionAlgorithm::generic_oneway_reaction(SingleReaction  &current_reactio
   const int number_of_saved_properties =
       3; // save p_id, charge and type of the reactant particle, only thing we
          // need to hide the particle and recover it
-  
-  auto particle_data =  make_reaction_attempt(current_reaction);
+
+  auto particle_data = make_reaction_attempt(current_reaction);
 
   double E_pot_new;
   if (particle_inside_exclusion_radius_touched)
@@ -463,9 +467,11 @@ void ReactionAlgorithm::generic_oneway_reaction(SingleReaction  &current_reactio
     for (int i = 0; i < len_hidden_particles_properties; i++) {
       auto p_id = particle_data.hidden_particles_properties[i].p_id;
       to_be_deleted_hidden_ids[i] = p_id;
-      to_be_deleted_hidden_types[i] = particle_data.hidden_particles_properties[i].type;
+      to_be_deleted_hidden_types[i] =
+          particle_data.hidden_particles_properties[i].type;
       // change back type otherwise the bookkeeping algorithm is not working
-      set_particle_type(p_id, particle_data.hidden_particles_properties[i].type);
+      set_particle_type(p_id,
+                        particle_data.hidden_particles_properties[i].type);
     }
 
     for (int i = 0; i < len_hidden_particles_properties; i++) {
@@ -481,7 +487,8 @@ void ReactionAlgorithm::generic_oneway_reaction(SingleReaction  &current_reactio
       delete_particle(p_ids_created_particle);
     }
     // 2) restore previously hidden reactant particles
-    restore_properties(particle_data.hidden_particles_properties, number_of_saved_properties);
+    restore_properties(particle_data.hidden_particles_properties,
+                       number_of_saved_properties);
     // 3) restore previously changed reactant particles
     restore_properties(particle_data.changed_particles_properties,
                        number_of_saved_properties);
@@ -1565,22 +1572,21 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
 
 std::pair<double, double>
 WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
-  
+
   SingleReaction &current_reaction = reactions[reaction_id];
-  
+
   if (!all_reactant_particles_exist(current_reaction))
     throw std::runtime_error("Trying to remove some non-existing particles "
                              "from the system via the inverse Widom scheme.");
 
-  
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
   // make reaction attempt
   const int number_of_saved_properties =
       3; // save p_id, charge and type of the reactant particle, only thing we
          // need to hide the particle and recover it
-  
-  auto particle_data =  make_reaction_attempt(current_reaction);
+
+  auto particle_data = make_reaction_attempt(current_reaction);
 
   const double E_pot_new = calculate_current_potential_energy_of_system();
   // reverse reaction attempt
@@ -1590,9 +1596,11 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
     delete_particle(p_ids_created_particle);
   }
   // 2) restore previously hidden reactant particles
-  restore_properties(particle_data.hidden_particles_properties, number_of_saved_properties);
+  restore_properties(particle_data.hidden_particles_properties,
+                     number_of_saved_properties);
   // 3) restore previously changed reactant particles
-  restore_properties(particle_data.changed_particles_properties, number_of_saved_properties);
+  restore_properties(particle_data.changed_particles_properties,
+                     number_of_saved_properties);
   std::vector<double> exponential = {
       exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
   current_reaction.accumulator_exponentials(exponential);
