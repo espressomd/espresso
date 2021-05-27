@@ -96,6 +96,10 @@ python_benchmark(
   FILE p3m.py ARGUMENTS
   "--particles_per_core=10000;--volume_fraction=0.25;--prefactor=4")
 
+python_benchmark(
+  FILE lb.py ARGUMENTS
+  "--particles_per_core=125;--volume_fraction=0.03;--lb_sites_per_core=28")
+
 add_custom_target(
   benchmark_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
                            ${CTEST_ARGS} --output-on-failure)
