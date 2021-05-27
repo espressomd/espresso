@@ -60,7 +60,6 @@ enum Fields {
   /** index of \ref n_thermalized_bonds */
   FIELD_THERMALIZEDBONDS,
   FIELD_FORCE_CAP,
-  FIELD_THERMO_VIRTUAL,
 };
 
 /** Broadcast a global variable.

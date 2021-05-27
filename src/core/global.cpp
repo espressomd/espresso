@@ -110,7 +110,6 @@ const std::unordered_map<int, Datafield> fields{
      {&n_thermalized_bonds, 1,
       "n_thermalized_bonds"}}, /* 56 from thermalized_bond.cpp */
     {FIELD_FORCE_CAP, {&force_cap, 1, "force_cap"}},
-    {FIELD_THERMO_VIRTUAL, {&thermo_virtual, 1, "thermo_virtual"}},
 };
 
 std::size_t hash_value(Datafield const &field) {

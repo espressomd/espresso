@@ -18,8 +18,7 @@
 #
 from functools import wraps
 include "myconfig.pxi"
-from .globals cimport FIELD_TEMPERATURE, FIELD_THERMO_SWITCH, \
-    FIELD_THERMO_VIRTUAL
+from .globals cimport FIELD_TEMPERATURE, FIELD_THERMO_SWITCH
 IF NPT:
     from .globals cimport FIELD_NPTISO_G0, FIELD_NPTISO_GV
     from .thermostat cimport nptiso
