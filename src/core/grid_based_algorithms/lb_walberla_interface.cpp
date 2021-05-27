@@ -166,5 +166,8 @@ void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f) {
 
 REGISTER_CALLBACK(add_force_at_pos)
 
+uint64_t get_rng_state() { return lb_walberla()->get_rng_state(); }
+
+void set_rng_state(uint64_t counter) { lb_walberla()->set_rng_state(counter); }
 } // namespace Walberla
 #endif

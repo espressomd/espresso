@@ -60,6 +60,9 @@ boost::optional<double> get_interpolated_density_at_pos(Utils::Vector3d pos);
 
 void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f);
 
+uint64_t get_rng_state();
+void set_rng_state(uint64_t code);
+
 } // namespace Walberla
 #endif
 #endif

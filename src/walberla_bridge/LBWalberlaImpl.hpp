@@ -649,6 +649,13 @@ public:
 
   double get_kT() const override { return 0.; };
 
+  uint64_t get_rng_state() const override {
+    throw std::runtime_error("The LB does not use a random number generator");
+  };
+  void set_rng_state(uint64_t counter) {
+    throw std::runtime_error("The LB does not use a random number generator");
+  };
+
   // Grid, domain, halo
   int n_ghost_layers() const override { return m_n_ghost_layers; };
   Utils::Vector3i get_grid_dimensions() const override {

@@ -67,23 +67,9 @@ class TestLB:
             agrid=self.params['agrid'],
             tau=self.system.time_step)
         self.system.actors.add(self.lbf)
-        with self.assertRaises(ValueError):
-            self.lbf.tau = -0.1
-        self.assertAlmostEqual(self.lbf.tau, self.system.time_step, places=6)
-        with self.assertRaises(ValueError):
-            self.lbf.density = -0.1
-        self.lbf.density = 1.0
-        with self.assertRaises(ValueError):
-            self.lbf.viscosity = -0.1
-        self.lbf.density = 2.4
-        with self.assertRaises(ValueError):
-            self.lbf.density = -2.4
-        self.assertAlmostEqual(self.lbf.density, 2.4, places=6)
         self.lbf.seed = 56
         self.system.integrator.run(1)
         self.assertEqual(self.lbf.seed, 57)
-        self.lbf.tau = 0.2
-        self.assertAlmostEqual(self.lbf.tau, 0.2, places=6)
         self.lbf[0, 0, 0].velocity = [1, 2, 3]
         np.testing.assert_allclose(
             np.copy(self.lbf[0, 0, 0].velocity), [1, 2, 3], atol=1E-10)
@@ -294,7 +280,6 @@ class TestLB:
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
-        print("box_l", self.system.box_l)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
@@ -319,7 +304,6 @@ class TestLB:
             coupling_pos1 = p1.pos + self.system.time_step * p1.v
             coupling_pos2 = p2.pos + self.system.time_step * p2.v
 
-            print(p1.pos, p2.pos)
             v_fluid1 = self.lbf.get_interpolated_velocity(coupling_pos1)
             v_fluid2 = self.lbf.get_interpolated_velocity(coupling_pos2)
             # Nodes to which forces will be interpolated
@@ -340,7 +324,6 @@ class TestLB:
             # check particle/fluid force balance
             applied_forces = np.array(
                 [n.last_applied_force for n in all_coupling_nodes])
-            print(sorted([n.index for n in all_coupling_nodes]))
             np.testing.assert_allclose(
                 np.sum(applied_forces, axis=0), -np.copy(p1.f) - np.copy(p2.f), atol=1E-10)
 
@@ -513,15 +496,6 @@ class TestLBWalberla(TestLB, ut.TestCase):
 
     def test_stress_tensor(self):
         print("stress tensor not implemented for Walberla. skipping test.")
-
-    def test_parameter_change_without_seed(self):
-        print("Thermalization not implemented for Walberla. skipping test")
-
-    def test_raise_if_not_active(self):
-        print("Not supported by Walberla ")
-
-    def test_properties(self):
-        print("LB Walberla not thermalized.")
 
     def test_pressure_tensor_observable(self):
         print("Not supported by Walberla")

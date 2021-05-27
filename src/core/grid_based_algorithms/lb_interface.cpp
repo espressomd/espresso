@@ -67,7 +67,6 @@ void lb_lbfluid_update() {
 
 /** measures the MD time since the last fluid update */
 static double fluidstep = 0.0;
-std::unique_ptr<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 void lb_lbfluid_propagate() {
   if (lattice_switch == ActiveLB::NONE)
@@ -142,10 +141,19 @@ void lb_lbfluid_on_integration_start() { lb_lbfluid_sanity_checks(); }
 
 void lb_lbfluid_invalidate_particle_allocation() {}
 
-uint64_t lb_lbfluid_get_rng_state() { return rng_counter_fluid->value(); }
+uint64_t lb_lbfluid_get_rng_state() {
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return Walberla::get_rng_state();
+  }
+  throw NoLBActive();
+}
 
 void lb_lbfluid_set_rng_state(uint64_t counter) {
-  rng_counter_fluid = std::make_unique<Utils::Counter<uint64_t>>(counter);
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    Walberla::set_rng_state(counter);
+  } else {
+    throw NoLBActive();
+  }
 }
 
 double lb_lbfluid_get_viscosity() {
