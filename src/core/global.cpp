@@ -91,9 +91,6 @@ const std::unordered_map<int, Datafield> fields{
      {reinterpret_cast<std::underlying_type_t<ActiveLB> *>(&lattice_switch), 1,
       "lattice_switch"}}, /* 37 from lattice.cpp */
     {FIELD_MAX_OIF_OBJECTS, {&max_oif_objects, 1, "max_oif_objects"}},
-    {FIELD_THERMALIZEDBONDS,
-     {&n_thermalized_bonds, 1,
-      "n_thermalized_bonds"}}, /* 56 from thermalized_bond.cpp */
 };
 
 std::size_t hash_value(Datafield const &field) {

@@ -43,8 +43,6 @@ enum Fields {
   /** index of \ref lattice_switch */
   FIELD_LATTICE_SWITCH,
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
-  /** index of \ref n_thermalized_bonds */
-  FIELD_THERMALIZEDBONDS,
 };
 
 /** Broadcast a global variable.
