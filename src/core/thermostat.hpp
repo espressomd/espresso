@@ -367,4 +367,10 @@ void thermo_init(double time_step);
 /** Increment RNG counters */
 void philox_counter_increment();
 
+#ifndef PARTICLE_ANISOTROPY
+void mpi_set_brownian_gamma(double gamma);
+#else
+void mpi_set_brownian_gamma(const Utils::Vector3d &gamma);
+#endif
+
 #endif

@@ -262,11 +262,9 @@ cdef class Thermostat:
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
         global brownian
         IF PARTICLE_ANISOTROPY:
-            for i in range(3):
-                brownian.gamma[i] = 0.
+            mpi_set_brownian_gamma(utils.make_Vector3d((0., 0., 0.)))
         ELSE:
-            brownian.gamma = 0.
-        mpi_bcast_parameter(FIELD_BROWNIAN_GAMMA)
+            mpi_set_brownian_gamma(0.)
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
                 for i in range(3):
@@ -535,16 +533,12 @@ cdef class Thermostat:
         temperature = float(kT)
         global brownian
         IF PARTICLE_ANISOTROPY:
+            cdef utils.Vector3d gamma_vec
             if scalar_gamma_def:
-                brownian.gamma[0] = gamma
-                brownian.gamma[1] = gamma
-                brownian.gamma[2] = gamma
+                for i in range(3):
+                    gamma_vec[i] = gamma
             else:
-                brownian.gamma[0] = gamma[0]
-                brownian.gamma[1] = gamma[1]
-                brownian.gamma[2] = gamma[2]
-        ELSE:
-            brownian.gamma = float(gamma)
+                gamma_vec = utils.make_Vector3d(gamma)
         IF ROTATION:
             if gamma_rotation is not None:
                 IF PARTICLE_ANISOTROPY:
@@ -579,7 +573,11 @@ cdef class Thermostat:
         thermo_switch = (thermo_switch | THERMO_BROWNIAN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
-        mpi_bcast_parameter(FIELD_BROWNIAN_GAMMA)
+        
+        IF PARTICLE_ANISOTROPY:
+            mpi_set_brownian_gamma(gamma_vec)
+        ELSE:
+            mpi_set_brownian_gamma(gamma)
 
         global thermo_virtual
         thermo_virtual = act_on_virtual

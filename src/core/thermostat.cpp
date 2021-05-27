@@ -28,6 +28,7 @@
 #include "bonded_interactions/thermalized_bond_utils.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "thermostat.hpp"
@@ -144,3 +145,25 @@ void philox_counter_increment() {
     thermalized_bond.rng_increment();
   }
 }
+
+#ifndef PARTICLE_ANISOTROPY
+void mpi_set_brownian_gamma_local(double gamma) {
+  brownian.gamma = GammaType{gamma};
+}
+#else
+void mpi_set_brownian_gamma_local(const Utils::Vector3d &gamma) {
+  brownian.gamma = GammaType{gamma};
+}
+#endif
+
+REGISTER_CALLBACK(mpi_set_brownian_gamma_local)
+
+#ifndef PARTICLE_ANISOTROPY
+void mpi_set_brownian_gamma(double gamma) {
+  mpi_call_all(mpi_set_brownian_gamma_local, gamma);
+}
+#else
+void mpi_set_brownian_gamma(const Utils::Vector3d &gamma) {
+  mpi_call_all(mpi_set_brownian_gamma_local, gamma);
+}
+#endif
