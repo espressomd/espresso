@@ -230,3 +230,15 @@ REGISTER_CALLBACK(mpi_set_thermo_virtual_local)
 void mpi_set_thermo_virtual(bool thermo_virtual) {
   mpi_call_all(mpi_set_thermo_virtual_local, thermo_virtual);
 }
+
+void mpi_set_temperature_local(double temperature) {
+  ::temperature = temperature;
+  on_temperature_change();
+  on_thermostat_param_change();
+}
+
+REGISTER_CALLBACK(mpi_set_temperature_local)
+
+void mpi_set_temperature(double temperature) {
+  mpi_call_all(mpi_set_temperature_local, temperature);
+}

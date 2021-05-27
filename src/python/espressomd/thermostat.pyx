@@ -244,10 +244,8 @@ cdef class Thermostat:
 
         """
 
-        global temperature
-        temperature = 0.
+        mpi_set_temperature(0.)
         mpi_set_thermo_virtual(True)
-        mpi_bcast_parameter(FIELD_TEMPERATURE)
         IF PARTICLE_ANISOTROPY:
             mpi_set_langevin_gamma(utils.make_Vector3d((0., 0., 0.)))
         ELSE:
@@ -366,8 +364,7 @@ cdef class Thermostat:
                 raise ValueError("seed must be a positive integer")
             langevin_set_rng_seed(seed)
 
-        global temperature
-        temperature = float(kT)
+        mpi_set_temperature(kT)
         IF PARTICLE_ANISOTROPY:
             cdef utils.Vector3d gamma_vec
             if scalar_gamma_def:
@@ -395,7 +392,6 @@ cdef class Thermostat:
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LANGEVIN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-        mpi_bcast_parameter(FIELD_TEMPERATURE)
         IF PARTICLE_ANISOTROPY:
             mpi_set_langevin_gamma(gamma_vec)
         ELSE:
@@ -502,8 +498,7 @@ cdef class Thermostat:
                 raise ValueError("seed must be a positive integer")
             brownian_set_rng_seed(seed)
 
-        global temperature
-        temperature = float(kT)
+        mpi_set_temperature(kT)
         IF PARTICLE_ANISOTROPY:
             cdef utils.Vector3d gamma_vec
             if scalar_gamma_def:
@@ -531,7 +526,6 @@ cdef class Thermostat:
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_BROWNIAN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-        mpi_bcast_parameter(FIELD_TEMPERATURE)
 
         IF PARTICLE_ANISOTROPY:
             mpi_set_brownian_gamma(gamma_vec)
@@ -637,15 +631,13 @@ cdef class Thermostat:
                     raise ValueError("seed must be a positive integer")
                 npt_iso_set_rng_seed(seed)
 
-            global temperature
-            temperature = float(kT)
+            mpi_set_temperature(kT)
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_NPT_ISO)
             global npt_iso
             npt_iso.gamma0 = gamma0
             npt_iso.gammav = gammav
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-            mpi_bcast_parameter(FIELD_TEMPERATURE)
             mpi_bcast_parameter(FIELD_NPTISO_G0)
             mpi_bcast_parameter(FIELD_NPTISO_GV)
 
@@ -668,7 +660,7 @@ cdef class Thermostat:
             """
             if kT is None:
                 raise ValueError("kT has to be given as keyword args")
-            if not isinstance(kT, float):
+            if not isinstance(kT, float) or is None:
                 raise ValueError("temperature must be a positive number")
 
             # Seed is required if the RNG is not initialized
@@ -683,13 +675,11 @@ cdef class Thermostat:
                     raise ValueError("seed must be a positive integer")
                 dpd_set_rng_seed(seed)
 
-            global temperature
-            temperature = float(kT)
+            mpi_set_temperature(kT)
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_DPD)
 
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-            mpi_bcast_parameter(FIELD_TEMPERATURE)
 
     IF STOKESIAN_DYNAMICS:
         @AssertThermostatType(THERMO_SD)

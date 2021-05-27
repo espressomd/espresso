@@ -383,4 +383,6 @@ void mpi_set_langevin_gamma_rot(const Utils::Vector3d &gamma);
 
 void mpi_set_thermo_virtual(bool thermo_virtual);
 
+void mpi_set_temperature(double temperature);
+
 #endif

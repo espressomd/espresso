@@ -104,6 +104,7 @@ cdef extern from "thermostat.hpp":
         void mpi_set_langevin_gamma_rot(double gamma)
 
     void mpi_set_thermo_virtual(cbool thermo_virtual)
+    void mpi_set_temperature(double temperature)
 
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:
