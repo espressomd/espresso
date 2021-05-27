@@ -362,7 +362,7 @@ extern StokesianThermostat stokesian;
 #endif
 
 /** Initialize constants of the thermostat at the start of integration */
-void thermo_init();
+void thermo_init(double time_step);
 
 /** Increment RNG counters */
 void philox_counter_increment();

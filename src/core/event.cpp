@@ -100,7 +100,7 @@ void on_program_start() {
   }
 }
 
-void on_integration_start() {
+void on_integration_start(double time_step) {
   /********************************************/
   /* sanity checks                            */
   /********************************************/
@@ -123,7 +123,7 @@ void on_integration_start() {
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
-    thermo_init();
+    thermo_init(time_step);
     reinit_thermo = false;
     recalc_forces = true;
   }

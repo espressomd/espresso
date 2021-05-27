@@ -37,7 +37,7 @@ extern ActiveLB lattice_switch;
 /**
  * @brief Propagate the LB fluid.
  */
-void lb_lbfluid_propagate();
+void lb_lbfluid_propagate(double time_step);
 
 /**
  * @brief Event handler for integration start.

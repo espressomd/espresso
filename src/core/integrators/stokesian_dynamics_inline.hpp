@@ -33,8 +33,8 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-inline void
-stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
+inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
+                                                 double time_step) {
   auto const skin2 = Utils::sqr(0.5 * skin);
 
   // Compute new (translational and rotational) velocities
@@ -58,8 +58,9 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
   }
 }
 
-inline void stokesian_dynamics_step_1(const ParticleRange &particles) {
-  stokesian_dynamics_propagate_vel_pos(particles);
+inline void stokesian_dynamics_step_1(const ParticleRange &particles,
+                                      double time_step) {
+  stokesian_dynamics_propagate_vel_pos(particles, time_step);
   increment_sim_time(time_step);
 }
 

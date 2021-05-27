@@ -64,8 +64,6 @@ LB_parameters_gpu lbpar_gpu = {
     -1.0,
     // tau
     -1.0,
-    // time_step
-    0.0,
     // dim_x;
     0,
     // dim_y;
@@ -102,9 +100,9 @@ bool ek_initialized = false;
 /*-----------------------------------------------------------*/
 
 /** %Lattice Boltzmann update gpu called from integrate.cpp */
-void lattice_boltzmann_update_gpu() {
+void lattice_boltzmann_update_gpu(double time_step) {
 
-  auto factor = (int)round(lbpar_gpu.tau / time_step);
+  auto factor = static_cast<int>(round(lbpar_gpu.tau / time_step));
 
   fluidstep += 1;
 
@@ -130,7 +128,6 @@ void lb_reinit_fluid_gpu() {
  *  See @cite dunweg07a and @cite dhumieres09a.
  */
 void lb_reinit_parameters_gpu() {
-  lbpar_gpu.time_step = static_cast<float>(time_step);
   lbpar_gpu.mu = 0.0;
 
   if (lbpar_gpu.viscosity > 0.0 && lbpar_gpu.agrid > 0.0 &&
@@ -172,7 +169,7 @@ void lb_reinit_parameters_gpu() {
 
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
-    lbpar_gpu.tau = static_cast<float>(time_step);
+    lbpar_gpu.tau = static_cast<float>(get_time_step());
   }
 #endif
 

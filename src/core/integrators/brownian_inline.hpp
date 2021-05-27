@@ -34,7 +34,8 @@
 #include <utils/math/sqr.hpp>
 
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
-                                         const ParticleRange &particles) {
+                                         const ParticleRange &particles,
+                                         double time_step) {
   for (auto &p : particles) {
     // Don't propagate translational degrees of freedom of vs
     if (!(p.p.is_virtual) or thermo_virtual) {

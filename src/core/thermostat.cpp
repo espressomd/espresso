@@ -95,10 +95,10 @@ REGISTER_THERMOSTAT_CALLBACKS(dpd)
 REGISTER_THERMOSTAT_CALLBACKS(stokesian)
 #endif
 
-void thermo_init() {
+void thermo_init(double time_step) {
   // initialize thermalized bond regardless of the current thermostat
   if (n_thermalized_bonds) {
-    thermalized_bond_init();
+    thermalized_bond_init(time_step);
   }
   if (thermo_switch == THERMO_OFF) {
     return;
@@ -107,7 +107,7 @@ void thermo_init() {
     langevin.recalc_prefactors(time_step);
 #ifdef DPD
   if (thermo_switch & THERMO_DPD)
-    dpd_init();
+    dpd_init(time_step);
 #endif
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO) {

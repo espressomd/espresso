@@ -155,7 +155,7 @@ void force_calc(CellStructure &cell_structure, double time_step) {
   immersed_boundaries.volume_conservation(cell_structure);
 
   lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                         ghost_particles);
+                                         ghost_particles, time_step);
 
 #ifdef CUDA
   copy_forces_from_GPU(particles);

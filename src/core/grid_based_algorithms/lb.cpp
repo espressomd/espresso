@@ -983,7 +983,7 @@ void lb_collide_stream() {
  *  for the lattice dynamics can be coarser than the MD time step, we
  *  monitor the time since the last lattice update.
  */
-void lattice_boltzmann_update() {
+void lattice_boltzmann_update(double time_step) {
   auto const factor = static_cast<int>(round(lbpar.tau / time_step));
 
   fluidstep += 1;

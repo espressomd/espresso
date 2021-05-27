@@ -163,6 +163,9 @@ void integrate_set_npt_isotropic(double ext_pressure, double piston,
                                  bool zdir_rescale, bool cubic_box);
 #endif
 
+/** Get time step */
+double get_time_step();
+
 /** Get simulation time */
 double get_sim_time();
 

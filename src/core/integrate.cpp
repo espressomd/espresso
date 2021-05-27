@@ -131,11 +131,11 @@ bool integrator_step_1(ParticleRange &particles) {
       return true; // early exit
     break;
   case INTEG_METHOD_NVT:
-    velocity_verlet_step_1(particles);
+    velocity_verlet_step_1(particles, time_step);
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_1(particles);
+    velocity_verlet_npt_step_1(particles, time_step);
     break;
 #endif
   case INTEG_METHOD_BD:
@@ -144,7 +144,7 @@ bool integrator_step_1(ParticleRange &particles) {
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
-    stokesian_dynamics_step_1(particles);
+    stokesian_dynamics_step_1(particles, time_step);
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
@@ -160,16 +160,16 @@ void integrator_step_2(ParticleRange &particles) {
     // Nothing
     break;
   case INTEG_METHOD_NVT:
-    velocity_verlet_step_2(particles);
+    velocity_verlet_step_2(particles, time_step);
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_2(particles);
+    velocity_verlet_npt_step_2(particles, time_step);
     break;
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles);
+    brownian_dynamics_propagator(brownian, particles, time_step);
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
@@ -185,7 +185,7 @@ int integrate(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   /* Prepare the integrator */
-  on_integration_start();
+  on_integration_start(time_step);
 
   /* if any method vetoes (e.g. P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
@@ -284,11 +284,11 @@ int integrate(int n_steps, int reuse_forces) {
 
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      lb_lbfluid_propagate();
+      lb_lbfluid_propagate(time_step);
       lb_lbcoupling_propagate();
 
 #ifdef VIRTUAL_SITES
-      virtual_sites()->after_lb_propagation();
+      virtual_sites()->after_lb_propagation(time_step);
 #endif
 
 #ifdef COLLISION_DETECTION
@@ -456,6 +456,8 @@ double interaction_range() {
   auto const max_cut = maximal_cutoff();
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
+
+double get_time_step() { return time_step; }
 
 double get_sim_time() { return sim_time; }
 

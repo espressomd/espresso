@@ -45,7 +45,8 @@
 #include <cmath>
 #include <functional>
 
-void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
+                                             double time_step) {
   extern IsotropicNptThermostat npt_iso;
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 
@@ -68,7 +69,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
 }
 
 /** Scale and communicate instantaneous NpT pressure */
-void velocity_verlet_npt_finalize_p_inst() {
+void velocity_verlet_npt_finalize_p_inst(double time_step) {
   extern IsotropicNptThermostat npt_iso;
   /* finalize derivation of p_inst */
   nptiso.p_inst = 0.0;
@@ -89,11 +90,12 @@ void velocity_verlet_npt_finalize_p_inst() {
   }
 }
 
-void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
+                                       double time_step) {
   double scal[3] = {0., 0., 0.}, L_new = 0.0;
 
   /* finalize derivation of p_inst */
-  velocity_verlet_npt_finalize_p_inst();
+  velocity_verlet_npt_finalize_p_inst(time_step);
 
   /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and
    * vel-rescaling
@@ -162,7 +164,8 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
   on_boxl_change(true);
 }
 
-void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
+                                       double time_step) {
   extern IsotropicNptThermostat npt_iso;
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 
@@ -190,17 +193,19 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
   }
 }
 
-void velocity_verlet_npt_step_1(const ParticleRange &particles) {
-  velocity_verlet_npt_propagate_vel(particles);
-  velocity_verlet_npt_propagate_pos(particles);
+void velocity_verlet_npt_step_1(const ParticleRange &particles,
+                                double time_step) {
+  velocity_verlet_npt_propagate_vel(particles, time_step);
+  velocity_verlet_npt_propagate_pos(particles, time_step);
   increment_sim_time(time_step);
 }
 
-void velocity_verlet_npt_step_2(const ParticleRange &particles) {
-  velocity_verlet_npt_propagate_vel_final(particles);
+void velocity_verlet_npt_step_2(const ParticleRange &particles,
+                                double time_step) {
+  velocity_verlet_npt_propagate_vel_final(particles, time_step);
 #ifdef ROTATION
   convert_torques_propagate_omega(particles, time_step);
 #endif
-  velocity_verlet_npt_finalize_p_inst();
+  velocity_verlet_npt_finalize_p_inst(time_step);
 }
 #endif

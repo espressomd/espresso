@@ -27,7 +27,6 @@
 
 #include "event.hpp"
 #include "global.hpp"
-#include "integrate.hpp"
 
 #include <cmath>
 
@@ -42,10 +41,10 @@ ThermalizedBond::ThermalizedBond(double temp_com, double gamma_com,
   this->gamma_distance = gamma_distance;
   this->r_cut = r_cut;
 
-  pref1_com = gamma_com;
-  pref2_com = std::sqrt(24.0 * gamma_com / time_step * temp_com);
-  pref1_dist = gamma_distance;
-  pref2_dist = std::sqrt(24.0 * gamma_distance / time_step * temp_distance);
+  pref1_com = -1.;
+  pref2_com = -1.;
+  pref1_dist = -1.;
+  pref2_dist = -1.;
 
   n_thermalized_bonds += 1;
   mpi_bcast_parameter(FIELD_THERMALIZEDBONDS);

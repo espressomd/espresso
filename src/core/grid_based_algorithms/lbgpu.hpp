@@ -74,9 +74,6 @@ struct LB_parameters_gpu {
    */
   float tau;
 
-  /** MD timestep */
-  float time_step;
-
   Utils::Array<unsigned int, 3> dim;
 
   unsigned int number_of_nodes;
@@ -153,7 +150,7 @@ void lb_GPU_sanity_checks();
 void lb_get_device_values_pointer(LB_rho_v_gpu **pointer_address);
 void lb_get_boundary_force_pointer(float **pointer_address);
 void lb_get_para_pointer(LB_parameters_gpu **pointer_address);
-void lattice_boltzmann_update_gpu();
+void lattice_boltzmann_update_gpu(double time_step);
 
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
@@ -188,7 +185,8 @@ void lb_init_boundaries_GPU(std::size_t n_lb_boundaries,
 void lb_set_agrid_gpu(double agrid);
 
 template <std::size_t no_of_neighbours>
-void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction,
+                                     double time_step);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);

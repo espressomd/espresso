@@ -68,10 +68,8 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
                    double r_c, int wf, double tgamma, double tr_c, int twf) {
   IA_parameters &ia_params = *get_ia_param_safe(part_type_a, part_type_b);
 
-  ia_params.dpd_radial = DPDParameters{
-      gamma, k, r_c, wf, sqrt(24.0 * temperature * gamma / time_step)};
-  ia_params.dpd_trans = DPDParameters{
-      tgamma, k, tr_c, twf, sqrt(24.0 * temperature * tgamma / time_step)};
+  ia_params.dpd_radial = DPDParameters{gamma, k, r_c, wf, -1.};
+  ia_params.dpd_trans = DPDParameters{tgamma, k, tr_c, twf, -1.};
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -79,7 +77,7 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
   return ES_OK;
 }
 
-void dpd_init() {
+void dpd_init(double time_step) {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       IA_parameters &ia_params = *get_ia_param(type_a, type_b);

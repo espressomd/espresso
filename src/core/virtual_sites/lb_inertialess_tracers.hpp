@@ -29,7 +29,8 @@
 #include "ParticleRange.hpp"
 
 // Main functions for CPU & GPU
-void IBM_UpdateParticlePositions(ParticleRange const &particles);
+void IBM_UpdateParticlePositions(ParticleRange const &particles,
+                                 double time_step);
 
 // Main functions for CPU implementation - called from integrate.cpp
 void IBM_ForcesIntoFluid_CPU();

@@ -26,6 +26,6 @@
  *
  *  Implementation in \ref thermalized_bond_utils.cpp.
  */
-void thermalized_bond_init();
+void thermalized_bond_init(double time_step);
 
 #endif

@@ -123,7 +123,8 @@ namespace {
  * @param pos Position of the force
  * @param force Force in MD units.
  */
-void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
+void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
+                  double time_step) {
   /* transform momentum transfer to lattice units
      (eq. (12) @cite ahlrichs99a) */
   auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
@@ -141,7 +142,8 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
  *  @return The viscous coupling force plus f_random.
  */
 Utils::Vector3d lb_viscous_coupling(Particle const &p,
-                                    Utils::Vector3d const &f_random) {
+                                    Utils::Vector3d const &f_random,
+                                    double time_step) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const interpolated_u =
@@ -162,7 +164,7 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
   auto const force = -lb_lbcoupling_get_gamma() * (p.m.v - v_drift) + f_random;
 
-  add_md_force(p.r.p, force);
+  add_md_force(p.r.p, force, time_step);
 
   return force;
 }
@@ -223,7 +225,7 @@ bool in_local_halo(Vector3d const &pos) {
 }
 
 #ifdef ENGINE
-void add_swimmer_force(Particle &p) {
+void add_swimmer_force(Particle &p, double time_step) {
   if (p.p.swim.swimming) {
     // calculate source position
     const double direction =
@@ -235,28 +237,29 @@ void add_swimmer_force(Particle &p) {
       return;
     }
 
-    add_md_force(source_position, p.p.swim.f_swim * director);
+    add_md_force(source_position, p.p.swim.f_swim * director, time_step);
   }
 }
 #endif
 
 } // namespace
 
-void lb_lbcoupling_calc_particle_lattice_ia(
-    bool couple_virtual, const ParticleRange &particles,
-    const ParticleRange &more_particles) {
+void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
+                                            const ParticleRange &particles,
+                                            const ParticleRange &more_particles,
+                                            double time_step) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     if (lb_particle_coupling.couple_to_md && this_node == 0) {
       switch (lb_lbinterpolation_get_interpolation_order()) {
       case (InterpolationOrder::linear):
-        lb_calc_particle_lattice_ia_gpu<8>(couple_virtual,
-                                           lb_lbcoupling_get_gamma());
+        lb_calc_particle_lattice_ia_gpu<8>(
+            couple_virtual, lb_lbcoupling_get_gamma(), time_step);
         break;
       case (InterpolationOrder::quadratic):
-        lb_calc_particle_lattice_ia_gpu<27>(couple_virtual,
-                                            lb_lbcoupling_get_gamma());
+        lb_calc_particle_lattice_ia_gpu<27>(
+            couple_virtual, lb_lbcoupling_get_gamma(), time_step);
         break;
       }
     }
@@ -295,18 +298,19 @@ void lb_lbcoupling_calc_particle_lattice_ia(
            * is responsible to adding its force */
           if (in_local_domain(p.r.p, local_geo)) {
             auto const force = lb_viscous_coupling(
-                p, noise_amplitude * f_random(p.identity()));
+                p, noise_amplitude * f_random(p.identity()), time_step);
             /* add force to the particle */
             p.f.f += force;
             /* Particle is not in our domain, but adds to the force
              * density in our domain, only calculate contribution to
              * the LB force density. */
           } else if (in_local_halo(p.r.p)) {
-            lb_viscous_coupling(p, noise_amplitude * f_random(p.identity()));
+            lb_viscous_coupling(p, noise_amplitude * f_random(p.identity()),
+                                time_step);
           }
 
 #ifdef ENGINE
-          add_swimmer_force(p);
+          add_swimmer_force(p, time_step);
 #endif
         };
 
