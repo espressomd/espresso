@@ -628,11 +628,7 @@ cdef class Thermostat:
             mpi_set_temperature(kT)
             global thermo_switch
             mpi_set_thermo_switch(thermo_switch | THERMO_NPT_ISO)
-            global npt_iso
-            npt_iso.gamma0 = gamma0
-            npt_iso.gammav = gammav
-            mpi_bcast_parameter(FIELD_NPTISO_G0)
-            mpi_bcast_parameter(FIELD_NPTISO_GV)
+            mpi_set_nptiso_gammas(gamma0, gammav)
 
     IF DPD:
         @AssertThermostatType(THERMO_DPD, THERMO_LANGEVIN, THERMO_LB)

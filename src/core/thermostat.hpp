@@ -387,4 +387,8 @@ void mpi_set_temperature(double temperature);
 
 void mpi_set_thermo_switch(int thermo_switch);
 
+#ifdef NPT
+void mpi_set_nptiso_gammas(double gamma0, double gammav);
+#endif
+
 #endif

@@ -252,3 +252,17 @@ REGISTER_CALLBACK(mpi_set_thermo_switch_local)
 void mpi_set_thermo_switch(int thermo_switch) {
   mpi_call_all(mpi_set_thermo_switch_local, thermo_switch);
 }
+
+#ifdef NPT
+void mpi_set_nptiso_gammas_local(double gamma0, double gammav) {
+  npt_iso.gamma0 = gamma0;
+  npt_iso.gammav = gammav;
+  on_thermostat_param_change();
+}
+
+REGISTER_CALLBACK(mpi_set_nptiso_gammas_local)
+
+void mpi_set_nptiso_gammas(double gamma0, double gammav) {
+  mpi_call_all(mpi_set_nptiso_gammas_local, gamma0, gammav);
+}
+#endif

@@ -107,6 +107,9 @@ cdef extern from "thermostat.hpp":
     void mpi_set_temperature(double temperature)
     void mpi_set_thermo_switch(int thermo_switch)
 
+    IF NPT:
+        void mpi_set_nptiso_gammas(double gamma0, double gammav)
+
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:
         void set_sd_kT(double kT) except +
