@@ -136,14 +136,6 @@ const std::unordered_map<int, Datafield> fields{
      {brownian.gamma_rotation.data(), 3,
       "brownian.gamma_rotation"}}, /* 57 from thermostat.cpp */
 #endif
-#ifndef PARTICLE_ANISOTROPY
-    {FIELD_BROWNIAN_GAMMA,
-     {&brownian.gamma, 1, "brownian.gamma"}}, /* 58  from thermostat.cpp */
-#else
-    {FIELD_BROWNIAN_GAMMA,
-     {brownian.gamma.data(), 3,
-      "brownian.gamma"}}, /* 58  from thermostat.cpp */
-#endif // PARTICLE_ANISOTROPY
 };
 
 std::size_t hash_value(Datafield const &field) {

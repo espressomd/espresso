@@ -18,8 +18,8 @@
 #
 from functools import wraps
 include "myconfig.pxi"
-from .globals cimport FIELD_BROWNIAN_GAMMA, FIELD_LANGEVIN_GAMMA, \
-    FIELD_TEMPERATURE, FIELD_THERMO_SWITCH, FIELD_THERMO_VIRTUAL
+from .globals cimport FIELD_LANGEVIN_GAMMA, FIELD_TEMPERATURE, \
+    FIELD_THERMO_SWITCH, FIELD_THERMO_VIRTUAL
 IF NPT:
     from .globals cimport FIELD_NPTISO_G0, FIELD_NPTISO_GV
     from .thermostat cimport nptiso
@@ -573,7 +573,7 @@ cdef class Thermostat:
         thermo_switch = (thermo_switch | THERMO_BROWNIAN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
-        
+
         IF PARTICLE_ANISOTROPY:
             mpi_set_brownian_gamma(gamma_vec)
         ELSE:

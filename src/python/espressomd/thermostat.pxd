@@ -89,7 +89,7 @@ cdef extern from "thermostat.hpp":
         void dpd_set_rng_counter(stdint.uint64_t counter)
     IF STOKESIAN_DYNAMICS:
         void stokesian_set_rng_counter(stdint.uint64_t counter)
-    
+
     IF PARTICLE_ANISOTROPY:
         void mpi_set_brownian_gamma(const Vector3d & gamma)
     ELSE:
