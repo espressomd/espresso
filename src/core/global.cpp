@@ -157,9 +157,3 @@ void check_global_consistency() {
     }
   }
 }
-
-/*************** BCAST PARAMETER ************/
-
-REGISTER_CALLBACK(common_bcast_parameter)
-
-void mpi_bcast_parameter(int i) { mpi_call_all(common_bcast_parameter, i); }

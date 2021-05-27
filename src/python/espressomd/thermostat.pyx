@@ -20,7 +20,6 @@ from functools import wraps
 include "myconfig.pxi"
 IF NPT:
     from .thermostat cimport nptiso
-from .globals cimport mpi_bcast_parameter
 from . cimport utils
 from .lb import HydrodynamicInteraction
 from .lb cimport lb_lbcoupling_set_gamma

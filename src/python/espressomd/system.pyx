@@ -44,7 +44,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
 from .comfixed import ComFixed
 from .globals import Globals
 from .globals cimport integ_switch, max_oif_objects, mpi_set_max_oif_objects
-from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded, mpi_bcast_parameter
+from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded
 from .utils cimport check_type_or_throw_except
 from .utils import is_valid_type, handle_errors
 IF VIRTUAL_SITES:

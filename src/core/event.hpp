@@ -41,10 +41,7 @@
 /** \name Hook procedures
  *  These procedures are called if several significant changes to
  *  the system happen which may make a reinitialization of subsystems
- *  necessary. Note that all these functions are called on ALL nodes.
- *  If you need to do something only on the master node, check
- *  \ref this_node == 0. The use of the asynchronous mpi_* functions
- *  (e.g. mpi_bcast_parameter) on the master node is possible.
+ *  necessary.
  */
 /**@{*/
 

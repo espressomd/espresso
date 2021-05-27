@@ -68,10 +68,8 @@ Utils::Vector<int, 6> calc_node_neighbors(const boost::mpi::communicator &comm);
  */
 Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm);
 
-/** called from \ref mpi_bcast_parameter . */
 void grid_changed_n_nodes();
 
-/** called from \ref mpi_bcast_parameter . */
 void grid_changed_box_l(const BoxGeometry &box);
 
 /** @brief Rescale box in dimension @p dir to the new value @p d_new and

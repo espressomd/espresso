@@ -25,9 +25,6 @@ cdef extern from "grid.hpp":
     void mpi_set_periodicity(bool x, bool y, bool z)
     void mpi_set_node_grid(const Vector3i & node_grid)
 
-cdef extern from "global.hpp":
-    void mpi_bcast_parameter(int p)
-
 cdef extern from "integrate.hpp":
     double time_step
     extern int integ_switch

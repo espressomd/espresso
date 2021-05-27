@@ -33,19 +33,10 @@
 void check_global_consistency();
 
 /** @brief Field Enumeration
- *  These numbers identify the variables given in
- *  @ref anonymous_namespace{global.cpp}::fields "fields"
- *  for use with @ref mpi_bcast_parameter.
  */
 enum Fields {
   /** index of \ref nptiso_struct::piston (only used for the events) */
   FIELD_NPTISO_PISTON,
 };
-
-/** Broadcast a global variable.
- *  @param i  the number from @ref anonymous_namespace{global.cpp}::fields
- *            "fields" specifying which Datafield to broadcast.
- */
-void mpi_bcast_parameter(int i);
 
 #endif
