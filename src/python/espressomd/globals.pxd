@@ -26,7 +26,6 @@ cdef extern from "grid.hpp":
 
 cdef extern from "global.hpp":
     int FIELD_NODEGRID
-    int FIELD_THERMO_SWITCH
     IF NPT:
         int FIELD_NPTISO_G0
         int FIELD_NPTISO_GV

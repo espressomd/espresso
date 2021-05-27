@@ -334,7 +334,6 @@ void on_parameter_change(int field) {
     /* If the force cap changed, forces are invalid */
     recalc_forces = true;
     break;
-  case FIELD_THERMO_SWITCH:
   case FIELD_LATTICE_SWITCH:
   case FIELD_RIGIDBONDS:
     break;

@@ -98,8 +98,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_NPTISO_GV,
      {&npt_iso.gammav, 1, "npt_iso.gammav"}}, /* 22 from thermostat.cpp */
 #endif
-    {FIELD_THERMO_SWITCH,
-     {&thermo_switch, 1, "thermo_switch"}}, /* 31 from thermostat.cpp */
     {FIELD_LATTICE_SWITCH,
      {reinterpret_cast<std::underlying_type_t<ActiveLB> *>(&lattice_switch), 1,
       "lattice_switch"}}, /* 37 from lattice.cpp */
