@@ -40,15 +40,13 @@
 
 #include <boost/mpi/collectives.hpp>
 
-#include <mpi.h>
-
 #include <cmath>
 #include <functional>
 
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
                                              double time_step) {
   extern IsotropicNptThermostat npt_iso;
-  nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
+  nptiso.p_vel = {};
 
   for (auto &p : particles) {
     // Virtual sites are not propagated during integration
@@ -92,7 +90,8 @@ void velocity_verlet_npt_finalize_p_inst(double time_step) {
 
 void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
                                        double time_step) {
-  double scal[3] = {0., 0., 0.}, L_new = 0.0;
+  Utils::Vector3d scal{};
+  double L_new = 0.0;
 
   /* finalize derivation of p_inst */
   velocity_verlet_npt_finalize_p_inst(time_step);
@@ -118,9 +117,9 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
     L_new = pow(nptiso.volume, 1.0 / nptiso.dimension);
 
     scal[1] = L_new * box_geo.length_inv()[nptiso.non_const_dim];
-    scal[0] = 1 / scal[1];
+    scal[0] = 1. / scal[1];
   }
-  MPI_Bcast(scal, 3, MPI_DOUBLE, 0, comm_cart);
+  boost::mpi::broadcast(comm_cart, scal, 0);
 
   /* propagate positions while rescaling positions and velocities */
   for (auto &p : particles) {
@@ -167,7 +166,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
 void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
                                        double time_step) {
   extern IsotropicNptThermostat npt_iso;
-  nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
+  nptiso.p_vel = {};
 
   for (auto &p : particles) {
 #ifdef ROTATION

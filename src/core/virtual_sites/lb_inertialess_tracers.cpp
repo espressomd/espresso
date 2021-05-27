@@ -38,15 +38,11 @@
 
 #include <cstddef>
 
-// ****** Functions for internal use ********
-
-void CoupleIBMParticleToFluid(Particle *p);
+void CoupleIBMParticleToFluid(Particle &p);
 void ParticleVelocitiesFromLB_CPU();
 bool IsHalo(int indexCheck);
-void GetIBMInterpolatedVelocity(const Utils::Vector3d &p, double *v,
-                                double *forceAdded);
-
-// ***** Internal variables ******
+void GetIBMInterpolatedVelocity(const Utils::Vector3d &p, Utils::Vector3d &v,
+                                Utils::Vector3d &forceAdded);
 
 bool *isHaloCache = nullptr;
 
@@ -77,7 +73,7 @@ void IBM_ForcesIntoFluid_CPU() {
   // Loop over local cells
   for (auto &p : cell_structure.local_particles()) {
     if (p.p.is_virtual)
-      CoupleIBMParticleToFluid(&p);
+      CoupleIBMParticleToFluid(p);
   }
 
   for (auto &p : cell_structure.ghost_particles()) {
@@ -85,7 +81,7 @@ void IBM_ForcesIntoFluid_CPU() {
     // in the range of the local lattice nodes
     if (in_local_domain(p.r.p)) {
       if (p.p.is_virtual)
-        CoupleIBMParticleToFluid(&p);
+        CoupleIBMParticleToFluid(p);
     }
   }
 }
@@ -112,15 +108,15 @@ void IBM_UpdateParticlePositions(ParticleRange const &particles,
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & 2))
 #endif
-        p.r.p[0] = p.r.p[0] + p.m.v[0] * time_step;
+        p.r.p[0] += p.m.v[0] * time_step;
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & 4))
 #endif
-        p.r.p[1] = p.r.p[1] + p.m.v[1] * time_step;
+        p.r.p[1] += p.m.v[1] * time_step;
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & 8))
 #endif
-        p.r.p[2] = p.r.p[2] + p.m.v[2] * time_step;
+        p.r.p[2] += p.m.v[2] * time_step;
 
       // Check if the particle might have crossed a box border
       const double dist2 = (p.r.p - p.l.p_old).norm2();
@@ -132,17 +128,14 @@ void IBM_UpdateParticlePositions(ParticleRange const &particles,
 }
 
 /** Put the momentum of a given particle into the LB fluid. */
-void CoupleIBMParticleToFluid(Particle *p) {
+void CoupleIBMParticleToFluid(Particle &p) {
   // Convert units from MD to LB
-  double delta_j[3];
-  delta_j[0] = p->f.f[0] * lbpar.tau * lbpar.tau / lbpar.agrid;
-  delta_j[1] = p->f.f[1] * lbpar.tau * lbpar.tau / lbpar.agrid;
-  delta_j[2] = p->f.f[2] * lbpar.tau * lbpar.tau / lbpar.agrid;
+  auto const delta_j = p.f.f * Utils::sqr(lbpar.tau * lbpar.tau) / lbpar.agrid;
 
   // Get indices and weights of affected nodes using discrete delta function
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
-  lblattice.map_position_to_lattice(p->r.p, node_index, delta);
+  lblattice.map_position_to_lattice(p.r.p, node_index, delta);
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {
@@ -154,12 +147,8 @@ void CoupleIBMParticleToFluid(Particle *p) {
           auto &local_f =
               lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
-          local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
-                        delta_j[0];
-          local_f[1] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
-                        delta_j[1];
-          local_f[2] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
-                        delta_j[2];
+          local_f +=
+              delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] * delta_j;
         }
       }
     }
@@ -172,8 +161,8 @@ void CoupleIBMParticleToFluid(Particle *p) {
  *  The fluid velocity is obtained by linear interpolation,
  *  cf. eq. (11) in @cite ahlrichs99a.
  */
-void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
-                                double *forceAdded) {
+void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, Utils::Vector3d &v,
+                                Utils::Vector3d &forceAdded) {
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
   Utils::Vector<std::size_t, 8> node_index{};
@@ -182,12 +171,14 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
 
   Utils::Vector3d interpolated_u = {};
   // This for the f/2 contribution to the velocity
-  forceAdded[0] = forceAdded[1] = forceAdded[2] = 0;
+  forceAdded = {};
 
   for (int z = 0; z < 2; z++) {
     for (int y = 0; y < 2; y++) {
       for (int x = 0; x < 2; x++) {
         auto const index = node_index[(z * 2 + y) * 2 + x];
+        auto const local_delta =
+            delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
         const auto &f = lbfields[index].force_density_buf;
 
         double local_density;
@@ -208,51 +199,26 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
           local_density = lbpar.density + modes[0];
 
           // Add the +f/2 contribution!!
-          local_j[0] = modes[1] + f[0] / 2;
-          local_j[1] = modes[2] + f[1] / 2;
-          local_j[2] = modes[3] + f[2] / 2;
+          local_j[0] = modes[1] + f[0] / 2.;
+          local_j[1] = modes[2] + f[1] / 2.;
+          local_j[2] = modes[3] + f[2] / 2.;
 
           // Keep track of the forces that we added to the fluid.
           // This is necessary for communication because this part is executed
           // for real and ghost particles.
           // Later on we sum the real and ghost contributions.
-          const double fExt[3] = {
-              lbpar.ext_force_density[0] * pow(lbpar.agrid, 2) * lbpar.tau *
-                  lbpar.tau,
-              lbpar.ext_force_density[1] * pow(lbpar.agrid, 2) * lbpar.tau *
-                  lbpar.tau,
-              lbpar.ext_force_density[2] * pow(lbpar.agrid, 2) * lbpar.tau *
-                  lbpar.tau};
-
-          forceAdded[0] += delta[3 * x + 0] * delta[3 * y + 1] *
-                           delta[3 * z + 2] * (f[0] - fExt[0]) / 2 /
-                           (local_density);
-          forceAdded[1] += delta[3 * x + 0] * delta[3 * y + 1] *
-                           delta[3 * z + 2] * (f[1] - fExt[1]) / 2 /
-                           (local_density);
-          forceAdded[2] += delta[3 * x + 0] * delta[3 * y + 1] *
-                           delta[3 * z + 2] * (f[2] - fExt[2]) / 2 /
-                           (local_density);
+          auto const f_ext =
+              lbpar.ext_force_density * Utils::sqr(lbpar.agrid * lbpar.tau);
+          forceAdded += local_delta * (f - f_ext) / (2. * local_density);
         }
 
         // Interpolate velocity
-        interpolated_u[0] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[0] / (local_density);
-        interpolated_u[1] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[1] / (local_density);
-        interpolated_u[2] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[2] / (local_density);
+        interpolated_u += local_delta * local_j / local_density;
       }
     }
   }
 
-  v[0] = interpolated_u[0];
-  v[1] = interpolated_u[1];
-  v[2] = interpolated_u[2];
-
-  v[0] *= lbpar.agrid / lbpar.tau;
-  v[1] *= lbpar.agrid / lbpar.tau;
-  v[2] *= lbpar.agrid / lbpar.tau;
+  v = interpolated_u * lbpar.agrid / lbpar.tau;
 }
 
 /** Build a cache structure which contains a flag for each LB node whether
@@ -292,10 +258,10 @@ void ParticleVelocitiesFromLB_CPU() {
   // particle force.
   for (auto &p : cell_structure.local_particles()) {
     if (p.p.is_virtual) {
-      double dummy[3];
       // Get interpolated velocity and store in the force (!) field
       // for later communication (see below)
-      GetIBMInterpolatedVelocity(p.r.p, p.f.f.data(), dummy);
+      Utils::Vector3d dummy;
+      GetIBMInterpolatedVelocity(p.r.p, p.f.f, dummy);
     }
   }
 
@@ -307,23 +273,19 @@ void ParticleVelocitiesFromLB_CPU() {
     // Try if we have to use *1.5 on the right
     if (in_local_domain(p.r.p)) {
       if (p.p.is_virtual) {
-        double dummy[3];
-        double force[3] = {0, 0,
-                           0}; // The force stemming from the ghost particle
+        Utils::Vector3d force{}; // The force stemming from the ghost particle
+        Utils::Vector3d dummy;
         GetIBMInterpolatedVelocity(p.r.p, dummy, force);
 
         // Rescale and store in the force field of the particle (for
         // communication, see below)
-        p.f.f[0] = force[0] * lbpar.agrid / lbpar.tau;
-        p.f.f[1] = force[1] * lbpar.agrid / lbpar.tau;
-        p.f.f[2] = force[2] * lbpar.agrid / lbpar.tau;
+        p.f.f = force * lbpar.agrid / lbpar.tau;
       } else {
-        p.f.f[0] = p.f.f[1] = p.f.f[2] = 0;
+        p.f.f = {};
       } // Reset, necessary because we add all forces below. Also needs to
         // be done for the real particles!
-
     } else {
-      p.f.f[0] = p.f.f[1] = p.f.f[2] = 0;
+      p.f.f = {};
     } // Reset, necessary because we add all forces below
   }
 
@@ -342,9 +304,7 @@ void ParticleVelocitiesFromLB_CPU() {
   // Transfer to velocity field
   for (auto &p : cell_structure.local_particles()) {
     if (p.p.is_virtual) {
-      p.m.v[0] = p.f.f[0];
-      p.m.v[1] = p.f.f[1];
-      p.m.v[2] = p.f.f[2];
+      p.m.v = p.f.f;
     }
   }
 }
