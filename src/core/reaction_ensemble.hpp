@@ -212,11 +212,8 @@ protected:
   virtual void on_mc_reject(int &old_state_index){};
   virtual int on_mc_use_WL_get_new_state() { return -10; }
 
-  void make_reaction_attempt(
-      SingleReaction const &current_reaction,
-      std::vector<StoredParticleProperty> &changed_particles_properties,
-      std::vector<int> &p_ids_created_particles,
-      std::vector<StoredParticleProperty> &hidden_particles_properties);
+  auto make_reaction_attempt(
+      SingleReaction const &current_reaction);
   void
   restore_properties(std::vector<StoredParticleProperty> const &property_list,
                      int number_of_saved_properties);
