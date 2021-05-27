@@ -41,7 +41,7 @@
 std::vector<IBM_CUDA_ParticleDataInput> IBM_ParticleDataInput_host = {};
 std::vector<IBM_CUDA_ParticleDataOutput> IBM_ParticleDataOutput_host = {};
 
-static void pack_particles(ParticleRange particles,
+static void pack_particles(ParticleRange const &particles,
                            std::vector<IBM_CUDA_ParticleDataInput> &buffer) {
 
   int i = 0;
@@ -67,7 +67,7 @@ static void pack_particles(ParticleRange particles,
  *  only need the virtual ones. Room for improvement...
  *  Analogous to @ref cuda_mpi_get_particles.
  */
-void IBM_cuda_mpi_get_particles(ParticleRange particles) {
+void IBM_cuda_mpi_get_particles(ParticleRange const &particles) {
   auto const n_part = particles.size();
 
   if (this_node > 0) {
@@ -85,7 +85,7 @@ void IBM_cuda_mpi_get_particles(ParticleRange particles) {
   }
 }
 
-static void set_velocities(ParticleRange particles,
+static void set_velocities(ParticleRange const &particles,
                            std::vector<IBM_CUDA_ParticleDataOutput> &buffer) {
   int i = 0;
   for (auto &part : particles) {
@@ -100,7 +100,7 @@ static void set_velocities(ParticleRange particles,
 /** Particle velocities have been communicated from GPU, now transmit to all
  *  nodes. Analogous to @ref cuda_mpi_send_forces.
  */
-void IBM_cuda_mpi_send_velocities(ParticleRange particles) {
+void IBM_cuda_mpi_send_velocities(ParticleRange const &particles) {
   auto const n_part = particles.size();
 
   if (this_node > 0) {

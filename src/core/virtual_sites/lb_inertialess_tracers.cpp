@@ -94,7 +94,7 @@ void IBM_ForcesIntoFluid_CPU() {
  *  particles.
  *  Called from the integration loop right after the LB update.
  */
-void IBM_UpdateParticlePositions(ParticleRange particles) {
+void IBM_UpdateParticlePositions(ParticleRange const &particles) {
   // Get velocities
   if (lattice_switch == ActiveLB::CPU)
     ParticleVelocitiesFromLB_CPU();
