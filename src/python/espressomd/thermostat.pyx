@@ -253,24 +253,19 @@ cdef class Thermostat:
         temperature = 0.
         mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
-        global langevin
         IF PARTICLE_ANISOTROPY:
-            for i in range(3):
-                langevin.gamma[i] = 0.
+            mpi_set_langevin_gamma(utils.make_Vector3d((0., 0., 0.)))
         ELSE:
-            langevin.gamma = 0.
-        mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+            mpi_set_langevin_gamma(0.)
         IF PARTICLE_ANISOTROPY:
             mpi_set_brownian_gamma(utils.make_Vector3d((0., 0., 0.)))
         ELSE:
             mpi_set_brownian_gamma(0.)
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
-                for i in range(3):
-                    langevin.gamma_rotation[i] = 0.
+                mpi_set_langevin_gamma_rot(utils.make_Vector3d((0., 0., 0.)))
             ELSE:
-                langevin.gamma_rotation = 0.
-            mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
+                mpi_set_langevin_gamma_rot(0.)
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
                 mpi_set_brownian_gamma_rot(utils.make_Vector3d((0., 0., 0.)))
@@ -378,60 +373,48 @@ cdef class Thermostat:
 
         global temperature
         temperature = float(kT)
-        global langevin
         IF PARTICLE_ANISOTROPY:
+            cdef utils.Vector3d gamma_vec
             if scalar_gamma_def:
-                langevin.gamma[0] = gamma
-                langevin.gamma[1] = gamma
-                langevin.gamma[2] = gamma
+                for i in range(3):
+                    gamma_vec[i] = gamma
             else:
-                langevin.gamma[0] = gamma[0]
-                langevin.gamma[1] = gamma[1]
-                langevin.gamma[2] = gamma[2]
-        ELSE:
-            langevin.gamma = float(gamma)
+                gamma_vec = utils.make_Vector3d(gamma)
         IF ROTATION:
-            if gamma_rotation is not None:
-                IF PARTICLE_ANISOTROPY:
+            IF PARTICLE_ANISOTROPY:
+                cdef utils.Vector3d gamma_rot_vec
+                if gamma_rotation is None:
+                    # rotational gamma is translational gamma
+                    gamma_rot_vec = gamma_vec
+                else:
                     if scalar_gamma_rot_def:
-                        langevin.gamma_rotation[0] = gamma_rotation
-                        langevin.gamma_rotation[1] = gamma_rotation
-                        langevin.gamma_rotation[2] = gamma_rotation
+                        for i in range(3):
+                            gamma_rot_vec[i] = gamma_rotation
                     else:
-                        langevin.gamma_rotation[0] = gamma_rotation[0]
-                        langevin.gamma_rotation[1] = gamma_rotation[1]
-                        langevin.gamma_rotation[2] = gamma_rotation[2]
-                ELSE:
-                    if scalar_gamma_rot_def:
-                        langevin.gamma_rotation = gamma_rotation
-                    else:
-                        raise ValueError(
-                            "gamma_rotation must be a scalar since feature PARTICLE_ANISOTROPY is disabled")
-            else:
-                IF PARTICLE_ANISOTROPY:
-                    if scalar_gamma_def:
-                        langevin.gamma_rotation[0] = gamma
-                        langevin.gamma_rotation[1] = gamma
-                        langevin.gamma_rotation[2] = gamma
-                    else:
-                        langevin.gamma_rotation[0] = gamma[0]
-                        langevin.gamma_rotation[1] = gamma[1]
-                        langevin.gamma_rotation[2] = gamma[2]
-                ELSE:
-                    langevin.gamma_rotation = langevin.gamma
-
+                        gamma_rot_vec = utils.make_Vector3d(gamma_rotation)
+            ELSE:
+                if gamma_rotation is None:
+                    # rotational gamma is translational gamma
+                    gamma_rotation = gamma
+        
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LANGEVIN)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
-        mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+        IF PARTICLE_ANISOTROPY:
+            mpi_set_langevin_gamma(gamma_vec)
+        ELSE:
+            mpi_set_langevin_gamma(gamma)
 
         global thermo_virtual
         thermo_virtual = act_on_virtual
         mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
 
         IF ROTATION:
-            mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
+            IF PARTICLE_ANISOTROPY:
+                mpi_set_langevin_gamma_rot(gamma_rot_vec)
+            ELSE:
+                mpi_set_langevin_gamma_rot(gamma_rotation)
         return True
 
     @AssertThermostatType(THERMO_BROWNIAN)

@@ -93,9 +93,15 @@ cdef extern from "thermostat.hpp":
     IF PARTICLE_ANISOTROPY:
         void mpi_set_brownian_gamma(const Vector3d & gamma)
         void mpi_set_brownian_gamma_rot(const Vector3d & gamma)
+
+        void mpi_set_langevin_gamma(const Vector3d & gamma)
+        void mpi_set_langevin_gamma_rot(const Vector3d & gamma)
     ELSE:
         void mpi_set_brownian_gamma(double gamma)
         void mpi_set_brownian_gamma_rot(double gamma)
+
+        void mpi_set_langevin_gamma(double gamma)
+        void mpi_set_langevin_gamma_rot(double gamma)
 
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:

@@ -154,6 +154,16 @@ void mpi_set_brownian_gamma_local(double gamma) {
 void mpi_set_brownian_gamma_rot_local(double gamma) {
   brownian.gamma_rotation = GammaType{gamma};
 }
+
+void mpi_set_langevin_gamma_local(double gamma) {
+  langevin.gamma = GammaType{gamma};
+  on_thermostat_param_change();
+}
+
+void mpi_set_langevin_gamma_rot_local(double gamma) {
+  langevin.gamma_rotation = GammaType{gamma};
+  on_thermostat_param_change();
+}
 #else
 void mpi_set_brownian_gamma_local(const Utils::Vector3d &gamma) {
   brownian.gamma = GammaType{gamma};
@@ -162,10 +172,22 @@ void mpi_set_brownian_gamma_local(const Utils::Vector3d &gamma) {
 void mpi_set_brownian_gamma_rot_local(const Utils::Vector3d &gamma) {
   brownian.gamma_rotation = GammaType{gamma};
 }
+
+void mpi_set_langevin_gamma_local(const Utils::Vector3d &gamma) {
+  langevin.gamma = GammaType{gamma};
+  on_thermostat_param_change();
+}
+
+void mpi_set_langevin_gamma_rot_local(const Utils::Vector3d &gamma) {
+  langevin.gamma_rotation = GammaType{gamma};
+  on_thermostat_param_change();
+}
 #endif
 
 REGISTER_CALLBACK(mpi_set_brownian_gamma_local)
 REGISTER_CALLBACK(mpi_set_brownian_gamma_rot_local)
+REGISTER_CALLBACK(mpi_set_langevin_gamma_local)
+REGISTER_CALLBACK(mpi_set_langevin_gamma_rot_local)
 
 #ifndef PARTICLE_ANISOTROPY
 void mpi_set_brownian_gamma(double gamma) {
@@ -175,6 +197,13 @@ void mpi_set_brownian_gamma(double gamma) {
 void mpi_set_brownian_gamma_rot(double gamma) {
   mpi_call_all(mpi_set_brownian_gamma_rot_local, gamma);
 }
+
+void mpi_set_langevin_gamma(double gamma) {
+  mpi_call_all(mpi_set_langevin_gamma_local, gamma);
+}
+void mpi_set_langevin_gamma_rot(double gamma) {
+  mpi_call_all(mpi_set_langevin_gamma_rot_local, gamma);
+}
 #else
 void mpi_set_brownian_gamma(const Utils::Vector3d &gamma) {
   mpi_call_all(mpi_set_brownian_gamma_local, gamma);
@@ -182,5 +211,12 @@ void mpi_set_brownian_gamma(const Utils::Vector3d &gamma) {
 
 void mpi_set_brownian_gamma_rot(const Utils::Vector3d &gamma) {
   mpi_call_all(mpi_set_brownian_gamma_rot_local, gamma);
+}
+
+void mpi_set_langevin_gamma(const Utils::Vector3d &gamma) {
+  mpi_call_all(mpi_set_langevin_gamma_local, gamma);
+}
+void mpi_set_langevin_gamma_rot(const Utils::Vector3d &gamma) {
+  mpi_call_all(mpi_set_langevin_gamma_rot_local, gamma);
 }
 #endif
