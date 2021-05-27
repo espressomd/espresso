@@ -150,20 +150,37 @@ void philox_counter_increment() {
 void mpi_set_brownian_gamma_local(double gamma) {
   brownian.gamma = GammaType{gamma};
 }
+
+void mpi_set_brownian_gamma_rot_local(double gamma) {
+  brownian.gamma_rotation = GammaType{gamma};
+}
 #else
 void mpi_set_brownian_gamma_local(const Utils::Vector3d &gamma) {
   brownian.gamma = GammaType{gamma};
 }
+
+void mpi_set_brownian_gamma_rot_local(const Utils::Vector3d &gamma) {
+  brownian.gamma_rotation = GammaType{gamma};
+}
 #endif
 
 REGISTER_CALLBACK(mpi_set_brownian_gamma_local)
+REGISTER_CALLBACK(mpi_set_brownian_gamma_rot_local)
 
 #ifndef PARTICLE_ANISOTROPY
 void mpi_set_brownian_gamma(double gamma) {
   mpi_call_all(mpi_set_brownian_gamma_local, gamma);
 }
+
+void mpi_set_brownian_gamma_rot(double gamma) {
+  mpi_call_all(mpi_set_brownian_gamma_rot_local, gamma);
+}
 #else
 void mpi_set_brownian_gamma(const Utils::Vector3d &gamma) {
   mpi_call_all(mpi_set_brownian_gamma_local, gamma);
+}
+
+void mpi_set_brownian_gamma_rot(const Utils::Vector3d &gamma) {
+  mpi_call_all(mpi_set_brownian_gamma_rot_local, gamma);
 }
 #endif
