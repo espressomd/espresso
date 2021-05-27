@@ -327,9 +327,6 @@ void on_nodegrid_change() {
 
 void on_parameter_change(int field) {
   switch (field) {
-  case FIELD_NODEGRID:
-    on_nodegrid_change();
-    break;
   case FIELD_NPTISO_PISTON:
   case FIELD_THERMALIZEDBONDS:
     on_thermostat_param_change();

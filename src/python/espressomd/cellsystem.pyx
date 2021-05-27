@@ -20,7 +20,6 @@ import numpy as np
 from libcpp.cast cimport dynamic_cast
 from .grid cimport node_grid
 from . cimport integrate
-from .globals cimport FIELD_NODEGRID
 from .globals cimport verlet_reuse, skin
 from .globals cimport mpi_bcast_parameter, mpi_set_skin, mpi_set_node_grid
 from libcpp.vector cimport vector

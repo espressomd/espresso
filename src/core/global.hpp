@@ -40,8 +40,6 @@ void check_global_consistency();
 enum Fields {
   /** index of \ref n_rigidbonds */
   FIELD_RIGIDBONDS,
-  /** index of \ref node_grid */
-  FIELD_NODEGRID,
   /** index of \ref nptiso_struct::piston (only used for the events) */
   FIELD_NPTISO_PISTON,
   /** index of \ref lattice_switch */
