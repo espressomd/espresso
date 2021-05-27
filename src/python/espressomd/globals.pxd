@@ -55,6 +55,7 @@ cdef extern from "tuning.hpp":
 
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int max_oif_objects
+    void mpi_set_max_oif_objects(int max_oif_objects)
 
 cdef extern from "forcecap.hpp":
     double forcecap_get()
