@@ -121,6 +121,10 @@ void on_simtime_change();
  */
 void on_forcecap_change();
 
+/** @brief Called when the node_grid changed.
+ */
+void on_nodegrid_change();
+
 /** called every time other parameters (timestep,...) are changed. Note that
  *  this does not happen automatically. The callback procedure of the changed
  *  variable is responsible for that.

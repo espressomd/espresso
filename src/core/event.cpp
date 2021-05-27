@@ -320,11 +320,15 @@ void on_simtime_change() { recalc_forces = true; }
 
 void on_forcecap_change() { recalc_forces = true; }
 
+void on_nodegrid_change() {
+  grid_changed_n_nodes();
+  cells_re_init(cell_structure.decomposition_type());
+}
+
 void on_parameter_change(int field) {
   switch (field) {
   case FIELD_NODEGRID:
-    grid_changed_n_nodes();
-    cells_re_init(cell_structure.decomposition_type());
+    on_nodegrid_change();
     break;
   case FIELD_NPTISO_PISTON:
   case FIELD_THERMALIZEDBONDS:

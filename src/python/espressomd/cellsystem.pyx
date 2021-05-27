@@ -22,7 +22,7 @@ from .grid cimport node_grid
 from . cimport integrate
 from .globals cimport FIELD_NODEGRID
 from .globals cimport verlet_reuse, skin
-from .globals cimport mpi_bcast_parameter, mpi_set_skin
+from .globals cimport mpi_bcast_parameter, mpi_set_skin, mpi_set_node_grid
 from libcpp.vector cimport vector
 from .cellsystem cimport cell_structure
 from .utils import handle_errors
@@ -183,17 +183,14 @@ cdef class CellSystem:
         """
 
         def __set__(self, _node_grid):
+            cdef Vector3i node_grid
             if not np.prod(_node_grid) == n_nodes:
                 raise ValueError(
                     f"Number of available nodes {n_nodes} and imposed node grid {_node_grid} do not agree.")
             else:
-                node_grid[0] = _node_grid[0]
-                node_grid[1] = _node_grid[1]
-                node_grid[2] = _node_grid[2]
-                mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
-                handle_errors("mpi_bcast_parameter for node_grid failed")
-                if mpi_err:
-                    raise Exception("Broadcasting the node grid failed")
+                for i in range(3):
+                    node_grid[i] = _node_grid[i]
+                mpi_set_node_grid(node_grid)
 
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])

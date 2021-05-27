@@ -18,11 +18,12 @@
 #
 include "myconfig.pxi"
 from libcpp cimport bool
-from .utils cimport Vector3d
+from .utils cimport Vector3d, Vector3i
 
 cdef extern from "grid.hpp":
     void mpi_set_box_length(Vector3d length) except +
     void mpi_set_periodicity(bool x, bool y, bool z)
+    void mpi_set_node_grid(const Vector3i & node_grid)
 
 cdef extern from "global.hpp":
     int FIELD_NODEGRID

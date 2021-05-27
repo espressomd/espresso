@@ -124,4 +124,6 @@ void mpi_set_box_length(const Utils::Vector3d &length);
  *  @param z periodicity in z direction
  */
 void mpi_set_periodicity(bool x, bool y, bool z);
+
+void mpi_set_node_grid(const Utils::Vector3i &node_grid);
 #endif
