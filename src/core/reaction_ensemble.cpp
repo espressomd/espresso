@@ -91,7 +91,7 @@ void EnergyCollectiveVariable::load_CV_boundaries(
 int ReactionAlgorithm::do_reaction(int reaction_steps) {
   for (int i = 0; i < reaction_steps; i++) {
     int reaction_id = i_random(static_cast<int>(reactions.size()));
-    generic_oneway_reaction(reaction_id);
+    generic_oneway_reaction(reactions[reaction_id]);
   }
   return 0;
 }
@@ -194,12 +194,12 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
 /**
  * Checks whether all particles exist for the provided reaction.
  */
-bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) const {
+bool ReactionAlgorithm::all_reactant_particles_exist(SingleReaction &current_reaction) const {
   bool enough_particles = true;
-  for (int i = 0; i < reactions[reaction_id].reactant_types.size(); i++) {
+  for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
     int current_number =
-        number_of_particles_with_type(reactions[reaction_id].reactant_types[i]);
-    if (current_number < reactions[reaction_id].reactant_coefficients[i]) {
+        number_of_particles_with_type(current_reaction.reactant_types[i]);
+    if (current_number < current_reaction.reactant_coefficients[i]) {
       enough_particles = false;
       break;
     }
@@ -343,15 +343,15 @@ double ReactionEnsemble::calculate_acceptance_probability(
 }
 
 std::map<int, int>
-ReactionAlgorithm::save_old_particle_numbers(int reaction_id) {
+ReactionAlgorithm::save_old_particle_numbers(SingleReaction &current_reaction) {
   std::map<int, int> old_particle_numbers;
   // reactants
-  for (int type : reactions[reaction_id].reactant_types) {
+  for (int type : current_reaction.reactant_types) {
     old_particle_numbers[type] = number_of_particles_with_type(type);
   }
 
   // products
-  for (int type : reactions[reaction_id].product_types) {
+  for (int type : current_reaction.product_types) {
     old_particle_numbers[type] = number_of_particles_with_type(type);
   }
   return old_particle_numbers;
@@ -392,14 +392,14 @@ void WangLandauReactionEnsemble::on_end_reaction(int &accepted_state) {
  * randomly in the box. Matching particles simply change the types. If there
  * are more reactants than products, old reactant particles are deleted.
  */
-void ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
+void ReactionAlgorithm::generic_oneway_reaction(SingleReaction &current_reaction) {
 
-  SingleReaction &current_reaction = reactions[reaction_id];
+
   current_reaction.tried_moves += 1;
   particle_inside_exclusion_radius_touched = false;
   int old_state_index = -1; // for Wang-Landau algorithm
   on_reaction_entry(old_state_index);
-  if (!all_reactant_particles_exist(reaction_id)) {
+  if (!all_reactant_particles_exist(current_reaction)) {
     // makes sure, no incomplete reaction is performed -> only need to consider
     // rollback of complete reactions
     on_reaction_rejection_directly_after_entry(old_state_index);
@@ -423,7 +423,7 @@ void ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   // do reaction
   // save old particle_numbers
   std::map<int, int> old_particle_numbers =
-      save_old_particle_numbers(reaction_id);
+      save_old_particle_numbers(current_reaction);
 
   const int number_of_saved_properties =
       3; // save p_id, charge and type of the reactant particle, only thing we
@@ -1109,7 +1109,7 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
   m_WL_tries += reaction_steps;
   for (int step = 0; step < reaction_steps; step++) {
     int reaction_id = i_random(static_cast<int>(reactions.size()));
-    generic_oneway_reaction(reaction_id);
+    generic_oneway_reaction(reactions[reaction_id]);
     if (can_refine_wang_landau_one_over_t() && m_WL_tries % 10000 == 0) {
       // check for convergence
       if (achieved_desired_number_of_refinements_one_over_t()) {
@@ -1191,7 +1191,7 @@ void WangLandauReactionEnsemble::reset_histogram() {
 /**
  *Refine the Wang-Landau parameter using the 1/t rule.
  */
-void WangLandauReactionEnsemble::refine_wang_landau_parameter_one_over_t() {
+void WangLandauReactionEnsemble::refine_wang_landau_parametecdr_one_over_t() {
   double monte_carlo_time = static_cast<double>(monte_carlo_trial_moves) /
                             static_cast<double>(used_bins);
   if (wang_landau_parameter / 2.0 <= 1.0 / monte_carlo_time ||
@@ -1541,7 +1541,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
     int reaction_id =
         list_of_reaction_ids_with_given_reactant_type[i_random(static_cast<int>(
             list_of_reaction_ids_with_given_reactant_type.size()))];
-    generic_oneway_reaction(reaction_id);
+    generic_oneway_reaction(reactions[reaction_id]);
   }
   return 0;
 }
@@ -1566,7 +1566,7 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
 
 std::pair<double, double>
 WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
-  if (!all_reactant_particles_exist(reaction_id))
+  if (!all_reactant_particles_exist(reactions[reaction_id]))
     throw std::runtime_error("Trying to remove some non-existing particles "
                              "from the system via the inverse Widom scheme.");
 
