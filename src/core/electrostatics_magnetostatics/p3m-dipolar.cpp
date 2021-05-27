@@ -229,7 +229,7 @@ void dp3m_init() {
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double accuracy) {
   if (r_cut >= 0) {
     dp3m.params.r_cut = r_cut;
-    dp3m.params.r_cut_iL = r_cut / box_geo.length()[0];
+    dp3m.params.r_cut_iL = r_cut * box_geo.length_inv()[0];
   }
 
   if (mesh >= 0)
@@ -268,7 +268,7 @@ void dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
     Dipole::set_method_local(DIPOLAR_P3M);
 
   dp3m.params.r_cut = r_cut;
-  dp3m.params.r_cut_iL = r_cut / box_geo.length()[0];
+  dp3m.params.r_cut_iL = r_cut * box_geo.length_inv()[0];
   dp3m.params.mesh[2] = dp3m.params.mesh[1] = dp3m.params.mesh[0] = mesh;
   dp3m.params.cao = cao;
   dp3m.params.alpha = alpha;
@@ -443,7 +443,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         }
       }
       node_k_space_energy_dip *=
-          dipole_prefac * Utils::pi() / box_geo.length()[0];
+          dipole_prefac * Utils::pi() * box_geo.length_inv()[0];
       boost::mpi::reduce(comm_cart, node_k_space_energy_dip, k_space_energy_dip,
                          std::plus<>(), 0);
 
@@ -454,7 +454,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         k_space_energy_dip -=
             dipole.prefactor *
             (dp3m.sum_mu2 * 2 *
-             pow(dp3m.params.alpha_L / box_geo.length()[0], 3) *
+             pow(dp3m.params.alpha_L * box_geo.length_inv()[0], 3) *
              Utils::sqrt_pi_i() / 3.0);
 
         auto const volume = box_geo.volume();
@@ -534,7 +534,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         /* Assign force component from mesh to particle */
         Utils::integral_parameter<AssignTorques, 1, 7>(
             dp3m.params.cao,
-            dipole_prefac * (2 * Utils::pi() / box_geo.length()[0]), d_rs,
+            dipole_prefac * (2 * Utils::pi() * box_geo.length_inv()[0]), d_rs,
             particles);
       }
 
@@ -623,8 +623,8 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         /* Assign force component from mesh to particle */
         Utils::integral_parameter<AssignForces, 1, 7>(
             dp3m.params.cao,
-            dipole_prefac * pow(2 * Utils::pi() / box_geo.length()[0], 2), d_rs,
-            particles);
+            dipole_prefac * pow(2 * Utils::pi() * box_geo.length_inv()[0], 2),
+            d_rs, particles);
       }
     } /* if (dp3m.sum_mu2 > 0) */
   }   /* if (force_flag) */
@@ -1143,8 +1143,8 @@ int dp3m_adaptive_tune(bool verbose) {
 
     r_cut_iL_min = 0;
     r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2) - skin;
-    r_cut_iL_min *= 1. / box_geo.length()[0];
-    r_cut_iL_max *= 1. / box_geo.length()[0];
+    r_cut_iL_min *= box_geo.length_inv()[0];
+    r_cut_iL_max *= box_geo.length_inv()[0];
   } else {
     r_cut_iL_min = r_cut_iL_max = dp3m.params.r_cut_iL;
 
@@ -1382,7 +1382,7 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
 
 void dp3m_init_a_ai_cao_cut() {
   for (int i = 0; i < 3; i++) {
-    dp3m.params.ai[i] = (double)dp3m.params.mesh[i] / box_geo.length()[i];
+    dp3m.params.ai[i] = dp3m.params.mesh[i] * box_geo.length_inv()[i];
     dp3m.params.a[i] = 1.0 / dp3m.params.ai[i];
     dp3m.params.cao_cut[i] = 0.5 * dp3m.params.a[i] * dp3m.params.cao;
   }
@@ -1394,7 +1394,7 @@ bool dp3m_sanity_checks_boxl() {
   bool ret = false;
   for (int i = 0; i < 3; i++) {
     /* check k-space cutoff */
-    if (dp3m.params.cao_cut[i] >= 0.5 * box_geo.length()[i]) {
+    if (dp3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
       runtimeErrorMsg() << "dipolar P3M_init: k-space cutoff "
                         << dp3m.params.cao_cut[i]
                         << " is larger than half of box dimension "
@@ -1469,7 +1469,7 @@ void dp3m_scaleby_box_l() {
   }
 
   dp3m.params.r_cut = dp3m.params.r_cut_iL * box_geo.length()[0];
-  dp3m.params.alpha = dp3m.params.alpha_L / box_geo.length()[0];
+  dp3m.params.alpha = dp3m.params.alpha_L * box_geo.length_inv()[0];
   dp3m_init_a_ai_cao_cut();
   p3m_calc_lm_ld_pos(dp3m.local_mesh, dp3m.params);
   dp3m_sanity_checks_boxl();

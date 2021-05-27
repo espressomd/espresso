@@ -111,8 +111,8 @@ void grid_changed_n_nodes() {
 }
 
 void rescale_boxl(int dir, double d_new) {
-  double scale =
-      (dir - 3) ? d_new / box_geo.length()[dir] : d_new / box_geo.length()[0];
+  double scale = (dir - 3) ? d_new * box_geo.length_inv()[dir]
+                           : d_new * box_geo.length_inv()[0];
 
   /* If shrinking, rescale the particles first. */
   if (scale <= 1.) {

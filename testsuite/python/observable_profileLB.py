@@ -91,15 +91,6 @@ class ObservableProfileLBCommon:
                          LB_VELOCITY_PROFILE_PARAMS['n_y_bins'] *
                          LB_VELOCITY_PROFILE_PARAMS['n_z_bins'] * 3)
 
-    def test_error_sampling_delta_of_0(self):
-        lb_velocity_params_local = copy.copy(LB_VELOCITY_PROFILE_PARAMS)
-        lb_velocity_params_local['sampling_delta_x'] = 0.0
-        lb_velocity_params_local['sampling_delta_y'] = 0.0
-        lb_velocity_params_local['sampling_delta_z'] = 0.0
-        with self.assertRaises(RuntimeError):
-            _ = espressomd.observables.LBVelocityProfile(
-                **lb_velocity_params_local)
-
     def test_error_if_no_LB(self):
         self.system.actors.clear()
         obs = espressomd.observables.LBVelocityProfile(
@@ -114,6 +105,22 @@ class ObservableProfileLBCommon:
             **lb_velocity_params_local)
         with self.assertRaises(RuntimeError):
             obs.calculate()
+
+    def test_exceptions(self):
+        params = LB_VELOCITY_PROFILE_PARAMS.copy()
+        for axis in 'xyz':
+            with self.assertRaisesRegex(RuntimeError, f'max_{axis} has to be > min_{axis}'):
+                espressomd.observables.LBVelocityProfile(
+                    **{**params, f'min_{axis}': 100.})
+            with self.assertRaisesRegex(ValueError, f'n_{axis}_bins has to be >= 1'):
+                espressomd.observables.LBVelocityProfile(
+                    **{**params, f'n_{axis}_bins': 0})
+            with self.assertRaisesRegex(ValueError, f'sampling_delta_{axis} has to be > 0'):
+                espressomd.observables.LBVelocityProfile(
+                    **{**params, f'sampling_delta_{axis}': 0})
+            with self.assertRaisesRegex(ValueError, f'sampling_offset_{axis} has to be >= 0'):
+                espressomd.observables.LBVelocityProfile(
+                    **{**params, f'sampling_offset_{axis}': -1e-8})
 
     def test_lb_profile_interface(self):
         # test setters and getters
