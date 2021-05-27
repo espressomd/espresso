@@ -246,10 +246,8 @@ cdef class Thermostat:
         """
 
         global temperature
-        global thermo_virtual
-        thermo_virtual = True
         temperature = 0.
-        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+        mpi_set_thermo_virtual(True)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
         IF PARTICLE_ANISOTROPY:
             mpi_set_langevin_gamma(utils.make_Vector3d((0., 0., 0.)))
@@ -404,9 +402,7 @@ cdef class Thermostat:
         ELSE:
             mpi_set_langevin_gamma(gamma)
 
-        global thermo_virtual
-        thermo_virtual = act_on_virtual
-        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+        mpi_set_thermo_virtual(act_on_virtual)
 
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
@@ -543,9 +539,7 @@ cdef class Thermostat:
         ELSE:
             mpi_set_brownian_gamma(gamma)
 
-        global thermo_virtual
-        thermo_virtual = act_on_virtual
-        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+        mpi_set_thermo_virtual(act_on_virtual)
 
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
@@ -601,9 +595,7 @@ cdef class Thermostat:
         thermo_switch = (thermo_switch | THERMO_LB)
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
 
-        global thermo_virtual
-        thermo_virtual = act_on_virtual
-        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+        mpi_set_thermo_virtual(act_on_virtual)
         lb_lbcoupling_set_gamma(gamma)
         return True
 

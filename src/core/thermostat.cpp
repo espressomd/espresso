@@ -220,3 +220,13 @@ void mpi_set_langevin_gamma_rot(const Utils::Vector3d &gamma) {
   mpi_call_all(mpi_set_langevin_gamma_rot_local, gamma);
 }
 #endif
+
+void mpi_set_thermo_virtual_local(bool thermo_virtual) {
+  ::thermo_virtual = thermo_virtual;
+}
+
+REGISTER_CALLBACK(mpi_set_thermo_virtual_local)
+
+void mpi_set_thermo_virtual(bool thermo_virtual) {
+  mpi_call_all(mpi_set_thermo_virtual_local, thermo_virtual);
+}
