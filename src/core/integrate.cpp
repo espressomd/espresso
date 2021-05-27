@@ -434,26 +434,18 @@ int mpi_integrate(int n_steps, int reuse_forces) {
 void integrate_set_steepest_descent(const double f_max, const double gamma,
                                     const double max_displacement) {
   steepest_descent_init(f_max, gamma, max_displacement);
-  integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
 }
 
-void integrate_set_nvt() {
-  integ_switch = INTEG_METHOD_NVT;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-}
+void integrate_set_nvt() { mpi_set_integ_switch(INTEG_METHOD_NVT); }
 
-void integrate_set_bd() {
-  integ_switch = INTEG_METHOD_BD;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-}
+void integrate_set_bd() { mpi_set_integ_switch(INTEG_METHOD_BD); }
 
 void integrate_set_sd() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2)) {
     throw std::runtime_error("Stokesian Dynamics requires periodicity 0 0 0");
   }
-  integ_switch = INTEG_METHOD_SD;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_set_integ_switch(INTEG_METHOD_SD);
 }
 
 #ifdef NPT
@@ -462,8 +454,7 @@ void integrate_set_npt_isotropic(double ext_pressure, double piston,
                                  bool zdir_rescale, bool cubic_box) {
   nptiso_init(ext_pressure, piston, xdir_rescale, ydir_rescale, zdir_rescale,
               cubic_box);
-  integ_switch = INTEG_METHOD_NPT_ISO;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_set_integ_switch(INTEG_METHOD_NPT_ISO);
 }
 #endif
 
@@ -511,3 +502,13 @@ void mpi_set_time_local(double time) {
 REGISTER_CALLBACK(mpi_set_time_local)
 
 void mpi_set_time(double time) { mpi_call_all(mpi_set_time_local, time); }
+
+void mpi_set_integ_switch_local(int integ_switch) {
+  ::integ_switch = integ_switch;
+}
+
+REGISTER_CALLBACK(mpi_set_integ_switch_local)
+
+void mpi_set_integ_switch(int integ_switch) {
+  mpi_call_all(mpi_set_integ_switch_local, integ_switch);
+}

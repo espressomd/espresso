@@ -185,4 +185,6 @@ void mpi_set_skin(double skin);
  */
 void mpi_set_time(double time);
 
+void mpi_set_integ_switch(int integ_switch);
+
 #endif
