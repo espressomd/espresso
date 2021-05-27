@@ -94,10 +94,11 @@ const FlagUID UBB_flag("velocity bounce back");
 
 /** Class that runs and controls the LB on WaLBerla
  */
-template <typename LatticeModel> class LBWalberlaImpl : public LBWalberlaBase {
+template <typename LatticeModel, typename FloatType = double>
+class LBWalberlaImpl : public LBWalberlaBase {
 protected:
   // Type definitions
-  using VectorField = GhostLayerField<real_t, 3>;
+  using VectorField = GhostLayerField<FloatType, 3>;
   using FlagField = walberla::FlagField<walberla::uint8_t>;
   using PdfField = lbm::PdfField<LatticeModel>;
   /** Velocity boundary condition */
@@ -215,9 +216,9 @@ public:
 
     // Init and register force fields
     m_last_applied_force_field_id = field::addToStorage<VectorField>(
-        m_blocks, "force field", real_t{0}, field::fzyx, m_n_ghost_layers);
+        m_blocks, "force field", FloatType{0}, field::fzyx, m_n_ghost_layers);
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
-        m_blocks, "force field", real_t{0}, field::fzyx, m_n_ghost_layers);
+        m_blocks, "force field", FloatType{0}, field::fzyx, m_n_ghost_layers);
 
     // Init and register flag field (fluid/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
@@ -228,7 +229,7 @@ public:
     // Init and register pdf field
     m_pdf_field_id = lbm::addPdfFieldToStorage(
         m_blocks, "pdf field", *(m_lattice_model.get()),
-        to_vector3(Utils::Vector3d{}), real_t(density), m_n_ghost_layers,
+        to_vector3(Utils::Vector3d{}), FloatType(density), m_n_ghost_layers,
         field::fzyx);
 
     // Register boundary handling
@@ -340,9 +341,10 @@ public:
     if (!bc)
       return false;
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
-    const real_t density = pdf_field->getDensity((*bc).cell);
+    const FloatType density = pdf_field->getDensity((*bc).cell);
     pdf_field->setDensityAndVelocity(
-        (*bc).cell, Vector3<real_t>{real_c(v[0]), real_c(v[1]), real_c(v[2])},
+        (*bc).cell,
+        Vector3<FloatType>{FloatType(v[0]), FloatType(v[1]), FloatType(v[2])},
         density);
     return true;
   };
@@ -412,7 +414,7 @@ public:
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
         for (int i : {0, 1, 2})
-          force_field->get((*bc).cell, i) += real_c(force[i] * weight);
+          force_field->get((*bc).cell, i) += FloatType(force[i] * weight);
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
@@ -441,7 +443,7 @@ public:
     auto force_field = (*bc).block->template getData<VectorField>(
         m_last_applied_force_field_id);
     for (uint_t f = 0u; f < 3u; ++f) {
-      force_field->get((*bc).cell, f) = real_c(force[f]);
+      force_field->get((*bc).cell, f) = FloatType(force[f]);
     }
 
     return true;
@@ -474,7 +476,7 @@ public:
     constexpr auto FSize = LatticeModel::Stencil::Size;
     assert(population.size() == FSize);
     for (uint_t f = 0u; f < FSize; ++f) {
-      pdf_field->get((*bc).cell, f) = real_c(population[f]);
+      pdf_field->get((*bc).cell, f) = FloatType(population[f]);
     }
 
     return true;
@@ -505,9 +507,9 @@ public:
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
     auto const &vel_adaptor =
         (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
-    Vector3<real_t> v = vel_adaptor->get((*bc).cell);
+    Vector3<FloatType> v = vel_adaptor->get((*bc).cell);
 
-    pdf_field->setDensityAndVelocity((*bc).cell, v, real_c(density));
+    pdf_field->setDensityAndVelocity((*bc).cell, v, FloatType(density));
 
     return true;
   };
@@ -546,8 +548,8 @@ public:
     if (!bc)
       return false;
 
-    const typename UBB::Velocity velocity(real_c(v[0]), real_c(v[1]),
-                                          real_c(v[2]));
+    const typename UBB::Velocity velocity(FloatType{v[0]}, FloatType{v[1]},
+                                          FloatType{v[2]});
 
     auto *boundary_handling =
         (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
@@ -601,8 +603,8 @@ public:
   };
   void clear_boundaries() override {
     const CellInterval &domain_bb_in_global_cell_coordinates =
-        m_blocks->getCellBBFromAABB(
-            m_blocks->begin()->getAABB().getExtended(real_c(n_ghost_layers())));
+        m_blocks->getCellBBFromAABB(m_blocks->begin()->getAABB().getExtended(
+            FloatType(n_ghost_layers())));
     for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
 
       auto *boundary_handling =
@@ -627,13 +629,14 @@ public:
 
   // Global momentum
   Utils::Vector3d get_momentum() const override {
-    Vector3<real_t> mom;
+    Vector3<FloatType> mom;
     for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
          ++block_it) {
       auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
-      Vector3<real_t> local_v;
+      Vector3<FloatType> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-        real_t local_dens = pdf_field->getDensityAndVelocity(local_v, x, y, z);
+        FloatType local_dens =
+            pdf_field->getDensityAndVelocity(local_v, x, y, z);
         mom += local_dens * local_v;
       });
     }
