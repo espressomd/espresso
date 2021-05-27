@@ -104,18 +104,18 @@ void thermo_init(double time_step) {
     return;
   }
   if (thermo_switch & THERMO_LANGEVIN)
-    langevin.recalc_prefactors(time_step);
+    langevin.recalc_prefactors(temperature, time_step);
 #ifdef DPD
   if (thermo_switch & THERMO_DPD)
-    dpd_init(time_step);
+    dpd_init(temperature, time_step);
 #endif
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO) {
-    npt_iso.recalc_prefactors(nptiso.piston, time_step);
+    npt_iso.recalc_prefactors(temperature, nptiso.piston, time_step);
   }
 #endif
   if (thermo_switch & THERMO_BROWNIAN)
-    brownian.recalc_prefactors();
+    brownian.recalc_prefactors(temperature);
 }
 
 void philox_counter_increment() {

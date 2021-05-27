@@ -35,13 +35,13 @@
 
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
                                          const ParticleRange &particles,
-                                         double time_step) {
+                                         double time_step, double kT) {
   for (auto &p : particles) {
     // Don't propagate translational degrees of freedom of vs
     if (!(p.p.is_virtual) or thermo_virtual) {
       p.r.p += bd_drag(brownian.gamma, p, time_step);
       p.m.v = bd_drag_vel(brownian.gamma, p);
-      p.r.p += bd_random_walk(brownian, p, time_step);
+      p.r.p += bd_random_walk(brownian, p, time_step, kT);
       p.m.v += bd_random_walk_vel(brownian, p);
       /* Verlet criterion check */
       if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
@@ -53,7 +53,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
     convert_torque_to_body_frame_apply_fix(p);
     p.r.quat = bd_drag_rot(brownian.gamma_rotation, p, time_step);
     p.m.omega = bd_drag_vel_rot(brownian.gamma_rotation, p);
-    p.r.quat = bd_random_walk_rot(brownian, p, time_step);
+    p.r.quat = bd_random_walk_rot(brownian, p, time_step, kT);
     p.m.omega += bd_random_walk_vel_rot(brownian, p);
 #endif // ROTATION
   }

@@ -77,15 +77,15 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
   return ES_OK;
 }
 
-void dpd_init(double time_step) {
+void dpd_init(double kT, double time_step) {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       IA_parameters &ia_params = *get_ia_param(type_a, type_b);
 
       ia_params.dpd_radial.pref =
-          sqrt(24.0 * temperature * ia_params.dpd_radial.gamma / time_step);
+          sqrt(24.0 * kT * ia_params.dpd_radial.gamma / time_step);
       ia_params.dpd_trans.pref =
-          sqrt(24.0 * temperature * ia_params.dpd_trans.gamma / time_step);
+          sqrt(24.0 * kT * ia_params.dpd_trans.gamma / time_step);
     }
   }
 }

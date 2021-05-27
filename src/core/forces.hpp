@@ -55,7 +55,7 @@ void init_forces_ghosts(const ParticleRange &particles);
  *  <li> Calculate long range interaction forces
  *  </ol>
  */
-void force_calc(CellStructure &cell_structure, double time_step);
+void force_calc(CellStructure &cell_structure, double time_step, double kT);
 
 /** Calculate long range forces (P3M, ...). */
 void calc_long_range_forces(const ParticleRange &particles);

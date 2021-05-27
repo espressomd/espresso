@@ -154,7 +154,7 @@ bool integrator_step_1(ParticleRange &particles) {
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
-void integrator_step_2(ParticleRange &particles) {
+void integrator_step_2(ParticleRange &particles, double kT) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -169,7 +169,7 @@ void integrator_step_2(ParticleRange &particles) {
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles, time_step);
+    brownian_dynamics_propagator(brownian, particles, time_step, kT);
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
@@ -207,7 +207,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    force_calc(cell_structure, time_step);
+    force_calc(cell_structure, time_step, temperature);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -269,12 +269,12 @@ int integrate(int n_steps, int reuse_forces) {
 
     particles = cell_structure.local_particles();
 
-    force_calc(cell_structure, time_step);
+    force_calc(cell_structure, time_step, temperature);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
 #endif
-    integrator_step_2(particles);
+    integrator_step_2(particles, temperature);
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
     if (n_rigidbonds) {
