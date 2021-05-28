@@ -56,7 +56,7 @@ struct NoLBActive : public std::exception {
 
 void lb_lbfluid_init() {}
 
-void lb_lbfluid_update() {
+void lb_lbfluid_integrate() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     lb_walberla()->integrate();
@@ -65,19 +65,9 @@ void lb_lbfluid_update() {
     throw NoLBActive();
 }
 
-/** measures the MD time since the last fluid update */
-static double fluidstep = 0.0;
-
 void lb_lbfluid_propagate() {
-  if (lattice_switch == ActiveLB::NONE)
-    return;
-
-  auto const factor = static_cast<int>(round(lb_lbfluid_get_tau() / time_step));
-
-  fluidstep += 1;
-  if (fluidstep >= factor) {
-    fluidstep = 0;
-    lb_lbfluid_update();
+  if (lattice_switch != ActiveLB::NONE) {
+    lb_lbfluid_integrate();
   }
 }
 
@@ -100,12 +90,11 @@ void lb_boundary_mach_check() {
   }
 }
 
-void lb_lbfluid_sanity_checks() {
+void lb_lbfluid_sanity_checks(double time_step) {
   if (lattice_switch == ActiveLB::NONE)
     return;
 
   // LB GPU interface functions only work on the head node.
-  extern double time_step;
   lb_boundary_mach_check();
   if (time_step > 0.)
     check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
@@ -137,7 +126,7 @@ void lb_lbfluid_sanity_checks() {
   }
 }
 
-void lb_lbfluid_on_integration_start() { lb_lbfluid_sanity_checks(); }
+void lb_lbfluid_on_integration_start() {}
 
 void lb_lbfluid_invalidate_particle_allocation() {}
 
@@ -205,18 +194,18 @@ const Utils::Vector3d lb_lbfluid_get_ext_force_density() {
   throw NoLBActive();
 }
 
-void check_tau_time_step_consistency(double tau, double time_s) {
+void check_tau_time_step_consistency(double tau, double time_step) {
   auto const eps = std::numeric_limits<float>::epsilon();
-  if ((tau - time_s) / (tau + time_s) < -eps)
+  if ((tau - time_step) / (tau + time_step) < -eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
                                 ") must be >= MD time_step (" +
-                                std::to_string(time_s) + ")");
-  auto const factor = tau / time_s;
+                                std::to_string(time_step) + ")");
+  auto const factor = tau / time_step;
   if (fabs(round(factor) - factor) / factor > eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
                                 ") must be integer multiple of "
                                 "MD time_step (" +
-                                std::to_string(time_s) + "). Factor is " +
+                                std::to_string(time_step) + "). Factor is " +
                                 std::to_string(factor));
 }
 

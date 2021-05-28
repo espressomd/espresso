@@ -57,6 +57,10 @@
 
 #include <boost/range/algorithm/min_element.hpp>
 
+#include <algorithm>
+#include <cmath>
+#include <csignal>
+#include <functional>
 #include <stdexcept>
 
 #ifdef VALGRIND_INSTRUMENTATION
@@ -74,6 +78,8 @@ bool skin_set = false;
 bool recalc_forces = true;
 
 double verlet_reuse = 0.0;
+
+static int fluid_step = 0;
 
 bool set_py_interrupt = false;
 namespace {
@@ -131,11 +137,11 @@ bool integrator_step_1(ParticleRange &particles) {
       return true; // early exit
     break;
   case INTEG_METHOD_NVT:
-    velocity_verlet_step_1(particles);
+    velocity_verlet_step_1(particles, time_step);
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_1(particles);
+    velocity_verlet_npt_step_1(particles, time_step);
     break;
 #endif
   case INTEG_METHOD_BD:
@@ -144,7 +150,7 @@ bool integrator_step_1(ParticleRange &particles) {
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
-    stokesian_dynamics_step_1(particles);
+    stokesian_dynamics_step_1(particles, time_step);
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
@@ -154,22 +160,22 @@ bool integrator_step_1(ParticleRange &particles) {
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
-void integrator_step_2(ParticleRange &particles) {
+void integrator_step_2(ParticleRange &particles, double kT) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
     break;
   case INTEG_METHOD_NVT:
-    velocity_verlet_step_2(particles);
+    velocity_verlet_step_2(particles, time_step);
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_2(particles);
+    velocity_verlet_npt_step_2(particles, time_step);
     break;
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles);
+    brownian_dynamics_propagator(brownian, particles, time_step, kT);
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
@@ -185,7 +191,7 @@ int integrate(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   /* Prepare the integrator */
-  on_integration_start();
+  on_integration_start(time_step);
 
   /* if any method vetoes (e.g. P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
@@ -207,7 +213,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    force_calc(cell_structure, time_step);
+    force_calc(cell_structure, time_step, temperature);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -269,12 +275,12 @@ int integrate(int n_steps, int reuse_forces) {
 
     particles = cell_structure.local_particles();
 
-    force_calc(cell_structure, time_step);
+    force_calc(cell_structure, time_step, temperature);
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->after_force_calc();
+    virtual_sites()->after_force_calc(time_step);
 #endif
-    integrator_step_2(particles);
+    integrator_step_2(particles, temperature);
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
     if (n_rigidbonds) {
@@ -284,13 +290,20 @@ int integrate(int n_steps, int reuse_forces) {
 
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      if (lattice_switch != ActiveLB::NONE) {
-        lb_lbfluid_propagate();
+      if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
+        auto const tau = lb_lbfluid_get_tau();
+        auto const lb_steps_per_md_step =
+            static_cast<int>(std::round(tau / time_step));
+        fluid_step += 1;
+        if (fluid_step >= lb_steps_per_md_step) {
+          fluid_step = 0;
+          lb_lbfluid_propagate();
+        }
         lb_lbcoupling_propagate();
       }
 
 #ifdef VIRTUAL_SITES
-      virtual_sites()->after_lb_propagation();
+      virtual_sites()->after_lb_propagation(time_step);
 #endif
 
 #ifdef COLLISION_DETECTION
@@ -458,6 +471,12 @@ double interaction_range() {
   auto const max_cut = maximal_cutoff();
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
+
+double get_time_step() { return time_step; }
+
+double get_sim_time() { return sim_time; }
+
+void increment_sim_time(double amount) { sim_time += amount; }
 
 void mpi_set_time_step_local(double dt) {
   time_step = dt;

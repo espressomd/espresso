@@ -37,7 +37,7 @@
  *  From eq. (14.39) in @cite Schlick2010.
  *  @param[in]     brownian_gamma Brownian translational gamma
  *  @param[in]     p              %Particle
- *  @param[in]     dt             Time interval
+ *  @param[in]     dt             Time step
  */
 inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
                                Particle const &p, double dt) {
@@ -163,10 +163,11 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
  *  From eq. (14.37) in @cite Schlick2010.
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              %Particle
- *  @param[in]     dt             Time interval
+ *  @param[in]     dt             Time step
+ *  @param[in]     kT             Temperature
  */
 inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
-                                      Particle const &p, double dt) {
+                                      Particle const &p, double dt, double kT) {
   // skip the translation thermalizing for virtual sites unless enabled
   if (p.p.is_virtual && !thermo_virtual)
     return {};
@@ -175,8 +176,8 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
 #ifdef THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
   if (p.p.gamma >= Thermostat::GammaType{}) {
-    if (temperature > 0.0) {
-      sigma_pos = BrownianThermostat::sigma(temperature, p.p.gamma);
+    if (kT > 0.0) {
+      sigma_pos = BrownianThermostat::sigma(kT, p.p.gamma);
     } else {
       sigma_pos = Thermostat::GammaType{};
     }
@@ -273,7 +274,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
  *  An analogy of eq. (14.39) in @cite Schlick2010.
  *  @param[in]     brownian_gamma_rotation Brownian rotational gamma
  *  @param[in]     p              %Particle
- *  @param[in]     dt             Time interval
+ *  @param[in]     dt             Time step
  */
 inline Utils::Quaternion<double>
 bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
@@ -352,18 +353,19 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
  *  An analogy of eq. (14.37) in @cite Schlick2010.
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              %Particle
- *  @param[in]     dt             Time interval
+ *  @param[in]     dt             Time step
+ *  @param[in]     kT             Temperature
  */
 inline Utils::Quaternion<double>
 bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
-                   double dt) {
+                   double dt, double kT) {
 
   Thermostat::GammaType sigma_pos = brownian.sigma_pos_rotation;
 #ifdef THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
-    if (temperature > 0.) {
-      sigma_pos = BrownianThermostat::sigma(temperature, p.p.gamma_rot);
+    if (kT > 0.) {
+      sigma_pos = BrownianThermostat::sigma(kT, p.p.gamma_rot);
     } else {
       sigma_pos = {}; // just an indication of the infinity
     }

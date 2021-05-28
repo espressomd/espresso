@@ -180,7 +180,7 @@ cdef class HydrodynamicInteraction(Actor):
         Lattice constant. The box size in every direction must be an integer
         multiple of ``agrid``.
     tau : :obj:`float`
-        LB time step. The MD time step must be an integer multiple of ``tau``.
+        LB time step, must be an integer multiple of the MD time step.
     dens : :obj:`float`
         Fluid density.
     visc : :obj:`float`

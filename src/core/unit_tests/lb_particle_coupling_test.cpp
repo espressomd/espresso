@@ -233,12 +233,12 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 
   auto const coupling_pos =
       p.r.p + Utils::Vector3d{0., 0., p.p.swim.dipole_length / params.agrid};
-  void add_swimmer_force(Particle const &p);
+  void add_swimmer_force(Particle const &p, double time_step);
 
   // swimmer coupling
   {
     if (in_local_halo(p.r.p)) {
-      add_swimmer_force(p);
+      add_swimmer_force(p, params.time_step);
     }
     if (in_local_halo(coupling_pos)) {
       auto const interpolated =
@@ -273,7 +273,8 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   // remove force of the particle from the fluid
   {
     if (in_local_halo(coupling_pos)) {
-      add_md_force(coupling_pos, -Utils::Vector3d{0., 0., p.p.swim.f_swim});
+      add_md_force(coupling_pos, -Utils::Vector3d{0., 0., p.p.swim.f_swim},
+                   params.time_step);
       auto const reset = lb_lbfluid_get_force_to_be_applied(coupling_pos);
       BOOST_REQUIRE_SMALL(reset.norm(), tol);
     }
@@ -309,11 +310,11 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
 
   void couple_particle(Particle & p, bool couple_virtual,
                        double noise_amplitude,
-                       const OptionalCounter &rng_counter);
+                       const OptionalCounter &rng_counter, double time_step);
   // coupling
   {
     if (in_local_halo(p.r.p)) {
-      couple_particle(p, false, noise, rng);
+      couple_particle(p, false, noise, rng, params.time_step);
       BOOST_CHECK_SMALL((p.f.f - expected).norm(), tol);
 
       auto const interpolated = lb_lbfluid_get_force_to_be_applied(p.r.p);
@@ -325,7 +326,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   // remove force of the particle from the fluid
   {
     if (in_local_halo(p.r.p)) {
-      add_md_force(p.r.p, -expected);
+      add_md_force(p.r.p, -expected, params.time_step);
     }
   }
 }
@@ -386,7 +387,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, coupling_particle_lattice_ia,
       auto const particles = cell_structure.local_particles();
       auto const ghost_particles = cell_structure.ghost_particles();
       lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                             ghost_particles);
+                                             ghost_particles, params.time_step);
       auto const &p = get_particle_data(pid);
       BOOST_CHECK_EQUAL(p.f.f.norm(), 0.);
     }
@@ -401,7 +402,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, coupling_particle_lattice_ia,
       auto const lb_before = lb_lbfluid_get_force_to_be_applied(p.r.p);
       // couple particle to LB
       lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                             ghost_particles);
+                                             ghost_particles, params.time_step);
       // check particle force
       auto const &p = get_particle_data(pid);
       BOOST_CHECK_SMALL((p.f.f - expected).norm(), tol);
@@ -411,7 +412,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, coupling_particle_lattice_ia,
       BOOST_CHECK_SMALL((lb_after - lb_expected).norm(), tol);
       // remove force of the particle from the fluid
       set_particle_f(pid, {});
-      add_md_force(p.r.p, -expected);
+      add_md_force(p.r.p, -expected, params.time_step);
     }
   }
 

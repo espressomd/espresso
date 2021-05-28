@@ -101,7 +101,7 @@ void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                grid_dimensions, node_grid, kT, seed);
   if (lb_walberla_instance) {
     lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
-    lb_lbfluid_sanity_checks();
+    lb_lbfluid_sanity_checks(get_time_step());
   }
 }
 

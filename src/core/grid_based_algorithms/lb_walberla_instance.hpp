@@ -50,9 +50,12 @@ void init_lb_walberla(double viscosity, double density, double agrid,
  *  WALBERLA
  *
  *  @param viscosity Fluid viscosity
- *  @param density Fluid density
- *  @param agrid  Size of one lb cell
- *  @param tau    LB time step
+ *  @param density   Fluid density
+ *  @param agrid     Size of one LB cell
+ *  @param tau       LB time step
+ *  @param box_size  Box dimensions
+ *  @param kT        Temperature
+ *  @param seed      LB random seed
  */
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau, Utils::Vector3d box_size, double kT,

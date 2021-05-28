@@ -103,8 +103,10 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
  * @brief Add a force to the lattice force density.
  * @param pos Position of the force
  * @param force Force in MD units.
+ * @param time_step MD time step.
  */
-void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
+void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
+                  double time_step) {
   /* transform momentum transfer to lattice units
      (eq. (12) @cite ahlrichs99a) */
   auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
@@ -205,7 +207,7 @@ bool in_local_halo(Vector3d const &pos) {
 }
 
 #ifdef ENGINE
-void add_swimmer_force(Particle const &p) {
+void add_swimmer_force(Particle const &p, double time_step) {
   if (p.p.swim.swimming) {
     // calculate source position
     const double direction =
@@ -214,7 +216,7 @@ void add_swimmer_force(Particle const &p) {
     auto const source_position = p.r.p + direction * director;
 
     if (in_local_halo(source_position)) {
-      add_md_force(source_position, p.p.swim.f_swim * director);
+      add_md_force(source_position, p.p.swim.f_swim * director, time_step);
     }
   }
 }
@@ -230,7 +232,7 @@ Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
 }
 
 void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
-                     const OptionalCounter &rng_counter) {
+                     const OptionalCounter &rng_counter, double time_step) {
 
   if (p.p.is_virtual and not couple_virtual)
     return;
@@ -247,7 +249,7 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
         noise_amplitude * lb_particle_coupling_noise(noise_amplitude > 0.0,
                                                      p.identity(), rng_counter);
     auto const coupling_force = drag_force + random_force;
-    add_md_force(p.r.p, coupling_force);
+    add_md_force(p.r.p, coupling_force, time_step);
     if (in_local_domain(p.r.p, local_geo)) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
@@ -256,9 +258,10 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
   }
 }
 
-void lb_lbcoupling_calc_particle_lattice_ia(
-    bool couple_virtual, const ParticleRange &particles,
-    const ParticleRange &more_particles) {
+void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
+                                            const ParticleRange &particles,
+                                            const ParticleRange &more_particles,
+                                            double time_step) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::WALBERLA) {
     if (lb_particle_coupling.couple_to_md) {
@@ -283,17 +286,17 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         /* Couple particles ranges */
         for (auto &p : particles) {
           couple_particle(p, couple_virtual, noise_amplitude,
-                          lb_particle_coupling.rng_counter_coupling);
+                          lb_particle_coupling.rng_counter_coupling, time_step);
 #ifdef ENGINE
-          add_swimmer_force(p);
+          add_swimmer_force(p, time_step);
 #endif
         }
 
         for (auto &p : more_particles) {
           couple_particle(p, couple_virtual, noise_amplitude,
-                          lb_particle_coupling.rng_counter_coupling);
+                          lb_particle_coupling.rng_counter_coupling, time_step);
 #ifdef ENGINE
-          add_swimmer_force(p);
+          add_swimmer_force(p, time_step);
 #endif
         }
 

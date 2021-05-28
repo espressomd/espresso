@@ -163,6 +163,15 @@ void integrate_set_npt_isotropic(double ext_pressure, double piston,
                                  bool zdir_rescale, bool cubic_box);
 #endif
 
+/** Get time step */
+double get_time_step();
+
+/** Get simulation time */
+double get_sim_time();
+
+/** Increase simulation time (only on head node) */
+void increment_sim_time(double amount);
+
 /** Send new \ref time_step and rescale the velocities accordingly. */
 void mpi_set_time_step(double time_step);
 
