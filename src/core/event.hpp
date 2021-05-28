@@ -54,7 +54,7 @@ void on_program_start();
 /** called every time the simulation is continued/started, i.e.
  *  when switching from the script interface to the simulation core.
  */
-void on_integration_start();
+void on_integration_start(double time_step);
 
 /** called before calculating observables, i.e. energy, pressure or
  *  the integrator (forces). Initialize any methods here which are not

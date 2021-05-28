@@ -296,7 +296,7 @@ void IBM_ResetLBForces_GPU() {
  *  This must be the first CUDA-IBM function to be called because it also does
  *  some initialization.
  */
-void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
+void IBM_ForcesIntoFluid_GPU(ParticleRange const &particles) {
   // This function does
   // (1) Gather forces from all particles via MPI
   // (2) Copy forces to the GPU
@@ -394,7 +394,7 @@ void InitCUDA_IBM(std::size_t const numParticles) {
 /** Call a kernel function to interpolate the velocity at each IBM particle's
  *  position. Store velocity in the particle data structure.
  */
-void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
+void ParticleVelocitiesFromLB_GPU(ParticleRange const &particles) {
   // This function performs three steps:
   // (1) interpolate velocities on GPU
   // (2) transfer velocities back to CPU
