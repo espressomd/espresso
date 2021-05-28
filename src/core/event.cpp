@@ -151,7 +151,6 @@ void on_integration_start(double time_step) {
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
 #endif
-  check_global_consistency();
 #endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
