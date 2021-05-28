@@ -22,7 +22,6 @@
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "lb_boundaries.hpp"
@@ -226,8 +225,7 @@ void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
   default:
     throw std::invalid_argument("Invalid lattice switch.");
   }
-  lattice_switch = local_lattice_switch;
-  mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
+  mpi_set_lattice_switch(local_lattice_switch);
 }
 
 double lb_lbfluid_get_kT() {
@@ -703,4 +701,14 @@ double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos) {
 #endif
   }
   throw NoLBActive();
+}
+
+void mpi_set_lattice_switch_local(ActiveLB lattice_switch) {
+  ::lattice_switch = lattice_switch;
+}
+
+REGISTER_CALLBACK(mpi_set_lattice_switch_local)
+
+void mpi_set_lattice_switch(ActiveLB lattice_switch) {
+  mpi_call_all(mpi_set_lattice_switch_local, lattice_switch);
 }

@@ -64,4 +64,5 @@ private:
   }
 };
 
+void mpi_set_n_rigidbonds(int n_rigidbonds);
 #endif

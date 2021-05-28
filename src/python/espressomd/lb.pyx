@@ -30,7 +30,6 @@ from . import cuda_init
 from . import utils
 from .utils import array_locked, is_valid_type, to_char_pointer
 from .utils cimport Vector3i, Vector3d, Vector6d, make_array_locked, create_nparray_from_double_array
-from .globals cimport time_step
 from .grid cimport box_geo
 
 

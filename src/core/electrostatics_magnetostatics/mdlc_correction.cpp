@@ -31,7 +31,6 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
 

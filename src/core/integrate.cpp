@@ -41,7 +41,6 @@
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
@@ -69,9 +68,12 @@
 
 int integ_switch = INTEG_METHOD_NVT;
 
-double time_step = -1.0;
+/** Time step for the integration. */
+static double time_step = -1.0;
 
-double sim_time = 0.0;
+/** Actual simulation time. */
+static double sim_time = 0.0;
+
 double skin = 0.0;
 bool skin_set = false;
 
@@ -377,9 +379,10 @@ int python_integrate(int n_steps, bool recalc_forces_par,
     }
     /* maximal skin that can be used without resorting is the maximal
      * range of the cell system minus what is needed for interactions. */
-    skin = std::min(0.4 * max_cut,
-                    *boost::min_element(cell_structure.max_cutoff()) - max_cut);
-    mpi_bcast_parameter(FIELD_SKIN);
+    auto const new_skin =
+        std::min(0.4 * max_cut,
+                 *boost::min_element(cell_structure.max_cutoff()) - max_cut);
+    mpi_set_skin(new_skin);
   }
 
   using Accumulators::auto_update;
@@ -433,26 +436,18 @@ int mpi_integrate(int n_steps, int reuse_forces) {
 void integrate_set_steepest_descent(const double f_max, const double gamma,
                                     const double max_displacement) {
   steepest_descent_init(f_max, gamma, max_displacement);
-  integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
 }
 
-void integrate_set_nvt() {
-  integ_switch = INTEG_METHOD_NVT;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-}
+void integrate_set_nvt() { mpi_set_integ_switch(INTEG_METHOD_NVT); }
 
-void integrate_set_bd() {
-  integ_switch = INTEG_METHOD_BD;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-}
+void integrate_set_bd() { mpi_set_integ_switch(INTEG_METHOD_BD); }
 
 void integrate_set_sd() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2)) {
     throw std::runtime_error("Stokesian Dynamics requires periodicity 0 0 0");
   }
-  integ_switch = INTEG_METHOD_SD;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_set_integ_switch(INTEG_METHOD_SD);
 }
 
 #ifdef NPT
@@ -461,8 +456,7 @@ void integrate_set_npt_isotropic(double ext_pressure, double piston,
                                  bool zdir_rescale, bool cubic_box) {
   nptiso_init(ext_pressure, piston, xdir_rescale, ydir_rescale, zdir_rescale,
               cubic_box);
-  integ_switch = INTEG_METHOD_NPT_ISO;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_set_integ_switch(INTEG_METHOD_NPT_ISO);
 }
 #endif
 
@@ -480,7 +474,7 @@ void increment_sim_time(double amount) { sim_time += amount; }
 
 void mpi_set_time_step_local(double dt) {
   time_step = dt;
-  on_parameter_change(FIELD_TIMESTEP);
+  on_timestep_change();
 }
 
 REGISTER_CALLBACK(mpi_set_time_step_local)
@@ -491,4 +485,32 @@ void mpi_set_time_step(double time_s) {
   if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
     check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
   mpi_call_all(mpi_set_time_step_local, time_s);
+}
+
+void mpi_set_skin_local(double skin) {
+  ::skin = skin;
+  on_skin_change();
+}
+
+REGISTER_CALLBACK(mpi_set_skin_local)
+
+void mpi_set_skin(double skin) { mpi_call_all(mpi_set_skin_local, skin); }
+
+void mpi_set_time_local(double time) {
+  sim_time = time;
+  on_simtime_change();
+}
+
+REGISTER_CALLBACK(mpi_set_time_local)
+
+void mpi_set_time(double time) { mpi_call_all(mpi_set_time_local, time); }
+
+void mpi_set_integ_switch_local(int integ_switch) {
+  ::integ_switch = integ_switch;
+}
+
+REGISTER_CALLBACK(mpi_set_integ_switch_local)
+
+void mpi_set_integ_switch(int integ_switch) {
+  mpi_call_all(mpi_set_integ_switch_local, integ_switch);
 }
