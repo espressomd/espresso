@@ -599,7 +599,6 @@ class LBSlice:
     def __iter__(self):
         indices = [(x, y, z) for (x, y, z) in itertools.product(
             self.x_indices, self.y_indices, self.z_indices)]
-        general_iterator = 
         return (LBFluidRoutines(np.array(index)) for index in indices)
 
 
