@@ -324,15 +324,6 @@ void on_nodegrid_change() {
   cells_re_init(cell_structure.decomposition_type());
 }
 
-void on_parameter_change(int field) {
-  switch (field) {
-  case FIELD_NPTISO_PISTON:
-  case FIELD_THERMALIZEDBONDS:
-    on_thermostat_param_change();
-    break;
-  }
-}
-
 /**
  * @brief Returns the ghost flags required for running pair
  *        kernels for the global state, e.g. the force calculation.

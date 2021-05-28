@@ -125,13 +125,6 @@ void on_forcecap_change();
  */
 void on_nodegrid_change();
 
-/** called every time other parameters (timestep,...) are changed. Note that
- *  this does not happen automatically. The callback procedure of the changed
- *  variable is responsible for that.
- *  @param parameter is the @ref Fields identifier of the field changed.
- */
-void on_parameter_change(int parameter);
-
 unsigned global_ghost_flags();
 
 /** called every time the walls for the lb fluid are changed */
