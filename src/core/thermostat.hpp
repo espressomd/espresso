@@ -367,19 +367,11 @@ void thermo_init(double time_step);
 /** Increment RNG counters */
 void philox_counter_increment();
 
-#ifndef PARTICLE_ANISOTROPY
-void mpi_set_brownian_gamma(double gamma);
-void mpi_set_brownian_gamma_rot(double gamma);
+void mpi_set_brownian_gamma(Thermostat::GammaType const &gamma);
+void mpi_set_brownian_gamma_rot(Thermostat::GammaType const &gamma);
 
-void mpi_set_langevin_gamma(double gamma);
-void mpi_set_langevin_gamma_rot(double gamma);
-#else
-void mpi_set_brownian_gamma(const Utils::Vector3d &gamma);
-void mpi_set_brownian_gamma_rot(const Utils::Vector3d &gamma);
-
-void mpi_set_langevin_gamma(const Utils::Vector3d &gamma);
-void mpi_set_langevin_gamma_rot(const Utils::Vector3d &gamma);
-#endif
+void mpi_set_langevin_gamma(Thermostat::GammaType const &gamma);
+void mpi_set_langevin_gamma_rot(Thermostat::GammaType const &gamma);
 
 void mpi_set_thermo_virtual(bool thermo_virtual);
 
