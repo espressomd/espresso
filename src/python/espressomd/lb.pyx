@@ -16,21 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from .globals cimport time_step
-from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
-from .utils import array_locked, is_valid_type, check_type_or_throw_except
-from . import utils
-from . import cuda_init
-from . cimport cuda_init
-from .actors cimport Actor
-from libc cimport stdint
-import numpy as np
-import functools
-import itertools
-import cython
-import os
 include "myconfig.pxi"
+import os
+import cython
+import itertools
+import functools
+import numpy as np
 cimport numpy as np
+from libc cimport stdint
+from .actors cimport Actor
+from . cimport cuda_init
+from . import cuda_init
+from . import utils
+from .utils import array_locked, is_valid_type, check_type_or_throw_except
+from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
+from .globals cimport time_step
 
 
 def _construct(cls, params):
@@ -453,9 +453,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines:
@@ -599,6 +599,7 @@ class LBSlice:
     def __iter__(self):
         indices = [(x, y, z) for (x, y, z) in itertools.product(
             self.x_indices, self.y_indices, self.z_indices)]
+        general_iterator = 
         return (LBFluidRoutines(np.array(index)) for index in indices)
 
 
