@@ -36,8 +36,9 @@ extern ActiveLB lattice_switch;
 
 /**
  * @brief Propagate the LB fluid.
+ * @param integrate_lb Whether to run the collide-stream scheme.
  */
-void lb_lbfluid_propagate(int lb_steps_per_md_step);
+void lb_lbfluid_propagate(bool integrate_lb);
 
 /**
  * @brief Event handler for integration start.

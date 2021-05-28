@@ -79,6 +79,8 @@ bool recalc_forces = true;
 
 double verlet_reuse = 0.0;
 
+static int fluid_step = 0;
+
 bool set_py_interrupt = false;
 namespace {
 volatile std::sig_atomic_t ctrl_C = 0;
@@ -289,9 +291,16 @@ int integrate(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
+        auto const tau = lb_lbfluid_get_tau();
         auto const lb_steps_per_md_step =
-            static_cast<int>(std::round(lb_lbfluid_get_tau() / time_step));
-        lb_lbfluid_propagate(lb_steps_per_md_step);
+            static_cast<int>(std::round(tau / time_step));
+        bool integrate_lb = false;
+        fluid_step += 1;
+        if (fluid_step >= lb_steps_per_md_step) {
+          fluid_step = 0;
+          integrate_lb = true;
+        }
+        lb_lbfluid_propagate(integrate_lb);
         lb_lbcoupling_propagate();
       }
 

@@ -90,23 +90,7 @@ LB_parameters_gpu lbpar_gpu = {
 /** this is the array that stores the hydrodynamic fields for the output */
 std::vector<LB_rho_v_pi_gpu> host_values(0);
 
-/** measures the MD time since the last fluid update */
-static int fluidstep = 0;
-
 bool ek_initialized = false;
-
-/*-----------------------------------------------------------*/
-/** main of lb_gpu_programm */
-/*-----------------------------------------------------------*/
-
-/** %Lattice Boltzmann update gpu called from integrate.cpp */
-void lattice_boltzmann_update_gpu(int lb_steps_per_md_step) {
-  fluidstep += 1;
-  if (fluidstep >= lb_steps_per_md_step) {
-    fluidstep = 0;
-    lb_integrate_GPU();
-  }
-}
 
 /** (Re-)initialize the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {

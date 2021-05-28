@@ -52,9 +52,9 @@ struct NoLBActive : public std::exception {
   const char *what() const noexcept override { return "LB not activated"; }
 };
 
-void lb_lbfluid_update(int lb_steps_per_md_step) {
+void lb_lbfluid_integrate() {
   if (lattice_switch == ActiveLB::CPU) {
-    lattice_boltzmann_update(lb_steps_per_md_step);
+    lb_integrate();
   } else if (lattice_switch == ActiveLB::GPU and this_node == 0) {
 #ifdef CUDA
 #ifdef ELECTROKINETICS
@@ -62,7 +62,7 @@ void lb_lbfluid_update(int lb_steps_per_md_step) {
       ek_integrate();
     } else {
 #endif
-      lattice_boltzmann_update_gpu(lb_steps_per_md_step);
+      lb_integrate_GPU();
 #ifdef ELECTROKINETICS
     }
 #endif
@@ -70,9 +70,11 @@ void lb_lbfluid_update(int lb_steps_per_md_step) {
   }
 }
 
-void lb_lbfluid_propagate(int lb_steps_per_md_step) {
+void lb_lbfluid_propagate(bool integrate_lb) {
   if (lattice_switch != ActiveLB::NONE) {
-    lb_lbfluid_update(lb_steps_per_md_step);
+    if (integrate_lb) {
+      lb_lbfluid_integrate();
+    }
     if (lb_lbfluid_get_kT() > 0.0) {
       if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
