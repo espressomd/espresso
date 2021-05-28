@@ -17,10 +17,10 @@
 import numpy as np
 
 from .grid cimport box_geo
-from .globals cimport time_step
+from .globals cimport get_time_step
 from .globals cimport mpi_set_time_step
 from .globals cimport min_global_cut
-from .globals cimport sim_time
+from .globals cimport get_sim_time
 from .globals cimport timing_samples
 from .globals cimport mpi_set_forcecap
 from .globals cimport forcecap_get
@@ -42,8 +42,7 @@ cdef class Globals:
             mpi_set_time_step(time_step)
 
         def __get__(self):
-            global time_step
-            return time_step
+            return get_time_step()
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
@@ -71,8 +70,7 @@ cdef class Globals:
             mpi_set_time(_time)
 
         def __get__(self):
-            global sim_time
-            return sim_time
+            return get_sim_time()
 
     property timings:
         def __set__(self, int _timings):

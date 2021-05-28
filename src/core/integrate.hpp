@@ -39,11 +39,6 @@
 /** Switch determining which integrator to use. */
 extern int integ_switch;
 
-/** Time step for the integration. */
-extern double time_step;
-
-/** Actual simulation time (only on MASTER NODE). */
-extern double sim_time;
 /** Verlet list skin. */
 extern double skin;
 /** True iff the user has changed the skin setting. */
