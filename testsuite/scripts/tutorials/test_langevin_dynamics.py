@@ -18,7 +18,6 @@
 import unittest as ut
 import importlib_wrapper
 import numpy as np
-import scipy.optimize
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/langevin_dynamics/langevin_dynamics.py")
@@ -27,15 +26,6 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
-
-    def test_ballistic_regime(self):
-        for (tau_p, tau, msd) in zip(tutorial.tau_p_values,
-                                     tutorial.tau_results,
-                                     tutorial.msd_results):
-            popt, _ = scipy.optimize.curve_fit(
-                tutorial.quadratic, tau[:tau_p], msd[:tau_p])
-            residuals = msd[:tau_p] - tutorial.quadratic(tau[:tau_p], *popt)
-            np.testing.assert_allclose(residuals, 0, rtol=0, atol=1e-3)
 
     def test_diffusion_coefficient(self):
         D_val = tutorial.diffusion_results
