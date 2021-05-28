@@ -1,0 +1,2471 @@
+unitcell 140.0 140.0 280.0
+atom 0 radius 1 name 0 type 0 
+atom 1 radius 1 name 2 type 2 
+atom 2 radius 1 name 2 type 2 
+atom 3 radius 1 name 2 type 2 
+atom 4 radius 1 name 2 type 2 
+atom 5 radius 1 name 2 type 2 
+atom 6 radius 1 name 2 type 2 
+atom 7 radius 1 name 2 type 2 
+atom 8 radius 1 name 2 type 2 
+atom 9 radius 1 name 2 type 2 
+atom 10 radius 1 name 2 type 2 
+atom 11 radius 1 name 2 type 2 
+atom 12 radius 1 name 2 type 2 
+atom 13 radius 1 name 2 type 2 
+atom 14 radius 1 name 2 type 2 
+atom 15 radius 1 name 2 type 2 
+atom 16 radius 1 name 2 type 2 
+atom 17 radius 1 name 2 type 2 
+atom 18 radius 1 name 2 type 2 
+atom 19 radius 1 name 2 type 2 
+atom 20 radius 1 name 2 type 2 
+atom 21 radius 1 name 2 type 2 
+atom 22 radius 1 name 2 type 2 
+atom 23 radius 1 name 2 type 2 
+atom 24 radius 1 name 2 type 2 
+atom 25 radius 1 name 2 type 2 
+atom 26 radius 1 name 2 type 2 
+atom 27 radius 1 name 2 type 2 
+atom 28 radius 1 name 2 type 2 
+atom 29 radius 1 name 2 type 2 
+atom 30 radius 1 name 2 type 2 
+atom 31 radius 1 name 2 type 2 
+atom 32 radius 1 name 2 type 2 
+atom 33 radius 1 name 2 type 2 
+atom 34 radius 1 name 2 type 2 
+atom 35 radius 1 name 2 type 2 
+atom 36 radius 1 name 2 type 2 
+atom 37 radius 1 name 2 type 2 
+atom 38 radius 1 name 2 type 2 
+atom 39 radius 1 name 2 type 2 
+atom 40 radius 1 name 2 type 2 
+atom 41 radius 1 name 2 type 2 
+atom 42 radius 1 name 2 type 2 
+atom 43 radius 1 name 2 type 2 
+atom 44 radius 1 name 2 type 2 
+atom 45 radius 1 name 2 type 2 
+atom 46 radius 1 name 2 type 2 
+atom 47 radius 1 name 2 type 2 
+atom 48 radius 1 name 2 type 2 
+atom 49 radius 1 name 2 type 2 
+atom 50 radius 1 name 2 type 2 
+atom 51 radius 1 name 2 type 2 
+atom 52 radius 1 name 2 type 2 
+atom 53 radius 1 name 2 type 2 
+atom 54 radius 1 name 2 type 2 
+atom 55 radius 1 name 2 type 2 
+atom 56 radius 1 name 2 type 2 
+atom 57 radius 1 name 2 type 2 
+atom 58 radius 1 name 2 type 2 
+atom 59 radius 1 name 2 type 2 
+atom 60 radius 1 name 2 type 2 
+atom 61 radius 1 name 2 type 2 
+atom 62 radius 1 name 2 type 2 
+atom 63 radius 1 name 2 type 2 
+atom 64 radius 1 name 2 type 2 
+atom 65 radius 1 name 2 type 2 
+atom 66 radius 1 name 2 type 2 
+atom 67 radius 1 name 2 type 2 
+atom 68 radius 1 name 2 type 2 
+atom 69 radius 1 name 2 type 2 
+atom 70 radius 1 name 2 type 2 
+atom 71 radius 1 name 2 type 2 
+atom 72 radius 1 name 2 type 2 
+atom 73 radius 1 name 2 type 2 
+atom 74 radius 1 name 2 type 2 
+atom 75 radius 1 name 2 type 2 
+atom 76 radius 1 name 2 type 2 
+atom 77 radius 1 name 2 type 2 
+atom 78 radius 1 name 2 type 2 
+atom 79 radius 1 name 2 type 2 
+atom 80 radius 1 name 2 type 2 
+atom 81 radius 1 name 2 type 2 
+atom 82 radius 1 name 2 type 2 
+atom 83 radius 1 name 2 type 2 
+atom 84 radius 1 name 2 type 2 
+atom 85 radius 1 name 2 type 2 
+atom 86 radius 1 name 2 type 2 
+atom 87 radius 1 name 2 type 2 
+atom 88 radius 1 name 2 type 2 
+atom 89 radius 1 name 2 type 2 
+atom 90 radius 1 name 2 type 2 
+atom 91 radius 1 name 2 type 2 
+atom 92 radius 1 name 2 type 2 
+atom 93 radius 1 name 2 type 2 
+atom 94 radius 1 name 2 type 2 
+atom 95 radius 1 name 2 type 2 
+atom 96 radius 1 name 2 type 2 
+atom 97 radius 1 name 2 type 2 
+atom 98 radius 1 name 2 type 2 
+atom 99 radius 1 name 2 type 2 
+atom 100 radius 1 name 2 type 2 
+atom 101 radius 1 name 2 type 2 
+atom 102 radius 1 name 2 type 2 
+atom 103 radius 1 name 2 type 2 
+atom 104 radius 1 name 2 type 2 
+atom 105 radius 1 name 2 type 2 
+atom 106 radius 1 name 2 type 2 
+atom 107 radius 1 name 2 type 2 
+atom 108 radius 1 name 2 type 2 
+atom 109 radius 1 name 2 type 2 
+atom 110 radius 1 name 2 type 2 
+atom 111 radius 1 name 2 type 2 
+atom 112 radius 1 name 2 type 2 
+atom 113 radius 1 name 2 type 2 
+atom 114 radius 1 name 2 type 2 
+atom 115 radius 1 name 2 type 2 
+atom 116 radius 1 name 2 type 2 
+atom 117 radius 1 name 2 type 2 
+atom 118 radius 1 name 2 type 2 
+atom 119 radius 1 name 2 type 2 
+atom 120 radius 1 name 2 type 2 
+atom 121 radius 1 name 2 type 2 
+atom 122 radius 1 name 2 type 2 
+atom 123 radius 1 name 2 type 2 
+atom 124 radius 1 name 2 type 2 
+atom 125 radius 1 name 0 type 0 
+atom 126 radius 1 name 2 type 2 
+atom 127 radius 1 name 2 type 2 
+atom 128 radius 1 name 2 type 2 
+atom 129 radius 1 name 2 type 2 
+atom 130 radius 1 name 2 type 2 
+atom 131 radius 1 name 2 type 2 
+atom 132 radius 1 name 2 type 2 
+atom 133 radius 1 name 2 type 2 
+atom 134 radius 1 name 2 type 2 
+atom 135 radius 1 name 2 type 2 
+atom 136 radius 1 name 2 type 2 
+atom 137 radius 1 name 2 type 2 
+atom 138 radius 1 name 2 type 2 
+atom 139 radius 1 name 2 type 2 
+atom 140 radius 1 name 2 type 2 
+atom 141 radius 1 name 2 type 2 
+atom 142 radius 1 name 2 type 2 
+atom 143 radius 1 name 2 type 2 
+atom 144 radius 1 name 2 type 2 
+atom 145 radius 1 name 2 type 2 
+atom 146 radius 1 name 2 type 2 
+atom 147 radius 1 name 2 type 2 
+atom 148 radius 1 name 2 type 2 
+atom 149 radius 1 name 2 type 2 
+atom 150 radius 1 name 2 type 2 
+atom 151 radius 1 name 2 type 2 
+atom 152 radius 1 name 2 type 2 
+atom 153 radius 1 name 2 type 2 
+atom 154 radius 1 name 2 type 2 
+atom 155 radius 1 name 2 type 2 
+atom 156 radius 1 name 2 type 2 
+atom 157 radius 1 name 2 type 2 
+atom 158 radius 1 name 2 type 2 
+atom 159 radius 1 name 2 type 2 
+atom 160 radius 1 name 2 type 2 
+atom 161 radius 1 name 2 type 2 
+atom 162 radius 1 name 2 type 2 
+atom 163 radius 1 name 2 type 2 
+atom 164 radius 1 name 2 type 2 
+atom 165 radius 1 name 2 type 2 
+atom 166 radius 1 name 2 type 2 
+atom 167 radius 1 name 2 type 2 
+atom 168 radius 1 name 2 type 2 
+atom 169 radius 1 name 2 type 2 
+atom 170 radius 1 name 2 type 2 
+atom 171 radius 1 name 2 type 2 
+atom 172 radius 1 name 2 type 2 
+atom 173 radius 1 name 2 type 2 
+atom 174 radius 1 name 2 type 2 
+atom 175 radius 1 name 2 type 2 
+atom 176 radius 1 name 2 type 2 
+atom 177 radius 1 name 2 type 2 
+atom 178 radius 1 name 2 type 2 
+atom 179 radius 1 name 2 type 2 
+atom 180 radius 1 name 2 type 2 
+atom 181 radius 1 name 2 type 2 
+atom 182 radius 1 name 2 type 2 
+atom 183 radius 1 name 2 type 2 
+atom 184 radius 1 name 2 type 2 
+atom 185 radius 1 name 2 type 2 
+atom 186 radius 1 name 2 type 2 
+atom 187 radius 1 name 2 type 2 
+atom 188 radius 1 name 2 type 2 
+atom 189 radius 1 name 2 type 2 
+atom 190 radius 1 name 2 type 2 
+atom 191 radius 1 name 2 type 2 
+atom 192 radius 1 name 2 type 2 
+atom 193 radius 1 name 2 type 2 
+atom 194 radius 1 name 2 type 2 
+atom 195 radius 1 name 2 type 2 
+atom 196 radius 1 name 2 type 2 
+atom 197 radius 1 name 2 type 2 
+atom 198 radius 1 name 2 type 2 
+atom 199 radius 1 name 2 type 2 
+atom 200 radius 1 name 2 type 2 
+atom 201 radius 1 name 2 type 2 
+atom 202 radius 1 name 2 type 2 
+atom 203 radius 1 name 2 type 2 
+atom 204 radius 1 name 2 type 2 
+atom 205 radius 1 name 2 type 2 
+atom 206 radius 1 name 2 type 2 
+atom 207 radius 1 name 2 type 2 
+atom 208 radius 1 name 2 type 2 
+atom 209 radius 1 name 2 type 2 
+atom 210 radius 1 name 2 type 2 
+atom 211 radius 1 name 2 type 2 
+atom 212 radius 1 name 2 type 2 
+atom 213 radius 1 name 2 type 2 
+atom 214 radius 1 name 2 type 2 
+atom 215 radius 1 name 2 type 2 
+atom 216 radius 1 name 2 type 2 
+atom 217 radius 1 name 2 type 2 
+atom 218 radius 1 name 2 type 2 
+atom 219 radius 1 name 2 type 2 
+atom 220 radius 1 name 2 type 2 
+atom 221 radius 1 name 2 type 2 
+atom 222 radius 1 name 2 type 2 
+atom 223 radius 1 name 2 type 2 
+atom 224 radius 1 name 2 type 2 
+atom 225 radius 1 name 2 type 2 
+atom 226 radius 1 name 2 type 2 
+atom 227 radius 1 name 2 type 2 
+atom 228 radius 1 name 2 type 2 
+atom 229 radius 1 name 2 type 2 
+atom 230 radius 1 name 2 type 2 
+atom 231 radius 1 name 2 type 2 
+atom 232 radius 1 name 2 type 2 
+atom 233 radius 1 name 2 type 2 
+atom 234 radius 1 name 2 type 2 
+atom 235 radius 1 name 2 type 2 
+atom 236 radius 1 name 2 type 2 
+atom 237 radius 1 name 2 type 2 
+atom 238 radius 1 name 2 type 2 
+atom 239 radius 1 name 2 type 2 
+atom 240 radius 1 name 2 type 2 
+atom 241 radius 1 name 2 type 2 
+atom 242 radius 1 name 2 type 2 
+atom 243 radius 1 name 2 type 2 
+atom 244 radius 1 name 2 type 2 
+atom 245 radius 1 name 2 type 2 
+atom 246 radius 1 name 2 type 2 
+atom 247 radius 1 name 2 type 2 
+atom 248 radius 1 name 2 type 2 
+atom 249 radius 1 name 2 type 2 
+atom 250 radius 1 name 0 type 0 
+atom 251 radius 1 name 2 type 2 
+atom 252 radius 1 name 2 type 2 
+atom 253 radius 1 name 2 type 2 
+atom 254 radius 1 name 2 type 2 
+atom 255 radius 1 name 2 type 2 
+atom 256 radius 1 name 2 type 2 
+atom 257 radius 1 name 2 type 2 
+atom 258 radius 1 name 2 type 2 
+atom 259 radius 1 name 2 type 2 
+atom 260 radius 1 name 2 type 2 
+atom 261 radius 1 name 2 type 2 
+atom 262 radius 1 name 2 type 2 
+atom 263 radius 1 name 2 type 2 
+atom 264 radius 1 name 2 type 2 
+atom 265 radius 1 name 2 type 2 
+atom 266 radius 1 name 2 type 2 
+atom 267 radius 1 name 2 type 2 
+atom 268 radius 1 name 2 type 2 
+atom 269 radius 1 name 2 type 2 
+atom 270 radius 1 name 2 type 2 
+atom 271 radius 1 name 2 type 2 
+atom 272 radius 1 name 2 type 2 
+atom 273 radius 1 name 2 type 2 
+atom 274 radius 1 name 2 type 2 
+atom 275 radius 1 name 2 type 2 
+atom 276 radius 1 name 2 type 2 
+atom 277 radius 1 name 2 type 2 
+atom 278 radius 1 name 2 type 2 
+atom 279 radius 1 name 2 type 2 
+atom 280 radius 1 name 2 type 2 
+atom 281 radius 1 name 2 type 2 
+atom 282 radius 1 name 2 type 2 
+atom 283 radius 1 name 2 type 2 
+atom 284 radius 1 name 2 type 2 
+atom 285 radius 1 name 2 type 2 
+atom 286 radius 1 name 2 type 2 
+atom 287 radius 1 name 2 type 2 
+atom 288 radius 1 name 2 type 2 
+atom 289 radius 1 name 2 type 2 
+atom 290 radius 1 name 2 type 2 
+atom 291 radius 1 name 2 type 2 
+atom 292 radius 1 name 2 type 2 
+atom 293 radius 1 name 2 type 2 
+atom 294 radius 1 name 2 type 2 
+atom 295 radius 1 name 2 type 2 
+atom 296 radius 1 name 2 type 2 
+atom 297 radius 1 name 2 type 2 
+atom 298 radius 1 name 2 type 2 
+atom 299 radius 1 name 2 type 2 
+atom 300 radius 1 name 2 type 2 
+atom 301 radius 1 name 2 type 2 
+atom 302 radius 1 name 2 type 2 
+atom 303 radius 1 name 2 type 2 
+atom 304 radius 1 name 2 type 2 
+atom 305 radius 1 name 2 type 2 
+atom 306 radius 1 name 2 type 2 
+atom 307 radius 1 name 2 type 2 
+atom 308 radius 1 name 2 type 2 
+atom 309 radius 1 name 2 type 2 
+atom 310 radius 1 name 2 type 2 
+atom 311 radius 1 name 2 type 2 
+atom 312 radius 1 name 2 type 2 
+atom 313 radius 1 name 2 type 2 
+atom 314 radius 1 name 2 type 2 
+atom 315 radius 1 name 2 type 2 
+atom 316 radius 1 name 2 type 2 
+atom 317 radius 1 name 2 type 2 
+atom 318 radius 1 name 2 type 2 
+atom 319 radius 1 name 2 type 2 
+atom 320 radius 1 name 2 type 2 
+atom 321 radius 1 name 2 type 2 
+atom 322 radius 1 name 2 type 2 
+atom 323 radius 1 name 2 type 2 
+atom 324 radius 1 name 2 type 2 
+atom 325 radius 1 name 2 type 2 
+atom 326 radius 1 name 2 type 2 
+atom 327 radius 1 name 2 type 2 
+atom 328 radius 1 name 2 type 2 
+atom 329 radius 1 name 2 type 2 
+atom 330 radius 1 name 2 type 2 
+atom 331 radius 1 name 2 type 2 
+atom 332 radius 1 name 2 type 2 
+atom 333 radius 1 name 2 type 2 
+atom 334 radius 1 name 2 type 2 
+atom 335 radius 1 name 2 type 2 
+atom 336 radius 1 name 2 type 2 
+atom 337 radius 1 name 2 type 2 
+atom 338 radius 1 name 2 type 2 
+atom 339 radius 1 name 2 type 2 
+atom 340 radius 1 name 2 type 2 
+atom 341 radius 1 name 2 type 2 
+atom 342 radius 1 name 2 type 2 
+atom 343 radius 1 name 2 type 2 
+atom 344 radius 1 name 2 type 2 
+atom 345 radius 1 name 2 type 2 
+atom 346 radius 1 name 2 type 2 
+atom 347 radius 1 name 2 type 2 
+atom 348 radius 1 name 2 type 2 
+atom 349 radius 1 name 2 type 2 
+atom 350 radius 1 name 2 type 2 
+atom 351 radius 1 name 2 type 2 
+atom 352 radius 1 name 2 type 2 
+atom 353 radius 1 name 2 type 2 
+atom 354 radius 1 name 2 type 2 
+atom 355 radius 1 name 2 type 2 
+atom 356 radius 1 name 2 type 2 
+atom 357 radius 1 name 2 type 2 
+atom 358 radius 1 name 2 type 2 
+atom 359 radius 1 name 2 type 2 
+atom 360 radius 1 name 2 type 2 
+atom 361 radius 1 name 2 type 2 
+atom 362 radius 1 name 2 type 2 
+atom 363 radius 1 name 2 type 2 
+atom 364 radius 1 name 2 type 2 
+atom 365 radius 1 name 2 type 2 
+atom 366 radius 1 name 2 type 2 
+atom 367 radius 1 name 2 type 2 
+atom 368 radius 1 name 2 type 2 
+atom 369 radius 1 name 2 type 2 
+atom 370 radius 1 name 2 type 2 
+atom 371 radius 1 name 2 type 2 
+atom 372 radius 1 name 2 type 2 
+atom 373 radius 1 name 2 type 2 
+atom 374 radius 1 name 2 type 2 
+atom 375 radius 1 name 0 type 0 
+atom 376 radius 1 name 2 type 2 
+atom 377 radius 1 name 2 type 2 
+atom 378 radius 1 name 2 type 2 
+atom 379 radius 1 name 2 type 2 
+atom 380 radius 1 name 2 type 2 
+atom 381 radius 1 name 2 type 2 
+atom 382 radius 1 name 2 type 2 
+atom 383 radius 1 name 2 type 2 
+atom 384 radius 1 name 2 type 2 
+atom 385 radius 1 name 2 type 2 
+atom 386 radius 1 name 2 type 2 
+atom 387 radius 1 name 2 type 2 
+atom 388 radius 1 name 2 type 2 
+atom 389 radius 1 name 2 type 2 
+atom 390 radius 1 name 2 type 2 
+atom 391 radius 1 name 2 type 2 
+atom 392 radius 1 name 2 type 2 
+atom 393 radius 1 name 2 type 2 
+atom 394 radius 1 name 2 type 2 
+atom 395 radius 1 name 2 type 2 
+atom 396 radius 1 name 2 type 2 
+atom 397 radius 1 name 2 type 2 
+atom 398 radius 1 name 2 type 2 
+atom 399 radius 1 name 2 type 2 
+atom 400 radius 1 name 2 type 2 
+atom 401 radius 1 name 2 type 2 
+atom 402 radius 1 name 2 type 2 
+atom 403 radius 1 name 2 type 2 
+atom 404 radius 1 name 2 type 2 
+atom 405 radius 1 name 2 type 2 
+atom 406 radius 1 name 2 type 2 
+atom 407 radius 1 name 2 type 2 
+atom 408 radius 1 name 2 type 2 
+atom 409 radius 1 name 2 type 2 
+atom 410 radius 1 name 2 type 2 
+atom 411 radius 1 name 2 type 2 
+atom 412 radius 1 name 2 type 2 
+atom 413 radius 1 name 2 type 2 
+atom 414 radius 1 name 2 type 2 
+atom 415 radius 1 name 2 type 2 
+atom 416 radius 1 name 2 type 2 
+atom 417 radius 1 name 2 type 2 
+atom 418 radius 1 name 2 type 2 
+atom 419 radius 1 name 2 type 2 
+atom 420 radius 1 name 2 type 2 
+atom 421 radius 1 name 2 type 2 
+atom 422 radius 1 name 2 type 2 
+atom 423 radius 1 name 2 type 2 
+atom 424 radius 1 name 2 type 2 
+atom 425 radius 1 name 2 type 2 
+atom 426 radius 1 name 2 type 2 
+atom 427 radius 1 name 2 type 2 
+atom 428 radius 1 name 2 type 2 
+atom 429 radius 1 name 2 type 2 
+atom 430 radius 1 name 2 type 2 
+atom 431 radius 1 name 2 type 2 
+atom 432 radius 1 name 2 type 2 
+atom 433 radius 1 name 2 type 2 
+atom 434 radius 1 name 2 type 2 
+atom 435 radius 1 name 2 type 2 
+atom 436 radius 1 name 2 type 2 
+atom 437 radius 1 name 2 type 2 
+atom 438 radius 1 name 2 type 2 
+atom 439 radius 1 name 2 type 2 
+atom 440 radius 1 name 2 type 2 
+atom 441 radius 1 name 2 type 2 
+atom 442 radius 1 name 2 type 2 
+atom 443 radius 1 name 2 type 2 
+atom 444 radius 1 name 2 type 2 
+atom 445 radius 1 name 2 type 2 
+atom 446 radius 1 name 2 type 2 
+atom 447 radius 1 name 2 type 2 
+atom 448 radius 1 name 2 type 2 
+atom 449 radius 1 name 2 type 2 
+atom 450 radius 1 name 2 type 2 
+atom 451 radius 1 name 2 type 2 
+atom 452 radius 1 name 2 type 2 
+atom 453 radius 1 name 2 type 2 
+atom 454 radius 1 name 2 type 2 
+atom 455 radius 1 name 2 type 2 
+atom 456 radius 1 name 2 type 2 
+atom 457 radius 1 name 2 type 2 
+atom 458 radius 1 name 2 type 2 
+atom 459 radius 1 name 2 type 2 
+atom 460 radius 1 name 2 type 2 
+atom 461 radius 1 name 2 type 2 
+atom 462 radius 1 name 2 type 2 
+atom 463 radius 1 name 2 type 2 
+atom 464 radius 1 name 2 type 2 
+atom 465 radius 1 name 2 type 2 
+atom 466 radius 1 name 2 type 2 
+atom 467 radius 1 name 2 type 2 
+atom 468 radius 1 name 2 type 2 
+atom 469 radius 1 name 2 type 2 
+atom 470 radius 1 name 2 type 2 
+atom 471 radius 1 name 2 type 2 
+atom 472 radius 1 name 2 type 2 
+atom 473 radius 1 name 2 type 2 
+atom 474 radius 1 name 2 type 2 
+atom 475 radius 1 name 2 type 2 
+atom 476 radius 1 name 2 type 2 
+atom 477 radius 1 name 2 type 2 
+atom 478 radius 1 name 2 type 2 
+atom 479 radius 1 name 2 type 2 
+atom 480 radius 1 name 2 type 2 
+atom 481 radius 1 name 2 type 2 
+atom 482 radius 1 name 2 type 2 
+atom 483 radius 1 name 2 type 2 
+atom 484 radius 1 name 2 type 2 
+atom 485 radius 1 name 2 type 2 
+atom 486 radius 1 name 2 type 2 
+atom 487 radius 1 name 2 type 2 
+atom 488 radius 1 name 2 type 2 
+atom 489 radius 1 name 2 type 2 
+atom 490 radius 1 name 2 type 2 
+atom 491 radius 1 name 2 type 2 
+atom 492 radius 1 name 2 type 2 
+atom 493 radius 1 name 2 type 2 
+atom 494 radius 1 name 2 type 2 
+atom 495 radius 1 name 2 type 2 
+atom 496 radius 1 name 2 type 2 
+atom 497 radius 1 name 2 type 2 
+atom 498 radius 1 name 2 type 2 
+atom 499 radius 1 name 2 type 2 
+atom 500 radius 1 name 0 type 0 
+atom 501 radius 1 name 2 type 2 
+atom 502 radius 1 name 2 type 2 
+atom 503 radius 1 name 2 type 2 
+atom 504 radius 1 name 2 type 2 
+atom 505 radius 1 name 2 type 2 
+atom 506 radius 1 name 2 type 2 
+atom 507 radius 1 name 2 type 2 
+atom 508 radius 1 name 2 type 2 
+atom 509 radius 1 name 2 type 2 
+atom 510 radius 1 name 2 type 2 
+atom 511 radius 1 name 2 type 2 
+atom 512 radius 1 name 2 type 2 
+atom 513 radius 1 name 2 type 2 
+atom 514 radius 1 name 2 type 2 
+atom 515 radius 1 name 2 type 2 
+atom 516 radius 1 name 2 type 2 
+atom 517 radius 1 name 2 type 2 
+atom 518 radius 1 name 2 type 2 
+atom 519 radius 1 name 2 type 2 
+atom 520 radius 1 name 2 type 2 
+atom 521 radius 1 name 2 type 2 
+atom 522 radius 1 name 2 type 2 
+atom 523 radius 1 name 2 type 2 
+atom 524 radius 1 name 2 type 2 
+atom 525 radius 1 name 2 type 2 
+atom 526 radius 1 name 2 type 2 
+atom 527 radius 1 name 2 type 2 
+atom 528 radius 1 name 2 type 2 
+atom 529 radius 1 name 2 type 2 
+atom 530 radius 1 name 2 type 2 
+atom 531 radius 1 name 2 type 2 
+atom 532 radius 1 name 2 type 2 
+atom 533 radius 1 name 2 type 2 
+atom 534 radius 1 name 2 type 2 
+atom 535 radius 1 name 2 type 2 
+atom 536 radius 1 name 2 type 2 
+atom 537 radius 1 name 2 type 2 
+atom 538 radius 1 name 2 type 2 
+atom 539 radius 1 name 2 type 2 
+atom 540 radius 1 name 2 type 2 
+atom 541 radius 1 name 2 type 2 
+atom 542 radius 1 name 2 type 2 
+atom 543 radius 1 name 2 type 2 
+atom 544 radius 1 name 2 type 2 
+atom 545 radius 1 name 2 type 2 
+atom 546 radius 1 name 2 type 2 
+atom 547 radius 1 name 2 type 2 
+atom 548 radius 1 name 2 type 2 
+atom 549 radius 1 name 2 type 2 
+atom 550 radius 1 name 2 type 2 
+atom 551 radius 1 name 2 type 2 
+atom 552 radius 1 name 2 type 2 
+atom 553 radius 1 name 2 type 2 
+atom 554 radius 1 name 2 type 2 
+atom 555 radius 1 name 2 type 2 
+atom 556 radius 1 name 2 type 2 
+atom 557 radius 1 name 2 type 2 
+atom 558 radius 1 name 2 type 2 
+atom 559 radius 1 name 2 type 2 
+atom 560 radius 1 name 2 type 2 
+atom 561 radius 1 name 2 type 2 
+atom 562 radius 1 name 2 type 2 
+atom 563 radius 1 name 2 type 2 
+atom 564 radius 1 name 2 type 2 
+atom 565 radius 1 name 2 type 2 
+atom 566 radius 1 name 2 type 2 
+atom 567 radius 1 name 2 type 2 
+atom 568 radius 1 name 2 type 2 
+atom 569 radius 1 name 2 type 2 
+atom 570 radius 1 name 2 type 2 
+atom 571 radius 1 name 2 type 2 
+atom 572 radius 1 name 2 type 2 
+atom 573 radius 1 name 2 type 2 
+atom 574 radius 1 name 2 type 2 
+atom 575 radius 1 name 2 type 2 
+atom 576 radius 1 name 2 type 2 
+atom 577 radius 1 name 2 type 2 
+atom 578 radius 1 name 2 type 2 
+atom 579 radius 1 name 2 type 2 
+atom 580 radius 1 name 2 type 2 
+atom 581 radius 1 name 2 type 2 
+atom 582 radius 1 name 2 type 2 
+atom 583 radius 1 name 2 type 2 
+atom 584 radius 1 name 2 type 2 
+atom 585 radius 1 name 2 type 2 
+atom 586 radius 1 name 2 type 2 
+atom 587 radius 1 name 2 type 2 
+atom 588 radius 1 name 2 type 2 
+atom 589 radius 1 name 2 type 2 
+atom 590 radius 1 name 2 type 2 
+atom 591 radius 1 name 2 type 2 
+atom 592 radius 1 name 2 type 2 
+atom 593 radius 1 name 2 type 2 
+atom 594 radius 1 name 2 type 2 
+atom 595 radius 1 name 2 type 2 
+atom 596 radius 1 name 2 type 2 
+atom 597 radius 1 name 2 type 2 
+atom 598 radius 1 name 2 type 2 
+atom 599 radius 1 name 2 type 2 
+atom 600 radius 1 name 2 type 2 
+atom 601 radius 1 name 2 type 2 
+atom 602 radius 1 name 2 type 2 
+atom 603 radius 1 name 2 type 2 
+atom 604 radius 1 name 2 type 2 
+atom 605 radius 1 name 2 type 2 
+atom 606 radius 1 name 2 type 2 
+atom 607 radius 1 name 2 type 2 
+atom 608 radius 1 name 2 type 2 
+atom 609 radius 1 name 2 type 2 
+atom 610 radius 1 name 2 type 2 
+atom 611 radius 1 name 2 type 2 
+atom 612 radius 1 name 2 type 2 
+atom 613 radius 1 name 2 type 2 
+atom 614 radius 1 name 2 type 2 
+atom 615 radius 1 name 2 type 2 
+atom 616 radius 1 name 2 type 2 
+atom 617 radius 1 name 2 type 2 
+atom 618 radius 1 name 2 type 2 
+atom 619 radius 1 name 2 type 2 
+atom 620 radius 1 name 2 type 2 
+atom 621 radius 1 name 2 type 2 
+atom 622 radius 1 name 2 type 2 
+atom 623 radius 1 name 2 type 2 
+atom 624 radius 1 name 2 type 2 
+atom 625 radius 1 name 0 type 0 
+atom 626 radius 1 name 2 type 2 
+atom 627 radius 1 name 2 type 2 
+atom 628 radius 1 name 2 type 2 
+atom 629 radius 1 name 2 type 2 
+atom 630 radius 1 name 2 type 2 
+atom 631 radius 1 name 2 type 2 
+atom 632 radius 1 name 2 type 2 
+atom 633 radius 1 name 2 type 2 
+atom 634 radius 1 name 2 type 2 
+atom 635 radius 1 name 2 type 2 
+atom 636 radius 1 name 2 type 2 
+atom 637 radius 1 name 2 type 2 
+atom 638 radius 1 name 2 type 2 
+atom 639 radius 1 name 2 type 2 
+atom 640 radius 1 name 2 type 2 
+atom 641 radius 1 name 2 type 2 
+atom 642 radius 1 name 2 type 2 
+atom 643 radius 1 name 2 type 2 
+atom 644 radius 1 name 2 type 2 
+atom 645 radius 1 name 2 type 2 
+atom 646 radius 1 name 2 type 2 
+atom 647 radius 1 name 2 type 2 
+atom 648 radius 1 name 2 type 2 
+atom 649 radius 1 name 2 type 2 
+atom 650 radius 1 name 2 type 2 
+atom 651 radius 1 name 2 type 2 
+atom 652 radius 1 name 2 type 2 
+atom 653 radius 1 name 2 type 2 
+atom 654 radius 1 name 2 type 2 
+atom 655 radius 1 name 2 type 2 
+atom 656 radius 1 name 2 type 2 
+atom 657 radius 1 name 2 type 2 
+atom 658 radius 1 name 2 type 2 
+atom 659 radius 1 name 2 type 2 
+atom 660 radius 1 name 2 type 2 
+atom 661 radius 1 name 2 type 2 
+atom 662 radius 1 name 2 type 2 
+atom 663 radius 1 name 2 type 2 
+atom 664 radius 1 name 2 type 2 
+atom 665 radius 1 name 2 type 2 
+atom 666 radius 1 name 2 type 2 
+atom 667 radius 1 name 2 type 2 
+atom 668 radius 1 name 2 type 2 
+atom 669 radius 1 name 2 type 2 
+atom 670 radius 1 name 2 type 2 
+atom 671 radius 1 name 2 type 2 
+atom 672 radius 1 name 2 type 2 
+atom 673 radius 1 name 2 type 2 
+atom 674 radius 1 name 2 type 2 
+atom 675 radius 1 name 2 type 2 
+atom 676 radius 1 name 2 type 2 
+atom 677 radius 1 name 2 type 2 
+atom 678 radius 1 name 2 type 2 
+atom 679 radius 1 name 2 type 2 
+atom 680 radius 1 name 2 type 2 
+atom 681 radius 1 name 2 type 2 
+atom 682 radius 1 name 2 type 2 
+atom 683 radius 1 name 2 type 2 
+atom 684 radius 1 name 2 type 2 
+atom 685 radius 1 name 2 type 2 
+atom 686 radius 1 name 2 type 2 
+atom 687 radius 1 name 2 type 2 
+atom 688 radius 1 name 2 type 2 
+atom 689 radius 1 name 2 type 2 
+atom 690 radius 1 name 2 type 2 
+atom 691 radius 1 name 2 type 2 
+atom 692 radius 1 name 2 type 2 
+atom 693 radius 1 name 2 type 2 
+atom 694 radius 1 name 2 type 2 
+atom 695 radius 1 name 2 type 2 
+atom 696 radius 1 name 2 type 2 
+atom 697 radius 1 name 2 type 2 
+atom 698 radius 1 name 2 type 2 
+atom 699 radius 1 name 2 type 2 
+atom 700 radius 1 name 2 type 2 
+atom 701 radius 1 name 2 type 2 
+atom 702 radius 1 name 2 type 2 
+atom 703 radius 1 name 2 type 2 
+atom 704 radius 1 name 2 type 2 
+atom 705 radius 1 name 2 type 2 
+atom 706 radius 1 name 2 type 2 
+atom 707 radius 1 name 2 type 2 
+atom 708 radius 1 name 2 type 2 
+atom 709 radius 1 name 2 type 2 
+atom 710 radius 1 name 2 type 2 
+atom 711 radius 1 name 2 type 2 
+atom 712 radius 1 name 2 type 2 
+atom 713 radius 1 name 2 type 2 
+atom 714 radius 1 name 2 type 2 
+atom 715 radius 1 name 2 type 2 
+atom 716 radius 1 name 2 type 2 
+atom 717 radius 1 name 2 type 2 
+atom 718 radius 1 name 2 type 2 
+atom 719 radius 1 name 2 type 2 
+atom 720 radius 1 name 2 type 2 
+atom 721 radius 1 name 2 type 2 
+atom 722 radius 1 name 2 type 2 
+atom 723 radius 1 name 2 type 2 
+atom 724 radius 1 name 2 type 2 
+atom 725 radius 1 name 2 type 2 
+atom 726 radius 1 name 2 type 2 
+atom 727 radius 1 name 2 type 2 
+atom 728 radius 1 name 2 type 2 
+atom 729 radius 1 name 2 type 2 
+atom 730 radius 1 name 2 type 2 
+atom 731 radius 1 name 2 type 2 
+atom 732 radius 1 name 2 type 2 
+atom 733 radius 1 name 2 type 2 
+atom 734 radius 1 name 2 type 2 
+atom 735 radius 1 name 2 type 2 
+atom 736 radius 1 name 2 type 2 
+atom 737 radius 1 name 2 type 2 
+atom 738 radius 1 name 2 type 2 
+atom 739 radius 1 name 2 type 2 
+atom 740 radius 1 name 2 type 2 
+atom 741 radius 1 name 2 type 2 
+atom 742 radius 1 name 2 type 2 
+atom 743 radius 1 name 2 type 2 
+atom 744 radius 1 name 2 type 2 
+atom 745 radius 1 name 2 type 2 
+atom 746 radius 1 name 2 type 2 
+atom 747 radius 1 name 2 type 2 
+atom 748 radius 1 name 2 type 2 
+atom 749 radius 1 name 2 type 2 
+atom 750 radius 1 name 0 type 0 
+atom 751 radius 1 name 2 type 2 
+atom 752 radius 1 name 2 type 2 
+atom 753 radius 1 name 2 type 2 
+atom 754 radius 1 name 2 type 2 
+atom 755 radius 1 name 2 type 2 
+atom 756 radius 1 name 2 type 2 
+atom 757 radius 1 name 2 type 2 
+atom 758 radius 1 name 2 type 2 
+atom 759 radius 1 name 2 type 2 
+atom 760 radius 1 name 2 type 2 
+atom 761 radius 1 name 2 type 2 
+atom 762 radius 1 name 2 type 2 
+atom 763 radius 1 name 2 type 2 
+atom 764 radius 1 name 2 type 2 
+atom 765 radius 1 name 2 type 2 
+atom 766 radius 1 name 2 type 2 
+atom 767 radius 1 name 2 type 2 
+atom 768 radius 1 name 2 type 2 
+atom 769 radius 1 name 2 type 2 
+atom 770 radius 1 name 2 type 2 
+atom 771 radius 1 name 2 type 2 
+atom 772 radius 1 name 2 type 2 
+atom 773 radius 1 name 2 type 2 
+atom 774 radius 1 name 2 type 2 
+atom 775 radius 1 name 2 type 2 
+atom 776 radius 1 name 2 type 2 
+atom 777 radius 1 name 2 type 2 
+atom 778 radius 1 name 2 type 2 
+atom 779 radius 1 name 2 type 2 
+atom 780 radius 1 name 2 type 2 
+atom 781 radius 1 name 2 type 2 
+atom 782 radius 1 name 2 type 2 
+atom 783 radius 1 name 2 type 2 
+atom 784 radius 1 name 2 type 2 
+atom 785 radius 1 name 2 type 2 
+atom 786 radius 1 name 2 type 2 
+atom 787 radius 1 name 2 type 2 
+atom 788 radius 1 name 2 type 2 
+atom 789 radius 1 name 2 type 2 
+atom 790 radius 1 name 2 type 2 
+atom 791 radius 1 name 2 type 2 
+atom 792 radius 1 name 2 type 2 
+atom 793 radius 1 name 2 type 2 
+atom 794 radius 1 name 2 type 2 
+atom 795 radius 1 name 2 type 2 
+atom 796 radius 1 name 2 type 2 
+atom 797 radius 1 name 2 type 2 
+atom 798 radius 1 name 2 type 2 
+atom 799 radius 1 name 2 type 2 
+atom 800 radius 1 name 2 type 2 
+atom 801 radius 1 name 2 type 2 
+atom 802 radius 1 name 2 type 2 
+atom 803 radius 1 name 2 type 2 
+atom 804 radius 1 name 2 type 2 
+atom 805 radius 1 name 2 type 2 
+atom 806 radius 1 name 2 type 2 
+atom 807 radius 1 name 2 type 2 
+atom 808 radius 1 name 2 type 2 
+atom 809 radius 1 name 2 type 2 
+atom 810 radius 1 name 2 type 2 
+atom 811 radius 1 name 2 type 2 
+atom 812 radius 1 name 2 type 2 
+atom 813 radius 1 name 2 type 2 
+atom 814 radius 1 name 2 type 2 
+atom 815 radius 1 name 2 type 2 
+atom 816 radius 1 name 2 type 2 
+atom 817 radius 1 name 2 type 2 
+atom 818 radius 1 name 2 type 2 
+atom 819 radius 1 name 2 type 2 
+atom 820 radius 1 name 2 type 2 
+atom 821 radius 1 name 2 type 2 
+atom 822 radius 1 name 2 type 2 
+atom 823 radius 1 name 2 type 2 
+atom 824 radius 1 name 2 type 2 
+atom 825 radius 1 name 2 type 2 
+atom 826 radius 1 name 2 type 2 
+atom 827 radius 1 name 2 type 2 
+atom 828 radius 1 name 2 type 2 
+atom 829 radius 1 name 2 type 2 
+atom 830 radius 1 name 2 type 2 
+atom 831 radius 1 name 2 type 2 
+atom 832 radius 1 name 2 type 2 
+atom 833 radius 1 name 2 type 2 
+atom 834 radius 1 name 2 type 2 
+atom 835 radius 1 name 2 type 2 
+atom 836 radius 1 name 2 type 2 
+atom 837 radius 1 name 2 type 2 
+atom 838 radius 1 name 2 type 2 
+atom 839 radius 1 name 2 type 2 
+atom 840 radius 1 name 2 type 2 
+atom 841 radius 1 name 2 type 2 
+atom 842 radius 1 name 2 type 2 
+atom 843 radius 1 name 2 type 2 
+atom 844 radius 1 name 2 type 2 
+atom 845 radius 1 name 2 type 2 
+atom 846 radius 1 name 2 type 2 
+atom 847 radius 1 name 2 type 2 
+atom 848 radius 1 name 2 type 2 
+atom 849 radius 1 name 2 type 2 
+atom 850 radius 1 name 2 type 2 
+atom 851 radius 1 name 2 type 2 
+atom 852 radius 1 name 2 type 2 
+atom 853 radius 1 name 2 type 2 
+atom 854 radius 1 name 2 type 2 
+atom 855 radius 1 name 2 type 2 
+atom 856 radius 1 name 2 type 2 
+atom 857 radius 1 name 2 type 2 
+atom 858 radius 1 name 2 type 2 
+atom 859 radius 1 name 2 type 2 
+atom 860 radius 1 name 2 type 2 
+atom 861 radius 1 name 2 type 2 
+atom 862 radius 1 name 2 type 2 
+atom 863 radius 1 name 2 type 2 
+atom 864 radius 1 name 2 type 2 
+atom 865 radius 1 name 2 type 2 
+atom 866 radius 1 name 2 type 2 
+atom 867 radius 1 name 2 type 2 
+atom 868 radius 1 name 2 type 2 
+atom 869 radius 1 name 2 type 2 
+atom 870 radius 1 name 2 type 2 
+atom 871 radius 1 name 2 type 2 
+atom 872 radius 1 name 2 type 2 
+atom 873 radius 1 name 2 type 2 
+atom 874 radius 1 name 2 type 2 
+atom 875 radius 1 name 0 type 0 
+atom 876 radius 1 name 2 type 2 
+atom 877 radius 1 name 2 type 2 
+atom 878 radius 1 name 2 type 2 
+atom 879 radius 1 name 2 type 2 
+atom 880 radius 1 name 2 type 2 
+atom 881 radius 1 name 2 type 2 
+atom 882 radius 1 name 2 type 2 
+atom 883 radius 1 name 2 type 2 
+atom 884 radius 1 name 2 type 2 
+atom 885 radius 1 name 2 type 2 
+atom 886 radius 1 name 2 type 2 
+atom 887 radius 1 name 2 type 2 
+atom 888 radius 1 name 2 type 2 
+atom 889 radius 1 name 2 type 2 
+atom 890 radius 1 name 2 type 2 
+atom 891 radius 1 name 2 type 2 
+atom 892 radius 1 name 2 type 2 
+atom 893 radius 1 name 2 type 2 
+atom 894 radius 1 name 2 type 2 
+atom 895 radius 1 name 2 type 2 
+atom 896 radius 1 name 2 type 2 
+atom 897 radius 1 name 2 type 2 
+atom 898 radius 1 name 2 type 2 
+atom 899 radius 1 name 2 type 2 
+atom 900 radius 1 name 2 type 2 
+atom 901 radius 1 name 2 type 2 
+atom 902 radius 1 name 2 type 2 
+atom 903 radius 1 name 2 type 2 
+atom 904 radius 1 name 2 type 2 
+atom 905 radius 1 name 2 type 2 
+atom 906 radius 1 name 2 type 2 
+atom 907 radius 1 name 2 type 2 
+atom 908 radius 1 name 2 type 2 
+atom 909 radius 1 name 2 type 2 
+atom 910 radius 1 name 2 type 2 
+atom 911 radius 1 name 2 type 2 
+atom 912 radius 1 name 2 type 2 
+atom 913 radius 1 name 2 type 2 
+atom 914 radius 1 name 2 type 2 
+atom 915 radius 1 name 2 type 2 
+atom 916 radius 1 name 2 type 2 
+atom 917 radius 1 name 2 type 2 
+atom 918 radius 1 name 2 type 2 
+atom 919 radius 1 name 2 type 2 
+atom 920 radius 1 name 2 type 2 
+atom 921 radius 1 name 2 type 2 
+atom 922 radius 1 name 2 type 2 
+atom 923 radius 1 name 2 type 2 
+atom 924 radius 1 name 2 type 2 
+atom 925 radius 1 name 2 type 2 
+atom 926 radius 1 name 2 type 2 
+atom 927 radius 1 name 2 type 2 
+atom 928 radius 1 name 2 type 2 
+atom 929 radius 1 name 2 type 2 
+atom 930 radius 1 name 2 type 2 
+atom 931 radius 1 name 2 type 2 
+atom 932 radius 1 name 2 type 2 
+atom 933 radius 1 name 2 type 2 
+atom 934 radius 1 name 2 type 2 
+atom 935 radius 1 name 2 type 2 
+atom 936 radius 1 name 2 type 2 
+atom 937 radius 1 name 2 type 2 
+atom 938 radius 1 name 2 type 2 
+atom 939 radius 1 name 2 type 2 
+atom 940 radius 1 name 2 type 2 
+atom 941 radius 1 name 2 type 2 
+atom 942 radius 1 name 2 type 2 
+atom 943 radius 1 name 2 type 2 
+atom 944 radius 1 name 2 type 2 
+atom 945 radius 1 name 2 type 2 
+atom 946 radius 1 name 2 type 2 
+atom 947 radius 1 name 2 type 2 
+atom 948 radius 1 name 2 type 2 
+atom 949 radius 1 name 2 type 2 
+atom 950 radius 1 name 2 type 2 
+atom 951 radius 1 name 2 type 2 
+atom 952 radius 1 name 2 type 2 
+atom 953 radius 1 name 2 type 2 
+atom 954 radius 1 name 2 type 2 
+atom 955 radius 1 name 2 type 2 
+atom 956 radius 1 name 2 type 2 
+atom 957 radius 1 name 2 type 2 
+atom 958 radius 1 name 2 type 2 
+atom 959 radius 1 name 2 type 2 
+atom 960 radius 1 name 2 type 2 
+atom 961 radius 1 name 2 type 2 
+atom 962 radius 1 name 2 type 2 
+atom 963 radius 1 name 2 type 2 
+atom 964 radius 1 name 2 type 2 
+atom 965 radius 1 name 2 type 2 
+atom 966 radius 1 name 2 type 2 
+atom 967 radius 1 name 2 type 2 
+atom 968 radius 1 name 2 type 2 
+atom 969 radius 1 name 2 type 2 
+atom 970 radius 1 name 2 type 2 
+atom 971 radius 1 name 2 type 2 
+atom 972 radius 1 name 2 type 2 
+atom 973 radius 1 name 2 type 2 
+atom 974 radius 1 name 2 type 2 
+atom 975 radius 1 name 2 type 2 
+atom 976 radius 1 name 2 type 2 
+atom 977 radius 1 name 2 type 2 
+atom 978 radius 1 name 2 type 2 
+atom 979 radius 1 name 2 type 2 
+atom 980 radius 1 name 2 type 2 
+atom 981 radius 1 name 2 type 2 
+atom 982 radius 1 name 2 type 2 
+atom 983 radius 1 name 2 type 2 
+atom 984 radius 1 name 2 type 2 
+atom 985 radius 1 name 2 type 2 
+atom 986 radius 1 name 2 type 2 
+atom 987 radius 1 name 2 type 2 
+atom 988 radius 1 name 2 type 2 
+atom 989 radius 1 name 2 type 2 
+atom 990 radius 1 name 2 type 2 
+atom 991 radius 1 name 2 type 2 
+atom 992 radius 1 name 2 type 2 
+atom 993 radius 1 name 2 type 2 
+atom 994 radius 1 name 2 type 2 
+atom 995 radius 1 name 2 type 2 
+atom 996 radius 1 name 2 type 2 
+atom 997 radius 1 name 2 type 2 
+atom 998 radius 1 name 2 type 2 
+atom 999 radius 1 name 2 type 2 
+atom 1000 radius 1 name 0 type 0 
+atom 1001 radius 1 name 2 type 2 
+atom 1002 radius 1 name 2 type 2 
+atom 1003 radius 1 name 2 type 2 
+atom 1004 radius 1 name 2 type 2 
+atom 1005 radius 1 name 2 type 2 
+atom 1006 radius 1 name 2 type 2 
+atom 1007 radius 1 name 2 type 2 
+atom 1008 radius 1 name 2 type 2 
+atom 1009 radius 1 name 2 type 2 
+atom 1010 radius 1 name 2 type 2 
+atom 1011 radius 1 name 2 type 2 
+atom 1012 radius 1 name 2 type 2 
+atom 1013 radius 1 name 2 type 2 
+atom 1014 radius 1 name 2 type 2 
+atom 1015 radius 1 name 2 type 2 
+atom 1016 radius 1 name 2 type 2 
+atom 1017 radius 1 name 2 type 2 
+atom 1018 radius 1 name 2 type 2 
+atom 1019 radius 1 name 2 type 2 
+atom 1020 radius 1 name 2 type 2 
+atom 1021 radius 1 name 2 type 2 
+atom 1022 radius 1 name 2 type 2 
+atom 1023 radius 1 name 2 type 2 
+atom 1024 radius 1 name 2 type 2 
+atom 1025 radius 1 name 2 type 2 
+atom 1026 radius 1 name 2 type 2 
+atom 1027 radius 1 name 2 type 2 
+atom 1028 radius 1 name 2 type 2 
+atom 1029 radius 1 name 2 type 2 
+atom 1030 radius 1 name 2 type 2 
+atom 1031 radius 1 name 2 type 2 
+atom 1032 radius 1 name 2 type 2 
+atom 1033 radius 1 name 2 type 2 
+atom 1034 radius 1 name 2 type 2 
+atom 1035 radius 1 name 2 type 2 
+atom 1036 radius 1 name 2 type 2 
+atom 1037 radius 1 name 2 type 2 
+atom 1038 radius 1 name 2 type 2 
+atom 1039 radius 1 name 2 type 2 
+atom 1040 radius 1 name 2 type 2 
+atom 1041 radius 1 name 2 type 2 
+atom 1042 radius 1 name 2 type 2 
+atom 1043 radius 1 name 2 type 2 
+atom 1044 radius 1 name 2 type 2 
+atom 1045 radius 1 name 2 type 2 
+atom 1046 radius 1 name 2 type 2 
+atom 1047 radius 1 name 2 type 2 
+atom 1048 radius 1 name 2 type 2 
+atom 1049 radius 1 name 2 type 2 
+atom 1050 radius 1 name 2 type 2 
+atom 1051 radius 1 name 2 type 2 
+atom 1052 radius 1 name 2 type 2 
+atom 1053 radius 1 name 2 type 2 
+atom 1054 radius 1 name 2 type 2 
+atom 1055 radius 1 name 2 type 2 
+atom 1056 radius 1 name 2 type 2 
+atom 1057 radius 1 name 2 type 2 
+atom 1058 radius 1 name 2 type 2 
+atom 1059 radius 1 name 2 type 2 
+atom 1060 radius 1 name 2 type 2 
+atom 1061 radius 1 name 2 type 2 
+atom 1062 radius 1 name 2 type 2 
+atom 1063 radius 1 name 2 type 2 
+atom 1064 radius 1 name 2 type 2 
+atom 1065 radius 1 name 2 type 2 
+atom 1066 radius 1 name 2 type 2 
+atom 1067 radius 1 name 2 type 2 
+atom 1068 radius 1 name 2 type 2 
+atom 1069 radius 1 name 2 type 2 
+atom 1070 radius 1 name 2 type 2 
+atom 1071 radius 1 name 2 type 2 
+atom 1072 radius 1 name 2 type 2 
+atom 1073 radius 1 name 2 type 2 
+atom 1074 radius 1 name 2 type 2 
+atom 1075 radius 1 name 2 type 2 
+atom 1076 radius 1 name 2 type 2 
+atom 1077 radius 1 name 2 type 2 
+atom 1078 radius 1 name 2 type 2 
+atom 1079 radius 1 name 2 type 2 
+atom 1080 radius 1 name 2 type 2 
+atom 1081 radius 1 name 2 type 2 
+atom 1082 radius 1 name 2 type 2 
+atom 1083 radius 1 name 2 type 2 
+atom 1084 radius 1 name 2 type 2 
+atom 1085 radius 1 name 2 type 2 
+atom 1086 radius 1 name 2 type 2 
+atom 1087 radius 1 name 2 type 2 
+atom 1088 radius 1 name 2 type 2 
+atom 1089 radius 1 name 2 type 2 
+atom 1090 radius 1 name 2 type 2 
+atom 1091 radius 1 name 2 type 2 
+atom 1092 radius 1 name 2 type 2 
+atom 1093 radius 1 name 2 type 2 
+atom 1094 radius 1 name 2 type 2 
+atom 1095 radius 1 name 2 type 2 
+atom 1096 radius 1 name 2 type 2 
+atom 1097 radius 1 name 2 type 2 
+atom 1098 radius 1 name 2 type 2 
+atom 1099 radius 1 name 2 type 2 
+atom 1100 radius 1 name 2 type 2 
+atom 1101 radius 1 name 2 type 2 
+atom 1102 radius 1 name 2 type 2 
+atom 1103 radius 1 name 2 type 2 
+atom 1104 radius 1 name 2 type 2 
+atom 1105 radius 1 name 2 type 2 
+atom 1106 radius 1 name 2 type 2 
+atom 1107 radius 1 name 2 type 2 
+atom 1108 radius 1 name 2 type 2 
+atom 1109 radius 1 name 2 type 2 
+atom 1110 radius 1 name 2 type 2 
+atom 1111 radius 1 name 2 type 2 
+atom 1112 radius 1 name 2 type 2 
+atom 1113 radius 1 name 2 type 2 
+atom 1114 radius 1 name 2 type 2 
+atom 1115 radius 1 name 2 type 2 
+atom 1116 radius 1 name 2 type 2 
+atom 1117 radius 1 name 2 type 2 
+atom 1118 radius 1 name 2 type 2 
+atom 1119 radius 1 name 2 type 2 
+atom 1120 radius 1 name 2 type 2 
+atom 1121 radius 1 name 2 type 2 
+atom 1122 radius 1 name 2 type 2 
+atom 1123 radius 1 name 2 type 2 
+atom 1124 radius 1 name 2 type 2 
+atom 1125 radius 1 name 0 type 0 
+atom 1126 radius 1 name 2 type 2 
+atom 1127 radius 1 name 2 type 2 
+atom 1128 radius 1 name 2 type 2 
+atom 1129 radius 1 name 2 type 2 
+atom 1130 radius 1 name 2 type 2 
+atom 1131 radius 1 name 2 type 2 
+atom 1132 radius 1 name 2 type 2 
+atom 1133 radius 1 name 2 type 2 
+atom 1134 radius 1 name 2 type 2 
+atom 1135 radius 1 name 2 type 2 
+atom 1136 radius 1 name 2 type 2 
+atom 1137 radius 1 name 2 type 2 
+atom 1138 radius 1 name 2 type 2 
+atom 1139 radius 1 name 2 type 2 
+atom 1140 radius 1 name 2 type 2 
+atom 1141 radius 1 name 2 type 2 
+atom 1142 radius 1 name 2 type 2 
+atom 1143 radius 1 name 2 type 2 
+atom 1144 radius 1 name 2 type 2 
+atom 1145 radius 1 name 2 type 2 
+atom 1146 radius 1 name 2 type 2 
+atom 1147 radius 1 name 2 type 2 
+atom 1148 radius 1 name 2 type 2 
+atom 1149 radius 1 name 2 type 2 
+atom 1150 radius 1 name 2 type 2 
+atom 1151 radius 1 name 2 type 2 
+atom 1152 radius 1 name 2 type 2 
+atom 1153 radius 1 name 2 type 2 
+atom 1154 radius 1 name 2 type 2 
+atom 1155 radius 1 name 2 type 2 
+atom 1156 radius 1 name 2 type 2 
+atom 1157 radius 1 name 2 type 2 
+atom 1158 radius 1 name 2 type 2 
+atom 1159 radius 1 name 2 type 2 
+atom 1160 radius 1 name 2 type 2 
+atom 1161 radius 1 name 2 type 2 
+atom 1162 radius 1 name 2 type 2 
+atom 1163 radius 1 name 2 type 2 
+atom 1164 radius 1 name 2 type 2 
+atom 1165 radius 1 name 2 type 2 
+atom 1166 radius 1 name 2 type 2 
+atom 1167 radius 1 name 2 type 2 
+atom 1168 radius 1 name 2 type 2 
+atom 1169 radius 1 name 2 type 2 
+atom 1170 radius 1 name 2 type 2 
+atom 1171 radius 1 name 2 type 2 
+atom 1172 radius 1 name 2 type 2 
+atom 1173 radius 1 name 2 type 2 
+atom 1174 radius 1 name 2 type 2 
+atom 1175 radius 1 name 2 type 2 
+atom 1176 radius 1 name 2 type 2 
+atom 1177 radius 1 name 2 type 2 
+atom 1178 radius 1 name 2 type 2 
+atom 1179 radius 1 name 2 type 2 
+atom 1180 radius 1 name 2 type 2 
+atom 1181 radius 1 name 2 type 2 
+atom 1182 radius 1 name 2 type 2 
+atom 1183 radius 1 name 2 type 2 
+atom 1184 radius 1 name 2 type 2 
+atom 1185 radius 1 name 2 type 2 
+atom 1186 radius 1 name 2 type 2 
+atom 1187 radius 1 name 2 type 2 
+atom 1188 radius 1 name 2 type 2 
+atom 1189 radius 1 name 2 type 2 
+atom 1190 radius 1 name 2 type 2 
+atom 1191 radius 1 name 2 type 2 
+atom 1192 radius 1 name 2 type 2 
+atom 1193 radius 1 name 2 type 2 
+atom 1194 radius 1 name 2 type 2 
+atom 1195 radius 1 name 2 type 2 
+atom 1196 radius 1 name 2 type 2 
+atom 1197 radius 1 name 2 type 2 
+atom 1198 radius 1 name 2 type 2 
+atom 1199 radius 1 name 2 type 2 
+atom 1200 radius 1 name 2 type 2 
+atom 1201 radius 1 name 2 type 2 
+atom 1202 radius 1 name 2 type 2 
+atom 1203 radius 1 name 2 type 2 
+atom 1204 radius 1 name 2 type 2 
+atom 1205 radius 1 name 2 type 2 
+atom 1206 radius 1 name 2 type 2 
+atom 1207 radius 1 name 2 type 2 
+atom 1208 radius 1 name 2 type 2 
+atom 1209 radius 1 name 2 type 2 
+atom 1210 radius 1 name 2 type 2 
+atom 1211 radius 1 name 2 type 2 
+atom 1212 radius 1 name 2 type 2 
+atom 1213 radius 1 name 2 type 2 
+atom 1214 radius 1 name 2 type 2 
+atom 1215 radius 1 name 2 type 2 
+atom 1216 radius 1 name 2 type 2 
+atom 1217 radius 1 name 2 type 2 
+atom 1218 radius 1 name 2 type 2 
+atom 1219 radius 1 name 2 type 2 
+atom 1220 radius 1 name 2 type 2 
+atom 1221 radius 1 name 2 type 2 
+atom 1222 radius 1 name 2 type 2 
+atom 1223 radius 1 name 2 type 2 
+atom 1224 radius 1 name 2 type 2 
+atom 1225 radius 1 name 2 type 2 
+atom 1226 radius 1 name 2 type 2 
+atom 1227 radius 1 name 2 type 2 
+atom 1228 radius 1 name 2 type 2 
+atom 1229 radius 1 name 2 type 2 
+atom 1230 radius 1 name 2 type 2 
+atom 1231 radius 1 name 2 type 2 
+atom 1232 radius 1 name 2 type 2 
+atom 1233 radius 1 name 2 type 2 
+atom 1234 radius 1 name 2 type 2 
+atom 1235 radius 1 name 2 type 2 
+atom 1236 radius 1 name 2 type 2 
+atom 1237 radius 1 name 2 type 2 
+atom 1238 radius 1 name 2 type 2 
+atom 1239 radius 1 name 2 type 2 
+atom 1240 radius 1 name 2 type 2 
+atom 1241 radius 1 name 2 type 2 
+atom 1242 radius 1 name 2 type 2 
+atom 1243 radius 1 name 2 type 2 
+atom 1244 radius 1 name 2 type 2 
+atom 1245 radius 1 name 2 type 2 
+atom 1246 radius 1 name 2 type 2 
+atom 1247 radius 1 name 2 type 2 
+atom 1248 radius 1 name 2 type 2 
+atom 1249 radius 1 name 2 type 2 
+bond 5:126
+bond 15:136
+bond 25:146
+bond 55:176
+bond 74:195
+bond 104:225
+bond 114:235
+bond 124:245
+bond 130:251
+bond 140:261
+bond 150:271
+bond 180:301
+bond 199:320
+bond 229:350
+bond 239:360
+bond 249:370
+bond 255:376
+bond 265:386
+bond 275:396
+bond 305:426
+bond 324:445
+bond 354:475
+bond 364:485
+bond 374:495
+bond 380:501
+bond 390:511
+bond 400:521
+bond 430:551
+bond 449:570
+bond 479:600
+bond 489:610
+bond 499:620
+bond 505:626
+bond 515:636
+bond 525:646
+bond 555:676
+bond 574:695
+bond 604:725
+bond 614:735
+bond 624:745
+bond 630:751
+bond 640:761
+bond 650:771
+bond 680:801
+bond 699:820
+bond 729:850
+bond 739:860
+bond 749:870
+bond 755:876
+bond 765:886
+bond 775:896
+bond 805:926
+bond 824:945
+bond 854:975
+bond 864:985
+bond 874:995
+bond 880:1001
+bond 890:1011
+bond 900:1021
+bond 930:1051
+bond 949:1070
+bond 979:1100
+bond 989:1110
+bond 999:1120
+bond 1005:1126
+bond 1015:1136
+bond 1025:1146
+bond 1055:1176
+bond 1074:1195
+bond 1104:1225
+bond 1114:1235
+bond 1124:1245
+
+timestep indexed
+0 100.0 100.0 140.0
+1 100.0 101.0 138.5857864376269
+2 100.0 100.5 138.5857864376269
+3 100.0 100.0 138.5857864376269
+4 100.0 99.5 138.5857864376269
+5 100.0 99.0 138.5857864376269
+6 99.64644660940672 101.0 138.93933982822017
+7 99.64644660940672 100.5 138.93933982822017
+8 99.64644660940672 100.0 138.93933982822017
+9 99.64644660940672 99.5 138.93933982822017
+10 99.64644660940672 99.0 138.93933982822017
+11 99.29289321881345 101.0 139.29289321881345
+12 99.29289321881345 100.5 139.29289321881345
+13 99.29289321881345 100.0 139.29289321881345
+14 99.29289321881345 99.5 139.29289321881345
+15 99.29289321881345 99.0 139.29289321881345
+16 98.93933982822018 101.0 139.64644660940672
+17 98.93933982822018 100.5 139.64644660940672
+18 98.93933982822018 100.0 139.64644660940672
+19 98.93933982822018 99.5 139.64644660940672
+20 98.93933982822018 99.0 139.64644660940672
+21 98.58578643762691 101.0 140.0
+22 98.58578643762691 100.5 140.0
+23 98.58578643762691 100.0 140.0
+24 98.58578643762691 99.5 140.0
+25 98.58578643762691 99.0 140.0
+26 100.35355339059328 101.0 138.93933982822017
+27 100.35355339059328 100.5 138.93933982822017
+28 100.35355339059328 100.0 138.93933982822017
+29 100.35355339059328 99.5 138.93933982822017
+30 100.35355339059328 99.0 138.93933982822017
+31 100.0 101.0 139.29289321881345
+32 100.0 100.5 139.29289321881345
+33 100.0 100.0 139.29289321881345
+34 100.0 99.5 139.29289321881345
+35 100.0 99.0 139.29289321881345
+36 99.64644660940672 101.0 139.64644660940672
+37 99.64644660940672 100.5 139.64644660940672
+38 99.64644660940672 100.0 139.64644660940672
+39 99.64644660940672 99.5 139.64644660940672
+40 99.64644660940672 99.0 139.64644660940672
+41 99.29289321881345 101.0 140.0
+42 99.29289321881345 100.5 140.0
+43 99.29289321881345 100.0 140.0
+44 99.29289321881345 99.5 140.0
+45 99.29289321881345 99.0 140.0
+46 98.93933982822018 101.0 140.35355339059328
+47 98.93933982822018 100.5 140.35355339059328
+48 98.93933982822018 100.0 140.35355339059328
+49 98.93933982822018 99.5 140.35355339059328
+50 98.93933982822018 99.0 140.35355339059328
+51 100.70710678118655 101.0 139.29289321881345
+52 100.70710678118655 100.5 139.29289321881345
+53 100.70710678118655 100.0 139.29289321881345
+54 100.70710678118655 99.5 139.29289321881345
+55 100.70710678118655 99.0 139.29289321881345
+56 100.35355339059328 101.0 139.64644660940672
+57 100.35355339059328 100.5 139.64644660940672
+58 100.35355339059328 100.0 139.64644660940672
+59 100.35355339059328 99.5 139.64644660940672
+60 100.35355339059328 99.0 139.64644660940672
+61 100.0 101.0 140.0
+62 100.0 100.5 140.0
+63 100.0 99.5 140.0
+64 100.0 99.0 140.0
+65 99.64644660940672 101.0 140.35355339059328
+66 99.64644660940672 100.5 140.35355339059328
+67 99.64644660940672 100.0 140.35355339059328
+68 99.64644660940672 99.5 140.35355339059328
+69 99.64644660940672 99.0 140.35355339059328
+70 99.29289321881345 101.0 140.70710678118655
+71 99.29289321881345 100.5 140.70710678118655
+72 99.29289321881345 100.0 140.70710678118655
+73 99.29289321881345 99.5 140.70710678118655
+74 99.29289321881345 99.0 140.70710678118655
+75 101.06066017177982 101.0 139.64644660940672
+76 101.06066017177982 100.5 139.64644660940672
+77 101.06066017177982 100.0 139.64644660940672
+78 101.06066017177982 99.5 139.64644660940672
+79 101.06066017177982 99.0 139.64644660940672
+80 100.70710678118655 101.0 140.0
+81 100.70710678118655 100.5 140.0
+82 100.70710678118655 100.0 140.0
+83 100.70710678118655 99.5 140.0
+84 100.70710678118655 99.0 140.0
+85 100.35355339059328 101.0 140.35355339059328
+86 100.35355339059328 100.5 140.35355339059328
+87 100.35355339059328 100.0 140.35355339059328
+88 100.35355339059328 99.5 140.35355339059328
+89 100.35355339059328 99.0 140.35355339059328
+90 100.0 101.0 140.70710678118655
+91 100.0 100.5 140.70710678118655
+92 100.0 100.0 140.70710678118655
+93 100.0 99.5 140.70710678118655
+94 100.0 99.0 140.70710678118655
+95 99.64644660940672 101.0 141.06066017177983
+96 99.64644660940672 100.5 141.06066017177983
+97 99.64644660940672 100.0 141.06066017177983
+98 99.64644660940672 99.5 141.06066017177983
+99 99.64644660940672 99.0 141.06066017177983
+100 101.41421356237309 101.0 140.0
+101 101.41421356237309 100.5 140.0
+102 101.41421356237309 100.0 140.0
+103 101.41421356237309 99.5 140.0
+104 101.41421356237309 99.0 140.0
+105 101.06066017177982 101.0 140.35355339059328
+106 101.06066017177982 100.5 140.35355339059328
+107 101.06066017177982 100.0 140.35355339059328
+108 101.06066017177982 99.5 140.35355339059328
+109 101.06066017177982 99.0 140.35355339059328
+110 100.70710678118655 101.0 140.70710678118655
+111 100.70710678118655 100.5 140.70710678118655
+112 100.70710678118655 100.0 140.70710678118655
+113 100.70710678118655 99.5 140.70710678118655
+114 100.70710678118655 99.0 140.70710678118655
+115 100.35355339059328 101.0 141.06066017177983
+116 100.35355339059328 100.5 141.06066017177983
+117 100.35355339059328 100.0 141.06066017177983
+118 100.35355339059328 99.5 141.06066017177983
+119 100.35355339059328 99.0 141.06066017177983
+120 100.0 101.0 141.4142135623731
+121 100.0 100.5 141.4142135623731
+122 100.0 100.0 141.4142135623731
+123 100.0 99.5 141.4142135623731
+124 100.0 99.0 141.4142135623731
+125 100.0 96.8 140.0
+126 100.0 97.8 138.5857864376269
+127 100.0 97.3 138.5857864376269
+128 100.0 96.8 138.5857864376269
+129 100.0 96.3 138.5857864376269
+130 100.0 95.8 138.5857864376269
+131 99.64644660940672 97.8 138.93933982822017
+132 99.64644660940672 97.3 138.93933982822017
+133 99.64644660940672 96.8 138.93933982822017
+134 99.64644660940672 96.3 138.93933982822017
+135 99.64644660940672 95.8 138.93933982822017
+136 99.29289321881345 97.8 139.29289321881345
+137 99.29289321881345 97.3 139.29289321881345
+138 99.29289321881345 96.8 139.29289321881345
+139 99.29289321881345 96.3 139.29289321881345
+140 99.29289321881345 95.8 139.29289321881345
+141 98.93933982822018 97.8 139.64644660940672
+142 98.93933982822018 97.3 139.64644660940672
+143 98.93933982822018 96.8 139.64644660940672
+144 98.93933982822018 96.3 139.64644660940672
+145 98.93933982822018 95.8 139.64644660940672
+146 98.58578643762691 97.8 140.0
+147 98.58578643762691 97.3 140.0
+148 98.58578643762691 96.8 140.0
+149 98.58578643762691 96.3 140.0
+150 98.58578643762691 95.8 140.0
+151 100.35355339059328 97.8 138.93933982822017
+152 100.35355339059328 97.3 138.93933982822017
+153 100.35355339059328 96.8 138.93933982822017
+154 100.35355339059328 96.3 138.93933982822017
+155 100.35355339059328 95.8 138.93933982822017
+156 100.0 97.8 139.29289321881345
+157 100.0 97.3 139.29289321881345
+158 100.0 96.8 139.29289321881345
+159 100.0 96.3 139.29289321881345
+160 100.0 95.8 139.29289321881345
+161 99.64644660940672 97.8 139.64644660940672
+162 99.64644660940672 97.3 139.64644660940672
+163 99.64644660940672 96.8 139.64644660940672
+164 99.64644660940672 96.3 139.64644660940672
+165 99.64644660940672 95.8 139.64644660940672
+166 99.29289321881345 97.8 140.0
+167 99.29289321881345 97.3 140.0
+168 99.29289321881345 96.8 140.0
+169 99.29289321881345 96.3 140.0
+170 99.29289321881345 95.8 140.0
+171 98.93933982822018 97.8 140.35355339059328
+172 98.93933982822018 97.3 140.35355339059328
+173 98.93933982822018 96.8 140.35355339059328
+174 98.93933982822018 96.3 140.35355339059328
+175 98.93933982822018 95.8 140.35355339059328
+176 100.70710678118655 97.8 139.29289321881345
+177 100.70710678118655 97.3 139.29289321881345
+178 100.70710678118655 96.8 139.29289321881345
+179 100.70710678118655 96.3 139.29289321881345
+180 100.70710678118655 95.8 139.29289321881345
+181 100.35355339059328 97.8 139.64644660940672
+182 100.35355339059328 97.3 139.64644660940672
+183 100.35355339059328 96.8 139.64644660940672
+184 100.35355339059328 96.3 139.64644660940672
+185 100.35355339059328 95.8 139.64644660940672
+186 100.0 97.8 140.0
+187 100.0 97.3 140.0
+188 100.0 96.3 140.0
+189 100.0 95.8 140.0
+190 99.64644660940672 97.8 140.35355339059328
+191 99.64644660940672 97.3 140.35355339059328
+192 99.64644660940672 96.8 140.35355339059328
+193 99.64644660940672 96.3 140.35355339059328
+194 99.64644660940672 95.8 140.35355339059328
+195 99.29289321881345 97.8 140.70710678118655
+196 99.29289321881345 97.3 140.70710678118655
+197 99.29289321881345 96.8 140.70710678118655
+198 99.29289321881345 96.3 140.70710678118655
+199 99.29289321881345 95.8 140.70710678118655
+200 101.06066017177982 97.8 139.64644660940672
+201 101.06066017177982 97.3 139.64644660940672
+202 101.06066017177982 96.8 139.64644660940672
+203 101.06066017177982 96.3 139.64644660940672
+204 101.06066017177982 95.8 139.64644660940672
+205 100.70710678118655 97.8 140.0
+206 100.70710678118655 97.3 140.0
+207 100.70710678118655 96.8 140.0
+208 100.70710678118655 96.3 140.0
+209 100.70710678118655 95.8 140.0
+210 100.35355339059328 97.8 140.35355339059328
+211 100.35355339059328 97.3 140.35355339059328
+212 100.35355339059328 96.8 140.35355339059328
+213 100.35355339059328 96.3 140.35355339059328
+214 100.35355339059328 95.8 140.35355339059328
+215 100.0 97.8 140.70710678118655
+216 100.0 97.3 140.70710678118655
+217 100.0 96.8 140.70710678118655
+218 100.0 96.3 140.70710678118655
+219 100.0 95.8 140.70710678118655
+220 99.64644660940672 97.8 141.06066017177983
+221 99.64644660940672 97.3 141.06066017177983
+222 99.64644660940672 96.8 141.06066017177983
+223 99.64644660940672 96.3 141.06066017177983
+224 99.64644660940672 95.8 141.06066017177983
+225 101.41421356237309 97.8 140.0
+226 101.41421356237309 97.3 140.0
+227 101.41421356237309 96.8 140.0
+228 101.41421356237309 96.3 140.0
+229 101.41421356237309 95.8 140.0
+230 101.06066017177982 97.8 140.35355339059328
+231 101.06066017177982 97.3 140.35355339059328
+232 101.06066017177982 96.8 140.35355339059328
+233 101.06066017177982 96.3 140.35355339059328
+234 101.06066017177982 95.8 140.35355339059328
+235 100.70710678118655 97.8 140.70710678118655
+236 100.70710678118655 97.3 140.70710678118655
+237 100.70710678118655 96.8 140.70710678118655
+238 100.70710678118655 96.3 140.70710678118655
+239 100.70710678118655 95.8 140.70710678118655
+240 100.35355339059328 97.8 141.06066017177983
+241 100.35355339059328 97.3 141.06066017177983
+242 100.35355339059328 96.8 141.06066017177983
+243 100.35355339059328 96.3 141.06066017177983
+244 100.35355339059328 95.8 141.06066017177983
+245 100.0 97.8 141.4142135623731
+246 100.0 97.3 141.4142135623731
+247 100.0 96.8 141.4142135623731
+248 100.0 96.3 141.4142135623731
+249 100.0 95.8 141.4142135623731
+250 100.0 93.6 140.0
+251 100.0 94.6 138.5857864376269
+252 100.0 94.1 138.5857864376269
+253 100.0 93.6 138.5857864376269
+254 100.0 93.1 138.5857864376269
+255 100.0 92.6 138.5857864376269
+256 99.64644660940672 94.6 138.93933982822017
+257 99.64644660940672 94.1 138.93933982822017
+258 99.64644660940672 93.6 138.93933982822017
+259 99.64644660940672 93.1 138.93933982822017
+260 99.64644660940672 92.6 138.93933982822017
+261 99.29289321881345 94.6 139.29289321881345
+262 99.29289321881345 94.1 139.29289321881345
+263 99.29289321881345 93.6 139.29289321881345
+264 99.29289321881345 93.1 139.29289321881345
+265 99.29289321881345 92.6 139.29289321881345
+266 98.93933982822018 94.6 139.64644660940672
+267 98.93933982822018 94.1 139.64644660940672
+268 98.93933982822018 93.6 139.64644660940672
+269 98.93933982822018 93.1 139.64644660940672
+270 98.93933982822018 92.6 139.64644660940672
+271 98.58578643762691 94.6 140.0
+272 98.58578643762691 94.1 140.0
+273 98.58578643762691 93.6 140.0
+274 98.58578643762691 93.1 140.0
+275 98.58578643762691 92.6 140.0
+276 100.35355339059328 94.6 138.93933982822017
+277 100.35355339059328 94.1 138.93933982822017
+278 100.35355339059328 93.6 138.93933982822017
+279 100.35355339059328 93.1 138.93933982822017
+280 100.35355339059328 92.6 138.93933982822017
+281 100.0 94.6 139.29289321881345
+282 100.0 94.1 139.29289321881345
+283 100.0 93.6 139.29289321881345
+284 100.0 93.1 139.29289321881345
+285 100.0 92.6 139.29289321881345
+286 99.64644660940672 94.6 139.64644660940672
+287 99.64644660940672 94.1 139.64644660940672
+288 99.64644660940672 93.6 139.64644660940672
+289 99.64644660940672 93.1 139.64644660940672
+290 99.64644660940672 92.6 139.64644660940672
+291 99.29289321881345 94.6 140.0
+292 99.29289321881345 94.1 140.0
+293 99.29289321881345 93.6 140.0
+294 99.29289321881345 93.1 140.0
+295 99.29289321881345 92.6 140.0
+296 98.93933982822018 94.6 140.35355339059328
+297 98.93933982822018 94.1 140.35355339059328
+298 98.93933982822018 93.6 140.35355339059328
+299 98.93933982822018 93.1 140.35355339059328
+300 98.93933982822018 92.6 140.35355339059328
+301 100.70710678118655 94.6 139.29289321881345
+302 100.70710678118655 94.1 139.29289321881345
+303 100.70710678118655 93.6 139.29289321881345
+304 100.70710678118655 93.1 139.29289321881345
+305 100.70710678118655 92.6 139.29289321881345
+306 100.35355339059328 94.6 139.64644660940672
+307 100.35355339059328 94.1 139.64644660940672
+308 100.35355339059328 93.6 139.64644660940672
+309 100.35355339059328 93.1 139.64644660940672
+310 100.35355339059328 92.6 139.64644660940672
+311 100.0 94.6 140.0
+312 100.0 94.1 140.0
+313 100.0 93.1 140.0
+314 100.0 92.6 140.0
+315 99.64644660940672 94.6 140.35355339059328
+316 99.64644660940672 94.1 140.35355339059328
+317 99.64644660940672 93.6 140.35355339059328
+318 99.64644660940672 93.1 140.35355339059328
+319 99.64644660940672 92.6 140.35355339059328
+320 99.29289321881345 94.6 140.70710678118655
+321 99.29289321881345 94.1 140.70710678118655
+322 99.29289321881345 93.6 140.70710678118655
+323 99.29289321881345 93.1 140.70710678118655
+324 99.29289321881345 92.6 140.70710678118655
+325 101.06066017177982 94.6 139.64644660940672
+326 101.06066017177982 94.1 139.64644660940672
+327 101.06066017177982 93.6 139.64644660940672
+328 101.06066017177982 93.1 139.64644660940672
+329 101.06066017177982 92.6 139.64644660940672
+330 100.70710678118655 94.6 140.0
+331 100.70710678118655 94.1 140.0
+332 100.70710678118655 93.6 140.0
+333 100.70710678118655 93.1 140.0
+334 100.70710678118655 92.6 140.0
+335 100.35355339059328 94.6 140.35355339059328
+336 100.35355339059328 94.1 140.35355339059328
+337 100.35355339059328 93.6 140.35355339059328
+338 100.35355339059328 93.1 140.35355339059328
+339 100.35355339059328 92.6 140.35355339059328
+340 100.0 94.6 140.70710678118655
+341 100.0 94.1 140.70710678118655
+342 100.0 93.6 140.70710678118655
+343 100.0 93.1 140.70710678118655
+344 100.0 92.6 140.70710678118655
+345 99.64644660940672 94.6 141.06066017177983
+346 99.64644660940672 94.1 141.06066017177983
+347 99.64644660940672 93.6 141.06066017177983
+348 99.64644660940672 93.1 141.06066017177983
+349 99.64644660940672 92.6 141.06066017177983
+350 101.41421356237309 94.6 140.0
+351 101.41421356237309 94.1 140.0
+352 101.41421356237309 93.6 140.0
+353 101.41421356237309 93.1 140.0
+354 101.41421356237309 92.6 140.0
+355 101.06066017177982 94.6 140.35355339059328
+356 101.06066017177982 94.1 140.35355339059328
+357 101.06066017177982 93.6 140.35355339059328
+358 101.06066017177982 93.1 140.35355339059328
+359 101.06066017177982 92.6 140.35355339059328
+360 100.70710678118655 94.6 140.70710678118655
+361 100.70710678118655 94.1 140.70710678118655
+362 100.70710678118655 93.6 140.70710678118655
+363 100.70710678118655 93.1 140.70710678118655
+364 100.70710678118655 92.6 140.70710678118655
+365 100.35355339059328 94.6 141.06066017177983
+366 100.35355339059328 94.1 141.06066017177983
+367 100.35355339059328 93.6 141.06066017177983
+368 100.35355339059328 93.1 141.06066017177983
+369 100.35355339059328 92.6 141.06066017177983
+370 100.0 94.6 141.4142135623731
+371 100.0 94.1 141.4142135623731
+372 100.0 93.6 141.4142135623731
+373 100.0 93.1 141.4142135623731
+374 100.0 92.6 141.4142135623731
+375 100.0 90.4 140.0
+376 100.0 91.4 138.5857864376269
+377 100.0 90.9 138.5857864376269
+378 100.0 90.4 138.5857864376269
+379 100.0 89.9 138.5857864376269
+380 100.0 89.4 138.5857864376269
+381 99.64644660940672 91.4 138.93933982822017
+382 99.64644660940672 90.9 138.93933982822017
+383 99.64644660940672 90.4 138.93933982822017
+384 99.64644660940672 89.9 138.93933982822017
+385 99.64644660940672 89.4 138.93933982822017
+386 99.29289321881345 91.4 139.29289321881345
+387 99.29289321881345 90.9 139.29289321881345
+388 99.29289321881345 90.4 139.29289321881345
+389 99.29289321881345 89.9 139.29289321881345
+390 99.29289321881345 89.4 139.29289321881345
+391 98.93933982822018 91.4 139.64644660940672
+392 98.93933982822018 90.9 139.64644660940672
+393 98.93933982822018 90.4 139.64644660940672
+394 98.93933982822018 89.9 139.64644660940672
+395 98.93933982822018 89.4 139.64644660940672
+396 98.58578643762691 91.4 140.0
+397 98.58578643762691 90.9 140.0
+398 98.58578643762691 90.4 140.0
+399 98.58578643762691 89.9 140.0
+400 98.58578643762691 89.4 140.0
+401 100.35355339059328 91.4 138.93933982822017
+402 100.35355339059328 90.9 138.93933982822017
+403 100.35355339059328 90.4 138.93933982822017
+404 100.35355339059328 89.9 138.93933982822017
+405 100.35355339059328 89.4 138.93933982822017
+406 100.0 91.4 139.29289321881345
+407 100.0 90.9 139.29289321881345
+408 100.0 90.4 139.29289321881345
+409 100.0 89.9 139.29289321881345
+410 100.0 89.4 139.29289321881345
+411 99.64644660940672 91.4 139.64644660940672
+412 99.64644660940672 90.9 139.64644660940672
+413 99.64644660940672 90.4 139.64644660940672
+414 99.64644660940672 89.9 139.64644660940672
+415 99.64644660940672 89.4 139.64644660940672
+416 99.29289321881345 91.4 140.0
+417 99.29289321881345 90.9 140.0
+418 99.29289321881345 90.4 140.0
+419 99.29289321881345 89.9 140.0
+420 99.29289321881345 89.4 140.0
+421 98.93933982822018 91.4 140.35355339059328
+422 98.93933982822018 90.9 140.35355339059328
+423 98.93933982822018 90.4 140.35355339059328
+424 98.93933982822018 89.9 140.35355339059328
+425 98.93933982822018 89.4 140.35355339059328
+426 100.70710678118655 91.4 139.29289321881345
+427 100.70710678118655 90.9 139.29289321881345
+428 100.70710678118655 90.4 139.29289321881345
+429 100.70710678118655 89.9 139.29289321881345
+430 100.70710678118655 89.4 139.29289321881345
+431 100.35355339059328 91.4 139.64644660940672
+432 100.35355339059328 90.9 139.64644660940672
+433 100.35355339059328 90.4 139.64644660940672
+434 100.35355339059328 89.9 139.64644660940672
+435 100.35355339059328 89.4 139.64644660940672
+436 100.0 91.4 140.0
+437 100.0 90.9 140.0
+438 100.0 89.9 140.0
+439 100.0 89.4 140.0
+440 99.64644660940672 91.4 140.35355339059328
+441 99.64644660940672 90.9 140.35355339059328
+442 99.64644660940672 90.4 140.35355339059328
+443 99.64644660940672 89.9 140.35355339059328
+444 99.64644660940672 89.4 140.35355339059328
+445 99.29289321881345 91.4 140.70710678118655
+446 99.29289321881345 90.9 140.70710678118655
+447 99.29289321881345 90.4 140.70710678118655
+448 99.29289321881345 89.9 140.70710678118655
+449 99.29289321881345 89.4 140.70710678118655
+450 101.06066017177982 91.4 139.64644660940672
+451 101.06066017177982 90.9 139.64644660940672
+452 101.06066017177982 90.4 139.64644660940672
+453 101.06066017177982 89.9 139.64644660940672
+454 101.06066017177982 89.4 139.64644660940672
+455 100.70710678118655 91.4 140.0
+456 100.70710678118655 90.9 140.0
+457 100.70710678118655 90.4 140.0
+458 100.70710678118655 89.9 140.0
+459 100.70710678118655 89.4 140.0
+460 100.35355339059328 91.4 140.35355339059328
+461 100.35355339059328 90.9 140.35355339059328
+462 100.35355339059328 90.4 140.35355339059328
+463 100.35355339059328 89.9 140.35355339059328
+464 100.35355339059328 89.4 140.35355339059328
+465 100.0 91.4 140.70710678118655
+466 100.0 90.9 140.70710678118655
+467 100.0 90.4 140.70710678118655
+468 100.0 89.9 140.70710678118655
+469 100.0 89.4 140.70710678118655
+470 99.64644660940672 91.4 141.06066017177983
+471 99.64644660940672 90.9 141.06066017177983
+472 99.64644660940672 90.4 141.06066017177983
+473 99.64644660940672 89.9 141.06066017177983
+474 99.64644660940672 89.4 141.06066017177983
+475 101.41421356237309 91.4 140.0
+476 101.41421356237309 90.9 140.0
+477 101.41421356237309 90.4 140.0
+478 101.41421356237309 89.9 140.0
+479 101.41421356237309 89.4 140.0
+480 101.06066017177982 91.4 140.35355339059328
+481 101.06066017177982 90.9 140.35355339059328
+482 101.06066017177982 90.4 140.35355339059328
+483 101.06066017177982 89.9 140.35355339059328
+484 101.06066017177982 89.4 140.35355339059328
+485 100.70710678118655 91.4 140.70710678118655
+486 100.70710678118655 90.9 140.70710678118655
+487 100.70710678118655 90.4 140.70710678118655
+488 100.70710678118655 89.9 140.70710678118655
+489 100.70710678118655 89.4 140.70710678118655
+490 100.35355339059328 91.4 141.06066017177983
+491 100.35355339059328 90.9 141.06066017177983
+492 100.35355339059328 90.4 141.06066017177983
+493 100.35355339059328 89.9 141.06066017177983
+494 100.35355339059328 89.4 141.06066017177983
+495 100.0 91.4 141.4142135623731
+496 100.0 90.9 141.4142135623731
+497 100.0 90.4 141.4142135623731
+498 100.0 89.9 141.4142135623731
+499 100.0 89.4 141.4142135623731
+500 100.0 87.2 140.0
+501 100.0 88.2 138.5857864376269
+502 100.0 87.7 138.5857864376269
+503 100.0 87.2 138.5857864376269
+504 100.0 86.7 138.5857864376269
+505 100.0 86.2 138.5857864376269
+506 99.64644660940672 88.2 138.93933982822017
+507 99.64644660940672 87.7 138.93933982822017
+508 99.64644660940672 87.2 138.93933982822017
+509 99.64644660940672 86.7 138.93933982822017
+510 99.64644660940672 86.2 138.93933982822017
+511 99.29289321881345 88.2 139.29289321881345
+512 99.29289321881345 87.7 139.29289321881345
+513 99.29289321881345 87.2 139.29289321881345
+514 99.29289321881345 86.7 139.29289321881345
+515 99.29289321881345 86.2 139.29289321881345
+516 98.93933982822018 88.2 139.64644660940672
+517 98.93933982822018 87.7 139.64644660940672
+518 98.93933982822018 87.2 139.64644660940672
+519 98.93933982822018 86.7 139.64644660940672
+520 98.93933982822018 86.2 139.64644660940672
+521 98.58578643762691 88.2 140.0
+522 98.58578643762691 87.7 140.0
+523 98.58578643762691 87.2 140.0
+524 98.58578643762691 86.7 140.0
+525 98.58578643762691 86.2 140.0
+526 100.35355339059328 88.2 138.93933982822017
+527 100.35355339059328 87.7 138.93933982822017
+528 100.35355339059328 87.2 138.93933982822017
+529 100.35355339059328 86.7 138.93933982822017
+530 100.35355339059328 86.2 138.93933982822017
+531 100.0 88.2 139.29289321881345
+532 100.0 87.7 139.29289321881345
+533 100.0 87.2 139.29289321881345
+534 100.0 86.7 139.29289321881345
+535 100.0 86.2 139.29289321881345
+536 99.64644660940672 88.2 139.64644660940672
+537 99.64644660940672 87.7 139.64644660940672
+538 99.64644660940672 87.2 139.64644660940672
+539 99.64644660940672 86.7 139.64644660940672
+540 99.64644660940672 86.2 139.64644660940672
+541 99.29289321881345 88.2 140.0
+542 99.29289321881345 87.7 140.0
+543 99.29289321881345 87.2 140.0
+544 99.29289321881345 86.7 140.0
+545 99.29289321881345 86.2 140.0
+546 98.93933982822018 88.2 140.35355339059328
+547 98.93933982822018 87.7 140.35355339059328
+548 98.93933982822018 87.2 140.35355339059328
+549 98.93933982822018 86.7 140.35355339059328
+550 98.93933982822018 86.2 140.35355339059328
+551 100.70710678118655 88.2 139.29289321881345
+552 100.70710678118655 87.7 139.29289321881345
+553 100.70710678118655 87.2 139.29289321881345
+554 100.70710678118655 86.7 139.29289321881345
+555 100.70710678118655 86.2 139.29289321881345
+556 100.35355339059328 88.2 139.64644660940672
+557 100.35355339059328 87.7 139.64644660940672
+558 100.35355339059328 87.2 139.64644660940672
+559 100.35355339059328 86.7 139.64644660940672
+560 100.35355339059328 86.2 139.64644660940672
+561 100.0 88.2 140.0
+562 100.0 87.7 140.0
+563 100.0 86.7 140.0
+564 100.0 86.2 140.0
+565 99.64644660940672 88.2 140.35355339059328
+566 99.64644660940672 87.7 140.35355339059328
+567 99.64644660940672 87.2 140.35355339059328
+568 99.64644660940672 86.7 140.35355339059328
+569 99.64644660940672 86.2 140.35355339059328
+570 99.29289321881345 88.2 140.70710678118655
+571 99.29289321881345 87.7 140.70710678118655
+572 99.29289321881345 87.2 140.70710678118655
+573 99.29289321881345 86.7 140.70710678118655
+574 99.29289321881345 86.2 140.70710678118655
+575 101.06066017177982 88.2 139.64644660940672
+576 101.06066017177982 87.7 139.64644660940672
+577 101.06066017177982 87.2 139.64644660940672
+578 101.06066017177982 86.7 139.64644660940672
+579 101.06066017177982 86.2 139.64644660940672
+580 100.70710678118655 88.2 140.0
+581 100.70710678118655 87.7 140.0
+582 100.70710678118655 87.2 140.0
+583 100.70710678118655 86.7 140.0
+584 100.70710678118655 86.2 140.0
+585 100.35355339059328 88.2 140.35355339059328
+586 100.35355339059328 87.7 140.35355339059328
+587 100.35355339059328 87.2 140.35355339059328
+588 100.35355339059328 86.7 140.35355339059328
+589 100.35355339059328 86.2 140.35355339059328
+590 100.0 88.2 140.70710678118655
+591 100.0 87.7 140.70710678118655
+592 100.0 87.2 140.70710678118655
+593 100.0 86.7 140.70710678118655
+594 100.0 86.2 140.70710678118655
+595 99.64644660940672 88.2 141.06066017177983
+596 99.64644660940672 87.7 141.06066017177983
+597 99.64644660940672 87.2 141.06066017177983
+598 99.64644660940672 86.7 141.06066017177983
+599 99.64644660940672 86.2 141.06066017177983
+600 101.41421356237309 88.2 140.0
+601 101.41421356237309 87.7 140.0
+602 101.41421356237309 87.2 140.0
+603 101.41421356237309 86.7 140.0
+604 101.41421356237309 86.2 140.0
+605 101.06066017177982 88.2 140.35355339059328
+606 101.06066017177982 87.7 140.35355339059328
+607 101.06066017177982 87.2 140.35355339059328
+608 101.06066017177982 86.7 140.35355339059328
+609 101.06066017177982 86.2 140.35355339059328
+610 100.70710678118655 88.2 140.70710678118655
+611 100.70710678118655 87.7 140.70710678118655
+612 100.70710678118655 87.2 140.70710678118655
+613 100.70710678118655 86.7 140.70710678118655
+614 100.70710678118655 86.2 140.70710678118655
+615 100.35355339059328 88.2 141.06066017177983
+616 100.35355339059328 87.7 141.06066017177983
+617 100.35355339059328 87.2 141.06066017177983
+618 100.35355339059328 86.7 141.06066017177983
+619 100.35355339059328 86.2 141.06066017177983
+620 100.0 88.2 141.4142135623731
+621 100.0 87.7 141.4142135623731
+622 100.0 87.2 141.4142135623731
+623 100.0 86.7 141.4142135623731
+624 100.0 86.2 141.4142135623731
+625 100.0 84.0 140.0
+626 100.0 85.0 138.5857864376269
+627 100.0 84.5 138.5857864376269
+628 100.0 84.0 138.5857864376269
+629 100.0 83.5 138.5857864376269
+630 100.0 83.0 138.5857864376269
+631 99.64644660940672 85.0 138.93933982822017
+632 99.64644660940672 84.5 138.93933982822017
+633 99.64644660940672 84.0 138.93933982822017
+634 99.64644660940672 83.5 138.93933982822017
+635 99.64644660940672 83.0 138.93933982822017
+636 99.29289321881345 85.0 139.29289321881345
+637 99.29289321881345 84.5 139.29289321881345
+638 99.29289321881345 84.0 139.29289321881345
+639 99.29289321881345 83.5 139.29289321881345
+640 99.29289321881345 83.0 139.29289321881345
+641 98.93933982822018 85.0 139.64644660940672
+642 98.93933982822018 84.5 139.64644660940672
+643 98.93933982822018 84.0 139.64644660940672
+644 98.93933982822018 83.5 139.64644660940672
+645 98.93933982822018 83.0 139.64644660940672
+646 98.58578643762691 85.0 140.0
+647 98.58578643762691 84.5 140.0
+648 98.58578643762691 84.0 140.0
+649 98.58578643762691 83.5 140.0
+650 98.58578643762691 83.0 140.0
+651 100.35355339059328 85.0 138.93933982822017
+652 100.35355339059328 84.5 138.93933982822017
+653 100.35355339059328 84.0 138.93933982822017
+654 100.35355339059328 83.5 138.93933982822017
+655 100.35355339059328 83.0 138.93933982822017
+656 100.0 85.0 139.29289321881345
+657 100.0 84.5 139.29289321881345
+658 100.0 84.0 139.29289321881345
+659 100.0 83.5 139.29289321881345
+660 100.0 83.0 139.29289321881345
+661 99.64644660940672 85.0 139.64644660940672
+662 99.64644660940672 84.5 139.64644660940672
+663 99.64644660940672 84.0 139.64644660940672
+664 99.64644660940672 83.5 139.64644660940672
+665 99.64644660940672 83.0 139.64644660940672
+666 99.29289321881345 85.0 140.0
+667 99.29289321881345 84.5 140.0
+668 99.29289321881345 84.0 140.0
+669 99.29289321881345 83.5 140.0
+670 99.29289321881345 83.0 140.0
+671 98.93933982822018 85.0 140.35355339059328
+672 98.93933982822018 84.5 140.35355339059328
+673 98.93933982822018 84.0 140.35355339059328
+674 98.93933982822018 83.5 140.35355339059328
+675 98.93933982822018 83.0 140.35355339059328
+676 100.70710678118655 85.0 139.29289321881345
+677 100.70710678118655 84.5 139.29289321881345
+678 100.70710678118655 84.0 139.29289321881345
+679 100.70710678118655 83.5 139.29289321881345
+680 100.70710678118655 83.0 139.29289321881345
+681 100.35355339059328 85.0 139.64644660940672
+682 100.35355339059328 84.5 139.64644660940672
+683 100.35355339059328 84.0 139.64644660940672
+684 100.35355339059328 83.5 139.64644660940672
+685 100.35355339059328 83.0 139.64644660940672
+686 100.0 85.0 140.0
+687 100.0 84.5 140.0
+688 100.0 83.5 140.0
+689 100.0 83.0 140.0
+690 99.64644660940672 85.0 140.35355339059328
+691 99.64644660940672 84.5 140.35355339059328
+692 99.64644660940672 84.0 140.35355339059328
+693 99.64644660940672 83.5 140.35355339059328
+694 99.64644660940672 83.0 140.35355339059328
+695 99.29289321881345 85.0 140.70710678118655
+696 99.29289321881345 84.5 140.70710678118655
+697 99.29289321881345 84.0 140.70710678118655
+698 99.29289321881345 83.5 140.70710678118655
+699 99.29289321881345 83.0 140.70710678118655
+700 101.06066017177982 85.0 139.64644660940672
+701 101.06066017177982 84.5 139.64644660940672
+702 101.06066017177982 84.0 139.64644660940672
+703 101.06066017177982 83.5 139.64644660940672
+704 101.06066017177982 83.0 139.64644660940672
+705 100.70710678118655 85.0 140.0
+706 100.70710678118655 84.5 140.0
+707 100.70710678118655 84.0 140.0
+708 100.70710678118655 83.5 140.0
+709 100.70710678118655 83.0 140.0
+710 100.35355339059328 85.0 140.35355339059328
+711 100.35355339059328 84.5 140.35355339059328
+712 100.35355339059328 84.0 140.35355339059328
+713 100.35355339059328 83.5 140.35355339059328
+714 100.35355339059328 83.0 140.35355339059328
+715 100.0 85.0 140.70710678118655
+716 100.0 84.5 140.70710678118655
+717 100.0 84.0 140.70710678118655
+718 100.0 83.5 140.70710678118655
+719 100.0 83.0 140.70710678118655
+720 99.64644660940672 85.0 141.06066017177983
+721 99.64644660940672 84.5 141.06066017177983
+722 99.64644660940672 84.0 141.06066017177983
+723 99.64644660940672 83.5 141.06066017177983
+724 99.64644660940672 83.0 141.06066017177983
+725 101.41421356237309 85.0 140.0
+726 101.41421356237309 84.5 140.0
+727 101.41421356237309 84.0 140.0
+728 101.41421356237309 83.5 140.0
+729 101.41421356237309 83.0 140.0
+730 101.06066017177982 85.0 140.35355339059328
+731 101.06066017177982 84.5 140.35355339059328
+732 101.06066017177982 84.0 140.35355339059328
+733 101.06066017177982 83.5 140.35355339059328
+734 101.06066017177982 83.0 140.35355339059328
+735 100.70710678118655 85.0 140.70710678118655
+736 100.70710678118655 84.5 140.70710678118655
+737 100.70710678118655 84.0 140.70710678118655
+738 100.70710678118655 83.5 140.70710678118655
+739 100.70710678118655 83.0 140.70710678118655
+740 100.35355339059328 85.0 141.06066017177983
+741 100.35355339059328 84.5 141.06066017177983
+742 100.35355339059328 84.0 141.06066017177983
+743 100.35355339059328 83.5 141.06066017177983
+744 100.35355339059328 83.0 141.06066017177983
+745 100.0 85.0 141.4142135623731
+746 100.0 84.5 141.4142135623731
+747 100.0 84.0 141.4142135623731
+748 100.0 83.5 141.4142135623731
+749 100.0 83.0 141.4142135623731
+750 100.0 80.8 140.0
+751 100.0 81.8 138.5857864376269
+752 100.0 81.3 138.5857864376269
+753 100.0 80.8 138.5857864376269
+754 100.0 80.3 138.5857864376269
+755 100.0 79.8 138.5857864376269
+756 99.64644660940672 81.8 138.93933982822017
+757 99.64644660940672 81.3 138.93933982822017
+758 99.64644660940672 80.8 138.93933982822017
+759 99.64644660940672 80.3 138.93933982822017
+760 99.64644660940672 79.8 138.93933982822017
+761 99.29289321881345 81.8 139.29289321881345
+762 99.29289321881345 81.3 139.29289321881345
+763 99.29289321881345 80.8 139.29289321881345
+764 99.29289321881345 80.3 139.29289321881345
+765 99.29289321881345 79.8 139.29289321881345
+766 98.93933982822018 81.8 139.64644660940672
+767 98.93933982822018 81.3 139.64644660940672
+768 98.93933982822018 80.8 139.64644660940672
+769 98.93933982822018 80.3 139.64644660940672
+770 98.93933982822018 79.8 139.64644660940672
+771 98.58578643762691 81.8 140.0
+772 98.58578643762691 81.3 140.0
+773 98.58578643762691 80.8 140.0
+774 98.58578643762691 80.3 140.0
+775 98.58578643762691 79.8 140.0
+776 100.35355339059328 81.8 138.93933982822017
+777 100.35355339059328 81.3 138.93933982822017
+778 100.35355339059328 80.8 138.93933982822017
+779 100.35355339059328 80.3 138.93933982822017
+780 100.35355339059328 79.8 138.93933982822017
+781 100.0 81.8 139.29289321881345
+782 100.0 81.3 139.29289321881345
+783 100.0 80.8 139.29289321881345
+784 100.0 80.3 139.29289321881345
+785 100.0 79.8 139.29289321881345
+786 99.64644660940672 81.8 139.64644660940672
+787 99.64644660940672 81.3 139.64644660940672
+788 99.64644660940672 80.8 139.64644660940672
+789 99.64644660940672 80.3 139.64644660940672
+790 99.64644660940672 79.8 139.64644660940672
+791 99.29289321881345 81.8 140.0
+792 99.29289321881345 81.3 140.0
+793 99.29289321881345 80.8 140.0
+794 99.29289321881345 80.3 140.0
+795 99.29289321881345 79.8 140.0
+796 98.93933982822018 81.8 140.35355339059328
+797 98.93933982822018 81.3 140.35355339059328
+798 98.93933982822018 80.8 140.35355339059328
+799 98.93933982822018 80.3 140.35355339059328
+800 98.93933982822018 79.8 140.35355339059328
+801 100.70710678118655 81.8 139.29289321881345
+802 100.70710678118655 81.3 139.29289321881345
+803 100.70710678118655 80.8 139.29289321881345
+804 100.70710678118655 80.3 139.29289321881345
+805 100.70710678118655 79.8 139.29289321881345
+806 100.35355339059328 81.8 139.64644660940672
+807 100.35355339059328 81.3 139.64644660940672
+808 100.35355339059328 80.8 139.64644660940672
+809 100.35355339059328 80.3 139.64644660940672
+810 100.35355339059328 79.8 139.64644660940672
+811 100.0 81.8 140.0
+812 100.0 81.3 140.0
+813 100.0 80.3 140.0
+814 100.0 79.8 140.0
+815 99.64644660940672 81.8 140.35355339059328
+816 99.64644660940672 81.3 140.35355339059328
+817 99.64644660940672 80.8 140.35355339059328
+818 99.64644660940672 80.3 140.35355339059328
+819 99.64644660940672 79.8 140.35355339059328
+820 99.29289321881345 81.8 140.70710678118655
+821 99.29289321881345 81.3 140.70710678118655
+822 99.29289321881345 80.8 140.70710678118655
+823 99.29289321881345 80.3 140.70710678118655
+824 99.29289321881345 79.8 140.70710678118655
+825 101.06066017177982 81.8 139.64644660940672
+826 101.06066017177982 81.3 139.64644660940672
+827 101.06066017177982 80.8 139.64644660940672
+828 101.06066017177982 80.3 139.64644660940672
+829 101.06066017177982 79.8 139.64644660940672
+830 100.70710678118655 81.8 140.0
+831 100.70710678118655 81.3 140.0
+832 100.70710678118655 80.8 140.0
+833 100.70710678118655 80.3 140.0
+834 100.70710678118655 79.8 140.0
+835 100.35355339059328 81.8 140.35355339059328
+836 100.35355339059328 81.3 140.35355339059328
+837 100.35355339059328 80.8 140.35355339059328
+838 100.35355339059328 80.3 140.35355339059328
+839 100.35355339059328 79.8 140.35355339059328
+840 100.0 81.8 140.70710678118655
+841 100.0 81.3 140.70710678118655
+842 100.0 80.8 140.70710678118655
+843 100.0 80.3 140.70710678118655
+844 100.0 79.8 140.70710678118655
+845 99.64644660940672 81.8 141.06066017177983
+846 99.64644660940672 81.3 141.06066017177983
+847 99.64644660940672 80.8 141.06066017177983
+848 99.64644660940672 80.3 141.06066017177983
+849 99.64644660940672 79.8 141.06066017177983
+850 101.41421356237309 81.8 140.0
+851 101.41421356237309 81.3 140.0
+852 101.41421356237309 80.8 140.0
+853 101.41421356237309 80.3 140.0
+854 101.41421356237309 79.8 140.0
+855 101.06066017177982 81.8 140.35355339059328
+856 101.06066017177982 81.3 140.35355339059328
+857 101.06066017177982 80.8 140.35355339059328
+858 101.06066017177982 80.3 140.35355339059328
+859 101.06066017177982 79.8 140.35355339059328
+860 100.70710678118655 81.8 140.70710678118655
+861 100.70710678118655 81.3 140.70710678118655
+862 100.70710678118655 80.8 140.70710678118655
+863 100.70710678118655 80.3 140.70710678118655
+864 100.70710678118655 79.8 140.70710678118655
+865 100.35355339059328 81.8 141.06066017177983
+866 100.35355339059328 81.3 141.06066017177983
+867 100.35355339059328 80.8 141.06066017177983
+868 100.35355339059328 80.3 141.06066017177983
+869 100.35355339059328 79.8 141.06066017177983
+870 100.0 81.8 141.4142135623731
+871 100.0 81.3 141.4142135623731
+872 100.0 80.8 141.4142135623731
+873 100.0 80.3 141.4142135623731
+874 100.0 79.8 141.4142135623731
+875 100.0 77.6 140.0
+876 100.0 78.6 138.5857864376269
+877 100.0 78.1 138.5857864376269
+878 100.0 77.6 138.5857864376269
+879 100.0 77.1 138.5857864376269
+880 100.0 76.6 138.5857864376269
+881 99.64644660940672 78.6 138.93933982822017
+882 99.64644660940672 78.1 138.93933982822017
+883 99.64644660940672 77.6 138.93933982822017
+884 99.64644660940672 77.1 138.93933982822017
+885 99.64644660940672 76.6 138.93933982822017
+886 99.29289321881345 78.6 139.29289321881345
+887 99.29289321881345 78.1 139.29289321881345
+888 99.29289321881345 77.6 139.29289321881345
+889 99.29289321881345 77.1 139.29289321881345
+890 99.29289321881345 76.6 139.29289321881345
+891 98.93933982822018 78.6 139.64644660940672
+892 98.93933982822018 78.1 139.64644660940672
+893 98.93933982822018 77.6 139.64644660940672
+894 98.93933982822018 77.1 139.64644660940672
+895 98.93933982822018 76.6 139.64644660940672
+896 98.58578643762691 78.6 140.0
+897 98.58578643762691 78.1 140.0
+898 98.58578643762691 77.6 140.0
+899 98.58578643762691 77.1 140.0
+900 98.58578643762691 76.6 140.0
+901 100.35355339059328 78.6 138.93933982822017
+902 100.35355339059328 78.1 138.93933982822017
+903 100.35355339059328 77.6 138.93933982822017
+904 100.35355339059328 77.1 138.93933982822017
+905 100.35355339059328 76.6 138.93933982822017
+906 100.0 78.6 139.29289321881345
+907 100.0 78.1 139.29289321881345
+908 100.0 77.6 139.29289321881345
+909 100.0 77.1 139.29289321881345
+910 100.0 76.6 139.29289321881345
+911 99.64644660940672 78.6 139.64644660940672
+912 99.64644660940672 78.1 139.64644660940672
+913 99.64644660940672 77.6 139.64644660940672
+914 99.64644660940672 77.1 139.64644660940672
+915 99.64644660940672 76.6 139.64644660940672
+916 99.29289321881345 78.6 140.0
+917 99.29289321881345 78.1 140.0
+918 99.29289321881345 77.6 140.0
+919 99.29289321881345 77.1 140.0
+920 99.29289321881345 76.6 140.0
+921 98.93933982822018 78.6 140.35355339059328
+922 98.93933982822018 78.1 140.35355339059328
+923 98.93933982822018 77.6 140.35355339059328
+924 98.93933982822018 77.1 140.35355339059328
+925 98.93933982822018 76.6 140.35355339059328
+926 100.70710678118655 78.6 139.29289321881345
+927 100.70710678118655 78.1 139.29289321881345
+928 100.70710678118655 77.6 139.29289321881345
+929 100.70710678118655 77.1 139.29289321881345
+930 100.70710678118655 76.6 139.29289321881345
+931 100.35355339059328 78.6 139.64644660940672
+932 100.35355339059328 78.1 139.64644660940672
+933 100.35355339059328 77.6 139.64644660940672
+934 100.35355339059328 77.1 139.64644660940672
+935 100.35355339059328 76.6 139.64644660940672
+936 100.0 78.6 140.0
+937 100.0 78.1 140.0
+938 100.0 77.1 140.0
+939 100.0 76.6 140.0
+940 99.64644660940672 78.6 140.35355339059328
+941 99.64644660940672 78.1 140.35355339059328
+942 99.64644660940672 77.6 140.35355339059328
+943 99.64644660940672 77.1 140.35355339059328
+944 99.64644660940672 76.6 140.35355339059328
+945 99.29289321881345 78.6 140.70710678118655
+946 99.29289321881345 78.1 140.70710678118655
+947 99.29289321881345 77.6 140.70710678118655
+948 99.29289321881345 77.1 140.70710678118655
+949 99.29289321881345 76.6 140.70710678118655
+950 101.06066017177982 78.6 139.64644660940672
+951 101.06066017177982 78.1 139.64644660940672
+952 101.06066017177982 77.6 139.64644660940672
+953 101.06066017177982 77.1 139.64644660940672
+954 101.06066017177982 76.6 139.64644660940672
+955 100.70710678118655 78.6 140.0
+956 100.70710678118655 78.1 140.0
+957 100.70710678118655 77.6 140.0
+958 100.70710678118655 77.1 140.0
+959 100.70710678118655 76.6 140.0
+960 100.35355339059328 78.6 140.35355339059328
+961 100.35355339059328 78.1 140.35355339059328
+962 100.35355339059328 77.6 140.35355339059328
+963 100.35355339059328 77.1 140.35355339059328
+964 100.35355339059328 76.6 140.35355339059328
+965 100.0 78.6 140.70710678118655
+966 100.0 78.1 140.70710678118655
+967 100.0 77.6 140.70710678118655
+968 100.0 77.1 140.70710678118655
+969 100.0 76.6 140.70710678118655
+970 99.64644660940672 78.6 141.06066017177983
+971 99.64644660940672 78.1 141.06066017177983
+972 99.64644660940672 77.6 141.06066017177983
+973 99.64644660940672 77.1 141.06066017177983
+974 99.64644660940672 76.6 141.06066017177983
+975 101.41421356237309 78.6 140.0
+976 101.41421356237309 78.1 140.0
+977 101.41421356237309 77.6 140.0
+978 101.41421356237309 77.1 140.0
+979 101.41421356237309 76.6 140.0
+980 101.06066017177982 78.6 140.35355339059328
+981 101.06066017177982 78.1 140.35355339059328
+982 101.06066017177982 77.6 140.35355339059328
+983 101.06066017177982 77.1 140.35355339059328
+984 101.06066017177982 76.6 140.35355339059328
+985 100.70710678118655 78.6 140.70710678118655
+986 100.70710678118655 78.1 140.70710678118655
+987 100.70710678118655 77.6 140.70710678118655
+988 100.70710678118655 77.1 140.70710678118655
+989 100.70710678118655 76.6 140.70710678118655
+990 100.35355339059328 78.6 141.06066017177983
+991 100.35355339059328 78.1 141.06066017177983
+992 100.35355339059328 77.6 141.06066017177983
+993 100.35355339059328 77.1 141.06066017177983
+994 100.35355339059328 76.6 141.06066017177983
+995 100.0 78.6 141.4142135623731
+996 100.0 78.1 141.4142135623731
+997 100.0 77.6 141.4142135623731
+998 100.0 77.1 141.4142135623731
+999 100.0 76.6 141.4142135623731
+1000 100.0 74.4 140.0
+1001 100.0 75.4 138.5857864376269
+1002 100.0 74.9 138.5857864376269
+1003 100.0 74.4 138.5857864376269
+1004 100.0 73.9 138.5857864376269
+1005 100.0 73.4 138.5857864376269
+1006 99.64644660940672 75.4 138.93933982822017
+1007 99.64644660940672 74.9 138.93933982822017
+1008 99.64644660940672 74.4 138.93933982822017
+1009 99.64644660940672 73.9 138.93933982822017
+1010 99.64644660940672 73.4 138.93933982822017
+1011 99.29289321881345 75.4 139.29289321881345
+1012 99.29289321881345 74.9 139.29289321881345
+1013 99.29289321881345 74.4 139.29289321881345
+1014 99.29289321881345 73.9 139.29289321881345
+1015 99.29289321881345 73.4 139.29289321881345
+1016 98.93933982822018 75.4 139.64644660940672
+1017 98.93933982822018 74.9 139.64644660940672
+1018 98.93933982822018 74.4 139.64644660940672
+1019 98.93933982822018 73.9 139.64644660940672
+1020 98.93933982822018 73.4 139.64644660940672
+1021 98.58578643762691 75.4 140.0
+1022 98.58578643762691 74.9 140.0
+1023 98.58578643762691 74.4 140.0
+1024 98.58578643762691 73.9 140.0
+1025 98.58578643762691 73.4 140.0
+1026 100.35355339059328 75.4 138.93933982822017
+1027 100.35355339059328 74.9 138.93933982822017
+1028 100.35355339059328 74.4 138.93933982822017
+1029 100.35355339059328 73.9 138.93933982822017
+1030 100.35355339059328 73.4 138.93933982822017
+1031 100.0 75.4 139.29289321881345
+1032 100.0 74.9 139.29289321881345
+1033 100.0 74.4 139.29289321881345
+1034 100.0 73.9 139.29289321881345
+1035 100.0 73.4 139.29289321881345
+1036 99.64644660940672 75.4 139.64644660940672
+1037 99.64644660940672 74.9 139.64644660940672
+1038 99.64644660940672 74.4 139.64644660940672
+1039 99.64644660940672 73.9 139.64644660940672
+1040 99.64644660940672 73.4 139.64644660940672
+1041 99.29289321881345 75.4 140.0
+1042 99.29289321881345 74.9 140.0
+1043 99.29289321881345 74.4 140.0
+1044 99.29289321881345 73.9 140.0
+1045 99.29289321881345 73.4 140.0
+1046 98.93933982822018 75.4 140.35355339059328
+1047 98.93933982822018 74.9 140.35355339059328
+1048 98.93933982822018 74.4 140.35355339059328
+1049 98.93933982822018 73.9 140.35355339059328
+1050 98.93933982822018 73.4 140.35355339059328
+1051 100.70710678118655 75.4 139.29289321881345
+1052 100.70710678118655 74.9 139.29289321881345
+1053 100.70710678118655 74.4 139.29289321881345
+1054 100.70710678118655 73.9 139.29289321881345
+1055 100.70710678118655 73.4 139.29289321881345
+1056 100.35355339059328 75.4 139.64644660940672
+1057 100.35355339059328 74.9 139.64644660940672
+1058 100.35355339059328 74.4 139.64644660940672
+1059 100.35355339059328 73.9 139.64644660940672
+1060 100.35355339059328 73.4 139.64644660940672
+1061 100.0 75.4 140.0
+1062 100.0 74.9 140.0
+1063 100.0 73.9 140.0
+1064 100.0 73.4 140.0
+1065 99.64644660940672 75.4 140.35355339059328
+1066 99.64644660940672 74.9 140.35355339059328
+1067 99.64644660940672 74.4 140.35355339059328
+1068 99.64644660940672 73.9 140.35355339059328
+1069 99.64644660940672 73.4 140.35355339059328
+1070 99.29289321881345 75.4 140.70710678118655
+1071 99.29289321881345 74.9 140.70710678118655
+1072 99.29289321881345 74.4 140.70710678118655
+1073 99.29289321881345 73.9 140.70710678118655
+1074 99.29289321881345 73.4 140.70710678118655
+1075 101.06066017177982 75.4 139.64644660940672
+1076 101.06066017177982 74.9 139.64644660940672
+1077 101.06066017177982 74.4 139.64644660940672
+1078 101.06066017177982 73.9 139.64644660940672
+1079 101.06066017177982 73.4 139.64644660940672
+1080 100.70710678118655 75.4 140.0
+1081 100.70710678118655 74.9 140.0
+1082 100.70710678118655 74.4 140.0
+1083 100.70710678118655 73.9 140.0
+1084 100.70710678118655 73.4 140.0
+1085 100.35355339059328 75.4 140.35355339059328
+1086 100.35355339059328 74.9 140.35355339059328
+1087 100.35355339059328 74.4 140.35355339059328
+1088 100.35355339059328 73.9 140.35355339059328
+1089 100.35355339059328 73.4 140.35355339059328
+1090 100.0 75.4 140.70710678118655
+1091 100.0 74.9 140.70710678118655
+1092 100.0 74.4 140.70710678118655
+1093 100.0 73.9 140.70710678118655
+1094 100.0 73.4 140.70710678118655
+1095 99.64644660940672 75.4 141.06066017177983
+1096 99.64644660940672 74.9 141.06066017177983
+1097 99.64644660940672 74.4 141.06066017177983
+1098 99.64644660940672 73.9 141.06066017177983
+1099 99.64644660940672 73.4 141.06066017177983
+1100 101.41421356237309 75.4 140.0
+1101 101.41421356237309 74.9 140.0
+1102 101.41421356237309 74.4 140.0
+1103 101.41421356237309 73.9 140.0
+1104 101.41421356237309 73.4 140.0
+1105 101.06066017177982 75.4 140.35355339059328
+1106 101.06066017177982 74.9 140.35355339059328
+1107 101.06066017177982 74.4 140.35355339059328
+1108 101.06066017177982 73.9 140.35355339059328
+1109 101.06066017177982 73.4 140.35355339059328
+1110 100.70710678118655 75.4 140.70710678118655
+1111 100.70710678118655 74.9 140.70710678118655
+1112 100.70710678118655 74.4 140.70710678118655
+1113 100.70710678118655 73.9 140.70710678118655
+1114 100.70710678118655 73.4 140.70710678118655
+1115 100.35355339059328 75.4 141.06066017177983
+1116 100.35355339059328 74.9 141.06066017177983
+1117 100.35355339059328 74.4 141.06066017177983
+1118 100.35355339059328 73.9 141.06066017177983
+1119 100.35355339059328 73.4 141.06066017177983
+1120 100.0 75.4 141.4142135623731
+1121 100.0 74.9 141.4142135623731
+1122 100.0 74.4 141.4142135623731
+1123 100.0 73.9 141.4142135623731
+1124 100.0 73.4 141.4142135623731
+1125 100.0 71.2 140.0
+1126 100.0 72.2 138.5857864376269
+1127 100.0 71.7 138.5857864376269
+1128 100.0 71.2 138.5857864376269
+1129 100.0 70.7 138.5857864376269
+1130 100.0 70.2 138.5857864376269
+1131 99.64644660940672 72.2 138.93933982822017
+1132 99.64644660940672 71.7 138.93933982822017
+1133 99.64644660940672 71.2 138.93933982822017
+1134 99.64644660940672 70.7 138.93933982822017
+1135 99.64644660940672 70.2 138.93933982822017
+1136 99.29289321881345 72.2 139.29289321881345
+1137 99.29289321881345 71.7 139.29289321881345
+1138 99.29289321881345 71.2 139.29289321881345
+1139 99.29289321881345 70.7 139.29289321881345
+1140 99.29289321881345 70.2 139.29289321881345
+1141 98.93933982822018 72.2 139.64644660940672
+1142 98.93933982822018 71.7 139.64644660940672
+1143 98.93933982822018 71.2 139.64644660940672
+1144 98.93933982822018 70.7 139.64644660940672
+1145 98.93933982822018 70.2 139.64644660940672
