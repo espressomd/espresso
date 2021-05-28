@@ -150,7 +150,7 @@ void lb_GPU_sanity_checks();
 void lb_get_device_values_pointer(LB_rho_v_gpu **pointer_address);
 void lb_get_boundary_force_pointer(float **pointer_address);
 void lb_get_para_pointer(LB_parameters_gpu **pointer_address);
-void lattice_boltzmann_update_gpu(double time_step);
+void lattice_boltzmann_update_gpu(int lb_steps_per_md_step);
 
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.

@@ -37,7 +37,7 @@ extern ActiveLB lattice_switch;
 /**
  * @brief Propagate the LB fluid.
  */
-void lb_lbfluid_propagate(double time_step);
+void lb_lbfluid_propagate(int lb_steps_per_md_step);
 
 /**
  * @brief Event handler for integration start.
@@ -133,7 +133,7 @@ void lb_lbfluid_set_kT(double kT);
 /**
  * @brief Perform LB parameter and boundary velocity checks.
  */
-void lb_lbfluid_sanity_checks();
+void lb_lbfluid_sanity_checks(double time_step);
 
 /**
  * @brief Set the LB density for a single node.

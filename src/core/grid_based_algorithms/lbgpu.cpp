@@ -100,14 +100,9 @@ bool ek_initialized = false;
 /*-----------------------------------------------------------*/
 
 /** %Lattice Boltzmann update gpu called from integrate.cpp */
-void lattice_boltzmann_update_gpu(double time_step) {
-
-  auto factor = static_cast<int>(round(lbpar_gpu.tau / time_step));
-
+void lattice_boltzmann_update_gpu(int lb_steps_per_md_step) {
   fluidstep += 1;
-
-  if (fluidstep >= factor) {
-
+  if (fluidstep >= lb_steps_per_md_step) {
     fluidstep = 0;
     lb_integrate_GPU();
   }

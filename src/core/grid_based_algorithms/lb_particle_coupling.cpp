@@ -122,6 +122,7 @@ namespace {
  * @brief Add a force to the lattice force density.
  * @param pos Position of the force
  * @param force Force in MD units.
+ * @param time_step MD time step.
  */
 void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
                   double time_step) {
@@ -137,9 +138,10 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
  *  Section II.C. @cite ahlrichs99a
  *
  *  @param[in] p             The coupled particle.
- *  @param[in]     f_random  Additional force to be included.
+ *  @param[in] f_random      Additional force to be included.
+ *  @param[in] time_step     MD time step.
  *
- *  @return The viscous coupling force plus f_random.
+ *  @return The viscous coupling force plus @p f_random.
  */
 Utils::Vector3d lb_viscous_coupling(Particle const &p,
                                     Utils::Vector3d const &f_random,

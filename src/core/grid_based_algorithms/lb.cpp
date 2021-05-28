@@ -35,7 +35,6 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "halo.hpp"
-#include "integrate.hpp"
 #include "lb-d3q19.hpp"
 #include "random.hpp"
 
@@ -983,13 +982,10 @@ void lb_collide_stream() {
  *  for the lattice dynamics can be coarser than the MD time step, we
  *  monitor the time since the last lattice update.
  */
-void lattice_boltzmann_update(double time_step) {
-  auto const factor = static_cast<int>(round(lbpar.tau / time_step));
-
+void lattice_boltzmann_update(int lb_steps_per_md_step) {
   fluidstep += 1;
-  if (fluidstep >= factor) {
+  if (fluidstep >= lb_steps_per_md_step) {
     fluidstep = 0;
-
     lb_collide_stream();
   }
 }

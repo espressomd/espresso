@@ -183,7 +183,7 @@ extern std::vector<LB_FluidNode> lbfields;
  *  collisions. If boundaries are present, it also applies the boundary
  *  conditions.
  */
-void lattice_boltzmann_update(double time_step);
+void lattice_boltzmann_update(int lb_steps_per_md_step);
 
 void lb_sanity_checks(const LB_Parameters &lb_parameters);
 

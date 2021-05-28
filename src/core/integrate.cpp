@@ -57,6 +57,10 @@
 
 #include <boost/range/algorithm/min_element.hpp>
 
+#include <algorithm>
+#include <cmath>
+#include <csignal>
+#include <functional>
 #include <stdexcept>
 
 #ifdef VALGRIND_INSTRUMENTATION
@@ -284,8 +288,12 @@ int integrate(int n_steps, int reuse_forces) {
 
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      lb_lbfluid_propagate(time_step);
-      lb_lbcoupling_propagate();
+      if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
+        auto const lb_steps_per_md_step =
+            static_cast<int>(std::round(lb_lbfluid_get_tau() / time_step));
+        lb_lbfluid_propagate(lb_steps_per_md_step);
+        lb_lbcoupling_propagate();
+      }
 
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation(time_step);
