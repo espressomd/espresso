@@ -97,11 +97,11 @@ cdef extern from "thermostat.hpp":
         void mpi_set_langevin_gamma(const Vector3d & gamma)
         void mpi_set_langevin_gamma_rot(const Vector3d & gamma)
     ELSE:
-        void mpi_set_brownian_gamma(double gamma)
-        void mpi_set_brownian_gamma_rot(double gamma)
+        void mpi_set_brownian_gamma(const double & gamma)
+        void mpi_set_brownian_gamma_rot(const double & gamma)
 
-        void mpi_set_langevin_gamma(double gamma)
-        void mpi_set_langevin_gamma_rot(double gamma)
+        void mpi_set_langevin_gamma(const double & gamma)
+        void mpi_set_langevin_gamma_rot(const double & gamma)
 
     void mpi_set_thermo_virtual(cbool thermo_virtual)
     void mpi_set_temperature(double temperature)
