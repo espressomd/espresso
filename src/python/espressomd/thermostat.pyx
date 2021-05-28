@@ -260,7 +260,7 @@ cdef class Thermostat:
         lb_lbcoupling_set_gamma(0.0)
 
     @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
-    def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
+    def set_langevin(self, kT, gamma, gamma_rotation=None,
                      act_on_virtual=False, seed=None):
         """
         Sets the Langevin thermostat.
@@ -302,9 +302,6 @@ cdef class Thermostat:
             else:
                 scalar_gamma_rot_def = True
 
-        if kT is None or gamma is None:
-            raise ValueError(
-                "Both, kT and gamma have to be given as keyword args")
         utils.check_type_or_throw_except(kT, 1, float, "kT must be a number")
         if scalar_gamma_def:
             utils.check_type_or_throw_except(
@@ -391,7 +388,7 @@ cdef class Thermostat:
         mpi_set_thermo_virtual(act_on_virtual)
 
     @AssertThermostatType(THERMO_BROWNIAN)
-    def set_brownian(self, kT=None, gamma=None, gamma_rotation=None,
+    def set_brownian(self, kT, gamma, gamma_rotation=None,
                      act_on_virtual=False, seed=None):
         """Sets the Brownian thermostat.
 
@@ -432,9 +429,6 @@ cdef class Thermostat:
             else:
                 scalar_gamma_rot_def = True
 
-        if kT is None or gamma is None:
-            raise ValueError(
-                "Both, kT and gamma have to be given as keyword args")
         utils.check_type_or_throw_except(kT, 1, float, "kT must be a number")
         if scalar_gamma_def:
             utils.check_type_or_throw_except(
@@ -571,7 +565,7 @@ cdef class Thermostat:
 
     IF NPT:
         @AssertThermostatType(THERMO_NPT_ISO)
-        def set_npt(self, kT=None, gamma0=None, gammav=None, seed=None):
+        def set_npt(self, kT, gamma0, gammav, seed=None):
             """
             Sets the NPT thermostat.
 
@@ -590,11 +584,8 @@ cdef class Thermostat:
 
             """
 
-            if kT is None or gamma0 is None or gammav is None:
-                raise ValueError(
-                    "kT, gamma0 and gammav have to be given as keyword args")
-            if not isinstance(kT, float):
-                raise ValueError("temperature must be a positive number")
+            utils.check_type_or_throw_except(
+                kT, 1, float, "kT must be a number")
 
             # Seed is required if the RNG is not initialized
             if seed is None and npt_iso.is_seed_required():
@@ -615,7 +606,7 @@ cdef class Thermostat:
 
     IF DPD:
         @AssertThermostatType(THERMO_DPD, THERMO_LANGEVIN, THERMO_LB)
-        def set_dpd(self, kT=None, seed=None):
+        def set_dpd(self, kT, seed=None):
             """
             Sets the DPD thermostat with required parameters 'kT'.
             This also activates the DPD interactions.
@@ -630,10 +621,8 @@ cdef class Thermostat:
                 Must be positive.
 
             """
-            if kT is None:
-                raise ValueError("kT has to be given as keyword args")
-            if not isinstance(kT, float) or kT is None:
-                raise ValueError("temperature must be a positive number")
+            utils.check_type_or_throw_except(
+                kT, 1, float, "kT must be a number")
 
             # Seed is required if the RNG is not initialized
             if seed is None and dpd.is_seed_required():
