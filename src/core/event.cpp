@@ -100,7 +100,7 @@ void on_program_start() {
   }
 }
 
-void on_integration_start() {
+void on_integration_start(double time_step) {
   /********************************************/
   /* sanity checks                            */
   /********************************************/
@@ -110,11 +110,13 @@ void on_integration_start() {
   integrator_npt_sanity_checks();
 #endif
   interactions_sanity_checks();
-  lb_lbfluid_on_integration_start();
+  lb_lbfluid_sanity_checks(time_step);
 
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
+
+  lb_lbfluid_on_integration_start();
 
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
@@ -123,7 +125,7 @@ void on_integration_start() {
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
-    thermo_init();
+    thermo_init(time_step);
     reinit_thermo = false;
     recalc_forces = true;
   }
@@ -328,6 +330,7 @@ void on_parameter_change(int field) {
   case FIELD_NPTISO_G0:
   case FIELD_NPTISO_GV:
   case FIELD_NPTISO_PISTON:
+  case FIELD_THERMALIZEDBONDS:
     reinit_thermo = true;
     break;
   case FIELD_FORCE_CAP:
@@ -337,7 +340,6 @@ void on_parameter_change(int field) {
   case FIELD_THERMO_SWITCH:
   case FIELD_LATTICE_SWITCH:
   case FIELD_RIGIDBONDS:
-  case FIELD_THERMALIZEDBONDS:
     break;
   case FIELD_SIMTIME:
     recalc_forces = true;
