@@ -294,13 +294,11 @@ int integrate(int n_steps, int reuse_forces) {
         auto const tau = lb_lbfluid_get_tau();
         auto const lb_steps_per_md_step =
             static_cast<int>(std::round(tau / time_step));
-        bool integrate_lb = false;
         fluid_step += 1;
         if (fluid_step >= lb_steps_per_md_step) {
           fluid_step = 0;
-          integrate_lb = true;
+          lb_lbfluid_propagate();
         }
-        lb_lbfluid_propagate(integrate_lb);
         lb_lbcoupling_propagate();
       }
 

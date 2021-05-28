@@ -70,11 +70,9 @@ void lb_lbfluid_integrate() {
   }
 }
 
-void lb_lbfluid_propagate(bool integrate_lb) {
+void lb_lbfluid_propagate() {
   if (lattice_switch != ActiveLB::NONE) {
-    if (integrate_lb) {
-      lb_lbfluid_integrate();
-    }
+    lb_lbfluid_integrate();
     if (lb_lbfluid_get_kT() > 0.0) {
       if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
