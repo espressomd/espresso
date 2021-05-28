@@ -245,26 +245,19 @@ cdef class Thermostat:
         mpi_set_thermo_virtual(True)
         IF PARTICLE_ANISOTROPY:
             mpi_set_langevin_gamma(utils.make_Vector3d((0., 0., 0.)))
+            mpi_set_brownian_gamma(utils.make_Vector3d((0., 0., 0.)))
+            IF ROTATION:
+                mpi_set_langevin_gamma_rot(utils.make_Vector3d((0., 0., 0.)))
+                mpi_set_brownian_gamma_rot(utils.make_Vector3d((0., 0., 0.)))
         ELSE:
             mpi_set_langevin_gamma(0.)
-        IF PARTICLE_ANISOTROPY:
-            mpi_set_brownian_gamma(utils.make_Vector3d((0., 0., 0.)))
-        ELSE:
             mpi_set_brownian_gamma(0.)
-        IF ROTATION:
-            IF PARTICLE_ANISOTROPY:
-                mpi_set_langevin_gamma_rot(utils.make_Vector3d((0., 0., 0.)))
-            ELSE:
+            IF ROTATION:
                 mpi_set_langevin_gamma_rot(0.)
-        IF ROTATION:
-            IF PARTICLE_ANISOTROPY:
-                mpi_set_brownian_gamma_rot(utils.make_Vector3d((0., 0., 0.)))
-            ELSE:
                 mpi_set_brownian_gamma_rot(0.)
 
         mpi_set_thermo_switch(THERMO_OFF)
         lb_lbcoupling_set_gamma(0.0)
-        return True
 
     @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
     def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
@@ -388,17 +381,14 @@ cdef class Thermostat:
         mpi_set_thermo_switch(thermo_switch | THERMO_LANGEVIN)
         IF PARTICLE_ANISOTROPY:
             mpi_set_langevin_gamma(gamma_vec)
+            IF ROTATION:
+                mpi_set_langevin_gamma_rot(gamma_rot_vec)
         ELSE:
             mpi_set_langevin_gamma(gamma)
+            IF ROTATION:
+                mpi_set_langevin_gamma_rot(gamma_rotation)
 
         mpi_set_thermo_virtual(act_on_virtual)
-
-        IF ROTATION:
-            IF PARTICLE_ANISOTROPY:
-                mpi_set_langevin_gamma_rot(gamma_rot_vec)
-            ELSE:
-                mpi_set_langevin_gamma_rot(gamma_rotation)
-        return True
 
     @AssertThermostatType(THERMO_BROWNIAN)
     def set_brownian(self, kT=None, gamma=None, gamma_rotation=None,
@@ -522,18 +512,14 @@ cdef class Thermostat:
 
         IF PARTICLE_ANISOTROPY:
             mpi_set_brownian_gamma(gamma_vec)
+            IF ROTATION:
+                mpi_set_brownian_gamma_rot(gamma_rot_vec)
         ELSE:
             mpi_set_brownian_gamma(gamma)
-
-        mpi_set_thermo_virtual(act_on_virtual)
-
-        IF ROTATION:
-            IF PARTICLE_ANISOTROPY:
-                mpi_set_brownian_gamma_rot(gamma_rot_vec)
-            ELSE:
+            IF ROTATION:
                 mpi_set_brownian_gamma_rot(gamma_rotation)
 
-        return True
+        mpi_set_thermo_virtual(act_on_virtual)
 
     @AssertThermostatType(THERMO_LB, THERMO_DPD)
     def set_lb(
@@ -582,7 +568,6 @@ cdef class Thermostat:
 
         mpi_set_thermo_virtual(act_on_virtual)
         lb_lbcoupling_set_gamma(gamma)
-        return True
 
     IF NPT:
         @AssertThermostatType(THERMO_NPT_ISO)
