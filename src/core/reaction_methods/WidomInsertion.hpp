@@ -19,7 +19,7 @@
 #ifndef REACTION_METHODS_WIDOM_INSERTION_HPP
 #define REACTION_METHODS_WIDOM_INSERTION_HPP
 
-#include "reaction_methods/ReactionAlgorithm.hpp"
+#include "ReactionAlgorithm.hpp"
 
 #include <utility>
 
@@ -29,7 +29,7 @@ namespace ReactionMethods {
 class WidomInsertion : public ReactionAlgorithm {
 public:
   WidomInsertion(int seed) : ReactionAlgorithm(seed) {}
-  std::pair<double, double> measure_excess_chemical_potential(int reaction_id);
+  std::pair<double, double> measure_excess_chemical_potential(SingleReaction &current_reaction);
 };
 
 } // namespace ReactionMethods

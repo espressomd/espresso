@@ -93,4 +93,4 @@ cdef extern from "reaction_methods/WidomInsertion.hpp" namespace "ReactionMethod
 
     cdef cppclass CWidomInsertion "ReactionMethods::WidomInsertion"(CReactionAlgorithm):
         CWidomInsertion(int seed)
-        pair[double, double] measure_excess_chemical_potential(int reaction_id) except +
+        pair[double, double] measure_excess_chemical_potential(SingleReaction & current_reaction) except +

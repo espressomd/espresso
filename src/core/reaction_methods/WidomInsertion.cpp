@@ -29,9 +29,8 @@
 namespace ReactionMethods {
 
 std::pair<double, double>
-WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
+WidomInsertion::measure_excess_chemical_potential(SingleReaction &current_reaction) {
   
-  SingleReaction &current_reaction = reactions[reaction_id];
   if (!all_reactant_particles_exist(current_reaction))
     throw std::runtime_error("Trying to remove some non-existing particles "
                              "from the system via the inverse Widom scheme.");

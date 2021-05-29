@@ -21,7 +21,7 @@
 
 #include "config.hpp"
 
-#include "reaction_methods/SingleReaction.hpp"
+#include "SingleReaction.hpp"
 
 #include "random.hpp"
 
