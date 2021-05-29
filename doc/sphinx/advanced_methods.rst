@@ -1283,7 +1283,7 @@ Initialization
     system.time_step = 0.0
     system.cell_system.skin = 0.4
     ek = espressomd.electrokinetics.Electrokinetics(agrid=1.0, lb_density=1.0,
-        viscosity=1.0, friction=1.0, T=1.0, prefactor=1.0,
+        viscosity=1.0, ext_force_density = [1,0,0], friction=1.0, T=1.0, prefactor=1.0,
         stencil='linkcentered', advection=True, fluid_coupling='friction')
     system.actors.add(ek)
 
@@ -1303,7 +1303,8 @@ that your computer contains a CUDA capable GPU which is sufficiently
 modern.
 
 To set up a proper LB fluid using this command one has to specify at
-least the following options: ``agrid``, ``lb_density``, ``viscosity``, ``friction``, ``T``, and ``prefactor``. The other options can be
+least the following options: ``agrid``, ``lb_density``, ``viscosity``, 
+``friction``, ``T``, and ``prefactor``. The other options can be
 used to modify the behavior of the LB fluid. Note that the command does
 not allow the user to set the time step parameter as is the case for the
 lattice-Boltzmann command, this parameter is instead taken directly from the value set for
@@ -1382,7 +1383,7 @@ Boundaries
 ^^^^^^^^^^
 ::
 
-    ek_boundary = espressomd.electrokinetics.EKBoundary(charge_density=1.0, shape=my_shape)
+    ek_boundary = espressomd.ekboundaries.EKBoundary(charge_density=1.0, shape=my_shape)
     system.ekboundaries.add(ek_boundary)
 
 .. note:: Feature ``EK_BOUNDARIES`` required
@@ -1456,15 +1457,14 @@ number density and flux of species ``species``, respectively.
 Local Quantities
 ^^^^^^^^^^^^^^^^
 
+Local quantities like velocity or fluid density for single nodes can be accessed in the same way 
+as for an LB fluid, see :ref:`Lattice-Boltzmann`. The only EK-specific quantity is the potential.
+
 ::
 
-    ek[0, 0, 0].velocity
     ek[0, 0, 0].potential
-    ek[0, 0, 0].pressure
-
-A single node can be addressed using three integer values
-which run from 0 to ``dim_x/agrid``, ``dim_y/agrid``, and ``dim_z/agrid``, respectively. The
-velocity, electrostatic potential and the pressure of a LB fluid node can be obtained this way.
+    ek[0, 0, 0].velocity
+    ek[0, 0, 0].boundary
 
 The local ``density`` and ``flux`` of a species can be obtained in the same fashion:
 

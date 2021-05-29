@@ -244,7 +244,7 @@ cdef class ReactionAlgorithm:
 
         for key, value in self._params["default_charges"].items():
             deref(self.RE).charges_of_types[int(key)] = value
-        deref(self.RE).check_reaction_ensemble()
+        deref(self.RE).check_reaction_method()
 
     def _validate_params_default_charge(self):
         if not isinstance(self._params["default_charges"], dict):
@@ -309,7 +309,7 @@ cdef class ReactionAlgorithm:
         the used reactions, the used temperature and the used exclusion radius.
 
         """
-        deref(self.RE).check_reaction_ensemble()
+        deref(self.RE).check_reaction_method()
         reactions = []
         for single_reaction_i in range(deref(self.RE).reactions.size()):
             reactant_types = []
@@ -431,6 +431,14 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
         self._set_params_in_es_core()
 
 cdef class ConstantpHEnsemble(ReactionAlgorithm):
+    """
+    This class implements the constant pH Ensemble.
+
+    When adding an acid-base reaction, the acid and base particle types
+    are always assumed to be at index 0 of the lists passed to arguments
+    ``reactant_types`` and ``product_types``.
+
+    """
     cdef unique_ptr[CConstantpHEnsemble] constpHptr
 
     def __init__(self, *args, **kwargs):

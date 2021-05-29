@@ -3301,7 +3301,6 @@ class BondedInteractions:
         value._bond_id = key
 
         # Set the parameters of the BondedInteraction instance in the Es core
-        make_bond_type_exist(key)
         value._set_params_in_es_core()
 
     def __len__(self):

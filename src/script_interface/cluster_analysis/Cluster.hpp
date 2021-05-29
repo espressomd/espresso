@@ -61,7 +61,7 @@ public:
     if (method == "center_of_mass") {
       return m_cluster->center_of_mass();
     }
-    return false;
+    return {};
   }
   void set_cluster(std::shared_ptr<::ClusterAnalysis::Cluster> &c) {
     m_cluster = c;

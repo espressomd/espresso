@@ -25,21 +25,14 @@ from .globals cimport timing_samples
 from .globals cimport forcecap_set
 from .globals cimport forcecap_get
 from .utils import array_locked, handle_errors
-from .utils cimport Vector3d, make_array_locked
+from .utils cimport Vector3d, make_array_locked, make_Vector3d
 
 cdef class Globals:
     property box_l:
         def __set__(self, _box_l):
-            cdef Vector3d temp_box_l
             if len(_box_l) != 3:
                 raise ValueError("Box length must be of length 3")
-            for i in range(3):
-                if _box_l[i] <= 0:
-                    raise ValueError(
-                        "Box length must be > 0  in all directions")
-                temp_box_l[i] = _box_l[i]
-            box_geo.set_length(temp_box_l)
-            mpi_bcast_parameter(FIELD_BOXL)
+            mpi_set_box_length(make_Vector3d(_box_l))
 
         def __get__(self):
             return make_array_locked(< Vector3d > box_geo.length())
@@ -64,14 +57,11 @@ cdef class Globals:
 
     property periodicity:
         def __set__(self, _periodic):
-            for i in range(3):
-                box_geo.set_periodic(i, _periodic[i])
-
-            mpi_bcast_parameter(FIELD_PERIODIC)
+            mpi_set_periodicity(_periodic[0], _periodic[1], _periodic[2])
             handle_errors("Error while assigning system periodicity")
 
         def __get__(self):
-            periodicity = np.zeros(3)
+            periodicity = np.empty(3, dtype=np.bool)
 
             for i in range(3):
                 periodicity[i] = box_geo.periodic(i)

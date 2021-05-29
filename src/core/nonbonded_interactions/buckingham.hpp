@@ -45,6 +45,7 @@ int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
 inline double buck_force_r(double A, double B, double C, double D, double r) {
   return (A * B * exp(-B * r) - 6.0 * C / pow(r, 7) - 4.0 * D / pow(r, 5));
 }
+
 /**Potential Energy due to a Buckingham potential between two particles at
  * interatomic separation r greater than or equal to discont*/
 inline double buck_energy_r(double A, double B, double C, double D,
@@ -70,12 +71,6 @@ inline double buck_pair_force_factor(IA_parameters const &ia_params,
     return fac;
   }
   return 0.0;
-}
-
-/** Calculate Buckingham force */
-inline Utils::Vector3d buck_pair_force(IA_parameters const &ia_params,
-                                       Utils::Vector3d const &d, double dist) {
-  return d * buck_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate Buckingham energy */

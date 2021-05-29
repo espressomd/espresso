@@ -30,7 +30,8 @@ public:
   using CylindricalLBProfileObservable::CylindricalLBProfileObservable;
   std::vector<double> operator()() const override;
   std::vector<size_t> shape() const override {
-    return {n_bins[0], n_bins[1], n_bins[2], 3};
+    auto const b = n_bins();
+    return {b[0], b[1], b[2], 3};
   }
 };
 

@@ -26,8 +26,11 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -39,6 +42,12 @@ namespace Observables {
 class CosPersistenceAngles : public PidObservable {
 public:
   using PidObservable::PidObservable;
+  explicit CosPersistenceAngles(std::vector<int> ids)
+      : PidObservable(std::move(ids)) {
+    if (this->ids().size() < 3)
+      throw std::runtime_error("At least 3 particles are required");
+  }
+
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
            const ParticleObservables::traits<Particle> &traits) const override {
@@ -47,8 +56,8 @@ public:
     auto const no_of_bonds = n_values() + 1;
     std::vector<Utils::Vector3d> bond_vectors(no_of_bonds);
     auto get_bond_vector = [&](auto index) {
-      return get_mi_vector(traits.position(particles[index + 1]),
-                           traits.position(particles[index]), box_geo);
+      return box_geo.get_mi_vector(traits.position(particles[index + 1]),
+                                   traits.position(particles[index]));
     };
     for (size_t i = 0; i < no_of_bonds; ++i) {
       auto const tmp = get_bond_vector(i);
@@ -65,7 +74,10 @@ public:
 
     return angles;
   }
-  std::vector<size_t> shape() const override { return {ids().size() - 2}; }
+  std::vector<size_t> shape() const override {
+    assert(ids().size() >= 2);
+    return {ids().size() - 2};
+  }
 };
 
 } // Namespace Observables

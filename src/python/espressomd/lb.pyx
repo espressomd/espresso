@@ -54,7 +54,7 @@ cdef class HydrodynamicInteraction(Actor):
         Lattice constant. The box size in every direction must be an integer
         multiple of ``agrid``.
     tau : :obj:`float`
-        LB time step. The MD time step must be an integer multiple of ``tau``.
+        LB time step, must be an integer multiple of the MD time step.
     dens : :obj:`float`
         Fluid density.
     visc : :obj:`float`
@@ -157,7 +157,6 @@ cdef class HydrodynamicInteraction(Actor):
         if "gamma_even" in self._params:
             python_lbfluid_set_gamma_even(self._params["gamma_even"])
 
-        lb_lbfluid_sanity_checks()
         utils.handle_errors("LB fluid activation")
 
     def _get_params_from_es_core(self):
@@ -459,7 +458,6 @@ IF CUDA:
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines:
-    cdef Vector3i node
 
     def __init__(self, key):
         utils.check_type_or_throw_except(

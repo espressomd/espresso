@@ -24,12 +24,13 @@ which would be out of reach of the commonly used atom-based
 simulations, due to the large time- and length scales of the studied
 processes.
 
-ESPResSo is capable of doing classical Molecular dynamics simulations
-of many types of systems in different statistical ensembles (microcanonical, canonical,
-isobaric-isothermal, (semi-)grand canonical, reaction, constant pH, Gibbs ensemble) and non-equilibrium situations, using standard potentials such as
-the Lennard-Jones or Morse potential. It contains many advanced
+ESPResSo is capable of doing classical Molecular Dynamics simulations
+of many types of systems in different statistical ensembles (microcanonical,
+canonical, isobaric-isothermal, (semi-)grand canonical, reaction, constant pH,
+Gibbs ensemble) and non-equilibrium situations, using standard potentials
+such as the Lennard-Jones or Morse potential. It contains many advanced
 simulation algorithms, which take into account hydrodynamic
-(lattice-Boltzmann) and electrostatic interactions (P3M, ELC, MMMxD).
+(lattice-Boltzmann) and electrostatic interactions (P3M, ELC, MMM1D).
 Rigid bodies can be modelled by virtual site interactions, and it can
 integrate rotationally non-invariant particles.
 
@@ -49,17 +50,19 @@ contributors from all over the world.
 
 ## Documentation
 
-The [user guide](http://espressomd.org/html/doc/index.html) will
+The [user guide](https://espressomd.github.io/doc/index.html) will
 walk you through the basic usage of ESPResSo. Advanced simulation
 methods are extensively documented, with examples and links to the
-relevant literature. Additional resources can be found on the
-homepage at http://espressomd.org/wordpress/documentation/, such
-as tutorials and doxygen documentation.
+relevant literature. Additional resources such as tutorials and
+doxygen documentation can be found on https://espressomd.github.io.
+The official website is http://espressomd.org/wordpress/.
 
 ## Installation
 
 Detailed installation instructions for Ubuntu and macOS can be found in the
-documentation, section [Installation](http://espressomd.org/html/doc/installation.html).
+user guide, section [Installation](https://espressomd.github.io/doc/installation.html).
+Common installation issues are addressed in the
+[FAQ](https://github.com/espressomd/espresso/wiki/Installation-FAQ).
 
 For most users, we recommend downloading the latest release version of ESPResSo. You
 can find it in the [release page](https://github.com/espressomd/espresso/releases),
@@ -83,11 +86,11 @@ acknowledge this usage by mentioning the software with its version number and
 A number of algorithms in ESPResSo are fairly advanced and unique to ESPResSo.
 The authors of these contributions kindly ask you to cite the relevant
 publications, as indicated in the documentation. For detailed instructions, see
-[How to cite ESPResSo](http://espressomd.org/html/doc/introduction.html#how-to-cite-espresso).
+[How to cite ESPResSo](https://espressomd.github.io/doc/introduction.html#how-to-cite-espresso).
 
 ## License
 
-Copyright (C) 2010-2019 The ESPResSo project
+Copyright (C) 2010-2021 The ESPResSo project
 
 Copyright (C) 2002-2010 Max-Planck-Institute for Polymer Research, Theory Group
 

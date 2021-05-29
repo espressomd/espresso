@@ -96,7 +96,7 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 boost::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_virial_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                    Particle const &p1, Particle const &p2) {
-  auto const dx = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  auto const dx = box_geo.get_mi_vector(p1.r.p, p2.r.p);
   auto const result = calc_bond_pair_force(p1, p2, iaparams, dx);
   if (result) {
     auto const &force = result.get();
@@ -117,8 +117,8 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
       (boost::get<TabulatedAngleBond>(&iaparams) != nullptr) ||
 #endif
       (boost::get<AngleCossquareBond>(&iaparams) != nullptr)) {
-    auto const dx21 = -get_mi_vector(p1.r.p, p2.r.p, box_geo);
-    auto const dx31 = get_mi_vector(p3.r.p, p1.r.p, box_geo);
+    auto const dx21 = -box_geo.get_mi_vector(p1.r.p, p2.r.p);
+    auto const dx31 = box_geo.get_mi_vector(p3.r.p, p1.r.p);
 
     auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
     if (result) {

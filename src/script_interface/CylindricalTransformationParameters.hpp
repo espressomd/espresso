@@ -22,6 +22,8 @@
 #ifndef SCRIPT_INTERFACE_CYL_TRANSFORM_PARAMS_HPP
 #define SCRIPT_INTERFACE_CYL_TRANSFORM_PARAMS_HPP
 
+#include <stdexcept>
+
 #include "script_interface/ScriptInterface.hpp"
 
 #include "utils/math/cylindrical_transformation_parameters.hpp"
@@ -40,18 +42,33 @@ public:
                      [this]() { return m_transform_params->orientation(); }}});
   }
   std::shared_ptr<::Utils::CylindricalTransformationParameters>
-  cyl_transform_params() {
+  cyl_transform_params() const {
     return m_transform_params;
   }
   void do_construct(VariantMap const &params) override {
-    m_transform_params =
-        std::make_shared<Utils::CylindricalTransformationParameters>(
-            get_value_or<Utils::Vector3d>(params, "center",
-                                          Utils::Vector3d{{0, 0, 0}}),
-            get_value_or<Utils::Vector3d>(params, "axis",
-                                          Utils::Vector3d{{0, 0, 1}}),
-            get_value_or<Utils::Vector3d>(params, "orientation",
-                                          Utils::Vector3d{{1, 0, 0}}));
+    auto n_params = params.size();
+    switch (n_params) {
+    case 0:
+      m_transform_params =
+          std::make_shared<Utils::CylindricalTransformationParameters>();
+      break;
+    case 2:
+      m_transform_params =
+          std::make_shared<Utils::CylindricalTransformationParameters>(
+              get_value<Utils::Vector3d>(params, "center"),
+              get_value<Utils::Vector3d>(params, "axis"));
+      break;
+    case 3:
+      m_transform_params =
+          std::make_shared<Utils::CylindricalTransformationParameters>(
+              get_value<Utils::Vector3d>(params, "center"),
+              get_value<Utils::Vector3d>(params, "axis"),
+              get_value<Utils::Vector3d>(params, "orientation"));
+      break;
+    default:
+      throw std::runtime_error("Provide either no arguments, center and axis, "
+                               "or center and axis and orientation");
+    }
   }
 
 private:

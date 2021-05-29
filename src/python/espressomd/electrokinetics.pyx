@@ -17,8 +17,8 @@
 include "myconfig.pxi"
 IF CUDA:
     from .lb cimport HydrodynamicInteraction
+    from .lb cimport LBFluidRoutines
     from .lb cimport lb_lbfluid_print_vtk_boundary
-    from .lb cimport python_lbnode_get_pressure_tensor
     from .lb cimport lb_lbnode_is_index_valid
     from .lb cimport lb_lbfluid_set_lattice_switch
     from .lb cimport GPU
@@ -26,7 +26,7 @@ from . import utils
 import tempfile
 import shutil
 from .utils import is_valid_type
-from .utils cimport Vector3i, Vector6d
+from .utils cimport Vector3i
 import numpy as np
 
 IF ELECTROKINETICS:
@@ -66,7 +66,7 @@ IF ELECTROKINETICS:
             """
 
             return ["agrid", "lb_density", "viscosity", "friction",
-                    "bulk_viscosity", "gamma_even", "gamma_odd", "T",
+                    "bulk_viscosity", "gamma_even", "gamma_odd", "T", "ext_force_density",
                     "prefactor", "stencil", "advection", "fluid_coupling",
                     "fluctuations", "fluctuation_amplitude", "es_coupling",
                     "species"]
@@ -90,6 +90,7 @@ IF ELECTROKINETICS:
                     "bulk_viscosity": -1,
                     "gamma_odd": 0.0,
                     "gamma_even": 0.0,
+                    "ext_force_density": [0., 0., 0.],
                     "friction": 0.0,
                     "T": -1,
                     "prefactor": -1,
@@ -120,6 +121,7 @@ IF ELECTROKINETICS:
                     "bulk_viscosity": ek_parameters.bulk_viscosity,
                     "gamma_odd": ek_parameters.gamma_odd,
                     "gamma_even": ek_parameters.gamma_even,
+                    "ext_force_density": ek_parameters.lb_ext_force_density,
                     "friction": ek_parameters.friction,
                     "T": ek_parameters.T,
                     "prefactor": ek_parameters.prefactor,
@@ -146,6 +148,9 @@ IF ELECTROKINETICS:
             ek_set_lb_density(self._params["lb_density"])
             ek_set_viscosity(self._params["viscosity"])
             ek_set_friction(self._params["friction"])
+            ek_set_lb_ext_force_density(self._params["ext_force_density"][0],
+                                        self._params["ext_force_density"][1],
+                                        self._params["ext_force_density"][2])
             ek_set_T(self._params["T"])
             ek_set_prefactor(self._params["prefactor"])
             ek_set_bulk_viscosity(self._params["bulk_viscosity"])
@@ -358,45 +363,16 @@ IF ELECTROKINETICS:
         def add_boundary(self, shape):
             raise Exception("This method is not implemented yet.")
 
-    cdef class ElectrokineticsRoutines:
-        cdef Vector3i node
-
-        def __init__(self, key):
-            self.node[0] = key[0]
-            self.node[1] = key[1]
-            self.node[2] = key[2]
-            if not lb_lbnode_is_index_valid(self.node):
-                raise IndexError("LB node index out of bounds")
+    cdef class ElectrokineticsRoutines(LBFluidRoutines):
 
         property potential:
             def __get__(self):
                 cdef double potential
-                ek_node_print_potential(self.node[0], self.node[1], self.node[2], & potential)
+                ek_node_get_potential(self.node[0], self.node[1], self.node[2], & potential)
                 return potential
 
             def __set__(self, value):
                 raise Exception("Potential can not be set.")
-
-        property velocity:
-            def __get__(self):
-                cdef double velocity[3]
-                ek_node_print_velocity(
-                    self.node[0], self.node[1], self.node[2], velocity)
-                return [velocity[0], velocity[1], velocity[2]]
-
-            def __set__(self, value):
-                raise Exception("Not implemented.")
-
-        property pressure:
-            def __get__(self):
-                cdef Vector6d pressure
-                pressure = python_lbnode_get_pressure_tensor(self.node)
-                return np.array([[pressure[0], pressure[1], pressure[3]],
-                                 [pressure[1], pressure[2], pressure[4]],
-                                 [pressure[3], pressure[4], pressure[5]]])
-
-            def __set__(self, value):
-                raise Exception("Not implemented.")
 
     class Species:
 
@@ -558,7 +534,7 @@ IF ELECTROKINETICS:
 
             def __get__(self):
                 cdef double density
-                if ek_node_print_density(self.id, self.node[0], self.node[1], self.node[2], & density) != 0:
+                if ek_node_get_density(self.id, self.node[0], self.node[1], self.node[2], & density) != 0:
                     raise Exception("Species has not been added to EK.")
                 return density
 
@@ -568,7 +544,7 @@ IF ELECTROKINETICS:
 
             def __get__(self):
                 cdef double flux[3]
-                if ek_node_print_flux(
+                if ek_node_get_flux(
                         self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
                     raise Exception("Species has not been added to EK.")
 

@@ -35,7 +35,6 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "halo.hpp"
-#include "integrate.hpp"
 #include "lb-d3q19.hpp"
 #include "random.hpp"
 
@@ -186,11 +185,6 @@ LB_Fluid lbfluid_post;
 std::vector<LB_FluidNode> lbfields;
 
 HaloCommunicator update_halo_comm = HaloCommunicator(0);
-
-/** measures the MD time since the last fluid update */
-static double fluidstep = 0.0;
-
-/********************** The Main LB Part *************************************/
 
 /**
  * @brief Initialize fluid nodes.
@@ -901,7 +895,7 @@ void lb_stream(LB_Fluid &lb_fluid, const std::array<T, 19> &populations,
 }
 
 /* Collisions and streaming (push scheme) */
-void lb_collide_stream() {
+void lb_integrate() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
@@ -975,23 +969,6 @@ void lb_collide_stream() {
 #ifdef ADDITIONAL_CHECKS
   lb_check_halo_regions(lbfluid, lblattice);
 #endif
-}
-
-/** Update the lattice Boltzmann fluid.
- *
- *  This function is called from the integrator. Since the time step
- *  for the lattice dynamics can be coarser than the MD time step, we
- *  monitor the time since the last lattice update.
- */
-void lattice_boltzmann_update() {
-  auto const factor = static_cast<int>(round(lbpar.tau / time_step));
-
-  fluidstep += 1;
-  if (fluidstep >= factor) {
-    fluidstep = 0;
-
-    lb_collide_stream();
-  }
 }
 
 /***********************************************************************/

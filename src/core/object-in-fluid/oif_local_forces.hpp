@@ -120,9 +120,9 @@ OifLocalForcesBond::calc_forces(Particle const &p2, Particle const &p1,
 
   // first-fold-then-the-same approach
   auto const fp2 = unfolded_position(p2.r.p, p2.l.i, box_geo.length());
-  auto const fp1 = fp2 + get_mi_vector(p1.r.p, fp2, box_geo);
-  auto const fp3 = fp2 + get_mi_vector(p3.r.p, fp2, box_geo);
-  auto const fp4 = fp2 + get_mi_vector(p4.r.p, fp2, box_geo);
+  auto const fp1 = fp2 + box_geo.get_mi_vector(p1.r.p, fp2);
+  auto const fp3 = fp2 + box_geo.get_mi_vector(p3.r.p, fp2);
+  auto const fp4 = fp2 + box_geo.get_mi_vector(p4.r.p, fp2);
 
   Utils::Vector3d force1{}, force2{}, force3{}, force4{};
 

@@ -26,6 +26,10 @@
 #include "script_interface/LocalContext.hpp"
 #include "script_interface/ObjectList.hpp"
 
+#include <algorithm>
+#include <memory>
+#include <vector>
+
 using namespace ScriptInterface;
 
 struct ObjectListImpl : ObjectList<ObjectHandle> {
@@ -75,6 +79,7 @@ BOOST_AUTO_TEST_CASE(clearing_elements) {
   list.add(ObjectRef{});
   list.clear();
   BOOST_CHECK(list.elements().empty());
+  BOOST_CHECK(list.mock_core.empty());
 }
 
 BOOST_AUTO_TEST_CASE(serialization) {

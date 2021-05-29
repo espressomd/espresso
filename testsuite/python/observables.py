@@ -125,9 +125,8 @@ class Observables(ut.TestCase):
 
             # Test setters and getters
             self.assertEqual(observable.ids, id_list)
-            new_pids = [id_list[0]]
-            observable.ids = new_pids
-            self.assertEqual(observable.ids, new_pids)
+            with self.assertRaises(RuntimeError):
+                observable.ids = [observable.ids[0]]
 
         return func
 

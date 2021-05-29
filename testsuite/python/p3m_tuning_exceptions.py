@@ -26,9 +26,12 @@ class P3M_tuning_test(ut.TestCase):
     system = espressomd.System(box_l=[10., 10., 10.])
 
     def setUp(self):
+        self.system.box_l = [10., 10., 10.]
+        self.system.periodicity = [True, True, True]
+
+    def tearDown(self):
         self.system.actors.clear()
         self.system.part.clear()
-        self.system.box_l = [10., 10., 10.]
 
     def add_charged_particles(self):
         self.system.part.add(pos=[[0, 0, 0], [.5, .5, .5]], q=[-1, 1])
@@ -221,11 +224,47 @@ class P3M_tuning_test(ut.TestCase):
 
         solver_p3m = espressomd.electrostatics.P3M(
             prefactor=2, accuracy=0.01, tune=False, cao=1,
-            r_cut=0.373, alpha=3.81, mesh=(8, 8, 8))
+            r_cut=0.373, alpha=3.81, mesh=(8, 8, 8), check_neutrality=False)
         solver_elc = espressomd.electrostatics.ELC(
-            p3m_actor=solver_p3m, gap_size=1.2 * self.system.box_l[2],
-            maxPWerror=0.01)
-        with self.assertRaisesRegex(Exception, "gap size too large"):
+            p3m_actor=solver_p3m, gap_size=100, maxPWerror=0.01)
+        with self.assertRaisesRegex(ValueError, "gap size too large"):
+            self.system.actors.add(solver_elc)
+
+        self.system.actors.clear()
+        solver_elc = espressomd.electrostatics.ELC(
+            p3m_actor=solver_p3m, gap_size=-1, maxPWerror=0.01)
+        with self.assertRaisesRegex(ValueError, "gap_size must be > 0"):
+            self.system.actors.add(solver_elc)
+
+        self.system.actors.clear()
+        solver_elc = espressomd.electrostatics.ELC(
+            p3m_actor=solver_p3m, gap_size=1, maxPWerror=0)
+        with self.assertRaisesRegex(ValueError, "maxPWerror must be > 0"):
+            self.system.actors.add(solver_elc)
+
+        self.system.part[0].q = -2
+
+        self.system.actors.clear()
+        solver_elc = espressomd.electrostatics.ELC(
+            p3m_actor=solver_p3m, gap_size=1,
+            maxPWerror=0.01, const_pot=True, pot_diff=3, check_neutrality=False)
+        with self.assertRaisesRegex(RuntimeError, "ELC does not currently support non-neutral systems with a dielectric contrast"):
+            self.system.actors.add(solver_elc)
+
+        self.system.actors.clear()
+        solver_elc = espressomd.electrostatics.ELC(
+            p3m_actor=solver_p3m, gap_size=1, maxPWerror=0.01, const_pot=False,
+            check_neutrality=False, delta_mid_top=0.5, delta_mid_bot=0.5)
+        with self.assertRaisesRegex(RuntimeError, "ELC does not work for non-neutral systems and non-metallic dielectric contrast"):
+            self.system.actors.add(solver_elc)
+
+        self.system.part[0].q = -1
+
+        self.system.actors.clear()
+        solver_elc = espressomd.electrostatics.ELC(
+            p3m_actor=solver_p3m, gap_size=1, maxPWerror=0.01, const_pot=False,
+            check_neutrality=False, delta_mid_top=-1, delta_mid_bot=-1)
+        with self.assertRaisesRegex(RuntimeError, "ELC with two parallel metallic boundaries requires the const_pot option"):
             self.system.actors.add(solver_elc)
 
         self.system.actors.clear()
@@ -251,6 +290,39 @@ class P3M_tuning_test(ut.TestCase):
             p3m_actor=solver_p3m, gap_size=1, maxPWerror=0.01)
         with self.assertRaisesRegex(ValueError, "ELC is not set up to work with the GPU P3M"):
             self.system.actors.add(solver_elc)
+
+    @utx.skipIfMissingFeatures("DP3M")
+    def test_04_invalid_params_dp3m_dlc_cpu(self):
+        import espressomd.magnetostatics
+        import espressomd.magnetostatic_extensions
+
+        self.system.time_step = 0.01
+        self.add_magnetic_particles()
+
+        dp3m_params = {'accuracy': 1e-6, 'mesh': [25, 25, 25], 'cao': 7,
+                       'prefactor': 1.1, 'r_cut': 4.50, 'alpha': 0.8216263}
+
+        solver_dp3m = espressomd.magnetostatics.DipolarP3M(
+            epsilon='metallic', tune=False, **dp3m_params)
+        self.system.actors.add(solver_dp3m)
+
+        solver_mdlc = espressomd.magnetostatic_extensions.DLC(
+            gap_size=100, maxPWerror=1e-5)
+        with self.assertRaisesRegex(ValueError, "gap size too large"):
+            self.system.actors.add(solver_mdlc)
+        self.system.actors.remove(solver_mdlc)
+
+        solver_mdlc = espressomd.magnetostatic_extensions.DLC(
+            gap_size=-1, maxPWerror=1e-5)
+        with self.assertRaisesRegex(ValueError, "gap_size must be > 0"):
+            self.system.actors.add(solver_mdlc)
+        self.system.actors.remove(solver_mdlc)
+
+        solver_mdlc = espressomd.magnetostatic_extensions.DLC(
+            gap_size=1, maxPWerror=0)
+        with self.assertRaisesRegex(ValueError, "maxPWerror must be > 0"):
+            self.system.actors.add(solver_mdlc)
+        self.system.actors.remove(solver_mdlc)
 
     ###########################################################
     # block of tests where tuning should not throw exceptions #

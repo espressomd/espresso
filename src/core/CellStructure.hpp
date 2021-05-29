@@ -100,7 +100,7 @@ struct MinimalImageDistance {
   const BoxGeometry box;
 
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(get_mi_vector(p1.r.p, p2.r.p, box));
+    return Distance(box.get_mi_vector(p1.r.p, p2.r.p));
   }
 };
 

@@ -36,6 +36,11 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cmath>
+#include <cstdio>
+#include <stdexcept>
+#include <vector>
+
 /**
  * Calculate dipolar energy and optionally force between two particles.
  * @param[in,out] p1          First particle
@@ -50,7 +55,7 @@ static double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
   auto const dip2 = p2.calc_dip();
 
   // Distance between particles
-  auto const dr = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  auto const dr = box_geo.get_mi_vector(p1.r.p, p2.r.p);
 
   // Powers of distance
   auto const r2 = dr.norm2();
@@ -131,12 +136,14 @@ double dawaanr_calculations(bool force_flag, bool energy_flag,
    =============================================================================
 */
 
-int Ncut_off_magnetic_dipolar_direct_sum = 0;
+int mdds_n_replica = 0;
 
-int magnetic_dipolar_direct_sum_sanity_checks() {
-  /* left for the future, at this moment nothing to do */
-
-  return 0;
+void mdds_sanity_checks(int n_replica) {
+  if (box_geo.periodic(0) and box_geo.periodic(1) and box_geo.periodic(2) and
+      n_replica == 0) {
+    throw std::runtime_error("Dipolar direct sum with replica does not "
+                             "support a periodic system with zero replica.");
+  }
 }
 
 double
@@ -145,12 +152,6 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
 
   assert(n_nodes == 1);
   assert(force_flag || energy_flag);
-
-  if (box_geo.periodic(0) and box_geo.periodic(1) and box_geo.periodic(2) and
-      Ncut_off_magnetic_dipolar_direct_sum == 0) {
-    throw std::runtime_error("Dipolar direct sum with replica does not support "
-                             "a periodic system with zero replica.");
-  };
 
   std::vector<double> x, y, z;
   std::vector<double> mx, my, mz;
@@ -209,9 +210,9 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
 
   int NCUT[3];
   for (int i = 0; i < 3; i++) {
-    NCUT[i] = box_geo.periodic(i) ? Ncut_off_magnetic_dipolar_direct_sum : 0;
+    NCUT[i] = box_geo.periodic(i) ? mdds_n_replica : 0;
   }
-  auto const NCUT2 = Utils::sqr(Ncut_off_magnetic_dipolar_direct_sum);
+  auto const NCUT2 = Utils::sqr(mdds_n_replica);
 
   for (int i = 0; i < dip_particles; i++) {
     for (int j = 0; j < dip_particles; j++) {
@@ -298,34 +299,33 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
   return 0.5 * dipole.prefactor * energy;
 }
 
-int dawaanr_set_params() {
+void dawaanr_set_params() {
   if (n_nodes > 1) {
-    runtimeErrorMsg() << "MPI parallelization not supported by "
-                      << "DipolarDirectSumCpu.";
-    return ES_ERROR;
+    throw std::runtime_error(
+        "MPI parallelization not supported by DipolarDirectSumCpu.");
   }
   if (dipole.method != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA) {
     Dipole::set_method_local(DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA);
   }
   // also necessary on 1 CPU, does more than just broadcasting
   mpi_bcast_coulomb_params();
-
-  return ES_OK;
 }
 
-int mdds_set_params(int n_cut) {
+void mdds_set_params(int n_replica) {
   if (n_nodes > 1) {
-    runtimeErrorMsg() << "MPI parallelization not supported by "
-                      << "DipolarDirectSumWithReplicaCpu.";
-    return ES_ERROR;
+    throw std::runtime_error(
+        "MPI parallelization not supported by DipolarDirectSumWithReplicaCpu.");
   }
-
-  Ncut_off_magnetic_dipolar_direct_sum = n_cut;
-
-  if (Ncut_off_magnetic_dipolar_direct_sum == 0) {
+  if (n_replica < 0) {
+    throw std::runtime_error("Dipolar direct sum requires n_replica >= 0.");
+  }
+  mdds_sanity_checks(n_replica);
+  if (n_replica == 0) {
     fprintf(stderr, "Careful: the number of extra replicas to take into "
                     "account during the direct sum calculation is zero\n");
   }
+
+  mdds_n_replica = n_replica;
 
   if (dipole.method != DIPOLAR_DS && dipole.method != DIPOLAR_MDLC_DS) {
     Dipole::set_method_local(DIPOLAR_DS);
@@ -333,7 +333,6 @@ int mdds_set_params(int n_cut) {
 
   // also necessary on 1 CPU, does more than just broadcasting
   mpi_bcast_coulomb_params();
-  return ES_OK;
 }
 
 #endif
