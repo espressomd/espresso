@@ -257,3 +257,14 @@ int interactions_sanity_checks() {
 
   return state;
 }
+
+void mpi_set_min_global_cut_local(double min_global_cut) {
+  ::min_global_cut = min_global_cut;
+  on_skin_change();
+}
+
+REGISTER_CALLBACK(mpi_set_min_global_cut_local)
+
+void mpi_set_min_global_cut(double min_global_cut) {
+  mpi_call_all(mpi_set_min_global_cut_local, min_global_cut);
+}

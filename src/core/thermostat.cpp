@@ -28,6 +28,7 @@
 #include "bonded_interactions/thermalized_bond_utils.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "thermostat.hpp"
@@ -144,3 +145,87 @@ void philox_counter_increment() {
     thermalized_bond.rng_increment();
   }
 }
+
+void mpi_set_brownian_gamma_local(GammaType const &gamma) {
+  brownian.gamma = gamma;
+}
+
+void mpi_set_brownian_gamma_rot_local(GammaType const &gamma) {
+  brownian.gamma_rotation = gamma;
+}
+
+void mpi_set_langevin_gamma_local(GammaType const &gamma) {
+  langevin.gamma = gamma;
+  on_thermostat_param_change();
+}
+
+void mpi_set_langevin_gamma_rot_local(GammaType const &gamma) {
+  langevin.gamma_rotation = gamma;
+  on_thermostat_param_change();
+}
+
+REGISTER_CALLBACK(mpi_set_brownian_gamma_local)
+REGISTER_CALLBACK(mpi_set_brownian_gamma_rot_local)
+REGISTER_CALLBACK(mpi_set_langevin_gamma_local)
+REGISTER_CALLBACK(mpi_set_langevin_gamma_rot_local)
+
+void mpi_set_brownian_gamma(GammaType const &gamma) {
+  mpi_call_all(mpi_set_brownian_gamma_local, gamma);
+}
+
+void mpi_set_brownian_gamma_rot(GammaType const &gamma) {
+  mpi_call_all(mpi_set_brownian_gamma_rot_local, gamma);
+}
+
+void mpi_set_langevin_gamma(GammaType const &gamma) {
+  mpi_call_all(mpi_set_langevin_gamma_local, gamma);
+}
+void mpi_set_langevin_gamma_rot(GammaType const &gamma) {
+  mpi_call_all(mpi_set_langevin_gamma_rot_local, gamma);
+}
+
+void mpi_set_thermo_virtual_local(bool thermo_virtual) {
+  ::thermo_virtual = thermo_virtual;
+}
+
+REGISTER_CALLBACK(mpi_set_thermo_virtual_local)
+
+void mpi_set_thermo_virtual(bool thermo_virtual) {
+  mpi_call_all(mpi_set_thermo_virtual_local, thermo_virtual);
+}
+
+void mpi_set_temperature_local(double temperature) {
+  ::temperature = temperature;
+  on_temperature_change();
+  on_thermostat_param_change();
+}
+
+REGISTER_CALLBACK(mpi_set_temperature_local)
+
+void mpi_set_temperature(double temperature) {
+  mpi_call_all(mpi_set_temperature_local, temperature);
+}
+
+void mpi_set_thermo_switch_local(int thermo_switch) {
+  ::thermo_switch = thermo_switch;
+}
+
+REGISTER_CALLBACK(mpi_set_thermo_switch_local)
+
+void mpi_set_thermo_switch(int thermo_switch) {
+  mpi_call_all(mpi_set_thermo_switch_local, thermo_switch);
+}
+
+#ifdef NPT
+void mpi_set_nptiso_gammas_local(double gamma0, double gammav) {
+  npt_iso.gamma0 = gamma0;
+  npt_iso.gammav = gammav;
+  on_thermostat_param_change();
+}
+
+REGISTER_CALLBACK(mpi_set_nptiso_gammas_local)
+
+void mpi_set_nptiso_gammas(double gamma0, double gammav) {
+  mpi_call_all(mpi_set_nptiso_gammas_local, gamma0, gammav);
+}
+#endif
