@@ -427,6 +427,9 @@ void ReactionAlgorithm::hide_particle(int p_id) const {
  * Check if the modified particle is too close to neighboring particles.
  */
 void ReactionAlgorithm::check_exclusion_radius(int p_id) {
+  if (exclusion_radius == 0.) {
+    return;
+  }
   auto const &p = get_particle_data(p_id);
   auto const d_min = distto(partCfg(), p.r.p, p_id);
   if (d_min < exclusion_radius)
