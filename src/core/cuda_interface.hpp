@@ -57,7 +57,6 @@ struct CUDA_particle_data {
   /** particle position given from md part*/
   Vector3f p;
 
-#if defined(CUDA)
   /** particle id */
   int identity;
 #ifdef VIRTUAL_SITES
@@ -68,7 +67,6 @@ struct CUDA_particle_data {
 
   /** particle momentum struct velocity p.m->v*/
   Vector3f v;
-#endif
 
 #ifdef ROTATION
   Vector3f director;

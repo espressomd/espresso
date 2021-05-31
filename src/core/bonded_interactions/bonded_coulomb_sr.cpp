@@ -25,25 +25,7 @@
 #include "bonded_coulomb_sr.hpp"
 
 #ifdef ELECTROSTATICS
-#include "bonded_interaction_data.hpp"
-#include "interactions.hpp"
 
-#include <utils/constants.hpp>
-
-int bonded_coulomb_sr_set_params(int bond_type, double q1q2) {
-  if (bond_type < 0)
-    return ES_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.bonded_coulomb_sr.q1q2 = q1q2;
-  bonded_ia_params[bond_type].type = BONDED_IA_BONDED_COULOMB_SR;
-  bonded_ia_params[bond_type].num = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
-}
+BondedCoulombSR::BondedCoulombSR(double q1q2) { this->q1q2 = q1q2; }
 
 #endif

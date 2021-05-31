@@ -218,6 +218,13 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
 cdef make_array_locked(Vector3d v):
     return array_locked([v[0], v[1], v[2]])
 
+cdef make_array_locked_vector(vector[Vector3d] v):
+    ret = np.empty((v.size(), 3))
+    for i in range(v.size()):
+        for j in range(3):
+            ret[i][j] = v[i][j]
+    return array_locked(ret)
+
 
 cdef Vector3d make_Vector3d(a):
     cdef Vector3d v
@@ -274,7 +281,7 @@ def is_valid_type(value, t):
     if value is None:
         return False
     if t == int:
-        return isinstance(value, (int, np.integer, np.long))
+        return isinstance(value, (int, np.integer))
     elif t == float:
         if hasattr(np, 'float128'):
             return isinstance(

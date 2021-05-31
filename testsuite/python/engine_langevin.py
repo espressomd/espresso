@@ -50,9 +50,9 @@ class SwimmerTest(ut.TestCase):
         S.cell_system.skin = 0.1
         S.time_step = tstep
 
-        S.part.add(id=0, pos=pos_0, swimming={"v_swim": v_swim})
-        S.part.add(id=1, pos=pos_1, swimming={"f_swim": f_swim})
-        S.part[:].rotation = 1, 1, 1
+        p0 = S.part.add(pos=pos_0, swimming={"v_swim": v_swim})
+        p1 = S.part.add(pos=pos_1, swimming={"f_swim": f_swim})
+        S.part[:].rotation = (1, 1, 1)
 
         S.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
@@ -61,8 +61,8 @@ class SwimmerTest(ut.TestCase):
         pos_0[2] = z_v(S.time, pos_0[2])
         pos_1[2] = z_f(S.time, pos_1[2])
 
-        delta_pos_0 = np.linalg.norm(S.part[0].pos - pos_0)
-        delta_pos_1 = np.linalg.norm(S.part[1].pos - pos_1)
+        delta_pos_0 = np.linalg.norm(p0.pos - pos_0)
+        delta_pos_1 = np.linalg.norm(p1.pos - pos_1)
 
         self.assertLess(1.4e-3, delta_pos_0)
         self.assertLess(delta_pos_0, 1.6e-3)

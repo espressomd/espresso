@@ -41,10 +41,7 @@
 /** \name Hook procedures
  *  These procedures are called if several significant changes to
  *  the system happen which may make a reinitialization of subsystems
- *  necessary. Note that all these functions are called on ALL nodes.
- *  If you need to do something only on the master node, check
- *  \ref this_node == 0. The use of the asynchronous mpi_* functions
- *  (e.g. mpi_bcast_parameter) on the master node is possible.
+ *  necessary.
  */
 /**@{*/
 
@@ -54,7 +51,7 @@ void on_program_start();
 /** called every time the simulation is continued/started, i.e.
  *  when switching from the script interface to the simulation core.
  */
-void on_integration_start();
+void on_integration_start(double time_step);
 
 /** called before calculating observables, i.e. energy, pressure or
  *  the integrator (forces). Initialize any methods here which are not
@@ -78,11 +75,14 @@ void on_short_range_ia_change();
 /** called every time a constraint is changed. */
 void on_constraint_change();
 
-/** called every time the box length has changed. This routine
- *  is relatively fast, and changing the box length every time step
- *  as for example necessary for NpT is more or less ok.
+/**
+ * @brief Called when the box length has changed. This routine is relatively
+ * fast, and changing the box length every time step as for example necessary
+ * for NpT is more or less ok.
+ *
+ * @param skip_method_adaption skip the long-range methods adaptions
  */
-void on_boxl_change();
+void on_boxl_change(bool skip_method_adaption = false);
 
 /** called every time a major change to the cell structure has happened,
  *  like the skin or grid have changed. This one is potentially slow.
@@ -92,12 +92,35 @@ void on_cell_structure_change();
 /** called every time the temperature changes. This one is potentially slow. */
 void on_temperature_change();
 
-/** called every time other parameters (timestep,...) are changed. Note that
- *  this does not happen automatically. The callback procedure of the changed
- *  variable is responsible for that.
- *  @param parameter is the @ref Fields identifier of the field changed.
+/** @brief Called when the periodicity changes. Internally calls @ref
+ * on_skin_change.
  */
-void on_parameter_change(int parameter);
+void on_periodicity_change();
+
+/** @brief Called when the skin is changed.
+ */
+void on_skin_change();
+
+/** @brief Called when parameters of thermostats are changed.
+ */
+void on_thermostat_param_change();
+
+/** @brief Called when the timestep changed. Internally calls @ref
+ * on_thermostat_param_change.
+ */
+void on_timestep_change();
+
+/** @brief Called when the simulation time changed.
+ */
+void on_simtime_change();
+
+/** @brief Called when the force cap changed.
+ */
+void on_forcecap_change();
+
+/** @brief Called when the node_grid changed.
+ */
+void on_nodegrid_change();
 
 unsigned global_ghost_flags();
 

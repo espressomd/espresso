@@ -31,15 +31,16 @@
 namespace Observables {
 
 std::vector<double> CylindricalLBVelocityProfile::operator()() const {
-  Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), 3, limits());
   for (auto const &p : sampling_positions) {
     auto const velocity = lb_lbfluid_get_interpolated_velocity(p) *
                           lb_lbfluid_get_lattice_speed();
-    auto const pos_shifted = p - center;
-    auto const pos_cyl =
-        Utils::transform_coordinate_cartesian_to_cylinder(pos_shifted, axis);
-    histogram.update(pos_cyl, Utils::transform_vector_cartesian_to_cylinder(
-                                  velocity, axis, pos_shifted));
+    auto const pos_shifted = p - transform_params->center();
+    auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
+        pos_shifted, transform_params->axis(), transform_params->orientation());
+    histogram.update(pos_cyl,
+                     Utils::transform_vector_cartesian_to_cylinder(
+                         velocity, transform_params->axis(), pos_shifted));
   }
   auto hist_data = histogram.get_histogram();
   auto const tot_count = histogram.get_tot_count();

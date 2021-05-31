@@ -14,6 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from libcpp cimport bool
+
 include "myconfig.pxi"
 
 IF DIPOLES == 1:
@@ -37,13 +40,12 @@ IF DIPOLES == 1:
         cdef extern Dipole_parameters dipole
 
     cdef extern from "electrostatics_magnetostatics/dipole.hpp" namespace "Dipole":
-
-        int set_Dprefactor(double prefactor)
+        void set_Dprefactor(double prefactor) except +
 
     cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
-        int dawaanr_set_params()
-        int mdds_set_params(int n_cut)
-        int Ncut_off_magnetic_dipolar_direct_sum
+        void dawaanr_set_params() except +
+        void mdds_set_params(int n_replica) except +
+        int mdds_n_replica
 
     IF(CUDA == 1) and (ROTATION == 1):
         cdef extern from "actor/DipolarDirectSum.hpp":
@@ -59,12 +61,12 @@ IF DP3M == 1:
     from p3m_common cimport P3MParameters
 
     cdef extern from "electrostatics_magnetostatics/p3m-dipolar.hpp":
-        int dp3m_set_params(double r_cut, int mesh, int cao, double alpha, double accuracy)
-        void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha, double accuracy)
-        int dp3m_set_mesh_offset(double x, double y, double z)
-        int dp3m_set_eps(double eps)
-        int dp3m_adaptive_tune(char ** log)
-        int dp3m_deactivate()
+        void dp3m_set_params(double r_cut, int mesh, int cao, double alpha, double accuracy) except +
+        void dp3m_set_tune_params(double r_cut, int mesh, int cao, double accuracy)
+        void dp3m_set_mesh_offset(double x, double y, double z) except +
+        void dp3m_set_eps(double eps)
+        int dp3m_adaptive_tune(bool verbose)
+        void dp3m_deactivate()
 
         ctypedef struct dp3m_data_struct:
             P3MParameters params

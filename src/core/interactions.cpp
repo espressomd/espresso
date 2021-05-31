@@ -22,59 +22,45 @@
 
 #include "TabulatedPotential.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/bonded_tab.hpp"
 #include "event.hpp"
 
 #include "serialization/IA_parameters.hpp"
 
-#include <boost/mpi.hpp>
 #include <utils/mpi/cart_comm.hpp>
+
+#include <boost/mpi.hpp>
 
 #include <mpi.h>
 
-inline bool is_tabulated_bond(BondedInteraction const type) {
-  return (type == BONDED_IA_TABULATED_DISTANCE or
-          type == BONDED_IA_TABULATED_ANGLE or
-          type == BONDED_IA_TABULATED_DIHEDRAL);
-}
-
-void mpi_bcast_all_ia_params_slave() {
+void mpi_bcast_all_ia_params_local() {
   boost::mpi::broadcast(comm_cart, ia_params, 0);
 }
 
-REGISTER_CALLBACK(mpi_bcast_all_ia_params_slave)
+REGISTER_CALLBACK(mpi_bcast_all_ia_params_local)
 
-void mpi_bcast_all_ia_params() { mpi_call_all(mpi_bcast_all_ia_params_slave); }
+void mpi_bcast_all_ia_params() { mpi_call_all(mpi_bcast_all_ia_params_local); }
 
-void mpi_bcast_ia_params_slave(int i, int j) {
+void mpi_bcast_ia_params_local(int i, int j) {
   if (j >= 0) {
     // non-bonded interaction parameters
     boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
   } else {
     // bonded interaction parameters
     if (this_node) {
-      make_bond_type_exist(i); // realloc bonded_ia_params on slave nodes!
-      if (is_tabulated_bond(bonded_ia_params[i].type)) {
-        delete bonded_ia_params[i].p.tab.pot;
-      }
+      // resize array on local nodes
+      make_bond_type_exist(i);
     }
-    MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
-              comm_cart);
-    // for tabulated potentials we have to send the tables extra
-    if (is_tabulated_bond(bonded_ia_params[i].type)) {
-      if (this_node) {
-        bonded_ia_params[i].p.tab.pot = new TabulatedPotential();
-      }
-      boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
-    }
+    boost::mpi::broadcast(comm_cart, bonded_ia_params[i], 0);
   }
 
   on_short_range_ia_change();
 }
 
-REGISTER_CALLBACK(mpi_bcast_ia_params_slave)
+REGISTER_CALLBACK(mpi_bcast_ia_params_local)
 
 void mpi_bcast_ia_params(int i, int j) {
-  mpi_call_all(mpi_bcast_ia_params_slave, i, j);
+  mpi_call_all(mpi_bcast_ia_params_local, i, j);
 }
 
 REGISTER_CALLBACK(realloc_ia_params)

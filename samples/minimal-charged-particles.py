@@ -68,16 +68,11 @@ system.non_bonded_inter[0, 0].wca.set_params(epsilon=wca_eps, sigma=wca_sig)
 #############################################################
 
 volume = box_l**3
-n_part = int(volume * density)
+n_part = 2 * int(0.5 * volume * density)  # enforce even number of particles
 
-for i in range(n_part):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
-
-# Assign charge to particles
-for i in range(n_part // 2 - 1):
-    system.part[2 * i].q = -1.0
-    system.part[2 * i + 1].q = 1.0
-
+# add particles with alternating charge
+system.part.add(pos=np.random.random((n_part, 3)) * system.box_l,
+                q=np.resize((1, -1), n_part))
 
 # Warmup
 #############################################################

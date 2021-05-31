@@ -156,30 +156,42 @@ concerning the simulation system such as box geometry, time step or :ref:`cell-s
 
 .. rubric:: Particles
 
-The particles in the simulation are accessed via ``system.part``, an instance of the :class:`~espressomd.particle_data.ParticleList` class. Use
-the ``add`` method to :ref:`create new particles<Adding particles>`: ::
+The particles in the simulation are accessed via ``system.part``, an instance of the
+:class:`~espressomd.particle_data.ParticleList` class. Use the ``add`` method to
+:ref:`create new particles<Adding particles>`: ::
 
-    system.part.add(id=0, pos=[1.0, 1.0, 1.0], type=0)
-    system.part.add(id=1, pos=[1.0, 1.0, 2.0], type=0)
+    part1 = system.part.add(pos=[1.0, 1.0, 1.0], type=0)
+    part2 = system.part.add(pos=[1.0, 1.0, 2.0], type=0)
 
-Individual particles can be retrieved by their numerical id using angular
-brackets::
+The individual particles are represented by instances of :class:`~espressomd.particle_data.ParticleHandle` which, as
+demonstrated in the example above, can be stored as Python variables (``part1`` and ``part2``).
+The properties of the particle are implemented as Python properties and can be accessed and/or modified using
+the respective :class:`~espressomd.particle_data.ParticleHandle`: ::
 
-    system.part[1].pos = [1.0, 1.0, 2.0]
+    >>> print(part2.pos)
+    [1.0, 1.0, 2.0]
+    >>> part2.pos = [0.2, 2.0, 0.0]
+    >>> print(part2.pos)
+    [0.2, 2.0, 0.0]
 
 It is also possible to :ref:`loop<Iterating over particles and pairs of
 particles>` over all particles::
 
     for p in system.part:
-        print("Particle id {}, type {}".format(p.id, p.type))
+        print(f"Particle pos {p.pos}, type {p.type}")
 
-An individual particle is represented by an instance of :class:`~espressomd.particle_data.ParticleHandle`.
-The properties of the particle are implemented as Python
-properties. ::
+Internally, each particle is automatically assigned a unique numerical id by |es|.
+Note that in principle it is possible to explicitly set this particle id (if not in use already) on particle creation.
+Using the id in square brackets, the respective particle can be accessed from the particle list::
 
-    particle = system.part[0]
-    particle.type = 0
-    print("Position of particle 0: {}".format(particle.pos))
+    >>> system.part.add(id=3, pos=[2.1, 1.2, 3.3], type=0)
+    >>> system.part[3].pos = [1.0, 1.0, 2.0]
+    >>> print(system.part[3])
+    [1.0, 1.0, 2.0]
+
+For larger simulation setups, explicit handling of numerical ids can quickly
+become confusing and is thus error-prone. We therefore highly recommend using
+:class:`~espressomd.particle_data.ParticleHandle` instead wherever possible.
 
 :ref:`Properties of several particles<Interacting with groups of particles>`
 can be accessed by using Python slices: ::
@@ -216,11 +228,11 @@ interaction between all particles of type 0 with the given parameters: ::
 
 .. rubric:: Bonded interaction
 
-Next, we add another pair of particles with a different type to later add
+Next, we add a pair of particles with a different type to later add
 a :ref:`harmonic bond<Harmonic bond>` between them: ::
 
-    system.part.add(id=2, pos=[7.0, 7.0, 7.0], type=1)
-    system.part.add(id=3, pos=[7.0, 7.0, 8.0], type=1)
+    part1 = system.part.add(pos=[7.0, 7.0, 7.0], type=1)
+    part2 = system.part.add(pos=[7.0, 7.0, 8.0], type=1)
 
 To set up a bonded interaction, first an instance of the appropriate
 class is created with the desired parameters: ::
@@ -232,19 +244,19 @@ by adding the instance to :attr:`~espressomd.system.System.bonded_inter`: ::
 
     system.bonded_inter.add(harmonic)
 
-Finally, the bond can be added to particles using the :meth:`~espressomd.particle_data.ParticleHandle.add_bond()` method of
-:class:`~espressomd.particle_data.ParticleHandle` with the instance of the bond class and the id of the bond
-partner particle: ::
+Finally, the bond can be added to particles using the :meth:`~espressomd.particle_data.ParticleHandle.add_bond()`
+method of :class:`~espressomd.particle_data.ParticleHandle` with the instance of the bond class and the
+instance of the partner particle: ::
 
-    system.part[2].add_bond((harmonic, 3))
+    part1.add_bond((harmonic, part2))
 
 .. rubric:: Charges
 
-Now we want to setup a pair of charged particles treated by the P3M
+Now we demonstrate how to setup a pair of charged particles treated by the P3M
 electrostatics solver. We start by adding the particles: ::
 
-    system.part.add(id=4, pos=[4.0, 1.0, 1.0], type=2, q=1.0)
-    system.part.add(id=5, pos=[6.0, 1.0, 1.0], type=2, q=-1.0)
+    cation = system.part.add(pos=[4.0, 1.0, 1.0], type=2, q=1.0)
+    anion = system.part.add(pos=[6.0, 1.0, 1.0], type=2, q=-1.0)
 
 Long-range interactions and other methods that might be mutually exclusive
 are treated as so-called *actors*. They are used by first creating an instance
@@ -254,7 +266,7 @@ of the desired actor::
 
 and then adding it to the system: ::
 
-    print("Tuning p3m...")
+    print("Tuning p3m ...")
     system.actors.add(p3m)
 
 .. rubric:: Integration
@@ -436,7 +448,7 @@ report so to the developers using the instructions in :ref:`Contributing`.
 +--------------------------------+------------------------+------------------+------------+
 | Langevin Thermostat            | Core                   | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Isotropic NPT                  | Experimental           | None             | Yes        |
+| Isotropic NpT                  | Experimental           | None             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Quaternion Integrator          | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+

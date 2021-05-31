@@ -86,8 +86,8 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
 
     # Initialize dict with expected forces
     f_expected = {}
-    for id in system.part[:].id:
-        f_expected[id] = np.zeros(3)
+    for pid in system.part[:].id:
+        f_expected[pid] = np.zeros(3)
 
     # Cache some stuff to speed up pair loop
     dist_vec = system.distance_vec
@@ -98,8 +98,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
     all_types = np.unique(system.part[:].type)
     for i in all_types:
         for j in all_types:
-            lj_params[i, j] = non_bonded_inter[
-                int(i), int(j)].lennard_jones.get_params()
+            lj_params[i, j] = non_bonded_inter[i, j].lennard_jones.get_params()
 
     # Go over all pairs of particles
     for pair in system.part.pairs():
@@ -116,17 +115,14 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
         f = lj_force_vector(v_d, d, lj_params[p0.type, p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
+
     # Check actual forces against expected
-    for id in system.part[:].id:
-        if id in ids_to_skip:
+    for p in system.part:
+        if p.id in ids_to_skip:
             continue
-        if np.linalg.norm(system.part[id].f - f_expected[id]) >= tolerance:
-            raise Exception("LJ force verification failed on particle " +
-                            str(id) +
-                            ". Got " +
-                            str(system.part[id].f) +
-                            ", expected " +
-                            str(f_expected[id]))
+        if np.linalg.norm(p.f - f_expected[p.id]) >= tolerance:
+            raise Exception(f"LJ force verification failed on particle "
+                            f"{p.id}. Got {p.f}, expected {f_expected[p.id]}")
 
 
 def abspath(path):
@@ -134,7 +130,7 @@ def abspath(path):
 
 
 def transform_pos_from_cartesian_to_polar_coordinates(pos):
-    """Transform the given cartesian coordinates to polar coordinates.
+    """Transform the given cartesian coordinates to cylindrical coordinates.
 
     Parameters
     ----------
@@ -164,50 +160,43 @@ def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
     """
     return np.array([
         (pos[0] * vel[0] + pos[1] * vel[1]) / np.sqrt(pos[0]**2 + pos[1]**2),
-        (pos[0] * vel[1] - pos[1] * vel[0]) / (pos[0]**2 + pos[1]**2), vel[2]])
+        (pos[0] * vel[1] - pos[1] * vel[0]) / np.sqrt(pos[0]**2 + pos[1]**2), vel[2]])
 
 
-def convert_vec_body_to_space(system, part, vec):
-    A = rotation_matrix_quat(system, part)
+def get_cylindrical_basis_vectors(pos):
+    phi = transform_pos_from_cartesian_to_polar_coordinates(pos)[1]
+    e_r = np.array([np.cos(phi), np.sin(phi), 0.])
+    e_phi = np.array([-np.sin(phi), np.cos(phi), 0.])
+    e_z = np.array([0., 0., 1.])
+    return e_r, e_phi, e_z
+
+
+def convert_vec_body_to_space(p, vec):
+    A = rotation_matrix_quat(p)
     return np.dot(A.transpose(), vec)
 
 
-def rotation_matrix(axis, theta):
+def rodrigues_rot(vec, axis, angle):
     """
-    Return the rotation matrix associated with counterclockwise rotation about
-    the given axis by theta radians.
-
-    Parameters
-    ----------
-    axis : array_like :obj:`float`
-        Axis to rotate around.
-    theta : :obj:`float`
-        Rotation angle.
-
+    https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula#Statement
     """
-    axis = np.asarray(axis)
-    axis = axis / np.sqrt(np.dot(axis, axis))
-    a = np.cos(theta / 2.0)
-    b, c, d = -axis * np.sin(theta / 2.0)
-    aa, bb, cc, dd = a * a, b * b, c * c, d * d
-    bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-    return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
-                     [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-                     [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
+    axis /= np.linalg.norm(axis)
+    return np.cos(angle) * vec + np.sin(angle) * np.cross(axis, vec) + \
+        (1 - np.cos(angle)) * np.dot(axis, vec) * axis
 
 
-def rotation_matrix_quat(system, part):
+def rotation_matrix_quat(p):
     """
     Return the rotation matrix associated with quaternion.
 
     Parameters
     ----------
-    part : :obj:`int`
-        Particle index.
+    p : :obj:`ParticleHandle`
+        Particle.
 
     """
     A = np.zeros((3, 3))
-    quat = system.part[part].quat
+    quat = p.quat
     qq = np.power(quat, 2)
 
     A[0, 0] = qq[0] + qq[1] - qq[2] - qq[3]
@@ -225,55 +214,41 @@ def rotation_matrix_quat(system, part):
     return A
 
 
-def get_cylindrical_bin_volume(
-        n_r_bins,
-        n_phi_bins,
-        n_z_bins,
-        min_r,
-        max_r,
-        min_phi,
-        max_phi,
-        min_z,
-        max_z):
+def normalize_cylindrical_hist(histogram, cyl_obs_params):
     """
-    Return the bin volumes for a cylindrical histogram.
+    normalize a histogram in cylindrical coordinates. Helper to test the output
+    of cylindrical histogram observables
 
     Parameters
     ----------
-    n_r_bins : :obj:`float`
-        Number of bins in ``r`` direction.
-    n_phi_bins : :obj:`float`
-        Number of bins in ``phi`` direction.
-    n_z_bins : :obj:`float`
-        Number of bins in ``z`` direction.
-    min_r : :obj:`float`
-        Minimum considered value in ``r`` direction.
-    max_r : :obj:`float`
-        Maximum considered value in ``r`` direction.
-    min_phi : :obj:`float`
-        Minimum considered value in ``phi`` direction.
-    max_phi : :obj:`float`
-        Maximum considered value in ``phi`` direction.
-    min_z : :obj:`float`
-        Minimum considered value in ``z`` direction.
-    max_z : :obj:`float`
-        Maximum considered value in ``z`` direction.
-
-    Returns
-    -------
-    array_like
-        Bin volumes.
-
+    histogram : (N,3) array_like of :obj:`float`
+        The histogram that needs to be normalized
+    cyl_obs_params : :obj:`dict`
+        A dictionary containing the common parameters of the cylindrical histogram observables.
+        Needs to contain the information about number and range of bins.
     """
+
+    n_r_bins = cyl_obs_params['n_r_bins']
+    n_phi_bins = cyl_obs_params['n_phi_bins']
+    n_z_bins = cyl_obs_params['n_z_bins']
+    min_r = cyl_obs_params['min_r']
+    max_r = cyl_obs_params['max_r']
+    min_phi = cyl_obs_params['min_phi']
+    max_phi = cyl_obs_params['max_phi']
+    min_z = cyl_obs_params['min_z']
+    max_z = cyl_obs_params['max_z']
+
     bin_volume = np.zeros(n_r_bins)
     r_bin_size = (max_r - min_r) / n_r_bins
     phi_bin_size = (max_phi - min_phi) / n_phi_bins
     z_bin_size = (max_z - min_z) / n_z_bins
     for i in range(n_r_bins):
-        bin_volume[i] = np.pi * ((min_r + r_bin_size * (i + 1))**2.0 -
-                                 (min_r + r_bin_size * i)**2.0) * \
+        bin_volume = np.pi * ((min_r + r_bin_size * (i + 1))**2.0 -
+                              (min_r + r_bin_size * i)**2.0) * \
             phi_bin_size / (2.0 * np.pi) * z_bin_size
-    return bin_volume
+        histogram[i, :, :] /= bin_volume
+
+    return histogram
 
 
 def get_histogram(pos, obs_params, coord_system, **kwargs):
@@ -373,29 +348,29 @@ def quartic_potential(k0, k1, r, r_cut, scalar_r):
 # Generic Lennard-Jones
 
 
-def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12.,
-                         e2=6., b1=4., b2=4., delta=0., lam=1.):
+def lj_generic_potential(r, epsilon, sigma, cutoff, offset=0., shift=0.,
+                         e1=12., e2=6., b1=4., b2=4., delta=0., lam=1.):
     r = np.array(r)
     V = np.zeros_like(r)
     cutoffMask = (r <= cutoff + offset)
     # LJGEN_SOFTCORE transformations
     rroff = np.sqrt(
-        np.power(r[cutoffMask] - offset, 2) + (1 - lam) * delta * sig**2)
-    V[cutoffMask] = eps * lam * \
-        (b1 * np.power(sig / rroff, e1) -
-         b2 * np.power(sig / rroff, e2) + shift)
+        np.power(r[cutoffMask] - offset, 2) + (1 - lam) * delta * sigma**2)
+    V[cutoffMask] = epsilon * lam * \
+        (b1 * np.power(sigma / rroff, e1) -
+         b2 * np.power(sigma / rroff, e2) + shift)
     return V
 
 
-def lj_generic_force(espressomd, r, eps, sig, cutoff, offset=0., e1=12, e2=6,
-                     b1=4., b2=4., delta=0., lam=1., generic=True):
+def lj_generic_force(espressomd, r, epsilon, sigma, cutoff, offset=0., e1=12,
+                     e2=6, b1=4., b2=4., delta=0., lam=1., generic=True):
     f = 1.
     if r >= offset + cutoff:
         f = 0.
     else:
-        h = (r - offset)**2 + delta * (1. - lam) * sig**2
-        f = (r - offset) * eps * lam * (
-            b1 * e1 * np.power(sig / np.sqrt(h), e1) - b2 * e2 * np.power(sig / np.sqrt(h), e2)) / h
+        h = (r - offset)**2 + delta * (1. - lam) * sigma**2
+        f = (r - offset) * epsilon * lam * (
+            b1 * e1 * np.power(sigma / np.sqrt(h), e1) - b2 * e2 * np.power(sigma / np.sqrt(h), e2)) / h
         if (not espressomd.has_features("LJGEN_SOFTCORE")) and generic:
             f *= np.sign(r - offset)
     return f
@@ -403,76 +378,76 @@ def lj_generic_force(espressomd, r, eps, sig, cutoff, offset=0., e1=12, e2=6,
 # Lennard-Jones
 
 
-def lj_potential(r, eps, sig, cutoff, shift, offset=0.):
+def lj_potential(r, epsilon, sigma, cutoff, shift, offset=0.):
     V = lj_generic_potential(
-        r, eps, sig, cutoff, offset=offset, shift=shift * 4.)
+        r, epsilon, sigma, cutoff, offset=offset, shift=shift * 4.)
     return V
 
 
-def lj_force(espressomd, r, eps, sig, cutoff, offset=0.):
+def lj_force(espressomd, r, epsilon, sigma, cutoff, offset=0.):
     f = lj_generic_force(
-        espressomd, r, eps, sig, cutoff, offset=offset, generic=False)
+        espressomd, r, epsilon, sigma, cutoff, offset=offset, generic=False)
     return f
 
 # Lennard-Jones Cosine
 
 
-def lj_cos_potential(r, eps, sig, cutoff, offset):
+def lj_cos_potential(r, epsilon, sigma, cutoff, offset):
     V = 0.
-    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_min = offset + np.power(2., 1. / 6.) * sigma
     r_cut = cutoff + offset
     if r < r_min:
-        V = lj_potential(r, eps=eps, sig=sig,
+        V = lj_potential(r, epsilon=epsilon, sigma=sigma,
                          cutoff=cutoff, offset=offset, shift=0.)
     elif r < r_cut:
         alpha = np.pi / \
             (np.power(r_cut - offset, 2) - np.power(r_min - offset, 2))
         beta = np.pi - np.power(r_min - offset, 2) * alpha
-        V = 0.5 * eps * \
+        V = 0.5 * epsilon * \
             (np.cos(alpha * np.power(r - offset, 2) + beta) - 1.)
     return V
 
 
-def lj_cos_force(espressomd, r, eps, sig, cutoff, offset):
+def lj_cos_force(espressomd, r, epsilon, sigma, cutoff, offset):
     f = 0.
-    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_min = offset + np.power(2., 1. / 6.) * sigma
     r_cut = cutoff + offset
     if r < r_min:
-        f = lj_force(espressomd, r, eps=eps, sig=sig,
+        f = lj_force(espressomd, r, epsilon=epsilon, sigma=sigma,
                      cutoff=cutoff, offset=offset)
     elif r < r_cut:
         alpha = np.pi / \
             (np.power(r_cut - offset, 2) - np.power(r_min - offset, 2))
         beta = np.pi - np.power(r_min - offset, 2) * alpha
-        f = (r - offset) * alpha * eps * \
+        f = (r - offset) * alpha * epsilon * \
             np.sin(alpha * np.power(r - offset, 2) + beta)
     return f
 
 # Lennard-Jones Cosine^2
 
 
-def lj_cos2_potential(r, eps, sig, offset, width):
+def lj_cos2_potential(r, epsilon, sigma, offset, width):
     V = 0.
-    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_min = offset + np.power(2., 1. / 6.) * sigma
     r_cut = r_min + width
     if r < r_min:
-        V = lj_potential(r, eps=eps, sig=sig,
+        V = lj_potential(r, epsilon=epsilon, sigma=sigma,
                          offset=offset, cutoff=r_cut, shift=0.)
     elif r < r_cut:
-        V = -eps * np.power(np.cos(np.pi /
-                                   (2. * width) * (r - r_min)), 2)
+        V = -epsilon * np.power(np.cos(np.pi /
+                                       (2. * width) * (r - r_min)), 2)
     return V
 
 
-def lj_cos2_force(espressomd, r, eps, sig, offset, width):
+def lj_cos2_force(espressomd, r, epsilon, sigma, offset, width):
     f = 0.
-    r_min = offset + np.power(2., 1. / 6.) * sig
+    r_min = offset + np.power(2., 1. / 6.) * sigma
     r_cut = r_min + width
     if r < r_min:
-        f = lj_force(espressomd, r, eps=eps,
-                     sig=sig, cutoff=r_cut, offset=offset)
+        f = lj_force(espressomd, r, epsilon=epsilon,
+                     sigma=sigma, cutoff=r_cut, offset=offset)
     elif r < r_cut:
-        f = - np.pi * eps * \
+        f = - np.pi * epsilon * \
             np.sin(np.pi * (r - r_min) / width) / (2. * width)
     return f
 
@@ -638,13 +613,6 @@ def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
     return 4. * epsilon * (rr**-12 - rr**-6)
 
 
-class DynamicDict(dict):
-
-    def __getitem__(self, key):
-        value = super().__getitem__(key)
-        return eval(value, self) if isinstance(value, str) else value
-
-
 def count_fluid_nodes(lbf):
     """Counts the non-boundary nodes in the passed lb fluid instance."""
 
@@ -654,3 +622,14 @@ def count_fluid_nodes(lbf):
             fluid_nodes += 1
 
     return fluid_nodes
+
+
+def random_dipoles(n_particles):
+    """Generate random dipoles by sampling Euler angles uniformly at random."""
+    cos_theta = 2 * np.random.random(n_particles) - 1
+    sin_theta = np.sin(np.arcsin(cos_theta))
+    phi = 2 * np.pi * np.random.random(n_particles)
+    dip = np.array([sin_theta * np.cos(phi),
+                    sin_theta * np.sin(phi),
+                    cos_theta]).T
+    return dip

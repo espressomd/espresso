@@ -60,7 +60,7 @@ def detect_invalid_urls(nb, sphinx_root='.'):
     html_parser = lxml.etree.HTMLParser()
     root = lxml.etree.fromstring(html_string, parser=html_parser)
     # process all links
-    espressomd_website_root = 'http://espressomd.org/html/doc/'
+    espressomd_website_root = 'https://espressomd.github.io/doc/'
     sphinx_html_root = os.path.join(sphinx_root, 'doc', 'sphinx', 'html')
     broken_links = []
     for link in root.xpath('//a'):

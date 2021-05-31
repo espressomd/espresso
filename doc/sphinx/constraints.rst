@@ -440,7 +440,8 @@ HollowConicalFrustum
 
 :class:`espressomd.shapes.HollowConicalFrustum`
 
-A hollow cone with round corners. The specific parameters
+A hollow cone with round corners.
+Can include an opening in the side (see figures below). The specific parameters
 are described in the shape's class :class:`espressomd.shapes.HollowConicalFrustum`.
 
 .. figure:: figures/shape-conical_frustum.png
@@ -448,6 +449,11 @@ are described in the shape's class :class:`espressomd.shapes.HollowConicalFrustu
    :align: center
    :height: 6.00000cm
 
+.. figure:: figures/shape-hollowconicalfrustum_central_angle.png
+   :alt: Visualization a HollowConicalFrustum shape with central angle
+   :align: center
+   :height: 6.00000cm
+   
 .. figure:: figures/conical_frustum.png
    :alt: Schematic for the HollowConicalFrustum shape with labeled geometrical parameters.
    :align: center

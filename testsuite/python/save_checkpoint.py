@@ -21,6 +21,7 @@ import os
 import espressomd
 import espressomd.checkpointing
 import espressomd.electrostatics
+import espressomd.magnetostatics
 import espressomd.interactions
 import espressomd.virtual_sites
 import espressomd.accumulators
@@ -36,8 +37,10 @@ from espressomd import constraints
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
 
-# use a box with 3 different dimensions
+# use a box with 3 different dimensions, unless DipolarP3M is used
 system = espressomd.System(box_l=[12.0, 14.0, 16.0])
+if 'DP3M' in modes:
+    system.box_l = 3 * [np.max(system.box_l)]
 system.cell_system.skin = 0.1
 system.time_step = 0.01
 system.min_global_cut = 2.0
@@ -59,7 +62,8 @@ if 'LB.CPU' in modes:
 elif 'LB.GPU' in modes and espressomd.gpu_available():
     LB_implementation = espressomd.lb.LBFluidGPU
 if LB_implementation:
-    lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
+    lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01,
+                            gamma_odd=0.2, gamma_even=0.3)
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
@@ -88,15 +92,21 @@ if 'EK.GPU' in modes and espressomd.gpu_available(
     ek.add_species(ek_species)
     system.actors.add(ek)
 
-system.part.add(pos=[1.0] * 3)
-system.part.add(pos=[1.0, 1.0, 2.0])
+p1 = system.part.add(pos=[1.0] * 3)
+p2 = system.part.add(pos=[1.0, 1.0, 2.0])
+
+if espressomd.has_features('ELECTROSTATICS'):
+    p1.q = 1
+    p2.q = -1
+
+if espressomd.has_features('DIPOLES'):
+    p1.dip = (1.3, 2.1, -6)
+    p2.dip = (7.3, 6.1, -4)
 
 if espressomd.has_features('EXCLUSIONS'):
     system.part.add(pos=[2.0] * 3, exclusions=[0, 1])
 
-if espressomd.has_features('P3M') and 'P3M.CPU' in modes:
-    system.part[0].q = 1
-    system.part[1].q = -1
+if espressomd.has_features('P3M') and 'P3M' in modes:
     p3m = espressomd.electrostatics.P3M(
         prefactor=1.0,
         accuracy=0.1,
@@ -105,7 +115,16 @@ if espressomd.has_features('P3M') and 'P3M.CPU' in modes:
         alpha=1.0,
         r_cut=1.0,
         tune=False)
-    system.actors.add(p3m)
+    if 'P3M.CPU' in modes:
+        system.actors.add(p3m)
+    elif 'P3M.ELC' in modes:
+        elc = espressomd.electrostatics.ELC(
+            p3m_actor=p3m,
+            gap_size=6.0,
+            maxPWerror=0.1,
+            delta_mid_top=0.9,
+            delta_mid_bot=0.1)
+        system.actors.add(elc)
 
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
 acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
@@ -116,7 +135,7 @@ acc_correlator = espressomd.accumulators.Correlator(
 acc_mean_variance.update()
 acc_time_series.update()
 acc_correlator.update()
-system.part[0].pos = [1.0, 2.0, 3.0]
+p1.pos = [1.0, 2.0, 3.0]
 acc_mean_variance.update()
 acc_time_series.update()
 acc_correlator.update()
@@ -137,7 +156,8 @@ pot_field_data = constraints.ElectricPotential.field_from_fn(
     system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
 checkpoint.register("pot_field_data")
 system.constraints.add(constraints.PotentialField(
-    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6))
+    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
+    particle_scales={5: 6.0}))
 vec_field_data = constraints.ForceField.field_from_fn(
     system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
 checkpoint.register("vec_field_data")
@@ -180,7 +200,7 @@ if 'LB.OFF' in modes:
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
         have_quaternion=True)
-    system.part[1].vs_auto_relate_to(0)
+    p2.vs_auto_relate_to(p1)
 
 if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
     system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -190,26 +210,66 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
 
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
-system.part[1].add_bond((harmonic_bond, 0))
+p2.add_bond((harmonic_bond, p1))
 if 'THERM.LB' not in modes:
     thermalized_bond = espressomd.interactions.ThermalizedBond(
         temp_com=0.0, gamma_com=0.0, temp_distance=0.2, gamma_distance=0.5,
         r_cut=2, seed=51)
     system.bonded_inter.add(thermalized_bond)
-    system.part[1].add_bond((thermalized_bond, 0))
+    p2.add_bond((thermalized_bond, p1))
 checkpoint.register("system")
 checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
 checkpoint.register("acc_correlator")
 # calculate forces
 system.integrator.run(0)
-particle_force0 = np.copy(system.part[0].f)
-particle_force1 = np.copy(system.part[1].f)
+particle_force0 = np.copy(p1.f)
+particle_force1 = np.copy(p2.f)
 checkpoint.register("particle_force0")
 checkpoint.register("particle_force1")
 if espressomd.has_features("COLLISION_DETECTION"):
     system.collision_detection.set_params(
         mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
+
+if espressomd.has_features('DP3M') and 'DP3M' in modes:
+    dp3m = espressomd.magnetostatics.DipolarP3M(
+        prefactor=1.,
+        epsilon=2.,
+        mesh_off=[0.5, 0.5, 0.5],
+        r_cut=2.4,
+        cao=1,
+        mesh=[8, 8, 8],
+        alpha=12,
+        accuracy=0.01,
+        tune=False)
+    system.actors.add(dp3m)
+
+if espressomd.has_features('SCAFACOS') and 'SCAFACOS' in modes \
+        and 'p3m' in espressomd.scafacos.available_methods():
+    system.actors.add(espressomd.electrostatics.Scafacos(
+        prefactor=0.5,
+        method_name="p3m",
+        method_params={
+            "p3m_r_cut": 1.0,
+            "p3m_grid": 64,
+            "p3m_cao": 7,
+            "p3m_alpha": 2.084652}))
+
+if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
+        and 'p2nfft' in espressomd.scafacos.available_methods():
+    system.actors.add(espressomd.magnetostatics.Scafacos(
+        prefactor=1.2,
+        method_name='p2nfft',
+        method_params={
+            "p2nfft_verbose_tuning": "0",
+            "pnfft_N": "32,32,32",
+            "pnfft_n": "32,32,32",
+            "pnfft_window_name": "bspline",
+            "pnfft_m": "4",
+            "p2nfft_ignore_tolerance": "1",
+            "pnfft_diff_ik": "0",
+            "p2nfft_r_cut": "11",
+            "p2nfft_alpha": "0.37"}))
 
 if LB_implementation:
     m = np.pi / 12

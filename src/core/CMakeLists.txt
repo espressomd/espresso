@@ -14,7 +14,6 @@ set(EspressoCore_SRC
     forces.cpp
     galilei.cpp
     ghosts.cpp
-    global.cpp
     grid.cpp
     immersed_boundaries.cpp
     interactions.cpp
@@ -26,7 +25,6 @@ set(EspressoCore_SRC
     polymer.cpp
     pressure.cpp
     rattle.cpp
-    reaction_ensemble.cpp
     rotate_system.cpp
     rotation.cpp
     Observable_stat.cpp
@@ -44,6 +42,7 @@ set(EspressoCore_SRC
     PartCfg.cpp
     AtomDecomposition.cpp
     reduce_observable_stat.cpp
+    EspressoSystemStandAlone.cpp
     DomainDecomposition.cpp)
 
 if(CUDA)
@@ -102,11 +101,12 @@ add_subdirectory(io)
 add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)
 add_subdirectory(observables)
+add_subdirectory(reaction_methods)
 add_subdirectory(virtual_sites)
 
-if(WITH_UNIT_TESTS)
+if(WITH_TESTS)
   add_subdirectory(unit_tests)
-endif(WITH_UNIT_TESTS)
+endif(WITH_TESTS)
 
 if(STOKESIAN_DYNAMICS)
   add_subdirectory(stokesian_dynamics)

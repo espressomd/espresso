@@ -145,9 +145,7 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
   }
 
   auto const C_size = A.size() / 3;
-  if (3 * C_size != A.size()) {
-    throw std::runtime_error("Invalid dimensions.");
-  }
+  assert(3 * C_size == A.size());
 
   std::vector<double> C(C_size, 0);
 
@@ -194,27 +192,19 @@ void Correlator::initialize() {
         ceil(1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0)));
   }
 
-  dim_A = 0;
-  dim_B = 0;
-
-  if (A_obs) {
-    dim_A = A_obs->n_values();
-  }
-  if (!B_obs) {
-    B_obs = A_obs;
-  }
-
+  assert(A_obs);
+  assert(B_obs);
+  dim_A = A_obs->n_values();
   dim_B = B_obs->n_values();
 
-  if (dim_A < 1) {
-    throw std::runtime_error("dimension of A was not >1");
+  if (dim_A == 0) {
+    throw std::runtime_error("dimension of first observable has to be >= 1");
+  }
+  if (dim_B == 0) {
+    throw std::runtime_error("dimension of second observable has to be >= 1");
   }
 
   // choose the correlation operation
-  if (corr_operation_name.empty()) {
-    throw std::runtime_error(
-        "no proper function for correlation operation given");
-  }
   if (corr_operation_name == "componentwise_product") {
     m_dim_corr = dim_A;
     m_shape = A_obs->shape();
@@ -254,37 +244,31 @@ void Correlator::initialize() {
     corr_operation = &scalar_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else {
-    throw std::runtime_error(
-        "no proper function for correlation operation given");
+    throw std::invalid_argument("correlation operation '" +
+                                corr_operation_name + "' not implemented");
   }
 
   // Choose the compression function
-  if (compressA_name.empty()) { // this is the default
-    compressA_name = "discard2";
-    compressA = &compress_discard2;
-  } else if (compressA_name == "discard2") {
+  if (compressA_name == "discard2") {
     compressA = &compress_discard2;
   } else if (compressA_name == "discard1") {
     compressA = &compress_discard1;
   } else if (compressA_name == "linear") {
     compressA = &compress_linear;
   } else {
-    throw std::runtime_error(
-        "no proper function for compression of first observable given");
+    throw std::invalid_argument("unknown compression method '" +
+                                compressA_name + "' for first observable");
   }
 
-  if (compressB_name.empty()) {
-    compressB_name = compressA_name;
-    compressB = compressA;
-  } else if (compressB_name == "discard2") {
+  if (compressB_name == "discard2") {
     compressB = &compress_discard2;
   } else if (compressB_name == "discard1") {
     compressB = &compress_discard1;
   } else if (compressB_name == "linear") {
     compressB = &compress_linear;
   } else {
-    throw std::runtime_error(
-        "no proper function for compression of second observable given");
+    throw std::invalid_argument("unknown compression method '" +
+                                compressB_name + "' for second observable");
   }
 
   A.resize(std::array<int, 2>{{m_hierarchy_depth, m_tau_lin + 1}});
@@ -418,8 +402,6 @@ void Correlator::update() {
       }
     }
   }
-
-  m_last_update = sim_time;
 }
 
 int Correlator::finalize() {
@@ -513,7 +495,9 @@ std::vector<double> Correlator::get_correlation() {
   for (size_t i = 0; i < n_result; i++) {
     auto const index = m_dim_corr * i;
     for (size_t k = 0; k < m_dim_corr; k++) {
-      res[index + k] = (n_sweeps[i] > 0) ? result[i][k] / n_sweeps[i] : 0;
+      if (n_sweeps[i]) {
+        res[index + k] = result[i][k] / static_cast<double>(n_sweeps[i]);
+      }
     }
   }
   return res;
@@ -541,7 +525,6 @@ std::string Correlator::get_internal_state() const {
   oa << A_accumulated_average;
   oa << B_accumulated_average;
   oa << n_data;
-  oa << m_last_update;
 
   return ss.str();
 }
@@ -563,7 +546,6 @@ void Correlator::set_internal_state(std::string const &state) {
   ia >> A_accumulated_average;
   ia >> B_accumulated_average;
   ia >> n_data;
-  ia >> m_last_update;
 }
 
 } // namespace Accumulators

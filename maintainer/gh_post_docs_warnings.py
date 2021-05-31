@@ -18,33 +18,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import re
 import os
-import sys
-import requests
 
-if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
+if not os.environ.get('CI_COMMIT_REF_NAME', '').startswith('PR-'):
+    print("Not a pull request. Exiting now.")
     exit(0)
 
-PR = os.environ['CI_COMMIT_REF_NAME'][3:]
-URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
-      PR + '/comments'
-HEADERS = {'Authorization': 'token ' + os.environ['GITHUB_TOKEN']}
-SIZELIMIT = 5000
+import re
+import sys
+import gh_post
 
 doc_type, has_warnings, filepath_warnings = sys.argv[-3:]
 has_warnings = has_warnings != '0'
 prefix = {'sphinx': 'doc', 'doxygen': 'dox'}[doc_type]
 TOKEN_ESPRESSO_CI = prefix + '_warnings.sh'
+SIZELIMIT = 5000
 
-# Delete all existing comments
-comments = requests.get(URL, headers=HEADERS)
-comments.raise_for_status()
-for comment in comments.json():
-    if comment['user']['login'] == 'espresso-ci' and \
-            TOKEN_ESPRESSO_CI in comment['body']:
-        response = requests.delete(comment['url'], headers=HEADERS)
-        response.raise_for_status()
+# Delete obsolete posts
+gh_post.delete_comments_by_token(TOKEN_ESPRESSO_CI)
 
 # If documentation raised warnings, post a new comment
 if has_warnings:
@@ -66,16 +57,13 @@ if has_warnings:
             comment += line + '\n'
         comment = comment.rstrip() + '\n' + backticks + '\n'
         comment += (
-            '\nThis list was truncated, check the [container logfile]'
-            '({}) for the complete list.\n'.format(os.environ['CI_JOB_URL']))
+            f'\nThis list was truncated, check the [container logfile]'
+            f'({gh_post.CI_JOB_URL}) for the complete list.\n')
     else:
         comment += warnings.rstrip() + '\n' + backticks + '\n'
     comment += (
-        '\nYou can generate these warnings with `make -t; make {}; '
-        '../maintainer/CI/{}_warnings.sh` using the maxset config. This is '
-        'the same command that I have executed to generate the log above.'
-        .format(doc_type, prefix))
+        f'\nYou can generate these warnings with `make -t; make {doc_type}; '
+        f'../maintainer/CI/{prefix}_warnings.sh` using the maxset config. This '
+        f'is the same command that I have executed to generate the log above.')
     assert TOKEN_ESPRESSO_CI in comment
-
-    response = requests.post(URL, headers=HEADERS, json={'body': comment})
-    response.raise_for_status()
+    gh_post.post_message(comment)

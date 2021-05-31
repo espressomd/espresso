@@ -28,16 +28,7 @@
 
 #include "energy.hpp"
 
-#include "bonded_interactions/angle_cosine.hpp"
-#include "bonded_interactions/angle_cossquare.hpp"
-#include "bonded_interactions/angle_harmonic.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "bonded_interactions/bonded_tab.hpp"
-#include "bonded_interactions/dihedral.hpp"
-#include "bonded_interactions/fene.hpp"
-#include "bonded_interactions/harmonic.hpp"
-#include "bonded_interactions/quartic.hpp"
-#include "bonded_interactions/umbrella.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -57,8 +48,6 @@
 #include "nonbonded_interactions/wca.hpp"
 
 #ifdef ELECTROSTATICS
-#include "bonded_interactions/bonded_coulomb.hpp"
-#include "bonded_interactions/bonded_coulomb_sr.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
 
@@ -77,6 +66,7 @@
 
 #include <boost/optional.hpp>
 #include <boost/range/algorithm/find_if.hpp>
+#include <boost/variant.hpp>
 
 /** Calculate non-bonded energies between a pair of particles.
  *  @param p1         particle 1.
@@ -212,94 +202,104 @@ inline void add_non_bonded_pair_energy(Particle const &p1, Particle const &p2,
 }
 
 inline boost::optional<double>
-calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
+calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
                    Utils::Span<Particle *> partners) {
   auto const n_partners = partners.size();
-  auto const type = iaparams.type;
 
   auto p2 = (n_partners > 0) ? partners[0] : nullptr;
   auto p3 = (n_partners > 1) ? partners[1] : nullptr;
   auto p4 = (n_partners > 2) ? partners[2] : nullptr;
 
   if (n_partners == 1) {
-    auto const dx = get_mi_vector(p1.r.p, p2->r.p, box_geo);
-    switch (type) {
-    case BONDED_IA_FENE:
-      return fene_pair_energy(iaparams, dx);
-    case BONDED_IA_HARMONIC:
-      return harmonic_pair_energy(iaparams, dx);
-    case BONDED_IA_QUARTIC:
-      return quartic_pair_energy(iaparams, dx);
+    auto const dx = box_geo.get_mi_vector(p1.r.p, p2->r.p);
+    if (auto const *iap = boost::get<FeneBond>(&iaparams)) {
+      return iap->energy(dx);
+    }
+    if (auto const *iap = boost::get<HarmonicBond>(&iaparams)) {
+      return iap->energy(dx);
+    }
+    if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
+      return iap->energy(dx);
+    }
 #ifdef ELECTROSTATICS
-    case BONDED_IA_BONDED_COULOMB:
-      return bonded_coulomb_pair_energy(p1.p.q * p2->p.q, iaparams, dx);
-    case BONDED_IA_BONDED_COULOMB_SR:
-      return bonded_coulomb_sr_pair_energy(p1, *p2, iaparams, dx);
+    if (auto const *iap = boost::get<BondedCoulomb>(&iaparams)) {
+      return iap->energy(p1.p.q * p2->p.q, dx);
+    }
+    if (auto const *iap = boost::get<BondedCoulombSR>(&iaparams)) {
+      return iap->energy(p1, *p2, dx);
+    }
 #endif
 #ifdef BOND_CONSTRAINT
-    case BONDED_IA_RIGID_BOND:
+    if (auto const *iap = boost::get<RigidBond>(&iaparams)) {
       return boost::optional<double>(0);
+    }
 #endif
-    case BONDED_IA_TABULATED_DISTANCE:
-      return tab_bond_energy(iaparams, dx);
-    case BONDED_IA_UMBRELLA:
-      return umbrella_pair_energy(iaparams, dx);
-    case BONDED_IA_VIRTUAL_BOND:
+#ifdef TABULATED
+    if (auto const *iap = boost::get<TabulatedDistanceBond>(&iaparams)) {
+      return iap->energy(dx);
+    }
+#endif
+    if (auto const *iap = boost::get<VirtualBond>(&iaparams)) {
       return boost::optional<double>(0);
-    default:
-      throw BondUnknownTypeError(type);
     }
+    throw BondUnknownTypeError();
   } // 1 partner
-  else if (n_partners == 2) {
-    switch (type) {
-    case BONDED_IA_ANGLE_HARMONIC:
-      return angle_harmonic_energy(p1.r.p, p2->r.p, p3->r.p, iaparams);
-    case BONDED_IA_ANGLE_COSINE:
-      return angle_cosine_energy(p1.r.p, p2->r.p, p3->r.p, iaparams);
-    case BONDED_IA_ANGLE_COSSQUARE:
-      return angle_cossquare_energy(p1.r.p, p2->r.p, p3->r.p, iaparams);
-    case BONDED_IA_TABULATED_ANGLE:
-      return tab_angle_energy(p1.r.p, p2->r.p, p3->r.p, iaparams);
-    default:
-      throw BondUnknownTypeError(type);
+  if (n_partners == 2) {
+    if (auto const *iap = boost::get<AngleHarmonicBond>(&iaparams)) {
+      return iap->energy(p1.r.p, p2->r.p, p3->r.p);
     }
-  } // 2 partner
-  else if (n_partners == 3) {
-    switch (type) {
-    case BONDED_IA_DIHEDRAL:
-      return dihedral_energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p, iaparams);
-    case BONDED_IA_TABULATED_DIHEDRAL:
-      return tab_dihedral_energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p, iaparams);
-    default:
-      throw BondUnknownTypeError(type);
+    if (auto const *iap = boost::get<AngleCosineBond>(&iaparams)) {
+      return iap->energy(p1.r.p, p2->r.p, p3->r.p);
     }
-  } else if (n_partners == 0) {
+    if (auto const *iap = boost::get<AngleCossquareBond>(&iaparams)) {
+      return iap->energy(p1.r.p, p2->r.p, p3->r.p);
+    }
+    if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
+      return iap->energy(p1.r.p, p2->r.p, p3->r.p);
+    }
+    throw BondUnknownTypeError();
+  } // 2 partners
+  if (n_partners == 3) {
+    if (auto const *iap = boost::get<DihedralBond>(&iaparams)) {
+      return iap->energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p);
+    }
+    if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
+      return iap->energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p);
+    }
+    throw BondUnknownTypeError();
+  } // 3 partners
+  if (n_partners == 0) {
     return 0.;
   }
 
   throw BondInvalidSizeError(n_partners);
 }
 
-/** Calculate kinetic energies for one particle.
- *  @param[in] p1   particle for which to calculate energies
+/** Calculate kinetic energies from translation for one particle.
+ *  @param p   particle for which to calculate energies
  */
-inline double calc_kinetic_energy(Particle const &p1) {
-  if (p1.p.is_virtual)
-    return 0.0;
+inline double translational_kinetic_energy(Particle const &p) {
+  return p.p.is_virtual ? 0. : 0.5 * p.p.mass * p.m.v.norm2();
+}
 
-  /* kinetic energy */
-  auto res = 0.5 * p1.p.mass * p1.m.v.norm2();
-
-  // Note that rotational degrees of virtual sites are integrated
-  // and therefore can contribute to kinetic energy
+/** Calculate kinetic energies from rotation for one particle.
+ *  @param p   particle for which to calculate energies
+ */
+inline double rotational_kinetic_energy(Particle const &p) {
 #ifdef ROTATION
-  if (p1.p.rotation) {
-    /* the rotational part is added to the total kinetic energy;
-     * Here we use the rotational inertia */
-    res += 0.5 * (hadamard_product(p1.m.omega, p1.m.omega) * p1.p.rinertia);
-  }
+  return p.p.rotation
+             ? 0.5 * (hadamard_product(p.m.omega, p.m.omega) * p.p.rinertia)
+             : 0.0;
+#else
+  return 0.0;
 #endif
-  return res;
+}
+
+/** Calculate kinetic energies for one particle.
+ *  @param p   particle for which to calculate energies
+ */
+inline double calc_kinetic_energy(Particle const &p) {
+  return translational_kinetic_energy(p) + rotational_kinetic_energy(p);
 }
 
 #endif // ENERGY_INLINE_HPP

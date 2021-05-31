@@ -28,7 +28,7 @@
 #include "EspressoSystemInterface.hpp"
 #include "actor/Mmm1dgpuForce.hpp"
 #include "actor/specfunc_cuda.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/mmm-modpsi.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
@@ -50,12 +50,12 @@ const int deviceCount = 1;
 #undef cudaSetDevice
 #define cudaSetDevice(d)
 
-__constant__ mmm1dgpu_real far_switch_radius_2[1] = {0.05 * 0.05};
-__constant__ mmm1dgpu_real boxz[1];
-__constant__ mmm1dgpu_real uz[1];
-__constant__ mmm1dgpu_real coulomb_prefactor[1] = {1.0};
+__constant__ float far_switch_radius_2[1] = {0.05f * 0.05f};
+__constant__ float boxz[1];
+__constant__ float uz[1];
+__constant__ float coulomb_prefactor[1] = {1.0f};
 __constant__ int bessel_cutoff[1] = {5};
-__constant__ mmm1dgpu_real maxPWerror[1] = {1e-5};
+__constant__ float maxPWerror[1] = {1e-5f};
 
 // order hardcoded. mmm1d_recalcTables() typically does order less than 30.
 // As the coefficients are stored in __constant__ memory, the array needs to be
@@ -68,15 +68,15 @@ const int modpsi_constant_size = modpsi_order * modpsi_order * 2;
 __constant__ int device_n_modPsi[1] = {0};
 __constant__ int device_linModPsi_offsets[2 * modpsi_order],
     device_linModPsi_lengths[2 * modpsi_order];
-__constant__ mmm1dgpu_real device_linModPsi[modpsi_constant_size];
+__constant__ float device_linModPsi[modpsi_constant_size];
 
-__device__ mmm1dgpu_real dev_mod_psi_even(int n, mmm1dgpu_real x) {
+__device__ float dev_mod_psi_even(int n, float x) {
   return evaluateAsTaylorSeriesAt(
       &device_linModPsi[device_linModPsi_offsets[2 * n]],
       device_linModPsi_lengths[2 * n], x * x);
 }
 
-__device__ mmm1dgpu_real dev_mod_psi_odd(int n, mmm1dgpu_real x) {
+__device__ float dev_mod_psi_odd(int n, float x) {
   return x * evaluateAsTaylorSeriesAt(
                  &device_linModPsi[device_linModPsi_offsets[2 * n + 1]],
                  device_linModPsi_lengths[2 * n + 1], x * x);
@@ -96,12 +96,11 @@ int modpsi_init() {
   }
 
   // linearize the coefficients array
-  std::vector<mmm1dgpu_real> linModPsi(linModPsi_offsets[modPsi.size() - 1] +
-                                       linModPsi_lengths[modPsi.size() - 1]);
+  std::vector<float> linModPsi(linModPsi_offsets[modPsi.size() - 1] +
+                               linModPsi_lengths[modPsi.size() - 1]);
   for (size_t i = 0; i < modPsi.size(); i++) {
     for (size_t j = 0; j < modPsi[i].size(); j++) {
-      linModPsi[linModPsi_offsets[i] + j] =
-          static_cast<mmm1dgpu_real>(modPsi[i][j]);
+      linModPsi[linModPsi_offsets[i] + j] = static_cast<float>(modPsi[i][j]);
     }
   }
 
@@ -122,7 +121,7 @@ int modpsi_init() {
                                      linModPsi_lengths.data(),
                                      modPsi.size() * sizeof(int)));
     cuda_safe_mem(cudaMemcpyToSymbol(device_linModPsi, linModPsi.data(),
-                                     linModPsiSize * sizeof(mmm1dgpu_real)));
+                                     linModPsiSize * sizeof(float)));
     auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
     cuda_safe_mem(cudaMemcpyToSymbol(device_n_modPsi, &n_modPsi, sizeof(int)));
   }
@@ -130,10 +129,8 @@ int modpsi_init() {
   return 0;
 }
 
-Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s,
-                             mmm1dgpu_real _coulomb_prefactor,
-                             mmm1dgpu_real _maxPWerror,
-                             mmm1dgpu_real _far_switch_radius,
+Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, float _coulomb_prefactor,
+                             float _maxPWerror, float _far_switch_radius,
                              int _bessel_cutoff)
     : numThreads(64), host_boxz(0), host_npart(0), need_tune(true), pairs(-1),
       dev_forcePairs(nullptr), dev_energyBlocks(nullptr),
@@ -141,16 +138,16 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s,
       far_switch_radius(_far_switch_radius), bessel_cutoff(_bessel_cutoff) {
   // interface sanity checks
   if (!s.requestFGpu())
-    std::cerr << "Mmm1dgpuForce needs access to forces on GPU!" << std::endl;
+    throw std::runtime_error("Mmm1dgpuForce needs access to forces on GPU!");
 
   if (!s.requestRGpu())
-    std::cerr << "Mmm1dgpuForce needs access to positions on GPU!" << std::endl;
+    throw std::runtime_error("Mmm1dgpuForce needs access to positions on GPU!");
 
   if (!s.requestQGpu())
-    std::cerr << "Mmm1dgpuForce needs access to charges on GPU!" << std::endl;
+    throw std::runtime_error("Mmm1dgpuForce needs access to charges on GPU!");
 
   // system sanity checks
-  check_periodicity();
+  sanity_checks();
 
   modpsi_init();
 }
@@ -161,12 +158,13 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
         "Error: Please set box length before initializing MMM1D!");
   }
   if (need_tune && s.npart_gpu() > 0) {
-    set_params(s.box()[2], coulomb.prefactor, maxPWerror, far_switch_radius,
-               bessel_cutoff);
+    set_params(static_cast<float>(s.box()[2]),
+               static_cast<float>(coulomb.prefactor), maxPWerror,
+               far_switch_radius, bessel_cutoff);
     tune(s, maxPWerror, far_switch_radius, bessel_cutoff);
   }
   if (s.box()[2] != host_boxz) {
-    set_params(s.box()[2], 0, -1, -1, -1);
+    set_params(static_cast<float>(s.box()[2]), 0, -1, -1, -1);
   }
   if (s.npart_gpu() == host_npart) // unchanged
   {
@@ -184,8 +182,7 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
     cudaMemGetInfo(&freeMem, &totalMem);
     if (freeMem / 2 <
         3 * s.npart_gpu() * s.npart_gpu() *
-            sizeof(
-                mmm1dgpu_real)) // don't use more than half the device's memory
+            sizeof(float)) // don't use more than half the device's memory
     {
       std::cerr << "Switching to atomicAdd due to memory constraints."
                 << std::endl;
@@ -199,12 +196,12 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
   {
     cuda_safe_mem(
         cudaMalloc((void **)&dev_forcePairs,
-                   3 * s.npart_gpu() * s.npart_gpu() * sizeof(mmm1dgpu_real)));
+                   3 * s.npart_gpu() * s.npart_gpu() * sizeof(float)));
   }
   if (dev_energyBlocks)
     cudaFree(dev_energyBlocks);
-  cuda_safe_mem(cudaMalloc((void **)&dev_energyBlocks,
-                           numBlocks(s) * sizeof(mmm1dgpu_real)));
+  cuda_safe_mem(
+      cudaMalloc((void **)&dev_energyBlocks, numBlocks(s) * sizeof(float)));
   host_npart = static_cast<int>(s.npart_gpu());
 }
 
@@ -217,14 +214,10 @@ unsigned int Mmm1dgpuForce::numBlocks(SystemInterface &s) {
 
 Mmm1dgpuForce::~Mmm1dgpuForce() { cudaFree(dev_forcePairs); }
 
-__forceinline__ __device__ mmm1dgpu_real sqpow(mmm1dgpu_real x) {
-  return x * x;
-}
-__forceinline__ __device__ mmm1dgpu_real cbpow(mmm1dgpu_real x) {
-  return x * x * x;
-}
+__forceinline__ __device__ float sqpow(float x) { return x * x; }
+__forceinline__ __device__ float cbpow(float x) { return x * x * x; }
 
-__device__ void sumReduction(mmm1dgpu_real *input, mmm1dgpu_real *sum) {
+__device__ void sumReduction(float *input, float *sum) {
   auto tid = static_cast<int>(threadIdx.x);
   for (auto i = static_cast<int>(blockDim.x) / 2; i > 0; i /= 2) {
     __syncthreads();
@@ -236,12 +229,12 @@ __device__ void sumReduction(mmm1dgpu_real *input, mmm1dgpu_real *sum) {
     sum[0] = input[0];
 }
 
-__global__ void sumKernel(mmm1dgpu_real *data, int N) {
-  extern __shared__ mmm1dgpu_real partialsums[];
+__global__ void sumKernel(float *data, int N) {
+  extern __shared__ float partialsums[];
   if (blockIdx.x != 0)
     return;
   auto tid = static_cast<int>(threadIdx.x);
-  mmm1dgpu_real result = 0;
+  float result = 0;
 
   for (int i = 0; i < N; i += static_cast<int>(blockDim.x)) {
     if (i + tid >= N)
@@ -258,16 +251,16 @@ __global__ void sumKernel(mmm1dgpu_real *data, int N) {
   }
 }
 
-__global__ void besselTuneKernel(int *result, mmm1dgpu_real far_switch_radius,
+__global__ void besselTuneKernel(int *result, float far_switch_radius,
                                  int maxCut) {
-  const mmm1dgpu_real c_2pif = 2 * Utils::pi<mmm1dgpu_real>();
-  mmm1dgpu_real arg = c_2pif * *uz * far_switch_radius;
-  mmm1dgpu_real pref = 4 * *uz * max(1.0f, c_2pif * *uz);
-  mmm1dgpu_real err;
+  const float c_2pif = 2 * Utils::pi<float>();
+  float arg = c_2pif * *uz * far_switch_radius;
+  float pref = 4 * *uz * max(1.0f, c_2pif * *uz);
+  float err;
   int P = 1;
   do {
-    err = pref * dev_K1(arg * static_cast<mmm1dgpu_real>(P)) * exp(arg) / arg *
-          (static_cast<mmm1dgpu_real>(P) - 1 + 1 / arg);
+    err = pref * dev_K1(arg * static_cast<float>(P)) * exp(arg) / arg *
+          (static_cast<float>(P) - 1 + 1 / arg);
     P++;
   } while (err > *maxPWerror && P <= maxCut);
   P--;
@@ -275,20 +268,20 @@ __global__ void besselTuneKernel(int *result, mmm1dgpu_real far_switch_radius,
   result[0] = P;
 }
 
-void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
-                         mmm1dgpu_real _far_switch_radius, int _bessel_cutoff) {
-  mmm1dgpu_real far_switch_radius = _far_switch_radius;
+void Mmm1dgpuForce::tune(SystemInterface &s, float _maxPWerror,
+                         float _far_switch_radius, int _bessel_cutoff) {
+  float far_switch_radius = _far_switch_radius;
   int bessel_cutoff = _bessel_cutoff;
-  mmm1dgpu_real maxrad = host_boxz;
+  float maxrad = host_boxz;
 
   if (_far_switch_radius < 0 && _bessel_cutoff < 0)
   // autodetermine switching radius and Bessel cutoff
   {
-    mmm1dgpu_real bestrad = 0, besttime = INFINITY;
+    float bestrad = 0, besttime = INFINITY;
 
     // NOLINTNEXTLINE(clang-analyzer-security.FloatLoopCounter)
-    for (far_switch_radius = 0.05 * maxrad; far_switch_radius < maxrad;
-         far_switch_radius += 0.05 * maxrad) {
+    for (far_switch_radius = 0.05f * maxrad; far_switch_radius < maxrad;
+         far_switch_radius += 0.05f * maxrad) {
       set_params(0, 0, _maxPWerror, far_switch_radius, bessel_cutoff);
       tune(s, _maxPWerror, far_switch_radius, -2); // tune Bessel cutoff
       auto runtime = force_benchmark(s);
@@ -327,17 +320,15 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
   }
 }
 
-void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
-                               mmm1dgpu_real _coulomb_prefactor,
-                               mmm1dgpu_real _maxPWerror,
-                               mmm1dgpu_real _far_switch_radius,
+void Mmm1dgpuForce::set_params(float _boxz, float _coulomb_prefactor,
+                               float _maxPWerror, float _far_switch_radius,
                                int _bessel_cutoff, bool manual) {
   if (_boxz > 0 && _far_switch_radius > _boxz) {
     throw std::runtime_error(
         "switching radius must not be larger than box length");
   }
-  mmm1dgpu_real _far_switch_radius_2 = _far_switch_radius * _far_switch_radius;
-  mmm1dgpu_real _uz = 1.0 / _boxz;
+  float _far_switch_radius_2 = _far_switch_radius * _far_switch_radius;
+  float _uz = 1.0f / _boxz;
   for (int d = 0; d < deviceCount; d++) {
     // double colons are needed to access the constant memory variables because
     // they are file globals and we have identically named class variables
@@ -350,18 +341,18 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
     if (_far_switch_radius >= 0) {
       mmm1d_params.far_switch_radius_2 =
           _far_switch_radius * _far_switch_radius;
-      cuda_safe_mem(cudaMemcpyToSymbol(
-          ::far_switch_radius_2, &_far_switch_radius_2, sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(cudaMemcpyToSymbol(::far_switch_radius_2,
+                                       &_far_switch_radius_2, sizeof(float)));
       far_switch_radius = _far_switch_radius;
     }
     if (_boxz > 0) {
       host_boxz = _boxz;
-      cuda_safe_mem(cudaMemcpyToSymbol(::boxz, &_boxz, sizeof(mmm1dgpu_real)));
-      cuda_safe_mem(cudaMemcpyToSymbol(::uz, &_uz, sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(cudaMemcpyToSymbol(::boxz, &_boxz, sizeof(float)));
+      cuda_safe_mem(cudaMemcpyToSymbol(::uz, &_uz, sizeof(float)));
     }
     if (_coulomb_prefactor != 0) {
       cuda_safe_mem(cudaMemcpyToSymbol(::coulomb_prefactor, &_coulomb_prefactor,
-                                       sizeof(mmm1dgpu_real)));
+                                       sizeof(float)));
       coulomb_prefactor = _coulomb_prefactor;
     }
     if (_bessel_cutoff > 0) {
@@ -372,8 +363,8 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
     }
     if (_maxPWerror > 0) {
       mmm1d_params.maxPWerror = _maxPWerror;
-      cuda_safe_mem(cudaMemcpyToSymbol(::maxPWerror, &_maxPWerror,
-                                       sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(
+          cudaMemcpyToSymbol(::maxPWerror, &_maxPWerror, sizeof(float)));
       maxPWerror = _maxPWerror;
     }
   }
@@ -387,29 +378,29 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
   // the MPI loop on the slave nodes is waiting for broadcasts.
 }
 
-__global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
-                             const mmm1dgpu_real *__restrict__ q,
-                             mmm1dgpu_real *__restrict__ force, int N,
-                             int pairs, int tStart, int tStop) {
+__global__ void forcesKernel(const float *__restrict__ r,
+                             const float *__restrict__ q,
+                             float *__restrict__ force, int N, int pairs,
+                             int tStart, int tStop) {
   if (tStop < 0)
     tStop = N * N;
 
-  const mmm1dgpu_real c_2pif = 2 * Utils::pi<mmm1dgpu_real>();
+  const float c_2pif = 2 * Utils::pi<float>();
 
   for (int tid =
            static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x) + tStart;
        tid < tStop; tid += static_cast<int>(blockDim.x * gridDim.x)) {
     int p1 = tid % N, p2 = tid / N;
-    mmm1dgpu_real x = r[3 * p2] - r[3 * p1], y = r[3 * p2 + 1] - r[3 * p1 + 1],
-                  z = r[3 * p2 + 2] - r[3 * p1 + 2];
-    mmm1dgpu_real rxy2 = sqpow(x) + sqpow(y);
-    mmm1dgpu_real rxy = sqrt(rxy2);
-    mmm1dgpu_real sum_r = 0, sum_z = 0;
+    float x = r[3 * p2] - r[3 * p1], y = r[3 * p2 + 1] - r[3 * p1 + 1],
+          z = r[3 * p2 + 2] - r[3 * p1 + 2];
+    float rxy2 = sqpow(x) + sqpow(y);
+    float rxy = sqrt(rxy2);
+    float sum_r = 0, sum_z = 0;
 
     // if (*boxz <= 0.0) return; // in case we are not initialized yet
 
     while (fabs(z) > *boxz / 2) // make sure we take the shortest distance
-      z -= (z > 0 ? 1. : -1.) * *boxz;
+      z -= (z > 0 ? 1.f : -1.f) * *boxz;
 
     if (p1 == p2) // particle exerts no force on itself
     {
@@ -417,16 +408,16 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
                // anyway)
     } else if (rxy2 <= *far_switch_radius_2) // near formula
     {
-      mmm1dgpu_real uzz = *uz * z;
-      mmm1dgpu_real uzr = *uz * rxy;
+      float uzz = *uz * z;
+      float uzr = *uz * rxy;
       sum_z = dev_mod_psi_odd(0, uzz);
-      mmm1dgpu_real uzrpow = uzr;
+      float uzrpow = uzr;
       for (int n = 1; n < *device_n_modPsi; n++) {
-        mmm1dgpu_real sum_r_old = sum_r;
-        mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
-        mmm1dgpu_real mpo = dev_mod_psi_odd(n, uzz);
+        float sum_r_old = sum_r;
+        float mpe = dev_mod_psi_even(n, uzz);
+        float mpo = dev_mod_psi_odd(n, uzz);
 
-        sum_r += 2 * static_cast<mmm1dgpu_real>(n) * mpe * uzrpow;
+        sum_r += 2 * static_cast<float>(n) * mpe * uzrpow;
         uzrpow *= uzr;
         sum_z += mpo * uzrpow;
         uzrpow *= uzr;
@@ -455,18 +446,16 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
     } else // far formula
     {
       for (int p = 1; p < *bessel_cutoff; p++) {
-        mmm1dgpu_real arg = c_2pif * *uz * static_cast<mmm1dgpu_real>(p);
-        sum_r +=
-            static_cast<mmm1dgpu_real>(p) * dev_K1(arg * rxy) * cos(arg * z);
-        sum_z +=
-            static_cast<mmm1dgpu_real>(p) * dev_K0(arg * rxy) * sin(arg * z);
+        float arg = c_2pif * *uz * static_cast<float>(p);
+        sum_r += static_cast<float>(p) * dev_K1(arg * rxy) * cos(arg * z);
+        sum_z += static_cast<float>(p) * dev_K0(arg * rxy) * sin(arg * z);
       }
       sum_r *= sqpow(*uz) * 4 * c_2pif;
       sum_z *= sqpow(*uz) * 4 * c_2pif;
       sum_r += 2 * *uz / rxy;
     }
 
-    mmm1dgpu_real pref = *coulomb_prefactor * q[p1] * q[p2];
+    float pref = *coulomb_prefactor * q[p1] * q[p2];
     if (pairs) {
       force[3 * (p1 + p2 * N - tStart)] = pref * sum_r / rxy * x;
       force[3 * (p1 + p2 * N - tStart) + 1] = pref * sum_r / rxy * y;
@@ -479,17 +468,17 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
   }
 }
 
-__global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
-                               const mmm1dgpu_real *__restrict__ q,
-                               mmm1dgpu_real *__restrict__ energy, int N,
-                               int pairs, int tStart, int tStop) {
+__global__ void energiesKernel(const float *__restrict__ r,
+                               const float *__restrict__ q,
+                               float *__restrict__ energy, int N, int pairs,
+                               int tStart, int tStop) {
   if (tStop < 0)
     tStop = N * N;
 
-  const mmm1dgpu_real c_2pif = 2 * Utils::pi<mmm1dgpu_real>();
-  const mmm1dgpu_real c_gammaf = 2 * Utils::gamma<mmm1dgpu_real>();
+  auto const c_2pif = 2 * Utils::pi<float>();
+  auto const c_gammaf = Utils::gamma<float>();
 
-  extern __shared__ mmm1dgpu_real partialsums[];
+  extern __shared__ float partialsums[];
   if (!pairs) {
     partialsums[threadIdx.x] = 0;
     __syncthreads();
@@ -498,28 +487,28 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
            static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x) + tStart;
        tid < tStop; tid += static_cast<int>(blockDim.x * gridDim.x)) {
     int p1 = tid % N, p2 = tid / N;
-    mmm1dgpu_real z = r[3 * p2 + 2] - r[3 * p1 + 2];
-    mmm1dgpu_real rxy2 =
+    float z = r[3 * p2 + 2] - r[3 * p1 + 2];
+    float rxy2 =
         sqpow(r[3 * p2] - r[3 * p1]) + sqpow(r[3 * p2 + 1] - r[3 * p1 + 1]);
-    mmm1dgpu_real rxy = sqrt(rxy2);
-    mmm1dgpu_real sum_e = 0;
+    float rxy = sqrt(rxy2);
+    float sum_e = 0;
 
     // if (*boxz <= 0.0) return; // in case we are not initialized yet
 
     while (fabs(z) > *boxz / 2) // make sure we take the shortest distance
-      z -= (z > 0 ? 1. : -1.) * *boxz;
+      z -= (z > 0 ? 1.f : -1.f) * *boxz;
 
     if (p1 == p2) // particle exerts no force on itself
     {
     } else if (rxy2 <= *far_switch_radius_2) // near formula
     {
-      mmm1dgpu_real uzz = *uz * z;
-      mmm1dgpu_real uzr2 = sqpow(*uz * rxy);
-      mmm1dgpu_real uzrpow = uzr2;
+      float uzz = *uz * z;
+      float uzr2 = sqpow(*uz * rxy);
+      float uzrpow = uzr2;
       sum_e = dev_mod_psi_even(0, uzz);
       for (int n = 1; n < *device_n_modPsi; n++) {
-        mmm1dgpu_real sum_e_old = sum_e;
-        mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
+        float sum_e_old = sum_e;
+        float mpe = dev_mod_psi_even(n, uzz);
         sum_e += mpe * uzrpow;
         uzrpow *= uzr2;
 
@@ -536,7 +525,7 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
     {
       sum_e = -(log(rxy * *uz / 2) + c_gammaf) / 2;
       for (int p = 1; p < *bessel_cutoff; p++) {
-        mmm1dgpu_real arg = c_2pif * *uz * static_cast<mmm1dgpu_real>(p);
+        float arg = c_2pif * *uz * static_cast<float>(p);
         sum_e += dev_K0(arg * rxy) * cos(arg * z);
       }
       sum_e *= *uz * 4;
@@ -553,9 +542,8 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
   }
 }
 
-__global__ void vectorReductionKernel(mmm1dgpu_real const *src,
-                                      mmm1dgpu_real *dst, int N, int tStart,
-                                      int tStop) {
+__global__ void vectorReductionKernel(float const *src, float *dst, int N,
+                                      int tStart, int tStop) {
   if (tStop < 0)
     tStop = N * N;
 
@@ -573,10 +561,7 @@ __global__ void vectorReductionKernel(mmm1dgpu_real const *src,
 }
 
 void Mmm1dgpuForce::computeForces(SystemInterface &s) {
-  if (coulomb.method !=
-      COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody cares about our
-                         // calculations anymore
-  {
+  if (coulomb.method != COULOMB_MMM1D_GPU) {
     std::cerr << "MMM1D: coulomb.method has been changed, skipping calculation"
               << std::endl;
     return;
@@ -600,8 +585,8 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s) {
   }
 }
 
-__global__ void scaleAndAddKernel(mmm1dgpu_real *dst, mmm1dgpu_real const *src,
-                                  int N, mmm1dgpu_real factor) {
+__global__ void scaleAndAddKernel(float *dst, float const *src, int N,
+                                  float factor) {
   for (auto tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
        tid < N; tid += static_cast<int>(blockDim.x * gridDim.x)) {
     dst[tid] += src[tid] * factor;
@@ -609,10 +594,7 @@ __global__ void scaleAndAddKernel(mmm1dgpu_real *dst, mmm1dgpu_real const *src,
 }
 
 void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
-  if (coulomb.method !=
-      COULOMB_MMM1D_GPU) // MMM1DGPU was disabled. nobody cares about our
-                         // calculations anymore
-  {
+  if (coulomb.method != COULOMB_MMM1D_GPU) {
     std::cerr << "MMM1D: coulomb.method has been changed, skipping calculation"
               << std::endl;
     return;
@@ -622,7 +604,7 @@ void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
   if (pairs < 0) {
     throw std::runtime_error("MMM1D was not initialized correctly");
   }
-  auto shared = static_cast<int>(numThreads * sizeof(mmm1dgpu_real));
+  auto shared = static_cast<int>(numThreads * sizeof(float));
 
   KERNELCALL_shared(energiesKernel, numBlocks(s), numThreads, shared,
                     s.rGpuBegin(), s.qGpuBegin(), dev_energyBlocks,
@@ -638,10 +620,10 @@ void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
 float Mmm1dgpuForce::force_benchmark(SystemInterface &s) {
   cudaEvent_t eventStart, eventStop;
   float elapsedTime;
-  mmm1dgpu_real *dev_f_benchmark;
+  float *dev_f_benchmark;
 
-  cuda_safe_mem(cudaMalloc((void **)&dev_f_benchmark,
-                           3 * s.npart_gpu() * sizeof(mmm1dgpu_real)));
+  cuda_safe_mem(
+      cudaMalloc((void **)&dev_f_benchmark, 3 * s.npart_gpu() * sizeof(float)));
   cuda_safe_mem(cudaEventCreate(&eventStart));
   cuda_safe_mem(cudaEventCreate(&eventStop));
   cuda_safe_mem(cudaEventRecord(eventStart, stream[0]));

@@ -32,7 +32,7 @@
 #include <type_traits>
 #include <utility>
 
-BOOST_AUTO_TEST_CASE(for_each) {
+BOOST_AUTO_TEST_CASE(for_each_) {
   using Utils::for_each;
 
   /* l-value reference tuple */
@@ -71,17 +71,18 @@ BOOST_AUTO_TEST_CASE(for_each) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(apply) {
-  using Utils::apply;
-
+BOOST_AUTO_TEST_CASE(apply_) {
   /* constexpr */
-  { static_assert(apply(std::plus<>(), std::array<int, 2>{3, 8}) == 11, ""); }
+  {
+    static_assert(Utils::apply(std::plus<>(), std::array<int, 2>{3, 8}) == 11,
+                  "");
+  }
 
   /* l-value reference */
   {
     auto t = std::make_tuple(4, 0, 7);
 
-    apply(
+    Utils::apply(
         [](int &a, int &b, int &c) {
           BOOST_CHECK_EQUAL(a, 4);
           BOOST_CHECK_EQUAL(b, 0);
@@ -100,16 +101,14 @@ BOOST_AUTO_TEST_CASE(apply) {
 
   /* r-value reference */
   {
-    apply([](auto &&a) { BOOST_CHECK_EQUAL(*a, 4); },
-          std::make_tuple(std::make_unique<int>(4
-
-                                                )));
+    Utils::apply([](auto &&a) { BOOST_CHECK_EQUAL(*a, 4); },
+                 std::make_tuple(std::make_unique<int>(4)));
   }
 
   /* empty */
   {
     bool called = false;
-    apply([&called]() { called = true; }, std::make_tuple());
+    Utils::apply([&called]() { called = true; }, std::make_tuple());
 
     BOOST_CHECK(called);
   }

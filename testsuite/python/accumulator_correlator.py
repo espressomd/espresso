@@ -82,9 +82,9 @@ class CorrelatorTest(ut.TestCase):
     def test_square_distance_componentwise(self):
         s = self.system
         v = np.array([1, 2, 3])
-        s.part.add(id=0, pos=(0, 0, 0), v=v)
+        p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticlePositions(ids=(0,))
+        obs = espressomd.observables.ParticlePositions(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="square_distance_componentwise")
@@ -105,9 +105,9 @@ class CorrelatorTest(ut.TestCase):
     def test_tensor_product(self):
         s = self.system
         v = np.array([1, 2, 3])
-        s.part.add(id=0, pos=(0, 0, 0), v=v)
+        p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=12, tau_max=2, delta_N=1,
             corr_operation="tensor_product")
@@ -128,9 +128,9 @@ class CorrelatorTest(ut.TestCase):
     def test_componentwise_product(self):
         s = self.system
         v = np.array([1, 2, 3])
-        s.part.add(id=0, pos=(0, 0, 0), v=v)
+        p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="componentwise_product")
@@ -150,9 +150,9 @@ class CorrelatorTest(ut.TestCase):
     def test_scalar_product(self):
         s = self.system
         v = np.array([1, 2, 3])
-        s.part.add(id=0, pos=(0, 0, 0), v=v)
+        p = s.part.add(pos=(0, 0, 0), v=v)
 
-        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=2, delta_N=1,
             corr_operation="scalar_product")
@@ -172,10 +172,10 @@ class CorrelatorTest(ut.TestCase):
     def test_fcs(self):
         s = self.system
         v = np.array([1, 2, 3])
-        s.part.add(id=0, pos=(0, 0, 0), v=v)
+        p = s.part.add(pos=(0, 0, 0), v=v)
 
         w = np.array([3, 2, 1])
-        obs = espressomd.observables.ParticlePositions(ids=(0,))
+        obs = espressomd.observables.ParticlePositions(ids=(p.id,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=9.9 * self.system.time_step,
             delta_N=1, corr_operation="fcs_acf", args=w)
@@ -200,9 +200,46 @@ class CorrelatorTest(ut.TestCase):
         acc.args = w_squared
         np.testing.assert_array_almost_equal(np.copy(acc.args), w_squared)
 
+    def test_correlator_compression(self):
+        p = self.system.part.add(pos=(0, 0, 0))
+        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        v1 = 3.
+        v2 = 5.
+        compressed_ref = {
+            "discard1": v2**2, "linear": ((v1 + v2) / 2.)**2,
+            "discard2": v1**2, "uncompressed": ((v1**2 + v2**2) / 2., v1 * v2)}
+        for tau_lin in [8, 10, 12]:
+            # set up accumulators
+            accumulators = {}
+            for compression in ("linear", "discard1", "discard2"):
+                acc = espressomd.accumulators.Correlator(
+                    obs1=obs, tau_lin=tau_lin, tau_max=2, delta_N=1,
+                    compress1=compression, compress2=compression,
+                    corr_operation="scalar_product")
+                accumulators[compression] = acc
+                self.system.auto_update_accumulators.add(acc)
+            # record oscillating data with frequency of 1/time_step
+            for i in range(1000):
+                p.v = (v1 if (i % 2 == 0) else v2, 0, 0)
+                self.system.integrator.run(1)
+            # check compression algorithms: the first tau_lin values
+            # are always uncompressed, the rest is compressed; the
+            # oscillation frequency is such that 'discard*' methods
+            # yield the corresponding constant 'v*' while 'linear'
+            # yields the average of 'v1' and 'v2'
+            uncompressed = np.repeat(
+                [compressed_ref["uncompressed"]], tau_lin, axis=0).flatten()
+            for compression in ("linear", "discard1", "discard2"):
+                accumulators[compression].finalize()
+                corr = accumulators[compression].result().flatten()
+                corr_ref = np.repeat(compressed_ref[compression], corr.shape)
+                corr_ref[:tau_lin + 1] = uncompressed[:tau_lin + 1]
+                np.testing.assert_array_equal(corr, corr_ref)
+            self.system.auto_update_accumulators.clear()
+
     def test_correlator_interface(self):
         # test setters and getters
-        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+        obs = espressomd.observables.ParticleVelocities(ids=(123,))
         acc = espressomd.accumulators.Correlator(
             obs1=obs, tau_lin=10, tau_max=12.0, delta_N=1,
             corr_operation="scalar_product")
@@ -245,6 +282,75 @@ class CorrelatorTest(ut.TestCase):
                 self.check_pickling(acc_lin)
                 self.check_pickling(acc_lin)
                 self.check_pickling(acc_def)
+
+    def test_correlator_exceptions(self):
+        self.system.part.add(pos=2 * [(0, 0, 0)])
+        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+
+        def create_accumulator(obs1=obs, **kwargs):
+            valid_kwargs = {'obs1': obs1, 'tau_lin': 10, 'tau_max': 10.,
+                            'delta_N': 1, 'corr_operation': "scalar_product"}
+            valid_kwargs.update(kwargs)
+            return espressomd.accumulators.Correlator(**valid_kwargs)
+
+        # check finalize method
+        acc = create_accumulator()
+        acc.finalize()
+        with self.assertRaisesRegex(RuntimeError, r"Correlator::finalize\(\) can only be called once"):
+            acc.finalize()
+        with self.assertRaisesRegex(RuntimeError, r"No data can be added after finalize\(\) was called."):
+            acc.update()
+
+        # check general arguments and input data
+        with self.assertRaisesRegex(RuntimeError, "tau_lin must be >= 2"):
+            create_accumulator(tau_lin=0)
+        with self.assertRaisesRegex(RuntimeError, "tau_lin must be divisible by 2"):
+            create_accumulator(tau_lin=3)
+        with self.assertRaisesRegex(RuntimeError, "tau_max must be >= delta_t"):
+            create_accumulator(delta_N=2 * int(10. / self.system.time_step))
+        with self.assertRaisesRegex(ValueError, "correlation operation 'unknown' not implemented"):
+            create_accumulator(corr_operation="unknown")
+        with self.assertRaisesRegex(ValueError, "unknown compression method 'unknown1' for first observable"):
+            create_accumulator(compress1="unknown1")
+        with self.assertRaisesRegex(ValueError, "unknown compression method 'unknown2' for second observable"):
+            create_accumulator(compress2="unknown2")
+        with self.assertRaisesRegex(RuntimeError, "dimension of first observable has to be >= 1"):
+            create_accumulator(
+                obs1=espressomd.observables.ParticleVelocities(ids=()))
+        with self.assertRaisesRegex(RuntimeError, "dimension of second observable has to be >= 1"):
+            create_accumulator(
+                obs2=espressomd.observables.ParticleVelocities(ids=()))
+
+        # check FCS-specific arguments and input data
+        with self.assertRaisesRegex(RuntimeError, "missing parameter for fcs_acf: w_x w_y w_z"):
+            create_accumulator(corr_operation="fcs_acf", args=[1, 1, 0])
+        with self.assertRaisesRegex(RuntimeError, "dimA must be divisible by 3 for fcs_acf"):
+            create_accumulator(corr_operation="fcs_acf", args=[1, 1, 1],
+                               obs1=espressomd.observables.Energy())
+        with self.assertRaisesRegex(RuntimeError, "the last dimension of dimA must be 3 for fcs_acf"):
+            obs_dens = espressomd.observables.DensityProfile(
+                ids=(0,), n_x_bins=3, n_y_bins=3, n_z_bins=1, min_x=0.,
+                min_y=0., min_z=0., max_x=1., max_y=1., max_z=1.)
+            create_accumulator(corr_operation="fcs_acf", args=[1, 1, 1],
+                               obs1=obs_dens)
+
+        # check correlation errors
+        obs2 = espressomd.observables.ParticleVelocities(ids=(0, 1))
+        with self.assertRaisesRegex(RuntimeError, "Error in scalar product: The vector sizes do not match"):
+            acc = create_accumulator(obs2=obs2)
+            acc.update()
+        with self.assertRaisesRegex(RuntimeError, "Error in componentwise product: The vector sizes do not match"):
+            acc = create_accumulator(
+                obs2=obs2, corr_operation="componentwise_product")
+            acc.update()
+        with self.assertRaisesRegex(RuntimeError, "Error in square distance componentwise: The vector sizes do not match"):
+            acc = create_accumulator(
+                obs2=obs2, corr_operation="square_distance_componentwise")
+            acc.update()
+        with self.assertRaisesRegex(RuntimeError, "Error in fcs_acf: The vector sizes do not match"):
+            acc = create_accumulator(
+                obs2=obs2, corr_operation="fcs_acf", args=[1, 1, 1])
+            acc.update()
 
 
 if __name__ == "__main__":

@@ -28,12 +28,6 @@
 // elegant than ifdeffing multiple versions of the kernel integrate.
 #ifdef CUDA
 
-#if defined(EK_DOUBLE_PREC)
-typedef double ekfloat;
-#else
-typedef float ekfloat;
-#endif
-
 #define MAX_NUMBER_OF_SPECIES 10
 
 /* Data structure holding parameters and memory pointers for the link flux
@@ -54,7 +48,7 @@ typedef struct {
   float friction;
   float T;
   float prefactor;
-  float lb_force_density[3];
+  float lb_ext_force_density[3];
   unsigned int number_of_species;
   int reaction_species[3];
   float rho_reactant_reservoir;
@@ -76,12 +70,12 @@ typedef struct {
   float *charge_potential_buffer;
   float *electric_field;
   float *charge_potential;
-  ekfloat *j;
+  float *j;
   float *lb_force_density_previous;
 #ifdef EK_DEBUG
-  ekfloat *j_fluc;
+  float *j_fluc;
 #endif
-  ekfloat *rho[MAX_NUMBER_OF_SPECIES];
+  float *rho[MAX_NUMBER_OF_SPECIES];
   int species_index[MAX_NUMBER_OF_SPECIES];
   float density[MAX_NUMBER_OF_SPECIES];
   float D[MAX_NUMBER_OF_SPECIES];
@@ -142,7 +136,6 @@ void ek_integrate();
 void ek_integrate_electrostatics();
 void ek_print_parameters();
 void ek_print_lbpar();
-void lb_set_ek_pointer(EK_parameters *pointeradress);
 unsigned int ek_calculate_boundary_mass();
 int ek_print_vtk_density(int species, char *filename);
 int ek_print_vtk_flux(int species, char *filename);
@@ -157,6 +150,9 @@ int ek_init();
 int ek_set_agrid(float agrid);
 int ek_set_lb_density(float lb_density);
 int ek_set_viscosity(float viscosity);
+int ek_set_lb_ext_force_density(float lb_ext_force_dens_x,
+                                float lb_ext_force_dens_y,
+                                float lb_ext_force_dens_z);
 int ek_set_friction(float friction);
 int ek_set_T(float T);
 int ek_set_prefactor(float prefactor);
@@ -177,20 +173,19 @@ int ek_set_fluidcoupling(bool ideal_contribution);
 int ek_set_fluctuations(bool fluctuations);
 int ek_set_fluctuation_amplitude(float fluctuation_amplitude);
 void ek_set_rng_state(uint64_t counter);
-int ek_node_print_velocity(int x, int y, int z, double *velocity);
-int ek_node_print_density(int species, int x, int y, int z, double *density);
-int ek_node_print_flux(int species, int x, int y, int z, double *flux);
-int ek_node_print_potential(int x, int y, int z, double *potential);
+int ek_node_get_density(int species, int x, int y, int z, double *density);
+int ek_node_get_flux(int species, int x, int y, int z, double *flux);
+int ek_node_get_potential(int x, int y, int z, double *potential);
 int ek_node_set_density(int species, int x, int y, int z, double density);
-ekfloat ek_calculate_net_charge();
+float ek_calculate_net_charge();
 int ek_neutralize_system(int species);
 int ek_save_checkpoint(char *filename, char *lb_filename);
 int ek_load_checkpoint(char *filename);
 
 #ifdef EK_BOUNDARIES
-void ek_gather_wallcharge_species_density(ekfloat *wallcharge_species_density,
+void ek_gather_wallcharge_species_density(float *wallcharge_species_density,
                                           int wallcharge_species);
-void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
+void ek_init_species_density_wallcharge(float *wallcharge_species_density,
                                         int wallcharge_species);
 #endif
 

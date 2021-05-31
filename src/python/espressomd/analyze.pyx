@@ -21,8 +21,9 @@ include "myconfig.pxi"
 from . cimport analyze
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
-from .interactions cimport BONDED_IA_NONE
-from .interactions cimport bonded_ia_params
+from .interactions cimport bonded_ia_params_is_type
+from .interactions cimport bonded_ia_params_size
+from .interactions cimport CoreNoneBond
 import numpy as np
 cimport numpy as np
 import scipy.signal
@@ -30,9 +31,9 @@ from .globals import Globals
 
 from collections import OrderedDict
 from .system import System
-from .utils import array_locked, is_valid_type
+from .utils import array_locked, is_valid_type, handle_errors
 from .utils cimport Vector3i, Vector3d, Vector9d
-from .utils cimport handle_errors, check_type_or_throw_except
+from .utils cimport check_type_or_throw_except
 from .utils cimport create_nparray_from_double_array
 from .particle_data cimport get_n_part
 
@@ -160,8 +161,8 @@ cdef _Observable_stat_to_dict(Observable_stat obs, cbool calc_sp):
 
     # Bonded
     total_bonded = set_initial()
-    for i in range(bonded_ia_params.size()):
-        if bonded_ia_params[i].type != BONDED_IA_NONE:
+    for i in range(bonded_ia_params_size()):
+        if not bonded_ia_params_is_type[CoreNoneBond](i):
             val = get_obs_contrib(obs.bonded_contribution(i), size, calc_sp)
             p["bonded", i] = val
             total_bonded += val
@@ -628,15 +629,17 @@ class Analysis:
 
         """
 
-        if (sf_types is None) or (not hasattr(sf_types, '__iter__')):
+        if sf_types is None or not hasattr(sf_types, '__iter__'):
             raise ValueError("sf_types has to be a list!")
         check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
-        sf = analyze.calc_structurefactor(
-            analyze.partCfg(), sf_types, sf_order)
+        cdef vector[double] wavevectors
+        cdef vector[double] intensities
+        analyze.calc_structurefactor(
+            analyze.partCfg(), sf_types, sf_order, wavevectors, intensities)
 
-        return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
+        return np.vstack([wavevectors, intensities])
 
     #
     # distribution

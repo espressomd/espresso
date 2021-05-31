@@ -28,8 +28,11 @@ class RotDiffAniso(ut.TestCase):
     longMessage = True
     round_error_prec = 1E-14
     # Handle for espresso system
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=3 * [10.])
     system.cell_system.skin = 5.0
+    system.periodicity = [0, 0, 0]
+    # The time step should be less than t0 ~ mass / gamma
+    system.time_step = 3E-3
 
     # The NVT thermostat parameters
     kT = 0.0
@@ -37,36 +40,26 @@ class RotDiffAniso(ut.TestCase):
 
     # Particle properties
     J = [0.0, 0.0, 0.0]
+    n_part = 800
 
     np.random.seed(4)
 
     def setUp(self):
         self.system.time = 0.0
+        self.system.integrator.set_nvt()
+        # Just some temperature range to cover by the test
+        self.kT = np.random.uniform(0.5, 1.5)
+
+    def tearDown(self):
         self.system.part.clear()
-        if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.system.thermostat.turn_off()
-            # the default integrator is supposed implicitly
-            self.system.integrator.set_nvt()
+        self.system.thermostat.turn_off()
 
-    def add_particles_setup(self, n):
-        """
-        Adding particles according to the
-        previously set parameters.
-
-        Parameters
-        ----------
-        n : :obj:`int`
-            Number of particles.
-
-        """
-
-        for ind in range(n):
-            part_pos = np.random.random(3) * self.box
-            self.system.part.add(rotation=(1, 1, 1), id=ind,
-                                 pos=part_pos)
-            self.system.part[ind].rinertia = self.J
-            if espressomd.has_features("ROTATION"):
-                self.system.part[ind].omega_body = [0.0, 0.0, 0.0]
+    def add_particles(self):
+        positions = np.random.random((self.n_part, 3)) * self.system.box_l[0]
+        self.system.part.add(pos=positions, rotation=self.n_part * [(1, 1, 1)],
+                             rinertia=self.n_part * [self.J])
+        if espressomd.has_features("ROTATION"):
+            self.system.part[:].omega_body = [0.0, 0.0, 0.0]
 
     def set_anisotropic_param(self):
         """
@@ -122,27 +115,7 @@ class RotDiffAniso(ut.TestCase):
         self.J[1] = self.J[0]
         self.J[2] = self.J[0]
 
-    def rot_diffusion_param_setup(self):
-        """
-        Setup the parameters for the rotational diffusion
-        test check_rot_diffusion().
-
-        """
-
-        # Time
-        # The time step should be less than t0 ~ mass / gamma
-        self.system.time_step = 3E-3
-
-        # Space
-        self.box = 10.0
-        self.system.box_l = 3 * [self.box]
-        self.system.periodicity = [0, 0, 0]
-
-        # NVT thermostat
-        # Just some temperature range to cover by the test:
-        self.kT = np.random.uniform(0.5, 1.5)
-
-    def check_rot_diffusion(self, n):
+    def check_rot_diffusion(self):
         """
         The rotational diffusion tests based on the reference work
         [Perrin, F. (1936) Journal de Physique et Le Radium, 7(1), 1-11.
@@ -169,8 +142,7 @@ class RotDiffAniso(ut.TestCase):
         # The body angular velocity is rotated now, but there is only the
         # thermal velocity, hence, this does not impact the test and its
         # physical context.
-        for ind in range(n):
-            self.system.part[ind].quat = [1.0, 0.0, 0.0, 0.0]
+        self.system.part[:].quat = [1.0, 0.0, 0.0, 0.0]
         # Average direction cosines
         # Diagonal ones:
         dcosjj_validate = np.zeros((3))
@@ -198,9 +170,9 @@ class RotDiffAniso(ut.TestCase):
             dcosijpp = np.zeros((3, 3))
             dcosijnn = np.zeros((3, 3))
             dcosij2 = np.zeros((3, 3))
-            for ind in range(n):
+            for p in self.system.part:
                 # Just a direction cosines functions averaging..
-                dir_cos = tests_common.rotation_matrix_quat(self.system, ind)
+                dir_cos = tests_common.rotation_matrix_quat(p)
                 for j in range(3):
                     # the LHS of eq. (23) [Perrin1936].
                     dcosjj[j] += dir_cos[j, j]
@@ -216,11 +188,11 @@ class RotDiffAniso(ut.TestCase):
                                 dir_cos[i, j] * dir_cos[j, i]
                             # the LHS of eq. (33) [Perrin1936].
                             dcosij2[i, j] += dir_cos[i, j]**2.0
-            dcosjj /= n
-            dcosjj2 /= n
-            dcosijpp /= n
-            dcosijnn /= n
-            dcosij2 /= n
+            dcosjj /= self.n_part
+            dcosjj2 /= self.n_part
+            dcosijpp /= self.n_part
+            dcosijnn /= self.n_part
+            dcosij2 /= self.n_part
 
             # Actual comparison.
 
@@ -351,39 +323,31 @@ class RotDiffAniso(ut.TestCase):
 
     # Langevin Dynamics / Anisotropic
     def test_case_00(self):
-        n = 800
-        self.rot_diffusion_param_setup()
         self.set_anisotropic_param()
-        self.add_particles_setup(n)
+        self.add_particles()
         self.system.thermostat.set_langevin(
             kT=self.kT, gamma=self.gamma_global, seed=42)
         # Actual integration and validation run
-        self.check_rot_diffusion(n)
+        self.check_rot_diffusion()
 
     # Langevin Dynamics / Isotropic
     def test_case_01(self):
-        n = 800
-        self.rot_diffusion_param_setup()
         self.set_isotropic_param()
-        self.add_particles_setup(n)
+        self.add_particles()
         self.system.thermostat.set_langevin(
             kT=self.kT, gamma=self.gamma_global, seed=42)
         # Actual integration and validation run
-        self.check_rot_diffusion(n)
+        self.check_rot_diffusion()
 
-    if "BROWNIAN_DYNAMICS" in espressomd.features():
-        # Brownian Dynamics / Isotropic
-        def test_case_10(self):
-            n = 800
-            self.system.thermostat.turn_off()
-            self.rot_diffusion_param_setup()
-            self.set_isotropic_param()
-            self.add_particles_setup(n)
-            self.system.thermostat.set_brownian(
-                kT=self.kT, gamma=self.gamma_global, seed=42)
-            self.system.integrator.set_brownian_dynamics()
-            # Actual integration and validation run
-            self.check_rot_diffusion(n)
+    # Brownian Dynamics / Isotropic
+    def test_case_10(self):
+        self.set_isotropic_param()
+        self.add_particles()
+        self.system.thermostat.set_brownian(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
+        self.system.integrator.set_brownian_dynamics()
+        # Actual integration and validation run
+        self.check_rot_diffusion()
 
 
 if __name__ == '__main__':

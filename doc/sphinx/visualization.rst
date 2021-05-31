@@ -10,7 +10,8 @@ online-visualization:
    visualization and plotting in Python"*. Mayavi has a user-friendly
    GUI to specify the appearance of the output.
    Additional requirements:
-   python module *mayavi*, VTK (package *python-vtk* for Debian/Ubuntu).
+   python module *mayavi*, VTK and wxWidgets GUI Toolkit (packages
+   *python3-vtk* and *python3-wxgtk*, for Debian/Ubuntu).
    Note that only VTK from version 7.0.0 and higher has Python 3
    support.
 

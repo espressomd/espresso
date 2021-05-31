@@ -55,7 +55,7 @@ def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
 
 # function to calculate the hydrostatic pressure
 
-# Technically, the LB simulates a compressible fluid, whiches pressure
+# Technically, the LB simulates a compressible fluid, whose pressure
 # tensor contains an additional term on the diagonal, proportional to
 # the divergence of the velocity. We neglect this contribution, which
 # creates a small error in the direction normal to the wall, which
@@ -70,24 +70,5 @@ def hydrostatic_pressure(
         box_z,
         agrid):
     offset = ek[int(box_x / (2 * agrid)), int(box_y / (2 * agrid)),
-                int(box_z / (2 * agrid))].pressure[tensor_entry]
+                int(box_z / (2 * agrid))].pressure_tensor[tensor_entry]
     return 0.0 + offset
-
-
-# variant from the nonlinear tests
-def hydrostatic_pressure_non_lin(
-        ek,
-        x,
-        xi,
-        bjerrum_length,
-        tensor_entry,
-        box_x,
-        box_y,
-        box_z,
-        agrid,
-        temperature):
-    offset = ek[int(box_x / (2 * agrid)), int(box_y / (2 * agrid)),
-                int(box_z / (2 * agrid))].pressure[tensor_entry]
-    return temperature * xi * xi * \
-        math.tan(xi * x) * math.tan(xi * x) / \
-        (2.0 * math.pi * bjerrum_length) + offset

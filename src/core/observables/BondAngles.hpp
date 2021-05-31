@@ -25,8 +25,11 @@
 
 #include <utils/Vector.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -38,17 +41,21 @@ namespace Observables {
 class BondAngles : public PidObservable {
 public:
   using PidObservable::PidObservable;
+  explicit BondAngles(std::vector<int> ids) : PidObservable(std::move(ids)) {
+    if (this->ids().size() < 3)
+      throw std::runtime_error("At least 3 particles are required");
+  }
 
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
            const ParticleObservables::traits<Particle> &traits) const override {
     std::vector<double> res(n_values());
-    auto v1 = get_mi_vector(traits.position(particles[1]),
-                            traits.position(particles[0]), box_geo);
+    auto v1 = box_geo.get_mi_vector(traits.position(particles[1]),
+                                    traits.position(particles[0]));
     auto n1 = v1.norm();
     for (size_t i = 0, end = n_values(); i < end; i++) {
-      auto v2 = get_mi_vector(traits.position(particles[i + 2]),
-                              traits.position(particles[i + 1]), box_geo);
+      auto v2 = box_geo.get_mi_vector(traits.position(particles[i + 2]),
+                                      traits.position(particles[i + 1]));
       auto n2 = v2.norm();
       auto cosine = (v1 * v2) / (n1 * n2);
       // sanitize cosine value
@@ -67,7 +74,10 @@ public:
     }
     return res;
   }
-  std::vector<size_t> shape() const override { return {ids().size() - 2}; }
+  std::vector<size_t> shape() const override {
+    assert(ids().size() >= 2);
+    return {ids().size() - 2};
+  }
 };
 
 } // Namespace Observables

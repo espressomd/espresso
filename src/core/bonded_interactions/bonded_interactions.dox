@@ -24,130 +24,153 @@
  *  @section bondedIA_new Adding new interactions
  *
  *  To add a new bonded interaction, the following steps are required:
- *  * core:
- *   - define a data structure for the interaction parameters (prefactors, etc.)
- *   - write a setter function, which takes the parameters of the interactions
- *     and stores them in the interaction data structure
- *   - write functions for calculating force and energy
- *   - add calls to the force and energy calculation functions to the force
- *     calculation in the integration loop as well as to energy and
- *     pressure tensor analysis
+ *  * C++ core:
+ *    - Create a new header file for your new bond type, preferably inside the
+ *      folder <tt>src/core/bonded_interactions</tt>.
+ *    - Define a data structure for the interaction parameters (prefactors,
+ *      etc.).
+ *    - Write a constructor and force/energy kernels.
+ *    - Add calls to these kernels in the force, energy and pressure
+ *      calculation functions.
+ *    - Register the new bond type.
  *  * Python interface:
- *   - import the definition of the interaction struct from the core
- *   - implement a class for the bonded interaction derived from the Python
- *     BondedInteraction base class
+ *    - Import the definition of the interaction struct from the core
+ *    - Implement a class for the bonded interaction derived from the Python
+ *      \c BondedInteraction base class
  *
- *  @subsection bondedIA_new_struct Defining the interaction data structure
- *
- *  The data structures for bonded interactions reside in
- *  bonded_interaction_data.hpp.
- *
- *  * Add your interaction to the @ref BondedInteraction enum, it is used to
- *    identify different bonded interactions.
- *  * Create a new struct containing the parameters of the interaction, using
- *    for example @ref Fene_bond_parameters as a guide.
- *  * Add the struct to the @ref Bond_parameters union
- *
- *  @subsection bondedIA_new_fun Functions for calculating force and energy, \
- *                               and for setting parameters
+ *  @subsection bondedIA_new_struct Defining the new interaction
  *
  *  Every interaction resides in its own source .cpp and .hpp files. A simple
  *  example for a bonded interaction is the FENE bond in @ref fene.hpp and
  *  @ref fene.cpp. Use these two files as templates for your interaction.
- *  In particular, use the same function names: \c NAME_pair_force,
- *  \c NAME_pair_energy, \c NAME_set_params, \c angle_NAME_force,
- *  \c angle_NAME_energy, \c angle_NAME_set_params, etc. with \c NAME your
- *  interaction name. In the checklist below, we'll use \c NAME = \c fene.
  *
- *  * The recommended signatures of the force and energy functions are:
- *    @code{.cpp}
- *    inline boost::optional<Utils::Vector3d>
- *    fene_pair_force(Bonded_ia_parameters const &iaparams,
- *                    Utils::Vector3d const &dx);
- *    inline boost::optional<double>
- *    fene_pair_energy(Bonded_ia_parameters const &iaparams,
- *                     Utils::Vector3d const &dx);
- *    @endcode
- *  * The setter function gets a \p bond_type which is a numerical id
- *    identifying the number of the bond type in the simulation.
- *    It DOES NOT determine the type of the bond potential (harmonic vs FENE).
- *    The signature of the setter function has to contain the \c bond_type, the
- *    remaining parameters are specific to the interaction:
- *    @code{.cpp}
- *    int fene_set_params(int bond_type, double k, double drmax, double r0);
- *    @endcode
- *    @ref ES_OK is returned on success, @ref ES_ERROR on error, e.g. when
- *    parameters are invalid.
- *  * The setter function must call @ref make_bond_type_exist() with
- *    \p bond_type to allocate the memory for storing the parameters.
- *  * Afterwards, the bond parameters can be stored in the global variable
- *    @ref bonded_ia_params "bonded_ia_params[bond_type]"
- *  * \c bonded_ia_params[bond_type].num is the number of particles involved
- *    in the bond, minus 1, i.e. 1 for a pairwise bonded potential such as the
- *    FENE bond.
- *  * The parameters for the individual bonded interaction go to the member of
- *    @ref Bond_parameters for your interaction defined in the previous step.
- *    For the FENE bond, this would be:
- *    @code{.cpp}
- *    bonded_ia_params[bond_type].p.fene
- *    @endcode
- *  * At the end of the parameter setter function, do not forget the call to
- *    @ref mpi_bcast_ia_params(), which will sync the parameters just set to
- *    other compute nodes in a parallel simulation.
- *  * The functions calculating force(s) and energy return their values in a
- *    \c boost::optional container if the bond is breakable. If the bond is
- *    broken, the returned object is empty; this will stop the integrator
- *    with a runtime error.
- *  * The functions calculating force and energy can make use of a
- *    pre-calculated distance vector (\p dx) pointing from particle 2 to
- *    particle 1, that takes periodic boundary conditions into account.
- *  * The force and energy functions cannot alter the particle states.
+ *  The first step is to create a new \c struct which represents your new
+ *  bond type inside the .hpp file. It needs to have the following members:
  *
- *  @subsection bondedIA_new_integration Including the bonded interaction in \
- *                                       the force calculation and the energy \
- *                                       and pressure analysis
+ *  * @code{.cpp}
+ *    static constexpr int num = 1;
+ *    @endcode
+ *    This is the number of particles involved in the bond, minus 1, i.e. 1
+ *    for a pairwise bonded potential such as the FENE bond.
+ *  * @code{.cpp}
+ *    double cutoff() const { return r0 + drmax; }
+ *    @endcode
+ *    The return value of \c cutoff() should be as large as the interaction
+ *    range of the new interaction. This is only relevant to pairwise bonds
+ *    and dihedral bonds. In all other cases, the return value should be -1,
+ *    namely angle bonds as well as other bonds that don't have an interaction
+ *    range.
+ *  * @code{.cpp}
+ *    boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+ *    @endcode
+ *    This function returns the bond force. If it is a bond involving three
+ *    or four particles, a \c std::tuple with three or four force vectors
+ *    has to be returned, respectively.
+ *    - The returned value is in a \c boost::optional container if the bond is
+ *      breakable. If the bond is broken, the returned object is empty; this
+ *      will stop the integrator with a runtime error.
+ *    - The function can make use of a pre-calculated distance vector (\p dx)
+ *      pointing from particle 2 to particle 1, that takes periodic boundary
+ *      conditions into account.
+ *    - The function name and signature may be different, e.g. for angle bonds.
+ *      To determine the right signature for the new interaction, you can have
+ *      a look at @ref forces_inline.hpp to see where this function will be
+ *      called and which other variables may be available for your calculation.
+ *  * @code{.cpp}
+ *    boost::optional<double> energy(Utils::Vector3d const &dx) const;
+ *    @endcode
+ *    This function returns the bond energy. The same information as given for
+ *    the force calculation above applies here. This function will be called
+ *    from @ref energy_inline.hpp .
+ *  * An explicit default constructor, for example
+ *    @code{.cpp}
+ *    FeneBond() = default;
+ *    @endcode
+ *  * A custom constructor which is used to set all parameters and to do
+ *    preparatory calculations if necessary, for example
+ *    @code{.cpp}
+ *    FeneBond(double k, double drmax, double r0);
+ *    @endcode
+ *    All values the bond needs to function properly should be passed as
+ *    arguments to this constructor.
+ *  * A template function for serialization called \c serialize. This is for
+ *    communication between nodes in parallel computations.
+ *    The following function can serve as a starting point.
+ *    @code{.cpp}
+ *    private:
+ *    friend boost::serialization::access;
+ *    template <typename Archive>
+ *    void serialize(Archive &ar, long int) {
+ *      ar &k;
+ *      ar &drmax;
+ *      ar &r0;
+ *      ar &drmax2;
+ *      ar &drmax2i;
+ *    }
+ *    @endcode
+ *    Replace all the <tt>ar&</tt> commands with the new bond's parameters.
+ *    Every data member of your struct needs to be transmitted. This template
+ *    function is private.
+ *
+ *  @subsection bondedIA_new_integration Integrating the new bond type into the C++ core
+ *
+ *  In most cases, there are three files that need to be updated to integrate
+ *  the new bond type into the core, namely
+ *  * @ref bonded_interaction_data.hpp
+ *  * @ref forces_inline.hpp
+ *  * @ref energy_inline.hpp
+ *
+ *  In some cases, you may also need to modify @ref pressure_inline.hpp.
  *
  *  * In bonded_interaction_data.cpp:
- *    - in function @ref maximal_cutoff_bonded(): add a case for the new
- *      interaction which makes sure that the cutoff is as large as
- *      the interaction range of the new interaction. This is only relevant to
- *      pairwise bonds and dihedral bonds. The range can be calculated by a
- *      formula, so it is not strictly necessary that the maximal interaction
- *      range be stored explicitly in the struct.
+ *    - Include the header file containing the new bond type.
+ *    - Add the new bond type to @ref Bonded_IA_Parameters at the end of the
+ *      types list.
+ *    - If by doing this, the length of the list in Bonded_IA_Parameters passes
+ *      over a multiple of 10, you may have to update ESPResSo's top level
+ *      CMakeLists.txt:
+ *      @code
+ *      # enable boost::variant with more than 20 types
+ *      target_compile_options(
+ *      cxx_interface INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+ *                              -DBOOST_MPL_LIMIT_LIST_SIZE=40)
+        @endcode
  *  * In forces_inline.hpp:
- *    - include the header file of the new interaction
- *    - in function @ref calc_bond_pair_force(): add the new interaction to the
- *      switch statement if it is a pairwise bond. For the FENE bond, the
- *      code looks like this:
+ *    - A call to the new bond's force calculation needs to be placed in either
+ *      of the functions @ref calc_bond_pair_force(), @ref
+ *      calc_bonded_three_body_force() or @ref calc_bonded_four_body_force(),
+ *      depending on how many bond partners there are.
+ *    - Add the new entry to the \c if - \c else chain, like in the following
+ *      example
  *      @code{.cpp}
- *      boost::optional<Utils::Vector3d> result;
  *      // ...
- *      case BONDED_IA_FENE:
- *        result = fene_pair_force(iaparams, dx);
- *        break;
- *      @endcode
- *    - in functions called by @ref add_bonded_force(): add the new interaction
- *      to the switch statements if it is not a pairwise bond. For the harmonic
- *      angle, the code looks like this:
- *      @code{.cpp}
- *      case BONDED_IA_ANGLE_HARMONIC:
- *        return angle_harmonic_force(p1.r.p, p2.r.p, p3.r.p, iaparams);
+ *      else if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
+ *        return iap->force(dx);
+ *      }
+ *      // ...
  *      @endcode
  *  * In energy_inline.hpp:
- *    - include the header file of the new interaction
- *    - in function @ref calc_bonded_energy(): add the new interaction to the
- *      switch statement. For the FENE bond, e.g., the code looks like this:
+ *    - A call to the new bond's force calculation needs to be placed in @ref
+ *      calc_bonded_energy. Find the \c if - \c else chain that corresponds
+ *      to the correct number of bond partners.
+ *    - Add the new entry to the \c if - \c else chain, like in the following
+ *      example
  *      @code{.cpp}
- *      case BONDED_IA_FENE:
- *        return fene_pair_energy(iaparams, dx);
+ *      // ...
+ *      else if (auto const *iap = boost::get<QuarticBond>(&iaparams)) {
+ *        return iap->energy(dx);
+ *      }
+ *      // ...
  *      @endcode
- *  * Pressure tensor and virial calculation: if your bonded
- *    interaction is not a pair bond or modifies the particles involved,
+ *  * Pressure tensor and virial calculation (pressure_inline.hpp): if your
+ *    bonded interaction is not a pair bond or modifies the particles involved,
  *    you have to implement a custom solution for virial calculation.
  *    The pressure occurs twice, once for the parallelized isotropic pressure
  *    and once for the tensorial pressure calculation. For pair forces, the
  *    pressure is calculated using the virials, for many body interactions
  *    currently no pressure is calculated.
+ *
+ *  Note that the force and energy functions cannot alter the particle states.
  *
  *  @subsection bondedIA_new_interface Adding the interaction in the Python interface
  *
@@ -155,44 +178,41 @@
  *  pure Python.
  *
  *  * In file <tt>src/python/espressomd/interactions.pxd</tt>:
- *    - Import the parameter data structure from the C++ header file for the new
- *      interaction. For the FENE bond, this looks like:
+ *    - Import the parameter data structure from the C++ header file for the
+ *      new interaction with an alias. For the FENE bond, this looks like:
  *      @code{.py}
  *      cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
- *          cdef struct Fene_bond_parameters:
+ *          # Parameters for FENE bond
+ *          cdef cppclass CoreFeneBond "FeneBond":
+ *              CoreFeneBond()
+ *              CoreFeneBond(double k, double drmax, double r0)
  *              double k
  *              double drmax
  *              double r0
  *              double drmax2
  *              double drmax2i
  *      @endcode
- *    - Add the bonded interaction to the Cython copy of the
- *      @ref BondedInteraction enum analogous to the one in the core
- *      The spelling has to match the one in the C++ enum exactly:
+ *  * In file <tt>src/python/espressomd/interactions.pyx</tt>:
+ *    - Add the bonded interaction to \c enum_bonded_interaction.
+ *      The order of the enum values must match the order of types in
+ *      @ref Bonded_IA_Parameters exactly:
  *      @code{.py}
- *      cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
- *          cdef enum enum_bonded_interaction "BondedInteraction":
- *              BONDED_IA_NONE = -1,
- *              BONDED_IA_FENE,
- *              [...]
- *      @endcode
- *    - Add the bonded interaction to the Cython copy of the
- *      @ref Bond_parameters union analogous to the C++ core.
- *      The member name has to match the one in C++ exactly:
- *      @code{.py}
- *      cdef union Bond_parameters:
- *          Fene_bond_parameters fene
+ *      cdef enum enum_bonded_interaction:
+ *          BONDED_IA_NONE = 0,
+ *          BONDED_IA_FENE,
  *          [...]
  *      @endcode
- *    - Import the declaration of the setter function implemented in the core.
- *      For the FENE bond, this looks like:
- *      @code{.py}
- *      cdef extern from "bonded_interactions/fene.hpp":
- *          int fene_set_params(int bond_type, double k, double drmax, double r0)
- *      @endcode
- *  * In file <tt>src/python/espressomd/interactions.pyx</tt>:
  *    - Implement the Cython class for the bonded interaction, using the one
  *      for the FENE bond as template. Please use pep8 naming convention.
+ *    - Create a new entry in the dictionary \c bonded_interaction_classes to
+ *      register the new class you have written:
+ *      @code{.py}
+ *      bonded_interaction_classes = {
+ *          int(BONDED_IA_FENE): FeneBond,
+ *          int(BONDED_IA_HARMONIC): HarmonicBond,
+ *          [...]
+ *      }
+ *      @endcode
  *  * In file <tt>testsuite/python/interactions_bonded_interface.py</tt>:
  *    - Add a test case to verify that parameters set and gotten from the
  *      interaction are consistent.

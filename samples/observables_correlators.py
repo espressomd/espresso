@@ -28,15 +28,15 @@ import espressomd.accumulators
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 np.random.seed(seed=42)
 
-system.part.add(pos=(0, 0, 0), v=(1, 2, 3))
+part = system.part.add(pos=(0, 0, 0), v=(1, 2, 3))
 system.time_step = 0.01
 system.cell_system.skin = 0
 system.cell_system.set_n_square(use_verlet_lists=False)
 system.thermostat.set_langevin(kT=1, gamma=10, seed=42)
 system.integrator.run(1000)
 
-# Initialize observable for a particle with id 0
-p = espressomd.observables.ParticlePositions(ids=(0,))
+# Initialize observable for a particle with id = part.id
+p = espressomd.observables.ParticlePositions(ids=(part.id,))
 # Ask the observable for its parameters
 print(p.get_params())
 # Calculate and return current value

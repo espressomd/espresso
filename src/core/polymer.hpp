@@ -36,14 +36,18 @@
 #include <vector>
 
 /** Determines valid polymer positions and returns them.
+ *  @param  partCfg           particle collection
  *  @param  n_polymers        how many polymers to create
  *  @param  beads_per_chain   monomers per chain
  *  @param  bond_length       length of the bonds between two monomers
- *  @param  seed              seed for RNG
+ *  @param  start_positions   starting positions of each polymers
  *  @param  min_distance      minimum distance between all particles
  *  @param  max_tries         how often a monomer/polymer should be reset if
  *                            current position collides with a previous particle
+ *  @param  use_bond_angle    whether to use the @p bond_angle argument
  *  @param  bond_angle        desired bond-angle to be fixed
+ *  @param  respect_constraints  whether to respect constraints
+ *  @param  seed              seed for RNG
  */
 std::vector<std::vector<Utils::Vector3d>>
 draw_polymer_positions(PartCfg &partCfg, int n_polymers, int beads_per_chain,

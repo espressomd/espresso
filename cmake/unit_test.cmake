@@ -1,12 +1,3 @@
-if(NOT DEFINED TEST_NP)
-  include(ProcessorCount)
-  processorcount(NP)
-  math(EXPR TEST_NP "${NP}/2 + 1")
-  if(${TEST_NP} GREATER 4)
-    set(TEST_NP 4)
-  endif()
-endif()
-
 if(EXISTS ${MPIEXEC})
   # OpenMPI 2.0 and higher checks the number of processes against the number of
   # CPUs

@@ -21,13 +21,10 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
-#include "interactions.hpp"
 #include "particle_data.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/optional.hpp>
@@ -78,22 +75,21 @@ RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 } // namespace
 
 boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
-                    Bonded_ia_parameters const &iaparams) {
+IBMTriel::calc_forces(Particle const &p1, Particle const &p2,
+                      Particle const &p3) const {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
   // get_mi_vector is an ESPResSo function which considers PBC
-  auto const vec2 = get_mi_vector(p3.r.p, p1.r.p, box_geo);
+  auto const vec2 = box_geo.get_mi_vector(p3.r.p, p1.r.p);
   auto const l = vec2.norm();
 
   // lp = length between 1 and 2
-  auto const vec1 = get_mi_vector(p2.r.p, p1.r.p, box_geo);
+  auto const vec1 = box_geo.get_mi_vector(p2.r.p, p1.r.p);
   auto const lp = vec1.norm();
 
   // Check for sanity
-  if ((lp - iaparams.p.ibm_triel.lp0 > iaparams.p.ibm_triel.maxDist) ||
-      (l - iaparams.p.ibm_triel.l0 > iaparams.p.ibm_triel.maxDist)) {
+  if ((lp - lp0 > maxDist) || (l - l0 > maxDist)) {
     return {};
   }
 
@@ -101,17 +97,6 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   auto const cosPhi = (vec1 * vec2) / (lp * l);
   auto const vecpro = vector_product(vec1, vec2);
   auto const sinPhi = vecpro.norm() / (l * lp);
-
-  // Variables in the reference state
-  const double l0 = iaparams.p.ibm_triel.l0;
-  const double lp0 = iaparams.p.ibm_triel.lp0;
-  const double cosPhi0 = iaparams.p.ibm_triel.cosPhi0;
-  const double sinPhi0 = iaparams.p.ibm_triel.sinPhi0;
-  const double a1 = iaparams.p.ibm_triel.a1;
-  const double a2 = iaparams.p.ibm_triel.a2;
-  const double b1 = iaparams.p.ibm_triel.b1;
-  const double b2 = iaparams.p.ibm_triel.b2;
-  const double A0 = iaparams.p.ibm_triel.area0;
 
   // Displacement gradient tensor D: eq. (C.9) in @cite kruger12a
   const double Dxx = lp / lp0;
@@ -132,15 +117,14 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   // Derivatives of energy density E used in chain rule below: eq. (C.14)
   double dEdI1;
   double dEdI2;
-  if (iaparams.p.ibm_triel.elasticLaw == tElasticLaw::NeoHookean) {
+  if (elasticLaw == tElasticLaw::NeoHookean) {
     // Neo-Hookean
-    dEdI1 = iaparams.p.ibm_triel.k1 / 6.0;
-    dEdI2 = (-1) * iaparams.p.ibm_triel.k1 / (6.0 * (i2 + 1.0) * (i2 + 1.0));
+    dEdI1 = k1 / 6.0;
+    dEdI2 = -k1 / (6.0 * (i2 + 1.0) * (i2 + 1.0));
   } else {
     // Skalak
-    dEdI1 = iaparams.p.ibm_triel.k1 * (i1 + 1) / 6.0;
-    dEdI2 = (-1) * iaparams.p.ibm_triel.k1 / 6.0 +
-            iaparams.p.ibm_triel.k2 * i2 / 6.0;
+    dEdI1 = k1 * (i1 + 1) / 6.0;
+    dEdI2 = -k1 / 6.0 + k2 * i2 / 6.0;
   }
 
   // Derivatives of Is: eq. (C.15)
@@ -204,8 +188,8 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
               (dEdI2 * dI2dGyx * dGyxdV2y) - (dEdI2 * dI2dGyy * dGyydV2y);
 
   // Multiply by undeformed area
-  f1_rot *= A0;
-  f2_rot *= A0;
+  f1_rot *= area0;
+  f2_rot *= area0;
 
   // Rotate forces back into original position of triangle
   auto forces = RotateForces(f1_rot, f2_rot, vec1, vec2);
@@ -213,12 +197,9 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   return forces;
 }
 
-int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
-                        const int ind3, const double maxDist,
-                        const tElasticLaw elasticLaw, const double k1,
-                        const double k2) {
-  // Create bond
-  make_bond_type_exist(bond_type);
+IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,
+                   const double maxDist, const tElasticLaw elasticLaw,
+                   const double k1, const double k2) {
 
   // Get data (especially location) of three particles
   auto part1 = get_particle_data(ind1);
@@ -226,49 +207,30 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
   auto part3 = get_particle_data(ind3);
 
   // Calculate equilibrium lengths and angle; Note the sequence of the points!
-  // lo = length between 1 and 3
-  auto const templo = get_mi_vector(part3.r.p, part1.r.p, box_geo);
-  const double l0 = templo.norm();
-  // lpo = length between 1 and 2
-  auto const templpo = get_mi_vector(part2.r.p, part1.r.p, box_geo);
-  const double lp0 = templpo.norm();
+  // l0 = length between 1 and 3
+  auto const temp_l0 = box_geo.get_mi_vector(part3.r.p, part1.r.p);
+  l0 = temp_l0.norm();
+  // lp0 = length between 1 and 2
+  auto const temp_lp0 = box_geo.get_mi_vector(part2.r.p, part1.r.p);
+  lp0 = temp_lp0.norm();
 
   // cospo / sinpo angle functions between these vectors; calculated directly
   // via the products
-  const double cosPhi0 = (templo * templpo) / (l0 * lp0);
-  auto const vecpro = vector_product(templo, templpo);
-  const double sinPhi0 = vecpro.norm() / (l0 * lp0);
+  cosPhi0 = (temp_l0 * temp_lp0) / (l0 * lp0);
+  auto const vecpro = vector_product(temp_l0, temp_lp0);
+  sinPhi0 = vecpro.norm() / (l0 * lp0);
 
   // Use the values determined above for further constants of the stretch-force
   // calculation
   const double area2 = l0 * lp0 * sinPhi0;
-  const double a1 = -(l0 * sinPhi0) / area2;
-  const double a2 = -a1;
-  const double b1 = (l0 * cosPhi0 - lp0) / area2;
-  const double b2 = -(l0 * cosPhi0) / area2;
-
-  // General stuff
-  bonded_ia_params[bond_type].type = BONDED_IA_IBM_TRIEL;
-  bonded_ia_params[bond_type].num = 2;
-
-  // Specific stuff
-  bonded_ia_params[bond_type].p.ibm_triel.a1 = a1;
-  bonded_ia_params[bond_type].p.ibm_triel.a2 = a2;
-  bonded_ia_params[bond_type].p.ibm_triel.b1 = b1;
-  bonded_ia_params[bond_type].p.ibm_triel.b2 = b2;
-  bonded_ia_params[bond_type].p.ibm_triel.l0 = l0;
-  bonded_ia_params[bond_type].p.ibm_triel.lp0 = lp0;
-  bonded_ia_params[bond_type].p.ibm_triel.sinPhi0 = sinPhi0;
-  bonded_ia_params[bond_type].p.ibm_triel.cosPhi0 = cosPhi0;
-  bonded_ia_params[bond_type].p.ibm_triel.area0 = 0.5 * area2;
-  bonded_ia_params[bond_type].p.ibm_triel.maxDist = maxDist;
-  bonded_ia_params[bond_type].p.ibm_triel.elasticLaw = elasticLaw;
+  a1 = -(l0 * sinPhi0) / area2;
+  a2 = -a1;
+  b1 = (l0 * cosPhi0 - lp0) / area2;
+  b2 = -(l0 * cosPhi0) / area2;
+  area0 = 0.5 * area2;
+  this->maxDist = maxDist;
+  this->elasticLaw = elasticLaw;
   // Always store two constants, for NeoHookean only k1 is used
-  bonded_ia_params[bond_type].p.ibm_triel.k1 = k1;
-  bonded_ia_params[bond_type].p.ibm_triel.k2 = k2;
-
-  // Communicate this to whoever is interested
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
+  this->k1 = k1;
+  this->k2 = k2;
 }

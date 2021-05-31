@@ -659,7 +659,7 @@ To use the script, compile espresso with the following features:
 
     #define EXTERNAL_FORCES
     #define MASS
-    #define LANGEVIN_PER_PARTICLE
+    #define THERMOSTAT_PER_PARTICLE
     #define ROTATION
     #define ROTATIONAL_INERTIA
     #define ELECTROSTATICS

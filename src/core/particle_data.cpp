@@ -34,6 +34,7 @@
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
 
+#include <string>
 #include <utils/Cache.hpp>
 #include <utils/constants.hpp>
 #include <utils/keys.hpp>
@@ -120,8 +121,7 @@ using UpdatePropertyMessage = boost::variant
                          &Prop::vs_relative>
 #endif
 #endif
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-        , UpdateProperty<double, &Prop::T>
+#ifdef THERMOSTAT_PER_PARTICLE
 #ifndef PARTICLE_ANISOTROPY
         , UpdateProperty<double, &Prop::gamma>
 #else
@@ -134,7 +134,7 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<Utils::Vector3d, &Prop::gamma_rot>
 #endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
         , UpdateProperty<uint8_t, &Prop::ext_flag>
         , UpdateProperty<Utils::Vector3d, &Prop::ext_force>
@@ -686,22 +686,20 @@ void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
   on_particle_change();
 }
 
-int place_particle(int p_id, const double *pos) {
-  Utils::Vector3d p{pos[0], pos[1], pos[2]};
-
+int place_particle(int p_id, Utils::Vector3d const &pos) {
   if (particle_exists(p_id)) {
-    mpi_place_particle(get_particle_node(p_id), p_id, p);
+    mpi_place_particle(get_particle_node(p_id), p_id, pos);
 
     return ES_PART_OK;
   }
-  particle_node[p_id] = mpi_place_new_particle(p_id, p);
+  particle_node[p_id] = mpi_place_new_particle(p_id, pos);
 
   return ES_PART_CREATED;
 }
 
-void set_particle_v(int part, double *v) {
+void set_particle_v(int part, Utils::Vector3d const &v) {
   mpi_update_particle<ParticleMomentum, &Particle::m, Utils::Vector3d,
-                      &ParticleMomentum::v>(part, Utils::Vector3d(v, v + 3));
+                      &ParticleMomentum::v>(part, v);
 }
 
 #ifdef ENGINE
@@ -711,9 +709,9 @@ void set_particle_swimming(int part, ParticleParametersSwimming swim) {
 }
 #endif
 
-void set_particle_f(int part, const Utils::Vector3d &F) {
+void set_particle_f(int part, const Utils::Vector3d &f) {
   mpi_update_particle<ParticleForce, &Particle::f, Utils::Vector3d,
-                      &ParticleForce::f>(part, F);
+                      &ParticleForce::f>(part, f);
 }
 
 #if defined(MASS)
@@ -725,20 +723,21 @@ const constexpr double ParticleProperties::mass;
 #endif
 
 #ifdef ROTATIONAL_INERTIA
-void set_particle_rotational_inertia(int part, double *rinertia) {
+void set_particle_rotational_inertia(int part,
+                                     Utils::Vector3d const &rinertia) {
   mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::rinertia>(
-      part, Utils::Vector3d(rinertia, rinertia + 3));
+      part, rinertia);
 }
 #else
 constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
+
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
   mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
                                                                        rot);
 }
-#endif
-#ifdef ROTATION
+
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
   mpi_send_update_message(part, UpdateOrientation{axis, angle});
 }
@@ -749,16 +748,14 @@ void set_particle_dipm(int part, double dipm) {
   mpi_update_particle_property<double, &ParticleProperties::dipm>(part, dipm);
 }
 
-void set_particle_dip(int part, double const *const dip) {
+void set_particle_dip(int part, Utils::Vector3d const &dip) {
   Utils::Quaternion<double> quat;
   double dipm;
-  std::tie(quat, dipm) =
-      convert_dip_to_quat(Utils::Vector3d({dip[0], dip[1], dip[2]}));
+  std::tie(quat, dipm) = convert_dip_to_quat(dip);
 
   set_particle_dipm(part, dipm);
   set_particle_quat(part, quat.data());
 }
-
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -808,9 +805,9 @@ void set_particle_mu_E(int part, Utils::Vector3d const &mu_E) {
       part, mu_E);
 }
 
-void get_particle_mu_E(int part, Utils::Vector3d &mu_E) {
+Utils::Vector3d get_particle_mu_E(int part) {
   auto const &p = get_particle_data(part);
-  mu_E = p.p.mu_E;
+  return p.p.mu_E;
 }
 #endif
 
@@ -837,10 +834,16 @@ void set_particle_mol_id(int part, int mid) {
 }
 
 #ifdef ROTATION
-void set_particle_quat(int part, double *quat) {
+void set_particle_quat(int part, double *const quat) {
   mpi_update_particle<ParticlePosition, &Particle::r, Utils::Quaternion<double>,
                       &ParticlePosition::quat>(
       part, Utils::Quaternion<double>{quat[0], quat[1], quat[2], quat[3]});
+}
+
+void set_particle_director(int part, const Utils::Vector3d &director) {
+  Utils::Quaternion<double> quat =
+      convert_director_to_quaternion(director.normalized());
+  set_particle_quat(part, quat.data());
 }
 
 void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab) {
@@ -865,17 +868,13 @@ void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab) {
 }
 #endif
 
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-void set_particle_temperature(int part, double T) {
-  mpi_update_particle_property<double, &ParticleProperties::T>(part, T);
-}
-
+#ifdef THERMOSTAT_PER_PARTICLE
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma(int part, double gamma) {
   mpi_update_particle_property<double, &ParticleProperties::gamma>(part, gamma);
 }
 #else
-void set_particle_gamma(int part, Utils::Vector3d gamma) {
+void set_particle_gamma(int part, Utils::Vector3d const &gamma) {
   mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::gamma>(
       part, gamma);
 }
@@ -888,13 +887,13 @@ void set_particle_gamma_rot(int part, double gamma_rot) {
       part, gamma_rot);
 }
 #else
-void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
+void set_particle_gamma_rot(int part, Utils::Vector3d const &gamma_rot) {
   mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::gamma_rot>(
       part, gamma_rot);
 }
 #endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
@@ -1020,14 +1019,6 @@ void mpi_rescale_particles(int dir, double scale) {
  *  @param _delete if true, delete the exclusion instead of add
  */
 void local_change_exclusion(int part1, int part2, int _delete) {
-  if (part1 == -1 && part2 == -1) {
-    for (auto &p : cell_structure.local_particles()) {
-      p.exclusions().clear();
-    }
-
-    return;
-  }
-
   /* part1, if here */
   auto part = cell_structure.get_local_particle(part1);
   if (part) {
@@ -1086,8 +1077,6 @@ int change_exclusion(int part1, int part2, int _delete) {
   }
   return ES_ERROR;
 }
-
-void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 
 void auto_exclusions(int distance) {
   /* partners is a list containing the currently found excluded particles for
@@ -1151,38 +1140,49 @@ void init_type_map(int type) {
   if (type < 0)
     throw std::runtime_error("Types may not be negative");
 
-  // fill particle map
-  if (particle_type_map.count(type) == 0)
-    particle_type_map[type] = std::unordered_set<int>();
-
+  auto &map_for_type = particle_type_map[type];
+  map_for_type.clear();
   for (auto const &p : partCfg()) {
     if (p.p.type == type)
-      particle_type_map.at(type).insert(p.p.identity);
+      map_for_type.insert(p.p.identity);
   }
 }
 
 void remove_id_from_map(int part_id, int type) {
-  if (particle_type_map.find(type) != particle_type_map.end())
-    particle_type_map.at(type).erase(part_id);
+  auto it = particle_type_map.find(type);
+  if (it != particle_type_map.end())
+    it->second.erase(part_id);
 }
 
 int get_random_p_id(int type, int random_index_in_type_map) {
-  if (random_index_in_type_map + 1 > particle_type_map.at(type).size())
+  auto it = particle_type_map.find(type);
+  if (it == particle_type_map.end()) {
+    throw std::runtime_error("The provided particle type " +
+                             std::to_string(type) +
+                             " is currently not tracked by the system.");
+  }
+
+  if (random_index_in_type_map + 1 > it->second.size())
     throw std::runtime_error("The provided index exceeds the number of "
                              "particle types listed in the particle_type_map");
-  return *std::next(particle_type_map[type].begin(), random_index_in_type_map);
+  return *std::next(it->second.begin(), random_index_in_type_map);
 }
 
 void add_id_to_type_map(int part_id, int type) {
-  if (particle_type_map.find(type) != particle_type_map.end())
-    particle_type_map.at(type).insert(part_id);
+  auto it = particle_type_map.find(type);
+  if (it != particle_type_map.end())
+    it->second.insert(part_id);
 }
 
 int number_of_particles_with_type(int type) {
-  if (particle_type_map.count(type) == 0)
-    throw std::runtime_error("The provided particle type does not exist in "
-                             "the particle_type_map");
-  return static_cast<int>(particle_type_map.at(type).size());
+  auto it = particle_type_map.find(type);
+  if (it == particle_type_map.end()) {
+    throw std::runtime_error("The provided particle type " +
+                             std::to_string(type) +
+                             " is currently not tracked by the system.");
+  }
+
+  return static_cast<int>(it->second.size());
 }
 
 // The following functions are used by the python interface to obtain
@@ -1198,7 +1198,6 @@ void pointer_to_omega_body(Particle const *p, double const *&res) {
 void pointer_to_quat(Particle const *p, double const *&res) {
   res = p->r.quat.data();
 }
-
 #endif
 
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
@@ -1243,7 +1242,7 @@ void pointer_to_fix(Particle const *p, const uint8_t *&res) {
 }
 #endif
 
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
+#ifdef THERMOSTAT_PER_PARTICLE
 void pointer_to_gamma(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
   res = &(p->p.gamma);
@@ -1262,10 +1261,7 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res) {
 }
 #endif // ROTATION
 
-void pointer_to_temperature(Particle const *p, double const *&res) {
-  res = &(p->p.T);
-}
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,

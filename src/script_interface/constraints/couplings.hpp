@@ -19,6 +19,15 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_COUPLINGS_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_COUPLINGS_HPP
 
+/**
+ * @file
+ * @brief ScriptInterface implementations for the
+ *        various couplings provided.
+ *
+ * These are separated from the Constraints because
+ * they can be reused together with the couplings themselves.
+ */
+
 #include "core/field_coupling/couplings/Charge.hpp"
 #include "core/field_coupling/couplings/Direct.hpp"
 #include "core/field_coupling/couplings/Mass.hpp"
@@ -27,21 +36,12 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
-#include <utils/serialization/pack.hpp>
-#include <utils/serialization/unordered_map.hpp>
+#include <unordered_map>
 
 namespace ScriptInterface {
 namespace Constraints {
 namespace detail {
 using namespace ::FieldCoupling::Coupling;
-
-/**
- * @brief ScriptInterface implementations for the
- *        various couplings provided.
- *
- * These are separated from the Constraints because
- * they can be reused together with the couplings themselves.
- */
 
 /**
  * Default version for parameterless couplings.
@@ -59,7 +59,7 @@ template <> struct coupling_parameters_impl<Viscous> {
   static std::vector<AutoParameter> params(const This &this_) {
     return {{
         "gamma",
-        [this_](const Variant &v) { this_().gamma() = get_value<double>(v); },
+        AutoParameter::read_only,
         [this_]() { return this_().gamma(); },
     }};
   }
@@ -70,18 +70,11 @@ template <> struct coupling_parameters_impl<Scaled> {
   static std::vector<AutoParameter> params(const This &this_) {
     return {{
                 "default_scale",
-                [this_](const Variant &v) {
-                  this_().default_scale() = get_value<double>(v);
-                },
+                AutoParameter::read_only,
                 [this_]() { return this_().default_scale(); },
             },
-            {"particle_scales",
-             [this_](const Variant &v) {
-               this_().particle_scales() =
-                   Utils::unpack<std::unordered_map<int, double>>(
-                       boost::get<std::string>(v));
-             },
-             [this_]() { return Utils::pack(this_().particle_scales()); }}};
+            {"particle_scales", AutoParameter::read_only,
+             [this_]() { return make_map(this_().particle_scales()); }}};
   }
 };
 
@@ -96,12 +89,10 @@ template <> inline Viscous make_coupling<Viscous>(const VariantMap &params) {
 }
 
 template <> inline Scaled make_coupling<Scaled>(const VariantMap &params) {
-  auto scales = params.count("particle_scale")
-                    ? Utils::unpack<std::unordered_map<int, double>>(
-                          get_value<std::string>(params, "particle_scale"))
-                    : std::unordered_map<int, double>{};
-
-  return Scaled{scales, get_value<double>(params, "default_scale")};
+  auto const particle_scales = get_value_or<std::unordered_map<int, Variant>>(
+      params, "particle_scales", {});
+  return Scaled{get_map<int, double>(particle_scales),
+                get_value<double>(params, "default_scale")};
 }
 } // namespace detail
 } // namespace Constraints

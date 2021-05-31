@@ -34,35 +34,42 @@ namespace Utils {
  * @brief Ratio of diameter and circumference of a circle.
  */
 template <class T = double> DEVICE_QUALIFIER constexpr T pi() {
-  return 3.14159265358979323846264338328;
+  return T(3.14159265358979323846264338328L);
 }
 
 /**
  * @brief One over square root of pi.
  */
 template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_pi_i() {
-  return 0.56418958354775627928034964498;
+  return T(0.56418958354775627928034964498L);
 }
 
 /**
  * @brief Euler-Mascheroni constant.
  */
 template <class T = double> DEVICE_QUALIFIER constexpr T gamma() {
-  return 0.57721566490153286060651209008;
+  return T(0.57721566490153286060651209008L);
 }
 
 /**
  * @brief Natural logarithm of 2.
  */
 template <class T = double> DEVICE_QUALIFIER constexpr T ln_2() {
-  return 0.6931471805599453094172321214581766;
+  return T(0.6931471805599453094172321214581766L);
 }
 
 /**
  * @brief Square root of 2.
  */
 template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_2() {
-  return 1.4142135623730950488016887242096981;
+  return T(1.4142135623730950488016887242096981L);
+}
+
+/**
+ * @brief Cube root of 2.
+ */
+template <class T = double> DEVICE_QUALIFIER constexpr T cbrt_2() {
+  return T(1.25992104989487316476721060727822835057025L);
 }
 
 /**@}*/
@@ -71,14 +78,6 @@ template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_2() {
 #define ES_OK 0
 /// error code if an error occurred
 #define ES_ERROR 1
-
-/** space necessary for an (64-bit) integer with sprintf. */
-#define ES_INTEGER_SPACE 24
-/** space necessary for a double with sprintf. Precision
-    is 17 digits, plus sign, dot, e, sign of exponent and
-    3 digits exponent etc.
-*/
-#define ES_DOUBLE_SPACE 27
 
 } // namespace Utils
 

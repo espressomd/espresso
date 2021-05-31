@@ -77,7 +77,7 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         """
         self.check_vel_dist_global_temp(True, loops=170)
 
-    @utx.skipIfMissingFeatures("BROWNIAN_PER_PARTICLE")
+    @utx.skipIfMissingFeatures("THERMOSTAT_PER_PARTICLE")
     def test_vel_dist_per_particle(self):
         """Test Brownian dynamics with particle-specific kT and gamma. Covers
            all combinations of particle-specific gamma and temp set or not set.
@@ -88,23 +88,13 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         kT = 0.9
         gamma = 3.2
         gamma2 = 4.3
-        kT2 = 1.5
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
         loops = 200
         v_minmax = 5
         bins = 4
         error_tol = 0.012
         self.check_per_particle(
-            N, kT, kT2, gamma2, loops, v_minmax, bins, error_tol)
-
-    def setup_diff_mass_rinertia(self, p):
-        if espressomd.has_features("MASS"):
-            p.mass = 0.5
-        if espressomd.has_features("ROTATION"):
-            p.rotation = [1, 1, 1]
-            # Make sure rinertia does not change diff coeff
-            if espressomd.has_features("ROTATIONAL_INERTIA"):
-                p.rinertia = [0.4, 0.4, 0.4]
+            N, kT, gamma2, loops, v_minmax, bins, error_tol)
 
     def test_msd_global_temp(self):
         """Tests diffusion via MSD for global gamma and temperature"""
@@ -114,7 +104,7 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         dt = 0.5
 
         system = self.system
-        p = system.part.add(pos=(0, 0, 0), id=0)
+        p = system.part.add(pos=(0, 0, 0))
         system.time_step = dt
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
         system.cell_system.skin = 0.4
@@ -150,7 +140,7 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         system.cell_system.skin = 0.1
         kT = 3.2
         system.thermostat.set_brownian(kT=kT, gamma=2.1, seed=17)
-        system.part.add(id=(0, 1), pos=np.zeros((2, 3)))
+        system.part.add(pos=np.zeros((2, 3)))
         steps = int(1e4)
         error_delta = 0.04
         self.check_noise_correlation(kT, steps, error_delta)

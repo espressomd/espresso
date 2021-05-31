@@ -32,8 +32,7 @@
 
 #define BOND_CONSTRAINT
 #define COLLISION_DETECTION
-#define LANGEVIN_PER_PARTICLE
-#define BROWNIAN_PER_PARTICLE
+#define THERMOSTAT_PER_PARTICLE
 
 #define NPT
 
@@ -48,6 +47,7 @@
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
+#define EK_DEBUG
 #define MMM1D_GPU
 #endif
 

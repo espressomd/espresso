@@ -32,10 +32,10 @@
 #include "config.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
@@ -54,6 +54,8 @@
 #endif
 
 #include <utils/mpi/all_compare.hpp>
+
+#include <cstdio>
 
 #include <mpi.h>
 
@@ -78,7 +80,11 @@ static int reinit_magnetostatics = false;
 void on_program_start() {
 #ifdef CUDA
   if (this_node == 0) {
-    cuda_init();
+    try {
+      cuda_init();
+    } catch (cuda_runtime_error const &err) {
+      // pass
+    }
   }
 #endif
 
@@ -87,16 +93,13 @@ void on_program_start() {
   /* initially go for domain decomposition */
   cells_re_init(CELL_STRUCTURE_DOMDEC);
 
-  /*
-    call all initializations to do only on the master node here.
-  */
   if (this_node == 0) {
-    /* interaction_data.c: make sure 0<->0 ia always exists */
+    /* make sure interaction 0<->0 always exists */
     make_particle_type_exist(0);
   }
 }
 
-void on_integration_start() {
+void on_integration_start(double time_step) {
   /********************************************/
   /* sanity checks                            */
   /********************************************/
@@ -106,11 +109,13 @@ void on_integration_start() {
   integrator_npt_sanity_checks();
 #endif
   interactions_sanity_checks();
-  lb_lbfluid_on_integration_start();
+  lb_lbfluid_sanity_checks(time_step);
 
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
+
+  lb_lbfluid_on_integration_start();
 
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
@@ -119,7 +124,7 @@ void on_integration_start() {
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
-    thermo_init();
+    thermo_init(time_step);
     reinit_thermo = false;
     recalc_forces = true;
   }
@@ -145,7 +150,6 @@ void on_integration_start() {
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
 #endif
-  check_global_consistency();
 #endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
@@ -161,20 +165,20 @@ void on_observable_calc() {
     Coulomb::on_observable_calc();
     reinit_electrostatics = false;
   }
-#endif /*ifdef ELECTROSTATICS */
+#endif /* ELECTROSTATICS */
 
 #ifdef DIPOLES
   if (reinit_magnetostatics) {
     Dipole::on_observable_calc();
     reinit_magnetostatics = false;
   }
-#endif /*ifdef ELECTROSTATICS */
+#endif /* DIPOLES */
 
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
     ek_integrate_electrostatics();
   }
-#endif
+#endif /* ELECTROKINETICS */
 
   clear_particle_node();
 }
@@ -233,33 +237,35 @@ void on_lbboundary_change() {
 #endif
 }
 
-void on_boxl_change() {
+void on_boxl_change(bool skip_method_adaption) {
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
-     therefore recalculate them. */
+   * therefore recalculate them. */
   cells_re_init(cell_structure.decomposition_type());
 
-/* Now give methods a chance to react to the change in box length */
+  if (not skip_method_adaption) {
+    /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
-  Coulomb::on_boxl_change();
+    Coulomb::on_boxl_change();
 #endif
 
 #ifdef DIPOLES
-  Dipole::on_boxl_change();
+    Dipole::on_boxl_change();
 #endif
 
-  lb_lbfluid_init();
+    lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
-  LBBoundaries::lb_init_boundaries();
+    LBBoundaries::lb_init_boundaries();
 #endif
+  }
 }
 
 void on_cell_structure_change() {
   clear_particle_node();
 
-/* Now give methods a chance to react to the change in cell
-   structure. Most ES methods need to reinitialize, as they depend
-   on skin, node grid and so on. */
+  /* Now give methods a chance to react to the change in cell
+   * structure. Most ES methods need to reinitialize, as they depend
+   * on skin, node grid and so on. */
 #ifdef ELECTROSTATICS
   Coulomb::init();
 #endif /* ifdef ELECTROSTATICS */
@@ -271,69 +277,50 @@ void on_cell_structure_change() {
 
 void on_temperature_change() { lb_lbfluid_reinit_parameters(); }
 
-void on_parameter_change(int field) {
-  switch (field) {
-  case FIELD_BOXL:
-    on_boxl_change();
-    break;
-  case FIELD_PERIODIC:
+void on_periodicity_change() {
 #ifdef SCAFACOS
 #ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_SCAFACOS) {
-      Scafacos::fcs_coulomb()->update_system_params();
-    }
+  if (coulomb.method == COULOMB_SCAFACOS) {
+    Scafacos::fcs_coulomb()->update_system_params();
+  }
 #endif
 #ifdef SCAFACOS_DIPOLES
-    if (dipole.method == DIPOLAR_SCAFACOS) {
-      Scafacos::fcs_dipoles()->update_system_params();
-    }
+  if (dipole.method == DIPOLAR_SCAFACOS) {
+    Scafacos::fcs_dipoles()->update_system_params();
+  }
 #endif
 #endif
 #ifdef STOKESIAN_DYNAMICS
-    if (integ_switch == INTEG_METHOD_SD) {
-      if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2))
-        runtimeErrorMsg() << "Illegal box periodicity for Stokesian Dynamics: "
-                          << box_geo.periodic(0) << " " << box_geo.periodic(1)
-                          << " " << box_geo.periodic(2) << "\n"
-                          << "  Required: 0 0 0\n";
-    }
+  if (integ_switch == INTEG_METHOD_SD) {
+    if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2))
+      runtimeErrorMsg() << "Illegal box periodicity for Stokesian Dynamics: "
+                        << box_geo.periodic(0) << " " << box_geo.periodic(1)
+                        << " " << box_geo.periodic(2) << "\n"
+                        << "  Required: 0 0 0\n";
+  }
 #endif
-  case FIELD_MIN_GLOBAL_CUT:
-  case FIELD_SKIN: {
-    cells_re_init(cell_structure.decomposition_type());
-  }
-    on_coulomb_change();
-    break;
-  case FIELD_NODEGRID:
-    grid_changed_n_nodes();
-    cells_re_init(cell_structure.decomposition_type());
-    break;
-  case FIELD_TEMPERATURE:
-    on_temperature_change();
-    reinit_thermo = true;
-    break;
-  case FIELD_TIMESTEP:
-    lb_lbfluid_reinit_parameters();
-  case FIELD_LANGEVIN_GAMMA:
-  case FIELD_LANGEVIN_GAMMA_ROTATION:
-  case FIELD_NPTISO_G0:
-  case FIELD_NPTISO_GV:
-  case FIELD_NPTISO_PISTON:
-    reinit_thermo = true;
-    break;
-  case FIELD_FORCE_CAP:
-    /* If the force cap changed, forces are invalid */
-    recalc_forces = true;
-    break;
-  case FIELD_THERMO_SWITCH:
-  case FIELD_LATTICE_SWITCH:
-  case FIELD_RIGIDBONDS:
-  case FIELD_THERMALIZEDBONDS:
-    break;
-  case FIELD_SIMTIME:
-    recalc_forces = true;
-    break;
-  }
+  on_skin_change();
+}
+
+void on_skin_change() {
+  cells_re_init(cell_structure.decomposition_type());
+  on_coulomb_change();
+}
+
+void on_thermostat_param_change() { reinit_thermo = true; }
+
+void on_timestep_change() {
+  lb_lbfluid_reinit_parameters();
+  on_thermostat_param_change();
+}
+
+void on_simtime_change() { recalc_forces = true; }
+
+void on_forcecap_change() { recalc_forces = true; }
+
+void on_nodegrid_change() {
+  grid_changed_n_nodes();
+  cells_re_init(cell_structure.decomposition_type());
 }
 
 /**

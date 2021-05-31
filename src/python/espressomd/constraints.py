@@ -112,7 +112,7 @@ class ShapeBasedConstraint(Constraint):
 
     See Also
     ----------
-    espressomd.shapes : shape module that define mathematical surfaces
+    espressomd.shapes : shape module that defines mathematical surfaces
 
     Examples
     ----------
@@ -342,10 +342,11 @@ class ForceField(_Interpolated):
         Spacing of the grid points.
     default_scale : :obj:`float`
         Scaling factor for particles that have no individual scaling factor.
-    particle_scales : array_like of (:obj:`int`, :obj:`float`)
-        A list of tuples of ids and scaling factors. For
-        particles in the list the interaction is scaled with
-        their individual scaling factor before it is applied.
+    particle_scales : :obj:`dict`
+        A dictionary mapping particle ids to scaling factors.
+        For these particles, the interaction is scaled with
+        their individual scaling factor. Other particles are
+        scaled with the default scaling factor.
 
     """
 
@@ -373,10 +374,11 @@ class PotentialField(_Interpolated):
         Spacing of the grid points.
     default_scale : :obj:`float`
         Scaling factor for particles that have no individual scaling factor.
-    particle_scales : array_like (:obj:`int`, :obj:`float`)
-        A list of tuples of ids and scaling factors. For
-        particles in the list the interaction is scaled with
-        their individual scaling factor before it is applied.
+    particle_scales : :obj:`dict`
+        A dictionary mapping particle ids to scaling factors.
+        For these particles, the interaction is scaled with
+        their individual scaling factor. Other particles are
+        scaled with the default scaling factor.
 
     """
 

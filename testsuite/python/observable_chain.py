@@ -66,15 +66,15 @@ class ObservableTests(ut.TestCase):
         # half the box size along the smallest axis
         min_dim = np.min(self.system.box_l)
         max_bond_length = min_dim / 2.01
-        p = self.system.part
 
         for _ in range(self.n_tries):
             # build polymer
             pos = np.zeros((self.n_parts, 3), dtype=float)
-            pos[0] = p[0].pos = np.random.uniform(low=0, high=min_dim, size=3)
-            for i in range(self.n_parts):
-                pos[i] = p[i].pos = pos[i - 1] + np.random.uniform(
+            pos[0] = np.random.uniform(low=0, high=min_dim, size=3)
+            for i in range(1, self.n_parts):
+                pos[i] = pos[i - 1] + np.random.uniform(
                     low=0, high=max_bond_length, size=3)
+            self.system.part[:].pos = pos
             # expected values
             distances = np.linalg.norm(pos[1:] - pos[:-1], axis=1)
             # observed values
@@ -89,6 +89,11 @@ class ObservableTests(ut.TestCase):
                 res_obs_chain, distances, decimal=9,
                 err_msg="Data did not agree for observable ParticleDistances")
 
+        # check exceptions
+        for i in range(2):
+            with self.assertRaises(RuntimeError):
+                espressomd.observables.ParticleDistances(ids=np.arange(i))
+
     def test_BondAngles(self):
         """
         Check BondAngles, for a particle triple and for a chain.
@@ -100,15 +105,15 @@ class ObservableTests(ut.TestCase):
         # half the box size along the smallest axis
         min_dim = np.min(self.system.box_l)
         max_bond_length = min_dim / 2.01
-        p = self.system.part
 
         for _ in range(self.n_tries):
             # build polymer
             pos = np.zeros((self.n_parts, 3), dtype=float)
-            pos[0] = p[0].pos = np.random.uniform(low=0, high=min_dim, size=3)
-            for i in range(self.n_parts):
-                pos[i] = p[i].pos = pos[i - 1] + np.random.uniform(
+            pos[0] = np.random.uniform(low=0, high=min_dim, size=3)
+            for i in range(1, self.n_parts):
+                pos[i] = pos[i - 1] + np.random.uniform(
                     low=0, high=max_bond_length, size=3)
+            self.system.part[:].pos = pos
             # expected values
             v1 = pos[:-2] - pos[1:-1]
             v2 = pos[2:] - pos[1:-1]
@@ -126,6 +131,11 @@ class ObservableTests(ut.TestCase):
             np.testing.assert_array_almost_equal(
                 res_obs_chain, angles, decimal=9,
                 err_msg="Data did not agree for observable BondAngles")
+
+        # check exceptions
+        for i in range(3):
+            with self.assertRaises(RuntimeError):
+                espressomd.observables.BondAngles(ids=np.arange(i))
 
     def test_BondDihedrals(self):
         """
@@ -165,8 +175,7 @@ class ObservableTests(ut.TestCase):
             pos[3] = pos[2] + [bl * np.cos(np.pi - phi), bl * np.sin(phi), 0.]
             pos[4] = pos[3] + [bl, 0., 0.]
             pos += offset
-            for i in range(self.n_parts):
-                self.system.part[i].pos = pos[i]
+            self.system.part[:].pos = pos
             return pos
 
         pids = list(range(self.n_parts))
@@ -202,13 +211,18 @@ class ObservableTests(ut.TestCase):
                         res_obs_chain, [dih1, dih2], decimal=9,
                         err_msg="Data did not agree for observable BondDihedrals")
 
+        # check exceptions
+        for i in range(4):
+            with self.assertRaises(RuntimeError):
+                espressomd.observables.BondDihedrals(ids=np.arange(i))
+
     def test_CosPersistenceAngles(self):
         # First test: compare with python implementation
         self.system.part.clear()
         self.system.part.add(pos=np.array(
             [np.linspace(0, self.system.box_l[0], 20)] * 3).T + np.random.random((20, 3)))
         obs = espressomd.observables.CosPersistenceAngles(
-            ids=range(len(self.system.part)))
+            ids=self.system.part[:].id)
         np.testing.assert_allclose(
             obs.calculate(), cos_persistence_angles(self.system.part[:].pos))
         self.system.part.clear()
@@ -219,9 +233,14 @@ class ObservableTests(ut.TestCase):
             pos = [np.cos(i * delta_phi), np.sin(i * delta_phi), 0.0]
             self.system.part.add(pos=pos)
         obs = espressomd.observables.CosPersistenceAngles(
-            ids=range(len(self.system.part)))
+            ids=self.system.part[:].id)
         expected = np.arange(1, 9) * delta_phi
         np.testing.assert_allclose(obs.calculate(), np.cos(expected))
+
+        # check exceptions
+        for i in range(3):
+            with self.assertRaises(RuntimeError):
+                espressomd.observables.CosPersistenceAngles(ids=np.arange(i))
 
 
 if __name__ == "__main__":

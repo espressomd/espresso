@@ -13,7 +13,7 @@ For understanding this chapter, it is helpful to be aware of the Python classes 
 * :class:`espressomd.particle_data.ParticleList` provides access to all particles in the simulation
 * :class:`espressomd.particle_data.ParticleSlice` provides access to a subset of particles in the simulation identified by a list of ids or an instance of :class:`slice` or :class:`range`.
 
-in almost no case have these classes to be instantiated explicitly by the user.
+In almost no case have these classes to be instantiated explicitly by the user.
 Rather, access is provided via the :attr:`espressomd.system.System.part` attribute.
 The details are explained in the following sections.
 
@@ -26,23 +26,36 @@ In order to add particles to the system, call
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
-    system.part.add(pos=[1.0, 1.0, 1.0], id=0, type=0)
+    a_particle = system.part.add(pos=[1.0, 1.0, 1.0], type=0)
 
 This command adds a single particle to the system with properties given
-as arguments. The pos property is required, the id can be omitted, in which case it is chosen automatically.
+as arguments, and it returns an instance of
+:class:`espressomd.particle_data.ParticleHandle`, which will be used to access
+properties of the newly created particle. The ``pos`` property is required, all
+other properties are optional.
 All available particle properties are members of :class:`espressomd.particle_data.ParticleHandle`.
+
+Note that the instances of :class:`espressomd.particle_data.ParticleHandle` returned by
+:meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the
+simulation, rather than offline copies. Changing their properties will affect the simulation.
 
 It is also possible to add several particles at once::
 
     import numpy as np
-    system.part.add(pos=np.random.random((10, 3) * box_length))
+    new_parts = system.part.add(pos=np.random.random((10, 3)) * box_length)
 
-Furthermore, the :meth:`espressomd.particle_data.ParticleList.add` method returns the added particle(s)::
+If several particles are added at once, an instance of
+:class:`espressomd.particle_data.ParticleSlice` is returned.
 
-    tracer = system.part.add(pos=(0, 0, 0))
-    print(tracer.pos)
+Particles are identified via their ``id`` property. A unique id is given to them
+automatically. Alternatively, you can assign an id manually when adding them to the system::
 
-Note that the instance of :class:`espressomd.particle_data.ParticleHandle` returned by :meth:`espressomd.particle_data.ParticleList.add` are handles for the live particles in the simulation, rather than offline copies. Changing their properties will affect the simulation.
+    system.part.add(pos=[1.0,2.0,3.0], id=system.part.highest_particle_id+1)
+
+The id provides an alternative way to access particles in the system. To
+retrieve the handle of the particle with id ``INDEX``, call::
+
+    p = system.part[<INDEX>]
 
 .. _Accessing particle properties:
 
@@ -51,53 +64,84 @@ Accessing particle properties
 
 Particle properties can be accessed like a class member.
 
-To access property ``PROPERTY`` of the particle with index ``INDEX``::
+To access property ``PROPERTY`` of a particle ``a_particle``::
+    
+    a_particle.<PROPERTY>
 
-    system.part[<INDEX>].<PROPERTY>
+For example, to print the particle's current position, call::
 
-For example, to print the current position of the particle with index 0 in the system, call::
-
-    print(system.part[0].pos)
+    print(a_particle.pos)
 
 Similarly, the position can be set::
 
-    system.part[0].pos = (1, 2.5, 3)
+    a_particle.pos = (1, 2.5, 3)
 
 .. _Vectorial properties:
 
 Vectorial properties
 ~~~~~~~~~~~~~~~~~~~~
 
-For vectorial particle properties, component-wise manipulation like ``system.part[0].pos[0]
+For vectorial particle properties, component-wise manipulation like ``a_particle.pos[0]
 = 1`` or in-place operators like ``+=`` or ``*=`` are not allowed and result in an error.
 This behavior is inherited, so the same applies to ``a`` after ``a =
-system.part[0].pos``. If you want to use a vectorial property for further
+a_particle.pos``. If you want to use a vectorial property for further
 calculations, you should explicitly make a copy e.g. via
-``a = numpy.copy(system.part[0].pos)``.
+``a = numpy.copy(a_particle.pos)``.
 
 .. _Interacting with groups of particles:
 
 Interacting with groups of particles
 ------------------------------------
 
-The :class:`espressomd.particle_data.ParticleList` support slicing similarly to lists and NumPy arrays. To access all existing particles, use a colon::
+Groups of particles are addressed using :class:`espressomd.particle_data.ParticleSlice` objects.
+Usually, these objects do not have to be instantiated by the user. There are several ways
+to retrieve a particle slice:
 
-    print(sysstem.part[:].pos)
-    system.part[:].q = 0
+- By calling :meth:`espressomd.particle_data.ParticleList.add`
 
-To access particles with ids ranging from 0 to 9, use::
+    When adding several particles at once, a particle slice is returned instead
+    of a particle handle.
 
-    system.part[0:10].pos
+- By slicing :py:attr:`espressomd.system.System.part`
 
-Note that, like in other cases in Python, the lower bound is inclusive and the upper bound is non-inclusive.
-It is also possible to get a slice containing particles of specific ids::
+    The :class:`~espressomd.particle_data.ParticleList` supports slicing
+    similarly to lists and NumPy arrays, however with the distinction that
+    particle slices can have gaps.
 
-    system.part[[1, 4, 3]]
+    Using a colon returns a slice containing all particles::
 
-would contain the particles with ids 1, 4, and 3 in that specific order.
+        print(system.part[:])
+    
+    To access particles with ids ranging from 0 to 9, use::
 
+        system.part[0:10]
 
-Setting slices can be done by
+    Note that, like in other cases in Python, the lower bound is inclusive and
+    the upper bound is non-inclusive. The length of the slice does not have to
+    be 10, it can be for example 2 if there are only 2 particles in the system
+    with an id between 0 and 9.
+
+    It is also possible to get a slice containing particles of specific ids::
+
+        system.part[[1, 4, 3]]
+
+    would contain the particles with ids 1, 4, and 3 in that specific order.
+
+- By calling :meth:`espressomd.particle_data.ParticleList.select`
+
+    This is useful to filter out particles with distinct properties, e.g.::
+
+        slice1 = system.part.select(type=0, q=1)
+        slice2 = system.part.select(lambda p: p.pos[0] < 0.5)
+
+Properties of particle slices can be accessed just like with single particles.
+A list of all values is returned::
+
+    print(system.part[:].q)
+
+A particle slice can be iterated over, see :ref:`Iterating over particles and pairs of particles`.
+
+Setting properties of slices can be done by
 
 - supplying a *single value* that is assigned to each entry of the slice, e.g.::
 
@@ -139,9 +183,9 @@ Deleting particles
 ------------------
 
 Particles can be easily deleted in Python using particle ids or ranges of particle ids.
-For example, to delete all particles with particle index greater than 10, run::
+For example, to delete all particles of type 1, run::
 
-    system.part[10:].remove()
+    system.part.select(type=1).remove()
 
 To delete all particles, use::
 
@@ -151,12 +195,13 @@ To delete all particles, use::
 
 Iterating over particles and pairs of particles
 -----------------------------------------------
-You can iterate over all particles or over a subset of particles as follows::
+You can iterate over all particles or over a subset of particles
+(see :ref:`Interacting with groups of particles`) as follows::
 
     for p in system.part:
         print(p.pos)
 
-    for p in system.part[0:10]:
+    for p in system.part.select(type=1):
         print(p.pos)
 
 You can iterate over all pairs of particles using::
@@ -172,7 +217,8 @@ Exclusions
 
 Particles can have an exclusion list of all other particles where non-bonded interactions are ignored.
 This is typically used in atomistic simulations,
-where nearest and next nearest neighbor interactions along the chain have to be omitted since they are included in the bonding potentials.
+where nearest and next nearest neighbor interactions along a chain of bonded
+particles have to be omitted since they are included in the bonding potentials.
 Exclusions do not apply to the short range part of electrostatics and magnetostatics methods, e.g. to P3M.
 
 ::
@@ -216,19 +262,20 @@ The function :func:`espressomd.polymer.linear_polymer_positions()` returns a
 three-dimensional numpy array, namely a list of polymers containing the
 positions of monomers (x, y, z). A quick example of how to set up polymers::
 
-     import espressomd
-     from espressomd import polymer
+    import espressomd
+    from espressomd import polymer
 
-     system = espressomd.System([50, 50, 50])
-     polymers = polymer.linear_polymer_positions(n_polymers=10,
-                                                 beads_per_chain=25,
-                                                 bond_length=0.9, seed=23)
-     for p in polymers:
-         for i, m in enumerate(p):
-            id = len(system.part)
-            system.part.add(id=id, pos=m)
-            if i > 0:
-                system.part[id].add_bond((<BOND_TYPE>, id - 1))
+    system = espressomd.System([50, 50, 50])
+    polymers = polymer.linear_polymer_positions(n_polymers=10,
+                                                beads_per_chain=25,
+                                                bond_length=0.9, seed=23)
+    for polymer in polymers:
+        monomers = system.part.add(pos=polymer)
+        previous_part = None
+        for part in monomers:
+            if not previous_part is None:
+                part.add_bond((<BOND_TYPE>, previous_part))
+            previous_part = part
 
 If there are constraints present in your system which you want to be taken
 into account when creating the polymer positions, you can set the optional
@@ -260,7 +307,7 @@ Setting up diamond polymer networks
 
 :func:`espressomd.polymer.setup_diamond_polymer()` creates a diamond-structured
 polymer network with 8 tetra-functional nodes
-connected by :math:`2*8` polymer chains of length ``MPC`` with the system box as
+connected by :math:`2 \times 8` polymer chains of length ``MPC`` with the system box as
 the unit cell. The box therefore has to be cubic.
 The diamond command creates ``16*MPC+8`` many particles
 which are connected via the provided bond type (the term plus 8 stems from adding 8 nodes which are connecting the chains).
@@ -316,7 +363,7 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
 The ``have_quaternion`` parameter determines whether the quaternion of the virtual particle is updated (useful in combination with the
 :attr:`espressomd.particle_data.ParticleHandle.vs_quat` property of the virtual particle which defines the orientation of the virtual particle
-in the body fixed frame of the related real particle.
+in the body fixed frame of the related real particle).
 
 .. _Rigid arrangements of particles:
 
@@ -485,7 +532,7 @@ Langevin swimmers
 
     system = espressomd.System(box_l=[1, 1, 1])
 
-    system.part.add(id=0, pos=[1, 0, 0], swimming={'f_swim': 0.03})
+    system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
 
 This enables the particle to be self-propelled in the direction determined by
 its quaternion. For setting the particle's quaternion see
@@ -512,7 +559,7 @@ Lattice-Boltzmann (LB) swimmers
 
     system = espressomd.System(box_l=[1, 1, 1])
 
-    system.part.add(id=1, pos=[2, 0, 0], rotation=[1, 1, 1], swimming={
+    system.part.add(pos=[2, 0, 0], rotation=[1, 1, 1], swimming={
         'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0})
 
 For an explanation of the parameters ``v_swim`` and ``f_swim`` see the previous

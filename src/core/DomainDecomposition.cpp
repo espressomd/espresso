@@ -97,14 +97,13 @@ void DomainDecomposition::move_left_or_right(ParticleList &src,
                                              ParticleList &right,
                                              int dir) const {
   for (auto it = src.begin(); it != src.end();) {
-    if ((get_mi_coord(it->r.p[dir], m_local_box.my_left()[dir],
-                      m_box.length()[dir], m_box.periodic(dir)) < 0.0) and
+    if ((m_box.get_mi_coord(it->r.p[dir], m_local_box.my_left()[dir], dir) <
+         0.0) and
         (m_box.periodic(dir) || (m_local_box.boundary()[2 * dir] == 0))) {
       left.insert(std::move(*it));
       it = src.erase(it);
-    } else if ((get_mi_coord(it->r.p[dir], m_local_box.my_right()[dir],
-                             m_box.length()[dir],
-                             m_box.periodic(dir)) >= 0.0) and
+    } else if ((m_box.get_mi_coord(it->r.p[dir], m_local_box.my_right()[dir],
+                                   dir) >= 0.0) and
                (m_box.periodic(dir) ||
                 (m_local_box.boundary()[2 * dir + 1] == 0))) {
       right.insert(std::move(*it));
@@ -286,7 +285,7 @@ int DomainDecomposition::calc_processor_min_num_cells() const {
 void DomainDecomposition::create_cell_grid(double range) {
   auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
 
-  int i, n_local_cells, new_cells;
+  int n_local_cells;
   double cell_range[3];
 
   /* initialize */
@@ -308,10 +307,10 @@ void DomainDecomposition::create_cell_grid(double range) {
   } else {
     /* Calculate initial cell grid */
     double volume = m_local_box.length()[0];
-    for (i = 1; i < 3; i++)
+    for (int i = 1; i < 3; i++)
       volume *= m_local_box.length()[i];
     double scale = pow(DomainDecomposition::max_num_cells / volume, 1. / 3.);
-    for (i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
       /* this is at least 1 */
       cell_grid[i] = (int)ceil(m_local_box.length()[i] * scale);
       cell_range[i] = m_local_box.length()[i] / cell_grid[i];
@@ -344,7 +343,7 @@ void DomainDecomposition::create_cell_grid(double range) {
       int min_ind = 0;
       double min_size = cell_range[0];
 
-      for (i = 1; i < 3; i++) {
+      for (int i = 1; i < 3; i++) {
         if (cell_grid[i] > 1 && cell_range[i] < min_size) {
           min_ind = i;
           min_size = cell_range[i];
@@ -372,8 +371,8 @@ void DomainDecomposition::create_cell_grid(double range) {
   auto const node_pos = cart_info.coords;
 
   /* now set all dependent variables */
-  new_cells = 1;
-  for (i = 0; i < 3; i++) {
+  int new_cells = 1;
+  for (int i = 0; i < 3; i++) {
     ghost_cell_grid[i] = cell_grid[i] + 2;
     new_cells *= ghost_cell_grid[i];
     cell_size[i] = m_local_box.length()[i] / (double)cell_grid[i];

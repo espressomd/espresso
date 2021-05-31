@@ -86,9 +86,10 @@ are required:
 
 .. code-block:: bash
 
-    sudo apt install python3-matplotlib python3-scipy ipython3 jupyter-notebook
-    pip3 install --user 'pint>=0.9' 'jupyter_contrib_nbextensions==0.5.1' \
-                        'sphinx>=1.6.7,!=2.1.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5'
+    sudo apt install python3-matplotlib python3-scipy python3-pint ipython3 jupyter-notebook
+    pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' \
+                        'sphinx>=1.6.7,!=2.1.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5' \
+                        'MDAnalysis>=1.0.0'
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
@@ -305,6 +306,8 @@ General features
 
 -  ``SCAFACOS_DIPOLES`` This activates magnetostatics methods of ScaFaCoS.
 
+-  ``DIPOLAR_DIRECT_SUM`` This activates the GPU implementation of the dipolar direct sum.
+
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.
 
@@ -315,11 +318,8 @@ General features
       additional degrees of freedom, which for example means that the
       kinetic energy changes at constant temperature is twice as large.
 
--  ``LANGEVIN_PER_PARTICLE`` Allows to choose the Langevin temperature and friction coefficient
-   per particle.
-
--  ``BROWNIAN_PER_PARTICLE`` Allows to choose the Brownian temperature and friction coefficient
-   per particle.
+-  ``THERMOSTAT_PER_PARTICLE`` Allows setting a per-particle friction
+   coefficient for the Langevin and Brownian thermostats.
 
 -  ``ROTATIONAL_INERTIA``
 
@@ -353,9 +353,9 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
--  ``NPT`` Enables an on-the-fly NPT integration scheme.
+-  ``NPT`` Enables an on-the-fly NpT integration scheme.
 
-   .. seealso:: :ref:`Isotropic NPT thermostat`
+   .. seealso:: :ref:`Isotropic NpT thermostat`
 
 -  ``ENGINE``
 
@@ -383,8 +383,6 @@ Fluid dynamics and fluid structure interaction
 -  ``EK_BOUNDARIES``
 
 -  ``EK_DEBUG``
-
--  ``EK_DOUBLE_PREC``
 
 
 .. _Interaction features:

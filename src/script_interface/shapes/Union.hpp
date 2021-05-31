@@ -30,42 +30,19 @@
 namespace ScriptInterface {
 namespace Shapes {
 
-class Union : public Shape {
+class Union : public ObjectList<Shape, Shape> {
 public:
   Union() : m_core_shape(new ::Shapes::Union()) {}
 
-  Variant do_call_method(std::string const &name,
-                         VariantMap const &params) override {
-    if (name == "add") {
-      auto const shape =
-          get_value<std::shared_ptr<Shapes::Shape>>(params.at("shape"));
-      m_core_shape->add(shape->shape());
-      m_shapes.push_back(shape);
-    } else if (name == "remove") {
-      auto const shape =
-          get_value<std::shared_ptr<Shapes::Shape>>(params.at("shape"));
-      m_core_shape->remove(shape->shape());
-      m_shapes.erase(std::remove(m_shapes.begin(), m_shapes.end(), shape),
-                     m_shapes.end());
-    } else if (name == "get_elements") {
-      std::vector<Variant> ret;
-      ret.reserve(m_shapes.size());
-      for (auto const &s : m_shapes) {
-        ret.emplace_back(s);
-      }
-      return ret;
-    } else if (name == "clear") {
-      for (auto &s : m_shapes) {
-        m_core_shape->remove(s->shape());
-        m_shapes.clear();
-      }
-    } else if (name == "size") {
-      return static_cast<int>(m_shapes.size());
-    } else if (name == "empty") {
-      return m_shapes.empty();
-    }
-    return Shape::do_call_method(name, params);
+private:
+  void add_in_core(const std::shared_ptr<Shape> &obj_ptr) override {
+    m_core_shape->add(obj_ptr->shape());
   }
+  void remove_in_core(const std::shared_ptr<Shape> &obj_ptr) override {
+    m_core_shape->remove(obj_ptr->shape());
+  }
+
+public:
   std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_core_shape;
   }

@@ -66,11 +66,9 @@ class ReactionEnsembleTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        for i in range(0, 2 * cls.N0, 2):
-            cls.system.part.add(id=i, pos=np.random.random(3) *
-                                cls.system.box_l, type=cls.type_A)
-            cls.system.part.add(id=i + 1, pos=np.random.random(3) *
-                                cls.system.box_l, type=cls.type_H)
+        cls.system.part.add(
+            pos=np.random.random((2 * cls.N0, 3)) * cls.system.box_l,
+            type=cls.N0 * [cls.type_A, cls.type_H])
 
         cls.RE.add_reaction(
             gamma=cls.gamma,
@@ -109,7 +107,6 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NA /= num_samples
         average_NHA /= num_samples
         average_alpha = average_NA / float(N0)
-        print(average_alpha)
         # Note: with 40 particles, alpha=0.5 and 1000*10 reactions, standard
         # deviation of average alpha is about 0.003 (determined from 40
         # repeated simulations).  We set the desired accuracy to 5*std = 0.015
@@ -176,7 +173,6 @@ class ReactionEnsembleTest(ut.TestCase):
         RE_status = RE.get_status()
         forward_reaction = RE_status["reactions"][0]
         backward_reaction = RE_status["reactions"][1]
-        print(forward_reaction)
         self.assertEqual(
             new_reaction_constant,
             forward_reaction["gamma"],

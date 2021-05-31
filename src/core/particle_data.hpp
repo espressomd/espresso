@@ -71,9 +71,9 @@ void clear_particle_node();
 /**
  * @brief Get particle data.
  *
- *   @param part the identity of the particle to fetch
- *   @return Pointer to copy of particle if it exists,
- *           nullptr otherwise;
+ *  @param part the identity of the particle to fetch
+ *  @return Pointer to copy of particle if it exists,
+ *          nullptr otherwise;
  */
 const Particle &get_particle_data(int part);
 
@@ -108,13 +108,13 @@ size_t fetch_cache_max_size();
  *  @retval ES_PART_CREATED if created
  *  @retval ES_PART_ERROR if id is illegal
  */
-int place_particle(int part, const double *p);
+int place_particle(int part, Utils::Vector3d const &p);
 
 /** Call only on the master node: set particle velocity.
  *  @param part the particle.
  *  @param v its new velocity.
  */
-void set_particle_v(int part, double *v);
+void set_particle_v(int part, Utils::Vector3d const &v);
 
 #ifdef ENGINE
 /** Call only on the master node: set particle velocity.
@@ -141,7 +141,7 @@ void set_particle_mass(int part, double mass);
  *  @param part the particle.
  *  @param rinertia its new inertia.
  */
-void set_particle_rotational_inertia(int part, double *rinertia);
+void set_particle_rotational_inertia(int part, Utils::Vector3d const &rinertia);
 #endif
 
 /** Call only on the master node: Specifies whether a particle's rotational
@@ -172,7 +172,7 @@ void set_particle_q(int part, double q);
  *  @param mu_E its new mobility.
  */
 void set_particle_mu_E(int part, Utils::Vector3d const &mu_E);
-void get_particle_mu_E(int part, Utils::Vector3d &mu_E);
+Utils::Vector3d get_particle_mu_E(int part);
 #endif
 
 /** Call only on the master node: set particle type.
@@ -194,6 +194,13 @@ void set_particle_mol_id(int part, int mid);
  */
 void set_particle_quat(int part, double *quat);
 
+/** Call only on the master node: set particle orientation using director.
+ *  The particle director defines the z-axis in the body-fixed frame.
+ *  @param part the particle.
+ *  @param director its new director vector (will be normalized if necessary)
+ */
+void set_particle_director(int part, const Utils::Vector3d &director);
+
 /** Call only on the master node: set particle angular velocity from lab frame.
  *  @param part the particle.
  *  @param omega_lab its new angular velocity.
@@ -211,7 +218,6 @@ void set_particle_omega_body(int part, const Utils::Vector3d &omega);
  *  @param torque_lab its new torque.
  */
 void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab);
-
 #endif
 
 #ifdef DIPOLES
@@ -219,7 +225,7 @@ void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab);
  *  @param part the particle.
  *  @param dip its new dipole orientation.
  */
-void set_particle_dip(int part, double const *dip);
+void set_particle_dip(int part, Utils::Vector3d const &dip);
 
 /** Call only on the master node: set particle dipole moment (absolute value).
  *  @param part the particle.
@@ -242,13 +248,7 @@ void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
                               Utils::Quaternion<double> const &rel_ori);
 #endif
 
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
-/** Call only on the master node: set particle temperature.
- *  @param part the particle.
- *  @param T its new temperature.
- */
-void set_particle_temperature(int part, double T);
-
+#ifdef THERMOSTAT_PER_PARTICLE
 /** Call only on the master node: set particle frictional coefficient.
  *  @param part the particle.
  *  @param gamma its new frictional coefficient.
@@ -256,16 +256,16 @@ void set_particle_temperature(int part, double T);
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma(int part, double gamma);
 #else
-void set_particle_gamma(int part, Utils::Vector3d gamma);
+void set_particle_gamma(int part, Utils::Vector3d const &gamma);
 #endif
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma_rot(int part, double gamma);
 #else
-void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot);
+void set_particle_gamma_rot(int part, Utils::Vector3d const &gamma_rot);
 #endif
 #endif
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
@@ -321,9 +321,6 @@ const std::vector<BondView> &get_particle_bonds(int part);
  *          exclusion set)
  */
 int change_exclusion(int part, int part2, int _delete);
-
-/** remove all exclusions. */
-void remove_all_exclusions();
 #endif
 
 /** Remove particle with a given identity. Also removes all bonds to the
@@ -366,7 +363,6 @@ void pointer_to_omega_body(Particle const *p, double const *&res);
 inline Utils::Vector3d get_torque_body(const Particle &p) { return p.f.torque; }
 
 void pointer_to_quat(Particle const *p, double const *&res);
-
 #endif
 
 void pointer_to_q(Particle const *p, double const *&res);
@@ -391,13 +387,12 @@ void pointer_to_ext_torque(Particle const *p, double const *&res2);
 void pointer_to_fix(Particle const *p, const uint8_t *&res);
 #endif
 
-#if defined(LANGEVIN_PER_PARTICLE) || defined(BROWNIAN_PER_PARTICLE)
+#ifdef THERMOSTAT_PER_PARTICLE
 void pointer_to_gamma(Particle const *p, double const *&res);
-void pointer_to_temperature(Particle const *p, double const *&res);
 #ifdef ROTATION
 void pointer_to_gamma_rot(Particle const *p, double const *&res);
 #endif
-#endif // LANGEVIN_PER_PARTICLE || BROWNIAN_PER_PARTICLE
+#endif // THERMOSTAT_PER_PARTICLE
 
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,

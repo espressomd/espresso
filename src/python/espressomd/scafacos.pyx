@@ -21,8 +21,7 @@ from .actors cimport Actor
 from libcpp.string cimport string  # import std::string
 from . cimport electrostatics
 from . cimport magnetostatics
-from .utils import to_char_pointer, to_str
-from .utils cimport handle_errors
+from .utils import to_char_pointer, to_str, handle_errors
 
 
 include "myconfig.pxi"
@@ -54,7 +53,12 @@ IF SCAFACOS == 1:
             return {"method_name", "method_params", "prefactor"}
 
         def validate_params(self):
-            return True
+            if self._params["method_name"] not in available_methods():
+                raise ValueError(
+                    f"method '{self._params['method_name']}' is unknown or not compiled in ScaFaCoS")
+            if not self._params["method_params"]:
+                raise ValueError(
+                    "ScaFaCoS methods require at least 1 parameter")
 
         def _get_params_from_es_core(self):
             # Parameters are returned as strings
@@ -108,9 +112,8 @@ IF SCAFACOS == 1:
             param_string = ""
             for k in method_params:
                 param_string += k + " " + str(method_params[k]) + " "
-            # Remove trailing whitespace
-            param_string = param_string[0:-1]
-            param_string = param_string.replace(" ", ",")
+            # Format list as a single string
+            param_string = param_string.rstrip().replace(" ", ",")
 
             set_parameters(to_char_pointer(self._params["method_name"]),
                            to_char_pointer(param_string), self.dipolar)

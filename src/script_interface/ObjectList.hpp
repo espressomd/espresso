@@ -19,11 +19,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_REGISTRY_HPP
-#define SCRIPT_INTERFACE_REGISTRY_HPP
+#ifndef SCRIPT_INTERFACE_OBJECT_LIST_HPP
+#define SCRIPT_INTERFACE_OBJECT_LIST_HPP
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/get_value.hpp"
+
+#include <utils/serialization/pack.hpp>
 
 #include <memory>
 #include <string>
@@ -37,12 +39,52 @@ namespace ScriptInterface {
  *         derived from ObjectHandle
  */
 template <
-    typename ManagedType,
+    typename ManagedType, class BaseType = ObjectHandle,
     class = std::enable_if_t<std::is_base_of<ObjectHandle, ManagedType>::value>>
-class ObjectList : public ObjectHandle {
-public:
+class ObjectList : public BaseType {
+private:
   virtual void add_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
   virtual void remove_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
+
+public:
+  /**
+   * @brief Add an element to the list.
+   *
+   * @param element The element to add.
+   */
+  void add(std::shared_ptr<ManagedType> const &element) {
+    add_in_core(element);
+    m_elements.push_back(element);
+  }
+
+  /**
+   * @brief Removes all occurrences of an element from the list.
+   *
+   * @param element The element to remove.
+   */
+  void remove(std::shared_ptr<ManagedType> const &element) {
+    remove_in_core(element);
+    m_elements.erase(std::remove(m_elements.begin(), m_elements.end(), element),
+                     m_elements.end());
+  }
+
+  /**
+   * @brief List elements.
+   */
+  auto const &elements() const { return m_elements; }
+
+  /**
+   * @brief Clear the list.
+   */
+  void clear() {
+    for (auto const &e : m_elements) {
+      remove_in_core(e);
+    }
+
+    m_elements.clear();
+  }
+
+protected:
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
 
@@ -50,18 +92,16 @@ public:
       auto obj_ptr =
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
-      add_in_core(obj_ptr);
-      m_elements.push_back(obj_ptr);
+      add(obj_ptr);
+      return none;
     }
 
     if (method == "remove") {
       auto obj_ptr =
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
-      remove_in_core(obj_ptr);
-      m_elements.erase(
-          std::remove(m_elements.begin(), m_elements.end(), obj_ptr),
-          m_elements.end());
+      remove(obj_ptr);
+      return none;
     }
 
     if (method == "get_elements") {
@@ -75,11 +115,8 @@ public:
     }
 
     if (method == "clear") {
-      for (auto const &e : m_elements) {
-        remove_in_core(e);
-      }
-
-      m_elements.clear();
+      clear();
+      return none;
     }
 
     if (method == "size") {
@@ -90,10 +127,29 @@ public:
       return m_elements.empty();
     }
 
-    return none;
+    return BaseType::do_call_method(method, parameters);
   }
 
 private:
+  std::string get_internal_state() const override {
+    std::vector<std::string> object_states(m_elements.size());
+
+    boost::transform(m_elements, object_states.begin(),
+                     [](auto const &e) { return e->serialize(); });
+
+    return Utils::pack(object_states);
+  }
+
+  void set_internal_state(std::string const &state) override {
+    auto const object_states = Utils::unpack<std::vector<std::string>>(state);
+
+    for (auto const &packed_object : object_states) {
+      auto o = std::dynamic_pointer_cast<ManagedType>(
+          BaseType::deserialize(packed_object, *BaseType::context()));
+      add(std::move(o));
+    }
+  }
+
   std::vector<std::shared_ptr<ManagedType>> m_elements;
 };
 } // Namespace ScriptInterface

@@ -66,13 +66,6 @@ inline double tabulated_pair_force_factor(IA_parameters const &ia_params,
   return 0.0;
 }
 
-/** Calculate a non-bonded pair force by linear interpolation from a table. */
-inline Utils::Vector3d tabulated_pair_force(IA_parameters const &ia_params,
-                                            Utils::Vector3d const &d,
-                                            double dist) {
-  return d * tabulated_pair_force_factor(ia_params, dist);
-}
-
 /** Calculate a non-bonded pair energy by linear interpolation from a table. */
 inline double tabulated_pair_energy(IA_parameters const &ia_params,
                                     double dist) {

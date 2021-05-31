@@ -99,6 +99,10 @@ inline bool bind_centers() {
          collision_params.mode != COLLISION_MODE_GLUE_TO_SURF;
 }
 
+inline int get_bond_num_partners(int bond_id) {
+  return number_of_partners(bonded_ia_params[bond_id]);
+}
+
 bool validate_collision_parameters() {
   // If mode is OFF, no further checks
   if (collision_params.mode == COLLISION_MODE_OFF) {
@@ -164,7 +168,7 @@ bool validate_collision_parameters() {
   // If the bond type to bind particle centers is not a pair bond...
   // Check that the bonds have the right number of partners
   if ((collision_params.mode & COLLISION_MODE_BOND) &&
-      (bonded_ia_params[collision_params.bond_centers].num != 1)) {
+      (get_bond_num_partners(collision_params.bond_centers) != 1)) {
     runtimeErrorMsg() << "The bond type to be used for binding particle "
                          "centers needs to be a pair bond";
     return false;
@@ -172,8 +176,8 @@ bool validate_collision_parameters() {
 
   // The bond between the virtual sites can be pair or triple
   if ((collision_params.mode & COLLISION_MODE_VS) &&
-      !(bonded_ia_params[collision_params.bond_vs].num == 1 ||
-        bonded_ia_params[collision_params.bond_vs].num == 2)) {
+      !(get_bond_num_partners(collision_params.bond_vs) == 1 ||
+        get_bond_num_partners(collision_params.bond_vs) == 2)) {
     runtimeErrorMsg() << "The bond type to be used for binding virtual sites "
                          "needs to be a pair or three-particle bond";
     return false;
@@ -192,7 +196,7 @@ bool validate_collision_parameters() {
          i < collision_params.bond_three_particles +
                  collision_params.three_particle_angle_resolution;
          i++) {
-      if (bonded_ia_params[i].num != 2) {
+      if (get_bond_num_partners(i) != 2) {
         runtimeErrorMsg()
             << "The bonds for three particle binding need to be angle bonds.";
         return false;
@@ -264,7 +268,7 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
                                             const Particle &p2,
                                             Utils::Vector3d &pos) {
   double c;
-  auto const vec21 = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  auto const vec21 = box_geo.get_mi_vector(p1.r.p, p2.r.p);
   const double dist_betw_part = vec21.norm();
 
   // Find out, which is the particle to be glued.
@@ -290,7 +294,7 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
                                             const Particle *const p2,
                                             Utils::Vector3d &pos1,
                                             Utils::Vector3d &pos2) {
-  auto const vec21 = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+  auto const vec21 = box_geo.get_mi_vector(p1->r.p, p2->r.p);
   pos1 = p1->r.p - vec21 * collision_params.vs_placement;
   pos2 = p1->r.p - vec21 * (1. - collision_params.vs_placement);
 }
@@ -301,10 +305,10 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
                                    Particle const &p2) {
   // If p1 and p2 are not closer or equal to the cutoff distance, skip
   // p1:
-  if (get_mi_vector(p.r.p, p1.r.p, box_geo).norm() > collision_params.distance)
+  if (box_geo.get_mi_vector(p.r.p, p1.r.p).norm() > collision_params.distance)
     return;
   // p2:
-  if (get_mi_vector(p.r.p, p2.r.p, box_geo).norm() > collision_params.distance)
+  if (box_geo.get_mi_vector(p.r.p, p2.r.p).norm() > collision_params.distance)
     return;
 
   // Check, if there already is a three-particle bond centered on p
@@ -337,9 +341,9 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
   // First, find the angle between the particle p, p1 and p2
 
   /* vector from p to p1 */
-  auto const vec1 = get_mi_vector(p.r.p, p1.r.p, box_geo).normalize();
+  auto const vec1 = box_geo.get_mi_vector(p.r.p, p1.r.p).normalize();
   /* vector from p to p2 */
-  auto const vec2 = get_mi_vector(p.r.p, p2.r.p, box_geo).normalize();
+  auto const vec2 = box_geo.get_mi_vector(p.r.p, p2.r.p).normalize();
 
   auto const cosine =
       boost::algorithm::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
@@ -377,7 +381,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
 
 void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
                                         const collision_struct &c) {
-  switch (bonded_ia_params[collision_params.bond_vs].num) {
+  switch (get_bond_num_partners(collision_params.bond_vs)) {
   case 1: {
     // Create bond between the virtual particles
     const int bondG[] = {current_vs_pid - 2};

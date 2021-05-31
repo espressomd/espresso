@@ -20,80 +20,36 @@
 #include "interactions.hpp"
 
 #include <boost/range/numeric.hpp>
+#include <boost/variant.hpp>
 
 #include <utils/constants.hpp>
 
 #include <algorithm>
-#include <stdexcept>
+#include <cstddef>
+#include <vector>
 
-std::vector<Bonded_ia_parameters> bonded_ia_params;
+std::vector<Bonded_IA_Parameters> bonded_ia_params;
 
-auto cutoff(int type, Bond_parameters const &bp) {
-  switch (type) {
-  case BONDED_IA_NONE:
-    return -1.;
-  case BONDED_IA_FENE:
-    return bp.fene.cutoff();
-  case BONDED_IA_HARMONIC:
-    return bp.harmonic.cutoff();
-  case BONDED_IA_QUARTIC:
-    return bp.quartic.cutoff();
-  case BONDED_IA_BONDED_COULOMB:
-    return bp.bonded_coulomb.cutoff();
-  case BONDED_IA_BONDED_COULOMB_SR:
-    return bp.bonded_coulomb_sr.cutoff();
-  case BONDED_IA_DIHEDRAL:
-    return bp.dihedral.cutoff();
-  case BONDED_IA_TABULATED_DISTANCE:
-  case BONDED_IA_TABULATED_ANGLE:
-  case BONDED_IA_TABULATED_DIHEDRAL:
-    return bp.tab.cutoff();
-  case BONDED_IA_RIGID_BOND:
-    return bp.rigid_bond.cutoff();
-  case BONDED_IA_VIRTUAL_BOND:
-    return bp.virt.cutoff();
-  case BONDED_IA_ANGLE_HARMONIC:
-    return bp.angle_harmonic.cutoff();
-  case BONDED_IA_ANGLE_COSINE:
-    return bp.angle_cosine.cutoff();
-  case BONDED_IA_ANGLE_COSSQUARE:
-    return bp.angle_cossquare.cutoff();
-  case BONDED_IA_OIF_LOCAL_FORCES:
-    return bp.oif_local_forces.cutoff();
-  case BONDED_IA_OIF_GLOBAL_FORCES:
-    return bp.oif_global_forces.cutoff();
-  case BONDED_IA_IBM_TRIEL:
-    return bp.ibm_triel.cutoff();
-  case BONDED_IA_IBM_VOLUME_CONSERVATION:
-    return bp.ibmVolConsParameters.cutoff();
-  case BONDED_IA_IBM_TRIBEND:
-    return bp.ibm_tribend.cutoff();
-  case BONDED_IA_UMBRELLA:
-    return bp.umbrella.cutoff();
-  case BONDED_IA_THERMALIZED_DIST:
-    return bp.thermalized_bond.cutoff();
-  default:
-    throw std::runtime_error("Unknown bond type.");
+/** Visitor to get the bond cutoff from the bond parameter variant */
+class BondCutoff : public boost::static_visitor<double> {
+public:
+  template <typename T> double operator()(T const &bond) const {
+    return bond.cutoff();
   }
-}
+};
 
 double maximal_cutoff_bonded() {
-  auto const max_cut_bonded =
-      boost::accumulate(bonded_ia_params, -1.,
-                        [](auto max_cut, Bonded_ia_parameters const &bond) {
-                          return std::max(max_cut, cutoff(bond.type, bond.p));
-                        });
+  auto const max_cut_bonded = boost::accumulate(
+      bonded_ia_params, BONDED_INACTIVE_CUTOFF,
+      [](auto max_cut, Bonded_IA_Parameters const &bond) {
+        return std::max(max_cut, boost::apply_visitor(BondCutoff(), bond));
+      });
 
   /* Check if there are dihedrals */
   auto const any_dihedrals = std::any_of(
       bonded_ia_params.begin(), bonded_ia_params.end(), [](auto const &bond) {
-        switch (bond.type) {
-        case BONDED_IA_DIHEDRAL:
-        case BONDED_IA_TABULATED_DIHEDRAL:
-          return true;
-        default:
-          return false;
-        }
+        return (boost::get<DihedralBond>(&bond) ||
+                boost::get<TabulatedDihedralBond>(&bond));
       });
 
   /* dihedrals: the central particle is indirectly connected to the fourth
@@ -102,30 +58,11 @@ double maximal_cutoff_bonded() {
 }
 
 void make_bond_type_exist(int type) {
-  int i, ns = type + 1;
-  const auto old_size = bonded_ia_params.size();
-  if (ns <= bonded_ia_params.size()) {
+  std::size_t ns = static_cast<std::size_t>(type) + 1;
+  auto const old_size = bonded_ia_params.size();
+  if (ns <= old_size) {
     return;
   }
   /* else allocate new memory */
-  bonded_ia_params.resize(ns);
-  /* set bond types not used as undefined */
-  for (i = old_size; i < ns; i++)
-    bonded_ia_params[i].type = BONDED_IA_NONE;
-}
-
-int virtual_set_params(int bond_type) {
-  if (bond_type < 0)
-    return ES_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].type = BONDED_IA_VIRTUAL_BOND;
-  bonded_ia_params[bond_type].num = 1;
-  bonded_ia_params[bond_type].p.virt = VirtualBond_Parameters{};
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
+  bonded_ia_params.resize(ns, NoneBond());
 }

@@ -16,18 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import unittest_decorators as utx
+import tests_common
 import numpy as np
-from numpy.random import random
 
 import espressomd
 import espressomd.magnetostatics
 import espressomd.analyze
 import espressomd.cuda_init
-
-
-def stopAll(system):
-    system.part[:].v = np.zeros(3)
-    system.part[:].omega_body = np.zeros(3)
+import espressomd.galilei
 
 
 @utx.skipIfMissingGPU()
@@ -56,21 +52,16 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
 
         for n in [128, 541]:
             dipole_modulus = 1.3
-            for i in range(n):
-                part_pos = np.array(random(3)) * l
-                costheta = 2 * random() - 1
-                sintheta = np.sin(np.arccos(costheta))
-                phi = 2 * np.pi * random()
-                part_dip[0] = sintheta * np.cos(phi) * dipole_modulus
-                part_dip[1] = sintheta * np.sin(phi) * dipole_modulus
-                part_dip[2] = costheta * dipole_modulus
-                self.system.part.add(id=i, type=0, pos=part_pos, dip=part_dip,
-                                     v=np.array([0, 0, 0]), omega_body=np.array([0, 0, 0]))
+            part_pos = np.random.random((n, 3)) * l
+            part_dip = dipole_modulus * tests_common.random_dipoles(n)
+            self.system.part.add(pos=part_pos, dip=part_dip,
+                                 v=n * [(0, 0, 0)], omega_body=n * [(0, 0, 0)])
 
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
             self.system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
-            stopAll(self.system)
+            g = espressomd.galilei.GalileiTransform()
+            g.kill_particle_motion(rotation=True)
             self.system.integrator.set_vv()
 
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -89,14 +80,9 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             self.system.actors.add(dds_gpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
-            dawaanr_f = []
-            dawaanr_t = []
-
-            for i in range(n):
-                dawaanr_f.append(self.system.part[i].f)
-                dawaanr_t.append(self.system.part[i].torque_lab)
-            dawaanr_e = espressomd.analyze.Analysis(
-                self.system).energy()["total"]
+            dawaanr_f = np.copy(self.system.part[:].f)
+            dawaanr_t = np.copy(self.system.part[:].torque_lab)
+            dawaanr_e = self.system.analysis.energy()["total"]
 
             del dds_gpu
             self.system.actors.clear()
@@ -107,14 +93,9 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             self.system.actors.add(bh_gpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
-            bhgpu_f = []
-            bhgpu_t = []
-
-            for i in range(n):
-                bhgpu_f.append(self.system.part[i].f)
-                bhgpu_t.append(self.system.part[i].torque_lab)
-            bhgpu_e = espressomd.analyze.Analysis(
-                self.system).energy()["total"]
+            bhgpu_f = np.copy(self.system.part[:].f)
+            bhgpu_t = np.copy(self.system.part[:].torque_lab)
+            bhgpu_e = self.system.analysis.energy()["total"]
 
             # compare
             for i in range(n):

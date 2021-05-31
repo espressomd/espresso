@@ -60,11 +60,11 @@ struct dp3m_data_struct : public p3m_data_struct_base {
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
-  /** real space mesh (local) for CA/FFT.*/
+  /** real space mesh (local) for CA/FFT. */
   fft_vector<double> rs_mesh;
-  /** real space mesh (local) for CA/FFT of the dipolar field.*/
+  /** real space mesh (local) for CA/FFT of the dipolar field. */
   std::array<fft_vector<double>, 3> rs_mesh_dip;
-  /** k-space mesh (local) for k-space calculation and FFT.*/
+  /** k-space mesh (local) for k-space calculation and FFT. */
   std::vector<double> ks_mesh;
 
   /** number of dipolar particles (only on master node). */
@@ -72,7 +72,7 @@ struct dp3m_data_struct : public p3m_data_struct_base {
   /** Sum of square of magnetic dipoles (only on master node). */
   double sum_mu2;
 
-  /** position shift for calc. of first assignment mesh point. */
+  /** position shift for calculation of first assignment mesh point. */
   double pos_shift;
 
   p3m_interpolation_cache inter_weights;
@@ -80,7 +80,7 @@ struct dp3m_data_struct : public p3m_data_struct_base {
   /** send/recv mesh sizes */
   p3m_send_mesh sm;
 
-  /* Stores the value of the energy correction due to MS effects */
+  /** value of the energy correction due to MS effects */
   double energy_correction;
 
   fft_data_struct fft;
@@ -90,18 +90,17 @@ struct dp3m_data_struct : public p3m_data_struct_base {
 extern dp3m_data_struct dp3m;
 
 /** @copydoc p3m_set_tune_params */
-void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
-                          double accuracy);
+void dp3m_set_tune_params(double r_cut, int mesh, int cao, double accuracy);
 
 /** @copydoc p3m_set_params */
-int dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
-                    double accuracy);
+void dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
+                     double accuracy);
 
 /** @copydoc p3m_set_mesh_offset */
-int dp3m_set_mesh_offset(double x, double y, double z);
+void dp3m_set_mesh_offset(double x, double y, double z);
 
 /** @copydoc p3m_set_eps */
-int dp3m_set_eps(double eps);
+void dp3m_set_eps(double eps);
 
 /** Initialize all structures, parameters and arrays needed for the
  *  P3M algorithm for dipole-dipole interactions.
@@ -115,8 +114,6 @@ void dp3m_scaleby_box_l();
 bool dp3m_sanity_checks(const Utils::Vector3i &grid);
 
 /** Assign the physical dipoles using the tabulated assignment function.
- *  If Dstore_ca_frac is true, then the charge fractions are buffered in
- *  Dcur_ca_fmp and Dcur_ca_frac.
  */
 void dp3m_dipole_assign(const ParticleRange &particles);
 
@@ -157,11 +154,11 @@ void dp3m_deactivate();
  *  The function is based on routines of the program HE_Q.cpp for charges
  *  written by M. Deserno.
  *
- *  @param[out]  log  log output
+ *  @param verbose printf output
  *  @retval ES_OK
  *  @retval ES_ERROR
  */
-int dp3m_adaptive_tune(char **log);
+int dp3m_adaptive_tune(bool verbose);
 
 /** Compute the k-space part of forces and energies for the magnetic
  *  dipole-dipole interaction

@@ -16,13 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import unittest_decorators as utx
-from numpy.random import random
+import tests_common
 import numpy as np
 
 import espressomd
 import espressomd.interactions
 import espressomd.magnetostatics
 import espressomd.analyze
+import espressomd.galilei
 
 
 @utx.skipIfMissingGPU()
@@ -31,37 +32,22 @@ class DDSGPUTest(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
-    def stopAll(self):
-        for i in range(len(self.es.part)):
-            self.es.part[i].v = np.array([0.0, 0.0, 0.0])
-            self.es.part[i].omega_body = np.array([0.0, 0.0, 0.0])
-
     @ut.skipIf(es.cell_system.get_state()["n_nodes"] > 1,
                "Skipping test: only runs for n_nodes == 1")
     def test(self):
         pf_dds_gpu = 2.34
         pf_dawaanr = 3.524
         ratio_dawaanr_dds_gpu = pf_dawaanr / pf_dds_gpu
-        l = 15
-        self.es.box_l = [l, l, l]
+        self.es.box_l = 3 * [15]
         self.es.periodicity = [0, 0, 0]
         self.es.time_step = 1E-4
         self.es.cell_system.skin = 0.1
 
-        part_dip = np.zeros((3))
-
         for n in [128, 541]:
             dipole_modulus = 1.3
-            for i in range(n):
-                part_pos = np.array(random(3)) * l
-                costheta = 2 * random() - 1
-                sintheta = np.sin(np.arcsin(costheta))
-                phi = 2 * np.pi * random()
-                part_dip[0] = sintheta * np.cos(phi) * dipole_modulus
-                part_dip[1] = sintheta * np.sin(phi) * dipole_modulus
-                part_dip[2] = costheta * dipole_modulus
-                self.es.part.add(id=i, type=0, pos=part_pos, dip=part_dip,
-                                 v=np.array([0, 0, 0]), omega_body=np.array([0, 0, 0]))
+            part_dip = dipole_modulus * tests_common.random_dipoles(n)
+            part_pos = np.random.random((n, 3)) * self.es.box_l[0]
+            self.es.part.add(pos=part_pos, dip=part_dip)
 
             self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
@@ -70,7 +56,8 @@ class DDSGPUTest(ut.TestCase):
             self.es.integrator.set_steepest_descent(
                 f_max=0.0, gamma=0.1, max_displacement=0.1)
             self.es.integrator.run(500)
-            self.stopAll()
+            g = espressomd.galilei.GalileiTransform()
+            g.kill_particle_motion(rotation=True)
             self.es.integrator.set_vv()
 
             self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -88,12 +75,8 @@ class DDSGPUTest(ut.TestCase):
             self.es.actors.add(dds_cpu)
             self.es.integrator.run(steps=0, recalc_forces=True)
 
-            dawaanr_f = []
-            dawaanr_t = []
-
-            for i in range(n):
-                dawaanr_f.append(self.es.part[i].f)
-                dawaanr_t.append(self.es.part[i].torque_lab)
+            dawaanr_f = np.copy(self.es.part[:].f)
+            dawaanr_t = np.copy(self.es.part[:].torque_lab)
             dawaanr_e = self.es.analysis.energy()["total"]
 
             del dds_cpu
@@ -106,12 +89,8 @@ class DDSGPUTest(ut.TestCase):
             self.es.actors.add(dds_gpu)
             self.es.integrator.run(steps=0, recalc_forces=True)
 
-            ddsgpu_f = []
-            ddsgpu_t = []
-
-            for i in range(n):
-                ddsgpu_f.append(self.es.part[i].f)
-                ddsgpu_t.append(self.es.part[i].torque_lab)
+            ddsgpu_f = np.copy(self.es.part[:].f)
+            ddsgpu_t = np.copy(self.es.part[:].torque_lab)
             ddsgpu_e = self.es.analysis.energy()["total"]
 
             # compare

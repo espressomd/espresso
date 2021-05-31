@@ -23,7 +23,8 @@ import numpy as np
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
-from .interactions cimport bonded_ia_params
+from .interactions cimport bonded_ia_params_size
+from .interactions cimport bonded_ia_params_num_partners
 from copy import copy
 from .globals cimport max_seen_particle_type, n_rigidbonds
 import collections
@@ -55,6 +56,33 @@ cdef class ParticleHandle:
 
     cdef int update_particle_data(self) except -1:
         self.particle_data = &get_particle_data(self._id)
+
+    def to_dict(self):
+        """
+        Returns the particle's attributes as a dictionary.
+
+        It includes the content of ``particle_attributes``, minus a few exceptions:
+
+        - :attr:`~ParticleHandle.dip`, :attr:`~ParticleHandle.director`:
+          Setting only the director will overwrite the orientation of the
+          particle around the axis parallel to dipole moment/director.
+          Quaternions contain the full info.
+        - :attr:`~ParticleHandle.image_box`, :attr:`~ParticleHandle.node`
+
+        """
+
+        pickle_attr = copy(particle_attributes)
+        for i in ["director", "dip", "image_box", "node"]:
+            if i in pickle_attr:
+                pickle_attr.remove(i)
+        IF MASS == 0:
+            pickle_attr.remove("mass")
+        pdict = {}
+
+        for property_ in pickle_attr:
+            pdict[property_] = ParticleHandle(
+                self.id).__getattribute__(property_)
+        return pdict
 
     def __str__(self):
         res = collections.OrderedDict()
@@ -141,14 +169,14 @@ cdef class ParticleHandle:
         """
 
         def __set__(self, _pos):
-            cdef double mypos[3]
+            cdef Vector3d pos
             if np.isnan(_pos).any() or np.isinf(_pos).any():
                 raise ValueError("invalid particle position")
             check_type_or_throw_except(
                 _pos, 3, float, "Position must be 3 floats")
             for i in range(3):
-                mypos[i] = _pos[i]
-            if place_particle(self._id, mypos) == -1:
+                pos[i] = _pos[i]
+            if place_particle(self._id, pos) == -1:
                 raise Exception("particle could not be set")
 
         def __get__(self):
@@ -225,12 +253,12 @@ cdef class ParticleHandle:
         """
 
         def __set__(self, _v):
-            cdef double myv[3]
+            cdef Vector3d v
             check_type_or_throw_except(
                 _v, 3, float, "Velocity has to be floats")
             for i in range(3):
-                myv[i] = _v[i]
-            set_particle_v(self._id, myv)
+                v[i] = _v[i]
+            set_particle_v(self._id, v)
 
         def __get__(self):
             self.update_particle_data()
@@ -411,26 +439,40 @@ cdef class ParticleHandle:
                 pointer_to_quat(self.particle_data, x)
                 return array_locked([x[0], x[1], x[2], x[3]])
 
-        # Director (z-axis in body fixed frame)
         property director:
             """
-            Director.
+            The particle director.
+
+            The ``director`` defines the the z-axis in the body-fixed frame.
+            If particle rotations happen, the director, i.e., the body-fixed
+            coordinate system co-rotates. Properties such as the angular
+            velocity :attr:`espressomd.particle_data.ParticleHandle.omega_body`
+            are evaluated in this body-fixed coordinate system.
+            When using particle dipoles, the dipole moment is co-aligned with
+            the particle director. Setting the director thus modifies the
+            dipole moment orientation (:attr:`espressomd.particle_data.ParticleHandle.dip`)
+            and vice versa.
+            See also :ref:`Rotational degrees of freedom and particle anisotropy`.
+
+            director : (3,) array_like of :obj:`float`
 
             .. note::
-               Setting the director is not implemented.
                This needs the feature ``ROTATION``.
 
             """
 
-            def __set__(self, _q):
-                raise AttributeError(
-                    "Setting the director is not implemented in the C++-core of ESPResSo.")
+            def __set__(self, _d):
+                cdef Vector3d myd
+                check_type_or_throw_except(
+                    _d, 3, float, "Particle director has to be 3 floats.")
+                for i in range(3):
+                    myd[i] = _d[i]
+                set_particle_director(self._id, myd)
 
             def __get__(self):
                 self.update_particle_data()
                 return make_array_locked(self.particle_data.r.calc_director())
 
-        # ROTATIONAL_INERTIA
         property omega_body:
             """
             The particle angular velocity in body frame.
@@ -513,7 +555,7 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _rinertia):
-                cdef double rinertia[3]
+                cdef Vector3d rinertia
                 check_type_or_throw_except(
                     _rinertia, 3, float, "Rotation_inertia has to be 3 floats.")
                 for i in range(3):
@@ -578,7 +620,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 cdef Vector3d _mu_E
-                get_particle_mu_E(self._id, _mu_E)
+                _mu_E = get_particle_mu_E(self._id)
                 return make_array_locked(_mu_E)
 
     property virtual:
@@ -654,7 +696,7 @@ cdef class ParticleHandle:
             is related and distance the distance between non-virtual and virtual particle.
             The relative orientation is specified as a quaternion of 4 floats.
 
-            vs_relative : tuple: (PID, distance, (q1,q2,q3,q4))
+            vs_relative : tuple (PID, distance, quaternion)
 
             .. note::
                This needs the feature ``VIRTUAL_SITES_RELATIVE``
@@ -662,23 +704,21 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, x):
-                if len(x) < 3:
+                if len(x) != 3:
                     raise ValueError(
-                        "vs_relative needs input like id,distance,(q1,q2,q3,q4).")
-                _relto = x[0]
-                _dist = x[1]
-                q = x[2]
-                cdef Quaternion[double] _q
+                        "vs_relative needs input in the form [id, distance, quaternion].")
+                rel_to, dist, quat = x
+                check_type_or_throw_except(
+                    rel_to, 1, int, "The particle id has to be given as an int.")
+                check_type_or_throw_except(
+                    dist, 1, float, "The distance has to be given as a float.")
+                check_type_or_throw_except(
+                    quat, 4, float, "The quaternion has to be given as a tuple of 4 floats.")
+                cdef Quaternion[double] q
                 for i in range(4):
-                    _q[i] = q[i]
+                    q[i] = quat[i]
 
-                if is_valid_type(_relto, int) and is_valid_type(
-                        _dist, float) and all(is_valid_type(fq, float) for fq in q):
-
-                    set_particle_vs_relative(self._id, _relto, _dist, _q)
-                else:
-                    raise ValueError(
-                        "vs_relative needs input like id<int>,distance<float>,(q1<float>,q2<float>,q3<float>,q4<float>).")
+                set_particle_vs_relative(self._id, rel_to, dist, q)
 
             def __get__(self):
                 self.update_particle_data()
@@ -690,14 +730,24 @@ cdef class ParticleHandle:
                 return (rel_to[0], dist[0], np.array((q[0], q[1], q[2], q[3])))
 
         # vs_auto_relate_to
-        def vs_auto_relate_to(self, _relto):
+        def vs_auto_relate_to(self, rel_to):
             """
-            Setup this particle as virtual site relative to the particle with the given id.
+            Setup this particle as virtual site relative to the particle
+            in argument ``rel_to``.
+
+            Parameters
+            -----------
+            rel_to : :obj:`int` or :obj:`ParticleHandle`
+                Particle to relate to (either particle id or particle object).
 
             """
+            # If rel_to is of type ParticleHandle,
+            # resolve id of particle which to relate to
+            if isinstance(rel_to, ParticleHandle):
+                rel_to = rel_to.id
             check_type_or_throw_except(
-                _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int.")
-            vs_relate_to(self._id, _relto)
+                rel_to, 1, int, "Argument of vs_auto_relate_to has to be of type ParticleHandle or int.")
+            vs_relate_to(self._id, rel_to)
 
     IF DIPOLES:
         property dip:
@@ -711,13 +761,13 @@ cdef class ParticleHandle:
 
             """
 
-            def __set__(self, _q):
-                cdef double myq[3]
+            def __set__(self, _dip):
+                cdef Vector3d dip
                 check_type_or_throw_except(
-                    _q, 3, float, "Dipole moment vector has to be 3 floats.")
+                    _dip, 3, float, "Dipole moment vector has to be 3 floats.")
                 for i in range(3):
-                    myq[i] = _q[i]
-                set_particle_dip(self._id, myq)
+                    dip[i] = _dip[i]
+                set_particle_dip(self._id, dip)
 
             def __get__(self):
                 self.update_particle_data()
@@ -842,7 +892,7 @@ cdef class ParticleHandle:
                         self.particle_data, ext_t)
                     return array_locked([ext_t[0], ext_t[1], ext_t[2]])
 
-    IF LANGEVIN_PER_PARTICLE or BROWNIAN_PER_PARTICLE:
+    IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
             property gamma:
                 """
@@ -852,8 +902,8 @@ cdef class ParticleHandle:
                 gamma : :obj:`float` or (3,) array_like of :obj:`float`
 
                 .. note::
-                    This needs features ``PARTICLE_ANISOTROPY`` and either
-                    ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                    This needs features ``PARTICLE_ANISOTROPY`` and
+                    ``THERMOSTAT_PER_PARTICLE``.
 
                 See Also
                 ----------
@@ -890,7 +940,7 @@ cdef class ParticleHandle:
                 gamma : :obj:`float`
 
                 .. note::
-                   This needs the feature ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                   This needs the feature ``THERMOSTAT_PER_PARTICLE``.
 
                 See Also
                 ----------
@@ -919,7 +969,7 @@ cdef class ParticleHandle:
 
                     .. note::
                         This needs features ``ROTATION``, ``PARTICLE_ANISOTROPY``
-                        and either ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                        and ``THERMOSTAT_PER_PARTICLE``.
 
                     """
 
@@ -952,8 +1002,8 @@ cdef class ParticleHandle:
                     gamma_rot : :obj:`float`
 
                     .. note::
-                        This needs features ``ROTATION`` and either
-                        ``LANGEVIN_PER_PARTICLE`` or ``BROWNIAN_PER_PARTICLE``.
+                        This needs features ``ROTATION`` and
+                        ``THERMOSTAT_PER_PARTICLE``.
 
                     """
 
@@ -968,29 +1018,6 @@ cdef class ParticleHandle:
                         pointer_to_gamma_rot(
                             self.particle_data, gamma_rot)
                         return gamma_rot[0]
-
-        property temp:
-            """
-            Particle's temperature in the Langevin and Brownian thermostats.
-
-            temp: :obj:`float`
-
-            .. note::
-                This needs the feature ``LANGEVIN_PER_PARTICLE`` or
-                ``BROWNIAN_PER_PARTICLE``.
-
-            """
-
-            def __set__(self, _temp):
-                check_type_or_throw_except(
-                    _temp, 1, float, "temp has to be a float.")
-                set_particle_temperature(self._id, _temp)
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef const double * temp = NULL
-                pointer_to_temperature(self.particle_data, temp)
-                return temp[0]
 
     IF ROTATION:
         property rotation:
@@ -1117,8 +1144,8 @@ cdef class ParticleHandle:
             constant terminal velocity in either of these methods is completely
             determined by the friction coefficient. You may only set one of the
             possibilities ``v_swim`` *or* ``f_swim`` as you cannot relax to constant force
-            *and* constant velocity at the same time. The setting both ``v_swim`` and
-            ``f_swim`` to 0.0 thus disables swimming. This option applies to all
+            *and* constant velocity at the same time. Setting both ``v_swim`` and
+            ``f_swim`` to 0.0 disables swimming. This option applies to all
             non-lattice-Boltzmann thermostats. Note that there is no real difference
             between ``v_swim`` and ``f_swim`` since the latter may always be chosen such that
             the same terminal velocity is achieved for a given friction coefficient.
@@ -1133,7 +1160,7 @@ cdef class ParticleHandle:
             v_swim : :obj:`float`
                 Achieve a constant velocity by imposing a constant terminal
                 velocity ``v_swim``. This excludes the option ``f_swim``.
-            mode : :obj:`str`, \{'pusher', 'puller'\}
+            mode : :obj:`str`, \{'pusher', 'puller', 'N/A'\}
                 The LB flow field can be generated by a pushing or a
                 pulling mechanism, leading to change in the sign of the
                 dipolar flow field with respect to the direction of motion.
@@ -1154,10 +1181,10 @@ cdef class ParticleHandle:
             >>> system = espressomd.System()
             >>>
             >>> # Usage with Langevin
-            >>> system.part.add(id=0, pos=[1,0,0],swimming={'f_swim':0.03})
+            >>> system.part.add(id=0, pos=[1, 0, 0], swimming={'f_swim': 0.03})
             >>>
             >>> # Usage with LB
-            >>> system.part.add(id=1, pos=[2,0,0], swimming={'f_swim': 0.01,
+            >>> system.part.add(id=1, pos=[2, 0, 0], swimming={'f_swim': 0.01,
             ...     'mode': 'pusher', 'dipole_length': 2.0})
 
             """
@@ -1200,7 +1227,7 @@ cdef class ParticleHandle:
                             swim.push_pull = 0
                         else:
                             raise Exception(
-                                "'mode' has to be either 'pusher' or 'puller'.")
+                                "'mode' has to be either 'pusher', 'puller' or 'N/A'.")
 
                     if 'dipole_length' in _params:
                         check_type_or_throw_except(
@@ -1243,16 +1270,13 @@ cdef class ParticleHandle:
             raise Exception("Could not remove particle.")
         del self
 
-    # Bond related methods
-    # Does not work properly with 3 or more partner bonds!
-
     def add_verified_bond(self, bond):
         """
         Add a bond, the validity of which has already been verified.
 
         See Also
         --------
-        add_bond : Delete an unverified bond held by the ``Particle``.
+        add_bond : Add an unverified bond to the ``Particle``.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
@@ -1280,7 +1304,6 @@ cdef class ParticleHandle:
             and the last element is the ID of the partner particle to be bonded
             to.
 
-
         See Also
         --------
         delete_bond : Delete an unverified bond held by the ``Particle``.
@@ -1296,7 +1319,7 @@ cdef class ParticleHandle:
         delete_particle_bond(
             self._id, make_const_span[int](bond_info, len(bond)))
 
-    def check_bond_or_throw_exception(self, bond):
+    def normalize_and_check_bond_or_throw_exception(self, bond):
         """
         Checks the validity of the given bond:
 
@@ -1308,58 +1331,61 @@ cdef class ParticleHandle:
 
         Throws an exception if any of these are not met.
 
+        Normalize the bond, i.e. replace bond ids by bond objects and particle
+        objects by particle ids.
+
         """
         # Has it []-access
         if not hasattr(bond, "__getitem__"):
             raise ValueError(
                 "Bond needs to be a tuple or list containing bond type and partners.")
 
-        # Bond type or numerical bond id
-        if not isinstance(bond[0], BondedInteraction):
-            if is_valid_type(bond[0], int):
-                bond[0] = BondedInteractions()[bond[0]]
-            else:
-                raise Exception(
-                    "1st element of Bond has to be of type BondedInteraction or int.")
+        bond = list(bond)
 
-        # Check whether the bond has been added to the list of active bonded
-        # interactions
+        # Bond type or numerical bond id
+        if is_valid_type(bond[0], int):
+            bond[0] = BondedInteractions()[bond[0]]
+        elif not isinstance(bond[0], BondedInteraction):
+            raise Exception(
+                "1st element of Bond has to be of type BondedInteraction or int.")
+
+        # Check the bond is in the list of active bonded interactions
         if bond[0]._bond_id == -1:
             raise Exception(
                 "The bonded interaction has not yet been added to the list of active bonds in ESPResSo.")
 
         # Validity of the numeric id
-        if bond[0]._bond_id >= bonded_ia_params.size():
+        if bond[0]._bond_id >= bonded_ia_params_size():
             raise ValueError(
-                "The bond type", bond[0]._bond_id, "does not exist.")
+                f"The bond type f{bond[0]._bond_id} does not exist.")
 
         bond_id = bond[0]._bond_id
         # Number of partners
-        if bonded_ia_params[bond_id].num != len(bond) - 1:
-            raise ValueError("Bond of type", bond[0]._bond_id, "needs",
-                             bonded_ia_params[bond_id].num, "partners.")
+        if bonded_ia_params_num_partners(bond_id) != len(bond) - 1:
+            raise ValueError(f"Bond {bond[0]} needs "
+                             f"{bonded_ia_params_num_partners(bond_id)} partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):
-            if not is_valid_type(bond[i], int):
-                if not isinstance(bond[i], ParticleHandle):
-                    raise ValueError(
-                        "Bond partners have to be of type integer or ParticleHandle.")
-                else:
-                    # Put the particle id instead of the particle handle
-                    bond[i] = bond[i].id
+            if isinstance(bond[i], ParticleHandle):
+                # Put the particle id instead of the particle handle
+                bond[i] = bond[i].id
+            elif not is_valid_type(bond[i], int):
+                raise ValueError(
+                    "Bond partners have to be of type integer or ParticleHandle.")
 
-    def add_bond(self, _bond):
+        return tuple(bond)
+
+    def add_bond(self, bond):
         """
         Add a single bond to the particle.
 
         Parameters
         ----------
-        _bond : :obj:`tuple`
-            tuple where the first element is either a bond ID of a bond type,
-            and the last element is the ID of the partner particle to be bonded
-            to.
-
+        bond : :obj:`tuple`
+            tuple where the first element is either a bond ID or a bond object,
+            and the next elements are particle ids or particle objects to be
+            bonded to.
 
         See Also
         --------
@@ -1367,84 +1393,80 @@ cdef class ParticleHandle:
 
         Examples
         --------
-        >>> import espressomd
-        >>> from espressomd.interactions import HarmonicBond
+        >>> import espressomd.interactions
         >>>
-        >>> system = espressomd.System()
+        >>> system = espressomd.System(box_l=3 * [10])
         >>>
         >>> # define a harmonic potential and add it to the system
-        >>> harm_bond = HarmonicBond(r_0=1, k=5)
+        >>> harm_bond = espressomd.interactions.HarmonicBond(r_0=1, k=5)
         >>> system.bonded_inter.add(harm_bond)
         >>>
         >>> # add two particles
-        >>> system.part.add(id=0, pos=(1, 0, 0))
-        >>> system.part.add(id=1, pos=(2, 0, 0))
+        >>> p1 = system.part.add(pos=(1, 0, 0))
+        >>> p2 = system.part.add(pos=(2, 0, 0))
         >>>
         >>> # bond them via the bond type
-        >>> system.part[0].add_bond((harm_bond,1))
+        >>> p1.add_bond((harm_bond, p2))
         >>> # or via the bond index (zero in this case since it is the first one added)
-        >>> system.part[0].add_bond((0,1))
+        >>> p1.add_bond((0, p2))
 
         """
 
-        if tuple(_bond) in self.bonds:
-            raise Exception(
-                f"Bond {tuple(_bond)} already exists on particle {self._id}.")
+        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+        if _bond in self.bonds:
+            raise RuntimeError(
+                f"Bond {_bond} already exists on particle {self._id}.")
+        self.add_verified_bond(_bond)
 
-        bond = list(_bond)  # As we will modify it
-        self.check_bond_or_throw_exception(bond)
-        self.add_verified_bond(bond)
-
-    def delete_bond(self, _bond):
+    def delete_bond(self, bond):
         """
         Delete a single bond from the particle.
 
         Parameters
         ----------
-        _bond :
-            bond to be deleted
+        bond : :obj:`tuple`
+            tuple where the first element is either a bond ID or a bond object,
+            and the next elements are particle ids or particle objects that are
+            bonded to.
 
         See Also
         --------
-        bonds :  Particle property, a list of all current bonds.
+        bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
 
         Examples
         --------
 
-        >>> import espressomd
-        >>> from espressomd.interactions import HarmonicBond
+        >>> import espressomd.interactions
         >>>
-        >>> system = espressomd.System()
-
-        define a harmonic potential and add it to the system
-
-        >>> harm_bond = HarmonicBond(r_0=1, k=5)
+        >>> system = espressomd.System(box_l=3 * [10])
+        >>>
+        >>> # define a harmonic potential and add it to the system
+        >>> harm_bond = espressomd.interactions.HarmonicBond(r_0=1, k=5)
         >>> system.bonded_inter.add(harm_bond)
-
-        add two bonded particles to particle 0
-
-        >>> system.part.add(id=0, pos=(1, 0, 0))
-        >>> system.part.add(id=1, pos=(2, 0, 0))
-        >>> system.part.add(id=2, pos=(1, 1, 0))
-        >>> system.part[0].add_bond((harm_bond,1))
-        >>> system.part[0].add_bond((harm_bond,2))
         >>>
-        >>> bonds = system.part[0].bonds
-        >>> print(bonds)
-        ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 1), (HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2))
-
-        delete the bond between particle 0 and particle 1
-
-        >>> system.part[0].delete_bond(bonds[0])
-        >>> print(system.part[0].bonds)
+        >>> # bond two particles to the first one
+        >>> p0 = system.part.add(pos=(1, 0, 0))
+        >>> p1 = system.part.add(pos=(2, 0, 0))
+        >>> p2 = system.part.add(pos=(1, 1, 0))
+        >>> p0.add_bond((harm_bond, p1))
+        >>> p0.add_bond((harm_bond, p2))
+        >>>
+        >>> print(p0.bonds)
+        ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 1),
+         (HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2))
+        >>> # delete the first bond
+        >>> p0.delete_bond(p0.bonds[0])
+        >>> print(p0.bonds)
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2),)
 
         """
 
-        bond = list(_bond)  # as we modify it
-        self.check_bond_or_throw_exception(bond)
-        self.delete_verified_bond(bond)
+        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+        if _bond not in self.bonds:
+            raise RuntimeError(
+                f"Bond {_bond} doesn't exist on particle {self._id}.")
+        self.delete_verified_bond(_bond)
 
     def delete_all_bonds(self):
         """
@@ -1453,7 +1475,7 @@ cdef class ParticleHandle:
         See Also
         ----------
         delete_bond : Delete an unverified bond held by the particle.
-        bonds : Particle property containing a list of all current bonds held by particle.
+        bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
 
@@ -1552,7 +1574,7 @@ cdef class _ParticleSliceImpl:
         id_list = id_list[slice_]
 
         # Generate a mask which will remove ids of non-existing particles
-        mask = np.empty(len(id_list), dtype=np.bool)
+        mask = np.empty(len(id_list), dtype=type(True))
         mask[:] = True
         for i, id in enumerate(id_list):
             if not particle_exists(id):
@@ -1676,6 +1698,37 @@ class ParticleSlice(_ParticleSliceImpl):
                 f"ParticleHandle does not have the attribute {name}.")
         super().__setattr__(name, value)
 
+    def to_dict(self):
+        """
+        Returns the particles attributes as a dictionary.
+
+        It can be used to save the particle data and recover it by using
+
+        >>> p = system.part.add(...)
+        >>> particle_dict = p.to_dict()
+        >>> system.part.add(particle_dict)
+
+        It includes the content of ``particle_attributes``, minus a few exceptions:
+
+        - :attr:`~ParticleHandle.dip`, :attr:`~ParticleHandle.director`:
+          Setting only the director will overwrite the orientation of the
+          particle around the axis parallel to dipole moment/director.
+          Quaternions contain the full info.
+        - :attr:`~ParticleHandle.image_box`, :attr:`~ParticleHandle.node`
+
+        """
+
+        odict = {}
+        key_list = [p.id for p in self]
+        for particle_number in key_list:
+            pdict = ParticleHandle(particle_number).to_dict()
+            for p_key, p_value in pdict.items():
+                if p_key in odict:
+                    odict[p_key].append(p_value)
+                else:
+                    odict[p_key] = [p_value]
+        return odict
+
 
 cdef class ParticleList:
     """
@@ -1712,21 +1765,11 @@ cdef class ParticleList:
 
         """
 
-        pickle_attr = copy(particle_attributes)
-        for i in ["director", "dip", "id", "image_box", "node"]:
-            if i in pickle_attr:
-                pickle_attr.remove(i)
-        IF MASS == 0:
-            pickle_attr.remove("mass")
         odict = {}
-        key_list = [p.id for p in self]
-        for particle_number in key_list:
-            pdict = {}
-
-            for property_ in pickle_attr:
-                pdict[property_] = ParticleHandle(
-                    particle_number).__getattribute__(property_)
-            odict[particle_number] = pdict
+        for p in self:
+            pdict = p.to_dict()
+            del pdict["id"]
+            odict[p.id] = pdict
         return odict
 
     def __setstate__(self, params):
@@ -1823,7 +1866,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         # The ParticleList[]-getter ist not valid yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be
         # done here. the code is from the pos:property of ParticleHandle
-        cdef double mypos[3]
+        cdef Vector3d mypos
         check_type_or_throw_except(
             P["pos"], 3, float, "Position must be 3 floats.")
         for i in range(3):
@@ -1875,7 +1918,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         if is_valid_type(idx, int):
             return particle_exists(idx)
         if isinstance(idx, (slice, tuple, list, np.ndarray)):
-            tf_array = np.zeros(len(idx), dtype=np.bool)
+            tf_array = np.zeros(len(idx), dtype=type(True))
             for i in range(len(idx)):
                 tf_array[i] = particle_exists(idx[i])
             return tf_array
@@ -2068,7 +2111,7 @@ def _add_particle_slice_properties():
 
     """
 
-    def seta(particle_slice, values, attribute):
+    def set_attribute(particle_slice, values, attribute):
         """
         Setter function that sets attribute on every member of particle_slice.
         If values contains only one element, all members are set to it. If it
@@ -2146,7 +2189,7 @@ def _add_particle_slice_properties():
 
                 return
 
-    def geta(particle_slice, attribute):
+    def get_attribute(particle_slice, attribute):
         """
         Getter function that copies attribute from every member of
         particle_slice into an array (if possible).
@@ -2184,8 +2227,10 @@ def _add_particle_slice_properties():
             continue
 
         # synthesize a new property
-        new_property = property(functools.partial(geta, attribute=attribute_name), functools.partial(
-            seta, attribute=attribute_name), doc=getattr(ParticleHandle, attribute_name).__doc__)
+        new_property = property(
+            functools.partial(get_attribute, attribute=attribute_name),
+            functools.partial(set_attribute, attribute=attribute_name),
+            doc=getattr(ParticleHandle, attribute_name).__doc__)
         # attach the property to ParticleSlice
         setattr(ParticleSlice, attribute_name, new_property)
 

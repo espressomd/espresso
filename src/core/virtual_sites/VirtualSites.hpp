@@ -34,6 +34,7 @@
 
 #ifdef VIRTUAL_SITES
 #include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 
 /** @brief Base class for virtual sites implementations */
 class VirtualSites {
@@ -49,7 +50,7 @@ public:
   virtual void back_transfer_forces_and_torques() const {}
   /** @brief Called after force calculation (and before rattle/shake) */
   virtual void after_force_calc(){};
-  virtual void after_lb_propagation(){};
+  virtual void after_lb_propagation(double){};
   /** @brief Pressure contribution. */
   virtual Utils::Matrix<double, 3, 3> pressure_tensor() const { return {}; };
   /** @brief Enable/disable quaternion calculations for vs.*/

@@ -21,8 +21,14 @@
 
 #define BOOST_TEST_MODULE Utils::Counter test
 #define BOOST_TEST_DYN_LINK
-#include "utils/Counter.hpp"
 #include <boost/test/unit_test.hpp>
+
+#include "utils/Counter.hpp"
+
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
+#include <sstream>
 
 using Utils::Counter;
 
@@ -51,4 +57,20 @@ BOOST_AUTO_TEST_CASE(increment) {
   c.increment();
   BOOST_CHECK_EQUAL(c.value(), 6);
   BOOST_CHECK_EQUAL(c.initial_value(), 5);
+}
+
+BOOST_AUTO_TEST_CASE(serialization) {
+  auto c = Counter<int>(5);
+  c.increment();
+
+  std::stringstream stream;
+  boost::archive::text_oarchive out_ar(stream);
+  out_ar << c;
+
+  boost::archive::text_iarchive in_ar(stream);
+  Counter<int> c_deserialized;
+  in_ar >> c_deserialized;
+
+  BOOST_CHECK_EQUAL(c_deserialized.value(), 6);
+  BOOST_CHECK_EQUAL(c_deserialized.initial_value(), 5);
 }

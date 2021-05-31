@@ -81,11 +81,20 @@ mpi_lb_get_interpolated_velocity(Utils::Vector3d const &pos) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_interpolated_velocity)
 
+boost::optional<double>
+mpi_lb_get_interpolated_density(Utils::Vector3d const &pos) {
+  return detail::lb_calc_for_pos(pos, [&](auto pos) {
+    return lb_lbinterpolation_get_interpolated_density(pos);
+  });
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_interpolated_density)
+
 auto mpi_lb_get_density(Utils::Vector3i const &index) {
-  return detail::lb_calc_fluid_kernel(index,
-                                      [&](auto modes, auto force_density) {
-                                        return lb_calc_density(modes, lbpar);
-                                      });
+  return detail::lb_calc_fluid_kernel(
+      index, [&](auto const &modes, auto const &force_density) {
+        return lb_calc_density(modes, lbpar);
+      });
 }
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_density)
@@ -138,7 +147,7 @@ REGISTER_CALLBACK(mpi_lb_set_force_density)
 
 auto mpi_lb_get_momentum_density(Utils::Vector3i const &index) {
   return detail::lb_calc_fluid_kernel(
-      index, [&](auto modes, auto force_density) {
+      index, [&](auto const &modes, auto const &force_density) {
         return lb_calc_momentum_density(modes, force_density);
       });
 }
@@ -147,7 +156,7 @@ REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_momentum_density)
 
 auto mpi_lb_get_pressure_tensor(Utils::Vector3i const &index) {
   return detail::lb_calc_fluid_kernel(
-      index, [&](auto modes, auto force_density) {
+      index, [&](auto const &modes, auto const &force_density) {
         return lb_calc_pressure_tensor(modes, force_density, lbpar);
       });
 }

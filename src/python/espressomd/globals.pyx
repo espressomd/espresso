@@ -22,24 +22,17 @@ from .globals cimport mpi_set_time_step
 from .globals cimport min_global_cut
 from .globals cimport sim_time
 from .globals cimport timing_samples
-from .globals cimport forcecap_set
+from .globals cimport mpi_set_forcecap
 from .globals cimport forcecap_get
-from .utils import array_locked
-from .utils cimport Vector3d, make_array_locked, handle_errors
+from .utils import array_locked, handle_errors
+from .utils cimport Vector3d, make_array_locked, make_Vector3d
 
 cdef class Globals:
     property box_l:
         def __set__(self, _box_l):
-            cdef Vector3d temp_box_l
             if len(_box_l) != 3:
                 raise ValueError("Box length must be of length 3")
-            for i in range(3):
-                if _box_l[i] <= 0:
-                    raise ValueError(
-                        "Box length must be > 0  in all directions")
-                temp_box_l[i] = _box_l[i]
-            box_geo.set_length(temp_box_l)
-            mpi_bcast_parameter(FIELD_BOXL)
+            mpi_set_box_length(make_Vector3d(_box_l))
 
         def __get__(self):
             return make_array_locked(< Vector3d > box_geo.length())
@@ -54,9 +47,7 @@ cdef class Globals:
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
-            global min_global_cut
-            min_global_cut = _min_global_cut
-            mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT)
+            mpi_set_min_global_cut(_min_global_cut)
 
         def __get__(self):
             global min_global_cut
@@ -64,14 +55,11 @@ cdef class Globals:
 
     property periodicity:
         def __set__(self, _periodic):
-            for i in range(3):
-                box_geo.set_periodic(i, _periodic[i])
-
-            mpi_bcast_parameter(FIELD_PERIODIC)
+            mpi_set_periodicity(_periodic[0], _periodic[1], _periodic[2])
             handle_errors("Error while assigning system periodicity")
 
         def __get__(self):
-            periodicity = np.zeros(3)
+            periodicity = np.empty(3, dtype=np.bool)
 
             for i in range(3):
                 periodicity[i] = box_geo.periodic(i)
@@ -80,9 +68,7 @@ cdef class Globals:
 
     property time:
         def __set__(self, double _time):
-            global sim_time
-            sim_time = _time
-            mpi_bcast_parameter(FIELD_SIMTIME)
+            mpi_set_time(_time)
 
         def __get__(self):
             global sim_time
@@ -102,7 +88,7 @@ cdef class Globals:
 
     property force_cap:
         def __set__(self, cap):
-            forcecap_set(cap)
+            mpi_set_forcecap(cap)
 
         def __get__(self):
             return forcecap_get()

@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// *******
 // This is an internal file of the IMMERSED BOUNDARY implementation
 // It should not be included by any main ESPResSo routines
 // Functions to be exported for ESPResSo are in ibm_main.hpp
@@ -31,7 +30,7 @@
 
 #include "Particle.hpp"
 #include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
@@ -40,94 +39,30 @@
 
 #include <cstddef>
 
-// To avoid include of communication.hpp in cuda file
+// To avoid including communication.hpp
 extern int this_node;
 
-// ***** Other functions for internal use *****
-void InitCUDA_IBM(int numParticles);
+// Other functions for internal use
+void InitCUDA_IBM(std::size_t numParticles);
 
-// ***** Our own global variables ********
+// Our own global variables
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_device = nullptr;
 IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_device = nullptr;
-int IBM_numParticlesCache = -1; // To detect a change in particle number which
-                                // requires reallocation of memory
+bool IBM_initialized = false;
+std::size_t IBM_numParticlesCache = 0; // To detect a change in particle number
+                                       // which requires reallocation of memory
 
-// ****** These variables are defined in lbgpu_cuda.cu, but we also want them
-// here ****
+// These variables are defined in lbgpu_cuda.cu, but we also want them here
 extern LB_node_force_density_gpu node_f;
 extern LB_nodes_gpu *current_nodes;
 
-// ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them
+// These variables are static in lbgpu_cuda.cu, so we need to duplicate them
 // here. They are initialized in ForcesIntoFluid. The pointers are on the host,
 // but point into device memory.
 LB_parameters_gpu *para_gpu = nullptr;
 float *lb_boundary_velocity_IBM = nullptr;
 
-/** @copybrief calc_m_from_n
- *
- *  This is a re-implementation of @ref calc_m_from_n. It does exactly the
- *  same, but calculates only the first four modes.
- */
-__device__ void Calc_m_from_n_IBM(const LB_nodes_gpu n_a,
-                                  const unsigned int index, float *mode,
-                                  const LB_parameters_gpu *const paraP) {
-  const LB_parameters_gpu &para = *paraP;
-  // mass mode
-  mode[0] = n_a.vd[0 * para.number_of_nodes + index] +
-            n_a.vd[1 * para.number_of_nodes + index] +
-            n_a.vd[2 * para.number_of_nodes + index] +
-            n_a.vd[3 * para.number_of_nodes + index] +
-            n_a.vd[4 * para.number_of_nodes + index] +
-            n_a.vd[5 * para.number_of_nodes + index] +
-            n_a.vd[6 * para.number_of_nodes + index] +
-            n_a.vd[7 * para.number_of_nodes + index] +
-            n_a.vd[8 * para.number_of_nodes + index] +
-            n_a.vd[9 * para.number_of_nodes + index] +
-            n_a.vd[10 * para.number_of_nodes + index] +
-            n_a.vd[11 * para.number_of_nodes + index] +
-            n_a.vd[12 * para.number_of_nodes + index] +
-            n_a.vd[13 * para.number_of_nodes + index] +
-            n_a.vd[14 * para.number_of_nodes + index] +
-            n_a.vd[15 * para.number_of_nodes + index] +
-            n_a.vd[16 * para.number_of_nodes + index] +
-            n_a.vd[17 * para.number_of_nodes + index] +
-            n_a.vd[18 * para.number_of_nodes + index];
-
-  // momentum modes
-
-  mode[1] = (n_a.vd[1 * para.number_of_nodes + index] -
-             n_a.vd[2 * para.number_of_nodes + index]) +
-            (n_a.vd[7 * para.number_of_nodes + index] -
-             n_a.vd[8 * para.number_of_nodes + index]) +
-            (n_a.vd[9 * para.number_of_nodes + index] -
-             n_a.vd[10 * para.number_of_nodes + index]) +
-            (n_a.vd[11 * para.number_of_nodes + index] -
-             n_a.vd[12 * para.number_of_nodes + index]) +
-            (n_a.vd[13 * para.number_of_nodes + index] -
-             n_a.vd[14 * para.number_of_nodes + index]);
-
-  mode[2] = (n_a.vd[3 * para.number_of_nodes + index] -
-             n_a.vd[4 * para.number_of_nodes + index]) +
-            (n_a.vd[7 * para.number_of_nodes + index] -
-             n_a.vd[8 * para.number_of_nodes + index]) -
-            (n_a.vd[9 * para.number_of_nodes + index] -
-             n_a.vd[10 * para.number_of_nodes + index]) +
-            (n_a.vd[15 * para.number_of_nodes + index] -
-             n_a.vd[16 * para.number_of_nodes + index]) +
-            (n_a.vd[17 * para.number_of_nodes + index] -
-             n_a.vd[18 * para.number_of_nodes + index]);
-
-  mode[3] = (n_a.vd[5 * para.number_of_nodes + index] -
-             n_a.vd[6 * para.number_of_nodes + index]) +
-            (n_a.vd[11 * para.number_of_nodes + index] -
-             n_a.vd[12 * para.number_of_nodes + index]) -
-            (n_a.vd[13 * para.number_of_nodes + index] -
-             n_a.vd[14 * para.number_of_nodes + index]) +
-            (n_a.vd[15 * para.number_of_nodes + index] -
-             n_a.vd[16 * para.number_of_nodes + index]) -
-            (n_a.vd[17 * para.number_of_nodes + index] -
-             n_a.vd[18 * para.number_of_nodes + index]);
-}
+static constexpr unsigned int threads_per_block = 64;
 
 __global__ void
 ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
@@ -175,38 +110,37 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
 
     // modulo for negative numbers is strange at best, shift to make sure we are
     // positive
-    auto const x = static_cast<unsigned int>(my_left[0] + para.dim_x);
-    auto const y = static_cast<unsigned int>(my_left[1] + para.dim_y);
-    auto const z = static_cast<unsigned int>(my_left[2] + para.dim_z);
+    auto const x = static_cast<unsigned int>(my_left[0] + para.dim[0]);
+    auto const y = static_cast<unsigned int>(my_left[1] + para.dim[1]);
+    auto const z = static_cast<unsigned int>(my_left[2] + para.dim[2]);
 
-    node_index[0] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[1] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[2] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[3] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[4] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[5] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[6] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[7] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
+    node_index[0] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[1] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[2] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[3] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[4] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[5] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[6] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[7] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
 
     for (int i = 0; i < 8; ++i) {
       // Atomic add is essential because this runs in parallel!
-      atomicAdd(
-          &(node_f.force_density[0 * para.number_of_nodes + node_index[i]]),
-          (particleForce[0] * delta[i]));
-      atomicAdd(
-          &(node_f.force_density[1 * para.number_of_nodes + node_index[i]]),
-          (particleForce[1] * delta[i]));
-      atomicAdd(
-          &(node_f.force_density[2 * para.number_of_nodes + node_index[i]]),
-          (particleForce[2] * delta[i]));
+      atomicAdd(&(node_f.force_density[node_index[i]][0]),
+                (particleForce[0] * delta[i]));
+      atomicAdd(&(node_f.force_density[node_index[i]][1]),
+                (particleForce[1] * delta[i]));
+      atomicAdd(&(node_f.force_density[node_index[i]][2]),
+                (particleForce[2] * delta[i]));
     }
   }
 }
@@ -233,14 +167,14 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
                     particles_input[particleIndex].pos[2]};
     float v[3] = {0};
 
-    // ***** This part is copied from get_interpolated_velocity
-    // ***** + we add the force + we consider boundaries
+    // This part is copied from get_interpolated_velocity
+    // + we add the force + we consider boundaries
 
     float temp_delta[6];
     float delta[8];
     int my_left[3];
     unsigned int node_index[8];
-    float mode[4];
+    Utils::Array<float, 4> mode;
 #pragma unroll
     for (int i = 0; i < 3; ++i) {
       const float scaledpos = pos[i] / para.agrid - 0.5f;
@@ -260,26 +194,28 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
 
     // modulo for negative numbers is strange at best, shift to make sure we are
     // positive
-    auto const x = static_cast<unsigned int>(my_left[0] + para.dim_x);
-    auto const y = static_cast<unsigned int>(my_left[1] + para.dim_y);
-    auto const z = static_cast<unsigned int>(my_left[2] + para.dim_z);
+    auto const x = static_cast<unsigned int>(my_left[0] + para.dim[0]);
+    auto const y = static_cast<unsigned int>(my_left[1] + para.dim[1]);
+    auto const z = static_cast<unsigned int>(my_left[2] + para.dim[2]);
 
-    node_index[0] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[1] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[2] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[3] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * (z % para.dim_z);
-    node_index[4] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[5] = (x + 1) % para.dim_x + para.dim_x * (y % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[6] = x % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
-    node_index[7] = (x + 1) % para.dim_x + para.dim_x * ((y + 1) % para.dim_y) +
-                    para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
+    node_index[0] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[1] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[2] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[3] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * (z % para.dim[2]);
+    node_index[4] = x % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[5] = (x + 1) % para.dim[0] + para.dim[0] * (y % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[6] = x % para.dim[0] + para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
+    node_index[7] = (x + 1) % para.dim[0] +
+                    para.dim[0] * ((y + 1) % para.dim[1]) +
+                    para.dim[0] * para.dim[1] * ((z + 1) % para.dim[2]);
 
     for (int i = 0; i < 8; ++i) {
       double local_rho;
@@ -303,22 +239,13 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
       } else
 #endif
       {
-        Calc_m_from_n_IBM(n_curr, node_index[i], mode, paraP);
+        calc_mass_and_momentum_mode(mode, n_curr, node_index[i]);
         local_rho = para.rho + mode[0];
 
         // Add the +f/2 contribution!!
-        local_j[0] =
-            mode[1] +
-            node_f.force_density_buf[0 * para.number_of_nodes + node_index[i]] /
-                2.f;
-        local_j[1] =
-            mode[2] +
-            node_f.force_density_buf[1 * para.number_of_nodes + node_index[i]] /
-                2.f;
-        local_j[2] =
-            mode[3] +
-            node_f.force_density_buf[2 * para.number_of_nodes + node_index[i]] /
-                2.f;
+        local_j[0] = mode[1] + node_f.force_density_buf[node_index[i]][0] / 2.f;
+        local_j[1] = mode[2] + node_f.force_density_buf[node_index[i]][1] / 2.f;
+        local_j[2] = mode[3] + node_f.force_density_buf[node_index[i]][2] / 2.f;
       }
 
       // Interpolate velocity
@@ -344,16 +271,11 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
   if (index < para.number_of_nodes) {
     const float force_factor = powf(para.agrid, 2) * para.tau * para.tau;
     if (para.external_force_density) {
-      node_f.force_density[0 * para.number_of_nodes + index] =
-          para.ext_force_density[0] * force_factor;
-      node_f.force_density[1 * para.number_of_nodes + index] =
-          para.ext_force_density[1] * force_factor;
-      node_f.force_density[2 * para.number_of_nodes + index] =
-          para.ext_force_density[2] * force_factor;
+      node_f.force_density[index][0] = para.ext_force_density[0] * force_factor;
+      node_f.force_density[index][1] = para.ext_force_density[1] * force_factor;
+      node_f.force_density[index][2] = para.ext_force_density[2] * force_factor;
     } else {
-      node_f.force_density[0 * para.number_of_nodes + index] = 0.0f;
-      node_f.force_density[1 * para.number_of_nodes + index] = 0.0f;
-      node_f.force_density[2 * para.number_of_nodes + index] = 0.0f;
+      node_f.force_density[index] = {};
     }
   }
 }
@@ -361,14 +283,8 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
 /** Call a kernel to reset the forces on the LB nodes to the external force. */
 void IBM_ResetLBForces_GPU() {
   if (this_node == 0) {
-    // Setup for kernel call
-    int threads_per_block = 64;
-    int blocks_per_grid_y = 4;
-    auto blocks_per_grid_x =
-        static_cast<int>((lbpar_gpu.number_of_nodes +
-                          threads_per_block * blocks_per_grid_y - 1) /
-                         (threads_per_block * blocks_per_grid_y));
-    dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+    dim3 dim_grid =
+        calculate_dim_grid(lbpar_gpu.number_of_nodes, 4, threads_per_block);
 
     KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block, node_f,
                para_gpu);
@@ -380,71 +296,62 @@ void IBM_ResetLBForces_GPU() {
  *  This must be the first CUDA-IBM function to be called because it also does
  *  some initialization.
  */
-void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
+void IBM_ForcesIntoFluid_GPU(ParticleRange const &particles) {
   // This function does
   // (1) Gather forces from all particles via MPI
   // (2) Copy forces to the GPU
   // (3) interpolate on the LBM grid and spread forces
 
-  const int numParticles = gpu_get_particle_pointer().size();
+  auto const numParticles = gpu_get_particle_pointer().size();
 
-  // Storage only needed on master and allocated only once at the first time
-  // step if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
-  if (IBM_ParticleDataInput_host == nullptr ||
+  // Storage only needed on head node
+  if (IBM_ParticleDataInput_host.empty() || !IBM_initialized ||
       numParticles != IBM_numParticlesCache)
     InitCUDA_IBM(numParticles);
 
   // We gather particle positions and forces from all nodes
   IBM_cuda_mpi_get_particles(particles);
 
-  // ***** GPU stuff only on master *****
+  // GPU only on head node
   if (this_node == 0 && numParticles > 0) {
 
     // Copy data to device
     cuda_safe_mem(cudaMemcpy(IBM_ParticleDataInput_device,
-                             IBM_ParticleDataInput_host,
+                             IBM_ParticleDataInput_host.data(),
                              numParticles * sizeof(IBM_CUDA_ParticleDataInput),
                              cudaMemcpyHostToDevice));
 
     // Kernel call for spreading the forces on the LB grid
-    int threads_per_block_particles = 64;
-    int blocks_per_grid_particles_y = 4;
-    int blocks_per_grid_particles_x =
-        (numParticles +
-         threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-        (threads_per_block_particles * blocks_per_grid_particles_y);
-    dim3 dim_grid_particles =
-        make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-
-    KERNELCALL(ForcesIntoFluid_Kernel, dim_grid_particles,
-               threads_per_block_particles, IBM_ParticleDataInput_device,
-               numParticles, node_f, para_gpu);
+    dim3 dim_grid = calculate_dim_grid(static_cast<unsigned>(numParticles), 4,
+                                       threads_per_block);
+    KERNELCALL(ForcesIntoFluid_Kernel, dim_grid, threads_per_block,
+               IBM_ParticleDataInput_device, numParticles, node_f, para_gpu);
   }
 }
 
-void InitCUDA_IBM(const int numParticles) {
+void InitCUDA_IBM(std::size_t const numParticles) {
 
-  if (this_node == 0) // GPU only on master
-  {
+  // GPU only on head node
+  if (this_node == 0) {
 
     // Check if we have to delete
-    if (IBM_ParticleDataInput_host != nullptr) {
-      delete[] IBM_ParticleDataInput_host;
-      delete[] IBM_ParticleDataOutput_host;
+    if (!IBM_ParticleDataInput_host.empty()) {
+      IBM_ParticleDataInput_host.clear();
+      IBM_ParticleDataOutput_host.clear();
       cuda_safe_mem(cudaFree(IBM_ParticleDataInput_device));
       cuda_safe_mem(cudaFree(IBM_ParticleDataOutput_device));
       cuda_safe_mem(cudaFree(lb_boundary_velocity_IBM));
     }
 
     // Back and forth communication of positions and velocities
-    IBM_ParticleDataInput_host = new IBM_CUDA_ParticleDataInput[numParticles];
+    IBM_ParticleDataInput_host.resize(numParticles);
+    IBM_ParticleDataOutput_host.resize(numParticles);
     cuda_safe_mem(
         cudaMalloc((void **)&IBM_ParticleDataInput_device,
                    numParticles * sizeof(IBM_CUDA_ParticleDataInput)));
     cuda_safe_mem(
         cudaMalloc((void **)&IBM_ParticleDataOutput_device,
                    numParticles * sizeof(IBM_CUDA_ParticleDataOutput)));
-    IBM_ParticleDataOutput_host = new IBM_CUDA_ParticleDataOutput[numParticles];
 
     // Use LB parameters
     lb_get_para_pointer(&para_gpu);
@@ -457,11 +364,11 @@ void InitCUDA_IBM(const int numParticles) {
 
     for (int n = 0; n < LBBoundaries::lbboundaries.size(); n++) {
       host_lb_boundary_velocity[3 * n + 0] =
-          LBBoundaries::lbboundaries[n]->velocity()[0];
+          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[0]);
       host_lb_boundary_velocity[3 * n + 1] =
-          LBBoundaries::lbboundaries[n]->velocity()[1];
+          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[1]);
       host_lb_boundary_velocity[3 * n + 2] =
-          LBBoundaries::lbboundaries[n]->velocity()[2];
+          static_cast<float>(LBBoundaries::lbboundaries[n]->velocity()[2]);
     }
 
     host_lb_boundary_velocity[3 * LBBoundaries::lbboundaries.size() + 0] = 0.0f;
@@ -480,46 +387,39 @@ void InitCUDA_IBM(const int numParticles) {
 #endif
 
     IBM_numParticlesCache = numParticles;
+    IBM_initialized = true;
   }
 }
 
 /** Call a kernel function to interpolate the velocity at each IBM particle's
  *  position. Store velocity in the particle data structure.
  */
-void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
+void ParticleVelocitiesFromLB_GPU(ParticleRange const &particles) {
   // This function performs three steps:
   // (1) interpolate velocities on GPU
   // (2) transfer velocities back to CPU
   // (3) spread velocities to local cells via MPI
 
-  const int numParticles = gpu_get_particle_pointer().size();
+  auto const numParticles = gpu_get_particle_pointer().size();
 
-  // **** GPU stuff only on master ****
+  // GPU only on head node
   if (this_node == 0 && numParticles > 0) {
     // Kernel call
-    int threads_per_block_particles = 64;
-    int blocks_per_grid_particles_y = 4;
-    int blocks_per_grid_particles_x =
-        (numParticles +
-         threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-        (threads_per_block_particles * blocks_per_grid_particles_y);
-    dim3 dim_grid_particles =
-        make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-    KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid_particles,
-               threads_per_block_particles, *current_nodes,
-               IBM_ParticleDataInput_device, numParticles,
+    dim3 dim_grid = calculate_dim_grid(static_cast<unsigned>(numParticles), 4,
+                                       threads_per_block);
+    KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid, threads_per_block,
+               *current_nodes, IBM_ParticleDataInput_device, numParticles,
                IBM_ParticleDataOutput_device, node_f, lb_boundary_velocity_IBM,
                para_gpu);
 
     // Copy velocities from device to host
-    cuda_safe_mem(cudaMemcpy(IBM_ParticleDataOutput_host,
+    cuda_safe_mem(cudaMemcpy(IBM_ParticleDataOutput_host.data(),
                              IBM_ParticleDataOutput_device,
                              numParticles * sizeof(IBM_CUDA_ParticleDataOutput),
                              cudaMemcpyDeviceToHost));
   }
 
-  // ***** Back to all nodes ****
-  // Spread using MPI
+  // Scatter to all nodes
   IBM_cuda_mpi_send_velocities(particles);
 }
 

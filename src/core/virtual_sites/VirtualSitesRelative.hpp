@@ -26,6 +26,7 @@
 #include "VirtualSites.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 
 /** @brief Virtual sites implementation for rigid bodies */
 class VirtualSitesRelative : public VirtualSites {

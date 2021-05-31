@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -91,10 +92,7 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
 
-        self.system.part.add(id=0, pos=self.start_pos, type=0)
-        self.system.part.add(id=1, pos=self.start_pos, type=0)
-        self.system.part.add(id=2, pos=self.start_pos, type=0)
-        self.system.part.add(id=3, pos=self.start_pos, type=0)
+        self.system.part.add(pos=4 * [self.start_pos], type=4 * [0])
 
     def tearDown(self):
         self.system.part.clear()
@@ -123,6 +121,8 @@ class InteractionsBondedTest(ut.TestCase):
 
     # Test Dihedral Angle
     def test_dihedral(self):
+        p0, p1, p2, p3 = self.system.part[:]
+
         dh_k = 1
         dh_phase = np.pi / 6
         dh_n = 1
@@ -130,33 +130,27 @@ class InteractionsBondedTest(ut.TestCase):
         dh = espressomd.interactions.Dihedral(
             bend=dh_k, mult=dh_n, phase=dh_phase)
         self.system.bonded_inter.add(dh)
-        self.system.part[1].add_bond((dh, 0, 2, 3))
-        self.system.part[2].pos = self.system.part[1].pos + [1, 0, 0]
+        p1.add_bond((dh, p0, p2, p3))
+        p2.pos = p1.pos + [1, 0, 0]
 
         N = 111
         d_phi = np.pi / (N * 4)
         for i in range(N):
-            self.system.part[0].pos = self.system.part[1].pos + \
+            p0.pos = p1.pos + \
                 rotate_vector(self.rel_pos_1, self.axis, i * d_phi)
-            self.system.part[3].pos = self.system.part[2].pos + \
+            p3.pos = p2.pos + \
                 rotate_vector(self.rel_pos_2, self.axis, -i * d_phi)
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
-            phi = self.dihedral_angle(self.system.part[0].pos,
-                                      self.system.part[1].pos,
-                                      self.system.part[2].pos,
-                                      self.system.part[3].pos)
+            phi = self.dihedral_angle(p0.pos, p1.pos, p2.pos, p3.pos)
             E_ref = dihedral_potential(dh_k, phi, dh_n, dh_phase)
 
             # Calculate forces
-            f2_sim = self.system.part[1].f
+            f2_sim = p1.f
             _, f2_ref, _ = dihedral_force(dh_k, dh_n, dh_phase,
-                                          self.system.part[0].pos,
-                                          self.system.part[1].pos,
-                                          self.system.part[2].pos,
-                                          self.system.part[3].pos)
+                                          p0.pos, p1.pos, p2.pos, p3.pos)
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
@@ -165,7 +159,10 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_almost_equal(f2_sim_copy, f2_ref)
 
     # Test Tabulated Dihedral Angle
+    @utx.skipIfMissingFeatures(["TABULATED"])
     def test_tabulated_dihedral(self):
+        p0, p1, p2, p3 = self.system.part[:]
+
         N = 111
         d_phi = 2 * np.pi / N
         # tabulated values for the range [0, 2*pi]
@@ -175,8 +172,8 @@ class InteractionsBondedTest(ut.TestCase):
         dihedral_tabulated = espressomd.interactions.TabulatedDihedral(
             energy=tab_energy, force=tab_force)
         self.system.bonded_inter.add(dihedral_tabulated)
-        self.system.part[1].add_bond((dihedral_tabulated, 0, 2, 3))
-        self.system.part[2].pos = self.system.part[1].pos + [1, 0, 0]
+        p1.add_bond((dihedral_tabulated, p0, p2, p3))
+        p2.pos = p1.pos + [1, 0, 0]
 
         # check stored parameters
         interaction_id = len(self.system.bonded_inter) - 1
@@ -189,9 +186,9 @@ class InteractionsBondedTest(ut.TestCase):
         # measure at half the angular resolution to observe interpolation
         for i in range(2 * N - 1):
             # increase dihedral angle by d_phi (phi ~ 0 at i = 0)
-            self.system.part[0].pos = self.system.part[1].pos + \
+            p0.pos = p1.pos + \
                 rotate_vector(self.rel_pos_1, self.axis, -i * d_phi / 4)
-            self.system.part[3].pos = self.system.part[2].pos + \
+            p3.pos = p2.pos + \
                 rotate_vector(self.rel_pos_1, self.axis, i * d_phi / 4)
             self.system.integrator.run(recalc_forces=True, steps=0)
 

@@ -50,6 +50,7 @@
 #include <cassert>
 #include <cstdio>
 #include <limits>
+#include <stdexcept>
 
 Coulomb_parameters coulomb;
 
@@ -91,8 +92,13 @@ void sanity_checks(int &state) {
     break;
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    if (ELC_sanity_checks())
-      state = 0; // fall through
+    try {
+      ELC_sanity_checks(elc_params);
+    } catch (std::runtime_error const &err) {
+      runtimeErrorMsg() << err.what();
+      state = 0;
+    }
+    // fall through
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     if (p3m_sanity_checks())
@@ -138,15 +144,10 @@ void deactivate() {
     break;
 #endif
   case COULOMB_DH:
-    dh_params.r_cut = 0.0;
-    dh_params.kappa = 0.0;
+    dh_params = {};
     break;
   case COULOMB_RF:
-    rf_params.kappa = 0.0;
-    rf_params.epsilon1 = 0.0;
-    rf_params.epsilon2 = 0.0;
-    rf_params.r_cut = 0.0;
-    rf_params.B = 0.0;
+    rf_params = {};
     break;
   case COULOMB_MMM1D:
     mmm1d_params.maxPWerror = 1e40;
@@ -157,8 +158,8 @@ void deactivate() {
 }
 
 void update_dependent_particles() {
-  iccp3m_iteration(cell_structure.local_particles(),
-                   cell_structure.ghost_particles());
+  icc_iteration(cell_structure.local_particles(),
+                cell_structure.ghost_particles());
 }
 
 void on_observable_calc() {
@@ -182,8 +183,13 @@ void on_coulomb_change() {
 #ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
-    if (this_node == 0)
-      p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
+    if (this_node == 0) {
+      try {
+        p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
+      } catch (std::runtime_error const &err) {
+        runtimeErrorMsg() << err.what();
+      }
+    }
     break;
 #endif
   case COULOMB_ELC_P3M:
@@ -358,23 +364,23 @@ double calc_energy_long_range(const ParticleRange &particles) {
   return energy;
 }
 
-int iccp3m_sanity_check() {
+int icc_sanity_check() {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M: {
     if (elc_params.dielectric_contrast_on) {
-      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
+      runtimeErrorMsg() << "ICC conflicts with ELC dielectric contrast";
       return 1;
     }
     break;
   }
 #endif
   case COULOMB_DH: {
-    runtimeErrorMsg() << "ICCP3M does not work with Debye-Hueckel.";
+    runtimeErrorMsg() << "ICC does not work with Debye-Hueckel.";
     return 1;
   }
   case COULOMB_RF: {
-    runtimeErrorMsg() << "ICCP3M does not work with COULOMB_RF.";
+    runtimeErrorMsg() << "ICC does not work with COULOMB_RF.";
     return 1;
   }
   default:
@@ -383,30 +389,12 @@ int iccp3m_sanity_check() {
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    runtimeErrorMsg() << "ICCP3M does not work in the NPT ensemble";
+    runtimeErrorMsg() << "ICC does not work in the NPT ensemble";
     return 1;
   }
 #endif
 
   return 0;
-}
-
-int elc_sanity_check() {
-#ifdef P3M
-  switch (coulomb.method) {
-  case COULOMB_P3M_GPU: {
-    runtimeErrorMsg()
-        << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
-    return ES_ERROR;
-  }
-  case COULOMB_ELC_P3M:
-  case COULOMB_P3M:
-    return ES_OK;
-  default:
-    break;
-  }
-#endif
-  return ES_ERROR;
 }
 
 void bcast_coulomb_params() {
@@ -439,16 +427,13 @@ void bcast_coulomb_params() {
   }
 }
 
-int set_prefactor(double prefactor) {
+void set_prefactor(double prefactor) {
   if (prefactor < 0.0) {
-    runtimeErrorMsg() << "Coulomb prefactor has to be >=0";
-    return ES_ERROR;
+    throw std::domain_error("Coulomb prefactor has to be >= 0");
   }
 
   coulomb.prefactor = prefactor;
   mpi_bcast_coulomb_params();
-
-  return ES_OK;
 }
 
 void deactivate_method() {

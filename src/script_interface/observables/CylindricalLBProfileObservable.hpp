@@ -28,6 +28,8 @@
 #include "core/observables/CylindricalLBProfileObservable.hpp"
 #include "script_interface/get_value.hpp"
 
+#include "script_interface/CylindricalTransformationParameters.hpp"
+
 #include <boost/range/algorithm.hpp>
 
 #include <cstddef>
@@ -53,95 +55,47 @@ public:
   using Base::Base;
   CylindricalLBProfileObservable() {
     this->add_parameters({
-        {"center",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->center =
-               get_value<::Utils::Vector3d>(v);
-         },
-         [this]() { return cylindrical_profile_observable()->center; }},
-        {"axis",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->axis =
-               get_value<Utils::Vector3d>(v);
-         },
-         [this]() { return cylindrical_profile_observable()->axis; }},
-        {"n_r_bins",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->n_bins[0] =
-               static_cast<size_t>(get_value<int>(v));
-         },
+        {"transform_params", m_transform_params},
+        {"n_r_bins", AutoParameter::read_only,
          [this]() {
-           return static_cast<int>(cylindrical_profile_observable()->n_bins[0]);
+           return static_cast<int>(
+               cylindrical_profile_observable()->n_bins()[0]);
          }},
-        {"n_phi_bins",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->n_bins[1] =
-               static_cast<size_t>(get_value<int>(v));
-         },
+        {"n_phi_bins", AutoParameter::read_only,
          [this]() {
-           return static_cast<int>(cylindrical_profile_observable()->n_bins[1]);
+           return static_cast<int>(
+               cylindrical_profile_observable()->n_bins()[1]);
          }},
-        {"n_z_bins",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->n_bins[2] =
-               static_cast<size_t>(get_value<int>(v));
-         },
+        {"n_z_bins", AutoParameter::read_only,
          [this]() {
-           return static_cast<int>(cylindrical_profile_observable()->n_bins[2]);
+           return static_cast<int>(
+               cylindrical_profile_observable()->n_bins()[2]);
          }},
-        {"min_r",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->limits[0].first =
-               get_value<double>(v);
-         },
+        {"min_r", AutoParameter::read_only,
          [this]() {
-           return cylindrical_profile_observable()->limits[0].first;
+           return cylindrical_profile_observable()->limits()[0].first;
          }},
-        {"min_phi",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->limits[1].first =
-               get_value<double>(v);
-         },
+        {"min_phi", AutoParameter::read_only,
          [this]() {
-           return cylindrical_profile_observable()->limits[1].first;
+           return cylindrical_profile_observable()->limits()[1].first;
          }},
-        {"min_z",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->limits[2].first =
-               get_value<double>(v);
-         },
+        {"min_z", AutoParameter::read_only,
          [this]() {
-           return cylindrical_profile_observable()->limits[2].first;
+           return cylindrical_profile_observable()->limits()[2].first;
          }},
-        {"max_r",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->limits[0].second =
-               get_value<double>(v);
-         },
+        {"max_r", AutoParameter::read_only,
          [this]() {
-           return cylindrical_profile_observable()->limits[0].second;
+           return cylindrical_profile_observable()->limits()[0].second;
          }},
-        {"max_phi",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->limits[1].second =
-               get_value<double>(v);
-         },
+        {"max_phi", AutoParameter::read_only,
          [this]() {
-           return cylindrical_profile_observable()->limits[1].second;
+           return cylindrical_profile_observable()->limits()[1].second;
          }},
-        {"max_z",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->limits[2].second =
-               get_value<double>(v);
-         },
+        {"max_z", AutoParameter::read_only,
          [this]() {
-           return cylindrical_profile_observable()->limits[2].second;
+           return cylindrical_profile_observable()->limits()[2].second;
          }},
-        {"sampling_density",
-         [this](const Variant &v) {
-           cylindrical_profile_observable()->sampling_density =
-               get_value<double>(v);
-         },
+        {"sampling_density", AutoParameter::read_only,
          [this]() {
            return cylindrical_profile_observable()->sampling_density;
          }},
@@ -149,13 +103,21 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    m_observable =
-        make_shared_from_args<CoreCylLBObs, Utils::Vector3d, Utils::Vector3d,
-                              int, int, int, double, double, double, double,
-                              double, double, double>(
-            params, "center", "axis", "n_r_bins", "n_phi_bins", "n_z_bins",
-            "min_r", "max_r", "min_phi", "max_phi", "min_z", "max_z",
-            "sampling_density");
+    set_from_args(m_transform_params, params, "transform_params");
+
+    if (m_transform_params)
+      m_observable = std::make_shared<CoreCylLBObs>(
+          m_transform_params->cyl_transform_params(),
+          get_value_or<int>(params, "n_r_bins", 1),
+          get_value_or<int>(params, "n_phi_bins", 1),
+          get_value_or<int>(params, "n_z_bins", 1),
+          get_value_or<double>(params, "min_r", 0.),
+          get_value<double>(params, "max_r"),
+          get_value_or<double>(params, "min_phi", -Utils::pi()),
+          get_value_or<double>(params, "max_phi", Utils::pi()),
+          get_value<double>(params, "min_z"),
+          get_value<double>(params, "max_z"),
+          get_value<double>(params, "sampling_density"));
   }
 
   Variant do_call_method(std::string const &method,
@@ -180,6 +142,7 @@ public:
 
 private:
   std::shared_ptr<CoreCylLBObs> m_observable;
+  std::shared_ptr<CylindricalTransformationParameters> m_transform_params;
 };
 
 } /* namespace Observables */

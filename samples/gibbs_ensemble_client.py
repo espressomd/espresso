@@ -88,21 +88,21 @@ class Manipulator():
 
     def move_particle(self):
         '''Moves a particle to a new random position. The old position is saved in _old_part_position.'''
-        sel = self._system.part.select(lambda p: p.id > -1).id_selection
-        self._old_part_idx = np.random.choice(sel)
-        self._old_part_position = self._system.part[self._old_part_idx].pos
-        self._system.part[self._old_part_idx].pos = np.random.rand(3) * box_l
+        sel = self._system.part.select(lambda p: p.id > -1).id
+        self._old_part = self._system.part[np.random.choice(sel)]
+        self._old_part_position = self._old_part.pos
+        self._old_part.pos = np.random.rand(3) * box_l
 
     def move_particle_revert(self):
         '''Revert the last movement step.'''
-        self._system.part[self._old_part_idx].pos = self._old_part_position
+        self._old_part.pos = self._old_part_position
 
     def remove_particle(self):
         '''Removes a random particle. The old position and index are saved in _old_part_position and _old_part_idx.'''
-        sel = self._system.part.select(lambda p: p.id > -1).id_selection
-        self._old_part_idx = np.random.choice(sel)
-        self._old_part_position = self._system.part[self._old_part_idx].pos
-        self._system.part[self._old_part_idx].remove()
+        sel = self._system.part.select(lambda p: p.id > -1).id
+        self._old_part = self._system.part[np.random.choice(sel)]
+        self._old_part_position = self._old_part.pos
+        self._old_part.remove()
 
     def remove_particle_revert(self):
         '''Revert the last remove particle step.'''
@@ -162,7 +162,7 @@ manipulator = Manipulator(system)
 
 # places the particles
 for i in range(particle_number):
-    system.part.add(pos=np.random.rand(3) * box_l, type=0, id=i)
+    system.part.add(pos=np.random.rand(3) * box_l, type=0)
 
 # send the initial energy
 energy = system.analysis.energy()['total']

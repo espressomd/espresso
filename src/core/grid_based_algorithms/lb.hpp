@@ -24,8 +24,7 @@
  *
  *  For performance reasons it is clever to do streaming and collision at the
  *  same time because every fluid node has to be read and written only once.
- *  This increases mainly cache efficiency. This is achieved by
- *  @ref lb_collide_stream.
+ *  This increases mainly cache efficiency.
  *
  *  The hydrodynamic fields, corresponding to density, velocity and pressure,
  *  are stored in @ref LB_FluidNode in the array @ref lbfields, the populations
@@ -144,10 +143,7 @@ void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
                      const LB_Parameters &lb_parameters);
 
 void lb_reinit_parameters(LB_Parameters &lb_parameters);
-/** Pointer to the velocity populations of the fluid.
- *  lbfluid contains pre-collision populations, lbfluid_post
- *  contains post-collision populations
- */
+
 using LB_Fluid = std::array<Utils::Span<double>, 19>;
 extern LB_Fluid lbfluid;
 
@@ -172,7 +168,7 @@ template <std::size_t I> auto get(const LB_Fluid_Ref &lb_fluid) {
 
 } // namespace Utils
 
-/** Pointer to the hydrodynamic fields of the fluid */
+/** Hydrodynamic fields of the fluid */
 extern std::vector<LB_FluidNode> lbfields;
 
 /************************************************************/
@@ -180,13 +176,13 @@ extern std::vector<LB_FluidNode> lbfields;
 /************************************************************/
 /**@{*/
 
-/** Update the lattice Boltzmann system for one time step.
+/** Integrate the lattice-Boltzmann system for one time step.
  *  This function performs the collision step and the streaming step.
  *  If external force densities are present, they are applied prior to the
  *  collisions. If boundaries are present, it also applies the boundary
  *  conditions.
  */
-void lattice_boltzmann_update();
+void lb_integrate();
 
 void lb_sanity_checks(const LB_Parameters &lb_parameters);
 
@@ -213,7 +209,8 @@ Utils::Vector6d lb_calc_pressure_tensor(std::array<double, 19> const &modes,
 
 /** Calculation of hydrodynamic modes.
  *
- *  @param index number of the node to calculate the modes for
+ *  @param[in]  index     Number of the node to calculate the modes for
+ *  @param[in]  lb_fluid  Populations of the fluid
  *  @retval Array containing the modes.
  */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index,

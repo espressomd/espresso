@@ -19,7 +19,6 @@ import unittest_decorators as utx
 import espressomd
 import numpy as np
 import espressomd.electrostatics
-from espressomd import electrostatic_extensions
 
 
 @utx.skipIfMissingFeatures(["P3M"])
@@ -35,7 +34,7 @@ class ELC_vs_analytic(ut.TestCase):
     delta_mid_bot = 39. / 41.
     distance = 1.
 
-    number_samples = 25
+    number_samples = 6 if '@WITH_COVERAGE@' == 'ON' else 12
     minimum_distance_to_wall = 0.1
     zPos = np.linspace(
         minimum_distance_to_wall,
@@ -46,10 +45,12 @@ class ELC_vs_analytic(ut.TestCase):
 
     def test_elc(self):
         """
-        Testing ELC against the analytic solution for an infinite large simulation box with dielectric contrast on the bottom of the box, which can be calculated analytically with image charges.
+        Testing ELC against the analytic solution for an infinitely large
+        simulation box with dielectric contrast on the bottom of the box,
+        which can be calculated analytically with image charges.
         """
-        self.system.part.add(id=1, pos=self.system.box_l / 2., q=self.q[0])
-        self.system.part.add(id=2, pos=self.system.box_l / 2. + [0, 0, self.distance],
+        self.system.part.add(pos=self.system.box_l / 2., q=self.q[0])
+        self.system.part.add(pos=self.system.box_l / 2. + [0, 0, self.distance],
                              q=-self.q[0])
 
         self.system.box_l = [self.box_l, self.box_l, self.box_l + self.elc_gap]
@@ -60,12 +61,11 @@ class ELC_vs_analytic(ut.TestCase):
                                             accuracy=self.accuracy,
                                             mesh=[58, 58, 70],
                                             cao=4)
-        self.system.actors.add(p3m)
-
-        elc = electrostatic_extensions.ELC(gap_size=self.elc_gap,
-                                           maxPWerror=self.accuracy,
-                                           delta_mid_bot=self.delta_mid_bot,
-                                           delta_mid_top=self.delta_mid_top)
+        elc = espressomd.electrostatics.ELC(p3m_actor=p3m,
+                                            gap_size=self.elc_gap,
+                                            maxPWerror=self.accuracy,
+                                            delta_mid_bot=self.delta_mid_bot,
+                                            delta_mid_top=self.delta_mid_top)
         self.system.actors.add(elc)
 
         elc_results = self.scan()
@@ -83,17 +83,18 @@ class ELC_vs_analytic(ut.TestCase):
             elc_results, analytic_results, rtol=0, atol=self.check_accuracy)
 
     def scan(self):
+        p1, p2 = self.system.part[:]
         result_array = np.empty((len(self.q), len(self.zPos), 2))
         for chargeIndex, charge in enumerate(self.q):
-            self.system.part[1].q = charge
-            self.system.part[2].q = -charge
+            p1.q = charge
+            p2.q = -charge
             for i, z in enumerate(self.zPos):
-                pos = self.system.part[1].pos
-                self.system.part[1].pos = [pos[0], pos[1], z]
-                self.system.part[2].pos = [pos[0], pos[1], z + self.distance]
+                pos = np.copy(p1.pos)
+                p1.pos = [pos[0], pos[1], z]
+                p2.pos = [pos[0], pos[1], z + self.distance]
 
                 self.system.integrator.run(0)
-                result_array[chargeIndex, i, 0] = self.system.part[1].f[2]
+                result_array[chargeIndex, i, 0] = p1.f[2]
                 result_array[chargeIndex, i, 1] = self.system.analysis.energy()[
                     "total"]
         return result_array

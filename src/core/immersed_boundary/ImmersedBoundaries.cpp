@@ -21,10 +21,12 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
+#include "ibm_volcons.hpp"
 #include "interactions.hpp"
+
+#include "bonded_interactions/bonded_interaction_data.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -51,7 +53,7 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
   if (not BoundariesFound) {
     BoundariesFound = boost::algorithm::any_of(
         bonded_ia_params, [](auto const &bonded_ia_param) {
-          return bonded_ia_param.type == BONDED_IA_IBM_VOLUME_CONSERVATION;
+          return (boost::get<IBMVolCons>(&bonded_ia_param) != nullptr);
         });
   }
 
@@ -62,15 +64,13 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
     // Loop through all bonded interactions and check if we need to set the
     // reference volume
     for (auto &bonded_ia_param : bonded_ia_params) {
-      if (bonded_ia_param.type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
+      if (auto *v = boost::get<IBMVolCons>(&bonded_ia_param)) {
         // This check is important because InitVolumeConservation may be called
         // accidentally during the integration. Then we must not reset the
         // reference
         BoundariesFound = true;
-        if (bonded_ia_param.p.ibmVolConsParameters.volRef == 0) {
-          const int softID = bonded_ia_param.p.ibmVolConsParameters.softID;
-          bonded_ia_param.p.ibmVolConsParameters.volRef =
-              VolumesCurrent[softID];
+        if (v->volRef == 0) {
+          v->volRef = VolumesCurrent[v->softID];
         }
       }
     }
@@ -79,50 +79,13 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
   }
 }
 
-/** Set parameters of volume conservation */
-int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
-                                                       const int softID,
-                                                       const double kappaV) {
-  // Create bond
-  make_bond_type_exist(bond_type);
-
-  // General bond parameters
-  bonded_ia_params[bond_type].type = BONDED_IA_IBM_VOLUME_CONSERVATION;
-  bonded_ia_params[bond_type].num = 0;
-
-  // Specific stuff
-  if (softID > MaxNumIBM) {
-    printf("Error: softID (%d) is larger than MaxNumIBM (%d)\n", softID,
-           MaxNumIBM);
-    return ES_ERROR;
-  }
-  if (softID < 0) {
-    printf("Error: softID (%d) must be non-negative\n", softID);
-    return ES_ERROR;
-  }
-
-  bonded_ia_params[bond_type].p.ibmVolConsParameters.softID = softID;
-  bonded_ia_params[bond_type].p.ibmVolConsParameters.kappaV = kappaV;
-  bonded_ia_params[bond_type].p.ibmVolConsParameters.volRef = 0;
-  // NOTE: We cannot compute the reference volume here because not all
-  // interactions are setup and thus we do not know which triangles belong to
-  // this softID Calculate it later in the init function
-
-  // Communicate this to whoever is interested
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
-}
-
-static const IBM_VolCons_Parameters *vol_cons_parameters(Particle const &p1) {
+static const IBMVolCons *vol_cons_parameters(Particle const &p1) {
   auto it = boost::find_if(p1.bonds(), [](auto const &bond) {
-    return bonded_ia_params[bond.bond_id()].type ==
-           BONDED_IA_IBM_VOLUME_CONSERVATION;
+    return boost::get<IBMVolCons>(&bonded_ia_params[bond.bond_id()]) != nullptr;
   });
 
   return (it != p1.bonds().end())
-             ? std::addressof(
-                   bonded_ia_params[it->bond_id()].p.ibmVolConsParameters)
+             ? boost::get<IBMVolCons>(&bonded_ia_params[it->bond_id()])
              : nullptr;
 }
 
@@ -131,8 +94,11 @@ static const IBM_VolCons_Parameters *vol_cons_parameters(Particle const &p1) {
  */
 void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
 
+  if (!BoundariesFound)
+    return;
+
   // Partial volumes for each soft particle, to be summed up
-  std::vector<double> tempVol(MaxNumIBM);
+  std::vector<double> tempVol(IBM_MAX_NUM);
 
   // Loop over all particles on local node
   cs.bond_loop(
@@ -140,7 +106,8 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
         auto const &iaparams = bonded_ia_params[bond_id];
         auto vol_cons_params = vol_cons_parameters(p1);
 
-        if (vol_cons_params && iaparams.type == BONDED_IA_IBM_TRIEL) {
+        if (vol_cons_params &&
+            (boost::get<IBMTriel>(&bonded_ia_params[bond_id]) != nullptr)) {
           // Our particle is the leading particle of a triel
           // Get second and third particle of the triangle
           Particle &p2 = *partners[0];
@@ -150,8 +117,8 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
           // This is to get a continuous trajectory with no jumps when box
           // boundaries are crossed.
           auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
-          auto const x2 = x1 + get_mi_vector(p2.r.p, x1, box_geo);
-          auto const x3 = x1 + get_mi_vector(p3.r.p, x1, box_geo);
+          auto const x2 = x1 + box_geo.get_mi_vector(p2.r.p, x1);
+          auto const x3 = x1 + box_geo.get_mi_vector(p3.r.p, x1);
 
           // Volume of this tetrahedron
           // See @cite zhang01b
@@ -176,27 +143,27 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
         return false;
       });
 
-  for (int i = 0; i < MaxNumIBM; i++)
+  for (int i = 0; i < IBM_MAX_NUM; i++)
     VolumesCurrent[i] = 0;
 
   // Sum up and communicate
-  MPI_Allreduce(&(tempVol.front()), &(VolumesCurrent.front()), MaxNumIBM,
-                MPI_DOUBLE, MPI_SUM, comm_cart);
+  MPI_Allreduce(tempVol.data(), VolumesCurrent.data(), IBM_MAX_NUM, MPI_DOUBLE,
+                MPI_SUM, comm_cart);
 }
 
 /** Calculate and add the volume force to each node */
 void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
+  if (!BoundariesFound)
+    return;
+
   cs.bond_loop(
       [this](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
-        auto const &iaparams = bonded_ia_params[bond_id];
-
-        if (iaparams.type == BONDED_IA_IBM_TRIEL) {
-          // Check if particle has a BONDED_IA_IBM_TRIEL and a
-          // BONDED_IA_IBM_VOLUME_CONSERVATION. Basically this loops over all
+        if (boost::get<IBMTriel>(&bonded_ia_params[bond_id]) != nullptr) {
+          // Check if particle has an IBM Triel bonded interaction and an
+          // IBM VolCons bonded interaction. Basically this loops over all
           // triangles, not all particles. First round to check for volume
           // conservation.
-          const IBM_VolCons_Parameters *ibmVolConsParameters =
-              vol_cons_parameters(p1);
+          const IBMVolCons *ibmVolConsParameters = vol_cons_parameters(p1);
           if (not ibmVolConsParameters)
             return false;
 
@@ -214,8 +181,8 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
 
           // Unfolding seems to work only for the first particle of a triel
           // so get the others from relative vectors considering PBC
-          auto const a12 = get_mi_vector(p2.r.p, x1, box_geo);
-          auto const a13 = get_mi_vector(p3.r.p, x1, box_geo);
+          auto const a12 = box_geo.get_mi_vector(p2.r.p, x1);
+          auto const a13 = box_geo.get_mi_vector(p3.r.p, x1);
 
           // Now we have the true and good coordinates
           // This is eq. (9) in @cite dupin08a.

@@ -138,7 +138,8 @@ The Debye-Hückel electrostatic potential is defined by
 
   .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 \exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 
-where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`.
+where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor` and
+:math:`\kappa` is the ionic strength.
 The Debye-Hückel potential is an approximate method for calculating
 electrostatic interactions, but technically it is treated as other
 short-ranged non-bonding potentials. For :math:`r > r_{\textrm{cut}}` it is
@@ -146,6 +147,29 @@ set to zero which introduces a step in energy. Therefore, it introduces
 fluctuations in energy.
 
 For :math:`\kappa = 0`, this corresponds to the plain Coulomb potential.
+
+.. _Reaction Field method:
+
+Reaction Field method
+---------------------
+
+:class:`espressomd.electrostatics.ReactionField`
+
+The Reaction Field electrostatic potential is defined by
+
+  .. math:: U^{C-RF} = C \cdot q_1 q_2 \left[\frac{1}{r} - \frac{B r^2}{2r_{\mathrm{cut}}^3} - \frac{1 - B/2}{r_{\mathrm{cut}}}\right] \quad \mathrm{for}\quad r<r_{\mathrm{cut}}
+
+where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor` and :math:`B`
+is defined as:
+
+  .. math:: B = \frac{2(\varepsilon_1 - \varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) - \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}{(\varepsilon_1 + 2\varepsilon_2)(1 + \kappa r_{\mathrm{cut}}) + \varepsilon_2 (\kappa r_{\mathrm{cut}})^2}
+
+with :math:`\kappa` the ionic strength, :math:`\varepsilon_1` the dielectric
+constant inside the cavity and :math:`\varepsilon_2` the dielectric constant
+outside the cavity :cite:`tironi95a`.
+
+The term in :math:`1 - B/2` is a correction to make the
+potential continuous at :math:`r = r_{\mathrm{cut}}`.
 
 
 .. _Dielectric interfaces with the ICC algorithm:
@@ -234,7 +258,7 @@ using it.
 Electrostatic Layer Correction (ELC)
 ------------------------------------
 
-:class:`espressomd.electrostatic_extensions.ELC`
+:class:`espressomd.electrostatics.ELC`
 
 *ELC* is an extension of the P3M electrostatics solver for explicit 2D periodic
 systems. It can account for different dielectric jumps on both sides of the
@@ -255,13 +279,14 @@ Usage notes:
     z-direction not to contain particles. The size in z-direction of this slab
     is controlled by the ``gap_size`` parameter. The user has to ensure that
     no particles enter this region by means of constraints or by fixing the
-    particles' z-coordinate. When there is no empty slab of the specified size,
-    the method will silently produce wrong results.
+    particles' z-coordinate. When particles enter the slab of the specified
+    size, an error will be thrown.
 
 *ELC* is an |es| actor and is used with::
 
-    import espressomd.electrostatic_extensions
-    elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3)
+    import espressomd.electrostatics
+    p3m = espressomd.electrostatics.P3M(prefactor=1, accuracy=1e-4)
+    elc = espressomd.electrostatics.ELC(p3m_actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.actors.add(elc)
 
 *ELC* can also be used to simulate 2D periodic systems with image charges,
@@ -273,8 +298,8 @@ simulation region (*middle*) to *bottom* (at :math:`z=0`) and from *middle* to
 are :math:`\Delta_t=\frac{\varepsilon_m-\varepsilon_t}{\varepsilon_m+\varepsilon_t}`
 and :math:`\Delta_b=\frac{\varepsilon_m-\varepsilon_b}{\varepsilon_m+\varepsilon_b}`::
 
-    elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3,
-                                       delta_mid_top=0.9, delta_mid_bot=0.1)
+    elc = espressomd.electrostatics.ELC(p3m_actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3,
+                                        delta_mid_top=0.9, delta_mid_bot=0.1)
 
 The fully metallic case :math:`\Delta_t=\Delta_b=-1` would lead to divergence
 of the forces/energies in *ELC* and is therefore only possible with the
@@ -283,8 +308,8 @@ of the forces/energies in *ELC* and is therefore only possible with the
 Toggle ``const_pot`` on to maintain a constant electric potential difference
 ``pot_diff`` between the xy-planes at :math:`z=0` and :math:`z = L_z - h`::
 
-    elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3,
-                                       const_pot=True, delta_mid_bot=100.0)
+    elc = espressomd.electrostatics.ELC(p3m_actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3,
+                                        const_pot=True, delta_mid_bot=100.0)
 
 This is done by countering the total dipole moment of the system with the
 electric field :math:`E_{\textrm{induced}}` and superposing a homogeneous
@@ -318,7 +343,7 @@ MMM1D is used with::
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
 MMM1D Coulomb method for systems with periodicity (0 0 1). Needs the
-nsquared cell system (see section :ref:`Cellsystems`). The first form sets parameters
+N-squared cell system (see section :ref:`Cellsystems`). The first form sets parameters
 manually. The switch radius determines at which xy-distance the force
 calculation switches from the near to the far formula. The Bessel cutoff
 does not need to be specified as it is automatically determined from the
@@ -336,7 +361,7 @@ MMM1D on GPU
 :class:`espressomd.electrostatics.MMM1DGPU`
 
 MMM1D is also available in a GPU implementation. Unlike its CPU
-counterpart, it does not need the nsquared cell system.
+counterpart, it does not need the N-squared cell system.
 
 ::
 

@@ -79,7 +79,7 @@ For example, ::
     >>> import espressomd
     >>> system = espressomd.System(box_l=[100, 100, 100])
     >>> for i in range(10):
-    ...     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
+    ...     system.part.add(pos=[1.0, 1.0, i**2], type=0)
     >>> system.analysis.min_dist()
     1.0
 
@@ -113,7 +113,7 @@ Two arrays are returned corresponding to the normalized distribution and the bin
 
     >>> system = espressomd.System(box_l=[10, 10, 10])
     >>> for i in range(5):
-    ...     system.part.add(id=i, pos=i * system.box_l, type=0)
+    ...     system.part.add(pos=i * system.box_l, type=0)
     >>> bins, count = system.analysis.distribution(type_list_a=[0], type_list_b=[0],
     ...                                            r_min=0.0, r_max=10.0, r_bins=10)
     >>>
@@ -411,10 +411,21 @@ or bin edges for the axes. Example::
                        density_profile.min_y, density_profile.max_y])
     plt.show()
 
+Observables based on cylindrical coordinates are also available.
+They require special parameters if the cylindrical coordinate system is non-standard, e.g. if you want the origin of the cylindrical coordinates to be at a special location of the box or if you want to make use of symmetries along an axis that is not parallel to the z-axis.
+For this purpose, use :class:`espressomd.math.CylindricalTransformationParameters` to create a consistent set of the parameters needed. Example::
+
+    import espressomd.math
+    
+    # shifted and rotated cylindrical coordinates
+    cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
+        center=[5.0, 5.0, 0.0], axis=[0, 1, 0], orientation=[0, 0, 1])
+
     # histogram in cylindrical coordinates
     density_profile = espressomd.observables.CylindricalDensityProfile(
-        ids=[0, 1], center=[5.0, 5.0, 0.0], axis=[0, 0, 1],
-        n_r_bins=8, min_r=0.0, max_r=4.0,
+        ids=[0, 1],
+        transform_params = cyl_transform_params,
+        n_r_bins=8, min_r=1.0, max_r=4.0,
         n_phi_bins=16, min_phi=-np.pi, max_phi=np.pi,
         n_z_bins=4, min_z=4.0, max_z=8.0)
     obs_data = density_profile.calculate()
@@ -663,7 +674,7 @@ Ref. :cite:`ramirez10a`.
 
 The choice of the compression function also influences the statistical
 accuracy and can even lead to systematic errors. The default compression
-function is which discards the second for the compressed values and
+function discards the second value and
 pushes the first one to the higher level. This is robust and can be
 applied universally to any combination of observables and correlation
 operation. On the other hand, it reduces the statistical accuracy as the
@@ -775,7 +786,6 @@ The results can be accessed via ClusterStructure.clusters, which is an instance 
 Individual clusters are represented by instances of
 :any:`espressomd.cluster_analysis.Cluster`, which provides access to the particles contained in a cluster as well as per-cluster analysis routines such as radius of gyration, center of mass and longest distance.
 Note that the cluster objects do not contain copies of the particles, but refer to the particles in the simulation. Hence, the objects become outdated if the simulation system changes. On the other hand, it is possible to directly manipulate the particles contained in a cluster.
-
 
 
 

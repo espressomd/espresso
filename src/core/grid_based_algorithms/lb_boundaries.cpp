@@ -75,7 +75,7 @@ void ek_init_boundaries() {
 #if defined(CUDA) && defined(EK_BOUNDARIES)
   int number_of_boundnodes = 0;
 
-  std::vector<ekfloat> host_wallcharge_species_density;
+  std::vector<float> host_wallcharge_species_density;
   float node_wallcharge = 0.0f;
   int wallcharge_species = -1, charged_boundaries = 0;
   bool node_charged = false;
@@ -107,9 +107,9 @@ void ek_init_boundaries() {
           << "no charged species available to create wall charge\n";
     }
 
-    for (int z = 0; z < int(lbpar_gpu.dim_z); z++) {
-      for (int y = 0; y < int(lbpar_gpu.dim_y); y++) {
-        for (int x = 0; x < int(lbpar_gpu.dim_x); x++) {
+    for (int z = 0; z < int(lbpar_gpu.dim[2]); z++) {
+      for (int y = 0; y < int(lbpar_gpu.dim[1]); y++) {
+        for (int x = 0; x < int(lbpar_gpu.dim[0]); x++) {
           auto const pos = static_cast<double>(lbpar_gpu.agrid) *
                            (Utils::Vector3d{1. * x, 1. * y, 1. * z} +
                             Utils::Vector3d::broadcast(0.5));
@@ -161,14 +161,14 @@ void lb_init_boundaries() {
       return;
     }
     ek_init_boundaries();
-    int number_of_boundnodes = 0;
+    unsigned number_of_boundnodes = 0;
     std::vector<int> host_boundary_node_list;
     std::vector<int> host_boundary_index_list;
     size_t size_of_index;
 
-    for (int z = 0; z < int(lbpar_gpu.dim_z); z++) {
-      for (int y = 0; y < int(lbpar_gpu.dim_y); y++) {
-        for (int x = 0; x < int(lbpar_gpu.dim_x); x++) {
+    for (int z = 0; z < int(lbpar_gpu.dim[2]); z++) {
+      for (int y = 0; y < int(lbpar_gpu.dim[1]); y++) {
+        for (int x = 0; x < int(lbpar_gpu.dim[0]); x++) {
           auto const pos = static_cast<double>(lbpar_gpu.agrid) *
                            (Utils::Vector3d{1. * x, 1. * y, 1. * z} +
                             Utils::Vector3d::broadcast(0.5));
@@ -184,7 +184,8 @@ void lb_init_boundaries() {
             host_boundary_node_list.resize(size_of_index);
             host_boundary_index_list.resize(size_of_index);
             host_boundary_node_list[number_of_boundnodes] =
-                x + lbpar_gpu.dim_x * y + lbpar_gpu.dim_x * lbpar_gpu.dim_y * z;
+                x + lbpar_gpu.dim[0] * y +
+                lbpar_gpu.dim[0] * lbpar_gpu.dim[1] * z;
             auto const boundary_number =
                 std::distance(lbboundaries.begin(), boundary.base()) - 1;
             host_boundary_index_list[number_of_boundnodes] =
@@ -277,7 +278,7 @@ Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
   std::vector<double> forces(3 * lbboundaries.size());
   if (lattice_switch == ActiveLB::GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(CUDA)
-    lb_gpu_get_boundary_forces(forces.data());
+    lb_gpu_get_boundary_forces(forces);
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)

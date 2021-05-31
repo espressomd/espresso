@@ -53,12 +53,6 @@ inline double lj_pair_force_factor(IA_parameters const &ia_params,
   return 0.0;
 }
 
-/** Calculate Lennard-Jones force */
-inline Utils::Vector3d lj_pair_force(IA_parameters const &ia_params,
-                                     Utils::Vector3d const &d, double dist) {
-  return d * lj_pair_force_factor(ia_params, dist);
-}
-
 /** Calculate Lennard-Jones energy */
 inline double lj_pair_energy(IA_parameters const &ia_params, double dist) {
   if ((dist < ia_params.lj.cut + ia_params.lj.offset) &&

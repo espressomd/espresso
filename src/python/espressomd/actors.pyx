@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
-from .utils cimport handle_errors
+from .utils import handle_errors
 
 cdef class Actor:
 
@@ -79,7 +79,7 @@ cdef class Actor:
         if inter in Actor.active_list:
             if not Actor.active_list[inter]:
                 raise Exception(
-                    "Class not registered in Actor.active_list " + self.__class__.__bases__[0])
+                    "Class not registered in Actor.active_list: " + self.__class__.__bases__[0].__name__)
             Actor.active_list[inter] = False
 
     def is_valid(self):

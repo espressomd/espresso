@@ -223,28 +223,28 @@ cdef class ReactionAlgorithm:
 
     def _set_params_in_es_core_add(self):
         cdef vector[int] reactant_types
-        for i in range(len(self._params["reactant_types"])):
-            reactant_types.push_back(self._params["reactant_types"][i])
         cdef vector[int] reactant_coefficients
-        for i in range(len(self._params["reactant_coefficients"])):
-            reactant_coefficients.push_back(
-                self._params["reactant_coefficients"][i])
         cdef vector[int] product_types
-        for i in range(len(self._params["product_types"])):
-            product_types.push_back(self._params["product_types"][i])
         cdef vector[int] product_coefficients
-        for i in range(len(self._params["product_coefficients"])):
-            product_coefficients.push_back(
-                self._params["product_coefficients"][i])
+        for value in self._params["reactant_types"]:
+            reactant_types.push_back(value)
+        for value in self._params["reactant_coefficients"]:
+            reactant_coefficients.push_back(value)
+        for value in self._params["product_types"]:
+            product_types.push_back(value)
+        for value in self._params["product_coefficients"]:
+            product_coefficients.push_back(value)
+
+        # forward reaction
         deref(self.RE).add_reaction(
             self._params["gamma"], reactant_types, reactant_coefficients, product_types, product_coefficients)
+        # backward reaction
         deref(self.RE).add_reaction(
             1.0 / self._params["gamma"], product_types, product_coefficients, reactant_types, reactant_coefficients)
 
-        for key in self._params["default_charges"]:  # the keys are the types
-            deref(self.RE).charges_of_types[
-                int(key)] = self._params["default_charges"][key]
-        deref(self.RE).check_reaction_ensemble()
+        for key, value in self._params["default_charges"].items():
+            deref(self.RE).charges_of_types[int(key)] = value
+        deref(self.RE).check_reaction_method()
 
     def _validate_params_default_charge(self):
         if not isinstance(self._params["default_charges"], dict):
@@ -309,7 +309,7 @@ cdef class ReactionAlgorithm:
         the used reactions, the used temperature and the used exclusion radius.
 
         """
-        deref(self.RE).check_reaction_ensemble()
+        deref(self.RE).check_reaction_method()
         reactions = []
         for single_reaction_i in range(deref(self.RE).reactions.size()):
             reactant_types = []
@@ -431,6 +431,14 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
         self._set_params_in_es_core()
 
 cdef class ConstantpHEnsemble(ReactionAlgorithm):
+    """
+    This class implements the constant pH Ensemble.
+
+    When adding an acid-base reaction, the acid and base particle types
+    are always assumed to be at index 0 of the lists passed to arguments
+    ``reactant_types`` and ``product_types``.
+
+    """
     cdef unique_ptr[CConstantpHEnsemble] constpHptr
 
     def __init__(self, *args, **kwargs):

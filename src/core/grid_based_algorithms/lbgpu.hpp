@@ -31,6 +31,7 @@
 #include "OptionalCounter.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -42,13 +43,6 @@
  * thus making the code more efficient. */
 #define LBQ 19
 
-#if defined(LB_DOUBLE_PREC) || defined(EK_DOUBLE_PREC)
-typedef double lbForceFloat;
-#else
-typedef float lbForceFloat;
-#endif
-
-/**-------------------------------------------------------------------------*/
 /** Parameters for the lattice Boltzmann system for GPU. */
 struct LB_parameters_gpu {
   /** number density (LB units) */
@@ -80,12 +74,7 @@ struct LB_parameters_gpu {
    */
   float tau;
 
-  /** MD timestep */
-  float time_step;
-
-  unsigned int dim_x;
-  unsigned int dim_y;
-  unsigned int dim_z;
+  Utils::Array<unsigned int, 3> dim;
 
   unsigned int number_of_nodes;
 #ifdef LB_BOUNDARIES_GPU
@@ -96,54 +85,35 @@ struct LB_parameters_gpu {
 
   int external_force_density;
 
-  float ext_force_density[3];
+  Utils::Array<float, 3> ext_force_density;
 
   unsigned int reinit;
   // Thermal energy
   float kT;
 };
 
-/** Conserved quantities for the lattice Boltzmann system. */
-struct LB_rho_v_gpu {
-
-  /** density of the node */
-  float rho;
-  /** velocity of the node */
-
-  float v[3];
-};
 /* this structure is almost duplicated for memory efficiency. When the stress
    tensor element are needed at every timestep, this features should be
    explicitly switched on */
-typedef struct {
+struct LB_rho_v_pi_gpu {
   /** density of the node */
   float rho;
   /** velocity of the node */
-  float v[3];
+  Utils::Array<float, 3> v;
   /** pressure tensor */
-  float pi[6];
-} LB_rho_v_pi_gpu;
+  Utils::Array<float, 6> pi;
+};
 
-typedef struct {
-
-  lbForceFloat *force_density;
+struct LB_node_force_density_gpu {
+  Utils::Array<float, 3> *force_density;
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual
-  // particles' position However, LBM wants to reset them immediately after the
-  // LBM update This variable keeps a backup
-  lbForceFloat *force_density_buf;
+  // particles' position. However, LBM wants to reset them immediately
+  // after the LBM update. This variable keeps a backup
+  Utils::Array<float, 3> *force_density_buf;
 #endif
-
-} LB_node_force_density_gpu;
-
-typedef struct {
-
-  float force_density[3];
-
-  unsigned int index;
-
-} LB_extern_nodeforcedensity_gpu;
+};
 
 /************************************************************/
 /** \name Exported Variables */
@@ -157,6 +127,8 @@ extern std::vector<LB_rho_v_pi_gpu> host_values;
 extern LB_node_force_density_gpu node_f;
 extern bool ek_initialized;
 #endif
+extern OptionalCounter rng_counter_fluid_gpu;
+extern OptionalCounter rng_counter_coupling_gpu;
 
 /**@}*/
 
@@ -164,13 +136,20 @@ extern bool ek_initialized;
 /** \name Exported Functions */
 /************************************************************/
 /**@{*/
+/** Conserved quantities for the lattice Boltzmann system. */
+struct LB_rho_v_gpu {
 
+  /** density of the node */
+  float rho;
+  /** velocity of the node */
+
+  Utils::Array<float, 3> v;
+};
 void lb_GPU_sanity_checks();
 
-void lb_get_device_values_pointer(LB_rho_v_gpu **pointeradress);
-void lb_get_boundary_force_pointer(float **pointeradress);
-void lb_get_para_pointer(LB_parameters_gpu **pointeradress);
-void lattice_boltzmann_update_gpu();
+void lb_get_device_values_pointer(LB_rho_v_gpu **pointer_address);
+void lb_get_boundary_force_pointer(float **pointer_address);
+void lb_get_para_pointer(LB_parameters_gpu **pointer_address);
 
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
@@ -188,14 +167,17 @@ void lb_reinit_fluid_gpu();
 /** Reset the forces on the fluid nodes */
 void reset_LB_force_densities_GPU(bool buffer = true);
 
-void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
+void lb_init_GPU(const LB_parameters_gpu &lbpar_gpu);
+
+/** Integrate the lattice-Boltzmann system for one time step. */
 void lb_integrate_GPU();
 
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);
-void lb_print_node_GPU(int single_nodeindex,
+void lb_print_node_GPU(unsigned single_nodeindex,
                        LB_rho_v_pi_gpu *host_print_values);
 #ifdef LB_BOUNDARIES_GPU
-void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes,
+void lb_init_boundaries_GPU(std::size_t n_lb_boundaries,
+                            unsigned number_of_boundnodes,
                             int *host_boundary_node_list,
                             int *host_boundary_index_list,
                             float *lb_bounday_velocity);
@@ -204,20 +186,22 @@ void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes,
 void lb_set_agrid_gpu(double agrid);
 
 template <std::size_t no_of_neighbours>
-void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
+void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction,
+                                     double time_step);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);
-void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag);
+void lb_get_boundary_flag_GPU(unsigned int single_nodeindex,
+                              unsigned int *host_flag);
 void lb_get_boundary_flags_GPU(unsigned int *host_bound_array);
 
-void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity);
-void lb_set_node_rho_GPU(int single_nodeindex, float host_rho);
+void lb_set_node_velocity_GPU(unsigned single_nodeindex, float *host_velocity);
+void lb_set_node_rho_GPU(unsigned single_nodeindex, float host_rho);
 
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
-void lb_gpu_get_boundary_forces(double *forces);
+void lb_gpu_get_boundary_forces(std::vector<double> &forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd);
 void lb_load_checkpoint_GPU(float const *host_checkpoint_vd);
 
@@ -231,14 +215,20 @@ void linear_velocity_interpolation(double const *positions, double *velocities,
                                    int length);
 void quadratic_velocity_interpolation(double const *positions,
                                       double *velocities, int length);
-
+Utils::Array<float, 6> stress_tensor_GPU();
 uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
+
+/** Calculate the node index from its coordinates */
+inline unsigned int calculate_node_index(LB_parameters_gpu const &lbpar,
+                                         Utils::Vector3i const &coord) {
+  return static_cast<unsigned>(
+      Utils::get_linear_index(coord, Utils::Vector3i(lbpar_gpu.dim)));
+}
 /**@}*/
-extern OptionalCounter rng_counter_fluid_gpu;
-extern OptionalCounter rng_counter_coupling_gpu;
+
 #endif /*  CUDA */
 
-#endif /*  CUDA_H */
+#endif /*  LBGPU_HPP */

@@ -23,15 +23,12 @@
  *  Routines to calculate the OIF local forces for a particle quadruple
  *  (two neighboring triangles with common edge).
  *  See @cite dupin07a.
- *
- *  Implementation in \ref oif_local_forces.cpp
  */
 
 #include "config.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 
 #include <utils/Vector.hpp>
@@ -40,11 +37,67 @@
 #include <cmath>
 #include <tuple>
 
-// set parameters for local forces
-int oif_local_forces_set_params(int bond_type, double r0, double ks,
-                                double kslin, double phi0, double kb,
-                                double A01, double A02, double kal,
-                                double kvisc);
+/** Parameters for OIF local forces
+ *
+ *  Characterize the deformation of two triangles sharing an edge.
+ */
+struct OifLocalForcesBond {
+  /** Equilibrium bond length of triangle edges */
+  double r0;
+  /** Non-linear stretching coefficient of triangle edges */
+  double ks;
+  /** Linear stretching coefficient of triangle edges */
+  double kslin;
+  /** Equilibrium angle between the two triangles */
+  double phi0;
+  /** Bending coefficient for the angle between the two triangles */
+  double kb;
+  /** Equilibrium surface of the first triangle */
+  double A01;
+  /** Equilibrium surface of the second triangle */
+  double A02;
+  /** Stretching coefficient of a triangle surface */
+  double kal;
+  /** Viscous coefficient of the triangle vertices */
+  double kvisc;
+
+  double cutoff() const { return 0.; }
+
+  static constexpr int num = 3;
+
+  OifLocalForcesBond() = default;
+  OifLocalForcesBond(double r0, double ks, double kslin, double phi0, double kb,
+                     double A01, double A02, double kal, double kvisc) {
+    this->phi0 = phi0;
+    this->kb = kb;
+    this->r0 = r0;
+    this->ks = ks;
+    this->kslin = kslin;
+    this->A01 = A01;
+    this->A02 = A02;
+    this->kal = kal;
+    this->kvisc = kvisc;
+  }
+
+  std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+  calc_forces(Particle const &p2, Particle const &p1, Particle const &p3,
+              Particle const &p4) const;
+
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, long int /* version */) {
+    ar &r0;
+    ar &ks;
+    ar &kslin;
+    ar &phi0;
+    ar &kb;
+    ar &A01;
+    ar &A02;
+    ar &kal;
+    ar &kvisc;
+  }
+};
 
 /** @details see eq. (19) in @cite dupin07a */
 inline double KS(double lambda) {
@@ -58,50 +111,46 @@ inline double KS(double lambda) {
  *  @param p2           %Particle of triangle 1.
  *  @param p1 , p3      Particles common to triangle 1 and triangle 2.
  *  @param p4           %Particle of triangle 2.
- *  @param iaparams     Bonded parameters for the OIF interaction.
  *  @return forces on @p p1, @p p2, @p p3, @p p4
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                   Utils::Vector3d>
-calc_oif_local(Particle const &p2, Particle const &p1, Particle const &p3,
-               Particle const &p4, Bonded_ia_parameters const &iaparams) {
+OifLocalForcesBond::calc_forces(Particle const &p2, Particle const &p1,
+                                Particle const &p3, Particle const &p4) const {
 
   // first-fold-then-the-same approach
   auto const fp2 = unfolded_position(p2.r.p, p2.l.i, box_geo.length());
-  auto const fp1 = fp2 + get_mi_vector(p1.r.p, fp2, box_geo);
-  auto const fp3 = fp2 + get_mi_vector(p3.r.p, fp2, box_geo);
-  auto const fp4 = fp2 + get_mi_vector(p4.r.p, fp2, box_geo);
+  auto const fp1 = fp2 + box_geo.get_mi_vector(p1.r.p, fp2);
+  auto const fp3 = fp2 + box_geo.get_mi_vector(p3.r.p, fp2);
+  auto const fp4 = fp2 + box_geo.get_mi_vector(p4.r.p, fp2);
 
   Utils::Vector3d force1{}, force2{}, force3{}, force4{};
 
   // non-linear stretching
-  if (iaparams.p.oif_local_forces.ks > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (ks > TINY_OIF_ELASTICITY_COEFFICIENT) {
     auto const dx = fp2 - fp3;
     auto const len = dx.norm();
-    auto const dr = len - iaparams.p.oif_local_forces.r0;
-    auto const lambda = 1.0 * len / iaparams.p.oif_local_forces.r0;
-    auto const fac =
-        -iaparams.p.oif_local_forces.ks * KS(lambda) * dr; // no normalization
+    auto const dr = len - r0;
+    auto const lambda = 1.0 * len / r0;
+    auto const fac = -ks * KS(lambda) * dr; // no normalization
     auto const f = (fac / len) * dx;
     force2 += f;
     force3 -= f;
   }
 
   // linear stretching
-  if (iaparams.p.oif_local_forces.kslin > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (kslin > TINY_OIF_ELASTICITY_COEFFICIENT) {
     auto const dx = fp2 - fp3;
     auto const len = dx.norm();
-    auto const dr = len - iaparams.p.oif_local_forces.r0;
-    auto const fac =
-        -iaparams.p.oif_local_forces.kslin * dr; // no normalization
+    auto const dr = len - r0;
+    auto const fac = -kslin * dr; // no normalization
     auto const f = (fac / len) * dx;
     force2 += f;
     force3 -= f;
   }
 
   // viscous force
-  if (iaparams.p.oif_local_forces.kvisc >
-      TINY_OIF_ELASTICITY_COEFFICIENT) { // to be implemented....
+  if (kvisc > TINY_OIF_ELASTICITY_COEFFICIENT) { // to be implemented....
     auto const dx = fp2 - fp3;
     auto const len2 = dx.norm2();
     auto const v_ij = p3.m.v - p2.m.v;
@@ -110,8 +159,8 @@ calc_oif_local(Particle const &p2, Particle const &p1, Particle const &p3,
     // Here the force is in the direction of relative velocity btw points
 
     // Code:
-    // force2 += iaparams.p.oif_local_forces.kvisc * v;
-    // force3 -= iaparams.p.oif_local_forces.kvisc * v;
+    // force2 += kvisc * v;
+    // force3 -= kvisc * v;
 
     // Variant B
     // Here the force is the projection of relative velocity btw points onto
@@ -130,7 +179,7 @@ calc_oif_local(Particle const &p2, Particle const &p1, Particle const &p3,
     // |p|^2 is stored in len2
 
     // Code:
-    auto const fac = iaparams.p.oif_local_forces.kvisc * (dx * v_ij) / len2;
+    auto const fac = kvisc * (dx * v_ij) / len2;
     auto const f = fac * dx;
     force2 += f;
     force3 -= f;
@@ -140,12 +189,11 @@ calc_oif_local(Particle const &p2, Particle const &p1, Particle const &p3,
      forceT1 is restoring force for triangle p1,p2,p3 and forceT2 restoring
      force for triangle p2,p3,p4 p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2;
      p3 -= 0.5*forceT1+0.5*forceT2; p4 += forceT2; */
-  if (iaparams.p.oif_local_forces.kb > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (kb > TINY_OIF_ELASTICITY_COEFFICIENT) {
     auto const phi = Utils::angle_btw_triangles(fp1, fp2, fp3, fp4);
-    auto const aa = (phi - iaparams.p.oif_local_forces
-                               .phi0); // no renormalization by phi0, to be
-                                       // consistent with Krueger and Fedosov
-    auto const fac = iaparams.p.oif_local_forces.kb * aa;
+    auto const aa = (phi - phi0); // no renormalization by phi0, to be
+                                  // consistent with Krueger and Fedosov
+    auto const fac = kb * aa;
 
     auto const Nc = Utils::get_n_triangle(
         fp1, fp2,
@@ -177,7 +225,7 @@ calc_oif_local(Particle const &p2, Particle const &p1, Particle const &p3,
    * Proportional distribution of forces, implemented according to
    * @cite jancigova16a.
    */
-  if (iaparams.p.oif_local_forces.kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
 
     auto handle_triangle = [](double kal, double A0, Utils::Vector3d const &fp1,
                               Utils::Vector3d const &fp2,
@@ -205,12 +253,8 @@ calc_oif_local(Particle const &p2, Particle const &p1, Particle const &p3,
       force3 += (fac / 3.0) * m3;
     };
 
-    handle_triangle(iaparams.p.oif_local_forces.kal,
-                    iaparams.p.oif_local_forces.A01, fp1, fp2, fp3, force1,
-                    force2, force3);
-    handle_triangle(iaparams.p.oif_local_forces.kal,
-                    iaparams.p.oif_local_forces.A02, fp2, fp3, fp4, force2,
-                    force3, force4);
+    handle_triangle(kal, A01, fp1, fp2, fp3, force1, force2, force3);
+    handle_triangle(kal, A02, fp2, fp3, fp4, force2, force3, force4);
   }
   return std::make_tuple(force2, force1, force3, force4);
 }

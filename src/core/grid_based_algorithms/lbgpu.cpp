@@ -35,7 +35,10 @@
 #include "integrate.hpp"
 #include "lb-d3q19.hpp"
 
+#include <utils/math/sqr.hpp>
+
 #include <cmath>
+#include <limits>
 #include <vector>
 
 LB_parameters_gpu lbpar_gpu = {
@@ -61,8 +64,6 @@ LB_parameters_gpu lbpar_gpu = {
     -1.0,
     // tau
     -1.0,
-    // time_step
-    0.0,
     // dim_x;
     0,
     // dim_y;
@@ -89,28 +90,7 @@ LB_parameters_gpu lbpar_gpu = {
 /** this is the array that stores the hydrodynamic fields for the output */
 std::vector<LB_rho_v_pi_gpu> host_values(0);
 
-/** measures the MD time since the last fluid update */
-static int fluidstep = 0;
-
 bool ek_initialized = false;
-
-/*-----------------------------------------------------------*/
-/** main of lb_gpu_programm */
-/*-----------------------------------------------------------*/
-
-/** %Lattice Boltzmann update gpu called from integrate.cpp */
-void lattice_boltzmann_update_gpu() {
-
-  auto factor = (int)round(lbpar_gpu.tau / time_step);
-
-  fluidstep += 1;
-
-  if (fluidstep >= factor) {
-
-    fluidstep = 0;
-    lb_integrate_GPU();
-  }
-}
 
 /** (Re-)initialize the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
@@ -127,7 +107,6 @@ void lb_reinit_fluid_gpu() {
  *  See @cite dunweg07a and @cite dhumieres09a.
  */
 void lb_reinit_parameters_gpu() {
-  lbpar_gpu.time_step = static_cast<float>(time_step);
   lbpar_gpu.mu = 0.0;
 
   if (lbpar_gpu.viscosity > 0.0 && lbpar_gpu.agrid > 0.0 &&
@@ -161,39 +140,15 @@ void lb_reinit_parameters_gpu() {
 
     /* Eq. (51) @cite dunweg07a.*/
     /* Note that the modes are not normalized as in the paper here! */
-    lbpar_gpu.mu = lbpar_gpu.kT * lbpar_gpu.tau * lbpar_gpu.tau /
-                   D3Q19::c_sound_sq<float> /
-                   (lbpar_gpu.agrid * lbpar_gpu.agrid);
+    lbpar_gpu.mu = lbpar_gpu.kT * Utils::sqr(lbpar_gpu.tau) /
+                   D3Q19::c_sound_sq<float> / Utils::sqr(lbpar_gpu.agrid);
   }
+
+  lb_set_agrid_gpu(lbpar_gpu.agrid);
 
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
-    lbpar_gpu.dim_x =
-        static_cast<unsigned int>(round(box_geo.length()[0] / lbpar_gpu.agrid));
-    lbpar_gpu.dim_y =
-        static_cast<unsigned int>(round(box_geo.length()[1] / lbpar_gpu.agrid));
-    lbpar_gpu.dim_z =
-        static_cast<unsigned int>(round(box_geo.length()[2] / lbpar_gpu.agrid));
-
-    unsigned int tmp[3];
-    tmp[0] = lbpar_gpu.dim_x;
-    tmp[1] = lbpar_gpu.dim_y;
-    tmp[2] = lbpar_gpu.dim_z;
-
-    /* sanity checks */
-    for (int dir = 0; dir < 3; dir++) {
-      /* check if box_l is compatible with lattice spacing */
-      if (fabs(box_geo.length()[dir] -
-               static_cast<float>(tmp[dir]) * lbpar_gpu.agrid) > 1.0e-3) {
-        runtimeErrorMsg() << "Lattice spacing lbpar_gpu.agrid= "
-                          << lbpar_gpu.agrid << " is incompatible with box_l["
-                          << dir << "]=" << box_geo.length()[dir];
-      }
-    }
-
-    lbpar_gpu.number_of_nodes =
-        lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
-    lbpar_gpu.tau = static_cast<float>(time_step);
+    lbpar_gpu.tau = static_cast<float>(get_time_step());
   }
 #endif
 
@@ -207,7 +162,7 @@ void lb_init_gpu() {
   /* set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 
-  lb_init_GPU(&lbpar_gpu);
+  lb_init_GPU(lbpar_gpu);
 
   gpu_init_particle_comm();
   cuda_bcast_global_part_params();
@@ -233,30 +188,32 @@ void lb_GPU_sanity_checks() {
 void lb_set_agrid_gpu(double agrid) {
   lbpar_gpu.agrid = static_cast<float>(agrid);
 
-  lbpar_gpu.dim_x =
+  lbpar_gpu.dim[0] =
       static_cast<unsigned int>(round(box_geo.length()[0] / agrid));
-  lbpar_gpu.dim_y =
+  lbpar_gpu.dim[1] =
       static_cast<unsigned int>(round(box_geo.length()[1] / agrid));
-  lbpar_gpu.dim_z =
+  lbpar_gpu.dim[2] =
       static_cast<unsigned int>(round(box_geo.length()[2] / agrid));
-  unsigned int tmp[3];
-  tmp[0] = lbpar_gpu.dim_x;
-  tmp[1] = lbpar_gpu.dim_y;
-  tmp[2] = lbpar_gpu.dim_z;
-  /* sanity checks */
-  for (int dir = 0; dir < 3; dir++) {
-    /* check if box_l is compatible with lattice spacing */
-    if (fabs(box_geo.length()[dir] - static_cast<float>(tmp[dir]) * agrid) >
-        ROUND_ERROR_PREC) {
-      runtimeErrorMsg() << "Lattice spacing p_agrid= " << agrid
-                        << " is incompatible with box_l[" << dir
-                        << "]=" << box_geo.length()[dir]
-                        << ", factor=" << tmp[dir] << " err= "
-                        << fabs(box_geo.length()[dir] - tmp[dir] * agrid);
-    }
+
+  Utils::Vector<float, 3> box_from_dim(
+      Utils::Vector<unsigned int, 3>(lbpar_gpu.dim) * agrid);
+  Utils::Vector<float, 3> box_lf(box_geo.length());
+
+  auto const rel_difference_vec =
+      Utils::hadamard_division(box_lf - box_from_dim, box_lf);
+  auto const commensurable = std::all_of(
+      rel_difference_vec.begin(), rel_difference_vec.end(), [](auto d) {
+        return std::abs(d) < std::numeric_limits<float>::epsilon();
+      });
+  if (not commensurable) {
+    runtimeErrorMsg() << "Lattice spacing agrid= " << agrid
+                      << " is incompatible with one of the box dimensions: "
+                      << box_geo.length()[0] << " " << box_geo.length()[1]
+                      << " " << box_geo.length()[2];
   }
   lbpar_gpu.number_of_nodes =
-      lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+      std::accumulate(lbpar_gpu.dim.begin(), lbpar_gpu.dim.end(), 1u,
+                      std::multiplies<unsigned int>());
 }
 
 #endif /*  CUDA */

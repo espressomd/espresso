@@ -34,7 +34,6 @@
 #include "rotation.hpp"
 
 #ifdef ROTATION
-#include "integrate.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mask.hpp>
@@ -116,13 +115,13 @@ static void define_Qdd(Particle const &p, Utils::Quaternion<double> &Qd,
  *  notation for quaternions, while @cite omelyan98a uses scalar-last
  *  notation.
  *
- *  For very high angular velocities (e.g. if the product of @ref time_step
+ *  For very high angular velocities (e.g. if the product of @p time_step
  *  with the largest component of @ref ParticleMomentum::omega "p.m.omega"
  *  is superior to ~2.0), the calculation might fail.
  *
  *  \todo implement for fixed_coord_flag
  */
-void propagate_omega_quat_particle(Particle &p) {
+void propagate_omega_quat_particle(Particle &p, double time_step) {
 
   // If rotation for the particle is disabled entirely, return early.
   if (p.p.rotation == ROTATION_FIXED)
@@ -153,13 +152,14 @@ void propagate_omega_quat_particle(Particle &p) {
   /* and rescale quaternion, so it is exactly of unit length */
   auto const scale = p.r.quat.norm();
   if (scale == 0) {
-    p.r.quat[0] = 1;
+    p.r.quat = Utils::Quaternion<double>::identity();
   } else {
     p.r.quat /= scale;
   }
 }
 
-void convert_torques_propagate_omega(const ParticleRange &particles) {
+void convert_torques_propagate_omega(const ParticleRange &particles,
+                                     double time_step) {
   for (auto &p : particles) {
     // Skip particle if rotation is turned off entirely for it.
     if (p.p.rotation == ROTATION_FIXED)

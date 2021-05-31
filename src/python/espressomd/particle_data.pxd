@@ -81,11 +81,11 @@ cdef extern from "particle_data.hpp":
     # Setter/getter/modifier functions functions
     void prefetch_particle_data(vector[int] ids)
 
-    int place_particle(int part, double p[3])
+    int place_particle(int part, const Vector3d & p)
 
-    void set_particle_v(int part, double v[3])
+    void set_particle_v(int part, const Vector3d & v)
 
-    void set_particle_f(int part, const Vector3d & F)
+    void set_particle_f(int part, const Vector3d & f)
 
     IF ROTATION:
         void set_particle_rotation(int part, int rot)
@@ -94,7 +94,7 @@ cdef extern from "particle_data.hpp":
         void set_particle_mass(int part, double mass)
 
     IF ROTATIONAL_INERTIA:
-        void set_particle_rotational_inertia(int part, double rinertia[3])
+        void set_particle_rotational_inertia(int part, const Vector3d & rinertia)
         void pointer_to_rotational_inertia(const particle * p, const double * & res)
 
     IF ROTATION:
@@ -104,7 +104,7 @@ cdef extern from "particle_data.hpp":
 
     IF LB_ELECTROHYDRODYNAMICS:
         void set_particle_mu_E(int part, const Vector3d & mu_E)
-        void get_particle_mu_E(int part, Vector3d & mu_E)
+        Vector3d get_particle_mu_E(int part)
 
     void set_particle_type(int part, int type)
 
@@ -113,15 +113,15 @@ cdef extern from "particle_data.hpp":
     IF ROTATION:
         void set_particle_quat(int part, double quat[4])
         void pointer_to_quat(const particle * p, const double * & res)
-        void set_particle_omega_lab(int part, Vector3d omega)
-        void set_particle_omega_body(int part, Vector3d omega)
-        void set_particle_torque_lab(int part, Vector3d torque)
+        void set_particle_director(int part, const Vector3d & director)
+        void set_particle_omega_lab(int part, const Vector3d & omega)
+        void set_particle_omega_body(int part, const Vector3d & omega)
+        void set_particle_torque_lab(int part, const Vector3d & torque)
         void pointer_to_omega_body(const particle * p, const double * & res)
         Vector3d get_torque_body(const particle p)
 
     IF DIPOLES:
-        void set_particle_dip(int part, double dip[3])
-
+        void set_particle_dip(int part, const Vector3d & dip)
         void set_particle_dipm(int part, double dipm)
         void pointer_to_dipm(const particle * P, const double * & res)
 
@@ -129,12 +129,9 @@ cdef extern from "particle_data.hpp":
         void set_particle_virtual(int part, int isVirtual)
         void pointer_to_virtual(const particle * P, const bint * & res)
 
-    IF LANGEVIN_PER_PARTICLE or BROWNIAN_PER_PARTICLE:
-        void set_particle_temperature(int part, double T)
-        void pointer_to_temperature(const particle * p, const double * & res)
-
+    IF THERMOSTAT_PER_PARTICLE:
         IF PARTICLE_ANISOTROPY:
-            void set_particle_gamma(int part, Vector3d gamma)
+            void set_particle_gamma(int part, const Vector3d & gamma)
         ELSE:
             void set_particle_gamma(int part, double gamma)
 
@@ -142,7 +139,7 @@ cdef extern from "particle_data.hpp":
 
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
-                void set_particle_gamma_rot(int part, Vector3d gamma_rot)
+                void set_particle_gamma_rot(int part, const Vector3d & gamma_rot)
             ELSE:
                 void set_particle_gamma_rot(int part, double gamma)
 
@@ -174,7 +171,6 @@ cdef extern from "particle_data.hpp":
 
     IF EXCLUSIONS:
         int change_exclusion(int part, int part2, int _delete)
-        void remove_all_exclusions()
 
     IF ENGINE:
         void set_particle_swimming(int part, particle_parameters_swimming swim)
@@ -188,9 +184,9 @@ cdef extern from "particle_data.hpp":
 
     bool particle_exists(int part)
 
-    int get_particle_node(int id) except +
+    int get_particle_node(int pid) except +
 
-    const particle & get_particle_data(int id) except +
+    const particle & get_particle_data(int pid) except +
 
     vector[int] get_particle_ids() except +
 
@@ -204,7 +200,7 @@ cdef extern from "virtual_sites.hpp":
 cdef extern from "rotation.hpp":
     Vector3d convert_vector_body_to_space(const particle & p, const Vector3d & v)
     Vector3d convert_vector_space_to_body(const particle & p, const Vector3d & v)
-    void rotate_particle(int id, Vector3d axis, double angle)
+    void rotate_particle(int pid, const Vector3d & axis, double angle)
 
 cdef class ParticleHandle:
     cdef public int _id

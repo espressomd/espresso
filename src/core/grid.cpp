@@ -27,7 +27,7 @@
 #include "grid.hpp"
 
 #include "communication.hpp"
-#include "global.hpp"
+#include "event.hpp"
 #include "particle_data.hpp"
 
 #include <utils/Vector.hpp>
@@ -75,12 +75,12 @@ calc_node_neighbors(const boost::mpi::communicator &comm) {
 
 LocalBox<double> regular_decomposition(const BoxGeometry &box,
                                        Utils::Vector3i const &node_pos,
-                                       Utils::Vector3i const &node_grid) {
+                                       Utils::Vector3i const &node_grid_par) {
   Utils::Vector3d local_length;
   Utils::Vector3d my_left;
 
   for (int i = 0; i < 3; i++) {
-    local_length[i] = box.length()[i] / node_grid[i];
+    local_length[i] = box.length()[i] / node_grid_par[i];
     my_left[i] = node_pos[i] * local_length[i];
   }
 
@@ -89,7 +89,7 @@ LocalBox<double> regular_decomposition(const BoxGeometry &box,
     /* left boundary ? */
     boundaries[2 * dir] = (node_pos[dir] == 0);
     /* right boundary ? */
-    boundaries[2 * dir + 1] = -(node_pos[dir] == node_grid[dir] - 1);
+    boundaries[2 * dir + 1] = -(node_pos[dir] == node_grid_par[dir] - 1);
   }
 
   return {my_left, local_length, boundaries};
@@ -111,8 +111,8 @@ void grid_changed_n_nodes() {
 }
 
 void rescale_boxl(int dir, double d_new) {
-  double scale =
-      (dir - 3) ? d_new / box_geo.length()[dir] : d_new / box_geo.length()[0];
+  double scale = (dir - 3) ? d_new * box_geo.length_inv()[dir]
+                           : d_new * box_geo.length_inv()[0];
 
   /* If shrinking, rescale the particles first. */
   if (scale <= 1.) {
@@ -122,14 +122,53 @@ void rescale_boxl(int dir, double d_new) {
   if (dir < 3) {
     auto box_l = box_geo.length();
     box_l[dir] = d_new;
-    box_geo.set_length(box_l);
+    mpi_set_box_length(box_l);
   } else {
-    box_geo.set_length({d_new, d_new, d_new});
+    mpi_set_box_length({d_new, d_new, d_new});
   }
-
-  mpi_bcast_parameter(FIELD_BOXL);
 
   if (scale > 1.) {
     mpi_rescale_particles(dir, scale);
   }
+}
+
+void mpi_set_box_length_local(const Utils::Vector3d &length) {
+  box_geo.set_length(length);
+  on_boxl_change();
+}
+
+REGISTER_CALLBACK(mpi_set_box_length_local)
+
+void mpi_set_box_length(const Utils::Vector3d &length) {
+  if (boost::algorithm::any_of(length,
+                               [](double value) { return value <= 0; })) {
+    throw std::domain_error("Box length must be >0");
+  }
+
+  mpi_call_all(mpi_set_box_length_local, length);
+}
+
+void mpi_set_periodicity_local(bool x, bool y, bool z) {
+  box_geo.set_periodic(0, x);
+  box_geo.set_periodic(1, y);
+  box_geo.set_periodic(2, z);
+
+  on_periodicity_change();
+}
+
+REGISTER_CALLBACK(mpi_set_periodicity_local)
+
+void mpi_set_periodicity(bool x, bool y, bool z) {
+  mpi_call_all(mpi_set_periodicity_local, x, y, z);
+}
+
+void mpi_set_node_grid_local(const Utils::Vector3i &node_grid) {
+  ::node_grid = node_grid;
+  on_nodegrid_change();
+}
+
+REGISTER_CALLBACK(mpi_set_node_grid_local)
+
+void mpi_set_node_grid(const Utils::Vector3i &node_grid) {
+  mpi_call_all(mpi_set_node_grid_local, node_grid);
 }

@@ -144,7 +144,7 @@ auto constraint_stress(
   /* The constraint force is minus the force on the particle, make it force
    * free. The counter force is translated by the connection vector to the
    * real particle, hence the virial stress is */
-  return tensor_product(connection_vector(p_ref, vs_rel), -f);
+  return tensor_product(-f, connection_vector(p_ref, vs_rel));
 }
 } // namespace
 
@@ -162,7 +162,7 @@ void VirtualSitesRelative::update() const {
     /* The shift has to respect periodic boundaries: if the reference
      * particles is not in the same image box, we potentially avoid to shift
      * to the other side of the box. */
-    p.r.p += get_mi_vector(new_pos, p.r.p, box_geo);
+    p.r.p += box_geo.get_mi_vector(new_pos, p.r.p);
 
     p.m.v = velocity(p_ref, p.p.vs_relative);
 

@@ -1,8 +1,5 @@
-if(NOT DEFINED TEST_NP)
-  include(ProcessorCount)
-  processorcount(NP)
-  math(EXPR TEST_NP "${NP}/2 + 1")
-endif()
+include(ProcessorCount)
+ProcessorCount(NP)
 
 if(EXISTS ${MPIEXEC})
   # OpenMPI 3.0 and higher checks the number of processes against the number of
@@ -49,27 +46,14 @@ function(PYTHON_BENCHMARK)
   endif()
   # parallel schemes
   if(EXISTS ${MPIEXEC} AND ${BENCHMARK_RUN_WITH_MPI})
-    set(BENCHMARK_CONFIGURATIONS "0")
-    if(${NP} GREATER 0 AND ${BENCHMARK_MAX_NUM_PROC} GREATER 0
-       AND ${BENCHMARK_MIN_NUM_PROC} LESS 2)
-      list(APPEND BENCHMARK_CONFIGURATIONS 1)
-    endif()
-    if(${NP} GREATER 1 AND ${BENCHMARK_MAX_NUM_PROC} GREATER 1
-       AND ${BENCHMARK_MIN_NUM_PROC} LESS 3)
-      list(APPEND BENCHMARK_CONFIGURATIONS 2)
-    endif()
-    if(${NP} GREATER 3 AND ${BENCHMARK_MAX_NUM_PROC} GREATER 3
-       AND ${BENCHMARK_MIN_NUM_PROC} LESS 5)
-      list(APPEND BENCHMARK_CONFIGURATIONS 4)
-    endif()
-    if(${NP} GREATER 7 AND ${BENCHMARK_MAX_NUM_PROC} GREATER 7
-       AND ${BENCHMARK_MIN_NUM_PROC} LESS 9)
-      list(APPEND BENCHMARK_CONFIGURATIONS 8)
-    endif()
-    if(${NP} GREATER 15 AND ${BENCHMARK_MAX_NUM_PROC} GREATER 15
-       AND ${BENCHMARK_MIN_NUM_PROC} LESS 17)
-      list(APPEND BENCHMARK_CONFIGURATIONS 16)
-    endif()
+    set(BENCHMARK_CONFIGURATIONS "sentinel")
+    foreach(nproc 1 2 4 8 16)
+      if(${BENCHMARK_MAX_NUM_PROC} GREATER_EQUAL ${nproc}
+         AND ${BENCHMARK_MIN_NUM_PROC} LESS_EQUAL ${nproc}
+         AND ${NP} GREATER_EQUAL ${nproc})
+        list(APPEND BENCHMARK_CONFIGURATIONS ${nproc})
+      endif()
+    endforeach(nproc)
     list(REMOVE_AT BENCHMARK_CONFIGURATIONS 0)
     foreach(nproc IN LISTS BENCHMARK_CONFIGURATIONS)
       set(BENCHMARK_TEST_NAME benchmark__${BENCHMARK_NAME}__parallel_${nproc})
@@ -111,6 +95,10 @@ python_benchmark(
 python_benchmark(
   FILE p3m.py ARGUMENTS
   "--particles_per_core=10000;--volume_fraction=0.25;--prefactor=4")
+
+python_benchmark(
+  FILE lb.py ARGUMENTS
+  "--particles_per_core=125;--volume_fraction=0.03;--lb_sites_per_core=28")
 
 add_custom_target(
   benchmark_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}

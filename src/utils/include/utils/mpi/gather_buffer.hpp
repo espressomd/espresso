@@ -38,54 +38,15 @@ namespace Mpi {
  * @brief Gather buffer with different size on each node.
  *
  * Gathers buffers with different lengths from all nodes to root.
- * The buffer is assumed to be large enough to hold the data from
- * all the nodes and is owned by the caller. On the root node no
- * data is copied, and the first n_elem elements of buffer are not
- * touched. This combines a common combination of MPI_Gather and
- * MPI_{Send,Recv}.
+ * The buffer is resized to the total size. On the @p root node,
+ * the first @p n_elem elements of @p buffer are moved, if need
+ * be. On the other nodes, @p buffer is not touched.
  *
- * @param buffer On the master the target buffer that has to be
-          large enough to hold all elements and has the local
-          part in the beginning. On the slaves the local buffer.
- * @param n_elem The number of elements in the local buffer.
- * @param comm The MPI communicator.
- * @param root The rank where the data should be gathered.
- * @return On rank root, the total number of elements in the buffer,
- *         on the other ranks 0.
- */
-template <typename T>
-int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
-                  int root = 0) {
-  if (comm.rank() == root) {
-    static std::vector<int> sizes;
-    static std::vector<int> displ;
-
-    auto const total_size =
-        detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
-
-    /* Gather data */
-    gatherv(comm, buffer, 0, buffer, sizes.data(), displ.data(), root);
-
-    return total_size;
-  }
-  detail::size_and_offset(n_elem, comm, root);
-  /* Send data */
-  gatherv(comm, buffer, n_elem, static_cast<T *>(nullptr), nullptr, nullptr,
-          root);
-
-  return 0;
-}
-
-/**
- * @brief Gather buffer with different size on each node.
- *
- * Gathers buffers with different lengths from all nodes to root.
- * The buffer is resized to the total size. On the root node no
- * data is copied, and the first n_elem elements of buffer are not
- * touched. On the slaves, the buffer is not touched.
+ * This encapsulates a common combination of <tt>MPI_Gather()</tt>
+ * and <tt>MPI_{Send,Recv}()</tt>.
  *
  * @param buffer On the master the target buffer that has the local
-          part in the beginning. On the slaves the local buffer.
+ *        part in the beginning. On the slaves the local buffer.
  * @param comm The MPI communicator.
  * @param root The rank where the data should be gathered.
  */
@@ -103,6 +64,13 @@ void gather_buffer(std::vector<T, Allocator> &buffer,
 
     /* Resize the buffer */
     buffer.resize(tot_size);
+
+    /* Move the original data to its new location */
+    if (sizes[root] && displ[root]) {
+      for (int i = sizes[root] - 1; i >= 0; --i) {
+        buffer[i + displ[root]] = buffer[i];
+      }
+    }
 
     /* Gather data */
     gatherv(comm, buffer.data(), buffer.size(), buffer.data(), sizes.data(),

@@ -24,11 +24,15 @@ from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['VIRTUAL_SITES_INERTIALESS_TRACERS'])
+@utx.skipIfMissingFeatures(
+    ['VIRTUAL_SITES_INERTIALESS_TRACERS', 'LB_BOUNDARIES'])
 class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
 
     def setUp(self):
         self.LBClass = lb.LBFluidGPU
+
+    def tearDown(self):
+        VirtualSitesTracersCommon.tearDown(self)
 
 
 if __name__ == "__main__":

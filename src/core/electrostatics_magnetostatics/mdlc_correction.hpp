@@ -44,7 +44,7 @@
 #include "config.hpp"
 #include <ParticleRange.hpp>
 
-#ifdef DP3M
+#ifdef DIPOLES
 
 /** parameters for the MDLC method */
 struct DLC_struct {
@@ -66,7 +66,7 @@ struct DLC_struct {
    *  In the latter case, the cutoff will be adapted if important parameters,
    *  such as the box dimensions, change.
    */
-  int far_calculated;
+  bool far_calculated;
 
   /** Up to where particles can be found */
   double h;
@@ -77,10 +77,10 @@ struct DLC_struct {
 };
 extern DLC_struct dlc_params;
 
-int mdlc_set_params(double maxPWerror, double gap_size, double far_cut);
-int mdlc_sanity_checks();
+void mdlc_set_params(double maxPWerror, double gap_size, double far_cut);
+void mdlc_sanity_checks();
 void add_mdlc_force_corrections(const ParticleRange &particles);
 double add_mdlc_energy_corrections(const ParticleRange &particles);
-#endif // DP3M
+#endif // DIPOLES
 
 #endif

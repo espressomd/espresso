@@ -51,7 +51,7 @@ calc_bin_sizes(std::array<std::pair<T, T>, Dims> const &limits,
                std::array<size_t, Dims> const &n_bins) {
   std::array<T, Dims> tmp;
   for (size_t ind = 0; ind < Dims; ++ind) {
-    tmp[ind] = (limits[ind].second - limits[ind].first) / n_bins[ind];
+    tmp[ind] = (limits[ind].second - limits[ind].first) / T(n_bins[ind]);
   }
   return tmp;
 }

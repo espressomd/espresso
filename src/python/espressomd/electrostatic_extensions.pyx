@@ -22,133 +22,15 @@ include "myconfig.pxi"
 from . cimport actors
 from . import actors
 import numpy as np
-from .utils cimport handle_errors, check_type_or_throw_except, check_range_or_except
+from .utils import handle_errors, array_locked
+from .utils cimport check_type_or_throw_except, check_range_or_except, Vector3d, make_Vector3d, make_array_locked, make_array_locked_vector
+from libcpp.vector cimport vector
 
-IF ELECTROSTATICS and P3M:
+IF ELECTROSTATICS:
     from espressomd.electrostatics import check_neutrality
 
     cdef class ElectrostaticExtensions(actors.Actor):
         pass
-
-    cdef class ELC(ElectrostaticExtensions):
-        """
-        Electrostatics solver for systems with two periodic dimensions.
-        See :ref:`Electrostatic Layer Correction (ELC)` for more details.
-
-        Parameters
-        ----------
-        gap_size : :obj:`float`, required
-            The gap size gives the height :math:`h` of the empty region between
-            the system box and the neighboring artificial images. |es| does not
-            make sure that the gap is actually empty, this is the user's
-            responsibility. The method will run even if the condition is not
-            fulfilled, however, the error bound will not be reached. Therefore
-            you should really make sure that the gap region is empty (e.g.
-            with wall constraints).
-        maxPWerror : :obj:`float`, required
-            The maximal pairwise error sets the least upper bound (LUB) error
-            of the force between any two charges without prefactors (see the
-            papers). The algorithm tries to find parameters to meet this LUB
-            requirements or will throw an error if there are none.
-        delta_mid_top : :obj:`float`, optional
-            Dielectric contrast :math:`\\Delta_t` between the upper boundary
-            and the simulation box.
-        delta_mid_bottom : :obj:`float`, optional
-            Dielectric contrast :math:`\\Delta_b` between the lower boundary
-            and the simulation box.
-        const_pot : :obj:`bool`, optional
-            Activate a constant electric potential between the top and bottom
-            of the simulation box.
-        pot_diff : :obj:`float`, optional
-            If ``const_pot`` is enabled, this parameter controls the applied
-            voltage between the boundaries of the simulation box in the
-            *z*-direction (at :math:`z = 0` and :math:`z = L_z - h`).
-        neutralize : :obj:`bool`, optional
-            By default, *ELC* just as P3M adds a homogeneous neutralizing
-            background to the system in case of a net charge. However, unlike
-            in three dimensions, this background adds a parabolic potential
-            across the slab :cite:`ballenegger09a`. Therefore, under normal
-            circumstances, you will probably want to disable the neutralization
-            for non-neutral systems. This corresponds then to a formal
-            regularization of the forces and energies :cite:`ballenegger09a`.
-            Also, if you add neutralizing walls explicitly as constraints, you
-            have to disable the neutralization. When using a dielectric
-            contrast or full metallic walls (``delta_mid_top != 0`` or
-            ``delta_mid_bot != 0`` or ``const_pot=True``), ``neutralize`` is
-            overwritten and switched off internally. Note that the special
-            case of non-neutral systems with a *non-metallic* dielectric jump
-            (e.g. ``delta_mid_top`` or ``delta_mid_bot`` in ``]-1,1[``) is not
-            covered by the algorithm and will throw an error.
-        far_cut : :obj:`float`, optional
-            Cutoff radius, use with care, intended for testing purposes. When
-            setting the cutoff directly, the maximal pairwise error is ignored.
-        """
-
-        def validate_params(self):
-            default_params = self.default_params()
-            check_type_or_throw_except(
-                self._params["maxPWerror"], 1, float, "")
-            check_range_or_except(
-                self._params, "maxPWerror", 0, False, "inf", True)
-            check_type_or_throw_except(self._params["gap_size"], 1, float, "")
-            check_range_or_except(
-                self._params, "gap_size", 0, False, "inf", True)
-            check_type_or_throw_except(self._params["far_cut"], 1, float, "")
-            check_type_or_throw_except(
-                self._params["neutralize"], 1, type(True), "")
-
-        def valid_keys(self):
-            return ["maxPWerror", "gap_size", "far_cut", "neutralize",
-                    "delta_mid_top", "delta_mid_bot", "const_pot", "pot_diff",
-                    "check_neutrality"]
-
-        def required_keys(self):
-            return ["maxPWerror", "gap_size"]
-
-        def default_params(self):
-            return {"maxPWerror": -1,
-                    "gap_size": -1,
-                    "far_cut": -1,
-                    "delta_mid_top": 0,
-                    "delta_mid_bot": 0,
-                    "const_pot": False,
-                    "pot_diff": 0.0,
-                    "neutralize": True,
-                    "check_neutrality": True}
-
-        def _get_params_from_es_core(self):
-            params = {}
-            params.update(elc_params)
-            return params
-
-        def _set_params_in_es_core(self):
-            if coulomb.method == COULOMB_P3M_GPU:
-                raise Exception(
-                    "ELC tuning failed, ELC is not set up to work with the GPU P3M")
-
-            if self._params["const_pot"]:
-                self._params["delta_mid_top"] = -1
-                self._params["delta_mid_bot"] = -1
-
-            if ELC_set_params(
-                self._params["maxPWerror"],
-                self._params["gap_size"],
-                self._params["far_cut"],
-                self._params["neutralize"],
-                self._params["delta_mid_top"],
-                self._params["delta_mid_bot"],
-                self._params["const_pot"],
-                    self._params["pot_diff"]):
-                handle_errors(
-                    "ELC tuning failed, ELC is not set up to work with the GPU P3M")
-
-        def _activate_method(self):
-            check_neutrality(self._params)
-            self._set_params_in_es_core()
-
-        def _deactivate_method(self):
-            raise Exception(
-                "Unable to remove ELC as the state of the underlying electrostatics method will remain unclear.")
 
     cdef class ICC(ElectrostaticExtensions):
         """
@@ -180,47 +62,35 @@ IF ELECTROSTATICS and P3M:
         sigmas : (``n_icc``, ) array_like :obj:`float`, optional
             Additional surface charge density in the absence of any charge
             induction.
-        epsilons : (``n_icc``, ) array_like :obj:`float`, optional
+        epsilons : (``n_icc``, ) array_like :obj:`float`
             Dielectric constant associated to the areas.
 
         """
 
         def validate_params(self):
-            default_params = self.default_params()
-
             check_type_or_throw_except(self._params["n_icc"], 1, int, "")
-            check_range_or_except(
-                self._params, "n_icc", 1, True, "inf", True)
+
+            check_type_or_throw_except(
+                self._params["first_id"], 1, int, "")
 
             check_type_or_throw_except(
                 self._params["convergence"], 1, float, "")
-            check_range_or_except(
-                self._params, "convergence", 0, False, "inf", True)
 
             check_type_or_throw_except(
                 self._params["relaxation"], 1, float, "")
-            check_range_or_except(
-                self._params, "relaxation", 0, False, "inf", True)
 
             check_type_or_throw_except(
                 self._params["ext_field"], 3, float, "")
 
             check_type_or_throw_except(
                 self._params["max_iterations"], 1, int, "")
-            check_range_or_except(
-                self._params, "max_iterations", 0, False, "inf", True)
-
-            check_type_or_throw_except(
-                self._params["first_id"], 1, int, "")
-            check_range_or_except(
-                self._params, "first_id", 0, True, "inf", True)
 
             check_type_or_throw_except(
                 self._params["eps_out"], 1, float, "")
 
             n_icc = self._params["n_icc"]
+            assert n_icc >= 0, "ICC: invalid number of particles"
 
-            # Required list input
             self._params["normals"] = np.array(self._params["normals"])
             if self._params["normals"].size != n_icc * 3:
                 raise ValueError(
@@ -231,18 +101,14 @@ IF ELECTROSTATICS and P3M:
             check_type_or_throw_except(
                 self._params["areas"], n_icc, float, "Error in area list.")
 
-            # Not Required
             if "sigmas" in self._params.keys():
                 check_type_or_throw_except(
                     self._params["sigmas"], n_icc, float, "Error in sigma list.")
             else:
                 self._params["sigmas"] = np.zeros(n_icc)
 
-            if "epsilons" in self._params.keys():
-                check_type_or_throw_except(
-                    self._params["epsilons"], n_icc, float, "Error in epsilon list.")
-            else:
-                self._params["epsilons"] = np.zeros(n_icc)
+            check_type_or_throw_except(
+                self._params["epsilons"], n_icc, float, "Error in epsilon list.")
 
         def valid_keys(self):
             return ["n_icc", "convergence", "relaxation", "ext_field",
@@ -250,92 +116,68 @@ IF ELECTROSTATICS and P3M:
                     "areas", "sigmas", "epsilons", "check_neutrality"]
 
         def required_keys(self):
-            return ["n_icc", "normals", "areas"]
+            return ["n_icc", "normals", "areas", "epsilons"]
 
         def default_params(self):
-            return {"n_icc": 0,
-                    "convergence": 1e-3,
+            return {"convergence": 1e-3,
                     "relaxation": 0.7,
                     "ext_field": [0, 0, 0],
                     "max_iterations": 100,
                     "first_id": 0,
-                    "esp_out": 1,
-                    "normals": [],
-                    "areas": [],
-                    "sigmas": [],
-                    "epsilons": [],
+                    "eps_out": 1,
                     "check_neutrality": True}
 
         def _get_params_from_es_core(self):
             params = {}
-            params["n_icc"] = iccp3m_cfg.n_ic
-
-            # Fill Lists
-            normals = []
-            areas = []
-            sigmas = []
-            epsilons = []
-            for i in range(iccp3m_cfg.n_ic):
-                normals.append([iccp3m_cfg.normals[i][0], iccp3m_cfg.normals[
-                               i][1], iccp3m_cfg.normals[i][2]])
-                areas.append(iccp3m_cfg.areas[i])
-                epsilons.append(iccp3m_cfg.ein[i])
-                sigmas.append(iccp3m_cfg.sigma[i])
-
-            params["normals"] = normals
-            params["areas"] = areas
-            params["epsilons"] = epsilons
-            params["sigmas"] = sigmas
-
-            params["ext_field"] = [iccp3m_cfg.ext_field[0],
-                                   iccp3m_cfg.ext_field[1], iccp3m_cfg.ext_field[2]]
-            params["first_id"] = iccp3m_cfg.first_id
-            params["max_iterations"] = iccp3m_cfg.num_iteration
-            params["convergence"] = iccp3m_cfg.convergence
-            params["relaxation"] = iccp3m_cfg.relax
-            params["eps_out"] = iccp3m_cfg.eout
+            params["n_icc"] = icc_cfg.n_icc
+            params["first_id"] = icc_cfg.first_id
+            params["max_iterations"] = icc_cfg.num_iteration
+            params["convergence"] = icc_cfg.convergence
+            params["relaxation"] = icc_cfg.relax
+            params["eps_out"] = icc_cfg.eout
+            params["normals"] = make_array_locked_vector(icc_cfg.normals)
+            params["areas"] = array_locked(icc_cfg.areas)
+            params["epsilons"] = array_locked(icc_cfg.ein)
+            params["sigmas"] = array_locked(icc_cfg.sigma)
+            params["ext_field"] = make_array_locked(icc_cfg.ext_field)
 
             return params
 
         def _set_params_in_es_core(self):
-            # First set number of icc particles
-            iccp3m_cfg.n_ic = self._params["n_icc"]
-            # Allocate ICC lists
-            iccp3m_alloc_lists()
+            cdef Vector3d ext_field = make_Vector3d(self._params["ext_field"])
+            cdef vector[double] areas, e_in, sigma
+            cdef vector[Vector3d] normals
+            areas.resize(self._params["n_icc"])
+            e_in.resize(self._params["n_icc"])
+            sigma.resize(self._params["n_icc"])
+            normals.resize(self._params["n_icc"])
 
-            # Fill Lists
-            for i in range(iccp3m_cfg.n_ic):
-                iccp3m_cfg.normals[i][0] = self._params["normals"][i][0]
-                iccp3m_cfg.normals[i][1] = self._params["normals"][i][1]
-                iccp3m_cfg.normals[i][2] = self._params["normals"][i][2]
+            for i in range(self._params["n_icc"]):
+                areas[i] = self._params["areas"][i]
+                e_in[i] = self._params["epsilons"][i]
+                sigma[i] = self._params["sigmas"][i]
 
-                iccp3m_cfg.areas[i] = self._params["areas"][i]
-                iccp3m_cfg.ein[i] = self._params["epsilons"][i]
-                iccp3m_cfg.sigma[i] = self._params["sigmas"][i]
+                for j in range(3):
+                    normals[i][j] = self._params["normals"][i][j]
 
-            iccp3m_cfg.ext_field[0] = self._params["ext_field"][0]
-            iccp3m_cfg.ext_field[1] = self._params["ext_field"][1]
-            iccp3m_cfg.ext_field[2] = self._params["ext_field"][2]
-            iccp3m_cfg.first_id = self._params["first_id"]
-            iccp3m_cfg.num_iteration = self._params["max_iterations"]
-            iccp3m_cfg.convergence = self._params["convergence"]
-            iccp3m_cfg.relax = self._params["relaxation"]
-            iccp3m_cfg.eout = self._params["eps_out"]
-
-            # Broadcasts vars
-            mpi_iccp3m_init()
+            icc_set_params(self._params["n_icc"],
+                           self._params["convergence"],
+                           self._params["relaxation"],
+                           ext_field,
+                           self._params["max_iterations"],
+                           self._params["first_id"],
+                           self._params["eps_out"],
+                           areas,
+                           e_in,
+                           sigma,
+                           normals)
 
         def _activate_method(self):
             check_neutrality(self._params)
             self._set_params_in_es_core()
 
         def _deactivate_method(self):
-            iccp3m_cfg.n_ic = 0
-            # Allocate ICC lists
-            iccp3m_alloc_lists()
-
-            # Broadcasts vars
-            mpi_iccp3m_init()
+            icc_deactivate()
 
         def last_iterations(self):
             """
@@ -348,4 +190,4 @@ IF ELECTROSTATICS and P3M:
                 Number of iterations
 
             """
-            return iccp3m_cfg.citeration
+            return icc_cfg.citeration

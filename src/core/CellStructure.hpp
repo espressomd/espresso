@@ -66,7 +66,10 @@ enum DataPart : unsigned {
   DATA_PART_POSITION = 2u,   /**< Particle::r */
   DATA_PART_MOMENTUM = 8u,   /**< Particle::m */
   DATA_PART_FORCE = 16u,     /**< Particle::f */
-  DATA_PART_BONDS = 32u      /**< Particle::bonds */
+#ifdef BOND_CONSTRAINT
+  DATA_PART_RATTLE = 32u, /**< Particle::rattle */
+#endif
+  DATA_PART_BONDS = 64u /**< Particle::bonds */
 };
 } // namespace Cells
 
@@ -97,7 +100,7 @@ struct MinimalImageDistance {
   const BoxGeometry box;
 
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(get_mi_vector(p1.r.p, p2.r.p, box));
+    return Distance(box.get_mi_vector(p1.r.p, p2.r.p));
   }
 };
 
@@ -369,6 +372,12 @@ public:
    * @brief Add forces from ghost particles to real particles.
    */
   void ghosts_reduce_forces();
+#ifdef BOND_CONSTRAINT
+  /**
+   * @brief Add rattle corrections from ghost particles to real particles.
+   */
+  void ghosts_reduce_rattle_correction();
+#endif
 
 private:
   /**
@@ -459,22 +468,21 @@ private:
 
 public:
   /**
-   * @brief Set the particle decomposition to
-   *        AtomDecomposition.
+   * @brief Set the particle decomposition to AtomDecomposition.
    *
-   *        @param comm Communicator to use.
-   *        @param box Box Geometry
+   * @param comm Communicator to use.
+   * @param box Box Geometry
    */
   void set_atom_decomposition(boost::mpi::communicator const &comm,
                               BoxGeometry const &box);
 
   /**
-   * @brief Set the particle decomposition to
-   *        DomainDecomposition.
+   * @brief Set the particle decomposition to DomainDecomposition.
    *
-   *        @param comm Cartesian communicator to use.
-   *        @param box Box Geometry
-   *        @param local_geo Geometry of the local box.
+   * @param comm Cartesian communicator to use.
+   * @param range Interaction range.
+   * @param box Box Geometry
+   * @param local_geo Geometry of the local box.
    */
   void set_domain_decomposition(boost::mpi::communicator const &comm,
                                 double range, BoxGeometry const &box,

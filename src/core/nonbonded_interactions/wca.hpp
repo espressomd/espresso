@@ -47,12 +47,6 @@ inline double wca_pair_force_factor(IA_parameters const &ia_params,
   return 0.0;
 }
 
-/** Calculate WCA force */
-inline Utils::Vector3d wca_pair_force(IA_parameters const &ia_params,
-                                      Utils::Vector3d const &d, double dist) {
-  return d * wca_pair_force_factor(ia_params, dist);
-}
-
 /** Calculate WCA energy */
 inline double wca_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < ia_params.wca.cut) {

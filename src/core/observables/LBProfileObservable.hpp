@@ -25,8 +25,10 @@
 #include <utils/Vector.hpp>
 
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <stdexcept>
 
 namespace Observables {
 
@@ -44,6 +46,18 @@ public:
         sampling_offset{sampling_offset_x, sampling_offset_y,
                         sampling_offset_z},
         allow_empty_bins(allow_empty_bins) {
+    if (sampling_delta[0] <= 0.)
+      throw std::domain_error("sampling_delta_x has to be > 0");
+    if (sampling_delta[1] <= 0.)
+      throw std::domain_error("sampling_delta_y has to be > 0");
+    if (sampling_delta[2] <= 0.)
+      throw std::domain_error("sampling_delta_z has to be > 0");
+    if (sampling_offset[0] < 0.)
+      throw std::domain_error("sampling_offset_x has to be >= 0");
+    if (sampling_offset[1] < 0.)
+      throw std::domain_error("sampling_offset_y has to be >= 0");
+    if (sampling_offset[2] < 0.)
+      throw std::domain_error("sampling_offset_z has to be >= 0");
     calculate_sampling_positions();
   }
   std::array<double, 3> sampling_delta;
@@ -51,23 +65,28 @@ public:
   bool allow_empty_bins;
   std::vector<Utils::Vector3d> sampling_positions;
   void calculate_sampling_positions() {
+    auto const lim = limits();
     sampling_positions.clear();
-    if (sampling_delta[0] == 0 or sampling_delta[1] == 0 or
-        sampling_delta[2] == 0)
-      throw std::runtime_error("Parameter delta_x/y/z must not be zero!");
+    assert(sampling_delta[0] > 0. and sampling_delta[1] > 0. and
+           sampling_delta[2] > 0.);
+    assert(sampling_offset[0] >= 0. and sampling_offset[1] >= 0. and
+           sampling_offset[2] >= 0.);
     const auto n_samples_x = static_cast<size_t>(
-        std::rint((limits[0].second - limits[0].first) / sampling_delta[0]));
+        std::rint((lim[0].second - lim[0].first) / sampling_delta[0]));
     const auto n_samples_y = static_cast<size_t>(
-        std::rint((limits[1].second - limits[1].first) / sampling_delta[1]));
+        std::rint((lim[1].second - lim[1].first) / sampling_delta[1]));
     const auto n_samples_z = static_cast<size_t>(
-        std::rint((limits[2].second - limits[2].first) / sampling_delta[2]));
+        std::rint((lim[2].second - lim[2].first) / sampling_delta[2]));
     for (size_t x = 0; x < n_samples_x; ++x) {
       for (size_t y = 0; y < n_samples_y; ++y) {
         for (size_t z = 0; z < n_samples_z; ++z) {
           sampling_positions.push_back(Utils::Vector3d{
-              {limits[0].first + sampling_offset[0] + x * sampling_delta[0],
-               limits[1].first + sampling_offset[1] + y * sampling_delta[1],
-               limits[2].first + sampling_offset[2] + z * sampling_delta[2]}});
+              {lim[0].first + sampling_offset[0] +
+                   static_cast<double>(x) * sampling_delta[0],
+               lim[1].first + sampling_offset[1] +
+                   static_cast<double>(y) * sampling_delta[1],
+               lim[2].first + sampling_offset[2] +
+                   static_cast<double>(z) * sampling_delta[2]}});
         }
       }
     }

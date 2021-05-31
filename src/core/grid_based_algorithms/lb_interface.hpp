@@ -50,9 +50,6 @@ void lb_lbfluid_on_integration_start();
  */
 void lb_lbfluid_init();
 
-/** (Re-)initialize the fluid. */
-void lb_lbfluid_reinit_fluid();
-
 /** (Re-)initialize the derived parameters for the lattice Boltzmann system.
  *  The current state of the fluid is unchanged.
  */
@@ -136,7 +133,7 @@ void lb_lbfluid_set_kT(double kT);
 /**
  * @brief Perform LB parameter and boundary velocity checks.
  */
-void lb_lbfluid_sanity_checks();
+void lb_lbfluid_sanity_checks(double time_step);
 
 /**
  * @brief Set the LB density for a single node.
@@ -163,6 +160,11 @@ double lb_lbfluid_get_tau();
  * @brief Get the LB grid spacing.
  */
 double lb_lbfluid_get_agrid();
+
+/**
+ * @brief Get the global LB relaxation parameter for odd modes.
+ */
+double lb_lbfluid_get_gamma_odd();
 
 /**
  * @brief Get the global LB relaxation parameter for even modes.
@@ -259,5 +261,14 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
  */
 const Utils::Vector3d
 lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
+
+/**
+ * @brief Calculates the interpolated fluid density on the master process.
+ * @param pos Position at which the density is to be calculated.
+ * @retval interpolated fluid density.
+ */
+double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
+
+void mpi_set_lattice_switch(ActiveLB lattice_switch);
 
 #endif

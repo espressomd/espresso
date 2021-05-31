@@ -19,6 +19,7 @@
 import espressomd
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 
 
 class InteractionsAngleBondTest(ut.TestCase):
@@ -37,15 +38,15 @@ class InteractionsAngleBondTest(ut.TestCase):
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
 
-        self.system.part.add(id=0, pos=self.start_pos, type=0)
-        self.system.part.add(id=1, pos=self.start_pos + self.rel_pos, type=0)
-        self.system.part.add(id=2, pos=self.start_pos + self.rel_pos, type=0)
+        p0 = self.system.part.add(pos=self.start_pos, type=0)
+        p1 = self.system.part.add(pos=self.start_pos + self.rel_pos, type=0)
+        self.system.part.add(pos=self.start_pos + self.rel_pos, type=0)
 
         # Add a pair bond to make sure that doesn't cause trouble
         harmonic_bond = espressomd.interactions.HarmonicBond(k=0, r_0=0)
         self.system.bonded_inter.add(harmonic_bond)
         self.harmonic_bond = harmonic_bond
-        self.system.part[1].add_bond((harmonic_bond, 0))
+        p1.add_bond((harmonic_bond, p0))
 
     def tearDown(self):
         self.system.part.clear()
@@ -83,9 +84,7 @@ class InteractionsAngleBondTest(ut.TestCase):
 
     def run_test(self, bond_instance, force_func, energy_func, phi0):
         self.system.bonded_inter.add(bond_instance)
-        p0 = self.system.part[0]
-        p1 = self.system.part[1]
-        p2 = self.system.part[2]
+        p0, p1, p2 = self.system.part[:]
         # Add bond angle
         p0.add_bond((bond_instance, 1, 2))
         # Add an extra (strength 0) pair bond, which should change nothing
@@ -123,7 +122,7 @@ class InteractionsAngleBondTest(ut.TestCase):
 
             # Total force =0?
             np.testing.assert_allclose(
-                np.sum(np.copy(self.system.part[0:3].f), 0), [0, 0, 0], atol=1E-12)
+                np.sum(np.copy(self.system.part[:].f), 0), [0, 0, 0], atol=1E-12)
 
             # No pressure (isotropic compression preserves angles)
             self.assertAlmostEqual(
@@ -149,7 +148,6 @@ class InteractionsAngleBondTest(ut.TestCase):
         # Remove bonds
         p0.delete_bond((bond_instance, 1, 2))
         p0.delete_bond((self.harmonic_bond, 1))
-        p0.delete_bond((self.harmonic_bond, 2))
 
     def test_angle_harmonic(self):
         ah_bend = 1.
@@ -190,6 +188,7 @@ class InteractionsAngleBondTest(ut.TestCase):
                           phi=phi, bend=acs_bend, phi0=acs_phi0),
                       acs_phi0)
 
+    @utx.skipIfMissingFeatures(["TABULATED"])
     def test_angle_tabulated(self):
         """Check that we can reproduce the three other potentials."""
         at_bend = 1

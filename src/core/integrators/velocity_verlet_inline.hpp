@@ -35,12 +35,13 @@
  *  v(t) + 0.5 \Delta t f(t)/m \f] <br> \f[ p(t+\Delta t) = p(t) + \Delta t
  *  v(t+0.5 \Delta t) \f]
  */
-inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
+inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles,
+                                              double time_step) {
 
   auto const skin2 = Utils::sqr(0.5 * skin);
   for (auto &p : particles) {
 #ifdef ROTATION
-    propagate_omega_quat_particle(p);
+    propagate_omega_quat_particle(p, time_step);
 #endif
 
     // Don't propagate translational degrees of freedom of vs
@@ -66,8 +67,8 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
 /** Final integration step of the Velocity Verlet integrator
  *  \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f]
  */
-inline void
-velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
+inline void velocity_verlet_propagate_vel_final(const ParticleRange &particles,
+                                                double time_step) {
 
   for (auto &p : particles) {
     // Virtual sites are not propagated during integration
@@ -83,15 +84,17 @@ velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
   }
 }
 
-inline void velocity_verlet_step_1(const ParticleRange &particles) {
-  velocity_verlet_propagate_vel_pos(particles);
-  sim_time += time_step;
+inline void velocity_verlet_step_1(const ParticleRange &particles,
+                                   double time_step) {
+  velocity_verlet_propagate_vel_pos(particles, time_step);
+  increment_sim_time(time_step);
 }
 
-inline void velocity_verlet_step_2(const ParticleRange &particles) {
-  velocity_verlet_propagate_vel_final(particles);
+inline void velocity_verlet_step_2(const ParticleRange &particles,
+                                   double time_step) {
+  velocity_verlet_propagate_vel_final(particles, time_step);
 #ifdef ROTATION
-  convert_torques_propagate_omega(particles);
+  convert_torques_propagate_omega(particles, time_step);
 #endif
 }
 

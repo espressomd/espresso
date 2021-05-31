@@ -49,8 +49,7 @@ class Integrate(ut.TestCase):
         # check angular velocity increases linearly
         for j in range(1, 200):
             system.integrator.run(1)
-            for i in range(3):
-                p = system.part[i]
+            for i, p in enumerate(system.part):
                 ref_omega = [0, 0, 0]
                 ref_omega[i] = j * time_step * p.torque_lab[i] / p.rinertia[i]
                 val_omega = np.copy(p.omega_lab)
@@ -94,8 +93,7 @@ class Integrate(ut.TestCase):
         # check quaternion follows a sine (the quaternion period is 4 pi)
         for j in range(1, 4 * n_steps + 1):
             system.integrator.run(1)
-            for i in range(3):
-                p = system.part[i]
+            for i, p in enumerate(system.part):
                 ref_omega = [0, 0, 0]
                 ref_omega[i] = 1
                 val_omega = np.copy(p.omega_lab)

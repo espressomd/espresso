@@ -28,18 +28,15 @@
 #include "DipolarBarnesHut_cuda.cuh"
 
 #include "cuda_init.hpp"
-#include "cuda_utils.hpp"
+#include "cuda_utils.cuh"
+#include "errorhandling.hpp"
 
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>
 
 #include <cuda.h>
 
-typedef float dds_float;
-
 #define IND (blockDim.x * blockIdx.x + threadIdx.x)
-
-using namespace std;
 
 // Method performance/accuracy parameters
 __constant__ float epssqd[1], itolsqd[1];
@@ -56,7 +53,7 @@ __device__ __constant__ volatile BHData bhpara[1];
 // The "half-convolution" multi-thread reduction.
 // The thread with a lower index will operate longer and
 // final result (here: the sum) is flowing down towards zero thread.
-__device__ void dds_sumReduction_BH(dds_float *input, dds_float *sum) {
+__device__ void dds_sumReduction_BH(float *input, float *sum) {
   auto tid = static_cast<int>(threadIdx.x);
   for (auto i = static_cast<int>(blockDim.x); i > 1; i /= 2) {
     __syncthreads();
@@ -689,7 +686,7 @@ __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
 /******************************************************************************/
 
 __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
-    dds_float pf, float *force, float *torque) {
+    float pf, float *force, float *torque) {
   int i, j, k, l, n, depth, base, sbase, diff, t;
   float tmp;
   // dr is a distance between particles.
@@ -901,7 +898,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
 /******************************************************************************/
 
 __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
-    dds_float pf, dds_float *energySum) {
+    float pf, float *energySum) {
   // NOTE: the algorithm of this kernel is almost identical to
   // forceCalculationKernel. See comments there.
 
@@ -911,8 +908,8 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
   __shared__ int pos[MAXDEPTH * THREADS5 / WARPSIZE],
       node[MAXDEPTH * THREADS5 / WARPSIZE];
   __shared__ float dq[MAXDEPTH * THREADS5 / WARPSIZE];
-  dds_float sum = 0.0;
-  extern __shared__ dds_float res[];
+  float sum = 0.0;
+  extern __shared__ float res[];
 
   float b, d1, dd5;
 
@@ -1119,7 +1116,7 @@ void sortBH(int blocks) {
 }
 
 // Force calculation.
-int forceBH(BHData *bh_data, dds_float k, float *f, float *torque) {
+int forceBH(BHData *bh_data, float k, float *f, float *torque) {
   int error_code = 0;
   dim3 grid(1, 1, 1);
   dim3 block(1, 1, 1);
@@ -1136,7 +1133,7 @@ int forceBH(BHData *bh_data, dds_float k, float *f, float *torque) {
 }
 
 // Energy calculation.
-int energyBH(BHData *bh_data, dds_float k, float *E) {
+int energyBH(BHData *bh_data, float k, float *E) {
   int error_code = 0;
   dim3 grid(1, 1, 1);
   dim3 block(1, 1, 1);
@@ -1144,18 +1141,18 @@ int energyBH(BHData *bh_data, dds_float k, float *E) {
   grid.x = bh_data->blocks * FACTOR5;
   block.x = THREADS5;
 
-  dds_float *energySum;
-  cuda_safe_mem(cudaMalloc(&energySum, (int)(sizeof(dds_float) * grid.x)));
+  float *energySum;
+  cuda_safe_mem(cudaMalloc(&energySum, (int)(sizeof(float) * grid.x)));
   // cleanup the memory for the energy sum
-  cuda_safe_mem(cudaMemset(energySum, 0, (int)(sizeof(dds_float) * grid.x)));
+  cuda_safe_mem(cudaMemset(energySum, 0, (int)(sizeof(float) * grid.x)));
 
   KERNELCALL_shared(energyCalculationKernel, grid, block,
-                    block.x * sizeof(dds_float), k, energySum);
+                    block.x * sizeof(float), k, energySum);
   cuda_safe_mem(cudaDeviceSynchronize());
 
   // Sum the results of all blocks
   // One energy part per block in the prev kernel
-  thrust::device_ptr<dds_float> t(energySum);
+  thrust::device_ptr<float> t(energySum);
   float x = thrust::reduce(t, t + grid.x);
   cuda_safe_mem(cudaMemcpy(E, &x, sizeof(float), cudaMemcpyHostToDevice));
 
@@ -1181,11 +1178,8 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 
   bh_data->nbodies = nbodies;
 
-  int devID = -1;
-  EspressoGpuDevice dev;
-
-  devID = cuda_get_device();
-  cuda_get_device_props(devID, dev);
+  auto const devID = cuda_get_device();
+  EspressoGpuDevice const dev = cuda_get_device_props(devID);
 
   bh_data->blocks = dev.n_cores;
   // Each node corresponds to a split of the cubic box in 3D space to equal

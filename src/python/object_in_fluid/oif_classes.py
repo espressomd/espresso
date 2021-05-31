@@ -1092,7 +1092,7 @@ class OifCell:
             i = 0
             for line in nodes_coord:  # extracts coordinates from the string line
                 line = line.split()
-                new_position = np.array(line).astype(np.float) + center
+                new_position = np.array(line).astype(float) + center
                 self.mesh.points[i].set_pos(new_position)
                 i += 1
 
@@ -1376,7 +1376,6 @@ class OifCell:
                 self.append_point_data_to_vtk(
                     file_name=vtk_file, data_name="total_f_metric",
                     data=elastic_forces_norms_list, first_append=first)
-                first = False
 
         # output raw data
         if raw_data_file is not None:

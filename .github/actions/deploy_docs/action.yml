@@ -1,0 +1,49 @@
+name: 'Deploy documentation'
+description: 'Deploy ESPResSo documentation'
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        # checkout github pages
+        cd "${HOME}"
+        git clone --quiet git@github.com:espressomd/espressomd.github.io.git
+        cd espressomd.github.io
+        # check if already up-to-date (i.e. the commit SHA of the
+        # generated docs is identical to the current commit SHA)
+        LAST_COMMIT=$(git log -1 --pretty=format:"%s" remotes/origin/main)
+        NEXT_COMMIT="Documentation for ${GITHUB_SHA}"
+        if [ "${NEXT_COMMIT}" = "${LAST_COMMIT}" ]; then
+          echo "Documentation already up-to-date.";
+          exit 0;
+        fi
+        # download artifacts
+        curl https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/-/jobs/artifacts/python/download?job=run_tutorials --fail -L -o tutorials.zip
+        curl https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/-/jobs/artifacts/python/download?job=run_doxygen   --fail -L -o doxygen.zip
+        curl https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/-/jobs/artifacts/python/download?job=check_sphinx  --fail -L -o sphinx.zip
+        if grep -F '<!DOCTYPE html>' *.zip; then
+          echo "The artifacts could not be downloaded.";
+          exit 1;
+        fi
+        unzip -q '*.zip'
+        # create a fresh main branch containing the docs of old releases
+        git config --global user.email "noreply@icp.uni-stuttgart.de"
+        git config --global user.name "espresso-ci"
+        git checkout -b new_main remotes/origin/releases
+        # generate the landing page by merging the branch containing the
+        # HTML theme and Markdown files, then convert them to HTML files
+        git merge --quiet --commit --no-edit --allow-unrelated-histories remotes/origin/landing_page
+        make tutorials.md
+        for filename in *.md; do
+          make "${filename%.md}.html";
+        done
+        git add *.html tutorials.md
+        git commit --quiet  -m "Generate landing page"
+        # add devel documentation
+        rsync -a --delete --exclude='*.md5' --exclude='*.map' "build/doc/doxygen/html/" dox/
+        rsync -a --delete --exclude='.buildinfo' "build/doc/sphinx/html/" doc/
+        rsync -a --delete "build/doc/tutorials/html/" tutorials/
+        git add doc dox tutorials
+        git commit --quiet -m "${NEXT_COMMIT}"
+        # deploy
+        git push -f origin new_main:main
+      shell: bash

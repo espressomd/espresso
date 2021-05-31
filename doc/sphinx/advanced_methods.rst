@@ -1283,7 +1283,7 @@ Initialization
     system.time_step = 0.0
     system.cell_system.skin = 0.4
     ek = espressomd.electrokinetics.Electrokinetics(agrid=1.0, lb_density=1.0,
-        viscosity=1.0, friction=1.0, T=1.0, prefactor=1.0,
+        viscosity=1.0, ext_force_density = [1,0,0], friction=1.0, T=1.0, prefactor=1.0,
         stencil='linkcentered', advection=True, fluid_coupling='friction')
     system.actors.add(ek)
 
@@ -1303,7 +1303,8 @@ that your computer contains a CUDA capable GPU which is sufficiently
 modern.
 
 To set up a proper LB fluid using this command one has to specify at
-least the following options: ``agrid``, ``lb_density``, ``viscosity``, ``friction``, ``T``, and ``prefactor``. The other options can be
+least the following options: ``agrid``, ``lb_density``, ``viscosity``, 
+``friction``, ``T``, and ``prefactor``. The other options can be
 used to modify the behavior of the LB fluid. Note that the command does
 not allow the user to set the time step parameter as is the case for the
 lattice-Boltzmann command, this parameter is instead taken directly from the value set for
@@ -1382,7 +1383,7 @@ Boundaries
 ^^^^^^^^^^
 ::
 
-    ek_boundary = espressomd.electrokinetics.EKBoundary(charge_density=1.0, shape=my_shape)
+    ek_boundary = espressomd.ekboundaries.EKBoundary(charge_density=1.0, shape=my_shape)
     system.ekboundaries.add(ek_boundary)
 
 .. note:: Feature ``EK_BOUNDARIES`` required
@@ -1429,10 +1430,10 @@ Fields
 
 ::
 
-    ek.print_vtk_boundary(path)
-    ek.print_vtk_density(path)
-    ek.print_vtk_velocity(path)
-    ek.print_vtk_potential(path)
+    ek.write_vtk_boundary(path)
+    ek.write_vtk_density(path)
+    ek.write_vtk_velocity(path)
+    ek.write_vtk_potential(path)
 
 A property of the fluid field can be exported into a
 file in one go. Currently supported
@@ -1444,8 +1445,8 @@ visualization software such as ParaView [5]_ and Mayavi2 [6]_.
 
 ::
 
-    species.print_vtk_flux(path)
-    species.print_vtk_density(path)
+    species.write_vtk_flux(path)
+    species.write_vtk_density(path)
 
 These commands are similar to the above. They enable the
 export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
@@ -1456,15 +1457,14 @@ number density and flux of species ``species``, respectively.
 Local Quantities
 ^^^^^^^^^^^^^^^^
 
+Local quantities like velocity or fluid density for single nodes can be accessed in the same way 
+as for an LB fluid, see :ref:`Lattice-Boltzmann`. The only EK-specific quantity is the potential.
+
 ::
 
-    ek[0, 0, 0].velocity
     ek[0, 0, 0].potential
-    ek[0, 0, 0].pressure
-
-A single node can be addressed using three integer values
-which run from 0 to ``dim_x/agrid``, ``dim_y/agrid``, and ``dim_z/agrid``, respectively. The
-velocity, electrostatic potential and the pressure of a LB fluid node can be obtained this way.
+    ek[0, 0, 0].velocity
+    ek[0, 0, 0].boundary
 
 The local ``density`` and ``flux`` of a species can be obtained in the same fashion:
 
@@ -1486,7 +1486,7 @@ Particle polarizability with thermalized cold Drude oscillators
 
 .. note::
 
-    Requires features ``THOLE``, ``P3M``, ``LANGEVIN_PER_PARTICLE``.
+    Requires features ``THOLE``, ``P3M``, ``THERMOSTAT_PER_PARTICLE``.
 
 .. note::
 
@@ -1498,7 +1498,7 @@ charge) to a particle (Drude core) that mimics an electron cloud which can be
 elongated to create a dynamically inducible dipole. The energetic minimum of
 the Drude charge can be obtained self-consistently, which requires several
 iterations of the system's electrostatics and is usually considered
-computational expensive. However, with thermalized cold Drude oscillators, the
+computationally expensive. However, with thermalized cold Drude oscillators, the
 distance between Drude charge and core is coupled to a thermostat so that it
 fluctuates around the SCF solution. This thermostat is kept at a low
 temperature compared to the global temperature to minimize the heat flow into
@@ -1515,8 +1515,8 @@ In |es|, the basic ingredients to simulate such a system are split into three bo
 
 The system-wide thermostat has to be applied to the centre of mass and not to
 the core particle directly. Therefore, the particles have to be excluded from
-global thermostatting.  With ``LANGEVIN_PER_PARTICLE`` enabled, we set the
-temperature and friction coefficient of the Drude complex to zero, which allows
+global thermostatting.  With ``THERMOSTAT_PER_PARTICLE`` enabled, we set the
+friction coefficient of the Drude complex to zero, which allows
 to still use a global Langevin thermostat for non-polarizable particles.
 
 As the Drude charge should not alter the *charge* or *mass* of the Drude
@@ -1693,9 +1693,7 @@ In practice, this constant is often used with the dimension of :math:`(c^{\ominu
 A simulation in
 the reaction ensemble consists of two types of moves: the *reaction move*
 and the *configuration move*. The configuration move changes the configuration
-of the system. It is not performed by the Reaction Ensemble module, and can be
-performed by a suitable molecular dynamics or a Monte Carlo scheme. The
-``reactant_ensemble`` command takes care only of the reaction moves.
+of the system.
 In the *forward* reaction, the appropriate number of reactants (given by
 :math:`\nu_i`) is removed from the system, and the concomitant number of
 products is inserted into the system. In the *backward* reaction,
@@ -1894,7 +1892,7 @@ The call of ``add_reaction`` define the insertion :math:`\mathrm{\emptyset \to t
 Multiple reactions for the insertions of different types can be added to the same ``WidomInsertion`` instance.
 Measuring the excess chemical potential using the insertion method is done via calling ``widom.measure_excess_chemical_potential(0)``.
 If another particle insertion is defined, then the excess chemical potential for this insertion can be measured by calling ``widom.measure_excess_chemical_potential(1)``.
-Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NPT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
+Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NpT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
 
 The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles like e.g.:
 

@@ -75,14 +75,12 @@ void calc_long_range_force(const ParticleRange &particles);
 
 double calc_energy_long_range(const ParticleRange &particles);
 
-int iccp3m_sanity_check();
-
-int elc_sanity_check();
+int icc_sanity_check();
 
 void bcast_coulomb_params();
 
 /** @brief Set the electrostatics prefactor */
-int set_prefactor(double prefactor);
+void set_prefactor(double prefactor);
 
 /** @brief Deactivates the current %Coulomb method. */
 void deactivate_method();

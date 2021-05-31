@@ -65,7 +65,7 @@ template <class To> struct conversion_visitor : boost::static_visitor<To> {
   template <class From>
   std::enable_if_t<allow_conversion<To, From>::value, To>
   operator()(const From &value) const {
-    return value;
+    return To(value);
   }
 
   template <class From>
@@ -93,7 +93,7 @@ struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
     return v;
   }
 
-  /* We try do unpack variant vectors and check if they
+  /* We try to unpack variant vectors and check if they
    * are convertible element by element. */
   auto operator()(std::vector<Variant> const &vv) const {
     if (N != vv.size()) {
@@ -160,6 +160,26 @@ template <> struct get_value_helper<std::vector<double>, void> {
   }
 };
 
+template <typename K, typename T>
+struct GetMapOrEmpty : boost::static_visitor<std::unordered_map<K, T>> {
+  /* Catch all case -> wrong type. */
+  template <typename U> std::unordered_map<K, T> operator()(U const &) const {
+    throw boost::bad_get{};
+  }
+
+  /* Standard case, correct type */
+  std::unordered_map<K, T> operator()(std::unordered_map<K, T> const &v) const {
+    return v;
+  }
+};
+
+/* std::unordered_map cases */
+template <> struct get_value_helper<std::unordered_map<int, Variant>, void> {
+  std::unordered_map<int, Variant> operator()(Variant const &v) const {
+    return boost::apply_visitor(GetMapOrEmpty<int, Variant>{}, v);
+  }
+};
+
 /* This allows direct retrieval of a shared_ptr to the object from
    an ObjectId variant. If the type is a derived type, the type is
    also checked.
@@ -211,6 +231,33 @@ template <typename T> T get_value(Variant const &v) {
     throw Exception("Provided argument of type " + detail::type_label(v) +
                     " is not convertible to " + Utils::demangle<T>());
   }
+}
+
+template <typename K, typename V>
+std::unordered_map<K, V> get_map(std::unordered_map<K, Variant> const &v) {
+  std::unordered_map<K, V> ret;
+  auto it = v.begin();
+  try {
+    for (; it != v.end(); ++it) {
+      ret.insert({it->first, detail::get_value_helper<V>{}(it->second)});
+    }
+  } catch (const boost::bad_get &) {
+    throw Exception("Provided map value of type " +
+                    detail::type_label(it->second) + " is not convertible to " +
+                    Utils::demangle<V>() +
+                    " (raised during the creation of a " +
+                    Utils::demangle<std::unordered_map<K, V>>() + ")");
+  }
+  return ret;
+}
+
+template <typename K, typename V>
+std::unordered_map<K, Variant> make_map(std::unordered_map<K, V> const &v) {
+  std::unordered_map<K, Variant> ret;
+  for (auto const &it : v) {
+    ret.insert({it.first, Variant(it.second)});
+  }
+  return ret;
 }
 
 /**

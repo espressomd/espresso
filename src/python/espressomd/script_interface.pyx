@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
-from .utils import to_char_pointer, to_str
-from .utils cimport Vector3d, make_array_locked, handle_errors
+from .utils import to_char_pointer, to_str, handle_errors
+from .utils cimport Vector3d, make_array_locked
 
 from libcpp.memory cimport make_shared
 
@@ -44,23 +44,21 @@ cdef class PScriptInterface:
 
     Parameters
     ----------
-    name : :obj:`str`
-        Name of the core class to instantiate (method 1).
-    \*\*kwargs
-        Parameters for the core class constructor (method 1).
     sip : :class:`PObjectRef`
-        Object id of an existing core object (method 2).
-
+        Object id of an existing core object (method 1).
+    name : :obj:`str`
+        Name of the core class to instantiate (method 2).
+    \*\*kwargs
+        Parameters for the core class constructor (method 2).
     policy : :obj:`str`, \{'GLOBAL', 'LOCAL'\}
-        Creation policy.
+        Creation policy. The managed object exists either on all MPI nodes
+        with 'GLOBAL' (default), or only on the head node with 'LOCAL'.
 
     Attributes
     ----------
 
     sip: :class:`PObjectRef`
         Pointer to a ScriptInterface object in the core.
-    policy_: :obj:`str`
-        Creation policy.
 
     """
 
@@ -184,6 +182,7 @@ cdef Variant python_object_to_variant(value):
     """Convert Python objects to C++ Variant objects."""
 
     cdef vector[Variant] vec
+    cdef unordered_map[int, Variant] vmap
     cdef PObjectRef oref
 
     if value is None:
@@ -195,6 +194,13 @@ cdef Variant python_object_to_variant(value):
     if isinstance(value, PScriptInterface):
         oref = value.get_sip()
         return make_variant(oref.sip)
+    elif isinstance(value, dict):
+        for k, v in value.items():
+            if not isinstance(k, int):
+                raise TypeError(
+                    f"No conversion from type dict_item([({type(k).__name__}, {type(v).__name__})]) to Variant[std::unordered_map<int, Variant>]")
+            vmap[k] = python_object_to_variant(v)
+        return make_variant[unordered_map[int, Variant]](vmap)
     elif hasattr(value, '__iter__') and not(type(value) == str):
         for e in value:
             vec.push_back(python_object_to_variant(e))
@@ -208,12 +214,14 @@ cdef Variant python_object_to_variant(value):
     elif np.issubdtype(np.dtype(type(value)), np.floating):
         return make_variant[double](value)
     else:
-        raise TypeError("Unknown type for conversion to Variant")
+        raise TypeError(
+            f"No conversion from type {type(value).__name__} to Variant")
 
 cdef variant_to_python_object(const Variant & value) except +:
     """Convert C++ Variant objects to Python objects."""
 
     cdef vector[Variant] vec
+    cdef unordered_map[int, Variant] vmap
     cdef shared_ptr[ObjectHandle] ptr
     if is_none(value):
         return None
@@ -261,6 +269,14 @@ cdef variant_to_python_object(const Variant & value) except +:
 
         for i in vec:
             res.append(variant_to_python_object(i))
+
+        return res
+    if is_type[unordered_map[int, Variant]](value):
+        vmap = get_value[unordered_map[int, Variant]](value)
+        res = {}
+
+        for kv in vmap:
+            res[kv.first] = variant_to_python_object(kv.second)
 
         return res
 
@@ -345,21 +361,6 @@ class ScriptObjectRegistry(ScriptInterfaceHelper):
     def __len__(self):
         return self.call_method("size")
 
-    def __reduce__(self):
-        res = []
-        for item in self.__iter__():
-            res.append(item)
-
-        return (_unpickle_script_object_registry,
-                (self._so_name, self.get_params(), res))
-
-
-def _unpickle_script_object_registry(so_name, params, items):
-    so = _python_class_by_so_name[so_name](**params)
-    for item in items:
-        so.add(item)
-    return so
-
 
 # Map from script object names to their corresponding python classes
 _python_class_by_so_name = {}
@@ -383,7 +384,7 @@ def script_interface_register(c):
 cdef void init(MpiCallbacks & cb):
     cdef Factory[ObjectHandle] f
 
-    initialize( & f)
+    initialize(& f)
 
     global _om
     _om = make_shared[ContextManager](cb, f)

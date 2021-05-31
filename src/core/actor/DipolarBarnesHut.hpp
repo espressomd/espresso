@@ -27,18 +27,16 @@
 #include "DipolarBarnesHut_cuda.cuh"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+#include "cuda_utils.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 
 #include <memory>
 
-// This needs to be done in the .cu file too
-typedef float dds_float;
-
 class DipolarBarnesHut : public Actor {
 public:
   DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq) {
-    k = static_cast<float>(dipole.prefactor);
+    m_k = static_cast<float>(dipole.prefactor);
     m_epssq = epssq;
     m_itolsq = itolsq;
     setBHPrecision(&m_epssq, &m_itolsq);
@@ -53,7 +51,12 @@ public:
   };
 
   void computeForces(SystemInterface &s) override {
-    allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
+    try {
+      allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
+    } catch (cuda_runtime_error const &err) {
+      runtimeErrorMsg() << "DipolarBarnesHut: " << err.what();
+      return;
+    }
 
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
@@ -61,12 +64,17 @@ public:
     buildTreeBH(m_bh_data.blocks);
     summarizeBH(m_bh_data.blocks);
     sortBH(m_bh_data.blocks);
-    if (forceBH(&m_bh_data, k, s.fGpuBegin(), s.torqueGpuBegin())) {
+    if (forceBH(&m_bh_data, m_k, s.fGpuBegin(), s.torqueGpuBegin())) {
       runtimeErrorMsg() << "kernels encountered a functional error";
     }
   };
   void computeEnergy(SystemInterface &s) override {
-    allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
+    try {
+      allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
+    } catch (cuda_runtime_error const &err) {
+      runtimeErrorMsg() << "DipolarBarnesHut: " << err.what();
+      return;
+    }
 
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
@@ -74,13 +82,13 @@ public:
     buildTreeBH(m_bh_data.blocks);
     summarizeBH(m_bh_data.blocks);
     sortBH(m_bh_data.blocks);
-    if (energyBH(&m_bh_data, k, (&(((CUDA_energy *)s.eGpu())->dipolar)))) {
+    if (energyBH(&m_bh_data, m_k, (&(((CUDA_energy *)s.eGpu())->dipolar)))) {
       runtimeErrorMsg() << "kernels encountered a functional error";
     }
   };
 
-protected:
-  float k;
+private:
+  float m_k;
   float m_epssq;
   float m_itolsq;
   BHData m_bh_data = {0,       0,       0,       nullptr, nullptr,

@@ -18,33 +18,14 @@
 #
 
 include "myconfig.pxi"
-from .electrostatics cimport *
 from libcpp.vector cimport vector
-from libcpp cimport bool
 from .utils cimport Vector3d
 
-IF ELECTROSTATICS and P3M:
-
-    cdef extern from "electrostatics_magnetostatics/elc.hpp":
-        ctypedef struct ELC_struct:
-            double maxPWerror
-            double gap_size
-            double far_cut
-            bool neutralize
-            double delta_mid_top,
-            double delta_mid_bot,
-            bool const_pot,
-            double pot_diff
-
-        int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                           bool neutralize, double delta_mid_top, double delta_mid_bot, bool const_pot, double pot_diff)
-
-        # links intern C-struct with python object
-        ELC_struct elc_params
+IF ELECTROSTATICS:
 
     cdef extern from "electrostatics_magnetostatics/icc.hpp":
-        ctypedef struct iccp3m_struct:
-            int n_ic
+        ctypedef struct icc_struct:
+            int n_icc
             int num_iteration
             double eout
             vector[double] areas
@@ -58,7 +39,14 @@ IF ELECTROSTATICS and P3M:
             int first_id
 
         # links intern C-struct with python object
-        iccp3m_struct iccp3m_cfg
+        cdef extern icc_struct icc_cfg
 
-        void iccp3m_alloc_lists()
-        int mpi_iccp3m_init()
+        void icc_set_params(int n_icc, double convergence, double relaxation,
+                            Vector3d & ext_field, int max_iterations,
+                            int first_id, double eps_out,
+                            vector[double] & areas,
+                            vector[double] & e_in,
+                            vector[double] & sigma,
+                            vector[Vector3d] & normals) except +
+
+        void icc_deactivate()

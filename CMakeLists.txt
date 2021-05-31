@@ -33,7 +33,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # C++ standard
 enable_language(CXX)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard to be used")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -41,7 +41,6 @@ include(FeatureSummary)
 include(GNUInstallDirs)
 project(ESPResSo)
 include(option_enum)
-include(option_if_available)
 if(POLICY CMP0074)
   # make find_package() use <PackageName>_ROOT variables
   cmake_policy(SET CMP0074 NEW)
@@ -69,12 +68,12 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # ##############################################################################
 
 option(WITH_PYTHON "Build with Python bindings" ON)
-option_if_available(WITH_GSL "Build with GSL support" ON)
+option(WITH_GSL "Build with GSL support" OFF)
 option(WITH_CUDA "Build with GPU support" OFF)
-option_if_available(WITH_HDF5 "Build with HDF5 support" ON)
+option(WITH_HDF5 "Build with HDF5 support" OFF)
 option(WITH_TESTS "Enable tests" ON)
-option_if_available(WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
-option_if_available(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" ON)
+option(WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
+option(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" OFF)
 option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
@@ -192,7 +191,7 @@ if(WITH_HDF5)
   # who are not familiar with the way hdf5 is distributed in Linux package
   # repositories (libhdf5-dev is the serial version).
   set(HDF5_PREFER_PARALLEL 1)
-  find_package(HDF5 "1.8" COMPONENTS C)
+  find_package(HDF5 "1.8" REQUIRED COMPONENTS C)
   if(HDF5_FOUND)
     if(HDF5_IS_PARALLEL)
       set(H5MD 1)
@@ -200,17 +199,8 @@ if(WITH_HDF5)
     else()
       unset(H5MD)
       set(HDF5_FOUND FALSE)
-      if(NOT WITH_HDF5_IS_DEFAULT_VALUE)
-        message(
-          FATAL_ERROR
-            "Optional dependency HDF5 explicitly requested, but parallel version not found."
-        )
-      endif()
+      message(FATAL_ERROR "HDF5 parallel version not found.")
     endif(HDF5_IS_PARALLEL)
-  elseif(NOT WITH_HDF5_IS_DEFAULT_VALUE)
-    message(
-      FATAL_ERROR
-        "Optional dependency HDF5 explicitly requested, but not found.")
   endif(HDF5_FOUND)
 endif(WITH_HDF5)
 
@@ -231,68 +221,43 @@ if(WITH_HDF5 AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
 endif()
 
 if(WITH_SCAFACOS)
-  find_package(PkgConfig)
-  pkg_check_modules(SCAFACOS scafacos)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(SCAFACOS scafacos REQUIRED)
   if(SCAFACOS_FOUND)
     set(SCAFACOS 1)
-  elseif(NOT WITH_SCAFACOS_IS_DEFAULT_VALUE)
-    message(
-      FATAL_ERROR
-        "Optional dependency ScaFaCoS explicitly requested, but not found.")
   endif(SCAFACOS_FOUND)
 endif(WITH_SCAFACOS)
 
 if(WITH_GSL)
+  find_package(GSL REQUIRED)
+else()
   find_package(GSL)
-  if(GSL_FOUND)
-    set(GSL 1)
-  elseif(NOT WITH_GSL_IS_DEFAULT_VALUE)
-    message(
-      FATAL_ERROR "Optional dependency GSL explicitly requested, but not found."
-    )
-  endif(GSL_FOUND)
 endif(WITH_GSL)
 
-find_package(BLAS)
-if(BLAS_FOUND)
-  set(BLAS 1)
-endif()
-find_package(LAPACK)
-if(LAPACK_FOUND)
-  set(LAPACK 1)
-endif()
+if(GSL_FOUND)
+  set(GSL 1)
+endif(GSL_FOUND)
 
 if(WITH_STOKESIAN_DYNAMICS)
-  if(BLAS AND LAPACK)
-    set(STOKESIAN_DYNAMICS 1)
-  endif()
-  if(NOT STOKESIAN_DYNAMICS AND NOT WITH_STOKESIAN_DYNAMICS_IS_DEFAULT_VALUE)
-    message(
-      FATAL_ERROR
-        "Optional feature Stokesian Dynamics explicitly requested, but dependencies not found."
-    )
-  endif()
-endif(WITH_STOKESIAN_DYNAMICS)
-
-if(STOKESIAN_DYNAMICS)
   set(CMAKE_INSTALL_LIBDIR
       "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
   include(FetchContent)
   FetchContent_Declare(
     stokesian_dynamics
     GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
-    GIT_TAG 860ceac208175)
+    GIT_TAG c14e57655e929)
   FetchContent_GetProperties(stokesian_dynamics)
+  set(STOKESIAN_DYNAMICS 1)
   if(NOT stokesian_dynamics_POPULATED)
     FetchContent_Populate(stokesian_dynamics)
     add_subdirectory(${stokesian_dynamics_SOURCE_DIR}
                      ${stokesian_dynamics_BINARY_DIR})
   endif()
-endif(STOKESIAN_DYNAMICS)
+endif(WITH_STOKESIAN_DYNAMICS)
 
 if(WITH_VALGRIND_INSTRUMENTATION)
-  find_package(PkgConfig)
-  pkg_check_modules(VALGRIND valgrind)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(VALGRIND valgrind REQUIRED)
   if(VALGRIND_FOUND)
     set(VALGRIND_INSTRUMENTATION 1)
     message(STATUS ${VALGRIND_INCLUDE_DIRS})
@@ -306,32 +271,9 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 
 find_package(MPI 3.0 REQUIRED)
 
-# CMake < 3.9
-if(NOT TARGET MPI::MPI_CXX)
-  add_library(MPI::MPI_CXX IMPORTED INTERFACE)
-
-  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
-  foreach(_MPI_FLAG ${MPI_CXX_COMPILE_FLAGS})
-    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_COMPILE_OPTIONS
-                                              ${_MPI_FLAG})
-  endforeach()
-
-  set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-                                            "${MPI_CXX_INCLUDE_PATH}")
-
-  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/18349
-  foreach(_MPI_FLAG ${MPI_CXX_LINK_FLAGS})
-    set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES
-                                              ${_MPI_FLAG})
-  endforeach()
-
-  set_property(TARGET MPI::MPI_CXX PROPERTY INTERFACE_LINK_LIBRARIES
-                                            ${MPI_CXX_LIBRARIES})
-endif()
-
-# ##############################################################################
+#
 # Boost
-# ##############################################################################
+#
 
 list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
 
@@ -411,6 +353,9 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(cxx_interface
                          INTERFACE -Wno-gnu-zero-variadic-macro-arguments)
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0.0")
+    target_compile_options(cxx_interface INTERFACE -Wimplicit-float-conversion)
+  endif()
 endif()
 
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
@@ -436,7 +381,16 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4
   target_compile_options(cxx_interface INTERFACE -ffloat-store)
 endif()
 
+# enable boost::variant with more than 20 types
+target_compile_options(
+  cxx_interface INTERFACE -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+                          -DBOOST_MPL_LIMIT_LIST_SIZE=30)
+
 set(CMAKE_MACOSX_RPATH TRUE)
+
+#
+# Sanitizers
+#
 
 if(WITH_ASAN AND WITH_MSAN)
   message(
@@ -463,26 +417,28 @@ endif()
 target_link_libraries(cxx_interface INTERFACE coverage_interface)
 
 #
-# Testing
-# ##############################################################################
+# Static analysis
+#
 
 if(WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
   set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
 endif()
 
+#
+# Testing
+#
+
 if(WITH_TESTS)
   enable_testing()
-  if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
-    set(WITH_UNIT_TESTS ON)
-  endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
-  if(WITH_PYTHON)
-    add_subdirectory(testsuite)
-  endif(WITH_PYTHON)
   set(CTEST_ARGS ""
       CACHE STRING
             "Extra arguments to give to ctest calls (separated by semicolons)")
+  set(TEST_NP "4" CACHE STRING "Maximal number of MPI ranks to use per test")
+  if(WITH_PYTHON)
+    add_subdirectory(testsuite)
+  endif(WITH_PYTHON)
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)
@@ -497,6 +453,7 @@ endif(WITH_BENCHMARKS)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(libs)
+
 #
 # Feature summary
 #

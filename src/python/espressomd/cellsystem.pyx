@@ -20,12 +20,12 @@ import numpy as np
 from libcpp.cast cimport dynamic_cast
 from .grid cimport node_grid
 from . cimport integrate
-from .globals cimport FIELD_SKIN, FIELD_NODEGRID
 from .globals cimport verlet_reuse, skin
-from .globals cimport mpi_bcast_parameter
+from .globals cimport mpi_set_skin, mpi_set_node_grid
 from libcpp.vector cimport vector
 from .cellsystem cimport cell_structure
-from .utils cimport handle_errors, Vector3i, check_type_or_throw_except
+from .utils import handle_errors
+from .utils cimport Vector3i, check_type_or_throw_except
 
 
 cdef class CellSystem:
@@ -143,9 +143,16 @@ cdef class CellSystem:
         This function needs to be separated from ``self.get_pairs()`` because ``cdef``
         cannot be inside an ``else`` block
         """
+        if hasattr(types, "__getitem__"):
+            if len(types) == 1:
+                check_type_or_throw_except(
+                    types[0], 1, int, 'types must be a list of int')
+            else:
+                check_type_or_throw_except(
+                    types, len(types), int, 'types must be a list of int')
+        else:
+            raise ValueError('types must be iterable')
 
-        check_type_or_throw_except(
-            types, len(types), int, 'types must be a list of int')
         cdef vector[int] types_c
         for type in types:
             types_c.push_back(type)
@@ -175,17 +182,14 @@ cdef class CellSystem:
         """
 
         def __set__(self, _node_grid):
+            cdef Vector3i node_grid
             if not np.prod(_node_grid) == n_nodes:
                 raise ValueError(
                     f"Number of available nodes {n_nodes} and imposed node grid {_node_grid} do not agree.")
             else:
-                node_grid[0] = _node_grid[0]
-                node_grid[1] = _node_grid[1]
-                node_grid[2] = _node_grid[2]
-                mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
-                handle_errors("mpi_bcast_parameter for node_grid failed")
-                if mpi_err:
-                    raise Exception("Broadcasting the node grid failed")
+                for i in range(3):
+                    node_grid[i] = _node_grid[i]
+                mpi_set_node_grid(node_grid)
 
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])
@@ -201,9 +205,7 @@ cdef class CellSystem:
         def __set__(self, double _skin):
             if _skin < 0:
                 raise ValueError("Skin must be >= 0")
-            global skin
-            skin = _skin
-            mpi_bcast_parameter(FIELD_SKIN)
+            mpi_set_skin(_skin)
             integrate.skin_set = True
 
         def __get__(self):

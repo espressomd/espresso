@@ -26,7 +26,10 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <cassert>
 #include <cstddef>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -38,6 +41,11 @@ namespace Observables {
 class ParticleDistances : public PidObservable {
 public:
   using PidObservable::PidObservable;
+  explicit ParticleDistances(std::vector<int> ids)
+      : PidObservable(std::move(ids)) {
+    if (this->ids().size() < 2)
+      throw std::runtime_error("At least 2 particles are required");
+  }
 
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
@@ -45,13 +53,16 @@ public:
     std::vector<double> res(n_values());
 
     for (size_t i = 0, end = n_values(); i < end; i++) {
-      auto const v = get_mi_vector(traits.position(particles[i]),
-                                   traits.position(particles[i + 1]), box_geo);
+      auto const v = box_geo.get_mi_vector(traits.position(particles[i]),
+                                           traits.position(particles[i + 1]));
       res[i] = v.norm();
     }
     return res;
   }
-  std::vector<size_t> shape() const override { return {ids().size() - 1}; }
+  std::vector<size_t> shape() const override {
+    assert(!ids().empty());
+    return {ids().size() - 1};
+  }
 };
 
 } // Namespace Observables

@@ -154,6 +154,9 @@ static unsigned map_data_parts(unsigned data_parts) {
          | ((DATA_PART_POSITION & data_parts) ? GHOSTTRANS_POSITION : 0u)
          | ((DATA_PART_MOMENTUM & data_parts) ? GHOSTTRANS_MOMENTUM : 0u)
          | ((DATA_PART_FORCE & data_parts) ? GHOSTTRANS_FORCE : 0u)
+#ifdef BOND_CONSTRAINT
+         | ((DATA_PART_RATTLE & data_parts) ? GHOSTTRANS_RATTLE : 0u)
+#endif
          | ((DATA_PART_BONDS & data_parts) ? GHOSTTRANS_BONDS : 0u);
   /* clang-format on */
 }
@@ -166,6 +169,12 @@ void CellStructure::ghosts_reduce_forces() {
   ghost_communicator(decomposition().collect_ghost_force_comm(),
                      GHOSTTRANS_FORCE);
 }
+#ifdef BOND_CONSTRAINT
+void CellStructure::ghosts_reduce_rattle_correction() {
+  ghost_communicator(decomposition().collect_ghost_force_comm(),
+                     GHOSTTRANS_RATTLE);
+}
+#endif
 
 Utils::Span<Cell *> CellStructure::local_cells() {
   return decomposition().local_cells();

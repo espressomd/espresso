@@ -24,11 +24,12 @@ import numpy as np
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
-from .utils cimport handle_errors
-from .utils import is_valid_type, check_type_or_throw_except, to_str
+from .utils import is_valid_type, check_type_or_throw_except, to_str, handle_errors
+from .utils cimport check_range_or_except
 from . cimport checks
 from .analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
+import sys
 
 
 IF ELECTROSTATICS == 1:
@@ -88,17 +89,12 @@ IF ELECTROSTATICS:
         kappa : :obj:`float`
             Inverse Debye screening length.
         r_cut : :obj:`float`
-            Cut off radius for this interaction.
+            Cutoff radius for this interaction.
 
         """
 
         def validate_params(self):
-            if self._params["prefactor"] <= 0:
-                raise ValueError("prefactor should be a positive float")
-            if self._params["kappa"] < 0:
-                raise ValueError("kappa should be a non-negative double")
-            if self._params["r_cut"] < 0:
-                raise ValueError("r_cut should be a non-negative double")
+            pass
 
         def valid_keys(self):
             return ["prefactor", "kappa", "r_cut", "check_neutrality"]
@@ -128,7 +124,8 @@ IF ELECTROSTATICS:
 
     cdef class ReactionField(ElectrostaticInteraction):
         """
-        Electrostatics solver based on the Reaction-Field framework.
+        Electrostatics solver based on the Reaction Field framework.
+        See :ref:`Reaction Field method` for more details.
 
         Parameters
         ----------
@@ -141,21 +138,12 @@ IF ELECTROSTATICS:
         epsilon2 : :obj:`float`
             exterior dielectric constant
         r_cut : :obj:`float`
-            Cut off radius for this interaction.
+            Cutoff radius for this interaction.
 
         """
 
         def validate_params(self):
-            if self._params["prefactor"] <= 0:
-                raise ValueError("prefactor should be a positive float")
-            if self._params["kappa"] < 0:
-                raise ValueError("kappa should be a non-negative double")
-            if self._params["epsilon1"] < 0:
-                raise ValueError("epsilon1 should be a non-negative double")
-            if self._params["epsilon2"] < 0:
-                raise ValueError("epsilon2 should be a non-negative double")
-            if self._params["r_cut"] < 0:
-                raise ValueError("r_cut should be a non-negative double")
+            pass
 
         def valid_keys(self):
             return ["prefactor", "kappa", "epsilon1", "epsilon2", "r_cut",
@@ -192,7 +180,113 @@ IF ELECTROSTATICS:
 
 
 IF P3M == 1:
-    cdef class P3M(ElectrostaticInteraction):
+    cdef class _P3MBase(ElectrostaticInteraction):
+
+        cdef _check_and_copy_mesh_size(self, int mesh[3], pmesh):
+            if is_valid_type(pmesh, int):
+                pmesh = 3 * [pmesh]
+            else:
+                check_type_or_throw_except(
+                    pmesh, 3, int, "mesh size must be 3 ints")
+            for i in range(3):
+                mesh[i] = pmesh[i]
+
+        def valid_keys(self):
+            return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
+                    "prefactor", "tune", "check_neutrality", "verbose",
+                    "mesh_off"]
+
+        def required_keys(self):
+            return ["prefactor", "accuracy"]
+
+        def default_params(self):
+            return {"cao": 0,
+                    "r_cut": -1,
+                    "alpha": 0,
+                    "accuracy": 0,
+                    "mesh": [0, 0, 0],
+                    "epsilon": 0.0,
+                    "mesh_off": [-1, -1, -1],
+                    "tune": True,
+                    "check_neutrality": True,
+                    "verbose": True}
+
+        def _get_params_from_es_core(self):
+            params = {}
+            params.update(p3m.params)
+            params["prefactor"] = coulomb.prefactor
+            params["tune"] = self._params["tune"]
+            return params
+
+        def _tune(self):
+            cdef int mesh[3]
+            self._check_and_copy_mesh_size(mesh, self._params["mesh"])
+
+            set_prefactor(self._params["prefactor"])
+            p3m_set_eps(self._params["epsilon"])
+            p3m_set_tune_params(self._params["r_cut"], mesh,
+                                self._params["cao"], self._params["accuracy"])
+            tuning_error = p3m_adaptive_tune(self._params["verbose"])
+            if tuning_error:
+                handle_errors("P3M: tuning failed")
+            self._params.update(self._get_params_from_es_core())
+
+        def tune(self, **tune_params_subset):
+            # update the three necessary parameters if not provided by the user
+            default_params = self.default_params()
+            for key in ["r_cut", "mesh", "cao"]:
+                if key not in tune_params_subset:
+                    tune_params_subset[key] = default_params[key]
+
+            super().tune(**tune_params_subset)
+
+        def _set_params_in_es_core(self):
+            cdef int mesh[3]
+            self._check_and_copy_mesh_size(mesh, self._params["mesh"])
+
+            set_prefactor(self._params["prefactor"])
+            # Sets p3m parameters
+            # p3m_set_params() -> set parameters and bcasts
+            # Careful: calls on_coulomb_change(), which calls p3m_init(),
+            #          which resets r_cut if prefactor=0
+            p3m_set_params(self._params["r_cut"], mesh, self._params["cao"],
+                           self._params["alpha"], self._params["accuracy"])
+            # Sets eps, bcast
+            p3m_set_eps(self._params["epsilon"])
+            p3m_set_mesh_offset(self._params["mesh_off"][0],
+                                self._params["mesh_off"][1],
+                                self._params["mesh_off"][2])
+
+        def validate_params(self):
+            default_params = self.default_params()
+            if not (self._params["prefactor"] > 0.0):
+                raise ValueError("prefactor should be a positive float")
+
+            if is_valid_type(self._params["mesh"], int):
+                if self._params["mesh"] % 2 != 0 and self._params["mesh"] != -1:
+                    raise ValueError(
+                        "P3M requires an even number of mesh points in all directions")
+            else:
+                check_type_or_throw_except(self._params["mesh"], 3, int,
+                                           "P3M mesh has to be an integer or integer list of length 3")
+                if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
+                   (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
+                   (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
+                    raise ValueError(
+                        "P3M requires an even number of mesh points in all directions")
+
+            if self._params["epsilon"] == "metallic":
+                self._params["epsilon"] = 0.0
+
+            check_type_or_throw_except(
+                self._params["epsilon"], 1, float,
+                "epsilon should be a double or 'metallic'")
+
+            if self._params["mesh_off"] != default_params["mesh_off"]:
+                check_type_or_throw_except(self._params["mesh_off"], 3, float,
+                                           "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
+
+    cdef class P3M(_P3MBase):
         """
         P3M electrostatics solver.
 
@@ -228,121 +322,15 @@ IF P3M == 1:
 
         """
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
-        def validate_params(self):
-            default_params = self.default_params()
-            if not (self._params["prefactor"] > 0.0):
-                raise ValueError("prefactor should be a positive float")
-
-            if not (self._params["r_cut"] >= 0
-                    or self._params["r_cut"] == default_params["r_cut"]):
-                raise ValueError("P3M r_cut has to be >=0")
-
-            if is_valid_type(self._params["mesh"], int):
-                if self._params["mesh"] % 2 != 0 and self._params["mesh"] != -1:
-                    raise ValueError(
-                        "P3M requires an even number of mesh points in all directions")
-            else:
-                check_type_or_throw_except(self._params["mesh"], 3, int,
-                                           "P3M mesh has to be an integer or integer list of length 3")
-                if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
-                   (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
-                   (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
-                    raise ValueError(
-                        "P3M requires an even number of mesh points in all directions")
-
-            if not (self._params["cao"] >= -1 and self._params["cao"] <= 7):
-                raise ValueError(
-                    "P3M cao has to be an integer between -1 and 7")
-
-            if self._params["tune"] and not (self._params["accuracy"] >= 0):
-                raise ValueError("P3M accuracy has to be positive")
-
-            if self._params["epsilon"] == "metallic":
-                self._params["epsilon"] = 0.0
-
-            check_type_or_throw_except(
-                self._params["epsilon"], 1, float,
-                "epsilon should be a double or 'metallic'")
-
-            if self._params["mesh_off"] != default_params["mesh_off"]:
-                check_type_or_throw_except(self._params["mesh_off"], 3, float,
-                                           "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
-
-            if not (self._params["alpha"] == default_params["alpha"]
-                    or self._params["alpha"] > 0):
-                raise ValueError("alpha should be positive")
-
-        def valid_keys(self):
-            return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
-                    "prefactor", "tune", "check_neutrality"]
-
-        def required_keys(self):
-            return ["prefactor", "accuracy"]
-
-        def default_params(self):
-            return {"cao": 0,
-                    "r_cut": -1,
-                    "alpha": 0,
-                    "accuracy": 0,
-                    "mesh": [0, 0, 0],
-                    "epsilon": 0.0,
-                    "mesh_off": [-1, -1, -1],
-                    "tune": True,
-                    "check_neutrality": True}
-
-        def _get_params_from_es_core(self):
-            params = {}
-            params.update(p3m.params)
-            params["prefactor"] = coulomb.prefactor
-            params["tune"] = self._params["tune"]
-            return params
-
-        def _set_params_in_es_core(self):
-            # Sets lb, bcast, resets vars to zero if lb=0
-            set_prefactor(self._params["prefactor"])
-            # Sets cdef vars and calls p3m_set_params() in core
-            python_p3m_set_params(self._params["r_cut"],
-                                  self._params["mesh"], self._params["cao"],
-                                  self._params["alpha"], self._params["accuracy"])
-            # p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
-            # Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
-            #         which resets r_cut if lb is zero. OK.
-            # Sets eps, bcast
-            p3m_set_eps(self._params["epsilon"])
-            python_p3m_set_mesh_offset(self._params["mesh_off"])
-
-        def tune(self, **tune_params_subset):
-            # update the three necessary parameters if not provided by the user
-            default_params = self.default_params()
-            for key in ["r_cut", "mesh", "cao"]:
-                if key not in tune_params_subset:
-                    tune_params_subset[key] = default_params[key]
-
-            super().tune(**tune_params_subset)
-
-        def _tune(self):
-            set_prefactor(self._params["prefactor"])
-            p3m_set_eps(self._params["epsilon"])
-            python_p3m_set_tune_params(self._params["r_cut"],
-                                       self._params["mesh"],
-                                       self._params["cao"],
-                                       -1.0,
-                                       self._params["accuracy"])
-            resp = python_p3m_adaptive_tune()
-            handle_errors("P3M tuning failed")
-            self._params.update(self._get_params_from_es_core())
-
         def _activate_method(self):
             check_neutrality(self._params)
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
+            handle_errors("P3M: initialization failed")
 
     IF CUDA:
-        cdef class P3MGPU(ElectrostaticInteraction):
+        cdef class P3MGPU(_P3MBase):
             """
             P3M electrostatics solver with GPU support.
 
@@ -378,114 +366,153 @@ IF P3M == 1:
 
             """
 
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-
-            def validate_params(self):
-                default_params = self.default_params()
-
-                if not (self._params["r_cut"] >= 0
-                        or self._params["r_cut"] == default_params["r_cut"]):
-                    raise ValueError("P3M r_cut has to be >=0")
-
-                if is_valid_type(self._params["mesh"], int):
-                    if self._params["mesh"] % 2 != 0 and self._params["mesh"] != -1:
-                        raise ValueError(
-                            "P3M requires an even number of mesh points in all directions")
-                else:
-                    check_type_or_throw_except(self._params["mesh"], 3, int,
-                                               "P3M mesh has to be an integer or integer list of length 3")
-                    if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
-                       (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
-                       (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
-                        raise ValueError(
-                            "P3M requires an even number of mesh points in all directions")
-
-                if not (self._params["cao"] >= -1
-                        and self._params["cao"] <= 7):
-                    raise ValueError(
-                        "P3M cao has to be an integer between -1 and 7")
-
-                if not (self._params["accuracy"] >= 0):
-                    raise ValueError("P3M accuracy has to be positive")
-
-                if self._params["epsilon"] == "metallic":
-                    self._params["epsilon"] = 0.0
-
-                check_type_or_throw_except(
-                    self._params["epsilon"], 1, float,
-                    "epsilon should be a double or 'metallic'")
-
-                if self._params["mesh_off"] != default_params["mesh_off"]:
-                    check_type_or_throw_except(self._params["mesh_off"], 3, float,
-                                               "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
-
-            def valid_keys(self):
-                return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
-                        "prefactor", "tune", "check_neutrality"]
-
-            def required_keys(self):
-                return ["prefactor", "accuracy"]
-
-            def default_params(self):
-                return {"cao": 0,
-                        "r_cut": -1,
-                        "alpha": 0,
-                        "accuracy": 0,
-                        "mesh": [0, 0, 0],
-                        "epsilon": 0.0,
-                        "mesh_off": [-1, -1, -1],
-                        "tune": True,
-                        "check_neutrality": True}
-
-            def _get_params_from_es_core(self):
-                params = {}
-                params.update(p3m.params)
-                params["prefactor"] = coulomb.prefactor
-                params["tune"] = self._params["tune"]
-                return params
-
-            def tune(self, **tune_params_subset):
-                # update the three necessary parameters if not provided by the
-                # user
-                default_params = self.default_params()
-                for key in ["r_cut", "mesh", "cao"]:
-                    if key not in tune_params_subset:
-                        tune_params_subset[key] = default_params[key]
-
-                super().tune(**tune_params_subset)
-
-            def _tune(self):
-                set_prefactor(self._params["prefactor"])
-                p3m_set_eps(self._params["epsilon"])
-                python_p3m_set_tune_params(self._params["r_cut"],
-                                           self._params["mesh"],
-                                           self._params["cao"],
-                                           -1.0,
-                                           self._params["accuracy"])
-                resp = python_p3m_adaptive_tune()
-                handle_errors("P3MGPU tuning failed")
-                self._params.update(self._get_params_from_es_core())
-
             def _activate_method(self):
+                cdef int mesh[3]
+                self._check_and_copy_mesh_size(mesh, self._params["mesh"])
+
                 check_neutrality(self._params)
-                python_p3m_gpu_init(self._params)
+                p3m_gpu_init(self._params["cao"], mesh, self._params["alpha"])
+                handle_errors("P3M: tuning failed")
                 coulomb.method = COULOMB_P3M_GPU
                 if self._params["tune"]:
                     self._tune()
-                python_p3m_gpu_init(self._params)
+                p3m_gpu_init(self._params["cao"], mesh, self._params["alpha"])
+                handle_errors("P3M: tuning failed")
                 self._set_params_in_es_core()
 
             def _set_params_in_es_core(self):
-                set_prefactor(self._params["prefactor"])
-                python_p3m_set_params(self._params["r_cut"],
-                                      self._params["mesh"],
-                                      self._params["cao"],
-                                      self._params["alpha"],
-                                      self._params["accuracy"])
-                p3m_set_eps(self._params["epsilon"])
-                python_p3m_set_mesh_offset(self._params["mesh_off"])
-                handle_errors("p3m gpu init")
+                super()._set_params_in_es_core()
+                handle_errors("P3M: initialization failed")
+
+    cdef class ELC(ElectrostaticInteraction):
+        """
+        Electrostatics solver for systems with two periodic dimensions.
+        See :ref:`Electrostatic Layer Correction (ELC)` for more details.
+
+        Parameters
+        ----------
+        p3m_actor : :obj:`P3M`, required
+            Base P3M actor.
+        gap_size : :obj:`float`, required
+            The gap size gives the height :math:`h` of the empty region between
+            the system box and the neighboring artificial images. |es| checks
+            that the gap is empty and will throw an error if it isn't. Therefore
+            you should really make sure that the gap region is empty (e.g.
+            with wall constraints).
+        maxPWerror : :obj:`float`, required
+            The maximal pairwise error sets the least upper bound (LUB) error
+            of the force between any two charges without prefactors (see the
+            papers). The algorithm tries to find parameters to meet this LUB
+            requirements or will throw an error if there are none.
+        delta_mid_top : :obj:`float`, optional
+            Dielectric contrast :math:`\\Delta_t` between the upper boundary
+            and the simulation box.
+        delta_mid_bottom : :obj:`float`, optional
+            Dielectric contrast :math:`\\Delta_b` between the lower boundary
+            and the simulation box.
+        const_pot : :obj:`bool`, optional
+            Activate a constant electric potential between the top and bottom
+            of the simulation box.
+        pot_diff : :obj:`float`, optional
+            If ``const_pot`` is enabled, this parameter controls the applied
+            voltage between the boundaries of the simulation box in the
+            *z*-direction (at :math:`z = 0` and :math:`z = L_z - h`).
+        neutralize : :obj:`bool`, optional
+            By default, *ELC* just as P3M adds a homogeneous neutralizing
+            background to the system in case of a net charge. However, unlike
+            in three dimensions, this background adds a parabolic potential
+            across the slab :cite:`ballenegger09a`. Therefore, under normal
+            circumstances, you will probably want to disable the neutralization
+            for non-neutral systems. This corresponds then to a formal
+            regularization of the forces and energies :cite:`ballenegger09a`.
+            Also, if you add neutralizing walls explicitly as constraints, you
+            have to disable the neutralization. When using a dielectric
+            contrast or full metallic walls (``delta_mid_top != 0`` or
+            ``delta_mid_bot != 0`` or ``const_pot=True``), ``neutralize`` is
+            overwritten and switched off internally. Note that the special
+            case of non-neutral systems with a *non-metallic* dielectric jump
+            (e.g. ``delta_mid_top`` or ``delta_mid_bot`` in ``]-1,1[``) is not
+            covered by the algorithm and will throw an error.
+        far_cut : :obj:`float`, optional
+            Cutoff radius, use with care, intended for testing purposes. When
+            setting the cutoff directly, the maximal pairwise error is ignored.
+        """
+
+        def validate_params(self):
+            # P3M
+            if CUDA:
+                if isinstance(self._params["p3m_actor"], P3MGPU):
+                    raise ValueError(
+                        "ELC is not set up to work with the GPU P3M")
+            check_type_or_throw_except(
+                self._params["p3m_actor"], 1, getattr(
+                    sys.modules[__name__], "P3M"),
+                "p3m_actor has to be a P3M solver")
+            self._params["p3m_actor"]._params["epsilon"] = 0.0
+            self._params["p3m_actor"].validate_params()
+            # ELC
+            check_type_or_throw_except(
+                self._params["maxPWerror"], 1, float,
+                "maxPWerror has to be a float")
+            check_type_or_throw_except(self._params["gap_size"], 1, float,
+                                       "gap_size has to be a float")
+            check_type_or_throw_except(self._params["far_cut"], 1, float,
+                                       "far_cut has to be a float")
+            check_type_or_throw_except(
+                self._params["neutralize"], 1, type(True),
+                "neutralize has to be a bool")
+
+        def valid_keys(self):
+            return ["p3m_actor", "maxPWerror", "gap_size", "far_cut",
+                    "neutralize", "delta_mid_top", "delta_mid_bot",
+                    "const_pot", "pot_diff", "check_neutrality"]
+
+        def required_keys(self):
+            return ["p3m_actor", "maxPWerror", "gap_size"]
+
+        def default_params(self):
+            return {"maxPWerror": -1,
+                    "gap_size": -1,
+                    "far_cut": -1,
+                    "delta_mid_top": 0,
+                    "delta_mid_bot": 0,
+                    "const_pot": False,
+                    "pot_diff": 0.0,
+                    "neutralize": True,
+                    "check_neutrality": True}
+
+        def _get_params_from_es_core(self):
+            params = {}
+            params.update(elc_params)
+            params["p3m_actor"] = self._params["p3m_actor"]
+            return params
+
+        def _set_params_in_es_core(self):
+            self._params["p3m_actor"]._set_params_in_es_core()
+            if coulomb.method == COULOMB_P3M_GPU:
+                raise Exception("ELC is not set up to work with the GPU P3M")
+
+            if self._params["const_pot"]:
+                self._params["delta_mid_top"] = -1
+                self._params["delta_mid_bot"] = -1
+
+            ELC_set_params(
+                self._params["maxPWerror"],
+                self._params["gap_size"],
+                self._params["far_cut"],
+                self._params["neutralize"],
+                self._params["delta_mid_top"],
+                self._params["delta_mid_bot"],
+                self._params["const_pot"],
+                self._params["pot_diff"])
+
+        def tune(self, **tune_params_subset):
+            self._params["p3m_actor"].tune(**tune_params_subset)
+
+        def _activate_method(self):
+            self._params["p3m_actor"]._activate_method()
+            check_neutrality(self._params)
+            self._set_params_in_es_core()
 
 IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
@@ -524,11 +551,12 @@ IF ELECTROSTATICS:
                     "far_switch_radius": -1,
                     "bessel_cutoff": -1,
                     "tune": True,
-                    "check_neutrality": True}
+                    "check_neutrality": True,
+                    "verbose": True}
 
         def valid_keys(self):
             return ["prefactor", "maxPWerror", "far_switch_radius",
-                    "bessel_cutoff", "tune", "check_neutrality"]
+                    "bessel_cutoff", "tune", "check_neutrality", "verbose"]
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
@@ -549,10 +577,12 @@ IF ELECTROSTATICS:
                 self._params["far_switch_radius"], self._params["maxPWerror"])
 
         def _tune(self):
-            cdef int resp
-            resp = pyMMM1D_tune()
+            resp = MMM1D_init()
             if resp:
-                raise Exception("failed to tune mmm1d ")
+                handle_errors("MMM1D: initialization failed")
+            resp = mmm1d_tune(self._params["verbose"])
+            if resp:
+                handle_errors("MMM1D: tuning failed")
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
@@ -635,7 +665,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             default_params = self.default_params()
 
             self.thisptr.set_params(
-                < mmm1dgpu_real > box_geo.length()[2], < mmm1dgpu_real > coulomb.prefactor,
+                < float > box_geo.length()[2], < float > coulomb.prefactor,
                 self._params["maxPWerror"], self._params["far_switch_radius"],
                 self._params["bessel_cutoff"])
 

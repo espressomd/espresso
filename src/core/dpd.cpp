@@ -42,6 +42,7 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/math/tensor_product.hpp>
+#include <utils/matrix.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -67,10 +68,8 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
                    double r_c, int wf, double tgamma, double tr_c, int twf) {
   IA_parameters &ia_params = *get_ia_param_safe(part_type_a, part_type_b);
 
-  ia_params.dpd_radial = DPDParameters{
-      gamma, k, r_c, wf, sqrt(24.0 * temperature * gamma / time_step)};
-  ia_params.dpd_trans = DPDParameters{
-      tgamma, k, tr_c, twf, sqrt(24.0 * temperature * tgamma / time_step)};
+  ia_params.dpd_radial = DPDParameters{gamma, k, r_c, wf, -1.};
+  ia_params.dpd_trans = DPDParameters{tgamma, k, tr_c, twf, -1.};
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -78,26 +77,15 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
   return ES_OK;
 }
 
-void dpd_init() {
+void dpd_init(double kT, double time_step) {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       IA_parameters &ia_params = *get_ia_param(type_a, type_b);
 
       ia_params.dpd_radial.pref =
-          sqrt(24.0 * temperature * ia_params.dpd_radial.gamma / time_step);
+          sqrt(24.0 * kT * ia_params.dpd_radial.gamma / time_step);
       ia_params.dpd_trans.pref =
-          sqrt(24.0 * temperature * ia_params.dpd_trans.gamma / time_step);
-    }
-  }
-}
-
-void dpd_update_params(double pref_scale) {
-  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
-    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
-      IA_parameters &ia_params = *get_ia_param(type_a, type_b);
-
-      ia_params.dpd_radial.pref *= pref_scale;
-      ia_params.dpd_trans.pref *= pref_scale;
+          sqrt(24.0 * kT * ia_params.dpd_trans.gamma / time_step);
     }
   }
 }
@@ -152,7 +140,7 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
 static auto dpd_viscous_stress_local() {
   on_observable_calc();
 
-  Utils::Vector<Vector3d, 3> stress{};
+  Utils::Matrix<double, 3, 3> stress{};
   cell_structure.non_bonded_loop(
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
         auto const v21 = p1.m.v - p2.m.v;
@@ -196,9 +184,6 @@ Utils::Vector9d dpd_stress() {
                                dpd_viscous_stress_local);
   auto const volume = box_geo.volume();
 
-  return Utils::Vector9d{stress[0][0], stress[0][1], stress[0][2],
-                         stress[1][0], stress[1][1], stress[1][2],
-                         stress[2][0], stress[2][1], stress[2][2]} /
-         volume;
+  return Utils::flatten(stress) / volume;
 }
 #endif

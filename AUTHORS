@@ -10,13 +10,14 @@ The following people have contributed to ESPResSo:
 
 Core developers
 ---------------
-Florian Weik
 Rudolf Weeber
 Kai Szuttor
 Jean-Noël Grad
+Alexander Reinauer
 
 Former Core Developers
 ----------------------
+Florian Weik
 Georg Rempfer
 Stefan Kesselheim
 Bernward Mann (deceased 2006)
@@ -43,8 +44,10 @@ Carl Georg Biermann
 Christian Haege
 Christoph Lohrmann
 Christoph Schneider
+David Beyer
 David Schwörer
 David Sean
+Deniz Mostarac
 Dmitro Galperin
 Dmytro Antypov
 Dominic Röhm
@@ -57,6 +60,7 @@ Frank Mühlbach
 Gizem Inci
 Gregoria Illya
 Hamid Zaheri
+Hao Lu
 Henri Menke
 Igor Pasichnyk
 Ingo Tischler
@@ -64,6 +68,7 @@ Ira Cooke
 Iva Jancigova
 Ivan Cimrak
 Iveta Jancigova
+Jakub Krajniak
 Jan Finkbeiner
 Joan Josep Cerdà
 Jonas Landsgesell
@@ -81,6 +86,7 @@ Le Qiao
 Lukas Fischer
 Marcello Sega
 Markus Gusenbauer
+Martin Kaiser
 Matej Praprotnik
 Mehmet Sayar
 Mehmet Süzen
@@ -94,7 +100,7 @@ Muhammad Anwar
 Nicolai Roth
 Nils Binz
 Nishchay Suri
-O.V. Rud
+Oleg V. Rud
 Owen A. Hickey-Moriarty
 Pascal Hebbeker
 Patrick Diggins
@@ -102,7 +108,9 @@ Patrick Kreissl
 Pedro Ojeda
 Pedro Sanchez
 Peter Košovan
+Philipp Stärk
 Pierre de Buyl
+Riccardo Frenner
 Robert Kaufmann
 Robin Bardakcioglu
 Sam Foley

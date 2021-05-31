@@ -40,9 +40,6 @@ class LBEHTest(ut.TestCase):
         self.s.time_step = self.params['time_step']
         self.s.cell_system.skin = self.params['skin']
 
-        for i in self.s.actors:
-            self.s.actors.remove(i)
-
         self.lbf = self.lb.LBFluid(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -56,10 +53,13 @@ class LBEHTest(ut.TestCase):
             LB_fluid=self.lbf,
             gamma=self.params['friction'])
 
+    def tearDown(self):
+        self.s.actors.clear()
+
     def test(self):
         s = self.s
 
-        s.part.add(pos=0.5 * s.box_l, mu_E=self.params['muE'])
+        p = s.part.add(pos=0.5 * s.box_l, mu_E=self.params['muE'])
 
         mu_E = np.array(self.params['muE'])
         # Terminal velocity is mu_E minus the momentum the fluid
@@ -68,7 +68,7 @@ class LBEHTest(ut.TestCase):
 
         s.integrator.run(steps=500)
 
-        np.testing.assert_allclose(v_term, np.copy(s.part[0].v), atol=1e-5)
+        np.testing.assert_allclose(v_term, np.copy(p.v), atol=1e-5)
 
 
 if __name__ == "__main__":

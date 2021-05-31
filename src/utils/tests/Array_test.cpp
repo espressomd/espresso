@@ -117,3 +117,23 @@ BOOST_AUTO_TEST_CASE(tuple_protocol) {
 
   BOOST_CHECK_EQUAL(Utils::get<1>(A{1, 2, 3, 4}), 2);
 }
+
+BOOST_AUTO_TEST_CASE(streaming_operator) {
+  {
+    auto const a = Utils::Array<int, 1>{1};
+
+    std::stringstream ss;
+    ss << a;
+
+    BOOST_CHECK_EQUAL(ss.str(), "1");
+  }
+
+  {
+    auto const a = Utils::Array<int, 3>{1, 2, 3};
+
+    std::stringstream ss;
+    ss << a;
+
+    BOOST_CHECK_EQUAL(ss.str(), "1, 2, 3");
+  }
+}

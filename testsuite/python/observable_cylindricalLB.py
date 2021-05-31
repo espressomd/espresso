@@ -18,207 +18,158 @@ import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.math
 import espressomd.observables
 import espressomd.lb
 import tests_common
 
 
-AGRID = 1.0
-VISC = 2.7
-DENS = 1.7
-TIME_STEP = 0.1
-LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
-             'tau': TIME_STEP,
-             }
-
-
 class CylindricalLBObservableCommon:
 
     """
-    Testcase for the CylindricalLBObservable.
+    Testcase for the CylindricalLBObservables.
 
     """
     lbf = None
-    system = espressomd.System(box_l=(10, 10, 10))
+    system = espressomd.System(box_l=3 * [15])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     positions = []
 
+    lb_params = {'agrid': 1.,
+                 'dens': 1.2,
+                 'visc': 2.7,
+                 'tau': 0.1,
+                 }
+    cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
+        center=3 * [7], axis=[1, 0, 0], orientation=[0, 0, 1])
+
     params = {
-        'ids': list(range(10)),
-        'center': [5.0, 5.0, 5.0],  # center of the histogram
-        'axis': 'y',
-        'n_r_bins': 10,  # number of bins in r
-        'n_phi_bins': 2,  # -*- in phi
-        'n_z_bins': 2,  # -*- in z
+        'ids': None,
+        'transform_params': cyl_transform_params,
+        'n_r_bins': 4,
+        'n_phi_bins': 3,
+        'n_z_bins': 5,
         'min_r': 0.0,
         'min_phi': -np.pi,
-        'min_z': -5.0,
-        'max_r': 5.0,
+        'min_z': -6.0,
+        'max_r': 6.0,
         'max_phi': np.pi,
-        'max_z': 5.0,
+        'max_z': 6.0,
     }
 
-    def tearDown(self):
-        self.system.part.clear()
+    v_r = 0.02
+    v_phi = 0.04
+    v_z = 0.03
 
-    def swap_axis(self, arr, axis):
-        if axis == 'x':
-            arr = np.dot(tests_common.rotation_matrix(
-                [0, 1, 0], np.pi / 2.0), arr)
-        elif axis == 'y':
-            arr = np.dot(tests_common.rotation_matrix(
-                [1, 0, 0], -np.pi / 2.0), arr)
-        return arr
+    def calc_vel_at_pos(self, positions):
+        """
+        In cylindrical coordinates, all velocities are the same.
+        In cartesian they depend on the position.
+        The cartesian velocities are calculated here.
+        """
 
-    def swap_axis_inverse(self, arr, axis):
-        if axis == 'x':
-            arr = np.dot(tests_common.rotation_matrix(
-                [0, 1, 0], -np.pi / 2.0), arr)
-        elif axis == 'y':
-            arr = np.dot(tests_common.rotation_matrix(
-                [1, 0, 0], np.pi / 2.0), arr)
-        return arr
+        vels = []
+        for pos in positions:
+            e_r, e_phi, e_z = tests_common.get_cylindrical_basis_vectors(pos)
+            velocity = self.v_r * e_r + self.v_phi * e_phi + self.v_z * e_z
+            vels.append(velocity)
+        return vels
 
-    def pol_coords(self):
-        positions = np.zeros((len(self.positions), 3))
-        for i, p in enumerate(self.positions):
-            tmp = p - np.array(self.params['center'])
-            tmp = self.swap_axis_inverse(tmp, self.params['axis'])
-            positions[i, :] = tests_common.transform_pos_from_cartesian_to_polar_coordinates(
-                tmp)
-        return positions
+    def align_with_observable_frame(self, vec):
+        """
+        Rotate vectors from the original box frame to
+        the frame of the observables.
+        """
 
-    def set_particles(self):
-        self.system.part.clear()
-        self.system.part.add(pos=self.positions)
+        # align original z to observable z
+        vec = tests_common.rodrigues_rot(vec, [0, 1, 0], np.pi / 2.)
+        # original x now points along [0,0,-1]
 
-    def set_fluid_velocity(self):
-        del self.positions[:]
-        # Choose the cartesian velocities such that each particle gets the same
-        # v_r, v_phi and v_z, respectively.
-        self.v_r = .75
-        self.v_phi = 2.5
-        self.v_z = 1.5
-        node_positions = np.arange(-4.5, 5.0, 1.0)
-        for i, _ in enumerate(node_positions):
-            position = np.array(
-                [node_positions[i], node_positions[i], node_positions[i]])
-            v_y = (position[0] * np.sqrt(position[0]**2 + position[1]**2) * self.v_phi +
-                   position[1] * self.v_r) / np.sqrt(position[0]**2 + position[1]**2)
-            v_x = (self.v_r * np.sqrt(position[0]**2 + position[1]**2) -
-                   position[1] * v_y) / position[0]
-            velocity = np.array([v_x, v_y, self.v_z])
-            velocity = self.swap_axis(velocity, self.params['axis'])
-            position = self.swap_axis(position, self.params['axis'])
-            position += np.array(self.params['center'])
-            self.positions.append(position)
-            self.lbf[np.array(position, dtype=int)].velocity = velocity
+        # align original x to observable orientation
+        vec = tests_common.rodrigues_rot(vec, [1, 0, 0], np.pi)
+        return vec
 
-    def normalize_with_bin_volume(self, histogram):
-        bin_volume = tests_common.get_cylindrical_bin_volume(
-            self.params['n_r_bins'],
-            self.params['n_phi_bins'],
-            self.params['n_z_bins'],
-            self.params['min_r'],
-            self.params['max_r'],
-            self.params['min_phi'],
-            self.params['max_phi'],
-            self.params['min_z'],
-            self.params['max_z'])
-        # Normalization
-        for i in range(self.params['n_r_bins']):
-            histogram[i, :, :] /= bin_volume[i]
-        return histogram
+    def setup_system_get_np_hist(self):
+        """
+        Pick positions and velocities in the original box frame and
+        calculate the np histogram. Then rotate and move the positions
+        and velocities to the frame of the observables.
+        After calculating the core observables, the result should be
+        the same as the np histogram obtained from the original box frame.
+        """
 
-    def LB_fluxdensity_profile_test(self):
-        self.set_fluid_velocity()
-        self.set_particles()
-        # Set up the Observable.
-        local_params = self.params.copy()
-        if self.params['axis'] == 'x':
-            local_params['axis'] = [1.0, 0.0, 0.0]
-        elif self.params['axis'] == 'y':
-            local_params['axis'] = [0.0, 1.0, 0.0]
-        else:
-            local_params['axis'] = [0.0, 0.0, 1.0]
-        p = espressomd.observables.CylindricalLBFluxDensityProfileAtParticlePositions(
-            **local_params)
-        core_hist = p.calculate()
-        core_hist_v_r = core_hist[:, :, :, 0]
-        core_hist_v_phi = core_hist[:, :, :, 1]
-        core_hist_v_z = core_hist[:, :, :, 2]
-        core_edges = p.call_method("edges")
-        self.pol_positions = self.pol_coords()
+        nodes = np.array(np.meshgrid([1, 2], [1, 2], [
+                         1, 1, 1, 1, 2])).T.reshape(-1, 3)
+        positions = nodes + 3 * [0.5]
+        velocities = self.calc_vel_at_pos(positions)
+
+        # get the histogram from numpy
+        pos_cyl = []
+        for pos in positions:
+            pos_cyl.append(
+                tests_common.transform_pos_from_cartesian_to_polar_coordinates(pos))
         np_hist, np_edges = tests_common.get_histogram(
-            self.pol_positions, self.params, 'cylindrical')
-        np_hist = self.normalize_with_bin_volume(np_hist)
-        np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
+            np.array(pos_cyl), self.params, 'cylindrical')
+
+        # the particles only determine the evaluation points, not the values of
+        # the observables
+        np_hist[np.nonzero(np_hist)] = 1
+
+        # now align the positions and velocities with the frame of reference
+        # used in the observables
+        pos_aligned = []
+        vel_aligned = []
+        for pos, vel in zip(positions, velocities):
+            pos_aligned.append(
+                self.align_with_observable_frame(pos) +
+                self.cyl_transform_params.center)
+            vel_aligned.append(self.align_with_observable_frame(vel))
+        node_aligned = np.array(
+            np.rint(
+                np.array(pos_aligned) -
+                3 *
+                [0.5]),
+            dtype=int)
+        self.system.part.add(pos=pos_aligned, v=vel_aligned)
+        self.params['ids'] = self.system.part[:].id
+
+        for node, vel in zip(node_aligned, vel_aligned):
+            self.lbf[node].velocity = vel
+
+        return np_hist, np_edges
+
+    def check_edges(self, observable, np_edges):
+        core_edges = observable.call_method("edges")
+        for core_edge, np_edge in zip(core_edges, np_edges):
+            np.testing.assert_array_almost_equal(core_edge, np_edge)
+
+    def test_cylindrical_lb_vel_profile_obs(self):
+        """
+        Check that the result from the observable (in its own frame)
+        matches the np result from the box frame
+        """
+
+        np_hist_binary, np_edges = self.setup_system_get_np_hist()
+        vel_obs = espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions(
+            **self.params)
+        core_hist_v = vel_obs.calculate()
+        core_hist_v_r = core_hist_v[:, :, :, 0]
+        core_hist_v_phi = core_hist_v[:, :, :, 1]
+        core_hist_v_z = core_hist_v[:, :, :, 2]
         np.testing.assert_array_almost_equal(
-            np_hist * self.v_phi, core_hist_v_phi)
-        np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
-        for i in range(3):
-            np.testing.assert_array_almost_equal(np_edges[i], core_edges[i])
-        self.assertEqual(np.prod(p.shape()), len(np_hist.flatten()) * 3)
-
-    def LB_velocity_profile_at_particle_positions_test(self):
-        self.set_fluid_velocity()
-        self.set_particles()
-        # Set up the Observable.
-        local_params = self.params.copy()
-        if self.params['axis'] == 'x':
-            local_params['axis'] = [1.0, 0.0, 0.0]
-        elif self.params['axis'] == 'y':
-            local_params['axis'] = [0.0, 1.0, 0.0]
-        else:
-            local_params['axis'] = [0.0, 0.0, 1.0]
-        p = espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions(
-            **local_params)
-        core_hist = p.calculate()
-        core_hist_v_r = core_hist[:, :, :, 0]
-        core_hist_v_phi = core_hist[:, :, :, 1]
-        core_hist_v_z = core_hist[:, :, :, 2]
-        self.pol_positions = self.pol_coords()
-        np_hist, _ = np.histogramdd(
-            self.pol_positions,
-            bins=(self.params['n_r_bins'],
-                  self.params['n_phi_bins'],
-                  self.params['n_z_bins']),
-            range=[(self.params['min_r'],
-                    self.params['max_r']),
-                   (self.params['min_phi'],
-                    self.params['max_phi']),
-                   (self.params['min_z'],
-                    self.params['max_z'])])
-        for x in np.nditer(np_hist, op_flags=['readwrite']):
-            if x[...] > 0.0:
-                x[...] /= x[...]
-        np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
+            np_hist_binary * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(
-            np_hist * self.v_phi, core_hist_v_phi)
-        np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
-        self.assertEqual(np.prod(p.shape()), len(np_hist.flatten()) * 3)
-
-    def perform_tests(self):
-        self.LB_fluxdensity_profile_test()
-        self.LB_velocity_profile_at_particle_positions_test()
-
-    def test_x_axis(self):
-        self.params['axis'] = 'x'
-        self.perform_tests()
-
-    def test_y_axis(self):
-        self.params['axis'] = 'y'
-        self.perform_tests()
-
-    def test_z_axis(self):
-        self.params['axis'] = 'z'
-        self.perform_tests()
+            np_hist_binary * self.v_phi, core_hist_v_phi)
+        np.testing.assert_array_almost_equal(
+            np_hist_binary * self.v_z, core_hist_v_z)
+        self.check_edges(vel_obs, np_edges)
 
     def test_cylindrical_lb_profile_interface(self):
-        # test setters and getters
+        """
+        Test setters and getters of the script interface
+        """
+
         params = self.params.copy()
         params['n_r_bins'] = 4
         params['n_phi_bins'] = 6
@@ -234,9 +185,8 @@ class CylindricalLBObservableCommon:
         self.assertEqual(observable.n_z_bins, params['n_z_bins'])
         obs_data = observable.calculate()
         np.testing.assert_array_equal(obs_data.shape, [4, 6, 8, 3])
-        observable.n_r_bins = 1
-        observable.n_phi_bins = 2
-        observable.n_z_bins = 3
+        observable = espressomd.observables.CylindricalLBVelocityProfile(
+            **{**params, 'n_r_bins': 1, 'n_phi_bins': 2, 'n_z_bins': 3})
         self.assertEqual(observable.n_r_bins, 1)
         self.assertEqual(observable.n_phi_bins, 2)
         self.assertEqual(observable.n_z_bins, 3)
@@ -246,45 +196,47 @@ class CylindricalLBObservableCommon:
         self.assertEqual(observable.min_r, params['min_r'])
         self.assertEqual(observable.min_phi, params['min_phi'])
         self.assertEqual(observable.min_z, params['min_z'])
-        observable.min_r = 4
-        observable.min_phi = 5
-        observable.min_z = 6
-        self.assertEqual(observable.min_r, 4)
-        self.assertEqual(observable.min_phi, 5)
-        self.assertEqual(observable.min_z, 6)
+        observable = espressomd.observables.CylindricalLBVelocityProfile(
+            **{**params, 'min_r': 4.0, 'min_phi': 1.0, 'min_z': 1.0})
+        self.assertEqual(observable.min_r, 4.0)
+        self.assertEqual(observable.min_phi, 1.0)
+        self.assertEqual(observable.min_z, 1.0)
         obs_bin_edges = observable.bin_edges()
-        np.testing.assert_array_equal(obs_bin_edges[0, 0, 0], [4, 5, 6])
+        np.testing.assert_array_equal(obs_bin_edges[0, 0, 0], [4, 1, 1])
         # check edges upper corner
         self.assertEqual(observable.max_r, params['max_r'])
         self.assertEqual(observable.max_phi, params['max_phi'])
         self.assertEqual(observable.max_z, params['max_z'])
-        observable.max_r = 7
-        observable.max_phi = 8
-        observable.max_z = 9
+        observable = espressomd.observables.CylindricalLBVelocityProfile(
+            **{**params, 'max_r': 7, 'max_phi': 8, 'max_z': 9})
         self.assertEqual(observable.max_r, 7)
         self.assertEqual(observable.max_phi, 8)
         self.assertEqual(observable.max_z, 9)
         obs_bin_edges = observable.bin_edges()
         np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
-        # check center
-        np.testing.assert_array_equal(
-            np.copy(observable.center), params['center'])
-        observable.center = [3, 2, 1]
-        np.testing.assert_array_equal(np.copy(observable.center), [3, 2, 1])
-        # check axis
-        np.testing.assert_array_equal(np.copy(observable.axis), params['axis'])
-        observable.axis = [6, 5, 4]
-        np.testing.assert_array_equal(np.copy(observable.axis), [6, 5, 4])
         # check sampling_density
-        self.assertEqual(observable.sampling_density, 2)
-        observable.sampling_density = 3
+        self.assertEqual(
+            observable.sampling_density,
+            params['sampling_density'])
+        observable = espressomd.observables.CylindricalLBVelocityProfile(
+            **{**params, 'sampling_density': 3})
         self.assertEqual(observable.sampling_density, 3)
+        # check center, axis, orientation
+        ctp = espressomd.math.CylindricalTransformationParameters(
+            center=[1, 2, 3], axis=[0, 1, 0], orientation=[0, 0, 1])
+        observable = espressomd.observables.CylindricalLBVelocityProfile(
+            **{**params, 'transform_params': ctp})
+        observable.transform_params = ctp
+
+        for attr_name in ['center', 'axis', 'orientation']:
+            np.testing.assert_array_almost_equal(np.copy(ctp.__getattr__(attr_name)),
+                                                 np.copy(observable.transform_params.__getattr__(attr_name)))
 
 
 class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluid(**self.lb_params)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
@@ -292,16 +244,47 @@ class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
         self.system.actors.remove(self.lbf)
         self.system.part.clear()
 
+    def test_cylindrical_lb_flux_density_obs(self):
+        """
+        Check that the result from the observable (in its own frame)
+        matches the np result from the box frame.
+        Only for CPU because density interpolation is not implemented for GPU LB.
+        """
+        np_hist_binary, np_edges = self.setup_system_get_np_hist()
+
+        flux_obs = espressomd.observables.CylindricalLBFluxDensityProfileAtParticlePositions(
+            **self.params)
+        core_hist_fl = flux_obs.calculate()
+        core_hist_fl_r = core_hist_fl[:, :, :, 0]
+        core_hist_fl_phi = core_hist_fl[:, :, :, 1]
+        core_hist_fl_z = core_hist_fl[:, :, :, 2]
+
+        np.testing.assert_array_almost_equal(
+            np_hist_binary *
+            self.lb_params['dens'] *
+            self.v_r,
+            core_hist_fl_r)
+        np.testing.assert_array_almost_equal(
+            np_hist_binary *
+            self.lb_params['dens'] *
+            self.v_phi,
+            core_hist_fl_phi)
+        np.testing.assert_array_almost_equal(
+            np_hist_binary *
+            self.lb_params['dens'] *
+            self.v_z,
+            core_hist_fl_z)
+        self.check_edges(flux_obs, np_edges)
+
 
 @utx.skipIfMissingGPU()
 class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluidGPU(**self.lb_params)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        del self.positions[:]
         self.system.actors.remove(self.lbf)
         self.system.part.clear()
 

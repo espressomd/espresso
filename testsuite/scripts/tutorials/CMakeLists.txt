@@ -26,7 +26,7 @@ add_custom_target(
           ${TUTORIALS_DIR} DEPENDS tutorials_python)
 
 tutorial_test(FILE test_lennard_jones.py)
-tutorial_test(FILE test_charged_system-1.py)
+tutorial_test(FILE test_charged_system.py)
 tutorial_test(FILE test_langevin_dynamics.py)
 tutorial_test(FILE test_polymers.py SUFFIX rouse)
 tutorial_test(FILE test_polymers.py SUFFIX zimm LABELS "gpu")
@@ -46,6 +46,6 @@ tutorial_test(FILE test_constant_pH__interactions.py)
 
 add_custom_target(
   check_tutorials COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                          -j${TEST_NP} ${CTEST_ARGS} --output-on-failure)
+                          ${CTEST_ARGS} --output-on-failure)
 
 add_dependencies(check_tutorials pypresso local_tutorials)

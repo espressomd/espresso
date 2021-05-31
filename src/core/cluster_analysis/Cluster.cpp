@@ -62,9 +62,8 @@ Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
   {
     auto const folded_pos =
         folded_position(get_particle_data(pid).r.p, box_geo);
-    auto const dist_to_reference =
-        get_mi_vector(folded_pos, reference_position,
-                      box_geo); // add current particle positions
+    auto const dist_to_reference = box_geo.get_mi_vector(
+        folded_pos, reference_position); // add current particle positions
     com += dist_to_reference * get_particle_data(pid).p.mass;
     total_mass += get_particle_data(pid).p.mass;
   }
@@ -87,8 +86,9 @@ double Cluster::longest_distance() {
   double ld = 0.;
   for (auto a = particles.begin(); a != particles.end(); a++) {
     for (auto b = a; ++b != particles.end();) {
-      auto const dist = get_mi_vector(get_particle_data(*a).r.p,
-                                      get_particle_data(*b).r.p, box_geo)
+      auto const dist = box_geo
+                            .get_mi_vector(get_particle_data(*a).r.p,
+                                           get_particle_data(*b).r.p)
                             .norm();
 
       // Larger than previous largest distance?
@@ -111,10 +111,10 @@ Cluster::radius_of_gyration_subcluster(std::vector<int> &subcl_particle_ids) {
   for (auto const pid : subcl_particle_ids) {
     // calculate square length of this distance
     sum_sq_dist +=
-        get_mi_vector(com, get_particle_data(pid).r.p, box_geo).norm2();
+        box_geo.get_mi_vector(com, get_particle_data(pid).r.p).norm2();
   }
 
-  return sqrt(sum_sq_dist / subcl_particle_ids.size());
+  return sqrt(sum_sq_dist / static_cast<double>(subcl_particle_ids.size()));
 }
 
 template <typename T>
@@ -141,7 +141,7 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   std::vector<double> distances;
 
   for (auto const &it : particles) {
-    distances.push_back(get_mi_vector(com, get_particle_data(it).r.p, box_geo)
+    distances.push_back(box_geo.get_mi_vector(com, get_particle_data(it).r.p)
                             .norm()); // add distance from the current particle
                                       // to the com in the distances vectors
   }
@@ -176,7 +176,7 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   double c0, c1, cov00, cov01, cov11, sumsq;
   gsl_fit_linear(&log_diameters.front(), 1, &log_pcounts.front(), 1, n, &c0,
                  &c1, &cov00, &cov01, &cov11, &sumsq);
-  double mean_sq_residual = sumsq / log_diameters.size();
+  double mean_sq_residual = sumsq / static_cast<double>(log_diameters.size());
   return {c1, mean_sq_residual};
 #else
   runtimeErrorMsg() << "GSL (gnu scientific library) is required for fractal "

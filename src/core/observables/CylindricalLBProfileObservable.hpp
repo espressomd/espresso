@@ -21,6 +21,7 @@
 
 #include "CylindricalProfileObservable.hpp"
 
+#include <utility>
 #include <utils/Vector.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 #include <utils/math/vec_rotate.hpp>
@@ -30,34 +31,34 @@ namespace Observables {
 
 class CylindricalLBProfileObservable : public CylindricalProfileObservable {
 public:
-  CylindricalLBProfileObservable(Utils::Vector3d const &center,
-                                 Utils::Vector3d const &axis, int n_r_bins,
-                                 int n_phi_bins, int n_z_bins, double min_r,
-                                 double max_r, double min_phi, double max_phi,
-                                 double min_z, double max_z,
-                                 double sampling_density)
-      : CylindricalProfileObservable(center, axis, n_r_bins, n_phi_bins,
-                                     n_z_bins, min_r, max_r, min_phi, max_phi,
-                                     min_z, max_z),
+  CylindricalLBProfileObservable(
+      std::shared_ptr<Utils::CylindricalTransformationParameters>
+          transform_params,
+      int n_r_bins, int n_phi_bins, int n_z_bins, double min_r, double max_r,
+      double min_phi, double max_phi, double min_z, double max_z,
+      double sampling_density)
+      : CylindricalProfileObservable(std::move(transform_params), n_r_bins,
+                                     n_phi_bins, n_z_bins, min_r, max_r,
+                                     min_phi, max_phi, min_z, max_z),
         sampling_density(sampling_density) {
     calculate_sampling_positions();
   }
   void calculate_sampling_positions() {
+    auto const lim = limits();
+    auto const b = n_bins();
     sampling_positions = Utils::get_cylindrical_sampling_positions(
-        limits[0], limits[1], limits[2], n_bins[0], n_bins[1], n_bins[2],
-        sampling_density);
+        lim[0], lim[1], lim[2], b[0], b[1], b[2], sampling_density);
     for (auto &p : sampling_positions) {
-      double theta;
-      Utils::Vector3d rotation_axis;
-      auto p_cart = Utils::transform_coordinate_cylinder_to_cartesian(
-          p, Utils::Vector3d{{0.0, 0.0, 1.0}});
+      auto p_cart = Utils::transform_coordinate_cylinder_to_cartesian(p);
       // We have to rotate the coordinates since the utils function assumes
       // z-axis symmetry.
-      std::tie(theta, rotation_axis) =
-          Utils::rotation_params(Utils::Vector3d{{0.0, 0.0, 1.0}}, axis);
+      constexpr Utils::Vector3d z_axis{{0.0, 0.0, 1.0}};
+      auto const theta = Utils::angle_between(z_axis, transform_params->axis());
+      auto const rot_axis =
+          Utils::vector_product(z_axis, transform_params->axis()).normalize();
       if (theta > std::numeric_limits<double>::epsilon())
-        p_cart = Utils::vec_rotate(rotation_axis, theta, p_cart);
-      p = p_cart + center;
+        p_cart = Utils::vec_rotate(rot_axis, theta, p_cart);
+      p = p_cart + transform_params->center();
     }
   }
   std::vector<Utils::Vector3d> sampling_positions;

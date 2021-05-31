@@ -18,13 +18,11 @@ EXTERNAL_FORCES
 MASS
 EXCLUSIONS
 BOND_CONSTRAINT
-LANGEVIN_PER_PARTICLE
-BROWNIAN_PER_PARTICLE
+THERMOSTAT_PER_PARTICLE
 COLLISION_DETECTION
 NPT
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY             implies ROTATION
-STOKESIAN_DYNAMICS              requires BLAS and LAPACK
 STOKESIAN_DYNAMICS              implies ROTATION
 
 /* Rotation */
@@ -64,7 +62,6 @@ ELECTROKINETICS                 requires CUDA
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_BOUNDARIES_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   requires CUDA
 EK_DEBUG                        requires ELECTROKINETICS
-EK_DOUBLE_PREC                  requires ELECTROKINETICS
 
 /* Interaction features */
 TABULATED
@@ -103,6 +100,4 @@ FFTW external
 H5MD external
 SCAFACOS external
 GSL external
-BLAS external
-LAPACK external
 STOKESIAN_DYNAMICS external

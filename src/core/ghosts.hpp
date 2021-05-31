@@ -45,6 +45,7 @@
  *  - @ref GHOSTTRANS_POSITION transfers the @ref ParticlePosition
  *  - @ref GHOSTTRANS_MOMENTUM transfers the @ref ParticleMomentum
  *  - @ref GHOSTTRANS_FORCE transfers the @ref ParticleForce
+ *  - @ref GHOSTTRANS_RATTLE transfers the @ref ParticleRattle
  *  - @ref GHOSTTRANS_PARTNUM transfers the cell sizes
  *
  *  Each ghost communication describes a single communication of the local with
@@ -127,6 +128,10 @@ enum : unsigned {
   GHOSTTRANS_MOMENTUM = 8u,
   /// transfer \ref ParticleForce
   GHOSTTRANS_FORCE = 16u,
+#ifdef BOND_CONSTRAINT
+  /// transfer \ref ParticleRattle
+  GHOSTTRANS_RATTLE = 32u,
+#endif
   /// resize the receiver particle arrays to the size of the senders
   GHOSTTRANS_PARTNUM = 64u,
   GHOSTTRANS_BONDS = 128u

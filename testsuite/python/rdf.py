@@ -49,7 +49,7 @@ class RdfTest(ut.TestCase):
 
         for i in range(n_part):
             s.part.add(
-                id=i, pos=[i * dx, 0.5 * s.box_l[1], 0.5 * s.box_l[2]], type=0)
+                pos=[i * dx, 0.5 * s.box_l[1], 0.5 * s.box_l[2]], type=0)
 
         r_bins = 50
         r_min = 0.5 * dx
@@ -74,7 +74,7 @@ class RdfTest(ut.TestCase):
 
         for i in range(n_part):
             s.part.add(
-                id=i, pos=[i * dx, 0.5 * s.box_l[1], 0.5 * s.box_l[2]], type=(i % 2))
+                pos=[i * dx, 0.5 * s.box_l[1], 0.5 * s.box_l[2]], type=(i % 2))
 
         r_bins = 50
         r_min = 0.5 * dx
@@ -107,37 +107,43 @@ class RdfTest(ut.TestCase):
     def test_rdf_interface(self):
         # test setters and getters
         s = self.s
-        s.part.add(id=0, pos=[0, 0, 0], type=0)
-        s.part.add(id=1, pos=[0, 0, 0], type=1)
-        observable = espressomd.observables.RDF(ids1=s.part[:].id[0::2],
-                                                ids2=s.part[:].id[1::2],
-                                                min_r=1, max_r=2, n_r_bins=3)
+        s.part.add(pos=4 * [(0, 0, 0)], type=[0, 1, 0, 1])
+        pids1 = s.part[:].id[0::2]
+        pids2 = s.part[:].id[1::2]
+        params = {
+            'ids1': pids1,
+            'ids2': pids2,
+            'min_r': 1,
+            'max_r': 2,
+            'n_r_bins': 3}
+        observable = espressomd.observables.RDF(**params)
         # check pids
-        self.assertEqual(observable.ids1, s.part[:].id[0::2])
-        self.assertEqual(observable.ids2, s.part[:].id[1::2])
+        np.testing.assert_array_equal(np.copy(observable.ids1), pids1)
+        np.testing.assert_array_equal(np.copy(observable.ids2), pids2)
         new_pids1 = [s.part[:].id[0]]
         new_pids2 = [s.part[:].id[1]]
-        observable.ids1 = new_pids1
-        observable.ids2 = new_pids2
-        self.assertEqual(observable.ids1, new_pids1)
-        self.assertEqual(observable.ids2, new_pids2)
+        observable = espressomd.observables.RDF(
+            **{**params, 'ids1': new_pids1, 'ids2': new_pids2})
+        np.testing.assert_array_equal(np.copy(observable.ids1), new_pids1)
+        np.testing.assert_array_equal(np.copy(observable.ids2), new_pids2)
         # check bins
         self.assertEqual(observable.n_r_bins, 3)
-        observable.n_r_bins = 2
+        observable = espressomd.observables.RDF(**{**params, 'n_r_bins': 2})
         self.assertEqual(observable.n_r_bins, 2)
         obs_data = observable.calculate()
         np.testing.assert_array_equal(obs_data.shape, [2])
         # check edges lower corner
         self.assertEqual(observable.min_r, 1)
-        observable.min_r = 0
-        self.assertEqual(observable.min_r, 0)
         # check edges upper corner
         self.assertEqual(observable.max_r, 2)
-        observable.max_r = 4
-        self.assertEqual(observable.max_r, 4)
         # check bin centers
         obs_bin_centers = observable.bin_centers()
-        np.testing.assert_array_equal(obs_bin_centers, [1, 3])
+        np.testing.assert_array_almost_equal(obs_bin_centers, [1.25, 1.75])
+        # check exceptions
+        with self.assertRaises(RuntimeError):
+            espressomd.observables.RDF(**{**params, 'min_r': 100.})
+        with self.assertRaises(ValueError):
+            espressomd.observables.RDF(**{**params, 'n_r_bins': 0})
 
 
 if __name__ == "__main__":

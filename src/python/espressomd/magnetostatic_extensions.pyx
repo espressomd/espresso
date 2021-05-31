@@ -20,9 +20,10 @@
 from . cimport utils
 include "myconfig.pxi"
 from .actors import Actor
-from .utils cimport handle_errors, check_range_or_except, check_type_or_throw_except
+from .utils import handle_errors
+from .utils cimport check_range_or_except, check_type_or_throw_except
 
-IF DIPOLES and DP3M:
+IF DIPOLES:
     class MagnetostaticExtension(Actor):
 
         pass
@@ -41,8 +42,11 @@ IF DIPOLES and DP3M:
         Parameters
         ----------
         gap_size : :obj:`float`
-            Size of the empty gap. Note that DLC relies on the user to make
-            sure that this condition is fulfilled.
+            The gap size gives the height :math:`h` of the empty region between
+            the system box and the neighboring artificial images. |es| checks
+            that the gap is empty and will throw an error if it isn't. Therefore
+            you should really make sure that the gap region is empty (e.g.
+            with wall constraints).
         maxPWerror : :obj:`float`
             Maximal pairwise error of the potential and force.
         far_cut : :obj:`float`, optional
@@ -56,13 +60,14 @@ IF DIPOLES and DP3M:
             """
             default_params = self.default_params()
             check_type_or_throw_except(
-                self._params["maxPWerror"], 1, float, "")
-            check_range_or_except(
-                self._params, "maxPWerror", 0, False, "inf", True)
-            check_type_or_throw_except(self._params["gap_size"], 1, float, "")
-            check_range_or_except(
-                self._params, "gap_size", 0, False, "inf", True)
-            check_type_or_throw_except(self._params["far_cut"], 1, float, "")
+                self._params["maxPWerror"], 1, float,
+                "maxPWerror has to be a float")
+            check_type_or_throw_except(
+                self._params["gap_size"], 1, float,
+                "gap_size has to be a float")
+            check_type_or_throw_except(
+                self._params["far_cut"], 1, float,
+                "far_cut has to be a float")
 
         def valid_keys(self):
             return ["maxPWerror", "gap_size", "far_cut"]
@@ -71,9 +76,7 @@ IF DIPOLES and DP3M:
             return ["maxPWerror", "gap_size"]
 
         def default_params(self):
-            return {"maxPWerror": -1,
-                    "gap_size": -1,
-                    "far_cut": -1}
+            return {"far_cut": -1}
 
         def _get_params_from_es_core(self):
             params = {}
@@ -81,11 +84,9 @@ IF DIPOLES and DP3M:
             return params
 
         def _set_params_in_es_core(self):
-            if mdlc_set_params(
-                    self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"]):
-                raise ValueError(
-                    "Choose a 3d magnetostatics method prior to DLC")
-            handle_errors("mdlc tuning failed, gap size too small")
+            mdlc_set_params(self._params["maxPWerror"],
+                            self._params["gap_size"],
+                            self._params["far_cut"])
 
         def _activate_method(self):
             self._set_params_in_es_core()

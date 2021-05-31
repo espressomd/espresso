@@ -20,7 +20,6 @@
 #define OBSERVABLES_PARTICLEBODYANGULARVELOCITIES_HPP
 
 #include "PidObservable.hpp"
-#include "integrate.hpp"
 
 #include <utils/Span.hpp>
 

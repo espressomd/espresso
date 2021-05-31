@@ -48,8 +48,7 @@ wall_offset = 0.1
 # create random positions in the box sufficiently away from the walls
 ran_pos = np.random.uniform(low=1 + wall_offset, high=box_l - 1 - wall_offset,
                             size=(num_part, 3))
-system.part.add(id=np.arange(num_part),
-                pos=ran_pos, type=np.zeros(num_part, dtype=int))
+system.part.add(pos=ran_pos, type=np.zeros(num_part, dtype=int))
 
 # bottom wall, normal pointing in the +z direction, laid at z=0.1
 floor = shapes.Wall(normal=[0, 0, 1], dist=wall_offset)
@@ -74,11 +73,12 @@ positions = polymer.linear_polymer_positions(n_polymers=1, beads_per_chain=50,
                                              bond_length=1.0, seed=1234,
                                              min_distance=0.9,
                                              respect_constraints=True)
-for i, pos in enumerate(positions[0]):
-    id = len(system.part)
-    system.part.add(id=id, pos=pos)
-    if i > 0:
-        system.part[id].add_bond((fene, id - 1))
+polymer = system.part.add(pos=positions[0])
+previous_part = None
+for part in polymer:
+    if previous_part:
+        part.add_bond((fene, previous_part))
+    previous_part = part
 
 # Warmup
 #############################################################
@@ -112,7 +112,8 @@ int_n_times = 300
 int_steps = 1000
 for t in range(int_n_times):
     system.integrator.run(int_steps)
-    # print the position to see if it stays within imposed constraints
-    print("({:.2f}, {:.2f}, {:.2f})".format(*system.part[0].pos))
-    for i in range(num_part):
-        assert wall_offset < system.part[i].pos[2] < box_l - wall_offset
+    for i, p in enumerate(system.part):
+        if i == 0:
+            # print the position to see if it stays within imposed constraints
+            print("({:.2f}, {:.2f}, {:.2f})".format(*p.pos))
+        assert wall_offset < p.pos[2] < box_l - wall_offset

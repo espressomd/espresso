@@ -49,8 +49,7 @@ class TestLBGetUAtPos(ut.TestCase):
         cls.n_nodes_per_dim = int(cls.system.box_l[0] / cls.params['agrid'])
         for p in range(cls.n_nodes_per_dim):
             # Set particles exactly between two LB nodes in x direction.
-            cls.system.part.add(id=p,
-                                pos=[(p + 1) * cls.params['agrid'],
+            cls.system.part.add(pos=[(p + 1) * cls.params['agrid'],
                                      0.5 * cls.params['agrid'],
                                      0.5 * cls.params['agrid']])
         cls.lb_fluid = lb.LBFluidGPU(

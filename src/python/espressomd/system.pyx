@@ -22,7 +22,7 @@ include "myconfig.pxi"
 import numpy as np
 import collections
 
-from .grid cimport get_mi_vector, box_geo
+from .grid cimport box_geo
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -43,11 +43,10 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .globals import Globals
-from .globals cimport FIELD_SIMTIME, FIELD_MAX_OIF_OBJECTS
-from .globals cimport integ_switch, max_oif_objects, sim_time
-from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded, mpi_bcast_parameter
-from .utils cimport handle_errors, check_type_or_throw_except
-from .utils import is_valid_type
+from .globals cimport integ_switch, max_oif_objects, mpi_set_max_oif_objects
+from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded
+from .utils cimport check_type_or_throw_except
+from .utils import is_valid_type, handle_errors
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -240,13 +239,10 @@ cdef class System:
         def __set__(self, double _time):
             if _time < 0:
                 raise ValueError("Simulation time must be >= 0")
-            global sim_time
-            sim_time = _time
-            mpi_bcast_parameter(FIELD_SIMTIME)
+            self.globals.time = _time
 
         def __get__(self):
-            global sim_time
-            return sim_time
+            return self.globals.time
 
     property time_step:
         """
@@ -303,9 +299,7 @@ cdef class System:
             return max_oif_objects
 
         def __set__(self, v):
-            global max_oif_objects
-            max_oif_objects = v
-            mpi_bcast_parameter(FIELD_MAX_OIF_OBJECTS)
+            mpi_set_max_oif_objects(v)
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
@@ -383,7 +377,7 @@ cdef class System:
             check_type_or_throw_except(
                 p2, 3, float, "p2 must be a particle or 3 floats")
             pos2 = make_Vector3d(p2)
-        cdef Vector3d mi_vec = get_mi_vector(pos2, pos1, box_geo)
+        cdef Vector3d mi_vec = box_geo.get_mi_vector(pos2, pos1)
 
         return make_array_locked(mi_vec)
 
@@ -448,6 +442,12 @@ cdef class System:
         -------
         :obj:`int`
             The number of particles which have the given type.
+
+        Raises
+        ------
+        RuntimeError
+            If the particle ``type`` is not currently tracked by the system. 
+            To select which particle types are tracked, call :meth:`setup_type_map`.
 
         """
         check_type_or_throw_except(type, 1, int, "type must be 1 int")

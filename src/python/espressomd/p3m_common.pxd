@@ -30,4 +30,3 @@ IF P3M == 1 or DP3M == 1:
             double a[3]
             double alpha
             double r_cut
-            double additional_mesh[3]
