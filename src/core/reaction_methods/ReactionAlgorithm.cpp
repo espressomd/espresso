@@ -38,6 +38,7 @@
 #include <map>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace ReactionMethods {
@@ -130,7 +131,8 @@ void ReactionAlgorithm::set_cuboid_reaction_ensemble_volume() {
 /**
  * Checks whether all particles exist for the provided reaction.
  */
-bool ReactionAlgorithm::all_reactant_particles_exist(SingleReaction const &current_reaction) const {
+bool ReactionAlgorithm::all_reactant_particles_exist(
+    SingleReaction const &current_reaction) const {
   bool enough_particles = true;
   for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
     int current_number =
@@ -159,13 +161,15 @@ void ReactionAlgorithm::append_particle_property_of_random_particle(
 /**
  *Performs a trial reaction move
  */
-std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,std::vector<StoredParticleProperty>>  ReactionAlgorithm::make_reaction_attempt(
+std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,
+           std::vector<StoredParticleProperty>>
+ReactionAlgorithm::make_reaction_attempt(
     SingleReaction const &current_reaction) {
   // create or hide particles of types with corresponding types in reaction
-  std::vector<StoredParticleProperty> changed_particles_properties;
   std::vector<int> p_ids_created_particles;
   std::vector<StoredParticleProperty> hidden_particles_properties;
-  
+  std::vector<StoredParticleProperty> changed_particles_properties;
+
   for (int i = 0; i < std::min(current_reaction.product_types.size(),
                                current_reaction.reactant_types.size());
        i++) {
@@ -228,8 +232,9 @@ std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,std::vector<Sto
       }
     }
   }
-  
-  return {changed_particles_properties, p_ids_created_particles, hidden_particles_properties};
+
+  return {changed_particles_properties, p_ids_created_particles,
+          hidden_particles_properties};
 }
 
 /**
@@ -254,8 +259,8 @@ void ReactionAlgorithm::restore_properties(
   }
 }
 
-std::map<int, int>
-ReactionAlgorithm::save_old_particle_numbers(SingleReaction const &current_reaction) {
+std::map<int, int> ReactionAlgorithm::save_old_particle_numbers(
+    SingleReaction const &current_reaction) {
   std::map<int, int> old_particle_numbers;
   // reactants
   for (int type : current_reaction.reactant_types) {
@@ -281,7 +286,8 @@ ReactionAlgorithm::save_old_particle_numbers(SingleReaction const &current_react
  * randomly in the box. Matching particles simply change the types. If there
  * are more reactants than products, old reactant particles are deleted.
  */
-void ReactionAlgorithm::generic_oneway_reaction(SingleReaction  &current_reaction) {
+void ReactionAlgorithm::generic_oneway_reaction(
+    SingleReaction &current_reaction) {
 
   current_reaction.tried_moves += 1;
   particle_inside_exclusion_radius_touched = false;
@@ -313,23 +319,20 @@ void ReactionAlgorithm::generic_oneway_reaction(SingleReaction  &current_reactio
   std::map<int, int> old_particle_numbers =
       save_old_particle_numbers(current_reaction);
 
+  std::vector<int> p_ids_created_particles;
+  std::vector<StoredParticleProperty> hidden_particles_properties;
+  std::vector<StoredParticleProperty> changed_particles_properties;
+  // save p_id, charge and type of the reactant particle, only thing we
+  // need to hide the particle and recover it
+  const int number_of_saved_properties = 3;
 
-  const int number_of_saved_properties =
-      3; // save p_id, charge and type of the reactant particle, only thing we
-         // need to hide the particle and recover it
-  
-   std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,std::vector<StoredParticleProperty>>  particle_data;
-   particle_data = make_reaction_attempt(current_reaction);
-  
-  std::vector<StoredParticleProperty> changed_particles_properties =  std::get<0>(particle_data);
-  std::vector<int> p_ids_created_particles = std::get<1>(particle_data);
-  std::vector<StoredParticleProperty> hidden_particles_properties = std::get<2>(particle_data);
+  std::tie(changed_particles_properties, p_ids_created_particles,
+           hidden_particles_properties) =
+      make_reaction_attempt(current_reaction);
 
-  double E_pot_new;
-  if (particle_inside_exclusion_radius_touched)
-    E_pot_new = std::numeric_limits<double>::max();
-  else
-    E_pot_new = calculate_current_potential_energy_of_system();
+  auto const E_pot_new = (particle_inside_exclusion_radius_touched)
+                             ? std::numeric_limits<double>::max()
+                             : calculate_current_potential_energy_of_system();
 
   int new_state_index = -1; // save new_state_index for Wang-Landau algorithm
   int accepted_state = -1;  // for Wang-Landau algorithm
@@ -597,11 +600,9 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
       particle_inside_exclusion_radius_touched = true;
   }
 
-  double E_pot_new;
-  if (particle_inside_exclusion_radius_touched)
-    E_pot_new = std::numeric_limits<double>::max();
-  else
-    E_pot_new = calculate_current_potential_energy_of_system();
+  auto const E_pot_new = (particle_inside_exclusion_radius_touched)
+                             ? std::numeric_limits<double>::max()
+                             : calculate_current_potential_energy_of_system();
 
   double beta = 1.0 / temperature;
 

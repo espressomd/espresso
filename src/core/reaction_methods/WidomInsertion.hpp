@@ -29,7 +29,8 @@ namespace ReactionMethods {
 class WidomInsertion : public ReactionAlgorithm {
 public:
   WidomInsertion(int seed) : ReactionAlgorithm(seed) {}
-  std::pair<double, double> measure_excess_chemical_potential(SingleReaction &current_reaction);
+  std::pair<double, double>
+  measure_excess_chemical_potential(SingleReaction &current_reaction);
 };
 
 } // namespace ReactionMethods
