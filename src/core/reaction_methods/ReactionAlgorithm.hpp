@@ -54,12 +54,13 @@ public:
   std::vector<SingleReaction> reactions;
   std::map<int, double> charges_of_types;
   double temperature = -10.0;
-  double exclusion_radius =
-      0.0; // this is used as a kind of hard sphere radius, if
-           // particles are closer than that it is assumed that
-           // their interaction energy gets approximately
-           // infinite => these configurations do not contribute
-           // to the partition function and ensemble averages.
+  /**
+   * Hard sphere radius. If particles are closer than this value,
+   * it is assumed that their interaction energy gets approximately
+   * infinite, therefore these configurations do not contribute
+   * to the partition function and ensemble averages.
+   */
+  double exclusion_radius = 0.0;
   double volume = -10.0;
   bool box_is_cylindric_around_z_axis = false;
   double cyl_radius = -10.0;
@@ -145,11 +146,14 @@ private:
   std::uniform_real_distribution<double> m_uniform_real_distribution;
 
   std::map<int, int>
-  save_old_particle_numbers(SingleReaction const &current_reaction);
+  save_old_particle_numbers(SingleReaction const &current_reaction) const;
 
-  void replace_particle(int p_id, int desired_type);
+  void replace_particle(int p_id, int desired_type) const;
   int create_particle(int desired_type);
-  void hide_particle(int p_id, int previous_type);
+  void hide_particle(int p_id) const;
+  void check_exclusion_radius(int p_id);
+  void move_particle(int p_id, Utils::Vector3d const &new_pos,
+                     double velocity_prefactor);
 
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);
