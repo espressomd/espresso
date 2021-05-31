@@ -114,6 +114,8 @@ protected:
   std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,
              std::vector<StoredParticleProperty>>
   make_reaction_attempt(SingleReaction const &current_reaction);
+  std::vector<std::pair<int, Utils::Vector3d>>
+  generate_new_particle_positions(int type, int n_particles);
   void
   restore_properties(std::vector<StoredParticleProperty> const &property_list,
                      int number_of_saved_properties);

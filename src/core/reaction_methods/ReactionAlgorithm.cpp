@@ -532,6 +532,36 @@ void ReactionAlgorithm::move_particle(int p_id, Utils::Vector3d const &new_pos,
   set_particle_v(p_id, vel);
 }
 
+std::vector<std::pair<int, Utils::Vector3d>>
+ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
+
+  std::vector<int> p_id_s_changed_particles;
+  std::vector<std::pair<int, Utils::Vector3d>> old_positions;
+  old_positions.reserve(n_particles);
+
+  // heuristic to find a particle that hasn't been touched already
+  int random_index_in_type_map = i_random(number_of_particles_with_type(type));
+  int p_id = get_random_p_id(type, random_index_in_type_map);
+  for (int i = 0; i < n_particles; i++) {
+    // check whether p_id was already touched, then reassign
+    while (Utils::contains(p_id_s_changed_particles, p_id)) {
+      random_index_in_type_map = i_random(number_of_particles_with_type(type));
+      p_id = get_random_p_id(type, random_index_in_type_map);
+    }
+    // store original position
+    auto const &p = get_particle_data(p_id);
+    old_positions.emplace_back(std::pair<int, Utils::Vector3d>{p_id, p.r.p});
+    p_id_s_changed_particles.emplace_back(p_id);
+    // write new position
+    auto const prefactor = std::sqrt(temperature / p.p.mass);
+    auto const new_pos = get_random_position_in_box();
+    move_particle(p_id, new_pos, prefactor);
+    check_exclusion_radius(p_id);
+  }
+
+  return old_positions;
+}
+
 /**
  * Performs a global MC move for a particle of the provided type.
  */
@@ -557,36 +587,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
-  std::vector<Utils::Vector3d> particle_positions(
-      particle_number_of_type_to_be_changed);
-  std::vector<int> p_id_s_changed_particles;
-
-  // heuristic to find a particle that hasn't been touched already
-  int random_index_in_type_map = i_random(number_of_particles_with_type(type));
-  int p_id = get_random_p_id(type, random_index_in_type_map);
-  for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
-    while (Utils::contains(p_id_s_changed_particles, p_id)) {
-      random_index_in_type_map = i_random(number_of_particles_with_type(type));
-      p_id = get_random_p_id(
-          type, random_index_in_type_map); // check whether you already touched
-                                           // this p_id, then reassign
-    }
-
-    auto part = get_particle_data(p_id);
-
-    particle_positions[i] = part.r.p;
-    p_id_s_changed_particles.push_back(p_id);
-  }
-
-  // propose new positions
-  for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
-    p_id = p_id_s_changed_particles[i];
-    // change particle position
-    auto const &p = get_particle_data(p_id);
-    auto const prefactor = std::sqrt(temperature / p.p.mass);
-    move_particle(p_id, get_random_position_in_box(), prefactor);
-    check_exclusion_radius(p_id);
-  }
+  auto const original_positions = generate_new_particle_positions(
+      type, particle_number_of_type_to_be_changed);
 
   auto const E_pot_new = (particle_inside_exclusion_radius_touched)
                              ? std::numeric_limits<double>::max()
@@ -633,9 +635,9 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   if (use_wang_landau) {
     on_mc_reject(old_state_index);
   }
-  // create particles again at the positions they were
-  for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
-    place_particle(p_id_s_changed_particles[i], particle_positions[i]);
+  // restore original particle positions
+  for (auto const &item : original_positions)
+    place_particle(std::get<0>(item), std::get<1>(item));
   return false;
 }
 
