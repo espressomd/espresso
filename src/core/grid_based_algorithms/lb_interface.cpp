@@ -23,7 +23,6 @@
 #include "config.hpp"
 #include "electrokinetics.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
 #include "lb-d3q19.hpp"
@@ -454,8 +453,7 @@ void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
   default:
     throw std::invalid_argument("Invalid lattice switch.");
   }
-  lattice_switch = local_lattice_switch;
-  mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
+  mpi_set_lattice_switch(local_lattice_switch);
 }
 
 void lb_lbfluid_set_kT(double kT) {
@@ -1269,4 +1267,14 @@ double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos) {
     }
   }
   throw NoLBActive();
+}
+
+void mpi_set_lattice_switch_local(ActiveLB lattice_switch) {
+  ::lattice_switch = lattice_switch;
+}
+
+REGISTER_CALLBACK(mpi_set_lattice_switch_local)
+
+void mpi_set_lattice_switch(ActiveLB lattice_switch) {
+  mpi_call_all(mpi_set_lattice_switch_local, lattice_switch);
 }

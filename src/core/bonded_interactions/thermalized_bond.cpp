@@ -24,9 +24,8 @@
  */
 
 #include "thermalized_bond.hpp"
-
+#include "communication.hpp"
 #include "event.hpp"
-#include "global.hpp"
 
 #include <cmath>
 
@@ -46,7 +45,16 @@ ThermalizedBond::ThermalizedBond(double temp_com, double gamma_com,
   pref1_dist = -1.;
   pref2_dist = -1.;
 
-  n_thermalized_bonds += 1;
-  mpi_bcast_parameter(FIELD_THERMALIZEDBONDS);
-  on_parameter_change(FIELD_THERMALIZEDBONDS);
+  mpi_set_n_thermalized_bonds(n_thermalized_bonds + 1);
+}
+
+void mpi_set_n_thermalized_bonds_local(int n_thermalized_bonds) {
+  ::n_thermalized_bonds = n_thermalized_bonds;
+  on_thermostat_param_change();
+}
+
+REGISTER_CALLBACK(mpi_set_n_thermalized_bonds_local)
+
+void mpi_set_n_thermalized_bonds(int n_thermalized_bonds) {
+  mpi_call_all(mpi_set_n_thermalized_bonds_local, n_thermalized_bonds);
 }

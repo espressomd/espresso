@@ -269,4 +269,6 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
  */
 double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
 
+void mpi_set_lattice_switch(ActiveLB lattice_switch);
+
 #endif
