@@ -17,7 +17,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-
+import itertools
 import espressomd
 import espressomd.lb
 from espressomd.observables import LBFluidPressureTensor

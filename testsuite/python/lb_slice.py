@@ -36,7 +36,6 @@ class LBSliceTest(ut.TestCase):
     system.actors.add(lb_fluid)
 
     def test_slicing(self):
-        system = self.system
         # array locked
         array = self.lb_fluid[1:-1:2, 5, 3:6:2].velocity
         with self.assertRaisesRegex(ValueError, "ESPResSo array properties return non-writable arrays"):
