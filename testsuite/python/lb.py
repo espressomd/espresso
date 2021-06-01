@@ -268,17 +268,19 @@ class TestLB:
             agrid=self.params['agrid'],
             tau=self.system.time_step)
         self.system.actors.add(self.lbf)
-        # test __eq()__ where a node is equal to itself and not equal to any other node
+        # test __eq()__ where a node is equal to itself and not equal to any
+        # other node
         assert self.lbf[0, 0, 0] == self.lbf[0, 0, 0]
         x, y, z = range(int(self.system.box_l[0])), range(
             int(self.system.box_l[1])), range(int(self.system.box_l[2]))
         nodes = [self.lbf[i, j, k] for i, j, k in itertools.product(x, y, z)]
         nodes.remove(self.lbf[0, 0, 0])
         assert all(self.lbf[0, 0, 0] != node for node in nodes)
-        # test __hash()__ intecept to indetify nodes based oon index rather than name. set() constructor runs hash()
+        # test __hash()__ intecept to indetify nodes based oon index rather
+        # than name. set() constructor runs hash()
         subset1, subset2 = nodes[:-10], nodes[-10:]
-        assert len(set(subset1+subset1)) == len(subset1)
-        assert len(set(subset1+subset2)) == len(subset1)+len(subset2)
+        assert len(set(subset1 + subset1)) == len(subset1)
+        assert len(set(subset1 + subset2)) == len(subset1) + len(subset2)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):

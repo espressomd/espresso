@@ -113,17 +113,23 @@ class LBSliceTest(ut.TestCase):
                 output_boundary_shape, should_boundary_shape)
 
             with self.assertRaises(NotImplementedError):
-                self.lb_fluid[1:, 1:, 1:].boundary = np.zeros(should_boundary_shape)
+                self.lb_fluid[1:, 1:, 1:].boundary = np.zeros(
+                    should_boundary_shape)
 
     def test_iterator(self):
         lbslice_handle = self.lb_fluid[:, :, :]
         # arrange node indices using class methods
         i_handle, j_handle, k_handle = lbslice_handle.x_indices, lbslice_handle.y_indices, lbslice_handle.z_indices
-        arranged_indices = [(x, y, z) for (x, y, z) in itertools.product(i_handle, j_handle, k_handle)]
+        arranged_indices = [
+            (x, y, z) for (
+                x, y, z) in itertools.product(
+                i_handle, j_handle, k_handle)]
         # arrange node indices using __iter__() enforced converstion
         iterator_indices = [x.index for x in lbslice_handle]
-        # check the results correspond pairwise. order implicitly preserved. uses __eq()__ method form LBFluidRoutines()
-        assert all([x == y for x, y in zip(arranged_indices, iterator_indices)])
+        # check the results correspond pairwise. order implicitly preserved.
+        # uses __eq()__ method form LBFluidRoutines()
+        assert all([x == y for x, y in zip(
+            arranged_indices, iterator_indices)])
 
 
 if __name__ == "__main__":
