@@ -68,9 +68,12 @@
 
 int integ_switch = INTEG_METHOD_NVT;
 
-double time_step = -1.0;
+/** Time step for the integration. */
+static double time_step = -1.0;
 
-double sim_time = 0.0;
+/** Actual simulation time. */
+static double sim_time = 0.0;
+
 double skin = 0.0;
 bool skin_set = false;
 
