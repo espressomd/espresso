@@ -34,9 +34,10 @@
  *  Include all particle-lattice forces in this function.
  *  The function is called from \ref force_calc.
  */
-void lb_lbcoupling_calc_particle_lattice_ia(
-    bool couple_virtual, const ParticleRange &particles,
-    const ParticleRange &more_particles);
+void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
+                                            const ParticleRange &particles,
+                                            const ParticleRange &more_particles,
+                                            double time_step);
 void lb_lbcoupling_propagate();
 uint64_t lb_lbcoupling_get_rng_state();
 void lb_lbcoupling_set_rng_state(uint64_t counter);
@@ -72,8 +73,10 @@ bool in_local_halo(Utils::Vector3d const &pos);
  * @brief Add a force to the lattice force density.
  * @param pos Position of the force
  * @param force Force in MD units.
+ * @param time_step MD time step.
  */
-void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force);
+void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
+                  double time_step);
 
 Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
                                            const OptionalCounter &rng_counter);

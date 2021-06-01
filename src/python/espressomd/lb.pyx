@@ -30,7 +30,6 @@ from . import cuda_init
 from . import utils
 from .utils import array_locked, is_valid_type, to_char_pointer
 from .utils cimport Vector3i, Vector3d, Vector6d, make_array_locked, create_nparray_from_double_array
-from .globals cimport time_step
 from .grid cimport box_geo
 
 
@@ -180,7 +179,7 @@ cdef class HydrodynamicInteraction(Actor):
         Lattice constant. The box size in every direction must be an integer
         multiple of ``agrid``.
     tau : :obj:`float`
-        LB time step. The MD time step must be an integer multiple of ``tau``.
+        LB time step, must be an integer multiple of the MD time step.
     dens : :obj:`float`
         Fluid density.
     visc : :obj:`float`

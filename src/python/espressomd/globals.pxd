@@ -18,45 +18,29 @@
 #
 include "myconfig.pxi"
 from libcpp cimport bool
-from .utils cimport Vector3d
+from .utils cimport Vector3d, Vector3i
 
 cdef extern from "grid.hpp":
     void mpi_set_box_length(Vector3d length) except +
     void mpi_set_periodicity(bool x, bool y, bool z)
-
-cdef extern from "global.hpp":
-    int FIELD_SKIN
-    int FIELD_NODEGRID
-    int FIELD_SIMTIME
-    int FIELD_MIN_GLOBAL_CUT
-    int FIELD_THERMO_SWITCH
-    int FIELD_THERMO_VIRTUAL
-    int FIELD_TEMPERATURE
-    int FIELD_LANGEVIN_GAMMA
-    int FIELD_BROWNIAN_GAMMA
-    IF ROTATION:
-        int FIELD_LANGEVIN_GAMMA_ROTATION
-        int FIELD_BROWNIAN_GAMMA_ROTATION
-    IF NPT:
-        int FIELD_NPTISO_G0
-        int FIELD_NPTISO_GV
-    int FIELD_MAX_OIF_OBJECTS
-
-    void mpi_bcast_parameter(int p)
+    void mpi_set_node_grid(const Vector3i & node_grid)
 
 cdef extern from "integrate.hpp":
-    double time_step
+    double get_time_step()
     extern int integ_switch
-    extern double sim_time
+    double get_sim_time()
     extern double verlet_reuse
     extern double skin
     void mpi_set_time_step(double time_step) except +
+    void mpi_set_skin(double skin)
+    void mpi_set_time(double time)
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern int max_seen_particle_type
     extern double min_global_cut
     double maximal_cutoff_bonded()
     double maximal_cutoff_nonbonded()
+    void mpi_set_min_global_cut(double min_global_cut)
 
 cdef extern from "rattle.hpp":
     extern int n_rigidbonds
@@ -66,7 +50,8 @@ cdef extern from "tuning.hpp":
 
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int max_oif_objects
+    void mpi_set_max_oif_objects(int max_oif_objects)
 
 cdef extern from "forcecap.hpp":
     double forcecap_get()
-    void forcecap_set(double forcecap)
+    void mpi_set_forcecap(double forcecap)

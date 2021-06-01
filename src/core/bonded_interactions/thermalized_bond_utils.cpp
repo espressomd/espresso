@@ -27,7 +27,7 @@
 
 #include <boost/variant.hpp>
 
-void thermalized_bond_init() {
+void thermalized_bond_init(double time_step) {
   for (auto &bonded_ia_param : bonded_ia_params) {
     if (auto *t = boost::get<ThermalizedBond>(&bonded_ia_param)) {
       t->pref1_com = t->gamma_com;

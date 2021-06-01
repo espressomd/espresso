@@ -30,7 +30,7 @@
 #include "particle_data.hpp"
 #include <algorithm>
 
-void VirtualSitesInertialessTracers::after_force_calc() {
+void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   // Distribute summed-up forces from physical particles to ghosts
   init_forces_ghosts(cell_structure.ghost_particles());
   cells_update_ghosts(Cells::DATA_PART_FORCE);
@@ -45,7 +45,7 @@ void VirtualSitesInertialessTracers::after_force_calc() {
       return;
     };
     if (in_local_halo(p.r.p)) {
-      add_md_force(p.r.p / lb_lbfluid_get_agrid(), -p.f.f);
+      add_md_force(p.r.p / lb_lbfluid_get_agrid(), -p.f.f, time_step);
     }
   };
   for (auto const &p : cell_structure.ghost_particles()) {
@@ -56,7 +56,7 @@ void VirtualSitesInertialessTracers::after_force_calc() {
       return;
     };
     if (in_local_halo(p.r.p)) {
-      add_md_force(p.r.p / lb_lbfluid_get_agrid(), -p.f.f);
+      add_md_force(p.r.p / lb_lbfluid_get_agrid(), -p.f.f, time_step);
     }
   }
 
@@ -64,8 +64,8 @@ void VirtualSitesInertialessTracers::after_force_calc() {
   init_forces_ghosts(cell_structure.ghost_particles());
 }
 
-void VirtualSitesInertialessTracers::after_lb_propagation() {
-  auto advect_particle = [](auto &p) {
+void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
+  auto advect_particle = [time_step](auto &p) {
     if (!p.p.is_virtual)
       return;
     if (lattice_switch == ActiveLB::NONE) {

@@ -85,7 +85,7 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density);
 /**
  * @brief Perform LB parameter and boundary velocity checks.
  */
-void lb_lbfluid_sanity_checks();
+void lb_lbfluid_sanity_checks(double time_step);
 
 /**
  * @brief Set the LB density for a single node.
@@ -234,7 +234,7 @@ lb_lbfluid_get_force_to_be_applied(const Utils::Vector3d &pos);
  * @brief Distributes a force at a position which will be applied during
  *        the next integration loop
  * @param pos Position at which the force is beeing applied.
- *        f   The force vector that is beeing applied.
+ * @param f   The force vector that is beeing applied.
  */
 void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
                                  const Utils::Vector3d &f);
@@ -245,5 +245,7 @@ void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
  * @retval interpolated fluid density.
  */
 double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
+
+void mpi_set_lattice_switch(ActiveLB lattice_switch);
 
 #endif
