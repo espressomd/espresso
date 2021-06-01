@@ -53,26 +53,35 @@ class ReactionEnsembleTest(ut.TestCase):
             pos=np.random.random((2 * cls.N0, 3)) * cls.system.box_l,
             type=cls.N0 * [cls.type_A, cls.type_H])
 
-        cls.RE.add_reaction(
-            gamma=cls.Ka,
-            reactant_types=[cls.type_HA],
-            reactant_coefficients=[1],
-            product_types=[cls.type_A, cls.type_H],
-            product_coefficients=[1, 1],
-            default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
         cls.RE.constant_pH = cls.pH
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.RE.delete_reaction(0)
 
     @classmethod
     def ideal_alpha(cls, pH):
         return 1.0 / (1 + 10**(cls.pKa - pH))
 
-    def test_ideal_titration_curve(self):
+    def run_ideal_titration_curve(self, num_concurrent_reactions):
+        RE = ReactionEnsembleTest.RE
+        RE.add_reaction(
+            gamma=ReactionEnsembleTest.Ka,
+            reactant_types=[ReactionEnsembleTest.type_HA],
+            reactant_coefficients=[num_concurrent_reactions],
+            product_types=[
+                ReactionEnsembleTest.type_A,
+                ReactionEnsembleTest.type_H],
+            product_coefficients=[
+                num_concurrent_reactions,
+                num_concurrent_reactions],
+            default_charges={ReactionEnsembleTest.type_HA: 0, ReactionEnsembleTest.type_A: -1, ReactionEnsembleTest.type_H: +1})
+
         N0 = ReactionEnsembleTest.N0
         type_A = ReactionEnsembleTest.type_A
         type_H = ReactionEnsembleTest.type_H
         type_HA = ReactionEnsembleTest.type_HA
         system = ReactionEnsembleTest.system
-        RE = ReactionEnsembleTest.RE
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
         RE.reaction(40 * N0)
@@ -111,6 +120,12 @@ class ReactionEnsembleTest(ut.TestCase):
             + f"  target alpha: {target_alpha:.3f}"
             + f"  rel_error: {rel_error_alpha * 100:.1f}%"
         )
+
+    def test_ideal_titration_curve_one_reaction(self):
+        self.run_ideal_titration_curve(1)
+
+    def test_ideal_titration_curve_two_reactions(self):
+        self.run_ideal_titration_curve(2)
 
 
 if __name__ == "__main__":

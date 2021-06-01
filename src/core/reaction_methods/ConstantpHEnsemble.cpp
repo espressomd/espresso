@@ -28,7 +28,6 @@
 #include <vector>
 
 namespace ReactionMethods {
-
 /**
  * Calculates the expression in the acceptance probability of the constant pH
  * method.
@@ -37,7 +36,8 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
     SingleReaction const &current_reaction, double E_pot_old, double E_pot_new,
     std::map<int, int> const &old_particle_numbers, int, int, bool) const {
   auto const beta = 1.0 / temperature;
-  auto const pKa = -current_reaction.nu_bar * log10(current_reaction.gamma);
+  auto const pKa = -std::copysign(1.0, current_reaction.nu_bar) *
+                   log10(current_reaction.gamma);
   auto const ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar / beta *
                                                    log(10) *
                                                    (m_constant_pH - pKa);

@@ -461,15 +461,6 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
 
         self._set_params_in_es_core()
 
-    def add_reaction(self, *args, **kwargs):
-        if(len(kwargs["product_types"]) != 2 or len(kwargs["reactant_types"]) != 1):
-            raise ValueError(
-                "The constant pH method is only implemented for reactions with two product types and one adduct type.")
-        if(kwargs["reactant_coefficients"][0] != 1 or kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1):
-            raise ValueError(
-                "All product and reactant coefficients must equal one in the constant pH method as implemented in ESPResSo.")
-        super().add_reaction(*args, **kwargs)
-
     property constant_pH:
         """
         Sets the input pH for the constant pH ensemble method.
