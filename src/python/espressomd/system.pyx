@@ -43,9 +43,8 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .globals import Globals
-from .globals cimport FIELD_MAX_OIF_OBJECTS
-from .globals cimport integ_switch, max_oif_objects
-from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded, mpi_bcast_parameter
+from .globals cimport integ_switch, max_oif_objects, mpi_set_max_oif_objects
+from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded
 from .utils cimport check_type_or_throw_except
 from .utils import is_valid_type, handle_errors
 IF VIRTUAL_SITES:
@@ -300,9 +299,7 @@ cdef class System:
             return max_oif_objects
 
         def __set__(self, v):
-            global max_oif_objects
-            max_oif_objects = v
-            mpi_bcast_parameter(FIELD_MAX_OIF_OBJECTS)
+            mpi_set_max_oif_objects(v)
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
