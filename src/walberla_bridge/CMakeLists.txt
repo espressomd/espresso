@@ -18,7 +18,7 @@
 #
 set(WalberlaBridge_SRC generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp generated_kernels/CollideSweepThermalized.cpp
                        generated_kernels/InitialPDFsSetter.cpp generated_kernels/Dynamic_UBB.cpp
-                       lb_walberla_init.cpp)
+                       lb_walberla_init.cpp WalberlaBlockForest.hpp)
 if (WALBERLA_USE_AVX)
   list(APPEND WalberlaBridge_SRC generated_kernels/CollideSweepAVX.cpp generated_kernels/CollideSweepThermalizedAVX.cpp)
 endif()
