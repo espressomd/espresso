@@ -19,9 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** \file
- *  This contains a timing loop for the force calculation. Via the global
- *  variable @ref timing_samples (called @c timings in the Python interface)
- *  you can specify how many force evaluations are sampled. Via \ref markTime
+ *  This contains a timing loop for the force calculation. Via \ref markTime
  *  and \ref diffTime you can also easily time anything other than
  *  the force evaluation.
  *
@@ -31,19 +29,15 @@
 #ifndef TUNING_H
 #define TUNING_H
 
-/** If positive, the number of samples for timing */
-extern int timing_samples;
-
 /** Measure the time for some force calculations.
  *  Actually performs \ref mpi_integrate (0).
  *  This times the force calculation without
  *  propagating the system. It therefore does
  *  not include e.g. Verlet list updates.
- *  @param default_samples  the number of samples to take if
- *                          \ref timing_samples is not set.
+ *  @param int_steps  Number of integration steps.
  *  @return Time per integration in milliseconds.
  */
-double time_force_calc(int default_samples);
+double time_force_calc(int int_steps);
 
 /** Set a time marker. \ref diffTime always gives the time in milliseconds
  *  between the last two calls to \ref markTime.

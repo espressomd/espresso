@@ -45,9 +45,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 cdef extern from "rattle.hpp":
     extern int n_rigidbonds
 
-cdef extern from "tuning.hpp":
-    extern int timing_samples
-
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int max_oif_objects
     void mpi_set_max_oif_objects(int max_oif_objects)

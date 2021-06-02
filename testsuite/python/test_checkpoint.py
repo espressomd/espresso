@@ -329,7 +329,7 @@ class CheckpointTest(ut.TestCase):
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.01, 'mesh': 3 * [8],
                      'cao': 1, 'alpha': 12.0, 'r_cut': 2.4, 'tune': False,
-                     'mesh_off': [0.5, 0.5, 0.5], 'epsilon': 2.0}
+                     'mesh_off': [0.5, 0.5, 0.5], 'epsilon': 2.0, 'timings': 15}
         for key in reference:
             self.assertIn(key, state)
             np.testing.assert_almost_equal(state[key], reference[key],
@@ -342,7 +342,8 @@ class CheckpointTest(ut.TestCase):
         actor = self.get_active_actor_of_type(espressomd.electrostatics.P3M)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
-                     'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False}
+                     'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
+                     'timings': 15}
         for key in reference:
             self.assertIn(key, state)
             np.testing.assert_almost_equal(state[key], reference[key],
@@ -356,7 +357,8 @@ class CheckpointTest(ut.TestCase):
         elc_state = actor.get_params()
         p3m_state = elc_state['p3m_actor'].get_params()
         p3m_reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
-                         'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False}
+                         'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
+                         'timings': 15}
         elc_reference = {'gap_size': 6.0, 'maxPWerror': 0.1,
                          'delta_mid_top': 0.9, 'delta_mid_bot': 0.1}
         for key in elc_reference:

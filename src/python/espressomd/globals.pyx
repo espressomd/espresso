@@ -21,7 +21,6 @@ from .globals cimport get_time_step
 from .globals cimport mpi_set_time_step
 from .globals cimport min_global_cut
 from .globals cimport get_sim_time
-from .globals cimport timing_samples
 from .globals cimport mpi_set_forcecap
 from .globals cimport forcecap_get
 from .utils import array_locked, handle_errors
@@ -72,18 +71,6 @@ cdef class Globals:
         def __get__(self):
             return get_sim_time()
 
-    property timings:
-        def __set__(self, int _timings):
-            global timing_samples
-            if _timings <= 0:
-                timing_samples = 0
-            else:
-                timing_samples = _timings
-
-        def __get__(self):
-            global timing_samples
-            return timing_samples
-
     property force_cap:
         def __set__(self, cap):
             mpi_set_forcecap(cap)
@@ -97,8 +84,8 @@ cdef class Globals:
                  'min_global_cut': self.min_global_cut,
                  'periodicity': self.periodicity,
                  'time': self.time,
-                 'timings': self.timings,
-                 'force_cap': self.force_cap}
+                 'force_cap': self.force_cap,
+                 'periodicity': self.periodicity}
         return state
 
     def __setstate__(self, state):
@@ -107,5 +94,4 @@ cdef class Globals:
         self.min_global_cut = state['min_global_cut']
         self.periodicity = state['periodicity']
         self.time = state['time']
-        self.timings = state['timings']
         self.force_cap = state['force_cap']

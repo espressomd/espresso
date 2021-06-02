@@ -55,7 +55,7 @@ IF COLLISION_DETECTION == 1:
 
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                      "time_step", "timings", "force_cap", "max_oif_objects"]
+                      "time_step", "force_cap", "max_oif_objects"]
 
 if VIRTUAL_SITES:
     setable_properties.append("_active_virtual_sites_handle")
@@ -254,18 +254,6 @@ cdef class System:
 
         def __get__(self):
             return self.globals.time_step
-
-    property timings:
-        """
-        Sets the number of test force calculations to carry out when tuning
-        electrostatics and magnetostatics.
-        """
-
-        def __set__(self, int _timings):
-            self.globals.timings = _timings
-
-        def __get__(self):
-            return self.globals.timings
 
     property max_cut_nonbonded:
         def __get__(self):
