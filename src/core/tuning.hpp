@@ -19,9 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** \file
- *  This contains a timing loop for the force calculation. Via \ref markTime
- *  and \ref diffTime you can also easily time anything other than
- *  the force evaluation.
+ *  This contains a timing loop for the force calculation.
  *
  *  Implementation in tuning.cpp.
  */
@@ -38,14 +36,6 @@
  *  @return Time per integration in milliseconds.
  */
 double time_force_calc(int int_steps);
-
-/** Set a time marker. \ref diffTime always gives the time in milliseconds
- *  between the last two calls to \ref markTime.
- */
-void markTime();
-
-/** Calculate milliseconds between last two calls to \ref markTime. */
-double diffTime();
 
 /** Set the optimal @ref skin between @p min_skin and @p max_skin
  *  by bisection to tolerance @p tol.
