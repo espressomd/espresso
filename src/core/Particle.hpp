@@ -22,6 +22,7 @@
 #include "config.hpp"
 
 #include "BondList.hpp"
+#include "Propagation.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
@@ -89,6 +90,8 @@ struct ParticleProperties {
   int mol_id = 0;
   /** particle type, used for non-bonded interactions. */
   int type = 0;
+
+  Propagation propagation = Propagation::SYSTEM_DEFAULT;
 
   /** particle mass */
 #ifdef MASS
@@ -402,6 +405,10 @@ struct Particle { // NOLINT(bugprone-exception-escape)
   ParticleProperties p;
   ///
   ParticlePosition r;
+  ///
+  void set_propagation(Propagation propagation) {
+    p.propagation = propagation;
+  }
 #ifdef DIPOLES
   Utils::Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
 #endif

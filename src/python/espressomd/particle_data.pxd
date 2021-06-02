@@ -26,6 +26,15 @@ include "myconfig.pxi"
 
 from .utils cimport Span
 
+cdef extern from "Propagation.hpp":
+    cdef cppclass Propagation:
+        pass
+
+cdef extern from "Propagation.hpp" namespace "Propagation":
+    cdef Propagation SYSTEM_DEFAULT
+    cdef Propagation VIRTUALSITES_RELATIVE
+    cdef Propagation INERTIALESS_TRACERS
+
 # Import particle data structures and setter functions from particle_data.hpp
 cdef extern from "particle_data.hpp":
     cppclass BondView:
@@ -47,6 +56,7 @@ cdef extern from "particle_data.hpp":
         int    type
         double mass
         stdint.uint8_t rotation
+        Propagation propagation
 
     ctypedef struct particle_position "ParticlePosition":
         Vector3d p
@@ -102,6 +112,8 @@ cdef extern from "particle_data.hpp":
 
     void set_particle_q(int part, double q)
 
+    void set_particle_propagation(int part, Propagation propagation)
+
     IF LB_ELECTROHYDRODYNAMICS:
         void set_particle_mu_E(int part, const Vector3d & mu_E)
         Vector3d get_particle_mu_E(int part)
@@ -152,6 +164,8 @@ cdef extern from "particle_data.hpp":
         void set_particle_vs_quat(int part, Quaternion[double] vs_quat)
 
     void pointer_to_q(const particle * P, const double * & res)
+
+    void pointer_to_propagation(const particle * P, const Propagation * & res)
 
     IF EXTERNAL_FORCES:
         IF ROTATION:

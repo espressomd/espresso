@@ -594,6 +594,35 @@ cdef class ParticleHandle:
             pointer_to_q(self.particle_data, x)
             return x[0]
 
+    # Propagation type
+    property propagation:
+        """
+        Particle propagation type.
+
+        propagation : :obj:`Propagation`
+        (`SYSTEM_DEFAULT` or `VIRTUALSITES_RELATIVE` 
+        or `INERTIALESS_TRACERS`)
+
+        """
+
+        def __set__(self, int _propagation):
+            cdef Propagation mypropagation
+            assert (_propagation == 0 or
+                    _propagation == 1 or
+                    _propagation == 2), \
+                    "Propagation can only be the following types:\n\
+                    0 SYSTEM_DEFAULT\n\
+                    1 VIRTUALSITES_RELATIVE\n\
+                    2 INERTIALESS_TRACERS\n"
+            mypropagation = <Propagation> _propagation
+            set_particle_propagation(self._id, mypropagation)
+
+        def __get__(self):
+            self.update_particle_data()
+            cdef const Propagation * x = NULL
+            pointer_to_propagation(self.particle_data, x)
+            return <int> x[0]
+
     IF LB_ELECTROHYDRODYNAMICS:
         property mu_E:
             """

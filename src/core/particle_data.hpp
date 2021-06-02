@@ -38,6 +38,7 @@
 
 #include "Particle.hpp"
 #include "ParticleList.hpp"
+#include "Propagation.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -165,6 +166,8 @@ void rotate_particle(int part, const Utils::Vector3d &axis, double angle);
  *  @param q its new charge.
  */
 void set_particle_q(int part, double q);
+
+void set_particle_propagation(int part, Propagation propagation);
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 /** Call only on the master node: set particle electrophoretic mobility.
@@ -366,6 +369,8 @@ void pointer_to_quat(Particle const *p, double const *&res);
 #endif
 
 void pointer_to_q(Particle const *p, double const *&res);
+
+void pointer_to_propagation(Particle const *p, Propagation const *&res);
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, bool const *&res);

@@ -33,6 +33,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
+#include "Propagation.hpp"
 
 #include <string>
 #include <utils/Cache.hpp>
@@ -93,6 +94,7 @@ using Prop = ParticleProperties;
 using UpdatePropertyMessage = boost::variant
         < UpdateProperty<int, &Prop::type>
         , UpdateProperty<int, &Prop::mol_id>
+        , UpdateProperty<Propagation, &Prop::propagation>
 #ifdef MASS
         , UpdateProperty<double, &Prop::mass>
 #endif
@@ -795,6 +797,11 @@ void set_particle_q(int part, double q) {
 #endif
 }
 
+void set_particle_propagation(int part, Propagation propagation) {
+  mpi_update_particle_property<Propagation,
+  &ParticleProperties::propagation>(part, propagation);
+}
+
 #ifndef ELECTROSTATICS
 const constexpr double ParticleProperties::q;
 #endif
@@ -1201,6 +1208,9 @@ void pointer_to_quat(Particle const *p, double const *&res) {
 #endif
 
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
+
+void pointer_to_propagation(Particle const *p, Propagation const *&res) 
+{ res = &(p->p.propagation); }
 
 #ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, bool const *&res) {
