@@ -23,29 +23,34 @@
 
 #include <cmath>
 #include <stdexcept>
+#include <tuple>
 #include <utility>
 #include <vector>
 
 namespace ReactionMethods {
 
-std::pair<double, double>
-WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
-  if (!all_reactant_particles_exist(reaction_id))
+std::pair<double, double> WidomInsertion::measure_excess_chemical_potential(
+    SingleReaction &current_reaction) {
+
+  if (!all_reactant_particles_exist(current_reaction))
     throw std::runtime_error("Trying to remove some non-existing particles "
                              "from the system via the inverse Widom scheme.");
 
-  SingleReaction &current_reaction = reactions[reaction_id];
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
   // make reaction attempt
   std::vector<int> p_ids_created_particles;
   std::vector<StoredParticleProperty> hidden_particles_properties;
   std::vector<StoredParticleProperty> changed_particles_properties;
-  const int number_of_saved_properties =
-      3; // save p_id, charge and type of the reactant particle, only thing we
-         // need to hide the particle and recover it
-  make_reaction_attempt(current_reaction, changed_particles_properties,
-                        p_ids_created_particles, hidden_particles_properties);
+
+  // save p_id, charge and type of the reactant particle, only thing we
+  // need to hide the particle and recover it
+  const int number_of_saved_properties = 3;
+
+  std::tie(changed_particles_properties, p_ids_created_particles,
+           hidden_particles_properties) =
+      make_reaction_attempt(current_reaction);
+
   const double E_pot_new = calculate_current_potential_energy_of_system();
   // reverse reaction attempt
   // reverse reaction
