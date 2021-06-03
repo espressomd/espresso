@@ -1,4 +1,6 @@
-# Copyright (C) 2019 The ESPResSo project
+#!/bin/sh
+#
+# Copyright (C) 2021 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,19 +16,28 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-import unittest as ut
-import importlib_wrapper
+python=$(which python3)
+pypresso=../../build/pypresso
 
-sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/gibbs_ensemble/run_sim.py",
-    cmd_arguments=["0.7", "-N", "256", "--warmup", "1000", "--steps", "1000", "--seed", "10"])
+if [ ! -e "${pypresso}" ]
+then
+    echo Invalid path to pypresso script: $pypresso
+    exit 1
+fi
 
+# Run the simulations for the temperatures given as parameters
+for kT in $*
+do
+    for seed in 1 2 3 4 5
+    do
 
-@skipIfMissingFeatures
-class Sample(ut.TestCase):
-    sample
+        test -s "temp_${kT}_seed_${seed}.dat.gz" ||
+            "${pypresso}" run_sim.py ${kT} --log --steps 1000000 --seed ${seed} > "temp_${kT}_seed_${seed}.out" 2>&1 &
+    done
+done
+wait
 
-
-if __name__ == "__main__":
-    ut.main()
+# Plot the results, create fits
+"${python}" create_fits.py temp_*.dat.gz
