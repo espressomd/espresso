@@ -100,10 +100,7 @@ NUM_OF_CLIENTS = 2
 
 # Global number of particles
 GLOBAL_NUM_PART = args.N
-try:
-    assert((GLOBAL_NUM_PART % 2) == 0)
-except AssertionError:
-    raise TypeError("Wrong number of particles, must be even")
+assert (GLOBAL_NUM_PART % 2) == 0, "The number of particles must be even"
 
 # Init particle density
 init_density = args.density
@@ -189,8 +186,7 @@ class Box:
         return np.clip((self.energy - self.old_energy), -100 * kT, 100 * kT)
 
     def send_data(self, data):
-        # For debugging
-        #assert(type(data) == list)
+        assert isinstance(data, list)
         logging.debug("Send to {}: {}".format(self.box_name, data))
         self.pipe.send(data)
 
@@ -202,9 +198,7 @@ class Box:
     def recv_energy(self):
         msg = self.recv_data()
         # Debugging
-        try:
-            assert(msg[0] == MessageID.ENERGY)
-        except BaseException:
+        if msg[0] != MessageID.ENERGY:
             raise ConnectionError(
                 "Error during energy return of {}, got this instead: \n{}".format(
                     self.box_name, msg))
@@ -217,9 +211,7 @@ def validate_info(boxes):
     [box.send_data([MessageID.INFO]) for box in boxes]
     for box in boxes:
         msg = box.pipe.recv()
-        try:
-            assert(msg[0] == MessageID.INFO)
-        except BaseException:
+        if msg[0] != MessageID.INFO:
             raise ConnectionError(
                 "Connection to {} seems to be broken.".format(
                     box.box_name))
@@ -239,10 +231,9 @@ def validate_info(boxes):
 def choose_random_box(boxes):
     """ Choose a box at random (Assumes 2 Clients) """
     random_int = np.random.randint(2)
-    try:
-        assert(boxes[random_int].num_part > 0)
+    if boxes[random_int].num_part > 0:
         return random_int
-    except BaseException:
+    else:
         return (random_int + 1) % 2
 
 

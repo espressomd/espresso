@@ -148,8 +148,9 @@ class Client(Process):
             MessageID.END: self.end_simulation
         }
 
+        # callback loop, we can simply terminate the process
+        # via process.terminate() in the parent process
         while True:
-            """ Can be left at while True, we can simply terminate the process via process.terminate() in the parent process """
             # Catch errors during handling
             msg = self.pipe.recv()
 

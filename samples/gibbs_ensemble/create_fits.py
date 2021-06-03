@@ -51,7 +51,7 @@ logging.basicConfig(
 )
 
 # Warmup length to skip at beginning
-WARMUP_LENGTH = int(3e3)
+WARMUP_LENGTH = 3000
 
 # Lists for (unsorted) densities and temperature
 dens_liquid = []
@@ -69,7 +69,7 @@ def autocorr(x):
     """ Compute the normalized autocorrelation function """
     _x = x - np.mean(x)
     return (signal.convolve(
-        _x, _x[::-1], mode='full', method='auto')[(np.size(_x) - 1):]) / (np.sum(_x * _x))
+        _x, _x[::-1], mode='full', method='auto')[(np.size(_x) - 1):]) / np.sum(_x * _x)
 
 
 def relaxation_time(x):
@@ -101,11 +101,8 @@ def rectilinear_law(kT, p_c, A, kT_c):
 for f in args.files:
 
     logging.info("Loading {}...".format(f))
-    try:
-        with gzip.open(f, 'rb') as _f:
-            data = pickle.load(_f)
-    except FileNotFoundError:
-        raise FileNotFoundError("File {} not found.".format(f))
+    with gzip.open(f, 'rb') as _f:
+        data = pickle.load(_f)
 
     kT = data["temperature"]
 

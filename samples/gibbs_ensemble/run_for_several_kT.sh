@@ -23,7 +23,7 @@ pypresso=../../build/pypresso
 
 if [ ! -e "${pypresso}" ]
 then
-    echo Invalid path to pypresso script: $pypresso
+    echo "Invalid path to pypresso script: ${pypresso}" 1>&2
     exit 1
 fi
 
