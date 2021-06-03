@@ -68,13 +68,13 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   int const type_A = 0;
   int const type_B = 1;
   int const type_C = 2;
-  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
+  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4}, 1);
 
   // check reaction addition
   {
     r_algo.add_reaction(reaction.gamma, reaction.reactant_types,
                         reaction.reactant_coefficients, reaction.product_types,
-                        reaction.product_coefficients);
+                        reaction.product_coefficients, 1);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 1ul);
     auto const &value = r_algo.reactions[0];
     BOOST_TEST(value.reactant_types == reaction.reactant_types,
@@ -116,11 +116,11 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // check reaction removal
   {
-    SingleReaction const new_reaction(5., {type_B}, {1}, {type_C}, {1});
+    SingleReaction const new_reaction(5., {type_B}, {1}, {type_C}, {1}, 1);
     r_algo.add_reaction(new_reaction.gamma, new_reaction.reactant_types,
                         new_reaction.reactant_coefficients,
                         new_reaction.product_types,
-                        new_reaction.product_coefficients);
+                        new_reaction.product_coefficients, 1);
     BOOST_REQUIRE_EQUAL(r_algo.reactions.size(), 2ul);
     BOOST_CHECK_EQUAL(r_algo.reactions[1].gamma, new_reaction.gamma);
     r_algo.delete_reaction(1);

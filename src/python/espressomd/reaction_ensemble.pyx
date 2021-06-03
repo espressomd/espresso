@@ -57,10 +57,10 @@ cdef class ReactionAlgorithm:
     cdef CReactionAlgorithm * RE
 
     def _valid_keys(self):
-        return "temperature", "exclusion_radius", "seed"
+        return "temperature", "exclusion_radius", "seed", "conversion_factor_from_mol_per_l_to_1_div_sigma_cubed"
 
     def _required_keys(self):
-        return "temperature", "exclusion_radius", "seed"
+        return "temperature", "exclusion_radius", "seed", "conversion_factor_from_mol_per_l_to_1_div_sigma_cubed"
 
     def _set_params_in_es_core(self):
         deref(self.RE).temperature = self._params["temperature"]
@@ -207,7 +207,7 @@ cdef class ReactionAlgorithm:
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
-        return "gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
+        return "gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality", "product_index_protons"
 
     def _required_keys_add(self):
         return ["gamma", "reactant_types", "reactant_coefficients",
@@ -234,13 +234,20 @@ cdef class ReactionAlgorithm:
             product_types.push_back(value)
         for value in self._params["product_coefficients"]:
             product_coefficients.push_back(value)
+        cdef int product_index_protons = -1000000
+        if "product_index_protons" in self._params:
+            product_index_protons = self._params["product_index_protons"] 
+
+        nu_bar = - np.sum(self._params["reactant_coefficients"]) + \
+            np.sum(self._params["product_coefficients"])
+        conv_factor = self._params["conversion_factor_from_mol_per_l_to_1_div_sigma_cubed"]        
 
         # forward reaction
         deref(self.RE).add_reaction(
-            self._params["gamma"], reactant_types, reactant_coefficients, product_types, product_coefficients)
+            self._params["gamma"] * conv_factor**nu_bar, reactant_types, reactant_coefficients, product_types, product_coefficients, product_index_protons)
         # backward reaction
         deref(self.RE).add_reaction(
-            1.0 / self._params["gamma"], product_types, product_coefficients, reactant_types, reactant_coefficients)
+            1.0 / (self._params["gamma"] * conv_factor**nu_bar), product_types, product_coefficients, reactant_types, reactant_coefficients, -product_index_protons)
 
         for key, value in self._params["default_charges"].items():
             deref(self.RE).charges_of_types[int(key)] = value
@@ -429,6 +436,8 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
                 raise KeyError(f"{k} is not a valid key")
 
         self._set_params_in_es_core()
+        deref(self.RE).m_conversion_factor_from_mol_per_l_to_1_div_sigma_cubed = kwargs[
+            "conversion_factor_from_mol_per_l_to_1_div_sigma_cubed"]
 
 cdef class ConstantpHEnsemble(ReactionAlgorithm):
     """
@@ -440,6 +449,12 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
 
     """
     cdef unique_ptr[CConstantpHEnsemble] constpHptr
+
+    def _valid_keys(self):
+        return "temperature", "exclusion_radius", "seed", "conversion_factor_from_mol_per_l_to_1_div_sigma_cubed", "pH"
+
+    def _required_keys(self):
+        return "temperature", "exclusion_radius", "seed", "conversion_factor_from_mol_per_l_to_1_div_sigma_cubed", "pH"
 
     def __init__(self, *args, **kwargs):
         self._params = {"temperature": 1,
@@ -460,6 +475,15 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
                 raise KeyError(f"{k} is not a valid key")
 
         self._set_params_in_es_core()
+        deref(self.RE).m_conversion_factor_from_mol_per_l_to_1_div_sigma_cubed = kwargs[
+            "conversion_factor_from_mol_per_l_to_1_div_sigma_cubed"]
+        deref(self.constpHptr).m_constant_pH = self._params["pH"]
+
+    def add_reaction(self, *args, **kwargs):
+        if("product_index_protons" not in kwargs):
+            raise ValueError(
+                "The constant pH method requires to know which type is the proton type")
+        super().add_reaction(*args, **kwargs)    
 
     property constant_pH:
         """
@@ -500,6 +524,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         self.RE = <CReactionAlgorithm * > self.WLRptr.get()
 
         self._set_params_in_es_core()
+        deref(self.RE).m_conversion_factor_from_mol_per_l_to_1_div_sigma_cubed = kwargs[
+            "conversion_factor_from_mol_per_l_to_1_div_sigma_cubed"]
 
     def reaction(self, reaction_steps=1):
         """
@@ -761,6 +787,8 @@ cdef class WidomInsertion(ReactionAlgorithm):
             else:
                 raise KeyError(f"{k} is not a valid key")
 
+        # unused value
+        self._params["conversion_factor_from_mol_per_l_to_1_div_sigma_cubed"] = 1.0
         self._set_params_in_es_core()
 
     def measure_excess_chemical_potential(self, reaction_id=0):

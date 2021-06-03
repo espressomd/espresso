@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(SingleReaction_test) {
   int const type_A = 0;
   int const type_B = 1;
   int const type_C = 2;
-  SingleReaction reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
+  SingleReaction reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4}, 1);
 
   // check derived parameter nu_bar
   BOOST_CHECK_EQUAL(reaction.nu_bar, 6);

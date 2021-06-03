@@ -53,6 +53,7 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
   ConstantpHEnsembleTest r_algo(42);
   r_algo.temperature = 20.;
   r_algo.m_constant_pH = 1.;
+  r_algo.m_conversion_factor_from_mol_per_l_to_1_div_sigma_cubed = 1.0;
 
   // exception if no reaction was added
   BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
@@ -61,7 +62,7 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
   int const type_A = 0;
   int const type_B = 1;
   int const type_C = 2;
-  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {1, 1});
+  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {1, 1}, 1);
 
   // check acceptance probability
   for (int i = 0; i < 3; ++i) {

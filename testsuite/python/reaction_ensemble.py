@@ -62,7 +62,7 @@ class ReactionEnsembleTest(ut.TestCase):
     gamma = target_alpha**2 / (1. - target_alpha) * N0 / (volume**nubar)
     RE = reaction_ensemble.ReactionEnsemble(
         temperature=temperature,
-        exclusion_radius=exclusion_radius, seed=12)
+        exclusion_radius=exclusion_radius, seed=12, conversion_factor_from_mol_per_l_to_1_div_sigma_cubed=1.0 / 37.1)
 
     @classmethod
     def setUpClass(cls):

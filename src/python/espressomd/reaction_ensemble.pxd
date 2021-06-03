@@ -43,7 +43,7 @@ cdef extern from "reaction_methods/ReactionAlgorithm.hpp" namespace "ReactionMet
         int check_reaction_method() except +
         double get_acceptance_rate_configurational_moves()
         int delete_particle(int p_id)
-        void add_reaction(double gamma, vector[int] reactant_types, vector[int] reactant_coefficients, vector[int] product_types, vector[int] product_coefficients) except +
+        void add_reaction(double gamma, vector[int] reactant_types, vector[int] reactant_coefficients, vector[int] product_types, vector[int] product_coefficients, int product_index_protons) except +
         void delete_reaction(int reaction_id)
 
         vector[SingleReaction] reactions
@@ -59,6 +59,7 @@ cdef extern from "reaction_methods/ReactionAlgorithm.hpp" namespace "ReactionMet
         double slab_start_z
         double slab_end_z
         int non_interacting_type
+        double m_conversion_factor_from_mol_per_l_to_1_div_sigma_cubed
 
 cdef extern from "reaction_methods/ReactionEnsemble.hpp" namespace "ReactionMethods":
 

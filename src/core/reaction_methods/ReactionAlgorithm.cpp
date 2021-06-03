@@ -61,9 +61,11 @@ void ReactionAlgorithm::add_reaction(
     double gamma, const std::vector<int> &reactant_types,
     const std::vector<int> &reactant_coefficients,
     const std::vector<int> &product_types,
-    const std::vector<int> &product_coefficients) {
+    const std::vector<int> &product_coefficients,
+    const int product_index_protons) {
   SingleReaction new_reaction(gamma, reactant_types, reactant_coefficients,
-                              product_types, product_coefficients);
+                              product_types, product_coefficients,
+                              product_index_protons);
 
   // make ESPResSo count the particle numbers which take part in the reactions
   for (int reactant_type : new_reaction.reactant_types)

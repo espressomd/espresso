@@ -46,15 +46,17 @@ class ConstantpHTest(ut.TestCase):
 
         RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
             temperature=1.0,
-            exclusion_radius=1,
-            seed=44)
+            exclusion_radius=0,
+            seed=44,
+            conversion_factor_from_mol_per_l_to_1_div_sigma_cubed=1.0 / 37.1, pH=pH)
         RE.add_reaction(
-            gamma=10**(-pKa),
+            gamma=(10**(-pKa)),
             reactant_types=[type_HA],
             reactant_coefficients=[1],
             product_types=[type_A, type_H],
             product_coefficients=[1, 1],
-            default_charges={type_HA: 0, type_A: -1, type_H: +1})
+            default_charges={type_HA: 0, type_A: -1, type_H: +1},
+            product_index_protons=1)
         RE.constant_pH = pH
 
         # equilibration

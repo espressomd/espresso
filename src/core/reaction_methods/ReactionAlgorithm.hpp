@@ -70,6 +70,7 @@ public:
   double slab_start_z = -10.0;
   double slab_end_z = -10.0;
   int non_interacting_type = 100;
+  double m_conversion_factor_from_mol_per_l_to_1_div_sigma_cubed;
 
   int m_accepted_configurational_MC_moves = 0;
   int m_tried_configurational_MC_moves = 0;
@@ -86,7 +87,8 @@ public:
   void add_reaction(double gamma, const std::vector<int> &reactant_types,
                     const std::vector<int> &reactant_coefficients,
                     const std::vector<int> &product_types,
-                    const std::vector<int> &product_coefficients);
+                    const std::vector<int> &product_coefficients,
+                    int product_index_protons);
   void delete_reaction(int reaction_id) {
     reactions.erase(reactions.begin() + reaction_id);
   }

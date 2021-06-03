@@ -70,19 +70,30 @@ double calculate_factorial_expression_cpH(
     SingleReaction const &current_reaction,
     std::map<int, int> const &old_particle_numbers) {
   double factorial_expr = 1.0;
+
   // factorial contribution of reactants
-  {
-    int nu_i = -1 * current_reaction.reactant_coefficients[0];
-    int N_i0 = old_particle_numbers.at(current_reaction.reactant_types[0]);
-    factorial_expr *=
-        factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
+  for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
+    if (current_reaction.product_index_protons < 0 &&
+        i == -current_reaction.product_index_protons)
+      continue;
+    int nu_i = -1 * current_reaction.reactant_coefficients[i];
+    int N_i0 = old_particle_numbers.at(current_reaction.reactant_types[i]);
+    factorial_expr *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
+        N_i0, nu_i); // zeta = 1 (see @cite smith94c)
+                     // since we only perform one reaction
+                     // at one call of the function
   }
   // factorial contribution of products
-  {
-    int nu_i = current_reaction.product_coefficients[0];
-    int N_i0 = old_particle_numbers.at(current_reaction.product_types[0]);
-    factorial_expr *=
-        factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N_i0, nu_i);
+  for (int i = 0; i < current_reaction.product_types.size(); i++) {
+    if (current_reaction.product_index_protons > 0 &&
+        i == current_reaction.product_index_protons)
+      continue;
+    int nu_i = current_reaction.product_coefficients[i];
+    int N_i0 = old_particle_numbers.at(current_reaction.product_types[i]);
+    factorial_expr *= factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
+        N_i0, nu_i); // zeta = 1 (see @cite smith94c)
+                     // since we only perform one reaction
+                     // at one call of the function
   }
   return factorial_expr;
 }

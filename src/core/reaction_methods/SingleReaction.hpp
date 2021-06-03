@@ -31,7 +31,8 @@ struct SingleReaction {
   SingleReaction(double gamma, std::vector<int> const &reactant_types,
                  std::vector<int> const &reactant_coefficients,
                  std::vector<int> const &product_types,
-                 std::vector<int> const &product_coefficients) {
+                 std::vector<int> const &product_coefficients,
+                 int product_index_protons) {
     this->reactant_types = reactant_types;
     this->reactant_coefficients = reactant_coefficients;
     this->product_types = product_types;
@@ -41,6 +42,7 @@ struct SingleReaction {
                              product_coefficients.end(), 0) -
              std::accumulate(reactant_coefficients.begin(),
                              reactant_coefficients.end(), 0);
+    this->product_index_protons = product_index_protons;
   }
 
   // strict input to the algorithm
@@ -49,6 +51,7 @@ struct SingleReaction {
   std::vector<int> product_types;
   std::vector<int> product_coefficients;
   double gamma = {};
+  int product_index_protons;
   // calculated values that are stored for performance reasons
   int nu_bar = {}; ///< change in particle numbers for the reaction
   Utils::Accumulator accumulator_exponentials = Utils::Accumulator(1);

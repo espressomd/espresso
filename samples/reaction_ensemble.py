@@ -74,17 +74,17 @@ if args.mode == "reaction_ensemble":
     RE = reaction_ensemble.ReactionEnsemble(
         temperature=1,
         exclusion_radius=1,
-        seed=77)
+        seed=77,
+        conversion_factor_from_mol_per_l_to_1_div_sigma_cubed=1.0 / 37.1)
 elif args.mode == "constant_pH_ensemble":
     RE = reaction_ensemble.ConstantpHEnsemble(
-        temperature=1, exclusion_radius=1, seed=77)
-    RE.constant_pH = 2
+        temperature=1, exclusion_radius=1, seed=77, conversion_factor_from_mol_per_l_to_1_div_sigma_cubed=1.0 / 37.1, pH=2)
 else:
     raise RuntimeError(
         "Please provide either --reaction_ensemble or --constant_pH_ensemble as argument ")
 RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
                 product_types=[1, 2], product_coefficients=[1, 1],
-                default_charges={0: 0, 1: -1, 2: +1})
+                default_charges={0: 0, 1: -1, 2: +1}, product_index_protons=1)
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 

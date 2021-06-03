@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
   int const type_A = 0;
   int const type_B = 1;
   int const type_C = 2;
-  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
+  SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4}, 1);
 
   // check acceptance probability
   constexpr auto g = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i;

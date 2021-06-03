@@ -59,7 +59,7 @@ class WangLandauReactionEnsembleTest(ut.TestCase):
     p1.add_bond((harmonic_bond, p2))
 
     WLRE = espressomd.reaction_ensemble.WangLandauReactionEnsemble(
-        temperature=temperature, exclusion_radius=0, seed=86)
+        temperature=temperature, exclusion_radius=0, seed=86, conversion_factor_from_mol_per_l_to_1_div_sigma_cubed=1.0)
     WLRE.add_reaction(
         gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
         product_types=[1, 2], product_coefficients=[1, 1],

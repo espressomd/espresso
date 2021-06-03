@@ -23,6 +23,7 @@ add_custom_target(
 
 sample_test(FILE test_billiard.py)
 sample_test(FILE test_chamber_game.py)
+sample_test(FILE test_constant_pH_ensemble_complex_reaction.py)
 sample_test(FILE test_constraints.py)
 sample_test(FILE test_dancing.py SUFFIX cpu_ft)
 sample_test(FILE test_dancing.py SUFFIX cpu_fts)

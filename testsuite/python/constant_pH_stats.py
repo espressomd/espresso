@@ -45,7 +45,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
-        temperature=1.0, exclusion_radius=1, seed=44)
+        temperature=1.0, exclusion_radius=1, seed=44, conversion_factor_from_mol_per_l_to_1_div_sigma_cubed=1.0 / 37.1, pH=pH)
 
     @classmethod
     def setUpClass(cls):
@@ -54,6 +54,7 @@ class ReactionEnsembleTest(ut.TestCase):
             type=cls.N0 * [cls.type_A, cls.type_H])
 
         cls.RE.constant_pH = cls.pH
+        cls.RE.set_volume(cls.box_l**3)
 
     @classmethod
     def tearDownClass(cls):
@@ -63,10 +64,11 @@ class ReactionEnsembleTest(ut.TestCase):
     def ideal_alpha(cls, pH):
         return 1.0 / (1 + 10**(cls.pKa - pH))
 
-    def run_ideal_titration_curve(self, num_concurrent_reactions):
+    def test_ideal_titration_curve(self):
+        num_concurrent_reactions = 1
         RE = ReactionEnsembleTest.RE
         RE.add_reaction(
-            gamma=ReactionEnsembleTest.Ka,
+            gamma=ReactionEnsembleTest.Ka**num_concurrent_reactions,
             reactant_types=[ReactionEnsembleTest.type_HA],
             reactant_coefficients=[num_concurrent_reactions],
             product_types=[
@@ -75,7 +77,11 @@ class ReactionEnsembleTest(ut.TestCase):
             product_coefficients=[
                 num_concurrent_reactions,
                 num_concurrent_reactions],
-            default_charges={ReactionEnsembleTest.type_HA: 0, ReactionEnsembleTest.type_A: -1, ReactionEnsembleTest.type_H: +1})
+            default_charges={
+                ReactionEnsembleTest.type_HA: 0,
+                ReactionEnsembleTest.type_A: -1,
+                ReactionEnsembleTest.type_H: +1},
+            product_index_protons=1)
 
         N0 = ReactionEnsembleTest.N0
         type_A = ReactionEnsembleTest.type_A
@@ -106,7 +112,6 @@ class ReactionEnsembleTest(ut.TestCase):
         pKa = ReactionEnsembleTest.pKa
         target_alpha = ReactionEnsembleTest.ideal_alpha(pH)
         rel_error_alpha = abs(average_alpha - target_alpha) / target_alpha
-        # relative error
         self.assertLess(
             rel_error_alpha,
             0.015,
@@ -120,12 +125,6 @@ class ReactionEnsembleTest(ut.TestCase):
             + f"  target alpha: {target_alpha:.3f}"
             + f"  rel_error: {rel_error_alpha * 100:.1f}%"
         )
-
-    def test_ideal_titration_curve_one_reaction(self):
-        self.run_ideal_titration_curve(1)
-
-    def test_ideal_titration_curve_two_reactions(self):
-        self.run_ideal_titration_curve(2)
 
 
 if __name__ == "__main__":

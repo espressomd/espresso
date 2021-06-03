@@ -36,14 +36,23 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
     SingleReaction const &current_reaction, double E_pot_old, double E_pot_new,
     std::map<int, int> const &old_particle_numbers, int, int, bool) const {
   auto const beta = 1.0 / temperature;
-  auto const pKa = -std::copysign(1.0, current_reaction.nu_bar) *
-                   log10(current_reaction.gamma);
-  auto const ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar / beta *
-                                                   log(10) *
-                                                   (m_constant_pH - pKa);
+  double nu_H = 0;
+  if (current_reaction.product_index_protons > 0)
+    nu_H = current_reaction
+               .product_coefficients[current_reaction.product_index_protons];
+  else
+    nu_H = -current_reaction
+                .reactant_coefficients[-current_reaction.product_index_protons];
+
+  auto const ln_bf = (E_pot_new - E_pot_old);
   const double factorial_expr = calculate_factorial_expression_cpH(
       current_reaction, old_particle_numbers);
-  auto const bf = factorial_expr * exp(-beta * ln_bf);
+  const double N_H = std::pow(10, -m_constant_pH) *
+                     m_conversion_factor_from_mol_per_l_to_1_div_sigma_cubed *
+                     volume;
+  auto const bf = current_reaction.gamma *
+                  std::pow(volume, current_reaction.nu_bar) *
+                  std::pow(N_H, -nu_H) * factorial_expr * exp(-beta * ln_bf);
   return bf;
 }
 
