@@ -36,30 +36,14 @@ LJ_SHIFT = - (np.power(LJ_SIGMA / LJ_CUTOFF, 12) -
               np.power(LJ_SIGMA / LJ_CUTOFF, 6))
 
 
-def calc_shift_correction(density):
-    """ Shift correction by integrating the constant part from 0 to the cutoff
-        radius """
-    return 4. / 3. * np.pi * LJ_CUTOFF**3 * LJ_SHIFT * 4 * LJ_EPSILON * density
-
-
-def calc_tail_correction(density):
-    """ Lennard-Jones truncation correction (See Frenkel, Smit, Understanding
-        molecular simulation, eq. (3.2.5)) """
-    return 8. / 3. * np.pi * density * LJ_EPSILON * LJ_SIGMA**3 * \
-        (1. / 3. * np.power(LJ_SIGMA / LJ_EPSILON, 9) -
-         np.power(LJ_SIGMA / LJ_EPSILON, 3))
-
-
 class Gibbs_Client(gibbs_ensemble.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     @property
     def energy(self):
-        """ Additional correction terms """
-        return super().energy  # + \
-        # calc_tail_correction(self.density) + \
-        # calc_shift_correction(self.density)
+        """ Energy handle (energy corrections can be added here) """
+        return super().energy
 
     def init_system(self):
         """ Initialize the system (this is executed only when the run
