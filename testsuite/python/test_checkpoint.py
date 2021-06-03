@@ -213,8 +213,8 @@ class CheckpointTest(ut.TestCase):
     def test_integrator_NPT(self):
         integ = system.integrator.get_state()
         self.assertIsInstance(
-            integ, espressomd.integrate.VelocityVerletIsotropicNPT)
-        params = integ.get_params()
+            integ['integrator'], espressomd.integrate.VelocityVerletIsotropicNPT)
+        params = integ['integrator'].get_params()
         self.assertEqual(params['ext_pressure'], 2.0)
         self.assertEqual(params['piston'], 0.01)
         self.assertEqual(params['direction'], [1, 0, 0])
@@ -223,8 +223,10 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('INT.SD' not in modes, 'SD integrator not in modes')
     def test_integrator_SD(self):
         integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.SteepestDescent)
-        params = integ.get_params()
+        self.assertIsInstance(
+            integ['integrator'],
+            espressomd.integrate.SteepestDescent)
+        params = integ['integrator'].get_params()
         self.assertEqual(params['f_max'], 2.0)
         self.assertEqual(params['gamma'], 0.1)
         self.assertEqual(params['max_displacement'], 0.01)
@@ -232,33 +234,41 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('INT.NVT' not in modes, 'NVT integrator not in modes')
     def test_integrator_NVT(self):
         integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.VelocityVerlet)
-        params = integ.get_params()
+        self.assertIsInstance(
+            integ['integrator'],
+            espressomd.integrate.VelocityVerlet)
+        params = integ['integrator'].get_params()
         self.assertEqual(params, {})
 
     @ut.skipIf('INT' in modes, 'VV integrator not the default')
     def test_integrator_VV(self):
         integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.VelocityVerlet)
-        params = integ.get_params()
+        self.assertIsInstance(
+            integ['integrator'],
+            espressomd.integrate.VelocityVerlet)
+        params = integ['integrator'].get_params()
         self.assertEqual(params, {})
 
     @ut.skipIf('INT.BD' not in modes, 'BD integrator not in modes')
     def test_integrator_BD(self):
         integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.BrownianDynamics)
-        params = integ.get_params()
+        self.assertIsInstance(
+            integ['integrator'],
+            espressomd.integrate.BrownianDynamics)
+        params = integ['integrator'].get_params()
         self.assertEqual(params, {})
 
     @utx.skipIfMissingFeatures('STOKESIAN_DYNAMICS')
     @ut.skipIf('INT.SDM' not in modes, 'SDM integrator not in modes')
     def test_integrator_SDM(self):
         integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.StokesianDynamics)
+        self.assertIsInstance(
+            integ['integrator'],
+            espressomd.integrate.StokesianDynamics)
         expected_params = {
             'approximation_method': 'ft', 'radii': {0: 1.5}, 'viscosity': 0.5,
             'lubrication': False, 'pair_mobility': False, 'self_mobility': True}
-        params = integ.get_params()
+        params = integ['integrator'].get_params()
         self.assertEqual(params, expected_params)
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')

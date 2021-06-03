@@ -25,6 +25,17 @@ include "myconfig.pxi"
 cdef extern from "config.hpp":
     pass
 
+cdef extern from "forcecap.hpp":
+    double forcecap_get()
+    void mpi_set_forcecap(double forcecap)
+
+cdef extern from "integrate.hpp":
+    extern int integ_switch
+    double get_time_step()
+    double get_sim_time()
+    void mpi_set_time_step(double time_step) except +
+    void mpi_set_time(double time)
+
 cdef extern from "integrate.hpp" nogil:
     cdef int python_integrate(int n_steps, cbool recalc_forces, int reuse_forces)
     cdef int mpi_steepest_descent(int max_steps)

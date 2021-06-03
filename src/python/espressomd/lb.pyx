@@ -30,7 +30,7 @@ from . import cuda_init
 from . import utils
 from .utils import array_locked, is_valid_type, check_type_or_throw_except
 from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
-from .globals cimport get_time_step
+from .integrate cimport get_time_step
 
 
 def _construct(cls, params):

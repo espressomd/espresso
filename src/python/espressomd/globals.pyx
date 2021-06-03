@@ -17,12 +17,7 @@
 import numpy as np
 
 from .grid cimport box_geo
-from .globals cimport get_time_step
-from .globals cimport mpi_set_time_step
 from .globals cimport min_global_cut
-from .globals cimport get_sim_time
-from .globals cimport mpi_set_forcecap
-from .globals cimport forcecap_get
 from .utils import array_locked, handle_errors
 from .utils cimport Vector3d, make_array_locked, make_Vector3d
 
@@ -35,13 +30,6 @@ cdef class Globals:
 
         def __get__(self):
             return make_array_locked(< Vector3d > box_geo.length())
-
-    property time_step:
-        def __set__(self, time_step):
-            mpi_set_time_step(time_step)
-
-        def __get__(self):
-            return get_time_step()
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
@@ -64,34 +52,13 @@ cdef class Globals:
 
             return array_locked(periodicity)
 
-    property time:
-        def __set__(self, double _time):
-            mpi_set_time(_time)
-
-        def __get__(self):
-            return get_sim_time()
-
-    property force_cap:
-        def __set__(self, cap):
-            mpi_set_forcecap(cap)
-
-        def __get__(self):
-            return forcecap_get()
-
     def __getstate__(self):
         state = {'box_l': self.box_l,
-                 'time_step': self.time_step,
                  'min_global_cut': self.min_global_cut,
-                 'periodicity': self.periodicity,
-                 'time': self.time,
-                 'force_cap': self.force_cap,
                  'periodicity': self.periodicity}
         return state
 
     def __setstate__(self, state):
         self.box_l = state['box_l']
-        self.time_step = state['time_step']
         self.min_global_cut = state['min_global_cut']
         self.periodicity = state['periodicity']
-        self.time = state['time']
-        self.force_cap = state['force_cap']

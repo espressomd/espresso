@@ -26,14 +26,9 @@ cdef extern from "grid.hpp":
     void mpi_set_node_grid(const Vector3i & node_grid)
 
 cdef extern from "integrate.hpp":
-    double get_time_step()
-    extern int integ_switch
-    double get_sim_time()
     extern double verlet_reuse
     extern double skin
-    void mpi_set_time_step(double time_step) except +
     void mpi_set_skin(double skin)
-    void mpi_set_time(double time)
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern int max_seen_particle_type
@@ -48,7 +43,3 @@ cdef extern from "rattle.hpp":
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int max_oif_objects
     void mpi_set_max_oif_objects(int max_oif_objects)
-
-cdef extern from "forcecap.hpp":
-    double forcecap_get()
-    void mpi_set_forcecap(double forcecap)

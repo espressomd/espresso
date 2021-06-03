@@ -43,7 +43,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .globals import Globals
-from .globals cimport integ_switch, max_oif_objects, mpi_set_max_oif_objects
+from .globals cimport max_oif_objects, mpi_set_max_oif_objects
 from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded
 from .utils cimport check_type_or_throw_except
 from .utils import is_valid_type, handle_errors
@@ -115,6 +115,7 @@ cdef class System:
             self.globals = Globals()
             if 'box_l' not in kwargs:
                 raise ValueError("Required argument box_l not provided.")
+            self.integrator = integrate.IntegratorHandle()
             System.__setattr__(self, "box_l", kwargs.get("box_l"))
             del kwargs["box_l"]
             for arg in kwargs:
@@ -135,7 +136,6 @@ cdef class System:
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
-            self.integrator = integrate.IntegratorHandle()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
@@ -154,6 +154,7 @@ cdef class System:
     def __getstate__(self):
         odict = collections.OrderedDict()
         odict['globals'] = System.__getattribute__(self, "globals")
+        odict['integrator'] = System.__getattribute__(self, "integrator")
         for property_ in setable_properties:
             if not hasattr(self.globals, property_):
                 odict[property_] = System.__getattribute__(self, property_)
@@ -169,7 +170,6 @@ cdef class System:
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
         odict['constraints'] = System.__getattribute__(self, "constraints")
         odict['galilei'] = System.__getattribute__(self, "galilei")
-        odict['integrator'] = System.__getattribute__(self, "integrator")
         IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
             odict['lbboundaries'] = System.__getattribute__(
                 self, "lbboundaries")
@@ -198,7 +198,7 @@ cdef class System:
 
     property integ_switch:
         def __get__(self):
-            return integ_switch
+            return self.integrator.integ_switch
 
     property force_cap:
         """
@@ -209,10 +209,10 @@ cdef class System:
         """
 
         def __get__(self):
-            return self.globals.force_cap
+            return self.integrator.force_cap
 
         def __set__(self, cap):
-            self.globals.force_cap = cap
+            self.integrator.force_cap = cap
 
     property periodicity:
         """
@@ -236,24 +236,22 @@ cdef class System:
         Set the time in the simulation
         """
 
-        def __set__(self, double _time):
-            if _time < 0:
-                raise ValueError("Simulation time must be >= 0")
-            self.globals.time = _time
+        def __set__(self, double sim_time):
+            self.integrator.time = sim_time
 
         def __get__(self):
-            return self.globals.time
+            return self.integrator.time
 
     property time_step:
         """
         Sets the time step for the integrator.
         """
 
-        def __set__(self, double _time_step):
-            self.globals.time_step = _time_step
+        def __set__(self, double time_step):
+            self.integrator.time_step = time_step
 
         def __get__(self):
-            return self.globals.time_step
+            return self.integrator.time_step
 
     property max_cut_nonbonded:
         def __get__(self):
