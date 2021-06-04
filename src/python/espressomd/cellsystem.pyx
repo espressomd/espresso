@@ -20,11 +20,11 @@ import numpy as np
 from libcpp.cast cimport dynamic_cast
 from .grid cimport node_grid
 from . cimport integrate
-from .globals cimport skin
-from .globals cimport mpi_set_skin, mpi_set_node_grid
+from .globals cimport mpi_set_node_grid
 from libcpp.vector cimport vector
 from .cellsystem cimport cell_structure
 from .cellsystem cimport get_verlet_reuse
+from .cellsystem cimport mpi_set_skin, skin
 from .utils import handle_errors
 from .utils cimport Vector3i, check_type_or_throw_except
 

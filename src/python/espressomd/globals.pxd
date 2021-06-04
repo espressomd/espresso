@@ -25,10 +25,6 @@ cdef extern from "grid.hpp":
     void mpi_set_periodicity(bool x, bool y, bool z)
     void mpi_set_node_grid(const Vector3i & node_grid)
 
-cdef extern from "integrate.hpp":
-    extern double skin
-    void mpi_set_skin(double skin)
-
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern int max_seen_particle_type
     extern double min_global_cut

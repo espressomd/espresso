@@ -47,6 +47,8 @@ cdef extern from "tuning.hpp":
     cdef void c_tune_skin "tune_skin" (double min_skin, double max_skin, double tol, int int_steps, bool adjust_max_skin)
 
 cdef extern from "integrate.hpp":
+    extern double skin
+    void mpi_set_skin(double skin)
     double get_verlet_reuse()
 
 cdef extern from "DomainDecomposition.hpp":
