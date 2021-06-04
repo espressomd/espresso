@@ -17,24 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
-from libcpp cimport bool
-from .utils cimport Vector3d, Vector3i
+from .utils cimport Vector3i
 
 cdef extern from "grid.hpp":
-    void mpi_set_box_length(Vector3d length) except +
-    void mpi_set_periodicity(bool x, bool y, bool z)
     void mpi_set_node_grid(const Vector3i & node_grid)
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern int max_seen_particle_type
-    extern double min_global_cut
     double maximal_cutoff_bonded()
     double maximal_cutoff_nonbonded()
-    void mpi_set_min_global_cut(double min_global_cut)
 
 cdef extern from "rattle.hpp":
     extern int n_rigidbonds
-
-cdef extern from "object-in-fluid/oif_global_forces.hpp":
-    int max_oif_objects
-    void mpi_set_max_oif_objects(int max_oif_objects)

@@ -20,7 +20,7 @@
 from libcpp cimport bool
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
-from .utils cimport Vector3i
+from .utils cimport Vector3i, Vector3d
 
 cdef extern from "communication.hpp":
     int n_nodes
@@ -55,3 +55,11 @@ cdef extern from "DomainDecomposition.hpp":
     cppclass  DomainDecomposition:
         Vector3i cell_grid
         double cell_size[3]
+
+cdef extern from "grid.hpp":
+    void mpi_set_box_length(Vector3d length) except +
+    void mpi_set_periodicity(bool x, bool y, bool z)
+
+cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
+    extern double min_global_cut
+    void mpi_set_min_global_cut(double min_global_cut)

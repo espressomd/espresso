@@ -22,7 +22,7 @@ from libcpp cimport bool
 from .utils cimport Vector3d
 
 cdef extern from "grid.hpp":
-    cdef void rescale_boxl(int dir, double d_new)
+    void rescale_boxl(int dir, double d_new)
 
 cdef extern from "rotate_system.hpp":
     void rotate_system(double phi, double theta, double alpha)
@@ -34,3 +34,7 @@ IF EXCLUSIONS:
 cdef extern from "particle_data.hpp":
     int init_type_map(int type) except +
     int number_of_particles_with_type(int type) except +
+
+cdef extern from "object-in-fluid/oif_global_forces.hpp":
+    int max_oif_objects
+    void mpi_set_max_oif_objects(int max_oif_objects)

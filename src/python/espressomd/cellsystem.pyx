@@ -19,6 +19,7 @@
 import numpy as np
 from libcpp.cast cimport dynamic_cast
 from .grid cimport node_grid
+from .grid cimport box_geo
 from . cimport integrate
 from .globals cimport mpi_set_node_grid
 from libcpp.vector cimport vector
@@ -26,8 +27,9 @@ from .cellsystem cimport cell_structure
 from .cellsystem cimport get_verlet_reuse
 from .cellsystem cimport mpi_set_skin, skin
 from .utils import handle_errors
-from .utils cimport Vector3i, check_type_or_throw_except
-
+from .utils cimport Vector3i, Vector3d, make_array_locked, make_Vector3d
+from .utils cimport check_type_or_throw_except
+from .utils import array_locked
 
 cdef class CellSystem:
     def set_domain_decomposition(self, use_verlet_lists=True):
@@ -94,21 +96,23 @@ cdef class CellSystem:
 
         s["skin"] = skin
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
+        s["box_l"] = self.box_l
+        s["periodicity"] = self.periodicity
+        s["min_global_cut"] = self.min_global_cut
         return s
 
     def __setstate__(self, d):
-        use_verlet_lists = None
-        for key in d:
-            if key == "use_verlet_list":
-                use_verlet_lists = d[key]
-            elif key == "type":
-                if d[key] == "domain_decomposition":
-                    self.set_domain_decomposition(
-                        use_verlet_lists=use_verlet_lists)
-                elif d[key] == "nsquare":
-                    self.set_n_square(use_verlet_lists=use_verlet_lists)
+        self.box_l = d['box_l']
         self.skin = d['skin']
         self.node_grid = d['node_grid']
+        self.periodicity = d['periodicity']
+        self.min_global_cut = d['min_global_cut']
+        if 'type' in d:
+            if d['type'] == "domain_decomposition":
+                self.set_domain_decomposition(
+                    use_verlet_lists=d['use_verlet_list'])
+            elif d['type'] == "nsquare":
+                self.set_n_square(use_verlet_lists=d['use_verlet_list'])
 
     def get_pairs(self, distance, types='all'):
         """
@@ -175,7 +179,21 @@ cdef class CellSystem:
 
         return mpi_resort_particles(int(global_flag))
 
-    # setter deprecated
+    property box_l:
+        """
+        (3,) array_like of :obj:`float`:
+            Dimensions of the simulation box
+
+        """
+
+        def __set__(self, _box_l):
+            if len(_box_l) != 3:
+                raise ValueError("Box length must be of length 3")
+            mpi_set_box_length(make_Vector3d(_box_l))
+
+        def __get__(self):
+            return make_array_locked(< Vector3d > box_geo.length())
+
     property node_grid:
         """
         Node grid.
@@ -194,6 +212,35 @@ cdef class CellSystem:
 
         def __get__(self):
             return np.array([node_grid[0], node_grid[1], node_grid[2]])
+
+    property periodicity:
+        """
+        (3,) array_like of :obj:`bool`:
+            System periodicity in ``[x, y, z]``, ``False`` for no periodicity
+            in this direction, ``True`` for periodicity
+
+        """
+
+        def __set__(self, _periodic):
+            if len(_periodic) != 3:
+                raise ValueError(
+                    "periodicity must be of length 3, got length " + str(len(_periodic)))
+            mpi_set_periodicity(_periodic[0], _periodic[1], _periodic[2])
+            handle_errors("Error while assigning system periodicity")
+
+        def __get__(self):
+            periodicity = np.empty(3, dtype=np.bool)
+            for i in range(3):
+                periodicity[i] = box_geo.periodic(i)
+            return array_locked(periodicity)
+
+    property min_global_cut:
+        def __set__(self, _min_global_cut):
+            mpi_set_min_global_cut(_min_global_cut)
+
+        def __get__(self):
+            global min_global_cut
+            return min_global_cut
 
     property skin:
         """

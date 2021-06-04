@@ -43,7 +43,6 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .globals import Globals
-from .globals cimport max_oif_objects, mpi_set_max_oif_objects
 from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded
 from .utils cimport check_type_or_throw_except
 from .utils import is_valid_type, handle_errors
@@ -115,6 +114,7 @@ cdef class System:
             self.globals = Globals()
             if 'box_l' not in kwargs:
                 raise ValueError("Required argument box_l not provided.")
+            self.cell_system = CellSystem()
             self.integrator = integrate.IntegratorHandle()
             System.__setattr__(self, "box_l", kwargs.get("box_l"))
             del kwargs["box_l"]
@@ -128,7 +128,6 @@ cdef class System:
             self.analysis = Analysis(self)
             self.auto_update_accumulators = AutoUpdateAccumulators()
             self.bonded_inter = interactions.BondedInteractions()
-            self.cell_system = CellSystem()
             IF COLLISION_DETECTION == 1:
                 self.collision_detection = CollisionDetection()
             self.comfixed = ComFixed()
@@ -154,6 +153,7 @@ cdef class System:
     def __getstate__(self):
         odict = collections.OrderedDict()
         odict['globals'] = System.__getattribute__(self, "globals")
+        odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['integrator'] = System.__getattribute__(self, "integrator")
         for property_ in setable_properties:
             if not hasattr(self.globals, property_):
@@ -162,7 +162,6 @@ cdef class System:
             self, "non_bonded_inter")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['part'] = System.__getattribute__(self, "part")
-        odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(
@@ -191,10 +190,10 @@ cdef class System:
         """
 
         def __set__(self, _box_l):
-            self.globals.box_l = _box_l
+            self.cell_system.box_l = _box_l
 
         def __get__(self):
-            return self.globals.box_l
+            return self.cell_system.box_l
 
     property integ_switch:
         def __get__(self):
@@ -223,13 +222,10 @@ cdef class System:
         """
 
         def __set__(self, _periodic):
-            if len(_periodic) != 3:
-                raise ValueError(
-                    "periodicity must be of length 3, got length " + str(len(_periodic)))
-            self.globals.periodicity = _periodic
+            self.cell_system.periodicity = _periodic
 
         def __get__(self):
-            return self.globals.periodicity
+            return self.cell_system.periodicity
 
     property time:
         """
@@ -263,10 +259,10 @@ cdef class System:
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
-            self.globals.min_global_cut = _min_global_cut
+            self.cell_system.min_global_cut = _min_global_cut
 
         def __get__(self):
-            return self.globals.min_global_cut
+            return self.cell_system.min_global_cut
 
     IF VIRTUAL_SITES:
         property virtual_sites:
