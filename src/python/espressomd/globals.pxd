@@ -26,7 +26,6 @@ cdef extern from "grid.hpp":
     void mpi_set_node_grid(const Vector3i & node_grid)
 
 cdef extern from "integrate.hpp":
-    extern double verlet_reuse
     extern double skin
     void mpi_set_skin(double skin)
 

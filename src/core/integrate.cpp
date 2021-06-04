@@ -81,7 +81,8 @@ static bool skin_set = false;
 
 bool recalc_forces = true;
 
-double verlet_reuse = 0.0;
+/** Average number of integration steps the Verlet list has been re-using. */
+static double verlet_reuse = 0.0;
 
 static int fluid_step = 0;
 
@@ -467,6 +468,8 @@ double interaction_range() {
   auto const max_cut = maximal_cutoff();
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
+
+double get_verlet_reuse() { return verlet_reuse; }
 
 double get_time_step() { return time_step; }
 

@@ -20,10 +20,11 @@ import numpy as np
 from libcpp.cast cimport dynamic_cast
 from .grid cimport node_grid
 from . cimport integrate
-from .globals cimport verlet_reuse, skin
+from .globals cimport skin
 from .globals cimport mpi_set_skin, mpi_set_node_grid
 from libcpp.vector cimport vector
 from .cellsystem cimport cell_structure
+from .cellsystem cimport get_verlet_reuse
 from .utils import handle_errors
 from .utils cimport Vector3i, check_type_or_throw_except
 
@@ -77,7 +78,7 @@ cdef class CellSystem:
             s["type"] = "nsquare"
 
         s["skin"] = skin
-        s["verlet_reuse"] = verlet_reuse
+        s["verlet_reuse"] = get_verlet_reuse()
         s["n_nodes"] = n_nodes
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
 

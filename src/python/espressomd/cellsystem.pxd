@@ -46,6 +46,9 @@ cdef extern from "cells.hpp":
 cdef extern from "tuning.hpp":
     cdef void c_tune_skin "tune_skin" (double min_skin, double max_skin, double tol, int int_steps, bool adjust_max_skin)
 
+cdef extern from "integrate.hpp":
+    double get_verlet_reuse()
+
 cdef extern from "DomainDecomposition.hpp":
     cppclass  DomainDecomposition:
         Vector3i cell_grid
