@@ -31,8 +31,6 @@ IF EXCLUSIONS:
     cdef extern from "particle_data.hpp":
         void auto_exclusions(int distance)
 
-cdef bool skin_set
-
 cdef extern from "particle_data.hpp":
     int init_type_map(int type) except +
     int number_of_particles_with_type(int type) except +

@@ -75,7 +75,9 @@ static double time_step = -1.0;
 static double sim_time = 0.0;
 
 double skin = 0.0;
-bool skin_set = false;
+
+/** True iff the user has changed the skin setting. */
+static bool skin_set = false;
 
 bool recalc_forces = true;
 
@@ -489,6 +491,7 @@ void mpi_set_time_step(double time_s) {
 
 void mpi_set_skin_local(double skin) {
   ::skin = skin;
+  skin_set = true;
   on_skin_change();
 }
 

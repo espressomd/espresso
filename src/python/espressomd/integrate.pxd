@@ -43,7 +43,6 @@ cdef extern from "integrate.hpp" nogil:
     cdef void integrate_set_nvt()
     cdef void integrate_set_steepest_descent(const double f_max, const double gamma,
                                              const double max_displacement) except +
-    cdef extern cbool skin_set
     cdef extern cbool set_py_interrupt
     cdef void integrate_set_bd()
 

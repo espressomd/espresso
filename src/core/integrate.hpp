@@ -41,8 +41,6 @@ extern int integ_switch;
 
 /** Verlet list skin. */
 extern double skin;
-/** True iff the user has changed the skin setting. */
-extern bool skin_set;
 
 /** If true, the forces will be recalculated before the next integration. */
 extern bool recalc_forces;
