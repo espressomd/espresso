@@ -21,7 +21,6 @@ from libcpp.cast cimport dynamic_cast
 from .grid cimport node_grid
 from .grid cimport box_geo
 from . cimport integrate
-from .globals cimport mpi_set_node_grid
 from libcpp.vector cimport vector
 from .cellsystem cimport cell_structure
 from .cellsystem cimport get_verlet_reuse
@@ -241,6 +240,14 @@ cdef class CellSystem:
         def __get__(self):
             global min_global_cut
             return min_global_cut
+
+    property max_cut_nonbonded:
+        def __get__(self):
+            return maximal_cutoff_nonbonded()
+
+    property max_cut_bonded:
+        def __get__(self):
+            return maximal_cutoff_bonded()
 
     property skin:
         """

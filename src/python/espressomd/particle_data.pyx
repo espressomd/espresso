@@ -25,8 +25,8 @@ from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params_size
 from .interactions cimport bonded_ia_params_num_partners
+from .analyze cimport max_seen_particle_type
 from copy import copy
-from .globals cimport max_seen_particle_type, n_rigidbonds
 import collections
 import functools
 from .utils import nesting_level, array_locked, is_valid_type

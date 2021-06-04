@@ -42,8 +42,6 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
-from .globals import Globals
-from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded
 from .utils cimport check_type_or_throw_except
 from .utils import is_valid_type, handle_errors
 IF VIRTUAL_SITES:
@@ -72,8 +70,6 @@ cdef class System:
 
     """
     cdef public:
-        globals
-        """:class:`espressomd.globals.Globals`"""
         part
         """:class:`espressomd.particle_data.ParticleList`"""
         non_bonded_inter
@@ -111,7 +107,6 @@ cdef class System:
     def __init__(self, **kwargs):
         global _system_created
         if not _system_created:
-            self.globals = Globals()
             if 'box_l' not in kwargs:
                 raise ValueError("Required argument box_l not provided.")
             self.cell_system = CellSystem()
@@ -152,12 +147,10 @@ cdef class System:
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         odict = collections.OrderedDict()
-        odict['globals'] = System.__getattribute__(self, "globals")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['integrator'] = System.__getattribute__(self, "integrator")
         for property_ in setable_properties:
-            if not hasattr(self.globals, property_):
-                odict[property_] = System.__getattribute__(self, property_)
+            odict[property_] = System.__getattribute__(self, property_)
         odict['non_bonded_inter'] = System.__getattribute__(
             self, "non_bonded_inter")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
@@ -251,11 +244,11 @@ cdef class System:
 
     property max_cut_nonbonded:
         def __get__(self):
-            return maximal_cutoff_nonbonded()
+            return self.cell_system.max_cut_nonbonded
 
     property max_cut_bonded:
         def __get__(self):
-            return maximal_cutoff_bonded()
+            return self.cell_system.max_cut_bonded
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
