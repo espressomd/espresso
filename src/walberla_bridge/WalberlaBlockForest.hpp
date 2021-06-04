@@ -54,11 +54,11 @@ public:
   };
 
   // Grid, domain, halo
-  int n_ghost_layers() const { return m_n_ghost_layers; };
-  Utils::Vector3i get_grid_dimensions() const {
+  [[nodiscard]] int n_ghost_layers() const { return m_n_ghost_layers; };
+  [[nodiscard]] Utils::Vector3i get_grid_dimensions() const {
     return m_grid_dimensions;
   }
-  std::pair<Utils::Vector3d, Utils::Vector3d>
+  [[nodiscard]] std::pair<Utils::Vector3d, Utils::Vector3d>
   get_local_domain() const {
     // We only have one block per mpi rank
     assert(++(m_blocks->begin()) == m_blocks->end());
@@ -67,19 +67,19 @@ public:
     return {to_vector3d(ab.min()), to_vector3d(ab.max())};
   };
 
-  bool node_in_local_domain(const Utils::Vector3i &node) const {
+  [[nodiscard]] bool node_in_local_domain(const Utils::Vector3i &node) const {
     // Note: Lattice constant =1, cell centers offset by .5
     return get_block_and_cell(node, false, m_blocks, n_ghost_layers()) !=
            boost::none;
   };
-  bool node_in_local_halo(const Utils::Vector3i &node) const {
+  [[nodiscard]] bool node_in_local_halo(const Utils::Vector3i &node) const {
     return get_block_and_cell(node, true, m_blocks, n_ghost_layers()) !=
            boost::none;
   };
-  bool pos_in_local_domain(const Utils::Vector3d &pos) const {
+  [[nodiscard]] bool pos_in_local_domain(const Utils::Vector3d &pos) const {
     return get_block(pos, false, m_blocks, n_ghost_layers()) != nullptr;
   };
-  bool pos_in_local_halo(const Utils::Vector3d &pos) const {
+  [[nodiscard]] bool pos_in_local_halo(const Utils::Vector3d &pos) const {
     return get_block(pos, true, m_blocks, n_ghost_layers()) != nullptr;
   };
 };
