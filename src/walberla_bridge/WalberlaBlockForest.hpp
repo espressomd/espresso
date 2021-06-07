@@ -1,7 +1,3 @@
-//
-// Created by areinauer on 6/2/21.
-//
-
 #ifndef ESPRESSO_WALBERLABLOCKFOREST_HPP
 #define ESPRESSO_WALBERLABLOCKFOREST_HPP
 
