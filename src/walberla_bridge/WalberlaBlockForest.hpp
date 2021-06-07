@@ -50,10 +50,8 @@ public:
   };
 
   // Grid, domain, halo
-  [[nodiscard]] int n_ghost_layers() const { return m_n_ghost_layers; };
-  [[nodiscard]] Utils::Vector3i get_grid_dimensions() const {
-    return m_grid_dimensions;
-  }
+  [[nodiscard]] auto get_ghost_layers() const { return m_n_ghost_layers; };
+  [[nodiscard]] auto get_grid_dimensions() const { return m_grid_dimensions; }
   [[nodiscard]] auto get_blocks() const { return m_blocks; }
   [[nodiscard]] std::pair<Utils::Vector3d, Utils::Vector3d>
   get_local_domain() const {
@@ -66,18 +64,18 @@ public:
 
   [[nodiscard]] bool node_in_local_domain(const Utils::Vector3i &node) const {
     // Note: Lattice constant =1, cell centers offset by .5
-    return get_block_and_cell(node, false, m_blocks, n_ghost_layers()) !=
+    return get_block_and_cell(node, false, m_blocks, get_ghost_layers()) !=
            boost::none;
   };
   [[nodiscard]] bool node_in_local_halo(const Utils::Vector3i &node) const {
-    return get_block_and_cell(node, true, m_blocks, n_ghost_layers()) !=
+    return get_block_and_cell(node, true, m_blocks, get_ghost_layers()) !=
            boost::none;
   };
   [[nodiscard]] bool pos_in_local_domain(const Utils::Vector3d &pos) const {
-    return get_block(pos, false, m_blocks, n_ghost_layers()) != nullptr;
+    return get_block(pos, false, m_blocks, get_ghost_layers()) != nullptr;
   };
   [[nodiscard]] bool pos_in_local_halo(const Utils::Vector3d &pos) const {
-    return get_block(pos, true, m_blocks, n_ghost_layers()) != nullptr;
+    return get_block(pos, true, m_blocks, get_ghost_layers()) != nullptr;
   };
 };
 } // namespace walberla
