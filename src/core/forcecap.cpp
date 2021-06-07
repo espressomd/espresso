@@ -27,18 +27,14 @@
 #include "forcecap.hpp"
 
 #include "Particle.hpp"
-#include "global.hpp"
+#include "communication.hpp"
+#include "event.hpp"
 
 #include <utils/Vector.hpp>
 
 #include <cmath>
 
 double force_cap = 0.0;
-
-void forcecap_set(double forcecap) {
-  force_cap = forcecap;
-  mpi_bcast_parameter(FIELD_FORCE_CAP);
-}
 
 double forcecap_get() { return force_cap; }
 
@@ -59,4 +55,15 @@ void forcecap_cap(ParticleRange particles) {
       }
     }
   }
+}
+
+void mpi_set_forcecap_local(double force_cap) {
+  ::force_cap = force_cap;
+  on_forcecap_change();
+}
+
+REGISTER_CALLBACK(mpi_set_forcecap_local)
+
+void mpi_set_forcecap(double force_cap) {
+  mpi_call_all(mpi_set_forcecap_local, force_cap);
 }

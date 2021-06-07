@@ -23,7 +23,6 @@
  */
 #include "cells.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -112,12 +111,10 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
     b = max_permissible_skin;
 
   while (fabs(a - b) > tol) {
-    skin = a;
-    mpi_bcast_parameter(FIELD_SKIN);
+    mpi_set_skin(a);
     time_a = time_calc(int_steps);
 
-    skin = b;
-    mpi_bcast_parameter(FIELD_SKIN);
+    mpi_set_skin(b);
     time_b = time_calc(int_steps);
 
     if (time_a > time_b) {
@@ -126,6 +123,6 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
       b = 0.5 * (a + b);
     }
   }
-  skin = 0.5 * (a + b);
-  mpi_bcast_parameter(FIELD_SKIN);
+  auto const new_skin = 0.5 * (a + b);
+  mpi_set_skin(new_skin);
 }

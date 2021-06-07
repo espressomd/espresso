@@ -105,7 +105,7 @@ void energy_calc(const double time) {
   }
 }
 
-void update_energy_local(int, int) { energy_calc(sim_time); }
+void update_energy_local(int, int) { energy_calc(get_sim_time()); }
 
 REGISTER_CALLBACK(update_energy_local)
 

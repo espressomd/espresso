@@ -216,7 +216,7 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao,
                          double accuracy) {
   if (r_cut >= 0) {
     p3m.params.r_cut = r_cut;
-    p3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
+    p3m.params.r_cut_iL = r_cut * box_geo.length_inv()[0];
   } else if (r_cut == -1.0) {
     p3m.params.r_cut = 0;
     p3m.params.r_cut_iL = 0;
@@ -260,7 +260,7 @@ void p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
     coulomb.method = COULOMB_P3M;
 
   p3m.params.r_cut = r_cut;
-  p3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
+  p3m.params.r_cut_iL = r_cut * box_geo.length_inv()[0];
   p3m.params.mesh[2] = mesh[2];
   p3m.params.mesh[1] = mesh[1];
   p3m.params.mesh[0] = mesh[0];
@@ -434,14 +434,14 @@ Utils::Vector9d p3m_calc_kspace_pressure_tensor() {
       for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
         for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
           auto const kx = 2.0 * Utils::pi() *
-                          p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
-                          box_geo.length()[RX];
+                          p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] *
+                          box_geo.length_inv()[RX];
           auto const ky = 2.0 * Utils::pi() *
-                          p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
-                          box_geo.length()[RY];
+                          p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] *
+                          box_geo.length_inv()[RY];
           auto const kz = 2.0 * Utils::pi() *
-                          p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
-                          box_geo.length()[RZ];
+                          p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] *
+                          box_geo.length_inv()[RZ];
           auto const sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
 
           auto const node_k_space_energy =
@@ -509,8 +509,8 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
             int d_rs = (d + p3m.ks_pnum) % 3;
             /* directions */
             auto const k = 2.0 * Utils::pi() *
-                           p3m.d_op[d_rs][j[d] + p3m.fft.plan[3].start[d]] /
-                           box_geo.length()[d_rs];
+                           p3m.d_op[d_rs][j[d] + p3m.fft.plan[3].start[d]] *
+                           box_geo.length_inv()[d_rs];
 
             /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
             p3m.E_mesh[d_rs][2 * ind + 0] = -k * phi_hat.imag();
@@ -675,7 +675,7 @@ static double p3m_mcr_time(const int mesh[3], int cao, double r_cut_iL,
   p3m.params.mesh[2] = mesh[2];
   p3m.params.cao = cao;
   p3m.params.alpha_L = alpha_L;
-  p3m.params.alpha = p3m.params.alpha_L * (1. / box_geo.length()[0]);
+  p3m.params.alpha = p3m.params.alpha_L * box_geo.length_inv()[0];
 
   /* initialize p3m structures */
   mpi_bcast_coulomb_params();
@@ -1004,7 +1004,7 @@ int p3m_adaptive_tune(bool verbose) {
      */
   } else if (p3m.params.mesh[1] == -1 && p3m.params.mesh[2] == -1) {
     double mesh_density = mesh_density_min = mesh_density_max =
-        p3m.params.mesh[0] / box_geo.length()[0];
+        p3m.params.mesh[0] * box_geo.length_inv()[0];
     p3m.params.mesh[1] =
         static_cast<int>(std::round(mesh_density * box_geo.length()[1]));
     p3m.params.mesh[2] =
@@ -1020,7 +1020,7 @@ int p3m_adaptive_tune(bool verbose) {
     }
   } else {
     mesh_density_min = mesh_density_max =
-        p3m.params.mesh[0] / box_geo.length()[0];
+        p3m.params.mesh[0] * box_geo.length_inv()[0];
 
     if (verbose) {
       std::printf("fixed mesh %d %d %d\n", p3m.params.mesh[0],
@@ -1034,8 +1034,8 @@ int p3m_adaptive_tune(bool verbose) {
 
     r_cut_iL_min = 0;
     r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
-    r_cut_iL_min *= (1. / box_geo.length()[0]);
-    r_cut_iL_max *= (1. / box_geo.length()[0]);
+    r_cut_iL_min *= box_geo.length_inv()[0];
+    r_cut_iL_max *= box_geo.length_inv()[0];
   } else {
     r_cut_iL_min = r_cut_iL_max = p3m.params.r_cut_iL;
 
@@ -1136,7 +1136,7 @@ int p3m_adaptive_tune(bool verbose) {
   p3m.params.mesh[2] = mesh[2];
   p3m.params.cao = cao;
   p3m.params.alpha_L = alpha_L;
-  p3m.params.alpha = p3m.params.alpha_L * (1. / box_geo.length()[0]);
+  p3m.params.alpha = p3m.params.alpha_L * box_geo.length_inv()[0];
   p3m.params.accuracy = accuracy;
   /* broadcast tuned p3m parameters */
   mpi_bcast_coulomb_params();
@@ -1244,7 +1244,7 @@ void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
 
 void p3m_init_a_ai_cao_cut() {
   for (int i = 0; i < 3; i++) {
-    p3m.params.ai[i] = (double)p3m.params.mesh[i] / box_geo.length()[i];
+    p3m.params.ai[i] = p3m.params.mesh[i] * box_geo.length_inv()[i];
     p3m.params.a[i] = 1.0 / p3m.params.ai[i];
     p3m.params.cao_cut[i] = 0.5 * p3m.params.a[i] * p3m.params.cao;
   }
@@ -1254,7 +1254,7 @@ bool p3m_sanity_checks_boxl() {
   bool ret = false;
   for (int i = 0; i < 3; i++) {
     /* check k-space cutoff */
-    if (p3m.params.cao_cut[i] >= 0.5 * box_geo.length()[i]) {
+    if (p3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
       runtimeErrorMsg() << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
                         << " is larger than half of box dimension "
                         << box_geo.length()[i];
@@ -1346,7 +1346,7 @@ void p3m_scaleby_box_l() {
   }
 
   p3m.params.r_cut = p3m.params.r_cut_iL * box_geo.length()[0];
-  p3m.params.alpha = p3m.params.alpha_L * (1. / box_geo.length()[0]);
+  p3m.params.alpha = p3m.params.alpha_L * box_geo.length_inv()[0];
   p3m_init_a_ai_cao_cut();
   p3m_calc_lm_ld_pos(p3m.local_mesh, p3m.params);
   p3m_sanity_checks_boxl();

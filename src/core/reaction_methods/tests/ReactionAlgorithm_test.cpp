@@ -27,7 +27,9 @@
 
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
+#include "Particle.hpp"
 #include "communication.hpp"
+#include "particle_data.hpp"
 
 #include <boost/mpi.hpp>
 
@@ -41,6 +43,7 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   class ReactionAlgorithmTest : public ReactionAlgorithm {
   public:
     using ReactionAlgorithm::calculate_acceptance_probability;
+    using ReactionAlgorithm::generate_new_particle_positions;
     using ReactionAlgorithm::ReactionAlgorithm;
   };
   constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
@@ -96,7 +99,7 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
 
   // set temperature
-  r_algo.temperature = 10;
+  r_algo.temperature = 1.;
 
 #ifdef ELECTROSTATICS
   // exception if reactant types have no charge information
@@ -129,6 +132,42 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // exception if deleting a non-existent particle
   BOOST_CHECK_THROW(r_algo.delete_particle(5), std::runtime_error);
+
+  // check particle moves
+  {
+    // set up particles
+    auto const box_l = 1.;
+    std::vector<std::pair<Utils::Vector3d, Utils::Vector3d>> ref_positions{
+        {{0.1, 0.2, 0.3}, {+10., +20., +30.}},
+        {{0.4, 0.5, 0.6}, {-10., -20., -30.}}};
+    place_particle(0, ref_positions[0].first);
+    place_particle(1, ref_positions[1].first);
+    set_particle_v(0, ref_positions[0].second);
+    set_particle_v(1, ref_positions[1].second);
+    // track particles
+    init_type_map(0);
+    // update particle positions and velocities
+    BOOST_CHECK(!r_algo.particle_inside_exclusion_radius_touched);
+    r_algo.particle_inside_exclusion_radius_touched = false;
+    r_algo.exclusion_radius = box_l;
+    auto const bookkeeping = r_algo.generate_new_particle_positions(0, 2);
+    BOOST_CHECK(r_algo.particle_inside_exclusion_radius_touched);
+    // check moves and bookkeeping
+    for (auto const &item : bookkeeping) {
+      auto const pid = item.first;
+      BOOST_REQUIRE(pid == 0 or pid == 1);
+      auto const ref_old_pos = ref_positions[pid].first;
+      auto const ref_old_vel = ref_positions[pid].second;
+      auto const &p = get_particle_data(pid);
+      auto const &new_pos = p.r.p;
+      auto const &new_vel = p.m.v;
+      BOOST_CHECK_EQUAL(item.second, ref_old_pos);
+      BOOST_CHECK_GE(new_pos, Utils::Vector3d::broadcast(0.));
+      BOOST_CHECK_LE(new_pos, Utils::Vector3d::broadcast(box_l));
+      BOOST_CHECK_GE((new_pos - ref_old_pos).norm(), 0.1);
+      BOOST_CHECK_GE((new_vel - ref_old_vel).norm(), 10.);
+    }
+  }
 }
 
 int main(int argc, char **argv) {

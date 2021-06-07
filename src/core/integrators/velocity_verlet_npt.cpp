@@ -40,14 +40,13 @@
 
 #include <boost/mpi/collectives.hpp>
 
-#include <mpi.h>
-
 #include <cmath>
 #include <functional>
 
-void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
+                                             double time_step) {
   extern IsotropicNptThermostat npt_iso;
-  nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
+  nptiso.p_vel = {};
 
   for (auto &p : particles) {
     // Virtual sites are not propagated during integration
@@ -68,7 +67,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
 }
 
 /** Scale and communicate instantaneous NpT pressure */
-void velocity_verlet_npt_finalize_p_inst() {
+void velocity_verlet_npt_finalize_p_inst(double time_step) {
   extern IsotropicNptThermostat npt_iso;
   /* finalize derivation of p_inst */
   nptiso.p_inst = 0.0;
@@ -89,11 +88,13 @@ void velocity_verlet_npt_finalize_p_inst() {
   }
 }
 
-void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
-  double scal[3] = {0., 0., 0.}, L_new = 0.0;
+void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
+                                       double time_step) {
+  Utils::Vector3d scal{};
+  double L_new = 0.0;
 
   /* finalize derivation of p_inst */
-  velocity_verlet_npt_finalize_p_inst();
+  velocity_verlet_npt_finalize_p_inst(time_step);
 
   /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and
    * vel-rescaling
@@ -115,10 +116,10 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
 
     L_new = pow(nptiso.volume, 1.0 / nptiso.dimension);
 
-    scal[1] = L_new / box_geo.length()[nptiso.non_const_dim];
-    scal[0] = 1 / scal[1];
+    scal[1] = L_new * box_geo.length_inv()[nptiso.non_const_dim];
+    scal[0] = 1. / scal[1];
   }
-  MPI_Bcast(scal, 3, MPI_DOUBLE, 0, comm_cart);
+  boost::mpi::broadcast(comm_cart, scal, 0);
 
   /* propagate positions while rescaling positions and velocities */
   for (auto &p : particles) {
@@ -162,9 +163,10 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
   on_boxl_change(true);
 }
 
-void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
+                                       double time_step) {
   extern IsotropicNptThermostat npt_iso;
-  nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
+  nptiso.p_vel = {};
 
   for (auto &p : particles) {
 #ifdef ROTATION
@@ -190,17 +192,19 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
   }
 }
 
-void velocity_verlet_npt_step_1(const ParticleRange &particles) {
-  velocity_verlet_npt_propagate_vel(particles);
-  velocity_verlet_npt_propagate_pos(particles);
-  sim_time += time_step;
+void velocity_verlet_npt_step_1(const ParticleRange &particles,
+                                double time_step) {
+  velocity_verlet_npt_propagate_vel(particles, time_step);
+  velocity_verlet_npt_propagate_pos(particles, time_step);
+  increment_sim_time(time_step);
 }
 
-void velocity_verlet_npt_step_2(const ParticleRange &particles) {
-  velocity_verlet_npt_propagate_vel_final(particles);
+void velocity_verlet_npt_step_2(const ParticleRange &particles,
+                                double time_step) {
+  velocity_verlet_npt_propagate_vel_final(particles, time_step);
 #ifdef ROTATION
   convert_torques_propagate_omega(particles, time_step);
 #endif
-  velocity_verlet_npt_finalize_p_inst();
+  velocity_verlet_npt_finalize_p_inst(time_step);
 }
 #endif

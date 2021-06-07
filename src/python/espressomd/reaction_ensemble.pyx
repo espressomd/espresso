@@ -431,6 +431,14 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
         self._set_params_in_es_core()
 
 cdef class ConstantpHEnsemble(ReactionAlgorithm):
+    """
+    This class implements the constant pH Ensemble.
+
+    When adding an acid-base reaction, the acid and base particle types
+    are always assumed to be at index 0 of the lists passed to arguments
+    ``reactant_types`` and ``product_types``.
+
+    """
     cdef unique_ptr[CConstantpHEnsemble] constpHptr
 
     def __init__(self, *args, **kwargs):
@@ -775,7 +783,9 @@ cdef class WidomInsertion(ReactionAlgorithm):
         your samples are uncorrelated.
 
         """
-        if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1) / 2):  # make inverse widom scheme (deletion of particles) inaccessible
+        # make inverse widom scheme (deletion of particles) inaccessible.
+        # The deletion reactions are the odd reaction_ids
+        if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1) / 2):
             raise ValueError("This reaction is not present")
         return deref(self.WidomInsertionPtr).measure_excess_chemical_potential(
-            int(2 * reaction_id))  # make inverse widom scheme (deletion of particles) inaccessible. The deletion reactions are the odd reaction_ids
+            deref(self.WidomInsertionPtr).reactions[int(2 * reaction_id)])

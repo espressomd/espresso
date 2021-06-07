@@ -155,7 +155,7 @@ public:
              obs_ptr obs2, Utils::Vector3d correlation_args_ = {})
       : AccumulatorBase(delta_N), finalized(false), t(0),
         m_correlation_args(correlation_args_), m_tau_lin(tau_lin),
-        m_dt(delta_N * time_step), m_tau_max(tau_max),
+        m_dt(delta_N * get_time_step()), m_tau_max(tau_max),
         compressA_name(std::move(compress1_)),
         compressB_name(std::move(compress2_)),
         corr_operation_name(std::move(corr_operation)), A_obs(std::move(obs1)),
@@ -271,7 +271,7 @@ private:
   using compression_function = std::vector<double> (*)(
       std::vector<double> const &A1, std::vector<double> const &A2);
 
-  // compressing functions
+  // compression functions
   compression_function compressA;
   compression_function compressB;
 };

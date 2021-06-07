@@ -63,12 +63,12 @@ public:
     else
       m_obs2 = m_obs1;
 
+    auto const comp1 = get_value_or<std::string>(args, "compress1", "discard2");
+    auto const comp2 = get_value_or<std::string>(args, "compress2", comp1);
+
     m_correlator = std::make_shared<CoreCorr>(
         get_value<int>(args, "tau_lin"), get_value<double>(args, "tau_max"),
-        get_value<int>(args, "delta_N"),
-        /* These two are optional */
-        get_value_or<std::string>(args, "compress1", ""),
-        get_value_or<std::string>(args, "compress2", ""),
+        get_value<int>(args, "delta_N"), comp1, comp2,
         get_value<std::string>(args, "corr_operation"), m_obs1->observable(),
         m_obs2->observable(), get_value_or<Utils::Vector3d>(args, "args", {}));
   }

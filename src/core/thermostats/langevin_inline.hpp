@@ -39,10 +39,11 @@
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
  *  @param[in]     time_step      Time step
+ *  @param[in]     kT             Temperature
  */
 inline Utils::Vector3d
 friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
-                         double time_step) {
+                         double time_step, double kT) {
   // Early exit for virtual particles without thermostat
   if (p.p.is_virtual && !thermo_virtual) {
     return {};
@@ -57,7 +58,7 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
     auto const gamma =
         p.p.gamma >= Thermostat::GammaType{} ? p.p.gamma : langevin.gamma;
     pref_friction = -gamma;
-    pref_noise = LangevinThermostat::sigma(temperature, time_step, gamma);
+    pref_noise = LangevinThermostat::sigma(kT, time_step, gamma);
   }
 #endif // THERMOSTAT_PER_PARTICLE
 
@@ -100,10 +101,12 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              %Particle
  *  @param[in]     time_step      Time step
+ *  @param[in]     kT             Temperature
  */
 inline Utils::Vector3d
 friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
-                                  Particle const &p, double time_step) {
+                                  Particle const &p, double time_step,
+                                  double kT) {
 
   auto pref_friction = -langevin.gamma_rotation;
   auto pref_noise = langevin.pref_noise_rotation;
@@ -115,7 +118,7 @@ friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
                            ? p.p.gamma_rot
                            : langevin.gamma_rotation;
     pref_friction = -gamma;
-    pref_noise = LangevinThermostat::sigma(temperature, time_step, gamma);
+    pref_noise = LangevinThermostat::sigma(kT, time_step, gamma);
   }
 #endif // THERMOSTAT_PER_PARTICLE
 

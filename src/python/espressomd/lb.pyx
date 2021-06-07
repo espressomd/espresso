@@ -54,7 +54,7 @@ cdef class HydrodynamicInteraction(Actor):
         Lattice constant. The box size in every direction must be an integer
         multiple of ``agrid``.
     tau : :obj:`float`
-        LB time step. The MD time step must be an integer multiple of ``tau``.
+        LB time step, must be an integer multiple of the MD time step.
     dens : :obj:`float`
         Fluid density.
     visc : :obj:`float`
@@ -157,7 +157,6 @@ cdef class HydrodynamicInteraction(Actor):
         if "gamma_even" in self._params:
             python_lbfluid_set_gamma_even(self._params["gamma_even"])
 
-        lb_lbfluid_sanity_checks()
         utils.handle_errors("LB fluid activation")
 
     def _get_params_from_es_core(self):
@@ -551,6 +550,14 @@ cdef class LBFluidRoutines:
         def __set__(self, value):
             raise NotImplementedError
 
+    def __eq__(self, obj1):
+        index_1 = np.array(self.index)
+        index_2 = np.array(obj1.index)
+        return all(index_1 == index_2)
+
+    def __hash__(self):
+        return hash(self.index)
+
 
 class LBSlice:
 
@@ -587,6 +594,11 @@ class LBSlice:
                 for k, z in enumerate(z_indices):
                     setattr(LBFluidRoutines(
                         np.array([x, y, z])), prop_name, value[i, j, k])
+
+    def __iter__(self):
+        indices = [(x, y, z) for (x, y, z) in itertools.product(
+            self.x_indices, self.y_indices, self.z_indices)]
+        return (LBFluidRoutines(np.array(index)) for index in indices)
 
 
 def _add_lb_slice_properties():

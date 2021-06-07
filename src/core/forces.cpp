@@ -53,7 +53,7 @@
 
 ActorList forceActors;
 
-void init_forces(const ParticleRange &particles, double time_step) {
+void init_forces(const ParticleRange &particles, double time_step, double kT) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
@@ -67,7 +67,7 @@ void init_forces(const ParticleRange &particles, double time_step) {
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    p.f = init_local_particle_force(p, time_step);
+    p.f = init_local_particle_force(p, time_step, kT);
   }
 
   /* initialize ghost forces with zero
@@ -84,7 +84,7 @@ void init_forces_ghosts(const ParticleRange &particles) {
   }
 }
 
-void force_calc(CellStructure &cell_structure, double time_step) {
+void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   espressoSystemInterface.update();
@@ -98,7 +98,7 @@ void force_calc(CellStructure &cell_structure, double time_step) {
 #ifdef ELECTROSTATICS
   icc_iteration(particles, cell_structure.ghost_particles());
 #endif
-  init_forces(particles, time_step);
+  init_forces(particles, time_step, kT);
 
   for (auto &forceActor : forceActors) {
     forceActor->computeForces(espressoSystemInterface);
@@ -134,7 +134,7 @@ void force_calc(CellStructure &cell_structure, double time_step) {
       VerletCriterion{skin, interaction_range(), coulomb_cutoff, dipole_cutoff,
                       collision_detection_cutoff()});
 
-  Constraints::constraints.add_forces(particles, sim_time);
+  Constraints::constraints.add_forces(particles, get_sim_time());
 
   if (max_oif_objects) {
     // There are two global quantities that need to be evaluated:
@@ -155,7 +155,7 @@ void force_calc(CellStructure &cell_structure, double time_step) {
   immersed_boundaries.volume_conservation(cell_structure);
 
   lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                         ghost_particles);
+                                         ghost_particles, time_step);
 
 #ifdef CUDA
   copy_forces_from_GPU(particles);
