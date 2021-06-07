@@ -50,6 +50,10 @@ class CheckpointTest(ut.TestCase):
         cls.ref_box_l = np.array([12.0, 14.0, 16.0])
         if 'DP3M' in modes:
             cls.ref_box_l = np.array([16.0, 16.0, 16.0])
+        cls.ref_periodicity = np.array([True, True, True])
+        if espressomd.has_features('STOKESIAN_DYNAMICS') and (
+                'THERM.SDM' in modes or 'INT.SDM' in modes):
+            cls.ref_periodicity = np.array([False, False, False])
 
     def get_active_actor_of_type(self, actor_type):
         for actor in system.actors.active_actors:
@@ -129,11 +133,15 @@ class CheckpointTest(ut.TestCase):
                 state_species[key],
                 atol=1E-5)
 
-    def test_variables(self):
-        self.assertEqual(system.cell_system.skin, 0.1)
-        self.assertEqual(system.time_step, 0.01)
-        self.assertEqual(system.min_global_cut, 2.0)
+    def test_system_variables(self):
+        cell_system_params = system.cell_system.get_state()
+        self.assertTrue(cell_system_params['use_verlet_list'])
+        self.assertAlmostEqual(system.cell_system.skin, 0.1, delta=1E-10)
+        self.assertAlmostEqual(system.time_step, 0.01, delta=1E-10)
+        self.assertAlmostEqual(system.min_global_cut, 2.0, delta=1E-10)
         np.testing.assert_allclose(np.copy(system.box_l), self.ref_box_l)
+        np.testing.assert_array_equal(
+            np.copy(system.periodicity), self.ref_periodicity)
 
     def test_part(self):
         np.testing.assert_allclose(
