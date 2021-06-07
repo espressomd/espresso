@@ -1712,16 +1712,7 @@ where :math:`\Delta E=E_\mathrm{new}-E_\mathrm{old}` is the change in potential 
 and :math:`\beta=1/k_\mathrm{B}T`.
 The extent of reaction, :math:`\xi=1` for the forward, and
 :math:`\xi=-1` for the backward direction.
-The parameter :math:`\Gamma` proportional to the reaction constant. It is defined as
-
-.. math::
-
-   \Gamma = \prod_i \Bigl(\frac{\left<N_i\right>}{V} \Bigr)^{\bar\nu} = V^{-\bar\nu} \prod_i \left<N_i\right>^{\nu_i} = K_c(c^{\ominus}=1/\sigma^3)
-
-where :math:`\left<N_i\right>/V` is the average number density of particles of type :math:`i`.
-Note that the dimension of :math:`\Gamma` is :math:`V^{\bar\nu}`, therefore its
-units must be consistent with the units in which |es| measures the box volume,
-i.e. :math:`\sigma^3`.
+The parameter :math:`\Gamma` is (in the newest version) the dimensionless reaction constant.
 
 It is often convenient, and in some cases even necessary, that some particles
 representing reactants are not removed from or placed at randomly in the system
@@ -1741,34 +1732,6 @@ An example script can be found here:
 * `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
 For a description of the available methods, see :class:`espressomd.reaction_ensemble.ReactionEnsemble`.
-
-.. _Converting tabulated reaction constants to internal units in ESPResSo:
-
-Converting tabulated reaction constants to internal units in |es|
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The implementation in |es| requires that the dimension of :math:`\Gamma`
-is consistent with the internal unit of volume, :math:`\sigma^3`. The tabulated
-values of equilibrium constants for reactions in solution, :math:`K_c`, typically use
-:math:`c^{\ominus} = 1\,\mathrm{moldm^{-3}}` as the reference concentration,
-and have the dimension of :math:`(c^{\ominus})^{\bar\nu}`. To be used with |es|, the
-value of :math:`K_c` has to be converted as
-
-.. math::
-
-   \Gamma = K_c(c^{\ominus} = 1/\sigma^3) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}})
-   \Bigl( N_{\mathrm{A}}\bigl(\frac{\sigma}{\mathrm{dm}}\bigr)^3\Bigr)^{\bar\nu}
-
-where :math:`N_{\mathrm{A}}` is the Avogadro number.  For gas-phase reactions,
-the pressure-based reaction constant, :math:`K_p` is often used, which can
-be converted to :math:`K_c` as
-
-.. math::
-
-   K_p(p^{\ominus}=1\,\mathrm{atm}) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) \biggl(\frac{c^{\ominus}RT}{p^{\ominus}}\biggr)^{\bar\nu},
-
-where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure.
-Consider using the python module pint for unit conversion.
 
 .. _Wang-Landau Reaction Ensemble:
 
