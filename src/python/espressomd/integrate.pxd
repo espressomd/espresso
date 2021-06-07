@@ -30,7 +30,6 @@ cdef extern from "forcecap.hpp":
     void mpi_set_forcecap(double forcecap)
 
 cdef extern from "integrate.hpp":
-    extern int integ_switch
     double get_time_step()
     double get_sim_time()
     void mpi_set_time_step(double time_step) except +

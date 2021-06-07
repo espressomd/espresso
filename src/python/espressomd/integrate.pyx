@@ -70,10 +70,6 @@ cdef class IntegratorHandle:
         def __get__(self):
             return forcecap_get()
 
-    property integ_switch:
-        def __get__(self):
-            return integ_switch
-
     def __init__(self):
         self.set_nvt()
 

@@ -188,10 +188,6 @@ cdef class System:
         def __get__(self):
             return self.cell_system.box_l
 
-    property integ_switch:
-        def __get__(self):
-            return self.integrator.integ_switch
-
     property force_cap:
         """
         :obj:`float`:
