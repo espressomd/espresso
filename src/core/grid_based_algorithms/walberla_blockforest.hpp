@@ -3,8 +3,7 @@
 
 #include "WalberlaBlockForest.hpp"
 
-/** @brief Access the per-MPI-node Walberla instance */
-std::shared_ptr<walberla::WalberlaBlockForest> walberla_blockforest;
+std::shared_ptr<walberla::WalberlaBlockForest> get_walberla_blockforest();
 
 void mpi_init_walberla_blockforest(const Utils::Vector3d &box_size,
                                    double agrid, int n_ghost_layers);
