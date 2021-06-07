@@ -65,23 +65,20 @@ cdef class CellSystem:
         return True
 
     def get_state(self):
-        s = {"use_verlet_list": cell_structure.use_verlet_list}
+        s = self.__getstate__()
+        del s["box_l"]
+        del s["periodicity"]
+        del s["min_global_cut"]
 
         if cell_structure.decomposition_type() == CELL_STRUCTURE_DOMDEC:
             dd = get_domain_decomposition()
-            s["type"] = "domain_decomposition"
             s["cell_grid"] = np.array(
                 [dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
             s["cell_size"] = np.array(
                 [dd.cell_size[0], dd.cell_size[1], dd.cell_size[2]])
 
-        if cell_structure.decomposition_type() == CELL_STRUCTURE_NSQUARE:
-            s["type"] = "nsquare"
-
-        s["skin"] = skin
         s["verlet_reuse"] = get_verlet_reuse()
         s["n_nodes"] = n_nodes
-        s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
 
         return s
 
