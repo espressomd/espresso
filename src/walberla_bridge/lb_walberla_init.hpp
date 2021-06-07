@@ -20,15 +20,15 @@
 #define LB_WALBERLA_INIT_HPP
 
 #include "LBWalberlaBase.hpp"
+#include "WalberlaBlockForest.hpp"
 
 #include <utils/Vector.hpp>
 
 /** @brief Initialize Walberla's MPI manager */
 void walberla_mpi_init();
 
-LBWalberlaBase *new_lb_walberla(double viscosity, double density,
-                                const Utils::Vector3i &grid_dimensions,
-                                const Utils::Vector3i &node_grid, double kT,
-                                unsigned int seed);
+LBWalberlaBase *
+new_lb_walberla(std::shared_ptr<walberla::WalberlaBlockForest> blockforest,
+                double viscosity, double density, double kT, unsigned int seed);
 
 #endif

@@ -436,10 +436,9 @@ IF LB_WALBERLA:
                 self._params['tau'] / self._params['agrid']**2
             lb_dens = self._params['dens'] * self._params['agrid']**3
             lb_kT = self._params['kT'] * \
-                self._params['tau']**2 / self._params['agrid']**2 
+                self._params['tau']**2 / self._params['agrid']**2
             mpi_init_lb_walberla(
                 lb_visc, lb_dens, self._params["agrid"], self._params["tau"],
-                box_geo.length(),
                 lb_kT, self._params['seed'])
             utils.handle_errors("LB fluid activation")
             self.ext_force_density = self._params["ext_force_density"]

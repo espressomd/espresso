@@ -21,16 +21,15 @@
 #ifdef LB_WALBERLA
 #include "lb_walberla_instance.hpp"
 
+#include "walberla_blockforest.hpp"
+
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "lb_interface.hpp"
 
 #include <LBWalberlaBase.hpp>
 #include <lb_walberla_init.hpp>
-
-#include <utils/Vector.hpp>
 
 #include <memory>
 
@@ -56,14 +55,11 @@ LBWalberlaParams *lb_walberla_params() {
 }
 
 void init_lb_walberla(double viscosity, double density, double agrid,
-                      double tau, const Utils::Vector3i &grid_dimensions,
-                      const Utils::Vector3i &node_grid, double kT,
-                      unsigned int seed) {
+                      double tau, double kT, unsigned int seed) {
   // Exceptions need to be converted to runtime errors so they can be
   // handled from Python in a parallel simulation
   try {
-    lb_walberla_instance = new_lb_walberla(viscosity, density, grid_dimensions,
-                                           node_grid, kT, seed);
+    lb_walberla_instance = new_lb_walberla(get_walberla_blockforest(), viscosity, density, kT, seed);
     lb_walberla_params_instance = new LBWalberlaParams{agrid, tau};
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
@@ -81,24 +77,8 @@ void destruct_lb_walberla() {
 }
 REGISTER_CALLBACK(destruct_lb_walberla)
 
-void mpi_init_lb_walberla(double viscosity, double density, double agrid,
-                          double tau, Utils::Vector3d box_size, double kT,
-                          unsigned int seed) {
-  const Utils::Vector3i grid_dimensions{
-      static_cast<int>(std::round(box_size[0] / agrid)),
-      static_cast<int>(std::round(box_size[1] / agrid)),
-      static_cast<int>(std::round(box_size[2] / agrid))};
-  for (int i : {0, 1, 2}) {
-    if (fabs(grid_dimensions[i] * agrid - box_size[i]) / box_size[i] >
-        std::numeric_limits<double>::epsilon()) {
-      throw std::runtime_error(
-          "Box length not commensurate with agrid in direction " +
-          std::to_string(i) + " length " + std::to_string(box_size[i]) +
-          " agrid " + std::to_string(agrid));
-    }
-  }
-  mpi_call_all(init_lb_walberla, viscosity, density, agrid, tau,
-               grid_dimensions, node_grid, kT, seed);
+void mpi_init_lb_walberla(double viscosity, double density, double agrid, double tau, double kT, unsigned int seed) {
+  mpi_call_all(init_lb_walberla, viscosity, density, agrid, tau, kT, seed);
   if (lb_walberla_instance) {
     lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
     lb_lbfluid_sanity_checks(get_time_step());
