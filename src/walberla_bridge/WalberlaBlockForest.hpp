@@ -54,6 +54,7 @@ public:
   [[nodiscard]] Utils::Vector3i get_grid_dimensions() const {
     return m_grid_dimensions;
   }
+  [[nodiscard]] auto get_blocks() const { return m_blocks; }
   [[nodiscard]] std::pair<Utils::Vector3d, Utils::Vector3d>
   get_local_domain() const {
     // We only have one block per mpi rank
