@@ -350,7 +350,8 @@ does not need to be specified as it is automatically determined from the
 particle distances and maximal pairwise error. The second tuning form
 just takes the maximal pairwise error and tries out a lot of switching
 radii to find out the fastest one. If this takes too long, you can
-change the value of the property :attr:`espressomd.system.System.timings`,
+change the value of the ``timings`` argument of the
+:class:`~espressomd.electrostatics.MMM1D` class,
 which controls the number of test force calculations.
 
 .. _MMM1D on GPU:

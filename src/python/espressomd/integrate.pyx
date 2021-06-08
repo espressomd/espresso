@@ -32,11 +32,15 @@ cdef class IntegratorHandle:
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
-        return self._integrator
+        return {'integrator': self._integrator, 'time': self.time,
+                'time_step': self.time_step, 'force_cap': self.force_cap}
 
     def __setstate__(self, state):
-        self._integrator = state
+        self._integrator = state['integrator']
         self._integrator._set_params_in_es_core()
+        self.time = state['time']
+        self.time_step = state['time_step']
+        self.force_cap = state['force_cap']
 
     def get_state(self):
         """
@@ -44,6 +48,27 @@ cdef class IntegratorHandle:
 
         """
         return self.__getstate__()
+
+    property time_step:
+        def __set__(self, time_step):
+            mpi_set_time_step(time_step)
+
+        def __get__(self):
+            return get_time_step()
+
+    property time:
+        def __set__(self, sim_time):
+            mpi_set_time(sim_time)
+
+        def __get__(self):
+            return get_sim_time()
+
+    property force_cap:
+        def __set__(self, cap):
+            mpi_set_forcecap(cap)
+
+        def __get__(self):
+            return forcecap_get()
 
     def __init__(self):
         self.set_nvt()
