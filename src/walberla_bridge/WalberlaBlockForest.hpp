@@ -11,7 +11,7 @@ namespace walberla {
 /** Class that runs and controls the BlockForest in walberla
  */
 class WalberlaBlockForest {
-protected:
+private:
   /** Member variables */
   Utils::Vector3i m_grid_dimensions;
   int m_n_ghost_layers;
