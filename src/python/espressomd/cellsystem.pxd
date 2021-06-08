@@ -57,12 +57,8 @@ cdef extern from "DomainDecomposition.hpp":
         double cell_size[3]
 
 cdef extern from "grid.hpp":
-    void mpi_set_box_length(Vector3d length) except +
-    void mpi_set_periodicity(bool x, bool y, bool z)
     void mpi_set_node_grid(const Vector3i & node_grid)
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-    extern double min_global_cut
-    void mpi_set_min_global_cut(double min_global_cut)
     double maximal_cutoff_bonded()
     double maximal_cutoff_nonbonded()

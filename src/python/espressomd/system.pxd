@@ -22,6 +22,8 @@ from libcpp cimport bool
 from .utils cimport Vector3d
 
 cdef extern from "grid.hpp":
+    void mpi_set_box_length(Vector3d length) except +
+    void mpi_set_periodicity(bool x, bool y, bool z)
     void rescale_boxl(int dir, double d_new)
 
 cdef extern from "rotate_system.hpp":
@@ -38,3 +40,7 @@ cdef extern from "particle_data.hpp":
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int max_oif_objects
     void mpi_set_max_oif_objects(int max_oif_objects)
+
+cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
+    extern double min_global_cut
+    void mpi_set_min_global_cut(double min_global_cut)

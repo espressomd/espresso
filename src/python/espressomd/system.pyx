@@ -43,7 +43,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
-from .utils import is_valid_type, handle_errors
+from .utils import is_valid_type, handle_errors, array_locked
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -60,6 +60,61 @@ if VIRTUAL_SITES:
 
 cdef bool _system_created = False
 
+cdef class _Globals:
+    def __getstate__(self):
+        return {'box_l': self.box_l,
+                'periodicity': self.periodicity,
+                'min_global_cut': self.min_global_cut}
+
+    def __setstate__(self, params):
+        self.box_l = params['box_l']
+        self.periodicity = params['periodicity']
+        self.min_global_cut = params['min_global_cut']
+
+    property box_l:
+        """
+        (3,) array_like of :obj:`float`:
+            Dimensions of the simulation box
+
+        """
+
+        def __set__(self, _box_l):
+            if len(_box_l) != 3:
+                raise ValueError("Box length must be of length 3")
+            mpi_set_box_length(make_Vector3d(_box_l))
+
+        def __get__(self):
+            return make_array_locked(< Vector3d > box_geo.length())
+
+    property periodicity:
+        """
+        (3,) array_like of :obj:`bool`:
+            System periodicity in ``[x, y, z]``, ``False`` for no periodicity
+            in this direction, ``True`` for periodicity
+
+        """
+
+        def __set__(self, _periodic):
+            if len(_periodic) != 3:
+                raise ValueError(
+                    "periodicity must be of length 3, got length " + str(len(_periodic)))
+            mpi_set_periodicity(_periodic[0], _periodic[1], _periodic[2])
+            handle_errors("Error while assigning system periodicity")
+
+        def __get__(self):
+            periodicity = np.empty(3, dtype=np.bool)
+            for i in range(3):
+                periodicity[i] = box_geo.periodic(i)
+            return array_locked(periodicity)
+
+    property min_global_cut:
+        def __set__(self, _min_global_cut):
+            mpi_set_min_global_cut(_min_global_cut)
+
+        def __get__(self):
+            global min_global_cut
+            return min_global_cut
+
 cdef class System:
     """The ESPResSo system class.
 
@@ -69,7 +124,9 @@ cdef class System:
               indentation level, either as method, property or reference.
 
     """
+
     cdef public:
+        _globals
         part
         """:class:`espressomd.particle_data.ParticleList`"""
         non_bonded_inter
@@ -109,10 +166,9 @@ cdef class System:
         if not _system_created:
             if 'box_l' not in kwargs:
                 raise ValueError("Required argument box_l not provided.")
-            self.cell_system = CellSystem()
+            self._globals = _Globals()
             self.integrator = integrate.IntegratorHandle()
-            System.__setattr__(self, "box_l", kwargs.get("box_l"))
-            del kwargs["box_l"]
+            System.__setattr__(self, "box_l", kwargs.pop("box_l"))
             for arg in kwargs:
                 if arg in setable_properties:
                     System.__setattr__(self, arg, kwargs.get(arg))
@@ -123,6 +179,7 @@ cdef class System:
             self.analysis = Analysis(self)
             self.auto_update_accumulators = AutoUpdateAccumulators()
             self.bonded_inter = interactions.BondedInteractions()
+            self.cell_system = CellSystem()
             IF COLLISION_DETECTION == 1:
                 self.collision_detection = CollisionDetection()
             self.comfixed = ComFixed()
@@ -147,13 +204,14 @@ cdef class System:
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         odict = collections.OrderedDict()
-        odict['cell_system'] = System.__getattribute__(self, "cell_system")
+        odict['_globals'] = System.__getattribute__(self, "_globals")
         odict['integrator'] = System.__getattribute__(self, "integrator")
         for property_ in setable_properties:
             odict[property_] = System.__getattribute__(self, property_)
         odict['non_bonded_inter'] = System.__getattribute__(
             self, "non_bonded_inter")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
+        odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['part'] = System.__getattribute__(self, "part")
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
@@ -183,10 +241,10 @@ cdef class System:
         """
 
         def __set__(self, _box_l):
-            self.cell_system.box_l = _box_l
+            self._globals.box_l = _box_l
 
         def __get__(self):
-            return self.cell_system.box_l
+            return self._globals.box_l
 
     property force_cap:
         """
@@ -211,10 +269,10 @@ cdef class System:
         """
 
         def __set__(self, _periodic):
-            self.cell_system.periodicity = _periodic
+            self._globals.periodicity = _periodic
 
         def __get__(self):
-            return self.cell_system.periodicity
+            return self._globals.periodicity
 
     property time:
         """
@@ -248,10 +306,10 @@ cdef class System:
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
-            self.cell_system.min_global_cut = _min_global_cut
+            self._globals.min_global_cut = _min_global_cut
 
         def __get__(self):
-            return self.cell_system.min_global_cut
+            return self._globals.min_global_cut
 
     IF VIRTUAL_SITES:
         property virtual_sites:
