@@ -26,6 +26,8 @@ class NSquare(ut.TestCase):
 
     def setUp(self):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
+        self.system.time_step = 1e-3
+        self.system.cell_system.skin = 0.1
 
     def tearDown(self):
         self.system.part.clear()
@@ -51,6 +53,9 @@ class NSquare(ut.TestCase):
         # This basically checks if part_node and local_particles
         # are still in a valid state after the particle exchange
         self.assertEqual(sum(self.system.part[:].type), n_part)
+
+        # Check that the system is still valid
+        self.system.integrator.run(0)
 
 
 if __name__ == "__main__":

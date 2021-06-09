@@ -29,6 +29,7 @@ class DomainDecomposition(ut.TestCase):
         self.system.cell_system.set_domain_decomposition(
             use_verlet_lists=False)
         self.system.cell_system.node_grid = self.original_node_grid
+        self.system.time_step = 1e-3
 
     def tearDown(self):
         self.system.part.clear()
@@ -53,6 +54,9 @@ class DomainDecomposition(ut.TestCase):
         # This basically checks if part_node and local_particles
         # is still in a valid state after the particle exchange
         self.assertEqual(sum(self.system.part[:].type), n_part)
+
+        # Check that the system is still valid
+        self.system.integrator.run(0)
 
     def test_resort(self):
         self.check_resort()
