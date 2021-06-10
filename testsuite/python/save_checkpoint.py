@@ -114,6 +114,7 @@ if espressomd.has_features('P3M') and 'P3M' in modes:
         cao=1,
         alpha=1.0,
         r_cut=1.0,
+        timings=15,
         tune=False)
     if 'P3M.CPU' in modes:
         system.actors.add(p3m)
@@ -241,6 +242,7 @@ if espressomd.has_features('DP3M') and 'DP3M' in modes:
         mesh=[8, 8, 8],
         alpha=12,
         accuracy=0.01,
+        timings=15,
         tune=False)
     system.actors.add(dp3m)
 

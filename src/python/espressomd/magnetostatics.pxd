@@ -65,7 +65,7 @@ IF DP3M == 1:
         void dp3m_set_tune_params(double r_cut, int mesh, int cao, double accuracy)
         void dp3m_set_mesh_offset(double x, double y, double z) except +
         void dp3m_set_eps(double eps)
-        int dp3m_adaptive_tune(bool verbose)
+        int dp3m_adaptive_tune(int timings, bool verbose)
         void dp3m_deactivate()
 
         ctypedef struct dp3m_data_struct:

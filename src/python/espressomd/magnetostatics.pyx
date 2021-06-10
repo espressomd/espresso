@@ -86,6 +86,8 @@ IF DP3M == 1:
         tune : :obj:`bool`, optional
             Activate/deactivate the tuning method on activation
             (default is ``True``, i.e., activated).
+        timings : :obj:`int`
+            Number of force calculations during tuning.
 
         """
 
@@ -117,10 +119,15 @@ IF DP3M == 1:
                 check_type_or_throw_except(self._params["mesh_off"], 3, float,
                                            "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
 
+            if not is_valid_type(self._params["timings"], int):
+                raise TypeError("DipolarP3M timings has to be an integer")
+            if self._params["timings"] <= 0:
+                raise ValueError("DipolarP3M timings must be > 0")
+
         def valid_keys(self):
             return ["prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
                     "cao", "accuracy", "epsilon", "cao_cut", "a", "ai",
-                    "alpha", "r_cut", "cao3", "tune", "verbose"]
+                    "alpha", "r_cut", "cao3", "tune", "timings", "verbose"]
 
         def required_keys(self):
             return ["accuracy", ]
@@ -133,6 +140,7 @@ IF DP3M == 1:
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
                     "tune": True,
+                    "timings": 10,
                     "verbose": True}
 
         def _get_params_from_es_core(self):
@@ -140,6 +148,7 @@ IF DP3M == 1:
             params.update(dp3m.params)
             params["prefactor"] = dipole.prefactor
             params["tune"] = self._params["tune"]
+            params["timings"] = self._params["timings"]
             return params
 
         def _set_params_in_es_core(self):
@@ -166,7 +175,8 @@ IF DP3M == 1:
             dp3m_set_eps(self._params["epsilon"])
             dp3m_set_tune_params(self._params["r_cut"], mesh,
                                  self._params["cao"], self._params["accuracy"])
-            tuning_error = dp3m_adaptive_tune(self._params["verbose"])
+            tuning_error = dp3m_adaptive_tune(
+                self._params["timings"], self._params["verbose"])
             if tuning_error:
                 handle_errors("DipolarP3M: tuning failed")
             self._params.update(self._get_params_from_es_core())

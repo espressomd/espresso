@@ -25,7 +25,7 @@
 
 double forcecap_get();
 
-void forcecap_cap(ParticleRange particles);
+void forcecap_cap(ParticleRange const &particles);
 
 void mpi_set_forcecap(double force_cap);
 

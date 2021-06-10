@@ -193,8 +193,8 @@ IF P3M == 1:
 
         def valid_keys(self):
             return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
-                    "prefactor", "tune", "check_neutrality", "verbose",
-                    "mesh_off"]
+                    "prefactor", "tune", "check_neutrality", "timings",
+                    "verbose", "mesh_off"]
 
         def required_keys(self):
             return ["prefactor", "accuracy"]
@@ -208,6 +208,7 @@ IF P3M == 1:
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
                     "tune": True,
+                    "timings": 10,
                     "check_neutrality": True,
                     "verbose": True}
 
@@ -216,6 +217,7 @@ IF P3M == 1:
             params.update(p3m.params)
             params["prefactor"] = coulomb.prefactor
             params["tune"] = self._params["tune"]
+            params["timings"] = self._params["timings"]
             return params
 
         def _tune(self):
@@ -226,7 +228,8 @@ IF P3M == 1:
             p3m_set_eps(self._params["epsilon"])
             p3m_set_tune_params(self._params["r_cut"], mesh,
                                 self._params["cao"], self._params["accuracy"])
-            tuning_error = p3m_adaptive_tune(self._params["verbose"])
+            tuning_error = p3m_adaptive_tune(
+                self._params["timings"], self._params["verbose"])
             if tuning_error:
                 handle_errors("P3M: tuning failed")
             self._params.update(self._get_params_from_es_core())
@@ -286,6 +289,11 @@ IF P3M == 1:
                 check_type_or_throw_except(self._params["mesh_off"], 3, float,
                                            "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
 
+            if not is_valid_type(self._params["timings"], int):
+                raise TypeError("DipolarP3M timings has to be an integer")
+            if self._params["timings"] <= 0:
+                raise ValueError("DipolarP3M timings must be > 0")
+
     cdef class P3M(_P3MBase):
         """
         P3M electrostatics solver.
@@ -316,6 +324,8 @@ IF P3M == 1:
         tune : :obj:`bool`, optional
             Used to activate/deactivate the tuning method on activation.
             Defaults to ``True``.
+        timings : :obj:`int`
+            Number of force calculations during tuning.
         check_neutrality : :obj:`bool`, optional
             Raise a warning if the system is not electrically neutral when
             set to ``True`` (default).
@@ -360,6 +370,8 @@ IF P3M == 1:
             tune : :obj:`bool`, optional
                 Used to activate/deactivate the tuning method on activation.
                 Defaults to ``True``.
+            timings : :obj:`int`
+                Number of force calculations during tuning.
             check_neutrality : :obj:`bool`, optional
                 Raise a warning if the system is not electrically neutral when
                 set to ``True`` (default).
@@ -531,6 +543,8 @@ IF ELECTROSTATICS:
         bessel_cutoff : :obj:`int`, optional
         tune : :obj:`bool`, optional
             Specify whether to automatically tune or not. Defaults to ``True``.
+        timings : :obj:`int`
+            Number of force calculations during tuning.
 
         """
 
@@ -544,6 +558,10 @@ IF ELECTROSTATICS:
                 raise ValueError("switch radius should be a positive double")
             if self._params["bessel_cutoff"] < 0 and self._params["bessel_cutoff"] != default_params["bessel_cutoff"]:
                 raise ValueError("bessel_cutoff should be a positive integer")
+            if not is_valid_type(self._params["timings"], int):
+                raise TypeError("DipolarP3M timings has to be an integer")
+            if self._params["timings"] <= 0:
+                raise ValueError("DipolarP3M timings must be > 0")
 
         def default_params(self):
             return {"prefactor": -1,
@@ -551,12 +569,14 @@ IF ELECTROSTATICS:
                     "far_switch_radius": -1,
                     "bessel_cutoff": -1,
                     "tune": True,
+                    "timings": 1000,
                     "check_neutrality": True,
                     "verbose": True}
 
         def valid_keys(self):
             return ["prefactor", "maxPWerror", "far_switch_radius",
-                    "bessel_cutoff", "tune", "check_neutrality", "verbose"]
+                    "bessel_cutoff", "tune", "check_neutrality", "timings",
+                    "verbose"]
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
@@ -569,6 +589,7 @@ IF ELECTROSTATICS:
             del params["far_switch_radius_2"]
             params["prefactor"] = coulomb.prefactor
             params["tune"] = self._params["tune"]
+            params["timings"] = self._params["timings"]
             return params
 
         def _set_params_in_es_core(self):
@@ -580,7 +601,7 @@ IF ELECTROSTATICS:
             resp = MMM1D_init()
             if resp:
                 handle_errors("MMM1D: initialization failed")
-            resp = mmm1d_tune(self._params["verbose"])
+            resp = mmm1d_tune(self._params["timings"], self._params["verbose"])
             if resp:
                 handle_errors("MMM1D: tuning failed")
             self._params.update(self._get_params_from_es_core())
