@@ -6,7 +6,7 @@
 namespace {
 /** @brief Access the per-MPI-node Walberla instance */
 std::shared_ptr<walberla::WalberlaBlockForest> walberla_blockforest;
-}; // namespace
+} // namespace
 
 std::shared_ptr<walberla::WalberlaBlockForest> get_walberla_blockforest() {
   if (!walberla_blockforest) {
