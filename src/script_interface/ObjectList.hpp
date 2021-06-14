@@ -33,6 +33,9 @@
 #include <vector>
 
 namespace ScriptInterface {
+class GlobalContext;
+class LocalContext;
+
 /**
  * @brief Owning list of ObjectHandles
  * @tparam ManagedType Type of the managed objects, needs to be
@@ -131,6 +134,8 @@ protected:
   }
 
 private:
+  friend class GlobalContext;
+  friend class LocalContext;
   std::string get_internal_state() const override {
     std::vector<std::string> object_states(m_elements.size());
 

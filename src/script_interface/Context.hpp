@@ -79,7 +79,8 @@ public:
    * is present.
    */
   virtual std::shared_ptr<ObjectHandle>
-  make_shared(std::string const &name, const VariantMap &parameters) = 0;
+  make_shared(std::string const &name, const VariantMap &parameters,
+              std::string const &internal_state = {}) = 0;
 
 protected:
   /**

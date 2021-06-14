@@ -148,7 +148,8 @@ struct LogContext : public Context {
   }
 
   std::shared_ptr<ObjectHandle> make_shared(std::string const &,
-                                            const VariantMap &) override {
+                                            const VariantMap &,
+                                            std::string const &) override {
     auto it = std::make_shared<Testing::LogHandle>();
     set_context(it.get());
 
@@ -167,7 +168,7 @@ struct LogContext : public Context {
 BOOST_AUTO_TEST_CASE(notify_set_parameter_) {
   auto log_ctx = std::make_shared<Testing::LogContext>();
 
-  auto o = log_ctx->make_shared({}, {});
+  auto o = log_ctx->make_shared({}, {}, {});
 
   std::string name;
   Variant value;
@@ -188,7 +189,7 @@ BOOST_AUTO_TEST_CASE(notify_set_parameter_) {
 BOOST_AUTO_TEST_CASE(notify_call_method_) {
   auto log_ctx = std::make_shared<Testing::LogContext>();
 
-  auto o = log_ctx->make_shared({}, {});
+  auto o = log_ctx->make_shared({}, {}, {});
 
   std::string name;
   VariantMap params;

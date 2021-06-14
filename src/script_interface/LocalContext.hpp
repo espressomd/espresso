@@ -51,11 +51,15 @@ public:
                             Variant const &) override {}
 
   std::shared_ptr<ObjectHandle>
-  make_shared(std::string const &name, const VariantMap &parameters) override {
+  make_shared(std::string const &name, const VariantMap &parameters,
+              std::string const &internal_state = {}) override {
     auto sp = m_factory.make(name);
     set_context(sp.get());
 
     sp->construct(parameters);
+    if (!internal_state.empty()) {
+      sp->set_internal_state(internal_state);
+    }
 
     return sp;
   }

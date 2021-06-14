@@ -30,6 +30,8 @@
 
 namespace ScriptInterface {
 class Context;
+class GlobalContext;
+class LocalContext;
 
 /**
  * @brief Base class for interface handles.
@@ -150,6 +152,8 @@ public:
   static ObjectRef deserialize(const std::string &state, Context &ctx);
 
 private:
+  friend class GlobalContext;
+  friend class LocalContext;
   virtual std::string get_internal_state() const { return {}; }
   virtual void set_internal_state(std::string const &state) {}
 };

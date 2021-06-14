@@ -70,7 +70,7 @@ private:
 
 private:
   Communication::CallbackHandle<ObjectId, const std::string &,
-                                const PackedMap &>
+                                const PackedMap &, const std::string &>
       cb_make_handle;
   Communication::CallbackHandle<ObjectId, const std::string &,
                                 const PackedVariant &>
@@ -86,8 +86,9 @@ public:
       : m_node_local_context(std::move(node_local_context)),
         cb_make_handle(&callbacks,
                        [this](ObjectId id, const std::string &name,
-                              const PackedMap &parameters) {
-                         make_handle(id, name, parameters);
+                              const PackedMap &parameters,
+                              std::string const &internal_state) {
+                         make_handle(id, name, parameters, internal_state);
                        }),
         cb_set_parameter(&callbacks,
                          [this](ObjectId id, std::string const &name,
@@ -107,7 +108,8 @@ private:
    * @brief Callback for @c cb_make_handle
    */
   void make_handle(ObjectId id, const std::string &name,
-                   const PackedMap &parameters);
+                   const PackedMap &parameters,
+                   std::string const &internal_state);
   /**
    * @brief Create remote instances
    *
@@ -116,7 +118,8 @@ private:
    * @param parameters Constructor parameters.
    */
   void remote_make_handle(ObjectId id, const std::string &name,
-                          const VariantMap &parameters);
+                          const VariantMap &parameters,
+                          std::string const &internal_state);
 
 private:
   /**
@@ -154,7 +157,8 @@ public:
    * Remote objects are automatically constructed.
    */
   std::shared_ptr<ObjectHandle>
-  make_shared(std::string const &name, const VariantMap &parameters) override;
+  make_shared(std::string const &name, const VariantMap &parameters,
+              std::string const &internal_state = {}) override;
 
   boost::string_ref name(const ObjectHandle *o) const override;
 };

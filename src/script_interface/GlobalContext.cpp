@@ -44,10 +44,11 @@
 
 namespace ScriptInterface {
 void GlobalContext::make_handle(ObjectId id, const std::string &name,
-                                const PackedMap &parameters) {
+                                const PackedMap &parameters,
+                                std::string const &internal_state) {
   try {
     ObjectRef so = m_node_local_context->make_shared(
-        name, unpack(parameters, m_local_objects));
+        name, unpack(parameters, m_local_objects), internal_state);
 
     m_local_objects.emplace(std::make_pair(id, std::move(so)));
   } catch (Exception const &) {
@@ -55,8 +56,9 @@ void GlobalContext::make_handle(ObjectId id, const std::string &name,
 }
 
 void GlobalContext::remote_make_handle(ObjectId id, const std::string &name,
-                                       const VariantMap &parameters) {
-  cb_make_handle(id, name, pack(parameters));
+                                       const VariantMap &parameters,
+                                       std::string const &internal_state) {
+  cb_make_handle(id, name, pack(parameters), internal_state);
 }
 
 void GlobalContext::set_parameter(ObjectId id, std::string const &name,
@@ -90,28 +92,34 @@ void GlobalContext::notify_call_method(const ObjectHandle *o,
 
 std::shared_ptr<ObjectHandle>
 GlobalContext::make_shared(std::string const &name,
-                           const VariantMap &parameters) {
+                           const VariantMap &parameters,
+                           std::string const &internal_state) {
   std::unique_ptr<ObjectHandle> sp = m_node_local_context->factory().make(name);
   set_context(sp.get());
 
   auto const id = object_id(sp.get());
-  remote_make_handle(id, name, parameters);
+  remote_make_handle(id, name, parameters, internal_state);
 
   sp->construct(parameters);
 
-  return {sp.release(),
-          /* Custom deleter, we keep the corresponding global context,
-           * as well as the original deleter for the object. */
-          [global_context = this, deleter = sp.get_deleter()](ObjectHandle *o) {
-            /* Tell the other nodes before invoking the destructor, this is
-             * required
-             * to have synchronous destructors, which is needed by some client
-             * code. */
-            global_context->cb_delete_handle(object_id(o));
+  std::shared_ptr<ObjectHandle> o = {
+      sp.release(),
+      /* Custom deleter, we keep the corresponding global context,
+       * as well as the original deleter for the object. */
+      [global_context = this, deleter = sp.get_deleter()](ObjectHandle *o) {
+        /* Tell the other nodes before invoking the destructor, this is
+         * required
+         * to have synchronous destructors, which is needed by some client
+         * code. */
+        global_context->cb_delete_handle(object_id(o));
 
-            /* Locally destroy the object. */
-            deleter(o);
-          }};
+        /* Locally destroy the object. */
+        deleter(o);
+      }};
+  if (!internal_state.empty()) {
+    o->set_internal_state(internal_state);
+  }
+  return o;
 }
 
 boost::string_ref GlobalContext::name(const ObjectHandle *o) const {

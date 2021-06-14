@@ -91,8 +91,7 @@ ObjectRef ObjectHandle::deserialize(const std::string &packed_state,
     params[kv.first] = boost::apply_visitor(UnpackVisitor(objects), kv.second);
   }
 
-  auto o = ctx.make_shared(state.name, params);
-  o->set_internal_state(state.internal_state);
+  auto o = ctx.make_shared(state.name, params, state.internal_state);
 
   return o;
 }
