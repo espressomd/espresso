@@ -3,7 +3,7 @@
 
 #include "WalberlaBlockForest.hpp"
 
-std::shared_ptr<walberla::WalberlaBlockForest> get_walberla_blockforest();
+const walberla::WalberlaBlockForest * get_walberla_blockforest();
 
 void mpi_init_walberla_blockforest(const Utils::Vector3d &box_size,
                                    double agrid, int n_ghost_layers);

@@ -8,12 +8,12 @@ namespace {
 std::shared_ptr<walberla::WalberlaBlockForest> walberla_blockforest;
 } // namespace
 
-std::shared_ptr<walberla::WalberlaBlockForest> get_walberla_blockforest() {
+const walberla::WalberlaBlockForest * get_walberla_blockforest() {
   if (!walberla_blockforest) {
     throw std::runtime_error(
         "Attempted access to uninitialized BlockForest instance.");
   }
-  return walberla_blockforest;
+  return walberla_blockforest.get();
 }
 
 void init_walberla_blockforest_local(const Utils::Vector3i &grid_dimensions,
