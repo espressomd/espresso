@@ -128,7 +128,7 @@ public:
   /** @brief set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;
 
-  virtual std::shared_ptr<walberla::WalberlaBlockForest> get_blockforest() const = 0;
+  [[nodiscard]] virtual const walberla::WalberlaBlockForest * get_blockforest() const = 0;
   /** @brief Create a VTK observable.
    *
    *  @param delta_N          Write frequency, if 0 write a single frame,
