@@ -63,7 +63,14 @@ class CheckpointTest(ut.TestCase):
             f"system doesn't have an actor of type {actor_type.__name__}")
 
     @ut.skipIf(not LB, "Skipping test due to missing mode.")
-    def test_LB(self):
+    def test_lb_fluid(self):
+        '''
+        Check serialization of the LB fluid. The checkpoint file only stores
+        population information, therefore calling ``lbf.load_checkpoint()``
+        erases all LBBoundaries information but doesn't remove the objects
+        contained in ``system.lbboundaries`. This test method is named such
+        that it is executed after ``self.test_lb_boundaries()``.
+        '''
         lbf = system.actors[0]
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
