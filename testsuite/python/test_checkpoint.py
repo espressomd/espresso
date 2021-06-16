@@ -167,10 +167,19 @@ class CheckpointTest(ut.TestCase):
         bond. The thermostat friction is negligible compared to the force
         factors used for both the harmonic bond and LJ potential.
         '''
+        # check containers agree on all MPI nodes
         p3, p4 = system.part[3:5]
         np.testing.assert_allclose(np.copy(p3.pos), system.box_l / 2. - 1.)
         np.testing.assert_allclose(np.copy(p4.pos), system.box_l / 2. + 1.)
         np.testing.assert_allclose(np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
+        # remove a shape-based constraint on all MPI nodes
+        if espressomd.has_features('LENNARD_JONES') and 'LJ' in modes:
+            old_force = np.copy(p3.f)
+            system.constraints.remove(system.constraints[0])
+            system.integrator.run(0, recalc_forces=True)
+            np.testing.assert_allclose(
+                np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
+            self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
@@ -474,6 +483,7 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES")
                                     or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
     def test_lb_boundaries(self):
+        # check boundaries agree on all MPI nodes
         self.assertEqual(len(system.lbboundaries), 2)
         np.testing.assert_allclose(
             np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
@@ -487,6 +497,11 @@ class CheckpointTest(ut.TestCase):
             system.actors[0][-1, :, :].boundary.astype(int), 2)
         np.testing.assert_equal(
             system.actors[0][1:-1, :, :].boundary.astype(int), 0)
+        # remove boundaries on all MPI nodes
+        system.lbboundaries.clear()
+        self.assertEqual(len(system.lbboundaries), 0)
+        np.testing.assert_equal(
+            system.actors[0][:, :, :].boundary.astype(int), 0)
 
     def test_constraints(self):
         from espressomd import constraints
