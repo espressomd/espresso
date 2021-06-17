@@ -20,6 +20,8 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+np.random.seed(42)
+
 
 class DomainDecomposition(ut.TestCase):
     system = espressomd.System(box_l=[50.0, 50.0, 50.0])
@@ -29,6 +31,7 @@ class DomainDecomposition(ut.TestCase):
         self.system.cell_system.set_domain_decomposition(
             use_verlet_lists=False)
         self.system.cell_system.node_grid = self.original_node_grid
+        self.system.time_step = 1e-3
 
     def tearDown(self):
         self.system.part.clear()
@@ -43,16 +46,32 @@ class DomainDecomposition(ut.TestCase):
         self.system.part[:].pos = self.system.box_l * \
             np.random.random((n_part, 3))
 
+        # Add an interacting particle in a corner of the box
+        self.system.part.add(pos=(0.01, 0.01, 0.01), type=0)
+        if espressomd.has_features(['LENNARD_JONES']):
+            self.system.non_bonded_inter[0, 1].lennard_jones.set_params(
+                epsilon=1.0, sigma=3.0, cutoff=6.0, shift=0.1)
+            ref_energy = self.system.analysis.energy()['total']
+            assert ref_energy > 10.
+
         # Distribute the particles on the nodes
         part_dist = self.system.cell_system.resort()
 
         # Check that we did not lose particles
-        self.assertEqual(sum(part_dist), n_part)
+        self.assertEqual(sum(part_dist), n_part + 1)
 
         # Check that we can still access all the particles
         # This basically checks if part_node and local_particles
         # is still in a valid state after the particle exchange
         self.assertEqual(sum(self.system.part[:].type), n_part)
+
+        # Check that the system is still valid
+        if espressomd.has_features(['LENNARD_JONES']):
+            # energy calculation
+            new_energy = self.system.analysis.energy()['total']
+            self.assertEqual(new_energy, ref_energy)
+        # force calculation
+        self.system.integrator.run(0, recalc_forces=True)
 
     def test_resort(self):
         self.check_resort()
