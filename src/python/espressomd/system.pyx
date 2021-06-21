@@ -102,7 +102,7 @@ cdef class _Globals:
             handle_errors("Error while assigning system periodicity")
 
         def __get__(self):
-            periodicity = np.empty(3, dtype=np.bool)
+            periodicity = np.empty(3, dtype=type(True))
             for i in range(3):
                 periodicity[i] = box_geo.periodic(i)
             return array_locked(periodicity)
