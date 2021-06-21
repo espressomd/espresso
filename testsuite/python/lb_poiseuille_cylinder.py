@@ -144,7 +144,7 @@ class LBPoiseuilleCommon:
             EXT_FORCE,
             VISC * DENS)
         f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
-        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured - f_half_correction)))
+        rmsd = np.linalg.norm(v_expected - v_measured - f_half_correction)
         self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
 
     def prepare_obs(self):
@@ -181,7 +181,7 @@ class LBPoiseuilleCommon:
             VISC * DENS)
         v_measured = obs_result[:, 0, 0, 2]
         f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
-        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured - f_half_correction)))
+        rmsd = np.linalg.norm(v_expected - v_measured - f_half_correction)
         self.assertLess(rmsd, 0.004 * AGRID / TIME_STEP)
 
     def test_x(self):

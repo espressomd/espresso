@@ -122,13 +122,15 @@ python_test(FILE widom_insertion.py MAX_NUM_PROC 1)
 python_test(FILE constant_pH.py MAX_NUM_PROC 1)
 python_test(FILE constant_pH_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE writevtf.py MAX_NUM_PROC 4)
-#python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 8 LABELS gpu long) # TODO WALBERLA
-#python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long) # TODO WALBERLA
-#python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu) # TODO WALBERLA
-#python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu) TODO WALBERLA
-#python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX x) # TODO WALBERLA
-#python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX y) TODO WALBERLA
-#python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX z) TODO WALBERLA
+# python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 8 LABELS gpu long) # TODO
+# WALBERLA python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu
+# long) # TODO WALBERLA python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1
+# LABELS gpu) # TODO WALBERLA python_test(FILE ek_charged_plate.py MAX_NUM_PROC
+# 1 LABELS gpu) TODO WALBERLA python_test(FILE ek_eof_one_species.py
+# MAX_NUM_PROC 1 LABELS gpu SUFFIX x) # TODO WALBERLA python_test(FILE
+# ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX y) TODO WALBERLA
+# python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX z)
+# TODO WALBERLA
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)
@@ -136,7 +138,8 @@ python_test(FILE brownian_dynamics.py MAX_NUM_PROC 1)
 python_test(FILE brownian_dynamics_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
-python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1) #TODO WALBERLA
+python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1) # TODO
+                                                                   # WALBERLA
 python_test(FILE domain_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)

@@ -313,9 +313,9 @@ void on_skin_change() {
 void on_thermostat_param_change() { reinit_thermo = true; }
 
 void on_timestep_change() {
-    if (lattice_switch != ActiveLB::NONE) {
-      throw std::runtime_error("Time step change not supported by LB");
-    }
+  if (lattice_switch != ActiveLB::NONE) {
+    throw std::runtime_error("Time step change not supported by LB");
+  }
   on_thermostat_param_change();
 }
 

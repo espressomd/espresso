@@ -31,9 +31,8 @@ sample_test(FILE test_dpd.py)
 sample_test(FILE test_drude_bmimpf6.py SUFFIX cpu)
 sample_test(FILE test_drude_bmimpf6.py SUFFIX gpu LABELS "gpu")
 
-# WALBERLA TODO: Re-enable all samples/tutorials related to lb
-# sample_test(FILE test_ekboundaries.py LABELS "gpu")
-# sample_test(FILE test_electrophoresis.py)
+# WALBERLA TODO: Re-enable all samples/tutorials related to lb sample_test(FILE
+# test_ekboundaries.py LABELS "gpu") sample_test(FILE test_electrophoresis.py)
 sample_test(FILE test_espresso_logo.py)
 sample_test(FILE test_gibbs_ensemble.py)
 sample_test(FILE test_grand_canonical.py)
@@ -81,7 +80,7 @@ sample_test(FILE test_visualization_npt.py)
 sample_test(FILE test_visualization_poiseuille.py)
 sample_test(FILE test_wang_landau_reaction_ensemble.py)
 sample_test(FILE test_widom_insertion.py)
-#sample_test(FILE test_object_in_fluid__motivation.py)
+# sample_test(FILE test_object_in_fluid__motivation.py)
 sample_test(FILE test_immersed_boundary.py)
 
 add_custom_target(
