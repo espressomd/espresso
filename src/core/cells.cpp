@@ -214,6 +214,7 @@ void cells_update_ghosts(unsigned data_parts) {
 
     /* Resort cell system */
     cell_structure.resort_particles(global);
+    cell_structure.ghosts_count();
     cell_structure.ghosts_update(data_parts);
 
     /* Add the ghost particles to the index if we don't already

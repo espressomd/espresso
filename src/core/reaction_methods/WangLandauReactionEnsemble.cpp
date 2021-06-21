@@ -474,7 +474,7 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
   m_WL_tries += reaction_steps;
   for (int step = 0; step < reaction_steps; step++) {
     int reaction_id = i_random(static_cast<int>(reactions.size()));
-    generic_oneway_reaction(reaction_id);
+    generic_oneway_reaction(reactions[reaction_id]);
     if (can_refine_wang_landau_one_over_t() && m_WL_tries % 10000 == 0) {
       // check for convergence
       if (achieved_desired_number_of_refinements_one_over_t()) {

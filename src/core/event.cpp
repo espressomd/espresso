@@ -256,9 +256,9 @@ void on_boxl_change(bool skip_method_adaption) {
 void on_cell_structure_change() {
   clear_particle_node();
 
-  /* Now give methods a chance to react to the change in cell
-   * structure. Most ES methods need to reinitialize, as they depend
-   * on skin, node grid and so on. */
+  /* Now give methods a chance to react to the change in cell structure.
+   * Most ES methods need to reinitialize, as they depend on skin,
+   * node grid and so on. */
 #ifdef ELECTROSTATICS
   Coulomb::init();
 #endif /* ifdef ELECTROSTATICS */
@@ -268,8 +268,8 @@ void on_cell_structure_change() {
 #endif /* ifdef DIPOLES */
   if (lattice_switch == ActiveLB::WALBERLA) {
     runtimeErrorMsg()
-        << "LB does not currently support handling changes of the MD "
-           "cell geometry. Setup the cell system, skin and interactions before "
+        << "LB does not currently support handling changes of the MD cell"
+           " geometry. Setup the cell system, skin and interactions before "
            "activating the CPU LB.";
   }
 }

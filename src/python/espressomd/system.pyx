@@ -44,11 +44,8 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
-from .globals import Globals
-from .globals cimport integ_switch, max_oif_objects, mpi_set_max_oif_objects
-from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded
 from .utils cimport check_type_or_throw_except
-from .utils import is_valid_type, handle_errors
+from .utils import is_valid_type, handle_errors, array_locked
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -57,13 +54,68 @@ IF COLLISION_DETECTION == 1:
 
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                      "time_step", "timings", "force_cap", "max_oif_objects"]
+                      "time_step", "force_cap", "max_oif_objects"]
 
 if VIRTUAL_SITES:
     setable_properties.append("_active_virtual_sites_handle")
 
 
 cdef bool _system_created = False
+
+cdef class _Globals:
+    def __getstate__(self):
+        return {'box_l': self.box_l,
+                'periodicity': self.periodicity,
+                'min_global_cut': self.min_global_cut}
+
+    def __setstate__(self, params):
+        self.box_l = params['box_l']
+        self.periodicity = params['periodicity']
+        self.min_global_cut = params['min_global_cut']
+
+    property box_l:
+        """
+        (3,) array_like of :obj:`float`:
+            Dimensions of the simulation box
+
+        """
+
+        def __set__(self, _box_l):
+            if len(_box_l) != 3:
+                raise ValueError("Box length must be of length 3")
+            mpi_set_box_length(make_Vector3d(_box_l))
+
+        def __get__(self):
+            return make_array_locked(< Vector3d > box_geo.length())
+
+    property periodicity:
+        """
+        (3,) array_like of :obj:`bool`:
+            System periodicity in ``[x, y, z]``, ``False`` for no periodicity
+            in this direction, ``True`` for periodicity
+
+        """
+
+        def __set__(self, _periodic):
+            if len(_periodic) != 3:
+                raise ValueError(
+                    "periodicity must be of length 3, got length " + str(len(_periodic)))
+            mpi_set_periodicity(_periodic[0], _periodic[1], _periodic[2])
+            handle_errors("Error while assigning system periodicity")
+
+        def __get__(self):
+            periodicity = np.empty(3, dtype=np.bool)
+            for i in range(3):
+                periodicity[i] = box_geo.periodic(i)
+            return array_locked(periodicity)
+
+    property min_global_cut:
+        def __set__(self, _min_global_cut):
+            mpi_set_min_global_cut(_min_global_cut)
+
+        def __get__(self):
+            global min_global_cut
+            return min_global_cut
 
 cdef class System:
     """The ESPResSo system class.
@@ -74,9 +126,9 @@ cdef class System:
               indentation level, either as method, property or reference.
 
     """
+
     cdef public:
-        globals
-        """:class:`espressomd.globals.Globals`"""
+        _globals
         part
         """:class:`espressomd.particle_data.ParticleList`"""
         non_bonded_inter
@@ -116,11 +168,11 @@ cdef class System:
     def __init__(self, **kwargs):
         global _system_created
         if not _system_created:
-            self.globals = Globals()
             if 'box_l' not in kwargs:
                 raise ValueError("Required argument box_l not provided.")
-            System.__setattr__(self, "box_l", kwargs.get("box_l"))
-            del kwargs["box_l"]
+            self._globals = _Globals()
+            self.integrator = integrate.IntegratorHandle()
+            System.__setattr__(self, "box_l", kwargs.pop("box_l"))
             for arg in kwargs:
                 if arg in setable_properties:
                     System.__setattr__(self, arg, kwargs.get(arg))
@@ -139,7 +191,6 @@ cdef class System:
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
-            self.integrator = integrate.IntegratorHandle()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
@@ -159,15 +210,15 @@ cdef class System:
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         odict = collections.OrderedDict()
-        odict['globals'] = System.__getattribute__(self, "globals")
+        odict['_globals'] = System.__getattribute__(self, "_globals")
+        odict['integrator'] = System.__getattribute__(self, "integrator")
         for property_ in setable_properties:
-            if not hasattr(self.globals, property_):
-                odict[property_] = System.__getattribute__(self, property_)
+            odict[property_] = System.__getattribute__(self, property_)
         odict['non_bonded_inter'] = System.__getattribute__(
             self, "non_bonded_inter")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
-        odict['part'] = System.__getattribute__(self, "part")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
+        odict['part'] = System.__getattribute__(self, "part")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(
             self, "auto_update_accumulators")
@@ -189,7 +240,11 @@ cdef class System:
         return odict
 
     def __setstate__(self, params):
+        # MD cell geometry cannot be reset with a walberla LB actor
+        md_cell_reset = ("box_l", "min_global_cut", "periodicity", "time_step")
         for property_ in params.keys():
+            if property_ in md_cell_reset:
+                continue
             System.__setattr__(self, property_, params[property_])
 
     property box_l:
@@ -200,15 +255,11 @@ cdef class System:
         """
 
         def __set__(self, _box_l):
-            self.globals.box_l = _box_l
+            self._globals.box_l = _box_l
             handle_errors("Box size setup")
 
         def __get__(self):
-            return self.globals.box_l
-
-    property integ_switch:
-        def __get__(self):
-            return integ_switch
+            return self._globals.box_l
 
     property force_cap:
         """
@@ -219,10 +270,10 @@ cdef class System:
         """
 
         def __get__(self):
-            return self.globals.force_cap
+            return self.integrator.force_cap
 
         def __set__(self, cap):
-            self.globals.force_cap = cap
+            self.integrator.force_cap = cap
 
     property periodicity:
         """
@@ -233,65 +284,48 @@ cdef class System:
         """
 
         def __set__(self, _periodic):
-            if len(_periodic) != 3:
-                raise ValueError(
-                    "periodicity must be of length 3, got length " + str(len(_periodic)))
-            self.globals.periodicity = _periodic
+            self._globals.periodicity = _periodic
             handle_errors("Setting periodicity")
 
         def __get__(self):
-            return self.globals.periodicity
+            return self._globals.periodicity
 
     property time:
         """
         Set the time in the simulation
         """
 
-        def __set__(self, double _time):
-            if _time < 0:
-                raise ValueError("Simulation time must be >= 0")
-            self.globals.time = _time
+        def __set__(self, double sim_time):
+            self.integrator.time = sim_time
 
         def __get__(self):
-            return self.globals.time
+            return self.integrator.time
 
     property time_step:
         """
         Sets the time step for the integrator.
         """
 
-        def __set__(self, double _time_step):
-            self.globals.time_step = _time_step
+        def __set__(self, double time_step):
+            self.integrator.time_step = time_step
 
         def __get__(self):
-            return self.globals.time_step
-
-    property timings:
-        """
-        Sets the number of test force calculations to carry out when tuning
-        electrostatics and magnetostatics.
-        """
-
-        def __set__(self, int _timings):
-            self.globals.timings = _timings
-
-        def __get__(self):
-            return self.globals.timings
+            return self.integrator.time_step
 
     property max_cut_nonbonded:
         def __get__(self):
-            return maximal_cutoff_nonbonded()
+            return self.cell_system.max_cut_nonbonded
 
     property max_cut_bonded:
         def __get__(self):
-            return maximal_cutoff_bonded()
+            return self.cell_system.max_cut_bonded
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
-            self.globals.min_global_cut = _min_global_cut
+            self._globals.min_global_cut = _min_global_cut
 
         def __get__(self):
-            return self.globals.min_global_cut
+            return self._globals.min_global_cut
 
     IF VIRTUAL_SITES:
         property virtual_sites:

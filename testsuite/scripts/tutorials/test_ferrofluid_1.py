@@ -22,7 +22,8 @@ import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/ferrofluid/ferrofluid_part1.py",
-    EQUIL_STEPS=200, EQUIL_ROUNDS=10)
+    EQUIL_STEPS=200, EQUIL_ROUNDS=10,
+    CI_DP3M_PARAMS={'cao': 3, 'r_cut': 8.34, 'mesh': [8, 8, 8], 'alpha': 0.2115, 'tune': False})
 
 
 @skipIfMissingFeatures

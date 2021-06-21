@@ -75,11 +75,14 @@ static double time_step = -1.0;
 static double sim_time = 0.0;
 
 double skin = 0.0;
-bool skin_set = false;
+
+/** True iff the user has changed the skin setting. */
+static bool skin_set = false;
 
 bool recalc_forces = true;
 
-double verlet_reuse = 0.0;
+/** Average number of integration steps the Verlet list has been re-using. */
+static double verlet_reuse = 0.0;
 
 static int fluid_step = 0;
 
@@ -466,6 +469,8 @@ double interaction_range() {
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
 
+double get_verlet_reuse() { return verlet_reuse; }
+
 double get_time_step() { return time_step; }
 
 double get_sim_time() { return sim_time; }
@@ -489,6 +494,7 @@ void mpi_set_time_step(double time_s) {
 
 void mpi_set_skin_local(double skin) {
   ::skin = skin;
+  skin_set = true;
   on_skin_change();
 }
 

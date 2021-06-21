@@ -53,6 +53,10 @@ class CheckpointTest(ut.TestCase):
         cls.ref_box_l = np.array([6.0, 7.0, 8.0])
         if 'DP3M' in modes:
             cls.ref_box_l = np.array([8.0, 8.0, 8.0])
+        cls.ref_periodicity = np.array([True, True, True])
+        if espressomd.has_features('STOKESIAN_DYNAMICS') and (
+                'THERM.SDM' in modes or 'INT.SDM' in modes):
+            cls.ref_periodicity = np.array([False, False, False])
 
     def get_active_actor_of_type(self, actor_type):
         for actor in system.actors.active_actors:
@@ -177,11 +181,15 @@ class CheckpointTest(ut.TestCase):
                 state_species[key],
                 atol=1E-5)
 
-    def test_variables(self):
-        self.assertEqual(system.cell_system.skin, 0.1)
-        self.assertEqual(system.time_step, 0.01)
-        self.assertEqual(system.min_global_cut, 2.0)
+    def test_system_variables(self):
+        cell_system_params = system.cell_system.get_state()
+        self.assertTrue(cell_system_params['use_verlet_list'])
+        self.assertAlmostEqual(system.cell_system.skin, 0.1, delta=1E-10)
+        self.assertAlmostEqual(system.time_step, 0.01, delta=1E-10)
+        self.assertAlmostEqual(system.min_global_cut, 2.0, delta=1E-10)
         np.testing.assert_allclose(np.copy(system.box_l), self.ref_box_l)
+        np.testing.assert_array_equal(
+            np.copy(system.periodicity), self.ref_periodicity)
 
     def test_part(self):
         np.testing.assert_allclose(
@@ -262,8 +270,8 @@ class CheckpointTest(ut.TestCase):
     def test_integrator_NPT(self):
         integ = system.integrator.get_state()
         self.assertIsInstance(
-            integ, espressomd.integrate.VelocityVerletIsotropicNPT)
-        params = integ.get_params()
+            integ['integrator'], espressomd.integrate.VelocityVerletIsotropicNPT)
+        params = integ['integrator'].get_params()
         self.assertEqual(params['ext_pressure'], 2.0)
         self.assertEqual(params['piston'], 0.01)
         self.assertEqual(params['direction'], [1, 0, 0])
@@ -272,8 +280,10 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('INT.SD' not in modes, 'SD integrator not in modes')
     def test_integrator_SD(self):
         integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.SteepestDescent)
-        params = integ.get_params()
+        self.assertIsInstance(
+            integ['integrator'],
+            espressomd.integrate.SteepestDescent)
+        params = integ['integrator'].get_params()
         self.assertEqual(params['f_max'], 2.0)
         self.assertEqual(params['gamma'], 0.1)
         self.assertEqual(params['max_displacement'], 0.01)
@@ -281,33 +291,41 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('INT.NVT' not in modes, 'NVT integrator not in modes')
     def test_integrator_NVT(self):
         integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.VelocityVerlet)
-        params = integ.get_params()
+        self.assertIsInstance(
+            integ['integrator'],
+            espressomd.integrate.VelocityVerlet)
+        params = integ['integrator'].get_params()
         self.assertEqual(params, {})
 
     @ut.skipIf('INT' in modes, 'VV integrator not the default')
     def test_integrator_VV(self):
         integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.VelocityVerlet)
-        params = integ.get_params()
+        self.assertIsInstance(
+            integ['integrator'],
+            espressomd.integrate.VelocityVerlet)
+        params = integ['integrator'].get_params()
         self.assertEqual(params, {})
 
     @ut.skipIf('INT.BD' not in modes, 'BD integrator not in modes')
     def test_integrator_BD(self):
         integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.BrownianDynamics)
-        params = integ.get_params()
+        self.assertIsInstance(
+            integ['integrator'],
+            espressomd.integrate.BrownianDynamics)
+        params = integ['integrator'].get_params()
         self.assertEqual(params, {})
 
     @utx.skipIfMissingFeatures('STOKESIAN_DYNAMICS')
     @ut.skipIf('INT.SDM' not in modes, 'SDM integrator not in modes')
     def test_integrator_SDM(self):
         integ = system.integrator.get_state()
-        self.assertIsInstance(integ, espressomd.integrate.StokesianDynamics)
+        self.assertIsInstance(
+            integ['integrator'],
+            espressomd.integrate.StokesianDynamics)
         expected_params = {
             'approximation_method': 'ft', 'radii': {0: 1.5}, 'viscosity': 0.5,
             'lubrication': False, 'pair_mobility': False, 'self_mobility': True}
-        params = integ.get_params()
+        params = integ['integrator'].get_params()
         self.assertEqual(params, expected_params)
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
@@ -378,7 +396,7 @@ class CheckpointTest(ut.TestCase):
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.01, 'mesh': 3 * [8],
                      'cao': 1, 'alpha': 12.0, 'r_cut': 2.4, 'tune': False,
-                     'mesh_off': [0.5, 0.5, 0.5], 'epsilon': 2.0}
+                     'mesh_off': [0.5, 0.5, 0.5], 'epsilon': 2.0, 'timings': 15}
         for key in reference:
             self.assertIn(key, state)
             np.testing.assert_almost_equal(state[key], reference[key],
@@ -391,7 +409,8 @@ class CheckpointTest(ut.TestCase):
         actor = self.get_active_actor_of_type(espressomd.electrostatics.P3M)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
-                     'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False}
+                     'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
+                     'timings': 15}
         for key in reference:
             self.assertIn(key, state)
             np.testing.assert_almost_equal(state[key], reference[key],
@@ -405,7 +424,8 @@ class CheckpointTest(ut.TestCase):
         elc_state = actor.get_params()
         p3m_state = elc_state['p3m_actor'].get_params()
         p3m_reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
-                         'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False}
+                         'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
+                         'timings': 15}
         elc_reference = {'gap_size': 2.0, 'maxPWerror': 0.1,
                          'delta_mid_top': 0.9, 'delta_mid_bot': 0.1}
         for key in elc_reference:

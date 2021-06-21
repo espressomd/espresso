@@ -27,12 +27,13 @@ from .interactions cimport CoreNoneBond
 import numpy as np
 cimport numpy as np
 import scipy.signal
-from .globals import Globals
+from .grid cimport box_geo
 
 from collections import OrderedDict
 from .system import System
 from .utils import array_locked, is_valid_type, handle_errors
 from .utils cimport Vector3i, Vector3d, Vector9d
+from .utils cimport make_array_locked
 from .utils cimport check_type_or_throw_except
 from .utils cimport create_nparray_from_double_array
 from .particle_data cimport get_n_part
@@ -690,7 +691,8 @@ class Analysis:
             raise ValueError("type_list_b has to be a list!")
 
         if r_max is None:
-            r_max = min(Globals().box_l) / 2
+            box_l = make_array_locked(< Vector3d > box_geo.length())
+            r_max = min(box_l) / 2
 
         assert r_min >= 0.0, "r_min was chosen too small!"
         assert not log_flag or r_min != 0.0, "r_min cannot include zero"

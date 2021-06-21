@@ -21,6 +21,8 @@
 /** \file
  *  Implementation of tuning.hpp.
  */
+#include "tuning.hpp"
+
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
@@ -37,17 +39,14 @@
 #include <algorithm>
 #include <cmath>
 
-int timing_samples = 10;
-
-double time_force_calc(int default_samples) {
-  auto const rds = timing_samples > 0 ? timing_samples : default_samples;
+double time_force_calc(int int_steps) {
   Utils::Statistics::RunningAverage<double> running_average;
 
   if (mpi_integrate(0, 0))
     return -1;
 
   /* perform force calculation test */
-  for (int i = 0; i < rds; i++) {
+  for (int i = 0; i < int_steps; i++) {
     const double tick = MPI_Wtime();
 
     if (mpi_integrate(0, -1))
@@ -75,26 +74,25 @@ double time_force_calc(int default_samples) {
  * This times the integration and
  * propagates the system.
  *
- * @param rds Number of steps to integrate.
+ * @param int_steps Number of steps to integrate.
  * @return Time per integration in ms.
  */
-static double time_calc(int rds) {
+static double time_calc(int int_steps) {
   if (mpi_integrate(0, 0))
     return -1;
 
   /* perform force calculation test */
   const double tick = MPI_Wtime();
-  if (mpi_integrate(rds, -1))
+  if (mpi_integrate(int_steps, -1))
     return -1;
   const double tock = MPI_Wtime();
 
   /* MPI returns s, return value should be in ms. */
-  return 1000. * (tock - tick) / rds;
+  return 1000. * (tock - tick) / int_steps;
 }
 
 void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
                bool adjust_max_skin) {
-  skin_set = true;
 
   double a = min_skin;
   double b = max_skin;
