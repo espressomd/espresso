@@ -24,7 +24,7 @@ class LBSliceTest(ut.TestCase):
 
     """This simple test first writes random numbers and then reads them 
     to same slices of LB nodes and compares if the results are the same, 
-    shape and value wise.
+    shape-wise and value-wise.
     """
 
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
@@ -124,9 +124,9 @@ class LBSliceTest(ut.TestCase):
             (x, y, z) for (
                 x, y, z) in itertools.product(
                 i_handle, j_handle, k_handle)]
-        # arrange node indices using __iter__() enforced converstion
+        # arrange node indices using __iter__() enforced conversion
         iterator_indices = [x.index for x in lbslice_handle]
-        # check the results correspond pairwise. order implicitly preserved.
+        # check the results correspond pairwise. order is implicitly preserved.
         # uses __eq()__ method form LBFluidRoutines()
         assert all([x == y for x, y in zip(
             arranged_indices, iterator_indices)])
