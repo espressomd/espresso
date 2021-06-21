@@ -41,7 +41,7 @@ DENS = 1.7
 TIME_STEP = 0.05
 BOX_L = 8.0
 # Location of the LB wall. This was box_l/2 -1 for Espresso's LB
-EFFECTIVE_RADIUS = BOX_L / 2 - 1.03
+EFFECTIVE_RADIUS = BOX_L / 2 - 1.0
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
@@ -96,7 +96,6 @@ class LBPoiseuilleCommon:
         """
         # disable periodicity except in the flow direction
         self.system.periodicity = np.logical_not(self.params['axis'])
-
         local_lb_params = LB_PARAMS.copy()
         local_lb_params['ext_force_density'] = np.array(
             self.params['axis']) * EXT_FORCE
@@ -145,8 +144,8 @@ class LBPoiseuilleCommon:
             EXT_FORCE,
             VISC * DENS)
         f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
-        np.testing.assert_allclose(
-            v_measured[1:-1] - f_half_correction, v_expected[1:-1], atol=0.0032)
+        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured - f_half_correction)))
+        self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
 
     def prepare_obs(self):
         if self.params['axis'] == [1, 0, 0]:
@@ -182,8 +181,8 @@ class LBPoiseuilleCommon:
             VISC * DENS)
         v_measured = obs_result[:, 0, 0, 2]
         f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
-        np.testing.assert_allclose(
-            v_measured[1:-1] - f_half_correction, v_expected[1:-1], atol=0.0037)
+        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured - f_half_correction)))
+        self.assertLess(rmsd, 0.004 * AGRID / TIME_STEP)
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]
