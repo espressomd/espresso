@@ -33,9 +33,12 @@ class LBSliceTest(ut.TestCase):
     system.time_step = .01
     system.cell_system.skin = 0.1
     np.random.seed(seed=42)
-    lb_fluid = espressomd.lb.LBFluidWalberla(
-        agrid=1.0, dens=1., visc=1., tau=0.01)
-    system.actors.add(lb_fluid)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.lb_fluid = espressomd.lb.LBFluidWalberla(
+            agrid=1.0, dens=1., visc=1., tau=0.01)
+        cls.system.actors.add(cls.lb_fluid)
 
     def test_slicing(self):
         lb_fluid = self.lb_fluid
