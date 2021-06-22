@@ -80,6 +80,8 @@ class LBWalberlaMass(ut.TestCase, LBMassCommon):
     """Test for the Walberla implementation of the LB."""
 
     def setUp(self):
+        self.blockforest = espressomd.walberla.WalberlaBlockForest(
+            agrid=LB_PARAMS['agrid'], box_l=self.system.box_l)
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 
 
