@@ -138,7 +138,10 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue(cell_system_params['use_verlet_list'])
         self.assertAlmostEqual(system.cell_system.skin, 0.1, delta=1E-10)
         self.assertAlmostEqual(system.time_step, 0.01, delta=1E-10)
+        self.assertAlmostEqual(system.time, 1.5, delta=1E-10)
+        self.assertAlmostEqual(system.force_cap, 1000., delta=1E-10)
         self.assertAlmostEqual(system.min_global_cut, 2.0, delta=1E-10)
+        self.assertEqual(system.max_oif_objects, 5)
         np.testing.assert_allclose(np.copy(system.box_l), self.ref_box_l)
         np.testing.assert_array_equal(
             np.copy(system.periodicity), self.ref_periodicity)
@@ -215,6 +218,12 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['kT'], 1.0)
         self.assertEqual(thmst['seed'], 42)
         self.assertEqual(thmst['counter'], 0)
+
+    def test_integrator(self):
+        params = system.integrator.get_state()
+        self.assertAlmostEqual(params['force_cap'], 1000., delta=1E-10)
+        self.assertAlmostEqual(params['time_step'], 0.01, delta=1E-10)
+        self.assertAlmostEqual(params['time'], 1.5, delta=1E-10)
 
     @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('INT.NPT' not in modes, 'NPT integrator not in modes')

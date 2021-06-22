@@ -43,7 +43,10 @@ if 'DP3M' in modes:
     system.box_l = 3 * [np.max(system.box_l)]
 system.cell_system.skin = 0.1
 system.time_step = 0.01
+system.time = 1.5
+system.force_cap = 1000.
 system.min_global_cut = 2.0
+system.max_oif_objects = 5
 
 # create checkpoint folder
 idx = "mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(".", "__")
