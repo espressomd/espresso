@@ -222,7 +222,7 @@ def validate_info(boxes):
         np.testing.assert_equal(
             box.num_part,
             msg[2],
-            err_msg="Server side box length (actual) differs from client side (desired)")
+            err_msg="Server side num part (actual) differs from client side (desired)")
         logging.debug(
             "Validation correct. Values of {}:\nBox length:\t{}\nNum Part:\t{}.".format(
                 box.box_name, box.box_length, box.num_part))
