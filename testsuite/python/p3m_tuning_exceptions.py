@@ -408,6 +408,10 @@ class P3M_tuning_test(ut.TestCase):
         self.assertEqual(tuned_mesh[1], 12)
         self.assertEqual(tuned_mesh[2], 16)
 
+        # check MD cell reset event
+        self.system.box_l = self.system.box_l
+        self.system.periodicity = self.system.periodicity
+
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures("P3M")
     def test_09_no_errors_p3m_gpu_rescale_mesh(self):
@@ -428,6 +432,30 @@ class P3M_tuning_test(ut.TestCase):
         self.assertEqual(tuned_mesh[0], 20)
         self.assertEqual(tuned_mesh[1], 30)
         self.assertEqual(tuned_mesh[2], 40)
+
+        # check MD cell reset event
+        self.system.box_l = self.system.box_l
+        self.system.periodicity = self.system.periodicity
+
+    @utx.skipIfMissingFeatures("DP3M")
+    def test_09_no_errors_dp3m_cpu_rescale_mesh(self):
+        import espressomd.magnetostatics
+
+        self.system.time_step = 0.01
+        self.add_magnetic_particles()
+
+        dp3m_params = {'accuracy': 1e-6, 'mesh': [25, 25, 25], 'cao': 7,
+                       'prefactor': 1.1, 'r_cut': 4.50, 'alpha': 0.8216263}
+        solver_dp3m = espressomd.magnetostatics.DipolarP3M(
+            epsilon='metallic', tune=False, **dp3m_params)
+        try:
+            self.system.actors.add(solver_dp3m)
+        except Exception as err:
+            self.fail('tuning raised Exception("' + str(err) + '")')
+
+        # check MD cell reset event
+        self.system.box_l = self.system.box_l
+        self.system.periodicity = self.system.periodicity
 
 
 if __name__ == "__main__":

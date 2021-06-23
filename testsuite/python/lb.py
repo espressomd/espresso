@@ -276,7 +276,7 @@ class TestLB:
         nodes = [self.lbf[i, j, k] for i, j, k in itertools.product(x, y, z)]
         nodes.remove(self.lbf[0, 0, 0])
         assert all(self.lbf[0, 0, 0] != node for node in nodes)
-        # test __hash()__ intecept to indetify nodes based oon index rather
+        # test __hash()__ intercept to identify nodes based on index rather
         # than name. set() constructor runs hash()
         subset1, subset2 = nodes[:-10], nodes[-10:]
         assert len(set(subset1 + subset1)) == len(subset1)
