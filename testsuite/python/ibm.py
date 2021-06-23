@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import numpy as np
+import itertools
 import unittest as ut
 
 import espressomd
@@ -126,6 +127,55 @@ class IBM(ut.TestCase):
 
         # check not bonded particles. Positions should still be distorted
         np.testing.assert_allclose(np.copy(non_bound.pos), distorted_pos)
+
+    def test_volcons(self):
+        '''Check volume conservation forces on a simple mesh (cube).'''
+        system = self.system
+        system.virtual_sites = VirtualSitesInertialessTracers()
+        system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
+
+        # Place particles on a cube.
+        positions = list(itertools.product((0, 1), repeat=3))
+        positions = positions[:4] + positions[6:] + positions[4:6]
+        positions = np.array(positions) - 0.5
+        system.part.add(pos=positions + system.box_l / 2., virtual=8 * [True])
+
+        # Divide the cube. All triangle normals must point inside the mesh.
+        # Use the right hand rule to determine the order of the indices.
+        triangles = [(0, 1, 2), (1, 3, 2),
+                     (2, 3, 4), (3, 5, 4),
+                     (4, 5, 6), (5, 7, 6),
+                     (6, 7, 0), (7, 1, 0),
+                     (0, 2, 4), (0, 4, 6),
+                     (1, 5, 3), (1, 7, 5)]
+        # Add triangle bonds that don't contribute to the force (infinite
+        # elasticity). These bonds are needed to calculate the mesh volume.
+        for id1, id2, id3 in triangles:
+            bond = espressomd.interactions.IBM_Triel(
+                ind1=id3, ind2=id2, ind3=id1, elasticLaw="Skalak", k1=0., k2=0., maxDist=3)
+            system.bonded_inter.add(bond)
+            system.part[id1].add_bond((bond, id2, id3))
+
+        # Add volume conservation force.
+        volCons = espressomd.interactions.IBM_VolCons(softID=1, kappaV=1.)
+        system.bonded_inter.add(volCons)
+        for p in system.part:
+            p.add_bond((volCons,))
+
+        # Run the integrator to initialize the mesh reference volume.
+        system.integrator.run(0, recalc_forces=True)
+
+        # The restorative force is zero at the moment.
+        np.testing.assert_almost_equal(np.copy(self.system.part[:].f), 0.)
+
+        # Double the cube dimensions. The volume increases by a factor of 8.
+        system.part[:].pos = 2. * positions + system.box_l / 2.
+        system.integrator.run(0, recalc_forces=True)
+        ref_forces = 1.75 * np.array(
+            [(1, 2, 2), (2, 1, -2), (2, -1, 1), (1, -2, -1),
+             (-1, -2, 2), (-2, -1, -2), (-2, 1, 1), (-1, 2, -1)])
+        np.testing.assert_almost_equal(
+            np.copy(self.system.part[:].f), ref_forces)
 
 
 if __name__ == "__main__":
