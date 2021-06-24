@@ -21,7 +21,7 @@ from cython.operator cimport dereference
 import collections
 
 include "myconfig.pxi"
-from .utils import requires_experimental_features, is_valid_type
+from .utils import is_valid_type
 from .utils cimport check_type_or_throw_except
 
 
@@ -2942,7 +2942,6 @@ class IBM_Tribend(BondedInteraction):
             self._params["ind4"], self._params["kb"], flat))
 
 
-@requires_experimental_features("No test coverage")
 class IBM_VolCons(BondedInteraction):
 
     """
@@ -2954,7 +2953,8 @@ class IBM_VolCons(BondedInteraction):
     ----------
     softID : :obj:`int`
         Used to identify the object to which this bond belongs. Each object
-        (cell) needs its own ID
+        (cell) needs its own ID. For performance reasons, it is best to
+        start from ``softID=0`` and increment by 1 for each subsequent bond.
     kappaV : :obj:`float`
         Modulus for volume force
 
@@ -2987,6 +2987,14 @@ class IBM_VolCons(BondedInteraction):
     def _set_params_in_es_core(self):
         set_bonded_ia_params(self._bond_id, CoreIBMVolCons(
             self._params["softID"], self._params["kappaV"]))
+
+    def current_volume(self):
+        """
+        Query the current volume of the soft object associated to this bond.
+        The volume is initialized once all :class:`IBM_Triel` bonds have
+        been added and the forces have been recalculated.
+        """
+        return immersed_boundaries.get_current_volume(self._params['softID'])
 
 
 class OifGlobalForces(BondedInteraction):
