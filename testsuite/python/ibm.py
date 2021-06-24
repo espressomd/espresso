@@ -92,6 +92,12 @@ class IBM(ut.TestCase):
         angle = self.compute_dihedral_angle(p0.pos, p1.pos, p2.pos, p3.pos)
         self.assertLess(angle, 2E-2)
 
+        # IBM doesn't implement energy and pressure kernels.
+        energy = self.system.analysis.energy()
+        pressure = self.system.analysis.pressure()
+        self.assertAlmostEqual(energy['bonded'], 0., delta=1e-10)
+        self.assertAlmostEqual(pressure['bonded'], 0., delta=1e-10)
+
     def test_triel(self):
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
@@ -176,6 +182,12 @@ class IBM(ut.TestCase):
              (-1, -2, 2), (-2, -1, -2), (-2, 1, 1), (-1, 2, -1)])
         np.testing.assert_almost_equal(
             np.copy(self.system.part[:].f), ref_forces)
+
+        # IBM doesn't implement energy and pressure kernels.
+        energy = self.system.analysis.energy()
+        pressure = self.system.analysis.pressure()
+        self.assertAlmostEqual(energy['bonded'], 0., delta=1e-10)
+        self.assertAlmostEqual(pressure['bonded'], 0., delta=1e-10)
 
 
 if __name__ == "__main__":
