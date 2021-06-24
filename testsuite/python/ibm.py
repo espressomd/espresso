@@ -22,6 +22,7 @@ import unittest as ut
 import unittest_decorators as utx
 
 import espressomd
+import espressomd.lb
 import espressomd.interactions
 try:
     from espressomd.virtual_sites import VirtualSitesInertialessTracers
@@ -32,12 +33,13 @@ except ImportError:
 @utx.skipIfMissingFeatures(['VIRTUAL_SITES_INERTIALESS_TRACERS'])
 class IBM(ut.TestCase):
     '''Test IBM implementation with a Langevin thermostat.'''
-    system = espressomd.System(box_l=3 * [10.])
-    system.time_step = 0.05
+    system = espressomd.System(box_l=3 * [8.])
+    system.time_step = 0.06
     system.cell_system.skin = 0.1
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.actors.clear()
         self.system.thermostat.turn_off()
 
     def compute_dihedral_angle(self, pos0, pos1, pos2, pos3):
@@ -63,10 +65,10 @@ class IBM(ut.TestCase):
         system.thermostat.set_langevin(kT=0, gamma=10, seed=1)
 
         # Add four particles
-        p0 = system.part.add(pos=[5, 5, 5])
-        p1 = system.part.add(pos=[5, 5, 6])
-        p2 = system.part.add(pos=[5, 6, 6])
-        p3 = system.part.add(pos=[5, 6, 5])
+        p0 = system.part.add(pos=[4, 4, 4])
+        p1 = system.part.add(pos=[4, 4, 5])
+        p2 = system.part.add(pos=[4, 5, 5])
+        p3 = system.part.add(pos=[4, 5, 4])
 
         # Add first triel, weak modulus
         tri1 = espressomd.interactions.IBM_Triel(
@@ -106,11 +108,11 @@ class IBM(ut.TestCase):
         system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
 
         # Add particles: 0-2 are not bonded, 3-5 are bonded
-        non_bound = system.part.add(pos=[[5, 5, 5], [5, 5, 6], [5, 6, 6]])
+        non_bound = system.part.add(pos=[[4, 4, 4], [4, 4, 5], [4, 5, 5]])
 
-        p3 = system.part.add(pos=[2, 5, 5])
-        p4 = system.part.add(pos=[2, 5, 6])
-        p5 = system.part.add(pos=[2, 6, 6])
+        p3 = system.part.add(pos=[1, 4, 4])
+        p4 = system.part.add(pos=[1, 4, 5])
+        p5 = system.part.add(pos=[1, 5, 5])
 
         # Add triel for 3-5
         tri = espressomd.interactions.IBM_Triel(
@@ -146,7 +148,8 @@ class IBM(ut.TestCase):
         positions = list(itertools.product((0, 1), repeat=3))
         positions = positions[:4] + positions[6:] + positions[4:6]
         positions = np.array(positions) - 0.5
-        system.part.add(pos=positions + system.box_l / 2., virtual=8 * [True])
+        mesh_center_ref = np.copy(system.box_l) / 2.
+        system.part.add(pos=positions + mesh_center_ref, virtual=8 * [True])
 
         # Divide the cube. All triangle normals must point inside the mesh.
         # Use the right hand rule to determine the order of the indices.
@@ -172,13 +175,17 @@ class IBM(ut.TestCase):
 
         # Run the integrator to initialize the mesh reference volume.
         system.integrator.run(0, recalc_forces=True)
+        self.assertAlmostEqual(volCons.current_volume(), 1., delta=1e-10)
 
         # The restorative force is zero at the moment.
         np.testing.assert_almost_equal(np.copy(self.system.part[:].f), 0.)
 
         # Double the cube dimensions. The volume increases by a factor of 8.
-        system.part[:].pos = 2. * positions + system.box_l / 2.
+        system.part[:].pos = 2. * positions + mesh_center_ref
         system.integrator.run(0, recalc_forces=True)
+        self.assertAlmostEqual(volCons.current_volume(), 8., delta=1e-10)
+
+        # Reference forces for that particular mesh geometry.
         ref_forces = 1.75 * np.array(
             [(1, 2, 2), (2, 1, -2), (2, -1, 1), (1, -2, -1),
              (-1, -2, 2), (-2, -1, -2), (-2, 1, 1), (-1, 2, -1)])
@@ -190,6 +197,49 @@ class IBM(ut.TestCase):
         pressure = self.system.analysis.pressure()
         self.assertAlmostEqual(energy['bonded'], 0., delta=1e-10)
         self.assertAlmostEqual(pressure['bonded'], 0., delta=1e-10)
+
+        # Add unthermalized LB.
+        system.thermostat.turn_off()
+        lbf = espressomd.lb.LBFluid(
+            kT=0.0, agrid=2, dens=1, visc=1.8, tau=system.time_step)
+        system.actors.add(lbf)
+        system.thermostat.set_lb(LB_fluid=lbf, act_on_virtual=False, gamma=1)
+
+        # Check the cube is shrinking. The geometrical center shouldn't move.
+        volume_diff_ref = 5.805e-4
+        # warmup
+        system.integrator.run(80)
+        # sampling
+        previous_volume = volCons.current_volume()
+        for _ in range(10):
+            system.integrator.run(20)
+            current_volume = volCons.current_volume()
+            volume_diff = previous_volume - current_volume
+            self.assertLess(current_volume, previous_volume)
+            self.assertAlmostEqual(volume_diff, volume_diff_ref, places=6)
+            previous_volume = current_volume
+            mesh_center = np.mean(self.system.part[:].pos, axis=0)
+            np.testing.assert_allclose(mesh_center, mesh_center_ref, rtol=1e-3)
+        # Halve the cube dimensions. The volume decreases by a factor of 8.
+        system.part[:].pos = 0.5 * positions + mesh_center_ref
+        system.integrator.run(0, recalc_forces=True)
+        self.assertAlmostEqual(volCons.current_volume(), 1. / 8., delta=1e-10)
+
+        # Check the cube is expanding. The geometrical center shouldn't move.
+        volume_diff_ref = 6.6066e-7
+        # warmup
+        system.integrator.run(80)
+        # sampling
+        previous_volume = volCons.current_volume()
+        for _ in range(10):
+            system.integrator.run(20)
+            current_volume = volCons.current_volume()
+            volume_diff = current_volume - previous_volume
+            self.assertGreater(current_volume, previous_volume)
+            self.assertAlmostEqual(volume_diff, volume_diff_ref, places=7)
+            previous_volume = current_volume
+            mesh_center = np.mean(self.system.part[:].pos, axis=0)
+            np.testing.assert_allclose(mesh_center, mesh_center_ref, rtol=1e-3)
 
 
 if __name__ == "__main__":

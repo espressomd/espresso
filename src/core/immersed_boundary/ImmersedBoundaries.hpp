@@ -41,6 +41,11 @@ public:
       VolumesCurrent.resize(new_size);
     }
   }
+  double get_current_volume(int softID) const {
+    assert(softID >= 0);
+    assert(softID < VolumesCurrent.size());
+    return VolumesCurrent[softID];
+  }
 
 private:
   void calc_volumes(CellStructure &cs);

@@ -2988,6 +2988,14 @@ class IBM_VolCons(BondedInteraction):
         set_bonded_ia_params(self._bond_id, CoreIBMVolCons(
             self._params["softID"], self._params["kappaV"]))
 
+    def current_volume(self):
+        """
+        Query the current volume of the soft object associated to this bond.
+        The volume is initialized once all :class:`IBM_Triel` bonds have
+        been added and the forces have been recalculated.
+        """
+        return immersed_boundaries.get_current_volume(self._params['softID'])
+
 
 class OifGlobalForces(BondedInteraction):
 
