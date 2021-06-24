@@ -21,7 +21,7 @@ from cython.operator cimport dereference
 import collections
 
 include "myconfig.pxi"
-from .utils import requires_experimental_features, is_valid_type
+from .utils import is_valid_type
 from .utils cimport check_type_or_throw_except
 
 
@@ -2942,7 +2942,6 @@ class IBM_Tribend(BondedInteraction):
             self._params["ind4"], self._params["kb"], flat))
 
 
-@requires_experimental_features("No test coverage")
 class IBM_VolCons(BondedInteraction):
 
     """
