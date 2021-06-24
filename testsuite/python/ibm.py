@@ -163,7 +163,7 @@ class IBM(ut.TestCase):
             system.part[id1].add_bond((bond, id2, id3))
 
         # Add volume conservation force.
-        volCons = espressomd.interactions.IBM_VolCons(softID=1, kappaV=1.)
+        volCons = espressomd.interactions.IBM_VolCons(softID=15, kappaV=1.)
         system.bonded_inter.add(volCons)
         for p in system.part:
             p.add_bond((volCons,))

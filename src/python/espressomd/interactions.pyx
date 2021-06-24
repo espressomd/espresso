@@ -2954,7 +2954,8 @@ class IBM_VolCons(BondedInteraction):
     ----------
     softID : :obj:`int`
         Used to identify the object to which this bond belongs. Each object
-        (cell) needs its own ID
+        (cell) needs its own ID. For performance reasons, it is best to
+        start from ``softID=0`` and increment by 1 for each subsequent bond.
     kappaV : :obj:`float`
         Modulus for volume force
 
