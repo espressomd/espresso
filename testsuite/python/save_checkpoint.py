@@ -59,6 +59,8 @@ if checkpoint.has_checkpoints():
         if filepath.endswith((".checkpoint", ".cpt")):
             os.remove(os.path.join(checkpoint.checkpoint_dir, filepath))
 
+n_nodes = system.cell_system.get_state()["n_nodes"]
+
 LB_implementation = None
 if 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
@@ -70,7 +72,8 @@ if LB_implementation:
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
+    if any(has_features(i)
+           for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]) and n_nodes == 1:
         if 'EK.GPU' not in modes:
             system.lbboundaries.add(
                 LBBoundary(shape=Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
@@ -136,6 +139,7 @@ if espressomd.has_features('P3M') and 'P3M' in modes:
             delta_mid_bot=0.1)
         system.actors.add(elc)
 
+# accumulators
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
 acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc_time_series = espressomd.accumulators.TimeSeries(obs=obs)
@@ -150,32 +154,35 @@ acc_mean_variance.update()
 acc_time_series.update()
 acc_correlator.update()
 
-system.auto_update_accumulators.add(acc_mean_variance)
-system.auto_update_accumulators.add(acc_time_series)
-system.auto_update_accumulators.add(acc_correlator)
+if n_nodes == 1:
+    system.auto_update_accumulators.add(acc_mean_variance)
+    system.auto_update_accumulators.add(acc_time_series)
+    system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
-system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
-                       particle_type=17)
-system.constraints.add(shape=Wall(normal=[1. / np.sqrt(3)] * 3, dist=0.5))
-system.constraints.add(constraints.Gravity(g=[1., 2., 3.]))
-system.constraints.add(constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
-system.constraints.add(
-    constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
-pot_field_data = constraints.ElectricPotential.field_from_fn(
-    system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
-checkpoint.register("pot_field_data")
-system.constraints.add(constraints.PotentialField(
-    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
-    particle_scales={5: 6.0}))
-vec_field_data = constraints.ForceField.field_from_fn(
-    system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
-checkpoint.register("vec_field_data")
-system.constraints.add(constraints.ForceField(
-    field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
-if espressomd.has_features("ELECTROSTATICS"):
-    system.constraints.add(constraints.ElectricPlaneWave(
-        E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
+if n_nodes == 1:
+    system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
+                           particle_type=17)
+    system.constraints.add(shape=Wall(normal=[1. / np.sqrt(3)] * 3, dist=0.5))
+    system.constraints.add(constraints.Gravity(g=[1., 2., 3.]))
+    system.constraints.add(
+        constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
+    system.constraints.add(
+        constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
+    pot_field_data = constraints.ElectricPotential.field_from_fn(
+        system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
+    checkpoint.register("pot_field_data")
+    system.constraints.add(constraints.PotentialField(
+        field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
+        particle_scales={5: 6.0}))
+    vec_field_data = constraints.ForceField.field_from_fn(
+        system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
+    checkpoint.register("vec_field_data")
+    system.constraints.add(constraints.ForceField(
+        field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
+    if espressomd.has_features("ELECTROSTATICS"):
+        system.constraints.add(constraints.ElectricPlaneWave(
+            E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
 
 if 'LB.OFF' in modes:
     # set thermostat

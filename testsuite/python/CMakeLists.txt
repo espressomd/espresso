@@ -57,8 +57,13 @@ endfunction(PYTHON_TEST)
 # Separate features with hyphens, use a period to add an optional flag.
 foreach(
   TEST_COMBINATION
-  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.elc-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm
+  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.elc-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt;lb.off-int.sd;lb.off-dp3m.cpu-therm.langevin-int.nvt;lb.off-therm.dpd-int.nvt;lb.off-scafacos-therm.bd-int.bd;lb.off-therm.sdm-int.sdm;lb.cpu-p3m.cpu-lj-therm.lb-mpi.1.core
 )
+  if(${TEST_COMBINATION} MATCHES "mpi\\.1\\.core")
+    set(TEST_NPROCS 1)
+  else()
+    set(TEST_NPROCS 4)
+  endif()
   if(${TEST_COMBINATION} MATCHES "\\.gpu")
     set(TEST_LABELS "gpu")
   else()
@@ -70,11 +75,11 @@ foreach(
     set(TEST_BINARY_LIST "1;0")
   endif()
   foreach(TEST_BINARY ${TEST_BINARY_LIST})
-    python_test(FILE save_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS}
-                SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
+    python_test(FILE save_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS
+                ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
     python_test(
-      FILE test_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX
-      ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
+      FILE test_checkpoint.py MAX_NUM_PROC ${TEST_NPROCS} LABELS ${TEST_LABELS}
+      SUFFIX ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
       save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
   endforeach(TEST_BINARY)
 endforeach(TEST_COMBINATION)

@@ -40,13 +40,15 @@ EK = ('EK.GPU' in modes and espressomd.gpu_available()
 
 class CheckpointTest(ut.TestCase):
 
+    checkpoint = espressomd.checkpointing.Checkpoint(
+        checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
+            '.', '__'),
+        checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
+    checkpoint.load(0)
+    n_nodes = system.cell_system.get_state()["n_nodes"]
+
     @classmethod
     def setUpClass(cls):
-        cls.checkpoint = espressomd.checkpointing.Checkpoint(
-            checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
-                '.', '__'),
-            checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
-        cls.checkpoint.load(0)
         cls.ref_box_l = np.array([12.0, 14.0, 16.0])
         if 'DP3M' in modes:
             cls.ref_box_l = np.array([16.0, 16.0, 16.0])
@@ -160,6 +162,7 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(p1.f), particle_force0)
         np.testing.assert_allclose(np.copy(p2.f), particle_force1)
 
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_object_containers_serialization(self):
         '''
         Check that particles at the interface between two MPI nodes still
@@ -225,9 +228,8 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['type'], 'DPD')
         self.assertEqual(thmst['kT'], 1.0)
         self.assertEqual(thmst['seed'], 42)
-        n_nodes = system.cell_system.get_state()["n_nodes"]
-        if n_nodes in {1, 2, 3, 4, 8}:
-            ref_counter = (n_nodes == 3) and 6 or 8
+        if self.n_nodes in {1, 2, 3, 4, 8}:
+            ref_counter = (self.n_nodes == 1) and 10 or 0
             self.assertEqual(thmst['counter'], ref_counter)
 
     @utx.skipIfMissingFeatures('NPT')
@@ -358,24 +360,27 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(
             acc_mean_variance.variance(),
             np.array([[0., 0.5, 2.], [0., 0., 0.]]))
-        np.testing.assert_array_equal(
-            system.auto_update_accumulators[0].variance(),
-            np.array([[0., 0.5, 2.], [0., 0., 0.]]))
+        if self.n_nodes == 1:
+            np.testing.assert_array_equal(
+                system.auto_update_accumulators[0].variance(),
+                np.array([[0., 0.5, 2.], [0., 0., 0.]]))
 
     def test_time_series(self):
         expected = [[[1, 1, 1], [1, 1, 2]], [[1, 2, 3], [1, 1, 2]]]
         np.testing.assert_array_equal(acc_time_series.time_series(), expected)
-        np.testing.assert_array_equal(
-            system.auto_update_accumulators[1].time_series(),
-            expected)
+        if self.n_nodes == 1:
+            np.testing.assert_array_equal(
+                system.auto_update_accumulators[1].time_series(),
+                expected)
 
     def test_correlator(self):
         expected = np.zeros((36, 2, 3))
         expected[0:2] = [[[1, 2.5, 5], [1, 1, 4]], [[1, 2, 3], [1, 1, 4]]]
         np.testing.assert_array_equal(acc_correlator.result(), expected)
-        np.testing.assert_array_equal(
-            system.auto_update_accumulators[2].result(),
-            expected)
+        if self.n_nodes == 1:
+            np.testing.assert_array_equal(
+                system.auto_update_accumulators[2].result(),
+                expected)
 
     @utx.skipIfMissingFeatures('DP3M')
     @ut.skipIf('DP3M.CPU' not in modes,
@@ -482,6 +487,7 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES")
                                     or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_lb_boundaries(self):
         # check boundaries agree on all MPI nodes
         self.assertEqual(len(system.lbboundaries), 2)
@@ -503,6 +509,7 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_equal(
             system.actors[0][:, :, :].boundary.astype(int), 0)
 
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):
         from espressomd import constraints
         self.assertEqual(len(system.constraints),
