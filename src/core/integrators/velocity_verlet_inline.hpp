@@ -30,6 +30,11 @@
 
 #include <utils/math/sqr.hpp>
 
+template <Propagation criterion>
+struct PropagationPredicate {
+  bool operator()(Particle const &p) { return p.p.propagation == criterion; };
+};
+
 /** Propagate the velocities and positions. Integration steps before force
  *  calculation of the Velocity Verlet integrator: <br> \f[ v(t+0.5 \Delta t) =
  *  v(t) + 0.5 \Delta t f(t)/m \f] <br> \f[ p(t+\Delta t) = p(t) + \Delta t
@@ -38,7 +43,9 @@
 inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
 
   auto const skin2 = Utils::sqr(0.5 * skin);
-  for (auto &p : particles) {
+  auto filtered_particles = particles.filter<
+    PropagationPredicate<Propagation::SYSTEM_DEFAULT>>();
+  for (auto &p : filtered_particles) {
 #ifdef ROTATION
     propagate_omega_quat_particle(p, time_step);
 #endif
@@ -69,7 +76,9 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
 inline void
 velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
 
-  for (auto &p : particles) {
+  auto filtered_particles = particles.filter<
+    PropagationPredicate<Propagation::SYSTEM_DEFAULT>>();
+  for (auto &p : filtered_particles) {
     // Virtual sites are not propagated during integration
     if (p.p.is_virtual)
       continue;

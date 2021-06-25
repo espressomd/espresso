@@ -21,7 +21,9 @@
 
 #include "Cell.hpp"
 #include "ParticleIterator.hpp"
+#include "Propagation.hpp"
 
+#include <boost/iterator/filter_iterator.hpp>
 #include <boost/range/iterator_range.hpp>
 
 #include <cassert>
@@ -46,6 +48,13 @@ public:
     }
 
     return assert(m_size >= 0), static_cast<base_type::size_type>(m_size);
+  }
+
+  template <class Predicate>
+  auto filter() const {
+    return boost::make_iterator_range(
+      boost::make_filter_iterator<Predicate>(begin(), end()),
+      boost::make_filter_iterator<Predicate>(end(), end()));
   }
 
 private:

@@ -36,6 +36,11 @@
 
 #include <stdexcept>
 
+template <Propagation criterion>
+struct PropagationPredicate {
+  bool operator()(Particle const &p) { return p.p.propagation == criterion; };
+};
+
 namespace {
 /**
  * @brief Orientation of the virtual site.
@@ -152,7 +157,9 @@ void VirtualSitesRelative::update() const {
   cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
                                Cells::DATA_PART_MOMENTUM);
 
-  for (auto &p : cell_structure.local_particles()) {
+  auto filtered_particles = cell_structure.local_particles().filter<
+    PropagationPredicate<Propagation::VIRTUALSITES_RELATIVE>>();
+  for (auto &p : filtered_particles) {
     if (!p.p.is_virtual)
       continue;
 
@@ -181,8 +188,10 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
   init_forces_ghosts(cell_structure.ghost_particles());
 
+  auto filtered_particles = cell_structure.local_particles().filter<
+    PropagationPredicate<Propagation::VIRTUALSITES_RELATIVE>>();
   // Iterate over all the particles in the local cells
-  for (auto &p : cell_structure.local_particles()) {
+  for (auto &p : filtered_particles) {
     // We only care about virtual particles
     if (p.p.is_virtual) {
       // First obtain the real particle responsible for this virtual particle:
