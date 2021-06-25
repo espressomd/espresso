@@ -158,38 +158,35 @@ void propagate_omega_quat_particle(Particle &p, double time_step) {
   }
 }
 
-void convert_torques_propagate_omega(const ParticleRange &particles,
-                                     double time_step) {
-  for (auto &p : particles) {
-    // Skip particle if rotation is turned off entirely for it.
-    if (p.p.rotation == ROTATION_FIXED)
-      continue;
+void convert_torque_propagate_omega(Particle &p, double time_step) {
+  // Skip particle if rotation is turned off entirely for it.
+  if (p.p.rotation == ROTATION_FIXED)
+    return;
 
-    convert_torque_to_body_frame_apply_fix(p);
+  convert_torque_to_body_frame_apply_fix(p);
 
-    // Propagation of angular velocities
-    p.m.omega += hadamard_division(0.5 * time_step * p.f.torque, p.p.rinertia);
+  // Propagation of angular velocities
+  p.m.omega += hadamard_division(0.5 * time_step * p.f.torque, p.p.rinertia);
 
-    // zeroth estimate of omega
-    Utils::Vector3d omega_0 = p.m.omega;
+  // zeroth estimate of omega
+  Utils::Vector3d omega_0 = p.m.omega;
 
-    /* if the tensor of inertia is isotropic, the following refinement is not
-       needed.
-       Otherwise repeat this loop 2-3 times depending on the required accuracy
-     */
+  /* if the tensor of inertia is isotropic, the following refinement is not
+     needed.
+     Otherwise repeat this loop 2-3 times depending on the required accuracy
+   */
 
-    const double rinertia_diff_01 = p.p.rinertia[0] - p.p.rinertia[1];
-    const double rinertia_diff_12 = p.p.rinertia[1] - p.p.rinertia[2];
-    const double rinertia_diff_20 = p.p.rinertia[2] - p.p.rinertia[0];
-    for (int times = 0; times <= 5; times++) {
-      Utils::Vector3d Wd;
+  const double rinertia_diff_01 = p.p.rinertia[0] - p.p.rinertia[1];
+  const double rinertia_diff_12 = p.p.rinertia[1] - p.p.rinertia[2];
+  const double rinertia_diff_20 = p.p.rinertia[2] - p.p.rinertia[0];
+  for (int times = 0; times <= 5; times++) {
+    Utils::Vector3d Wd;
 
-      Wd[0] = p.m.omega[1] * p.m.omega[2] * rinertia_diff_12 / p.p.rinertia[0];
-      Wd[1] = p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
-      Wd[2] = p.m.omega[0] * p.m.omega[1] * rinertia_diff_01 / p.p.rinertia[2];
+    Wd[0] = p.m.omega[1] * p.m.omega[2] * rinertia_diff_12 / p.p.rinertia[0];
+    Wd[1] = p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
+    Wd[2] = p.m.omega[0] * p.m.omega[1] * rinertia_diff_01 / p.p.rinertia[2];
 
-      p.m.omega = omega_0 + (0.5 * time_step) * Wd;
-    }
+    p.m.omega = omega_0 + (0.5 * time_step) * Wd;
   }
 }
 
