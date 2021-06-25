@@ -17,6 +17,7 @@
 
 #include "generated_kernels/ContinuityKernel.h"
 #include "generated_kernels/DiffusiveFluxKernel.h"
+#include "generated_kernels/NoFlux.h"
 
 namespace walberla {
 
@@ -34,15 +35,6 @@ protected:
   using FlagField = walberla::FlagField<walberla::uint8_t>;
   using DensityField = GhostLayerField<FloatType, 1>;
 
-  /** Velocity boundary condition */
-  // TODO: Boundary conditions
-  // using UBB = lbm::UBB<LatticeModel, uint8_t, true, true>;
-
-  /** Boundary handling */
-  // TODO: Boundary handling...
-  // using Boundaries = BoundaryHandling<FlagField, typename stencil::D3Q27,
-  // UBB>;
-
   /** VTK writers that are executed automatically */
   std::map<std::string, std::pair<std::shared_ptr<vtk::VTKOutput>, bool>>
       m_vtk_auto;
@@ -57,10 +49,10 @@ protected:
   BlockDataID m_flux_field_id;
   BlockDataID m_flux_field_flattened_id;
 
-  BlockDataID m_boundary_handling_id;
-
   /** Block forest */
   const WalberlaBlockForest *m_blockforest;
+
+  pystencils::NoFlux m_noflux;
 
   std::shared_ptr<timeloop::SweepTimeloop> m_time_loop;
 
@@ -72,21 +64,23 @@ protected:
 
   // Boundary handling
   // TODO: Boundary Handling for density and fluxes
-  //  class LBBoundaryHandling {
+  //  class BoundaryHandling {
   //  public:
-  //    LBBoundaryHandling(const BlockDataID &flag_field_id,
-  //                       const BlockDataID &pdf_field_id)
-  //        : m_flag_field_id(flag_field_id), m_pdf_field_id(pdf_field_id) {}
+  //    BoundaryHandling(const BlockDataID &flag_field_id,
+  //                     const BlockDataID &flux_field_id)
+  //        : m_flag_field_id(flag_field_id), m_flux_field_id(flux_field_id) {}
   //
   //    Boundaries *operator()(IBlock *const block) {
   //
   //      auto *flag_field = block->template
   //      getData<FlagField>(m_flag_field_id); auto *pdf_field = block->template
-  //      getData<PdfField>(m_pdf_field_id);
+  //      getData<FluxField>(m_flux_field_id);
   //
-  //      const auto fluid = flag_field->flagExists(Fluid_flag)
-  //                         ? flag_field->getFlag(Fluid_flag)
-  //                         : flag_field->registerFlag(Fluid_flag);
+  //      const auto domain = flag_field->flagExists(domain_flag)
+  //                              ? flag_field->getFlag(domain_flag)
+  //                              : flag_field->registerFlag(domain_flag);
+  //
+  //      pystencils::NoFlux noflux(block, m_flux_field_id);
   //
   //      return new Boundaries(
   //          "boundary handling", flag_field, fluid,
@@ -95,7 +89,7 @@ protected:
   //
   //  private:
   //    const BlockDataID m_flag_field_id;
-  //    const BlockDataID m_pdf_field_id;
+  //    const BlockDataID m_flux_field_id;
   //  };
 
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
@@ -105,7 +99,8 @@ protected:
 public:
   EKinWalberlaImpl(const WalberlaBlockForest *blockforest, FloatType diffusion,
                    FloatType kT, FloatType density)
-      : EKinWalberlaBase<FloatType>(diffusion, kT), m_blockforest{blockforest} {
+      : EKinWalberlaBase<FloatType>(diffusion, kT), m_blockforest{blockforest},
+        m_noflux(get_blockforest()->get_blocks(), m_flux_field_flattened_id) {
     m_density_field_id = field::addToStorage<DensityField>(
         get_blockforest()->get_blocks(), "density field", density, field::fzyx,
         get_blockforest()->get_ghost_layers());
@@ -121,10 +116,24 @@ public:
             get_blockforest()->get_blocks(), m_flux_field_id,
             "flattened flux field");
 
-    // Init and register flag field (fluid/boundary)
+    // Init and register flag field (domain/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
-        m_blockforest->get_blocks(), "flag field",
-        m_blockforest->get_ghost_layers());
+        get_blockforest()->get_blocks(), "flag field",
+        get_blockforest()->get_ghost_layers());
+
+    for (auto block = get_blockforest()->get_blocks()->begin();
+         block != get_blockforest()->get_blocks()->end(); ++block) {
+      auto *flagField = block->template getData<FlagField>(m_flag_field_id);
+
+      flagField->registerFlag(domain_flag);
+      flagField->registerFlag(noflux_flag);
+    }
+
+    // set domain flag everywhere
+    clear_boundaries();
+
+    // m_noflux = pystencils::NoFlux(get_blockforest(),
+    // m_flux_field_flattened_id);
 
     // TODO: boundary handlings
     // Register boundary handling
@@ -155,6 +164,7 @@ public:
               .run(block);
         },
         "ekin diffusive flux");
+    m_time_loop->add() << Sweep(m_noflux, "no flux boundary condition");
     m_time_loop->add()
         << Sweep(pystencils::ContinuityKernel(m_flux_field_flattened_id,
                                               m_density_field_flattened_id),
@@ -226,51 +236,60 @@ public:
     return {density_field->get((*bc).cell)};
   };
 
-  //  [[nodiscard]] bool remove_node_from_boundary(const Utils::Vector3i &node)
-  //  override {
-  //    auto bc = get_block_and_cell(node, true,
-  //    get_blockforest()->get_blocks(),
-  //                                 get_blockforest()->get_ghost_layers());
-  //    if (!bc)
-  //      return false;
-  //    auto *boundary_handling =
-  //        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-  //    boundary_handling->removeBoundary((*bc).cell[0], (*bc).cell[1],
-  //                                      (*bc).cell[2]);
-  //    return true;
-  //  };
-  //  [[nodiscard]] boost::optional<bool>
-  //  get_node_is_boundary(const Utils::Vector3i &node,
-  //                       bool consider_ghosts = false) const override {
-  //    auto bc =
-  //        get_block_and_cell(node, consider_ghosts,
-  //        get_blockforest()->get_blocks(),
-  //                           get_blockforest()->get_ghost_layers());
-  //    if (!bc)
-  //      return {boost::none};
-  //
-  //    auto *boundary_handling =
-  //        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-  //    return {boundary_handling->isBoundary((*bc).cell)};
-  //  };
-  //  void clear_boundaries() override {
-  //    const CellInterval &domain_bb_in_global_cell_coordinates =
-  //        get_blockforest()->get_blocks()->getCellBBFromAABB(
-  //            get_blockforest()->get_blocks()->begin()->getAABB().getExtended(
-  //                FloatType(get_blockforest()->get_ghost_layers())));
-  //    for (auto block = get_blockforest()->get_blocks()->begin();
-  //         block != get_blockforest()->get_blocks()->end(); ++block) {
-  //
-  //      auto *boundary_handling =
-  //          block->template getData<Boundaries>(m_boundary_handling_id);
-  //
-  //      CellInterval domain_bb(domain_bb_in_global_cell_coordinates);
-  //      get_blockforest()->get_blocks()->transformGlobalToBlockLocalCellInterval(
-  //          domain_bb, *block);
-  //
-  //      boundary_handling->fillWithDomain(domain_bb);
-  //    }
-  //  };
+  void boundary_noflux_update() {
+    m_noflux.template fillFromFlagField<FlagField>(
+        get_blockforest()->get_blocks(), m_flag_field_id, noflux_flag,
+        domain_flag);
+  }
+
+  [[nodiscard]] bool
+  remove_node_from_boundary(const Utils::Vector3i &node) override {
+    auto bc = get_block_and_cell(node, true, get_blockforest()->get_blocks(),
+                                 get_blockforest()->get_ghost_layers());
+    if (!bc)
+      return false;
+
+    auto *flagField = (*bc).block->template getData<FlagField>(m_flag_field_id);
+    flagField->removeFlag((*bc).cell, flagField->getFlag(noflux_flag));
+
+    boundary_noflux_update();
+    return true;
+  };
+
+  [[nodiscard]] boost::optional<bool>
+  get_node_is_boundary(const Utils::Vector3i &node,
+                       bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(node, consider_ghosts,
+                                 get_blockforest()->get_blocks(),
+                                 get_blockforest()->get_ghost_layers());
+    if (!bc)
+      return {boost::none};
+
+    auto *flagField = (*bc).block->template getData<FlagField>(m_flag_field_id);
+    return {!flagField->isFlagSet((*bc).cell, flagField->getFlag(domain_flag))};
+  };
+
+  void clear_boundaries() override {
+    const CellInterval &domain_bb_in_global_cell_coordinates =
+        get_blockforest()->get_blocks()->getCellBBFromAABB(
+            get_blockforest()->get_blocks()->begin()->getAABB().getExtended(
+                FloatType(get_blockforest()->get_ghost_layers())));
+    for (auto block = get_blockforest()->get_blocks()->begin();
+         block != get_blockforest()->get_blocks()->end(); ++block) {
+
+      auto *flagField = block->template getData<FlagField>(m_flag_field_id);
+
+      CellInterval domain_bb(domain_bb_in_global_cell_coordinates);
+      get_blockforest()->get_blocks()->transformGlobalToBlockLocalCellInterval(
+          domain_bb, *block);
+
+      for (auto cell : domain_bb) {
+        flagField->addFlag(cell, flagField->getFlag(domain_flag));
+      }
+    }
+
+    boundary_noflux_update();
+  };
 
   [[nodiscard]] uint64_t get_rng_state() const override {
     throw std::runtime_error("The LB does not use a random number generator");

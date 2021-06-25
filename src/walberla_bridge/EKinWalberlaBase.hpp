@@ -37,11 +37,11 @@ public:
   [[nodiscard]] virtual boost::optional<FloatType>
   get_node_density(const Utils::Vector3i &node) const = 0;
 
-  //  virtual bool remove_node_from_boundary(const Utils::Vector3i &node) = 0;
-  //  [[nodiscard]] virtual boost::optional<bool>
-  //  get_node_is_boundary(const Utils::Vector3i &node,
-  //                       bool consider_ghosts = false) const = 0;
-  //  virtual void clear_boundaries() = 0;
+  virtual bool remove_node_from_boundary(const Utils::Vector3i &node) = 0;
+  [[nodiscard]] virtual boost::optional<bool>
+  get_node_is_boundary(const Utils::Vector3i &node,
+                       bool consider_ghosts = false) const = 0;
+  virtual void clear_boundaries() = 0;
 
   // Global parameters
   void set_diffusion(double diffusion) { m_diffusion = diffusion; }
