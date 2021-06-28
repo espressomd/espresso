@@ -90,8 +90,8 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
 
   // check acceptance probability
   {
-    double probability = r_algo.calculate_acceptance_probability(
-        reaction, -1., -1., {{1, 2}}, -1, -1, false);
+    double probability =
+        r_algo.calculate_acceptance_probability(reaction, -1., -1., {{1, 2}});
     BOOST_CHECK_EQUAL(probability, -10.);
   }
 
