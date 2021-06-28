@@ -94,7 +94,7 @@ public:
   bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type);
 
-  bool particle_inside_exclusion_radius_touched;
+  bool particle_inside_exclusion_radius_touched = false;
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
