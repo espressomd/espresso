@@ -27,15 +27,22 @@
 
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
+#include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "particle_data.hpp"
 
 #include <boost/mpi.hpp>
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <stdexcept>
+
+namespace espresso {
+// ESPResSo system instance
+std::unique_ptr<EspressoSystemStandAlone> system;
+} // namespace espresso
 
 // Check the base class for all Monte Carlo algorithms.
 BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
@@ -69,6 +76,11 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   int const type_B = 1;
   int const type_C = 2;
   SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
+
+  // track particles
+  init_type_map(type_A);
+  init_type_map(type_B);
+  init_type_map(type_C);
 
   // check reaction addition
   {
@@ -144,8 +156,8 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     place_particle(1, ref_positions[1].first);
     set_particle_v(0, ref_positions[0].second);
     set_particle_v(1, ref_positions[1].second);
-    // track particles
-    init_type_map(0);
+    set_particle_type(0, type_A);
+    set_particle_type(1, type_A);
     // update particle positions and velocities
     BOOST_CHECK(!r_algo.particle_inside_exclusion_radius_touched);
     r_algo.particle_inside_exclusion_radius_touched = false;
@@ -167,12 +179,57 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
       BOOST_CHECK_GE((new_pos - ref_old_pos).norm(), 0.1);
       BOOST_CHECK_GE((new_vel - ref_old_vel).norm(), 10.);
     }
+    // cleanup
+    remove_particle(0);
+    remove_particle(1);
+  }
+
+  // check Monte Carlo moves
+  {
+    // set up particles
+    auto const box_l = 1.;
+    std::vector<Utils::Vector3d> ref_positions{{0.1, 0.2, 0.3},
+                                               {0.4, 0.5, 0.6}};
+    place_particle(0, ref_positions[0]);
+    place_particle(1, ref_positions[1]);
+    set_particle_type(0, type_A);
+    set_particle_type(1, type_A);
+    // check early exit when a MC move cannot be performed
+    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_C, 1));
+    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_B, 2));
+    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_A, 0));
+    // force all MC moves to be rejected by picking particles inside
+    // their exclusion radius
+    r_algo.exclusion_radius = box_l;
+    r_algo.particle_inside_exclusion_radius_touched = false;
+    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_A, 2));
+    // check none of the particles moved
+    for (auto const pid : {0, 1}) {
+      auto const ref_old_pos = ref_positions[pid];
+      auto const &p = get_particle_data(pid);
+      auto const &new_pos = p.r.p;
+      BOOST_CHECK_LE((new_pos - ref_old_pos).norm(), tol);
+    }
+    // force a MC move to be accepted by using a constant Hamiltonian
+    r_algo.exclusion_radius = 0.;
+    r_algo.particle_inside_exclusion_radius_touched = false;
+    BOOST_REQUIRE(r_algo.do_global_mc_move_for_particles_of_type(type_A, 1));
+    std::vector<double> distances(2);
+    // check that only one particle moved
+    for (auto const pid : {0, 1}) {
+      auto const &p = get_particle_data(pid);
+      distances[pid] = (ref_positions[pid] - p.r.p).norm();
+    }
+    BOOST_CHECK_LE(std::min(distances[0], distances[1]), tol);
+    BOOST_CHECK_GE(std::max(distances[0], distances[1]), 0.1);
+    // cleanup
+    remove_particle(0);
+    remove_particle(1);
   }
 }
 
 int main(int argc, char **argv) {
-  auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
-  Communication::init(mpi_env);
+  espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

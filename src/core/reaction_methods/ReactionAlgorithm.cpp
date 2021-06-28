@@ -557,7 +557,6 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   m_tried_configurational_MC_moves += 1;
   particle_inside_exclusion_radius_touched = false;
 
-  int old_state_index = -1;
   int particle_number_of_type = number_of_particles_with_type(type);
   if (particle_number_of_type == 0 or
       particle_number_of_type_to_be_changed == 0) {
@@ -576,13 +575,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
 
   double beta = 1.0 / temperature;
 
-  int new_state_index = -1;
-  double bf = 1.0;
-  std::map<int, int> dummy_old_particle_numbers;
-  SingleReaction temp_unimportant_arbitrary_reaction;
-
   // Metropolis algorithm since proposal density is symmetric
-  bf = std::min(1.0, bf * exp(-beta * (E_pot_new - E_pot_old)));
+  auto const bf = std::min(1.0, exp(-beta * (E_pot_new - E_pot_old)));
 
   // // correct for enhanced proposal of small radii by using the
   // // Metropolis-Hastings algorithm for asymmetric proposal densities
@@ -591,8 +585,8 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   //               std::pow(particle_positions[0][1]-cyl_y,2));
   // double new_radius =
   //     std::sqrt(std::pow(new_pos[0]-cyl_x,2)+std::pow(new_pos[1]-cyl_y,2));
-  // bf = std::min(1.0,
-  //     bf*exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
+  // auto const bf = std::min(1.0,
+  //     exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
 
   // Metropolis-Hastings algorithm for asymmetric proposal density
   if (m_uniform_real_distribution(m_generator) < bf) {
