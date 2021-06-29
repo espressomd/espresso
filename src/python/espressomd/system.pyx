@@ -43,7 +43,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
-from .utils import is_valid_type, handle_errors, array_locked
+from .utils import handle_errors, array_locked
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 

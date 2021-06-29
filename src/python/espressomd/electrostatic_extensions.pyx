@@ -22,8 +22,8 @@ include "myconfig.pxi"
 from . cimport actors
 from . import actors
 import numpy as np
-from .utils import handle_errors, array_locked
-from .utils cimport check_type_or_throw_except, check_range_or_except, Vector3d, make_Vector3d, make_array_locked, make_array_locked_vector
+from .utils import array_locked
+from .utils cimport check_type_or_throw_except, Vector3d, make_Vector3d, make_array_locked, make_array_locked_vector
 from libcpp.vector cimport vector
 
 IF ELECTROSTATICS:
