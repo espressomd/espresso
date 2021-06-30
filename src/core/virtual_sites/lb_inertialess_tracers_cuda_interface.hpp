@@ -45,6 +45,7 @@ typedef struct {
   float pos[3];
   float f[3];
   bool is_virtual;
+  Propagation propagation;
 } IBM_CUDA_ParticleDataInput;
 
 typedef struct {

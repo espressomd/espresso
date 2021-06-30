@@ -1903,10 +1903,13 @@ __global__ void calc_fluid_particle_ia(
   Utils::Array<float, no_of_neighbours> delta;
   float delta_j[3];
   if (part_index < particle_data.size()) {
+    if ((particle_data[part_index].propagation == Propagation::SYSTEM_DEFAULT)
 #if defined(VIRTUAL_SITES)
-    if (!particle_data[part_index].is_virtual || couple_virtual)
+        or (particle_data[part_index].propagation ==
+                Propagation::VIRTUALSITES_RELATIVE and
+            couple_virtual)
 #endif
-    {
+    ) {
       /* force acting on the particle. delta_j will be used later to compute the
        * force that acts back onto the fluid. */
       calc_viscous_force<no_of_neighbours>(
