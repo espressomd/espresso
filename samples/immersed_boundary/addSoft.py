@@ -34,7 +34,7 @@ def AddSoft(system, comX, comY, comZ, k1, k2):
             system.part.add(id=i, pos=[X, Y, Z], virtual=True)
 
     # triangles
-    from espressomd.interactions import IBM_Triel
+    import espressomd.interactions
     with open("tables/softTriangles", "r") as fp:
         numTri = int(fp.readline())
         print("Found {} triangles".format(numTri))
@@ -44,7 +44,8 @@ def AddSoft(system, comX, comY, comZ, k1, k2):
             id1 = int(line[0])
             id2 = int(line[1])
             id3 = int(line[2])
-            tri = IBM_Triel(ind1=id1, ind2=id2, ind3=id3,
-                            elasticLaw="Skalak", k1=k1, k2=k2, maxDist=5)
+            tri = espressomd.interactions.IBM_Triel(
+                ind1=id1, ind2=id2, ind3=id3, elasticLaw="Skalak", maxDist=5,
+                k1=k1, k2=k2)
             system.bonded_inter.add(tri)
             system.part[id1].add_bond((tri, id2, id3))

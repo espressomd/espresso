@@ -21,11 +21,11 @@ Visualize a Lennard-Jones liquid with live plotting via matplotlib.
 """
 
 import numpy as np
-from matplotlib import pyplot
+import matplotlib.pyplot as plt
 from threading import Thread
-import espressomd
-from espressomd import visualization
 import argparse
+import espressomd
+import espressomd.visualization
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
@@ -106,9 +106,9 @@ print("Start with minimal distance {}".format(act_min_dist))
 
 # Select visualizer
 if args.visualizer == "mayavi":
-    visualizer = visualization.mayaviLive(system)
+    visualizer = espressomd.visualization.mayaviLive(system)
 else:
-    visualizer = visualization.openGLLive(system)
+    visualizer = espressomd.visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #
@@ -147,11 +147,11 @@ print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 energies = system.analysis.energy()
 print(energies)
 
-plot, = pyplot.plot([0], [energies['total']], label="total")
-pyplot.xlabel("Time")
-pyplot.ylabel("Energy")
-pyplot.legend()
-pyplot.show(block=False)
+plot, = plt.plot([0], [energies['total']], label="total")
+plt.xlabel("Time")
+plt.ylabel("Energy")
+plt.legend()
+plt.show(block=False)
 
 
 def main_loop():
@@ -180,10 +180,10 @@ def update_plot():
     if last_plotted == current_time:
         return
     last_plotted = current_time
-    pyplot.xlim(0, plot.get_xdata()[-1])
-    pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
-    pyplot.draw()
-    pyplot.pause(0.01)
+    plt.xlim(0, plot.get_xdata()[-1])
+    plt.ylim(plot.get_ydata().min(), plot.get_ydata().max())
+    plt.draw()
+    plt.pause(0.01)
 
 
 t = Thread(target=main_thread)

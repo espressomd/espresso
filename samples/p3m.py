@@ -20,14 +20,13 @@
 Simulate a Lennard-Jones liquid with charges. The P3M method is used to
 calculate electrostatic interactions.
 """
+import argparse
 import numpy as np
 import espressomd
+import espressomd.electrostatics
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
-
-from espressomd import electrostatics
-import argparse
 
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
@@ -112,9 +111,9 @@ print("Start with minimal distance {}".format(act_min_dist))
 
 print("\nSCRIPT--->Create p3m\n")
 if args.mode == "gpu":
-    p3m = electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-2)
+    p3m = espressomd.electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-2)
 else:
-    p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+    p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 
 print("\nSCRIPT--->Add actor\n")
 system.actors.add(p3m)

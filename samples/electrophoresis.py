@@ -26,9 +26,10 @@ import numpy as np
 import scipy.optimize
 
 import espressomd
+import espressomd.electrostatics
+import espressomd.interactions
 import espressomd.observables
 import espressomd.polymer
-from espressomd import electrostatics, interactions
 
 logging.basicConfig(level=logging.INFO)
 
@@ -70,8 +71,9 @@ system.non_bonded_inter[1, 2].wca.set_params(epsilon=1, sigma=1)
 
 # bonded interactions
 ################################################################
-harmonic_bond = interactions.HarmonicBond(k=10, r_0=2)
-angle_harmonic_bond = interactions.AngleHarmonic(bend=10, phi0=np.pi)
+harmonic_bond = espressomd.interactions.HarmonicBond(k=10, r_0=2)
+angle_harmonic_bond = espressomd.interactions.AngleHarmonic(
+    bend=10, phi0=np.pi)
 system.bonded_inter.add(harmonic_bond)
 system.bonded_inter.add(angle_harmonic_bond)
 
@@ -131,7 +133,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # activate electrostatics
 #############################################################
-p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 system.actors.add(p3m)
 
 # apply external force (external electric field)

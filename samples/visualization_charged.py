@@ -20,8 +20,8 @@ LJ parameters and masses.
 """
 
 import espressomd
-from espressomd.visualization_opengl import openGLLive
-from espressomd import electrostatics
+import espressomd.electrostatics
+import espressomd.visualization_opengl
 import numpy as np
 
 required_features = ["P3M", "LENNARD_JONES", "MASS"]
@@ -30,8 +30,8 @@ espressomd.assert_features(required_features)
 box = [40, 40, 40]
 system = espressomd.System(box_l=box)
 system.cell_system.set_domain_decomposition(use_verlet_lists=True)
-visualizer = openGLLive(system, background_color=[1, 1, 1],
-                        drag_enabled=True, drag_force=10)
+visualizer = espressomd.visualization_opengl.openGLLive(
+    system, background_color=[1, 1, 1], drag_enabled=True, drag_force=10)
 
 
 # TIMESTEP
@@ -127,7 +127,7 @@ energy = system.analysis.energy()
 print("After Minimization: E_total = {:.2e}".format(energy['total']))
 
 print("Tune p3m")
-p3m = electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-1)
+p3m = espressomd.electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-1)
 system.actors.add(p3m)
 
 system.thermostat.set_langevin(kT=temperature, gamma=2.0, seed=42)

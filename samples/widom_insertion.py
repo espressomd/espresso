@@ -24,8 +24,8 @@ import numpy as np
 import argparse
 
 import espressomd
-from espressomd import reaction_ensemble
-from espressomd import electrostatics
+import espressomd.reaction_ensemble
+import espressomd.electrostatics
 
 required_features = ["WCA", "P3M"]
 espressomd.assert_features(required_features)
@@ -73,7 +73,7 @@ for type_1 in types:
         system.non_bonded_inter[type_1, type_2].wca.set_params(
             epsilon=wca_eps, sigma=wca_sig)
 
-p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
+p3m = espressomd.electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
 for key, value in p3m_params.items():
@@ -102,7 +102,7 @@ system.integrator.set_vv()
 # activate thermostat
 system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
 
-widom = reaction_ensemble.WidomInsertion(
+widom = espressomd.reaction_ensemble.WidomInsertion(
     temperature=temperature, seed=77)
 
 # add insertion reaction
