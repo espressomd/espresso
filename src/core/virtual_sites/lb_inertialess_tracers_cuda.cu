@@ -74,7 +74,8 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
   const LB_parameters_gpu &para = *paraP;
 
   if (particleIndex < number_of_particles &&
-      particle_input[particleIndex].is_virtual) {
+      particle_input[particleIndex].propagation ==
+          Propagation::INERTIALESS_TRACERS) {
     // MD to LB units: mass is not affected, length are scaled by agrid, times
     // by para.tau
     const float factor = 1 / para.agrid * para.tau * para.tau;
@@ -159,7 +160,8 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
   const LB_parameters_gpu &para = *paraP;
 
   if (particleIndex < number_of_particles &&
-      particles_input[particleIndex].is_virtual) {
+      particles_input[particleIndex].propagation ==
+          Propagation::INERTIALESS_TRACERS) {
 
     // Get position
     float pos[3] = {particles_input[particleIndex].pos[0],

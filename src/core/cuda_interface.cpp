@@ -45,6 +45,7 @@ static void pack_particles(ParticleRange particles,
 
 #ifdef CUDA
     buffer[i].identity = part.p.identity;
+    buffer[i].propagation = part.p.propagation;
     buffer[i].v = static_cast<Vector3f>(part.m.v);
 #ifdef VIRTUAL_SITES
     buffer[i].is_virtual = part.p.is_virtual;

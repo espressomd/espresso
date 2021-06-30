@@ -51,6 +51,7 @@ static void pack_particles(ParticleRange particles,
     buffer[i].pos[0] = static_cast<float>(pos[0]);
     buffer[i].pos[1] = static_cast<float>(pos[1]);
     buffer[i].pos[2] = static_cast<float>(pos[2]);
+    buffer[i].propagation = part.p.propagation;
 
     buffer[i].f[0] = static_cast<float>(part.f.f[0]);
     buffer[i].f[1] = static_cast<float>(part.f.f[1]);

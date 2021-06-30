@@ -56,6 +56,7 @@ struct CUDA_particle_data {
 
   /** particle position given from md part*/
   Vector3f p;
+  Propagation propagation;
 
   /** particle id */
   int identity;
