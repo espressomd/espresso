@@ -121,17 +121,24 @@ void integrator_sanity_checks() {
   }
 }
 
+template <Propagation criterion>
+struct PropagationPredicate {
+  bool operator()(Particle const &p) { return p.p.propagation == criterion; };
+};
+
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
 bool integrator_step_1(ParticleRange &particles) {
+  auto filtered_particles = particles.filter<
+    PropagationPredicate<Propagation::SYSTEM_DEFAULT>>();
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     if (steepest_descent_step(particles))
       return true; // early exit
     break;
   case INTEG_METHOD_NVT:
-    velocity_verlet_step_1(particles);
+    velocity_verlet_step_1(filtered_particles);
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
@@ -155,12 +162,14 @@ bool integrator_step_1(ParticleRange &particles) {
 
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
+  auto filtered_particles = particles.filter<
+    PropagationPredicate<Propagation::SYSTEM_DEFAULT>>();
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
     break;
   case INTEG_METHOD_NVT:
-    velocity_verlet_step_2(particles);
+    velocity_verlet_step_2(filtered_particles);
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:

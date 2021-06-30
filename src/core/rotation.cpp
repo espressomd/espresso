@@ -158,7 +158,8 @@ void propagate_omega_quat_particle(Particle &p, double time_step) {
   }
 }
 
-void convert_torques_propagate_omega(const ParticleRange &particles,
+template <typename ParticleIterable>
+void convert_torques_propagate_omega(const ParticleIterable particles,
                                      double time_step) {
   for (auto &p : particles) {
     // Skip particle if rotation is turned off entirely for it.
