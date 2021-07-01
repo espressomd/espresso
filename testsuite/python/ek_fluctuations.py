@@ -22,21 +22,12 @@ import espressomd.electrokinetics
 import numpy as np
 import math
 
-##########################################################################
-#                          Set up the System                             #
-##########################################################################
-# Build a fluctuating ek species.
-
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["ELECTROKINETICS"])
 class ek_fluctuations(ut.TestCase):
 
-    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
     def test(self):
-        system = self.es
-
         # Set parameters
         box_x = 16
         box_y = 16
@@ -46,12 +37,12 @@ class ek_fluctuations(ut.TestCase):
         diff = 1.0
         agrid = 1.0
 
-        system.box_l = [box_x, box_y, box_z]
+        system = espressomd.System(box_l=[box_x, box_y, box_z])
         system.time_step = time_step
         system.cell_system.skin = 0.2
         system.thermostat.turn_off()
 
-        # Setup the Fluid
+        # Setup the fluid
         ek = espressomd.electrokinetics.Electrokinetics(
             agrid=agrid,
             lb_density=1.0,
@@ -72,7 +63,7 @@ class ek_fluctuations(ut.TestCase):
         ek.add_species(species)
         system.actors.add(ek)
 
-        # Warm - Up
+        # Warmup
         system.integrator.run(1000)
 
         # Set integration and binning parameters

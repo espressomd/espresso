@@ -28,7 +28,7 @@ import tests_common
 class P3MGPU_test(ut.TestCase):
 
     def test(self):
-        es = espressomd.System(box_l=[10.0, 10.0, 10.0])
+        system = espressomd.System(box_l=[10.0, 10.0, 10.0])
         test_params = {}
         test_params["prefactor"] = 2
         test_params["cao"] = 2
@@ -40,7 +40,7 @@ class P3MGPU_test(ut.TestCase):
         test_params["tune"] = False
 
         p3m = espressomd.electrostatics.P3MGPU(**test_params)
-        es.actors.add(p3m)
+        system.actors.add(p3m)
         tests_common.assert_params_match(self, test_params, p3m.get_params())
 
 

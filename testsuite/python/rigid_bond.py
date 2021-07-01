@@ -30,31 +30,30 @@ class RigidBondTest(ut.TestCase):
     def test(self):
         target_acc = 1E-3
         tol = 1.2 * target_acc
-        s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        s.box_l = [10, 10, 10]
-        s.cell_system.skin = 0.4
-        s.time_step = 0.01
-        s.thermostat.set_langevin(kT=1, gamma=1, seed=42)
+        system = espressomd.System(box_l=[10., 10., 10.])
+        system.cell_system.skin = 0.4
+        system.time_step = 0.01
+        system.thermostat.set_langevin(kT=1, gamma=1, seed=42)
         rigid_bond = espressomd.interactions.RigidBond(
             r=1.2, ptol=1E-3, vtol=target_acc)
-        s.bonded_inter.add(rigid_bond)
+        system.bonded_inter.add(rigid_bond)
 
         # create polymer
         last_p = None
         for i in range(5):
-            p = s.part.add(pos=(i * 1.2, 0, 0))
+            p = system.part.add(pos=(i * 1.2, 0, 0))
             if last_p is not None:
                 p.add_bond((rigid_bond, last_p))
             last_p = p
 
-        s.integrator.run(5000)
+        system.integrator.run(5000)
 
         # check every bond
-        p1_iter, p2_iter = itertools.tee(s.part)
+        p1_iter, p2_iter = itertools.tee(system.part)
         next(p2_iter, None)  # advance second iterator by 1 step
         for p1, p2 in zip(p1_iter, p2_iter):
-            d = s.distance(p2, p1)
-            v_d = s.distance_vec(p2, p1)
+            d = system.distance(p2, p1)
+            v_d = system.distance_vec(p2, p1)
             self.assertAlmostEqual(d, 1.2, delta=tol)
             # Velocity projection on distance vector
             vel_proj = np.dot(p2.v - p1.v, v_d) / d

@@ -29,20 +29,20 @@ class ClusterAnalysis(ut.TestCase):
 
     """Tests the cluster analysis"""
 
-    es = espressomd.System(box_l=(1, 1, 1))
+    system = espressomd.System(box_l=(1, 1, 1))
 
     f = espressomd.interactions.FeneBond(k=1, d_r_max=0.05)
-    es.bonded_inter.add(f)
+    system.bonded_inter.add(f)
 
     # 1st cluster
-    es.part.add(id=0, pos=(0, 0, 0))
-    es.part.add(id=1, pos=(0.91, 0, 0), bonds=((0, 0),))
-    es.part.add(id=2, pos=(0, 0.2, 0))
-    es.part.add(id=3, pos=(0, 0.1, 0))
+    system.part.add(id=0, pos=(0, 0, 0))
+    system.part.add(id=1, pos=(0.91, 0, 0), bonds=((0, 0),))
+    system.part.add(id=2, pos=(0, 0.2, 0))
+    system.part.add(id=3, pos=(0, 0.1, 0))
 
     # 2nd cluster
-    es.part.add(id=4, pos=(0.5, 0.5, 0.5))
-    es.part.add(id=5, pos=(0.55, 0.5, 0.5))
+    system.part.add(id=4, pos=(0.5, 0.5, 0.5))
+    system.part.add(id=5, pos=(0.55, 0.5, 0.5))
 
     cs = espressomd.cluster_analysis.ClusterStructure()
     np.random.seed(1)
@@ -115,10 +115,10 @@ class ClusterAnalysis(ut.TestCase):
         self.assertEqual(visited_sizes, [2, 4])
 
     def test_zz_single_cluster_analysis(self):
-        self.es.part.clear()
+        self.system.part.clear()
         # Place particles on a line (crossing periodic boundaries)
         for x in np.arange(-0.2, 0.21, 0.01):
-            self.es.part.add(pos=(x, 1.1 * x, 1.2 * x))
+            self.system.part.add(pos=(x, 1.1 * x, 1.2 * x))
         dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.13)
         self.cs.pair_criterion = dc
         self.cs.run_for_all_pairs()
@@ -132,18 +132,17 @@ class ClusterAnalysis(ut.TestCase):
             self.assertLess(np.linalg.norm(c.center_of_mass()), 1E-8)
 
             # Longest distance
-            self.assertAlmostEqual(
-                c.longest_distance(),
-                self.es.distance(self.es.part[0],
-                                 self.es.part[len(self.es.part) - 1]),
-                delta=1E-8)
+            ref_dist = self.system.distance(
+                self.system.part[0],
+                self.system.part[len(self.system.part) - 1])
+            self.assertAlmostEqual(c.longest_distance(), ref_dist, delta=1E-8)
 
             # Radius of gyration
             rg = 0.
-            com_particle = self.es.part[len(self.es.part) // 2]
+            com_particle = self.system.part[len(self.system.part) // 2]
             for p in c.particles():
-                rg += self.es.distance(p, com_particle)**2
-            rg /= len(self.es.part)
+                rg += self.system.distance(p, com_particle)**2
+            rg /= len(self.system.part)
             rg = np.sqrt(rg)
             self.assertAlmostEqual(c.radius_of_gyration(), rg, delta=1E-6)
 
@@ -161,12 +160,12 @@ class ClusterAnalysis(ut.TestCase):
                 c.fractal_dimension(dr=dr)[0], 1, delta=0.05)
 
             # Fractal dimension of a disk should be close to 2
-            self.es.part.clear()
+            self.system.part.clear()
             center = np.array((0.1, .02, 0.15))
             for _ in range(3000):
                 r_inv, phi = np.random.random(2) * np.array((0.2, 2 * np.pi))
                 r = 1 / r_inv
-                self.es.part.add(
+                self.system.part.add(
                     pos=center + r * np.array((np.sin(phi), np.cos(phi), 0)))
             self.cs.clear()
             self.cs.run_for_all_pairs()
@@ -188,7 +187,7 @@ class ClusterAnalysis(ut.TestCase):
         # Check particle to cluster id mapping, once by ParticleHandle, once by
         # id
         self.assertEqual(self.cs.cid_for_particle(
-            self.es.part[0]), self.cs.cluster_ids()[0])
+            self.system.part[0]), self.cs.cluster_ids()[0])
         self.assertEqual(self.cs.cid_for_particle(1), self.cs.cluster_ids()[0])
 
         # Unknown method should return None

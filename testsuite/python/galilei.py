@@ -22,17 +22,16 @@ import numpy as np
 import espressomd
 import espressomd.galilei
 
-BOX_L = np.array([10, 20, 30])
-
 
 class Galilei(ut.TestCase):
-    system = espressomd.System(box_l=BOX_L)
+    system = espressomd.System(box_l=[10, 20, 30])
 
     def setUp(self):
         N_PART = 500
-        self.system.part.add(pos=BOX_L * np.random.random((N_PART, 3)),
-                             v=-5. + 10. * np.random.random((N_PART, 3)),
-                             f=np.random.random((N_PART, 3)))
+        self.system.part.add(
+            pos=self.system.box_l * np.random.random((N_PART, 3)),
+            v=-5. + 10. * np.random.random((N_PART, 3)),
+            f=np.random.random((N_PART, 3)))
         if espressomd.has_features("MASS"):
             self.system.part[:].mass = 42. * np.random.random((N_PART,))
         if espressomd.has_features("ROTATION"):

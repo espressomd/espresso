@@ -26,25 +26,24 @@ class RescaleTest(ut.TestCase):
     """Test the global box and particle rescaling.
 
     """
-    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.cell_system.skin = 0.0
-    s.time_step = 0.01
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.cell_system.skin = 0.0
+    system.time_step = 0.01
 
     def setUp(self):
         N = 100
-        self.s.box_l = 3 * [10]
-        self.s.part.add(pos=self.s.box_l * np.random.random((N, 3)))
+        self.system.box_l = 3 * [10]
+        self.system.part.add(pos=self.system.box_l * np.random.random((N, 3)))
 
     def test_iso(self):
         """Test 'isotropic' case (dir="xyz").
         """
-        s = self.s
         scale = 1.3
-        new_box_l = scale * s.box_l[0]
+        new_box_l = scale * self.system.box_l[0]
 
-        old_pos = s.part[:].pos
-        s.change_volume_and_rescale_particles(new_box_l)
-        new_pos = s.part[:].pos
+        old_pos = self.system.part[:].pos
+        self.system.change_volume_and_rescale_particles(new_box_l)
+        new_pos = self.system.part[:].pos
 
         max_diff = np.max(np.abs(new_pos / old_pos - scale))
         self.assertAlmostEqual(0., max_diff, places=10)
@@ -52,13 +51,12 @@ class RescaleTest(ut.TestCase):
     def dir_test(self, dir):
         """Test scaling of a single direction.
         """
-        s = self.s
         scale = 0.7
-        new_box_l = scale * s.box_l[dir]
+        new_box_l = scale * self.system.box_l[dir]
 
-        old_pos = s.part[:].pos
-        s.change_volume_and_rescale_particles(new_box_l, dir=dir)
-        new_pos = s.part[:].pos
+        old_pos = self.system.part[:].pos
+        self.system.change_volume_and_rescale_particles(new_box_l, dir=dir)
+        new_pos = self.system.part[:].pos
 
         for i in range(3):
             if i == dir:

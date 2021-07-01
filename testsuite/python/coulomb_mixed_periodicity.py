@@ -30,7 +30,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
 
     """Test mixed periodicity electrostatics"""
 
-    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     data = np.genfromtxt(tests_common.abspath(
         "data/coulomb_mixed_periodicity_system.data"))
 
@@ -41,24 +41,25 @@ class CoulombMixedPeriodicity(ut.TestCase):
     reference_energy = 216.640984711
 
     def setUp(self):
-        self.S.box_l = (10, 10, 10)
-        self.S.time_step = 0.01
-        self.S.cell_system.skin = 0.
+        self.system.box_l = (10, 10, 10)
+        self.system.time_step = 0.01
+        self.system.cell_system.skin = 0.
 
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f
-        self.S.part.add(pos=self.data[:, 1:4], q=self.data[:, 4])
+        self.system.part.add(pos=self.data[:, 1:4], q=self.data[:, 4])
         self.forces = self.data[:, 5:8]
 
     def tearDown(self):
-        self.S.part.clear()
-        self.S.actors.clear()
+        self.system.part.clear()
+        self.system.actors.clear()
 
     def compare(self, method_name, energy=True):
         # Compare forces and energy now in the system to stored ones
 
         # Force
-        force_diff = np.linalg.norm(self.S.part[:].f - self.forces, axis=1)
+        force_diff = np.linalg.norm(
+            self.system.part[:].f - self.forces, axis=1)
         self.assertLessEqual(
             np.mean(force_diff), self.tolerance_force,
             "Absolute force difference too large for method " + method_name)
@@ -66,7 +67,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         # Energy
         if energy:
             self.assertAlmostEqual(
-                self.S.analysis.energy()["total"],
+                self.system.analysis.energy()["total"],
                 self.reference_energy, delta=self.tolerance_energy,
                 msg="Absolute energy difference too large for " + method_name)
 
@@ -75,32 +76,32 @@ class CoulombMixedPeriodicity(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M"])
     def test_elc(self):
         # Make sure, the data satisfies the gap
-        for p in self.S.part:
+        for p in self.system.part:
             if p.pos[2] < 0 or p.pos[2] > 9.:
                 raise Exception("Particle z pos invalid")
 
-        self.S.cell_system.set_domain_decomposition()
-        self.S.cell_system.node_grid = sorted(
-            self.S.cell_system.node_grid, key=lambda x: -x)
-        self.S.periodicity = [1, 1, 1]
-        self.S.box_l = (10, 10, 10)
+        self.system.cell_system.set_domain_decomposition()
+        self.system.cell_system.node_grid = sorted(
+            self.system.cell_system.node_grid, key=lambda x: -x)
+        self.system.periodicity = [1, 1, 1]
+        self.system.box_l = (10, 10, 10)
 
         p3m = espressomd.electrostatics.P3M(
             prefactor=1, accuracy=1e-6, mesh=(64, 64, 64))
         elc = espressomd.electrostatics.ELC(
             p3m_actor=p3m, maxPWerror=1E-6, gap_size=1)
 
-        self.S.actors.add(elc)
-        self.S.integrator.run(0)
+        self.system.actors.add(elc)
+        self.system.integrator.run(0)
         self.compare("elc", energy=True)
 
     @ut.skipIf(not espressomd.has_features("SCAFACOS")
                or 'p2nfft' not in espressomd.scafacos.available_methods(),
                'Skipping test: missing feature SCAFACOS or p2nfft method')
     def test_scafacos_p2nfft(self):
-        self.S.periodicity = [1, 1, 0]
-        self.S.cell_system.set_domain_decomposition()
-        self.S.box_l = [10, 10, 10]
+        self.system.periodicity = [1, 1, 0]
+        self.system.cell_system.set_domain_decomposition()
+        self.system.box_l = [10, 10, 10]
 
         scafacos = espressomd.electrostatics.Scafacos(
             prefactor=1,
@@ -111,8 +112,8 @@ class CoulombMixedPeriodicity(ut.TestCase):
                 "pnfft_N": "96,96,128",
                 "r_cut": 2.4,
                 "pnfft_m": 3})
-        self.S.actors.add(scafacos)
-        self.S.integrator.run(0)
+        self.system.actors.add(scafacos)
+        self.system.integrator.run(0)
         self.compare("scafacos_p2nfft", energy=True)
 
 

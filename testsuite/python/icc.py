@@ -60,7 +60,6 @@ class test_icc(ut.TestCase):
             pos=positions, q=charges, fix=fix), normals, areas
 
     def common_setup(self, kwargs, error):
-        self.tearDown()
         part_slice, normals, areas = self.add_icc_particles(2, 0.01, 0)
 
         params = {"n_icc": len(part_slice),
@@ -88,9 +87,9 @@ class test_icc(ut.TestCase):
 
         for kwargs, error in params:
             self.common_setup(kwargs, error)
+            self.tearDown()
 
     def test_core_params(self):
-        self.tearDown()
         part_slice, normals, areas = self.add_icc_particles(5, 0.01, 0)
 
         params = {"n_icc": len(part_slice),
@@ -112,7 +111,6 @@ class test_icc(ut.TestCase):
         BOX_L = 20.
         BOX_SPACE = 5.
 
-        self.tearDown()
         self.system.box_l = [BOX_L, BOX_L, BOX_L + BOX_SPACE]
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01

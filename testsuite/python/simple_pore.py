@@ -41,38 +41,37 @@ class SimplePoreConstraint(ut.TestCase):
         self.assertLess(d, 0.)
 
     def test_stability(self):
-        s = espressomd.System(box_l=[1.0, 1.0, 1.0])
         box_yz = 15.
         box_x = 20.
-        s.box_l = [box_x, box_yz, box_yz]
-        s.time_step = 0.01
-        s.cell_system.skin = 0.4
+        system = espressomd.System(box_l=[box_x, box_yz, box_yz])
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
 
         lj_eps = 1.0
         lj_sig = 1.0
         lj_cut = lj_sig * 2**(1. / 6.)
 
-        s.constraints.add(
+        system.constraints.add(
             particle_type=0, penetrable=False, only_positive=False,
             shape=espressomd.shapes.SimplePore(
                 axis=[1., 0.5, 0.5], radius=3., smoothing_radius=.1,
                 length=5, center=[.5 * box_x, .5 * box_yz, .5 * box_yz]))
-        s.constraints.add(
+        system.constraints.add(
             particle_type=0, penetrable=False, only_positive=False,
             shape=espressomd.shapes.Cylinder(
                 axis=[1., 0, 0], radius=0.5 * box_yz, length=4 * lj_cut + box_x,
                 center=[.5 * box_x, .5 * box_yz, .5 * box_yz], direction=-1))
 
-        s.non_bonded_inter[0, 1].lennard_jones.set_params(
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
         for i in range(200):
             rpos = [i * (box_x / 200.), 0.5 * box_yz, 0.5 * box_yz]
-            s.part.add(pos=rpos, type=1, v=[1., 1., 1.])
+            system.part.add(pos=rpos, type=1, v=[1., 1., 1.])
 
-        start_energy = s.analysis.energy()['total']
-        s.integrator.run(1000)
-        end_energy = s.analysis.energy()['total']
+        start_energy = system.analysis.energy()['total']
+        system.integrator.run(1000)
+        end_energy = system.analysis.energy()['total']
         rel_diff = abs(end_energy - start_energy) / start_energy
 
         self.assertLess(rel_diff, 1e-3)
