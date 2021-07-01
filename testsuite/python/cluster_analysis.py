@@ -18,11 +18,11 @@
 #
 import unittest as ut
 import espressomd
-from espressomd.utils import handle_errors
+import espressomd.utils
 import numpy as np
-from espressomd.interactions import FeneBond
-from espressomd.pair_criteria import DistanceCriterion, BondCriterion
-from espressomd.cluster_analysis import ClusterStructure
+import espressomd.interactions
+import espressomd.pair_criteria
+import espressomd.cluster_analysis
 
 
 class ClusterAnalysis(ut.TestCase):
@@ -31,7 +31,7 @@ class ClusterAnalysis(ut.TestCase):
 
     es = espressomd.System(box_l=(1, 1, 1))
 
-    f = FeneBond(k=1, d_r_max=0.05)
+    f = espressomd.interactions.FeneBond(k=1, d_r_max=0.05)
     es.bonded_inter.add(f)
 
     # 1st cluster
@@ -44,11 +44,11 @@ class ClusterAnalysis(ut.TestCase):
     es.part.add(id=4, pos=(0.5, 0.5, 0.5))
     es.part.add(id=5, pos=(0.55, 0.5, 0.5))
 
-    cs = ClusterStructure()
+    cs = espressomd.cluster_analysis.ClusterStructure()
     np.random.seed(1)
 
     # Setup check
-    handle_errors("")
+    espressomd.utils.handle_errors("")
 
     def test_00_fails_without_criterion_set(self):
         with self.assertRaises(Exception):
@@ -56,7 +56,7 @@ class ClusterAnalysis(ut.TestCase):
 
     def test_set_criterion(self):
         # Test setters/getters for criteria
-        dc = DistanceCriterion(cut_off=0.11)
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.11)
         self.cs.set_params(pair_criterion=dc)
         # Do we get back the right criterion
         dc_ret = self.cs.get_params()["pair_criterion"]
@@ -69,7 +69,8 @@ class ClusterAnalysis(ut.TestCase):
 
     def test_analysis_for_all_pairs(self):
         # Run cluster analysis
-        self.cs.set_params(pair_criterion=DistanceCriterion(cut_off=0.12))
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.12)
+        self.cs.set_params(pair_criterion=dc)
         self.cs.run_for_all_pairs()
 
         # Number of clusters
@@ -118,7 +119,8 @@ class ClusterAnalysis(ut.TestCase):
         # Place particles on a line (crossing periodic boundaries)
         for x in np.arange(-0.2, 0.21, 0.01):
             self.es.part.add(pos=(x, 1.1 * x, 1.2 * x))
-        self.cs.pair_criterion = DistanceCriterion(cut_off=0.13)
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.13)
+        self.cs.pair_criterion = dc
         self.cs.run_for_all_pairs()
         self.assertEqual(len(self.cs.clusters), 1)
 
@@ -174,7 +176,8 @@ class ClusterAnalysis(ut.TestCase):
 
     def test_analysis_for_bonded_particles(self):
         # Run cluster analysis
-        self.cs.set_params(pair_criterion=BondCriterion(bond_type=0))
+        bc = espressomd.pair_criteria.BondCriterion(bond_type=0)
+        self.cs.set_params(pair_criterion=bc)
         self.cs.run_for_bonded_particles()
 
         # There should be one cluster containing particles 0 and 1

@@ -20,7 +20,8 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
-from espressomd import electrostatics, scafacos
+import espressomd.electrostatics
+import espressomd.scafacos
 import tests_common
 
 
@@ -84,22 +85,24 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.S.periodicity = [1, 1, 1]
         self.S.box_l = (10, 10, 10)
 
-        p3m = electrostatics.P3M(prefactor=1, accuracy=1e-6, mesh=(64, 64, 64))
-        elc = electrostatics.ELC(p3m_actor=p3m, maxPWerror=1E-6, gap_size=1)
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=1, accuracy=1e-6, mesh=(64, 64, 64))
+        elc = espressomd.electrostatics.ELC(
+            p3m_actor=p3m, maxPWerror=1E-6, gap_size=1)
 
         self.S.actors.add(elc)
         self.S.integrator.run(0)
         self.compare("elc", energy=True)
 
     @ut.skipIf(not espressomd.has_features("SCAFACOS")
-               or 'p2nfft' not in scafacos.available_methods(),
+               or 'p2nfft' not in espressomd.scafacos.available_methods(),
                'Skipping test: missing feature SCAFACOS or p2nfft method')
     def test_scafacos_p2nfft(self):
         self.S.periodicity = [1, 1, 0]
         self.S.cell_system.set_domain_decomposition()
         self.S.box_l = [10, 10, 10]
 
-        scafacos = electrostatics.Scafacos(
+        scafacos = espressomd.electrostatics.Scafacos(
             prefactor=1,
             method_name="p2nfft",
             method_params={

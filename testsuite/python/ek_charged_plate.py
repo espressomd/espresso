@@ -18,7 +18,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-from espressomd import electrokinetics
+import espressomd.electrokinetics
 import math
 
 ##########################################################################
@@ -50,7 +50,7 @@ class ek_charged_plate(ut.TestCase):
         system.thermostat.turn_off()
 
         # Setup the Fluid
-        ek = electrokinetics.Electrokinetics(
+        ek = espressomd.electrokinetics.Electrokinetics(
             agrid=agrid,
             lb_density=1.0,
             viscosity=1.0,
@@ -61,9 +61,9 @@ class ek_charged_plate(ut.TestCase):
             advection=False,
             es_coupling=True)
 
-        positive_ions = electrokinetics.Species(
+        positive_ions = espressomd.electrokinetics.Species(
             density=0.0, D=0.0, valency=1.0)
-        negative_ions = electrokinetics.Species(
+        negative_ions = espressomd.electrokinetics.Species(
             density=0.0, D=0.0, valency=-1.0)
         ek.add_species(positive_ions)
         ek.add_species(negative_ions)

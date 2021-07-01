@@ -18,7 +18,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-from espressomd import electrokinetics
+import espressomd.electrokinetics
 import numpy as np
 import math
 
@@ -52,18 +52,22 @@ class ek_fluctuations(ut.TestCase):
         system.thermostat.turn_off()
 
         # Setup the Fluid
-        ek = electrokinetics.Electrokinetics(agrid=agrid,
-                                             lb_density=1.0,
-                                             viscosity=1.0,
-                                             friction=0.0,
-                                             T=1.0,
-                                             prefactor=1.0,
-                                             stencil='linkcentered',
-                                             advection=False,
-                                             fluctuations=True,
-                                             fluctuation_amplitude=1.0)
+        ek = espressomd.electrokinetics.Electrokinetics(
+            agrid=agrid,
+            lb_density=1.0,
+            viscosity=1.0,
+            friction=0.0,
+            T=1.0,
+            prefactor=1.0,
+            stencil='linkcentered',
+            advection=False,
+            fluctuations=True,
+            fluctuation_amplitude=1.0)
 
-        species = electrokinetics.Species(density=rho0, D=diff, valency=0.0)
+        species = espressomd.electrokinetics.Species(
+            density=rho0,
+            D=diff,
+            valency=0.0)
 
         ek.add_species(species)
         system.actors.add(ek)

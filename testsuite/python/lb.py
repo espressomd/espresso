@@ -20,7 +20,7 @@ import numpy as np
 import itertools
 import espressomd
 import espressomd.lb
-from espressomd.observables import LBFluidPressureTensor
+import espressomd.observables
 import sys
 
 
@@ -120,7 +120,7 @@ class TestLB:
 
     def test_pressure_tensor_observable(self):
         """
-        Checks agreement between the LBFluidPressureTensor observable and
+        Checks agreement between the ``LBFluidPressureTensor`` observable and
         per-node pressure tensor summed up over the entire fluid.
 
         """
@@ -147,7 +147,7 @@ class TestLB:
 
         pressure_tensor /= system.volume() / agrid**3
 
-        obs = LBFluidPressureTensor()
+        obs = espressomd.observables.LBFluidPressureTensor()
         obs_pressure_tensor = obs.calculate()
         np.testing.assert_allclose(
             pressure_tensor,

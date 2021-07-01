@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 
-from espressomd.shapes import Wall, Sphere
-from espressomd.constraints import ShapeBasedConstraint
+import espressomd.shapes
+import espressomd.constraints
 
 
 class ScriptInterfaceObjectParams(ut.TestCase):
@@ -25,22 +25,22 @@ class ScriptInterfaceObjectParams(ut.TestCase):
     """Tests that object parameters are assigned the correct python class"""
 
     def test(self):
-        c = ShapeBasedConstraint()
-        w = Wall(normal=[-1, 0, 0])
+        c = espressomd.constraints.ShapeBasedConstraint()
+        w = espressomd.shapes.Wall(normal=[-1, 0, 0])
         c.shape = w
         # Does the shape parameter return the correct class
-        self.assertEqual(c.shape.__class__, Wall)
+        self.assertEqual(c.shape.__class__, espressomd.shapes.Wall)
         # Does the script object match
         self.assertEqual(c.shape, w)
 
         # Different shape
-        c.shape = Sphere(radius=1)
+        c.shape = espressomd.shapes.Sphere(radius=1)
         # Test class
-        self.assertEqual(c.shape.__class__, Sphere)
+        self.assertEqual(c.shape.__class__, espressomd.shapes.Sphere)
         # Test parameter retrieval
         self.assertAlmostEqual(c.shape.radius, 1, places=8)
         with self.assertRaises(RuntimeError):
-            c.shape = Wall(thisparameterdoesnotexist=0)
+            c.shape = espressomd.shapes.Wall(thisparameterdoesnotexist=0)
 
 
 if __name__ == "__main__":

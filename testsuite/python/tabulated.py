@@ -19,6 +19,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.interactions
 import numpy as np
 
 
@@ -80,10 +81,8 @@ class TabulatedTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures("TABULATED")
     def test_bonded(self):
-        from espressomd.interactions import TabulatedDistance
-
-        tb = TabulatedDistance(min=self.min_, max=self.max_,
-                               energy=self.energy, force=self.force)
+        tb = espressomd.interactions.TabulatedDistance(
+            min=self.min_, max=self.max_, energy=self.energy, force=self.force)
         self.s.bonded_inter.add(tb)
 
         np.testing.assert_allclose(self.force, tb.params['force'])

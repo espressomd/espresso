@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd
+import espressomd.lb
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -22,7 +23,6 @@ import numpy as np
 
 @utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
 class LBEHTest(ut.TestCase):
-    from espressomd import lb
     s = espressomd.System(box_l=[6.0, 6.0, 6.0])
 
     def setUp(self):
@@ -40,7 +40,7 @@ class LBEHTest(ut.TestCase):
         self.s.time_step = self.params['time_step']
         self.s.cell_system.skin = self.params['skin']
 
-        self.lbf = self.lb.LBFluid(
+        lbf = espressomd.lb.LBFluid(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
@@ -48,10 +48,8 @@ class LBEHTest(ut.TestCase):
             kT=self.params['temp']
         )
 
-        self.s.actors.add(self.lbf)
-        self.s.thermostat.set_lb(
-            LB_fluid=self.lbf,
-            gamma=self.params['friction'])
+        self.s.actors.add(lbf)
+        self.s.thermostat.set_lb(LB_fluid=lbf, gamma=self.params['friction'])
 
     def tearDown(self):
         self.s.actors.clear()

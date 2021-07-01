@@ -22,7 +22,7 @@ import unittest_decorators as utx
 import itertools
 
 import espressomd
-from espressomd.observables import DPDStress
+import espressomd.observables
 
 
 @utx.skipIfMissingFeatures("DPD")
@@ -372,7 +372,7 @@ class DPDThermostat(ut.TestCase):
 
             dpd_stress = s.analysis.dpd_stress()
 
-            dpd_obs = DPDStress()
+            dpd_obs = espressomd.observables.DPDStress()
             obs_stress = dpd_obs.calculate()
 
             np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)

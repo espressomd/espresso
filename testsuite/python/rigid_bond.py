@@ -19,8 +19,8 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.interactions
 import numpy as np
-from espressomd.interactions import RigidBond
 import itertools
 
 
@@ -35,7 +35,8 @@ class RigidBondTest(ut.TestCase):
         s.cell_system.skin = 0.4
         s.time_step = 0.01
         s.thermostat.set_langevin(kT=1, gamma=1, seed=42)
-        rigid_bond = RigidBond(r=1.2, ptol=1E-3, vtol=target_acc)
+        rigid_bond = espressomd.interactions.RigidBond(
+            r=1.2, ptol=1E-3, vtol=target_acc)
         s.bonded_inter.add(rigid_bond)
 
         # create polymer

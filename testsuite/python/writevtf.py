@@ -24,8 +24,8 @@ import sys
 import unittest as ut
 import numpy as np
 import espressomd
-from espressomd import interactions
-from espressomd.io.writer import vtf
+import espressomd.interactions
+import espressomd.io.writer.vtf
 import tempfile
 
 npart = 50
@@ -53,7 +53,9 @@ class CommonTests(ut.TestCase):
         system.part.add(id=i, pos=np.array(3 * [i], dtype=float),
                         v=np.array([1.0, 2.0, 3.0]), type=1 + (-1)**i)
 
-    system.bonded_inter.add(interactions.FeneBond(k=1., d_r_max=10.0))
+    system.bonded_inter.add(
+        espressomd.interactions.FeneBond(
+            k=1., d_r_max=10.0))
     system.part[0].add_bond((0, 1))
     system.part[0].add_bond((0, 2))
     system.part[0].add_bond((0, 3))
@@ -110,13 +112,15 @@ class VCFTestAll(CommonTests):
         cls.types_to_write = 'all'
 
         with tempfile.TemporaryFile(mode='w+t') as fp:
-            vtf.writevcf(cls.system, fp, types=cls.types_to_write)
+            espressomd.io.writer.vtf.writevcf(
+                cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
             cls.written_pos = np.loadtxt(fp, comments="t")
 
         with tempfile.TemporaryFile(mode='w+t') as fp:
-            vtf.writevsf(cls.system, fp, types=cls.types_to_write)
+            espressomd.io.writer.vtf.writevsf(
+                cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
             cls.written_bonds = np.loadtxt(
@@ -143,13 +147,15 @@ class VCFTestType(CommonTests):
         cls.types_to_write = [2, 23]
         with tempfile.TemporaryFile(mode='w+') as fp:
 
-            vtf.writevcf(cls.system, fp, types=cls.types_to_write)
+            espressomd.io.writer.vtf.writevcf(
+                cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
             cls.written_pos = np.loadtxt(fp, comments="t")
 
         with tempfile.TemporaryFile(mode='w+') as fp:
-            vtf.writevsf(cls.system, fp, types=cls.types_to_write)
+            espressomd.io.writer.vtf.writevsf(
+                cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
             cls.written_bonds = np.loadtxt(

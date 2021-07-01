@@ -19,8 +19,8 @@
 import numpy as np
 
 import espressomd
-from espressomd.accumulators import TimeSeries
-from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
+import espressomd.accumulators
+import espressomd.observables
 
 
 def single_component_maxwell(x1, x2, kT):
@@ -88,13 +88,15 @@ class ThermostatsCommon:
         # Warmup
         system.integrator.run(20)
 
-        vel_obs = ParticleVelocities(ids=system.part[:].id)
-        vel_acc = TimeSeries(obs=vel_obs)
+        vel_obs = espressomd.observables.ParticleVelocities(
+            ids=system.part[:].id)
+        vel_acc = espressomd.accumulators.TimeSeries(obs=vel_obs)
         system.auto_update_accumulators.add(vel_acc)
 
         if espressomd.has_features("ROTATION"):
-            omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
-            omega_acc = TimeSeries(obs=omega_obs)
+            omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
+                ids=system.part[:].id)
+            omega_acc = espressomd.accumulators.TimeSeries(obs=omega_obs)
             system.auto_update_accumulators.add(omega_acc)
 
         # Sampling
@@ -150,13 +152,15 @@ class ThermostatsCommon:
 
         system.integrator.run(50)
 
-        vel_obs = ParticleVelocities(ids=system.part[:].id)
-        vel_acc = TimeSeries(obs=vel_obs)
+        vel_obs = espressomd.observables.ParticleVelocities(
+            ids=system.part[:].id)
+        vel_acc = espressomd.accumulators.TimeSeries(obs=vel_obs)
         system.auto_update_accumulators.add(vel_acc)
 
         if espressomd.has_features("ROTATION"):
-            omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
-            omega_acc = TimeSeries(obs=omega_obs)
+            omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
+                ids=system.part[:].id)
+            omega_acc = espressomd.accumulators.TimeSeries(obs=omega_obs)
             system.auto_update_accumulators.add(omega_acc)
 
         system.integrator.run(steps)
@@ -182,13 +186,15 @@ class ThermostatsCommon:
         """
 
         system = self.system
-        vel_obs = ParticleVelocities(ids=system.part[:].id)
-        vel_series = TimeSeries(obs=vel_obs)
+        vel_obs = espressomd.observables.ParticleVelocities(
+            ids=system.part[:].id)
+        vel_series = espressomd.accumulators.TimeSeries(obs=vel_obs)
         system.auto_update_accumulators.add(vel_series)
         if espressomd.has_features("ROTATION"):
             system.part[:].rotation = (1, 1, 1)
-            omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
-            omega_series = TimeSeries(obs=omega_obs)
+            omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
+                ids=system.part[:].id)
+            omega_series = espressomd.accumulators.TimeSeries(obs=omega_obs)
             system.auto_update_accumulators.add(omega_series)
 
         system.integrator.run(steps)

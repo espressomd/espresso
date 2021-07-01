@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
+import espressomd.electrostatics
 import unittest as ut
 import unittest_decorators as utx
-from tests_common import assert_params_match
+import tests_common
 
 
 @utx.skipIfMissingGPU()
@@ -27,8 +28,6 @@ from tests_common import assert_params_match
 class P3MGPU_test(ut.TestCase):
 
     def test(self):
-        from espressomd.electrostatics import P3MGPU
-
         es = espressomd.System(box_l=[10.0, 10.0, 10.0])
         test_params = {}
         test_params["prefactor"] = 2
@@ -40,9 +39,9 @@ class P3MGPU_test(ut.TestCase):
         test_params["alpha"] = 1.1
         test_params["tune"] = False
 
-        p3m = P3MGPU(**test_params)
+        p3m = espressomd.electrostatics.P3MGPU(**test_params)
         es.actors.add(p3m)
-        assert_params_match(self, test_params, p3m.get_params())
+        tests_common.assert_params_match(self, test_params, p3m.get_params())
 
 
 if __name__ == "__main__":

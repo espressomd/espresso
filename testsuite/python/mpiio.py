@@ -23,12 +23,12 @@ Testmodule for MPI-IO.
 
 import espressomd
 import espressomd.io
-from espressomd.interactions import AngleHarmonic
+import espressomd.interactions
 import numpy as np
 import unittest as ut
 import random
 import os
-from argparse import Namespace
+import argparse
 
 # Number of particles
 npart = 10
@@ -58,7 +58,7 @@ def random_particles():
     """Returns a list of random particle descriptions."""
     parts = []
     for i in range(npart):
-        p = Namespace()
+        p = argparse.Namespace()
         p.id = i
         p.type = random.randint(0, 100)
         p.pos = np.random.rand(3)
@@ -88,7 +88,8 @@ class MPIIOTest(ut.TestCase):
     s = espressomd.system.System(box_l=[1, 1, 1])
     # Just a bunch of random interactions such that add_bond does not throw
     for i in range(nbonds):
-        s.bonded_inter[i] = AngleHarmonic(bend=i, phi0=i)
+        s.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
+            bend=i, phi0=i)
     test_particles = random_particles()
 
     def setUp(self):

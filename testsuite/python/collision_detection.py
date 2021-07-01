@@ -19,9 +19,10 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-from espressomd.interactions import HarmonicBond, AngleHarmonic
+import espressomd.interactions
+import espressomd.virtual_sites
 import numpy as np
-from random import shuffle
+import random
 
 
 @utx.skipIfMissingFeatures("COLLISION_DETECTION")
@@ -32,11 +33,10 @@ class CollisionDetection(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(seed=42)
     if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
-        from espressomd.virtual_sites import VirtualSitesRelative
-        s.virtual_sites = VirtualSitesRelative()
+        s.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
 
-    H = HarmonicBond(k=5000, r_0=0.1)
-    H2 = HarmonicBond(k=25000, r_0=0.02)
+    H = espressomd.interactions.HarmonicBond(k=5000, r_0=0.1)
+    H2 = espressomd.interactions.HarmonicBond(k=25000, r_0=0.02)
     s.bonded_inter.add(H)
     s.bonded_inter.add(H2)
     time_step = 0.001
@@ -108,7 +108,7 @@ class CollisionDetection(ut.TestCase):
 
     def run_test_bind_at_point_of_collision_for_pos(self, *positions):
         positions = list(positions)
-        shuffle(positions)
+        random.shuffle(positions)
         self.s.part.clear()
         # Place particle which should not take part in collisions
         p = self.s.part.add(pos=(0.1, 0.3, 0))
@@ -322,7 +322,7 @@ class CollisionDetection(ut.TestCase):
 
     def run_test_glue_to_surface_for_pos(self, *positions):
         positions = list(positions)
-        shuffle(positions)
+        random.shuffle(positions)
         self.s.part.clear()
         # Place particle which should not take part in collisions
         # In this case, it is skipped, because it is of the wrong type,
@@ -600,7 +600,7 @@ class CollisionDetection(ut.TestCase):
         # Setup bonds
         res = 181
         for i in range(0, res, 1):
-            self.s.bonded_inter[i + 2] = AngleHarmonic(
+            self.s.bonded_inter[i + 2] = espressomd.interactions.AngleHarmonic(
                 bend=1, phi0=float(i) / (res - 1) * np.pi)
         cutoff = 0.11
         self.s.collision_detection.set_params(

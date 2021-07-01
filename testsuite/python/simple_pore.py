@@ -17,7 +17,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-from espressomd.shapes import SimplePore, Cylinder
+import espressomd.shapes
 
 # Integration test for simple pore
 # The rationale is to hit the pore everywhere with particles
@@ -31,8 +31,8 @@ from espressomd.shapes import SimplePore, Cylinder
 class SimplePoreConstraint(ut.TestCase):
 
     def test_orientation(self):
-        pore = SimplePore(axis=[1., 0., 0.], radius=2., smoothing_radius=.1,
-                          length=2., center=[5., 5., 5.])
+        pore = espressomd.shapes.SimplePore(axis=[1., 0., 0.], radius=2., smoothing_radius=.1,
+                                            length=2., center=[5., 5., 5.])
 
         d, _ = pore.calc_distance(position=[.0, .0, .0])
         self.assertGreater(d, 0.)
@@ -54,12 +54,12 @@ class SimplePoreConstraint(ut.TestCase):
 
         s.constraints.add(
             particle_type=0, penetrable=False, only_positive=False,
-            shape=SimplePore(
+            shape=espressomd.shapes.SimplePore(
                 axis=[1., 0.5, 0.5], radius=3., smoothing_radius=.1,
                 length=5, center=[.5 * box_x, .5 * box_yz, .5 * box_yz]))
         s.constraints.add(
             particle_type=0, penetrable=False, only_positive=False,
-            shape=Cylinder(
+            shape=espressomd.shapes.Cylinder(
                 axis=[1., 0, 0], radius=0.5 * box_yz, length=4 * lj_cut + box_x,
                 center=[.5 * box_x, .5 * box_yz, .5 * box_yz], direction=-1))
 

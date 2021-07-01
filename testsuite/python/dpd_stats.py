@@ -19,13 +19,13 @@
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
+import thermostats_common
 
 import espressomd
-from thermostats_common import ThermostatsCommon
 
 
 @utx.skipIfMissingFeatures("DPD")
-class DPDThermostat(ut.TestCase, ThermostatsCommon):
+class DPDThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
 
     """Tests the velocity distribution created by the DPD thermostat."""
 

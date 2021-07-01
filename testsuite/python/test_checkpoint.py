@@ -27,7 +27,8 @@ import espressomd.magnetostatics
 import espressomd.scafacos
 import espressomd.virtual_sites
 import espressomd.integrate
-from espressomd.shapes import Sphere, Wall
+import espressomd.shapes
+import espressomd.constraints
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
@@ -495,8 +496,10 @@ class CheckpointTest(ut.TestCase):
             np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
         np.testing.assert_allclose(
             np.copy(system.lbboundaries[1].velocity), [0, 0, 0])
-        self.assertIsInstance(system.lbboundaries[0].shape, Wall)
-        self.assertIsInstance(system.lbboundaries[1].shape, Wall)
+        self.assertIsInstance(
+            system.lbboundaries[0].shape, espressomd.shapes.Wall)
+        self.assertIsInstance(
+            system.lbboundaries[1].shape, espressomd.shapes.Wall)
         np.testing.assert_equal(
             system.actors[0][0, :, :].boundary.astype(int), 1)
         np.testing.assert_equal(
@@ -511,53 +514,55 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):
-        from espressomd import constraints
         self.assertEqual(len(system.constraints),
                          8 - int(not espressomd.has_features("ELECTROSTATICS")))
         c = system.constraints
         ref_shape = self.ref_box_l.astype(int) + 2
 
-        self.assertIsInstance(c[0].shape, Sphere)
+        self.assertIsInstance(c[0].shape, espressomd.shapes.Sphere)
         self.assertAlmostEqual(c[0].shape.radius, 0.1, delta=1E-10)
         self.assertEqual(c[0].particle_type, 17)
 
-        self.assertIsInstance(c[1].shape, Wall)
+        self.assertIsInstance(c[1].shape, espressomd.shapes.Wall)
         np.testing.assert_allclose(np.copy(c[1].shape.normal),
                                    [1. / np.sqrt(3)] * 3)
 
-        self.assertIsInstance(c[2], constraints.Gravity)
+        self.assertIsInstance(c[2], espressomd.constraints.Gravity)
         np.testing.assert_allclose(np.copy(c[2].g), [1., 2., 3.])
 
-        self.assertIsInstance(c[3], constraints.HomogeneousMagneticField)
+        self.assertIsInstance(
+            c[3], espressomd.constraints.HomogeneousMagneticField)
         np.testing.assert_allclose(np.copy(c[3].H), [1., 2., 3.])
 
-        self.assertIsInstance(c[4], constraints.HomogeneousFlowField)
+        self.assertIsInstance(
+            c[4], espressomd.constraints.HomogeneousFlowField)
         np.testing.assert_allclose(np.copy(c[4].u), [1., 2., 3.])
         self.assertAlmostEqual(c[4].gamma, 2.3, delta=1E-10)
 
-        self.assertIsInstance(c[5], constraints.PotentialField)
+        self.assertIsInstance(c[5], espressomd.constraints.PotentialField)
         self.assertEqual(c[5].field.shape, tuple(list(ref_shape) + [1]))
         self.assertAlmostEqual(c[5].default_scale, 1.6, delta=1E-10)
         self.assertAlmostEqual(c[5].particle_scales[5], 6.0, delta=1E-10)
         np.testing.assert_allclose(np.copy(c[5].origin), [-0.5, -0.5, -0.5])
         np.testing.assert_allclose(np.copy(c[5].grid_spacing), np.ones(3))
-        ref_pot = constraints.PotentialField(
+        ref_pot = espressomd.constraints.PotentialField(
             field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6)
         np.testing.assert_allclose(np.copy(c[5].field), np.copy(ref_pot.field),
                                    atol=1e-10)
 
-        self.assertIsInstance(c[6], constraints.ForceField)
+        self.assertIsInstance(c[6], espressomd.constraints.ForceField)
         self.assertEqual(c[6].field.shape, tuple(list(ref_shape) + [3]))
         self.assertAlmostEqual(c[6].default_scale, 1.4, delta=1E-10)
         np.testing.assert_allclose(np.copy(c[6].origin), [-0.5, -0.5, -0.5])
         np.testing.assert_allclose(np.copy(c[6].grid_spacing), np.ones(3))
-        ref_vec = constraints.ForceField(
+        ref_vec = espressomd.constraints.ForceField(
             field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4)
         np.testing.assert_allclose(np.copy(c[6].field), np.copy(ref_vec.field),
                                    atol=1e-10)
 
         if espressomd.has_features("ELECTROSTATICS"):
-            self.assertIsInstance(c[7], constraints.ElectricPlaneWave)
+            self.assertIsInstance(
+                c[7], espressomd.constraints.ElectricPlaneWave)
             np.testing.assert_allclose(np.copy(c[7].E0), [1., -2., 3.])
             np.testing.assert_allclose(np.copy(c[7].k), [-.1, .2, .3])
             self.assertAlmostEqual(c[7].omega, 5., delta=1E-10)

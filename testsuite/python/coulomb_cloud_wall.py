@@ -23,7 +23,7 @@ import numpy as np
 import espressomd
 import espressomd.cuda_init
 import espressomd.electrostatics
-from espressomd import scafacos
+import espressomd.scafacos
 import tests_common
 
 
@@ -106,7 +106,7 @@ class CoulombCloudWall(ut.TestCase):
         self.compare("p3m_gpu", energy=False, prefactor=2.2)
 
     @ut.skipIf(not espressomd.has_features("SCAFACOS")
-               or 'p2nfft' not in scafacos.available_methods(),
+               or 'p2nfft' not in espressomd.scafacos.available_methods(),
                'Skipping test: missing feature SCAFACOS or p2nfft method')
     def test_scafacos_p2nfft(self):
         self.S.actors.add(

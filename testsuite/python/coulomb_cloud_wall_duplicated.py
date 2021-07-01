@@ -23,7 +23,7 @@ import numpy as np
 import espressomd
 import espressomd.cuda_init
 import espressomd.electrostatics
-from tests_common import abspath
+import tests_common
 
 
 @utx.skipIfMissingFeatures("ELECTROSTATICS")
@@ -33,7 +33,7 @@ class CoulombCloudWall(ut.TestCase):
     stored data."""
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
     data = np.genfromtxt(
-        abspath("data/coulomb_cloud_wall_duplicated_system.data"))
+        tests_common.abspath("data/coulomb_cloud_wall_duplicated_system.data"))
 
     tolerance = 1E-3
 
