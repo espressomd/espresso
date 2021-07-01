@@ -41,8 +41,8 @@ public:
 protected:
   double calculate_acceptance_probability(
       SingleReaction const &current_reaction, double E_pot_old,
-      double E_pot_new, std::map<int, int> const &old_particle_numbers, int,
-      int, bool) const override;
+      double E_pot_new,
+      std::map<int, int> const &old_particle_numbers) const override;
 };
 
 } // namespace ReactionMethods

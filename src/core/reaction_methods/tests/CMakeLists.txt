@@ -25,9 +25,6 @@ unit_test(NAME ReactionAlgorithm_test SRC ReactionAlgorithm_test.cpp DEPENDS
           EspressoCore Boost::mpi MPI::MPI_CXX)
 unit_test(NAME ReactionEnsemble_test SRC ReactionEnsemble_test.cpp DEPENDS
           EspressoCore Boost::mpi MPI::MPI_CXX)
-unit_test(NAME WangLandauReactionEnsemble_test SRC
-          WangLandauReactionEnsemble_test.cpp DEPENDS EspressoCore Boost::mpi
-          MPI::MPI_CXX)
 unit_test(NAME particle_tracking_test SRC particle_tracking_test.cpp DEPENDS
           EspressoCore Boost::mpi MPI::MPI_CXX)
 unit_test(NAME reaction_methods_utils_test SRC reaction_methods_utils_test.cpp
