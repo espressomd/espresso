@@ -19,18 +19,20 @@
 def vtf_pid_map(system, types='all'):
     """
     Generates a VTF particle index map to ESPResSo ``id``.
-    This fills the gap for particle ID's as required by VMD
+    This fills the gap for particle ID's as required by VMD.
 
     Parameters
     ----------
-    system: espressomd.System() object
+    system: :obj:`espressomd.system.System`
     types : :obj:`str`
-            Specifies the particle types. The id mapping depends on which
-            particles are going to be printed. This should be the same as
-            the one used in writevsf() and writevsf().
+        Specifies the particle types. The id mapping depends on which
+        particles are going to be printed. This should be the same as
+        the one used in :func:`writevsf()` and :func:`writevcf()`.
     Returns
     -------
-    dict:   A dictionary where the values are the VTF indices and the keys are the ESPresSo particle ``id``
+    dict:
+        A dictionary where the values are the VTF indices and the keys
+        are the ESPresSo particle ``id``.
     """
 
     if not hasattr(types, '__iter__'):
@@ -52,11 +54,11 @@ def writevsf(system, fp, types='all'):
 
     Parameters
     ----------
-    system: espressomd.System() object
+    system: :obj:`espressomd.system.System`
     types : :obj:`str`
-            Specifies the particle types. The string 'all' will write all particles
+        Specifies the particle types. The string 'all' will write all particles
     fp : file
-               File pointer to write to.
+        File pointer to write to.
 
     """
 
@@ -82,11 +84,11 @@ def writevcf(system, fp, types='all'):
 
     Parameters
     ----------
-    system: espressomd.System() object
+    system: :obj:`espressomd.system.System`
     types : :obj:`str`
-            Specifies the particle types. The string 'all' will write all particles
+        Specifies the particle types. The string 'all' will write all particles
     fp : file
-               File pointer to write to.
+        File pointer to write to.
 
     """
     vtf_index = vtf_pid_map(system, types)

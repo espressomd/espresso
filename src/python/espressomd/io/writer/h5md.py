@@ -23,33 +23,33 @@ from ...script_interface import PScriptInterface  # pylint: disable=import
 from ...code_info import features
 
 
-class UnitSystem:	
-    """	
-    Data class for writing H5MD trajectories with	
-    `physical units <https://nongnu.org/h5md/modules/units.html>`.	
-    There are four settable units: 'mass', 'length', 'time', 'charge'.	
-    Units should be written as strings following the specifications defined	
-    `here <https://nongnu.org/h5md/modules/units.html#unit-string>`,	
-    e.g. ``UnitSystem(time='ps', mass='u', length='nm', charge='e')``.	
-    """	
+class UnitSystem:
+    """
+    Data class for writing H5MD trajectories with
+    `physical units <https://nongnu.org/h5md/modules/units.html>`_.
+    There are four settable units: 'mass', 'length', 'time', 'charge'.
+    Units should be written as strings following the specifications defined
+    `here <https://nongnu.org/h5md/modules/units.html#unit-string>`_,
+    e.g. ``UnitSystem(time='ps', mass='u', length='nm', charge='e')``.
+    """
 
-    def __init__(self, **kwargs):	
-        self.mass = ''	
-        self.time = ''	
-        self.length = ''	
-        self.charge = ''	
-        for key, value in kwargs.items():	
-            assert hasattr(self, key), 'unknown dimension ' + key	
-            setattr(self, key, value or '')	
+    def __init__(self, **kwargs):
+        self.mass = ''
+        self.time = ''
+        self.length = ''
+        self.charge = ''
+        for key, value in kwargs.items():
+            assert hasattr(self, key), 'unknown dimension ' + key
+            setattr(self, key, value or '')
 
-        if self.length and self.mass and self.time:	
-            self.force = '{} {} {}-2'.format(self.length,	
-                                             self.mass, self.time)	
-        else:	
-            self.force = ''	
-        if self.length and self.time:	
-            self.velocity = '{} {}-1'.format(self.length, self.time)	
-        else:	
+        if self.length and self.mass and self.time:
+            self.force = '{} {} {}-2'.format(self.length,
+                                             self.mass, self.time)
+        else:
+            self.force = ''
+        if self.length and self.time:
+            self.velocity = '{} {}-1'.format(self.length, self.time)
+        else:
             self.velocity = ''
 
 
@@ -71,7 +71,7 @@ else:
         ----------
         file_path : :obj:`str`
             Path to the trajectory file.
-        unit_system : :obj:`UnitSystem`, optional	
+        unit_system : :obj:`UnitSystem`, optional
             Physical units for the data.
 
         """
@@ -80,9 +80,9 @@ else:
             self.h5md_instance = PScriptInterface(
                 "ScriptInterface::Writer::H5md", file_path=file_path, script_path=sys.argv[0],
                 mass_unit=unit_system.mass, length_unit=unit_system.length, 
-                time_unit=unit_system.time,	
-                force_unit=unit_system.force,	
-                velocity_unit=unit_system.velocity,	
+                time_unit=unit_system.time,
+                force_unit=unit_system.force,
+                velocity_unit=unit_system.velocity,
                 charge_unit=unit_system.charge
             )
 

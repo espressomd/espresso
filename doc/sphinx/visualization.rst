@@ -12,17 +12,14 @@ online-visualization:
    Additional requirements:
    python module *mayavi*, VTK and wxWidgets GUI Toolkit (packages
    *python3-vtk* and *python3-wxgtk*, for Debian/Ubuntu).
-   Note that only VTK from version 7.0.0 and higher has Python 3
-   support.
+   Note that only VTK from version 7.0.0 and higher has Python 3 support.
 
 #. A direct rendering engine based on *pyopengl*. As it is developed for |es|,
-   it supports the visualization of several specific features like
-   constraints, particle properties, the cell system, lattice-Boltzmann and
-   more. It can be adjusted with a large number of parameters to set colors,
-   materials, camera and interactive features like assigning callbacks to user
-   input.
-   Additional requirements:
-   python module *PyOpenGL*.
+   it supports the visualization of several specific features like constraints,
+   particle properties, the cell system, lattice-Boltzmann and more. It can be
+   adjusted with a large number of parameters to set colors, materials,
+   camera and interactive features like assigning callbacks to user input.
+   Additional requirements: python module *PyOpenGL*.
 
 Both are not meant to produce high quality renderings, but rather to
 debug your setup and equilibration process.
@@ -43,13 +40,12 @@ window with ``start()``. See the following minimal code example::
     import espressomd.visualization
     import threading
 
-    system = espressomd.System(box_l=[1, 1, 1])
+    system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 0.4
-    system.time_step = 0.01
-    system.box_l = [10, 10, 10]
+    system.time_step = 0.00001
 
-    system.part.add(pos=[1, 1, 1])
-    system.part.add(pos=[9, 9, 9])
+    system.part.add(pos=[1, 1, 1], v=[1, 0, 0])
+    system.part.add(pos=[9, 9, 9], v=[0, 1, 0])
 
     #visualizer = espressomd.visualization.mayaviLive(system)
     visualizer = espressomd.visualization.openGLLive(system)
@@ -145,7 +141,7 @@ visualizer is initialized::
 
     system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 0.4
-    system.time_step = 0.00001
+    system.time_step = 0.0001
 
     system.part.add(pos=[1, 1, 1], v=[1, 0, 0])
     system.part.add(pos=[9, 9, 9], v=[0, 1, 0])
@@ -260,7 +256,6 @@ feature)::
                         ext_torque=[5, 0, 0],
                         v=[10, 0, 0],
                         type=0)
-
         system.part.add(pos=np.random.random(3) * box_l,
                         rotation=[1, 1, 1],
                         ext_torque=[0, 5, 0],
@@ -305,29 +300,31 @@ by a timer or keyboard input::
 
     # Callbacks to control temperature
     temperature = 1.0
+    system.thermostat.set_langevin(kT=temperature, seed=42, gamma=1.0)
     def increaseTemp():
         global temperature
-        temperature += 0.1
+        temperature += 0.5
         system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-        print("T =", system.thermostat.get_state()[0]['kT'])
+        print(f"T = {system.thermostat.get_state()[0]['kT']:.1f}")
 
     def decreaseTemp():
         global temperature
-        temperature -= 0.1
-
+        temperature -= 0.5
         if temperature > 0:
             system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-            print("T =", system.thermostat.get_state()[0]['kT'])
+            print(f"T = {system.thermostat.get_state()[0]['kT']:.1f}")
         else:
             temperature = 0
             system.thermostat.turn_off()
             print("T = 0")
 
-    # Registers input-based calls
-    visualizer.keyboard_manager.register_button(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
-    visualizer.keyboard_manager.register_button(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
+    # Registers input-based calls with keys Y and H
+    visualizer.keyboard_manager.register_button(KeyboardButtonEvent('y', KeyboardFireEvent.Hold, increaseTemp))
+    visualizer.keyboard_manager.register_button(KeyboardButtonEvent('h', KeyboardFireEvent.Hold, decreaseTemp))
 
-Further examples can be found in :file:`samples/billiard.py` or :file:`samples/visualization_interactive.py`.
+    visualizer.run(1)
+
+Further examples can be found in :file:`/samples/billiard.py` or :file:`/samples/visualization_interactive.py`.
 
 .. _Dragging particles:
 

@@ -195,22 +195,17 @@ cdef class ParticleHandle:
         Examples
         --------
         >>> import espressomd
-        >>>
-        >>> system = espressomd.System()
-        >>>
-        >>> system.box_l=[10,10,10]
-        >>> # add two bonded particles to particle 0
-        >>> system.part.add(id=0, pos=(5, 0, 0))
-        >>> system.part.add(id=1, pos=(10, 0, 0))
-        >>> system.part.add(id=2, pos=(25, 0, 0))
+        >>> system = espressomd.System(box_l=[10, 10, 10])
+        >>> system.part.add(pos=(5, 0, 0))
+        >>> system.part.add(pos=(10, 0, 0))
+        >>> system.part.add(pos=(25, 0, 0))
         >>> for p in system.part:
-        >>>     print(p.pos)
+        ...     print(p.pos)
         [ 5.  0.  0.]
         [ 10.   0.   0.]
         [ 25.   0.   0.]
-        >>>
         >>> for p in system.part:
-        >>>     print(p.pos_folded)
+        ...     print(p.pos_folded)
         [5.0, 0.0, 0.0]
         [0.0, 0.0, 0.0]
         [5.0, 0.0, 0.0]
@@ -1177,14 +1172,11 @@ cdef class ParticleHandle:
             Examples
             --------
             >>> import espressomd
-            >>>
-            >>> system = espressomd.System()
-            >>>
-            >>> # Usage with Langevin
-            >>> system.part.add(id=0, pos=[1, 0, 0], swimming={'f_swim': 0.03})
-            >>>
-            >>> # Usage with LB
-            >>> system.part.add(id=1, pos=[2, 0, 0], swimming={'f_swim': 0.01,
+            >>> system = espressomd.System(box_l=[10, 10, 10])
+            >>> # Langevin swimmer
+            >>> system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
+            >>> # LB swimmer
+            >>> system.part.add(pos=[2, 0, 0], swimming={'f_swim': 0.01,
             ...     'mode': 'pusher', 'dipole_length': 2.0})
 
             """
@@ -1808,9 +1800,7 @@ cdef class ParticleList:
         --------
 
         >>> import espressomd
-        >>>
-        >>> system = espressomd.System()
-        >>>
+        >>> system = espressomd.System(box_l=[10, 10, 10])
         >>> # add two particles
         >>> system.part.add(id=0, pos=(1, 0, 0))
         >>> system.part.add(id=1, pos=(2, 0, 0))
@@ -1818,7 +1808,7 @@ cdef class ParticleList:
         Pos is mandatory, id can be omitted, in which case it is assigned automatically.
         Several particles can be added by passing one value per particle to each property::
 
-            system.part.add(pos=((1,2,3),(4,5,6)),q=(1,-1))
+            system.part.add(pos=((1, 2, 3), (4, 5, 6)), q=(1, -1))
 
         """
 
@@ -1955,17 +1945,14 @@ Set quat and scalar dipole moment (dipm) instead.")
         --------
 
         >>> import espressomd
-        >>>
-        >>> system = espressomd.System()
-        >>>
+        >>> system = espressomd.System(box_l=[10, 10, 10])
         >>> # add several particles
-        >>> system.part.add(pos=.5*system.box_l,v=[1,0,0],type=0)
-        >>> system.part.add(pos=.4*system.box_l,v=[0,2,0],type=1)
-        >>> system.part.add(pos=.7*system.box_l,v=[2,0,1],type=1)
-        >>> system.part.add(pos=.1*system.box_l,v=[0,0,1],type=2)
-        >>>
+        >>> system.part.add(pos=0.5 * system.box_l, v=[1, 0, 0], type=0)
+        >>> system.part.add(pos=0.4 * system.box_l, v=[0, 2, 0], type=1)
+        >>> system.part.add(pos=0.7 * system.box_l, v=[2, 0, 1], type=1)
+        >>> system.part.add(pos=0.1 * system.box_l, v=[0, 0, 1], type=2)
         >>> # write to VTK
-        >>> system.part.writevtk("part_type_0_1.vtk", types=[0,1])
+        >>> system.part.writevtk("part_type_0_1.vtk", types=[0, 1])
         >>> system.part.writevtk("part_type_2.vtk", types=[2])
         >>> system.part.writevtk("part_all.vtk")
 
