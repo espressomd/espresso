@@ -135,8 +135,8 @@ imported, before anything related can be done. ::
 
 This should be followed by further necessary imports of the example at hand: ::
 
-    from espressomd.interactions import HarmonicBond
-    from espressomd.electrostatics import P3M
+    import espressomd.interactions
+    import espressomd.electrostatics
 
 .. rubric:: espressomd.System
 
@@ -237,7 +237,7 @@ a :ref:`harmonic bond<Harmonic bond>` between them: ::
 To set up a bonded interaction, first an instance of the appropriate
 class is created with the desired parameters: ::
 
-    harmonic = HarmonicBond(k=1.0, r_0=0.5)
+    harmonic = espressomd.interactions.HarmonicBond(k=1.0, r_0=0.5)
 
 Then, the bonded interaction is registered in the simulation core
 by adding the instance to :attr:`~espressomd.system.System.bonded_inter`: ::
@@ -262,7 +262,7 @@ Long-range interactions and other methods that might be mutually exclusive
 are treated as so-called *actors*. They are used by first creating an instance
 of the desired actor::
 
-    p3m = P3M(accuracy=1e-3, prefactor=1.0)
+    p3m = espressomd.electrostatics.P3M(accuracy=1e-3, prefactor=1.0)
 
 and then adding it to the system: ::
 

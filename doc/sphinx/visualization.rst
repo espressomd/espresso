@@ -40,8 +40,8 @@ the renderer with your system. Finally start the blocking visualization
 window with ``start()``. See the following minimal code example::
 
     import espressomd
-    from espressomd import visualization
-    from threading import Thread
+    import espressomd.visualization
+    import threading
 
     system = espressomd.System(box_l=[1, 1, 1])
     system.cell_system.skin = 0.4
@@ -51,15 +51,15 @@ window with ``start()``. See the following minimal code example::
     system.part.add(pos=[1, 1, 1])
     system.part.add(pos=[9, 9, 9])
 
-    #visualizer = visualization.mayaviLive(system)
-    visualizer = visualization.openGLLive(system)
+    #visualizer = espressomd.visualization.mayaviLive(system)
+    visualizer = espressomd.visualization.openGLLive(system)
 
     def main_thread():
         while True:
             system.integrator.run(1)
             visualizer.update()
 
-    t = Thread(target=main_thread)
+    t = threading.Thread(target=main_thread)
     t.daemon = True
     t.start()
     visualizer.start()
@@ -141,7 +141,7 @@ an integration loop with ``n`` integration steps in a separate thread once the
 visualizer is initialized::
 
     import espressomd
-    from espressomd import visualization
+    import espressomd.visualization
 
     system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 0.4
@@ -150,7 +150,7 @@ visualizer is initialized::
     system.part.add(pos=[1, 1, 1], v=[1, 0, 0])
     system.part.add(pos=[9, 9, 9], v=[0, 1, 0])
 
-    visualizer = visualization.openGLLive(system, background_color=[1, 1, 1])
+    visualizer = espressomd.visualization.openGLLive(system, background_color=[1, 1, 1])
     visualizer.run(1)
 
 
@@ -170,7 +170,7 @@ argument ``window_size`` of the visualizer. This method can be used to create
 screenshots without blocking the simulation script::
 
     import espressomd
-    from espressomd import visualization
+    import espressomd.visualization
 
     system = espressomd.System(box_l=[10, 10, 10])
     system.cell_system.skin = 1.0
@@ -181,7 +181,7 @@ screenshots without blocking the simulation script::
 
     system.thermostat.set_langevin(kT=1, gamma=1, seed=42)
 
-    visualizer = visualization.openGLLive(system, window_size=[500, 500])
+    visualizer = espressomd.visualization.openGLLive(system, window_size=[500, 500])
 
     for i in range(100):
         system.integrator.run(1)
@@ -205,17 +205,17 @@ components. To distinguish particle groups, arrays of RGBA or ADSSO entries are
 used, which are indexed circularly by the numerical particle type::
 
     # Particle type 0 is red, type 1 is blue (type 2 is red etc)..
-    visualizer = visualization.openGLLive(system,
-                                          particle_coloring='type',
-                                          particle_type_colors=[[1, 0, 0], [0, 0, 1]])
+    visualizer = espressomd.visualization.openGLLive(system,
+                                                     particle_coloring='type',
+                                                     particle_type_colors=[[1, 0, 0], [0, 0, 1]])
 
 ``particle_type_materials`` lists the materials by type::
 
     # Particle type 0 is gold, type 1 is blue (type 2 is gold again etc).
-    visualizer = visualization.openGLLive(system,
-                                          particle_coloring='type',
-                                          particle_type_colors=[[1, 1, 1], [0, 0, 1]],
-                                          particle_type_materials=["steel", "bright"])
+    visualizer = espressomd.visualization.openGLLive(system,
+                                                     particle_coloring='type',
+                                                     particle_type_colors=[[1, 1, 1], [0, 0, 1]],
+                                                     particle_type_materials=["steel", "bright"])
 
 Materials are stored in :attr:`espressomd.visualization_opengl.openGLLive.materials`.
 
@@ -238,9 +238,9 @@ following code snippet demonstrates the visualization of the director property
 and individual settings for two particle types (requires the ``ROTATION``
 feature)::
 
-    import numpy
-    from espressomd import *
-    from espressomd.visualization_opengl import *
+    import numpy as np
+    import espressomd
+    from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
     box_l = 10
     system = espressomd.System(box_l=[box_l, box_l, box_l])
@@ -255,13 +255,13 @@ feature)::
                             director_arrows_type_colors=[[1.0, 0, 0], [0, 1.0, 0]])
 
     for i in range(10):
-        system.part.add(pos=numpy.random.random(3) * box_l,
+        system.part.add(pos=np.random.random(3) * box_l,
                         rotation=[1, 1, 1],
                         ext_torque=[5, 0, 0],
                         v=[10, 0, 0],
                         type=0)
 
-        system.part.add(pos=numpy.random.random(3) * box_l,
+        system.part.add(pos=np.random.random(3) * box_l,
                         rotation=[1, 1, 1],
                         ext_torque=[0, 5, 0],
                         v=[-10, 0, 0],

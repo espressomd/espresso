@@ -117,11 +117,11 @@ class ShapeBasedConstraint(Constraint):
     Examples
     ----------
     >>> import espressomd
-    >>> from espressomd import shapes
+    >>> import espressomd.shapes
     >>> system = espressomd.System()
     >>>
     >>> # create first a shape-object to define the constraint surface
-    >>> spherical_cavity = shapes.Sphere(center=[5,5,5], radius=5.0, direction=-1.0)
+    >>> spherical_cavity = espressomd.shapes.Sphere(center=[5,5,5], radius=5.0, direction=-1.0)
     >>>
     >>> # now create an un-penetrable shape-based constraint of type 0
     >>> spherical_constraint = system.constraints.add(particle_type=0, penetrable=False, shape=spherical_cavity)
@@ -151,7 +151,7 @@ class ShapeBasedConstraint(Constraint):
         Examples
         ----------
         >>> import espressomd
-        >>> from espressomd import shapes
+        >>> import espressomd.shapes
         >>> system = espressomd.System()
         >>>
         >>> system.time_step = 0.01
@@ -162,7 +162,8 @@ class ShapeBasedConstraint(Constraint):
         ...     epsilon=1, sigma=1,
         ...     cutoff=2**(1. / 6), shift="auto")
         >>>
-        >>> floor = system.constraints.add(shape=shapes.Wall(normal=[0, 0, 1], dist=0.0),
+        >>> floor = system.constraints.add(
+        ...    shape=espressomd.shapes.Wall(normal=[0, 0, 1], dist=0.0),
         ...    particle_type=0, penetrable=False, only_positive=False)
         >>>
         >>> system.part.add(id=0, pos=[0,0,1.5], type=0, ext_force=[0, 0, -.1])
