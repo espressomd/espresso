@@ -26,6 +26,7 @@
 #include "particle_data.hpp"
 
 #include "Particle.hpp"
+#include "Propagation.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
@@ -33,7 +34,6 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
-#include "Propagation.hpp"
 
 #include <string>
 #include <utils/Cache.hpp>
@@ -116,12 +116,10 @@ using UpdatePropertyMessage = boost::variant
 #ifdef DIPOLES
         , UpdateProperty<double, &Prop::dipm>
 #endif
-#ifdef VIRTUAL_SITES
         , UpdateProperty<bool, &Prop::is_virtual>
 #ifdef VIRTUAL_SITES_RELATIVE
         , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameters,
                          &Prop::vs_relative>
-#endif
 #endif
 #ifdef THERMOSTAT_PER_PARTICLE
 #ifndef PARTICLE_ANISOTROPY
@@ -760,12 +758,10 @@ void set_particle_dip(int part, Utils::Vector3d const &dip) {
 }
 #endif
 
-#ifdef VIRTUAL_SITES
 void set_particle_virtual(int part, bool is_virtual) {
   mpi_update_particle_property<bool, &ParticleProperties::is_virtual>(
       part, is_virtual);
 }
-#endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part,
@@ -798,8 +794,8 @@ void set_particle_q(int part, double q) {
 }
 
 void set_particle_propagation(int part, Propagation propagation) {
-  mpi_update_particle_property<Propagation,
-  &ParticleProperties::propagation>(part, propagation);
+  mpi_update_particle_property<Propagation, &ParticleProperties::propagation>(
+      part, propagation);
 }
 
 #ifndef ELECTROSTATICS
@@ -1209,14 +1205,13 @@ void pointer_to_quat(Particle const *p, double const *&res) {
 
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 
-void pointer_to_propagation(Particle const *p, Propagation const *&res) 
-{ res = &(p->p.propagation); }
+void pointer_to_propagation(Particle const *p, Propagation const *&res) {
+  res = &(p->p.propagation);
+}
 
-#ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, bool const *&res) {
   res = &(p->p.is_virtual);
 }
-#endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void pointer_to_vs_quat(Particle const *p, double const *&res) {

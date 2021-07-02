@@ -34,8 +34,7 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
   auto const expected = 0.5 * p.p.mass * p.m.v.norm2();
   BOOST_TEST(translational_kinetic_energy(p) == expected);
 
-/* virtual */
-#ifdef VIRTUAL_SITES
+  /* virtual */
   {
     Particle p;
 #ifdef MASS
@@ -47,7 +46,6 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
     auto const expected = 0.;
     BOOST_TEST(translational_kinetic_energy(p) == expected);
   }
-#endif
 }
 
 BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {

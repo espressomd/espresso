@@ -237,13 +237,11 @@ void set_particle_dip(int part, Utils::Vector3d const &dip);
 void set_particle_dipm(int part, double dipm);
 #endif
 
-#ifdef VIRTUAL_SITES
 /** Call only on the master node: set particle virtual flag.
  *  @param part the particle.
  *  @param is_virtual new @ref ParticleProperties::is_virtual "is_virtual" flag.
  */
 void set_particle_virtual(int part, bool is_virtual);
-#endif
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part,
                           Utils::Quaternion<double> const &vs_relative_quat);
@@ -372,9 +370,7 @@ void pointer_to_q(Particle const *p, double const *&res);
 
 void pointer_to_propagation(Particle const *p, Propagation const *&res);
 
-#ifdef VIRTUAL_SITES
 void pointer_to_virtual(Particle const *p, bool const *&res);
-#endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void pointer_to_vs_quat(Particle const *p, double const *&res);

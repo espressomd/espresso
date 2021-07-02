@@ -33,6 +33,7 @@ from .utils import nesting_level, array_locked, is_valid_type
 from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
 from .utils cimport Vector3i, Vector3d, Vector4d
 from .grid cimport box_geo, folded_position, unfolded_position
+import enum
 
 
 def _COORD_FIXED(coord):
@@ -49,6 +50,14 @@ for d in dir(ParticleHandle):
     if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
         if d != "pos_folded":
             particle_attributes.append(d)
+
+
+class Propagation(enum.Enum):
+    # WARNING: Values have to be synchronized with the core!
+    SYSTEM_DEFAULT = 0
+    VIRTUALSITES_RELATIVE = 1
+    INERTIALESS_TRACERS = 2
+
 
 cdef class ParticleHandle:
     def __cinit__(self, int _id):
@@ -605,23 +614,15 @@ cdef class ParticleHandle:
 
         """
 
-        def __set__(self, int _propagation):
-            cdef Propagation mypropagation
-            assert (_propagation == 0 or
-                    _propagation == 1 or
-                    _propagation == 2), \
-                    "Propagation can only be the following types:\n\
-                    0 SYSTEM_DEFAULT\n\
-                    1 VIRTUALSITES_RELATIVE\n\
-                    2 INERTIALESS_TRACERS\n"
-            mypropagation = <Propagation> _propagation
-            set_particle_propagation(self._id, mypropagation)
+        def __set__(self, _propagation):
+            cdef CPropagation cpropagation
+            cdef int temp = _propagation.value 
+            cpropagation = <CPropagation > temp
+            set_particle_propagation(self._id, cpropagation)
 
         def __get__(self):
             self.update_particle_data()
-            cdef const Propagation * x = NULL
-            pointer_to_propagation(self.particle_data, x)
-            return <int> x[0]
+            return Propagation( < int > self.particle_data.p.propagation)
 
     IF LB_ELECTROHYDRODYNAMICS:
         property mu_E:

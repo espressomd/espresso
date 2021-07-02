@@ -24,8 +24,6 @@
 
 #include "config.hpp"
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-
 #include "ParticleRange.hpp"
 
 // Main functions for CPU & GPU
@@ -39,6 +37,6 @@ void IBM_ForcesIntoFluid_CPU();
 void IBM_ForcesIntoFluid_GPU(ParticleRange particles);
 void IBM_ResetLBForces_GPU();
 
-#endif
-
+void inertialess_tracers_add_force_to_fluid();
+void inertialess_tracers_propagate();
 #endif

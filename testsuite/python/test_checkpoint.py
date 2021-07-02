@@ -25,7 +25,6 @@ import espressomd.checkpointing
 import espressomd.electrostatics
 import espressomd.magnetostatics
 import espressomd.scafacos
-import espressomd.virtual_sites
 import espressomd.integrate
 from espressomd.shapes import Sphere, Wall
 
@@ -290,9 +289,6 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
         self.assertTrue(system.part[1].virtual)
-        self.assertIsInstance(
-            system.virtual_sites,
-            espressomd.virtual_sites.VirtualSitesRelative)
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(

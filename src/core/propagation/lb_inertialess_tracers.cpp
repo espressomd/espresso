@@ -21,12 +21,11 @@
 
 #include "config.hpp"
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-
-#include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "lb_inertialess_tracers.hpp"
 
 #include "Particle.hpp"
 #include "cells.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
@@ -347,4 +346,29 @@ void ParticleVelocitiesFromLB_CPU() {
     }
   }
 }
+
+void inertialess_tracers_add_force_to_fluid() {
+  // Now the forces are computed and need to go into the LB fluid
+  if (lattice_switch == ActiveLB::CPU) {
+    IBM_ForcesIntoFluid_CPU();
+    return;
+  }
+#ifdef CUDA
+  if (lattice_switch == ActiveLB::GPU) {
+    IBM_ForcesIntoFluid_GPU(cell_structure.local_particles());
+    return;
+  }
 #endif
+  if (std::any_of(cell_structure.local_particles().begin(),
+                  cell_structure.local_particles().end(), [](Particle &p) {
+                    return p.p.propagation == Propagation::INERTIALESS_TRACERS;
+                  })) {
+    runtimeErrorMsg() << "Inertialess Tracers: No LB method was active but "
+                         "virtual sites present.";
+    return;
+  }
+}
+
+void inertialess_tracers_propagate() {
+  IBM_UpdateParticlePositions(cell_structure.local_particles());
+}

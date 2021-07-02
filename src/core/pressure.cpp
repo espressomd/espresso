@@ -34,8 +34,8 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
+#include "propagation/virtual_sites_relative.hpp"
 #include "reduce_observable_stat.hpp"
-#include "virtual_sites.hpp"
 
 #include "short_range_loop.hpp"
 
@@ -108,12 +108,10 @@ void pressure_calc() {
 
   calc_long_range_virials(cell_structure.local_particles());
 
-#ifdef VIRTUAL_SITES
   if (!obs_pressure.virtual_sites.empty()) {
-    auto const vs_pressure = virtual_sites()->pressure_tensor();
+    auto const vs_pressure = virtual_sites_relative_pressure_tensor();
     boost::copy(flatten(vs_pressure), obs_pressure.virtual_sites.begin());
   }
-#endif
 
   obs_pressure.rescale(volume);
 

@@ -23,14 +23,12 @@
 
 #include "config.hpp"
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "lb_inertialess_tracers_cuda_interface.hpp"
 #include "serialization/ibm_cuda_particle_velocities_input.hpp"
-#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
@@ -120,5 +118,3 @@ void IBM_cuda_mpi_send_velocities(ParticleRange particles) {
     set_velocities(particles, IBM_ParticleDataOutput_host);
   }
 }
-
-#endif

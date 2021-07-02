@@ -17,10 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "VirtualSitesRelative.hpp"
-
-#ifdef VIRTUAL_SITES_RELATIVE
-
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "forces.hpp"
@@ -36,8 +32,7 @@
 
 #include <stdexcept>
 
-template <Propagation criterion>
-struct PropagationPredicate {
+template <Propagation criterion> struct PropagationPredicate {
   bool operator()(Particle const &p) { return p.p.propagation == criterion; };
 };
 
@@ -153,12 +148,13 @@ auto constraint_stress(
 }
 } // namespace
 
-void VirtualSitesRelative::update() const {
+void virtual_sites_relative_update() {
   cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
                                Cells::DATA_PART_MOMENTUM);
 
-  auto filtered_particles = cell_structure.local_particles().filter<
-    PropagationPredicate<Propagation::VIRTUALSITES_RELATIVE>>();
+  auto filtered_particles =
+      cell_structure.local_particles()
+          .filter<PropagationPredicate<Propagation::VIRTUALSITES_RELATIVE>>();
   for (auto &p : filtered_particles) {
     if (!p.p.is_virtual)
       continue;
@@ -173,8 +169,8 @@ void VirtualSitesRelative::update() const {
 
     p.m.v = velocity(p_ref, p.p.vs_relative);
 
-    if (get_have_quaternion())
-      p.r.quat = orientation(p_ref, p.p.vs_relative);
+    //    if (get_have_quaternion()) TODO
+    p.r.quat = orientation(p_ref, p.p.vs_relative);
 
     if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
       cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
@@ -183,13 +179,14 @@ void VirtualSitesRelative::update() const {
 
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
-void VirtualSitesRelative::back_transfer_forces_and_torques() const {
+void virtual_sites_relative_back_transfer_forces_and_torques() {
   cell_structure.ghosts_reduce_forces();
 
   init_forces_ghosts(cell_structure.ghost_particles());
 
-  auto filtered_particles = cell_structure.local_particles().filter<
-    PropagationPredicate<Propagation::VIRTUALSITES_RELATIVE>>();
+  auto filtered_particles =
+      cell_structure.local_particles()
+          .filter<PropagationPredicate<Propagation::VIRTUALSITES_RELATIVE>>();
   // Iterate over all the particles in the local cells
   for (auto &p : filtered_particles) {
     // We only care about virtual particles
@@ -204,7 +201,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 }
 
 // Rigid body contribution to scalar pressure and pressure tensor
-Utils::Matrix<double, 3, 3> VirtualSitesRelative::pressure_tensor() const {
+Utils::Matrix<double, 3, 3> virtual_sites_relative_pressure_tensor() {
   Utils::Matrix<double, 3, 3> pressure_tensor = {};
 
   for (auto &p : cell_structure.local_particles()) {
@@ -219,4 +216,3 @@ Utils::Matrix<double, 3, 3> VirtualSitesRelative::pressure_tensor() const {
 
   return pressure_tensor;
 }
-#endif

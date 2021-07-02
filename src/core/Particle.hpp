@@ -130,9 +130,6 @@ struct ParticleProperties {
   /** dipole moment (absolute value) */
   double dipm = 0.;
 #endif
-
-#ifdef VIRTUAL_SITES
-  /** is particle virtual */
   bool is_virtual = false;
 #ifdef VIRTUAL_SITES_RELATIVE
   /** The following properties define, with respect to which real particle a
@@ -158,9 +155,6 @@ struct ParticleProperties {
     }
   } vs_relative;
 #endif // VIRTUAL_SITES_RELATIVE
-#else  // VIRTUAL_SITES
-  static constexpr bool is_virtual = false;
-#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
 /** Friction coefficient for translation */
@@ -226,12 +220,10 @@ struct ParticleProperties {
     ar &dipm;
 #endif
 
-#ifdef VIRTUAL_SITES
     ar &is_virtual;
 #ifdef VIRTUAL_SITES_RELATIVE
     ar &vs_relative;
 #endif
-#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
     ar &gamma;
@@ -406,9 +398,7 @@ struct Particle { // NOLINT(bugprone-exception-escape)
   ///
   ParticlePosition r;
   ///
-  void set_propagation(Propagation propagation) {
-    p.propagation = propagation;
-  }
+  void set_propagation(Propagation propagation) { p.propagation = propagation; }
 #ifdef DIPOLES
   Utils::Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
 #endif

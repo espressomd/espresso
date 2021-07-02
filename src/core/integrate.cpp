@@ -27,11 +27,13 @@
  */
 
 #include "integrate.hpp"
-#include "integrators/brownian_inline.hpp"
-#include "integrators/steepest_descent.hpp"
-#include "integrators/stokesian_dynamics_inline.hpp"
-#include "integrators/velocity_verlet_inline.hpp"
-#include "integrators/velocity_verlet_npt.hpp"
+#include "propagation/brownian_inline.hpp"
+#include "propagation/lb_inertialess_tracers.hpp"
+#include "propagation/steepest_descent.hpp"
+#include "propagation/stokesian_dynamics_inline.hpp"
+#include "propagation/velocity_verlet_inline.hpp"
+#include "propagation/velocity_verlet_npt.hpp"
+#include "propagation/virtual_sites_relative.hpp"
 
 #include "ParticleRange.hpp"
 #include "accumulators.hpp"
@@ -51,7 +53,6 @@
 #include "rotation.hpp"
 #include "signalhandling.hpp"
 #include "thermostat.hpp"
-#include "virtual_sites.hpp"
 
 #include <profiler/profiler.hpp>
 
@@ -121,8 +122,7 @@ void integrator_sanity_checks() {
   }
 }
 
-template <Propagation criterion>
-struct PropagationPredicate {
+template <Propagation criterion> struct PropagationPredicate {
   bool operator()(Particle const &p) { return p.p.propagation == criterion; };
 };
 
@@ -130,8 +130,8 @@ struct PropagationPredicate {
  *  @return whether or not to stop the integration loop early.
  */
 bool integrator_step_1(ParticleRange &particles) {
-  auto filtered_particles = particles.filter<
-    PropagationPredicate<Propagation::SYSTEM_DEFAULT>>();
+  auto filtered_particles =
+      particles.filter<PropagationPredicate<Propagation::SYSTEM_DEFAULT>>();
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     if (steepest_descent_step(particles))
@@ -162,8 +162,8 @@ bool integrator_step_1(ParticleRange &particles) {
 
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
-  auto filtered_particles = particles.filter<
-    PropagationPredicate<Propagation::SYSTEM_DEFAULT>>();
+  auto filtered_particles =
+      particles.filter<PropagationPredicate<Propagation::SYSTEM_DEFAULT>>();
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -209,9 +209,7 @@ int integrate(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     lb_lbcoupling_deactivate();
 
-#ifdef VIRTUAL_SITES
-    virtual_sites()->update();
-#endif
+    virtual_sites_relative_update();
 
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
@@ -266,9 +264,7 @@ int integrate(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef VIRTUAL_SITES
-    virtual_sites()->update();
-#endif
+    virtual_sites_relative_update();
 
     if (cell_structure.get_resort_particles() >= Cells::RESORT_LOCAL)
       n_verlet_updates++;
@@ -280,9 +276,7 @@ int integrate(int n_steps, int reuse_forces) {
 
     force_calc(cell_structure, time_step);
 
-#ifdef VIRTUAL_SITES
-    virtual_sites()->after_force_calc();
-#endif
+    inertialess_tracers_add_force_to_fluid();
     integrator_step_2(particles);
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
@@ -296,9 +290,7 @@ int integrate(int n_steps, int reuse_forces) {
       lb_lbfluid_propagate();
       lb_lbcoupling_propagate();
 
-#ifdef VIRTUAL_SITES
-      virtual_sites()->after_lb_propagation();
-#endif
+      inertialess_tracers_propagate();
 
 #ifdef COLLISION_DETECTION
       handle_collisions();
@@ -323,9 +315,7 @@ int integrate(int n_steps, int reuse_forces) {
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
-#ifdef VIRTUAL_SITES
-  virtual_sites()->update();
-#endif
+  virtual_sites_relative_update();
 
   /* verlet list statistics */
   if (n_verlet_updates > 0)

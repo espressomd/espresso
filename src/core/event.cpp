@@ -47,8 +47,8 @@
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
+#include "propagation/virtual_sites_relative.hpp"
 #include "thermostat.hpp"
-#include "virtual_sites.hpp"
 
 #ifdef SCAFACOS
 #include "electrostatics_magnetostatics/scafacos.hpp"
@@ -375,10 +375,8 @@ unsigned global_ghost_flags() {
 }
 
 void update_dependent_particles() {
-#ifdef VIRTUAL_SITES
-  virtual_sites()->update();
+  virtual_sites_relative_update();
   cells_update_ghosts(global_ghost_flags());
-#endif
 
 #ifdef ELECTROSTATICS
   Coulomb::update_dependent_particles();

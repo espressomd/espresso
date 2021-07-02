@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2021 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,15 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
-#define VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 
-#include "config.hpp"
-#ifdef VIRTUAL_SITES
-#include "VirtualSites.hpp"
+#pragma once
 
-/** @brief Do-nothing virtual-sites implementation */
-class VirtualSitesOff : public VirtualSites {};
+void virtual_sites_relative_update();
 
-#endif
-#endif
+// Distribute forces that have accumulated on virtual particles to the
+// associated real particles
+void virtual_sites_relative_back_transfer_forces_and_torques();
+
+// Rigid body contribution to scalar pressure and pressure tensor
+Utils::Matrix<double, 3, 3> virtual_sites_relative_pressure_tensor();

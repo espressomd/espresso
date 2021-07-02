@@ -131,8 +131,7 @@ bool validate_collision_parameters() {
   }
 #endif
 
-// Check vs placement parameter
-#ifdef VIRTUAL_SITES
+  // Check vs placement parameter
   if (collision_params.mode & COLLISION_MODE_VS) {
     if ((collision_params.vs_placement < 0) ||
         (collision_params.vs_placement > 1)) {
@@ -141,7 +140,6 @@ bool validate_collision_parameters() {
       return false;
     }
   }
-#endif
 
   // Check if bonded ia exist
   if ((collision_params.mode & COLLISION_MODE_BOND) &&

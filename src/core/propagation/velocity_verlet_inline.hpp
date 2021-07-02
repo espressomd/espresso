@@ -36,7 +36,8 @@
  *  v(t+0.5 \Delta t) \f]
  */
 template <typename ParticleIterable>
-inline void velocity_verlet_propagate_vel_pos(const ParticleIterable particles) {
+inline void
+velocity_verlet_propagate_vel_pos(const ParticleIterable particles) {
 
   auto const skin2 = Utils::sqr(0.5 * skin);
   for (auto &p : particles) {
