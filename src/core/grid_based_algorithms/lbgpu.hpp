@@ -109,13 +109,11 @@ struct LB_rho_v_pi_gpu {
 
 struct LB_node_force_density_gpu {
   Utils::Array<float, 3> *force_density;
-#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual
   // particles' position. However, LBM wants to reset them immediately
   // after the LBM update. This variable keeps a backup
   Utils::Array<float, 3> *force_density_buf;
-#endif
 };
 
 /************************************************************/

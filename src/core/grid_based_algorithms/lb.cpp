@@ -937,11 +937,9 @@ void lb_collide_stream() {
           auto const modes_with_forces = lb_apply_forces(
               thermalized_modes, lbpar, lbfields[index].force_density);
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
           // Safeguard the node forces so that we can later use them for the IBM
           // particle update
           lbfields[index].force_density_buf = lbfields[index].force_density;
-#endif
 
           /* reset the force density */
           lbfields[index].force_density = lbpar.ext_force_density;

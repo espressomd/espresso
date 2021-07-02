@@ -21,8 +21,6 @@
 
 #include "config.hpp"
 
-#ifdef VIRTUAL_SITES
-
 #include "virtual_sites.hpp"
 
 #include "Particle.hpp"
@@ -39,17 +37,6 @@
 #include <cmath>
 #include <cstdio>
 #include <tuple>
-
-namespace {
-std::shared_ptr<VirtualSites> m_virtual_sites;
-}
-
-const std::shared_ptr<VirtualSites> &virtual_sites() { return m_virtual_sites; }
-
-void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
-  m_virtual_sites = v;
-  recalc_forces = true;
-}
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
@@ -151,5 +138,4 @@ void vs_relate_to(int part_num, int relate_to) {
   set_particle_propagation(part_num, Propagation::VIRTUALSITES_RELATIVE);
 }
 
-#endif
 #endif

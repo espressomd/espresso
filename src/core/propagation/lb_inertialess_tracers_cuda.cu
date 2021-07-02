@@ -25,8 +25,8 @@
 
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) && defined(CUDA)
 
-#include "virtual_sites/lb_inertialess_tracers.hpp"
-#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
+#include "lb_inertialess_tracers.hpp"
+#include "lb_inertialess_tracers_cuda_interface.hpp"
 
 #include "Particle.hpp"
 #include "cuda_interface.hpp"

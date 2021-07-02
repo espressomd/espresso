@@ -21,11 +21,10 @@ import numpy as np
 import espressomd
 from espressomd import shapes, lbboundaries
 import espressomd.interactions
-try:
-    from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
-except ImportError:
-    pass
+from espressomd.particle_data import Propagation
+
 from espressomd.utils import handle_errors
+from espressomd.particle_data import Propagation
 
 
 class VirtualSitesTracersCommon:
@@ -62,24 +61,19 @@ class VirtualSitesTracersCommon:
 
         handle_errors("setup")
 
-    def test_aa_method_switching(self):
-        # Virtual sites should be disabled by default
-        self.assertIsInstance(self.system.virtual_sites, VirtualSitesOff)
-
-        # Switch implementation
-        self.system.virtual_sites = VirtualSitesInertialessTracers()
-        self.assertIsInstance(
-            self.system.virtual_sites, VirtualSitesInertialessTracers)
-
     def test_advection(self):
         self.reset_lb(ext_force_density=[0.1, 0, 0])
         # System setup
         system = self.system
 
-        system.virtual_sites = VirtualSitesInertialessTracers()
-
         # Establish steady state flow field
-        p = system.part.add(pos=(0, 5.5, 5.5), virtual=True)
+        p = system.part.add(
+            pos=(
+                0,
+                5.5,
+                5.5),
+            virtual=True,
+            propagation=Propagation.INERTIALESS_TRACERS)
         system.integrator.run(400)
 
         p.pos = (0, 5.5, 5.5)
@@ -111,7 +105,7 @@ class VirtualSitesTracersCommon:
         # move nodes, should relax back
 
         system = self.system
-        system.virtual_sites = VirtualSitesInertialessTracers()
+        system.part.clear()
         system.thermostat.set_langevin(kT=0, gamma=10, seed=1)
 
         # Add four particles
@@ -148,7 +142,7 @@ class VirtualSitesTracersCommon:
 
     def test_triel(self):
         system = self.system
-        system.virtual_sites = VirtualSitesInertialessTracers()
+        system.part.clear()
         system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
 
         # Add particles: 0-2 are not bonded, 3-5 are bonded
@@ -189,11 +183,10 @@ class VirtualSitesTracersCommon:
         """
         self.reset_lb()
         system = self.system
-        system.virtual_sites = VirtualSitesInertialessTracers()
         system.actors.clear()
         system.part.clear()
         p = system.part.add(pos=(0, 0, 0))
         system.integrator.run(1)
-        p.virtual = True
+        p.propagation = Propagation.INERTIALESS_TRACERS
         with self.assertRaises(Exception):
             system.integrator.run(1)

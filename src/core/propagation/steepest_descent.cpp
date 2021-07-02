@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "integrators/steepest_descent.hpp"
+#include "steepest_descent.hpp"
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"

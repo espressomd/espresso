@@ -64,7 +64,7 @@ if(CUDA)
       grid_based_algorithms/fd-electrostatics_cuda.cu
       grid_based_algorithms/electrokinetics.cpp
       grid_based_algorithms/lbgpu.cpp
-      virtual_sites/lb_inertialess_tracers_cuda.cu)
+      propagation/lb_inertialess_tracers_cuda.cu)
 
   add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
 else(CUDA)
@@ -97,13 +97,12 @@ add_subdirectory(constraints)
 add_subdirectory(electrostatics_magnetostatics)
 add_subdirectory(grid_based_algorithms)
 add_subdirectory(immersed_boundary)
-add_subdirectory(integrators)
+add_subdirectory(propagation)
 add_subdirectory(io)
 add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)
 add_subdirectory(observables)
 add_subdirectory(reaction_methods)
-add_subdirectory(virtual_sites)
 
 if(WITH_TESTS)
   add_subdirectory(unit_tests)

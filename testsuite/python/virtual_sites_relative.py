@@ -19,15 +19,12 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
-    from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
 import numpy as np
 
 from tests_common import verify_lj_forces
 from numpy import random
 
 
-@utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
 class VirtualSites(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
@@ -75,32 +72,23 @@ class VirtualSites(ut.TestCase):
             v_d - vs_r[1] * self.director_from_quaternion(
                 self.multiply_quaternions(rel.quat, vs_r[2]))), 1E-6)
 
-    def test_aa_method_switching(self):
-        # Virtual sites should be disabled by default
-        self.assertIsInstance(self.system.virtual_sites, VirtualSitesOff)
-
-        # Switch implementation
-        self.system.virtual_sites = VirtualSitesRelative()
-        self.assertIsInstance(self.system.virtual_sites, VirtualSitesRelative)
-
     def test_vs_quat(self):
         # First check that quaternion of virtual particle is unchanged if
         # have_quaterion is false.
-        self.system.virtual_sites = VirtualSitesRelative(have_quaternion=False)
-        self.assertFalse(self.system.virtual_sites.have_quaternion)
+
+        # TODO
         p1 = self.system.part.add(pos=[1, 1, 1], rotation=[1, 1, 1],
                                   omega_lab=[1, 1, 1])
         p2 = self.system.part.add(pos=[1, 1, 1], rotation=[1, 1, 1])
         p2.vs_auto_relate_to(p1)
-        np.testing.assert_array_equal(np.copy(p2.quat), [1, 0, 0, 0])
-        self.system.integrator.run(1)
-        np.testing.assert_array_equal(np.copy(p2.quat), [1, 0, 0, 0])
-        # Now check that quaternion of the virtual particle gets updated.
-        self.system.virtual_sites = VirtualSitesRelative(have_quaternion=True)
-        self.system.integrator.run(1)
-        self.assertRaises(AssertionError, np.testing.assert_array_equal,
-                          np.copy(p2.quat), [1, 0, 0, 0])
-
+        #        np.testing.assert_array_equal(np.copy(p2.quat), [1, 0, 0, 0])
+        #        self.system.integrator.run(1)
+        #        np.testing.assert_array_equal(np.copy(p2.quat), [1, 0, 0, 0])
+        #        # Now check that quaternion of the virtual particle gets updated.
+        #        self.system.integrator.run(1)
+        #        self.assertRaises(AssertionError, np.testing.assert_array_equal,
+        #                          np.copy(p2.quat), [1, 0, 0, 0])
+        #
         # co-aligned case
         p2.vs_quat = (1, 0, 0, 0)
         self.system.integrator.run(1)
@@ -134,7 +122,6 @@ class VirtualSites(ut.TestCase):
     def test_pos_vel_forces(self):
         system = self.system
         system.cell_system.skin = 0.3
-        system.virtual_sites = VirtualSitesRelative()
         system.box_l = [10, 10, 10]
         system.time_step = 0.004
         system.thermostat.turn_off()
@@ -211,7 +198,6 @@ class VirtualSites(ut.TestCase):
           integrates and verifies forces. This is to make sure that no pairs
           get lost or are outdated in the short range loop"""
         system = self.system
-        system.virtual_sites = VirtualSitesRelative()
         # Parameters
         n = 90
         phi = 0.6
@@ -315,7 +301,6 @@ class VirtualSites(ut.TestCase):
         system.cell_system.skin = 0.1
         system.min_global_cut = 0.2
         # Should not have a pressure
-        system.virtual_sites = VirtualSitesOff()
         pressure_tensor_vs = system.analysis.pressure_tensor()[
             "virtual_sites", 0]
         p_vs = system.analysis.pressure()["virtual_sites", 0]
@@ -323,7 +308,6 @@ class VirtualSites(ut.TestCase):
         np.testing.assert_allclose(p_vs, 0., atol=1e-10)
 
         # vs relative contrib
-        system.virtual_sites = VirtualSitesRelative()
         p0 = system.part.add(pos=(0, 0, 0), id=0)
         p1 = system.part.add(pos=(0.1, 0.1, 0.1), id=1, ext_force=(1, 2, 3))
         p1.vs_auto_relate_to(p0)

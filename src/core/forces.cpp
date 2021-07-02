@@ -44,8 +44,8 @@
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
+#include "propagation/virtual_sites_relative.hpp"
 #include "short_range_loop.hpp"
-#include "virtual_sites.hpp"
 
 #include <profiler/profiler.hpp>
 
@@ -161,10 +161,8 @@ void force_calc(CellStructure &cell_structure, double time_step) {
   copy_forces_from_GPU(particles);
 #endif
 
-// VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES
-  virtual_sites()->back_transfer_forces_and_torques();
-#endif
+  // VIRTUAL_SITES distribute forces
+  virtual_sites_relative_back_transfer_forces_and_torques();
 
   // Communication Step: ghost forces
   cell_structure.ghosts_reduce_forces();

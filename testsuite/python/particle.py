@@ -21,6 +21,7 @@ import unittest_decorators as utx
 import espressomd
 import numpy as np
 from espressomd.interactions import FeneBond
+from espressomd.particle_data import Propagation
 
 
 class ParticleProperties(ut.TestCase):
@@ -95,6 +96,11 @@ class ParticleProperties(ut.TestCase):
     test_f = generateTestForVectorProperty("f", np.array([0.2, 0.3, 0.7]))
     test_type = generateTestForScalarProperty("type", int(3))
     test_mol_id = generateTestForScalarProperty("mol_id", int(3))
+
+    test_propagation_sys_def = generateTestForScalarProperty(
+        "propagation", Propagation.SYSTEM_DEFAULT)
+    test_propagation_vsr = generateTestForScalarProperty(
+        "propagation", Propagation.VIRTUALSITES_RELATIVE)
 
     test_bonds_property = generateTestForScalarProperty(
         "bonds", ((f1, 1), (f2, 2)))

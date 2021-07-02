@@ -24,8 +24,6 @@ from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(
-    ['VIRTUAL_SITES_INERTIALESS_TRACERS', 'LB_BOUNDARIES'])
 class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
 
     def setUp(self):

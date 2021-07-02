@@ -16,15 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
-#define VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
+/// \file
+/// \brief Main of the Bayreuth Immersed-Boundary implementation
+
+#ifndef VIRTUAL_SITES_LB_INERTIALESS_TRACERS_HPP
+#define VIRTUAL_SITES_LB_INERTIALESS_TRACERS_HPP
 
 #include "config.hpp"
-#ifdef VIRTUAL_SITES
-#include "VirtualSites.hpp"
 
-/** @brief Do-nothing virtual-sites implementation */
-class VirtualSitesOff : public VirtualSites {};
+#include "ParticleRange.hpp"
 
-#endif
+// Main functions for CPU & GPU
+void IBM_UpdateParticlePositions(ParticleRange particles);
+
+// Main functions for CPU implementation - called from integrate.cpp
+void IBM_ForcesIntoFluid_CPU();
+
+// Main functions for GPU implementation - called from integrate.cpp
+// These are in ibm_cuda.cu
+void IBM_ForcesIntoFluid_GPU(ParticleRange particles);
+void IBM_ResetLBForces_GPU();
+
+void inertialess_tracers_add_force_to_fluid();
+void inertialess_tracers_propagate();
 #endif

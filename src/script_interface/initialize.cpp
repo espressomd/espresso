@@ -35,7 +35,6 @@
 #include "lbboundaries/initialize.hpp"
 #include "mpiio/initialize.hpp"
 #include "observables/initialize.hpp"
-#include "virtual_sites/initialize.hpp"
 
 namespace ScriptInterface {
 void initialize(Utils::Factory<ObjectHandle> *f) {
@@ -49,7 +48,6 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   ClusterAnalysis::initialize(f);
   LBBoundaries::initialize(f);
   PairCriteria::initialize(f);
-  VirtualSites::initialize(f);
   MPIIO::initialize(f);
   CollisionDetection::initialize(f);
 

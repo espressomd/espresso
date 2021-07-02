@@ -16,29 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/// \file
-/// \brief Main of the Bayreuth Immersed-Boundary implementation
 
-#ifndef VIRTUAL_SITES_LB_INERTIALESS_TRACERS_HPP
-#define VIRTUAL_SITES_LB_INERTIALESS_TRACERS_HPP
+#pragma once
 
-#include "config.hpp"
+void virtual_sites_relative_update();
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+// Distribute forces that have accumulated on virtual particles to the
+// associated real particles
+void virtual_sites_relative_back_transfer_forces_and_torques();
 
-#include "ParticleRange.hpp"
-
-// Main functions for CPU & GPU
-void IBM_UpdateParticlePositions(ParticleRange particles);
-
-// Main functions for CPU implementation - called from integrate.cpp
-void IBM_ForcesIntoFluid_CPU();
-
-// Main functions for GPU implementation - called from integrate.cpp
-// These are in ibm_cuda.cu
-void IBM_ForcesIntoFluid_GPU(ParticleRange particles);
-void IBM_ResetLBForces_GPU();
-
-#endif
-
-#endif
+// Rigid body contribution to scalar pressure and pressure tensor
+Utils::Matrix<double, 3, 3> virtual_sites_relative_pressure_tensor();

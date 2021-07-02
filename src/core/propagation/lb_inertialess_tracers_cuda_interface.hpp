@@ -27,8 +27,6 @@
 
 #include "config.hpp"
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-
 #include "ParticleRange.hpp"
 
 #include <vector>
@@ -55,7 +53,5 @@ typedef struct {
 // ******** global variables for CUDA and MPI communication ******
 extern std::vector<IBM_CUDA_ParticleDataInput> IBM_ParticleDataInput_host;
 extern std::vector<IBM_CUDA_ParticleDataOutput> IBM_ParticleDataOutput_host;
-
-#endif
 
 #endif

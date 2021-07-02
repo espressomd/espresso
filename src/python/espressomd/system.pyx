@@ -48,8 +48,6 @@ from .globals cimport integ_switch, max_oif_objects
 from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded, mpi_bcast_parameter
 from .utils cimport check_type_or_throw_except
 from .utils import is_valid_type, handle_errors
-IF VIRTUAL_SITES:
-    from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
 IF COLLISION_DETECTION == 1:
     from .collision_detection import CollisionDetection
@@ -57,9 +55,6 @@ IF COLLISION_DETECTION == 1:
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "timings", "force_cap", "max_oif_objects"]
-
-if VIRTUAL_SITES:
-    setable_properties.append("_active_virtual_sites_handle")
 
 
 cdef bool _system_created = False
@@ -108,7 +103,6 @@ cdef class System:
         """:class:`espressomd.cuda_init.CudaInitHandle`"""
         comfixed
         """:class:`espressomd.comfixed.ComFixed`"""
-        _active_virtual_sites_handle
 
     def __init__(self, **kwargs):
         global _system_created
@@ -143,9 +137,6 @@ cdef class System:
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
-            IF VIRTUAL_SITES:
-                self._active_virtual_sites_handle = ActiveVirtualSitesHandle(
-                    implementation=VirtualSitesOff())
             _system_created = True
         else:
             raise RuntimeError(
@@ -282,14 +273,6 @@ cdef class System:
 
         def __get__(self):
             return self.globals.min_global_cut
-
-    IF VIRTUAL_SITES:
-        property virtual_sites:
-            def __set__(self, v):
-                self._active_virtual_sites_handle.implementation = v
-
-            def __get__(self):
-                return self._active_virtual_sites_handle.implementation
 
     property max_oif_objects:
         """Maximum number of objects as per the object_in_fluid method.
