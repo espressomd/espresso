@@ -148,6 +148,7 @@ void vs_relate_to(int part_num, int relate_to) {
   // and the relative orientation
   set_particle_vs_relative(part_num, relate_to, dist, quat);
   set_particle_virtual(part_num, true);
+  set_particle_propagation(part_num, Propagation::VIRTUALSITES_RELATIVE);
 }
 
 #endif
