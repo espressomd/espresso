@@ -40,13 +40,15 @@ EK = ('EK.GPU' in modes and espressomd.gpu_available()
 
 class CheckpointTest(ut.TestCase):
 
+    checkpoint = espressomd.checkpointing.Checkpoint(
+        checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
+            '.', '__'),
+        checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
+    checkpoint.load(0)
+    n_nodes = system.cell_system.get_state()["n_nodes"]
+
     @classmethod
     def setUpClass(cls):
-        cls.checkpoint = espressomd.checkpointing.Checkpoint(
-            checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
-                '.', '__'),
-            checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
-        cls.checkpoint.load(0)
         cls.ref_box_l = np.array([12.0, 14.0, 16.0])
         if 'DP3M' in modes:
             cls.ref_box_l = np.array([16.0, 16.0, 16.0])
@@ -63,7 +65,14 @@ class CheckpointTest(ut.TestCase):
             f"system doesn't have an actor of type {actor_type.__name__}")
 
     @ut.skipIf(not LB, "Skipping test due to missing mode.")
-    def test_LB(self):
+    def test_lb_fluid(self):
+        '''
+        Check serialization of the LB fluid. The checkpoint file only stores
+        population information, therefore calling ``lbf.load_checkpoint()``
+        erases all LBBoundaries information but doesn't remove the objects
+        contained in ``system.lbboundaries`. This test method is named such
+        that it is executed after ``self.test_lb_boundaries()``.
+        '''
         lbf = system.actors[0]
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
@@ -139,7 +148,7 @@ class CheckpointTest(ut.TestCase):
         self.assertAlmostEqual(system.cell_system.skin, 0.1, delta=1E-10)
         self.assertAlmostEqual(system.time_step, 0.01, delta=1E-10)
         self.assertAlmostEqual(system.time, 1.5, delta=1E-10)
-        self.assertAlmostEqual(system.force_cap, 1000., delta=1E-10)
+        self.assertAlmostEqual(system.force_cap, 1e8, delta=1E-10)
         self.assertAlmostEqual(system.min_global_cut, 2.0, delta=1E-10)
         self.assertEqual(system.max_oif_objects, 5)
         np.testing.assert_allclose(np.copy(system.box_l), self.ref_box_l)
@@ -147,12 +156,33 @@ class CheckpointTest(ut.TestCase):
             np.copy(system.periodicity), self.ref_periodicity)
 
     def test_part(self):
-        np.testing.assert_allclose(
-            np.copy(system.part[0].pos), np.array([1.0, 2.0, 3.0]))
-        np.testing.assert_allclose(
-            np.copy(system.part[1].pos), np.array([1.0, 1.0, 2.0]))
-        np.testing.assert_allclose(np.copy(system.part[0].f), particle_force0)
-        np.testing.assert_allclose(np.copy(system.part[1].f), particle_force1)
+        p1, p2 = system.part[0:2]
+        np.testing.assert_allclose(np.copy(p1.pos), np.array([1.0, 2.0, 3.0]))
+        np.testing.assert_allclose(np.copy(p2.pos), np.array([1.0, 1.0, 2.0]))
+        np.testing.assert_allclose(np.copy(p1.f), particle_force0)
+        np.testing.assert_allclose(np.copy(p2.f), particle_force1)
+
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
+    def test_object_containers_serialization(self):
+        '''
+        Check that particles at the interface between two MPI nodes still
+        experience the force from a shape-based constraint and a harmonic
+        bond. The thermostat friction is negligible compared to the force
+        factors used for both the harmonic bond and LJ potential.
+        '''
+        # check containers agree on all MPI nodes
+        p3, p4 = system.part[3:5]
+        np.testing.assert_allclose(np.copy(p3.pos), system.box_l / 2. - 1.)
+        np.testing.assert_allclose(np.copy(p4.pos), system.box_l / 2. + 1.)
+        np.testing.assert_allclose(np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
+        # remove a shape-based constraint on all MPI nodes
+        if espressomd.has_features('LENNARD_JONES') and 'LJ' in modes:
+            old_force = np.copy(p3.f)
+            system.constraints.remove(system.constraints[0])
+            system.integrator.run(0, recalc_forces=True)
+            np.testing.assert_allclose(
+                np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
+            self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
@@ -198,7 +228,9 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['type'], 'DPD')
         self.assertEqual(thmst['kT'], 1.0)
         self.assertEqual(thmst['seed'], 42)
-        self.assertEqual(thmst['counter'], 6)
+        if self.n_nodes in {1, 2, 3, 4, 8}:
+            ref_counter = (self.n_nodes == 1) and 10 or 0
+            self.assertEqual(thmst['counter'], ref_counter)
 
     @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('THERM.NPT' not in modes, 'NPT thermostat not in modes')
@@ -221,7 +253,7 @@ class CheckpointTest(ut.TestCase):
 
     def test_integrator(self):
         params = system.integrator.get_state()
-        self.assertAlmostEqual(params['force_cap'], 1000., delta=1E-10)
+        self.assertAlmostEqual(params['force_cap'], 1e8, delta=1E-10)
         self.assertAlmostEqual(params['time_step'], 0.01, delta=1E-10)
         self.assertAlmostEqual(params['time'], 1.5, delta=1E-10)
 
@@ -328,24 +360,27 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(
             acc_mean_variance.variance(),
             np.array([[0., 0.5, 2.], [0., 0., 0.]]))
-        np.testing.assert_array_equal(
-            system.auto_update_accumulators[0].variance(),
-            np.array([[0., 0.5, 2.], [0., 0., 0.]]))
+        if self.n_nodes == 1:
+            np.testing.assert_array_equal(
+                system.auto_update_accumulators[0].variance(),
+                np.array([[0., 0.5, 2.], [0., 0., 0.]]))
 
     def test_time_series(self):
         expected = [[[1, 1, 1], [1, 1, 2]], [[1, 2, 3], [1, 1, 2]]]
         np.testing.assert_array_equal(acc_time_series.time_series(), expected)
-        np.testing.assert_array_equal(
-            system.auto_update_accumulators[1].time_series(),
-            expected)
+        if self.n_nodes == 1:
+            np.testing.assert_array_equal(
+                system.auto_update_accumulators[1].time_series(),
+                expected)
 
     def test_correlator(self):
         expected = np.zeros((36, 2, 3))
         expected[0:2] = [[[1, 2.5, 5], [1, 1, 4]], [[1, 2, 3], [1, 1, 4]]]
         np.testing.assert_array_equal(acc_correlator.result(), expected)
-        np.testing.assert_array_equal(
-            system.auto_update_accumulators[2].result(),
-            expected)
+        if self.n_nodes == 1:
+            np.testing.assert_array_equal(
+                system.auto_update_accumulators[2].result(),
+                expected)
 
     @utx.skipIfMissingFeatures('DP3M')
     @ut.skipIf('DP3M.CPU' not in modes,
@@ -452,12 +487,29 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES")
                                     or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_lb_boundaries(self):
-        self.assertEqual(len(system.lbboundaries), 1)
+        # check boundaries agree on all MPI nodes
+        self.assertEqual(len(system.lbboundaries), 2)
         np.testing.assert_allclose(
             np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
+        np.testing.assert_allclose(
+            np.copy(system.lbboundaries[1].velocity), [0, 0, 0])
         self.assertIsInstance(system.lbboundaries[0].shape, Wall)
+        self.assertIsInstance(system.lbboundaries[1].shape, Wall)
+        np.testing.assert_equal(
+            system.actors[0][0, :, :].boundary.astype(int), 1)
+        np.testing.assert_equal(
+            system.actors[0][-1, :, :].boundary.astype(int), 2)
+        np.testing.assert_equal(
+            system.actors[0][1:-1, :, :].boundary.astype(int), 0)
+        # remove boundaries on all MPI nodes
+        system.lbboundaries.clear()
+        self.assertEqual(len(system.lbboundaries), 0)
+        np.testing.assert_equal(
+            system.actors[0][:, :, :].boundary.astype(int), 0)
 
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_constraints(self):
         from espressomd import constraints
         self.assertEqual(len(system.constraints),

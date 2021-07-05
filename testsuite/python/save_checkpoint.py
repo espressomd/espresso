@@ -44,7 +44,7 @@ if 'DP3M' in modes:
 system.cell_system.skin = 0.1
 system.time_step = 0.01
 system.time = 1.5
-system.force_cap = 1000.
+system.force_cap = 1e8
 system.min_global_cut = 2.0
 system.max_oif_objects = 5
 
@@ -59,6 +59,8 @@ if checkpoint.has_checkpoints():
         if filepath.endswith((".checkpoint", ".cpt")):
             os.remove(os.path.join(checkpoint.checkpoint_dir, filepath))
 
+n_nodes = system.cell_system.get_state()["n_nodes"]
+
 LB_implementation = None
 if 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
@@ -70,10 +72,13 @@ if LB_implementation:
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
+    if any(has_features(i)
+           for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]) and n_nodes == 1:
         if 'EK.GPU' not in modes:
             system.lbboundaries.add(
-                LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4, 1e-4, 0)))
+                LBBoundary(shape=Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
+            system.lbboundaries.add(
+                LBBoundary(shape=Wall(normal=(-1, 0, 0), dist=-(system.box_l[0] - 0.5)), velocity=(0, 0, 0)))
 
 EK_implementation = None
 if 'EK.GPU' in modes and espressomd.gpu_available(
@@ -95,8 +100,8 @@ if 'EK.GPU' in modes and espressomd.gpu_available(
     ek.add_species(ek_species)
     system.actors.add(ek)
 
-p1 = system.part.add(pos=[1.0] * 3)
-p2 = system.part.add(pos=[1.0, 1.0, 2.0])
+p1 = system.part.add(id=0, pos=[1.0] * 3)
+p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
 if espressomd.has_features('ELECTROSTATICS'):
     p1.q = 1
@@ -107,7 +112,11 @@ if espressomd.has_features('DIPOLES'):
     p2.dip = (7.3, 6.1, -4)
 
 if espressomd.has_features('EXCLUSIONS'):
-    system.part.add(pos=[2.0] * 3, exclusions=[0, 1])
+    system.part.add(id=2, pos=[2.0] * 3, exclusions=[0, 1])
+
+# place particles at the interface between 2 MPI nodes
+p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
+p4 = system.part.add(id=4, pos=system.box_l / 2.0 + 1.0, type=1)
 
 if espressomd.has_features('P3M') and 'P3M' in modes:
     p3m = espressomd.electrostatics.P3M(
@@ -130,6 +139,7 @@ if espressomd.has_features('P3M') and 'P3M' in modes:
             delta_mid_bot=0.1)
         system.actors.add(elc)
 
+# accumulators
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
 acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc_time_series = espressomd.accumulators.TimeSeries(obs=obs)
@@ -144,32 +154,35 @@ acc_mean_variance.update()
 acc_time_series.update()
 acc_correlator.update()
 
-system.auto_update_accumulators.add(acc_mean_variance)
-system.auto_update_accumulators.add(acc_time_series)
-system.auto_update_accumulators.add(acc_correlator)
+if n_nodes == 1:
+    system.auto_update_accumulators.add(acc_mean_variance)
+    system.auto_update_accumulators.add(acc_time_series)
+    system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
-system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
-                       particle_type=17)
-system.constraints.add(shape=Wall(normal=[1. / np.sqrt(3)] * 3, dist=0.5))
-system.constraints.add(constraints.Gravity(g=[1., 2., 3.]))
-system.constraints.add(constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
-system.constraints.add(
-    constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
-pot_field_data = constraints.ElectricPotential.field_from_fn(
-    system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
-checkpoint.register("pot_field_data")
-system.constraints.add(constraints.PotentialField(
-    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
-    particle_scales={5: 6.0}))
-vec_field_data = constraints.ForceField.field_from_fn(
-    system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
-checkpoint.register("vec_field_data")
-system.constraints.add(constraints.ForceField(
-    field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
-if espressomd.has_features("ELECTROSTATICS"):
-    system.constraints.add(constraints.ElectricPlaneWave(
-        E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
+if n_nodes == 1:
+    system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
+                           particle_type=17)
+    system.constraints.add(shape=Wall(normal=[1. / np.sqrt(3)] * 3, dist=0.5))
+    system.constraints.add(constraints.Gravity(g=[1., 2., 3.]))
+    system.constraints.add(
+        constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
+    system.constraints.add(
+        constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
+    pot_field_data = constraints.ElectricPotential.field_from_fn(
+        system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
+    checkpoint.register("pot_field_data")
+    system.constraints.add(constraints.PotentialField(
+        field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
+        particle_scales={5: 6.0}))
+    vec_field_data = constraints.ForceField.field_from_fn(
+        system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
+    checkpoint.register("vec_field_data")
+    system.constraints.add(constraints.ForceField(
+        field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
+    if espressomd.has_features("ELECTROSTATICS"):
+        system.constraints.add(constraints.ElectricPlaneWave(
+            E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
 
 if 'LB.OFF' in modes:
     # set thermostat
@@ -211,6 +224,8 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
         epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
     system.non_bonded_inter[3, 0].lennard_jones.set_params(
         epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
+    system.non_bonded_inter[1, 17].lennard_jones.set_params(
+        epsilon=1.2e5, sigma=1.7, cutoff=2.0, shift=0.1)
 
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
@@ -221,6 +236,9 @@ if 'THERM.LB' not in modes:
         r_cut=2, seed=51)
     system.bonded_inter.add(thermalized_bond)
     p2.add_bond((thermalized_bond, p1))
+strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
+system.bonded_inter.add(strong_harmonic_bond)
+p4.add_bond((strong_harmonic_bond, p3))
 checkpoint.register("system")
 checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
