@@ -92,8 +92,8 @@ class ek_charged_plate(ut.TestCase):
                 force_difference = abs(expected_force - particle_force[0])
 
         self.assertLess(force_difference, 1.0e-04,
-                        "Force accuracy in X not achieved, allowed deviation: "
-                        "1.0e-04, measured: {}".format(force_difference))
+                        f"Force accuracy in X not achieved, allowed "
+                        f"deviation: 1.0e-04, measured: {force_difference}")
 
         # Unset species
         for i in range(int(box_y / agrid)):
@@ -123,8 +123,8 @@ class ek_charged_plate(ut.TestCase):
                 force_difference = abs(expected_force - particle_force[1])
 
         self.assertLess(force_difference, 1.0e-04,
-                        "Force accuracy in Y not achieved, allowed deviation: "
-                        "1.0e-04, measured: {}".format(force_difference))
+                        f"Force accuracy in Y not achieved, allowed "
+                        f"deviation: 1.0e-04, measured: {force_difference}")
 
         # Unset species
         for i in range(int(box_x / agrid)):
@@ -154,8 +154,8 @@ class ek_charged_plate(ut.TestCase):
                 force_difference = abs(expected_force - particle_force[2])
 
         self.assertLess(force_difference, 1.0e-04,
-                        "Force accuracy in Z not achieved, allowed deviation: "
-                        "1.0e-04, measured: {}".format(force_difference))
+                        f"Force accuracy in Z not achieved, allowed "
+                        f"deviation: 1.0e-04, measured: {force_difference}")
 
         # Unset species
         for i in range(int(box_x / agrid)):

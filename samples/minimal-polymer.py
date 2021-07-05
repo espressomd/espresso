@@ -65,10 +65,10 @@ espressomd.io.writer.vtf.writevsf(system, outfile)
 system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=0.01)
 while system.analysis.min_dist() < 0.95:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(20)
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 
@@ -83,7 +83,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 print("simulating...")
 t_steps = 1000
 for t in range(t_steps):
-    print("step {} of {}".format(t, t_steps), end='\r', flush=True)
+    print(f"step {t + 1} of {t_steps}", end='\r', flush=True)
     system.integrator.run(10)
     espressomd.io.writer.vtf.writevcf(system, outfile)
 outfile.close()

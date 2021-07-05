@@ -454,9 +454,8 @@ end:
 
     for i in range(1, 101):
         system.integrator.run(steps=500)
-        cell.output_vtk_pos_folded(filename="output/sim1/cell_"
-                                   + str(i) + ".vtk")
-        print("time: ", str(i * time_step))
+        cell.output_vtk_pos_folded(filename=f"output/sim1/cell_{i}.vtk")
+        print(f"time: {i * time_step}")
     print("Simulation completed.")
 
 This simulation runs for 100 cycles. In each cycle, 500 integration
@@ -510,7 +509,7 @@ In the script, we have used the commands such as
 
 ::
 
-    cell.output_vtk_pos_folded(filename="output/sim1/cell_" + str(i) + ".vtk")
+    cell.output_vtk_pos_folded(filename=f"output/sim1/cell_{i}.vtk")
 
 to output the information about cell in every pass of the simulation
 loop. These files can then be used for inspection in ParaView and

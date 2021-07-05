@@ -32,11 +32,11 @@ def assert_params_match(ut_obj, inParams, outParams, msg_long=None):
         if isinstance(inParams[k], float):
             ut_obj.assertAlmostEqual(
                 outParams[k], inParams[k], delta=1E-14,
-                msg="Mismatching parameter {!r}{}".format(k, msg_long))
+                msg=f"Mismatching parameter {k!r}{msg_long}")
         else:
             ut_obj.assertEqual(
                 outParams[k], inParams[k],
-                msg="Mismatching parameter {!r}{}".format(k, msg_long))
+                msg=f"Mismatching parameter {k!r}{msg_long}")
 
 
 def generate_test_for_class(_system, _interClass, _params):
@@ -62,8 +62,8 @@ def generate_test_for_class(_system, _interClass, _params):
         outParams = Inter.get_params()
         del system.actors[0]
 
-        assert_params_match(self, params, outParams, "Parameters set {} vs. {}"
-                            .format(params, outParams))
+        assert_params_match(self, params, outParams,
+                            f"Parameters set {params} vs. {outParams}")
 
     return func
 
@@ -287,7 +287,7 @@ def get_histogram(pos, obs_params, coord_system, **kwargs):
                   (obs_params['min_phi'], obs_params['max_phi']),
                   (obs_params['min_z'], obs_params['max_z'])]
     else:
-        raise ValueError("Unknown coord system '{}'".format(coord_system))
+        raise ValueError(f"Unknown coord system '{coord_system}'")
     return np.histogramdd(pos, bins=bins, range=extent, **kwargs)
 
 #

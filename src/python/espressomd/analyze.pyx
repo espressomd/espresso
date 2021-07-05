@@ -594,11 +594,11 @@ class Analysis:
         id_max = chain_start + chain_length * number_of_chains
         for i in range(id_min, id_max):
             if not self._system.part.exists(i):
-                raise ValueError('particle with id {0} does not exist\n'
-                                 'cannot perform analysis on the range '
-                                 'chain_start={1}, number_of_chains={2}, chain_length={3}\n'
-                                 'please provide a contiguous range of particle ids'.format(
-                                     i, chain_start, number_of_chains, chain_length))
+                raise ValueError(f'particle with id {i} does not exist\n'
+                                 f'cannot perform analysis on the range '
+                                 f'chain_start={chain_start}, number_of_chains='
+                                 f'{number_of_chains}, chain_length={chain_length}\n'
+                                 f'please provide a contiguous range of particle ids')
 
     #
     # Structure factor
@@ -911,4 +911,4 @@ class Analysis:
                     (self._Vkappa["Vk1"] / self._Vkappa["avk"])**2
             return result
         else:
-            raise ValueError("Unknown mode {!r}".format(mode))
+            raise ValueError(f"Unknown mode {mode!r}")

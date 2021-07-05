@@ -51,13 +51,13 @@ class OifVolumeConservation(ut.TestCase):
         # fluid
 
         diameter_init = cell0.diameter()
-        print("initial diameter = " + str(diameter_init))
+        print(f"initial diameter = {diameter_init}")
 
         # OIF object is being stretched by factor 1.5
         system.part[:].pos = (system.part[:].pos - 5) * 1.5 + 5
 
         diameter_stretched = cell0.diameter()
-        print("stretched diameter = " + str(diameter_stretched))
+        print(f"stretched diameter = {diameter_stretched}")
 
         # Apply non-isotropic deformation
         system.part[:].pos = system.part[:].pos * np.array((0.96, 1.05, 1.02))
@@ -80,7 +80,7 @@ class OifVolumeConservation(ut.TestCase):
         for _ in range(2):
             system.integrator.run(steps=240)
             diameter_final = cell0.diameter()
-            print("final diameter = " + str(diameter_final))
+            print(f"final diameter = {diameter_final}")
             self.assertAlmostEqual(
                 diameter_final / diameter_init - 1, 0, delta=0.005)
 

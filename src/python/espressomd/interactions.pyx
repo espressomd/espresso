@@ -90,7 +90,7 @@ cdef class NonBondedInteraction:
         return self._params
 
     def __str__(self):
-        return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
+        return f'{self.__class__.__name__}({self.get_params()})'
 
     def __getstate__(self):
         odict = collections.OrderedDict()
@@ -1728,9 +1728,8 @@ cdef class BondedInteraction:
             # Check, if any key was passed, which is not known
             for k in p.keys():
                 if k not in self.valid_keys():
-                    raise ValueError(
-                        "Key '{}' invalid! Only the following keys are supported: {}"
-                        .format(k, ", ".join(self.valid_keys())))
+                    raise ValueError(f"Key '{k}' invalid! Only the following "
+                                     f"keys are supported: {', '.join(self.valid_keys())}")
 
             # Initialize default values
             self.set_default_params()
@@ -1767,7 +1766,7 @@ cdef class BondedInteraction:
             "Subclasses of BondedInteraction must define the _set_params_in_es_core() method.")
 
     def __str__(self):
-        return self.__class__.__name__ + "(" + str(self._params) + ")"
+        return f'{self.__class__.__name__}({self._params})'
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.

@@ -1281,7 +1281,7 @@ cdef class ParticleHandle:
             bond_info[i] = bond[i]
         if self._id in bond[1:]:
             raise Exception(
-                "Bond partners {} include the particle {} itself.".format(bond[1:], self._id))
+                f"Bond partners {bond[1:]} include the particle {self._id} itself.")
 
         add_particle_bond(self._id, make_const_span[int](bond_info, len(bond)))
 

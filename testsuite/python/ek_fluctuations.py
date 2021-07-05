@@ -101,8 +101,8 @@ class ek_fluctuations(ut.TestCase):
             max_diff = max(math.fabs(p[i] - bins[i]), max_diff)
 
         self.assertLess(max_diff, 5.0e-03,
-                        "Density distribution accuracy not achieved, allowed "
-                        "deviation: 5.0e-03, measured: {}".format(max_diff))
+                        f"Density distribution accuracy not achieved, allowed "
+                        f"deviation: 5.0e-03, measured: {max_diff}")
 
 
 if __name__ == "__main__":

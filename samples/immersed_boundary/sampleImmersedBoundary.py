@@ -51,7 +51,7 @@ system = espressomd.System(box_l=(20, 20, boxZ))
 system.time_step = 1 / 6.
 system.cell_system.skin = 0.1
 system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
-print("Parallelization: " + str(system.cell_system.node_grid))
+print(f"Parallelization: {system.cell_system.node_grid}")
 
 force = 0.001
 from addSoft import AddSoft
@@ -97,12 +97,12 @@ os.makedirs(outputDir)
 print('Saving data to ' + outputDir)
 
 # Perform integration
-writeVTK.WriteVTK(system, str(outputDir + "/cell_" + str(0) + ".vtk"))
+writeVTK.WriteVTK(system, os.path.join(outputDir, f"cell_{0}.vtk"))
 
 stepSize = 1000
 numSteps = 20
 
 for i in range(numSteps):
     system.integrator.run(stepSize)
-    writeVTK.WriteVTK(system, str(outputDir + "/cell_" + str(i + 1) + ".vtk"))
-    print("Done " + str(i + 1) + " out of " + str(numSteps) + " steps.")
+    writeVTK.WriteVTK(system, os.path.join(outputDir, f"cell_{i + 1}.vtk"))
+    print(f"Done {i + 1} out of {numSteps} steps.")

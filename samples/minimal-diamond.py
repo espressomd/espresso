@@ -76,10 +76,10 @@ espressomd.polymer.setup_diamond_polymer(system=system, bond=fene, MPC=MPC)
 system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=0.01)
 while system.analysis.min_dist() < 0.9:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(20)
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 
@@ -109,7 +109,7 @@ espressomd.io.writer.vtf.writevsf(system, outfile)
 espressomd.io.writer.vtf.writevcf(system, outfile)
 t_steps = 100
 for t in range(t_steps):
-    print("step {} of {}".format(t + 1, t_steps), end='\r', flush=True)
+    print(f"step {t + 1} of {t_steps}", end='\r', flush=True)
     system.integrator.run(sim_steps)
     espressomd.io.writer.vtf.writevcf(system, outfile)
 outfile.close()

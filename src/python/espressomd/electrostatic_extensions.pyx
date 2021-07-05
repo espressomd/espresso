@@ -94,7 +94,7 @@ IF ELECTROSTATICS:
             self._params["normals"] = np.array(self._params["normals"])
             if self._params["normals"].size != n_icc * 3:
                 raise ValueError(
-                    "Expecting normal list with " + str(n_icc * 3) + " entries.")
+                    f"Expecting normal list with {n_icc * 3} entries.")
             check_type_or_throw_except(self._params["normals"], n_icc,
                                        np.ndarray, "Error in normal list.")
 

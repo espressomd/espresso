@@ -43,12 +43,11 @@ class UnitSystem:
             setattr(self, key, value or '')
 
         if self.length and self.mass and self.time:
-            self.force = '{} {} {}-2'.format(self.length,
-                                             self.mass, self.time)
+            self.force = f'{self.length} {self.mass} {self.time}-2'
         else:
             self.force = ''
         if self.length and self.time:
-            self.velocity = '{} {}-1'.format(self.length, self.time)
+            self.velocity = f'{self.length} {self.time}-1'
         else:
             self.velocity = ''
 

@@ -77,7 +77,7 @@ p3m = espressomd.electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
 for key, value in p3m_params.items():
-    print("{} = {}".format(key, value))
+    print(f"{key} = {value}")
 
 # Warmup
 #############################################################
@@ -91,11 +91,11 @@ system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=0.01)
 i = 0
 while system.analysis.min_dist() < min_dist and i < warm_n_times:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(warm_steps)
     i += 1
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 
@@ -121,9 +121,9 @@ for i in range(n_iterations):
     if i % 20 == 0:
         print("mu_ex_pair ({:.4f}, +/- {:.4f})".format(
             *widom.measure_excess_chemical_potential(insertion_reaction_id)))
-        print("HA", system.number_of_particles(type=0), "A-",
-              system.number_of_particles(type=1), "H+",
-              system.number_of_particles(type=2))
+        print(f"HA {system.number_of_particles(type=0)}",
+              f"A- {system.number_of_particles(type=1)}",
+              f"H+ {system.number_of_particles(type=2)}")
 
 print("excess chemical potential for an ion pair ",
       widom.measure_excess_chemical_potential(insertion_reaction_id))

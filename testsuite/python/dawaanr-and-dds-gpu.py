@@ -98,13 +98,13 @@ class DDSGPUTest(ut.TestCase):
                 np.testing.assert_allclose(
                     np.array(dawaanr_t[i]),
                     ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i]),
-                    err_msg='Torques on particle do not match for particle {}'
-                    .format(i), atol=3e-3)
+                    err_msg=f'Torques do not match for particle {i}',
+                    atol=3e-3)
                 np.testing.assert_allclose(
                     np.array(dawaanr_f[i]),
                     ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i]),
-                    err_msg='Forces on particle do not match for particle i={}'
-                    .format(i), atol=3e-3)
+                    err_msg=f'Forces do not match for particle {i}',
+                    atol=3e-3)
             self.assertAlmostEqual(
                 dawaanr_e,
                 ddsgpu_e * ratio_dawaanr_dds_gpu,

@@ -116,7 +116,7 @@ class TestLBWrite:
         for filepath in filepaths:
             self.assertTrue(
                 os.path.exists(filepath),
-                'VTK file "{}" not written to disk'.format(filepath))
+                f'VTK file "{filepath}" not written to disk')
 
         # check VTK values match node values
         node_velocity = np.zeros(shape + [3])
@@ -174,7 +174,7 @@ class TestLBWrite:
         for filepath in filepaths:
             self.assertTrue(
                 os.path.exists(filepath),
-                'data file "{}" not written to disk'.format(filepath))
+                f'data file "{filepath}" not written to disk')
 
         # check data values match node values
         node_velocity = np.zeros(shape + [3])

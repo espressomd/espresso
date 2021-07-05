@@ -150,7 +150,7 @@ limitations in the simulation core. :ref:`Properties of the System
 class<Setting global variables in Python>` are used to access the parameters
 concerning the simulation system such as box geometry, time step or :ref:`cell-system<Cellsystems>`: ::
 
-    print("The box dimensions are {}".format(system.box_l))
+    print(f"The box dimensions are {system.box_l}")
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
@@ -288,10 +288,10 @@ of the system are printed: ::
     for i in range(num_configs):
         system.integrator.run(num_steps)
         energy = system.analysis.energy()
-        print("System time: {}".format(system.time))
-        print("Energy of the LJ interaction: {}".format(energy["non_bonded"]))
-        print("Energy of the harmonic bond: {}".format(energy["bonded"]))
-        print("Energy of the Coulomb interaction: {}".format(energy["coulomb"]))
+        print(f"System time: {system.time}")
+        print(f"Energy of the LJ interaction: {energy['non_bonded']}")
+        print(f"Energy of the harmonic bond: {energy['bonded']}")
+        print(f"Energy of the Coulomb interaction: {energy['coulomb']}")
 
 .. _Tutorials:
 

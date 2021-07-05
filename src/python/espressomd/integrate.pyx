@@ -74,8 +74,7 @@ cdef class IntegratorHandle:
         self.set_nvt()
 
     def __str__(self):
-        return self.__class__.__name__ + \
-            "(" + str(self._integrator.__class__.__name__) + ")"
+        return f'{self.__class__.__name__}({self._integrator.__class__.__name__})'
 
     def run(self, *args, **kwargs):
         """
@@ -172,7 +171,7 @@ cdef class Integrator:
         self._set_params_in_es_core()
 
     def __str__(self):
-        return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
+        return f'{self.__class__.__name__}({self.get_params()})'
 
     def validate_params(self):
         """Check that parameters are valid.
