@@ -1866,13 +1866,13 @@ Set quat and scalar dipole moment (dipm) instead.")
 
         # Pos is taken care of
         del P["pos"]
-        id = P["id"]
+        pid = P["id"]
         del P["id"]
 
         if P != {}:
-            self[id].update(P)
+            self[pid].update(P)
 
-        return self[id]
+        return self[pid]
 
     def _place_new_particles(self, Ps):
         # Check if all entries have the same length
