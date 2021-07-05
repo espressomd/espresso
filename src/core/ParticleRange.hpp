@@ -50,11 +50,10 @@ public:
     return assert(m_size >= 0), static_cast<base_type::size_type>(m_size);
   }
 
-  template <class Predicate>
-  auto filter() const {
+  template <class Predicate> auto filter() const {
     return boost::make_iterator_range(
-      boost::make_filter_iterator<Predicate>(begin(), end()),
-      boost::make_filter_iterator<Predicate>(end(), end()));
+        boost::make_filter_iterator<Predicate>(begin(), end()),
+        boost::make_filter_iterator<Predicate>(end(), end()));
   }
 
 private:
