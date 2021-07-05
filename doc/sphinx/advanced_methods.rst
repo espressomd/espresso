@@ -1770,27 +1770,6 @@ be converted to :math:`K_c` as
 where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure.
 Consider using the python module pint for unit conversion.
 
-.. _Wang-Landau Reaction Ensemble:
-
-Wang-Landau Reaction Ensemble
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Combination of the Reaction Ensemble with the Wang-Landau algorithm
-:cite:`wang01a`. Allows for enhanced sampling of the reacting system
-and for the determination of the density of states with respect
-to the reaction coordinate or with respect to some other collective
-variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
-algorithm :cite:`belardinelli07a` is implemented since it
-does not suffer from systematic errors.
-
-Multiple reactions and multiple collective variables can be set.
-
-An example script can be found here:
-
-* `Wang-Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`__
-
-For a description of the available methods, see :class:`espressomd.reaction_ensemble.ReactionEnsemble`.
-
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:
 
 Grand canonical ensemble simulation
