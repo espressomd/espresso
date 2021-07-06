@@ -80,7 +80,8 @@ class Client(Process):
 
     def move_particle(self, DX_MAX):
         """ Move random particle inside the box """
-        self.old_particle = np.random.choice(self.system.part)
+        random_particle_id = np.random.choice(self.system.part[:].id)
+        self.old_particle = self.system.part[random_particle_id]
         self.old_pos = self.old_particle.pos
         self.old_particle.pos = self.old_pos + \
             (0.5 - np.random.random(size=3)) * DX_MAX
@@ -104,7 +105,8 @@ class Client(Process):
 
     def remove_particle(self):
         """ Remove a random particle """
-        self.old_particle = np.random.choice(self.system.part).to_dict()
+        random_particle_id = np.random.choice(self.system.part[:].id)
+        self.old_particle = self.system.part[random_particle_id].to_dict()
         self.system.part[self.old_particle["id"]].remove()
         self.send_energy()
 

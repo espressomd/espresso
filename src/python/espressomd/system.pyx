@@ -55,9 +55,11 @@ IF COLLISION_DETECTION == 1:
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                       "time_step", "force_cap", "max_oif_objects"]
+checkpointable_properties = ["max_oif_objects"]
 
 if VIRTUAL_SITES:
     setable_properties.append("_active_virtual_sites_handle")
+    checkpointable_properties.append("_active_virtual_sites_handle")
 
 
 cdef bool _system_created = False
@@ -104,7 +106,7 @@ cdef class _Globals:
             handle_errors("Error while assigning system periodicity")
 
         def __get__(self):
-            periodicity = np.empty(3, dtype=np.bool)
+            periodicity = np.empty(3, dtype=type(True))
             for i in range(3):
                 periodicity[i] = box_geo.periodic(i)
             return array_locked(periodicity)
@@ -212,7 +214,7 @@ cdef class System:
         odict = collections.OrderedDict()
         odict['_globals'] = System.__getattribute__(self, "_globals")
         odict['integrator'] = System.__getattribute__(self, "integrator")
-        for property_ in setable_properties:
+        for property_ in checkpointable_properties:
             odict[property_] = System.__getattribute__(self, property_)
         odict['non_bonded_inter'] = System.__getattribute__(
             self, "non_bonded_inter")

@@ -92,24 +92,13 @@ public:
   }
 
   bool do_global_mc_move_for_particles_of_type(int type,
-                                               int particle_number_of_type,
-                                               bool use_wang_landau);
+                                               int particle_number_of_type);
 
-  bool particle_inside_exclusion_radius_touched;
+  bool particle_inside_exclusion_radius_touched = false;
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
   void generic_oneway_reaction(SingleReaction &current_reaction);
-  virtual void on_reaction_entry(int &old_state_index) {}
-  virtual void
-  on_reaction_rejection_directly_after_entry(int &old_state_index) {}
-  virtual void on_attempted_reaction(int &new_state_index) {}
-  virtual void on_end_reaction(int &accepted_state) {}
-
-  virtual void on_mc_rejection_directly_after_entry(int &old_state_index){};
-  virtual void on_mc_accept(int &new_state_index){};
-  virtual void on_mc_reject(int &old_state_index){};
-  virtual int on_mc_use_WL_get_new_state() { return -10; }
 
   std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,
              std::vector<StoredParticleProperty>>
@@ -136,9 +125,7 @@ protected:
 protected:
   virtual double calculate_acceptance_probability(
       SingleReaction const &current_reaction, double E_pot_old,
-      double E_pot_new, std::map<int, int> const &old_particle_numbers,
-      int old_state_index, int new_state_index,
-      bool only_make_configuration_changing_move) const {
+      double E_pot_new, std::map<int, int> const &old_particle_numbers) const {
     return -10;
   }
 

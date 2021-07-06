@@ -26,7 +26,7 @@ class LBSliceTest(ut.TestCase):
 
     """This simple test first writes random numbers and then reads them 
     to same slices of LB nodes and compares if the results are the same, 
-    shape and value wise.
+    shape-wise and value-wise.
     """
 
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
@@ -44,43 +44,43 @@ class LBSliceTest(ut.TestCase):
         lb_fluid = self.lb_fluid
 
         # array locked
-        array = self.lb_fluid[1:-1:2, 5, 3:6:2].velocity
+        array = lb_fluid[1:-1:2, 5, 3:6:2].velocity
         with self.assertRaisesRegex(ValueError, "ESPResSo array properties return non-writable arrays"):
             array[0, 0, 0, 1] = 5.
 
         # velocity on test slice [:-1, :-1, -1]
         input_vel = np.random.rand(9, 9, 9, 3)
-        self.lb_fluid[:-1, :-1, :-1].velocity = input_vel
-        output_vel = self.lb_fluid[:-1, :-1, :-1].velocity
+        lb_fluid[:-1, :-1, :-1].velocity = input_vel
+        output_vel = lb_fluid[:-1, :-1, :-1].velocity
         np.testing.assert_array_almost_equal(input_vel, np.copy(output_vel))
 
         with self.assertRaisesRegex(ValueError, r"Input-dimensions of velocity array \(9, 9, 9, 2\) does not match slice dimensions \(9, 9, 9, 3\)"):
-            self.lb_fluid[:-1, :-1, :-1].velocity = input_vel[:, :, :, :2]
+            lb_fluid[:-1, :-1, :-1].velocity = input_vel[:, :, :, :2]
 
         # velocity broadcast
-        self.lb_fluid[:, :, 0].velocity = [1, 2, 3]
+        lb_fluid[:, :, 0].velocity = [1, 2, 3]
         np.testing.assert_array_almost_equal(
-            np.copy(self.lb_fluid[:, :, 0].velocity), 10 * [10 * [[[1, 2, 3]]]])
+            np.copy(lb_fluid[:, :, 0].velocity), 10 * [10 * [[[1, 2, 3]]]])
 
         # density on test slice [1:-1:2, 5, 3:6:2]
         input_dens = np.random.rand(4, 1, 2)
-        self.lb_fluid[1:-1:2, 5, 3:6:2].density = input_dens
-        output_dens = self.lb_fluid[1:-1:2, 5, 3:6:2].density
+        lb_fluid[1:-1:2, 5, 3:6:2].density = input_dens
+        output_dens = lb_fluid[1:-1:2, 5, 3:6:2].density
         np.testing.assert_array_almost_equal(input_dens, np.copy(output_dens))
 
         # density broadcast
-        self.lb_fluid[:, :, 0].density = 1.2
+        lb_fluid[:, :, 0].density = 1.2
         np.testing.assert_array_almost_equal(
-            np.copy(self.lb_fluid[:, :, 0].density), 1.2)
+            np.copy(lb_fluid[:, :, 0].density), 1.2)
 
         # population on test slice [:, :, :]
         input_pop = np.random.rand(10, 10, 10, 19)
-        self.lb_fluid[:, :, :].population = input_pop
-        output_pop = self.lb_fluid[:, :, :].population
+        lb_fluid[:, :, :].population = input_pop
+        output_pop = lb_fluid[:, :, :].population
         np.testing.assert_array_almost_equal(input_pop, np.copy(output_pop))
 
         with self.assertRaisesRegex(ValueError, r"Input-dimensions of population array \(10, 10, 10, 5\) does not match slice dimensions \(10, 10, 10, 19\)"):
-            self.lb_fluid[:, :, :].population = input_pop[:, :, :, :5]
+            lb_fluid[:, :, :].population = input_pop[:, :, :, :5]
 
         # TODO Walberla: uncomment this block when pressure tensor is available
 #        # pressure tensor on test slice [3, 6, 2:5]
@@ -131,9 +131,9 @@ class LBSliceTest(ut.TestCase):
             (x, y, z) for (
                 x, y, z) in itertools.product(
                 i_handle, j_handle, k_handle)]
-        # arrange node indices using __iter__() enforced converstion
+        # arrange node indices using __iter__() enforced conversion
         iterator_indices = [x.index for x in lbslice_handle]
-        # check the results correspond pairwise. order implicitly preserved.
+        # check the results correspond pairwise. order is implicitly preserved.
         # uses __eq()__ method form LBFluidRoutines()
         assert all([x == y for x, y in zip(
             arranged_indices, iterator_indices)])

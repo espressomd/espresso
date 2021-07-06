@@ -32,10 +32,11 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
-#include <mpi.h>
+#include <boost/mpi/collectives/all_reduce.hpp>
 
-#include <cstdio>
+#include <functional>
 #include <utility>
+#include <vector>
 
 /** Calculate volumes, volume force and add it to each virtual particle. */
 void ImmersedBoundaries::volume_conservation(CellStructure &cs) {
@@ -69,7 +70,7 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
         // accidentally during the integration. Then we must not reset the
         // reference
         BoundariesFound = true;
-        if (v->volRef == 0) {
+        if (v->volRef == 0.) {
           v->volRef = VolumesCurrent[v->softID];
         }
       }
@@ -98,7 +99,7 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
     return;
 
   // Partial volumes for each soft particle, to be summed up
-  std::vector<double> tempVol(IBM_MAX_NUM);
+  std::vector<double> tempVol(VolumesCurrent.size());
 
   // Loop over all particles on local node
   cs.bond_loop(
@@ -143,12 +144,10 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
         return false;
       });
 
-  for (int i = 0; i < IBM_MAX_NUM; i++)
-    VolumesCurrent[i] = 0;
-
   // Sum up and communicate
-  MPI_Allreduce(tempVol.data(), VolumesCurrent.data(), IBM_MAX_NUM, MPI_DOUBLE,
-                MPI_SUM, comm_cart);
+  boost::mpi::all_reduce(comm_cart, tempVol.data(),
+                         static_cast<int>(tempVol.size()),
+                         VolumesCurrent.data(), std::plus<double>());
 }
 
 /** Calculate and add the volume force to each node */

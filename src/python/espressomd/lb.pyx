@@ -317,11 +317,25 @@ cdef class HydrodynamicInteraction(Actor):
         lb_lbfluid_add_force_at_pos(p, f)
 
     def save_checkpoint(self, path, binary):
+        '''
+        Write LB node populations to a file.
+        :class:`~espressomd.lbboundaries.LBBoundaries`
+        information is not written to the file.
+        '''
         tmp_path = path + ".__tmp__"
         lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
         os.rename(tmp_path, path)
 
     def load_checkpoint(self, path, binary):
+        '''
+        Load LB node populations from a file.
+        :class:`~espressomd.lbboundaries.LBBoundaries`
+        information is not available in the file. The boundary
+        information of the grid will be set to zero,
+        even if :class:`~espressomd.lbboundaries.LBBoundaries`
+        contains :class:`~espressomd.lbboundaries.LBBoundary`
+        objects (they are ignored).
+        '''
         lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
     def _activate_method(self):

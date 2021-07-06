@@ -100,6 +100,11 @@ Be aware of the following limitations:
 
   * Pickling support of the :class:`espressomd.system.System` instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms than can be tested.
 
+  * Checkpointing only supports recursion on the head node. It is therefore
+    impossible to checkpoint a :class:`espressomd.system.System` instance that
+    contains LB boundaries, constraints or auto-update accumulators, when the
+    simulation is running with 2 or more MPI nodes.
+
   * The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice-Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods
     :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
     and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint.
