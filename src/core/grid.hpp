@@ -49,9 +49,6 @@ extern Utils::Vector3i node_grid;
  */
 void init_node_grid();
 
-/** @brief Map a spatial position to the node grid */
-int map_position_node_array(const Utils::Vector3d &pos);
-
 /** @brief Fill neighbor lists of node.
  *
  * Calculates the numbers of the nearest neighbors for a node.
