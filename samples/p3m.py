@@ -120,16 +120,16 @@ system.actors.add(p3m)
 
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
-for key in list(p3m_params.keys()):
-    print(f"{key} = {p3m_params[key]}")
+for key, val in p3m_params.items():
+    print(f"{key} = {val}")
 
 print("\nSCRIPT--->Explicit tune call\n")
 p3m.tune(accuracy=1e3)
 
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
-for key in list(p3m_params.keys()):
-    print(f"{key} = {p3m_params[key]}")
+for key, val in p3m_params.items():
+    print(f"{key} = {val}")
 
 print(system.actors)
 

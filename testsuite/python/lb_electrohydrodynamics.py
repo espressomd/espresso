@@ -37,7 +37,7 @@ class LBEHTest(ut.TestCase):
                        'skin': 0.2,
                        'muE': [0.1, 0.2, 0.3]}
 
-        system.periodicity = [1, 1, 1]
+        system.periodicity = 3 * [True]
         system.time_step = self.params['time_step']
         system.cell_system.skin = self.params['skin']
 

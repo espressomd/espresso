@@ -118,16 +118,16 @@ class ShapeBasedConstraint(Constraint):
     ----------
     >>> import espressomd
     >>> import espressomd.shapes
-    >>> system = espressomd.System(box_l=[1., 1., 1.])
+    >>> system = espressomd.System(box_l=3 * [10.])
     >>>
     >>> # create first a shape-object to define the constraint surface
-    >>> spherical_cavity = espressomd.shapes.Sphere(center=[5,5,5], radius=5.0, direction=-1.0)
+    >>> spherical_cavity = espressomd.shapes.Sphere(center=system.box_l / 2, radius=2.0, direction=-1.0)
     >>>
     >>> # now create an un-penetrable shape-based constraint of type 0
     >>> spherical_constraint = system.constraints.add(particle_type=0, penetrable=False, shape=spherical_cavity)
     >>>
     >>> # place a trapped particle inside this sphere
-    >>> system.part.add(pos=[5, 5, 5], type=1)
+    >>> system.part.add(pos=0.51 * system.box_l, type=1)
 
     """
 
