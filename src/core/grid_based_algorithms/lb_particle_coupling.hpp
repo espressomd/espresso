@@ -19,15 +19,18 @@
 #ifndef LB_PARTICLE_COUPLING_HPP
 #define LB_PARTICLE_COUPLING_HPP
 
-#include "OptionalCounter.hpp"
 #include "ParticleRange.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 
+#include <boost/optional.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/optional.hpp>
 
 #include <cstdint>
+
+using OptionalCounter = boost::optional<Utils::Counter<uint64_t>>;
 
 /** Calculate particle lattice interactions.
  *  So far, only viscous coupling with Stokesian friction is implemented.
@@ -103,7 +106,7 @@ Utils::Vector3d lb_drag_force(Particle const &p,
                               const Utils::Vector3d &vel_offset);
 
 struct LB_Particle_Coupling {
-  OptionalCounter rng_counter_coupling;
+  OptionalCounter rng_counter_coupling = {};
   /*
    * @brief Friction constant for the particle coupling.
    */
@@ -113,8 +116,7 @@ struct LB_Particle_Coupling {
 private:
   friend class boost::serialization::access;
 
-  template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
+  template <class Archive> void serialize(Archive &ar, const unsigned int) {
     ar &rng_counter_coupling;
     ar &gamma;
     ar &couple_to_md;

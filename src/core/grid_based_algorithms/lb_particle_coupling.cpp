@@ -225,8 +225,12 @@ void add_swimmer_force(Particle const &p, double time_step) {
 Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
                                            const OptionalCounter &rng_counter) {
   if (enabled) {
-    return Random::noise_uniform<RNGSalt::PARTICLES>(rng_counter->value(), 0,
-                                                     part_id);
+    if (rng_counter) {
+      return Random::noise_uniform<RNGSalt::PARTICLES>(rng_counter->value(), 0,
+                                                       part_id);
+    }
+    throw std::runtime_error(
+        "Access to uninitialized LB particle coupling RNG counter");
   }
   return {};
 }
