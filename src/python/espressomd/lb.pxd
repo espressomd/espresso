@@ -27,6 +27,7 @@ from .actors cimport Actor
 from .utils cimport Vector3d
 from .utils cimport Vector3i
 from .utils cimport Vector6d
+from .utils cimport make_Vector3d
 
 cdef class HydrodynamicInteraction(Actor):
     pass
@@ -116,18 +117,9 @@ IF LB_WALBERLA:
 #
 
 cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density, p_agrid, p_tau) except +:
-
     cdef Vector3d c_ext_force_density
-    # unit conversion MD -> LB
-    c_ext_force_density[
-        0] = p_ext_force_density[
-            0] * p_agrid * p_agrid * p_tau * p_tau
-    c_ext_force_density[
-        1] = p_ext_force_density[
-            1] * p_agrid * p_agrid * p_tau * p_tau
-    c_ext_force_density[
-        2] = p_ext_force_density[
-            2] * p_agrid * p_agrid * p_tau * p_tau
+    cdef double unit_conversion = p_agrid**2 * p_tau**2
+    c_ext_force_density = make_Vector3d(p_ext_force_density) * unit_conversion
     lb_lbfluid_set_ext_force_density(c_ext_force_density)
 
 cdef inline double python_lbfluid_get_viscosity(p_agrid, p_tau) except +:
@@ -141,18 +133,14 @@ cdef inline double python_lbfluid_get_gamma() except +:
 
 cdef inline Vector3d python_lbfluid_get_ext_force_density(p_agrid, p_tau) except +:
     cdef Vector3d c_ext_force_density
-    # call c-function
+    cdef double unit_conversion = 1.0 / (p_agrid * p_tau)**2
     c_ext_force_density = lb_lbfluid_get_ext_force_density()
-    # unit conversion LB -> MD
-    for i in range(3):
-        c_ext_force_density[i] /= p_agrid * p_agrid * p_tau * p_tau
-    return c_ext_force_density
+    return c_ext_force_density * unit_conversion
 
 cdef inline Vector6d python_lbfluid_get_pressure_tensor(agrid, tau) except +:
     cdef Vector6d tensor = lb_lbfluid_get_pressure_tensor()
-    for i in range(6):
-        tensor[i] *= 1. / agrid * 1. / tau**2.0
-    return tensor
+    cdef double unit_conversion = 1.0 / (agrid * tau**2)
+    return tensor * unit_conversion
 
 cdef inline void python_lbnode_set_velocity(Vector3i node, Vector3d velocity) except +:
     cdef double inv_lattice_speed = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid()
@@ -184,7 +172,7 @@ cdef inline Vector6d python_lbnode_get_pressure_tensor(Vector3i node) except +:
 cdef inline double python_lbnode_get_density(Vector3i node) except +: 
     cdef double agrid = lb_lbfluid_get_agrid()
     cdef double c_density = lb_lbnode_get_density(node)
-    return c_density / agrid / agrid / agrid 
+    return c_density / agrid**3
 
 cdef inline void python_lbnode_set_density(Vector3i node, double density) except +:
     cdef double agrid = lb_lbfluid_get_agrid()
