@@ -31,25 +31,6 @@
 #include <algorithm>
 #include <stdexcept>
 
-namespace {
-InterpolationOrder interpolation_order = InterpolationOrder::linear;
-}
-
-void mpi_set_interpolation_order(InterpolationOrder const &order) {
-  interpolation_order = order;
-}
-
-REGISTER_CALLBACK(mpi_set_interpolation_order)
-
-void lb_lbinterpolation_set_interpolation_order(
-    InterpolationOrder const &order) {
-  mpi_call_all(mpi_set_interpolation_order, order);
-}
-
-InterpolationOrder lb_lbinterpolation_get_interpolation_order() {
-  return interpolation_order;
-}
-
 const Utils::Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
   Utils::Vector3d interpolated_u{};
@@ -77,18 +58,12 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
 void lb_lbinterpolation_add_force_density(
     const Utils::Vector3d &pos, const Utils::Vector3d &force_density) {
-  switch (interpolation_order) {
-  case (InterpolationOrder::quadratic):
-    throw std::runtime_error(
-        "The non-linear interpolation scheme is not implemented.");
-  case (InterpolationOrder::linear):
-    if (lattice_switch == ActiveLB::WALBERLA) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-      if (!lb_walberla()->add_force_at_pos(pos / lb_lbfluid_get_agrid(),
-                                           force_density))
-        throw std::runtime_error("Could not apply force to lb.");
+    if (!lb_walberla()->add_force_at_pos(pos / lb_lbfluid_get_agrid(),
+                                         force_density))
+      throw std::runtime_error("Could not apply force to lb.");
 #endif
-    } else
-      throw std::runtime_error("No LB active.");
-  }
+  } else
+    throw std::runtime_error("No LB active.");
 }

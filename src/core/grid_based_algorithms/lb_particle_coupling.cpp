@@ -265,43 +265,34 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::WALBERLA) {
     if (lb_particle_coupling.couple_to_md) {
-      switch (lb_lbinterpolation_get_interpolation_order()) {
-      case (InterpolationOrder::quadratic):
-        throw std::runtime_error("The non-linear interpolation scheme is not "
-                                 "implemented for the CPU LB.");
-      case (InterpolationOrder::linear): {
-        using Utils::sqr;
-        auto const kT = lb_lbfluid_get_kT() * sqr(lb_lbfluid_get_agrid()) /
-                        sqr(lb_lbfluid_get_tau());
-        /* Eq. (16) @cite ahlrichs99a.
-         * The factor 12 comes from the fact that we use random numbers
-         * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-         * time_step comes from the discretization.
-         */
-        auto const noise_amplitude =
-            (kT > 0.) ? std::sqrt(12. * 2. * lb_lbcoupling_get_gamma() * kT /
-                                  time_step)
-                      : 0.0;
+      using Utils::sqr;
+      auto const kT = lb_lbfluid_get_kT() * sqr(lb_lbfluid_get_agrid()) /
+                      sqr(lb_lbfluid_get_tau());
+      /* Eq. (16) @cite ahlrichs99a.
+       * The factor 12 comes from the fact that we use random numbers
+       * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
+       * time_step comes from the discretization.
+       */
+      auto const noise_amplitude =
+          (kT > 0.)
+              ? std::sqrt(12. * 2. * lb_lbcoupling_get_gamma() * kT / time_step)
+              : 0.0;
 
-        /* Couple particles ranges */
-        for (auto &p : particles) {
-          couple_particle(p, couple_virtual, noise_amplitude,
-                          lb_particle_coupling.rng_counter_coupling, time_step);
+      /* Couple particles ranges */
+      for (auto &p : particles) {
+        couple_particle(p, couple_virtual, noise_amplitude,
+                        lb_particle_coupling.rng_counter_coupling, time_step);
 #ifdef ENGINE
-          add_swimmer_force(p, time_step);
+        add_swimmer_force(p, time_step);
 #endif
-        }
-
-        for (auto &p : more_particles) {
-          couple_particle(p, couple_virtual, noise_amplitude,
-                          lb_particle_coupling.rng_counter_coupling, time_step);
-#ifdef ENGINE
-          add_swimmer_force(p, time_step);
-#endif
-        }
-
-        break;
       }
+
+      for (auto &p : more_particles) {
+        couple_particle(p, couple_virtual, noise_amplitude,
+                        lb_particle_coupling.rng_counter_coupling, time_step);
+#ifdef ENGINE
+        add_swimmer_force(p, time_step);
+#endif
       }
     }
   }

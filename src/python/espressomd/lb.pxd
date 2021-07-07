@@ -103,15 +103,6 @@ cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     bool lb_lbcoupling_is_seed_required() except +
     void mpi_bcast_lb_particle_coupling()
 
-cdef extern from "grid_based_algorithms/lb_interpolation.hpp":
-    cdef cppclass InterpolationOrder:
-        pass
-    void lb_lbinterpolation_set_interpolation_order(InterpolationOrder & order) except +
-
-cdef extern from "grid_based_algorithms/lb_interpolation.hpp" namespace "InterpolationOrder":
-    cdef InterpolationOrder linear
-    cdef InterpolationOrder quadratic
-
 IF LB_WALBERLA:
     cdef extern from "grid_based_algorithms/lb_walberla_instance.hpp":
         void mpi_init_lb_walberla(double viscosity, double density, double agrid, double tau, Vector3d box_size, double kT, unsigned int seed) except +
