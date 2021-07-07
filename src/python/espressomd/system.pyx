@@ -42,7 +42,6 @@ IF LB_WALBERLA:
     from .lb import _vtk_registry
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
-    from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
 from .utils import is_valid_type, handle_errors, array_locked
@@ -155,8 +154,6 @@ cdef class System:
         """:class:`espressomd.constraints.Constraints`"""
         lbboundaries
         """:class:`espressomd.lbboundaries.LBBoundaries`"""
-        ekboundaries
-        """:class:`espressomd.ekboundaries.EKBoundaries`"""
         collision_detection
         """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
@@ -195,7 +192,6 @@ cdef class System:
             self.galilei = GalileiTransform()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
-                self.ekboundaries = EKBoundaries()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
