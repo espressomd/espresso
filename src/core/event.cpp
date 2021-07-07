@@ -223,7 +223,7 @@ void on_short_range_ia_change() {
 void on_constraint_change() { recalc_forces = true; }
 
 void on_lbboundary_change() {
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+#if defined(LB_BOUNDARIES)
   LBBoundaries::lb_init_boundaries();
 
   recalc_forces = true;

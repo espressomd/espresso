@@ -29,7 +29,7 @@
 #include <memory>
 
 namespace LBBoundaries {
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+#if defined(LB_BOUNDARIES)
 class LBBoundary;
 void lb_init_boundaries();
 #endif
@@ -59,7 +59,7 @@ public:
 
   void set_velocity(const Utils::Vector3d &velocity) {
     m_velocity = velocity;
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+#if defined(LB_BOUNDARIES)
     lb_init_boundaries();
 #endif
   }

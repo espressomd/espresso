@@ -37,9 +37,6 @@ modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
 LB = (espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes or
       espressomd.gpu_available() and 'LB.GPU' in modes)
 
-EK = ('EK.GPU' in modes and espressomd.gpu_available()
-      and espressomd.has_features('ELECTROKINETICS'))
-
 
 class CheckpointTest(ut.TestCase):
 
@@ -146,8 +143,8 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue(os.path.isfile(filepath_template.format(1)))
         self.assertFalse(os.path.isfile(filepath_template.format(2)))
 
-    @utx.skipIfMissingFeatures('ELECTROKINETICS')
-    @ut.skipIf(not EK, "Skipping test due to missing mode.")
+    # TODO WALBERLA
+    @ut.skipIf(True, "EK not implemented")
     def test_EK(self):
         ek = system.actors[0]
         ek_species = ek.get_params()['species'][0]
@@ -529,8 +526,8 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part[1].exclusions), [2])
         self.assertEqual(list(system.part[2].exclusions), [0, 1])
 
-    @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES")
-                                    or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
+    @ut.skipIf(not LB or not espressomd.has_features("LB_BOUNDARIES"),
+               "Missing features")
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_lb_boundaries(self):
         # check boundaries agree on all MPI nodes

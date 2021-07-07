@@ -232,8 +232,7 @@ if LB_implementation:
 
 EK_implementation = None
 # TODO_WALBERLA
-# if 'EK.GPU' in modes and espressomd.gpu_available(
-# ) and espressomd.has_features('ELECTROKINETICS'):
+# if 'EK.GPU' in modes and espressomd.has_features('ELECTROKINETICS'):
 #    EK_implementation = espressomd.electrokinetics
 #    ek = EK_implementation.Electrokinetics(
 #        agrid=0.5,

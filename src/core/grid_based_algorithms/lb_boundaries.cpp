@@ -48,7 +48,7 @@ using Utils::get_linear_index;
 namespace LBBoundaries {
 
 std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+#if defined(LB_BOUNDARIES)
 
 void add(const std::shared_ptr<LBBoundary> &b) {
   auto &lbb = lbboundaries;
@@ -93,6 +93,6 @@ void lb_init_boundaries() {
   } // lattice switch is WALBERLA
 }
 
-#endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
+#endif /* LB_BOUNDARIES */
 
 } // namespace LBBoundaries

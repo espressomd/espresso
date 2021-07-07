@@ -18,7 +18,7 @@ from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, scrip
 from .__init__ import has_features
 
 
-if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
+if has_features(["LB_BOUNDARIES"]):
     @script_interface_register
     class LBBoundaries(ScriptObjectRegistry):
 

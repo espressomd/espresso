@@ -40,7 +40,7 @@ from .constraints import Constraints
 from .accumulators import AutoUpdateAccumulators
 IF LB_WALBERLA:
     from .lb import _vtk_registry
-if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+if LB_BOUNDARIES:
     from .lbboundaries import LBBoundaries
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
@@ -190,7 +190,7 @@ cdef class System:
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
-            if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+            if LB_BOUNDARIES:
                 self.lbboundaries = LBBoundaries()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
@@ -227,7 +227,7 @@ cdef class System:
             odict['collision_detection'] = System.__getattribute__(
                 self, "collision_detection")
         odict['actors'] = System.__getattribute__(self, "actors")
-        IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+        IF LB_BOUNDARIES:
             odict['lbboundaries'] = System.__getattribute__(
                 self, "lbboundaries")
         odict['integrator'] = System.__getattribute__(self, "integrator")

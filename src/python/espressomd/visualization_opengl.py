@@ -353,8 +353,7 @@ class openGLLive():
         if not espressomd.has_features('ROTATION'):
             self.specs['director_arrows'] = False
 
-        if not espressomd.has_features('LB_BOUNDARIES') and \
-                not espressomd.has_features('LB_BOUNDARIES_GPU'):
+        if not espressomd.has_features('LB_BOUNDARIES'):
             self.specs['LB_draw_boundaries'] = False
             self.specs['LB_draw_node_boundaries'] = False
 
