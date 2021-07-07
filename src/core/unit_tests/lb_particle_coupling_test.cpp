@@ -308,9 +308,6 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   p.r.p = first_lb_node + Utils::Vector3d::broadcast(0.5);
   lb_lbcoupling_set_gamma(gamma);
 
-  void couple_particle(Particle & p, bool couple_virtual,
-                       double noise_amplitude,
-                       const OptionalCounter &rng_counter, double time_step);
   // coupling
   {
     if (in_local_halo(p.r.p)) {
