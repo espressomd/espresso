@@ -346,35 +346,38 @@ Setting up boundary conditions
 
 The following example sets up a system consisting of a spherical boundary in the center of the simulation box acting as a no-slip boundary for the LB fluid that is driven by 4 walls with a slip velocity::
 
-    from espressomd import System, lb, lbboundaries, shapes
+    import espressomd
+    import espressomd.lb
+    import espressomd.lbboundaries
+    import espressomd.shapes
 
-    system = System(box_l=[64, 64, 64])
+    system = espressomd.System(box_l=[64, 64, 64])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
-    lb = lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     system.actors.add(lb)
 
     v = [0, 0, 0.01]  # the boundary slip
     walls = [None] * 4
 
-    wall_shape = shapes.Wall(normal=[1, 0, 0], dist=1)
-    walls[0] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+    wall_shape = espressomd.shapes.Wall(normal=[1, 0, 0], dist=1)
+    walls[0] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
 
-    wall_shape = shapes.Wall(normal=[-1, 0, 0], dist=-63)
-    walls[1] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+    wall_shape = espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-63)
+    walls[1] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
 
-    wall_shape = shapes.Wall(normal=[0, 1, 0], dist=1)
-    walls[2] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+    wall_shape = espressomd.shapes.Wall(normal=[0, 1, 0], dist=1)
+    walls[2] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
 
-    wall_shape = shapes.Wall(normal=[0, -1, 0], dist=-63)
-    walls[3] = lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
+    wall_shape = espressomd.shapes.Wall(normal=[0, -1, 0], dist=-63)
+    walls[3] = espressomd.lbboundaries.LBBoundary(shape=wall_shape, velocity=v)
 
     for wall in walls:
         system.lbboundaries.add(wall)
 
-    sphere_shape = shapes.Sphere(radius=5.5, center=[33, 33, 33], direction=1)
-    sphere = lbboundaries.LBBoundary(shape=sphere_shape)
+    sphere_shape = espressomd.shapes.Sphere(radius=5.5, center=[33, 33, 33], direction=1)
+    sphere = espressomd.lbboundaries.LBBoundary(shape=sphere_shape)
     system.lbboundaries.add(sphere)
 
     system.integrator.run(4000)

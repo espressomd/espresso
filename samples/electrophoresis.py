@@ -26,9 +26,10 @@ import numpy as np
 import scipy.optimize
 
 import espressomd
+import espressomd.electrostatics
+import espressomd.interactions
 import espressomd.observables
 import espressomd.polymer
-from espressomd import electrostatics, interactions
 
 logging.basicConfig(level=logging.INFO)
 
@@ -70,8 +71,9 @@ system.non_bonded_inter[1, 2].wca.set_params(epsilon=1, sigma=1)
 
 # bonded interactions
 ################################################################
-harmonic_bond = interactions.HarmonicBond(k=10, r_0=2)
-angle_harmonic_bond = interactions.AngleHarmonic(bend=10, phi0=np.pi)
+harmonic_bond = espressomd.interactions.HarmonicBond(k=10, r_0=2)
+angle_harmonic_bond = espressomd.interactions.AngleHarmonic(
+    bend=10, phi0=np.pi)
 system.bonded_inter.add(harmonic_bond)
 system.bonded_inter.add(angle_harmonic_bond)
 
@@ -109,8 +111,8 @@ system.part.add(pos=np.random.random((N_IONS, 3)) * system.box_l,
                 q=np.resize((1, -1), N_IONS),
                 type=np.resize((1, 2), N_IONS))
 
-logging.info("particle types: {}\n".format(system.part[:].type))
-logging.info("total charge: {}".format(np.sum(system.part[:].q)))
+logging.info(f"particle types: {system.part[:].type}\n")
+logging.info(f"total charge: {np.sum(system.part[:].q)}")
 
 # warm-up integration
 ###############################################################
@@ -118,20 +120,19 @@ system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=0.01)
 i = 0
 while system.analysis.min_dist() < MIN_DIST and i < WARM_N_TIMES:
-    logging.debug(
-        "total energy: {:+.2e}".format(system.analysis.energy()["total"]))
+    logging.debug(f"total energy: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(WARM_STEPS)
     i += 1
 
 logging.info(
-    "total energy after warm-up: {:+.2e}\n".format(system.analysis.energy()["total"]))
+    f"total energy after warm-up: {system.analysis.energy()['total']:+.2e}\n")
 system.integrator.set_vv()
 
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # activate electrostatics
 #############################################################
-p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 system.actors.add(p3m)
 
 # apply external force (external electric field)
@@ -166,7 +167,7 @@ pos = np.full((N_SAMPLES, N_MONOMERS, 3), np.nan)
 #############################################################
 for i in range(N_SAMPLES):
     if i % 100 == 0:
-        logging.info("\rsampling: {:4d}".format(i))
+        logging.info(f"\rsampling: {i:4d}")
     system.integrator.run(N_INT_STEPS)
     pos[i] = system.part[:N_MONOMERS].pos
 
@@ -183,7 +184,7 @@ COM_v = (COM[1:] - COM[:-1]) / (N_INT_STEPS * system.time_step)
 # calculate the electrophoretic mobility mu = v/E
 ##################################
 mu = np.average(np.linalg.norm(COM_v, axis=1)) / E_FIELD
-logging.info("electrophoretic mobility: {}".format(mu))
+logging.info(f"electrophoretic mobility: {mu}")
 
 # calculate the persistence length...
 #############################################################
@@ -213,8 +214,7 @@ def exponential(x, lp):
 
 opt, _ = scipy.optimize.curve_fit(exponential, sampling_positions, cos_thetas)
 persistence_length = opt[0]
-logging.info("persistence length (python analysis): {}".format(
-    persistence_length))
+logging.info(f"persistence length (python analysis): {persistence_length}")
 
 # ...second by using observables
 
@@ -234,8 +234,7 @@ def persistence_length_obs(
 
 sampling_positions_obs, cos_thetas_obs, persistence_length_obs = persistence_length_obs(
     acc_bond_length, acc_persistence_angles, exponential)
-logging.info("persistence length (observables): {}".format(
-    persistence_length_obs))
+logging.info(f"persistence length (observables): {persistence_length_obs}")
 
 # plot the results
 #############################################################

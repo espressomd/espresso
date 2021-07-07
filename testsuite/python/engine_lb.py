@@ -17,13 +17,13 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-from espressomd import System, lb
-
-from tests_common import get_lb_nodes_around_pos
+import espressomd
+import espressomd.lb
+import tests_common
 
 
 class SwimmerTest():
-    system = System(box_l=3 * [6])
+    system = espressomd.System(box_l=3 * [6])
     system.cell_system.skin = 1
     system.time_step = 1e-2
     LB_params = {'agrid': 1,
@@ -167,7 +167,7 @@ class SwimmerTest():
             # fold into box
             sw_source_pos -= np.floor(sw_source_pos /
                                       self.system.box_l) * np.array(self.system.box_l)
-            sw_source_nodes = get_lb_nodes_around_pos(sw_source_pos, self.lbf)
+            sw_source_nodes = tests_common.get_lb_nodes_around_pos(sw_source_pos, self.lbf)
             sw_source_forces = np.array(
                 [n.last_applied_force for n in sw_source_nodes])
             np.testing.assert_allclose(
@@ -180,7 +180,7 @@ class SwimmerTestWALBERLA(SwimmerTest, ut.TestCase):
 
     def setUp(self):
         self.tol = 1e-10
-        self.lbf = lb.LBFluidWalberla(**self.LB_params)
+        self.lbf = espressomd.lb.LBFluidWalberla(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 

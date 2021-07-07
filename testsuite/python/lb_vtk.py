@@ -107,7 +107,7 @@ class TestVTK(ut.TestCase):
         for filepath in filepaths:
             self.assertTrue(
                 os.path.exists(filepath),
-                'VTK file "{}" not written to disk'.format(filepath))
+                f'VTK file "{filepath}" not written to disk')
 
         # check velocity profile is symmetric at all time steps
         for filepath in filepaths:

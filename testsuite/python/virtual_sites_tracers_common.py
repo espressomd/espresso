@@ -19,14 +19,12 @@
 import numpy as np
 
 import espressomd
-from espressomd import shapes, lbboundaries
-try:
-    from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
-except ImportError:
-    pass
-from espressomd.utils import handle_errors
-from tests_common import get_lb_nodes_around_pos
+import espressomd.shapes
+import espressomd.lbboundaries
+import espressomd.virtual_sites
+import espressomd.utils
 
+import tests_common
 import unittest_decorators as utx
 
 
@@ -54,31 +52,34 @@ class VirtualSitesTracersCommon:
             gamma=1)
 
         # Setup boundaries
-        walls = [lbboundaries.LBBoundary() for k in range(2)]
-        walls[0].set_params(shape=shapes.Wall(normal=[0, 0, 1], dist=0.5))
-        walls[1].set_params(shape=shapes.Wall(normal=[0, 0, -1],
-                                              dist=-self.box_height - 0.5))
+        walls = [espressomd.lbboundaries.LBBoundary() for k in range(2)]
+        walls[0].set_params(shape=espressomd.shapes.Wall(
+            normal=[0, 0, 1], dist=0.5))
+        walls[1].set_params(shape=espressomd.shapes.Wall(
+            normal=[0, 0, -1], dist=-self.box_height - 0.5))
 
         for wall in walls:
             self.system.lbboundaries.add(wall)
 
-        handle_errors("setup")
+        espressomd.utils.handle_errors("setup")
 
     def test_aa_method_switching(self):
         # Virtual sites should be disabled by default
-        self.assertIsInstance(self.system.virtual_sites, VirtualSitesOff)
+        self.assertIsInstance(
+            self.system.virtual_sites,
+            espressomd.virtual_sites.VirtualSitesOff)
 
         # Switch implementation
-        self.system.virtual_sites = VirtualSitesInertialessTracers()
+        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
         self.assertIsInstance(
-            self.system.virtual_sites, VirtualSitesInertialessTracers)
+            self.system.virtual_sites, espressomd.virtual_sites.VirtualSitesInertialessTracers)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ab_single_step(self):
         self.reset_lb()
         self.system.lbboundaries.clear()
         self.system.part.clear()
-        self.system.virtual_sites = VirtualSitesInertialessTracers()
+        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 
         # Random velocities
         for n in self.lbf.nodes():
@@ -93,7 +94,7 @@ class VirtualSitesTracersCommon:
 
             coupling_pos = p.pos
             # Nodes to which forces will be interpolated
-            lb_nodes = get_lb_nodes_around_pos(
+            lb_nodes = tests_common.get_lb_nodes_around_pos(
                 coupling_pos, self.lbf)
 
             np.testing.assert_allclose(
@@ -128,7 +129,7 @@ class VirtualSitesTracersCommon:
         # System setup
         system = self.system
 
-        system.virtual_sites = VirtualSitesInertialessTracers()
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 
         # Establish steady state flow field
         p = system.part.add(pos=(0, 5.5, 5.5), virtual=True)
@@ -151,7 +152,7 @@ class VirtualSitesTracersCommon:
         """
         self.reset_lb()
         system = self.system
-        system.virtual_sites = VirtualSitesInertialessTracers()
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
         system.actors.clear()
         system.part.clear()
         p = system.part.add(pos=(0, 0, 0))

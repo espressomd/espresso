@@ -26,10 +26,10 @@ Several modes are available for different types of binding.
 * ``"bind_centers"``: adds a pair-bond between two particles at their first collision. By making the bonded interaction *stiff* enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
 
     import espressomd
-    from espressomd.interactions import HarmonicBond
+    import espressomd.interactions
 
     system = espressomd.System(box_l=[1, 1, 1])
-    bond_centers = HarmonicBond(k=1000, r_0=<CUTOFF>)
+    bond_centers = espressomd.interactions.HarmonicBond(k=1000, r_0=<CUTOFF>)
     system.bonded_inter.add(bond_centers)
     system.collision_detection.set_params(mode="bind_centers", distance=<CUTOFF>,
                                           bond_centers=bond_centers)
@@ -100,7 +100,7 @@ Several modes are available for different types of binding.
 
         n_angle_bonds = 181  # 0 to 180 degrees in one degree steps
         for i in range(0, res, 1):
-            self.system.bonded_inter[i] = Angle_Harmonic(
+            self.system.bonded_inter[i] = espressomd.interactions.Angle_Harmonic(
                 bend=1, phi0=float(i) / (res - 1) * np.pi)
 
         # Create the bond passed to bond_centers here and add it to the system
@@ -454,9 +454,8 @@ end:
 
     for i in range(1, 101):
         system.integrator.run(steps=500)
-        cell.output_vtk_pos_folded(filename="output/sim1/cell_"
-                                   + str(i) + ".vtk")
-        print("time: ", str(i * time_step))
+        cell.output_vtk_pos_folded(filename=f"output/sim1/cell_{i}.vtk")
+        print(f"time: {i * time_step}")
     print("Simulation completed.")
 
 This simulation runs for 100 cycles. In each cycle, 500 integration
@@ -510,7 +509,7 @@ In the script, we have used the commands such as
 
 ::
 
-    cell.output_vtk_pos_folded(filename="output/sim1/cell_" + str(i) + ".vtk")
+    cell.output_vtk_pos_folded(filename=f"output/sim1/cell_{i}.vtk")
 
 to output the information about cell in every pass of the simulation
 loop. These files can then be used for inspection in ParaView and
@@ -1500,8 +1499,8 @@ and can be used to conveniently add a Drude particle to a given core particle.
 As it also adds the first two bonds between Drude and core, these bonds have to
 be created beforehand::
 
-    from drude_functions import *
-    add_drude_particle_to_core(<system>, <harmonic_bond>, <thermalized_bond>,
+    import espressomd.drude_helpers
+    espressomd.drude_helpers(<system>, <harmonic_bond>, <thermalized_bond>,
         <core particle>, <id drude>, <type drude>, <alpha>, <mass drude>,
         <coulomb_prefactor>, <thole damping>, <verbose>)
 
@@ -1531,7 +1530,7 @@ One bond type of this kind is needed per Drude type. The above helper function a
 tracks particle types, ids and charges of Drude and core particles, so a simple call of
 another helper function::
 
-    drude_helpers.setup_and_add_drude_exclusion_bonds(S)
+    espressomd.drude_helpers.setup_and_add_drude_exclusion_bonds(S)
 
 will use this data to create a :ref:`Subtract P3M short-range bond` per Drude type
 and set it up it between all Drude and core particles collected in calls of :meth:`~espressomd.drude_helpers.add_drude_particle_to_core`.
@@ -1557,7 +1556,7 @@ long-range part of the electrostatic interaction. Two helper methods assist
 with setting up this exclusion. If used, they have to be called
 after all Drude particles are added to the system::
 
-    setup_intramol_exclusion_bonds(<system>, <molecule drude types>,
+    espressomd.drude_helpers.setup_intramol_exclusion_bonds(<system>, <molecule drude types>,
         <molecule core types>, <molecule core partial charges>, <verbose>)
 
 This function creates the requires number of bonds which are later added to the
@@ -1574,7 +1573,7 @@ Parameters are:
 After setting up the bonds, one has to add them to each molecule with the
 following method::
 
-    add_intramol_exclusion_bonds(<system>, <drude ids>, <core ids>, <verbose>)
+    espressomd.drude_helpers.add_intramol_exclusion_bonds(<system>, <drude ids>, <core ids>, <verbose>)
 
 This method has to be called for all molecules and needs the following parameters:
 

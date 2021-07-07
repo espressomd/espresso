@@ -32,8 +32,8 @@ print("""
 required_features = ["EXTERNAL_FORCES"]
 
 import espressomd
-espressomd.assert_features(required_features)
 import espressomd.lb
+espressomd.assert_features(required_features)
 
 
 box_l = 50

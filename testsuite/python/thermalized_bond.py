@@ -19,13 +19,14 @@
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
+import thermostats_common
 
 import espressomd
-from thermostats_common import ThermostatsCommon
+import espressomd.interactions
 
 
 @utx.skipIfMissingFeatures(["MASS"])
-class ThermalizedBond(ut.TestCase, ThermostatsCommon):
+class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
 
     """Tests the two velocity distributions for COM and distance created by the
        thermalized bond independently against the single component Maxwell

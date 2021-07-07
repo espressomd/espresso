@@ -27,7 +27,8 @@
 # boundaries, where the velocity is fixed to $v.
 #
 import espressomd
-from espressomd import lbboundaries, shapes
+import espressomd.lbboundaries
+import espressomd.shapes
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -65,20 +66,20 @@ class Stokes:
 
         # Setup walls
         walls = [None] * 4
-        walls[0] = lbboundaries.LBBoundary(shape=shapes.Wall(
+        walls[0] = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
-        walls[1] = lbboundaries.LBBoundary(shape=shapes.Wall(
+        walls[1] = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(
             normal=[1, 0, 0], dist=1), velocity=v)
-        walls[2] = lbboundaries.LBBoundary(shape=shapes.Wall(
+        walls[2] = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(
             normal=[0, -1, 0], dist=-(1 + box_width)), velocity=v)
-        walls[3] = lbboundaries.LBBoundary(shape=shapes.Wall(
+        walls[3] = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(
             normal=[0, 1, 0], dist=1), velocity=v)
 
         for wall in walls:
             self.system.lbboundaries.add(wall)
 
         # setup sphere without slip in the middle
-        sphere = lbboundaries.LBBoundary(shape=shapes.Sphere(
+        sphere = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Sphere(
             radius=radius, center=[real_width / 2] * 2 + [box_length / 2],
             direction=1))
 

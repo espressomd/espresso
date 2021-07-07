@@ -58,9 +58,9 @@ def handle_unknown(f, all_features):
             match = d
 
     if match:
-        print("Unknown feature '{}', did you mean '{}'?".format(f, match))
+        print(f"Unknown feature '{f}', did you mean '{match}'?")
     else:
-        print("Unknown feature '{}'".format(f))
+        print(f"Unknown feature '{f}'")
 
 
 class FeatureError(Exception):
@@ -68,8 +68,8 @@ class FeatureError(Exception):
 
 
 def print_exception(ex):
-    print("""Skipped external header because {} returned non-zero exit code {},
-             output: {}.""".format(' '.join(ex.cmd), ex.returncode, ex.output.strip()))
+    print(f"Skipped external header because {' '.join(ex.cmd)} returned "
+          f"non-zero exit code {ex.returncode}, output: {ex.output.strip()}.")
 
 
 def check_myconfig(compiler, feature_file, myconfig, pre_header=None):
@@ -99,8 +99,7 @@ def check_myconfig(compiler, feature_file, myconfig, pre_header=None):
     for e in (my_features & defs.externals):
         error_state = True
         my_features.remove(e)
-        print(
-            "External feature '{}' can not be defined in myconfig.".format(e))
+        print(f"External feature '{e}' can not be defined in myconfig.")
 
     for u in (my_features - defs.features):
         if u.startswith('__'):
@@ -109,7 +108,7 @@ def check_myconfig(compiler, feature_file, myconfig, pre_header=None):
         handle_unknown(u, defs.features)
 
     if error_state:
-        raise FeatureError("There were errors in '{}'".format(sys.argv[3]))
+        raise FeatureError(f"There were errors in '{sys.argv[3]}'")
     else:
         return
 
@@ -124,4 +123,4 @@ if __name__ == "__main__":
         check_myconfig(sys.argv[1], sys.argv[2], sys.argv[3], pre_header)
         sys.exit()
     except FeatureError:
-        sys.exit("There were errors in '{}'".format(sys.argv[3]))
+        sys.exit(f"There were errors in '{sys.argv[3]}'")

@@ -22,7 +22,7 @@
 import unittest as ut
 import numpy as np
 import espressomd
-from espressomd import reaction_ensemble
+import espressomd.reaction_ensemble
 
 
 class ReactionEnsembleTest(ut.TestCase):
@@ -60,7 +60,7 @@ class ReactionEnsembleTest(ut.TestCase):
     # gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
     # degree of dissociation alpha = N_A / N_HA = N_H / N_0
     gamma = target_alpha**2 / (1. - target_alpha) * N0 / (volume**nubar)
-    RE = reaction_ensemble.ReactionEnsemble(
+    RE = espressomd.reaction_ensemble.ReactionEnsemble(
         temperature=temperature,
         exclusion_radius=exclusion_radius, seed=12)
 

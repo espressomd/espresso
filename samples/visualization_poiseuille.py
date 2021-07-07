@@ -19,16 +19,19 @@ Visualize the Poiseuille flow in a lattice-Boltzmann fluid with an
 external force applied.
 """
 
-from espressomd import System, lb, shapes, lbboundaries
-import numpy as np
+import espressomd
+import espressomd.lb
+import espressomd.lbboundaries
+import espressomd.shapes
 import espressomd.visualization_opengl
+import numpy as np
 
 required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
 # System setup
 box_l = 16
-system = System(box_l=[box_l] * 3)
+system = espressomd.System(box_l=[box_l] * 3)
 np.random.seed(seed=42)
 
 system.time_step = 0.01
@@ -48,15 +51,15 @@ visualizer = espressomd.visualization_opengl.openGLLive(
     velocity_arrows_type_radii=[0.1],
     velocity_arrows_type_colors=[[0, 1, 0]])
 
-lbf = lb.LBFluidWalberla(kT=0, agrid=1.0, dens=1.0, visc=1.0, tau=0.1,
-                         ext_force_density=[0, 0.003, 0])
+lbf = espressomd.lb.LBFluidWalberla(
+    kT=0, agrid=1.0, dens=1.0, visc=1.0, tau=0.1, ext_force_density=[0, 0.003, 0])
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 
 # Setup boundaries
-walls = [lbboundaries.LBBoundary() for k in range(2)]
-walls[0].set_params(shape=shapes.Wall(normal=[1, 0, 0], dist=1.5))
-walls[1].set_params(shape=shapes.Wall(normal=[-1, 0, 0], dist=-14.5))
+walls = [espressomd.lbboundaries.LBBoundary() for k in range(2)]
+walls[0].set_params(shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
+walls[1].set_params(shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5))
 
 for i in range(100):
     system.part.add(pos=np.random.random(3) * system.box_l)

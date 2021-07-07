@@ -18,7 +18,7 @@
 #
 import unittest as ut
 import unittest_decorators as utx
-from espressomd import lb
+import espressomd.lb
 
 from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
@@ -28,7 +28,7 @@ from virtual_sites_tracers_common import VirtualSitesTracersCommon
 class VirtualSitesTracersWalberla(ut.TestCase, VirtualSitesTracersCommon):
 
     def setUp(self):
-        self.LBClass = lb.LBFluidWalberla
+        self.LBClass = espressomd.lb.LBFluidWalberla
 
     def tearDown(self):
         VirtualSitesTracersCommon.tearDown(self)

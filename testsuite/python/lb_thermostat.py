@@ -16,16 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import unittest_decorators as utx
+import thermostats_common
 import numpy as np
 
 import espressomd.lb
-from thermostats_common import ThermostatsCommon
 
 """
 Check the lattice-Boltzmann thermostat with respect to the particle velocity
 distribution.
-
-
 """
 
 KT = 0.9 
@@ -43,7 +41,7 @@ LB_PARAMS = {'agrid': AGRID,
              'seed': 123}
 
 
-class LBThermostatCommon(ThermostatsCommon):
+class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
     """Base class of the test that holds the test logic."""
     lbf = None

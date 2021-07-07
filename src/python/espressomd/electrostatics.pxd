@@ -18,8 +18,8 @@
 #
 
 include "myconfig.pxi"
-from .utils import is_valid_type, to_str
 from libcpp cimport bool
+from .analyze cimport PartCfg, partCfg
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -165,3 +165,6 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
             void activate()
             void deactivate()
+
+cdef extern from "utils/checks/charge_neutrality.hpp" namespace "Utils":
+    bool check_charge_neutrality[ParticleRange](ParticleRange & partCfg)
