@@ -114,8 +114,6 @@ void on_integration_start(double time_step) {
   /* end sanity checks                        */
   /********************************************/
 
-  lb_lbfluid_on_integration_start();
-
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);

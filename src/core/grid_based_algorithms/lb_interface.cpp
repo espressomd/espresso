@@ -125,10 +125,6 @@ void lb_lbfluid_sanity_checks(double time_step) {
   }
 }
 
-void lb_lbfluid_on_integration_start() {}
-
-void lb_lbfluid_invalidate_particle_allocation() {}
-
 uint64_t lb_lbfluid_get_rng_state() {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {

@@ -29,27 +29,23 @@
 #include <utils/Vector.hpp>
 
 #include <algorithm>
+#include <cstdio>
 #include <stdexcept>
 
 const Utils::Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
-  Utils::Vector3d interpolated_u{};
-
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-
     auto res =
         lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid(), true);
-
     if (!res) {
       printf("%d: position: %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
       throw std::runtime_error(
           "Interpolated velocity could not be obtained from Walberla");
     }
-    extern double sim_time;
     return *res;
 #endif
   }

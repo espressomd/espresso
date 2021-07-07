@@ -38,11 +38,6 @@ extern ActiveLB lattice_switch;
  */
 void lb_lbfluid_propagate();
 
-/**
- * @brief Event handler for integration start.
- */
-void lb_lbfluid_on_integration_start();
-
 /** @brief Perform a full initialization of
  *  the lattice-Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values.
