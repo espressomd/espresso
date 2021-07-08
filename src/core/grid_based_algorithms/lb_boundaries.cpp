@@ -106,6 +106,8 @@ void lb_init_boundaries() {
 // TODO: move to separate file
 namespace EKBoundaries {
 
+std::vector<std::shared_ptr<EKBoundary>> ekboundaries;
+
 void ek_init_boundaries() {
   if (ek_get_lattice_switch() == EK::ActiveEK::WALBERLA) {
     ekin_walberla()->clear_boundaries();
