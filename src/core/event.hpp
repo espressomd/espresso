@@ -127,6 +127,9 @@ unsigned global_ghost_flags();
 /** called every time the walls for the lb fluid are changed */
 void on_lbboundary_change();
 
+/** called every time the boundaries for the ek are changed */
+void on_ekboundary_change();
+
 /** @brief Update particles with properties depending on other particles,
  *  namely virtual sites and ICC charges.
  */

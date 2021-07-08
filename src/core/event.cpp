@@ -228,6 +228,8 @@ void on_lbboundary_change() {
 #endif
 }
 
+void on_ekboundary_change() { EKBoundaries::ek_init_boundaries(); }
+
 void on_boxl_change(bool skip_method_adaption) {
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
