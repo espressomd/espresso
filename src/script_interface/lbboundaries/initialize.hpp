@@ -30,6 +30,11 @@ namespace LBBoundaries {
 void initialize(Utils::Factory<ObjectHandle> *om);
 
 } /* namespace LBBoundaries */
+
+namespace EKBoundaries {
+
+void initialize(Utils::Factory<ObjectHandle> *om);
+}
 } /* namespace ScriptInterface */
 
 #endif

@@ -33,9 +33,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LBBoundary>("LBBoundaries::LBBoundary");
 }
 } /* namespace LBBoundaries */
-} /* namespace ScriptInterface */
 
-namespace ScriptInterface {
 namespace EKBoundaries {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
