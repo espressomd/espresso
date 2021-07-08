@@ -242,6 +242,20 @@ public:
         domain_flag);
   }
 
+  [[nodicard]] bool
+  set_node_noflux_boundary(const Utils::Vector3i &node) override {
+    auto bc = get_block_and_cell(node, true, get_blockforest()->get_blocks(),
+                                 get_blockforest()->get_ghost_layers());
+    if (!bc)
+      return false;
+
+    auto *flagField = (*bc).block->template getData<FlagField>(m_flag_field_id);
+    flagField->addFlag((*bc).cell, flagField->getFlag(noflux_flag));
+
+    boundary_noflux_update();
+    return true;
+  }
+
   [[nodiscard]] bool
   remove_node_from_boundary(const Utils::Vector3i &node) override {
     auto bc = get_block_and_cell(node, true, get_blockforest()->get_blocks(),
