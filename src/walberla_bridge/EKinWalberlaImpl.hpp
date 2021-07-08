@@ -376,7 +376,7 @@ public:
     vtk_writer->addCellInclusionFilter(domain_filter);
 
     // add writers
-    if (static_cast<unsigned>(OutputVTK::density) & flag_observables) {
+    if (static_cast<unsigned>(EKOutputVTK::density) & flag_observables) {
       // TODO: density writer...
       //      vtk_writer->addCellDataWriter(
       //          make_shared<lbm::DensityVTKWriter<LatticeModel, float>>(

@@ -96,7 +96,7 @@ public:
 };
 
 /** @brief EKin statistics to write to VTK files */
-enum class OutputVTK : unsigned {
+enum class EKOutputVTK : unsigned {
   density = 1u << 0u,
 };
 
