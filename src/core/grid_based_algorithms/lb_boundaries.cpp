@@ -128,4 +128,20 @@ void ek_init_boundaries() {
     }
   }
 }
+
+void add(const std::shared_ptr<EKBoundary> &b) {
+  auto &ekb = ekboundaries;
+  assert(std::find(ekb.begin(), ekb.end(), b) == ekb.end());
+  ekb.emplace_back(b);
+
+  on_ekboundary_change();
+}
+
+void remove(const std::shared_ptr<EKBoundary> &b) {
+  auto &ekb = ekboundaries;
+  assert(std::find(ekb.begin(), ekb.end(), b) != ekb.end());
+  ekb.erase(std::remove(ekb.begin(), ekb.end(), b), ekb.end());
+
+  on_ekboundary_change();
+}
 } // namespace EKBoundaries
