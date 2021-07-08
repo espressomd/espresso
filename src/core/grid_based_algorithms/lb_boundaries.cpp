@@ -28,12 +28,15 @@
 #include "grid_based_algorithms/lb_boundaries.hpp"
 
 #include "communication.hpp"
+#include "ekin_walberla_instance.hpp"
+#include "ekin_walberla_interface.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "lbboundaries/LBBoundary.hpp"
+#include "walberla_blockforest.hpp"
 
 #include <utils/index.hpp>
 
@@ -99,3 +102,28 @@ void lb_init_boundaries() {
 #endif /* LB_BOUNDARIES */
 
 } // namespace LBBoundaries
+
+// TODO: move to separate file
+namespace EKBoundaries {
+
+void ek_init_boundaries() {
+  if (ek_get_lattice_switch() == EK::ActiveEK::WALBERLA) {
+    ekin_walberla()->clear_boundaries();
+
+    // TODO: figure out a solution for that
+    auto const agrid = lb_lbfluid_get_agrid();
+
+    for (auto index_and_pos : ekin_walberla()->node_indices_positions(true)) {
+      // Convert to MD units
+      auto const index = index_and_pos.first;
+      auto const pos = index_and_pos.second * agrid;
+
+      for (auto const &ekboundary : ekboundaries) {
+        if (not ekboundary->shape().is_inside(pos)) {
+          ekin_walberla()->set_node_noflux_boundary(index);
+        }
+      }
+    }
+  }
+}
+} // namespace EKBoundaries
