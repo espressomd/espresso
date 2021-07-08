@@ -22,6 +22,9 @@
 #include "LBBoundaries.hpp"
 #include "LBBoundary.hpp"
 
+#include "EKBoundaries.hpp"
+#include "EKBoundary.hpp"
+
 namespace ScriptInterface {
 namespace LBBoundaries {
 
@@ -31,3 +34,14 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 }
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */
+
+namespace ScriptInterface {
+namespace EKBoundaries {
+
+void initialize(Utils::Factory<ObjectHandle> *om) {
+  om->register_new<EKBoundaries>("EKBoundaries::EKBoundaries");
+  om->register_new<EKBoundary>("EKBoundaries::EKBoundary");
+}
+
+} // namespace EKBoundaries
+} // namespace ScriptInterface
