@@ -20,7 +20,7 @@ set(WalberlaBridge_SRC WalberlaBlockForest.hpp
                        generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp generated_kernels/CollideSweepThermalized.cpp
                        generated_kernels/InitialPDFsSetter.cpp generated_kernels/Dynamic_UBB.cpp
                        lb_walberla_init.cpp
-                       generated_kernels/DiffusiveFluxKernel.cpp generated_kernels/ContinuityKernel.cpp
+                       generated_kernels/DiffusiveFluxKernel.cpp generated_kernels/ContinuityKernel.cpp generated_kernels/NoFlux.cpp
                        ekin_walberla_init.cpp)
 if (WALBERLA_USE_AVX)
   list(APPEND WalberlaBridge_SRC generated_kernels/CollideSweepAVX.cpp generated_kernels/CollideSweepThermalizedAVX.cpp)
