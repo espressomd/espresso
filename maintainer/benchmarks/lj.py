@@ -137,24 +137,30 @@ system.integrator.set_steepest_descent(
     max_displacement=0.01)
 
 # warmup
-while system.analysis.energy()["total"] > 3 * n_part:
-    print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
+energy_target = n_part / 2.
+for _ in range(20):
+    energy = system.analysis.energy()["total"]
+    print(f"Minimization: {energy:.1f}")
+    if energy < energy_target:
+        break
     system.integrator.run(20)
-print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
-print()
-system.integrator.set_vv()
+else:
+    print(f"Minimization failed to converge to {energy_target:.1f}")
+    exit(1)
 
+system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # tuning and equilibration
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
+print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 60000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
+print("Equilibration")
 system.integrator.run(min(10 * measurement_steps, 60000))
 
-print(system.non_bonded_inter[0, 0].lennard_jones)
 
 if not args.visualizer:
     # print initial energies

@@ -138,28 +138,38 @@ for i in range(0, n_part, len(species)):
 #  Warmup Integration                                       #
 #############################################################
 
-energy = system.analysis.energy()
-print("Before Minimization: E_total = {}".format(energy["total"]))
-system.integrator.set_steepest_descent(f_max=1000, gamma=30.0,
-                                       max_displacement=0.05)
-system.integrator.run(2000)
-system.integrator.set_vv()
-energy = system.analysis.energy()
-print("After Minimization: E_total = {}".format(energy["total"]))
+system.integrator.set_steepest_descent(
+    f_max=0,
+    gamma=0.001,
+    max_displacement=0.01)
 
+# warmup
+energy_target = n_part / 10.
+for _ in range(20):
+    energy = system.analysis.energy()["total"]
+    print(f"Minimization: {energy:.1f}")
+    if energy < energy_target:
+        break
+    system.integrator.run(20)
+else:
+    print(f"Minimization failed to converge to {energy_target:.1f}")
+    exit(1)
 
 system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # tuning and equilibration
+print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 1000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=0.4, max_skin=1.6, tol=0.05, int_steps=100,
     adjust_max_skin=True)))
+print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune p3m")
 p3m = electrostatics.P3M(prefactor=args.prefactor, accuracy=1e-4)
 system.actors.add(p3m)
+print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100,
