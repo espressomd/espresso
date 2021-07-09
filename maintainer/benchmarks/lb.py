@@ -20,10 +20,12 @@
 """
 Benchmark Lattice-Boltzmann fluid + Lennard-Jones particles
 """
+import espressomd
+import espressomd.lb
 import os
 import sys
 import numpy as np
-from time import time
+import time
 import argparse
 
 parser = argparse.ArgumentParser(description="Benchmark LB simulations. "
@@ -51,8 +53,6 @@ assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
 
-
-import espressomd
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
@@ -144,9 +144,9 @@ system.integrator.run(500)
 
 system.thermostat.turn_off()
 print("lb sites", lb_grid, "agrid", agrid)
-if "LBFluid" in dir(espressomd.lb):
+if hasattr(espressomd.lb, "LBFluid"):
     LBClass = espressomd.lb.LBFluid
-elif "LBFluidWalberla" in dir(espressomd.lb):
+elif hasattr(espressomd.lb, "LBFluidWalberla"):
     LBClass = espressomd.lb.LBFluidWalberla
 else: 
     raise Exception("LB not built in")
@@ -159,18 +159,18 @@ system.thermostat.set_lb(gamma=10, LB_fluid=lbf, seed=2)
 
 # time integration loop
 print("Timing every {} steps".format(measurement_steps))
-main_tick = time()
+main_tick = time.time()
 all_t = []
 for i in range(n_iterations):
-    tick = time()
+    tick = time.time()
     system.integrator.run(measurement_steps)
-    tock = time()
+    tock = time.time()
     t = (tock - tick) / measurement_steps
     print("step {}, time = {:.2e}, verlet: {:.2f}, energy: {:.2e}"
           .format(i, t, system.cell_system.get_state()["verlet_reuse"],
                   system.analysis.energy()["total"]))
     all_t.append(t)
-main_tock = time()
+main_tock = time.time()
 # average time
 all_t = np.array(all_t)
 avg = np.average(all_t)

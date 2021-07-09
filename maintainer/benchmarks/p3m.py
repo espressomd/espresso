@@ -16,10 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import espressomd
+import espressomd.electrostatics
 import os
 import sys
 import numpy as np
-from time import time
+import time
 import argparse
 
 parser = argparse.ArgumentParser(description="Benchmark P3M simulations. "
@@ -53,12 +55,6 @@ assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
 if not args.visualizer:
     assert(measurement_steps >= 50), \
         "{} steps per tick are too short".format(measurement_steps)
-
-
-import espressomd
-from espressomd import electrostatics
-if args.visualizer:
-    from espressomd import visualization
 
 required_features = ["P3M", "LENNARD_JONES", "MASS"]
 espressomd.assert_features(required_features)
@@ -167,7 +163,7 @@ print("Tune skin: {}".format(system.cell_system.tune_skin(
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune p3m")
-p3m = electrostatics.P3M(prefactor=args.prefactor, accuracy=1e-4)
+p3m = espressomd.electrostatics.P3M(prefactor=args.prefactor, accuracy=1e-4)
 system.actors.add(p3m)
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
@@ -183,17 +179,17 @@ if not args.visualizer:
 
     # time integration loop
     print("Timing every {} steps".format(measurement_steps))
-    main_tick = time()
+    main_tick = time.time()
     all_t = []
     for i in range(n_iterations):
-        tick = time()
+        tick = time.time()
         system.integrator.run(measurement_steps)
-        tock = time()
+        tock = time.time()
         t = (tock - tick) / measurement_steps
         print("step {}, time = {:.2e}, verlet: {:.2f}"
               .format(i, t, system.cell_system.get_state()["verlet_reuse"]))
         all_t.append(t)
-    main_tock = time()
+    main_tock = time.time()
     # average time
     all_t = np.array(all_t)
     avg = np.average(all_t)
@@ -218,5 +214,6 @@ if not args.visualizer:
         f.write(report)
 else:
     # use visualizer
-    visualizer = visualization.openGLLive(system)
+    import espressomd.visualization
+    visualizer = espressomd.visualization.openGLLive(system)
     visualizer.run(1)

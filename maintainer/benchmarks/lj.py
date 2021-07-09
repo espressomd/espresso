@@ -16,10 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import espressomd
 import os
 import sys
 import numpy as np
-from time import time, sleep
+import time
 import argparse
 
 parser = argparse.ArgumentParser(description="Benchmark LJ simulations. "
@@ -53,12 +54,6 @@ assert not (args.bonds and args.volume_fraction > 0.5), \
 if not args.visualizer:
     assert(measurement_steps >= 100), \
         "{} steps per tick are too short".format(measurement_steps)
-
-
-import espressomd
-if args.visualizer:
-    from espressomd import visualization
-    from threading import Thread
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
@@ -169,18 +164,18 @@ if not args.visualizer:
 
     # time integration loop
     print("Timing every {} steps".format(measurement_steps))
-    main_tick = time()
+    main_tick = time.time()
     all_t = []
     for i in range(n_iterations):
-        tick = time()
+        tick = time.time()
         system.integrator.run(measurement_steps)
-        tock = time()
+        tock = time.time()
         t = (tock - tick) / measurement_steps
         print("step {}, time = {:.2e}, verlet: {:.2f}, energy: {:.2e}"
               .format(i, t, system.cell_system.get_state()["verlet_reuse"],
                       system.analysis.energy()["total"]))
         all_t.append(t)
-    main_tock = time()
+    main_tock = time.time()
     # average time
     all_t = np.array(all_t)
     avg = np.average(all_t)
@@ -205,15 +200,17 @@ if not args.visualizer:
         f.write(report)
 else:
     # use visualizer
-    visualizer = visualization.openGLLive(system)
+    import threading
+    import espressomd.visualization
+    visualizer = espressomd.visualization.openGLLive(system)
 
     def main_thread():
         while True:
             system.integrator.run(1)
             visualizer.update()
-            sleep(1 / 60.)  # limit frame rate to at most 60 FPS
+            time.sleep(1 / 60.)  # limit frame rate to at most 60 FPS
 
-    t = Thread(target=main_thread)
+    t = threading.Thread(target=main_thread)
     t.daemon = True
     t.start()
     visualizer.start()
