@@ -156,49 +156,8 @@ system.integrator.run(min(5 * measurement_steps, 2500))
 
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-if not args.visualizer:
-    # print initial energies
-    energies = system.analysis.energy()
-    print(energies)
 
-    # time integration loop
-    print("Timing every {} steps".format(measurement_steps))
-    main_tick = time.time()
-    all_t = []
-    for i in range(n_iterations):
-        tick = time.time()
-        system.integrator.run(measurement_steps)
-        tock = time.time()
-        t = (tock - tick) / measurement_steps
-        print("step {}, time = {:.2e}, verlet: {:.2f}, energy: {:.2e}"
-              .format(i, t, system.cell_system.get_state()["verlet_reuse"],
-                      system.analysis.energy()["total"]))
-        all_t.append(t)
-    main_tock = time.time()
-    # average time
-    all_t = np.array(all_t)
-    avg = np.average(all_t)
-    ci = 1.96 * np.std(all_t) / np.sqrt(len(all_t) - 1)
-    print("average: {:.3e} +/- {:.3e} (95% C.I.)".format(avg, ci))
-
-    # print final energies
-    energies = system.analysis.energy()
-    print(energies)
-
-    # write report
-    cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
-    report = ('"{script}","{arguments}",{cores},{mean:.3e},'
-              '{ci:.3e},{n},{dur:.1f}\n'.format(
-                  script=os.path.basename(sys.argv[0]), arguments=cmd,
-                  cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
-                  mean=avg, ci=ci))
-    if not os.path.isfile(args.output):
-        report = ('"script","arguments","cores","mean","ci",'
-                  '"nsteps","duration"\n' + report)
-    with open(args.output, "a") as f:
-        f.write(report)
-else:
-    # use visualizer
+if args.visualizer:
     import threading
     import espressomd.visualization
     visualizer = espressomd.visualization.openGLLive(system)
@@ -213,3 +172,45 @@ else:
     t.daemon = True
     t.start()
     visualizer.start()
+
+
+# print initial energies
+energies = system.analysis.energy()
+print(energies)
+
+# time integration loop
+print("Timing every {} steps".format(measurement_steps))
+main_tick = time.time()
+all_t = []
+for i in range(n_iterations):
+    tick = time.time()
+    system.integrator.run(measurement_steps)
+    tock = time.time()
+    t = (tock - tick) / measurement_steps
+    print("step {}, time = {:.2e}, verlet: {:.2f}, energy: {:.2e}"
+          .format(i, t, system.cell_system.get_state()["verlet_reuse"],
+                  system.analysis.energy()["total"]))
+    all_t.append(t)
+main_tock = time.time()
+# average time
+all_t = np.array(all_t)
+avg = np.average(all_t)
+ci = 1.96 * np.std(all_t) / np.sqrt(len(all_t) - 1)
+print("average: {:.3e} +/- {:.3e} (95% C.I.)".format(avg, ci))
+
+# print final energies
+energies = system.analysis.energy()
+print(energies)
+
+# write report
+cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
+report = ('"{script}","{arguments}",{cores},{mean:.3e},'
+          '{ci:.3e},{n},{dur:.1f}\n'.format(
+              script=os.path.basename(sys.argv[0]), arguments=cmd,
+              cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
+              mean=avg, ci=ci))
+if not os.path.isfile(args.output):
+    report = ('"script","arguments","cores","mean","ci",'
+              '"nsteps","duration"\n' + report)
+with open(args.output, "a") as f:
+    f.write(report)
