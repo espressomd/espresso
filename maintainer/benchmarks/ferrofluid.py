@@ -35,8 +35,7 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     "particles (range: [0.01-0.74], default: 0.50)")
 parser.add_argument("--dipole_moment", metavar="FRAC", action="store",
                     type=float, default=2**0.5, required=False,
-                    help="Fraction of the simulation box volume occupied by "
-                    "particles (range: [0.01-0.74], default: 0.50)")
+                    help="Magnitude of the dipole moment (same for all particles)")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--output", metavar="FILEPATH", action="store",
                    type=str, required=False, default="benchmarks.csv",
@@ -54,13 +53,11 @@ assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
 assert args.dipole_moment > 0
 if not args.visualizer:
-    assert(measurement_steps >= 100), \
-        "{} steps per tick are too short".format(measurement_steps)
+    assert measurement_steps >= 100, \
+        f"{measurement_steps} steps per tick are too short"
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
-
-print(espressomd.features())
 
 # System
 #############################################################
@@ -96,32 +93,19 @@ system.time_step = 0.01
 system.cell_system.skin = 0.5
 system.thermostat.turn_off()
 
-
-#############################################################
-#  Setup System                                             #
-#############################################################
-
 # Interaction setup
 #############################################################
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-print("LJ-parameters:")
-print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
-
 # Particle setup
 #############################################################
+system.part.add(
+    pos=np.random.random((n_part, 3)) * system.box_l,
+    rotation=n_part * [(1, 1, 1)],
+    dipm=n_part * [args.dipole_moment])
 
-for i in range(n_part):
-    system.part.add(
-        id=i,
-        pos=np.random.random(3) *
-        system.box_l,
-        rotation=(1, 1, 1),
-        dipm=args.dipole_moment)
-
-#############################################################
-#  Warmup Integration                                       #
+#  Warmup Integration
 #############################################################
 
 system.integrator.set_steepest_descent(
@@ -149,12 +133,10 @@ print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 60000))
 system.actors.add(
     espressomd.magnetostatics.DipolarP3M(prefactor=1, accuracy=1E-4))
-print("Tune skin: {}".format(system.cell_system.tune_skin(
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
 print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 2500))
-
-print(system.non_bonded_inter[0, 0].lennard_jones)
 
 
 if args.visualizer:
@@ -174,10 +156,6 @@ if args.visualizer:
     visualizer.start()
 
 
-# print initial energies
-energies = system.analysis.energy()
-print(energies)
-
 # time integration loop
 print("Timing every {} steps".format(measurement_steps))
 main_tick = time.time()
@@ -192,15 +170,11 @@ for i in range(n_iterations):
                   system.analysis.energy()["total"]))
     all_t.append(t)
 main_tock = time.time()
+
 # average time
-all_t = np.array(all_t)
 avg = np.average(all_t)
 ci = 1.96 * np.std(all_t) / np.sqrt(len(all_t) - 1)
 print("average: {:.3e} +/- {:.3e} (95% C.I.)".format(avg, ci))
-
-# print final energies
-energies = system.analysis.energy()
-print(energies)
 
 # write report
 cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))

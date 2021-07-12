@@ -53,13 +53,11 @@ assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
 if not args.visualizer:
-    assert(measurement_steps >= 50), \
-        "{} steps per tick are too short".format(measurement_steps)
+    assert measurement_steps >= 50, \
+        f"{measurement_steps} steps per tick are too short"
 
 required_features = ["P3M", "LENNARD_JONES", "MASS"]
 espressomd.assert_features(required_features)
-
-print(espressomd.features())
 
 # System
 #############################################################
@@ -93,20 +91,11 @@ box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
 system.box_l = 3 * (box_l,)
 system.cell_system.set_domain_decomposition(use_verlet_lists=True)
 
-# PRNG seeds
-#############################################################
-# np.random.seed(1)
-
 # Integration parameters
 #############################################################
 system.time_step = 0.01
 system.cell_system.skin = .4
 system.thermostat.turn_off()
-
-
-#############################################################
-#  Setup System                                             #
-#############################################################
 
 # Interaction setup
 #############################################################
@@ -130,8 +119,7 @@ for i in range(0, n_part, len(species)):
         system.part.add(pos=np.random.random(3) * system.box_l,
                         q=charges[t], type=types[t], mass=masses[t])
 
-#############################################################
-#  Warmup Integration                                       #
+#  Warmup Integration
 #############################################################
 
 system.integrator.set_steepest_descent(
@@ -157,7 +145,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # tuning and equilibration
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 1000))
-print("Tune skin: {}".format(system.cell_system.tune_skin(
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=0.4, max_skin=1.6, tol=0.05, int_steps=100,
     adjust_max_skin=True)))
 print("Equilibration")
@@ -167,7 +155,7 @@ p3m = espressomd.electrostatics.P3M(prefactor=args.prefactor, accuracy=1e-4)
 system.actors.add(p3m)
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
-print("Tune skin: {}".format(system.cell_system.tune_skin(
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100,
     adjust_max_skin=True)))
 
@@ -177,9 +165,6 @@ if args.visualizer:
     visualizer = espressomd.visualization.openGLLive(system)
     visualizer.run(1)
 
-# print initial energies
-energies = system.analysis.energy()
-print(energies)
 
 # time integration loop
 print("Timing every {} steps".format(measurement_steps))
@@ -190,19 +175,16 @@ for i in range(n_iterations):
     system.integrator.run(measurement_steps)
     tock = time.time()
     t = (tock - tick) / measurement_steps
-    print("step {}, time = {:.2e}, verlet: {:.2f}"
-          .format(i, t, system.cell_system.get_state()["verlet_reuse"]))
+    print("step {}, time = {:.2e}, verlet: {:.2f}, energy: {:.2e}"
+          .format(i, t, system.cell_system.get_state()["verlet_reuse"],
+                  system.analysis.energy()["total"]))
     all_t.append(t)
 main_tock = time.time()
+
 # average time
-all_t = np.array(all_t)
 avg = np.average(all_t)
 ci = 1.96 * np.std(all_t) / np.sqrt(len(all_t) - 1)
 print("average: {:.3e} +/- {:.3e} (95% C.I.)".format(avg, ci))
-
-# print final energies
-energies = system.analysis.energy()
-print(energies)
 
 # write report
 cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))

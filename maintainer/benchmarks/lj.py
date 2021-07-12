@@ -52,13 +52,11 @@ assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
 assert not (args.bonds and args.volume_fraction > 0.5), \
     "volume_fraction too dense (>0.50) for a diatomic liquid, risk of bonds breaking"
 if not args.visualizer:
-    assert(measurement_steps >= 100), \
-        "{} steps per tick are too short".format(measurement_steps)
+    assert measurement_steps >= 100, \
+        f"{measurement_steps} steps per tick are too short"
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
-
-print(espressomd.features())
 
 # System
 #############################################################
@@ -84,46 +82,32 @@ box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
 #############################################################
 system.box_l = 3 * (box_l,)
 
-# PRNG seeds
-#############################################################
-# np.random.seed(1)
-
 # Integration parameters
 #############################################################
 system.time_step = 0.01
 system.cell_system.skin = 0.5
 system.thermostat.turn_off()
 
-
-#############################################################
-#  Setup System                                             #
-#############################################################
-
 # Interaction setup
 #############################################################
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-print("LJ-parameters:")
-print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
-
 # Particle setup
 #############################################################
 
 if not args.bonds:
-    for i in range(n_part):
-        system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+    system.part.add(pos=np.random.random((n_part, 3)) * system.box_l)
 else:
     hb = espressomd.interactions.HarmonicBond(r_0=lj_cut, k=2)
     system.bonded_inter.add(hb)
-    for i in range(0, n_part, 2):
+    for _ in range(0, n_part, 2):
         pos = np.random.random(3) * system.box_l
-        system.part.add(id=i, pos=pos)
-        system.part.add(id=i + 1, pos=pos + np.random.random(3) / np.sqrt(3))
-        system.part[i].add_bond((hb, i + 1))
+        p1 = system.part.add(pos=pos)
+        p2 = system.part.add(pos=pos + np.random.random(3) / np.sqrt(3))
+        system.part[p1].add_bond((hb, p2))
 
-#############################################################
-#  Warmup Integration                                       #
+#  Warmup Integration
 #############################################################
 
 system.integrator.set_steepest_descent(
@@ -147,11 +131,11 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # tuning and equilibration
-print("Tune skin: {}".format(system.cell_system.tune_skin(
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
 print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 60000))
-print("Tune skin: {}".format(system.cell_system.tune_skin(
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
 print("Equilibration")
 system.integrator.run(min(10 * measurement_steps, 60000))
@@ -174,10 +158,6 @@ if args.visualizer:
     visualizer.start()
 
 
-# print initial energies
-energies = system.analysis.energy()
-print(energies)
-
 # time integration loop
 print("Timing every {} steps".format(measurement_steps))
 main_tick = time.time()
@@ -192,15 +172,11 @@ for i in range(n_iterations):
                   system.analysis.energy()["total"]))
     all_t.append(t)
 main_tock = time.time()
+
 # average time
-all_t = np.array(all_t)
 avg = np.average(all_t)
 ci = 1.96 * np.std(all_t) / np.sqrt(len(all_t) - 1)
 print("average: {:.3e} +/- {:.3e} (95% C.I.)".format(avg, ci))
-
-# print final energies
-energies = system.analysis.energy()
-print(energies)
 
 # write report
 cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))

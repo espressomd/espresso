@@ -18,7 +18,7 @@
 #
 
 """
-Benchmark Lattice-Boltzmann fluid + Lennard-Jones particles
+Benchmark Lattice-Boltzmann fluid + Lennard-Jones particles.
 """
 import espressomd
 import espressomd.lb
@@ -56,7 +56,6 @@ assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
-
 # System
 #############################################################
 system = espressomd.System(box_l=[1, 1, 1])
@@ -84,31 +83,18 @@ measurement_steps = int(max(120**3 / lb_grid**3, 50))
 #############################################################
 system.box_l = 3 * (box_l,)
 
-# PRNG seeds
-#############################################################
-# np.random.seed(1)
-
 # Integration parameters
 #############################################################
 system.time_step = 0.01
 system.cell_system.skin = 0.5
 system.thermostat.turn_off()
 
-
-#############################################################
-#  Setup System                                             #
-#############################################################
-
 # Interaction setup
 #############################################################
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-
-# Particle setup
-#############################################################
-
-#  Warmup Integration                                       #
+#  Warmup Integration
 #############################################################
 
 system.integrator.set_steepest_descent(
@@ -132,11 +118,11 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # tuning and equilibration
-print("Tune skin: {}".format(system.cell_system.tune_skin(
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
 print("Equilibration")
 system.integrator.run(500)
-print("Tune skin: {}".format(system.cell_system.tune_skin(
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
 print("Equilibration")
 system.integrator.run(500)
@@ -171,12 +157,13 @@ for i in range(n_iterations):
                   system.analysis.energy()["total"]))
     all_t.append(t)
 main_tock = time.time()
+
 # average time
-all_t = np.array(all_t)
 avg = np.average(all_t)
 ci = 1.96 * np.std(all_t) / np.sqrt(len(all_t) - 1)
 print("average: {:.3e} +/- {:.3e} (95% C.I.)".format(avg, ci))
 
+# write report
 cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
 report = ('"{script}","{arguments}",{cores},{mean:.3e},'
           '{ci:.3e},{n},{dur:.1f}\n'.format(
