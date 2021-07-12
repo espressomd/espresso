@@ -32,10 +32,10 @@ parser = argparse.ArgumentParser(description="Benchmark LB simulations. "
                                  "Save the results to a CSV file.")
 parser.add_argument("--particles_per_core", metavar="N", action="store",
                     type=int, default=125, required=False,
-                    help="Number of particles in the simulation box")
+                    help="Number of particles per core")
 parser.add_argument("--lb_sites_per_particle", metavar="N_LB", action="store",
                     type=float, default=28, required=False,
-                    help="Number of particles in the simulation box")
+                    help="Number of LB sites per particle")
 parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     type=float, default=0.03, required=False,
                     help="Fraction of the simulation box volume occupied by "
@@ -75,7 +75,7 @@ n_part = n_proc * args.particles_per_core
 # volume of N spheres with radius r: N * (4/3*pi*r^3)
 box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
          / args.volume_fraction)**(1. / 3.)
-lb_grid = int((round(n_part * args.lb_sites_per_particle)**(1. / 3)))
+lb_grid = int(2 * round((n_part * args.lb_sites_per_particle)**(1. / 3) / 2.))
 agrid = box_l / lb_grid
 measurement_steps = int(max(120**3 / lb_grid**3, 50))
 
@@ -93,6 +93,11 @@ system.thermostat.turn_off()
 #############################################################
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+
+# Particle setup
+#############################################################
+
+system.part.add(pos=np.random.random((n_part, 3)) * system.box_l)
 
 #  Warmup Integration
 #############################################################
@@ -129,7 +134,8 @@ system.integrator.run(500)
 
 
 system.thermostat.turn_off()
-print("lb sites", lb_grid, "agrid", agrid)
+print(f"LB shape: [{lb_grid}, {lb_grid}, {lb_grid}]")
+print(f"LB agrid: {agrid:.3f}")
 if hasattr(espressomd.lb, "LBFluid"):
     LBClass = espressomd.lb.LBFluid
 elif hasattr(espressomd.lb, "LBFluidWalberla"):
@@ -139,7 +145,6 @@ else:
 
 lbf = LBClass(agrid=agrid, dens=1, visc=1, tau=system.time_step, kT=1, seed=1)
 system.actors.add(lbf)
-print("lb shape", lbf.shape)
 system.thermostat.set_lb(gamma=10, LB_fluid=lbf, seed=2)
 
 
