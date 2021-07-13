@@ -17,10 +17,14 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
+
+# make simulation deterministic
+np.random.seed(42)
 
 benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@BENCHMARKS_DIR@/lj.py", cmd_arguments=["--particles_per_core", "800"],
-    n_iterations=2)
+    measurement_steps=400, n_iterations=2)
 
 
 @skipIfMissingFeatures
