@@ -8,3 +8,16 @@ extraction:
       - "cd build && cmake .."
     index:
       build_command: "cd build && make -j2"
+  python:
+    python_setup:
+      requirements:
+        - wheel
+      requirements_files:
+        - requirements.txt
+      exclude_requirements:
+        - PyOpenGL
+        - mayavi
+        - pyface
+        - pygame
+        - traits
+        - traitsui
