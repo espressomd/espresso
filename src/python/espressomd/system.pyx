@@ -43,7 +43,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
-from .utils import is_valid_type, handle_errors, array_locked
+from .utils import handle_errors, array_locked
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -99,7 +99,7 @@ cdef class _Globals:
         def __set__(self, _periodic):
             if len(_periodic) != 3:
                 raise ValueError(
-                    "periodicity must be of length 3, got length " + str(len(_periodic)))
+                    f"periodicity must be of length 3, got length {len(_periodic)}")
             mpi_set_periodicity(_periodic[0], _periodic[1], _periodic[2])
             handle_errors("Error while assigning system periodicity")
 

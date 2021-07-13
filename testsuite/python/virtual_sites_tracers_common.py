@@ -17,12 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-from espressomd import shapes, lbboundaries
-try:
-    from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
-except ImportError:
-    pass
-from espressomd.utils import handle_errors
+import espressomd.shapes
+import espressomd.lbboundaries
+import espressomd.virtual_sites
+import espressomd.utils
 
 
 class VirtualSitesTracersCommon:
@@ -49,31 +47,34 @@ class VirtualSitesTracersCommon:
             gamma=1)
 
         # Setup boundaries
-        walls = [lbboundaries.LBBoundary() for k in range(2)]
-        walls[0].set_params(shape=shapes.Wall(normal=[0, 0, 1], dist=0.5))
-        walls[1].set_params(shape=shapes.Wall(normal=[0, 0, -1],
-                                              dist=-self.box_height - 0.5))
+        walls = [espressomd.lbboundaries.LBBoundary() for k in range(2)]
+        walls[0].set_params(shape=espressomd.shapes.Wall(
+            normal=[0, 0, 1], dist=0.5))
+        walls[1].set_params(shape=espressomd.shapes.Wall(
+            normal=[0, 0, -1], dist=-self.box_height - 0.5))
 
         for wall in walls:
             self.system.lbboundaries.add(wall)
 
-        handle_errors("setup")
+        espressomd.utils.handle_errors("setup")
 
     def test_aa_method_switching(self):
         # Virtual sites should be disabled by default
-        self.assertIsInstance(self.system.virtual_sites, VirtualSitesOff)
+        self.assertIsInstance(
+            self.system.virtual_sites,
+            espressomd.virtual_sites.VirtualSitesOff)
 
         # Switch implementation
-        self.system.virtual_sites = VirtualSitesInertialessTracers()
+        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
         self.assertIsInstance(
-            self.system.virtual_sites, VirtualSitesInertialessTracers)
+            self.system.virtual_sites, espressomd.virtual_sites.VirtualSitesInertialessTracers)
 
     def test_advection(self):
         self.reset_lb(ext_force_density=[0.1, 0, 0])
         # System setup
         system = self.system
 
-        system.virtual_sites = VirtualSitesInertialessTracers()
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 
         # Establish steady state flow field
         p = system.part.add(pos=(0, 5.5, 5.5), virtual=True)
@@ -96,7 +97,7 @@ class VirtualSitesTracersCommon:
         """
         self.reset_lb()
         system = self.system
-        system.virtual_sites = VirtualSitesInertialessTracers()
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
         system.actors.clear()
         system.part.clear()
         p = system.part.add(pos=(0, 0, 0))

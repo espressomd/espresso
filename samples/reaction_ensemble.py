@@ -32,7 +32,7 @@ import numpy as np
 import argparse
 
 import espressomd
-from espressomd import reaction_ensemble
+import espressomd.reaction_ensemble
 
 parser = argparse.ArgumentParser(epilog=epilog)
 group = parser.add_mutually_exclusive_group()
@@ -71,12 +71,12 @@ for i in range(N0, 2 * N0):
 
 RE = None
 if args.mode == "reaction_ensemble":
-    RE = reaction_ensemble.ReactionEnsemble(
+    RE = espressomd.reaction_ensemble.ReactionEnsemble(
         temperature=1,
         exclusion_radius=1,
         seed=77)
 elif args.mode == "constant_pH_ensemble":
-    RE = reaction_ensemble.ConstantpHEnsemble(
+    RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
         temperature=1, exclusion_radius=1, seed=77)
     RE.constant_pH = 2
 else:

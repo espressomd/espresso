@@ -21,11 +21,11 @@ Visualize a Lennard-Jones liquid with live plotting via matplotlib.
 """
 
 import numpy as np
-from matplotlib import pyplot
+import matplotlib.pyplot as plt
 from threading import Thread
-import espressomd
-from espressomd import visualization
 import argparse
+import espressomd
+import espressomd.visualization
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
@@ -98,27 +98,26 @@ n_part = int(volume * density)
 for i in range(n_part):
     system.part.add(pos=np.random.random(3) * system.box_l)
 
-print("Simulate {} particles in a cubic box {} at density {}."
-      .format(n_part, box_l, density).strip())
+print(
+    f"Simulate {n_part} particles in a cubic box {box_l} at density {density}.")
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
-print("Start with minimal distance {}".format(act_min_dist))
+print(f"Start with minimal distance {act_min_dist}")
 
 # Select visualizer
 if args.visualizer == "mayavi":
-    visualizer = visualization.mayaviLive(system)
+    visualizer = espressomd.visualization.mayaviLive(system)
 else:
-    visualizer = visualization.openGLLive(system)
+    visualizer = espressomd.visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #
 #############################################################
 
-print("""
+print(f"""\
 Start warmup integration:
-At maximum {} times {} steps
-Stop if minimal distance is larger than {}
-""".strip().format(warm_n_times, warm_steps, min_dist))
+At maximum {warm_n_times} times {warm_steps} steps
+Stop if minimal distance is larger than {min_dist}""")
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # minimize energy using min_dist as the convergence criterion
@@ -126,12 +125,12 @@ system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=lj_sig / 100)
 i = 0
 while i < warm_n_times and system.analysis.min_dist() < min_dist:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(warm_steps)
     i += 1
     visualizer.update()
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 
@@ -147,16 +146,16 @@ print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 energies = system.analysis.energy()
 print(energies)
 
-plot, = pyplot.plot([0], [energies['total']], label="total")
-pyplot.xlabel("Time")
-pyplot.ylabel("Energy")
-pyplot.legend()
-pyplot.show(block=False)
+plot, = plt.plot([0], [energies['total']], label="total")
+plt.xlabel("Time")
+plt.ylabel("Energy")
+plt.legend()
+plt.show(block=False)
 
 
 def main_loop():
     global energies
-    print("run at time={:.2f}".format(system.time))
+    print(f"run at time={system.time:.2f}")
 
     system.integrator.run(int_steps)
     visualizer.update()
@@ -180,10 +179,10 @@ def update_plot():
     if last_plotted == current_time:
         return
     last_plotted = current_time
-    pyplot.xlim(0, plot.get_xdata()[-1])
-    pyplot.ylim(plot.get_ydata().min(), plot.get_ydata().max())
-    pyplot.draw()
-    pyplot.pause(0.01)
+    plt.xlim(0, plot.get_xdata()[-1])
+    plt.ylim(plot.get_ydata().min(), plot.get_ydata().max())
+    plt.draw()
+    plt.pause(0.01)
 
 
 t = Thread(target=main_thread)

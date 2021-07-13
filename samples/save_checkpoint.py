@@ -25,17 +25,16 @@ Basic usage of the checkpointing feature. Show how to write the state of:
 """
 
 import espressomd
+import espressomd.electrostatics
+import espressomd.checkpointing
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import electrostatics
-from espressomd import checkpointing
-
 import numpy as np
 import signal
 
-checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
+checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
 
 if not checkpoint.checkpoint_signals:
     checkpoint.register_signal(signal.SIGINT)
@@ -71,7 +70,7 @@ n_part = 10
 system.part.add(pos=np.random.random((n_part, 3)) * system.box_l,
                 q=np.resize((1, -1), n_part))
 
-p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 system.actors.add(p3m)
 
 # let's also register the p3m reference for easy access later

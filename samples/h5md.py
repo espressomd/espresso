@@ -19,9 +19,9 @@ Write ESPResSo trajectories in the H5MD format. See :ref:`Writing H5MD-files`.
 """
 
 import espressomd
-from espressomd.io.writer import h5md  # pylint: disable=import-error
-from espressomd import polymer
-from espressomd import interactions
+import espressomd.io.writer.h5md  # pylint: disable=import-error
+import espressomd.polymer
+import espressomd.interactions
 
 system = espressomd.System(box_l=[100.0, 100.0, 100.0])
 
@@ -29,13 +29,12 @@ system.time_step = 0.01
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.skin = 0.4
 
-fene = interactions.FeneBond(k=10, d_r_max=2)
+fene = espressomd.interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
-positions = polymer.linear_polymer_positions(n_polymers=5,
-                                             beads_per_chain=50,
-                                             bond_length=1.0,
-                                             seed=1234)
+positions = espressomd.polymer.linear_polymer_positions(
+    n_polymers=5, beads_per_chain=50, bond_length=1.0, seed=1234)
+
 for polymer in positions:
     monomers = system.part.add(pos=polymer)
     previous_part = None
@@ -44,8 +43,10 @@ for polymer in positions:
             part.add_bond((fene, previous_part))
         previous_part = part
 
-h5_units = h5md.UnitSystem(time='ps', mass='u', length='nm', charge='e')
-h5_file = h5md.H5md(file_path="sample.h5", unit_system=h5_units)
+h5_units = espressomd.io.writer.h5md.UnitSystem(
+    time='ps', mass='u', length='nm', charge='e')
+h5_file = espressomd.io.writer.h5md.H5md(
+    file_path="sample.h5", unit_system=h5_units)
 
 for i in range(2):
     h5_file.write()

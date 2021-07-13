@@ -20,6 +20,7 @@ import espressomd
 import numpy as np
 import math
 import espressomd.interactions
+import espressomd.electrostatics
 
 COULOMB_PREFACTOR = 4.01
 
@@ -40,14 +41,12 @@ class TestThole(ut.TestCase):
     system = espressomd.System(box_l=[box_l] * 3)
 
     def setUp(self):
-        from espressomd.electrostatics import P3M
-
         self.system.time_step = 0.01
         self.system.cell_system.skin = 0.4
         self.system.part.add(pos=[0, 0, 0], type=0, fix=[1, 1, 1], q=self.q1)
         self.system.part.add(pos=[2, 0, 0], type=0, fix=[1, 1, 1], q=self.q2)
 
-        p3m = P3M(
+        p3m = espressomd.electrostatics.P3M(
             prefactor=COULOMB_PREFACTOR, accuracy=1e-6, mesh=3 * [52], cao=4)
         self.system.actors.add(p3m)
 

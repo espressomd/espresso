@@ -26,7 +26,7 @@ import numpy as np
 import scipy.optimize
 
 import espressomd
-from espressomd import reaction_ensemble
+import espressomd.reaction_ensemble
 
 # System parameters
 #############################################################
@@ -81,7 +81,7 @@ for i in range(N0):
         system.part.add(pos=np.random.random(3) * system.box_l, type=type_B)
 
 # use an exclusion radius of 0 to simulate an ideal gas
-RE = reaction_ensemble.ReactionEnsemble(
+RE = espressomd.reaction_ensemble.ReactionEnsemble(
     temperature=1, exclusion_radius=0, seed=4)
 
 
@@ -144,11 +144,7 @@ concentrations_numerical = {
 
 print("concentrations sampled with the reaction ensemble vs. analytical solutions:")
 for ptype in types:
-    print("  type {}: {:.4f} +/- {:.4f} mol/l (95% CI), expected: {:.4f} mol/l"
-          .format(types_name[ptype],
-                  concentrations[ptype],
-                  concentrations_95ci[ptype],
-                  concentrations_numerical[ptype]))
+    print(f"  type {types_name[ptype]}: {concentrations[ptype]:.4f} +/- {concentrations_95ci[ptype]:.4f} mol/l (95% CI), expected: {concentrations_numerical[ptype]:.4f} mol/l")
 
 K_sim = ((concentrations[type_C] / c_ref_in_mol_per_l)**nu_C
          * (concentrations[type_D] / c_ref_in_mol_per_l)**nu_D
@@ -158,5 +154,5 @@ K_sim = ((concentrations[type_C] / c_ref_in_mol_per_l)**nu_C
 N0_sim = (1.0 / abs(nu_A) * concentrations[type_A] + 1.0 / nu_D *
           concentrations[type_D]) / conversion_inv_sigma_cube_to_mol_per_l * volume
 print("properties of the simulated ensemble:")
-print("  K_sim = {:.1e} mol/l, expected: {:.1e} mol/l".format(K_sim, K))
-print("  N0_sim = {:.1f}, expected: {}".format(N0_sim, N0))
+print(f"  K_sim = {K_sim:.1e} mol/l, expected: {K:.1e} mol/l")
+print(f"  N0_sim = {N0_sim:.1f}, expected: {N0}")

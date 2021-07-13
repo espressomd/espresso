@@ -19,11 +19,11 @@ cimport numpy
 import os
 from libcpp cimport bool
 from libcpp.vector cimport vector
-from .particle_data import ParticleHandle
-from .particle_data cimport *
+from .particle_data cimport particle, get_particle_data, get_particle_bonds
 from .interactions import NonBondedInteractions
 from .interactions cimport IA_parameters, get_ia_param
 from .grid cimport box_geo
+from .utils cimport Vector3d
 from .utils cimport make_array_locked
 
 include "myconfig.pxi"

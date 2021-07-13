@@ -17,14 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
-from .utils import requires_experimental_features
 from .actors cimport Actor
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
 
 from .utils import handle_errors
-from .utils import is_valid_type, check_type_or_throw_except, to_str
+from .utils import is_valid_type, check_type_or_throw_except
 
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):

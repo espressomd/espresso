@@ -189,8 +189,8 @@ surface. ICC relies on a Coulomb solver that is already initialized. So far, it
 is implemented and well tested with the Coulomb solver P3M. ICC is an |es|
 actor and can be activated via::
 
-    from espressomd.electrostatic_extensions import ICC
-    icc = ICC(...)
+    import espressomd.electrostatic_extensions
+    icc = espressomd.electrostatic_extensions.ICC(...)
     system.actors.add(icc)
 
 The ICC particles are setup as normal |es| particles. Note that they should
@@ -336,10 +336,10 @@ the details.
 
 MMM1D is used with::
 
-    from espressomd.electrostatics import MMM1D
-    mmm1d = MMM1D(prefactor=C, far_switch_radius=fr, maxPWerror=err, tune=False,
-                  bessel_cutoff=bc)
-    mmm1d = MMM1D(prefactor=C, maxPWerror=err)
+    import espressomd.electrostatics
+    mmm1d = espressomd.electrostatics.MMM1D(prefactor=C, far_switch_radius=fr,
+                                            maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d = espressomd.electrostatics.MMM1D(prefactor=C, maxPWerror=err)
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
 MMM1D Coulomb method for systems with periodicity (0 0 1). Needs the
@@ -366,10 +366,10 @@ counterpart, it does not need the N-squared cell system.
 
 ::
 
-    from espressomd.electrostatics import MMM1DGPU
-    mmm1d_gpu = MMM1DGPU(prefactor=C, far_switch_radius=fr, maxPWerror=err,
-                         tune=False, bessel_cutoff=bc)
-    mmm1d_gpu = MMM1DGPU(prefactor=C, maxPWerror=err)
+    import espressomd.electrostatics
+    mmm1d = espressomd.electrostatics.MMM1DGPU(prefactor=C, far_switch_radius=fr,
+                                               maxPWerror=err, tune=False, bessel_cutoff=bc)
+    mmm1d = espressomd.electrostatics.MMM1DGPU(prefactor=C, maxPWerror=err)
 
 The first form sets parameters manually. The switch radius determines at which
 xy-distance the force calculation switches from the near to the far
@@ -405,9 +405,10 @@ To use a specific electrostatics solver from ScaFaCoS for your system,
 e.g. ``ewald``, set its cutoff to :math:`1.5` and tune the other parameters
 for an accuracy of :math:`10^{-3}`::
 
-   from espressomd.electrostatics import Scafacos
-   scafacos = Scafacos(prefactor=1, method_name="ewald",
-                       method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
+   import espressomd.electrostatics
+   scafacos = espressomd.electrostatics.Scafacos(
+      prefactor=1, method_name="ewald",
+      method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
    system.actors.add(scafacos)
 
 For details of the various methods and their parameters please refer to

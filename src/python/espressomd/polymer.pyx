@@ -24,6 +24,7 @@ from .system import System
 from .interactions import BondedInteraction
 from .utils cimport make_Vector3d, check_type_or_throw_except
 from .utils import array_locked
+from .analyze cimport partCfg
 
 
 def validate_params(_params, default):
@@ -240,7 +241,7 @@ def setup_diamond_polymer(system=None, bond=None, MPC=0,
 
     box = system.box_l
     if not box[0] == box[1] == box[2]:
-        raise Exception("Simulation box must be cubic but is {}".format(box))
+        raise Exception(f"Simulation box must be cubic but is {box}")
     box_length = box[0]
 
     node_positions = box_length / 4. * np.array([[0, 0, 0], [1, 1, 1],

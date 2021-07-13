@@ -34,7 +34,9 @@ def AssertThermostatType(*allowedthermostats):
     """Assert that only a certain group of thermostats is active at a time.
 
     Decorator class to ensure that only specific combinations of thermostats
-    can be activated together by the user. Usage::
+    can be activated together by the user. Usage:
+
+    .. code-block:: cython
 
         cdef class Thermostat:
             @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)

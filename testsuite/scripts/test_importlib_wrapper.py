@@ -348,7 +348,7 @@ except ImportError:
                                    'es2.System', 's1', 's2', 's3', 's4'}
         self.assertEqual(v.es_system_aliases, expected_es_sys_aliases)
         # find all variables of type espressomd.system.System
-        expected_es_sys_objs = set('sys' + str(i) for i in range(1, 8))
+        expected_es_sys_objs = set(f'sys{i}' for i in range(1, 8))
         self.assertEqual(v.variable_system_aliases, expected_es_sys_objs)
         # find all seeds setup
         self.assertEqual(v.numpy_seeds, [17, 18, 19])
