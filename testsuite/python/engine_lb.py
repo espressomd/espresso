@@ -167,7 +167,8 @@ class SwimmerTest():
             # fold into box
             sw_source_pos -= np.floor(sw_source_pos /
                                       self.system.box_l) * np.array(self.system.box_l)
-            sw_source_nodes = tests_common.get_lb_nodes_around_pos(sw_source_pos, self.lbf)
+            sw_source_nodes = tests_common.get_lb_nodes_around_pos(
+                sw_source_pos, self.lbf)
             sw_source_forces = np.array(
                 [n.last_applied_force for n in sw_source_nodes])
             np.testing.assert_allclose(

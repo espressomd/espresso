@@ -59,7 +59,8 @@ system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 # Setup boundaries
 walls = [espressomd.lbboundaries.LBBoundary() for k in range(2)]
 walls[0].set_params(shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
-walls[1].set_params(shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-14.5))
+walls[1].set_params(shape=espressomd.shapes.Wall(
+    normal=[-1, 0, 0], dist=-14.5))
 
 for i in range(100):
     system.part.add(pos=np.random.random(3) * system.box_l)
