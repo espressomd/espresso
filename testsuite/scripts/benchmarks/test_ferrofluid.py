@@ -24,7 +24,9 @@ np.random.seed(42)
 
 benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@BENCHMARKS_DIR@/ferrofluid.py", measurement_steps=100, n_iterations=2,
-    cmd_arguments=["--particles_per_core", "400"])
+    cmd_arguments=["--particles_per_core", "400"], min_skin=0.225, max_skin=0.225,
+    dp3m_params={'prefactor': 1, 'accuracy': 1e-4, 'cao': 7, 'r_cut': 5.193,
+                 'mesh': [20, 20, 20], 'alpha': 0.64788, 'tune': False})
 
 
 @skipIfMissingFeatures

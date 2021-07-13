@@ -127,20 +127,23 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # tuning and equilibration
+min_skin = 0.2
+max_skin = 1.6
+p3m_params = {'prefactor': args.prefactor, 'accuracy': 1e-4}
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 1000))
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
-    min_skin=0.4, max_skin=1.6, tol=0.05, int_steps=100,
+    min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100,
     adjust_max_skin=True)))
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune p3m")
-p3m = espressomd.electrostatics.P3M(prefactor=args.prefactor, accuracy=1e-4)
+p3m = espressomd.electrostatics.P3M(**p3m_params)
 system.actors.add(p3m)
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
-    min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100,
+    min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100,
     adjust_max_skin=True)))
 
 

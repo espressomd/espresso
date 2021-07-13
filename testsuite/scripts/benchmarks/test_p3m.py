@@ -24,7 +24,9 @@ np.random.seed(42)
 
 benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@BENCHMARKS_DIR@/p3m.py", cmd_arguments=["--particles_per_core", "400"],
-    measurement_steps=100, n_iterations=2)
+    measurement_steps=100, n_iterations=2, min_skin=0.262, max_skin=0.262,
+    p3m_params={'prefactor': 4, 'accuracy': 1e-4, 'cao': 7, 'r_cut': 3.182,
+                'mesh': [24, 24, 24], 'alpha': 1.02742, 'tune': False})
 
 
 @skipIfMissingFeatures
