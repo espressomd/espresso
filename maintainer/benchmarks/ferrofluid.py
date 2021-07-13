@@ -18,10 +18,8 @@
 #
 import espressomd
 import espressomd.magnetostatics
-import os
-import sys
+import benchmarks
 import numpy as np
-import time
 import argparse
 
 parser = argparse.ArgumentParser(description="Benchmark ferrofluid simulations. "
@@ -108,22 +106,8 @@ system.part.add(
 #  Warmup Integration
 #############################################################
 
-system.integrator.set_steepest_descent(
-    f_max=0,
-    gamma=0.001,
-    max_displacement=0.01)
-
 # warmup
-energy_target = n_part / 10.
-for _ in range(20):
-    energy = system.analysis.energy()["total"]
-    print(f"Minimization: {energy:.1f}")
-    if energy < energy_target:
-        break
-    system.integrator.run(20)
-else:
-    print(f"Minimization failed to converge to {energy_target:.1f}")
-    exit(1)
+benchmarks.minimize(system, n_part / 10.)
 
 system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
@@ -140,6 +124,7 @@ system.integrator.run(min(5 * measurement_steps, 2500))
 
 
 if args.visualizer:
+    import time
     import threading
     import espressomd.visualization
     visualizer = espressomd.visualization.openGLLive(system)
@@ -157,34 +142,11 @@ if args.visualizer:
 
 
 # time integration loop
-print("Timing every {} steps".format(measurement_steps))
-main_tick = time.time()
-all_t = []
-for i in range(n_iterations):
-    tick = time.time()
-    system.integrator.run(measurement_steps)
-    tock = time.time()
-    t = (tock - tick) / measurement_steps
-    print("step {}, time = {:.2e}, verlet: {:.2f}, energy: {:.2e}"
-          .format(i, t, system.cell_system.get_state()["verlet_reuse"],
-                  system.analysis.energy()["total"]))
-    all_t.append(t)
-main_tock = time.time()
+timings = benchmarks.get_timings(system, measurement_steps, n_iterations)
 
 # average time
-avg = np.average(all_t)
-ci = 1.96 * np.std(all_t) / np.sqrt(len(all_t) - 1)
-print("average: {:.3e} +/- {:.3e} (95% C.I.)".format(avg, ci))
+avg, ci = benchmarks.get_average_time(timings)
+print(f"average: {avg:.3e} +/- {ci:.3e} (95% C.I.)")
 
 # write report
-cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
-report = ('"{script}","{arguments}",{cores},{mean:.3e},'
-          '{ci:.3e},{n},{dur:.1f}\n'.format(
-              script=os.path.basename(sys.argv[0]), arguments=cmd,
-              cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
-              mean=avg, ci=ci))
-if not os.path.isfile(args.output):
-    report = ('"script","arguments","cores","mean","ci",'
-              '"nsteps","duration"\n' + report)
-with open(args.output, "a") as f:
-    f.write(report)
+benchmarks.write_report(args.output, n_proc, timings, measurement_steps)
