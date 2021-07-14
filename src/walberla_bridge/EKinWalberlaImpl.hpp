@@ -244,7 +244,7 @@ public:
         domain_flag);
   }
 
-  [[nodicard]] bool
+  [[nodiscard]] bool
   set_node_noflux_boundary(const Utils::Vector3i &node) override {
     auto bc = get_block_and_cell(node, true, get_blockforest()->get_blocks(),
                                  get_blockforest()->get_ghost_layers());
