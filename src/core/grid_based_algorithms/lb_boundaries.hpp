@@ -65,13 +65,4 @@ void remove(const std::shared_ptr<LBBoundary> &);
 #endif // (LB_BOUNDARIES)
 } // namespace LBBoundaries
 
-// TODO: move to separate file
-namespace EKBoundaries {
-
-extern std::vector<std::shared_ptr<EKBoundary>> ekboundaries;
-
-void add(const std::shared_ptr<EKBoundary> &);
-void remove(const std::shared_ptr<EKBoundary> &);
-} // namespace EKBoundaries
-
 #endif /* LB_BOUNDARIES_H */
