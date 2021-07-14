@@ -30,9 +30,7 @@ cdef class EKinWalberla(Actor):
         return {"diffusion", "kT", "dens", "tau"}
 
     def default_params(self):
-        return {"diffusion": 0.0,
-                "kT": 0.0,
-                "dens": 0.0}
+        return {}
 
     def _set_params_in_es_core(self):
         pass
