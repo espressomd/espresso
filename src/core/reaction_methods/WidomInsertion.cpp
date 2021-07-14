@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "reaction_methods/WidomInsertion.hpp"
 
 #include "energy.hpp"
