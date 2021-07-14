@@ -86,6 +86,7 @@ bool recalc_forces = true;
 static double verlet_reuse = 0.0;
 
 static int fluid_step = 0;
+static int ek_step = 0;
 
 bool set_py_interrupt = false;
 namespace {
@@ -294,25 +295,29 @@ int integrate(int n_steps, int reuse_forces) {
     }
 #endif
 
+    // TODO: this will not work if ek is coupled to lb
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE or
-          ek_get_lattice_switch() != EK::ActiveEK::NONE) {
-        // use tau if lb is active, otherwise use the MD - timestep
-        auto const tau = []() {
-          return lb_lbfluid_get_lattice_switch() != ActiveLB::NONE
-                     ? lb_lbfluid_get_tau()
-                     : get_time_step();
-        }();
+      if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
+        auto const tau = lb_lbfluid_get_tau();
         auto const lb_steps_per_md_step =
             static_cast<int>(std::round(tau / time_step));
         fluid_step += 1;
         if (fluid_step >= lb_steps_per_md_step) {
           fluid_step = 0;
           lb_lbfluid_propagate();
-          ek_propagate();
         }
         lb_lbcoupling_propagate();
+      }
+      if (ek_get_lattice_switch() != EK::ActiveEK::NONE) {
+        auto const tau = walberla::ek_get_tau();
+        auto const ek_steps_per_md_step =
+            static_cast<int>(std::round(tau / time_step));
+        ek_step += 1;
+        if (ek_step >= ek_steps_per_md_step) {
+          ek_step = 0;
+          ek_propagate();
+        }
       }
 
 #ifdef VIRTUAL_SITES
