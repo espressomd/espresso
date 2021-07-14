@@ -338,7 +338,8 @@ void ReactionAlgorithm::generic_oneway_reaction(
 
   std::vector<double> exponential = {
       exp(-1.0 / kT * (E_pot_new - E_pot_old))};
-  current_reaction.accumulator_exponentials(exponential);
+      
+   current_reaction.accumulator_potential_energy_difference_exponential(exponential);
 
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
