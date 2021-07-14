@@ -113,7 +113,7 @@ void ek_init_boundaries() {
     ekin_walberla()->clear_boundaries();
 
     // TODO: figure out a solution for that
-    auto const agrid = lb_lbfluid_get_agrid();
+    auto const agrid = get_walberla_blockforest_params()->get_agrid();
 
     for (auto index_and_pos : ekin_walberla()->node_indices_positions(true)) {
       // Convert to MD units
