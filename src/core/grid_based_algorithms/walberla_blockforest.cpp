@@ -6,9 +6,11 @@
 namespace {
 /** @brief Access the per-MPI-node Walberla instance */
 std::shared_ptr<walberla::WalberlaBlockForest> walberla_blockforest;
+std::unique_ptr<walberla::WalberlaBlockForestParams>
+    walberla_blockforest_params;
 } // namespace
 
-const walberla::WalberlaBlockForest * get_walberla_blockforest() {
+const walberla::WalberlaBlockForest *get_walberla_blockforest() {
   if (!walberla_blockforest) {
     throw std::runtime_error(
         "Attempted access to uninitialized BlockForest instance.");
@@ -16,11 +18,21 @@ const walberla::WalberlaBlockForest * get_walberla_blockforest() {
   return walberla_blockforest.get();
 }
 
+const walberla::WalberlaBlockForestParams *get_walberla_blockforest_params() {
+  if (!walberla_blockforest_params) {
+    throw std::runtime_error(
+        "Attempted access to uninitialized BlockForest parameters.");
+  }
+  return walberla_blockforest_params.get();
+}
+
 void init_walberla_blockforest_local(const Utils::Vector3i &grid_dimensions,
                                      const Utils::Vector3i &node_grid,
-                                     int n_ghost_layers) {
+                                     int n_ghost_layers, double agrid) {
   walberla_blockforest = std::make_shared<walberla::WalberlaBlockForest>(
       grid_dimensions, node_grid, n_ghost_layers);
+  walberla_blockforest_params =
+      std::make_unique<walberla::WalberlaBlockForestParams>(agrid);
 }
 
 REGISTER_CALLBACK(init_walberla_blockforest_local)
@@ -41,5 +53,5 @@ void mpi_init_walberla_blockforest(const Utils::Vector3d &box_size,
     }
   }
   mpi_call_all(init_walberla_blockforest_local, grid_dimensions, node_grid,
-               n_ghost_layers);
+               n_ghost_layers, agrid);
 }
