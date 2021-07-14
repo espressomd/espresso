@@ -53,6 +53,7 @@ protected:
   const WalberlaBlockForest *m_blockforest;
 
   pystencils::NoFlux *m_noflux;
+  bool m_noflux_dirty = false;
 
   std::shared_ptr<timeloop::SweepTimeloop> m_time_loop;
 
@@ -197,6 +198,10 @@ public:
   void ghost_communication() override { (*m_full_communication)(); };
 
   void integrate() override {
+    if (m_noflux_dirty) {
+      boundary_noflux_update();
+      m_noflux_dirty = false;
+    }
     m_time_loop->singleStep();
 
     // Handle VTK writers
@@ -254,7 +259,7 @@ public:
     auto *flagField = (*bc).block->template getData<FlagField>(m_flag_field_id);
     flagField->addFlag((*bc).cell, flagField->getFlag(noflux_flag));
 
-    boundary_noflux_update();
+    m_noflux_dirty = true;
     return true;
   }
 
@@ -268,7 +273,7 @@ public:
     auto *flagField = (*bc).block->template getData<FlagField>(m_flag_field_id);
     flagField->removeFlag((*bc).cell, flagField->getFlag(noflux_flag));
 
-    boundary_noflux_update();
+    m_noflux_dirty = true;
     return true;
   };
 
@@ -304,7 +309,7 @@ public:
       }
     }
 
-    boundary_noflux_update();
+    m_noflux_dirty = true;
   };
 
   [[nodiscard]] uint64_t get_rng_state() const override {
