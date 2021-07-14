@@ -65,6 +65,7 @@
 
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
+#include "generated_kernels/StreamSweep.h"
 #include "walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
@@ -265,14 +266,8 @@ public:
     // Note: For now combined collide-stream sweeps cannot be used,
     // because the collide-push variant is not supported by lbmpy.
     // The following functors are individual in-place collide and stream steps
-    // derived from the lbmpy-provide combined sweep class.
-    auto combined_sweep_stream =
-        std::make_shared<typename LatticeModel::Sweep>(m_pdf_field_id);
-    auto stream = [combined_sweep_stream](
-                      IBlock *const block,
-                      const uint_t numberOfGhostLayersToInclude = uint_t(0)) {
-      combined_sweep_stream->stream(block, numberOfGhostLayersToInclude);
-    };
+    auto stream = pystencils::StreamSweep(m_pdf_field_id);
+
     auto combined_sweep_collide =
         std::make_shared<typename LatticeModel::Sweep>(m_pdf_field_id);
     auto collide = [combined_sweep_collide](

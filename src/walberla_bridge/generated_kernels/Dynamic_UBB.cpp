@@ -49,13 +49,13 @@ static FUNC_PREFIX void dynamic_ubb_boundary_Dynamic_UBB(
     int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3,
     int64_t indexVectorSize) {
 
-  const int32_t f_in_inv_dir_idx[] = {0, 2,  1,  4,  3,  6,  5,  10, 9, 8,
+  const int64_t f_in_inv_dir_idx[] = {0, 2,  1,  4,  3,  6,  5,  10, 9, 8,
                                       7, 16, 15, 18, 17, 12, 11, 14, 13};
-  const int32_t f_out_offsets_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1,
+  const int64_t f_out_offsets_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1,
                                      1, 0, 0, -1, 1, 0, 0, -1, 1};
-  const int32_t f_out_offsets_y[] = {0,  1, -1, 0, 0, 0, 0,  1, 1, -1,
+  const int64_t f_out_offsets_y[] = {0,  1, -1, 0, 0, 0, 0,  1, 1, -1,
                                      -1, 1, -1, 0, 0, 1, -1, 0, 0};
-  const int32_t f_out_offsets_z[] = {0, 0, 0, 0, 0, 1,  -1, 0,  0, 0,
+  const int64_t f_out_offsets_z[] = {0, 0, 0, 0, 0, 1,  -1, 0,  0, 0,
                                      0, 1, 1, 1, 1, -1, -1, -1, -1};
 
   const double weights[] = {
@@ -67,18 +67,18 @@ static FUNC_PREFIX void dynamic_ubb_boundary_Dynamic_UBB(
       0.0277777777777778, 0.0277777777777778, 0.0277777777777778,
       0.0277777777777778};
 
-  const int32_t neighbour_offset_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1,
+  const int64_t neighbour_offset_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1,
                                         1, 0, 0, -1, 1, 0, 0, -1, 1};
-  const int32_t neighbour_offset_y[] = {0,  1, -1, 0, 0, 0, 0,  1, 1, -1,
+  const int64_t neighbour_offset_y[] = {0,  1, -1, 0, 0, 0, 0,  1, 1, -1,
                                         -1, 1, -1, 0, 0, 1, -1, 0, 0};
-  const int32_t neighbour_offset_z[] = {0, 0, 0, 0, 0, 1,  -1, 0,  0, 0,
+  const int64_t neighbour_offset_z[] = {0, 0, 0, 0, 0, 1,  -1, 0,  0, 0,
                                         0, 1, 1, 1, 1, -1, -1, -1, -1};
 
   for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
-    const int32_t x = *((int32_t *)(&_data_indexVector[40 * ctr_0]));
-    const int32_t y = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 4]));
-    const int32_t z = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 8]));
-    const int32_t dir = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 12]));
+    const int64_t x = *((int32_t *)(&_data_indexVector[40 * ctr_0]));
+    const int64_t y = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 4]));
+    const int64_t z = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 8]));
+    const int64_t dir = *((int32_t *)(&_data_indexVector[40 * ctr_0 + 12]));
     const double vel0Term =
         _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 + _stride_pdfs_1 * y +
                    _stride_pdfs_1 + _stride_pdfs_2 * z + 8 * _stride_pdfs_3] +

@@ -17,6 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
+#pragma once
 #include "core/DataTypes.h"
 
 #include "field/GhostLayerField.h"
@@ -436,6 +437,8 @@ public:
             }
             
         }
+        
+
         indexVectors->syncGPU();
     }
 

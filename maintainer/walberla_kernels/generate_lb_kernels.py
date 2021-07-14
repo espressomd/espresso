@@ -21,78 +21,120 @@ import sympy as sp
 import pystencils as ps
 from pystencils.field import Field
 from lbmpy.creationfunctions import create_lb_collision_rule, create_mrt_orthogonal, force_model_from_string
-from lbmpy.moments import is_bulk_moment, is_shear_moment, get_order
 from lbmpy.stencils import get_stencil
-from pystencils_walberla import CodeGeneration
+from pystencils_walberla import CodeGeneration, codegen
 
-from lbmpy_walberla import generate_lattice_model, generate_boundary, generate_lb_pack_info
+from lbmpy_walberla import generate_boundary, generate_lb_pack_info
 
 from lbmpy.boundaries import UBB
 from lbmpy_walberla.additional_data_handler import UBBAdditionalDataHandler
+import relaxation_rates
+from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
+from lbmpy.stencils import get_stencil
+from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_only_kernel
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
+
+
+def generate_collision_sweep(
+        ctx, lb_method, collision_rule, class_name, params):
+    dtype = "float64" 
+    field_layout = "fzyx"
+    q = len(lb_method.stencil)
+    dim = len(lb_method.stencil[0])
+    # Symbols for PDF (twice, due to double buffering)
+    src_field = ps.Field.create_generic(
+        'pdfs',
+        dim,
+        dtype,
+        index_dimensions=1,
+        layout=field_layout,
+        index_shape=(
+            q,
+        ))
+    dst_field = ps.Field.create_generic('pdfs_tmp', dim, dtype, index_dimensions=1, layout=field_layout,
+                                        index_shape=(q,))
+
+    # Generate collision kernel
+    collide_update_rule = create_lbm_kernel(
+        collision_rule,
+        src_field,
+        dst_field,
+        CollideOnlyInplaceAccessor())
+    collide_ast = ps.create_kernel(collide_update_rule, **params)
+    collide_ast.function_name = 'kernel_collide'
+    collide_ast.assumed_inner_stride_one = True
+    codegen.generate_sweep(ctx, class_name, collide_ast)
+
+
+def generate_stream_sweep(ctx, lb_method, class_name, params):
+    dtype = "float64" 
+    field_layout = "fzyx"
+
+    q = len(lb_method.stencil)
+    dim = len(lb_method.stencil[0])
+
+    # Symbols for PDF (twice, due to double buffering)
+    src_field = ps.Field.create_generic(
+        'pdfs',
+        dim,
+        dtype,
+        index_dimensions=1,
+        layout=field_layout,
+        index_shape=(
+            q,
+        ))
+    dst_field = ps.Field.create_generic('pdfs_tmp', dim, dtype, index_dimensions=1, layout=field_layout,
+                                        index_shape=(q,))
+
+    stream_update_rule = create_stream_pull_only_kernel(lb_method.stencil, None, 'pdfs', 'pdfs_tmp', field_layout,
+                                                        dtype)
+    stream_ast = ps.create_kernel(stream_update_rule, **params)
+    stream_ast.function_name = 'kernel_stream'
+    stream_ast.assumed_inner_stride_one = True
+    codegen.generate_sweep(
+        ctx, class_name, stream_ast, field_swaps=[
+            (src_field, dst_field)])
+
 
 with CodeGeneration() as ctx:
     kT = sp.symbols("kT")
     force_field = ps.fields("force(3): [3D]", layout='fzyx')
 
-    # Relaxation rate mapping
-    def rr_getter(moment_group):
-        """Map groups of LB moments to relaxation rate symbols 
-        (omega_shear/bulk/odd/even) or 0 for conserved modes.
-        """
-        is_shear = [is_shear_moment(m, 3) for m in moment_group]
-        is_bulk = [is_bulk_moment(m, 3) for m in moment_group]
-        order = [get_order(m) for m in moment_group]
-        assert min(order) == max(order)
-        order = order[0]
-
-        if order < 2:
-            return 0
-        elif any(is_bulk):
-            assert all(is_bulk)
-            return sp.Symbol("omega_bulk")
-        elif any(is_shear):
-            assert all(is_shear)
-            return sp.Symbol("omega_shear")
-        elif order % 2 == 0:
-            assert order > 2
-            return sp.Symbol("omega_even")
-        else:
-            return sp.Symbol("omega_odd")
-
+    # Vectorization parameters
     cpu_vectorize_info = {
         "instruction_set": "avx",
         "assume_inner_stride_one": True,
         "assume_aligned": True,
         "assume_sufficient_line_padding": True}
+    params = {"target": "cpu"}
+    params_vec = {"target": "cpu", "cpu_vectorize_info": cpu_vectorize_info}
 
     # LB Method definition
     method = create_mrt_orthogonal(
         stencil=get_stencil('D3Q19'),
         compressible=True,
         weighted=True,
-        relaxation_rate_getter=rr_getter,
+        relaxation_rate_getter=relaxation_rates.rr_getter,
         force_model=force_model_from_string(
             'schiller', force_field.center_vector)
     )
+    generate_stream_sweep(ctx, method, "StreamSweep", params)
+    generate_stream_sweep(ctx, method, "StreamSweepAVX", params_vec)
 
-    # generate unthermalized LB
+    # generate unthermalized collision rule
     collision_rule_unthermalized = create_lb_collision_rule(
         method,
         optimization={'cse_global': True}
     )
-    generate_lattice_model(
+    generate_collision_sweep(
         ctx,
-        'MRTLatticeModel',
+        method,
         collision_rule_unthermalized,
-        field_layout="fzyx")
-
-    generate_lattice_model(
-        ctx,
-        'MRTLatticeModelAvx',
-        collision_rule_unthermalized,
-        cpu_vectorize_info=cpu_vectorize_info,
-        field_layout="fzyx")
+        "CollideSweep",
+        {})
+    generate_collision_sweep(
+        ctx, method, collision_rule_unthermalized, "CollideSweepAVX", {
+            "cpu_vectorize_info": cpu_vectorize_info})
 
     # generate thermalized LB
     collision_rule_thermalized = create_lb_collision_rule(
@@ -104,17 +146,18 @@ with CodeGeneration() as ctx:
         },
         optimization={'cse_global': True}
     )
-    generate_lattice_model(
+    generate_collision_sweep(
         ctx,
-        'FluctuatingMRTLatticeModel',
+        method,
         collision_rule_thermalized,
-        field_layout="fzyx")
-    generate_lattice_model(
+        "CollideSweepthermalized",
+        params)
+    generate_collision_sweep(
         ctx,
-        'FluctuatingMRTLatticeModelAvx',
+        method,
         collision_rule_thermalized,
-        cpu_vectorize_info=cpu_vectorize_info,
-        field_layout="fzyx")
+        "CollideSweepthermalizedAVX",
+        params_vec)
 
     # Boundary conditions
     ubb_dynamic = UBB(lambda *args: None, dim=3)
