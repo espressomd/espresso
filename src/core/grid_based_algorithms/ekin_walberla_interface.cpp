@@ -35,6 +35,8 @@ Utils::Vector3i ek_get_shape() {
 }
 void ek_set_kT(double kT) { ekin_walberla()->set_kT(kT); }
 
+double ek_get_tau() { return ek_walberla_params()->get_tau(); }
+
 bool ek_node_is_index_valid(const Utils::Vector3i &ind) {
   return detail::node_is_index_valid(ind, ek_get_shape());
 }

@@ -22,6 +22,8 @@ void ek_set_diffusion(double diffusion);
 double ek_get_kT();
 void ek_set_kT(double kT);
 
+double ek_get_tau();
+
 Utils::Vector3i ek_get_shape();
 
 bool ek_node_is_index_valid(const Utils::Vector3i &ind);

@@ -11,7 +11,7 @@ cdef class EKinRoutines:
     cdef Vector3i node
 
 cdef extern from "grid_based_algorithms/ekin_walberla_instance.hpp":
-    void mpi_init_ekin_walberla(double diffusion, double kT, double density) except +
+    void mpi_init_ekin_walberla(double diffusion, double kT, double density, double tau) except +
     void mpi_destruct_ekin_walberla() except +
 
 cdef extern from "grid_based_algorithms/ekin_walberla_interface.hpp" namespace "walberla":
@@ -20,6 +20,8 @@ cdef extern from "grid_based_algorithms/ekin_walberla_interface.hpp" namespace "
 
     double ek_get_kT() except +
     void ek_set_kT(double kT) except +
+
+    double ek_get_tau() except +
 
     Vector3i ek_get_shape() except +
 

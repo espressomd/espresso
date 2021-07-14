@@ -24,10 +24,10 @@ cdef class EKinWalberla(Actor):
         pass
 
     def valid_keys(self):
-        return {"diffusion", "kT", "dens"}
+        return {"diffusion", "kT", "dens", "tau"}
 
     def required_keys(self):
-        return {"diffusion", "kT", "dens"}
+        return {"diffusion", "kT", "dens", "tau"}
 
     def default_params(self):
         return {"diffusion": 0.0,
@@ -74,7 +74,8 @@ cdef class EKinWalberla(Actor):
         mpi_init_ekin_walberla(
             self._params["diffusion"],
             self._params["kT"],
-            self._params["dens"])
+            self._params["dens"],
+            self._params["tau"])
 
     def _deactivate_method(self):
         mpi_destruct_ekin_walberla()
@@ -92,6 +93,10 @@ cdef class EKinWalberla(Actor):
 
         def __set__(self, diffusion):
             ek_set_diffusion(diffusion)
+
+    property tau:
+        def __get__(self):
+            return ek_get_tau()
 
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""

@@ -20,7 +20,8 @@ EKinWalberlaBase<double> *ekin_walberla();
 /** @brief Access the EK Walberla parameters */
 EKWalberlaParams *ek_walberla_params();
 
-void mpi_init_ekin_walberla(double diffusion, double kT, double density);
+void mpi_init_ekin_walberla(double diffusion, double kT, double density,
+                            double tau);
 void mpi_destruct_ekin_walberla();
 
 #endif // ESPRESSO_EKIN_WALBERLA_INSTANCE_HPP
