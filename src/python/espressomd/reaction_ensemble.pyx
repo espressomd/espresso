@@ -36,8 +36,8 @@ cdef class ReactionAlgorithm:
 
     Parameters
     ----------
-    temperature : :obj:`float`
-        The temperature at which the reaction is performed.
+    kT : :obj:`float`
+        Thermal energy of the system in simulation units
     exclusion_radius : :obj:`float`
         Minimal distance from any particle, within which new particle will not
         be inserted. This is useful to avoid integrator failures if particles
@@ -53,13 +53,13 @@ cdef class ReactionAlgorithm:
     cdef CReactionAlgorithm * RE
 
     def _valid_keys(self):
-        return "temperature", "exclusion_radius", "seed"
+        return "kT", "exclusion_radius", "seed"
 
     def _required_keys(self):
-        return "temperature", "exclusion_radius", "seed"
+        return "kT", "exclusion_radius", "seed"
 
     def _set_params_in_es_core(self):
-        deref(self.RE).temperature = self._params["temperature"]
+        deref(self.RE).kT = self._params["kT"]
         # setting a volume is a side effect, sets the default volume of the
         # reaction ensemble as the volume of the cuboid simulation box. this
         # volume can be altered by the command "reaction ensemble volume
@@ -301,7 +301,7 @@ cdef class ReactionAlgorithm:
     def get_status(self):
         """
         Returns the status of the reaction ensemble in a dictionary containing
-        the used reactions, the used temperature and the used exclusion radius.
+        the used reactions, the used kT and the used exclusion radius.
 
         """
         deref(self.RE).check_reaction_method()
@@ -336,8 +336,8 @@ cdef class ReactionAlgorithm:
                         "gamma": deref(self.RE).reactions[single_reaction_i].gamma}
             reactions.append(reaction)
 
-        return {"reactions": reactions, "temperature": deref(
-            self.RE).temperature, "exclusion_radius": deref(self.RE).exclusion_radius}
+        return {"reactions": reactions, "kT": deref(
+            self.RE).kT, "exclusion_radius": deref(self.RE).exclusion_radius}
 
     def delete_particle(self, p_id):
         """
@@ -406,7 +406,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
     cdef unique_ptr[CReactionEnsemble] REptr
 
     def __init__(self, *args, **kwargs):
-        self._params = {"temperature": 1,
+        self._params = {"kT": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
             if k not in kwargs:
@@ -437,7 +437,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     cdef unique_ptr[CConstantpHEnsemble] constpHptr
 
     def __init__(self, *args, **kwargs):
-        self._params = {"temperature": 1,
+        self._params = {"kT": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
             if k not in kwargs:
@@ -490,10 +490,10 @@ cdef class WidomInsertion(ReactionAlgorithm):
     cdef unique_ptr[CWidomInsertion] WidomInsertionPtr
 
     def _required_keys(self):
-        return "temperature", "seed"
+        return "kT", "seed"
 
     def _valid_keys(self):
-        return "temperature", "seed"
+        return "kT", "seed"
 
     def _valid_keys_add(self):
         return "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
@@ -503,7 +503,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
                 "product_types", "product_coefficients", "default_charges"]
 
     def __init__(self, *args, **kwargs):
-        self._params = {"temperature": 1}
+        self._params = {"kT": 1}
         for k in self._required_keys():
             if k not in kwargs:
                 raise ValueError(
