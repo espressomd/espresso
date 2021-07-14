@@ -457,12 +457,46 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
         self._set_params_in_es_core()
 
     def add_reaction(self, *args, **kwargs):
+
+        if ("reactant_coefficients" in kwargs.keys()):
+
+            if (kwargs["reactant_coefficients"][0] != 1):
+
+                raise ValueError(
+                    "All product and reactant coefficients must equal one in the constant pH method as implemented in ESPResSo.")
+
+            else:
+
+                print("WARNING the variable reactant_coefficients is deprecated",
+                      "and it is no longer a necesary input for the constant pH ensemble.",
+                      "It is kept for backwards compatibility but might be deleted in future versions.")
+
+        else:
+
+            kwargs["reactant_coefficients"] = [1]
+
+        if ("product_coefficients" in kwargs.keys()):
+
+            if (kwargs["product_coefficients"][0] != 1) or (
+                    kwargs["product_coefficients"][1] != 1):
+
+                raise ValueError(
+                    "All product and reactant coefficients must equal one in the constant pH method as implemented in ESPResSo.")
+
+            else:
+
+                print("WARNING the variable product_coefficients is deprecated",
+                      "and it is no longer a necesary input for the constant pH ensemble.",
+                      "It is kept for backwards compatibility but might be deleted in future versions.")
+
+        else:
+
+            kwargs["product_coefficients"] = [1, 1]
+
         if(len(kwargs["product_types"]) != 2 or len(kwargs["reactant_types"]) != 1):
             raise ValueError(
                 "The constant pH method is only implemented for reactions with two product types and one adduct type.")
-        if(kwargs["reactant_coefficients"][0] != 1 or kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1):
-            raise ValueError(
-                "All product and reactant coefficients must equal one in the constant pH method as implemented in ESPResSo.")
+
         super().add_reaction(*args, **kwargs)
 
     property constant_pH:
