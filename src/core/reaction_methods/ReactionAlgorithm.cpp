@@ -336,10 +336,10 @@ void ReactionAlgorithm::generic_oneway_reaction(
   auto const bf = calculate_acceptance_probability(
       current_reaction, E_pot_old, E_pot_new, old_particle_numbers);
 
-  std::vector<double> exponential = {
-      exp(-1.0 / kT * (E_pot_new - E_pot_old))};
-      
-   current_reaction.accumulator_potential_energy_difference_exponential(exponential);
+  std::vector<double> exponential = {exp(-1.0 / kT * (E_pot_new - E_pot_old))};
+
+  current_reaction.accumulator_potential_energy_difference_exponential(
+      exponential);
 
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
