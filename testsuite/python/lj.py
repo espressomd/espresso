@@ -20,13 +20,13 @@ import espressomd
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
-from tests_common import abspath
+import tests_common
 
 
 @utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class LennardJonesTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    data = np.loadtxt(abspath('data/lj_system.dat'))
+    data = np.loadtxt(tests_common.abspath('data/lj_system.dat'))
     pos = data[:, 1:4]
     forces = data[:, 4:7]
 

@@ -90,6 +90,26 @@ cdef extern from "thermostat.hpp":
     IF STOKESIAN_DYNAMICS:
         void stokesian_set_rng_counter(stdint.uint64_t counter)
 
+    IF PARTICLE_ANISOTROPY:
+        void mpi_set_brownian_gamma(const Vector3d & gamma)
+        void mpi_set_brownian_gamma_rot(const Vector3d & gamma)
+
+        void mpi_set_langevin_gamma(const Vector3d & gamma)
+        void mpi_set_langevin_gamma_rot(const Vector3d & gamma)
+    ELSE:
+        void mpi_set_brownian_gamma(const double & gamma)
+        void mpi_set_brownian_gamma_rot(const double & gamma)
+
+        void mpi_set_langevin_gamma(const double & gamma)
+        void mpi_set_langevin_gamma_rot(const double & gamma)
+
+    void mpi_set_thermo_virtual(cbool thermo_virtual)
+    void mpi_set_temperature(double temperature)
+    void mpi_set_thermo_switch(int thermo_switch)
+
+    IF NPT:
+        void mpi_set_nptiso_gammas(double gamma0, double gammav)
+
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:
         void set_sd_kT(double kT) except +

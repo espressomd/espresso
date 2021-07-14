@@ -257,6 +257,12 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
       return iap->energy(p1.r.p, p2->r.p, p3->r.p);
     }
+    if (auto const *iap = boost::get<IBMTriel>(&iaparams)) {
+      runtimeWarningMsg() << "Unsupported bond type " +
+                                 std::to_string(iaparams.which()) +
+                                 " in energy calculation.";
+      return 0.;
+    }
     throw BondUnknownTypeError();
   } // 2 partners
   if (n_partners == 3) {
@@ -265,6 +271,12 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     }
     if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
       return iap->energy(p2->r.p, p1.r.p, p3->r.p, p4->r.p);
+    }
+    if (auto const *iap = boost::get<IBMTribend>(&iaparams)) {
+      runtimeWarningMsg() << "Unsupported bond type " +
+                                 std::to_string(iaparams.which()) +
+                                 " in energy calculation.";
+      return 0.;
     }
     throw BondUnknownTypeError();
   } // 3 partners

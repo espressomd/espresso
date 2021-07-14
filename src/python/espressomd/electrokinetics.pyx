@@ -399,7 +399,7 @@ IF ELECTROKINETICS:
             self._set_params_in_es_core()
 
         def __str__(self):
-            return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
+            return f"{self.__class__.__name__}({self.get_params()})"
 
         def __getitem__(self, key):
             if isinstance(key, (tuple, list, np.ndarray)):

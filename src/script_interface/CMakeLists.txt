@@ -1,5 +1,7 @@
-add_library(ScriptInterface SHARED initialize.cpp ObjectHandle.cpp
-                                   GlobalContext.cpp ContextManager.cpp)
+add_library(
+  ScriptInterface SHARED
+  initialize.cpp ObjectHandle.cpp object_container_mpi_guard.cpp
+  GlobalContext.cpp ContextManager.cpp)
 
 add_subdirectory(accumulators)
 add_subdirectory(collision_detection)

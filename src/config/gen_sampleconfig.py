@@ -30,7 +30,7 @@ sys.path.append(os.path.join(moduledir, '..', 'src'))
 import featuredefs
 
 if len(sys.argv) != 2:
-    print("Usage: {} DEFFILE".format(sys.argv[0]), file=sys.stderr)
+    print(f"Usage: {sys.argv[0]} DEFFILE", file=sys.stderr)
     exit(2)
 
 deffilename = sys.argv[1]

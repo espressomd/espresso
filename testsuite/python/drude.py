@@ -21,7 +21,7 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.electrostatics
 import espressomd.interactions
-from espressomd import drude_helpers
+import espressomd.drude_helpers
 
 
 @utx.skipIfMissingFeatures(["P3M", "ELECTROSTATICS", "THOLE",
@@ -166,37 +166,37 @@ class Drude(ut.TestCase):
         system.bonded_inter.add(thermalized_dist_bond)
         system.bonded_inter.add(harmonic_bond)
 
-        drude_helpers.add_drude_particle_to_core(
+        espressomd.drude_helpers.add_drude_particle_to_core(
             system, harmonic_bond, thermalized_dist_bond, system.part[0], 1,
             types["PF6_D"], polarizations["PF6"], mass_drude,
             coulomb_prefactor, 2.0)
-        drude_helpers.add_drude_particle_to_core(
+        espressomd.drude_helpers.add_drude_particle_to_core(
             system, harmonic_bond, thermalized_dist_bond, system.part[2], 3,
             types["BMIM_C1_D"], polarizations["BMIM_C1"], mass_drude,
             coulomb_prefactor, 2.0)
-        drude_helpers.add_drude_particle_to_core(
+        espressomd.drude_helpers.add_drude_particle_to_core(
             system, harmonic_bond, thermalized_dist_bond, system.part[4], 5,
             types["BMIM_C2_D"], polarizations["BMIM_C2"], mass_drude,
             coulomb_prefactor, 2.0)
-        drude_helpers.add_drude_particle_to_core(
+        espressomd.drude_helpers.add_drude_particle_to_core(
             system, harmonic_bond, thermalized_dist_bond, system.part[6], 7,
             types["BMIM_C3_D"], polarizations["BMIM_C3"], mass_drude,
             coulomb_prefactor, 2.0)
 
         # Setup and add Drude-Core SR exclusion bonds
-        drude_helpers.setup_and_add_drude_exclusion_bonds(system)
+        espressomd.drude_helpers.setup_and_add_drude_exclusion_bonds(system)
 
         # Setup intramol SR exclusion bonds once
-        drude_helpers.setup_intramol_exclusion_bonds(
+        espressomd.drude_helpers.setup_intramol_exclusion_bonds(
             system, [6, 7, 8], [1, 2, 3],
             [charges["BMIM_C1"], charges["BMIM_C2"], charges["BMIM_C3"]])
 
         # Add bonds per molecule
-        drude_helpers.add_intramol_exclusion_bonds(
+        espressomd.drude_helpers.add_intramol_exclusion_bonds(
             system, [3, 5, 7], [2, 4, 6])
 
         # Thole
-        drude_helpers.add_all_thole(system)
+        espressomd.drude_helpers.add_all_thole(system)
 
         def dipole_moment(id_core, id_drude):
             pc = system.part[id_core]

@@ -17,10 +17,10 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-
+import itertools
 import espressomd
 import espressomd.lb
-from espressomd.observables import LBFluidPressureTensor
+import espressomd.observables
 import sys
 
 
@@ -120,7 +120,7 @@ class TestLB:
 
     def test_pressure_tensor_observable(self):
         """
-        Checks agreement between the LBFluidPressureTensor observable and
+        Checks agreement between the ``LBFluidPressureTensor`` observable and
         per-node pressure tensor summed up over the entire fluid.
 
         """
@@ -147,7 +147,7 @@ class TestLB:
 
         pressure_tensor /= system.volume() / agrid**3
 
-        obs = LBFluidPressureTensor()
+        obs = espressomd.observables.LBFluidPressureTensor()
         obs_pressure_tensor = obs.calculate()
         np.testing.assert_allclose(
             pressure_tensor,
@@ -260,6 +260,27 @@ class TestLB:
         system.integrator.run(steps=1)
         system.actors.clear()
         system.box_l = old_l
+
+    def test_bool_operations_on_node(self):
+        self.lbf = self.lb_class(
+            kT=1.0, seed=42, visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step)
+        self.system.actors.add(self.lbf)
+        # test __eq()__ where a node is equal to itself and not equal to any
+        # other node
+        assert self.lbf[0, 0, 0] == self.lbf[0, 0, 0]
+        x, y, z = range(int(self.system.box_l[0])), range(
+            int(self.system.box_l[1])), range(int(self.system.box_l[2]))
+        nodes = [self.lbf[i, j, k] for i, j, k in itertools.product(x, y, z)]
+        nodes.remove(self.lbf[0, 0, 0])
+        assert all(self.lbf[0, 0, 0] != node for node in nodes)
+        # test __hash()__ intercept to identify nodes based on index rather
+        # than name. set() constructor runs hash()
+        subset1, subset2 = nodes[:-10], nodes[-10:]
+        assert len(set(subset1 + subset1)) == len(subset1)
+        assert len(set(subset1 + subset2)) == len(subset1) + len(subset2)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):

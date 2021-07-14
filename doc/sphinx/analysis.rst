@@ -366,8 +366,8 @@ follows
 
 ::
 
-    from espressomd.observables import ParticlePositions
-    part_pos = ParticlePositions(ids=(1, 2, 3, 4, 5))
+    import espressomd.observables
+    part_pos = espressomd.observables.ParticlePositions(ids=(1, 2, 3, 4, 5))
 
 Here, the keyword argument ``ids`` specifies the ids of the particles,
 which the observable should take into account.
@@ -768,14 +768,14 @@ The cluster analysis is available in parallel simulations, but the analysis is c
 Whether or not two particles are neighbors is defined by a pair criterion. The available criteria can be found in :mod:`espressomd.pair_criteria`.
 For example, a distance criterion which will consider particles as neighbors if they are closer than 0.11 is created as follows::
 
-    from espressomd.pair_criteria import DistanceCriterion
-    dc = DistanceCriterion(cut_off=0.11)
+    import espressomd.pair_criteria
+    dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.11)
 
 To obtain the cluster structure of a system, an instance of :class:`espressomd.cluster_analysis.ClusterStructure` has to be created.
 To to create a cluster structure with above criterion::
 
-    from espressomd.cluster_analysis import ClusterStructure
-    cs = ClusterStructure(distance_criterion=dc)
+    import espressomd.cluster_analysis
+    cs = espressomd.cluster_analysis.ClusterStructure(distance_criterion=dc)
 
 In most cases, the cluster analysis is carried out by calling the :any:`espressomd.cluster_analysis.ClusterStructure.run_for_all_pairs` method. When the pair criterion is purely based on bonds,  :any:`espressomd.cluster_analysis.ClusterStructure.run_for_bonded_particles` can be used.
 

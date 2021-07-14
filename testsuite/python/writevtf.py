@@ -24,8 +24,8 @@ import sys
 import unittest as ut
 import numpy as np
 import espressomd
-from espressomd import interactions
-from espressomd.io.writer import vtf
+import espressomd.interactions
+import espressomd.io.writer.vtf
 import tempfile
 
 npart = 50
@@ -53,7 +53,8 @@ class CommonTests(ut.TestCase):
         system.part.add(id=i, pos=np.array(3 * [i], dtype=float),
                         v=np.array([1.0, 2.0, 3.0]), type=1 + (-1)**i)
 
-    system.bonded_inter.add(interactions.FeneBond(k=1., d_r_max=10.0))
+    system.bonded_inter.add(
+        espressomd.interactions.FeneBond(k=1., d_r_max=10.0))
     system.part[0].add_bond((0, 1))
     system.part[0].add_bond((0, 2))
     system.part[0].add_bond((0, 3))
@@ -97,6 +98,17 @@ class CommonTests(ut.TestCase):
             simulation_atoms[:, 1], self.written_atoms[:, 1],
             err_msg="Atoms not written correctly by writevsf!")
 
+    def test_vtf_pid_map(self):
+        system = self.system
+        types = self.types_to_write
+        if types == 'all':
+            ids = system.part[:].id
+        else:
+            ids = system.part[:].id[np.isin(system.part[:].type, types)]
+        mapping_ref = dict(zip(ids, range(len(ids))))
+        mapping = espressomd.io.writer.vtf.vtf_pid_map(system, types=types)
+        self.assertEqual(mapping, mapping_ref)
+
 
 class VCFTestAll(CommonTests):
 
@@ -110,13 +122,15 @@ class VCFTestAll(CommonTests):
         cls.types_to_write = 'all'
 
         with tempfile.TemporaryFile(mode='w+t') as fp:
-            vtf.writevcf(cls.system, fp, types=cls.types_to_write)
+            espressomd.io.writer.vtf.writevcf(
+                cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
             cls.written_pos = np.loadtxt(fp, comments="t")
 
         with tempfile.TemporaryFile(mode='w+t') as fp:
-            vtf.writevsf(cls.system, fp, types=cls.types_to_write)
+            espressomd.io.writer.vtf.writevsf(
+                cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
             cls.written_bonds = np.loadtxt(
@@ -127,8 +141,10 @@ class VCFTestAll(CommonTests):
                 usecols=[1])  # just the second bonded member
             fp.seek(0)
             cls.written_atoms = np.loadtxt(
-                fp, skiprows=1, comments="b", usecols=[
-                    1, 7])  # just the part_ID and type_ID
+                fp,
+                skiprows=1,
+                comments="b",
+                usecols=[1, 7])  # just the part_ID and type_ID
 
 
 class VCFTestType(CommonTests):
@@ -143,13 +159,15 @@ class VCFTestType(CommonTests):
         cls.types_to_write = [2, 23]
         with tempfile.TemporaryFile(mode='w+') as fp:
 
-            vtf.writevcf(cls.system, fp, types=cls.types_to_write)
+            espressomd.io.writer.vtf.writevcf(
+                cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
             cls.written_pos = np.loadtxt(fp, comments="t")
 
         with tempfile.TemporaryFile(mode='w+') as fp:
-            vtf.writevsf(cls.system, fp, types=cls.types_to_write)
+            espressomd.io.writer.vtf.writevsf(
+                cls.system, fp, types=cls.types_to_write)
             fp.flush()
             fp.seek(0)
             cls.written_bonds = np.loadtxt(

@@ -47,9 +47,9 @@ void VirtualSitesInertialessTracers::after_force_calc() {
   }
 }
 
-void VirtualSitesInertialessTracers::after_lb_propagation() {
+void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  IBM_UpdateParticlePositions(cell_structure.local_particles());
+  IBM_UpdateParticlePositions(cell_structure.local_particles(), time_step);
 #endif // VS inertialess tracers
 }
 #endif

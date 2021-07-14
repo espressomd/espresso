@@ -25,18 +25,18 @@ import numpy as np
 import argparse
 
 import espressomd
+import espressomd.observables
+import espressomd.accumulators
+import espressomd.electrostatics
+import espressomd.interactions
+import espressomd.virtual_sites
+import espressomd.drude_helpers
+import espressomd.visualization_opengl
+
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "ROTATIONAL_INERTIA", "VIRTUAL_SITES_RELATIVE",
                      "THOLE", "THERMOSTAT_PER_PARTICLE"]
 espressomd.assert_features(required_features)
-
-import espressomd.observables
-import espressomd.accumulators
-from espressomd.electrostatics import P3M
-from espressomd.interactions import ThermalizedBond, HarmonicBond
-from espressomd import drude_helpers
-from espressomd.virtual_sites import VirtualSitesRelative
-import espressomd.visualization_opengl
 
 
 print(__doc__ + """
@@ -76,7 +76,7 @@ box_l = box_volume**(1. / 3.)
 print("\n-->Ion pairs:", n_ionpairs, "Box size:", box_l)
 
 system = espressomd.System(box_l=[box_l, box_l, box_l])
-system.virtual_sites = VirtualSitesRelative()
+system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
 
 if args.visu:
     d_scale = 0.988 * 0.5
@@ -265,57 +265,58 @@ if not args.drude:
         seed=42)
 
 # ELECTROSTATICS
+p3m_params = {'prefactor': coulomb_prefactor, 'accuracy': 1e-3}
 if args.gpup3m:
-    from espressomd.electrostatics import P3MGPU
     print("\n-->Tune P3M GPU")
-    p3m = P3MGPU(prefactor=coulomb_prefactor, accuracy=1e-3)
+    p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
 else:
     print("\n-->Tune P3M CPU")
-    p3m = P3M(prefactor=coulomb_prefactor, accuracy=1e-3)
+    p3m = espressomd.electrostatics.P3M(**p3m_params)
 
 system.actors.add(p3m)
 
 if args.drude:
     print("-->Adding Drude related bonds")
-    thermalized_dist_bond = ThermalizedBond(
+    thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
         temp_com=temperature_com, gamma_com=gamma_com,
         temp_distance=temperature_drude, gamma_distance=gamma_drude,
         r_cut=min(lj_sigmas.values()) * 0.5, seed=123)
-    harmonic_bond = HarmonicBond(k=k_drude, r_0=0.0, r_cut=1.0)
+    harmonic_bond = espressomd.interactions.HarmonicBond(
+        k=k_drude, r_0=0.0, r_cut=1.0)
     system.bonded_inter.add(thermalized_dist_bond)
     system.bonded_inter.add(harmonic_bond)
 
     for i in anion_ids:
-        drude_helpers.add_drude_particle_to_core(
+        espressomd.drude_helpers.add_drude_particle_to_core(
             system, harmonic_bond, thermalized_dist_bond, system.part[i],
             i + 1, types["PF6_D"], polarizations["PF6"],
             args.mass_drude, coulomb_prefactor)
     for i in cation_c1_ids:
-        drude_helpers.add_drude_particle_to_core(
+        espressomd.drude_helpers.add_drude_particle_to_core(
             system, harmonic_bond, thermalized_dist_bond, system.part[i],
             i + 1, types["BMIM_C1_D"], polarizations["BMIM_C1"],
             args.mass_drude, coulomb_prefactor)
     for i in cation_c2_ids:
-        drude_helpers.add_drude_particle_to_core(
+        espressomd.drude_helpers.add_drude_particle_to_core(
             system, harmonic_bond, thermalized_dist_bond, system.part[i],
             i + 1, types["BMIM_C2_D"], polarizations["BMIM_C2"],
             args.mass_drude, coulomb_prefactor)
     for i in cation_c3_ids:
-        drude_helpers.add_drude_particle_to_core(
+        espressomd.drude_helpers.add_drude_particle_to_core(
             system, harmonic_bond, thermalized_dist_bond, system.part[i],
             i + 1, types["BMIM_C3_D"], polarizations["BMIM_C3"],
             args.mass_drude, coulomb_prefactor)
 
-    drude_helpers.setup_and_add_drude_exclusion_bonds(system)
+    espressomd.drude_helpers.setup_and_add_drude_exclusion_bonds(system)
 
     if args.thole:
         print("-->Adding Thole interactions")
-        drude_helpers.add_all_thole(system)
+        espressomd.drude_helpers.add_all_thole(system)
 
     if args.intra_ex:
         # SETUP BONDS ONCE
         print("-->Adding intramolecular exclusions")
-        drude_helpers.setup_intramol_exclusion_bonds(
+        espressomd.drude_helpers.setup_intramol_exclusion_bonds(
             system,
             [types["BMIM_C1_D"], types["BMIM_C2_D"], types["BMIM_C3_D"]],
             [types["BMIM_C1"], types["BMIM_C2"], types["BMIM_C3"]],
@@ -323,7 +324,7 @@ if args.drude:
 
         # ADD SR EX BONDS PER MOLECULE
         for i in cation_c1_ids:
-            drude_helpers.add_intramol_exclusion_bonds(
+            espressomd.drude_helpers.add_intramol_exclusion_bonds(
                 system, [i + 1, i + 3, i + 5], [i, i + 2, i + 4])
 
 print("\n-->Short equilibration with smaller time step")

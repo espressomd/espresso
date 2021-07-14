@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
                               std::log(10.) * (r_algo.m_constant_pH +
                                                std::log10(reaction.gamma)));
         auto const acceptance = r_algo.calculate_acceptance_probability(
-            reaction, energy, 0., p_numbers, -1, -1, false);
+            reaction, energy, 0., p_numbers);
         BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);
       }
     }

@@ -19,12 +19,10 @@ import unittest as ut
 import unittest_decorators as utx
 
 import espressomd
-from espressomd.interactions import HarmonicBond
-from espressomd.interactions import FeneBond
-from espressomd.observables import PressureTensor
-from espressomd.observables import Pressure
+import espressomd.interactions
+import espressomd.observables
 
-from tests_common import fene_force2
+import tests_common
 
 import numpy as np
 
@@ -111,7 +109,7 @@ class PressureLJ(ut.TestCase):
         p2 = system.part.add(pos=[0.1, 9.7, 0.1], type=1, mol_id=1)
         p3 = system.part.add(pos=[0.1, 10.3, 0.1], type=2, mol_id=2)
 
-        harmonic = HarmonicBond(k=1e4, r_0=0)
+        harmonic = espressomd.interactions.HarmonicBond(k=1e4, r_0=0)
         system.bonded_inter.add(harmonic)
         p0.add_bond((harmonic, p1))
         p2.add_bond((harmonic, p3))
@@ -246,11 +244,11 @@ class PressureLJ(ut.TestCase):
 
         # Compare pressure observables to pressure from analysis
         np.testing.assert_allclose(
-            PressureTensor().calculate(),
+            espressomd.observables.PressureTensor().calculate(),
             sim_pressure_tensor["total"],
             rtol=0, atol=1E-10)
         self.assertAlmostEqual(
-            Pressure().calculate(),
+            espressomd.observables.Pressure().calculate(),
             sim_pressure["total"],
             delta=tol)
 
@@ -264,7 +262,7 @@ class PressureFENE(ut.TestCase):
     def get_anal_pressure_tensor_fene(self, pos_1, pos_2, k, d_r_max, r_0):
         tensor = np.zeros([3, 3])
         vec_r = pos_1 - pos_2
-        f = -fene_force2(vec_r, k, d_r_max, r_0)
+        f = -tests_common.fene_force2(vec_r, k, d_r_max, r_0)
         tensor += np.einsum('i,j', f, vec_r) / system.volume()
         return tensor
 
@@ -289,7 +287,7 @@ class PressureFENE(ut.TestCase):
         d_r_max = 1.5
         r_0 = 0.1
 
-        fene = FeneBond(k=k, d_r_max=d_r_max, r_0=r_0)
+        fene = espressomd.interactions.FeneBond(k=k, d_r_max=d_r_max, r_0=r_0)
         system.bonded_inter.add(fene)
         p0.add_bond((fene, p1))
         system.integrator.run(steps=0)
@@ -325,11 +323,11 @@ class PressureFENE(ut.TestCase):
 
         # Compare pressure observables to pressure from analysis
         np.testing.assert_allclose(
-            PressureTensor().calculate(),
+            espressomd.observables.PressureTensor().calculate(),
             sim_pressure_tensor["total"],
             rtol=0, atol=1E-10)
         self.assertAlmostEqual(
-            Pressure().calculate(),
+            espressomd.observables.Pressure().calculate(),
             sim_pressure["total"],
             delta=tol)
 

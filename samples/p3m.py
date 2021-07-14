@@ -20,14 +20,13 @@
 Simulate a Lennard-Jones liquid with charges. The P3M method is used to
 calculate electrostatic interactions.
 """
+import argparse
 import numpy as np
 import espressomd
+import espressomd.electrostatics
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
-
-from espressomd import electrostatics
-import argparse
 
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
@@ -101,36 +100,36 @@ for i in range(n_part):
     else:
         part.q = 1.0
 
-print("Simulate {} particles in a cubic box {} at density {}."
-      .format(n_part, box_l, density).strip())
+print(
+    f"Simulate {n_part} particles in a cubic box {box_l} at density {density}.")
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
-print("Start with minimal distance {}".format(act_min_dist))
+print(f"Start with minimal distance {act_min_dist}")
 
 # P3M setup after charge assignment
 #############################################################
 
 print("\nSCRIPT--->Create p3m\n")
 if args.mode == "gpu":
-    p3m = electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-2)
+    p3m = espressomd.electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-2)
 else:
-    p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+    p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 
 print("\nSCRIPT--->Add actor\n")
 system.actors.add(p3m)
 
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
-for key in list(p3m_params.keys()):
-    print("{} = {}".format(key, p3m_params[key]))
+for key, val in p3m_params.items():
+    print(f"{key} = {val}")
 
 print("\nSCRIPT--->Explicit tune call\n")
 p3m.tune(accuracy=1e3)
 
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
-for key in list(p3m_params.keys()):
-    print("{} = {}".format(key, p3m_params[key]))
+for key, val in p3m_params.items():
+    print(f"{key} = {val}")
 
 print(system.actors)
 
@@ -138,22 +137,21 @@ print(system.actors)
 #  Warmup Integration                                       #
 #############################################################
 
-print("""
+print(f"""\
 Start warmup integration:
-At maximum {} times {} steps
-Stop if minimal distance is larger than {}
-""".strip().format(warm_n_times, warm_steps, min_dist))
+At maximum {warm_n_times} times {warm_steps} steps
+Stop if minimal distance is larger than {min_dist}""")
 
 # minimize energy using min_dist as the convergence criterion
 system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=wca_sig / 100)
 i = 0
 while i < warm_n_times and system.analysis.min_dist() < min_dist:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(warm_steps)
     i += 1
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 

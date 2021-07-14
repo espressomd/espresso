@@ -18,14 +18,15 @@
 #
 import unittest as ut
 import unittest_decorators as utx
-import espressomd
+import thermostats_common
 import numpy as np
-from espressomd.accumulators import Correlator
-from espressomd.observables import ParticlePositions
-from thermostats_common import ThermostatsCommon
+
+import espressomd
+import espressomd.accumulators
+import espressomd.observables
 
 
-class BrownianThermostat(ut.TestCase, ThermostatsCommon):
+class BrownianThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
 
     """Tests velocity distributions and diffusion for Brownian Dynamics"""
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -109,11 +110,12 @@ class BrownianThermostat(ut.TestCase, ThermostatsCommon):
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
         system.cell_system.skin = 0.4
 
-        pos_obs = ParticlePositions(ids=(p.id,))
+        pos_obs = espressomd.observables.ParticlePositions(ids=(p.id,))
 
-        c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=1,
-                           corr_operation="square_distance_componentwise",
-                           compress1="discard1")
+        c_pos = espressomd.accumulators.Correlator(
+            obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=1,
+            corr_operation="square_distance_componentwise",
+            compress1="discard1")
         system.auto_update_accumulators.add(c_pos)
 
         system.integrator.run(30000)

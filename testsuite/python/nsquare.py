@@ -20,12 +20,16 @@ import unittest as ut
 import espressomd
 import numpy as np
 
+np.random.seed(42)
+
 
 class NSquare(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def setUp(self):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
+        self.system.time_step = 1e-3
+        self.system.cell_system.skin = 0.15
 
     def tearDown(self):
         self.system.part.clear()
@@ -35,13 +39,26 @@ class NSquare(ut.TestCase):
         n_nodes = self.system.cell_system.get_state()['n_nodes']
         n_part_avg = n_part // n_nodes
 
-        self.system.part.add(pos=np.random.random((n_part, 3)),
-                             type=n_part * [1])
+        # Add the particles on node 0, so that they have to be resorted
+        self.system.part.add(pos=n_part * [(0, 0, 0)], type=n_part * [1])
 
+        # And now change their positions
+        self.system.part[:].pos = self.system.box_l * \
+            np.random.random((n_part, 3))
+
+        # Add an interacting particle in a corner of the box
+        self.system.part.add(pos=[(0.01, 0.01, 0.01)], type=[0])
+        if espressomd.has_features(['LENNARD_JONES']):
+            self.system.non_bonded_inter[0, 1].lennard_jones.set_params(
+                epsilon=1.0, sigma=0.14, cutoff=0.15, shift=0.1)
+            ref_energy = self.system.analysis.energy()['total']
+            assert ref_energy > 10.
+
+        # Distribute the particles on the nodes
         part_dist = self.system.cell_system.resort()
 
         # Check that we did not lose particles
-        self.assertEqual(sum(part_dist), n_part)
+        self.assertEqual(sum(part_dist), n_part + 1)
 
         # Check that the particles are evenly distributed
         for node_parts in part_dist:
@@ -51,6 +68,14 @@ class NSquare(ut.TestCase):
         # This basically checks if part_node and local_particles
         # are still in a valid state after the particle exchange
         self.assertEqual(sum(self.system.part[:].type), n_part)
+
+        # Check that the system is still valid
+        if espressomd.has_features(['LENNARD_JONES']):
+            # energy calculation
+            new_energy = self.system.analysis.energy()['total']
+            self.assertEqual(new_energy, ref_energy)
+        # force calculation
+        self.system.integrator.run(0, recalc_forces=True)
 
 
 if __name__ == "__main__":

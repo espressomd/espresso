@@ -19,18 +19,20 @@
 def vtf_pid_map(system, types='all'):
     """
     Generates a VTF particle index map to ESPResSo ``id``.
-    This fills the gap for particle ID's as required by VMD
+    This fills the gap for particle ID's as required by VMD.
 
     Parameters
     ----------
-    system: espressomd.System() object
+    system: :obj:`espressomd.system.System`
     types : :obj:`str`
-            Specifies the particle types. The id mapping depends on which
-            particles are going to be printed. This should be the same as
-            the one used in writevsf() and writevsf().
+        Specifies the particle types. The id mapping depends on which
+        particles are going to be printed. This should be the same as
+        the one used in :func:`writevsf()` and :func:`writevcf()`.
     Returns
     -------
-    dict:   A dictionary where the values are the VTF indices and the keys are the ESPresSo particle ``id``
+    dict:
+        A dictionary where the values are the VTF indices and the keys
+        are the ESPresSo particle ``id``.
     """
 
     if not hasattr(types, '__iter__'):
@@ -52,27 +54,24 @@ def writevsf(system, fp, types='all'):
 
     Parameters
     ----------
-    system: espressomd.System() object
+    system: :obj:`espressomd.system.System`
     types : :obj:`str`
-            Specifies the particle types. The string 'all' will write all particles
+        Specifies the particle types. The string 'all' will write all particles
     fp : file
-               File pointer to write to.
+        File pointer to write to.
 
     """
 
     vtf_index = vtf_pid_map(system, types)
-    fp.write("unitcell {} {} {}\n".format(*(system.box_l)))
+    fp.write(f"unitcell {' '.join(map(str, system.box_l))}\n")
 
     for pid, vtf_id, in vtf_index.items():
-        fp.write("atom {} radius 1 name {} type {} \n".format(vtf_id,
-                                                              system.part[
-                                                                  pid].type,
-                                                              system.part[pid].type))
+        fp.write(
+            f"atom {vtf_id} radius 1 name {system.part[pid].type} type {system.part[pid].type} \n")
     for pid, vtf_id, in vtf_index.items():
         for b in system.part[pid].bonds:
             if system.part[b[1]].id in vtf_index:
-                fp.write("bond {}:{}\n".format(
-                    vtf_id, vtf_index[system.part[b[1]].id]))
+                fp.write(f"bond {vtf_id}:{vtf_index[system.part[b[1]].id]}\n")
 
 
 def writevcf(system, fp, types='all'):
@@ -82,14 +81,14 @@ def writevcf(system, fp, types='all'):
 
     Parameters
     ----------
-    system: espressomd.System() object
+    system: :obj:`espressomd.system.System`
     types : :obj:`str`
-            Specifies the particle types. The string 'all' will write all particles
+        Specifies the particle types. The string 'all' will write all particles
     fp : file
-               File pointer to write to.
+        File pointer to write to.
 
     """
     vtf_index = vtf_pid_map(system, types)
     fp.write("\ntimestep indexed\n")
     for pid, vtf_id, in vtf_index.items():
-        fp.write("{} {} {} {}\n".format(vtf_id, *(system.part[pid].pos)))
+        fp.write(f"{vtf_id} {' '.join(map(str, system.part[pid].pos))}\n")

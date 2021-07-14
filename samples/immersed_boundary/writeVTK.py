@@ -28,10 +28,8 @@ def WriteVTK(system, outFile):
         # points, get number from tables
         with open("tables/softPositions", "r") as fp2:
             numPoints = int(fp2.readline())
-        fp.write("POINTS " + str(numPoints) + " floats\n")
+        fp.write(f"POINTS {numPoints} floats\n")
 
         # points, positions
         for i in range(0, len(system.part)):
-            fp.write(str(system.part[i].pos_folded[0]) + " " + str(
-                system.part[i].pos_folded[1]) + " " + str(system.part[i].pos_folded[2]))
-            fp.write("\n")
+            fp.write(f"{' '.join(map(str, system.part[i].pos_folded))}\n")

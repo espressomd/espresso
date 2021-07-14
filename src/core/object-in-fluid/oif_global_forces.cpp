@@ -21,6 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "communication.hpp"
 #include "grid.hpp"
 #include "interactions.hpp"
 
@@ -131,3 +132,13 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
 }
 
 int max_oif_objects = 0;
+
+void mpi_set_max_oif_objects_local(int max_oif_objects) {
+  ::max_oif_objects = max_oif_objects;
+}
+
+REGISTER_CALLBACK(mpi_set_max_oif_objects_local)
+
+void mpi_set_max_oif_objects(int max_oif_objects) {
+  mpi_call_all(mpi_set_max_oif_objects_local, max_oif_objects);
+}

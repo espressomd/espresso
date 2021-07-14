@@ -19,6 +19,7 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd
+import espressomd.constraints
 
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")
@@ -28,8 +29,6 @@ class IntegratorSteepestDescent(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 
     test_rotation = espressomd.has_features(("ROTATION", "DIPOLES"))
-    if test_rotation:
-        from espressomd.constraints import HomogeneousMagneticField
 
     box_l = 10.0
     density = 0.6
@@ -49,7 +48,7 @@ class IntegratorSteepestDescent(ut.TestCase):
             cutoff=self.lj_cut, shift="auto")
         if self.test_rotation:
             self.system.constraints.add(
-                self.HomogeneousMagneticField(H=[-0.5, 0, 0]))
+                espressomd.constraints.HomogeneousMagneticField(H=[-0.5, 0, 0]))
 
     def tearDown(self):
         self.system.part.clear()
@@ -184,9 +183,10 @@ class IntegratorSteepestDescent(ut.TestCase):
             with self.assertRaises(RuntimeError):
                 system.integrator.set_isotropic_npt(ext_pressure=1, piston=-1)
             # the interface state is unchanged
-            self.assertIsInstance(system.integrator.get_state(),
+            state = system.integrator.get_state()
+            self.assertIsInstance(state['integrator'],
                                   espressomd.integrate.SteepestDescent)
-            params = system.integrator.get_state().get_params()
+            params = state['integrator'].get_params()
             self.assertEqual(params["f_max"], sd_params["f_max"])
             self.assertEqual(params["gamma"], sd_params["gamma"])
             self.assertEqual(
@@ -206,7 +206,7 @@ class IntegratorSteepestDescent(ut.TestCase):
             system.integrator.set_steepest_descent(
                 f_max=0, gamma=1, max_displacement=-1)
         # the interface state is unchanged
-        self.assertIsInstance(system.integrator.get_state(),
+        self.assertIsInstance(system.integrator.get_state()['integrator'],
                               espressomd.integrate.VelocityVerlet)
         # the core state is unchanged
         system.integrator.run(1)

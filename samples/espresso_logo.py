@@ -21,9 +21,10 @@ import math
 import numpy as np
 
 import espressomd
-espressomd.assert_features(["WCA", "MASS"])
 import espressomd.shapes
-from espressomd.visualization_opengl import openGLLive
+import espressomd.visualization_opengl
+
+espressomd.assert_features(["WCA", "MASS"])
 
 box_l = 50
 system = espressomd.System(box_l=[box_l, 15, box_l])
@@ -174,7 +175,7 @@ for i in range(3):
     system.non_bonded_inter[i, 2].wca.set_params(
         epsilon=wca_eps, sigma=wca_sig)
 
-visualizer = openGLLive(
+visualizer = espressomd.visualization_opengl.openGLLive(
     system,
     background_color=[0.2, 0.2, 0.3],
     camera_position=[box_l / 2.0, box_l / 4.0, 20 * 3],

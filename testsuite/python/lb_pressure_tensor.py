@@ -21,7 +21,7 @@ import numpy as np
 
 import espressomd
 import espressomd.lb
-from scipy.optimize import curve_fit
+import scipy.optimize
 
 AGRID = .5
 N_CELLS = 12
@@ -179,7 +179,7 @@ class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
                 # fit tail
                 def f(x, a, b): return a * np.exp(-b * x)
 
-                (a, b), _ = curve_fit(f, acf[:len(ts)], ts)
+                (a, b), _ = scipy.optimize.curve_fit(f, acf[:len(ts)], ts)
                 tail = f(ts[-1], a, b) / b
 
                 integral = numeric_integral + tail

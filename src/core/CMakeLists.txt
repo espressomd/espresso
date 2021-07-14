@@ -14,7 +14,6 @@ set(EspressoCore_SRC
     forces.cpp
     galilei.cpp
     ghosts.cpp
-    global.cpp
     grid.cpp
     immersed_boundaries.cpp
     interactions.cpp

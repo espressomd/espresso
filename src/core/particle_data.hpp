@@ -348,7 +348,7 @@ void auto_exclusions(int distance);
 
 void init_type_map(int type);
 
-/* find a particle of given type and return its id */
+/** Find a particle of given type and return its id */
 int get_random_p_id(int type, int random_index_in_type_map);
 int number_of_particles_with_type(int type);
 

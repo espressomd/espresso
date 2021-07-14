@@ -23,7 +23,7 @@ import numpy as np
 import espressomd
 import espressomd.cuda_init
 import espressomd.electrostatics
-from tests_common import abspath
+import tests_common
 
 
 @utx.skipIfMissingFeatures("ELECTROSTATICS")
@@ -31,9 +31,11 @@ class CoulombCloudWall(ut.TestCase):
 
     """This compares p3m, p3m_gpu electrostatic forces and energy against
     stored data."""
-    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[10., 10., 20.])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
     data = np.genfromtxt(
-        abspath("data/coulomb_cloud_wall_duplicated_system.data"))
+        tests_common.abspath("data/coulomb_cloud_wall_duplicated_system.data"))
 
     tolerance = 1E-3
 
@@ -41,24 +43,21 @@ class CoulombCloudWall(ut.TestCase):
     reference_energy = 2. * 148.94229549
 
     def setUp(self):
-        self.S.box_l = (10, 10, 20)
-        self.S.time_step = 0.01
-        self.S.cell_system.skin = 0.4
-
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f
-        self.S.part.add(pos=self.data[:, 1:4], q=self.data[:, 4])
+        self.system.part.add(pos=self.data[:, 1:4], q=self.data[:, 4])
         self.forces = self.data[:, 5:8]
 
     def tearDown(self):
-        self.S.part.clear()
-        self.S.actors.clear()
+        self.system.part.clear()
+        self.system.actors.clear()
 
     def compare(self, method_name, energy=True):
         # Compare forces and energy now in the system to stored ones
 
         # Force
-        force_diff = np.linalg.norm(self.S.part[:].f - self.forces, axis=1)
+        force_diff = np.linalg.norm(
+            self.system.part[:].f - self.forces, axis=1)
         self.assertLess(
             np.mean(force_diff), self.tolerance,
             msg="Absolute force difference too large for method " + method_name)
@@ -66,7 +65,7 @@ class CoulombCloudWall(ut.TestCase):
         # Energy
         if energy:
             self.assertAlmostEqual(
-                self.S.analysis.energy()["total"], self.reference_energy,
+                self.system.analysis.energy()["total"], self.reference_energy,
                 delta=self.tolerance,
                 msg="Absolute energy difference too large for " + method_name)
 
@@ -74,16 +73,16 @@ class CoulombCloudWall(ut.TestCase):
 
     @utx.skipIfMissingFeatures("P3M")
     def test_p3m(self):
-        self.S.actors.add(
+        self.system.actors.add(
             espressomd.electrostatics.P3M(
                 prefactor=1, r_cut=1.001, accuracy=1e-3,
                 mesh=[64, 64, 128], cao=7, alpha=2.70746, tune=False))
-        self.S.integrator.run(0)
+        self.system.integrator.run(0)
         self.compare("p3m", energy=True)
 
     @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
-        self.S.actors.add(
+        self.system.actors.add(
             espressomd.electrostatics.P3MGPU(
                 prefactor=1,
                 r_cut=1.001,
@@ -92,12 +91,12 @@ class CoulombCloudWall(ut.TestCase):
                 cao=7,
                 alpha=2.70746,
                 tune=False))
-        self.S.integrator.run(0)
+        self.system.integrator.run(0)
         self.compare("p3m_gpu", energy=False)
 
     def test_zz_deactivation(self):
         # The energy is 0 if no method is active
-        self.assertEqual(self.S.analysis.energy()["total"], 0.0)
+        self.assertEqual(self.system.analysis.energy()["total"], 0.0)
 
 
 if __name__ == "__main__":

@@ -118,11 +118,12 @@ extern p3m_data_struct p3m;
  *  The function is based on routines of the program HE_Q.cpp written by M.
  *  Deserno.
  *
+ *  @param timings Number of test force calculations
  *  @param verbose printf output
  *  @retval ES_OK
  *  @retval ES_ERROR
  */
-int p3m_adaptive_tune(bool verbose);
+int p3m_adaptive_tune(int timings, bool verbose);
 
 /** Initialize all structures, parameters and arrays needed for the
  *  P3M algorithm for charge-charge interactions.

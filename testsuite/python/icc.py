@@ -17,6 +17,8 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.electrostatics
+import espressomd.electrostatic_extensions
 import numpy as np
 
 
@@ -58,9 +60,6 @@ class test_icc(ut.TestCase):
             pos=positions, q=charges, fix=fix), normals, areas
 
     def common_setup(self, kwargs, error):
-        from espressomd.electrostatic_extensions import ICC
-
-        self.tearDown()
         part_slice, normals, areas = self.add_icc_particles(2, 0.01, 0)
 
         params = {"n_icc": len(part_slice),
@@ -72,7 +71,7 @@ class test_icc(ut.TestCase):
 
         params.update(kwargs)
 
-        icc = ICC(**params)
+        icc = espressomd.electrostatic_extensions.ICC(**params)
         with self.assertRaisesRegex(Exception, error):
             self.system.actors.add(icc)
 
@@ -88,11 +87,9 @@ class test_icc(ut.TestCase):
 
         for kwargs, error in params:
             self.common_setup(kwargs, error)
+            self.tearDown()
 
     def test_core_params(self):
-        from espressomd.electrostatic_extensions import ICC
-
-        self.tearDown()
         part_slice, normals, areas = self.add_icc_particles(5, 0.01, 0)
 
         params = {"n_icc": len(part_slice),
@@ -102,7 +99,7 @@ class test_icc(ut.TestCase):
                   "first_id": part_slice.id[0],
                   "check_neutrality": False}
 
-        icc = ICC(**params)
+        icc = espressomd.electrostatic_extensions.ICC(**params)
         self.system.actors.add(icc)
 
         icc_params = icc.get_params()
@@ -111,13 +108,9 @@ class test_icc(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_dipole_system(self):
-        from espressomd.electrostatics import P3M
-        from espressomd.electrostatic_extensions import ICC
-
         BOX_L = 20.
         BOX_SPACE = 5.
 
-        self.tearDown()
         self.system.box_l = [BOX_L, BOX_L, BOX_L + BOX_SPACE]
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
@@ -139,17 +132,18 @@ class test_icc(ut.TestCase):
         epsilons = np.full_like(areas, 1e8)
         sigmas = np.zeros_like(areas)
 
-        icc = ICC(n_icc=2 * N_ICC_SIDE_LENGTH**2,
-                  normals=normals,
-                  areas=areas,
-                  epsilons=epsilons,
-                  sigmas=sigmas,
-                  convergence=1e-6,
-                  max_iterations=100,
-                  first_id=part_slice_lower.id[0],
-                  eps_out=1.,
-                  relaxation=0.75,
-                  ext_field=[0, 0, 0])
+        icc = espressomd.electrostatic_extensions.ICC(
+            n_icc=2 * N_ICC_SIDE_LENGTH**2,
+            normals=normals,
+            areas=areas,
+            epsilons=epsilons,
+            sigmas=sigmas,
+            convergence=1e-6,
+            max_iterations=100,
+            first_id=part_slice_lower.id[0],
+            eps_out=1.,
+            relaxation=0.75,
+            ext_field=[0, 0, 0])
 
         # Dipole in the center of the simulation box
         BOX_L_HALF = BOX_L / 2
@@ -159,7 +153,8 @@ class test_icc(ut.TestCase):
         self.system.part.add(pos=[BOX_L_HALF, BOX_L_HALF, BOX_L_HALF + DIPOLE_DISTANCE / 2],
                              q=-DIPOLE_CHARGE, fix=[True, True, True])
 
-        p3m = P3M(prefactor=1, mesh=32, cao=7, accuracy=1e-5)
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=1, mesh=32, cao=7, accuracy=1e-5)
 
         self.system.actors.add(p3m)
         self.system.actors.add(icc)

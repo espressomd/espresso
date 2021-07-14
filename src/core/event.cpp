@@ -36,7 +36,6 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
@@ -100,7 +99,7 @@ void on_program_start() {
   }
 }
 
-void on_integration_start() {
+void on_integration_start(double time_step) {
   /********************************************/
   /* sanity checks                            */
   /********************************************/
@@ -110,11 +109,13 @@ void on_integration_start() {
   integrator_npt_sanity_checks();
 #endif
   interactions_sanity_checks();
-  lb_lbfluid_on_integration_start();
+  lb_lbfluid_sanity_checks(time_step);
 
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
+
+  lb_lbfluid_on_integration_start();
 
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
@@ -123,7 +124,7 @@ void on_integration_start() {
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
-    thermo_init();
+    thermo_init(time_step);
     reinit_thermo = false;
     recalc_forces = true;
   }
@@ -149,7 +150,6 @@ void on_integration_start() {
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
 #endif
-  check_global_consistency();
 #endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
@@ -307,42 +307,20 @@ void on_skin_change() {
   on_coulomb_change();
 }
 
-void on_parameter_change(int field) {
-  switch (field) {
-  case FIELD_MIN_GLOBAL_CUT:
-  case FIELD_SKIN:
-    on_skin_change();
-    break;
-  case FIELD_NODEGRID:
-    grid_changed_n_nodes();
-    cells_re_init(cell_structure.decomposition_type());
-    break;
-  case FIELD_TEMPERATURE:
-    on_temperature_change();
-    reinit_thermo = true;
-    break;
-  case FIELD_TIMESTEP:
-    lb_lbfluid_reinit_parameters();
-  case FIELD_LANGEVIN_GAMMA:
-  case FIELD_LANGEVIN_GAMMA_ROTATION:
-  case FIELD_NPTISO_G0:
-  case FIELD_NPTISO_GV:
-  case FIELD_NPTISO_PISTON:
-    reinit_thermo = true;
-    break;
-  case FIELD_FORCE_CAP:
-    /* If the force cap changed, forces are invalid */
-    recalc_forces = true;
-    break;
-  case FIELD_THERMO_SWITCH:
-  case FIELD_LATTICE_SWITCH:
-  case FIELD_RIGIDBONDS:
-  case FIELD_THERMALIZEDBONDS:
-    break;
-  case FIELD_SIMTIME:
-    recalc_forces = true;
-    break;
-  }
+void on_thermostat_param_change() { reinit_thermo = true; }
+
+void on_timestep_change() {
+  lb_lbfluid_reinit_parameters();
+  on_thermostat_param_change();
+}
+
+void on_simtime_change() { recalc_forces = true; }
+
+void on_forcecap_change() { recalc_forces = true; }
+
+void on_nodegrid_change() {
+  grid_changed_n_nodes();
+  cells_re_init(cell_structure.decomposition_type());
 }
 
 /**

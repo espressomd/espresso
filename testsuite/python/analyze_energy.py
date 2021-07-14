@@ -17,14 +17,15 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-from espressomd.interactions import HarmonicBond
+import espressomd.interactions
+import espressomd.electrostatics
 
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
-    harmonic = HarmonicBond(r_0=0.0, k=3)
+    harmonic = espressomd.interactions.HarmonicBond(r_0=0.0, k=3)
 
     @classmethod
     def setUpClass(cls):
@@ -152,21 +153,19 @@ class AnalyzeEnergy(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["ELECTROSTATICS", "P3M"])
     def test_electrostatics(self):
-
-        from espressomd import electrostatics
-
         p0, p1 = self.system.part[:]
         p0.pos = [1, 2, 2]
         p1.pos = [3, 2, 2]
         p0.q = 1
         p1.q = -1
-        p3m = electrostatics.P3M(prefactor=1.0,
-                                 accuracy=9.910945054074526e-08,
-                                 mesh=[22, 22, 22],
-                                 cao=7,
-                                 r_cut=8.906249999999998,
-                                 alpha=0.387611049779351,
-                                 tune=False)
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=1.0,
+            accuracy=9.910945054074526e-08,
+            mesh=[22, 22, 22],
+            cao=7,
+            r_cut=8.906249999999998,
+            alpha=0.387611049779351,
+            tune=False)
         self.system.actors.add(p3m)
 
         # did not verify if this is correct, but looks pretty good (close to

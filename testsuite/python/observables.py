@@ -69,12 +69,12 @@ class Observables(ut.TestCase):
         p.virtual = True
 
     def generate_test_for_pid_observable(
-            _obs_name, _pprop_name, _agg_type=None):
+            _obs_class, _pprop_name, _agg_type=None):
         """Generates test cases for observables working on particle id lists.
 
         """
         pprop_name = _pprop_name
-        obs_name = _obs_name
+        obs_class = _obs_class
         agg_type = _agg_type
 
         def func(self):
@@ -109,7 +109,7 @@ class Observables(ut.TestCase):
                     part_data = calc_com_x(self.system, pprop_name, id_list)
 
             # Data from observable
-            observable = obs_name(ids=id_list)
+            observable = obs_class(ids=id_list)
             obs_data = observable.calculate()
 
             # Check
@@ -118,10 +118,9 @@ class Observables(ut.TestCase):
 
             np.testing.assert_array_almost_equal(
                 obs_data,
-                part_data, err_msg="Data did not agree for observable " +
-                str(obs_name) +
-                " and particle property " +
-                pprop_name, decimal=11)
+                part_data,
+                err_msg=f"Data did not agree for observable {obs_class.__name__} and particle property {pprop_name}",
+                decimal=11)
 
             # Test setters and getters
             self.assertEqual(observable.ids, id_list)

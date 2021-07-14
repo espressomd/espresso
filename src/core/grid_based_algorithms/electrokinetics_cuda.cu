@@ -33,6 +33,7 @@
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
+#include "integrate.hpp"
 
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
@@ -2246,11 +2247,11 @@ int ek_init() {
     lbpar_gpu.is_TRT = true;
 
     lb_reinit_parameters_gpu();
-    lbpar_gpu.viscosity = ek_parameters.viscosity * lbpar_gpu.time_step /
-                          Utils::sqr(lbpar_gpu.agrid);
-    lbpar_gpu.bulk_viscosity = ek_parameters.bulk_viscosity *
-                               lbpar_gpu.time_step /
-                               Utils::sqr(lbpar_gpu.agrid);
+    auto const time_step = static_cast<float>(get_time_step());
+    lbpar_gpu.viscosity =
+        ek_parameters.viscosity * time_step / Utils::sqr(lbpar_gpu.agrid);
+    lbpar_gpu.bulk_viscosity =
+        ek_parameters.bulk_viscosity * time_step / Utils::sqr(lbpar_gpu.agrid);
 
     lbpar_gpu.external_force_density =
         ek_parameters.lb_ext_force_density[0] != 0 ||
@@ -2258,12 +2259,12 @@ int ek_init() {
         ek_parameters.lb_ext_force_density[2] != 0;
     lbpar_gpu.ext_force_density =
         Utils::Vector3f(ek_parameters.lb_ext_force_density) *
-        Utils::sqr(lbpar_gpu.agrid * lbpar_gpu.time_step);
+        Utils::sqr(lbpar_gpu.agrid * time_step);
 
     lb_reinit_parameters_gpu();
     lb_init_gpu();
 
-    ek_parameters.time_step = lbpar_gpu.time_step;
+    ek_parameters.time_step = time_step;
     ek_parameters.dim_x = lbpar_gpu.dim[0];
     ek_parameters.dim_x_padded = (ek_parameters.dim_x / 2 + 1) * 2;
     ek_parameters.dim_y = lbpar_gpu.dim[1];
@@ -3619,7 +3620,6 @@ void ek_print_lbpar() {
   printf("    float gamma_even = %f;\n", lbpar_gpu.gamma_even);
   printf("    float agrid = %f;\n", lbpar_gpu.agrid);
   printf("    float tau = %f;\n", lbpar_gpu.tau);
-  printf("    float time_step = %f;\n", lbpar_gpu.time_step);
   printf("    float bulk_viscosity = %f;\n", lbpar_gpu.bulk_viscosity);
   printf("    unsigned int dim_x = %d;\n", lbpar_gpu.dim[0]);
   printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim[1]);

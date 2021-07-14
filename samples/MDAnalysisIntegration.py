@@ -21,7 +21,7 @@ convert the frame to other formats (CHARMM, GROMACS, ...). For more
 details, see :ref:`Writing various formats using MDAnalysis`.
 """
 import espressomd
-from espressomd import MDA_ESP
+import espressomd.MDA_ESP
 import numpy as np
 import MDAnalysis as mda
 
@@ -47,7 +47,7 @@ for i in range(10):
 # ========================================================="
 #
 
-eos = MDA_ESP.Stream(system)
+eos = espressomd.MDA_ESP.Stream(system)
 
 u = mda.Universe(eos.topology, eos.trajectory)
 

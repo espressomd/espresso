@@ -30,7 +30,7 @@ from . import cuda_init
 from . import utils
 from .utils import array_locked, is_valid_type, check_type_or_throw_except
 from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
-from .globals cimport time_step
+from .integrate cimport get_time_step
 
 
 def _construct(cls, params):
@@ -54,7 +54,7 @@ cdef class HydrodynamicInteraction(Actor):
         Lattice constant. The box size in every direction must be an integer
         multiple of ``agrid``.
     tau : :obj:`float`
-        LB time step. The MD time step must be an integer multiple of ``tau``.
+        LB time step, must be an integer multiple of the MD time step.
     dens : :obj:`float`
         Fluid density.
     visc : :obj:`float`
@@ -157,7 +157,6 @@ cdef class HydrodynamicInteraction(Actor):
         if "gamma_even" in self._params:
             python_lbfluid_set_gamma_even(self._params["gamma_even"])
 
-        lb_lbfluid_sanity_checks()
         utils.handle_errors("LB fluid activation")
 
     def _get_params_from_es_core(self):
@@ -285,11 +284,25 @@ cdef class HydrodynamicInteraction(Actor):
         lb_lbfluid_print_boundary(utils.to_char_pointer(path))
 
     def save_checkpoint(self, path, binary):
+        '''
+        Write LB node populations to a file.
+        :class:`~espressomd.lbboundaries.LBBoundaries`
+        information is not written to the file.
+        '''
         tmp_path = path + ".__tmp__"
         lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
         os.rename(tmp_path, path)
 
     def load_checkpoint(self, path, binary):
+        '''
+        Load LB node populations from a file.
+        :class:`~espressomd.lbboundaries.LBBoundaries`
+        information is not available in the file. The boundary
+        information of the grid will be set to zero,
+        even if :class:`~espressomd.lbboundaries.LBBoundaries`
+        contains :class:`~espressomd.lbboundaries.LBBoundary`
+        objects (they are ignored).
+        '''
         lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
     def _activate_method(self):
@@ -376,8 +389,8 @@ cdef class HydrodynamicInteraction(Actor):
 
         def __set__(self, tau):
             lb_lbfluid_set_tau(tau)
-            if time_step > 0.0:
-                check_tau_time_step_consistency(tau, time_step)
+            if get_time_step() > 0.0:
+                check_tau_time_step_consistency(tau, get_time_step())
 
     property agrid:
         def __get__(self):
@@ -551,6 +564,14 @@ cdef class LBFluidRoutines:
         def __set__(self, value):
             raise NotImplementedError
 
+    def __eq__(self, obj1):
+        index_1 = np.array(self.index)
+        index_2 = np.array(obj1.index)
+        return all(index_1 == index_2)
+
+    def __hash__(self):
+        return hash(self.index)
+
 
 class LBSlice:
 
@@ -587,6 +608,11 @@ class LBSlice:
                 for k, z in enumerate(z_indices):
                     setattr(LBFluidRoutines(
                         np.array([x, y, z])), prop_name, value[i, j, k])
+
+    def __iter__(self):
+        indices = [(x, y, z) for (x, y, z) in itertools.product(
+            self.x_indices, self.y_indices, self.z_indices)]
+        return (LBFluidRoutines(np.array(index)) for index in indices)
 
 
 def _add_lb_slice_properties():

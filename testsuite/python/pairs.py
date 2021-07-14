@@ -27,35 +27,32 @@ class PairTest(ut.TestCase):
     when the distance threshold is larger than the cell size.
     """
 
-    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=3 * [10.])
+    system.time_step = 0.1
+    system.cell_system.skin = 0.3
+    # Force an appropriate cell grid
+    system.min_global_cut = 1.6
 
     def setUp(self):
-        self.s.time_step = 0.1     
-        self.s.box_l = 3 * [10.]
-        self.s.cell_system.skin = 0.3
-
-        # Force an appropriate cell grid
-        self.s.min_global_cut = 1.6
-
         vel = [1., 2., 3.]
 
-        self.s.part.add(id=0, pos=[5., 4.5, 5.], v=vel, type=0)
-        self.s.part.add(id=1, pos=[5., 5.5, 5.], v=vel, type=1)
-        self.s.part.add(id=2, pos=[9.5, 5., 5.], v=vel, type=2)
-        self.s.part.add(id=3, pos=[0.5, 5., 5.], v=vel, type=3)
-        self.s.part.add(id=4, pos=[5., 5., 9.5], v=vel, type=4)
-        self.s.part.add(id=5, pos=[5., 5., 0.5], v=vel, type=5)
-        self.s.part.add(id=6, pos=[5., 9.5, 5.], v=vel, type=6)
-        self.s.part.add(id=7, pos=[5., 0.5, 5.], v=vel, type=7)
-        self.s.part.add(id=8, pos=[5., 9.5, 9.5], v=vel, type=8)
-        self.s.part.add(id=9, pos=[5., 0.5, 0.5], v=vel, type=9)
-        self.s.part.add(id=10, pos=[1., 1., 1.], v=vel, type=10)
-        self.s.part.add(id=11, pos=[9., 9., 9.], v=vel, type=11)
+        self.system.part.add(id=0, pos=[5., 4.5, 5.], v=vel, type=0)
+        self.system.part.add(id=1, pos=[5., 5.5, 5.], v=vel, type=1)
+        self.system.part.add(id=2, pos=[9.5, 5., 5.], v=vel, type=2)
+        self.system.part.add(id=3, pos=[0.5, 5., 5.], v=vel, type=3)
+        self.system.part.add(id=4, pos=[5., 5., 9.5], v=vel, type=4)
+        self.system.part.add(id=5, pos=[5., 5., 0.5], v=vel, type=5)
+        self.system.part.add(id=6, pos=[5., 9.5, 5.], v=vel, type=6)
+        self.system.part.add(id=7, pos=[5., 0.5, 5.], v=vel, type=7)
+        self.system.part.add(id=8, pos=[5., 9.5, 9.5], v=vel, type=8)
+        self.system.part.add(id=9, pos=[5., 0.5, 0.5], v=vel, type=9)
+        self.system.part.add(id=10, pos=[1., 1., 1.], v=vel, type=10)
+        self.system.part.add(id=11, pos=[9., 9., 9.], v=vel, type=11)
 
         self.types_to_get_pairs = [0, 1, 4, 5, 6]
 
     def tearDown(self):
-        self.s.part.clear()
+        self.system.part.clear()
 
     def expected_pairs(self, periodicity):
         if all(periodicity == (1, 1, 1)):
@@ -70,50 +67,51 @@ class PairTest(ut.TestCase):
             return [(0, 1)]
 
     def check_pairs(self):
-        pairs = self.s.cell_system.get_pairs(1.5)
-        epairs = self.expected_pairs(self.s.periodicity)
+        pairs = self.system.cell_system.get_pairs(1.5)
+        epairs = self.expected_pairs(self.system.periodicity)
         self.assertSetEqual(set(pairs), set(epairs))
 
-        pairs_by_type = self.s.cell_system.get_pairs(
+        pairs_by_type = self.system.cell_system.get_pairs(
             1.5, types=self.types_to_get_pairs)
-        epairs_by_type = self.expected_pairs_with_types(self.s.periodicity)
+        epairs_by_type = self.expected_pairs_with_types(
+            self.system.periodicity)
         self.assertSetEqual(set(pairs_by_type), set(epairs_by_type))
 
     def test_input_exceptions(self):
         with self.assertRaises(ValueError):
-            self.s.cell_system.get_pairs(0.1, types=3)
+            self.system.cell_system.get_pairs(0.1, types=3)
         # check no exception for list of length 1
-        self.s.cell_system.get_pairs(0.1, types=[3])
+        self.system.cell_system.get_pairs(0.1, types=[3])
 
     def check_range_exception(self):
         with self.assertRaises(Exception):
-            self.s.cell_system.get_pairs(3.)
+            self.system.cell_system.get_pairs(3.)
 
     def run_and_check(self, n_steps=100):
-        self.s.integrator.run(0)
+        self.system.integrator.run(0)
         self.check_pairs()
-        self.s.integrator.run(n_steps)
+        self.system.integrator.run(n_steps)
         self.check_pairs()
 
     def test_nsquare(self):
-        self.s.cell_system.set_n_square()
-        self.s.periodicity = [1, 1, 1]
+        self.system.cell_system.set_n_square()
+        self.system.periodicity = [1, 1, 1]
         self.run_and_check()
 
     def test_nsquare_partial_z(self):
-        self.s.cell_system.set_n_square()
-        self.s.periodicity = [1, 1, 0]
+        self.system.cell_system.set_n_square()
+        self.system.periodicity = [1, 1, 0]
         self.run_and_check()
 
     def test_dd(self):
-        self.s.cell_system.set_domain_decomposition()
-        self.s.periodicity = [1, 1, 1]
+        self.system.cell_system.set_domain_decomposition()
+        self.system.periodicity = [1, 1, 1]
         self.run_and_check()
         self.check_range_exception()
 
     def test_dd_partial_z(self):
-        self.s.cell_system.set_domain_decomposition()
-        self.s.periodicity = [1, 1, 0]
+        self.system.cell_system.set_domain_decomposition()
+        self.system.periodicity = [1, 1, 0]
         self.run_and_check()
         self.check_range_exception()
 

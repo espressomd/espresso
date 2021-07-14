@@ -52,9 +52,6 @@
 #include <tuple>
 #include <vector>
 
-/** How many trial calculations in @ref mmm1d_tune */
-#define TEST_INTEGRATIONS 1000
-
 /** Largest numerically stable cutoff for Bessel function. Don't
  *  change without improving the formulas.
  */
@@ -335,7 +332,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
   return chpref * E;
 }
 
-int mmm1d_tune(bool verbose) {
+int mmm1d_tune(int timings, bool verbose) {
   if (MMM1D_sanity_checks())
     return ES_ERROR;
   double min_time = std::numeric_limits<double>::infinity();
@@ -361,7 +358,7 @@ int mmm1d_tune(bool verbose) {
       mpi_bcast_coulomb_params();
 
       /* perform force calculation test */
-      double int_time = time_force_calc(TEST_INTEGRATIONS);
+      double int_time = time_force_calc(timings);
 
       /* exit on errors */
       if (int_time < 0)

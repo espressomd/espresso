@@ -44,8 +44,9 @@ Moreover, please carefully read the limitations mentioned below.
 
 Checkpointing is implemented by the :class:`espressomd.checkpointing.Checkpoint` class. It is instanced as follows::
 
-    from espressomd import checkpointing
-    checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path=".")
+    import espressomd
+    import espressomd.checkpointing
+    checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path=".")
 
 Here, ``checkpoint_id`` denotes the identifier for a checkpoint. Legal characters for an id
 are "0-9", "a-zA-Z", "-", "_".
@@ -85,10 +86,10 @@ quits.
 An existing checkpoint can be loaded with::
 
     import espressomd
-    from espressomd import checkpointing
+    import espressomd.checkpointing
     import signal
 
-    checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
+    checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
     checkpoint.load()
 
 This will restore the state of the objects registered for checkpointing.
@@ -99,6 +100,11 @@ Be aware of the following limitations:
   * Checkpointing makes use of the ``pickle`` python package. Objects will only be restored as far as they support pickling. This is the case for Python's basic data types, ``numpy`` arrays and many other objects. Still, pickling support cannot be taken for granted.
 
   * Pickling support of the :class:`espressomd.system.System` instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms than can be tested.
+
+  * Checkpointing only supports recursion on the head node. It is therefore
+    impossible to checkpoint a :class:`espressomd.system.System` instance that
+    contains LB boundaries, constraints or auto-update accumulators, when the
+    simulation is running with 2 or more MPI nodes.
 
   * The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice-Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods
     :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
@@ -139,10 +145,10 @@ respective hdf5-file. This may, for example, look like:
 
 .. code:: python
 
-    from espressomd.io.writer import h5md
+    import espressomd.io.writer.h5md
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
-    h5 = h5md.H5md(file_path="trajectory.h5")
+    h5 = espressomd.io.writer.h5md.H5md(file_path="trajectory.h5")
 
 An optional argument to the constructor of :class:`espressomd.io.writer.h5md.H5md` is
 an instance of :class:`espressomd.io.writer.h5md.UnitSystem` which encapsulates 
@@ -210,10 +216,10 @@ capabilities. The usage is quite simple:
 
 .. code:: python
 
-    from espressomd.io.mppiio import mpiio
+    import espressomd.io.mppiio
     system = espressomd.System(box_l=[1, 1, 1])
     # ... add particles here
-    mpiio.write("/tmp/mydata", positions=True, velocities=True, types=True, bonds=True)
+    espressomd.io.mppiio.mpiio.write("/tmp/mydata", positions=True, velocities=True, types=True, bonds=True)
 
 Here, :file:`/tmp/mydata` is the prefix used for several files. The call will output
 particle positions, velocities, types and their bonds to the following files in
@@ -271,21 +277,21 @@ A standalone VTF file can simply be
 .. code:: python
 
     import espressomd
-    from espressomd.io.writer import vtf
+    import espressomd.io.writer.vtf
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     fp = open('trajectory.vtf', mode='w+t')
 
     # ... add particles here
 
     # write structure block as header
-    vtf.writevsf(system, fp)
+    espressomd.io.writer.vtf.writevsf(system, fp)
     # write initial positions as coordinate block
-    vtf.writevcf(system, fp)
+    espressomd.io.writer.vtf.writevcf(system, fp)
 
     # integrate and write the frame
     for n in num_steps:
         system.integrator.run(100)
-        vtf.writevcf(system, fp)
+        espressomd.io.writer.vtf.writevcf(system, fp)
     fp.close()
 
 The structure definitions in the VTF/VSF formats are incremental, the user
@@ -319,11 +325,11 @@ Writes a structure block describing the system's structure to the given channel,
 .. code:: python
 
     import espressomd
-    from espressomd.io.writer import vtf
+    import espressomd.io.writer.vtf
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
     fp = open('trajectory.vsf', mode='w+t')
-    vtf.writevsf(system, fp, types='all')
+    espressomd.io.writer.vtf.writevsf(system, fp, types='all')
 
 The output of this command can be
 used for a standalone VSF file, or at the beginning of a VTF file that
@@ -341,11 +347,11 @@ the system's particles.
 .. code:: python
 
     import espressomd
-    from espressomd.io.writer import vtf
+    import espressomd.io.writer.vtf
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
     fp = open('trajectory.vcf', mode='w+t')
-    vtf.writevcf(system, fp, types='all')
+    espressomd.io.writer.vtf.writevcf(system, fp, types='all')
 
 .. _vtf_pid_map\: Going back and forth between ESPResSo and VTF indexing:
 
@@ -360,11 +366,11 @@ requires increasing and continuous indexing. The |es| ``id`` can be used as *key
 .. code:: python
 
     import espressomd
-    from espressomd.io.writer import vtf
+    import espressomd.io.writer.vtf
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     system.part.add(id=5, pos=[0, 0, 0])
     system.part.add(id=3, pos=[0, 0, 0])
-    vtf_index = vtf.vtf_pid_map(system)
+    vtf_index = espressomd.io.writer.vtf.vtf_pid_map(system)
     vtf_index[3]
 
 Note that the |es| particles are ordered in increasing order, thus ``id=3`` corresponds to the zeroth VTF index.
@@ -387,10 +393,10 @@ using MDAnalysis. A simple example is the following:
 
     import espressomd
     import MDAnalysis as mda
-    from espressomd import MDA_ESP
+    import espressomd.MDA_ESP
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
     # ... add particles here
-    eos = MDA_ESP.Stream(system)  # create the stream
+    eos = espressomd.MDA_ESP.Stream(system)  # create the stream
     u = mda.Universe(eos.topology, eos.trajectory)  # create the MDA universe
 
     # example: write a single frame to PDB
@@ -417,7 +423,7 @@ To read a PDB file containing a single frame::
     import MDAnalysis
     import numpy as np
     import espressomd
-    from espressomd.interactions import HarmonicBond
+    import espressomd.interactions
 
     # parse protein structure
     universe = MDAnalysis.Universe("protein.pdb")
@@ -432,12 +438,12 @@ To read a PDB file containing a single frame::
     # configure sphere size sigma and create a harmonic bond
     system.non_bonded_inter[0, 0].lennard_jones.set_params(
         epsilon=1, sigma=1.5, cutoff=2, shift="auto")
-    system.bonded_inter[0] = HarmonicBond(k=0.5, r_0=1.5)
+    system.bonded_inter[0] = espressomd.interactions.HarmonicBond(k=0.5, r_0=1.5)
     # create particles and add bonds between them
     system.part.add(pos=np.array(chainA.positions, dtype=float))
     for i in range(0, len(chainA) - 1):
         system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
     # visualize protein in 3D
-    from espressomd import visualization
-    visualizer = visualization.openGLLive(system, bond_type_radius=[0.2])
+    import espressomd.visualization
+    visualizer = espressomd.visualization.openGLLive(system, bond_type_radius=[0.2])
     visualizer.run(0)

@@ -19,8 +19,8 @@ Visualize the simulation of a linear polymer.
 """
 
 import espressomd
-from espressomd.interactions import HarmonicBond
-from espressomd import visualization
+import espressomd.interactions
+import espressomd.visualization
 import numpy as np
 import argparse
 
@@ -46,7 +46,7 @@ system.cell_system.skin = 0.4
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=0, sigma=1, cutoff=2, shift="auto")
-system.bonded_inter[0] = HarmonicBond(k=0.5, r_0=1.0)
+system.bonded_inter[0] = espressomd.interactions.HarmonicBond(k=0.5, r_0=1.0)
 
 previous_part = None
 for i in range(n_part):
@@ -57,9 +57,10 @@ for i in range(n_part):
 
 # Select visualizer
 if args.visualizer == "mayavi":
-    visualizer = visualization.mayaviLive(system)
+    visualizer = espressomd.visualization.mayaviLive(system)
 else:
-    visualizer = visualization.openGLLive(system, bond_type_radius=[0.3])
+    visualizer = espressomd.visualization.openGLLive(
+        system, bond_type_radius=[0.3])
 
 system.integrator.set_steepest_descent(f_max=10, gamma=50.0,
                                        max_displacement=0.2)

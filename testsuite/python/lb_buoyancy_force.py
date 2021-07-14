@@ -16,12 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import espressomd
-from espressomd import lbboundaries, shapes
+import espressomd.lbboundaries
+import espressomd.shapes
 import unittest as ut
-import numpy as np
 import unittest_decorators as utx
+import numpy as np
 
-from tests_common import count_fluid_nodes
+import tests_common
 
 # Define the LB Parameters
 TIME_STEP = 0.01
@@ -60,16 +61,16 @@ class Buoyancy(object):
         for i in range(3):
             n = np.zeros(3)
             n[i] = 1
-            self.system.lbboundaries.add(
-                lbboundaries.LBBoundary(shape=shapes.Wall(
-                                        normal=-n, dist=-(self.system.box_l[i] - AGRID))))
+            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
+                                         shape=espressomd.shapes.Wall(
+                                             normal=-n, dist=-(self.system.box_l[i] - AGRID))))
 
-            self.system.lbboundaries.add(lbboundaries.LBBoundary(
-                                         shape=shapes.Wall(
+            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
+                                         shape=espressomd.shapes.Wall(
                                              normal=n, dist=AGRID)))
 
         # setup sphere without slip in the middle
-        sphere = lbboundaries.LBBoundary(shape=shapes.Sphere(
+        sphere = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Sphere(
             radius=RADIUS, center=self.system.box_l / 2, direction=1))
 
         self.system.lbboundaries.add(sphere)
@@ -91,7 +92,7 @@ class Buoyancy(object):
         for b in self.system.lbboundaries:
             boundary_force += b.get_force()
 
-        fluid_nodes = count_fluid_nodes(self.lbf)
+        fluid_nodes = tests_common.count_fluid_nodes(self.lbf)
         fluid_volume = fluid_nodes * AGRID**3
         applied_force = fluid_volume * np.array(LB_PARAMS['ext_force_density'])
 

@@ -40,7 +40,7 @@ class Checkpoint:
         A string identifying a specific checkpoint.
     checkpoint_path : :obj:`str`, optional
         Path for reading and writing the checkpoint.
-        If not given, the CWD is used.
+        If not given, the current working directory is used.
 
     """
 
@@ -76,9 +76,9 @@ class Checkpoint:
 
     def __getattr_submodule(self, obj, name, default):
         """
-        Generalization of getattr(). __getattr_submodule(object,
-        "name1.sub1.sub2", None) will return attribute sub2 if available
-        otherwise None.
+        Generalization of ``getattr()``.
+        ``__getattr_submodule(object, "name1.sub1.sub2", None)`` will return
+        attribute ``sub2`` if available otherwise ``None``.
 
         """
         names = name.split('.')
@@ -90,9 +90,10 @@ class Checkpoint:
 
     def __setattr_submodule(self, obj, name, value):
         """
-        Generalization of setattr(). __setattr_submodule(object,
-        "name1.sub1.sub2", value) will set attribute sub2 to value. Will raise
-        exception if parent modules do not exist.
+        Generalization of ``setattr()``.
+        ``__setattr_submodule(object, "name1.sub1.sub2", value)`` will set
+        attribute ``sub2`` to ``value``. Will raise exception if parent
+        modules do not exist.
 
         """
         names = name.split('.')
@@ -101,14 +102,15 @@ class Checkpoint:
 
         if obj is None:
             raise Exception(
-                "Cannot set attribute of non existing submodules: {}\nCheck the order you registered objects for checkpointing.".format(name))
+                f"Cannot set attribute of non existing submodules: {name}\n"
+                f"Check the order you registered objects for checkpointing.")
         setattr(obj, names[-1], value)
 
     def __hasattr_submodule(self, obj, name):
         """
-        Generalization of hasattr(). __hasattr_submodule(object,
-        "name1.sub1.sub2") will return True if submodule sub1 has the attribute
-        sub2.
+        Generalization of ``hasattr()``.
+        ``__hasattr_submodule(object, "name1.sub1.sub2")`` will return
+        ``True`` if submodule ``sub1`` has the attribute ``sub2``.
 
         """
         names = name.split('.')

@@ -37,30 +37,30 @@ class HatTest(ut.TestCase):
             return 0.
 
     def test(self):
-        s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        s.box_l = 3 * [10]
-        s.time_step = 0.01
-        s.cell_system.skin = 0.4
+        system = espressomd.System(box_l=3 * [10])
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
 
-        p0 = s.part.add(pos=0.5 * s.box_l, type=0)
-        p1 = s.part.add(pos=0.5 * s.box_l, type=0)
+        p0 = system.part.add(pos=0.5 * system.box_l, type=0)
+        p1 = system.part.add(pos=0.5 * system.box_l, type=0)
 
         F_max = 3.145
         cutoff = 1.3
 
-        s.non_bonded_inter[0, 0].hat.set_params(F_max=F_max, cutoff=cutoff)
+        system.non_bonded_inter[0, 0].hat.set_params(
+            F_max=F_max, cutoff=cutoff)
 
         dx = cutoff / 90.
-        r0 = 0.5 * s.box_l[0]
+        r0 = 0.5 * system.box_l[0]
 
         for i in range(100):
             r = r0 - i * dx
-            p1.pos = [r, 0.5 * s.box_l[1], 0.5 * s.box_l[2]]
-            s.integrator.run(0)
+            p1.pos = [r, 0.5 * system.box_l[1], 0.5 * system.box_l[2]]
+            system.integrator.run(0)
             self.assertAlmostEqual(
                 self.force(F_max, cutoff, i * dx), p0.f[0], places=7)
             self.assertAlmostEqual(
-                self.pot(F_max, cutoff, i * dx), s.analysis.energy()['total'], places=7)
+                self.pot(F_max, cutoff, i * dx), system.analysis.energy()['total'], places=7)
 
 
 if __name__ == "__main__":

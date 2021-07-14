@@ -21,7 +21,7 @@ from cython.operator cimport dereference
 import collections
 
 include "myconfig.pxi"
-from .utils import requires_experimental_features, is_valid_type
+from .utils import is_valid_type
 from .utils cimport check_type_or_throw_except
 
 
@@ -90,7 +90,7 @@ cdef class NonBondedInteraction:
         return self._params
 
     def __str__(self):
-        return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
+        return f'{self.__class__.__name__}({self.get_params()})'
 
     def __getstate__(self):
         odict = collections.OrderedDict()
@@ -1728,9 +1728,8 @@ cdef class BondedInteraction:
             # Check, if any key was passed, which is not known
             for k in p.keys():
                 if k not in self.valid_keys():
-                    raise ValueError(
-                        "Key '{}' invalid! Only the following keys are supported: {}"
-                        .format(k, ", ".join(self.valid_keys())))
+                    raise ValueError(f"Key '{k}' invalid! Only the following "
+                                     f"keys are supported: {', '.join(self.valid_keys())}")
 
             # Initialize default values
             self.set_default_params()
@@ -1767,7 +1766,7 @@ cdef class BondedInteraction:
             "Subclasses of BondedInteraction must define the _set_params_in_es_core() method.")
 
     def __str__(self):
-        return self.__class__.__name__ + "(" + str(self._params) + ")"
+        return f'{self.__class__.__name__}({self._params})'
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -2942,7 +2941,6 @@ class IBM_Tribend(BondedInteraction):
             self._params["ind4"], self._params["kb"], flat))
 
 
-@requires_experimental_features("No test coverage")
 class IBM_VolCons(BondedInteraction):
 
     """
@@ -2954,7 +2952,8 @@ class IBM_VolCons(BondedInteraction):
     ----------
     softID : :obj:`int`
         Used to identify the object to which this bond belongs. Each object
-        (cell) needs its own ID
+        (cell) needs its own ID. For performance reasons, it is best to
+        start from ``softID=0`` and increment by 1 for each subsequent bond.
     kappaV : :obj:`float`
         Modulus for volume force
 
@@ -2987,6 +2986,14 @@ class IBM_VolCons(BondedInteraction):
     def _set_params_in_es_core(self):
         set_bonded_ia_params(self._bond_id, CoreIBMVolCons(
             self._params["softID"], self._params["kappaV"]))
+
+    def current_volume(self):
+        """
+        Query the current volume of the soft object associated to this bond.
+        The volume is initialized once all :class:`IBM_Triel` bonds have
+        been added and the forces have been recalculated.
+        """
+        return immersed_boundaries.get_current_volume(self._params['softID'])
 
 
 class OifGlobalForces(BondedInteraction):

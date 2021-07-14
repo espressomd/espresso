@@ -20,9 +20,9 @@ them during the entire simulation.
 """
 
 import espressomd
-from espressomd import interactions
-from espressomd import shapes
-from espressomd import polymer
+import espressomd.interactions
+import espressomd.shapes
+import espressomd.polymer
 
 required_features = ["WCA"]
 espressomd.assert_features(required_features)
@@ -51,28 +51,27 @@ ran_pos = np.random.uniform(low=1 + wall_offset, high=box_l - 1 - wall_offset,
 system.part.add(pos=ran_pos, type=np.zeros(num_part, dtype=int))
 
 # bottom wall, normal pointing in the +z direction, laid at z=0.1
-floor = shapes.Wall(normal=[0, 0, 1], dist=wall_offset)
+floor = espressomd.shapes.Wall(normal=[0, 0, 1], dist=wall_offset)
 c1 = system.constraints.add(
     particle_type=0, penetrable=False, only_positive=False, shape=floor)
 
 # top wall, normal pointing in the -z direction, laid at z=49.9, since the
 # normal direction points down, dist is -49.9
-ceil = shapes.Wall(normal=[0, 0, -1], dist=-(box_l - wall_offset))
+ceil = espressomd.shapes.Wall(normal=[0, 0, -1], dist=-(box_l - wall_offset))
 c2 = system.constraints.add(
     particle_type=0, penetrable=False, only_positive=False, shape=ceil)
 
 # create stiff FENE bonds
-fene = interactions.FeneBond(k=30, d_r_max=2)
+fene = espressomd.interactions.FeneBond(k=30, d_r_max=2)
 system.bonded_inter.add(fene)
 # start it next to the wall to test it!
 start = np.array([1, 1, 1 + wall_offset])
 
 # polymer.linear_polymer_positions will avoid violating the constraints
 
-positions = polymer.linear_polymer_positions(n_polymers=1, beads_per_chain=50,
-                                             bond_length=1.0, seed=1234,
-                                             min_distance=0.9,
-                                             respect_constraints=True)
+positions = espressomd.polymer.linear_polymer_positions(
+    n_polymers=1, beads_per_chain=50, bond_length=1.0, seed=1234,
+    min_distance=0.9, respect_constraints=True)
 polymer = system.part.add(pos=positions[0])
 previous_part = None
 for part in polymer:

@@ -17,7 +17,6 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-from espressomd import has_features
 import numpy as np
 
 
@@ -32,7 +31,7 @@ class ParticleSliceTest(ut.TestCase):
         for i in range(4):
             self.system.part.add(pos=[0, 0, i])
 
-        if has_features(["EXTERNAL_FORCES"]):
+        if espressomd.has_features(["EXTERNAL_FORCES"]):
             self.system.part[1].fix = self.state[1]
             np.testing.assert_array_equal(
                 np.copy(self.system.part[0].fix), self.state[0])

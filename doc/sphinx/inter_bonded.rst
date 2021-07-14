@@ -56,8 +56,8 @@ FENE bond
 A FENE (finite extension nonlinear elastic) bond can be instantiated via
 :class:`espressomd.interactions.FeneBond`::
 
-    from espressomd.interactions import FeneBond
-    fene = FeneBond(k=<float>, d_r_max=<float>, r_0=<float>)
+    import espressomd.interactions
+    fene = espressomd.interactions.FeneBond(k=<float>, d_r_max=<float>, r_0=<float>)
 
 This command creates a bond type identifier with a FENE
 interaction. The FENE potential
@@ -80,8 +80,8 @@ Harmonic bond
 A harmonic bond can be instantiated via
 :class:`espressomd.interactions.HarmonicBond`::
 
-    from espressomd.interactions import HarmonicBond
-    hb = HarmonicBond(k=<float>, r_0=<float>, r_cut=<float>)
+    import espressomd.interactions
+    hb = espressomd.interactions.HarmonicBond(k=<float>, r_0=<float>, r_cut=<float>)
 
 
 This creates a bond type identifier with a classical harmonic
@@ -122,6 +122,7 @@ Bonded Coulomb
 A pairwise Coulomb interaction can be instantiated via
 :class:`espressomd.interactions.BondedCoulomb`::
 
+    import espressomd.interactions
     bonded_coulomb = espressomd.interactions.BondedCoulomb(prefactor=1.0)
     system.bonded_inter.add(bonded_coulomb)
     p1.add_bond((bonded_coulomb, p2))
@@ -147,8 +148,8 @@ Subtract P3M short-range bond
 This bond can be instantiated via
 :class:`espressomd.interactions.BondedCoulombSRBond`::
 
-    from espressomd.interactions import BondedCoulombSRBond
-    subtr_p3m_sr = BondedCoulombSRBond(q1q2=<float>)
+    import espressomd.interactions
+    subtr_p3m_sr = espressomd.interactions.BondedCoulombSRBond(q1q2=<float>)
 
 The parameter ``q1q2`` sets the charge factor of the short-range P3M interaction.
 It can differ from the actual particle charges.  This specialized bond can be
@@ -169,8 +170,8 @@ Rigid bonds
 A rigid bond can be instantiated via
 :class:`espressomd.interactions.RigidBond`::
 
-    from espressomd.interactions import RigidBond
-    rig = RigidBond(r=<float>, ptol=<float>, vtol=<float> )
+    import espressomd.interactions
+    rig = espressomd.interactions.RigidBond(r=<float>, ptol=<float>, vtol=<float> )
 
 To simulate rigid bonds, |es| uses the Rattle Shake algorithm which satisfies
 internal constraints for molecular models with internal constraints,
@@ -186,10 +187,11 @@ Thermalized distance bond
 A thermalized bond can be instantiated via
 :class:`espressomd.interactions.ThermalizedBond`::
 
-    from espressomd.interactions import ThermalizedBond
-    thermalized_bond = ThermalizedBond(temp_com=<float>, gamma_com=<float>,
-                                       temp_distance=<float>, gamma_distance=<float>,
-                                       r_cut=<float>, seed=<int>)
+    import espressomd.interactions
+    thermalized_bond = espressomd.interactions.ThermalizedBond(
+        temp_com=<float>, gamma_com=<float>,
+        temp_distance=<float>, gamma_distance=<float>,
+        r_cut=<float>, seed=<int>)
     system.bonded_inter.add(thermalized_bond)
 
 This bond can be used to apply Langevin thermalization on the centre of mass
@@ -207,9 +209,9 @@ Tabulated distance
 A tabulated bond length can be instantiated via
 :class:`espressomd.interactions.TabulatedDistance`::
 
-    from espressomd.interactions import TabulatedDistance
-    tab_dist = TabulatedDistance(min=<min>, max=<max>,
-                                 energy=<energy>, force=<force>)
+    import espressomd.interactions
+    tab_dist = espressomd.interactions.TabulatedDistance(
+        min=<min>, max=<max>, energy=<energy>, force=<force>)
     system.bonded_inter.add(tab_dist)
     p1.add_bond((tab_dist, p2))
 
@@ -228,8 +230,8 @@ Virtual bonds
 A virtual bond can be instantiated via
 :class:`espressomd.interactions.Virtual`::
 
-    from espressomd.interactions import Virtual
-    tab = Virtual()
+    import espressomd.interactions
+    tab = espressomd.interactions.Virtual()
 
 
 This creates a virtual bond type identifier for a pair bond
@@ -259,7 +261,7 @@ between the vectors from the central particle to the two other particles.
 Similar to other bonded interactions, these are defined for every particle triplet and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`), in this case the central one.
 For example, for the schematic with particles ``p0``, ``p1`` (central particle) and ``p2`` the bond was defined using ::
 
-    >>> p1.add_bond((bond_angle, p0, p2))
+    p1.add_bond((bond_angle, p0, p2))
 
 The parameter ``bond_angle`` is an instance of one of four possible bond-angle
 classes, described below.
@@ -279,9 +281,10 @@ angle in radians ranging from 0 to :math:`\pi`.
 
 Example::
 
-    >>> angle_harmonic = AngleHarmonic(bend=1.0, phi0=2 * np.pi / 3)
-    >>> system.bonded_inter.add(angle_harmonic)
-    >>> p1.add_bond((angle_harmonic, p0, p2))
+    import espressomd.interactions
+    angle_harmonic = espressomd.interactions.AngleHarmonic(bend=1.0, phi0=2 * np.pi / 3)
+    system.bonded_inter.add(angle_harmonic)
+    p1.add_bond((angle_harmonic, p0, p2))
 
 
 Cosine angle potential
@@ -302,9 +305,10 @@ periodic and smooth for all angles :math:`\phi`.
 
 Example::
 
-    >>> angle_cosine = AngleCosine(bend=1.0, phi0=2 * np.pi / 3)
-    >>> system.bonded_inter.add(angle_cosine)
-    >>> p1.add_bond((angle_cosine, p0, p2))
+    import espressomd.interactions
+    angle_cosine = espressomd.interactions.AngleCosine(bend=1.0, phi0=2 * np.pi / 3)
+    system.bonded_inter.add(angle_cosine)
+    p1.add_bond((angle_cosine, p0, p2))
 
 
 Harmonic cosine potential
@@ -325,9 +329,10 @@ therefore much flatter than the two aforementioned potentials.
 
 Example::
 
-    >>> angle_cossquare = AngleCossquare(bend=1.0, phi0=2 * np.pi / 3)
-    >>> system.bonded_inter.add(angle_cossquare)
-    >>> p1.add_bond((angle_cossquare, p0, p2))
+    import espressomd.interactions
+    angle_cossquare = espressomd.interactions.AngleCossquare(bend=1.0, phi0=2 * np.pi / 3)
+    system.bonded_inter.add(angle_cossquare)
+    p1.add_bond((angle_cossquare, p0, p2))
 
 
 Tabulated angle potential
@@ -336,10 +341,11 @@ Tabulated angle potential
 A tabulated bond angle can be instantiated via
 :class:`espressomd.interactions.TabulatedAngle`::
 
-    from espressomd.interactions import TabulatedAngle
+    import espressomd.interactions
     theta = np.linspace(0, np.pi, num=91, endpoint=True)
-    angle_tab = TabulatedAngle(energy=10 * (theta - 2 * np.pi / 3)**2,
-                               force=10 * (theta - 2 * np.pi / 3) / 2)
+    angle_tab =  espressomd.interactions.TabulatedAngle(
+        energy=10 * (theta - 2 * np.pi / 3)**2,
+        force=10 * (theta - 2 * np.pi / 3) / 2)
     system.bonded_inter.add(angle_tab)
     p1.add_bond((angle_tab, p0, p2))
 
@@ -362,8 +368,8 @@ Dihedral potential with phase shift
 
 Dihedral interactions are available through the :class:`espressomd.interactions.Dihedral` class::
 
-    from espressomd.interactions import Dihedral
-    dihedral = Dihedral(bend=<K>, mult=<n>, phase=<phi_0>)
+    import espressomd.interactions
+    dihedral = espressomd.interactions.Dihedral(bend=<K>, mult=<n>, phase=<phi_0>)
     system.bonded_inter.add(dihedral)
     p2.add_bond((dihedral, p1, p3, p4))
 
@@ -400,8 +406,8 @@ Tabulated dihedral potential
 A tabulated dihedral interaction can be instantiated via
 :class:`espressomd.interactions.TabulatedDihedral`::
 
-    from espressomd.interactions import TabulatedDihedral
-    dihedral_tab = TabulatedDihedral(energy=<energy>, force=<force>)
+    import espressomd.interactions
+    dihedral_tab = espressomd.interactions.TabulatedDihedral(energy=<energy>, force=<force>)
     system.bonded_inter.add(dihedral_tab)
     p2.add_bond((dihedral_tab, p1, p3, p4))
 

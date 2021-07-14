@@ -17,7 +17,9 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-from espressomd import System, polymer, interactions
+import espressomd
+import espressomd.polymer
+import espressomd.interactions
 
 
 class DiamondPolymer(ut.TestCase):
@@ -29,7 +31,7 @@ class DiamondPolymer(ut.TestCase):
     * the geometry of the polymer network
     """
 
-    system = System(box_l=3 * [16])
+    system = espressomd.System(box_l=3 * [16])
     diamond_params = {'MPC': 15,
                       'dist_cM': 3,
                       'val_cM': -1.3,
@@ -39,15 +41,16 @@ class DiamondPolymer(ut.TestCase):
                       'type_nodes': 2,
                       'type_nM': 5,
                       'type_cM': 7}
-    bond_length = system.box_l[0] * \
-        (0.25 * np.sqrt(3)) / (diamond_params['MPC'] + 1)
 
     def setUp(self):
-        bond = interactions.HarmonicBond(k=1.5, r_0=self.bond_length, r_cut=3)
+        bond_length = self.system.box_l[0] * \
+            np.sqrt(3) / 4. / (self.diamond_params['MPC'] + 1)
+        bond = espressomd.interactions.HarmonicBond(
+            k=1.5, r_0=bond_length, r_cut=3)
         self.system.bonded_inter.add(bond)
-        polymer.setup_diamond_polymer(system=self.system,
-                                      bond=bond,
-                                      **self.diamond_params)
+        espressomd.polymer.setup_diamond_polymer(system=self.system,
+                                                 bond=bond,
+                                                 **self.diamond_params)
         self.system.time_step = 0.1
         self.node_parts = self.system.part.select(
             type=self.diamond_params['type_nodes'])
@@ -120,7 +123,7 @@ class DiamondPolymer(ut.TestCase):
         """
         # Energy calculation checks distance indirectly through
         # position of minimum of HarmonicBond
-        # With formula for self.bond_length this also ensures
+        # With formula for bond_length this also ensures
         # that only nearest neighbours can be reached
         E = self.system.analysis.energy()['total']
         self.assertAlmostEqual(E, 0., delta=1e-13)

@@ -149,8 +149,8 @@ To use the methods, create an instance of either
 system's list of active actors. The only required parameter is the Prefactor
 :eq:`dipolar_prefactor`::
 
-  from espressomd.magnetostatics import DipolarDirectSumGpu
-  dds = DipolarDirectSumGpu(bjerrum_length=1)
+  import espressomd.magnetostatics
+  dds = espressomd.magnetostatics.DipolarDirectSumGpu(bjerrum_length=1)
   system.actors.add(dds)
 
 For testing purposes, a variant of the dipolar direct sum is available which
@@ -184,8 +184,8 @@ refer to :cite:`Polyakov2013`.
 To use the method, create an instance of :class:`~espressomd.magnetostatics.DipolarBarnesHutGpu`
 and add it to the system's list of active actors::
 
-  from espressomd.magnetostatics import DipolarBarnesHutGpu
-  bh = DipolarBarnesHutGpu(prefactor=pf_dds_gpu, epssq=200.0, itolsq=8.0)
+  import espressomd.magnetostatics
+  bh = espressomd.magnetostatics.DipolarBarnesHutGpu(prefactor=pf_dds_gpu, epssq=200.0, itolsq=8.0)
   system.actors.add(bh)
 
 

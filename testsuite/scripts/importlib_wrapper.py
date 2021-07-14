@@ -124,7 +124,7 @@ def configure_and_import(filepath,
     script_suffix += "_processed.py"
     output_filepath = os.path.splitext(filepath)[0] + script_suffix
     assert os.path.isfile(output_filepath) is False, \
-        "File {} already processed, cannot overwrite".format(output_filepath)
+        f"File {output_filepath} already processed, cannot overwrite"
     with open(output_filepath, "wb") as f:
         f.write(code.encode(encoding="utf-8"))
     # import
@@ -137,7 +137,7 @@ def configure_and_import(filepath,
         module = importlib.import_module(module_name)
     except espressomd.FeaturesError as err:
         skip_future_imports_dependency(filepath)
-        skipIfMissingFeatures = unittest.skip(str(err) + ", skipping test!")
+        skipIfMissingFeatures = unittest.skip(f"{err}, skipping test!")
         module = MagicMock()
     else:
         skipIfMissingFeatures = _id
@@ -181,8 +181,8 @@ def set_cmd(code, filepath, cmd_arguments):
     lineno = mapping[min(visitor.linenos)]
     line = lines[lineno - 1]
     indentation = line[:len(line) - len(line.lstrip())]
-    lines[lineno - 1] = indentation + "import sys;sys.argv = " + \
-        str(sys_argv) + ";" + line.lstrip()
+    lines[lineno -
+          1] = f"{indentation}import sys;sys.argv = {sys_argv};{line.lstrip()}"
     code = "\n".join(lines)
     old_sys_argv = list(sys.argv)
     return code, old_sys_argv
@@ -202,8 +202,8 @@ class GetVariableAssignments(ast.NodeVisitor):
                 varname = target.id
                 if varname in self.variables:
                     assert len(node.targets) == 1, \
-                        "Cannot substitute multiple assignments (variable " \
-                        "'{}' at line {})".format(varname, node.lineno)
+                        f"Cannot substitute multiple assignments (variable " \
+                        f"'{varname}' at line {node.lineno})"
                     self.variables[varname].append(node.lineno)
 
     def visit_ClassDef(self, node):
@@ -244,7 +244,7 @@ def substitute_variable_values(code, strings_as_is=False, keep_original=True,
     # substitute values
     for varname, new_value in parameters.items():
         linenos = visitor.variables[varname]
-        assert linenos, "variable {} has no assignment".format(varname)
+        assert linenos, f"variable {varname} has no assignment"
         new_value = strings_as_is and new_value or repr(new_value)
         for lineno in linenos:
             identation, old_value = lines[lineno - 1].split(varname, 1)
@@ -577,11 +577,11 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
         if lineno not in self.visu_items:
             self.visu_items[lineno] = []
         if from_str:
-            line = "from {} import {}".format(from_str, module_str)
+            line = f"from {from_str} import {module_str}"
         else:
-            line = "import {}".format(module_str)
+            line = f"import {module_str}"
         if alias:
-            line += " as {}".format(alias)
+            line += f" as {alias}"
         self.visu_items[lineno].append(line)
 
     def visit_Import(self, node):
@@ -595,8 +595,8 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
         if node.module in self.namespace_visualizers:
             for child in node.names:
                 if child.name == "*":
-                    raise ValueError("cannot use MagicMock() on a wildcard "
-                                     "import at line {}".format(node.lineno))
+                    raise ValueError(f"cannot use MagicMock() on a wildcard "
+                                     f"import at line {node.lineno}")
                 self.register_import(
                     node.lineno, node.module, child.name, child.asname)
         # get visualizer alias
@@ -631,14 +631,14 @@ except ImportError:
     def check_for_deferred_ImportError(line, alias):
         if "_opengl" not in line and "_mayavi" not in line:
             if "openGLLive" in line or "mayaviLive" in line:
-                return """
-    if hasattr({0}, 'deferred_ImportError'):
-        raise {0}.deferred_ImportError""".format(alias)
+                return f"""
+    if hasattr({alias}, 'deferred_ImportError'):
+        raise {alias}.deferred_ImportError"""
             else:
-                return """
-    if hasattr({0}.mayaviLive, 'deferred_ImportError') or \\
-       hasattr({0}.openGLLive, 'deferred_ImportError'):
-        raise ImportError()""".format(alias)
+                return f"""
+    if hasattr({alias}.mayaviLive, 'deferred_ImportError') or \\
+       hasattr({alias}.openGLLive, 'deferred_ImportError'):
+        raise ImportError()"""
         else:
             return ""
 
@@ -669,5 +669,5 @@ def skip_future_imports_dependency(filepath):
         module_name = os.path.splitext(os.path.basename(filepath))[0]
         assert module_name != ""
         skip_future_imports = module_name
-    return unittest.skip("failed to import {}, skipping test!"
-                         .format(skip_future_imports))
+    return unittest.skip(
+        f"failed to import {skip_future_imports}, skipping test!")

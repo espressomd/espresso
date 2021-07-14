@@ -18,14 +18,15 @@
 #
 import unittest as ut
 import unittest_decorators as utx
-import espressomd
 import numpy as np
-from espressomd.accumulators import Correlator
-from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
-from thermostats_common import ThermostatsCommon
+
+import espressomd
+import espressomd.accumulators
+import espressomd.observables
+import thermostats_common
 
 
-class LangevinThermostat(ut.TestCase, ThermostatsCommon):
+class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
 
     """Tests velocity distributions and diffusion for Langevin Dynamics"""
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -190,15 +191,17 @@ class LangevinThermostat(ut.TestCase, ThermostatsCommon):
             all_particles.append(p_gamma)
 
         # linear vel
-        vel_obs = ParticleVelocities(ids=system.part[:].id)
-        corr_vel = Correlator(
+        vel_obs = espressomd.observables.ParticleVelocities(
+            ids=system.part[:].id)
+        corr_vel = espressomd.accumulators.Correlator(
             obs1=vel_obs, tau_lin=10, tau_max=1.4, delta_N=2,
             corr_operation="componentwise_product", compress1="discard1")
         system.auto_update_accumulators.add(corr_vel)
         # angular vel
         if espressomd.has_features("ROTATION"):
-            omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
-            corr_omega = Correlator(
+            omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
+                ids=system.part[:].id)
+            corr_omega = espressomd.accumulators.Correlator(
                 obs1=omega_obs, tau_lin=10, tau_max=1.5, delta_N=2,
                 corr_operation="componentwise_product", compress1="discard1")
             system.auto_update_accumulators.add(corr_omega)

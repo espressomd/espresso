@@ -19,12 +19,14 @@
 """
 Set up a diamond-structured polymer network.
 """
-import espressomd
-espressomd.assert_features(["WCA"])
-from espressomd import interactions, polymer
-from espressomd.io.writer import vtf  # pylint: disable=import-error
-
 import numpy as np
+
+import espressomd
+import espressomd.interactions
+import espressomd.polymer
+import espressomd.io.writer.vtf  # pylint: disable=import-error
+
+espressomd.assert_features(["WCA"])
 
 # System parameters
 #############################################################
@@ -40,7 +42,7 @@ system.non_bonded_inter[0, 1].wca.set_params(epsilon=1, sigma=1)
 system.non_bonded_inter[1, 1].wca.set_params(epsilon=1, sigma=1)
 
 # create stiff FENE bonds
-fene = interactions.FeneBond(k=30, d_r_max=1.5)
+fene = espressomd.interactions.FeneBond(k=30, d_r_max=1.5)
 system.bonded_inter.add(fene)
 
 # The call to diamond.Diamond() creates 16 connected polymers.
@@ -64,7 +66,7 @@ system.box_l = 3 * [a]
 print("box now at ", system.box_l)
 
 # We can now call diamond to place the monomers, crosslinks and bonds.
-polymer.setup_diamond_polymer(system=system, bond=fene, MPC=MPC)
+espressomd.polymer.setup_diamond_polymer(system=system, bond=fene, MPC=MPC)
 
 #############################################################
 #      Warmup                                               #
@@ -74,10 +76,10 @@ polymer.setup_diamond_polymer(system=system, bond=fene, MPC=MPC)
 system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=0.01)
 while system.analysis.min_dist() < 0.9:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(20)
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 
@@ -103,12 +105,12 @@ for _ in np.arange(1, 15):
 
 # visualize at a smaller box size
 outfile = open('diamond.vtf', 'w')
-vtf.writevsf(system, outfile)
-vtf.writevcf(system, outfile)
+espressomd.io.writer.vtf.writevsf(system, outfile)
+espressomd.io.writer.vtf.writevcf(system, outfile)
 t_steps = 100
 for t in range(t_steps):
-    print("step {} of {}".format(t + 1, t_steps), end='\r', flush=True)
+    print(f"step {t + 1} of {t_steps}", end='\r', flush=True)
     system.integrator.run(sim_steps)
-    vtf.writevcf(system, outfile)
+    espressomd.io.writer.vtf.writevcf(system, outfile)
 outfile.close()
 print()

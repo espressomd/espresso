@@ -42,7 +42,7 @@ cdef extern from "PartCfg.hpp":
 cdef extern from "partCfg_global.hpp":
     PartCfg & partCfg()
 
-cdef extern from "particle_data.hpp":
+cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     int max_seen_particle_type
 
 cdef extern from "Observable_stat.hpp":

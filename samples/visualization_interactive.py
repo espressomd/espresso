@@ -21,8 +21,8 @@ changed via the keyboard.
 """
 
 import espressomd
+import espressomd.visualization_opengl
 import numpy as np
-from espressomd import visualization_opengl
 
 required_features = []
 espressomd.assert_features(required_features)
@@ -31,7 +31,7 @@ print("Press u/j to change temperature")
 
 box_l = 10.0
 system = espressomd.System(box_l=[box_l] * 3)
-visualizer = visualization_opengl.openGLLive(
+visualizer = espressomd.visualization_opengl.openGLLive(
     system, drag_enabled=True, drag_force=100)
 
 system.time_step = 0.00001
@@ -62,31 +62,29 @@ temperature = 1.0
 
 def increaseTemp():
     global temperature
-    temperature += 0.1
+    temperature += 0.5
     system.thermostat.set_langevin(kT=temperature, gamma=1.0)
     print("T =", system.thermostat.get_state()[0]['kT'])
 
 
 def decreaseTemp():
     global temperature
-    temperature -= 0.1
+    temperature -= 0.5
 
     if temperature > 0:
         system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-        print("T =", system.thermostat.get_state()[0]['kT'])
+        print(f"T = {system.thermostat.get_state()[0]['kT']:.1f}")
     else:
         temperature = 0
         system.thermostat.turn_off()
-        print("T = 0")
+        print("T = 0.")
 
 
 # Register button callbacks
 visualizer.keyboard_manager.register_button(
-    visualization_opengl.KeyboardButtonEvent(
-        'u', visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
+    espressomd.visualization_opengl.KeyboardButtonEvent('u', espressomd.visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
 visualizer.keyboard_manager.register_button(
-    visualization_opengl.KeyboardButtonEvent(
-        'j', visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
+    espressomd.visualization_opengl.KeyboardButtonEvent('j', espressomd.visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
 
 # Set initial position
 spin()

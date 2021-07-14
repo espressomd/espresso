@@ -18,25 +18,16 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-from espressomd import electrokinetics
+import espressomd.electrokinetics
 import numpy as np
 import math
-
-##########################################################################
-#                          Set up the System                             #
-##########################################################################
-# Build a fluctuating ek species.
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["ELECTROKINETICS"])
 class ek_fluctuations(ut.TestCase):
 
-    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
-
     def test(self):
-        system = self.es
-
         # Set parameters
         box_x = 16
         box_y = 16
@@ -46,29 +37,33 @@ class ek_fluctuations(ut.TestCase):
         diff = 1.0
         agrid = 1.0
 
-        system.box_l = [box_x, box_y, box_z]
+        system = espressomd.System(box_l=[box_x, box_y, box_z])
         system.time_step = time_step
         system.cell_system.skin = 0.2
         system.thermostat.turn_off()
 
-        # Setup the Fluid
-        ek = electrokinetics.Electrokinetics(agrid=agrid,
-                                             lb_density=1.0,
-                                             viscosity=1.0,
-                                             friction=0.0,
-                                             T=1.0,
-                                             prefactor=1.0,
-                                             stencil='linkcentered',
-                                             advection=False,
-                                             fluctuations=True,
-                                             fluctuation_amplitude=1.0)
+        # Setup the fluid
+        ek = espressomd.electrokinetics.Electrokinetics(
+            agrid=agrid,
+            lb_density=1.0,
+            viscosity=1.0,
+            friction=0.0,
+            T=1.0,
+            prefactor=1.0,
+            stencil='linkcentered',
+            advection=False,
+            fluctuations=True,
+            fluctuation_amplitude=1.0)
 
-        species = electrokinetics.Species(density=rho0, D=diff, valency=0.0)
+        species = espressomd.electrokinetics.Species(
+            density=rho0,
+            D=diff,
+            valency=0.0)
 
         ek.add_species(species)
         system.actors.add(ek)
 
-        # Warm - Up
+        # Warmup
         system.integrator.run(1000)
 
         # Set integration and binning parameters
@@ -106,8 +101,8 @@ class ek_fluctuations(ut.TestCase):
             max_diff = max(math.fabs(p[i] - bins[i]), max_diff)
 
         self.assertLess(max_diff, 5.0e-03,
-                        "Density distribution accuracy not achieved, allowed "
-                        "deviation: 5.0e-03, measured: {}".format(max_diff))
+                        f"Density distribution accuracy not achieved, allowed "
+                        f"deviation: 5.0e-03, measured: {max_diff}")
 
 
 if __name__ == "__main__":

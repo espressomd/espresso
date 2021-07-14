@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
                                     reaction.gamma * f_expr *
                                     std::exp(energy / r_algo.temperature);
         auto const acceptance = r_algo.calculate_acceptance_probability(
-            reaction, energy, 0., p_numbers, -1, -1, false);
+            reaction, energy, 0., p_numbers);
         BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);
       }
     }

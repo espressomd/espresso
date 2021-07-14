@@ -16,20 +16,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
-from espressomd import has_features, code_info
+import espressomd
 
 
 class Features(ut.TestCase):
 
     def test_has_features(self):
-        for feature in code_info.features():
-            self.assertTrue(has_features(feature))
+        for feature in espressomd.code_info.features():
+            self.assertTrue(espressomd.has_features(feature))
 
-        for feature in code_info.all_features() - set(code_info.features()):
-            self.assertFalse(has_features(feature))
+        for feature in espressomd.code_info.all_features(
+        ) - set(espressomd.code_info.features()):
+            self.assertFalse(espressomd.has_features(feature))
 
         with self.assertRaises(RuntimeError) as _:
-            has_features("NotAFeature")
+            espressomd.has_features("NotAFeature")
 
 
 if __name__ == '__main__':

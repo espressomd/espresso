@@ -77,10 +77,11 @@ double mmm1d_coulomb_pair_energy(double q1q2, Utils::Vector3d const &d,
  *  on the master node.
  *
  *  @param verbose output information about the tuning (tried values and errors)
+ *  @param timings Number of test force calculations
  *  @retval ES_OK
  *  @retval ES_ERROR
  */
-int mmm1d_tune(bool verbose);
+int mmm1d_tune(int timings, bool verbose);
 
 #endif
 #endif

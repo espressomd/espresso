@@ -64,8 +64,6 @@ LB_parameters_gpu lbpar_gpu = {
     -1.0,
     // tau
     -1.0,
-    // time_step
-    0.0,
     // dim_x;
     0,
     // dim_y;
@@ -92,28 +90,7 @@ LB_parameters_gpu lbpar_gpu = {
 /** this is the array that stores the hydrodynamic fields for the output */
 std::vector<LB_rho_v_pi_gpu> host_values(0);
 
-/** measures the MD time since the last fluid update */
-static int fluidstep = 0;
-
 bool ek_initialized = false;
-
-/*-----------------------------------------------------------*/
-/** main of lb_gpu_programm */
-/*-----------------------------------------------------------*/
-
-/** %Lattice Boltzmann update gpu called from integrate.cpp */
-void lattice_boltzmann_update_gpu() {
-
-  auto factor = (int)round(lbpar_gpu.tau / time_step);
-
-  fluidstep += 1;
-
-  if (fluidstep >= factor) {
-
-    fluidstep = 0;
-    lb_integrate_GPU();
-  }
-}
 
 /** (Re-)initialize the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
@@ -130,7 +107,6 @@ void lb_reinit_fluid_gpu() {
  *  See @cite dunweg07a and @cite dhumieres09a.
  */
 void lb_reinit_parameters_gpu() {
-  lbpar_gpu.time_step = static_cast<float>(time_step);
   lbpar_gpu.mu = 0.0;
 
   if (lbpar_gpu.viscosity > 0.0 && lbpar_gpu.agrid > 0.0 &&
@@ -172,7 +148,7 @@ void lb_reinit_parameters_gpu() {
 
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
-    lbpar_gpu.tau = static_cast<float>(time_step);
+    lbpar_gpu.tau = static_cast<float>(get_time_step());
   }
 #endif
 

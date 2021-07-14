@@ -23,46 +23,45 @@ import numpy as np
 
 class ComFixed(ut.TestCase):
 
-    def com(self, s):
-        return np.average(s.part[:].pos, axis=0, weights=s.part[:].mass)
+    np.random.seed(seed=42)
+
+    def com(self, parts):
+        return np.average(parts.pos, axis=0, weights=parts.mass)
 
     def test(self):
         dt = 0.01
         skin = 0.4
 
-        s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        np.random.seed(seed=42)
+        system = espressomd.System(box_l=[10., 10., 10.])
+        system.time_step = dt
+        system.cell_system.skin = skin
 
-        s.box_l = [10, 10, 10]
-        s.time_step = dt
-        s.cell_system.skin = skin
-
-        s.thermostat.set_langevin(kT=1., gamma=0.001, seed=41)
+        system.thermostat.set_langevin(kT=1., gamma=0.001, seed=41)
 
         for i in range(100):
-            r = [0.5, 1., 1.] * s.box_l * np.random.random(3)
+            r = [0.5, 1., 1.] * system.box_l * np.random.random(3)
             v = 3 * [0.]
             # Make sure that id and type gaps work correctly
-            s.part.add(id=2 * i, pos=r, v=v, type=2 * (i % 2))
+            system.part.add(id=2 * i, pos=r, v=v, type=2 * (i % 2))
 
         if espressomd.has_features(["MASS"]):
             # Avoid masses too small for the time step
-            s.part[:].mass = 2. * (0.1 + np.random.random(100))
+            system.part[:].mass = 2. * (0.1 + np.random.random(100))
 
-        com_0 = self.com(s)
+        com_0 = self.com(system.part[:])
 
-        s.comfixed.types = [0, 2]
+        system.comfixed.types = [0, 2]
 
         # Interface check
-        self.assertEqual(s.comfixed.types, [2, 0])
+        self.assertEqual(system.comfixed.types, [2, 0])
 
         for i in range(10):
-            com_i = self.com(s)
+            com_i = self.com(system.part[:])
 
             for j in range(3):
                 self.assertAlmostEqual(com_0[j], com_i[j], places=10)
 
-            s.integrator.run(10)
+            system.integrator.run(10)
 
 
 if __name__ == "__main__":

@@ -24,8 +24,8 @@ import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-import espressomd.magnetostatics as magnetostatics
-from tests_common import abspath
+import espressomd.magnetostatics
+import tests_common
 
 
 @utx.skipIfMissingFeatures(["SCAFACOS_DIPOLES"])
@@ -68,17 +68,18 @@ class Scafacos1d2d(ut.TestCase):
                 s.periodicity = [1, 0, 0]
                 file_prefix = "data/scafacos_dipoles_1d"
 
-            ref_E_path = abspath(file_prefix + "_reference_data_energy.dat")
+            ref_E_path = tests_common.abspath(
+                file_prefix + "_reference_data_energy.dat")
             ref_E = float(np.genfromtxt(ref_E_path))
 
             # Particles
-            data = np.genfromtxt(abspath(
+            data = np.genfromtxt(tests_common.abspath(
                 file_prefix + "_reference_data_forces_torques.dat"))
             s.part.add(pos=data[:, 1:4], dip=data[:, 4:7])
             s.part[:].rotation = (1, 1, 1)
 
             if dim == 2:
-                scafacos = magnetostatics.Scafacos(
+                scafacos = espressomd.magnetostatics.Scafacos(
                     prefactor=1,
                     method_name="p2nfft",
                     method_params={
@@ -98,7 +99,7 @@ class Scafacos1d2d(ut.TestCase):
 
             else:
                 # 1d periodic in x
-                scafacos = magnetostatics.Scafacos(
+                scafacos = espressomd.magnetostatics.Scafacos(
                     prefactor=1,
                     method_name="p2nfft",
                     method_params={

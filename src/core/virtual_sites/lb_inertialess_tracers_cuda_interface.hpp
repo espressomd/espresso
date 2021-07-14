@@ -35,10 +35,10 @@
 
 // *********** Communication functions ********
 // Implemented in real C++, but called from the ibm_cuda.cu
-void IBM_cuda_mpi_send_velocities(ParticleRange particles);
-void IBM_cuda_mpi_get_particles(ParticleRange particles);
+void IBM_cuda_mpi_send_velocities(ParticleRange const &particles);
+void IBM_cuda_mpi_get_particles(ParticleRange const &particles);
 
-void ParticleVelocitiesFromLB_GPU(ParticleRange particles);
+void ParticleVelocitiesFromLB_GPU(ParticleRange const &particles);
 
 // ******** data types for CUDA and MPI communication ******
 typedef struct {

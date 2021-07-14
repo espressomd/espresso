@@ -41,10 +41,7 @@
 /** \name Hook procedures
  *  These procedures are called if several significant changes to
  *  the system happen which may make a reinitialization of subsystems
- *  necessary. Note that all these functions are called on ALL nodes.
- *  If you need to do something only on the master node, check
- *  \ref this_node == 0. The use of the asynchronous mpi_* functions
- *  (e.g. mpi_bcast_parameter) on the master node is possible.
+ *  necessary.
  */
 /**@{*/
 
@@ -54,7 +51,7 @@ void on_program_start();
 /** called every time the simulation is continued/started, i.e.
  *  when switching from the script interface to the simulation core.
  */
-void on_integration_start();
+void on_integration_start(double time_step);
 
 /** called before calculating observables, i.e. energy, pressure or
  *  the integrator (forces). Initialize any methods here which are not
@@ -104,12 +101,26 @@ void on_periodicity_change();
  */
 void on_skin_change();
 
-/** called every time other parameters (timestep,...) are changed. Note that
- *  this does not happen automatically. The callback procedure of the changed
- *  variable is responsible for that.
- *  @param parameter is the @ref Fields identifier of the field changed.
+/** @brief Called when parameters of thermostats are changed.
  */
-void on_parameter_change(int parameter);
+void on_thermostat_param_change();
+
+/** @brief Called when the timestep changed. Internally calls @ref
+ * on_thermostat_param_change.
+ */
+void on_timestep_change();
+
+/** @brief Called when the simulation time changed.
+ */
+void on_simtime_change();
+
+/** @brief Called when the force cap changed.
+ */
+void on_forcecap_change();
+
+/** @brief Called when the node_grid changed.
+ */
+void on_nodegrid_change();
 
 unsigned global_ghost_flags();
 

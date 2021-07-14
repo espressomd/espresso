@@ -56,7 +56,6 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.cuh"
 #include "electrostatics_magnetostatics/coulomb.hpp"
-#include "global.hpp"
 
 #include <utils/math/bspline.hpp>
 #include <utils/math/int_pow.hpp>

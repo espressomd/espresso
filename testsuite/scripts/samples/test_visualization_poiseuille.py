@@ -18,7 +18,7 @@
 import unittest as ut
 import importlib_wrapper
 import numpy as np
-from espressomd.observables import ParticleVelocities
+import espressomd.observables
 
 
 def disable_GUI(code):
@@ -39,7 +39,8 @@ class Sample(ut.TestCase):
     system = sample.system
 
     def test_particle_coupling(self):
-        part_vel = ParticleVelocities(ids=list(range(100)))
+        part_vel = espressomd.observables.ParticleVelocities(
+            ids=list(range(100)))
         mean_velocity = np.mean(part_vel.calculate())
         self.assertGreater(mean_velocity, 1e-5)
 

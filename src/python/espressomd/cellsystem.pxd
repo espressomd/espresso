@@ -20,7 +20,7 @@
 from libcpp cimport bool
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
-from .utils cimport Vector3i
+from .utils cimport Vector3i, Vector3d
 
 cdef extern from "communication.hpp":
     int n_nodes
@@ -46,7 +46,19 @@ cdef extern from "cells.hpp":
 cdef extern from "tuning.hpp":
     cdef void c_tune_skin "tune_skin" (double min_skin, double max_skin, double tol, int int_steps, bool adjust_max_skin)
 
+cdef extern from "integrate.hpp":
+    extern double skin
+    void mpi_set_skin(double skin)
+    double get_verlet_reuse()
+
 cdef extern from "DomainDecomposition.hpp":
     cppclass  DomainDecomposition:
         Vector3i cell_grid
         double cell_size[3]
+
+cdef extern from "grid.hpp":
+    void mpi_set_node_grid(const Vector3i & node_grid)
+
+cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
+    double maximal_cutoff_bonded()
+    double maximal_cutoff_nonbonded()

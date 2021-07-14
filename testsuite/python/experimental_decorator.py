@@ -17,12 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-from espressomd.utils import requires_experimental_features
+import espressomd.utils
 
 import unittest as ut
 
 
-@requires_experimental_features("because")
+@espressomd.utils.requires_experimental_features("because")
 class A:
 
     def __init__(self, *args, **kwargs):

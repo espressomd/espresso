@@ -19,14 +19,14 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.interactions
 import numpy as np
 
 
 class TabulatedTest(ut.TestCase):
-    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.box_l = 3 * [10]
-    s.time_step = 0.01
-    s.cell_system.skin = 0.4
+    system = espressomd.System(box_l=3 * [10.])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
 
     def setUp(self):
         self.force = np.zeros((100,))
@@ -39,59 +39,54 @@ class TabulatedTest(ut.TestCase):
             self.force[i] = 5 + i * 2.3 * self.dx
             self.energy[i] = 5 - i * 2.3 * self.dx
 
-        self.s.part.add(type=0, pos=[5., 5., 5.0])
-        self.s.part.add(type=0, pos=[5., 5., 5.5])
+        self.system.part.add(type=0, pos=[5., 5., 5.0])
+        self.system.part.add(type=0, pos=[5., 5., 5.5])
 
     def tearDown(self):
-        self.s.part.clear()
+        self.system.part.clear()
 
     def check(self):
-        p0, p1 = self.s.part[:]
+        p0, p1 = self.system.part[:]
         # Below cutoff
-        np.testing.assert_allclose(np.copy(self.s.part[:].f), 0.0)
+        np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.0)
 
         for z in np.linspace(0, self.max_ - self.min_, 200, endpoint=False):
             p1.pos = [5., 5., 6. + z]
-            self.s.integrator.run(0)
+            self.system.integrator.run(0)
             np.testing.assert_allclose(
                 np.copy(p0.f), [0., 0., -(5. + z * 2.3)])
             np.testing.assert_allclose(np.copy(p0.f), -np.copy(p1.f))
             self.assertAlmostEqual(
-                self.s.analysis.energy()['total'], 5. - z * 2.3)
+                self.system.analysis.energy()['total'], 5. - z * 2.3)
 
     @utx.skipIfMissingFeatures("TABULATED")
     def test_non_bonded(self):
-        self.s.non_bonded_inter[0, 0].tabulated.set_params(
+        self.system.non_bonded_inter[0, 0].tabulated.set_params(
             min=self.min_, max=self.max_, energy=self.energy, force=self.force)
 
-        np.testing.assert_allclose(
-            self.force, self.s.non_bonded_inter[0, 0].tabulated.get_params()['force'])
-        np.testing.assert_allclose(
-            self.energy, self.s.non_bonded_inter[0, 0].tabulated.get_params()['energy'])
-        self.assertAlmostEqual(
-            self.min_, self.s.non_bonded_inter[0, 0].tabulated.get_params()['min'])
-        self.assertAlmostEqual(
-            self.max_, self.s.non_bonded_inter[0, 0].tabulated.get_params()['max'])
+        params = self.system.non_bonded_inter[0, 0].tabulated.get_params()
+        np.testing.assert_allclose(params['force'], self.force)
+        np.testing.assert_allclose(params['energy'], self.energy)
+        self.assertAlmostEqual(params['min'], self.min_)
+        self.assertAlmostEqual(params['max'], self.max_)
 
         self.check()
 
-        self.s.non_bonded_inter[0, 0].tabulated.set_params(
+        self.system.non_bonded_inter[0, 0].tabulated.set_params(
             min=-1, max=-1, energy=[], force=[])
 
     @utx.skipIfMissingFeatures("TABULATED")
     def test_bonded(self):
-        from espressomd.interactions import TabulatedDistance
+        tb = espressomd.interactions.TabulatedDistance(
+            min=self.min_, max=self.max_, energy=self.energy, force=self.force)
+        self.system.bonded_inter.add(tb)
 
-        tb = TabulatedDistance(min=self.min_, max=self.max_,
-                               energy=self.energy, force=self.force)
-        self.s.bonded_inter.add(tb)
+        np.testing.assert_allclose(tb.params['force'], self.force)
+        np.testing.assert_allclose(tb.params['energy'], self.energy)
+        self.assertAlmostEqual(tb.params['min'], self.min_)
+        self.assertAlmostEqual(tb.params['max'], self.max_)
 
-        np.testing.assert_allclose(self.force, tb.params['force'])
-        np.testing.assert_allclose(self.energy, tb.params['energy'])
-        self.assertAlmostEqual(self.min_, tb.params['min'])
-        self.assertAlmostEqual(self.max_, tb.params['max'])
-
-        p0, p1 = self.s.part[:]
+        p0, p1 = self.system.part[:]
         p0.add_bond((tb, p1))
         self.check()
 

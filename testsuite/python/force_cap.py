@@ -29,13 +29,14 @@ class ForceCap(ut.TestCase):
 
     """
 
-    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.cell_system.skin = 0.0
+    system = espressomd.System(box_l=3 * [10.])
+    system.time_step = 0.1
+    system.cell_system.skin = 0.0
 
     np.random.seed(42)
 
     def calc_f_max(self):
-        f = np.power(self.s.part[:].f, 2)
+        f = np.power(self.system.part[:].f, 2)
         sqr_sum = (np.sum(f, axis=1))
         f_max = np.max(sqr_sum)**0.5
         return f_max
@@ -43,24 +44,20 @@ class ForceCap(ut.TestCase):
     def test(self):
         N = 200
         f_cap = 10.
-        s = self.s
-        s.part.clear()
-        s.time_step = 0.1
-        s.box_l = 3 * [10.]
-        s.part.add(pos=10. * np.random.random((N, 3)))
+        self.system.part.add(pos=10. * np.random.random((N, 3)))
 
-        self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1000., sigma=2., cutoff=1.5, shift=0.0)
 
-        self.s.integrator.run(0)
+        self.system.integrator.run(0)
         # Check that there is sth to cap
         self.assertGreater(self.calc_f_max(), f_cap)
 
-        self.s.force_cap = f_cap
+        self.system.force_cap = f_cap
 
         # Check interface
-        self.assertEqual(self.s.force_cap, f_cap)
-        self.s.integrator.run(0)
+        self.assertEqual(self.system.force_cap, f_cap)
+        self.system.integrator.run(0)
 
         # Since there was a force larger than f_cap, the
         # maximum should now be f_cap.

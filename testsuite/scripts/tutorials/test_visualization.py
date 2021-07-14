@@ -20,7 +20,7 @@ import importlib_wrapper
 
 
 def disable_visualizer_GUI(code):
-    breakpoint = "t = Thread(target=main)"
+    breakpoint = "t = threading.Thread(target=main)"
     assert breakpoint in code
     code = code.split(breakpoint, 1)[0] + "main()"
     return code

@@ -21,8 +21,8 @@ def AddVolCons(system, kV):
     # currently only works for ONE SINGLE soft object
 
     # make interaction
-    from espressomd.interactions import IBM_VolCons
-    volCons = IBM_VolCons(softID=1, kappaV=kV)
+    import espressomd.interactions
+    volCons = espressomd.interactions.IBM_VolCons(softID=1, kappaV=kV)
     system.bonded_inter.add(volCons)
 
     # loop over particles and add

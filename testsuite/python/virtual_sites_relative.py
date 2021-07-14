@@ -19,12 +19,9 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
-    from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
+import espressomd.virtual_sites
 import numpy as np
-
-from tests_common import verify_lj_forces
-from numpy import random
+import tests_common
 
 
 @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
@@ -77,16 +74,21 @@ class VirtualSites(ut.TestCase):
 
     def test_aa_method_switching(self):
         # Virtual sites should be disabled by default
-        self.assertIsInstance(self.system.virtual_sites, VirtualSitesOff)
+        self.assertIsInstance(
+            self.system.virtual_sites,
+            espressomd.virtual_sites.VirtualSitesOff)
 
         # Switch implementation
-        self.system.virtual_sites = VirtualSitesRelative()
-        self.assertIsInstance(self.system.virtual_sites, VirtualSitesRelative)
+        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
+        self.assertIsInstance(
+            self.system.virtual_sites,
+            espressomd.virtual_sites.VirtualSitesRelative)
 
     def test_vs_quat(self):
         # First check that quaternion of virtual particle is unchanged if
         # have_quaterion is false.
-        self.system.virtual_sites = VirtualSitesRelative(have_quaternion=False)
+        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
+            have_quaternion=False)
         self.assertFalse(self.system.virtual_sites.have_quaternion)
         p1 = self.system.part.add(pos=[1, 1, 1], rotation=[1, 1, 1],
                                   omega_lab=[1, 1, 1])
@@ -96,7 +98,8 @@ class VirtualSites(ut.TestCase):
         self.system.integrator.run(1)
         np.testing.assert_array_equal(np.copy(p2.quat), [1, 0, 0, 0])
         # Now check that quaternion of the virtual particle gets updated.
-        self.system.virtual_sites = VirtualSitesRelative(have_quaternion=True)
+        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
+            have_quaternion=True)
         self.system.integrator.run(1)
         self.assertRaises(AssertionError, np.testing.assert_array_equal,
                           np.copy(p2.quat), [1, 0, 0, 0])
@@ -134,7 +137,7 @@ class VirtualSites(ut.TestCase):
     def test_pos_vel_forces(self):
         system = self.system
         system.cell_system.skin = 0.3
-        system.virtual_sites = VirtualSitesRelative()
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         system.box_l = [10, 10, 10]
         system.time_step = 0.004
         system.thermostat.turn_off()
@@ -211,7 +214,7 @@ class VirtualSites(ut.TestCase):
           integrates and verifies forces. This is to make sure that no pairs
           get lost or are outdated in the short range loop"""
         system = self.system
-        system.virtual_sites = VirtualSitesRelative()
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         # Parameters
         n = 90
         phi = 0.6
@@ -238,8 +241,8 @@ class VirtualSites(ut.TestCase):
         for i in range(int(n / 2)):
             # Type=1, i.e., no lj ia for the center of mass particles
             system.part.add(
-                rotation=(1, 1, 1), id=3 * i, pos=random.random(3) * l, type=1,
-                omega_lab=0.3 * random.random(3), v=random.random(3))
+                rotation=(1, 1, 1), id=3 * i, pos=np.random.random(3) * l, type=1,
+                omega_lab=0.3 * np.random.random(3), v=np.random.random(3))
             # lj spheres
             system.part.add(rotation=(1, 1, 1), id=3 * i + 1,
                             pos=system.part[3 * i].pos +
@@ -280,8 +283,8 @@ class VirtualSites(ut.TestCase):
             # Verify lj forces on the particles. The non-virtual particles are
             # skipped because the forces on them originate from the vss and not
             # the lj interaction
-            verify_lj_forces(system, 1E-10, 3 *
-                             np.arange(int(n / 2), dtype=int))
+            tests_common.verify_lj_forces(system, 1E-10, 3 *
+                                          np.arange(int(n / 2), dtype=int))
 
         # Test applying changes
         enegry_pre_change = system.analysis.energy()['total']
@@ -315,7 +318,7 @@ class VirtualSites(ut.TestCase):
         system.cell_system.skin = 0.1
         system.min_global_cut = 0.2
         # Should not have a pressure
-        system.virtual_sites = VirtualSitesOff()
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
         pressure_tensor_vs = system.analysis.pressure_tensor()[
             "virtual_sites", 0]
         p_vs = system.analysis.pressure()["virtual_sites", 0]
@@ -323,7 +326,7 @@ class VirtualSites(ut.TestCase):
         np.testing.assert_allclose(p_vs, 0., atol=1e-10)
 
         # vs relative contrib
-        system.virtual_sites = VirtualSitesRelative()
+        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         p0 = system.part.add(pos=(0, 0, 0), id=0)
         p1 = system.part.add(pos=(0.1, 0.1, 0.1), id=1, ext_force=(1, 2, 3))
         p1.vs_auto_relate_to(p0)

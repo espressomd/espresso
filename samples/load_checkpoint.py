@@ -25,13 +25,12 @@ Basic usage of the checkpointing feature. Show how to load the state of:
 """
 # pylint: disable=undefined-variable
 import espressomd
+import espressomd.checkpointing
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import checkpointing
-
-checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
+checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
 checkpoint.load()
 
 # print out actors

@@ -18,7 +18,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-from espressomd import electrokinetics
+import espressomd.electrokinetics
 import math
 
 ##########################################################################
@@ -31,10 +31,10 @@ import math
 @utx.skipIfMissingFeatures(["ELECTROKINETICS"])
 class ek_charged_plate(ut.TestCase):
 
-    es = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def test(self):
-        system = self.es
+        system = self.system
 
         # Set parameters
         box_x = 20
@@ -50,7 +50,7 @@ class ek_charged_plate(ut.TestCase):
         system.thermostat.turn_off()
 
         # Setup the Fluid
-        ek = electrokinetics.Electrokinetics(
+        ek = espressomd.electrokinetics.Electrokinetics(
             agrid=agrid,
             lb_density=1.0,
             viscosity=1.0,
@@ -61,9 +61,9 @@ class ek_charged_plate(ut.TestCase):
             advection=False,
             es_coupling=True)
 
-        positive_ions = electrokinetics.Species(
+        positive_ions = espressomd.electrokinetics.Species(
             density=0.0, D=0.0, valency=1.0)
-        negative_ions = electrokinetics.Species(
+        negative_ions = espressomd.electrokinetics.Species(
             density=0.0, D=0.0, valency=-1.0)
         ek.add_species(positive_ions)
         ek.add_species(negative_ions)
@@ -92,8 +92,8 @@ class ek_charged_plate(ut.TestCase):
                 force_difference = abs(expected_force - particle_force[0])
 
         self.assertLess(force_difference, 1.0e-04,
-                        "Force accuracy in X not achieved, allowed deviation: "
-                        "1.0e-04, measured: {}".format(force_difference))
+                        f"Force accuracy in X not achieved, allowed "
+                        f"deviation: 1.0e-04, measured: {force_difference}")
 
         # Unset species
         for i in range(int(box_y / agrid)):
@@ -123,8 +123,8 @@ class ek_charged_plate(ut.TestCase):
                 force_difference = abs(expected_force - particle_force[1])
 
         self.assertLess(force_difference, 1.0e-04,
-                        "Force accuracy in Y not achieved, allowed deviation: "
-                        "1.0e-04, measured: {}".format(force_difference))
+                        f"Force accuracy in Y not achieved, allowed "
+                        f"deviation: 1.0e-04, measured: {force_difference}")
 
         # Unset species
         for i in range(int(box_x / agrid)):
@@ -154,8 +154,8 @@ class ek_charged_plate(ut.TestCase):
                 force_difference = abs(expected_force - particle_force[2])
 
         self.assertLess(force_difference, 1.0e-04,
-                        "Force accuracy in Z not achieved, allowed deviation: "
-                        "1.0e-04, measured: {}".format(force_difference))
+                        f"Force accuracy in Z not achieved, allowed "
+                        f"deviation: 1.0e-04, measured: {force_difference}")
 
         # Unset species
         for i in range(int(box_x / agrid)):

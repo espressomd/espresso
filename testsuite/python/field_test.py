@@ -21,7 +21,7 @@ import numpy as np
 import itertools
 
 import espressomd
-from espressomd import constraints
+import espressomd.constraints
 
 
 class FieldTest(ut.TestCase):
@@ -45,7 +45,7 @@ class FieldTest(ut.TestCase):
 
     def test_gravity(self):
         g_const = np.array([1, 2, 3])
-        gravity = constraints.Gravity(g=g_const)
+        gravity = espressomd.constraints.Gravity(g=g_const)
 
         np.testing.assert_almost_equal(g_const, np.copy(gravity.g))
 
@@ -72,7 +72,8 @@ class FieldTest(ut.TestCase):
         E = np.array([1., 2., 3.])
         phi0 = 4.
 
-        electric_field = constraints.LinearElectricPotential(E=E, phi0=phi0)
+        electric_field = espressomd.constraints.LinearElectricPotential(
+            E=E, phi0=phi0)
         np.testing.assert_almost_equal(E, electric_field.E)
         self.assertEqual(phi0, electric_field.phi0)
 
@@ -104,7 +105,7 @@ class FieldTest(ut.TestCase):
         omega = 5.
         phi = 1.4
 
-        electric_wave = constraints.ElectricPlaneWave(
+        electric_wave = espressomd.constraints.ElectricPlaneWave(
             E0=E0, k=k, omega=omega, phi=phi)
         np.testing.assert_almost_equal(E0, electric_wave.E0)
         np.testing.assert_almost_equal(k, electric_wave.k)
@@ -132,7 +133,8 @@ class FieldTest(ut.TestCase):
         u = np.array([1., 2., 3.])
         gamma = 2.3
 
-        flow_field = constraints.HomogeneousFlowField(u=u, gamma=gamma)
+        flow_field = espressomd.constraints.HomogeneousFlowField(
+            u=u, gamma=gamma)
         np.testing.assert_almost_equal(u, np.copy(flow_field.u))
 
         self.system.constraints.add(flow_field)
@@ -150,12 +152,14 @@ class FieldTest(ut.TestCase):
         box = np.array([10., 10., 10.])
         scaling = 2.6
 
-        field_data = constraints.PotentialField.field_from_fn(
+        field_data = espressomd.constraints.PotentialField.field_from_fn(
             box, h, self.potential)
 
-        F = constraints.PotentialField(field=field_data, grid_spacing=h,
-                                       particle_scales={1: 0.0},
-                                       default_scale=scaling)
+        F = espressomd.constraints.PotentialField(
+            field=field_data,
+            grid_spacing=h,
+            particle_scales={1: 0.0},
+            default_scale=scaling)
 
         p = self.system.part.add(pos=[0, 0, 0])
         self.system.part.add(pos=[1, 0, 0])
@@ -184,10 +188,11 @@ class FieldTest(ut.TestCase):
         h = np.array([.2, .2, .2])
         box = np.array([10., 10., 10.])
 
-        field_data = constraints.ElectricPotential.field_from_fn(
+        field_data = espressomd.constraints.ElectricPotential.field_from_fn(
             box, h, self.potential)
 
-        F = constraints.ElectricPotential(field=field_data, grid_spacing=h)
+        F = espressomd.constraints.ElectricPotential(
+            field=field_data, grid_spacing=h)
 
         p = self.system.part.add(pos=[0, 0, 0])
         p.q = -3.1
@@ -211,11 +216,14 @@ class FieldTest(ut.TestCase):
         box = np.array([10., 10., 10.])
         scaling = 2.6
 
-        field_data = constraints.ForceField.field_from_fn(box, h, self.force)
+        field_data = espressomd.constraints.ForceField.field_from_fn(
+            box, h, self.force)
 
-        F = constraints.ForceField(field=field_data, grid_spacing=h,
-                                   particle_scales={1: 0.0},
-                                   default_scale=scaling)
+        F = espressomd.constraints.ForceField(
+            field=field_data,
+            grid_spacing=h,
+            particle_scales={1: 0.0},
+            default_scale=scaling)
 
         p = self.system.part.add(pos=[0, 0, 0])
         self.system.constraints.add(F)
@@ -240,9 +248,10 @@ class FieldTest(ut.TestCase):
         box = np.array([10., 10., 10.])
         gamma = 2.6
 
-        field_data = constraints.FlowField.field_from_fn(box, h, self.force)
+        field_data = espressomd.constraints.FlowField.field_from_fn(
+            box, h, self.force)
 
-        F = constraints.FlowField(
+        F = espressomd.constraints.FlowField(
             field=field_data,
             grid_spacing=h,
             gamma=gamma)

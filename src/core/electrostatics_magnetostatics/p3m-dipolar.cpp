@@ -791,14 +791,13 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
  *  @param[in]  cao             @copybrief P3MParameters::cao
  *  @param[in]  r_cut_iL        @copybrief P3MParameters::r_cut_iL
  *  @param[in]  alpha_L         @copybrief P3MParameters::alpha_L
+ *  @param[in]  timings         Number of test force calculations
  *
  *  @returns The integration time in case of success, otherwise
  *           -@ref P3M_TUNE_FAIL
  */
-static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
-                            double alpha_L) {
-  /* rounded up 2000/n_charges timing force evaluations */
-  int int_num = (1999 + dp3m.sum_dip_part) / dp3m.sum_dip_part;
+static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L,
+                            int timings) {
 
   /* broadcast p3m parameters for test run */
   if (dipole.method != DIPOLAR_P3M && dipole.method != DIPOLAR_MDLC_P3M)
@@ -810,7 +809,7 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
   /* initialize p3m structures */
   mpi_bcast_coulomb_params();
   /* perform force calculation test */
-  double int_time = time_force_calc(int_num);
+  double int_time = time_force_calc(timings);
   if (int_time == -1) {
     return -P3M_TUNE_FAIL;
   }
@@ -828,6 +827,7 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
  *  @param[out] _r_cut_iL       @copybrief P3MParameters::r_cut_iL
  *  @param[out] _alpha_L        @copybrief P3MParameters::alpha_L
  *  @param[out] _accuracy       @copybrief P3MParameters::accuracy
+ *  @param[in]  timings         Number of test force calculations
  *  @param[in]  verbose         printf output
  *
  *  @returns The integration time in case of success, otherwise
@@ -837,7 +837,8 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
  */
 static double dp3m_mc_time(int mesh, int cao, double r_cut_iL_min,
                            double r_cut_iL_max, double *_r_cut_iL,
-                           double *_alpha_L, double *_accuracy, bool verbose) {
+                           double *_alpha_L, double *_accuracy, int timings,
+                           bool verbose) {
   double r_cut_iL;
   double rs_err, ks_err;
 
@@ -900,7 +901,8 @@ static double dp3m_mc_time(int mesh, int cao, double r_cut_iL_min,
     runtimeErrorMsg() << "dipolar P3M: tuning when dlc needs to be fixed";
   }
 
-  double const int_time = dp3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
+  double const int_time =
+      dp3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L, timings);
   if (int_time == -P3M_TUNE_FAIL) {
     if (verbose) {
       std::printf("tuning failed, test integration not possible\n");
@@ -937,6 +939,7 @@ static double dp3m_mc_time(int mesh, int cao, double r_cut_iL_min,
  *  @param[out]     _r_cut_iL       @copybrief P3MParameters::r_cut_iL
  *  @param[out]     _alpha_L        @copybrief P3MParameters::alpha_L
  *  @param[out]     _accuracy       @copybrief P3MParameters::accuracy
+ *  @param[in]      timings         Number of test force calculations
  *  @param[in]      verbose         printf output
  *
  *  @returns The integration time in case of success, otherwise
@@ -944,7 +947,7 @@ static double dp3m_mc_time(int mesh, int cao, double r_cut_iL_min,
 static double dp3m_m_time(int mesh, int cao_min, int cao_max, int *_cao,
                           double r_cut_iL_min, double r_cut_iL_max,
                           double *_r_cut_iL, double *_alpha_L,
-                          double *_accuracy, bool verbose) {
+                          double *_accuracy, int timings, bool verbose) {
   double best_time = -1, tmp_r_cut_iL = -1., tmp_alpha_L = 0.0,
          tmp_accuracy = 0.0;
   /* in which direction improvement is possible. Initially, we don't know it
@@ -960,7 +963,7 @@ static double dp3m_m_time(int mesh, int cao_min, int cao_max, int *_cao,
   do {
     tmp_time =
         dp3m_mc_time(mesh, cao, r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
-                     &tmp_alpha_L, &tmp_accuracy, verbose);
+                     &tmp_alpha_L, &tmp_accuracy, timings, verbose);
     /* bail out if the force evaluation is not working */
     if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
       return tmp_time;
@@ -997,9 +1000,9 @@ static double dp3m_m_time(int mesh, int cao_min, int cao_max, int *_cao,
     /* check in which direction we can optimise. Both directions are possible */
     double dir_times[3];
     for (final_dir = -1; final_dir <= 1; final_dir += 2) {
-      dir_times[final_dir + 1] = tmp_time =
-          dp3m_mc_time(mesh, cao + final_dir, r_cut_iL_min, r_cut_iL_max,
-                       &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy, verbose);
+      dir_times[final_dir + 1] = tmp_time = dp3m_mc_time(
+          mesh, cao + final_dir, r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
+          &tmp_alpha_L, &tmp_accuracy, timings, verbose);
       /* bail out on errors, as usual */
       if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
         return tmp_time;
@@ -1051,7 +1054,7 @@ static double dp3m_m_time(int mesh, int cao_min, int cao_max, int *_cao,
   for (; cao >= cao_min && cao <= cao_max; cao += final_dir) {
     tmp_time =
         dp3m_mc_time(mesh, cao, r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
-                     &tmp_alpha_L, &tmp_accuracy, verbose);
+                     &tmp_alpha_L, &tmp_accuracy, timings, verbose);
     /* bail out on errors, as usual */
     if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
       return tmp_time;
@@ -1073,7 +1076,7 @@ static double dp3m_m_time(int mesh, int cao_min, int cao_max, int *_cao,
   return best_time;
 }
 
-int dp3m_adaptive_tune(bool verbose) {
+int dp3m_adaptive_tune(int timings, bool verbose) {
   /** Tuning of dipolar P3M. The algorithm basically determines the mesh, cao
    *  and then the real space cutoff, in this nested order.
    *
@@ -1175,7 +1178,7 @@ int dp3m_adaptive_tune(bool verbose) {
     tmp_cao = cao;
     tmp_time = dp3m_m_time(tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
                            r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L,
-                           &tmp_accuracy, verbose);
+                           &tmp_accuracy, timings, verbose);
     /* some error occurred during the tuning force evaluation */
     if (tmp_time == -P3M_TUNE_FAIL || tmp_time == -DP3M_RTBISECTION_ERROR)
       return ES_ERROR;

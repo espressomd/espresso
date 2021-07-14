@@ -24,6 +24,7 @@
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/get_value.hpp"
+#include "script_interface/object_container_mpi_guard.hpp"
 
 #include <utils/serialization/pack.hpp>
 
@@ -132,6 +133,8 @@ protected:
 
 private:
   std::string get_internal_state() const override {
+    object_container_mpi_guard(BaseType::name(), m_elements.size());
+
     std::vector<std::string> object_states(m_elements.size());
 
     boost::transform(m_elements, object_states.begin(),

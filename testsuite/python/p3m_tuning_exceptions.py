@@ -328,6 +328,12 @@ class P3M_tuning_test(ut.TestCase):
     # block of tests where tuning should not throw exceptions #
     ###########################################################
 
+    def add_actor_assert_failure(self, actor):
+        try:
+            self.system.actors.add(actor)
+        except Exception as err:
+            self.fail(f'tuning raised Exception("{err}")')
+
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures("P3M")
     def test_09_no_errors_p3m_gpu(self):
@@ -338,10 +344,7 @@ class P3M_tuning_test(ut.TestCase):
 
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-2,
                                                   epsilon='metallic')
-        try:
-            self.system.actors.add(solver)
-        except Exception as err:
-            self.fail('tuning raised Exception("' + str(err) + '")')
+        self.add_actor_assert_failure(solver)
 
     @utx.skipIfMissingFeatures("P3M")
     def test_09_no_errors_p3m_cpu(self):
@@ -359,10 +362,7 @@ class P3M_tuning_test(ut.TestCase):
         for key, value in valid_params.items():
             solver = espressomd.electrostatics.P3M(
                 prefactor=2, accuracy=1e-2, epsilon=0.0, **{key: value})
-            try:
-                self.system.actors.add(solver)
-            except Exception as err:
-                self.fail('tuning raised Exception("' + str(err) + '")')
+            self.add_actor_assert_failure(solver)
             self.system.actors.clear()
 
     @utx.skipIfMissingFeatures("DP3M")
@@ -382,10 +382,7 @@ class P3M_tuning_test(ut.TestCase):
         for key, value in valid_params.items():
             solver = espressomd.magnetostatics.DipolarP3M(
                 prefactor=2, accuracy=1e-2, **{key: value})
-            try:
-                self.system.actors.add(solver)
-            except Exception as err:
-                self.fail('tuning raised Exception("' + str(err) + '")')
+            self.add_actor_assert_failure(solver)
             self.system.actors.clear()
 
     @utx.skipIfMissingFeatures("P3M")
@@ -399,14 +396,15 @@ class P3M_tuning_test(ut.TestCase):
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2,
                                                epsilon='metallic',
                                                mesh=[8, -1, -1])
-        try:
-            self.system.actors.add(solver)
-        except Exception as err:
-            self.fail('tuning raised Exception("' + str(err) + '")')
+        self.add_actor_assert_failure(solver)
         tuned_mesh = solver.get_params()['mesh']
         self.assertEqual(tuned_mesh[0], 8)
         self.assertEqual(tuned_mesh[1], 12)
         self.assertEqual(tuned_mesh[2], 16)
+
+        # check MD cell reset event
+        self.system.box_l = self.system.box_l
+        self.system.periodicity = self.system.periodicity
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures("P3M")
@@ -420,14 +418,32 @@ class P3M_tuning_test(ut.TestCase):
         solver = espressomd.electrostatics.P3MGPU(prefactor=2, accuracy=1e-1,
                                                   epsilon='metallic',
                                                   mesh=[20, -1, -1])
-        try:
-            self.system.actors.add(solver)
-        except Exception as err:
-            self.fail('tuning raised Exception("' + str(err) + '")')
+        self.add_actor_assert_failure(solver)
         tuned_mesh = solver.get_params()['mesh']
         self.assertEqual(tuned_mesh[0], 20)
         self.assertEqual(tuned_mesh[1], 30)
         self.assertEqual(tuned_mesh[2], 40)
+
+        # check MD cell reset event
+        self.system.box_l = self.system.box_l
+        self.system.periodicity = self.system.periodicity
+
+    @utx.skipIfMissingFeatures("DP3M")
+    def test_09_no_errors_dp3m_cpu_rescale_mesh(self):
+        import espressomd.magnetostatics
+
+        self.system.time_step = 0.01
+        self.add_magnetic_particles()
+
+        dp3m_params = {'accuracy': 1e-6, 'mesh': [25, 25, 25], 'cao': 7,
+                       'prefactor': 1.1, 'r_cut': 4.50, 'alpha': 0.8216263}
+        solver_dp3m = espressomd.magnetostatics.DipolarP3M(
+            epsilon='metallic', tune=False, **dp3m_params)
+        self.add_actor_assert_failure(solver_dp3m)
+
+        # check MD cell reset event
+        self.system.box_l = self.system.box_l
+        self.system.periodicity = self.system.periodicity
 
 
 if __name__ == "__main__":

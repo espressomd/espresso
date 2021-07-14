@@ -62,9 +62,17 @@ int auto_update_next_update() {
 
 void auto_update_add(AccumulatorBase *acc) {
   assert(acc);
+  assert(std::find_if(auto_update_accumulators.begin(),
+                      auto_update_accumulators.end(), [acc](auto const &a) {
+                        return a.acc == acc;
+                      }) == auto_update_accumulators.end());
   auto_update_accumulators.emplace_back(acc);
 }
 void auto_update_remove(AccumulatorBase *acc) {
+  assert(std::find_if(auto_update_accumulators.begin(),
+                      auto_update_accumulators.end(), [acc](auto const &a) {
+                        return a.acc == acc;
+                      }) != auto_update_accumulators.end());
   auto_update_accumulators.erase(
       boost::remove_if(
           auto_update_accumulators,

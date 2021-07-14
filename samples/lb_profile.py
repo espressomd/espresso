@@ -23,16 +23,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import espressomd
-
-required_features = ["CUDA", "LB_BOUNDARIES_GPU"]
-espressomd.assert_features(required_features)
-
 import espressomd.lb
 import espressomd.observables
 import espressomd.shapes
 import espressomd.lbboundaries
 import espressomd.accumulators
 import espressomd.math
+
+required_features = ["CUDA", "LB_BOUNDARIES_GPU"]
+espressomd.assert_features(required_features)
 
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])
 system.time_step = 0.01

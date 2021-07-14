@@ -135,8 +135,8 @@ imported, before anything related can be done. ::
 
 This should be followed by further necessary imports of the example at hand: ::
 
-    from espressomd.interactions import HarmonicBond
-    from espressomd.electrostatics import P3M
+    import espressomd.interactions
+    import espressomd.electrostatics
 
 .. rubric:: espressomd.System
 
@@ -150,7 +150,7 @@ limitations in the simulation core. :ref:`Properties of the System
 class<Setting global variables in Python>` are used to access the parameters
 concerning the simulation system such as box geometry, time step or :ref:`cell-system<Cellsystems>`: ::
 
-    print("The box dimensions are {}".format(system.box_l))
+    print(f"The box dimensions are {system.box_l}")
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
@@ -237,7 +237,7 @@ a :ref:`harmonic bond<Harmonic bond>` between them: ::
 To set up a bonded interaction, first an instance of the appropriate
 class is created with the desired parameters: ::
 
-    harmonic = HarmonicBond(k=1.0, r_0=0.5)
+    harmonic = espressomd.interactions.HarmonicBond(k=1.0, r_0=0.5)
 
 Then, the bonded interaction is registered in the simulation core
 by adding the instance to :attr:`~espressomd.system.System.bonded_inter`: ::
@@ -262,7 +262,7 @@ Long-range interactions and other methods that might be mutually exclusive
 are treated as so-called *actors*. They are used by first creating an instance
 of the desired actor::
 
-    p3m = P3M(accuracy=1e-3, prefactor=1.0)
+    p3m = espressomd.electrostatics.P3M(accuracy=1e-3, prefactor=1.0)
 
 and then adding it to the system: ::
 
@@ -288,10 +288,10 @@ of the system are printed: ::
     for i in range(num_configs):
         system.integrator.run(num_steps)
         energy = system.analysis.energy()
-        print("System time: {}".format(system.time))
-        print("Energy of the LJ interaction: {}".format(energy["non_bonded"]))
-        print("Energy of the harmonic bond: {}".format(energy["bonded"]))
-        print("Energy of the Coulomb interaction: {}".format(energy["coulomb"]))
+        print(f"System time: {system.time}")
+        print(f"Energy of the LJ interaction: {energy['non_bonded']}")
+        print(f"Energy of the harmonic bond: {energy['bonded']}")
+        print(f"Energy of the Coulomb interaction: {energy['coulomb']}")
 
 .. _Tutorials:
 

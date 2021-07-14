@@ -26,7 +26,6 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "global.hpp"
 #include "integrate.hpp"
 
 #include <utils/Vector.hpp>
@@ -64,6 +63,7 @@ void mpi_bcast_nptiso_geom_barostat_worker() {
   boost::mpi::broadcast(comm_cart, nptiso.non_const_dim, 0);
   boost::mpi::broadcast(comm_cart, nptiso.p_ext, 0);
   boost::mpi::broadcast(comm_cart, nptiso.piston, 0);
+  on_thermostat_param_change();
 }
 
 REGISTER_CALLBACK(mpi_bcast_nptiso_geom_barostat_worker)
@@ -147,7 +147,6 @@ void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
   nptiso = new_nptiso;
 
   mpi_bcast_nptiso_geom_barostat();
-  on_parameter_change(FIELD_NPTISO_PISTON);
 }
 
 void npt_ensemble_init(const BoxGeometry &box) {

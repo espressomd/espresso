@@ -22,12 +22,11 @@ using the P3M solver. The system is maintained at a constant temperature
 using a Langevin thermostat.
 """
 import espressomd
+import espressomd.electrostatics
+import numpy as np
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
-
-from espressomd import electrostatics
-import numpy as np
 
 # System parameters
 #############################################################
@@ -95,7 +94,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # P3M setup after charge assigned
 #############################################################
-p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 system.actors.add(p3m)
 
 #############################################################

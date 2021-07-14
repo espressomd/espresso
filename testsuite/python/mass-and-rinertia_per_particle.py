@@ -17,7 +17,6 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-from numpy.random import uniform
 import espressomd
 import math
 
@@ -125,24 +124,24 @@ class ThermoTest(ut.TestCase):
         # such gamma assignments throughout the test.
         gamma_min = self.gamma_min
         gamma_max = self.gamma_max
-        gamma_rnd = uniform(gamma_min, gamma_max)
+        gamma_rnd = np.random.uniform(gamma_min, gamma_max)
         self.gamma_global = gamma_rnd, gamma_rnd, gamma_rnd
         # Additional test case for the specific global rotational gamma set.
-        self.gamma_global_rot = uniform(gamma_min, gamma_max, 3)
+        self.gamma_global_rot = np.random.uniform(gamma_min, gamma_max, 3)
         # Per-particle values:
         self.kT_p = [0.0, 0.0]
         # Either translational friction isotropy is required
         # or both translational and rotational ones.
         # Otherwise these types of motion will interfere.
         # ..Let's test both cases depending on the particle index.
-        self.gamma_tran_p[0, 0] = uniform(gamma_min, gamma_max)
+        self.gamma_tran_p[0, 0] = np.random.uniform(gamma_min, gamma_max)
         self.gamma_tran_p[0, 1] = self.gamma_tran_p[0, 0]
         self.gamma_tran_p[0, 2] = self.gamma_tran_p[0, 0]
-        self.gamma_rot_p[0, :] = uniform(gamma_min, gamma_max, 3)
-        self.gamma_tran_p[1, 0] = uniform(gamma_min, gamma_max)
+        self.gamma_rot_p[0, :] = np.random.uniform(gamma_min, gamma_max, 3)
+        self.gamma_tran_p[1, 0] = np.random.uniform(gamma_min, gamma_max)
         self.gamma_tran_p[1, 1] = self.gamma_tran_p[1, 0]
         self.gamma_tran_p[1, 2] = self.gamma_tran_p[1, 0]
-        self.gamma_rot_p[1, 0] = uniform(gamma_min, gamma_max)
+        self.gamma_rot_p[1, 0] = np.random.uniform(gamma_min, gamma_max)
         self.gamma_rot_p[1, 1] = self.gamma_rot_p[1, 0]
         self.gamma_rot_p[1, 2] = self.gamma_rot_p[1, 0]
 
@@ -181,20 +180,21 @@ class ThermoTest(ut.TestCase):
 
         # NVT thermostat
         # Just some temperature range to cover by the test:
-        self.kT = uniform(1.5, 5.)
+        self.kT = np.random.uniform(1.5, 5.)
         # See the above comment regarding the gamma assignments.
         # Note: here & hereinafter specific variations in these ranges are
         # related to the test execution duration to achieve the required
         # statistical averages faster.
         gamma_min = self.gamma_min
         gamma_max = self.gamma_max
-        self.gamma_global = uniform(gamma_min, gamma_max, 3)
-        self.gamma_global_rot = uniform(gamma_min, gamma_max, 3)
+        self.gamma_global = np.random.uniform(gamma_min, gamma_max, 3)
+        self.gamma_global_rot = np.random.uniform(gamma_min, gamma_max, 3)
         # Per-particle parameters
         self.kT_p = [2.5, 2.0]
         for k in range(2):
-            self.gamma_tran_p[k, :] = uniform(gamma_min, gamma_max, 3)
-            self.gamma_rot_p[k, :] = uniform(gamma_min, gamma_max, 3)
+            self.gamma_tran_p[k, :] = np.random.uniform(
+                gamma_min, gamma_max, 3)
+            self.gamma_rot_p[k, :] = np.random.uniform(gamma_min, gamma_max, 3)
 
         # Particles
         # As far as the problem characteristic time is t0 ~ mass / gamma
@@ -206,8 +206,8 @@ class ThermoTest(ut.TestCase):
         # too much of the CPU time.
         min_mass_param = 3.
         max_mass_param = 10.0
-        self.mass = uniform(min_mass_param, max_mass_param)
-        self.J = uniform(min_mass_param, max_mass_param, 3)
+        self.mass = np.random.uniform(min_mass_param, max_mass_param)
+        self.J = np.random.uniform(min_mass_param, max_mass_param, 3)
         for i in range(n):
             for k in range(2):
                 ind = i + k * n

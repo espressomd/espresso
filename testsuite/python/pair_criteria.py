@@ -19,78 +19,78 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-from espressomd.interactions import FeneBond
-from espressomd import pair_criteria
+import espressomd.interactions
+import espressomd.pair_criteria
 
 
 class PairCriteria(ut.TestCase):
 
     """Tests interface and implementation of pair criteria"""
 
-    es = espressomd.System(box_l=[1., 1., 1.])
+    system = espressomd.System(box_l=[1., 1., 1.])
 
-    f1 = FeneBond(k=1, d_r_max=0.05)
-    es.bonded_inter.add(f1)
-    f2 = FeneBond(k=1, d_r_max=0.05)
-    es.bonded_inter.add(f2)
-    p1 = es.part.add(pos=(0, 0, 0))
-    p2 = es.part.add(pos=(0.91, 0, 0))
+    f1 = espressomd.interactions.FeneBond(k=1, d_r_max=0.05)
+    system.bonded_inter.add(f1)
+    f2 = espressomd.interactions.FeneBond(k=1, d_r_max=0.05)
+    system.bonded_inter.add(f2)
+    p1 = system.part.add(pos=(0, 0, 0))
+    p2 = system.part.add(pos=(0.91, 0, 0))
     epsilon = 1E-8
 
     def test_distance_crit_periodic(self):
-        dc = pair_criteria.DistanceCriterion(cut_off=0.1)
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.1)
         # Interface
         self.assertEqual(list(dc.get_params().keys()), ["cut_off", ])
         self.assertTrue(abs(dc.get_params()["cut_off"] - 0.1) < self.epsilon)
 
         # Decisions
         # Periodic system. Particles in range via minimum image convention
-        self.es.periodicity = (1, 1, 1)
+        self.system.periodicity = (1, 1, 1)
         self.assertTrue(dc.decide(self.p1, self.p2))
         self.assertTrue(dc.decide(self.p1.id, self.p2.id))
 
     def test_distance_crit_non_periodic(self):
-        dc = pair_criteria.DistanceCriterion(cut_off=0.1)
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.1)
 
         # Non-periodic system. Particles out of range
-        self.es.periodicity = (0, 0, 0)
+        self.system.periodicity = (0, 0, 0)
         self.assertTrue(not dc.decide(self.p1, self.p2))
         self.assertTrue(not dc.decide(self.p1.id, self.p2.id))
 
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_energy_crit(self):
         # Setup purely repulsive lj
-        self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             sigma=0.11, epsilon=1, cutoff=2**(1. / 6.) * 0.11, shift="auto")
-        ec = pair_criteria.EnergyCriterion(cut_off=0.001)
+        ec = espressomd.pair_criteria.EnergyCriterion(cut_off=0.001)
         # Interface
         self.assertEqual(list(ec.get_params().keys()), ["cut_off", ])
         self.assertTrue(abs(ec.get_params()["cut_off"] - 0.001) < self.epsilon)
 
         # Decisions
         # Periodic system. Particles in range via minimum image convention
-        self.es.periodicity = (1, 1, 1)
+        self.system.periodicity = (1, 1, 1)
         self.assertTrue(ec.decide(self.p1, self.p2))
         self.assertTrue(ec.decide(self.p1.id, self.p2.id))
 
     @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_energy_crit_non_periodic(self):
         # Setup purely repulsive lj
-        self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             sigma=0.11, epsilon=1, cutoff=2**(1. / 6.) * 0.11, shift="auto")
-        ec = pair_criteria.EnergyCriterion(cut_off=0.001)
+        ec = espressomd.pair_criteria.EnergyCriterion(cut_off=0.001)
         # Interface
         self.assertEqual(list(ec.get_params().keys()), ["cut_off", ])
         self.assertTrue(abs(ec.get_params()["cut_off"] - 0.001) < self.epsilon)
 
         # Non-periodic system. Particles out of range
-        self.es.periodicity = (0, 0, 0)
+        self.system.periodicity = (0, 0, 0)
         self.assertTrue(not ec.decide(self.p1, self.p2))
         self.assertTrue(not ec.decide(self.p1.id, self.p2.id))
 
     def test_bond_crit(self):
         bt = 0
-        bc = pair_criteria.BondCriterion(bond_type=bt)
+        bc = espressomd.pair_criteria.BondCriterion(bond_type=bt)
         # Interface
         self.assertEqual(list(bc.get_params().keys()), ["bond_type", ])
         self.assertEqual(bc.get_params()["bond_type"], bt)
@@ -101,13 +101,13 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(not bc.decide(self.p1.id, self.p2.id))
 
         # Add bond. Then the criterion should match
-        self.es.part[self.p1.id].bonds = ((bt, self.p2.id),)
+        self.system.part[self.p1.id].bonds = ((bt, self.p2.id),)
         self.assertTrue(bc.decide(self.p1, self.p2))
         self.assertTrue(bc.decide(self.p1.id, self.p2.id))
 
         # Place bond on the 2nd particle. The criterion should still match
-        self.es.part[self.p1.id].bonds = ()
-        self.es.part[self.p2.id].bonds = ((bt, self.p1.id),)
+        self.system.part[self.p1.id].bonds = ()
+        self.system.part[self.p2.id].bonds = ((bt, self.p1.id),)
         self.assertTrue(bc.decide(self.p1, self.p2))
         self.assertTrue(bc.decide(self.p1.id, self.p2.id))
 

@@ -24,8 +24,7 @@
  *
  *  For performance reasons it is clever to do streaming and collision at the
  *  same time because every fluid node has to be read and written only once.
- *  This increases mainly cache efficiency. This is achieved by
- *  @ref lb_collide_stream.
+ *  This increases mainly cache efficiency.
  *
  *  The hydrodynamic fields, corresponding to density, velocity and pressure,
  *  are stored in @ref LB_FluidNode in the array @ref lbfields, the populations
@@ -177,13 +176,13 @@ extern std::vector<LB_FluidNode> lbfields;
 /************************************************************/
 /**@{*/
 
-/** Update the lattice Boltzmann system for one time step.
+/** Integrate the lattice-Boltzmann system for one time step.
  *  This function performs the collision step and the streaming step.
  *  If external force densities are present, they are applied prior to the
  *  collisions. If boundaries are present, it also applies the boundary
  *  conditions.
  */
-void lattice_boltzmann_update();
+void lb_integrate();
 
 void lb_sanity_checks(const LB_Parameters &lb_parameters);
 

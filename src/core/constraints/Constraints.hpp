@@ -23,6 +23,7 @@
 #include "grid.hpp"
 #include "statistics.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 
@@ -51,11 +52,15 @@ public:
     if (not c->fits_in_box(box_geo.length())) {
       throw std::runtime_error("Constraint not compatible with box size.");
     }
+    assert(std::find(m_constraints.begin(), m_constraints.end(), c) ==
+           m_constraints.end());
 
     m_constraints.emplace_back(c);
     on_constraint_change();
   }
   void remove(std::shared_ptr<Constraint> const &c) {
+    assert(std::find(m_constraints.begin(), m_constraints.end(), c) !=
+           m_constraints.end());
     m_constraints.erase(
         std::remove(m_constraints.begin(), m_constraints.end(), c),
         m_constraints.end());

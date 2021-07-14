@@ -25,27 +25,28 @@ import itertools
 
 @utx.skipIfMissingFeatures("ROTATION")
 class Rotation(ut.TestCase):
-    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.cell_system.skin = 0
-    s.time_step = 0.01
+    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system.cell_system.skin = 0.
+    system.time_step = 0.01
 
     def tearDown(self):
-        self.s.part.clear()
+        self.system.part.clear()
+        self.system.thermostat.turn_off()
 
     def test_langevin(self):
         """Applies langevin thermostat and checks that correct axes get
            thermalized"""
-        s = self.s
-        s.thermostat.set_langevin(gamma=1, kT=1, seed=42)
+        system = self.system
+        system.thermostat.set_langevin(gamma=1, kT=1, seed=42)
         for rot_x, rot_y, rot_z in itertools.product((False, True), repeat=3):
-            p = s.part.add(pos=(0, 0, 0), rotation=(rot_x, rot_y, rot_z),
-                           quat=(1, 0, 0, 0), omega_body=(0, 0, 0),
-                           torque_lab=(0, 0, 0))
-            s.integrator.run(500)
+            p = system.part.add(pos=(0, 0, 0), rotation=(rot_x, rot_y, rot_z),
+                                quat=(1, 0, 0, 0), omega_body=(0, 0, 0),
+                                torque_lab=(0, 0, 0))
+            system.integrator.run(500)
             self.validate(p, rot_x, 0)
             self.validate(p, rot_y, 1)
             self.validate(p, rot_z, 2)
-            s.part.clear()
+            system.part.clear()
 
     def validate(self, p, rotate, coord):
         if rotate:
@@ -59,9 +60,8 @@ class Rotation(ut.TestCase):
     def test_axes_changes(self):
         """Verifies that rotation axes in body and space frame stay the same
            and other axes don't"""
-        s = self.s
-        p = s.part.add(pos=(0.9, 0.9, 0.9), ext_torque=(1, 1, 1))
-        s.thermostat.turn_off()
+        system = self.system
+        p = system.part.add(pos=(0.9, 0.9, 0.9), ext_torque=(1, 1, 1))
         for direction in (0, 1, 2):
             # Reset orientation
             p.quat = [1, 0, 0, 0]
@@ -71,7 +71,7 @@ class Rotation(ut.TestCase):
             rot[direction] = 1
             p.rotation = rot
 
-            s.integrator.run(130)
+            system.integrator.run(130)
 
             # Check other axes:
             for axis in [1, 0, 0], [0, 1, 0], [0, 0, 1]:
@@ -86,8 +86,7 @@ class Rotation(ut.TestCase):
                         np.dot(axis, p.convert_vector_body_to_space(axis)), 0.95)
 
     def test_frame_conversion_and_rotation(self):
-        s = self.s
-        p = s.part.add(pos=np.random.random(3), rotation=(1, 1, 1))
+        p = self.system.part.add(pos=np.random.random(3), rotation=(1, 1, 1))
 
         # Space and body frame co-incide?
         np.testing.assert_allclose(
@@ -126,15 +125,14 @@ class Rotation(ut.TestCase):
             p.convert_vector_space_to_body(v_r), v, atol=1E-10)
 
     def test_rotation_mpi_communication(self):
-        s = self.s
-        s.part.clear()
+        system = self.system
         # place particle in cell with MPI rank 0
-        p = s.part.add(pos=0.01 * self.s.box_l, rotation=(1, 1, 1))
+        p = system.part.add(pos=0.01 * system.box_l, rotation=(1, 1, 1))
         p.rotate((1, 0, 0), -np.pi / 2)
         np.testing.assert_array_almost_equal(
             np.copy(p.director), [0, 1, 0], decimal=10)
         # place particle in cell with MPI rank N-1
-        p = s.part.add(pos=0.99 * self.s.box_l, rotation=(1, 1, 1))
+        p = system.part.add(pos=0.99 * system.box_l, rotation=(1, 1, 1))
         p.rotate((1, 0, 0), -np.pi / 2)
         np.testing.assert_array_almost_equal(
             np.copy(p.director), [0, 1, 0], decimal=10)
