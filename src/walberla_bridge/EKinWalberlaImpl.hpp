@@ -52,7 +52,7 @@ protected:
   /** Block forest */
   const WalberlaBlockForest *m_blockforest;
 
-  pystencils::NoFlux m_noflux;
+  pystencils::NoFlux *m_noflux;
 
   std::shared_ptr<timeloop::SweepTimeloop> m_time_loop;
 
@@ -99,8 +99,7 @@ protected:
 public:
   EKinWalberlaImpl(const WalberlaBlockForest *blockforest, FloatType diffusion,
                    FloatType kT, FloatType density)
-      : EKinWalberlaBase<FloatType>(diffusion, kT), m_blockforest{blockforest},
-        m_noflux(get_blockforest()->get_blocks(), m_flux_field_flattened_id) {
+      : EKinWalberlaBase<FloatType>(diffusion, kT), m_blockforest{blockforest} {
     m_density_field_id = field::addToStorage<DensityField>(
         get_blockforest()->get_blocks(), "density field", density, field::fzyx,
         get_blockforest()->get_ghost_layers());
@@ -115,6 +114,9 @@ public:
         field::addFlattenedShallowCopyToStorage<FluxField>(
             get_blockforest()->get_blocks(), m_flux_field_id,
             "flattened flux field");
+
+    m_noflux = new pystencils::NoFlux(get_blockforest()->get_blocks(),
+                                      m_flux_field_flattened_id);
 
     // Init and register flag field (domain/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
@@ -164,7 +166,7 @@ public:
               .run(block);
         },
         "ekin diffusive flux");
-    m_time_loop->add() << Sweep(m_noflux, "no flux boundary condition");
+    m_time_loop->add() << Sweep(*m_noflux, "no flux boundary condition");
     m_time_loop->add()
         << Sweep(pystencils::ContinuityKernel(m_flux_field_flattened_id,
                                               m_density_field_flattened_id),
@@ -237,7 +239,7 @@ public:
   };
 
   void boundary_noflux_update() {
-    m_noflux.template fillFromFlagField<FlagField>(
+    m_noflux->template fillFromFlagField<FlagField>(
         get_blockforest()->get_blocks(), m_flag_field_id, noflux_flag,
         domain_flag);
   }
