@@ -316,7 +316,7 @@ public:
 
   // Grid, domain, halo
 
-  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
+  [[nodiscard]] std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
   node_indices_positions(bool include_ghosts = false) const override {
     int ghost_offset = 0;
     if (include_ghosts)
