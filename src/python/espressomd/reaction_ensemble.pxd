@@ -48,7 +48,7 @@ cdef extern from "reaction_methods/ReactionAlgorithm.hpp" namespace "ReactionMet
 
         vector[SingleReaction] reactions
         map[int, double] charges_of_types
-        double temperature
+        double kT
         double exclusion_radius
         double volume
         bool box_is_cylindric_around_z_axis

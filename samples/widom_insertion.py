@@ -103,7 +103,7 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
 
 widom = espressomd.reaction_ensemble.WidomInsertion(
-    temperature=temperature, seed=77)
+    kT=temperature, seed=77)
 
 # add insertion reaction
 insertion_reaction_id = 0

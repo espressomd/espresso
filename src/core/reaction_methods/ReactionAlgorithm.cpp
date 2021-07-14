@@ -85,13 +85,13 @@ void ReactionAlgorithm::check_reaction_method() const {
     throw std::runtime_error("Reaction system not initialized");
   }
 
-  if (temperature < 0) {
-    throw std::runtime_error("Temperatures cannot be negative. Please provide "
-                             "a temperature (in k_B T) to the simulation. "
-                             "Normally it should be 1.0. This will be used "
-                             "directly to calculate beta:=1/(k_B T) which "
+  if (kT < 0) {
+    throw std::runtime_error("kT cannot be negative,"
+                             "normally it should be 1.0. This will be used"
+                             "directly to calculate beta:=1/(k_B T) which"
                              "occurs in the exp(-beta*E)\n");
   }
+
 #ifdef ELECTROSTATICS
   // check for the existence of default charges for all types that take part in
   // the reactions
@@ -336,8 +336,7 @@ void ReactionAlgorithm::generic_oneway_reaction(
   auto const bf = calculate_acceptance_probability(
       current_reaction, E_pot_old, E_pot_new, old_particle_numbers);
 
-  std::vector<double> exponential = {
-      exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
+  std::vector<double> exponential = {exp(-1.0 / kT * (E_pot_new - E_pot_old))};
   current_reaction.accumulator_exponentials(exponential);
 
   if (m_uniform_real_distribution(m_generator) < bf) {
@@ -500,7 +499,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   }
 
   // we use mass=1 for all particles, think about adapting this
-  move_particle(p_id, get_random_position_in_box(), std::sqrt(temperature));
+  move_particle(p_id, get_random_position_in_box(), std::sqrt(kT));
   set_particle_type(p_id, desired_type);
 #ifdef ELECTROSTATICS
   set_particle_q(p_id, charges_of_types[desired_type]);
@@ -540,7 +539,7 @@ ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
     auto const &p = get_particle_data(p_id);
     old_positions.emplace_back(std::pair<int, Utils::Vector3d>{p_id, p.r.p});
     // write new position
-    auto const prefactor = std::sqrt(temperature / p.p.mass);
+    auto const prefactor = std::sqrt(kT / p.p.mass);
     auto const new_pos = get_random_position_in_box();
     move_particle(p_id, new_pos, prefactor);
     check_exclusion_radius(p_id);
@@ -573,7 +572,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
                              ? std::numeric_limits<double>::max()
                              : calculate_current_potential_energy_of_system();
 
-  double beta = 1.0 / temperature;
+  double beta = 1.0 / kT;
 
   // Metropolis algorithm since proposal density is symmetric
   auto const bf = std::min(1.0, exp(-beta * (E_pot_new - E_pot_old)));
