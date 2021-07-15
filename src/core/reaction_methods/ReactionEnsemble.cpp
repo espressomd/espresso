@@ -20,7 +20,6 @@
 #include "reaction_methods/ReactionEnsemble.hpp"
 
 #include "utils.hpp"
-
 #include <cmath>
 #include <map>
 
