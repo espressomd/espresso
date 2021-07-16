@@ -107,11 +107,11 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     BOOST_CHECK_EQUAL(probability, -10.);
   }
 
-  // exception if temperature is negative
+  // exception if kT is negative
   BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
 
-  // set temperature
-  r_algo.temperature = 1.;
+  // set kT
+  r_algo.kT = 1.;
 
 #ifdef ELECTROSTATICS
   // exception if reactant types have no charge information

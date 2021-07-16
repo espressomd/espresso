@@ -61,7 +61,7 @@ class ReactionEnsembleTest(ut.TestCase):
     # degree of dissociation alpha = N_A / N_HA = N_H / N_0
     gamma = target_alpha**2 / (1. - target_alpha) * N0 / (volume**nubar)
     RE = espressomd.reaction_ensemble.ReactionEnsemble(
-        temperature=temperature,
+        kT=temperature,
         exclusion_radius=exclusion_radius, seed=12)
 
     @classmethod
@@ -151,9 +151,9 @@ class ReactionEnsembleTest(ut.TestCase):
 
         self.assertAlmostEqual(
             ReactionEnsembleTest.temperature,
-            RE_status["temperature"],
+            RE_status["kT"],
             places=9,
-            msg="reaction ensemble temperature not set correctly.")
+            msg="reaction ensemble kT not set correctly.")
         self.assertAlmostEqual(
             ReactionEnsembleTest.exclusion_radius,
             RE_status["exclusion_radius"],

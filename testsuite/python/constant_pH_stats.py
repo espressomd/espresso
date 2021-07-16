@@ -45,7 +45,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
-        temperature=1.0, exclusion_radius=1, seed=44)
+        kT=1.0, exclusion_radius=1, seed=44)
 
     @classmethod
     def setUpClass(cls):
@@ -56,9 +56,7 @@ class ReactionEnsembleTest(ut.TestCase):
         cls.RE.add_reaction(
             gamma=cls.Ka,
             reactant_types=[cls.type_HA],
-            reactant_coefficients=[1],
             product_types=[cls.type_A, cls.type_H],
-            product_coefficients=[1, 1],
             default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
         cls.RE.constant_pH = cls.pH
 

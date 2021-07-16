@@ -53,7 +53,7 @@ public:
 
   std::vector<SingleReaction> reactions;
   std::map<int, double> charges_of_types;
-  double temperature = -10.0;
+  double kT = -10.0;
   /**
    * Hard sphere radius. If particles are closer than this value,
    * it is assumed that their interaction energy gets approximately
