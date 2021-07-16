@@ -136,7 +136,7 @@ def to_str(s):
     elif isinstance(s, bytes):
         return ( < bytes > s).decode('ascii')
     else:
-        raise ValueError('Unknown string type {}'.format(type(s)))
+        raise ValueError(f'Unknown string type {type(s)}')
 
 
 class array_locked(np.ndarray):
@@ -252,7 +252,7 @@ cpdef handle_errors(msg):
     for err in errors:
         # Cast because cython does not support typed enums completely
         if < int > err.level() == < int > ERROR:
-            raise Exception("{}: {}".format(msg, to_str(err.format())))
+            raise Exception(f"{msg}: {to_str(err.format())}")
 
 
 def nesting_level(obj):

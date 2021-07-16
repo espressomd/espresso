@@ -18,7 +18,7 @@
 #
 import unittest as ut
 import unittest_decorators as utx
-from tests_common import assert_params_match
+import tests_common
 
 import espressomd
 
@@ -35,7 +35,7 @@ class ParticleProperties(ut.TestCase):
         ``inParams``.
         """
         self.assertEqual(outBond, inType, msg="Bonded interaction mismatch")
-        assert_params_match(self, inParams, outParams, msg_long)
+        tests_common.assert_params_match(self, inParams, outParams, msg_long)
 
     def parameterKeys(self, bondObject):
         """

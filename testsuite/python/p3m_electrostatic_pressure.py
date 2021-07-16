@@ -21,7 +21,7 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd
-from espressomd import electrostatics
+import espressomd.electrostatics
 
 
 class pressureViaVolumeScaling:
@@ -114,7 +114,7 @@ class VirialPressureConsistency(ut.TestCase):
 
     def test_p3m_pressure(self):
         pressures_via_virial = []
-        p3m = electrostatics.P3M(
+        p3m = espressomd.electrostatics.P3M(
             prefactor=2.0,
             accuracy=1e-3,
             mesh=16,

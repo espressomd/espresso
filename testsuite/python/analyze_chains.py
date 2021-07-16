@@ -18,8 +18,8 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
-from espressomd.interactions import FeneBond
-from espressomd import polymer
+import espressomd.interactions
+import espressomd.polymer
 
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")
@@ -36,12 +36,11 @@ class AnalyzeChain(ut.TestCase):
         # start with a small box
         cls.system.box_l = np.array([box_l, box_l, box_l])
         cls.system.cell_system.set_n_square(use_verlet_lists=False)
-        fene = FeneBond(k=30, d_r_max=2)
+        fene = espressomd.interactions.FeneBond(k=30, d_r_max=2)
         cls.system.bonded_inter.add(fene)
-        positions = polymer.linear_polymer_positions(n_polymers=cls.num_poly,
-                                                     bond_length=0.9,
-                                                     beads_per_chain=cls.num_mono,
-                                                     seed=42)
+        positions = espressomd.polymer.linear_polymer_positions(
+            n_polymers=cls.num_poly, bond_length=0.9,
+            beads_per_chain=cls.num_mono, seed=42)
         for p in positions:
             for ndx, m in enumerate(p):
                 part_id = len(cls.system.part)

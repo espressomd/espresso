@@ -26,8 +26,8 @@ import numpy as np
 
 import espressomd
 import espressomd.shapes
-from espressomd import electrostatics
-from espressomd import visualization
+import espressomd.electrostatics
+import espressomd.visualization
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
@@ -37,7 +37,7 @@ elc_gap = 10
 potential_diff = -3.
 system = espressomd.System(box_l=[box_l, box_l, box_l + elc_gap])
 np.random.seed(seed=42)
-visualizer = visualization.openGLLive(
+visualizer = espressomd.visualization.openGLLive(
     system,
     background_color=[1, 1, 1],
     constraint_type_colors=[[0, 0, 0]],
@@ -73,9 +73,10 @@ print("After Minimization: E_total=", energy['total'])
 
 system.thermostat.set_langevin(kT=0.1, gamma=1.0, seed=42)
 
-p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
-elc = electrostatics.ELC(p3m_actor=p3m, maxPWerror=1.0, gap_size=elc_gap,
-                         const_pot=True, pot_diff=potential_diff)
+p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+elc = espressomd.electrostatics.ELC(
+    p3m_actor=p3m, maxPWerror=1.0, gap_size=elc_gap, const_pot=True,
+    pot_diff=potential_diff)
 system.actors.add(elc)
 
 visualizer.run(1)

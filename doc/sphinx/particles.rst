@@ -263,12 +263,12 @@ three-dimensional numpy array, namely a list of polymers containing the
 positions of monomers (x, y, z). A quick example of how to set up polymers::
 
     import espressomd
-    from espressomd import polymer
+    import espressomd.polymer
 
     system = espressomd.System([50, 50, 50])
-    polymers = polymer.linear_polymer_positions(n_polymers=10,
-                                                beads_per_chain=25,
-                                                bond_length=0.9, seed=23)
+    polymers = espressomd.polymer.linear_polymer_positions(n_polymers=10,
+                                                           beads_per_chain=25,
+                                                           bond_length=0.9, seed=23)
     for polymer in polymers:
         monomers = system.part.add(pos=polymer)
         previous_part = None
@@ -353,12 +353,12 @@ following sections.
 To switch the active scheme, the attribute :attr:`espressomd.system.System.virtual_sites` of the system class can be used::
 
     import espressomd
-    from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
+    import espressomd.virtual_sites
 
     system = espressomd.System(box_l=[1, 1, 1])
-    system.virtual_sites = VirtualSitesRelative(have_quaternion=False)
+    system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(have_quaternion=False)
     # or
-    system.virtual_sites = VirtualSitesOff()
+    system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
 The ``have_quaternion`` parameter determines whether the quaternion of the virtual particle is updated (useful in combination with the

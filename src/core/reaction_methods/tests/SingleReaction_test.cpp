@@ -71,3 +71,17 @@ BOOST_AUTO_TEST_CASE(SingleReaction_test) {
     }
   }
 }
+
+BOOST_AUTO_TEST_CASE(SingleReaction_default_test) {
+  using namespace ReactionMethods;
+
+  SingleReaction default_reaction{};
+  BOOST_CHECK_EQUAL(default_reaction.gamma, 0.);
+  BOOST_CHECK_EQUAL(default_reaction.nu_bar, 0);
+  BOOST_CHECK_EQUAL(default_reaction.tried_moves, 0);
+  BOOST_CHECK_EQUAL(default_reaction.accepted_moves, 0);
+  BOOST_CHECK(default_reaction.reactant_types.empty());
+  BOOST_CHECK(default_reaction.reactant_coefficients.empty());
+  BOOST_CHECK(default_reaction.product_types.empty());
+  BOOST_CHECK(default_reaction.product_coefficients.empty());
+}

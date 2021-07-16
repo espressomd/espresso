@@ -20,10 +20,12 @@
 Set up a linear polymer.
 """
 import espressomd
+import espressomd.interactions
+import espressomd.polymer
+import espressomd.io.writer.vtf  # pylint: disable=import-error
+
 espressomd.assert_features(["WCA"])
-from espressomd import interactions
-from espressomd import polymer
-from espressomd.io.writer import vtf  # pylint: disable=import-error
+
 import numpy as np
 
 # System parameters
@@ -39,14 +41,12 @@ outfile = open('polymer.vtf', 'w')
 
 system.non_bonded_inter[0, 0].wca.set_params(epsilon=1, sigma=1)
 
-fene = interactions.FeneBond(k=10, d_r_max=2)
+fene = espressomd.interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
 
-positions = polymer.linear_polymer_positions(n_polymers=1,
-                                             beads_per_chain=50,
-                                             bond_length=1.0,
-                                             seed=3210)
+positions = espressomd.polymer.linear_polymer_positions(
+    n_polymers=1, beads_per_chain=50, bond_length=1.0, seed=3210)
 previous_part = None
 for pos in positions[0]:
     part = system.part.add(pos=pos)
@@ -54,7 +54,7 @@ for pos in positions[0]:
         part.add_bond((fene, previous_part))
     previous_part = part
 
-vtf.writevsf(system, outfile)
+espressomd.io.writer.vtf.writevsf(system, outfile)
 
 
 #############################################################
@@ -65,10 +65,10 @@ vtf.writevsf(system, outfile)
 system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=0.01)
 while system.analysis.min_dist() < 0.95:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(20)
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 
@@ -83,8 +83,8 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 print("simulating...")
 t_steps = 1000
 for t in range(t_steps):
-    print("step {} of {}".format(t, t_steps), end='\r', flush=True)
+    print(f"step {t + 1} of {t_steps}", end='\r', flush=True)
     system.integrator.run(10)
-    vtf.writevcf(system, outfile)
+    espressomd.io.writer.vtf.writevcf(system, outfile)
 outfile.close()
 print()

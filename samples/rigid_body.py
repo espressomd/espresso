@@ -25,10 +25,11 @@ import math
 import numpy as np
 
 import espressomd
-required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
-espressomd.assert_features(required_features)
 import espressomd.virtual_sites
 import espressomd.rotation
+
+required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
+espressomd.assert_features(required_features)
 
 
 system = espressomd.System(box_l=[10.0] * 3)

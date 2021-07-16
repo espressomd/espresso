@@ -24,9 +24,7 @@ import numpy as np
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
-from .utils import is_valid_type, check_type_or_throw_except, to_str, handle_errors
-from .utils cimport check_range_or_except
-from . cimport checks
+from .utils import is_valid_type, check_type_or_throw_except, handle_errors
 from .analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
 import sys
@@ -36,7 +34,7 @@ IF ELECTROSTATICS == 1:
     def check_neutrality(_params):
         if "check_neutrality" in _params:
             if(_params["check_neutrality"]):
-                if not checks.check_charge_neutrality[PartCfg](partCfg()):
+                if not check_charge_neutrality[PartCfg](partCfg()):
                     raise Exception("""
                     The system is not charge neutral. Please
                     neutralize the system before adding a new actor by adding

@@ -17,11 +17,12 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-from espressomd import System, lb
+import espressomd
+import espressomd.lb
 
 
 class SwimmerTest():
-    system = System(box_l=3 * [6])
+    system = espressomd.System(box_l=3 * [6])
     system.cell_system.skin = 1
     system.time_step = 1e-2
     LB_params = {'agrid': 1,
@@ -133,7 +134,7 @@ class SwimmerTestCPU(SwimmerTest, ut.TestCase):
 
     def setUp(self):
         self.tol = 1e-10
-        self.lbf = lb.LBFluid(**self.LB_params)
+        self.lbf = espressomd.lb.LBFluid(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 
@@ -144,7 +145,7 @@ class SwimmerTestGPU(SwimmerTest, ut.TestCase):
 
     def setUp(self):
         self.tol = 1e-5
-        self.lbf = lb.LBFluidGPU(**self.LB_params)
+        self.lbf = espressomd.lb.LBFluidGPU(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 

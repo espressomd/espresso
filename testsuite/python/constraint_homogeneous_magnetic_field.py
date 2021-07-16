@@ -23,16 +23,13 @@ import espressomd
 
 class HomogeneousMagneticFieldTest(ut.TestCase):
 
-    S = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[3.0, 3.0, 3.0])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
     np.random.seed(seed=42)
 
-    def setUp(self):
-        self.S.box_l = [3.0, 3.0, 3.0]
-        self.S.time_step = 0.01
-        self.S.cell_system.skin = 0.4
-
     def tearDown(self):
-        self.S.constraints.clear()
+        self.system.constraints.clear()
 
     def test_setter_and_getter(self):
         H_field1 = np.array([0.0, 1.0, 0.0])
@@ -60,27 +57,29 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
         dip_mom1 = [-1.0, 0.5, -0.2]
 
         # check that the dipolar energy is zero initially, ...
-        self.assertEqual(self.S.analysis.energy()["dipolar"], 0.0)
+        self.assertEqual(self.system.analysis.energy()["dipolar"], 0.0)
 
         H_constraint = espressomd.constraints.HomogeneousMagneticField(
             H=H_field)
-        self.S.constraints.add(H_constraint)
+        self.system.constraints.add(H_constraint)
 
         # ... and also after adding the constraint
-        self.assertEqual(self.S.analysis.energy()["dipolar"], 0.0)
+        self.assertEqual(self.system.analysis.energy()["dipolar"], 0.0)
 
         # check dipolar energy when adding dipole moments
-        p0 = self.S.part.add(pos=[0, 0, 0], dip=dip_mom0, rotation=(1, 1, 1))
-        self.assertEqual(self.S.analysis.energy()["dipolar"],
+        p0 = self.system.part.add(
+            pos=[0, 0, 0], dip=dip_mom0, rotation=(1, 1, 1))
+        self.assertEqual(self.system.analysis.energy()["dipolar"],
                          -1.0 * np.dot(H_field, dip_mom0))
-        p1 = self.S.part.add(pos=[1, 1, 1], dip=dip_mom1, rotation=(1, 1, 1))
-        self.assertEqual(self.S.analysis.energy()["dipolar"],
+        p1 = self.system.part.add(
+            pos=[1, 1, 1], dip=dip_mom1, rotation=(1, 1, 1))
+        self.assertEqual(self.system.analysis.energy()["dipolar"],
                          -(np.dot(H_field, dip_mom0) +
                            np.dot(H_field, dip_mom1)))
 
         if espressomd.has_features(["ROTATION"]):
             # check that running the integrator leads to expected torques
-            self.S.integrator.run(0)
+            self.system.integrator.run(0)
             torque_expected0 = np.cross(dip_mom0, H_field)
             torque_expected1 = np.cross(dip_mom1, H_field)
             for i in range(3):

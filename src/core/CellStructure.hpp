@@ -358,6 +358,11 @@ public:
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
 
   /**
+   * @brief Synchronize number of ghosts.
+   */
+  void ghosts_count();
+
+  /**
    * @brief Update ghost particles.
    *
    * This function updates the ghost particles with data

@@ -17,7 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ObjectList test
+#define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -25,6 +27,10 @@
 
 #include "script_interface/LocalContext.hpp"
 #include "script_interface/ObjectList.hpp"
+
+#include "core/communication.hpp"
+
+#include <boost/mpi.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -107,4 +113,11 @@ BOOST_AUTO_TEST_CASE(serialization) {
   BOOST_CHECK(list2->mock_core.size() == 2);
   BOOST_CHECK(list2->mock_core.front()->name() == "ObjectHandle");
   BOOST_CHECK(list2->mock_core.back()->name() == "ObjectHandle");
+}
+
+int main(int argc, char **argv) {
+  auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
+  Communication::init(mpi_env);
+
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

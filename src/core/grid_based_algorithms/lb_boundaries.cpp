@@ -59,12 +59,16 @@ std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
 void add(const std::shared_ptr<LBBoundary> &b) {
+  assert(std::find(lbboundaries.begin(), lbboundaries.end(), b) ==
+         lbboundaries.end());
   lbboundaries.emplace_back(b);
 
   on_lbboundary_change();
 }
 
 void remove(const std::shared_ptr<LBBoundary> &b) {
+  assert(std::find(lbboundaries.begin(), lbboundaries.end(), b) !=
+         lbboundaries.end());
   lbboundaries.erase(std::remove(lbboundaries.begin(), lbboundaries.end(), b),
                      lbboundaries.end());
 
