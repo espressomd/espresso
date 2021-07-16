@@ -37,15 +37,20 @@ class VerletCriterion {
   const double m_eff_coulomb_cut2 = 0.;
   const double m_eff_dipolar_cut2 = 0.;
   const double m_collision_cut2 = 0.;
+  double eff_cutoff_sqr(double x) const {
+    if (x == INACTIVE_CUTOFF)
+      return INACTIVE_CUTOFF;
+    return Utils::sqr(x + m_skin);
+  }
 
 public:
   VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
                   double dipolar_cut = 0.,
                   double collision_detection_cutoff = 0.)
-      : m_skin(skin), m_eff_max_cut2(Utils::sqr(max_cut + m_skin)),
-        m_eff_coulomb_cut2(Utils::sqr(coulomb_cut + m_skin)),
-        m_eff_dipolar_cut2(Utils::sqr(dipolar_cut + m_skin)),
-        m_collision_cut2(Utils::sqr(collision_detection_cutoff)) {}
+      : m_skin(skin), m_eff_max_cut2(eff_cutoff_sqr(max_cut)),
+        m_eff_coulomb_cut2(eff_cutoff_sqr(coulomb_cut)),
+        m_eff_dipolar_cut2(eff_cutoff_sqr(dipolar_cut)),
+        m_collision_cut2(eff_cutoff_sqr(collision_detection_cutoff)) {}
 
   template <typename Distance>
   bool operator()(const Particle &p1, const Particle &p2,
