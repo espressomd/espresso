@@ -307,6 +307,7 @@ The following tutorials are available:
 
 * :file:`lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid.
 * :file:`visualization`: Using the online visualizers of |es|.
+* :file:`error_analysis`: Statistical analysis of simulation results.
 * :file:`charged_system`: Modelling of ion condensation around a charged rod.
 * :file:`ferrofluid`: Modelling a colloidal suspension of magnetic particles.
 * :file:`lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice-Boltzmann method.

@@ -12,6 +12,11 @@ physical systems.
 * **Simulate a simple Lennard-Jones liquid**  
   Modelling of a single-component and a two-component Lennard-Jones liquid.  
   [Guide](lennard_jones/lennard_jones.ipynb)
+* **Error_analysis**  
+  Statistical analysis of simulation results
+  Guide
+  [Part 1](error_analysis/error_analysis_part1.ipynb) |
+  [Part 2](error_analysis/error_analysis_part2.ipynb)
 * **Visualization**  
   Using the online visualizers of ESPResSo.  
   [Guide](visualization/visualization.ipynb)
