@@ -18,29 +18,22 @@
 import unittest as ut
 import importlib_wrapper
 import numpy as np
-import scipy.optimize
+
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/lattice_boltzmann/lattice_boltzmann_part2.py")
+    "@TUTORIALS_DIR@/lattice_boltzmann/lattice_boltzmann_poiseuille_flow.py",
+    gpu=True)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def test_ballistic_regime(self):
-        for (tau_p, tau, msd) in zip(tutorial.tau_p_values,
-                                     tutorial.tau_results,
-                                     tutorial.msd_results):
-            popt, _ = scipy.optimize.curve_fit(
-                tutorial.quadratic, tau[:tau_p], msd[:tau_p])
-            residuals = msd[:tau_p] - tutorial.quadratic(tau[:tau_p], *popt)
-            np.testing.assert_allclose(residuals, 0, rtol=0, atol=1e-3)
-
-    def test_diffusion_coefficient(self):
-        D_val = tutorial.diffusion_results
-        D_ref = tutorial.KT / np.array(tutorial.gammas)
-        np.testing.assert_allclose(D_val, D_ref, rtol=0, atol=0.1)
+    def test_flow_profile(self):
+        analytical = tutorial.y_values
+        simulation = tutorial.fluid_velocities
+        rmsd = np.sqrt(np.mean(np.square(analytical - simulation)))
+        self.assertLess(rmsd, 2e-5 * tutorial.AGRID / tutorial.lbf.tau)
 
 
 if __name__ == "__main__":
