@@ -37,7 +37,7 @@ LB_PARAMETERS = {
     'dens': DENS,
     'tau': TAU
 }
-V_BOUNDARY = 0.6
+V_BOUNDARY = 0.2
 
 
 def velocity_profile(x):
@@ -75,6 +75,7 @@ class LBInterpolation:
         self.system.integrator.run(250)
         # Check interpolated vel at upper boundary. The node position is at
         # box_l[0]-agrid/2.
+
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity(
                 [self.system.box_l[0] - AGRID / 2, 0, 0])),
@@ -122,23 +123,13 @@ class LBInterpolation:
 
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-class LBInterpolationCPU(ut.TestCase, LBInterpolation):
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+class LBInterpolationWalberla(ut.TestCase, LBInterpolation):
 
     def setUp(self):
         self.system.lbboundaries.clear()
         self.system.actors.clear()
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
-        self.system.actors.add(self.lbf)
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
-class LBInterpolationGPU(ut.TestCase, LBInterpolation):
-
-    def setUp(self):
-        self.system.lbboundaries.clear()
-        self.system.actors.clear()
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMETERS)
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMETERS)
         self.system.actors.add(self.lbf)
 
 

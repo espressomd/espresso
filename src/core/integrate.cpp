@@ -283,7 +283,7 @@ int integrate(int n_steps, int reuse_forces) {
     force_calc(cell_structure, time_step, temperature);
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->after_force_calc();
+    virtual_sites()->after_force_calc(time_step);
 #endif
     integrator_step_2(particles, temperature);
 #ifdef BOND_CONSTRAINT

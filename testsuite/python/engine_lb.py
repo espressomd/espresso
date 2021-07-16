@@ -19,6 +19,7 @@ import unittest_decorators as utx
 import numpy as np
 import espressomd
 import espressomd.lb
+import tests_common
 
 
 class SwimmerTest():
@@ -88,12 +89,28 @@ class SwimmerTest():
         and to the fluid, so total momentum is conserved
         """
         self.add_all_types_of_swimmers(rotation=False)
-        self.system.integrator.run(20, reuse_forces=True)
+
+        # Comments by Christoph Lohrmann from #3514:
+        # - why I used ` reuse_forces=True` : If I don't use it, ` force_calc()`  is
+        # called the first time without LB-coupling. That means no friction for any
+        # swimmer and no additional force for the ` v_swim`  type swimmers. The 
+        # active force for the ` f_swim`  swimmers gets added anyway because it is
+        # not derived from the coupling to LB. With ` reuse_forces`  at least both
+        # types are treated the same.
+        # - Therefore, in the first halfstep, the active forces on the particles are
+        # missing.  This creates the first half of the missing momentum.
+        # - The LB fluid is always ahead by a half step (as checked by 
+        # ` test_ext_force_density()`  in ` lb.py` ). It is also not affected by the
+        # ` reuse_forces`  in the first halfstep because ` force_calc()`  with 
+        # coupling is called in the main integration loop before 
+        # ` lb_lbfluid_propagate()` 
+        # - => in total, the fluid momentum is ahead by a full time step
+        self.system.integrator.run(100, reuse_forces=True)
         tot_mom = self.system.analysis.linear_momentum(include_particles=True,
                                                        include_lbfluid=True)
-        # compensate half-step offset between force calculation and LB-update
+        # compensate offset between force calculation and LB-update    
         for part in self.system.part:
-            tot_mom += part.f * self.system.time_step / 2.
+            tot_mom += part.f * self.system.time_step
 
         np.testing.assert_allclose(tot_mom, 3 * [0.], atol=self.tol)
 
@@ -122,30 +139,49 @@ class SwimmerTest():
             np.testing.assert_allclose(
                 np.copy(swimmer.f), force, atol=self.tol)
 
-    def check_fluid_force(self, swimmer):
-        pass
-        # forces on particles are checked
-        # total force on the fluid matches (momentum conservation)
-        # TODO: only thing left to check is the location of the fluid force.
+    def test_fluid_force(self):
+        """ forces on particles are already checked (self.test_particle_forces)
+        total force on the fluid matches (self.test_momentum_conservation)
+        only thing left to check is the location of the fluid force.
+        """
+        f_swim = 0.11
+        dip_length = 2 * self.LB_params['agrid']
+
+        sw0_pos = np.array([3.8, 1.1, 1.1])
+        sw1_pos = np.array([1.8, 4.1, 4.1])
+        sw0 = self.system.part.add(pos=sw0_pos, quat=np.sqrt([.5, 0, .5, 0]),
+                                   mass=0.9, rotation=3 * [False],
+                                   swimming={"mode": "pusher", "f_swim": f_swim,
+                                             "dipole_length": dip_length})
+        sw1 = self.system.part.add(pos=sw1_pos, quat=np.sqrt([.5, 0, .5, 0]),
+                                   mass=0.7, rotation=3 * [False],
+                                   swimming={"mode": "puller", "f_swim": f_swim,
+                                             "dipole_length": dip_length})
+
+        self.system.integrator.run(2)
+
+        for sw in [sw0, sw1]:
+            push_pull = -1 if sw.swimming['mode'] == 'pusher' else 1
+            sw_source_pos = sw.pos + self.system.time_step * \
+                sw.v + push_pull * dip_length * sw.director
+            # fold into box
+            sw_source_pos -= np.floor(sw_source_pos /
+                                      self.system.box_l) * np.array(self.system.box_l)
+            sw_source_nodes = tests_common.get_lb_nodes_around_pos(
+                sw_source_pos, self.lbf)
+            sw_source_forces = np.array(
+                [n.last_applied_force for n in sw_source_nodes])
+            np.testing.assert_allclose(
+                np.sum(sw_source_forces, axis=0), -f_swim * np.array(sw.director), atol=1E-10)
 
 
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestCPU(SwimmerTest, ut.TestCase):
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+class SwimmerTestWALBERLA(SwimmerTest, ut.TestCase):
 
     def setUp(self):
         self.tol = 1e-10
-        self.lbf = espressomd.lb.LBFluid(**self.LB_params)
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestGPU(SwimmerTest, ut.TestCase):
-
-    def setUp(self):
-        self.tol = 1e-5
-        self.lbf = espressomd.lb.LBFluidGPU(**self.LB_params)
+        self.lbf = espressomd.lb.LBFluidWalberla(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 

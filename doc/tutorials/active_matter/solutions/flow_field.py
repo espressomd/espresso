@@ -30,7 +30,7 @@ import espressomd
 from espressomd import assert_features, lb
 
 
-assert_features(["ENGINE", "CUDA", "MASS", "ROTATION", "ROTATIONAL_INERTIA"])
+assert_features(["ENGINE", "MASS", "ROTATION", "ROTATIONAL_INERTIA"])
 
 
 parser = argparse.ArgumentParser()
@@ -50,9 +50,6 @@ mode = args.mode
 pos = args.z_position
 
 ##########################################################################
-
-outdir = "./RESULTS_FLOW_FIELD/T_{}_P_{}/".format(mode, pos)
-os.makedirs(outdir, exist_ok=True)
 
 # System parameters
 LENGTH = 25.0
@@ -86,15 +83,21 @@ system.part.add(
 ##########################################################################
 
 # Setup the fluid (quiescent)
-lbf = lb.LBFluidGPU(agrid=1.0, dens=1.0,
-                    visc=1.0, tau=TIME_STEP)
+lbf = lb.LBFluidWalberla(agrid=1.0, dens=1.0,
+                         visc=1.0, tau=TIME_STEP)
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=20.0, seed=42)
 
 ##########################################################################
 
 # Output the coordinates
-with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
+vtk_base_dir = 'vtk_out/RESULTS_FLOW_FIELD'
+vtk_identifier = "T_{}_P_{}".format(mode, pos)
+vtk_outdir = os.path.join(vtk_base_dir, vtk_identifier)
+lb_vtk = lbf.add_vtk_writer(vtk_identifier, 'velocity_vector',
+                            base_folder=vtk_base_dir, prefix='lb_velocity')
+
+with open("{}/trajectory.dat".format(vtk_outdir), 'w') as outfile:
     print("####################################################", file=outfile)
     print("#        time        position       velocity       #", file=outfile)
     print("####################################################", file=outfile)
@@ -113,9 +116,9 @@ with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
         # Output 50 simulations
         if k % (PROD_STEPS / 50) == 0:
             num = k // (PROD_STEPS // 50)
-            lbf.write_vtk_velocity("{}/lb_velocity_{}.vtk".format(outdir, num))
+            lb_vtk.write()
             system.part.writevtk(
-                "{}/position_{}.vtk".format(outdir, num), types=[0])
+                "{}/position_{}.vtk".format(vtk_outdir, num), types=[0])
 
         system.integrator.run(PROD_LENGTH)
 print()

@@ -29,8 +29,8 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test_file_generation(self):
-        for name in ["trajectory.dat", "position_0.vtk", "lb_velocity_0.vtk"]:
-            filepath = os.path.join(tutorial.outdir, name)
+        for name in ["trajectory.dat", "position_0.vtk", "lb_velocity_0.vtu"]:
+            filepath = os.path.join(tutorial.vtk_outdir, name)
             self.assertTrue(
                 os.path.isfile(filepath),
                 filepath + " not created")

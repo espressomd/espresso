@@ -618,10 +618,43 @@ def count_fluid_nodes(lbf):
 
     fluid_nodes = 0
     for n in lbf.nodes():
-        if not n.boundary:
+        if not n.is_boundary:
             fluid_nodes += 1
 
     return fluid_nodes
+
+
+def fold_index(idx, shape):
+    """Fold index into the range 0<x<shape"""
+
+    res = np.copy(idx)
+    for i in range(len(idx)):
+        while res[i] >= shape[i]:
+            res[i] -= shape[i]
+        while res[i] < 0:
+            res[i] += shape[i]
+    return res
+
+
+def get_lb_nodes_around_pos(pos, lbf):
+    """Returns lb node(s) relevant for interpolaiton around the given position"""
+
+    pos_lb_units = pos / lbf.agrid - .5  # Rel to node centers
+
+    lower_left_index = np.array(np.floor(pos_lb_units), dtype=int)
+
+    # Position exactly on a node? Return just that node
+    if np.all(lower_left_index == pos_lb_units):
+        return [lbf[fold_index(lower_left_index, lbf.shape)]]
+
+    # Otherwise return 8 surrounding nodes
+    res = []
+    for i in (0, 1):
+        for j in (0, 1):
+            for k in (0, 1):
+                res.append(lbf[fold_index(lower_left_index +
+                                          np.array((i, j, k), dtype=int), lbf.shape)])
+    return res
 
 
 def random_dipoles(n_particles):

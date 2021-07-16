@@ -232,18 +232,6 @@ class CylindricalLBObservableCommon:
             np.testing.assert_array_almost_equal(np.copy(ctp.__getattr__(attr_name)),
                                                  np.copy(observable.transform_params.__getattr__(attr_name)))
 
-
-class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**self.lb_params)
-        self.system.actors.add(self.lbf)
-
-    def tearDown(self):
-        del self.positions[:]
-        self.system.actors.remove(self.lbf)
-        self.system.part.clear()
-
     def test_cylindrical_lb_flux_density_obs(self):
         """
         Check that the result from the observable (in its own frame)
@@ -277,11 +265,12 @@ class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
         self.check_edges(flux_obs, np_edges)
 
 
-@utx.skipIfMissingGPU()
-class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class CylindricalLBObservableWalberla(
+        ut.TestCase, CylindricalLBObservableCommon):
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**self.lb_params)
+        self.lbf = espressomd.lb.LBFluidWalberla(**self.lb_params)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):

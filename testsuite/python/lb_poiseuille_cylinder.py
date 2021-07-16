@@ -1,3 +1,4 @@
+
 # Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -37,8 +38,10 @@ AGRID = .5
 EXT_FORCE = .1
 VISC = 2.7
 DENS = 1.7
-TIME_STEP = 0.1
+TIME_STEP = 0.05
 BOX_L = 8.0
+# Location of the LB wall. This was box_l/2 -1 for Espresso's LB
+EFFECTIVE_RADIUS = BOX_L / 2 - 1.0
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
@@ -93,7 +96,6 @@ class LBPoiseuilleCommon:
         """
         # disable periodicity except in the flow direction
         self.system.periodicity = np.logical_not(self.params['axis'])
-
         local_lb_params = LB_PARAMS.copy()
         local_lb_params['ext_force_density'] = np.array(
             self.params['axis']) * EXT_FORCE
@@ -109,8 +111,8 @@ class LBPoiseuilleCommon:
         mid_indices = 3 * [int((BOX_L / AGRID) / 2)]
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
-        while diff > 0.001:
-            self.system.integrator.run(1)
+        while diff > 1E-5:
+            self.system.integrator.run(5)
             new_val = self.lbf[mid_indices].velocity[
                 np.nonzero(self.params['axis'])[0]]
             diff = abs(new_val - old_val)
@@ -138,10 +140,11 @@ class LBPoiseuilleCommon:
         v_measured = velocities[1:-1]
         v_expected = poiseuille_flow(
             positions[1:-1] - 0.5 * BOX_L,
-            BOX_L / 2.0 - 1.0,
+            EFFECTIVE_RADIUS,
             EXT_FORCE,
             VISC * DENS)
-        rmsd = np.linalg.norm(v_expected - v_measured)
+        f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
+        rmsd = np.linalg.norm(v_expected - v_measured - f_half_correction)
         self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
 
     def prepare_obs(self):
@@ -165,7 +168,7 @@ class LBPoiseuilleCommon:
     def check_observable(self):
         self.prepare_obs()
         # gather some statistics for the observable accumulator
-        self.system.integrator.run(1)
+        self.system.integrator.run(5)
         obs_result = self.accumulator.mean()
         x = np.linspace(
             OBS_PARAMS['min_r'],
@@ -173,11 +176,12 @@ class LBPoiseuilleCommon:
             OBS_PARAMS['n_r_bins'])
         v_expected = poiseuille_flow(
             x,
-            BOX_L / 2.0 - 1.0,
+            EFFECTIVE_RADIUS,
             EXT_FORCE,
             VISC * DENS)
         v_measured = obs_result[:, 0, 0, 2]
-        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
+        f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
+        rmsd = np.linalg.norm(v_expected - v_measured - f_half_correction)
         self.assertLess(rmsd, 0.004 * AGRID / TIME_STEP)
 
     def test_x(self):
@@ -199,32 +203,18 @@ class LBPoiseuilleCommon:
         self.check_observable()
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB."""
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid
+        self.lbf = espressomd.lb.LBFluidWalberla
 
     def tearDown(self):
         self.system.actors.clear()
         self.system.lbboundaries.clear()
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
-class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU
-
-    def tearDown(self):
-        self.system.actors.clear()
-        self.system.lbboundaries.clear()
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     ut.main()

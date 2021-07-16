@@ -204,6 +204,7 @@ cdef class CellSystem:
             if _skin < 0:
                 raise ValueError("Skin must be >= 0")
             mpi_set_skin(_skin)
+            handle_errors("Skin setup")
 
         def __get__(self):
             return skin

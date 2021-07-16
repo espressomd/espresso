@@ -40,7 +40,7 @@ class TestLB:
 
     system.periodicity = [1, 1, 1]
     system.time_step = 0.01
-    system.cell_system.skin = 1.0
+    system.cell_system.skin = 0
     lbf = None
     dof = 3.
 
@@ -107,22 +107,19 @@ class TestLB:
                 3. * np.product(self.lbf.shape)**2)
 
             # check mass conversation
-            self.assertAlmostEqual(fluid_mass, self.params["dens"],
-                                   delta=self.params["mass_prec_per_node"])
+            self.assertAlmostEqual(fluid_mass, self.params["dens"], delta=1E-9)
 
             # check momentum conservation
-            # NOTE: this particle momentum prediction is due to the missing f/2 part in the
-            #       LB fluid.
-            particle_momentum = np.sum(
-                [p.mass * p.v + 0.5 * p.f * self.system.time_step for p in self.system.part], axis=0)
-            fluid_momentum = self.system.analysis.linear_momentum(False, True)
-            np.testing.assert_allclose(
-                particle_momentum + fluid_momentum, self.tot_mom,
-                atol=self.params['mom_prec'])
+            momentum = self.system.analysis.linear_momentum()
+            f_2_correction = np.sum(
+                self.system.part[:].f,
+                axis=0) * self.system.time_step
 
-            # Calc particle temperature
-            e = self.system.analysis.energy()
-            temp_particle = 2.0 / self.dof * e["kinetic"] / self.n_col_part
+            np.testing.assert_allclose(momentum + f_2_correction, self.tot_mom,
+                                       atol=1E-10)
+
+            temp_particle = np.average(
+                [np.average(p.mass * p.v**2) for p in self.system.part])
 
             # Update lists
             all_temp_particle.append(temp_particle)
@@ -133,8 +130,9 @@ class TestLB:
         #   scale=np.std(all_temp_particle,ddof=1))[1] - self.params["temp"]
         # temp_prec_fluid = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
         #   scale=np.std(all_temp_fluid,ddof=1))[1] -self.params["temp"]
-        temp_prec_particle = 0.06 * self.params["temp"]
+
         temp_prec_fluid = 0.05 * self.params["temp"]
+        temp_prec_particle = 0.05 * self.params["temp"]
 
         self.assertAlmostEqual(
             np.mean(all_temp_fluid), self.params["temp"], delta=temp_prec_fluid)
@@ -142,19 +140,11 @@ class TestLB:
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
 
-class TestLBCPU(TestLB, ut.TestCase):
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class TestLBWalberla(TestLB, ut.TestCase):
 
     def setUp(self):
-        self.lb_class = espressomd.lb.LBFluid
-        self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
-
-
-@utx.skipIfMissingGPU()
-class TestLBGPU(TestLB, ut.TestCase):
-
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidGPU
-        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
+        self.lb_class = espressomd.lb.LBFluidWalberla
 
 
 if __name__ == "__main__":

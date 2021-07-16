@@ -19,6 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.hpp"
+
 #include "communication.hpp"
 
 #include "errorhandling.hpp"
@@ -26,6 +28,10 @@
 #include "grid.hpp"
 
 #include <utils/mpi/cart_comm.hpp>
+
+#ifdef LB_WALBERLA
+#include <lb_walberla_init.hpp>
+#endif
 
 #include <boost/mpi.hpp>
 
@@ -84,10 +90,10 @@ void openmpi_fix_vader() {
  *
  * This was originally inspired by mpi4py
  * (https://github.com/mpi4py/mpi4py/blob/4e3f47b6691c8f5a038e73f84b8d43b03f16627f/src/lib-mpi/compat/openmpi.h).
- * It's needed because OpenMPI dlopens its submodules. These are unable to find
- * the top-level OpenMPI library if that was dlopened itself, i.e. when the
- * Python interpreter dlopens a module that is linked against OpenMPI. It's
- * about some weird two-level symbol namespace thing.
+ * It's needed because OpenMPI dlopens its submodules. These are unable to
+ * find the top-level OpenMPI library if that was dlopened itself, i.e. when
+ * the Python interpreter dlopens a module that is linked against OpenMPI.
+ * It's about some weird two-level symbol namespace thing.
  */
 void openmpi_global_namespace() {
   if (OMPI_MAJOR_VERSION >= 3)
@@ -134,6 +140,10 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
       std::make_unique<Communication::MpiCallbacks>(comm_cart);
 
   ErrorHandling::init_error_handling(mpiCallbacks());
+
+#ifdef LB_WALBERLA
+  walberla_mpi_init();
+#endif
 
   on_program_start();
 }

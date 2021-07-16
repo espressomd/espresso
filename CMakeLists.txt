@@ -77,6 +77,8 @@ option(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" OFF)
 option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
+option(WITH_WALBERLA "Build with WALBERLA Lattice-Boltzmann support" OFF)
+option(WALBERLA_USE_AVX "Build WALBERLA Lattice-Boltzmann with AVX vectorization" OFF)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
@@ -445,6 +447,40 @@ if(WITH_BENCHMARKS)
   add_custom_target(benchmark)
   add_subdirectory(maintainer/benchmarks)
 endif(WITH_BENCHMARKS)
+
+# Walberla
+if(WITH_WALBERLA)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CUDA_STANDARD 14)
+  set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
+  set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+  include(FetchContent)
+  FetchContent_Declare(
+    walberla
+    GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
+    GIT_TAG        b17ca5caf00db7d19f86c5f85c6f67fec6c16aff
+    PATCH_COMMAND  patch -p0 --ignore-whitespace -i
+                   ${PROJECT_SOURCE_DIR}/cmake/waLBerlaFunctions.patch
+  )
+  FetchContent_Populate(walberla)
+  set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
+  set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
+  set(WALBERLA_BUILD_TOOLS off CACHE BOOL "")
+  set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
+  set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
+  set(WALBERLA_BUILD_DOC off CACHE BOOL "")
+  set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
+  add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
+  set(WALBERLA 1)
+  set(WALBERLA_LIBS
+      walberla::core walberla::domain_decomposition walberla::blockforest
+      walberla::boundary walberla::core walberla::domain_decomposition
+      walberla::field walberla::lbm walberla::timeloop walberla::vtk)
+  # TODO WALBERLA: remove -lmpi_cxx -lmpi (required to find symbol MPI::Datatype::Free() in VTK code) and -lstdc++fs
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
+    set(WALBERLA_LIBS ${WALBERLA_LIBS} stdc++fs -lmpi_cxx -lmpi)
+  endif()
+endif(WITH_WALBERLA)
 
 #
 # Subdirectories

@@ -19,12 +19,18 @@
 #ifndef LB_PARTICLE_COUPLING_HPP
 #define LB_PARTICLE_COUPLING_HPP
 
-#include "OptionalCounter.hpp"
 #include "ParticleRange.hpp"
 
+#include <utils/Counter.hpp>
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/optional.hpp>
 
 #include <cstdint>
+
+using OptionalCounter = boost::optional<Utils::Counter<uint64_t>>;
 
 /** Calculate particle lattice interactions.
  *  So far, only viscous coupling with Stokesian friction is implemented.
@@ -56,8 +62,51 @@ void lb_lbcoupling_activate();
  */
 void lb_lbcoupling_deactivate();
 
+/**
+ * @brief Check if a position is within the local LB domain
+ *       plus halo.
+ *
+ * @param pos Position to check
+ *
+ * @return True iff the point is inside of the domain.
+ */
+bool in_local_halo(Utils::Vector3d const &pos);
+
+/**
+ * @brief Add a force to the lattice force density.
+ * @param pos Position of the force
+ * @param force Force in MD units.
+ * @param time_step MD time step.
+ */
+void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
+                  double time_step);
+
+Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
+                                           const OptionalCounter &rng_counter);
+
+// internal function exposed for unit testing
+void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
+                     const OptionalCounter &rng_counter, double time_step);
+
+Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p);
+
+void mpi_bcast_lb_particle_coupling();
+
+/** calculate drag force on a single particle
+ *
+ *  Section II.C. @cite ahlrichs99a
+ *
+ *  @param[in] p             The coupled particle.
+ *  @param vel_offset        Velocity offset to be added to interpolated LB
+ * velocity before calculating the force
+ *
+ *  @return The viscous coupling force
+ */
+Utils::Vector3d lb_drag_force(Particle const &p,
+                              const Utils::Vector3d &vel_offset);
+
 struct LB_Particle_Coupling {
-  OptionalCounter rng_counter_coupling;
+  OptionalCounter rng_counter_coupling = {};
   /*
    * @brief Friction constant for the particle coupling.
    */
@@ -67,14 +116,14 @@ struct LB_Particle_Coupling {
 private:
   friend class boost::serialization::access;
 
-  template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
+  template <class Archive> void serialize(Archive &ar, const unsigned int) {
     ar &rng_counter_coupling;
     ar &gamma;
     ar &couple_to_md;
   }
 };
 
+// internal global exposed for unit testing
 extern LB_Particle_Coupling lb_particle_coupling;
 
 #endif

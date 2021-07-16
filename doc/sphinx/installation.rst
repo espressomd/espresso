@@ -373,16 +373,8 @@ Fluid dynamics and fluid structure interaction
 
 -  ``LB_BOUNDARIES``
 
--  ``LB_BOUNDARIES_GPU``
-
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
-
--  ``ELECTROKINETICS``
-
--  ``EK_BOUNDARIES``
-
--  ``EK_DEBUG``
 
 
 .. _Interaction features:

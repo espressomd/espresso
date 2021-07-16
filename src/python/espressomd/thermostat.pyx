@@ -27,6 +27,7 @@ from .lb cimport lb_lbcoupling_get_gamma
 from .lb cimport lb_lbcoupling_set_rng_state
 from .lb cimport lb_lbcoupling_get_rng_state
 from .lb cimport lb_lbcoupling_is_seed_required
+from .lb cimport mpi_bcast_lb_particle_coupling
 from .lb cimport lb_lbfluid_get_kT
 
 
@@ -260,6 +261,7 @@ cdef class Thermostat:
 
         mpi_set_thermo_switch(THERMO_OFF)
         lb_lbcoupling_set_gamma(0.0)
+        mpi_bcast_lb_particle_coupling()
 
     @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
     def set_langevin(self, kT, gamma, gamma_rotation=None,
@@ -527,11 +529,11 @@ cdef class Thermostat:
         """
         Sets the LB thermostat.
 
-        This thermostat requires the feature ``LBFluid`` or ``LBFluidGPU``.
+        This thermostat requires the feature ``LB_WALBERLA``.
 
         Parameters
         ----------
-        LB_fluid : :class:`~espressomd.lb.LBFluid` or :class:`~espressomd.lb.LBFluidGPU`
+        LB_fluid : :class:`~espressomd.lb.LBFluidWalberla`
         seed : :obj:`int`
             Seed for the random number generator, required if kT > 0.
             Must be positive.
@@ -556,14 +558,17 @@ cdef class Thermostat:
                 if seed < 0:
                     raise ValueError("seed must be a positive integer")
                 lb_lbcoupling_set_rng_state(seed)
+                mpi_bcast_lb_particle_coupling()
         else:
             lb_lbcoupling_set_rng_state(0)
+            mpi_bcast_lb_particle_coupling()
 
         global thermo_switch
         mpi_set_thermo_switch(thermo_switch | THERMO_LB)
 
         mpi_set_thermo_virtual(act_on_virtual)
         lb_lbcoupling_set_gamma(gamma)
+        mpi_bcast_lb_particle_coupling()
 
     IF NPT:
         @AssertThermostatType(THERMO_NPT_ISO)

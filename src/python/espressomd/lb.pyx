@@ -28,20 +28,145 @@ from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
 from . import utils
-from .utils import array_locked, is_valid_type, check_type_or_throw_except
-from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
-from .integrate cimport get_time_step
+from .utils import array_locked, is_valid_type, to_char_pointer
+from .utils cimport Vector3i, Vector3d, Vector6d, make_array_locked, create_nparray_from_double_array
+from .grid cimport box_geo
+
+
+IF LB_WALBERLA:
+
+    import lxml.etree
+
+    class VTKRegistry:
+
+        def __init__(self):
+            self.map = {}
+            self.collisions = {}
+
+        def _register_vtk_object(self, vtk_uid, vtk_obj):
+            self.map[vtk_uid] = vtk_obj
+            self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
+
+        def __getstate__(self):
+            return self.map
+
+        def __setstate__(self, active_vtk_objects):
+            self.map = {}
+            self.collisions = {}
+            for vtk_uid, vtk_obj in active_vtk_objects.items():
+                self.map[vtk_uid] = vtk_obj
+                self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
+
+    _vtk_registry = VTKRegistry()
+
+    class VTKOutput:
+        """
+        VTK callback.
+        """
+        observable2enum = {
+            'density': < int > output_vtk_density,
+            'velocity_vector': < int > output_vtk_velocity_vector,
+            'pressure_tensor': < int > output_vtk_pressure_tensor}
+
+        def __init__(self, vtk_uid, identifier, observables, delta_N,
+                     base_folder, prefix):
+            observables = set(observables)
+            flag = sum(self.observable2enum[obs] for obs in observables)
+            self._params = {
+                'vtk_uid': vtk_uid, 'identifier': identifier, 'prefix': prefix,
+                'delta_N': delta_N, 'base_folder': base_folder, 'flag': flag,
+                'enabled': True, 'initial_count': 0, 'observables': observables}
+            self._set_params_in_es_core()
+
+        def __getstate__(self):
+            odict = self._params.copy()
+            # get initial execution counter
+            pvd = os.path.abspath(self._params['vtk_uid']) + '.pvd'
+            if os.path.isfile(pvd):
+                tree = lxml.etree.parse(pvd)
+                nodes = tree.xpath('/VTKFile/Collection/DataSet')
+                if nodes:
+                    odict['initial_count'] = int(
+                        nodes[-1].attrib['timestep']) + 1
+            return odict
+
+        def __setstate__(self, params):
+            self._params = params
+            self._set_params_in_es_core()
+
+        def _set_params_in_es_core(self):
+            _vtk_registry._register_vtk_object(self._params['vtk_uid'], self)
+            lb_lbfluid_create_vtk(self._params['delta_N'],
+                                  self._params['initial_count'],
+                                  self._params['flag'],
+                                  to_char_pointer(self._params['identifier']),
+                                  to_char_pointer(self._params['base_folder']),
+                                  to_char_pointer(self._params['prefix']))
+            if not self._params['enabled']:
+                self.disable()
+
+        def write(self):
+            raise NotImplementedError()
+
+        def disable(self):
+            raise NotImplementedError()
+
+        def enable(self):
+            raise NotImplementedError()
+
+    class VTKOutputAutomatic(VTKOutput):
+        """
+        Automatic VTK callback. Can be disabled at any time and re-enabled later.
+
+        Please note that the internal VTK counter is no longer incremented
+        when the callback is disabled, which means the number of LB steps
+        between two frames will not always be an integer multiple of delta_N.
+        """
+
+        def __repr__(self):
+            return "<{}.{}: writes to '{}' every {} LB step{}{}>".format(
+                self.__class__.__module__, self.__class__.__name__,
+                self._params['vtk_uid'], self._params['delta_N'],
+                '' if self._params['delta_N'] == 1 else 's',
+                '' if self._params['enabled'] else ' (disabled)')
+
+        def write(self):
+            raise RuntimeError(
+                'Automatic VTK callbacks writes automaticall, cannot be triggered manually')
+
+        def enable(self):
+            lb_lbfluid_switch_vtk(to_char_pointer(self._params['vtk_uid']), 1)
+            self._params['enabled'] = True
+
+        def disable(self):
+            lb_lbfluid_switch_vtk(to_char_pointer(self._params['vtk_uid']), 0)
+            self._params['enabled'] = False
+
+    class VTKOutputManual(VTKOutput):
+        """
+        Manual VTK callback. Can be called at any time to take a snapshot
+        of the current state of the LB fluid.
+        """
+
+        def __repr__(self):
+            return "<{}.{}: writes to '{}' on demand>".format(
+                self.__class__.__module__, self.__class__.__name__,
+                self._params['vtk_uid'])
+
+        def write(self):
+            lb_lbfluid_write_vtk(to_char_pointer(self._params['vtk_uid']))
+
+        def disable(self):
+            raise RuntimeError('Manual VTK callbacks cannot be disabled')
+
+        def enable(self):
+            raise RuntimeError('Manual VTK callbacks cannot be enabled')
 
 
 def _construct(cls, params):
     obj = cls(**params)
     obj._params = params
     return obj
-
-
-def assert_agrid_tau_set(obj):
-    assert obj.agrid != obj.default_params()['agrid'] and obj.tau != obj.default_params()[
-        'tau'], "tau and agrid have to be set first!"
 
 
 cdef class HydrodynamicInteraction(Actor):
@@ -94,8 +219,6 @@ cdef class HydrodynamicInteraction(Actor):
         else:
             raise Exception(
                 "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
-    # validate the given parameters on actor initialization
-    ####################################################
 
     def validate_params(self):
         default_params = self.default_params()
@@ -128,7 +251,7 @@ cdef class HydrodynamicInteraction(Actor):
                 "visc": -1.0,
                 "bulk_visc": -1.0,
                 "tau": -1.0,
-                "seed": None,
+                "seed": 0,
                 "kT": 0.}
 
     def _set_lattice_switch(self):
@@ -136,34 +259,13 @@ cdef class HydrodynamicInteraction(Actor):
             "Subclasses of HydrodynamicInteraction must define the _set_lattice_switch() method.")
 
     def _set_params_in_es_core(self):
-        default_params = self.default_params()
-        self.agrid = self._params['agrid']
-        self.tau = self._params['tau']
-        self.density = self._params['dens']
-
-        if self._params['kT'] > 0.:
-            self.seed = self._params['seed']
-        self.kT = self._params['kT']
-
-        self.viscosity = self._params['visc']
-        if self._params['bulk_visc'] != default_params['bulk_visc']:
-            self.bulk_viscosity = self._params['bulk_visc']
-
-        self.ext_force_density = self._params["ext_force_density"]
-
-        if "gamma_odd" in self._params:
-            python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
-
-        if "gamma_even" in self._params:
-            python_lbfluid_set_gamma_even(self._params["gamma_even"])
-
-        utils.handle_errors("LB fluid activation")
+        pass
 
     def _get_params_from_es_core(self):
         default_params = self.default_params()
         self._params['agrid'] = self.agrid
         self._params["tau"] = self.tau
-        self._params['dens'] = self.density
+        #self._params['dens'] = self.density
         self._params["kT"] = self.kT
         if self._params['kT'] > 0.0:
             self._params['seed'] = self.seed
@@ -171,30 +273,8 @@ cdef class HydrodynamicInteraction(Actor):
         if not self._params["bulk_visc"] == default_params["bulk_visc"]:
             self._params['bulk_visc'] = self.bulk_viscosity
         self._params['ext_force_density'] = self.ext_force_density
-        if 'gamma_odd' in self._params:
-            self._params['gamma_odd'] = lb_lbfluid_get_gamma_odd()
-        if 'gamma_even' in self._params:
-            self._params['gamma_even'] = lb_lbfluid_get_gamma_even()
 
         return self._params
-
-    def set_interpolation_order(self, interpolation_order):
-        """ Set the order for the fluid interpolation scheme.
-
-        Parameters
-        ----------
-        interpolation_order : :obj:`str`, \{"linear", "quadratic"\}
-            ``"linear"`` for trilinear interpolation, ``"quadratic"`` for
-            quadratic interpolation. For the CPU implementation of LB, only
-            ``"linear"`` is available.
-
-        """
-        if interpolation_order == "linear":
-            lb_lbinterpolation_set_interpolation_order(linear)
-        elif interpolation_order == "quadratic":
-            lb_lbinterpolation_set_interpolation_order(quadratic)
-        else:
-            raise ValueError("Invalid parameter")
 
     def get_interpolated_velocity(self, pos):
         """Get LB fluid velocity at specified position.
@@ -217,71 +297,24 @@ cdef class HydrodynamicInteraction(Actor):
         cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
         return make_array_locked(v)
 
-    def write_vtk_velocity(self, path, bb1=None, bb2=None):
-        """Write the LB fluid velocity to a VTK file.
-        If both ``bb1`` and ``bb2`` are specified, return a subset of the grid.
+    def add_force_at_pos(self, pos, force):
+        """Adds a force to the fluid at given position
 
         Parameters
         ----------
-        path : :obj:`str`
-            Path to the output ASCII file.
-        bb1 : (3,) array_like of :obj:`int`, optional
-            Node indices of the lower corner of the bounding box.
-        bb2 : (3,) array_like of :obj:`int`, optional
-            Node indices of the upper corner of the bounding box.
+        pos : (3,) array_like of :obj:`float`
+              The position at which the force will be added.
+        force : (3,) array_like of :obj:`float`
+              The force vector which will be distributed at the position.
 
         """
-        cdef vector[int] bb1_vec
-        cdef vector[int] bb2_vec
-        if bb1 is None and bb2 is None:
-            lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
-        elif bb1 is None or bb2 is None:
-            raise ValueError(
-                "Invalid parameter: must provide either both bb1 and bb2, or none of them")
-        else:
-            check_type_or_throw_except(bb1, 3, int,
-                                       "bb1 has to be an integer list of length 3")
-            check_type_or_throw_except(bb2, 3, int,
-                                       "bb2 has to be an integer list of length 3")
-            bb1_vec = bb1
-            bb2_vec = bb2
-            lb_lbfluid_print_vtk_velocity(
-                utils.to_char_pointer(path), bb1_vec, bb2_vec)
+        cdef Vector3d p
+        cdef Vector3d f
 
-    def write_vtk_boundary(self, path):
-        """Write the LB boundaries to a VTK file.
-
-        Parameters
-        ----------
-        path : :obj:`str`
-            Path to the output ASCII file.
-
-        """
-        lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
-
-    def write_velocity(self, path):
-        """Write the LB fluid velocity to a data file that can be loaded by
-        numpy, with format "x y z vx vy vz".
-
-        Parameters
-        ----------
-        path : :obj:`str`
-            Path to the output data file.
-
-        """
-        lb_lbfluid_print_velocity(utils.to_char_pointer(path))
-
-    def write_boundary(self, path):
-        """Write the LB boundaries to a data file that can be loaded by numpy,
-        with format "x y z u".
-
-        Parameters
-        ----------
-        path : :obj:`str`
-            Path to the output data file.
-
-        """
-        lb_lbfluid_print_boundary(utils.to_char_pointer(path))
+        for i in range(3):
+            p[i] = pos[i]
+            f[i] = force[i]
+        lb_lbfluid_add_force_at_pos(p, f)
 
     def save_checkpoint(self, path, binary):
         '''
@@ -321,10 +354,6 @@ cdef class HydrodynamicInteraction(Actor):
         def __get__(self):
             return lb_lbfluid_get_kT()
 
-        def __set__(self, kT):
-            cdef double _kT = kT
-            lb_lbfluid_set_kT(_kT)
-
     property seed:
         def __get__(self):
             return lb_lbfluid_get_rng_state()
@@ -345,59 +374,26 @@ cdef class HydrodynamicInteraction(Actor):
 
     property ext_force_density:
         def __get__(self):
-            assert_agrid_tau_set(self)
             cdef Vector3d res
             res = python_lbfluid_get_ext_force_density(
                 self.agrid, self.tau)
             return make_array_locked(res)
 
         def __set__(self, ext_force_density):
-            assert_agrid_tau_set(self)
             python_lbfluid_set_ext_force_density(
                 ext_force_density, self.agrid, self.tau)
 
-    property density:
-        def __get__(self):
-            assert_agrid_tau_set(self)
-            return python_lbfluid_get_density(self.agrid)
-
-        def __set__(self, density):
-            assert_agrid_tau_set(self)
-            python_lbfluid_set_density(density, self.agrid)
-
     property viscosity:
         def __get__(self):
-            assert_agrid_tau_set(self)
             return python_lbfluid_get_viscosity(self.agrid, self.tau)
-
-        def __set__(self, viscosity):
-            assert_agrid_tau_set(self)
-            python_lbfluid_set_viscosity(viscosity, self.agrid, self.tau)
-
-    property bulk_viscosity:
-        def __get__(self):
-            assert_agrid_tau_set(self)
-            return python_lbfluid_get_bulk_viscosity(self.agrid, self.tau)
-
-        def __set__(self, viscosity):
-            assert_agrid_tau_set(self)
-            python_lbfluid_set_bulk_viscosity(viscosity, self.agrid, self.tau)
 
     property tau:
         def __get__(self):
             return lb_lbfluid_get_tau()
 
-        def __set__(self, tau):
-            lb_lbfluid_set_tau(tau)
-            if get_time_step() > 0.0:
-                check_tau_time_step_consistency(tau, get_time_step())
-
     property agrid:
         def __get__(self):
             return lb_lbfluid_get_agrid()
-
-        def __set__(self, agrid):
-            lb_lbfluid_set_agrid(agrid)
 
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
@@ -408,68 +404,104 @@ cdef class HydrodynamicInteraction(Actor):
             yield self[i, j, k]
 
 
-cdef class LBFluid(HydrodynamicInteraction):
-    """
-    Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
-    See :class:`HydrodynamicInteraction` for the list of parameters.
-
-    """
-
-    def _set_lattice_switch(self):
-        lb_lbfluid_set_lattice_switch(CPU)
-
-    def _activate_method(self):
-        self.validate_params()
-        self._set_lattice_switch()
-        self._set_params_in_es_core()
-
-IF CUDA:
-    cdef class LBFluidGPU(HydrodynamicInteraction):
+IF LB_WALBERLA:
+    cdef class LBFluidWalberla(HydrodynamicInteraction):
         """
-        Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
+        Initialize the lattice-Boltzmann method for hydrodynamic flow using waLBerla.
         See :class:`HydrodynamicInteraction` for the list of parameters.
 
         """
 
+        def _set_params_in_es_core(self):
+            pass
+
+        def default_params(self):
+            return {"agrid": -1.0,
+                    "dens": -1.0,
+                    "ext_force_density": [0.0, 0.0, 0.0],
+                    "visc": -1.0,
+                    "bulk_visc": -1.0,
+                    "tau": -1.0,
+                    "kT": 0.0,
+                    "seed": 0}
+
         def _set_lattice_switch(self):
-            lb_lbfluid_set_lattice_switch(GPU)
+            raise Exception("This may not be called")
 
         def _activate_method(self):
             self.validate_params()
-            self._set_lattice_switch()
-            self._set_params_in_es_core()
 
-        @cython.boundscheck(False)
-        @cython.wraparound(False)
-        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None, three_point=False):
-            """Calculate the fluid velocity at given positions.
+            # unit conversion
+            lb_visc = self._params["visc"] * \
+                self._params['tau'] / self._params['agrid']**2
+            lb_dens = self._params['dens'] * self._params['agrid']**3
+            lb_kT = self._params['kT'] * \
+                self._params['tau']**2 / self._params['agrid']**2 
+            mpi_init_lb_walberla(
+                lb_visc, lb_dens, self._params["agrid"], self._params["tau"],
+                box_geo.length(),
+                lb_kT, self._params['seed'])
+            utils.handle_errors("LB fluid activation")
+            self.ext_force_density = self._params["ext_force_density"]
+
+        def _deactivate_method(self):
+            mpi_destruct_lb_walberla()
+            super()._deactivate_method()
+
+        def add_vtk_writer(self, identifier, observables, delta_N=0,
+                           base_folder='vtk_out', prefix='simulation_step'):
+            """
+            Create a VTK observable.
+
+            Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
+            Summary is written to ``<base_folder>/<identifier>.pvd``.
 
             Parameters
             ----------
-            positions : (N,3) numpy-array of type :obj:`float`
-                The 3-dimensional positions.
-
-            Returns
-            -------
-            velocities : (N,3) numpy-array of type :obj:`float`
-                The 3-dimensional LB fluid velocities.
-
-            Raises
-            ------
-            AssertionError
-                If shape of ``positions`` not (N,3).
-
+            identifier : :obj:`str`
+                Name of the VTK dataset.
+            observables : :obj:`list`, \{'density', 'velocity_vector', 'pressure_tensor'\}
+                List of observables to write to the VTK files.
+            delta_N : :obj:`int`
+                Write frequency, if 0 write a single frame (default),
+                otherwise add a callback to write every ``delta_N`` LB steps
+                to a new file.
+            base_folder : :obj:`str`
+                Path to the output VTK folder.
+            prefix : :obj:`str`
+                Prefix for VTK files.
             """
-            assert positions.shape[1] == 3, \
-                "The input array must have shape (N,3)"
-            cdef int length
-            length = positions.shape[0]
-            velocities = np.empty_like(positions)
-            if three_point:
-                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            # sanity checks
+            utils.check_type_or_throw_except(
+                delta_N, 1, int, "delta_N must be 1 integer")
+            assert delta_N >= 0, 'delta_N must be a positive integer'
+            utils.check_type_or_throw_except(
+                identifier, 1, str, "identifier must be 1 string")
+            assert os.path.sep not in identifier, 'identifier must be a string, not a filepath'
+            if isinstance(observables, str):
+                observables = [observables]
+            for obs in observables:
+                if obs not in VTKOutput.observable2enum:
+                    raise ValueError('Unknown VTK observable ' + obs)
+            vtk_uid = base_folder + '/' + identifier
+            vtk_path = os.path.abspath(vtk_uid)
+            if vtk_path in _vtk_registry.collisions:
+                raise RuntimeError(
+                    'VTK identifier "{}" would overwrite files written by VTK identifier "{}"'.format(
+                        vtk_uid, _vtk_registry.collisions[vtk_path]))
+            args = (
+                vtk_uid,
+                identifier,
+                observables,
+                delta_N,
+                base_folder,
+                prefix)
+            if delta_N:
+                obj = VTKOutputAutomatic(*args)
             else:
-                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
-            return velocities * lb_lbfluid_get_lattice_speed()
+                obj = VTKOutputManual(*args)
+            return obj
+
 
 cdef class LBFluidRoutines:
 
@@ -516,53 +548,37 @@ cdef class LBFluidRoutines:
         def __set__(self, value):
             raise NotImplementedError
 
-    property pressure_tensor_neq:
-        def __get__(self):
-            cdef Vector6d tensor = python_lbnode_get_pressure_tensor_neq(self.node)
-            return array_locked(np.array([[tensor[0], tensor[1], tensor[3]],
-                                          [tensor[1], tensor[2], tensor[4]],
-                                          [tensor[3], tensor[4], tensor[5]]]))
-
-        def __set__(self, value):
-            raise NotImplementedError
-
     property population:
         def __get__(self):
-            cdef Vector19d double_return
-            double_return = lb_lbnode_get_pop(self.node)
-            return array_locked(np.array([double_return[0],
-                                          double_return[1],
-                                          double_return[2],
-                                          double_return[3],
-                                          double_return[4],
-                                          double_return[5],
-                                          double_return[6],
-                                          double_return[7],
-                                          double_return[8],
-                                          double_return[9],
-                                          double_return[10],
-                                          double_return[11],
-                                          double_return[12],
-                                          double_return[13],
-                                          double_return[14],
-                                          double_return[15],
-                                          double_return[16],
-                                          double_return[17],
-                                          double_return[18]]
-                                         ))
+            cdef vector[double] pop
+            pop = lb_lbnode_get_pop(self.node)
+            return array_locked(
+                create_nparray_from_double_array(pop.data(), pop.size()))
 
         def __set__(self, population):
-            cdef Vector19d _population
-            for i in range(19):
+            cdef vector[double] _population
+            _population.resize(len(population))
+            for i in range(len(population)):
                 _population[i] = population[i]
             lb_lbnode_set_pop(self.node, _population)
 
-    property boundary:
+    property is_boundary:
         def __get__(self):
-            return lb_lbnode_get_boundary(self.node)
+            return lb_lbnode_is_boundary(self.node)
 
         def __set__(self, value):
             raise NotImplementedError
+
+    property last_applied_force:
+        def __get__(self):
+            return make_array_locked(
+                python_lbnode_get_last_applied_force(self.node))
+
+        def __set__(self, force):
+            cdef Vector3d _force
+            for i in range(3):
+                _force[i] = force[i]
+            python_lbnode_set_last_applied_force(self.node, _force)
 
     def __eq__(self, obj1):
         index_1 = np.array(self.index)

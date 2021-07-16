@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 The ESPResSo project
+# Copyright (C) 2010-2020 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,11 +26,13 @@ Check the lattice-Boltzmann thermostat with respect to the particle velocity
 distribution.
 """
 
-KT = 0.25
-AGRID = 2.5
-VISC = 2.7
+KT = 0.9 
+AGRID = 0.8
+node_volume = AGRID**3
+VISC = 6 
 DENS = 1.7
-TIME_STEP = 0.05
+TIME_STEP = 0.005
+GAMMA = 2
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
@@ -43,48 +45,64 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
     """Base class of the test that holds the test logic."""
     lbf = None
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[AGRID * 12] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+
+    def test_fluid(self):
+        self.prepare()
+        self.system.integrator.run(100)
+        fluid_temps = []
+        for _ in range(100):
+            fluid_temps.append(
+                np.average([n.density * n.velocity**2 for n in self.lbf.nodes()]) * node_volume)
+            self.system.integrator.run(3)
+
+        fluid_temp = np.average(fluid_temps)
+        self.assertAlmostEqual(fluid_temp, KT, delta=0.05)
 
     def prepare(self):
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=GAMMA)
+
+    def test_with_particles(self):
+        self.prepare()
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=5.0)
-
-    def test_velocity_distribution(self):
-        self.prepare()
-        self.system.integrator.run(20)
+        self.system.integrator.run(100)
         N = len(self.system.part)
-        loops = 250
-        v_stored = np.zeros((loops, N, 3))
+        loops = 500
+        v_particles = np.zeros((loops, N, 3))
+        fluid_temps = []
+
         for i in range(loops):
             self.system.integrator.run(3)
-            v_stored[i] = self.system.part[:].v
-        minmax = 5
+            if i % 10 == 0:
+                fluid_temps.append(
+                    np.average([n.density * n.velocity**2 for n in self.lbf.nodes()]) * node_volume)
+            v_particles[i] = self.system.part[:].v
+        fluid_temp = np.average(fluid_temps)
+
+        np.testing.assert_allclose(np.average(v_particles), 0, atol=0.02)
+        np.testing.assert_allclose(np.var(v_particles), KT, rtol=0.02)
+
+        minmax = 3
         n_bins = 7
-        error_tol = 0.01
+        error_tol = 0.015  
         self.check_velocity_distribution(
-            v_stored.reshape((-1, 3)), minmax, n_bins, error_tol, KT)
+            v_particles.reshape((-1, 3)), minmax, n_bins, error_tol, KT)
+
+        np.testing.assert_allclose(fluid_temp, KT, rtol=0.01)
 
 
-class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class LBWalberlaThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the CPU implementation of the LB."""
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-
-
-@utx.skipIfMissingGPU()
-class LBGPUThermostat(ut.TestCase, LBThermostatCommon):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 
 
 if __name__ == '__main__':

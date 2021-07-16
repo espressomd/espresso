@@ -38,9 +38,10 @@ from .analyze import Analysis
 from .galilei import GalileiTransform
 from .constraints import Constraints
 from .accumulators import AutoUpdateAccumulators
-if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+IF LB_WALBERLA:
+    from .lb import _vtk_registry
+if LB_BOUNDARIES:
     from .lbboundaries import LBBoundaries
-    from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
 from .utils import handle_errors, array_locked
@@ -153,8 +154,6 @@ cdef class System:
         """:class:`espressomd.constraints.Constraints`"""
         lbboundaries
         """:class:`espressomd.lbboundaries.LBBoundaries`"""
-        ekboundaries
-        """:class:`espressomd.ekboundaries.EKBoundaries`"""
         collision_detection
         """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
@@ -162,6 +161,8 @@ cdef class System:
         comfixed
         """:class:`espressomd.comfixed.ComFixed`"""
         _active_virtual_sites_handle
+        IF LB_WALBERLA:
+            _vtk_registry
 
     def __init__(self, **kwargs):
         global _system_created
@@ -189,15 +190,16 @@ cdef class System:
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
-            if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
+            if LB_BOUNDARIES:
                 self.lbboundaries = LBBoundaries()
-                self.ekboundaries = EKBoundaries()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
             IF VIRTUAL_SITES:
                 self._active_virtual_sites_handle = ActiveVirtualSitesHandle(
                     implementation=VirtualSitesOff())
+            IF LB_WALBERLA:
+                self._vtk_registry = _vtk_registry
             _system_created = True
         else:
             raise RuntimeError(
@@ -215,24 +217,32 @@ cdef class System:
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['part'] = System.__getattribute__(self, "part")
-        odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(
             self, "auto_update_accumulators")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
         odict['constraints'] = System.__getattribute__(self, "constraints")
         odict['galilei'] = System.__getattribute__(self, "galilei")
-        IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
-            odict['lbboundaries'] = System.__getattribute__(
-                self, "lbboundaries")
-        odict['thermostat'] = System.__getattribute__(self, "thermostat")
         IF COLLISION_DETECTION:
             odict['collision_detection'] = System.__getattribute__(
                 self, "collision_detection")
+        odict['actors'] = System.__getattribute__(self, "actors")
+        IF LB_BOUNDARIES:
+            odict['lbboundaries'] = System.__getattribute__(
+                self, "lbboundaries")
+        odict['integrator'] = System.__getattribute__(self, "integrator")
+        odict['thermostat'] = System.__getattribute__(self, "thermostat")
+        IF LB_WALBERLA:
+            odict['_vtk_registry'] = System.__getattribute__(
+                self, "_vtk_registry")
         return odict
 
     def __setstate__(self, params):
+        # MD cell geometry cannot be reset with a walberla LB actor
+        md_cell_reset = ("box_l", "min_global_cut", "periodicity", "time_step")
         for property_ in params.keys():
+            if property_ in md_cell_reset:
+                continue
             System.__setattr__(self, property_, params[property_])
 
     property box_l:
@@ -244,6 +254,7 @@ cdef class System:
 
         def __set__(self, _box_l):
             self._globals.box_l = _box_l
+            handle_errors("Box size setup")
 
         def __get__(self):
             return self._globals.box_l
@@ -272,6 +283,7 @@ cdef class System:
 
         def __set__(self, _periodic):
             self._globals.periodicity = _periodic
+            handle_errors("Setting periodicity")
 
         def __get__(self):
             return self._globals.periodicity

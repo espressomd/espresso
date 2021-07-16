@@ -49,12 +49,11 @@
 #include <vector>
 
 namespace LBBoundaries {
-using LB_Fluid = std::array<Utils::Span<double>, 19>;
 
 extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+#if defined(LB_BOUNDARIES)
 
-/** Initializes the constrains in the system.
+/** Initializes the constraints in the system.
  *  This function determines the lattice sited which belong to boundaries
  *  and marks them with a corresponding flag.
  */
@@ -63,6 +62,6 @@ void lb_init_boundaries();
 void add(const std::shared_ptr<LBBoundary> &);
 void remove(const std::shared_ptr<LBBoundary> &);
 
-#endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
+#endif // (LB_BOUNDARIES)
 } // namespace LBBoundaries
 #endif /* LB_BOUNDARIES_H */

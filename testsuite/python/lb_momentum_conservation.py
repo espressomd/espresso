@@ -17,22 +17,26 @@
 
 import espressomd
 import unittest as ut
+
+import unittest_decorators as utx
+
 import numpy as np
 
 # Define the LB Parameters
-TIME_STEP = 0.1
-AGRID = 1.0
-KVISC = 5
-DENS = 1
-BOX_SIZE = 6 * AGRID
-F = 1. / BOX_SIZE**3
-GAMMA = 15
+TIME_STEP = 0.008
+AGRID = .4 
+GRID_SIZE = 6 
+KVISC = 4
+DENS = 2.3
+F = 5.5 / GRID_SIZE**3 
+GAMMA = 1
+
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'tau': TIME_STEP,
-             'ext_force_density': [0, F, 0]}
+             'ext_force_density': [-.7 * F, .9 * F, .8 * F]}
 
 
 class Momentum(object):
@@ -43,7 +47,7 @@ class Momentum(object):
 
     """
     lbf = None
-    system = espressomd.System(box_l=[BOX_SIZE] * 3)
+    system = espressomd.System(box_l=[GRID_SIZE * AGRID] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
@@ -52,49 +56,47 @@ class Momentum(object):
         self.system.part.clear()
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=GAMMA, seed=1)
+        np.testing.assert_allclose(
+            self.lbf.ext_force_density,
+            LB_PARAMS["ext_force_density"])
 
-        applied_force = self.system.volume() * np.array(
+        # Initial momentum before integration = 0
+        np.testing.assert_allclose(
+            self.system.analysis.linear_momentum(), [0., 0., 0.], atol=1E-12)
+
+        ext_fluid_force = self.system.volume() * np.array(
             LB_PARAMS['ext_force_density'])
+
         p = self.system.part.add(
-            pos=(0, 0, 0), ext_force=-applied_force, v=[.1, .2, .3])
+            pos=self.system.box_l / 2, ext_force=-ext_fluid_force, v=[.2, .4, .6])
+        initial_momentum = np.array(self.system.analysis.linear_momentum())
+        np.testing.assert_allclose(initial_momentum, np.copy(p.v) * p.mass)
+        while True: 
+            self.system.integrator.run(500)
 
-        # Reach steady state
-        self.system.integrator.run(500)
-        v_final = np.copy(p.v)
-        momentum = self.system.analysis.linear_momentum()
+            measured_momentum = self.system.analysis.linear_momentum()
+            coupling_force = -(p.f - p.ext_force)
+            compensation = -TIME_STEP / 2 * coupling_force
 
-        for _ in range(10):
-            self.system.integrator.run(50)
-            # check that momentum stays constant
-            np.testing.assert_allclose(
-                self.system.analysis.linear_momentum(), momentum, atol=2E-4)
-
-            # Check that particle velocity is stationary
-            # up to the acceleration of 1/2 time step
-            np.testing.assert_allclose(np.copy(p.v), v_final, atol=2.2E-3)
+            np.testing.assert_allclose(measured_momentum + compensation, 
+                                       initial_momentum, atol=1E-4)
+            if np.linalg.norm(p.f) < 0.01 \
+               and np.all(np.abs(p.pos) > 10.1 * self.system.box_l):
+                break
 
         # Make sure, the particle has crossed the periodic boundaries
         self.assertGreater(
-            np.amax(
-                np.abs(v_final) *
+            max(
+                np.abs(p.v) *
                 self.system.time),
-            BOX_SIZE)
+            self.system.box_l[0])
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['EXTERNAL_FORCES']), "Skipping test due to missing features.")
-class LBGPUMomentum(ut.TestCase, Momentum):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-
-
-@ut.skipIf(not espressomd.has_features(
-    ['EXTERNAL_FORCES']), "Skipping test due to missing features.")
-class LBCPUMomentum(ut.TestCase, Momentum):
+@utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
+class LBWalberlaMomentum(ut.TestCase, Momentum):
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 
 
 if __name__ == "__main__":

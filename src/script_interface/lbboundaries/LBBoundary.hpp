@@ -51,31 +51,14 @@ public:
             };
           },
           [this]() { return m_shape; }}});
-#ifdef EK_BOUNDARIES
-    add_parameters({{"charge_density",
-                     [this](Variant const &value) {
-                       m_lbboundary->set_charge_density(
-                           get_value<double>(value));
-                     },
-                     [this]() { return m_lbboundary->charge_density(); }},
-                    {"net_charge",
-                     [this](Variant const &value) {
-                       m_lbboundary->set_net_charge(get_value<double>(value));
-                     },
-                     [this]() { return m_lbboundary->net_charge(); }}});
-#endif
   }
 
   Variant do_call_method(const std::string &name, const VariantMap &) override {
     if (name == "get_force") {
-      // The get force method uses mpi callbacks on lb cpu
-      if (this_node == 0) {
-        const auto agrid = lb_lbfluid_get_agrid();
-        const auto tau = lb_lbfluid_get_tau();
-        const double unit_conversion = agrid / tau / tau;
-        return m_lbboundary->get_force() * unit_conversion;
-      }
-      return none;
+      const auto agrid = lb_lbfluid_get_agrid();
+      const auto tau = lb_lbfluid_get_tau();
+      const double unit_conversion = agrid / tau / tau;
+      return m_lbboundary->get_force() * unit_conversion;
     }
     return none;
   }

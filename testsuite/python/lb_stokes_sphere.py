@@ -92,7 +92,7 @@ class Stokes:
             return np.sqrt(tmp)
 
         last_force = -1000.
-        dynamic_viscosity = self.lbf.viscosity * self.lbf.density
+        dynamic_viscosity = self.lbf.viscosity * DENS 
         stokes_force = 6 * np.pi * dynamic_viscosity * radius * size(v)
         self.system.integrator.run(50)
         while True:
@@ -110,19 +110,11 @@ class Stokes:
             atol=stokes_force * 0.03)
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPUStokes(ut.TestCase, Stokes):
+@utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
+class LBWalberlaStokes(ut.TestCase, Stokes):
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-
-
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
-class LBCPUStokes(ut.TestCase, Stokes):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 
 
 if __name__ == "__main__":

@@ -76,9 +76,11 @@ default:
      CC: 'gcc-9'
      CXX: 'g++-9'
      with_cuda: 'false'
+     with_cxx_standard: '17'
      myconfig: 'default'
      with_coverage: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
   script:
@@ -101,6 +103,25 @@ maxset:
      with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
      cmake_params: '-DTEST_NP=8'
+  script:
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
+maxset-walberla:
+  <<: *global_job_definition
+  stage: build
+  variables:
+     with_cuda: 'false'
+     with_cxx_standard: '17'
+     myconfig: 'maxset-walberla'
+     with_coverage: 'true'
+     with_walberla: 'true'
+     with_scafacos: 'false'
+     with_stokesian_dynamics: 'false'
+     check_skip_long: 'true'
+     check_procs: '4'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -281,11 +302,14 @@ tutorials-samples-maxset:
   variables:
      CC: 'gcc-8'
      CXX: 'g++-8'
-     myconfig: 'maxset'
-     with_cuda: 'true'
+     myconfig: 'maxset-walberla'
+     with_cuda: 'false'
+     with_cxx_standard: '17'
      with_coverage: 'false'
      with_coverage_python: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
+     cmake_params: '-DWALBERLA_USE_STD_EXPERIMENTAL_FILESYSTEM=TRUE'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
@@ -297,7 +321,6 @@ tutorials-samples-maxset:
   tags:
     - docker
     - linux
-    - cuda
 
 tutorials-samples-default:
   <<: *global_job_definition
@@ -429,28 +452,29 @@ empty:
     - linux
     - cuda
 
-check_sphinx:
-  <<: *global_job_definition
-  stage: additional_checks
-  needs:
-    - cuda10-maxset
-  when: on_success
-  script:
-    - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
-    - cd ${CI_PROJECT_DIR}/build
-    - make -t && rm src/python/espressomd/visualization.* && make sphinx
-    - make -j2 tutorials
-    - make check_utils
-    - bash ${CI_PROJECT_DIR}/maintainer/CI/doc_warnings.sh
-    - python3 ${CI_PROJECT_DIR}/maintainer/CI/jupyter_warnings.py
-  artifacts:
-    paths:
-    - build/doc/sphinx
-    expire_in: 1 week
-  tags:
-    - docker
-    - linux
-    - cuda
+# WALBERLA TODO
+#check_sphinx:
+#  <<: *global_job_definition
+#  stage: additional_checks
+#  needs:
+#    - cuda10-maxset
+#  when: on_success
+#  script:
+#    - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
+#    - cd ${CI_PROJECT_DIR}/build
+#    - make -t && rm src/python/espressomd/visualization.* && make sphinx
+#    - make -j2 tutorials
+#    - make check_utils
+#    - bash ${CI_PROJECT_DIR}/maintainer/CI/doc_warnings.sh
+#    - python3 ${CI_PROJECT_DIR}/maintainer/CI/jupyter_warnings.py
+#  artifacts:
+#    paths:
+#    - build/doc/sphinx
+#    expire_in: 1 week
+#  tags:
+#    - docker
+#    - linux
+#    - cuda
 
 run_tutorials:
   <<: *global_job_definition

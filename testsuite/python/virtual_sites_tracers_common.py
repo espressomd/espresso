@@ -16,18 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import numpy as np
+
 import espressomd
 import espressomd.shapes
 import espressomd.lbboundaries
 import espressomd.virtual_sites
 import espressomd.utils
 
+import tests_common
+import unittest_decorators as utx
+
 
 class VirtualSitesTracersCommon:
     box_height = 10.
     box_lw = 8.
     system = espressomd.System(box_l=(box_lw, box_lw, box_height))
-    system.time_step = 0.05
+    system.time_step = 0.08
     system.cell_system.skin = 0.1
 
     def tearDown(self):
@@ -69,6 +74,56 @@ class VirtualSitesTracersCommon:
         self.assertIsInstance(
             self.system.virtual_sites, espressomd.virtual_sites.VirtualSitesInertialessTracers)
 
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+    def test_ab_single_step(self):
+        self.reset_lb()
+        self.system.lbboundaries.clear()
+        self.system.part.clear()
+        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
+
+        # Random velocities
+        for n in self.lbf.nodes():
+            n.velocity = np.random.random(3) - .5
+        force = [1, -2, 3]
+        # Test several particle positions
+        for pos in [[3, 2, 1], [0, 0, 0],
+                    self.system.box_l * 0.49,
+                    self.system.box_l,
+                    self.system.box_l * 0.99]:
+            p = self.system.part.add(pos=pos, ext_force=force, virtual=True)
+
+            coupling_pos = p.pos
+            # Nodes to which forces will be interpolated
+            lb_nodes = tests_common.get_lb_nodes_around_pos(
+                coupling_pos, self.lbf)
+
+            np.testing.assert_allclose(
+                [n.last_applied_force for n in lb_nodes],
+                np.zeros((len(lb_nodes), 3)))
+            self.system.integrator.run(1)
+
+            v_fluid = np.copy(self.lbf.get_interpolated_velocity(coupling_pos))
+
+            # Check particle velocity
+            np.testing.assert_allclose(np.copy(p.v), v_fluid)
+
+            # particle position
+            np.testing.assert_allclose(
+                np.copy(p.pos),
+                coupling_pos + v_fluid * self.system.time_step)
+
+            # check transfer of particle force to fluid
+            applied_forces = np.array([n.last_applied_force for n in lb_nodes])
+            np.testing.assert_allclose(
+                np.sum(applied_forces, axis=0), force, atol=1E-10)
+
+            # Check that last_applied_force gets cleared
+            p.remove()
+            self.system.integrator.run(1)
+            applied_forces = np.array([n.last_applied_force for n in lb_nodes])
+            np.testing.assert_allclose(
+                np.sum(applied_forces, axis=0), [0, 0, 0])
+
     def test_advection(self):
         self.reset_lb(ext_force_density=[0.1, 0, 0])
         # System setup
@@ -88,7 +143,7 @@ class VirtualSitesTracersCommon:
             system.integrator.run(100)
             # compute expected position
             dist = self.lbf.get_interpolated_velocity(p.pos)[0] * system.time
-            self.assertAlmostEqual(p.pos[0] / dist, 1, delta=0.005)
+            self.assertAlmostEqual(p.pos[0] / dist, 1, delta=0.001)
 
     def test_zz_without_lb(self):
         """Check behaviour without lb. Ignore non-virtual particles, complain on

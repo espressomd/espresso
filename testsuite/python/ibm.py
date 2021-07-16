@@ -135,6 +135,8 @@ class IBM(ut.TestCase):
         # check not bonded particles. Positions should still be distorted
         np.testing.assert_allclose(np.copy(non_bound.pos), distorted_pos)
 
+    # TODO WALBERLA
+    @ut.skipIf(True, "IBM doesn't support waLBerla particle coupling")
     def test_volcons(self):
         '''Check volume conservation forces on a simple mesh (cube).'''
         system = self.system
@@ -197,7 +199,7 @@ class IBM(ut.TestCase):
 
         # Add unthermalized LB.
         system.thermostat.turn_off()
-        lbf = espressomd.lb.LBFluid(
+        lbf = espressomd.lb.LBFluidWalberla(
             kT=0.0, agrid=2, dens=1, visc=1.8, tau=system.time_step)
         system.actors.add(lbf)
         system.thermostat.set_lb(LB_fluid=lbf, act_on_virtual=False, gamma=1)

@@ -29,9 +29,8 @@
 #include <memory>
 
 namespace LBBoundaries {
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+#if defined(LB_BOUNDARIES)
 class LBBoundary;
-Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb);
 void lb_init_boundaries();
 #endif
 class LBBoundary {
@@ -39,17 +38,19 @@ public:
   LBBoundary()
       : m_shape(std::make_shared<Shapes::NoWhere>()),
         m_velocity(Utils::Vector3d{0, 0, 0}),
-        m_force(Utils::Vector3d{0, 0, 0}) {
-#ifdef EK_BOUNDARIES
-    m_charge_density = 0.0;
-    m_net_charge = 0.0;
-#endif
-  }
+        m_force(Utils::Vector3d{0, 0, 0}) {}
 
   /* Calculate distance from the lbboundary */
   void calc_dist(const Utils::Vector3d &pos, double &dist,
                  Utils::Vector3d &vec) const {
     m_shape->calculate_dist(pos, dist, vec);
+  }
+
+  double calc_dist(const Utils::Vector3d &pos) const {
+    double dist;
+    Utils::Vector3d tmp;
+    calc_dist(pos, dist, tmp);
+    return dist;
   }
 
   void set_shape(std::shared_ptr<Shapes::Shape> const &shape) {
@@ -58,7 +59,7 @@ public:
 
   void set_velocity(const Utils::Vector3d &velocity) {
     m_velocity = velocity;
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+#if defined(LB_BOUNDARIES)
     lb_init_boundaries();
 #endif
   }
@@ -67,40 +68,13 @@ public:
   Shapes::Shape const &shape() const { return *m_shape; }
   Utils::Vector3d &velocity() { return m_velocity; }
   Utils::Vector3d &force() { return m_force; }
-  Utils::Vector3d get_force() const {
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-    return lbboundary_get_force(this);
-#else
-    throw std::runtime_error("Needs LB_BOUNDARIES or LB_BOUNDARIES_GPU.");
-#endif
-  }
-
-#ifdef EK_BOUNDARIES // TODO: ugly. Better would be a class EKBoundaries,
-                     // deriving from LBBoundaries, but that requires completely
-                     // different initialization infrastructure.
-  void set_charge_density(double charge_density) {
-    m_charge_density = static_cast<float>(charge_density);
-  }
-  void set_net_charge(double net_charge) {
-    m_net_charge = static_cast<float>(net_charge);
-  }
-
-  float &charge_density() { return m_charge_density; }
-  float &net_charge() { return m_net_charge; }
-#endif
+  Utils::Vector3d get_force() const;
 
 private:
   /** Private data members */
   std::shared_ptr<Shapes::Shape> m_shape;
   Utils::Vector3d m_velocity;
   Utils::Vector3d m_force;
-
-#ifdef EK_BOUNDARIES // TODO: ugly. Better would be a class EKBoundaries,
-                     // deriving from LBBoundaries, but that requires completely
-                     // different initialization infrastructure.
-  float m_charge_density;
-  float m_net_charge;
-#endif
 };
 
 } /* namespace LBBoundaries */

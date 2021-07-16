@@ -228,40 +228,31 @@ drift. To remove the momentum in the fluid call::
 Output for visualization
 ------------------------
 
-|es| implements a number of commands to output fluid field data of the whole fluid into a file at once. ::
+|es| implements the :meth:`LBFluidWalberla.write_vtk()` command to output
+one or multiple fluid field data into a single file::
 
-    lb.write_vtk_velocity(path)
-    lb.write_vtk_boundary(path)
-    lb.write_velocity(path)
-    lb.write_boundary(path)
 
-Currently supported fluid properties are the velocity, and boundary flag in ASCII VTK as well as Gnuplot compatible ASCII output.
+    vtk_obs = ['density', 'velocity_vector']
+    # create a VTK callback that automatically writes every 10 LB steps
+    lb_vtk = lbf.add_vtk_writer('vtk_automatic', vtk_obs, delta_N=10)
+    self.system.integrator.run(100)
+    # can be deactivated
+    lb_vtk.disable()
+    self.system.integrator.run(10)
+    lb_vtk.enable()
+    # create a VTK callback that writes on demand
+    lb_vtk = lbf.add_vtk_writer('vtk_now', vtk_obs)
+    lb_vtk.write()
+
+Currently supported fluid properties are the density, velocity vector
+and pressure tensor. By default, the properties of the current state
+of the fluid are written to disk. To add a callback that writes to
+disk continuously, use the optional argument ``delta_N`` to indicate
+the level of subsampling. Such a callback can be deactivated.
 
 The VTK format is readable by visualization software such as ParaView [1]_
 or Mayavi2 [2]_. If you plan to use ParaView for visualization, note that also the particle
 positions can be exported using the VTK format (see :meth:`~espressomd.particle_data.ParticleList.writevtk`).
-
-The variant
-
-::
-
-   lb.write_vtk_velocity(path, bb1, bb2)
-
-allows you to only output part of the flow field by specifying an axis aligned
-bounding box through the coordinates ``bb1`` and ``bb1`` (lists of three ints) of two of its corners. This
-bounding box can be used to output a slice of the flow field. As an
-example, executing
-
-::
-
-    lb.write_vtk_velocity(path, [0, 0, 5], [10, 10, 5])
-
-will output the cross-section of the velocity field in a plane
-perpendicular to the :math:`z`-axis at :math:`z = 5` (assuming the box
-size is 10 in the :math:`x`- and :math:`y`-direction).
-
-.. If the bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
-
 
 .. _Choosing between the GPU and CPU implementations:
 
@@ -286,8 +277,6 @@ The following minimal example demonstrates how to use the GPU implementation of 
     system.actors.add(lb)
     system.integrator.run(100)
 
-For boundary conditions analogous to the CPU
-implementation, the feature ``LB_BOUNDARIES_GPU`` has to be activated.
 The feature ``CUDA`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
 
 .. _Electrohydrodynamics:
@@ -341,7 +330,7 @@ or::
 Minimal usage example
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. note:: Feature ``LB_BOUNDARIES`` or ``LB_BOUNDARIES_GPU`` required
+.. note:: Feature ``LB_BOUNDARIES`` required
 
 In order to add a wall as boundary for a lattice-Boltzmann fluid
 you could do the following::

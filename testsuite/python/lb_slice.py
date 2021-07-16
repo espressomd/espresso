@@ -16,10 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd.lb
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import itertools
 
 
+@utx.skipIfMissingFeatures("LB_WALBERLA")
 class LBSliceTest(ut.TestCase):
 
     """This simple test first writes random numbers and then reads them 
@@ -34,7 +36,7 @@ class LBSliceTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.lb_fluid = espressomd.lb.LBFluid(
+        cls.lb_fluid = espressomd.lb.LBFluidWalberla(
             agrid=1.0, dens=1., visc=1., tau=0.01)
         cls.system.actors.add(cls.lb_fluid)
 
@@ -80,27 +82,16 @@ class LBSliceTest(ut.TestCase):
         with self.assertRaisesRegex(ValueError, r"Input-dimensions of population array \(10, 10, 10, 5\) does not match slice dimensions \(10, 10, 10, 19\)"):
             lb_fluid[:, :, :].population = input_pop[:, :, :, :5]
 
-        # pressure tensor on test slice [3, 6, 2:5]
-        output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor.shape
-        should_pressure_shape = (1, 1, 3, 3, 3)
-        np.testing.assert_array_almost_equal(
-            output_pressure_shape, should_pressure_shape)
+        # TODO Walberla: uncomment this block when pressure tensor is available
+#        # pressure tensor on test slice [3, 6, 2:5]
+#        output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor.shape
+#        should_pressure_shape = (1, 1, 3, 3, 3)
+#        np.testing.assert_array_almost_equal(
+#            output_pressure_shape, should_pressure_shape)
 
-        with self.assertRaises(NotImplementedError):
-            lb_fluid[3, 6, 2:5].pressure_tensor = np.zeros(
-                should_pressure_shape)
-
-        # pressure tensor neq on test slice [3, 6, 2:10]
-        output_pressure_neq_shape = lb_fluid[3:5,
-                                             6:7,
-                                             2:10].pressure_tensor_neq.shape
-        should_pressure_neq_shape = (2, 1, 8, 3, 3)
-        np.testing.assert_array_almost_equal(
-            output_pressure_neq_shape, should_pressure_neq_shape)
-
-        with self.assertRaises(NotImplementedError):
-            lb_fluid[3:5, 6:7, 2:10].pressure_tensor_neq = np.zeros(
-                output_pressure_neq_shape)
+#        with self.assertRaises(NotImplementedError):
+#            lb_fluid[3, 6, 2:5].pressure_tensor = np.zeros(
+#                should_pressure_shape)
 
         # index on test slice [1, 1:5, 6:]
         output_index_shape = lb_fluid[1, 1:5, 6:].index.shape
@@ -111,16 +102,26 @@ class LBSliceTest(ut.TestCase):
         with self.assertRaisesRegex(AttributeError, "attribute 'index' of 'espressomd.lb.LBFluidRoutines' objects is not writable"):
             lb_fluid[1, 1:5, 6:].index = np.zeros(output_index_shape)
 
-        # boundary on test slice [1:, 1:, 1:]
-        if espressomd.has_features('LB_BOUNDARIES'):
-            output_boundary_shape = lb_fluid[1:, 1:, 1:].boundary.shape
-            should_boundary_shape = (9, 9, 9)
-            np.testing.assert_array_almost_equal(
-                output_boundary_shape, should_boundary_shape)
+        # is_boundary on test slice [1:, 1:, 1:]
+        output_boundary_shape = lb_fluid[1:, 1:, 1:].is_boundary.shape
+        should_boundary_shape = (9, 9, 9)
+        np.testing.assert_array_almost_equal(
+            output_boundary_shape, should_boundary_shape)
 
-            with self.assertRaises(NotImplementedError):
-                lb_fluid[1:, 1:, 1:].boundary = np.zeros(
-                    should_boundary_shape)
+        with self.assertRaises(NotImplementedError):
+            lb_fluid[1:, 1:, 1:].is_boundary = np.zeros(should_boundary_shape)
+
+        # last_applied_force on test slice [:-1, :-1, -1]
+        input_laf = np.random.rand(9, 9, 9, 3)
+        lb_fluid[:-1, :-1, :-1].last_applied_force = input_laf
+        output_laf = lb_fluid[:-1, :-1, :-1].last_applied_force
+        np.testing.assert_array_almost_equal(input_laf, np.copy(output_laf))
+
+        # last_applied_force broadcast
+        lb_fluid[:, :, 0].last_applied_force = [1, 2, 3]
+        np.testing.assert_array_almost_equal(
+            np.copy(lb_fluid[:, :, 0].last_applied_force),
+            10 * [10 * [[[1, 2, 3]]]])
 
     def test_iterator(self):
         lbslice_handle = self.lb_fluid[:, :, :]

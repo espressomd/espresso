@@ -37,7 +37,6 @@
 #include "electrostatics_magnetostatics/reaction_field.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "errorhandling.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 
@@ -305,11 +304,6 @@ void calc_long_range_force(const ParticleRange &particles) {
   }
 
   /* Add fields from EK if enabled */
-#ifdef ELECTROKINETICS
-  if (this_node == 0) {
-    ek_calculate_electrostatic_coupling();
-  }
-#endif
 }
 
 double calc_energy_long_range(const ParticleRange &particles) {

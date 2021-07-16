@@ -19,6 +19,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import os
 
 import espressomd
 import espressomd.checkpointing
@@ -29,14 +30,13 @@ import espressomd.virtual_sites
 import espressomd.integrate
 import espressomd.shapes
 import espressomd.constraints
+import espressomd.lb
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
 
-LB = ('LB.CPU' in modes or 'LB.GPU' in modes and espressomd.gpu_available())
-
-EK = ('EK.GPU' in modes and espressomd.gpu_available()
-      and espressomd.has_features('ELECTROKINETICS'))
+LB = (espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes or
+      espressomd.gpu_available() and 'LB.GPU' in modes)
 
 
 class CheckpointTest(ut.TestCase):
@@ -50,9 +50,9 @@ class CheckpointTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.ref_box_l = np.array([12.0, 14.0, 16.0])
+        cls.ref_box_l = np.array([6.0, 7.0, 8.0])
         if 'DP3M' in modes:
-            cls.ref_box_l = np.array([16.0, 16.0, 16.0])
+            cls.ref_box_l = np.array([8.0, 8.0, 8.0])
         cls.ref_periodicity = np.array([True, True, True])
         if espressomd.has_features('STOKESIAN_DYNAMICS') and (
                 'THERM.SDM' in modes or 'INT.SDM' in modes):
@@ -74,7 +74,7 @@ class CheckpointTest(ut.TestCase):
         contained in ``system.lbboundaries`. This test method is named such
         that it is executed after ``self.test_lb_boundaries()``.
         '''
-        lbf = system.actors[0]
+        lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
         with self.assertRaises(RuntimeError):
@@ -82,7 +82,7 @@ class CheckpointTest(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
             lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
-        precision = 9 if "LB.CPU" in modes else 5
+        precision = 9 if "LB.WALBERLA" in modes else 5
         m = np.pi / 12
         nx = lbf.shape[0]
         ny = lbf.shape[1]
@@ -97,15 +97,55 @@ class CheckpointTest(ut.TestCase):
                         np.copy(lbf[i, j, k].population),
                         grid_3D[i, j, k] * np.arange(1, 20),
                         decimal=precision)
+                    np.testing.assert_almost_equal(
+                        np.copy(lbf[i, j, k].last_applied_force),
+                        grid_3D[i, j, k] * np.arange(1, 4),
+                        decimal=precision)
         state = lbf.get_params()
-        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01,
-                     'gamma_odd': 0.2, 'gamma_even': 0.3}
+        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
         for key in reference:
             self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
 
-    @utx.skipIfMissingFeatures('ELECTROKINETICS')
-    @ut.skipIf(not EK, "Skipping test due to missing mode.")
+    @utx.skipIfMissingFeatures('LB_WALBERLA')
+    @ut.skipIf('LB.WALBERLA' not in modes, 'waLBerla LBM not in modes')
+    def test_VTK(self):
+        vtk_suffix = '@TEST_COMBINATION@_@TEST_BINARY@'
+        for vtk_registry in (system._vtk_registry,
+                             espressomd.lb._vtk_registry):
+            key = f'vtk_out/auto_{vtk_suffix}'
+            self.assertIn(key, vtk_registry.map)
+            obj = vtk_registry.map[key]
+            self.assertIsInstance(obj, espressomd.lb.VTKOutputAutomatic)
+            self.assertEqual(obj._params['vtk_uid'], key)
+            self.assertEqual(obj._params['delta_N'], 1)
+            self.assertFalse(obj._params['enabled'])
+            self.assertEqual(obj._params['observables'],
+                             {'density', 'velocity_vector'})
+            self.assertIn(
+                "writes to '{}' every 1 LB step (disabled)>".format(key),
+                repr(obj))
+            key = f'vtk_out/manual_{vtk_suffix}'
+            self.assertIn(key, vtk_registry.map)
+            obj = vtk_registry.map[key]
+            self.assertIsInstance(obj, espressomd.lb.VTKOutputManual)
+            self.assertEqual(obj._params['vtk_uid'], key)
+            self.assertEqual(obj._params['delta_N'], 0)
+            self.assertEqual(obj._params['observables'], {'density'})
+            self.assertIn("writes to '{}' on demand>".format(key), repr(obj))
+        # check file numbering when resuming VTK write operations
+        filepath_template = key + '/simulation_step_{}.vtu'
+        vtk_manual = system._vtk_registry.map[key]
+        self.assertTrue(os.path.isfile(filepath_template.format(0)))
+        self.assertFalse(os.path.isfile(filepath_template.format(1)))
+        self.assertFalse(os.path.isfile(filepath_template.format(2)))
+        vtk_manual.write()
+        self.assertTrue(os.path.isfile(filepath_template.format(0)))
+        self.assertTrue(os.path.isfile(filepath_template.format(1)))
+        self.assertFalse(os.path.isfile(filepath_template.format(2)))
+
+    # TODO WALBERLA
+    @ut.skipIf(True, "EK not implemented")
     def test_EK(self):
         ek = system.actors[0]
         ek_species = ek.get_params()['species'][0]
@@ -185,16 +225,17 @@ class CheckpointTest(ut.TestCase):
                 np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
             self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
-    @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
-    def test_thermostat_LB(self):
-        thmst = system.thermostat.get_state()[0]
-        if 'LB.GPU' in modes and not espressomd.gpu_available():
-            self.assertEqual(thmst['type'], 'OFF')
-        else:
-            self.assertEqual(thmst['type'], 'LB')
-            # rng_counter_fluid = seed, seed is 0 because kT=0
-            self.assertEqual(thmst['rng_counter_fluid'], 0)
-            self.assertEqual(thmst['gamma'], 2.0)
+#    # TODO WALBERLA
+#    @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
+#    def test_thermostat_LB(self):
+#        thmst = system.thermostat.get_state()[0]
+#        if 'LB.GPU' in modes and not espressomd.gpu_available():
+#            self.assertEqual(thmst['type'], 'OFF')
+#        else:
+#            self.assertEqual(thmst['type'], 'LB')
+#            # rng_counter_fluid = seed, seed is 0 because kT=0
+#            self.assertEqual(thmst['rng_counter_fluid'], 0)
+#            self.assertEqual(thmst['gamma'], 2.0)
 
     @ut.skipIf('THERM.LANGEVIN' not in modes,
                'Langevin thermostat not in modes')
@@ -420,7 +461,7 @@ class CheckpointTest(ut.TestCase):
         p3m_reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                          'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                          'timings': 15}
-        elc_reference = {'gap_size': 6.0, 'maxPWerror': 0.1,
+        elc_reference = {'gap_size': 2.0, 'maxPWerror': 0.1,
                          'delta_mid_top': 0.9, 'delta_mid_bot': 0.1}
         for key in elc_reference:
             self.assertIn(key, elc_state)
@@ -444,7 +485,7 @@ class CheckpointTest(ut.TestCase):
                          'p3m_cao': '7',
                          'p3m_r_cut': '1.0',
                          'p3m_grid': '64',
-                         'p3m_alpha': '2.084652'}}
+                         'p3m_alpha': '2.320667'}}
         for key in reference:
             self.assertEqual(state[key], reference[key], msg=f'for {key}')
 
@@ -484,8 +525,8 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part[1].exclusions), [2])
         self.assertEqual(list(system.part[2].exclusions), [0, 1])
 
-    @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES")
-                                    or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
+    @ut.skipIf(not LB or not espressomd.has_features("LB_BOUNDARIES"),
+               "Missing features")
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_lb_boundaries(self):
         # check boundaries agree on all MPI nodes

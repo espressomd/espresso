@@ -93,10 +93,6 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         Vector9d operator * (double i)
         Vector9d operator / (double i)
 
-    cppclass Vector19d:
-        double & operator[](int i)
-        double * data()
-
 cdef extern from "utils/quaternion.hpp" namespace "Utils":
     cppclass Quaternion[T]:
         T & operator[](int i)

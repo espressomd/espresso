@@ -21,6 +21,7 @@ import espressomd.lb
 import espressomd.shapes
 import espressomd.lbboundaries
 import itertools
+import numpy as np
 
 
 class LBBoundariesBase:
@@ -76,21 +77,27 @@ class LBBoundariesBase:
 
         self.assertTrue(lbb.empty())
 
-    def check_boundary_flags(self, boundarynumbers):
+# WALBERLA TODO
+    def check_boundary_flags(self, boundary1, boundary2):
         rng = range(20)
 
         for i in itertools.product(range(0, 5), rng, rng):
-            self.assertEqual(self.lbf[i].boundary, boundarynumbers[0])
+            self.assertTrue(self.lbf[i].is_boundary)
+            np.testing.assert_allclose(
+                np.copy(self.lbf[i].velocity), np.copy(boundary1.velocity))
 
         for i in itertools.product(range(5, 15), rng, rng):
-            self.assertEqual(self.lbf[i].boundary, boundarynumbers[1])
+            self.assertFalse(self.lbf[i].is_boundary)
 
         for i in itertools.product(range(15, 20), rng, rng):
-            self.assertEqual(self.lbf[i].boundary, boundarynumbers[2])
+            self.assertTrue(self.lbf[i].is_boundary)
+            np.testing.assert_allclose(
+                np.copy(self.lbf[i].velocity), np.copy(boundary2.velocity))
 
         self.system.lbboundaries.clear()
-        for i in itertools.product(rng, rng, rng):
-            self.assertEqual(self.lbf[i].boundary, 0)
+        # WALBERLA TODO
+#        for i in itertools.product(rng, rng, rng):
+#            self.assertFalse(self.lbf[i].is_boundary)
 
     def test_boundary_flags(self):
         lbb = self.system.lbboundaries
@@ -98,43 +105,24 @@ class LBBoundariesBase:
         lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
         lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape2))
 
-        self.check_boundary_flags([1, 0, 2])
+        self.check_boundary_flags(lbb[0], lbb[1])
 
     def test_union(self):
         union = espressomd.shapes.Union()
         union.add([self.wall_shape1, self.wall_shape2])
-        self.system.lbboundaries.add(
+        lbb = self.system.lbboundaries.add(
             espressomd.lbboundaries.LBBoundary(shape=union))
-        self.check_boundary_flags([1, 0, 1])
+        self.check_boundary_flags(lbb, lbb)
 
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
-class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class LBBoundariesWalberla(ut.TestCase, LBBoundariesBase):
     lbf = None
 
     def setUp(self):
         if not self.lbf:
-            self.lbf = espressomd.lb.LBFluid(
-                visc=1.0,
-                dens=1.0,
-                agrid=0.5,
-                tau=1.0)
-
-        self.system.actors.add(self.lbf)
-
-    def tearDown(self):
-        self.system.lbboundaries.clear()
-        self.system.actors.remove(self.lbf)
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES_GPU"])
-class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
-    lbf = None
-
-    def setUp(self):
-        if not self.lbf:
-            self.lbf = espressomd.lb.LBFluidGPU(
+            self.lbf = espressomd.lb.LBFluidWalberla(
                 visc=1.0,
                 dens=1.0,
                 agrid=0.5,

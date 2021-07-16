@@ -522,7 +522,7 @@ or data files for further processing and analysis.
 Visualization in ParaView
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For visualization we suggest the free software ParaView. All .vtk
+For visualization we suggest the free software ParaView [5]_. All .vtk
 files (boundaries, fluid, objects at all time steps) can be loaded at
 the same time. The loading is a two step process, because only after
 pressing the Apply button, are the files actually imported. Using the
@@ -1422,35 +1422,6 @@ Checkpointing in the EK works quite similar to checkpointing in the LB, because 
 Output
 ~~~~~~
 
-.. _Fields:
-
-Fields
-^^^^^^
-
-::
-
-    ek.write_vtk_boundary(path)
-    ek.write_vtk_density(path)
-    ek.write_vtk_velocity(path)
-    ek.write_vtk_potential(path)
-
-A property of the fluid field can be exported into a
-file in one go. Currently supported
-are: density, velocity, potential and boundary, which give the LB fluid density, the LB fluid velocity,
-the electrostatic potential, and the location and type of the
-boundaries, respectively. The boundaries can only be printed when the
-``EK_BOUNDARIES`` is compiled in. The output is a vtk-file, which is readable by
-visualization software such as ParaView [5]_ and Mayavi2 [6]_.
-
-::
-
-    species.write_vtk_flux(path)
-    species.write_vtk_density(path)
-
-These commands are similar to the above. They enable the
-export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
-number density and flux of species ``species``, respectively.
-
 .. _Local Quantities:
 
 Local Quantities
@@ -1474,8 +1445,6 @@ The local ``density`` and ``flux`` of a species can be obtained in the same fash
 
 .. [5]
    https://www.paraview.org/
-.. [6]
-   http://code.enthought.com/projects/mayavi/
 
 
 .. _Particle polarizability with thermalized cold Drude oscillators:

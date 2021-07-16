@@ -99,6 +99,7 @@ set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_hdf5 true
 set_default_value with_scafacos false
+set_default_value with_walberla false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 300
 set_default_value hide_gpu false
@@ -142,6 +143,10 @@ else
     cmake_params="${cmake_params} -DWITH_STOKESIAN_DYNAMICS=OFF"
 fi
 
+if [ "${with_walberla}" = true ]; then
+  cmake_params="$cmake_params -DWITH_WALBERLA=ON"
+fi
+
 if [ "${with_coverage}" = true ]; then
     cmake_params="-DWITH_COVERAGE=ON ${cmake_params}"
 fi
@@ -183,7 +188,7 @@ outp srcdir builddir \
     with_ubsan with_asan \
     check_odd_only \
     with_static_analysis myconfig \
-    build_procs check_procs \
+    build_procs check_procs with_walberla \
     with_cuda with_cuda_compiler with_ccache
 
 echo "Creating ${builddir}..."
@@ -226,8 +231,9 @@ end "BUILD"
 # library. See details in https://github.com/espressomd/espresso/issues/2249
 # Can't do this check on CUDA though because nvcc creates a host function
 # that just calls exit() for each device function, and can't do this with
-# coverage because gcov 9.0 adds code that calls exit().
-if [[ "${with_coverage}" == false && ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) ]]; then
+# coverage because gcov 9.0 adds code that calls exit(), and can't do this
+# with walberla because the library calls exit() in assertions.
+if [[ "${with_coverage}" == false && ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) && "${with_walberla}" != "true" ]]; then
     if nm -o -C $(find . -name '*.so') | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
         exit 1
