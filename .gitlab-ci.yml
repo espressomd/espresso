@@ -290,7 +290,7 @@ tutorials-samples-maxset:
      make_check_python: 'false'
      make_check_tutorials: 'true'
      make_check_samples: 'true'
-     make_check_benchmarks: 'false'
+     make_check_benchmarks: 'true'
      test_timeout: '1200'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -313,7 +313,7 @@ tutorials-samples-default:
      make_check_python: 'false'
      make_check_tutorials: 'true'
      make_check_samples: 'true'
-     make_check_benchmarks: 'false'
+     make_check_benchmarks: 'true'
      test_timeout: '1200'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -338,7 +338,7 @@ tutorials-samples-empty:
      make_check_python: 'false'
      make_check_tutorials: 'true'
      make_check_samples: 'true'
-     make_check_benchmarks: 'false'
+     make_check_benchmarks: 'true'
      test_timeout: '1200'
      with_scafacos: 'false'
   script:
@@ -364,7 +364,7 @@ tutorials-samples-no-gpu:
      make_check_python: 'false'
      make_check_tutorials: 'true'
      make_check_samples: 'true'
-     make_check_benchmarks: 'false'
+     make_check_benchmarks: 'true'
      test_timeout: '1200'
      hide_gpu: 'true'
   script:

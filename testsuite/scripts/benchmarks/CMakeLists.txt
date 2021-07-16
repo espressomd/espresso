@@ -22,7 +22,9 @@ add_custom_target(
           ${CMAKE_SOURCE_DIR}/maintainer/benchmarks ${BENCHMARKS_DIR})
 
 benchmark_test(FILE test_lj.py)
+benchmark_test(FILE test_lb.py)
 benchmark_test(FILE test_p3m.py)
+benchmark_test(FILE test_ferrofluid.py)
 
 add_custom_target(
   check_benchmarks COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}

@@ -98,7 +98,7 @@ python_benchmark(
 
 python_benchmark(
   FILE lb.py ARGUMENTS
-  "--particles_per_core=125;--volume_fraction=0.03;--lb_sites_per_core=28")
+  "--particles_per_core=125;--volume_fraction=0.03;--lb_sites_per_particle=28")
 
 add_custom_target(
   benchmark_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}

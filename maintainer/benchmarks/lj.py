@@ -16,10 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import os
-import sys
+import espressomd
+import benchmarks
 import numpy as np
-from time import time, sleep
 import argparse
 
 parser = argparse.ArgumentParser(description="Benchmark LJ simulations. "
@@ -51,19 +50,11 @@ assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
 assert not (args.bonds and args.volume_fraction > 0.5), \
     "volume_fraction too dense (>0.50) for a diatomic liquid, risk of bonds breaking"
 if not args.visualizer:
-    assert(measurement_steps >= 100), \
-        "{} steps per tick are too short".format(measurement_steps)
-
-
-import espressomd
-if args.visualizer:
-    from espressomd import visualization
-    from threading import Thread
+    assert measurement_steps >= 100, \
+        f"{measurement_steps} steps per tick are too short"
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
-
-print(espressomd.features())
 
 # System
 #############################################################
@@ -89,125 +80,77 @@ box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
 #############################################################
 system.box_l = 3 * (box_l,)
 
-# PRNG seeds
-#############################################################
-# np.random.seed(1)
-
 # Integration parameters
 #############################################################
 system.time_step = 0.01
 system.cell_system.skin = 0.5
 system.thermostat.turn_off()
 
-
-#############################################################
-#  Setup System                                             #
-#############################################################
-
 # Interaction setup
 #############################################################
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-print("LJ-parameters:")
-print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
-
 # Particle setup
 #############################################################
 
 if not args.bonds:
-    for i in range(n_part):
-        system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+    system.part.add(pos=np.random.random((n_part, 3)) * system.box_l)
 else:
     hb = espressomd.interactions.HarmonicBond(r_0=lj_cut, k=2)
     system.bonded_inter.add(hb)
-    for i in range(0, n_part, 2):
+    for _ in range(0, n_part, 2):
         pos = np.random.random(3) * system.box_l
-        system.part.add(id=i, pos=pos)
-        system.part.add(id=i + 1, pos=pos + np.random.random(3) / np.sqrt(3))
-        system.part[i].add_bond((hb, i + 1))
+        p1 = system.part.add(pos=pos)
+        p2 = system.part.add(pos=pos + np.random.random(3) / np.sqrt(3))
+        system.part[p1].add_bond((hb, p2))
 
+#  Warmup Integration
 #############################################################
-#  Warmup Integration                                       #
-#############################################################
-
-system.integrator.set_steepest_descent(
-    f_max=0,
-    gamma=0.001,
-    max_displacement=0.01)
 
 # warmup
-while system.analysis.energy()["total"] > 3 * n_part:
-    print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
-    system.integrator.run(20)
-print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
-print()
-system.integrator.set_vv()
+benchmarks.minimize(system, n_part / 2.)
 
+system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # tuning and equilibration
-print("Tune skin: {}".format(system.cell_system.tune_skin(
-    min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
+min_skin = 0.2
+max_skin = 1.0
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
+    min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100)))
+print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 60000))
-print("Tune skin: {}".format(system.cell_system.tune_skin(
-    min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
+    min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100)))
+print("Equilibration")
 system.integrator.run(min(10 * measurement_steps, 60000))
 
-print(system.non_bonded_inter[0, 0].lennard_jones)
 
-if not args.visualizer:
-    # print initial energies
-    energies = system.analysis.energy()
-    print(energies)
-
-    # time integration loop
-    print("Timing every {} steps".format(measurement_steps))
-    main_tick = time()
-    all_t = []
-    for i in range(n_iterations):
-        tick = time()
-        system.integrator.run(measurement_steps)
-        tock = time()
-        t = (tock - tick) / measurement_steps
-        print("step {}, time = {:.2e}, verlet: {:.2f}, energy: {:.2e}"
-              .format(i, t, system.cell_system.get_state()["verlet_reuse"],
-                      system.analysis.energy()["total"]))
-        all_t.append(t)
-    main_tock = time()
-    # average time
-    all_t = np.array(all_t)
-    avg = np.average(all_t)
-    ci = 1.96 * np.std(all_t) / np.sqrt(len(all_t) - 1)
-    print("average: {:.3e} +/- {:.3e} (95% C.I.)".format(avg, ci))
-
-    # print final energies
-    energies = system.analysis.energy()
-    print(energies)
-
-    # write report
-    cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
-    report = ('"{script}","{arguments}",{cores},{mean:.3e},'
-              '{ci:.3e},{n},{dur:.1f}\n'.format(
-                  script=os.path.basename(sys.argv[0]), arguments=cmd,
-                  cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
-                  mean=avg, ci=ci))
-    if not os.path.isfile(args.output):
-        report = ('"script","arguments","cores","mean","ci",'
-                  '"nsteps","duration"\n' + report)
-    with open(args.output, "a") as f:
-        f.write(report)
-else:
-    # use visualizer
-    visualizer = visualization.openGLLive(system)
+if args.visualizer:
+    import time
+    import threading
+    import espressomd.visualization
+    visualizer = espressomd.visualization.openGLLive(system)
 
     def main_thread():
         while True:
             system.integrator.run(1)
             visualizer.update()
-            sleep(1 / 60.)  # limit frame rate to at most 60 FPS
+            time.sleep(1 / 60.)  # limit frame rate to at most 60 FPS
 
-    t = Thread(target=main_thread)
+    t = threading.Thread(target=main_thread)
     t.daemon = True
     t.start()
     visualizer.start()
+
+
+# time integration loop
+timings = benchmarks.get_timings(system, measurement_steps, n_iterations)
+
+# average time
+avg, ci = benchmarks.get_average_time(timings)
+print(f"average: {avg:.3e} +/- {ci:.3e} (95% C.I.)")
+
+# write report
+benchmarks.write_report(args.output, n_proc, timings, measurement_steps)
