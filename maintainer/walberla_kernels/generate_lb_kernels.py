@@ -150,13 +150,13 @@ with CodeGeneration() as ctx:
         ctx,
         method,
         collision_rule_thermalized,
-        "CollideSweepthermalized",
+        "CollideSweepThermalized",
         params)
     generate_collision_sweep(
         ctx,
         method,
         collision_rule_thermalized,
-        "CollideSweepthermalizedAVX",
+        "CollideSweepThermalizedAVX",
         params_vec)
 
     # Boundary conditions
