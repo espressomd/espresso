@@ -18,47 +18,14 @@
 import unittest as ut
 import importlib_wrapper
 import numpy as np
+import scipy
+import setuptools
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/active_matter/active_matter.py", 
-    ED_PARAMS={'n_sampling_steps': 100000,
-               'time_step': 0.01,
-               'box_l': 3 * [10.],
-               'skin': 0.4,
-               'active_velocity': 5,
-               'kT': 1,
-               'gamma': 1,
-               'gamma_rotation': 1,
-               'mass': 0.1,
-               'rinertia': 3 * [1.]},
-    RECT_PARAMS={'length': 100,
-                 'radius': 20,
-                 'funnel_inner_radius': 3,
-                 'funnel_angle': np.pi / 4.0,
-                 'funnel_thickness': 0.1,
-                 'n_particles': 500,
-                 'active_velocity': 5,
-                 'steps_per_sample': 500,
-                 'n_samples': 100,
-                 'time_step': 0.01,
-                 'wca_sigma': 0.5,
-                 'wca_epsilon': 1,
-                 'skin': 0.4,
-                 'kT': 1.,
-                 'gamma': 1.,
-                 'gamma_rotation': 1},
-    HYDRO_PARAMS={'box_l': 3 * [25],
-                  'time_step': 0.01,
-                  'run_steps': 200,
-                  'skin': 1,
-                  'agrid': 1,
-                  'dens': 1,
-                  'visc': 1,
-                  'gamma': 1,
-                  'mass': 5,
-                  'dipole_length': 2,
-                  'active_force': 0.1,
-                  'mode': 'pusher'}
+    ED_N_SAMPLING_STEPS=100000,
+    RECT_N_SAMPLES=150,
+    HYDRO_N_STEPS=100
 )
 
 
@@ -86,6 +53,19 @@ class TestActMat(ut.TestCase):
         self.assertLess(
             tutorial.system.analysis.linear_momentum(
                 include_particles=False)[2], 0)
+
+    @ut.skipIf(not setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet('>=1.4.0').contains(
+        scipy.__version__), "Skipping test: scipy version requirement (>=1.4.0) not met")
+    def test_quaternion(self):
+        """ Check the quaternion function is correctly implemented
+        """
+        import scipy.spatial.transform as sst
+        for theta in np.linspace(0, 2 * np.pi, 10):
+            for phi in np.linspace(0, np.pi, 10):
+                q_ref = sst.Rotation.from_euler('yz', [theta, phi]).as_quat()
+                q_tut = tutorial.a2quat(theta, phi)
+                q_tut = q_tut[1:] + [q_tut[0]]
+                np.testing.assert_allclose(q_tut, q_ref, rtol=0., atol=1e-10)
 
 
 if __name__ == "__main__":
