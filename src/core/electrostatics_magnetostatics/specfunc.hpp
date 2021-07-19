@@ -38,7 +38,7 @@
 #include <utils/Span.hpp>
 
 #include <cassert>
-#include <tuple>
+#include <utility>
 
 /** Hurwitz zeta function. This function was taken from the GSL code. */
 double hzeta(double order, double x);
@@ -74,7 +74,7 @@ double LPK1(double x);
  *  comparable to the relative precision sqrt implementation of current
  *  hardware.
  */
-std::tuple<double, double> LPK01(double x);
+std::pair<double, double> LPK01(double x);
 
 /** Evaluate the polynomial interpreted as a Taylor series via the
  *  Horner scheme.
