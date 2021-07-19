@@ -148,7 +148,7 @@ public:
 
   Utils::Vector3d box() const override;
 
-  unsigned int npart_gpu() override {
+  unsigned int npart_gpu() const override {
 #ifdef CUDA
     return gpu_get_particle_pointer().size();
 #else

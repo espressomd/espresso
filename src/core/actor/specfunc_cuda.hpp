@@ -132,11 +132,11 @@ __constant__ static int bi1_size = 11;
 /**@}*/
 
 __device__ float evaluateAsChebychevSeriesAt(float const *c, int n, float x) {
-  float x2 = 2 * x;
-  float dd = c[n - 1];
-  float d = x2 * dd + c[n - 2];
+  auto const x2 = 2 * x;
+  auto dd = c[n - 1];
+  auto d = x2 * dd + c[n - 2];
   for (int j = n - 3; j >= 1; j--) {
-    float tmp = d;
+    auto const tmp = d;
     d = x2 * d - dd + c[j];
     dd = tmp;
   }
@@ -145,7 +145,7 @@ __device__ float evaluateAsChebychevSeriesAt(float const *c, int n, float x) {
 
 __device__ float evaluateAsTaylorSeriesAt(float const *c, int n, float x) {
   int cnt = n - 1;
-  float r = c[cnt];
+  auto r = c[cnt];
   while (--cnt >= 0)
     r = r * x + c[cnt];
   return r;

@@ -93,7 +93,7 @@ public:
     return m_needsDirectorGpu;
   }
 
-  virtual unsigned int npart_gpu() { return 0; };
+  virtual unsigned int npart_gpu() const { return 0; };
   virtual Vector3 box() const = 0;
 
   virtual bool needsRGpu() { return m_needsRGpu; };

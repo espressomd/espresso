@@ -48,7 +48,7 @@ public:
 private:
   // CUDA parameters
   unsigned int numThreads;
-  unsigned int numBlocks(SystemInterface &s);
+  unsigned int numBlocks(SystemInterface const &s) const;
 
   // the box length currently set on the GPU
   // Needed to make sure it hasn't been modified after inter coulomb was used.
