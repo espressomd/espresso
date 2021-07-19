@@ -60,12 +60,10 @@
 /** Minimal radius for the far formula in multiples of box_l[2] */
 #define MIN_RAD 0.01
 
-/* if you define this, the Bessel functions are calculated up
+/* if you define this feature, the Bessel functions are calculated up
  * to machine precision, otherwise 10^-14, which should be
  * definitely enough for daily life. */
-#undef BESSEL_MACHINE_PREC
-
-#ifndef BESSEL_MACHINE_PREC
+#ifndef MMM1D_MACHINE_PREC
 #define K0 LPK0
 #define K1 LPK1
 #endif
@@ -250,7 +248,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
 
       auto const fq = c_2pi * bp;
       double k0, k1;
-#ifdef BESSEL_MACHINE_PREC
+#ifdef MMM1D_MACHINE_PREC
       k0 = K0(fq * rxy_d);
       k1 = K1(fq * rxy_d);
 #else

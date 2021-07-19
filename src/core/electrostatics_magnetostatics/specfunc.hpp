@@ -45,31 +45,31 @@ double hzeta(double order, double x);
 
 /** Modified Bessel function of second kind, order 0. This function was taken
  *  from the GSL code. Precise roughly up to machine precision.
- *  If @c BESSEL_MACHINE_PREC is not defined, @ref LPK0 is used instead.
+ *  If @c MMM1D_MACHINE_PREC is not defined, @ref LPK0 is used instead.
  */
 double K0(double x);
 
 /** Modified Bessel function of second kind, order 1. This function was taken
  *  from the GSL code. Precise roughly up to machine precision.
- *  If @c BESSEL_MACHINE_PREC is not defined, @ref LPK1 is used instead.
+ *  If @c MMM1D_MACHINE_PREC is not defined, @ref LPK1 is used instead.
  */
 double K1(double x);
 
-/** Bessel function K0 at x.
+/** Bessel function of second kind, order 0, low precision.
  *  The implementation has an absolute precision of around 10^(-14), which is
  *  comparable to the relative precision sqrt implementation of current
  *  hardware.
  */
 double LPK0(double x);
 
-/** Bessel function K1 at x.
+/** Bessel function of second kind, order 1, low precision.
  *  The implementation has an absolute precision of around 10^(-14), which is
  *  comparable to the relative precision sqrt implementation of current
  *  hardware.
  */
 double LPK1(double x);
 
-/** Bessel functions K0 and K1 at x.
+/** Bessel functions of second kind, order 0 and order 1, low precision.
  *  The implementation has an absolute precision of around 10^(-14), which is
  *  comparable to the relative precision sqrt implementation of current
  *  hardware.

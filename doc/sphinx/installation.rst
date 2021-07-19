@@ -294,7 +294,13 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``MMM1D_GPU``
+-  ``MMM1D_GPU``: This enables MMM1D on GPU. It is faster than the CPU version
+   by several orders of magnitude, but has float precision instead of double
+   precision.
+
+-  ``MMM1D_MACHINE_PREC``: This enables high-precision Bessel functions
+   for MMM1D on CPU. Comes with a 60% slow-down penalty. The low-precision
+   functions are in most cases precise enough and are enabled by default.
 
 -  ``DIPOLES`` This activates the dipole-moment property of particles; In addition,
    the various magnetostatics algorithms, such as P3M are switched on.

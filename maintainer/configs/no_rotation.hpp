@@ -36,6 +36,7 @@
 
 // Charges and dipoles
 #define ELECTROSTATICS
+#define MMM1D_MACHINE_PREC
 #ifdef CUDA
 #define MMM1D_GPU
 #endif
