@@ -1,3 +1,6 @@
+#include "config.hpp"
+
+#ifdef EK_WALBERLA
 #include "ekin_walberla_interface.hpp"
 
 #include "boost/optional.hpp"
@@ -83,3 +86,5 @@ void mpi_set_ek_lattice_switch(EK::ActiveEK lattice_switch) {
 }
 
 EK::ActiveEK ek_get_lattice_switch() { return EK::lattice_switch; }
+
+#endif // EK_WALBERLA

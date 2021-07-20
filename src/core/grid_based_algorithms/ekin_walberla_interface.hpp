@@ -1,6 +1,8 @@
 #ifndef ESPRESSO_EKIN_WALBERLA_INTERFACE_HPP
 #define ESPRESSO_EKIN_WALBERLA_INTERFACE_HPP
+#include "config.hpp"
 
+#ifdef EK_WALBERLA
 #include "boost/optional.hpp"
 #include "utils/Vector.hpp"
 
@@ -36,4 +38,5 @@ void mpi_set_ek_lattice_switch(EK::ActiveEK lattice_switch);
 
 EK::ActiveEK ek_get_lattice_switch();
 
+#endif // EK_WALBERLA
 #endif // ESPRESSO_EKIN_WALBERLA_INTERFACE_HPP
