@@ -3,8 +3,7 @@
 #include "config.hpp"
 
 #include "core/communication.hpp"
-#include "core/grid_based_algorithms/lb_interface.hpp"
-#include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
+#include "core/grid_based_algorithms/lbboundaries/EKBoundary.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/shapes/Shape.hpp"
