@@ -287,7 +287,8 @@ public:
       return {boost::none};
 
     auto *flagField = (*bc).block->template getData<FlagField>(m_flag_field_id);
-    return {!flagField->isFlagSet((*bc).cell, flagField->getFlag(domain_flag))};
+    return {flagField->isPartOfMaskSet((*bc).cell,
+                                       ~flagField->getFlag(domain_flag))};
   };
 
   void clear_boundaries() override {
