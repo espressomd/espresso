@@ -1,5 +1,5 @@
-#ifndef ESPRESSO_EKBOUNDARY_HPP
-#define ESPRESSO_EKBOUNDARY_HPP
+#ifndef SCRIPT_INTERFACE_EKBOUNDARIES_EKBOUNDARY_HPP
+#define SCRIPT_INTERFACE_EKBOUNDARIES_EKBOUNDARY_HPP
 #include "config.hpp"
 
 #include "core/communication.hpp"
@@ -43,4 +43,4 @@ private:
 } // namespace EKBoundaries
 } /* namespace ScriptInterface */
 
-#endif // ESPRESSO_EKBOUNDARY_HPP
+#endif // SCRIPT_INTERFACE_EKBOUNDARIES_EKBOUNDARY_HPP
