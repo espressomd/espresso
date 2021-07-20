@@ -96,8 +96,8 @@ cdef class EKinWalberla(Actor):
         def __get__(self):
             return ek_get_tau()
 
-    def nodes(self):
-        """Provides a generator for iterating over all lb nodes"""
+        def nodes(self):
+            """Provides a generator for iterating over all lb nodes"""
 
         shape = self.shape
         for i, j, k in itertools.product(
@@ -168,27 +168,27 @@ cdef class EKinRoutines:
             return ek_get_node_is_boundary(self.node)
 
 
-def _add_lb_slice_properties():
+def _add_ek_slice_properties():
     """
     Automatically add all of EKinRoutines's properties to LBSlice.
 
     """
 
-    def set_attribute(lb_slice, value, attribute):
+    def set_attribute(ek_slice, value, attribute):
         """
         Setter function that sets attribute on every member of lb_slice.
         If values contains only one element, all members are set to it.
 
         """
 
-        indices = [lb_slice.x_indices, lb_slice.y_indices, lb_slice.z_indices]
+        indices = [ek_slice.x_indices, ek_slice.y_indices, ek_slice.z_indices]
         N = [len(x) for x in indices]
 
         if N[0] * N[1] * N[2] == 0:
             raise AttributeError("Cannot set properties of an empty LBSlice")
 
         value = np.copy(value)
-        attribute_shape = lb_slice.get_values(
+        attribute_shape = ek_slice.get_values(
             *np.zeros((3, 1), dtype=int), attribute).shape[3:]
         target_shape = (*N, *attribute_shape)
 
@@ -200,22 +200,22 @@ def _add_lb_slice_properties():
             raise ValueError(
                 f"Input-dimensions of {attribute} array {value.shape} does not match slice dimensions {target_shape}.")
 
-        lb_slice.set_values(*indices, attribute, value)
+        ek_slice.set_values(*indices, attribute, value)
 
-    def get_attribute(lb_slice, attribute):
+    def get_attribute(ek_slice, attribute):
         """
         Getter function that copies attribute from every member of
         lb_slice into an array (if possible).
 
         """
 
-        indices = [lb_slice.x_indices, lb_slice.y_indices, lb_slice.z_indices]
+        indices = [ek_slice.x_indices, ek_slice.y_indices, ek_slice.z_indices]
         N = [len(x) for x in indices]
 
         if N[0] * N[1] * N[2] == 0:
             return np.empty(0, dtype=type(None))
 
-        return lb_slice.get_values(*indices, attribute)
+        return ek_slice.get_values(*indices, attribute)
 
     for attribute_name in dir(EKinRoutines):
         if attribute_name in dir(EKinSlice) or not isinstance(
@@ -231,4 +231,4 @@ def _add_lb_slice_properties():
         setattr(EKinSlice, attribute_name, new_property)
 
 
-_add_lb_slice_properties()
+_add_ek_slice_properties()
