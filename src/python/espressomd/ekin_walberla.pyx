@@ -58,7 +58,7 @@ IF EK_WALBERLA:
                         return EKinRoutines(np.array(key))
             else:
                 raise Exception(
-                    "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
+                    f"{key} is not a valid key. Should be a point on the nodegrid e.g. ek[0,0,0], or a slice")
 
         def save_checkpoint(self, path, binary):
             # tmp_path = path + ".__tmp__"
