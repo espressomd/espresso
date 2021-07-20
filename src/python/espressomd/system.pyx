@@ -42,6 +42,7 @@ IF LB_WALBERLA:
     from .lb import _vtk_registry
 if LB_BOUNDARIES:
     from .lbboundaries import LBBoundaries
+if EK_BOUNDARIES:
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
@@ -195,6 +196,7 @@ cdef class System:
             self.galilei = GalileiTransform()
             if LB_BOUNDARIES:
                 self.lbboundaries = LBBoundaries()
+            if EK_BOUNDARIES:
                 self.ekboundaries = EKBoundaries()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
@@ -234,6 +236,7 @@ cdef class System:
         IF LB_BOUNDARIES:
             odict['lbboundaries'] = System.__getattribute__(
                 self, "lbboundaries")
+        IF EK_BOUNDARIES:
             odict['ekboundaries'] = System.__getattribute__(
                 self, "ekboundaries")
         odict['integrator'] = System.__getattribute__(self, "integrator")
