@@ -46,7 +46,7 @@ constexpr double INACTIVE_CUTOFF = -1.;
 struct LJ_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = 0.0;
+  double cut = INACTIVE_CUTOFF;
   double shift = 0.0;
   double offset = 0.0;
   double min = 0.0;
