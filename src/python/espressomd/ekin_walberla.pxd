@@ -1,3 +1,4 @@
+include "myconfig.pxi"
 
 from libcpp cimport bool
 
@@ -10,9 +11,10 @@ cdef class EKinWalberla(Actor):
 cdef class EKinRoutines:
     cdef Vector3i node
 
-cdef extern from "grid_based_algorithms/ekin_walberla_instance.hpp":
-    void mpi_init_ekin_walberla(double diffusion, double kT, double density, double tau) except +
-    void mpi_destruct_ekin_walberla() except +
+IF EK_WALBERLA:
+    cdef extern from "grid_based_algorithms/ekin_walberla_instance.hpp":
+        void mpi_init_ekin_walberla(double diffusion, double kT, double density, double tau) except +
+        void mpi_destruct_ekin_walberla() except +
 
 cdef extern from "grid_based_algorithms/ekin_walberla_interface.hpp" namespace "walberla":
     double ek_get_diffusion() except +

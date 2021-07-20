@@ -1,4 +1,5 @@
 #include "ek_boundaries.hpp"
+#include "config.hpp"
 #include "ekin_walberla_instance.hpp"
 #include "ekin_walberla_interface.hpp"
 #include "event.hpp"
@@ -9,8 +10,9 @@
 namespace EKBoundaries {
 
 std::vector<std::shared_ptr<EKBoundary>> ekboundaries;
-
+#ifdef EK_BOUNDARIES
 void ek_init_boundaries() {
+#ifdef EK_WALBERLA
   if (ek_get_lattice_switch() == EK::ActiveEK::WALBERLA) {
     ekin_walberla()->clear_boundaries();
 
@@ -28,6 +30,7 @@ void ek_init_boundaries() {
       }
     }
   }
+#endif // EK_WALBERLA
 }
 
 void add(const std::shared_ptr<EKBoundary> &b) {
@@ -45,4 +48,5 @@ void remove(const std::shared_ptr<EKBoundary> &b) {
 
   on_ekboundary_change();
 }
+#endif // EK_BOUNDARIES
 } // namespace EKBoundaries
