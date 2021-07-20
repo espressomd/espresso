@@ -255,6 +255,9 @@ void on_boxl_change(bool skip_method_adaption) {
 #ifdef LB_BOUNDARIES
     LBBoundaries::lb_init_boundaries();
 #endif
+#ifdef EK_BOUNDARIES
+    EKBoundaries::ek_init_boundaries();
+#endif
   }
 }
 
