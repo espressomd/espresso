@@ -1,3 +1,6 @@
+#include "config.hpp"
+
+#ifdef EK_WALBERLA
 #include "ekin_walberla_instance.hpp"
 
 #include "walberla_blockforest.hpp"
@@ -65,3 +68,4 @@ void mpi_destruct_ekin_walberla() {
   Communication::mpiCallbacks().call_all(destruct_ekin_walberla_local);
   mpi_set_ek_lattice_switch(EK::ActiveEK::NONE);
 }
+#endif // EK_WALBERLA
