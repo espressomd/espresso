@@ -38,9 +38,9 @@ IF EK_WALBERLA:
             pass
 
         def _get_params_from_es_core(self):
-            default_params = self.default_params()
             self._params['diffusion'] = self.diffusion
             self._params["kT"] = self.kT
+            self._params["tau"] = self.tau
 
             return self._params
 
