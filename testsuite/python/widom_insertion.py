@@ -73,7 +73,7 @@ class WidomInsertionTest(ut.TestCase):
     volume = system.volume()
 
     Widom = espressomd.reaction_ensemble.WidomInsertion(
-        temperature=TEMPERATURE, seed=1)
+        kT=TEMPERATURE, seed=1)
 
     def setUp(self):
         self.system.part.add(pos=0.5 * self.system.box_l, type=self.TYPE_HA)

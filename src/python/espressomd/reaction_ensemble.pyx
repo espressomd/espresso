@@ -19,6 +19,7 @@ from libcpp.vector cimport vector
 from libcpp.memory cimport unique_ptr
 from cython.operator cimport dereference as deref
 import numpy as np
+import warnings
 
 
 cdef class ReactionAlgorithm:
@@ -36,8 +37,8 @@ cdef class ReactionAlgorithm:
 
     Parameters
     ----------
-    temperature : :obj:`float`
-        The temperature at which the reaction is performed.
+    kT : :obj:`float`
+        Thermal energy of the system in simulation units
     exclusion_radius : :obj:`float`
         Minimal distance from any particle, within which new particle will not
         be inserted. This is useful to avoid integrator failures if particles
@@ -53,13 +54,13 @@ cdef class ReactionAlgorithm:
     cdef CReactionAlgorithm * RE
 
     def _valid_keys(self):
-        return "temperature", "exclusion_radius", "seed"
+        return "kT", "exclusion_radius", "seed"
 
     def _required_keys(self):
-        return "temperature", "exclusion_radius", "seed"
+        return "kT", "exclusion_radius", "seed"
 
     def _set_params_in_es_core(self):
-        deref(self.RE).temperature = self._params["temperature"]
+        deref(self.RE).kT = self._params["kT"]
         # setting a volume is a side effect, sets the default volume of the
         # reaction ensemble as the volume of the cuboid simulation box. this
         # volume can be altered by the command "reaction ensemble volume
@@ -191,8 +192,9 @@ cdef class ReactionAlgorithm:
         self._params["check_for_electroneutrality"] = True
         for k in self._required_keys_add():
             if k not in kwargs:
-                raise ValueError("At least the following keys have to be given as keyword arguments: " +
-                                 self._required_keys_add().__str__() + " got " + kwargs.__str__())
+                raise ValueError(
+                    f"At least the following keys have to be given as keyword "
+                    f"arguments: {self._required_keys()}, got {kwargs}")
             self._params[k] = kwargs[k]
 
         for k in self._valid_keys_add():
@@ -203,7 +205,9 @@ cdef class ReactionAlgorithm:
         self._set_params_in_es_core_add()
 
     def _valid_keys_add(self):
-        return "gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
+        return ("gamma", "reactant_types", "reactant_coefficients",
+                "product_types", "product_coefficients", "default_charges",
+                "check_for_electroneutrality")
 
     def _required_keys_add(self):
         return ["gamma", "reactant_types", "reactant_coefficients",
@@ -301,7 +305,7 @@ cdef class ReactionAlgorithm:
     def get_status(self):
         """
         Returns the status of the reaction ensemble in a dictionary containing
-        the used reactions, the used temperature and the used exclusion radius.
+        the used reactions, the used kT and the used exclusion radius.
 
         """
         deref(self.RE).check_reaction_method()
@@ -336,8 +340,8 @@ cdef class ReactionAlgorithm:
                         "gamma": deref(self.RE).reactions[single_reaction_i].gamma}
             reactions.append(reaction)
 
-        return {"reactions": reactions, "temperature": deref(
-            self.RE).temperature, "exclusion_radius": deref(self.RE).exclusion_radius}
+        return {"reactions": reactions, "kT": deref(
+            self.RE).kT, "exclusion_radius": deref(self.RE).exclusion_radius}
 
     def delete_particle(self, p_id):
         """
@@ -406,12 +410,13 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
     cdef unique_ptr[CReactionEnsemble] REptr
 
     def __init__(self, *args, **kwargs):
-        self._params = {"temperature": 1,
+        self._params = {"kT": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+                    f"At least the following keys have to be given as keyword "
+                    f"arguments: {self._required_keys()}, got {kwargs}")
             self._params[k] = kwargs[k]
 
         self.REptr.reset(new CReactionEnsemble(int(self._params["seed"])))
@@ -437,12 +442,12 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     cdef unique_ptr[CConstantpHEnsemble] constpHptr
 
     def __init__(self, *args, **kwargs):
-        self._params = {"temperature": 1,
-                        "exclusion_radius": 0}
+        self._params = {"kT": 1, "exclusion_radius": 0}
         for k in self._required_keys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+                    f"At least the following keys have to be given as keyword "
+                    f"arguments: {self._required_keys()}, got {kwargs}")
             self._params[k] = kwargs[k]
 
         self.constpHptr.reset(new CConstantpHEnsemble(int(self._params["seed"])))
@@ -457,12 +462,39 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
         self._set_params_in_es_core()
 
     def add_reaction(self, *args, **kwargs):
+        warn_msg = (
+            "arguments 'reactant_coefficients' and 'product_coefficients' "
+            "are deprecated and are no longer necessary for the constant pH "
+            "ensemble. They are kept for backward compatibility but might "
+            "be deleted in future versions.")
+        err_msg = ("All product and reactant coefficients must equal one in "
+                   "the constant pH method as implemented in ESPResSo.")
+        warn_user = False
+
+        if "reactant_coefficients" in kwargs:
+            if kwargs["reactant_coefficients"][0] != 1:
+                raise ValueError(err_msg)
+            else:
+                warn_user = True
+        else:
+            kwargs["reactant_coefficients"] = [1]
+
+        if "product_coefficients" in kwargs:
+            if kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1:
+                raise ValueError(err_msg)
+            else:
+                warn_user = True
+        else:
+            kwargs["product_coefficients"] = [1, 1]
+
+        if warn_user:
+            warnings.warn(warn_msg, FutureWarning)
+
         if(len(kwargs["product_types"]) != 2 or len(kwargs["reactant_types"]) != 1):
             raise ValueError(
-                "The constant pH method is only implemented for reactions with two product types and one adduct type.")
-        if(kwargs["reactant_coefficients"][0] != 1 or kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1):
-            raise ValueError(
-                "All product and reactant coefficients must equal one in the constant pH method as implemented in ESPResSo.")
+                "The constant pH method is only implemented for reactions "
+                "with two product types and one adduct type.")
+
         super().add_reaction(*args, **kwargs)
 
     property constant_pH:
@@ -490,29 +522,30 @@ cdef class WidomInsertion(ReactionAlgorithm):
     cdef unique_ptr[CWidomInsertion] WidomInsertionPtr
 
     def _required_keys(self):
-        return "temperature", "seed"
+        return ("kT", "seed")
 
     def _valid_keys(self):
-        return "temperature", "seed"
+        return ("kT", "seed")
 
     def _valid_keys_add(self):
-        return "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
+        return ("reactant_types", "reactant_coefficients", "product_types",
+                "product_coefficients", "default_charges",
+                "check_for_electroneutrality")
 
     def _required_keys_add(self):
-        return ["reactant_types", "reactant_coefficients",
-                "product_types", "product_coefficients", "default_charges"]
+        return ("reactant_types", "reactant_coefficients",
+                "product_types", "product_coefficients", "default_charges")
 
     def __init__(self, *args, **kwargs):
-        self._params = {"temperature": 1}
+        self._params = {"kT": 1}
         for k in self._required_keys():
             if k not in kwargs:
                 raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
+                    f"At least the following keys have to be given as keyword "
+                    f"arguments: {self._required_keys()}, got {kwargs}")
             self._params[k] = kwargs[k]
-        self._params[
-            "exclusion_radius"] = 0.0  # this is not used by the widom insertion method
-        self._params[
-            "gamma"] = 1.0  # this is not used by the widom insertion method
+        self._params["exclusion_radius"] = 0.0  # not used by this method
+        self._params["gamma"] = 1.0  # not used by this method
 
         self.WidomInsertionPtr.reset(new CWidomInsertion(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.WidomInsertionPtr.get()
