@@ -42,7 +42,7 @@
 #include "event.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/ekin_walberla_interface.hpp"
+#include "grid_based_algorithms/ek_interface.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -309,14 +309,14 @@ int integrate(int n_steps, int reuse_forces) {
         }
         lb_lbcoupling_propagate();
       }
-      if (ek_get_lattice_switch() != EK::ActiveEK::NONE) {
-        auto const tau = walberla::ek_get_tau();
+      if (EK::get_lattice_switch() != EK::ActiveEK::NONE) {
+        auto const tau = EK::get_tau();
         auto const ek_steps_per_md_step =
             static_cast<int>(std::round(tau / time_step));
         ek_step += 1;
         if (ek_step >= ek_steps_per_md_step) {
           ek_step = 0;
-          ek_propagate();
+          EK::propagate();
         }
       }
 

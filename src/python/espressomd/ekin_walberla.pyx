@@ -52,7 +52,7 @@ IF EK_WALBERLA:
             if isinstance(key, (tuple, list, np.ndarray)):
                 if len(key) == 3:
                     if any(isinstance(typ, slice) for typ in key):
-                        shape = ek_get_shape()
+                        shape = get_shape()
                         return EKinSlice(key, (shape[0], shape[1], shape[2]))
                     else:
                         return EKinRoutines(np.array(key))
@@ -82,21 +82,21 @@ IF EK_WALBERLA:
 
         property kT:
             def __get__(self):
-                return ek_get_kT()
+                return get_kT()
 
             def __set__(self, kT):
-                ek_set_kT(kT)
+                set_kT(kT)
 
         property diffusion:
             def __get__(self):
-                return ek_get_diffusion()
+                return get_diffusion()
 
             def __set__(self, diffusion):
-                ek_set_diffusion(diffusion)
+                set_diffusion(diffusion)
 
         property tau:
             def __get__(self):
-                return ek_get_tau()
+                return get_tau()
 
         def nodes(self):
             """Provides a generator for iterating over all lb nodes"""
@@ -151,7 +151,7 @@ cdef class EKinRoutines:
         self.node[0] = key[0]
         self.node[1] = key[1]
         self.node[2] = key[2]
-        if not ek_node_is_index_valid(self.node):
+        if not node_is_index_valid(self.node):
             raise ValueError("EKin node index out of bounds")
 
     property index:
@@ -160,14 +160,14 @@ cdef class EKinRoutines:
 
     property density:
         def __get__(self):
-            return ek_get_density(self.node)
+            return get_density(self.node)
 
         def __set__(self, value):
-            ek_set_node_density(self.node, value)
+            set_density(self.node, value)
 
     property is_boundary:
         def __get__(self):
-            return ek_get_node_is_boundary(self.node)
+            return get_is_boundary(self.node)
 
 
 def _add_ek_slice_properties():

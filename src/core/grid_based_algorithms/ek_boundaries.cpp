@@ -1,5 +1,6 @@
 #include "ek_boundaries.hpp"
 #include "config.hpp"
+#include "ek_interface.hpp"
 #include "ekin_walberla_instance.hpp"
 #include "ekin_walberla_interface.hpp"
 #include "event.hpp"
@@ -13,7 +14,7 @@ std::vector<std::shared_ptr<EKBoundary>> ekboundaries;
 #ifdef EK_BOUNDARIES
 void ek_init_boundaries() {
 #ifdef EK_WALBERLA
-  if (ek_get_lattice_switch() == EK::ActiveEK::WALBERLA) {
+  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
     ekin_walberla()->clear_boundaries();
 
     auto const agrid = get_walberla_blockforest_params()->get_agrid();

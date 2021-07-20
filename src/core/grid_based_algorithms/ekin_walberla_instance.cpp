@@ -8,7 +8,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 
-#include "ekin_walberla_interface.hpp"
+#include "ek_interface.hpp"
 
 #include "EKinWalberlaBase.hpp"
 #include "ekin_walberla_init.hpp"
