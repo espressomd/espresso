@@ -67,17 +67,10 @@ std::pair<double, double> WidomInsertion::measure_excess_chemical_potential(
       exponential);
 
   // calculate mean excess chemical potential and standard error of the mean
-  std::pair<double, double> result = std::make_pair(
-      -kT * log(current_reaction
-                    .accumulator_potential_energy_difference_exponential
-                    .mean()[0]),
-      std::abs(
-          -kT /
-          current_reaction.accumulator_potential_energy_difference_exponential
-              .mean()[0] *
-          current_reaction.accumulator_potential_energy_difference_exponential
-              .std_error()[0]));
-  return result;
+  auto const &accumulator =
+      current_reaction.accumulator_potential_energy_difference_exponential;
+  return {-kT * log(accumulator.mean()[0]),
+          std::abs(-kT / accumulator.mean()[0] * accumulator.std_error()[0])};
 }
 
 } // namespace ReactionMethods
