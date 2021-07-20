@@ -229,7 +229,11 @@ void on_lbboundary_change() {
 #endif
 }
 
-void on_ekboundary_change() { EKBoundaries::ek_init_boundaries(); }
+void on_ekboundary_change() {
+#ifdef EK_BOUNDARIES
+  EKBoundaries::ek_init_boundaries();
+#endif
+}
 
 void on_boxl_change(bool skip_method_adaption) {
   grid_changed_box_l(box_geo);
