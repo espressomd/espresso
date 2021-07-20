@@ -38,6 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 #define LB_WALBERLA
+#define EK_WALBERLA
+#define EK_BOUNDARIES
 
 #define ENGINE
 

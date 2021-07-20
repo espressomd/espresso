@@ -1,3 +1,5 @@
+include "myconfig.pxi"
+
 import itertools
 import functools
 
@@ -17,92 +19,92 @@ import numpy as np
 
 # TODO: boundaries?
 # TODO: vtk writer
-# TODO: add EK_WALBERLA C-Flag to disable all kinds of stuff
 
-cdef class EKinWalberla(Actor):
-    def validate_params(self):
-        pass
+IF EK_WALBERLA:
+    cdef class EKinWalberla(Actor):
+        def validate_params(self):
+            pass
 
-    def valid_keys(self):
-        return {"diffusion", "kT", "dens", "tau"}
+        def valid_keys(self):
+            return {"diffusion", "kT", "dens", "tau"}
 
-    def required_keys(self):
-        return {"diffusion", "kT", "dens", "tau"}
+        def required_keys(self):
+            return {"diffusion", "kT", "dens", "tau"}
 
-    def default_params(self):
-        return {}
+        def default_params(self):
+            return {}
 
-    def _set_params_in_es_core(self):
-        pass
+        def _set_params_in_es_core(self):
+            pass
 
-    def _get_params_from_es_core(self):
-        default_params = self.default_params()
-        self._params['diffusion'] = self.diffusion
-        self._params["kT"] = self.kT
+        def _get_params_from_es_core(self):
+            default_params = self.default_params()
+            self._params['diffusion'] = self.diffusion
+            self._params["kT"] = self.kT
 
-        return self._params
+            return self._params
 
-    def __reduce__(self):
-        return _construct, (self.__class__, self._params), None
+        def __reduce__(self):
+            return _construct, (self.__class__, self._params), None
 
-    def __getitem__(self, key):
-        cdef Vector3i shape
-        if isinstance(key, (tuple, list, np.ndarray)):
-            if len(key) == 3:
-                if any(isinstance(typ, slice) for typ in key):
-                    shape = ek_get_shape()
-                    return EKinSlice(key, (shape[0], shape[1], shape[2]))
-                else:
-                    return EKinRoutines(np.array(key))
-        else:
-            raise Exception(
-                "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
+        def __getitem__(self, key):
+            cdef Vector3i shape
+            if isinstance(key, (tuple, list, np.ndarray)):
+                if len(key) == 3:
+                    if any(isinstance(typ, slice) for typ in key):
+                        shape = ek_get_shape()
+                        return EKinSlice(key, (shape[0], shape[1], shape[2]))
+                    else:
+                        return EKinRoutines(np.array(key))
+            else:
+                raise Exception(
+                    "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0], or a slice" % key)
 
-    def save_checkpoint(self, path, binary):
-        # tmp_path = path + ".__tmp__"
-        # lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
-        # os.rename(tmp_path, path)
-        pass
+        def save_checkpoint(self, path, binary):
+            # tmp_path = path + ".__tmp__"
+            # lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
+            # os.rename(tmp_path, path)
+            pass
 
-    def load_checkpoint(self, path, binary):
-        # lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
-        pass
+        def load_checkpoint(self, path, binary):
+            # lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
+            pass
 
-    def _activate_method(self):
-        mpi_init_ekin_walberla(
-            self._params["diffusion"],
-            self._params["kT"],
-            self._params["dens"],
-            self._params["tau"])
+        def _activate_method(self):
+            mpi_init_ekin_walberla(
+                self._params["diffusion"],
+                self._params["kT"],
+                self._params["dens"],
+                self._params["tau"])
 
-    def _deactivate_method(self):
-        mpi_destruct_ekin_walberla()
+        def _deactivate_method(self):
+            mpi_destruct_ekin_walberla()
 
-    property kT:
-        def __get__(self):
-            return ek_get_kT()
+        property kT:
+            def __get__(self):
+                return ek_get_kT()
 
-        def __set__(self, kT):
-            ek_set_kT(kT)
+            def __set__(self, kT):
+                ek_set_kT(kT)
 
-    property diffusion:
-        def __get__(self):
-            return ek_get_diffusion()
+        property diffusion:
+            def __get__(self):
+                return ek_get_diffusion()
 
-        def __set__(self, diffusion):
-            ek_set_diffusion(diffusion)
+            def __set__(self, diffusion):
+                ek_set_diffusion(diffusion)
 
-    property tau:
-        def __get__(self):
-            return ek_get_tau()
+        property tau:
+            def __get__(self):
+                return ek_get_tau()
 
         def nodes(self):
             """Provides a generator for iterating over all lb nodes"""
 
-        shape = self.shape
-        for i, j, k in itertools.product(
-                range(shape[0]), range(shape[1]), range(shape[2])):
-            yield self[i, j, k]
+            shape = self.shape
+            for i, j, k in itertools.product(
+                    range(shape[0]), range(shape[1]), range(shape[2])):
+                yield self[i, j, k]
 
 
 class EKinSlice:
