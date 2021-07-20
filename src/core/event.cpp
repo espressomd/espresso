@@ -37,6 +37,7 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/ek_boundaries.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
