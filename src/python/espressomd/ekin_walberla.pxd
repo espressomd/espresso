@@ -29,3 +29,5 @@ cdef extern from "grid_based_algorithms/ekin_walberla_interface.hpp" namespace "
 
     double ek_get_density(const Vector3i & ind) except +
     void ek_set_node_density(const Vector3i & ind, double density) except +
+
+    bool ek_get_node_is_boundary(const Vector3i & ind) except +

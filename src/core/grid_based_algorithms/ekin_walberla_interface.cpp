@@ -53,12 +53,23 @@ double ek_get_density(const Utils::Vector3i &ind) {
                                               ek_get_node_density, ind);
 }
 
+boost::optional<bool> get_node_is_boundary(Utils::Vector3i ind) {
+  return ekin_walberla()->get_node_is_boundary(ind);
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_node_is_boundary)
+
 void ek_set_node_density(const Utils::Vector3i &ind, double density) {
   ekin_walberla()->set_node_density(ind, density);
   ekin_walberla()->ghost_communication();
 }
 
 REGISTER_CALLBACK(ek_set_node_density)
+
+bool ek_get_node_is_boundary(const Utils::Vector3i &ind) {
+  return ::Communication::mpiCallbacks().call(::Communication::Result::one_rank,
+                                              get_node_is_boundary, ind);
+}
 } // namespace walberla
 
 void mpi_set_ek_lattice_switch_local(EK::ActiveEK lattice_switch) {

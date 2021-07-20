@@ -16,6 +16,8 @@ namespace walberla {
 double ek_get_density(const Utils::Vector3i &ind);
 void ek_set_node_density(const Utils::Vector3i &ind, double density);
 
+bool ek_get_node_is_boundary(const Utils::Vector3i &ind);
+
 double ek_get_diffusion();
 void ek_set_diffusion(double diffusion);
 

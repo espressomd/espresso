@@ -163,12 +163,9 @@ cdef class EKinRoutines:
         def __set__(self, value):
             ek_set_node_density(self.node, value)
 
-    # property is_boundary:
-    #     def __get__(self):
-    #         return lb_lbnode_is_boundary(self.node)
-    #
-    #     def __set__(self, value):
-    #         raise NotImplementedError
+    property is_boundary:
+        def __get__(self):
+            return ek_get_node_is_boundary(self.node)
 
 
 def _add_lb_slice_properties():
