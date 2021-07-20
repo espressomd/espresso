@@ -19,7 +19,7 @@ from .__init__ import has_features
 
 # TODO: feature-def
 
-if has_features(["LB_BOUNDARIES"]):
+if has_features(["EK_BOUNDARIES"]):
     @script_interface_register
     class EKBoundaries(ScriptObjectRegistry):
 
