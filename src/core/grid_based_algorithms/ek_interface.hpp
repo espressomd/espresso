@@ -32,6 +32,4 @@ void propagate();
 
 void mpi_set_ek_lattice_switch(EK::ActiveEK lattice_switch);
 
-EK::ActiveEK ek_get_lattice_switch();
-
 #endif // ESPRESSO_EK_INTERFACE_HPP

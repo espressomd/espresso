@@ -136,5 +136,3 @@ REGISTER_CALLBACK(mpi_set_ek_lattice_switch_local)
 void mpi_set_ek_lattice_switch(EK::ActiveEK lattice_switch) {
   mpi_call_all(mpi_set_ek_lattice_switch_local, lattice_switch);
 }
-
-EK::ActiveEK ek_get_lattice_switch() { return EK::get_lattice_switch(); }
