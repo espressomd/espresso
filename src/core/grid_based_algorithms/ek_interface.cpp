@@ -115,6 +115,19 @@ bool node_is_index_valid(const Utils::Vector3i &ind) {
   return detail::node_is_index_valid(ind, get_shape());
 }
 
+void create_vtk(unsigned delta_N, unsigned initial_count,
+                unsigned flag_observables, std::string const &identifier,
+                std::string const &base_folder, std::string const &prefix) {
+#ifdef LB_WALBERLA
+  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
+    mpi_call_all(walberla::ek_create_vtk, delta_N, initial_count,
+                 flag_observables, identifier, base_folder, prefix);
+    return;
+  }
+#endif
+  throw NoEKActive();
+}
+
 EK::ActiveEK get_lattice_switch() { return EK::lattice_switch; }
 
 void propagate() {

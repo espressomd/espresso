@@ -49,6 +49,15 @@ Utils::Vector3i ek_get_shape() {
   return ekin_walberla()->get_blockforest()->get_grid_dimensions();
 }
 
+void ek_create_vtk(unsigned delta_N, unsigned initial_count,
+                   unsigned flag_observables, std::string const &identifier,
+                   std::string const &base_folder, std::string const &prefix) {
+  ekin_walberla()->create_vtk(delta_N, initial_count, flag_observables,
+                              identifier, base_folder, prefix);
+}
+
+REGISTER_CALLBACK(ek_create_vtk)
+
 void ek_propagate() { ekin_walberla()->integrate(); }
 
 } // namespace walberla

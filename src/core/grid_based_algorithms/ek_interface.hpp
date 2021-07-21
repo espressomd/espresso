@@ -25,6 +25,13 @@ Utils::Vector3i get_shape();
 
 bool node_is_index_valid(const Utils::Vector3i &ind);
 
+/**
+ * @brief Create a VTK observable.
+ */
+void create_vtk(unsigned delta_N, unsigned initial_count,
+                unsigned flag_observables, std::string const &identifier,
+                std::string const &base_folder, std::string const &prefix);
+
 EK::ActiveEK get_lattice_switch();
 
 void propagate();

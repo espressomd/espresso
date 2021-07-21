@@ -23,6 +23,10 @@ double ek_get_tau();
 
 Utils::Vector3i ek_get_shape();
 
+void ek_create_vtk(unsigned delta_N, unsigned initial_count,
+                   unsigned flag_observables, std::string const &identifier,
+                   std::string const &base_folder, std::string const &prefix);
+
 void ek_propagate();
 
 } // namespace walberla
