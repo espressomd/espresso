@@ -71,6 +71,14 @@ cdef class ReactionAlgorithm:
             deref(self.RE).set_cuboid_reaction_ensemble_volume()
         deref(self.RE).exclusion_radius = self._params["exclusion_radius"]
 
+    def remove_constraint(self):
+        """
+        Remove any previously defined constraint.
+        Requires setting the volume using :meth:`set_volume`.
+
+        """
+        deref(self.RE).remove_constraint()
+
     def set_cylindrical_constraint_in_z_direction(self, center_x, center_y,
                                                   radius_of_cylinder):
         """
@@ -88,10 +96,8 @@ cdef class ReactionAlgorithm:
             radius of the cylinder
 
         """
-        deref(self.RE).cyl_x = center_x
-        deref(self.RE).cyl_y = center_y
-        deref(self.RE).cyl_radius = radius_of_cylinder
-        deref(self.RE).box_is_cylindric_around_z_axis = True
+        deref(self.RE).set_cyl_constraint(
+            center_x, center_y, radius_of_cylinder)
 
     def set_wall_constraints_in_z_direction(self, slab_start_z, slab_end_z):
         """
@@ -99,16 +105,15 @@ cdef class ReactionAlgorithm:
         the volume using :meth:`set_volume`.
 
         """
-        deref(self.RE).slab_start_z = slab_start_z
-        deref(self.RE).slab_end_z = slab_end_z
-        deref(self.RE).box_has_wall_constraints = True
+        deref(self.RE).set_slab_constraint(slab_start_z, slab_end_z)
 
     def get_wall_constraints_in_z_direction(self):
         """
         Returns the restrictions of the sampling area in z-direction.
 
         """
-        return deref(self.RE).slab_start_z, deref(self.RE).slab_end_z
+        v = deref(self.RE).get_slab_constraint_parameters()
+        return [v[0], v[1]]
 
     def set_volume(self, volume):
         """
