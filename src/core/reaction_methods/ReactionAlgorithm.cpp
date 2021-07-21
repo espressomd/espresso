@@ -38,6 +38,7 @@
 #include <map>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace ReactionMethods {
@@ -48,7 +49,7 @@ namespace ReactionMethods {
 int ReactionAlgorithm::do_reaction(int reaction_steps) {
   for (int i = 0; i < reaction_steps; i++) {
     int reaction_id = i_random(static_cast<int>(reactions.size()));
-    generic_oneway_reaction(reaction_id);
+    generic_oneway_reaction(reactions[reaction_id]);
   }
   return 0;
 }
@@ -84,13 +85,13 @@ void ReactionAlgorithm::check_reaction_method() const {
     throw std::runtime_error("Reaction system not initialized");
   }
 
-  if (temperature < 0) {
-    throw std::runtime_error("Temperatures cannot be negative. Please provide "
-                             "a temperature (in k_B T) to the simulation. "
-                             "Normally it should be 1.0. This will be used "
-                             "directly to calculate beta:=1/(k_B T) which "
+  if (kT < 0) {
+    throw std::runtime_error("kT cannot be negative,"
+                             "normally it should be 1.0. This will be used"
+                             "directly to calculate beta:=1/(k_B T) which"
                              "occurs in the exp(-beta*E)\n");
   }
+
 #ifdef ELECTROSTATICS
   // check for the existence of default charges for all types that take part in
   // the reactions
@@ -130,12 +131,13 @@ void ReactionAlgorithm::set_cuboid_reaction_ensemble_volume() {
 /**
  * Checks whether all particles exist for the provided reaction.
  */
-bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) const {
+bool ReactionAlgorithm::all_reactant_particles_exist(
+    SingleReaction const &current_reaction) const {
   bool enough_particles = true;
-  for (int i = 0; i < reactions[reaction_id].reactant_types.size(); i++) {
+  for (int i = 0; i < current_reaction.reactant_types.size(); i++) {
     int current_number =
-        number_of_particles_with_type(reactions[reaction_id].reactant_types[i]);
-    if (current_number < reactions[reaction_id].reactant_coefficients[i]) {
+        number_of_particles_with_type(current_reaction.reactant_types[i]);
+    if (current_number < current_reaction.reactant_coefficients[i]) {
       enough_particles = false;
       break;
     }
@@ -159,12 +161,15 @@ void ReactionAlgorithm::append_particle_property_of_random_particle(
 /**
  *Performs a trial reaction move
  */
-void ReactionAlgorithm::make_reaction_attempt(
-    SingleReaction const &current_reaction,
-    std::vector<StoredParticleProperty> &changed_particles_properties,
-    std::vector<int> &p_ids_created_particles,
-    std::vector<StoredParticleProperty> &hidden_particles_properties) {
+std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,
+           std::vector<StoredParticleProperty>>
+ReactionAlgorithm::make_reaction_attempt(
+    SingleReaction const &current_reaction) {
   // create or hide particles of types with corresponding types in reaction
+  std::vector<int> p_ids_created_particles;
+  std::vector<StoredParticleProperty> hidden_particles_properties;
+  std::vector<StoredParticleProperty> changed_particles_properties;
+
   for (int i = 0; i < std::min(current_reaction.product_types.size(),
                                current_reaction.reactant_types.size());
        i++) {
@@ -189,6 +194,7 @@ void ReactionAlgorithm::make_reaction_attempt(
                               current_reaction.reactant_coefficients[i];
            j++) {
         int p_id = create_particle(current_reaction.product_types[i]);
+        check_exclusion_radius(p_id);
         p_ids_created_particles.push_back(p_id);
       }
     } else if (current_reaction.reactant_coefficients[i] -
@@ -199,8 +205,8 @@ void ReactionAlgorithm::make_reaction_attempt(
            j++) {
         append_particle_property_of_random_particle(
             current_reaction.reactant_types[i], hidden_particles_properties);
-        hide_particle(hidden_particles_properties.back().p_id,
-                      current_reaction.reactant_types[i]);
+        check_exclusion_radius(hidden_particles_properties.back().p_id);
+        hide_particle(hidden_particles_properties.back().p_id);
       }
     }
   }
@@ -216,17 +222,21 @@ void ReactionAlgorithm::make_reaction_attempt(
       for (int j = 0; j < current_reaction.reactant_coefficients[i]; j++) {
         append_particle_property_of_random_particle(
             current_reaction.reactant_types[i], hidden_particles_properties);
-        hide_particle(hidden_particles_properties.back().p_id,
-                      current_reaction.reactant_types[i]);
+        check_exclusion_radius(hidden_particles_properties.back().p_id);
+        hide_particle(hidden_particles_properties.back().p_id);
       }
     } else {
       // create additional product_types particles
       for (int j = 0; j < current_reaction.product_coefficients[i]; j++) {
         int p_id = create_particle(current_reaction.product_types[i]);
+        check_exclusion_radius(p_id);
         p_ids_created_particles.push_back(p_id);
       }
     }
   }
+
+  return {changed_particles_properties, p_ids_created_particles,
+          hidden_particles_properties};
 }
 
 /**
@@ -251,16 +261,16 @@ void ReactionAlgorithm::restore_properties(
   }
 }
 
-std::map<int, int>
-ReactionAlgorithm::save_old_particle_numbers(int reaction_id) {
+std::map<int, int> ReactionAlgorithm::save_old_particle_numbers(
+    SingleReaction const &current_reaction) const {
   std::map<int, int> old_particle_numbers;
   // reactants
-  for (int type : reactions[reaction_id].reactant_types) {
+  for (int type : current_reaction.reactant_types) {
     old_particle_numbers[type] = number_of_particles_with_type(type);
   }
 
   // products
-  for (int type : reactions[reaction_id].product_types) {
+  for (int type : current_reaction.product_types) {
     old_particle_numbers[type] = number_of_particles_with_type(type);
   }
   return old_particle_numbers;
@@ -278,17 +288,14 @@ ReactionAlgorithm::save_old_particle_numbers(int reaction_id) {
  * randomly in the box. Matching particles simply change the types. If there
  * are more reactants than products, old reactant particles are deleted.
  */
-void ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
+void ReactionAlgorithm::generic_oneway_reaction(
+    SingleReaction &current_reaction) {
 
-  SingleReaction &current_reaction = reactions[reaction_id];
   current_reaction.tried_moves += 1;
   particle_inside_exclusion_radius_touched = false;
-  int old_state_index = -1; // for Wang-Landau algorithm
-  on_reaction_entry(old_state_index);
-  if (!all_reactant_particles_exist(reaction_id)) {
+  if (!all_reactant_particles_exist(current_reaction)) {
     // makes sure, no incomplete reaction is performed -> only need to consider
     // rollback of complete reactions
-    on_reaction_rejection_directly_after_entry(old_state_index);
     return;
   }
 
@@ -309,40 +316,32 @@ void ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   // do reaction
   // save old particle_numbers
   std::map<int, int> old_particle_numbers =
-      save_old_particle_numbers(reaction_id);
+      save_old_particle_numbers(current_reaction);
 
   std::vector<int> p_ids_created_particles;
   std::vector<StoredParticleProperty> hidden_particles_properties;
   std::vector<StoredParticleProperty> changed_particles_properties;
-  const int number_of_saved_properties =
-      3; // save p_id, charge and type of the reactant particle, only thing we
-         // need to hide the particle and recover it
-  make_reaction_attempt(current_reaction, changed_particles_properties,
-                        p_ids_created_particles, hidden_particles_properties);
+  // save p_id, charge and type of the reactant particle, only thing we
+  // need to hide the particle and recover it
+  const int number_of_saved_properties = 3;
 
-  double E_pot_new;
-  if (particle_inside_exclusion_radius_touched)
-    E_pot_new = std::numeric_limits<double>::max();
-  else
-    E_pot_new = calculate_current_potential_energy_of_system();
+  std::tie(changed_particles_properties, p_ids_created_particles,
+           hidden_particles_properties) =
+      make_reaction_attempt(current_reaction);
 
-  int new_state_index = -1; // save new_state_index for Wang-Landau algorithm
-  int accepted_state = -1;  // for Wang-Landau algorithm
-  on_attempted_reaction(new_state_index);
+  auto const E_pot_new = (particle_inside_exclusion_radius_touched)
+                             ? std::numeric_limits<double>::max()
+                             : calculate_current_potential_energy_of_system();
 
-  constexpr bool only_make_configuration_changing_move = false;
   auto const bf = calculate_acceptance_probability(
-      current_reaction, E_pot_old, E_pot_new, old_particle_numbers,
-      old_state_index, new_state_index, only_make_configuration_changing_move);
+      current_reaction, E_pot_old, E_pot_new, old_particle_numbers);
 
-  std::vector<double> exponential = {
-      exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
-  current_reaction.accumulator_exponentials(exponential);
+  std::vector<double> exponential = {exp(-1.0 / kT * (E_pot_new - E_pot_old))};
+  current_reaction.accumulator_potential_energy_difference_exponential(
+      exponential);
 
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
-    accepted_state = new_state_index;
-
     // delete hidden reactant_particles (remark: don't delete changed particles)
     // extract ids of to be deleted particles
     auto len_hidden_particles_properties =
@@ -364,7 +363,6 @@ void ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     current_reaction.accepted_moves += 1;
   } else {
     // reject
-    accepted_state = old_state_index;
     // reverse reaction
     // 1) delete created product particles
     for (int p_ids_created_particle : p_ids_created_particles) {
@@ -376,17 +374,16 @@ void ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     restore_properties(changed_particles_properties,
                        number_of_saved_properties);
   }
-  on_end_reaction(accepted_state);
 }
 
 /**
  * Replaces a particle with the given particle id to be of a certain type. This
  * especially means that the particle type and the particle charge are changed.
  */
-void ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
+void ReactionAlgorithm::replace_particle(int p_id, int desired_type) const {
   set_particle_type(p_id, desired_type);
 #ifdef ELECTROSTATICS
-  set_particle_q(p_id, charges_of_types[desired_type]);
+  set_particle_q(p_id, charges_of_types.at(desired_type));
 #endif
 }
 
@@ -406,19 +403,24 @@ void ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
  * there would be a need for a rule for such "collision" reactions (a reaction
  * like the one above).
  */
-void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
-
-  auto const part = get_particle_data(p_id);
-  auto const d_min = distto(partCfg(), part.r.p, p_id);
-  if (d_min < exclusion_radius)
-    particle_inside_exclusion_radius_touched = true;
-
+void ReactionAlgorithm::hide_particle(int p_id) const {
+  set_particle_type(p_id, non_interacting_type);
 #ifdef ELECTROSTATICS
-  // set charge
   set_particle_q(p_id, 0.0);
 #endif
-  // set type
-  set_particle_type(p_id, non_interacting_type);
+}
+
+/**
+ * Check if the modified particle is too close to neighboring particles.
+ */
+void ReactionAlgorithm::check_exclusion_radius(int p_id) {
+  if (exclusion_radius == 0.) {
+    return;
+  }
+  auto const &p = get_particle_data(p_id);
+  auto const d_min = distto(partCfg(), p.r.p, p_id);
+  if (d_min < exclusion_radius)
+    particle_inside_exclusion_radius_touched = true;
 }
 
 /**
@@ -497,123 +499,84 @@ int ReactionAlgorithm::create_particle(int desired_type) {
     p_id = get_maximal_particle_id() + 1;
   }
 
-  // create random velocity vector according to Maxwell-Boltzmann distribution
-  Utils::Vector3d vel;
   // we use mass=1 for all particles, think about adapting this
-  vel[0] = std::sqrt(temperature) * m_normal_distribution(m_generator);
-  vel[1] = std::sqrt(temperature) * m_normal_distribution(m_generator);
-  vel[2] = std::sqrt(temperature) * m_normal_distribution(m_generator);
-#ifdef ELECTROSTATICS
-  double charge = charges_of_types[desired_type];
-#endif
-
-  auto const pos_vec = get_random_position_in_box();
-  place_particle(p_id, pos_vec);
-  // set type
+  move_particle(p_id, get_random_position_in_box(), std::sqrt(kT));
   set_particle_type(p_id, desired_type);
 #ifdef ELECTROSTATICS
-  // set charge
-  set_particle_q(p_id, charge);
+  set_particle_q(p_id, charges_of_types[desired_type]);
 #endif
-  // set velocities
-  set_particle_v(p_id, vel);
-  double d_min = distto(partCfg(), pos_vec, p_id);
-  if (d_min < exclusion_radius) {
-    // setting of a minimal distance is allowed to avoid overlapping
-    // configurations if there is a repulsive potential. States with
-    // very high energies have a probability of almost zero and
-    // therefore do not contribute to ensemble averages.
-    particle_inside_exclusion_radius_touched = true;
-  }
   return p_id;
+}
+
+void ReactionAlgorithm::move_particle(int p_id, Utils::Vector3d const &new_pos,
+                                      double velocity_prefactor) {
+  place_particle(p_id, new_pos);
+  // create random velocity vector according to Maxwell-Boltzmann distribution
+  Utils::Vector3d vel;
+  vel[0] = velocity_prefactor * m_normal_distribution(m_generator);
+  vel[1] = velocity_prefactor * m_normal_distribution(m_generator);
+  vel[2] = velocity_prefactor * m_normal_distribution(m_generator);
+  set_particle_v(p_id, vel);
+}
+
+std::vector<std::pair<int, Utils::Vector3d>>
+ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
+
+  std::vector<int> p_id_s_changed_particles;
+  std::vector<std::pair<int, Utils::Vector3d>> old_positions;
+  old_positions.reserve(n_particles);
+
+  // draw particle ids at random without replacement
+  int p_id = -1;
+  std::vector<int> drawn_pids{p_id};
+  for (int i = 0; i < n_particles; i++) {
+    // draw a new particle id
+    while (Utils::contains(drawn_pids, p_id)) {
+      auto const random_index = i_random(number_of_particles_with_type(type));
+      p_id = get_random_p_id(type, random_index);
+    }
+    drawn_pids.emplace_back(p_id);
+    // store original position
+    auto const &p = get_particle_data(p_id);
+    old_positions.emplace_back(std::pair<int, Utils::Vector3d>{p_id, p.r.p});
+    // write new position
+    auto const prefactor = std::sqrt(kT / p.p.mass);
+    auto const new_pos = get_random_position_in_box();
+    move_particle(p_id, new_pos, prefactor);
+    check_exclusion_radius(p_id);
+  }
+
+  return old_positions;
 }
 
 /**
  * Performs a global MC move for a particle of the provided type.
  */
 bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
-    int type, int particle_number_of_type_to_be_changed, bool use_wang_landau) {
+    int type, int particle_number_of_type_to_be_changed) {
   m_tried_configurational_MC_moves += 1;
   particle_inside_exclusion_radius_touched = false;
-
-  int old_state_index = -1;
-  if (use_wang_landau) {
-    on_reaction_entry(old_state_index);
-  }
 
   int particle_number_of_type = number_of_particles_with_type(type);
   if (particle_number_of_type == 0 or
       particle_number_of_type_to_be_changed == 0) {
     // reject
-    if (use_wang_landau) {
-      on_mc_rejection_directly_after_entry(old_state_index);
-    }
     return false;
   }
 
   const double E_pot_old = calculate_current_potential_energy_of_system();
 
-  std::vector<Utils::Vector3d> particle_positions(
-      particle_number_of_type_to_be_changed);
-  std::vector<int> p_id_s_changed_particles;
+  auto const original_positions = generate_new_particle_positions(
+      type, particle_number_of_type_to_be_changed);
 
-  // heuristic to find a particle that hasn't been touched already
-  int random_index_in_type_map = i_random(number_of_particles_with_type(type));
-  int p_id = get_random_p_id(type, random_index_in_type_map);
-  for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
-    while (Utils::contains(p_id_s_changed_particles, p_id)) {
-      random_index_in_type_map = i_random(number_of_particles_with_type(type));
-      p_id = get_random_p_id(
-          type, random_index_in_type_map); // check whether you already touched
-                                           // this p_id, then reassign
-    }
+  auto const E_pot_new = (particle_inside_exclusion_radius_touched)
+                             ? std::numeric_limits<double>::max()
+                             : calculate_current_potential_energy_of_system();
 
-    auto part = get_particle_data(p_id);
+  double beta = 1.0 / kT;
 
-    particle_positions[i] = part.r.p;
-    p_id_s_changed_particles.push_back(p_id);
-  }
-
-  // propose new positions
-  for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
-    p_id = p_id_s_changed_particles[i];
-    // change particle position
-    auto const new_pos = get_random_position_in_box();
-    auto const &p = get_particle_data(p_id);
-    auto const prefactor = std::sqrt(temperature / p.p.mass);
-    Utils::Vector3d vel;
-    vel[0] = prefactor * m_normal_distribution(m_generator);
-    vel[1] = prefactor * m_normal_distribution(m_generator);
-    vel[2] = prefactor * m_normal_distribution(m_generator);
-    set_particle_v(p_id, vel);
-    place_particle(p_id, new_pos);
-    auto const d_min = distto(partCfg(), new_pos, p_id);
-    if (d_min < exclusion_radius)
-      particle_inside_exclusion_radius_touched = true;
-  }
-
-  double E_pot_new;
-  if (particle_inside_exclusion_radius_touched)
-    E_pot_new = std::numeric_limits<double>::max();
-  else
-    E_pot_new = calculate_current_potential_energy_of_system();
-
-  double beta = 1.0 / temperature;
-
-  int new_state_index = -1;
-  double bf = 1.0;
-  std::map<int, int> dummy_old_particle_numbers;
-  SingleReaction temp_unimportant_arbitrary_reaction;
-
-  if (use_wang_landau) {
-    new_state_index = on_mc_use_WL_get_new_state();
-    bf = calculate_acceptance_probability(
-        temp_unimportant_arbitrary_reaction, E_pot_old, E_pot_new,
-        dummy_old_particle_numbers, old_state_index, new_state_index, true);
-  } else {
-    // Metropolis algorithm since proposal density is symmetric
-    bf = std::min(1.0, bf * exp(-beta * (E_pot_new - E_pot_old)));
-  }
+  // Metropolis algorithm since proposal density is symmetric
+  auto const bf = std::min(1.0, exp(-beta * (E_pot_new - E_pot_old)));
 
   // // correct for enhanced proposal of small radii by using the
   // // Metropolis-Hastings algorithm for asymmetric proposal densities
@@ -622,26 +585,18 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   //               std::pow(particle_positions[0][1]-cyl_y,2));
   // double new_radius =
   //     std::sqrt(std::pow(new_pos[0]-cyl_x,2)+std::pow(new_pos[1]-cyl_y,2));
-  // bf = std::min(1.0,
-  //     bf*exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
+  // auto const bf = std::min(1.0,
+  //     exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
 
   // Metropolis-Hastings algorithm for asymmetric proposal density
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
     m_accepted_configurational_MC_moves += 1;
-    if (use_wang_landau) {
-      on_mc_accept(new_state_index);
-    }
     return true;
   }
-  // reject
-  // modify wang_landau histogram and potential
-  if (use_wang_landau) {
-    on_mc_reject(old_state_index);
-  }
-  // create particles again at the positions they were
-  for (int i = 0; i < particle_number_of_type_to_be_changed; i++)
-    place_particle(p_id_s_changed_particles[i], particle_positions[i]);
+  // reject: restore original particle positions
+  for (auto const &item : original_positions)
+    place_particle(std::get<0>(item), std::get<1>(item));
   return false;
 }
 

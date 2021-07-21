@@ -24,8 +24,8 @@ import numpy as np
 import argparse
 
 import espressomd
-from espressomd import reaction_ensemble
-from espressomd import electrostatics
+import espressomd.reaction_ensemble
+import espressomd.electrostatics
 
 required_features = ["WCA", "P3M"]
 espressomd.assert_features(required_features)
@@ -73,11 +73,11 @@ for type_1 in types:
         system.non_bonded_inter[type_1, type_2].wca.set_params(
             epsilon=wca_eps, sigma=wca_sig)
 
-p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
+p3m = espressomd.electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
 for key, value in p3m_params.items():
-    print("{} = {}".format(key, value))
+    print(f"{key} = {value}")
 
 # Warmup
 #############################################################
@@ -91,19 +91,19 @@ system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
                                        max_displacement=0.01)
 i = 0
 while system.analysis.min_dist() < min_dist and i < warm_n_times:
-    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    print(f"minimization: {system.analysis.energy()['total']:+.2e}")
     system.integrator.run(warm_steps)
     i += 1
 
-print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print(f"minimization: {system.analysis.energy()['total']:+.2e}")
 print()
 system.integrator.set_vv()
 
 # activate thermostat
 system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
 
-widom = reaction_ensemble.WidomInsertion(
-    temperature=temperature, seed=77)
+widom = espressomd.reaction_ensemble.WidomInsertion(
+    kT=temperature, seed=77)
 
 # add insertion reaction
 insertion_reaction_id = 0
@@ -121,9 +121,9 @@ for i in range(n_iterations):
     if i % 20 == 0:
         print("mu_ex_pair ({:.4f}, +/- {:.4f})".format(
             *widom.measure_excess_chemical_potential(insertion_reaction_id)))
-        print("HA", system.number_of_particles(type=0), "A-",
-              system.number_of_particles(type=1), "H+",
-              system.number_of_particles(type=2))
+        print(f"HA {system.number_of_particles(type=0)}",
+              f"A- {system.number_of_particles(type=1)}",
+              f"H+ {system.number_of_particles(type=2)}")
 
 print("excess chemical potential for an ion pair ",
       widom.measure_excess_chemical_potential(insertion_reaction_id))

@@ -120,14 +120,14 @@ public:
   /** Recalculate prefactors.
    *  Needs to be called every time the parameters are changed.
    */
-  void recalc_prefactors(double time_step) {
+  void recalc_prefactors(double kT, double time_step) {
     pref_friction = -gamma;
-    pref_noise = sigma(temperature, time_step, gamma);
+    pref_noise = sigma(kT, time_step, gamma);
     // If gamma_rotation is not set explicitly, use the translational one.
     if (gamma_rotation < GammaType{}) {
       gamma_rotation = gamma;
     }
-    pref_noise_rotation = sigma(temperature, time_step, gamma_rotation);
+    pref_noise_rotation = sigma(kT, time_step, gamma_rotation);
   }
   /** Calculate the noise prefactor.
    *  Evaluates the quantity @f$ \sqrt{2 k_B T \gamma / dt} / \sigma_\eta @f$
@@ -174,17 +174,17 @@ public:
   /** Recalculate prefactors.
    *  Needs to be called every time the parameters are changed.
    */
-  void recalc_prefactors() {
+  void recalc_prefactors(double kT) {
     /** The heat velocity dispersion corresponds to the Gaussian noise only,
      *  which is only valid for the BD. Just a square root of kT, see (10.2.17)
      *  and comments in 2 paragraphs afterwards, @cite Pottier2010.
      */
-    sigma_vel = sigma(temperature);
+    sigma_vel = sigma(kT);
     /** The random walk position dispersion is defined by the second eq. (14.38)
      *  of @cite Schlick2010. Its time interval factor will be added in the
      *  Brownian Dynamics functions. Its square root is the standard deviation.
      */
-    sigma_pos = sigma(temperature, gamma);
+    sigma_pos = sigma(kT, gamma);
 #ifdef ROTATION
     /** Note: the BD thermostat assigns the brownian viscous parameters as well.
      *  They correspond to the friction tensor Z from the eq. (14.31) of
@@ -194,8 +194,8 @@ public:
     if (gamma_rotation < GammaType{}) {
       gamma_rotation = gamma;
     }
-    sigma_vel_rotation = sigma(temperature);
-    sigma_pos_rotation = sigma(temperature, gamma_rotation);
+    sigma_vel_rotation = sigma(kT);
+    sigma_pos_rotation = sigma(kT, gamma_rotation);
 #endif // ROTATION
   }
   /** Calculate the noise prefactor.
@@ -258,13 +258,13 @@ public:
   /** Recalculate prefactors.
    *  Needs to be called every time the parameters are changed.
    */
-  void recalc_prefactors(double piston, double time_step) {
+  void recalc_prefactors(double kT, double piston, double time_step) {
     assert(piston > 0.0);
     auto const half_time_step = time_step / 2.0;
     pref_rescale_0 = -gamma0 * half_time_step;
-    pref_noise_0 = sigma(temperature, gamma0, time_step);
+    pref_noise_0 = sigma(kT, gamma0, time_step);
     pref_rescale_V = -gammav * half_time_step / piston;
-    pref_noise_V = sigma(temperature, gammav, time_step);
+    pref_noise_V = sigma(kT, gammav, time_step);
   }
   /** Calculate the noise prefactor.
    *  Evaluates the quantity @f$ \sqrt{2 k_B T \gamma dt / 2} / \sigma_\eta @f$
@@ -275,7 +275,7 @@ public:
     // random uniform noise has variance 1/12; the temperature
     // coefficient of 2 is canceled out by the half time step
     constexpr auto const temp_coeff = 12.0;
-    return sqrt(temp_coeff * temperature * gamma * time_step);
+    return sqrt(temp_coeff * kT * gamma * time_step);
   }
   /** @name Parameters */
   /**@{*/
@@ -362,9 +362,25 @@ extern StokesianThermostat stokesian;
 #endif
 
 /** Initialize constants of the thermostat at the start of integration */
-void thermo_init();
+void thermo_init(double time_step);
 
 /** Increment RNG counters */
 void philox_counter_increment();
+
+void mpi_set_brownian_gamma(Thermostat::GammaType const &gamma);
+void mpi_set_brownian_gamma_rot(Thermostat::GammaType const &gamma);
+
+void mpi_set_langevin_gamma(Thermostat::GammaType const &gamma);
+void mpi_set_langevin_gamma_rot(Thermostat::GammaType const &gamma);
+
+void mpi_set_thermo_virtual(bool thermo_virtual);
+
+void mpi_set_temperature(double temperature);
+
+void mpi_set_thermo_switch(int thermo_switch);
+
+#ifdef NPT
+void mpi_set_nptiso_gammas(double gamma0, double gammav);
+#endif
 
 #endif

@@ -528,7 +528,7 @@ cdef extern from "thermostat.hpp":
 
 cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
     cppclass ImmersedBoundaries:
-        pass
+        double get_current_volume(int softID)
 
 cdef extern from "immersed_boundaries.hpp":
     extern ImmersedBoundaries immersed_boundaries

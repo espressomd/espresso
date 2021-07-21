@@ -88,9 +88,10 @@ class IntegratorNPT(ut.TestCase):
             system.integrator.set_steepest_descent(
                 f_max=-10, gamma=0, max_displacement=0.1)
         # the interface state is unchanged
-        self.assertIsInstance(system.integrator.get_state(),
+        integrator_state = system.integrator.get_state()
+        self.assertIsInstance(integrator_state['integrator'],
                               espressomd.integrate.VelocityVerletIsotropicNPT)
-        params = system.integrator.get_state().get_params()
+        params = integrator_state['integrator'].get_params()
         self.assertEqual(params['ext_pressure'], npt_params['ext_pressure'])
         self.assertEqual(params['piston'], npt_params['piston'])
         # the core state is unchanged
@@ -108,7 +109,7 @@ class IntegratorNPT(ut.TestCase):
         with self.assertRaises(RuntimeError):
             system.integrator.set_isotropic_npt(ext_pressure=-1, piston=100)
         # the interface state is unchanged
-        self.assertIsInstance(system.integrator.get_state(),
+        self.assertIsInstance(system.integrator.get_state()['integrator'],
                               espressomd.integrate.VelocityVerlet)
         # the core state is unchanged
         system.integrator.run(1)

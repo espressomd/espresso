@@ -21,7 +21,7 @@
 
 #include "config.hpp"
 
-#include "reaction_methods/SingleReaction.hpp"
+#include "SingleReaction.hpp"
 
 #include "random.hpp"
 
@@ -29,6 +29,7 @@
 
 #include <map>
 #include <random>
+#include <tuple>
 #include <vector>
 
 namespace ReactionMethods {
@@ -52,13 +53,14 @@ public:
 
   std::vector<SingleReaction> reactions;
   std::map<int, double> charges_of_types;
-  double temperature = -10.0;
-  double exclusion_radius =
-      0.0; // this is used as a kind of hard sphere radius, if
-           // particles are closer than that it is assumed that
-           // their interaction energy gets approximately
-           // infinite => these configurations do not contribute
-           // to the partition function and ensemble averages.
+  double kT = -10.0;
+  /**
+   * Hard sphere radius. If particles are closer than this value,
+   * it is assumed that their interaction energy gets approximately
+   * infinite, therefore these configurations do not contribute
+   * to the partition function and ensemble averages.
+   */
+  double exclusion_radius = 0.0;
   double volume = -10.0;
   bool box_is_cylindric_around_z_axis = false;
   double cyl_radius = -10.0;
@@ -90,30 +92,19 @@ public:
   }
 
   bool do_global_mc_move_for_particles_of_type(int type,
-                                               int particle_number_of_type,
-                                               bool use_wang_landau);
+                                               int particle_number_of_type);
 
-  bool particle_inside_exclusion_radius_touched;
+  bool particle_inside_exclusion_radius_touched = false;
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
-  void generic_oneway_reaction(int reaction_id);
-  virtual void on_reaction_entry(int &old_state_index) {}
-  virtual void
-  on_reaction_rejection_directly_after_entry(int &old_state_index) {}
-  virtual void on_attempted_reaction(int &new_state_index) {}
-  virtual void on_end_reaction(int &accepted_state) {}
+  void generic_oneway_reaction(SingleReaction &current_reaction);
 
-  virtual void on_mc_rejection_directly_after_entry(int &old_state_index){};
-  virtual void on_mc_accept(int &new_state_index){};
-  virtual void on_mc_reject(int &old_state_index){};
-  virtual int on_mc_use_WL_get_new_state() { return -10; }
-
-  void make_reaction_attempt(
-      SingleReaction const &current_reaction,
-      std::vector<StoredParticleProperty> &changed_particles_properties,
-      std::vector<int> &p_ids_created_particles,
-      std::vector<StoredParticleProperty> &hidden_particles_properties);
+  std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,
+             std::vector<StoredParticleProperty>>
+  make_reaction_attempt(SingleReaction const &current_reaction);
+  std::vector<std::pair<int, Utils::Vector3d>>
+  generate_new_particle_positions(int type, int n_particles);
   void
   restore_properties(std::vector<StoredParticleProperty> const &property_list,
                      int number_of_saved_properties);
@@ -128,14 +119,13 @@ protected:
     std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
     return uniform_int_dist(m_generator);
   }
-  bool all_reactant_particles_exist(int reaction_id) const;
+  bool
+  all_reactant_particles_exist(SingleReaction const &current_reaction) const;
 
 protected:
   virtual double calculate_acceptance_probability(
       SingleReaction const &current_reaction, double E_pot_old,
-      double E_pot_new, std::map<int, int> const &old_particle_numbers,
-      int old_state_index, int new_state_index,
-      bool only_make_configuration_changing_move) const {
+      double E_pot_new, std::map<int, int> const &old_particle_numbers) const {
     return -10;
   }
 
@@ -144,11 +134,15 @@ private:
   std::normal_distribution<double> m_normal_distribution;
   std::uniform_real_distribution<double> m_uniform_real_distribution;
 
-  std::map<int, int> save_old_particle_numbers(int reaction_id);
+  std::map<int, int>
+  save_old_particle_numbers(SingleReaction const &current_reaction) const;
 
-  void replace_particle(int p_id, int desired_type);
+  void replace_particle(int p_id, int desired_type) const;
   int create_particle(int desired_type);
-  void hide_particle(int p_id, int previous_type);
+  void hide_particle(int p_id) const;
+  void check_exclusion_radius(int p_id);
+  void move_particle(int p_id, Utils::Vector3d const &new_pos,
+                     double velocity_prefactor);
 
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);

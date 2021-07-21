@@ -19,44 +19,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** \file
- *  force cap calculation.
- *
- *  For more information see \ref forcecap.hpp "forcecap.hpp".
+ *  Force capping calculation.
  */
 
 #include "forcecap.hpp"
 
 #include "Particle.hpp"
-#include "global.hpp"
+#include "communication.hpp"
+#include "event.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <cmath>
 
-double force_cap = 0.0;
-
-void forcecap_set(double forcecap) {
-  force_cap = forcecap;
-  mpi_bcast_parameter(FIELD_FORCE_CAP);
-}
+static double force_cap = 0.0;
 
 double forcecap_get() { return force_cap; }
 
-void forcecap_cap(ParticleRange particles) {
+void forcecap_cap(ParticleRange const &particles) {
   if (force_cap <= 0) {
     return;
   }
 
-  auto const fc2 = force_cap * force_cap;
+  auto const force_cap_sq = Utils::sqr(force_cap);
 
   for (auto &p : particles) {
-    auto const f2 = p.f.f.norm2();
-    if (f2 > fc2) {
-      auto const scale = force_cap / std::sqrt(f2);
-
-      for (int i = 0; i < 3; i++) {
-        p.f.f[i] *= scale;
-      }
+    auto const force_sq = p.f.f.norm2();
+    if (force_sq > force_cap_sq) {
+      p.f.f *= force_cap / std::sqrt(force_sq);
     }
   }
+}
+
+void mpi_set_forcecap_local(double force_cap) {
+  ::force_cap = force_cap;
+  on_forcecap_change();
+}
+
+REGISTER_CALLBACK(mpi_set_forcecap_local)
+
+void mpi_set_forcecap(double force_cap) {
+  mpi_call_all(mpi_set_forcecap_local, force_cap);
 }

@@ -133,7 +133,7 @@ void lb_lbfluid_set_kT(double kT);
 /**
  * @brief Perform LB parameter and boundary velocity checks.
  */
-void lb_lbfluid_sanity_checks();
+void lb_lbfluid_sanity_checks(double time_step);
 
 /**
  * @brief Set the LB density for a single node.
@@ -268,5 +268,7 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
  * @retval interpolated fluid density.
  */
 double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos);
+
+void mpi_set_lattice_switch(ActiveLB lattice_switch);
 
 #endif

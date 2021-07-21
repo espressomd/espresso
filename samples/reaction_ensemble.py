@@ -32,7 +32,7 @@ import numpy as np
 import argparse
 
 import espressomd
-from espressomd import reaction_ensemble
+import espressomd.reaction_ensemble
 
 parser = argparse.ArgumentParser(epilog=epilog)
 group = parser.add_mutually_exclusive_group()
@@ -71,20 +71,24 @@ for i in range(N0, 2 * N0):
 
 RE = None
 if args.mode == "reaction_ensemble":
-    RE = reaction_ensemble.ReactionEnsemble(
-        temperature=1,
+    RE = espressomd.reaction_ensemble.ReactionEnsemble(
+        kT=1,
         exclusion_radius=1,
         seed=77)
+    RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
+                    product_types=[1, 2], product_coefficients=[1, 1],
+                    default_charges={0: 0, 1: -1, 2: +1})
 elif args.mode == "constant_pH_ensemble":
-    RE = reaction_ensemble.ConstantpHEnsemble(
-        temperature=1, exclusion_radius=1, seed=77)
+    RE = espressomd.reaction_ensemble.ConstantpHEnsemble(
+        kT=1, exclusion_radius=1, seed=77)
     RE.constant_pH = 2
+    RE.add_reaction(gamma=K_diss, reactant_types=[0],
+                    product_types=[1, 2],
+                    default_charges={0: 0, 1: -1, 2: +1})
 else:
     raise RuntimeError(
         "Please provide either --reaction_ensemble or --constant_pH_ensemble as argument ")
-RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
-                product_types=[1, 2], product_coefficients=[1, 1],
-                default_charges={0: 0, 1: -1, 2: +1})
+
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 

@@ -19,8 +19,8 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.interactions
 import numpy as np
-from espressomd.interactions import FeneBond
 
 
 class ParticleProperties(ut.TestCase):
@@ -36,9 +36,9 @@ class ParticleProperties(ut.TestCase):
     system.cell_system.skin = 0
     system.time_step = 0.01
 
-    f1 = FeneBond(k=1, d_r_max=2)
+    f1 = espressomd.interactions.FeneBond(k=1, d_r_max=2)
     system.bonded_inter.add(f1)
-    f2 = FeneBond(k=1, d_r_max=2)
+    f2 = espressomd.interactions.FeneBond(k=1, d_r_max=2)
     system.bonded_inter.add(f2)
 
     def setUp(self):
@@ -310,7 +310,7 @@ class ParticleProperties(ut.TestCase):
 
         p1 = self.system.part[self.pid]
         p2 = self.system.part.add(pos=p1.pos)
-        inactive_bond = FeneBond(k=1, d_r_max=2)
+        inactive_bond = espressomd.interactions.FeneBond(k=1, d_r_max=2)
         p2.add_bond([self.f1, p1])
         with self.assertRaisesRegex(RuntimeError, "already exists on particle"):
             p2.add_bond([self.f1, p1.id])

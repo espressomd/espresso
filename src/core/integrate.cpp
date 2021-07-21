@@ -41,7 +41,6 @@
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
@@ -57,6 +56,10 @@
 
 #include <boost/range/algorithm/min_element.hpp>
 
+#include <algorithm>
+#include <cmath>
+#include <csignal>
+#include <functional>
 #include <stdexcept>
 
 #ifdef VALGRIND_INSTRUMENTATION
@@ -65,15 +68,23 @@
 
 int integ_switch = INTEG_METHOD_NVT;
 
-double time_step = -1.0;
+/** Time step for the integration. */
+static double time_step = -1.0;
 
-double sim_time = 0.0;
+/** Actual simulation time. */
+static double sim_time = 0.0;
+
 double skin = 0.0;
-bool skin_set = false;
+
+/** True iff the user has changed the skin setting. */
+static bool skin_set = false;
 
 bool recalc_forces = true;
 
-double verlet_reuse = 0.0;
+/** Average number of integration steps the Verlet list has been re-using. */
+static double verlet_reuse = 0.0;
+
+static int fluid_step = 0;
 
 bool set_py_interrupt = false;
 namespace {
@@ -131,11 +142,11 @@ bool integrator_step_1(ParticleRange &particles) {
       return true; // early exit
     break;
   case INTEG_METHOD_NVT:
-    velocity_verlet_step_1(particles);
+    velocity_verlet_step_1(particles, time_step);
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_1(particles);
+    velocity_verlet_npt_step_1(particles, time_step);
     break;
 #endif
   case INTEG_METHOD_BD:
@@ -144,7 +155,7 @@ bool integrator_step_1(ParticleRange &particles) {
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
-    stokesian_dynamics_step_1(particles);
+    stokesian_dynamics_step_1(particles, time_step);
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
@@ -154,22 +165,22 @@ bool integrator_step_1(ParticleRange &particles) {
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
-void integrator_step_2(ParticleRange &particles) {
+void integrator_step_2(ParticleRange &particles, double kT) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
     break;
   case INTEG_METHOD_NVT:
-    velocity_verlet_step_2(particles);
+    velocity_verlet_step_2(particles, time_step);
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_2(particles);
+    velocity_verlet_npt_step_2(particles, time_step);
     break;
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles);
+    brownian_dynamics_propagator(brownian, particles, time_step, kT);
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
@@ -185,7 +196,7 @@ int integrate(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   /* Prepare the integrator */
-  on_integration_start();
+  on_integration_start(time_step);
 
   /* if any method vetoes (e.g. P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
@@ -207,7 +218,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    force_calc(cell_structure, time_step);
+    force_calc(cell_structure, time_step, temperature);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -269,12 +280,12 @@ int integrate(int n_steps, int reuse_forces) {
 
     particles = cell_structure.local_particles();
 
-    force_calc(cell_structure, time_step);
+    force_calc(cell_structure, time_step, temperature);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
 #endif
-    integrator_step_2(particles);
+    integrator_step_2(particles, temperature);
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
     if (n_rigidbonds) {
@@ -284,11 +295,20 @@ int integrate(int n_steps, int reuse_forces) {
 
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      lb_lbfluid_propagate();
-      lb_lbcoupling_propagate();
+      if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
+        auto const tau = lb_lbfluid_get_tau();
+        auto const lb_steps_per_md_step =
+            static_cast<int>(std::round(tau / time_step));
+        fluid_step += 1;
+        if (fluid_step >= lb_steps_per_md_step) {
+          fluid_step = 0;
+          lb_lbfluid_propagate();
+        }
+        lb_lbcoupling_propagate();
+      }
 
 #ifdef VIRTUAL_SITES
-      virtual_sites()->after_lb_propagation();
+      virtual_sites()->after_lb_propagation(time_step);
 #endif
 
 #ifdef COLLISION_DETECTION
@@ -362,9 +382,10 @@ int python_integrate(int n_steps, bool recalc_forces_par,
     }
     /* maximal skin that can be used without resorting is the maximal
      * range of the cell system minus what is needed for interactions. */
-    skin = std::min(0.4 * max_cut,
-                    *boost::min_element(cell_structure.max_cutoff()) - max_cut);
-    mpi_bcast_parameter(FIELD_SKIN);
+    auto const new_skin =
+        std::min(0.4 * max_cut,
+                 *boost::min_element(cell_structure.max_cutoff()) - max_cut);
+    mpi_set_skin(new_skin);
   }
 
   using Accumulators::auto_update;
@@ -418,26 +439,18 @@ int mpi_integrate(int n_steps, int reuse_forces) {
 void integrate_set_steepest_descent(const double f_max, const double gamma,
                                     const double max_displacement) {
   steepest_descent_init(f_max, gamma, max_displacement);
-  integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
 }
 
-void integrate_set_nvt() {
-  integ_switch = INTEG_METHOD_NVT;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-}
+void integrate_set_nvt() { mpi_set_integ_switch(INTEG_METHOD_NVT); }
 
-void integrate_set_bd() {
-  integ_switch = INTEG_METHOD_BD;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-}
+void integrate_set_bd() { mpi_set_integ_switch(INTEG_METHOD_BD); }
 
 void integrate_set_sd() {
   if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2)) {
     throw std::runtime_error("Stokesian Dynamics requires periodicity 0 0 0");
   }
-  integ_switch = INTEG_METHOD_SD;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_set_integ_switch(INTEG_METHOD_SD);
 }
 
 #ifdef NPT
@@ -446,8 +459,7 @@ void integrate_set_npt_isotropic(double ext_pressure, double piston,
                                  bool zdir_rescale, bool cubic_box) {
   nptiso_init(ext_pressure, piston, xdir_rescale, ydir_rescale, zdir_rescale,
               cubic_box);
-  integ_switch = INTEG_METHOD_NPT_ISO;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  mpi_set_integ_switch(INTEG_METHOD_NPT_ISO);
 }
 #endif
 
@@ -457,9 +469,17 @@ double interaction_range() {
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
 
+double get_verlet_reuse() { return verlet_reuse; }
+
+double get_time_step() { return time_step; }
+
+double get_sim_time() { return sim_time; }
+
+void increment_sim_time(double amount) { sim_time += amount; }
+
 void mpi_set_time_step_local(double dt) {
   time_step = dt;
-  on_parameter_change(FIELD_TIMESTEP);
+  on_timestep_change();
 }
 
 REGISTER_CALLBACK(mpi_set_time_step_local)
@@ -470,4 +490,33 @@ void mpi_set_time_step(double time_s) {
   if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
     check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
   mpi_call_all(mpi_set_time_step_local, time_s);
+}
+
+void mpi_set_skin_local(double skin) {
+  ::skin = skin;
+  skin_set = true;
+  on_skin_change();
+}
+
+REGISTER_CALLBACK(mpi_set_skin_local)
+
+void mpi_set_skin(double skin) { mpi_call_all(mpi_set_skin_local, skin); }
+
+void mpi_set_time_local(double time) {
+  sim_time = time;
+  on_simtime_change();
+}
+
+REGISTER_CALLBACK(mpi_set_time_local)
+
+void mpi_set_time(double time) { mpi_call_all(mpi_set_time_local, time); }
+
+void mpi_set_integ_switch_local(int integ_switch) {
+  ::integ_switch = integ_switch;
+}
+
+REGISTER_CALLBACK(mpi_set_integ_switch_local)
+
+void mpi_set_integ_switch(int integ_switch) {
+  mpi_call_all(mpi_set_integ_switch_local, integ_switch);
 }

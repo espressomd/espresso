@@ -27,7 +27,7 @@ import unittest as ut
 import unittest_decorators as utx
 try:
     import MDAnalysis as mda
-    from espressomd import MDA_ESP
+    import espressomd.MDA_ESP
     skipIfMissingPythonPackage = utx.no_skip
 except ImportError:
     skipIfMissingPythonPackage = ut.skip(
@@ -56,7 +56,7 @@ class TestMDAnalysis(ut.TestCase):
 
     def test_universe(self):
         system = self.system
-        eos = MDA_ESP.Stream(system)
+        eos = espressomd.MDA_ESP.Stream(system)
         u = mda.Universe(eos.topology, eos.trajectory)
         # check atoms
         self.assertEqual(len(u.atoms), 10)

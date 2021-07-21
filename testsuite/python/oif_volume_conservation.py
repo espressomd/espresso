@@ -17,9 +17,8 @@
 import espressomd
 import numpy as np
 import unittest as ut
-
-from tests_common import abspath
 import unittest_decorators as utx
+import tests_common
 
 
 @utx.skipIfMissingFeatures("MASS")
@@ -38,8 +37,8 @@ class OifVolumeConservation(ut.TestCase):
 
         # creating the template for OIF object
         cell_type = oif.OifCellType(
-            nodes_file=abspath("data/sphere393nodes.dat"),
-            triangles_file=abspath("data/sphere393triangles.dat"),
+            nodes_file=tests_common.abspath("data/sphere393nodes.dat"),
+            triangles_file=tests_common.abspath("data/sphere393triangles.dat"),
             system=system, ks=1.0, kb=1.0, kal=1.0, kag=0.1, kv=0.1,
             check_orientation=False, resize=(3.0, 3.0, 3.0))
 
@@ -52,13 +51,13 @@ class OifVolumeConservation(ut.TestCase):
         # fluid
 
         diameter_init = cell0.diameter()
-        print("initial diameter = " + str(diameter_init))
+        print(f"initial diameter = {diameter_init}")
 
         # OIF object is being stretched by factor 1.5
         system.part[:].pos = (system.part[:].pos - 5) * 1.5 + 5
 
         diameter_stretched = cell0.diameter()
-        print("stretched diameter = " + str(diameter_stretched))
+        print(f"stretched diameter = {diameter_stretched}")
 
         # Apply non-isotropic deformation
         system.part[:].pos = system.part[:].pos * np.array((0.96, 1.05, 1.02))
@@ -81,7 +80,7 @@ class OifVolumeConservation(ut.TestCase):
         for _ in range(2):
             system.integrator.run(steps=240)
             diameter_final = cell0.diameter()
-            print("final diameter = " + str(diameter_final))
+            print(f"final diameter = {diameter_final}")
             self.assertAlmostEqual(
                 diameter_final / diameter_init - 1, 0, delta=0.005)
 

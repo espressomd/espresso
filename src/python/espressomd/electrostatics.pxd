@@ -18,8 +18,8 @@
 #
 
 include "myconfig.pxi"
-from .utils import is_valid_type, to_str
 from libcpp cimport bool
+from .analyze cimport PartCfg, partCfg
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -71,7 +71,7 @@ IF ELECTROSTATICS:
             void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double accuracy)
             void p3m_set_mesh_offset(double x, double y, double z) except +
             void p3m_set_eps(double eps)
-            int p3m_adaptive_tune(bool verbose)
+            int p3m_adaptive_tune(int timings, bool verbose)
 
             ctypedef struct p3m_data_struct:
                 P3MParameters params
@@ -133,7 +133,7 @@ IF ELECTROSTATICS:
 
         void MMM1D_set_params(double switch_rad, double maxPWerror)
         int MMM1D_init()
-        int mmm1d_tune(bool verbose)
+        int mmm1d_tune(int timings, bool verbose)
 
 IF ELECTROSTATICS and MMM1D_GPU:
 
@@ -165,3 +165,6 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
             void activate()
             void deactivate()
+
+cdef extern from "utils/checks/charge_neutrality.hpp" namespace "Utils":
+    bool check_charge_neutrality[ParticleRange](ParticleRange & partCfg)

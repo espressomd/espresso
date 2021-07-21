@@ -16,10 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import os
-import sys
+import espressomd
+import espressomd.magnetostatics
+import benchmarks
 import numpy as np
-from time import time, sleep
 import argparse
 
 parser = argparse.ArgumentParser(description="Benchmark ferrofluid simulations. "
@@ -33,8 +33,7 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     "particles (range: [0.01-0.74], default: 0.50)")
 parser.add_argument("--dipole_moment", metavar="FRAC", action="store",
                     type=float, default=2**0.5, required=False,
-                    help="Fraction of the simulation box volume occupied by "
-                    "particles (range: [0.01-0.74], default: 0.50)")
+                    help="Magnitude of the dipole moment (same for all particles)")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--output", metavar="FILEPATH", action="store",
                    type=str, required=False, default="benchmarks.csv",
@@ -52,20 +51,11 @@ assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
 assert args.dipole_moment > 0
 if not args.visualizer:
-    assert(measurement_steps >= 100), \
-        "{} steps per tick are too short".format(measurement_steps)
-
-
-import espressomd
-from espressomd import magnetostatics
-if args.visualizer:
-    from espressomd import visualization
-    from threading import Thread
+    assert measurement_steps >= 100, \
+        f"{measurement_steps} steps per tick are too short"
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
-
-print(espressomd.features())
 
 # System
 #############################################################
@@ -91,121 +81,71 @@ box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
 #############################################################
 system.box_l = 3 * (box_l,)
 
-# PRNG seeds
-#############################################################
-# np.random.seed(1)
-
 # Integration parameters
 #############################################################
 system.time_step = 0.01
 system.cell_system.skin = 0.5
 system.thermostat.turn_off()
 
-
-#############################################################
-#  Setup System                                             #
-#############################################################
-
 # Interaction setup
 #############################################################
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-print("LJ-parameters:")
-print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
-
 # Particle setup
 #############################################################
+system.part.add(
+    pos=np.random.random((n_part, 3)) * system.box_l,
+    rotation=n_part * [(1, 1, 1)],
+    dipm=n_part * [args.dipole_moment])
 
-for i in range(n_part):
-    system.part.add(
-        id=i,
-        pos=np.random.random(3) *
-        system.box_l,
-        rotation=(1, 1, 1),
-        dipm=args.dipole_moment)
-
+#  Warmup Integration
 #############################################################
-#  Warmup Integration                                       #
-#############################################################
-
-system.integrator.set_steepest_descent(
-    f_max=0,
-    gamma=0.001,
-    max_displacement=0.01)
 
 # warmup
-while system.analysis.energy()["total"] > 0.1 * n_part:
-    print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
-    system.integrator.run(20)
-print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
-print()
-system.integrator.set_vv()
+benchmarks.minimize(system, n_part / 10.)
 
+system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
+# tuning and equilibration
+min_skin = 0.2
+max_skin = 1.0
+dp3m_params = {'prefactor': 1, 'accuracy': 1e-4}
+print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 60000))
-
-system.actors.add(magnetostatics.DipolarP3M(prefactor=1, accuracy=1E-4))
-print("Tune skin: {}".format(system.cell_system.tune_skin(
-    min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
-
+dp3m = espressomd.magnetostatics.DipolarP3M(**dp3m_params)
+system.actors.add(dp3m)
+print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
+    min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100)))
+print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 2500))
 
-print(system.non_bonded_inter[0, 0].lennard_jones)
 
-if not args.visualizer:
-    # print initial energies
-    energies = system.analysis.energy()
-    print(energies)
-
-    # time integration loop
-    print("Timing every {} steps".format(measurement_steps))
-    main_tick = time()
-    all_t = []
-    for i in range(n_iterations):
-        tick = time()
-        system.integrator.run(measurement_steps)
-        tock = time()
-        t = (tock - tick) / measurement_steps
-        print("step {}, time = {:.2e}, verlet: {:.2f}, energy: {:.2e}"
-              .format(i, t, system.cell_system.get_state()["verlet_reuse"],
-                      system.analysis.energy()["total"]))
-        all_t.append(t)
-    main_tock = time()
-    # average time
-    all_t = np.array(all_t)
-    avg = np.average(all_t)
-    ci = 1.96 * np.std(all_t) / np.sqrt(len(all_t) - 1)
-    print("average: {:.3e} +/- {:.3e} (95% C.I.)".format(avg, ci))
-
-    # print final energies
-    energies = system.analysis.energy()
-    print(energies)
-
-    # write report
-    cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
-    report = ('"{script}","{arguments}",{cores},{mean:.3e},'
-              '{ci:.3e},{n},{dur:.1f}\n'.format(
-                  script=os.path.basename(sys.argv[0]), arguments=cmd,
-                  cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
-                  mean=avg, ci=ci))
-    if not os.path.isfile(args.output):
-        report = ('"script","arguments","cores","mean","ci",'
-                  '"nsteps","duration"\n' + report)
-    with open(args.output, "a") as f:
-        f.write(report)
-else:
-    # use visualizer
-    visualizer = visualization.openGLLive(system)
+if args.visualizer:
+    import time
+    import threading
+    import espressomd.visualization
+    visualizer = espressomd.visualization.openGLLive(system)
 
     def main_thread():
         while True:
             system.integrator.run(1)
             visualizer.update()
-            sleep(1 / 60.)  # limit frame rate to at most 60 FPS
+            time.sleep(1 / 60.)  # limit frame rate to at most 60 FPS
 
-    t = Thread(target=main_thread)
+    t = threading.Thread(target=main_thread)
     t.daemon = True
     t.start()
     visualizer.start()
+
+
+# time integration loop
+timings = benchmarks.get_timings(system, measurement_steps, n_iterations)
+
+# average time
+avg, ci = benchmarks.get_average_time(timings)
+print(f"average: {avg:.3e} +/- {ci:.3e} (95% C.I.)")
+
+# write report
+benchmarks.write_report(args.output, n_proc, timings, measurement_steps)

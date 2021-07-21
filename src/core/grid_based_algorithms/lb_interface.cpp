@@ -23,7 +23,6 @@
 #include "config.hpp"
 #include "electrokinetics.hpp"
 #include "errorhandling.hpp"
-#include "global.hpp"
 #include "grid.hpp"
 #include "halo.hpp"
 #include "lb-d3q19.hpp"
@@ -52,9 +51,9 @@ struct NoLBActive : public std::exception {
   const char *what() const noexcept override { return "LB not activated"; }
 };
 
-void lb_lbfluid_update() {
+void lb_lbfluid_integrate() {
   if (lattice_switch == ActiveLB::CPU) {
-    lattice_boltzmann_update();
+    lb_integrate();
   } else if (lattice_switch == ActiveLB::GPU and this_node == 0) {
 #ifdef CUDA
 #ifdef ELECTROKINETICS
@@ -62,7 +61,7 @@ void lb_lbfluid_update() {
       ek_integrate();
     } else {
 #endif
-      lattice_boltzmann_update_gpu();
+      lb_integrate_GPU();
 #ifdef ELECTROKINETICS
     }
 #endif
@@ -72,7 +71,7 @@ void lb_lbfluid_update() {
 
 void lb_lbfluid_propagate() {
   if (lattice_switch != ActiveLB::NONE) {
-    lb_lbfluid_update();
+    lb_lbfluid_integrate();
     if (lb_lbfluid_get_kT() > 0.0) {
       if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
@@ -104,8 +103,7 @@ void lb_boundary_mach_check() {
   }
 }
 
-void lb_lbfluid_sanity_checks() {
-  extern double time_step;
+void lb_lbfluid_sanity_checks(double time_step) {
   if (lattice_switch == ActiveLB::GPU && this_node == 0) {
 #ifdef CUDA
     lb_GPU_sanity_checks();
@@ -123,7 +121,6 @@ void lb_lbfluid_sanity_checks() {
 }
 
 void lb_lbfluid_on_integration_start() {
-  lb_lbfluid_sanity_checks();
   if (lattice_switch == ActiveLB::CPU) {
     halo_communication(update_halo_comm,
                        reinterpret_cast<char *>(lbfluid[0].data()));
@@ -418,18 +415,18 @@ void lb_lbfluid_set_tau(double tau) {
   }
 }
 
-void check_tau_time_step_consistency(double tau, double time_s) {
+void check_tau_time_step_consistency(double tau, double time_step) {
   auto const eps = std::numeric_limits<float>::epsilon();
-  if ((tau - time_s) / (tau + time_s) < -eps)
+  if ((tau - time_step) / (tau + time_step) < -eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
                                 ") must be >= MD time_step (" +
-                                std::to_string(time_s) + ")");
-  auto const factor = tau / time_s;
+                                std::to_string(time_step) + ")");
+  auto const factor = tau / time_step;
   if (fabs(round(factor) - factor) / factor > eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
                                 ") must be integer multiple of "
                                 "MD time_step (" +
-                                std::to_string(time_s) + "). Factor is " +
+                                std::to_string(time_step) + "). Factor is " +
                                 std::to_string(factor));
 }
 
@@ -456,8 +453,7 @@ void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
   default:
     throw std::invalid_argument("Invalid lattice switch.");
   }
-  lattice_switch = local_lattice_switch;
-  mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
+  mpi_set_lattice_switch(local_lattice_switch);
 }
 
 void lb_lbfluid_set_kT(double kT) {
@@ -1271,4 +1267,14 @@ double lb_lbfluid_get_interpolated_density(const Utils::Vector3d &pos) {
     }
   }
   throw NoLBActive();
+}
+
+void mpi_set_lattice_switch_local(ActiveLB lattice_switch) {
+  ::lattice_switch = lattice_switch;
+}
+
+REGISTER_CALLBACK(mpi_set_lattice_switch_local)
+
+void mpi_set_lattice_switch(ActiveLB lattice_switch) {
+  mpi_call_all(mpi_set_lattice_switch_local, lattice_switch);
 }

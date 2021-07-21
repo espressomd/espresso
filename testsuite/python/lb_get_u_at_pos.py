@@ -20,7 +20,7 @@ import unittest_decorators as utx
 import numpy as np
 import numpy.testing
 import espressomd
-from espressomd import lb
+import espressomd.lb
 
 
 @utx.skipIfMissingGPU()
@@ -52,7 +52,7 @@ class TestLBGetUAtPos(ut.TestCase):
             cls.system.part.add(pos=[(p + 1) * cls.params['agrid'],
                                      0.5 * cls.params['agrid'],
                                      0.5 * cls.params['agrid']])
-        cls.lb_fluid = lb.LBFluidGPU(
+        cls.lb_fluid = espressomd.lb.LBFluidGPU(
             visc=cls.params['viscosity'],
             dens=cls.params['dens'],
             agrid=cls.params['agrid'],

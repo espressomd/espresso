@@ -111,7 +111,7 @@ IF SCAFACOS == 1:
             method_params = self._params["method_params"]
             param_string = ""
             for k in method_params:
-                param_string += k + " " + str(method_params[k]) + " "
+                param_string += f"{k} {method_params[k]} "
             # Format list as a single string
             param_string = param_string.rstrip().replace(" ", ",")
 

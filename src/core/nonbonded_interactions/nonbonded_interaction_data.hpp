@@ -29,8 +29,11 @@
 
 #include <utils/index.hpp>
 
+#include <MpiCallbacks.hpp>
 #include <algorithm>
 #include <cassert>
+#include <communication.hpp>
+#include <event.hpp>
 #include <string>
 #include <vector>
 
@@ -43,7 +46,7 @@ constexpr double INACTIVE_CUTOFF = -1.;
 struct LJ_Parameters {
   double eps = 0.0;
   double sig = 0.0;
-  double cut = 0.0;
+  double cut = INACTIVE_CUTOFF;
   double shift = 0.0;
   double offset = 0.0;
   double min = 0.0;
@@ -359,4 +362,8 @@ inline bool checkIfInteraction(IA_parameters const &data) {
   return data.max_cut != INACTIVE_CUTOFF;
 }
 
+/** @brief Set and broadcast the min_global_cut
+ *  @param min_global_cut minimum global cutoff
+ */
+void mpi_set_min_global_cut(double min_global_cut);
 #endif

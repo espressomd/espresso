@@ -78,8 +78,8 @@ plt.gca().set_prop_cycle(None)
 for i in range(0, 6, 2):
     plt.plot(data[:, i], data[:, i + 1], linestyle='dashed')
 
-plt.title("Trajectory of sedimenting spheres\nsolid line: simulation "
-          "({}), dashed line: paper (FTS)".format(sd_method.upper()))
+plt.title(f"Trajectory of sedimenting spheres\nsolid line: simulation "
+          f"({sd_method.upper()}), dashed line: paper (FTS)")
 plt.xlabel("x")
 plt.ylabel("y")
 plt.show()

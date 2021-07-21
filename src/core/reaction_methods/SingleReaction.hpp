@@ -51,7 +51,8 @@ struct SingleReaction {
   double gamma = {};
   // calculated values that are stored for performance reasons
   int nu_bar = {}; ///< change in particle numbers for the reaction
-  Utils::Accumulator accumulator_exponentials = Utils::Accumulator(1);
+  Utils::Accumulator accumulator_potential_energy_difference_exponential =
+      Utils::Accumulator(1);
   int tried_moves = 0;
   int accepted_moves = 0;
   double get_acceptance_rate() const {

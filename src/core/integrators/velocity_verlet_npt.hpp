@@ -33,14 +33,16 @@
  *  Propagate pressure, box_length (2 times) and positions, rescale
  *  positions and velocities and check Verlet list criterion (only NpT).
  */
-void velocity_verlet_npt_step_1(const ParticleRange &particles);
+void velocity_verlet_npt_step_1(const ParticleRange &particles,
+                                double time_step);
 
 /** Final integration step of the Velocity Verlet+NpT integrator.
  *  Finalize instantaneous pressure calculation:
  *  \f[ v(t+\Delta t) = v(t+0.5 \Delta t)
  *      + 0.5 \Delta t \cdot F(t+\Delta t)/m \f]
  */
-void velocity_verlet_npt_step_2(const ParticleRange &particles);
+void velocity_verlet_npt_step_2(const ParticleRange &particles,
+                                double time_step);
 #endif
 
 #endif

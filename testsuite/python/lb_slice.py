@@ -17,13 +17,14 @@
 import espressomd.lb
 import unittest as ut
 import numpy as np
+import itertools
 
 
 class LBSliceTest(ut.TestCase):
 
     """This simple test first writes random numbers and then reads them 
     to same slices of LB nodes and compares if the results are the same, 
-    shape and value wise.
+    shape-wise and value-wise.
     """
 
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
@@ -31,12 +32,14 @@ class LBSliceTest(ut.TestCase):
     system.cell_system.skin = 0.1
     np.random.seed(seed=42)
 
-    def test_slicing(self):
-        system = self.system
-
-        lb_fluid = espressomd.lb.LBFluid(
+    @classmethod
+    def setUpClass(cls):
+        cls.lb_fluid = espressomd.lb.LBFluid(
             agrid=1.0, dens=1., visc=1., tau=0.01)
-        system.actors.add(lb_fluid)
+        cls.system.actors.add(cls.lb_fluid)
+
+    def test_slicing(self):
+        lb_fluid = self.lb_fluid
 
         # array locked
         array = lb_fluid[1:-1:2, 5, 3:6:2].velocity
@@ -89,7 +92,8 @@ class LBSliceTest(ut.TestCase):
 
         # pressure tensor neq on test slice [3, 6, 2:10]
         output_pressure_neq_shape = lb_fluid[3:5,
-                                             6:7, 2:10].pressure_tensor_neq.shape
+                                             6:7,
+                                             2:10].pressure_tensor_neq.shape
         should_pressure_neq_shape = (2, 1, 8, 3, 3)
         np.testing.assert_array_almost_equal(
             output_pressure_neq_shape, should_pressure_neq_shape)
@@ -115,7 +119,23 @@ class LBSliceTest(ut.TestCase):
                 output_boundary_shape, should_boundary_shape)
 
             with self.assertRaises(NotImplementedError):
-                lb_fluid[1:, 1:, 1:].boundary = np.zeros(should_boundary_shape)
+                lb_fluid[1:, 1:, 1:].boundary = np.zeros(
+                    should_boundary_shape)
+
+    def test_iterator(self):
+        lbslice_handle = self.lb_fluid[:, :, :]
+        # arrange node indices using class methods
+        i_handle, j_handle, k_handle = lbslice_handle.x_indices, lbslice_handle.y_indices, lbslice_handle.z_indices
+        arranged_indices = [
+            (x, y, z) for (
+                x, y, z) in itertools.product(
+                i_handle, j_handle, k_handle)]
+        # arrange node indices using __iter__() enforced conversion
+        iterator_indices = [x.index for x in lbslice_handle]
+        # check the results correspond pairwise. order is implicitly preserved.
+        # uses __eq()__ method form LBFluidRoutines()
+        assert all([x == y for x, y in zip(
+            arranged_indices, iterator_indices)])
 
 
 if __name__ == "__main__":

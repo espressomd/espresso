@@ -23,9 +23,11 @@ import os
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
-from tests_common import abspath, random_dipoles
-OPEN_BOUNDARIES_REF_ENERGY = abspath("data/dipolar_open_boundaries_energy.npy")
-OPEN_BOUNDARIES_REF_ARRAYS = abspath("data/dipolar_open_boundaries_arrays.npy")
+import tests_common
+OPEN_BOUNDARIES_REF_ENERGY = tests_common.abspath(
+    "data/dipolar_open_boundaries_energy.npy")
+OPEN_BOUNDARIES_REF_ARRAYS = tests_common.abspath(
+    "data/dipolar_open_boundaries_arrays.npy")
 
 
 @utx.skipIfMissingFeatures(["DIPOLES"])
@@ -128,7 +130,7 @@ class dds(ut.TestCase):
         N = 20
         dipole_modulus = 1.3
         part_pos = np.random.random((N, 3)) * system.box_l
-        part_dip = dipole_modulus * random_dipoles(N)
+        part_dip = dipole_modulus * tests_common.random_dipoles(N)
         particles = system.part.add(pos=part_pos, dip=part_dip,
                                     rotation=N * [(1, 1, 1)])
 

@@ -1,5 +1,6 @@
+#!/bin/sh
 #
-# Copyright (C) 2014-2019 The ESPResSo project
+# Copyright (C) 2021 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,10 +18,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Common functions needed by all of ESPResSo
-# Define no variables here, as all variables should become part of a
-# specific class.
-#
+python=$(which python3)
+pypresso=../../build/pypresso
 
-cdef extern from "communication.hpp":
-    int mpi_bcast_parameter(int p)
+if [ ! -e "${pypresso}" ]
+then
+    echo "Invalid path to pypresso script: ${pypresso}" 1>&2
+    exit 1
+fi
+
+# Run the simulations for the temperatures given as parameters
+for kT in $*
+do
+    for seed in 1 2 3 4 5
+    do
+
+        test -s "temp_${kT}_seed_${seed}.dat.gz" ||
+            "${pypresso}" run_sim.py ${kT} --log --steps 1000000 --seed ${seed} > "temp_${kT}_seed_${seed}.out" 2>&1 &
+    done
+done
+wait
+
+# Plot the results, create fits
+"${python}" create_fits.py temp_*.dat.gz

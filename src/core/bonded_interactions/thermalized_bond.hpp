@@ -135,4 +135,5 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
   return std::make_tuple(force1, force2);
 }
 
+void mpi_set_n_thermalized_bonds(int n_thermalized_bonds);
 #endif

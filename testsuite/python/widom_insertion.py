@@ -23,8 +23,8 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
-from espressomd import reaction_ensemble
-from tests_common import lj_potential
+import espressomd.reaction_ensemble
+import tests_common
 
 
 @utx.skipIfMissingFeatures(["LENNARD_JONES"])
@@ -44,17 +44,18 @@ class WidomInsertionTest(ut.TestCase):
     LJ_SIG = 1.0
     LJ_CUT = 5
     BOX_L = 2 * LJ_CUT
-    LJ_SHIFT = lj_potential(LJ_CUT, LJ_EPS, LJ_SIG, LJ_CUT + 1, 0.0)
+    LJ_SHIFT = tests_common.lj_potential(
+        LJ_CUT, LJ_EPS, LJ_SIG, LJ_CUT + 1.0, 0.0)
 
     radius = np.linspace(1e-10, LJ_CUT, 1000)
     # numerical integration for radii smaller than the cut-off in spherical
     # coordinates
     integrateUpToCutOff = 4 * np.pi * np.trapz(
-        radius**2 * np.exp(-lj_potential(radius,
-                                         LJ_EPS,
-                                         LJ_SIG,
-                                         LJ_CUT,
-                                         LJ_SHIFT) / TEMPERATURE),
+        radius**2 * np.exp(-tests_common.lj_potential(radius,
+                                                      LJ_EPS,
+                                                      LJ_SIG,
+                                                      LJ_CUT,
+                                                      LJ_SHIFT) / TEMPERATURE),
         x=radius)
     # numerical solution for V_lj=0 => corresponds to the volume (as exp(0)=1)
     integreateRest = (BOX_L**3 - 4.0 / 3.0 * np.pi * LJ_CUT**3)
@@ -71,8 +72,8 @@ class WidomInsertionTest(ut.TestCase):
     system.cell_system.skin = 0.4
     volume = system.volume()
 
-    Widom = reaction_ensemble.WidomInsertion(
-        temperature=TEMPERATURE, seed=1)
+    Widom = espressomd.reaction_ensemble.WidomInsertion(
+        kT=TEMPERATURE, seed=1)
 
     def setUp(self):
         self.system.part.add(pos=0.5 * self.system.box_l, type=self.TYPE_HA)

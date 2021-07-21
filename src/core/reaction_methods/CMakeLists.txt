@@ -22,7 +22,6 @@ target_sources(
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ReactionAlgorithm.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/ReactionEnsemble.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/ConstantpHEnsemble.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/WangLandauReactionEnsemble.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/WidomInsertion.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp)
 
