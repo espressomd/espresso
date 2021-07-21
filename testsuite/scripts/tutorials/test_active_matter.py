@@ -23,6 +23,7 @@ import setuptools
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/active_matter/active_matter.py", 
+    gpu=True,
     ED_N_SAMPLING_STEPS=100000,
     RECT_N_SAMPLES=150,
     HYDRO_N_STEPS=100
