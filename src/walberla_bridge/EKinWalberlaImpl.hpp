@@ -385,10 +385,9 @@ public:
 
     // add writers
     if (static_cast<unsigned>(EKOutputVTK::density) & flag_observables) {
-      // TODO: density writer...
-      //      vtk_writer->addCellDataWriter(
-      //          make_shared<lbm::DensityVTKWriter<LatticeModel, float>>(
-      //              m_pdf_field_id, "DensityFromPDF"));
+      vtk_writer->addCellDataWriter(
+          make_shared<field::VTKWriter<DensityField, float>>(m_density_field_id,
+                                                             "EKDensity"));
     }
 
     // register object
