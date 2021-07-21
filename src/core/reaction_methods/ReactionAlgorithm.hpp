@@ -154,6 +154,7 @@ private:
   double m_slab_start_z = -10.0;
   double m_slab_end_z = -10.0;
 
+protected:
   Utils::Vector3d get_random_position_in_box();
 };
 
