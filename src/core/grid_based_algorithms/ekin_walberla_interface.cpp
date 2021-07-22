@@ -58,6 +58,18 @@ void ek_create_vtk(unsigned delta_N, unsigned initial_count,
 
 REGISTER_CALLBACK(ek_create_vtk)
 
+void ek_write_vtk(std::string const &vtk_uid) {
+  ekin_walberla()->write_vtk(vtk_uid);
+}
+
+REGISTER_CALLBACK(ek_write_vtk)
+
+void ek_switch_vtk(std::string const &vtk_uid, int status) {
+  ekin_walberla()->switch_vtk(vtk_uid, status);
+}
+
+REGISTER_CALLBACK(ek_switch_vtk)
+
 void ek_propagate() { ekin_walberla()->integrate(); }
 
 } // namespace walberla

@@ -26,6 +26,8 @@ Utils::Vector3i ek_get_shape();
 void ek_create_vtk(unsigned delta_N, unsigned initial_count,
                    unsigned flag_observables, std::string const &identifier,
                    std::string const &base_folder, std::string const &prefix);
+void ek_write_vtk(std::string const &vtk_uid);
+void ek_switch_vtk(std::string const &vtk_uid, int status);
 
 void ek_propagate();
 

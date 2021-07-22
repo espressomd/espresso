@@ -128,6 +128,26 @@ void create_vtk(unsigned delta_N, unsigned initial_count,
   throw NoEKActive();
 }
 
+void write_vtk(std::string const &vtk_uid) {
+#ifdef EK_WALBERLA
+  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
+    mpi_call_all(walberla::ek_write_vtk, vtk_uid);
+    return;
+  }
+#endif // EK_WALBERLA
+  throw NoEKActive();
+}
+
+void switch_vtk(std::string const &vtk_uid, int status) {
+#ifdef EK_WALBERLA
+  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
+    mpi_call_all(walberla::ek_switch_vtk, vtk_uid);
+    return;
+  }
+#endif // EK_WALBERLA
+  throw NoEKActive();
+}
+
 EK::ActiveEK get_lattice_switch() { return EK::lattice_switch; }
 
 void propagate() {
