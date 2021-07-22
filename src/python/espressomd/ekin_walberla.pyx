@@ -18,7 +18,6 @@ import os
 
 
 # TODO: boundaries?
-# TODO: vtk writer
 
 IF EK_WALBERLA:
 
