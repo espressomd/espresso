@@ -65,7 +65,9 @@
 
 #include "LBWalberlaBase.hpp"
 #include "ResetForce.hpp"
+#include "generated_kernels/CollideSweep.h"
 #include "generated_kernels/StreamSweep.h"
+#include "relaxation_rates.hpp"
 #include "walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
@@ -267,14 +269,11 @@ public:
     // because the collide-push variant is not supported by lbmpy.
     // The following functors are individual in-place collide and stream steps
     auto stream = pystencils::StreamSweep(m_pdf_field_id);
-
-    auto combined_sweep_collide =
-        std::make_shared<typename LatticeModel::Sweep>(m_pdf_field_id);
-    auto collide = [combined_sweep_collide](
-                       IBlock *const block,
-                       const uint_t numberOfGhostLayersToInclude = uint_t(0)) {
-      combined_sweep_collide->collide(block, numberOfGhostLayersToInclude);
-    };
+    const real_t omega = shear_mode_relaxation_rate(get_viscosity());
+    const real_t omega_odd = odd_mode_relaxation_rate(omega);
+    auto collide =
+        pystencils::CollideSweep(m_force_to_be_applied_id, m_pdf_field_id,
+                                 omega, omega, omega_odd, omega);
 
     // Add steps to the integration loop
     m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
