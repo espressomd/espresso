@@ -244,11 +244,11 @@ IF EK_WALBERLA:
             ----------
             identifier : :obj:`str`
                 Name of the VTK dataset.
-            observables : :obj:`list`, \{'density', 'velocity_vector', 'pressure_tensor'\}
+            observables : :obj:`list`, \{'density'\}
                 List of observables to write to the VTK files.
             delta_N : :obj:`int`
                 Write frequency, if 0 write a single frame (default),
-                otherwise add a callback to write every ``delta_N`` LB steps
+                otherwise add a callback to write every ``delta_N`` EK steps
                 to a new file.
             base_folder : :obj:`str`
                 Path to the output VTK folder.
