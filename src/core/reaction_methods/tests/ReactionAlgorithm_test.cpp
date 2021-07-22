@@ -267,6 +267,16 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     }
     // restore box geometry
     espresso::system->set_box_l(Utils::Vector3d::broadcast(1.));
+    // check exception mechanism
+    using exception = std::domain_error;
+    BOOST_CHECK_THROW(r_algo.set_slab_constraint(-1., 0.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_slab_constraint(0.5, 1.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_slab_constraint(0.5, 0.2), exception);
+    BOOST_CHECK_THROW(r_algo.set_cyl_constraint(-1., 0.5, 0.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_cyl_constraint(1.5, 0.5, 0.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_cyl_constraint(0.5, -1., 0.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_cyl_constraint(0.5, 1.5, 0.5), exception);
+    BOOST_CHECK_THROW(r_algo.set_cyl_constraint(0.5, 0.5, -1.0), exception);
     r_algo.remove_constraint();
   }
 }

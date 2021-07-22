@@ -46,8 +46,8 @@ cdef extern from "reaction_methods/ReactionAlgorithm.hpp" namespace "ReactionMet
         int delete_particle(int p_id)
         void add_reaction(double gamma, vector[int] reactant_types, vector[int] reactant_coefficients, vector[int] product_types, vector[int] product_coefficients) except +
         void delete_reaction(int reaction_id)
-        void set_cyl_constraint(double center_x, double center_y, double radius)
-        void set_slab_constraint(double slab_start_z, double slab_end_z)
+        void set_cyl_constraint(double center_x, double center_y, double radius) except +
+        void set_slab_constraint(double slab_start_z, double slab_end_z) except +
         void remove_constraint()
         Vector2d get_slab_constraint_parameters()
 
