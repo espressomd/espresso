@@ -141,7 +141,7 @@ void write_vtk(std::string const &vtk_uid) {
 void switch_vtk(std::string const &vtk_uid, int status) {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    mpi_call_all(walberla::ek_switch_vtk, vtk_uid);
+    mpi_call_all(walberla::ek_switch_vtk, vtk_uid, status);
     return;
   }
 #endif // EK_WALBERLA

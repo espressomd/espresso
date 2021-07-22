@@ -35,12 +35,12 @@ void create_vtk(unsigned delta_N, unsigned initial_count,
 /**
  * @brief Write a VTK observable to disk.
  */
-void lb_lbfluid_write_vtk(std::string const &vtk_uid);
+void write_vtk(std::string const &vtk_uid);
 
 /**
  * @brief Toggle a VTK observable on/off.
  */
-void lb_lbfluid_switch_vtk(std::string const &vtk_uid, int status);
+void switch_vtk(std::string const &vtk_uid, int status);
 
 EK::ActiveEK get_lattice_switch();
 
