@@ -21,7 +21,6 @@
 #ifdef LB_WALBERLA
 
 #include "MpiCallbacks.hpp"
-#include "lb_interface.hpp"
 #include "lb_walberla_instance.hpp"
 
 #include <utils/Vector.hpp>

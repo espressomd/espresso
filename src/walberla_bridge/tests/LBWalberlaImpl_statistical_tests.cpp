@@ -36,10 +36,7 @@
 #include <boost/mpi.hpp>
 
 #include <cmath>
-#include <functional>
-#include <iostream>
-#include <memory>
-#include <vector>
+#include <cstdio>
 
 #include "tests_common.hpp"
 
