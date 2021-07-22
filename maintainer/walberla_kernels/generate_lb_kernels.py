@@ -41,6 +41,7 @@ def generate_collision_sweep(
     field_layout = "fzyx"
     q = len(lb_method.stencil)
     dim = len(lb_method.stencil[0])
+
     # Symbols for PDF (twice, due to double buffering)
     src_field = ps.Field.create_generic(
         'pdfs',
@@ -48,11 +49,16 @@ def generate_collision_sweep(
         dtype,
         index_dimensions=1,
         layout=field_layout,
-        index_shape=(
-            q,
-        ))
-    dst_field = ps.Field.create_generic('pdfs_tmp', dim, dtype, index_dimensions=1, layout=field_layout,
-                                        index_shape=(q,))
+        index_shape=(q,)
+    )
+    dst_field = ps.Field.create_generic(
+        'pdfs_tmp',
+        dim,
+        dtype,
+        index_dimensions=1,
+        layout=field_layout,
+        index_shape=(q,)
+    )
 
     # Generate collision kernel
     collide_update_rule = create_lbm_kernel(
@@ -69,7 +75,6 @@ def generate_collision_sweep(
 def generate_stream_sweep(ctx, lb_method, class_name, params):
     dtype = "float64" 
     field_layout = "fzyx"
-
     q = len(lb_method.stencil)
     dim = len(lb_method.stencil[0])
 
@@ -80,20 +85,25 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
         dtype,
         index_dimensions=1,
         layout=field_layout,
-        index_shape=(
-            q,
-        ))
-    dst_field = ps.Field.create_generic('pdfs_tmp', dim, dtype, index_dimensions=1, layout=field_layout,
-                                        index_shape=(q,))
+        index_shape=(q,)
+    )
+    dst_field = ps.Field.create_generic(
+        'pdfs_tmp',
+        dim,
+        dtype,
+        index_dimensions=1,
+        layout=field_layout,
+        index_shape=(q,)
+    )
 
-    stream_update_rule = create_stream_pull_only_kernel(lb_method.stencil, None, 'pdfs', 'pdfs_tmp', field_layout,
-                                                        dtype)
+    # Generate stream kernel
+    stream_update_rule = create_stream_pull_only_kernel(
+        lb_method.stencil, None, 'pdfs', 'pdfs_tmp', field_layout, dtype)
     stream_ast = ps.create_kernel(stream_update_rule, **params)
     stream_ast.function_name = 'kernel_stream'
     stream_ast.assumed_inner_stride_one = True
     codegen.generate_sweep(
-        ctx, class_name, stream_ast, field_swaps=[
-            (src_field, dst_field)])
+        ctx, class_name, stream_ast, field_swaps=[(src_field, dst_field)])
 
 
 with CodeGeneration() as ctx:
@@ -131,10 +141,15 @@ with CodeGeneration() as ctx:
         method,
         collision_rule_unthermalized,
         "CollideSweep",
-        {})
+        {}
+    )
     generate_collision_sweep(
-        ctx, method, collision_rule_unthermalized, "CollideSweepAVX", {
-            "cpu_vectorize_info": cpu_vectorize_info})
+        ctx,
+        method,
+        collision_rule_unthermalized,
+        "CollideSweepAVX",
+        {"cpu_vectorize_info": cpu_vectorize_info}
+    )
 
     # generate thermalized LB
     collision_rule_thermalized = create_lb_collision_rule(
@@ -151,30 +166,34 @@ with CodeGeneration() as ctx:
         method,
         collision_rule_thermalized,
         "CollideSweepThermalized",
-        params)
+        params
+    )
     generate_collision_sweep(
         ctx,
         method,
         collision_rule_thermalized,
         "CollideSweepThermalizedAVX",
-        params_vec)
+        params_vec
+    )
 
     # Boundary conditions
     ubb_dynamic = UBB(lambda *args: None, dim=3)
     ubb_data_handler = UBBAdditionalDataHandler(method.stencil, ubb_dynamic)
 
     generate_boundary(ctx, 'Dynamic_UBB', ubb_dynamic, method,
-                      additional_data_handler=ubb_data_handler, streaming_pattern="push")
+                      additional_data_handler=ubb_data_handler,
+                      streaming_pattern="push")
 
     # communication
-    pdfs = Field.create_generic('pdfs', 3, index_shape=(
-        len(method.stencil),), layout='fzyx')
+    pdfs = Field.create_generic(
+        'pdfs', 3, index_shape=(len(method.stencil),), layout='fzyx')
     generate_lb_pack_info(
         ctx,
         'PushPackInfo',
         method.stencil,
         pdfs,
-        streaming_pattern='push')
+        streaming_pattern='push'
+    )
 
     # Info header containing correct template definitions for stencil and field
     #ctx.write_file("InfoHeader.h", info_header)
