@@ -368,11 +368,10 @@ void Mmm1dgpuForce::set_params(float _boxz, float _coulomb_prefactor,
 __global__ void forcesKernel(const float *__restrict__ r,
                              const float *__restrict__ q,
                              float *__restrict__ force, int N, int pairs,
-                             int tStart, int tStop) {
-  if (tStop < 0)
-    tStop = N * N;
+                             int tStart) {
 
   auto const c_2pif = 2 * Utils::pi<float>();
+  auto const tStop = Utils::sqr(N);
 
   for (int tid =
            static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x) + tStart;
@@ -460,12 +459,11 @@ __global__ void forcesKernel(const float *__restrict__ r,
 __global__ void energiesKernel(const float *__restrict__ r,
                                const float *__restrict__ q,
                                float *__restrict__ energy, int N, int pairs,
-                               int tStart, int tStop) {
-  if (tStop < 0)
-    tStop = N * N;
+                               int tStart) {
 
   auto const c_2pif = 2 * Utils::pi<float>();
   auto const c_gammaf = Utils::gamma<float>();
+  auto const tStop = Utils::sqr(N);
 
   extern __shared__ float partialsums[];
   if (!pairs) {
@@ -532,9 +530,9 @@ __global__ void energiesKernel(const float *__restrict__ r,
 }
 
 __global__ void vectorReductionKernel(float const *src, float *dst, int N,
-                                      int tStart, int tStop) {
-  if (tStop < 0)
-    tStop = N * N;
+                                      int tStart) {
+
+  auto const tStop = Utils::sqr(N);
 
   for (auto tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
        tid < N; tid += static_cast<int>(blockDim.x * gridDim.x)) {
@@ -565,12 +563,12 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s) {
   {
     auto blocksRed = static_cast<int>(s.npart_gpu() / numThreads) + 1;
     KERNELCALL(forcesKernel, numBlocks(s), numThreads, s.rGpuBegin(),
-               s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs, 0, -1)
+               s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs, 0)
     KERNELCALL(vectorReductionKernel, blocksRed, numThreads, dev_forcePairs,
-               s.fGpuBegin(), s.npart_gpu(), 0, -1)
+               s.fGpuBegin(), s.npart_gpu(), 0)
   } else {
     KERNELCALL(forcesKernel, numBlocks(s), numThreads, s.rGpuBegin(),
-               s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), pairs, 0, -1)
+               s.qGpuBegin(), s.fGpuBegin(), s.npart_gpu(), pairs, 0)
   }
 }
 
@@ -597,7 +595,7 @@ void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
 
   KERNELCALL_shared(energiesKernel, numBlocks(s), numThreads, shared,
                     s.rGpuBegin(), s.qGpuBegin(), dev_energyBlocks,
-                    s.npart_gpu(), 0, 0, -1);
+                    s.npart_gpu(), 0, 0);
   KERNELCALL_shared(sumKernel, 1, numThreads, shared, dev_energyBlocks,
                     numBlocks(s));
   KERNELCALL(scaleAndAddKernel, 1, 1, &(((CUDA_energy *)s.eGpu())->coulomb),
@@ -617,7 +615,7 @@ float Mmm1dgpuForce::force_benchmark(SystemInterface &s) {
   cuda_safe_mem(cudaEventCreate(&eventStop));
   cuda_safe_mem(cudaEventRecord(eventStart, stream[0]));
   KERNELCALL(forcesKernel, numBlocks(s), numThreads, s.rGpuBegin(),
-             s.qGpuBegin(), dev_f_benchmark, s.npart_gpu(), 0, 0, -1)
+             s.qGpuBegin(), dev_f_benchmark, s.npart_gpu(), 0, 0)
   cuda_safe_mem(cudaEventRecord(eventStop, stream[0]));
   cuda_safe_mem(cudaEventSynchronize(eventStop));
   cuda_safe_mem(cudaEventElapsedTime(&elapsedTime, eventStart, eventStop));
