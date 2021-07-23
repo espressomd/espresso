@@ -22,6 +22,8 @@
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 
+#include <cstddef>
+
 /* Syntactic sugar */
 #define espressoSystemInterface EspressoSystemInterface::Instance()
 
@@ -117,12 +119,16 @@ public:
   float *fGpuEnd() override {
     return gpu_get_particle_force_pointer() + 3 * m_gpu_npart;
   };
-  float *eGpu() override { return (float *)gpu_get_energy_pointer(); };
+  float *eGpu() override {
+    // cast struct of floats to array of floats
+    // https://stackoverflow.com/a/29278260
+    return reinterpret_cast<float *>(gpu_get_energy_pointer());
+  };
   float *torqueGpuBegin() override {
-    return (float *)gpu_get_particle_torque_pointer();
+    return gpu_get_particle_torque_pointer();
   };
   float *torqueGpuEnd() override {
-    return (float *)(gpu_get_particle_torque_pointer()) + 3 * m_gpu_npart;
+    return gpu_get_particle_torque_pointer() + 3 * m_gpu_npart;
   };
   bool hasFGpu() override { return true; };
   bool requestFGpu() override {
@@ -148,7 +154,7 @@ public:
 
   Utils::Vector3d box() const override;
 
-  unsigned int npart_gpu() const override {
+  std::size_t npart_gpu() const override {
 #ifdef CUDA
     return gpu_get_particle_pointer().size();
 #else
@@ -177,10 +183,10 @@ protected:
       reallocDeviceMemory(gpu_get_particle_pointer().size());
     }
   };
-  void reallocDeviceMemory(int n);
+  void reallocDeviceMemory(std::size_t n);
 #endif
 
-  int m_gpu_npart;
+  std::size_t m_gpu_npart;
   bool m_gpu;
 
   float *m_r_gpu_begin;

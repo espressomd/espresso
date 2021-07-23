@@ -66,40 +66,40 @@ constexpr int modpsi_constant_size = modpsi_order * modpsi_order * 2;
 
 // linearized array on device
 __constant__ int device_n_modPsi[1] = {0};
-__constant__ int device_linModPsi_offsets[2 * modpsi_order],
-    device_linModPsi_lengths[2 * modpsi_order];
+__constant__ unsigned int device_linModPsi_offsets[2 * modpsi_order];
+__constant__ unsigned int device_linModPsi_lengths[2 * modpsi_order];
 __constant__ float device_linModPsi[modpsi_constant_size];
 
 __device__ float dev_mod_psi_even(int n, float x) {
   return evaluateAsTaylorSeriesAt(
       &device_linModPsi[device_linModPsi_offsets[2 * n]],
-      device_linModPsi_lengths[2 * n], x * x);
+      static_cast<int>(device_linModPsi_lengths[2 * n]), x * x);
 }
 
 __device__ float dev_mod_psi_odd(int n, float x) {
   return x * evaluateAsTaylorSeriesAt(
                  &device_linModPsi[device_linModPsi_offsets[2 * n + 1]],
-                 device_linModPsi_lengths[2 * n + 1], x * x);
+                 static_cast<int>(device_linModPsi_lengths[2 * n + 1]), x * x);
 }
 
 int modpsi_init() {
   create_mod_psi_up_to(modpsi_order);
 
   // linearized array on host
-  std::vector<int> linModPsi_offsets(modPsi.size());
-  std::vector<int> linModPsi_lengths(modPsi.size());
-  for (size_t i = 0; i < modPsi.size(); i++) {
+  std::vector<unsigned int> linModPsi_offsets(modPsi.size());
+  std::vector<unsigned int> linModPsi_lengths(modPsi.size());
+  for (std::size_t i = 0; i < modPsi.size(); i++) {
     if (i)
       linModPsi_offsets[i] =
           linModPsi_offsets[i - 1] + linModPsi_lengths[i - 1];
-    linModPsi_lengths[i] = modPsi[i].size();
+    linModPsi_lengths[i] = static_cast<unsigned int>(modPsi[i].size());
   }
 
   // linearize the coefficients array
   std::vector<float> linModPsi(linModPsi_offsets[modPsi.size() - 1] +
                                linModPsi_lengths[modPsi.size() - 1]);
-  for (size_t i = 0; i < modPsi.size(); i++) {
-    for (size_t j = 0; j < modPsi[i].size(); j++) {
+  for (std::size_t i = 0; i < modPsi.size(); i++) {
+    for (std::size_t j = 0; j < modPsi[i].size(); j++) {
       linModPsi[linModPsi_offsets[i] + j] = static_cast<float>(modPsi[i][j]);
     }
   }
@@ -110,7 +110,7 @@ int modpsi_init() {
     // copy to GPU
     auto const linModPsiSize = linModPsi_offsets[modPsi.size() - 1] +
                                linModPsi_lengths[modPsi.size() - 1];
-    if (linModPsiSize > modpsi_constant_size) {
+    if (linModPsiSize > static_cast<unsigned int>(modpsi_constant_size)) {
       throw std::runtime_error(
           "__constant__ device_linModPsi[] is not large enough");
     }
@@ -153,18 +153,18 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, float _coulomb_prefactor,
 }
 
 void Mmm1dgpuForce::setup(SystemInterface &s) {
-  if (s.box()[2] <= 0) {
+  auto const box_z = static_cast<float>(s.box()[2]);
+  if (box_z <= 0) {
     throw std::runtime_error(
         "Please set box length before initializing MMM1D!");
   }
   if (need_tune && s.npart_gpu() > 0) {
-    set_params(static_cast<float>(s.box()[2]),
-               static_cast<float>(coulomb.prefactor), maxPWerror,
+    set_params(box_z, static_cast<float>(coulomb.prefactor), maxPWerror,
                far_switch_radius, bessel_cutoff);
     tune(s, maxPWerror, far_switch_radius, bessel_cutoff);
   }
-  if (s.box()[2] != host_boxz) {
-    set_params(static_cast<float>(s.box()[2]), 0, -1, -1, -1);
+  if (box_z != host_boxz) {
+    set_params(box_z, 0, -1, -1, -1);
   }
   if (s.npart_gpu() == host_npart) { // unchanged
     return;
@@ -178,7 +178,7 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
   for (int d = 0; d < deviceCount; d++) {
     cudaSetDevice(d);
 
-    size_t freeMem, totalMem;
+    std::size_t freeMem, totalMem;
     cudaMemGetInfo(&freeMem, &totalMem);
     if (freeMem / 2 < part_mem_size) {
       // don't use more than half the device's memory
@@ -198,11 +198,12 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
     cudaFree(dev_energyBlocks);
   cuda_safe_mem(
       cudaMalloc((void **)&dev_energyBlocks, numBlocks(s) * sizeof(float)));
-  host_npart = static_cast<int>(s.npart_gpu());
+  host_npart = static_cast<unsigned int>(s.npart_gpu());
 }
 
 unsigned int Mmm1dgpuForce::numBlocks(SystemInterface const &s) const {
-  auto b = static_cast<int>(s.npart_gpu() * s.npart_gpu() / numThreads) + 1;
+  auto b = 1 + static_cast<unsigned int>(Utils::sqr(s.npart_gpu()) /
+                                         static_cast<std::size_t>(numThreads));
   if (b > 65535)
     b = 65535;
   return b;
@@ -214,8 +215,8 @@ __forceinline__ __device__ float sqpow(float x) { return x * x; }
 __forceinline__ __device__ float cbpow(float x) { return x * x * x; }
 
 __device__ void sumReduction(float *input, float *sum) {
-  auto tid = static_cast<int>(threadIdx.x);
-  for (auto i = static_cast<int>(blockDim.x) / 2; i > 0; i /= 2) {
+  auto const tid = threadIdx.x;
+  for (auto i = blockDim.x / 2; i > 0; i /= 2) {
     __syncthreads();
     if (tid < i)
       input[tid] += input[i + tid];
@@ -225,23 +226,23 @@ __device__ void sumReduction(float *input, float *sum) {
     sum[0] = input[0];
 }
 
-__global__ void sumKernel(float *data, int N) {
+__global__ void sumKernel(float *data, std::size_t N) {
   extern __shared__ float partialsums[];
   if (blockIdx.x != 0)
     return;
-  auto const tid = static_cast<int>(threadIdx.x);
+  std::size_t const tid = threadIdx.x;
   auto result = 0.f;
 
-  for (int i = 0; i < N; i += static_cast<int>(blockDim.x)) {
+  for (std::size_t i = 0; i < N; i += blockDim.x) {
     if (i + tid >= N)
-      partialsums[tid] = 0;
+      partialsums[tid] = 0.f;
     else
       partialsums[tid] = data[i + tid];
 
     sumReduction(partialsums, &result);
     if (tid == 0) {
       if (i == 0)
-        data[0] = 0;
+        data[0] = 0.f;
       data[0] += result;
     }
   }
@@ -249,9 +250,9 @@ __global__ void sumKernel(float *data, int N) {
 
 __global__ void besselTuneKernel(int *result, float far_switch_radius,
                                  int maxCut) {
-  const float c_2pif = 2 * Utils::pi<float>();
-  float arg = c_2pif * *uz * far_switch_radius;
-  float pref = 4 * *uz * max(1.0f, c_2pif * *uz);
+  constexpr auto c_2pif = 2 * Utils::pi<float>();
+  auto const arg = c_2pif * *uz * far_switch_radius;
+  auto const pref = 4 * *uz * max(1.0f, c_2pif * *uz);
   float err;
   int P = 1;
   do {
@@ -367,17 +368,16 @@ void Mmm1dgpuForce::set_params(float _boxz, float _coulomb_prefactor,
 
 __global__ void forcesKernel(const float *__restrict__ r,
                              const float *__restrict__ q,
-                             float *__restrict__ force, int N, int pairs,
-                             int tStart) {
+                             float *__restrict__ force, std::size_t N,
+                             int pairs, std::size_t tStart) {
 
-  auto const c_2pif = 2 * Utils::pi<float>();
+  constexpr auto c_2pif = 2 * Utils::pi<float>();
   auto const tStop = Utils::sqr(N);
 
-  for (int tid =
-           static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x) + tStart;
-       tid < tStop; tid += static_cast<int>(blockDim.x * gridDim.x)) {
+  for (std::size_t tid = threadIdx.x + blockIdx.x * blockDim.x + tStart;
+       tid < tStop; tid += blockDim.x * gridDim.x) {
     auto const p1 = tid % N, p2 = tid / N;
-    auto x = r[3 * p2] - r[3 * p1];
+    auto x = r[3 * p2 + 0] - r[3 * p1 + 0];
     auto y = r[3 * p2 + 1] - r[3 * p1 + 1];
     auto z = r[3 * p2 + 2] - r[3 * p1 + 2];
     auto const rxy2 = sqpow(x) + sqpow(y);
@@ -392,8 +392,8 @@ __global__ void forcesKernel(const float *__restrict__ r,
 
     if (p1 == p2) // particle exerts no force on itself
     {
-      rxy = 1; // so the division at the end doesn't fail with NaN (sum_r is 0
-               // anyway)
+      rxy = 1.f; // so the division at the end doesn't fail with NaN
+                 // (sum_r is 0 anyway)
     } else if (rxy2 <= *far_switch_radius_2) // near formula
     {
       auto const uzz = *uz * z;
@@ -428,8 +428,8 @@ __global__ void forcesKernel(const float *__restrict__ r,
       if (rxy == 0) // particles at the same radial position only exert a force
                     // in z direction
       {
-        rxy = 1; // so the division at the end doesn't fail with NaN (sum_r is 0
-                 // anyway)
+        rxy = 1.f; // so the division at the end doesn't fail with NaN
+                   // (sum_r is 0 anyway)
       }
     } else // far formula
     {
@@ -445,11 +445,11 @@ __global__ void forcesKernel(const float *__restrict__ r,
 
     auto const pref = *coulomb_prefactor * q[p1] * q[p2];
     if (pairs) {
-      force[3 * (p1 + p2 * N - tStart)] = pref * sum_r / rxy * x;
+      force[3 * (p1 + p2 * N - tStart) + 0] = pref * sum_r / rxy * x;
       force[3 * (p1 + p2 * N - tStart) + 1] = pref * sum_r / rxy * y;
       force[3 * (p1 + p2 * N - tStart) + 2] = pref * sum_z;
     } else {
-      atomicAdd(&force[3 * p2], pref * sum_r / rxy * x);
+      atomicAdd(&force[3 * p2 + 0], pref * sum_r / rxy * x);
       atomicAdd(&force[3 * p2 + 1], pref * sum_r / rxy * y);
       atomicAdd(&force[3 * p2 + 2], pref * sum_z);
     }
@@ -458,11 +458,11 @@ __global__ void forcesKernel(const float *__restrict__ r,
 
 __global__ void energiesKernel(const float *__restrict__ r,
                                const float *__restrict__ q,
-                               float *__restrict__ energy, int N, int pairs,
-                               int tStart) {
+                               float *__restrict__ energy, std::size_t N,
+                               int pairs, std::size_t tStart) {
 
-  auto const c_2pif = 2 * Utils::pi<float>();
-  auto const c_gammaf = Utils::gamma<float>();
+  constexpr auto c_2pif = 2 * Utils::pi<float>();
+  constexpr auto c_gammaf = Utils::gamma<float>();
   auto const tStop = Utils::sqr(N);
 
   extern __shared__ float partialsums[];
@@ -470,13 +470,12 @@ __global__ void energiesKernel(const float *__restrict__ r,
     partialsums[threadIdx.x] = 0;
     __syncthreads();
   }
-  for (int tid =
-           static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x) + tStart;
-       tid < tStop; tid += static_cast<int>(blockDim.x * gridDim.x)) {
+  for (std::size_t tid = threadIdx.x + blockIdx.x * blockDim.x + tStart;
+       tid < tStop; tid += blockDim.x * gridDim.x) {
     auto const p1 = tid % N, p2 = tid / N;
     auto z = r[3 * p2 + 2] - r[3 * p1 + 2];
-    auto const rxy2 =
-        sqpow(r[3 * p2] - r[3 * p1]) + sqpow(r[3 * p2 + 1] - r[3 * p1 + 1]);
+    auto const rxy2 = sqpow(r[3 * p2 + 0] - r[3 * p1 + 0]) +
+                      sqpow(r[3 * p2 + 1] - r[3 * p1 + 1]);
     auto rxy = sqrt(rxy2);
     auto sum_e = 0.f;
 
@@ -529,18 +528,17 @@ __global__ void energiesKernel(const float *__restrict__ r,
   }
 }
 
-__global__ void vectorReductionKernel(float const *src, float *dst, int N,
-                                      int tStart) {
+__global__ void vectorReductionKernel(float const *src, float *dst,
+                                      std::size_t N, std::size_t tStart) {
 
   auto const tStop = Utils::sqr(N);
 
-  for (auto tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
-       tid < N; tid += static_cast<int>(blockDim.x * gridDim.x)) {
+  for (std::size_t tid = threadIdx.x + blockIdx.x * blockDim.x; tid < N;
+       tid += blockDim.x * gridDim.x) {
     auto const offset = (tid + (tStart % N)) % N;
-
-    for (int i = 0; tid + i * N < (tStop - tStart); i++) {
+    for (std::size_t i = 0; tid + i * N < (tStop - tStart); i++) {
 #pragma unroll 3
-      for (int d = 0; d < 3; d++) {
+      for (std::size_t d = 0; d < 3; d++) {
         dst[3 * offset + d] -= src[3 * (tid + i * N) + d];
       }
     }
@@ -561,7 +559,9 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s) {
 
   if (pairs) // if we calculate force pairs, we need to reduce them to forces
   {
-    auto blocksRed = static_cast<int>(s.npart_gpu() / numThreads) + 1;
+    auto const blocksRed =
+        1 + static_cast<unsigned>(s.npart_gpu() /
+                                  static_cast<std::size_t>(numThreads));
     KERNELCALL(forcesKernel, numBlocks(s), numThreads, s.rGpuBegin(),
                s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs, 0)
     KERNELCALL(vectorReductionKernel, blocksRed, numThreads, dev_forcePairs,
@@ -572,10 +572,10 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s) {
   }
 }
 
-__global__ void scaleAndAddKernel(float *dst, float const *src, int N,
+__global__ void scaleAndAddKernel(float *dst, float const *src, std::size_t N,
                                   float factor) {
-  for (auto tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
-       tid < N; tid += static_cast<int>(blockDim.x * gridDim.x)) {
+  for (std::size_t tid = threadIdx.x + blockIdx.x * blockDim.x; tid < N;
+       tid += blockDim.x * gridDim.x) {
     dst[tid] += src[tid] * factor;
   }
 }
@@ -591,17 +591,18 @@ void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
   if (pairs < 0) {
     throw std::runtime_error("MMM1D was not initialized correctly");
   }
-  auto const shared = numThreads * static_cast<int>(sizeof(float));
 
+  auto const shared = numThreads * static_cast<unsigned>(sizeof(float));
   KERNELCALL_shared(energiesKernel, numBlocks(s), numThreads, shared,
                     s.rGpuBegin(), s.qGpuBegin(), dev_energyBlocks,
                     s.npart_gpu(), 0, 0);
   KERNELCALL_shared(sumKernel, 1, numThreads, shared, dev_energyBlocks,
                     numBlocks(s));
-  KERNELCALL(scaleAndAddKernel, 1, 1, &(((CUDA_energy *)s.eGpu())->coulomb),
+  KERNELCALL(scaleAndAddKernel, 1, 1,
+             &(reinterpret_cast<CUDA_energy *>(s.eGpu())->coulomb),
              &dev_energyBlocks[0], 1,
-             0.5); // we have counted every interaction twice, so halve the
-                   // total energy
+             0.5f); // we have counted every interaction twice, so halve the
+                    // total energy
 }
 
 float Mmm1dgpuForce::force_benchmark(SystemInterface &s) {

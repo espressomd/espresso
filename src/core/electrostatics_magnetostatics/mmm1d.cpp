@@ -77,10 +77,10 @@ MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
 static std::array<double, MAXIMAL_B_CUT> bessel_radii;
 
 static double far_error(int P, double minrad) {
+  auto const wavenumber = 2 * Utils::pi() * box_geo.length_inv()[2];
   // this uses an upper bound to all force components and the potential
-  auto const rhores = 2 * Utils::pi() * box_geo.length_inv()[2] * minrad;
-  auto const pref = 4 * box_geo.length_inv()[2] *
-                    std::max(1.0, 2 * Utils::pi() * box_geo.length_inv()[2]);
+  auto const rhores = wavenumber * minrad;
+  auto const pref = 4 * box_geo.length_inv()[2] * std::max(1.0, wavenumber);
 
   return pref * K1(rhores * P) * exp(rhores) / rhores * (P - 1 + 1 / rhores);
 }
@@ -177,7 +177,7 @@ int MMM1D_init() {
 
 void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
                                   double r, Utils::Vector3d &force) {
-  constexpr double c_2pi = 2 * Utils::pi();
+  constexpr auto c_2pi = 2 * Utils::pi();
   auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
@@ -186,9 +186,9 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
 
   if (rxy2 <= mmm1d_params.far_switch_radius_2) {
     /* polygamma summation */
-    double sr = 0;
-    double sz = mod_psi_odd(0, z_d);
-    double r2nm1 = 1.0;
+    auto sr = 0.;
+    auto sz = mod_psi_odd(0, z_d);
+    auto r2nm1 = 1.0;
     for (int n = 1; n < n_modPsi; n++) {
       auto const deriv = static_cast<double>(2 * n);
       auto const mpe = mod_psi_even(n, z_d);
@@ -238,7 +238,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
     /* far range formula */
     auto const rxy = sqrt(rxy2);
     auto const rxy_d = rxy * box_geo.length_inv()[2];
-    double sr = 0, sz = 0;
+    auto sr = 0., sz = 0.;
 
     for (int bp = 1; bp < MAXIMAL_B_CUT; bp++) {
       if (bessel_radii[bp - 1] < rxy)
@@ -271,7 +271,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
   if (chpref == 0)
     return 0;
 
-  constexpr double c_2pi = 2 * Utils::pi();
+  constexpr auto c_2pi = 2 * Utils::pi();
   auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
@@ -299,15 +299,15 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
 
     double rt, shift_z;
 
-    E += 1 / r;
+    E += 1. / r;
 
     shift_z = d[2] + box_geo.length()[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
-    E += 1 / rt;
+    E += 1. / rt;
 
     shift_z = d[2] - box_geo.length()[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
-    E += 1 / rt;
+    E += 1. / rt;
   } else {
     /* far range formula */
     auto const rxy = sqrt(rxy2);

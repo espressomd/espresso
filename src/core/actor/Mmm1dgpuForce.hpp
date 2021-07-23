@@ -55,7 +55,7 @@ private:
   float host_boxz;
   // the number of particles we had during the last run. Needed to check if we
   // have to realloc dev_forcePairs
-  int host_npart;
+  unsigned int host_npart;
   bool need_tune;
 
   // pairs==0: return forces using atomicAdd

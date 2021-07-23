@@ -210,7 +210,7 @@ std::array<std::vector<int>, 3> inline calc_meshift(
     std::array<int, 3> const &mesh_size, bool zero_out_midpoint = false) {
   std::array<std::vector<int>, 3> ret{};
 
-  for (size_t i = 0; i < 3; i++) {
+  for (std::size_t i = 0; i < 3; i++) {
     ret[i] = std::vector<int>(mesh_size[i]);
 
     for (int j = 1; j <= mesh_size[i] / 2; j++) {
