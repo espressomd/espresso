@@ -38,8 +38,11 @@
 
 #include <cuda.h>
 
+#include <cmath>
 #include <cstddef>
-#include <iostream>
+#include <cstdio>
+#include <stdexcept>
+#include <vector>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -154,10 +157,6 @@ Mmm1dgpuForce::Mmm1dgpuForce(SystemInterface &s, float _coulomb_prefactor,
 
 void Mmm1dgpuForce::setup(SystemInterface &s) {
   auto const box_z = static_cast<float>(s.box()[2]);
-  if (box_z <= 0) {
-    throw std::runtime_error(
-        "Please set box length before initializing MMM1D!");
-  }
   if (need_tune && s.npart_gpu() > 0) {
     set_params(box_z, static_cast<float>(coulomb.prefactor), maxPWerror,
                far_switch_radius, bessel_cutoff);
@@ -182,8 +181,7 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
     cudaMemGetInfo(&freeMem, &totalMem);
     if (freeMem / 2 < part_mem_size) {
       // don't use more than half the device's memory
-      std::cerr << "Switching to atomicAdd due to memory constraints."
-                << std::endl;
+      fprintf(stderr, "Switching to atomicAdd due to memory constraints.\n");
       pairs = 0;
       break;
     }
@@ -546,11 +544,7 @@ __global__ void vectorReductionKernel(float const *src, float *dst,
 }
 
 void Mmm1dgpuForce::computeForces(SystemInterface &s) {
-  if (coulomb.method != COULOMB_MMM1D_GPU) {
-    std::cerr << "MMM1D: coulomb.method has been changed, skipping calculation"
-              << std::endl;
-    return;
-  }
+  assert(coulomb.method == COULOMB_MMM1D_GPU);
   setup(s);
 
   if (pairs < 0) {
@@ -581,11 +575,7 @@ __global__ void scaleAndAddKernel(float *dst, float const *src, std::size_t N,
 }
 
 void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
-  if (coulomb.method != COULOMB_MMM1D_GPU) {
-    std::cerr << "MMM1D: coulomb.method has been changed, skipping calculation"
-              << std::endl;
-    return;
-  }
+  assert(coulomb.method == COULOMB_MMM1D_GPU);
   setup(s);
 
   if (pairs < 0) {
