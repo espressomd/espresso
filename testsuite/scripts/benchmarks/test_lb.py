@@ -17,19 +17,19 @@
 
 import unittest as ut
 import importlib_wrapper
-import os
+import numpy as np
 
-tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/active_matter/solutions/rectification_geometry.py")
+# make simulation deterministic
+np.random.seed(42)
+
+benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
+    "@BENCHMARKS_DIR@/lb.py", cmd_arguments=["--particles_per_core", "80"],
+    measurement_steps=200, n_iterations=2, min_skin=0.688, max_skin=0.688)
 
 
 @skipIfMissingFeatures
-class Tutorial(ut.TestCase):
-    system = tutorial.system
-
-    def test_file_generation(self):
-        filepath = "vtk_out/shape/simulation_step_0.vtu"
-        self.assertTrue(os.path.isfile(filepath), filepath + " not created")
+class Sample(ut.TestCase):
+    system = benchmark.system
 
 
 if __name__ == "__main__":
