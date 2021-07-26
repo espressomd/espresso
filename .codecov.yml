@@ -29,6 +29,7 @@ coverage:
         threshold: 1%
     patch:
       default:
+        target: 90% # switch back to 'auto' when all python tests are enabled again
         enabled: yes
         threshold: 1%
     changes: no
