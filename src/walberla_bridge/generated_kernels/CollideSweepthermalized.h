@@ -50,8 +50,8 @@ namespace pystencils {
 class CollideSweepthermalized
 {
 public:
-    CollideSweepthermalized( BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, double kT, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t seed, uint32_t time_step )
-        : forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(block_offset_0), block_offset_1_(block_offset_1), block_offset_2_(block_offset_2), kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed), time_step_(time_step)
+    CollideSweepthermalized( BlockDataID forceID_, BlockDataID pdfsID_, double kT, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t seed, uint32_t time_step )
+        : forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(0), block_offset_1_(0), block_offset_2_(0), kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed), time_step_(time_step)
     {};
 
     

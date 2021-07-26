@@ -1,15 +1,19 @@
 #include "LBWalberlaImpl.hpp"
 #include "relaxation_rates.hpp"
 #ifdef __AVX2__
+#include "generated_kernels/CollideSweepAVX.h"
+#define CollisionModelName walberla::pystencils::CollideSweepAVX
 #include "generated_kernels/MRTLatticeModelAvx.h"
 #define LatticeModelName lbm::MRTLatticeModelAvx
 #else
+#include "generated_kernels/CollideSweep.h"
+#define CollisionModelName walberla::pystencils::CollideSweep
 #include "generated_kernels/MRTLatticeModel.h"
 #define LatticeModelName lbm::MRTLatticeModel
 #endif
 
 namespace walberla {
-class LBWalberlaD3Q19MRT : public LBWalberlaImpl<LatticeModelName> {
+class LBWalberlaD3Q19MRT : public LBWalberlaImpl<LatticeModelName, CollisionModelName> {
   using LatticeModel = LatticeModelName;
 
 public:
@@ -42,10 +46,11 @@ public:
                      const Utils::Vector3i &node_grid, int n_ghost_layers)
       : LBWalberlaImpl(viscosity, grid_dimensions, node_grid, n_ghost_layers) {
     construct_lattice_model(viscosity);
-    setup_with_valid_lattice_model(density);
+    setup_with_valid_lattice_model(density, 0u, 0u);
   };
 };
 
 } // namespace walberla
 
 #undef LatticeModelName
+#undef CollisionModelName

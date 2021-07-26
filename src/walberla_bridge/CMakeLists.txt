@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 set(WalberlaBridge_SRC generated_kernels/FluctuatingMRTLatticeModel.cpp generated_kernels/MRTLatticeModel.cpp
-                       generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp
+                       generated_kernels/StreamSweep.cpp generated_kernels/CollideSweep.cpp generated_kernels/CollideSweepthermalized.cpp
                        lb_walberla_init.cpp)
 if (WALBERLA_USE_AVX)
-  list(APPEND WalberlaBridge_SRC generated_kernels/FluctuatingMRTLatticeModelAvx.cpp generated_kernels/MRTLatticeModelAvx.cpp)
+  list(APPEND WalberlaBridge_SRC generated_kernels/FluctuatingMRTLatticeModelAvx.cpp generated_kernels/MRTLatticeModelAvx.cpp generated_kernels/CollideSweepAVX.cpp generated_kernels/CollideSweepthermalizedAVX.cpp)
 endif()
 add_library(WalberlaBridge SHARED ${WalberlaBridge_SRC})
 target_link_libraries(WalberlaBridge PUBLIC MPI::MPI_CXX EspressoUtils

@@ -18,6 +18,7 @@
 //! \\author lbmpy
 //======================================================================================================================
 
+#include <cassert>
 #include <cmath>
 
 #include "CollideSweepthermalized.h"
@@ -334,6 +335,7 @@ static FUNC_PREFIX void collidesweepthermalized_collidesweepthermalized(
         const double vel2Term = xi_258 + xi_3;
         const double rho =
             vel0Term + vel1Term + vel2Term + xi_267 + xi_4 + xi_5 + xi_6;
+        assert(rho >= 0.);
         const double xi_7 = 1 / (rho);
         const double xi_86 = kT * rho;
         const double xi_87 =
