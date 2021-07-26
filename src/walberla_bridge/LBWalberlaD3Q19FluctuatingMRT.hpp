@@ -14,7 +14,8 @@
 #endif
 
 namespace walberla {
-class LBWalberlaD3Q19FluctuatingMRT : public LBWalberlaImpl<LatticeModelName, CollisionModelName> {
+class LBWalberlaD3Q19FluctuatingMRT
+    : public LBWalberlaImpl<LatticeModelName, CollisionModelName> {
 
   using LatticeModel = LatticeModelName;
 
@@ -30,7 +31,7 @@ public:
                      omega,     // shear
                      seed,      // RNG seed
                      0          // time_step
-                    ));
+                     ));
   };
   void set_viscosity(double viscosity) override {
     auto *lm = dynamic_cast<LatticeModel *>(m_lattice_model.get());

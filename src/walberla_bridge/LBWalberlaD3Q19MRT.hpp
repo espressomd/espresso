@@ -13,7 +13,8 @@
 #endif
 
 namespace walberla {
-class LBWalberlaD3Q19MRT : public LBWalberlaImpl<LatticeModelName, CollisionModelName> {
+class LBWalberlaD3Q19MRT
+    : public LBWalberlaImpl<LatticeModelName, CollisionModelName> {
   using LatticeModel = LatticeModelName;
 
 public:
