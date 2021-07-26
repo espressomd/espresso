@@ -16,8 +16,8 @@ import os
 # TODO: consistent "ekin"/"ek" prefix
 # TODO: figure out how to remove duplication in the MPI-calls between ekin/lb
 
-
-# TODO: boundaries?
+# TODO: boundaries? -> dirichlet density boundary condition is missing
+#                   -> fixed flux boundary condition?
 
 IF EK_WALBERLA:
 
