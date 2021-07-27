@@ -151,7 +151,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             unsigned int numBlocks(SystemInterface & s)
 
             float host_boxz
-            int host_npart
+            unsigned int host_npart
             bool need_tune
 
             int pairs
