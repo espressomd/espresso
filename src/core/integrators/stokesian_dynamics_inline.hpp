@@ -35,7 +35,6 @@
 
 inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
                                                  double time_step) {
-  auto const skin2 = Utils::sqr(0.5 * skin);
 
   // Compute new (translational and rotational) velocities
   propagate_vel_pos_sd(particles, comm_cart, time_step);
@@ -51,10 +50,6 @@ inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
       Utils::Vector3d omega_unit = (1 / norm) * p.m.omega;
       local_rotate_particle(p, omega_unit, norm * time_step);
     }
-
-    // Verlet criterion check
-    if ((p.r.p - p.l.p_old).norm2() > skin2)
-      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 }
 

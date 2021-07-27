@@ -41,6 +41,7 @@ from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
     from .ekboundaries import EKBoundaries
+from . import lees_edwards
 from .comfixed import ComFixed
 from .utils cimport check_type_or_throw_except
 from .utils import handle_errors, array_locked
@@ -155,6 +156,8 @@ cdef class System:
         """:class:`espressomd.lbboundaries.LBBoundaries`"""
         ekboundaries
         """:class:`espressomd.ekboundaries.EKBoundaries`"""
+        lees_edwards
+        """:class:`espressomd.lees_edwards.Lees_Edwards`"""
         collision_detection
         """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
@@ -192,6 +195,7 @@ cdef class System:
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
+            self.lees_edwards = lees_edwards.LeesEdwards()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()

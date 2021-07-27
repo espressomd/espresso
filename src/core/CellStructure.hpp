@@ -34,6 +34,7 @@
 #include "bond_error.hpp"
 #include "ghosts.hpp"
 
+#include "utils/math/sqr.hpp"
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
@@ -357,6 +358,23 @@ public:
    */
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
 
+  /** Checks whether a particle has moved further than the skin, thus
+  requiring a resort
+
+  @param particles Particles to check
+  @param skin Skin
+  @param additional_offset Offset which is added to the distance the particle
+  has travelled when comparing to skin/2 (e.g., for Lees Edwards BC).
+
+  */
+  bool check_resort_required(const ParticleRange &particles, double skin,
+                             const Utils::Vector3d &additional_offset) {
+    double lim = Utils::sqr(skin / 2) - additional_offset.norm2();
+    return std::any_of(
+        particles.begin(), particles.end(),
+        [lim](const auto &p) { return ((p.r.p - p.l.p_old).norm2() > lim); });
+  }
+
   /**
    * @brief Synchronize number of ghosts.
    */
@@ -454,7 +472,7 @@ public:
   /**
    * @brief Resort particles.
    */
-  void resort_particles(int global_flag);
+  void resort_particles(int global_flag, const BoxGeometry &box);
 
 private:
   /** @brief Set the particle decomposition, keeping the particles. */

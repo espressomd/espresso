@@ -44,18 +44,16 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
       p.r.p += bd_random_walk(brownian, p, time_step, kT);
       p.m.v += bd_random_walk_vel(brownian, p);
       /* Verlet criterion check */
-      if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
-        cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
-    }
 #ifdef ROTATION
-    if (!p.p.rotation)
-      continue;
-    convert_torque_to_body_frame_apply_fix(p);
-    p.r.quat = bd_drag_rot(brownian.gamma_rotation, p, time_step);
-    p.m.omega = bd_drag_vel_rot(brownian.gamma_rotation, p);
-    p.r.quat = bd_random_walk_rot(brownian, p, time_step, kT);
-    p.m.omega += bd_random_walk_vel_rot(brownian, p);
+      if (!p.p.rotation)
+        continue;
+      convert_torque_to_body_frame_apply_fix(p);
+      p.r.quat = bd_drag_rot(brownian.gamma_rotation, p, time_step);
+      p.m.omega = bd_drag_vel_rot(brownian.gamma_rotation, p);
+      p.r.quat = bd_random_walk_rot(brownian, p, time_step, kT);
+      p.m.omega += bd_random_walk_vel_rot(brownian, p);
 #endif // ROTATION
+    }
   }
   increment_sim_time(time_step);
 }

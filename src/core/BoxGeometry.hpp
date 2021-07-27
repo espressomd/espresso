@@ -23,6 +23,7 @@
 
 #include <utils/Vector.hpp>
 
+#include "LeesEdwardsBC.hpp"
 #include <bitset>
 #include <cassert>
 #include <cmath>
@@ -66,8 +67,10 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
 }
 } // namespace detail
 
+enum class BoxType { CUBOID = 0, LEES_EDWARDS = 1 };
 class BoxGeometry {
 private:
+  BoxType m_type = BoxType::CUBOID;
   /** Flags for all three dimensions whether pbc are applied (default). */
   std::bitset<3> m_periodic = 0b111;
   /** Side lengths of the box */
@@ -76,6 +79,9 @@ private:
   Utils::Vector3d m_length_inv = {1, 1, 1};
   /** Half side lengths of the box */
   Utils::Vector3d m_length_half = {0.5, 0.5, 0.5};
+
+  /** Lees Edwards boundary conditions */
+  LeesEdwardsBC m_lees_edwards_bc;
 
 public:
   /**
@@ -159,9 +165,23 @@ public:
   template <typename T>
   Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
                                     const Utils::Vector<T, 3> &b) const {
-    return {get_mi_coord(a[0], b[0], 0), get_mi_coord(a[1], b[1], 1),
-            get_mi_coord(a[2], b[2], 2)};
+    if (type() == BoxType::CUBOID) {
+      return {get_mi_coord(a[0], b[0], 0), get_mi_coord(a[1], b[1], 1),
+              get_mi_coord(a[2], b[2], 2)};
+    }
+    if (type() == BoxType::LEES_EDWARDS) {
+      return clees_edwards_bc().distance(a - b, length(), length_half(),
+                                         length_inv(), m_periodic);
+    }
+    throw std::runtime_error("Unhandled BoxType");
   }
+
+  BoxType type() const { return m_type; };
+  void set_type(BoxType type) { m_type = type; };
+
+  LeesEdwardsBC &lees_edwards_bc() { return m_lees_edwards_bc; };
+  const LeesEdwardsBC &clees_edwards_bc() const { return m_lees_edwards_bc; };
+  void set_lees_edwards_bc(LeesEdwardsBC bc) { m_lees_edwards_bc = bc; }
 };
 
 /** @brief Fold a coordinate to primary simulation box.
