@@ -1,5 +1,5 @@
 # required scientific packages
-numpy>=1.16.2
+numpy>=1.17.4
 h5py>=2.7.1
 # optional scientific packages
 scipy>=1.4.0
