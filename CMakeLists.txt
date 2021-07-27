@@ -281,15 +281,7 @@ if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
-set(BOOST_MINIMUM_VERSION "1.66.0")
-
-# old Boost.MPI versions contain a use-after-free bug that seems to only cause
-# crashes on 32-bit architectures
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-  set(BOOST_MINIMUM_VERSION "1.67.0")
-endif()
-
-find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
+find_package(Boost 1.69.0 REQUIRED ${BOOST_COMPONENTS})
 
 #
 # Paths
