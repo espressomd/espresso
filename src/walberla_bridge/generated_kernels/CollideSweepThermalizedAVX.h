@@ -13,7 +13,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file CollideSweepthermalizedAVX.h
+//! \\file CollideSweepThermalizedAVX.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -47,10 +47,10 @@ namespace walberla {
 namespace pystencils {
 
 
-class CollideSweepthermalizedAVX
+class CollideSweepThermalizedAVX
 {
 public:
-    CollideSweepthermalizedAVX( BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, double kT, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t seed, uint32_t time_step )
+    CollideSweepThermalizedAVX( BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, double kT, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t seed, uint32_t time_step )
         : forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(block_offset_0), block_offset_1_(block_offset_1), block_offset_2_(block_offset_2), kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even), omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed), time_step_(time_step)
     {};
 
@@ -67,14 +67,14 @@ public:
     }
     
 
-    static std::function<void (IBlock *)> getSweep(const shared_ptr<CollideSweepthermalizedAVX> & kernel)
+    static std::function<void (IBlock *)> getSweep(const shared_ptr<CollideSweepThermalizedAVX> & kernel)
     {
         return [kernel] 
                (IBlock * b) 
                { kernel->run(b); };
     }
 
-    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<CollideSweepthermalizedAVX> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
+    static std::function<void (IBlock*)> getSweepOnCellInterval(const shared_ptr<CollideSweepThermalizedAVX> & kernel, const shared_ptr<StructuredBlockStorage> & blocks, const CellInterval & globalCellInterval, cell_idx_t ghostLayers=1)
     {
         return [kernel, blocks, globalCellInterval, ghostLayers]
                (IBlock * b) 

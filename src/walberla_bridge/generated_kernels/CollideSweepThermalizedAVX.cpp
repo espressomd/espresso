@@ -13,14 +13,14 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file CollideSweepthermalizedAVX.cpp
+//! \\file CollideSweepThermalizedAVX.cpp
 //! \\ingroup lbm
 //! \\author lbmpy
 //======================================================================================================================
 
 #include <cmath>
 
-#include "CollideSweepthermalizedAVX.h"
+#include "CollideSweepThermalizedAVX.h"
 #include "core/DataTypes.h"
 #include "core/Macros.h"
 
@@ -1586,7 +1586,7 @@ static FUNC_PREFIX void collidesweepthermalizedavx_collidesweepthermalizedavx(
 }
 } // namespace internal_collidesweepthermalizedavx_collidesweepthermalizedavx
 
-void CollideSweepthermalizedAVX::run(IBlock *block) {
+void CollideSweepThermalizedAVX::run(IBlock *block) {
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
 
@@ -1638,7 +1638,7 @@ void CollideSweepthermalizedAVX::run(IBlock *block) {
           seed, time_step);
 }
 
-void CollideSweepthermalizedAVX::runOnCellInterval(
+void CollideSweepThermalizedAVX::runOnCellInterval(
     const shared_ptr<StructuredBlockStorage> &blocks,
     const CellInterval &globalCellInterval, cell_idx_t ghostLayers,
     IBlock *block) {

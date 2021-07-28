@@ -2,13 +2,13 @@
 #include "relaxation_rates.hpp"
 
 #ifdef __AVX__
-#include "generated_kernels/CollideSweepthermalizedAVX.h"
-#define CollisionModelName walberla::pystencils::CollideSweepthermalizedAVX
+#include "generated_kernels/CollideSweepThermalizedAVX.h"
+#define CollisionModelName walberla::pystencils::CollideSweepThermalizedAVX
 #include "generated_kernels/FluctuatingMRTLatticeModelAvx.h"
 #define LatticeModelName lbm::FluctuatingMRTLatticeModelAvx
 #else
-#include "generated_kernels/CollideSweepthermalized.h"
-#define CollisionModelName walberla::pystencils::CollideSweepthermalized
+#include "generated_kernels/CollideSweepThermalized.h"
+#define CollisionModelName walberla::pystencils::CollideSweepThermalized
 #include "generated_kernels/FluctuatingMRTLatticeModel.h"
 #define LatticeModelName lbm::FluctuatingMRTLatticeModel
 #endif

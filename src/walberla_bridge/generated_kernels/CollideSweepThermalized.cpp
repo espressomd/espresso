@@ -13,14 +13,14 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file CollideSweepthermalized.cpp
+//! \\file CollideSweepThermalized.cpp
 //! \\ingroup lbm
 //! \\author lbmpy
 //======================================================================================================================
 
 #include <cmath>
 
-#include "CollideSweepthermalized.h"
+#include "CollideSweepThermalized.h"
 #include "core/DataTypes.h"
 #include "core/Macros.h"
 
@@ -583,7 +583,7 @@ static FUNC_PREFIX void collidesweepthermalized_collidesweepthermalized(
 }
 } // namespace internal_collidesweepthermalized_collidesweepthermalized
 
-void CollideSweepthermalized::run(IBlock *block) {
+void CollideSweepThermalized::run(IBlock *block) {
   auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
 
@@ -632,7 +632,7 @@ void CollideSweepthermalized::run(IBlock *block) {
           omega_even, omega_odd, omega_shear, seed, time_step);
 }
 
-void CollideSweepthermalized::runOnCellInterval(
+void CollideSweepThermalized::runOnCellInterval(
     const shared_ptr<StructuredBlockStorage> &blocks,
     const CellInterval &globalCellInterval, cell_idx_t ghostLayers,
     IBlock *block) {
