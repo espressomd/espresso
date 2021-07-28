@@ -82,7 +82,8 @@ public:
     buildTreeBH(m_bh_data.blocks);
     summarizeBH(m_bh_data.blocks);
     sortBH(m_bh_data.blocks);
-    if (energyBH(&m_bh_data, m_k, (&(((CUDA_energy *)s.eGpu())->dipolar)))) {
+    if (energyBH(&m_bh_data, m_k,
+                 &(reinterpret_cast<CUDA_energy *>(s.eGpu())->dipolar))) {
       runtimeErrorMsg() << "kernels encountered a functional error";
     }
   };

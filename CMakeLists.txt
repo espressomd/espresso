@@ -166,10 +166,10 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.6 REQUIRED)
+find_package(PythonInterp 3.7 REQUIRED)
 
 if(WITH_PYTHON)
-  find_package(Cython 0.29 REQUIRED)
+  find_package(Cython 0.29.14 REQUIRED)
   find_package(PythonHeaders REQUIRED)
   find_package(NumPy REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
@@ -283,15 +283,7 @@ if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
-set(BOOST_MINIMUM_VERSION "1.66.0")
-
-# old Boost.MPI versions contain a use-after-free bug that seems to only cause
-# crashes on 32-bit architectures
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-  set(BOOST_MINIMUM_VERSION "1.67.0")
-endif()
-
-find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
+find_package(Boost 1.69.0 REQUIRED ${BOOST_COMPONENTS})
 
 #
 # Paths

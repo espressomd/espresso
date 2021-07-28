@@ -52,20 +52,15 @@
 #include <tuple>
 #include <vector>
 
-/** Largest numerically stable cutoff for Bessel function. Don't
- *  change without improving the formulas.
+/** Largest numerically stable cutoff for Bessel function.
+ *  Don't change without improving the formulas.
  */
-#define MAXIMAL_B_CUT 30
+constexpr int MAXIMAL_B_CUT = 30;
 
-/** Minimal radius for the far formula in multiples of box_l[2] */
-#define MIN_RAD 0.01
-
-/* if you define this, the Bessel functions are calculated up
+/* if you define this feature, the Bessel functions are calculated up
  * to machine precision, otherwise 10^-14, which should be
  * definitely enough for daily life. */
-#undef BESSEL_MACHINE_PREC
-
-#ifndef BESSEL_MACHINE_PREC
+#ifndef MMM1D_MACHINE_PREC
 #define K0 LPK0
 #define K1 LPK1
 #endif
@@ -76,22 +71,24 @@ static double uz2, prefuz2, prefL3_i;
 /**@}*/
 
 MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
-/** From which distance a certain Bessel cutoff is valid. Can't be part of the
-    params since these get broadcasted. */
-static std::vector<double> bessel_radii;
+/** From which distance a certain Bessel cutoff is valid.
+ *  Can't be part of the params since these get broadcasted.
+ */
+static std::array<double, MAXIMAL_B_CUT> bessel_radii;
 
 static double far_error(int P, double minrad) {
+  auto const wavenumber = 2 * Utils::pi() * box_geo.length_inv()[2];
   // this uses an upper bound to all force components and the potential
-  auto const rhores = 2 * Utils::pi() * box_geo.length_inv()[2] * minrad;
-  auto const pref = 4 * box_geo.length_inv()[2] *
-                    std::max(1.0, 2 * Utils::pi() * box_geo.length_inv()[2]);
+  auto const rhores = wavenumber * minrad;
+  auto const pref = 4 * box_geo.length_inv()[2] * std::max(1.0, wavenumber);
 
   return pref * K1(rhores * P) * exp(rhores) / rhores * (P - 1 + 1 / rhores);
 }
 
 static double determine_minrad(double maxPWerror, int P) {
   // bisection to search for where the error is maxPWerror
-  double const rgranularity = MIN_RAD * box_geo.length()[2];
+  constexpr auto min_rad = 0.01;
+  double const rgranularity = min_rad * box_geo.length()[2];
   double rmin = rgranularity;
   double rmax = std::min(box_geo.length()[0], box_geo.length()[1]);
   double const errmin = far_error(P, rmin);
@@ -117,10 +114,9 @@ static double determine_minrad(double maxPWerror, int P) {
   return 0.5 * (rmin + rmax);
 }
 
-static void determine_bessel_radii(double maxPWerror, int maxP) {
-  bessel_radii.resize(maxP);
-  for (int P = 1; P <= maxP; ++P) {
-    bessel_radii[P - 1] = determine_minrad(maxPWerror, P);
+static void determine_bessel_radii(double maxPWerror) {
+  for (int i = 0; i < MAXIMAL_B_CUT; ++i) {
+    bessel_radii[i] = determine_minrad(maxPWerror, i + 1);
   }
 }
 
@@ -173,7 +169,7 @@ int MMM1D_init() {
   prefuz2 = coulomb.prefactor * uz2;
   prefL3_i = prefuz2 * box_geo.length_inv()[2];
 
-  determine_bessel_radii(mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
+  determine_bessel_radii(mmm1d_params.maxPWerror);
   prepare_polygamma_series(mmm1d_params.maxPWerror,
                            mmm1d_params.far_switch_radius_2);
   return ES_OK;
@@ -181,7 +177,7 @@ int MMM1D_init() {
 
 void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
                                   double r, Utils::Vector3d &force) {
-  constexpr double c_2pi = 2 * Utils::pi();
+  constexpr auto c_2pi = 2 * Utils::pi();
   auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
@@ -190,9 +186,9 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
 
   if (rxy2 <= mmm1d_params.far_switch_radius_2) {
     /* polygamma summation */
-    double sr = 0;
-    double sz = mod_psi_odd(0, z_d);
-    double r2nm1 = 1.0;
+    auto sr = 0.;
+    auto sz = mod_psi_odd(0, z_d);
+    auto r2nm1 = 1.0;
     for (int n = 1; n < n_modPsi; n++) {
       auto const deriv = static_cast<double>(2 * n);
       auto const mpe = mod_psi_even(n, z_d);
@@ -242,7 +238,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
     /* far range formula */
     auto const rxy = sqrt(rxy2);
     auto const rxy_d = rxy * box_geo.length_inv()[2];
-    double sr = 0, sz = 0;
+    auto sr = 0., sz = 0.;
 
     for (int bp = 1; bp < MAXIMAL_B_CUT; bp++) {
       if (bessel_radii[bp - 1] < rxy)
@@ -250,7 +246,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
 
       auto const fq = c_2pi * bp;
       double k0, k1;
-#ifdef BESSEL_MACHINE_PREC
+#ifdef MMM1D_MACHINE_PREC
       k0 = K0(fq * rxy_d);
       k1 = K1(fq * rxy_d);
 #else
@@ -275,7 +271,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
   if (chpref == 0)
     return 0;
 
-  constexpr double c_2pi = 2 * Utils::pi();
+  constexpr auto c_2pi = 2 * Utils::pi();
   auto const n_modPsi = static_cast<int>(modPsi.size() >> 1);
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
@@ -303,15 +299,15 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
 
     double rt, shift_z;
 
-    E += 1 / r;
+    E += 1. / r;
 
     shift_z = d[2] + box_geo.length()[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
-    E += 1 / rt;
+    E += 1. / rt;
 
     shift_z = d[2] - box_geo.length()[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
-    E += 1 / rt;
+    E += 1. / rt;
   } else {
     /* far range formula */
     auto const rxy = sqrt(rxy2);
@@ -335,17 +331,17 @@ double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
 int mmm1d_tune(int timings, bool verbose) {
   if (MMM1D_sanity_checks())
     return ES_ERROR;
-  double min_time = std::numeric_limits<double>::infinity();
-  double min_rad = -1;
-  auto const maxrad = box_geo.length()[2];
-  double switch_radius;
 
   if (mmm1d_params.far_switch_radius_2 < 0) {
+    auto const maxrad = box_geo.length()[2];
+    auto min_time = std::numeric_limits<double>::infinity();
+    auto min_rad = -1.;
+    double switch_radius;
     /* determine besselcutoff and optimal switching radius. Should be around
      * 0.33 */
     for (switch_radius = 0.2 * maxrad; switch_radius < 0.4 * maxrad;
          switch_radius += 0.025 * maxrad) {
-      if (switch_radius <= bessel_radii[MAXIMAL_B_CUT - 1]) {
+      if (switch_radius <= bessel_radii.back()) {
         // this switching radius is too small for our Bessel series
         continue;
       }
@@ -379,7 +375,7 @@ int mmm1d_tune(int timings, bool verbose) {
     switch_radius = min_rad;
     mmm1d_params.far_switch_radius_2 = Utils::sqr(switch_radius);
   } else if (mmm1d_params.far_switch_radius_2 <=
-             Utils::sqr(bessel_radii[MAXIMAL_B_CUT - 1])) {
+             Utils::sqr(bessel_radii.back())) {
     // this switching radius is too small for our Bessel series
     runtimeErrorMsg() << "could not find reasonable bessel cutoff";
     return ES_ERROR;

@@ -1,4 +1,4 @@
-image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:063f945eb434f6900402fd412f28a4486288c82b
+image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:08d67d67a4d3c3279cacee975b68c02ec89b2a21
 
 stages:
   - prepare
@@ -148,7 +148,7 @@ no_rotation:
 ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:e583d4b2eb8eedd10068957f952bd67008475ee5
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:08d67d67a4d3c3279cacee975b68c02ec89b2a21
   variables:
      myconfig: 'maxset'
      with_cuda: 'false'
@@ -166,22 +166,7 @@ ubuntu:wo-dependencies:
 debian:10:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/debian:d372d95f6906c16abd9b47b994034a22981a9ff2
-  variables:
-     with_cuda: 'false'
-     myconfig: 'maxset'
-     make_check_python: 'false'
-     with_stokesian_dynamics: 'true'
-  script:
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
-opensuse:15.2:
-  <<: *global_job_definition
-  stage: build
-  image: docker.pkg.github.com/espressomd/docker/opensuse:d496478230db4e5c286680e3bdc1621af1fccffc
+  image: docker.pkg.github.com/espressomd/docker/debian:08d67d67a4d3c3279cacee975b68c02ec89b2a21
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -196,7 +181,7 @@ opensuse:15.2:
 fedora:32:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/fedora:4f126520866e84a4883355ffe8710040bf20051c
+  image: docker.pkg.github.com/espressomd/docker/fedora:08d67d67a4d3c3279cacee975b68c02ec89b2a21
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -252,7 +237,7 @@ clang-sanitizer:
 cuda11-maxset:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/cuda:d372d95f6906c16abd9b47b994034a22981a9ff2
+  image: docker.pkg.github.com/espressomd/docker/cuda:08d67d67a4d3c3279cacee975b68c02ec89b2a21
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
