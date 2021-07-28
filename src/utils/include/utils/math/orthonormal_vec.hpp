@@ -22,6 +22,8 @@
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
 
+#include <cstddef>
+
 namespace Utils {
 /**
  * @brief Return a vector that is orthonormal to vec

@@ -26,7 +26,9 @@
 
 #include <boost/range/iterator_range.hpp>
 
+#include <algorithm>
 #include <functional>
+#include <utility>
 #include <vector>
 
 template <class CellRef> class Neighbors {

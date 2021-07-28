@@ -29,8 +29,11 @@
 #include <utils/math/int_pow.hpp>
 
 #include <boost/range/algorithm/transform.hpp>
+
 #include <cmath>
 #include <functional>
+#include <memory>
+#include <vector>
 
 namespace Observables {
 std::vector<double> RDF::operator()() const {

@@ -61,6 +61,7 @@
 #include <boost/range/numeric.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <complex>
 #include <cstddef>

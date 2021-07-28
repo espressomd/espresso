@@ -33,6 +33,9 @@
 #include <boost/range/numeric.hpp>
 
 #include <cmath>
+#include <cstddef>
+#include <functional>
+#include <vector>
 
 #if defined(DP3M)
 

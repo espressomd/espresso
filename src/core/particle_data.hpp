@@ -44,7 +44,7 @@
 #include <utils/quaternion.hpp>
 
 #include <cstddef>
-#include <memory>
+#include <vector>
 
 /************************************************
  * defines

@@ -45,6 +45,7 @@
 #include <boost/range/algorithm.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <iterator>
 #include <memory>

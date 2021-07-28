@@ -23,6 +23,7 @@
 
 #ifdef CUDA
 
+#include <cstddef>
 #include <vector>
 
 /** Struct to hold information relevant to ESPResSo

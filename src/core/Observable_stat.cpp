@@ -27,7 +27,9 @@
 
 #include <utils/Span.hpp>
 
+#include <cassert>
 #include <cstddef>
+#include <vector>
 
 Observable_stat::Observable_stat(size_t chunk_size) : m_chunk_size(chunk_size) {
   // number of chunks for different interaction types

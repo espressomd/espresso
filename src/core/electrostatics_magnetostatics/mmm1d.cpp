@@ -46,6 +46,7 @@
 #include <utils/math/sqr.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <limits>

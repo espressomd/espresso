@@ -54,6 +54,7 @@
 #include <profiler/profiler.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
@@ -64,6 +65,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 
 using Utils::get_linear_index;
 

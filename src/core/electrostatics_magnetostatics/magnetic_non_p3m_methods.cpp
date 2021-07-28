@@ -36,6 +36,7 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <stdexcept>

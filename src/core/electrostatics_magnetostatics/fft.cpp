@@ -47,6 +47,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 using Utils::get_linear_index;
 using Utils::permute_ifield;

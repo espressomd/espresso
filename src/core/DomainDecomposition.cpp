@@ -40,6 +40,7 @@
 #include <functional>
 #include <iterator>
 #include <utility>
+#include <vector>
 
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.

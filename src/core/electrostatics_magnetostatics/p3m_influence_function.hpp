@@ -32,6 +32,9 @@
 
 #include <cmath>
 #include <cstddef>
+#include <functional>
+#include <utility>
+#include <vector>
 
 namespace detail {
 template <typename T> T g_ewald(T alpha, T k2) {

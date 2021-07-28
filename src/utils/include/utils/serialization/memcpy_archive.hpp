@@ -26,8 +26,10 @@
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/serialization.hpp>
 
+#include <cassert>
 #include <cstddef>
 #include <cstring>
+#include <memory>
 #include <type_traits>
 
 namespace Utils {

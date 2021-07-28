@@ -33,9 +33,11 @@
 
 #include <utils/Vector.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <numeric>
+#include <utility>
 #include <vector>
 
 namespace ClusterAnalysis {

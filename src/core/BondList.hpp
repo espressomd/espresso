@@ -29,7 +29,10 @@
 #include <boost/serialization/array.hpp>
 #include <boost/version.hpp>
 
+#include <algorithm>
+#include <cassert>
 #include <cstddef>
+#include <memory>
 #include <type_traits>
 
 /**

@@ -41,6 +41,8 @@
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace {
 int min(int i, unsigned int j) { return std::min(i, static_cast<int>(j)); }

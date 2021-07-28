@@ -50,10 +50,16 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/variant.hpp>
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace {
 /**

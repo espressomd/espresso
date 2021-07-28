@@ -29,6 +29,7 @@
 #include <cmath>
 #include <cstddef>
 #include <stdexcept>
+#include <vector>
 
 namespace Observables {
 

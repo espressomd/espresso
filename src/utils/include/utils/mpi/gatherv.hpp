@@ -23,6 +23,9 @@
 #include <boost/mpi/datatype.hpp>
 #include <boost/mpi/exception.hpp>
 #include <boost/mpi/nonblocking.hpp>
+
+#include <algorithm>
+#include <cassert>
 #include <vector>
 
 namespace Utils {

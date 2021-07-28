@@ -33,6 +33,8 @@
 #include <cstdlib>
 #include <functional>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace ErrorHandling {
 namespace {

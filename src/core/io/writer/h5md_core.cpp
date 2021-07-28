@@ -35,7 +35,9 @@
 #include <cstddef>
 #include <fstream>
 #include <functional>
+#include <iterator>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace Writer {
