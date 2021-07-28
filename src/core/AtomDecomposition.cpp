@@ -54,7 +54,8 @@ GhostCommunicator AtomDecomposition::prepare_comm() {
     return GhostCommunicator{comm, 0};
   }
 
-  auto ghost_comm = GhostCommunicator{comm, static_cast<size_t>(comm.size())};
+  auto ghost_comm =
+      GhostCommunicator{comm, static_cast<std::size_t>(comm.size())};
   /* every node has its dedicated comm step */
   for (int n = 0; n < comm.size(); n++) {
     ghost_comm.communications[n].part_lists.resize(1);

@@ -29,7 +29,7 @@ namespace Fields {
 /**
  * @brief A vector field that is constant in space.
  */
-template <typename T, size_t codim> class Constant {
+template <typename T, std::size_t codim> class Constant {
 public:
   using value_type =
       typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;

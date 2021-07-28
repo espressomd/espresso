@@ -61,7 +61,7 @@ public:
     auto v2 = box_geo.get_mi_vector(traits.position(particles[2]),
                                     traits.position(particles[1]));
     auto c1 = Utils::vector_product(v1, v2);
-    for (size_t i = 0, end = n_values(); i < end; i++) {
+    for (std::size_t i = 0, end = n_values(); i < end; i++) {
       auto v3 = box_geo.get_mi_vector(traits.position(particles[i + 3]),
                                       traits.position(particles[i + 2]));
       auto c2 = vector_product(v2, v3);
@@ -74,7 +74,7 @@ public:
     }
     return res;
   }
-  std::vector<size_t> shape() const override {
+  std::vector<std::size_t> shape() const override {
     assert(ids().size() >= 3);
     return {ids().size() - 3};
   }

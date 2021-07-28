@@ -53,7 +53,7 @@ template <int cao> struct InterpolationWeights {
  * type InterpolationWeights.
  */
 class p3m_interpolation_cache {
-  size_t m_cao = 0;
+  std::size_t m_cao = 0;
   /** Charge fractions for mesh assignment. */
   std::vector<double> ca_frac;
   /** index of first mesh point for charge assignment. */
@@ -100,7 +100,7 @@ public:
    * @param i Index of the entry to load.
    * @return i-it interpolation weights.
    */
-  template <int cao> InterpolationWeights<cao> load(size_t i) const {
+  template <int cao> InterpolationWeights<cao> load(std::size_t i) const {
     assert(cao == m_cao);
 
     using Utils::make_const_span;

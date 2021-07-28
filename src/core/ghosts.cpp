@@ -66,13 +66,13 @@ public:
 
   /** Returns the number of elements in the non-bond storage.
    */
-  size_t size() const { return buf.size(); }
+  std::size_t size() const { return buf.size(); }
 
   /** Resizes the underlying storage s.t. the object is capable
    * of holding "new_size" chars.
    * @param new_size new size
    */
-  void resize(size_t new_size) { buf.resize(new_size); }
+  void resize(std::size_t new_size) { buf.resize(new_size); }
 
   /** Returns a reference to the bond storage.
    */
@@ -84,8 +84,8 @@ private:
   std::vector<char> bondbuf; ///< Buffer for bond lists
 };
 
-static size_t calc_transmit_size(unsigned data_parts) {
-  size_t size = {};
+static std::size_t calc_transmit_size(unsigned data_parts) {
+  std::size_t size = {};
   if (data_parts & GHOSTTRANS_PROPRTS)
     size += Utils::MemcpyOArchive::packing_size<ParticleProperties>();
   if (data_parts & GHOSTTRANS_POSITION)
@@ -102,14 +102,14 @@ static size_t calc_transmit_size(unsigned data_parts) {
   return size;
 }
 
-static size_t calc_transmit_size(const GhostCommunication &ghost_comm,
-                                 unsigned int data_parts) {
+static std::size_t calc_transmit_size(const GhostCommunication &ghost_comm,
+                                      unsigned int data_parts) {
   if (data_parts & GHOSTTRANS_PARTNUM)
     return sizeof(int) * ghost_comm.part_lists.size();
 
   auto const n_part = boost::accumulate(
       ghost_comm.part_lists, 0ul,
-      [](size_t sum, auto part_list) { return sum + part_list->size(); });
+      [](std::size_t sum, auto part_list) { return sum + part_list->size(); });
 
   return n_part * calc_transmit_size(data_parts);
 }
@@ -271,7 +271,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
                                unsigned int data_parts) {
   /* transfer data */
   auto const offset = ghost_comm.part_lists.size() / 2;
-  for (size_t pl = 0; pl < offset; pl++) {
+  for (std::size_t pl = 0; pl < offset; pl++) {
     const auto *src_list = ghost_comm.part_lists[pl];
     auto *dst_list = ghost_comm.part_lists[pl + offset];
 
@@ -282,7 +282,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
       auto &dst_part = *dst_list;
       assert(src_part.size() == dst_part.size());
 
-      for (size_t i = 0; i < src_part.size(); i++) {
+      for (std::size_t i = 0; i < src_part.size(); i++) {
         auto const &part1 = src_part.begin()[i];
         auto &part2 = dst_part.begin()[i];
 

@@ -72,23 +72,23 @@ public:
   explicit BasicMemcpyArchive(Utils::Span<char> buf)
       : buf(buf), insert(buf.data()) {}
 
-  size_t get_library_version() const { return 4; }
+  std::size_t get_library_version() const { return 4; }
 
-  size_t bytes_processed() const { return insert - buf.data(); }
-  void skip(size_t bytes) {
+  std::size_t bytes_processed() const { return insert - buf.data(); }
+  void skip(std::size_t bytes) {
     assert((insert + bytes) <= buf.end());
     insert += bytes;
   }
 
 private:
-  void read(void *data, size_t bytes) {
+  void read(void *data, std::size_t bytes) {
     /* check that there is enough space left in the buffer */
     assert((insert + bytes) <= buf.end());
     std::memcpy(data, insert, bytes);
     insert += bytes;
   }
 
-  void write(const void *data, size_t bytes) {
+  void write(const void *data, std::size_t bytes) {
     /* check that there is enough space left in the buffer */
     assert((insert + bytes) <= buf.end());
     std::memcpy(insert, data, bytes);
@@ -144,7 +144,7 @@ public:
    * @tparam T Type to consider.
    * @return Packed size in bytes.
    */
-  template <class T> static constexpr size_t packing_size() {
+  template <class T> static constexpr std::size_t packing_size() {
     return sizeof(T);
   }
 };
@@ -176,7 +176,7 @@ public:
    * @brief Number of bytes read from the buffer.
    * @return Number of bytes read.
    */
-  size_t bytes_read() const { return bytes_processed(); }
+  std::size_t bytes_read() const { return bytes_processed(); }
 
   /** @copydoc base_type::packing_size */
   using base_type::packing_size;
@@ -210,7 +210,7 @@ public:
    * @brief Number of bytes written to the buffer.
    * @return Number of bytes written.
    */
-  size_t bytes_written() const { return bytes_processed(); }
+  std::size_t bytes_written() const { return bytes_processed(); }
 
   /** @copydoc base_type::packing_size */
   using base_type::packing_size;

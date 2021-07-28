@@ -303,7 +303,7 @@ void dp3m_set_eps(double eps) {
 }
 
 namespace {
-template <size_t cao> struct AssignDipole {
+template <std::size_t cao> struct AssignDipole {
   void operator()(Utils::Vector3d const &real_pos,
                   Utils::Vector3d const &dip) const {
     auto const weights = p3m_calculate_interpolation_weights<cao>(
@@ -336,7 +336,7 @@ void dp3m_dipole_assign(const ParticleRange &particles) {
 }
 
 namespace {
-template <size_t cao> struct AssignTorques {
+template <std::size_t cao> struct AssignTorques {
   void operator()(double prefac, int d_rs,
                   const ParticleRange &particles) const {
     /* particle counter */
@@ -354,7 +354,7 @@ template <size_t cao> struct AssignTorques {
   }
 };
 
-template <size_t cao> struct AssignForces {
+template <std::size_t cao> struct AssignForces {
   void operator()(double prefac, int d_rs,
                   const ParticleRange &particles) const {
     /* particle counter */

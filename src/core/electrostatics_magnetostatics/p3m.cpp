@@ -294,7 +294,7 @@ void p3m_set_eps(double eps) {
 }
 
 namespace {
-template <size_t cao> struct AssignCharge {
+template <std::size_t cao> struct AssignCharge {
   void operator()(double q, const Utils::Vector3d &real_pos,
                   const Utils::Vector3d &ai, p3m_local_mesh const &local_mesh,
                   p3m_interpolation_cache &inter_weights) {
@@ -349,7 +349,7 @@ void p3m_assign_charge(double q, const Utils::Vector3d &real_pos) {
 }
 
 namespace {
-template <size_t cao> struct AssignForces {
+template <std::size_t cao> struct AssignForces {
   void operator()(double force_prefac, const ParticleRange &particles) const {
     using Utils::make_const_span;
     using Utils::Span;

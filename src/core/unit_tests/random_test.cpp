@@ -34,8 +34,8 @@
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(test_noise_statistics) {
-  constexpr size_t const sample_size = 60'000;
-  constexpr size_t const x = 0, y = 1, z = 2;
+  constexpr std::size_t const sample_size = 60'000;
+  constexpr std::size_t const x = 0, y = 1, z = 2;
   constexpr double const tol = 1e-12;
 
   double value = 1;
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
 }
 
 BOOST_AUTO_TEST_CASE(test_noise_uniform_1d) {
-  constexpr size_t const sample_size = 60'000;
+  constexpr std::size_t const sample_size = 60'000;
 
   std::vector<double> means, variances;
   std::vector<std::vector<double>> covariance;
@@ -80,8 +80,8 @@ BOOST_AUTO_TEST_CASE(test_noise_uniform_1d) {
 }
 
 BOOST_AUTO_TEST_CASE(test_noise_uniform_3d) {
-  constexpr size_t const sample_size = 60'000;
-  constexpr size_t const x = 0, y = 1, z = 2;
+  constexpr std::size_t const sample_size = 60'000;
+  constexpr std::size_t const x = 0, y = 1, z = 2;
 
   std::vector<double> means, variances;
   std::vector<std::vector<double>> covariance;
@@ -105,8 +105,8 @@ BOOST_AUTO_TEST_CASE(test_noise_uniform_3d) {
 }
 
 BOOST_AUTO_TEST_CASE(test_noise_gaussian_4d) {
-  constexpr size_t const sample_size = 100'000;
-  constexpr size_t const x = 0, y = 1, z = 2, t = 3;
+  constexpr std::size_t const sample_size = 100'000;
+  constexpr std::size_t const x = 0, y = 1, z = 2, t = 3;
 
   std::vector<double> means, variances;
   std::vector<std::vector<double>> covariance;
@@ -137,9 +137,9 @@ BOOST_AUTO_TEST_CASE(test_noise_gaussian_4d) {
 BOOST_AUTO_TEST_CASE(test_uncorrelated_consecutive_ids) {
   // setup: 2 particles with the same seed and consecutive ids
   // check thermostats with pid offset by 2 aren't cross-correlated with lag 2
-  constexpr size_t const sample_size = 50'000;
-  constexpr size_t const x = 0, y = 1, z = 2;
-  constexpr size_t seed = 0;
+  constexpr std::size_t const sample_size = 50'000;
+  constexpr std::size_t const x = 0, y = 1, z = 2;
+  constexpr std::size_t seed = 0;
   constexpr int pid = 1;
   constexpr int pid_offset = 2;
 
@@ -161,11 +161,11 @@ BOOST_AUTO_TEST_CASE(test_uncorrelated_consecutive_ids) {
 BOOST_AUTO_TEST_CASE(test_uncorrelated_consecutive_seeds) {
   // setup: 2 particles with the same id with 2 rngs with consecutive seeds
   // check thermostats with seed offset by 2 aren't cross-correlated with lag 2
-  constexpr size_t const sample_size = 50'000;
-  constexpr size_t const x = 0, y = 1, z = 2;
+  constexpr std::size_t const sample_size = 50'000;
+  constexpr std::size_t const x = 0, y = 1, z = 2;
   constexpr int pid = 1;
-  constexpr size_t seed = 0;
-  constexpr size_t seed_offset = 2;
+  constexpr std::size_t seed = 0;
+  constexpr std::size_t seed_offset = 2;
 
   auto const correlation = std::get<3>(noise_statistics(
       [counter = 0]() mutable -> std::array<VariantVectorXd, 3> {

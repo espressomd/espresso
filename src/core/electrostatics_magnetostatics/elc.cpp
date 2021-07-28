@@ -112,7 +112,7 @@ static void add_z_force(const ParticleRange &particles);
  * @param u Inverse box length
  * @return Calculated values.
  */
-template <size_t dir>
+template <std::size_t dir>
 static std::vector<SCCache> calc_sc_cache(const ParticleRange &particles,
                                           std::size_t n_freq, double u) {
   constexpr double c_2pi = 2 * Utils::pi();
@@ -122,7 +122,7 @@ static std::vector<SCCache> calc_sc_cache(const ParticleRange &particles,
   for (std::size_t freq = 1; freq <= n_freq; freq++) {
     auto const pref = c_2pi * u * static_cast<double>(freq);
 
-    size_t o = (freq - 1) * n_part;
+    std::size_t o = (freq - 1) * n_part;
     for (auto const &part : particles) {
       auto const arg = pref * part.r.p[dir];
       ret[o++] = {sin(arg), cos(arg)};

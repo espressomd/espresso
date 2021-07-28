@@ -52,12 +52,12 @@ public:
   using const_iterator = const_pointer;
   using reverse_iterator = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-  using size_type = size_t;
+  using size_type = std::size_t;
   using difference_type = ptrdiff_t;
 
 private:
   T *m_ptr;
-  size_t m_size{};
+  std::size_t m_size{};
 
   template <typename U>
   using enable_if_const_t =
@@ -77,7 +77,7 @@ public:
   DEVICE_QUALIFIER
   constexpr Span(pointer array, size_type length)
       : m_ptr(array), m_size(length) {}
-  template <size_t N>
+  template <std::size_t N>
   DEVICE_QUALIFIER constexpr Span(T (&a)[N]) noexcept : Span(a, N) {}
 
   template <typename C, typename = enable_if_mutable_t<C>,
@@ -113,7 +113,7 @@ public:
 };
 
 template <typename T>
-DEVICE_QUALIFIER constexpr Span<T> make_span(T *p, size_t N) {
+DEVICE_QUALIFIER constexpr Span<T> make_span(T *p, std::size_t N) {
   return Span<T>(p, N);
 }
 
@@ -122,8 +122,8 @@ template <class C> DEVICE_QUALIFIER constexpr auto make_span(C &c) {
 }
 
 template <typename T>
-DEVICE_QUALIFIER constexpr Span<std::add_const_t<T>> make_const_span(T *p,
-                                                                     size_t N) {
+DEVICE_QUALIFIER constexpr Span<std::add_const_t<T>>
+make_const_span(T *p, std::size_t N) {
   return Span<std::add_const_t<T>>(p, N);
 }
 

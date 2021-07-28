@@ -107,7 +107,7 @@ private:
   friend boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     if (Archive::is_loading::value) {
-      size_t size{};
+      std::size_t size{};
       ar &size;
       m_storage.resize(size);
     }
@@ -149,7 +149,7 @@ public:
   using value_type = BondView;
   using reference = std::add_lvalue_reference_t<BondView>;
   using const_reference = std::add_const_t<reference>;
-  using size_type = size_t;
+  using size_type = std::size_t;
   using difference_type = ptrdiff_t;
   using iterator = Iterator;
   using const_iterator = Iterator;

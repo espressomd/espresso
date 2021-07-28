@@ -171,8 +171,8 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
     log_diameters.push_back(log(current_rg * 2.0));
   }
   // usage: Function: int gsl_fit_linear (const double * x, const size_t
-  // xstride, const double * y, const size_t ystride, size_t n, double * c0,
-  // double * c1, double * cov00, double * cov01, double * cov11, double *
+  // xstride, const double * y, const std::size_t ystride, std::size_t n, double
+  // * c0, double * c1, double * cov00, double * cov01, double * cov11, double *
   // sumsq)
   const int n = log_pcounts.size();
   double c0, c1, cov00, cov01, cov11, sumsq;

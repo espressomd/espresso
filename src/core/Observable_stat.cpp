@@ -31,7 +31,8 @@
 #include <cstddef>
 #include <vector>
 
-Observable_stat::Observable_stat(size_t chunk_size) : m_chunk_size(chunk_size) {
+Observable_stat::Observable_stat(std::size_t chunk_size)
+    : m_chunk_size(chunk_size) {
   // number of chunks for different interaction types
   auto constexpr n_coulomb = 2;
   auto constexpr n_dipolar = 2;
@@ -42,8 +43,8 @@ Observable_stat::Observable_stat(size_t chunk_size) : m_chunk_size(chunk_size) {
 #endif
   auto const n_bonded = bonded_ia_params.size();
   auto const n_non_bonded = max_non_bonded_pairs();
-  constexpr size_t n_ext_fields = 1; // energies from all fields: accumulated
-  constexpr size_t n_kinetic = 1; // linear+angular kinetic energy: accumulated
+  constexpr std::size_t n_ext_fields = 1; // reduction over all fields
+  constexpr std::size_t n_kinetic = 1; // linear+angular kinetic contributions
 
   // resize vector
   auto const total = n_kinetic + n_bonded + 2 * n_non_bonded + n_coulomb +

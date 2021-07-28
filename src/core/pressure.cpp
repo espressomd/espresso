@@ -133,7 +133,7 @@ void update_pressure() { mpi_call_all(update_pressure_local, -1, -1); }
 Utils::Vector9d observable_compute_pressure_tensor() {
   update_pressure();
   Utils::Vector9d pressure_tensor{};
-  for (size_t j = 0; j < 9; j++) {
+  for (std::size_t j = 0; j < 9; j++) {
     pressure_tensor[j] = obs_pressure.accumulate(0, j);
   }
   return pressure_tensor;

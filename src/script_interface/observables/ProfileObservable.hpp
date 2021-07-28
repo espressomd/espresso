@@ -49,7 +49,7 @@ public:
         {{"n_x_bins",
           [this](const Variant &v) {
             profile_observable()->n_bins[0] =
-                static_cast<size_t>(get_value<int>(v));
+                static_cast<std::size_t>(get_value<int>(v));
           },
           [this]() {
             return static_cast<int>(profile_observable()->n_bins[0]);
@@ -57,7 +57,7 @@ public:
          {"n_y_bins",
           [this](const Variant &v) {
             profile_observable()->n_bins[1] =
-                static_cast<size_t>(get_value<int>(v));
+                static_cast<std::size_t>(get_value<int>(v));
           },
           [this]() {
             return static_cast<int>(profile_observable()->n_bins[1]);
@@ -65,7 +65,7 @@ public:
          {"n_z_bins",
           [this](const Variant &v) {
             profile_observable()->n_bins[2] =
-                static_cast<size_t>(get_value<int>(v));
+                static_cast<std::size_t>(get_value<int>(v));
           },
           [this]() {
             return static_cast<int>(profile_observable()->n_bins[2]);

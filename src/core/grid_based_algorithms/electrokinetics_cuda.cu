@@ -1792,7 +1792,7 @@ __global__ void ek_gather_species_charge_density() {
 
 __global__ void
 ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
-                                  size_t number_of_particles,
+                                  std::size_t number_of_particles,
                                   LB_parameters_gpu *ek_lbparameters_gpu) {
   unsigned int index = ek_getThreadIndex();
   unsigned int lowernode[3];
@@ -1876,10 +1876,9 @@ ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
   }
 }
 
-__global__ void
-ek_spread_particle_force(CUDA_particle_data *particle_data,
-                         size_t number_of_particles, float *particle_forces,
-                         LB_parameters_gpu *ek_lbparameters_gpu) {
+__global__ void ek_spread_particle_force(
+    CUDA_particle_data *particle_data, std::size_t number_of_particles,
+    float *particle_forces, LB_parameters_gpu *ek_lbparameters_gpu) {
 
   unsigned int index = ek_getThreadIndex();
   unsigned int lowernode[3];

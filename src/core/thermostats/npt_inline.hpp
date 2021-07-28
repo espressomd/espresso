@@ -42,7 +42,7 @@
  *  @return noise added to the velocity, already rescaled by
  *          dt/2 (contained in prefactors)
  */
-template <size_t step>
+template <std::size_t step>
 inline Utils::Vector3d
 friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
                        Utils::Vector3d const &vel, int p_identity) {

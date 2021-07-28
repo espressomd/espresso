@@ -35,29 +35,33 @@ using Utils::for_each_pair;
 #include <utility>
 #include <vector>
 
-using PairContainer = std::vector<std::pair<size_t, size_t>>;
+using PairContainer = std::vector<std::pair<std::size_t, size_t>>;
 
 struct F {
-  std::vector<size_t> vec1;
-  std::vector<size_t> vec2;
+  std::vector<std::size_t> vec1;
+  std::vector<std::size_t> vec2;
   PairContainer pairs;
-  F() : vec1(std::vector<size_t>(14)), vec2(std::vector<size_t>(15)), pairs() {
+  F()
+      : vec1(std::vector<std::size_t>(14)), vec2(std::vector<std::size_t>(15)),
+        pairs() {
     std::iota(vec1.begin(), vec1.end(), 0);
     std::iota(vec2.begin(), vec2.end(), 0);
   }
   auto pair_inserter() {
-    return [&pairs = pairs](size_t a, size_t b) { pairs.emplace_back(a, b); };
+    return [&pairs = pairs](std::size_t a, std::size_t b) {
+      pairs.emplace_back(a, b);
+    };
   }
 };
 
-void check_pairs(size_t n_values, PairContainer const &pairs) {
+void check_pairs(std::size_t n_values, PairContainer const &pairs) {
   /* Check number of pairs */
   BOOST_CHECK(pairs.size() == ((n_values - 1) * n_values) / 2);
 
   /* Check that all were visited in order */
   auto it = pairs.begin();
-  for (size_t i = 0; i < n_values; i++)
-    for (size_t j = i + 1; j < n_values; j++) {
+  for (std::size_t i = 0; i < n_values; i++)
+    for (std::size_t j = i + 1; j < n_values; j++) {
       BOOST_CHECK((it->first == i) && (it->second == j));
       ++it;
     }
@@ -79,7 +83,7 @@ BOOST_FIXTURE_TEST_CASE(range, F) {
   check_pairs(vec1.size(), pairs);
 }
 
-void check_cartesian_pairs(size_t n_values_1, size_t n_values_2,
+void check_cartesian_pairs(std::size_t n_values_1, std::size_t n_values_2,
                            PairContainer const &pairs,
                            bool exclude_diagonal = false) {
   /* Check number of pairs */
@@ -89,8 +93,8 @@ void check_cartesian_pairs(size_t n_values_1, size_t n_values_2,
 
   /* Check that all were visited in order */
   auto it = pairs.begin();
-  for (size_t i = 0; i < n_values_1; ++i) {
-    for (size_t j = 0; j < n_values_2; ++j) {
+  for (std::size_t i = 0; i < n_values_1; ++i) {
+    for (std::size_t j = 0; j < n_values_2; ++j) {
       if (!(exclude_diagonal and i == j)) {
         BOOST_CHECK((it->first == i) && (it->second == j));
         ++it;
@@ -119,7 +123,7 @@ BOOST_FIXTURE_TEST_CASE(range_cartesian, F) {
 BOOST_FIXTURE_TEST_CASE(basic_check_cartesian_if, F) {
   /* Collect pairs */
   for_each_cartesian_pair_if(vec1.begin(), vec1.end(), vec2.begin(), vec2.end(),
-                             pair_inserter(), std::not_equal_to<size_t>{});
+                             pair_inserter(), std::not_equal_to<std::size_t>{});
 
   /* Check the result */
   check_cartesian_pairs(vec1.size(), vec2.size(), pairs, true);
@@ -128,7 +132,7 @@ BOOST_FIXTURE_TEST_CASE(basic_check_cartesian_if, F) {
 BOOST_FIXTURE_TEST_CASE(range_cartesian_if, F) {
   /* Collect pairs */
   for_each_cartesian_pair_if(vec1, vec2, pair_inserter(),
-                             std::not_equal_to<size_t>{});
+                             std::not_equal_to<std::size_t>{});
 
   /* Check the result */
   check_cartesian_pairs(vec1.size(), vec2.size(), pairs, true);
