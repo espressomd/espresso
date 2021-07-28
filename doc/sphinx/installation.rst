@@ -44,7 +44,7 @@ C++ Compiler
 
 Boost
     A number of advanced C++ features used by |es| are provided by Boost.
-    We strongly recommend to use at least Boost 1.67.
+    We strongly recommend to use at least Boost 1.71.
 
 FFTW
     For some algorithms (P\ :math:`^3`\ M), |es| needs the FFTW library
@@ -86,8 +86,8 @@ are required:
 
 .. code-block:: bash
 
-    sudo apt install python3-matplotlib python3-scipy python3-pint ipython3 jupyter-notebook
-    pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' \
+    sudo apt install python3-matplotlib python3-pint ipython3 jupyter-notebook
+    pip3 install --user 'jupyter_contrib_nbextensions==0.5.1' 'python3-scipy>=1.4.0' \
                         'sphinx>=1.6.7,!=2.1.0,!=3.0.0' 'sphinxcontrib-bibtex>=0.3.5' \
                         'MDAnalysis>=1.0.0'
     jupyter contrib nbextension install --user
@@ -182,7 +182,7 @@ Run the following commands:
 .. code-block:: bash
 
     sudo port selfupdate
-    sudo port install cmake python37 py37-cython py37-numpy \
+    sudo port install cmake python37 py37-cython py37-numpy py37-scipy \
       openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
       doxygen py37-opengl py37-sphinx gsl hdf5 +openmpi \
       py37-matplotlib py37-ipython py37-jupyter
@@ -199,7 +199,7 @@ Run the following commands:
 .. code-block:: bash
 
     brew install cmake python cython boost boost-mpi fftw \
-      doxygen gsl numpy ipython jupyter
+      doxygen gsl numpy scipy ipython jupyter
     brew install hdf5-mpi
     brew link --force cython
     pip install PyOpenGL matplotlib

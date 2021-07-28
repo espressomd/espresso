@@ -1,8 +1,8 @@
 # required scientific packages
-numpy>=1.16.2
+numpy>=1.17.4
 h5py>=2.7.1
 # optional scientific packages
-scipy>=1.1.0
+scipy>=1.4.0
 MDAnalysis>=1.0.0
 pint>=0.10.1
 # optional packages for graphics and external devices

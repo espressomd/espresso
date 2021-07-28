@@ -18,8 +18,6 @@
 import unittest as ut
 import importlib_wrapper
 import numpy as np
-import scipy
-import setuptools
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/active_matter/active_matter.py", 
@@ -55,8 +53,6 @@ class TestActMat(ut.TestCase):
             tutorial.system.analysis.linear_momentum(
                 include_particles=False)[2], 0)
 
-    @ut.skipIf(not setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet('>=1.4.0').contains(
-        scipy.__version__), "Skipping test: scipy version requirement (>=1.4.0) not met")
     def test_quaternion(self):
         """ Check the quaternion function is correctly implemented
         """
