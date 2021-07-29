@@ -274,9 +274,14 @@ public:
     const real_t omega = shear_mode_relaxation_rate(get_viscosity());
     const real_t omega_odd = odd_mode_relaxation_rate(omega);
     auto const kT = get_kT();
+    auto block = m_blocks->begin();
     auto collide = std::make_shared<CollisionModel>(
-        m_last_applied_force_field_id, m_pdf_field_id, kT, omega, omega,
-        omega_odd, omega, seed, time_step);
+        m_last_applied_force_field_id, m_pdf_field_id,
+        uint32_c(m_blocks->getBlockCellBB(*block).xMin()),
+        uint32_c(m_blocks->getBlockCellBB(*block).yMin()),
+        uint32_c(m_blocks->getBlockCellBB(*block).zMin()),
+        kT, omega, omega, omega_odd, omega, seed, time_step);
+
     // Add steps to the integration loop
     m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
         m_blocks->getBlockStorage(), 1);
