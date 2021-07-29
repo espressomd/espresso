@@ -150,7 +150,7 @@ public:
   using reference = std::add_lvalue_reference_t<BondView>;
   using const_reference = std::add_const_t<reference>;
   using size_type = std::size_t;
-  using difference_type = ptrdiff_t;
+  using difference_type = std::ptrdiff_t;
   using iterator = Iterator;
   using const_iterator = Iterator;
 

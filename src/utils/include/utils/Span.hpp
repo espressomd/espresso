@@ -53,7 +53,7 @@ public:
   using reverse_iterator = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
   using size_type = std::size_t;
-  using difference_type = ptrdiff_t;
+  using difference_type = std::ptrdiff_t;
 
 private:
   T *m_ptr;
