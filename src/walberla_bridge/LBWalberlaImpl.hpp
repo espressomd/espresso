@@ -290,10 +290,7 @@ public:
                                           "Reset force fields");
     m_time_loop->add() << timeloop::Sweep(*collide, "LB collide")
                        << timeloop::AfterFunction(
-                              *m_pdf_streaming_communication, "communication")
-                       << timeloop::AfterFunction(
-                              [collide]() { collide->time_step_++; },
-                              "increment RNG counter");
+                              *m_pdf_streaming_communication, "communication");
     m_time_loop->add() << timeloop::Sweep(
         Boundaries::getBlockSweep(m_boundary_handling_id), "boundary handling");
     m_time_loop->add() << timeloop::Sweep(stream, "LB stream")
