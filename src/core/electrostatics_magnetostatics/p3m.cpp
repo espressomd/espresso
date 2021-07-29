@@ -296,7 +296,7 @@ void p3m_set_eps(double eps) {
 namespace {
 template <std::size_t cao> struct AssignCharge {
   void operator()(double q, const Utils::Vector3d &real_pos,
-                  const Utils::Vector3d &ai, p3m_local_mesh const &local_mesh,
+                  const Utils::Vector3d &ai, P3MLocalMesh const &local_mesh,
                   p3m_interpolation_cache &inter_weights) {
     auto const w =
         p3m_calculate_interpolation_weights<cao>(real_pos, ai, local_mesh);
@@ -308,7 +308,7 @@ template <std::size_t cao> struct AssignCharge {
   }
 
   void operator()(double q, const Utils::Vector3d &real_pos,
-                  const Utils::Vector3d &ai, p3m_local_mesh const &local_mesh) {
+                  const Utils::Vector3d &ai, P3MLocalMesh const &local_mesh) {
     p3m_interpolate(
         local_mesh,
         p3m_calculate_interpolation_weights<cao>(real_pos, ai, local_mesh),

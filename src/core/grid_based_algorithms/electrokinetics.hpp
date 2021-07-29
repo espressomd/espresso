@@ -32,7 +32,7 @@
 
 /* Data structure holding parameters and memory pointers for the link flux
  * system. */
-typedef struct {
+struct EKParameters {
   float agrid;
   float time_step; // MD time step
   float lb_density;
@@ -83,7 +83,7 @@ typedef struct {
   float valency[MAX_NUMBER_OF_SPECIES];
   float ext_force_density[3][MAX_NUMBER_OF_SPECIES];
   char *node_is_catalyst;
-} EK_parameters;
+};
 
 #endif
 
@@ -129,7 +129,7 @@ typedef struct {
 #define EK_LINK_DUD 24
 #define EK_LINK_DUU 25
 
-extern EK_parameters ek_parameters;
+extern EKParameters ek_parameters;
 extern bool ek_initialized;
 
 void ek_integrate();

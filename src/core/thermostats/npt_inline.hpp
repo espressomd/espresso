@@ -62,7 +62,7 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
 }
 
 /** Add p_diff-dependent noise and friction for NpT-sims to \ref
- *  nptiso_struct::p_diff
+ *  NptIsoParameters::p_diff
  */
 inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
                                      double p_diff) {

@@ -71,7 +71,7 @@ constexpr int MAXIMAL_B_CUT = 30;
 static double uz2, prefuz2, prefL3_i;
 /**@}*/
 
-MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
+MMM1DParameters mmm1d_params = {0.05, 1e-5, 0};
 /** From which distance a certain Bessel cutoff is valid.
  *  Can't be part of the params since these get broadcasted.
  */

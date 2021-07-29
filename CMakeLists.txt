@@ -348,6 +348,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0.0")
     target_compile_options(cxx_interface INTERFACE -Wimplicit-float-conversion)
   endif()
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
+     AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "11.0.0")
+    target_compile_options(cxx_interface INTERFACE -Wnon-c-typedef-for-linkage)
+  endif()
 endif()
 
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION

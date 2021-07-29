@@ -24,7 +24,7 @@ IF ELECTROKINETICS and CUDA:
 
         # EK data struct
         IF EK_DEBUG:
-            ctypedef struct EK_parameters:
+            ctypedef struct EKParameters:
                 float agrid
                 float time_step
                 float lb_density
@@ -73,7 +73,7 @@ IF ELECTROKINETICS and CUDA:
                 float * charge_potential_buffer
                 float * electric_field
         ELSE:
-            ctypedef struct EK_parameters:
+            ctypedef struct EKParameters:
                 float agrid
                 float time_step
                 float lb_density
@@ -121,7 +121,7 @@ IF ELECTROKINETICS and CUDA:
                 float * charge_potential_buffer
                 float * electric_field
 
-        cdef extern EK_parameters ek_parameters
+        cdef extern EKParameters ek_parameters
 
         # EK functions
         void ek_print_parameters()

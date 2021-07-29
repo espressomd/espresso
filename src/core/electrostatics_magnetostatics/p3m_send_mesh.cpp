@@ -34,7 +34,7 @@
 #include <cstddef>
 
 void p3m_send_mesh::resize(const boost::mpi::communicator &comm,
-                           const p3m_local_mesh &local_mesh) {
+                           const P3MLocalMesh &local_mesh) {
   int done[3] = {0, 0, 0};
   /* send grids */
   for (int i = 0; i < 3; i++) {
