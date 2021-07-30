@@ -245,7 +245,7 @@ if(WITH_STOKESIAN_DYNAMICS)
   FetchContent_Declare(
     stokesian_dynamics
     GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
-    GIT_TAG c14e57655e929)
+    GIT_TAG 862a7537a366f0c32f0c25e46bd107bea590faea)
   FetchContent_GetProperties(stokesian_dynamics)
   set(STOKESIAN_DYNAMICS 1)
   if(NOT stokesian_dynamics_POPULATED)
