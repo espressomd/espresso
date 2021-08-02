@@ -49,6 +49,7 @@ namespace utf = boost::unit_test;
 #include <boost/mpi.hpp>
 #include <boost/range/numeric.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <limits>

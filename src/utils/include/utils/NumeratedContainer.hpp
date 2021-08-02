@@ -158,7 +158,7 @@ public:
    */
   const_iterator find(int id) const { return m_container.find(id); }
 
-  size_t size() const { return m_container.size(); }
+  std::size_t size() const { return m_container.size(); }
 
 private:
   /** Data storage */

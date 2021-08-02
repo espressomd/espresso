@@ -51,7 +51,7 @@ using namespace ::FieldCoupling::Fields;
  */
 template <typename Field> struct field_params_impl;
 
-template <typename T, size_t codim>
+template <typename T, std::size_t codim>
 struct field_params_impl<Constant<T, codim>> {
   static Constant<T, codim> make(const VariantMap &params) {
     return Constant<T, codim>{
@@ -64,7 +64,7 @@ struct field_params_impl<Constant<T, codim>> {
   }
 };
 
-template <typename T, size_t codim>
+template <typename T, std::size_t codim>
 struct field_params_impl<AffineMap<T, codim>> {
   using jacobian_type = typename AffineMap<T, codim>::jacobian_type;
   using value_type = typename AffineMap<T, codim>::value_type;
@@ -82,7 +82,7 @@ struct field_params_impl<AffineMap<T, codim>> {
   }
 };
 
-template <typename T, size_t codim>
+template <typename T, std::size_t codim>
 struct field_params_impl<PlaneWave<T, codim>> {
   using jacobian_type = typename PlaneWave<T, codim>::jacobian_type;
   using value_type = typename PlaneWave<T, codim>::value_type;
@@ -107,7 +107,7 @@ struct field_params_impl<PlaneWave<T, codim>> {
   }
 };
 
-template <typename T, size_t codim>
+template <typename T, std::size_t codim>
 struct field_params_impl<Interpolated<T, codim>> {
   static Interpolated<T, codim> make(const VariantMap &params) {
     auto const field_data =

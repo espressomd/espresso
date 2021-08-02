@@ -32,7 +32,7 @@ public:
 
   virtual void update() = 0;
   /** Dimensions needed to reshape the flat array returned by the accumulator */
-  virtual std::vector<size_t> shape() const = 0;
+  virtual std::vector<std::size_t> shape() const = 0;
 
 private:
   // Number of timesteps between automatic updates.

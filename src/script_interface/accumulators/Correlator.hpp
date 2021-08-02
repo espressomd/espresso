@@ -34,6 +34,7 @@
 #include <utils/as_const.hpp>
 
 #include <memory>
+#include <string>
 
 namespace ScriptInterface {
 namespace Accumulators {

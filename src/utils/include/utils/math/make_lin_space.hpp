@@ -42,16 +42,16 @@ namespace Utils {
  * @return Range of equally spaced values
  */
 template <class T>
-auto make_lin_space(T start, T stop, size_t number, bool endpoint = true) {
+auto make_lin_space(T start, T stop, std::size_t number, bool endpoint = true) {
   using boost::make_counting_iterator;
   using boost::make_iterator_range;
   using boost::make_transform_iterator;
 
   auto const dx = (stop - start) / T(number - endpoint);
-  auto x = [dx, start](size_t i) { return start + T(i) * dx; };
+  auto x = [dx, start](std::size_t i) { return start + T(i) * dx; };
 
   return make_iterator_range(
-      make_transform_iterator(make_counting_iterator(size_t(0)), x),
+      make_transform_iterator(make_counting_iterator(std::size_t(0)), x),
       make_transform_iterator(make_counting_iterator(number), x));
 }
 } // namespace Utils

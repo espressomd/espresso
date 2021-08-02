@@ -38,6 +38,7 @@
 
 #include <cuda.h>
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>

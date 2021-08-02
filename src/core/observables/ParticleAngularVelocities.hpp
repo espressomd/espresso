@@ -39,7 +39,7 @@ public:
     std::vector<double> res(n_values());
 
 #ifdef ROTATION
-    size_t i = 0;
+    std::size_t i = 0;
     for (auto p : particles) {
       const Utils::Vector3d omega =
           convert_vector_body_to_space(p.get(), p.get().m.omega);
@@ -52,7 +52,7 @@ public:
     return res;
   }
 
-  std::vector<size_t> shape() const override { return {ids().size(), 3}; }
+  std::vector<std::size_t> shape() const override { return {ids().size(), 3}; }
 };
 
 } // Namespace Observables

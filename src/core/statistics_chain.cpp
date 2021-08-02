@@ -29,6 +29,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <array>
 #include <cmath>
 #include <stdexcept>
 

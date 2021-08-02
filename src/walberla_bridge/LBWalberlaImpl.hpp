@@ -154,8 +154,8 @@ protected:
   // ResetForce sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
-  size_t stencil_size() const override {
-    return static_cast<size_t>(LatticeModel::Stencil::Size);
+  std::size_t stencil_size() const override {
+    return static_cast<std::size_t>(LatticeModel::Stencil::Size);
   }
 
   // Boundary handling

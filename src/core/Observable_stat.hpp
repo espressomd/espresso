@@ -36,14 +36,14 @@ class Observable_stat {
   /** Array for observables on each node. */
   std::vector<double> m_data;
   /** Number of doubles per data item */
-  size_t m_chunk_size;
+  std::size_t m_chunk_size;
 
   /** Calculate the maximal number of non-bonded interaction pairs in the
    *  system.
    */
-  static size_t max_non_bonded_pairs() {
+  static std::size_t max_non_bonded_pairs() {
     extern int max_seen_particle_type;
-    return static_cast<size_t>(
+    return static_cast<std::size_t>(
         (max_seen_particle_type * (max_seen_particle_type + 1)) / 2);
   }
 
@@ -57,7 +57,7 @@ class Observable_stat {
   }
 
 public:
-  explicit Observable_stat(size_t chunk_size);
+  explicit Observable_stat(std::size_t chunk_size);
 
   auto chunk_size() const { return m_chunk_size; }
   Utils::Span<double> data_() { return {m_data.data(), m_data.size()}; }
@@ -70,7 +70,7 @@ public:
    *  @param column Which column to sum up (only relevant for multi-dimensional
    *                observables).
    */
-  double accumulate(double acc = 0.0, size_t column = 0) const {
+  double accumulate(double acc = 0.0, std::size_t column = 0) const {
     assert(column < m_chunk_size);
     if (m_chunk_size == 1)
       return boost::accumulate(m_data, acc);

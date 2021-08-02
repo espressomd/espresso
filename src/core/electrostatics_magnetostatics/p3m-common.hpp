@@ -83,7 +83,7 @@ enum FFT_WAVE_VECTOR : int { KY = 0, KZ = 1, KX = 2 };
  ************************************************/
 
 /** Structure for local mesh parameters. */
-typedef struct {
+struct P3MLocalMesh {
   /* local mesh characterization. */
   /** dimension (size) of local mesh. */
   Utils::Vector3i dim;
@@ -108,10 +108,10 @@ typedef struct {
   int q_2_off;
   /** offset between mesh lines of the two last dimensions */
   int q_21_off;
-} p3m_local_mesh;
+};
 
 /** Structure to hold P3M parameters and some dependent variables. */
-typedef struct {
+struct P3MParameters {
   /** tuning or production? */
   bool tuning = false;
   /** Ewald splitting parameter (0<alpha<1), rescaled to
@@ -153,8 +153,7 @@ typedef struct {
     ar &mesh_off &cao &accuracy &epsilon &cao_cut;
     ar &a &ai &alpha &r_cut &cao3;
   }
-
-} P3MParameters;
+};
 
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
  *  output array with dimension dim[3] at start position start[3].
@@ -181,20 +180,19 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
 /** Calculate properties of the local FFT mesh for the
  *   charge assignment process.
  */
-void p3m_calc_local_ca_mesh(p3m_local_mesh &local_mesh,
+void p3m_calc_local_ca_mesh(P3MLocalMesh &local_mesh,
                             const P3MParameters &params,
                             const LocalBox<double> &local_geo, double skin,
                             double space_layer);
 
 /** Calculate the spatial position of the left down mesh
  *  point of the local mesh, to be stored in
- *  @ref p3m_local_mesh::ld_pos "ld_pos".
+ *  @ref P3MLocalMesh::ld_pos "ld_pos".
  *
  *  Function called by @ref p3m_calc_local_ca_mesh() once and by
  *  @ref p3m_scaleby_box_l() whenever the box size changes.
  */
-void p3m_calc_lm_ld_pos(p3m_local_mesh &local_mesh,
-                        const P3MParameters &params);
+void p3m_calc_lm_ld_pos(P3MLocalMesh &local_mesh, const P3MParameters &params);
 
 #endif /* P3M || DP3M */
 

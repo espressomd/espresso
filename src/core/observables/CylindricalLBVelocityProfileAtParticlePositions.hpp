@@ -40,7 +40,7 @@ public:
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
            const ParticleObservables::traits<Particle> &traits) const override;
 
-  std::vector<size_t> shape() const override {
+  std::vector<std::size_t> shape() const override {
     auto const b = n_bins();
     return {b[0], b[1], b[2], 3};
   }

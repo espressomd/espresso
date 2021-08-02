@@ -41,8 +41,11 @@
 
 #include <utils/index.hpp>
 
+#include <algorithm>
 #include <sstream>
+#include <string>
 #include <utility>
+#include <vector>
 
 /****************************************
  * variables

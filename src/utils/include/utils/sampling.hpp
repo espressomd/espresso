@@ -44,12 +44,11 @@ namespace Utils {
  * @param sampling_density The number of samples per unit volume.
  * @retval Cartesian sampling coordinates.
  */
-std::vector<Vector3d>
-get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
-                                   std::pair<double, double> const &phi_limits,
-                                   std::pair<double, double> const &z_limits,
-                                   size_t n_r_bins, size_t n_phi_bins,
-                                   size_t n_z_bins, double sampling_density) {
+std::vector<Vector3d> get_cylindrical_sampling_positions(
+    std::pair<double, double> const &r_limits,
+    std::pair<double, double> const &phi_limits,
+    std::pair<double, double> const &z_limits, std::size_t n_r_bins,
+    std::size_t n_phi_bins, std::size_t n_z_bins, double sampling_density) {
   auto const delta_r =
       (r_limits.second - r_limits.first) / static_cast<double>(n_r_bins);
   auto const delta_phi =
@@ -60,9 +59,9 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
   // requirement.
   auto const smallest_bin_volume =
       pi() * Utils::sqr(r_limits.first + delta_r) * delta_phi / (2.0 * pi());
-  auto const min_n_samples = std::max(
-      n_z_bins,
-      static_cast<size_t>(std::round(smallest_bin_volume * sampling_density)));
+  auto const min_n_samples =
+      std::max(n_z_bins, static_cast<std::size_t>(std::round(
+                             smallest_bin_volume * sampling_density)));
   auto const delta_z =
       (z_limits.second - z_limits.first) / static_cast<double>(min_n_samples);
 
@@ -94,7 +93,7 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
   auto phis = [n_phi_samples, n_phi_bins, phi_limits](int r_bin) {
     auto const phis_range = make_lin_space(
         phi_limits.first, phi_limits.second,
-        n_phi_bins * static_cast<size_t>(std::round(n_phi_samples(r_bin))),
+        n_phi_bins * static_cast<std::size_t>(std::round(n_phi_samples(r_bin))),
         /*endpoint */ false);
     return phis_range;
   };

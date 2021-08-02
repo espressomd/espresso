@@ -60,8 +60,10 @@ template <class T> struct CudaDeviceAllocator {
     return false;
   }
 
-  pointer allocate(const size_t n) const { return thrust::device_malloc<T>(n); }
-  void deallocate(pointer p, size_t) const noexcept {
+  pointer allocate(const std::size_t n) const {
+    return thrust::device_malloc<T>(n);
+  }
+  void deallocate(pointer p, std::size_t) const noexcept {
     try {
       thrust::device_free(p);
     } catch (thrust::system::system_error const &) {

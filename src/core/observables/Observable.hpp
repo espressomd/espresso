@@ -45,13 +45,13 @@ public:
   virtual std::vector<double> operator()() const = 0;
 
   /** Size of the flat array returned by the observable */
-  size_t n_values() const {
+  std::size_t n_values() const {
     auto const v = shape();
     return std::accumulate(v.begin(), v.end(), 1u, std::multiplies<>());
   }
 
   /** Dimensions needed to reshape the flat array returned by the observable */
-  virtual std::vector<size_t> shape() const = 0;
+  virtual std::vector<std::size_t> shape() const = 0;
 };
 
 } // Namespace Observables
