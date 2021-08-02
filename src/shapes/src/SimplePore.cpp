@@ -24,6 +24,7 @@
 #include <cassert>
 #include <cmath>
 #include <tuple>
+#include <utility>
 
 namespace Shapes {
 /**

@@ -48,7 +48,7 @@ T *raw_data_pointer(thrust::device_vector<T, A> &vec) {
   return thrust::raw_pointer_cast(vec.data());
 }
 
-template <class SpanLike> size_t byte_size(SpanLike const &v) {
+template <class SpanLike> std::size_t byte_size(SpanLike const &v) {
   return v.size() * sizeof(typename SpanLike::value_type);
 }
 
@@ -98,7 +98,8 @@ void cuda_check_errors_exit(const dim3 &block, const dim3 &grid,
  * @param vec Vector To resize.
  * @param n Desired new size of the element.
  */
-template <class T> void resize_or_replace(device_vector<T> &vec, size_t n) {
+template <class T>
+void resize_or_replace(device_vector<T> &vec, std::size_t n) {
   if (vec.capacity() == 0) {
     vec = device_vector<T>(n);
   } else {
@@ -106,7 +107,7 @@ template <class T> void resize_or_replace(device_vector<T> &vec, size_t n) {
   }
 }
 
-void resize_buffers(size_t number_of_particles) {
+void resize_buffers(std::size_t number_of_particles) {
   particle_data_host.resize(number_of_particles);
   resize_or_replace(particle_data_device, number_of_particles);
 

@@ -245,7 +245,7 @@ if(WITH_STOKESIAN_DYNAMICS)
   FetchContent_Declare(
     stokesian_dynamics
     GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
-    GIT_TAG c14e57655e929)
+    GIT_TAG 862a7537a366f0c32f0c25e46bd107bea590faea)
   FetchContent_GetProperties(stokesian_dynamics)
   set(STOKESIAN_DYNAMICS 1)
   if(NOT stokesian_dynamics_POPULATED)
@@ -347,6 +347,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                          INTERFACE -Wno-gnu-zero-variadic-macro-arguments)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "8.0.0")
     target_compile_options(cxx_interface INTERFACE -Wimplicit-float-conversion)
+  endif()
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
+     AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "11.0.0")
+    target_compile_options(cxx_interface INTERFACE -Wnon-c-typedef-for-linkage)
   endif()
 endif()
 

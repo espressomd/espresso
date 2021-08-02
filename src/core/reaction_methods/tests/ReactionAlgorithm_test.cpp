@@ -38,6 +38,8 @@
 #include <limits>
 #include <memory>
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace espresso {
 // ESPResSo system instance

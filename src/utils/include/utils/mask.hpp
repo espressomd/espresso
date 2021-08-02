@@ -29,7 +29,7 @@
 
 namespace Utils {
 namespace detail {
-template <class T, class Integral, size_t... I>
+template <class T, class Integral, std::size_t... I>
 auto mask_impl(Integral mask, T t, std::index_sequence<I...>) {
   return T{((mask & (1u << I)) ? get<I>(t) : tuple_element_t<I, T>{})...};
 }

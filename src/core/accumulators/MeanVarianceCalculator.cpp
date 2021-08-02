@@ -29,6 +29,7 @@
 
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace Accumulators {
 void MeanVarianceCalculator::update() { m_acc(m_obs->operator()()); }

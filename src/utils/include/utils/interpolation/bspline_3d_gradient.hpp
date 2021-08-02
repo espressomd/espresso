@@ -42,7 +42,7 @@ namespace Interpolation {
  * @param grid_spacing The distance between the grid points.
  * @param offset Shift of the grid relative to the origin.
  */
-template <size_t order, typename Kernel>
+template <std::size_t order, typename Kernel>
 void bspline_3d_gradient(const Vector3d &pos, const Kernel &kernel,
                          const Vector3d &grid_spacing, const Vector3d &offset) {
   using Utils::bspline;
@@ -81,7 +81,7 @@ void bspline_3d_gradient(const Vector3d &pos, const Kernel &kernel,
 /**
  * @brief cardinal B-spline weighted sum.
  */
-template <size_t order, typename T, typename Kernel>
+template <std::size_t order, typename T, typename Kernel>
 T bspline_3d_gradient_accumulate(const Vector3d &pos, const Kernel &kernel,
                                  const Vector3d &grid_spacing,
                                  const Vector3d &offset, T const &init) {

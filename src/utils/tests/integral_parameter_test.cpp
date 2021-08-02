@@ -26,7 +26,7 @@
 #include <type_traits>
 #include <utility>
 
-template <size_t I> struct F {
+template <std::size_t I> struct F {
   template <class T> auto operator()(T arg) const {
     return std::make_pair(I, arg);
   }
@@ -35,7 +35,7 @@ template <size_t I> struct F {
 BOOST_AUTO_TEST_CASE(integral_parameter_) {
   static_assert(
       std::is_same<decltype(Utils::integral_parameter<F, 1, 5>(5, 13)),
-                   std::pair<size_t, int>>::value,
+                   std::pair<std::size_t, int>>::value,
       "");
 
   BOOST_CHECK(std::make_pair(1ul, 13) ==

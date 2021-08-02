@@ -27,6 +27,7 @@
 #include <utils/constants.hpp>
 
 #include <cmath>
+#include <vector>
 
 std::vector<std::vector<double>> modPsi;
 

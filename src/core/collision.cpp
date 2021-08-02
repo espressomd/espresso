@@ -51,15 +51,15 @@
 #include <vector>
 
 /// Data type holding the info about a single collision
-typedef struct {
+struct CollisionPair {
   int pp1; // 1st particle id
   int pp2; // 2nd particle id
-} collision_struct;
+};
 
 namespace boost {
 namespace serialization {
 template <typename Archive>
-void serialize(Archive &ar, collision_struct &c, const unsigned int) {
+void serialize(Archive &ar, CollisionPair &c, const unsigned int) {
   ar &c.pp1;
   ar &c.pp2;
 }
@@ -69,7 +69,7 @@ void serialize(Archive &ar, collision_struct &c, const unsigned int) {
 /// During force calculation, colliding particles are recorded in the queue.
 /// The queue is processed after force calculation, when it is safe to add
 /// particles.
-static std::vector<collision_struct> local_collision_queue;
+static std::vector<CollisionPair> local_collision_queue;
 
 /// Parameters for collision detection
 Collision_parameters collision_params;
@@ -380,7 +380,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
 }
 
 void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
-                                        const collision_struct &c) {
+                                        const CollisionPair &c) {
   switch (get_bond_num_partners(collision_params.bond_vs)) {
   case 1: {
     // Create bond between the virtual particles
@@ -412,7 +412,7 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
 void glue_to_surface_bind_part_to_vs(const Particle *const p1,
                                      const Particle *const p2,
                                      const int vs_pid_plus_one,
-                                     const collision_struct &c) {
+                                     const CollisionPair &c) {
   // Create bond between the virtual particles
   const int bondG[] = {vs_pid_plus_one - 1};
 
@@ -425,8 +425,8 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
 
 #endif
 
-std::vector<collision_struct> gather_global_collision_queue() {
-  std::vector<collision_struct> res = local_collision_queue;
+std::vector<CollisionPair> gather_global_collision_queue() {
+  std::vector<CollisionPair> res = local_collision_queue;
   Utils::Mpi::gather_buffer(res, comm_cart);
   boost::mpi::broadcast(comm_cart, res, 0);
 
@@ -474,7 +474,7 @@ static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
 // looks for a third particle by using the domain decomposition
 // cell system. If found, it performs three particle binding
 void three_particle_binding_domain_decomposition(
-    const std::vector<collision_struct> &gathered_queue) {
+    const std::vector<CollisionPair> &gathered_queue) {
 
   for (auto &c : gathered_queue) {
     // If we have both particles, at least as ghosts, Get the corresponding cell

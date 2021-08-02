@@ -27,6 +27,9 @@
 
 #include "p3m-common.hpp"
 
+#include <array>
+#include <vector>
+
 struct p3m_data_struct_base {
   P3MParameters params;
 

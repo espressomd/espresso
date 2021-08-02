@@ -158,7 +158,7 @@ struct GhostCommunication {
 /** Properties for a ghost communication. */
 struct GhostCommunicator {
   GhostCommunicator() = default;
-  GhostCommunicator(boost::mpi::communicator comm, size_t size)
+  GhostCommunicator(boost::mpi::communicator comm, std::size_t size)
       : mpi_comm(std::move(comm)), communications(size) {}
 
   /** Attached mpi communicator */

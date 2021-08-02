@@ -73,7 +73,7 @@ void LBBoundaries::lb_init_boundaries();
 
 static constexpr unsigned int threads_per_block = 64;
 
-EK_parameters ek_parameters = {
+EKParameters ek_parameters = {
     // agrid
     -1.0,
     // time_step
@@ -174,7 +174,7 @@ EK_parameters ek_parameters = {
     nullptr,
 };
 
-__device__ __constant__ EK_parameters ek_parameters_gpu[1];
+__device__ __constant__ EKParameters ek_parameters_gpu[1];
 float *charge_gpu;
 LB_parameters_gpu *ek_lbparameters_gpu;
 CUDA_particle_data *particle_data_gpu;
@@ -189,7 +189,7 @@ FdElectrostatics *electrostatics = nullptr;
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_node_force_density_gpu node_f, node_f_buf;
 extern LB_nodes_gpu *current_nodes;
-extern EK_parameters *lb_ek_parameters;
+extern EKParameters *lb_ek_parameters;
 
 LB_rho_v_gpu *ek_lb_device_values;
 
@@ -1792,7 +1792,7 @@ __global__ void ek_gather_species_charge_density() {
 
 __global__ void
 ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
-                                  size_t number_of_particles,
+                                  std::size_t number_of_particles,
                                   LB_parameters_gpu *ek_lbparameters_gpu) {
   unsigned int index = ek_getThreadIndex();
   unsigned int lowernode[3];
@@ -1876,10 +1876,9 @@ ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
   }
 }
 
-__global__ void
-ek_spread_particle_force(CUDA_particle_data *particle_data,
-                         size_t number_of_particles, float *particle_forces,
-                         LB_parameters_gpu *ek_lbparameters_gpu) {
+__global__ void ek_spread_particle_force(
+    CUDA_particle_data *particle_data, std::size_t number_of_particles,
+    float *particle_forces, LB_parameters_gpu *ek_lbparameters_gpu) {
 
   unsigned int index = ek_getThreadIndex();
   unsigned int lowernode[3];
@@ -2282,7 +2281,7 @@ int ek_init() {
 #endif
 
     cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
-                                     sizeof(EK_parameters)));
+                                     sizeof(EKParameters)));
 
     lb_get_para_pointer(&ek_lbparameters_gpu);
 
@@ -2336,7 +2335,7 @@ int ek_init() {
 
     ek_parameters.charge_potential = electrostatics->getGrid().grid;
     cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
-                                     sizeof(EK_parameters)));
+                                     sizeof(EKParameters)));
 
     // clear initial LB force and finish up
     dim3 dim_grid = calculate_dim_grid(
@@ -2362,7 +2361,7 @@ int ek_init() {
       return 1;
     }
     cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
-                                     sizeof(EK_parameters)));
+                                     sizeof(EKParameters)));
 
     dim3 dim_grid =
         calculate_dim_grid(ek_parameters.number_of_nodes, 4, threads_per_block);
@@ -2375,7 +2374,7 @@ int ek_init() {
     lb_get_boundary_force_pointer(&ek_lb_boundary_force);
 
     cuda_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters,
-                                     sizeof(EK_parameters)));
+                                     sizeof(EKParameters)));
 #endif
 
     ek_integrate_electrostatics();

@@ -319,7 +319,7 @@ double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,
                              const double *box) {
   static thrust::device_vector<double> he_q;
 
-  const size_t mesh_size = mesh[0] * mesh[1] * mesh[2];
+  const std::size_t mesh_size = mesh[0] * mesh[1] * mesh[2];
 
   he_q.resize(mesh_size);
 

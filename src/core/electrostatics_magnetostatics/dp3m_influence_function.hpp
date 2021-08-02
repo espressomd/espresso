@@ -33,6 +33,9 @@
 #include <boost/range/numeric.hpp>
 
 #include <cmath>
+#include <cstddef>
+#include <functional>
+#include <vector>
 
 #if defined(DP3M)
 
@@ -48,7 +51,7 @@
  *  \param d_op        differential operator for a given n-vector
  *  \return The result of the fraction.
  */
-template <size_t S>
+template <std::size_t S>
 double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
                      Utils::Vector3i const &d_op) {
   using Utils::int_pow;
@@ -99,7 +102,7 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
  * @param box_l Box size
  * @return Values of the influence function at regular grid points.
  */
-template <size_t S>
+template <std::size_t S>
 std::vector<double> grid_influence_function(P3MParameters const &params,
                                             Utils::Vector3i const &n_start,
                                             Utils::Vector3i const &n_end,

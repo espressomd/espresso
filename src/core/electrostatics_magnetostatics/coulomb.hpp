@@ -92,8 +92,8 @@ void update_dependent_particles();
 } // namespace Coulomb
 #else  // ELECTROSTATICS
 namespace Coulomb {
-constexpr size_t pressure_n() { return 0; }
-constexpr size_t energy_n() { return 0; }
+constexpr std::size_t pressure_n() { return 0; }
+constexpr std::size_t energy_n() { return 0; }
 } // namespace Coulomb
 #endif // ELECTROSTATICS
 #endif // ESPRESSO_COULOMB_HPP
