@@ -202,7 +202,8 @@ class CylindricalLBObservableCommon:
         self.assertEqual(observable.min_phi, 1.0)
         self.assertEqual(observable.min_z, 1.0)
         obs_bin_edges = observable.bin_edges()
-        np.testing.assert_array_equal(obs_bin_edges[0, 0, 0], [4, 1, 1])
+        np.testing.assert_allclose(obs_bin_edges[0, 0, 0], [4, 1, 1],
+                                   rtol=0., atol=1e-14)
         # check edges upper corner
         self.assertEqual(observable.max_r, params['max_r'])
         self.assertEqual(observable.max_phi, params['max_phi'])
@@ -213,7 +214,8 @@ class CylindricalLBObservableCommon:
         self.assertEqual(observable.max_phi, 8)
         self.assertEqual(observable.max_z, 9)
         obs_bin_edges = observable.bin_edges()
-        np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
+        np.testing.assert_allclose(obs_bin_edges[-1, -1, -1], [7, 8, 9],
+                                   rtol=0., atol=1e-14)
         # check sampling_density
         self.assertEqual(
             observable.sampling_density,

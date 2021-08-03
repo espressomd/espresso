@@ -134,7 +134,7 @@ class DPDThermostat(ut.TestCase):
         system.integrator.run(0)
 
         # Only trans, so x component should be zero
-        self.assertLess(abs(p0.f[0]), 1e-16)
+        self.assertLess(abs(p0.f[0]), 1e-14)
         np.testing.assert_allclose(
             np.copy(p0.f[1:2]), gamma * v[1:2], rtol=0, atol=1e-11)
         np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
@@ -176,7 +176,7 @@ class DPDThermostat(ut.TestCase):
         system.integrator.run(0)
 
         # Only trans, so x component should be zero
-        self.assertLess(abs(p0.f[0]), 1e-16)
+        self.assertLess(abs(p0.f[0]), 1e-14)
         omega = calc_omega(1.3, 1.4)**2
         np.testing.assert_allclose(
             np.copy(p0.f[1:2]), omega * gamma * v[1:2], rtol=0, atol=1e-11)

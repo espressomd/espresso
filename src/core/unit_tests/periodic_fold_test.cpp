@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(with_image_count) {
     auto const box = 10.;
     auto const res = periodic_fold(x, 0, box);
     BOOST_CHECK(res.first >= 0.);
-    BOOST_CHECK(res.first < box);
+    BOOST_CHECK(res.first <= box);
     BOOST_CHECK(std::abs(res.first - x + res.second * box) <=
                 std::numeric_limits<double>::epsilon());
   }

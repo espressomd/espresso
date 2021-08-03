@@ -235,7 +235,8 @@ class TestCylindricalObservable(ut.TestCase):
         self.assertEqual(observable.min_phi, 2)
         self.assertEqual(observable.min_z, 1)
         obs_bin_edges = observable.bin_edges()
-        np.testing.assert_array_almost_equal(obs_bin_edges[0, 0, 0], [1, 2, 1])
+        np.testing.assert_allclose(obs_bin_edges[0, 0, 0], [1, 2, 1],
+                                   rtol=0., atol=1e-14)
         # check edges upper corner
         self.assertEqual(observable.max_r, params['max_r'])
         self.assertEqual(observable.max_phi, params['max_phi'])
@@ -246,7 +247,8 @@ class TestCylindricalObservable(ut.TestCase):
         self.assertEqual(observable.max_phi, 8)
         self.assertEqual(observable.max_z, 9)
         obs_bin_edges = observable.bin_edges()
-        np.testing.assert_array_equal(obs_bin_edges[-1, -1, -1], [7, 8, 9])
+        np.testing.assert_allclose(obs_bin_edges[-1, -1, -1], [7, 8, 9],
+                                   rtol=0., atol=1e-14)
         # check center, axis, orientation
         ctp = espressomd.math.CylindricalTransformationParameters(
             center=[1, 2, 3], axis=[0, 1, 0], orientation=[0, 0, 1])
