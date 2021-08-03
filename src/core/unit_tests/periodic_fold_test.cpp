@@ -69,6 +69,7 @@ BOOST_AUTO_TEST_CASE(with_image_count) {
     BOOST_CHECK_EQUAL(res.second, i + 1);
   }
 
+#ifndef __FAST_MATH__
   /* Pathological (NaN) */
   {
     auto const x = std::nan("");
@@ -77,6 +78,7 @@ BOOST_AUTO_TEST_CASE(with_image_count) {
     auto const res = periodic_fold(x, i, box);
     BOOST_CHECK(std::isnan(res.first));
   }
+#endif // __FAST_MATH__
 
   /* Overflow right */
   {
@@ -155,6 +157,7 @@ BOOST_AUTO_TEST_CASE(without_image_count) {
     BOOST_CHECK_EQUAL(res, x - box);
   }
 
+#ifndef __FAST_MATH__
   /* Pathological (NaN value) */
   {
     auto const x = std::nan("");
@@ -170,6 +173,7 @@ BOOST_AUTO_TEST_CASE(without_image_count) {
     auto const res = periodic_fold(x, box);
     BOOST_CHECK(std::isnan(res));
   }
+#endif // __FAST_MATH__
 
   /* Corner left */
   {
