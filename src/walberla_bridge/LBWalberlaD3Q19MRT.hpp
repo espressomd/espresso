@@ -11,10 +11,11 @@
 #include "generated_kernels/MRTLatticeModel.h"
 #define LatticeModelName lbm::MRTLatticeModel
 #endif
+#define CollisionModelFactoryName walberla::pystencils::CollideSweepFactory
 
 namespace walberla {
 class LBWalberlaD3Q19MRT
-    : public LBWalberlaImpl<LatticeModelName, CollisionModelName> {
+    : public LBWalberlaImpl<LatticeModelName, CollisionModelName, CollisionModelFactoryName> {
   using LatticeModel = LatticeModelName;
 
 public:
@@ -55,3 +56,4 @@ public:
 
 #undef LatticeModelName
 #undef CollisionModelName
+#undef CollisionModelFactoryName

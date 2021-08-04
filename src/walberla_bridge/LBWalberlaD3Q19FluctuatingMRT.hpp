@@ -12,10 +12,11 @@
 #include "generated_kernels/FluctuatingMRTLatticeModel.h"
 #define LatticeModelName lbm::FluctuatingMRTLatticeModel
 #endif
+#define CollisionModelFactoryName walberla::pystencils::CollideSweepThermalizedFactory
 
 namespace walberla {
 class LBWalberlaD3Q19FluctuatingMRT
-    : public LBWalberlaImpl<LatticeModelName, CollisionModelName> {
+    : public LBWalberlaImpl<LatticeModelName, CollisionModelName, CollisionModelFactoryName> {
 
   using LatticeModel = LatticeModelName;
 
@@ -83,3 +84,4 @@ private:
 } // namespace walberla
 #undef LatticeModelName
 #undef CollisionModelName
+#undef CollisionModelFactoryName
