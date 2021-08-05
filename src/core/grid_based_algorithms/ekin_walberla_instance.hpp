@@ -35,6 +35,8 @@ std::vector<EKWalberlaInstance> &get_eks_walberla();
 
 const EKWalberlaInstance &get_ek_instance_walberla(uint id);
 
+EKinWalberlaBase<double> *get_ek_walberla(uint id);
+
 /** @brief Access the EK Walberla parameters */
 EKWalberlaParams *ek_walberla_params();
 

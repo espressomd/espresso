@@ -36,6 +36,10 @@ const EKWalberlaInstance &get_ek_instance_walberla(uint id) {
   return get_eks_walberla().at(id);
 }
 
+EKinWalberlaBase<double> *get_ek_walberla(uint id) {
+  return get_ek_instance_walberla(id).get_ek();
+}
+
 EKWalberlaParams *ek_walberla_params() {
   if (!ek_walberla_params_instance) {
     throw std::runtime_error(
