@@ -47,6 +47,6 @@ EK::ActiveEK get_lattice_switch();
 void propagate();
 } // namespace EK
 
-void mpi_set_ek_lattice_switch(uint id, EK::ActiveEK lattice_switch);
+void mpi_set_ek_lattice_switch(EK::ActiveEK lattice_switch);
 
 #endif // ESPRESSO_EK_INTERFACE_HPP
