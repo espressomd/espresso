@@ -16,6 +16,7 @@
 #include <memory>
 
 namespace {
+std::vector<EKWalberlaInstance> ek_walberla_instances;
 EKinWalberlaBase<double> *ekin_walberla_instance = nullptr;
 std::unique_ptr<EKWalberlaParams> ek_walberla_params_instance{nullptr};
 } // namespace
@@ -26,6 +27,10 @@ EKinWalberlaBase<double> *ekin_walberla() {
         "Attempted access to uninitialized EKinWalberla instance.");
   }
   return ekin_walberla_instance;
+}
+
+std::vector<EKWalberlaInstance> &get_eks_walberla() {
+  return ek_walberla_instances;
 }
 
 EKWalberlaParams *ek_walberla_params() {

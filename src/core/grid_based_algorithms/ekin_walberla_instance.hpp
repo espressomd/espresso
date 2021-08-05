@@ -17,8 +17,21 @@ private:
   double m_tau;
 };
 
+struct EKWalberlaInstance {
+  EKWalberlaInstance(EKinWalberlaBase<double> *ekptr, double tau)
+      : m_tau(tau), m_ekptr(ekptr) {}
+  [[nodiscard]] double get_tau() const { return m_tau; };
+  [[nodiscard]] EKinWalberlaBase<double> *get_ek() const { return m_ekptr; };
+
+private:
+  double m_tau;
+  EKinWalberlaBase<double> *m_ekptr;
+};
+
 /** @brief Access the per-MPI-node EKin instance */
 EKinWalberlaBase<double> *ekin_walberla();
+
+std::vector<EKWalberlaInstance> &get_eks_walberla();
 
 /** @brief Access the EK Walberla parameters */
 EKWalberlaParams *ek_walberla_params();
