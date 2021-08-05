@@ -13,6 +13,7 @@
 #include "EKinWalberlaBase.hpp"
 #include "ekin_walberla_init.hpp"
 
+#include <cassert>
 #include <memory>
 
 namespace {
@@ -21,16 +22,18 @@ EKinWalberlaBase<double> *ekin_walberla_instance = nullptr;
 std::unique_ptr<EKWalberlaParams> ek_walberla_params_instance{nullptr};
 } // namespace
 
-EKinWalberlaBase<double> *ekin_walberla() {
-  if (!ekin_walberla_instance) {
-    throw std::runtime_error(
-        "Attempted access to uninitialized EKinWalberla instance.");
-  }
-  return ekin_walberla_instance;
+EKinWalberlaBase<double> *ekin_walberla(uint id) {
+  return get_ek_instance_walberla(id).get_ek();
 }
 
 std::vector<EKWalberlaInstance> &get_eks_walberla() {
   return ek_walberla_instances;
+}
+
+const EKWalberlaInstance &get_ek_instance_walberla(uint id) {
+  assert(!get_eks_walberla().empty());
+
+  return get_eks_walberla().at(id);
 }
 
 EKWalberlaParams *ek_walberla_params() {
