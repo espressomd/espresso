@@ -21,51 +21,21 @@ bool node_is_index_valid(const Utils::Vector3i &ind,
 }
 } // namespace detail
 
-double get_density(const Utils::Vector3i &ind) {
+double get_density(uint id, const Utils::Vector3i &ind) {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
     return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, walberla::ek_get_node_density, ind);
-  }
-#endif // EK_WALBERLA
-  throw NoEKActive();
-}
-
-void set_density(const Utils::Vector3i &ind, double density) {
-#ifdef EK_WALBERLA
-  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    mpi_call_all(walberla::ek_set_node_density, ind, density);
-  } else
-#endif // EK_WALBERLA
-  {
-    throw NoEKActive();
-  }
-}
-
-bool get_is_boundary(const Utils::Vector3i &ind) {
-#ifdef EK_WALBERLA
-  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, walberla::ek_get_node_is_boundary,
+        ::Communication::Result::one_rank, walberla::ek_get_node_density, id,
         ind);
   }
 #endif // EK_WALBERLA
   throw NoEKActive();
 }
 
-double get_diffusion() {
+void set_density(uint id, const Utils::Vector3i &ind, double density) {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    return walberla::ek_get_diffusion();
-  }
-#endif // EK_WALBERLA
-  throw NoEKActive();
-}
-
-void set_diffusion(double diffusion) {
-#ifdef EK_WALBERLA
-  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    mpi_call_all(walberla::ek_set_diffusion, diffusion);
+    mpi_call_all(walberla::ek_set_node_density, id, ind, density);
   } else
 #endif // EK_WALBERLA
   {
@@ -73,19 +43,30 @@ void set_diffusion(double diffusion) {
   }
 }
 
-double get_kT() {
+bool get_is_boundary(uint id, const Utils::Vector3i &ind) {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    return walberla::ek_get_kT();
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, walberla::ek_get_node_is_boundary,
+        id, ind);
   }
 #endif // EK_WALBERLA
   throw NoEKActive();
 }
 
-void set_kT(double kT) {
+double get_diffusion(uint id) {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    mpi_call_all(walberla::ek_set_kT, kT);
+    return walberla::ek_get_diffusion(id);
+  }
+#endif // EK_WALBERLA
+  throw NoEKActive();
+}
+
+void set_diffusion(uint id, double diffusion) {
+#ifdef EK_WALBERLA
+  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
+    mpi_call_all(walberla::ek_set_diffusion, id, diffusion);
   } else
 #endif // EK_WALBERLA
   {
@@ -93,34 +74,54 @@ void set_kT(double kT) {
   }
 }
 
-double get_tau() {
+double get_kT(uint id) {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    return walberla::ek_get_tau();
+    return walberla::ek_get_kT(id);
   }
 #endif // EK_WALBERLA
   throw NoEKActive();
 }
 
-Utils::Vector3i get_shape() {
+void set_kT(uint id, double kT) {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    return walberla::ek_get_shape();
+    mpi_call_all(walberla::ek_set_kT, id, kT);
+  } else
+#endif // EK_WALBERLA
+  {
+    throw NoEKActive();
+  }
+}
+
+double get_tau(uint id) {
+#ifdef EK_WALBERLA
+  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
+    return walberla::ek_get_tau(id);
   }
 #endif // EK_WALBERLA
   throw NoEKActive();
 }
 
-bool node_is_index_valid(const Utils::Vector3i &ind) {
-  return detail::node_is_index_valid(ind, get_shape());
+Utils::Vector3i get_shape(uint id) {
+#ifdef EK_WALBERLA
+  if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
+    return walberla::ek_get_shape(id);
+  }
+#endif // EK_WALBERLA
+  throw NoEKActive();
 }
 
-void create_vtk(unsigned delta_N, unsigned initial_count,
+bool node_is_index_valid(uint id, const Utils::Vector3i &ind) {
+  return detail::node_is_index_valid(ind, get_shape(id));
+}
+
+void create_vtk(uint id, unsigned delta_N, unsigned initial_count,
                 unsigned flag_observables, std::string const &identifier,
                 std::string const &base_folder, std::string const &prefix) {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    mpi_call_all(walberla::ek_create_vtk, delta_N, initial_count,
+    mpi_call_all(walberla::ek_create_vtk, id, delta_N, initial_count,
                  flag_observables, identifier, base_folder, prefix);
     return;
   }
@@ -128,20 +129,20 @@ void create_vtk(unsigned delta_N, unsigned initial_count,
   throw NoEKActive();
 }
 
-void write_vtk(std::string const &vtk_uid) {
+void write_vtk(uint id, std::string const &vtk_uid) {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    mpi_call_all(walberla::ek_write_vtk, vtk_uid);
+    mpi_call_all(walberla::ek_write_vtk, id, vtk_uid);
     return;
   }
 #endif // EK_WALBERLA
   throw NoEKActive();
 }
 
-void switch_vtk(std::string const &vtk_uid, int status) {
+void switch_vtk(uint id, std::string const &vtk_uid, int status) {
 #ifdef EK_WALBERLA
   if (EK::get_lattice_switch() == EK::ActiveEK::WALBERLA) {
-    mpi_call_all(walberla::ek_switch_vtk, vtk_uid, status);
+    mpi_call_all(walberla::ek_switch_vtk, id, vtk_uid, status);
     return;
   }
 #endif // EK_WALBERLA
