@@ -46,13 +46,11 @@ void init_ekin_walberla_local(double diffusion, double kT, double density,
   // Exceptions need to be converted to runtime errors so they can be
   // handled from Python in a parallel simulation
   try {
-    ekin_walberla_instance =
-        new_ekin_walberla(get_walberla_blockforest(), diffusion, kT, density);
-    ek_walberla_params_instance = std::make_unique<EKWalberlaParams>(tau);
+    get_eks_walberla().emplace_back(
+        new_ekin_walberla(get_walberla_blockforest(), diffusion, kT, density),
+        tau);
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
-    ekin_walberla_instance = nullptr;
-    ek_walberla_params_instance.reset();
   }
 }
 REGISTER_CALLBACK(init_ekin_walberla_local)
