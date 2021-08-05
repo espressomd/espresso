@@ -51,7 +51,7 @@ logging.basicConfig(
 )
 
 # Warmup length to skip at beginning
-WARMUP_LENGTH = 3000
+WARMUP_LENGTH = 300000
 
 # Lists for (unsorted) densities and temperature
 dens_liquid = []
@@ -76,8 +76,8 @@ def relaxation_time(x):
     """ Compute the relaxation time """
     corr = autocorr(x)
     popt, _ = curve_fit(lambda x, a: np.exp(-a * x),
-                        range(np.size(corr)), corr, p0=(1. / 15000))
-    return popt[0]
+                        range(np.size(corr)), corr, p0=(1.,))
+    return 1. / popt[0]
 
 
 def std_error_mean(x):
@@ -115,11 +115,11 @@ for f in args.files:
 
     # Calculate errors
     errors_liquid.append(
-        std_error_mean(data["densities_box01"]) if density1 > density2 else
-        std_error_mean(data["densities_box02"]))
+        std_error_mean(data["densities_box01"][WARMUP_LENGTH:]) if density1 > density2 else
+        std_error_mean(data["densities_box02"][WARMUP_LENGTH:]))
     errors_gas.append(
-        std_error_mean(data["densities_box01"]) if density1 < density2 else
-        std_error_mean(data["densities_box02"]))
+        std_error_mean(data["densities_box01"][WARMUP_LENGTH:]) if density1 < density2 else
+        std_error_mean(data["densities_box02"][WARMUP_LENGTH:]))
     kTs.append(kT)
 
 # Sort temperatures and densities respectively
@@ -153,7 +153,7 @@ y_rectilinear = 0.5 * (dens_liquid + dens_gas)
 
 # Fit using scaling law
 fit_scaling, p_cov_scaling = curve_fit(
-    scaling_law, kTs, y_scaling, p0=(1., 1.), maxfev=6000)
+    scaling_law, kTs, y_scaling, p0=(1., 1.1), maxfev=6000)
 
 # Print fit values
 logging.info("Fits using scaling law: B, T_c: {}".format(fit_scaling))
