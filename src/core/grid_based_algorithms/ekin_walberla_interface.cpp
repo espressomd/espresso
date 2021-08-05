@@ -79,6 +79,7 @@ void ek_propagate() {
                 [](const EKWalberlaInstance &ek_instance) {
                   ek_instance.get_ek()->integrate();
                 });
+}
 } // namespace walberla
 
 #endif // EK_WALBERLA
