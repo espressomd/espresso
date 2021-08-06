@@ -65,7 +65,9 @@ void energy_calc(const double time) {
 
   on_observable_calc();
 
-  for (auto const &p : cell_structure.local_particles()) {
+  auto const local_parts = cell_structure.local_particles();
+
+  for (auto const &p : local_parts) {
     obs_energy.kinetic[0] += calc_kinetic_energy(p);
   }
 
@@ -85,9 +87,16 @@ void energy_calc(const double time) {
       },
       maximal_cutoff(), maximal_cutoff_bonded());
 
-  calc_long_range_energies(cell_structure.local_particles());
+#ifdef ELECTROSTATICS
+  /* calculate k-space part of electrostatic interaction. */
+  obs_energy.coulomb[1] = Coulomb::calc_energy_long_range(local_parts);
+#endif
 
-  auto local_parts = cell_structure.local_particles();
+#ifdef DIPOLES
+  /* calculate k-space part of magnetostatic interaction. */
+  obs_energy.dipolar[1] = Dipole::calc_energy_long_range(local_parts);
+#endif
+
   Constraints::constraints.add_energy(local_parts, time, obs_energy);
 
 #ifdef CUDA
@@ -110,18 +119,6 @@ void update_energy_local(int, int) { energy_calc(get_sim_time()); }
 REGISTER_CALLBACK(update_energy_local)
 
 void update_energy() { mpi_call_all(update_energy_local, -1, -1); }
-
-void calc_long_range_energies(const ParticleRange &particles) {
-#ifdef ELECTROSTATICS
-  /* calculate k-space part of electrostatic interaction. */
-  obs_energy.coulomb[1] = Coulomb::calc_energy_long_range(particles);
-#endif
-
-#ifdef DIPOLES
-  /* calculate k-space part of magnetostatic interaction. */
-  obs_energy.dipolar[1] = Dipole::calc_energy_long_range(particles);
-#endif
-}
 
 double calculate_current_potential_energy_of_system() {
   update_energy();

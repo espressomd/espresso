@@ -57,21 +57,7 @@ Observable_stat obs_pressure{9};
 
 Observable_stat const &get_obs_pressure() { return obs_pressure; }
 
-/** Calculate long-range virials (P3M, ...). */
-void calc_long_range_virials(const ParticleRange &particles) {
-#ifdef ELECTROSTATICS
-  /* calculate k-space part of electrostatic interaction. */
-  auto const coulomb_pressure = Coulomb::calc_pressure_long_range(particles);
-  boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
-#endif
-#ifdef DIPOLES
-  /* calculate k-space part of magnetostatic interaction. */
-  Dipole::calc_pressure_long_range();
-#endif
-}
-
 void pressure_calc() {
-  auto const volume = box_geo.volume();
 
   if (!interactions_sanity_checks())
     return;
@@ -80,7 +66,10 @@ void pressure_calc() {
 
   on_observable_calc();
 
-  for (auto const &p : cell_structure.local_particles()) {
+  auto const volume = box_geo.volume();
+  auto const local_parts = cell_structure.local_particles();
+
+  for (auto const &p : local_parts) {
     add_kinetic_virials(p, obs_pressure);
   }
 
@@ -106,7 +95,15 @@ void pressure_calc() {
       },
       maximal_cutoff(), maximal_cutoff_bonded());
 
-  calc_long_range_virials(cell_structure.local_particles());
+#ifdef ELECTROSTATICS
+  /* calculate k-space part of electrostatic interaction. */
+  auto const coulomb_pressure = Coulomb::calc_pressure_long_range(local_parts);
+  boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
+#endif
+#ifdef DIPOLES
+  /* calculate k-space part of magnetostatic interaction. */
+  Dipole::calc_pressure_long_range();
+#endif
 
 #ifdef VIRTUAL_SITES
   if (!obs_pressure.virtual_sites.empty()) {

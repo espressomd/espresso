@@ -28,7 +28,6 @@
 #define _ENERGY_H
 
 #include "Observable_stat.hpp"
-#include "ParticleRange.hpp"
 #include "actor/ActorList.hpp"
 
 extern ActorList energyActors;
@@ -41,9 +40,6 @@ void update_energy();
 
 /** Return the energy observable. */
 Observable_stat const &get_obs_energy();
-
-/** Calculate long-range energies (P3M, ...). */
-void calc_long_range_energies(const ParticleRange &particles);
 
 /** Calculate the total energy of the system. */
 double calculate_current_potential_energy_of_system();
