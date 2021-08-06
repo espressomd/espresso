@@ -85,7 +85,7 @@ void pressure_calc() {
   }
 
   short_range_loop(
-      [](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+      [](Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = bonded_ia_params[bond_id];
         auto const result = calc_bonded_pressure_tensor(iaparams, p1, partners);
         if (result) {
@@ -100,7 +100,7 @@ void pressure_calc() {
         }
         return true;
       },
-      [](Particle &p1, Particle &p2, Distance const &d) {
+      [](Particle const &p1, Particle const &p2, Distance const &d) {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
                                     obs_pressure);
       },

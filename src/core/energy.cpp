@@ -70,7 +70,7 @@ void energy_calc(const double time) {
   }
 
   short_range_loop(
-      [](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+      [](Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = bonded_ia_params[bond_id];
         auto const result = calc_bonded_energy(iaparams, p1, partners);
         if (result) {
