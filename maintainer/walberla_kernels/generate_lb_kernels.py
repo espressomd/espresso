@@ -18,6 +18,7 @@
 #
 
 import os
+import jinja2
 import sympy as sp
 import pystencils as ps
 from pystencils.field import Field
@@ -34,6 +35,58 @@ from lbmpy.fieldaccess import CollideOnlyInplaceAccessor
 from lbmpy.stencils import get_stencil
 from lbmpy.updatekernels import create_lbm_kernel, create_stream_pull_only_kernel
 # for collide-push from lbmpy.fieldaccess import StreamPushTwoFieldsAccessor
+
+
+def adapt_pystencils():
+    '''
+    Adapt pystencils to the SFINAE method (add the block offset lambda
+    callback and the time_step increment).
+    '''
+    old_add_pystencils_filters_to_jinja_env = codegen.add_pystencils_filters_to_jinja_env
+
+    def new_add_pystencils_filters_to_jinja_env(jinja_env):
+        # save original pystencils to adapt
+        old_add_pystencils_filters_to_jinja_env(jinja_env)
+        old_generate_call = jinja_env.filters['generate_call']
+        old_generate_members = jinja_env.filters['generate_members']
+        old_generate_refs_for_kernel_parameters = jinja_env.filters[
+            'generate_refs_for_kernel_parameters']
+
+        @jinja2.contextfilter
+        def new_generate_call(*args, **kwargs):
+            output = old_generate_call(*args, **kwargs)
+            function_call = output.split('\n')[-1]
+            if 'block_offset_0' in function_call:
+                output += '\nthis->time_step_++;'
+            return output
+
+        @jinja2.contextfilter
+        def new_generate_members(*args, **kwargs):
+            output = old_generate_members(*args, **kwargs)
+            token = ' block_offset_0_;'
+            if token in output:
+                i = output.index(token)
+                vartype = output[:i].split('\n')[-1].strip()
+                output += f'\nstd::function<void(IBlock *, {vartype}&, {vartype}&, {vartype}&)> block_offset_generator = [](IBlock * const, {vartype}&, {vartype}&, {vartype}&) {{ }};'
+            return output
+
+        def new_generate_refs_for_kernel_parameters(*args, **kwargs):
+            output = old_generate_refs_for_kernel_parameters(*args, **kwargs)
+            if 'block_offset_0' in output:
+                old_token = 'auto & block_offset_'
+                new_token = 'auto block_offset_'
+                assert output.count(old_token) == 3, \
+                    f'could not find "{old_token}" in """\n{output}\n"""'
+                output = output.replace(old_token, new_token)
+                output += '\nblock_offset_generator(block, block_offset_0, block_offset_1, block_offset_2);'
+            return output
+
+        # replace pystencils
+        jinja_env.filters['generate_call'] = new_generate_call
+        jinja_env.filters['generate_members'] = new_generate_members
+        jinja_env.filters['generate_refs_for_kernel_parameters'] = new_generate_refs_for_kernel_parameters
+
+    codegen.add_pystencils_filters_to_jinja_env = new_add_pystencils_filters_to_jinja_env
 
 
 def earmark_generated_kernels():
@@ -130,6 +183,8 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
     codegen.generate_sweep(
         ctx, class_name, stream_ast, field_swaps=[(src_field, dst_field)])
 
+
+adapt_pystencils()
 
 with CodeGeneration() as ctx:
     kT = sp.symbols("kT")
